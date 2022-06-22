@@ -2,7 +2,7 @@
 #
 # generate-prefs.R
 #
-# Copyright (C) 2021 by RStudio, PBC
+# Copyright (C) 2022 by RStudio, PBC
 #
 # Unless you have received this program directly from RStudio pursuant
 # to the terms of a commercial license agreement with RStudio, then
@@ -78,8 +78,14 @@ generate <- function (schemaPath, className) {
    prefs <- schema$properties
 
    java <- ""   # The contents of the Java file we'll be creating
+   javaConstants <- ""   # The contents of the Java constants (i18n) file we'll be creating
+   javaProperties <- ""  # The contents of the Java properties (i18n) file we'll be creating
    cpp <- ""    # The contents of the C++ file we'll be creating
    hpp <- ""    # The contents of the C++ header file we'll be creating
+
+   # DEBUG: Text prepended to all i18n outputs (so we can spot which is being displayed, if any)
+   prefixDefault <- ""
+   prefixProperties <- ""
 
    # Components
 
@@ -101,6 +107,15 @@ generate <- function (schemaPath, className) {
       # Convert the preference name from camel case to snake case
       camel <- gsub("_(.)", "\\U\\1\\E", pref, perl = TRUE)
       def <- prefs[[pref]]
+
+      # Prefs with enumReadable values must have valid enum entry of equal length
+      if (!is.null(def[["enumReadable"]]) &&
+          (is.null(def[["enum"]]) || length(def[["enumReadable"]]) != length(def[["enum"]]))) {
+
+         warningMsg <- sprintf("\nPreference \"%s\" does not have [[enum]] and [[enumReadable]] of equal length and will be skipped (not generated)", pref)
+         cat(warningMsg)
+         next
+      }
       
       # Convert JSON schema type to corresponding Java type
       type <- def[["type"]]
@@ -177,30 +192,86 @@ generate <- function (schemaPath, className) {
          "   /**\n",
          "    * ", def[["description"]], "\n",
          "    */\n")
-      
-      # Add a Java accessor for the preference, and an entry for syncing it with another copy
+
+      # Create a Java/GWT Properties file header for the preference
+      commentProperties <- paste0(
+         "# ", def[["description"]], "\n")
+
+      # Add title and description entries for the java constants file
       prefTitle <- if (is.null(def[["title"]])) "" else def[["title"]]
+      javaConstants <- paste0(javaConstants,
+         comment,
+         "   @DefaultStringValue(\"", prefixDefault, prefTitle, "\")\n",
+         "   String ", camel, "Title", "();\n",
+         "   @DefaultStringValue(\"", prefixDefault, def[["description"]], "\")\n",
+         "   String ", camel, "Description", "();\n")
+
+      if (!is.null(def[["enumReadable"]]))
+      {
+         javaConstants <- paste0(javaConstants,
+                                 paste0(mapply(function (enumVal, enumReadable) {
+                                    paste0(
+                                       "   @DefaultStringValue(\"", prefixDefault, enumReadable, "\")\n",
+                                       "   String ", camel, "Enum_", gsub("[^A-Za-z0-9_]", "_", enumVal), "();"
+                                    )
+                                 }, def[["enum"]], def[["enumReadable"]]), collapse = "\n"
+                                 ), "\n"
+         )
+      }
+
+      javaConstants <- paste0(javaConstants, "\n")
+
+      # Add title and description entries for the java properties file
+      javaProperties <- paste0(javaProperties,
+         commentProperties,
+         camel, "Title = ", prefixProperties, prefTitle, "\n",
+         camel, "Description = ", prefixProperties, def[["description"]], "\n")
+
+      if (!is.null(def[["enumReadable"]]))
+      {
+         javaProperties <- paste0(javaProperties,
+                                  paste0(mapply(function (enumVal, enumReadable) {
+                                     paste0(
+                                        camel, "Enum_", gsub("[^A-Za-z0-9_]", "_", enumVal), "=", prefixProperties, enumReadable
+                                     )
+                                  }, def[["enum"]], def[["enumReadable"]]), collapse = "\n"
+                                  ), "\n"
+         )
+      }
+
+      javaProperties <- paste0(javaProperties, "\n")
+
+      prefTitle <- paste0("_constants.", camel, "Title()")
+      prefDescription <- paste0("_constants.", camel, "Description()")
       java <- paste0(java,
          comment,
          "   public PrefValue<", type, "> ", camel, "()\n",
          "   {\n",
          "      return ", preftype, "(\n         \"", pref, "\",\n",
-                       "         \"", prefTitle, "\", \n", 
-                       "         \"", def[["description"]], "\", \n")
+                       "         ", prefTitle, ", \n",
+                       "         ", prefDescription, ", \n")
       if (!is.null(def[["enum"]]))
       {
-          java <- paste0(java, "         new String[] {\n",
-             paste(lapply(def[["enum"]], function(enumval) {
-                    toupper(paste0("            ",
-                                   pref, 
-                                   "_", 
-                                   gsub("[^A-Za-z0-9_]", "_", enumval)))
-                   }), collapse = ",\n"),
-             "\n         },\n")
+         java <- paste0(java, "         new String[] {\n",
+                        paste(lapply(def[["enum"]], function(enumval) {
+                           toupper(paste0("            ",
+                                          pref,
+                                          "_",
+                                          gsub("[^A-Za-z0-9_]", "_", enumval)))
+                        }), collapse = ",\n"),
+                        "\n         },\n")
       }
       java <- paste0(java, 
-                       "         ", defaultval, ");\n",
-                       "   }\n\n")
+                       "         ", defaultval)
+      if (!is.null(def[["enumReadable"]]))
+      {
+         java <- paste0(java, ",\n", "         new String[] {\n",
+                        paste(lapply(def[["enum"]], function(enumval) {
+                           paste0("            _constants.", camel, "Enum_", gsub("[^A-Za-z0-9_]", "_", enumval), "()")
+                        }), collapse = ",\n"),
+                        "\n         }")
+      }
+      java <- paste0(java, ");\n   }\n\n")
       synctype <- if (identical(preftype, "enumeration")) "String" else capitalize(preftype)
       javasync <- paste0(javasync,
          "      if (source.hasKey(\"", pref, "\"))\n",
@@ -245,7 +316,9 @@ generate <- function (schemaPath, className) {
             if (!is.null(default))
                default <- paste(" ||", jsonlite::toJSON(default, auto_unbox = TRUE))
             
-            if (identical(proptype, "array")) {
+            if (identical(proptype, "object")) {
+               proptype <- "JavaScriptObject"
+            } else if (identical(proptype, "array")) {
                proptype <- "JsArrayString"
                default <- default %||% " || []"
                if (!is.null(propdef[["items"]])) {
@@ -258,6 +331,9 @@ generate <- function (schemaPath, className) {
                default <- default %||% " || \"\""
             } else if (identical(proptype, "integer")) {
                proptype <- "int"
+               default <- default %||% " || 0"
+            } else if (identical(proptype, "number")) {
+               proptype <- "double"
                default <- default %||% " || 0"
             } else if (identical(proptype, "boolean")) {
                default <- default %||% " || false"
@@ -297,6 +373,8 @@ generate <- function (schemaPath, className) {
    # Return computed Java and C++ code
    list(
       java = java,
+      javaConstants = javaConstants,
+      javaProperties = javaProperties,
       cpp = cpp,
       hpp = hpp)
 }
@@ -307,6 +385,12 @@ result <- generate("../../cpp/session/resources/schema/user-prefs-schema.json",
 template <- readLines("prefs/UserPrefsAccessor.java")
 writeLines(gsub("%PREFS%", result$java, template), 
            con = "../src/org/rstudio/studio/client/workbench/prefs/model/UserPrefsAccessor.java")
+template <- readLines("prefs/UserPrefsAccessorConstants.java")
+writeLines(gsub("%PREFS%", result$javaConstants, template),
+           con = "../src/org/rstudio/studio/client/workbench/prefs/model/UserPrefsAccessorConstants.java")
+template <- readLines("prefs/UserPrefsAccessorConstants_en.properties")
+writeLines(gsub("%PREFS%", result$javaProperties, template),
+           con = "../src/org/rstudio/studio/client/workbench/prefs/model/UserPrefsAccessorConstants_en.properties")
 template <- readLines("prefs/UserPrefValues.hpp")
 writeLines(gsub("%PREFS%", result$hpp, template), 
            con = "../../cpp/session/include/session/prefs/UserPrefValues.hpp")
@@ -320,6 +404,12 @@ result <- generate("../../cpp/session/resources/schema/user-state-schema.json",
 javaTemplate <- readLines("prefs/UserStateAccessor.java")
 writeLines(gsub("%STATE%", result$java, javaTemplate), 
            con = "../src/org/rstudio/studio/client/workbench/prefs/model/UserStateAccessor.java")
+javaTemplate <- readLines("prefs/UserStateAccessorConstants.java")
+writeLines(gsub("%STATE%", result$javaConstants, javaTemplate),
+           con = "../src/org/rstudio/studio/client/workbench/prefs/model/UserStateAccessorConstants.java")
+javaTemplate <- readLines("prefs/UserStateAccessorConstants_en.properties")
+writeLines(gsub("%STATE%", result$javaProperties, javaTemplate),
+           con = "../src/org/rstudio/studio/client/workbench/prefs/model/UserStateAccessorConstants_en.properties")
 template <- readLines("prefs/UserStateValues.hpp")
 writeLines(gsub("%STATE%", result$hpp, template), 
            con = "../../cpp/session/include/session/prefs/UserStateValues.hpp")

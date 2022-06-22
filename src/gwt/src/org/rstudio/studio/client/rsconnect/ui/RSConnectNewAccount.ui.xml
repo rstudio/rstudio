@@ -1,18 +1,19 @@
 <!DOCTYPE ui:UiBinder SYSTEM "http://dl.google.com/gwt/DTD/xhtml.ent">
 <ui:UiBinder xmlns:ui="urn:ui:com.google.gwt.uibinder"
-   xmlns:g="urn:import:com.google.gwt.user.client.ui">
+   xmlns:g="urn:import:com.google.gwt.user.client.ui"
+   ui:generateFormat='com.google.gwt.i18n.server.PropertyCatalogFactory'
+   ui:generateKeys="com.google.gwt.i18n.server.keygen.MD5KeyGenerator"
+   ui:generateLocales="default">
    <ui:style>
    
    </ui:style>
    <g:HTMLPanel>
    <g:HTML>
    <p>
-      To publish content, you first need to connect RStudio to an account on 
-      the service you want to publish to.
+      <ui:msg key="publishContentText">To publish content, you first need to connect RStudio to an account on the service you want to publish to.</ui:msg>
    </p>
    <p>
-      Once you've authorized this computer to publish content to an account, 
-      you can publish any time without re-entering your credentials.
+      <ui:msg key="authorizeNewAccountText">Once you've authorized this computer to publish content to an account, you can publish any time without re-entering your credentials.</ui:msg>
    </p>
    </g:HTML>
    </g:HTMLPanel>

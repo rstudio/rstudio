@@ -1,7 +1,7 @@
 /*
  * EventProperty.java
  *
- * Copyright (C) 2021 by RStudio, PBC
+ * Copyright (C) 2022 by RStudio, PBC
  *
  * Unless you have received this program directly from RStudio pursuant
  * to the terms of a commercial license agreement with RStudio, then
@@ -19,5 +19,18 @@ import com.google.gwt.dom.client.NativeEvent;
 public class EventProperty
 {
    public static final native String key(NativeEvent event) /*-{ return event.key; }-*/;
+   
+   // This helper is provided to avoid GWT's normalization of MouseEvent
+   // buttons in the 'event.getButton()' accessor.
+   public static final native int button(NativeEvent event)
+   /*-{
+      return event.button;
+   }-*/;
+   
+   public static final int MOUSE_MAIN       = 0;
+   public static final int MOUSE_AUXILIARY  = 1;
+   public static final int MOUSE_SECONDARY  = 2;
+   public static final int MOUSE_BACKWARD   = 3;
+   public static final int MOUSE_FORWARD    = 4;
 }
 

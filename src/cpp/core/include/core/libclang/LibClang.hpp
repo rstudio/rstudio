@@ -1,7 +1,7 @@
 /*
  * LibClang.hpp
  *
- * Copyright (C) 2021 by RStudio, PBC
+ * Copyright (C) 2022 by RStudio, PBC
  *
  * Unless you have received this program directly from RStudio pursuant
  * to the terms of a commercial license agreement with RStudio, then
@@ -23,6 +23,7 @@
 #include <boost/function.hpp>
 
 #include <shared_core/Error.hpp>
+#include <core/Version.hpp>
 
 #include "Diagnostic.hpp"
 #include "SourceIndex.hpp"
@@ -43,11 +44,18 @@ namespace libclang {
 struct LibraryVersion
 {
    LibraryVersion() : versionMajor_(0), versionMinor_(0), versionPatch_(0) {}
+
    LibraryVersion(int versionMajor, int versionMinor, int versionPatch)
       : versionMajor_(versionMajor), versionMinor_(versionMinor), versionPatch_(versionPatch)
    {
    }
 
+   explicit LibraryVersion(const core::Version& version)
+      : versionMajor_(version.versionMajor()),
+        versionMinor_(version.versionMinor()),
+        versionPatch_(version.versionPatch())
+   {
+   }
 
    bool empty() const { return versionMajor_ == 0; }
 
@@ -107,8 +115,8 @@ public:
    virtual ~LibClang();
 
    // loading
-   bool load(EmbeddedLibrary embedded = EmbeddedLibrary(),
-             LibraryVersion requiredVersion = LibraryVersion(3,4,0),
+   bool load(EmbeddedLibrary embedded,
+             LibraryVersion requiredVersion,
              std::string* pDiagnostics = nullptr);
 
    core::Error unload();

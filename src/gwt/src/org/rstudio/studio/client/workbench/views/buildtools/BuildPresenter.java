@@ -1,7 +1,7 @@
 /*
  * BuildPresenter.java
  *
- * Copyright (C) 2021 by RStudio, PBC
+ * Copyright (C) 2022 by RStudio, PBC
  *
  * Unless you have received this program directly from RStudio pursuant
  * to the terms of a commercial license agreement with RStudio, then
@@ -14,11 +14,13 @@
  */
 package org.rstudio.studio.client.workbench.views.buildtools;
 
+import com.google.gwt.core.client.GWT;
 import com.google.gwt.core.client.JsArray;
 import com.google.gwt.core.client.Scheduler;
 import com.google.gwt.event.dom.client.ClickEvent;
 import com.google.gwt.event.dom.client.ClickHandler;
 import com.google.gwt.event.dom.client.HasClickHandlers;
+import com.google.gwt.event.shared.HandlerRegistration;
 import com.google.gwt.user.client.Command;
 import com.google.inject.Inject;
 
@@ -40,8 +42,11 @@ import org.rstudio.studio.client.common.dependencies.DependencyManager;
 import org.rstudio.studio.client.common.filetypes.FileTypeRegistry;
 import org.rstudio.studio.client.common.sourcemarkers.SourceMarker;
 import org.rstudio.studio.client.common.sourcemarkers.SourceMarkerList;
+import org.rstudio.studio.client.quarto.QuartoHelper;
+import org.rstudio.studio.client.quarto.model.QuartoConfig;
 import org.rstudio.studio.client.server.ServerError;
 import org.rstudio.studio.client.server.ServerRequestCallback;
+import org.rstudio.studio.client.server.Void;
 import org.rstudio.studio.client.workbench.WorkbenchContext;
 import org.rstudio.studio.client.workbench.WorkbenchView;
 import org.rstudio.studio.client.workbench.commands.Commands;
@@ -54,6 +59,8 @@ import org.rstudio.studio.client.workbench.views.BasePresenter;
 import org.rstudio.studio.client.workbench.views.buildtools.events.BuildCompletedEvent;
 import org.rstudio.studio.client.workbench.views.buildtools.events.BuildErrorsEvent;
 import org.rstudio.studio.client.workbench.views.buildtools.events.BuildOutputEvent;
+import org.rstudio.studio.client.workbench.views.buildtools.events.BuildRenderSubTypeEvent;
+import org.rstudio.studio.client.workbench.views.buildtools.events.BuildServeSubTypeEvent;
 import org.rstudio.studio.client.workbench.views.buildtools.events.BuildStartedEvent;
 import org.rstudio.studio.client.workbench.views.buildtools.model.BuildServerOperations;
 import org.rstudio.studio.client.workbench.views.buildtools.model.BuildState;
@@ -66,7 +73,7 @@ import org.rstudio.studio.client.workbench.views.terminal.TerminalHelper;
 
 public class BuildPresenter extends BasePresenter
 {
-   public interface Display extends WorkbenchView
+   public interface Display extends WorkbenchView 
    {
       void buildStarted();
 
@@ -81,9 +88,12 @@ public class BuildPresenter extends BasePresenter
                       String buildType);
       void buildCompleted();
 
+      
       HasSelectionCommitHandlers<CodeNavigationTarget> errorList();
-
-      HasSelectionCommitHandlers<String> buildSubType();
+        
+      HandlerRegistration addBuildRenderSubTypeHandler(BuildRenderSubTypeEvent.Handler handler);
+      HandlerRegistration addBuildServeSubTypeHandler(BuildServeSubTypeEvent.Handler handler);
+      
 
       HasClickHandlers stopButton();
 
@@ -246,10 +256,14 @@ public class BuildPresenter extends BasePresenter
          }
       });
 
-      view_.buildSubType().addSelectionCommitHandler((SelectionCommitEvent<String> event) ->
-      {
-         startBuild("build-all", event.getSelectedItem());
+      view_.addBuildRenderSubTypeHandler(event -> {
+         startBuild("build-all", event.getSubType());
       });
+      
+      view_.addBuildServeSubTypeHandler(event -> {
+         quartoServe(event.getSubType(), false);
+      });
+   
 
       view_.stopButton().addClickHandler(new ClickHandler() {
          @Override
@@ -295,6 +309,16 @@ public class BuildPresenter extends BasePresenter
       startBuild("build-all");
    }
 
+   void onBuildIncremental()
+   {
+      startBuild("build-incremental");
+   }
+
+   void onBuildFull()
+   {
+      startBuild("build-full");
+   }
+
    void onDevtoolsLoadAll()
    {
       source_.withSaveFilesBeforeCommand(() ->
@@ -303,7 +327,12 @@ public class BuildPresenter extends BasePresenter
          {
             sendLoadCommandToConsole("devtools::load_all(\"" + loadAllPath + "\")");
          });
-      }, () -> {}, "Build");
+      }, () -> {}, constants_.buildText());
+   }
+   
+   void onServeQuartoSite()
+   {
+      quartoServe("default", false);
    }
 
    void onBuildSourcePackage()
@@ -319,8 +348,8 @@ public class BuildPresenter extends BasePresenter
    void onRoxygenizePackage()
    {
       dependencyManager_.withRoxygen(
-            "Building package documentation",
-            "Building package documentation",
+            constants_.packageDocumentationProgressCaption(),
+            constants_.packageDocumentationProgressCaption(),
             () -> startBuild("roxygenize-package"));
    }
 
@@ -342,11 +371,6 @@ public class BuildPresenter extends BasePresenter
    {
    }
 
-   void onRebuildAll()
-   {
-      startBuild("rebuild-all");
-   }
-
    void onCleanAll()
    {
       startBuild("clean-all");
@@ -361,7 +385,7 @@ public class BuildPresenter extends BasePresenter
    {
       if (session_.getSessionInfo().getBuildToolsType() == SessionInfo.BUILD_TOOLS_WEBSITE)
       {
-          dependencyManager_.withRMarkdown("Building sites", new Command() {
+          dependencyManager_.withRMarkdown(constants_.buildingSitesUserAction(), new Command() {
             @Override
             public void execute()
             {
@@ -369,15 +393,36 @@ public class BuildPresenter extends BasePresenter
             }
           });
       }
+      else if (session_.getSessionInfo().getBuildToolsType() == SessionInfo.BUILD_TOOLS_QUARTO)
+      {
+         // books get a render and serve if the target is html or pdf
+         QuartoConfig config = session_.getSessionInfo().getQuartoConfig();
+         if (config.project_type.equals(SessionInfo.QUARTO_PROJECT_TYPE_BOOK))
+         {
+            if (shouldRenderAndServeBook(subType))
+               quartoServe(subType, true);
+            else
+               executeBuild("build-all", subType);
+         }
+         else if (isQuartoSubProject(config) || !QuartoHelper.isQuartoWebsiteConfig(config))
+         {
+            executeBuild(type, "");
+         }
+         else 
+         {
+            quartoServe("default", true);
+         }
+      }
       else
       {
          executeBuild(type, subType);
       }
    }
 
+
    private void executeBuild(final String type, final String subType)
    {
-      if (type != "build-all" && type != "rebuild-all")
+      if (type != "build-all" || session_.getSessionInfo().getBuildToolsType() == SessionInfo.BUILD_TOOLS_QUARTO)
       {
          executeBuildNoBusyCheck(type, subType);
          return;
@@ -390,7 +435,7 @@ public class BuildPresenter extends BasePresenter
          {
             terminalHelper_.warnBusyTerminalBeforeCommand(() ->
                   executeBuildNoBusyCheck(type, subType),
-                  "Build", "Terminal jobs will be terminated. Are you sure?",
+                  constants_.buildText(), constants_.terminalTerminatedQuestion(),
                   userPrefs_.busyDetection().getValue());
          }
       });
@@ -418,21 +463,21 @@ public class BuildPresenter extends BasePresenter
             }
 
          });
-      }, () -> {}, "Build");
+      }, () -> {}, constants_.buildText());
    }
 
    void onStopBuild()
    {
        server_.terminateBuild(new DelayedProgressRequestCallback<Boolean>(
-                                                       "Terminating Build..."){
+                                                       constants_.terminatingBuildMessage()){
          @Override
          protected void onSuccess(Boolean response)
          {
             if (!response)
             {
                globalDisplay_.showErrorMessage(
-                     "Error Terminating Build",
-                     "Unable to terminate build. Please try again.");
+                     constants_.errorTerminatingBuildCaption(),
+                     constants_.errorTerminatingBuildMessage());
             }
          }
        });
@@ -472,6 +517,46 @@ public class BuildPresenter extends BasePresenter
       }
 
    }
+   
+   
+   private boolean shouldRenderAndServeBook(String bookType)
+   {
+      // don't do a serve if this is a sub-project (as that might cause an over-render)
+      QuartoConfig config = session_.getSessionInfo().getQuartoConfig();
+      if (isQuartoSubProject(config)) {
+         return false;
+      }
+      
+      
+      if (bookType.startsWith("html") || bookType.startsWith("pdf"))
+      {
+         return true;
+      }
+      else if (bookType == "all")
+      {
+         for (int i=0; i<config.project_formats.length; i++) 
+         {
+            if (config.project_formats[i].startsWith("html"))
+               return true;
+         }
+      }
+     
+      // fallthrough
+      return false;
+      
+   }
+   
+   private boolean isQuartoSubProject(QuartoConfig config)
+   {
+      return !config.project_dir.equals(workbenchContext_.getActiveProjectDir().getPath());
+   }
+   
+   private void quartoServe(String format, boolean render)
+   {
+      source_.withSaveFilesBeforeCommand(() -> {
+         server_.quartoServe(format, render, new SimpleRequestCallback<Void>(constants_.quartoServeError()));
+      }, () -> {}, "Quarto");
+   }
 
    private String devtoolsLoadAllPath_ = null;
 
@@ -489,4 +574,5 @@ public class BuildPresenter extends BasePresenter
    private final WorkbenchContext workbenchContext_;
    private final TerminalHelper terminalHelper_;
    private final Provider<JobManager> pJobManager_;
+   private static final ViewBuildtoolsConstants constants_ = GWT.create(ViewBuildtoolsConstants.class);
 }

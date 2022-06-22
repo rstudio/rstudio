@@ -1,7 +1,7 @@
 /*
  * BreakpointManager.java
  *
- * Copyright (C) 2021 by RStudio, PBC
+ * Copyright (C) 2022 by RStudio, PBC
  *
  * Unless you have received this program directly from RStudio pursuant
  * to the terms of a commercial license agreement with RStudio, then
@@ -19,6 +19,7 @@ import java.util.ArrayList;
 import java.util.Set;
 import java.util.TreeSet;
 
+import com.google.gwt.core.client.GWT;
 import org.rstudio.core.client.command.CommandBinder;
 import org.rstudio.core.client.command.Handler;
 import org.rstudio.core.client.js.JsObject;
@@ -28,6 +29,7 @@ import org.rstudio.studio.client.application.events.EventBus;
 import org.rstudio.studio.client.application.events.RestartStatusEvent;
 import org.rstudio.studio.client.common.FilePathUtils;
 import org.rstudio.studio.client.common.GlobalDisplay;
+import org.rstudio.studio.client.common.StudioClientCommonConstants;
 import org.rstudio.studio.client.common.debugging.events.BreakpointsSavedEvent;
 import org.rstudio.studio.client.common.debugging.events.PackageLoadedEvent;
 import org.rstudio.studio.client.common.debugging.events.PackageUnloadedEvent;
@@ -448,9 +450,8 @@ public class BreakpointManager
    {
       globalDisplay_.showYesNoMessage(
             MessageDialog.QUESTION,
-            "Clear All Breakpoints",
-            "Are you sure you want to remove all the breakpoints in this " +
-            "project?",
+            constants_.clearAllBreakpointsCaption(),
+            constants_.clearAllBreakpointsMessage(),
             new Operation() {
                @Override
                public void execute()
@@ -889,4 +890,5 @@ public class BreakpointManager
 
    private boolean breakpointStateDirty_ = false;
    private int currentBreakpointId_ = 0;
+   private static final StudioClientCommonConstants constants_ = GWT.create(StudioClientCommonConstants.class);
 }

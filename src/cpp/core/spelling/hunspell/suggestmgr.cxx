@@ -1090,7 +1090,7 @@ int SuggestMgr::ngsuggest(char** wlst, char * w, int ns, HashMgr** pHMgr, int md
     sc = ngram(3, word, HENTRY_WORD(hp), NGRAM_LONGER_WORSE + low) +
 	leftcommonsubstring(word, HENTRY_WORD(hp));
 
-    // check special pronounciation
+    // check special pronunciation
     if ((hp->var & H_OPT_PHON) && copy_field(f, HENTRY_DATA(hp), MORPH_PHON)) {
 	int sc2 = ngram(3, word, f, NGRAM_LONGER_WORSE + low) +
 		+ leftcommonsubstring(word, f);
@@ -1138,7 +1138,7 @@ int SuggestMgr::ngsuggest(char** wlst, char * w, int ns, HashMgr** pHMgr, int md
   }}
 
   // find minimum threshold for a passable suggestion
-  // mangle original word three differnt ways
+  // mangle original word three different ways
   // and score them to generate a minimum acceptable score
   int thresh = 0;
   for (int sp = 1; sp < 4; sp++) {

@@ -1,7 +1,7 @@
 /*
  * R.css
  *
- * Copyright (C) 2021 by RStudio, PBC
+ * Copyright (C) 2022 by RStudio, PBC
  *
  * Unless you have received this program directly from RStudio pursuant
  * to the terms of a commercial license agreement with RStudio, then
@@ -66,17 +66,17 @@ h6 {
    font-style: italic;
 }
 
-.rstudio-themes-flat.rstudio-themes-dark-grey h1,
-.rstudio-themes-flat.rstudio-themes-dark-grey h2,
-.rstudio-themes-flat.rstudio-themes-dark-grey h3,
-.rstudio-themes-flat.rstudio-themes-dark-grey h4,
-.rstudio-themes-flat.rstudio-themes-dark-grey h5,
-.rstudio-themes-flat.rstudio-themes-dark-grey h6 {
+.rstudio-themes-dark-grey h1,
+.rstudio-themes-dark-grey h2,
+.rstudio-themes-dark-grey h3,
+.rstudio-themes-dark-grey h4,
+.rstudio-themes-dark-grey h5,
+.rstudio-themes-dark-grey h6 {
    color: inherit;
 }
 
-.rstudio-themes-flat.rstudio-themes-dark-grey *::selection,
-.rstudio-themes-flat.rstudio-themes-dark-grey *::selection {
+.rstudio-themes-dark-grey *::selection,
+.rstudio-themes-dark-grey *::selection {
    background: rgba(255, 255, 255, 0.15);
    color: #FFF;
 }

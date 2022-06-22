@@ -1,7 +1,7 @@
 /*
  * DataViewer.cpp
  *
- * Copyright (C) 2021 by RStudio, PBC
+ * Copyright (C) 2022 by RStudio, PBC
  *
  * Unless you have received this program directly from RStudio pursuant
  * to the terms of a commercial license agreement with RStudio, then
@@ -122,7 +122,7 @@ namespace {
  *    
  *    When a request for data arrives, we check to see if the data requested is
  *    a subset of the data already in our working copy. If it is, we use the
- *    working copy as a starting postion rather than the original or cached
+ *    working copy as a starting position rather than the original or cached
  *    object.
  *
  *    This allows us to efficiently perform operations on very large datasets
@@ -189,7 +189,7 @@ bool isFilterSubset(const std::string& outer, const std::string& inner)
    else if (outerType == "character")
    {
       // characters are a subset if the outer string is within the inner one
-      // (i.e. a seach for "walnuts" (inner) is within "walnut" (outer))
+      // (i.e. a search for "walnuts" (inner) is within "walnut" (outer))
       return inner.find(outer) != std::string::npos;
    }
    
@@ -204,7 +204,7 @@ typedef enum
 } DimType;
 
 // returns dimensions of an object safely--assumes dimension to be 0 unless we
-// can succesfully obtain dimensions
+// can successfully obtain dimensions
 int safeDim(SEXP data, DimType dimType)
 {
    r::sexp::Protect protect;
@@ -532,6 +532,7 @@ json::Value getData(SEXP dataSEXP, const http::Fields& fields)
       std::string emptyStr = "";
       filters.push_back(emptyStr);
    }
+   
    for (int i = 1; i <= ncol; i++)
    {
       std::string filterVal = http::util::urlDecode(
@@ -550,18 +551,17 @@ json::Value getData(SEXP dataSEXP, const http::Fields& fields)
    bool hasTransform = false;
 
    // check to see if we have an ordered/filtered view we can build from
-   std::map<std::string, CachedFrame>::iterator cachedFrame = 
-      s_cachedFrames.find(cacheKey);
+   auto cachedFrame = s_cachedFrames.find(cacheKey);
    if (needsTransform)
    {
       if (cachedFrame != s_cachedFrames.end())
       {
          // do we have a previously ordered/filtered view?
-         SEXP workingDataSEXP = nullptr;
+         SEXP workingDataSEXP = R_NilValue;
          r::exec::RFunction(".rs.findWorkingData", cacheKey)
             .call(&workingDataSEXP, &protect);
-         if (workingDataSEXP != nullptr && TYPEOF(workingDataSEXP) != NILSXP &&
-             !Rf_isNull(workingDataSEXP))
+         
+         if (workingDataSEXP != R_NilValue)
          {
             if (cachedFrame->second.workingSearch == search &&
                 cachedFrame->second.workingFilters == filters && 
@@ -601,8 +601,7 @@ json::Value getData(SEXP dataSEXP, const http::Fields& fields)
 
       // check to see if we've accidentally transformed ourselves into nothing
       // (this shouldn't generally happen without a specific error)
-      if (dataSEXP == nullptr || TYPEOF(dataSEXP) == NILSXP || 
-          Rf_isNull(dataSEXP)) 
+      if (dataSEXP == R_NilValue)
       {
          throw r::exec::RErrorException("Failure to sort or filter data");
       }
@@ -620,9 +619,9 @@ json::Value getData(SEXP dataSEXP, const http::Fields& fields)
    }
 
    // apply new row count if we've transformed the data (or need to)
-   filteredNRow = needsTransform || hasTransform ?
-      safeDim(dataSEXP, DIM_ROWS) : 
-      nrow;
+   filteredNRow = needsTransform || hasTransform
+      ? safeDim(dataSEXP, DIM_ROWS)
+      : nrow;
 
    // return the lesser of the rows available and rows requested
    length = std::min(length, filteredNRow - start);
@@ -638,14 +637,23 @@ json::Value getData(SEXP dataSEXP, const http::Fields& fields)
    int initialIndex = 0 + columnOffset;
    for (int i = initialIndex; i < initialIndex + numFormattedColumns; i++)
    {
-      SEXP columnSEXP = VECTOR_ELT(dataSEXP, i);
-      if (columnSEXP == nullptr || TYPEOF(columnSEXP) == NILSXP ||
-          Rf_isNull(columnSEXP))
+      if (i >= r::sexp::length(dataSEXP))
       {
-         throw r::exec::RErrorException("No data in column " +
-               boost::lexical_cast<std::string>(i));
+         throw r::exec::RErrorException(
+                  string_utils::sprintf(
+                     "Internal error: attempted to access column %i in vector of size %i",
+                     i,
+                     r::sexp::length(dataSEXP)));
       }
-      SEXP formattedColumnSEXP;
+      
+      SEXP columnSEXP = VECTOR_ELT(dataSEXP, i);
+      if (columnSEXP == nullptr || columnSEXP == R_NilValue)
+      {
+         throw r::exec::RErrorException(
+                  string_utils::sprintf("No data in column %i", i));
+      }
+      
+      SEXP formattedColumnSEXP = R_NilValue;
       r::exec::RFunction formatFx(".rs.formatDataColumn");
       formatFx.addParam(columnSEXP);
       formatFx.addParam(gsl::narrow_cast<int>(start));
@@ -653,33 +661,40 @@ json::Value getData(SEXP dataSEXP, const http::Fields& fields)
       error = formatFx.call(&formattedColumnSEXP, &protect);
       if (error)
          throw r::exec::RErrorException(error.getSummary());
+      
       SET_VECTOR_ELT(formattedDataSEXP, i - initialIndex, formattedColumnSEXP);
    }
 
    // format the row names
-   SEXP rownamesSEXP;
+   SEXP rownamesSEXP = R_NilValue;
    r::exec::RFunction(".rs.formatRowNames", dataSEXP, start, length)
       .call(&rownamesSEXP, &protect);
    
    // create the result grid as JSON
+   
    json::Array data;
    for (int row = 0; row < length; row++)
    {
+      // first, handle row names
       json::Array rowData;
-      if (rownamesSEXP != nullptr &&
-          TYPEOF(rownamesSEXP) != NILSXP &&
-          !Rf_isNull(rownamesSEXP) )
+      if (rownamesSEXP != nullptr && TYPEOF(rownamesSEXP) == STRSXP)
       {
          SEXP nameSEXP = STRING_ELT(rownamesSEXP, row);
-         if (nameSEXP != nullptr &&
-             nameSEXP != NA_STRING &&
-             r::sexp::length(nameSEXP) > 0)
+         if (nameSEXP == nullptr)
          {
-            rowData.push_back(Rf_translateCharUTF8(nameSEXP));
+            rowData.push_back(row + start);
+         }
+         else if (nameSEXP == NA_STRING)
+         {
+            rowData.push_back(SPECIAL_CELL_NA);
+         }
+         else if (r::sexp::length(nameSEXP) == 0)
+         {
+            rowData.push_back(row + start);
          }
          else
          {
-            rowData.push_back(row + start);
+            rowData.push_back(Rf_translateCharUTF8(nameSEXP));
          }
       }
       else
@@ -687,34 +702,51 @@ json::Value getData(SEXP dataSEXP, const http::Fields& fields)
          rowData.push_back(row + start);
       }
 
-      for (int col = 0; col<Rf_length(formattedDataSEXP); col++)
+      // now, handle remaining columns in formatted data
+      for (int col = 0, ncol = r::sexp::length(formattedDataSEXP); col < ncol; col++)
       {
+         // NOTE: it is possible for malformed data.frames to have columns with
+         // differing number of elements; this is rare in practice but needs
+         // to be handled to avoid crashes
+         // https://github.com/rstudio/rstudio/issues/9364
          SEXP columnSEXP = VECTOR_ELT(formattedDataSEXP, col);
-         if (columnSEXP != nullptr &&
-             TYPEOF(columnSEXP) == STRSXP &&
-             !Rf_isNull(columnSEXP))
+         if (row >= r::sexp::length(columnSEXP))
          {
-            SEXP stringSEXP = STRING_ELT(columnSEXP, row);
-            if (stringSEXP != nullptr &&
-                stringSEXP != NA_STRING &&
-                r::sexp::length(stringSEXP) > 0)
-            {
-               rowData.push_back(Rf_translateCharUTF8(stringSEXP));
-            }
-            else if (stringSEXP == NA_STRING)
-            {
-               rowData.push_back(SPECIAL_CELL_NA);
-            }
-            else
-            {
-               rowData.push_back("");
-            }
+            // because R's default print method pads with NAs in this case,
+            // we replicate that with our own padded NAs
+            rowData.push_back(SPECIAL_CELL_NA);
+            continue;
          }
-         else
+         
+         // validate that we have a character vector
+         if (columnSEXP == nullptr || TYPEOF(columnSEXP) != STRSXP)
+         {
+            rowData.push_back("");
+            continue;
+         }
+         
+         // we have a valid character vector; access the string element
+         // and push back data as appropriate
+         SEXP stringSEXP = STRING_ELT(columnSEXP, row);
+         if (stringSEXP == nullptr)
          {
             rowData.push_back("");
          }
+         else if (stringSEXP == NA_STRING)
+         {
+            rowData.push_back(SPECIAL_CELL_NA);
+         }
+         else if (r::sexp::length(stringSEXP) == 0)
+         {
+            rowData.push_back("");
+         }
+         else
+         {
+            rowData.push_back(Rf_translateCharUTF8(stringSEXP));
+         }
       }
+      
+      // all done, add row data
       data.push_back(rowData);
    }
 
@@ -831,9 +863,34 @@ Error getGridData(const http::Request& request,
 
    pResponse->setNoCacheHeaders();    // don't cache data/grid shape
    pResponse->setStatusCode(status);
+   pResponse->setContentType("application/json");
    pResponse->setBody(output);
 
    return Success();
+}
+
+Error removeRCachedData(const std::string& cacheKey);
+
+void removeRCachedDataCallback(const std::string& cacheKey)
+{
+   Error error = removeRCachedData(cacheKey);
+   if (error)
+      LOG_ERROR(error);
+}
+
+Error removeRCachedData(const std::string& cacheKey)
+{
+   if (core::thread::isMainThread())
+   {
+      // remove cache env object and backing file
+      return r::exec::RFunction(".rs.removeCachedData", cacheKey,
+            viewerCacheDir()).call();
+   }
+   else
+   {
+      module_context::executeOnMainThread(boost::bind(removeRCachedDataCallback, cacheKey));
+      return Success();
+   }
 }
 
 Error removeCacheKey(const std::string& cacheKey)
@@ -844,9 +901,7 @@ Error removeCacheKey(const std::string& cacheKey)
    if (pos != s_cachedFrames.end())
       s_cachedFrames.erase(pos);
    
-   // remove cache env object and backing file
-   return r::exec::RFunction(".rs.removeCachedData", cacheKey, 
-         viewerCacheDir()).call();
+    return removeRCachedData(cacheKey);
 }
 
 // called by the client to expire data cached by an associated viewer tab
@@ -886,6 +941,9 @@ void onResume(const Settings&)
 void onDetectChanges(module_context::ChangeSource source)
 {
    DROP_RECURSIVE_CALLS;
+
+   if (!core::thread::isMainThread())
+      return;
 
    // unlikely that data will change outside of a REPL
    if (source != module_context::ChangeSourceREPL) 

@@ -1,7 +1,7 @@
 #
 # test-environment.R
 #
-# Copyright (C) 2021 by RStudio, PBC
+# Copyright (C) 2022 by RStudio, PBC
 #
 # Unless you have received this program directly from RStudio pursuant
 # to the terms of a commercial license agreement with RStudio, then
@@ -92,4 +92,13 @@ test_that("memory usage stats are reasonable", {
    # ensure that the memory used by R is less than the memory used by the process
    r_total <- report$r$cons + report$r$vector
    expect_true(report$system$process$kb > r_total)
+})
+
+test_that("missing arguments can be described", {
+   
+   # simulate a missing value argument
+   delayedAssign("x", quote(expr = ))
+   desc <- .rs.describeObject(environment(), "x")
+   expect_identical(desc$name, .rs.scalar("x"))
+   
 })

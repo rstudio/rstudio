@@ -3,7 +3,7 @@
 #
 # install-dependencies-yum
 #
-# Copyright (C) 2021 by RStudio, PBC
+# Copyright (C) 2022 by RStudio, PBC
 #
 # Unless you have received this program directly from RStudio pursuant
 # to the terms of a commercial license agreement with RStudio, then
@@ -24,6 +24,7 @@ sudo yum install -y gcc-c++
 sudo yum install -y cmake
 sudo yum install -y rpmdevtools
 sudo yum install -y wget
+sudo yum install -y jq
 
 # core system libraries
 sudo yum install -y libuuid-devel
@@ -62,6 +63,6 @@ fi
 
 # common
 cd ../common
-./install-common
+./install-common $1
 cd ../linux
 

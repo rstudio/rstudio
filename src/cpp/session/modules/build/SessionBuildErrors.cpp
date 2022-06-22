@@ -1,7 +1,7 @@
 /*
  * SessionBuildErrors.cpp
  *
- * Copyright (C) 2021 by RStudio, PBC
+ * Copyright (C) 2022 by RStudio, PBC
  *
  * Unless you have received this program directly from RStudio pursuant
  * to the terms of a commercial license agreement with RStudio, then
@@ -34,6 +34,7 @@
 #include <session/projects/SessionProjects.hpp>
 
 #define kAnsiEscapeRegex "(?:\033\\[\\d+m)*"
+#define kAnsiUrlRegex "(?:\u001B]8;[^\u0007]*\u0007)*"
 
 using namespace rstudio::core;
 using namespace boost::placeholders;
@@ -291,11 +292,13 @@ std::vector<module_context::SourceMarker> parseTestThatErrors(
                   kAnsiEscapeRegex // color
                   "\\s+"           // separating space
                   "\\("            // opening paren
+                  kAnsiUrlRegex    // opening hyperlink
                   "([^:\\n]+)"     // file name           (2)
                   ":"              // colon separator
                   "([0-9]+)"       // file line           (3)
                   ":"              // colon separator
                   "([0-9]+)"       // file column         (4)
+                  kAnsiUrlRegex    // closing hyperlink
                   "\\)"            // closing paren
                   ":"              // colon separator
                   "\\s+"           // separating space
@@ -433,9 +436,11 @@ CompileErrorParser rErrorParser(const FilePath& basePath)
    return boost::bind(parseRErrors, basePath, _1);
 }
 
-CompileErrorParser testthatErrorParser(const FilePath& basePath,
-                                       const core::Version& testthatVersion)
+CompileErrorParser testthatErrorParser(const FilePath& basePath)
 {
+   core::Version testthatVersion;
+   module_context::packageVersion("testthat", &testthatVersion);
+
    return boost::bind(parseTestThatErrors, basePath, _1, testthatVersion);
 }
 

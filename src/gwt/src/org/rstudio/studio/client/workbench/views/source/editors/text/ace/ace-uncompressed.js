@@ -2679,8 +2679,10 @@ var Tokenizer = function(rules) {
             var rule = state[i];
             if (rule.defaultToken)
                 mapping.defaultToken = rule.defaultToken;
-            if (rule.caseInsensitive)
-                flag = "gi";
+            if (rule.caseInsensitive && flag.indexOf("i") === -1)
+                flag += "i";
+            if (rule.unicode && flag.indexOf("u") === -1)
+                flag += "u";
             if (rule.regex == null)
                 continue;
 
@@ -15201,7 +15203,7 @@ var MarkdownHighlightRules = function() {
         },
         codeBlockStartRule,
         {
-            defaultToken : "list" //do not use markup.list to allow stling leading `*` differntly
+            defaultToken : "list" //do not use markup.list to allow stling leading `*` differently
         } ],
 
         "blockquote" : [ { // Blockquotes only escape on blank lines.

@@ -1,7 +1,7 @@
 /*
  * rmd.ts
  *
- * Copyright (C) 2021 by RStudio, PBC
+ * Copyright (C) 2022 by RStudio, PBC
  *
  * Unless you have received this program directly from RStudio pursuant
  * to the terms of a commercial license agreement with RStudio, then
@@ -24,18 +24,20 @@ import {
   findChildren,
   findChildrenByMark,
   setTextSelection,
+  findParentNode,
 } from 'prosemirror-utils';
 
 import { getMarkRange } from './mark';
 import { precedingListItemInsertPos, precedingListItemInsert } from './list';
 import { toggleBlockType } from './command';
-import { selectionIsBodyTopLevel } from './selection';
+import { selectionIsBodyTopLevel, selectionWithinLastBodyParagraph } from './selection';
 import { uuidv4 } from './util';
 
 export interface EditorRmdChunk {
   lang: string;
   meta: string;
   code: string;
+  delimiter: string;
 }
 
 export type ExecuteRmdChunkFn = (chunk: EditorRmdChunk) => void;
@@ -60,7 +62,7 @@ export function canInsertRmdChunk(state: EditorState) {
   return true;
 }
 
-export function insertRmdChunk(chunkPlaceholder: string, rowOffset = 0, colOffset = 0) {
+export function insertRmdChunk(chunkPlaceholder: string) {
   return (state: EditorState, dispatch?: (tr: Transaction) => void, view?: EditorView) => {
     const schema = state.schema;
 
@@ -79,11 +81,6 @@ export function insertRmdChunk(chunkPlaceholder: string, rowOffset = 0, colOffse
     }
 
     if (dispatch) {
-      // compute offset
-      const lines = chunkPlaceholder.split(/\r?\n/);
-      const lineChars = lines.slice(0, rowOffset).reduce((count, line) => count + line.length + 1, 1);
-      const offsetChars = lineChars + colOffset;
-
       // perform insert
       const tr = state.tr;
       const rmdText = schema.text(chunkPlaceholder);
@@ -92,9 +89,13 @@ export function insertRmdChunk(chunkPlaceholder: string, rowOffset = 0, colOffse
       if (prevListItemPos) {
         precedingListItemInsert(tr, prevListItemPos, rmdNode);
       } else {
-        tr.replaceSelectionWith(rmdNode);
-        const selPos = tr.selection.from - rmdNode.nodeSize - 1 + offsetChars - 1;
-        setTextSelection(selPos)(tr);
+        const emptyNode = findParentNode(node => node.type === state.schema.nodes.paragraph && node.childCount === 0)(tr.selection);
+        if (emptyNode && selectionWithinLastBodyParagraph(tr.selection)) {
+          tr.insert(tr.selection.from-1, rmdNode);
+        } else {
+          tr.replaceSelectionWith(rmdNode);
+        }
+        setTextSelection(tr.selection.from - 2)(tr);
       }
 
       dispatch(tr);
@@ -153,18 +154,34 @@ export function rmdChunk(code: string): EditorRmdChunk | null {
     const matchLang = meta.match(/\w+/);
     const lang = matchLang ? matchLang[0] : '';
 
-    // remove lines, other than the first, which are chunk delimiters (start
-    // with ```). these are generally unintended but can be accidentally
-    // introduced by e.g., pasting a chunk with its delimiters into visual mode,
-    // where delimiters are implicit. if these lines aren't removed, they create
-    // nested chunks that break parsing and can corrupt the document (see case
-    // 8452)
-    lines = lines.filter((line, idx) => {
-      if (idx === 0) {
-        return true;
+    const isContainerChunk = ["verbatim", "asis", "comment"].includes(lang);
+
+    // for container chunks, delimiter is one backtick greater than the most 
+    // ticks we've found starting a line (otherwise is ```)
+    const delimiter = isContainerChunk ? lines.reduce((ticks: string, line: string) => {
+      const match = line.match(/^```+/);
+      if (match && (match[0].length >= ticks.length)) {
+        ticks = match[0] + "`";
       }
-      return !line.startsWith("```");
-    });
+      return ticks;
+    }, "```") : "```";
+
+    // filter out stray ``` if this isn't a container chunk
+    if (!isContainerChunk) {
+       // remove lines, other than the first, which are chunk delimiters (start
+      // with ```). these are generally unintended but can be accidentally
+      // introduced by e.g., pasting a chunk with its delimiters into visual mode,
+      // where delimiters are implicit. if these lines aren't removed, they create
+      // nested chunks that break parsing and can corrupt the document (see case
+      // 8452)
+      lines = lines.filter((line, idx) => {
+        if (idx === 0) {
+          return true;
+        }
+        return !line.startsWith("```");
+      });
+    }
+   
 
     // a completely empty chunk (no second line) should be returned
     // as such. if it's not completely empty then append a newline
@@ -175,6 +192,7 @@ export function rmdChunk(code: string): EditorRmdChunk | null {
       lang,
       meta,
       code: chunkCode,
+      delimiter
     };
   } else {
     return null;
@@ -202,23 +220,43 @@ export function mergeRmdChunks(chunks: EditorRmdChunk[]) {
  * @returns An object with `engine` and `label` properties, or null.
  */
 export function rmdChunkEngineAndLabel(text: string) {
-  // Match the engine and label with a regex
-  const match = text.match(/^\{([a-zA-Z0-9_]+)[\s,]+([a-zA-Z0-9/._='"-]+)/);
+
+  // Match the engine and (maybe the) label with a regex
+  const match = text.match(/^\{([a-zA-Z0-9_]+)[\s,]*([a-zA-Z0-9/._='"-]*)/);
+  
   if (match) {
+    // The first capturing group is the engine
+    const engine = match[1];
+
     // The second capturing group in the regex matches the first string after
-    // the engine. This might be a label (e.g., {r label}), but could also be
-    // a chunk option (e.g., {r echo=FALSE}). If it has an =, presume that it's
-    // an option.
-    if (match[2].indexOf("=") !== -1) {
-      return null;
+    // the engine. This might be: 
+    // - a label (e.g., {r label})
+    // - a chunk option (e.g., {r echo=FALSE}). If it has an =, presume that it's an option.
+    // - empty
+    if (match[2].length && match[2].indexOf("=") == -1) {
+      return {
+        engine: engine,
+        label: match[2],
+      };
     }
-    return {
-      engine: match[1],
-      label: match[2],
-    };
-  } else {
-    return null;
+
+    // Finally, look for label in #| comments
+    // 
+    // ```{r}
+    // #| label: label
+    // 
+    for (var line of text.split("\n")) {
+      const labelMatch = line.match(/^#\|\s*label:\s+(.*)$/);
+      if (labelMatch) {
+        return {
+          engine: engine,
+          label: labelMatch[1],
+        };
+      }
+    }
   }
+
+  return null;
 }
 
 export function haveTableCellsWithInlineRcode(doc: ProsemirrorNode) {

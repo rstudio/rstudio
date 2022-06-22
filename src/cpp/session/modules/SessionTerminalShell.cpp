@@ -1,7 +1,7 @@
 /*
  * SessionTerminalShell.cpp
  *
- * Copyright (C) 2021 by RStudio, PBC
+ * Copyright (C) 2022 by RStudio, PBC
  *
  * Unless you have received this program directly from RStudio pursuant
  * to the terms of a commercial license agreement with RStudio, then
@@ -78,6 +78,7 @@ void scanAvailableShells(std::vector<TerminalShell>* pShells)
 {
 #ifdef _WIN32
    std::vector<std::string> args;
+   std::vector<std::string> bashLoginArgs = { "-l" };
 
    const std::string sys32("system32\\");
    const std::string cmd("cmd.exe");
@@ -92,6 +93,7 @@ void scanAvailableShells(std::vector<TerminalShell>* pShells)
       LOG_ERROR(err);
       return;
    }
+
    std::string progfiles;
    err = core::system::expandEnvironmentVariables("%ProgramFiles%\\", &progfiles);
    if (err)
@@ -100,7 +102,7 @@ void scanAvailableShells(std::vector<TerminalShell>* pShells)
       return;
    }
 
-   addShell(getGitBashShell(), TerminalShell::ShellType::GitBash, "Git Bash", args, pShells);
+   addShell(getGitBashShell(), TerminalShell::ShellType::GitBash, "Git Bash", bashLoginArgs, pShells);
 
    core::FilePath cmd64 = core::FilePath(windir + sys32 + cmd);
    core::FilePath ps64 = core::FilePath(windir + sys32 + ps);
@@ -113,8 +115,11 @@ void scanAvailableShells(std::vector<TerminalShell>* pShells)
 
    // Is there a better way to detect WSL? This will match any 64-bit
    // bash.exe found in same location as the WSL bash.
-   addShell(bashWSL, TerminalShell::ShellType::WSLBash,
-            "Bash (Windows Subsystem for Linux)", args, pShells);
+   addShell(bashWSL,
+            TerminalShell::ShellType::WSLBash,
+            "Bash (Windows Subsystem for Linux)",
+            bashLoginArgs,
+            pShells);
 #endif
 
    // If nothing found add standard shell (%comspec% on Windows, Bash on Posix)

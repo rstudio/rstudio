@@ -1,7 +1,7 @@
 /*
  * WorkbenchServerOperations.java
  *
- * Copyright (C) 2021 by RStudio, PBC
+ * Copyright (C) 2022 by RStudio, PBC
  *
  * Unless you have received this program directly from RStudio pursuant
  * to the terms of a commercial license agreement with RStudio, then
@@ -31,6 +31,7 @@ import org.rstudio.studio.client.packrat.model.PackratServerOperations;
 import org.rstudio.studio.client.panmirror.server.PanmirrorServerOperations;
 import org.rstudio.studio.client.projects.model.ProjectTemplateServerOperations;
 import org.rstudio.studio.client.projects.model.ProjectsServerOperations;
+import org.rstudio.studio.client.quarto.model.QuartoServerOperations;
 import org.rstudio.studio.client.renv.model.RenvServerOperations;
 import org.rstudio.studio.client.rmarkdown.model.RMarkdownServerOperations;
 import org.rstudio.studio.client.server.ServerRequestCallback;
@@ -56,6 +57,7 @@ import org.rstudio.studio.client.workbench.views.output.markers.model.MarkersSer
 import org.rstudio.studio.client.workbench.views.packages.model.PackagesServerOperations;
 import org.rstudio.studio.client.workbench.views.plots.model.PlotsServerOperations;
 import org.rstudio.studio.client.workbench.views.presentation.model.PresentationServerOperations;
+import org.rstudio.studio.client.workbench.views.presentation2.model.Presentation2ServerOperations;
 import org.rstudio.studio.client.workbench.views.source.editors.profiler.model.ProfilerServerOperations;
 import org.rstudio.studio.client.workbench.views.source.editors.text.themes.model.ThemeServerOperations;
 import org.rstudio.studio.client.workbench.views.source.model.SourceServerOperations;
@@ -101,6 +103,7 @@ public interface WorkbenchServerOperations extends ConsoleServerOperations,
                                                    DependencyServerOperations,
                                                    PackratServerOperations,
                                                    RenvServerOperations,
+                                                   QuartoServerOperations,
                                                    MarkersServerOperations,
                                                    LintServerOperations,
                                                    RoxygenServerOperations,
@@ -112,7 +115,8 @@ public interface WorkbenchServerOperations extends ConsoleServerOperations,
                                                    SecondaryReposServerOperations,
                                                    ThemeServerOperations,
                                                    TutorialServerOperations,
-                                                   PythonServerOperations
+                                                   PythonServerOperations,
+                                                   Presentation2ServerOperations
 {   
    void initializeForMainWorkbench();
    void disconnect();

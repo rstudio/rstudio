@@ -1,7 +1,7 @@
 /*
  * JobsTab.java
  *
- * Copyright (C) 2021 by RStudio, PBC
+ * Copyright (C) 2022 by RStudio, PBC
  *
  * Unless you have received this program directly from RStudio pursuant
  * to the terms of a commercial license agreement with RStudio, then
@@ -14,6 +14,7 @@
  */
 package org.rstudio.studio.client.workbench.views.jobs;
 
+import com.google.gwt.core.client.GWT;
 import com.google.gwt.user.client.Command;
 import com.google.inject.Inject;
 
@@ -28,6 +29,7 @@ import org.rstudio.studio.client.workbench.views.jobs.events.JobInitEvent;
 import org.rstudio.studio.client.workbench.views.jobs.events.JobOutputEvent;
 import org.rstudio.studio.client.workbench.views.jobs.events.JobSelectionEvent;
 import org.rstudio.studio.client.workbench.views.jobs.events.JobUpdatedEvent;
+import org.rstudio.studio.client.workbench.views.jobs.events.JobsActivateEvent;
 import org.rstudio.studio.client.workbench.views.jobs.events.JobsPresenterEventHandlers;
 
 public class JobsTab extends DelayLoadWorkbenchTab<JobsPresenter>
@@ -40,7 +42,7 @@ public class JobsTab extends DelayLoadWorkbenchTab<JobsPresenter>
       abstract void confirmClose(Command onConfirmed);
       
       @Handler
-      public abstract void onActivateJobs();
+      public abstract void onActivateBackgroundJobs();
    }
    
    public interface Binder extends CommandBinder<Commands, JobsTab.Shim> {}
@@ -51,7 +53,7 @@ public class JobsTab extends DelayLoadWorkbenchTab<JobsPresenter>
                         Commands commands,
                         EventBus events)
    {
-      super("Jobs", shim);
+      super(constants_.backgroundJobsTitle(), shim);
       shim_ = shim;
       
       binder.bind(commands, shim);
@@ -59,6 +61,7 @@ public class JobsTab extends DelayLoadWorkbenchTab<JobsPresenter>
       events.addHandler(JobOutputEvent.TYPE, shim);
       events.addHandler(JobSelectionEvent.TYPE, shim);
       events.addHandler(JobElapsedTickEvent.TYPE, shim);
+      events.addHandler(JobsActivateEvent.TYPE, shim);
       
       events.addHandler(JobInitEvent.TYPE, this);
    }
@@ -87,4 +90,5 @@ public class JobsTab extends DelayLoadWorkbenchTab<JobsPresenter>
    }
    
    final Shim shim_;
+   private static final JobsConstants constants_ = GWT.create(JobsConstants.class);
 }

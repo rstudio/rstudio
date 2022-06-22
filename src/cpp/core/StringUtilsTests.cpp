@@ -1,7 +1,7 @@
 /*
  * StringUtils.cpp
  *
- * Copyright (C) 2021 by RStudio, PBC
+ * Copyright (C) 2022 by RStudio, PBC
  *
  * Unless you have received this program directly from RStudio pursuant
  * to the terms of a commercial license agreement with RStudio, then
@@ -152,6 +152,26 @@ test_context("Comment extraction")
       expect_true(jsLiteralEscape("\"hello\"") == "\\\"hello\\\"");
       expect_true(jsLiteralEscape("'goodbye'") == "\\'goodbye\\'");
       expect_true(jsLiteralEscape("</script>") == "\\074/script>");
+   }
+
+   test_that("HTML tags in JSON are escaped")
+   {
+      expect_true(jsonHtmlEscape("<h1>") == "\\u003ch1\\u003e");
+      expect_true(jsonHtmlEscape("<script>alert!") == "\\u003cscript\\u003ealert!");
+   }
+}
+
+test_context("String formatting")
+{
+   test_that("Some simple strings can be formatted")
+   {
+      std::string s;
+      
+      s = string_utils::sprintf("%s, %s!", "Hello", "world");
+      expect_true(s == "Hello, world!");
+      
+      s = string_utils::sprintf("%i + %i == %i", 2, 2, 2 + 2);
+      expect_true(s == "2 + 2 == 4");
    }
 }
 

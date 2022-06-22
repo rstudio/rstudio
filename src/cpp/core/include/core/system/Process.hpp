@@ -1,7 +1,7 @@
 /*
  * Process.hpp
  *
- * Copyright (C) 2021 by RStudio, PBC
+ * Copyright (C) 2022 by RStudio, PBC
  *
  * Unless you have received this program directly from RStudio pursuant
  * to the terms of a commercial license agreement with RStudio, then
@@ -24,6 +24,7 @@
 #include <boost/utility.hpp>
 #include <boost/function.hpp>
 #include <boost/scoped_ptr.hpp>
+#include <boost/thread.hpp>
 #include <boost/date_time/posix_time/posix_time_types.hpp>
 
 #include <core/system/System.hpp>
@@ -48,7 +49,7 @@ enum Mode
 {
    Always = 0,
    Never = 1,
-   Whitelist = 2,
+   List = 2,
 };
 
 } // BusyDetectionMode
@@ -94,6 +95,7 @@ struct ProcessOptions
    ProcessOptions()
 #ifdef _WIN32
       : terminateChildren(false),
+        exitWithParent(false),
         smartTerminal(false),
         detachProcess(false),
         createNewConsole(false),
@@ -102,9 +104,11 @@ struct ProcessOptions
         rows(kDefaultRows),
         redirectStdErrToStdOut(false),
         reportHasSubprocs(false),
-        trackCwd(false)
+        trackCwd(false),
+        callbacksRequireMainThread(true)
 #else
       : terminateChildren(false),
+        exitWithParent(false),
         smartTerminal(false),
         detachSession(false),
         cols(kDefaultCols),
@@ -112,7 +116,8 @@ struct ProcessOptions
         redirectStdErrToStdOut(false),
         reportHasSubprocs(false),
         trackCwd(false),
-        threadSafe(false)
+        threadSafe(false),
+        callbacksRequireMainThread(true)
 #endif
    {
    }
@@ -134,6 +139,10 @@ struct ProcessOptions
    // currently this implies CREATE_NEW_PROCESS_GROUP on Windows to get
    // the same semantics around interruptions
    bool terminateChildren;
+
+   // This process should also exit with a SIGTERM when the parent exits.
+   // NOTE: Currently only supported on posix. 
+   bool exitWithParent;
 
    // Use kSmartTerm as terminal type and disable canonical line-by-line
    // I/O processing
@@ -174,7 +183,7 @@ struct ProcessOptions
    bool reportHasSubprocs;
 
    // Ignore these subprocesses when reporting
-   std::vector<std::string> subprocWhitelist;
+   std::vector<std::string> ignoredSubprocs;
 
    // Periodically track process' current working directory
    bool trackCwd;
@@ -184,6 +193,11 @@ struct ProcessOptions
    // consequently, many of the options are ignored in this mode as it is very strict
    // and cannot accomplish many things that the thread unsafe mode can
    bool threadSafe;
+   
+   // Does this process have callbacks which must be invoked on the main thread?
+   // Set this flag if the callbacks registered for this process should only
+   // be invoked on the main thread.
+   bool callbacksRequireMainThread;
 
    // If not empty, these two provide paths that stdout and stderr
    // (respectively) should be redirected to. Note that this ONLY works
@@ -336,7 +350,7 @@ struct ProcessCallbacks
    // comment above for potential values)
    boost::function<void(int)> onExit;
 
-   // Called periodically to report if this process has subprocesses (non-whitelist, whitelist)
+   // Called periodically to report if this process has subprocesses (non-ignored, ignored)
    boost::function<void(bool, bool)> onHasSubprocs;
 
    // Called periodically to report current working directory of process
@@ -431,7 +445,12 @@ public:
 private:
    struct Impl;
    boost::scoped_ptr<Impl> pImpl_;
+   boost::recursive_mutex mutex_;
 };
+
+bool enableCallbacksRequireMainThread();
+
+void setEnableCallbacksRequireMainThread(bool enforce);
 
 } // namespace system
 } // namespace core

@@ -1,7 +1,6 @@
 @eval proportionalFont org.rstudio.core.client.theme.ThemeFonts.getProportionalFont();
 @eval fixedWidthFont org.rstudio.core.client.theme.ThemeFonts.getFixedWidthFont();
 
-@external rstudio-themes-flat;
 @external rstudio-themes-default, rstudio-themes-dark-grey, rstudio-themes-alternate;
 
 @eval THEME_DEFAULT_BORDER org.rstudio.core.client.theme.ThemeColors.defaultBorder;
@@ -25,6 +24,7 @@
 
 .toolbar {
    background-image: none !important;
+   border: none;
 }
 
 @sprite .toolbarWrapper {
@@ -37,54 +37,47 @@
    font-size: 11px;
 }
 
-.rstudio-themes-flat .toolbarWrapper {
+.toolbarWrapper {
    background: #f4f8f9;
-   border-bottom: solid 1px #000;
+   border-bottom: solid 1px;
    height: 25px;
 }
 
-.rstudio-themes-flat .toolbarInnerWrapper {
-   border: none;
-}
-
-.rstudio-themes-flat .toolbar {
+.toolbarInnerWrapper {
    border: none;
 }
 
 .diffToolbarInnerWrapper {
    float: right;
+   border: none;
 }
 
 .diffContextLines {
    padding-top: 4px;
 }
 
-.rstudio-themes-flat .diffToolbarInnerWrapper {
-   border: none;
-}
-
-.rstudio-themes-flat .diffToolbarWrapper {
+.diffToolbarWrapper {
    height: 28px;
 }
 
-.rstudio-themes-flat .splitPanel .gwt-SplitLayoutPanel-VDragger {
+.splitPanel .gwt-SplitLayoutPanel-VDragger {
    border-top: solid 1px #000;
    border-bottom: solid 1px #000;
    height: 2px !important;
 }
 
-.rstudio-themes-flat .rstudio-themes-default .toolbarWrapper,
-.rstudio-themes-flat .rstudio-themes-default .splitPanel .gwt-SplitLayoutPanel-VDragger {
+.toolbarWrapper,
+.splitPanel .gwt-SplitLayoutPanel-VDragger {
    border-color: THEME_DEFAULT_BORDER;
 }
 
-.rstudio-themes-flat .rstudio-themes-dark-grey .toolbarWrapper,
-.rstudio-themes-flat .rstudio-themes-dark-grey .splitPanel .gwt-SplitLayoutPanel-VDragger {
+.rstudio-themes-dark-grey .toolbarWrapper,
+.rstudio-themes-dark-grey .splitPanel .gwt-SplitLayoutPanel-VDragger {
    border-color: THEME_DARKGREY_BORDER;
 }
 
-.rstudio-themes-flat .rstudio-themes-alternate .toolbarWrapper,
-.rstudio-themes-flat .rstudio-themes-alternate .splitPanel .gwt-SplitLayoutPanel-VDragger {
+.rstudio-themes-alternate .toolbarWrapper,
+.rstudio-themes-alternate .splitPanel .gwt-SplitLayoutPanel-VDragger {
    border-color: THEME_ALTERNATE_BORDER;
 }
 

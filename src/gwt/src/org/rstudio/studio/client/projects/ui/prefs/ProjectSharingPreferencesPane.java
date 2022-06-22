@@ -1,7 +1,7 @@
 /*
  * ProjectSharingPreferencesPane.java
  *
- * Copyright (C) 2021 by RStudio, PBC
+ * Copyright (C) 2022 by RStudio, PBC
  *
  * Unless you have received this program directly from RStudio pursuant
  * to the terms of a commercial license agreement with RStudio, then
@@ -16,6 +16,7 @@ package org.rstudio.studio.client.projects.ui.prefs;
 
 import org.rstudio.core.client.prefs.RestartRequirement;
 import org.rstudio.core.client.resources.ImageResource2x;
+import org.rstudio.studio.client.projects.StudioClientProjectConstants;
 import org.rstudio.studio.client.projects.model.RProjectOptions;
 
 import com.google.gwt.resources.client.ImageResource;
@@ -31,7 +32,7 @@ public class ProjectSharingPreferencesPane extends ProjectPreferencesPane
    @Override
    public String getName()
    {
-      return "Sharing";
+      return constants_.sharingText();
    }
 
    @Override
@@ -45,4 +46,5 @@ public class ProjectSharingPreferencesPane extends ProjectPreferencesPane
    {
       return new RestartRequirement();
    }
+   private static final StudioClientProjectConstants constants_ = com.google.gwt.core.client.GWT.create(StudioClientProjectConstants.class);
 }

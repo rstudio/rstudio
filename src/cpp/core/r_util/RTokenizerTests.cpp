@@ -1,7 +1,7 @@
 /*
  * RTokenizerTests.cpp
  *
- * Copyright (C) 2021 by RStudio, PBC
+ * Copyright (C) 2022 by RStudio, PBC
  *
  * Unless you have received this program directly from RStudio pursuant
  * to the terms of a commercial license agreement with RStudio, then
@@ -308,6 +308,19 @@ test_context("RTokenizer")
       RTokens rTokens(L"'abc\ndef'");
       expect_true(rTokens.size() == 1);
       expect_true(rTokens.at(0).isType(RToken::STRING));
+   }
+   
+   test_that("escapes within symbol names are handled")
+   {
+      RTokens rTokens(L"`a \\` b`");
+      expect_true(rTokens.size() == 1);
+      expect_true(rTokens.at(0).isType(RToken::ID));
+   }
+   
+   test_that("knitr chunk embeds are handled")
+   {
+      RTokens rTokens(L"<<chunk>>");
+      expect_true(rTokens.size() == 1);
    }
    
 }

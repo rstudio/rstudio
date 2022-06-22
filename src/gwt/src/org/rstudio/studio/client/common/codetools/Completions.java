@@ -1,7 +1,7 @@
 /*
  * Completions.java
  *
- * Copyright (C) 2021 by RStudio, PBC
+ * Copyright (C) 2022 by RStudio, PBC
  *
  * Unless you have received this program directly from RStudio pursuant
  * to the terms of a commercial license agreement with RStudio, then
@@ -23,9 +23,12 @@ public class Completions extends JavaScriptObject
 {
    public static native Completions createCompletions(String token,
                                                       JsArrayString completions,
+                                                      JsArrayString completionsDisplay,
                                                       JsArrayString packages,
                                                       JsArrayBoolean quote,
                                                       JsArrayInteger type,
+                                                      JsArrayBoolean suggestOnAccept,
+                                                      JsArrayBoolean replaceToEnd,
                                                       JsArrayString meta,
                                                       String fguess,
                                                       boolean excludeOtherCompletions,
@@ -37,9 +40,12 @@ public class Completions extends JavaScriptObject
       return {
          token: [token],
          results: completions,
+         display: completionsDisplay,
          packages: packages,
          quote: quote,
          type: type,
+         suggestOnAccept: suggestOnAccept,
+         replaceToEnd: replaceToEnd,
          meta: meta,
          fguess: fguess ? [fguess] : null,
          excludeOtherCompletions: excludeOtherCompletions,
@@ -60,6 +66,10 @@ public class Completions extends JavaScriptObject
    
    public final native JsArrayString getCompletions() /*-{
       return this.results;
+   }-*/;
+   
+   public final native JsArrayString getCompletionsDisplay() /*-{
+      return this.display || this.results;
    }-*/;
    
    public final native JsArrayString getPackages() /*-{
@@ -88,7 +98,7 @@ public class Completions extends JavaScriptObject
       return !!this.cacheable;
    }-*/;
 
-   public final native void setSuggestOnAccept(boolean suggestOnAccept) /*-{
+   public final native void setSuggestOnAccept(JsArrayBoolean suggestOnAccept) /*-{
       this.suggestOnAccept = suggestOnAccept;
    }-*/;
    
@@ -108,8 +118,30 @@ public class Completions extends JavaScriptObject
       return this.meta;
    }-*/;
 
-   public final native boolean getSuggestOnAccept() /*-{
-      return !!this.suggestOnAccept;
+   // provide suggestOnAccept if it isn't present (server completions will 
+   // generally not yield this)
+   public final native JsArrayBoolean getSuggestOnAccept() /*-{
+      if (!this.suggestOnAccept) {
+         this.suggestOnAccept = new Array(this.results.length);
+         for (var i=0; i<this.suggestOnAccept.length;i++) {
+            this.suggestOnAccept[i] = false;
+         }
+      }
+      return this.suggestOnAccept;   
+      
+   }-*/;
+   
+   // provide replaceToEnd if it isn't present (server completions will 
+   // generally not yield this)
+   public final native JsArrayBoolean getReplaceToEnd() /*-{
+      if (!this.replaceToEnd) {
+         this.replaceToEnd = new Array(this.results.length);
+         for (var i=0; i<this.replaceToEnd.length;i++) {
+            this.replaceToEnd[i] = false;
+         }
+      }
+      return this.replaceToEnd;   
+      
    }-*/;
    
    public final native boolean getExcludeOtherCompletions() /*-{

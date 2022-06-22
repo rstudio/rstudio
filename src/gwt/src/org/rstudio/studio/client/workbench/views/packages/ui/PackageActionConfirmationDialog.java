@@ -1,7 +1,7 @@
 /*
  * PackageActionConfirmationDialog.java
  *
- * Copyright (C) 2021 by RStudio, PBC
+ * Copyright (C) 2022 by RStudio, PBC
  *
  * Unless you have received this program directly from RStudio pursuant
  * to the terms of a commercial license agreement with RStudio, then
@@ -45,6 +45,7 @@ import com.google.gwt.user.client.ui.ScrollPanel;
 import com.google.gwt.user.client.ui.Widget;
 import com.google.gwt.view.client.ListDataProvider;
 import com.google.gwt.view.client.NoSelectionModel;
+import org.rstudio.studio.client.workbench.views.packages.PackagesConstants;
 
 public abstract class PackageActionConfirmationDialog<T extends JavaScriptObject> extends ModalDialog<ArrayList<T>>
 {
@@ -61,13 +62,13 @@ public abstract class PackageActionConfirmationDialog<T extends JavaScriptObject
       
       setOkButtonCaption(okCaption);
     
-      addLeftButton(selectAllButton_ = new ThemedButton("Select All",
-         event -> setGlobalPerformAction("Select All", true)), ElementIds.SELECT_ALL_BUTTON);
+      addLeftButton(selectAllButton_ = new ThemedButton(constants_.selectAllLabel(),
+         event -> setGlobalPerformAction(constants_.selectAllLabel(), true)), ElementIds.SELECT_ALL_BUTTON);
       
       selectAllButton_.getElement().getStyle().setMarginRight(10, Unit.PX);
      
-      addLeftButton(selectNoneButton_ = new ThemedButton("Select None",
-         event -> setGlobalPerformAction("Select None", false)), ElementIds.SELECT_NONE_BUTTON);
+      addLeftButton(selectNoneButton_ = new ThemedButton(constants_.selectNoneLabel(),
+         event -> setGlobalPerformAction(constants_.selectNoneLabel(), false)), ElementIds.SELECT_NONE_BUTTON);
       
       enableOkButton(false);
       selectAllButton_.setEnabled(false);
@@ -255,5 +256,6 @@ public abstract class PackageActionConfirmationDialog<T extends JavaScriptObject
    private ListDataProvider<PendingAction> actionsDataProvider_;
    private ThemedButton selectAllButton_;
    private ThemedButton selectNoneButton_;
+   private static final PackagesConstants constants_ = com.google.gwt.core.client.GWT.create(PackagesConstants.class);
 
 }

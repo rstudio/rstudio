@@ -1,0 +1,59 @@
+#!/usr/bin/env bash
+
+#
+# install-node
+#
+# Copyright (C) 2022 by RStudio, Inc.
+#
+# Unless you have received this program directly from RStudio pursuant
+# to the terms of a commercial license agreement with RStudio, then
+# this program is licensed to you under the terms of version 3 of the
+# GNU Affero General Public License. This program is distributed WITHOUT
+# ANY EXPRESS OR IMPLIED WARRANTY, INCLUDING THOSE OF NON-INFRINGEMENT,
+# MERCHANTABILITY OR FITNESS FOR A PARTICULAR PURPOSE. Please refer to the
+# AGPL (http://www.gnu.org/licenses/agpl-3.0.txt) for more details.
+#
+#
+
+set -e
+
+source "$(dirname "${BASH_SOURCE[0]}")/../tools/rstudio-tools.sh"
+section "Installing node"
+
+# if we already have node, nothing to do
+if [ -d "${NODE_SUBDIR}" ]; then
+	echo "node is already installed at '${NODE_SUBDIR}'"
+	exit 0
+fi
+
+# complete url based on platform
+PLATFORM="$(uname)-$(arch)"
+case "${PLATFORM}" in
+
+"Darwin-i386")   NODE_FILE="node-v${NODE_VERSION}-darwin-x64" ;;
+"Darwin-arm64")  NODE_FILE="node-v${NODE_VERSION}-darwin-arm64" ;;
+"Linux-x86_64")  NODE_FILE="node-v${NODE_VERSION}-linux-x64" ;;
+"Linux-aarch64") NODE_FILE="node-v${NODE_VERSION}-linux-arm64" ;;
+*)
+	echo "Node binaries not available for platform '${PLATFORM}'."
+	exit 0
+;;
+esac
+
+# build archive paths, etc
+NODE_ARCHIVE="${NODE_FILE}.tar.gz"
+NODE_URL="${NODE_BASE_URL}${NODE_ARCHIVE}"
+
+# enter node directory
+mkdir -p "${NODE_ROOT}"
+pushd "${NODE_ROOT}"
+
+# download and extract
+echo "Downloading ${NODE_FILE} from ${NODE_URL}"
+download "${NODE_URL}" "${NODE_ARCHIVE}"
+extract "${NODE_ARCHIVE}"
+rm -f "${NODE_ARCHIVE}"
+
+# rename to expected folder name
+mv "${NODE_FILE}" "${NODE_FOLDER}"
+

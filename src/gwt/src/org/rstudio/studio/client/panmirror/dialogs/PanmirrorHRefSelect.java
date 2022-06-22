@@ -1,7 +1,7 @@
 /*
  * PanmirrorHRefSelect.java
  *
- * Copyright (C) 2021 by RStudio, PBC
+ * Copyright (C) 2022 by RStudio, PBC
  *
  * Unless you have received this program directly from RStudio pursuant
  * to the terms of a commercial license agreement with RStudio, then
@@ -17,12 +17,14 @@
 package org.rstudio.studio.client.panmirror.dialogs;
 
 import com.google.gwt.aria.client.Roles;
+import com.google.gwt.core.client.GWT;
 import org.rstudio.core.client.ElementIds;
 import org.rstudio.core.client.widget.CanFocus;
 import org.rstudio.core.client.widget.FocusHelper;
 import org.rstudio.core.client.widget.FormLabel;
 import org.rstudio.core.client.widget.FormListBox;
 import org.rstudio.core.client.widget.FormTextBox;
+import org.rstudio.studio.client.panmirror.PanmirrorConstants;
 import org.rstudio.studio.client.panmirror.dialogs.model.PanmirrorLinkCapabilities;
 import org.rstudio.studio.client.panmirror.dialogs.model.PanmirrorLinkHeadingTarget;
 import org.rstudio.studio.client.panmirror.dialogs.model.PanmirrorLinkTargets;
@@ -99,7 +101,7 @@ public class PanmirrorHRefSelect extends Composite implements CanFocus
       });
       
       VerticalPanel container = new VerticalPanel();
-      container.add(new FormLabel("Link To:", type_));
+      container.add(new FormLabel(constants_.linkToLabel(), type_));
       container.add(controls_);
       
       initWidget(container);
@@ -220,5 +222,6 @@ public class PanmirrorHRefSelect extends Composite implements CanFocus
    private final FormTextBox href_; 
    private final FormListBox headings_;
    private final FormListBox ids_;
-   
+   private static final PanmirrorConstants constants_ = GWT.create(PanmirrorConstants.class);
+
 }

@@ -1,7 +1,7 @@
 /*
  * bibliography-provider_local.ts
  *
- * Copyright (C) 2021 by RStudio, PBC
+ * Copyright (C) 2022 by RStudio, PBC
  *
  * Unless you have received this program directly from RStudio pursuant
  * to the terms of a commercial license agreement with RStudio, then
@@ -35,7 +35,7 @@ export interface BibliographyResult {
   etag: string;
   bibliography: Bibliography;
 }
-export const kLocalBiliographyProviderKey = 'E06068FE-45DA-4D88-ABDA-0DF290624950';
+export const kLocalBibliographyProviderKey = 'E06068FE-45DA-4D88-ABDA-0DF290624950';
 
 export class BibliographyDataProviderLocal implements BibliographyDataProvider {
   private etag: string;
@@ -47,7 +47,7 @@ export class BibliographyDataProviderLocal implements BibliographyDataProvider {
     this.etag = '';
   }
   public name: string = 'Bibliography';
-  public key: string = kLocalBiliographyProviderKey;
+  public key: string = kLocalBibliographyProviderKey;
   public requiresWritable: boolean = false;
 
   // Always enabled;
@@ -192,10 +192,10 @@ function bibliographyFilesFromDoc(parsedYamls: ParsedYaml[]): string[] | undefin
       Array.isArray(bibliographyFiles) &&
       bibliographyFiles.every(bibliographyFile => typeof bibliographyFile === 'string')
     ) {
-      return bibliographyFiles;
-    } else {
+      return bibliographyFiles as string[];
+    } else if (typeof bibliographyFiles === "string") {
       // A single bibliography
-      return [bibliographyFiles];
+      return [bibliographyFiles as string];
     }
   }
   return undefined;

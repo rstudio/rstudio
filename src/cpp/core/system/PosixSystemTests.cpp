@@ -1,7 +1,7 @@
 /*
  * PosixSystemTests.cpp
  *
- * Copyright (C) 2021 by RStudio, PBC
+ * Copyright (C) 2022 by RStudio, PBC
  *
  * Unless you have received this program directly from RStudio pursuant
  * to the terms of a commercial license agreement with RStudio, then
@@ -16,9 +16,11 @@
 #ifndef _WIN32
 
 #include <core/system/PosixSystem.hpp>
+#include <core/system/PosixGroup.hpp>
 #include <signal.h>
 #include <sys/wait.h>
-
+#include <unistd.h>
+#include <grp.h>
 #include <tests/TestThat.hpp>
 
 namespace rstudio {
@@ -26,8 +28,41 @@ namespace core {
 namespace system {
 namespace tests {
 
+#ifdef __linux__
+
+static std::string getNoGroupName()
+{
+   std::string group;
+
+   // Fun with groups:
+   //
+   // - Debian/Ubuntu have nobody user in the group "nogroup" and the "nobody" group doesn't exist
+   // - RHEL/CentOS have nobody in the "nobody" group, and "nogroup" doesn't exist
+   // - OpenSUSE has both groups, but nobody belongs to "nobody"
+   //
+   if (getgrnam("nobody"))
+      group = "nobody"; // RHEL/CentOS/OpenSUSE
+   else if (getgrnam("nogroup"))
+      group = "nogroup"; // Debian/Ubuntu
+
+   expect_false(group.empty());
+   return group;
+}
+
+#endif
+
 test_context("PosixSystemTests")
 {
+   test_that("findProgramOnPath can find core utils")
+   {
+      FilePath whichPath;
+      Error error = findProgramOnPath("which", &whichPath);
+      expect_false(error);
+      
+      std::string resolvedPath = whichPath.getAbsolutePath();
+      expect_true(resolvedPath == "/usr/bin/which" || resolvedPath == "/bin/which");
+   }
+   
    test_that("Empty subprocess list returned correctly with pgrep method")
    {
       pid_t pid = fork();
@@ -339,6 +374,180 @@ test_context("PosixSystemTests")
       }
    }
 #endif // !__APPLE__
+}
+
+User s_testUser;
+group::Group s_testGroup;
+group::Group s_testNonMemberGroup;
+
+bool initUserAndGroup(std::string username, std::string groupname, std::string nonmember_groupname)
+{
+   bool isRoot = core::system::effectiveUserIsRoot();
+   expect_true(isRoot);
+   if (!isRoot)
+      return false;
+
+   // get user info
+   Error error = User::getUserFromIdentifier(username, s_testUser);
+   expect_false(error);
+   if (error)
+   {
+      LOG_ERROR(error);
+      return false;
+   }
+
+   // get group info. user should be a member of this group.
+   error = group::groupFromName(groupname, &s_testGroup);
+   expect_false(error);
+   if (error)
+   {
+      LOG_ERROR(error);
+      return false;
+   }
+
+   // get secondary group info. user should not be a member of this group.
+   error = group::groupFromName(nonmember_groupname, &s_testNonMemberGroup);
+   expect_false(error);
+   if (error)
+   {
+      LOG_ERROR(error);
+      return false;
+   }
+   return true;
+}
+
+TEST_CASE("TemporarilyDropPrivTests", "[requiresRoot]")
+{
+#ifdef __linux__
+      expect_true(initUserAndGroup("nobody", getNoGroupName(), "users"));
+#endif // __linux__
+#ifdef __APPLE__
+      expect_true(initUserAndGroup("nobody", "nobody", "daemon"));
+#endif // __APPLE__
+
+   test_that("temporarilyDropPriv uses primary group")
+   {
+      // drop privs to the unprivileged user
+      Error error = temporarilyDropPriv(s_testUser.getUsername().c_str(), false);
+      expect_false(error);
+
+      // check real and effective user
+      uid_t ruid = getuid();
+      uid_t euid = geteuid();
+      expect_true(ruid == 0);
+      expect_true(euid == s_testUser.getUserId());
+
+      // check real and effective group
+      gid_t rgid = getgid();
+      gid_t egid = getegid();
+      expect_true(rgid == 0);
+      // since we didn't provide a target group, we expect the target user's primary group
+      expect_true(egid == s_testUser.getGroupId());
+
+      error = restorePriv();
+      expect_false(error);
+   }
+
+   test_that("temporarilyDropPriv uses alternate group")
+   {
+      // drop privs to the unprivileged user and target group
+      Error error = temporarilyDropPriv(s_testUser.getUsername().c_str(), s_testGroup.name, false);
+      expect_false(error);
+
+      // check real and effective user
+      uid_t ruid = getuid();
+      uid_t euid = geteuid();
+      expect_true(ruid == 0);
+      expect_true(euid == s_testUser.getUserId());
+
+      // check real and effective group
+      gid_t rgid = getgid();
+      gid_t egid = getegid();
+      expect_true(rgid == 0);
+      // since we provided a target group, we now expect the target group
+      expect_true(egid == s_testGroup.groupId);
+
+      error = restorePriv();
+      expect_false(error);
+   }
+
+   test_that("temporarilyDropPriv checks group membership with alternate group")
+   {
+      // try dropping privs to a target group that target user does not belong to
+      Error error = temporarilyDropPriv(s_testUser.getUsername().c_str(), s_testNonMemberGroup.name, false);
+      expect_true(error.getCode() == boost::system::errc::permission_denied);
+
+      error = restorePriv();
+      expect_false(error);
+   }
+}
+
+
+TEST_CASE("PermanentlyDropPrivPrimaryTests", "[requiresRoot]")
+{
+#ifdef __linux__
+   expect_true(initUserAndGroup("nobody", getNoGroupName(), "users"));
+#endif // __linux__
+#ifdef __APPLE__
+   expect_true(initUserAndGroup("nobody", "nobody", "daemon"));
+#endif // __APPLE__
+
+   test_that("permanentlyDropPriv uses primary group")
+   {
+      // drop privs to the unprivileged user
+      Error error = permanentlyDropPriv(s_testUser.getUsername().c_str());
+      expect_false(error);
+
+      // check real and effective user
+      uid_t ruid = getuid();
+      uid_t euid = geteuid();
+      expect_true(ruid == s_testUser.getUserId());
+      expect_true(euid == s_testUser.getUserId());
+
+      // check real and effective group
+      gid_t rgid = getgid();
+      gid_t egid = getegid();
+      // since we didn't provide a target group, we expect the target user's primary group
+      expect_true(rgid == s_testUser.getGroupId());
+      expect_true(egid == s_testUser.getGroupId());
+   }
+}
+
+TEST_CASE("PermanentlyDropPrivAlternateTests", "[requiresRoot]")
+{
+#ifdef __linux__
+   expect_true(initUserAndGroup("nobody", getNoGroupName(), "users"));
+#endif // __linux__
+#ifdef __APPLE__
+   expect_true(initUserAndGroup("nobody", "nobody", "daemon"));
+#endif // __APPLE__
+
+   test_that("permanentlyDropPriv checks group membership with alternate group")
+   {
+      // try dropping privs to a target group that target user does not belong to
+      Error error = permanentlyDropPriv(s_testUser.getUsername().c_str(), s_testNonMemberGroup.name);
+      expect_true(error.getCode() == boost::system::errc::permission_denied);
+   }
+
+   test_that("permanentlyDropPriv uses alternate group")
+   {
+      // drop privs to the unprivileged user and target group
+      Error error = permanentlyDropPriv(s_testUser.getUsername().c_str(), s_testGroup.name);
+      expect_false(error);
+
+      // check real and effective user
+      uid_t ruid = getuid();
+      uid_t euid = geteuid();
+      expect_true(ruid == s_testUser.getUserId());
+      expect_true(euid == s_testUser.getUserId());
+
+      // check real and effective group
+      gid_t rgid = getgid();
+      gid_t egid = getegid();
+      // since we provided a target group, we now expect the target group
+      expect_true(rgid == s_testGroup.groupId);
+      expect_true(egid == s_testGroup.groupId);
+   }
 }
 
 } // end namespace tests

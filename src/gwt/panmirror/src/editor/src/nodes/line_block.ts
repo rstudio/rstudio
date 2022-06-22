@@ -1,7 +1,7 @@
 /*
  * line_block.ts
  *
- * Copyright (C) 2021 by RStudio, PBC
+ * Copyright (C) 2022 by RStudio, PBC
  *
  * Unless you have received this program directly from RStudio pursuant
  * to the terms of a commercial license agreement with RStudio, then
@@ -16,7 +16,7 @@
 import { Node as ProsemirrorNode, Schema, DOMOutputSpec } from 'prosemirror-model';
 
 import { ExtensionContext } from '../api/extension';
-import { PandocOutput, PandocTokenType, PandocToken } from '../api/pandoc';
+import { PandocOutput, PandocTokenType, PandocToken, kWriteSpaces } from '../api/pandoc';
 
 import { EditorCommandId, WrapCommand } from '../api/command';
 import { OmniInsertGroup } from '../api/omni_insert';
@@ -58,7 +58,7 @@ const extension = (context: ExtensionContext) => {
             },
           ],
           writer: (output: PandocOutput, node: ProsemirrorNode) => {
-            output.withOption('writeSpaces', false, () => {
+            output.withOption(kWriteSpaces, false, () => {
               output.writeToken(PandocTokenType.LineBlock, () => {
                 node.forEach(line => {
                   output.writeArray(() => {

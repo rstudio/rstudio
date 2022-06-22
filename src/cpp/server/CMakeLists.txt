@@ -1,7 +1,7 @@
 #
 # CMakeLists.txt
 #
-# Copyright (C) 2021 by RStudio, PBC
+# Copyright (C) 2022 by RStudio, PBC
 #
 # Unless you have received this program directly from RStudio pursuant
 # to the terms of a commercial license agreement with RStudio, then
@@ -23,12 +23,15 @@ file(GLOB_RECURSE SERVER_HEADER_FILES "*.h*")
 
 # source files
 set(SERVER_SOURCE_FILES
+   DBActiveSessionStorage.cpp
+   DBActiveSessionsStorage.cpp
    ServerBrowser.cpp
    ServerErrorCategory.cpp
    ServerEval.cpp
    ServerEnvVars.cpp
    ServerInit.cpp
    ServerLoginPages.cpp
+   ServerLogVars.cpp
    ServerMainOverlay.cpp
    ServerMeta.cpp
    ServerOffline.cpp
@@ -38,14 +41,18 @@ set(SERVER_SOURCE_FILES
    ServerPAMAuthOverlay.cpp
    ServerProcessSupervisor.cpp
    ServerREnvironment.cpp
-   ServerSessionProxy.cpp
-   ServerSessionProxyOverlay.cpp
-   ServerSessionManager.cpp
    ServerXdgVars.cpp
    auth/ServerAuthHandler.cpp
    auth/ServerAuthCommon.cpp
    auth/ServerSecureUriHandler.cpp
    auth/ServerValidateUser.cpp
+   session/ServerSessionProxy.cpp
+   session/ServerSessionProxyOverlay.cpp
+   session/ServerSessionRpc.cpp
+   session/ServerSessionRpcOverlay.cpp
+   session/ServerSessionManager.cpp
+   session/ServerSessionMetadataRpc.cpp
+   session/ServerSessionMetadataRpcOverlay.cpp
    ${CMAKE_CURRENT_BINARY_DIR}/ServerAddins.cpp
 )
 
@@ -273,9 +280,18 @@ endif()
 
 # test files
 if (RSTUDIO_UNIT_TESTS_ENABLED)
+  file(GLOB_RECURSE SERVER_DB_FILES RELATIVE ${CMAKE_CURRENT_SOURCE_DIR} "${CMAKE_CURRENT_SOURCE_DIR}/db/*")
+  file(MAKE_DIRECTORY "${CMAKE_CURRENT_BINARY_DIR}/db/test")
+  foreach(SERVER_DB_FILE ${SERVER_DB_FILES})
+    configure_file(${CMAKE_CURRENT_SOURCE_DIR}/${SERVER_DB_FILE}
+                   ${CMAKE_CURRENT_BINARY_DIR}/${SERVER_DB_FILE} COPYONLY)
+  endforeach()
 
   set(SERVER_TEST_FILES
-     ServerEnvVarsTests.cpp)
+     DBActiveSessionStorageTests.cpp
+     ServerEnvVarsTests.cpp
+     ServerDatabaseMigrationTests.cpp
+     ServerDatabaseMigrationOverlayTests.cpp)
 
   list(APPEND SERVER_SOURCE_FILES ${SERVER_TEST_FILES})
 

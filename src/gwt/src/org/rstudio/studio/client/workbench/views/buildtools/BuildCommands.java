@@ -1,7 +1,7 @@
 /*
  * BuildCommands.java
  *
- * Copyright (C) 2021 by RStudio, PBC
+ * Copyright (C) 2022 by RStudio, PBC
  *
  * Unless you have received this program directly from RStudio pursuant
  * to the terms of a commercial license agreement with RStudio, then
@@ -14,6 +14,7 @@
  */
 package org.rstudio.studio.client.workbench.views.buildtools;
 
+import com.google.gwt.core.client.GWT;
 import org.rstudio.core.client.resources.ImageResource2x;
 import org.rstudio.studio.client.workbench.commands.Commands;
 import org.rstudio.studio.client.workbench.model.SessionInfo;
@@ -44,30 +45,49 @@ public class BuildCommands
                            new ImageResource2x(
                               BuildPaneResources.INSTANCE.iconBuild2x()
                            ));
-         commands.buildAll().setMenuLabel("_Build All");
-         commands.buildAll().setButtonLabel("Build All");
-         commands.buildAll().setDesc("Build all");
-         
-      }
-      
-      // remove makefile commands if this isn't a makefile
-      if (type == SessionInfo.BUILD_TOOLS_CUSTOM ||
-          type == SessionInfo.BUILD_TOOLS_WEBSITE)
-      {
-         commands.rebuildAll().remove();
+         commands.buildAll().setMenuLabel("_" + constants_.buildAllLabel());
+         commands.buildAll().setButtonLabel(constants_.buildAllLabel());
+         commands.buildAll().setDesc(constants_.buildAllDesc());
       }
       
       if (type == SessionInfo.BUILD_TOOLS_CUSTOM ||
-          type == SessionInfo.BUILD_TOOLS_PACKAGE)
+          type == SessionInfo.BUILD_TOOLS_PACKAGE ||
+          type == SessionInfo.BUILD_TOOLS_QUARTO)
       {
          commands.cleanAll().remove();
+      }
+      
+      if (type != SessionInfo.BUILD_TOOLS_QUARTO)
+      {
+         commands.serveQuartoSite().remove();
+      }
+      
+      if (type == SessionInfo.BUILD_TOOLS_QUARTO)
+      {
+         String projType = constants_.projectTypeText();
+         
+         if (sessionInfo.getQuartoConfig().project_type.equals(
+                      SessionInfo.QUARTO_PROJECT_TYPE_BOOK)) 
+         {
+            projType = constants_.bookText();
+         }
+         if (sessionInfo.getQuartoConfig().project_type.equals(
+               SessionInfo.QUARTO_PROJECT_TYPE_WEBSITE)) 
+         {
+            projType = constants_.projectWebsiteText();
+         }
+         commands.buildAll().setMenuLabel("_" + constants_.renderLabel() + projType);
+         commands.buildAll().setButtonLabel(constants_.renderLabel() + projType);
+         commands.buildAll().setDesc(constants_.renderLabel() + projType.toLowerCase());
+         commands.buildAll().setImageResource(commands.quartoRenderDocument().getImageResource());
+         commands.serveQuartoSite().setMenuLabel("_" + constants_.serveLabel() + " " + projType);
+         commands.serveQuartoSite().setButtonLabel(constants_.serveLabel() + " " + projType);
       }
       
       // remove all other commands if there are no build tools
       if (type == SessionInfo.BUILD_TOOLS_NONE)
       {
          commands.buildAll().remove();
-         commands.rebuildAll().remove();
          commands.cleanAll().remove();
          commands.stopBuild().remove();
          commands.activateBuild().remove();
@@ -75,4 +95,5 @@ public class BuildCommands
          commands.clearBuild().remove();
       }
    }
+   private static final ViewBuildtoolsConstants constants_ = GWT.create(ViewBuildtoolsConstants.class);
 }

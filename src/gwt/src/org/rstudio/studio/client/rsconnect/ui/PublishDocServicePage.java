@@ -1,7 +1,7 @@
 /*
  * PublishDocServicePage.java
  *
- * Copyright (C) 2021 by RStudio, PBC
+ * Copyright (C) 2022 by RStudio, PBC
  *
  * Unless you have received this program directly from RStudio pursuant
  * to the terms of a commercial license agreement with RStudio, then
@@ -15,9 +15,11 @@
 
 import java.util.ArrayList;
 
+import com.google.gwt.core.client.GWT;
 import org.rstudio.core.client.resources.ImageResource2x;
 import org.rstudio.core.client.widget.WizardNavigationPage;
 import org.rstudio.core.client.widget.WizardPage;
+import org.rstudio.studio.client.rsconnect.RsconnectConstants;
 import org.rstudio.studio.client.rsconnect.model.RSConnectPublishInput;
 import org.rstudio.studio.client.rsconnect.model.RSConnectPublishResult;
 
@@ -30,7 +32,7 @@ public class PublishDocServicePage
                                 ImageResource icon,
                                 RSConnectPublishInput input)
    {
-      super(title, subTitle, "Publish To", icon, null, createPages(input));
+      super(title, subTitle, constants_.publishTo(), icon, null, createPages(input));
    }
    
    private static ArrayList<WizardPage<RSConnectPublishInput, 
@@ -65,8 +67,7 @@ public class PublishDocServicePage
          }
       }
       WizardPage<RSConnectPublishInput, RSConnectPublishResult> rpubsPage  =
-            new PublishRPubsPage("RPubs", "RPubs is a free service from " + 
-         "RStudio for sharing documents on the web.");
+            new PublishRPubsPage("RPubs", constants_.rPubsSubtitle());
 
       // make Rpubs the top selection for now since RStudioConnect is in beta
       pages.add(rpubsPage);
@@ -74,4 +75,5 @@ public class PublishDocServicePage
       
       return pages;
    }
+   private static final RsconnectConstants constants_ = GWT.create(RsconnectConstants.class);
 }

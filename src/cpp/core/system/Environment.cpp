@@ -1,7 +1,7 @@
 /*
  * Environment.cpp
  *
- * Copyright (C) 2021 by RStudio, PBC
+ * Copyright (C) 2022 by RStudio, PBC
  *
  * Unless you have received this program directly from RStudio pursuant
  * to the terms of a commercial license agreement with RStudio, then
@@ -19,6 +19,8 @@
 #include <boost/regex.hpp>
 
 #include <core/Algorithm.hpp>
+
+#include <core/Log.hpp>
 
 #include <boost/bind/bind.hpp>
 
@@ -80,7 +82,7 @@ void setenv(Options* pEnvironment,
       pEnvironment->push_back(std::make_pair(name, value));
 }
 
-// remove an enviroment variable from an Options structure
+// remove an environment variable from an Options structure
 void unsetenv(Options* pEnvironment, const std::string& name)
 {
    pEnvironment->erase(std::remove_if(pEnvironment->begin(),
@@ -125,7 +127,7 @@ void addToPath(std::string* pPath,
    *pPath = modifyPath(*pPath, filePath, prepend);
 }
 
-// add to the PATH within an Options struture
+// add to the PATH within an Options structure
 void addToPath(Options* pEnvironment,
                const std::string& filePath,
                bool prepend)
@@ -167,6 +169,32 @@ std::string expandEnvVars(const Options& environment, const std::string& str)
       result = boost::regex_replace(result, reBraceVar, pair.second);
    }
    return result;
+}
+
+void forwardEnvVars(const std::vector<std::string>& vars, Options* pEnvironment)
+{
+   // forward specified environment variables
+   for (const std::string& envVar : vars)
+   {
+      // only forward value if non-empty; avoid overwriting a previously set
+      // value with an empty one
+      std::string val = core::system::getenv(envVar);
+      if (!val.empty())
+      {
+         // warn if we're changing values; we typically are forwarding values in
+         // order to ensure a consistent view of configuration and state across
+         // RStudio processes, which merits overwriting, but it's also hard to
+         // imagine that these vars would be set unintentionally in the existing
+         // environment.
+         std::string oldVal = core::system::getenv(*pEnvironment, envVar);
+         if (!oldVal.empty() && oldVal != val)
+         {
+             LOG_WARNING_MESSAGE("Overriding " + std::string(envVar) +
+                                 ": '" + oldVal + "' => '" + val + "'");
+         }
+         core::system::setenv(pEnvironment, envVar, val);
+      }
+   }
 }
 
 } // namespace system

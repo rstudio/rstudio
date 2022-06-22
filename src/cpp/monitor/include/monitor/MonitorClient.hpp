@@ -1,7 +1,7 @@
 /*
  * MonitorClient.hpp
  *
- * Copyright (C) 2021 by RStudio, PBC
+ * Copyright (C) 2022 by RStudio, PBC
  *
  * Unless you have received this program directly from RStudio pursuant
  * to the terms of a commercial license agreement with RStudio, then
@@ -77,7 +77,8 @@ public:
                            core::log::LogLevel level,
                            const std::string& message) = 0;
 
-   static std::shared_ptr<core::log::ILogDestination> createLogDestination(core::log::LogLevel logLevel,
+   static std::shared_ptr<core::log::ILogDestination> createLogDestination(const std::string& id,
+                                                                           core::log::LogLevel logLevel,
                                                                            const std::string& programIdentity);
 
    virtual void sendMetrics(const std::vector<metrics::Metric>& metrics) = 0;

@@ -6,9 +6,9 @@ RStudio requires relatively recent versions of a number of components. It is
 therefore likely to only correctly configure and build on more recent Linux
 systems. Specific version requirements for various components include:
 
-- R 3.0.1
+- R 3.3.0
 - CMake 3.4.3 or newer
-- Boost 1.69
+- Boost 1.78
 - Qt 5.12.8 [Required only for Desktop]
 - patchelf 0.9 [Required only for Desktop]
 
@@ -41,7 +41,7 @@ SDK be sure to specify the --exclude-qt-sdk flag as described above).
    ./install-dependencies-yum
    ./install-dependencies-zypper
 
-Note that this script will install Boost 1.69 in the /opt/rstudio-tools/boost
+Note that this script will install Boost 1.78 in the /opt/rstudio-tools/boost
 directory (the /opt/rstudio-tools directory is used to insure that this
 installation of boost doesn't conflict with other versions of boost installed
 on the system). This part of the installation will take a few minutes since
@@ -61,7 +61,7 @@ serve as a guide in determining which referenced libraries must be available
 on your system.
 
 2) Run the install-common script from dependencies/common (which will
-install Google Web Toolkit, Hunspell dictionaries, MathJax, Boost 1.69, and
+install Google Web Toolkit, Hunspell dictionaries, MathJax, Boost 1.78, and
 other dependencies):
 
 NOTE: To build without crashpad support, define RSTUDIO_DISABLE_CRASHPAD=1
@@ -84,4 +84,3 @@ and don't have Qt and QtWebEngine installed on the system:
 (3.4.3) you can download a Linux binary of the latest version of CMake here:
 
   - https://cmake.org/download/
-

@@ -1,4 +1,4 @@
-@external rstudio-themes-flat, rstudio-themes-dark;
+@external rstudio-themes-dark;
 
 .smallButton {
    display: block;
@@ -9,32 +9,21 @@
    outline: none;
 }
 
-@sprite .buttonLeft {
-   gwt-image: 'smallButtonLeft';
-   min-width: value('smallButtonLeft.getWidth', 'px');
-   width: value('smallButtonLeft.getWidth', 'px');
-}
-@sprite .buttonCenter {
-   gwt-image: 'smallButtonTile';
-
-}
-@sprite .buttonRight {
-   gwt-image: 'smallButtonRight';
-   min-width: value('smallButtonRight.getWidth', 'px');
-   width: value('smallButtonRight.getWidth', 'px');
-}
-
 .buttonContent {
    font-size: 9px;
    color: black;
    white-space: nowrap;
+   margin-top: 3px;
+   margin-left: 6px;
+   margin-right: 6px;
+   margin-bottom: 3px;
 }
 
-.rstudio-themes-flat button.smallButton {
+button.smallButton {
    padding-bottom: 2px;
 }
 
-.rstudio-themes-flat button.smallButton > table:first-child {
+button.smallButton > table:first-child {
    border: solid 1px #bbbbbb;
    border-radius: 5px;
    background: #f6f5f7;
@@ -42,36 +31,27 @@
    overflow: hidden;
 }
 
-.rstudio-themes-flat .rstudio-themes-dark button.smallButton > table:first-child {
+.rstudio-themes-dark button.smallButton > table:first-child {
    box-shadow: none;
 }
 
-.rstudio-themes-flat button.smallButton:active > table:first-child {
+button.smallButton:active > table:first-child {
    background: #eaeaea;
 }
 
-.rstudio-themes-flat .buttonLeft {
-   background: none;
-}
-
-.rstudio-themes-flat .buttonCenter {
-   background: none;
+.buttonCenter {
    font-size: 10px;
 }
 
-.rstudio-themes-flat .rstudio-themes-dark .buttonCenter {
+.rstudio-themes-dark .buttonCenter {
    color: white;
 }
 
-.rstudio-themes-flat .buttonRight {
-   background: none;
-}
-
-.rstudio-themes-flat .rstudio-themes-dark button.smallButton > table:first-child {
+.rstudio-themes-dark button.smallButton > table:first-child {
    border-color: rgb(45,60,75);
    background: rgb(145,154,161);
 }
 
-.rstudio-themes-flat .rstudio-themes-dark .buttonContent {
+.rstudio-themes-dark .buttonContent {
    color: white;
 }

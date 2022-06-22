@@ -1,7 +1,7 @@
 /*
  * SessionHttpConnectionImpl.hpp
  *
- * Copyright (C) 2021 by RStudio, PBC
+ * Copyright (C) 2022 by RStudio, PBC
  *
  * Unless you have received this program directly from RStudio pursuant
  * to the terms of a commercial license agreement with RStudio, then
@@ -23,6 +23,7 @@
 #include <boost/asio/io_service.hpp>
 #include <boost/asio/write.hpp>
 #include <boost/asio/placeholders.hpp>
+#include <boost/asio/ssl.hpp>
 #include <boost/enable_shared_from_this.hpp>
 
 #include <shared_core/Error.hpp>
@@ -42,6 +43,8 @@
 
 #include "SessionHttpConnectionUtils.hpp"
 
+using namespace boost::placeholders;
+
 namespace rstudio {
 namespace session {
 
@@ -59,10 +62,24 @@ public:
 
 public:
    HttpConnectionImpl(boost::asio::io_service& ioService,
+                      boost::shared_ptr<boost::asio::ssl::context> sslContext,
                       const HeadersParsedHandler& headersParsed,
                       const Handler& handler)
-      : socket_(ioService), headersParsedHandler_(headersParsed), handler_(handler)
+      : headersParsedHandler_(headersParsed), handler_(handler),
+        receivedTime_(std::chrono::steady_clock::now())
    {
+      if (sslContext)
+      {
+         sslStream_.reset(new boost::asio::ssl::stream<typename ProtocolType::socket>(ioService, *sslContext));
+
+         // get socket and store it in a separate shared pointer
+         // the owner is the SSL stream pointer - this ensures we don't double delete
+         socket_.reset(sslStream_, &sslStream_->next_layer());
+      }
+      else
+      {
+         socket_.reset(new typename ProtocolType::socket(ioService));
+      }
    }
 
    virtual ~HttpConnectionImpl()
@@ -88,24 +105,50 @@ public:
       {
          if (response.isStreamResponse())
          {
-            boost::shared_ptr<core::http::StreamWriter<typename ProtocolType::socket> > pWriter(
-                     new core::http::StreamWriter<typename ProtocolType::socket>(
-                        socket_,
-                        response,
-                        boost::bind(&HttpConnectionImpl::onStreamComplete,
-                                    HttpConnectionImpl<ProtocolType>::shared_from_this()),
-                        boost::bind(&HttpConnectionImpl::handleError,
-                                    HttpConnectionImpl<ProtocolType>::shared_from_this(),
-                                    _1)));
+            if (sslStream_)
+            {
+               boost::shared_ptr<core::http::StreamWriter<boost::asio::ssl::stream<typename ProtocolType::socket>> > pWriter(
+                        new core::http::StreamWriter<boost::asio::ssl::stream<typename ProtocolType::socket>>(
+                           *sslStream_,
+                           response,
+                           boost::bind(&HttpConnectionImpl::onStreamComplete,
+                                       HttpConnectionImpl<ProtocolType>::shared_from_this()),
+                           boost::bind(&HttpConnectionImpl::handleError,
+                                       HttpConnectionImpl<ProtocolType>::shared_from_this(),
+                                       _1)));
 
-            pWriter->write();
+               pWriter->write();
+            }
+            else
+            {
+               boost::shared_ptr<core::http::StreamWriter<typename ProtocolType::socket> > pWriter(
+                        new core::http::StreamWriter<typename ProtocolType::socket>(
+                           socket(),
+                           response,
+                           boost::bind(&HttpConnectionImpl::onStreamComplete,
+                                       HttpConnectionImpl<ProtocolType>::shared_from_this()),
+                           boost::bind(&HttpConnectionImpl::handleError,
+                                       HttpConnectionImpl<ProtocolType>::shared_from_this(),
+                                       _1)));
+               pWriter->write();
+            }
+
             return;
          }
 
          // write the non streaming response
-         boost::asio::write(socket_,
-                            response.toBuffers(
-                                  core::http::Header::connectionClose()));
+         if (sslStream_)
+         {
+            boost::asio::write(*sslStream_,
+                               response.toBuffers(
+                                     core::http::Header::connectionClose()));
+         }
+         else
+         {
+            boost::asio::write(socket(),
+                               response.toBuffers(
+                                     core::http::Header::connectionClose()));
+         }
       }
       catch(const boost::system::system_error& e)
       {
@@ -127,12 +170,29 @@ public:
       CATCH_UNEXPECTED_EXCEPTION
    }
 
+   virtual void sendJsonRpcResponse(
+           core::json::JsonRpcResponse& jsonRpcResponse)
+   {
+      // setup response
+      core::http::Response response;
+
+      // automagic gzip support
+      if (request().acceptsEncoding(core::http::kGzipEncoding))
+         response.setContentEncoding(core::http::kGzipEncoding);
+
+      // set response
+      core::json::setJsonRpcResponse(jsonRpcResponse, &response);
+
+      // send the response
+      sendResponse(response);
+   }
+
    // close (occurs automatically after writeResponse, here in case it
    // need to be closed in other circumstances
    virtual void close()
    {
       // always close connection
-      core::Error error = core::http::closeSocket(socket_);
+      core::Error error = core::http::closeSocket(*socket_);
       if (error)
          LOG_ERROR(error);
    }
@@ -144,11 +204,22 @@ public:
    // is successfully read the Connection is passed to the Handler
    void startReading()
    {
-      readSome();
+      if (sslStream_)
+      {
+         // Begin ssl handshake - on success handleHandake will invoke readSome() to start reading
+         sslStream_->async_handshake(boost::asio::ssl::stream_base::server,
+                                     boost::bind(&HttpConnectionImpl<ProtocolType>::handleHandshake,
+                                                 HttpConnectionImpl<ProtocolType>::shared_from_this(),
+                                                 boost::asio::placeholders::error));
+      }
+      else
+      {
+         readSome();
+      }
    }
 
    // get the socket
-   typename ProtocolType::socket& socket() { return socket_; }
+   typename ProtocolType::socket& socket() { return *socket_; }
 
    virtual void setUploadHandler(const core::http::UriAsyncUploadHandlerFunction& uploadHandler)
    {
@@ -169,6 +240,15 @@ public:
       requestParser_.setFormHandler(formHandler);
    }
 
+   virtual bool isAsyncRpc() const
+   {
+      return false;
+   }
+
+   virtual std::chrono::steady_clock::time_point receivedTime() const
+   {
+      return receivedTime_;
+   }
 
 private:
 
@@ -181,14 +261,43 @@ private:
       // (unless the handler chooses to retain a copy of it e.g. to perform
       // processing in a background thread)
 
-      socket_.async_read_some(
-         boost::asio::buffer(buffer_),
-         boost::bind(
-               &HttpConnectionImpl<ProtocolType>::handleRead,
-               HttpConnectionImpl<ProtocolType>::shared_from_this(),
-               boost::asio::placeholders::error,
-               boost::asio::placeholders::bytes_transferred));
+      if (sslStream_)
+      {
+         sslStream_->async_read_some(
+            boost::asio::buffer(buffer_),
+            boost::bind(
+                  &HttpConnectionImpl<ProtocolType>::handleRead,
+                  HttpConnectionImpl<ProtocolType>::shared_from_this(),
+                  boost::asio::placeholders::error,
+                  boost::asio::placeholders::bytes_transferred));
+      }
+      else
+      {
+         socket_->async_read_some(
+            boost::asio::buffer(buffer_),
+            boost::bind(
+                  &HttpConnectionImpl<ProtocolType>::handleRead,
+                  HttpConnectionImpl<ProtocolType>::shared_from_this(),
+                  boost::asio::placeholders::error,
+                  boost::asio::placeholders::bytes_transferred));
+      }
    }
+
+   void handleHandshake(const boost::system::error_code& ec)
+   {
+      if (ec)
+      {
+         core::Error error(ec, ERROR_LOCATION);
+         if (!core::http::isConnectionTerminatedError(error))
+            LOG_ERROR(error);
+
+         return;
+      }
+
+      // ssl stream established - start reading
+      readSome();
+   }
+
 
    void handleRead(const boost::system::error_code& e,
                    std::size_t bytesTransferred)
@@ -284,13 +393,19 @@ private:
    }
 
 private:
-   typename ProtocolType::socket socket_;
+   // optional ssl stream
+   // not used if the connection is not ssl enabled
+   boost::shared_ptr<boost::asio::ssl::stream<typename ProtocolType::socket> > sslStream_;
+
+   // underlying socket
+   boost::shared_ptr<typename ProtocolType::socket> socket_;
    boost::array<char, 8192> buffer_;
    core::http::RequestParser requestParser_;
    core::http::Request request_;
    std::string requestId_;
    HeadersParsedHandler headersParsedHandler_;
    Handler handler_;
+   std::chrono::steady_clock::time_point receivedTime_;
 };
 
 } // namespace session

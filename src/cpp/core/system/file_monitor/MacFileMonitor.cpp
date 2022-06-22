@@ -1,7 +1,7 @@
 /*
  * MacFileMonitor.cpp
  *
- * Copyright (C) 2021 by RStudio, PBC
+ * Copyright (C) 2022 by RStudio, PBC
  *
  * Unless you have received this program directly from RStudio pursuant
  * to the terms of a commercial license agreement with RStudio, then
@@ -351,7 +351,8 @@ void unregisterMonitor(Handle handle)
 
    // let the client know we are unregistered (note this call should always
    // be prior to delete pContext below!)
-   pContext->callbacks.onUnregistered(handle);
+   if (pContext->callbacks.onUnregistered)
+      pContext->callbacks.onUnregistered(handle);
 
    // delete the context
    delete pContext;

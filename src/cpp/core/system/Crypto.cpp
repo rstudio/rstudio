@@ -1,7 +1,7 @@
 /*
  * Crypto.cpp
  *
- * Copyright (C) 2021 by RStudio, PBC
+ * Copyright (C) 2022 by RStudio, PBC
  *
  * Unless you have received this program directly from RStudio pursuant
  * to the terms of a commercial license agreement with RStudio, then
@@ -32,6 +32,7 @@
 #include <openssl/pem.h>
 #include <openssl/rand.h>
 #include <openssl/rsa.h>
+#include <openssl/x509.h>
 
 #include <algorithm>
 #include <stdio.h>
@@ -141,20 +142,20 @@ Error rsaSign(const std::string& message,
                                                       gsl::narrow_cast<int>(pemPrivateKey.size())),
                                                       BIO_free);
    if (!pKeyBuff)
-      return systemError(boost::system::errc::not_enough_memory, ERROR_LOCATION);
+      return systemError(boost::system::errc::not_enough_memory, "RSA sign", ERROR_LOCATION);
 
 
    std::unique_ptr<RSA, decltype(&RSA_free)> pRsa(PEM_read_bio_RSAPrivateKey(pKeyBuff.get(), nullptr, nullptr, nullptr),
                                                   RSA_free);
    if (!pRsa)
-      return systemError(boost::system::errc::not_enough_memory, ERROR_LOCATION);
+      return systemError(boost::system::errc::not_enough_memory, "RSA private key", ERROR_LOCATION);
 
 
    // sign the message hash
    std::unique_ptr<unsigned char, decltype(&free)> pSignature((unsigned char*)malloc(RSA_size(pRsa.get())),
                                                               free);
    if (!pSignature)
-      return systemError(boost::system::errc::not_enough_memory, ERROR_LOCATION);
+      return systemError(boost::system::errc::not_enough_memory, "RSA signature", ERROR_LOCATION);
 
    unsigned int sigLen = 0;
    int ret = RSA_sign(NID_sha256, (const unsigned char*)hash.c_str(),
@@ -185,12 +186,12 @@ Error rsaVerify(const std::string& message,
             gsl::narrow_cast<int>(pemPublicKey.size())),
             BIO_free);
    if (!pKeyBuff)
-      return systemError(boost::system::errc::not_enough_memory, ERROR_LOCATION);
+      return systemError(boost::system::errc::not_enough_memory, "RSA bio public key", ERROR_LOCATION);
 
    std::unique_ptr<RSA, decltype(&RSA_free)> pRsa(PEM_read_bio_RSA_PUBKEY(pKeyBuff.get(), nullptr, nullptr, nullptr),
                                                   RSA_free);
    if (!pRsa)
-      return systemError(boost::system::errc::not_enough_memory, ERROR_LOCATION);
+      return systemError(boost::system::errc::not_enough_memory, "RSA pub key", ERROR_LOCATION);
 
    // verify the message hash
    int ret = RSA_verify(NID_sha256, (const unsigned char*)hash.c_str(), static_cast<unsigned int>(hash.size()),
@@ -208,11 +209,11 @@ Error generateRsa(const std::unique_ptr<BIO, decltype(&BIO_free)>& pBioPub,
 {
    std::unique_ptr<RSA, decltype(&RSA_free)> pRsa(RSA_new(), RSA_free);
    if (!pRsa)
-      return systemError(boost::system::errc::not_enough_memory, ERROR_LOCATION);
+      return systemError(boost::system::errc::not_enough_memory, "RSA key", ERROR_LOCATION);
 
    std::unique_ptr<BIGNUM, decltype(&BN_free)> pBigNum(BN_new(), BN_free);
    if (!pBigNum)
-      return systemError(boost::system::errc::not_enough_memory, ERROR_LOCATION);
+      return systemError(boost::system::errc::not_enough_memory, "RSA bignum", ERROR_LOCATION);
 
    int ret = BN_set_word(pBigNum.get(), RSA_F4);
    if (ret != 1)
@@ -225,7 +226,7 @@ Error generateRsa(const std::unique_ptr<BIO, decltype(&BIO_free)>& pBioPub,
    // Convert RSA to PKEY
    std::unique_ptr<EVP_PKEY, decltype(&EVP_PKEY_free)> pKey(EVP_PKEY_new(), EVP_PKEY_free);
    if (!pKey)
-      return systemError(boost::system::errc::not_enough_memory, ERROR_LOCATION);
+      return systemError(boost::system::errc::not_enough_memory, "RSA evp key", ERROR_LOCATION);
 
    ret = EVP_PKEY_set1_RSA(pKey.get(), pRsa.get());
    if (ret != 1)
@@ -268,13 +269,13 @@ Error generateRsaKeyPair(std::string* pOutPublicKey,
    std::unique_ptr<BIO, decltype(&BIO_free)> pBioPub(BIO_new(BIO_s_mem()),
                                                      BIO_free);
    if (!pBioPub)
-      return systemError(boost::system::errc::not_enough_memory, ERROR_LOCATION);
+      return systemError(boost::system::errc::not_enough_memory, "RSA bio key pair", ERROR_LOCATION);
 
    pOutPrivateKey->reserve(4096);
    std::unique_ptr<BIO, decltype(&BIO_free)> pBioPem(BIO_new(BIO_s_mem()),
                                                      BIO_free);
    if (!pBioPem)
-      return systemError(boost::system::errc::not_enough_memory, ERROR_LOCATION);
+      return systemError(boost::system::errc::not_enough_memory, "RSA bio priv key", ERROR_LOCATION);
 
    Error error = generateRsa(pBioPub, pBioPem);
    if (error)
@@ -289,6 +290,134 @@ Error generateRsaKeyPair(std::string* pOutPublicKey,
 
    *pOutPublicKey = std::string(pubPtr->data, pubPtr->length);
    *pOutPrivateKey = std::string(pemPtr->data, pemPtr->length);
+
+   return Success();
+}
+
+namespace {
+
+Error generateRsaCertAndKey(const std::string& certCommonName,
+                            const std::unique_ptr<BIO, decltype(&BIO_free)>& pBioCert,
+                            const std::unique_ptr<BIO, decltype(&BIO_free)>& pBioCertKey)
+{
+   const int RSA_KEY_SIZE = 2048;
+
+   std::unique_ptr<RSA, decltype(&RSA_free)> pRsa(RSA_new(), RSA_free);
+   if (!pRsa)
+      return systemError(boost::system::errc::not_enough_memory, "RSA key", ERROR_LOCATION);
+
+   std::unique_ptr<BIGNUM, decltype(&BN_free)> pBigNum(BN_new(), BN_free);
+   if (!pBigNum)
+      return systemError(boost::system::errc::not_enough_memory, "RSA big num", ERROR_LOCATION);
+
+   int ret = BN_set_word(pBigNum.get(), RSA_F4);
+   if (ret != 1)
+      return getLastCryptoError(ERROR_LOCATION);
+
+   ret = RSA_generate_key_ex(pRsa.get(), RSA_KEY_SIZE, pBigNum.get(), nullptr);
+   if (ret != 1)
+      return getLastCryptoError(ERROR_LOCATION);
+
+   std::unique_ptr<X509, decltype(&X509_free)> pCert { X509_new(), X509_free };
+   std::unique_ptr<EVP_PKEY, decltype(&EVP_PKEY_free)> pCertKey(EVP_PKEY_new(), EVP_PKEY_free);
+   if (!pCertKey || !pCert)
+      return systemError(boost::system::errc::not_enough_memory, "Cert/key", ERROR_LOCATION);
+
+   // Convert RSA to EVP_PKEY handing off this reference to the RSA so it's freed with pCertKey
+   EVP_PKEY_assign(pCertKey.get(), EVP_PKEY_RSA, reinterpret_cast<char*>(pRsa.release()));
+
+   ASN1_INTEGER_set(X509_get_serialNumber(pCert.get()), 1);
+   X509_gmtime_adj(X509_get_notBefore(pCert.get()), 0);
+   X509_gmtime_adj(X509_get_notAfter(pCert.get()), 365 * 24 * 3600);
+
+   X509_set_pubkey(pCert.get(), pCertKey.get());
+
+   X509_name_st* name = X509_get_subject_name(pCert.get());
+
+   X509_NAME_add_entry_by_txt(name, "C",  MBSTRING_ASC, (unsigned char *)"US", -1, -1, 0);
+   X509_NAME_add_entry_by_txt(name, "O",  MBSTRING_ASC, (unsigned char *)"RStudio PBC", -1, -1, 0);
+   if (certCommonName.size() > 0)
+      X509_NAME_add_entry_by_txt(name, "CN", MBSTRING_ASC, (unsigned char *)certCommonName.c_str(), -1, -1, 0);
+
+   X509_set_issuer_name(pCert.get(), name);
+
+   X509_sign(pCert.get(), pCertKey.get(), EVP_sha256());
+
+   // Write cert key in PEM format
+   ret = PEM_write_bio_X509(pBioCert.get(), pCert.get());
+   if (ret != 1)
+      return getLastCryptoError(ERROR_LOCATION);
+
+   // Write private key in PEM format
+   ret = PEM_write_bio_PrivateKey(pBioCertKey.get(), pCertKey.get(), nullptr, nullptr, 0, nullptr, nullptr);
+   if (ret != 1)
+      return getLastCryptoError(ERROR_LOCATION);
+
+   return Success();
+}
+
+} // end private namespace
+
+Error generateRsaCertAndKeyFiles(const std::string& in_certCommonName,
+                                 const FilePath& in_certPath,
+                                 const FilePath& in_certKeyPath)
+{
+   std::unique_ptr<BIO, decltype(&BIO_free)> pBioCert(BIO_new_file(in_certPath.getAbsolutePath().c_str(), "w"),
+                                                      BIO_free);
+   if (!pBioCert)
+      return getLastCryptoError(ERROR_LOCATION);
+
+   std::unique_ptr<BIO, decltype(&BIO_free)> pBioCertKey(BIO_new_file(in_certKeyPath.getAbsolutePath().c_str(), "w"),
+                                                         BIO_free);
+   if (!pBioCertKey)
+      return getLastCryptoError(ERROR_LOCATION);
+
+   Error res = generateRsaCertAndKey(in_certCommonName, pBioCert, pBioCertKey);
+   if (res)
+      return res;
+
+#ifndef _WIN32
+   // change modes so public key is readable by all
+   Error error = in_certPath.changeFileMode(core::FileMode::USER_READ_WRITE_ALL_READ);
+   if (error)
+      return error;
+
+   // change mode so private key is only readable by user
+   error = in_certKeyPath.changeFileMode(core::FileMode::USER_READ_WRITE);
+   if (error)
+      return error;
+#endif
+
+   return Success();
+}
+
+Error generateRsaCertAndKeyPair(const std::string& in_certCommonName,
+                                std::string& out_cert,
+                                std::string& out_certKey)
+{
+   std::unique_ptr<BIO, decltype(&BIO_free)> pBioCert(BIO_new(BIO_s_mem()),
+                                                      BIO_free);
+   if (!pBioCert)
+      return systemError(boost::system::errc::not_enough_memory, "RSA cert buffer", ERROR_LOCATION);
+
+   std::unique_ptr<BIO, decltype(&BIO_free)> pBioCertKey(BIO_new(BIO_s_mem()),
+                                                         BIO_free);
+   if (!pBioCertKey)
+      return systemError(boost::system::errc::not_enough_memory, "RSA cert key buffer", ERROR_LOCATION);
+
+   Error error = generateRsaCertAndKey(in_certCommonName, pBioCert, pBioCertKey);
+   if (error)
+      return error;
+
+   // extract the underlying character buffers from the memory BIOs
+   // note - these will be freed automatically when the BIOs are freed
+   BUF_MEM* certPtr;
+   BUF_MEM* certKeyPtr;
+   BIO_get_mem_ptr(pBioCert.get(), &certPtr);
+   BIO_get_mem_ptr(pBioCertKey.get(), &certKeyPtr);
+
+   out_cert = std::string(certPtr->data, certPtr->length);
+   out_certKey = std::string(certKeyPtr->data, certKeyPtr->length);
 
    return Success();
 }
@@ -309,13 +438,13 @@ core::Error rsaInit()
 
    int rnd = ::open("/dev/urandom", O_RDONLY);
    if (rnd == -1)
-      return systemError(errno, ERROR_LOCATION);
+      return systemError(errno, "RSA /dev/urandom", ERROR_LOCATION);
 
    char entropy[ENTROPY_BYTES];
    if (-1 == ::read(rnd, entropy, ENTROPY_BYTES))
    {
       ::close(rnd);
-      return systemError(errno, ERROR_LOCATION);
+      return systemError(errno, "RSA read random", ERROR_LOCATION);
    }
    ::close(rnd);
 

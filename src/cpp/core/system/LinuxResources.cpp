@@ -1,7 +1,7 @@
 /*
  * LinuxResources.cpp
  *
- * Copyright (C) 2021 by RStudio, PBC
+ * Copyright (C) 2022 by RStudio, PBC
  *
  * Unless you have received this program directly from RStudio pursuant
  * to the terms of a commercial license agreement with RStudio, then
@@ -332,7 +332,7 @@ std::string getMemoryCgroup()
       }
 
       // If we got this far, we hit the end of the file without finding a memory entry.
-      LOG_WARNING_MESSAGE("No memory control group found in /proc/self/cgroup");
+      LOG_INFO_MESSAGE("No memory control group found in /proc/self/cgroup");
    }
    catch (...)
    {

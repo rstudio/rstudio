@@ -1,7 +1,7 @@
 /*
  * DesktopApplicationHeader.java
  *
- * Copyright (C) 2021 by RStudio, PBC
+ * Copyright (C) 2022 by RStudio, PBC
  *
  * Unless you have received this program directly from RStudio pursuant
  * to the terms of a commercial license agreement with RStudio, then
@@ -16,6 +16,7 @@ package org.rstudio.studio.client.application.ui.impl;
 
 import java.util.ArrayList;
 
+import org.rstudio.core.client.BrowseCap;
 import org.rstudio.core.client.ElementIds;
 import org.rstudio.core.client.StringUtil;
 import org.rstudio.core.client.command.AppMenuBar;
@@ -32,6 +33,7 @@ import org.rstudio.core.client.widget.Operation;
 import org.rstudio.core.client.widget.ToolbarButton;
 import org.rstudio.core.client.widget.ToolbarLabel;
 import org.rstudio.studio.client.RStudioGinjector;
+import org.rstudio.studio.client.application.StudioClientApplicationConstants;
 import org.rstudio.studio.client.application.ApplicationQuit;
 import org.rstudio.studio.client.application.ApplicationQuit.QuitContext;
 import org.rstudio.studio.client.application.Desktop;
@@ -44,7 +46,6 @@ import org.rstudio.studio.client.application.model.ApplicationServerOperations;
 import org.rstudio.studio.client.application.model.UpdateCheckResult;
 import org.rstudio.studio.client.application.ui.ApplicationHeader;
 import org.rstudio.studio.client.application.ui.GlobalToolbar;
-import org.rstudio.studio.client.application.ui.RStudioThemes;
 import org.rstudio.studio.client.common.GlobalDisplay;
 import org.rstudio.studio.client.common.debugging.ErrorManager;
 import org.rstudio.studio.client.events.EditEvent;
@@ -96,6 +97,7 @@ public class DesktopApplicationHeader implements ApplicationHeader,
                           GlobalDisplay globalDisplay,
                           ApplicationQuit appQuit)
    {
+      commands_ = commands;
       session_ = session;
       eventBus_= events;
       pUIPrefs_ = pUIPrefs;
@@ -121,12 +123,22 @@ public class DesktopApplicationHeader implements ApplicationHeader,
       commands.showLogFiles().setVisible(true);
       commands.diagnosticsReport().setVisible(true);
       commands.showFolder().setVisible(true);
-
+      
+      if (BrowseCap.isElectron())
+      {
+         // we use a preview listener because we need to ensure the event
+         // is handled before anything else in the IDE surface might try
+         // to handle the mouse event
+         addBackForwardMouseDownHandlers();
+      }
+      else
+      {
+         commands.showA11yDiagnostics().remove();
+      }
+      
       events.addHandler(SessionInitEvent.TYPE, (SessionInitEvent sie) ->
       {
          final SessionInfo sessionInfo = session.getSessionInfo();
-
-         isFlatTheme_ = RStudioThemes.isFlat(pUIPrefs_.get());
 
          if (Desktop.isRemoteDesktop())
             addSignoutToolbar();
@@ -200,7 +212,6 @@ public class DesktopApplicationHeader implements ApplicationHeader,
       toolbar_ = new GlobalToolbar(commands, pCodeSearch);
       ThemeStyles styles = ThemeResources.INSTANCE.themeStyles();
       toolbar_.getWrapper().addStyleName(styles.desktopGlobalToolbarWrapper());
-      toolbar_.addStyleName(styles.desktopGlobalToolbar());
    }
 
    @Override
@@ -247,7 +258,7 @@ public class DesktopApplicationHeader implements ApplicationHeader,
 
          ToolbarButton signOutButton = new ToolbarButton(
                ToolbarButton.NoText,
-               "Sign out",
+               constants_.signOutButtonText(),
                new ImageResource2x(RESOURCES.signOut2x()),
                event -> eventBus_.fireEvent(new LogoutRequestedEvent()));
 
@@ -275,16 +286,43 @@ public class DesktopApplicationHeader implements ApplicationHeader,
 
    private static final DesktopApplicationHeader.Resources RESOURCES =  (DesktopApplicationHeader.Resources) GWT.create(DesktopApplicationHeader.Resources.class);
 
+   private void undoAce() {
+      // Undo on the ACE editor has to be called manually since Electron cannot trigger it
+      AceEditorNative editorNative = AceEditorNative.getEditor(DomUtils.getActiveElement());
+      if (editorNative != null) {
+         editorNative.execCommand("undo");
+      } else {
+         Desktop.getFrame().undo();
+      }
+   }
+
+   private void redoAce() {
+      // Redo on the ACE editor has to be called manually since Electron cannot trigger it
+      AceEditorNative editorNative = AceEditorNative.getEditor(DomUtils.getActiveElement());
+      if (editorNative != null) {
+         editorNative.execCommand("redo");
+      } else {
+         Desktop.getFrame().redo();
+      }
+   }
+
    @Handler
-   void onUndoDummy()
-   {
-      Desktop.getFrame().undo();
+   void onUndoDummy() {
+      if (BrowseCap.isElectron()) {
+         undoAce();
+      } else {
+         Desktop.getFrame().undo();
+      }
    }
 
    @Handler
    void onRedoDummy()
    {
-      Desktop.getFrame().redo();
+      if (BrowseCap.isElectron()) {
+         redoAce();
+      } else {
+         Desktop.getFrame().redo();
+      }
    }
 
    @Handler
@@ -346,8 +384,8 @@ public class DesktopApplicationHeader implements ApplicationHeader,
       if (port == 0)
       {
          globalDisplay_.showErrorMessage(
-               "Error Opening Devtools",
-               "The Chromium devtools server could not be activated.");
+               constants_.errorOpeningDevToolsCaption(),
+               constants_.cannotActivateDevtoolsMessage());
       }
       else
       {
@@ -365,6 +403,12 @@ public class DesktopApplicationHeader implements ApplicationHeader,
    }
 
    @Handler
+   void onShowA11yDiagnostics()
+   {
+      globalDisplay_.openMinimalWindow("chrome://accessibility", 500, 400);
+   }
+
+   @Handler
    void onReloadUi()
    {
       WindowEx.get().reload();
@@ -379,7 +423,7 @@ public class DesktopApplicationHeader implements ApplicationHeader,
    public int getPreferredHeight()
    {
       if (toolbar_.isVisible())
-         return isFlatTheme_ ? 29 : 32;
+         return 29;
       else
          return 5;
    }
@@ -403,8 +447,8 @@ public class DesktopApplicationHeader implements ApplicationHeader,
          @Override
          public void onError(ServerError error)
          {
-            globalDisplay_.showErrorMessage("Error Checking for Updates",
-                  "An error occurred while checking for updates: "
+            globalDisplay_.showErrorMessage(constants_.errorCheckingUpdatesMessage(),
+                  constants_.errorOccurredCheckingUpdatesMessage()
                   + error.getMessage());
          }
       });
@@ -432,13 +476,13 @@ public class DesktopApplicationHeader implements ApplicationHeader,
          ArrayList<String> elementIds = new ArrayList<>();
          ArrayList<Operation> buttonOperations = new ArrayList<>();
 
-         buttonLabels.add("Quit and Download...");
+         buttonLabels.add(constants_.quitDownloadButtonLabel());
          elementIds.add(ElementIds.DIALOG_YES_BUTTON);
          buttonOperations.add(new Operation() {
             @Override
             public void execute()
             {
-               appQuit_.prepareForQuit("Update RStudio", new QuitContext()
+               appQuit_.prepareForQuit(constants_.updateRStudioCaption(), new QuitContext()
                {
                   @Override
                   public void onReadyToQuit(boolean saveChanges)
@@ -450,7 +494,7 @@ public class DesktopApplicationHeader implements ApplicationHeader,
             }
          });
 
-         buttonLabels.add("Remind Later");
+         buttonLabels.add(constants_.remindLaterButtonLabel());
          elementIds.add(ElementIds.DIALOG_NO_BUTTON);
          buttonOperations.add(new Operation() {
             @Override
@@ -464,7 +508,7 @@ public class DesktopApplicationHeader implements ApplicationHeader,
          // Only provide the option to ignore the update if it's not urgent.
          if (result.getUpdateUrgency() == 0)
          {
-            buttonLabels.add("Ignore Update");
+            buttonLabels.add(constants_.ignoreUpdateButtonLabel());
             elementIds.add(ElementIds.DIALOG_CANCEL_BUTTON);
             buttonOperations.add(new Operation() {
                @Override
@@ -477,7 +521,7 @@ public class DesktopApplicationHeader implements ApplicationHeader,
          }
 
          globalDisplay_.showGenericDialog(GlobalDisplay.MSG_QUESTION,
-               "Update Available",
+               constants_.updateAvailableCaption(),
                result.getUpdateMessage(),
                buttonLabels,
                elementIds,
@@ -486,8 +530,8 @@ public class DesktopApplicationHeader implements ApplicationHeader,
       else if (manual)
       {
          globalDisplay_.showMessage(GlobalDisplay.MSG_INFO,
-                              "No Update Available",
-                              "You're using the newest version of RStudio.");
+                              constants_.noUpdateAvailableCaption(),
+                              constants_.usingNewestVersionMessage());
       }
    }
 
@@ -590,13 +634,47 @@ public class DesktopApplicationHeader implements ApplicationHeader,
    {
       return null;
    }
-
+   
+   private void onMouseBack()
+   {
+      commands_.sourceNavigateBack().execute();
+   }
+   
+   private void onMouseForward()
+   {
+      commands_.sourceNavigateForward().execute();
+   }
+   
+   private final native void addBackForwardMouseDownHandlers()
+   /*-{
+      
+      var self = this;
+      $doc.body.addEventListener("mousedown", $entry(function(event) {
+         
+         var button = event.button;
+         if (button === 3)
+         {
+            event.stopPropagation();
+            event.preventDefault();
+            self.@org.rstudio.studio.client.application.ui.impl.DesktopApplicationHeader::onMouseBack()();
+         }
+         else if (button === 4)
+         {
+            event.stopPropagation();
+            event.preventDefault();
+            self.@org.rstudio.studio.client.application.ui.impl.DesktopApplicationHeader::onMouseForward()();
+         }
+         
+      }), true);
+   }-*/;
+   
    public interface Binder
          extends CommandBinder<Commands, DesktopApplicationHeader>
    {
    }
 
    private static Binder binder_ = GWT.create(Binder.class);
+   private Commands commands_;
    private Session session_;
    private EventBus eventBus_;
    private GlobalToolbar toolbar_;
@@ -606,6 +684,6 @@ public class DesktopApplicationHeader implements ApplicationHeader,
    private IgnoredUpdates ignoredUpdates_;
    private boolean ignoredUpdatesDirty_ = false;
    private ApplicationQuit appQuit_;
-   private Boolean isFlatTheme_ = false;
    private WebApplicationHeaderOverlay overlay_;
+   private static final StudioClientApplicationConstants constants_ = GWT.create(StudioClientApplicationConstants.class);
 }

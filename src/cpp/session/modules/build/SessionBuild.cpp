@@ -1,7 +1,7 @@
 /*
  * SessionBuild.cpp
  *
- * Copyright (C) 2021 by RStudio, PBC
+ * Copyright (C) 2022 by RStudio, PBC
  *
  * Unless you have received this program directly from RStudio pursuant
  * to the terms of a commercial license agreement with RStudio, then
@@ -37,6 +37,7 @@
 #include <core/r_util/RPackageInfo.hpp>
 
 #include <session/SessionOptions.hpp>
+#include "../modules/rmarkdown/SessionRMarkdown.hpp"
 
 #ifdef _WIN32
 #include <core/r_util/RToolsInfo.hpp>
@@ -51,6 +52,7 @@
 
 #include <session/projects/SessionProjects.hpp>
 #include <session/SessionModuleContext.hpp>
+#include <session/SessionQuarto.hpp>
 #include <session/prefs/UserPrefs.hpp>
 
 #include "SessionBuildErrors.hpp"
@@ -58,6 +60,7 @@
 #include "SessionInstallRtools.hpp"
 
 using namespace rstudio::core;
+using namespace boost::placeholders;
 
 namespace rstudio {
 namespace session {
@@ -235,7 +238,8 @@ const char * const kBuildBinaryPackage = "build-binary-package";
 const char * const kTestPackage = "test-package";
 const char * const kCheckPackage = "check-package";
 const char * const kBuildAndReload = "build-all";
-const char * const kRebuildAll = "rebuild-all";
+const char * const kBuildIncremental = "build-incremental";
+const char * const kBuildFull = "build-full";
 const char * const kTestFile = "test-file";
 const char * const kTestShiny = "test-shiny";
 const char * const kTestShinyFile = "test-shiny-file";
@@ -315,6 +319,9 @@ private:
       else
          core::system::unsetenv(&environment, "RSTUDIO_CONSOLE_WIDTH");
 
+      // this runs in the build pane as a child process of this process
+      core::system::setenv(&environment, "RSTUDIO_CHILD_PROCESS_PANE", "build");
+      
       FilePath buildTargetPath = projects::projectContext().buildTargetPath();
       const core::r_util::RProjectConfig& config = projectConfig();
       if (type == kTestFile)
@@ -351,7 +358,8 @@ private:
             core::system::setenv(&environment, "R_LIBS", rLibs);
 
          // pass along RSTUDIO_VERSION
-         core::system::setenv(&environment, "RSTUDIO_VERSION", RSTUDIO_VERSION);
+         core::system::setenv(&environment, "RSTUDIO_VERSION", modules::rmarkdown::parsableRStudioVersion());
+         core::system::setenv(&environment, "RSTUDIO_LONG_VERSION", RSTUDIO_VERSION);
 
          options.environment = environment;
          
@@ -362,6 +370,12 @@ private:
          options.environment = environment;
          options.workingDir = buildTargetPath.getParent();
          executeCustomBuild(type, buildTargetPath, options, cb);
+      }
+      else if (quarto::quartoConfig().is_project)
+      {
+         options.environment = environment;
+         options.workingDir = projects::projectContext().directory();
+         executeQuartoBuild(subType, options, cb);
       }
       else
       {
@@ -457,8 +471,15 @@ private:
    {
       if (!projectConfig().packageRoxygenize.empty())
       {
-         if ((type == kBuildAndReload || type == kRebuildAll) &&
-             options_.autoRoxygenizeForBuildAndReload)
+         if (type == kBuildAndReload && options_.autoRoxygenizeForBuildAndReload)
+         {
+            return true;
+         }
+         else if (type == kBuildIncremental && options_.autoRoxygenizeForBuildAndReload)
+         {
+            return true;
+         }
+         else if (type == kBuildFull && options_.autoRoxygenizeForBuildAndReload)
          {
             return true;
          }
@@ -562,8 +583,8 @@ private:
       // check for required version of roxygen
       if (!module_context::isMinimumRoxygenInstalled())
       {
-         terminateWithError("roxygen2 v4.0 (or later) required to "
-                            "generate documentation");
+         terminateWithError(
+                  "roxygen2 (>= 4.1.0) is required to generate documentation");
       }
 
       // make a copy of options so we can customize the environment
@@ -582,8 +603,8 @@ private:
       
       // build the roxygenize command
       shell_utils::ShellCommand cmd(rScriptPath);
-      cmd << "--slave";
       cmd << "--vanilla";
+      cmd << "-s";
       cmd << "-e";
       cmd << buildRoxygenizeCall();
 
@@ -646,14 +667,13 @@ private:
                      const FilePath& packagePath,
                      const core::system::ProcessOptions& options,
                      const core::system::ProcessCallbacks& cb)
-   {      
+   {
 
       // if this action is going to INSTALL the package then on
       // windows we need to unload the library first
 #ifdef _WIN32
       if (packagePath.completeChildPath("src").exists() &&
-         (type == kBuildAndReload || type == kRebuildAll ||
-          type == kBuildBinaryPackage))
+         (type == kBuildAndReload || type == kBuildIncremental || type == kBuildFull || type == kBuildBinaryPackage))
       {
          std::string pkg = pkgInfo_.name();
          Error error = r::exec::RFunction(".rs.forceUnloadPackage", pkg).call();
@@ -671,18 +691,20 @@ private:
       type_ = type;
 
       // add testthat and shinytest result parsers
-      core::Version testthatVersion;
-      module_context::packageVersion("testthat", &testthatVersion);
-      
       if (type == kTestFile)
       {
          openErrorList_ = false;
-         parsers.add(testthatErrorParser(packagePath.getParent(), testthatVersion));
+         if (module_context::isPackageInstalled("testthat")) {
+            parsers.add(testthatErrorParser(packagePath.getParent()));
+         }
+         
       }
       else if (type == kTestPackage)
       {
          openErrorList_ = false;
-         parsers.add(testthatErrorParser(packagePath.completePath("tests/testthat"), testthatVersion));
+         if (module_context::isPackageInstalled("testthat")) {
+            parsers.add(testthatErrorParser(packagePath.completePath("tests/testthat")));
+         }
       }
 
       initErrorParser(packagePath, parsers);
@@ -734,7 +756,7 @@ private:
       errorOutputFilterFunction_ = isPackageBuildError;
 
       // build command
-      if (type == kBuildAndReload || type == kRebuildAll)
+      if (type == kBuildAndReload || type == kBuildIncremental || type == kBuildFull)
       {
          // restart R after build is completed
          restartR_ = true;
@@ -746,8 +768,8 @@ private:
          // get extra args
          std::string extraArgs = projectConfig().packageInstallArgs;
 
-         // add --preclean if this is a rebuild all
-         if (collectForcePackageRebuild() || (type == kRebuildAll))
+         // add --preclean if necessary
+         if (type == kBuildFull || collectForcePackageRebuild() || (type == kBuildAndReload && cleanBeforeInstall()) )
          {
             if (!boost::algorithm::contains(extraArgs, "--preclean"))
                rCmd << "--preclean";
@@ -812,6 +834,10 @@ private:
       {
          if (useDevtools())
          {
+            // redirect stderr to stdout for certain build types
+            // see: https://github.com/rstudio/rstudio/issues/5126
+            pkgOptions.redirectStdErrToStdOut = true;
+            
             devtoolsCheckPackage(packagePath, pkgOptions, cb);
          }
          else
@@ -826,11 +852,18 @@ private:
 
       else if (type == kTestPackage)
       {
-
          if (useDevtools())
+         {
+            // redirect stderr to stdout for certain build types
+            // see: https://github.com/rstudio/rstudio/issues/5126
+            pkgOptions.redirectStdErrToStdOut = true;
+            
             devtoolsTestPackage(packagePath, pkgOptions, cb);
+         }
          else
+         {
             testPackage(packagePath, pkgOptions, cb);
+         }
       }
 
       else if (type == kTestFile)
@@ -998,12 +1031,13 @@ private:
 
       // execute within the package directory
       pkgOptions.workingDir = workingDir;
-
+      
       // build args
       std::vector<std::string> args;
-      args.push_back("--slave");
       if (vanilla)
          args.push_back("--vanilla");
+
+      args.push_back("-s");
       args.push_back("-e");
       args.push_back(command);
 
@@ -1130,8 +1164,8 @@ private:
 
       // construct a shell command to execute
       shell_utils::ShellCommand cmd(rScriptPath);
-      cmd << "--slave";
       cmd << "--vanilla";
+      cmd << "-s";
       cmd << "-e";
       std::vector<std::string> rSourceCommands;
       
@@ -1139,7 +1173,7 @@ private:
          "setwd('%1%');"
          "files <- list.files(pattern = '[.][rR]$');"
          "invisible(lapply(files, function(x) {"
-         "    system(paste(shQuote('%2%'), '--vanilla --slave -f', shQuote(x)))"
+         "    system(paste(shQuote('%2%'), '--vanilla -s -f', shQuote(x)))"
          "}))"
       );
 
@@ -1170,8 +1204,8 @@ private:
 
       // construct a shell command to execute
       shell_utils::ShellCommand cmd(rScriptPath);
-      cmd << "--slave";
       cmd << "--vanilla";
+      cmd << "-s";
       cmd << "-e";
       std::vector<std::string> rSourceCommands;
       
@@ -1257,12 +1291,13 @@ private:
 
       // construct a shell command to execute
       shell_utils::ShellCommand cmd(rScriptPath);
-      cmd << "--slave";
       cmd << "--vanilla";
+      cmd << "-s";
       cmd << "-e";
       std::vector<std::string> rSourceCommands;
       
-      if (type == kTestShiny) {
+      if (type == kTestShiny)
+      {
         boost::format fmt(
            "result <- shinytest::testApp('%1%');"
            "saveRDS(result, '%2%')"
@@ -1271,7 +1306,9 @@ private:
         cmd << boost::str(fmt %
                              shinyPath.getAbsolutePath() %
                           tempRdsFile.getAbsolutePath());
-      } else if (type == kTestShinyFile) {
+      }
+      else if (type == kTestShinyFile)
+      {
         boost::format fmt(
            "result <- shinytest::testApp('%1%', '%2%');"
            "saveRDS(result, '%3%')"
@@ -1281,7 +1318,9 @@ private:
                              shinyPath.getAbsolutePath() %
                           shinyTestName %
                           tempRdsFile.getAbsolutePath());
-      } else {
+      }
+      else
+      {
         terminateWithError("Shiny test type is unsupported.");
       }
 
@@ -1423,17 +1462,14 @@ private:
       std::string cmd;
       if (type == "build-all")
       {
+         // cmd = shell_utils::join_and(makeClean, make);
          cmd = make;
       }
       else if (type == "clean-all")
       {
          cmd = makeClean;
       }
-      else if (type == "rebuild-all")
-      {
-         cmd = shell_utils::join_and(makeClean, make);
-      }
-
+      
       module_context::processSupervisor().runCommand(cmd,
                                                      options,
                                                      cb);
@@ -1448,6 +1484,21 @@ private:
                            shell_utils::ShellCommand(customScriptPath),
                            options,
                            cb);
+   }
+
+   void executeQuartoBuild(const std::string& subType,
+                           const core::system::ProcessOptions& options,
+                           const core::system::ProcessCallbacks& cb)
+   {
+      // show preview on complete
+      successFunction_ = boost::bind(&Build::showQuartoSitePreview,
+                                     Build::shared_from_this());
+
+       auto cmd = shell_utils::ShellCommand("quarto");
+       cmd << "render";
+       if (!subType.empty())
+          cmd << "--to" << subType;
+       module_context::processSupervisor().runCommand(cmd, options,cb);
    }
 
 
@@ -1496,27 +1547,76 @@ private:
       rExecute(command, websitePath, options, false /* --vanilla */, cb);
    }
 
+   void enquePreviewRmdEvent(const FilePath& sourceFile, const FilePath& outputFile)
+   {
+      json::Object previewRmdJson;
+      using namespace module_context;
+      previewRmdJson["source_file"] = createAliasedPath(sourceFile);
+      previewRmdJson["encoding"] = projects::projectContext().config().encoding;
+      previewRmdJson["output_file"] = createAliasedPath(outputFile);
+      ClientEvent event(client_events::kPreviewRmd, previewRmdJson);
+      enqueClientEvent(event);
+   }
+
    void showWebsitePreview(const FilePath& websitePath)
    {
       // determine source file
       std::string output = outputAsText();
-      FilePath sourceFile = websitePath.completeChildPath("index.Rmd");
-      if (!sourceFile.exists())
-         sourceFile = websitePath.completeChildPath("index.md");
+      FilePath sourceFile = websiteSourceFile(websitePath);
+      if (sourceFile.isEmpty())
+         return;
 
       // look for Output created message
-      FilePath outputFile = module_context::extractOutputFileCreated(sourceFile,
+      FilePath outputFile = module_context::extractOutputFileCreated(sourceFile.getParent(),
                                                                      output);
       if (!outputFile.isEmpty())
       {
-         json::Object previewRmdJson;
-         using namespace module_context;
-         previewRmdJson["source_file"] = createAliasedPath(sourceFile);
-         previewRmdJson["encoding"] = projects::projectContext().config().encoding;
-         previewRmdJson["output_file"] = createAliasedPath(outputFile);
-         ClientEvent event(client_events::kPreviewRmd, previewRmdJson);
-         enqueClientEvent(event);
+         enquePreviewRmdEvent(sourceFile, outputFile);
       }
+   }
+
+   void showQuartoSitePreview()
+   {
+      // determine source file
+      auto config = quarto::quartoConfig();
+      auto quartoProjectDir = module_context::resolveAliasedPath(config.project_dir);
+      std::string output = outputAsText();
+      FilePath sourceFile = websiteSourceFile(quartoProjectDir);
+      if (sourceFile.isEmpty())
+         return;
+
+      // look for Output created message
+      FilePath outputFile = module_context::extractOutputFileCreated(
+         projects::projectContext().directory(),
+         output
+      );
+      if (!outputFile.isEmpty())
+      {
+         // it will be html if we did a sub-project render.
+         if (outputFile.hasExtensionLowerCase(".html") || outputFile.hasExtensionLowerCase("pdf"))
+         {
+            quarto::handleQuartoPreview(sourceFile, outputFile, output, false);
+         }
+         else
+         {
+            enquePreviewRmdEvent(sourceFile, outputFile);
+         }
+      }
+   }
+
+   FilePath websiteSourceFile(const FilePath& websiteDir)
+   {
+      FilePath sourceFile = websiteDir.completeChildPath("index.Rmd");
+      if (!sourceFile.exists())
+         sourceFile = websiteDir.completeChildPath("index.rmd");
+      if (!sourceFile.exists())
+         sourceFile = websiteDir.completeChildPath("index.md");
+      if (!sourceFile.exists())
+         sourceFile = websiteDir.completeChildPath("index.qmd");
+      if (sourceFile.exists())
+         return sourceFile;
+      else
+         return FilePath();
    }
 
    void terminateWithErrorStatus(int exitStatus)
@@ -1526,24 +1626,40 @@ private:
                        boost::str(fmt % exitStatus));
       enqueBuildCompleted();
    }
+   
+   void terminateWithErrorImpl(const std::string& message)
+   {
+      enqueBuildOutput(module_context::kCompileOutputError, message);
+      enqueBuildCompleted();
+   }
 
    void terminateWithError(const std::string& context,
                            const Error& error)
    {
-      std::string msg = "Error " + context + ": " + error.getSummary();
-      terminateWithError(msg);
+      std::string msg = string_utils::sprintf(
+               "Error %s: %s\n",
+               context.c_str(),
+               error.getSummary().c_str());
+      terminateWithErrorImpl(msg);
    }
 
-   void terminateWithError(const std::string& msg)
+   void terminateWithError(const std::string& message)
    {
-      enqueBuildOutput(module_context::kCompileOutputError, msg);
-      enqueBuildCompleted();
+      std::string msg = core::string_utils::sprintf(
+               "Error: %s\n",
+               message.c_str());
+      terminateWithErrorImpl(msg);
    }
 
    bool useDevtools()
    {
       return projectConfig().packageUseDevtools &&
              module_context::isMinimumDevtoolsInstalled();
+   }
+
+   bool cleanBeforeInstall()
+   {
+      return projectConfig().packageCleanBeforeInstall;
    }
 
 public:
@@ -2227,6 +2343,7 @@ Error initialize()
       (bind(registerRpcMethod, "devtools_load_all_path", devtoolsLoadAllPath))
       (bind(registerRpcMethod, "get_bookdown_formats", getBookdownFormats))
       (bind(sourceModuleRFile, "SessionBuild.R"))
+      (bind(sourceModuleRFile, "SessionInstallRtools.R"))
       (bind(source_cpp::initialize));
    return initBlock.execute();
 }

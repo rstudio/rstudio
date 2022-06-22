@@ -1,7 +1,7 @@
 /*
  * SourceColumnManager.java
  *
- * Copyright (C) 2021 by RStudio, PBC
+ * Copyright (C) 2022 by RStudio, PBC
  *
  * Unless you have received this program directly from RStudio pursuant
  * to the terms of a commercial license agreement with RStudio, then
@@ -67,8 +67,10 @@ import org.rstudio.studio.client.server.model.DocumentCloseAllNoSaveEvent;
 import org.rstudio.studio.client.server.model.DocumentCloseEvent;
 import org.rstudio.studio.client.workbench.FileMRUList;
 import org.rstudio.studio.client.workbench.commands.Commands;
+import org.rstudio.studio.client.workbench.events.SessionInitEvent;
 import org.rstudio.studio.client.workbench.model.ClientState;
 import org.rstudio.studio.client.workbench.model.Session;
+import org.rstudio.studio.client.workbench.model.SessionInfo;
 import org.rstudio.studio.client.workbench.model.UnsavedChangesTarget;
 import org.rstudio.studio.client.workbench.model.helper.JSObjectStateValue;
 import org.rstudio.studio.client.workbench.prefs.model.UserPrefs;
@@ -106,6 +108,7 @@ public class SourceColumnManager implements CommandPaletteEntrySource,
                                             DocumentCloseEvent.Handler,
                                             DebugModeChangedEvent.Handler
 {
+  private static final ViewsSourceConstants constants_ = GWT.create(ViewsSourceConstants.class);
   public interface CPSEditingTargetCommand
    {
       void execute(EditingTarget editingTarget, Command continuation);
@@ -206,6 +209,7 @@ public class SourceColumnManager implements CommandPaletteEntrySource,
 
       rmarkdown_ = new TextEditingTargetRMarkdownHelper();
       vimCommands_ = new SourceVimCommands();
+      quartoCommands_ = new QuartoCommands(this, server_);
       columnState_ = null;
       initDynamicCommands();
 
@@ -213,6 +217,12 @@ public class SourceColumnManager implements CommandPaletteEntrySource,
       events_.addHandler(DebugModeChangedEvent.TYPE, this);
       events_.addHandler(DocumentCloseAllNoSaveEvent.TYPE, this);
       events_.addHandler(DocumentCloseEvent.TYPE, this);
+      
+      events_.addHandler(SessionInitEvent.TYPE, (SessionInitEvent sie) ->
+      {
+         SessionInfo sessionInfo = session.getSessionInfo();
+         quartoCommands_.onSessionInit(sessionInfo, commands_);
+      });
 
       WindowEx.addFocusHandler(new FocusHandler()
       {
@@ -398,7 +408,7 @@ public class SourceColumnManager implements CommandPaletteEntrySource,
    public ColumnName add(String name, String accessibleName, Source.Display display,
                      boolean activate, boolean updateState)
    {
-      if (contains(name))
+      if (containsName(name))
          return new ColumnName();
 
       SourceColumn column = GWT.create(SourceColumn.class);
@@ -504,6 +514,7 @@ public class SourceColumnManager implements CommandPaletteEntrySource,
    {
       if (!StringUtil.isNullOrEmpty(name))
          setActive(getByName(name));
+
       if (!hasActiveEditor())
       {
          if (activeColumn_ == null)
@@ -672,7 +683,7 @@ public class SourceColumnManager implements CommandPaletteEntrySource,
    {
       if (hasActiveEditor())
          return activeColumn_.getActiveEditor().getCurrentStatus();
-      return "No document tabs open";
+      return constants_.noDocumentTabsOpen();
    }
 
    public Synctex getSynctex()
@@ -736,7 +747,7 @@ public class SourceColumnManager implements CommandPaletteEntrySource,
       // the active column is always managed last because any column can disable a command, but
       // only the active one can enable a command
       if (activeColumn_.isInitialized())
-         activeColumn_.manageCommands(forceSync, activeColumn_);
+         activeColumn_.manageCommands(forceSync, activeColumn_); 
 
       if (!session_.getSessionInfo().getAllowShell())
          commands_.sendToTerminal().setVisible(false);
@@ -845,6 +856,26 @@ public class SourceColumnManager implements CommandPaletteEntrySource,
       editingTarget.getEditorContext();
       return true;
    }
+   
+   public boolean requestEditorContext(String id)
+   {
+      for (SourceColumn column : columnList_)
+      {
+         for (EditingTarget target : column.getEditors())
+         {
+            if (target instanceof TextEditingTarget)
+            {
+               if (StringUtil.equals(target.getId(), id))
+               {
+                  ((TextEditingTarget) target).getEditorContext();
+                  return true;
+               }
+            }
+         }
+      }
+      
+      return false;
+   }
 
    public void activateCodeBrowser(
       final String codeBrowserPath,
@@ -925,7 +956,7 @@ public class SourceColumnManager implements CommandPaletteEntrySource,
          FileTypeRegistry.OBJECT_EXPLORER.getTypeId(),
          null,
          (JsObject) handle.cast(),
-         new SimpleRequestCallback<SourceDocument>("Show Object Explorer")
+         new SimpleRequestCallback<SourceDocument>(constants_.showObjectExplorer())
          {
             @Override
             public void onResponseReceived(SourceDocument response)
@@ -964,7 +995,7 @@ public class SourceColumnManager implements CommandPaletteEntrySource,
          FileTypeRegistry.DATAFRAME.getTypeId(),
          null,
          (JsObject) data.cast(),
-         new SimpleRequestCallback<SourceDocument>("Show Data Frame")
+         new SimpleRequestCallback<SourceDocument>(constants_.showDataFrame())
          {
             @Override
             public void onResponseReceived(SourceDocument response)
@@ -1167,6 +1198,17 @@ public class SourceColumnManager implements CommandPaletteEntrySource,
 
    // new doc functions
 
+   public void newQuartoDoc()
+   {
+      quartoCommands_.newQuarto(false);
+   }
+   
+   public void newQuartoPres()
+   {
+      quartoCommands_.newQuarto(true);
+   }
+   
+   
    public void newRMarkdownV1Doc()
    {
       newSourceDocWithTemplate(FileTypeRegistry.RMARKDOWN,
@@ -1224,9 +1266,8 @@ public class SourceColumnManager implements CommandPaletteEntrySource,
             public void execute(final String content)
             {
                if (content.length() == 0)
-                  globalDisplay_.showErrorMessage("Template Content Missing",
-                     "The template at " + template.getTemplatePath() +
-                        " is missing.");
+                  globalDisplay_.showErrorMessage(constants_.templateContentMissing(),
+                     constants_.templateAtPathMissing(template.getTemplatePath()));
                newDoc(FileTypeRegistry.RMARKDOWN, content, null);
             }
          });
@@ -1321,7 +1362,7 @@ public class SourceColumnManager implements CommandPaletteEntrySource,
       return null;
    }
 
-   private void newSourceDocWithTemplate(
+   void newSourceDocWithTemplate(
       final TextFileType fileType,
       String name,
       String template,
@@ -1330,7 +1371,7 @@ public class SourceColumnManager implements CommandPaletteEntrySource,
       final TransformerCommand<String> contentTransformer)
    {
       final ProgressIndicator indicator = new GlobalProgressDelayer(
-         globalDisplay_, 500, "Creating new document...").getIndicator();
+         globalDisplay_, 500, constants_.creatingNewDocument()).getIndicator();
 
       server_.getSourceTemplate(name,
          template,
@@ -1381,6 +1422,12 @@ public class SourceColumnManager implements CommandPaletteEntrySource,
       getActive().newDoc(fileType, contents, resultCallback);
    }
 
+   public void newDoc(EditableFileType fileType,
+                      final SourceColumn targetColumn,
+                      final ResultCallback<EditingTarget, ServerError> resultCallback)
+   {
+      targetColumn.newDoc(fileType, resultCallback);
+   }
 
    public void disownDoc(String docId)
    {
@@ -1639,9 +1686,8 @@ public class SourceColumnManager implements CommandPaletteEntrySource,
                      @Override
                      public void onError(ServerError error)
                      {
-                        globalDisplay_.showErrorMessage("Document Tab Move Failed",
-                           "Couldn't move the tab to this window: \n" +
-                              error.getMessage());
+                        globalDisplay_.showErrorMessage(constants_.documentTabMoveFailed(),
+                           constants_.couldntMoveTabToWindowError(error.getMessage()));
                      }
                   });
             }
@@ -1718,8 +1764,17 @@ public class SourceColumnManager implements CommandPaletteEntrySource,
                         final TextFileType fileType,
                         final CommandWithArg<EditingTarget> executeOnSuccess)
    {
+      openFile(file, fileType, getActive(), executeOnSuccess);
+   }
+
+   public void openFile(final FileSystemItem file,
+                        final TextFileType fileType,
+                        final SourceColumn targetColumn,
+                        final CommandWithArg<EditingTarget> executeOnSuccess)
+   {
       // add this work to the queue
-      openFileQueue_.add(new OpenFileEntry(file, fileType, executeOnSuccess));
+      // keep track of the associated column
+      openFileQueue_.add(new OpenFileEntry(file, fileType, targetColumn, executeOnSuccess));
 
       // begin queue processing if it's the only work in the queue
       if (openFileQueue_.size() == 1)
@@ -1810,7 +1865,7 @@ public class SourceColumnManager implements CommandPaletteEntrySource,
       activeColumn_.fireDocTabsChanged();
    }
 
-   public void scrollToPosition(FilePosition position, boolean moveCursor)
+   public void scrollToPosition(FilePosition position, boolean moveCursor, Command onNavigationCompleted)
    {
       // ensure we have an active source column
       getActive();
@@ -1821,7 +1876,7 @@ public class SourceColumnManager implements CommandPaletteEntrySource,
             position.getLine() - 1,
             position.getColumn() - 1);
          activeColumn_.getActiveEditor().navigateToPosition(
-            srcPosition, false, false, moveCursor, null);
+            srcPosition, false, false, moveCursor, onNavigationCompleted);
       }
    }
 
@@ -1867,6 +1922,7 @@ public class SourceColumnManager implements CommandPaletteEntrySource,
       openFile(
          entry.file,
          entry.fileType,
+         entry.targetColumn,
          new ResultCallback<EditingTarget, ServerError>()
          {
             @Override
@@ -1899,7 +1955,7 @@ public class SourceColumnManager implements CommandPaletteEntrySource,
                }
 
                globalDisplay_.showMessage(GlobalDisplay.MSG_ERROR,
-                  "Error while opening file",
+                  constants_.errorWhileOpeningFile(),
                   message);
 
                processNextEntry.execute();
@@ -1913,6 +1969,13 @@ public class SourceColumnManager implements CommandPaletteEntrySource,
       openFile(file, fileTypeRegistry_.getTextTypeForFile(file), resultCallback);
    }
 
+   public void openFile(final FileSystemItem file,
+                        final TextFileType fileType,
+                        final ResultCallback<EditingTarget, ServerError> resultCallback)
+   {
+      openFile(file, fileType, getActive(), resultCallback);
+   }
+
    // top-level wrapper for opening files. takes care of:
    //  - making sure the view is visible
    //  - checking whether it is already open and re-selecting its tab
@@ -1922,19 +1985,20 @@ public class SourceColumnManager implements CommandPaletteEntrySource,
    //    via the call to the lower level openFile method
    public void openFile(final FileSystemItem file,
                         final TextFileType fileType,
+                        final SourceColumn targetColumn,
                         final ResultCallback<EditingTarget, ServerError> resultCallback)
    {
-      activeColumn_.ensureVisible(true);
+      targetColumn.ensureVisible(true);
 
       if (fileType.isRNotebook())
       {
-         openNotebook(file, resultCallback);
+         openNotebook(file, targetColumn, resultCallback);
          return;
       }
 
       if (file == null)
       {
-         newDoc(fileType, resultCallback);
+         newDoc(fileType, targetColumn, resultCallback);
          return;
       }
 
@@ -1955,7 +2019,7 @@ public class SourceColumnManager implements CommandPaletteEntrySource,
          {
             public void execute()
             {
-               openFileFromServer(file, fileType, resultCallback);
+               openFileFromServer(file, fileType, targetColumn, resultCallback);
             }
          }, new Operation()
          {
@@ -1969,13 +2033,14 @@ public class SourceColumnManager implements CommandPaletteEntrySource,
       }
       else
       {
-         openFileFromServer(file, fileType, resultCallback);
+         openFileFromServer(file, fileType, targetColumn, resultCallback);
       }
    }
 
    public void openNotebook(
       final FileSystemItem rmdFile,
       final SourceDocumentResult doc,
+      final SourceColumn targetColumn,
       final ResultCallback<EditingTarget, ServerError> resultCallback)
    {
       if (!StringUtil.isNullOrEmpty(doc.getDocPath()))
@@ -1983,7 +2048,7 @@ public class SourceColumnManager implements CommandPaletteEntrySource,
          // this happens if we created the R Markdown file, or if the R Markdown
          // file on disk matched the one inside the notebook
          openFileFromServer(rmdFile,
-            FileTypeRegistry.RMARKDOWN, resultCallback);
+            FileTypeRegistry.RMARKDOWN, targetColumn, resultCallback);
       }
       else if (!StringUtil.isNullOrEmpty(doc.getDocId()))
       {
@@ -1997,14 +2062,13 @@ public class SourceColumnManager implements CommandPaletteEntrySource,
                public void onResponseReceived(SourceDocument doc)
                {
                   // create the editor
-                  EditingTarget target = getActive().addTab(doc, Source.OPEN_INTERACTIVE);
+                  EditingTarget target = targetColumn.addTab(doc, Source.OPEN_INTERACTIVE);
 
                   // show a warning bar
                   if (target instanceof TextEditingTarget)
                   {
                      ((TextEditingTarget) target).showWarningMessage(
-                        "This notebook has the same name as an R Markdown " +
-                           "file, but doesn't match it.");
+                        constants_.openNotebookWarningMessage());
                   }
                   resultCallback.onSuccess(target);
                }
@@ -2013,11 +2077,8 @@ public class SourceColumnManager implements CommandPaletteEntrySource,
                public void onError(ServerError error)
                {
                   globalDisplay_.showErrorMessage(
-                     "Notebook Open Failed",
-                     "This notebook could not be opened. " +
-                        "If the error persists, try removing the " +
-                        "accompanying R Markdown file. \n\n" +
-                        error.getMessage());
+                     constants_.notebookOpenFailed(),
+                     constants_.notebookOpenFailedMessage(error.getMessage()));
                   resultCallback.onFailure(error);
                }
             });
@@ -2165,7 +2226,9 @@ public class SourceColumnManager implements CommandPaletteEntrySource,
       dynamicCommands_.add(commands_.previewSql());
       dynamicCommands_.add(commands_.sourceActiveDocument());
       dynamicCommands_.add(commands_.sourceActiveDocumentWithEcho());
+      dynamicCommands_.add(commands_.runDocumentFromServerDotR());
       dynamicCommands_.add(commands_.knitDocument());
+      dynamicCommands_.add(commands_.quartoRenderDocument());
       dynamicCommands_.add(commands_.toggleRmdVisualMode());
       dynamicCommands_.add(commands_.enableProsemirrorDevTools());
       dynamicCommands_.add(commands_.previewHTML());
@@ -2227,10 +2290,10 @@ public class SourceColumnManager implements CommandPaletteEntrySource,
       dynamicCommands_.add(commands_.openNewTerminalAtEditorLocation());
       dynamicCommands_.add(commands_.sendFilenameToTerminal());
       dynamicCommands_.add(commands_.renameSourceDoc());
-      dynamicCommands_.add(commands_.sourceAsLauncherJob());
+      dynamicCommands_.add(commands_.sourceAsWorkbenchJob());
       dynamicCommands_.add(commands_.sourceAsJob());
-      dynamicCommands_.add(commands_.runSelectionAsJob());
-      dynamicCommands_.add(commands_.runSelectionAsLauncherJob());
+      dynamicCommands_.add(commands_.runSelectionAsBackgroundJob());
+      dynamicCommands_.add(commands_.runSelectionAsWorkbenchJob());
       dynamicCommands_.add(commands_.toggleSoftWrapMode());
       for (AppCommand command : dynamicCommands_)
       {
@@ -2276,20 +2339,12 @@ public class SourceColumnManager implements CommandPaletteEntrySource,
       return sourceCommand;
    }
 
-   private void openNotebook(final FileSystemItem rnbFile,
-                             final ResultCallback<EditingTarget, ServerError> resultCallback)
+   public void extractRmdFile(final FileSystemItem rnbFile,
+         final ResultCallback<SourceDocumentResult, ServerError> resultCallback)
    {
-      // construct path to .Rmd
       final String rnbPath = rnbFile.getPath();
-      final String rmdPath = FilePathUtils.filePathSansExtension(rnbPath) + ".Rmd";
-      final FileSystemItem rmdFile = FileSystemItem.createFile(rmdPath);
 
-      // if we already have associated .Rmd file open, then just edit it
-      // TODO: should we perform conflict resolution here as well?
-      if (openFileAlreadyOpen(rmdFile, resultCallback))
-         return;
-
-      // ask the server to extract the .Rmd, then open that
+      // ask the server to extract the .Rmd
       Command extractRmdCommand = new Command()
       {
          @Override
@@ -2302,22 +2357,54 @@ public class SourceColumnManager implements CommandPaletteEntrySource,
                      @Override
                      public void onResponseReceived(SourceDocumentResult doc)
                      {
-                        openNotebook(rmdFile, doc, resultCallback);
+                        resultCallback.onSuccess(doc);
                      }
 
                      @Override
                      public void onError(ServerError error)
                      {
-                        globalDisplay_.showErrorMessage("Notebook Open Failed",
-                              "This notebook could not be opened. \n\n" +
-                              error.getMessage());
                         resultCallback.onFailure(error);
                      }
                   });
          }
       };
 
-      dependencyManager_.withRMarkdown("R Notebook", "Using R Notebooks", extractRmdCommand);
+      dependencyManager_.withRMarkdown(constants_.rNotebook(), constants_.usingRNotebooksText(), extractRmdCommand);
+   }
+
+   private void openNotebook(final FileSystemItem rnbFile,
+                             final SourceColumn targetColumn,
+                             final ResultCallback<EditingTarget, ServerError> resultCallback)
+   {
+      // construct path to .Rmd
+      final String rnbPath = rnbFile.getPath();
+      final String rmdPath = FilePathUtils.filePathSansExtension(rnbPath) + ".Rmd";
+      final FileSystemItem rmdFile = FileSystemItem.createFile(rmdPath);
+
+      // if we already have associated .Rmd file open, then just edit it
+      // TODO: should we perform conflict resolution here as well?
+      if (openFileAlreadyOpen(rmdFile, resultCallback))
+         return;
+
+      // extract Rmd File from rnb file, and open that instead
+      extractRmdFile(rnbFile,
+            new ResultCallback<SourceDocumentResult, ServerError>()
+            {
+               @Override
+               public void onSuccess(SourceDocumentResult doc)
+               {
+                  openNotebook(rmdFile, doc, targetColumn, resultCallback);
+               }
+
+               @Override
+               public void onFailure(ServerError error)
+               {
+                  globalDisplay_.showErrorMessage(constants_.notebookOpenFailed(),
+                        constants_.notebookCouldNotBeOpenedMessage(error.getMessage()));
+                  resultCallback.onFailure(error);
+               }
+            });
+
    }
 
    private void openFileFromServer(
@@ -2325,8 +2412,17 @@ public class SourceColumnManager implements CommandPaletteEntrySource,
          final TextFileType fileType,
          final ResultCallback<EditingTarget, ServerError> resultCallback)
    {
+      openFileFromServer(file, fileType, getActive(), resultCallback);
+   }
+
+   private void openFileFromServer(
+         final FileSystemItem file,
+         final TextFileType fileType,
+         final SourceColumn targetColumn,
+         final ResultCallback<EditingTarget, ServerError> resultCallback)
+   {
       final Command dismissProgress = globalDisplay_.showProgress(
-                                                         "Opening file...");
+                                                         constants_.openingFile());
 
       server_.openDocument(
             file.getPath(),
@@ -2348,7 +2444,10 @@ public class SourceColumnManager implements CommandPaletteEntrySource,
                public void onResponseReceived(SourceDocument document)
                {
                   // apply (dynamic) doc property defaults
-                  SourceColumn.applyDocPropertyDefaults(document, false, userPrefs_);
+                  SourceColumn.applyDocPropertyDefaults(
+                     server_, document, false, 
+                     userPrefs_, session_.getSessionInfo()
+                  );
 
                   // if we are opening for a source navigation then we
                   // need to force Rmds into source mode
@@ -2362,14 +2461,14 @@ public class SourceColumnManager implements CommandPaletteEntrySource,
 
                   dismissProgress.execute();
                   pMruList_.get().add(document.getPath());
-                  EditingTarget target = getActive().addTab(document, Source.OPEN_INTERACTIVE);
+                  EditingTarget target = targetColumn.addTab(document, Source.OPEN_INTERACTIVE);
                   if (resultCallback != null)
                      resultCallback.onSuccess(target);
                }
             });
    }
 
-   private boolean openFileAlreadyOpen(final FileSystemItem file,
+   public boolean openFileAlreadyOpen(final FileSystemItem file,
                                        final ResultCallback<EditingTarget, ServerError> resultCallback)
    {
       for (SourceColumn column : columnList_)
@@ -2386,40 +2485,33 @@ public class SourceColumnManager implements CommandPaletteEntrySource,
                pMruList_.get().add(thisPath);
                if (resultCallback != null)
                   resultCallback.onSuccess(target);
+
                return true;
             }
          }
       }
+
       return false;
    }
 
    private void showFileTooLargeWarning(FileSystemItem file,
                                         long sizeLimit)
    {
-      StringBuilder msg = new StringBuilder();
-      msg.append("The file '" + file.getName() + "' is too ");
-      msg.append("large to open in the source editor (the file is ");
-      msg.append(StringUtil.formatFileSize(file.getLength()) + " and the ");
-      msg.append("maximum file size is ");
-      msg.append(StringUtil.formatFileSize(sizeLimit) + ")");
-
       globalDisplay_.showMessage(GlobalDisplay.MSG_WARNING,
-                                 "Selected File Too Large",
-                                 msg.toString());
+                                 constants_.selectedFileTooLarge(),
+                                 constants_.showFileTooLargeWarningMsg(file.getName(),
+                                         StringUtil.formatFileSize(file.getLength()),
+                                                 StringUtil.formatFileSize(sizeLimit)));
    }
 
    private void confirmOpenLargeFile(FileSystemItem file,
                                      Operation openOperation,
                                      Operation noOperation)
    {
-      StringBuilder msg = new StringBuilder();
-      msg.append("The source file '" + file.getName() + "' is large (");
-      msg.append(StringUtil.formatFileSize(file.getLength()) + ") ");
-      msg.append("and may take some time to open. ");
-      msg.append("Are you sure you want to continue opening it?");
       globalDisplay_.showYesNoMessage(GlobalDisplay.MSG_WARNING,
-                                      "Confirm Open",
-                                      msg.toString(),
+                                      constants_.confirmOpen(),
+                                      constants_.confirmOpenLargeFileMsg(file.getName(),
+                                              StringUtil.formatFileSize(file.getLength())),
                                       false, // Don't include cancel
                                       openOperation,
                                       noOperation,
@@ -2678,7 +2770,7 @@ public class SourceColumnManager implements CommandPaletteEntrySource,
       return null;
    }
 
-   private boolean contains(String name)
+   private boolean containsName(String name)
    {
      for (SourceColumn column : columnList_)
      {
@@ -2696,21 +2788,29 @@ public class SourceColumnManager implements CommandPaletteEntrySource,
 
    private static class OpenFileEntry
    {
-      public OpenFileEntry(FileSystemItem fileIn, TextFileType fileTypeIn,
-            CommandWithArg<EditingTarget> executeIn)
+      public OpenFileEntry(
+            FileSystemItem fileIn,
+            TextFileType fileTypeIn,
+            SourceColumn targetColumnIn,
+            CommandWithArg<EditingTarget> executeIn
+            )
       {
          file = fileIn;
          fileType = fileTypeIn;
+         targetColumn = targetColumnIn;
          executeOnSuccess = executeIn;
       }
+
       public final FileSystemItem file;
       public final TextFileType fileType;
+      public final SourceColumn targetColumn;
       public final CommandWithArg<EditingTarget> executeOnSuccess;
+
    }
 
    private String computeAccessibleName()
    {
-      return "Source Column " + sourceColumnCounter_++;
+      return constants_.sourceColumn(sourceColumnCounter_++);
    }
 
    private State columnState_;
@@ -2724,6 +2824,7 @@ public class SourceColumnManager implements CommandPaletteEntrySource,
    private HashSet<AppCommand> dynamicCommands_ = new HashSet<>();
    private final HashMap<String, SourceAppCommand> sourceAppCommands_ = new HashMap<>();
    private SourceVimCommands vimCommands_;
+   private QuartoCommands quartoCommands_;
 
    private Commands commands_;
    private EventBus events_;
@@ -2744,7 +2845,7 @@ public class SourceColumnManager implements CommandPaletteEntrySource,
    private final SourceNavigationHistory sourceNavigationHistory_ =
        new SourceNavigationHistory(30);
 
-   public final static String COLUMN_PREFIX = "Source";
+   public final static String COLUMN_PREFIX = constants_.source();
    public final static String MAIN_SOURCE_NAME = COLUMN_PREFIX;
    static int sourceColumnCounter_ = 1;
 }

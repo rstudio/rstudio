@@ -1,7 +1,7 @@
 /*
  * Process.cpp
  *
- * Copyright (C) 2021 by RStudio, PBC
+ * Copyright (C) 2022 by RStudio, PBC
  *
  * Unless you have received this program directly from RStudio pursuant
  * to the terms of a commercial license agreement with RStudio, then
@@ -28,11 +28,15 @@
 #include <core/PerformanceTimer.hpp>
 #include <core/system/ChildProcess.hpp>
 
+#include <core/Thread.hpp>
+
 using namespace boost::placeholders;
 
 namespace rstudio {
 namespace core {
 namespace system {
+
+bool s_enableCallbacksRequireMainThread = false;
 
 const char* const kSmartTerm = "xterm-256color";
 const char* const kDumbTerm = "dumb";
@@ -97,15 +101,20 @@ namespace {
 
 Error runChild(boost::shared_ptr<AsyncChildProcess> pChild,
                std::vector<boost::shared_ptr<AsyncChildProcess> >* pChildren,
+               boost::recursive_mutex* pMutex,
                const ProcessCallbacks& callbacks)
 {
    // run the child
-   Error error = pChild->run(callbacks);
-   if (error)
-      return error;
+   RECURSIVE_LOCK_MUTEX(*pMutex)
+   {
+      Error error = pChild->run(callbacks);
+      if (error)
+         return error;
 
-   // add to the list of children
-   pChildren->push_back(pChild);
+      // add to the list of children
+      pChildren->push_back(pChild);
+   }
+   END_LOCK_MUTEX
 
    // success
    return Success();
@@ -125,7 +134,7 @@ Error ProcessSupervisor::runProgram(const std::string& executable,
                                                        options));
 
    // run the child
-   return runChild(pChild, &(pImpl_->children), callbacks);
+   return runChild(pChild, &(pImpl_->children), &mutex_, callbacks);
 }
 
 Error ProcessSupervisor::runCommand(const std::string& command,
@@ -137,7 +146,7 @@ Error ProcessSupervisor::runCommand(const std::string& command,
                                  new AsyncChildProcess(command, options));
 
    // run the child
-   return runChild(pChild, &(pImpl_->children), callbacks);
+   return runChild(pChild, &(pImpl_->children), &mutex_, callbacks);
 }
 
 Error ProcessSupervisor::runTerminal(const ProcessOptions& options,
@@ -148,7 +157,7 @@ Error ProcessSupervisor::runTerminal(const ProcessOptions& options,
                                  new AsyncChildProcess(options));
 
    // run the child
-   return runChild(pChild, &(pImpl_->children), callbacks);
+   return runChild(pChild, &(pImpl_->children), &mutex_, callbacks);
 }
 
 namespace {
@@ -282,7 +291,7 @@ Error ProcessSupervisor::runCommand(
              const ProcessOptions& options,
              const boost::function<void(const ProcessResult&)>& onCompleted)
 {
-   // create proces callbacks
+   // create process callbacks
    ProcessCallbacks cb = createProcessCallbacks(input, onCompleted);
 
    // run the child
@@ -298,9 +307,11 @@ bool ProcessSupervisor::hasRunningChildren()
 
 namespace {
 
-bool has_activity(const boost::shared_ptr<AsyncChildProcess>& childProc)
+bool hasActivity(const boost::shared_ptr<AsyncChildProcess>& childProc)
 {
-   return childProc->hasNonWhitelistSubprocess() || childProc->hasWhitelistSubprocess()||
+   return
+         childProc->hasNonIgnoredSubprocess() ||
+         childProc->hasIgnoredSubprocess() ||
          childProc->hasRecentOutput();
 }
 
@@ -308,49 +319,54 @@ bool has_activity(const boost::shared_ptr<AsyncChildProcess>& childProc)
 
 bool ProcessSupervisor::hasActiveChildren()
 {
-   return boost::algorithm::any_of(pImpl_->children, has_activity);
+   return boost::algorithm::any_of(pImpl_->children, hasActivity);
 }
 
 bool ProcessSupervisor::poll()
 {
-   // bail immediately if we have no children
-   if (!hasRunningChildren())
-      return false;
+   RECURSIVE_LOCK_MUTEX(mutex_)
+   {
+      // bail immediately if we have no children
+      if (!hasRunningChildren())
+         return false;
 
-   // never allow re-entrancy (could occur if one of the output
-   // handlers called from poll executes a waitForMethod which
-   // results in additional polling during idle/wait time)
-   if (pImpl_->isPolling)
-      return true;
+      // never allow re-entrancy (could occur if one of the output
+      // handlers called from poll executes a waitForMethod which
+      // results in additional polling during idle/wait time)
+      if (pImpl_->isPolling)
+         return true;
 
-   // set isPolling then clear it on exit
-   pImpl_->isPolling = true;
-   scope::SetOnExit<bool> setOnExit(&pImpl_->isPolling, false);
+      // set isPolling then clear it on exit
+      pImpl_->isPolling = true;
+      scope::SetOnExit<bool> setOnExit(&pImpl_->isPolling, false);
 
-   // call poll on all of our children via a copy of the std::vector that
-   // holds all of the children. we do this because 'poll' can end up
-   // executing R code (e.g. via onContinue) which can in term end up
-   // executing background tasks that result in a call to processSupervisor
-   // runProgram or runCommand. This would then result in a push_back on
-   // the children vector and if this requried a realloc would invalidate
-   // all of the iterators currently pointing into the container
-   std::vector<boost::shared_ptr<AsyncChildProcess> > children = pImpl_->children;
-   std::for_each(children.begin(),
-                 children.end(),
-                 boost::bind(&AsyncChildProcess::poll, _1));
+      // call poll on all of our children via a copy of the std::vector that
+      // holds all of the children. we do this because 'poll' can end up
+      // executing R code (e.g. via onContinue) which can in term end up
+      // executing background tasks that result in a call to processSupervisor
+      // runProgram or runCommand. This would then result in a push_back on
+      // the children vector and if this required a realloc would invalidate
+      // all of the iterators currently pointing into the container
+      std::vector<boost::shared_ptr<AsyncChildProcess> > children = pImpl_->children;
+      std::for_each(children.begin(),
+                    children.end(),
+                    boost::bind(&AsyncChildProcess::poll, _1));
 
-   // remove any children who have exited from our list. note that it's safe
-   // in this case to use pImpl_->children directly because the call to
-   // AsyncChildProcess::exited just checks a member variable rather than
-   // executing code that could cause re-entry
-   pImpl_->children.erase(std::remove_if(
-                             pImpl_->children.begin(),
-                             pImpl_->children.end(),
-                             boost::bind(&AsyncChildProcess::exited, _1)),
-                          pImpl_->children.end());
+      // remove any children who have exited from our list. note that it's safe
+      // in this case to use pImpl_->children directly because the call to
+      // AsyncChildProcess::exited just checks a member variable rather than
+      // executing code that could cause re-entry
+      pImpl_->children.erase(std::remove_if(
+                                pImpl_->children.begin(),
+                                pImpl_->children.end(),
+                                boost::bind(&AsyncChildProcess::exited, _1)),
+                             pImpl_->children.end());
 
-   // return status
-   return hasRunningChildren();
+      // return status
+      return hasRunningChildren();
+   }
+   END_LOCK_MUTEX
+   return false;
 }
 
 void ProcessSupervisor::terminateAll()
@@ -386,6 +402,16 @@ bool ProcessSupervisor::wait(
    }
 
    return true;
+}
+
+void setEnableCallbacksRequireMainThread(bool enabled)
+{
+   s_enableCallbacksRequireMainThread = enabled;
+}
+
+bool enableCallbacksRequireMainThread()
+{
+   return s_enableCallbacksRequireMainThread;
 }
 
 } // namespace system

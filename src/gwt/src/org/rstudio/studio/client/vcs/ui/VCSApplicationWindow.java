@@ -1,7 +1,7 @@
 /*
  * VCSApplicationWindow.java
  *
- * Copyright (C) 2021 by RStudio, PBC
+ * Copyright (C) 2022 by RStudio, PBC
  *
  * Unless you have received this program directly from RStudio pursuant
  * to the terms of a commercial license agreement with RStudio, then
@@ -15,20 +15,7 @@
 package org.rstudio.studio.client.vcs.ui;
 
 
-import java.util.ArrayList;
-
-import org.rstudio.studio.client.application.events.EventBus;
-import org.rstudio.studio.client.common.StyleUtils;
-import org.rstudio.studio.client.common.satellite.SatelliteWindow;
-import org.rstudio.studio.client.common.vcs.StatusAndPath;
-import org.rstudio.studio.client.vcs.VCSApplicationParams;
-import org.rstudio.studio.client.vcs.VCSApplicationView;
-import org.rstudio.studio.client.workbench.commands.Commands;
-import org.rstudio.studio.client.workbench.ui.FontSizeManager;
-import org.rstudio.studio.client.workbench.views.vcs.dialog.ReviewPresenter;
-import org.rstudio.studio.client.workbench.views.vcs.dialog.HistoryPresenter;
-import org.rstudio.studio.client.workbench.views.vcs.frame.VCSPopup;
-
+import com.google.gwt.core.client.GWT;
 import com.google.gwt.core.client.JavaScriptObject;
 import com.google.gwt.user.client.Window;
 import com.google.gwt.user.client.ui.LayoutPanel;
@@ -36,6 +23,20 @@ import com.google.gwt.user.client.ui.Widget;
 import com.google.inject.Inject;
 import com.google.inject.Provider;
 import com.google.inject.Singleton;
+import org.rstudio.studio.client.application.events.EventBus;
+import org.rstudio.studio.client.common.StyleUtils;
+import org.rstudio.studio.client.common.satellite.SatelliteWindow;
+import org.rstudio.studio.client.common.vcs.StatusAndPath;
+import org.rstudio.studio.client.vcs.VCSApplicationParams;
+import org.rstudio.studio.client.vcs.VCSApplicationView;
+import org.rstudio.studio.client.vcs.VCSConstants;
+import org.rstudio.studio.client.workbench.commands.Commands;
+import org.rstudio.studio.client.workbench.ui.FontSizeManager;
+import org.rstudio.studio.client.workbench.views.vcs.dialog.HistoryPresenter;
+import org.rstudio.studio.client.workbench.views.vcs.dialog.ReviewPresenter;
+import org.rstudio.studio.client.workbench.views.vcs.frame.VCSPopup;
+
+import java.util.ArrayList;
 
 
 @Singleton
@@ -61,7 +62,7 @@ public class VCSApplicationWindow extends SatelliteWindow
                                JavaScriptObject params)
    {
       // set our window title
-      Window.setTitle("RStudio: Review Changes");
+      Window.setTitle(constants_.vcsWindowTitle());
       
       // always show scrollbars on the mac
       StyleUtils.forceMacScrollbars(mainPanel);
@@ -116,5 +117,7 @@ public class VCSApplicationWindow extends SatelliteWindow
    private final Provider<HistoryPresenter> pHistoryPresenter_;
    private final Provider<Commands> pCommands_;
    private VCSPopup.Controller vcsPopupController_ = null;
- 
+
+   private static final VCSConstants constants_ = GWT.create(VCSConstants.class);
+
 }

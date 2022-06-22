@@ -1,7 +1,7 @@
 /*
  * SessionDependencies.cpp
  *
- * Copyright (C) 2021 by RStudio, PBC
+ * Copyright (C) 2022 by RStudio, PBC
  *
  * Unless you have received this program directly from RStudio pursuant
  * to the terms of a commercial license agreement with RStudio, then
@@ -257,6 +257,13 @@ Error unsatisfiedDependencies(const json::JsonRpcRequest& request,
    if (error)
       return error;
    std::vector<Dependency> deps = dependenciesFromJson(depsJson);
+
+   // if prompted installation is disabled entirely then return no deps
+   if (!core::system::getenv("RSTUDIO_DISABLE_PACKAGE_INSTALL_PROMPT").empty())
+   {
+      pResponse->setResult(dependenciesToJson(std::vector<Dependency>()));
+      return Success();
+   }
 
    // build the list of unsatisfied dependencies
    using namespace module_context;

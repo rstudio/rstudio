@@ -1,7 +1,7 @@
 /*
  * CodeIcons.java
  *
- * Copyright (C) 2021 by RStudio, PBC
+ * Copyright (C) 2022 by RStudio, PBC
  *
  * Unless you have received this program directly from RStudio pursuant
  * to the terms of a commercial license agreement with RStudio, then
@@ -105,4 +105,7 @@ public interface CodeIcons extends ClientBundle
 
    @Source("conda_2x.png")
    ImageResource conda2x();
+
+   @Source("test_2x.png")
+   ImageResource test2x();
 }

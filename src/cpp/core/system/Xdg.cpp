@@ -1,7 +1,7 @@
 /*
  * Xdg.cpp
  *
- * Copyright (C) 2021 by RStudio, PBC
+ * Copyright (C) 2022 by RStudio, PBC
  *
  * Unless you have received this program directly from RStudio pursuant
  * to the terms of a commercial license agreement with RStudio, then
@@ -99,7 +99,7 @@ FilePath resolveXdgDir(
    std::string env = getenv(rstudioEnvVar);
    if (env.empty())
    {
-      // The RStudio environment variable specifices the final path; if it isn't
+      // The RStudio environment variable specifies the final path; if it isn't
       // set we will need to append "rstudio" to the path later.
       finalPath = false;
       env = getenv(xdgEnvVar);
@@ -124,7 +124,7 @@ FilePath resolveXdgDir(
       else
       {
          LOG_ERROR_MESSAGE("Unable to retrieve app settings path. HRESULT:  " +
-                           safe_convert::numberToString(hr));
+                           safe_convert::numberToHexString(hr));
       }
 
       // Free memory if allocated
@@ -216,6 +216,11 @@ FilePath userDataDir(
          user,
          homeDir
    );
+}
+
+FilePath userLogDir()
+{
+   return userDataDir().completePath("log");
 }
 
 void verifyUserDirs(
@@ -323,33 +328,51 @@ FilePath systemConfigFile(const std::string& filename)
 #endif
 }
 
+FilePath findSystemConfigFile(const std::string& context, const std::string& filename)
+{
+   FilePath configFile = systemConfigFile(filename);
+   if (configFile.exists())
+   {
+      // We found the file, so just say where we found it
+      rstudio::core::log::logInfoMessage("Reading " + context + " from '" +
+            configFile.getAbsolutePath() + "'");
+   }
+   else
+   {
+      if (getenv("RSTUDIO_CONFIG_DIR").empty())
+      {
+         if (getenv("XDG_CONFIG_DIRS").empty())
+         {
+            // No env vars so just say we didn't find the file at its default location
+            rstudio::core::log::logInfoMessage("No " + context + " found at " +
+                  configFile.getAbsolutePath());
+         }
+         else
+         {
+            // XDG_CONFIG_DIRS was set, so emit the search path we used
+            rstudio::core::log::logInfoMessage("No " + context + " '" + filename + "' "
+                  "found in XDG_CONFIG_DIRS, expected in an 'rstudio' folder in one of "
+                  "'" + getenv("XDG_CONFIG_DIRS") + "'");
+         }
+      }
+      else
+      {
+         // RSTUDIO_CONFIG_DIR was set, so emit where we expected the file to be
+         rstudio::core::log::logInfoMessage("No " + context + " found in RSTUDIO_CONFIG_DIR, "
+               "expected at '" + configFile.getAbsolutePath() + "'");
+      }
+   }
+   return configFile;
+}
+
 void forwardXdgEnvVars(Options *pEnvironment)
 {
    // forward relevant XDG environment variables (i.e. all those we respect above)
-   for (auto&& xdgVar: {"RSTUDIO_CONFIG_HOME", "RSTUDIO_CONFIG_DIR",
-                        "RSTUDIO_DATA_HOME",   "RSTUDIO_DATA_DIR",
-                        "XDG_CONFIG_HOME",     "XDG_CONFIG_DIRS",
-                        "XDG_DATA_HOME",       "XDG_DATA_DIRS"})
-   {
-      // only forward value if non-empty; avoid overwriting a previously set
-      // value with an empty one
-      std::string val = core::system::getenv(xdgVar);
-      if (!val.empty())
-      {
-         // warn if we're changing values; we typically are forwarding values in
-         // order to ensure a consistent view of configuration and state across
-         // RStudio processes, which merits overwriting, but it's also hard to
-         // imagine that these vars would be set unintentionally in the existing
-         // environment.
-         std::string oldVal = core::system::getenv(*pEnvironment, xdgVar);
-         if (!oldVal.empty() && oldVal != val)
-         {
-             LOG_WARNING_MESSAGE("Overriding " + std::string(xdgVar) +
-                                 ": '" + oldVal + "' => '" + val + "'");
-         }
-         core::system::setenv(pEnvironment, xdgVar, val);
-      }
-   }
+   core::system::forwardEnvVars({"RSTUDIO_CONFIG_HOME", "RSTUDIO_CONFIG_DIR",
+                                 "RSTUDIO_DATA_HOME",   "RSTUDIO_DATA_DIR",
+                                 "XDG_CONFIG_HOME",     "XDG_CONFIG_DIRS",
+                                 "XDG_DATA_HOME",       "XDG_DATA_DIRS"},
+                                pEnvironment);
 }
 
 

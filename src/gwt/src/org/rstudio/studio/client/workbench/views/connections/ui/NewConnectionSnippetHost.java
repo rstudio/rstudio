@@ -1,7 +1,7 @@
 /*
  * NewConnectionSnippetHost.java
  *
- * Copyright (C) 2021 by RStudio, PBC
+ * Copyright (C) 2022 by RStudio, PBC
  *
  * Unless you have received this program directly from RStudio pursuant
  * to the terms of a commercial license agreement with RStudio, then
@@ -40,6 +40,7 @@ import org.rstudio.studio.client.common.DelayedProgressRequestCallback;
 import org.rstudio.studio.client.common.GlobalDisplay;
 import org.rstudio.studio.client.server.ServerError;
 import org.rstudio.studio.client.server.ServerRequestCallback;
+import org.rstudio.studio.client.workbench.views.connections.ConnectionsConstants;
 import org.rstudio.studio.client.workbench.views.connections.events.NewConnectionWizardRequestCloseEvent;
 import org.rstudio.studio.client.workbench.views.connections.model.ConnectionOptions;
 import org.rstudio.studio.client.workbench.views.connections.model.ConnectionUninstallResult;
@@ -186,16 +187,15 @@ public class NewConnectionSnippetHost extends Composite
    {
       VerticalPanel verticalPanel = new VerticalPanel();
       verticalPanel.addStyleName(RES.styles().dialogMessagePanel());
-      HTML msg = new HTML("<b>Success!</b> The given parameters " +
-            "can be used to connect and disconnect correctly.");
+      HTML msg = new HTML(constants_.newConnectionSuccessHTML());
       
       verticalPanel.add(msg);
       MessageDialog dlg = new MessageDialog(MessageDialog.INFO,
-            "Test Results",
+            constants_.testResultsCaption(),
             verticalPanel
             );
 
-      dlg.addButton("OK", ElementIds.DIALOG_OK_BUTTON, new Operation() {
+      dlg.addButton(constants_.okLabel(), ElementIds.DIALOG_OK_BUTTON, new Operation() {
          @Override
          public void execute()
          {
@@ -211,16 +211,16 @@ public class NewConnectionSnippetHost extends Composite
       verticalPanel.addStyleName(RES.styles().dialogMessagePanel());
       
       SafeHtmlBuilder safeHtmlBuilder = new SafeHtmlBuilder();
-      safeHtmlBuilder.appendHtmlConstant("<b>Failure.</b> ");
+      safeHtmlBuilder.appendHtmlConstant(constants_.failureHTML());
       safeHtmlBuilder.appendEscaped(error);
       
       verticalPanel.add(new HTML(safeHtmlBuilder.toSafeHtml()));
       MessageDialog dlg = new MessageDialog(MessageDialog.ERROR,
-            "Test Results",
+            constants_.testResultsCaption(),
             verticalPanel
             );
 
-      dlg.addButton("OK", ElementIds.DIALOG_OK_BUTTON, new Operation() {
+      dlg.addButton(constants_.okLabel(), ElementIds.DIALOG_OK_BUTTON, new Operation() {
          @Override
          public void execute()
          {
@@ -341,13 +341,13 @@ public class NewConnectionSnippetHost extends Composite
       HorizontalPanel buttonsPanel = new HorizontalPanel();
       buttonsPanel.addStyleName(RES.styles().buttonsPanel());
 
-      final ThemedButton testButton = new ThemedButton("Test");
+      final ThemedButton testButton = new ThemedButton(constants_.testButtonLabel());
       testButton.addClickHandler(new ClickHandler() {
          public void onClick(ClickEvent event) {
             testButton.setEnabled(false);
             server_.connectionTest(
                codePanel_.getCode(),
-               new DelayedProgressRequestCallback<String>("Testing Connection...") {
+               new DelayedProgressRequestCallback<String>(constants_.testingConnectionProgressMessage()) {
                   @Override
                   protected void onSuccess(String error)
                   {
@@ -377,7 +377,7 @@ public class NewConnectionSnippetHost extends Composite
       }
 
       if (showAdvancedButton) {
-         ThemedButton optionsButton = new ThemedButton("Options...", new ClickHandler() {
+         ThemedButton optionsButton = new ThemedButton(constants_.optionsButtonLabel(), new ClickHandler() {
             public void onClick(ClickEvent event) {
                new NewConnectionSnippetDialog(
                   new OperationWithInput<HashMap<String, String>>() {
@@ -494,15 +494,15 @@ public class NewConnectionSnippetHost extends Composite
    private ThemedButton makeUninstallButton()
    {
       // newConnectionSnippetHostResources_.trashImage()
-      ThemedButton button = new ThemedButton("Uninstall...", new ClickHandler()
+      ThemedButton button = new ThemedButton(constants_.uninstallButton(), new ClickHandler()
       {
          @Override
          public void onClick(ClickEvent arg0)
          {  
             globalDisplay_.showYesNoMessage(
                MessageDialog.QUESTION,
-               "Uninstall " + info_.getName() + " Driver", 
-               "Uninstall the " + info_.getName() + " driver by removing files and registration entries?",
+               constants_.uninstallDriverCaption(info_.getName()),
+               constants_.uninstallDriverMessage(info_.getName()),
                   false,
                   new Operation() 
                   {
@@ -527,14 +527,14 @@ public class NewConnectionSnippetHost extends Composite
                               
                               if (!StringUtil.isNullOrEmpty(result.getError())) {
                                  globalDisplay_.showErrorMessage(
-                                    "Uninstallation failed",
+                                    constants_.uninstallationFailedCaption(),
                                     result.getError()
                                  );
                               }
                               else if (!StringUtil.isNullOrEmpty(result.getMessage())) {
                                  globalDisplay_.showMessage(
                                     MessageDialog.INFO,
-                                    "Uninstallation complete",
+                                    constants_.uninstallationCompleteCaption(),
                                     result.getMessage(),
                                     dismissOperation
                                  );
@@ -543,8 +543,8 @@ public class NewConnectionSnippetHost extends Composite
                               {
                                  globalDisplay_.showMessage(
                                     MessageDialog.INFO,
-                                    "Uninstallation complete",
-                                    "Driver " + info_.getName() + " was successfully uninstalled.",
+                                    constants_.uninstallationCompleteCaption(),
+                                    constants_.driverUninstalledSuccess(info_.getName()),
                                     dismissOperation
                                  );
                               }
@@ -555,7 +555,7 @@ public class NewConnectionSnippetHost extends Composite
                            {
                               Debug.logError(error);
                               globalDisplay_.showErrorMessage(
-                                 "Uninstallation failed",
+                                 constants_.uninstalledFailedMessage(),
                                  error.getUserMessage());
                            }
                         });
@@ -662,4 +662,5 @@ public class NewConnectionSnippetHost extends Composite
    private GlobalDisplay globalDisplay_;
    private ThemedButton uninstallButton_;
    private EventBus eventBus_;
+   private static final ConnectionsConstants constants_ = GWT.create(ConnectionsConstants.class);
 }

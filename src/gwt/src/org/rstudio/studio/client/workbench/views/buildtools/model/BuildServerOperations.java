@@ -1,7 +1,7 @@
 /*
  * BuildServerOperations.java
  *
- * Copyright (C) 2021 by RStudio, PBC
+ * Copyright (C) 2022 by RStudio, PBC
  *
  * Unless you have received this program directly from RStudio pursuant
  * to the terms of a commercial license agreement with RStudio, then
@@ -15,10 +15,11 @@
 
 package org.rstudio.studio.client.workbench.views.buildtools.model;
 
+import org.rstudio.studio.client.quarto.model.QuartoServerOperations;
 import org.rstudio.studio.client.server.ServerRequestCallback;
 import org.rstudio.studio.client.workbench.views.source.model.CppCapabilities;
 
-public interface BuildServerOperations
+public interface BuildServerOperations extends QuartoServerOperations
 {
    // check if we can build C/C++ code
    void getCppCapabilities(

@@ -1,7 +1,7 @@
 /*
  * SessionOptions.gen.hpp
  *
- * Copyright (C) 2021 by RStudio, PBC
+ * Copyright (C) 2022 by RStudio, PBC
  *
  * Unless you have received this program directly from RStudio pursuant
  * to the terms of a commercial license agreement with RStudio, then
@@ -200,15 +200,30 @@ protected:
       ("restrict-directory-view",
       value<bool>(&restrictDirectoryView_)->default_value(false),
       "Indicates whether or not to restrict the directories that can be viewed within the IDE.")
-      ("directory-view-whitelist",
-      value<std::string>(&directoryViewWhitelist_)->default_value(std::string()),
+      ("directory-view-allow-list",
+      value<std::string>(&directoryViewAllowList_)->default_value(std::string()),
       "Specifies a list of directories exempt from directory view restrictions, separated by a colon character (:).")
-      (kSessionEnvVarSaveBlacklist,
-      value<std::string>(&envVarSaveBlacklist_)->default_value(std::string()),
+      (kSessionEphemeralEnvVars,
+      value<std::string>(&ephemeralEnvVars_)->default_value(std::string()),
       "Specifies a list of environment variables that will not be saved when sessions suspend, separated by a colon character (:).")
       (kSessionSuspendOnIncompleteStatement,
       value<bool>(&suspendOnIncompleteStatement_)->default_value(false),
-      "Specifies whether the session should be allowed to suspend when a user has entered a partial R statement.");
+      "Specifies whether the session should be allowed to suspend when a user has entered a partial R statement.")
+      (kSessionAsyncRpcEnabled,
+      value<bool>(&asyncRpcEnabled_)->default_value(true),
+      "Enables async responses to rpc requests to prevent connection logjams in the browser, allowing interrupt of busy sessions")
+      (kSessionAsyncRpcTimeoutMs,
+      value<int>(&asyncRpcTimeoutMs_)->default_value(200),
+      "Duration in millis before requests are converted to async - i.e. how fast will the server free up connections when it's busy")
+      (kSessionHandleOfflineEnabled,
+      value<bool>(&handleOfflineEnabled_)->default_value(true),
+      "Enables offline request handling. When the R session is busy, some requests are allowed to run")
+      (kSessionHandleOfflineTimeoutMs,
+      value<int>(&handleOfflineTimeoutMs_)->default_value(200),
+      "Duration in millis before requests that can be handled offline are processed by the offline handler thread.")
+      (kSessionUseFileStorage,
+      value<bool>(&sessionUseFileStorage_)->default_value(true),
+      "Controls whether the session should store its metadata on the file system or send it to the server to be stored in the internal database.");
 
    pAllow->add_options()
       ("allow-vcs-executable-edit",
@@ -286,7 +301,7 @@ protected:
       value<bool>(&autoReloadSource_)->default_value(false),
       "Indicates whether or not to automatically reload R source if it changes during the session.")
       ("r-compatible-graphics-engine-version",
-      value<int>(&rCompatibleGraphicsEngineVersion_)->default_value(14),
+      value<int>(&rCompatibleGraphicsEngineVersion_)->default_value(15),
       "Specifies the maximum graphics engine version that this version of RStudio is compatible with.")
       ("r-resources-path",
       value<std::string>(&rResourcesPath_)->default_value("resources"),
@@ -329,7 +344,7 @@ protected:
       value<std::string>(&gnudiffPath_)->default_value("bin/gnudiff"),
       "Specifies the path to gnudiff utilities (Windows-only).")
       ("external-gnugrep-path",
-      value<std::string>(&gnugrepPath_)->default_value("bin/gnugrep"),
+      value<std::string>(&gnugrepPath_)->default_value("bin/gnugrep/3.0"),
       "Specifies the path to gnugrep utilities (Windows-only).")
       ("external-msysssh-path",
       value<std::string>(&msysSshPath_)->default_value("bin/msys-ssh-1000-18"),
@@ -349,6 +364,9 @@ protected:
       ("external-pandoc-path",
       value<std::string>(&pandocPath_)->default_value(kDefaultPandocPath),
       "Specifies the path to pandoc binaries.")
+      ("external-quarto-path",
+      value<std::string>(&quartoPath_)->default_value(kDefaultQuartoPath),
+      "Specifies the path to quarto binaries.")
       ("external-libclang-path",
       value<std::string>(&libclangPath_)->default_value(kDefaultRsclangPath),
       "Specifies the path to the libclang shared library")
@@ -383,12 +401,9 @@ protected:
 
    pMisc->add_options();
 
-   FilePath defaultConfigPath = core::system::xdg::systemConfigFile("rsession.conf");
+   FilePath defaultConfigPath = core::system::xdg::findSystemConfigFile("rsession configuration", "rsession.conf");
    std::string configFile = defaultConfigPath.exists() ?
       defaultConfigPath.getAbsolutePath() : "";
-   if (!configFile.empty())
-      LOG_INFO_MESSAGE("Reading rsession configuration from " + configFile);
-
    return program_options::OptionsDescription("rsession", configFile);
 }
 
@@ -433,24 +448,29 @@ public:
    bool useSecureCookies() const { return useSecureCookies_; }
    rstudio::core::http::Cookie::SameSite sameSite() const { return sameSite_; }
    bool restrictDirectoryView() const { return restrictDirectoryView_; }
-   std::string directoryViewWhitelist() const { return directoryViewWhitelist_; }
-   std::string envVarSaveBlacklist() const { return envVarSaveBlacklist_; }
+   std::string directoryViewAllowList() const { return directoryViewAllowList_; }
+   std::string ephemeralEnvVars() const { return ephemeralEnvVars_; }
    bool suspendOnIncompleteStatement() const { return suspendOnIncompleteStatement_; }
-   bool allowVcsExecutableEdit() const { return allowVcsExecutableEdit_; }
-   bool allowCRANReposEdit() const { return allowCRANReposEdit_; }
-   bool allowVcs() const { return allowVcs_; }
-   bool allowPackageInstallation() const { return allowPackageInstallation_; }
-   bool allowShell() const { return allowShell_; }
-   bool allowTerminalWebsockets() const { return allowTerminalWebsockets_; }
-   bool allowFileDownloads() const { return allowFileDownloads_; }
-   bool allowFileUploads() const { return allowFileUploads_; }
-   bool allowRemovePublicFolder() const { return allowRemovePublicFolder_; }
-   bool allowRpubsPublish() const { return allowRpubsPublish_; }
-   bool allowExternalPublish() const { return allowExternalPublish_; }
-   bool allowPublish() const { return allowPublish_; }
-   bool allowPresentationCommands() const { return allowPresentationCommands_; }
-   bool allowFullUI() const { return allowFullUI_; }
-   bool allowLauncherJobs() const { return allowLauncherJobs_; }
+   bool asyncRpcEnabled() const { return asyncRpcEnabled_; }
+   int asyncRpcTimeoutMs() const { return asyncRpcTimeoutMs_; }
+   bool handleOfflineEnabled() const { return handleOfflineEnabled_; }
+   int handleOfflineTimeoutMs() const { return handleOfflineTimeoutMs_; }
+   bool sessionUseFileStorage() const { return sessionUseFileStorage_; }
+   bool allowVcsExecutableEdit() const { return allowVcsExecutableEdit_ || allowOverlay(); }
+   bool allowCRANReposEdit() const { return allowCRANReposEdit_ || allowOverlay(); }
+   bool allowVcs() const { return allowVcs_ || allowOverlay(); }
+   bool allowPackageInstallation() const { return allowPackageInstallation_ || allowOverlay(); }
+   bool allowShell() const { return allowShell_ || allowOverlay(); }
+   bool allowTerminalWebsockets() const { return allowTerminalWebsockets_ || allowOverlay(); }
+   bool allowFileDownloads() const { return allowFileDownloads_ || allowOverlay(); }
+   bool allowFileUploads() const { return allowFileUploads_ || allowOverlay(); }
+   bool allowRemovePublicFolder() const { return allowRemovePublicFolder_ || allowOverlay(); }
+   bool allowRpubsPublish() const { return allowRpubsPublish_ || allowOverlay(); }
+   bool allowExternalPublish() const { return allowExternalPublish_ || allowOverlay(); }
+   bool allowPublish() const { return allowPublish_ || allowOverlay(); }
+   bool allowPresentationCommands() const { return allowPresentationCommands_ || allowOverlay(); }
+   bool allowFullUI() const { return allowFullUI_ || allowOverlay(); }
+   bool allowLauncherJobs() const { return allowLauncherJobs_ || allowOverlay(); }
    core::FilePath coreRSourcePath() const { return core::FilePath(coreRSourcePath_); }
    core::FilePath modulesRSourcePath() const { return core::FilePath(modulesRSourcePath_); }
    core::FilePath sessionLibraryPath() const { return core::FilePath(sessionLibraryPath_); }
@@ -480,6 +500,7 @@ public:
    core::FilePath hunspellDictionariesPath() const { return core::FilePath(hunspellDictionariesPath_); }
    core::FilePath mathjaxPath() const { return core::FilePath(mathjaxPath_); }
    core::FilePath pandocPath() const { return core::FilePath(pandocPath_); }
+   core::FilePath quartoPath() const { return core::FilePath(quartoPath_); }
    core::FilePath libclangPath() const { return core::FilePath(libclangPath_); }
    core::FilePath libclangHeadersPath() const { return core::FilePath(libclangHeadersPath_); }
    core::FilePath winptyPath() const { return core::FilePath(winptyPath_); }
@@ -530,9 +551,14 @@ protected:
    bool useSecureCookies_;
    rstudio::core::http::Cookie::SameSite sameSite_;
    bool restrictDirectoryView_;
-   std::string directoryViewWhitelist_;
-   std::string envVarSaveBlacklist_;
+   std::string directoryViewAllowList_;
+   std::string ephemeralEnvVars_;
    bool suspendOnIncompleteStatement_;
+   bool asyncRpcEnabled_;
+   int asyncRpcTimeoutMs_;
+   bool handleOfflineEnabled_;
+   int handleOfflineTimeoutMs_;
+   bool sessionUseFileStorage_;
    bool allowVcsExecutableEdit_;
    bool allowCRANReposEdit_;
    bool allowVcs_;
@@ -577,6 +603,7 @@ protected:
    std::string hunspellDictionariesPath_;
    std::string mathjaxPath_;
    std::string pandocPath_;
+   std::string quartoPath_;
    std::string libclangPath_;
    std::string libclangHeadersPath_;
    std::string winptyPath_;
@@ -586,6 +613,7 @@ protected:
    std::string projectId_;
    std::string scopeId_;
    std::string launcherToken_;
+   virtual bool allowOverlay() const { return false; };
 };
 
 } // namespace session

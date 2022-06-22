@@ -1,7 +1,7 @@
 /*
  * SessionPlots.cpp
  *
- * Copyright (C) 2021 by RStudio, PBC
+ * Copyright (C) 2022 by RStudio, PBC
  *
  * Unless you have received this program directly from RStudio pursuant
  * to the terms of a commercial license agreement with RStudio, then
@@ -21,6 +21,7 @@
 #include <shared_core/Error.hpp>
 #include <core/Log.hpp>
 #include <core/Exec.hpp>
+#include <core/Thread.hpp>
 #include <core/Predicate.hpp>
 #include <shared_core/FilePath.hpp>
 #include <core/BoostErrors.hpp>
@@ -36,11 +37,14 @@
 #include <r/RSexp.hpp>
 #include <r/RExec.hpp>
 #include <r/RRoutines.hpp>
+
+#include <r/session/RSessionUtils.hpp>
 #include <r/session/RGraphics.hpp>
 
 #include <session/SessionModuleContext.hpp>
 
 using namespace rstudio::core;
+using namespace boost::placeholders;
 
 namespace rstudio {
 namespace session {
@@ -53,7 +57,19 @@ namespace {
 
 // locations
 #define kGraphics "/graphics"
+
+Error getPlotTempdir(const json::JsonRpcRequest& request, 
+                     json::JsonRpcResponse* pResponse)
+{
+   std::string tempdir;
+   Error error = r::exec::RFunction("tempdir").callUtf8(&tempdir);
+   if (error)
+      LOG_ERROR(error);
    
+   pResponse->setResult(tempdir);
+   return Success();
+}
+
 Error nextPlot(const json::JsonRpcRequest& request, 
                json::JsonRpcResponse* pResponse)
 {   
@@ -131,7 +147,7 @@ Error savePlotAs(const json::JsonRpcRequest& request,
    // resolve path
    FilePath plotPath = module_context::resolveAliasedPath(path);
 
-   // if it already exists and we aren't ovewriting then return false
+   // if it already exists and we aren't overwriting then return false
    if (plotPath.exists() && !overwrite)
    {
       pResponse->setResult(boolObject(false));
@@ -174,7 +190,7 @@ Error savePlotAsPdf(const json::JsonRpcRequest& request,
    // resolve path
    FilePath plotPath = module_context::resolveAliasedPath(path);
 
-   // if it already exists and we aren't ovewriting then return false
+   // if it already exists and we aren't overwriting then return false
    if (plotPath.exists() && !overwrite)
    {
       pResponse->setResult(boolObject(false));
@@ -361,7 +377,7 @@ Error getUniqueSavePlotStem(const json::JsonRpcRequest& request,
    if (error)
       return error;
 
-   // set resposne
+   // set response
    pResponse->setResult(stem);
    return Success();
 }
@@ -626,7 +642,7 @@ void handlePngRequest(const http::Request& request,
 }
 
 
-// NOTE: this function assumes it is retreiving the image for the currently
+// NOTE: this function assumes it is retrieving the image for the currently
 // active plot (the assumption is implied by the fact that file not found
 // on the requested png results in a redirect to the currently active
 // plot's png). to handle this redirection we should always maintain an
@@ -738,6 +754,8 @@ void detectChanges(bool activatePlots)
 
 void onDetectChanges(module_context::ChangeSource source)
 {
+   if (!core::thread::isMainThread())
+      return;
    bool activatePlots = source == module_context::ChangeSourceREPL;
    detectChanges(activatePlots);
 }
@@ -750,7 +768,7 @@ void onBackgroundProcessing(bool isIdle)
       // verify that the last change is more than 50ms old. the reason
       // we check for changes in the background is so we can respect
       // plot animations (typically implemented using Sys.sleep). however,
-      // we don't want this to spill over inot incrementally rendering all
+      // we don't want this to spill over into incrementally rendering all
       // plots as this will slow down overall plotting performance
       // considerably.
       using namespace boost::posix_time;
@@ -899,6 +917,7 @@ Error initialize()
    using namespace module_context;
    ExecBlock initBlock;
    initBlock.addFunctions()
+      (bind(registerRpcMethod, "get_plot_tempdir", getPlotTempdir))
       (bind(registerRpcMethod, "next_plot", nextPlot))
       (bind(registerRpcMethod, "previous_plot", previousPlot))
       (bind(registerRpcMethod, "remove_plot", removePlot))

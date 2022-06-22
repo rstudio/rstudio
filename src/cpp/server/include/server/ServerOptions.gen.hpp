@@ -1,7 +1,7 @@
 /*
  * ServerOptions.gen.hpp
  *
- * Copyright (C) 2021 by RStudio, PBC
+ * Copyright (C) 2022 by RStudio, PBC
  *
  * Unless you have received this program directly from RStudio pursuant
  * to the terms of a commercial license agreement with RStudio, then
@@ -134,7 +134,10 @@ protected:
       "If enabled, cause RStudio to enforce that incoming request origins are from the host domain. This can be added for additional security. See https://cheatsheetseries.owasp.org/cheatsheets/Cross-Site_Request_Forgery_Prevention_Cheat_Sheet.html#verifying-origin-with-standard-headers")
       ("www-allow-origin",
       value<std::vector<std::string>>(pWwwAllowedOrigins)->default_value(std::vector<std::string>())->multitoken(),
-      "Specifies an additional origin that requests are allowed from, even if it does not match the host domain. Used if origin checking is enabled. May be specified multiple times for multiple origins.");
+      "Specifies an additional origin that requests are allowed from, even if it does not match the host domain. Used if origin checking is enabled. May be specified multiple times for multiple origins.")
+      ("session-use-file-storage",
+      value<bool>(&sessionUseFileStorage_)->default_value(true),
+      "Whether to use the file system to store metadata about the session storage or the internal database. Setting this to false may require special network configuration. See [Session Storage](../server_management/session_storage.html) for more information.");
 
    pRsession->add_options()
       ("rsession-which-r",
@@ -225,12 +228,9 @@ protected:
       value<int>(&monitorIntervalSeconds_)->default_value(60),
       "The interval in seconds at which the monitor is probed for new data.");
 
-   FilePath defaultConfigPath = core::system::xdg::systemConfigFile("rserver.conf");
+   FilePath defaultConfigPath = core::system::xdg::findSystemConfigFile("rserver configuration", "rserver.conf");
    std::string configFile = defaultConfigPath.exists() ?
       defaultConfigPath.getAbsolutePath() : "";
-   if (!configFile.empty())
-      LOG_INFO_MESSAGE("Reading rserver configuration from " + configFile);
-
    return program_options::OptionsDescription("rserver", configFile);
 }
 
@@ -256,6 +256,7 @@ public:
    std::string wwwFrameOrigin() const { return wwwFrameOrigin_; }
    bool wwwEnableOriginCheck() const { return wwwEnableOriginCheck_; }
    std::vector<boost::regex> wwwAllowedOrigins() const { return wwwAllowedOrigins_; }
+   bool sessionUseFileStorage() const { return sessionUseFileStorage_; }
    std::string rsessionWhichR() const { return rsessionWhichR_; }
    std::string rsessionPath() const { return rsessionPath_; }
    std::string rldpathPath() const { return rldpathPath_; }
@@ -305,6 +306,7 @@ protected:
    std::string wwwFrameOrigin_;
    bool wwwEnableOriginCheck_;
    std::vector<boost::regex> wwwAllowedOrigins_;
+   bool sessionUseFileStorage_;
    std::string rsessionWhichR_;
    std::string rsessionPath_;
    std::string rldpathPath_;
@@ -332,6 +334,7 @@ protected:
    std::string authRevocationListDir_;
    bool authCookiesForceSecure_;
    int monitorIntervalSeconds_;
+   virtual bool allowOverlay() const { return false; };
 };
 
 } // namespace server

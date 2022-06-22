@@ -1,7 +1,7 @@
 /*
  * SpellingLanguageSelectWidget.java
  *
- * Copyright (C) 2021 by RStudio, PBC
+ * Copyright (C) 2022 by RStudio, PBC
  *
  * Unless you have received this program directly from RStudio pursuant
  * to the terms of a commercial license agreement with RStudio, then
@@ -14,10 +14,12 @@
  */
 package org.rstudio.studio.client.common.spelling.ui;
 
+import com.google.gwt.core.client.GWT;
 import org.rstudio.core.client.widget.HelpButton;
 import org.rstudio.core.client.widget.ProgressIndicator;
 import org.rstudio.core.client.widget.SelectWidget;
 import org.rstudio.studio.client.RStudioGinjector;
+import org.rstudio.studio.client.common.StudioClientCommonConstants;
 import org.rstudio.studio.client.common.spelling.SpellingService;
 import org.rstudio.studio.client.common.spelling.model.SpellingLanguage;
 import org.rstudio.studio.client.server.ServerError;
@@ -41,7 +43,7 @@ public class SpellingLanguageSelectWidget extends SelectWidget
    public SpellingLanguageSelectWidget(SpellingService spellingService, 
                                        boolean includeDefaultOption)
    {
-      super("Main dictionary language:", 
+      super(constants_.spellingLanguageSelectWidgetLabel(),
             new String[0], 
             new String[0], 
             false, 
@@ -53,7 +55,7 @@ public class SpellingLanguageSelectWidget extends SelectWidget
       
       getLabel().getElement().getStyle().setMarginBottom(4, Unit.PX);
       
-      HelpButton.addHelpButton(this, "spelling_dictionaries", "Help on spelling dictionaries", 0);
+      HelpButton.addHelpButton(this, "spelling_dictionaries", constants_.addHelpButtonLabel(), 0);
       
       getListBox().addChangeHandler(new ChangeHandler() {
 
@@ -65,8 +67,8 @@ public class SpellingLanguageSelectWidget extends SelectWidget
             {
                setSelectedLanguage(currentLangId_);
                String progress = allLanguagesInstalled_ ?
-                                    "Downloading dictionaries..." :
-                                    "Downloading additional languages...";
+                                    constants_.progressDownloadingLabel() :
+                                    constants_.progressDownloadingLanguagesLabel();
                
                // show progress
                progressIndicator_.onProgress(progress);
@@ -94,7 +96,7 @@ public class SpellingLanguageSelectWidget extends SelectWidget
                         {
                            progressIndicator_.onCompleted();
                            RStudioGinjector.INSTANCE.getGlobalDisplay().showErrorMessage(
-                              "Error Downloading Dictionaries", userMessage.stringValue());
+                              constants_.onErrorDownloadingCaption(), userMessage.stringValue());
                         }
                         else
                         {
@@ -129,7 +131,7 @@ public class SpellingLanguageSelectWidget extends SelectWidget
       String[] values = new String[languages.length()+1 + languageOffset_];
       if (includeDefaultOption_)
       {
-         choices[0] = "(Default)";
+         choices[0] = constants_.includeDefaultOption();
          values[0] = "";
       }
       for (int i=0; i<languages.length(); i++)
@@ -139,9 +141,9 @@ public class SpellingLanguageSelectWidget extends SelectWidget
          values[i + languageOffset_] = language.getId();
       }
       if (allLanguagesInstalled)
-         choices[installIndex_] = "Update Dictionaries...";
+         choices[installIndex_] = constants_.allLanguagesInstalledOption();
       else
-         choices[installIndex_] = "Install More Languages...";
+         choices[installIndex_] = constants_.installIndexOption();
       values[installIndex_] = "";
       
       setChoices(choices, values);
@@ -185,5 +187,6 @@ public class SpellingLanguageSelectWidget extends SelectWidget
    private boolean allLanguagesInstalled_ = false;
    private JsArray<SpellingLanguage> languages_;
    private ProgressIndicator progressIndicator_;
-  
+   private static final StudioClientCommonConstants constants_ = GWT.create(StudioClientCommonConstants.class);
+
 }

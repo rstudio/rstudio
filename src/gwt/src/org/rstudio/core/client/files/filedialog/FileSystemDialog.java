@@ -1,7 +1,7 @@
 /*
  * FileSystemDialog.java
  *
- * Copyright (C) 2021 by RStudio, PBC
+ * Copyright (C) 2022 by RStudio, PBC
  *
  * Unless you have received this program directly from RStudio pursuant
  * to the terms of a commercial license agreement with RStudio, then
@@ -21,11 +21,13 @@ import com.google.gwt.event.logical.shared.SelectionEvent;
 import com.google.gwt.event.logical.shared.SelectionHandler;
 import com.google.gwt.user.client.Event;
 import com.google.gwt.user.client.ui.*;
+import com.google.gwt.core.client.GWT;
 
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 
+import org.rstudio.core.client.CoreClientConstants;
 import org.rstudio.core.client.ElementIds;
 import org.rstudio.core.client.StringUtil;
 import org.rstudio.core.client.events.SelectionCommitEvent;
@@ -51,8 +53,8 @@ public abstract class FileSystemDialog extends ModalDialogBase
    {
       public void onClick(ClickEvent event)
       {
-         context_.messageDisplay().promptForText("New Folder",
-                                                 "Folder name",
+         context_.messageDisplay().promptForText(constants_.newFolderTitle(),
+                                                 constants_.folderNameLabel(),
                                                  null,
                                                  this);
       }
@@ -115,7 +117,7 @@ public abstract class FileSystemDialog extends ModalDialogBase
 
       if (allowFolderCreation)
       {
-         addLeftButton(new ThemedButton("New Folder", new NewFolderHandler()),
+         addLeftButton(new ThemedButton(constants_.newFolderTitle(), new NewFolderHandler()),
                ElementIds.FILE_NEW_FOLDER_BUTTON);
       }
 
@@ -124,7 +126,7 @@ public abstract class FileSystemDialog extends ModalDialogBase
             ElementIds.FILE_ACCEPT_BUTTON + "_" + ElementIds.idSafeString(buttonName));
 
       ThemedButton cancelButton =
-         new ThemedButton("Cancel",
+         new ThemedButton(constants_.cancelLabel(),
          event -> {
             if (invokeOperationEvenOnCancel_)
             {
@@ -281,7 +283,7 @@ public abstract class FileSystemDialog extends ModalDialogBase
 
    protected void showError(String errorMessage)
    {
-      context_.messageDisplay().showErrorMessage("Error", errorMessage);
+      context_.messageDisplay().showErrorMessage(constants_.errorCaption(), errorMessage);
    }
 
    /**
@@ -386,4 +388,5 @@ public abstract class FileSystemDialog extends ModalDialogBase
    private final ProgressIndicator progress_;
    protected FileBrowserWidget browser_;
    private String initialFilename_;
+   private static final CoreClientConstants constants_ = GWT.create(CoreClientConstants.class);
 }

@@ -1,7 +1,7 @@
 /*
  * YamlFrontMatter.java
  *
- * Copyright (C) 2021 by RStudio, PBC
+ * Copyright (C) 2022 by RStudio, PBC
  *
  * Unless you have received this program directly from RStudio pursuant
  * to the terms of a commercial license agreement with RStudio, then
@@ -14,6 +14,9 @@
  */
 package org.rstudio.studio.client.rmarkdown.model;
 
+import java.util.ArrayList;
+
+import org.rstudio.core.client.StringUtil;
 import org.rstudio.studio.client.workbench.views.source.editors.text.DocDisplay;
 import org.rstudio.studio.client.workbench.views.source.editors.text.ace.Position;
 import org.rstudio.studio.client.workbench.views.source.editors.text.ace.Range;
@@ -23,12 +26,19 @@ import com.google.gwt.regexp.shared.RegExp;
 
 public class YamlFrontMatter
 {
+   // front matter can end with ... rather than ---; see spec:
+   // http://www.yaml.org/spec/1.2/spec.html#id2760395
+   //
+   // note that these can't be statically initialized as fully compiled
+   // regexes due to state reuse
+   private static String frontMatterBeginRegex = "^---\\s*$";
+   private static String frontMatterEndRegex = "^(---|\\.\\.\\.)\\s*$";
+
    public static Range getFrontMatterRange(DocDisplay display)
    {
-      // front matter can end with ... rather than ---; see spec:
-      // http://www.yaml.org/spec/1.2/spec.html#id2760395
-      RegExp frontMatterBegin = RegExp.compile("^---\\s*$", "gm");
-      RegExp frontMatterEnd = RegExp.compile("^(---|\\.\\.\\.)\\s*$", "gm");
+      RegExp frontMatterBegin = RegExp.compile(frontMatterBeginRegex, "gm");
+      RegExp frontMatterEnd = RegExp.compile(frontMatterEndRegex, "gm");
+
       Position begin = null;
       Position end = null;
       
@@ -69,6 +79,43 @@ public class YamlFrontMatter
          return null;
       
       return Range.fromPoints(begin, end);
+   }
+   
+   public static String getFrontMatter(String document)
+   {
+      RegExp frontMatterBegin = RegExp.compile(frontMatterBeginRegex, "gm");
+      RegExp frontMatterEnd = RegExp.compile(frontMatterEndRegex, "gm");
+
+      ArrayList<String> frontMatter = new ArrayList<String>();
+      for (String line : StringUtil.getLineIterator(document))
+      {
+         if (frontMatter.size() == 0)
+         {
+            MatchResult beginMatch = frontMatterBegin.exec(line);
+            if (beginMatch != null)
+            {
+               frontMatter.add(line);
+            }
+            else
+            {
+               if (!line.matches("\\s*"))
+                  return null;
+            }
+         }
+         else
+         {
+            MatchResult endMatch = frontMatterEnd.exec(line);
+            if (endMatch != null)
+            {
+               return StringUtil.join(frontMatter.subList(1, frontMatter.size()), "\n");
+            }
+            else
+            {
+               frontMatter.add(line);
+            }
+         }
+      }
+      return null;
    }
    
    public static String getFrontMatter(DocDisplay display)

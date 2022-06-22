@@ -1,7 +1,7 @@
 /*
  * SessionObjectExplorer.cpp
  *
- * Copyright (C) 2021 by RStudio, PBC
+ * Copyright (C) 2022 by RStudio, PBC
  *
  * Unless you have received this program directly from RStudio pursuant
  * to the terms of a commercial license agreement with RStudio, then
@@ -139,6 +139,18 @@ void onResume(const Settings&)
    
 }
 
+void removeFromRCache(const std::string& id)
+{
+   // also attempt to remove from R cache
+   using namespace r::exec;
+   Error error = RFunction(".rs.explorer.removeCacheEntry")
+         .addParam(id)
+         .call();
+
+   if (error)
+      LOG_ERROR(error);
+}
+
 void onDocPendingRemove(boost::shared_ptr<source_database::SourceDocument> pDoc)
 {
    Error error;
@@ -155,15 +167,8 @@ void onDocPendingRemove(boost::shared_ptr<source_database::SourceDocument> pDoc)
       LOG_ERROR(error);
       return;
    }
-   
-   // also attempt to remove from R cache
-   using namespace r::exec;
-   error = RFunction(".rs.explorer.removeCacheEntry")
-         .addParam(id)
-         .call();
-   
-   if (error)
-      LOG_ERROR(error);
+
+   module_context::executeOnMainThread(boost::bind(removeFromRCache, id));
 }
 
 void onDeferredInit(bool)

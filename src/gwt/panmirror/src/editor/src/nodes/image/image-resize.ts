@@ -1,7 +1,7 @@
 /*
  * image-resize.ts
  *
- * Copyright (C) 2021 by RStudio, PBC
+ * Copyright (C) 2022 by RStudio, PBC
  *
  * Unless you have received this program directly from RStudio pursuant
  * to the terms of a commercial license agreement with RStudio, then
@@ -40,8 +40,9 @@ import {
   kValidUnits,
   isValidImageSizeUnit,
 } from '../../api/image';
-import { kWidthAttrib, kHeightAttrib, kStyleAttrib, kAlignAttrib } from '../../api/pandoc_attr';
+import { kWidthAttrib, kHeightAttrib, kStyleAttrib, kAlignAttrib, kFigAlignAttrib, pandocAttrGetKeyvalue } from '../../api/pandoc_attr';
 import { EditorUIImages } from '../../api/ui-images';
+import { EditorFormat } from '../../api/format';
 
 import { imageDialog } from './image-dialog';
 import { hasPercentWidth, imageDimensionsFromImg } from './image-util';
@@ -90,6 +91,7 @@ export function attachResizeUI(
   imgContainerWidth: () => number,
   view: EditorView,
   ui: EditorUI,
+  format: EditorFormat
 ): ResizeUI {
   // indicate that resize ui is active
   container.classList.add('pm-image-resize-active');
@@ -162,6 +164,7 @@ export function attachResizeUI(
       nodeWithPos.node.type,
       view,
       ui,
+      format,
       true,
     );
   };
@@ -183,6 +186,8 @@ export function attachResizeUI(
   // create resize handle and add it to the container
   const handle = resizeHandle(
     img,
+    imageNode,
+    container,
     imgContainerWidth,
     shelf.props.lockRatio,
     shelf.props.units,
@@ -407,6 +412,8 @@ function resizeShelf(
 
 function resizeHandle(
   img: HTMLImageElement,
+  imageNode: () => NodeWithPos,
+  container: HTMLElement,
   imgContainerWidth: () => number,
   lockRatio: () => boolean,
   units: () => string,
@@ -459,6 +466,12 @@ function resizeHandle(
       if (hasPercentWidth(units()) && widthInUnits > 100) {
         width = containerWidth;
         height = width * (startHeight / startWidth);
+      }
+
+      // set margins for any alignment we have
+      const align = pandocAttrGetKeyvalue(imageNode().node.attrs, kFigAlignAttrib);
+      if (align) {
+        setMarginsForAlignment(container, align, width, containerWidth);
       }
 
       img.style.width = width + kPixelUnit;
@@ -639,7 +652,7 @@ export function updateImageViewSize(
 
         // apply selected other styles to the image view (we don't just forward the entire
         // style attribute b/c that would interfere with setting of style props in the
-        // width and height cases below). here we should whitelist in all styles we think
+        // width and height cases below). here we should enumerate all styles we think
         // users might want to see in the editor
         const liftImgStyle = (attrib: string, val: string) => img.style.setProperty(attrib, val);
         value = removeStyleAttrib(value, 'border(?:[\\w\\-])*', liftImgStyle);
@@ -693,9 +706,46 @@ export function updateImageViewSize(
       }
     });
 
+    // if we have a fig-align value then determine the displayed width and
+    // apply margins as required to the figure
+    if (figure) {
+      const align = pandocAttrGetKeyvalue(node.attrs, kFigAlignAttrib);
+      if (align && (align !== "default")) {
+        let width: number | null = null;
+        const widthProp = imageSizePropWithUnit(img.style.width);
+        if (widthProp) {
+          width = widthProp.size;
+        } else {
+          const dims = imageDimensionsFromImg(img, containerWidth);
+          width = dims.naturalWidth;
+        }
+        if (width !== null) {
+          setMarginsForAlignment(figure, align, width, containerWidth);
+        }
+      }
+    }
+    
     // if width is a percentage, then displayed height needs to be 'auto'
     if (hasPercentWidth(img.getAttribute(kDataWidth))) {
       img.style.height = 'auto';
     }
+  }
+}
+
+
+function setMarginsForAlignment(el: HTMLElement, align: string, width: number, containerWidth: number) {
+  const marginWidth = containerWidth - width;
+  if (marginWidth > 0) {
+    if (align === "left") {
+      el.style.marginRight = marginWidth + kPixelUnit;
+    } else if (align === "right") {
+      el.style.marginLeft = marginWidth + kPixelUnit;
+    } else if (align === "center") {
+      el.style.marginLeft = (marginWidth/2) + kPixelUnit;
+      el.style.marginRight = el.style.marginLeft ;
+    }
+  } else {
+    el.style.marginLeft = "";
+    el.style.marginRight = "" ;
   }
 }

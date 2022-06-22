@@ -1,7 +1,7 @@
 /*
  * HelpServerOperations.java
  *
- * Copyright (C) 2021 by RStudio, PBC
+ * Copyright (C) 2022 by RStudio, PBC
  *
  * Unless you have received this program directly from RStudio pursuant
  * to the terms of a commercial license agreement with RStudio, then
@@ -46,4 +46,14 @@ public interface HelpServerOperations
                                ServerRequestCallback<HelpInfo.Custom> requestCallback);
    
    void showCustomHelpTopic(String helpHandler, String topic, String source);
+
+   void getVignetteTitle(String topic,
+                         String pkgName, 
+                         ServerRequestCallback<String> requestCallback);
+
+   public void getVignetteDescription(String topic,
+                                      String pkgName, 
+                                      ServerRequestCallback<String> requestCallback);
+
+   void showVignette(String topic, String pkgName);
 }

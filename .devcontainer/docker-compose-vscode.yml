@@ -1,0 +1,16 @@
+version: '3'
+
+services:
+
+    vscode:
+        build:
+            context: ..
+            dockerfile: .devcontainer/Dockerfile
+        ports:
+            - "8787"
+        tty: true
+        privileged: true
+        volumes:
+            - ~/:/userhome
+            - ~/.aws:/root/.aws
+            - /var/run/docker.sock:/var/run/docker.sock

@@ -1,7 +1,7 @@
 /*
  * ConnectionsPane.java
  *
- * Copyright (C) 2021 by RStudio, PBC
+ * Copyright (C) 2022 by RStudio, PBC
  *
  * Unless you have received this program directly from RStudio pursuant
  * to the terms of a commercial license agreement with RStudio, then
@@ -69,6 +69,7 @@ import org.rstudio.studio.client.application.events.EventBus;
 import org.rstudio.studio.client.workbench.commands.Commands;
 import org.rstudio.studio.client.workbench.prefs.model.UserPrefs;
 import org.rstudio.studio.client.workbench.ui.WorkbenchPane;
+import org.rstudio.studio.client.workbench.views.connections.ConnectionsConstants;
 import org.rstudio.studio.client.workbench.views.connections.ConnectionsPresenter;
 import org.rstudio.studio.client.workbench.views.connections.events.ActiveConnectionsChangedEvent;
 import org.rstudio.studio.client.workbench.views.connections.events.ExecuteConnectionActionEvent;
@@ -88,7 +89,7 @@ public class ConnectionsPane extends WorkbenchPane
    public ConnectionsPane(Commands commands, EventBus eventBus, UserPrefs userPrefs)
    {
       // initialize
-      super("Connections", eventBus);
+      super(constants_.connectionsTitle(), eventBus);
       commands_ = commands;
       userPrefs_ = userPrefs;
 
@@ -141,7 +142,7 @@ public class ConnectionsPane extends WorkbenchPane
             return connection.getDisplayName();
          }
       };      
-      connectionsDataGrid_.addColumn(hostColumn_, new TextHeader("Connection"));
+      connectionsDataGrid_.addColumn(hostColumn_, new TextHeader(constants_.connectionTextHeader()));
       connectionsDataGrid_.setColumnWidth(hostColumn_, 50, Unit.PCT);
       
       // add status column
@@ -151,13 +152,13 @@ public class ConnectionsPane extends WorkbenchPane
          public String getValue(Connection connection)
          {
             if (isConnected(connection.getId()))
-               return "Connected";
+               return constants_.connectedText();
             else
                return "";
          }
       };
       statusColumn_.setCellStyleNames(RES.dataGridStyle().statusColumn());
-      connectionsDataGrid_.addColumn(statusColumn_, new TextHeader("Status"));
+      connectionsDataGrid_.addColumn(statusColumn_, new TextHeader(constants_.statusText()));
       connectionsDataGrid_.setColumnWidth(statusColumn_, 75, Unit.PX);
       
       // add explore column
@@ -171,7 +172,7 @@ public class ConnectionsPane extends WorkbenchPane
                    fireEvent(new ExploreConnectionEvent(connection));
                 }  
               },
-              "Explore connection") {
+              constants_.exploreConnectionTitle()) {
       };
       connectionsDataGrid_.addColumn(exploreColumn, new TextHeader(""));
       connectionsDataGrid_.setColumnWidth(exploreColumn, 30, Unit.PX);
@@ -337,9 +338,9 @@ public class ConnectionsPane extends WorkbenchPane
    @Override
    protected Toolbar createMainToolbar()
    {
-      toolbar_ = new Toolbar("Connections Tab");
+      toolbar_ = new Toolbar(constants_.connectionsTabLabel());
    
-      searchWidget_ = new SearchWidget("Filter by connection", new SuggestOracle() {
+      searchWidget_ = new SearchWidget(constants_.filterByConnectionLabel(), new SuggestOracle() {
          @Override
          public void requestSuggestions(Request request, Callback callback)
          {
@@ -350,7 +351,7 @@ public class ConnectionsPane extends WorkbenchPane
          }
       });
 
-      objectSearchWidget_ = new SearchWidget("Filter by object", new SuggestOracle() {
+      objectSearchWidget_ = new SearchWidget(constants_.filterByObjectLabel(), new SuggestOracle() {
          @Override
          public void requestSuggestions(Request request, Callback callback)
          {
@@ -366,34 +367,34 @@ public class ConnectionsPane extends WorkbenchPane
       
       backToConnectionsButton_ = new ToolbarButton(
             ToolbarButton.NoText,
-            "View all connections",
+            constants_.viewAllConnectionsTitle(),
             commands_.helpBack().getImageResource());
        
       // connect meuu
       ToolbarPopupMenu connectMenu = new ToolbarPopupMenu();
       connectMenu.addItem(connectMenuItem(
             commands_.historySendToConsole().getImageResource(),
-            "R Console",
+            constants_.rConsoleText(),
             ConnectionOptions.CONNECT_R_CONSOLE));
       connectMenu.addSeparator();
       connectMenu.addItem(connectMenuItem(
             commands_.newSourceDoc().getImageResource(),
-            "New R Script",
+            constants_.newRScriptText(),
             ConnectionOptions.CONNECT_NEW_R_SCRIPT));
       connectMenu.addItem(connectMenuItem(
          commands_.newRNotebook().getImageResource(),
-         "New R Notebook",
+         constants_.newRNotebookText(),
             ConnectionOptions.CONNECT_NEW_R_NOTEBOOK));
       if (BrowseCap.INSTANCE.canCopyToClipboard())
       {
          connectMenu.addSeparator();
          connectMenu.addItem(connectMenuItem(
                commands_.copyPlotToClipboard().getImageResource(),
-               "Copy to Clipboard",
+               constants_.copyToClipboardText(),
                ConnectionOptions.CONNECT_COPY_TO_CLIPBOARD));
       }
       connectMenuButton_ = new ToolbarMenuButton(
-            "Connect",
+            constants_.connectLabel(),
             ToolbarButton.NoTitle,
             commands_.newConnection().getImageResource(), 
             connectMenu);
@@ -418,7 +419,7 @@ public class ConnectionsPane extends WorkbenchPane
    @Override
    protected SecondaryToolbar createSecondaryToolbar()
    {
-      secondaryToolbar_ = new SecondaryToolbar("Connections Tab Connection");
+      secondaryToolbar_ = new SecondaryToolbar(constants_.connectionsTab());
       secondaryToolbar_.addLeftWidget(connectionName_ = new ToolbarLabel());
       connectionIcon_ = new Image();
       connectionIcon_.setWidth("16px");
@@ -644,4 +645,5 @@ public class ConnectionsPane extends WorkbenchPane
       else
          installConnectionsToolbar();
    }
+   private static final ConnectionsConstants constants_ = GWT.create(ConnectionsConstants.class);
 }

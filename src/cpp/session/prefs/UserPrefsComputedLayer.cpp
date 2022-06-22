@@ -1,7 +1,7 @@
 /*
  * UserPrefsComputedLayer.cpp
  *
- * Copyright (C) 2021 by RStudio, PBC
+ * Copyright (C) 2022 by RStudio, PBC
  *
  * Unless you have received this program directly from RStudio pursuant
  * to the terms of a commercial license agreement with RStudio, then
@@ -58,9 +58,20 @@ Error UserPrefsComputedLayer::readPrefs()
 
    // SSH key ----------------------------------------------------------------
    FilePath sshKeyDir = modules::source_control::defaultSshKeyDir();
-   FilePath rsaSshKeyPath = sshKeyDir.completeChildPath("id_rsa");
+
+   // Github recommends using ed25519, so look for that first
+   std::string keyFile("id_ed25519");
+   FilePath rsaSshKeyPath = sshKeyDir.completeChildPath(keyFile);
+   if (!rsaSshKeyPath.exists())
+   {
+      keyFile = "id_rsa";
+      rsaSshKeyPath = sshKeyDir.completeChildPath(keyFile);
+   }
    layer[kRsaKeyPath] = rsaSshKeyPath.getAbsolutePath();
    layer["have_rsa_key"] = rsaSshKeyPath.exists();
+
+   // provide name of public key file
+   layer["rsa_key_file"] = keyFile + ".pub";
 
    // Crash reporting --------------------------------------------------------
    layer[kSubmitCrashReports] = crash_handler::isHandlerEnabled();
@@ -138,4 +149,5 @@ FilePath UserPrefsComputedLayer::detectedTerminalPath()
 } // namespace prefs
 } // namespace session
 } // namespace rstudio
+
 

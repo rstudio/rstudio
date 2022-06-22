@@ -1,7 +1,7 @@
 /*
  * ChunkRowExecState.java
  *
- * Copyright (C) 2021 by RStudio, PBC
+ * Copyright (C) 2022 by RStudio, PBC
  *
  * Unless you have received this program directly from RStudio pursuant
  * to the terms of a commercial license agreement with RStudio, then
@@ -76,7 +76,11 @@ public abstract class ChunkRowExecState
    protected abstract void addClazz(int state);
    
    protected abstract void removeClazz();
-   
+
+   protected abstract void setTitle(String title);
+
+   protected abstract void appendToTitle(String text);
+
    // Private methods ---------------------------------------------------------
    
    private void scheduleDismiss()
@@ -114,4 +118,7 @@ public abstract class ChunkRowExecState
    public final static int LINE_RESTING  = 2;
    public final static int LINE_ERROR    = 3;
    public final static int LINE_NONE     = 4;
+
+   // Only used for visual mode chunks
+   public final static int LINE_LINT     = 6;
 }

@@ -1,7 +1,7 @@
 /*
  * RSessionContext.cpp
  *
- * Copyright (C) 2021 by RStudio, PBC
+ * Copyright (C) 2022 by RStudio, PBC
  *
  * Unless you have received this program directly from RStudio pursuant
  * to the terms of a commercial license agreement with RStudio, then
@@ -35,6 +35,7 @@
 
 #include <core/r_util/RActiveSessions.hpp>
 #include <core/r_util/RProjectFile.hpp>
+#include <core/r_util/RActiveSessionsStorage.hpp>
 
 #ifndef _WIN32
 #include <sys/stat.h>
@@ -113,6 +114,18 @@ SessionScope SessionScope::vscodeSession(const std::string& id)
    // note: project ID is currently unused as it is meaningless
    // in the context of external workbenches
    return SessionScope(ProjectId(kVSCodeId), id);
+}
+
+SessionScope SessionScope::fromSessionId(const std::string& id, const std::string& editor)
+{
+   if (editor == kWorkbenchJupyterLab)
+      return jupyterLabSession(id);
+   else if (editor == kWorkbenchJupyterNotebook)
+      return jupyterNotebookSession(id);
+   else if (editor == kWorkbenchVSCode)
+      return vscodeSession(id);
+   else
+      return projectNone(id);
 }
 
 bool SessionScope::isProjectNone() const
@@ -217,15 +230,17 @@ bool isSharedPath(const std::string& projectPath,
    return false;
 }
 
-SessionScopeState validateSessionScope(const SessionScope& scope,
-                          const core::FilePath& userHomePath,
-                          const core::FilePath& userScratchPath,
-                          core::r_util::ProjectIdToFilePath projectIdToFilePath,
-                          bool projectSharingEnabled,
-                          std::string* pProjectFilePath)
+SessionScopeState validateSessionScope(
+   std::shared_ptr<IActiveSessionsStorage> storage,
+   const SessionScope& scope,
+   const core::FilePath& userHomePath,
+   const core::FilePath& userScratchPath,
+   core::r_util::ProjectIdToFilePath projectIdToFilePath,
+   bool projectSharingEnabled,
+   std::string* pProjectFilePath)
 {
    // does this session exist?
-   r_util::ActiveSessions activeSessions(userScratchPath);
+   r_util::ActiveSessions activeSessions(storage, userScratchPath);
    boost::shared_ptr<r_util::ActiveSession> pSession
                                           = activeSessions.get(scope.id());
    if (pSession->empty() || !pSession->validate(userHomePath,
@@ -457,7 +472,7 @@ std::string generateScopeId(const std::vector<std::string>& reserved)
    std::string id = core::string_utils::toLower(
                                  core::system::generateShortenedUuid());
 
-   // ensure 8 chracters
+   // ensure 8 characters
    if (id.length() != kProjectIdLen)
    {
       if (id.length() > kProjectIdLen)

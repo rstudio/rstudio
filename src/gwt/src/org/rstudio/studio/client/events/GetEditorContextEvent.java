@@ -1,7 +1,7 @@
 /*
  * GetEditorContextEvent.java
  *
- * Copyright (C) 2021 by RStudio, PBC
+ * Copyright (C) 2022 by RStudio, PBC
  *
  * Unless you have received this program directly from RStudio pursuant
  * to the terms of a commercial license agreement with RStudio, then
@@ -29,8 +29,16 @@ public class GetEditorContextEvent extends CrossWindowEvent<GetEditorContextEven
    {
       protected Data() {}
 
-      public static final native Data create() /*-{ return 0; }-*/;
-      public final native int getType() /*-{ return this; }-*/;
+      public static final native Data create()
+      /*-{
+         return {
+            type: 0,
+            id: ""
+         };
+      }-*/;
+      
+      public final native int getType()     /*-{ return this["type"]; }-*/;
+      public final native String getDocId() /*-{ return this["id"];   }-*/;
    }
 
    public static class DocumentSelection extends JavaScriptObject

@@ -1,7 +1,7 @@
 /*
  * Scope.java
  *
- * Copyright (C) 2021 by RStudio, PBC
+ * Copyright (C) 2022 by RStudio, PBC
  *
  * Unless you have received this program directly from RStudio pursuant
  * to the terms of a commercial license agreement with RStudio, then
@@ -56,6 +56,10 @@ public class Scope extends JavaScriptObject
 
    public native final boolean isFunction() /*-{
       return this.isFunction();
+   }-*/;
+
+   public native final boolean isTest() /*-{
+      return this.isTest();
    }-*/;
 
    public native final Scope getParentScope() /*-{

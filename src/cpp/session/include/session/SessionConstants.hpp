@@ -2,7 +2,7 @@
 /*
  * SessionConstants.hpp
  *
- * Copyright (C) 2021 by RStudio, PBC
+ * Copyright (C) 2022 by RStudio, PBC
  *
  * Unless you have received this program directly from RStudio pursuant
  * to the terms of a commercial license agreement with RStudio, then
@@ -43,6 +43,11 @@
 
 #define kRStudioUserHomePage              "RSTUDIO_USER_HOME_PAGE"
 
+#define kSessionSslCertEnvVar             "RS_SESSION_SSL_CERT"
+#define kSessionSslCertKeyEnvVar          "RS_SESSION_SSL_CERT_KEY"
+#define kSessionSslCertPathEnvVar         "RS_SESSION_SSL_CERT_PATH"
+#define kSessionSslCertKeyPathEnvVar      "RS_SESSION_SSL_CERT_KEY_PATH"
+
 #define kProgramModeSessionOption         "program-mode"
 #define kRStudioProgramMode               "RSTUDIO_PROGRAM_MODE"
 #define kSessionProgramModeDesktop        "desktop"
@@ -69,14 +74,21 @@
 #define kTimeoutSessionOption             "session-timeout-minutes"
 #define kTimeoutSuspendSessionOption      "session-timeout-suspend"
 #define kDisconnectedTimeoutSessionOption "session-disconnected-timeout-minutes"
-#define kSessionEnvVarSaveBlacklist       "session-env-var-save-blacklist"
+#define kSessionEphemeralEnvVars          "session-ephemeral-env-vars"
 #define kVerifySignaturesSessionOption    "verify-signatures"
 #define kStandaloneSessionOption          "standalone"
 #define kWwwAddressSessionOption          "www-address"
 #define kWwwPortSessionOption             "www-port"
 #define kWwwResusePorts                   "www-reuse-ports"
+#define kSessionSslCertOption             "cert"
+#define kSessionSslCertKeyOption          "cert-key"
 #define kTerminalPortOption               "terminal-port"
 #define kSessionSuspendOnIncompleteStatement "session-suspend-on-incomplete-statement"
+#define kSessionAsyncRpcEnabled           "session-async-rpc-enabled"
+#define kSessionAsyncRpcTimeoutMs         "session-async-rpc-timeout-ms"
+#define kSessionHandleOfflineEnabled      "session-handle-offline-enabled"
+#define kSessionHandleOfflineTimeoutMs    "session-handle-offline-timeout-ms"
+#define kSessionUseFileStorage            "session-use-file-storage"
 
 #define kLauncherSessionOption            "launcher-session"
 
@@ -126,7 +138,13 @@
 #define kSessionTmpDirEnvVar       "RS_SESSION_TMP_DIR"
 #define kSessionTmpDir             "rstudio-rsession"
 
-#define kDefaultPandocPath         "bin/pandoc"
+#ifdef QUARTO_ENABLED
+# define kDefaultPandocPath        "bin/quarto/bin/tools"
+#else
+# define kDefaultPandocPath        "bin/pandoc"
+#endif
+
+#define kDefaultQuartoPath         "bin/quarto"
 #define kDefaultPostbackPath       "bin/postback/rpostback"
 #define kDefaultRsclangPath        "bin/rsclang"
 

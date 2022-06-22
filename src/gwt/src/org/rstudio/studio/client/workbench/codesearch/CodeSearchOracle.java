@@ -1,7 +1,7 @@
 /*
  * CodeSearchOracle.java
  *
- * Copyright (C) 2021 by RStudio, PBC
+ * Copyright (C) 2022 by RStudio, PBC
  *
  * Unless you have received this program directly from RStudio pursuant
  * to the terms of a commercial license agreement with RStudio, then
@@ -18,6 +18,7 @@ import java.util.ArrayList;
 import java.util.Comparator;
 import java.util.List;
 
+import com.google.gwt.core.client.GWT;
 import org.rstudio.core.client.CodeNavigationTarget;
 import org.rstudio.core.client.DuplicateHelper;
 import org.rstudio.core.client.FilePosition;
@@ -85,36 +86,47 @@ public class CodeSearchOracle extends SuggestOracle
             char prevChar = StringUtil.charAt(suggestionLower, matchPos - 1);
             if (prevChar == '_' || prevChar == '-' ||
                   (!isFile && prevChar == '.'))
-            {
                penalty = j + 1;
-            }
          }
          
          // Less penalty for case-sensitive matches
          if (StringUtil.charAt(suggestion, matchPos) == query.charAt(j))
             penalty--;
-         
-         // More penalty for 'uninteresting' files
-         if (suggestion == "RcppExports.R" ||
-             suggestion == "RcppExports.cpp")
-            penalty += 6;
-         
-         // More penalty for 'uninteresting' extensions (e.g. .Rd)
-         String extension = StringUtil.getExtension(suggestionLower);
-         if (extension.toLowerCase() == "rd")
-            penalty += 6;
-         
+            
          totalPenalty += penalty;
       }
       
       // Penalize file targets
       if (isFile)
+      {
          totalPenalty++;
+
+         // More penalty for 'uninteresting' files
+         if (isUninterestingFile(suggestion))
+            totalPenalty += 6;
+      }
       
       // Penalize unmatched characters
       totalPenalty += (query.length() - matches.size()) * query.length();
       
       return totalPenalty;
+   }
+
+   public static boolean isUninterestingFile(String filename)
+   {
+      if (filename == "RcppExports.R" ||
+          filename == "RcppExports.cpp" ||
+          filename == "cpp11.R" ||
+          filename == "cpp11.cpp" ||
+          filename == "arrowExports.R" ||
+          filename == "arrowExports.cpp")
+         return true;
+
+      String extension = StringUtil.getExtension(filename);
+      if (extension.toLowerCase() == "rd")
+         return true;
+      
+      return false;
    }
    
    @Override
@@ -339,7 +351,7 @@ public class CodeSearchOracle extends SuggestOracle
                if (error.getCode() != ServerError.TRANSMISSION)
                {
                   RStudioGinjector.INSTANCE.getGlobalDisplay().showErrorMessage(
-                        "Code Search Error", error.getUserMessage());
+                          constants_.codeSearchError(), error.getUserMessage());
                }
                
             }
@@ -468,5 +480,5 @@ public class CodeSearchOracle extends SuggestOracle
       private final ArrayList<CodeSearchSuggestion> suggestions_;
       private final boolean moveAvailable_;
    }
-   
+   private static final CodeSearchConstants constants_ = GWT.create(CodeSearchConstants.class);
 }

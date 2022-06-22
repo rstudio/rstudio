@@ -1,7 +1,7 @@
 /*
  * FilesCopy.java
  *
- * Copyright (C) 2021 by RStudio, PBC
+ * Copyright (C) 2022 by RStudio, PBC
  *
  * Unless you have received this program directly from RStudio pursuant
  * to the terms of a commercial license agreement with RStudio, then
@@ -14,6 +14,7 @@
  */
 package org.rstudio.studio.client.workbench.views.files;
 
+import com.google.gwt.core.client.GWT;
 import com.google.gwt.user.client.Command;
 import com.google.inject.Inject;
 import org.rstudio.core.client.files.FileSystemItem;
@@ -70,10 +71,10 @@ public class FilesCopy
                                    + sourceFile.getStem().length();
       
       // show prompt for new filename
-      final String objectName = sourceFile.isDirectory() ? "Folder" : "File";
+      final String objectName = sourceFile.isDirectory() ? constants_.folderLabel() : constants_.fileLabel();
       globalDisplay_.promptForText(
-             "Copy " + objectName, 
-             "Enter a name for the copy of '" + sourceFile.getName() + "':",
+             constants_.copyTitle(objectName),
+             constants_.enterNameLabel(sourceFile.getName()),
              defaultName,
              0,
              defaultSelectionLength,
@@ -82,7 +83,7 @@ public class FilesCopy
 
          public void execute(String input, ProgressIndicator progress)
          {
-            progress.onProgress("Copying " + objectName.toLowerCase() + "...");
+            progress.onProgress(constants_.copyingLabel(objectName.toLowerCase()));
 
             String targetFilePath = targetDirectory.completePath(input);
             final FileSystemItem targetFile = FileSystemItem.createFile(
@@ -107,4 +108,5 @@ public class FilesCopy
    
    private final FilesServerOperations server_;
    private final GlobalDisplay globalDisplay_;
+   private static final FilesConstants constants_ = GWT.create(FilesConstants.class);
 }

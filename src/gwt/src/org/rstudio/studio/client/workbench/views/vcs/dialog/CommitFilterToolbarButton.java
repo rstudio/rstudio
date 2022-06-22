@@ -1,7 +1,7 @@
 /*
  * CommitFilterToolbarButton.java
  *
- * Copyright (C) 2021 by RStudio, PBC
+ * Copyright (C) 2022 by RStudio, PBC
  *
  * Unless you have received this program directly from RStudio pursuant
  * to the terms of a commercial license agreement with RStudio, then
@@ -14,6 +14,7 @@
  */
 package org.rstudio.studio.client.workbench.views.vcs.dialog;
 
+import com.google.gwt.core.client.GWT;
 import org.rstudio.core.client.files.FileSystemItem;
 import org.rstudio.core.client.widget.ProgressIndicator;
 import org.rstudio.core.client.widget.ProgressOperationWithInput;
@@ -32,10 +33,12 @@ import com.google.gwt.user.client.Command;
 import com.google.gwt.user.client.ui.HasValue;
 import com.google.gwt.user.client.ui.MenuItem;
 import com.google.inject.Inject;
+import org.rstudio.studio.client.workbench.views.vcs.ViewVcsConstants;
 
 public class CommitFilterToolbarButton extends ToolbarMenuButton
                                        implements HasValue<FileSystemItem>
 {
+   private static final ViewVcsConstants constants_ = GWT.create(ViewVcsConstants.class);
    @Inject
    public CommitFilterToolbarButton(FileTypeRegistry fileTypeRegistry,
                                     FileDialogs fileDialogs,
@@ -54,7 +57,7 @@ public class CommitFilterToolbarButton extends ToolbarMenuButton
 
       ToolbarPopupMenu menu = getMenu();
 
-      menu.addItem(new MenuItem("(all commits)", new Command() {
+      menu.addItem(new MenuItem(constants_.allCommitsParentheses(), new Command() {
          @Override
          public void execute()
          {
@@ -62,22 +65,22 @@ public class CommitFilterToolbarButton extends ToolbarMenuButton
          }
       }));
 
-      menu.addItem(new MenuItem("Filter by File...", new Command() {
+      menu.addItem(new MenuItem(constants_.filterByFileEllipses(), new Command() {
          @Override
          public void execute()
          {
-            fileDialogs_.openFile("Choose File",
+            fileDialogs_.openFile(constants_.chooseFileCapitalized(),
                                   fileContext_,
                                   getInitialChooserPath(),
                                   chooserOperation());
          }
       }));
 
-      menu.addItem(new MenuItem("Filter by Directory...", new Command() {
+      menu.addItem(new MenuItem(constants_.filterByDirectoryEllipses(), new Command() {
          @Override
          public void execute()
          {
-            fileDialogs_.chooseFolder("Choose Folder",
+            fileDialogs_.chooseFolder(constants_.chooseFolderCapitalized(),
                                        fileContext_,
                                        getInitialChooserPath(),
                                        chooserOperation());
@@ -127,7 +130,7 @@ public class CommitFilterToolbarButton extends ToolbarMenuButton
             else
                setLeftImage(fileTypeRegistry_.getIconForFile(value_).getImageResource());
             setText(value_.getName());
-            setTitle("Filter: " + value_.getPath());
+            setTitle(constants_.filterColonPath(value_.getPath()));
          }
 
          if (fireEvents)
@@ -165,6 +168,6 @@ public class CommitFilterToolbarButton extends ToolbarMenuButton
    private final FileDialogs fileDialogs_;
    private final Session session_;
 
-   private static final String ALL_COMMITS = "(all commits)";
-   private static final String ALL_COMMITS_TITLE = "Filter: (None)";
+   private static final String ALL_COMMITS = constants_.allCommitsParentheses();
+   private static final String ALL_COMMITS_TITLE = constants_.filterColonNone();
 }

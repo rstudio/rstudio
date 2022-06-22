@@ -57,13 +57,13 @@ var YamlHighlightRules = function() {
                 regex: "[&\\*][a-zA-Z0-9-_]+"
             }, {
                 token: ["meta.tag", "keyword", "meta.tag", "keyword"],
-                regex: /^(\s*\w.*?)(:{2,3})(\s*\w.*?)(:(?:\s+|$))/
+                regex: /^(\s*[\w\-].*?)(:{2,3})(\s*[\w\-].*?)(:(?:\s+|$))/
             }, {
                 token: ["meta.tag", "keyword"],
-                regex: /^(\s*\w.*?)(:(?:\s+|$))/
+                regex: /^(\s*[\w\-].*?)(:(?:\s+|$))/
             }, {
                 token: ["meta.tag", "keyword"],
-                regex: /(\w+?)(\s*:(?:\s+|$))/
+                regex: /([\w\-]+?)(\s*:(?:\s+|$))/
             }, {
                 token : "keyword.operator",
                 regex : "<<\\w*:\\w*"
@@ -80,7 +80,7 @@ var YamlHighlightRules = function() {
                     var indent = /^\s*/.exec(line)[0];
 
                     // save prior state + indent length
-                    stack.length = 2;
+                    stack = stack || [];
                     stack[0] = state;
                     stack[1] = indent.length;
 
@@ -122,7 +122,6 @@ var YamlHighlightRules = function() {
                     var indent = stack[1];
                     if (indent >= val.length) {
                         this.next = stack[0];
-                        stack.splice(0);
                     } else {
                         this.next = state;
                     }

@@ -1,7 +1,7 @@
 /*
  * SessionCompilePdf.cpp
  *
- * Copyright (C) 2021 by RStudio, PBC
+ * Copyright (C) 2022 by RStudio, PBC
  *
  * Unless you have received this program directly from RStudio pursuant
  * to the terms of a commercial license agreement with RStudio, then
@@ -47,6 +47,7 @@
 #include "SessionTexUtils.hpp"
 
 using namespace rstudio::core;
+using namespace boost::placeholders;
 
 namespace rstudio {
 namespace session {
@@ -321,7 +322,7 @@ bool includeLogEntry(const core::tex::LogEntry& logEntry)
    return true;
 }
 
-// filter out log entries which we view as superflous or distracting
+// filter out log entries which we view as superfluous or distracting
 void filterLatexLog(const core::tex::LogEntries& logEntries,
                     core::tex::LogEntries* pFilteredLogEntries)
 {
@@ -483,7 +484,7 @@ public:
    {
       if (!basePath_.empty())
       {
-         // remove known auxillary files
+         // remove known auxiliary files
          remove(".out");
          remove(".aux");
 
@@ -528,7 +529,7 @@ private:
 };
 
 // implement pdf compilation within a class so we can maintain state
-// accross the various async callbacks the compile is composed of
+// across the various async callbacks the compile is composed of
 class AsyncPdfCompiler : boost::noncopyable,
                     public boost::enable_shared_from_this<AsyncPdfCompiler>
 {
@@ -842,7 +843,7 @@ private:
       // list or within the console
       bool showIssuesList = !isTargetRnw() || !concords.empty();
 
-      // notify the cleanp context of log entries (so it can
+      // notify the cleanup context of log entries (so it can
       // preserve any referenced files)
       auxillaryFileCleanupContext_.preserveLogReferencedFiles(
                                                       logEntries);

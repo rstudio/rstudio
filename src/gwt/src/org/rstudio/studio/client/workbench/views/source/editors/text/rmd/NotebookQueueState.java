@@ -1,7 +1,7 @@
 /*
  * NotebookQueueState.java
  *
- * Copyright (C) 2021 by RStudio, PBC
+ * Copyright (C) 2022 by RStudio, PBC
  *
  * Unless you have received this program directly from RStudio pursuant
  * to the terms of a commercial license agreement with RStudio, then
@@ -16,10 +16,13 @@ package org.rstudio.studio.client.workbench.views.source.editors.text.rmd;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Map;
 
+import com.google.gwt.core.client.GWT;
 import org.rstudio.core.client.Debug;
 import org.rstudio.core.client.StringUtil;
 import org.rstudio.core.client.dom.DomUtils;
+import org.rstudio.core.client.js.JsUtil;
 import org.rstudio.studio.client.RStudioGinjector;
 import org.rstudio.studio.client.application.events.EventBus;
 import org.rstudio.studio.client.rmarkdown.events.ChunkExecStateChangedEvent;
@@ -36,6 +39,7 @@ import org.rstudio.studio.client.server.VoidServerRequestCallback;
 import org.rstudio.studio.client.workbench.views.console.ConsoleResources;
 import org.rstudio.studio.client.workbench.views.console.events.ConsoleBusyEvent;
 import org.rstudio.studio.client.workbench.views.console.events.ConsoleHistoryAddedEvent;
+import org.rstudio.studio.client.workbench.views.source.ViewsSourceConstants;
 import org.rstudio.studio.client.workbench.views.source.editors.text.ChunkOutputWidget;
 import org.rstudio.studio.client.workbench.views.source.editors.text.ChunkRowExecState;
 import org.rstudio.studio.client.workbench.views.source.editors.text.DocDisplay;
@@ -47,10 +51,12 @@ import org.rstudio.studio.client.workbench.views.source.editors.text.TextEditing
 import org.rstudio.studio.client.workbench.views.source.editors.text.ace.LineWidget;
 import org.rstudio.studio.client.workbench.views.source.editors.text.ace.Position;
 import org.rstudio.studio.client.workbench.views.source.editors.text.ace.Range;
+import org.rstudio.studio.client.workbench.views.source.editors.text.assist.RChunkHeaderParser;
 import org.rstudio.studio.client.workbench.views.source.events.ChunkChangeEvent;
 import org.rstudio.studio.client.workbench.views.source.model.DocUpdateSentinel;
 
 import com.google.gwt.core.client.JsArray;
+import com.google.gwt.user.client.Command;
 
 public class NotebookQueueState implements NotebookRangeExecutedEvent.Handler,
                                            ChunkExecStateChangedEvent.Handler
@@ -204,7 +210,7 @@ public class NotebookQueueState implements NotebookRangeExecutedEvent.Handler,
       {
          List<ChunkExecUnit> chunks = new ArrayList<>();
          chunks.add(chunk);
-         executeChunks("Run Chunk", chunks);
+         executeChunks(constants_.runChunk(), chunks);
       }
    }
    
@@ -578,22 +584,77 @@ public class NotebookQueueState implements NotebookRangeExecutedEvent.Handler,
             notebook_.getCommitMode(), notebook_.getPlotWidth(), charWidth_);
    }
    
+   private void withQueueDependencies(Command command)
+   {
+      boolean requiresPython = false;
+      
+      for (NotebookQueueUnit unit : JsUtil.asIterable(queue_.getUnits()))
+      {
+         String code = unit.getCode();
+         if (StringUtil.isNullOrEmpty(code))
+            continue;
+         
+         int newlineIndex = code.indexOf('\n');
+         if (newlineIndex == -1)
+            continue;
+         
+         String header = code.substring(0, newlineIndex);
+         Map<String, String> chunkOptions = RChunkHeaderParser.parse(header);
+         if (!chunkOptions.containsKey("engine"))
+            continue;
+         
+         // the chunk header parser preserves quotes around options,
+         // and since the engine is technically supplied as a string,
+         // we detect the different quoted variants here.
+         String engine = chunkOptions.get("engine");
+         for (String python : new String[] { "python", "'python'", "\"python\"" })
+         {
+            if (StringUtil.equals(engine, python))
+            {
+               requiresPython = true;
+               break;
+            }
+         }
+         
+         // break early if we can
+         if (requiresPython)
+            break;
+         
+      }
+      
+      if (requiresPython)
+      {
+         RStudioGinjector.INSTANCE.getDependencyManager().withReticulate(
+               constants_.executingChunks(),
+               constants_.executingPythonChunks(),
+               command);
+      }
+      else
+      {
+         command.execute();
+      }
+   }
+   
    private void executeQueue()
    {
-      server_.executeNotebookChunks(queue_, new ServerRequestCallback<Void>()
+      // check whether queue required Python to execute
+      withQueueDependencies(() ->
       {
-         @Override
-         public void onResponseReceived(Void v)
+         server_.executeNotebookChunks(queue_, new ServerRequestCallback<Void>()
          {
-            renderQueueState(false);
-         }
+            @Override
+            public void onResponseReceived(Void v)
+            {
+               renderQueueState(false);
+            }
 
-         @Override
-         public void onError(ServerError error)
-         {
-            RStudioGinjector.INSTANCE.getGlobalDisplay().showErrorMessage(
-                  "Can't execute " + queue_.getJobDesc(), error.getMessage());
-         }
+            @Override
+            public void onError(ServerError error)
+            {
+               RStudioGinjector.INSTANCE.getGlobalDisplay().showErrorMessage(
+                     constants_.cantExecuteJobDesc(queue_.getJobDesc()), error.getMessage());
+            }
+         });
       });
    }
    
@@ -657,4 +718,5 @@ public class NotebookQueueState implements NotebookRangeExecutedEvent.Handler,
    private int charWidth_;
    private static int executingQueues_ = 0;
    public NotebookQueueUnit executingUnit_;
+   private static final ViewsSourceConstants constants_ = GWT.create(ViewsSourceConstants.class);
 }

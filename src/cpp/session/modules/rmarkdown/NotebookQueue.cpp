@@ -1,7 +1,7 @@
 /*
  * NotebookQueue.cpp
  *
- * Copyright (C) 2021 by RStudio, PBC
+ * Copyright (C) 2022 by RStudio, PBC
  *
  * Unless you have received this program directly from RStudio pursuant
  * to the terms of a commercial license agreement with RStudio, then
@@ -32,6 +32,7 @@
 
 #include <r/RCntxtUtils.hpp>
 #include <r/RInterface.hpp>
+#include <r/ROptions.hpp>
 #include <r/RExec.hpp>
 #include <r/RJson.hpp>
 #include <r/RSexp.hpp>
@@ -48,6 +49,7 @@
 #define kThreadQuitCommand "thread_quit"
 
 using namespace rstudio::core;
+using namespace boost::placeholders;
 
 namespace rstudio {
 namespace session {
@@ -69,6 +71,7 @@ class NotebookQueue : boost::noncopyable
 public:
    NotebookQueue() 
    {
+      prevReticulateReplQuiet_ = false;
       // launch a thread to process console input
       pInput_ = 
          boost::make_shared<core::thread::ThreadsafeQueue<std::string> >();
@@ -290,6 +293,7 @@ private:
       {
          // if we're switching the console between languages, call the
          // appropriate R code to make that happen
+         const char * const kReplQuietOption = "reticulate.repl.quiet";
          std::string prefix;
 
          bool isPythonActive = module_context::isPythonReplActive();
@@ -297,11 +301,18 @@ private:
          {
             // switching from Python -> R: deactivate the Python REPL
             prefix = "quit\n";
+
+            // reverse out changes to the banner option
+            r::options::setOption(kReplQuietOption, prevReticulateReplQuiet_);
          }
          else if (!isPythonActive && execContext_ && execContext_->engine() == "python")
          {
             // switching from R -> Python: activate the Python REPL
             prefix = "reticulate::repl_python()\n";
+
+            // suppress the banner
+            prevReticulateReplQuiet_ = r::options::getOption<bool>(kReplQuietOption, false, false);
+            r::options::setOption(kReplQuietOption, true);
          }
 
          // send code to console 
@@ -508,7 +519,7 @@ private:
          // loop back console input request to session -- this allows us to treat 
          // notebook console input exactly as user console input
          core::http::Response response;
-         Error error = session::http::sendSessionRequest(
+         Error error = session::module_context::sendSessionRequest(
                "/rpc/console_input", input, &response);
 
          if (error)
@@ -680,6 +691,9 @@ private:
          }
       }
    }
+
+   // previous value for reticulate.repl.quiet
+   bool prevReticulateReplQuiet_;
 
    // the documents with active queues
    std::list<boost::shared_ptr<NotebookDocQueue> > queue_;

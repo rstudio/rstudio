@@ -1,7 +1,7 @@
 /*
  * SessionHttpMethods.hpp
  *
- * Copyright (C) 2021 by RStudio, PBC
+ * Copyright (C) 2022 by RStudio, PBC
  *
  * Unless you have received this program directly from RStudio pursuant
  * to the terms of a commercial license agreement with RStudio, then
@@ -13,10 +13,12 @@
  *
  */
 
+// We need LogLevel::DEBUG so don't #define DEBUG for this file
+#define RSTUDIO_DEBUG_MACROS_DISABLED
+
 #include "SessionHttpMethods.hpp"
 #include "SessionConsoleInput.hpp"
 #include "SessionMainProcess.hpp"
-#include "SessionSuspend.hpp"
 #include "SessionClientInit.hpp"
 #include "SessionInit.hpp"
 #include "SessionUriHandlers.hpp"
@@ -28,10 +30,13 @@
 
 #include <boost/algorithm/string.hpp>
 
+#include <core/Thread.hpp>
+
 #include <core/gwt/GwtLogHandler.hpp>
 #include <core/gwt/GwtFileHandler.hpp>
 
 #include <shared_core/json/Json.hpp>
+#include <shared_core/Logger.hpp>
 #include <core/json/JsonRpc.hpp>
 
 #include <core/system/Crypto.hpp>
@@ -51,13 +56,18 @@
 #include <session/SessionOptions.hpp>
 #include <session/SessionPersistentState.hpp>
 #include <session/SessionScopes.hpp>
+#include <session/SessionSuspend.hpp>
 #include <session/projects/SessionProjects.hpp>
+#include <session/prefs/UserPrefs.hpp>
 
 #ifdef RSTUDIO_SERVER
 #include <server_core/sessions/SessionSignature.hpp>
 #endif
 
+#include "SessionAsyncRpcConnection.hpp"
+
 using namespace rstudio::core;
+using namespace boost::placeholders;
 
 namespace rstudio {
 namespace session {
@@ -75,34 +85,38 @@ std::vector<std::string> s_waitForMethodNames;
 // url for next session
 std::string s_nextSessionUrl;
 
-boost::posix_time::ptime timeoutTimeFromNow()
-{
-   int timeoutMinutes = options().timeoutMinutes();
-   if (timeoutMinutes > 0)
-   {
-      return boost::posix_time::second_clock::universal_time() +
-             boost::posix_time::minutes(options().timeoutMinutes());
-   }
-   else
-   {
-      return boost::posix_time::ptime(boost::posix_time::not_a_date_time);
-   }
-}
+bool s_protocolDebugEnabled = false;
+bool s_sessionDebugLogCreated = false;
 
 void processEvents()
 {
-    // execute safely since this can call arbitrary R code (and
-    // (can also cause jump_to_top if an interrupt is pending)
-    Error error = rstudio::r::exec::executeSafely(
-                rstudio::r::session::event_loop::processEvents);
-    if (error)
-        LOG_ERROR(error);
+   if (!ASSERT_MAIN_THREAD())
+   {
+      return;
+   }
+
+   // execute safely since this can call arbitrary R code (and
+   // (can also cause jump_to_top if an interrupt is pending)
+   Error error = rstudio::r::exec::executeSafely(
+            rstudio::r::session::event_loop::processEvents);
+
+   if (error) // If the statement is interrupted, this can return an error so logging as debug to limit visibility
+      LOG_DEBUG_MESSAGE(error.asString());
 }
 
 bool parseAndValidateJsonRpcConnection(
          boost::shared_ptr<HttpConnection> ptrConnection,
          json::JsonRpcRequest* pJsonRpcRequest)
 {
+   // Async rpc requests will have already parsed the request so just copy it over here
+   if (ptrConnection->isAsyncRpc())
+   {
+      boost::shared_ptr<rpc::AsyncRpcConnection> asyncConnection =
+              boost::static_pointer_cast<rpc::AsyncRpcConnection>(ptrConnection);
+      *pJsonRpcRequest = asyncConnection->jsonRpcRequest();
+      return true;
+   }
+
    // attempt to parse the request into a json-rpc request
    Error error = json::parseJsonRpcRequest(ptrConnection->request().body(),
                                            pJsonRpcRequest);
@@ -116,6 +130,8 @@ bool parseAndValidateJsonRpcConnection(
    if (options().programMode() == kSessionProgramModeServer && 
        !core::http::validateCSRFHeaders(ptrConnection->request()))
    {
+      LOG_WARNING_MESSAGE("RPC request to '" + ptrConnection->request().uri() + "' has missing or "
+            "mismatched " kCSRFTokenCookie " cookie or " kCSRFTokenHeader " header");
       ptrConnection->sendJsonRpcError(Error(json::errc::Unauthorized, ERROR_LOCATION));
       return false;
    }
@@ -174,6 +190,7 @@ bool isMethod(boost::shared_ptr<HttpConnection> ptrConnection,
 Error startHttpConnectionListener()
 {
    initializeHttpConnectionListener();
+
    Error error = httpConnectionListener().start();
    if (error)
       return error;
@@ -185,8 +202,11 @@ Error startHttpConnectionListener()
             static_cast<TcpIpHttpConnectionListener&>(httpConnectionListener());
 
       boost::asio::ip::tcp::endpoint endpoint = listener.getLocalEndpoint();
+
+      std::string protocol = listener.isSsl() ? " https" : "";
+
       std::cout << "Listener bound to address " << endpoint.address().to_string()
-                << " port " << endpoint.port() << std::endl;
+                << " port " << endpoint.port() << protocol << std::endl;
 
       // set the standalone port so rpostback and others know how to
       // connect back into the session process
@@ -201,37 +221,6 @@ Error startHttpConnectionListener()
    return Success();
 }
 
-bool isTimedOut(const boost::posix_time::ptime& timeoutTime)
-{
-   using namespace boost::posix_time;
-
-   // never time out in desktop mode
-   if (options().programMode() == kSessionProgramModeDesktop)
-      return false;
-
-   // check for an client disconnection based timeout
-   int disconnectedTimeoutMinutes = options().disconnectedTimeoutMinutes();
-   if (disconnectedTimeoutMinutes > 0)
-   {
-      ptime lastEventConnection =
-         httpConnectionListener().eventsConnectionQueue().lastConnectionTime();
-      if (!lastEventConnection.is_not_a_date_time())
-      {
-         if ( (lastEventConnection + minutes(disconnectedTimeoutMinutes)
-               < second_clock::universal_time()) )
-         {
-            return true;
-         }
-      }
-   }
-
-   // check for a foreground inactivity based timeout
-   if (timeoutTime.is_not_a_date_time())
-      return false;
-   else
-      return second_clock::universal_time() > timeoutTime;
-}
-
 bool isWaitForMethodUri(const std::string& uri)
 {
    for (const std::string& methodName : s_waitForMethodNames)
@@ -241,12 +230,6 @@ bool isWaitForMethodUri(const std::string& uri)
    }
 
    return false;
-}
-
-bool isJsonRpcRequest(boost::shared_ptr<HttpConnection> ptrConnection)
-{
-   return boost::algorithm::starts_with(ptrConnection->request().uri(),
-                                        "/rpc/");
 }
 
 void polledEventHandler()
@@ -261,6 +244,11 @@ void polledEventHandler()
       rstudio::r::session::event_loop::permanentlyDisablePolledEventHandler();
 
       // done
+      return;
+   }
+
+   if (!ASSERT_MAIN_THREAD())
+   {
       return;
    }
 
@@ -305,6 +293,10 @@ void polledEventHandler()
       {
          if ( isMethod(ptrConnection, kClientInit) )
          {
+            if (ptrConnection->isAsyncRpc())
+            {
+               BOOST_ASSERT(false); // The listener thread skips client_init when converting RPC to async
+            }
             // client_init means the user is attempting to reload the browser
             // in the middle of a computation. process client_init and post
             // a busy event as our initFunction
@@ -315,6 +307,13 @@ void polledEventHandler()
          }
          else
          {
+            if (s_protocolDebugEnabled)
+            {
+               std::chrono::duration<double> duration =
+                       std::chrono::steady_clock::now() - ptrConnection->receivedTime();
+               LOG_DEBUG_MESSAGE("Handle background: " + ptrConnection->request().uri() +
+                                 " after: " + string_utils::formatDouble(duration.count(), 2));
+            }
             handleConnection(ptrConnection, http_methods::BackgroundConnection);
          }
       }
@@ -405,6 +404,11 @@ std::string clientVersion()
    return RSTUDIO_GIT_REVISION_HASH;
 }
 
+bool protocolDebugEnabled()
+{
+   return s_protocolDebugEnabled;
+}
+
 void waitForMethodInitFunction(const ClientEvent& initEvent)
 {
    module_context::enqueClientEvent(initEvent);
@@ -435,54 +439,26 @@ bool waitForMethod(const std::string& method,
       LOG_ERROR_MESSAGE("Waiting for method " + method + " after fork");
       return false;
    }
+   
+   if (!ASSERT_MAIN_THREAD(method))
+   {
+      return false;
+   }
 
    // establish timeouts
-   boost::posix_time::ptime timeoutTime = timeoutTimeFromNow();
+   suspend::resetSuspendTimeout();
    boost::posix_time::time_duration connectionQueueTimeout =
                                    boost::posix_time::milliseconds(50);
+
+   // If this method (and the provided allowSuspend() function) blocks auto suspension,
+   // make sure to record it
+   suspend::addBlockingOp(method, allowSuspend);
 
    // wait until we get the method we are looking for
    while (true)
    {
       // suspend if necessary (does not return if a suspend occurs)
-      suspend::suspendIfRequested(allowSuspend);
-
-      // check for timeout
-      if (isTimedOut(timeoutTime))
-      {
-         if (allowSuspend())
-         {
-            // note that we timed out
-            suspend::setSuspendedFromTimeout(true);
-
-            if (!options().timeoutSuspend())
-            {
-               // configuration dictates that we should quit the
-               // session instead of suspending when timeout occurs
-               //
-               // the conditions for the quit must be the same as those
-               // for a regular suspend
-               rstudio::r::session::quit(false, EXIT_SUCCESS); // does not return
-               return false;
-            }
-
-            // attempt to suspend (does not return if it succeeds)
-            if (!suspend::suspendSession(false))
-            {
-               // reset timeout flag
-               suspend::setSuspendedFromTimeout(false);
-
-               // if it fails then reset the timeout timer so we don't keep
-               // hammering away on the failure case
-               timeoutTime = timeoutTimeFromNow();
-            }
-         }
-      }
-
-      // if we have at least one async process running then this counts
-      // as "activity" and resets the timeout timer
-      if (main_process::haveActiveChildren())
-         timeoutTime = timeoutTimeFromNow();
+      suspend::checkForSuspend(allowSuspend);
 
       // look for a connection (waiting for the specified interval)
       boost::shared_ptr<HttpConnection> ptrConnection =
@@ -526,6 +502,11 @@ bool waitForMethod(const std::string& method,
                // ensure initialized
                init::ensureSessionInitialized();
 
+               if (s_protocolDebugEnabled && method != kConsoleInput)
+               {
+                  LOG_DEBUG_MESSAGE("Handle wait for:     " + ptrConnection->request().uri());
+               }
+
                break; // got the method, we are out of here!
             }
          }
@@ -533,11 +514,23 @@ bool waitForMethod(const std::string& method,
          // another connection type, dispatch it
          else
          {
-            handleConnection(ptrConnection, ForegroundConnection);
+            if (s_protocolDebugEnabled)
+            {
+               std::chrono::steady_clock::time_point now = std::chrono::steady_clock::now();
+               std::chrono::duration<double> beforeTime = now - ptrConnection->receivedTime();
+               LOG_DEBUG_MESSAGE("- Handle foreground: " + ptrConnection->request().uri() +
+                                 " after: " + string_utils::formatDouble(beforeTime.count(), 2));
+               handleConnection(ptrConnection, ForegroundConnection);
+               std::chrono::duration<double> afterTime = std::chrono::steady_clock::now() - now;
+               LOG_DEBUG_MESSAGE("--- complete:        " + ptrConnection->request().uri() +
+                                 " in: " + string_utils::formatDouble(afterTime.count(), 2));
+            }
+            else
+               handleConnection(ptrConnection, ForegroundConnection);
          }
 
          // since we got a connection we can reset the timeout time
-         timeoutTime = timeoutTimeFromNow();
+         suspend::resetSuspendTimeout(ptrConnection);
 
          // after we've processed at least one waitForMethod it is now safe to
          // initialize the polledEventHandler (which is used to maintain rsession
@@ -551,6 +544,8 @@ bool waitForMethod(const std::string& method,
                                                      polledEventHandler);
       }
    }
+
+   suspend::removeBlockingOp(suspend::kGenericMethod + method);
 
    // satisfied the request
    return true;
@@ -571,6 +566,20 @@ bool waitForMethod(const std::string& method,
                         pRequest);
 }
 
+bool isJsonRpcRequest(boost::shared_ptr<HttpConnection> ptrConnection)
+{
+    return boost::algorithm::starts_with(ptrConnection->request().uri(),
+                                         "/rpc/");
+}
+
+bool isAsyncJsonRpcRequest(boost::shared_ptr<HttpConnection> ptrConnection)
+{
+   std::string uri = ptrConnection->request().uri();
+   // Excluding the client_init operation because it's one of those special cases that will
+   // require more code + testing. Since its only made once per browser process it won't pile up
+   return boost::algorithm::starts_with(uri, "/rpc/") && uri != "/rpc/client_init";
+}
+
 void handleConnection(boost::shared_ptr<HttpConnection> ptrConnection,
                       ConnectionType connectionType)
 {
@@ -582,6 +591,10 @@ void handleConnection(boost::shared_ptr<HttpConnection> ptrConnection,
 
    if (uriHandler) // uri handler
    {
+      if (ptrConnection->isAsyncRpc())
+      {
+         BOOST_ASSERT(false); // should not get here for uri handlers
+      }
       core::http::visitHandler(uriHandler.get(),
                                request,
                                boost::bind(endHandleConnection,
@@ -594,6 +607,7 @@ void handleConnection(boost::shared_ptr<HttpConnection> ptrConnection,
    }
    else if (isJsonRpcRequest(ptrConnection)) // check for json-rpc
    {
+      using namespace module_context;
       // r code may execute - ensure session is initialized
       init::ensureSessionInitialized();
 
@@ -651,7 +665,6 @@ void handleConnection(boost::shared_ptr<HttpConnection> ptrConnection,
                }
 
                // update project and working dir
-               using namespace module_context;
                if (switchToProject == kProjectNone)
                {
                   // update the project and working dir
@@ -678,7 +691,6 @@ void handleConnection(boost::shared_ptr<HttpConnection> ptrConnection,
                   else
                   {
                      // extract the directory (aliased)
-                     using namespace module_context;
                      FilePath projFile = module_context::resolveAliasedPath(switchToProject);
                      std::string projDir = createAliasedPath(projFile.getParent());
                      scope = r_util::SessionScope::fromProject(
@@ -702,7 +714,6 @@ void handleConnection(boost::shared_ptr<HttpConnection> ptrConnection,
                // note switch to R version if requested
                if (json::isType<json::Object>(switchToVersionJson))
                {
-                  using namespace module_context;
                   std::string version, rHome, label;
                   Error error = json::readObject(
                                             switchToVersionJson.getObject(),
@@ -735,7 +746,13 @@ void handleConnection(boost::shared_ptr<HttpConnection> ptrConnection,
                  else
                     LOG_ERROR(error);
                }
+               LOG_DEBUG_MESSAGE("Switching projects: setting activityState to shutting_down");
             }
+            else
+               LOG_DEBUG_MESSAGE("Quitting session: setting activityState to shutting_down");
+
+            // Mark this session as "Shutting Down" in the homepage (do we need a "SwitchingProjects" state?)
+            activeSession().setActivityState(r_util::kActivityStateShuttingDown, true);
 
             // exit status
             int status = switchToProject.empty() ? EXIT_SUCCESS : EX_CONTINUE;
@@ -768,7 +785,7 @@ void handleConnection(boost::shared_ptr<HttpConnection> ptrConnection,
             // Discard any buffered input
             console_input::clearConsoleInputBuffer();
 
-            // aknowledge request
+            // acknowledge request
             ptrConnection->sendJsonRpcResponse();
 
             // only accept interrupts while R is processing input
@@ -797,6 +814,22 @@ void handleConnection(boost::shared_ptr<HttpConnection> ptrConnection,
       response.setNotFoundError(request);
       ptrConnection->sendResponse(response);
    }
+}
+
+boost::shared_ptr<HttpConnection> handleAsyncRpc(boost::shared_ptr<HttpConnection> ptrConnection)
+{
+   json::JsonRpcRequest jsonRpcRequest;
+   boost::shared_ptr<HttpConnection> res;
+   if (parseAndValidateJsonRpcConnection(ptrConnection, &jsonRpcRequest))
+   {
+      std::string asyncHandle = core::system::generateUuid(true);
+      // This will eventually call sendResponse and close ptrConnection
+      rpc::sendJsonAsyncPendingResponse(jsonRpcRequest, ptrConnection, asyncHandle);
+
+      res.reset(new rpc::AsyncRpcConnection(ptrConnection, jsonRpcRequest, asyncHandle));
+   }
+   // else - an invalid request - an http error response has already been sent so return nothing
+   return res;
 }
 
 WaitResult startHttpConnectionListenerWithTimeout()
@@ -842,6 +875,48 @@ void registerGwtHandlers()
                                                   "/",
                                                   http::UriFilterFunction(),
                                                   initJs);
+}
+
+namespace {
+
+/**
+ * When a session debug logging preference is enabled, either create a new FileLog or update an existing one
+ * to have DEBUG so these messages show up. This prevents the user from needing to configure logging.conf
+ * for the session just to turn on debug logging.
+ */
+void initSessionDebugLog()
+{
+   if (s_sessionDebugLogCreated)
+      return;
+   s_sessionDebugLogCreated = true;
+
+   system::initFileLogDestination(log::LogLevel::DEBUG, core::system::xdg::userLogDir());
+}
+
+void onUserPrefsChanged(const std::string& layer, const std::string& pref)
+{
+   if (pref == kSessionProtocolDebug)
+   {
+      bool newVal = prefs::userPrefs().sessionProtocolDebug();
+      if (newVal != s_protocolDebugEnabled)
+      {
+         s_protocolDebugEnabled = newVal;
+         if (newVal)
+             initSessionDebugLog();
+      }
+   }
+}
+
+
+}
+
+core::Error initialize()
+{
+   s_protocolDebugEnabled = prefs::userPrefs().sessionProtocolDebug();
+   prefs::userPrefs().onChanged.connect(onUserPrefsChanged);
+   if (s_protocolDebugEnabled)
+      initSessionDebugLog();
+   return Success();
 }
 
 std::string nextSessionUrl()

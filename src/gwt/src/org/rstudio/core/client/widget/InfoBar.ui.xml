@@ -1,12 +1,15 @@
 <ui:UiBinder xmlns:ui='urn:ui:com.google.gwt.uibinder'
              xmlns:g='urn:import:com.google.gwt.user.client.ui'
-             xmlns:f='urn:import:org.rstudio.core.client.widget'>
+             xmlns:f='urn:import:org.rstudio.core.client.widget'
+             ui:generateFormat='com.google.gwt.i18n.server.PropertyCatalogFactory'
+             ui:generateKeys="com.google.gwt.i18n.server.keygen.MD5KeyGenerator"
+             ui:generateLocales="default">
 
     <ui:with field="themeRes" type="org.rstudio.core.client.theme.res.ThemeResources"/>
 
 
    <ui:style>
-      @external rstudio-themes-flat, rstudio-themes-dark-grey, gwt-Image;
+      @external rstudio-themes-dark-grey, gwt-Image;
       @eval THEME_DARKGREY_BACKGROUND org.rstudio.core.client.theme.ThemeColors.darkGreyBackground;
       @eval THEME_DARKGREY_BORDER org.rstudio.core.client.theme.ThemeColors.darkGreyBorder;
 
@@ -16,7 +19,7 @@
          background-color: #ffd;
          border-bottom: 1px solid #bcc1c5;
       }
-      .rstudio-themes-flat .rstudio-themes-dark-grey .outer {
+      .rstudio-themes-dark-grey .outer {
          background-color: THEME_DARKGREY_BACKGROUND !important;
          border-bottom: 1px solid THEME_DARKGREY_BORDER !important;
       }
@@ -29,7 +32,7 @@
          margin-top: 2px;
          color: #555;
       }
-      .rstudio-themes-flat .rstudio-themes-dark-grey .label {
+      .rstudio-themes-dark-grey .label {
          color: #FFF;
       }
       .dismiss {
@@ -44,7 +47,7 @@
          width: 9px;
          height: 9px;
       }
-      .rstudio-themes-flat .rstudio-themes-dark-grey .dismiss {
+      .rstudio-themes-dark-grey .dismiss {
          -webkit-filter: invert(100%);
             -moz-filter: invert(100%);
              -ms-filter: invert(100%);
@@ -69,7 +72,9 @@
           <f:ImageButton ui:field="dismiss_"
                    resource="{themeRes.closeTab2x}"
                    addStyleNames="{style.dismiss}"
-                   title="Dismiss infobar"/>
+                   title="Dismiss infobar">
+             <ui:attribute name="title" key="dismissInfobarTitle"/>
+          </f:ImageButton>
       </g:east>
    </g:DockLayoutPanel>
    </g:FlowPanel>

@@ -1,7 +1,7 @@
 /*
  * ProjectPythonPreferencesPane.java
  *
- * Copyright (C) 2021 by RStudio, PBC
+ * Copyright (C) 2022 by RStudio, PBC
  *
  * Unless you have received this program directly from RStudio pursuant
  * to the terms of a commercial license agreement with RStudio, then
@@ -14,7 +14,9 @@
  */
 package org.rstudio.studio.client.projects.ui.prefs;
 
+import com.google.gwt.core.client.GWT;
 import org.rstudio.core.client.prefs.RestartRequirement;
+import org.rstudio.studio.client.projects.StudioClientProjectConstants;
 import org.rstudio.studio.client.projects.model.RProjectConfig;
 import org.rstudio.studio.client.projects.model.RProjectOptions;
 import org.rstudio.studio.client.workbench.prefs.views.PythonDialogResources;
@@ -30,7 +32,7 @@ public class ProjectPythonPreferencesPane extends PythonPreferencesPaneBase<RPro
    public ProjectPythonPreferencesPane(PythonDialogResources res,
                                        PythonServerOperations server)
    {
-      super("380px", "(Use default)");
+      super("380px", constants_.useDefaultText(), true);
    }
 
    @Override
@@ -52,5 +54,6 @@ public class ProjectPythonPreferencesPane extends PythonPreferencesPaneBase<RPro
          config.setPythonPath(interpreter.getPath());
       });
    }
+   private static final StudioClientProjectConstants constants_ = GWT.create(StudioClientProjectConstants.class);
 
 }

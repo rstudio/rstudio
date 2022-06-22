@@ -1,6 +1,8 @@
 @charset "UTF-8";
 
-@external rstudio-themes-flat;
+@def CODE_BACKGROUND_COLOR #1f1f1f;
+@def CODE_COLOR #f0f0f0;
+
 @external rstudio-themes-dark;
 @external rstudio-themes-scrollbars;
 @external editor_dark;
@@ -8,46 +10,59 @@
 @external sourceLine;
 @external odd;
 @external even;
+@external code-toolbar;
+@external token, operator, property, tag, boolean, number, constant, symbol, deleted;
+@external chunk, source, output, warning, error, message;
+@external std, opt, hl;
+
+/* Help R equations to be a bit easier to read. */
+/* Ugly hack, but we don't have a better way of targeting this element. */
+p + div[style="text-align: center;"]
+{
+   font-size: 16px;
+}
+
 
 /* Default to white text on black in editor_dark themes */
-.rstudio-themes-flat.editor_dark {
+.editor_dark {
    color: white;
    background: none;
 }
 
-.rstudio-themes-flat.editor_dark div#TOC,
-.rstudio-themes-flat.editor_dark h1,
-.rstudio-themes-flat.editor_dark h2,
-.rstudio-themes-flat.editor_dark h3,
-.rstudio-themes-flat.editor_dark h4,
-.rstudio-themes-flat.editor_dark table {
+.editor_dark div#TOC,
+.editor_dark h1,
+.editor_dark h2,
+.editor_dark h3,
+.editor_dark h4,
+.editor_dark table {
    color: white !important;
    background: none !important;
 }
 
-.rstudio-themes-flat.editor_dark.ace_editor_theme p,
-.rstudio-themes-flat.editor_dark.ace_editor_theme a,
+.editor_dark.ace_editor_theme p,
+.editor_dark.ace_editor_theme a,
 .rstudio-themes-dark.editor_dark.ace_editor_theme div {
    color: white !important;
 }
 
-.rstudio-themes-flat.editor_dark h1,
-.rstudio-themes-flat.editor_dark h2,
-.rstudio-themes-flat.editor_dark h3,
-.rstudio-themes-flat.editor_dark h4 {
+.editor_dark h1,
+.editor_dark h2,
+.editor_dark h3,
+.editor_dark h4 {
    border-color: #6A6A6A !important;
 }
 
-.rstudio-themes-flat.editor_dark ::selection {
+.editor_dark ::selection {
    background-color: #CCC;
 }
 
-.rstudio-themes-flat.rstudio-themes-dark.rstudio-themes-scrollbars::-webkit-scrollbar,
-.rstudio-themes-flat.rstudio-themes-dark.rstudio-themes-scrollbars ::-webkit-scrollbar {
+
+.rstudio-themes-dark.rstudio-themes-scrollbars::-webkit-scrollbar,
+.rstudio-themes-dark.rstudio-themes-scrollbars ::-webkit-scrollbar {
    background: #FFF;
 }
 
-.rstudio-themes-flat.rstudio-themes-dark.editor_dark.ace_editor_theme a.sourceLine {
+.rstudio-themes-dark.editor_dark.ace_editor_theme a.sourceLine {
    color: #A3A3A3 !important;
 }
 
@@ -55,38 +70,118 @@
   * This rule is used to preserve the default background + highlighting for
   * the Arguments section of the documentation.
   */
-.rstudio-themes-flat.rstudio-themes-dark.editor_dark.ace_editor_theme h3 + pre {
+.rstudio-themes-dark.editor_dark.ace_editor_theme h3 + pre {
    color: #DEDEDE;
    background: none;
 }
 
-.rstudio-themes-flat.rstudio-themes-dark.editor_dark.ace_editor_theme pre,
-.rstudio-themes-flat.rstudio-themes-dark.editor_dark.ace_editor_theme pre code {
-   background-color: #333;
-   color: #F7F7F7;
+.rstudio-themes-dark.editor_dark.ace_editor_theme pre,
+.rstudio-themes-dark.editor_dark.ace_editor_theme pre code {
+   background-color: CODE_BACKGROUND_COLOR;
+   color: CODE_COLOR;
+   filter: none !important;
 }
 
-.rstudio-themes-flat.rstudio-themes-dark.editor_dark.ace_editor_theme p code {
+.rstudio-themes-dark.editor_dark.ace_editor_theme p code {
    color: white !important;
    background: none;
 }
 
-.rstudio-themes-flat.rstudio-themes-dark.editor_dark.ace_editor_theme table thead,
-.rstudio-themes-flat.rstudio-themes-dark.editor_dark.ace_editor_theme table tr.even {
-   background-color: #333 !important;
+.rstudio-themes-dark.editor_dark.ace_editor_theme table thead,
+.rstudio-themes-dark.editor_dark.ace_editor_theme table tr.even {
+   background-color: CODE_BACKGROUND_COLOR !important;
    border-color: #999 !important;
 }
 
-.rstudio-themes-flat.rstudio-themes-dark.editor_dark.ace_editor_theme table tr.odd {
+.rstudio-themes-dark.editor_dark.ace_editor_theme table tr.odd {
    border-color: #999 !important;
 }
 
-.rstudio-themes-flat.rstudio-themes-dark.editor_dark.ace_editor_theme table th,
-.rstudio-themes-flat.rstudio-themes-dark.editor_dark.ace_editor_theme table td {
+.rstudio-themes-dark.editor_dark.ace_editor_theme table th,
+.rstudio-themes-dark.editor_dark.ace_editor_theme table td {
    border-color: #666 !important;
 }
 
-.rstudio-themes-flat.rstudio-themes-dark.editor_dark.ace_editor_theme blockquote {
-   background-color: #333 !important;
+.rstudio-themes-dark.editor_dark.ace_editor_theme blockquote {
+   background-color: CODE_BACKGROUND_COLOR !important;
    border-radius: 3px;
 }
+
+/**
+ * The themes below were added to help support R 4.2.0's enhanced
+ * help system, when used with dark RStudio themes.
+ */
+.rstudio-themes-dark.editor_dark.ace_editor_theme .code-toolbar
+{
+   background-color: CODE_BACKGROUND_COLOR;
+   border: 2px solid CODE_BACKGROUND_COLOR;
+   border-radius: 4px;
+   padding: 2px 6px;
+}
+
+.rstudio-themes-dark.editor_dark.ace_editor_theme code,
+.rstudio-themes-dark.editor_dark.ace_editor_theme pre
+{
+   margin: 0;
+   padding: 0;
+   text-shadow: none;
+}
+
+.rstudio-themes-dark.editor_dark.ace_editor_theme .token.operator
+{
+   background: none;
+}
+
+.rstudio-themes-dark.editor_dark.ace_editor_theme .token
+{
+   filter: brightness(1.25);
+}
+
+/* Ugly hack, but we don't have a better way of targeting this element. */
+.rstudio-themes-dark.editor_dark.ace_editor_theme p + div[style="text-align: center;"]
+{
+   background-color: CODE_BACKGROUND_COLOR;
+   padding: 8px 0;
+}
+
+
+/* These styles help Examples render correctly in the Help pane. */
+.rstudio-themes-dark.editor_dark.ace_editor_theme .chunk pre
+{
+   background: none;
+   margin: 1em 0px;
+}
+
+.rstudio-themes-dark.editor_dark.ace_editor_theme .source
+{
+   background-color: CODE_BACKGROUND_COLOR;
+   border: 1px solid CODE_BACKGROUND_COLOR;
+}
+
+.rstudio-themes-dark.editor_dark.ace_editor_theme .output,
+.rstudio-themes-dark.editor_dark.ace_editor_theme .warning,
+.rstudio-themes-dark.editor_dark.ace_editor_theme .error,
+.rstudio-themes-dark.editor_dark.ace_editor_theme .message
+{
+   background-color: black;
+   border: 1px solid black;
+}
+
+.rstudio-themes-dark.editor_dark.ace_editor_theme .hl.std
+{
+   color: CODE_COLOR;
+}
+
+.rstudio-themes-dark.editor_dark.ace_editor_theme .hl.opt
+{
+   color: #9a6e3a;
+}
+
+.rstudio-themes-dark.editor_dark.ace_editor_theme *::selection
+{
+   background: rgba(255, 255, 255, 0.15) !important;
+   color: inherit !important;
+}
+
+
+

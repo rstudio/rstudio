@@ -1,7 +1,7 @@
 /*
  * SessionClientInit.hpp
  *
- * Copyright (C) 2021 by RStudio, PBC
+ * Copyright (C) 2022 by RStudio, PBC
  *
  * Unless you have received this program directly from RStudio pursuant
  * to the terms of a commercial license agreement with RStudio, then
@@ -15,7 +15,6 @@
 
 #include "SessionClientInit.hpp"
 #include "SessionInit.hpp"
-#include "SessionSuspend.hpp"
 #include "SessionHttpMethods.hpp"
 #include "SessionDirs.hpp"
 
@@ -70,6 +69,8 @@
 #include <session/SessionOptions.hpp>
 #include <session/SessionPackageProvidedExtension.hpp>
 #include <session/SessionPersistentState.hpp>
+#include <session/SessionQuarto.hpp>
+#include <session/SessionSuspend.hpp>
 #include <session/projects/SessionProjectSharing.hpp>
 #include <session/prefs/UserPrefs.hpp>
 #include <session/prefs/UserState.hpp>
@@ -170,7 +171,10 @@ void handleClientInit(const boost::function<void()>& initFunction,
    if (options.programMode() == kSessionProgramModeServer && 
        !core::http::validateCSRFHeaders(ptrConnection->request()))
    {
-      ptrConnection->sendJsonRpcError(Error(json::errc::Unauthorized, ERROR_LOCATION));
+      LOG_WARNING_MESSAGE("Client init request to " + ptrConnection->request().uri() + 
+            " has missing or mismatched " kCSRFTokenCookie " cookie or " kCSRFTokenHeader " header");
+      // Send an error that shows up in the alert box of the browser - if we send unauthorized here, it causes an infinite sign in loop
+      ptrConnection->sendJsonRpcError(Error("MissingCSRFToken", json::errc::ParamMissing, "Client /rpc/client_init request - missing " kCSRFTokenHeader " header", ERROR_LOCATION));
       return;
    }
 
@@ -202,6 +206,14 @@ void handleClientInit(const boost::function<void()>& initFunction,
       // header value (complements RSTUDIO_USER_IDENTITY)
       core::system::setenv("RSTUDIO_USER_IDENTITY_DISPLAY", 
             userIdentityDisplay(ptrConnection->request()));
+
+      // read display name from upstream if set
+      std::string displayName = ptrConnection->request().headerValue(
+            kRStudioUserIdentityDisplay);
+      if (!displayName.empty())
+      {
+         persistentState().setUserDisplayName(displayName);
+      }
    }
 
    // prepare session info 
@@ -225,13 +237,6 @@ void handleClientInit(const boost::function<void()>& initFunction,
       sessionInfo["scratch_dir"] = options.userScratchPath().getAbsolutePath();
    }
 
-   // temp dir
-   FilePath tempDir = rstudio::r::session::utils::tempDir();
-   Error error = tempDir.ensureDirectory();
-   if (error)
-      LOG_ERROR(error);
-   sessionInfo["temp_dir"] = tempDir.getAbsolutePath();
-
    // R_LIBS_USER
    sessionInfo["r_libs_user"] = module_context::rLibsUser();
    
@@ -251,7 +256,7 @@ void handleClientInit(const boost::function<void()>& initFunction,
    
    // source documents
    json::Array jsonDocs;
-   error = modules::source::clientInitDocuments(&jsonDocs);
+   Error error = modules::source::clientInitDocuments(&jsonDocs);
    if (error)
       LOG_ERROR(error);
    sessionInfo["source_documents"] = jsonDocs;
@@ -270,7 +275,10 @@ void handleClientInit(const boost::function<void()>& initFunction,
    sessionInfo["python_repl_active"] = modules::reticulate::isReplActive();
    
    // propagate RETICULATE_PYTHON if set
-   sessionInfo["reticulate_python"] = core::system::getenv("RETICULATE_PYTHON");
+   std::string reticulate_python = core::system::getenv("RETICULATE_PYTHON");
+   if (reticulate_python.empty())
+      reticulate_python = core::system::getenv("RETICULATE_PYTHON_FALLBACK");
+   sessionInfo["reticulate_python"] = reticulate_python;
    
    // get current console language
    sessionInfo["console_language"] = modules::reticulate::isReplActive() ? "Python" : "R";
@@ -282,7 +290,20 @@ void handleClientInit(const boost::function<void()>& initFunction,
       // console actions
       json::Object actionsObject;
       consoleActions.asJson(&actionsObject);
+
+      std::string resumeMsg = suspend::getResumedMessage();
+      if (!resumeMsg.empty())
+      {
+         // Manually adding message to the console here instead of using consoleWriteOutput()
+         // to avoid it ending up in the history and printing out every time this session
+         // resumes/reloads and potentially resulting in an unnecessarily long list of
+         // previous resumed messages
+         actionsObject["data"].getArray().push_back(resumeMsg);
+         actionsObject["type"].getArray().push_back(kConsoleActionOutput);
+      }
       sessionInfo["console_actions"] = actionsObject;
+
+      suspend::initFromResume();
    }
 
    sessionInfo["rnw_weave_types"] = modules::authoring::supportedRnwWeaveTypes();
@@ -384,7 +405,12 @@ void handleClientInit(const boost::function<void()>& initFunction,
    if (projects::projectContext().hasProject())
    {
       std::string type = projects::projectContext().config().buildType;
+      if ((type == r_util::kBuildTypeNone) && quarto::quartoConfig().is_project)
+      {
+         type = r_util::kBuildTypeQuarto;
+      }
       sessionInfo["build_tools_type"] = type;
+
 
       sessionInfo["build_tools_bookdown_website"] =
                               module_context::isBookdownWebsite();
@@ -420,6 +446,8 @@ void handleClientInit(const boost::function<void()>& initFunction,
    sessionInfo["blogdown_config"] = modules::rmarkdown::blogdown::blogdownConfig();
    sessionInfo["is_bookdown_project"] = module_context::isBookdownProject();
    sessionInfo["is_distill_project"] = module_context::isDistillProject();
+
+   sessionInfo["quarto_config"] = quarto::quartoConfigJSON();
    
    sessionInfo["graphics_backends"] = modules::graphics::supportedBackends();
 
@@ -515,6 +543,7 @@ void handleClientInit(const boost::function<void()>& initFunction,
    rVersionsJson["r_version"] = module_context::rVersion();
    rVersionsJson["r_version_label"] = module_context::rVersionLabel();
    rVersionsJson["r_home_dir"] = module_context::rHomeDir();
+   rVersionsJson["r_version_module"] = module_context::rVersionModule();
    sessionInfo["r_versions_info"] = rVersionsJson;
 
    sessionInfo["show_user_home_page"] = options.showUserHomePage();
@@ -541,7 +570,7 @@ void handleClientInit(const boost::function<void()>& initFunction,
 
    sessionInfo["job_state"] = modules::jobs::jobState();
 
-   sessionInfo["launcher_jobs_enabled"] = modules::overlay::launcherJobsFeatureDisplayed();
+   sessionInfo["workbench_jobs_enabled"] = modules::overlay::workbenchJobsFeatureDisplayed();
 
    json::Object packageDependencies;
    error = modules::dependency_list::getDependencyList(&packageDependencies);

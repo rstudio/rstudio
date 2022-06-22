@@ -1,7 +1,7 @@
 /*
  * JobItem.java
  *
- * Copyright (C) 2021 by RStudio, PBC
+ * Copyright (C) 2022 by RStudio, PBC
  *
  * Unless you have received this program directly from RStudio pursuant
  * to the terms of a commercial license agreement with RStudio, then
@@ -28,6 +28,7 @@ import org.rstudio.core.client.widget.ToolbarButton;
 import org.rstudio.studio.client.application.events.FireEvents;
 import org.rstudio.studio.client.workbench.prefs.model.UserPrefs;
 import org.rstudio.studio.client.workbench.prefs.model.UserPrefsSubset;
+import org.rstudio.studio.client.workbench.views.jobs.JobsConstants;
 import org.rstudio.studio.client.workbench.views.jobs.events.JobExecuteActionEvent;
 import org.rstudio.studio.client.workbench.views.jobs.events.JobSelectionEvent;
 import org.rstudio.studio.client.workbench.views.jobs.model.Job;
@@ -103,7 +104,7 @@ public class JobItem extends Composite implements JobItemView
    public JobItem(@Assisted Job job, FireEvents eventBus, Preferences prefs)
    {
       eventBus_ = eventBus;
-      stop_ = new ToolbarButton(ToolbarButton.NoText, "Stop job", new ImageResource2x(RESOURCES.jobCancel()), evt ->
+      stop_ = new ToolbarButton(ToolbarButton.NoText, constants_.stopJobTitle(), new ImageResource2x(RESOURCES.jobCancel()), evt ->
       {
          eventBus_.fireEvent(new JobExecuteActionEvent(job.id, JobConstants.ACTION_STOP));
       });
@@ -121,7 +122,7 @@ public class JobItem extends Composite implements JobItemView
       }
       
       select_.setResource(detailsImage);
-      select_.setAltText("Select Job");
+      select_.setAltText(constants_.selectJobText());
 
       ClickHandler selectJob = evt ->
       {
@@ -249,7 +250,7 @@ public class JobItem extends Composite implements JobItemView
       // if job is not running, we have nothing to do
       if (job_.state == JobConstants.STATE_IDLE)
       {
-         elapsed_.setText("Waiting");
+         elapsed_.setText(constants_.waitingText());
          return;
       }
       
@@ -281,4 +282,5 @@ public class JobItem extends Composite implements JobItemView
    
    // injected
    private final FireEvents eventBus_;
+   private static final JobsConstants constants_ = GWT.create(JobsConstants.class);
 }

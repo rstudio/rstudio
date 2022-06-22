@@ -1,7 +1,7 @@
 /*
  * TcpIpSocketUtils.hpp
  *
- * Copyright (C) 2021 by RStudio, PBC
+ * Copyright (C) 2022 by RStudio, PBC
  *
  * Unless you have received this program directly from RStudio pursuant
  * to the terms of a commercial license agreement with RStudio, then
@@ -89,10 +89,29 @@ inline Error initTcpIpAcceptor(
    acceptor.open(endpoint.protocol(), ec);
    if (ec)
       return Error(ec, ERROR_LOCATION);
-   
+
+   // NOTE: The semantics of SO_REUSEADDR are different between Unix and Windows; see:
+   //
+   // https://docs.microsoft.com/en-us/windows/win32/winsock/using-so-reuseaddr-and-so-exclusiveaddruse
+   //
+   // In particular:
+   //
+   // > The SO_REUSEADDR socket option allows a socket to forcibly bind to a port in use by another socket.
+   //
+   // The rough equivalent of the Unix behavior we want here is SO_EXCLUSIVEADDRUSE.
+#ifndef _WIN32
    acceptor.set_option(tcp::acceptor::reuse_address(true), ec);
    if (ec)
       return Error(ec, ERROR_LOCATION);
+#else
+   typedef boost::asio::detail::socket_option::boolean<
+         BOOST_ASIO_OS_DEF(SOL_SOCKET),
+         SO_EXCLUSIVEADDRUSE
+   > exclusive_addr_use;
+   acceptor.set_option(exclusive_addr_use(true), ec);
+   if (ec)
+      return Error(ec, ERROR_LOCATION);
+#endif
    
    acceptor.set_option(tcp::no_delay(true), ec);
    if (ec)

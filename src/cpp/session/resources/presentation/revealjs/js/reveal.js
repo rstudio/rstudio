@@ -1276,7 +1276,7 @@ var Reveal = (function(){
 				state = state.concat( slideState.split( ' ' ) );
 			}
 
-			// If this slide has a data-autoslide attribtue associated use this as
+			// If this slide has a data-autoslide attribute associated use this as
 			// autoSlide value otherwise use the global configured time
 			var slideAutoSlide = slides[index].getAttribute( 'data-autoslide' );
 			if( slideAutoSlide ) {

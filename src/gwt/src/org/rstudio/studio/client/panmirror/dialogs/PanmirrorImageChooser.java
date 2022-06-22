@@ -2,7 +2,7 @@
 /*
  * PanmirrorImageChooser.java
  *
- * Copyright (C) 2021 by RStudio, PBC
+ * Copyright (C) 2022 by RStudio, PBC
  *
  * Unless you have received this program directly from RStudio pursuant
  * to the terms of a commercial license agreement with RStudio, then
@@ -18,6 +18,7 @@ package org.rstudio.studio.client.panmirror.dialogs;
 
 import java.util.HashMap;
 
+import com.google.gwt.core.client.GWT;
 import org.rstudio.core.client.ElementIds.TextBoxButtonId;
 import org.rstudio.core.client.files.FileSystemItem;
 import org.rstudio.core.client.widget.ProgressIndicator;
@@ -25,6 +26,7 @@ import org.rstudio.core.client.widget.ProgressOperationWithInput;
 import org.rstudio.core.client.widget.TextBoxWithButton;
 import org.rstudio.studio.client.RStudioGinjector;
 import org.rstudio.studio.client.common.SimpleRequestCallback;
+import org.rstudio.studio.client.panmirror.PanmirrorConstants;
 import org.rstudio.studio.client.panmirror.ui.PanmirrorUIContext;
 import org.rstudio.studio.client.rmarkdown.model.RMarkdownServerOperations;
 
@@ -37,8 +39,9 @@ public class PanmirrorImageChooser extends TextBoxWithButton {
    
    public PanmirrorImageChooser(PanmirrorUIContext uiContext, RMarkdownServerOperations server)
    {
-      super("Image (File or URL):", "", "Browse...", null, TextBoxButtonId.CHOOSE_IMAGE, false, null);
+      super(constants_.imageChooserLabel(), "", constants_.browseLabel(), null, TextBoxButtonId.CHOOSE_IMAGE, false, null);
       PanmirrorDialogsUtil.setFullWidthStyles(this);
+      disableSpellcheck();
       
       addClickHandler(new ClickHandler() {
 
@@ -53,7 +56,7 @@ public class PanmirrorImageChooser extends TextBoxWithButton {
             );
                
             RStudioGinjector.INSTANCE.getFileDialogs().openFile(
-               "Choose Image",
+               constants_.chooseImageCaption(),
                RStudioGinjector.INSTANCE.getRemoteFileSystemContext(),
                initialDir,
                new ProgressOperationWithInput<FileSystemItem>()
@@ -101,5 +104,5 @@ public class PanmirrorImageChooser extends TextBoxWithButton {
    }
    
    private static HashMap<String,String> previousImageDirs_ = new HashMap<String,String>();
-   
+   private static final PanmirrorConstants constants_ = GWT.create(PanmirrorConstants.class);
 }

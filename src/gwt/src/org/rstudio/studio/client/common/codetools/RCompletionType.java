@@ -1,7 +1,7 @@
 /*
  * RCompletionType.java
  *
- * Copyright (C) 2021 by RStudio, PBC
+ * Copyright (C) 2022 by RStudio, PBC
  *
  * Unless you have received this program directly from RStudio pursuant
  * to the terms of a commercial license agreement with RStudio, then
@@ -41,7 +41,8 @@ public class RCompletionType
    public static final int KEYWORD     = 22;
    public static final int OPTION      = 23;
    public static final int DATASET     = 24;
-   
+   public static final int YAML_KEY    = 25;
+   public static final int YAML_VALUE  = 26;
    public static final int SNIPPET     = 98;
    public static final int CONTEXT     = 99;
    

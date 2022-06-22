@@ -1,7 +1,7 @@
 /*
  * RExec.cpp
  *
- * Copyright (C) 2021 by RStudio, PBC
+ * Copyright (C) 2022 by RStudio, PBC
  *
  * Unless you have received this program directly from RStudio pursuant
  * to the terms of a commercial license agreement with RStudio, then
@@ -17,8 +17,10 @@
 #include <r/RExec.hpp>
 
 #include <shared_core/FilePath.hpp>
+
 #include <core/Log.hpp>
 #include <core/StringUtils.hpp>
+#include <core/Thread.hpp>
 #include <core/system/Environment.hpp>
 
 #include <r/RErrorCategory.hpp>
@@ -38,6 +40,10 @@ LibExtern int R_interrupts_pending;
 LibExtern int UserBreak;
 #endif
 }
+
+// avoid TRUE, FALSE defines masking Rboolean TRUE, FALSE enum
+#undef FALSE
+#undef TRUE
 
 using namespace rstudio::core;
 
@@ -96,11 +102,11 @@ private:
 Error parseString(const std::string& str, SEXP* pSEXP, sexp::Protect* pProtect)
 {
    // string to parse
-   SEXP cv = sexp::create(str, pProtect);
+   SEXP strSEXP = sexp::create(str, pProtect);
 
    // do the parse and protect the result
    ParseStatus ps;
-   *pSEXP=R_ParseVector(cv, 1, &ps, R_NilValue);
+   *pSEXP = R_ParseVector(strSEXP, 1, &ps, R_NilValue);
    pProtect->add(*pSEXP);
 
    // check error/success
@@ -110,10 +116,8 @@ Error parseString(const std::string& str, SEXP* pSEXP, sexp::Protect* pProtect)
       error.addProperty("code", str);
       return error;
    }
-   else
-   {
-      return Success();
-   }
+   
+   return Success();
 }
 
 
@@ -124,15 +128,23 @@ enum EvalType {
    EvalTry,    // use R_tryEval
    EvalDirect  // use Rf_eval directly
 };
+
 Error evaluateExpressionsUnsafe(SEXP expr,
                                 SEXP envir,
                                 SEXP* pSEXP,
                                 sexp::Protect* pProtect,
                                 EvalType evalType)
 {
+   if (!ASSERT_MAIN_THREAD())
+   {
+      return rCodeExecutionError(
+               "Attempted to evaluate R code on non-main thread",
+               ERROR_LOCATION);
+   }
+   
    // detect if an error occurred (only relevant for EvalTry)
    int errorOccurred = 0;
-   
+
    // if we have an entire expression list, evaluate its contents one-by-one 
    // and return only the last one
    if (TYPEOF(expr) == EXPRSXP) 
@@ -229,11 +241,18 @@ void SEXPTopLevelExec(void *data)
    
 Error executeSafely(boost::function<void()> function)
 {
+   if (!ASSERT_MAIN_THREAD())
+   {
+      return rCodeExecutionError(
+               "Attempted to execute R code on non-main thread",
+               ERROR_LOCATION);
+   }
+   
    // disable custom error handlers while we execute code
    DisableErrorHandlerScope disableErrorHandler;
    DisableDebugScope disableStepInto(R_GlobalEnv);
 
-   Rboolean success = R_ToplevelExec(topLevelExec, (void*)&function);
+   Rboolean success = R_ToplevelExec(topLevelExec, (void*) &function);
    if (!success)
    {
       return rCodeExecutionError(getErrorMessage(), ERROR_LOCATION);
@@ -308,6 +327,13 @@ Error evaluateString(const std::string& str,
                      sexp::Protect* pProtect,
                      EvalFlags flags)
 {
+   if (!ASSERT_MAIN_THREAD())
+   {
+      return rCodeExecutionError(
+               "Attempted to evaluate R code on non-main thread (" + str + ")",
+               ERROR_LOCATION);
+   }
+   
    // refresh source if necessary (no-op in production)
    r::sourceManager().reloadIfNecessary();
    
@@ -375,26 +401,28 @@ void RFunction::commonInit(const std::string& functionName)
    // record functionName (used later for diagnostics)
    functionName_ = functionName;
    
-   // get name & ns
-   std::string name, ns;
-   
-   // check for namespace qualifier
-   std::string nsQual(":::");
-   size_t pos = functionName_.find(nsQual);
-   if (pos != std::string::npos)
+   // handle empty function names up front
+   if (functionName.empty())
    {
-      ns = functionName_.substr(0, pos);
-      name = functionName_.substr(pos + nsQual.size());
+      functionSEXP_ = R_UnboundValue;
+      return;
+   }
+   
+   // otherwise, build call to function
+   // check for namespace qualifier and handle that if set
+   auto pos = functionName.find(":::");
+   if (pos == std::string::npos)
+   {
+      functionSEXP_ = Rf_install(functionName.c_str());
    }
    else
    {
-      name = functionName_;
-   }
-   
-   // lookup function
-   functionSEXP_ = sexp::findFunction(name, ns);
-   if (functionSEXP_ != R_UnboundValue)
+      functionSEXP_ = Rf_lang3(
+               Rf_install(":::"),
+               Rf_install(functionName.substr(0, pos).c_str()),
+               Rf_install(functionName.substr(pos + 3).c_str()));
       preserver_.add(functionSEXP_);
+   }
 }
    
 Error RFunction::callUnsafe()
@@ -419,19 +447,40 @@ Error RFunction::call(SEXP evalNS, SEXP* pResultSEXP, sexp::Protect* pProtect)
    return call(evalNS, true, pResultSEXP, pProtect);
 }
 
-Error RFunction::call(SEXP evalNS, bool safely, SEXP* pResultSEXP,
+Error RFunction::call(SEXP evalNS,
+                      bool safely,
+                      SEXP* pResultSEXP,
                       sexp::Protect* pProtect)
 {
+   // check that the function exists
+   if (functionSEXP_ != R_UnboundValue)
+   {
+      Error existsError = safely ?
+               evaluateExpressions(functionSEXP_, evalNS, pResultSEXP, pProtect) :
+               evaluateExpressionsUnsafe(functionSEXP_, evalNS, pResultSEXP, pProtect, EvalTry);
+      
+      if (existsError)
+         functionSEXP_ = R_UnboundValue;
+   }
+   
    // verify the function
    if (functionSEXP_ == R_UnboundValue)
    {
-      LOG_ERROR_MESSAGE("Failed to find function: '" + functionName_ + "'");
       Error error(errc::SymbolNotFoundError, ERROR_LOCATION);
       if (!functionName_.empty())
          error.addProperty("symbol", functionName_);
       return error;
    }
    
+   // make sure we're on the main thread
+   std::string functionName = functionName_.empty() ? "<unknown>" : functionName_;
+   if (!ASSERT_MAIN_THREAD("Executing function: " + functionName_))
+   {
+      return rCodeExecutionError(
+               "Attempted to execute R function '" + functionName + "' on non-main thread",
+               ERROR_LOCATION);
+   }
+
    // create the call object (LANGSXP) with the correct number of elements
    SEXP callSEXP;
    pProtect->add(callSEXP = Rf_allocVector(LANGSXP, 1 + params_.size()));
@@ -440,10 +489,9 @@ Error RFunction::call(SEXP evalNS, bool safely, SEXP* pResultSEXP,
    // assign the function to the first element of the call
    SETCAR(callSEXP, functionSEXP_);
    
-   // assign parameters to the subseqent elements of the call
+   // assign parameters to the subsequent elements of the call
    SEXP nextSlotSEXP = CDR(callSEXP);
-   for (std::vector<Param>::const_iterator 
-            it = params_.begin(); it != params_.end(); ++it)
+   for (auto it = params_.begin(); it != params_.end(); ++it)
    {
       SETCAR(nextSlotSEXP, it->valueSEXP);
       // parameters can optionally be named
@@ -514,11 +562,7 @@ void errorCall(SEXP call, const std::string& message)
    
 std::string getErrorMessage()
 {
-   std::string errMessage;
-   Error callError = RFunction("geterrmessage").call(&errMessage);
-   if (callError)
-      LOG_ERROR(callError);
-   return errMessage;
+   return R_curErrorBuf();
 }
    
 

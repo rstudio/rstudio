@@ -1,7 +1,10 @@
 <!DOCTYPE ui:UiBinder SYSTEM "http://dl.google.com/gwt/DTD/xhtml.ent">
 <ui:UiBinder xmlns:ui="urn:ui:com.google.gwt.uibinder"
    xmlns:rw="urn:import:org.rstudio.core.client.widget"
-   xmlns:g="urn:import:com.google.gwt.user.client.ui">
+   xmlns:g="urn:import:com.google.gwt.user.client.ui"
+   ui:generateFormat='com.google.gwt.i18n.server.PropertyCatalogFactory'
+   ui:generateKeys="com.google.gwt.i18n.server.keygen.MD5KeyGenerator"
+   ui:generateLocales="default">
    <ui:with field="ElementIds" type="org.rstudio.core.client.ElementIds"/>
    <ui:style>
       @eval fixedWidthFont org.rstudio.core.client.theme.ThemeFonts.getFixedWidthFont();
@@ -22,9 +25,9 @@
    </ui:style>
    <g:VerticalPanel styleName="{style.outer}">
       <rw:FormLabel styleName="{style.spaced}" text="The following job is still running." ui:field="jobListLabel_"
-                    for="{ElementIds.getJobQuitListbox}"/>
+                    for="{ElementIds.getJobQuitListbox}"><ui:attribute name="text" key="jobRunningText"/></rw:FormLabel>
       <rw:FormListBox styleName="{style.spaced} {style.list}" visibleItemCount="5" ui:field="jobList_"
                       elementId="{ElementIds.getJobQuitListbox}"/>
-      <g:Label styleName="{style.spaced}" text="Quitting the session will terminate these jobs."/>
+      <g:Label styleName="{style.spaced}" text="Quitting the session will terminate these jobs."><ui:attribute name="text" key="quittingSession"/></g:Label>
    </g:VerticalPanel>
 </ui:UiBinder> 

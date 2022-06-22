@@ -1,7 +1,7 @@
 /*
  * CommitDetail.java
  *
- * Copyright (C) 2021 by RStudio, PBC
+ * Copyright (C) 2022 by RStudio, PBC
  *
  * Unless you have received this program directly from RStudio pursuant
  * to the terms of a commercial license agreement with RStudio, then
@@ -23,7 +23,6 @@ import com.google.gwt.event.dom.client.ClickHandler;
 import com.google.gwt.event.dom.client.HasClickHandlers;
 import com.google.gwt.event.shared.HandlerRegistration;
 import com.google.gwt.i18n.client.DateTimeFormat;
-import com.google.gwt.i18n.client.DateTimeFormat.PredefinedFormat;
 import com.google.gwt.uibinder.client.UiBinder;
 import com.google.gwt.uibinder.client.UiField;
 import com.google.gwt.user.client.Command;
@@ -37,6 +36,7 @@ import org.rstudio.core.client.theme.res.ThemeStyles;
 import org.rstudio.core.client.widget.ProgressPanel;
 import org.rstudio.core.client.widget.images.ProgressImages;
 import org.rstudio.studio.client.common.vcs.GitServerOperations.PatchMode;
+import org.rstudio.studio.client.workbench.views.vcs.ViewVcsConstants;
 import org.rstudio.studio.client.workbench.views.vcs.common.diff.*;
 import org.rstudio.studio.client.workbench.views.vcs.common.events.ViewFileRevisionEvent;
 import org.rstudio.studio.client.workbench.views.vcs.dialog.HistoryPresenter.CommitDetailDisplay;
@@ -50,7 +50,7 @@ public class CommitDetail extends Composite implements CommitDetailDisplay
 
    public CommitDetail()
    {
-      sizeWarning_ = new SizeWarningWidget("commit");
+      sizeWarning_ = new SizeWarningWidget(constants_.commit());
       sizeWarning_.setVisible(false);
       progressPanel_ = new ProgressPanel(ProgressImages.createLargeGray());
       initWidget(GWT.<Binder>create(Binder.class).createAndBindUi(this));
@@ -178,7 +178,7 @@ public class CommitDetail extends Composite implements CommitDetailDisplay
    @Override
    public void setCommitListIsLoading(boolean isLoading)
    {
-      emptySelectionLabel_.setText(isLoading ? "" : "(No commit selected)");
+      emptySelectionLabel_.setText(isLoading ? "" : constants_.noCommitSelectedParentheses());
    }
 
    @Override
@@ -192,9 +192,9 @@ public class CommitDetail extends Composite implements CommitDetailDisplay
       labelId_.setText(commit_.getId());
       labelAuthor_.setText(commit_.getAuthor());
       labelDate_.setText(
-            DateTimeFormat.getFormat(PredefinedFormat.DATE_SHORT).format(commit_.getDate()) +
+            yearMonthDayFormat.format(commit_.getDate()) +
             " " +
-            DateTimeFormat.getFormat(PredefinedFormat.TIME_SHORT).format(commit_.getDate())
+            hourMinuteFormat.format(commit_.getDate())
       );
       labelSubject_.setText(commit_.getSubject());
 
@@ -239,6 +239,7 @@ public class CommitDetail extends Composite implements CommitDetailDisplay
    {
       return sizeWarning_;
    }
+   private static final ViewVcsConstants constants_ = GWT.create(ViewVcsConstants.class);
 
    private final Invalidation invalidation_ = new Invalidation();
    private CommitInfo commit_;
@@ -270,5 +271,6 @@ public class CommitDetail extends Composite implements CommitDetailDisplay
    HTMLPanel commitViewPanel_;
 
    private ScrollPanel container_;
-
+   private static final DateTimeFormat yearMonthDayFormat = DateTimeFormat.getFormat("yyyy-MM-dd");
+   private static final DateTimeFormat hourMinuteFormat = DateTimeFormat.getFormat("kk:mm");
 }

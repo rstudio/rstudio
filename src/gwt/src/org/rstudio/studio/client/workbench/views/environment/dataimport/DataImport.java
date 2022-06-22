@@ -1,7 +1,7 @@
 /*
  * DataImport.java
  *
- * Copyright (C) 2021 by RStudio, PBC
+ * Copyright (C) 2022 by RStudio, PBC
  *
  * Unless you have received this program directly from RStudio pursuant
  * to the terms of a commercial license agreement with RStudio, then
@@ -17,6 +17,7 @@ package org.rstudio.studio.client.workbench.views.environment.dataimport;
 
 import org.rstudio.core.client.Debug;
 import org.rstudio.core.client.Size;
+import org.rstudio.core.client.dom.Clipboard;
 import org.rstudio.core.client.dom.DomMetrics;
 import org.rstudio.core.client.dom.DomUtils;
 import org.rstudio.core.client.resources.ImageResource2x;
@@ -35,6 +36,7 @@ import org.rstudio.studio.client.server.ServerError;
 import org.rstudio.studio.client.server.ServerRequestCallback;
 import org.rstudio.studio.client.server.Void;
 import org.rstudio.studio.client.workbench.model.WorkbenchServerOperations;
+import org.rstudio.studio.client.workbench.views.environment.ViewEnvironmentConstants;
 import org.rstudio.studio.client.workbench.views.environment.dataimport.model.DataImportAssembleResponse;
 import org.rstudio.studio.client.workbench.views.environment.dataimport.model.DataImportPreviewResponse;
 import org.rstudio.studio.client.workbench.views.environment.dataimport.model.DataImportServerOperations;
@@ -57,6 +59,7 @@ import com.google.inject.Inject;
 
 public class DataImport extends Composite
 {
+   private static final ViewEnvironmentConstants constants_ = GWT.create(ViewEnvironmentConstants.class);
    private static DataImportUiBinder uiBinder = GWT
          .create(DataImportUiBinder.class);
    
@@ -75,7 +78,7 @@ public class DataImport extends Composite
    private final int minWidth = 680;
    private final int minHeight = 400;
    
-   private final String codePreviewErrorMessage_ = "Code Creation Error";
+   private final String codePreviewErrorMessage_ = constants_.codeCreationError();
    
    private DataImportOptions importOptions_;
    
@@ -102,7 +105,7 @@ public class DataImport extends Composite
       dataImportResources_ = GWT.create(DataImportResources.class);
       dataImportMode_ = dataImportMode;
       
-      gridViewer_ = new GridViewerFrame("Data Preview");
+      gridViewer_ = new GridViewerFrame(constants_.dataPreview());
       copyButton_ = makeCopyButton();
 
       progressIndicator_ = new ProgressIndicatorDelay(progressIndicator);
@@ -189,15 +192,15 @@ public class DataImport extends Composite
       switch (dataImportMode_)
       {
       case Text:
-         headerMessage = "Is this a valid CSV file?\n\n";
+         headerMessage = constants_.isThisAValidCSVFile();
          break;
       case SAV:
       case SAS:
       case Stata:
-         headerMessage =  "Is this a valid SPSS, SAS or STATA file?\n\n";
+         headerMessage =  constants_.isThisAValidSpssSasSataFile();
          break;
       case XLS:
-         headerMessage =  "Is this a valid Excel file?\n\n";
+         headerMessage =  constants_.isThisAValidExcelFile();
          break;
       default:
          break;
@@ -252,12 +255,12 @@ public class DataImport extends Composite
    
    ImageButton makeCopyButton()
    {
-      ImageButton btn = new ImageButton("Copy Code Preview", new ImageResource2x(
+      ImageButton btn = new ImageButton(constants_.copyCodePreview(), new ImageResource2x(
          dataImportResources_.copyImage(),
          dataImportResources_.copyImage2x()));
       btn.addClickHandler(clickEvent ->
       {
-         DomUtils.copyCodeToClipboard(codePreview_);
+         Clipboard.setText(codePreview_);
       });
       return btn;
    }
@@ -291,7 +294,7 @@ public class DataImport extends Composite
    {
       globalDisplay_.promptForText(
          title,
-         "Please enter the format string",
+         constants_.pleaseEnterFormatString(),
          parseString,
          new OperationWithInput<String>()
          {
@@ -312,7 +315,7 @@ public class DataImport extends Composite
    {
       globalDisplay_.promptForText(
          title,
-         "Please insert a comma separated list of factors",
+         constants_.pleaseInsertACommaSeparatedList(),
          "",
          new OperationWithInput<String>()
          {
@@ -373,7 +376,7 @@ public class DataImport extends Composite
                      if (dataImportMode_ == DataImportModes.Text)
                      {
                         promptForParseString(
-                              "Date Format", "%m/%d/%Y", completeAndPreview, column.getName(), input);
+                              constants_.dateFormat(), "%m/%d/%Y", completeAndPreview, column.getName(), input);
                      }
                      else
                      {
@@ -384,17 +387,17 @@ public class DataImport extends Composite
                   else if (input == "time")
                   {
                      promptForParseString(
-                        "Time Format", "%H:%M", completeAndPreview, column.getName(), input);
+                        constants_.timeFormat(), "%H:%M", completeAndPreview, column.getName(), input);
                   }
                   else if (input == "dateTime")
                   {
                      promptForParseString(
-                        "Date and Time Format", "%m/%d/%Y %H:%M", completeAndPreview, column.getName(), input);
+                        constants_.dateAndTimeFormat(), "%m/%d/%Y %H:%M", completeAndPreview, column.getName(), input);
                   }
                   else if (input == "factor")
                   {
                      promptForFactorString(
-                        "Factors", completeAndPreview, column.getName(), input);
+                        constants_.factors(), completeAndPreview, column.getName(), input);
                   }
                   else
                   {
@@ -456,8 +459,7 @@ public class DataImport extends Composite
             
             if (someColumnsHaveNoName(lastSuccessfulResponse_)) {
                columnTypesMenu_.setError(
-                     "All columns must have names in order to " +
-                     "perform column operations.");
+                     constants_.allColumnsMustHaveName());
                columnTypesMenu_.setWidth("200px");
             }
             
@@ -539,7 +541,7 @@ public class DataImport extends Composite
             
             previewImportOptions.setMaxRows(maxRows_);
             
-            progressIndicator_.onProgress("Retrieving preview data...", new Operation()
+            progressIndicator_.onProgress(constants_.retrievingPreviewDataEllipses(), new Operation()
             {
                @Override
                public void execute()
@@ -597,10 +599,10 @@ public class DataImport extends Composite
                   }
                   
                   gridViewer_.setOption("status",
-                        "Previewing first " + toLocaleString(maxRows_) + 
-                        " entries. " + (
-                              response.getParsingErrors() > 0 ?
-                              Integer.toString(response.getParsingErrors()) + " parsing errors." : "")
+                          response.getParsingErrors() > 0 ?
+                                  constants_.previewingFirstEntriesMultiple(toLocaleString(maxRows_),
+                                          Integer.toString(response.getParsingErrors())) :
+                                  constants_.previewingFirstEntriesNone(toLocaleString(maxRows_))
                         );
                   
                   assignColumnDefinitions(response, importOptions_.getColumnDefinitions());

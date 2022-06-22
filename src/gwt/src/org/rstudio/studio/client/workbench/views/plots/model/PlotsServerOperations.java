@@ -1,7 +1,7 @@
 /*
  * PlotsServerOperations.java
  *
- * Copyright (C) 2021 by RStudio, PBC
+ * Copyright (C) 2022 by RStudio, PBC
  *
  * Unless you have received this program directly from RStudio pursuant
  * to the terms of a commercial license agreement with RStudio, then
@@ -33,6 +33,8 @@ public interface PlotsServerOperations
                            int width, 
                            int height, 
                            boolean attachment);
+   
+   void getPlotTempdir(ServerRequestCallback<String> requestCallback);
    
    void nextPlot(ServerRequestCallback<Void> requestCallback);
    void previousPlot(ServerRequestCallback<Void> requestCallback);

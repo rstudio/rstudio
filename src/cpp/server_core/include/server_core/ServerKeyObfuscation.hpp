@@ -1,7 +1,7 @@
 /*
  * ServerKeyObfuscation.hpp
  *
- * Copyright (C) 2021 by RStudio, PBC
+ * Copyright (C) 2022 by RStudio, PBC
  *
  * Unless you have received this program directly from RStudio pursuant
  * to the terms of a commercial license agreement with RStudio, then
@@ -16,6 +16,7 @@
 #ifndef SERVER_CORE_SERVER_KEY_OBFUSCATION_HPP
 #define SERVER_CORE_SERVER_KEY_OBFUSCATION_HPP
 
-#define OBFUSCATE_KEY(key) (key)
+// stub for open source
+#define OBFUSCATE_KEY(key) (key[0] = key[0])
 
 #endif /* SERVER_CORE_SERVER_KEY_OBFUSCATION_HPP */

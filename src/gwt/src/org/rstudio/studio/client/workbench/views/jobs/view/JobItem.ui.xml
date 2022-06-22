@@ -3,7 +3,7 @@
     xmlns:g="urn:import:com.google.gwt.user.client.ui"
     xmlns:rw="urn:import:org.rstudio.core.client.widget">
     <ui:style field="styles_" type="org.rstudio.studio.client.workbench.views.jobs.view.JobItem.Styles">
-    @external rstudio-themes-flat, rstudio-themes-dark;
+    @external rstudio-themes-dark;
     .item
     {
         padding-left: 5px;
@@ -41,13 +41,13 @@
         color: #da2c30;
     }
     
-    .rstudio-themes-flat .rstudio-themes-dark .succeeded .state
+    .rstudio-themes-dark .succeeded .state
     {
         color: #3db057;
     }
     
-    .rstudio-themes-flat .rstudio-themes-dark .cancelled .state,
-    .rstudio-themes-flat .rstudio-themes-dark .failed .state
+    .rstudio-themes-dark .cancelled .state,
+    .rstudio-themes-dark .failed .state
     {
         color: #ee6366;
     }

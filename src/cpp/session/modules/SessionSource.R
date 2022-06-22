@@ -1,7 +1,7 @@
 #
 # SessionSource.R
 #
-# Copyright (C) 2021 by RStudio, PBC
+# Copyright (C) 2022 by RStudio, PBC
 #
 # Unless you have received this program directly from RStudio pursuant
 # to the terms of a commercial license agreement with RStudio, then
@@ -77,7 +77,7 @@
       'ISO-8859-7', #'Windows-1253',
       # Cyrillic
       #'ISO-8859-5', 'MacCyrillic', 'KOI8-R', 'Windows-1251',
-      # Ukranian
+      # Ukrainian
       #'KOI8-U',
       # Simplified Chinese
       'GB2312', #'HZ-GB-2312',

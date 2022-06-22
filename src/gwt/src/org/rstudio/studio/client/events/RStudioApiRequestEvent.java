@@ -1,7 +1,7 @@
 /*
  * RStudioApiRequestEvent.java
  *
- * Copyright (C) 2021 by RStudio, PBC
+ * Copyright (C) 2022 by RStudio, PBC
  *
  * Unless you have received this program directly from RStudio pursuant
  * to the terms of a commercial license agreement with RStudio, then
@@ -150,6 +150,9 @@ public class RStudioApiRequestEvent extends GwtEvent<RStudioApiRequestEvent.Hand
       }
       
       public final native String getPath() /*-{ return this["path"]; }-*/;
+      public final native int getRow() /*-{ return this["row"]; }-*/;
+      public final native int getColumn() /*-{ return this["column"]; }-*/;
+      public final native boolean getMoveCursor() /*-{ return this["moveCursor"]; }-*/;
    }
    
    public static class DocumentNewData extends JavaScriptObject

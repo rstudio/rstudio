@@ -1,7 +1,10 @@
 <!DOCTYPE ui:UiBinder SYSTEM "http://dl.google.com/gwt/DTD/xhtml.ent">
 <ui:UiBinder xmlns:ui="urn:ui:com.google.gwt.uibinder"
     xmlns:g="urn:import:com.google.gwt.user.client.ui"
-    xmlns:rs="urn:import:org.rstudio.core.client.widget">
+    xmlns:rs="urn:import:org.rstudio.core.client.widget"
+    ui:generateFormat='com.google.gwt.i18n.server.PropertyCatalogFactory'
+    ui:generateKeys="com.google.gwt.i18n.server.keygen.MD5KeyGenerator"
+    ui:generateLocales="default">
     <ui:with field="res" type="org.rstudio.core.client.theme.res.ThemeResources"/>
     <ui:with field="ElementIds" type="org.rstudio.core.client.ElementIds"/>
     <ui:style>
@@ -94,18 +97,19 @@
         }
     </ui:style>
     <g:HTMLPanel styleName="{style.mainPanel}">
-        <rs:FormLabel ui:field="optionsLabel_" text="Import Options:" styleName="{style.optionsLabel}"/>
+        <rs:FormLabel ui:field="optionsLabel_" text="Import Options:" styleName="{style.optionsLabel}"><ui:attribute
+                name="text" key="importOptionsText"/></rs:FormLabel>
         <div ui:field="optionsGroup_" class="{style.optionsBlock}">
             <table class="{style.optionsColumn}">
                 <tr class="{style.optionsRow}">
-                    <td><rs:FormLabel text="Name:" for="{ElementIds.getDataImportOptionsName}"/></td>
+                    <td><rs:FormLabel text="Name:" for="{ElementIds.getDataImportOptionsName}"><ui:attribute name="text" key="nameText"/></rs:FormLabel></td>
                     <td>
                         <rs:FormTextBox ui:field="nameTextBox_" styleName="{style.nameTextBox}"
                                         elementId="{ElementIds.getDataImportOptionsName}"/>
                     </td>
                 </tr>
                 <tr class="{style.optionsRow}">
-                    <td><rs:FormLabel text="Skip:" for="{ElementIds.getDataImportOptionsSkip}"/></td>
+                    <td><rs:FormLabel text="Skip:" for="{ElementIds.getDataImportOptionsSkip}"><ui:attribute name="text" key="skipText"/></rs:FormLabel></td>
                     <td>
                         <rs:FormTextBox ui:field="skipTextBox_" styleName="{style.skipTextBox}"
                                         elementId="{ElementIds.getDataImportOptionsSkip}"/>
@@ -115,54 +119,58 @@
             <table class="{style.optionsColumn}">
                 <tr class="{style.optionsRow}">
                     <td colspan="2">
-                        <g:CheckBox ui:field="columnNamesCheckBox_" text="First Row as Names"/>
+                        <g:CheckBox ui:field="columnNamesCheckBox_" text="First Row as Names"><ui:attribute name="text" key="firstRowText"/></g:CheckBox>
                     </td>
                 </tr>
                 <tr class="{style.optionsRow}">
                     <td colspan="2">
-                        <g:CheckBox ui:field="trimSpacesCheckBox_" text="Trim Spaces"/>
+                        <g:CheckBox ui:field="trimSpacesCheckBox_" text="Trim Spaces"><ui:attribute name="text" key="trimSpacesText"/></g:CheckBox>
                     </td>
                 </tr>
                 <tr class="{style.optionsRow}">
                     <td colspan="2">
-                        <g:CheckBox ui:field="openDataViewerCheckBox_" text="Open Data Viewer"/>
+                        <g:CheckBox ui:field="openDataViewerCheckBox_" text="Open Data Viewer"><ui:attribute name="text" key="openDataViewerText"/></g:CheckBox>
                     </td>
                 </tr>
             </table>
             <table class="{style.optionsColumn}">
                 <tr class="{style.optionsRow}">
-                    <td><rs:FormLabel text="Delimiter:" for="{ElementIds.getDataImportOptionsDelimiter}"/></td>
+                    <td><rs:FormLabel text="Delimiter:" for="{ElementIds.getDataImportOptionsDelimiter}"><ui:attribute
+                            name="text" key="delimiterText"/></rs:FormLabel></td>
                     <td>
                         <rs:FormListBox ui:field="delimiterListBox_" styleName="{style.optionsListBox}"
                                         elementId="{ElementIds.getDataImportOptionsDelimiter}"/>
                     </td>
                 </tr>
                 <tr class="{style.optionsRow}">
-                    <td><rs:FormLabel text="Quotes:" for="{ElementIds.getDataImportOptionsQuotes}"/></td>
+                    <td><rs:FormLabel text="Quotes:" for="{ElementIds.getDataImportOptionsQuotes}"><ui:attribute
+                            name="text" key="quotesText"/></rs:FormLabel></td>
                     <td>
                         <rs:FormListBox ui:field="quotesListBox_" styleName="{style.optionsListBox}"
                                         elementId="{ElementIds.getDataImportOptionsQuotes}"/>
                     </td>
                 </tr>
                 <tr class="{style.optionsRow}">
-                    <td>Locale:</td>
+                    <td><ui:msg key="localeText">Locale:</ui:msg></td>
                     <td>
                         <g:Button ui:field="localeButton_" styleName="{style.optionsListBox}">
-                            Configure...
+                            <ui:msg key="configureText">Configure...</ui:msg>
                         </g:Button>
                     </td>
                 </tr>
             </table>
             <table class="{style.optionsColumn}">
                 <tr class="{style.optionsRow}">
-                    <td><rs:FormLabel text="Escape:" for="{ElementIds.getDataImportOptionsEscape}"/></td>
+                    <td><rs:FormLabel text="Escape:" for="{ElementIds.getDataImportOptionsEscape}"><ui:attribute
+                            name="text" key="escapeText"/></rs:FormLabel></td>
                     <td>
                         <rs:FormListBox ui:field="escapeListBox_" styleName="{style.optionsListBox}"
                                         elementId="{ElementIds.getDataImportOptionsEscape}" />
                     </td>
                 </tr>
                 <tr class="{style.optionsRow}">
-                    <td><rs:FormLabel text="Comment:" for="{ElementIds.getDataImportOptionsComment}"/></td>
+                    <td><rs:FormLabel text="Comment:" for="{ElementIds.getDataImportOptionsComment}"><ui:attribute
+                            name="text" key="commentText"/></rs:FormLabel></td>
                     <td>
                         <rs:FormListBox ui:field="commentListBox_" styleName="{style.optionsListBox}"
                                         elementId="{ElementIds.getDataImportOptionsComment}"/>

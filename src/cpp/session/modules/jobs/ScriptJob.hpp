@@ -1,7 +1,7 @@
 /*
  * ScriptJob.hpp
  *
- * Copyright (C) 2021 by RStudio, PBC
+ * Copyright (C) 2022 by RStudio, PBC
  *
  * Unless you have received this program directly from RStudio pursuant
  * to the terms of a commercial license agreement with RStudio, then
@@ -80,6 +80,7 @@ public:
    static boost::shared_ptr<ScriptJob> create(
          const ScriptLaunchSpec& spec);
    void start();
+   core::Error replay();
 
 private:
    ScriptJob(const ScriptLaunchSpec& spec);
@@ -101,6 +102,8 @@ core::Error startScriptJob(const ScriptLaunchSpec& spec,
       std::string *pId);
 
 core::Error stopScriptJob(const std::string& id);
+
+core::Error replayScriptJob(const std::string& id);
 
 } // namespace jobs
 } // namespace modules

@@ -2,7 +2,10 @@
 <ui:UiBinder xmlns:ui="urn:ui:com.google.gwt.uibinder"
    xmlns:g="urn:import:com.google.gwt.user.client.ui"
    xmlns:rw="urn:import:org.rstudio.core.client.widget"
-   xmlns:dialogs="urn:import:org.rstudio.studio.client.panmirror.dialogs">
+   xmlns:dialogs="urn:import:org.rstudio.studio.client.panmirror.dialogs"
+   ui:generateFormat='com.google.gwt.i18n.server.PropertyCatalogFactory'
+   ui:generateKeys="com.google.gwt.i18n.server.keygen.MD5KeyGenerator"
+   ui:generateLocales="default">
    <ui:with field="res" type="org.rstudio.studio.client.panmirror.dialogs.PanmirrorDialogsResources" />
    <ui:with field="ElementIds" type="org.rstudio.core.client.ElementIds"/>
    <ui:style>
@@ -29,7 +32,8 @@
                                         styleName="{style.formatSelect} {res.styles.spaced}" ui:field="rawFormatSelect_">
       </dialogs:PanmirrorRawFormatSelect>
 
-      <rw:FormLabel for="{ElementIds.getVisualMdRawContent}" text="Content:" ui:field="rawContentLabel_"/>
+      <rw:FormLabel for="{ElementIds.getVisualMdRawContent}" text="Content:" ui:field="rawContentLabel_"><ui:attribute
+              name="text" key="contentText"/></rw:FormLabel>
       <rw:FormTextBox elementId="{ElementIds.getVisualMdRawContent}" styleName="{style.rawContent} {res.styles.spaced}"
                     ui:field="rawContent_">
       </rw:FormTextBox>

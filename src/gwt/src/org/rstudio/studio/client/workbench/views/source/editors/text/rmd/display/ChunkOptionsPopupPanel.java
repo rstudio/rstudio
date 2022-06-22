@@ -1,7 +1,7 @@
 /*
  * ChunkOptionsPopupPanel.java
  *
- * Copyright (C) 2021 by RStudio, PBC
+ * Copyright (C) 2022 by RStudio, PBC
  *
  * Unless you have received this program directly from RStudio pursuant
  * to the terms of a commercial license agreement with RStudio, then
@@ -41,6 +41,7 @@ import org.rstudio.studio.client.common.FileDialogs;
 import org.rstudio.studio.client.common.FilePathUtils;
 import org.rstudio.studio.client.common.HelpLink;
 import org.rstudio.studio.client.workbench.model.RemoteFileSystemContext;
+import org.rstudio.studio.client.workbench.views.source.ViewsSourceConstants;
 import org.rstudio.studio.client.workbench.views.source.editors.text.DocDisplay;
 import org.rstudio.studio.client.workbench.views.source.editors.text.ace.Position;
 
@@ -81,7 +82,7 @@ public abstract class ChunkOptionsPopupPanel extends MiniPopupPanel
    protected abstract void initOptions(Command afterInit);
    protected abstract void synchronize();
    protected abstract void revert();
-   
+   private static final ViewsSourceConstants constants_ = GWT.create(ViewsSourceConstants.class);
    @Inject
    private void initialize(FileDialogs fileDialogs,
                            RemoteFileSystemContext rfsContext)
@@ -108,7 +109,7 @@ public abstract class ChunkOptionsPopupPanel extends MiniPopupPanel
       header_.setVisible(false);
       panel_.add(header_);
       
-      tbChunkLabel_ = new TextBoxWithCue("Unnamed chunk");
+      tbChunkLabel_ = new TextBoxWithCue(constants_.unnamedChunk());
       tbChunkLabel_.addStyleName(RES.styles().textBox());
       tbChunkLabel_.addChangeHandler(changeEvent -> synchronize());
       
@@ -142,7 +143,7 @@ public abstract class ChunkOptionsPopupPanel extends MiniPopupPanel
       int gridRows = includeChunkNameUI ? 2 : 1;
       LayoutGrid nameAndOutputGrid = new LayoutGrid(gridRows, 2);
 
-      chunkLabel_ = new FormLabel("Chunk Name:", tbChunkLabel_);
+      chunkLabel_ = new FormLabel(constants_.chunkNameColon(), tbChunkLabel_);
       chunkLabel_.addStyleName(RES.styles().chunkLabel());
       
       if (includeChunkNameUI)
@@ -202,7 +203,7 @@ public abstract class ChunkOptionsPopupPanel extends MiniPopupPanel
       });
       
       int row = includeChunkNameUI ? 1 : 0;
-      FormLabel outputLabel = new FormLabel("Output:");
+      FormLabel outputLabel = new FormLabel(constants_.outputColon());
       nameAndOutputGrid.setWidget(row, 0, outputLabel);
       nameAndOutputGrid.setWidget(row, 1, outputComboBox_);
       outputLabel.setFor(outputComboBox_);
@@ -210,28 +211,28 @@ public abstract class ChunkOptionsPopupPanel extends MiniPopupPanel
       panel_.add(nameAndOutputGrid);
       
       showWarningsInOutputCb_ = makeTriStateToggle(
-            "Show warnings",
+            constants_.showWarnings(),
             "warning");
       panel_.add(showWarningsInOutputCb_);
-      
+
       showMessagesInOutputCb_ = makeTriStateToggle(
-            "Show messages",
+            constants_.showMessages(),
             "message");
       panel_.add(showMessagesInOutputCb_);
 
       cacheChunkCb_ = makeTriStateToggle(
-            "Cache chunk",
+            constants_.cacheChunk(),
             "cache");
       panel_.add(cacheChunkCb_);
       cacheChunkCb_.setVisible(false);
 
       printTableAsTextCb_ = makeTriStateToggle(
-            "Use paged tables",
+            constants_.usePagedTables(),
             "paged.print");
       panel_.add(printTableAsTextCb_);
       printTableAsTextCb_.setVisible(false);
       
-      useCustomFigureCheckbox_ = new Toggle("Use custom figure size", false);
+      useCustomFigureCheckbox_ = new Toggle(constants_.useCustomFigureSize(), false);
       useCustomFigureCheckbox_.addStyleName(RES.styles().checkBox());
       useCustomFigureCheckbox_.addValueChangeHandler(new ValueChangeHandler<Toggle.State>()
       {
@@ -257,13 +258,13 @@ public abstract class ChunkOptionsPopupPanel extends MiniPopupPanel
       figureDimensionsPanel_.getElement().getStyle().setMarginTop(5, Unit.PX);
       
       figWidthBox_ = makeInputBox("fig.width", false);
-      FormLabel widthLabel = new FormLabel("Width (inches):", figWidthBox_);
+      FormLabel widthLabel = new FormLabel(constants_.widthInchesColon(), figWidthBox_);
       widthLabel.getElement().getStyle().setMarginLeft(20, Unit.PX);
       figureDimensionsPanel_.setWidget(0, 0, widthLabel);
       figureDimensionsPanel_.setWidget(0, 1, figWidthBox_);
       
       figHeightBox_ = makeInputBox("fig.height", false);
-      FormLabel heightLabel = new FormLabel("Height (inches):", figHeightBox_);
+      FormLabel heightLabel = new FormLabel(constants_.heightInchesColon(), figHeightBox_);
       heightLabel.getElement().getStyle().setMarginLeft(20, Unit.PX);
       figureDimensionsPanel_.setWidget(1, 0, heightLabel);
       figureDimensionsPanel_.setWidget(1, 1, figHeightBox_);
@@ -275,7 +276,7 @@ public abstract class ChunkOptionsPopupPanel extends MiniPopupPanel
       
       enginePathBox_ = makeInputBox("engine.path", true);
       enginePathBox_.getElement().getStyle().setWidth(120, Unit.PX);
-      Label enginePathLabel = new Label("Engine path:");
+      Label enginePathLabel = new Label(constants_.enginePathColon());
       SmallButton enginePathBrowseButton = new SmallButton("...");
       enginePathBrowseButton.addClickHandler(new ClickHandler()
       {
@@ -289,7 +290,7 @@ public abstract class ChunkOptionsPopupPanel extends MiniPopupPanel
                   : FileSystemItem.createDir(FilePathUtils.dirFromFile(path));
             
             fileDialogs_.openFile(
-                  "Select Engine",
+                  constants_.selectEngine(),
                   rfsContext_,
                   initialPath,
                   new ProgressOperationWithInput<FileSystemItem>()
@@ -319,7 +320,7 @@ public abstract class ChunkOptionsPopupPanel extends MiniPopupPanel
       
       engineOptsBox_ = makeInputBox("engine.opts", true);
       engineOptsBox_.getElement().getStyle().setWidth(120, Unit.PX);
-      Label engineOptsLabel = new Label("Engine options:");
+      Label engineOptsLabel = new Label(constants_.engineOptionsColon());
       enginePanel_.setWidget(1, 0, engineOptsLabel);
       enginePanel_.setWidget(1, 1, engineOptsBox_);
       
@@ -330,14 +331,14 @@ public abstract class ChunkOptionsPopupPanel extends MiniPopupPanel
       
       FlowPanel linkPanel = new FlowPanel();
       linkPanel.add(new VerticalSpacer("8px"));
-      HelpLink helpLink = new HelpLink("Chunk options", "chunk-options", false);
+      HelpLink helpLink = new HelpLink(constants_.chunkOptions(), "chunk-options", false);
       linkPanel.add(helpLink);
       
       HorizontalPanel buttonPanel = new HorizontalPanel();
       buttonPanel.addStyleName(RES.styles().buttonPanel());
       buttonPanel.setHorizontalAlignment(HorizontalPanel.ALIGN_RIGHT);
       
-      revertButton_ = new SmallButton("Revert");
+      revertButton_ = new SmallButton(constants_.revertCapitalized());
       revertButton_.getElement().getStyle().setMarginRight(8, Unit.PX);
       revertButton_.addClickHandler(clickEvent ->
       {
@@ -346,7 +347,7 @@ public abstract class ChunkOptionsPopupPanel extends MiniPopupPanel
       });
       buttonPanel.add(revertButton_);
       
-      applyButton_ = new SmallButton("Apply");
+      applyButton_ = new SmallButton(constants_.applyCapitalized());
       applyButton_.addClickHandler(clickEvent ->
       {
          synchronize();
@@ -652,19 +653,19 @@ public abstract class ChunkOptionsPopupPanel extends MiniPopupPanel
    protected Position position_;
    
    private static final String OUTPUT_USE_DOCUMENT_DEFAULT =
-         "(Use document default)";
+         constants_.useDocumentDefaultParentheses();
 
    private static final String OUTPUT_SHOW_OUTPUT_ONLY =
-         "Show output only";
+         constants_.showOutputOnly();
    
    private static final String OUTPUT_SHOW_CODE_AND_OUTPUT =
-         "Show code and output";
+         constants_.showCodeAndOutput();
    
    private static final String OUTPUT_SHOW_NOTHING =
-         "Show nothing (run code)";
+         constants_.showNothingRunCode();
    
    private static final String OUTPUT_SKIP_THIS_CHUNK =
-         "Show nothing (don't run code)";
+         constants_.showNothingDontRunCode();
    
    public interface Styles extends CssResource
    {

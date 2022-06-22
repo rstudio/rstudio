@@ -1,7 +1,7 @@
 /*
  * RSConnectPublishInput.java
  *
- * Copyright (C) 2021 by RStudio, PBC
+ * Copyright (C) 2022 by RStudio, PBC
  *
  * Unless you have received this program directly from RStudio pursuant
  * to the terms of a commercial license agreement with RStudio, then
@@ -26,135 +26,151 @@ public class RSConnectPublishInput
    {
       originatingEvent_ = originatingEvent;
    }
-   
-   public boolean isShiny() 
+
+   public boolean isShiny()
    {
       return isShiny_;
    }
-   
-   public void setIsShiny(boolean isShiny) 
+
+   public void setIsShiny(boolean isShiny)
    {
       isShiny_ = isShiny;
    }
-   
+
    public FileSystemItem getSourceRmd()
    {
       return sourceRmd_;
    }
-   
+
    public void setSourceRmd(FileSystemItem sourceRmd)
    {
       sourceRmd_ = sourceRmd;
    }
-   
-   public boolean isConnectUIEnabled() 
+
+   public boolean isConnectUIEnabled()
    {
       return isConnectUIEnabled_;
    }
-   
+
    public boolean hasConnectAccount()
    {
       return hasConnectAccount_;
    }
-   
+
    public void setHasConnectAccount(boolean hasAccount)
    {
       hasConnectAccount_ = hasAccount;
    }
-   
+
    public void setConnectUIEnabled(boolean enabled)
    {
       isConnectUIEnabled_ = enabled;
    }
-   
+
    public boolean isExternalUIEnabled()
    {
       return isExternalUIEnabled_;
    }
-   
+
    public boolean hasDocOutput()
    {
       return originatingEvent_ != null &&
-            originatingEvent_.getFromPreview() != null &&
-            !StringUtil.isNullOrEmpty(
-                  originatingEvent_.getFromPreview().getOutputFile());
+         originatingEvent_.getFromPreview() != null &&
+         !StringUtil.isNullOrEmpty(
+            originatingEvent_.getFromPreview().getOutputFile());
    }
-   
+
    public String getDocOutput()
    {
       if (!hasDocOutput())
          return null;
       return originatingEvent_.getFromPreview().getOutputFile();
    }
-    
+
    public void setExternalUIEnabled(boolean enabled)
    {
       isExternalUIEnabled_ = enabled;
    }
-   
+
    public boolean isMultiRmd()
    {
       return isMultiRmd_;
    }
-   
+
    public void setIsMultiRmd(boolean isMulti)
    {
       isMultiRmd_ = isMulti;
    }
-   
+
    public boolean isSelfContained()
    {
       return isSelfContained_;
    }
-   
+
    public void setIsSelfContained(boolean selfContained)
    {
       isSelfContained_ = selfContained;
    }
-   
+
    public void setDescription(String description)
    {
       description_ = description;
    }
-   
+
    public String getDescription()
    {
       return description_;
    }
-   
+
    public int getContentType()
    {
       return getOriginatingEvent().getContentType();
    }
-   
+
+   public boolean isWebsiteContentType()
+   {
+      return getContentType() == RSConnect.CONTENT_TYPE_WEBSITE ||
+         getContentType() == RSConnect.CONTENT_TYPE_QUARTO_WEBSITE;
+   }
+
    public RSConnectActionEvent getOriginatingEvent()
    {
       return originatingEvent_;
    }
-   
+
    public String getWebsiteDir()
    {
       return websiteDir_;
    }
-   
+
    public void setWebsiteDir(String dir)
    {
       websiteDir_ = dir;
    }
-   
+
    public boolean isWebsiteRmd()
    {
       return !StringUtil.isNullOrEmpty(websiteDir_);
    }
-   
+
    public String getWebsiteOutputDir()
    {
       return websiteOutputDir_;
    }
-   
+
    public void setWebsiteOutputDir(String dir)
    {
       websiteOutputDir_ = dir;
+   }
+
+   public boolean isQuarto()
+   {
+      return isQuarto_;
+   }
+
+   public void setIsQuarto(boolean quarto)
+   {
+      isQuarto_ = quarto;
    }
  
    public boolean isStaticDocInput()
@@ -178,6 +194,7 @@ public class RSConnectPublishInput
    private boolean isMultiRmd_;
    private boolean isSelfContained_;
    private boolean hasConnectAccount_;
+   private boolean isQuarto_;
    private FileSystemItem sourceRmd_;
    private RSConnectActionEvent originatingEvent_;
    private String description_ = null;

@@ -1,7 +1,7 @@
 /*
  * RenvActionDialogContents.java
  *
- * Copyright (C) 2021 by RStudio, PBC
+ * Copyright (C) 2022 by RStudio, PBC
  *
  * Unless you have received this program directly from RStudio pursuant
  * to the terms of a commercial license agreement with RStudio, then
@@ -14,16 +14,6 @@
  */
 package org.rstudio.studio.client.renv.ui;
 
-import java.util.ArrayList;
-import java.util.List;
-
-import org.rstudio.core.client.JsArrayUtil;
-import org.rstudio.core.client.StringUtil;
-import org.rstudio.core.client.theme.RStudioDataGridResources;
-import org.rstudio.core.client.theme.RStudioDataGridStyle;
-import org.rstudio.core.client.widget.RStudioDataGrid;
-import org.rstudio.studio.client.workbench.projects.RenvAction;
-
 import com.google.gwt.core.client.GWT;
 import com.google.gwt.core.client.JsArray;
 import com.google.gwt.uibinder.client.UiBinder;
@@ -33,6 +23,16 @@ import com.google.gwt.user.cellview.client.TextColumn;
 import com.google.gwt.user.client.ui.Composite;
 import com.google.gwt.user.client.ui.Label;
 import com.google.gwt.user.client.ui.Widget;
+import org.rstudio.core.client.JsArrayUtil;
+import org.rstudio.core.client.StringUtil;
+import org.rstudio.core.client.theme.RStudioDataGridResources;
+import org.rstudio.core.client.theme.RStudioDataGridStyle;
+import org.rstudio.core.client.widget.RStudioDataGrid;
+import org.rstudio.studio.client.renv.RenvConstants;
+import org.rstudio.studio.client.workbench.projects.RenvAction;
+
+import java.util.ArrayList;
+import java.util.List;
 
 public class RenvActionDialogContents extends Composite
 {
@@ -52,19 +52,19 @@ public class RenvActionDialogContents extends Composite
       table_.setWidth("600px");
       table_.setRowData(actions_);
       
-      textColumn("Package",          "15%", (RenvAction entry) -> getPackageName(entry));
-      textColumn("Library Version",  "20%", (RenvAction entry) -> getLibraryVersion(entry));
-      textColumn("Lockfile Version", "20%", (RenvAction entry) -> getLockfileVersion(entry));
-      textColumn("Action",           "45%", (RenvAction entry) -> getAction(entry));
+      textColumn(constants_.packageColumnText(), "15%", (RenvAction entry) -> getPackageName(entry));
+      textColumn(constants_.libraryVersionColumnText(), "20%", (RenvAction entry) -> getLibraryVersion(entry));
+      textColumn(constants_.lockfileVersionColumnText(), "20%", (RenvAction entry) -> getLockfileVersion(entry));
+      textColumn(constants_.actionVersionColumnText(),"45%", (RenvAction entry) -> getAction(entry));
       
       
       if (action == "Snapshot")
       {
-         headerLabel_ = new Label("The following packages will be updated in the lockfile.");
+         headerLabel_ = new Label(constants_.snapshotHeaderLabel());
       }
       else if (action == "Restore")
       {
-         headerLabel_ = new Label("The following changes will be made to the project library.");
+         headerLabel_ = new Label(constants_.restoreHeaderLabel());
       }
       
       initWidget(uiBinder.createAndBindUi(this));
@@ -80,13 +80,13 @@ public class RenvActionDialogContents extends Composite
    private String getLibraryVersion(RenvAction entry)
    {
       String version = entry.getLibraryVersion();
-      return StringUtil.isNullOrEmpty(version) ? "[Not installed]" : version;
+      return StringUtil.isNullOrEmpty(version) ? constants_.libraryVersionNotInstalled() : version;
    }
    
    private String getLockfileVersion(RenvAction entry)
    {
       String version = entry.getLockfileVersion();
-      return StringUtil.isNullOrEmpty(version) ? "[Not recorded]" : version;
+      return StringUtil.isNullOrEmpty(version) ? constants_.lockfileVersionNotRecorded() : version;
    }
    
    private String getAction(RenvAction entry)
@@ -118,25 +118,15 @@ public class RenvActionDialogContents extends Composite
    {
       if (entry.getAction() == "install")
       {
-         return StringUtil.format(
-               "Add '{package}' [{version}] to the lockfile",
-               "package", entry.getPackageName(),
-               "version", entry.getLibraryVersion());
+         return constants_.installAction(entry.getPackageName(), entry.getLibraryVersion());
       }
       else if (entry.getAction() == "remove")
       {
-         return StringUtil.format(
-               "Remove '{package}' [{version}] from the lockfile",
-               "package", entry.getPackageName(),
-               "version", entry.getLockfileVersion());
+         return constants_.removeAction(entry.getPackageName(), entry.getLockfileVersion());
       }
       else
       {
-         return StringUtil.format(
-               "Update '{package}' [{oldVersion} -> {newVersion}] in the lockfile",
-               "package", entry.getPackageName(),
-               "oldVersion", entry.getLockfileVersion(),
-               "newVersion", entry.getLibraryVersion());
+         return constants_.updateAction(entry.getPackageName(), entry.getLockfileVersion(), entry.getLibraryVersion());
       }
    }
    
@@ -144,19 +134,12 @@ public class RenvActionDialogContents extends Composite
    {
       if (entry.getAction() == "install")
       {
-         return StringUtil.format(
-               "Install '{package}' [{version}]",
-               "action",  StringUtil.capitalize(entry.getAction()),
-               "package", entry.getPackageName(),
-               "version", entry.getLockfileVersion());
+         return constants_.restoreInstallAction(entry.getPackageName(), entry.getLockfileVersion()
+         );
       }
       else if (entry.getAction() == "remove")
       {
-         return StringUtil.format(
-               "Remove '{package}' [{version}]",
-               "action",  StringUtil.capitalize(entry.getAction()),
-               "package", entry.getPackageName(),
-               "version", entry.getLibraryVersion());
+         return constants_.restoreRemoveAction(entry.getPackageName(), entry.getLibraryVersion());
       }
       else
       {
@@ -196,6 +179,7 @@ public class RenvActionDialogContents extends Composite
    }
    
    private static final Resources RES = GWT.create(Resources.class);
+   private static final RenvConstants constants_ = GWT.create(RenvConstants.class);
    
    static { RES.dataGridStyle().ensureInjected(); }
    

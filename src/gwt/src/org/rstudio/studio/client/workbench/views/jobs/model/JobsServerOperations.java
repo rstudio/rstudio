@@ -1,7 +1,7 @@
 /*
  * JobsServerOperations.java
  *
- * Copyright (C) 2021 by RStudio, PBC
+ * Copyright (C) 2022 by RStudio, PBC
  *
  * Unless you have received this program directly from RStudio pursuant
  * to the terms of a commercial license agreement with RStudio, then
@@ -24,6 +24,6 @@ public interface JobsServerOperations
    void setJobListening(String id, boolean listening, boolean bypassLauncherCall,
                         ServerRequestCallback<JsArray<JobOutput> > output);
    void startJob(JobLaunchSpec spec, ServerRequestCallback<String> callback);
-   void clearJobs(ServerRequestCallback<Void> callback);
+   void clearBackgroundJobs(ServerRequestCallback<Void> callback);
    void executeJobAction(String id, String action, ServerRequestCallback<Void> callback);
 }

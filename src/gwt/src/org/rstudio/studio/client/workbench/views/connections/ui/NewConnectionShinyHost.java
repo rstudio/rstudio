@@ -1,7 +1,7 @@
 /*
  * NewConnectionShinyHost.java
  *
- * Copyright (C) 2021 by RStudio, PBC
+ * Copyright (C) 2022 by RStudio, PBC
  *
  * Unless you have received this program directly from RStudio pursuant
  * to the terms of a commercial license agreement with RStudio, then
@@ -35,6 +35,7 @@ import org.rstudio.studio.client.server.Void;
 import org.rstudio.studio.client.server.remote.RResult;
 import org.rstudio.studio.client.shiny.events.ShinyFrameNavigatedEvent;
 import org.rstudio.studio.client.shiny.model.ShinyApplicationParams;
+import org.rstudio.studio.client.workbench.views.connections.ConnectionsConstants;
 import org.rstudio.studio.client.workbench.views.connections.events.NewConnectionDialogUpdatedEvent;
 import org.rstudio.studio.client.workbench.views.connections.model.ConnectionOptions;
 import org.rstudio.studio.client.workbench.views.connections.model.ConnectionsServerOperations;
@@ -114,12 +115,12 @@ public class NewConnectionShinyHost extends Composite
 
    private void showError(String errorMessage)
    {
-      globalDisplay_.showErrorMessage("Error", errorMessage);
+      globalDisplay_.showErrorMessage(constants_.errorCaption(), errorMessage);
    }
    
    private void initialize(final Operation operation, final NewConnectionInfo info)
    {
-      dependencyManager_.withShiny("Connecting to " + info.getName(), new Command()
+      dependencyManager_.withShiny(constants_.connectionUserActionLabel() + info.getName(), new Command()
       {
          @Override
          public void execute()
@@ -153,7 +154,7 @@ public class NewConnectionShinyHost extends Composite
       VerticalPanel container = new VerticalPanel();
       
       // create iframe for miniUI
-      frame_ = new RStudioFrame("Shiny Mini UI");
+      frame_ = new RStudioFrame(constants_.shinyMiniUITitle());
       frame_.setSize("100%", "140px");
 
       container.add(frame_);
@@ -277,4 +278,5 @@ public class NewConnectionShinyHost extends Composite
    private ConnectionsServerOperations server_;
    private ShinyServerOperations shinyServer_;
    private DependencyManager dependencyManager_;
+   private static final ConnectionsConstants constants_ = GWT.create(ConnectionsConstants.class);
 }

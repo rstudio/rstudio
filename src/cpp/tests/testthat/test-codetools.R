@@ -1,7 +1,7 @@
 #
 # test-codetools.R
 #
-# Copyright (C) 2021 by RStudio, PBC
+# Copyright (C) 2022 by RStudio, PBC
 #
 # Unless you have received this program directly from RStudio pursuant
 # to the terms of a commercial license agreement with RStudio, then
@@ -77,5 +77,14 @@ test_that(".rs.CRANDownloadOptionsString() fills missing CRAN repo", {
    string <- .rs.CRANDownloadOptionsString()
    actual <- eval(parse(text = string), envir = envir)
    expect_equal(unlist(actual[["repos"]]["CRAN"]), c(CRAN = cran))
+})
+
+
+test_that("HTML escaping escapes HTML entities", {
+   fake_header <- "<h1>Not a real header.</h1>"
+
+   escaped <- .rs.htmlEscape(fake_header)
+   expect_false(grepl(escaped, "<"))
+   expect_false(grepl(escaped, ">"))
 })
 

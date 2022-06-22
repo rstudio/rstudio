@@ -1,7 +1,7 @@
 /*
  * SavePlotAsImageDialog.java
  *
- * Copyright (C) 2021 by RStudio, PBC
+ * Copyright (C) 2022 by RStudio, PBC
  *
  * Unless you have received this program directly from RStudio pursuant
  * to the terms of a commercial license agreement with RStudio, then
@@ -14,6 +14,7 @@
  */
 package org.rstudio.studio.client.workbench.exportplot;
 
+import com.google.gwt.core.client.GWT;
 import org.rstudio.core.client.files.FileSystemItem;
 import org.rstudio.core.client.widget.Operation;
 import org.rstudio.core.client.widget.OperationWithInput;
@@ -40,13 +41,13 @@ public class SavePlotAsImageDialog extends ExportPlotDialog
    {
       super(options, previewer);
       
-      setText("Save Plot as Image");
+      setText(constants_.savePlotAsImageText());
      
       globalDisplay_ = globalDisplay;
       saveOperation_ = saveOperation;
       progressIndicator_ = addProgressIndicator();
       
-      ThemedButton saveButton = new ThemedButton("Save", 
+      ThemedButton saveButton = new ThemedButton(constants_.saveTitle(),
                                                  new ClickHandler() {
          public void onClick(ClickEvent event) 
          {
@@ -69,7 +70,7 @@ public class SavePlotAsImageDialog extends ExportPlotDialog
                                                       context);
       
       // view after size
-      viewAfterSaveCheckBox_ = new CheckBox("View plot after saving");
+      viewAfterSaveCheckBox_ = new CheckBox(constants_.viewAfterSaveCheckBoxTitle());
       viewAfterSaveCheckBox_.setValue(options.getViewAfterSave());
       addLeftWidget(viewAfterSaveCheckBox_);
      
@@ -110,8 +111,8 @@ public class SavePlotAsImageDialog extends ExportPlotDialog
       if (targetPath == null)
       {
          globalDisplay_.showErrorMessage(
-            "File Name Required", 
-            "You must provide a file name for the plot image.", 
+            constants_.fileNameRequiredCaption(),
+            constants_.fileNameRequiredMessage(),
             saveAsTarget_);
          return;
       }
@@ -131,5 +132,5 @@ public class SavePlotAsImageDialog extends ExportPlotDialog
    private final SavePlotAsImageOperation saveOperation_;
    private SavePlotAsImageTargetEditor saveAsTarget_;
    private CheckBox viewAfterSaveCheckBox_;
-   
+   private static final ExportPlotConstants constants_ = GWT.create(ExportPlotConstants.class);
 }

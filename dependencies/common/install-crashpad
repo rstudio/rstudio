@@ -3,7 +3,7 @@
 #
 # install-crashpad
 #
-# Copyright (C) 2021 by RStudio, PBC
+# Copyright (C) 2022 by RStudio, PBC
 #
 # Unless you have received this program directly from RStudio pursuant
 # to the terms of a commercial license agreement with RStudio, then
@@ -24,6 +24,11 @@ section "Installing Crashpad"
 # older platforms are unable to build crashpad and may request to skip it
 if [ "$RSTUDIO_DISABLE_CRASHPAD" == "1" ]; then
    echo "Skipping crashpad install"
+   exit 0
+fi
+
+if [ "$(arch)" == "aarch64" ]; then
+   echo "Skipping crashpad install (not yet supported on aarch64)"
    exit 0
 fi
 
@@ -73,7 +78,7 @@ if [ -n "${FLAVOR}" ]; then
    download "$CRASHPAD_PRE_BUILT_ROOT_URL/$ARCHIVE_FOLDER/crashpad-${FLAVOR}$ARCHIVE_EXT"
    tar xvf "crashpad-${FLAVOR}$ARCHIVE_EXT"
    if ! test -e "$CRASHPAD_BIN_DIR/crashpad_handler"; then
-      echo "An error occured installing pre-built Crashpad binaries - $CRASHPAD_BIN_DIR/crashpad_handler does not exist"
+      echo "An error occurred installing pre-built Crashpad binaries - $CRASHPAD_BIN_DIR/crashpad_handler does not exist"
       exit 1
    else
       rm "./crashpad-${FLAVOR}$ARCHIVE_EXT"

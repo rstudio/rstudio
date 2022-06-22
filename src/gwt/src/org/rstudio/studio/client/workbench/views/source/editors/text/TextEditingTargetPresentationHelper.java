@@ -1,7 +1,7 @@
 /*
  * TextEditingTargetPresentationHelper.java
  *
- * Copyright (C) 2021 by RStudio, PBC
+ * Copyright (C) 2022 by RStudio, PBC
  *
  * Unless you have received this program directly from RStudio pursuant
  * to the terms of a commercial license agreement with RStudio, then
@@ -32,6 +32,7 @@ import org.rstudio.studio.client.workbench.views.source.editors.text.status.Stat
 import org.rstudio.studio.client.workbench.views.source.editors.text.status.StatusBarPopupRequest;
 import org.rstudio.studio.client.workbench.views.source.model.SourcePosition;
 
+import com.google.gwt.core.client.GWT;
 import com.google.gwt.core.client.Scheduler;
 import com.google.gwt.core.client.Scheduler.ScheduledCommand;
 import com.google.gwt.safehtml.shared.SafeHtmlBuilder;
@@ -82,10 +83,10 @@ public class TextEditingTargetPresentationHelper
          if (title.length() > 0 && SLIDE_PATTERN.match(title, 0) == null)
             return title;
          else
-            return "(Untitled Slide)";
+            return constants_.untitledSlide();
       }
       else
-         return "(No Slides)";
+         return constants_.noSlides();
    }
    
    public void buildSlideMenu(
@@ -116,7 +117,7 @@ public class TextEditingTargetPresentationHelper
                SlideNavigationItem item = slideNavigation.getItems().get(i);
                String title = item.getTitle();
                if (StringUtil.isNullOrEmpty(title))
-                  title = "(Untitled Slide)";
+                  title = constants_.untitledSlide();
                
                StringBuilder indentBuilder = new StringBuilder();
                for (int level=0; level<item.getIndent(); level++)
@@ -209,4 +210,5 @@ public class TextEditingTargetPresentationHelper
    
    private static final String SLIDE_REGEX = "^\\={3,}\\s*$";
    private static final Pattern SLIDE_PATTERN = Pattern.create(SLIDE_REGEX);
+   private static final EditorsTextConstants constants_ = GWT.create(EditorsTextConstants.class);
 }

@@ -1,7 +1,7 @@
 /*
  * PosixLibraryLoader.cpp
  *
- * Copyright (C) 2021 by RStudio, PBC
+ * Copyright (C) 2022 by RStudio, PBC
  *
  * Unless you have received this program directly from RStudio pursuant
  * to the terms of a commercial license agreement with RStudio, then
@@ -50,6 +50,32 @@ Error loadLibrary(const std::string& libPath, void** ppLib)
    else
    {
       return Success();
+   }
+}
+
+/**
+ * Verify that we can load a library (without actually loading it)
+ * by passing RTLD_NOLOAD to dlopen
+ */
+Error verifyLibrary(const std::string& libPath)
+{
+   void* pLib = nullptr;
+   pLib = ::dlopen(libPath.c_str(), RTLD_LAZY | RTLD_NOLOAD);
+   if (pLib == nullptr)
+   {
+      // dlopen returns a null pointer on error rather than an error number.
+      // using -1 here as a generic non-zero placeholder
+      Error error = Error("LibraryVerifyFailed",
+                          -1,
+                          "Attempt to verify library failed",
+                          ErrorLocation());
+      error.addProperty("lib-path", libPath);
+      addLastDLErrorMessage(&error);
+      return error;
+   }
+   else
+   {
+      return closeLibrary(pLib);
    }
 }
 

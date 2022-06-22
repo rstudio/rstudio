@@ -1,7 +1,7 @@
 /*
  * RProjectFile.hpp
  *
- * Copyright (C) 2021 by RStudio, PBC
+ * Copyright (C) 2022 by RStudio, PBC
  *
  * Unless you have received this program directly from RStudio pursuant
  * to the terms of a commercial license agreement with RStudio, then
@@ -44,6 +44,7 @@ extern const char * const kBuildTypePackage;
 extern const char * const kBuildTypeMakefile;
 extern const char * const kBuildTypeWebsite;
 extern const char * const kBuildTypeCustom;
+extern const char * const kBuildTypeQuarto;
 
 extern const char * const kMarkdownWrapUseDefault;
 extern const char * const kMarkdownWrapNone;
@@ -63,10 +64,12 @@ std::ostream& operator << (std::ostream& stream, const YesNoAskValue& val);
 struct RProjectBuildDefaults
 {
    RProjectBuildDefaults()
-      : useDevtools(true)
+      : useDevtools(true),
+        cleanBeforeInstall(true)
    {
    }
    bool useDevtools;
+   bool cleanBeforeInstall;
 };
 
 struct RProjectConfig
@@ -80,6 +83,7 @@ struct RProjectConfig
         enableCodeIndexing(true),
         useSpacesForTab(true),
         numSpacesForTab(2),
+        useNativePipeOperator(DefaultValue),
         autoAppendNewline(false),
         stripTrailingWhitespace(false),
         lineEndings(kLineEndingsUseDefault),
@@ -95,6 +99,7 @@ struct RProjectConfig
         packageCheckArgs(),
         packageRoxygenize(),
         packageUseDevtools(false),
+        packageCleanBeforeInstall(true),
         makefilePath(),
         websitePath(),
         customScriptPath(),
@@ -123,6 +128,7 @@ struct RProjectConfig
    bool enableCodeIndexing;
    bool useSpacesForTab;
    int numSpacesForTab;
+   int useNativePipeOperator;
    bool autoAppendNewline;
    bool stripTrailingWhitespace;
    int lineEndings;
@@ -138,6 +144,7 @@ struct RProjectConfig
    std::string packageCheckArgs;
    std::string packageRoxygenize;
    bool packageUseDevtools;
+   bool packageCleanBeforeInstall;
    std::string makefilePath;
    std::string websitePath;
    std::string customScriptPath;
@@ -193,9 +200,8 @@ bool isWebsiteDirectory(const FilePath& projectDir);
 FilePath websiteRootDirectory(const FilePath& filePath);
 
 } // namespace r_util
-} // namespace core 
+} // namespace core
 } // namespace rstudio
 
 
 #endif // CORE_R_UTIL_R_PROJECT_FILE_HPP
-

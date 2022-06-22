@@ -1,7 +1,7 @@
 /*
  * LibraryLoader.hpp
  *
- * Copyright (C) 2021 by RStudio, PBC
+ * Copyright (C) 2022 by RStudio, PBC
  *
  * Unless you have received this program directly from RStudio pursuant
  * to the terms of a commercial license agreement with RStudio, then
@@ -18,16 +18,61 @@
 
 #include <string>
 
+#include <boost/noncopyable.hpp>
+
+#include <shared_core/Error.hpp>
+
+#include <core/Log.hpp>
+
 namespace rstudio {
 namespace core {
 
-class Error;
-
 namespace system {
 
-Error loadLibrary(const std::string& libPath, void** ppLib);
-Error loadSymbol(void* pLib, const std::string& name, void** ppSymbol);
-Error closeLibrary(void* pLib);
+core::Error loadLibrary(const std::string& libPath, void** ppLib);
+core::Error verifyLibrary(const std::string& libPath);
+core::Error loadSymbol(void* pLib, const std::string& name, void** ppSymbol);
+core::Error closeLibrary(void* pLib);
+
+class Library : boost::noncopyable
+{
+public:
+
+   explicit Library(const std::string& library)
+      : pLib_(nullptr)
+   {
+      core::Error error = loadLibrary(library, &pLib_);
+      if (error)
+         LOG_ERROR(error);
+   }
+
+   ~Library()
+   {
+      try
+      {
+         if (pLib_)
+         {
+            core::Error error = closeLibrary(pLib_);
+            if (error)
+               LOG_ERROR(error);
+         }
+      }
+      catch (...)
+      {
+
+      }
+   }
+
+   operator void*() const
+   {
+      return pLib_;
+   }
+
+private:
+   void* pLib_;
+};
+
+
 
 } // namespace system
 } // namespace core

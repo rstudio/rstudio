@@ -1,7 +1,7 @@
 /*
  * SessionJobs.cpp
  *
- * Copyright (C) 2021 by RStudio, PBC
+ * Copyright (C) 2022 by RStudio, PBC
  *
  * Unless you have received this program directly from RStudio pursuant
  * to the terms of a commercial license agreement with RStudio, then
@@ -73,11 +73,21 @@ SEXP rs_addJob(SEXP nameSEXP, SEXP statusSEXP, SEXP progressUnitsSEXP, SEXP acti
 
    // add the job
    boost::shared_ptr<Job> pJob =  
-      addJob(name, status, group, progress, state, type, autoRemove, actionsSEXP, show, tags);
+      addJob(name, status, group, progress, true, state, type, autoRemove, actionsSEXP, JobActions(), show, tags);
 
    // return job id
    r::sexp::Protect protect;
    return r::sexp::create(pJob->id(), &protect);
+}
+
+SEXP rs_getJobState(SEXP jobSEXP)
+{
+   boost::shared_ptr<Job> pJob;
+   if (!lookupJob(jobSEXP, &pJob))
+      return R_NilValue;
+   
+   r::sexp::Protect protect;
+   return r::sexp::create(Job::stateAsString(pJob->state()), &protect);
 }
 
 SEXP rs_isJobRunning(SEXP jobSEXP)
@@ -266,6 +276,21 @@ SEXP rs_stopScriptJob(SEXP sexpId)
    return R_NilValue;
 }
 
+SEXP rs_replayScriptJob(SEXP sexpId)
+{
+   std::string id = r::sexp::safeAsString(sexpId);
+   Error error = replayScriptJob(id);
+   if (error == systemError(boost::system::errc::no_such_file_or_directory, ErrorLocation()))
+   {
+      r::exec::error("The script job '" + id + "' was not found.");
+   }
+   else if (error)
+   {
+      r::exec::error("Error while replaying script job: " + error.getSummary());
+   }
+   return R_NilValue;
+}
+
 SEXP rs_executeJobAction(SEXP sexpId, SEXP action)
 {
    boost::shared_ptr<Job> pJob;
@@ -357,10 +382,10 @@ Error runScriptJob(const json::JsonRpcRequest& request,
    return Success();
 }
 
-Error clearJobs(const json::JsonRpcRequest& request,
-                      json::JsonRpcResponse* pResponse)
+Error clearBackgroundJobs(const json::JsonRpcRequest& request,
+                          json::JsonRpcResponse* pResponse)
 {
-   removeCompletedLocalJobs();
+   removeCompletedBackgroundJobs();
    return Success();
 }
 
@@ -414,7 +439,7 @@ Error executeJobAction(const json::JsonRpcRequest& request,
 
 void onSuspend(const r::session::RSuspendOptions&, core::Settings*)
 {
-   removeAllLocalJobs();
+   removeAllBackgroundJobs();
 }
 
 void onResume(const Settings& settings)
@@ -432,7 +457,7 @@ void onClientInit()
 
 void onShutdown(bool terminatedNormally)
 {
-   removeAllLocalJobs();
+   removeAllBackgroundJobs();
 }
 
 } // anonymous namespace
@@ -444,8 +469,8 @@ core::json::Object jobState()
 
 bool isSuspendable()
 {
-   // don't suspend while we're running local jobs
-   return !localJobsRunning();
+   // don't suspend while we're running background jobs
+   return !backgroundJobsRunning();
 }
 
 core::Error initialize()
@@ -453,6 +478,7 @@ core::Error initialize()
    // register API handlers
    RS_REGISTER_CALL_METHOD(rs_addJob);
    RS_REGISTER_CALL_METHOD(rs_removeJob);
+   RS_REGISTER_CALL_METHOD(rs_getJobState);
    RS_REGISTER_CALL_METHOD(rs_isJobRunning);
    RS_REGISTER_CALL_METHOD(rs_setJobProgress);
    RS_REGISTER_CALL_METHOD(rs_addJobProgress);
@@ -461,6 +487,7 @@ core::Error initialize()
    RS_REGISTER_CALL_METHOD(rs_addJobOutput);
    RS_REGISTER_CALL_METHOD(rs_runScriptJob);
    RS_REGISTER_CALL_METHOD(rs_stopScriptJob);
+   RS_REGISTER_CALL_METHOD(rs_replayScriptJob);
    RS_REGISTER_CALL_METHOD(rs_executeJobAction);
 
    module_context::addSuspendHandler(module_context::SuspendHandler(
@@ -475,7 +502,7 @@ core::Error initialize()
       (bind(module_context::registerRpcMethod, "job_output", jobOutput))
       (bind(module_context::registerRpcMethod, "set_job_listening", setJobListening))
       (bind(module_context::registerRpcMethod, "run_script_job", runScriptJob))
-      (bind(module_context::registerRpcMethod, "clear_jobs", clearJobs))
+      (bind(module_context::registerRpcMethod, "clear_background_jobs", clearBackgroundJobs))
       (bind(module_context::registerRpcMethod, "execute_job_action", executeJobAction))
       (bind(module_context::sourceModuleRFile, "SessionJobs.R"));
 

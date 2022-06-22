@@ -3,7 +3,7 @@
 #
 # install-dependencies-osx-arch
 #
-# Copyright (C) 2021 by RStudio, PBC
+# Copyright (C) 2022 by RStudio, PBC
 #
 # Unless you have received this program directly from RStudio pursuant
 # to the terms of a commercial license agreement with RStudio, then
@@ -40,14 +40,23 @@ FORMULAS=(
    cmake
    coreutils
    gettext
+   jq
    krb5
    libpq
-   openssl
+   openjdk@11
+   openssl@1.1
    ninja
    pidof
    postgresql
    r
 )
+
+# Python only needed for developer builds
+if ! is-jenkins; then
+  if ! has-program python3; then
+    FORMULAS+=(python3)
+  fi
+fi
 
 HOMEBREW_PREFIX=$(brew --prefix)
 for FORMULA in "${FORMULAS[@]}"; do
@@ -65,4 +74,3 @@ grep -qxF 'set startup-with-shell off' ~/.gdbinit || echo "set startup-with-shel
 cd ../common
 ./install-common
 cd ../osx
-

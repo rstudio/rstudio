@@ -1,7 +1,7 @@
 /*
  * HunspellSpellingEngine.cpp
  *
- * Copyright (C) 2021 by RStudio, PBC
+ * Copyright (C) 2022 by RStudio, PBC
  *
  * Unless you have received this program directly from RStudio pursuant
  * to the terms of a commercial license agreement with RStudio, then
@@ -50,7 +50,7 @@ void removeMorphologicalDescription(std::string* pText)
 }
 
 // extract the word from the dic_delta line -- remove the
-// optional affix and then replace escaped / chracters
+// optional affix and then replace escaped / characters
 bool parseDicDeltaLine(std::string line,
                        std::string* pWord,
                        std::string* pAffix)
@@ -93,14 +93,14 @@ bool parseDicDeltaLine(std::string line,
 // The hunspell api allows you to add words with affixes by providing an
 // example word already in the dictionary that has the same affix. The google
 // english .dic_delta files use the hard-coded integer values 6 and 7 to
-// (respecitvely) indicate possesive (M) and possesive/plural (MS) affixes.
+// (respectively) indicate possessive (M) and possessive/plural (MS) affixes.
 // Therefore, this function needs to return words that are marked as
 // M or MS consistently in the main dictionaries of the 4 english variations.
 // If we want to extend affix support to other languages we'll need to
-// do a simillar mapping
+// do a similar mapping
 std::string exampleWordForEnglishAffix(const std::string& affix)
 {
-   if (affix == "6") // possesive (M)
+   if (affix == "6") // possessive (M)
       return "Arcadia";
    else if (affix == "7") // possessive or plural (MS)
       return "beverage";

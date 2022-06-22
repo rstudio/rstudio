@@ -1,7 +1,7 @@
 /*
  * Projects.java
  *
- * Copyright (C) 2021 by RStudio, PBC
+ * Copyright (C) 2022 by RStudio, PBC
  *
  * Unless you have received this program directly from RStudio pursuant
  * to the terms of a commercial license agreement with RStudio, then
@@ -17,6 +17,7 @@ package org.rstudio.studio.client.projects;
 
 import java.util.ArrayList;
 
+import com.google.gwt.core.client.GWT;
 import org.rstudio.core.client.Debug;
 import org.rstudio.core.client.ElementIds;
 import org.rstudio.core.client.SerializedCommand;
@@ -62,6 +63,8 @@ import org.rstudio.studio.client.projects.model.ProjectsServerOperations;
 import org.rstudio.studio.client.projects.model.RProjectOptions;
 import org.rstudio.studio.client.projects.ui.newproject.NewProjectWizard;
 import org.rstudio.studio.client.projects.ui.prefs.ProjectPreferencesDialog;
+import org.rstudio.studio.client.quarto.model.QuartoCommandConstants;
+import org.rstudio.studio.client.quarto.model.QuartoServerOperations;
 import org.rstudio.studio.client.renv.model.RenvServerOperations;
 import org.rstudio.studio.client.server.ServerError;
 import org.rstudio.studio.client.server.ServerRequestCallback;
@@ -107,6 +110,7 @@ public class Projects implements OpenProjectFileEvent.Handler,
                    ProjectsServerOperations projServer,
                    RenvServerOperations renvServer,
                    GitServerOperations gitServer,
+                   QuartoServerOperations quartoServer,
                    EventBus eventBus,
                    Binder binder,
                    final Commands commands,
@@ -123,6 +127,7 @@ public class Projects implements OpenProjectFileEvent.Handler,
       projServer_ = projServer;
       renvServer_ = renvServer;
       gitServer_ = gitServer;
+      quartoServer_ = quartoServer;
       fsContext_ = fsContext;
       session_ = session;
       pWorkbenchContext_ = pWorkbenchContext;
@@ -179,16 +184,16 @@ public class Projects implements OpenProjectFileEvent.Handler,
          else
          {
             commands.activateVcs().setMenuLabel(
-                                 "Show _" + sessionInfo.getVcsName());
+                                 constants_.showVCSMenuLabel(sessionInfo.getVcsName()));
             commands.layoutZoomVcs().setMenuLabel(
-                                 "Zoom _" + sessionInfo.getVcsName());
+                                 constants_.zoomVCSMenuLabel(sessionInfo.getVcsName()));
 
             // customize for svn if necessary
             if (sessionInfo.getVcsName() == VCSConstants.SVN_ID)
             {
                commands.vcsPush().remove();
-               commands.vcsPull().setButtonLabel("Update");
-               commands.vcsPull().setMenuLabel("_Update");
+               commands.vcsPull().setButtonLabel(constants_.updateButtonLabel());
+               commands.vcsPull().setMenuLabel(constants_.updateMenuLabel());
             }
 
             // customize for git if necessary
@@ -226,18 +231,24 @@ public class Projects implements OpenProjectFileEvent.Handler,
    {
       // first resolve the quit context (potentially saving edited documents
       // and determining whether to save the R environment on exit)
-      applicationQuit_.prepareForQuit("Save Current Workspace",
+      applicationQuit_.prepareForQuit(constants_.newProjectCaption(),
          true /*allowCancel*/,
          forceSaveAll,
          new ApplicationQuit.QuitContext() {
            @Override
            public void onReadyToQuit(final boolean saveChanges)
            {
+              final ProgressIndicator indicator =
+                    globalDisplay_.getProgressIndicator(constants_.errorCaption());
+                 indicator.onProgress(constants_.newProjectProjectIndicator());
+              
               projServer_.getNewProjectContext(
                 new SimpleRequestCallback<NewProjectContext>() {
                    @Override
                    public void onResponseReceived(NewProjectContext context)
                    {
+                      indicator.onCompleted();
+                      
                       NewProjectWizard wiz = new NewProjectWizard(
                          session_.getSessionInfo(),
                          pUserPrefs_.get(),
@@ -261,6 +272,14 @@ public class Projects implements OpenProjectFileEvent.Handler,
                       });
                       wiz.showModal();
                    }
+                   
+                   @Override
+                   public void onError(ServerError error)
+                   {
+                      indicator.onCompleted();
+                      super.onError(error);
+                   }
+                   
               });
            }
       });
@@ -305,6 +324,7 @@ public class Projects implements OpenProjectFileEvent.Handler,
                options,
                null /*newPackageOptions*/,
                null /*newShinyAppOptions*/,
+               null /*newQuartoProjectOptions*/,
                null /*projectTemplateOptions*/,
                event.getCallContext());
 
@@ -329,6 +349,7 @@ public class Projects implements OpenProjectFileEvent.Handler,
                null/*vcsCloneOptions*/,
                null/*newPackageOptions*/,
                null/*newShinyAppOptions*/,
+               null/*newQuartoProjectOptions*/,
                null/*projectTemplateOptions*/,
                event.getCallContext());
 
@@ -369,7 +390,7 @@ public class Projects implements OpenProjectFileEvent.Handler,
       // properly.
 
       final ProgressIndicator indicator = globalDisplay_.getProgressIndicator(
-                                                      "Error Creating Project");
+                                                      constants_.creatingProjectError());
 
       // Here's the command queue that will hold the various operations.
       final SerializedCommandQueue createProjectCmds =
@@ -389,10 +410,11 @@ public class Projects implements OpenProjectFileEvent.Handler,
 
             // update default project location pref if necessary
             if ((newProject.getNewDefaultProjectLocation() != null) ||
-                (newProject.getCreateGitRepo() !=
-                 userPrefs.newProjGitInit().getValue()))
+                (newProject.getCreateGitRepo() != userPrefs.newProjGitInit().getValue()) ||
+                (newProject.getUseRenv() != userPrefs.newProjUseRenv().getValue()))
+
             {
-               indicator.onProgress("Saving defaults...");
+               indicator.onProgress(constants_.savingDefaultsLabel());
 
                if (newProject.getNewDefaultProjectLocation() != null)
                {
@@ -405,6 +427,13 @@ public class Projects implements OpenProjectFileEvent.Handler,
                {
                   userPrefs.newProjGitInit().setGlobalValue(
                                           newProject.getCreateGitRepo());
+               }
+
+               if (newProject.getUseRenv() !=
+                  userPrefs.newProjUseRenv().getValue())
+               {
+                  userPrefs.newProjUseRenv().setGlobalValue(
+                     newProject.getUseRenv());
                }
 
                // call the server -- in all cases continue on with
@@ -444,47 +473,13 @@ public class Projects implements OpenProjectFileEvent.Handler,
                VcsCloneOptions cloneOptions = newProject.getVcsCloneOptions();
 
                if (cloneOptions.getVcsName() == (VCSConstants.GIT_ID))
-                  indicator.onProgress("Cloning Git repository...");
+                  indicator.onProgress(constants_.cloneGitRepoLabel());
                else
-                  indicator.onProgress("Checking out SVN repository...");
+                  indicator.onProgress(constants_.cloneSVNRepoLabel());
 
                gitServer_.vcsClone(
                      cloneOptions,
-                     new ServerRequestCallback<ConsoleProcess>() {
-                        @Override
-                        public void onResponseReceived(ConsoleProcess proc)
-                        {
-                           final ConsoleProgressDialog consoleProgressDialog =
-                                 new ConsoleProgressDialog(proc, gitServer_);
-                           consoleProgressDialog.showModal();
-
-                           proc.addProcessExitHandler(new ProcessExitEvent.Handler()
-                           {
-                              @Override
-                              public void onProcessExit(ProcessExitEvent event)
-                              {
-                                 if (event.getExitCode() == 0)
-                                 {
-                                    consoleProgressDialog.hide();
-                                    continuation.execute();
-                                 }
-                                 else
-                                 {
-                                    notifyTutorialCreateNewResult(newProject, false, "vcsClone failed");
-                                    indicator.onCompleted();
-                                 }
-                              }
-                           });
-                        }
-
-                        @Override
-                        public void onError(ServerError error)
-                        {
-                           Debug.logError(error);
-                           indicator.onError(error.getUserMessage());
-                           notifyTutorialCreateNewResult(newProject, false, error.getUserMessage());
-                        }
-                     });
+                     consoleProcessRequestCallback(newProject, indicator, continuation, constants_.vcsCloneFailMessage()));
             }
          }, false);
       }
@@ -505,82 +500,89 @@ public class Projects implements OpenProjectFileEvent.Handler,
                if (!PACKAGE_NAME_PATTERN.test(packageName))
                {
                   indicator.onError(
-                        "Invalid package name '" + packageName + "': " +
-                              "package names must start with a letter, and contain " +
-                              "only letters and numbers."
+                        constants_.invalidPackageMessage(packageName)
                         );
                   notifyTutorialCreateNewResult(newProject, false,
-                        "Invalid package name " + packageName);
+                        constants_.invalidPackageName(packageName));
                   return;
                }
             }
 
-            indicator.onProgress("Creating project...");
+            indicator.onProgress(constants_.creatingProjectLabel());
 
             if (newProject.getNewPackageOptions() == null)
             {
-               Command onReady = () -> {
-                  projServer_.createProject(
-                        newProject.getProjectFile(),
-                        newProject.getNewPackageOptions(),
-                        newProject.getNewShinyAppOptions(),
-                        newProject.getProjectTemplateOptions(),
-                        new ServerRequestCallback<String>()
-                        {
-                           @Override
-                           public void onResponseReceived(String foundProjectFile)
-                           {
-                              if (!StringUtil.isNullOrEmpty(foundProjectFile))
-                              {
-                                 // found an existing project file with different name than the
-                                 // parent folder; have to update here so that's what we end up
-                                 // opening
-                                 newProject.setProjectFile(foundProjectFile);
-                              }
-                              continuation.execute();
-                           }
-
-                           @Override
-                           public void onError(ServerError error)
-                           {
-                              Debug.logError(error);
-                              indicator.onError(error.getUserMessage());
-                              notifyTutorialCreateNewResult(newProject, false, error.getUserMessage());
-                           }
-                        });
-               };
-
-               if (newProject.getProjectTemplateOptions() != null)
+               if (newProject.getNewQuartoProjectOptions() != null)
                {
-                  // NOTE: We provide built-in project templates for packages that may
-                  // not be currently installed; in those cases, verify that the package is
-                  // installed and if not attempt installation from CRAN first
-                  String pkg = newProject.getProjectTemplateOptions().getDescription().getPackage();
-                  ArrayList<Dependency> deps = new ArrayList<>();
-                  deps.add(Dependency.cranPackage(pkg));
-                  RStudioGinjector.INSTANCE.getDependencyManager().withDependencies(
-                        "Creating project",
-                        "Creating a project with " + pkg,
-                        pkg + " Project",
-                        deps,
-                        false,
-                        (Boolean success) -> {
-                           if (!success)
-                           {
-                              globalDisplay_.showErrorMessage(
-                                    "Error installing " + pkg,
-                                    "Installation of package '" + pkg + "' failed, and so the project cannot " +
-                                    "be created. Try installing the package manually with " +
-                                    "'install.packages(\"" + pkg + "\")'.");
-                              return;
-                           }
-
-                           onReady.execute();
-                        });
+                  quartoServer_.quartoCreateProject(
+                     newProject.getProjectFile(),
+                     newProject.getNewQuartoProjectOptions(),
+                     consoleProcessRequestCallback(newProject, indicator, continuation, 
+                                                   constants_.projectFailedMessage()));
                }
                else
                {
-                  onReady.execute();
+                  Command onReady = () -> {
+                     projServer_.createProject(
+                           newProject.getProjectFile(),
+                           newProject.getNewPackageOptions(),
+                           newProject.getNewShinyAppOptions(),
+                           newProject.getProjectTemplateOptions(),
+                           new ServerRequestCallback<String>()
+                           {
+                              @Override
+                              public void onResponseReceived(String foundProjectFile)
+                              {
+                                 if (!StringUtil.isNullOrEmpty(foundProjectFile))
+                                 {
+                                    // found an existing project file with different name than the
+                                    // parent folder; have to update here so that's what we end up
+                                    // opening
+                                    newProject.setProjectFile(foundProjectFile);
+                                 }
+                                 continuation.execute();
+                              }
+   
+                              @Override
+                              public void onError(ServerError error)
+                              {
+                                 Debug.logError(error);
+                                 indicator.onError(error.getUserMessage());
+                                 notifyTutorialCreateNewResult(newProject, false, error.getUserMessage());
+                              }
+                           });
+                  };
+   
+                  if (newProject.getProjectTemplateOptions() != null)
+                  {
+                     // NOTE: We provide built-in project templates for packages that may
+                     // not be currently installed; in those cases, verify that the package is
+                     // installed and if not attempt installation from CRAN first
+                     String pkg = newProject.getProjectTemplateOptions().getDescription().getPackage();
+                     ArrayList<Dependency> deps = new ArrayList<>();
+                     deps.add(Dependency.cranPackage(pkg));
+                     RStudioGinjector.INSTANCE.getDependencyManager().withDependencies(
+                           constants_.creatingProjectCaption(),
+                           constants_.creatingProjectWithLabel(pkg),
+                           constants_.projectContext(pkg),
+                           deps,
+                           false,
+                           (Boolean success) -> {
+                              if (!success)
+                              {
+                                 globalDisplay_.showErrorMessage(
+                                       constants_.errorInstallingCaption(pkg),
+                                       constants_.errorInstallingCaptionMessage(pkg));
+                                 return;
+                              }
+   
+                              onReady.execute();
+                           });
+                  }
+                  else
+                  {
+                     onReady.execute();
+                  }
                }
             }
             else
@@ -603,7 +605,7 @@ public class Projects implements OpenProjectFileEvent.Handler,
                            if (response.failed())
                            {
                               indicator.onError(response.errorMessage());
-                              notifyTutorialCreateNewResult(newProject, false, "creating project");
+                              notifyTutorialCreateNewResult(newProject, false, constants_.creatingProjectResultMessage());
                            }
                            else
                            {
@@ -633,7 +635,7 @@ public class Projects implements OpenProjectFileEvent.Handler,
             @Override
             public void onExecute(final Command continuation)
             {
-               indicator.onProgress("Initializing git repository...");
+               indicator.onProgress(constants_.initializingGitRepoMessage());
 
                String projDir = FileSystemItem.createFile(
                      newProject.getProjectFile()).getParentPathString();
@@ -658,10 +660,10 @@ public class Projects implements OpenProjectFileEvent.Handler,
          }, false);
       }
 
-      if (newProject.getUseRenv())
+      if (initializeRenv(newProject))
       {
          createProjectCmds.addCommand((final Command continuation) -> {
-            indicator.onProgress("Initializing renv...");
+            indicator.onProgress(constants_.initializingRenvMessage());
 
             String projDir = FileSystemItem.createFile(
                   newProject.getProjectFile()
@@ -677,7 +679,8 @@ public class Projects implements OpenProjectFileEvent.Handler,
             });
 
          }, false);
-      }
+      } 
+      
 
       if (newProject.getOpenInNewWindow())
       {
@@ -696,7 +699,7 @@ public class Projects implements OpenProjectFileEvent.Handler,
                else
                {
                   notifyTutorialCreateNewResult(newProject, true, "");
-                  indicator.onProgress("Preparing to open project...");
+                  indicator.onProgress(constants_.executeOpenProjectMessage());
                   serverOpenProjectInNewWindow(project,
                                                newProject.getRVersion(),
                                                continuation);
@@ -808,7 +811,7 @@ public class Projects implements OpenProjectFileEvent.Handler,
    {
       // first resolve the quit context (potentially saving edited documents
       // and determining whether to save the R environment on exit)
-      applicationQuit_.prepareForQuit("Close Project", new ApplicationQuit.QuitContext() {
+      applicationQuit_.prepareForQuit(constants_.closeProjectLabel(), new ApplicationQuit.QuitContext() {
          public void onReadyToQuit(final boolean saveChanges)
          {
             applicationQuit_.performQuit(null, saveChanges, NONE);
@@ -835,9 +838,8 @@ public class Projects implements OpenProjectFileEvent.Handler,
       {
          globalDisplay_.showMessage(
                MessageDialog.INFO,
-               "No Active Project",
-               "Build tools can only be configured from within an " +
-               "RStudio project.");
+               constants_.noActiveProjectCaption(),
+               constants_.noActiveProjectMessage());
 
       }
       else
@@ -854,11 +856,8 @@ public class Projects implements OpenProjectFileEvent.Handler,
       {
          globalDisplay_.showMessage(
                MessageDialog.INFO,
-               "No Active Project",
-               "Version control features can only be accessed from within an " +
-               "RStudio project. Note that if you have an existing directory " +
-               "under version control you can associate an RStudio project " +
-               "with that directory using the New Project dialog.");
+               constants_.noActiveProjectCaption(),
+               constants_.versionControlProjectSetupMessage());
 
       }
       else
@@ -882,8 +881,8 @@ public class Projects implements OpenProjectFileEvent.Handler,
    public void showProjectOptions(final int initialPane, boolean showPaneChooser)
    {
       final ProgressIndicator indicator = globalDisplay_.getProgressIndicator(
-                                                      "Error Reading Options");
-      indicator.onProgress("Reading options...");
+                                                      constants_.errorReadingOptionsCaption());
+      indicator.onProgress(constants_.readingOptionsMessage());
 
       projServer_.readProjectOptions(new SimpleRequestCallback<RProjectOptions>() {
 
@@ -915,8 +914,8 @@ public class Projects implements OpenProjectFileEvent.Handler,
       // prompt to confirm
       String projectPath = projFile.getParentPathString();
       globalDisplay_.showYesNoMessage(GlobalDisplay.MSG_QUESTION,
-         "Confirm Open Project",
-         "Do you want to open the project " + projectPath + "?",
+         constants_.confirmOpenProjectCaption(),
+         constants_.openProjectPathMessage(projectPath),
           new Operation()
           {
              public void execute()
@@ -937,13 +936,11 @@ public class Projects implements OpenProjectFileEvent.Handler,
    public void onOpenProjectError(OpenProjectErrorEvent event)
    {
       // show error dialog
-      String msg = "Project '" + event.getProject() + "' " +
-                   "could not be opened: " + event.getMessage();
+      String msg = constants_.openProjectError(event.getProject(), event.getMessage());
 
       if (session_.getSessionInfo().getAllowOpenSharedProjects())
       {
-         msg += "\n\nEnsure the project URL is correct; if it is, contact the project" +
-               " owner to request access.";
+         msg += constants_.openProjectErrorMessage();
       }
 
       ArrayList<String> buttons = new ArrayList<>();
@@ -965,7 +962,7 @@ public class Projects implements OpenProjectFileEvent.Handler,
 
       RStudioGinjector.INSTANCE.getGlobalDisplay().showGenericDialog(
             GlobalDisplay.MSG_ERROR,
-            "Error Opening Project",
+            constants_.errorOpeningProjectCaption(),
             msg, buttons, elementIds, ops, 0);
 
       // remove from mru list
@@ -998,7 +995,7 @@ public class Projects implements OpenProjectFileEvent.Handler,
          {
             if (valid)
             {
-               applicationQuit_.prepareForQuit("Switch Projects",
+               applicationQuit_.prepareForQuit(constants_.switchProjectsCaption(),
                   allowCancel,
                   forceSaveAll,
                   new ApplicationQuit.QuitContext() {
@@ -1019,7 +1016,17 @@ public class Projects implements OpenProjectFileEvent.Handler,
          }
       });
    }
-
+   
+   // initialize renv if requested AND this isn't a quarto project with 
+   // an engine incompatible with renv
+   private boolean initializeRenv(NewProjectResult newProject)
+   {
+      return newProject.getUseRenv() &&
+             (newProject.getNewQuartoProjectOptions() == null ||
+             newProject.getNewQuartoProjectOptions().getEngine()
+                .equals(QuartoCommandConstants.ENGINE_KNITR));
+   }
+   
    private void showOpenProjectDialog(
                   int defaultType,
                   boolean allowOpenInNewWindow,
@@ -1034,7 +1041,7 @@ public class Projects implements OpenProjectFileEvent.Handler,
    public void onShowDiagnosticsProject()
    {
       final ProgressIndicator indicator = globalDisplay_.getProgressIndicator("Lint");
-      indicator.onProgress("Analyzing project sources...");
+      indicator.onProgress(constants_.onShowDiagnosticsProject());
       projServer_.analyzeProject(new ServerRequestCallback<Void>()
       {
          @Override
@@ -1091,7 +1098,7 @@ public class Projects implements OpenProjectFileEvent.Handler,
    {
       // first resolve the quit context (potentially saving edited documents
       // and determining whether to save the R environment on exit)
-      applicationQuit_.prepareForQuit("Switch Projects",
+      applicationQuit_.prepareForQuit(constants_.switchProjectsCaption(),
                                       true /*allowCancel*/,
                                       forceSaveAll,
                                       new ApplicationQuit.QuitContext() {
@@ -1168,17 +1175,58 @@ public class Projects implements OpenProjectFileEvent.Handler,
 
    private void showProjectOpenError(String projectFilePath)
    {
-      String msg = "Project '" + projectFilePath + "' " +
-            "does not exist (it has been moved or deleted), or it " +
-            "is not writeable";
-      globalDisplay_.showErrorMessage("Error Opening Project", msg);
+      String msg = constants_.projectOpenError(projectFilePath);
+      globalDisplay_.showErrorMessage(constants_.errorOpeningProjectCaption(), msg);
    }
 
+   private ServerRequestCallback<ConsoleProcess> consoleProcessRequestCallback(final NewProjectResult newProject,
+                                                           final ProgressIndicator indicator,
+                                                           final Command continuation,
+                                                           final String failMessage)
+   {
+      return new ServerRequestCallback<ConsoleProcess>() {
+         @Override
+         public void onResponseReceived(ConsoleProcess proc)
+         {
+            final ConsoleProgressDialog consoleProgressDialog =
+                  new ConsoleProgressDialog(proc, gitServer_);
+            consoleProgressDialog.showModal();
+
+            proc.addProcessExitHandler(new ProcessExitEvent.Handler()
+            {
+               @Override
+               public void onProcessExit(ProcessExitEvent event)
+               {
+                  if (event.getExitCode() == 0)
+                  {
+                     consoleProgressDialog.hide();
+                     continuation.execute();
+                  }
+                  else
+                  {
+                     notifyTutorialCreateNewResult(newProject, false, failMessage);
+                     indicator.onCompleted();
+                  }
+               }
+            });
+         }
+
+         @Override
+         public void onError(ServerError error)
+         {
+            Debug.logError(error);
+            indicator.onError(error.getUserMessage());
+            notifyTutorialCreateNewResult(newProject, false, error.getUserMessage());
+         }
+      };
+   }
+   private static final StudioClientProjectConstants constants_ = GWT.create(StudioClientProjectConstants.class);
    private final Provider<ProjectMRUList> pMRUList_;
    private final ApplicationQuit applicationQuit_;
    private final ProjectsServerOperations projServer_;
    private final RenvServerOperations renvServer_;
    private final GitServerOperations gitServer_;
+   private final QuartoServerOperations quartoServer_;
    private final RemoteFileSystemContext fsContext_;
    private final GlobalDisplay globalDisplay_;
    private final EventBus eventBus_;
@@ -1189,7 +1237,8 @@ public class Projects implements OpenProjectFileEvent.Handler,
    private final ProjectOpener opener_;
    private final SessionOpener sessionOpener_;
 
-   public static final String NONE = "none";
-   public static final Pattern PACKAGE_NAME_PATTERN =
-         Pattern.create("^[a-zA-Z][a-zA-Z0-9.]*$", "");
+   // This string cannot be localized, currently, because it is hardcoded as "none" in the C++ code
+   // #define kProjectNone           "none"
+   public static final String NONE = "none"; // constants_.noneLabel();
+   public static final Pattern PACKAGE_NAME_PATTERN = Pattern.create("^[a-zA-Z][a-zA-Z0-9.]*$", "");
 }

@@ -3,7 +3,7 @@
 #
 # install-soci
 #
-# Copyright (C) 2021 by RStudio, PBC
+# Copyright (C) 2022 by RStudio, PBC
 #
 # Unless you have received this program directly from RStudio pursuant
 # to the terms of a commercial license agreement with RStudio, then
@@ -21,10 +21,12 @@ source "$(dirname "${BASH_SOURCE[0]}")/../tools/rstudio-tools.sh"
 section "Installing SOCI"
 
 # vars
-SOCI_DIR=$RSTUDIO_TOOLS_ROOT/soci
-SOCI_BIN_DIR=$SOCI_DIR/build
-SOCI_URL=https://s3.amazonaws.com/rstudio-buildtools/soci.tar.gz
-BOOST_VERSION="1_69_0"
+SOCI_VERSION="4.0.3"
+SOCI_DIR="$RSTUDIO_TOOLS_ROOT/soci-${SOCI_VERSION}"
+SOCI_BIN_DIR="${SOCI_DIR}/build"
+SOCI_ARCHIVE=soci-${SOCI_VERSION}.tar.gz
+SOCI_URL="https://s3.amazonaws.com/rstudio-buildtools/${SOCI_ARCHIVE}"
+BOOST_VERSION="1_78_0"
 BOOST_DIR="$RSTUDIO_TOOLS_ROOT/boost/boost_$BOOST_VERSION"
 
 # install SOCI if it isn't already installed
@@ -38,8 +40,8 @@ cd "${RSTUDIO_TOOLS_ROOT}"
 
 # download and unpack SOCI sources
 if ! [ -d "$SOCI_DIR" ]; then
-   download "${SOCI_URL}" soci.tar.gz
-   tar zxvf soci.tar.gz
+   download "${SOCI_URL}" ${SOCI_ARCHIVE}
+   tar zxvf ${SOCI_ARCHIVE}
 fi
 cd "${SOCI_DIR}"
 
@@ -64,7 +66,15 @@ rm -f CMakeCache.txt
 : "${CMAKE=cmake}"
 : "${MAKE=make}"
 
-"${CMAKE}" -G "Unix Makefiles"                         \
+if has-program ninja
+then 
+   CMAKE_GENERATOR="Ninja"
+   MAKEFLAGS="-w dupbuild=warn ${MAKEFLAGS}"
+else
+   CMAKE_GENERATOR="Unix Makefiles"
+fi
+
+"${CMAKE}" -G"${CMAKE_GENERATOR}"                      \
    -DCMAKE_POLICY_DEFAULT_CMP0063="NEW"                \
    -DCMAKE_POLICY_DEFAULT_CMP0074="NEW"                \
    -DCMAKE_POSITION_INDEPENDENT_CODE:BOOL=true         \
@@ -91,7 +101,7 @@ rm -f CMakeCache.txt
    -DWITH_ODBC=OFF                                     \
    ..
 
-"${MAKE}"
+"${CMAKE}" --build . --target all -- ${MAKEFLAGS}
 
 # fix up permissions so bin dir will be readable by others
 chmod -R 777 "$SOCI_BIN_DIR"

@@ -1,0 +1,133 @@
+/* Stores the version of the schema. */
+CREATE TABLE schema_version(
+   /* The date at which this schema version was created. */
+   current_version text NOT NULL,
+
+   /* The name of the release to which this version of the schema belongs. */
+   release_name text NOT NULL
+);
+
+LOCK schema_version IN ACCESS EXCLUSIVE MODE;
+
+/* Stores revoked auth cookies - cookies that are not yet expired, but
+   have been invalidated due to a user signing out. These cookies will
+   not be allowed to be used again for sign-in purposes.
+*/
+CREATE TABLE revoked_cookie(
+   /* The expiration date string at which this cookie expires. Derivative of the CookieData,
+      used for sorting purposes
+   */
+   expiration text NOT NULL,
+   
+   /* The actual cookie data */
+   cookie_data text NOT NULL,
+
+   /* Primary key is the actual cookie data itself (no duplicate cookies can be issued) */
+   PRIMARY KEY (cookie_data)
+);
+
+/* Stores users of RStudio Server */
+CREATE TABLE licensed_users(
+
+   /* The username associated with the user */
+   user_name text NOT NULL,
+
+   /* Always false column, to keep the order the same as in Workbench */
+   locked boolean NOT NULL DEFAULT false,
+
+   /* The date time when the user last signed in */
+   last_sign_in text NOT NULL,
+
+   /* Always false column, to keep the order the same as in Workbench */
+   is_admin boolean NOT NULL DEFAULT false,
+
+   /* The Posix/Operating-System-Level ID of the user */
+   user_id integer NOT NULL DEFAULT -1,
+
+   /* Auto incrementing ID for each user for internal FK relationships. */
+   id SERIAL NOT NULL,
+
+   /* Add Primary Key */
+   PRIMARY KEY(id)
+
+);
+
+/* Stores metadata about actvie sessions */ 
+CREATE TABLE active_session_metadata(
+
+   /* The ID of the session which this row describes */
+   session_id text NOT NULL,
+
+   /* The ID of the row in licensed_users which corresponds to the user that owns this session */
+   user_id integer NOT NULL,
+
+   /* The type of workbench for this session */
+   workbench text NOT NULL,
+
+   /* The time at which this session was first created */
+   created text NOT NULL,
+
+   /* The time at which this session was last used */
+   last_used text NOT NULL,
+
+   /* The version of R in use, if this session's workbench type is R */
+   r_version text,
+
+   /* The label of the version of R in use, if this session's workbench type is R */
+   r_version_label text,
+
+   /* The R home of the version of R in use, if this session's workbench type is R */
+   r_version_home text,
+
+   /* The open project, if any */
+   project text,
+
+   /* The working directory of the session */
+   working_directory text,
+
+   /* The state of the session (running, executing, suspended) */
+   activity_state text NOT NULL,
+
+   /* The display label for this session */
+   label text NOT NULL,
+
+   /* The parameters with which this session was launched */
+   launch_parameters text NOT NULL,
+
+   /* Whether or not a save prompt is required */
+   save_prompt_required text NOT NULL DEFAULT 'not_required',
+
+   /* Boolean representing whether the session is currently executing R code */
+   executing TEXT,
+
+   /* Boolean representing whether the session is currently running */
+   running TEXT,
+
+   /* The last session state updated */
+   last_state_updated TEXT,
+
+   /* Initial */
+   initial TEXT,
+
+   /* Time the session was last resumed */
+   last_resumed TEXT,
+
+   /* Things which are blocking the suspension of the session, if any */
+   blocking_suspend TEXT,
+
+   /* Time at which the session suspeneded */
+   suspend_timestamp TEXT,
+
+   PRIMARY KEY (session_id),
+   
+   /* User entries should not be deleted, but if they are, remove all of that user's sessions */
+   CONSTRAINT fk_user
+      FOREIGN KEY (user_id) 
+         REFERENCES licensed_users(id) 
+         ON DELETE CASCADE
+);
+
+/* Index to be used for sorting revoked cookies by expiration */
+CREATE INDEX revoked_cookie_expiration_index ON revoked_cookie(expiration);
+
+INSERT INTO schema_version (current_version, release_name) VALUES ('20220610180402900844286', 'Spotted Wakerobin');

@@ -1,7 +1,7 @@
 /*
  * SessionRTokenCursorTests.cpp
  *
- * Copyright (C) 2021 by RStudio, PBC
+ * Copyright (C) 2022 by RStudio, PBC
  *
  * Unless you have received this program directly from RStudio pursuant
  * to the terms of a commercial license agreement with RStudio, then
@@ -24,7 +24,7 @@ using namespace core::r_util::token_cursor;
 
 bool isPipeOperator(const std::wstring& string)
 {
-   static const boost::wregex rePipe(L"^%[^>]*>+[^>]*%$");
+   static const boost::wregex rePipe(L"^(%[^>]*>+[^>]*%)|([|]>)$");
    return regex_utils::match(string.begin(), string.end(), rePipe);
 }
 
@@ -77,6 +77,8 @@ test_context("RTokenCursor")
       expect_true(isPipeOperator(L"%>%"));
       expect_true(isPipeOperator(L"%>>%"));
       expect_true(isPipeOperator(L"%T>%"));
+      expect_true(isPipeOperator(L"|>"));
+      expect_false(isPipeOperator(L"%!%"));
       
       RTokens rTokens(L"mtcars %>% first_level() %>% second_level(1");
       RTokenCursor cursor(rTokens);
@@ -148,6 +150,18 @@ test_context("RTokenCursor")
 
       // isPipeOperator exercises the token's begin/end iterators
       expect_false(token_utils::isPipeOperator(result));
+   }
+   
+   test_that("1:2:3 is parsed appropriately")
+   {
+      RTokens rTokens(L"1:2:3");
+      expect_true(rTokens.size() == 5);
+      expect_true(rTokens.at(0).isType(RToken::NUMBER));
+      expect_true(rTokens.at(1).isType(RToken::OPER));
+      expect_true(rTokens.at(2).isType(RToken::NUMBER));
+      expect_true(rTokens.at(3).isType(RToken::OPER));
+      expect_true(rTokens.at(4).isType(RToken::NUMBER));
+      
    }
 }
 

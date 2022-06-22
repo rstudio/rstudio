@@ -1,7 +1,7 @@
 /*
  * HelpTab.java
  *
- * Copyright (C) 2021 by RStudio, PBC
+ * Copyright (C) 2022 by RStudio, PBC
  *
  * Unless you have received this program directly from RStudio pursuant
  * to the terms of a commercial license agreement with RStudio, then
@@ -14,6 +14,7 @@
  */
 package org.rstudio.studio.client.workbench.views.help;
 
+import com.google.gwt.core.client.GWT;
 import com.google.inject.Inject;
 
 import org.rstudio.core.client.command.CommandBinder;
@@ -67,7 +68,7 @@ public class HelpTab extends DelayLoadWorkbenchTab<Help>
                   EventBus events,
                   final Session session)
    {
-      super("Help", shim);
+      super(constants_.helpText(), shim);
       binder.bind(commands, shim);
       events.addHandler(ShowHelpEvent.TYPE, shim);
       events.addHandler(ActivateHelpEvent.TYPE, shim);
@@ -80,4 +81,5 @@ public class HelpTab extends DelayLoadWorkbenchTab<Help>
          }
       });
    }
+   private static final HelpConstants constants_ = GWT.create(HelpConstants.class);
 }

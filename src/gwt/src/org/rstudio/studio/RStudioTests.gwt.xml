@@ -3,7 +3,7 @@
 <module rename-to="rstudio">
    <inherits name="org.rstudio.studio.RStudio"/>
 
-   <set-property name="compiler.stackMode" value="emulated"/>
+   <set-property name="compiler.stackMode" value="native"/>
 
    <set-property name="rstudio.unittests" value="true"/>
 </module>

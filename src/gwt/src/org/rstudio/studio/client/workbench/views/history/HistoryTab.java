@@ -1,7 +1,7 @@
 /*
  * HistoryTab.java
  *
- * Copyright (C) 2021 by RStudio, PBC
+ * Copyright (C) 2022 by RStudio, PBC
  *
  * Unless you have received this program directly from RStudio pursuant
  * to the terms of a commercial license agreement with RStudio, then
@@ -14,6 +14,7 @@
  */
 package org.rstudio.studio.client.workbench.views.history;
 
+import com.google.gwt.core.client.GWT;
 import com.google.inject.Inject;
 
 import org.rstudio.core.client.command.CommandBinder;
@@ -39,7 +40,8 @@ public class HistoryTab extends DelayLoadWorkbenchTab<History>
    @Inject
    public HistoryTab(Shim shim, Binder binder, Commands commands)
    {
-      super("History", shim);
+      super(constants_.historyTitle(), shim);
       binder.bind(commands, shim);
    }
+   private static final HistoryConstants constants_ = GWT.create(HistoryConstants.class);
 }

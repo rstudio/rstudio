@@ -1,7 +1,7 @@
 /*
  * FilesTab.java
  *
- * Copyright (C) 2021 by RStudio, PBC
+ * Copyright (C) 2022 by RStudio, PBC
  *
  * Unless you have received this program directly from RStudio pursuant
  * to the terms of a commercial license agreement with RStudio, then
@@ -14,6 +14,7 @@
  */
 package org.rstudio.studio.client.workbench.views.files;
 
+import com.google.gwt.core.client.GWT;
 import com.google.inject.Inject;
 import org.rstudio.core.client.command.CommandBinder;
 import org.rstudio.core.client.command.Handler;
@@ -49,10 +50,11 @@ public class FilesTab extends DelayLoadWorkbenchTab<Files>
                    EventBus events,
                    Commands commands)
    {
-      super("Files", shim);
+      super(constants_.filesTitle(), shim);
       binder.bind(commands, shim);
       events.addHandler(OpenFileInBrowserEvent.TYPE, shim);
       events.addHandler(DirectoryNavigateEvent.TYPE, shim);
       events.addHandler(RenameSourceFileEvent.TYPE, shim);
    }
+   private static final FilesConstants constants_ = GWT.create(FilesConstants.class);
 }

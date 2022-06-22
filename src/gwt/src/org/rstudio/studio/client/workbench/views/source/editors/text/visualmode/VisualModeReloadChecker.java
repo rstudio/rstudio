@@ -1,7 +1,7 @@
 /*
  * VisualModeReloadState.java
  *
- * Copyright (C) 2021 by RStudio, PBC
+ * Copyright (C) 2022 by RStudio, PBC
  *
  * Unless you have received this program directly from RStudio pursuant
  * to the terms of a commercial license agreement with RStudio, then
@@ -16,10 +16,10 @@
 
 package org.rstudio.studio.client.workbench.views.source.editors.text.visualmode;
 
-import org.rstudio.studio.client.panmirror.uitools.PanmirrorPandocFormatConfig;
+import org.rstudio.studio.client.panmirror.PanmirrorWidget;
+import org.rstudio.studio.client.panmirror.format.PanmirrorFormat;
 import org.rstudio.studio.client.panmirror.uitools.PanmirrorUITools;
 import org.rstudio.studio.client.panmirror.uitools.PanmirrorUIToolsFormat;
-import org.rstudio.studio.client.workbench.views.source.editors.text.TextEditingTarget;
 
 
 // class that tracks whether the format config we started editing with has changed
@@ -27,29 +27,22 @@ import org.rstudio.studio.client.workbench.views.source.editors.text.TextEditing
 
 public class VisualModeReloadChecker
 {
-   public VisualModeReloadChecker(TextEditingTarget.Display view)
+   public VisualModeReloadChecker(PanmirrorWidget.FormatSource formatSource)
    {
-      view_ = view;
       formatTools_ = new PanmirrorUITools().format;
-      config_ = formatTools_.parseFormatConfig(getEditorCode(), true);
+      formatSource_ = formatSource;
+      format_ = formatSource_.getFormat(formatTools_);  
    }
    
    public boolean requiresReload()
    {
-      PanmirrorPandocFormatConfig config = formatTools_.parseFormatConfig(getEditorCode(), true);
-      return !PanmirrorPandocFormatConfig.editorBehaviorConfigEqual(config,  config_);  
+      PanmirrorFormat format = formatSource_.getFormat(formatTools_);
+      return !PanmirrorFormat.areEqual(format,  format_);  
    }
-   
-   private String getEditorCode()
-   {
-      return VisualModeUtil.getEditorCode(view_);
-   }
-   
-   
+      
    private final PanmirrorUIToolsFormat formatTools_;
-   private final PanmirrorPandocFormatConfig config_;
-   
-   private final TextEditingTarget.Display view_;
+   private final PanmirrorWidget.FormatSource formatSource_;
+   private final PanmirrorFormat format_;
 }
 
 

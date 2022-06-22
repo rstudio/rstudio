@@ -1,7 +1,7 @@
 /*
  * PanmirrorMarkdownFormat.java
  *
- * Copyright (C) 2021 by RStudio, PBC
+ * Copyright (C) 2022 by RStudio, PBC
  *
  * Unless you have received this program directly from RStudio pursuant
  * to the terms of a commercial license agreement with RStudio, then
@@ -16,6 +16,8 @@
 package org.rstudio.studio.client.panmirror.format;
 
 
+import org.rstudio.core.client.StringUtil;
+
 import jsinterop.annotations.JsType;
 
 @JsType
@@ -26,5 +28,16 @@ public class PanmirrorFormat
    public PanmirrorRmdExtensions rmdExtensions;
    public PanmirrorHugoExtensions hugoExtensions;
    public String[] docTypes;
+   
+   public static boolean areEqual(PanmirrorFormat a, PanmirrorFormat b)
+   {
+      String aDoctypes = a.docTypes != null ? String.join(",", a.docTypes) : "";
+      String bDoctypes = b.docTypes != null ? String.join(",", b.docTypes) : "";
+      return StringUtil.equals(a.pandocMode, b.pandocMode) &&
+             StringUtil.equals(a.pandocExtensions, b.pandocExtensions) &&
+             PanmirrorRmdExtensions.areEqual(a.rmdExtensions, b.rmdExtensions) &&
+             PanmirrorHugoExtensions.areEqual(a.hugoExtensions, b.hugoExtensions) &&
+             aDoctypes == bDoctypes;       
+   }
 }
 

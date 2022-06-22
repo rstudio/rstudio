@@ -1,7 +1,7 @@
 /*
  * PlotsTab.java
  *
- * Copyright (C) 2021 by RStudio, PBC
+ * Copyright (C) 2022 by RStudio, PBC
  *
  * Unless you have received this program directly from RStudio pursuant
  * to the terms of a commercial license agreement with RStudio, then
@@ -98,7 +98,7 @@ public class PlotsTab extends DelayLoadWorkbenchTab<Plots>
                    Commands commands,
                    PlotsServerOperations server)
    {
-      super("Plots", shim);
+      super(constants_.plotsTitle(), shim);
       binder.bind(commands, shim);
       commands_ = commands;
       shim_ = shim;
@@ -186,4 +186,5 @@ public class PlotsTab extends DelayLoadWorkbenchTab<Plots>
    private final HandlerManager handlers_ = new HandlerManager(this);
    private final PlotsShim shim_;
    private Commands commands_;
+   private static final PlotsConstants constants_ = com.google.gwt.core.client.GWT.create(PlotsConstants.class);
 }

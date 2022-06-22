@@ -1,7 +1,7 @@
 /*
  * TextEditingTarget.java
  *
- * Copyright (C) 2021 by RStudio, PBC
+ * Copyright (C) 2022 by RStudio, PBC
  *
  * Unless you have received this program directly from RStudio pursuant
  * to the terms of a commercial license agreement with RStudio, then
@@ -112,7 +112,8 @@ public class TextEditingTargetPackageDependencyHelper
       boolean canDiscoverDependencies =
             docDisplay_.getFileType().isR() ||
             docDisplay_.getFileType().isRmd() ||
-            docDisplay_.getFileType().isRnw();
+            docDisplay_.getFileType().isRnw() ||
+            docDisplay_.getFileType().isQuartoMarkdown();
       
       if (!canDiscoverDependencies)
          return;

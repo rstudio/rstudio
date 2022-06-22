@@ -1,0 +1,123 @@
+#
+# CMakeNodeTools.txt
+#
+# Copyright (C) 2022 by RStudio, PBC
+#
+# This program is licensed to you under the terms of version 3 of the
+# GNU Affero General Public License. This program is distributed WITHOUT
+# ANY EXPRESS OR IMPLIED WARRANTY, INCLUDING THOSE OF NON-INFRINGEMENT,
+# MERCHANTABILITY OR FITNESS FOR A PARTICULAR PURPOSE. Please refer to the
+# AGPL (http://www.gnu.org/licenses/agpl-3.0.txt) for more details.
+# 
+#
+
+# include guard
+if(RSTUDIO_CMAKE_NODE_TOOLS_INCLUDED)
+   return()
+endif()
+set(RSTUDIO_CMAKE_NODE_TOOLS_INCLUDED YES)
+
+# set the node version
+if(NOT DEFINED RSTUDIO_NODE_VERSION)
+   set(RSTUDIO_NODE_VERSION "16.14.0")
+endif()
+if(DEFINED ENV{RSTUDIO_NODE_VERSION})
+   set(RSTUDIO_NODE_VERSION $ENV{RSTUDIO_NODE_VERSION})
+endif()
+
+# set cmake env vars for node (NODEJS) and node tools, like YARN, and NPM
+
+if(APPLE AND UNAME_M STREQUAL arm64)
+
+   # make sure we're using arm64 binaries of node / npm for arm64 builds
+   set(NODEJS 
+      "${CMAKE_CURRENT_LIST_DIR}/../../dependencies/common/node/${RSTUDIO_NODE_VERSION}-arm64/bin/node")
+   set(NPM 
+      "${CMAKE_CURRENT_LIST_DIR}/../../dependencies/common/node/${RSTUDIO_NODE_VERSION}-arm64/bin/npm")
+   set(NPX 
+      "${CMAKE_CURRENT_LIST_DIR}/../../dependencies/common/node/${RSTUDIO_NODE_VERSION}-arm64/bin/npx")
+
+else()
+
+   # Detect node.js, npm, and npx; use versions supplied by the dependency scripts
+   find_program(NODEJS
+      NAMES node
+      NO_DEFAULT_PATH PATH_SUFFIXES "bin"
+      PATHS "/opt/rstudio-tools/dependencies/common/node/${RSTUDIO_NODE_VERSION}"
+      "${CMAKE_CURRENT_LIST_DIR}/../../dependencies/common/node/${RSTUDIO_NODE_VERSION}")
+
+   find_program(NPM
+      NAMES npm
+      PATH_SUFFIXES "bin"
+      NO_DEFAULT_PATH 
+      PATHS "/opt/rstudio-tools/dependencies/common/node/${RSTUDIO_NODE_VERSION}"
+      "${CMAKE_CURRENT_LIST_DIR}/../../dependencies/common/node/${RSTUDIO_NODE_VERSION}")
+
+   find_program(NPX
+      NAMES npx
+      PATH_SUFFIXES "bin"
+      NO_DEFAULT_PATH 
+      PATHS "/opt/rstudio-tools/dependencies/common/node/${RSTUDIO_NODE_VERSION}"
+      "${CMAKE_CURRENT_LIST_DIR}/../../dependencies/common/node/${RSTUDIO_NODE_VERSION}")
+
+endif()
+   
+if(NODEJS)
+   message(STATUS "Using node.js: ${NODEJS}")
+else()
+   message(FATAL_ERROR "node.js not found (required)")
+endif()
+   
+if(NPM)
+   message(STATUS "Using npm: ${NPM}")
+else()
+   message(FATAL_ERROR "npm not found (required for rsw-homepage)")
+endif()
+
+if(NPX)
+   message(STATUS "Using npx: ${NPX}")
+else()
+   message(STATUS "npx not found (required for Electron)")
+endif()
+
+get_filename_component(NODEJS_PATH ${NODEJS} DIRECTORY CACHE)
+
+# yarn
+if(UNIX)
+
+   find_program(YARN
+      NAMES yarn
+      NO_DEFAULT_PATH
+      PATHS "$ENV{HOME}/.yarn/bin")
+
+elseif(WIN32)
+
+   find_program(YARN
+      NAMES yarn
+      NO_DEFAULT_PATH
+      PATHS "${NODEJS_PATH}")
+
+endif()
+
+if (NOT YARN)
+   find_program(YARN NAMES yarn)
+endif()
+
+if(YARN)
+   message(STATUS "Using yarn: ${YARN}")
+else()
+   message(STATUS "yarn not found (required for Electron)")
+   set(YARN yarn)
+endif()
+
+# cache variables
+set(NODEJS "${NODEJS}" CACHE INTERNAL "")
+set(YARN "${YARN}" CACHE INTERNAL "")
+set(NPM "${NPM}" CACHE INTERNAL "")
+set(NPX "${NPX}" CACHE INTERNAL "")
+
+# create paths from programs
+get_filename_component(YARN_PATH ${YARN} DIRECTORY CACHE)
+get_filename_component(NPM_PATH ${NPM} DIRECTORY CACHE)
+get_filename_component(NPX_PATH ${NPX} DIRECTORY CACHE)
+

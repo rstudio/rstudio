@@ -3,7 +3,7 @@
 #
 # install-common
 #
-# Copyright (C) 2021 by RStudio, PBC
+# Copyright (C) 2022 by RStudio, PBC
 #
 # Unless you have received this program directly from RStudio pursuant
 # to the terms of a commercial license agreement with RStudio, then
@@ -21,6 +21,7 @@ set -e
 ./install-mathjax
 ./install-boost
 ./install-pandoc
+./install-quarto
 ./install-packages
 ./install-sentry-cli
 ./install-npm-dependencies
@@ -30,5 +31,5 @@ set -e
 
 if [ -e install-overlay ]
 then
-   ./install-overlay
+   ./install-overlay $1
 fi

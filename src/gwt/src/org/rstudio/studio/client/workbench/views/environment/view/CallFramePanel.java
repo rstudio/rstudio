@@ -1,7 +1,7 @@
 /*
  * CallFramePanel.java
  *
- * Copyright (C) 2021 by RStudio, PBC
+ * Copyright (C) 2022 by RStudio, PBC
  *
  * Unless you have received this program directly from RStudio pursuant
  * to the terms of a commercial license agreement with RStudio, then
@@ -34,6 +34,7 @@ import com.google.gwt.user.client.ui.Widget;
 
 import org.rstudio.core.client.theme.res.ThemeResources;
 import org.rstudio.core.client.theme.res.ThemeStyles;
+import org.rstudio.studio.client.workbench.views.environment.ViewEnvironmentConstants;
 import org.rstudio.studio.client.workbench.views.environment.model.CallFrame;
 
 import java.util.ArrayList;
@@ -85,12 +86,12 @@ public class CallFramePanel extends ResizeComposite
 
       addStyleName("ace_editor_theme");
 
-      Label tracebackTitle = new Label("Traceback");
+      Label tracebackTitle = new Label(constants_.tracebackCapitalized());
       tracebackTitle.addStyleName(style.tracebackHeader());
       
       callFramePanelHeader.addStyleName(globalStyles.windowframe());
       callFramePanelHeader.add(tracebackTitle);
-      CheckBox showInternals = new CheckBox("Show internals");
+      CheckBox showInternals = new CheckBox(constants_.showInternals());
       showInternals.addStyleName(style.showInternalsCheckbox());
       showInternals.setValue(panelHost_.getShowInternalFunctions());
       showInternals.addValueChangeHandler(
@@ -210,4 +211,5 @@ public class CallFramePanel extends ResizeComposite
    CallFramePanelHost panelHost_;
    ArrayList<CallFrameItem> callFrameItems_;
    boolean isMinimized_ = false;
+   private static final ViewEnvironmentConstants constants_ = GWT.create(ViewEnvironmentConstants.class);
 }

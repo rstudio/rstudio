@@ -1,7 +1,7 @@
 /*
  * DocumentOutlineWidget.java
  *
- * Copyright (C) 2021 by RStudio, PBC
+ * Copyright (C) 2022 by RStudio, PBC
  *
  * Unless you have received this program directly from RStudio pursuant
  * to the terms of a commercial license agreement with RStudio, then
@@ -29,11 +29,13 @@ import org.rstudio.studio.client.common.filetypes.TextFileType;
 import org.rstudio.studio.client.workbench.prefs.model.UserPrefs;
 import org.rstudio.studio.client.workbench.views.source.editors.text.Scope;
 import org.rstudio.studio.client.workbench.views.source.editors.text.ScopeFunction;
+import org.rstudio.studio.client.workbench.views.source.editors.text.ScopeTest;
 import org.rstudio.studio.client.workbench.views.source.editors.text.TextEditingTarget;
 import org.rstudio.studio.client.workbench.views.source.editors.text.events.ActiveScopeChangedEvent;
 import org.rstudio.studio.client.workbench.views.source.editors.text.events.CursorChangedEvent;
 import org.rstudio.studio.client.workbench.views.source.editors.text.events.EditorThemeStyleChangedEvent;
 import org.rstudio.studio.client.workbench.views.source.editors.text.events.ScopeTreeReadyEvent;
+import org.rstudio.studio.client.workbench.views.source.model.SourceDocument;
 import org.rstudio.studio.client.workbench.views.source.model.SourcePosition;
 
 import com.google.gwt.core.client.GWT;
@@ -64,7 +66,7 @@ public class DocumentOutlineWidget extends Composite
    {
       public EmptyPlaceholder()
       {
-         add(new Label("No outline available"));
+         add(new Label(constants_.noOutlineAvailable()));
          addStyleName(RES.styles().emptyPlaceholder());
       }
    }
@@ -144,6 +146,11 @@ public class DocumentOutlineWidget extends Composite
             if (StringUtil.isNullOrEmpty(text))
                text = "(" + node.getLabel().toLowerCase() + ")";
          }
+         else if (node.isTest())
+         {
+            ScopeTest asTestNode = (ScopeTest) node;
+            text = asTestNode.getTestName();
+         }
          else if (node.isFunction())
          {
             ScopeFunction asFunctionNode = (ScopeFunction) node;
@@ -151,7 +158,7 @@ public class DocumentOutlineWidget extends Composite
          }
          else if (node.isYaml())
          {
-            text = "Title";
+            text = constants_.title();
          }
          else
          {
@@ -169,13 +176,22 @@ public class DocumentOutlineWidget extends Composite
          label_.removeStyleName(RES.styles().nodeLabelChunk());
          label_.removeStyleName(RES.styles().nodeLabelSection());
          label_.removeStyleName(RES.styles().nodeLabelFunction());
-
+         label_.removeStyleName(RES.styles().nodeLabelTest());
+         label_.removeStyleName(RES.styles().nodeLabelSecundary());
+         
          if (node.isChunk())
             label_.addStyleName(RES.styles().nodeLabelChunk());
          else if (node.isSection() && !node.isMarkdownHeader() && !node.isYaml())
             label_.addStyleName(RES.styles().nodeLabelSection());
+         else if (node.isTest())
+            label_.addStyleName(RES.styles().nodeLabelTest());   
          else if (node.isFunction())
+         {
             label_.addStyleName(RES.styles().nodeLabelFunction());
+            if (target_.getExtendedFileType().startsWith(SourceDocument.XT_TEST_PREFIX)) 
+               label_.addStyleName(RES.styles().nodeLabelSecundary());
+         }
+            
       }
 
       private void setIndent(int depth)
@@ -247,7 +263,7 @@ public class DocumentOutlineWidget extends Composite
 
       tree_ = new Tree();
       tree_.addStyleName(RES.styles().tree());
-      Roles.getTreeRole().setAriaLabelProperty(tree_.getElement(), "Document Outline");
+      Roles.getTreeRole().setAriaLabelProperty(tree_.getElement(), constants_.documentOutline());
 
       panel_ = new FlowPanel();
       panel_.addStyleName(RES.styles().panel());
@@ -475,6 +491,7 @@ public class DocumentOutlineWidget extends Composite
 
       return node.isChunk() ||
              node.isClass() ||
+             node.isTest() ||
              node.isFunction() ||
              node.isNamespace() ||
              node.isSection();
@@ -549,6 +566,9 @@ public class DocumentOutlineWidget extends Composite
       String nodeLabelChunk();
       String nodeLabelSection();
       String nodeLabelFunction();
+      String nodeLabelTest();
+
+      String nodeLabelSecundary();
    }
 
    public interface Resources extends ClientBundle
@@ -561,5 +581,5 @@ public class DocumentOutlineWidget extends Composite
    static {
       RES.styles().ensureInjected();
    }
-
+   private static final ViewsSourceConstants constants_ = GWT.create(ViewsSourceConstants.class);
 }

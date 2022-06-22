@@ -1,7 +1,7 @@
 /*
  * MenubarPanel.java
  *
- * Copyright (C) 2021 by RStudio, PBC
+ * Copyright (C) 2022 by RStudio, PBC
  *
  * Unless you have received this program directly from RStudio pursuant
  * to the terms of a commercial license agreement with RStudio, then
@@ -37,18 +37,14 @@ public class MenubarPanel extends Composite
       @Source("MenubarPanel.css")
       Styles styles();
 
-      ImageResource menubarLeft();
       @ImageOptions(repeatStyle = RepeatStyle.Horizontal)
       ImageResource menubarTile();
-      ImageResource menubarRight();
    }
 
    interface Styles extends CssResource
    {
       String panel();
-      String left();
       String center();
-      String right();
    }
 
    interface MyUiBinder extends UiBinder<Widget, MenubarPanel> {}

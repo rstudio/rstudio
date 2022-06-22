@@ -1,7 +1,7 @@
 /*
  * REnvironmentPosix.cpp
  *
- * Copyright (C) 2021 by RStudio, PBC
+ * Copyright (C) 2022 by RStudio, PBC
  *
  * Unless you have received this program directly from RStudio pursuant
  * to the terms of a commercial license agreement with RStudio, then
@@ -310,7 +310,7 @@ bool validateRScriptPath(const std::string& rScriptPath,
       return false;
    }
 
-   // error if it is a directry
+   // error if it is a directory
    else if (rBinaryPath.isDirectory())
    {
       *pErrMsg = "R script path (" + rBinaryPath.getAbsolutePath() +
@@ -507,7 +507,7 @@ bool detectRLocationsUsingR(const std::string& rScriptPath,
    // only be the case when a module is specified
    std::string rCommand = !rScriptPath.empty() ? rScriptPath : "R";
    std::string command =  rCommand +
-     " --slave --vanilla -e \"cat(paste("
+     " --vanilla -s -e \"cat(paste("
             "R.home('home'),"
             "R.home('share'),"
             "R.home('include'),"
@@ -818,30 +818,57 @@ std::string rLibraryPath(const FilePath& rHomePath,
                          const FilePath& ldPathsScript,
                          const std::string& ldLibraryPath)
 {
-   // determine library path (existing + r lib dir + r extra lib dirs)
-   std::string libraryPath = core::system::getenv(kLibraryPathEnvVariable);
+   std::vector<std::string> libraryPaths;
+   
+   // place R library path at front
+   libraryPaths.push_back(rLibPath.getAbsolutePath());
+   
+   // pass along default (inherited) library paths
+   std::string defaultLibraryPaths = core::system::getenv(kLibraryPathEnvVariable);
+ 
+   // on macOS, we need to initialize with a default set of library paths
+   // if the path was already empty
 #ifdef __APPLE__
-   // if this isn't set explicitly then initalize it with the default
-   // of $HOME/lib:/usr/local/lib:/usr/lib. See documentation here:
-   // http://developer.apple.com/library/ios/#documentation/system/conceptual/manpages_iphoneos/man3/dlopen.3.html
-   if (libraryPath.empty())
+   if (defaultLibraryPaths.empty())
    {
+      // if this isn't set explicitly then initialize it with the default
+      // of $HOME/lib:/usr/local/lib:/usr/lib. See documentation here:
+      // http://developer.apple.com/library/ios/#documentation/system/conceptual/manpages_iphoneos/man3/dlopen.3.html
+      //
+      // NOTE (kevin): the above documentation now appears to be old; 'man dyld' has:
+      // 
+      // DYLD_FALLBACK_LIBRARY_PATH This is a colon separated list of
+      // directories that contain libraries. If a dylib is not found at its
+      // install path, dyld uses this as a list of directories to search for
+      // the dylib. By default, it is set to /usr/local/lib:/usr/lib.
+      //
+      // we keep $HOME/lib on the path for backwards compatibility, just in case
       boost::format fmt("%1%/lib:/usr/local/lib:/usr/lib");
-      libraryPath = boost::str(fmt % core::system::getenv("HOME"));
+      defaultLibraryPaths = boost::str(fmt % core::system::getenv("HOME"));
    }
 #endif
-   if (!libraryPath.empty())
-      libraryPath.append(":");
-   libraryPath.append(ldLibraryPath);
-   if (!libraryPath.empty())
-      libraryPath.append(":");
-   libraryPath = rLibPath.getAbsolutePath() + ":" + libraryPath;
-   std::string extraPaths = extraLibraryPaths(ldPathsScript,
-                                              rHomePath.getAbsolutePath());
-   if (!extraPaths.empty())
-      libraryPath.append(":" + extraPaths);
    
-   return libraryPath;
+   // now add our default library paths
+   if (!defaultLibraryPaths.empty())
+      libraryPaths.push_back(defaultLibraryPaths);
+   
+   // add LD_LIBRARY_PATH
+   if (!ldLibraryPath.empty())
+      libraryPaths.push_back(ldLibraryPath);
+   
+   // compute and add extra library paths (if any)
+   std::string extraPaths = extraLibraryPaths(ldPathsScript, rHomePath.getAbsolutePath());
+   if (!extraPaths.empty())
+      libraryPaths.push_back(extraPaths);
+   
+   // join into path
+   std::string fullPath = boost::algorithm::join(libraryPaths, ":");
+   
+   // remove duplicated colons
+   boost::regex reColons("[:]+");
+   boost::replace_all(fullPath, reColons, ":");
+   
+   return fullPath;
 }
 
 Error rVersion(const FilePath& rHomePath,
@@ -887,7 +914,7 @@ Error rVersion(const FilePath& rHomePath,
    core::system::ProcessResult result;
 
    std::string rCommand = !rScriptPath.isEmpty() ? rScriptPath.getAbsolutePath() : "R";
-   std::string command = rCommand + " --slave --vanilla -e 'cat(R.Version()$major,R.Version()$minor, sep=\".\")'";
+   std::string command = rCommand + " --vanilla -s -e 'cat(R.Version()$major,R.Version()$minor, sep=\".\")'";
    std::string fullCommand = createSourcedCommand(prelaunchScript,
                                                   module,
                                                   moduleBinaryPath,
@@ -930,7 +957,7 @@ Error rVersion(const FilePath& rHomePath,
 
 /*
 We've observed that Ubuntu 14.10 no longer passes the LANG environment
-variable to daemon processes so we lose the automatic inheritence of
+variable to daemon processes so we lose the automatic inheritance of
 LANG from the system default. For this case we'll do automatic detection
 and setting of LANG.
 */

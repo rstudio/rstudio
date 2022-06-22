@@ -1,7 +1,7 @@
 /*
  * pandoc.ts
  *
- * Copyright (C) 2021 by RStudio, PBC
+ * Copyright (C) 2022 by RStudio, PBC
  *
  * Unless you have received this program directly from RStudio pursuant
  * to the terms of a commercial license agreement with RStudio, then
@@ -274,6 +274,9 @@ export interface ProsemirrorWriter {
   // log an unrecoginzed token type
   logUnrecognized(token: string): void;
 
+  // log the presence of example lists
+  logExampleList(): void;
+
   // query whether a given node type is open
   // (useful for e.g. conditional behavior when in a list or table)
   isNodeOpen(type: NodeType): boolean;
@@ -306,7 +309,12 @@ export interface PandocMarkWriter {
 
 export type PandocMarkWriterFn = (output: PandocOutput, mark: Mark, parent: Fragment) => void;
 
-export type PandocOutputOption = 'writeSpaces';
+export const kWriteSpaces = 'writeSpaces';
+export const kPreventBracketEscape = 'preventBracketEscape';
+
+export type PandocOutputOption = typeof kWriteSpaces | typeof kPreventBracketEscape;
+
+
 
 export interface PandocOutput {
   extensions: PandocExtensions;

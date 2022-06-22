@@ -1,6 +1,9 @@
 <ui:UiBinder xmlns:ui='urn:ui:com.google.gwt.uibinder'
              xmlns:g='urn:import:com.google.gwt.user.client.ui'
-             xmlns:widget="urn:import:org.rstudio.core.client.widget">
+             xmlns:widget="urn:import:org.rstudio.core.client.widget"
+             ui:generateFormat='com.google.gwt.i18n.server.PropertyCatalogFactory'
+             ui:generateKeys="com.google.gwt.i18n.server.keygen.MD5KeyGenerator"
+             ui:generateLocales="default">
    <ui:style type="org.rstudio.studio.client.notebookv2.CompileNotebookv2OptionsDialog.CompileNotebookv2Style">
       
       .dialog {
@@ -19,19 +22,19 @@
 
    <g:HTMLPanel styleName="{style.dialog}">
       
-      <label ui:field="dialogLabel_">Create a standalone report that contains the
-      code and output from your R script.</label>
+      <label ui:field="dialogLabel_"><ui:msg key="dialogLabel">Create a standalone report that contains the
+         code and output from your R script.</ui:msg></label>
       
       <p>
-       For more information on compiling reports, see the documentation at
+       <ui:msg key="compilingReports">For more information on compiling reports, see the documentation at</ui:msg>
         <a href="http://rmarkdown.rstudio.com/articles_report_from_r_script.html" target = "_blank">
-           Compiling Reports from R Scripts
+           <ui:msg key="reportsFromRScripts">Compiling Reports from R Scripts</ui:msg>
         </a>
       </p>
  
       <div ui:field="divFormatSelector_" styleName="{style.formatPanel}">
          <g:HorizontalPanel ui:field="formatLabelPanel_">
-            <widget:FormLabel ui:field="lblFormat_" text="Report output format:"/>
+            <widget:FormLabel ui:field="lblFormat_" text="Report output format:"><ui:attribute name="text" key="lblFormat"/></widget:FormLabel>
          </g:HorizontalPanel>
          <g:ListBox ui:field="listFormat_"
                     styleName="{style.format}">

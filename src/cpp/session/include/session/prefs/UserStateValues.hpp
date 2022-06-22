@@ -1,6 +1,6 @@
 /* UserPrefValues.hpp
  *
- * Copyright (C) 2021 by RStudio, PBC
+ * Copyright (C) 2022 by RStudio, PBC
  *
  * Unless you have received this program directly from RStudio pursuant
  * to the terms of a commercial license agreement with RStudio, then
@@ -26,6 +26,25 @@ namespace rstudio {
 namespace session {
 namespace prefs {
 
+#define kGeneral "general"
+#define kGeneralIgnoredUpdateVersions "ignoredUpdateVersions"
+#define kFont "font"
+#define kFontProportionalFont "proportionalFont"
+#define kFontFixedWidthFont "fixedWidthFont"
+#define kView "view"
+#define kViewZoomLevel "zoomLevel"
+#define kViewWindowBounds "windowBounds"
+#define kViewAccessibility "accessibility"
+#define kRemoteSession "remote_session"
+#define kRemoteSessionLastRemoteSessionUrl "lastRemoteSessionUrl"
+#define kRemoteSessionAuthCookies "authCookies"
+#define kRemoteSessionTempAuthCookies "tempAuthCookies"
+#define kRenderer "renderer"
+#define kRendererEngine "engine"
+#define kRendererUseGpuExclusionList "useGpuExclusionList"
+#define kRendererUseGpuDriverBugWorkarounds "useGpuDriverBugWorkarounds"
+#define kPlatform "platform"
+#define kPlatformWindows "windows"
 #define kContextId "context_id"
 #define kAutoCreatedProfile "auto_created_profile"
 #define kTheme "theme"
@@ -91,11 +110,48 @@ namespace prefs {
 #define kZoteroUseBetterBibtex "zotero_use_better_bibtex"
 #define kZoteroApiKey "zotero_api_key"
 #define kZoteroDataDir "zotero_data_dir"
+#define kQuartoWebsiteSyncEditor "quarto_website_sync_editor"
 
 class UserStateValues: public Preferences
 {
 public:
    static std::vector<std::string> allKeys();
+   /**
+    * 
+    */
+   core::json::Object general();
+   core::Error setGeneral(core::json::Object val);
+
+   /**
+    * Font options from the Appearance category
+    */
+   core::json::Object font();
+   core::Error setFont(core::json::Object val);
+
+   /**
+    * 
+    */
+   core::json::Object view();
+   core::Error setView(core::json::Object val);
+
+   /**
+    * 
+    */
+   core::json::Object remoteSession();
+   core::Error setRemoteSession(core::json::Object val);
+
+   /**
+    * 
+    */
+   core::json::Object renderer();
+   core::Error setRenderer(core::json::Object val);
+
+   /**
+    * 
+    */
+   core::json::Object platform();
+   core::Error setPlatform(core::json::Object val);
+
    /**
     * A unique identifier representing the user and machine.
     */
@@ -239,6 +295,12 @@ public:
     */
    std::string zoteroDataDir();
    core::Error setZoteroDataDir(std::string val);
+
+   /**
+    * Sync source editor to Quarto website preview navigation.
+    */
+   bool quartoWebsiteSyncEditor();
+   core::Error setQuartoWebsiteSyncEditor(bool val);
 
 };
 

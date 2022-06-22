@@ -1,5 +1,3 @@
-@external rstudio-themes-flat;
-
 .mainWidget {
    width: 510px;
    height: 300px;
@@ -14,9 +12,6 @@
 .headerPanel {
    width: 400px;
    height: 42px;
-}
-
-.rstudio-themes-flat .headerPanel {
    margin-left: 5px;
 }
 
@@ -31,11 +26,6 @@
 .wizardBodyPanel {
    width: 533px;
    height: 244px;
-   margin-left: -10px;
-   margin-right: -13px;
-}
-
-.rstudio-themes-flat .wizardBodyPanel {
    margin-left: -10px;
    margin-right: -10px;
 }
@@ -68,10 +58,6 @@
 }
 
 @sprite .wizardPageSelectorItemFirst {
-   gwt-image: 'wizardPageSelectorBackgroundFirst';
-}
-
-@sprite .rstudio-themes-flat .wizardPageSelectorItemFirst {
    gwt-image: 'wizardPageSelectorBackground';
 }
 
@@ -94,9 +80,9 @@
 
 .wizardPageSelectorItemLeftIcon {
    max-width: 20px;
-   max-height: 20px;
+   max-height: 18px;
    margin-left: 8px;
-   margin-top: 8px;
+   margin-top: 9px;
 }
 
 .wizardPageSelectorItemRightArrow {

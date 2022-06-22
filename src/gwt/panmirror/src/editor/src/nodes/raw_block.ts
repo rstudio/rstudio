@@ -1,7 +1,7 @@
 /*
  * raw_block.ts
  *
- * Copyright (C) 2021 by RStudio, PBC
+ * Copyright (C) 2022 by RStudio, PBC
  *
  * Unless you have received this program directly from RStudio pursuant
  * to the terms of a commercial license agreement with RStudio, then
@@ -36,8 +36,8 @@ import { ProsemirrorCommand, EditorCommandId } from '../api/command';
 import { EditorUI } from '../api/ui';
 import { isSingleLineHTML } from '../api/html';
 import { kHTMLFormat, kTexFormat, editRawBlockCommand, isRawHTMLFormat } from '../api/raw';
-import { isSingleLineTex } from '../api/tex';
 import { OmniInsert, OmniInsertGroup } from '../api/omni_insert';
+import { kRawInlineFormat, kRawInlineContent } from '../marks/raw_inline/raw_inline';
 
 const extension = (context: ExtensionContext): Extension | null => {
   const { pandocExtensions, pandocCapabilities, ui } = context;
@@ -113,6 +113,43 @@ const extension = (context: ExtensionContext): Extension | null => {
             });
           },
 
+          tokensFilter: (tokens: PandocToken[], writer: ProsemirrorWriter) => {
+            const filtered: PandocToken[] = [];
+            for (let i=0; i<tokens.length; i++) {
+              if (isSingleLineHtmlRawBlock(tokens[i]) && 
+                  isParaOrPlain(tokens[i+1]) &&
+                  isSingleLineHtmlRawBlock(tokens[i+2])) {
+
+                const beginTag = (tokens[i].c[kRawBlockContent] as string).trimRight();
+                const endTag = (tokens[i+2].c[kRawBlockContent] as string).trimRight();
+                const match = beginTag.match(/^<(.*?)>$/);
+                if (match && (endTag === "</" + match[1] + ">")) {
+                 
+                  const innerContent = tokens[i+1].c as PandocToken[];
+                  innerContent.unshift({
+                    t: PandocTokenType.RawInline,
+                    c: ["html", beginTag]
+                  });
+                  innerContent.push({
+                    t: PandocTokenType.RawInline,
+                    c: ["html", endTag]
+                  });
+                  filtered.push({
+                    t: PandocTokenType.Para,
+                    c: innerContent
+                  });
+                  i += 2;
+                } else {
+                  filtered.push(tokens[i]);
+                }
+              } else {
+                filtered.push(tokens[i]);
+              } 
+            } 
+
+            return filtered;
+          },
+
           // we define a custom blockReader here so that we can convert html and tex blocks with
           // a single line of code into paragraph with a raw inline
           blockReader: (schema: Schema, tok: PandocToken, writer: ProsemirrorWriter) => {
@@ -125,6 +162,12 @@ const extension = (context: ExtensionContext): Extension | null => {
               const content = rawTok.c[kRawBlockContent];
               writer.addNode(schema.nodes.raw_block, { format }, [schema.text(content)]);
               return true;
+            } else if (isParagraphWrappingLatexBeginOrEnd(tok)) {
+              writer.addNode(schema.nodes.raw_block, { format: kTexFormat }, [schema.text(tok.c[0].c)]);
+              return true;
+            } else if (isParagraphWrappingRawLatexBeginOrEnd(tok)) {
+              writer.addNode(schema.nodes.raw_block, { format: kTexFormat }, [schema.text(tok.c[0].c[kRawInlineContent])]);
+              return true;
             } else {
               return false;
             }
@@ -133,6 +176,26 @@ const extension = (context: ExtensionContext): Extension | null => {
             if (!pandocExtensions.raw_attribute || node.textContent.trim() === '<!-- -->') {
               output.writeToken(PandocTokenType.Para, () => {
                 output.writeRawMarkdown(node.textContent);
+              });
+
+            // raw block with embedded ``` (e.g. a commented out Rmd code chunk) needs
+            // extra backticks on the outside to prevent the rmd chunk end backticks
+            // from being considered the end of the raw html block.
+            } else if (node.textContent.includes("\n```")) {
+              // find the ``` standing by itself on a line
+              const matches: RegExpExecArray[] = [];
+              const embeddedTickRegEx = /\n(`{3,})\s*?\n/g;
+              embeddedTickRegEx.lastIndex = 0;
+              let match: RegExpExecArray | null = null;
+               // tslint:disable-next-line no-conditional-assignment
+              while (match = embeddedTickRegEx.exec(node.textContent)) {
+                matches.push(match);
+              }
+              embeddedTickRegEx.lastIndex = 0;
+              const matchRev = matches.reverse();
+              const ticks = (matchRev.length > 0 ? matchRev[0][1] : "```") + "`";
+              output.writeToken(PandocTokenType.Para, () => {
+                output.writeRawMarkdown(`${ticks}{=${node.attrs.format}}\n${node.textContent}\n${ticks}\n`);
               });
             } else {
               output.writeToken(PandocTokenType.RawBlock, () => {
@@ -181,6 +244,25 @@ const extension = (context: ExtensionContext): Extension | null => {
   };
 };
 
+function isSingleLineHtmlRawBlock(tok?: PandocToken) {
+  if (tok?.t === PandocTokenType.RawBlock) {
+    const format = tok.c[kRawBlockFormat];
+    const text = tok.c[kRawBlockContent] as string;
+    const textTrimmed = text.trimRight();
+    return isRawHTMLFormat(format) && isSingleLineHTML(textTrimmed);
+  } else {
+    return false;
+  }
+}
+
+function isParaOrPlain(tok?: PandocToken) {
+  if (tok) {
+    return tok.t === PandocTokenType.Plain || tok.t === PandocTokenType.Para;
+  } else {
+    return false;
+  }
+}
+
 function readPandocRawBlock(schema: Schema, tok: PandocToken, writer: ProsemirrorWriter) {
   // single lines of html should be read as inline html (allows for
   // highlighting and more seamless editing experience)
@@ -192,8 +274,8 @@ function readPandocRawBlock(schema: Schema, tok: PandocToken, writer: Prosemirro
     writer.writeInlineHTML(textTrimmed);
     writer.closeNode();
 
-    // similarly, single lines of tex should be read as inline tex
-  } else if (format === kTexFormat && isSingleLineTex(textTrimmed)) {
+    // similarly, single lines of tex (that aren't begin or end) should be read as inline tex
+  } else if (format === kTexFormat && readAsInlineTex(textTrimmed)) {
     writer.openNode(schema.nodes.paragraph, {});
     const rawTexMark = schema.marks.raw_tex.create();
     writer.openMark(rawTexMark);
@@ -207,10 +289,37 @@ function readPandocRawBlock(schema: Schema, tok: PandocToken, writer: Prosemirro
   }
 }
 
+
+export function readAsInlineTex(tex: string) {
+  tex = tex.trimRight();
+  if (tex.split('\n').length === 1){
+    return !isLatexBeginOrEnd(tex);
+  } else {
+    return false;
+  }
+}
+
 function isParagraphWrappingMultilineRaw(tok: PandocToken) {
   return isSingleChildParagraph(tok) && 
          tok.c[0].t === PandocTokenType.RawInline &&
          isMultilineString(tok.c[0].c[kRawBlockContent]);
+}
+
+function isParagraphWrappingLatexBeginOrEnd(tok: PandocToken) {
+  return isSingleChildParagraph(tok) &&
+         tok.c[0].t === PandocTokenType.Str &&
+         isLatexBeginOrEnd(tok.c[0].c);
+}
+
+function isParagraphWrappingRawLatexBeginOrEnd(tok: PandocToken) {
+  return isSingleChildParagraph(tok) &&
+         (tok.c[0].t === PandocTokenType.RawInline &&
+         tok.c[0].c[kRawInlineFormat] === kTexFormat &&
+         isLatexBeginOrEnd(tok.c[0].c[kRawInlineContent]));
+}
+
+function isLatexBeginOrEnd(str: string) {
+  return str && str.trimLeft().match(/\\(begin|end)/);
 }
 
 function isSingleChildParagraph(tok: PandocToken) {

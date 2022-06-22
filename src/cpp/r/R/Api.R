@@ -1,7 +1,7 @@
 #
 # Api.R
 #
-# Copyright (C) 2021 by RStudio, PBC
+# Copyright (C) 2022 by RStudio, PBC
 #
 # Unless you have received this program directly from RStudio pursuant
 # to the terms of a commercial license agreement with RStudio, then
@@ -136,7 +136,8 @@
   info$mode <- .Call("rs_rstudioProgramMode", PACKAGE = "(embedding)")
   info$edition <- .Call("rs_rstudioEdition", PACKAGE = "(embedding)")
   info$version <- .Call("rs_rstudioVersion", PACKAGE = "(embedding)")
-  info$version <- base::package_version(info$version)
+  info$version <- package_version(info$version)
+  info$long_version <- .Call("rs_rstudioLongVersion", PACKAGE = "(embedding)")
   info$release_name <- .Call("rs_rstudioReleaseName", PACKAGE = "(embedding)")
   info
 })
@@ -266,52 +267,7 @@
                                               col = -1L,
                                               moveCursor = TRUE)
 {
-   # validate file argument
-   hasFile <- !is.null(filePath) && length(filePath) > 0
-   if (hasFile && !is.character(filePath)) {
-      stop("filePath must be a character")
-   }
-   if (hasFile && !file.exists(filePath)) {
-      stop(filePath, " does not exist.")
-   }
-   
-   # transform numeric line, column values to integer
-   if (is.numeric(line))
-      line <- as.integer(line)
-   
-   if (is.numeric(col))
-      col <- as.integer(col)
-
-   # validate line/col arguments
-   if (!is.integer(line) || length(line) != 1 ||
-       !is.integer(col)  || length(col) != 1) {
-      stop("line and column must be numeric values.")
-   }
-
-   if (hasFile)
-   {
-      # expand and alias for client
-      filePath <- .rs.normalizePath(filePath, winslash = "/", mustWork = TRUE)
-      homeDir <- path.expand("~")
-      if (identical(substr(filePath, 1, nchar(homeDir)), homeDir)) {
-         filePath <- file.path("~", substring(filePath, nchar(homeDir) + 2))
-      }
-   }
-   
-   # if we're requesting navigation without a specific cursor position,
-   # then use a separate API (this allows the API to work regardless of
-   # whether we're in source or visual mode)
-   if (identical(line, -1L) && identical(col, -1L))
-      return(invisible(.Call("rs_fileEdit", filePath, PACKAGE = "(embedding)")))
-
-   # send event to client
-   .rs.enqueClientEvent("jump_to_function", list(
-      file_name     = .rs.scalar(filePath),
-      line_number   = .rs.scalar(line),
-      column_number = .rs.scalar(col),
-      move_cursor   = .rs.scalar(moveCursor)))
-
-   invisible(NULL)
+   .rs.api.documentOpen(filePath, line = line, col = col, moveCursor = moveCursor)
 })
 
 .rs.addFunction("validateAndTransformLocation", function(location)
@@ -436,19 +392,19 @@
 # of the 'rstudioapi' package -- it is superceded by
 # '.rs.getLastActiveEditorContext()'.
 .rs.addApiFunction("getActiveDocumentContext", function() {
-   .Call("rs_getEditorContext", 0L, PACKAGE = "(embedding)")
+   .Call("rs_getEditorContext", 0L, NULL, PACKAGE = "(embedding)")
 })
 
 .rs.addApiFunction("getLastActiveEditorContext", function() {
-   .Call("rs_getEditorContext", 0L, PACKAGE = "(embedding)")
+   .Call("rs_getEditorContext", 0L, NULL, PACKAGE = "(embedding)")
 })
 
 .rs.addApiFunction("getConsoleEditorContext", function() {
-   .Call("rs_getEditorContext", 1L, PACKAGE = "(embedding)")
+   .Call("rs_getEditorContext", 1L, NULL, PACKAGE = "(embedding)")
 })
 
-.rs.addApiFunction("getSourceEditorContext", function() {
-   .Call("rs_getEditorContext", 2L, PACKAGE = "(embedding)")
+.rs.addApiFunction("getSourceEditorContext", function(id = NULL) {
+   .Call("rs_getEditorContext", 2L, id, PACKAGE = "(embedding)")
 })
 
 .rs.addApiFunction("getActiveProject", function() {
@@ -458,7 +414,8 @@
 .rs.addApiFunction("sendToConsole", function(code,
                                              echo = TRUE,
                                              execute = TRUE,
-                                             focus = TRUE)
+                                             focus = TRUE, 
+                                             animate = FALSE)
 {
    if (!is.character(code))
       stop("'code' should be a character vector", call. = FALSE)
@@ -469,6 +426,7 @@
       echo = .rs.scalar(as.logical(echo)),
       execute = .rs.scalar(as.logical(execute)),
       focus = .rs.scalar(as.logical(focus)),
+      animate = .rs.scalar(as.logical(animate)),
       language = "R"
    )
 
@@ -691,10 +649,48 @@
    response$id
 })
 
-.rs.addApiFunction("documentOpen", function(path) {
+.rs.addApiFunction("documentOpen", function(path, 
+                                            line = -1L, 
+                                            col = -1L, 
+                                            moveCursor = TRUE) {
+
+   # validate path argument
+   hasFile <- !is.null(path) && length(path) > 0
+   if (hasFile && !is.character(path)) {
+      stop("path must be a character")
+   }
+   if (length(path) > 1L) {
+      stop("path must be a single file")
+   }
+   if (hasFile && !file.exists(path)) {
+      stop(path, " does not exist.")
+   }
    
+   if (hasFile)
+   {
+      # expand and alias for client
+      path <- .rs.normalizePath(path, winslash = "/", mustWork = TRUE)
+      path <- .rs.createAliasedPath(path)
+   }
+
+   # transform numeric line, column values to integer
+   if (is.double(line))
+      line <- as.integer(line)
+   
+   if (is.double(col))
+      col <- as.integer(col)
+
+   # validate line/col arguments
+   if (!is.integer(line) || length(line) != 1 ||
+       !is.integer(col)  || length(col) != 1) {
+      stop("line and column must be numeric values.")
+   }
+
    payload <- list(
-      path = .rs.scalar(path)
+      path = .rs.scalar(path), 
+      row = .rs.scalar(line), 
+      column = .rs.scalar(col), 
+      moveCursor = .rs.scalar(isTRUE(moveCursor))
    )
    
    request <- .rs.api.createRequest(
@@ -1150,7 +1146,7 @@ options(terminal.manager = list(terminalActivate = .rs.api.terminalActivate,
 })
 
 # API for sending + receiving arbitrary requests from rstudioapi
-# added in RStudio v1.4; not used univerally by older APIs but useful
+# added in RStudio v1.4; not used universally by older APIs but useful
 # as a framework for any new functions that might be added
 
 #' @param type The event type. See '.rs.api.events' for the set
@@ -1244,3 +1240,7 @@ options(terminal.manager = list(terminalActivate = .rs.api.terminalActivate,
    invisible(path)
 })
 
+.rs.addApiFunction("bugReport", function()
+{
+   .rs.bugReport(pro = FALSE)
+})

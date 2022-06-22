@@ -1,7 +1,7 @@
 /*
  * DataTable.java
  *
- * Copyright (C) 2021 by RStudio, PBC
+ * Copyright (C) 2022 by RStudio, PBC
  *
  * Unless you have received this program directly from RStudio pursuant
  * to the terms of a commercial license agreement with RStudio, then
@@ -15,8 +15,14 @@
 
 package org.rstudio.studio.client.dataviewer;
 
-import java.util.ArrayList;
-
+import com.google.gwt.core.client.GWT;
+import com.google.gwt.dom.client.Element;
+import com.google.gwt.dom.client.NativeEvent;
+import com.google.gwt.event.dom.client.ClickEvent;
+import com.google.gwt.event.dom.client.ClickHandler;
+import com.google.gwt.event.logical.shared.ValueChangeEvent;
+import com.google.gwt.event.logical.shared.ValueChangeHandler;
+import com.google.gwt.user.client.ui.SuggestOracle;
 import com.google.gwt.user.client.ui.Widget;
 import org.rstudio.core.client.CommandWith2Args;
 import org.rstudio.core.client.command.ShortcutManager;
@@ -27,13 +33,7 @@ import org.rstudio.core.client.resources.ImageResource2x;
 import org.rstudio.core.client.theme.res.ThemeStyles;
 import org.rstudio.core.client.widget.*;
 
-import com.google.gwt.dom.client.Element;
-import com.google.gwt.dom.client.NativeEvent;
-import com.google.gwt.event.dom.client.ClickEvent;
-import com.google.gwt.event.dom.client.ClickHandler;
-import com.google.gwt.event.logical.shared.ValueChangeEvent;
-import com.google.gwt.event.logical.shared.ValueChangeHandler;
-import com.google.gwt.user.client.ui.SuggestOracle;
+import java.util.ArrayList;
 
 public class DataTable
 {
@@ -50,7 +50,7 @@ public class DataTable
    public void initToolbar(Toolbar toolbar, boolean isPreview)
    {
       filterButton_ = new LatchingToolbarButton(
-              "Filter",
+              constants_.filterButtonText(),
               ToolbarButton.NoTitle,
               false, /* textIndicatesState */
               new ImageResource2x(DataViewerResources.INSTANCE.filterIcon2x()),
@@ -76,7 +76,7 @@ public class DataTable
       colsSeparator_.setVisible(false);
       addColumnControls(toolbar);
 
-      searchWidget_ = new SearchWidget("Search data table", new SuggestOracle() {
+      searchWidget_ = new SearchWidget(constants_.searchWidgetLabel(), new SuggestOracle() {
          @Override
          public void requestSuggestions(Request request, Callback callback)
          {
@@ -100,7 +100,7 @@ public class DataTable
       if (isPreview)
       {
          ToolbarLabel label = 
-            new ToolbarLabel("(Displaying up to 1,000 records)");
+            new ToolbarLabel(constants_.toolbarLabel());
          label.addStyleName(ThemeStyles.INSTANCE.toolbarInfoLabel());
          toolbar.addRightWidget(label);
       }
@@ -146,7 +146,7 @@ public class DataTable
    }
    private void addColumnControls(Toolbar toolbar)
    {
-      colsLabel_ = new ToolbarLabel("Cols:");
+      colsLabel_ = new ToolbarLabel(constants_.colsLabel());
       colsLabel_.addStyleName(ThemeStyles.INSTANCE.toolbarInfoLabel());
       colsLabel_.setVisible(false);
       toolbar.addLeftWidget(colsLabel_);
@@ -384,4 +384,6 @@ public class DataTable
       "<i class=\"icon-angle-right \"></i>",
       "<i class=\"icon-angle-double-right \"></i>"
    };
+
+   private static final DataViewerConstants constants_ = GWT.create(DataViewerConstants.class);
 }

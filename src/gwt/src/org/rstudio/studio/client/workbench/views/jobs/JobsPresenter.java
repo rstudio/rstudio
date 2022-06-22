@@ -1,7 +1,7 @@
 /*
  * JobsPresenter.java
  *
- * Copyright (C) 2021 by RStudio, PBC
+ * Copyright (C) 2022 by RStudio, PBC
  *
  * Unless you have received this program directly from RStudio pursuant
  * to the terms of a commercial license agreement with RStudio, then
@@ -17,12 +17,14 @@ package org.rstudio.studio.client.workbench.views.jobs;
 
 import java.util.List;
 
+import com.google.gwt.core.client.GWT;
 import org.rstudio.core.client.command.CommandBinder;
 import org.rstudio.core.client.command.Handler;
 import org.rstudio.studio.client.common.GlobalDisplay;
 import org.rstudio.studio.client.workbench.commands.Commands;
 import org.rstudio.studio.client.workbench.views.BasePresenter;
 import org.rstudio.studio.client.workbench.views.jobs.events.JobUpdatedEvent;
+import org.rstudio.studio.client.workbench.views.jobs.events.JobsActivateEvent;
 import org.rstudio.studio.client.workbench.views.jobs.events.JobElapsedTickEvent;
 import org.rstudio.studio.client.workbench.views.jobs.events.JobOutputEvent;
 import org.rstudio.studio.client.workbench.views.jobs.events.JobSelectionEvent;
@@ -89,6 +91,12 @@ public class JobsPresenter extends BasePresenter
    }
    
    @Override
+   public void onJobsActivate(JobsActivateEvent event)
+   {
+      jobEventHandler_.onJobsActivate(event);
+   }
+   
+   @Override
    public void onJobElapsedTick(JobElapsedTickEvent event)
    {
       jobEventHandler_.onJobElapsedTick(event);
@@ -112,12 +120,10 @@ public class JobsPresenter extends BasePresenter
       
       if (running > 0)
       {
-         globalDisplay_.showMessage(GlobalDisplay.MSG_INFO, 
-               "Local Jobs Still Running", 
-               "The Jobs tab cannot be closed while there " +
-               (running > 1 ?
-                  "are unfinished local jobs" : "is an unfinished local job") + "." +
-               "\n\nWait until all local jobs have completed.");
+         globalDisplay_.showMessage(GlobalDisplay.MSG_INFO,
+               constants_.backgroundJobsRunningCaption(),
+               constants_.backgroundJobsRunningMessage(running > 1 ?
+               constants_.backgroundJobsUnfinished() : constants_.backgroundJobUnfinished()));
          return;
       }
       
@@ -127,7 +133,7 @@ public class JobsPresenter extends BasePresenter
    }
    
    @Handler
-   public void onActivateJobs()
+   public void onActivateBackgroundJobs()
    {
       // Ensure that console pane is not minimized
       commands_.activateConsolePane().execute();
@@ -141,4 +147,5 @@ public class JobsPresenter extends BasePresenter
    private final GlobalDisplay globalDisplay_;
    private final Commands commands_;
    private final Provider<JobManager> pJobManager_;
+   private static final JobsConstants constants_ = GWT.create(JobsConstants.class);
 }

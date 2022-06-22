@@ -1,7 +1,7 @@
 /*
  * ProjectCompilePdfPreferencesPane.java
  *
- * Copyright (C) 2021 by RStudio, PBC
+ * Copyright (C) 2022 by RStudio, PBC
  *
  * Unless you have received this program directly from RStudio pursuant
  * to the terms of a commercial license agreement with RStudio, then
@@ -14,6 +14,7 @@
  */
 package org.rstudio.studio.client.projects.ui.prefs;
 
+import com.google.gwt.core.client.GWT;
 import org.rstudio.core.client.ElementIds;
 import org.rstudio.core.client.files.FileSystemItem;
 import org.rstudio.core.client.prefs.PreferencesDialogBaseResources;
@@ -26,6 +27,7 @@ import org.rstudio.core.client.widget.TextBoxWithButton;
 import org.rstudio.studio.client.RStudioGinjector;
 import org.rstudio.studio.client.common.latex.LatexProgramSelectWidget;
 import org.rstudio.studio.client.common.rnw.RnwWeaveSelectWidget;
+import org.rstudio.studio.client.projects.StudioClientProjectConstants;
 import org.rstudio.studio.client.projects.model.RProjectConfig;
 import org.rstudio.studio.client.projects.model.RProjectOptions;
 
@@ -39,7 +41,7 @@ public class ProjectCompilePdfPreferencesPane extends ProjectPreferencesPane
    @Inject
    public ProjectCompilePdfPreferencesPane()
    {
-      addHeader("PDF Generation");
+      addHeader(constants_.pdfGenerationCaption());
 
       defaultSweaveEngine_ = new RnwWeaveSelectWidget();
       add(defaultSweaveEngine_);
@@ -47,7 +49,7 @@ public class ProjectCompilePdfPreferencesPane extends ProjectPreferencesPane
       defaultLatexProgram_ = new LatexProgramSelectWidget();
       add(defaultLatexProgram_);
 
-      addHeader("PDF Preview");
+      addHeader(constants_.pdfPreviewCaption());
 
       rootDoc_ = new RootDocumentChooser();
       nudgeRight(rootDoc_);
@@ -95,10 +97,10 @@ public class ProjectCompilePdfPreferencesPane extends ProjectPreferencesPane
    {
       public RootDocumentChooser()
       {
-         super("Compile PDF root document:",
-               "(Current Document)",
-               "Browse...",
-               new HelpButton("pdf_root_document", "Get help on Compile PDF root document"),
+         super(constants_.compilePDFLabel(),
+               constants_.compilePDFEmptyLabel(),
+               constants_.browseActionLabel(),
+               new HelpButton("pdf_root_document", constants_.rootDocumentChooserTitle()),
                ElementIds.TextBoxButtonId.PDF_ROOT,
                true,
                null);
@@ -114,7 +116,7 @@ public class ProjectCompilePdfPreferencesPane extends ProjectPreferencesPane
                          getSession().getSessionInfo().getActiveProjectDir();
 
                RStudioGinjector.INSTANCE.getFileDialogs().openFile(
-                     "Choose File",
+                     constants_.chooseFileCaption(),
                      RStudioGinjector.INSTANCE.getRemoteFileSystemContext(),
                      projDir,
                      new ProgressOperationWithInput<FileSystemItem>()
@@ -159,5 +161,6 @@ public class ProjectCompilePdfPreferencesPane extends ProjectPreferencesPane
    private RnwWeaveSelectWidget defaultSweaveEngine_;
    private LatexProgramSelectWidget defaultLatexProgram_;
    private TextBoxWithButton rootDoc_;
+   private static final StudioClientProjectConstants constants_ = GWT.create(StudioClientProjectConstants.class);
 
 }

@@ -1,7 +1,7 @@
 /*
  * SVNResolveDialog.java
  *
- * Copyright (C) 2021 by RStudio, PBC
+ * Copyright (C) 2022 by RStudio, PBC
  *
  * Unless you have received this program directly from RStudio pursuant
  * to the terms of a commercial license agreement with RStudio, then
@@ -30,6 +30,7 @@ import com.google.gwt.user.client.ui.Widget;
 import org.rstudio.core.client.ElementIds;
 import org.rstudio.core.client.widget.ModalDialog;
 import org.rstudio.core.client.widget.OperationWithInput;
+import org.rstudio.studio.client.workbench.views.vcs.ViewVcsConstants;
 
 public class SVNResolveDialog extends ModalDialog<String>
 {
@@ -79,7 +80,7 @@ public class SVNResolveDialog extends ModalDialog<String>
             radioTheirsAll_,
       };
 
-      spanTargetNoun_.setInnerText(fileCount_ == 1 ? "path" : "paths");
+      spanTargetNoun_.setInnerText(fileCount_ == 1 ? constants_.path() : constants_.paths());
 
       ElementIds.assignElementId(radioWorking_, ElementIds.SVN_RESOLVE_MINE);
       ElementIds.assignElementId(descriptionWorking_, ElementIds.SVN_RESOLVE_MINE_DESC);
@@ -136,4 +137,5 @@ public class SVNResolveDialog extends ModalDialog<String>
 
    private final int fileCount_;
    private InputElement[] inputElements_;
+   private static final ViewVcsConstants constants_ = GWT.create(ViewVcsConstants.class);
 }

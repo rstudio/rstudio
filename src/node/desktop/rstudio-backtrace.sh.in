@@ -1,0 +1,81 @@
+#!/usr/bin/env bash
+
+# check if rstudio is already running
+PIDOF_RSTUDIO=`pidof rstudio`
+if ! test -z $PIDOF_RSTUDIO
+then
+  echo ""
+  echo "RStudio already running (quit existing sessions before running this utility)"
+  echo ""
+  exit 1
+fi
+
+# record current working dir
+CURRENT_DIR=`pwd`
+
+# make sure gdb is installed
+sudo apt-get install gdb
+
+# allow core dumps of unlimited size
+ulimit -c unlimited
+
+# set core pattern to custom value
+OLD_CORE_PATTERN=`cat /proc/sys/kernel/core_pattern`
+CORE_DIR=/tmp/rstudio/coredumps
+rm -rf $CORE_DIR
+mkdir -p $CORE_DIR
+chmod 777 $CORE_DIR
+sudo sh -c "echo $CORE_DIR/%e.core > /proc/sys/kernel/core_pattern"
+
+# outfile
+RSTUDIO_BACKTRACE_OUT=$CURRENT_DIR/rstudio-backtrace.txt
+sudo rm -f $RSTUDIO_BACKTRACE_OUT
+touch $RSTUDIO_BACKTRACE_OUT
+
+# write RStudio and R version info
+echo "RStudio Version: ${CPACK_PACKAGE_VERSION}" >> $RSTUDIO_BACKTRACE_OUT
+echo "" >> $RSTUDIO_BACKTRACE_OUT
+R --vanilla --quiet -e "print(sessionInfo())" >> $RSTUDIO_BACKTRACE_OUT
+echo $RSTUDIO_WHICH_R >> $RSTUDIO_BACKTRACE_OUT
+which R  >> $RSTUDIO_BACKTRACE_OUT
+uname -a >> $RSTUDIO_BACKTRACE_OUT
+echo "" >> $RSTUDIO_BACKTRACE_OUT
+
+
+# run rstudio
+${CMAKE_INSTALL_PREFIX}/bin/rstudio
+
+# create gdb command file for backtraces
+RSTUDIO_BACKTRACE_GDB=/tmp/rstudio-backtrace.gdb 
+sudo rm -f $RSTUDIO_BACKTRACE_GDB
+cat <<'EOF' > $RSTUDIO_BACKTRACE_GDB 
+thread apply all bt full
+quit
+EOF
+
+# write any backtraces we found
+if test -e $CORE_DIR/rstudio.core
+then
+	# write backtraces for rstudio
+	gdb --command=$RSTUDIO_BACKTRACE_GDB \
+       ${CMAKE_INSTALL_PREFIX}/bin/rstudio $CORE_DIR/rstudio.core \
+       >> $RSTUDIO_BACKTRACE_OUT 2>/dev/null
+fi
+
+if test -e $CORE_DIR/rsession.core
+then
+	# write backtraces for rsession
+	gdb --command=$RSTUDIO_BACKTRACE_GDB \
+       ${CMAKE_INSTALL_PREFIX}/bin/rsession $CORE_DIR/rsession.core \
+       >> $RSTUDIO_BACKTRACE_OUT 2>/dev/null
+fi
+
+
+# remove tmp backtrace command file
+rm $RSTUDIO_BACKTRACE_GDB 
+
+# restore old core pattern
+sudo sh -c "echo $OLD_CORE_PATTERN > /proc/sys/kernel/core_pattern"
+
+
+

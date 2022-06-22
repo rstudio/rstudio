@@ -1,7 +1,7 @@
 /*
  * DefaultCRANMirror.java
  *
- * Copyright (C) 2021 by RStudio, PBC
+ * Copyright (C) 2022 by RStudio, PBC
  *
  * Unless you have received this program directly from RStudio pursuant
  * to the terms of a commercial license agreement with RStudio, then
@@ -14,8 +14,10 @@
  */
 package org.rstudio.studio.client.common.mirrors;
 
+import com.google.gwt.core.client.GWT;
 import org.rstudio.core.client.widget.OperationWithInput;
 import org.rstudio.studio.client.common.GlobalDisplay;
+import org.rstudio.studio.client.common.StudioClientCommonConstants;
 import org.rstudio.studio.client.common.mirrors.model.CRANMirror;
 import org.rstudio.studio.client.common.mirrors.model.MirrorsServerOperations;
 import org.rstudio.studio.client.server.ServerRequestCallback;
@@ -69,8 +71,8 @@ public class DefaultCRANMirror
                      }
                      else
                      {
-                        globalDisplay_.showErrorMessage("Error Setting CRAN Mirror", 
-                              "The CRAN mirror could not be changed.");
+                        globalDisplay_.showErrorMessage(constants_.errorSettingCranMirror(),
+                              constants_.cranMirrorCannotChange());
                      }
                   });
              }
@@ -106,5 +108,5 @@ public class DefaultCRANMirror
             server_.getCRANMirrors(requestCallback);
          }
     };
-   
+    private static final StudioClientCommonConstants constants_ = GWT.create(StudioClientCommonConstants.class);
 }

@@ -1,7 +1,7 @@
 /*
  * ui-images.ts
  *
- * Copyright (C) 2021 by RStudio, PBC
+ * Copyright (C) 2022 by RStudio, PBC
  *
  * Unless you have received this program directly from RStudio pursuant
  * to the terms of a commercial license agreement with RStudio, then
@@ -93,6 +93,14 @@ export interface EditorUIImages {
     r_chunk_dark?: string;
     rcpp_chunk?: string;
     rcpp_chunk_dark?: string;
+    tabset?: string;
+    tabset_dark?: string;
+    slide_columns?: string;
+    slide_columns_dark?: string;
+    slide_pause?: string;
+    slide_pause_dark?: string;
+    slide_notes?: string;
+    slide_notes_dark?: string;
   };
   citations?: {
     article?: string;
@@ -121,6 +129,7 @@ export interface EditorUIImages {
     web_dark?: string;
     zoteroOverlay?: string;
     local_sources?: string;
+    packages?: string;
     bibligraphy?: string;
     bibligraphy_folder?: string;
     zotero_library?: string;
@@ -130,6 +139,27 @@ export interface EditorUIImages {
     crossref?: string;
     pubmed?: string;
     datacite?: string;
+  };
+  xrefs?: {
+    section_dark?: string;
+    section?: string;
+    equation?: string;
+    equation_dark?: string;
+    table?: string;
+    table_dark?: string;
+    listing?: string;
+    listing_dark?: string;
+    theorem?: string;
+    theorem_dark?: string;
+    figure?: string;
+    figure_dark?: string;
+    type_all?: string;
+    type_section?: string;
+    type_figure?: string;
+    type_table?: string;
+    type_listing?: string;
+    type_equation?: string;
+    type_theorem?: string;
   };
   widgets?: {
     tag_delete?: string;

@@ -1,7 +1,7 @@
 /*
  * SessionHttpConnectionQueue.cpp
  *
- * Copyright (C) 2021 by RStudio, PBC
+ * Copyright (C) 2022 by RStudio, PBC
  *
  * Unless you have received this program directly from RStudio pursuant
  * to the terms of a commercial license agreement with RStudio, then
@@ -31,8 +31,8 @@ void HttpConnectionQueue::enqueConnection(
 {
    LOCK_MUTEX(*pMutex_)
    {
-      // enque
-      queue_.push(ptrConnection);
+      // Add the new connection to the end of the queue
+      queue_.push_back(ptrConnection);
    }
    END_LOCK_MUTEX
 
@@ -46,9 +46,9 @@ boost::shared_ptr<HttpConnection> HttpConnectionQueue::doDequeConnection()
    {
       if (!queue_.empty())
       {
-         // remove it
+         // remove the first connection
          boost::shared_ptr<HttpConnection> next = queue_.front();
-         queue_.pop();
+         queue_.erase(queue_.begin());
 
          // note last connection time
          lastConnectionTime_ =
@@ -135,6 +135,49 @@ boost::posix_time::ptime HttpConnectionQueue::lastConnectionTime()
 
     // keep compiler happy
     return boost::posix_time::ptime();
+}
+
+boost::shared_ptr<HttpConnection> HttpConnectionQueue::dequeMatchingConnection(
+        const HttpConnectionMatcher matcher,
+        const std::chrono::steady_clock::time_point now)
+{
+   LOCK_MUTEX(*pMutex_)
+      {
+         size_t sz = queue_.size();
+         boost::shared_ptr<HttpConnection> next;
+         for (size_t i = 0; i < sz; i++)
+         {
+            next = queue_[i];
+            if (matcher(next, now))
+            {
+               queue_.erase(queue_.begin() + i);
+               return next;
+            }
+         }
+      }
+   END_LOCK_MUTEX
+   return boost::shared_ptr<HttpConnection>();
+}
+
+void HttpConnectionQueue::convertConnections(
+        const HttpConnectionConverter converter,
+        const std::chrono::steady_clock::time_point now)
+{
+   LOCK_MUTEX(*pMutex_)
+      {
+         size_t sz = queue_.size();
+         boost::shared_ptr<HttpConnection> next;
+         for (size_t i = 0; i < sz; i++)
+         {
+            next = queue_[i];
+            boost::shared_ptr<HttpConnection> convertedConn = converter(next, now);
+            if (convertedConn)
+            {
+               queue_[i] = convertedConn;
+            }
+         }
+      }
+   END_LOCK_MUTEX
 }
 
 } // namespace session

@@ -1,7 +1,7 @@
 /*
  * csl.ts
  *
- * Copyright (C) 2021 by RStudio, PBC
+ * Copyright (C) 2022 by RStudio, PBC
  *
  * Unless you have received this program directly from RStudio pursuant
  * to the terms of a commercial license agreement with RStudio, then
@@ -130,9 +130,15 @@ export function sanitizeForCiteproc(csl: CSL): CSL {
   }
 
   // Pubmed and others may included license information (including date ranges and more)
-  // which will not be properly parsed by Pandoc (when writing to the bibiliography). Remove
+  // which will not be properly parsed by Pandoc (when writing to the bibliography). Remove
   if (cslAny.license) {
     delete cslAny.license;
+  }
+
+  // Datacite and others may include a 'contributor' field which should be an array of author types
+  // however, pandoc can't properly process contributor field
+  if (cslAny.contributor) {
+    delete cslAny.contributor;
   }
 
   // pandoc-citeproc performance is extremely poor with large abstracts. As a result, purge this property

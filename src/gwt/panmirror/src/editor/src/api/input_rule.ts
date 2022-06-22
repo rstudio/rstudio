@@ -1,7 +1,7 @@
 /*
  * input_rule.ts
  *
- * Copyright (C) 2021 by RStudio, PBC
+ * Copyright (C) 2022 by RStudio, PBC
  *
  * Unless you have received this program directly from RStudio pursuant
  * to the terms of a commercial license agreement with RStudio, then
@@ -30,21 +30,20 @@ export function markInputRule(
       return null;
     }
 
-    const attrs = getAttrs instanceof Function ? getAttrs(match) : getAttrs;
+    // remove any leading delimter (modulo spaces)
+    const textIndex = match[0].indexOf(match[1]);
+    const prefix = match[0].substring(0, textIndex).replace(/^\s/, "");
+    const delimStart = start + textIndex - prefix.length;
     const tr = state.tr;
-    if (match[1]) {
-      const textStart = start + match[0].indexOf(match[1]);
-      const textEnd = textStart + match[1].length;
-      if (textEnd < end) {
-        tr.delete(textEnd, end);
-      }
-      if (textStart > start) {
-        tr.delete(start, textStart);
-      }
-      end = start + match[1].length;
-    }
+    tr.delete(delimStart, delimStart + prefix.length);
+
+    // create mark
+    const attrs = getAttrs instanceof Function ? getAttrs(match) : getAttrs;
     const mark = markType.create(attrs);
-    tr.addMark(start, end, mark);
+
+    // apply it to the matching core text
+    const markStart = start + textIndex - prefix.length;
+    tr.addMark(markStart, markStart + match[1].length, mark);
     tr.removeStoredMark(mark); // Do not continue with mark.
     return tr;
   });

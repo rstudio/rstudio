@@ -3,7 +3,7 @@
 #
 # install-dependencies-zypper
 #
-# Copyright (C) 2021 by RStudio, PBC
+# Copyright (C) 2022 by RStudio, PBC
 #
 # Unless you have received this program directly from RStudio pursuant
 # to the terms of a commercial license agreement with RStudio, then
@@ -24,6 +24,7 @@ sudo zypper --non-interactive in gcc-c++
 sudo zypper --non-interactive in gcc-fortran
 sudo zypper --non-interactive in build
 sudo zypper --non-interactive in cmake
+sudo zypper --non-interactive in jq
 
 # core system libraries
 sudo zypper --non-interactive in libbz2-devel
@@ -56,6 +57,6 @@ fi
 
 # common
 cd ../common
-./install-common
+./install-common $1
 cd ../linux
 

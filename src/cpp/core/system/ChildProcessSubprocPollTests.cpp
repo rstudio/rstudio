@@ -1,7 +1,7 @@
 /*
  * ChildProcessSubprocPollTests.cpp
  *
- * Copyright (C) 2021 by RStudio, PBC
+ * Copyright (C) 2022 by RStudio, PBC
  *
  * Unless you have received this program directly from RStudio pursuant
  * to the terms of a commercial license agreement with RStudio, then
@@ -140,8 +140,8 @@ test_context("ChildProcess polling support class")
       NoSubProcPollingFixture test(pid);
 
       expect_true(test.poller_.hasRecentOutput());
-      expect_true(test.poller_.hasNonWhitelistSubprocess());
-      expect_false(test.poller_.hasWhitelistSubprocess());
+      expect_true(test.poller_.hasNonIgnoredSubprocess());
+      expect_false(test.poller_.hasIgnoredSubprocess());
    }
 
    test_that("recent input state without subproc polling doesn't change immediately")
@@ -175,8 +175,8 @@ test_context("ChildProcess polling support class")
       SubProcPollingFixture test(pid);
 
       expect_true(test.poller_.hasRecentOutput());
-      expect_true(test.poller_.hasNonWhitelistSubprocess());
-      expect_false(test.poller_.hasWhitelistSubprocess());
+      expect_true(test.poller_.hasNonIgnoredSubprocess());
+      expect_false(test.poller_.hasIgnoredSubprocess());
    }
 
    test_that("childproc checked when recent output and timeout expires")
@@ -190,7 +190,7 @@ test_context("ChildProcess polling support class")
       blockingwait(kCheckSubprocDelayExpired); // longer than the subproc timeout
       expect_true(test.poller_.poll(false)); // not longer than the recent output timeout!
       expect_true(test.checkCalled_);
-      expect_true(test.poller_.hasNonWhitelistSubprocess() == test.checkReturns_);
+      expect_true(test.poller_.hasNonIgnoredSubprocess() == test.checkReturns_);
       expect_true(test.poller_.hasRecentOutput());
       expect_true(test.callerPid_ == pid);
    }
@@ -206,7 +206,7 @@ test_context("ChildProcess polling support class")
       blockingwait(kCheckSubprocDelayExpired); // long enough for childproc polling
       test.poller_.poll(false); // not longer than the output timeout
       expect_true(test.checkCalled_);
-      expect_true(test.poller_.hasNonWhitelistSubprocess() == test.checkReturns_);
+      expect_true(test.poller_.hasNonIgnoredSubprocess() == test.checkReturns_);
       expect_true(test.poller_.hasRecentOutput());
       expect_true(test.callerPid_ == pid);
 
@@ -216,7 +216,7 @@ test_context("ChildProcess polling support class")
       test.poller_.poll(false);
       expect_false(test.checkCalled_); // because of no recent output
       expect_false(test.poller_.hasRecentOutput());
-      expect_true(test.poller_.hasNonWhitelistSubprocess() == test.checkReturns_);
+      expect_true(test.poller_.hasNonIgnoredSubprocess() == test.checkReturns_);
    }
 
    test_that("initial state for cwd polling matches expectations")

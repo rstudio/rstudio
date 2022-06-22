@@ -528,7 +528,7 @@ int  AffixMgr::parse_file(const char * affpath, const char * key)
           }
        }
 
-       /* parse in the ignored characters (for example, Arabic optional diacretics charachters */
+       /* parse in the ignored characters (for example, Arabic optional diacretics characters */
        if (strncmp(line,"IGNORE",6) == 0) {
           if (parse_array(line, &ignorechars, &ignorechars_utf16, &ignorechars_utf16_len, utf8, afflst->getlinenum())) {
              delete afflst;

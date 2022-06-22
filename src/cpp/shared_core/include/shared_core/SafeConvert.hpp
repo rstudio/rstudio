@@ -1,7 +1,7 @@
 /*
  * SafeConvert.hpp
  *
- * Copyright (C) 2021 by RStudio, PBC
+ * Copyright (C) 2022 by RStudio, PBC
  *
  * Unless you have received this program directly from RStudio pursuant to the terms of a commercial license agreement
  * with RStudio, then this program is licensed to you under the following terms:
@@ -25,6 +25,7 @@
 #define SHARED_CORE_SAFE_CONVERT_HPP
 
 #include <string>
+#include <iomanip>
 #include <ios>
 #include <iostream>
 #include <locale>
@@ -33,7 +34,6 @@
 #include <boost/numeric/conversion/cast.hpp>
 #include <boost/optional.hpp>
 
-#include <shared_core/Logger.hpp>
 #include <shared_core/Error.hpp>
 
 namespace rstudio {
@@ -111,7 +111,35 @@ T stringTo(const std::string& in_strValue,
 }
 
 /**
- * @brief Coverts a number to string value.
+ * @brief Converts a number to string value in hexadecimal representation.
+ *
+ * @param in_input                  The number to convert.
+ * @param in_localeIndependent      Whether to perform the conversion independent of locale. Default: true.
+ *
+ * @return The converted string on successful conversion; empty string otherwise.
+ */
+inline std::string numberToHexString(long in_input, bool in_localeIndependent = true)
+{
+   try
+   {
+      std::ostringstream stream;
+      if (in_localeIndependent)
+         stream.imbue(std::locale::classic()); // force locale-independence
+      stream << "0x";
+      // ensure remainder of string after "0x" is 8 characters by adding 0's if needed (e.g. 0x00030201)
+      stream << std::setfill('0') << std::setw(8) << std::right;
+      stream << std::hex;
+      stream << in_input;
+      return stream.str();
+   }
+   CATCH_UNEXPECTED_EXCEPTION
+
+   // return empty string for unexpected error
+   return std::string();
+}
+
+/**
+ * @brief Converts a number to string value.
  *
  * @param in_input                  The number to convert.
  * @param in_localeIndependent      Whether to perform the conversion independent of locale. Default: true.
@@ -136,7 +164,7 @@ inline std::string numberToString(double in_input, bool in_localeIndependent = t
 }
 
 /**
- * @brief Coverts a number to string value.
+ * @brief Converts a number to string value.
  *
  * @tparam T                        The type of the number.
  * @param in_input                  The number to convert.
@@ -163,7 +191,7 @@ std::string numberToString(T input, bool localeIndependent = true)
 }
 
 /**
- * @brief Coverts a number to the specified type.
+ * @brief Converts a number to the specified type.
  *
  * @tparam TInput                   The type of the number.
  * @tparam TOutput                  The type to which to convert the number.
@@ -186,7 +214,7 @@ TOutput numberTo(TInput input, TOutput defaultValue)
 }
 
 /**
- * @brief Coverts a number to the specified type.
+ * @brief Converts a number to the specified type.
  *
  * @tparam TInput                   The type of the number.
  * @tparam TOutput                  The type to which to convert the number.

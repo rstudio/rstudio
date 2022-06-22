@@ -1,7 +1,7 @@
 /*
  * JobManager.java
  *
- * Copyright (C) 2021 by RStudio, PBC
+ * Copyright (C) 2022 by RStudio, PBC
  *
  * Unless you have received this program directly from RStudio pursuant
  * to the terms of a commercial license agreement with RStudio, then
@@ -19,6 +19,7 @@ import java.util.Comparator;
 import java.util.Date;
 import java.util.List;
 
+import com.google.gwt.core.client.GWT;
 import org.rstudio.core.client.CommandWithArg;
 import org.rstudio.core.client.Debug;
 import org.rstudio.core.client.StringUtil;
@@ -33,6 +34,7 @@ import org.rstudio.studio.client.workbench.WorkbenchContext;
 import org.rstudio.studio.client.workbench.commands.Commands;
 import org.rstudio.studio.client.workbench.events.SessionInitEvent;
 import org.rstudio.studio.client.workbench.model.Session;
+import org.rstudio.studio.client.workbench.views.jobs.JobsConstants;
 import org.rstudio.studio.client.workbench.views.jobs.events.JobElapsedTickEvent;
 import org.rstudio.studio.client.workbench.views.jobs.events.JobExecuteActionEvent;
 import org.rstudio.studio.client.workbench.views.jobs.events.JobInitEvent;
@@ -179,18 +181,18 @@ public class JobManager implements JobRefreshEvent.Handler,
    }
 
    @Handler
-   public void onClearJobs()
+   public void onClearBackgroundJobs()
    {
       display_.showYesNoMessage(
             GlobalDisplay.MSG_QUESTION,
-            "Remove Completed Local Jobs",
-            "Are you sure you want to remove completed local jobs from the list of jobs?\n\nOnce removed, local jobs cannot be recovered.",
+            constants_.removeCompletedBackgroundJobsCaption(),
+            constants_.removeCompletedBackgroundJobsMessage(),
             false, // include cancel
-            () ->  server_.clearJobs(new VoidServerRequestCallback()),
+            () ->  server_.clearBackgroundJobs(new VoidServerRequestCallback()),
             null,  // do nothing on No
             null,  // do nothing on Cancel
-            "Remove jobs",
-            "Cancel",
+            constants_.removeJobsLabel(),
+            constants_.cancelLabel(),
             false // yes is not default
             );
    }
@@ -214,7 +216,7 @@ public class JobManager implements JobRefreshEvent.Handler,
     */
    public static LocalJobProgress summarizeProgress(JobState state)
    {
-      boolean running = false;
+      boolean showProgress = false;
 
       // flatten job list to an array while looking for a running job
       ArrayList<Job> jobs = new ArrayList<>();
@@ -228,13 +230,13 @@ public class JobManager implements JobRefreshEvent.Handler,
          // push session jobs into array
          jobs.add(job);
 
-         // remember if we found a running job
-         if (job.state == JobConstants.STATE_RUNNING)
-            running = true;
+         // remember if we found a running job that has progress
+         if (job.state == JobConstants.STATE_RUNNING && job.max > 0)
+            showProgress = true;
       }
 
-      // if we didn't find any running job, then we have no progress to report
-      if (!running)
+      // if we didn't find any jobs with reportable progress, then we have no progress to report
+      if (!showProgress)
       {
          return null;
       }
@@ -295,7 +297,7 @@ public class JobManager implements JobRefreshEvent.Handler,
       if (idxFirst == idxLast)
          name = jobs.get(idxFirst).name;
       else
-         name =  numJobs + " jobs";
+         name =  constants_.numJobsLabel(numJobs);
 
       // compute total progress units and longest running job
       int progress = 0;
@@ -356,7 +358,9 @@ public class JobManager implements JobRefreshEvent.Handler,
       for (String id: state_.iterableKeys())
       {
          Job job = state_.getJob(id);
-         if (job.type == JobConstants.JOB_TYPE_SESSION && job.completed == 0)
+         if ((job.type == JobConstants.JOB_TYPE_SESSION) && 
+             (job.completed == 0) && 
+             job.confirm_term)
          {
             running.add(job);
          }
@@ -379,7 +383,7 @@ public class JobManager implements JobRefreshEvent.Handler,
 
    private void showJobLauncherDialog(FileSystemItem path, FileSystemItem workingDir, String code)
    {
-      JobLauncherDialog dialog = new JobLauncherDialog("Run Selection as Job",
+      JobLauncherDialog dialog = new JobLauncherDialog(constants_.runSelectionAsBackgroundJobCaption(),
             JobLauncherDialog.JobSource.Selection,
             path,
             workingDir,
@@ -395,7 +399,7 @@ public class JobManager implements JobRefreshEvent.Handler,
 
    private void showJobLauncherDialog(FileSystemItem path)
    {
-      JobLauncherDialog dialog = new JobLauncherDialog("Run Script as Local Job",
+      JobLauncherDialog dialog = new JobLauncherDialog(constants_.runScriptAsBackgroundJobCaption(),
             JobLauncherDialog.JobSource.Script,
             path,
             spec ->
@@ -462,4 +466,5 @@ public class JobManager implements JobRefreshEvent.Handler,
    private final JobsServerOperations server_;
    private final Provider<SourceWindowManager> pSourceManager_;
    private final GlobalDisplay display_;
+   private static final JobsConstants constants_ = GWT.create(JobsConstants.class);
 }

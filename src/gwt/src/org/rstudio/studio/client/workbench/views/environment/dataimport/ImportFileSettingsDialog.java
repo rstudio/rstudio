@@ -1,7 +1,7 @@
 /*
  * ImportFileSettingsDialog.java
  *
- * Copyright (C) 2021 by RStudio, PBC
+ * Copyright (C) 2022 by RStudio, PBC
  *
  * Unless you have received this program directly from RStudio pursuant
  * to the terms of a commercial license agreement with RStudio, then
@@ -40,6 +40,7 @@ import org.rstudio.core.client.widget.ProgressIndicator;
 import org.rstudio.studio.client.common.GlobalDisplay;
 import org.rstudio.studio.client.server.ServerError;
 import org.rstudio.studio.client.server.ServerRequestCallback;
+import org.rstudio.studio.client.workbench.views.environment.ViewEnvironmentConstants;
 import org.rstudio.studio.client.workbench.views.environment.model.DataPreviewResult;
 import org.rstudio.studio.client.workbench.views.environment.model.EnvironmentServerOperations;
 import org.rstudio.studio.client.workbench.views.source.editors.text.IconvListResult;
@@ -47,6 +48,7 @@ import org.rstudio.studio.client.workbench.views.source.model.SourceServerOperat
 
 public class ImportFileSettingsDialog extends ModalDialog<ImportFileSettingsDialogResult>
 {
+   private static final ViewEnvironmentConstants constants_ = GWT.create(ViewEnvironmentConstants.class);
    interface Resources extends ClientBundle
    {
       @Source("ImportFileSettingsDialog.css")
@@ -97,19 +99,19 @@ public class ImportFileSettingsDialog extends ModalDialog<ImportFileSettingsDial
                                 .replace(" ", ".")
                                 .replace("-", "."));
 
-      separator_.addItem("Whitespace", "");
-      separator_.addItem("Comma", ",");
-      separator_.addItem("Semicolon", ";");
-      separator_.addItem("Tab", "\t");
+      separator_.addItem(constants_.whitespaceCapitalized(), "");
+      separator_.addItem(constants_.commaCapitalized(), ",");
+      separator_.addItem(constants_.semicolonCapitalized(), ";");
+      separator_.addItem(constants_.tabCapitalized(), "\t");
 
-      decimal_.addItem("Period", ".");
-      decimal_.addItem("Comma", ",");
+      decimal_.addItem(constants_.periodCapitalized(), ".");
+      decimal_.addItem(constants_.commaCapitalized(), ",");
 
-      quote_.addItem("Double quote (\")", "\"");
-      quote_.addItem("Single quote (')", "'");
-      quote_.addItem("None", "");
+      quote_.addItem(constants_.doubleQuotesParentheses(), "\"");
+      quote_.addItem(constants_.singleQuoteParentheses(), "'");
+      quote_.addItem(constants_.noneCapitalized(), "");
       
-      comment_.addItem("None", "");
+      comment_.addItem(constants_.noneCapitalized(), "");
       comment_.addItem("#", "#");
       comment_.addItem("!", "!");
       comment_.addItem("%", "%");
@@ -117,11 +119,11 @@ public class ImportFileSettingsDialog extends ModalDialog<ImportFileSettingsDial
       comment_.addItem("/", "/");
       comment_.addItem("~", "~");
       
-      rowNames_.addItem("Automatic", autoValue);
-      rowNames_.addItem("Use first column", "1");
-      rowNames_.addItem("Use numbers", "NULL");
+      rowNames_.addItem(constants_.automaticCapitalized(), autoValue);
+      rowNames_.addItem(constants_.useFirstColumn(), "1");
+      rowNames_.addItem(constants_.useNumbers(), "NULL");
       
-      encoding_.addItem("Automatic", "unknown");
+      encoding_.addItem(constants_.automaticCapitalized(), "unknown");
       sourceServer_.iconvlist(new ServerRequestCallback<IconvListResult>()
       {
          @Override
@@ -148,7 +150,7 @@ public class ImportFileSettingsDialog extends ModalDialog<ImportFileSettingsDial
 
       progress_ = addProgressIndicator();
 
-      setOkButtonCaption("Import");
+      setOkButtonCaption(constants_.importCapitalized());
    }
 
    @Override
@@ -158,7 +160,7 @@ public class ImportFileSettingsDialog extends ModalDialog<ImportFileSettingsDial
 
       separator_.setSelectedIndex(-1);
       quote_.setSelectedIndex(-1);
-      naStrings_.setText("NA");
+      naStrings_.setText(constants_.notApplicableAbbreviation());
       loadData();
    }
 
@@ -199,7 +201,7 @@ public class ImportFileSettingsDialog extends ModalDialog<ImportFileSettingsDial
 
       updateRequest_.invalidate();
       final Token invalidationToken = updateRequest_.getInvalidationToken();
-      progress_.onProgress("Updating preview");
+      progress_.onProgress(constants_.updatingPreview());
       server_.getOutputPreview(
             dataFile_.getPath(),
             encoding_.getValue(encoding_.getSelectedIndex()),
@@ -228,7 +230,7 @@ public class ImportFileSettingsDialog extends ModalDialog<ImportFileSettingsDial
 
                   progress_.onProgress(null);
                   globalDisplay_.showErrorMessage(
-                        "Error",
+                        constants_.errorCapitalized(),
                         error.getUserMessage());
                }
             });
@@ -238,7 +240,7 @@ public class ImportFileSettingsDialog extends ModalDialog<ImportFileSettingsDial
    {
       final Token invalidationToken = updateRequest_.getInvalidationToken();
 
-      progress_.onProgress("Detecting data format");
+      progress_.onProgress(constants_.detectingDataFormat());
       server_.getDataPreview(
             dataFile_.getPath(),
             new ServerRequestCallback<DataPreviewResult>()
@@ -275,7 +277,7 @@ public class ImportFileSettingsDialog extends ModalDialog<ImportFileSettingsDial
 
                   progress_.onProgress(null);
                   globalDisplay_.showErrorMessage(
-                        "Error",
+                        constants_.errorCapitalized(),
                         error.getUserMessage());
                }
             });
@@ -369,8 +371,8 @@ public class ImportFileSettingsDialog extends ModalDialog<ImportFileSettingsDial
       if (varname_.getText().trim().length() == 0)
       {
          varname_.setFocus(true);
-         globalDisplay_.showErrorMessage("Variable Name Is Required",
-                                         "Please provide a variable name.");
+         globalDisplay_.showErrorMessage(constants_.variableNameIsRequired(),
+                                         constants_.pleaseProvideAVariableName());
          return false;
       }
 

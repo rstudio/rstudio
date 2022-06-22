@@ -1,7 +1,7 @@
 /*
  * SessionReticulate.cpp
  *
- * Copyright (C) 2021 by RStudio, PBC
+ * Copyright (C) 2022 by RStudio, PBC
  *
  * Unless you have received this program directly from RStudio pursuant
  * to the terms of a commercial license agreement with RStudio, then
@@ -40,6 +40,34 @@ namespace {
 // has the Python session been initialized by reticulate yet?
 bool s_pythonInitialized = false;
 
+std::string s_reticulatePython;
+bool s_reticulatePythonInited = false;
+
+void updateReticulatePython(bool forInit)
+{
+   if (!forInit && s_reticulatePythonInited)
+      return;
+
+   if (!ASSERT_MAIN_THREAD())
+   {
+      return;
+   }
+
+   s_reticulatePython = core::system::getenv("RETICULATE_PYTHON");
+   if (s_reticulatePython.empty())
+   {
+      // Will check if RETICULATE_PYTHON_FALLBACK is set,
+      // unless higher priority Python config has already been found
+      Error error = r::exec::RFunction(".rs.inferReticulatePython")
+            .call(&s_reticulatePython);
+
+      if (error)
+         LOG_ERROR(error);
+   }
+
+   s_reticulatePythonInited = true;
+}
+
 SEXP rs_reticulateInitialized()
 {
    // set initialized flag
@@ -52,6 +80,9 @@ SEXP rs_reticulateInitialized()
    // interrupts are still handled by R as expected
    module_context::initializeConsoleCtrlHandler();
 
+   // cache the final path to python for offline use
+   updateReticulatePython(true);
+
    return R_NilValue;
 }
 
@@ -60,6 +91,9 @@ void onDeferredInit(bool)
    Error error = r::exec::RFunction(".rs.reticulate.initialize").call();
    if (error)
       LOG_ERROR(error);
+
+   // update python path after all R init scripts
+   updateReticulatePython(false);
 }
 
 } // end anonymous namespace
@@ -76,6 +110,13 @@ bool isReplActive()
    if (error)
       LOG_ERROR(error);
    return active;
+}
+
+
+std::string reticulatePython()
+{
+   updateReticulatePython(false);
+   return s_reticulatePython;
 }
 
 Error initialize()

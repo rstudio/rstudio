@@ -1,7 +1,7 @@
 /*
  * Win32SystemTests.cpp
  *
- * Copyright (C) 2021 by RStudio, PBC
+ * Copyright (C) 2022 by RStudio, PBC
  *
  * Unless you have received this program directly from RStudio pursuant
  * to the terms of a commercial license agreement with RStudio, then
@@ -250,6 +250,18 @@ TEST_CASE("Win32SystemTests")
       WaitForSingleObject(pi.hProcess, INFINITE);
       CloseHandle(pi.hProcess);
       CloseHandle(pi.hThread);
+   }
+
+   SECTION("We can find programs on the PATH")
+   {
+      FilePath calcPath;
+      Error error;
+
+      error = core::system::findProgramOnPath("calc", &calcPath);
+      CHECK(error == Success());
+
+      error = core::system::findProgramOnPath("calc.exe", &calcPath);
+      CHECK(error == Success());
    }
 }
 

@@ -1,0 +1,125 @@
+<!--
+
+This file is intended to contain definitions for all commands in RStudio, as
+well as menu structures (for main menu and popup menus).
+
+<menu>
+   Contains <menu>, <cmd>, <separator>
+   @id (required): The method name for this menu on the command bundle interface
+   @vertical: Whether the menu should be vertical. Defaults to true
+   @label: For submenus, indicate the label in the parent menu for this submenu
+
+<cmd> (in menu context)
+   @refid (required): The id of the command that should appear here
+
+<cmd> (in command context)
+   @id (required): The method name for this command on the command bundle iface
+   @label: Will be used for buttonLabel or menuLabel if they are not provided
+   @buttonLabel: Label that should be used on toolbar button face. Use empty
+      string if no label should be used
+   @menuLabel: Label that should be used in a menu.
+   @desc: Extended description (e.g. for tooltip)
+   @checkable: Indicates whether the command has a stateful checked state,
+      which is shown by the command when rendered in a menu (both GWT and
+      native menus)
+   @radio: Same as @checkable but indicates that the command is part of a
+      group of mutually exclusive checkable commands; management of the mutually
+      exclusive behavior is not automatic and must be managed in code
+   @preventShortcutWhenDisabled: Whether the command's shortcut should be
+      suppressed when the command is disabled
+   @visible: Whether the command should initially be visible. You should always
+      set windowMode to "main" for commands not initially visible, unless all
+      satellite windows manage the command state correctly at startup.
+   @windowMode: Which window the command wants to operate on; possible values:
+      "any": operates on current window (the default),
+      "main": always operates on main window, and raises main window
+      "background": always operates on main window, but in the background
+      "<satellite name>": operates on named satellite; sent to the main window
+        for processing unless fired from the named satellite
+-->
+<commands>
+    <menu id="mainMenu" vertical="false">
+        <!--
+           Keep ShowMainMenuEvent.Menu enum in sync with top-level main-menu entries (File, Edit...)
+        -->
+        <menu label="_File">
+            <menu label="New _File">
+                <cmd refid="newSourceDoc"/>
+                <separator/>
+                <cmd refid="newRNotebook"/>
+                <separator/>
+                <cmd refid="newRMarkdownDoc"/>
+            </menu>
+            <cmd refid="newProject"/>
+            <separator/>
+            <cmd refid="openSourceDoc"/>
+        </menu>
+    </menu>
+
+    <shortcuts>
+        <!--
+           Only the following keys may be used:
+              Alphanumerics
+              /
+              Enter
+              Left, Right, Up, Down
+              Tab
+              PageUp, PageDown
+              F1-F12
+              =
+              <
+              `
+              .
+        -->
+        <!-- Valid modifiers are Ctrl, Alt, Meta, Shift, and Cmd -->
+        <!-- "Cmd" means Ctrl OR Meta -->
+        <!-- Use spaces for key sequences, e.g. 'Ctrl+X Ctrl+F' -->
+        <!-- Separate shortcuts with '|', e.g. 'Ctrl+X Ctrl+F|Cmd+O' -->
+        <!-- When adding/changing shortcuts, also update keyboard.htm -->
+        <shortcutgroup name="Source Editor">
+            <shortcut refid="extractFunction" value="Cmd+Alt+X"/>
+            <shortcut refid="commentUncomment" value="Cmd+Shift+C"/>
+            <shortcut refid="commentUncomment" value="Cmd+/" disableModes="default,vim,emacs"/>
+            <shortcut refid="blockOutdent" value="Meta+[" if="org.rstudio.core.client.BrowseCap.isMacintosh()" disableModes="default,vim,emacs"/>
+            <shortcut refid="blockIndent" value="Meta+]" if="org.rstudio.core.client.BrowseCap.isMacintosh()" disableModes="default,vim,emacs"/>
+        </shortcutgroup>
+    </shortcuts>
+
+    <!--
+    Valid cmd attributes:
+       id           The unique name for this command. There must be a matching
+                    method with this name on the CommandBundle subinterface.
+
+       label        The user-visible name for this command. Will be used on
+                    buttons and menus unless overridden by menuLabel or
+                    buttonLabel.
+
+       menuLabel    The name that will be displayed in the main menu and/or
+                    popup menus.
+
+       buttonLabel  The name that will be displayed on toolbar buttons.
+
+       desc         A short description to be used as a tooltip.
+
+       enabled      [true|false] Whether the command should start out as enabled
+                    or disabled. Defaults to true.
+
+       visible      [true|false] Whether the command should start out as visible
+                    or hidden. Defaults to true.
+
+       rebindable   [true|false] Whether this command should be rebindable by the
+                    user to different keyboard shortcuts. Defaults to true.
+    -->
+
+    <cmd id="setWorkingDirToProjectDir"
+         label="Set Working Directory to Project Directory"
+         buttonLabel=""
+         menuLabel="To _Project Directory"
+         desc="Change working directory to project root directory"/>
+
+    <cmd id="setWorkingDirToActiveDoc"
+         label="Set Working Directory to Current Document's Directory"
+         buttonLabel=""
+         menuLabel="To _Source File Location"
+         desc="Change working directory to path of active document"/>
+</commands>

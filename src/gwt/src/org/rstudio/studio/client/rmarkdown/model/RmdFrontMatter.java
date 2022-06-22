@@ -1,7 +1,7 @@
 /*
  * RmdFrontMatter.java
  *
- * Copyright (C) 2021 by RStudio, PBC
+ * Copyright (C) 2022 by RStudio, PBC
  *
  * Unless you have received this program directly from RStudio pursuant
  * to the terms of a commercial license agreement with RStudio, then
@@ -41,21 +41,7 @@ public class RmdFrontMatter extends JavaScriptObject
       this.runtime = runtime;
    }-*/;
 
-   public final native void addDate() /*-{
-      // We use JavaScript to create a date string so the document picks up the
-      // system locale's mechanism for formatting dates.
-      //
-      // IE 11 adds unprintable Unicode characters to the date string that we
-      // need to remove for R Markdown. See case 4300 for details, including a
-      // link to the issue reported against IE in early 2014 (unresolved as of
-      // 3/2015)
-      var date = (new Date()).toLocaleDateString().replace(/\u200e/g, "");
-      
-      // Remove periods as they interfere with rendering to PDF.
-      // see: https://github.com/rstudio/rmarkdown/issues/145#issuecomment-47415718
-      date = date.replace(/\./g, " ");
-      date = date.replace(/\s+/g, " ");
-      
+   public final native void setDate(String date) /*-{
       this.date = date;
    }-*/;
    
@@ -82,6 +68,15 @@ public class RmdFrontMatter extends JavaScriptObject
          return [ this.output ];
       else
          return Object.getOwnPropertyNames(this.output);
+   }-*/;
+   
+   public final native JsArrayString getQuartoFormatList() /*-{
+      if (typeof this.format === "undefined")
+         return [ "html" ];
+      if (typeof this.format === "string")
+         return [ this.format ];
+      else
+         return Object.getOwnPropertyNames(this.format);
    }-*/;
 
    public final native RmdFrontMatterOutputOptions getOutputOption(
@@ -137,31 +132,43 @@ public class RmdFrontMatter extends JavaScriptObject
      }
    }-*/;
    
-   public final void applyCreateOptions(String author, String title, 
+   public final void applyCreateOptions(String author, String title, String date, 
                                         String format, boolean isShiny)
    {
       setTitle(title);
+      
       if (author.length() > 0)
       {
          setAuthor(author);
-         addDate();
       }
+      
       if (isShiny)
       {
          setRuntime(SHINY_RUNTIME);
       }
+      
       if (format != null)
       {
          setOutputOption(format, RmdFrontMatterOutputOptions.create());
       }
+      
+      if (date.length() > 0)
+      {
+         setDate(date);
+      }
    }
    
    public final static String OUTPUT_KEY = "output";
+   public final static String FORMAT_KEY = "format";
    public final static String RUNTIME_KEY = "runtime";
+   public final static String SERVER_KEY = "server";
    public final static String KNIT_KEY = "knit";
+   public final static String ENGINE_KEY = "engine";
+   public final static String JUPYTER_KEY = "jupyter";
 
    public final static String DEFAULT_FORMAT = "default";
    public final static String SHINY_RUNTIME = "shiny";
    public final static String SHINY_PRERENDERED_RUNTIME = "shiny_prerendered";
+   public final static String SHINY_RMD_RUNTIME = "shinyrmd";
    public final static String FRONTMATTER_SEPARATOR = "---\n";
 }

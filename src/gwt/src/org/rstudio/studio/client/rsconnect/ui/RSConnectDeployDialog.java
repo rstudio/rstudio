@@ -1,7 +1,7 @@
 /*
  * RSConnectDeployDialog.java
  *
- * Copyright (C) 2021 by RStudio, PBC
+ * Copyright (C) 2022 by RStudio, PBC
  *
  * Unless you have received this program directly from RStudio pursuant
  * to the terms of a commercial license agreement with RStudio, then
@@ -18,12 +18,14 @@ import java.util.HashMap;
 import java.util.Map;
 
 import com.google.gwt.aria.client.Roles;
+import com.google.gwt.core.client.GWT;
 import org.rstudio.core.client.ElementIds;
 import org.rstudio.core.client.widget.OperationWithInput;
 import org.rstudio.core.client.widget.ProgressIndicator;
 import org.rstudio.core.client.widget.ThemedButton;
 import org.rstudio.studio.client.common.GlobalDisplay;
 import org.rstudio.studio.client.rsconnect.RSConnect;
+import org.rstudio.studio.client.rsconnect.RsconnectConstants;
 import org.rstudio.studio.client.rsconnect.model.RSConnectAccount;
 import org.rstudio.studio.client.rsconnect.model.RSConnectDeploymentRecord;
 import org.rstudio.studio.client.rsconnect.model.RSConnectPublishSource;
@@ -49,14 +51,14 @@ public class RSConnectDeployDialog
    {
       super(server, Roles.getDialogRole(), display, new RSConnectDeploy(source, 
             contentType, fromPrevious, false));
-      setText("Publish to Server");
+      setText(constants_.publishToServer());
       setWidth("350px");
-      deployButton_ = new ThemedButton("Publish");
+      deployButton_ = new ThemedButton(constants_.publish());
       addOkButton(deployButton_, ElementIds.DEPLOY_CONTENT);
       addCancelButton();
       connect_ = connect;
       
-      launchCheck_ = new CheckBox("Launch browser");
+      launchCheck_ = new CheckBox(constants_.launchBrowser());
       launchCheck_.setValue(true);
       launchCheck_.setStyleName(contents_.getStyle().launchCheck());
       addLeftWidget(launchCheck_);
@@ -142,7 +144,7 @@ public class RSConnectDeployDialog
    private void onDeploy()
    {
       final ProgressIndicator indicator = addProgressIndicator();
-      indicator.onProgress("Deploying...");
+      indicator.onProgress(constants_.deploying());
       contents_.validateResult(new OperationWithInput<Boolean>()
       {
          @Override
@@ -179,4 +181,5 @@ public class RSConnectDeployDialog
    
    // Map of app URL to the deployment made to that URL
    private Map<String, RSConnectDeploymentRecord> deployments_ = new HashMap<>();
+   private static final RsconnectConstants constants_ = GWT.create(RsconnectConstants.class);
 }

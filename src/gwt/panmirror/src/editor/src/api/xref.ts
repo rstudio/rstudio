@@ -1,7 +1,7 @@
 /*
  * xref.ts
  *
- * Copyright (C) 2021 by RStudio, PBC
+ * Copyright (C) 2022 by RStudio, PBC
  *
  * Unless you have received this program directly from RStudio pursuant
  * to the terms of a commercial license agreement with RStudio, then
@@ -20,10 +20,13 @@ import { findChildrenByMark } from 'prosemirror-utils';
 import { pandocAutoIdentifier } from './pandoc_id';
 import { rmdChunkEngineAndLabel } from './rmd';
 import { kTexFormat } from './raw';
+import { findChildrenByType } from 'prosemirror-utils';
 
 export interface XRefServer {
   indexForFile: (file: string) => Promise<XRefs>;
   xrefForId: (file: string, id: string) => Promise<XRefs>;
+  quartoIndexForFile: (file: string) => Promise<XRefs>;
+  quartoXrefForId: (file: string, id: string) => Promise<XRefs>;
 }
 
 export interface XRefs {
@@ -39,28 +42,60 @@ export interface XRef {
   title?: string;
 }
 
-export function xrefKey(xref: XRef) {
-  // headings don't include their type in the key
-  const key = /^h\d$/.test(xref.type)
-    ? xref.id
-    : // no colon if there is no type
-    xref.type.length > 0
-    ? `${xref.type}:${xref.id}`
-    : xref.id;
+export type XRefType = "quarto" | "bookdown";
 
-  // return key with suffix
-  return key + xref.suffix;
+export function xrefKey(xref: XRef, xrefType?: XRefType) {
+  if (xrefType === "quarto") {
+    // Quarto keys are merely type-id
+    if (xref.suffix) {
+      return `${xref.type}-${xref.id}${xref.suffix}`;
+    } else {
+      return `${xref.type}-${xref.id}`;
+    }
+  } else {
+    // headings don't include their type in the key
+    const key = /^h\d$/.test(xref.type)
+      ? xref.id
+      : // no colon if there is no type
+      xref.type.length > 0
+        ? `${xref.type}:${xref.id}`
+        : xref.id;
+
+    // return key with suffix
+    return key + xref.suffix;
+  }
 }
 
-export function xrefPosition(doc: ProsemirrorNode, xref: string): number {
+export function parseQuartoXRef(xref: string) {
+  const dashPos = xref.indexOf('-');
+  if (dashPos !== -1) {
+    return {
+      type: xref.substring(0, dashPos),
+      id: xref.substring(dashPos + 1),
+    };
+  } else {
+    return null;
+  }
+}
+
+export function xrefPosition(doc: ProsemirrorNode, xref: string, xrefType: XRefType): number {
+
+  if (xrefType === 'quarto') {
+    return xrefPositionLocate(doc, xref, quartoXrefPositionLocators);
+  } else {
+    return xrefPositionLocate(doc, xref, bookdownXrefPositionLocators);
+  }
+}
+
+function xrefPositionLocate(doc: ProsemirrorNode, xref: string, locators: Record<string, XRefPositionLocator>) {
   // -1 if not found
   let xrefPos = -1;
 
   // get type and id
-  const xrefInfo = xrefTypeAndId(xref);
+  const xrefInfo = parseBookdownXRef(xref);
   if (xrefInfo) {
     const { type, id } = xrefInfo;
-    const locator = xrefPositionLocators[type];
+    const locator = locators[type];
     if (locator) {
       // if this locator finds by mark then look at doc for marks
       if (locator.markType) {
@@ -77,7 +112,7 @@ export function xrefPosition(doc: ProsemirrorNode, xref: string): number {
             xrefPos = markedNode.pos;
           }
         });
-      } 
+      }
       if (xrefPos === -1 && locator.nodeTypes) {
         // otherwise recursively examine nodes to find the xref
         doc.descendants((node, pos) => {
@@ -99,7 +134,7 @@ export function xrefPosition(doc: ProsemirrorNode, xref: string): number {
   return xrefPos;
 }
 
-function xrefTypeAndId(xref: string) {
+function parseBookdownXRef(xref: string) {
   const colonPos = xref.indexOf(':');
   if (colonPos !== -1) {
     return {
@@ -117,7 +152,98 @@ interface XRefPositionLocator {
   hasXRef: (node: ProsemirrorNode, id: string, markType?: MarkType) => boolean;
 }
 
-const xrefPositionLocators: { [key: string]: XRefPositionLocator } = {
+const quartoXrefPositionLocators: { [key: string]: XRefPositionLocator } = {
+  sec: quartoHeadingLocator(),
+  fig: quartoFigureLocator(),
+  tbl: quartoTableLocator(),
+  eq: quartoMathLocator(),
+  lst: quartoListingLocator(),
+  thm: quartoDivLocator("thm"),
+  lem: quartoDivLocator("lem"),
+  cor: quartoDivLocator("cor"),
+  prp: quartoDivLocator("prp"),
+  cnj: quartoDivLocator("cnj"),
+  def: quartoDivLocator("def"),
+  exm: quartoDivLocator("exm"),
+  exr: quartoDivLocator("exr"),
+};
+
+
+function quartoMathLocator() {
+  return {
+    nodeTypes: ['paragraph'],
+    hasXRef: (node: ProsemirrorNode, id: string) => {
+      const mathType = node.type.schema.marks.math;
+      let prevNodeMath = false;
+      for (let i = 0; i < node.childCount; i++) {
+        const childNode = node.child(i);
+        if (prevNodeMath) {
+          const text = childNode.textContent;
+          if (!!text.match(/^\s*\{\#eq\-.*\}/)) {
+            return true;
+          }
+        }
+        prevNodeMath = !!childNode.marks.find(
+          mark => mark.type === mathType && mark.attrs.type === "DisplayMath"
+        );
+      }
+      return false;
+    },
+  };
+}
+
+function quartoFigureLocator() {
+  return {
+    nodeTypes: ['figure'],
+    hasXRef: (node: ProsemirrorNode, id: string) => {
+      return node.attrs.id === `fig-${id}`;
+    },
+  };
+}
+
+function quartoHeadingLocator() {
+  return {
+    nodeTypes: ['heading'],
+    hasXRef: (node: ProsemirrorNode, id: string) => {
+      return node.attrs.id === `sec-${id}`;
+    },
+  };
+}
+
+function quartoTableLocator() {
+  return {
+    nodeTypes: ['table_container'],
+    hasXRef: (node: ProsemirrorNode, id: string) => {
+      // Look for a table which has a table caption that contains the id
+      const captions = findChildrenByType(node, node.type.schema.nodes.table_caption);
+      if (captions.length) {
+        return !!captions[0].node.textContent.match(/\{\#tbl\-.*\}/);
+      }
+      return false;
+    },
+  };
+}
+
+function quartoDivLocator(type: string) {
+  return {
+    nodeTypes: ['div'],
+    hasXRef: (node: ProsemirrorNode, id: string) => {
+      return node.attrs.id === `${type}-${id}`;
+    },
+  };
+}
+
+function quartoListingLocator() {
+  return {
+    nodeTypes: ['code_block'],
+    hasXRef: (node: ProsemirrorNode, id: string) => {
+      const attrs = node.attrs;
+      return attrs.id === `lst-${id}`;
+    },
+  };
+}
+
+const bookdownXrefPositionLocators: { [key: string]: XRefPositionLocator } = {
   h1: headingLocator(),
   h2: headingLocator(),
   h3: headingLocator(),

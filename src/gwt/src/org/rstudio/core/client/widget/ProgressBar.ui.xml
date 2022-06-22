@@ -23,6 +23,10 @@
       width: 0;
       background-color: #68C13C;
    }
+
+   div.bar {
+      margin: 0;
+   }
    
    .rstudio-themes-dark .bar
    {

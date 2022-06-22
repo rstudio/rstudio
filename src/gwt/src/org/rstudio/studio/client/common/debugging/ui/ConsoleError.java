@@ -1,7 +1,7 @@
 /*
  * ConsoleError.java
  *
- * Copyright (C) 2021 by RStudio, PBC
+ * Copyright (C) 2022 by RStudio, PBC
  *
  * Unless you have received this program directly from RStudio pursuant
  * to the terms of a commercial license agreement with RStudio, then
@@ -19,9 +19,9 @@ import com.google.gwt.dom.client.Element;
 import com.google.gwt.dom.client.Node;
 import com.google.gwt.dom.client.NodeList;
 import com.google.gwt.dom.client.Style;
-import org.rstudio.core.client.Debug;
 import org.rstudio.core.client.VirtualConsole;
 import org.rstudio.studio.client.RStudioGinjector;
+import org.rstudio.studio.client.common.StudioClientCommonConstants;
 import org.rstudio.studio.client.common.debugging.model.UnhandledError;
 
 import com.google.gwt.core.client.GWT;
@@ -116,9 +116,9 @@ public class ConsoleError extends Composite
          Element child = Element.as(children.getItem(i));
          if (child.hasClassName("show_traceback_text")) {
             if (showingTraceback_)
-               child.setInnerText("Hide Traceback");
+               child.setInnerText(constants_.hideTracebackText());
             else
-               child.setInnerText("Show Traceback");
+               child.setInnerText(constants_.showTracebackText());
          }
          else if (child.hasClassName("stack_trace"))
          {
@@ -140,4 +140,5 @@ public class ConsoleError extends Composite
    private Observer observer_;
    private boolean showingTraceback_ = false;
    private String command_;
+   private static final StudioClientCommonConstants constants_ = GWT.create(StudioClientCommonConstants.class);
 }

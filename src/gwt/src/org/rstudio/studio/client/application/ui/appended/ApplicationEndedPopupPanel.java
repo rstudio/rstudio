@@ -1,7 +1,7 @@
 /*
  * ApplicationEndedPopupPanel.java
  *
- * Copyright (C) 2021 by RStudio, PBC
+ * Copyright (C) 2022 by RStudio, PBC
  *
  * Unless you have received this program directly from RStudio pursuant
  * to the terms of a commercial license agreement with RStudio, then
@@ -42,6 +42,7 @@ import org.rstudio.core.client.widget.CenterPanel;
 import org.rstudio.core.client.widget.DecorativeImage;
 import org.rstudio.core.client.widget.FocusHelper;
 import org.rstudio.core.client.widget.ModalDialogTracker;
+import org.rstudio.studio.client.application.StudioClientApplicationConstants;
 import org.rstudio.studio.client.application.Desktop;
 
 public class ApplicationEndedPopupPanel extends PopupPanel
@@ -58,19 +59,17 @@ public class ApplicationEndedPopupPanel extends PopupPanel
 
    public static void showSuicide(String reason)
    {
-      String description = "<p>R encountered a fatal error.";
+      String description = "<p>" + constants_.rFatalErrorMessage();
       if (reason.length() > 0)
          description += ": " + reason;
-      description += "</p>The session was terminated.";
+      description += "</p>" + constants_.sessionTerminatedMessage();
       asyncShow(SUICIDE, description, null);
    }
 
    public static void showDisconnected()
    {
       String description =
-         "This browser was disconnected from the R session because another " +
-         "browser connected (only one browser at a time may be connected " +
-         "to an RStudio session). You may reconnect using the button below.";
+         constants_.browserDisconnectedMessage();
 
       asyncShow(DISCONNECTED, description, null);
    }
@@ -78,8 +77,7 @@ public class ApplicationEndedPopupPanel extends PopupPanel
    public static void showOffline()
    {
       String description =
-         "RStudio is temporarily offline due to system maintenance. We " +
-         "apologize for the inconvenience, please try again in a few minutes.";
+         constants_.rStudioOfflineMessage();
 
       asyncShow(OFFLINE, description, null);
    }
@@ -147,36 +145,36 @@ public class ApplicationEndedPopupPanel extends PopupPanel
       {
       case QUIT:
          image = new DecorativeImage(new ImageResource2x(RESOURCES.applicationQuit2x()));
-         captionLabel.setText("R Session Ended");
-         button.setText("Start New Session");
+         captionLabel.setText(constants_.rSessionEndedCaption());
+         button.setText(constants_.startNewSessionText());
          break;
 
       case SUICIDE:
          image = new DecorativeImage(new ImageResource2x(RESOURCES.applicationSuicide2x()));
-         captionLabel.setText("R Session Aborted");
-         button.setText("Start New Session");
+         captionLabel.setText(constants_.rSessionAbortedCaption());
+         button.setText(constants_.startNewSessionText());
          break;
 
       case DISCONNECTED:
          image = new DecorativeImage(new ImageResource2x(RESOURCES.applicationDisconnected2x()));
-         captionLabel.setText("R Session Disconnected");
-         button.setText("Reconnect");
+         captionLabel.setText(constants_.rSessionDisconnectedCaption());
+         button.setText(constants_.reconnectButtonText());
          break;
 
       case OFFLINE:
          image = new DecorativeImage(new ImageResource2x(RESOURCES.applicationOffline2x()));
-         captionLabel.setText("RStudio Temporarily Offline");
-         button.setText("Reconnect");
+         captionLabel.setText(constants_.temporarilyOfflineCaption());
+         button.setText(constants_.reconnectButtonText());
          break;
 
       case QUIT_MULTI:
          image = new DecorativeImage(new ImageResource2x(RESOURCES.applicationQuit2x()));
-         captionLabel.setText("R Session Ended");
-         button.setText("Reconnect");
+         captionLabel.setText(constants_.rSessionEndedCaption());
+         button.setText(constants_.reconnectButtonText());
          break;
 
       default:
-         throw new IllegalArgumentException("Unknown mode " + mode);
+         throw new IllegalArgumentException(constants_.unknownModeText() + mode);
       }
 
       // add image
@@ -313,4 +311,5 @@ public class ApplicationEndedPopupPanel extends PopupPanel
    SimplePanel content_;
 
    private boolean reloading_ = false;
+   private static final StudioClientApplicationConstants constants_ = GWT.create(StudioClientApplicationConstants.class);
 }

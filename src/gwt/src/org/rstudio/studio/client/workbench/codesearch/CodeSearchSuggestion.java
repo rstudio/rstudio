@@ -1,7 +1,7 @@
 /*
  * CodeSearchSuggestion.java
  *
- * Copyright (C) 2021 by RStudio, PBC
+ * Copyright (C) 2022 by RStudio, PBC
  *
  * Unless you have received this program directly from RStudio pursuant
  * to the terms of a commercial license agreement with RStudio, then
@@ -99,6 +99,9 @@ class CodeSearchSuggestion implements Suggestion
       case SourceItem.SECTION:
          image = new ImageResource2x(CodeIcons.INSTANCE.section2x());
          break;
+      case SourceItem.TEST:
+         image = new ImageResource2x(CodeIcons.INSTANCE.test2x());
+         break;
       case SourceItem.NONE:
       default:
          image = new ImageResource2x(CodeIcons.INSTANCE.keyword2x());
@@ -134,6 +137,11 @@ class CodeSearchSuggestion implements Suggestion
       
       // resolve name (include parent if there is one)
       String name = sourceItem.getName();
+
+      // remove "t " for test items that was artifically added by testThatCallIndexer()
+      if (sourceItem.getType() == SourceItem.TEST)
+         name = name.replaceFirst("t ", "");
+         
       if (!StringUtil.isNullOrEmpty(sourceItem.getParentName()))
          name = sourceItem.getParentName() + "::" + name;
       
@@ -252,6 +260,7 @@ class CodeSearchSuggestion implements Suggestion
       
       // tables
       map.put("tab", CodeIcons.INSTANCE.table2x());
+      map.put("tbl", CodeIcons.INSTANCE.table2x());
       
       // math-related sections (e.g. theorems)
       map.put("thm", CodeIcons.INSTANCE.function2x());

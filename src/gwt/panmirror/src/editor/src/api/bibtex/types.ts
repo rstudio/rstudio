@@ -1,7 +1,7 @@
 /*
  * types.ts
  *
- * Copyright (C) 2021 by RStudio, PBC
+ * Copyright (C) 2022 by RStudio, PBC
  *
  * Unless you have received this program directly from RStudio pursuant
  * to the terms of a commercial license agreement with RStudio, then
@@ -84,6 +84,43 @@ export function typeMapping(cslType: string): Type {
         bibtex: BibTextTypes.misc.type,
         ...BibTextTypes.misc.fields,
       };
+  }
+}
+
+export function bibtextTypeToCSLType(bibtexType: string) {
+  switch (bibtexType) {
+    case BibTextTypes.article.type:
+      return cslTypes.articleJournal;
+
+    case BibTextTypes.proceedings.type:
+    case BibTextTypes.manual.type:
+    case BibTextTypes.book.type:
+      return cslTypes.book;
+
+    case BibTextTypes.booklet.type:
+      return cslTypes.pamphlet;
+
+    case BibTextTypes.inbook.type:
+    case BibTextTypes.incollection.type:
+      return cslTypes.chapter;
+
+    case BibTextTypes.conference.type:
+    case BibTextTypes.inproceedings.type:
+      return cslTypes.paperConference;
+
+    case BibTextTypes.mastersthesis.type:
+    case BibTextTypes.phdthesis.type:
+      return cslTypes.thesis;
+
+    case BibTextTypes.techreport.type:
+      return cslTypes.report;
+
+    case BibTextTypes.unpublished.type:
+      return cslTypes.manuscript;
+
+    case BibTextTypes.misc.type:
+    default:
+      return cslTypes.article;
   }
 }
 

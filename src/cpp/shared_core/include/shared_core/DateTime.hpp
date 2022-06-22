@@ -1,7 +1,7 @@
 /*
  * DateTime.hpp
  * 
- * Copyright (C) 2021 by RStudio, PBC
+ * Copyright (C) 2022 by RStudio, PBC
  *
  * Unless you have received this program directly from RStudio pursuant to the terms of a commercial license agreement
  * with RStudio, then this program is licensed to you under the following terms:
@@ -24,14 +24,22 @@
 #ifndef SHARED_CORE_DATE_TIME_HPP
 #define SHARED_CORE_DATE_TIME_HPP
 
+#include <boost/date_time/local_time/local_time.hpp>
 #include <boost/date_time/posix_time/posix_time.hpp>
 
 #include <string>
 
 namespace rstudio {
 namespace core {
-namespace system {
 namespace date_time {
+
+constexpr const char* kIso8601Format {"%Y-%m-%dT%H:%M:%S%FZ"};
+
+inline boost::posix_time::ptime timeFromStdTime(std::time_t t)
+{
+   return boost::posix_time::ptime(boost::gregorian::date(1970,1,1)) +
+         boost::posix_time::seconds(static_cast<long>(t));
+}
 
 template <typename TimeType>
 std::string format(const TimeType& time,
@@ -50,8 +58,45 @@ std::string format(const TimeType& time,
    return dateStream.str();
 }
 
+inline bool parseUtcTimeFromFormatString(const std::string& timeStr,
+                                         const std::string& formatStr,
+                                         boost::posix_time::ptime *pOutTime)
+{
+   using namespace boost::local_time;
+
+   std::stringstream ss(timeStr);
+   local_time_input_facet* ifc = new local_time_input_facet(formatStr);
+
+   ss.imbue(std::locale(ss.getloc(), ifc));
+
+   local_date_time ldt(not_a_date_time);
+
+   if (ss >> ldt)
+   {
+      *pOutTime = ldt.utc_time();
+      return true;
+   }
+
+   return false;
+}
+
+inline bool parseUtcTimeFromIsoString(const std::string& timeStr,
+                                      boost::posix_time::ptime *pOutTime)
+{
+   return parseUtcTimeFromFormatString(timeStr,
+                                       "%Y-%m-%d %H:%M:%S %ZP",
+                                       pOutTime);
+}
+
+inline bool parseUtcTimeFromIso8601String(const std::string& timeStr,
+                                          boost::posix_time::ptime *pOutTime)
+{
+   return parseUtcTimeFromFormatString(timeStr,
+                                       kIso8601Format,
+                                       pOutTime);
+}
+
 } // namespace date_time
-} // namespace system
 } // namespace core
 } // namespace rstudio
 

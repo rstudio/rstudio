@@ -1,7 +1,7 @@
 /*
  * PanmirrorEditorWidget.java
  *
- * Copyright (C) 2021 by RStudio, PBC
+ * Copyright (C) 2022 by RStudio, PBC
  *
  * Unless you have received this program directly from RStudio pursuant
  * to the terms of a commercial license agreement with RStudio, then
@@ -32,6 +32,7 @@ import org.rstudio.core.client.widget.IsHideableWidget;
 import org.rstudio.studio.client.RStudioGinjector;
 import org.rstudio.studio.client.application.events.ChangeFontSizeEvent;
 import org.rstudio.studio.client.application.events.EventBus;
+import org.rstudio.studio.client.common.presentation2.model.PresentationEditorLocation;
 import org.rstudio.studio.client.palette.model.CommandPaletteEntryProvider;
 import org.rstudio.studio.client.palette.model.CommandPaletteEntrySource;
 import org.rstudio.studio.client.panmirror.command.PanmirrorMenuItem;
@@ -64,6 +65,7 @@ import org.rstudio.studio.client.panmirror.uitools.PanmirrorUITools;
 import org.rstudio.studio.client.panmirror.uitools.PanmirrorUIToolsFormat;
 import org.rstudio.studio.client.workbench.prefs.model.UserPrefs;
 import org.rstudio.studio.client.workbench.prefs.model.UserState;
+import org.rstudio.studio.client.workbench.views.source.editors.text.MarkdownToolbar;
 import org.rstudio.studio.client.workbench.views.source.editors.text.events.EditorThemeChangedEvent;
 import org.rstudio.studio.client.workbench.views.source.editors.text.themes.AceTheme;
 
@@ -122,10 +124,11 @@ public class PanmirrorWidget extends DockLayoutPanel implements
                              FormatSource formatSource,
                              PanmirrorOptions options,
                              Options widgetOptions,
+                             MarkdownToolbar toolbar,
                              int progressDelay,
                              CommandWithArg<PanmirrorWidget> completed) {
       
-      PanmirrorWidget editorWidget = new PanmirrorWidget(widgetOptions);
+      PanmirrorWidget editorWidget = new PanmirrorWidget(widgetOptions, toolbar);
    
       Panmirror.load(() -> {
          
@@ -145,7 +148,7 @@ public class PanmirrorWidget extends DockLayoutPanel implements
        });  
    }
    
-   private PanmirrorWidget(Options options)
+   private PanmirrorWidget(Options options, MarkdownToolbar toolbarHost)
    {
       super(Style.Unit.PX);
       setSize("100%", "100%");   
@@ -155,10 +158,9 @@ public class PanmirrorWidget extends DockLayoutPanel implements
          this.addStyleName(ThemeResources.INSTANCE.themeStyles().borderedIFrame());
      
       // toolbar
+      toolbarHost_ = toolbarHost;
       toolbar_ =  new PanmirrorToolbar();
-      addNorth(toolbar_, toolbar_.getHeight());
-      setWidgetHidden(toolbar_, !options.toolbar);
-      
+        
       
       // find replace
       findReplace_ = new PanmirrorFindReplaceWidget(new PanmirrorFindReplaceWidget.Container()
@@ -173,9 +175,7 @@ public class PanmirrorWidget extends DockLayoutPanel implements
          {
             findReplaceShowing_ = show;
             setWidgetHidden(findReplace_, !findReplaceShowing_);
-            
-            toolbar_.setFindReplaceLatched(findReplaceShowing_);
-            
+                        
             PanmirrorFindReplaceVisibleEvent.fire(PanmirrorWidget.this, findReplaceShowing_);
             
             if (findReplaceShowing_)
@@ -254,7 +254,7 @@ public class PanmirrorWidget extends DockLayoutPanel implements
          
       commands_ = new PanmirrorToolbarCommands(editor.commands());
       
-      toolbar_.init(commands_, editor_.getMenus(), null);
+      toolbar_.init(commands_, editor_.getMenus(), toolbarHost_);
       
       outline_.addPanmirrorOutlineNavigationHandler(new PanmirrorOutlineNavigationEvent.Handler() {
          @Override
@@ -357,7 +357,7 @@ public class PanmirrorWidget extends DockLayoutPanel implements
    }
    
    public void destroy()
-   {
+   {  
       // detach registrations (outline events)
       registrations_.removeHandler();
       
@@ -462,7 +462,7 @@ public class PanmirrorWidget extends DockLayoutPanel implements
          outline_.setAriaVisible(show);
          if (animate)
          {
-            int duration = (userPrefs_.reducedMotion().getValue() ? 0 : 500);
+            int duration = (userPrefs_.reducedMotion().getValue() ? 0 : 400);
             animate(duration, new AnimationCallback() {
                @Override
                public void onAnimationComplete()
@@ -483,12 +483,7 @@ public class PanmirrorWidget extends DockLayoutPanel implements
          }
       }
    }
-   
-   public void showToolbar(boolean show)
-   {
-      setWidgetHidden(toolbar_, !show);
-   }
-   
+  
    public void insertChunk(String chunkPlaceholder, int rowOffset, int colOffset)
    {
       editor_.insertChunk(chunkPlaceholder, rowOffset, colOffset);
@@ -509,7 +504,7 @@ public class PanmirrorWidget extends DockLayoutPanel implements
    {
       editor_.setKeybindings(keybindings);
       commands_ = new PanmirrorToolbarCommands(editor_.commands());
-      toolbar_.init(commands_, editor_.getMenus(), null);
+      toolbar_.init(commands_, editor_.getMenus(), toolbarHost_);
    }
    
    public String getHTML()
@@ -567,6 +562,16 @@ public class PanmirrorWidget extends DockLayoutPanel implements
       PanmirrorEditingLocation previousLocation) 
    {
       editor_.setEditingLocation(outlineLocation, previousLocation);
+   }
+   
+   public PresentationEditorLocation getPresentationEditorLocation()
+   {
+      return editor_.getPresentationEditorLocation();
+   }
+   
+   public void navigateToPresentationEditorLocation(PresentationEditorLocation location)
+   {
+      editor_.navigateToPresentationEditorLocation(location);
    }
    
    public void focus()
@@ -734,6 +739,7 @@ public class PanmirrorWidget extends DockLayoutPanel implements
    private EventBus events_ = null;
    
    private PanmirrorToolbar toolbar_ = null;
+   private MarkdownToolbar toolbarHost_ = null;
    private boolean findReplaceShowing_ = false;
    private PanmirrorFindReplaceWidget findReplace_ = null;
    private PanmirrorOutlineWidget outline_ = null;

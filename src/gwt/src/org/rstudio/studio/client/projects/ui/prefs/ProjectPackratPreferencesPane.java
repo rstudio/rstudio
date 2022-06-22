@@ -1,7 +1,7 @@
 /*
  * ProjectPackratPreferencesPane.java
  *
- * Copyright (C) 2021 by RStudio, PBC
+ * Copyright (C) 2022 by RStudio, PBC
  *
  * Unless you have received this program directly from RStudio pursuant
  * to the terms of a commercial license agreement with RStudio, then
@@ -32,6 +32,7 @@ import org.rstudio.studio.client.common.dependencies.DependencyManager;
 import org.rstudio.studio.client.packrat.model.PackratContext;
 import org.rstudio.studio.client.packrat.model.PackratPrerequisites;
 import org.rstudio.studio.client.packrat.model.PackratServerOperations;
+import org.rstudio.studio.client.projects.StudioClientProjectConstants;
 import org.rstudio.studio.client.projects.model.RProjectOptions;
 import org.rstudio.studio.client.projects.model.RProjectPackratOptions;
 import org.rstudio.studio.client.server.ServerError;
@@ -82,10 +83,7 @@ public class ProjectPackratPreferencesPane extends ProjectPreferencesPane
    {
       Styles styles = RES.styles();
       Label label = new Label(
-            "Packrat is a dependency management tool that makes your " +
-            "R code more isolated, portable, and reproducible by " +
-            "giving your project its own privately managed package " +
-            "library."
+              constants_.initializePackratMessage()
         );
         spaced(label);
         add(label);
@@ -93,7 +91,7 @@ public class ProjectPackratPreferencesPane extends ProjectPreferencesPane
         PackratContext context = options.getPackratContext();
         RProjectPackratOptions packratOptions = options.getPackratOptions();
 
-        chkUsePackrat_ = new CheckBox("Use packrat with this project");
+        chkUsePackrat_ = new CheckBox(constants_.chkUsePackratLabel());
         chkUsePackrat_.setValue(context.isPackified());
         chkUsePackrat_.addValueChangeHandler(
                                 new ValueChangeHandler<Boolean>() {
@@ -111,23 +109,23 @@ public class ProjectPackratPreferencesPane extends ProjectPreferencesPane
         spaced(chkUsePackrat_);
         add(chkUsePackrat_);
 
-        chkAutoSnapshot_ = new CheckBox("Automatically snapshot local changes");
+        chkAutoSnapshot_ = new CheckBox(constants_.chkAutoSnapshotLabel());
         chkAutoSnapshot_.setValue(packratOptions.getAutoSnapshot());
         lessSpaced(chkAutoSnapshot_);
         add(chkAutoSnapshot_);
 
         String vcsName = session_.getSessionInfo().getVcsName();
-        chkVcsIgnoreLib_ = new CheckBox(vcsName + " ignore packrat library");
+        chkVcsIgnoreLib_ = new CheckBox(constants_.chkVcsIgnoreLibLabel(vcsName));
         chkVcsIgnoreLib_.setValue(packratOptions.getVcsIgnoreLib());
         lessSpaced(chkVcsIgnoreLib_);
         add(chkVcsIgnoreLib_);
 
-        chkVcsIgnoreSrc_ = new CheckBox(vcsName + " ignore packrat sources");
+        chkVcsIgnoreSrc_ = new CheckBox(constants_.chkVcsIgnoreSrcLabel(vcsName));
         chkVcsIgnoreSrc_.setValue(packratOptions.getVcsIgnoreSrc());
         lessSpaced(chkVcsIgnoreSrc_);
         add(chkVcsIgnoreSrc_);
 
-        chkUseCache_ = new CheckBox("Use global cache for installed packages");
+        chkUseCache_ = new CheckBox(constants_.chkUseCacheLabel());
         chkUseCache_.setValue(packratOptions.getUseCache());
         spaced(chkUseCache_);
         add(chkUseCache_);
@@ -145,9 +143,9 @@ public class ProjectPackratPreferencesPane extends ProjectPreferencesPane
                     ", "));
         taExternalPackages_.getElement().getStyle().setMarginBottom(8, Unit.PX);
         panelExternalPackages_.add(new LabelWithHelp(
-            "External packages (comma separated):",
+            constants_.panelExternalPackagesText(),
             "packrat_external_packages",
-            false, "Help on external packages", taExternalPackages_));
+            false, constants_.panelExternalPackagesTitle(), taExternalPackages_));
         panelExternalPackages_.add(taExternalPackages_);
         add(panelExternalPackages_);
 
@@ -162,7 +160,7 @@ public class ProjectPackratPreferencesPane extends ProjectPreferencesPane
 
         manageUI(context.isPackified());
 
-        HelpLink helpLink = new HelpLink("Learn more about Packrat",
+        HelpLink helpLink = new HelpLink(constants_.packratHelpLink(),
                                          "packrat",
                                          false);
         helpLink.getElement().getStyle().setMarginTop(15, Unit.PX);
@@ -227,7 +225,7 @@ public class ProjectPackratPreferencesPane extends ProjectPreferencesPane
    {
       final ProgressIndicator indicator = getProgressIndicator();
 
-      indicator.onProgress("Verifying prerequisites...");
+      indicator.onProgress(constants_.verifyPrerequisitesLabel());
 
       server_.getPackratPrerequisites(
         new ServerRequestCallback<PackratPrerequisites>() {
@@ -253,7 +251,7 @@ public class ProjectPackratPreferencesPane extends ProjectPreferencesPane
                      public void run()
                      {
                         dependencyManager_.withPackrat(
-                              "Managing packages with packrat",
+                              constants_.packratManagePackages(),
                               new Command() {
 
                                @Override
@@ -278,7 +276,7 @@ public class ProjectPackratPreferencesPane extends ProjectPreferencesPane
                   public void run()
                   {
                      server_.installBuildTools(
-                           "Managing packages with Packrat",
+                           constants_.packratManagePackages(),
                            new SimpleRequestCallback<Boolean>() {});
                   }
                  }.schedule(250);
@@ -333,5 +331,6 @@ public class ProjectPackratPreferencesPane extends ProjectPreferencesPane
    private TextArea taExternalPackages_;
 
    private LocalRepositoriesWidget widgetLocalRepos_;
+   private static final StudioClientProjectConstants constants_ = com.google.gwt.core.client.GWT.create(StudioClientProjectConstants.class);
 
 }

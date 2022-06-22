@@ -1,7 +1,7 @@
 /*
  * RInit.cpp
  *
- * Copyright (C) 2021 by RStudio, PBC
+ * Copyright (C) 2022 by RStudio, PBC
  *
  * Unless you have received this program directly from RStudio pursuant
  * to the terms of a commercial license agreement with RStudio, then
@@ -50,6 +50,8 @@ bool s_isR3 = false;
 
 // is this R 3.3 or greater
 bool s_isR3_3 = false;
+
+boost::function<void()> s_beforeResumeCallback, s_afterResumeCallback;
 
 // function for deferred deserialization actions. this encapsulates parts of 
 // the initialization process that are potentially highly latent. this allows
@@ -175,6 +177,9 @@ void deferredRestoreNewSession()
 void restoreSession(const FilePath& suspendedSessionPath,
                     std::string* pErrorMessages)
 {
+   if (s_beforeResumeCallback)
+     s_beforeResumeCallback();
+
    // don't show output during deserialization (packages loaded
    // during deserialization sometimes print messages)
    utils::SuppressOutputInScope suppressOutput;
@@ -196,6 +201,9 @@ void restoreSession(const FilePath& suspendedSessionPath,
                                           deferredRestoreSuspendedSession,
                                           deferredRestoreAction);
    }
+
+   if (s_afterResumeCallback)
+     s_afterResumeCallback();
 }
 
 // one-time per session initialization
@@ -349,22 +357,30 @@ Error initialize()
    error = r::sourceManager().sourceLocal(optionsFilePath);
    if (error)
       return error;
-
-   // server specific R options options
+   
+   // set server options
+#ifdef __linux__
    if (utils::isServerMode())
    {
-#ifndef __APPLE__
-      FilePath serverOptionsFilePath = utils::rSourcePath().completePath(
-         "ServerOptions.R");
-      return r::sourceManager().sourceLocal(serverOptionsFilePath);
-#else
-      return Success();
+      FilePath serverOptionsFilePath =
+            utils::rSourcePath().completePath("ServerOptions.R");
+      
+      Error error = r::sourceManager().sourceLocal(serverOptionsFilePath);
+      if (error)
+         return error;
+   }
 #endif
-   }
-   else
-   {
-      return Success();
-   }
+   
+   // now run hooks for those waiting for session to be fully initialized
+   if (rCallbacks().initComplete)
+      rCallbacks().initComplete();
+   
+   // run tests if configured to do so
+   // (note that the callback will exit the process after tests have been run)
+   if (rCallbacks().runTests)
+      rCallbacks().runTests();
+   
+   return Success();
 }
 
 void ensureDeserialized()
@@ -411,6 +427,12 @@ void reportHistoryAccessError(const std::string& context,
    std::string path = createAliasedPath(historyFilePath);
    std::string errmsg = context + " " + path + ": " + summary;
    REprintf("Error attempting to %s\n", errmsg.c_str());
+}
+
+void setResumeCallbacks(boost::function<void()> before, boost::function<void()> after)
+{
+   s_beforeResumeCallback = before;
+   s_afterResumeCallback = after;
 }
    
 namespace utils {

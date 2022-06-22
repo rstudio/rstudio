@@ -8,7 +8,7 @@ installed.
 Bootstrap
 =============================================================================
 - Open an Administrator PowerShell and execute this command:
-    - `Set-ExecutionPolicy Bypass -Scope Process -Force; iex ((New-Object System.Net.WebClient).DownloadString('https://raw.githubusercontent.com/rstudio/rstudio/master/dependencies/windows/Install-RStudio-Prereqs.ps1'))`
+    - `Set-ExecutionPolicy Bypass -Scope Process -Force; iex ((New-Object System.Net.WebClient).DownloadString('https://raw.githubusercontent.com/rstudio/rstudio/main/dependencies/windows/Install-RStudio-Prereqs.ps1'))`
 - Wait for the script to complete
 
 Install Qt SDK
@@ -44,7 +44,16 @@ Build Java/Gwt
 - `cd rstudio\src\gwt`
 - `ant draft` or for iterative development of Java/Gwt code, `ant desktop`
 
-Build C++
+Build C++ From Command-Prompt
+=============================================================================
+- `cd rstudio\src`
+- `mkdir build`
+- `cd build`
+- `..\cpp\tools\windows-dev.cmd`
+- `cmake ..\cpp -GNinja`
+- `ninja`
+
+Alternate: Build C++ with Qt Creator
 =============================================================================
 - Open Qt Creator
 - Open Project and select rstudio\src\cpp\CMakelists.txt

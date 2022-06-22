@@ -1,7 +1,7 @@
 /*
  * FileEditEvent.java
  *
- * Copyright (C) 2021 by RStudio, PBC
+ * Copyright (C) 2022 by RStudio, PBC
  *
  * Unless you have received this program directly from RStudio pursuant
  * to the terms of a commercial license agreement with RStudio, then
@@ -14,8 +14,11 @@
  */
 package org.rstudio.studio.client.workbench.views.source.events;
 
+import com.google.gwt.core.client.JavaScriptObject;
 import com.google.gwt.event.shared.EventHandler;
 import com.google.gwt.event.shared.GwtEvent;
+
+import org.rstudio.core.client.FilePosition;
 import org.rstudio.core.client.files.FileSystemItem;
 
 public class FileEditEvent extends GwtEvent<FileEditEvent.Handler>
@@ -26,15 +29,40 @@ public class FileEditEvent extends GwtEvent<FileEditEvent.Handler>
    {
       void onFileEdit(FileEditEvent event);
    }
+   
+   public static class Data extends JavaScriptObject
+   {
+      protected Data() {}
 
+      public native final FileSystemItem getFile() /*-{
+         return this.file;
+      }-*/;
+
+      public native final FilePosition getFilePosition() /*-{
+         return this.position;
+      }-*/;
+   }
+
+   public FileEditEvent(Data data)
+   {
+      file_ = data.getFile();
+      position_ = data.getFilePosition();
+   }
+   
    public FileEditEvent(FileSystemItem file)
    {
       file_ = file;
+      position_ = null;
    }
 
    public FileSystemItem getFile()
    {
       return file_;
+   }
+   
+   public FilePosition getFilePosition()
+   {
+      return position_;
    }
 
    @Override
@@ -50,5 +78,6 @@ public class FileEditEvent extends GwtEvent<FileEditEvent.Handler>
    }
 
    private final FileSystemItem file_;
+   private final FilePosition position_;
 }
 

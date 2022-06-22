@@ -1,7 +1,7 @@
 /*
  * ProductEditionInfo.java
  *
- * Copyright (C) 2021 by RStudio, PBC
+ * Copyright (C) 2022 by RStudio, PBC
  *
  * Unless you have received this program directly from RStudio pursuant
  * to the terms of a commercial license agreement with RStudio, then
@@ -15,13 +15,15 @@
 
 package org.rstudio.studio.client.application.model;
 
+import com.google.gwt.core.client.GWT;
+import org.rstudio.studio.client.application.StudioClientApplicationConstants;
 import org.rstudio.studio.client.application.Desktop;
 
 public class ProductEditionInfo
 {
    public String editionName()
    {
-      return "RStudio" + (Desktop.isDesktop() ? "" : " Server");
+      return constants_.rStudioEditionName(Desktop.isDesktop() ? "" : " " + constants_.serverLabel());
    }
    
    public boolean proLicense()
@@ -36,4 +38,5 @@ public class ProductEditionInfo
    public void showSessionServerOptionsDialog()
    {
    }
+   private static final StudioClientApplicationConstants constants_ = GWT.create(StudioClientApplicationConstants.class);
 }

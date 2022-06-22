@@ -1,6 +1,8 @@
-<!DOCTYPE ui:UiBinder SYSTEM "http://dl.google.com/gwt/DTD/xhtml.ent">
 <ui:UiBinder xmlns:ui="urn:ui:com.google.gwt.uibinder"
-   xmlns:g="urn:import:com.google.gwt.user.client.ui">
+   xmlns:g="urn:import:com.google.gwt.user.client.ui"
+   ui:generateFormat='com.google.gwt.i18n.server.PropertyCatalogFactory'
+   ui:generateKeys="com.google.gwt.i18n.server.keygen.MD5KeyGenerator"
+   ui:generateLocales="default">
    <ui:with field="res" type="org.rstudio.studio.client.workbench.views.source.editors.text.rmd.ChunkContextResources" />
    <ui:style>
    .wrapper
@@ -77,7 +79,7 @@
           <g:HTMLPanel styleName="{style.dropDownArrow}"></g:HTMLPanel>
         </g:HTMLPanel>
         <g:Image styleName="{style.button}" title="Modify Chunk Options"
-                 ui:field="options_"></g:Image>
+                 ui:field="options_"><ui:attribute name="title" key="modifyChunkTitle"/></g:Image>
         <g:Image styleName="{style.prevButton}" ui:field="runPrevious_"></g:Image>
         <g:Image styleName="{style.button}"
                  resource="{res.runChunk2x}"

@@ -1,7 +1,7 @@
 /*
  * FileChangeEvent.hpp
  *
- * Copyright (C) 2021 by RStudio, PBC
+ * Copyright (C) 2022 by RStudio, PBC
  *
  * Unless you have received this program directly from RStudio pursuant
  * to the terms of a commercial license agreement with RStudio, then
@@ -105,7 +105,7 @@ void collectFileChangeEvents(PreviousIterator prevBegin,
    std::copy(currBegin, currEnd, std::back_inserter(curr));
    std::sort(curr.begin(), curr.end(), fileInfoPathLessThan);
 
-   // initalize the iterators
+   // initialize the iterators
    std::vector<FileInfo>::iterator prevIt = prev.begin();
    std::vector<FileInfo>::iterator currIt = curr.begin();
 

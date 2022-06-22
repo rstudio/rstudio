@@ -1,7 +1,7 @@
 /*
  * bibtex.ts
  *
- * Copyright (C) 2021 by RStudio, PBC
+ * Copyright (C) 2022 by RStudio, PBC
  *
  * Unless you have received this program directly from RStudio pursuant
  * to the terms of a commercial license agreement with RStudio, then
@@ -234,13 +234,7 @@ const escapeNonAscii = (value: string): string => {
         result = result + (characterMap.ungrouped ? characterMap.latex : `{${characterMap.latex}}`);
       } else {
         // No LaTeX replacement, just emit the character
-        if (char < 255) {
-          result = result + String.fromCodePoint(char);
-        } else {
-          // A unicode character for which we have no valid LaTeX replacement
-          // emit a question mark
-          result = result + '?';
-        }
+        result = result + String.fromCodePoint(char);
       }
     } else {
       // A position which has no codepoint. what on earth is this?
@@ -395,15 +389,24 @@ const formatNames = (names: NameDictObject[]): string => {
       const prefix = name.prefix ? formatText(name.prefix) : false;
 
       if (suffix && prefix) {
-        formattedNames.push(`{${prefix} ${family}}, {${suffix}}, {${given}}`);
+        formattedNames.push(`${protect(`${prefix} ${family}`)}, ${protect(suffix)}, ${protect(given)}`);
       } else if (suffix) {
-        formattedNames.push(`{${family}}, {${suffix}}, {${given}}`);
+        formattedNames.push(`${protect(family)}, ${protect(suffix)}, ${protect(given)}`);
       } else if (prefix) {
-        formattedNames.push(`{${prefix} ${family}}, {${given}}`);
+        formattedNames.push(`${protect(`${prefix} ${family}`)}, ${protect(given)}`);
       } else {
-        formattedNames.push(`{${family}}, {${given}}`);
+        formattedNames.push(`${protect(family)}, ${protect(given)}`);
       }
     }
   });
   return formattedNames.join(' and ');
 };
+
+const kBibtexSafeRegex = /^[a-zA-Z0-9 .-]*$/;
+function protect(str: string) {
+  if (str.match(kBibtexSafeRegex)) {
+    return str;
+  } else {
+    return `{${str}}`;
+  }
+}

@@ -1,7 +1,7 @@
 /*
  * PosixChildProcess.cpp
  *
- * Copyright (C) 2021 by RStudio, PBC
+ * Copyright (C) 2022 by RStudio, PBC
  *
  * Unless you have received this program directly from RStudio pursuant
  * to the terms of a commercial license agreement with RStudio, then
@@ -27,6 +27,7 @@
 #else
 #include <pty.h>
 #include <asm/ioctls.h>
+#include <sys/prctl.h>
 #endif
 
 #include <sys/wait.h>
@@ -36,15 +37,16 @@
 #include <boost/bind/bind.hpp>
 
 #include <shared_core/Error.hpp>
+
 #include <core/Log.hpp>
+#include <core/PerformanceTimer.hpp>
+#include <core/Thread.hpp>
 #include <core/system/PosixChildProcess.hpp>
 #include <core/system/PosixSystem.hpp>
 #include <core/system/PosixUser.hpp>
 #include <core/system/ProcessArgs.hpp>
 #include <core/system/ShellUtils.hpp>
-#include <core/Thread.hpp>
 
-#include <core/PerformanceTimer.hpp>
 
 using namespace boost::placeholders;
 
@@ -71,10 +73,6 @@ const boost::posix_time::milliseconds kCheckSubprocDelay =
 // how often we query and store current working directory of subprocess
 const boost::posix_time::milliseconds kCheckCwdDelay =
                                          boost::posix_time::milliseconds(2000);
-
-// exit code for when a thread-safe spawn fails - chosen to be something "unique" enough to identify
-// since thread-safe forks cannot actually log effectively
-const int kThreadSafeForkErrorExit = 153;
 
 int resolveExitStatus(int status)
 {
@@ -421,13 +419,13 @@ Error ChildProcess::terminate()
    }
 }
 
-bool ChildProcess::hasNonWhitelistSubprocess() const
+bool ChildProcess::hasNonIgnoredSubprocess() const
 {
    // base class doesn't support subprocess-checking; override to implement
    return true;
 }
 
-bool ChildProcess::hasWhitelistSubprocess() const
+bool ChildProcess::hasIgnoredSubprocess() const
 {
    // base class doesn't support subprocess-checking; override to implement
    return false;
@@ -493,7 +491,11 @@ Error ChildProcess::run()
       // fetch the user to switch to before forking, as the method is not
       // async signal safe and could cause lockups
       core::system::User user;
-      error = User::getUserFromIdentifier(options_.runAsUser, user);
+      if (options_.runAsUser == "root")
+         error = User::getUserFromIdentifier(0, user);
+      else
+         error = User::getUserFromIdentifier(options_.runAsUser, user);
+
       if (error)
          return error;
 
@@ -600,10 +602,14 @@ Error ChildProcess::run()
             if (error)
                LOG_ERROR(error);
 
-            // switch user
-            error = core::system::permanentlyDropPriv(options_.runAsUser);
-            if (error)
-               LOG_ERROR(error);
+
+            if (options_.runAsUser != "root")
+            {
+               // switch user if not root
+               error = core::system::permanentlyDropPriv(options_.runAsUser);
+               if (error)
+                  LOG_ERROR(error);
+            }
          }
 
          // check for an onAfterFork function
@@ -751,24 +757,24 @@ Error ChildProcess::run()
          if (runAsUser)
          {
             if (signal_safe::permanentlyDropPriv(runAsUser.get()) == -1)
-               ::_exit(kThreadSafeForkErrorExit);
+               ::_exit(errno);
          }
 
          if (options_.detachSession)
          {
             if (::setsid() == -1)
-               ::_exit(kThreadSafeForkErrorExit);
+               ::_exit(errno);
          }
          else if (options_.terminateChildren)
          {
             if (::setpgid(0,0) == -1)
-               ::_exit(kThreadSafeForkErrorExit);
+               ::_exit(errno);
          }
 
          // clear signal mask so that child process does not unintentionally
          // block any signals that our parent is blocking
          if (signal_safe::clearSignalMask() != 0)
-            ::_exit(kThreadSafeForkErrorExit);
+            ::_exit(errno);
 
          // close pipe end that we do not need
          // this is not critical and as such, is best effort
@@ -781,15 +787,15 @@ Error ChildProcess::run()
          // wire standard streams
          int result = ::dup2(fdInput[READ], STDIN_FILENO);
          if (result == -1)
-            ::_exit(kThreadSafeForkErrorExit);
+            ::_exit(errno);
 
          result = ::dup2(fdOutput[WRITE], STDOUT_FILENO);
          if (result == -1)
-            ::_exit(kThreadSafeForkErrorExit);
+            ::_exit(errno);
 
          result = ::dup2(options_.redirectStdErrToStdOut ? fdOutput[WRITE] : fdError[WRITE], STDERR_FILENO);
          if (result == -1)
-            ::_exit(kThreadSafeForkErrorExit);
+            ::_exit(errno);
 
          // close inherited file descriptors - this prevents
          // the child from clobbering the parent's FDs
@@ -797,6 +803,15 @@ Error ChildProcess::run()
          // clobbering of FDs affecting epoll calls
          signal_safe::closeFileDescriptorsFromParent(fdCloseFd[READ], STDERR_FILENO+1, hard);
          ::close(fdCloseFd[READ]);
+      }
+
+      if (options_.exitWithParent)
+      {
+#ifndef __APPLE__
+         // set a bit indicating we want to die when our parent dies
+         if (::prctl(PR_SET_PDEATHSIG, SIGTERM) == -1)
+            LOG_ERROR(systemError(errno, ERROR_LOCATION));
+#endif
       }
 
       if (options_.environment)
@@ -821,7 +836,7 @@ Error ChildProcess::run()
          ::exit(EXIT_FAILURE);
       }
       else
-         ::_exit(kThreadSafeForkErrorExit);
+         ::_exit(errno);
    }
 
    // parent
@@ -835,7 +850,7 @@ Error ChildProcess::run()
          pImpl_->init(pid, fdMaster);
       }
 
-      // standard mode: close unused pipes & wire streams to approprite fds
+      // standard mode: close unused pipes & wire streams to appropriate fds
       else
       {
          // close unused pipes
@@ -980,18 +995,18 @@ Error AsyncChildProcess::terminate()
    return ChildProcess::terminate();
 }
 
-bool AsyncChildProcess::hasNonWhitelistSubprocess() const
+bool AsyncChildProcess::hasNonIgnoredSubprocess() const
 {
    if (pAsyncImpl_->pSubprocPoll_)
-      return pAsyncImpl_->pSubprocPoll_->hasNonWhitelistSubprocess();
+      return pAsyncImpl_->pSubprocPoll_->hasNonIgnoredSubprocess();
    else
       return true;
 }
 
-bool AsyncChildProcess::hasWhitelistSubprocess() const
+bool AsyncChildProcess::hasIgnoredSubprocess() const
 {
    if (pAsyncImpl_->pSubprocPoll_)
-      return pAsyncImpl_->pSubprocPoll_->hasWhitelistSubprocess();
+      return pAsyncImpl_->pSubprocPoll_->hasIgnoredSubprocess();
    else
       return false;
 }
@@ -1014,6 +1029,14 @@ bool AsyncChildProcess::hasRecentOutput() const
 
 void AsyncChildProcess::poll()
 {
+   // skip polling if we're not on the main thread,
+   // and the process options request we run on the main thread only
+   if (enableCallbacksRequireMainThread() && options().callbacksRequireMainThread && !core::thread::isMainThread())
+   {
+      LOG_DEBUG_MESSAGE("Skipping poll events for child process - not on main thread");
+      return;
+   }
+   
    // call onStarted if we haven't yet
    if (!(pAsyncImpl_->calledOnStarted_))
    {
@@ -1032,7 +1055,7 @@ void AsyncChildProcess::poll()
          pImpl_->pid,
          kResetRecentDelay, kCheckSubprocDelay, kCheckCwdDelay,
          options().reportHasSubprocs ? core::system::getSubprocesses : nullptr,
-         options().subprocWhitelist,
+         options().ignoredSubprocs,
          options().trackCwd ? core::system::currentWorkingDir : nullptr));
 
       if (callbacks_.onStarted)
@@ -1044,7 +1067,7 @@ void AsyncChildProcess::poll()
    {
       if (!callbacks_.onContinue(*this))
       {
-         // terminate the proces
+         // terminate the process
          Error error = terminate();
          if (error)
             LOG_ERROR(error);
@@ -1146,8 +1169,8 @@ void AsyncChildProcess::poll()
    {
       if (callbacks_.onHasSubprocs)
       {
-         callbacks_.onHasSubprocs(hasNonWhitelistSubprocess(),
-                                  hasWhitelistSubprocess());
+         callbacks_.onHasSubprocs(hasNonIgnoredSubprocess(),
+                                  hasIgnoredSubprocess());
       }
       if (callbacks_.reportCwd)
       {
@@ -1642,14 +1665,14 @@ Error AsioAsyncChildProcess::terminate()
    return error;
 }
 
-bool AsioAsyncChildProcess::hasNonWhitelistSubprocess() const
+bool AsioAsyncChildProcess::hasNonIgnoredSubprocess() const
 {
-   return AsyncChildProcess::hasNonWhitelistSubprocess();
+   return AsyncChildProcess::hasNonIgnoredSubprocess();
 }
 
-bool AsioAsyncChildProcess::hasWhitelistSubprocess() const
+bool AsioAsyncChildProcess::hasIgnoredSubprocess() const
 {
-   return AsyncChildProcess::hasWhitelistSubprocess();
+   return AsyncChildProcess::hasIgnoredSubprocess();
 }
 
 core::FilePath AsioAsyncChildProcess::getCwd() const
@@ -1761,6 +1784,45 @@ Error forkAndRunPrivileged(const boost::function<int(void)>& func)
    if (error)
       return error;
    return forkAndRunImpl(func, rootUser);
+}
+
+Error sendSignalToSpecifiedChildProcesses(const std::set<std::string>& procNames,
+                                          int signal)
+{
+   std::vector<ProcessInfo> procs;
+   Error error = getChildProcesses(&procs);
+   if (error)
+      return error;
+
+   std::vector<pid_t> pidsToKill;
+   for (const auto& proc : procs)
+   {
+      if (procNames.count(proc.exe) != 0)
+         pidsToKill.push_back(proc.pid);
+   }
+
+   auto sendSig = [=]()
+   {
+      // must only use async signal safe code in this function!
+      int err = 0;
+
+      for (size_t i = 0; i < pidsToKill.size(); ++i)
+      {
+         if (::kill(pidsToKill.at(i), signal) == -1)
+         {
+            if (errno != ESRCH)
+               err = errno;
+         }
+      }
+
+      return err;
+   };
+
+   error = forkAndRunPrivileged(sendSig);
+   if (error)
+      return error;
+
+   return Success();
 }
 
 } // namespace system

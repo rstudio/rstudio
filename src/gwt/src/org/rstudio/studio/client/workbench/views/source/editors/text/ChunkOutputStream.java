@@ -1,7 +1,7 @@
 /*
  * ChunkOutputStream.java
  *
- * Copyright (C) 2021 by RStudio, PBC
+ * Copyright (C) 2022 by RStudio, PBC
  *
  * Unless you have received this program directly from RStudio pursuant
  * to the terms of a commercial license agreement with RStudio, then
@@ -19,6 +19,7 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
+import com.google.gwt.core.client.GWT;
 import com.google.gwt.user.client.Timer;
 import org.rstudio.core.client.StringUtil;
 import org.rstudio.core.client.VirtualConsole;
@@ -225,7 +226,7 @@ public class ChunkOutputStream extends FlowPanel
          url += "viewer_pane=1&capabilities=1";
       }
 
-      final ChunkOutputFrame frame = new ChunkOutputFrame("Chunk HTML Output Frame");
+      final ChunkOutputFrame frame = new ChunkOutputFrame(constants_.chunkHtmlOutputFrame());
 
       if (chunkOutputSize_ == ChunkOutputSize.Default || 
           chunkOutputSize_ == ChunkOutputSize.Natural)
@@ -434,7 +435,7 @@ public class ChunkOutputStream extends FlowPanel
 
       if (StringUtil.isNullOrEmpty(htmlOutput))
          return;
-      final ChunkOutputFrame frame = new ChunkOutputFrame("Chunk Feedback");
+      final ChunkOutputFrame frame = new ChunkOutputFrame(constants_.chunkFeedback());
       add(frame);
 
       Element body = frame.getDocument().getBody();
@@ -792,6 +793,7 @@ public class ChunkOutputStream extends FlowPanel
    private int maxOrdinal_ = 0;
 
    private final static String ORDINAL_ATTRIBUTE = "data-ordinal";
+   private static final EditorsTextConstants constants_ = GWT.create(EditorsTextConstants.class);
 
    private Command afterRender_;
    private Colors themeColors_;

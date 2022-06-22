@@ -1,7 +1,7 @@
 #
 # Options.R
 #
-# Copyright (C) 2021 by RStudio, PBC
+# Copyright (C) 2022 by RStudio, PBC
 #
 # Unless you have received this program directly from RStudio pursuant
 # to the terms of a commercial license agreement with RStudio, then
@@ -153,6 +153,9 @@ options(profvis.keep_output = TRUE)
 
 # indicate that we're not in a notebook by default
 options(rstudio.notebook.executing = FALSE)
+
+# avoid exceedingly-large deparsed line output
+.rs.setOptionDefault("deparse.max.lines", 20L)
 
 # provide a custom HTTP user agent
 .rs.initHttpUserAgent()

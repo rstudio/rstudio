@@ -1,0 +1,94 @@
+#!/usr/bin/env bash
+
+#
+# install-quarto
+#
+# Copyright (C) 2022 by RStudio, PBC
+#
+# Unless you have received this program directly from RStudio pursuant
+# to the terms of a commercial license agreement with RStudio, then
+# this program is licensed to you under the terms of version 3 of the
+# GNU Affero General Public License. This program is distributed WITHOUT
+# ANY EXPRESS OR IMPLIED WARRANTY, INCLUDING THOSE OF NON-INFRINGEMENT,
+# MERCHANTABILITY OR FITNESS FOR A PARTICULAR PURPOSE. Please refer to the
+# AGPL (http://www.gnu.org/licenses/agpl-3.0.txt) for more details.
+#
+#
+
+set -e
+
+source "$(dirname "${BASH_SOURCE[0]}")/../tools/rstudio-tools.sh"
+section "Installing Quarto"
+
+if [ "$(arch)" = "aarch64" ]; then
+  echo "install-quarto not yet available for aarch64"
+  exit 0
+fi
+
+# variables that control download + installation process
+# update to latest Quarto release
+QUARTO_VERSION=`curl https://quarto.org/docs/download/_download.json | jq ".version" | grep -oE '[0-9]+\.[0-9]+\.[0-9]+'`
+QUARTO_URL_BASE="https://github.com/quarto-dev/quarto-cli/releases/latest/download"
+
+# specify a version to pin for releases
+#QUARTO_VERSION="0.9.230"
+QUARTO_SUBDIR="quarto"
+#QUARTO_URL_BASE="https://s3.amazonaws.com/rstudio-buildtools/quarto/${QUARTO_VERSION}"
+
+# move to tools root
+sudo-if-necessary-for "${RSTUDIO_TOOLS_ROOT}" "$@"
+cd "${RSTUDIO_TOOLS_ROOT}"
+
+# check installed version
+QUARTO_BIN="${RSTUDIO_TOOLS_ROOT}/${QUARTO_SUBDIR}/bin/quarto"
+if test -f "${QUARTO_BIN}"; then
+   INSTALLED_QUARTO_VERSION=`${QUARTO_BIN} --version`
+   if [ $INSTALLED_QUARTO_VERSION == $QUARTO_VERSION ]; then
+      echo "Quarto ${QUARTO_VERSION} already installed"
+      exit 0
+   fi
+fi
+
+# reset quarto subdirectory
+rm -rf "${QUARTO_SUBDIR}"
+mkdir -p "${QUARTO_SUBDIR}"
+pushd "${QUARTO_SUBDIR}"
+
+# determine archive based on platform
+PLATFORM="$(uname)-$(getconf LONG_BIT)"
+case "${PLATFORM}" in
+
+"Darwin-64")
+  SUBDIR="macos"
+  FILES=(
+    "quarto-${QUARTO_VERSION}-macos.tar.gz"
+  )
+  ;;
+
+"Linux-64")
+  SUBDIR="linux"
+  FILES=(
+    "quarto-${QUARTO_VERSION}-linux-amd64.tar.gz"
+  )
+  ;;
+
+*)
+  echo "Quarto binaries not available for platform '${PLATFORM}'."
+  exit 0
+  ;;
+
+esac
+
+# download and extract files 
+for FILE in "${FILES[@]}"; do
+   echo "Downloading ${FILE} from ${QUARTO_URL_BASE}/${FILE}"
+   download "${QUARTO_URL_BASE}/${FILE}" "${FILE}"
+   extract "${FILE}"
+   rm -f "${FILE}"
+   if [ $PLATFORM == "Linux-64" ]; then
+     mv "${QUARTO_SUBDIR}-${QUARTO_VERSION}" "../${QUARTO_SUBDIR}-${QUARTO_VERSION}"
+     popd
+     rm -rf "${QUARTO_SUBDIR}"
+     mv "${QUARTO_SUBDIR}-${QUARTO_VERSION}" "${QUARTO_SUBDIR}"
+   fi
+done

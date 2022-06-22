@@ -1,7 +1,7 @@
 /*
  * ProgramOptions.cpp
  *
- * Copyright (C) 2021 by RStudio, PBC
+ * Copyright (C) 2022 by RStudio, PBC
  *
  * Unless you have received this program directly from RStudio pursuant
  * to the terms of a commercial license agreement with RStudio, then
@@ -30,6 +30,13 @@ namespace core {
 namespace program_options {
  
 namespace {
+
+enum class OptionsParseState
+{
+   Initial,
+   ConfigFile,
+   CommandLine
+};
 
 bool validateOptionsProvided(const variables_map& vm,
                              const options_description& optionsDescription,
@@ -169,6 +176,7 @@ ProgramStatus read(const OptionsDescription& optionsDescription,
 {
    *pHelp = false;
    std::string configFile;
+   OptionsParseState state = OptionsParseState::Initial;
    try
    {        
       // general options
@@ -197,13 +205,16 @@ ProgramStatus read(const OptionsDescription& optionsDescription,
          // the default value that was passed in
          configFile = optionsDescription.defaultConfigFilePath;
 
+         state = OptionsParseState::ConfigFile;
          if (!parseConfigFile(vm, configFile, optionsDescription, allowUnregisteredConfigOptions))
             return ProgramStatus::exitFailure();
 
+         state = OptionsParseState::CommandLine;
          parseCommandLine(vm, optionsDescription, commandLineOptions, argc, argv, pUnrecognized);
       }
       else
       {
+         state = OptionsParseState::CommandLine;
          parseCommandLine(vm, optionsDescription, commandLineOptions, argc, argv, pUnrecognized);
 
          // "none" is a special sentinel value for the config-file which
@@ -212,6 +223,7 @@ ProgramStatus read(const OptionsDescription& optionsDescription,
          if (configFile == "none")
             configFile = "";
 
+         state = OptionsParseState::ConfigFile;
          if (!parseConfigFile(vm, configFile, optionsDescription, allowUnregisteredConfigOptions))
             return ProgramStatus::exitFailure();
       }
@@ -252,7 +264,9 @@ ProgramStatus read(const OptionsDescription& optionsDescription,
    catch(const boost::program_options::error& e)
    {
       std::string msg(e.what());
-      if (!configFile.empty())
+      if (state == OptionsParseState::CommandLine)
+         msg += " on command line";
+      else if (!configFile.empty())
          msg += " in config file " + configFile;
       reportError(msg, ERROR_LOCATION, true);
       return ProgramStatus::exitFailure();

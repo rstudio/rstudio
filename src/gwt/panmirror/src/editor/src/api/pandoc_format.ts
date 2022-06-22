@@ -1,7 +1,7 @@
 /*
  * pandoc_format.ts
  *
- * Copyright (C) 2021 by RStudio, PBC
+ * Copyright (C) 2022 by RStudio, PBC
  *
  * Unless you have received this program directly from RStudio pursuant
  * to the terms of a commercial license agreement with RStudio, then
@@ -73,13 +73,32 @@ function pandocFormatConfigFromYamlInCode(code: string, isRmd: boolean): PandocF
   // did we find yaml?
   if (yaml) {
     // see if we have any md_extensions defined
-    const mdExtensions = isRmd ? findValue('md_extensions', yaml?.output) : undefined;
+    let mdExtensions : string | undefined = isRmd ? findValue('md_extensions', yaml?.output) : undefined;
+    if (!mdExtensions) {
+      // look for quarto 'from'
+      const from = findValue('from', yaml);
+      if (from) {
+        const fromStr = String(from);
+        const extensions = fromStr.match(/^\w+([+-][\w+-]+)$/);
+        if (extensions) {
+          mdExtensions = extensions[1];
+        }
+      }
+    }
 
     // see if we have any markdown options defined
     let yamlFormatConfig: PandocFormatConfig | undefined;
-    const yamlMarkdownOptions = yaml?.editor_options?.markdown;
-    if (yamlMarkdownOptions instanceof Object) {
-      yamlFormatConfig = readPandocFormatConfig(yamlMarkdownOptions);
+
+    // first check 'editor' then check 'editor_options'
+    const yamlEditor = yaml?.editor;
+    if (yamlEditor && (yamlEditor instanceof Object) && 
+        yamlEditor.markdown && (yamlEditor.markdown instanceof Object)) {
+      yamlFormatConfig = readPandocFormatConfig(yamlEditor.markdown);
+    } else {
+      const yamlMarkdownOptions = yaml?.editor_options?.markdown;
+      if (yamlMarkdownOptions instanceof Object) {
+        yamlFormatConfig = readPandocFormatConfig(yamlMarkdownOptions);
+      }
     }
 
     // combine and return
@@ -388,6 +407,8 @@ function gfmExtensions() {
     '+pipe_tables',
     '+strikeout',
     '+task_lists',
+    '+tex_math_dollars',
+    '+footnotes'
   ];
   return extensions;
 }

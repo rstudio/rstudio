@@ -1,7 +1,7 @@
 /*
  * list-commands.ts
  *
- * Copyright (C) 2021 by RStudio, PBC
+ * Copyright (C) 2022 by RStudio, PBC
  *
  * Unless you have received this program directly from RStudio pursuant
  * to the terms of a commercial license agreement with RStudio, then
@@ -13,8 +13,8 @@
  *
  */
 
-import { NodeType, Node as ProsemirrorNode } from 'prosemirror-model';
-import { EditorState, Transaction } from 'prosemirror-state';
+import { NodeType, Node as ProsemirrorNode, NodeRange, Schema } from 'prosemirror-model';
+import { EditorState, Transaction, Selection } from 'prosemirror-state';
 import { EditorView } from 'prosemirror-view';
 import { autoJoin } from 'prosemirror-commands';
 import { NodeWithPos, findParentNode } from 'prosemirror-utils';
@@ -24,6 +24,9 @@ import { EditorUI, EditorUIPrefs } from '../../api/ui';
 import { ListProps } from '../../api/ui-dialogs';
 import { ListType, ListCapabilities, isList } from '../../api/list';
 import { OmniInsert } from '../../api/omni_insert';
+import { findWrapping } from 'prosemirror-transform';
+import { trRemoveDiv } from '../div/div';
+import { pandocAttrHasClass, pandocAttrRemoveClass, pandocAttrEnsureClass } from '../../api/pandoc_attr';
 
 export class ListCommand extends NodeCommand {
   constructor(
@@ -111,6 +114,10 @@ export class EditListPropertiesCommand extends ProsemirrorCommand {
   }
 }
 
+const kListIncrementalDefault = "default";
+const kListIncremental = "incremental";
+const kListNonIncremental = "nonincremental";
+
 async function editList(
   node: ProsemirrorNode,
   pos: number,
@@ -127,6 +134,16 @@ async function editList(
     type: node.type === schema.nodes.ordered_list ? ListType.Ordered : ListType.Bullet,
   } as ListProps;
 
+  // if we support incremental lists then determine that value
+  const incrementalDiv = wrappingIncrementalDiv(state.selection, schema);
+  if (incrementalDiv && capabilities.incremental) {
+    props.incremental = pandocAttrHasClass(incrementalDiv.node.attrs, clz => clz === kListIncremental) 
+      ? kListIncremental 
+      : kListNonIncremental;
+  } else {
+    props.incremental = kListIncrementalDefault;
+  }
+
   // edit list
   const result = await ui.dialogs.editList(props, capabilities);
 
@@ -138,6 +155,47 @@ async function editList(
       ...attrs,
       ...result,
     });
+
+   
+    if (capabilities.incremental) {
+
+      // remove any existing wrapping
+      if (result.incremental === kListIncrementalDefault) {
+        if (incrementalDiv) {
+          trRemoveDiv(tr, incrementalDiv);
+        }
+      // edit existing wrapping
+      } else if (incrementalDiv) {
+        const divAttrs = { ...incrementalDiv.node.attrs };
+        pandocAttrRemoveClass(divAttrs, isIncrementalClass);
+        pandocAttrEnsureClass(divAttrs, result.incremental);
+        tr.setNodeMarkup(incrementalDiv.pos, schema.nodes.div, divAttrs);
+      // create new wrapping
+      } else {
+        const $pos = tr.doc.resolve(pos);
+        const $endPos = tr.doc.resolve(pos + node.nodeSize);
+        const range = $pos.blockRange($endPos);  
+        if (range) {
+          const wrapping = findWrapping(range, schema.nodes.div, { classes: [result.incremental]});
+          if (wrapping) {
+            tr.wrap(range, wrapping);
+          }
+        }
+      }
+    }
+    
     dispatch(tr);
   }
+}
+
+function wrappingIncrementalDiv(selection: Selection, schema: Schema) {
+  return findParentNode(nd => {
+    return nd.type === schema.nodes.div && 
+           pandocAttrHasClass(nd.attrs, isIncrementalClass);
+  })(selection);
+
+}
+
+function isIncrementalClass(clz: string) {
+  return [kListIncremental, kListNonIncremental].includes(clz);
 }

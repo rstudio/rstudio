@@ -1,7 +1,7 @@
 /*
  * ProjectPreferencesDialogResources.java
  *
- * Copyright (C) 2021 by RStudio, PBC
+ * Copyright (C) 2022 by RStudio, PBC
  *
  * Unless you have received this program directly from RStudio pursuant
  * to the terms of a commercial license agreement with RStudio, then
@@ -30,6 +30,7 @@ public interface ProjectPreferencesDialogResources extends ClientBundle
       String enableCodeIndexing();
       String useSpacesForTab();
       String numberOfTabs();
+      String useNativePipeOperator();
       String editingOption();
       String encodingChooser();
       String lineEndings();
@@ -41,6 +42,7 @@ public interface ProjectPreferencesDialogResources extends ClientBundle
       String buildToolsRoxygenize();
       String buildToolsCheckBox();
       String buildToolsDevtools();
+      String buildToolsCleanBeforeInstall();
       String previewWebsite();
       String directorySelector();
       String websiteOutputFormat();
@@ -61,7 +63,7 @@ public interface ProjectPreferencesDialogResources extends ClientBundle
 
    @Source("iconShare_2x.png")
    ImageResource iconShare2x();
-   
+
    @Source("iconRMarkdown_2x.png")
    ImageResource iconRMarkdown2x();
 

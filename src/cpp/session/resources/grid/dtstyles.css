@@ -1,7 +1,7 @@
 /*
  * dtstyles.css
  *
- * Copyright (C) 2021 by RStudio, PBC
+ * Copyright (C) 2022 by RStudio, PBC
  *
  * Unless you have received this program directly from RStudio pursuant
  * to the terms of a commercial license agreement with RStudio, then
@@ -34,9 +34,6 @@ table.dataTable tbody td {
     border-bottom: 1px solid #cfd4d8;
     border-right: 1px solid #cfd4d8;
     font-size: 11px;
-}
-
-.rstudio-themes-flat table.dataTable tbody td  {
     background: none;
 }
 
@@ -46,18 +43,13 @@ th {
 
 th, td.first-child {
     font-size: 11px;
-    color: #555555;
+    color: #000;
     background-color: #f7f8f9;
     font-weight: bold;
 }
 
-.rstudio-themes-flat th,
-.rstudio-themes-flat td.first-child {
-    color: #000;
-}
-
-.rstudio-themes-flat.editor_dark th,
-.rstudio-themes-flat.editor_dark td.first-child {
+.editor_dark th,
+.editor_dark td.first-child {
     color: #FFF;
     font-weight: 400;
 }
@@ -142,13 +134,13 @@ table.dataTable {
     font-weight: normal;
 }
 
-.rstudio-themes-flat.rstudio-themes-dark-grey .colFilter,
-.rstudio-themes-flat.rstudio-themes-dark-grey .numValueBox {
+.rstudio-themes-dark-grey .colFilter,
+.rstudio-themes-dark-grey .numValueBox {
     border-color: rgb(45,60,75);
     background: rgb(108,121,131);
 }
 
-.rstudio-themes-flat.rstudio-themes-dark-grey .textFilterBox {
+.rstudio-themes-dark-grey .textFilterBox {
     background: rgb(108,121,131);
     color: #FFF;
 }
@@ -297,7 +289,7 @@ th:focus {
     text-align: left;
 }
 
-.rstudio-themes-flat.editor_dark #rsGridData_info {
+.editor_dark #rsGridData_info {
     color: #FFF;
 }
 
@@ -316,7 +308,7 @@ th:focus {
     position: relative;
 }
 
-.rstudio-themes-flat.rstudio-themes-dark-grey *::selection {
+.rstudio-themes-dark-grey *::selection {
     background: rgba(255, 255, 255, 0.15);
     color: #FFF;
 }
@@ -335,10 +327,6 @@ th:focus {
     table-layout: fixed;
 }
 
-#rsGridData.manualSize {
-    display: table;
-}
-
 .cell, .headerCell {
     position: relative;
 }
@@ -347,7 +335,7 @@ th:focus {
     background-color: #e8e8ff;
 }
 
-.rstudio-themes-flat.editor_dark .searchMatch {
+.editor_dark .searchMatch {
     background-color: #6d787f;
 }
 
@@ -371,7 +359,7 @@ div.DTS div.DTS_Loading.showLoading {
     background-color: #fdfdfd;
 }
 
-.rstudio-themes-flat.editor_dark #rsGridData #rsGridData tbody tr.even {
+.editor_dark #rsGridData #rsGridData tbody tr.even {
     background: none;
 }
 
@@ -380,15 +368,15 @@ div.DTS div.DTS_Loading.showLoading {
     height: 23px;
 }
 
-.rstudio-themes-flat #rsGridData tbody tr.even {
+#rsGridData tbody tr.even {
     background: none;
 }
 
-.rstudio-themes-flat #rsGridData tbody tr.odd {
+#rsGridData tbody tr.odd {
     background: rgba(255, 255, 255, 0.5);
 }
 
-.rstudio-themes-flat.editor_dark #rsGridData tbody tr.odd {
+.editor_dark #rsGridData tbody tr.odd {
     background: rgba(255, 255, 255, 0.03);
 }
 
@@ -479,15 +467,15 @@ div.dataTables_scroll div.dataTables_scrollHead {
     width: 100px;
 }
 
-.rstudio-themes-flat.editor_dark .histBack.selected {
+.editor_dark .histBack.selected {
     background-color: #6B7882;
 }
 
-.rstudio-themes-flat.editor_dark .histBar {
+.editor_dark .histBar {
     background-color: #5989B9;
 }
 
-.rstudio-themes-flat.editor_dark .selected .histBar {
+.editor_dark .selected .histBar {
     background-color: #79A9D9;
 }
 

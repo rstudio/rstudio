@@ -1,7 +1,7 @@
 /*
  * MiniPieWidget.java
  *
- * Copyright (C) 2021 by RStudio, PBC
+ * Copyright (C) 2022 by RStudio, PBC
  *
  * Unless you have received this program directly from RStudio pursuant
  * to the terms of a commercial license agreement with RStudio, then
@@ -22,7 +22,6 @@ import com.google.gwt.user.client.ui.Composite;
 import com.google.gwt.user.client.ui.SimplePanel;
 import org.rstudio.core.client.ElementIds;
 
-import javax.validation.constraints.Min;
 
 /**
  * A mini pie chart widget that shows a set of percentages in the form of a pie chart.
@@ -49,7 +48,6 @@ public class MiniPieWidget extends Composite
       Element svg = Document.get().createElement("svg");
       svg.setAttribute("viewBox", "0 0 " + (PIE_CENTER * 2) + " " + (PIE_CENTER * 2));
       svg.setAttribute("style", "width: 100%; height: 100%;");
-      percent_ = 0;
 
       // Create accessibility title and description
       title_ = Document.get().createTitleElement();
@@ -152,5 +150,4 @@ public class MiniPieWidget extends Composite
    private final Element back_;
    private final Element title_;
    private final Element description_;
-   private int percent_;
 }

@@ -1,7 +1,7 @@
 /*
  * StanCompletionManager.java
  *
- * Copyright (C) 2021 by RStudio, PBC
+ * Copyright (C) 2022 by RStudio, PBC
  *
  * Unless you have received this program directly from RStudio pursuant
  * to the terms of a commercial license agreement with RStudio, then
@@ -45,7 +45,22 @@ import com.google.gwt.event.shared.HandlerRegistration;
 public class StanCompletionManager extends CompletionManagerBase
                                    implements CompletionManager
 {
-   public StanCompletionManager(DocDisplay docDisplay,
+   // Use a funstructor to create an instance in order to ensure toggleHandlers()
+   // is invoked after the object is fully instantiated
+   public static StanCompletionManager create(DocDisplay docDisplay,
+                                             CompletionPopupDisplay popup,
+                                             CodeToolsServerOperations server,
+                                             CompletionContext context)
+   {
+      StanCompletionManager retVal = new StanCompletionManager(docDisplay, popup, server, context);
+
+      retVal.toggleHandlers(true);
+
+      return retVal;
+   }
+
+   // Use the create() funstructor above instead of invoking this constructor directly
+   private StanCompletionManager(DocDisplay docDisplay,
                                 CompletionPopupDisplay popup,
                                 CodeToolsServerOperations server,
                                 CompletionContext context)
@@ -99,8 +114,8 @@ public class StanCompletionManager extends CompletionManagerBase
    }
    
    @Override
-   protected void addExtraCompletions(String token,
-                                      List<QualifiedName> completions)
+   public void addExtraCompletions(String token,
+                                   List<QualifiedName> completions)
    {
       Set<String> discoveredIdentifiers = new HashSet<>();
       
@@ -122,9 +137,12 @@ public class StanCompletionManager extends CompletionManagerBase
          
          QualifiedName name = new QualifiedName(
                t.getValue(),
+               t.getValue(),
                "[identifier]",
                false,
                RCompletionType.CONTEXT,
+               false,
+               false,
                "",
                null,
                "Stan");

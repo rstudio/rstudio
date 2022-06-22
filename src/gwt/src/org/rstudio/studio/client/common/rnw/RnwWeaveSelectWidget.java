@@ -1,7 +1,7 @@
 /*
  * RnwWeaveSelectWidget.java
  *
- * Copyright (C) 2021 by RStudio, PBC
+ * Copyright (C) 2022 by RStudio, PBC
  *
  * Unless you have received this program directly from RStudio pursuant
  * to the terms of a commercial license agreement with RStudio, then
@@ -15,6 +15,7 @@
 package org.rstudio.studio.client.common.rnw;
 
 
+import com.google.gwt.core.client.GWT;
 import org.rstudio.core.client.Debug;
 import org.rstudio.core.client.widget.HelpButton;
 import org.rstudio.core.client.widget.MessageDialog;
@@ -22,6 +23,7 @@ import org.rstudio.core.client.widget.Operation;
 import org.rstudio.core.client.widget.SelectWidget;
 import org.rstudio.studio.client.RStudioGinjector;
 import org.rstudio.studio.client.common.GlobalDisplay;
+import org.rstudio.studio.client.common.StudioClientCommonConstants;
 import org.rstudio.studio.client.server.ServerError;
 import org.rstudio.studio.client.server.ServerRequestCallback;
 import org.rstudio.studio.client.workbench.model.Session;
@@ -37,9 +39,9 @@ public class RnwWeaveSelectWidget extends SelectWidget
 {
    public RnwWeaveSelectWidget()
    { 
-      super("Weave Rnw files using:", rnwWeaveRegistry_.getTypeNames());
+      super(constants_.weaveRnwLabel(), rnwWeaveRegistry_.getTypeNames());
   
-      HelpButton.addHelpButton(this, "rnw_weave_method", "Help on weaving Rnw files");
+      HelpButton.addHelpButton(this, "rnw_weave_method", constants_.weaveRnwHelpTitle());
       
       RStudioGinjector.INSTANCE.injectMembers(this);
       
@@ -70,13 +72,8 @@ public class RnwWeaveSelectWidget extends SelectWidget
             {
                globalDisplay_.showYesNoMessage(
                   MessageDialog.QUESTION,
-                  "Confirm Change", 
-                  "The " + weave.getPackageName() + " package is required " +
-                  "for " + weave.getName() + " weaving, " +
-                  "however it is not currently installed. You should " +
-                  "ensure that " + weave.getPackageName() + " is installed " +
-                  "prior to compiling a PDF." +
-                  "\n\nAre you sure you want to change this option?",
+                  constants_.confirmChangeCaption(),
+                  constants_.packageRequiredMessage(weave.getPackageName(), weave.getName()),
                   false,
                   new Operation() { 
                      @Override
@@ -122,4 +119,5 @@ public class RnwWeaveSelectWidget extends SelectWidget
    
    public static final RnwWeaveRegistry rnwWeaveRegistry_ = 
                            RStudioGinjector.INSTANCE.getRnwWeaveRegistry();
+   private static final StudioClientCommonConstants constants_ = GWT.create(StudioClientCommonConstants.class);
 }

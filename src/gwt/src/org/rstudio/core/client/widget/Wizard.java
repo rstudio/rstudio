@@ -1,7 +1,7 @@
 /*
  * Wizard.java
  *
- * Copyright (C) 2021 by RStudio, PBC
+ * Copyright (C) 2022 by RStudio, PBC
  *
  * Unless you have received this program directly from RStudio pursuant
  * to the terms of a commercial license agreement with RStudio, then
@@ -19,10 +19,12 @@ import java.util.ArrayList;
 
 import com.google.gwt.aria.client.DialogRole;
 import com.google.gwt.aria.client.Roles;
+import com.google.gwt.core.client.GWT;
 import com.google.gwt.dom.client.Element;
 import com.google.gwt.dom.client.Style;
 import com.google.gwt.event.dom.client.KeyCodes;
 import com.google.gwt.event.dom.client.KeyDownEvent;
+import org.rstudio.core.client.CoreClientConstants;
 import org.rstudio.core.client.CommandWithArg;
 import org.rstudio.core.client.Debug;
 import org.rstudio.core.client.ElementIds;
@@ -62,7 +64,7 @@ public class Wizard<I,T> extends ModalDialog<T>
       addCloseHandler((arg0) -> cleanupPage(firstPage_));
 
       // add next button
-      nextButton_ = new ThemedButton("Next", (arg0) ->
+      nextButton_ = new ThemedButton(constants_.nextButtonText(), (arg0) ->
       {
          if (activePage_ instanceof WizardIntermediatePage<?,?>)
          {
@@ -143,7 +145,7 @@ public class Wizard<I,T> extends ModalDialog<T>
       
       // second page back button
       ImageResource2x bkImg = new ImageResource2x(res.wizardBackButton2x());
-      backButton_ = new Label("Back");
+      backButton_ = new Label(constants_.backButtonText());
       backButton_.addStyleName(styles.wizardBackButton());
       backButton_.addStyleName(ThemeResources.INSTANCE.themeStyles().handCursor());
       backButton_.getElement().setTabIndex(0);
@@ -563,4 +565,5 @@ public class Wizard<I,T> extends ModalDialog<T>
    private WizardPage<I,T> activeParentNavigationPage_ = null;
    private boolean isAnimating_ = false;
    private boolean validating_ = false;
+   private static final CoreClientConstants constants_ = GWT.create(CoreClientConstants.class);
 }

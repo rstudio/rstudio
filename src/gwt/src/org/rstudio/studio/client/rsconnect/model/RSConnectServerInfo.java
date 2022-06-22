@@ -1,7 +1,7 @@
 /*
  * RSConnectServerInfo.java
  *
- * Copyright (C) 2021 by RStudio, PBC
+ * Copyright (C) 2022 by RStudio, PBC
  *
  * Unless you have received this program directly from RStudio pursuant
  * to the terms of a commercial license agreement with RStudio, then
@@ -13,8 +13,10 @@
  *
  */
 package org.rstudio.studio.client.rsconnect.model;
+import org.rstudio.studio.client.rsconnect.RsconnectConstants;
 
 import com.google.gwt.core.client.JavaScriptObject;
+import com.google.gwt.core.client.GWT;
 
 public class RSConnectServerInfo extends JavaScriptObject
 {
@@ -48,8 +50,7 @@ public class RSConnectServerInfo extends JavaScriptObject
    
    public final String getInfoString() 
    {
-      return "Server: " + getName() + " (" + getUrl() + ")\n" + 
-             "Version: " + getVersion() + "\n" + 
-             "About: " + getAbout() + "\n";
+      return constants_.rsConnectServerInfoString(getName(),getUrl(),getVersion(),getAbout());
    }
+   private static final RsconnectConstants constants_ = GWT.create(RsconnectConstants.class);
 }

@@ -1,7 +1,7 @@
 /*
  * CodeSearchWidget.java
  *
- * Copyright (C) 2021 by RStudio, PBC
+ * Copyright (C) 2022 by RStudio, PBC
  *
  * Unless you have received this program directly from RStudio pursuant
  * to the terms of a commercial license agreement with RStudio, then
@@ -14,12 +14,14 @@
  */
 package org.rstudio.studio.client.workbench.codesearch.ui;
 
+import com.google.gwt.core.client.GWT;
 import org.rstudio.core.client.ElementIds;
 import org.rstudio.core.client.resources.ImageResource2x;
 import org.rstudio.core.client.widget.SearchDisplay;
 import org.rstudio.core.client.widget.SearchWidget;
 import org.rstudio.core.client.widget.TextBoxWithCue;
 import org.rstudio.studio.client.workbench.codesearch.CodeSearch;
+import org.rstudio.studio.client.workbench.codesearch.CodeSearchConstants;
 import org.rstudio.studio.client.workbench.codesearch.CodeSearchOracle;
 
 import com.google.gwt.user.client.ui.SuggestBox;
@@ -32,9 +34,9 @@ public class CodeSearchWidget extends SearchWidget
    @Inject
    public CodeSearchWidget(CodeSearchOracle oracle)
    {
-      super("Filter by file or function name",
+      super(constants_.codeSearchLabel(),
             oracle,
-            new TextBoxWithCue("Go to file/function"),
+            new TextBoxWithCue(constants_.textBoxWithCue()),
             new SuggestBox.DefaultSuggestionDisplay());
       
       oracle_ = oracle;   
@@ -65,4 +67,5 @@ public class CodeSearchWidget extends SearchWidget
    }
    
    private final CodeSearchOracle oracle_;
+   private static final CodeSearchConstants constants_ = GWT.create(CodeSearchConstants.class);
 }

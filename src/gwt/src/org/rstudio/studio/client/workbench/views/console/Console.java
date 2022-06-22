@@ -1,7 +1,7 @@
 /*
  * Console.java
  *
- * Copyright (C) 2021 by RStudio, PBC
+ * Copyright (C) 2022 by RStudio, PBC
  *
  * Unless you have received this program directly from RStudio pursuant
  * to the terms of a commercial license agreement with RStudio, then
@@ -27,10 +27,14 @@ import org.rstudio.core.client.js.JsObject;
 import org.rstudio.core.client.layout.DelayFadeInHelper;
 import org.rstudio.core.client.widget.FocusContext;
 import org.rstudio.studio.client.application.events.EventBus;
+import org.rstudio.studio.client.application.events.SessionSerializationEvent;
+import org.rstudio.studio.client.application.events.SessionSuspendBlockedEvent;
 import org.rstudio.studio.client.events.ReticulateEvent;
 import org.rstudio.studio.client.workbench.commands.Commands;
 import org.rstudio.studio.client.workbench.events.BusyEvent;
 import org.rstudio.studio.client.workbench.events.ZoomPaneEvent;
+import org.rstudio.studio.client.workbench.model.Session;
+import org.rstudio.studio.client.workbench.ui.PaneManager;
 import org.rstudio.studio.client.workbench.views.console.ConsolePane.ConsoleMode;
 import org.rstudio.studio.client.workbench.views.console.events.ConsoleActivateEvent;
 import org.rstudio.studio.client.workbench.views.console.events.ConsolePromptEvent;
@@ -42,6 +46,8 @@ import org.rstudio.studio.client.workbench.views.source.editors.profiler.RprofEv
 
 public class Console
 {
+   enum Language { R, PYTHON };
+   
    interface Binder extends CommandBinder<Commands, Console> {}
 
    public interface Display
@@ -52,17 +58,37 @@ public class Console
       IsWidget getConsoleInterruptButton();
       IsWidget getConsoleClearButton();
       IsWidget getProfilerInterruptButton();
+      void onSuspendedBlockedEvent(SessionSuspendBlockedEvent event);
+      void onSerializationEvent(SessionSerializationEvent event);
       void enterMode(ConsolePane.ConsoleMode mode);
       void leaveMode(ConsolePane.ConsoleMode mode);
       ConsolePane.ConsoleMode mode();
       void showProgress(LocalJobProgress progress);
+      
+      void adaptToLanguage(Language language);
    }
 
    @Inject
-   public Console(final Display view, EventBus events, Commands commands)
+   public Console(final Display view,
+                  EventBus events,
+                  Session session,
+                  Commands commands)
    {
       view_ = view;
       events_ = events;
+      session_ = session;
+      
+      try
+      {
+         if (session_.getSessionInfo().getPythonReplActive())
+         {
+            view_.adaptToLanguage(Language.PYTHON);
+         }
+      }
+      catch (Exception e)
+      {
+         
+      }
 
       events.addHandler(SendToConsoleEvent.TYPE, event ->
       {
@@ -86,7 +112,15 @@ public class Console
       events.addHandler(ReticulateEvent.TYPE, event ->
       {
          String type = event.getType();
-         if (StringUtil.equals(type, ReticulateEvent.TYPE_REPL_BUSY))
+         if (StringUtil.equals(type, ReticulateEvent.TYPE_REPL_INITIALIZED))
+         {
+            view.adaptToLanguage(Language.PYTHON);
+         }
+         else if (StringUtil.equals(type, ReticulateEvent.TYPE_REPL_TEARDOWN))
+         {
+            view.adaptToLanguage(Language.R);
+         }
+         else if (StringUtil.equals(type, ReticulateEvent.TYPE_REPL_BUSY))
          {
             JsObject data = event.getPayload().cast();
             
@@ -145,6 +179,14 @@ public class Console
          else
             view.leaveMode(ConsoleMode.Job);
       });
+
+      events.addHandler(SessionSerializationEvent.TYPE, event -> {
+         view.onSerializationEvent(event);
+      });
+
+      events.addHandler(SessionSuspendBlockedEvent.TYPE, event -> {
+         view.onSuspendedBlockedEvent(event);
+      });
    }
 
    @Handler
@@ -187,7 +229,7 @@ public class Console
    public void onLayoutZoomConsole()
    {
       onActivateConsole();
-      events_.fireEvent(new ZoomPaneEvent("Console"));
+      events_.fireEvent(new ZoomPaneEvent(PaneManager.CONSOLE_PANE));
    }
 
    public Display getDisplay()
@@ -199,4 +241,5 @@ public class Console
    private final DelayFadeInHelper profilerFadeInHelper_;
    private final EventBus events_;
    private final Display view_;
+   private final Session session_;
 }

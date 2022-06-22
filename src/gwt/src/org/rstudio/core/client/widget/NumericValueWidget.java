@@ -1,7 +1,7 @@
 /*
  * NumericValueWidget.java
  *
- * Copyright (C) 2021 by RStudio, PBC
+ * Copyright (C) 2022 by RStudio, PBC
  *
  * Unless you have received this program directly from RStudio pursuant
  * to the terms of a commercial license agreement with RStudio, then
@@ -14,10 +14,12 @@
  */
 package org.rstudio.core.client.widget;
 
+import com.google.gwt.core.client.GWT;
 import com.google.gwt.dom.client.Style.Unit;
 import com.google.gwt.event.logical.shared.ValueChangeHandler;
 import com.google.gwt.event.shared.HandlerRegistration;
 import com.google.gwt.user.client.ui.*;
+import org.rstudio.core.client.CoreClientConstants;
 import org.rstudio.core.client.events.EnsureVisibleEvent;
 import org.rstudio.core.client.events.HasEnsureVisibleHandlers;
 import org.rstudio.studio.client.RStudioGinjector;
@@ -122,8 +124,8 @@ public class NumericValueWidget extends Composite
          fireEvent(new EnsureVisibleEvent());
          textBox_.getElement().focus();
          RStudioGinjector.INSTANCE.getGlobalDisplay().showErrorMessage(
-               "Error",
-               label_ + " must be a valid number.",
+               constants_.errorCaption(),
+               constants_.rStudioGinjectorErrorMessage(label_),
                textBox_);
          return false;
       }
@@ -133,17 +135,17 @@ public class NumericValueWidget extends Composite
          if (minValue_ != null && intVal < minValue_)
          {
             RStudioGinjector.INSTANCE.getGlobalDisplay().showErrorMessage(
-                  "Error",
-                  label_ + " must be greater than or equal to " + minValue_ + ".",
-                  textBox_);
+               constants_.errorCaption(),
+               constants_.rStudioGinjectorGreaterThanError(label_, minValue_),
+               textBox_);
             return false;
          }
          if (maxValue_ != null && intVal > maxValue_)
          {
             RStudioGinjector.INSTANCE.getGlobalDisplay().showErrorMessage(
-                  "Error",
-                  label_ + " must be less than or equal to " + maxValue_ + ".",
-                  textBox_);
+               constants_.errorCaption(),
+               constants_.rStudioGinjectorLessThanError(label_, maxValue_),
+               textBox_);
             return false;
          }
       }
@@ -168,4 +170,5 @@ public class NumericValueWidget extends Composite
    private Integer minValue_;
    private Integer maxValue_;
    private String label_;
+   private static final CoreClientConstants constants_ = GWT.create(CoreClientConstants.class);
 }

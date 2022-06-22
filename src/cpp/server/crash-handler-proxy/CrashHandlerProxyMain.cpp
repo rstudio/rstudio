@@ -1,7 +1,7 @@
 /*
  * CrashHandlerProxyMain.cpp
  *
- * Copyright (C) 2021 by RStudio, PBC
+ * Copyright (C) 2022 by RStudio, PBC
  *
  */
 
@@ -26,6 +26,9 @@ void runCrashHandler(const char* argv[])
    else
       handlerPath = exePath.getParent().completeChildPath("crashpad_handler");
 
+   if (!handlerPath.exists())
+      return;
+   
    std::string handlerPathStr = handlerPath.getAbsolutePath();
    const char* handlerExe = handlerPathStr.c_str();
    argv[0] = handlerExe;

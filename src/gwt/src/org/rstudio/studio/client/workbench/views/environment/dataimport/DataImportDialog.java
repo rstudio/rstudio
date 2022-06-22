@@ -1,7 +1,7 @@
 /*
  * DataImportDialog.java
  *
- * Copyright (C) 2021 by RStudio, PBC
+ * Copyright (C) 2022 by RStudio, PBC
  *
  * Unless you have received this program directly from RStudio pursuant
  * to the terms of a commercial license agreement with RStudio, then
@@ -16,12 +16,14 @@
 package org.rstudio.studio.client.workbench.views.environment.dataimport;
 
 import com.google.gwt.aria.client.Roles;
+import com.google.gwt.core.client.GWT;
 import org.rstudio.core.client.dom.DomUtils;
 import org.rstudio.core.client.widget.ModalDialog;
 import org.rstudio.core.client.widget.OperationWithInput;
 import org.rstudio.studio.client.RStudioGinjector;
 
 import com.google.gwt.user.client.ui.Widget;
+import org.rstudio.studio.client.workbench.views.environment.ViewEnvironmentConstants;
 
 public class DataImportDialog extends ModalDialog<String>
 {
@@ -37,7 +39,7 @@ public class DataImportDialog extends ModalDialog<String>
       dataImport_ = new DataImport(dataImportMode, addProgressIndicator(false), path);
       RStudioGinjector.INSTANCE.injectMembers(this);
       
-      setOkButtonCaption("Import");
+      setOkButtonCaption(constants_.importCapitalized());
       setEnterDisabled(true);
       
       setHelpLink(dataImport_.getHelpLink());
@@ -63,4 +65,5 @@ public class DataImportDialog extends ModalDialog<String>
    {
       return dataImport_;
    }
+   private static final ViewEnvironmentConstants constants_ = GWT.create(ViewEnvironmentConstants.class);
 }

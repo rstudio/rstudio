@@ -4,7 +4,10 @@
     xmlns:rs="urn:import:org.rstudio.core.client.widget"
     xmlns:rsdi="urn:import:org.rstudio.studio.client.workbench.views.environment.dataimport"
     xmlns:rsw="urn:import:org.rstudio.core.client.widget"
-    xmlns:rsace="urn:import:org.rstudio.studio.client.workbench.views.source.editors.text">
+    xmlns:rsace="urn:import:org.rstudio.studio.client.workbench.views.source.editors.text"
+    ui:generateFormat='com.google.gwt.i18n.server.PropertyCatalogFactory'
+    ui:generateKeys="com.google.gwt.i18n.server.keygen.MD5KeyGenerator"
+    ui:generateLocales="default">
     <ui:with field="res" type="org.rstudio.studio.client.workbench.views.environment.dataimport.res.DataImportResources"/>
     <ui:with field="ElementIds" type="org.rstudio.core.client.ElementIds"/>
     <ui:style>
@@ -143,13 +146,17 @@
         }
     </ui:style>
     <g:HTMLPanel styleName="{style.flexPanel}">
-        <rsw:FormLabel text="File/URL:" styleName="{style.topImportLabel}" for="{ElementIds.getDataImportFileUrl}"/>
+        <rsw:FormLabel text="File/URL:" styleName="{style.topImportLabel}" for="{ElementIds.getDataImportFileUrl}">
+            <ui:attribute name="text" key="fileURL"/>
+        </rsw:FormLabel>
         <rsdi:DataImportFileChooser ui:field="dataImportFileChooser_"
                                     styleName="{style.fileChooser}"
                                     elementId="{ElementIds.getDataImportFileUrl}"
                                     ariaLabelSuffix="File/URL"/>
         <g:HTMLPanel styleName="{style.dataPreviewHeader}">
-            <g:Label text="Data Preview:" styleName="{style.dataPreviewLabel}"/>
+            <g:Label text="Data Preview:" styleName="{style.dataPreviewLabel}">
+                <ui:attribute name="text" key="dataPreviewText"/>
+            </g:Label>
         </g:HTMLPanel>
         <rs:GridViewerFrame ui:field="gridViewer_"
                             styleName="{style.gridViewerFrame}"/>
@@ -162,7 +169,9 @@
                 <div class="{style.headWithButton}">
                     <rsw:FormLabel text="Code Preview:"
                                    styleName="{style.codePreviewImportLabel}"
-                                   for="{ElementIds.getDataImportCodePreview}"/>
+                                   for="{ElementIds.getDataImportCodePreview}">
+                        <ui:attribute name="text" key="codePreviewText"/>
+                    </rsw:FormLabel>
                     <rsw:ImageButton ui:field="copyButton_"
                                      addStyleNames="{style.copyButton}"/>
                 </div>

@@ -1,7 +1,7 @@
 /*
  * SessionRpc.hpp
  *
- * Copyright (C) 2021 by RStudio, PBC
+ * Copyright (C) 2022 by RStudio, PBC
  *
  * Unless you have received this program directly from RStudio pursuant
  * to the terms of a commercial license agreement with RStudio, then
@@ -39,6 +39,17 @@ void handleRpcRequest(const core::json::JsonRpcRequest& request,
 void setRpcDelay(int delayMs);
 
 core::Error initialize();
+
+bool isOfflineableRequest(boost::shared_ptr<HttpConnection> ptrConnection);
+
+void sendJsonAsyncPendingResponse(const core::json::JsonRpcRequest &request,
+                                  boost::shared_ptr<HttpConnection> ptrConnection,
+                                  std::string &asyncHandle);
+
+void endHandleRpcRequestIndirect(
+        const std::string& asyncHandle,
+        const core::Error& executeError,
+        core::json::JsonRpcResponse* pJsonRpcResponse);
 
 } // namespace rpc
 } // namespace session

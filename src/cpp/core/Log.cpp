@@ -1,7 +1,7 @@
 /*
  * Log.cpp
  *
- * Copyright (C) 2021 by RStudio, PBC
+ * Copyright (C) 2022 by RStudio, PBC
  *
  * Unless you have received this program directly from RStudio pursuant
  * to the terms of a commercial license agreement with RStudio, then
@@ -15,68 +15,11 @@
 
 #include <core/Log.hpp>
 
-#include <iostream>
-#include <sstream>
-#include <algorithm>
-
-#include <core/system/System.hpp>
-
 #include <shared_core/Error.hpp>
-#include <shared_core/SafeConvert.hpp>
 
 namespace rstudio {
 namespace core {
 namespace log {
-
-namespace {
-
-void logAction(LogLevel logLevel,
-               const boost::function<std::string()>& action,
-               const ErrorLocation& loggedFromLocation = ErrorLocation(),
-               const std::string& logSection = std::string())
-{
-   switch (logLevel)
-   {
-      case LogLevel::ERR:
-         return logErrorMessage(action(), logSection, loggedFromLocation);
-      case LogLevel::WARN:
-         return logWarningMessage(action(), logSection, loggedFromLocation);
-      case LogLevel::DEBUG:
-         return logDebugMessage(action(), logSection, loggedFromLocation);
-      case LogLevel::INFO:
-         return logInfoMessage(action(), logSection, loggedFromLocation);
-      case LogLevel::OFF:
-         return;
-      default:
-      {
-         assert(false);
-         logErrorMessage(
-            "Failed to log action. Invalid log level specified: " +
-            safe_convert::numberToString(static_cast<int>(logLevel)));
-         return;
-      }
-   }
-}
-
-} // anonymous namespace
-
-void logDebugAction(const boost::function<std::string()>& action,
-                    const ErrorLocation& loggedFromLocation)
-{
-   logAction(LogLevel::DEBUG,
-             action,
-             loggedFromLocation);
-}
-
-void logDebugAction(const std::string& logSection,
-                    const boost::function<std::string ()>& action,
-                    const ErrorLocation& loggedFromLocation)
-{
-   logAction(LogLevel::DEBUG,
-             action,
-             loggedFromLocation,
-             logSection);
-}
    
 std::string errorAsLogEntry(const Error& error)
 {

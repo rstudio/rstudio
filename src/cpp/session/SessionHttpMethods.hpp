@@ -1,7 +1,7 @@
 /*
  * SessionHttpMethods.hpp
  *
- * Copyright (C) 2021 by RStudio, PBC
+ * Copyright (C) 2022 by RStudio, PBC
  *
  * Unless you have received this program directly from RStudio pursuant
  * to the terms of a commercial license agreement with RStudio, then
@@ -45,12 +45,19 @@ bool waitForMethod(const std::string& method,
                    core::json::JsonRpcRequest* pRequest);
 void waitForMethodInitFunction(const ClientEvent& initEvent);
 
+bool isJsonRpcRequest(boost::shared_ptr<HttpConnection> ptrConnection);
+
+bool isAsyncJsonRpcRequest(boost::shared_ptr<HttpConnection> ptrConnection);
+
 void handleConnection(boost::shared_ptr<HttpConnection> ptrConnection,
                       ConnectionType connectionType);
+boost::shared_ptr<HttpConnection> handleAsyncRpc(boost::shared_ptr<HttpConnection> ptrConnection);
 core::WaitResult startHttpConnectionListenerWithTimeout();
 void registerGwtHandlers();
 std::string clientVersion();
 std::string nextSessionUrl();
+bool protocolDebugEnabled();
+core::Error initialize();
 
 } // namespace http_methods
 } // namespace session

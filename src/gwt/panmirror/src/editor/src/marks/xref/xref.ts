@@ -1,7 +1,7 @@
 /*
  * xref.ts
  *
- * Copyright (C) 2021 by RStudio, PBC
+ * Copyright (C) 2022 by RStudio, PBC
  *
  * Unless you have received this program directly from RStudio pursuant
  * to the terms of a commercial license agreement with RStudio, then
@@ -31,11 +31,13 @@ import { PandocOutput } from '../../api/pandoc';
 import { OmniInsertGroup } from '../../api/omni_insert';
 import { xrefCompletionHandler } from './xref-completion';
 import { xrefPopupPlugin } from './xref-popup';
+import { kQuartoDocType } from '../../api/format';
+import { insertXref } from '../../behaviors/insert_xref/insert_xref';
 
 const kRefRegExDetectAndApply = /(?:^|[^`])(\\?@ref\([ A-Za-z0-9:-]*\))/g;
 
 const extension = (context: ExtensionContext): Extension | null => {
-  const { pandocExtensions, format, ui, navigation, server } = context;
+  const { pandocExtensions, format, ui, server } = context;
 
   if (!format.rmdExtensions.bookdownXRef) {
     return null;
@@ -182,6 +184,72 @@ const extension = (context: ExtensionContext): Extension | null => {
             },
           ),
         ];
+      } else if (format.docTypes.includes(kQuartoDocType) && pandocExtensions.citations) {
+        return [
+          new ProsemirrorCommand(
+            EditorCommandId.CrossReference,
+            ['Shift-Mod-F10'],
+            (state: EditorState, dispatch?: (tr: Transaction<any>) => void) => {
+              // enable/disable command
+              if (!canInsertNode(state, schema.nodes.text) || !toggleMarkType(schema.marks.cite_id)(state)) {
+                return false;
+              }
+
+              // Show the insert Xref dialog
+              if (dispatch) {
+                insertXref(ui, state.doc, server, (key: string, prefix?: string) => {
+                  // An xref was selected, insert it
+                  const tr = state.tr;
+                  const xref = schema.text(key, [schema.marks.cite_id.create()]);
+
+                  // If there is a custom prefix, create a full cite
+                  if (prefix !== undefined || key.startsWith('-')) {
+                    const start = tr.selection.from;
+                    const wrapperText = schema.text('[]');
+                    tr.replaceSelectionWith(wrapperText);
+
+                    // move the selection into the wrapper
+                    setTextSelection(tr.selection.from - 1)(tr);
+
+                    // Insert the prefix
+                    if (prefix !== undefined) {
+                      tr.insertText(`${prefix} `, tr.selection.from);
+                    }
+
+                    // Insert the xref
+                    tr.insert(tr.selection.from, xref);
+
+                    // Add the cite mark
+                    const citeMark = schema.marks.cite.create();
+                    tr.addMark(start, tr.selection.from + 1, citeMark);
+
+                    setTextSelection(tr.selection.from + 1)(tr);
+                    dispatch(tr);
+
+                  } else {
+                    // otherwise, create simple cite_id
+                    tr.replaceSelectionWith(xref, false);
+                    setTextSelection(tr.selection.from)(tr);
+                    dispatch(tr);
+                  }
+                });
+              }
+              return true;
+            },
+            {
+              name: ui.context.translateText('Cross Reference'),
+              description: ui.context.translateText('Reference to related content'),
+              group: OmniInsertGroup.References,
+              priority: 0,
+              image: () =>
+                ui.prefs.darkMode()
+                  ? ui.images.omni_insert!.cross_reference_dark!
+                  : ui.images.omni_insert!.cross_reference!,
+            },
+          ),
+        ];
+
+
       } else {
         return [];
       }
@@ -211,7 +279,7 @@ function atRefInputRule() {
 
 function refPrefixInputRule() {
   return new InputRule(
-    /(^|[^`])(Chapter|Section|Figure|Table|Equation) $/,
+    /(^|[^`])(Chapter|Chapters|Appendix|Section|Figure|Table|Equation) $/,
     (state: EditorState, match: string[], start: number, end: number) => {
       const tr = state.tr;
       tr.insertText(' ');

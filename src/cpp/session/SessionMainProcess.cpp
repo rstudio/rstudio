@@ -1,7 +1,7 @@
 /*
  * SessionMainProcess.cpp
  *
- * Copyright (C) 2021 by RStudio, PBC
+ * Copyright (C) 2022 by RStudio, PBC
  *
  * Unless you have received this program directly from RStudio pursuant
  * to the terms of a commercial license agreement with RStudio, then
@@ -20,6 +20,8 @@
 #include <core/system/Process.hpp>
 
 #include <session/SessionModuleContext.hpp>
+
+#include <r/RExec.hpp>
 
 namespace rstudio {
 namespace session {
@@ -74,6 +76,11 @@ void setupForkHandlers()
 
 }
 #endif
+
+bool isMainThread()
+{
+   return s_mainThreadId == boost::this_thread::get_id();
+}
 
 void initThreadId()
 {

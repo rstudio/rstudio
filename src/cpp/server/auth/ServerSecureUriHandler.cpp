@@ -1,7 +1,7 @@
 /*
  * ServerSecureUriHandler.cpp
  *
- * Copyright (C) 2021 by RStudio, PBC
+ * Copyright (C) 2022 by RStudio, PBC
  *
  * Unless you have received this program directly from RStudio pursuant
  * to the terms of a commercial license agreement with RStudio, then
@@ -31,6 +31,7 @@
 #include <server/auth/ServerValidateUser.hpp>
 
 using namespace rstudio::core;
+using namespace boost::placeholders;
 
 namespace rstudio {
 namespace server {
@@ -271,17 +272,18 @@ SecureAsyncUriHandlerFunctionEx makeExtendedAsyncUriHandler(SecureAsyncUriHandle
    
 http::UriHandlerFunction secureHttpHandler(SecureUriHandlerFunction handler,
                                            bool authenticate,
-                                           bool requireUserListCookie)
+                                           bool requireUserListCookie,
+                                           bool refreshAuthCookies)
 {
    if (authenticate)
       return UriHandler(makeExtendedUriHandler(handler),
                         auth::handler::signInThenContinue,
-                        true,
+                        refreshAuthCookies,
                         requireUserListCookie);
    else
       return UriHandler(makeExtendedUriHandler(handler),
                         setHttpError,
-                        true,
+                        refreshAuthCookies,
                         requireUserListCookie);
 }
 

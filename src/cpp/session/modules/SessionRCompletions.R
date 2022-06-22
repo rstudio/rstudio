@@ -1,7 +1,7 @@
 #
 # SessionRCompletions.R
 #
-# Copyright (C) 2021 by RStudio, PBC
+# Copyright (C) 2022 by RStudio, PBC
 #
 # Unless you have received this program directly from RStudio pursuant
 # to the terms of a commercial license agreement with RStudio, then
@@ -709,7 +709,7 @@ assign(x = ".rs.acCompletionTypes",
       if (any(sapply(readers, identical, object)))
          object <- utils::read.table
       
-      # Similarily for write.csv
+      # Similarly for write.csv
       writers <- list(
          utils::write.csv,
          utils::write.csv2
@@ -1235,7 +1235,7 @@ assign(x = ".rs.acCompletionTypes",
    completions
 })
 
-.rs.addFunction("blackListEvaluationDataTable", function(token, string, functionCall, envir)
+.rs.addFunction("excludeEvaluationDataTable", function(token, string, functionCall, envir)
 {
    tryCatch({
       # NOTE: We don't retrieve the name from the function call as this could
@@ -1265,9 +1265,9 @@ assign(x = ".rs.acCompletionTypes",
    
 })
 
-.rs.addFunction("blackListEvaluation", function(token, string, functionCall, envir)
+.rs.addFunction("excludeEvaluation", function(token, string, functionCall, envir)
 {
-   if (!is.null(result <- .rs.blackListEvaluationDataTable(token, string, functionCall, envir)))
+   if (!is.null(result <- .rs.excludeEvaluationDataTable(token, string, functionCall, envir)))
       return(result)
    
    NULL
@@ -1279,11 +1279,11 @@ assign(x = ".rs.acCompletionTypes",
 {
    result <- .rs.emptyCompletions(excludeOtherCompletions = TRUE)
    
-   ## Blacklist certain evaluations
-   if (!is.null(blacklist <- .rs.blackListEvaluation(token, string, functionCall, envir)))
+   ## Exclude certain evaluations
+   if (!is.null(exclusions <- .rs.excludeEvaluation(token, string, functionCall, envir)))
    {
-      blacklist$excludeOtherCompletions <- .rs.scalar(TRUE)
-      return(blacklist)
+      exclusions$excludeOtherCompletions <- .rs.scalar(TRUE)
+      return(exclusions)
    }
    
    object <- .rs.getAnywhere(string, envir)
@@ -1464,8 +1464,8 @@ assign(x = ".rs.acCompletionTypes",
 {
    result <- .rs.emptyCompletions()
    
-   ## Blacklist certain evaluations
-   if (!is.null(result <- .rs.blackListEvaluation(token, string, functionCall, envir)))
+   ## Exclude certain evaluations
+   if (!is.null(result <- .rs.excludeEvaluation(token, string, functionCall, envir)))
       return(result)
    
    object <- .rs.getAnywhere(string, envir)
@@ -1526,8 +1526,8 @@ assign(x = ".rs.acCompletionTypes",
 {
    result <- .rs.emptyCompletions()
    
-   ## Blacklist certain evaluations
-   if (!is.null(result <- .rs.blackListEvaluation(token, string, functionCall, envir)))
+   ## Exclude certain evaluations
+   if (!is.null(result <- .rs.excludeEvaluation(token, string, functionCall, envir)))
       return(result)
    
    object <- .rs.getAnywhere(string, envir)
@@ -1555,7 +1555,7 @@ assign(x = ".rs.acCompletionTypes",
 
 .rs.addFunction("listIndexedPackages", function()
 {
-   .Call("rs_listIndexedPackages")
+   .Call("rs_listIndexedPackages", PACKAGE = "(embedding)")
 })
 
 .rs.addFunction("getCompletionsPackages", function(token,
@@ -1563,7 +1563,7 @@ assign(x = ".rs.acCompletionTypes",
                                                    excludeOtherCompletions = FALSE,
                                                    quote = !appendColons)
 {
-   allPackages <- basename(.rs.listIndexedPackages())
+   allPackages <- sort(basename(.rs.listIndexedPackages()))
    
    # In case indexing is disabled, include any loaded namespaces by default
    allPackages <- union(allPackages, loadedNamespaces())
@@ -1580,16 +1580,25 @@ assign(x = ".rs.acCompletionTypes",
    }
    
    # Construct our completions, and we're done
-   completions <- .rs.selectFuzzyMatches(allPackages, token)
-   .rs.makeCompletions(token = token,
-                       results = if (appendColons && length(completions))
-                          paste(completions, "::", sep = "")
-                       else
-                          completions,
-                       packages = completions,
-                       quote = quote,
-                       type = .rs.acCompletionTypes$PACKAGE,
-                       excludeOtherCompletions = excludeOtherCompletions)
+   matches <- .rs.selectFuzzyMatches(allPackages, token)
+   results <- if (appendColons && length(matches))
+      paste(matches, "::", sep = "")
+   else
+      matches
+   
+   completions <- .rs.makeCompletions(
+      token = token,
+      results = results,
+      packages = matches,
+      quote = quote,
+      type = .rs.acCompletionTypes$PACKAGE,
+      excludeOtherCompletions = excludeOtherCompletions
+   )
+   
+   .rs.sortCompletions(
+      completions   = completions,
+      token         = token
+   )
 })
 
 .rs.addFunction("getCompletionsData", function(token)
@@ -2065,7 +2074,7 @@ assign(x = ".rs.acCompletionTypes",
    dropFirstArgument <- FALSE
    if (length(string))
    {
-      pipes <- c("%>%", "%<>%", "%T>%", "%>>%")
+      pipes <- c("%>%", "%<>%", "%T>%", "%>>%", "\\|>")
       pattern <- paste(pipes, collapse = "|")
       
       stringPipeMatches <- gregexpr(
@@ -2212,7 +2221,7 @@ assign(x = ".rs.acCompletionTypes",
       if (token == "")
          return(.rs.emptyCompletions(excludeOtherCompletions = TRUE))
       
-      # Otherwise, complete from the seach path + available packages
+      # Otherwise, complete from the search path + available packages
       completions <- Reduce(.rs.appendCompletions, list(
          .rs.getCompletionsSearchPath(token),
          .rs.getCompletionsNAMESPACE(token, documentId),
@@ -2295,18 +2304,19 @@ assign(x = ".rs.acCompletionTypes",
       # NOTE: For Markdown link completions, we overload the meaning of the
       # function call string here, and use it as a signal to generate paths
       # relative to the R markdown path.
-      isRmd <- .rs.endsWith(tolower(filePath), ".rmd")
+      isNotebook <- .rs.endsWith(tolower(filePath), ".rmd") ||
+                    .rs.endsWith(tolower(filePath), ".qmd")
       
       path <- NULL
       
       # if in an Rmd file, ask it for its desired working dir (can be changed
       # with the knitr root.dir option)
-      if (isRmd)
+      if (isNotebook)
       {
-         path <- .Call("rs_getRmdWorkingDir", filePath, documentId)
+         path <- .Call("rs_getNotebookWorkingDir", filePath, documentId)
       }
       
-      if (is.null(path) && isRmd)
+      if (is.null(path) && isNotebook)
       {
          # for R Markdown documents without an explicit working dir,
          # use preferences instead
@@ -2508,14 +2518,14 @@ assign(x = ".rs.acCompletionTypes",
    {
       if (type[[i]] %in% c(.rs.acContextTypes$FUNCTION, .rs.acContextTypes$UNKNOWN))
       {
-         ## Blacklist certain functions
+         ## Exclude certain functions
          if (string[[i]] %in% c("help", "str", "args", "debug", "debugonce", "trace"))
          {
             completions$overrideInsertParens <- .rs.scalar(TRUE)
          }
          else
          {
-            ## Blacklist based on formals of the function
+            ## Exclude based on formals of the function
             object <- .rs.getAnywhere(string[[i]], envir)
             if (is.function(object))
             {
@@ -3441,7 +3451,7 @@ assign(x = ".rs.acCompletionTypes",
    
    ## If we detect that particular 'library' calls are in the source document,
    ## and those packages are actually available (but the package is not currently loaded),
-   ## then we get an asynchronously-updated set of completions. We enocde them as 'context'
+   ## then we get an asynchronously-updated set of completions. We encode them as 'context'
    ## completions just so the user has a small hint that, even though we provide the
    ## completions, the package isn't actually loaded.
    packages <- .rs.listInferredPackages(documentId)

@@ -1,6 +1,9 @@
 <!DOCTYPE ui:UiBinder SYSTEM "http://dl.google.com/gwt/DTD/xhtml.ent">
 <ui:UiBinder xmlns:ui="urn:ui:com.google.gwt.uibinder"
-   xmlns:g="urn:import:com.google.gwt.user.client.ui">
+   xmlns:g="urn:import:com.google.gwt.user.client.ui"
+   ui:generateFormat='com.google.gwt.i18n.server.PropertyCatalogFactory'
+   ui:generateKeys="com.google.gwt.i18n.server.keygen.MD5KeyGenerator"
+   ui:generateLocales="default">
    <ui:style>
    .host
    {
@@ -30,11 +33,12 @@
    }
    </ui:style>
    <g:HTMLPanel styleName="{style.host}">
-      <g:Label ui:field="message_" styleName="{style.waiting}" text="Waiting for session to start..."></g:Label>
+      <g:Label ui:field="message_" styleName="{style.waiting}" text="Waiting for session to start..."><ui:attribute
+              name="text" key="waitingSessionToStart"/></g:Label>
       <g:HTML>
-         You may continue waiting here or monitor from
+         <ui:msg key="waitingText">You may continue waiting here or monitor from</ui:msg>
          <a title="Return to RStudio Workbench Home"
-            href="../../home">RStudio Server Home</a>.
+            href="../../home"><ui:msg key="serverHomeText">RStudio Server Home</ui:msg><ui:attribute name="title" key="returnToWorkbenchHome"/></a>.
       </g:HTML>
       <g:Label styleName="{style.status}" ui:field="status_" visible="false"></g:Label>
    </g:HTMLPanel>

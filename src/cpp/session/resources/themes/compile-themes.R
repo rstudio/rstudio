@@ -1,7 +1,7 @@
 #
 #  compile-themes.R
 #
-# Copyright (C) 2021 by RStudio, PBC
+# Copyright (C) 2022 by RStudio, PBC
 #
 # Unless you have received this program directly from RStudio pursuant
 # to the terms of a commercial license agreement with RStudio, then
@@ -652,6 +652,7 @@
          sprintf(".xtermInvertColor { color: %s; }", background),
          sprintf(".xtermInvertBgColor { background-color: %s; }", foreground),
          ".xtermBold { font-weight: bold; }",
+         ".xtermBlur { filter: blur(1px); }", 
          ".xtermUnderline { text-decoration: underline; }",
          ".xtermBlink { text-decoration: blink; }",
          ".xtermHidden { visibility: hidden; }",
@@ -1172,7 +1173,7 @@
 })
 
 .rs.addFunction("themes_static_rules", function(isDark) {
-   content <- paste(".rstudio-themes-flat.editor_dark.ace_editor_theme a {",
+   content <- paste(".editor_dark.ace_editor_theme a {",
                     "   color: #FFF !important;",
                     "}",
                     "",
@@ -1194,14 +1195,14 @@
       content <- c(
          content,
          paste(
-            ".rstudio-themes-flat.rstudio-themes-dark-menus .ace_editor.ace_autocomplete {",
+            ".rstudio-themes-dark-menus .ace_editor.ace_autocomplete {",
             "   background: #2f3941;",                    # darkGreyMenuBackground
             "   border: solid 1px #4e5c68 !important;",   # darkGreyMenuBorder
             "   color: #f0f0f0;",
             "}",
             "",
-            ".rstudio-themes-flat.rstudio-themes-dark-menus .ace_editor.ace_autocomplete .ace_marker-layer .ace_active-line,",
-            ".rstudio-themes-flat.rstudio-themes-dark-menus .ace_editor.ace_autocomplete .ace_marker-layer .ace_line-hover {",
+            ".rstudio-themes-dark-menus .ace_editor.ace_autocomplete .ace_marker-layer .ace_active-line,",
+            ".rstudio-themes-dark-menus .ace_editor.ace_autocomplete .ace_marker-layer .ace_line-hover {",
             "   background: rgba(255, 255, 255, 0.15);",  # darkGreyMenuSelected 
             "   border: none",
             "}",
@@ -1237,9 +1238,8 @@
    regex <- paste("^\\s*", themeNameCssClass, "\\s*\\{\\s*$", sep = "")
    content <- gsub(regex, paste(
       ".ace_editor",
-      ".rstudio-themes-flat.ace_editor_theme .profvis-flamegraph",
-      ".rstudio-themes-flat.ace_editor_theme", 
-      ".rstudio-themes-flat .ace_editor_theme {",
+      ".ace_editor_theme .profvis-flamegraph",
+      ".ace_editor_theme {",
       sep = ", "), lines)
    
    ## Strip the theme name rule from the CSS.

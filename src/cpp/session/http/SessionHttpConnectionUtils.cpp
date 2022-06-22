@@ -1,7 +1,7 @@
 /*
  * SessionHttpConnectionUtils.cpp
  *
- * Copyright (C) 2021 by RStudio, PBC
+ * Copyright (C) 2022 by RStudio, PBC
  *
  * Unless you have received this program directly from RStudio pursuant
  * to the terms of a commercial license agreement with RStudio, then
@@ -38,6 +38,8 @@
 #include <session/SessionMain.hpp>
 #include <session/SessionOptions.hpp>
 #include <session/projects/ProjectsSettings.hpp>
+#include "../SessionRpc.hpp"
+#include "../SessionAsyncRpcConnection.hpp"
 
 namespace rstudio {
 namespace session {
@@ -65,22 +67,6 @@ void HttpConnection::sendJsonRpcResponse()
    sendJsonRpcResponse(jsonRpcResponse);
 }
 
-void HttpConnection::sendJsonRpcResponse(
-                     const core::json::JsonRpcResponse& jsonRpcResponse)
-{
-   // setup response
-   core::http::Response response;
-
-   // automagic gzip support
-   if (request().acceptsEncoding(core::http::kGzipEncoding))
-      response.setContentEncoding(core::http::kGzipEncoding);
-
-   // set response
-   core::json::setJsonRpcResponse(jsonRpcResponse, &response);
-
-   // send the response
-   sendResponse(response);
-}
 
 
 
@@ -90,7 +76,6 @@ std::string rstudioRequestIdFromRequest(const core::http::Request& request)
 {
    return request.headerValue("X-RS-RID");
 }
-
 
 bool isMethod(boost::shared_ptr<HttpConnection> ptrConnection,
                      const std::string& method)
@@ -212,6 +197,10 @@ bool checkForSuspend(boost::shared_ptr<HttpConnection> ptrConnection)
       }
       else
       {
+         if (http_methods::protocolDebugEnabled())
+         {
+            LOG_DEBUG_MESSAGE("handle session suspend");
+         }
          // send a signal to this process to suspend
          using namespace rstudio::core::system;
          sendSignalToSelf(force ? SigUsr2 : SigUsr1);
@@ -267,6 +256,17 @@ bool checkForInterrupt(boost::shared_ptr<HttpConnection> ptrConnection)
       // busy and it should instead send an explicit request to canncel the current
       // console read request.
       bool busy = session::console_input::executing();
+      if (http_methods::protocolDebugEnabled())
+      {
+         if (busy)
+         {
+            LOG_DEBUG_MESSAGE("handle busy interrupt");
+         }
+         else
+         {
+            LOG_DEBUG_MESSAGE("handle idle interrupt");
+         }
+      }
       if (busy)
       {
          r::exec::setInterruptsPending(true);

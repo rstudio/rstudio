@@ -1,7 +1,7 @@
 /*
  * TutorialTab.java
  *
- * Copyright (C) 2021 by RStudio, PBC
+ * Copyright (C) 2022 by RStudio, PBC
  *
  * This program is licensed to you under the terms of version 3 of the
  * GNU Affero General Public License. This program is distributed WITHOUT
@@ -27,11 +27,12 @@ public class TutorialTab extends DelayLoadWorkbenchTab<TutorialPresenter>
    @Inject
    public TutorialTab(Shim shim)
    {
-      super("Tutorial", shim);
+      super(constants_.tutorialTitle(), shim);
       shim_ = shim;
    }
    
    
    @SuppressWarnings("unused")
    private final Shim shim_;
+   private static final TutorialConstants constants_ = com.google.gwt.core.client.GWT.create(TutorialConstants.class);
 }

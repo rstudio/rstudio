@@ -49,7 +49,7 @@ export const TextInput = React.forwardRef<HTMLInputElement, TextInputProps>((pro
 
   return (
     <div className="pm-textinput-container" style={style}>
-      {props.iconAdornment ? <img src={props.iconAdornment} className="pm-textinput-icon" alt="" /> : undefined}
+      {props.iconAdornment ? <img src={props.iconAdornment} className="pm-textinput-icon" alt="" draggable="false"/> : undefined}
       <input
         type="text"
         placeholder={props.placeholder}

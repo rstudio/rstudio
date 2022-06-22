@@ -1,7 +1,7 @@
 /*
  * list-pandoc.ts
  *
- * Copyright (C) 2021 by RStudio, PBC
+ * Copyright (C) 2022 by RStudio, PBC
  *
  * Unless you have received this program directly from RStudio pursuant
  * to the terms of a commercial license agreement with RStudio, then
@@ -19,7 +19,7 @@ import { PandocOutput, PandocToken, ProsemirrorWriter, PandocTokenType } from '.
 
 import { fragmentWithCheck, tokensWithChecked } from './list-checked';
 import { ListNumberDelim, ListNumberStyle } from './list';
-import { ListCapabilities } from '../../api/list';
+import { ListCapabilities, isList } from '../../api/list';
 
 const LIST_ATTRIBS = 0;
 const LIST_CHILDREN = 1;
@@ -76,6 +76,15 @@ export function readPandocList(nodeType: NodeType, capabilities: ListCapabilitie
 
   const listItemNodeType = schema.nodes.list_item;
   return (writer: ProsemirrorWriter, tok: PandocToken) => {
+
+    // determine if this is an example list and log if it is
+    if ((nodeType === schema.nodes.ordered_list) && capabilities.fancy) {
+      const style = tok.c[LIST_ATTRIBS][LIST_ATTRIB_NUMBER_STYLE].t;
+      if (style === ListNumberStyle.Example) {
+        writer.logExampleList();
+      }
+    }
+    
     const children = getChildren(tok);
     const attrs = getAttrs(tok);
     attrs.tight = children.length && children[0].length && children[0][0].t === 'Plain';
@@ -150,9 +159,12 @@ function listNodeOptions(node: ProsemirrorNode, capabilities: ListCapabilities):
   };
 
   // if it's tight see if we need to override b/c of multiple blocks
+  // (allow case of [paragraph,list] which is just a nested list)
   node.forEach(item => {
     if (options.tight && item.childCount > 1) {
-      options.tight = false;
+      if (item.childCount > 2 || !isList(item.child(1)) ) {
+        options.tight = false;
+      }
     }
   });
 

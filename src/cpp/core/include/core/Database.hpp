@@ -1,7 +1,7 @@
 /*
  * Database.hpp
  *
- * Copyright (C) 2021 by RStudio, PBC
+ * Copyright (C) 2022 by RStudio, PBC
  *
  * Unless you have received this program directly from RStudio pursuant
  * to the terms of a commercial license agreement with RStudio, then
@@ -19,6 +19,7 @@
 #include <core/Thread.hpp>
 #include <shared_core/FilePath.hpp>
 
+#include <boost/assign.hpp>
 #include <boost/optional.hpp>
 #include <boost/shared_ptr.hpp>
 #include <boost/variant.hpp>
@@ -98,12 +99,17 @@ public:
       statement_.exchange(soci::into(out));
       return *this;
    }
-
+   
    template <typename T>
    Query& withOutput(T& out, const std::string& varName)
    {
       statement_.exchange(soci::into(out, varName));
       return *this;
+   }
+
+   int getAffectedRows()
+   {
+      return statement_.get_affected_rows();
    }
 
 private:
@@ -122,6 +128,8 @@ class Rowset
 public:
    RowsetIterator begin();
    RowsetIterator end();
+
+   size_t columnCount() const;
 
 private:
    friend class Connection;
@@ -242,7 +250,7 @@ private:
    void returnConnection(const boost::shared_ptr<Connection>& connection);
    void testAndReconnect(boost::shared_ptr<Connection>& connection);
 
-   thread::ThreadsafeQueue<boost::shared_ptr<Connection>> connections_;
+   thread::ThreadsafeQueue<boost::shared_ptr<Connection> > connections_;
    ConnectionOptions connectionOptions_;
 };
 
@@ -262,6 +270,34 @@ private:
    soci::transaction transaction_;
 };
 
+struct SchemaVersion {
+   public:
+      SchemaVersion() = default;
+      SchemaVersion(std::string date, std::string flower);
+      SchemaVersion(const SchemaVersion& other);
+      SchemaVersion(SchemaVersion&& other);
+
+      std::string Date;
+      std::string Flower;   
+
+      std::string toString() const;
+
+      bool isEmpty() const;
+
+      SchemaVersion& operator=(const SchemaVersion& other);
+      SchemaVersion& operator=(SchemaVersion&& other);
+
+      bool operator<(const SchemaVersion& other) const;
+      bool operator<=(const SchemaVersion& other) const;
+      bool operator>(const SchemaVersion& other) const;
+      bool operator>=(const SchemaVersion& other) const;
+      bool operator==(const SchemaVersion& other) const;
+      bool operator!=(const SchemaVersion& other) const;
+
+   private:
+      static const std::map<std::string, int>& versionMap();
+};
+
 class SchemaUpdater
 {
 public:
@@ -271,31 +307,39 @@ public:
    // updates the database schema to the highest version
    Error update();
 
-   // updates the database schema to the specified version if it is contained
-   // within the migration schemas, or no higher than that version if it is not present
-   Error updateToVersion(const std::string& maxVersion);
-
    // returns whether or not the schema is up-to-date with the latest schema version
    Error isUpToDate(bool* pUpToDate);
 
    // gets the current database schema version
-   Error databaseSchemaVersion(std::string* pVersion);
+   Error databaseSchemaVersion(SchemaVersion* pVersion);
 
 private:
    static constexpr const char* SCHEMA_TABLE = "schema_version";
    static constexpr const char* SQL_EXTENSION = ".sql";
    static constexpr const char* SQLITE_EXTENSION = ".sqlite";
    static constexpr const char* POSTGRESQL_EXTENSION = ".postgresql";
+   static constexpr const char* CREATE_TABLES_STEM = "CreateTables";
+   static constexpr const char* ALTER_TABLES_STEM = "AlterTables";
 
    // returns whether or not a schema version is present in the database
    Error isSchemaVersionPresent(bool* pIsPresent);
 
+   Error getSchemaTableColumnCount(int* pColumnCount);
+
    // returns the highest version that can be migrated to with the migrations
    // specified when constructing this SchemaUpdater
-   Error highestMigrationVersion(std::string* pVersion);
+   Error highestMigrationVersion(SchemaVersion* pVersion);
 
    // gets the actual migration files from the migration path
-   Error migrationFiles(std::vector<FilePath>* pMigrationFiles);
+   Error migrationFiles(std::vector<std::pair<SchemaVersion, FilePath> >* pMigrationFiles);
+
+   Error createSchema();
+
+   // updates the database schema to the specified version if it is contained
+   // within the migration schemas, or no higher than that version if it is not present
+   Error updateToVersion(const SchemaVersion& maxVersion);
+
+   bool parseVersionOfFile(const FilePath& file, SchemaVersion* pVersion);
 
    boost::shared_ptr<IConnection> connection_;
    FilePath migrationsPath_;
@@ -316,6 +360,15 @@ Error connect(const ConnectionOptions& options,
 Error createConnectionPool(size_t poolSize,
                            const ConnectionOptions& options,
                            boost::shared_ptr<ConnectionPool>* pPool);
+
+// execute a provided query and pass each row to the rowHandler
+Error execAndProcessQuery(boost::shared_ptr<database::IConnection> pConnection,
+                          const std::string& sql,
+                          const boost::function<void(const database::Row&)>& rowHandler =
+                             boost::function<void(const database::Row&)>());
+
+// uses soci::indicator to safely parse a string value from a row
+std::string getRowStringValue(const Row& row, const std::string& column);
 
 } // namespace database
 } // namespace core

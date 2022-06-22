@@ -1,7 +1,7 @@
 /*
  * User.hpp
  * 
- * Copyright (C) 2021 by RStudio, PBC
+ * Copyright (C) 2022 by RStudio, PBC
  *
  * Unless you have received this program directly from RStudio pursuant to the terms of a commercial license agreement
  * with RStudio, then this program is licensed to you under the following terms:
@@ -218,6 +218,14 @@ public:
     * @return The login shell of this user.
     */
    const std::string& getShell() const;
+
+   /**
+    * @brief Returns the user's real name ("John Doe", not "jdoe")
+    *
+    * @return The real name of this user. Not available on all systems and configurations;
+    *   an empty string is returned if the value is not known.
+    */
+   const std::string& getRealName() const;
 
    /**
     * @brief Gets the ID of this user.

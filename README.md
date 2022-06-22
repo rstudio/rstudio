@@ -1,3 +1,5 @@
+> **Note:** On May 6, 2021, this repository's default branch was changed from `master` to `main`. See [Regarding Git and Branch Naming](https://sfconservancy.org/news/2020/jun/23/gitbranchname/) from the Software Freedom Conservancy for more information.
+
 RStudio
 =============================================================================
 
@@ -40,7 +42,9 @@ See also the following files included with the distribution:
 - NOTICE  - Additional open source software included with RStudio
 - SOURCE  - How to obtain the source code for RStudio
 - INSTALL - How to build and install RStudio from source
+- VSCODE.md - How to get started with development using Visual Studio Code
 
 If you have problems or want to share feedback with us please visit our
 [community forum](https://community.rstudio.com/c/rstudio-ide). For other
 inquiries you can also email us at [info@rstudio.com](mailto:info@rstudio.com). 
+

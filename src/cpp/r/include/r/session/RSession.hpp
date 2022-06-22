@@ -1,7 +1,7 @@
 /*
  * RSession.hpp
  *
- * Copyright (C) 2021 by RStudio, PBC
+ * Copyright (C) 2022 by RStudio, PBC
  *
  * Unless you have received this program directly from RStudio pursuant
  * to the terms of a commercial license agreement with RStudio, then
@@ -30,6 +30,7 @@
 
 #define kConsoleInputCancel 1
 #define kConsoleInputEof    2
+#define kConsoleInputNoEcho 4
 
 #define EX_CONTINUE                         100
 #define EX_FORCE                            101
@@ -64,7 +65,7 @@ struct ROptions
 {
    ROptions() :
          useInternet2(true),
-         rCompatibleGraphicsEngineVersion(14),
+         rCompatibleGraphicsEngineVersion(15),
          serverMode(false),
          autoReloadSource(false),
          restoreWorkspace(true),
@@ -148,6 +149,11 @@ struct RConsoleInput
    {
       return (flags & kConsoleInputEof) != 0;
    }
+
+   bool isNoEcho()
+   {
+      return (flags & kConsoleInputNoEcho) != 0;
+   }
    
    // typically used for hand-constructed RPC requests
    core::json::Array toJsonArray()
@@ -180,14 +186,16 @@ struct RSuspendOptions;
 struct RCallbacks
 {
    boost::function<core::Error(const RInitInfo&)> init;
-   boost::function<bool(const std::string&,bool,RConsoleInput*)> consoleRead;
+   boost::function<void()> initComplete;
+   boost::function<bool(const std::string&, bool, RConsoleInput*)> consoleRead;
    boost::function<void(const std::string&)> browseURL;
    boost::function<void(const core::FilePath&)> browseFile;
    boost::function<void(const std::string&)> showHelp;
    boost::function<void(const std::string&, core::FilePath&, bool)> showFile;
    boost::function<void(const std::string&, int)> consoleWrite;
    boost::function<void()> consoleHistoryReset;
-   boost::function<bool(double*,double*)> locator;
+   boost::function<void()> consoleReset;
+   boost::function<bool(double*, double*)> locator;
    boost::function<core::FilePath(bool)> chooseFile;
    boost::function<int(const std::string&)> editFile;
    boost::function<void(const std::string&)> showMessage;
@@ -199,7 +207,8 @@ struct RCallbacks
    boost::function<void()> quit;
    boost::function<void(const std::string&)> suicide;
    boost::function<void(bool)> cleanup;
-   boost::function<void(int,const core::FilePath&)> serialization;
+   boost::function<void(int, const core::FilePath&)> serialization;
+   boost::function<void()> runTests;
 };
 
 // run the session   
@@ -211,12 +220,15 @@ void ensureDeserialized();
 // set client metrics 
 void setClientMetrics(const RClientMetrics& metrics);
 
+// report a warning to the user
+void reportWarningToConsole(const std::string& warning);
+
 // report a warning to the user and also log it
 void reportAndLogWarning(const std::string& warning);
 
 // suspend/resume
 bool isSuspendable(const std::string& prompt);
-bool suspend(bool force, int status, const std::string& envVarSaveBlacklist);
+bool suspend(bool force, int status, const std::string& ephemeralEnvVars);
 
 struct RSuspendOptions
 {
@@ -225,16 +237,16 @@ struct RSuspendOptions
    {
    }
 
-   RSuspendOptions(int exitStatus, const std::string& blacklist) 
+   RSuspendOptions(int exitStatus, const std::string& ephemeral) 
       : status(exitStatus),
-        envVarSaveBlacklist(blacklist)
+        ephemeralEnvVars(ephemeral)
    {
    }
    int status;
    bool saveMinimal { false };
    bool saveWorkspace { false };
    bool excludePackages { false };
-   std::string envVarSaveBlacklist;
+   std::string ephemeralEnvVars;
 };
 void suspendForRestart(const RSuspendOptions& options);
    
@@ -253,6 +265,8 @@ bool browserContextActive();
 
 // quit
 void quit(bool saveWorkspace, int status = EXIT_SUCCESS);
+
+void setResumeCallbacks(boost::function<void()> before, boost::function<void()> after);
 
 } // namespace session
 } // namespace r

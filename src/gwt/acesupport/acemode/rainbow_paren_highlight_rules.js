@@ -1,7 +1,7 @@
 /*
  * rainbow_paren_highlight_rules.js
  *
- * Copyright (C) 2021 by RStudio, PBC
+ * Copyright (C) 2022 by RStudio, PBC
  *
  * Unless you have received this program directly from RStudio pursuant
  * to the terms of a commercial license agreement with RStudio, then
@@ -44,19 +44,30 @@ define("mode/rainbow_paren_highlight_rules", ["require", "exports", "module"], f
           return this.token;
         }
 
+        // NOTE: The 'stack' object here (which is really just an array) is
+        // shared by different highlight rules, and is a general way to set and
+        // persist state in the tokenizer. However, because it's visible to
+        // each matching highlight rule, and each individual highlight rule
+        // might want to manipulate that stack, we need to choose the index
+        // carefully to avoid stomping on state declared from other highlight
+        // rules. 15 is chosen as a "large enough" number to avoid stepping
+        // other rules, which normally would be manipulating the first few
+        // slots of the 'stack' array.
+        //
+        // https://github.com/rstudio/rstudio/issues/11087
         stack = stack || [];
         stack[0] = state;
-        stack[1] = stack[1] || 0;
+        stack[15] = stack[15] || 0;
 
         switch(val) {
 
         case "[": case "{": case "(":
-          this.token = "paren.paren_color_" + (stack[1] % $numParenColors);
-          stack[1] = stack[1] + 1;
+          this.token = "paren.paren_color_" + (stack[15] % $numParenColors);
+          stack[15] = stack[15] + 1;
           break;
         case "]": case "}": case ")":
-          stack[1] = Math.max(0, stack[1] - 1);
-          this.token = "paren.paren_color_" + (stack[1] % $numParenColors);
+          stack[15] = Math.max(0, stack[15] - 1);
+          this.token = "paren.paren_color_" + (stack[15] % $numParenColors);
           break;
         }
 

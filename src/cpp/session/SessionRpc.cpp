@@ -1,7 +1,7 @@
 /*
  * SessionRpc.cpp
  *
- * Copyright (C) 2021 by RStudio, PBC
+ * Copyright (C) 2022 by RStudio, PBC
  *
  * Unless you have received this program directly from RStudio pursuant
  * to the terms of a commercial license agreement with RStudio, then
@@ -18,6 +18,7 @@
 #include "SessionRpc.hpp"
 #include "SessionHttpMethods.hpp"
 #include "SessionClientEventQueue.hpp"
+#include "SessionAsyncRpcConnection.hpp"
 
 #include <shared_core/json/Json.hpp>
 #include <core/json/JsonRpc.hpp>
@@ -31,6 +32,7 @@
 #include <r/RRoutines.hpp>
 
 using namespace rstudio::core;
+using namespace boost::placeholders;
 
 namespace rstudio {
 namespace session {
@@ -38,6 +40,8 @@ namespace {
 
 // a delay used when processing RPC methods (used to simulate network latency)
 int s_rpcDelayMs = -1;
+
+std::set<std::string> s_offlineableUris;
 
 // json rpc methods
 core::json::JsonRpcAsyncMethods* s_pJsonRpcMethods = nullptr;
@@ -85,26 +89,6 @@ void endHandleRpcRequestDirect(boost::shared_ptr<HttpConnection> ptrConnection,
    }
 }
 
-void endHandleRpcRequestIndirect(
-      const std::string& asyncHandle,
-      const core::Error& executeError,
-      json::JsonRpcResponse* pJsonRpcResponse)
-{
-   json::JsonRpcResponse temp;
-   json::JsonRpcResponse& jsonRpcResponse =
-                                 pJsonRpcResponse ? *pJsonRpcResponse : temp;
-
-   BOOST_ASSERT(!jsonRpcResponse.hasAfterResponse());
-   if (executeError)
-   {
-      jsonRpcResponse.setError(executeError);
-   }
-   json::Object value;
-   value["handle"] = asyncHandle;
-   value["response"] = jsonRpcResponse.getRawResponse();
-   ClientEvent evt(client_events::kAsyncCompletion, value);
-   module_context::enqueClientEvent(evt);
-}
 
 void saveJsonResponse(const core::Error& error, core::json::JsonRpcResponse *pSrc,
                       core::Error *pError,      core::json::JsonRpcResponse *pDest)
@@ -255,6 +239,50 @@ void raiseJsonRpcResponseError(json::JsonRpcResponse& response)
    }
 }
 
+void sendJsonAsyncPendingResponse(const core::json::JsonRpcRequest &request,
+                                  boost::shared_ptr<HttpConnection> ptrConnection,
+                                  std::string &asyncHandle)
+{
+   // indirect return (asyncHandle style)
+   json::JsonRpcResponse response;
+   response.setAsyncHandle(asyncHandle);
+   response.setField(kEventsPending, "false");
+   ptrConnection->sendJsonRpcResponse(response);
+}
+
+void endHandleRpcRequestIndirect(
+        const std::string& asyncHandle,
+        const core::Error& executeError,
+        json::JsonRpcResponse* pJsonRpcResponse)
+{
+   json::JsonRpcResponse temp;
+   json::JsonRpcResponse& jsonRpcResponse =
+           pJsonRpcResponse ? *pJsonRpcResponse : temp;
+
+   if (executeError)
+      jsonRpcResponse.setError(executeError);
+   
+   if (!jsonRpcResponse.hasField(kEventsPending))
+      jsonRpcResponse.setField(kEventsPending, "false");
+   
+   json::Object value;
+   value["handle"] = asyncHandle;
+   value["response"] = jsonRpcResponse.getRawResponse();
+   ClientEvent evt(client_events::kAsyncCompletion, value);
+   module_context::enqueClientEvent(evt);
+
+   // run after response if we have one (then detect changes again)
+   if (pJsonRpcResponse->hasAfterResponse())
+   {
+      pJsonRpcResponse->runAfterResponse();
+      if (!pJsonRpcResponse->suppressDetectChanges())
+      {
+         module_context::events().onDetectChanges(
+                 module_context::ChangeSourceRPC);
+      }
+   }
+}
+
 void handleRpcRequest(const core::json::JsonRpcRequest& request,
                       boost::shared_ptr<HttpConnection> ptrConnection,
                       http_methods::ConnectionType connectionType)
@@ -277,7 +305,19 @@ void handleRpcRequest(const core::json::JsonRpcRequest& request,
       std::pair<bool, json::JsonRpcAsyncFunction> reg = it->second;
       json::JsonRpcAsyncFunction handlerFunction = reg.second;
 
-      if (reg.first)
+      // For asyncRpc the http response was already sent - just call the handler and emit the event
+      if (ptrConnection->isAsyncRpc())
+      {
+         boost::shared_ptr<rpc::AsyncRpcConnection> asyncConn =
+                 boost::static_pointer_cast<rpc::AsyncRpcConnection>(ptrConnection);
+         handlerFunction(request,
+                         boost::bind(endHandleRpcRequestIndirect,
+                                     asyncConn->asyncHandle(),
+                                     _1,
+                                     _2));
+      }
+      // Sync rpc
+      else if (reg.first)
       {
          // direct return
          handlerFunction(request,
@@ -287,18 +327,15 @@ void handleRpcRequest(const core::json::JsonRpcRequest& request,
                                      _1,
                                      _2));
       }
+      // registerAsyncRpc - http connection is still open, send the async response, then emit the event
       else
       {
-         // indirect return (asyncHandle style)
-         std::string handle = core::system::generateUuid(true);
-         json::JsonRpcResponse response;
-         response.setAsyncHandle(handle);
-         response.setField(kEventsPending, "false");
-         ptrConnection->sendJsonRpcResponse(response);
+         std::string asyncHandle = core::system::generateUuid(true);
+         sendJsonAsyncPendingResponse(request, ptrConnection, asyncHandle);
 
          handlerFunction(request,
                          boost::bind(endHandleRpcRequestIndirect,
-                                     handle,
+                                     asyncHandle,
                                      _1,
                                      _2));
       }
@@ -312,13 +349,28 @@ void handleRpcRequest(const core::json::JsonRpcRequest& request,
       // application states
       LOG_ERROR(executeError);
 
-      endHandleRpcRequestDirect(ptrConnection, executeStartTime, executeError, nullptr);
+      if (ptrConnection->isAsyncRpc())
+      {
+         boost::shared_ptr<rpc::AsyncRpcConnection> asyncConn =
+                 boost::static_pointer_cast<rpc::AsyncRpcConnection>(ptrConnection);
+         endHandleRpcRequestIndirect(asyncConn->asyncHandle(), executeError, nullptr);
+      }
+      else
+         endHandleRpcRequestDirect(ptrConnection, executeStartTime, executeError, nullptr);
    }
 }
 
 void setRpcDelay(int delayMs)
 {
    s_rpcDelayMs = delayMs;
+}
+
+bool isOfflineableRequest(boost::shared_ptr<HttpConnection> ptrConnection)
+{
+   // Only specific requests that do not use the R runtime are offlineable (e.g. save_document)
+   if (s_offlineableUris.find(ptrConnection->request().uri()) == s_offlineableUris.end())
+      return false;
+   return true;
 }
 
 Error initialize()
@@ -331,6 +383,23 @@ Error initialize()
    s_pJsonRpcMethods = new core::json::JsonRpcAsyncMethods;
 
    RS_REGISTER_CALL_METHOD(rs_invokeRpc);
+
+   s_offlineableUris.insert("/rpc/save_document");
+   s_offlineableUris.insert("/rpc/save_document_diff");
+   s_offlineableUris.insert("/rpc/open_document");
+   s_offlineableUris.insert("/rpc/set_client_state");
+   s_offlineableUris.insert("/rpc/list_files");
+   s_offlineableUris.insert("/rpc/modify_document_properties");
+   s_offlineableUris.insert("/rpc/check_for_external_edit");
+   s_offlineableUris.insert("/rpc/start_terminal");
+   s_offlineableUris.insert("/rpc/process_start");
+   s_offlineableUris.insert("/rpc/process_notify_start");
+   s_offlineableUris.insert("/rpc/process_notify_visible");
+   s_offlineableUris.insert("/rpc/process_get_buffer_chunk");
+   s_offlineableUris.insert("/rpc/process_erase_buffer");
+   s_offlineableUris.insert("/rpc/process_set_size");
+   s_offlineableUris.insert("/rpc/get_source_template");
+   s_offlineableUris.insert("/rpc/new_document");
 
    return Success();
 }

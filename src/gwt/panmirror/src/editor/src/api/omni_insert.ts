@@ -1,7 +1,7 @@
 /*
  * omni_insert.ts
  *
- * Copyright (C) 2021 by RStudio, PBC
+ * Copyright (C) 2022 by RStudio, PBC
  *
  * Unless you have received this program directly from RStudio pursuant
  * to the terms of a commercial license agreement with RStudio, then
@@ -33,13 +33,14 @@ export interface OmniInserter extends OmniInsert {
 }
 
 export enum OmniInsertGroup {
+  Common = 'Common',
   Headings = 'Headings',
-  Chunks = 'Chunks',
   Lists = 'Lists',
   Math = 'Math',
   References = 'References',
   Content = 'Content',
   Blocks = 'Blocks',
+  Chunks = 'Chunks',
 }
 
 const omniInsertGroupOrder = new Map<string, number>(Object.keys(OmniInsertGroup).map((key, index) => [key, index]));

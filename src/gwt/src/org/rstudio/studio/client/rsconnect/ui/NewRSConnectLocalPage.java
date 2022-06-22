@@ -1,7 +1,7 @@
 /*
  * NewRSConnectLocalPage.java
  *
- * Copyright (C) 2021 by RStudio, PBC
+ * Copyright (C) 2022 by RStudio, PBC
  *
  * Unless you have received this program directly from RStudio pursuant
  * to the terms of a commercial license agreement with RStudio, then
@@ -14,10 +14,12 @@
  */
 package org.rstudio.studio.client.rsconnect.ui;
 
+import com.google.gwt.core.client.GWT;
 import org.rstudio.core.client.resources.ImageResource2x;
 import org.rstudio.core.client.widget.OperationWithInput;
 import org.rstudio.core.client.widget.ProgressIndicator;
 import org.rstudio.core.client.widget.WizardIntermediatePage;
+import org.rstudio.studio.client.rsconnect.RsconnectConstants;
 import org.rstudio.studio.client.rsconnect.model.NewRSConnectAccountInput;
 import org.rstudio.studio.client.rsconnect.model.NewRSConnectAccountResult;
 
@@ -32,7 +34,7 @@ public class NewRSConnectLocalPage
    {
       super(RSConnectAccountWizard.SERVICE_NAME, 
             RSConnectAccountWizard.SERVICE_DESCRIPTION,
-            "RStudio Connect Account",
+            constants_.rstudioConnectAccount(),
             new ImageResource2x(RSConnectResources.INSTANCE.localAccountIcon2x()), 
             new ImageResource2x(RSConnectResources.INSTANCE.localAccountIconLarge2x()),
             new NewRSConnectAuthPage());
@@ -92,4 +94,5 @@ public class NewRSConnectLocalPage
 
 
    private RSConnectLocalAccount local_;
+   private static final RsconnectConstants constants_ = GWT.create(RsconnectConstants.class);
 }

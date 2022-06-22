@@ -1,7 +1,7 @@
 /*
  * DesktopFrame.java
  *
- * Copyright (C) 2021 by RStudio, PBC
+ * Copyright (C) 2022 by RStudio, PBC
  *
  * Unless you have received this program directly from RStudio pursuant
  * to the terms of a commercial license agreement with RStudio, then
@@ -26,10 +26,7 @@ import com.google.gwt.core.client.JsArrayString;
 import com.google.gwt.user.client.Command;
 
 /**
- * This is an interface straight through to a C++ object that lives
- * in the Qt desktop frame.
- * 
- * String arguments must not be null.
+ * This is an interface to callbacks registered by the desktop frame.
  */
 @BaseExpression("$wnd.desktop")
 public interface DesktopFrame extends JavaScriptPassthrough
@@ -91,7 +88,6 @@ public interface DesktopFrame extends JavaScriptPassthrough
                                   int height, Command onPrepared);
    void prepareForNamedWindow(String name, boolean allowExternalNavigation,
          boolean showDesktopToolbar, Command onPrepared);
-   void closeNamedWindow(String name);
    
    void copyPageRegionToClipboard(int left, int top, int width, int height,
                                   Command onCopied);
@@ -145,17 +141,12 @@ public interface DesktopFrame extends JavaScriptPassthrough
    public static final int PENDING_QUIT_AND_RESTART = 2;
    public static final int PENDING_QUIT_RESTART_AND_RELOAD = 3;
    
-   void setPendingQuit(int pendingQuit);
+   void setPendingQuit(int pendingQuit, CommandWithArg<Void> callback);
    void setPendingProject(String projectFilePath);
    void launchSession(boolean reload);
    
    void openProjectInNewWindow(String projectFilePath);
    void openSessionInNewWindow(String workingDirectoryPath);
-   
-   void openTerminal(String terminalPath,
-                     String workingDirectory,
-                     String extraPathEntries,
-                     String shellType);
 
    void setFixedWidthFont(String font);
    void setZoomLevel(double zoomLevel);
@@ -163,6 +154,7 @@ public interface DesktopFrame extends JavaScriptPassthrough
    void zoomIn();
    void zoomOut();
    void zoomActualSize();
+   void getZoomLevel(CommandWithArg<Double> callback);
    
    void setBackgroundColor(JsArrayInteger rgbColor);
    void changeTitleBarColor(int r, int g, int b);
@@ -174,8 +166,8 @@ public interface DesktopFrame extends JavaScriptPassthrough
    void getClipboardMonitoring(CommandWithArg<Boolean> callback);
    void setClipboardMonitoring(boolean monitoring);
    
-   void getIgnoreGpuBlacklist(CommandWithArg<Boolean> callback);
-   void setIgnoreGpuBlacklist(boolean ignore);
+   void getIgnoreGpuExclusionList(CommandWithArg<Boolean> callback);
+   void setIgnoreGpuExclusionList(boolean ignore);
    
    void getDisableGpuDriverBugWorkarounds(CommandWithArg<Boolean> callback);
    void setDisableGpuDriverBugWorkarounds(boolean disable);
@@ -199,7 +191,7 @@ public interface DesktopFrame extends JavaScriptPassthrough
    
    void setViewerUrl(String url);
    void reloadViewerZoomWindow(String url);
-   
+   void setPresentationUrl(String url);
    void setTutorialUrl(String url);
    
    void setShinyDialogUrl(String url);

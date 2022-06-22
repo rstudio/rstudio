@@ -3,7 +3,7 @@
 #
 # install-qt-linux
 #
-# Copyright (C) 2021 by RStudio, PBC
+# Copyright (C) 2022 by RStudio, PBC
 #
 # Unless you have received this program directly from RStudio pursuant
 # to the terms of a commercial license agreement with RStudio, then
@@ -29,8 +29,8 @@ if [ -z "$QT_SDK_DIR" ]; then
    QT_SDK_DIR=/opt/RStudio-QtSDK
 fi
 
-mkdir -p ${QT_SDK_DIR}
-./install-qt.sh --version $QT_VERSION --directory ${QT_SDK_DIR}/Qt$QT_VERSION \
+mkdir -p "${QT_SDK_DIR}"
+./install-qt.sh --version $QT_VERSION --directory "${QT_SDK_DIR}/Qt$QT_VERSION" \
     qtbase \
     qtwebengine \
     qtwebchannel \

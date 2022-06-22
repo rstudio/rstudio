@@ -1,7 +1,7 @@
 /*
  * AnsiEscapeCode.java
  *
- * Copyright (C) 2021 by RStudio, PBC
+ * Copyright (C) 2022 by RStudio, PBC
  *
  * Unless you have received this program directly from RStudio pursuant
  * to the terms of a commercial license agreement with RStudio, then
@@ -43,7 +43,7 @@ public class AnsiCode
    public static final int BLURRED = 2;
    public static final int BOLD_BLURRED_OFF = 22;
    public static final String BOLD_STYLE = "xtermBold";
-   public static final String BLURRED_STYLE = "NYI";
+   public static final String BLURRED_STYLE = "xtermBlur";
 
    public static final int ITALIC = 3;
    public static final int ITALIC_OFF = 23;
@@ -390,12 +390,12 @@ public class AnsiCode
          }
          else if (codeVal == BLURRED)
          {
-            // NYI clazzes_.add(BLURRED_STYLE);
+            clazzes_.add(BLURRED_STYLE);
          }
          else if (codeVal == BOLD_BLURRED_OFF)
          {
             clazzes_.remove(BOLD_STYLE);
-            // NYI clazzes_.remove(BLURRED_STYLE);
+            clazzes_.remove(BLURRED_STYLE);
          }
          else if (codeVal == ITALIC)
          {
@@ -740,6 +740,14 @@ public class AnsiCode
 
    // Match partial potential ANSI SGR escape sequences
    public static final Pattern SGR_PARTIAL_ESCAPE_PATTERN = Pattern.create(SGR_PARTIAL_REGEX);
+
+   // RegEx to match hyperlinks escape codes
+   // OSC 8 ; [params] ; [url] ; \7
+   public static final String HYPERLINK_REGEX = 
+      "^\u001b\\]8;([^;]*);([^\7]*)\7";
+
+   // Match hyperlink
+   public static final Pattern HYPERLINK_PATTERN = Pattern.create(HYPERLINK_REGEX);
 
    private Color currentColor_ = new Color();
    private Color currentBgColor_ = new Color();

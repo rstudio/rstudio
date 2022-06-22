@@ -1,7 +1,7 @@
 /*
  * JobsApi.hpp
  *
- * Copyright (C) 2021 by RStudio, PBC
+ * Copyright (C) 2022 by RStudio, PBC
  *
  * Unless you have received this program directly from RStudio pursuant
  * to the terms of a commercial license agreement with RStudio, then
@@ -38,11 +38,13 @@ boost::shared_ptr<Job> addJob(
       const std::string& status,
       const std::string& group,
       int progress,
+      bool confirmTermination,
       JobState state,
       JobType type,
       const std::string& cluster,
       bool autoRemove,
       SEXP actions,
+      JobActions cppActions,
       bool show,
       bool saveOutput,
       std::vector<std::string> tags);
@@ -52,10 +54,12 @@ boost::shared_ptr<Job> addJob(
       const std::string& status,
       const std::string& group,
       int progress,
+      bool confirmTermination,
       JobState state,
       JobType type,
       bool autoRemove,
       SEXP actions,
+      JobActions cppActions,
       bool show,
       std::vector<std::string> tags);
 
@@ -75,15 +79,15 @@ core::json::Object jobsAsJson();
 
 void removeAllJobs();
 
-void removeAllLocalJobs();
+void removeAllBackgroundJobs();
 
-void removeAllLauncherJobs();
+void removeAllWorkbenchJobs();
 
-void removeCompletedLocalJobs();
+void removeCompletedBackgroundJobs();
 
 void endAllJobStreaming();
 
-bool localJobsRunning();
+bool backgroundJobsRunning();
 
 } // namespace jobs
 } // namespace modules

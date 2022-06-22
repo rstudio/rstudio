@@ -1,7 +1,7 @@
 /*
  * Satellite.java
  *
- * Copyright (C) 2021 by RStudio, PBC
+ * Copyright (C) 2022 by RStudio, PBC
  *
  * Unless you have received this program directly from RStudio pursuant
  * to the terms of a commercial license agreement with RStudio, then
@@ -199,6 +199,9 @@ public class Satellite implements HasCloseHandlers<Satellite>
       $wnd.opener.registerAsRStudioSatellite(name, $wnd);
    }-*/;
 
+   public native void notifyRStudioSatelliteClosed() /*-{
+      $wnd.opener.notifyRStudioSatelliteClosed($wnd.RStudioSatelliteName);
+   }-*/;
 
    // check whether the current window is a satellite
    public static native boolean isCurrentWindowSatellite() /*-{

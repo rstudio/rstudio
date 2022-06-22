@@ -1,7 +1,7 @@
 /*
  * ZoteroApiKeyWidget.java
  *
- * Copyright (C) 2021 by RStudio, PBC
+ * Copyright (C) 2022 by RStudio, PBC
  *
  * Unless you have received this program directly from RStudio pursuant
  * to the terms of a commercial license agreement with RStudio, then
@@ -14,6 +14,7 @@
  */
 package org.rstudio.studio.client.workbench.prefs.views.zotero;
 
+import com.google.gwt.core.client.GWT;
 import org.rstudio.core.client.MessageDisplay;
 import org.rstudio.core.client.widget.FormLabel;
 import org.rstudio.core.client.widget.NullProgressIndicator;
@@ -24,6 +25,7 @@ import org.rstudio.studio.client.common.GlobalDisplay;
 import org.rstudio.studio.client.panmirror.server.PanmirrorZoteroServerOperations;
 import org.rstudio.studio.client.server.ServerError;
 import org.rstudio.studio.client.server.ServerRequestCallback;
+import org.rstudio.studio.client.workbench.prefs.PrefsConstants;
 
 import com.google.gwt.user.client.ui.Composite;
 import com.google.gwt.user.client.ui.FlowPanel;
@@ -50,12 +52,12 @@ public class ZoteroApiKeyWidget extends Composite
       
       // verify key button
       SmallButton verifyKeyButton = new SmallButton();
-      
-      verifyKeyButton.setText("Verify Key...");
+
+      verifyKeyButton.setText(constants_.verifyKey());
       verifyKeyButton.addClickHandler(event -> verifyKey());
       apiKeyPanel.add(verifyKeyButton);
-       
-      panel.add(new FormLabel("Zotero Web API Key:", txtApiKey_));
+
+      panel.add(new FormLabel(constants_.zoteroWebApiKey(), txtApiKey_));
       panel.add(apiKeyPanel);
       
       
@@ -88,7 +90,7 @@ public class ZoteroApiKeyWidget extends Composite
       String key = getKey();
       if (key.length() > 0)
       {
-         progressIndicator_.onProgress("Verifying Key...");
+         progressIndicator_.onProgress(constants_.verifyingKey());
          server_.zoteroValidateWebAPIKey(key, new ServerRequestCallback<Boolean>() {
             
             @Override
@@ -98,15 +100,13 @@ public class ZoteroApiKeyWidget extends Composite
                GlobalDisplay display = RStudioGinjector.INSTANCE.getGlobalDisplay();
                if (valid)
                {
-                  display.showMessage(MessageDisplay.MSG_INFO, "Zotero", 
-                                      "Zotero API key sucessfully verified.");
+                  display.showMessage(MessageDisplay.MSG_INFO, constants_.zotero(),
+                                      constants_.zoteroKeyVerified());
                }
                else
                {
-                  display.showMessage(MessageDisplay.MSG_WARNING, "Zotero", 
-                                      "Unable to verify Zotero API key.\n\n" +
-                                      "You should verify that your API key is still valid, " +
-                                      "and if necessary create a new key.");
+                  display.showMessage(MessageDisplay.MSG_WARNING, constants_.zotero(),
+                                      constants_.zoteroVerifyKeyFailedMessage());
                }
             }
             
@@ -127,5 +127,5 @@ public class ZoteroApiKeyWidget extends Composite
    private PanmirrorZoteroServerOperations server_;
    private ProgressIndicator progressIndicator_;
   
-
+   private static final PrefsConstants constants_ = GWT.create(PrefsConstants.class);
 }

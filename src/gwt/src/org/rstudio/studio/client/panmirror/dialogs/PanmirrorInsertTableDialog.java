@@ -1,7 +1,7 @@
 /*
  * PanmirrorInsertTableDialog.java
  *
- * Copyright (C) 2021 by RStudio, PBC
+ * Copyright (C) 2022 by RStudio, PBC
  *
  * Unless you have received this program directly from RStudio pursuant
  * to the terms of a commercial license agreement with RStudio, then
@@ -22,6 +22,7 @@ import org.rstudio.core.client.widget.ModalDialog;
 import org.rstudio.core.client.widget.NumericValueWidget;
 import org.rstudio.core.client.widget.OperationWithInput;
 import org.rstudio.core.client.widget.TextBoxWithCue;
+import org.rstudio.studio.client.panmirror.PanmirrorConstants;
 import org.rstudio.studio.client.panmirror.dialogs.model.PanmirrorInsertTableResult;
 import org.rstudio.studio.client.panmirror.dialogs.model.PanmirrorTableCapabilities;
 
@@ -39,7 +40,7 @@ public class PanmirrorInsertTableDialog extends ModalDialog<PanmirrorInsertTable
    public PanmirrorInsertTableDialog(PanmirrorTableCapabilities capabilities, 
                                      OperationWithInput<PanmirrorInsertTableResult> operation)
    {
-      super("Insert Table", Roles.getDialogRole(), operation, () -> {
+      super(constants_.insertTableCaption(), Roles.getDialogRole(), operation, () -> {
          // cancel returns null
          operation.execute(null);
       });
@@ -93,7 +94,7 @@ public class PanmirrorInsertTableDialog extends ModalDialog<PanmirrorInsertTable
    }
    
    interface Binder extends UiBinder<Widget, PanmirrorInsertTableDialog> {}
-   
+   private static final PanmirrorConstants constants_ = GWT.create(PanmirrorConstants.class);
    private Widget mainWidget_;
 
    @UiField NumericValueWidget rows_;

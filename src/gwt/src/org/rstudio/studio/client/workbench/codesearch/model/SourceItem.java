@@ -1,7 +1,7 @@
 /*
  * SourceItem.java
  *
- * Copyright (C) 2021 by RStudio, PBC
+ * Copyright (C) 2022 by RStudio, PBC
  *
  * Unless you have received this program directly from RStudio pursuant
  * to the terms of a commercial license agreement with RStudio, then
@@ -39,6 +39,7 @@ public class SourceItem extends JavaScriptObject
    public static final int FIGURE     =  8;
    public static final int TABLE      =  9;
    public static final int MATH       = 10;
+   public static final int TEST       = 11;
 
    public final native int getType() /*-{
       return this.type;
@@ -71,6 +72,10 @@ public class SourceItem extends JavaScriptObject
    
    public final native JsObject getMetadata() /*-{
       return this.metadata || {};
+   }-*/;
+
+   public final native boolean getHidden() /*-{
+      return this.hidden;
    }-*/;
    
    public final boolean hasXRef()

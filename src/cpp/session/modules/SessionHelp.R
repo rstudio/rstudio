@@ -1,7 +1,7 @@
 #
 # SessionHelp.R
 #
-# Copyright (C) 2021 by RStudio, PBC
+# Copyright (C) 2022 by RStudio, PBC
 #
 # Unless you have received this program directly from RStudio pursuant
 # to the terms of a commercial license agreement with RStudio, then
@@ -90,7 +90,7 @@ options(help_type = "html")
    payload = paste(
       "<h3>R Custom HTTP Handler Not Found</h3>",
       "<p>Unable to locate custom HTTP handler for",
-      "<i>", path, "</i>",
+      "<i>", .rs.htmlEscape(path), "</i>",
       "<p>Is the package which implements this HTTP handler loaded?</p>")
    
    list(payload, "text/html", character(), 404)
@@ -126,14 +126,14 @@ options(help_type = "html")
    
    # order matches by subsequence match score
    scores <- .rs.scoreMatches(tolower(flat), tolower(query))
-   ordered <- flat[order(scores)]
+   ordered <- flat[order(scores, nchar(flat))]
    matches <- unique(ordered[.rs.isSubsequence(tolower(ordered), tolower(query))])
    
    # force first character to match, but allow typos after.
    # also keep matches with one or more leading '.', so that e.g.
    # the prefix 'libpaths' can match '.libPaths'
    if (nzchar(query)) {
-      first <- substring(query, 1, 1)
+      first <- .rs.escapeForRegex(substring(query, 1L, 1L))
       pattern <- sprintf("^[.]*[%s]", first)
       matches <- grep(pattern, matches, value = TRUE, perl = TRUE)
    }
@@ -398,11 +398,48 @@ options(help_type = "html")
       utils::browseURL(url)
 })
 
+.rs.addJsonRpcHandler("get_vignette_title", function(topic, package)
+{
+   title <- tryCatch(utils::vignette(topic, package)$Title, 
+                     error = function(e) "", 
+                     warning = function(e) "")
+   .rs.scalar(title)         
+})
+
+.rs.addJsonRpcHandler("get_vignette_description", function(topic, package)
+{
+   description <- tryCatch(
+      {
+         v <- vignette(topic, package)
+
+         Dir <- v$Dir
+         File <- v$File
+         if (grepl("[.]Rmd$", File))
+         {
+            description <- rmarkdown::yaml_front_matter(file.path(Dir, "doc", File))$description
+            if (is.null(description))
+            {
+               description <- ""
+            }
+            description
+         }
+         else ""
+
+      }, 
+      error = function(e) "", 
+      warning = function(e) "")
+   .rs.scalar(description)         
+})
+
+.rs.addJsonRpcHandler("show_vignette", function(topic, package)
+{
+   print(utils::vignette(topic, package))
+})
 
 .rs.addFunction("getHelpFunction", function(name, src, envir = parent.frame())
 {
    # If 'src' is the name of something on the searchpath, get that object
-   # from the seach path, then attempt to get help based on that object
+   # from the search path, then attempt to get help based on that object
    pos <- match(src, search(), nomatch = -1L)
    if (pos >= 0)
    {
@@ -711,17 +748,15 @@ options(help_type = "html")
 
 .rs.addJsonRpcHandler("search", function(query)
 {
-   exactMatch = help(query, help_type = "html")
+   # first, check and see if we can get an exact match
+   exactMatch <- help(query, help_type = "html")
    if (length(exactMatch) == 1)
    {
       print(exactMatch)
       return()
    }
-   else
-   {
-      paste("help/doc/html/Search?pattern=",
-            utils::URLencode(query, reserved = TRUE),
-            "&title=1&keyword=1&alias=1",
-            sep = "")
-   }
+   
+   # if that failed, then we'll do an explicit search
+   fmt <- "help/doc/html/Search?pattern=%s&title=1&keyword=1&alias=1"
+   sprintf(fmt, utils::URLencode(query, reserved = TRUE))
 })

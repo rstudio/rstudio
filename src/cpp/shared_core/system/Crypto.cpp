@@ -1,7 +1,7 @@
 /*
  * Crypto.cpp
  *
- * Copyright (C) 2021 by RStudio, PBC
+ * Copyright (C) 2022 by RStudio, PBC
  *
  * Unless you have received this program directly from RStudio pursuant to the
  * terms of a commercial license agreement with RStudio, then this program is
@@ -319,7 +319,7 @@ Error decryptAndBase64Decode(
    if (error)
       return error;
 
-   // covert the decrypted bytes into the original string
+   // convert the decrypted bytes into the original string
    out_decrypted.reserve(decrypted.size());
    std::copy(decrypted.begin(), decrypted.end(), std::back_inserter(out_decrypted));
 

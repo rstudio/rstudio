@@ -1,7 +1,7 @@
 /*
  * DocPropMenuItem.java
  *
- * Copyright (C) 2021 by RStudio, PBC
+ * Copyright (C) 2022 by RStudio, PBC
  *
  * Unless you have received this program directly from RStudio pursuant
  * to the terms of a commercial license agreement with RStudio, then
@@ -16,6 +16,8 @@ package org.rstudio.core.client.widget;
 
 import java.util.HashMap;
 
+import com.google.gwt.core.client.GWT;
+import org.rstudio.core.client.CoreClientConstants;
 import org.rstudio.core.client.StringUtil;
 import org.rstudio.studio.client.RStudioGinjector;
 import org.rstudio.studio.client.workbench.views.source.model.DocUpdateSentinel;
@@ -88,7 +90,7 @@ public class DocPropMenuItem extends CheckableMenuItem
          public void onError(String message)
          {
             RStudioGinjector.INSTANCE.getGlobalDisplay().showErrorMessage(
-                  "Could Not Change Setting", message);
+                  constants_.docPropErrorMessage(), message);
          }
          
          @Override
@@ -123,4 +125,5 @@ public class DocPropMenuItem extends CheckableMenuItem
    private String propName_;
    private String targetValue_;
    private boolean default_;
+   private static final CoreClientConstants constants_ = GWT.create(CoreClientConstants.class);
 }

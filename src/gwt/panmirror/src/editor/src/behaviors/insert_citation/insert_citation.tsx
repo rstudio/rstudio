@@ -1,7 +1,7 @@
 /*
  * insert_citation_picker.ts
  *
- * Copyright (C) 2021 by RStudio, PBC
+ * Copyright (C) 2022 by RStudio, PBC
  *
  * Unless you have received this program directly from RStudio pursuant
  * to the terms of a commercial license agreement with RStudio, then
@@ -40,6 +40,7 @@ import {
   CitationListEntry,
   CitationSourceListStatus,
   BibliographySourceProvider,
+  CitationSourcePanelSearchResult,
 } from './source_panels/insert_citation-source-panel';
 import { bibliographySourcePanel } from './source_panels/insert_citation-source-panel-bibliography';
 import { doiSourcePanel } from './source_panels/insert_citation-source-panel-doi';
@@ -47,10 +48,12 @@ import { crossrefSourcePanel } from './source_panels/insert_citation-source-pane
 import { pubmedSourcePanel } from './source_panels/insert_citation-source-panel-pubmed';
 import { dataciteSourcePanel } from './source_panels/insert_citation-source-panel-datacite';
 import { CitationBibliographyPicker } from './insert_citation-bibliography-picker';
+import { packageSourcePanel } from './source_panels/insert_citation-source-panel-packages';
 
 import './insert_citation.css';
 import debounce from 'lodash.debounce';
 import { CheckboxInput } from '../../api/widgets/checkbox-input';
+
 
 // When the dialog has completed, it will return this result
 // If the dialog is canceled no result will be returned
@@ -111,6 +114,7 @@ export async function showInsertCitationDialog(
             crossrefSourcePanel(ui, server.crossref, server.doi, bibliographyManager),
             dataciteSourcePanel(ui, server.datacite, server.doi, bibliographyManager),
             pubmedSourcePanel(ui, server.pubmed, server.doi, bibliographyManager),
+            packageSourcePanel(ui, server.environment)
           ]
           : [bibliographySourcePanel(doc, ui, bibliographyManager)];
       };
@@ -353,20 +357,22 @@ export const InsertCitationPanel: React.FC<InsertCitationPanelProps> = props => 
   const streamTimerId = React.useRef<NodeJS.Timeout>();
   const refreshSearchCallback = React.useRef<VoidFunction>();
   React.useEffect(() => {
-    refreshSearchCallback.current = () => {
-      // Once the configurations, refresh the search
-      const defaultResults = selectedPanelProvider.typeAheadSearch(
-        insertCitationPanelState.searchTerm,
-        insertCitationPanelState.selectedNode,
-        existingCitationIds,
-      );
-      if (defaultResults) {
-        updateState({
-          searchTerm: '',
-          citations: defaultResults?.citations || [],
-          status: defaultResults?.status || CitationSourceListStatus.default,
-          statusMessage: defaultResults?.statusMessage || selectedPanelProvider.placeHolderMessage,
-        });
+    refreshSearchCallback.current = async () => {
+      if (selectedPanelProvider.typeAheadSearch) {
+        // Once the configurations, refresh the search
+        selectedPanelProvider.typeAheadSearch(
+          insertCitationPanelState.searchTerm,
+          insertCitationPanelState.selectedNode,
+          insertCitationConfiguration.existingIds,
+          (results: CitationSourcePanelSearchResult) => {
+            updateState({
+              searchTerm: '',
+              citations: results?.citations || [],
+              status: results?.status || CitationSourceListStatus.default,
+              statusMessage: results?.statusMessage || selectedPanelProvider.placeHolderMessage,
+            });
+          }
+        );
       }
     };
   });
@@ -401,24 +407,28 @@ export const InsertCitationPanel: React.FC<InsertCitationPanelProps> = props => 
     }, 200);
 
     // Set the default state to initialize the first search
-    const searchResult = selectedPanelProvider.typeAheadSearch(
-      '',
-      insertCitationPanelState.selectedNode,
-      existingCitationIds,
-    );
-    updateState({
-      searchTerm: '',
-      citations: searchResult?.citations || [],
-      status: searchResult?.status || CitationSourceListStatus.default,
-      statusMessage: searchResult?.statusMessage || selectedPanelProvider.placeHolderMessage,
-    });
+    if (selectedPanelProvider.typeAheadSearch) {
+      selectedPanelProvider.typeAheadSearch(
+        '',
+        insertCitationPanelState.selectedNode,
+        insertCitationConfiguration.existingIds,
+        (result: CitationSourcePanelSearchResult) => {
+          updateState({
+            searchTerm: '',
+            citations: result?.citations || [],
+            status: result?.status || CitationSourceListStatus.default,
+            statusMessage: result?.statusMessage || selectedPanelProvider.placeHolderMessage,
+          });
+        }
+      );
+    }
   }, []);
 
   // When the user presses the insert button
   const onOk = () => {
     props.onOk(
       mergedCitationsToAdd,
-      insertCitationPanelState.existingBibliographyFile || insertCitationPanelState.createBibliographyFile,      
+      insertCitationPanelState.existingBibliographyFile || insertCitationPanelState.createBibliographyFile,
       insertCitationPanelState.selectedNode,
       insertCitationPanelState.intextCitationStyle
     );
@@ -444,17 +454,18 @@ export const InsertCitationPanel: React.FC<InsertCitationPanelProps> = props => 
         existingIds: string[],
         existingState: InsertCitationPanelState
       ) => {
-        const searchResult = panelProvider.typeAheadSearch(searchTerm, existingState.selectedNode, existingIds);
-        if (searchResult) {
-          setInsertCitationPanelState(
-            {
-              ...existingState,
-              searchTerm,
-              citations: searchResult?.citations,
-              status: searchResult?.status,
-              statusMessage: searchResult?.statusMessage,
-            }
-          );
+        if (panelProvider.typeAheadSearch) {
+          panelProvider.typeAheadSearch(searchTerm, existingState.selectedNode, existingIds, (result: CitationSourcePanelSearchResult) => {
+            setInsertCitationPanelState(
+              {
+                ...existingState,
+                searchTerm,
+                citations: result?.citations,
+                status: result?.status,
+                statusMessage: result?.statusMessage,
+              }
+            );
+          });
         }
       },
       30,
@@ -474,7 +485,7 @@ export const InsertCitationPanel: React.FC<InsertCitationPanelProps> = props => 
     onSearchTermChanged: (term: string) => {
       const updatedState = { ...insertCitationPanelState, searchTerm: term };
       updateState(updatedState);
-      memoizedTypeaheadSearch(term, selectedPanelProvider, existingCitationIds, updatedState);
+      memoizedTypeaheadSearch(term, selectedPanelProvider, insertCitationConfiguration.existingIds, updatedState);
     },
     onExecuteSearch: (searchTerm: string) => {
       searchCanceled.current = false;
@@ -483,19 +494,24 @@ export const InsertCitationPanel: React.FC<InsertCitationPanelProps> = props => 
         status: CitationSourceListStatus.inProgress,
         statusMessage: selectedPanelProvider.progressMessage,
       });
-      selectedPanelProvider
-        .search(searchTerm, insertCitationPanelState.selectedNode, existingCitationIds)
-        .then(searchResult => {
-          if (!searchCanceled.current) {
-            updateState({
-              searchTerm,
-              citations: searchResult?.citations,
-              status: searchResult?.status,
-              statusMessage: searchResult?.statusMessage,
-              selectedIndex: -1,
-            });
-          }
-        });
+      if (selectedPanelProvider.search) {
+        selectedPanelProvider
+          .search(searchTerm, insertCitationPanelState.selectedNode, existingCitationIds)
+          .then(searchResult => {
+            if (!searchCanceled.current) {
+              // If only a single result is returned, select that by default
+              const selectedIndex = searchResult?.citations.length === 1 ? 0 : -1;
+
+              updateState({
+                searchTerm,
+                citations: searchResult?.citations,
+                status: searchResult?.status,
+                statusMessage: searchResult?.statusMessage,
+                selectedIndex,
+              });
+            }
+          });
+      }
     },
     onAddCitation: (citation: CitationListEntry) => {
       const newCitations = [...insertCitationPanelState.citationsToAdd, citation];
@@ -521,18 +537,24 @@ export const InsertCitationPanel: React.FC<InsertCitationPanelProps> = props => 
 
   // This implements the connection of the dialog (non-provider panel) events and data and the
   // core dialog state
-  const onNodeSelected = (node: NavigationTreeNode) => {
+  const onNodeSelected = async (node: NavigationTreeNode) => {
     const suggestedPanel = panelForNode(insertCitationConfiguration.providers, node);
     if (suggestedPanel) {
+
+      // Clear the current displayed citations
+      updateState({ citations: [], selectedNode: node, status: CitationSourceListStatus.default, statusMessage: "" });
       searchCanceled.current = true;
-      const searchResult = suggestedPanel.typeAheadSearch('', node, existingCitationIds);
-      updateState({
-        searchTerm: '',
-        citations: searchResult?.citations || [],
-        status: searchResult?.status || CitationSourceListStatus.default,
-        statusMessage: searchResult?.statusMessage || suggestedPanel.placeHolderMessage,
-        selectedNode: node,
-      });
+      if (suggestedPanel.typeAheadSearch) {
+        suggestedPanel.typeAheadSearch('', node, insertCitationConfiguration.existingIds, (result: CitationSourcePanelSearchResult) => {
+          updateState({
+            searchTerm: '',
+            citations: result?.citations || [],
+            status: result?.status || CitationSourceListStatus.default,
+            statusMessage: result?.statusMessage || suggestedPanel.placeHolderMessage,
+            selectedNode: node,
+          });
+        });
+      }
 
       if (suggestedPanel?.key !== selectedPanelProvider?.key) {
         setSelectedPanelProvider(suggestedPanel);
@@ -541,8 +563,17 @@ export const InsertCitationPanel: React.FC<InsertCitationPanelProps> = props => 
   };
 
   const deleteCitation = (id: string) => {
-    const filteredCitations = insertCitationPanelState.citationsToAdd.filter(source => source.id !== id);
-    updateState({ citationsToAdd: filteredCitations });
+
+    // First, see if the item we're delete is the selection
+    const selCite = displayedCitations[insertCitationPanelState.selectedIndex];
+    if (selCite && selCite.id === id) {
+      // This is the selected index, just clear the selection
+      updateState({ selectedIndex: -1 });
+    } else {
+      // This is an explicitly added citation, remove it
+      const filteredCitations = insertCitationPanelState.citationsToAdd.filter(source => source.id !== id);
+      updateState({ citationsToAdd: filteredCitations });
+    }
   };
 
   const onTagDeleted = (tag: TagItem) => {
@@ -607,7 +638,7 @@ export const InsertCitationPanel: React.FC<InsertCitationPanelProps> = props => 
   };
 
   const totalCitationCount = insertCitationPanelState.citationsToAdd.length + (insertCitationPanelState.selectedIndex > -1 ? 1 : 0);
-  
+
 
   // Create the panel that should be displayed for the selected node of the tree
   const panelToDisplay = selectedPanelProvider
@@ -644,33 +675,33 @@ export const InsertCitationPanel: React.FC<InsertCitationPanelProps> = props => 
       </div>
       <div className="pm-cite-panel-insert-inputs">
         <div className="pm-cite-panel-insert-options">
-        {// Only show the picker if there are either no bibliographies specified, or if there are writable bibliographies
-        insertCitationConfiguration.bibliographyFiles.length === 0 ||
-        insertCitationConfiguration.bibliographyFiles.some(bibFile => bibFile?.writable) ? (
-          <CitationBibliographyPicker
-            bibliographyTypes={bibliographyTypes(props.ui)}
-            createBibliographyFileName={insertCitationPanelState.createBibliographyFile.displayPath}
-            onCreateBibliographyFileNameChanged={onCreateBibliographyFileNameChanged}
-            bibliographyFiles={insertCitationConfiguration.bibliographyFiles}
-            onBiblographyFileChanged={onBibliographyFileChanged}
-            ui={props.ui}
-          />
-        ) : (
-          <div />
-        )}
-                {
-          totalCitationCount <= 1  ? (
-          <div className='pm-cite-panel-checkbox-group'>
-            <CheckboxInput 
-              id='intextStyleCheckbox'
-              checked={insertCitationPanelState.intextCitationStyle} 
-              className='pm-cite-panel-checkbox' 
-              onChange={onCitationStyleChanged}/>
-            <label htmlFor='intextStyleCheckbox' className='pm-cite-panel-checkbox-label'>{props.ui.context.translateText('Use in-text citation')}</label>
-          </div>
-        ) : (
-          <div/>
-        )}
+          {// Only show the picker if there are either no bibliographies specified, or if there are writable bibliographies
+            insertCitationConfiguration.bibliographyFiles.length === 0 ||
+              insertCitationConfiguration.bibliographyFiles.some(bibFile => bibFile?.writable) ? (
+                <CitationBibliographyPicker
+                  bibliographyTypes={bibliographyTypes(props.ui)}
+                  createBibliographyFileName={insertCitationPanelState.createBibliographyFile.displayPath}
+                  onCreateBibliographyFileNameChanged={onCreateBibliographyFileNameChanged}
+                  bibliographyFiles={insertCitationConfiguration.bibliographyFiles}
+                  onBiblographyFileChanged={onBibliographyFileChanged}
+                  ui={props.ui}
+                />
+              ) : (
+                <div />
+              )}
+          {
+            totalCitationCount <= 1 ? (
+              <div className='pm-cite-panel-checkbox-group'>
+                <CheckboxInput
+                  id='intextStyleCheckbox'
+                  checked={insertCitationPanelState.intextCitationStyle}
+                  className='pm-cite-panel-checkbox'
+                  onChange={onCitationStyleChanged} />
+                <label htmlFor='intextStyleCheckbox' className='pm-cite-panel-checkbox-label'>{props.ui.context.translateText('Use in-text citation')}</label>
+              </div>
+            ) : (
+                <div />
+              )}
 
         </div>
 

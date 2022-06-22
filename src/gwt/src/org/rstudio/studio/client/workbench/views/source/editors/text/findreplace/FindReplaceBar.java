@@ -1,7 +1,7 @@
 /*
  * FindReplaceBar.java
  *
- * Copyright (C) 2021 by RStudio, PBC
+ * Copyright (C) 2022 by RStudio, PBC
  *
  * Unless you have received this program directly from RStudio pursuant
  * to the terms of a commercial license agreement with RStudio, then
@@ -34,6 +34,7 @@ import org.rstudio.core.client.widget.SmallButton;
 import org.rstudio.studio.client.RStudioGinjector;
 import org.rstudio.studio.client.workbench.commands.Commands;
 import org.rstudio.studio.client.workbench.views.history.view.Shelf;
+import org.rstudio.studio.client.workbench.views.source.ViewsSourceConstants;
 import org.rstudio.studio.client.workbench.views.source.editors.text.findreplace.FindReplace.Display;
 
 public class FindReplaceBar extends Composite implements Display, RequiresResize
@@ -53,6 +54,7 @@ public class FindReplaceBar extends Composite implements Display, RequiresResize
    interface Styles extends CssResource
    {
       String findReplaceBar();
+      String findTextBox();
       String replaceTextBox();
       String findPanel();
       String optionsPanel();
@@ -83,7 +85,8 @@ public class FindReplaceBar extends Composite implements Display, RequiresResize
 
       HorizontalPanel findReplacePanel = new HorizontalPanel();
       findReplacePanel.addStyleName(RES.styles().findPanel());
-      findReplacePanel.add(txtFind_ = new FindTextBox("Find"));
+      findReplacePanel.add(txtFind_ = new FindTextBox(constants_.findCapitalized()));
+      txtFind_.addStyleName(RES.styles().findTextBox());
       txtFind_.setIconVisible(true);
 
       Commands cmds = RStudioGinjector.INSTANCE.getCommands();
@@ -91,11 +94,11 @@ public class FindReplaceBar extends Composite implements Display, RequiresResize
       findReplacePanel.add(btnFindPrev_ = new SmallButton(cmds.findPrevious()));
       findReplacePanel.add(btnSelectAll_ = new SmallButton(cmds.findSelectAll()));
 
-      findReplacePanel.add(txtReplace_ = new FindTextBox("Replace"));
+      findReplacePanel.add(txtReplace_ = new FindTextBox(constants_.replaceCapitalized()));
       txtReplace_.addStyleName(RES.styles().replaceTextBox());
       findReplacePanel.add(btnReplace_ = new SmallButton(cmds.replaceAndFind()));
-      findReplacePanel.add(btnReplaceAll_ = new SmallButton("All"));
-      btnReplaceAll_.setTitle("Replace all occurrences");
+      findReplacePanel.add(btnReplaceAll_ = new SmallButton(constants_.allCapitalized()));
+      btnReplaceAll_.setTitle(constants_.replaceAllOccurrences());
 
       panel.add(findReplacePanel);
 
@@ -104,31 +107,31 @@ public class FindReplaceBar extends Composite implements Display, RequiresResize
 
       optionsPanel.add(chkInSelection_ = new CheckBox());
       Label inSelectionLabel = new CheckboxLabel(chkInSelection_,
-                                                 "In selection").getLabel();
+                                                 constants_.inSelection()).getLabel();
       inSelectionLabel.addStyleName(RES.styles().checkboxLabel());
       optionsPanel.add(inSelectionLabel);
 
       optionsPanel.add(chkCaseSensitive_ = new CheckBox());
       Label matchCaseLabel =
-                  new CheckboxLabel(chkCaseSensitive_, "Match case").getLabel();
+                  new CheckboxLabel(chkCaseSensitive_, constants_.matchCase()).getLabel();
       matchCaseLabel.addStyleName(RES.styles().checkboxLabel());
       optionsPanel.add(matchCaseLabel);
 
       optionsPanel.add(chkWholeWord_ = new CheckBox());
       Label wholeWordLabel =
-             new CheckboxLabel(chkWholeWord_, "Whole word").getLabel();
+             new CheckboxLabel(chkWholeWord_, constants_.wholeWord()).getLabel();
       wholeWordLabel.addStyleName(RES.styles().checkboxLabel());
       optionsPanel.add(wholeWordLabel);
 
       optionsPanel.add(chkRegEx_ = new CheckBox());
-      Label regexLabel = new CheckboxLabel(chkRegEx_, "Regex").getLabel();
+      Label regexLabel = new CheckboxLabel(chkRegEx_, constants_.regexCapitalized()).getLabel();
       regexLabel.addStyleName(RES.styles().checkboxLabel());
 
       optionsPanel.add(regexLabel);
 
       optionsPanel.add(chkWrapSearch_ = new CheckBox());
       Label wrapSearchLabel = new CheckboxLabel(chkWrapSearch_,
-                                                "Wrap").getLabel();
+                                                constants_.wrapCapitalized()).getLabel();
       wrapSearchLabel.addStyleName(RES.styles().checkboxLabel());
       optionsPanel.add(wrapSearchLabel);
 
@@ -168,7 +171,7 @@ public class FindReplaceBar extends Composite implements Display, RequiresResize
       btnClose_.setStyleName(RES.styles().closeButton());
       btnClose_.addStyleName(ThemeStyles.INSTANCE.closeTabButton());
       btnClose_.addStyleName(ThemeStyles.INSTANCE.handCursor());
-      Roles.getButtonRole().setAriaLabelProperty(btnClose_.getElement(), "Close find and replace");
+      Roles.getButtonRole().setAriaLabelProperty(btnClose_.getElement(), constants_.closeFindAndReplace());
       btnClose_.getElement().appendChild(
             new DecorativeImage(new ImageResource2x(ThemeResources.INSTANCE.closeTab2x())).getElement());
 
@@ -387,4 +390,5 @@ public class FindReplaceBar extends Composite implements Display, RequiresResize
    private final Button btnClose_;
    private static final Resources RES = GWT.create(Resources.class);
    private boolean defaultForward_;
+   private static final ViewsSourceConstants constants_ = GWT.create(ViewsSourceConstants.class);
 }

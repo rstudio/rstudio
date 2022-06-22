@@ -1,7 +1,7 @@
 /*
  * RVersionsPosix.cpp
  *
- * Copyright (C) 2021 by RStudio, PBC
+ * Copyright (C) 2022 by RStudio, PBC
  *
  * Unless you have received this program directly from RStudio pursuant
  * to the terms of a commercial license agreement with RStudio, then
@@ -311,7 +311,7 @@ std::vector<RVersion> enumerateRVersions(
 #endif
 
    // sort the versions using stable sort
-   // this gaurantees that versions specified in the versions file will come first
+   // this guarantees that versions specified in the versions file will come first
    // this makes sure that versions that have user-defined metadata (such as labels)
    // will not be erased in the subsequent erase call, but the equivalent default versions that were
    // found will be erased instead

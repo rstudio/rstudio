@@ -1,7 +1,7 @@
 /*
  * NewShinyWebApplication.java
  *
- * Copyright (C) 2021 by RStudio, PBC
+ * Copyright (C) 2022 by RStudio, PBC
  *
  * Unless you have received this program directly from RStudio pursuant
  * to the terms of a commercial license agreement with RStudio, then
@@ -191,7 +191,7 @@ public class NewShinyWebApplication extends ModalDialog<NewShinyWebApplication.R
       super(caption, Roles.getDialogRole(), operation);
       RStudioGinjector.INSTANCE.injectMembers(this);
 
-      setOkButtonCaption("Create");
+      setOkButtonCaption(constants_.create());
 
       loadAndPersistClientState();
 
@@ -206,18 +206,18 @@ public class NewShinyWebApplication extends ModalDialog<NewShinyWebApplication.R
       addTextFieldValidator(appNameTextBox_);
       ElementIds.assignElementId(appNameTextBox_, ElementIds.NEW_SHINY_APP_NAME);
 
-      appNameLabel_ = new FormLabel("Application name:", appNameTextBox_);
+      appNameLabel_ = new FormLabel(constants_.applicationNameColon(), appNameTextBox_);
       appNameLabel_.addStyleName(RES.styles().label());
 
-      appTypeLabel_ = new Label("Application type:");
+      appTypeLabel_ = new Label(constants_.applicationTypeColon());
       appTypeLabel_.addStyleName(RES.styles().label());
       appTypeLabel_.getElement().getStyle().setMarginTop(2, Unit.PX);
 
       FieldSetWrapperPanel<VerticalPanel> radioPanel = new FieldSetWrapperPanel<>(new VerticalPanel(), appTypeLabel_);
       radioPanel.setStylePrimaryName(RES.styles().shinyTypeGroup());
-      appTypeSingleFileButton_ = new RadioButton("shiny", "Single File (app.R)");
+      appTypeSingleFileButton_ = new RadioButton("shiny", constants_.singleFileAppR());
       ElementIds.assignElementId(appTypeSingleFileButton_, ElementIds.NEW_SHINY_APP_SINGLE_FILE);
-      appTypeMultipleFileButton_ = new RadioButton("shiny", "Multiple File (ui.R/server.R)");
+      appTypeMultipleFileButton_ = new RadioButton("shiny", constants_.multipleFileUiServerR());
       ElementIds.assignElementId(appTypeMultipleFileButton_, ElementIds.NEW_SHINY_APP_MULTI_FILE);
       radioPanel.add(appTypeSingleFileButton_);
       radioPanel.add(appTypeMultipleFileButton_);
@@ -231,7 +231,7 @@ public class NewShinyWebApplication extends ModalDialog<NewShinyWebApplication.R
          appTypeSingleFileButton_.setValue(true);
       
       directoryChooserTextBox_ = new DirectoryChooserTextBox(
-         "Create within directory:",
+         constants_.createWithinDirectoryColon(),
          ElementIds.TextBoxButtonId.SHINY_DIR,
          null);
       directoryChooserTextBox_.setText(defaultParentDirectory());
@@ -264,7 +264,7 @@ public class NewShinyWebApplication extends ModalDialog<NewShinyWebApplication.R
       
       
       shinyHelpLink_ = new HelpLink(
-            "Shiny Web Applications",
+            constants_.shinyWebApplications(),
             "about_shiny",
             false);
       shinyHelpLink_.getElement().getStyle().setMarginTop(4, Unit.PX);
@@ -284,11 +284,11 @@ public class NewShinyWebApplication extends ModalDialog<NewShinyWebApplication.R
       if (!isValidAppName(appName))
       {
          String message = appName.isEmpty()
-               ? "The application name must not be empty"
-               : "Invalid application name";
+               ? constants_.applicationNameMustNotBeEmpty()
+               : constants_.invalidApplicationName();
          
          globalDisplay_.showErrorMessage(
-               "Invalid Application Name",
+               constants_.invalidApplicationNameCapitalized(),
                message,
                appNameTextBox_);
          return false;
@@ -386,5 +386,5 @@ public class NewShinyWebApplication extends ModalDialog<NewShinyWebApplication.R
    static {
       RES.styles().ensureInjected();
    }
-
+   private static final ViewsSourceConstants constants_ = GWT.create(ViewsSourceConstants.class);
 }

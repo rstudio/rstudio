@@ -1,7 +1,7 @@
 /*
  * ServerAuthCommon.hpp
  *
- * Copyright (C) 2021 by RStudio, PBC
+ * Copyright (C) 2022 by RStudio, PBC
  *
  * Unless you have received this program directly from RStudio pursuant
  * to the terms of a commercial license agreement with RStudio, then
@@ -82,6 +82,10 @@ void prepareHandler(handler::Handler& handler,
                     const std::string& signOutUrl,
                     UserIdentifierToLocalUsernameGetter userIdentifierToLocalUsername,
                     UserIdentifierGetter getUserIdentifier = NULL);
+
+std::string userIdentifierToLocalUsername(const std::string& userIdentifier);
+
+boost::optional<boost::posix_time::time_duration> getCookieExpiry(bool staySignedIn);
 
 } // namespace common
 } // namespace auth

@@ -1,7 +1,7 @@
 /*
  * ChildProcessSubprocPoll.cpp
  *
- * Copyright (C) 2021 by RStudio, PBC
+ * Copyright (C) 2022 by RStudio, PBC
  *
  * Unless you have received this program directly from RStudio pursuant
  * to the terms of a commercial license agreement with RStudio, then
@@ -36,7 +36,7 @@ ChildProcessSubprocPoll::ChildProcessSubprocPoll(
       boost::posix_time::milliseconds checkSubprocDelay,
       boost::posix_time::milliseconds checkCwdDelay,
       boost::function<std::vector<SubprocInfo> (PidType pid)> subProcCheck,
-      const std::vector<std::string>& subProcWhitelist,
+      const std::vector<std::string>& ignoredSubProcs,
       boost::function<core::FilePath (PidType pid)> cwdCheck)
    :
      pid_(pid),
@@ -44,7 +44,7 @@ ChildProcessSubprocPoll::ChildProcessSubprocPoll(
      resetRecentOutputAfter_(boost::posix_time::not_a_date_time),
      checkCwdAfter_(boost::posix_time::not_a_date_time),
      hasSubprocess_(true),
-     hasWhitelistSubprocess_(false),
+     hasIgnoredSubprocess_(false),
      hasRecentOutput_(true),
      didThrottleSubprocCheck_(false),
      stopped_(false),
@@ -52,7 +52,7 @@ ChildProcessSubprocPoll::ChildProcessSubprocPoll(
      checkSubprocDelay_(checkSubprocDelay),
      checkCwdDelay_(checkCwdDelay),
      subProcCheck_(subProcCheck),
-     subProcWhitelist_(subProcWhitelist),
+     ignoredSubProcs_(ignoredSubProcs),
      cwdCheck_(cwdCheck)
 {
 }
@@ -116,21 +116,21 @@ bool ChildProcessSubprocPoll::pollSubproc(boost::posix_time::ptime currentTime)
    // Enough time has passed, update whether "pid" has subprocesses
    // and restart the timer.
    hasSubprocess_ = false;
-   hasWhitelistSubprocess_ = false;
+   hasIgnoredSubprocess_ = false;
    std::vector<SubprocInfo> children = subProcCheck_(pid_);
    for (const SubprocInfo& proc : children)
    {
-      bool isWhitelistItem = false;
-      for (const auto& whitelistItem : subProcWhitelist_)
+      bool ignoredItem = false;
+      for (const auto& ignored : ignoredSubProcs_)
       {
-         if (proc.exe == whitelistItem)
+         if (proc.exe == ignored)
          {
-            isWhitelistItem = true;
-            hasWhitelistSubprocess_ = true;
+            ignoredItem = true;
+            hasIgnoredSubprocess_ = true;
             break;
          }
       }
-      if (!isWhitelistItem)
+      if (!ignoredItem)
       {
          hasSubprocess_ = true;
       }
@@ -168,14 +168,14 @@ void ChildProcessSubprocPoll::stop()
    stopped_ = true;
 }
 
-bool ChildProcessSubprocPoll::hasNonWhitelistSubprocess() const
+bool ChildProcessSubprocPoll::hasNonIgnoredSubprocess() const
 {
    return hasSubprocess_;
 }
 
-bool ChildProcessSubprocPoll::hasWhitelistSubprocess() const
+bool ChildProcessSubprocPoll::hasIgnoredSubprocess() const
 {
-   return hasWhitelistSubprocess_;
+   return hasIgnoredSubprocess_;
 }
 
 bool ChildProcessSubprocPoll::hasRecentOutput() const

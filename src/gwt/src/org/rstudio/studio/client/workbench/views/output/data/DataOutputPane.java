@@ -1,7 +1,7 @@
 /*
  * DataOutputPane.java
  *
- * Copyright (C) 2021 by RStudio, PBC
+ * Copyright (C) 2022 by RStudio, PBC
  *
  * Unless you have received this program directly from RStudio pursuant
  * to the terms of a commercial license agreement with RStudio, then
@@ -14,6 +14,7 @@
  */
 package org.rstudio.studio.client.workbench.views.output.data;
 
+import com.google.gwt.core.client.GWT;
 import com.google.gwt.user.client.Timer;
 import com.google.gwt.user.client.ui.Label;
 import com.google.gwt.user.client.ui.Widget;
@@ -23,6 +24,7 @@ import org.rstudio.core.client.events.EnsureVisibleEvent;
 import org.rstudio.core.client.theme.res.ThemeStyles;
 import org.rstudio.core.client.widget.*;
 import org.rstudio.studio.client.workbench.ui.WorkbenchPane;
+import org.rstudio.studio.client.workbench.views.output.OutputConstants;
 import org.rstudio.studio.client.workbench.views.output.data.events.DataOutputCompletedEvent;
 
 public class DataOutputPane extends WorkbenchPane
@@ -31,21 +33,21 @@ public class DataOutputPane extends WorkbenchPane
    @Inject
    public DataOutputPane()
    {
-      super("Data Output");
+      super(constants_.dataOutputTitle());
       ensureWidget();
    }
 
    @Override
    protected Widget createMainWidget()
    { 
-      gridViewer_ = new GridViewerFrame("Data Output Pane", true);
+      gridViewer_ = new GridViewerFrame(constants_.dataOutputPaneTitle(), true);
       return gridViewer_;
    }
 
    @Override
    protected Toolbar createMainToolbar()
    {
-      Toolbar toolbar = new Toolbar("Data Output Tab");
+      Toolbar toolbar = new Toolbar(constants_.dataOutputTabLabel());
 
       dataOutputFile_ = new Label();
       dataOutputFile_.setStyleName(ThemeStyles.INSTANCE.subtitle());
@@ -102,4 +104,5 @@ public class DataOutputPane extends WorkbenchPane
    
    GridViewerFrame gridViewer_;
    Label dataOutputFile_;
+   private static final OutputConstants constants_ = GWT.create(OutputConstants.class);
 }

@@ -1,7 +1,7 @@
 /*
  * SessionSource.cpp
  *
- * Copyright (C) 2021 by RStudio, PBC
+ * Copyright (C) 2022 by RStudio, PBC
  *
  * Unless you have received this program directly from RStudio pursuant
  * to the terms of a commercial license agreement with RStudio, then
@@ -1295,7 +1295,10 @@ void enqueFileEditEvent(const std::string& file)
    fileJson["mime_type"] = filePath.getMimeContentType();
    
    // fire event
-   ClientEvent event(client_events::kFileEdit, fileJson);
+   json::Object eventJson;
+   eventJson["file"] = fileJson;
+   eventJson["position"] = json::Value();
+   ClientEvent event(client_events::kFileEdit, eventJson);
    module_context::enqueClientEvent(event);
 }
 

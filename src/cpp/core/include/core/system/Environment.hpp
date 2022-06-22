@@ -1,7 +1,7 @@
 /*
  * Environment.hpp
  *
- * Copyright (C) 2021 by RStudio, PBC
+ * Copyright (C) 2022 by RStudio, PBC
  *
  * Unless you have received this program directly from RStudio pursuant
  * to the terms of a commercial license agreement with RStudio, then
@@ -61,7 +61,7 @@ void setenv(Options* pEnvironment,
             const std::string& name,
             const std::string& value);
 
-// remove an enviroment variable from an Options structure
+// remove an environment variable from an Options structure
 void unsetenv(Options* pEnvironment,
               const std::string& name);
 
@@ -76,7 +76,7 @@ void addToPath(std::string* pPath,
                const std::string& filePath,
                bool prepend = false);
 
-// add to the PATH within an Options struture
+// add to the PATH within an Options structure
 void addToPath(Options* pEnvironment,
                const std::string& filePath,
                bool prepend = false);
@@ -91,7 +91,11 @@ bool parseEnvVar(const std::string envVar, Option* pEnvVar);
 // /bob/foo when USER=bob
 std::string expandEnvVars(const Options& environment, const std::string& str);
 
-// set an environment variable in some scope (overridding and
+// forwards environment variables specified as a vector of strings from the current environment
+// to the desired environment object
+void forwardEnvVars(const std::vector<std::string>& vars, Options* pEnvironment);
+
+// set an environment variable in some scope (overriding and
 // later restoring a previously-set environment variable)
 class EnvironmentScope : boost::noncopyable
 {

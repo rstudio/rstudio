@@ -1,7 +1,7 @@
 /*
  * Response.cpp
  *
- * Copyright (C) 2021 by RStudio, PBC
+ * Copyright (C) 2022 by RStudio, PBC
  *
  * Unless you have received this program directly from RStudio pursuant
  * to the terms of a commercial license agreement with RStudio, then
@@ -323,7 +323,7 @@ void Response::setPrivateCacheForeverHeaders()
 {
    // NOTE: the Google article referenced above indicates that for the 
    // private scenario you should set the Expires header in the past so 
-   // that HTTP 1.0 proxies never cache it. Unfortuantely when running 
+   // that HTTP 1.0 proxies never cache it. Unfortunately when running 
    // against localhost in Firefox we observed that this prevented Firefox
    // from caching.
    setCacheForeverHeaders(false);

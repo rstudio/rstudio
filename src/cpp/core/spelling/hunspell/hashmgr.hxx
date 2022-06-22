@@ -29,7 +29,7 @@ class LIBHUNSPELL_DLL_EXPORTED HashMgr
   int               numaliasf; // flag vector `compression' with aliases
   unsigned short ** aliasf;
   unsigned short *  aliasflen;
-  int               numaliasm; // morphological desciption `compression' with aliases
+  int               numaliasm; // morphological description `compression' with aliases
   char **           aliasm;
 
 

@@ -1,7 +1,7 @@
 /*
  * DatabaseTests.cpp
  *
- * Copyright (C) 2021 by RStudio, PBC
+ * Copyright (C) 2022 by RStudio, PBC
  *
  * Unless you have received this program directly from RStudio pursuant
  * to the terms of a commercial license agreement with RStudio, then
@@ -20,9 +20,10 @@
 #include <core/system/System.hpp>
 #include <shared_core/SafeConvert.hpp>
 
-#include <soci/boost-tuple.h>
 #include <soci/session.h>
 #include <soci/sqlite3/soci-sqlite3.h>
+
+#include "config.h"
 
 namespace rstudio {
 namespace unit_tests {
@@ -87,14 +88,16 @@ TEST_CASE("Database", "[.database]")
             .withInput(text);
       REQUIRE_FALSE(connection->execute(query));
 
-      boost::tuple<int, std::string> row;
+      int rowId;
+      std::string rowText;
       query = connection->query("select id, text from Test where id = (:id)")
             .withInput(id)
-            .withOutput(row);
+            .withOutput(rowId)
+            .withOutput(rowText);
       REQUIRE_FALSE(connection->execute(query));
 
-      CHECK(row.get<0>() == id);
-      CHECK(row.get<1>() == text);
+      CHECK(rowId == id);
+      CHECK(rowText == text);
    }
 
    test_that("Can create PostgreSQL database")
@@ -113,14 +116,16 @@ TEST_CASE("Database", "[.database]")
             .withInput(text);
       REQUIRE_FALSE(connection->execute(query));
 
-      boost::tuple<int, std::string> row;
+      int rowId;
+      std::string rowText;
       query = connection->query("select id, text from Test where id = (:id)")
             .withInput(id)
-            .withOutput(row);
+            .withOutput(rowId)
+            .withOutput(rowText);
       REQUIRE_FALSE(connection->execute(query));
 
-      CHECK(row.get<0>() == id);
-      CHECK(row.get<1>() == text);
+      CHECK(rowId == id);
+      CHECK(rowText == text);
    }
 
    test_that("Can perform transactions")
@@ -146,14 +151,17 @@ TEST_CASE("Database", "[.database]")
       REQUIRE(numFailed == 0);
       transaction.commit();
 
-      boost::tuple<int, std::string> row;
+
+      int rowId;
+      std::string rowText;
       query = connection->query("select id, text from Test where id = 50")
-            .withOutput(row);
+         .withOutput(rowId)
+         .withOutput(rowText);
 
       REQUIRE_FALSE(connection->execute(query, &dataReturned));
       REQUIRE(dataReturned);
-      REQUIRE(row.get<0>() == 50);
-      REQUIRE(row.get<1>() == "Test text 50");
+      REQUIRE(rowId == 50);
+      REQUIRE(rowText == "Test text 50");
 
       // now attempt to rollback a transaction
       Transaction transaction2(connection);
@@ -171,7 +179,8 @@ TEST_CASE("Database", "[.database]")
       transaction2.rollback();
 
       query = connection->query("select id, text from Test where id = 150")
-            .withOutput(row);
+         .withOutput(rowId)
+         .withOutput(rowText);
 
       // expect no data
       REQUIRE_FALSE(connection->execute(query, &dataReturned));
@@ -230,9 +239,12 @@ TEST_CASE("Database", "[.database]")
       REQUIRE_FALSE(createConnectionPool(5, sqliteConnectionOptions(), &connectionPool));
 
       boost::shared_ptr<IConnection> connection = connectionPool->getConnection();
-      boost::tuple<int, std::string> row;
+
+      int rowId;
+      std::string rowText;
       Query query = connection->query("select id, text from Test where id = 50")
-            .withOutput(row);
+         .withOutput(rowId)
+         .withOutput(rowText);
 
       bool dataReturned = false;
       REQUIRE_FALSE(connection->execute(query, &dataReturned));
@@ -240,7 +252,8 @@ TEST_CASE("Database", "[.database]")
 
       boost::shared_ptr<IConnection> connection2 = connectionPool->getConnection();
       Query query2 = connection2->query("select id, text from Test where id = 25")
-            .withOutput(row);
+         .withOutput(rowId)
+         .withOutput(rowText);
 
       dataReturned = false;
       REQUIRE_FALSE(connection2->execute(query2, &dataReturned));
@@ -349,12 +362,13 @@ TEST_CASE("Database", "[.database]")
       REQUIRE_FALSE(sqliteUpdater.update());
       REQUIRE_FALSE(postgresUpdater.update());
 
-      std::string currentSchemaVersion;
+      SchemaVersion currentSchemaVersion;
       REQUIRE_FALSE(sqliteUpdater.databaseSchemaVersion(&currentSchemaVersion));
-      REQUIRE(currentSchemaVersion == "3_AddAccountCreationTime");
-      currentSchemaVersion.clear();
+      REQUIRE(currentSchemaVersion == SchemaVersion("3", RSTUDIO_RELEASE_NAME));
+      
+      currentSchemaVersion = SchemaVersion();
       REQUIRE_FALSE(postgresUpdater.databaseSchemaVersion(&currentSchemaVersion));
-      REQUIRE(currentSchemaVersion == "3_AddAccountCreationTime");
+      REQUIRE(currentSchemaVersion == SchemaVersion("3", RSTUDIO_RELEASE_NAME));
 
       // ensure repeated calls to update work without error
       REQUIRE_FALSE(sqliteUpdater.update());

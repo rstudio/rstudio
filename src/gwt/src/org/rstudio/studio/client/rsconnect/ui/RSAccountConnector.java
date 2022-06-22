@@ -1,7 +1,7 @@
 /*
  * RSAccountConnector.java
  *
- * Copyright (C) 2021 by RStudio, PBC
+ * Copyright (C) 2022 by RStudio, PBC
  *
  * Unless you have received this program directly from RStudio pursuant
  * to the terms of a commercial license agreement with RStudio, then
@@ -14,6 +14,7 @@
  */
 package org.rstudio.studio.client.rsconnect.ui;
 
+import com.google.gwt.core.client.GWT;
 import org.rstudio.core.client.command.CommandBinder;
 import org.rstudio.core.client.command.Handler;
 import org.rstudio.core.client.widget.Operation;
@@ -23,6 +24,7 @@ import org.rstudio.core.client.widget.ProgressIndicator;
 import org.rstudio.studio.client.application.events.EventBus;
 import org.rstudio.studio.client.common.GlobalDisplay;
 import org.rstudio.studio.client.common.satellite.Satellite;
+import org.rstudio.studio.client.rsconnect.RsconnectConstants;
 import org.rstudio.studio.client.rsconnect.events.EnableRStudioConnectUIEvent;
 import org.rstudio.studio.client.rsconnect.model.NewRSConnectAccountResult;
 import org.rstudio.studio.client.rsconnect.model.NewRSConnectAccountResult.AccountType;
@@ -146,17 +148,16 @@ public class RSAccountConnector implements EnableRStudioConnectUIEvent.Handler
 
             if (!found)
             {
-               display_.showErrorMessage("Server Information Not Found",
-                     "RStudio could not retrieve server information for " +
-                     "the selected account.");
+               display_.showErrorMessage(constants_.serverInformationNotFound(),
+                     constants_.rStudioCouldNotRetrieveForAccount());
             }
          }
 
          @Override
          public void onError(ServerError error)
          {
-            display_.showErrorMessage("Can't Find Servers",
-                  "RStudio could not retrieve server information.");
+            display_.showErrorMessage(constants_.cantFindServers(),
+                  constants_.rStudioCouldNotRetrieveServerInfo());
          }
       });
    }
@@ -306,14 +307,11 @@ public class RSAccountConnector implements EnableRStudioConnectUIEvent.Handler
                                                          "rsconnect::");
       if (!cmd.startsWith("rsconnect::setAccountInfo"))
       {
-         display_.showErrorMessage("Error Connecting Account",
-               "The pasted command should start with " +
-               "rsconnect::setAccountInfo. If you're having trouble, try " +
-               "connecting your account manually; type " +
-               "?rsconnect::setAccountInfo at the R console for help.");
+         display_.showErrorMessage(constants_.errorConnectingAccount(),
+               constants_.errorAccountMessageSetInfo());
          onConnected.execute(AccountConnectResult.Incomplete);
       }
-      indicator.onProgress("Connecting account...");
+      indicator.onProgress(constants_.connectingAccount());
       server_.connectRSConnectAccount(cmd,
             new ServerRequestCallback<Void>()
       {
@@ -326,11 +324,8 @@ public class RSAccountConnector implements EnableRStudioConnectUIEvent.Handler
          @Override
          public void onError(ServerError error)
          {
-            display_.showErrorMessage("Error Connecting Account",
-                  "The command '" + cmd + "' failed. You can set up an " +
-                  "account manually by using rsconnect::setAccountInfo; " +
-                  "type ?rsconnect::setAccountInfo at the R console for " +
-                  "more information.");
+            display_.showErrorMessage(constants_.errorConnectingAccount(),
+                  constants_.errorAccountMessage(cmd));
             onConnected.execute(AccountConnectResult.Failed);
          }
       });
@@ -342,7 +337,7 @@ public class RSAccountConnector implements EnableRStudioConnectUIEvent.Handler
          final OperationWithInput<AccountConnectResult> onConnected)
 
    {
-      indicator.onProgress("Adding account...");
+      indicator.onProgress(constants_.addingAccount());
       final RSConnectAuthUser user = result.getAuthUser();
       final RSConnectServerInfo serverInfo = result.getServerInfo();
       final RSConnectPreAuthToken token = result.getPreAuthToken();
@@ -360,13 +355,8 @@ public class RSAccountConnector implements EnableRStudioConnectUIEvent.Handler
          @Override
          public void onError(ServerError error)
          {
-            display_.showErrorMessage("Account Connect Failed",
-                  "Your account was authenticated successfully, but could " +
-                  "not be connected to RStudio. Make sure your installation " +
-                  "of the 'rsconnect' package is correct for the server " +
-                  "you're connecting to.\n\n" +
-                  serverInfo.getInfoString() + "\n" +
-                  error.getMessage());
+            display_.showErrorMessage(constants_.accountConnectFailed(),
+                  constants_.accountConnectFailedMessage(serverInfo.getInfoString(),error.getMessage()));
             onConnected.execute(AccountConnectResult.Failed);
          }
       });
@@ -393,4 +383,5 @@ public class RSAccountConnector implements EnableRStudioConnectUIEvent.Handler
    private final Session session_;
 
    private boolean showingWizard_;
+   private static final RsconnectConstants constants_ = GWT.create(RsconnectConstants.class);
 }

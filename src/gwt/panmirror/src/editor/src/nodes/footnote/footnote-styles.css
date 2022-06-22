@@ -1,7 +1,7 @@
 /*
  * footnote-styles.css
  *
- * Copyright (C) 2021 by RStudio, PBC
+ * Copyright (C) 2022 by RStudio, PBC
  *
  * Unless you have received this program directly from RStudio pursuant
  * to the terms of a commercial license agreement with RStudio, then
@@ -19,8 +19,8 @@
   cursor: default;
 }
 
-.ProseMirror .body,
-.ProseMirror .notes {
+.ProseMirror > .body,
+.ProseMirror > .notes {
   position: absolute;
   left: 0;
   right: 0;
@@ -28,20 +28,20 @@
   overflow-y: auto;
 }
 
-.ProseMirror .body {
+.ProseMirror > .body {
   top: 0;
 }
 
-.ProseMirror .notes {
+.ProseMirror > .notes {
   height: 0;
 }
 
-.ProseMirror .body.editing-footnote {
+.ProseMirror > .body.editing-footnote {
   bottom: 160px;
   border-bottom: 1px solid;
 }
 
-.ProseMirror .notes.editing-footnote {
+.ProseMirror > .notes.editing-footnote {
   height: 150px;
   padding-top: 10px;
   z-index: 5;

@@ -1,7 +1,7 @@
 #
 # SessionThemes.R
 #
-# Copyright (C) 2021 by RStudio, PBC
+# Copyright (C) 2022 by RStudio, PBC
 #
 # Unless you have received this program directly from RStudio pursuant
 # to the terms of a commercial license agreement with RStudio, then
@@ -166,7 +166,7 @@
          for (scope in scopes)
          {
             style <- .rs.parseStyles(element$settings)
-            haveStyle <- !is.null(style) && !is.na(style) && (length(style) > 0)
+            haveStyle <- !is.null(style) && any(!is.na(style)) && (length(style) > 0)
             if ((scope %in% supportedScopeNames) && haveStyle)
             {
                styles[[ supportedScopes[[scope]] ]] <- style
@@ -286,7 +286,7 @@
                     gsub(
                        "([^0-9A-Z])([A-Z])", # Insert hyphen before capital letters which are not immediately preceded by a digit or another capital letter
                        "\\1-\\2",
-                       gsub("(?:'|\"|\\(([^\\)]*)\\))", "\\1", # Remove special characters and antyhing encased in parantheses
+                       gsub("(?:'|\"|\\(([^\\)]*)\\))", "\\1", # Remove special characters and anything encased in parentheses
                             gsub("&","-and-", # Replace & with And
                                  gsub("\\s", "-", string)))))))) # Replace whitespace with hyphen
    }
@@ -501,7 +501,7 @@
    value
 })
 
-# Recursivley parses a dictionary element from a tmtheme document and raises the correct errors.
+# Recursively parses a dictionary element from a tmtheme document and raises the correct errors.
 #
 # @param dictElement    The element to parse.
 # @param keyName        The name of the dictionary.
@@ -845,7 +845,7 @@
    # Get the name of the file without extension.
    fileName <- basename(themePath)
    
-   # Get the name of the theme either from the first occurence of "rs-theme-name:" in the css or 
+   # Get the name of the theme either from the first occurrence of "rs-theme-name:" in the css or 
    # the name of the file.
    themeLines <- readLines(themePath, encoding = "UTF-8", warn = FALSE)
    name <- .rs.getThemeName(paste0(themeLines, collapse = "\n"), fileName)
@@ -980,8 +980,9 @@
       warning("Removing the active theme - setting the current theme to ", nextTheme)
       .rs.applyTheme(nextTheme, themeList)
    }
-
+   
    filePath <- .rs.getThemeDirFromUrl(themeList[[lowerCaseName]]$url)
+   
    if (is.null(filePath))
    {
       stop("Please verify that the theme is installed as a custom theme.")

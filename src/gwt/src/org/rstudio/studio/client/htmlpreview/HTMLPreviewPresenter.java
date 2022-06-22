@@ -1,7 +1,7 @@
 /*
  * HTMLPreviewPresenter.java
  *
- * Copyright (C) 2021 by RStudio, PBC
+ * Copyright (C) 2022 by RStudio, PBC
  *
  * Unless you have received this program directly from RStudio pursuant
  * to the terms of a commercial license agreement with RStudio, then
@@ -14,6 +14,7 @@
  */
 package org.rstudio.studio.client.htmlpreview;
 
+import com.google.gwt.core.client.GWT;
 import org.rstudio.core.client.BrowseCap;
 import org.rstudio.core.client.HtmlMessageListener;
 import org.rstudio.core.client.URIUtils;
@@ -149,7 +150,7 @@ public class HTMLPreviewPresenter implements IsWidget
          {
             previewRunning_ = true;
             lastPreviewOutput_ = new StringBuilder();
-            view_.showProgress("Knitting...");
+            view_.showProgress(constants_.progressPreviewStartedCaption());
             view_.addProgressClickHandler(new ClickHandler() {
                @Override
                public void onClick(ClickEvent event)
@@ -199,7 +200,7 @@ public class HTMLPreviewPresenter implements IsWidget
          
                url = URIUtils.addQueryParam(url,
                                             "host",
-                                            htmlMessageListener_.getOriginDomain());
+                                            HtmlMessageListener.getOriginDomain());
                
                htmlMessageListener_.allowOpenOnLoad();
                htmlMessageListener_.setUrl(url);
@@ -211,7 +212,7 @@ public class HTMLPreviewPresenter implements IsWidget
             }
             else
             {
-               view_.setProgressCaption("Preview failed");
+               view_.setProgressCaption(constants_.progressPreviewFailedCaption());
                view_.stopProgress();
             }
          }
@@ -268,8 +269,8 @@ public class HTMLPreviewPresenter implements IsWidget
       {
          final FileSystemItem htmlFile = FileSystemItem.createFile(
                                        lastSuccessfulPreview_.getHtmlFile());
-         pFileExport_.get().export("Download to Local File",
-                                   "web page", 
+         pFileExport_.get().export(constants_.downloadToLocalFileCaption(),
+                                   constants_.downloadToLocalFileDescription(),
                                    htmlFile);
       }
    }
@@ -291,7 +292,7 @@ public class HTMLPreviewPresenter implements IsWidget
                                                          sourceFile.getStem()));
          
          fileDialogs_.saveFile(
-            "Save File As", 
+            constants_.saveFileAsCaption(),
              fileSystemContext_, 
              initialFilePath, 
              sourceFile.getExtension(),
@@ -308,7 +309,7 @@ public class HTMLPreviewPresenter implements IsWidget
                      return;
                   }
                   
-                  indicator.onProgress("Saving File...");
+                  indicator.onProgress(constants_.savingFileCaption());
       
                   server_.copyFile(sourceFile, 
                                    targetFile, 
@@ -361,6 +362,8 @@ public class HTMLPreviewPresenter implements IsWidget
    private String savePreviewDir_;
    private static final String MODULE_HTML_PREVIEW = "html_preview";
    private static final String KEY_SAVEAS_DIR = "saveAsDir";
+
+   private static final HtmlPreviewConstants constants_ = GWT.create(HtmlPreviewConstants.class);
    
    private final GlobalDisplay globalDisplay_;
    private final FileDialogs fileDialogs_;

@@ -1,7 +1,7 @@
 /*
  * NewProjectContext.java
  *
- * Copyright (C) 2021 by RStudio, PBC
+ * Copyright (C) 2022 by RStudio, PBC
  *
  * Unless you have received this program directly from RStudio pursuant
  * to the terms of a commercial license agreement with RStudio, then
@@ -13,6 +13,8 @@
  *
  */
 package org.rstudio.studio.client.projects.model;
+
+import org.rstudio.studio.client.quarto.model.QuartoCapabilities;
 
 import com.google.gwt.core.client.JavaScriptObject;
 
@@ -28,6 +30,10 @@ public class NewProjectContext extends JavaScriptObject
    
    public native final boolean isPackratAvailable() /*-{
       return this.packrat_available;
+   }-*/;
+   
+   public native final QuartoCapabilities getQuartoCapabilities() /*-{
+      return this.quarto_capabilities;
    }-*/;
    
    public native final String getWorkingDirectory() /*-{

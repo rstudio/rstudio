@@ -1,7 +1,7 @@
 /*
  * System.hpp
  *
- * Copyright (C) 2021 by RStudio, PBC
+ * Copyright (C) 2022 by RStudio, PBC
  *
  * Unless you have received this program directly from RStudio pursuant
  * to the terms of a commercial license agreement with RStudio, then
@@ -166,6 +166,11 @@ Error initializeStderrLog(const std::string& programIdentity,
 Error initializeLog(const std::string& programIdentity,
                     log::LogLevel logLevel,
                     const FilePath& logDir,
+                    bool forceLogDir,
+                    bool enableConfigReload = true);
+
+Error initializeLog(const std::string& programIdentity,
+                    log::LogLevel logLevel,
                     bool enableConfigReload = true);
 
 void initializeLogConfigReload();
@@ -173,6 +178,10 @@ void initializeLogConfigReload();
 // common initialization functions - do not invoke directly
 Error initLog();
 Error reinitLog();
+
+void ttyCheck(const std::string& destination);
+
+void initFileLogDestination(const log::LogLevel level, const FilePath defaultLogDir);
 
 // exit
 int exitFailure(const Error& error, const ErrorLocation& loggedFromLocation);

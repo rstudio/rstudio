@@ -3,7 +3,7 @@
 #
 # install-pandoc
 #
-# Copyright (C) 2021 by RStudio, PBC
+# Copyright (C) 2022 by RStudio, PBC
 #
 # Unless you have received this program directly from RStudio pursuant
 # to the terms of a commercial license agreement with RStudio, then
@@ -21,7 +21,7 @@ source "$(dirname "${BASH_SOURCE[0]}")/../tools/rstudio-tools.sh"
 section "Installing Pandoc"
 
 # variables that control download + installation process
-PANDOC_VERSION="2.11.4"
+PANDOC_VERSION="2.18"
 PANDOC_SUBDIR="pandoc/${PANDOC_VERSION}"
 PANDOC_URL_BASE="https://s3.amazonaws.com/rstudio-buildtools/pandoc/${PANDOC_VERSION}"
 
@@ -40,20 +40,24 @@ mkdir -p "${PANDOC_SUBDIR}"
 pushd "${PANDOC_SUBDIR}"
 
 # determine sub-directory based on platform
-PLATFORM="$(uname)-$(getconf LONG_BIT)"
+PLATFORM="$(uname -s)-$(uname -m)"
 case "${PLATFORM}" in
 
-"Darwin-64")
-  SUBDIR="macos"
+"Darwin-x86_64" | "Darwin-arm64")
   FILES=(
     "pandoc-${PANDOC_VERSION}-macOS.zip"
   )
   ;;
 
-"Linux-64")
-  SUBDIR="linux"
+"Linux-x86_64")
   FILES=(
     "pandoc-${PANDOC_VERSION}-linux-amd64.tar.gz"
+  )
+  ;;
+
+"Linux-aarch64")
+  FILES=(
+    "pandoc-${PANDOC_VERSION}-linux-arm64.tar.gz"
   )
   ;;
 

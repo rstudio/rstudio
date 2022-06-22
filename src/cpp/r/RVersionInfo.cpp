@@ -1,7 +1,7 @@
 /*
  * RVersionInfo.cpp
  *
- * Copyright (C) 2021 by RStudio, PBC
+ * Copyright (C) 2022 by RStudio, PBC
  *
  * Unless you have received this program directly from RStudio pursuant
  * to the terms of a commercial license agreement with RStudio, then
@@ -25,20 +25,25 @@ namespace rstudio {
 namespace r {
 namespace version_info {
 
+namespace {
+
+RVersionNumber readVersion()
+{
+   std::string currentRVersion;
+   Error error = exec::RFunction(".rs.rVersionString").call(&currentRVersion);
+   if (error)
+      LOG_ERROR(error);
+   
+   return RVersionNumber::parse(currentRVersion);
+}
+
+} // end anonymous namespace
+
 // Returns a representation of the current version of R
 RVersionNumber currentRVersion()
 {
-   // Cached R version number; this can't change during the session so it's safe to keep a copy
-   static RVersionNumber current;
-   if (current.empty())
-   {
-      // No cache; ask R for its current version
-      std::string currentRVersion;
-      Error error = exec::RFunction(".rs.rVersionString").call(&currentRVersion);
-      if (!error)
-         current = RVersionNumber::parse(currentRVersion);
-   }
-   return current;
+   static RVersionNumber instance = readVersion();
+   return instance;
 }
 
 } // namespace version_info

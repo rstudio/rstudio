@@ -1,7 +1,7 @@
 /*
  * PdfJsWindow.java
  *
- * Copyright (C) 2021 by RStudio, PBC
+ * Copyright (C) 2022 by RStudio, PBC
  *
  * Unless you have received this program directly from RStudio pursuant
  * to the terms of a commercial license agreement with RStudio, then
@@ -59,36 +59,42 @@ public class PdfJsWindow extends WindowEx
          rstudioCss.href = "viewer-rstudio.css";
          win.document.head.appendChild(rstudioCss);
       
-         // hide the Open File and Bookmark buttons; these don't make sense in
-         // our context
-         var openFileButton = win.document.getElementById("openFile");
-         if (openFileButton) {
-            openFileButton.style.display = "none";
+         // hide some buttons that aren't relevant to RStudio
+         var hideIds = ["openFile", "secondaryOpenFile", "viewBookmark"];
+         for (var i = 0, n = hideIds.length; i < n; i++) {
+            var el = win.document.getElementById(hideIds[i]);
+            if (el) {
+               el.setAttribute("hidden", true);
+            }
          }
-         var bookmarkButton = win.document.getElementById("viewBookmark");
-         if (bookmarkButton) {
-            bookmarkButton.style.display = "none";
-         }
+         
+         // create a Jump to Source toolbar button
+         // (image and style are applied in viewer-rstudio.css)
+         //
+         // inject UI on PDF document load, as otherwise pdf.js may attempt
+         // to mutate the toolbar and remove our custom button in the process
+         // ('documentload' is a custom pdf.js event)
+         win.addEventListener("documentload", function() {
+            
+            var jumpToSource = win.document.createElement("button");
+            jumpToSource.className = "toolbarButton";
+            jumpToSource.id = "jumpToSource";
+            jumpToSource.title = "Sync editor location to PDF view";
+            jumpToSource.addEventListener("click", function(evt) {
+               @org.rstudio.studio.client.pdfviewer.model.PdfJsWindow::fireLookupCurrentViewEvent(*)(win);
+            });
 
-         // create a Jump to Source toolbar button (image and style are applied
-         // in viewer-rstudio.css)
-         var jumpToSource = win.document.createElement("button");
-         jumpToSource.className = "toolbarButton";
-         jumpToSource.id = "jumpToSource";
-         jumpToSource.title = "Sync editor location to PDF view";
-         jumpToSource.addEventListener("click", function(evt) {
-            @org.rstudio.studio.client.pdfviewer.model.PdfJsWindow::fireLookupCurrentViewEvent(Lorg/rstudio/studio/client/pdfviewer/model/PdfJsWindow;)(win);
+            var jumpToSourceContent = win.document.createElement("span");
+            jumpToSourceContent.innerText = "Jump to Source Location";
+            jumpToSource.appendChild(jumpToSourceContent);
+
+            // put the Jump to Source button on the right toolbar
+            var toolbarRight = win.document.getElementById("toolbarViewerRight");
+            if (toolbarRight) {
+               toolbarRight.insertBefore(jumpToSource, toolbarRight.firstChild);
+            }
+         
          });
-
-         var jumpToSourceContent = win.document.createElement("span");
-         jumpToSourceContent.innerText = "Jump to Source Location";
-         jumpToSource.appendChild(jumpToSourceContent);
-
-         // put the Jump to Source button on the right toolbar
-         var toolbarRight = win.document.getElementById("toolbarViewerRight");
-         if (toolbarRight) {
-            toolbarRight.insertBefore(jumpToSource, toolbarRight.firstChild);
-         }
          
          // make the sidebar open by default
          win.PDFView.switchSidebarView('thumbs');
@@ -237,8 +243,21 @@ public class PdfJsWindow extends WindowEx
    }-*/;
    
    public final native void applyLocationHash(String hash) /*-{
-      if (hash !== null)
-         this.PDFView.setHash(hash);
+      
+      // ignore empty hashes
+      if (hash == null || hash.length === 0) {
+         return;
+      }
+      
+      // add an event listener that waits until the page has been rendered
+      var self = this;
+      var callback = function(event) {
+         self.PDFView.pdfLinkService.setHash(hash);
+         self.removeEventListener("documentload", callback);
+      };
+      
+      self.addEventListener("documentload", callback);
+            
    }-*/;
    
    public final native float getCurrentScale() /*-{

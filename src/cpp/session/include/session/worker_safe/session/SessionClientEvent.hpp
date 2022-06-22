@@ -1,7 +1,7 @@
 /*
  * SessionClientEvent.hpp
  *
- * Copyright (C) 2021 by RStudio, PBC
+ * Copyright (C) 2022 by RStudio, PBC
  *
  * Unless you have received this program directly from RStudio pursuant
  * to the terms of a commercial license agreement with RStudio, then
@@ -208,6 +208,11 @@ extern const int kRStudioApiRequest;
 extern const int kDocumentCloseAllNoSave;
 extern const int kMemoryUsageChanged;
 extern const int kCommandCallbacksChanged;
+extern const int kConsoleActivate;
+extern const int kJobsActivate;
+extern const int kPresentationPreview;
+extern const int kSuspendBlocked;
+extern const int kClipboardAction;
 }
    
 class ClientEvent

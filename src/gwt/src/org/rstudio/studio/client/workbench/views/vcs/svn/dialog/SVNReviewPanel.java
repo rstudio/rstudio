@@ -1,7 +1,7 @@
 /*
  * SVNReviewPanel.java
  *
- * Copyright (C) 2021 by RStudio, PBC
+ * Copyright (C) 2022 by RStudio, PBC
  *
  * Unless you have received this program directly from RStudio pursuant
  * to the terms of a commercial license agreement with RStudio, then
@@ -50,6 +50,7 @@ import org.rstudio.core.client.widget.ToolbarPopupMenu;
 import org.rstudio.studio.client.common.vcs.GitServerOperations.PatchMode;
 import org.rstudio.studio.client.common.vcs.StatusAndPath;
 import org.rstudio.studio.client.workbench.commands.Commands;
+import org.rstudio.studio.client.workbench.views.vcs.ViewVcsConstants;
 import org.rstudio.studio.client.workbench.views.vcs.common.ChangelistTable;
 import org.rstudio.studio.client.workbench.views.vcs.common.diff.ChunkOrLine;
 import org.rstudio.studio.client.workbench.views.vcs.common.diff.LineTablePresenter;
@@ -211,10 +212,10 @@ public class SVNReviewPanel extends ResizeComposite implements Display
       lines_.getElement().setTabIndex(-1);
       lines_.hideStageCommands();
 
-      overrideSizeWarning_ = new SizeWarningWidget("diff");
+      overrideSizeWarning_ = new SizeWarningWidget(constants_.diff());
 
-      topToolbar_ = new Toolbar("SVN Review");
-      diffToolbar_ = new Toolbar("SVN Diff");
+      topToolbar_ = new Toolbar(constants_.svnReview());
+      diffToolbar_ = new Toolbar(constants_.svnDiff());
 
       changelist.setSelectFirstItemByDefault(true);
 
@@ -224,14 +225,14 @@ public class SVNReviewPanel extends ResizeComposite implements Display
       topToolbar_.addStyleName(RES.styles().toolbar());
       topToolbar_.getWrapper().addStyleName(RES.styles().toolbarInnerWrapper());
 
-      switchViewButton_ = new LeftRightToggleButton("Changes", "History", true);
+      switchViewButton_ = new LeftRightToggleButton(constants_.changesCapitalized(), constants_.historyCapitalized(), true);
       switchViewButton_.getElement().getStyle().setMarginRight(8, Unit.PX);
       topToolbar_.addLeftWidget(switchViewButton_);
 
       topToolbar_.addLeftSeparator();
 
       topToolbar_.addLeftWidget(new ToolbarButton(
-            "Refresh", ToolbarButton.NoTitle, commands.vcsRefresh().getImageResource(),
+            constants_.refreshCapitalized(), ToolbarButton.NoTitle, commands.vcsRefresh().getImageResource(),
             new ClickHandler() {
                @Override
                public void onClick(ClickEvent event)
@@ -254,8 +255,8 @@ public class SVNReviewPanel extends ResizeComposite implements Display
       topToolbar_.addLeftWidget(commands.vcsCommit().createToolbarButton());
 
 
-      commands.vcsPull().setButtonLabel("Update");
-      commands.vcsPull().setMenuLabel("Update");
+      commands.vcsPull().setButtonLabel(constants_.updateCapitalized());
+      commands.vcsPull().setMenuLabel(constants_.updateCapitalized());
       topToolbar_.addRightWidget(commands.vcsPull().createToolbarButton());
 
       diffToolbar_.addStyleName(RES.styles().toolbar());
@@ -264,7 +265,7 @@ public class SVNReviewPanel extends ResizeComposite implements Display
 
       diffToolbar_.addLeftSeparator();
       discardAllButton_ = diffToolbar_.addLeftWidget(new ToolbarButton(
-            "Discard All", ToolbarButton.NoTitle,  new ImageResource2x(RES.discard2x())));
+            constants_.discardAllCapitalized(), ToolbarButton.NoTitle,  new ImageResource2x(RES.discard2x())));
 
       contextLines_.addStyleName(RES.styles().diffContextLines());
       lblContext_.setFor(contextLines_);
@@ -492,4 +493,5 @@ public class SVNReviewPanel extends ResizeComposite implements Display
    static {
       RES.styles().ensureInjected();
    }
+   private static final ViewVcsConstants constants_ = GWT.create(ViewVcsConstants.class);
 }

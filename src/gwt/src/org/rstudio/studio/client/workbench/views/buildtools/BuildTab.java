@@ -1,7 +1,7 @@
 /*
  * BuildTab.java
  *
- * Copyright (C) 2021 by RStudio, PBC
+ * Copyright (C) 2022 by RStudio, PBC
  *
  * Unless you have received this program directly from RStudio pursuant
  * to the terms of a commercial license agreement with RStudio, then
@@ -14,6 +14,7 @@
  */
 package org.rstudio.studio.client.workbench.views.buildtools;
 
+import com.google.gwt.core.client.GWT;
 import com.google.inject.Inject;
 
 import org.rstudio.core.client.command.CommandBinder;
@@ -37,9 +38,11 @@ public class BuildTab extends DelayLoadWorkbenchTab<BuildPresenter>
       @Handler
       public abstract void onBuildAll();
       @Handler
-      public abstract void onDevtoolsLoadAll();
+      public abstract void onBuildIncremental();
       @Handler
-      public abstract void onRebuildAll();
+      public abstract void onBuildFull();
+      @Handler
+      public abstract void onDevtoolsLoadAll();
       @Handler
       public abstract void onCleanAll();
       @Handler
@@ -58,6 +61,8 @@ public class BuildTab extends DelayLoadWorkbenchTab<BuildPresenter>
       public abstract void onTestTestthatFile();
       @Handler
       public abstract void onTestShinytestFile();
+      @Handler
+      public abstract void onServeQuartoSite();
 
       abstract void initialize(BuildState buildState);
    }
@@ -70,7 +75,8 @@ public class BuildTab extends DelayLoadWorkbenchTab<BuildPresenter>
                    EventBus eventBus,
                    UserPrefs uiPrefs)
    {
-      super("Build", shim);
+      super(constants_.buildText(), shim);
+
       session_ = session;
       binder.bind(commands, shim);
 
@@ -101,4 +107,5 @@ public class BuildTab extends DelayLoadWorkbenchTab<BuildPresenter>
    }
 
    private final Session session_;
+   private static final ViewBuildtoolsConstants constants_ = GWT.create(ViewBuildtoolsConstants.class);
 }

@@ -1,7 +1,7 @@
 /*
  * FormTextArea.java
  *
- * Copyright (C) 2021 by RStudio, PBC
+ * Copyright (C) 2022 by RStudio, PBC
  *
  * Unless you have received this program directly from RStudio pursuant
  * to the terms of a commercial license agreement with RStudio, then
@@ -29,5 +29,10 @@ public class FormTextArea extends TextArea
    public void setAriaLabel(String label)
    {
       Roles.getTextboxRole().setAriaLabelProperty(getElement(), label);
+   }
+   
+   public void setSpellcheck(String spellcheck)
+   {
+      getElement().setAttribute("spellcheck", spellcheck);
    }
 }

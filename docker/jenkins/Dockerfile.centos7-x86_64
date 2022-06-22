@@ -21,10 +21,12 @@ RUN yum install -y \
     gtk3 \
     java-1.8.0-openjdk \
     java-1.8.0-openjdk-devel \
+    jq \
     libcurl-devel \
     libacl-devel \
     libcap-devel \ 
     libffi \
+    libuser-devel \
     libuuid-devel \
     libxml2-devel \
     libXcursor-devel \
@@ -33,6 +35,7 @@ RUN yum install -y \
     lsof \
     make \
     mariadb-libs \
+    ninja-build \
     openssl-devel \
     p7zip \
     p7zip-plugins \
@@ -40,6 +43,7 @@ RUN yum install -y \
     pango-devel \
     patchelf \
     postgresql-devel \
+    python3 \
     R \
     rpmdevtools \
     rpm-sign \
@@ -47,8 +51,8 @@ RUN yum install -y \
     sudo \
     wget \
     xml-commons-apis \
-    zlib-devel \
-    libuser-devel
+    xorg-x11-server-Xvfb \
+    zlib-devel
 
 # add scl repo and install additional dependencies
 RUN yum install -y \
@@ -99,13 +103,17 @@ COPY src/gwt/panmirror/src/editor/yarn.lock /opt/rstudio-tools/panmirror/
 COPY src/gwt/panmirror/src/editor/package.json /opt/rstudio-tools/panmirror/
 
 # install common dependencies
-RUN cd /opt/rstudio-tools/dependencies/common && scl enable llvm-toolset-7 "/bin/bash ./install-common"
+RUN cd /opt/rstudio-tools/dependencies/common && scl enable llvm-toolset-7 "/bin/bash ./install-common centos7"
 
 # install Qt SDK
 COPY dependencies/common/install-qt.sh /tmp/
 COPY dependencies/linux/install-qt-linux /tmp/
 RUN export QT_VERSION=5.12.8 && \
     cd /tmp && /bin/bash ./install-qt-linux
+
+# cachebust for Quarto release
+ADD https://quarto.org/docs/download/_download.json quarto_releases
+RUN cd /opt/rstudio-tools/dependencies/common && scl enable llvm-toolset-7 "/bin/bash ./install-quarto"
 
 # set github login from build argument if defined
 ARG GITHUB_LOGIN

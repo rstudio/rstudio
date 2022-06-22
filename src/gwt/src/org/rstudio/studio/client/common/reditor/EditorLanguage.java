@@ -1,7 +1,7 @@
 /*
  * EditorLanguage.java
  *
- * Copyright (C) 2021 by RStudio, PBC
+ * Copyright (C) 2022 by RStudio, PBC
  *
  * Unless you have received this program directly from RStudio pursuant
  * to the terms of a commercial license agreement with RStudio, then
@@ -55,7 +55,7 @@ public class EditorLanguage
    public static final EditorLanguage LANG_STAN = new EditorLanguage(
          "mode/stan", true);
    public static final EditorLanguage LANG_YAML = new EditorLanguage(
-         "mode/yaml", false, true);
+         "mode/yaml", true, false);
    public static final EditorLanguage LANG_PYTHON = new EditorLanguage(
          "mode/python", true);
    public static final EditorLanguage LANG_SH = new EditorLanguage(

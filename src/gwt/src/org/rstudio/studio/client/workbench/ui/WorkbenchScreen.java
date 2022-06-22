@@ -1,7 +1,7 @@
 /*
  * WorkbenchScreen.java
  *
- * Copyright (C) 2021 by RStudio, PBC
+ * Copyright (C) 2022 by RStudio, PBC
  *
  * Unless you have received this program directly from RStudio pursuant
  * to the terms of a commercial license agreement with RStudio, then
@@ -277,14 +277,11 @@ public class WorkbenchScreen extends Composite
                Math.max(deckPanelSize.width, 0),
                Math.max(deckPanelSize.height - Toolbar.DEFAULT_HEIGHT, 0));
 
-      double devicePixelRatio = 1.0;
-      if (BrowseCap.isMacintoshDesktop())
-         devicePixelRatio = BrowseCap.devicePixelRatio();
-      WorkbenchMetrics metrics = WorkbenchMetrics.create(consoleWidth,
+     WorkbenchMetrics metrics = WorkbenchMetrics.create(consoleWidth,
                                                          buildConsoleWidth,
                                                          plotsSize.width,
                                                          plotsSize.height,
-                                                         devicePixelRatio);
+                                                         BrowseCap.devicePixelRatio());
 
       // make sure we don't send very similar metrics values twice (it is
       // an expensive operation since it involves at least 2 http requests)
@@ -348,6 +345,12 @@ public class WorkbenchScreen extends Composite
    void onActivateConnections() { paneManager_.activateTab(Tab.Connections); }
    @Handler
    void onActivateTutorial() { paneManager_.activateTab(Tab.Tutorial); }
+   @Handler
+   void onActivatePresentation2() 
+   { 
+      paneManager_.activateTab(Tab.Presentations); 
+      paneManager_.focusTab(Tab.Presentations);
+   }
 
 
    @Handler
@@ -376,6 +379,8 @@ public class WorkbenchScreen extends Composite
    void onLayoutZoomConnections() { paneManager_.zoomTab(Tab.Connections); }
    @Handler
    void onLayoutZoomTutorial() { paneManager_.zoomTab(Tab.Tutorial); }
+   @Handler
+   void onLayoutZoomPresentation2() { paneManager_.zoomTab(Tab.Presentations); }
 
    @Handler
    void onLayoutZoomLeftColumn() { paneManager_.zoomColumn(PaneManager.LEFT_COLUMN); }

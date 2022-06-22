@@ -1,7 +1,7 @@
 /*
  * r_code_model.js
  *
- * Copyright (C) 2021 by RStudio, PBC
+ * Copyright (C) 2022 by RStudio, PBC
  *
  * Unless you have received this program directly from RStudio pursuant
  * to the terms of a commercial license agreement with RStudio, then
@@ -158,7 +158,33 @@ var RCodeModel = function(session, tokenizer,
       tokenCursor.$row = clonedCursor.$row;
       tokenCursor.$offset = clonedCursor.$offset;
       return true;
+   }
 
+   // Find the associated test_that() token from an open brace, e.g.
+   // 
+   // test_that("foo() does this", {
+   // ^<<<<<<<<<<<<<<<<<<<<<<<<<<<<^
+   function findAssocTestToken(tokenCursor)
+   {
+      var clonedCursor = tokenCursor.cloneCursor();
+      if (clonedCursor.currentValue() !== "{")
+         return false;
+      if (!clonedCursor.moveToPreviousToken()) 
+         return false;
+      if (!clonedCursor.currentToken().value == ",")
+         return false;
+      if (!clonedCursor.moveToPreviousToken())
+         return false;
+      if (!clonedCursor.currentToken().type == "string")
+         return false;
+      if (!clonedCursor.moveToPreviousToken())
+         return false;
+      if (!clonedCursor.currentToken().value == "(")
+         return false;
+      if (!clonedCursor.moveToPreviousToken())
+         return false;
+      var token = clonedCursor.currentToken();
+      return pIdentifier(token) && token.value == "test_that";
    }
 
    // Determine whether the token cursor lies within the
@@ -216,7 +242,7 @@ var RCodeModel = function(session, tokenizer,
 
    function pInfix(token)
    {
-      return /\binfix\b/.test(token.type);
+      return /\binfix\b/.test(token.type) || token.value === "|>";
    }
 
    this.getDplyrJoinContextFromInfixChain = function(cursor)
@@ -735,30 +761,52 @@ var RCodeModel = function(session, tokenizer,
 
    this.$buildScopeTreeUpToRow = function(maxRow)
    {
-      function getChunkLabel(reOptions, comment) {
+      function getChunkLabel(reOptions, comment, iterator) {
 
          if (typeof reOptions === "undefined")
             return "";
          
          var match = reOptions.exec(comment);
-         if (!match)
-            return null;
-         var value = match[1];
-         var values = value.split(',');
-         if (values.length == 0)
-            return null;
-
-         // If first arg has no =, it's a label
-         if (!/=/.test(values[0])) {
-            return values[0].replace(/(^\s+)|(\s+$)/g, '');
+         if (match)
+         {
+            var value = match[1];
+            var values = value.split(',');
+            if (values.length > 0)
+            {
+               // If first arg has no =, it's a label
+               var first = values[0];
+               if (!/=/.test(first)) {
+                  var label = first.replace(/(^\s+)|(\s+$)/g, '');
+                  if (label.length)
+                     return label;
+               }
+            
+               for (var i = 0; i < values.length; i++) {
+                  match = /^\s*label\s*=\s*(.*)$/.exec(values[i]);
+                  if (match)
+                     return Utils.stripEnclosingQuotes(match[1].trim());
+               }
+            }
          }
-
-         for (var i = 0; i < values.length; i++) {
-            match = /^\s*label\s*=\s*(.*)$/.exec(values[i]);
-            if (match)
-               return Utils.stripEnclosingQuotes(match[1].trim());
+         
+         // then look for yaml label, i.e.
+         // 
+         // ```{r}
+         // #| label: foo
+         var it = iterator.clone();
+         
+         var tok = it.moveToNextToken();
+         while(tok != null && tok.type.startsWith("comment"))
+         {
+            var value = tok.value;
+            
+            var labelRegex = /^#\|\s*label\s*:\s*(.*)$/;
+            if (labelRegex.test(value))
+               return value.replace(labelRegex, "$1");
+            
+            tok = it.moveToNextToken();
          }
-
+         
          return null;
       }
 
@@ -1042,11 +1090,12 @@ var RCodeModel = function(session, tokenizer,
             var chunkPos = {row: chunkStartPos.row + 1, column: 0};
             var chunkNum = chunkCount;
 
-               var chunkLabel = getChunkLabel(this.$codeBeginPattern, value);
-               var scopeName = "Chunk " + chunkNum;
-               if (chunkLabel && value !== "YAML Header")
-                  scopeName += ": " + chunkLabel;
-               this.$scopes.onChunkStart(chunkLabel,
+            var chunkLabel = getChunkLabel(this.$codeBeginPattern, value, iterator);
+            var scopeName = "Chunk " + chunkNum;
+            if (chunkLabel && value !== "YAML Header")
+               scopeName += ": " + chunkLabel;
+
+            this.$scopes.onChunkStart(chunkLabel,
                                          scopeName,
                                          chunkStartPos,
                                          chunkPos);
@@ -1138,6 +1187,23 @@ var RCodeModel = function(session, tokenizer,
                                                  functionName,
                                                  functionArgs);
             }
+            else if (findAssocTestToken(localCursor))
+            {
+               var descCursor = localCursor.cloneCursor();
+               descCursor.moveToPreviousToken();
+               descCursor.moveToPreviousToken();
+
+               var desc = descCursor.currentToken().value;
+
+               var testthatCursor = descCursor.cloneCursor();
+               testthatCursor.moveToPreviousToken();
+               testthatCursor.moveToPreviousToken();
+
+               this.$scopes.onTestScopeStart(desc,
+                  testthatCursor.currentPosition(),
+                  tokenCursor.currentPosition()
+               );
+            } 
             else
             {
                startPos = tokenCursor.currentPosition();
@@ -1505,6 +1571,12 @@ var RCodeModel = function(session, tokenizer,
             row - 10
          );
 
+         // Special case for new function definitions.
+         var line = this.$session.getLine(row);
+         if (/\bfunction\s*\(\s*$/.test(line)) {
+            return this.$getIndent(row) + tab + tab;
+         }
+
          // Used to add extra whitspace if the next line is a continuation of the
          // previous line (i.e. the last significant token is a binary operator).
          var continuationIndent = "";
@@ -1553,6 +1625,7 @@ var RCodeModel = function(session, tokenizer,
                }
             }
          }
+
          else if (prevToken
                      && prevToken.token.type === "keyword"
                      && (prevToken.token.value === "repeat" || prevToken.token.value === "else"))

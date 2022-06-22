@@ -5,7 +5,7 @@
 @external rstudio-themes-dark, rstudio-themes-dark-grey;
 
 /* Considered these for the light latch background color as well. Ended up with #e7e8ea which
-   is the value hard coded for .rstudio-themes-flat .gwt-TabLayoutPanelTabs in themeStyles.css
+   is the value hard coded for .gwt-TabLayoutPanelTabs in themeStyles.css
 
 @eval THEME_DEFAULT_INACTIVE org.rstudio.core.client.theme.ThemeColors.defaultInactiveBackground;
 @eval THEME_LIGHT_CONTROL_BORDER org.rstudio.core.client.theme.ThemeColors.lightControlBorder;
@@ -32,7 +32,12 @@
 }
 
 .toolbarTextMenuButton {
-   margin-top: -2px;
+   margin-top: -1px;
+   color: #393939;
+}
+
+.rstudio-themes-dark .toolbarTextMenuButton {
+   color: #efefef
 }
 
 .toolbarSeparator {
@@ -40,7 +45,7 @@
 }
 
 .toolbarPopupMenu .gwt-MenuItem {
-   min-width: 190px;
+   min-width: 185px;
 }
 
 .toolbarPopupSubmenu .gwt-MenuItem {

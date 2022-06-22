@@ -1,6 +1,9 @@
 <ui:UiBinder xmlns:ui='urn:ui:com.google.gwt.uibinder'
              xmlns:g='urn:import:com.google.gwt.user.client.ui'
-             xmlns:rw="urn:import:org.rstudio.core.client.widget">
+             xmlns:rw="urn:import:org.rstudio.core.client.widget"
+             ui:generateFormat='com.google.gwt.i18n.server.PropertyCatalogFactory'
+             ui:generateKeys="com.google.gwt.i18n.server.keygen.MD5KeyGenerator"
+             ui:generateLocales="default">
 
    <ui:with field="res" type="org.rstudio.studio.client.panmirror.dialogs.PanmirrorDialogsResources" />
    <ui:with field="ElementIds" type="org.rstudio.core.client.ElementIds"/>
@@ -18,34 +21,38 @@
          <g:cell horizontalAlignment="ALIGN_LEFT">
             <g:HorizontalPanel>
                <rw:FormLabel elementId="{ElementIds.getVisualMdAttrIdLabel1}" text="ID"/>
-               <rw:FormLabel elementId="{ElementIds.getVisualMdAttrIdLabel2}" text="(e.g. #overview)" styleName="{res.styles.inlineInfoLabel}"/>
+               <rw:FormLabel elementId="{ElementIds.getVisualMdAttrIdLabel2}" text="(e.g. #overview)" styleName="{res.styles.inlineInfoLabel}"><ui:attribute
+                       name="text" key="overviewText"/></rw:FormLabel>
             </g:HorizontalPanel>
          </g:cell> 
          <g:cell width="50px" horizontalAlignment="ALIGN_RIGHT">
-            <rw:SmallButton ui:field="autogenBtn_" text="Auto Generate" />
+            <rw:SmallButton ui:field="autogenBtn_" text="Auto Generate"><ui:attribute name="text" key="autoGenerateText"/></rw:SmallButton>
          </g:cell>
       </g:HorizontalPanel>
-      <rw:FormTextBox elementId="{ElementIds.getVisualMdAttrId}" styleName="{res.styles.fullWidth} {res.styles.spaced}" ui:field="id_"/>
+      <rw:FormTextBox elementId="{ElementIds.getVisualMdAttrId}" styleName="{res.styles.fullWidth} {res.styles.spaced}" ui:field="id_" spellcheck="false"/>
      
       <g:HorizontalPanel>
-         <rw:FormLabel elementId="{ElementIds.getVisualMdAttrClassesLabel1}" text="Classes"/>
-         <rw:FormLabel elementId="{ElementIds.getVisualMdAttrClassesLabel2}" text="(e.g. .illustration)" styleName="{res.styles.inlineInfoLabel}"/>
+         <rw:FormLabel elementId="{ElementIds.getVisualMdAttrClassesLabel1}" text="Classes"><ui:attribute name="text" key="classesText"/></rw:FormLabel>
+         <rw:FormLabel elementId="{ElementIds.getVisualMdAttrClassesLabel2}" text="(e.g. .illustration)" styleName="{res.styles.inlineInfoLabel}"><ui:attribute
+                 name="text" key="illustrationText"/></rw:FormLabel>
       </g:HorizontalPanel>
-      <rw:FormTextBox elementId="{ElementIds.getVisualMdAttrClasses}" styleName="{res.styles.fullWidth} {res.styles.spaced}" ui:field="classes_"/>
+      <rw:FormTextBox elementId="{ElementIds.getVisualMdAttrClasses}" styleName="{res.styles.fullWidth} {res.styles.spaced}" ui:field="classes_" spellcheck="false"/>
      
       <g:HorizontalPanel>
-         <rw:FormLabel elementId="{ElementIds.getVisualMdAttrStyleLabel1}" text="CSS styles"/>
-         <rw:FormLabel elementId="{ElementIds.getVisualMdAttrStyleLabel2}" text="(e.g. color: gray;)" styleName="{res.styles.inlineInfoLabel}"/>
+         <rw:FormLabel elementId="{ElementIds.getVisualMdAttrStyleLabel1}" text="CSS styles"><ui:attribute name="text" key="cssStyles"/></rw:FormLabel>
+         <rw:FormLabel elementId="{ElementIds.getVisualMdAttrStyleLabel2}" text="(e.g. color: gray;)" styleName="{res.styles.inlineInfoLabel}"><ui:attribute
+                 name="text" key="colorText"/></rw:FormLabel>
       </g:HorizontalPanel>
-      <rw:FormTextBox elementId="{ElementIds.getVisualMdAttrStyle}" styleName="{res.styles.fullWidth} {res.styles.spaced}" ui:field="style_"/>
+      <rw:FormTextBox elementId="{ElementIds.getVisualMdAttrStyle}" styleName="{res.styles.fullWidth} {res.styles.spaced}" ui:field="style_" spellcheck="false"/>
      
       <g:HorizontalPanel>
-         <rw:FormLabel elementId="{ElementIds.getVisualMdAttrKeyValueLabel1}" text="Other"/>
-         <rw:FormLabel elementId="{ElementIds.getVisualMdAttrKeyValueLabel2}" text="(key=value, one per line)" styleName="{res.styles.inlineInfoLabel}"/>
+         <rw:FormLabel elementId="{ElementIds.getVisualMdAttrKeyValueLabel1}" text="Other"><ui:attribute name="text" key="otherText"/></rw:FormLabel>
+         <rw:FormLabel elementId="{ElementIds.getVisualMdAttrKeyValueLabel2}" text="(key=value, one per line)" styleName="{res.styles.inlineInfoLabel}"><ui:attribute
+                 name="text" key="valueText"/></rw:FormLabel>
       </g:HorizontalPanel>
       
       <rw:FormTextArea elementId="{ElementIds.getVisualMdAttrKeyValue}" styleName="{res.styles.textArea} {res.styles.spaced}"
-                       ui:field="attributes_" visibleLines="3">
+                       ui:field="attributes_" visibleLines="3" spellcheck="false">
       </rw:FormTextArea>
    </g:VerticalPanel>
 

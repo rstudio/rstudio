@@ -1,7 +1,7 @@
 /*
  * TextEditingTargetCompilePdfHelper.java
  *
- * Copyright (C) 2021 by RStudio, PBC
+ * Copyright (C) 2022 by RStudio, PBC
  *
  * Unless you have received this program directly from RStudio pursuant
  * to the terms of a commercial license agreement with RStudio, then
@@ -14,6 +14,7 @@
  */
 package org.rstudio.studio.client.workbench.views.source.editors.text;
 
+import com.google.gwt.core.client.GWT;
 import com.google.inject.Inject;
 import org.rstudio.core.client.Debug;
 import org.rstudio.core.client.StringUtil;
@@ -153,10 +154,8 @@ public class TextEditingTargetCompilePdfHelper
                   == null)
             {
                // show warning and bail 
-               display.showWarningBar(
-                  "Unknown LaTeX program type '" + latexProgramDirective + 
-                  "' specified (valid types are " + 
-                  latexProgramRegistry_.getPrintableTypeNames() +  ")");
+               display.showWarningBar(constants_.checkCompilersUnknownLatexType(latexProgramDirective,
+                       latexProgramRegistry_.getPrintableTypeNames()));
                
                return;
             }
@@ -175,10 +174,8 @@ public class TextEditingTargetCompilePdfHelper
             if (rnwWeave == null)
             {
                // show warning and bail 
-               display.showWarningBar(
-                  "Unknown Rnw weave method '" + rnwWeaveDirective.getName() + 
-                  "' specified (valid types are " + 
-                  rnwWeaveRegistry_.getPrintableTypeNames() +  ")");
+               display.showWarningBar(constants_.checkCompilersRnWWeaveTypeError(rnwWeaveDirective.getName(),
+                       rnwWeaveRegistry_.getPrintableTypeNames()));
                
                return;
             }    
@@ -215,11 +212,9 @@ public class TextEditingTargetCompilePdfHelper
                {
                   String warning;
                   if (Desktop.isDesktop())
-                     warning = "No LaTeX installation detected. Please install " +
-                               "LaTeX before compiling.";
+                     warning = constants_.checkCompilersDesktopWarning();
                   else
-                     warning = "This server does not have LaTeX installed. You " +
-                               "may not be able to compile.";
+                     warning = constants_.checkCompilersServerWarning();
                   display.showTexInstallationMissingWarning(warning);
                }
                else if (checkForRnwWeave && 
@@ -227,16 +222,14 @@ public class TextEditingTargetCompilePdfHelper
                {
                   String forContext = "";
                   if (hasRnwWeaveDirective)
-                     forContext = "this file";
+                     forContext = constants_.thisFile();
                   else if (sessionInfo.getActiveProjectFile() != null)
-                     forContext = "Rnw files for this project"; 
+                     forContext = constants_.rnwFilesForProject();
                   else
-                     forContext = "Rnw files";
+                     forContext = constants_.rnwFiles();
                   
-                  display.showWarningBar(
-                     fRnwWeave.getName() + " is configured to weave " + 
-                     forContext + " " + "however the " + 
-                     fRnwWeave.getPackageName() + " package is not installed.");
+                  display.showWarningBar(constants_.checkCompilersRnWPackageNotInstalled(fRnwWeave.getName(),
+                                  forContext, fRnwWeave.getPackageName()));
                }
                else
                {
@@ -461,4 +454,5 @@ public class TextEditingTargetCompilePdfHelper
                      "\\\\[\\s]*SweaveOpts[\\s]*{.*concordance[\\s]*=.*}");
    
    private static HashMap<String, RnwChunkOptions> chunkOptionsCache_ = new HashMap<>();
+   private static final EditorsTextConstants constants_ = GWT.create(EditorsTextConstants.class);
 }

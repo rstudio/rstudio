@@ -1,6 +1,6 @@
 /* UserPrefsComputed.java
  *
- * Copyright (C) 2021 by RStudio, PBC
+ * Copyright (C) 2022 by RStudio, PBC
  *
  * Unless you have received this program directly from RStudio pursuant
  * to the terms of a commercial license agreement with RStudio, then
@@ -13,9 +13,11 @@
  */
 package org.rstudio.studio.client.workbench.prefs.model;
 
+import com.google.gwt.core.client.GWT;
 import org.rstudio.studio.client.workbench.model.SessionInfo;
 
 import com.google.gwt.core.client.JsArray;
+import org.rstudio.studio.client.workbench.prefs.PrefsConstants;
 
 public class UserPrefsComputed extends UserPrefsAccessor
 {
@@ -27,11 +29,17 @@ public class UserPrefsComputed extends UserPrefsAccessor
    
    public PrefValue<Boolean> haveRsaKey()
    {
-      return bool("have_rsa_key", "Has RSA Key", "Whether the user has an RSA key", false);
+      return bool("have_rsa_key", constants_.haveRSAKeyTitle(), constants_.haveRSAKeyDescription(), false);
    }
    
+   public PrefValue<String> rsaKeyFile()
+   {
+      return string("rsa_key_file", constants_.rsaKeyFileTitle(), constants_.rsaKeyFileDescription(), "");
+   }
+
    public PrefValue<SpellingPrefsContext> spellingPrefsContext()
    {
-      return object("spelling", "Spelling Prefs", "The context for the user's spelling preferences", null);
+      return object("spelling", constants_.spellingPrefsTitle(), constants_.spellingPrefsDescription(), null);
    }
+   private static final PrefsConstants constants_ = GWT.create(PrefsConstants.class);
 }

@@ -1,7 +1,7 @@
 /*
  * ConsoleErrorFrame.java
  *
- * Copyright (C) 2021 by RStudio, PBC
+ * Copyright (C) 2022 by RStudio, PBC
  *
  * Unless you have received this program directly from RStudio pursuant
  * to the terms of a commercial license agreement with RStudio, then
@@ -18,6 +18,7 @@ package org.rstudio.studio.client.common.debugging.ui;
 import org.rstudio.core.client.FilePosition;
 import org.rstudio.core.client.files.FileSystemItem;
 import org.rstudio.studio.client.RStudioGinjector;
+import org.rstudio.studio.client.common.StudioClientCommonConstants;
 import org.rstudio.studio.client.common.debugging.model.ErrorFrame;
 import org.rstudio.studio.client.common.filetypes.FileTypeRegistry;
 import org.rstudio.studio.client.common.filetypes.events.OpenSourceFileEvent;
@@ -52,7 +53,7 @@ public class ConsoleErrorFrame extends Composite
       frame_ = frame;
 
       boolean hasSource = !frame.getFileName().isEmpty();
-      functionName.setText(frame.getFunctionName() + (hasSource ? " at" : ""));
+      functionName.setText(constants_.functionNameText(frame.getFunctionName(), (hasSource ? " " + constants_.atText() : "")));
       frameNumber.setText((Integer.valueOf(number)).toString() + ".");
       if (hasSource)
       {
@@ -97,4 +98,5 @@ public class ConsoleErrorFrame extends Composite
    Label frameNumber;
 
    private ErrorFrame frame_ = null;
+   private static final StudioClientCommonConstants constants_ = GWT.create(StudioClientCommonConstants.class);
 }

@@ -1,7 +1,7 @@
 /*
  * GwtFileHandler.cpp
  *
- * Copyright (C) 2021 by RStudio, PBC
+ * Copyright (C) 2022 by RStudio, PBC
  *
  * Unless you have received this program directly from RStudio pursuant
  * to the terms of a commercial license agreement with RStudio, then
@@ -27,6 +27,8 @@
 #include <core/http/Response.hpp>
 
 #include "config.h"
+
+using namespace boost::placeholders;
 
 namespace rstudio {
 namespace core {
@@ -149,8 +151,9 @@ void handleFileRequest(const FileRequestOptions& options,
       vars["server_homepage"] = options.serverHomepagePath;
 
       // read existing CSRF token
-      std::string csrfToken = request.cookieValue(kCSRFTokenCookie);
+      std::string csrfToken = core::http::getCSRFTokenCookie(request);
       vars["csrf_token"] = string_utils::htmlEscape(csrfToken, true /* isAttribute */);
+      vars["csrf_token_meta"] = kCSRFTokenCookie;
 
       // don't allow main page to be framed by other domains (clickjacking
       // defense)

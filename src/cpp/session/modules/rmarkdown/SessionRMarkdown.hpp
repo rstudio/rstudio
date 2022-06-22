@@ -1,7 +1,7 @@
 /*
  * SessionRMarkdown.hpp
  *
- * Copyright (C) 2021 by RStudio, PBC
+ * Copyright (C) 2022 by RStudio, PBC
  *
  * Unless you have received this program directly from RStudio pursuant
  * to the terms of a commercial license agreement with RStudio, then
@@ -45,10 +45,12 @@ bool pptAvailable();
 
 core::Error evaluateRmdParams(const std::string& docId);
 
+std::string parsableRStudioVersion();
+
 core::Error initialize();
 
 } // namespace rmarkdown
-} // namepace handlers
+} // namespace handlers
 } // namespace session
 } // namespace rstudio
 

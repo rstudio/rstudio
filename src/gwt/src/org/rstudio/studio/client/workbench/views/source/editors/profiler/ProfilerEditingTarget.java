@@ -1,7 +1,7 @@
 /*
  * ProfilerEditingTarget.java
  *
- * Copyright (C) 2021 by RStudio, PBC
+ * Copyright (C) 2022 by RStudio, PBC
  *
  * Unless you have received this program directly from RStudio pursuant
  * to the terms of a commercial license agreement with RStudio, then
@@ -68,6 +68,7 @@ import org.rstudio.studio.client.workbench.commands.Commands;
 import org.rstudio.studio.client.workbench.model.RemoteFileSystemContext;
 import org.rstudio.studio.client.workbench.views.source.SourceColumn;
 import org.rstudio.studio.client.workbench.views.source.SourceWindowManager;
+import org.rstudio.studio.client.workbench.views.source.ViewsSourceConstants;
 import org.rstudio.studio.client.workbench.views.source.editors.EditingTarget;
 import org.rstudio.studio.client.workbench.views.source.editors.EditingTargetSource.EditingTargetNameProvider;
 import org.rstudio.studio.client.workbench.views.source.editors.profiler.model.ProfileOperationResponse;
@@ -148,6 +149,12 @@ public class ProfilerEditingTarget implements EditingTarget,
    {
       return null;
    }
+   
+   @Override 
+   public boolean isShinyPrerenderedDoc()
+   {
+      return false;
+   }
 
    public HasValue<String> getName()
    {
@@ -183,7 +190,7 @@ public class ProfilerEditingTarget implements EditingTarget,
 
    public String getTabTooltip()
    {
-      return "R Profiler";
+      return constants_.rProfiler();
    }
 
    public HashSet<AppCommand> getSupportedCommands()
@@ -563,11 +570,11 @@ public class ProfilerEditingTarget implements EditingTarget,
          @Override
          public String getTitle()
          {
-            return "Profile";
+            return constants_.profileCapitalized();
          }
       };
 
-      view_ = new ProfilerEditingTargetWidget("Profiler", commands_, publishHtmlSource, column_);
+      view_ = new ProfilerEditingTargetWidget(constants_.profilerCapitalized(), commands_, publishHtmlSource, column_);
       defaultNameProvider_ = defaultNameProvider;
 
       getName().setValue(getAndSetInitialName());
@@ -670,13 +677,13 @@ public class ProfilerEditingTarget implements EditingTarget,
 
    public String getDefaultNamePrefix()
    {
-      return "Profile";
+      return constants_.profileCapitalized();
    }
 
    @Override
    public String getCurrentStatus()
    {
-      return "Code Profile results displayed";
+      return constants_.codeProfileResultsDisplayed();
    }
 
    private void savePropertiesWithPath(String path)
@@ -702,7 +709,7 @@ public class ProfilerEditingTarget implements EditingTarget,
       sourceServer_.modifyDocumentProperties(
          doc_.getId(),
          props,
-         new SimpleRequestCallback<Void>("Error")
+         new SimpleRequestCallback<Void>(constants_.errorCapitalized())
          {
             @Override
             public void onResponseReceived(Void response)
@@ -713,7 +720,7 @@ public class ProfilerEditingTarget implements EditingTarget,
             public void onError(ServerError error)
             {
                Debug.logError(error);
-               globalDisplay_.showErrorMessage("Failed to Save Profile Properties",
+               globalDisplay_.showErrorMessage(constants_.failedToSaveProfileProperties(),
                      error.getMessage());
             }
       });
@@ -728,7 +735,7 @@ public class ProfilerEditingTarget implements EditingTarget,
          fsi = workbenchContext_.getDefaultFileDialogDir();
 
       fileDialogs_.saveFile(
-            "Save File - " + getName().getValue(),
+            constants_.saveFileName(getName().getValue()),
             fileContext_,
             fsi,
             fileType_.getDefaultExtension(),
@@ -765,7 +772,7 @@ public class ProfilerEditingTarget implements EditingTarget,
                         {
                            Debug.logError(error);
                            indicator.onCompleted();
-                           globalDisplay_.showErrorMessage("Failed to Save Profile",
+                           globalDisplay_.showErrorMessage(constants_.failedToSaveProfile(),
                                  error.getMessage());
                         }
                   });
@@ -822,8 +829,8 @@ public class ProfilerEditingTarget implements EditingTarget,
                   else if (selectedPath_.indexOf("<expr>") == -1)
                   {
                      globalDisplay_.showMessage(GlobalDisplay.MSG_ERROR,
-                           "Error while opening profiler source",
-                           "The source file " + selectedPath_ + " does not exist.");
+                           constants_.errorOpeningProfilerSource(),
+                           constants_.sourceFileAtPathDoesNotExist(selectedPath_));
                   }
                }
             }
@@ -924,4 +931,5 @@ public class ProfilerEditingTarget implements EditingTarget,
    private String selectedPath_;
    private int selectedLine_;
    private Boolean hasValidPath_ = false;
+   private static final ViewsSourceConstants constants_ = GWT.create(ViewsSourceConstants.class);
 }

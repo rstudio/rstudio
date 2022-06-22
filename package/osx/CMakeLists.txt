@@ -1,7 +1,7 @@
 #
 # CMakeLists.txt
 #
-# Copyright (C) 2021 by RStudio, PBC
+# Copyright (C) 2022 by RStudio, PBC
 #
 # Unless you have received this program directly from RStudio pursuant
 # to the terms of a commercial license agreement with RStudio, then
@@ -33,12 +33,24 @@ set(
 
 # developer-id code signing
 if(RSTUDIO_PACKAGE_BUILD AND NOT RSESSION_ALTERNATE_BUILD)
-   configure_and_install("cmake/fix-library-paths.cmake")
-   configure_and_install("cmake/codesign-package.cmake")
+
+   if(RSTUDIO_ELECTRON)
+      configure_and_install("cmake/merge-electron.cmake")
+   endif()
+
+   configure_and_install("cmake/prepare-package.cmake")
+
+   if(RSTUDIO_ELECTRON)
+      configure_and_install("cmake/codesign-package-electron.cmake")
+   else()
+      configure_and_install("cmake/codesign-package.cmake")
+   endif()
+
 endif()
 
 # package attributes
 set(CPACK_PACKAGE_FILE_NAME "${CPACK_PACKAGE_NAME}${RSTUDIO_PACKAGE_SUFFIX}${CPACK_PACKAGE_VERSION}")
+string(REPLACE "+" "-" CPACK_PACKAGE_FILE_NAME "${CPACK_PACKAGE_FILE_NAME}")
 
 # create drag and drop installer
 set(CPACK_BINARY_DRAGNDROP ON)

@@ -1,7 +1,7 @@
 /*
  * CodeFilesList.java
  *
- * Copyright (C) 2021 by RStudio, PBC
+ * Copyright (C) 2022 by RStudio, PBC
  *
  * Unless you have received this program directly from RStudio pursuant
  * to the terms of a commercial license agreement with RStudio, then
@@ -16,6 +16,7 @@ package org.rstudio.studio.client.projects.ui.newproject;
 
 import java.util.ArrayList;
 
+import com.google.gwt.core.client.GWT;
 import org.rstudio.core.client.files.FileSystemItem;
 import org.rstudio.core.client.widget.FormLabel;
 import org.rstudio.core.client.widget.ProgressIndicator;
@@ -23,6 +24,7 @@ import org.rstudio.core.client.widget.ProgressOperationWithInput;
 import org.rstudio.core.client.widget.SmallButton;
 import org.rstudio.studio.client.RStudioGinjector;
 import org.rstudio.studio.client.common.FileDialogs;
+import org.rstudio.studio.client.projects.StudioClientProjectConstants;
 import org.rstudio.studio.client.workbench.model.RemoteFileSystemContext;
 
 import com.google.gwt.dom.client.SelectElement;
@@ -44,7 +46,7 @@ public class CodeFilesList extends Composite
       panel.addStyleName(RES.styles().wizardMainColumn());
       
       HorizontalPanel labelPanel = new HorizontalPanel();
-      FormLabel label = new FormLabel("Create package based on source files:");
+      FormLabel label = new FormLabel(constants_.createPackageFormLabel());
       label.addStyleName(RES.styles().wizardTextEntryLabel());
       labelPanel.add(label);
       panel.add(labelPanel);
@@ -58,10 +60,10 @@ public class CodeFilesList extends Composite
       dictionariesPanel.add(listBox_);
       
       VerticalPanel buttonPanel = new VerticalPanel();
-      SmallButton buttonAdd = createButton("Add...");
+      SmallButton buttonAdd = createButton(constants_.addButtonCaption());
       buttonAdd.addClickHandler(addButtonClicked_);
       buttonPanel.add(buttonAdd);
-      SmallButton buttonRemove = createButton("Remove");
+      SmallButton buttonRemove = createButton(constants_.removeButtonCaption());
       buttonRemove.addClickHandler(removeButtonClicked_);
       buttonPanel.add(buttonRemove);
       dictionariesPanel.add(buttonPanel);
@@ -94,7 +96,7 @@ public class CodeFilesList extends Composite
       public void onClick(ClickEvent event)
       {
          fileDialogs_.openFile(
-            "Add Source File", 
+            constants_.addSourceFileCaption(),
             fileSystemContext_, 
             FileSystemItem.home(), 
             new ProgressOperationWithInput<FileSystemItem>() {
@@ -137,4 +139,5 @@ public class CodeFilesList extends Composite
    private RemoteFileSystemContext fileSystemContext_;
    
    static final NewProjectResources RES = NewProjectResources.INSTANCE;
+   private static final StudioClientProjectConstants constants_ = GWT.create(StudioClientProjectConstants.class);
 }

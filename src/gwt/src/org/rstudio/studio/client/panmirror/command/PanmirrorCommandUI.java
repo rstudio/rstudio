@@ -1,7 +1,7 @@
 /*
  * PanmirrorCommandUI.java
  *
- * Copyright (C) 2021 by RStudio, PBC
+ * Copyright (C) 2022 by RStudio, PBC
  *
  * Unless you have received this program directly from RStudio pursuant
  * to the terms of a commercial license agreement with RStudio, then
@@ -28,7 +28,7 @@ public class PanmirrorCommandUI implements ScheduledCommand
 {
    public PanmirrorCommandUI(PanmirrorCommand command, String menuText, MenuitemRole role, String image)
    {
-      this(command, menuText, null, role, image);
+      this(command, menuText, null, role, image, true);
    }
    
    
@@ -36,7 +36,8 @@ public class PanmirrorCommandUI implements ScheduledCommand
                              String menuText, 
                              String pluralMenuFormat,
                              MenuitemRole role, 
-                             String image)
+                             String image,
+                             boolean commandPallette)
    {
       this.command_ = command;
       this.menuText_ = menuText;
@@ -45,6 +46,7 @@ public class PanmirrorCommandUI implements ScheduledCommand
       this.image_ = image;
       this.shortcut_ = getShortcut(command);
       this.keySequence_ = getKeySequence(command);
+      this.commandPallette_ = commandPallette;
    }
    
    public String getId()
@@ -96,6 +98,11 @@ public class PanmirrorCommandUI implements ScheduledCommand
    public MenuitemRole getMenuRole()
    {
       return menuRole_;
+   }
+   
+   public boolean getCommandPallette()
+   {
+      return commandPallette_;
    }
    
    public ImageResource getImage()
@@ -174,6 +181,7 @@ public class PanmirrorCommandUI implements ScheduledCommand
    private final String image_;
    private final String shortcut_;
    private final KeySequence keySequence_;
+   private final boolean commandPallette_;
    
    private final static PanmirrorCommandIcons icons_ = PanmirrorCommandIcons.INSTANCE;
    

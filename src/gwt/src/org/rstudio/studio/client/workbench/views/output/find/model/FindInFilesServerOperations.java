@@ -1,7 +1,7 @@
 /*
  * FindInFilesServerOperations.java
  *
- * Copyright (C) 2021 by RStudio, PBC
+ * Copyright (C) 2022 by RStudio, PBC
  *
  * Unless you have received this program directly from RStudio pursuant
  * to the terms of a commercial license agreement with RStudio, then
@@ -26,6 +26,8 @@ public interface FindInFilesServerOperations
                   boolean ignoreCase,
                   FileSystemItem directory,
                   JsArrayString includeFilePatterns,
+                  boolean useGitGrep, 
+                  boolean excludeGitIgnore,
                   JsArrayString excludeFilePatterns,
                   ServerRequestCallback<String> requestCallback);
 
@@ -39,6 +41,8 @@ public interface FindInFilesServerOperations
                        boolean searchIgnoreCase,
                        FileSystemItem dictionary,
                        JsArrayString includeFilePatterns,
+                       boolean useGitGrep,
+                       boolean excludeGitIgnore,
                        JsArrayString excludeFilePatterns,
                        String replaceString,
                        ServerRequestCallback<String> requestCallback);
@@ -48,6 +52,8 @@ public interface FindInFilesServerOperations
                         boolean searchIgnoreCase,
                         FileSystemItem dictionary,
                         JsArrayString includeFilePatterns,
+                        boolean useGitGrep,
+                        boolean excludeGitIgnore,
                         JsArrayString excludeFilePatterns,
                         int searchResults,
                         String replaceString,

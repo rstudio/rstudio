@@ -1,7 +1,7 @@
 #
 # CMakeLists.txt
 #
-# Copyright (C) 2021 by RStudio, PBC
+# Copyright (C) 2022 by RStudio, PBC
 #
 # Unless you have received this program directly from RStudio pursuant
 # to the terms of a commercial license agreement with RStudio, then
@@ -45,8 +45,19 @@ if(DEFINED ENV{GWT_MAIN_MODULE})
    set(GWT_MAIN_MODULE $ENV{GWT_MAIN_MODULE})
 endif()
 
+# memory settings (allow override from env)
+set (GWT_XMX "-Xmx1536M")
+if(DEFINED ENV{GWT_XMX})
+   set(GWT_XMX $ENV{GWT_XMX})
+endif()
+set (GWT_XSS "-Xss16M")
+if(DEFINED ENV{GWT_XSS})
+   set(GWT_XSS $ENV{GWT_XSS})
+endif()
+
 if(GWT_BUILD)
    message(STATUS "Configured to build GWT")
+   message(STATUS "Using GWT module: org.rstudio.studio.${GWT_MAIN_MODULE}")
    set(GWT_COPY Yes)
 
    find_program(ANT
@@ -59,18 +70,50 @@ if(GWT_BUILD)
       message(FATAL_ERROR "ant not found (required to build GWT)")
    endif()
 
-   # invoke ant to build
-   add_custom_target(gwt_build ALL)
+   # depend on Java source files
+   file(GLOB_RECURSE GWT_SOURCE_FILES CONFIGURE_DEPENDS "${CMAKE_CURRENT_SOURCE_DIR}/src/*")
+
+   # generated during GWT build command
+   set(GWT_BUILD_TIMESTAMP "${CMAKE_CURRENT_BINARY_DIR}/timestamp")
+
+   # define GWT build
    add_custom_command(
-      TARGET gwt_build
-      WORKING_DIRECTORY "${CMAKE_CURRENT_SOURCE_DIR}"
+      OUTPUT
+         "${GWT_BUILD_TIMESTAMP}"
+      DEPENDS
+         "${GWT_SOURCE_FILES}"
+      WORKING_DIRECTORY
+         "${CMAKE_CURRENT_SOURCE_DIR}"
+      COMMENT
+         "Building GWT sources"
       COMMAND
          ${ANT}
          -Dbuild.dir="${GWT_BIN_DIR}"
          -Dwww.dir="${GWT_WWW_DIR}"
          -Dextras.dir="${GWT_EXTRAS_DIR}"
          -Dlib.dir="${GWT_LIB_DIR}"
-         -Dgwt.main.module="org.rstudio.studio.${GWT_MAIN_MODULE}")
+         -Dgwt.xmx="${GWT_XMX}"
+         -Dgwt.xss="${GWT_XSS}"
+         -Dgwt.main.module="org.rstudio.studio.${GWT_MAIN_MODULE}"
+      COMMAND
+         "${CMAKE_COMMAND}" -E touch "${GWT_BUILD_TIMESTAMP}")
+
+   # invoke ant to build
+   add_custom_target(
+      gwt_build ALL
+      DEPENDS "${GWT_BUILD_TIMESTAMP}")
+
+   # wait for major C++ work to complete before running the GWT build;
+   # the Java compiler often runs out of resources when a parallel C++
+   # is happening: https://github.com/rstudio/rstudio/issues/7660
+   if (TARGET rserver)
+      add_dependencies(gwt_build rsession rserver)
+   elseif(TARGET desktop)
+      add_dependencies(gwt_build rsession desktop)
+   else()
+      add_dependencies(gwt_build rsession)
+   endif()
+
 endif()
 
 if(NOT DEFINED GWT_COPY)
@@ -81,18 +124,32 @@ if(GWT_COPY)
    message(STATUS "Configured to install GWT")
 
    # create test script and copy to binary directory with executable permissions
-   configure_file(${CMAKE_CURRENT_SOURCE_DIR}/gwt-unit-tests.sh.in
-                  ${CMAKE_CURRENT_BINARY_DIR}${CMAKE_FILES_DIRECTORY}/gwt-unit-tests.sh)
+   configure_file(
+      ${CMAKE_CURRENT_SOURCE_DIR}/gwt-unit-tests.sh.in
+      ${CMAKE_CURRENT_BINARY_DIR}${CMAKE_FILES_DIRECTORY}/gwt-unit-tests.sh)
+
    file(COPY ${CMAKE_CURRENT_BINARY_DIR}${CMAKE_FILES_DIRECTORY}/gwt-unit-tests.sh
              DESTINATION ${CMAKE_CURRENT_BINARY_DIR}
              FILE_PERMISSIONS OWNER_READ OWNER_WRITE OWNER_EXECUTE GROUP_READ
              GROUP_EXECUTE WORLD_READ WORLD_EXECUTE)
    
-   # installation rules
-   install(DIRECTORY www DESTINATION ${RSTUDIO_INSTALL_SUPPORTING})
-   install(DIRECTORY "${GWT_WWW_DIR}" DESTINATION ${RSTUDIO_INSTALL_SUPPORTING})
-   install(DIRECTORY "${GWT_EXTRAS_DIR}/rstudio/symbolMaps/"
-           DESTINATION ${RSTUDIO_INSTALL_SUPPORTING}/www-symbolmaps)
+   # install local web resources
+   # we exclude WEB-INF here just in case a prior GWT build updated this
+   install(
+      DIRECTORY www
+      DESTINATION "${RSTUDIO_INSTALL_SUPPORTING}"
+      PATTERN "WEB-INF" EXCLUDE)
+
+   # install compiled GWT artefacts
+   install(
+      DIRECTORY "${GWT_WWW_DIR}"
+      DESTINATION "${RSTUDIO_INSTALL_SUPPORTING}"
+      PATTERN "WEB-INF" EXCLUDE)
+
+   # copy symbol maps
+   install(
+      DIRECTORY "${GWT_EXTRAS_DIR}/rstudio/symbolMaps/"
+      DESTINATION ${RSTUDIO_INSTALL_SUPPORTING}/www-symbolmaps)
 
 endif()
 

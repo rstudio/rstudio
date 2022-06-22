@@ -1,7 +1,7 @@
 /*
  * span.ts
  *
- * Copyright (C) 2021 by RStudio, PBC
+ * Copyright (C) 2022 by RStudio, PBC
  *
  * Unless you have received this program directly from RStudio pursuant
  * to the terms of a commercial license agreement with RStudio, then
@@ -43,7 +43,6 @@ const extension = (context: ExtensionContext) => {
       {
         name: 'span',
         spec: {
-          group: 'formatting',
           attrs: pandocAttrSpec,
           inclusive: false,
           parseDOM: [
@@ -81,7 +80,7 @@ const extension = (context: ExtensionContext) => {
             },
           ],
           writer: {
-            priority: 11,
+            priority: 12,
             write: (output: PandocOutput, mark: Mark, parent: Fragment) => {
               output.writeToken(PandocTokenType.Span, () => {
                 output.writeAttr(mark.attrs.id, mark.attrs.classes, mark.attrs.keyvalue);

@@ -1,7 +1,7 @@
 /*
  * Thread.hpp
  *
- * Copyright (C) 2021 by RStudio, PBC
+ * Copyright (C) 2022 by RStudio, PBC
  *
  * Unless you have received this program directly from RStudio pursuant
  * to the terms of a commercial license agreement with RStudio, then
@@ -51,11 +51,17 @@
    }                                                                           \
    CATCH_UNEXPECTED_EXCEPTION
 
+#define ASSERT_MAIN_THREAD(__REASON__)                                         \
+   (::rstudio::core::thread::assertMainThread(                                 \
+      { __REASON__ },                                                          \
+      BOOST_CURRENT_FUNCTION,                                                  \
+      ERROR_LOCATION))
+
 
 namespace rstudio {
 namespace core {
 namespace thread {
-      
+
 template <typename T>
 class ThreadsafeValue : boost::noncopyable
 {
@@ -359,6 +365,15 @@ private:
 
 void safeLaunchThread(boost::function<void()> threadMain,
                       boost::thread* pThread = nullptr);
+
+void initializeMainThreadId(boost::thread::id id);
+
+bool isMainThread();
+
+bool assertMainThread(
+      const std::string& reason,
+      const std::string& functionName,
+      const core::ErrorLocation& errorLocation);
       
 } // namespace thread
 } // namespace core

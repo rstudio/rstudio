@@ -1,7 +1,7 @@
 /*
  * FileType.java
  *
- * Copyright (C) 2021 by RStudio, PBC
+ * Copyright (C) 2022 by RStudio, PBC
  *
  * Unless you have received this program directly from RStudio pursuant
  * to the terms of a commercial license agreement with RStudio, then
@@ -29,6 +29,7 @@ public abstract class FileType
    public static final String TEX_LANG_MODE = "TeX";
    public static final String SQL_LANG_MODE = "SQL";
    public static final String STAN_LANG_MODE = "Stan";
+   public static final String YAML_LANG_MODE = "YAML";
    public static final String PYTHON_LANG_MODE = "Python";
    
    static ArrayList<FileType> ALL_FILE_TYPES = new ArrayList<>();

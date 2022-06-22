@@ -1,7 +1,7 @@
 /*
  * python_highlight_rules.js
  *
- * Copyright (C) 2021 by RStudio, PBC
+ * Copyright (C) 2022 by RStudio, PBC
  *
  * The Initial Developer of the Original Code is
  * Ajax.org B.V.
@@ -108,7 +108,12 @@ var PythonHighlightRules = function() {
     var stringEscape =  "\\\\(x[0-9A-Fa-f]{2}|[0-7]{3}|[\\\\abfnrtv'\"]|U[0-9A-Fa-f]{8}|u[0-9A-Fa-f]{4})";
 
     this.$rules = {
-        "start" : [ {
+        "start" : [  {
+            // chunk metadata comments
+            token : "comment.doc.tag",
+            regex : "#\\s*[|].*$",
+            next  : "start"
+        }, {
             token : "comment",
             regex : "#.*$"
         }, {

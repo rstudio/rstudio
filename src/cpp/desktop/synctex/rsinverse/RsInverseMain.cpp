@@ -1,7 +1,7 @@
 /*
  * RsInverseMain.cpp
  *
- * Copyright (C) 2021 by RStudio, PBC
+ * Copyright (C) 2022 by RStudio, PBC
  *
  * Unless you have received this program directly from RStudio pursuant
  * to the terms of a commercial license agreement with RStudio, then
@@ -105,7 +105,7 @@ int main(int argc, char** argv)
       // we presume that the path is passed to us in the system encoding
       sourceFile = string_utils::systemToUtf8(sourceFile);
 
-      // enocde the source file and line as a query string
+      // encode the source file and line as a query string
       std::string requestBody;
       core::http::Fields args;
       args.push_back(std::make_pair("source-file", sourceFile));

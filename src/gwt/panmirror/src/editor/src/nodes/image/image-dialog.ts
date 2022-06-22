@@ -1,7 +1,7 @@
 /*
  * image-dialog.ts
  *
- * Copyright (C) 2021 by RStudio, PBC
+ * Copyright (C) 2022 by RStudio, PBC
  *
  * Unless you have received this program directly from RStudio pursuant
  * to the terms of a commercial license agreement with RStudio, then
@@ -21,7 +21,10 @@ import { EditorUI } from '../../api/ui';
 import { ImageProps } from '../../api/ui-dialogs';
 import { extractSizeStyles, kPercentUnit, kPixelUnit } from '../../api/css';
 import { ImageType, ImageDimensions, isNaturalAspectRatio } from '../../api/image';
-import { kWidthAttrib, kHeightAttrib } from '../../api/pandoc_attr';
+import { kWidthAttrib, kHeightAttrib, pandocAttrRemoveKeyvalue, 
+         pandocAttrGetKeyvalue, pandocAttrSetKeyvalue, 
+         kFigAlignAttrib, kFigEnvAttrib, kFigAltAttrib } from '../../api/pandoc_attr';
+         import { EditorFormat, kQuartoDocType } from '../../api/format';
 
 import { imagePropsWithSizes, hasPercentWidth } from './image-util';
 
@@ -31,6 +34,7 @@ export async function imageDialog(
   nodeType: NodeType,
   view: EditorView,
   editorUI: EditorUI,
+  editorFormat: EditorFormat,
   imageAttributes: boolean,
 ) {
   // alias schema
@@ -45,7 +49,7 @@ export async function imageDialog(
     // base attributess
     image = {
       ...(node.attrs as ImageProps),
-      alt: nodeType === schema.nodes.figure ? node.textContent : node.attrs.alt,
+      caption: nodeType === schema.nodes.figure ? node.textContent : node.attrs.caption,
     };
 
     // move width and height out of style and into keyvalue if necessary
@@ -77,17 +81,58 @@ export async function imageDialog(
   // determine the type
   const type = nodeType === view.state.schema.nodes.image ? ImageType.Image : ImageType.Figure;
 
-  // edit the image
-  const result = await editorUI.dialogs.editImage(image, dims, imageAttributes);
+  // if this is a quarto figure then remove fig-align and fig-env from attributes
+  const quartoFigure = (type === ImageType.Figure) && 
+                        editorFormat.docTypes.includes(kQuartoDocType) && 
+                         imageAttributes;
+  if (quartoFigure) {
+    // fig-alt
+    image.alt = pandocAttrGetKeyvalue(image, kFigAltAttrib) || "";
+    pandocAttrRemoveKeyvalue(image, kFigAltAttrib);
+    // fig-align
+    image.align = pandocAttrGetKeyvalue(image, kFigAlignAttrib) || "default";
+    pandocAttrRemoveKeyvalue(image, kFigAlignAttrib);
+    // fig env
+    image.env = pandocAttrGetKeyvalue(image, kFigEnvAttrib) || "";
+    pandocAttrRemoveKeyvalue(image, kFigEnvAttrib);
+  }
+
+  const result = await editorUI.dialogs.editImage(
+    image, dims, type === ImageType.Figure, imageAttributes
+  );
   if (result) {
-    // figures treat 'alt' as their content (the caption), but since captions support
-    // inline formatting (and the dialog doesn't) we only want to update the
-    // content if the alt/caption actually changed (as it will blow away formatting)
-    if (type === ImageType.Figure && image.alt !== result.alt) {
-      if (result.alt) {
-        content = Fragment.from(view.state.schema.text(result.alt));
+    // since captions support inline formatting (and the dialog doesn't) we only want 
+    // to update the content if the alt/caption actually changed (as it will blow away
+    // formatting)
+    if (type === ImageType.Figure && image.caption !== result.caption) {
+      if (result.caption) {
+        content = Fragment.from(view.state.schema.text(result.caption));
       } else {
         content = Fragment.empty;
+      }
+    }
+
+    // if we have align then move into keyvalue
+    if (quartoFigure) {
+      // fig-alt
+      if (result.alt) {
+        pandocAttrSetKeyvalue(result, kFigAltAttrib, result.alt);
+      } else {
+        pandocAttrRemoveKeyvalue(result, kFigAltAttrib);
+      }
+      // fig-align
+      if (result.align) {
+        if (result.align !== "default") {
+          pandocAttrSetKeyvalue(result, kFigAlignAttrib, result.align);
+        } else {
+          pandocAttrRemoveKeyvalue(result, kFigAlignAttrib);
+        }
+      }
+      // fig-env
+      if (result.env) {
+        pandocAttrSetKeyvalue(result, kFigEnvAttrib, result.env);
+      } else {
+        pandocAttrRemoveKeyvalue(result, kFigEnvAttrib);
       }
     }
 

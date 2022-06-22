@@ -1,7 +1,7 @@
 /*
  * PanmirrorCommands.java
  *
- * Copyright (C) 2021 by RStudio, PBC
+ * Copyright (C) 2022 by RStudio, PBC
  *
  * Unless you have received this program directly from RStudio pursuant
  * to the terms of a commercial license agreement with RStudio; then
@@ -83,6 +83,7 @@ public class PanmirrorCommands
 
    // insert
    public static final String OmniInsert = "12F96C13-38C1-4266-A0A1-E871D8C709FB";
+   public static final String Table = "CBD3ACC6-B2A3-457D-885C-EDA600F6FC67";
    public static final String Link = "842FCB9A-CA61-4C5F-A0A0-43507B4B3FA9";
    public static final String RemoveLink = "072D2084-218D-4A34-AF1F-7E196AF684B2";
    public static final String Image = "808220A3-2B83-4CB6-BCC1-46565D54FA47";
@@ -100,6 +101,8 @@ public class PanmirrorCommands
    public static final String EnDash = "C32AFE32-0E57-4A16-9C39-88EB1D82B8B4";
    public static final String NonBreakingSpace = "CF6428AB-F36E-446C-8661-2781B2CD1169";
    public static final String HardLineBreak = "3606FF87-866C-4729-8F3F-D065388FC339";
+   public static final String Tabset = "7327AF95-3EA7-42C8-8C42-D4CB0D15CAE4";
+   public static final String Callout = "DC86C28A-0140-4EB5-A745-2C1EFA55C94D";
    
    // raw
    public static final String TexInline = "CFE8E9E5-93BA-4FFA-9A77-BA7EFC373864";
@@ -120,10 +123,19 @@ public class PanmirrorCommands
    public static final String RcppCodeChunk = "6BD2810B-6B20-4358-8AA4-74BBFFC92AC3";
    public static final String SQLCodeChunk = "41D61FD2-B56B-48A7-99BC-2F60BC0D9F78";
    public static final String StanCodeChunk = "65D33344-CBE9-438C-B337-A538F8D7FCE5";
+   public static final String ExpandAllChunks = "B217913B-67C9-457F-B766-7FCCB502F611";
+   public static final String CollapseAllChunks = "9907A864-D707-4410-93A4-07871A8C43A6";
+   public static final String ExpandChunk = "0226518C-559A-4BFC-A5BD-244BEE8175AA";
+   public static final String CollapseChunk = "4AFBBC0C-A6DA-4019-B85F-374636E349C3";
    
    // outline
    public static final String GoToNextSection = "AE827BDA-96F8-4E84-8030-298D98386765";
    public static final String GoToPreviousSection = "E6AA728C-2B75-4939-9123-0F082837ACDF";
    public static final String GoToNextChunk = "50DD6E51-13B5-4F1E-A46B-6A33EB1609D9";
    public static final String GoToPreviousChunk = "8D105D33-78FE-4A98-8195-6B71361424C5";
+   
+   // slides
+   public static final String InsertSlidePause = "FCA8BF2E-2668-4919-92FC-02083EB48246";
+   public static final String InsertSlideNotes = "9C709915-02BE-4F4F-9CEB-50E17973C9BE";
+   public static final String InsertSlideColumns = "AE62D05F-1415-4E1F-84AE-753EE2393002";
 }

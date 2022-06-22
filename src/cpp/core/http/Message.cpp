@@ -1,7 +1,7 @@
 /*
  * Message.cpp
  *
- * Copyright (C) 2021 by RStudio, PBC
+ * Copyright (C) 2022 by RStudio, PBC
  *
  * Unless you have received this program directly from RStudio pursuant
  * to the terms of a commercial license agreement with RStudio, then
@@ -162,7 +162,7 @@ void Message::reset()
    headers_.clear();
    body_.clear();
    
-   // allow additional reseting by subclasses
+   // allow additional resetting by subclasses
    resetMembers();
 }
 
@@ -217,7 +217,7 @@ std::vector<boost::asio::const_buffer> Message::headerBuffers(
    for (Headers::const_iterator
         it = headers_.begin(); it != headers_.end(); ++it)
    {
-      // add the header if it isn't being overriden
+      // add the header if it isn't being overridden
       if (it->name != overrideHeader_.name)
          appendHeader(*it, &buffers);
    }

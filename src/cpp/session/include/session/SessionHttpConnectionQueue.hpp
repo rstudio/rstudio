@@ -1,7 +1,7 @@
 /*
  * SessionHttpConnectionQueue.hpp
  *
- * Copyright (C) 2021 by RStudio, PBC
+ * Copyright (C) 2022 by RStudio, PBC
  *
  * Unless you have received this program directly from RStudio pursuant
  * to the terms of a commercial license agreement with RStudio, then
@@ -35,6 +35,14 @@ namespace core {
 namespace rstudio {
 namespace session {
 
+typedef boost::function<bool(const boost::shared_ptr<HttpConnection>&,
+                             const std::chrono::steady_clock::time_point)>
+        HttpConnectionMatcher;
+
+typedef boost::function<boost::shared_ptr<HttpConnection>(const boost::shared_ptr<HttpConnection>&,
+                                                          const std::chrono::steady_clock::time_point)>
+        HttpConnectionConverter;
+
 class HttpConnectionQueue : boost::noncopyable
 {
 public:
@@ -55,6 +63,14 @@ public:
 
    boost::posix_time::ptime lastConnectionTime();
 
+   boost::shared_ptr<HttpConnection> dequeMatchingConnection(
+               const HttpConnectionMatcher matcher,
+               const std::chrono::steady_clock::time_point now);
+
+   void convertConnections(
+               const HttpConnectionConverter matcher,
+               const std::chrono::steady_clock::time_point now);
+
 private:
    boost::shared_ptr<HttpConnection> doDequeConnection();
    bool waitForConnection(const boost::posix_time::time_duration& waitDuration);
@@ -70,7 +86,7 @@ private:
 
    // instance data
    boost::posix_time::ptime lastConnectionTime_;
-   std::queue<boost::shared_ptr<HttpConnection> > queue_;
+   std::vector<boost::shared_ptr<HttpConnection> > queue_;
 };
 
 } // namespace session

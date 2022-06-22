@@ -1,7 +1,7 @@
 /*
  * AsyncRJobManager.cpp
  *
- * Copyright (C) 2021 by RStudio, PBC
+ * Copyright (C) 2022 by RStudio, PBC
  *
  * Unless you have received this program directly from RStudio pursuant
  * to the terms of a commercial license agreement with RStudio, then
@@ -52,7 +52,7 @@ void AsyncRJob::registerJob()
       LOG_ERROR(error);
 
    // add the job -- currently idle until we get some content from it
-   job_ = addJob(name_, "", "", 0, JobIdle, JobTypeSession, false, actions, true, {});
+   job_ = addJob(name_, "", "", 0, true, JobIdle, JobTypeSession, false, actions, JobActions(), true, {});
 }
 
 void AsyncRJob::onStderr(const std::string& output)
@@ -65,6 +65,33 @@ void AsyncRJob::onStdout(const std::string& output)
 {
    if (job_)
       job_->addOutput(output, false);
+}
+
+Error AsyncRJob::reset()
+{
+   // clear progress-related state
+   completed_ = false;
+   cancelled_ = false;
+
+   // reset underlying job
+   if (job_)
+   {
+      return job_->reset();
+   }
+
+   return Success();
+}
+
+Error AsyncRJob::replay()
+{
+   // this base implementation does not know how to replay itself
+   Error error = systemError(boost::system::errc::not_supported, ERROR_LOCATION);
+   if (job_)
+   {
+      error.addProperty("id", job_->id());
+   }
+   error.addProperty("description", "Job does not support replay");
+   return error;
 }
 
 void AsyncRJob::onCompleted(int exitStatus)
@@ -117,15 +144,9 @@ void AsyncRJob::addOnComplete(boost::function<void()> onComplete)
 Error registerAsyncRJob(boost::shared_ptr<AsyncRJob> job,
       std::string *pId)
 {
-   // create the job 
+   // create the job; note that once registered the job remains registered until the session ends,
+   // so that it can be replayed if requested
    job->registerJob();
-
-   // remove the job from the registry when it's done
-   job->addOnComplete([=]() 
-   { 
-      // remove the job from the list of those running
-      s_jobs.erase(std::remove(s_jobs.begin(), s_jobs.end(), job), s_jobs.end());
-   });
 
    // return and register the job
    if (pId != nullptr)
@@ -136,13 +157,13 @@ Error registerAsyncRJob(boost::shared_ptr<AsyncRJob> job,
    return Success();
 }
 
-core::Error stopAsyncRJob(const std::string& id)
+core::Error getAsyncRJob(const std::string& id, boost::shared_ptr<AsyncRJob> *pJob)
 {
    for (auto job: s_jobs)
    {
       if (job->id() == id)
       {
-         job->cancel();
+         *pJob = job;
          return Success();
       }
    }
@@ -152,6 +173,32 @@ core::Error stopAsyncRJob(const std::string& id)
          ERROR_LOCATION);
    error.addProperty("id", id);
    return error;
+}
+
+
+core::Error stopAsyncRJob(const std::string& id)
+{
+   boost::shared_ptr<AsyncRJob> pJob;
+   Error error = getAsyncRJob(id, &pJob);
+   if (error)
+   {
+      return error;
+   }
+
+   pJob->cancel();
+   return Success();
+}
+
+core::Error replayAsyncRJob(const std::string& id)
+{
+   boost::shared_ptr<AsyncRJob> pJob;
+   Error error = getAsyncRJob(id, &pJob);
+   if (error)
+   {
+      return error;
+   }
+
+   return pJob->replay();
 }
  
 } // namespace jobs

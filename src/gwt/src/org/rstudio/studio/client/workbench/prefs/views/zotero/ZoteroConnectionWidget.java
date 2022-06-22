@@ -1,7 +1,7 @@
 /*
  * ZoteroConnectionWidget.java
  *
- * Copyright (C) 2021 by RStudio, PBC
+ * Copyright (C) 2022 by RStudio, PBC
  *
  * Unless you have received this program directly from RStudio pursuant
  * to the terms of a commercial license agreement with RStudio, then
@@ -16,10 +16,12 @@ package org.rstudio.studio.client.workbench.prefs.views.zotero;
 
 import java.util.ArrayList;
 
+import com.google.gwt.core.client.GWT;
 import org.rstudio.core.client.widget.SelectWidget;
 import org.rstudio.studio.client.application.Desktop;
 import org.rstudio.studio.client.common.HelpLink;
 import org.rstudio.studio.client.common.SuperDevMode;
+import org.rstudio.studio.client.workbench.prefs.PrefsConstants;
 import org.rstudio.studio.client.workbench.prefs.model.UserStateAccessor;
 import org.rstudio.studio.client.workbench.prefs.views.PreferencesDialogResources;
 
@@ -37,10 +39,10 @@ public class ZoteroConnectionWidget extends Composite
       HorizontalPanel panel = new HorizontalPanel();
       
       ArrayList<String> options = new ArrayList<>();
-      options.add("(None)");
+      options.add(constants_.noneParentheses());
       if (!webOnly())
-         options.add("Local");
-      options.add("Web");
+         options.add(constants_.local());
+      options.add(constants_.web());
       
       ArrayList<String> values = new ArrayList<>();
       values.add(UserStateAccessor.ZOTERO_CONNECTION_TYPE_NONE);
@@ -49,7 +51,7 @@ public class ZoteroConnectionWidget extends Composite
       values.add(UserStateAccessor.ZOTERO_CONNECTION_TYPE_WEB);
 
       zoteroConnection_ = new SelectWidget(
-            "Zotero Library:",
+            constants_.zoteroLibrary(),
             options.toArray(new String[] {}),
             values.toArray(new String[] {}),
             false,
@@ -62,7 +64,7 @@ public class ZoteroConnectionWidget extends Composite
       
       if (includeHelp)
       {
-         HelpLink zoteroHelp = new HelpLink("Using Zotero", "visual_markdown_editing-zotero", false);
+         HelpLink zoteroHelp = new HelpLink(constants_.usingZotero(), "visual_markdown_editing-zotero", false);
          zoteroHelp.addStyleName(res.styles().selectWidgetHelp());
          panel.add(zoteroHelp);
       }
@@ -92,6 +94,6 @@ public class ZoteroConnectionWidget extends Composite
    }
    
    private final SelectWidget zoteroConnection_;
-
+   private static final PrefsConstants constants_ = GWT.create(PrefsConstants.class);
 
 }

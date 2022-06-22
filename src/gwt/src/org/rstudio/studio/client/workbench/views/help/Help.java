@@ -1,7 +1,7 @@
 /*
  * Help.java
  *
- * Copyright (C) 2021 by RStudio, PBC
+ * Copyright (C) 2022 by RStudio, PBC
  *
  * Unless you have received this program directly from RStudio pursuant
  * to the terms of a commercial license agreement with RStudio, then
@@ -14,6 +14,7 @@
  */
 package org.rstudio.studio.client.workbench.views.help;
 
+import com.google.gwt.core.client.GWT;
 import com.google.gwt.event.logical.shared.HasSelectionHandlers;
 import com.google.gwt.event.logical.shared.SelectionEvent;
 import com.google.gwt.event.logical.shared.SelectionHandler;
@@ -31,6 +32,7 @@ import org.rstudio.studio.client.workbench.WorkbenchView;
 import org.rstudio.studio.client.workbench.commands.Commands;
 import org.rstudio.studio.client.workbench.events.ActivatePaneEvent;
 import org.rstudio.studio.client.workbench.model.Session;
+import org.rstudio.studio.client.workbench.ui.PaneManager;
 import org.rstudio.studio.client.workbench.views.BasePresenter;
 import org.rstudio.studio.client.workbench.views.help.events.ActivateHelpEvent;
 import org.rstudio.studio.client.workbench.views.help.events.HasHelpNavigateHandlers;
@@ -194,7 +196,7 @@ public class Help extends BasePresenter implements ShowHelpEvent.Handler
 
    public void bringToFront()
    {
-      events_.fireEvent(new ActivatePaneEvent("Help"));
+      events_.fireEvent(new ActivatePaneEvent(PaneManager.HELP_PANE));
    }
 
    private void home()
@@ -317,4 +319,5 @@ public class Help extends BasePresenter implements ShowHelpEvent.Handler
    private boolean historyInitialized_;
    private GlobalDisplay globalDisplay_;
    private EventBus events_;
+   private static final HelpConstants constants_ = GWT.create(HelpConstants.class);
 }

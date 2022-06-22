@@ -1,7 +1,7 @@
 /*
  * Workbench.java
  *
- * Copyright (C) 2021 by RStudio, PBC
+ * Copyright (C) 2022 by RStudio, PBC
  *
  * Unless you have received this program directly from RStudio pursuant
  * to the terms of a commercial license agreement with RStudio, then
@@ -74,11 +74,11 @@ import org.rstudio.studio.client.workbench.events.*;
 import org.rstudio.studio.client.workbench.events.ShowMainMenuEvent.Menu;
 import org.rstudio.studio.client.workbench.model.*;
 import org.rstudio.studio.client.workbench.prefs.model.UserPrefs;
+import org.rstudio.studio.client.workbench.snippets.ui.EditSnippetsDialog;
 import org.rstudio.studio.client.workbench.views.choosefile.ChooseFile;
 import org.rstudio.studio.client.workbench.views.files.events.DirectoryNavigateEvent;
 import org.rstudio.studio.client.workbench.views.source.SourceWindowManager;
 import org.rstudio.studio.client.workbench.views.source.editors.profiler.ProfilerPresenter;
-import org.rstudio.studio.client.workbench.views.terminal.events.ActivateNamedTerminalEvent;
 import org.rstudio.studio.client.workbench.views.tutorial.TutorialPresenter.Tutorial;
 import org.rstudio.studio.client.workbench.views.tutorial.events.TutorialCommandEvent;
 import org.rstudio.studio.client.workbench.views.tutorial.events.TutorialLaunchEvent;
@@ -282,12 +282,7 @@ public class Workbench implements BusyEvent.Handler,
       {
          long over = quotaStatus.getUsed() - quotaStatus.getQuota();
          StringBuilder msg = new StringBuilder();
-         msg.append("You are ");
-         msg.append(StringUtil.formatFileSize(over));
-         msg.append(" over your ");
-         msg.append(StringUtil.formatFileSize(quotaStatus.getQuota()));
-         msg.append(" file storage limit. Please remove files to ");
-         msg.append("continue working.");
+         msg.append(constants_.onQuotaMessage(StringUtil.formatFileSize(over),StringUtil.formatFileSize(quotaStatus.getQuota())));
          globalDisplay_.showWarningBar(false, msg.toString());
       }
 
@@ -296,9 +291,7 @@ public class Workbench implements BusyEvent.Handler,
       else if (quotaStatus.isNearQuota() && !nearQuotaWarningShown_)
       {
          StringBuilder msg = new StringBuilder();
-         msg.append("You are nearly over your ");
-         msg.append(StringUtil.formatFileSize(quotaStatus.getQuota()));
-         msg.append(" file storage limit.");
+         msg.append(constants_.quotaStatusMessage(StringUtil.formatFileSize(quotaStatus.getQuota())));
          globalDisplay_.showWarningBar(false, msg.toString());
 
          nearQuotaWarningShown_ = true;
@@ -318,7 +311,7 @@ public class Workbench implements BusyEvent.Handler,
    public void onSetWorkingDir()
    {
       fileDialogs_.chooseFolder(
-            "Choose Working Directory",
+            constants_.chooseWorkingDirCaption(),
             fsContext_,
             workbenchContext_.getCurrentWorkingDir(),
             new ProgressOperationWithInput<FileSystemItem>()
@@ -366,7 +359,7 @@ public class Workbench implements BusyEvent.Handler,
    public void onSourceFile()
    {
       fileDialogs_.openFile(
-            "Source File",
+            constants_.sourceFileCaption(),
             fsContext_,
             workbenchContext_.getCurrentWorkingDir(),
             new ProgressOperationWithInput<FileSystemItem>()
@@ -396,12 +389,12 @@ public class Workbench implements BusyEvent.Handler,
    public void onVersionControlShowRsaKey()
    {
       final ProgressIndicator indicator = new GlobalProgressDelayer(
-            globalDisplay_, 500, "Reading RSA public key...").getIndicator();
+            globalDisplay_, 500, constants_.rsaKeyProgressMessage()).getIndicator();
 
       // compute path to public key
       String sshDir = session_.getSessionInfo().getDefaultSSHKeyDir();
       final String keyPath = FileSystemItem.createDir(sshDir).completePath(
-                                                               "id_rsa.pub");
+         pPrefs_.get().rsaKeyFile().getValue());
 
       // read it
       server_.gitSshPublicKey(keyPath, new ServerRequestCallback<String> () {
@@ -411,42 +404,17 @@ public class Workbench implements BusyEvent.Handler,
          {
             indicator.onCompleted();
 
-            new ShowPublicKeyDialog("RSA Public Key",
+            new ShowPublicKeyDialog(constants_.rsaPublicKeyCaption(),
                                     publicKeyContents).showModal();
          }
 
          @Override
          public void onError(ServerError error)
          {
-            String msg = "Error attempting to read key '" + keyPath + "' (" +
-                         error.getUserMessage() + ")";
+            String msg = constants_.onErrorReadKey(keyPath, error.getMessage());
             indicator.onError(msg);
          }
       });
-   }
-
-   @Handler
-   public void onShowShellDialog()
-   {
-      if (Desktop.isDesktop())
-      {
-         server_.getTerminalOptions(new SimpleRequestCallback<TerminalOptions>()
-         {
-            @Override
-            public void onResponseReceived(TerminalOptions options)
-            {
-               Desktop.getFrame().openTerminal(
-                     StringUtil.notNull(options.getTerminalPath()),
-                     StringUtil.notNull(options.getWorkingDirectory()),
-                     StringUtil.notNull(options.getExtraPathEntries()),
-                     options.getShellType());
-            }
-         });
-      }
-      else
-      {
-         eventBus_.fireEvent(new ActivateNamedTerminalEvent());
-      }
    }
 
    @Handler
@@ -468,6 +436,12 @@ public class Workbench implements BusyEvent.Handler,
    public void onModifyKeyboardShortcuts()
    {
       new ModifyKeyboardShortcutsWidget().showModal();
+   }
+
+   @Handler
+   public void onEditCodeSnippets()
+   {
+      new EditSnippetsDialog().showModal();
    }
 
    @Handler
@@ -588,13 +562,9 @@ public class Workbench implements BusyEvent.Handler,
       boolean shouldPrompt = session_.getSessionInfo().getPromptForCrashHandlerPermission();
       if (shouldPrompt)
       {
-         String message =
-               "May we upload crash reports to RStudio automatically?\n\nCrash reports don't include " +
-               "any personal information, except for IP addresses which are used to determine how many users " +
-               "are affected by each crash.\n\nCrash reporting can be disabled at any time under the Global Options.";
-
+         String message = constants_.checkForCrashHandlerPermissionMessage();
          globalDisplay_.showYesNoMessage(GlobalDisplay.MSG_QUESTION,
-               "Enable Automated Crash Reporting",
+               constants_.enableCrashReportingCaption(),
                message,
                false,
                new Operation() {
@@ -621,10 +591,10 @@ public class Workbench implements BusyEvent.Handler,
       // resolve labels
       String yesLabel = userPrompt.getYesLabel();
       if (StringUtil.isNullOrEmpty(yesLabel))
-         yesLabel = "Yes";
+         yesLabel = constants_.yesLabel();
       String noLabel = userPrompt.getNoLabel();
       if (StringUtil.isNullOrEmpty(noLabel))
-         noLabel = "No";
+         noLabel = constants_.noLabel();
 
       // show dialog
       globalDisplay_.showYesNoMessage(
@@ -659,7 +629,7 @@ public class Workbench implements BusyEvent.Handler,
 
       // show dialog
       globalDisplay_.showMessage(notification.getType(),
-                                 "Admin Notification",
+                                 constants_.adminNotificationCaption(),
                                  notification.getMessage(),
                                  adminNotificationAcknowledged(notification.getId()));
    }
@@ -800,4 +770,5 @@ public class Workbench implements BusyEvent.Handler,
    private boolean nearQuotaWarningShown_ = false;
    
    @SuppressWarnings("unused") private final SourceWindowManager sourceWindowManager_;
+   private static final ClientWorkbenchConstants constants_ = GWT.create(ClientWorkbenchConstants.class);
 }

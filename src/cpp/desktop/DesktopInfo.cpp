@@ -1,7 +1,7 @@
 /*
  * DesktopInfo.cpp
  *
- * Copyright (C) 2021 by RStudio, PBC
+ * Copyright (C) 2022 by RStudio, PBC
  *
  * Unless you have received this program directly from RStudio pursuant
  * to the terms of a commercial license agreement with RStudio, then
@@ -72,7 +72,7 @@ void buildFontDatabaseImpl()
 #ifdef _WIN32
       // screen out annoying Qt warnings when attempting to
       // initialize incompatible fonts
-      static std::set<std::string> blacklist = {
+      static std::set<std::string> ignored = {
          "8514oem",
          "Fixedsys",
          "Modern",
@@ -85,7 +85,7 @@ void buildFontDatabaseImpl()
          "Terminal"
       };
 
-      if (blacklist.count(family.toStdString()))
+      if (ignored.count(family.toStdString()))
          continue;
 #endif
 

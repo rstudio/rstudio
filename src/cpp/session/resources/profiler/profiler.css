@@ -1,7 +1,7 @@
 /*
  * profiler.css
  *
- * Copyright (C) 2021 by RStudio, PBC
+ * Copyright (C) 2022 by RStudio, PBC
  *
  * Unless you have received this program directly from RStudio pursuant
  * to the terms of a commercial license agreement with RStudio, then
@@ -13,107 +13,107 @@
  *
  */
 
-.rstudio-themes-flat.rstudio-themes-dark .profvis-footer,
-.rstudio-themes-flat.rstudio-themes-dark .profvis-status-bar,
-.rstudio-themes-flat.rstudio-themes-dark .result-block-active,
-.rstudio-themes-flat.rstudio-themes-dark .options-button {
+.rstudio-themes-dark .profvis-footer,
+.rstudio-themes-dark .profvis-status-bar,
+.rstudio-themes-dark .result-block-active,
+.rstudio-themes-dark .options-button {
    color: #FFF;
 }
 
-.rstudio-themes-flat span.identifier {
+span.identifier {
    color: inherit;
 }
 
-.rstudio-themes-flat.rstudio-themes-dark .profvis-table th {
+.rstudio-themes-dark .profvis-table th {
    background: rgba(255, 255, 255, 0.10);
    border-top: none;
    font-weight: 400;
 }
 
-.rstudio-themes-flat.rstudio-themes-dark table.profvis-table tr.active {
+.rstudio-themes-dark table.profvis-table tr.active {
    background: rgba(255, 255, 255, 0.05);
 }
 
-.rstudio-themes-flat table.profvis-table .membar-right-cell,
-.rstudio-themes-flat table.profvis-table .timebar-cell {
+table.profvis-table .membar-right-cell,
+table.profvis-table .timebar-cell {
    border-color: #444;
 }
 
-.rstudio-themes-flat table.profvis-table tr {
+table.profvis-table tr {
    border-top: none;
 }
 
-.rstudio-themes-flat .profvis-splitbar-horizontal {
+.profvis-splitbar-horizontal {
    background: none;
    border-top: solid 1px #FFF;
    border-bottom: solid 1px #FFF;
 }
 
-.rstudio-themes-flat .separator-block {
+.separator-block {
    display: none;
 }
 
-.rstudio-themes-flat .info-block {
+.info-block {
    border-right: solid 1px #FFF;
 }
 
-.rstudio-themes-flat .profvis-treetable {
+.profvis-treetable {
    color: inherit !important;
 }
 
-.rstudio-themes-flat .profvis-treetable table tr {
+.profvis-treetable table tr {
    background: inherit !important;
 }
 
-.rstudio-themes-flat.rstudio-themes-dark .profvis-treetable th {
+.rstudio-themes-dark .profvis-treetable th {
    color: #FFF;
 }
 
-.rstudio-themes-flat.rstudio-themes-dark .profvis-treetable .treetable-collapse > div > div {
+.rstudio-themes-dark .profvis-treetable .treetable-collapse > div > div {
    border-top: 6px solid #FFF;
 }
 
-.rstudio-themes-flat.rstudio-themes-dark .profvis-treetable .treetable-expand > div > div {
+.rstudio-themes-dark .profvis-treetable .treetable-expand > div > div {
    border-left: 6px solid #FFF;
 }
 
-.rstudio-themes-flat .profvis-flamegraph .background {
+.profvis-flamegraph .background {
    fill: rgba(249, 249, 250, 0);
 }
 
-.rstudio-themes-flat.rstudio-themes-dark .profvis-flamegraph .tick {
+.rstudio-themes-dark .profvis-flamegraph .tick {
    fill: #FFF;
 }
 
-.rstudio-themes-flat.rstudio-themes-dark .profvis-flamegraph .tick line {
+.rstudio-themes-dark .profvis-flamegraph .tick line {
    stroke: #FFF;
 }
 
-.rstudio-themes-flat.rstudio-themes-dark .profvis-flamegraph .domain {
+.rstudio-themes-dark .profvis-flamegraph .domain {
    stroke: #FFF;
 }
 
-.rstudio-themes-flat.rstudio-themes-dark .profvis-flamegraph .cell text {
+.rstudio-themes-dark .profvis-flamegraph .cell text {
    fill: #FFF;
 }
 
-.rstudio-themes-flat.rstudio-themes-dark .profvis-flamegraph .cell rect {
+.rstudio-themes-dark .profvis-flamegraph .cell rect {
    fill: rgba(255,255,255,0.3);
 }
 
-.rstudio-themes-flat.rstudio-themes-dark .profvis-flamegraph .cell.highlighted .rect {
+.rstudio-themes-dark .profvis-flamegraph .cell.highlighted .rect {
    fill: rgba(255,255,255,0.5);
 }
 
-.rstudio-themes-flat.rstudio-themes-dark .profvis-flamegraph .cell.highlighted.active .rect {
+.rstudio-themes-dark .profvis-flamegraph .cell.highlighted.active .rect {
    fill: rgba(255,255,255,0.7);
 }
 
-.rstudio-themes-flat.rstudio-themes-dark .profvis-message div {
+.rstudio-themes-dark .profvis-message div {
    color: #FFF;
 }
 
-.rstudio-themes-flat.rstudio-themes-dark .profvis-options-panel {
+.rstudio-themes-dark .profvis-options-panel {
    background: rgb(47, 57, 65);
    border-color: rgb(78, 92, 104);
 }

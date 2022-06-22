@@ -1,7 +1,7 @@
 /*
  * RToolsInfo.cpp
  *
- * Copyright (C) 2021 by RStudio, PBC
+ * Copyright (C) 2022 by RStudio, PBC
  *
  * Unless you have received this program directly from RStudio pursuant
  * to the terms of a commercial license agreement with RStudio, then
@@ -84,6 +84,7 @@ RToolsInfo::RToolsInfo(const std::string& name,
    std::vector<std::string> relativePathEntries;
    std::vector<std::string> clangArgs;
    std::vector<core::system::Option> environmentVars;
+
    if (name == "2.11")
    {
       versionMin = "2.10.0";
@@ -190,7 +191,7 @@ RToolsInfo::RToolsInfo(const std::string& name,
    else if (name == "4.0")
    {
       versionMin = "4.0.0";
-      versionMax = "5.0.0";
+      versionMax = "4.1.99";
 
       // PATH for utilities
       relativePathEntries.push_back("usr/bin");
@@ -203,7 +204,19 @@ RToolsInfo::RToolsInfo(const std::string& name,
       std::replace(rtoolsPath.begin(), rtoolsPath.end(), '/', '\\');
       environmentVars.push_back({"RTOOLS40_HOME", rtoolsPath});
 
-      // set clang args
+      // undefine _MSC_VER, so that we can "pretend" to be gcc
+      // this is important for C++ libraries which might try to use
+      // MSVC-specific tools when _MSC_VER is defined (e.g. Eigen), which might
+      // not actually be defined or available in Rtools
+      clangArgs.push_back("-U_MSC_VER");
+
+      // set GNUC levels
+      // (required for _mingw.h, which otherwise tries to use incompatible MSVC defines)
+      clangArgs.push_back("-D__GNUC__=8");
+      clangArgs.push_back("-D__GNUC_MINOR__=3");
+      clangArgs.push_back("-D__GNUC_PATCHLEVEL__=0");
+
+      // set compiler include paths
 #ifdef _WIN64
       std::string baseDir = "mingw64";
       std::string triple = "x86_64-w64-mingw32";
@@ -227,6 +240,47 @@ RToolsInfo::RToolsInfo(const std::string& name,
          FilePath includePath = installPath.completeChildPath(baseDir + "/" + stem);
          clangArgs.push_back("-I" + includePath.getAbsolutePath());
       }
+   }
+   else if (name == "4.2")
+   {
+      versionMin = "4.2.0";
+      versionMax = "5.0.0";
+
+      // PATH for utilities
+      relativePathEntries.push_back("usr/bin");
+
+      // set RTOOLS42_HOME
+      std::string rtoolsPath = installPath.getAbsolutePath();
+      std::replace(rtoolsPath.begin(), rtoolsPath.end(), '/', '\\');
+      environmentVars.push_back({"RTOOLS42_HOME", rtoolsPath});
+
+      // undefine _MSC_VER, so that we can "pretend" to be gcc
+      // this is important for C++ libraries which might try to use
+      // MSVC-specific tools when _MSC_VER is defined (e.g. Eigen), which might
+      // not actually be defined or available in Rtools
+      clangArgs.push_back("-U_MSC_VER");
+
+      // set GNUC levels
+      // (required for _mingw.h, which otherwise tries to use incompatible MSVC defines)
+      clangArgs.push_back("-D__GNUC__=10");
+      clangArgs.push_back("-D__GNUC_MINOR__=3");
+      clangArgs.push_back("-D__GNUC_PATCHLEVEL__=0");
+
+      auto stems = {
+         "x86_64-w64-mingw32.static.posix/lib/gcc/x86_64-w64-mingw32.static.posix/10.3.0/include/c++",
+         "x86_64-w64-mingw32.static.posix/lib/gcc/x86_64-w64-mingw32.static.posix/10.3.0/include/c++/x86_64-w64-mingw32.static.posix",
+         "x86_64-w64-mingw32.static.posix/lib/gcc/x86_64-w64-mingw32.static.posix/10.3.0/include/c++/backward",
+         "x86_64-w64-mingw32.static.posix/lib/gcc/x86_64-w64-mingw32.static.posix/10.3.0/include",
+         "x86_64-w64-mingw32.static.posix/include",
+         "x86_64-w64-mingw32.static.posix/lib/gcc/x86_64-w64-mingw32.static.posix/10.3.0/include-fixed",
+      };
+
+      for (auto&& stem : stems)
+      {
+         FilePath includePath = installPath.completeChildPath(stem);
+         clangArgs.push_back("-I" + includePath.getAbsolutePath());
+      }
+
    }
    else
    {
@@ -253,7 +307,12 @@ std::string RToolsInfo::url(const std::string& repos) const
 {
    std::string url;
 
-   if (name() == "4.0")
+   if (name() == "4.2")
+   {
+      std::string suffix = "bin/windows/Rtools/rtools42/rtools.html";
+      url = core::http::URL::complete(repos, suffix);
+   }
+   else if (name() == "4.0")
    {
       std::string arch = core::system::isWin64() ? "x86_64" : "i686";
       std::string suffix = "bin/windows/Rtools/rtools40-" + arch + ".exe";
@@ -287,22 +346,25 @@ std::ostream& operator<<(std::ostream& os, const RToolsInfo& info)
 
 namespace {
 
-Error scanEnvironmentForRTools(bool usingMingwGcc49,
-                               const std::string& envvar,
-                               std::vector<RToolsInfo>* pRTools)
+Error useRtools(const std::string& rToolsVersion,
+                const std::string& rToolsHomeEnv,
+                const std::string& rToolsDefaultPath,
+                std::vector<RToolsInfo>* pRTools)
 {
-   // nothing to do if we have no envvar
-   if (envvar.empty())
-      return Success();
+   FilePath installPath(rToolsDefaultPath);
 
-   // read value
-   std::string envval = core::system::getenv(envvar);
-   if (envval.empty())
-      return Success();
+   // if the associated environment variable is set, and
+   // it points to an existing directory, use that instead
+   std::string rToolsHome = core::system::getenv(rToolsHomeEnv);
+   if (!rToolsHome.empty())
+   {
+      FilePath candidatePath(rToolsHome);
+      if (candidatePath.exists())
+         installPath = candidatePath;
+   }
 
    // build info
-   FilePath installPath(envval);
-   RToolsInfo toolsInfo("4.0", installPath, usingMingwGcc49);
+   RToolsInfo toolsInfo(rToolsVersion, installPath, false);
 
    // check that recorded path is valid
    bool ok =
@@ -315,6 +377,31 @@ Error scanEnvironmentForRTools(bool usingMingwGcc49,
 
    return Success();
 
+}
+
+Error scanEnvironmentForRTools(const std::string& rVersion,
+                               std::vector<RToolsInfo>* pRTools)
+{
+   using core::Version;
+   Version version(rVersion);
+
+   if (version < Version("4.0.0"))
+   {
+      // older versions of Rtools didn't record this home path via
+      // any environment variables, so nothing to do here
+   }
+   else if (version < Version("4.2.0"))
+   {
+      // use RTOOLS40_HOME
+      useRtools("4.0", "RTOOLS40_HOME", "C:/rtools40", pRTools);
+   }
+   else if (version < Version("5.0.0"))
+   {
+      // use RTOOLS42_HOME
+      useRtools("4.2", "RTOOLS42_HOME", "C:/rtools42", pRTools);
+   }
+
+   return Success();
 }
 
 Error scanRegistryForRTools(HKEY key,
@@ -420,13 +507,13 @@ void scanFoldersForRTools(bool usingMingwGcc49, std::vector<RToolsInfo>* pRTools
 } // end anonymous namespace
 
 void scanForRTools(bool usingMingwGcc49,
-                   const std::string& rtoolsHomeEnvVar,
+                   const std::string& rVersion,
                    std::vector<RToolsInfo>* pRTools)
 {
    std::vector<RToolsInfo> rtoolsInfo;
 
    // scan for Rtools
-   scanEnvironmentForRTools(usingMingwGcc49, rtoolsHomeEnvVar, &rtoolsInfo);
+   scanEnvironmentForRTools(rVersion, &rtoolsInfo);
    scanRegistryForRTools(usingMingwGcc49, &rtoolsInfo);
    scanFoldersForRTools(usingMingwGcc49, &rtoolsInfo);
 

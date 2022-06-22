@@ -1,7 +1,7 @@
 /*
  * NullProgressIndicator.java
  *
- * Copyright (C) 2021 by RStudio, PBC
+ * Copyright (C) 2022 by RStudio, PBC
  *
  * Unless you have received this program directly from RStudio pursuant
  * to the terms of a commercial license agreement with RStudio, then
@@ -15,6 +15,8 @@
 
 package org.rstudio.core.client.widget;
 
+import com.google.gwt.core.client.GWT;
+import org.rstudio.core.client.CoreClientConstants;
 import org.rstudio.studio.client.RStudioGinjector;
 
 public class NullProgressIndicator implements ProgressIndicator
@@ -38,7 +40,7 @@ public class NullProgressIndicator implements ProgressIndicator
    @Override
    public void onError(String message)
    {
-      RStudioGinjector.INSTANCE.getGlobalDisplay().showErrorMessage("Error",
+      RStudioGinjector.INSTANCE.getGlobalDisplay().showErrorMessage(constants_.errorCaption(),
                                                                     message);
    }
 
@@ -46,4 +48,5 @@ public class NullProgressIndicator implements ProgressIndicator
    public void clearProgress()
    {
    }
+   private static final CoreClientConstants constants_ = GWT.create(CoreClientConstants.class);
 }

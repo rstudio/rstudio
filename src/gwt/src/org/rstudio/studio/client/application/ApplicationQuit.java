@@ -1,7 +1,7 @@
 /*
  * ApplicationQuit.java
  *
- * Copyright (C) 2021 by RStudio, PBC
+ * Copyright (C) 2022 by RStudio, PBC
  *
  * Unless you have received this program directly from RStudio pursuant
  * to the terms of a commercial license agreement with RStudio, then
@@ -131,11 +131,11 @@ public class ApplicationQuit implements SaveActionChangedEvent.Handler,
       if (busy)
       {
          if (workbenchContext_.isServerBusy() && !terminalHelper_.warnBeforeClosing(busyMode))
-            msg = "The R session is currently busy.";
+            msg = constants_.rSessionCurrentlyBusyMessage();
          else if (workbenchContext_.isServerBusy() && terminalHelper_.warnBeforeClosing(busyMode))
-            msg = "The R session and the terminal are currently busy.";
+            msg = constants_.rSessionTerminalBusyMessage();
          else 
-            msg = "The terminal is currently busy.";
+            msg = constants_.terminalCurrentlyBusyMessage();
       }
 
       eventBus_.fireEvent(new QuitInitiatedEvent());
@@ -147,7 +147,7 @@ public class ApplicationQuit implements SaveActionChangedEvent.Handler,
             globalDisplay_.showYesNoMessage(
                   MessageDialog.QUESTION,
                   caption, 
-                  msg + " Are you sure you want to quit?",
+                  constants_.applicationQuitMessage(msg),
                   () -> handleUnfinishedWork(caption, allowCancel, forceSaveAll, quitContext),
                   true);
          }
@@ -252,7 +252,7 @@ public class ApplicationQuit implements SaveActionChangedEvent.Handler,
             RStudioGinjector.INSTANCE.getGlobalDisplay().showYesNoMessage(
                   MessageDialog.QUESTION,
                   caption,
-                  "Are you sure you want to quit the R session?",
+                  constants_.quitRSessionsMessage(),
                   quitOperation,
                   true);
          }
@@ -268,7 +268,7 @@ public class ApplicationQuit implements SaveActionChangedEvent.Handler,
       if (unsavedSourceDocs.size() == 0 && workbenchContext != null) 
       {        
          // confirm quit and do it
-         String prompt = "Save workspace image to " + 
+         String prompt = constants_.saveWorkspaceImageMessage() +
                          workbenchContext.getREnvironmentPath() + "?";
          RStudioGinjector.INSTANCE.getGlobalDisplay().showYesNoMessage(
                GlobalDisplay.MSG_QUESTION,
@@ -278,8 +278,8 @@ public class ApplicationQuit implements SaveActionChangedEvent.Handler,
                () -> quitContext.onReadyToQuit(true),
                () -> quitContext.onReadyToQuit(false),
                () -> {},
-               "Save",
-               "Don't Save",
+               constants_.saveYesLabel(),
+               constants_.saveNoLabel(),
                true);        
       }
       
@@ -429,15 +429,12 @@ public class ApplicationQuit implements SaveActionChangedEvent.Handler,
             // the process exits). since this codepath is only for the quit
             // case (and not the restart or restart and reload cases)
             // we can set the pending quit bit here
-            if (Desktop.hasDesktopFrame())
+            DesktopFrameHelper.setPendingQuit(DesktopFrame.PENDING_QUIT_AND_EXIT, () ->
             {
-               Desktop.getFrame().setPendingQuit(
-                        DesktopFrame.PENDING_QUIT_AND_EXIT);
-            }
-            
-            server_.handleUnsavedChangesCompleted(
-                                          handled_, 
-                                          new VoidServerRequestCallback());  
+               server_.handleUnsavedChangesCompleted(
+                     handled_, 
+                     new VoidServerRequestCallback());  
+            });
          }
          
          private final boolean handled_;
@@ -458,7 +455,7 @@ public class ApplicationQuit implements SaveActionChangedEvent.Handler,
       else if (unsavedSourceDocs.size() > 1)
       {
          new UnsavedChangesDialog(
-               "Quit R Session",
+               constants_.quitRSessionTitle(),
                unsavedSourceDocs,
                new OperationWithInput<UnsavedChangesDialog.Result>() {
                   @Override
@@ -494,7 +491,7 @@ public class ApplicationQuit implements SaveActionChangedEvent.Handler,
                   eventBus_.fireEvent(new SuspendAndRestartEvent(
                         SuspendOptions.createSaveMinimal(saveChanges),
                         null));
-               }, "Restart R", "Terminal jobs will be terminated. Are you sure?",
+               }, constants_.restartRCaption(), constants_.terminalJobTerminatedQuestion(),
                   pUserPrefs_.get().busyDetection().getValue());
             }
          });
@@ -510,14 +507,21 @@ public class ApplicationQuit implements SaveActionChangedEvent.Handler,
    public void onSuspendAndRestart(final SuspendAndRestartEvent event)
    {
       // Ignore nested restarts once restart starts
-      if (suspendingAndRestarting_) return;
+      if (suspendingAndRestarting_)
+         return;
       
       // set restart pending for desktop
-      setPendingQuit(DesktopFrame.PENDING_QUIT_AND_RESTART);
-      
+      DesktopFrameHelper.setPendingQuit(DesktopFrame.PENDING_QUIT_AND_RESTART, () ->
+      {
+         onSuspendAndRestartImpl(event);
+      });
+   }
+   
+   private void onSuspendAndRestartImpl(final SuspendAndRestartEvent event)
+   {
       final TimedProgressIndicator progress = new TimedProgressIndicator(
-            globalDisplay_.getProgressIndicator("Error"));
-      progress.onTimedProgress("Restarting R...", 1000);
+            globalDisplay_.getProgressIndicator(constants_.progressErrorCaption()));
+      progress.onTimedProgress(constants_.restartingRMessage(), 1000);
       
       final Operation onRestartComplete = () -> {
          suspendingAndRestarting_ = false;
@@ -535,43 +539,43 @@ public class ApplicationQuit implements SaveActionChangedEvent.Handler,
             onRestartComplete.execute();
          }, () -> { // failure
             onRestartComplete.execute();
-            setPendingQuit(DesktopFrame.PENDING_QUIT_NONE);
+            DesktopFrameHelper.setPendingQuit(DesktopFrame.PENDING_QUIT_NONE, () -> {});
          });
-   }
-   
-   private void setPendingQuit(int pendingQuit)
-   {
-      if (Desktop.hasDesktopFrame())
-         Desktop.getFrame().setPendingQuit(pendingQuit);
    }
    
    @Handler
    public void onQuitSession()
    {
-      prepareForQuit("Quit R Session", (boolean saveChanges) -> performQuit(null, saveChanges));
+      prepareForQuit(constants_.quitRSessionCaption(), (boolean saveChanges) -> performQuit(null, saveChanges));
    }
 
    @Handler
    public void onForceQuitSession()
    {
-      prepareForQuit("Quit R Session", false /*allowCancel*/, false /*forceSaveChanges*/,
+      prepareForQuit(
+            constants_.quitRSessionCaption(),
+            false /*allowCancel*/,
+            false /*forceSaveChanges*/,
             (boolean saveChanges) -> performQuit(null, saveChanges));
    }
 
    public void doRestart(Session session)
    {
-      prepareForQuit(
-            "Restarting RStudio",
-            saveChanges -> {
-               String project = session.getSessionInfo().getActiveProjectFile();
-               if (project == null)
-                  project = Projects.NONE;
-
-               final String finalProject = project;
-               performQuit(null, saveChanges, () -> {
-                  eventBus_.fireEvent(new OpenProjectNewWindowEvent(finalProject, null));
-               });
-            });
+      prepareForQuit(constants_.restartRStudio(), (saveChanges) ->
+      {
+         final String project = StringUtil.nullCoalesce(
+               session.getSessionInfo().getActiveProjectFile(),
+               Projects.NONE);
+         
+         // NOTE: we don't use the 'switchToProject' variant here as we
+         // want to open a brand new RStudio window for this project, rather
+         // than just reload the current window with the requested project
+         // now active
+         performQuit(null, saveChanges, () ->
+         {
+            eventBus_.fireEvent(new OpenProjectNewWindowEvent(project, null));
+         });
+      });
    }
 
    private UnsavedChangesTarget globalEnvTarget_ = new UnsavedChangesTarget()
@@ -591,7 +595,7 @@ public class ApplicationQuit implements SaveActionChangedEvent.Handler,
       @Override
       public String getTitle()
       {
-         return "Workspace image (.RData)";
+         return constants_.studioClientTitle();
       }
 
       @Override
@@ -605,9 +609,9 @@ public class ApplicationQuit implements SaveActionChangedEvent.Handler,
    private String buildSwitchMessage(String switchToProject)
    {
       String msg = switchToProject != "none" ?
-        "Switching to project " + 
+        constants_.switchingToProjectMessage() +
            FileSystemItem.createFile(switchToProject).getParentPathString() :
-        "Closing project";
+        constants_.closingProjectMessage();
       return msg + "...";
    }
    
@@ -636,88 +640,86 @@ public class ApplicationQuit implements SaveActionChangedEvent.Handler,
          {
             msg = switchToProject_ != null ? 
                                     buildSwitchMessage(switchToProject_) :
-                                    "Quitting R Session...";
+                                    constants_.quitRSessionMessage();
          }
+         
          final GlobalProgressDelayer progress = new GlobalProgressDelayer(
                                                                globalDisplay_,
                                                                250,
                                                                msg);
-
+         
          // Use a barrier and LastChanceSaveEvent to allow source documents
          // and client state to be synchronized before quitting.
          Barrier barrier = new Barrier();
-         barrier.addBarrierReleasedHandler(releasedEvent ->
+         barrier.addBarrierReleasedHandler((releasedEvent) ->
          {
             // All last chance save operations have completed (or possibly
             // failed). Now do the real quit.
 
             // notify the desktop frame that we are about to quit
-            String switchToProject = StringUtil.create(switchToProject_);
-            if (Desktop.hasDesktopFrame())
-            {
-               Desktop.getFrame().setPendingQuit(switchToProject_ != null ?
-                     DesktopFrame.PENDING_QUIT_RESTART_AND_RELOAD :
-                     DesktopFrame.PENDING_QUIT_AND_EXIT);
-            }
+            final int quitType = switchToProject_ == null
+                  ? DesktopFrame.PENDING_QUIT_AND_EXIT
+                  : DesktopFrame.PENDING_QUIT_RESTART_AND_RELOAD;
             
-            server_.quitSession(
-               saveChanges_,
-               switchToProject,
-               switchToRVersion_,
-               GWT.getHostPageBaseURL(),
-               new ServerRequestCallback<Boolean>()
-               {
-                  @Override
-                  public void onResponseReceived(Boolean response)
-                  {
-                     if (response)
+            DesktopFrameHelper.setPendingQuit(quitType, () ->
+            {
+               server_.quitSession(
+                     saveChanges_,
+                     switchToProject_,
+                     switchToRVersion_,
+                     GWT.getHostPageBaseURL(),
+                     new ServerRequestCallback<Boolean>()
                      {
-                        // clear progress only if we aren't switching projects
-                        // (otherwise we want to leave progress up until
-                        // the app reloads)
-                        if (switchToProject_ == null)
-                           progress.dismiss();
-                        
-                        if (callContext_ != null)
+                        @Override
+                        public void onResponseReceived(Boolean response)
                         {
-                           eventBus_.fireEvent(new ApplicationTutorialEvent(
-                                 ApplicationTutorialEvent.API_SUCCESS, callContext_));
-                        }
-                        
-                        // fire onQuitAcknowledged
-                        if (onQuitAcknowledged_ != null)
-                           onQuitAcknowledged_.execute();
-                     }
-                     else
-                     {
-                        onFailedToQuit("server quitSession responded false");
-                     }
-                  }
+                           if (response)
+                           {
+                              // clear progress only if we aren't switching projects
+                              // (otherwise we want to leave progress up until
+                              // the app reloads)
+                              if (switchToProject_ == null)
+                                 progress.dismiss();
 
-                  @Override
-                  public void onError(ServerError error)
-                  {
-                     onFailedToQuit(error.getMessage());
-                  }
-                  
-                  private void onFailedToQuit(String message)
-                  {
-                     progress.dismiss();
-                     
-                     if (callContext_ != null)
-                     {
-                        eventBus_.fireEvent(new ApplicationTutorialEvent(
-                              ApplicationTutorialEvent.API_ERROR,
-                              message,
-                              callContext_));
-                     }
-                     if (Desktop.hasDesktopFrame())
-                     {
-                        Desktop.getFrame().setPendingQuit(
-                                      DesktopFrame.PENDING_QUIT_NONE);
-                     }
-                  }
-               });
+                              if (callContext_ != null)
+                              {
+                                 eventBus_.fireEvent(new ApplicationTutorialEvent(
+                                       ApplicationTutorialEvent.API_SUCCESS, callContext_));
+                              }
+
+                              // fire onQuitAcknowledged
+                              if (onQuitAcknowledged_ != null)
+                                 onQuitAcknowledged_.execute();
+                           }
+                           else
+                           {
+                              onFailedToQuit(constants_.serverQuitSession());
+                           }
+                        }
+
+                        @Override
+                        public void onError(ServerError error)
+                        {
+                           onFailedToQuit(error.getMessage());
+                        }
+
+                        private void onFailedToQuit(String message)
+                        {
+                           progress.dismiss();
+
+                           if (callContext_ != null)
+                           {
+                              eventBus_.fireEvent(new ApplicationTutorialEvent(
+                                    ApplicationTutorialEvent.API_ERROR,
+                                    message,
+                                    callContext_));
+                           }
+                           
+                           DesktopFrameHelper.setPendingQuit(DesktopFrame.PENDING_QUIT_NONE, () -> {});
+                        }
+                     });
+            });
+            
          });
 
          // We acquire a token to make sure that the barrier doesn't fire before
@@ -755,4 +757,5 @@ public class ApplicationQuit implements SaveActionChangedEvent.Handler,
    private final TerminalHelper terminalHelper_;
    private final Provider<JobManager> pJobManager_;
    private final Provider<SessionOpener> pSessionOpener_;
+   private static final StudioClientApplicationConstants constants_ = GWT.create(StudioClientApplicationConstants.class);
 }

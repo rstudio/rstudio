@@ -1,7 +1,7 @@
 /*
  * ProjectRMarkdownPreferencesPane.java
  *
- * Copyright (C) 2021 by RStudio, PBC
+ * Copyright (C) 2022 by RStudio, PBC
  *
  * Unless you have received this program directly from RStudio pursuant
  * to the terms of a commercial license agreement with RStudio, then
@@ -23,6 +23,7 @@ import org.rstudio.core.client.widget.LayoutGrid;
 import org.rstudio.core.client.widget.NumericValueWidget;
 import org.rstudio.studio.client.common.HelpLink;
 import org.rstudio.studio.client.panmirror.server.PanmirrorZoteroServerOperations;
+import org.rstudio.studio.client.projects.StudioClientProjectConstants;
 import org.rstudio.studio.client.projects.model.RProjectConfig;
 import org.rstudio.studio.client.projects.model.RProjectOptions;
 import org.rstudio.studio.client.workbench.prefs.model.UserPrefs;
@@ -44,9 +45,9 @@ public class ProjectRMarkdownPreferencesPane extends ProjectPreferencesPane
    {
    
    
-      addHeader("Visual Mode: Markdown Output");
+      addHeader(constants_.visualModeCaption());
       
-      Label infoLabel = new Label("Use (Default) to inherit the global default setting");
+      Label infoLabel = new Label(constants_.rMarkdownInfoLabel());
       infoLabel.addStyleName(PreferencesDialogBaseResources.INSTANCE.styles().infoLabel());
       add(infoLabel);
       
@@ -57,12 +58,12 @@ public class ProjectRMarkdownPreferencesPane extends ProjectPreferencesPane
       // wrap mode
       wrap_ = new ListBox();
       wrap_.addStyleName(RES.styles().listBox());
-      wrap_.addItem("(Default)", RProjectConfig.MARKDOWN_WRAP_DEFAULT);
+      wrap_.addItem(constants_.projectTypeDefault(), RProjectConfig.MARKDOWN_WRAP_DEFAULT);
       wrap_.addItem(RProjectConfig.MARKDOWN_WRAP_NONE.toLowerCase(), RProjectConfig.MARKDOWN_WRAP_NONE);
       wrap_.addItem(RProjectConfig.MARKDOWN_WRAP_COLUMN.toLowerCase(), RProjectConfig.MARKDOWN_WRAP_COLUMN);
       wrap_.addItem(RProjectConfig.MARKDOWN_WRAP_SENTENCE.toLowerCase(), RProjectConfig.MARKDOWN_WRAP_SENTENCE);
       
-      wrapColumn_ =  new NumericValueWidget("Wrap at column:", 1, UserPrefs.MAX_WRAP_COLUMN);
+      wrapColumn_ =  new NumericValueWidget(constants_.wrapColumnLabel(), 1, UserPrefs.MAX_WRAP_COLUMN);
       wrapColumn_.addStyleName(RES.styles().wrapAtColumn());
       wrapColumn_.setVisible(false);
       wrap_.addChangeHandler((value) -> {
@@ -70,7 +71,7 @@ public class ProjectRMarkdownPreferencesPane extends ProjectPreferencesPane
       });
      
       VerticalPanel wrapPanel = new VerticalPanel();
-      wrapPanel.add(new FormLabel("Automatic text wrapping (line breaks)", wrap_));
+      wrapPanel.add(new FormLabel(constants_.wrapPanelText(), wrap_));
       wrapPanel.add(wrapColumn_);
       
       grid.setWidget(0, 0, wrapPanel);
@@ -80,33 +81,33 @@ public class ProjectRMarkdownPreferencesPane extends ProjectPreferencesPane
       // references
       references_ = new ListBox();
       references_.addStyleName(RES.styles().listBox());
-      references_.addItem("(Default)", RProjectConfig.MARKDOWN_REFERENCES_DEFAULT);
+      references_.addItem(constants_.referencesDefaultItem(), RProjectConfig.MARKDOWN_REFERENCES_DEFAULT);
       references_.addItem(RProjectConfig.MARKDOWN_REFERENCES_BLOCK.toLowerCase(), RProjectConfig.MARKDOWN_REFERENCES_BLOCK);
       references_.addItem(RProjectConfig.MARKDOWN_REFERENCES_SECTION.toLowerCase(), RProjectConfig.MARKDOWN_REFERENCES_SECTION);
       references_.addItem(RProjectConfig.MARKDOWN_REFERENCES_DOCUMENT.toLowerCase(), RProjectConfig.MARKDOWN_REFERENCES_DOCUMENT);
-      grid.setWidget(1, 0, new FormLabel("Write references at end of current", references_));
+      grid.setWidget(1, 0, new FormLabel(constants_.referencesFormLabel(), references_));
       grid.setWidget(1, 1, references_);
       
       // canonical mode
       canonical_ = new ListBox();
-      canonical_.addItem("(Default)");
-      canonical_.addItem("true");
-      canonical_.addItem("false");
+      canonical_.addItem(constants_.canonicalDefaultItem());
+      canonical_.addItem(constants_.canonicalTrueItem());
+      canonical_.addItem(constants_.canonicalFalseItem());
       canonical_.addStyleName(RES.styles().listBox());
-      grid.setWidget(2, 0, new FormLabel("Write canonical visual mode markdown in source mode", canonical_));
+      grid.setWidget(2, 0, new FormLabel(constants_.canonicalFormLabel(), canonical_));
       grid.setWidget(2, 1, canonical_);
       
       add(grid);
       
       // help on per-file markdown options
       HelpLink markdownPerFileOptions = new HelpLink(
-            "Learn more about markdown writer options",
+            constants_.markdownPerFileOptionsCaption(),
             "visual_markdown_editing-writer-options",
             false // no version info
       );
       add(markdownPerFileOptions);
       
-      addHeader("Visual Mode: Zotero");
+      addHeader(constants_.visualModeZoteroCaption());
       mediumSpaced(markdownPerFileOptions);
       
       zoteroLibs_ = new ZoteroLibrariesWidget(zoteroServer, true);
@@ -122,7 +123,7 @@ public class ProjectRMarkdownPreferencesPane extends ProjectPreferencesPane
    @Override
    public String getName()
    {
-      return "R Markdown";
+      return constants_.rMarkdownText();
    }
 
    @Override
@@ -203,6 +204,7 @@ public class ProjectRMarkdownPreferencesPane extends ProjectPreferencesPane
    private ListBox references_;
    private ListBox canonical_;
    private ZoteroLibrariesWidget zoteroLibs_;
+   private static final StudioClientProjectConstants constants_ = com.google.gwt.core.client.GWT.create(StudioClientProjectConstants.class);
 
 
 }

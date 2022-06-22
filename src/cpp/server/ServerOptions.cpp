@@ -1,7 +1,7 @@
 /*
  * ServerOptions.cpp
  *
- * Copyright (C) 2021 by RStudio, PBC
+ * Copyright (C) 2022 by RStudio, PBC
  *
  * Unless you have received this program directly from RStudio pursuant
  * to the terms of a commercial license agreement with RStudio, then
@@ -249,37 +249,81 @@ ProgramStatus Options::read(int argc,
    if (authNone_)
       authValidateUsers_ = false;
 
-   // if specified, confirm that the program user exists. however, if the
-   // program user is the default and it doesn't exist then allow that to pass,
-   // this just means that the user did a simple make install and hasn't setup
-   // an rserver user yet. in this case the program will run as root
-   if (!serverUser_.empty())
+   if (serverUser_.empty())
    {
-      // if we aren't running as root then forget the programUser
-      if (!core::system::realUserIsRoot())
+      // it's an error to run with no server user at all, so presume root
+      serverUser_ = "root";
+      LOG_WARNING_MESSAGE("No server user specified, running as root instead "
+            "(not recommended)");
+   }
+   else
+   {
+      // if specified, confirm that the program user exists. however, if the
+      // program user is the default and it doesn't exist then allow that to pass,
+      // this just means that the user did a simple make install and hasn't setup
+      // an rserver user yet. in this case the program will run as root
+
+      // look up details for the proposed user
+      system::User user;
+      Error error = system::User::getUserFromIdentifier(serverUser_, user);
+
+      if (core::system::realUserIsRoot())
       {
-         serverUser_ = "";
-      }
-      // if there is a program user specified and it doesn't exist....
-      else
-      {
-         system::User user;
-         Error error = system::User::getUserFromIdentifier(serverUser_, user);
          if (error || !user.exists())
          {
             if (serverUser_ == "rstudio-server")
             {
                // administrator hasn't created an rserver system account yet
-               // so we'll end up running as root
-               serverUser_ = "";
-               LOG_WARNING_MESSAGE("Running as root user is not recommended!");
+               // so we'll end up running as root. note that we have to specify "root" as
+               // the server user explicitly here since many codepaths look up the server
+               // user by name (can't be empty)
+               serverUser_ = "root";
+               LOG_WARNING_MESSAGE("Server user ' " + serverUser_ + "' does not exist, running as "
+                     "root instead (not recommended)");
             }
             else
             {
-               LOG_ERROR_MESSAGE("Server user " + serverUser_ + " does not exist");
+               LOG_ERROR_MESSAGE("Server user '" + serverUser_ + "' does not exist");
                return ProgramStatus::exitFailure();
             }
          }
+         else
+         {
+            LOG_INFO_MESSAGE("Running as server user '" + serverUser_ + "' (with privilege)");
+         }
+      }
+      else
+      {
+         if (error)
+         {
+            LOG_ERROR_MESSAGE("Could not find details for server user '" + serverUser_ + "'");
+            LOG_ERROR(error);
+            return ProgramStatus::exitFailure();
+         }
+
+         // We don't have privilege, which is okay so long as the server user is also the current
+         // user (we can't change users without privilege)
+         system::User currentUser;
+         error = system::User::getCurrentUser(currentUser);
+         if (error)
+         {
+            LOG_ERROR_MESSAGE("Could not find details for current user while attempting to "
+                  "compare to server user '" + serverUser_ + "'");
+            LOG_ERROR(error);
+            return ProgramStatus::exitFailure();
+         }
+
+         if (user.getUserId() != currentUser.getUserId())
+         {
+            LOG_ERROR_MESSAGE("Attempt to run server as user '" + serverUser_ + "' (uid " +
+                     safe_convert::numberToString(user.getUserId()) + ") "
+                     "from account '" + currentUser.getUsername() + "' (uid " +
+                     safe_convert::numberToString(currentUser.getUserId()) + ") "
+                     "without privilege, which is required to run as a different uid");
+            return ProgramStatus::exitFailure();
+         }
+
+         LOG_INFO_MESSAGE("Running as server user '" + serverUser_ + "' (without privilege)");
       }
    }
 

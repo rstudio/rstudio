@@ -1,39 +1,51 @@
-<!DOCTYPE ui:UiBinder SYSTEM "http://dl.google.com/gwt/DTD/xhtml.ent">
 <ui:UiBinder xmlns:ui="urn:ui:com.google.gwt.uibinder"
    xmlns:g="urn:import:com.google.gwt.user.client.ui"
-   xmlns:rw="urn:import:org.rstudio.core.client.widget">
+   xmlns:rw="urn:import:org.rstudio.core.client.widget"
+   ui:generateFormat='com.google.gwt.i18n.server.PropertyCatalogFactory'
+   ui:generateKeys="com.google.gwt.i18n.server.keygen.MD5KeyGenerator"
+   ui:generateLocales="default">
    <ui:with field="res" type="org.rstudio.studio.client.panmirror.dialogs.PanmirrorDialogsResources" />
    <ui:with field="ElementIds" type="org.rstudio.core.client.ElementIds"/>
    <ui:style>
       .orderedOptions {
          margin-top: 10px;
       }
+      .topSpaced {
+         margin-top: 4px;
+      }
    </ui:style>
 
    <g:VerticalPanel styleName="{res.styles.dialog}">
 
-      <rw:FormLabel for="{ElementIds.getVisualMdListType}" text="List type:"/>
+      <rw:FormLabel for="{ElementIds.getVisualMdListType}" text="List type:"><ui:attribute name="text" key="listType"/> </rw:FormLabel>
       <rw:SelectWidget elementId="{ElementIds.getVisualMdListType}" styleName="{res.styles.fullWidth} {res.styles.spaced}"
                        ui:field="listType_"/>
+                       
+      <rw:FormLabel for="{ElementIds.getVisualMdListIncremental}" text="Item display:" ui:field="labelIncremental_"><ui:attribute
+              name="text" key="itemDisplay"/></rw:FormLabel>
+      <rw:SelectWidget elementId="{ElementIds.getVisualMdListIncremental}" styleName="{res.styles.fullWidth} {res.styles.spaced} {style.topSpaced}"
+                       ui:field="listIncremental_"/>
 
       <g:CheckBox styleName="{res.styles.checkBox} {res.styles.spaced}" text="Tight layout (less vertical space between list items)"
-                  ui:field="tight_"/>
+                  ui:field="tight_"><ui:attribute name="text" key="tightLayout"/> </g:CheckBox>
 
        <g:VerticalPanel styleName="{style.orderedOptions}" ui:field="orderedOptionsPanel_">
 
-         <rw:FormLabel for="{ElementIds.getVisualMdListOrder}" text="Starting number:"/>
+         <rw:FormLabel for="{ElementIds.getVisualMdListOrder}" text="Starting number:"><ui:attribute name="text" key="startingNumber"/></rw:FormLabel>
          <rw:NumericTextBox elementId="{ElementIds.getVisualMdListOrder}" value="1" styleName="{res.styles.fullWidth} {res.styles.spaced}"
                             ui:field="startingNumber_"/>
 
-         <rw:FormLabel for="{ElementIds.getVisualMdListNumberStyle}" text="Number style:"/>
+         <rw:FormLabel for="{ElementIds.getVisualMdListNumberStyle}" text="Number style:"><ui:attribute name="text" key="numberStyle"/></rw:FormLabel>
          <rw:SelectWidget elementId="{ElementIds.getVisualMdListNumberStyle}" styleName="{res.styles.fullWidth} {res.styles.spaced}"
                           ui:field="numberStyle_"/>
 
-         <rw:FormLabel for="{ElementIds.getVisualMdListNumberDelim}" text="Number delimiter:"/>
+         <rw:FormLabel for="{ElementIds.getVisualMdListNumberDelim}" text="Number delimiter:"><ui:attribute name="text" key="numberDelimiter"/></rw:FormLabel>
          <rw:SelectWidget elementId="{ElementIds.getVisualMdListNumberDelim}"  styleName="{res.styles.fullWidth}"
                           ui:field="numberDelimiter_"/>
          <rw:FormLabel elementId="{ElementIds.getVisualMdListNumberDelimNote}" styleName="{res.styles.infoLabel} {res.styles.spaced}"
-                       text="Pandoc HTML output does not support custom number delimiters, so the editor will always display the Period style" />
+                       text="Pandoc HTML output does not support custom number delimiters, so the editor will always display the Period style">
+             <ui:attribute name="text" key="pandocHTMLText"/>
+         </rw:FormLabel>
 
        </g:VerticalPanel>
 

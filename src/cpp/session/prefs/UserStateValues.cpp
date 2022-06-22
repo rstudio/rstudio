@@ -1,6 +1,6 @@
 /* UserPrefValues.cpp
  *
- * Copyright (C) 2021 by RStudio, PBC
+ * Copyright (C) 2022 by RStudio, PBC
  *
  * Unless you have received this program directly from RStudio pursuant
  * to the terms of a commercial license agreement with RStudio, then
@@ -22,6 +22,84 @@
 namespace rstudio {
 namespace session {
 namespace prefs {
+
+/**
+ * 
+ */
+core::json::Object UserStateValues::general()
+{
+   return readPref<core::json::Object>("general");
+}
+
+core::Error UserStateValues::setGeneral(core::json::Object val)
+{
+   return writePref("general", val);
+}
+
+/**
+ * Font options from the Appearance category
+ */
+core::json::Object UserStateValues::font()
+{
+   return readPref<core::json::Object>("font");
+}
+
+core::Error UserStateValues::setFont(core::json::Object val)
+{
+   return writePref("font", val);
+}
+
+/**
+ * 
+ */
+core::json::Object UserStateValues::view()
+{
+   return readPref<core::json::Object>("view");
+}
+
+core::Error UserStateValues::setView(core::json::Object val)
+{
+   return writePref("view", val);
+}
+
+/**
+ * 
+ */
+core::json::Object UserStateValues::remoteSession()
+{
+   return readPref<core::json::Object>("remote_session");
+}
+
+core::Error UserStateValues::setRemoteSession(core::json::Object val)
+{
+   return writePref("remote_session", val);
+}
+
+/**
+ * 
+ */
+core::json::Object UserStateValues::renderer()
+{
+   return readPref<core::json::Object>("renderer");
+}
+
+core::Error UserStateValues::setRenderer(core::json::Object val)
+{
+   return writePref("renderer", val);
+}
+
+/**
+ * 
+ */
+core::json::Object UserStateValues::platform()
+{
+   return readPref<core::json::Object>("platform");
+}
+
+core::Error UserStateValues::setPlatform(core::json::Object val)
+{
+   return writePref("platform", val);
+}
 
 /**
  * A unique identifier representing the user and machine.
@@ -335,9 +413,28 @@ core::Error UserStateValues::setZoteroDataDir(std::string val)
    return writePref("zotero_data_dir", val);
 }
 
+/**
+ * Sync source editor to Quarto website preview navigation.
+ */
+bool UserStateValues::quartoWebsiteSyncEditor()
+{
+   return readPref<bool>("quarto_website_sync_editor");
+}
+
+core::Error UserStateValues::setQuartoWebsiteSyncEditor(bool val)
+{
+   return writePref("quarto_website_sync_editor", val);
+}
+
 std::vector<std::string> UserStateValues::allKeys()
 {
    return std::vector<std::string>({
+      kGeneral,
+      kFont,
+      kView,
+      kRemoteSession,
+      kRenderer,
+      kPlatform,
       kContextId,
       kAutoCreatedProfile,
       kTheme,
@@ -362,6 +459,7 @@ std::vector<std::string> UserStateValues::allKeys()
       kZoteroUseBetterBibtex,
       kZoteroApiKey,
       kZoteroDataDir,
+      kQuartoWebsiteSyncEditor,
    });
 }
    

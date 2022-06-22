@@ -1,7 +1,7 @@
 /*
  * CommandPaletteLauncher.java
  *
- * Copyright (C) 2021 by RStudio, PBC
+ * Copyright (C) 2022 by RStudio, PBC
  *
  * Unless you have received this program directly from RStudio pursuant
  * to the terms of a commercial license agreement with RStudio, then
@@ -15,9 +15,14 @@
 
 package org.rstudio.studio.client.palette;
 
-import java.util.ArrayList;
-import java.util.List;
-
+import com.google.gwt.aria.client.Roles;
+import com.google.gwt.core.client.GWT;
+import com.google.gwt.dom.client.Document;
+import com.google.gwt.dom.client.Element;
+import com.google.gwt.user.client.Window;
+import com.google.inject.Inject;
+import com.google.inject.Provider;
+import com.google.inject.Singleton;
 import org.rstudio.core.client.command.CommandBinder;
 import org.rstudio.core.client.command.Handler;
 import org.rstudio.core.client.command.ShortcutManager;
@@ -34,13 +39,8 @@ import org.rstudio.studio.client.workbench.commands.Commands;
 import org.rstudio.studio.client.workbench.prefs.model.UserPrefs;
 import org.rstudio.studio.client.workbench.views.source.Source;
 
-import com.google.gwt.aria.client.Roles;
-import com.google.gwt.dom.client.Document;
-import com.google.gwt.dom.client.Element;
-import com.google.gwt.user.client.Window;
-import com.google.inject.Inject;
-import com.google.inject.Provider;
-import com.google.inject.Singleton;
+import java.util.ArrayList;
+import java.util.List;
 
 @Singleton
 public class CommandPaletteLauncher implements CommandPalette.Host
@@ -112,8 +112,8 @@ public class CommandPaletteLauncher implements CommandPalette.Host
    {
       pWorkbenchLists_.get().getCommandPaletteMruList().clear();
       mru_ = null;
-      display_.showMessage(GlobalDisplay.MSG_INFO, "Command Palette Cleared",
-         "The Command Palette's list of recently used items has been cleared.");
+      display_.showMessage(GlobalDisplay.MSG_INFO, constants_.cmdPaletteClearedCaption(),
+              constants_.cmdPaletteClearedMessage());
    }
    
    /**
@@ -181,7 +181,7 @@ public class CommandPaletteLauncher implements CommandPalette.Host
       // Assign the appropriate ARIA role to this panel
       Element ele = panel_.getElement();
       Roles.getDialogRole().set(ele);
-      Roles.getDialogRole().setAriaLabelProperty(ele, "Search commands and settings");
+      Roles.getDialogRole().setAriaLabelProperty(ele, constants_.searchCmdsAriaLabelProperty());
 
       // Find the center of the screen
       panel_.add(palette_);
@@ -231,4 +231,6 @@ public class CommandPaletteLauncher implements CommandPalette.Host
    private final Provider<Source> pSource_;
    private final Provider<UserPrefs> pPrefs_;
    private final Provider<WorkbenchListManager> pWorkbenchLists_;
+
+   private static final PaletteConstants constants_ = GWT.create(PaletteConstants.class);
 }

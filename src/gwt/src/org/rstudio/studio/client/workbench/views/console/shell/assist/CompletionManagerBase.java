@@ -1,7 +1,7 @@
 /*
  * CompletionManagerBase.java
  *
- * Copyright (C) 2021 by RStudio, PBC
+ * Copyright (C) 2022 by RStudio, PBC
  *
  * Unless you have received this program directly from RStudio pursuant
  * to the terms of a commercial license agreement with RStudio, then
@@ -17,6 +17,8 @@ package org.rstudio.studio.client.workbench.views.console.shell.assist;
 import java.util.ArrayList;
 import java.util.List;
 
+import com.google.gwt.core.client.GWT;
+
 import org.rstudio.core.client.Invalidation;
 import org.rstudio.core.client.Rectangle;
 import org.rstudio.core.client.StringUtil;
@@ -30,6 +32,7 @@ import org.rstudio.studio.client.common.codetools.Completions;
 import org.rstudio.studio.client.common.codetools.RCompletionType;
 import org.rstudio.studio.client.workbench.prefs.model.UserPrefs;
 import org.rstudio.studio.client.workbench.snippets.SnippetHelper;
+import org.rstudio.studio.client.workbench.views.console.ConsoleConstants;
 import org.rstudio.studio.client.workbench.views.console.shell.assist.CompletionRequester.QualifiedName;
 import org.rstudio.studio.client.workbench.views.source.editors.text.AceEditor;
 import org.rstudio.studio.client.workbench.views.source.editors.text.CompletionContext;
@@ -55,7 +58,9 @@ import com.google.gwt.user.client.Timer;
 import com.google.inject.Inject;
 
 public abstract class CompletionManagerBase
-      implements CompletionRequestContext.Host
+      implements CompletionRequestContext.Host,
+                 CompletionManager,
+                 CompletionManagerCommon
 {
    public abstract void goToHelp();
    public abstract void goToDefinition();
@@ -67,7 +72,7 @@ public abstract class CompletionManagerBase
       public void onToken(TokenIterator it, Token token);
    }
    
-   public CompletionManagerBase(CompletionPopupDisplay popup,
+   protected CompletionManagerBase(CompletionPopupDisplay popup,
                                 DocDisplay docDisplay,
                                 CodeToolsServerOperations server,
                                 CompletionContext context)
@@ -84,10 +89,6 @@ public abstract class CompletionManagerBase
       helpTimer_ = new HelpTimer();
       handlers_ = new ArrayList<>();
       snippets_ = new SnippetHelper((AceEditor) docDisplay, context.getId());
-      
-      // deferred so that handlers are toggled after subclasses have finished
-      // construction
-      Scheduler.get().scheduleDeferred(() -> toggleHandlers(true));
    }
    
    @Inject
@@ -142,9 +143,12 @@ public abstract class CompletionManagerBase
       {
          names.add(new QualifiedName(
                completions.getCompletions().get(i),
+               completions.getCompletionsDisplay().get(i),
                completions.getPackages().get(i),
                false,
                completions.getType().get(i),
+               completions.getSuggestOnAccept().get(i),
+               completions.getReplaceToEnd().get(i),
                completions.getMeta().get(i),
                completions.getHelpHandler(),
                completions.getLanguage()));
@@ -175,7 +179,7 @@ public abstract class CompletionManagerBase
          if (data.autoAcceptSingleCompletionResult())
          {
             popup_.showErrorMessage(
-                  "(No matches)",
+                  constants_.noMatchesLabel(),
                   new PopupPositioner(docDisplay_.getCursorBounds(), popup_));
          }
          else
@@ -275,8 +279,8 @@ public abstract class CompletionManagerBase
       Token token = docDisplay_.getTokenAt(docDisplay_.getCursorPosition());
       if (token != null)
       {
-         // don't complete within comments
-         if (token.hasType("comment"))
+         // don't complete within comments if requested
+         if (!allowInComment() && token.hasType("comment"))
             return false;
 
          // don't complete within multi-line strings
@@ -336,14 +340,53 @@ public abstract class CompletionManagerBase
          completionCache_.flush();
    }
    
+   // This is a stub to help handle redirection that's done via
+   // the DelegatingCompletionManager class, without requiring every
+   // sub-class to know about the delegation being done.
+   //
+   // The DelegatingCompletionManager class overrides this method,
+   // thereby allowing CompletionManagerBase to "know" what the active
+   // completion manager is in multi-mode documents.
+   //
+   // For single-mode documents, we just return null, and use the
+   // default implementation's behavior. Or, if the subclass has
+   // overridden our method, then that method will be visible first
+   // and used anyway.
+   
+   @Override
+   public CompletionManager getActiveCompletionManager()
+   {
+      return (CompletionManager) null;
+   }
+   
    // Subclasses should override this to provide extra (e.g. context) completions.
    protected void addExtraCompletions(String token, List<QualifiedName> completions)
    {
+      CompletionManager manager = getActiveCompletionManager();
+      if (manager instanceof CompletionManagerBase)
+      {
+         CompletionManagerBase delegate = (CompletionManagerBase) manager;
+         delegate.addExtraCompletions(token, completions);
+      }
    }
    
    // Subclasses can override this if they want different behavior in
    // amending completions appropriate to their type
    protected String onCompletionSelected(QualifiedName requestedCompletion)
+   {
+      CompletionManager manager = getActiveCompletionManager();
+      if (manager instanceof CompletionManagerBase)
+      {
+         CompletionManagerBase delegate = (CompletionManagerBase) manager;
+         return delegate.onCompletionSelected(requestedCompletion);
+      }
+      else
+      {
+         return onCompletionSelectedDefault(requestedCompletion);
+      }
+   }
+   
+   protected String onCompletionSelectedDefault(QualifiedName requestedCompletion)
    {
       String value = requestedCompletion.name;
       int type = requestedCompletion.type;
@@ -367,33 +410,79 @@ public abstract class CompletionManagerBase
    // e.g. displaying a tooltip or similar
    protected void onCompletionInserted(QualifiedName completion)
    {
+      CompletionManager manager = getActiveCompletionManager();
+      if (manager instanceof CompletionManagerBase)
+      {
+         CompletionManagerBase delegate = (CompletionManagerBase) manager;
+         delegate.onCompletionInserted(completion);
+      }
+      else
+      {
+         onCompletionInsertedDefault(completion);
+      }
+   }
+      
+   protected void onCompletionInsertedDefault(QualifiedName completion)
+   {
       int type = completion.type;
-      if (!RCompletionType.isFunctionType(type))
-         return;
-      
-      boolean insertParensAfterCompletion =
-            RCompletionType.isFunctionType(type) &&
-            userPrefs_.insertParensAfterFunctionCompletion().getValue();
-      
-      if (insertParensAfterCompletion)
-         docDisplay_.moveCursorBackward();
+      if (RCompletionType.isFunctionType(type))
+      {
+         boolean insertParensAfterCompletion =
+               RCompletionType.isFunctionType(type) &&
+               userPrefs_.insertParensAfterFunctionCompletion().getValue();
+         
+         if (insertParensAfterCompletion)
+            docDisplay_.moveCursorBackward();
+      }
+            
+      // suggest on accept
+      if (completion.suggestOnAccept)
+      {
+         Scheduler.get().scheduleDeferred(() -> beginSuggest(true, true, false));
+      }
    }
    
    // Subclasses can override depending on what characters are typically
    // considered part of identifiers / are relevant to a completion context.
-   protected boolean isBoundaryCharacter(char ch)
+   protected boolean isCompletionCharacter(char ch)
    {
-      boolean valid =
+      CompletionManager manager = getActiveCompletionManager();
+      if (manager instanceof CompletionManagerBase)
+      {
+         CompletionManagerBase delegate = (CompletionManagerBase) manager;
+         return delegate.isCompletionCharacter(ch);
+      }
+      else
+      {
+         return isCompletionCharacterDefault(ch);
+      }
+   }
+      
+   protected boolean isCompletionCharacterDefault(char ch)
+   {
+      return
             Character.isLetterOrDigit(ch) ||
             ch == '.' ||
             ch == '_';
-      
-      return !valid;
    }
    
    // Subclasses can override based on what characters might want to trigger
    // completions, or force a new completion request.
    protected boolean isTriggerCharacter(char ch)
+   {
+      CompletionManager manager = getActiveCompletionManager();
+      if (manager instanceof CompletionManagerBase)
+      {
+         CompletionManagerBase delegate = (CompletionManagerBase) manager;
+         return delegate.isTriggerCharacter(ch);
+      }
+      else
+      {
+         return isTriggerCharacterDefault(ch);
+      }
+   }
+      
+   protected boolean isTriggerCharacterDefault(char ch)
    {
       return false;
    }
@@ -475,14 +564,14 @@ public abstract class CompletionManagerBase
             case KeyCodes.KEY_F1:        return onPopupAdditionalHelp();
             }
             
+            Position cursorPos = docDisplay_.getCursorPosition();
+            Position completionPos = contextData_.getPosition();
+
             // cancel the current completion session if the cursor
             // has been moved before the completion start position,
             // or to a new line. this ensures that backspace can
             if (contextData_ != null)
             {
-               Position cursorPos = docDisplay_.getCursorPosition();
-               Position completionPos = contextData_.getPosition();
-
                boolean dismiss =
                      cursorPos.getRow() != completionPos.getRow() ||
                      cursorPos.getColumn() < completionPos.getColumn();
@@ -499,10 +588,17 @@ public abstract class CompletionManagerBase
             // associated action
             if (keyCode == KeyCodes.KEY_BACKSPACE)
             {
-               Scheduler.get().scheduleDeferred(() ->
+               if (cancelCompletionsOnBackspace())
                {
-                  beginSuggest(false, false, false);
-               });
+                  invalidatePendingRequests();
+               }
+               else
+               {
+                  Scheduler.get().scheduleDeferred(() ->
+                  {
+                     beginSuggest(false, false, false);
+                  });
+               }
                
                return false;
             }
@@ -630,7 +726,7 @@ public abstract class CompletionManagerBase
    }
    
    protected boolean canAutoPopup(char ch, int lookbackLimit)
-   {
+   {  
       String codeComplete = userPrefs_.codeCompletion().getValue();
       
       if (isTriggerCharacter(ch) && !StringUtil.equals(codeComplete, UserPrefs.CODE_COMPLETION_MANUAL))
@@ -642,10 +738,10 @@ public abstract class CompletionManagerBase
       if (docDisplay_.isVimModeOn() && !docDisplay_.isVimInInsertMode())
          return false;
       
-      if (docDisplay_.isCursorInSingleLineString())
+      if (docDisplay_.isCursorInSingleLineString(allowInComment()))
          return false;
       
-      if (!isBoundaryCharacter(docDisplay_.getCharacterAtCursor()))
+      if (!isCompletionCharacter(docDisplay_.getCharacterAtCursor()))
          return false;
          
       String currentLine = docDisplay_.getCurrentLine();
@@ -654,19 +750,45 @@ public abstract class CompletionManagerBase
       
       boolean canAutoPopup =
             currentLine.length() >= lookbackLimit &&
-            !isBoundaryCharacter(ch);
+            isCompletionCharacter(ch);
             
       if (!canAutoPopup)
+      {
          return false;
+      }
       
       for (int i = 0; i < lookbackLimit; i++)
       {
          int index = cursorColumn - i - 1;
-         if (isBoundaryCharacter(StringUtil.charAt(currentLine, index)))
+         if (!isCompletionCharacter(StringUtil.charAt(currentLine, index)))
             return false;
       }
       
       return true;
+   }
+   
+   protected boolean allowInComment()
+   {
+      return false;
+   }
+   
+   private boolean cancelCompletionsOnBackspace()
+   {
+      // if we're at the start of the document, cancel
+      int index = docDisplay_.getCursorColumn();
+      if (index < 2)
+         return true;
+      
+      // if we no longer have a relevant completion character
+      // at the cursor position, bail (note that the backspace
+      // has not yet been processed at this point so we look
+      // at the character further behind)
+      char ch = docDisplay_.getCurrentLine().charAt(index - 2);
+      if (!isCompletionCharacter(ch))
+         return true;
+      
+      // passed all tests; don't cancel completions
+      return false;
    }
    
    private void onSelection(String completionToken,
@@ -684,7 +806,7 @@ public abstract class CompletionManagerBase
          snippets_.applySnippet(completionToken, completion.name);
       }
       else
-      {
+      {   
          String value = onCompletionSelected(completion);
          
          // compute an appropriate offset for completion --
@@ -707,6 +829,10 @@ public abstract class CompletionManagerBase
          {
             Position replaceStart = range.getEnd().movedLeft(offset);
             Position replaceEnd = range.getEnd();
+            
+            if (completion.replaceToEnd)
+               replaceEnd.setColumn(docDisplay_.getLength(replaceEnd.getRow()));
+            
             docDisplay_.replaceRange(Range.fromPoints(replaceStart, replaceEnd), value);
          }
 
@@ -783,7 +909,7 @@ public abstract class CompletionManagerBase
          
          String line = docDisplay_.getCurrentLine();
          char ch = StringUtil.charAt(line, cursorColumn - 1);
-         if (isBoundaryCharacter(ch))
+         if (!isCompletionCharacter(ch))
          {
             invalidatePendingRequests();
             return;
@@ -816,6 +942,9 @@ public abstract class CompletionManagerBase
    {
       if (completion.type == RCompletionType.SNIPPET)
          popup_.displaySnippetHelp(snippets_.getSnippetContents(completion.name));
+      else if (completion.type == RCompletionType.YAML_KEY ||
+               completion.type == RCompletionType.YAML_VALUE)
+         popup_.displayYAMLHelp(completion.name, completion.meta);
       else
          helpStrategy_.showHelp(completion, popup_);
    }
@@ -825,7 +954,7 @@ public abstract class CompletionManagerBase
       helpTimer_.schedule(completion);
    }
    
-   private void toggleHandlers(boolean enable)
+   protected void toggleHandlers(boolean enable)
    {
       if (enable)
          addHandlers();
@@ -885,12 +1014,14 @@ public abstract class CompletionManagerBase
                ignoreNextBlur_ = true;
             }),
             
-            popup_.addAttachHandler((AttachEvent event) -> {
-               docDisplay_.setPopupVisible(event.isAttached());
+            popup_.addSelectionHandler((SelectionEvent<QualifiedName> event) -> {
+               docDisplay_.setPopupVisible(true);
+               onPopupSelection(event.getSelectedItem());
             }),
             
-            popup_.addSelectionHandler((SelectionEvent<QualifiedName> event) -> {
-               onPopupSelection(event.getSelectedItem());
+            popup_.addCloseHandler(event ->
+            {
+               Scheduler.get().scheduleDeferred(() -> docDisplay_.setPopupVisible(false));
             }),
             
             popup_.addSelectionCommitHandler((SelectionCommitEvent<QualifiedName> event) -> {
@@ -1001,4 +1132,5 @@ public abstract class CompletionManagerBase
    
    protected EventBus events_;
    protected UserPrefs userPrefs_;
+   private static final ConsoleConstants constants_ = GWT.create(ConsoleConstants.class);
 }

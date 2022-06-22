@@ -1,7 +1,7 @@
 /*
  * cite-popup.tsx
  *
- * Copyright (C) 2021 by RStudio, PBC
+ * Copyright (C) 2022 by RStudio, PBC
  *
  * Unless you have received this program directly from RStudio pursuant
  * to the terms of a commercial license agreement with RStudio, then
@@ -14,7 +14,7 @@
  */
 
 import { Schema } from 'prosemirror-model';
-import { PluginKey } from 'prosemirror-state';
+import { PluginKey, Selection } from 'prosemirror-state';
 import { DecorationSet, EditorView } from 'prosemirror-view';
 
 import React from 'react';
@@ -29,10 +29,11 @@ import { PandocServer } from '../../api/pandoc';
 import './cite-popup.css';
 import { urlForCitation } from '../../api/cite';
 import { cslFromDoc } from '../../api/csl';
+import { EditorServer } from '../../api/server';
 
 const kMaxWidth = 400; // also in cite-popup.css
 
-export function citePopupPlugin(schema: Schema, ui: EditorUI, bibMgr: BibliographyManager, server: PandocServer) {
+export function citePopupPlugin(schema: Schema, ui: EditorUI, bibMgr: BibliographyManager, server: EditorServer) {
   return textPopupDecorationPlugin({
     key: new PluginKey<DecorationSet>('cite-popup'),
     markType: schema.marks.cite_id,
@@ -42,26 +43,38 @@ export function citePopupPlugin(schema: Schema, ui: EditorUI, bibMgr: Bibliograp
     createPopup: async (view: EditorView, target: TextPopupTarget, style: React.CSSProperties) => {
       await bibMgr.load(ui, view.state.doc);
 
-      const csl = cslFromDoc(view.state.doc);
       const citeId = target.text.replace(/^-@|^@/, '');
-      const source = bibMgr.findIdInLocalBibliography(citeId);
-      if (source) {
-        const previewHtml = await server.citationHTML(
-          ui.context.getDocumentPath(),
-          JSON.stringify([source]),
-          csl || null,
-        );
-        const finalHtml = ensureSafeLinkIsPresent(previewHtml, () => {
-          const url = urlForCitation(source);
-          if (url) {
-            return {
-              text: ui.context.translateText('[Link]'),
-              url,
-            };
-          }
-        });
 
-        return <CitePopup previewHtml={finalHtml} style={style} />;
+      // See if this will be handled by Xref
+      let isXRef = false;
+      const docPath = ui.context.getDocumentPath();
+      if (docPath) {
+        const xrefs = await server.xref.quartoXrefForId(docPath, citeId);
+        isXRef = xrefs.refs.length > 0;
+      }
+
+      if (!isXRef) {
+        const csl = cslFromDoc(view.state.doc);
+        const source = bibMgr.findIdInLocalBibliography(citeId);
+
+        if (source) {
+          const previewHtml = await server.pandoc.citationHTML(
+            ui.context.getDocumentPath(),
+            JSON.stringify([source]),
+            csl || null,
+          );
+          const finalHtml = ensureSafeLinkIsPresent(previewHtml, () => {
+            const url = urlForCitation(source);
+            if (url) {
+              return {
+                text: ui.context.translateText('[Link]'),
+                url,
+              };
+            }
+          });
+
+          return <CitePopup previewHtml={finalHtml} style={style} />;
+        }
       }
       return null;
     },

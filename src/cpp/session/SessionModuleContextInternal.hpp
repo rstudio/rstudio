@@ -1,7 +1,7 @@
 /*
  * SessionModuleContextInternal.hpp
  *
- * Copyright (C) 2021 by RStudio, PBC
+ * Copyright (C) 2022 by RStudio, PBC
  *
  * Unless you have received this program directly from RStudio pursuant
  * to the terms of a commercial license agreement with RStudio, then
@@ -45,7 +45,7 @@ void onSuspended(const r::session::RSuspendOptions& options,
                  core::Settings* pPersistentState);
 void onResumed(const core::Settings& persistentState);
 
-// notify of backgound processing
+// notify of background processing
 void onBackgroundProcessing(bool isIdle);
 
 // source diagnostics

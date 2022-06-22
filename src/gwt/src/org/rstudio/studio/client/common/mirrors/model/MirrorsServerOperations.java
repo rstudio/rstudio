@@ -1,7 +1,7 @@
 /*
  * MirrorsServerOperations.java
  *
- * Copyright (C) 2021 by RStudio, PBC
+ * Copyright (C) 2022 by RStudio, PBC
  *
  * Unless you have received this program directly from RStudio pursuant
  * to the terms of a commercial license agreement with RStudio, then
@@ -14,6 +14,7 @@
  */
 package org.rstudio.studio.client.common.mirrors.model;
 
+import org.rstudio.studio.client.projects.model.RProjectOptions;
 import org.rstudio.studio.client.server.ServerRequestCallback;
 
 import com.google.gwt.core.client.JsArray;
@@ -29,4 +30,7 @@ public interface MirrorsServerOperations
 
    void getCRANActives(
          ServerRequestCallback<JsArray<CRANMirror>> requestCallback);
+
+   void readProjectOptions(
+         ServerRequestCallback<RProjectOptions> requestCallback);
 }

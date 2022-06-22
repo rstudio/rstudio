@@ -1,7 +1,7 @@
 /*
  * AppCommandPaletteItem.java
  *
- * Copyright (C) 2021 by RStudio, PBC
+ * Copyright (C) 2022 by RStudio, PBC
  *
  * Unless you have received this program directly from RStudio pursuant
  * to the terms of a commercial license agreement with RStudio, then
@@ -16,6 +16,7 @@ package org.rstudio.studio.client.palette;
 
 import java.util.List;
 
+import com.google.gwt.core.client.GWT;
 import org.rstudio.core.client.Debug;
 import org.rstudio.core.client.StringUtil;
 import org.rstudio.core.client.command.AppCommand;
@@ -57,17 +58,16 @@ public class AppCommandPaletteItem extends BasePaletteItem<AppCommandPaletteEntr
       {
          // This isn't currently likely since we hide commands that aren't
          // visible.
-         display.showErrorMessage("Command Not Available", 
-               "The command '" + label_ + "' is not currently available.");
+         display.showErrorMessage(constants_.commandNotAvailableCaption(),
+                 constants_.commandNotAvailableMessage(label_));
       }
       else if (!command_.isEnabled() || !command_.hasCommandHandlers())
       {
          // Don't attempt to execute disabled commands. Treat command with no
          // handlers as disabled (nothing will happen if we run them except a
          // runtime exception)
-         display.showErrorMessage("Command Disabled", 
-               "The command '" + label_ + "' cannot be used right now. " +
-               "It may be unavailable in this project, file, or view.");
+         display.showErrorMessage(constants_.commandDisabledCaption(),
+                 constants_.commandDisabledMessage(label_));
       }
       else
       {
@@ -85,9 +85,8 @@ public class AppCommandPaletteItem extends BasePaletteItem<AppCommandPaletteEntr
          }
          catch(Exception e)
          {
-            display.showErrorMessage("Command Execution Failed", 
-                  "The command '" + label_ + "' could not be executed.\n\n" +
-                  StringUtil.notNull(e.getMessage()));
+            display.showErrorMessage(constants_.commandExecutionFailedCaption(),
+                    constants_.commandExecutionFailedMessage(label_, StringUtil.notNull(e.getMessage())));
             Debug.logException(e);
          }
       }
@@ -136,4 +135,6 @@ public class AppCommandPaletteItem extends BasePaletteItem<AppCommandPaletteEntr
    private final AppCommand command_;
 
    private String label_;
+
+   private static final PaletteConstants constants_ = GWT.create(PaletteConstants.class);
 }

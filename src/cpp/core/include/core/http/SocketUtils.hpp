@@ -1,7 +1,7 @@
 /*
  * SocketUtils.hpp
  *
- * Copyright (C) 2021 by RStudio, PBC
+ * Copyright (C) 2022 by RStudio, PBC
  *
  * Unless you have received this program directly from RStudio pursuant
  * to the terms of a commercial license agreement with RStudio, then
@@ -18,6 +18,7 @@
 
 #include <boost/asio/error.hpp>
 #include <boost/asio/socket_base.hpp>
+#include <boost/asio/ssl/error.hpp>
 
 #ifdef _WIN32
 #include <boost/system/windows_error.hpp>
@@ -74,6 +75,7 @@ inline bool isConnectionTerminatedError(const core::Error& error)
    bool timedOut = error == boost::asio::error::timed_out;
    bool eof = error == boost::asio::error::eof;
    bool reset = error == boost::asio::error::connection_reset;
+   bool shortRead = error == boost::asio::ssl::error::stream_truncated; // "short read"
    bool badFile = error == boost::asio::error::bad_descriptor;
    bool brokenPipe = error == boost::asio::error::broken_pipe;
    bool noFile = error == systemError(boost::system::errc::no_such_file_or_directory, ErrorLocation());
@@ -85,7 +87,7 @@ inline bool isConnectionTerminatedError(const core::Error& error)
    bool noData = false;
 #endif
    
-   return timedOut || eof || reset || badFile || brokenPipe || noFile || noData;
+   return timedOut || eof || reset || badFile || brokenPipe || noFile || noData || shortRead;
 }
 
 inline bool isConnectionUnavailableError(const Error& error)

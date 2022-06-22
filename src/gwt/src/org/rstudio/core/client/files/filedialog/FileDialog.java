@@ -1,7 +1,7 @@
 /*
  * FileDialog.java
  *
- * Copyright (C) 2021 by RStudio, PBC
+ * Copyright (C) 2022 by RStudio, PBC
  *
  * Unless you have received this program directly from RStudio pursuant
  * to the terms of a commercial license agreement with RStudio, then
@@ -15,8 +15,10 @@
 package org.rstudio.core.client.files.filedialog;
 
 import com.google.gwt.aria.client.DialogRole;
+import com.google.gwt.core.client.GWT;
 import com.google.gwt.event.logical.shared.SelectionEvent;
 
+import org.rstudio.core.client.CoreClientConstants;
 import org.rstudio.core.client.StringUtil;
 import org.rstudio.core.client.files.FileSystemContext;
 import org.rstudio.core.client.files.FileSystemItem;
@@ -56,7 +58,7 @@ public abstract class FileDialog extends FileSystemDialog
    @Override
    public String getFilenameLabel()
    {
-      return "File name";
+      return constants_.getFilenameLabel();
    }
 
    /**
@@ -135,7 +137,7 @@ public abstract class FileDialog extends FileSystemDialog
       {
          if (!allowNonexistentFile_)
          {
-            showError("File does not exist");
+            showError(constants_.nonexistentFileMessage());
             return false;
          }
       }
@@ -234,4 +236,5 @@ public abstract class FileDialog extends FileSystemDialog
    protected boolean promptOnOverwrite_;
    protected boolean allowNonexistentFile_;
    private boolean attemptAcceptOnNextNavigate_ = false;
+   private static final CoreClientConstants constants_ = GWT.create(CoreClientConstants.class);
 }

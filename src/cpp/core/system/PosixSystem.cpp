@@ -1,7 +1,7 @@
 /*
  * PosixSystem.cpp
  *
- * Copyright (C) 2021 by RStudio, PBC
+ * Copyright (C) 2022 by RStudio, PBC
  *
  * Unless you have received this program directly from RStudio pursuant
  * to the terms of a commercial license agreement with RStudio, then
@@ -24,6 +24,7 @@
 #include <boost/algorithm/string.hpp>
 #include <boost/range/as_array.hpp>
 #include <boost/bind/bind.hpp>
+#include <boost/scope_exit.hpp>
 
 #include <signal.h>
 #include <fcntl.h>
@@ -158,7 +159,7 @@ Error realPath(const FilePath& filePath, FilePath* pRealPath)
 
 Error realPath(const std::string& path, FilePath* pRealPath)
 {
-   char buffer[PATH_MAX*2];
+   char buffer[PATH_MAX * 2];
    char* realPath = ::realpath(path.c_str(), buffer);
    if (realPath == nullptr)
    {
@@ -166,12 +167,58 @@ Error realPath(const std::string& path, FilePath* pRealPath)
       error.addProperty("path", path);
       return error;
    }
+   
   *pRealPath = FilePath(realPath);
    return Success();
 }
      
 void initHook()
 {
+}
+
+Error findProgramOnPath(const std::string& program,
+                        core::FilePath* pProgramPath)
+{
+   std::string path = core::system::getenv("PATH");
+   auto paths = core::algorithm::split(path, ":");
+
+   for (auto&& path : paths)
+   {
+      // get file descriptor for path entry
+      int fd = ::open(path.c_str(), 0);
+      if (fd == -1)
+         continue;
+      
+      // clean up when we're done
+      BOOST_SCOPE_EXIT( (&fd) )
+      {
+         ::close(fd);
+      }
+      BOOST_SCOPE_EXIT_END;
+      
+      // confirm that it's a regular file
+      struct stat sb;
+      int status = ::fstatat(fd, program.c_str(), &sb, 0);
+      if (status == -1)
+         continue;
+      
+      bool isRegularFile = S_ISREG(sb.st_mode);
+      if (!isRegularFile)
+         continue;
+      
+      // confirm that it's executable
+      // note that we use AT_EACCESS to ensure checks are done using
+      // the effective user id
+      status = ::faccessat(fd, program.c_str(), X_OK, AT_EACCESS);
+      if (status == -1)
+         continue;
+      
+      // all checks passed; return full path
+      *pProgramPath = FilePath(path).completeChildPath(program);
+      return Success();
+   }
+
+   return fileNotFoundError(program, ERROR_LOCATION);
 }
 
 // statics defined in System.cpp
@@ -187,7 +234,7 @@ Error initializeSystemLog(const std::string& programIdentity,
    {
       // create default syslog logger options
       log::SysLogOptions options;
-      s_logOptions.reset(new log::LogOptions(programIdentity, logLevel, log::LoggerType::kSysLog, options));
+      s_logOptions.reset(new log::LogOptions(programIdentity, logLevel, log::LoggerType::kSysLog, log::LogMessageFormatType::PRETTY, options));
       s_programIdentity = programIdentity;
 
       Error error = initLog();
@@ -201,6 +248,8 @@ Error initializeSystemLog(const std::string& programIdentity,
 
    return Success();
 }
+
+boost::function<void()> s_sighupHandler;
 
 namespace {
 
@@ -228,6 +277,10 @@ void logConfigReloadThreadFunc(sigset_t waitMask)
          {
             LOG_INFO_MESSAGE("Successfully reloaded logging configuration");
          }
+
+         // call previously registered SIGHUP handlder
+         if (s_sighupHandler)
+            s_sighupHandler();
       }
    }
 }
@@ -247,6 +300,12 @@ void initializeLogConfigReload()
 
    // start a thread to handle the SIGHUP signal
    boost::thread thread(boost::bind(logConfigReloadThreadFunc, waitMask));
+}
+
+
+void registerSighupHandler(const boost::function<void()>& sighupHandler)
+{
+   s_sighupHandler = sighupHandler;
 }
    
 Error ignoreTerminalSignals()
@@ -507,7 +566,7 @@ namespace {
 // worst case scenario - close all file descriptors possible
 // this can be EXTREMELY slow when max fd is set to a high value
 // note: this conditional should actually never be true
-// as all linux systems have /proc/self - this is perserved in the codebase
+// as all linux systems have /proc/self - this is preserved in the codebase
 // as a remainder of what was being done in the recent past
 Error closeFileDescriptorsFrom(int fdStart)
 {
@@ -2123,8 +2182,9 @@ Error runProcess(const std::string& path,
                  ProcessConfig& config,
                  ProcessConfigFilter configFilter)
 {
-   // change user here if requested
-   if (!runAsUser.empty())
+   // change user here if requested and we have privilege. if we don't have privilege, we can only
+   // "run as" the current user (we'll check that later)
+   if (!runAsUser.empty() && posix::realUserIsRoot())
    {
       // restore root
       Error error = restorePriv();
@@ -2158,6 +2218,18 @@ Error runProcess(const std::string& path,
    error = User::getCurrentUser(user);
    if (error)
       return error;
+
+   // if we don't have privilege, the only user we can run as is ourselves, so if runAsUser is
+   // specified, make sure it's the same account we're running from.
+   if (!posix::realUserIsRoot() && !runAsUser.empty())
+   {
+      if (runAsUser != user.getUsername())
+      {
+         return systemError(EPERM, "Attempt to run process '" + path + "' as user '" +
+               runAsUser + "' from unprivileged user account '" + user.getUsername() + "'",
+               ERROR_LOCATION);
+      }
+   }
 
    // close all open file descriptors other than std streams
    error = closeNonStdFileDescriptors();
@@ -2326,11 +2398,34 @@ bool isUserNotFoundError(const Error& error)
    return error == systemError(boost::system::errc::permission_denied, ErrorLocation());
 }
 
-Error userBelongsToGroup(const User& user,
-                         const std::string& groupName,
-                         bool* pBelongs)
+Error userBelongsToGroupViaGroupList(const User& user,
+                                     const std::string& groupName,
+                                     bool* pBelongs)
 {
    *pBelongs = false; // default to not found
+
+   // get a list of the user's groups
+   std::vector<group::Group> groups;
+   Error error = group::userGroups(user.getUsername(), &groups);
+   if (error)
+      return error;
+
+   // scan the user's groups to see if they are a member of the target group
+   *pBelongs = std::find_if(groups.begin(),
+                            groups.end(),
+                            [&](const group::Group& group)
+                            { return group.name == groupName; }) != groups.end();
+
+   return Success();
+}
+
+Error userBelongsToGroupViaGroupName(const User& user,
+                                     const std::string& groupName,
+                                     bool* pBelongs)
+{
+   *pBelongs = false; // default to not found
+
+   // fetch the group by its name
    group::Group group;
    Error error = group::groupFromName(groupName, &group);
    if (error)
@@ -2341,7 +2436,7 @@ Error userBelongsToGroup(const User& user,
    {
       *pBelongs = true;
    }
-   // else scan the list of member names for this user
+   // else scan the list of group members looking for this user
    else
    {
       *pBelongs = std::find(group.members.begin(),
@@ -2353,6 +2448,42 @@ Error userBelongsToGroup(const User& user,
 }
 
 
+// first try to get the user's groups via getgrouplist. we prefer this to
+// fetching information about the group to test membership because
+// this can fail in the case where SSSD group member data is disabled
+// via ignore_group_members (see https://jhrozek.fedorapeople.org/sssd/1.9.91/man/sssd.conf.5.html)
+//
+// we fallback to the old implementation if this method did not yield a positive result
+// to ensure backwards compatibility in existing customer environments. however,
+// group member enumeration of large groups is expensive and this has been known
+// to be slow in some environments.
+//
+// if the first try fails via getgrouplist, we hold the error and attempt
+// the old implementation before returning. if both calls fail, we return the first error
+Error userBelongsToGroup(const User& user,
+                         const std::string& groupName,
+                         bool* pBelongs)
+{
+   *pBelongs = false; // default to not found
+
+   // first we try to use the getgrouplist(3) implementation to determine
+   // if the user is a member of the target groupName.
+   Error groupListError = userBelongsToGroupViaGroupList(user, groupName, pBelongs);
+
+   // if there was no error, then we can return early.
+   // otherwise, we fallback to the legacy implementation
+   if (!groupListError)
+      return Success();
+
+   // next we try to lookup the target group using the getgrnam_r(3) implementation
+   Error groupNameError = userBelongsToGroupViaGroupName(user, groupName, pBelongs);
+
+   // if both attempts fail, return the first error we encountered
+   if (groupNameError)
+      return groupListError;
+
+   return Success();
+}
 
 /////////////////////////////////////////////////////////////////////
 //
@@ -2369,18 +2500,51 @@ bool effectiveUserIsRoot()
    return ::geteuid() == 0;
 }
 
-Error temporarilyDropPriv(const std::string& newUsername)
+Error temporarilyDropPriv(const std::string& newUsername,
+                          bool chownLogDir)
 {
-   // clear error state
-   errno = 0;
+   return temporarilyDropPriv(newUsername, std::string(), chownLogDir);
+}
 
+Error temporarilyDropPriv(const std::string& newUsername,
+                          const std::string& newGroupname,
+                          bool chownLogDir)
+{
    // get user info
    User user;
    Error error = User::getUserFromIdentifier(newUsername, user);
    if (error)
       return error;
 
-   return posix::temporarilyDropPrivileges(user);
+   // get group info if one was provided
+   boost::optional<GidType> groupOpt;
+   if (!newGroupname.empty())
+   {
+      // verify that the user is a member of the provided group
+      bool belongs = false;
+      error = userBelongsToGroup(user, newGroupname, &belongs);
+      if (error)
+         return error;
+
+      if (!belongs)
+         return systemError(boost::system::errc::permission_denied, ERROR_LOCATION);
+
+      group::Group group;
+      error = group::groupFromName(newGroupname, &group);
+      if (error)
+         return error;
+
+      groupOpt = group.groupId;
+   }
+
+   // before changing the process user, ensure it becomes the new
+   // owner of any file logs so we can ensure that we can keep writing to them
+   //
+   // also, we chown the log dir to the server user if specified to ensure that we
+   // can create new log files after giving up root privilege
+   core::log::refreshAllLogDestinations(core::log::RefreshParams{ user, chownLogDir });
+
+   return posix::temporarilyDropPrivileges(user, groupOpt);
 }
 
 Error restorePriv()
@@ -2393,27 +2557,65 @@ Error restorePriv()
 
 Error permanentlyDropPriv(const std::string& newUsername)
 {
-   // clear error state
-   errno = 0;
+   return permanentlyDropPriv(newUsername, std::string());
+}
 
+Error permanentlyDropPriv(const std::string& newUsername, const std::string& newGroupname)
+{
    // get user info
    User user;
    Error error = User::getUserFromIdentifier(newUsername, user);
    if (error)
       return error;
 
+   // get group info if one was provided
+   boost::optional<GidType> groupOpt;
+   if (!newGroupname.empty())
+   {
+      // verify that the user is a member of the provided group
+      bool belongs = false;
+      error = userBelongsToGroup(user, newGroupname, &belongs);
+      if (error)
+         return error;
+
+      if (!belongs)
+         return systemError(boost::system::errc::permission_denied, ERROR_LOCATION);
+
+      group::Group group;
+      error = group::groupFromName(newGroupname, &group);
+      if (error)
+         return error;
+
+      groupOpt = group.groupId;
+   }
+
+   GidType targetGID = groupOpt.value_or(user.getGroupId());
+
+   // Refresh the destinations without providing a user since we have the parent processes's file destinations
+   // and don't want to change the ownership of the log files to newUsername. We do still want to make sure we
+   // are set up to log in case there are errors before we call ::execve - in particular, for syslog
+   core::log::refreshAllLogDestinations();
+
+   // clear error state
+   errno = 0;
+
    // supplemental group list
+   // NOTE: We are intentionally specifying the user's primary group here
+   // regardless of whether an alternate group is provided. This so all of
+   // the user's groups are maintained for the new process. Initializing
+   // with the alternate group results in the process running with only a single
+   // group.
    if (::initgroups(user.getUsername().c_str(), user.getGroupId()) < 0)
       return systemError(errno, ERROR_LOCATION);
 
    // set group
-   if (::setresgid(user.getGroupId(), user.getGroupId(), user.getGroupId()) < 0)
+   if (::setresgid(targetGID, targetGID, targetGID) < 0)
       return systemError(errno, ERROR_LOCATION);
    // verify
    gid_t rgid, egid, sgid;
    if (::getresgid(&rgid, &egid, &sgid) < 0)
       return systemError(errno, ERROR_LOCATION);
-   if (rgid != user.getGroupId() || egid != user.getGroupId() || sgid != user.getGroupId())
+   if (rgid != targetGID || egid != targetGID || sgid != targetGID)
       return systemError(EACCES, ERROR_LOCATION);
 
    // set user
@@ -2433,11 +2635,12 @@ Error permanentlyDropPriv(const std::string& newUsername)
 // privilege manipulation for systems that don't support setresuid/getresuid
 #else
 
-namespace {
-   uid_t s_privUid;
+Error permanentlyDropPriv(const std::string& newUsername)
+{
+   return permanentlyDropPriv(newUsername, std::string());
 }
 
-Error permanentlyDropPriv(const std::string& newUsername)
+Error permanentlyDropPriv(const std::string& newUsername, const std::string& newGroupname)
 {
    // clear error state
    errno = 0;
@@ -2448,15 +2651,43 @@ Error permanentlyDropPriv(const std::string& newUsername)
    if (error)
       return error;
 
+   // get group info if one was provided
+   boost::optional<GidType> groupOpt;
+   if (!newGroupname.empty())
+   {
+      // verify that the user is a member of the provided group
+      bool belongs = false;
+      error = userBelongsToGroup(user, newGroupname, &belongs);
+      if (error)
+         return error;
+
+      if (!belongs)
+         return systemError(boost::system::errc::permission_denied, ERROR_LOCATION);
+
+      group::Group group;
+      error = group::groupFromName(newGroupname, &group);
+      if (error)
+         return error;
+
+      groupOpt = group.groupId;
+   }
+
+   GidType targetGID = groupOpt.value_or(user.getGroupId());
+
    // supplemental group list
+   // NOTE: We are intentionally specifying the user's primary group here
+   // regardless of whether an alternate group is provided. This so all of
+   // the user's groups are maintained for the new process. Initializing
+   // with the alternate group results in the process running with only a single
+   // group.
    if (::initgroups(user.getUsername().c_str(), user.getGroupId()) < 0)
       return systemError(errno, ERROR_LOCATION);
 
    // set group
-   if (::setregid(user.getGroupId(), user.getGroupId()) < 0)
+   if (::setregid(targetGID, targetGID) < 0)
       return systemError(errno, ERROR_LOCATION);
    // verify
-   if (::getgid() != user.getGroupId() || ::getegid() != user.getGroupId())
+   if (::getgid() != targetGID || ::getegid() != targetGID)
       return systemError(EACCES, ERROR_LOCATION);
 
    // set user
@@ -2480,4 +2711,3 @@ Error restoreRoot()
 } // namespace system
 } // namespace core
 } // namespace rstudio
-

@@ -1,7 +1,7 @@
 /*
  * StatusBarWidget.java
  *
- * Copyright (C) 2021 by RStudio, PBC
+ * Copyright (C) 2022 by RStudio, PBC
  *
  * Unless you have received this program directly from RStudio pursuant
  * to the terms of a commercial license agreement with RStudio, then
@@ -31,6 +31,7 @@ import org.rstudio.core.client.resources.ImageResource2x;
 import org.rstudio.core.client.widget.IsWidgetWithHeight;
 import org.rstudio.studio.client.common.icons.StandardIcons;
 import org.rstudio.studio.client.common.icons.code.CodeIcons;
+import org.rstudio.studio.client.workbench.views.source.ViewsSourceConstants;
 
 public class StatusBarWidget extends Composite
       implements StatusBar, IsWidgetWithHeight
@@ -149,47 +150,52 @@ public class StatusBarWidget extends Composite
       if (type == StatusBar.SCOPE_CLASS)
       {
          scopeIcon_.setResource(new ImageResource2x(CodeIcons.INSTANCE.clazz2x()));
-         scopeIcon_.setAltText("Class");
+         scopeIcon_.setAltText(constants_.classCapitalized());
       }
       else if (type == StatusBar.SCOPE_NAMESPACE)
       {
          scopeIcon_.setResource(new ImageResource2x(CodeIcons.INSTANCE.namespace2x()));
-         scopeIcon_.setAltText("Namespace");
+         scopeIcon_.setAltText(constants_.namespaceCapitalized());
       }
       else if (type == StatusBar.SCOPE_LAMBDA)
       {
          scopeIcon_.setResource(new ImageResource2x(StandardIcons.INSTANCE.lambdaLetter2x()));
-         scopeIcon_.setAltText("Lambda");
+         scopeIcon_.setAltText(constants_.lambdaCapitalized());
       }
       else if (type == StatusBar.SCOPE_ANON)
       {
          scopeIcon_.setResource(new ImageResource2x(StandardIcons.INSTANCE.functionLetter2x()));
-         scopeIcon_.setAltText("Anonymous");
+         scopeIcon_.setAltText(constants_.anonymousCapitalized());
+      }
+      else if (type == StatusBar.SCOPE_TEST)
+      {
+         scopeIcon_.setResource(new ImageResource2x(StandardIcons.INSTANCE.test2x()));
+         scopeIcon_.setAltText(constants_.testCapitalized());
       }
       else if (type == StatusBar.SCOPE_FUNCTION)
       {
          scopeIcon_.setResource(new ImageResource2x(StandardIcons.INSTANCE.functionLetter2x()));
-         scopeIcon_.setAltText("Function");
+         scopeIcon_.setAltText(constants_.functionCapitalized());
       }
       else if (type == StatusBar.SCOPE_CHUNK)
       {
          scopeIcon_.setResource(new ImageResource2x(RES.chunk2x()));
-         scopeIcon_.setAltText("Chunk");
+         scopeIcon_.setAltText(constants_.chunkCapitalized());
       }
       else if (type == StatusBar.SCOPE_SECTION)
       {
          scopeIcon_.setResource(new ImageResource2x(RES.section2x()));
-         scopeIcon_.setAltText("Section");
+         scopeIcon_.setAltText(constants_.sectionCapitalized());
       }
       else if (type == StatusBar.SCOPE_SLIDE)
       {
          scopeIcon_.setResource(new ImageResource2x(RES.slide2x()));
-         scopeIcon_.setAltText("Slide");
+         scopeIcon_.setAltText(constants_.slideCapitalized());
       }
       else
       {
          scopeIcon_.setResource(new ImageResource2x(CodeIcons.INSTANCE.function2x()));
-         scopeIcon_.setAltText("Function");
+         scopeIcon_.setAltText(constants_.functionCapitalized());
       }
    }
 
@@ -327,4 +333,5 @@ public class StatusBarWidget extends Composite
    private final int height_;
    private HandlerRegistration handler_;
    private int scopeType_;
+   private static final ViewsSourceConstants constants_ = GWT.create(ViewsSourceConstants.class);
 }

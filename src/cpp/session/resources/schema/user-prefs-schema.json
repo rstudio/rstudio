@@ -136,6 +136,12 @@
             "title": "Show line numbers in editor",
             "description": "Show line numbers in RStudio's code editor."
         },
+        "relative_line_numbers": {
+            "type": "boolean",
+            "default": false,
+            "title": "Use relative line numbers in editor",
+            "description": "Show relative, rather than absolute, line numbers in RStudio's code editor."
+        },
         "highlight_selected_word": {
             "type": "boolean",
             "default": true,
@@ -202,7 +208,7 @@
                     "TabSet2",
                     "HiddenTabSet"],
                 "tabSet1": ["Environment", "History", "Connections", "Build", "VCS", "Tutorial", "Presentation"],
-                "tabSet2": ["Files", "Plots", "Packages", "Help", "Viewer"],
+                "tabSet2": ["Files", "Plots", "Packages", "Help", "Viewer", "Presentations"],
                 "hiddenTabSet": [],
                 "console_left_on_top": false,
                 "console_right_on_top": true,
@@ -230,8 +236,8 @@
         },
         "auto_detect_indentation": {
             "type": "boolean",
-            "default": true,
-            "title": "Autodetect indentation in files",
+            "default": false,
+            "title": "Auto-detect indentation in files",
             "description": "Whether to automatically detect indentation settings from file contents."
         },
         "show_margin": {
@@ -268,16 +274,18 @@
             "type": "boolean",
             "default": false,
             "title": "Continue comments after adding new line",
-            "description": "Whether continue comments (by inserting the comment character) after adding a new line."
+            "description": "Whether to continue comments (by inserting the comment character) after adding a new line."
         },
         "highlight_web_link": {
             "type": "boolean",
             "default": true,
+            "title": "Whether web links in comments are clickable",
             "description": "Whether web links in comments are clickable."
         },
         "editor_keybindings": {
             "type": "string",
             "enum": ["default", "vim", "emacs", "sublime"],
+            "enumReadable": ["Default", "Vim", "Emacs", "Sublime Text"],
             "default": "default",
             "title": "Keybinding set for editor",
             "description": "The keybindings to use in the RStudio code editor."
@@ -321,6 +329,7 @@
         "surround_selection": {
             "type": "string",
             "enum": ["never", "quotes", "quotes_and_brackets"],
+            "enumReadable": ["Never", "Quotes", "Quotes & Brackets"],
             "default": "quotes_and_brackets",
             "title": "Surround selections with",
             "description": "Which kinds of delimiters can be used to surround the current selection."
@@ -334,6 +343,7 @@
         "code_completion": {
             "type": "string",
             "enum": ["always", "never", "triggered", "manual"],
+            "enumReadable": ["Automatically", "Never", "When triggered ($, ::)", "Manually (tab)"],
             "default": "always",
             "title": "Use code completion for R",
             "description": "When to use auto-completion for R code in the RStudio code editor."
@@ -341,6 +351,7 @@
         "code_completion_other": {
             "type": "string",
             "enum": ["always", "triggered", "manual"],
+            "enumReadable": ["Automatically", "When triggered", "Manually (ctrl+space)"],
             "default": "always",
             "title": "Use code completion for other languages",
             "description": "When to use auto-completion for other languages (such as JavaScript and SQL) in the RStudio code editor."
@@ -381,11 +392,17 @@
             "title": "Show diagnostics in C++ code",
             "description": "Whether to show diagnostic messages for C++ code as you type."
         },
+        "show_diagnostics_yaml": {
+            "type": "boolean",
+            "default": true,
+            "title": "Show diagnostics in YAML code",
+            "description": "Whether to show diagnostic messages for YAML code as you type."
+        },
         "show_diagnostics_other": {
             "type": "boolean",
             "default": false,
             "title": "Show diagnostics in other languages",
-            "description": "Whether to show diagnostic messages for other types of code (not R or C++)."
+            "description": "Whether to show diagnostic messages for other types of code (not R, C++, or YAML)."
         },
         "style_diagnostics": {
             "type": "boolean",
@@ -498,6 +515,7 @@
         "fold_style": {
             "type": "string",
             "enum": ["begin-only", "begin-and-end"],
+            "enumReadable": ["Start Only", "Start and End"],
             "default": "begin-and-end",
             "title": "Fold style in editor",
             "description": "The style of folding to use."
@@ -559,7 +577,7 @@
         },
         "limit_visible_console": {
             "type": "boolean",
-            "default": true,
+            "default": false,
             "title": "Limit visible console output",
             "description": "Whether to only show a limited window of the total console output"
         },
@@ -634,12 +652,6 @@
             "default": false,
             "title": "Source with echo by default",
             "description": "Whether to echo R code when sourcing it."
-        },
-        "new_project_git_init": {
-            "type": "boolean",
-            "default": false,
-            "title": "Initialize new projects with Git",
-            "description": "Whether to initialize new projects with a Git repo by default."
         },
         "default_sweave_engine": {
             "type": "string",
@@ -732,11 +744,11 @@
             "title": "Enable the Packages pane",
             "description": "Whether to enable RStudio's Packages pane."
         },
-        "use_rcpp_template": {
-            "type": "boolean",
-            "default": true,
-            "title": "Use RCpp file templates",
-            "description": "Whether to use RCPP templates."
+        "cpp_template": {
+            "type": "string",
+            "default": "Rcpp",
+            "title": "C++ template",
+            "description": "C++ template."
         },
         "restore_source_documents": {
             "type": "boolean",
@@ -793,6 +805,12 @@
             "default": "",
             "title": "Document author",
             "description": "The default name to use as the document author when creating new documents."
+        },
+        "rmd_auto_date": {
+            "type": "boolean",
+            "default": false,
+            "title": "Use current date when rendering document",
+            "description": "Use current date when rendering document"
         },
         "rmd_preferred_template_path": {
             "type": "string",
@@ -858,6 +876,7 @@
         "execution_behavior": {
             "type": "string",
             "enum": ["line", "statement", "paragraph"],
+            "enumReadable": ["Current line", "Multi-line R statement", "Multiple consecutive R lines"],
             "default": "statement",
             "title": "Unit of R code execution",
             "description": "The unit of R code to execute when the Execute command is invoked."
@@ -957,6 +976,7 @@
                 ".github",
                 ".gitignore",
                 ".httr-oauth",
+                ".lintr",
                 ".r",
                 ".rbuildignore",
                 ".rdata"   ,
@@ -973,6 +993,12 @@
             "title": "Sort file names naturally in Files pane",
             "description": "Whether to sort file names naturally, so that e.g., file10.R comes after file9.R"
         },
+        "sync_files_pane_working_dir": {
+            "type": "boolean",
+            "default": false,
+            "title": "Synchronize the Files pane with the current working directory",
+            "description": "Whether to change the directory in the Files pane automatically when the working directory in R changes."
+        },
         "jobs_tab_visibility": {
             "type": "string",
             "enum": ["closed", "shown", "default"],
@@ -983,24 +1009,24 @@
         "show_launcher_jobs_tab": {
             "type": "boolean",
             "default": true,
-            "description": "Whether to show the Launcher jobs tab in RStudio Pro and RStudio Workbench."
+            "description": "Whether to show the Workbench Jobs tab in RStudio Pro and RStudio Workbench."
         },
         "launcher_jobs_sort": {
             "type": "string",
             "enum": ["recorded", "state"],
             "default": "recorded",
-            "description": "How to sort jobs in the Launcher tab in RStudio Pro and RStudio Workbench."
+            "description": "How to sort jobs in the Workbench Jobs tab in RStudio Pro and RStudio Workbench."
         },
         "busy_detection": {
             "type": "string",
-            "enum": ["always", "never", "whitelist"],
+            "enum": ["always", "never", "list"],
             "default": "always",
             "description": "How to detect busy status in the Terminal."
         },
-        "busy_whitelist": {
+        "busy_exclusion_list": {
             "type": "array",
             "default": ["tmux", "screen"],
-            "description": "A whitelist of apps that should not be considered busy in the Terminal."
+            "description": "A list of apps that should not be considered busy in the Terminal."
         },
         "knit_working_dir": {
             "type": "string",
@@ -1032,7 +1058,7 @@
         "global_theme": {
             "type": "string",
             "default": "default",
-            "enum": ["classic", "default", "alternate"],
+            "enum": ["default", "alternate"],
             "title": "Global theme",
             "description": "The theme to use for the main RStudio user interface."
         },
@@ -1048,11 +1074,29 @@
             "title": "Double click to select in the Console",
             "description": "Whether double-clicking should select a word in the Console pane."
         },
+        "console_suspend_blocked_notice": {
+            "type": "boolean",
+            "default": true,
+            "title": "Warn when automatic session suspension is paused",
+            "description": "Whether the 'Auto Suspension Blocked' icon should appear in the R Console toolbar."
+        },
+        "console_suspend_blocked_notice_delay": {
+            "type": "integer",
+            "default": 5,
+            "title": "Number of seconds to delay warning",
+            "description": "How long to wait before warning that automatic session suspension has been paused. Higher values for less frequent notices."
+        },
         "new_proj_git_init": {
             "type": "boolean",
             "default": false,
             "title": "Create a Git repo in new projects",
             "description": "Whether a git repo should be initialized inside new projects by default."
+        },
+        "new_proj_use_renv": {
+            "type": "boolean",
+            "default": false,
+            "title": "Create an renv environment in new projects",
+            "description": "Whether an renv environment should be created inside new projects by default."
         },
         "root_document": {
             "type": "string",
@@ -1104,13 +1148,26 @@
         "rsa_key_path": {
             "type": "string",
             "default": "",
-            "description": "The path to the RSA key file to use."
+            "description": "The path to the SSH key file to use."
+        },
+        "ssh_key_type": {
+            "type": "string",
+            "enum": ["ed25519", "rsa"],
+            "enumReadable": ["ED25519", "RSA"],
+            "default": "ed25519",
+            "description": "The encryption type to use for the SSH key file."
         },
         "use_devtools": {
             "type": "boolean",
             "default": true,
             "title": "Use the devtools R package if available",
             "description": "Whether to use the devtools R package."
+        },
+        "clean_before_install": {
+            "type": "boolean",
+            "default": true,
+            "title": "Always use --preclean when installing package",
+            "description": "Always use --preclean when installing package."
         },
         "use_internet2": {
             "type": "boolean",
@@ -1203,6 +1260,10 @@
                 "label": {
                     "type": "string",
                     "description": "A free-form label for describing the R version."
+                },
+                "module": {
+                    "type": "string",
+                    "description": "The name of the environment module to load."
                 }
             },
             "description": "The R version to use by default."
@@ -1212,6 +1273,12 @@
             "default": 50,
             "title": "Maximum number of columns in data viewer",
             "description": "The maximum number of columns to show at once in the data viewer."
+        },
+        "data_viewer_max_cell_size": {
+            "type": "integer",
+            "default": 50,
+            "title": "Maximum number of character in data viewer cells",
+            "description": "The maximum number of characters to show in a data viewer cell."
         },
         "enable_screen_reader": {
             "type": "boolean",
@@ -1258,6 +1325,7 @@
         "auto_save_on_idle": {
             "type": "string",
             "enum": ["commit", "backup", "none"],
+            "enumReadable": ["Save and write changes", "Backup unsaved changes", "Do nothing"],
             "default": "backup",
             "title": "Autosave mode on idle",
             "description": "How to deal with changes to documents on idle."
@@ -1343,6 +1411,12 @@
             "default": false,
             "title": "Show margin in visual mode code blocks",
             "description": "Whether to show the margin guide in the visual mode code blocks."
+        },
+        "visual_markdown_code_editor_line_numbers": {
+            "type": "boolean",
+            "default": false,
+            "title": "Show line numbers in visual mode code blocks",
+            "description": "Whether to show line numbers in the code editors used in visual mode"
         },
         "visual_markdown_editing_font_size_points": {
             "type": "integer",
@@ -1470,17 +1544,17 @@
             "description": "The maximum amount of seconds of retry for save operations."
         },
         "insert_native_pipe_operator": {
-            "description": "Whether the Insert Pipe Operator command should insert the native R pipe operator, |>",
+            "description": "Whether the Insert Pipe Operator command should use the native R pipe operator, |>",
             "title": "Use R's native pipe operator, |>",
             "type": "boolean",
-            "default": false 
+            "default": false
         },
         "command_palette_mru": {
             "description": "Whether to keep track of recently used commands in the Command Palette",
             "title": "Remember recently used items in Command Palette",
             "type": "boolean",
             "default": true
-        }, 
+        },
         "show_memory_usage": {
             "description": "Whether to compute and show memory usage in the Environment Pane",
             "title": "Show memory usage in Environment Pane",
@@ -1496,6 +1570,37 @@
         "terminal_python_integration": {
             "description": "Enable Python terminal hooks. When enabled, the RStudio-configured version of Python will be placed on the PATH.",
             "title": "Enable terminal Python integration",
+            "type": "boolean",
+            "default": true
+        },
+        "session_protocol_debug": {
+            "description": "Enable session protocol debug logging showing all session requests and events",
+            "title": "Session protocol debug logging",
+            "type": "boolean",
+            "default": false
+        },
+        "python_project_environment_automatic_activate": {
+            "description": "When enabled, if the active project contains a Python virtual environment, then RStudio will automatically activate this environment on startup.",
+            "title": "Automatically activate project Python environments",
+            "type": "boolean",
+            "default": true
+        },
+        "check_null_external_pointers": {
+            "description": "When enabled, RStudio will detect R objects containing null external pointers when building the Environment pane, and avoid introspecting their contents further.",
+            "title": "Check values in the Environment pane for null external pointers",
+            "type": "boolean",
+            "default": false
+        },
+         "ui_language": {
+            "type": "string",
+            "enum": ["en", "fr"],
+            "default": "en",
+            "title": "User Interface Language:",
+            "description": "The IDE's user-interface language."
+        },
+        "native_file_dialogs": {
+            "description": "Whether RStudio Desktop will use the operating system's native File and Message dialog boxes.",
+            "title": "Use native file and message dialog boxes",
             "type": "boolean",
             "default": true
         }

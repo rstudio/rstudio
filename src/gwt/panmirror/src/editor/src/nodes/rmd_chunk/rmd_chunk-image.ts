@@ -1,7 +1,7 @@
 /*
  * rmd_chunk-image.ts
  *
- * Copyright (C) 2021 by RStudio, PBC
+ * Copyright (C) 2022 by RStudio, PBC
  *
  * Unless you have received this program directly from RStudio pursuant
  * to the terms of a commercial license agreement with RStudio, then
@@ -102,6 +102,7 @@ function imagePreviewDecorations(state: EditorState, uiContext: EditorUIContext)
           }
 
           img.src = uiContext.mapResourceToURL(imagePath);
+          img.setAttribute('draggable', 'false');
 
           // watch for changes to the file
           const unsubscribe = uiContext.watchResource(imagePath, () => {

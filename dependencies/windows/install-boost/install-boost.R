@@ -28,8 +28,8 @@ options(log.dir = normalizePath("logs"))
 PATH$prepend("../tools")
 
 # initialize variables
-boost_url <- "https://s3.amazonaws.com/rstudio-buildtools/Boost/boost_1_69_0.7z"
-output_name <- sprintf("boost-1.69.0-win-msvc141-%s-%s.zip", variant, link)
+boost_url <- "https://s3.amazonaws.com/rstudio-buildtools/Boost/boost_1_78_0.7z"
+output_name <- sprintf("boost-1.78.0-win-msvc142-%s-%s.zip", variant, link)
 output_dir <- normalizePath(file.path(owd, ".."), winslash = "/")
 output_file <- file.path(output_dir, output_name)
 install_dir <- file.path(owd, "..", tools::file_path_sans_ext(output_name))
@@ -91,7 +91,7 @@ invisible(lapply(docs, function(doc) {
 
 # bootstrap the boost build directory
 section("Bootstrapping boost...")
-exec("cmd.exe", "/C call bootstrap.bat vc141")
+exec("cmd.exe", "/C call bootstrap.bat vc142")
 
 # create bcp executable (so we can create Boost
 # using a private namespace)
@@ -107,7 +107,7 @@ exec("bcp", args)
 
 # enter the 'rstudio' directory and re-bootstrap
 enter("rstudio")
-exec("cmd.exe", "/C call bootstrap.bat vc141")
+exec("cmd.exe", "/C call bootstrap.bat vc142")
 
 # construct common arguments for 32bit, 64bit boost builds
 b2_build_args <- function(bitness) {
@@ -117,7 +117,7 @@ b2_build_args <- function(bitness) {
    
    paste(
       sprintf("address-model=%s", bitness),
-      "toolset=msvc-14.1",
+      "toolset=msvc-14.2",
       sprintf("--prefix=\"%s\"", prefix),
       "--abbreviate-paths",
       sprintf("variant=%s", variant),

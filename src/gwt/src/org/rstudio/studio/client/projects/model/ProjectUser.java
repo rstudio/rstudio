@@ -1,7 +1,7 @@
 /*
  * ProjectUser.java
  *
- * Copyright (C) 2021 by RStudio, PBC
+ * Copyright (C) 2022 by RStudio, PBC
  *
  * Unless you have received this program directly from RStudio pursuant
  * to the terms of a commercial license agreement with RStudio, then
@@ -26,6 +26,13 @@ public class ProjectUser extends JavaScriptObject
       return this.username;
    }-*/;
    
+   public final native String getDisplayName() /*-{
+      // This data comes from a persisted file that can be missing
+      // the display_name field if written from earlier versions of
+      // RStudio Workbench, so use the username as a fallback.
+      return this.display_name || this.username;
+   }-*/;
+
    public final native String getSessionId() /*-{
       return this.session_id;
    }-*/;

@@ -1,0 +1,35 @@
+@startuml
+title QtWebEngine Details
+legend top center
+Major classes related to a QtWebEngine instance in RStudio
+endlegend
+
+hide empty members
+
+skinparam class {
+BackgroundColor<<Qt>> PaleGreen
+BorderColor<<Qt>> SpringGreen
+}
+
+class QMainWindow << Qt >>
+class QWebEngineView << Qt >>
+class QWebEnginePage << Qt >>
+class QWebChannel << Qt >>
+class QWebEngineProfile << Qt >>
+
+class BrowserWindow extends QMainWindow
+class WebView extends QWebEngineView
+class WebPage extends QWebEnginePage
+class WebProfile extends QWebEngineProfile
+
+BrowserWindow *-- WebView : pView_
+WebView *-- WebPage : pWebPage_
+QWebEnginePage *-- QWebChannel
+
+QWebEnginePage *-- QWebEngineProfile : profile()
+QWebEngineView *-- QWebEnginePage : page()
+QMainWindow *-- QWebEngineView : centralWidget()
+
+WebPage .. WebProfile : creates >
+
+@enduml

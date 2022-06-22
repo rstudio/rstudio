@@ -1,7 +1,7 @@
 /*
  * SessionBlogdown.cpp
  *
- * Copyright (C) 2021 by RStudio, PBC
+ * Copyright (C) 2022 by RStudio, PBC
  *
  * Unless you have received this program directly from RStudio pursuant
  * to the terms of a commercial license agreement with RStudio, then
@@ -117,6 +117,27 @@ bool usingTexMathDollarsInCode(const FilePath& hugoRootPath,
 
 }
 
+bool parseHugoConfigVar(const std::string configVar, core::system::Option* pEnvVar)
+{
+   std::string::size_type pos = configVar.find("=");
+   if (pos == std::string::npos)
+      pos = configVar.find(":");
+
+   if ( pos != std::string::npos )
+   {
+      std::string key = configVar.substr(0, pos);
+      std::string value;
+      if ( (pos + 1) < configVar.size() )
+         value = configVar.substr(pos + 1);
+      *pEnvVar = std::make_pair(key,value);
+      return true;
+   }
+   else
+   {
+      return false;
+   }
+}
+
 const char* const kIsBlogdownProject = "is_blogdown_project";
 const char* const kIsHugoProject = "is_hugo_project";
 
@@ -210,17 +231,18 @@ core::json::Object blogdownConfig(bool refresh)
       // get the hugo config
       std::string hugoConfig = runHugo("config");
 
+
       // create map of variables
       if (hugoConfig.size() > 0)
       {
          std::map<std::string,std::string> variables;
-         boost::regex var("^([A-Za-z0-9_]+\\s*=\\s*[^\n]+)$");
+         boost::regex var("^([A-Za-z0-9_]+\\s*[=:]\\s*[^\n]+)$");
          boost::sregex_token_iterator it(hugoConfig.begin(), hugoConfig.end(), var, 0);
          boost::sregex_token_iterator end;
          while (it != end)
          {
             core::system::Option var;
-            if (core::system::parseEnvVar(*it, &var))
+            if (parseHugoConfigVar(*it, &var))
             {
                boost::algorithm::trim(var.first);
                boost::algorithm::trim(var.second);

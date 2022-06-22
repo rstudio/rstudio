@@ -1,7 +1,7 @@
 /*
  * ZoteroCollectionsWeb.cpp
  *
- * Copyright (C) 2009-20 by RStudio, Inc.
+ * Copyright (C) 2022 by RStudio, Inc.
  *
  * Unless you have received this program directly from RStudio pursuant
  * to the terms of a commercial license agreement with RStudio, then
@@ -29,6 +29,7 @@
 #include "ZoteroCSL.hpp"
 
 using namespace rstudio::core;
+using namespace boost::placeholders;
 
 namespace rstudio {
 namespace session {
@@ -355,7 +356,7 @@ private:
          for (auto collectionSpecJson : collectionSpecsJson)
          {
             json::Object collectionJson = collectionSpecJson.getObject()["data"].getObject();
-            int version = collectionJson[kVersion].getInt();
+            double version = collectionJson[kVersion].getDouble();
             std::string name = collectionJson[kName].getString();
             std::string collectionID = collectionJson[kKey].getString();
 
@@ -475,10 +476,10 @@ private:
       else
       {
          // calculate library version from max of items downloaed
-         int version = 0;
+         double version = 0;
          json::Array itemsJson = jsonValue.getArray();
          std::for_each(itemsJson.begin(), itemsJson.end(), [&version](const json::Value& item) {
-            int itemVersion = item.getObject()[kVersion].getInt();
+            double itemVersion = item.getObject()[kVersion].getDouble();
             if (itemVersion > version)
                version = itemVersion;
          });
@@ -638,7 +639,7 @@ void getWebCollectionsForUser(std::string key,
          }
       }
 
-      // associate cache specs with download requests (so we can propogate the version)
+      // associate cache specs with download requests (so we can propagate the version)
       for (ZoteroCollectionSpec cacheSpec : cacheSpecs)
       {
          auto it = std::find_if(pDownloads->begin(), pDownloads->end(), [cacheSpec](const DownloadRequest& request) {
@@ -721,7 +722,7 @@ void getWebCollectionSpecs(std::string key, std::vector<std::string> collections
                return;
             }
 
-            // create specs (filter on collections if a whitelist was provided)
+            // create specs (filter on collections if a query list was provided)
             for (auto group : groups)
             {
                std::string groupName = group.first;

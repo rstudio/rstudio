@@ -1,7 +1,7 @@
 /*
  * HelpPane.java
  *
- * Copyright (C) 2021 by RStudio, PBC
+ * Copyright (C) 2022 by RStudio, PBC
  *
  * Unless you have received this program directly from RStudio pursuant
  * to the terms of a commercial license agreement with RStudio, then
@@ -44,6 +44,7 @@ import com.google.inject.Inject;
 import com.google.inject.Provider;
 
 import org.rstudio.core.client.BrowseCap;
+import org.rstudio.core.client.Debug;
 import org.rstudio.core.client.ElementIds;
 import org.rstudio.core.client.Point;
 import org.rstudio.core.client.StringUtil;
@@ -51,6 +52,7 @@ import org.rstudio.core.client.command.KeyboardShortcut;
 import org.rstudio.core.client.command.ShortcutManager;
 import org.rstudio.core.client.dom.DomUtils;
 import org.rstudio.core.client.dom.ElementEx;
+import org.rstudio.core.client.dom.EventProperty;
 import org.rstudio.core.client.dom.IFrameElementEx;
 import org.rstudio.core.client.dom.WindowEx;
 import org.rstudio.core.client.events.NativeKeyDownEvent;
@@ -69,7 +71,6 @@ import org.rstudio.core.client.widget.ToolbarButton;
 import org.rstudio.studio.client.application.Desktop;
 import org.rstudio.studio.client.application.events.EventBus;
 import org.rstudio.studio.client.application.events.MouseNavigateEvent;
-import org.rstudio.studio.client.application.ui.RStudioThemes;
 import org.rstudio.studio.client.common.AutoGlassPanel;
 import org.rstudio.studio.client.common.GlobalDisplay;
 import org.rstudio.studio.client.common.GlobalDisplay.NewWindowOptions;
@@ -92,7 +93,7 @@ public class HelpPane extends WorkbenchPane
                    EventBus events,
                    UserPrefs prefs)
    {
-      super("Help", events);
+      super(constants_.helpText(), events);
 
       searchProvider_ = searchProvider;
       globalDisplay_ = globalDisplay;
@@ -112,12 +113,13 @@ public class HelpPane extends WorkbenchPane
       });
 
       frame_ = new RStudioThemedFrame(
-         "Help Pane",
+         constants_.helpPaneTitle(),
          null,
          RES.editorStyles().getText(),
          null,
          false,
-         RStudioThemes.isFlat());
+         true);
+      
       frame_.setSize("100%", "100%");
       frame_.setStylePrimaryName("rstudio-HelpFrame");
       frame_.addStyleName("ace_editor_theme");
@@ -264,12 +266,14 @@ public class HelpPane extends WorkbenchPane
       }
 
       var thiz = this;
+      
       $wnd.helpNavigated = function(document, win) {
          thiz.@org.rstudio.studio.client.workbench.views.help.HelpPane::helpNavigated(Lcom/google/gwt/dom/client/Document;)(document);
          addEventHandler(win, "unload", function () {
             thiz.@org.rstudio.studio.client.workbench.views.help.HelpPane::unload()();
          });
       };
+      
       $wnd.helpNavigate = function(url) {
          if (url.length)
             thiz.@org.rstudio.studio.client.workbench.views.help.HelpPane::showHelp(Ljava/lang/String;)(url);
@@ -278,6 +282,11 @@ public class HelpPane extends WorkbenchPane
       $wnd.helpKeydown = function(e) {
          thiz.@org.rstudio.studio.client.workbench.views.help.HelpPane::handleKeyDown(Lcom/google/gwt/dom/client/NativeEvent;)(e);
       };
+      
+      $wnd.helpMousedown = function(e) {
+         thiz.@org.rstudio.studio.client.workbench.views.help.HelpPane::handleMouseDown(*)(e);
+      };
+      
    }-*/;
 
 
@@ -332,6 +341,23 @@ public class HelpPane extends WorkbenchPane
          // since this is a shortcut handled by the main window
          // we set focus to it
          WindowEx.get().focus();
+      }
+   }
+   
+   private void handleMouseDown(NativeEvent event)
+   {
+      int button = EventProperty.button(event);
+      if (button == EventProperty.MOUSE_BACKWARD)
+      {
+         event.stopPropagation();
+         event.preventDefault();
+         commands_.helpBack().execute();
+      }
+      else if (button == EventProperty.MOUSE_FORWARD)
+      {
+         event.stopPropagation();
+         event.preventDefault();
+         commands_.helpForward().execute();
       }
    }
 
@@ -402,7 +428,7 @@ public class HelpPane extends WorkbenchPane
    @Override
    protected Toolbar createMainToolbar()
    {
-      Toolbar toolbar = new Toolbar("Help Tab");
+      Toolbar toolbar = new Toolbar(constants_.helpTabLabel());
 
       toolbar.addLeftWidget(commands_.helpBack().createToolbarButton());
       toolbar.addLeftWidget(commands_.helpForward().createToolbarButton());
@@ -432,7 +458,7 @@ public class HelpPane extends WorkbenchPane
    @Override
    protected SecondaryToolbar createSecondaryToolbar()
    {
-      SecondaryToolbar toolbar = new SecondaryToolbar("Help Tab Second");
+      SecondaryToolbar toolbar = new SecondaryToolbar(constants_.helpTabSecondLabel());
 
       title_ = new Label();
       title_.addStyleName(RES.styles().topicTitle());
@@ -442,7 +468,7 @@ public class HelpPane extends WorkbenchPane
       toolbar.getWrapper().addStyleName(styles.tallerToolbarWrapper());
 
       final SmallButton btnNext = new SmallButton("&gt;", true);
-      btnNext.setTitle("Find next (Enter)");
+      btnNext.setTitle(constants_.findNextLabel());
       btnNext.addStyleName(RES.styles().topicNavigationButton());
       btnNext.setVisible(false);
       btnNext.addClickHandler(new ClickHandler() {
@@ -454,7 +480,7 @@ public class HelpPane extends WorkbenchPane
       });
 
       final SmallButton btnPrev = new SmallButton("&lt;", true);
-      btnPrev.setTitle("Find previous");
+      btnPrev.setTitle(constants_.findPreviousLabel());
       btnPrev.addStyleName(RES.styles().topicNavigationButton());
       btnPrev.setVisible(false);
       btnPrev.addClickHandler(new ClickHandler() {
@@ -466,7 +492,7 @@ public class HelpPane extends WorkbenchPane
       });
 
 
-      findTextBox_ = new FindTextBox("Find in Topic");
+      findTextBox_ = new FindTextBox(constants_.findInTopicLabel());
       findTextBox_.addStyleName(RES.styles().findTopicTextbox());
       findTextBox_.setOverrideWidth(90);
       ElementIds.assignElementId(findTextBox_, ElementIds.SW_HELP_FIND_IN_TOPIC);
@@ -819,8 +845,8 @@ public class HelpPane extends WorkbenchPane
       if (!contentWindow.find(term, false, false, true, false))
       {
          globalDisplay_.showMessage(MessageDialog.INFO,
-               "Find in Topic",
-               "No occurrences found",
+               constants_.findInTopicLabel(),
+               constants_.noOccurrencesFoundMessage(),
                findInputSource);
       }
    }
@@ -885,4 +911,5 @@ public class HelpPane extends WorkbenchPane
    private boolean selected_;
    private static int popoutCount_ = 0;
    private SearchDisplay searchWidget_;
+   private static final HelpConstants constants_ = GWT.create(HelpConstants.class);
 }

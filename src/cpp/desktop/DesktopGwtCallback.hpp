@@ -1,7 +1,7 @@
 /*
  * DesktopGwtCallback.hpp
  *
- * Copyright (C) 2021 by RStudio, PBC
+ * Copyright (C) 2022 by RStudio, PBC
  *
  * Unless you have received this program directly from RStudio pursuant
  * to the terms of a commercial license agreement with RStudio, then
@@ -124,8 +124,6 @@ public Q_SLOTS:
    QString getRVersion();
    QString chooseRVersion();
 
-   double devicePixelRatio();
-
    void openMinimalWindow(QString name, QString url, int width, int height);
    void activateMinimalWindow(QString name);
    void activateSatelliteWindow(QString name);
@@ -133,7 +131,6 @@ public Q_SLOTS:
                                   int height);
    void prepareForNamedWindow(QString name, bool allowExternalNavigate,
                               bool showToolbar);
-   void closeNamedWindow(QString name);
 
    // coordinates are relative to entire containing web page
    void copyPageRegionToClipboard(int left, int top, int width, int height);
@@ -209,8 +206,8 @@ public Q_SLOTS:
    bool getClipboardMonitoring();
    void setClipboardMonitoring(bool monitoring);
    
-   bool getIgnoreGpuBlacklist();
-   void setIgnoreGpuBlacklist(bool ignore);
+   bool getIgnoreGpuExclusionList();
+   void setIgnoreGpuExclusionList(bool ignore);
    
    bool getDisableGpuDriverBugWorkarounds();
    void setDisableGpuDriverBugWorkarounds(bool disable);
@@ -239,7 +236,7 @@ public Q_SLOTS:
    void reloadZoomWindow();
 
    void setTutorialUrl(QString url);
-   
+   void setPresentationUrl(QString url);
    void setViewerUrl(QString url);
    void reloadViewerZoomWindow(QString url);
 

@@ -1,7 +1,7 @@
 /*
  * SessionAsyncRProcess.cpp
  *
- * Copyright (C) 2021 by RStudio, PBC
+ * Copyright (C) 2022 by RStudio, PBC
  *
  * Unless you have received this program directly from RStudio pursuant
  * to the terms of a commercial license agreement with RStudio, then
@@ -25,6 +25,8 @@
 #include <r/session/RSessionUtils.hpp>
 
 #include <session/SessionAsyncRProcess.hpp>
+
+using namespace boost::placeholders;
 
 namespace rstudio {
 namespace session {
@@ -76,14 +78,16 @@ void AsyncRProcess::start(const char* rCommand,
 
    // args
    std::vector<std::string> args;
-   args.push_back("--slave");
+
    if (rOptions & R_PROCESS_VANILLA)
       args.push_back("--vanilla");
+
    if (rOptions & R_PROCESS_NO_RDATA)
    {
       args.push_back("--no-save");
       args.push_back("--no-restore");
    }
+
 
    // for windows we need to forward setInternet2
 #ifdef _WIN32
@@ -91,6 +95,7 @@ void AsyncRProcess::start(const char* rCommand,
       args.push_back("--internet2");
 #endif
 
+   args.push_back("-s");
    args.push_back("-e");
    
    bool needsQuote = false;
@@ -98,7 +103,7 @@ void AsyncRProcess::start(const char* rCommand,
    // On Windows, we turn the vector of strings into a single
    // string to send over the command line, so we must ensure
    // that the arguments following '-e' are quoted, so that
-   // they are all interpretted as a single argument (rather
+   // they are all interpreted as a single argument (rather
    // than multiple arguments) to '-e'.
 
 #ifdef _WIN32
@@ -171,7 +176,7 @@ void AsyncRProcess::start(const char* rCommand,
    
    // update environment used for child process
    options.environment = childEnv;
-
+   
    core::system::ProcessCallbacks cb;
    using namespace module_context;
    cb.onContinue = boost::bind(&AsyncRProcess::onContinue,
@@ -273,6 +278,11 @@ void AsyncRProcess::onProcessCompleted(int exitStatus)
    markCompleted();
    ipcRequests_.removeIfExists();
    ipcResponse_.removeIfExists();
+
+   // we've terminated, so clear termination flag (this instance can be re-used if the process is
+   // started again)
+   terminationRequested_ = false;
+
    onCompleted(exitStatus);
 }
 

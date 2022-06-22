@@ -1,7 +1,7 @@
 /*
  * SecureKeyFile.cpp
  *
- * Copyright (C) 2021 by RStudio, PBC
+ * Copyright (C) 2022 by RStudio, PBC
  *
  * Unless you have received this program directly from RStudio pursuant
  * to the terms of a commercial license agreement with RStudio, then
@@ -36,7 +36,7 @@ core::Error readSecureKeyFile(const FilePath& secureKeyPath,
    if (secureKeyPath.exists())
    {
       *pKeyPathUsed = secureKeyPath.getAbsolutePath();
-      LOG_DEBUG_MESSAGE("Using secure key file: \"" + *pKeyPathUsed + "\"");
+      LOG_DEBUG_MESSAGE("Using secure key file: " + *pKeyPathUsed);
 
       // read the key
       std::string secureKey;
@@ -105,13 +105,24 @@ core::Error readSecureKeyFile(const std::string& filename,
    if (core::system::effectiveUserIsRoot())
    {
       // check in our default configuration folder
-      secureKeyPath = core::system::xdg::systemConfigFile(filename);
+      secureKeyPath = core::system::xdg::findSystemConfigFile(
+            "secure key", filename);
       if (!secureKeyPath.exists())
          secureKeyPath = core::FilePath("/var/lib/rstudio-server")
             .completePath(filename);
    }
    else
+   {
       secureKeyPath = core::FilePath("/tmp/rstudio-server").completePath(filename);
+      if (secureKeyPath.exists())
+      {
+         LOG_INFO_MESSAGE("Running without privilege; using secure key at " + secureKeyPath.getAbsolutePath());
+      }
+      else
+      {
+         LOG_INFO_MESSAGE("Running without privilege; generating secure key at " + secureKeyPath.getAbsolutePath());
+      }
+   }
 
    return readSecureKeyFile(secureKeyPath, pContents, pContentsHash, pKeyPathUsed);
 }

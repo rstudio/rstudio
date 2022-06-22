@@ -1,7 +1,7 @@
 /*
  * AceEditorNative.java
  *
- * Copyright (C) 2021 by RStudio, PBC
+ * Copyright (C) 2022 by RStudio, PBC
  *
  * Unless you have received this program directly from RStudio pursuant
  * to the terms of a commercial license agreement with RStudio, then
@@ -74,6 +74,10 @@ public class AceEditorNative extends JavaScriptObject
    
    public native final void setHighlightActiveLine(boolean highlight) /*-{
       this.setHighlightActiveLine(highlight);
+   }-*/;
+
+   public native final void setRelativeLineNumbers(boolean relative) /*-{
+      this.setOption("relativeLineNumbers", relative);
    }-*/;
    
    public native final void setHighlightGutterLine(boolean highlight) /*-{

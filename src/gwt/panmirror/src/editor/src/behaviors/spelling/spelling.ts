@@ -1,7 +1,7 @@
 /*
  * spelling.ts
  *
- * Copyright (C) 2021 by RStudio, PBC
+ * Copyright (C) 2022 by RStudio, PBC
  *
  * Unless you have received this program directly from RStudio pursuant
  * to the terms of a commercial license agreement with RStudio, then
@@ -91,6 +91,12 @@ export function getWords(
 function excludeWord(doc: ProsemirrorNode, from: number, to: number, excluded: MarkType[]) {
   // does it have one of our excluded mark types?
   if (excluded.some(markType => doc.rangeHasMark(from, to, markType))) {
+    return true;
+  }
+
+  // is it in a code block
+  const $from = doc.resolve(from);
+  if ($from.parent.isBlock && $from.parent.type.spec.code) {
     return true;
   }
 

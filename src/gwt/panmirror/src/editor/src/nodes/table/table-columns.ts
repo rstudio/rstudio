@@ -1,7 +1,7 @@
 /*
  * table-columns.ts
  *
- * Copyright (C) 2021 by RStudio, PBC
+ * Copyright (C) 2022 by RStudio, PBC
  *
  * Unless you have received this program directly from RStudio pursuant
  * to the terms of a commercial license agreement with RStudio, then
@@ -115,14 +115,31 @@ export function fixupTableWidths(view: EditorView) {
       }
 
       // resolve colpercents (read by tokenzier)
-      const colpercents = table.node.attrs.colpercents;
+      let colpercents: number[] = table.node.attrs.colpercents;
+
       if (colpercents) {
+
+        // enforce a minimum column width of 25% (otherwise hard to edit)
+        // note some of this will get taken back when we adjust all columns
+        // for the extra bonus given to small columns
+        const kMinPercent = 0.25;
+        const totalPercent = colpercents.reduce((total: number, pct: number) => {
+          return total + pct;
+        }, 0);
+        colpercents = colpercents.map(pct => Math.max(pct, kMinPercent));
+        const adjustedPercent = colpercents.reduce((total: number, pct: number) => {
+          return total + pct;
+        }, 0);
+        const extraPercent = adjustedPercent - totalPercent;
+        colpercents = colpercents.map(pct => pct - (extraPercent/colpercents.length));
+        const colWidths = colpercents.map(pct => Math.floor(pct * containerWidth));
+
         // for each row
         table.node.forEach((rowNode, rowOffset, r) => {
           // for each cell
           rowNode.forEach((cellNode, cellOffset, c) => {
             const cellPos = table.pos + 1 + rowOffset + 1 + cellOffset;
-            const colWidth = [colpercents[c] * containerWidth];
+            const colWidth = [colWidths[c]];
             if (colWidth !== cellNode.attrs.colwidth) {
               tr.setNodeMarkup(cellPos, cellNode.type, {
                 ...cellNode.attrs,

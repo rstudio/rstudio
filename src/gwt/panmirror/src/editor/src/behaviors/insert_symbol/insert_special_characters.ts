@@ -13,14 +13,15 @@
  *
  */
 
-import { EditorCommandId, InsertCharacterCommand } from '../../api/command';
+import { EditorCommandId, InsertCharacterCommand, ProsemirrorCommand } from '../../api/command';
+import { hardBreakCommandFn } from '../../nodes/hard_break';
 
 const extension = {
   commands: () => {
     return [
       new InsertCharacterCommand(EditorCommandId.EmDash, '—', []),
       new InsertCharacterCommand(EditorCommandId.EnDash, '–', []),
-      new InsertCharacterCommand(EditorCommandId.HardLineBreak, '\n', ['Shift-Enter']),
+      new ProsemirrorCommand(EditorCommandId.HardLineBreak, ['Shift-Enter'], hardBreakCommandFn())
     ];
   },
 };

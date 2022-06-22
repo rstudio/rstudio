@@ -1,7 +1,7 @@
 /*
  * NewProjectWizard.java
  *
- * Copyright (C) 2021 by RStudio, PBC
+ * Copyright (C) 2022 by RStudio, PBC
  *
  * Unless you have received this program directly from RStudio pursuant
  * to the terms of a commercial license agreement with RStudio, then
@@ -17,6 +17,7 @@ package org.rstudio.studio.client.projects.ui.newproject;
 import java.util.ArrayList;
 
 import com.google.gwt.aria.client.Roles;
+import com.google.gwt.core.client.GWT;
 import org.rstudio.core.client.ElementIds;
 import org.rstudio.core.client.widget.ProgressOperationWithInput;
 import org.rstudio.core.client.widget.Wizard;
@@ -24,6 +25,7 @@ import org.rstudio.core.client.widget.WizardNavigationPage;
 import org.rstudio.studio.client.application.model.RVersionSpec;
 import org.rstudio.studio.client.application.model.RVersionsInfo;
 import org.rstudio.studio.client.application.ui.RVersionSelectWidget;
+import org.rstudio.studio.client.projects.StudioClientProjectConstants;
 import org.rstudio.studio.client.projects.model.NewProjectInput;
 import org.rstudio.core.client.widget.WizardPage;
 import org.rstudio.studio.client.projects.model.NewProjectResult;
@@ -45,8 +47,8 @@ public class NewProjectWizard extends Wizard<NewProjectInput,NewProjectResult>
          boolean allowOpenInNewWindow,
          ProgressOperationWithInput<NewProjectResult> operation)
    {
-      super("New Project Wizard", 
-            "Create Project",
+      super(constants_.newProjectWizardCaption(),
+            constants_.createProjectCaption(),
             Roles.getDialogRole(), 
             input, 
             createFirstPage(sessionInfo),
@@ -60,6 +62,7 @@ public class NewProjectWizard extends Wizard<NewProjectInput,NewProjectResult>
       {
          rVersionSelector_ = new RVersionSelectWidget(
            "",
+           ElementIds.SelectWidgetId.R_VER_NEW_PROJ_WIZ,
            rVersions.getAvailableRVersions(),
            false,
            false,
@@ -74,7 +77,7 @@ public class NewProjectWizard extends Wizard<NewProjectInput,NewProjectResult>
          rVersionSelector_.setVisible(false);
       }
       
-      openInNewWindow_ = new CheckBox("Open in new session");
+      openInNewWindow_ = new CheckBox(constants_.openNewSessionLabel());
       ElementIds.assignElementId(openInNewWindow_,
          ElementIds.idWithPrefix(getTitle(), ElementIds.NEW_PROJECT_NEW_SESSION));
       addLeftWidget(openInNewWindow_);
@@ -121,7 +124,7 @@ public class NewProjectWizard extends Wizard<NewProjectInput,NewProjectResult>
          SessionInfo sessionInfo)
    {
       return new WizardNavigationPage<>(
-            "New Project", "Create project from:", "Create Project", 
+            constants_.newProjectTitle(), constants_.createProjectFromLabel(), constants_.createProjectCaption(),
             null, null, createSubPages(sessionInfo));
    }
    
@@ -142,4 +145,5 @@ public class NewProjectWizard extends Wizard<NewProjectInput,NewProjectResult>
    private RVersionSelectWidget rVersionSelector_ = null;
    private final SessionInfo sessionInfo_;
    private final boolean allowOpenInNewWindow_;
+   private static final StudioClientProjectConstants constants_ = GWT.create(StudioClientProjectConstants.class);
 }

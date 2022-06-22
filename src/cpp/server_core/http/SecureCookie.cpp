@@ -1,7 +1,7 @@
 /*
  * SecureCookie.cpp
  *
- * Copyright (C) 2021 by RStudio, PBC
+ * Copyright (C) 2022 by RStudio, PBC
  *
  * Unless you have received this program directly from RStudio pursuant
  * to the terms of a commercial license agreement with RStudio, then
@@ -204,7 +204,7 @@ std::string readSecureCookie(const std::string& signedCookieValue)
    return value;
 }
 
-void set(const std::string& name,
+http::Cookie set(const std::string& name,
          const std::string& value,
          const http::Request& request,
          const boost::posix_time::time_duration& validDuration,
@@ -229,6 +229,8 @@ void set(const std::string& name,
 
    // add to response
    pResponse->addCookie(cookie);
+
+   return cookie;
 }
 
 void remove(const http::Request& request,
@@ -265,6 +267,7 @@ const std::string& getKey()
 {
    return s_secureCookieKey;
 }
+
 const std::string& getKeyFileUsed()
 {
    return s_secureCookieKeyPath;

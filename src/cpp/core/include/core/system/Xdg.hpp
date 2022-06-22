@@ -1,7 +1,7 @@
 /*
  * Xdg.hpp
  *
- * Copyright (C) 2021 by RStudio, PBC
+ * Copyright (C) 2022 by RStudio, PBC
  *
  * Unless you have received this program directly from RStudio pursuant
  * to the terms of a commercial license agreement with RStudio, then
@@ -62,6 +62,9 @@ FilePath userConfigDir(const boost::optional<std::string>& user = boost::none,
 // On Windows, this is 'FOLDERID_LocalAppData' (typically 'AppData/Local').
 FilePath userDataDir(const boost::optional<std::string>& user = boost::none,
                      const boost::optional<FilePath>& homeDir = boost::none);
+
+// Returns the user-specific logging directory underneath the userDataDir
+FilePath userLogDir();
                      
 // This function verifies that the userConfigDir() and userDataDir() exist and are owned by the running user.
 // 
@@ -77,10 +80,17 @@ FilePath systemConfigDir();
 
 // Convenience method for finding a configuration file. Checks all the
 // directories in XDG_CONFIG_DIRS for the file. If it doesn't find it,
-// the path where we expected to find it is returned instead.
+// the path where we expected to find it is returned instead. Doesn't
+// do any logging.
 FilePath systemConfigFile(const std::string& filename);
 
-// Sets relevant XDG environment varibles
+// Convenience method for finding a configuration file. Given a context such as
+// "load balancer config" or "secure header", it will log, at the INFO level,
+// where the config file was found, where it was expected to be found it wasn't,
+// and why.
+FilePath findSystemConfigFile(const std::string& context, const std::string& filename);
+
+// Sets relevant XDG environment variables
 void forwardXdgEnvVars(Options *pEnvironment);
 
 } // namespace xdg

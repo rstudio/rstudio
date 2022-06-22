@@ -1,7 +1,7 @@
 /*
  * spelling-realtime.ts
  *
- * Copyright (C) 2021 by RStudio, PBC
+ * Copyright (C) 2022 by RStudio, PBC
  *
  * Unless you have received this program directly from RStudio pursuant
  * to the terms of a commercial license agreement with RStudio, then
@@ -204,7 +204,11 @@ class RealtimeSpellingPlugin extends Plugin<DecorationSet> {
         // call a second time as no words will be cached initially, this simplifies the
         // need for threading a callback through the entire plugin system
         const v = this.view;
-        setTimeout(() => updateSpelling(v), 5000);
+        setTimeout(() => {
+          if (v.dom?.isConnected) {
+            updateSpelling(v);
+          }
+        }, 5000); 
       }
     });
   }

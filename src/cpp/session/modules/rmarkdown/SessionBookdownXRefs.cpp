@@ -1,7 +1,7 @@
 /*
  * SessionBookdownXRefs.cpp
  *
- * Copyright (C) 2021 by RStudio, PBC
+ * Copyright (C) 2022 by RStudio, PBC
  *
  * Unless you have received this program directly from RStudio pursuant
  * to the terms of a commercial license agreement with RStudio, then
@@ -358,7 +358,7 @@ json::Array indexEntriesToXRefs(const std::vector<XRefIndexEntry>& entries, bool
       }
    }
 
-   // read in referece-keys.txt so we can detect entires w/ suffixes
+   // read in referece-keys.txt so we can detect entries w/ suffixes
    std::map<std::string,int> multiKeys;
    if (isBookdownProject)
       multiKeys = readMultiKeys();

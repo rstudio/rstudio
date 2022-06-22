@@ -1,7 +1,7 @@
 /*
  * rmd_chunk.ts
  *
- * Copyright (C) 2021 by RStudio, PBC
+ * Copyright (C) 2022 by RStudio, PBC
  *
  * Unless you have received this program directly from RStudio pursuant
  * to the terms of a commercial license agreement with RStudio, then
@@ -30,6 +30,8 @@ import { RmdChunkImagePreviewPlugin } from './rmd_chunk-image';
 import { rmdChunkBlockCapsuleFilter } from './rmd_chunk-capsule';
 
 import './rmd_chunk-styles.css';
+import { EditorState, Transaction } from 'prosemirror-state';
+import { EditorView } from 'prosemirror-view';
 
 const extension = (context: ExtensionContext): Extension | null => {
   const { ui, options, format } = context;
@@ -89,7 +91,7 @@ const extension = (context: ExtensionContext): Extension | null => {
             output.writeToken(PandocTokenType.Para, () => {
               const parts = rmdChunk(node.textContent);
               if (parts) {
-                output.writeRawMarkdown('```{' + parts.meta + '}\n' + parts.code + '```\n');
+                output.writeRawMarkdown(parts.delimiter + '{' + parts.meta + '}\n' + parts.code + parts.delimiter + '\n');
               }
             });
           },
@@ -106,6 +108,8 @@ const extension = (context: ExtensionContext): Extension | null => {
         new SQLChunkCommand(ui),
         new D3ChunkCommand(ui),
         new StanChunkCommand(ui),
+        new ExpandAllChunksCommand(ui),
+        new CollapseAllChunksCommand(ui)
       ];
       return commands;
     },
@@ -129,17 +133,14 @@ class RmdChunkCommand extends ProsemirrorCommand {
     lang: string,
     placeholder: string,
     image: () => string,
-    rowOffset = 1,
-    colOffset = 0,
-    selectionOffset?: number,
+    group = OmniInsertGroup.Chunks
   ) {
-    super(id, keymap, insertRmdChunk(placeholder, rowOffset, colOffset), {
+    super(id, keymap, insertRmdChunk(placeholder), {
       name: `${lang} ${ui.context.translateText('Code Chunk')}`,
       description: `${ui.context.translateText('Executable')} ${lang} ${ui.context.translateText('chunk')}`,
-      group: OmniInsertGroup.Chunks,
+      group,
       priority,
-      selectionOffset: selectionOffset || colOffset || placeholder.length,
-      image,
+      image
     });
   }
 }
@@ -148,6 +149,7 @@ class RChunkCommand extends RmdChunkCommand {
   constructor(ui: EditorUI) {
     super(ui, EditorCommandId.RCodeChunk, ['Mod-Alt-i'], 10, 'R', '{r}\n', () =>
       ui.prefs.darkMode() ? ui.images.omni_insert!.r_chunk_dark! : ui.images.omni_insert!.r_chunk!,
+      OmniInsertGroup.Common
     );
   }
 }
@@ -162,6 +164,7 @@ class PythonChunkCommand extends RmdChunkCommand {
       'Python',
       '{python}\n',
       () => ui.images.omni_insert!.python_chunk!,
+      OmniInsertGroup.Common
     );
   }
 }
@@ -192,15 +195,14 @@ class SQLChunkCommand extends RmdChunkCommand {
       'SQL',
       '{sql connection=}\n',
       () => ui.images.omni_insert!.sql_chunk!,
-      0,
-      16,
+      OmniInsertGroup.Chunks
     );
   }
 }
 
 class D3ChunkCommand extends RmdChunkCommand {
   constructor(ui: EditorUI) {
-    super(ui, EditorCommandId.D3CodeChunk, [], 4, 'D3', '{d3 data=}\n', () => ui.images.omni_insert!.d3_chunk!, 0, 9);
+    super(ui, EditorCommandId.D3CodeChunk, [], 4, 'D3', '{d3 data=}\n', () => ui.images.omni_insert!.d3_chunk!, OmniInsertGroup.Chunks);
   }
 }
 
@@ -214,9 +216,37 @@ class StanChunkCommand extends RmdChunkCommand {
       'Stan',
       '{stan output.var=}\n',
       () => ui.images.omni_insert!.stan_chunk!,
-      0,
-      17,
+      OmniInsertGroup.Chunks
     );
+  }
+}
+
+class ChunkExpansionCommand extends ProsemirrorCommand {
+  constructor(
+    ui: EditorUI,
+    id: EditorCommandId,
+    keymap: string[],
+    expand: boolean
+  ) {
+    super(id, keymap, (state: EditorState, dispatch?: (tr: Transaction) => void, view?: EditorView) => 
+    {
+      if (dispatch) {
+        ui.chunks.setChunksExpanded(expand);
+      }
+      return true;
+    });
+  }
+}
+
+class ExpandAllChunksCommand extends ChunkExpansionCommand {
+  constructor(ui: EditorUI) {
+    super(ui, EditorCommandId.ExpandAllChunks, [], true);
+  }
+}
+
+class CollapseAllChunksCommand extends ChunkExpansionCommand {
+  constructor(ui: EditorUI) {
+    super(ui, EditorCommandId.CollapseAllChunks, [], false);
   }
 }
 

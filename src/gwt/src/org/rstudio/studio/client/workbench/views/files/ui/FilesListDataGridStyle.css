@@ -1,38 +1,27 @@
 @def selectionBorderWidth 2px;
 
-@external rstudio-themes-flat, rstudio-themes-dark;
+@external rstudio-themes-dark;
 
 .dataGridCell {
   padding: 0 1px;
 }
 
 .dataGridCell input[type=checkbox] {
-   margin-top: 0;
-   margin-bottom: 0;
-   zoom: 1.000001;
-}
-
-.rstudio-themes-flat .dataGridCell input[type=checkbox] {
-   margin-top: 0;
-   margin-bottom: 0;
-   zoom: 1;
+  margin-top: 0;
+  margin-bottom: 0;
+  margin-left: 5px;
+  zoom: 1;
 }
 
 .dataGridLastColumnHeader {
   border-right: none;
 }
 
-.dataGridEvenRow, .dataGridOddRow, .dataGridHoveredRow, .dataGridSelectedRow, .dataGridKeyboardSelectedRow {
-  background: #ffffff;
-  color: #606060;
-}
-
 .dataGridEvenRowCell, .dataGridOddRowCell, .dataGridHoveredRowCell, .dataGridSelectedRowCell, .dataGridKeyboardSelectedRowCell, .dataGridKeyboardSelectedCell   {
   border: selectionBorderWidth solid #ffffff;
-  color: #606060;
 }
 
-.rstudio-themes-flat .rstudio-themes-dark .dataGridCell img {
+.rstudio-themes-dark .dataGridCell img {
    filter: brightness(90%) saturate(90%);
 }
 
@@ -40,29 +29,16 @@
 
 }
 
-.rstudio-themes-flat .dataGridCell {
+.dataGridCell {
   padding: 0 1px;
   border-color: transparent;
 }
 
-.rstudio-themes-flat .dataGridEvenRow,
-.rstudio-themes-flat .dataGridOddRow,
-.rstudio-themes-flat .dataGridHoveredRow,
-.rstudio-themes-flat .dataGridSelectedRow,
-.rstudio-themes-flat .dataGridKeyboardSelectedRow {
+.dataGridEvenRow,
+.dataGridOddRow,
+.dataGridHoveredRow,
+.dataGridSelectedRow,
+.dataGridKeyboardSelectedRow {
   background: inherit;
-  color: inherit;
 }
 
-.rstudio-themes-flat .dataGridEvenRowCell,
-.rstudio-themes-flat .dataGridOddRowCell,
-.rstudio-themes-flat .dataGridHoveredRowCell,
-.rstudio-themes-flat .dataGridSelectedRowCell,
-.rstudio-themes-flat .dataGridKeyboardSelectedRowCell,
-.rstudio-themes-flat .dataGridKeyboardSelectedCell   {
-  color: inherit;
-}
-
-.rstudio-themes-flat .dataGridCell input[type=checkbox] {
-  margin-left: 5px;
-}

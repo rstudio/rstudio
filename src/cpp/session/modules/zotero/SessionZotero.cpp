@@ -1,7 +1,7 @@
 /*
  * SessionZotero.cpp
  *
- * Copyright (C) 2009-20 by RStudio, Inc.
+ * Copyright (C) 2022 by RStudio, Inc.
  *
  * Unless you have received this program directly from RStudio pursuant
  * to the terms of a commercial license agreement with RStudio, then
@@ -34,6 +34,7 @@
 #include "ZoteroUtil.hpp"
 
 using namespace rstudio::core;
+using namespace boost::placeholders;
 
 namespace rstudio {
 namespace session {
@@ -363,7 +364,7 @@ void zoteroGetCollections(const json::JsonRpcRequest& request,
       auto jsonSpec = json.getObject();
       ZoteroCollectionSpec cacheSpec;
       cacheSpec.name = jsonSpec[kName].getString();
-      cacheSpec.version = jsonSpec[kVersion].getInt();
+      cacheSpec.version = jsonSpec[kVersion].getDouble();
       cacheSpec.key = jsonSpec[kKey].getString();
       cacheSpec.parentKey = jsonSpec[kParentKey].getString();
       return cacheSpec;

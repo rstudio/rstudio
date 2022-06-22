@@ -1,7 +1,7 @@
 /*
  * PosixFileScanner.cpp
  *
- * Copyright (C) 2021 by RStudio, PBC
+ * Copyright (C) 2022 by RStudio, PBC
  *
  * Unless you have received this program directly from RStudio pursuant
  * to the terms of a commercial license agreement with RStudio, then
@@ -183,7 +183,7 @@ Error scanFiles(const tree<FileInfo>::iterator_base& fromNode,
                // try to scan the files in the subdirectory -- if we fail
                // we continue because we don't want one "bad" directory
                // to cause us to abort the entire scan. yes the tree
-               // will be incomplete however it will be even more incompete
+               // will be incomplete however it will be even more incomplete
                // if we fail entirely
                Error error = scanFiles(child, options, pTree);
                if (error)

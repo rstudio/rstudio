@@ -1,7 +1,7 @@
 /*
  * SpellingDialog.java
  *
- * Copyright (C) 2021 by RStudio, PBC
+ * Copyright (C) 2022 by RStudio, PBC
  *
  * Unless you have received this program directly from RStudio pursuant
  * to the terms of a commercial license agreement with RStudio, then
@@ -31,6 +31,7 @@ import org.rstudio.core.client.Rectangle.FailureMode;
 import org.rstudio.core.client.widget.ModalDialogBase;
 import org.rstudio.core.client.widget.ThemedButton;
 import org.rstudio.studio.client.RStudioGinjector;
+import org.rstudio.studio.client.workbench.views.source.ViewsSourceConstants;
 
 public class SpellingDialog extends ModalDialogBase implements CheckSpelling.Display
 {
@@ -40,14 +41,14 @@ public class SpellingDialog extends ModalDialogBase implements CheckSpelling.Dis
    public SpellingDialog()
    {
       super(Roles.getDialogRole());
-      setText("Check Spelling");
+      setText(constants_.checkSpelling());
 
-      btnAdd_ = new ThemedButton("Add");
-      btnAdd_.setTitle("Add word to user dictionary");
-      btnSkip_ = new ThemedButton("Skip");
-      btnIgnoreAll_ = new ThemedButton("Ignore All");
-      btnChange_ = new ThemedButton("Change");
-      btnChangeAll_ = new ThemedButton("Change All");
+      btnAdd_ = new ThemedButton(constants_.addCapitalized());
+      btnAdd_.setTitle(constants_.addWordToUserDictionary());
+      btnSkip_ = new ThemedButton(constants_.skip());
+      btnIgnoreAll_ = new ThemedButton(constants_.ignoreAll());
+      btnChange_ = new ThemedButton(constants_.changeCapitalized());
+      btnChangeAll_ = new ThemedButton(constants_.changeAll());
       prepareButtons(btnAdd_, btnSkip_, btnIgnoreAll_, btnChange_, btnChangeAll_);
 
       mainWidget_ = GWT.<Binder>create(Binder.class).createAndBindUi(this);
@@ -56,7 +57,7 @@ public class SpellingDialog extends ModalDialogBase implements CheckSpelling.Dis
             btnAdd_, btnIgnoreAll_, btnSkip_, btnChange_, btnChangeAll_
       };
 
-      Roles.getListboxRole().setAriaLabelProperty(lstSuggestions_.getElement(), "Suggestions");
+      Roles.getListboxRole().setAriaLabelProperty(lstSuggestions_.getElement(), constants_.suggestionsCapitalized());
       addCancelButton();
    }
 
@@ -164,7 +165,7 @@ public class SpellingDialog extends ModalDialogBase implements CheckSpelling.Dis
    @Override
    public void showProgress()
    {
-      txtDisplay_.setText("Checking...");
+      txtDisplay_.setText(constants_.checkingEllipses());
       txtReplacement_.setText("");
 
       txtReplacement_.setEnabled(false);
@@ -255,5 +256,5 @@ public class SpellingDialog extends ModalDialogBase implements CheckSpelling.Dis
    private final Widget mainWidget_;
 
    private Rectangle boundsToAvoid_;
-
+   private static final ViewsSourceConstants constants_ = GWT.create(ViewsSourceConstants.class);
 }

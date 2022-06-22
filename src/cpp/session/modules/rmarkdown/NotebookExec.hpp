@@ -1,7 +1,7 @@
 /*
  * NotebookExec.hpp
  *
- * Copyright (C) 2021 by RStudio, PBC
+ * Copyright (C) 2022 by RStudio, PBC
  *
  * Unless you have received this program directly from RStudio pursuant
  * to the terms of a commercial license agreement with RStudio, then
@@ -19,6 +19,7 @@
 #include <session/SessionModuleContext.hpp>
 
 #include <core/BoostSignals.hpp>
+#include <core/FileLock.hpp>
 #include <shared_core/json/Json.hpp>
 
 #include <r/RSexp.hpp>
@@ -26,8 +27,6 @@
 #include "NotebookCapture.hpp"
 #include "NotebookOutput.hpp"
 #include "NotebookChunkOptions.hpp"
-
-#define kStagingSuffix "_t"
 
 namespace rstudio {
 namespace core {
@@ -113,6 +112,7 @@ private:
    bool hasErrors_;
 
    std::vector<boost::shared_ptr<NotebookCapture> > captures_;
+   std::vector<boost::shared_ptr<core::ScopedFileLock> > locks_;
    std::vector<RSTUDIO_BOOST_CONNECTION> connections_;
 };
 

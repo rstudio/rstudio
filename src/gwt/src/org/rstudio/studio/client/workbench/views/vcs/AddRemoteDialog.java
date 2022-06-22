@@ -1,7 +1,7 @@
 /*
  * AddRemoteDialog.java
  *
- * Copyright (C) 2021 by RStudio, PBC
+ * Copyright (C) 2022 by RStudio, PBC
  *
  * Unless you have received this program directly from RStudio pursuant
  * to the terms of a commercial license agreement with RStudio, then
@@ -31,6 +31,7 @@ import com.google.gwt.event.dom.client.KeyDownHandler;
 import com.google.gwt.user.client.ui.TextBox;
 import com.google.gwt.user.client.ui.VerticalPanel;
 import com.google.gwt.user.client.ui.Widget;
+import com.google.gwt.core.client.GWT;
 
 public class AddRemoteDialog extends ModalDialog<AddRemoteDialog.Input>
                              implements KeyDownHandler
@@ -63,13 +64,13 @@ public class AddRemoteDialog extends ModalDialog<AddRemoteDialog.Input>
                           OperationWithInput<Input> operation)
    {
       super(caption, Roles.getDialogRole(), operation);
-      setOkButtonCaption("Add");
+      setOkButtonCaption(constants_.addCapitalized());
 
       container_ = new VerticalPanel();
       tbName_ = textBox();
       tbUrl_ = textBox();
-      lblName_ = label("Remote Name:", tbName_);
-      lblUrl_ = label("Remote URL:", tbUrl_);
+      lblName_ = label(constants_.remoteNameColon(), tbName_);
+      lblUrl_ = label(constants_.remoteUrlColon(), tbUrl_);
 
       tbName_.addKeyDownHandler(this);
       tbUrl_.addKeyDownHandler(this);
@@ -143,4 +144,5 @@ public class AddRemoteDialog extends ModalDialog<AddRemoteDialog.Input>
    private final TextBox tbName_;
    private final TextBox tbUrl_;
    private final VerticalPanel container_;
+   private static final ViewVcsConstants constants_ = GWT.create(ViewVcsConstants.class);
 }

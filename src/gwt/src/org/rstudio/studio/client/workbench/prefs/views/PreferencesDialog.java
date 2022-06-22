@@ -1,7 +1,7 @@
 /*
  * PreferencesDialog.java
  *
- * Copyright (C) 2021 by RStudio, PBC
+ * Copyright (C) 2022 by RStudio, PBC
  *
  * Unless you have received this program directly from RStudio pursuant
  * to the terms of a commercial license agreement with RStudio, then
@@ -37,6 +37,7 @@ import org.rstudio.studio.client.workbench.model.WorkbenchServerOperations;
 import org.rstudio.studio.client.workbench.prefs.events.UserPrefsChangedEvent;
 import org.rstudio.studio.client.workbench.prefs.model.UserPrefs;
 import org.rstudio.studio.client.workbench.prefs.model.UserState;
+import org.rstudio.studio.client.workbench.prefs.PrefsConstants;
 
 public class PreferencesDialog extends PreferencesDialogBase<UserPrefs>
 {
@@ -68,11 +69,12 @@ public class PreferencesDialog extends PreferencesDialogBase<UserPrefs>
                             UserPrefs userPrefs,
                             UserState userState)
    {
-      super("Options",
+      super(constants_.options(),
             res.styles().panelContainer(),
             res.styles().panelContainerNoChooser(),
             true,
             panes(
+                  userPrefs,
                   general,
                   source,
                   console,
@@ -80,13 +82,13 @@ public class PreferencesDialog extends PreferencesDialogBase<UserPrefs>
                   paneLayout,
                   packages,
                   rmarkdown,
+                  python,
                   compilePdf,
                   spelling,
                   sourceControl,
                   publishing,
                   terminal,
-                  accessibility,
-                  python));
+                  accessibility));
       
       session_ = session;
       server_ = server;
@@ -167,12 +169,17 @@ public class PreferencesDialog extends PreferencesDialogBase<UserPrefs>
    }
    
    @SafeVarargs
-   private static final List<PreferencesDialogPaneBase<UserPrefs>> panes(
+   private static final List<PreferencesDialogPaneBase<UserPrefs>> panes(UserPrefs prefs,
       PreferencesDialogPaneBase<UserPrefs>... paneList)
    {
       List<PreferencesDialogPaneBase<UserPrefs>> allPanes = new ArrayList<>();
       for (PreferencesDialogPaneBase<UserPrefs> pane : paneList)
+      {
+         // filter out panes here basd on prefs as required
+         // (not doing any filtering right now)
+    
          allPanes.add(pane);
+      }
       return allPanes;
    }
    
@@ -182,4 +189,5 @@ public class PreferencesDialog extends PreferencesDialogBase<UserPrefs>
    private final UserState state_;
    private final ApplicationQuit quit_;
    private final GlobalDisplay globalDisplay_;
+   private static final PrefsConstants constants_ = GWT.create(PrefsConstants.class);
 }

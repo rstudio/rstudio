@@ -1,7 +1,7 @@
 #
 # SessionDataImportV2.R
 #
-# Copyright (C) 2021 by RStudio, PBC
+# Copyright (C) 2022 by RStudio, PBC
 #
 # Unless you have received this program directly from RStudio pursuant
 # to the terms of a commercial license agreement with RStudio, then
@@ -406,8 +406,8 @@
          }
          else if (identical(dataImportOptions$delimiter, " "))
          {
-            functionName <- "read_table2"
-            functionReference <- readr::read_table2
+            functionName <- "read_table"
+            functionReference <- readr::read_table
          }
          else
          {
@@ -427,7 +427,7 @@
          options[["na"]] <- dataImportOptions$na
          options[["comment"]] <- dataImportOptions$comments
          options[["skip"]] <- dataImportOptions$skip
-         options[["n_max"]] <- dataImportOptions$maxRows
+         options[["guess_max"]] <- dataImportOptions$maxRows
          options[["col_types"]] <- dataImportOptions$columnDefinitions
 
          # set special parameter types
@@ -794,7 +794,7 @@
       data <- suppressWarnings(
          eval(parse(text=importInfo$previewCode))
       )
-
+      
       parsingErrors <- parsingErrorsFromMode(dataImportOptions$mode, data)
 
       preparedData <- .rs.prepareViewerData(

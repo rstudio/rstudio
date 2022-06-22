@@ -1,7 +1,7 @@
 /*
  * MemoryUsageSummary.java
  *
- * Copyright (C) 2021 by RStudio, PBC
+ * Copyright (C) 2022 by RStudio, PBC
  *
  * Unless you have received this program directly from RStudio pursuant
  * to the terms of a commercial license agreement with RStudio, then
@@ -32,6 +32,7 @@ import com.google.gwt.user.client.ui.Label;
 import com.google.gwt.user.client.ui.Widget;
 import org.rstudio.core.client.ElementIds;
 import org.rstudio.core.client.StringUtil;
+import org.rstudio.studio.client.workbench.views.environment.ViewEnvironmentConstants;
 import org.rstudio.studio.client.workbench.views.environment.model.MemoryStat;
 import org.rstudio.studio.client.workbench.views.environment.model.MemoryUsage;
 import org.rstudio.studio.client.workbench.views.environment.model.MemoryUsageReport;
@@ -40,7 +41,7 @@ public class MemoryUsageSummary extends Composite
 {
    interface Style extends CssResource
    {
-      String kbCell();
+      String mbCell();
       String stats();
       String header();
       String swatch();
@@ -75,7 +76,7 @@ public class MemoryUsageSummary extends Composite
       // Create the header title for the table
       HeadingElement header = Document.get().createHElement(1);
       header.setClassName(style.header());
-      header.setInnerText("Memory Usage");
+      header.setInnerText(constants_.memoryUsage());
       stats_.getElement().appendChild(header);
       ElementIds.assignElementId(header, ElementIds.MEMORY_TABLE_TITLE);
 
@@ -92,13 +93,13 @@ public class MemoryUsageSummary extends Composite
       statsRow.appendChild(colorCell);
 
       Element statCell = Document.get().createTHElement();
-      statCell.setInnerText("Statistic");
+      statCell.setInnerText(constants_.statisticCapitalized());
       statsRow.appendChild(statCell);
       Element memoryCell = Document.get().createTHElement();
-      memoryCell.setInnerText("Memory");
+      memoryCell.setInnerText(constants_.memoryCapitalized());
       statsRow.appendChild(memoryCell);
       Element sourceCell = Document.get().createTHElement();
-      sourceCell.setInnerText("Source");
+      sourceCell.setInnerText(constants_.sourceCapitalized());
       statsRow.appendChild(sourceCell);
       statsHeader.appendChild(statsRow);
 
@@ -113,7 +114,7 @@ public class MemoryUsageSummary extends Composite
       // The sum of all the objects in R (cons + vectors, as reported by gc())
       statsBody.appendChild(buildStatsRow(
          null,
-         "Used by R objects",
+         constants_.usedByRObjects(),
          report.getRUsage().getConsKb() + report.getRUsage().getVectorKb(),
          "R"
       ));
@@ -122,28 +123,28 @@ public class MemoryUsageSummary extends Composite
       statsBody.appendChild(buildStatsRow(
          MemoryUsagePieChart.getProcessColorCode(
             report.getSystemUsage().getPercentUsed()),
-         "Used by session",
+         constants_.usedBySession(),
          report.getSystemUsage().getProcess()));
 
       // The memory used by the system that isn't already accounted for in the process
       statsBody.appendChild(buildStatsRow(
          MemoryUsagePieChart.getSystemColorCode(
             report.getSystemUsage().getPercentUsed()),
-         "Used by system",
+         constants_.usedBySystem(),
          report.getSystemUsage().getUsed().getKb() - report.getSystemUsage().getProcess().getKb(),
          report.getSystemUsage().getUsed().getProviderName()));
 
       // The memory left on the system (the total less the used)
       statsBody.appendChild(buildStatsRow(
          MemUsageWidget.MEMORY_PIE_UNUSED_COLOR,
-         "Free system memory",
+         constants_.freeSystemMemory(),
          report.getSystemUsage().getTotal().getKb() - report.getSystemUsage().getUsed().getKb(),
          report.getSystemUsage().getUsed().getProviderName()));
 
       // Total system memory
       statsBody.appendChild(buildStatsRow(
          null,
-         "Total system memory",
+         constants_.totalSystemMemory(),
          report.getSystemUsage().getTotal()));
 
       stats_.getElement().appendChild(statsTable);
@@ -202,12 +203,12 @@ public class MemoryUsageSummary extends Composite
 
       TableCellElement kbCell = Document.get().createTDElement();
       Element kbVal = Document.get().createElement("strong");
-      kbVal.setInnerText(StringUtil.prettyFormatNumber(kb));
+      kbVal.setInnerText(StringUtil.prettyFormatNumber(kb / 1024));
       kbCell.appendChild(kbVal);
       Element kbLabel = Document.get().createSpanElement();
-      kbLabel.setInnerText(" KiB");
+      kbLabel.setInnerText(" MiB");
       kbCell.appendChild(kbLabel);
-      kbCell.setClassName(style.kbCell());
+      kbCell.setClassName(style.mbCell());
       row.appendChild(kbCell);
 
       TableCellElement sourceCell = Document.get().createTDElement();
@@ -216,7 +217,7 @@ public class MemoryUsageSummary extends Composite
 
       return row;
    }
-
+   private static final ViewEnvironmentConstants constants_ = GWT.create(ViewEnvironmentConstants.class);
    @UiField(provided = true) MemoryUsagePieChart pie_;
    @UiField Label pieLabel_;
    @UiField HTMLPanel stats_;

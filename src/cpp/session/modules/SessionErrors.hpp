@@ -1,7 +1,7 @@
 /*
  * SessionErrors.hpp
  *
- * Copyright (C) 2021 by RStudio, PBC
+ * Copyright (C) 2022 by RStudio, PBC
  *
  * Unless you have received this program directly from RStudio pursuant
  * to the terms of a commercial license agreement with RStudio, then
@@ -33,7 +33,7 @@ core::Error initialize();
 core::json::Value errorStateAsJson();
 
 } // namespace errors
-} // namepace modules
+} // namespace modules
 } // namespace session
 } // namespace rstudio
 

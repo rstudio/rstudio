@@ -1,7 +1,7 @@
 /*
  * AsyncConnectionImpl.hpp
  *
- * Copyright (C) 2021 by RStudio, PBC
+ * Copyright (C) 2022 by RStudio, PBC
  *
  * Unless you have received this program directly from RStudio pursuant
  * to the terms of a commercial license agreement with RStudio, then
@@ -39,6 +39,8 @@
 #include <core/http/StreamWriter.hpp>
 #include <core/http/RequestParser.hpp>
 #include <core/http/AsyncConnection.hpp>
+
+using namespace boost::placeholders;
 
 namespace rstudio {
 namespace core {
@@ -209,7 +211,7 @@ public:
       {
          boost::shared_ptr<core::http::StreamWriter<SocketType> > pWriter(
                   new core::http::StreamWriter<SocketType>(
-                     *socket_,
+                     socket(), // using socket(), not *socket in case of SSL connection
                      response_,
                      boost::bind(&AsyncConnectionImpl<SocketType>::onStreamComplete,
                                  AsyncConnectionImpl<SocketType>::shared_from_this()),
@@ -223,10 +225,15 @@ public:
       else
       {
          // make sure that if no body and content-length were specified,
+         // and the status code is not 1xx or 204,
          // we send 0 for Content-Length
          // otherwise, this response will be invalid
-         if (response_.body().empty() && response_.headerValue("Content-Length").empty())
+         if ((response_.body().empty() && response_.headerValue("Content-Length").empty()) &&
+             (response_.statusCode() < 100 || response_.statusCode() > 199) &&
+             response_.statusCode() != 204)
+         {
              response_.setContentLength(0);
+         }
 
          // write
          socketOperations_->asyncWrite(

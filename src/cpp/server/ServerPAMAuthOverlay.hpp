@@ -1,7 +1,7 @@
 /*
  * ServerPAMAuthOverlay.hpp
  *
- * Copyright (C) 2021 by RStudio, PBC
+ * Copyright (C) 2022 by RStudio, PBC
  *
  * Unless you have received this program directly from RStudio pursuant
  * to the terms of a commercial license agreement with RStudio, then
@@ -23,7 +23,6 @@ namespace server {
 namespace pam_auth {
 namespace overlay {
 
-void intialize();
 bool canSetSignInCookies();
 void onUserPasswordAvailable(const std::string& username,
                          const std::string& password);

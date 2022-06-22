@@ -1,7 +1,7 @@
 /*
  * cpp_code_model.js
  *
- * Copyright (C) 2021 by RStudio, PBC
+ * Copyright (C) 2022 by RStudio, PBC
  *
  * Unless you have received this program directly from RStudio pursuant
  * to the terms of a commercial license agreement with RStudio, then
@@ -1122,7 +1122,7 @@ var CppCodeModel = function(session, tokenizer,
                indent + tab;
          }
 
-         // If we're looking at a class with the first inheritted member
+         // If we're looking at a class with the first inherited member
          // on the same line, e.g.
          //
          //   class Foo : public A,

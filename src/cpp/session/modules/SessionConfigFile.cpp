@@ -1,7 +1,7 @@
 /*
  * SessionConfigFile.cpp
  *
- * Copyright (C) 2021 by RStudio, PBC
+ * Copyright (C) 2022 by RStudio, PBC
  *
  * Unless you have received this program directly from RStudio pursuant
  * to the terms of a commercial license agreement with RStudio, then
@@ -124,7 +124,7 @@ Error readConfigJSON(const core::json::JsonRpcRequest& request,
    }
 
    // System config is always in the XDG location (if it exists at all)
-   FilePath systemConfig = core::system::xdg::systemConfigFile(path);
+   FilePath systemConfig = core::system::xdg::findSystemConfigFile(path, path);
 
    // If neither config file exists, no work to do; raise an error if requested.
    if (!userConfig.exists() && !systemConfig.exists())

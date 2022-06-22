@@ -1,7 +1,7 @@
 /*
  * VirtualConsoleTests.java
  *
- * Copyright (C) 2021 by RStudio, PBC
+ * Copyright (C) 2022 by RStudio, PBC
  *
  * Unless you have received this program directly from RStudio pursuant
  * to the terms of a commercial license agreement with RStudio, then
@@ -14,6 +14,8 @@
  */
 package org.rstudio.core.client;
 
+import org.rstudio.studio.client.server.ServerRequestCallback;
+import org.rstudio.studio.client.server.Void;
 import org.rstudio.studio.client.workbench.prefs.model.UserPrefs;
 
 import com.google.gwt.dom.client.Document;
@@ -1194,5 +1196,59 @@ public class VirtualConsoleTests extends GWTTestCase
          "<span></span><span class=\"xtermColor6\"> [</span>";
       Assert.assertEquals(expected, ele.getInnerHTML());
       Assert.assertEquals("✓ |   4       | reporter-zzz [", vc.toString());
+   }
+
+   public void testBlurred()
+   {
+      PreElement ele = Document.get().createPreElement();
+      VirtualConsole vc = getVC(ele);
+      String testInput = "\033[2mtext\033[22m";
+      vc.submit(testInput);
+      String expected = "<span class=\"xtermBlur\">text</span>";
+      Assert.assertEquals(expected, ele.getInnerHTML());
+   }
+
+   public void testHyperlinkNoParams()
+   {
+      PreElement ele = Document.get().createPreElement();
+      VirtualConsole vc = getVC(ele);
+      String testInput = "\u001b]8;;http://www.example.com\7text\u001b]8;;\7";
+      vc.submit(testInput);
+      Assert.assertTrue(ele.getInnerHTML().matches("^<a class=\".*\">text</a>"));
+   }
+
+   public void testHyperlinkNoParamsColorOutside()
+   {
+      PreElement ele = Document.get().createPreElement();
+      VirtualConsole vc = getVC(ele);
+      String testInput = "\033[31m\u001b]8;;http://www.example.com\7text\u001b]8;;\7\033[39m";
+      vc.submit(testInput);
+      Assert.assertTrue(ele.getInnerHTML().matches("^<a class=\".*xtermColor1.*\">text</a>"));
+   }
+
+   public void testHyperlinkNoParamsColorInside()
+   {
+      PreElement ele = Document.get().createPreElement();
+      VirtualConsole vc = getVC(ele);
+      String testInput = "\u001b]8;;http://www.example.com\7\033[31mtext\033[39m\u001b]8;;\7";
+      vc.submit(testInput);
+      Assert.assertTrue(ele.getInnerHTML().matches("^<a class=\".*xtermColor1.*\">text</a>"));
+   }
+
+   public void testHyperlinkWithParams()
+   {
+      PreElement ele = Document.get().createPreElement();
+      VirtualConsole vc = getVC(ele);
+      String testInput = "\u001b]8;name1=value1:name2=value2;http://www.example.com\7text\u001b]8;;\7";
+      vc.submit(testInput);
+      Assert.assertTrue(ele.getInnerHTML().matches("^<a class=\".*\">text</a>"));
+   }
+
+   public void testIssue9846()
+   {
+      PreElement ele = Document.get().createPreElement();
+      VirtualConsole vc = getVC(ele);
+      vc.submit("i Some intermediate step with a \033[32mfield\033[39m-----------------------\r+++++++++++++++++++++++++++++++++++++\r\033[33m!\033[39m An alert message which is long enough\ni Some intermediate step with a \033[32mfield\033[39m\n");
+      Assert.assertEquals("<span class=\"xtermColor3\">!</span><span> An alert message which is long enough</span><span>---------------------\ni Some intermediate step with a </span><span class=\"xtermColor2\">field</span><span>\n</span>", ele.getInnerHTML());
    }
 }

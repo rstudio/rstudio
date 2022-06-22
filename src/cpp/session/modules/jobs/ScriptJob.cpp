@@ -1,7 +1,7 @@
 /*
  * ScriptJob.cpp
  *
- * Copyright (C) 2021 by RStudio, PBC
+ * Copyright (C) 2022 by RStudio, PBC
  *
  * Unless you have received this program directly from RStudio pursuant
  * to the terms of a commercial license agreement with RStudio, then
@@ -155,6 +155,7 @@ void ScriptJob::start()
       "exportRdata = " + exportRdata + ");";
      
    core::system::Options environment;
+   environment.push_back(std::make_pair("RSTUDIO_CHILD_PROCESS_PANE", "job"));
 
    // build options for async R process; default to no rdata unless we have other options (most
    // common is a vanilla R process)
@@ -163,6 +164,44 @@ void ScriptJob::start()
 
    async_r::AsyncRProcess::start(cmd.c_str(), environment, spec_.workingDir(),
                                  options);
+}
+
+core::Error ScriptJob::replay()
+{
+   Error error;
+   if (!job_)
+   {
+      error = systemError(boost::system::errc::no_child_process, ERROR_LOCATION);
+      error.addProperty("name", name_);
+      error.addProperty("description", "Script job process is not running yet and cannot "
+            "be replayed.");
+      return error;
+   }
+   if (!job_->complete())
+   {
+      error = systemError(boost::system::errc::operation_in_progress, ERROR_LOCATION);
+      error.addProperty("id", job_->id());
+      error.addProperty("name", name_);
+      error.addProperty("description", "Script job is still running and cannot be replayed.");
+      return error;
+   }
+
+   // reset the underlying job
+   jobs::setJobStatus(job_, "Re-running");
+   error = reset();
+   if (error)
+   {
+      return error;
+   }
+
+   // return job to idle state and reset progress
+   setJobState(job_, JobState::JobIdle);
+   setJobProgress(job_, 0);
+
+   // job is now reset, run the script again
+   start();
+
+   return Success();
 }
 
 void ScriptJob::onStdout(const std::string& output)
@@ -420,6 +459,11 @@ core::Error startScriptJob(const ScriptLaunchSpec& spec,
 Error stopScriptJob(const std::string& id)
 {
    return stopAsyncRJob(id);
+}
+
+Error replayScriptJob(const std::string& id)
+{
+   return replayAsyncRJob(id);
 }
 
 } // namespace jobs

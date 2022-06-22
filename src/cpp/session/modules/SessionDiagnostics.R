@@ -1,7 +1,7 @@
 #
 # SessionDiagnostics.R
 #
-# Copyright (C) 2021 by RStudio, PBC
+# Copyright (C) 2022 by RStudio, PBC
 #
 # Unless you have received this program directly from RStudio pursuant
 # to the terms of a commercial license agreement with RStudio, then
@@ -67,7 +67,7 @@
 {
    if (!file.exists(filePath))
       return(list())
-      
+
    filePath <- .rs.normalizePath(filePath, mustWork = TRUE)
    lint <- .rs.lintRFile(filePath)
    invisible(.rs.showLintMarkers(lint, filePath))
@@ -84,7 +84,8 @@
    .rs.api.sourceMarkers(
       name = "Diagnostics",
       markers = markers,
-      basePath = .rs.getProjectDirectory()
+      basePath = .rs.getProjectDirectory(),
+      isDiagnostics = true
    )
 })
 
@@ -109,31 +110,31 @@
    # to be UTF-8 encoded; however, that encoding can be lost when forming
    # this call so bring the encoding back.
    Encoding(content) <- "UTF-8"
-   
+
    splat <- strsplit(content, "\n", fixed = TRUE)[[1]]
    starts <- grep(reStart, splat, perl = TRUE)
    ends <- grep(reEnd, splat, perl = TRUE)
-   
+
    # Get start/end pairs
    pairs <- lapply(starts, function(i) {
       following <- ends[ends > i]
       if (!length(following)) return(NULL)
       c(i, following[[1]])
    })
-   
+
    # Drop NULL
    pairs[unlist(lapply(pairs, is.null))] <- NULL
-   
+
    new <- character(length(splat))
    for (pair in pairs)
    {
       start <- pair[[1]]
       end <- pair[[2]]
-      
+
       # Ignore pairs that include 'eval = FALSE'.
       if (grepl("eval\\s*=\\s*F", splat[[start]], perl = TRUE))
          next
-      
+
       # Ignore pairs that include 'engine=', assuming they're non-R chunks.
       #
       # 'Rscript' chunks would work standalone and hence the linter would not
@@ -141,14 +142,13 @@
       # from prior chunks, so we just don't lint it.
       if (grepl("engine\\s*=", splat[[start]], perl = TRUE))
          next
-      
+
       # If the chunk end lies immediately after the chunk start, bail
       if (start + 1 == end)
          next
-      
+
       new[(start + 1):(end - 1)] <- splat[(start + 1):(end - 1)]
    }
-   
    .rs.scalar(paste(new, collapse = "\n"))
 })
 

@@ -1,7 +1,7 @@
 /*
  * spelling-doc.ts
  *
- * Copyright (C) 2021 by RStudio, PBC
+ * Copyright (C) 2022 by RStudio, PBC
  *
  * Unless you have received this program directly from RStudio pursuant
  * to the terms of a commercial license agreement with RStudio, then
@@ -41,7 +41,7 @@ export function getSpellingDoc(
   // alias schema
   const schema = view.state.schema;
 
-  // intialize marks we don't want to check
+  // initialize marks we don't want to check
   const excluded = excludedMarks(schema, marks);
 
   // check begin

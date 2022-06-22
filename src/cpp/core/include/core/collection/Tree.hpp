@@ -1,7 +1,7 @@
 /*
  * Tree.hpp
  *
- * Copyright (C) 2021 by RStudio, PBC
+ * Copyright (C) 2022 by RStudio, PBC
  * Copyright (C) 2001-2011 Kasper Peeters <kasper@phi-sci.com>
  *
  * Unless you have received this program directly from RStudio pursuant
@@ -26,7 +26,7 @@
 //
 // If you have received this program directly from RStudio pursuant
 // to the terms of a commercial license then tree.hh is covered 
-// under this same commerical license.
+// under this same commercial license.
 //
 
 /** \mainpage tree.hh

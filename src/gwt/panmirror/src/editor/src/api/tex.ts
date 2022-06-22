@@ -1,7 +1,7 @@
 /*
  * tex.ts
  *
- * Copyright (C) 2021 by RStudio, PBC
+ * Copyright (C) 2022 by RStudio, PBC
  *
  * Unless you have received this program directly from RStudio pursuant
  * to the terms of a commercial license agreement with RStudio, then
@@ -44,7 +44,10 @@ export function texLength(text: string) {
     // only letters, backslashes, and open brace/bracket allowed (unless we are in braces or brackets)
     const inBraces = braceLevel >= 1;
     const inBrackets = bracketLevel >= 1;
-    if (i > 0 && !isLetter(ch) && ch !== '\\' && ch !== '{' && ch !== '[' && !inBraces && !inBrackets) {
+    if (i > 0 && ch === ' ' && text[i+1] === '\\') {
+      i++; // skip the \
+      continue;
+    } if (i > 0 && !isLetter(ch) && ch !== '\\' && ch !== '{' && ch !== '[' && !inBraces && !inBrackets) {
       return i;
     }
 
@@ -67,9 +70,6 @@ export function texLength(text: string) {
   }
 }
 
-export function isSingleLineTex(tex: string) {
-  return tex.trimRight().split('\n').length === 1;
-}
 
 const LetterRegex = /[A-Za-z]/;
 function isLetter(ch: string) {

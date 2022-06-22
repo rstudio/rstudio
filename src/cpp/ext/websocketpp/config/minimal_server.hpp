@@ -118,7 +118,7 @@ struct minimal_server {
     /// RNG policies
     typedef websocketpp::random::none::int_generator<uint32_t> rng_type;
 
-    /// Controls compile time enabling/disabling of thread syncronization
+    /// Controls compile time enabling/disabling of thread synchronization
     /// code Disabling can provide a minor performance improvement to single
     /// threaded applications
     static bool const enable_multithreading = true;
@@ -130,7 +130,7 @@ struct minimal_server {
         typedef type::request_type request_type;
         typedef type::response_type response_type;
 
-        /// Controls compile time enabling/disabling of thread syncronization
+        /// Controls compile time enabling/disabling of thread synchronization
         /// code Disabling can provide a minor performance improvement to single
         /// threaded applications
         static bool const enable_multithreading = true;

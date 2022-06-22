@@ -1,7 +1,7 @@
 /*
  * SessionSystemResources.cpp
  *
- * Copyright (C) 2021 by RStudio, PBC
+ * Copyright (C) 2022 by RStudio, PBC
  *
  * Unless you have received this program directly from RStudio pursuant
  * to the terms of a commercial license agreement with RStudio, then
@@ -45,29 +45,6 @@ boost::mutex s_queryMutex;
 // The interval, in seconds, at which we will query for memory statistics
 std::atomic<int> s_queryInterval;
 
-/**
- * Computes memory usage and emits it to the client as a client event.
- */
-void emitMemoryChangedEvent()
-{
-   // Ensure we don't emit memory stats from child processes
-   if (main_process::wasForked())
-   {
-      return;
-   }
-
-   boost::shared_ptr<MemoryUsage> pUsage;
-   Error error = getMemoryUsage(&pUsage);
-   if (error)
-   {
-      LOG_ERROR(error);
-   }
-   else
-   {
-      ClientEvent event(client_events::kMemoryUsageChanged, pUsage->toJson());
-      module_context::enqueClientEvent(event);
-   }
-}
 
 /**
  * Performs a previously scheduled query for available memory.
@@ -280,6 +257,31 @@ Error initialize()
       (bind(module_context::sourceModuleRFile, "SessionSystemResources.R"));
 
    return initBlock.execute();
+}
+
+
+/**
+ * Computes memory usage and emits it to the client as a client event.
+ */
+void emitMemoryChangedEvent()
+{
+   // Ensure we don't emit memory stats from child processes
+   if (main_process::wasForked())
+   {
+      return;
+   }
+
+   boost::shared_ptr<MemoryUsage> pUsage;
+   Error error = getMemoryUsage(&pUsage);
+   if (error)
+   {
+      LOG_ERROR(error);
+   }
+   else
+   {
+      ClientEvent event(client_events::kMemoryUsageChanged, pUsage->toJson());
+      module_context::enqueClientEvent(event);
+   }
 }
 
 }  // namespace system_resources

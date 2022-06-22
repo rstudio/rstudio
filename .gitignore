@@ -5,6 +5,7 @@ build-*/
 *_build/
 *-build-*/
 *_build_*/
+/run/
 qtcreator-build
 .DS_Store
 src/gwt/www/js/acesupport.js
@@ -46,3 +47,6 @@ GSYMS
 GTAGS
 TODO-INTERNAL
 *.pid
+
+node_modules/
+src/node/desktop/src/types/user-state-schema.d.ts

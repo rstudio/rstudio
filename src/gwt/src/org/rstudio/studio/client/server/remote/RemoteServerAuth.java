@@ -1,7 +1,7 @@
 /*
  * RemoteServerAuth.java
  *
- * Copyright (C) 2021 by RStudio, PBC
+ * Copyright (C) 2022 by RStudio, PBC
  *
  * Unless you have received this program directly from RStudio pursuant
  * to the terms of a commercial license agreement with RStudio, then
@@ -14,6 +14,7 @@
  */
 package org.rstudio.studio.client.server.remote;
 
+import com.google.gwt.core.client.GWT;
 import com.google.gwt.core.client.Scheduler;
 import com.google.gwt.core.client.Scheduler.ScheduledCommand;
 import com.google.gwt.json.client.JSONArray;
@@ -32,6 +33,7 @@ import org.rstudio.core.client.jsonrpc.RequestLogEntry.ResponseType;
 import org.rstudio.core.client.jsonrpc.RpcError;
 import org.rstudio.core.client.jsonrpc.RpcResponse;
 import org.rstudio.studio.client.server.Bool;
+import org.rstudio.studio.client.server.ServerConstants;
 import org.rstudio.studio.client.server.ServerError;
 import org.rstudio.studio.client.server.ServerRequestCallback;
 
@@ -176,7 +178,7 @@ class RemoteServerAuth
          {
             // parse the results
             String results = event.getResults();
-            RpcResponse response = RpcResponse.parse(event.getResults());
+            RpcResponse response = RpcResponse.parseUnsafe(event.getResults());
             if (response != null)
             {
                logEntry.logResponse(ResponseType.Normal, results);
@@ -212,8 +214,7 @@ class RemoteServerAuth
                logEntry.logResponse(ResponseType.Error, results);
 
                // form message
-               String msg = "Error parsing results: " +
-                            (results != null ? results : "(null)");
+               String msg = constants_.errorParsingResults(results != null ? results : constants_.nullText());
 
                // we don't expect this so debug log to flag our attention
                Debug.log("UPDATE CREDENTIALS: " + msg);
@@ -251,4 +252,5 @@ class RemoteServerAuth
    }
 
    private final RemoteServer remoteServer_;
+   private static final ServerConstants constants_ = GWT.create(ServerConstants.class);
 }

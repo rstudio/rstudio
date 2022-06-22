@@ -1,7 +1,7 @@
 /*
  * PythonCompletionManager.java
  *
- * Copyright (C) 2021 by RStudio, PBC
+ * Copyright (C) 2022 by RStudio, PBC
  *
  * Unless you have received this program directly from RStudio pursuant
  * to the terms of a commercial license agreement with RStudio, then
@@ -14,6 +14,7 @@
  */
 package org.rstudio.studio.client.workbench.views.console.shell.assist;
 
+import com.google.gwt.core.client.GWT;
 import org.rstudio.core.client.Debug;
 import org.rstudio.core.client.StringUtil;
 import org.rstudio.core.client.regex.Match;
@@ -23,6 +24,7 @@ import org.rstudio.studio.client.common.GlobalProgressDelayer;
 import org.rstudio.studio.client.common.codetools.CodeToolsServerOperations;
 import org.rstudio.studio.client.server.ServerError;
 import org.rstudio.studio.client.server.ServerRequestCallback;
+import org.rstudio.studio.client.workbench.views.console.ConsoleConstants;
 import org.rstudio.studio.client.workbench.views.source.editors.text.DocDisplay;
 import org.rstudio.studio.client.workbench.views.source.editors.text.ace.Position;
 import org.rstudio.studio.client.workbench.views.source.editors.text.ace.Token;
@@ -35,8 +37,23 @@ import org.rstudio.studio.client.workbench.views.source.editors.text.CompletionC
 
 public class PythonCompletionManager extends CompletionManagerBase
                                      implements CompletionManager
-{  
-   public PythonCompletionManager(DocDisplay docDisplay,
+{
+   // Use a funstructor to create an instance in order to ensure toggleHandlers()
+   // is invoked after the object is fully instantiated
+   public static PythonCompletionManager create(DocDisplay docDisplay,
+                                                CompletionPopupDisplay popup,
+                                                CodeToolsServerOperations server,
+                                                CompletionContext context)
+   {
+      PythonCompletionManager retVal = new PythonCompletionManager(docDisplay, popup, server, context);
+
+      retVal.toggleHandlers(true);
+
+      return retVal;
+   }
+
+   // Use the create() funstructor above instead of invoking this constructor directly
+   private PythonCompletionManager(DocDisplay docDisplay,
                                   CompletionPopupDisplay popup,
                                   CodeToolsServerOperations server,
                                   CompletionContext context)
@@ -112,7 +129,7 @@ public class PythonCompletionManager extends CompletionManagerBase
       final GlobalProgressDelayer progress = new GlobalProgressDelayer(
             RStudioGinjector.INSTANCE.getGlobalDisplay(),
             1000,
-            "Opening help...");
+            constants_.openingHelpProgressMessage());
       
       PythonEditorContext context = new PythonEditorContext(docDisplay_);
       
@@ -142,7 +159,7 @@ public class PythonCompletionManager extends CompletionManagerBase
       final GlobalProgressDelayer progress = new GlobalProgressDelayer(
             RStudioGinjector.INSTANCE.getGlobalDisplay(),
             1000,
-            "Finding definition...");
+            constants_.findingDefinitionProgressMessage());
       
       PythonEditorContext context = new PythonEditorContext(docDisplay_);
       
@@ -172,7 +189,7 @@ public class PythonCompletionManager extends CompletionManagerBase
       final GlobalProgressDelayer progress = new GlobalProgressDelayer(
             RStudioGinjector.INSTANCE.getGlobalDisplay(),
             1000,
-            "Opening help...");
+            constants_.openingHelpProgressMessage());
       
       String line;
       int position;
@@ -400,4 +417,5 @@ public class PythonCompletionManager extends CompletionManagerBase
    
    private static final Pattern RE_IMPORT_AS =
          Pattern.create("^\\s*import\\s+([\\w._]+)\\s+as\\s+([\\w._]+)\\s*(?:#.*|$)", "");
+   private static final ConsoleConstants constants_ = GWT.create(ConsoleConstants.class);
 }

@@ -1,7 +1,7 @@
 /*
  * heading.ts
  *
- * Copyright (C) 2021 by RStudio, PBC
+ * Copyright (C) 2022 by RStudio, PBC
  *
  * Unless you have received this program directly from RStudio pursuant
  * to the terms of a commercial license agreement with RStudio, then
@@ -83,9 +83,10 @@ const extension = (context: ExtensionContext): Extension => {
             return {
               type: (schema: Schema) => schema.nodes.heading,
               offset: {
-                top: 5,
-                right: 10,
+                top: 2,
+                right: 6,
               },
+              preferHidden: true
             };
           } else {
             return null;
@@ -204,7 +205,7 @@ class HeadingCommand extends ProsemirrorCommand {
 }
 
 function heading1OmniInsert(ui: EditorUI) {
-  return headingOmniInsert(ui, 1, ui.context.translateText('Top level heading'), [
+  return headingOmniInsert(ui, 1, ui.context.translateText('Part heading'), [
     ui.images.omni_insert?.heading1!,
     ui.images.omni_insert?.heading1_dark!,
   ]);
@@ -216,7 +217,6 @@ function heading2OmniInsert(ui: EditorUI) {
     ui.images.omni_insert?.heading2_dark!,
   ]);
 }
-
 function heading3OmniInsert(ui: EditorUI) {
   return headingOmniInsert(ui, 3, ui.context.translateText('Sub-section heading'), [
     ui.images.omni_insert?.heading3!,
@@ -225,17 +225,18 @@ function heading3OmniInsert(ui: EditorUI) {
 }
 
 function heading4OmniInsert(ui: EditorUI) {
-  return headingOmniInsert(ui, 4, ui.context.translateText('Smaller heading'), [
+  return headingOmniInsert(ui, 4, ui.context.translateText('Small heading'), [
     ui.images.omni_insert?.heading4!,
     ui.images.omni_insert?.heading4_dark!,
   ]);
 }
 
-function headingOmniInsert(ui: EditorUI, level: number, description: string, images: [string, string]): OmniInsert {
+function headingOmniInsert(ui: EditorUI, level: number, description: string, images: [string, string], group = OmniInsertGroup.Headings): OmniInsert {
   return {
     name: headingName(ui, level),
+    keywords: ["h" + level],
     description,
-    group: OmniInsertGroup.Headings,
+    group,
     image: () => (ui.prefs.darkMode() ? images[1] : images[0]),
   };
 }

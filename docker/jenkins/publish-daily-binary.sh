@@ -34,8 +34,8 @@ PLATFORM=${COMPONENTS[6]}
 
 # sanity check a URL component to fail faster if the URL is not in the format
 # we expect
-if [ "$FLAVOR" != "desktop" ] && [ "$FLAVOR" != "server" ]; then
-    echo "Unsupported flavor '$FLAVOR' (expected 'desktop' or 'server')"
+if [ "$FLAVOR" != "desktop" ] && [ "$FLAVOR" != "server" ] && [ "$FLAVOR" != "electron" ]; then
+    echo "Unsupported flavor '$FLAVOR' (expected 'desktop', 'electron', or 'server')"
     exit 1
 fi
 
@@ -45,8 +45,8 @@ if [ "$OS" == "macos" ];  then
 fi
 
 # figure out the "latest" package name by replacing the version number with "latest"; for example
-# for "rstudio-server-pro-1.3.413-4.deb", we want "rstudio-server-pro-latest.deb"
-LATEST=$(echo "$FILENAME" | sed -e 's/[[:digit:]]\.[[:digit:]][[:digit:]]*\.[[:digit:]][[:digit:]]*\(-[[:digit:]][[:digit:]]*\)*/latest/')
+# for "rstudio-workbench-2021.09.0-daily-123.pro1.deb", we want "rstudio-workbench-latest.deb"
+LATEST=$(echo "$FILENAME" | sed -e 's/[[:digit:]][[:digit:]][[:digit:]][[:digit:]]\.[[:digit:]][[:digit:]]\.[[:digit:]][[:digit:]]*-daily-[[:digit:]][[:digit:]]*\(\.pro[[:digit:]][[:digit:]]*\)*/latest/')
 echo "Publishing $FILENAME as daily $FLAVOR build for $OS ($PLATFORM): $LATEST..."
 
 # download the current .htaccess file to a temporary location
@@ -54,8 +54,20 @@ HTACCESS=$(mktemp)
 echo "Fetching .htaccess for update..."
 scp -o StrictHostKeyChecking=no -i $IDENTITY www-data@rstudio.org:/srv/www/rstudio.org/public_html/download/latest/daily/.htaccess $HTACCESS
 
-# remove existing redirect
-sed -i.bak "s/${FLAVOR}\/${OS}\/${LATEST} .*/${FLAVOR}\/${OS}\/${LATEST} ${URL//\//\\/}/" $HTACCESS
+# .htaccess expects URL encoded URLs so replace the + with %2B
+ENC_URL=`echo $URL | sed -e 's/+/%2B/'`
+
+if grep "/${FLAVOR}/${OS}/${LATEST}" $HTACCESS > /dev/null ; then
+
+   # replace existing redirect
+   sed -i.bak "s/${FLAVOR}\/${OS}\/${LATEST} .*/${FLAVOR}\/${OS}\/${LATEST} ${ENC_URL//\//\\/}/" $HTACCESS
+
+   echo "Updated daily URL https://rstudio.org/download/latest/daily/${FLAVOR}/${OS}/${LATEST} to ${ENC_URL}"
+else
+   echo "  - daily URL - not found - appending new entry:"
+   echo "Redirect 302 /download/latest/daily/${FLAVOR}/${OS}/${LATEST} ${ENC_URL}"
+   echo "Redirect 302 /download/latest/daily/${FLAVOR}/${OS}/${LATEST} ${ENC_URL}" >> $HTACCESS
+fi
 
 # copy it back up
 echo "Uploading new .htaccess..."

@@ -1,7 +1,7 @@
 /*
  * SessionBuildErrors.hpp
  *
- * Copyright (C) 2021 by RStudio, PBC
+ * Copyright (C) 2022 by RStudio, PBC
  *
  * Unless you have received this program directly from RStudio pursuant
  * to the terms of a commercial license agreement with RStudio, then
@@ -70,8 +70,7 @@ CompileErrorParser gccErrorParser(const core::FilePath& basePath);
 
 CompileErrorParser rErrorParser(const core::FilePath& basePath);
 
-CompileErrorParser testthatErrorParser(const core::FilePath& basePath,
-                                       const rstudio::core::Version& testthatVersion);
+CompileErrorParser testthatErrorParser(const core::FilePath& basePath);
 
 CompileErrorParser shinytestErrorParser(const core::FilePath& basePath, const core::FilePath& rdsPath);
 

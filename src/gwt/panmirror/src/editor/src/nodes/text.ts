@@ -1,7 +1,7 @@
 /*
  * text.ts
  *
- * Copyright (C) 2021 by RStudio, PBC
+ * Copyright (C) 2022 by RStudio, PBC
  *
  * Unless you have received this program directly from RStudio pursuant
  * to the terms of a commercial license agreement with RStudio, then
@@ -22,16 +22,11 @@ import { kQuoteType, QuoteType, kQuoteChildren, fancyQuotesToSimple } from '../a
 const extension = (context: ExtensionContext) => {
   const readText = (text: string) => {
     // we explicitly don't want fancy quotes in the editor
-    text = fancyQuotesToSimple(text);
-
     if (context.pandocExtensions.smart) {
-      return text
-        .replace(/---/g, '—')
-        .replace(/--/g, '–')
-        .replace(/\.\.\./g, '…');
-    } else {
-      return text;
+      text = fancyQuotesToSimple(text);
     }
+  
+    return text;
   };
 
   return {

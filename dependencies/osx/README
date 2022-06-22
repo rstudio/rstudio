@@ -17,7 +17,7 @@ xcode-select --install
 Installing Qt SDK
 =============================================================================
 
-Building RStudio Desktop requires installation of Qt 5.12.8, including
+Building RStudio Desktop requires installation of Qt 5.12.10, including
 the macOS and QtWebEngine components.
 
 - https://www.qt.io/

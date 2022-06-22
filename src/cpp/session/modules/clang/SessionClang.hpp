@@ -1,7 +1,7 @@
 /*
  * SessionClang.hpp
  *
- * Copyright (C) 2021 by RStudio, PBC
+ * Copyright (C) 2022 by RStudio, PBC
  *
  * Unless you have received this program directly from RStudio pursuant
  * to the terms of a commercial license agreement with RStudio, then
@@ -15,6 +15,8 @@
 
 #ifndef SESSION_MODULES_CLANG_HPP
 #define SESSION_MODULES_CLANG_HPP
+
+#define kEmbeddedLibClangVersion "13.0.1"
 
 #include <shared_core/Error.hpp>
 
@@ -34,7 +36,7 @@ bool isAvailable();
 core::Error initialize();
    
 } // namespace clang
-} // namepace handlers
+} // namespace handlers
 } // namespace session
 } // namespace rstudio
 

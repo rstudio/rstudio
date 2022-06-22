@@ -1,7 +1,7 @@
 /*
  * ConnectionsTab.java
  *
- * Copyright (C) 2021 by RStudio, PBC
+ * Copyright (C) 2022 by RStudio, PBC
  *
  * This program is licensed to you under the terms of version 3 of the
  * GNU Affero General Public License. This program is distributed WITHOUT
@@ -57,7 +57,7 @@ public class ConnectionsTab extends DelayLoadWorkbenchTab<ConnectionsPresenter>
                          EventBus eventBus,
                          Session session)
    {
-      super("Connections", shim);
+      super(constants_.connectionsTitle(), shim);
       binder.bind(commands, shim);
       session_ = session;
       eventBus_ = eventBus;
@@ -93,4 +93,5 @@ public class ConnectionsTab extends DelayLoadWorkbenchTab<ConnectionsPresenter>
 
    private Session session_;
    private EventBus eventBus_;
+   private static final ConnectionsConstants constants_ = com.google.gwt.core.client.GWT.create(ConnectionsConstants.class);
 }

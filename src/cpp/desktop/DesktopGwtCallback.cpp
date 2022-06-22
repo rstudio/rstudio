@@ -1,7 +1,7 @@
 /*
  * DesktopGwtCallback.cpp
  *
- * Copyright (C) 2021 by RStudio, PBC
+ * Copyright (C) 2022 by RStudio, PBC
  *
  * Unless you have received this program directly from RStudio pursuant
  * to the terms of a commercial license agreement with RStudio, then
@@ -654,11 +654,6 @@ QString GwtCallback::chooseRVersion()
 #endif
 }
 
-double GwtCallback::devicePixelRatio()
-{
-   return desktop::devicePixelRatio(pMainWindow_);
-}
-
 void GwtCallback::openMinimalWindow(QString name,
                                     QString url,
                                     int width,
@@ -732,16 +727,6 @@ void GwtCallback::prepareForNamedWindow(QString name,
 {
    pOwner_->webPage()->prepareForWindow(
                 PendingWindow(name, allowExternalNavigate, showDesktopToolbar));
-}
-
-void GwtCallback::closeNamedWindow(QString name)
-{
-   // close the requested window
-   pOwner_->webPage()->closeWindow(name);
-
-   // bring the main window to the front (so we don't lose RStudio context
-   // entirely)
-   desktop::raiseAndActivateWindow(pMainWindow_);
 }
 
 void GwtCallback::activateSatelliteWindow(QString name)
@@ -1362,14 +1347,14 @@ void GwtCallback::setClipboardMonitoring(bool monitoring)
    options().setClipboardMonitoring(monitoring);
 }
 
-bool GwtCallback::getIgnoreGpuBlacklist()
+bool GwtCallback::getIgnoreGpuExclusionList()
 {
-   return options().ignoreGpuBlacklist();
+   return options().ignoreGpuExclusionList();
 }
 
-void GwtCallback::setIgnoreGpuBlacklist(bool ignore)
+void GwtCallback::setIgnoreGpuExclusionList(bool ignore)
 {
-   options().setIgnoreGpuBlacklist(ignore);
+   options().setIgnoreGpuExclusionList(ignore);
 }
 
 bool GwtCallback::getDisableGpuDriverBugWorkarounds()
@@ -1452,6 +1437,12 @@ void GwtCallback::setTutorialUrl(QString url)
 {
    pOwner_->webPage()->setTutorialUrl(url);
 }
+
+void GwtCallback::setPresentationUrl(QString url)
+{
+   pOwner_->webPage()->setPresentationUrl(url);
+}
+
 
 void GwtCallback::setViewerUrl(QString url)
 {

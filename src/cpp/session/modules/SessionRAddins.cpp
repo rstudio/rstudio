@@ -1,7 +1,7 @@
 /*
  * SessionRAddins.cpp
  *
- * Copyright (C) 2021 by RStudio, PBC
+ * Copyright (C) 2022 by RStudio, PBC
  *
  * Unless you have received this program directly from RStudio pursuant
  * to the terms of a commercial license agreement with RStudio, then
@@ -34,6 +34,7 @@
 #include <r/RSexp.hpp>
 #include <r/RExec.hpp>
 #include <r/RRoutines.hpp>
+#include <r/RVersionInfo.hpp>
 
 #include <session/projects/SessionProjects.hpp>
 #include <session/SessionModuleContext.hpp>
@@ -340,12 +341,35 @@ class AddinWorker : public ppe::Worker
 {
    void onIndexingStarted()
    {
+      // initialize registry
       pRegistry_ = boost::make_shared<AddinRegistry>();
+      
+      // discover path to user config directory
+      if (r::version_info::currentRVersion().versionMajor() >= 4)
+      {
+         Error error = r::exec::RFunction("tools:::R_user_dir")
+               .addParam("package", "")
+               .addParam("which", "config")
+               .call(&userConfigPath_);
+         if (error)
+            LOG_ERROR(error);
+      }
    }
    
-   void onWork(const std::string& pkgName, const FilePath& addinPath)
+   void onWork(const std::string& pkgName, const FilePath& pkgPath)
    {
-      pRegistry_->add(pkgName, addinPath);
+      // first, check for bundled addins
+      FilePath bundledAddinsPath = pkgPath.completeChildPath("rstudio/addins.dcf");
+      if (bundledAddinsPath.exists())
+         pRegistry_->add(pkgName, bundledAddinsPath);
+      
+      // next, check for addins in R_user_dir() folder
+      if (!userConfigPath_.isEmpty())
+      {
+         FilePath configAddinsPath = userConfigPath_.completeChildPath(pkgName + "/rstudio/addins.dcf");
+         if (configAddinsPath.exists())
+            pRegistry_->add(pkgName, configAddinsPath);
+      }
    }
    
    void onIndexingCompleted(json::Object* pPayload)
@@ -384,7 +408,7 @@ class AddinWorker : public ppe::Worker
 
 public:
    
-   AddinWorker() : ppe::Worker("rstudio/addins.dcf") {}
+   AddinWorker() : ppe::Worker() {}
    
    void addContinuation(json::JsonRpcFunctionContinuation continuation)
    {
@@ -394,6 +418,7 @@ public:
 private:
    boost::shared_ptr<AddinRegistry> pRegistry_;
    std::vector<json::JsonRpcFunctionContinuation> continuations_;
+   FilePath userConfigPath_;
 };
 
 boost::shared_ptr<AddinWorker>& addinWorker()

@@ -1,7 +1,7 @@
 /*
  * RSConnectDeploy.java
  *
- * Copyright (C) 2021 by RStudio, PBC
+ * Copyright (C) 2022 by RStudio, PBC
  *
  * Unless you have received this program directly from RStudio pursuant
  * to the terms of a commercial license agreement with RStudio, then
@@ -38,6 +38,7 @@ import org.rstudio.studio.client.common.FileDialogs;
 import org.rstudio.studio.client.common.FilePathUtils;
 import org.rstudio.studio.client.common.GlobalDisplay;
 import org.rstudio.studio.client.rsconnect.RSConnect;
+import org.rstudio.studio.client.rsconnect.RsconnectConstants;
 import org.rstudio.studio.client.rsconnect.model.RSConnectAccount;
 import org.rstudio.studio.client.rsconnect.model.RSConnectAppName;
 import org.rstudio.studio.client.rsconnect.model.RSConnectApplicationInfo;
@@ -221,9 +222,8 @@ public class RSConnectDeploy extends Composite
       createNewAnchor_.setClickHandler(() ->
       {
          display_.showMessage(GlobalDisplay.MSG_INFO, 
-               "Create New Content", 
-               "To publish this content to a new location, click the Publish drop-down menu " +
-               "and choose Other Destination.");
+               constants_.createNewAccount(),
+               constants_.createNewAccountMessage());
       });
 
       checkUncheckAllButton_.getElement().getStyle().setMarginLeft(0, Unit.PX);
@@ -286,7 +286,7 @@ public class RSConnectDeploy extends Composite
       userPrefs_ = prefs;
       userState_ = state;
       accountList_ = new RSConnectAccountList(server_, display_, false, 
-            !asStatic_, "Publish from Account");
+            !asStatic_, constants_.publishFromAccount());
       appName_ = new AppNameTextbox(this);
       
       // when the account list finishes populating, select the account from the
@@ -692,8 +692,8 @@ public class RSConnectDeploy extends Composite
                         }
                         else
                         {
-                           onAppsReceived_.onError("Error retrieving application " + 
-                             fromPrevious_.getAppId() + ".");
+                           onAppsReceived_.onError(constants_.errorRetrievingApplicationAppId(
+                             fromPrevious_.getAppId()));
                         }
                      }
 
@@ -808,8 +808,7 @@ public class RSConnectDeploy extends Composite
          @Override
          public void onError(ServerError error)
          {
-            indicator.onError("Error retrieving accounts:\n\n" +
-                              error.getMessage());
+            indicator.onError(constants_.errorRetrievingAccountsWithMessage(error.getMessage()));
             indicator.onCompleted();
          }
       });
@@ -846,10 +845,8 @@ public class RSConnectDeploy extends Composite
                   {
                      RStudioGinjector.INSTANCE.getGlobalDisplay().showMessage(
                            GlobalDisplay.MSG_INFO,
-                           "Finished Document Not Found",
-                           "To publish finished document to RStudio Connect, you must first render " +
-                                 "it. Dismiss this message, click Knit to render the document, " +
-                                 "then try publishing again.");
+                           constants_.finishedDocumentNotFound(),
+                           constants_.finishedDocumentNotFoundMessage());
                   }
                };
                showMessageTimer.schedule(100);
@@ -877,22 +874,21 @@ public class RSConnectDeploy extends Composite
                      source_.getWebsiteDir() :
                   source_.getDeployFile() : 
             source_.getDeployDir();
-                  
+
       // getDeploymentFiles fails if we don't give it a source -- this should
       // never happen, but if it does this error message will be more useful
       if (StringUtil.isNullOrEmpty(fileSource))
       {
-         indicator.onError("Could not determine the list of files to deploy. " +
-                  "Try re-rendering and ensuring that you're publishing to a " +
-                  "server which supports this kind of content.");
+         indicator.onError(constants_.couldNotDetermineListToDeployReRender());
          indicator.onCompleted();
          return;
       }
 
-      indicator.onProgress("Collecting files...");
+      indicator.onProgress(constants_.collectingFiles());
       server_.getDeploymentFiles(
             fileSource,
             asMultipleRmd_,
+            source_.isQuarto() ? source_.getSourceFile() : "",
             new ServerRequestCallback<RSConnectDeploymentFiles>()
             {
                @Override 
@@ -900,12 +896,8 @@ public class RSConnectDeploy extends Composite
                {
                   if (files.getDirSize() > files.getMaxSize())
                   {
-                     indicator.onError(
-                           "The item to be deployed (" + fileSource + ") " +
-                           "exceeds the maximum deployment size, which is " +
-                           StringUtil.formatFileSize(files.getMaxSize()) + "." +
-                           " Consider creating a new directory containing " + 
-                           "only the content you wish to deploy.");
+                     indicator.onError(constants_.itemExceedsDeploymentSize(fileSource,
+                           StringUtil.formatFileSize(files.getMaxSize())));
 
                   }
                   else
@@ -913,8 +905,7 @@ public class RSConnectDeploy extends Composite
                      if (files.getDirList() == null || 
                          files.getDirList().length() == 0)
                      {
-                        indicator.onError("Could not determine the list of " +
-                          "files to deploy.");
+                        indicator.onError(constants_.couldNotDetermineListToDeploy());
                         indicator.onCompleted();
                      }
                      setFileList(
@@ -942,8 +933,7 @@ public class RSConnectDeploy extends Composite
                public void onError(ServerError error)
                {
                   // we need to have a list of files to deploy to proceed
-                  indicator.onError("Could not find files to deploy: \n\n" +
-                     error.getMessage());
+                  indicator.onError(constants_.couldNotFindFilesToDeploy(error.getMessage()));
                   indicator.onCompleted();
                }
             });
@@ -978,7 +968,7 @@ public class RSConnectDeploy extends Composite
       FileDialogs dialogs = RStudioGinjector.INSTANCE.getFileDialogs();
       final FileSystemItem sourceDir = 
             FileSystemItem.createDir(source_.getDeployDir());
-      dialogs.openFile("Select File", 
+      dialogs.openFile(constants_.selectFile(),
             RStudioGinjector.INSTANCE.getRemoteFileSystemContext(), 
             sourceDir, 
             new ProgressOperationWithInput<FileSystemItem>()
@@ -993,10 +983,8 @@ public class RSConnectDeploy extends Composite
                      if (path == null)
                      {
                         display_.showMessage(GlobalDisplay.MSG_INFO, 
-                              "Cannot Add File", 
-                              "Only files in the same folder as the " +
-                              "document (" + sourceDir + ") or one of its " +
-                              "sub-folders may be added.");
+                              constants_.cannotAddFile(),
+                              constants_.onAddFileClickMessage(sourceDir.getPath()));
                         return;
                      }
                      else
@@ -1085,7 +1073,7 @@ public class RSConnectDeploy extends Composite
             // if this is a document with the name "index", guess the directory
             // as the content name rather than the file
             if (contentType_ == RSConnect.CONTENT_TYPE_DOCUMENT &&
-                appTitle.toLowerCase().equals("index"))
+                appTitle.toLowerCase().equals(constants_.index()))
             {
                appTitle = FilePathUtils.fileNameSansExtension(
                      source_.getDeployDir());
@@ -1093,7 +1081,8 @@ public class RSConnectDeploy extends Composite
 
             setUnsanitizedAppName(appTitle);
          }
-         else if (contentType_ == RSConnect.CONTENT_TYPE_WEBSITE)
+         else if (contentType_ == RSConnect.CONTENT_TYPE_WEBSITE ||
+            contentType_ == RSConnect.CONTENT_TYPE_QUARTO_WEBSITE)
          {
             setUnsanitizedAppName(FilePathUtils.fileNameSansExtension(
                   source_.getWebsiteDir()));
@@ -1107,7 +1096,8 @@ public class RSConnectDeploy extends Composite
          illustration = new ImageResource2x(RESOURCES.publishPlotIllustration2x());
       else if (contentType_ == RSConnect.CONTENT_TYPE_DOCUMENT)
          illustration = new ImageResource2x(RESOURCES.publishRmdIllustration2x());
-      else if (contentType_ == RSConnect.CONTENT_TYPE_HTML || contentType_ == RSConnect.CONTENT_TYPE_WEBSITE)
+      else if (contentType_ == RSConnect.CONTENT_TYPE_HTML || contentType_ == RSConnect.CONTENT_TYPE_WEBSITE ||
+               contentType_ == RSConnect.CONTENT_TYPE_QUARTO_WEBSITE)
          illustration = new ImageResource2x(RESOURCES.publishHTMLIllustration2x());
       else if (contentType_ == RSConnect.CONTENT_TYPE_PRES)
          illustration = new ImageResource2x(RESOURCES.publishPresentationIllustration2x());
@@ -1150,11 +1140,8 @@ public class RSConnectDeploy extends Composite
                   {
                      display_.showYesNoMessage(
                            GlobalDisplay.MSG_QUESTION, 
-                           "Overwrite " + appName + "?", 
-                           "You've already published an application named '" + 
-                           appName +"' to " + account.getServer() + " (" + 
-                           url + "). Do you want to replace the existing " + 
-                           "application with this content?", false, 
+                           constants_.overwriteAppName(appName),
+                           constants_.checkForExistingAppMessage(appName,account.getServer(),url), false,
                            new ProgressOperation()
                            {
                               @Override
@@ -1173,8 +1160,8 @@ public class RSConnectDeploy extends Composite
                                  onValidated.execute(false);
                               }
                            }, 
-                           "Replace", 
-                           "Cancel", 
+                           constants_.replace(),
+                           constants_.cancel(),
                            true);
                   }
                }
@@ -1221,7 +1208,7 @@ public class RSConnectDeploy extends Composite
             box.setValue(allChecked_);
          }
       }
-      checkUncheckAllButton_.setText(allChecked_ ? "Uncheck All" : "Check All");
+      checkUncheckAllButton_.setText(allChecked_ ? constants_.uncheckAll() : constants_.checkAll());
    }
    
    private class OnAppsReceived extends ServerRequestCallback<JsArray<RSConnectApplicationInfo>>
@@ -1344,4 +1331,5 @@ public class RSConnectDeploy extends Composite
 
    private final DeployStyle style_;
    private final boolean forDocument_;
+   private static final RsconnectConstants constants_ = GWT.create(RsconnectConstants.class);
 }

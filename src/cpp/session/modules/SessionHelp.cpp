@@ -1,7 +1,7 @@
 /*
  * SessionHelp.cpp
  *
- * Copyright (C) 2021 by RStudio, PBC
+ * Copyright (C) 2022 by RStudio, PBC
  *
  * Unless you have received this program directly from RStudio pursuant
  * to the terms of a commercial license agreement with RStudio, then
@@ -68,6 +68,7 @@
 #undef FALSE
 
 using namespace rstudio::core;
+using namespace boost::placeholders;
 
 namespace rstudio {
 namespace session {
@@ -182,7 +183,7 @@ bool isHttpdErrorPayload(SEXP payloadSEXP)
 
 // hook the browseURL function to look for calls to the R internal http
 // server. for custom URLs remap the address to remote and then fire
-// the browse_url event. for help URLs fire the appropraite show_help event
+// the browse_url event. for help URLs fire the appropriate show_help event
 bool handleLocalHttpUrl(const std::string& url)
 {
    // check for custom
@@ -272,13 +273,45 @@ bool handleRShowDocFile(const core::FilePath& filePath)
 }
 
 // javascript callbacks to inject into page
-const char * const kJsCallbacks =
-      "<script type=\"text/javascript\">\n"
-      "if (window.parent.helpNavigated)\n"
-      "   window.parent.helpNavigated(document, window);\n"
-      "if (window.parent.helpKeydown)\n"
-      "   window.onkeydown = function(e) {window.parent.helpKeydown(e);}\n"
-      "</script>\n";
+const char * const kJsCallbacks = R"EOF(
+<script type="text/javascript">
+
+   if (window.parent.helpNavigated)
+      window.parent.helpNavigated(document, window);
+
+   if (window.parent.helpKeydown)
+      window.onkeydown = function(e) { window.parent.helpKeydown(e); }
+
+   if (window.parent.helpMousedown)
+      window.onmousedown = function(e) { window.parent.helpMousedown(e); }
+
+   window.addEventListener("load", function(event) {
+
+      // https://github.com/rstudio/rmarkdown/blob/de02c926371fdadc4d92f08e1ad7b77db069be49/inst/rmarkdown/templates/html_vignette/resources/vignette.css#L187-L201
+      var classMap = {
+         "at": "ace_keyword ace_operator",
+         "ch": "ace_string",
+         "co": "ace_comment",
+         "cf": "ace_keyword",
+         "cn": "ace_constant ace_language",
+         "dt": "ace_identifier",
+         "dv": "ace_constant ace_numeric",
+         "er": "ace_keyword ace_operator",
+         "fu": "ace_identifier",
+         "kw": "ace_keyword",
+         "ot": "ace_keyword ace_operator",
+         "sc": "ace_keyword ace_operator",
+         "st": "ace_string",
+      };
+
+      var els = document.querySelectorAll(".sourceCode span");
+      for (el of els)
+         el.className = classMap[el.className] || el.className;
+
+   });
+
+</script>
+)EOF";
 
 
 class HelpFontSizeFilter : public boost::iostreams::aggregate_filter<char>
@@ -400,7 +433,7 @@ void handleHttpdResult(SEXP httpdSEXP,
    // NOTE: this function is a port of process_request in Rhttpd.c
    // (that function is coupled to sending its results via the R http daemon, 
    // since we need to send the results via our daemon we need our own
-   // implemetnation of the function). The port was completed 10/28/2009 so 
+   // implementation of the function). The port was completed 10/28/2009 so 
    // diffs in this function subsequent to that should be accounted for
    
    // defaults
@@ -698,7 +731,7 @@ void handleRdPreviewRequest(const http::Request& request,
                             const Filter& filter,
                             http::Response* pResponse)
 {
-   // read parmaeters
+   // read parameters
    std::string file = request.queryParamValue("file");
    if (file.empty())
    {
@@ -831,7 +864,7 @@ void handleHttpdRequest(const std::string& location,
       return;
    }
 
-   // evalute the handler
+   // evaluate the handler
    r::sexp::Protect rp;
    SEXP httpdSEXP;
    Error error = r::exec::executeSafely<SEXP>(

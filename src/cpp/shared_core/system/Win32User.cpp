@@ -1,7 +1,7 @@
 /*
  * Win32StringUtils.cpp
  *
- * Copyright (C) 2021 by RStudio, PBC
+ * Copyright (C) 2022 by RStudio, PBC
  *
  * Unless you have received this program directly from RStudio pursuant
  * to the terms of a commercial license agreement with RStudio, then
@@ -77,8 +77,8 @@ FilePath currentCSIDLPersonalHomePath()
    }
    else
    {
-      log::logWarningMessage("Unable to retreive user home path. HRESULT:  " +
-                          safe_convert::numberToString(hr));
+      log::logWarningMessage("Unable to retrieve user home path. HRESULT:  " +
+                          safe_convert::numberToHexString(hr));
       return FilePath();
    }
 }
@@ -100,8 +100,8 @@ FilePath defaultCSIDLPersonalHomePath()
    }
    else
    {
-      log::logWarningMessage("Unable to retreive user home path. HRESULT:  " +
-                          safe_convert::numberToString(hr));
+      log::logWarningMessage("Unable to retrieve user home path. HRESULT:  " +
+                          safe_convert::numberToHexString(hr));
       return FilePath();
    }
 }

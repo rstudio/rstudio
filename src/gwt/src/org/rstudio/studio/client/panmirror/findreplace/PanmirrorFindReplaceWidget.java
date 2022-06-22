@@ -1,7 +1,7 @@
 /*
  * PanmirrorFindReplaceWidget.java
  *
- * Copyright (C) 2021 by RStudio, PBC
+ * Copyright (C) 2022 by RStudio, PBC
  *
  * Unless you have received this program directly from RStudio pursuant
  * to the terms of a commercial license agreement with RStudio, then
@@ -17,12 +17,13 @@
 
 package org.rstudio.studio.client.panmirror.findreplace;
 
+import com.google.gwt.core.client.GWT;
 import org.rstudio.core.client.TimeBufferedCommand;
 import org.rstudio.core.client.command.KeyboardHelper;
-import org.rstudio.core.client.command.KeyboardShortcut;
 import org.rstudio.core.client.widget.HasFindReplace;
 import org.rstudio.studio.client.RStudioGinjector;
 import org.rstudio.studio.client.common.GlobalDisplay;
+import org.rstudio.studio.client.panmirror.PanmirrorConstants;
 import org.rstudio.studio.client.workbench.views.source.editors.text.findreplace.FindReplaceBar;
 
 import com.google.gwt.core.client.Scheduler;
@@ -53,16 +54,12 @@ public class PanmirrorFindReplaceWidget extends FindReplaceBar implements HasFin
       // re-execute search on changes
       addFindKeyUpHandler((event) -> {
          
-         // reject keys w/ modifiers
-         if (KeyboardShortcut.getModifierValue(event.getNativeEvent()) != KeyboardShortcut.NONE)
-            return;
-         
-         // reject navigational and control keys
          int keycode = event.getNativeKeyCode();
-         if (KeyboardHelper.isNavigationalKeycode(keycode))
+         if (KeyboardHelper.isNavigationalKeycode(keycode) ||
+             KeyboardHelper.isControlKeycode(keycode))
          {
             return;
-         } 
+         }
          
          // perform incremental search
          performFind();
@@ -90,8 +87,8 @@ public class PanmirrorFindReplaceWidget extends FindReplaceBar implements HasFin
          int replaced = find.replaceAll(text);
          RStudioGinjector.INSTANCE.getGlobalDisplay().showMessage(
             GlobalDisplay.MSG_INFO,
-            "Find/Replace",
-            replaced + " occurrences replaced."
+            constants_.findReplaceTitle(),
+            constants_.rStudioGinjectorErrorMessage(replaced)
          );
       });
      
@@ -192,6 +189,6 @@ public class PanmirrorFindReplaceWidget extends FindReplaceBar implements HasFin
    
    private Container container_;
 
-  
+   private static final PanmirrorConstants constants_ = GWT.create(PanmirrorConstants.class);
 
 }

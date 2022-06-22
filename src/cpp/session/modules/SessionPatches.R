@@ -1,7 +1,7 @@
 #
 # SessionPatches.R
 #
-# Copyright (C) 2021 by RStudio, PBC
+# Copyright (C) 2022 by RStudio, PBC
 #
 # Unless you have received this program directly from RStudio pursuant
 # to the terms of a commercial license agreement with RStudio, then
@@ -39,3 +39,15 @@
    parallel:::setDefaultClusterOptions(setup_strategy = "sequential")
 })
 
+# On Windows, because we now set the active code page to UTF-8,
+# we need to be careful to ensure the outputs from list.files(), list.dirs()
+# and dir() have their encoding properly marked. We do this here.
+if (.rs.platform.isWindows)
+{
+   setHook("rstudio.sessionInit", function(...)
+   {
+      enabled <- getOption("rstudio.enableFileHooks", default = getRversion() < "4.2.0")
+      if (identical(enabled, TRUE))
+         .rs.files.replaceBindings()
+   })
+}

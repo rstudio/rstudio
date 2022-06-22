@@ -1,7 +1,7 @@
 /*
  * SessionConnections.cpp
  *
- * Copyright (C) 2021 by RStudio, PBC
+ * Copyright (C) 2022 by RStudio, PBC
  *
  * Unless you have received this program directly from RStudio pursuant
  * to the terms of a commercial license agreement with RStudio, then
@@ -653,8 +653,8 @@ Error installOdbcDriver(const json::JsonRpcRequest& request,
 
    // build args
    std::vector<std::string> args;
-   args.push_back("--slave");
    args.push_back("--vanilla");
+   args.push_back("-s");
 
    // for windows we need to forward setInternet2
 #ifdef _WIN32

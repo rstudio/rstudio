@@ -1,7 +1,7 @@
 /*
  * GitPane.java
  *
- * Copyright (C) 2021 by RStudio, PBC
+ * Copyright (C) 2022 by RStudio, PBC
  *
  * Unless you have received this program directly from RStudio pursuant
  * to the terms of a commercial license agreement with RStudio, then
@@ -14,6 +14,7 @@
  */
 package org.rstudio.studio.client.workbench.views.vcs.git;
 
+import com.google.gwt.core.client.GWT;
 import com.google.gwt.core.client.Scheduler;
 import com.google.gwt.core.client.Scheduler.ScheduledCommand;
 import com.google.gwt.event.dom.client.ClickEvent;
@@ -46,6 +47,7 @@ import org.rstudio.studio.client.workbench.prefs.model.UserPrefs;
 import org.rstudio.studio.client.workbench.ui.WorkbenchPane;
 import org.rstudio.studio.client.workbench.views.vcs.CheckoutBranchToolbarButton;
 import org.rstudio.studio.client.workbench.views.vcs.CreateBranchToolbarButton;
+import org.rstudio.studio.client.workbench.views.vcs.ViewVcsConstants;
 import org.rstudio.studio.client.workbench.views.vcs.git.GitPresenter.Display;
 
 import java.util.ArrayList;
@@ -120,18 +122,18 @@ public class GitPane extends WorkbenchPane implements Display
       moreMenu.addItem(commands_.vcsRevert().createMenuItem(false));
       moreMenu.addItem(commands_.vcsIgnore().createMenuItem(false));
       moreMenu.addSeparator();
-      moreMenu.addItem(commands_.showShellDialog().createMenuItem(false));
+      moreMenu.addItem(commands_.newTerminal().createMenuItem(false));
 
       ToolbarPopupMenu pullMoreMenu = new ToolbarPopupMenu();
       pullMoreMenu.addItem(commands_.vcsPullRebase().createMenuItem(false));
 
-      Toolbar toolbar = new Toolbar("Git Tab");
+      Toolbar toolbar = new Toolbar(constants_.gitTabCapitalized());
       toolbar.addLeftWidget(commands_.vcsDiff().createToolbarButton());
       toolbar.addLeftSeparator();
       toolbar.addLeftWidget(commands_.vcsCommit().createToolbarButton());
       toolbar.addLeftSeparator();
       toolbar.addLeftWidget(pullButton_ = commands_.vcsPull().createToolbarButton());
-      toolbar.addLeftWidget(new ToolbarMenuButton(ToolbarButton.NoText, "Pull options", pullMoreMenu, true));
+      toolbar.addLeftWidget(new ToolbarMenuButton(ToolbarButton.NoText, constants_.pullOptions(), pullMoreMenu, true));
       toolbar.addLeftSeparator();
       toolbar.addLeftWidget(pushButton_ = commands_.vcsPush().createToolbarButton());
       toolbar.addLeftSeparator();
@@ -139,7 +141,7 @@ public class GitPane extends WorkbenchPane implements Display
       toolbar.addLeftSeparator();
 
       moreButton_ = new ToolbarMenuButton(
-            "More",
+            constants_.moreCapitalized(),
             ToolbarButton.NoTitle,
             new ImageResource2x(StandardIcons.INSTANCE.more_actions2x()),
             moreMenu);
@@ -176,13 +178,13 @@ public class GitPane extends WorkbenchPane implements Display
       refreshMenu.addSeparator();
 
       refreshMenu.addItem(new MenuItem(
-            AppCommand.formatMenuLabel(null, "Refresh Now", null),
+            AppCommand.formatMenuLabel(null, constants_.refreshNowCapitalized(), null),
             true, // as HTML
             () -> commands_.vcsRefresh().execute()));
 
       toolbar.addRightWidget(new ToolbarMenuButton(
             ToolbarButton.NoText,
-            "Refresh options",
+            constants_.refreshOptions(),
             refreshMenu,
             false));
 
@@ -218,11 +220,11 @@ public class GitPane extends WorkbenchPane implements Display
       if (width == 0)
          return;
 
-      pullButton_.setText(width > 600, "Pull");
-      pushButton_.setText(width > 600, "Push");
-      historyButton_.setText(width > 680, "History");
-      moreButton_.setText(width > 680, "More");
-      createBranchToolbarButton_.setText(width > 730, "New Branch");
+      pullButton_.setText(width > 600, constants_.pullCapitalized());
+      pushButton_.setText(width > 600, constants_.pushCapitalized());
+      historyButton_.setText(width > 680, constants_.historyCapitalized());
+      moreButton_.setText(width > 680, constants_.moreCapitalized());
+      createBranchToolbarButton_.setText(width > 730, constants_.newBranchCapitalized());
    }
 
    @Override
@@ -304,4 +306,5 @@ public class GitPane extends WorkbenchPane implements Display
    private final CheckoutBranchToolbarButton switchBranchToolbarButton_;
    private final CreateBranchToolbarButton createBranchToolbarButton_;
    private final GitChangelistTable table_;
+   private static final ViewVcsConstants constants_ = GWT.create(ViewVcsConstants.class);
 }

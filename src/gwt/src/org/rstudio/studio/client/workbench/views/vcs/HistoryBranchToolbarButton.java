@@ -1,7 +1,7 @@
 /*
  * HistoryBranchToolbarButton.java
  *
- * Copyright (C) 2021 by RStudio, PBC
+ * Copyright (C) 2022 by RStudio, PBC
  *
  * Unless you have received this program directly from RStudio pursuant
  * to the terms of a commercial license agreement with RStudio, then
@@ -14,6 +14,7 @@
  */
 package org.rstudio.studio.client.workbench.views.vcs;
 
+import com.google.gwt.core.client.GWT;
 import com.google.gwt.user.client.ui.MenuItem;
 import com.google.inject.Inject;
 import com.google.inject.Provider;
@@ -48,11 +49,11 @@ public class HistoryBranchToolbarButton extends BranchToolbarButton
    {
       super.onBeforePopulateMenu(rootMenu);
       
-      String label = "(all branches)";
+      String label = constants_.allBranchesParentheses();
       rootMenu.addItem(
             new MenuItem(label, new SwitchBranchCommand(label, "--all")));
    }
 
    private boolean initialized_ = false;
-
+   private static final ViewVcsConstants constants_ = GWT.create(ViewVcsConstants.class);
 }

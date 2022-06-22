@@ -1,7 +1,7 @@
 /*
  * r_highlight_rules.js
  *
- * Copyright (C) 2021 by RStudio, PBC
+ * Copyright (C) 2022 by RStudio, PBC
  *
  * The Initial Developer of the Original Code is
  * Ajax.org B.V.
@@ -42,7 +42,6 @@ define("mode/r_highlight_rules", ["require", "exports", "module"], function(requ
   {
     var rules = {};
 
-
     rules["start"] = [
       {
         // escaped '@' sign
@@ -59,7 +58,7 @@ define("mode/r_highlight_rules", ["require", "exports", "module"], function(requ
       {
         // roxygen tag accepting a parameter
         token : ["keyword", "comment"],
-        regex : "(@(?:export|inheritParams|name|param|rdname|slot|template|useDynLib))(\\s+)(?=[a-zA-Z0-9._-])",
+        regex : "(@(?:export|field|inheritParams|name|param|rdname|slot|template|useDynLib))(\\s+)(?=[a-zA-Z0-9._-])",
         merge : false,
         next  : "rd-highlight"
       },
@@ -184,12 +183,12 @@ define("mode/r_highlight_rules", ["require", "exports", "module"], function(requ
 
   var RHighlightRules = function()
   {
-    // NOTE: The backslash character is an experimental alias
-    // for the 'function' symbol, and can be used for defining
-    // short-hand functions, e.g.
+    // NOTE: The backslash character is an alias for the 'function' symbol,
+    // and can be used for defining short-hand functions, e.g.
     //
     //     \(x) x + 1
     //
+    // It was introduced with R 4.2.0.
     var keywords = lang.arrayToMap([
       "\\", "function", "if", "else", "in",
       "break", "next", "repeat", "for", "while"
@@ -209,8 +208,11 @@ define("mode/r_highlight_rules", ["require", "exports", "module"], function(requ
     ]);
 
     // NOTE: We accept '\' as a standalone identifier here
-    // so that it can be parsed as the 'function' alias symbol
-    var reIdentifier = "(?:\\\\|[a-zA-Z.][a-zA-Z0-9._]*)";
+    // so that it can be parsed as the 'function' alias symbol.
+    // 
+    // Unicode escapes are picked to conform with TR31:
+    // https://unicode.org/reports/tr31/#Default_Identifier_Syntax
+    var reIdentifier = String.raw`(?:\\|_|[\p{L}\p{Nl}.][\p{L}\p{Nl}\p{Mn}\p{Mc}\p{Nd}\p{Pc}.]*)`;
 
     var $complements = {
       "{" : "}",
@@ -229,15 +231,21 @@ define("mode/r_highlight_rules", ["require", "exports", "module"], function(requ
         next  : "start"
       },
       {
+        // R Markdown chunk metadata comments
+        token : "comment.doc.tag",
+        regex : "#\\s*[|].*$",
+        next  : "start"
+      },
+      {
         // Begin Roxygen with todo
         token : ["comment", "comment.keyword.operator"],
-        regex : "(#+'\\s*)(TODO|FIXME)\\b",
+        regex : "(#+['*]\\s*)(TODO|FIXME)\\b",
         next  : "rd-start"
       },
       {
         // Roxygen
         token : "comment",
-        regex : "#+'",
+        regex : "#+['*]",
         next  : "rd-start"
       },
       {
@@ -265,6 +273,10 @@ define("mode/r_highlight_rules", ["require", "exports", "module"], function(requ
 
           // save current state in stack
           stack[0] = state;
+
+          // save the name of the next state
+          // (needed because state names can be mutated in multi-mode documents)
+          stack[1] = this.next;
 
           // save the expected suffix for exit
           stack[2] =
@@ -308,7 +320,7 @@ define("mode/r_highlight_rules", ["require", "exports", "module"], function(requ
       },
       {
         token : "constant.numeric", // number + integer
-        regex : "(?:(?:\\d+(?:\\.\\d*)?)|(?:\\.\\d+))(?:[eE][+\\-]?\\d*)?[iL]?",
+        regex : "(?:(?:\\d+(?:\\.\\d*)?)|(?:\\.\\d+))(?:[eE][+-]?\\d*)?[iL]?",
         merge : false,
         next  : "start"
       }
@@ -317,24 +329,8 @@ define("mode/r_highlight_rules", ["require", "exports", "module"], function(requ
     rules["#quoted-identifier"] = [
       {
         token : "identifier",
-        regex : "`.*?`",
+        regex : "[`](?:(?:\\\\.)|(?:[^`\\\\]))*?[`]",
         merge : false,
-        next  : "start"
-      }
-    ];
-
-    rules["#identifier"] = [
-      {
-        token : function(value)
-        {
-          if (builtinConstants.hasOwnProperty(value))
-            return "constant.language";
-          else if (value.match(/^\.\.\d+$/))
-            return "variable.language";
-          else
-            return "identifier";
-        },
-        regex : reIdentifier,
         next  : "start"
       }
     ];
@@ -352,8 +348,10 @@ define("mode/r_highlight_rules", ["require", "exports", "module"], function(requ
           else
             return "identifier";
         },
-        regex : reIdentifier,
-        next  : "start"
+        regex   : reIdentifier,
+        unicode : true,
+        merge   : false,
+        next    : "start"
       }
     ];
 
@@ -365,8 +363,10 @@ define("mode/r_highlight_rules", ["require", "exports", "module"], function(requ
           else
             return "identifier";
         },
-        regex : reIdentifier + "(?=\\s*::)",
-        next  : "start"
+        regex   : reIdentifier + "(?=\\s*::)",
+        unicode : true,
+        merge   : false,
+        next    : "start"
       }
     ];
 
@@ -378,8 +378,10 @@ define("mode/r_highlight_rules", ["require", "exports", "module"], function(requ
           else
             return "identifier";
         },
-        regex : reIdentifier + "(?=\\s*\\()",
-        next  : "start"
+        regex   : reIdentifier + "(?=\\s*\\()",
+        unicode : true,
+        merge   : false,
+        next    : "start"
       }
     ];
 
@@ -393,8 +395,10 @@ define("mode/r_highlight_rules", ["require", "exports", "module"], function(requ
           else
             return "identifier";
         },
-        regex : reIdentifier + "(?=\\s*\\()",
-        next  : "start"
+        regex   : reIdentifier + "(?=\\s*\\()",
+        unicode : true,
+        merge   : false,
+        next    : "start"
       }
     ];
 
@@ -407,7 +411,7 @@ define("mode/r_highlight_rules", ["require", "exports", "module"], function(requ
       },
       {
         token : "keyword.operator",
-        regex : ":::|::|:=|\\|>|=>|%%|>=|<=|==|!=|<<\\-|\\->>|\\->|<\\-|\\|\\||&&|=|\\+|\\-|\\*\\*?|/|\\^|>|<|!|&|\\||~|\\$|:|@|\\?",
+        regex : ":::|::|:=|\\|>|=>|%%|>=|<=|==|!=|<<-|->>|->|<-|\\|\\||&&|=|\\+|-|\\*\\*?|/|\\^|>|<|!|&|\\||~|\\$|:|@|\\?",
         merge : false,
         next  : "start"
       },
@@ -440,6 +444,14 @@ define("mode/r_highlight_rules", ["require", "exports", "module"], function(requ
       }
     ];
 
+    rules["#knitr-embed"] = [
+      {
+        token: "constant.language",
+        regex: "^[<][<][^>]+[>][>]$",
+        merge: false
+      }
+    ];
+
     rules["#text"] = [
       {
         token : "text",
@@ -452,7 +464,7 @@ define("mode/r_highlight_rules", ["require", "exports", "module"], function(requ
       "#comment", "#string", "#number",
       "#package-access", "#quoted-identifier",
       "#function-call-or-keyword", "#keyword-or-identifier",
-      "#operator", "#text"
+      "#knitr-embed", "#operator", "#text"
     ]);
 
     rules["afterDollar"] = include([
@@ -472,7 +484,7 @@ define("mode/r_highlight_rules", ["require", "exports", "module"], function(requ
         token : "string",
         regex : "[\\]})][-]*['\"]",
         onMatch: function(value, state, stack, line) {
-          this.next = (value === stack[2]) ? stack[0] : "rawstring";
+          this.next = (value === stack[2]) ? stack[0] : stack[1];
           return this.token;
         }
       },

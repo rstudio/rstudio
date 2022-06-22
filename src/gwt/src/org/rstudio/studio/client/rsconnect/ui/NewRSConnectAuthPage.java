@@ -1,7 +1,7 @@
 /*
  * NewRSConnectAuthPage.java
  *
- * Copyright (C) 2021 by RStudio, PBC
+ * Copyright (C) 2022 by RStudio, PBC
  *
  * Unless you have received this program directly from RStudio pursuant
  * to the terms of a commercial license agreement with RStudio, then
@@ -14,6 +14,7 @@
  */
 package org.rstudio.studio.client.rsconnect.ui;
 
+import com.google.gwt.core.client.GWT;
 import org.rstudio.core.client.StringUtil;
 import org.rstudio.core.client.resources.ImageResource2x;
 import org.rstudio.core.client.widget.OperationWithInput;
@@ -25,6 +26,7 @@ import org.rstudio.studio.client.common.GlobalDisplay;
 import org.rstudio.studio.client.common.GlobalDisplay.NewWindowOptions;
 import org.rstudio.studio.client.common.Value;
 import org.rstudio.studio.client.common.satellite.events.WindowClosedEvent;
+import org.rstudio.studio.client.rsconnect.RsconnectConstants;
 import org.rstudio.studio.client.rsconnect.model.NewRSConnectAccountInput;
 import org.rstudio.studio.client.rsconnect.model.NewRSConnectAccountResult;
 import org.rstudio.studio.client.rsconnect.model.RSConnectAuthUser;
@@ -48,7 +50,7 @@ public class NewRSConnectAuthPage
 {
    public NewRSConnectAuthPage()
    {
-      super("", "", "Verifying Account", 
+      super("", "", constants_.verifyingAccount(),
             new ImageResource2x(RSConnectResources.INSTANCE.localAccountIcon2x()), 
             new ImageResource2x(RSConnectResources.INSTANCE.localAccountIconLarge2x()));
 
@@ -89,7 +91,7 @@ public class NewRSConnectAuthPage
       // save reference to parent wizard's progress indicator for retries
       wizardIndicator_ = indicator;
 
-      indicator.onProgress("Checking server connection...");
+      indicator.onProgress(constants_.checkingServerConnection());
       server_.validateServerUrl(result_.getServerUrl(), 
             new ServerRequestCallback<RSConnectServerInfo>()
       {
@@ -103,12 +105,9 @@ public class NewRSConnectAuthPage
             }
             else
             {
-               contents_.showError("Server Validation Failed", 
-                     "The URL '" + result_.getServerUrl() + 
-                     "' does not appear to belong to a valid server. Please " +
-                     "double check the URL, and contact your administrator " +
-                     "if the problem persists.\n\n" +
-                     info.getMessage());
+               contents_.showError(constants_.serverValidationFailed(),
+                     constants_.serverValidationFailedMessage(result_.getServerUrl(),
+                     info.getMessage()));
                indicator.clearProgress();
             }
          }
@@ -116,9 +115,9 @@ public class NewRSConnectAuthPage
          @Override
          public void onError(ServerError error)
          {
-            contents_.showError("Error Connecting Account", 
-                  "The server couldn't be validated. " + 
-                   error.getMessage());
+            contents_.showError(constants_.errorConnectingAccount(),
+                  constants_.serverCouldntBeValidated(
+                   error.getMessage()));
             indicator.clearProgress();
          }
       });
@@ -238,10 +237,8 @@ public class NewRSConnectAuthPage
          {
             if (!user.isValidUser())
             {
-               contents_.showError("Account Not Connected", 
-                     "Authentication failed. If you did not cancel " +
-                     "authentication, try again, or contact your server " +
-                     "administrator for assistance.");
+               contents_.showError(constants_.accountNotConnected(),
+                     constants_.accountNotConnectedMessage());
             }
             else
             {
@@ -253,12 +250,9 @@ public class NewRSConnectAuthPage
          @Override
          public void onError(ServerError error)
          {
-            contents_.showError("Account Validation Failed", 
-                  "RStudio failed to determine whether the account was " +
-                  "valid. Try again; if the error persists, contact your " +
-                  "server administrator.\n\n" +
-                  result_.getServerInfo().getInfoString() + "\n" +
-                  error.getMessage());
+            contents_.showError(constants_.accountValidationFailed(),
+                  constants_.accountValidationFailedMessage(result_.getServerInfo().getInfoString(),
+                  error.getMessage()));
          }
       });
    }
@@ -338,7 +332,7 @@ public class NewRSConnectAuthPage
          final ProgressIndicator indicator,
          final OperationWithInput<NewRSConnectAccountResult> onResult)
    {
-      indicator.onProgress("Setting up an account...");
+      indicator.onProgress(constants_.settingUpAccount());
       server_.getPreAuthToken(serverInfo.getName(), 
             new ServerRequestCallback<RSConnectPreAuthToken>()
       {
@@ -355,11 +349,9 @@ public class NewRSConnectAuthPage
          @Override
          public void onError(ServerError error)
          {
-            display_.showErrorMessage("Error Connecting Account", 
-                  "The server appears to be valid, but rejected the " + 
-                  "request to authorize an account.\n\n"+
-                  serverInfo.getInfoString() + "\n" +
-                  error.getMessage());
+            display_.showErrorMessage(constants_.errorConnectingAccount(),
+                  constants_.errorConnectingAccountMessage(serverInfo.getInfoString(),
+                          error.getMessage()));
             indicator.clearProgress();
             onResult.execute(null);
          }
@@ -375,4 +367,5 @@ public class NewRSConnectAuthPage
    private Value<Boolean> waitingForAuth_ = new Value<>(false);
    private boolean runningAuthCompleteCheck_ = false;
    private ProgressIndicator wizardIndicator_;
+   private static final RsconnectConstants constants_ = GWT.create(RsconnectConstants.class);
 }

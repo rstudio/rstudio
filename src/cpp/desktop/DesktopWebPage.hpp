@@ -1,7 +1,7 @@
 /*
  * DesktopWebPage.hpp
  *
- * Copyright (C) 2021 by RStudio, PBC
+ * Copyright (C) 2022 by RStudio, PBC
  *
  * Unless you have received this program directly from RStudio pursuant
  * to the terms of a commercial license agreement with RStudio, then
@@ -21,6 +21,7 @@
 #include <QtGui>
 #include <QWebEnginePage>
 #include <QWebEngineUrlRequestInfo>
+#include <QWebEngineFullScreenRequest>
 
 #include "DesktopWebProfile.hpp"
 #include "DesktopUtils.hpp"
@@ -86,12 +87,15 @@ public:
    void setBaseUrl(const QUrl& baseUrl);
    void setTutorialUrl(const QString& tutorialUrl);
    void setViewerUrl(const QString& viewerUrl);
+   void setPresentationUrl(const QString& presentationUrl);
    void setShinyDialogUrl(const QString& shinyDialogUrl);
    void prepareExternalNavigate(const QString& externalUrl);
 
    void activateWindow(QString name);
    void prepareForWindow(const PendingWindow& pendingWnd);
    void closeWindow(QString name);
+
+   void acceptFullScreen(QWebEngineFullScreenRequest request);
 
    void triggerAction(QWebEnginePage::WebAction action, bool checked = false) override;
 
@@ -111,6 +115,7 @@ protected:
    
    QString tutorialUrl();
    QString viewerUrl();
+   QString presentationUrl();
 
 private:
    void init();
@@ -120,6 +125,7 @@ private:
    QUrl baseUrl_;
    QString tutorialUrl_;
    QString viewerUrl_;
+   QString presentationUrl_;
    QString shinyDialogUrl_;
    bool allowExternalNav_;
    std::queue<PendingWindow> pendingWindows_;

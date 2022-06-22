@@ -1,7 +1,7 @@
 /*
  * CodeBrowserEditingTarget.java
  *
- * Copyright (C) 2021 by RStudio, PBC
+ * Copyright (C) 2022 by RStudio, PBC
  *
  * Unless you have received this program directly from RStudio pursuant
  * to the terms of a commercial license agreement with RStudio, then
@@ -55,6 +55,7 @@ import org.rstudio.studio.client.workbench.ui.FontSizeManager;
 import org.rstudio.studio.client.workbench.views.console.shell.editor.InputEditorSelection;
 import org.rstudio.studio.client.workbench.views.source.SourceColumn;
 import org.rstudio.studio.client.workbench.views.source.SourceWindowManager;
+import org.rstudio.studio.client.workbench.views.source.ViewsSourceConstants;
 import org.rstudio.studio.client.workbench.views.source.editors.EditingTarget;
 import org.rstudio.studio.client.workbench.views.source.editors.EditingTargetCodeExecution;
 import org.rstudio.studio.client.workbench.views.source.editors.EditingTargetSource.EditingTargetNameProvider;
@@ -234,7 +235,7 @@ public class CodeBrowserEditingTarget implements EditingTarget
          server_.modifyDocumentProperties(
                doc_.getId(),
                props,
-               new SimpleRequestCallback<Void>("Error")
+               new SimpleRequestCallback<Void>(constants_.errorCapitalized())
                {
                   @Override
                   public void onResponseReceived(Void response)
@@ -266,15 +267,15 @@ public class CodeBrowserEditingTarget implements EditingTarget
    }
 
    @Handler
-   void onRunSelectionAsJob()
+   void onRunSelectionAsBackgroundJob()
    {
-      codeExecution_.runSelectionAsJob(false /*useLauncher*/);
+      codeExecution_.runSelectionAsJob(false /*isWorkbenchJob*/);
    }
 
    @Handler
-   void onRunSelectionAsLauncherJob()
+   void onRunSelectionAsWorkbenchJob()
    {
-      codeExecution_.runSelectionAsJob(true /*useLauncher*/);
+      codeExecution_.runSelectionAsJob(true /*isWorkbenchJob*/);
    }
 
    @Handler
@@ -379,6 +380,12 @@ public class CodeBrowserEditingTarget implements EditingTarget
    {
       return null;
    }
+   
+   @Override 
+   public boolean isShinyPrerenderedDoc()
+   {
+      return false;
+   }
 
    @Override
    public HasValue<String> getName()
@@ -432,7 +439,7 @@ public class CodeBrowserEditingTarget implements EditingTarget
    @Override
    public String getTabTooltip()
    {
-      return "R Source Viewer";
+      return constants_.rSourceViewer();
    }
 
    @Override
@@ -461,8 +468,8 @@ public class CodeBrowserEditingTarget implements EditingTarget
       commands.add(commands_.executeCode());
       commands.add(commands_.executeCodeWithoutFocus());
       commands.add(commands_.executeLastCode());
-      commands.add(commands_.runSelectionAsJob());
-      commands.add(commands_.runSelectionAsLauncherJob());
+      commands.add(commands_.runSelectionAsBackgroundJob());
+      commands.add(commands_.runSelectionAsWorkbenchJob());
       commands.add(commands_.sendToTerminal());
 
       if (SourceWindowManager.isMainSourceWindow())
@@ -759,8 +766,7 @@ public class CodeBrowserEditingTarget implements EditingTarget
       docDisplay_.highlightDebugLocation(startPos, endPos, executing);
       if (!shownWarningBar_)
       {
-         view_.showWarningBar("Debug location is approximate because the " +
-                              "source is not available.");
+         view_.showWarningBar(constants_.debugLocationIsApproximate());
          shownWarningBar_ = true;
       }
    }
@@ -791,7 +797,7 @@ public class CodeBrowserEditingTarget implements EditingTarget
    @Override
    public String getCurrentStatus()
    {
-      return "Code Browser displayed";
+      return constants_.codeBrowserDisplayed();
    }
 
    @Override
@@ -825,7 +831,7 @@ public class CodeBrowserEditingTarget implements EditingTarget
                name,
                namespace,
                new SimpleRequestCallback<SearchPathFunctionDefinition>(
-                        "Error Reading Function Definition") {
+                        constants_.errorReadingFunctionDefinition()) {
                   @Override
                   public void onResponseReceived(
                                     SearchPathFunctionDefinition functionDef)
@@ -854,11 +860,12 @@ public class CodeBrowserEditingTarget implements EditingTarget
    private Display view_;
    private HandlerRegistration commandReg_;
    private boolean shownWarningBar_ = false;
-   private final Value<String> name_ = new Value<>("Source Viewer");
+   private final Value<String> name_ = new Value<>(constants_.sourceViewer());
    private DocDisplay docDisplay_;
    private EditingTargetCodeExecution codeExecution_;
 
    private SearchPathFunctionDefinition currentFunction_ = null;
 
    private static final MyBinder binder_ = GWT.create(MyBinder.class);
+   private static final ViewsSourceConstants constants_ = GWT.create(ViewsSourceConstants.class);
 }

@@ -1,7 +1,7 @@
 /*
  * SaveFileDialog.java
  *
- * Copyright (C) 2021 by RStudio, PBC
+ * Copyright (C) 2022 by RStudio, PBC
  *
  * Unless you have received this program directly from RStudio pursuant
  * to the terms of a commercial license agreement with RStudio, then
@@ -15,6 +15,8 @@
 package org.rstudio.core.client.files.filedialog;
 
 import com.google.gwt.aria.client.Roles;
+import com.google.gwt.core.client.GWT;
+import org.rstudio.core.client.CoreClientConstants;
 import org.rstudio.core.client.MessageDisplay;
 import org.rstudio.core.client.StringUtil;
 import org.rstudio.core.client.files.FileSystemContext;
@@ -41,8 +43,8 @@ public class SaveFileDialog extends FileDialog
    {
       context_.messageDisplay().showYesNoMessage(
             MessageDisplay.MSG_WARNING,
-            "Confirm Overwrite",
-            "This file already exists. Do you want to replace it?",
+            constants_.showOverwriteCaption(),
+            constants_.showOverwriteMessage(),
             false,
             new Operation()
             {
@@ -86,4 +88,5 @@ public class SaveFileDialog extends FileDialog
    
    private final String defaultExtension_;
    private final boolean forceDefaultExtension_;
+   private static final CoreClientConstants constants_ = GWT.create(CoreClientConstants.class);
 }

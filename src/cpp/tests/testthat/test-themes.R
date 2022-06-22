@@ -1,7 +1,7 @@
 #
 # test-themes.R
 #
-# Copyright (C) 2021 by RStudio, PBC
+# Copyright (C) 2022 by RStudio, PBC
 #
 # Unless you have received this program directly from RStudio pursuant
 # to the terms of a commercial license agreement with RStudio, then
@@ -18,7 +18,7 @@ context("themes")
 # We need this file for .rs.parseCss
 source(file.path("..", "..", "session", "resources", "themes", "compile-themes.R"))
 
-inputFileLocation <- file.path(path.expand("."), "themes")
+inputFileLocation <- file.path(normalizePath("."), "themes")
 tempOutputDir <- file.path(inputFileLocation, "temp")
 localInstallDir <- file.path(inputFileLocation, "localInstall")
 globalInstallDir <- file.path(inputFileLocation, "globalInstall")
@@ -283,7 +283,7 @@ makeGlobalThemeDir <- function()
 }
 
 # Test getRgbColor =================================================================================
-test_that("rgb coversion from hex format works", {
+test_that("rgb conversion from hex format works", {
    # All lowercase
    expect_equal(.rs.getRgbColor("#ffffff"), c(255, 255, 255))
 
@@ -1415,27 +1415,19 @@ test_that("parseTmTheme handles incorrect input", {
       fixed = TRUE)
    expect_error(
       .rs.parseTmTheme(file.path(inputFileLocation, "errorthemes", "Malformed1.tmTheme")),
-      sprintf(
-         "error parsing attribute name [68]",
-         inputFileLocation),
+      "error parsing attribute name [68]",
       fixed = TRUE)
    expect_error(
       .rs.parseTmTheme(file.path(inputFileLocation, "errorthemes", "Malformed2.tmTheme")),
-      sprintf(
-         "Opening and ending tag mismatch: string line 223 and notstring [76]",
-         inputFileLocation),
+      "Opening and ending tag mismatch: string line 223 and notstring [76]",
       fixed = TRUE)
    expect_error(
       .rs.parseTmTheme(file.path(inputFileLocation, "errorthemes", "Malformed3.tmTheme")),
-      sprintf(
-         "StartTag: invalid element name [68]",
-         inputFileLocation),
+      "StartTag: invalid element name [68]",
       fixed = TRUE)
    expect_error(
       .rs.parseTmTheme(file.path(inputFileLocation, "errorthemes", "Malformed4.tmTheme")),
-      sprintf(
-         "StartTag: invalid element name [68]",
-         inputFileLocation),
+      "StartTag: invalid element name [68]",
       fixed = TRUE)
    expect_error(
       .rs.parseTmTheme(file.path(inputFileLocation, "errorthemes", "MissingKeyEnd.tmTheme")),
@@ -1683,9 +1675,9 @@ test_that_wrapped("addTheme gives error when the theme already exists", {
    themePath <- file.path(inputFileLocation, "rsthemes", paste0(themes[[40]]$fileName, ".rstheme"))
    # suppress warning for theme overwrite
    suppressWarnings(
-      .rs.addTheme(themePath, FALSE, FALSE, FALSE))
+      .rs.addTheme(themePath, FALSE, force=TRUE, globally=FALSE))
    expect_error(
-      .rs.addTheme(themePath, FALSE, FALSE, FALSE),
+      .rs.addTheme(themePath, FALSE, force=FALSE, globally=FALSE),
       paste0(
          "The specified theme, \"",
          names(themes)[40],
@@ -1937,3 +1929,4 @@ AFTER_FUN = function() {
    Sys.chmod(dir(noPermissionDir, full.names = TRUE, all.files = TRUE), mode = "0777")
    file.remove(file.path(noPermissionDir, paste0(themes[[32]]$fileName, ".rstheme")))
 })
+

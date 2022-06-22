@@ -1,7 +1,7 @@
 /*
  * insert_citation-source-panel-list-item.ts
  *
- * Copyright (C) 2021 by RStudio, PBC
+ * Copyright (C) 2022 by RStudio, PBC
  *
  * Unless you have received this program directly from RStudio pursuant
  * to the terms of a commercial license agreement with RStudio, then
@@ -64,6 +64,13 @@ export const CitationSourcePanelListItem = (props: ListChildComponentProps) => {
     citationListData.onConfirm();
   };
 
+  let authors = "";
+  try {
+    authors = citationEntry.authors(authorWidth);
+  } catch (er) {
+    // Failed to format the authors, just ignore this.
+  }
+
   return (
     <div
       onMouseDown={onItemClick}
@@ -78,20 +85,22 @@ export const CitationSourcePanelListItem = (props: ListChildComponentProps) => {
               <img
                 className="pm-insert-citation-source-panel-item-adorn pm-block-border-color pm-background-color"
                 src={citationEntry.imageAdornment}
+                draggable="false"
               />
             ) : (
-              undefined
-            )}
+                undefined
+              )}
             <img
               className="pm-insert-citation-source-panel-item-icon pm-block-border-color"
               src={citationEntry.image}
+              draggable="false"
             />
           </div>
           <div className="pm-insert-citation-source-panel-item-summary">
             <div className="pm-insert-citation-source-panel-item-id">
               <div className="pm-insert-citation-source-panel-item-title pm-fixedwidth-font pm-text-color">{id}</div>
               <div className="pm-insert-citation-source-panel-item-detail pm-text-color">
-                {citationEntry.authors(authorWidth)} {citationEntry.date}
+                {authors} {citationEntry.date}
               </div>
             </div>
             <div className="pm-insert-citation-source-panel-item-subtitle-text pm-text-color">

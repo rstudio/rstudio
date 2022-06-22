@@ -45,12 +45,13 @@ export interface CitationSourcePanelProvider {
   placeHolderMessage?: string;
   progressMessage?: string;
   warningMessage?: string;
-  typeAheadSearch: (
+  typeAheadSearch?: (
     term: string,
     selectedNode: NavigationTreeNode,
     existingCitationIds: string[],
-  ) => CitationSourcePanelSearchResult | null;
-  search: (
+    onResults: (result: CitationSourcePanelSearchResult) => void
+  ) => void;
+  search?: (
     term: string,
     selectedNode: NavigationTreeNode,
     existingCitationIds: string[],

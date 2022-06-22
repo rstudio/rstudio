@@ -1,7 +1,10 @@
 <!DOCTYPE ui:UiBinder SYSTEM "http://dl.google.com/gwt/DTD/xhtml.ent">
 <ui:UiBinder xmlns:ui="urn:ui:com.google.gwt.uibinder"
    xmlns:g="urn:import:com.google.gwt.user.client.ui"
-   xmlns:rs="urn:import:org.rstudio.core.client.widget">
+   xmlns:rs="urn:import:org.rstudio.core.client.widget"
+   ui:generateFormat='com.google.gwt.i18n.server.PropertyCatalogFactory'
+   ui:generateKeys="com.google.gwt.i18n.server.keygen.MD5KeyGenerator"
+   ui:generateLocales="default">
    <ui:with field="ElementIds" type="org.rstudio.core.client.ElementIds"/>
    <ui:style>
      @external .gwt-Label;
@@ -68,18 +71,18 @@
    <g:HTMLPanel styleName="{style.templateListArea} {style.noTemplates}" 
                 visible="false" ui:field="noTemplatesFound_">
      <g:HTML styleName="{style.noTemplatesText}">
-       (No templates found)
+         <ui:msg key="noTemplateFound">(No templates found)</ui:msg>
      </g:HTML>
    </g:HTMLPanel>
 
    <g:HTMLPanel ui:field="templateOptionsPanel_" visible="false">
      <g:HTML styleName="{style.createNote}">
-        This template contains multiple files. Create a new directory for
-        these files:
+         <ui:msg key="templateOptionsPanel">This template contains multiple files. Create a new directory for
+             these files:</ui:msg>
      </g:HTML>
-     <rs:LabeledTextBox textBoxId="{ElementIds.getRmdTemplateChooserName}" labelText="Name:" 
-                        styleName="{style.controlLabel} {style.interiorControlLabel}" 
-                        ui:field="txtName_" text="Untitled"></rs:LabeledTextBox>
+       <rs:LabeledTextBox textBoxId="{ElementIds.getRmdTemplateChooserName}" labelText="Name:"
+                          styleName="{style.controlLabel} {style.interiorControlLabel}"
+                          ui:field="txtName_" text="Untitled"/>
 
      <rs:DirectoryChooserTextBox width="100%" addStyleNames="{style.directoryChooser} {style.directoryChooserInner}" ui:field="dirLocation_">
      </rs:DirectoryChooserTextBox>

@@ -1,0 +1,37 @@
+#!/usr/bin/env bash
+
+# A small helper utility that tries to set JAVA_HOME before invoking ant, so
+# that a suitable version of java is used during compilation. Primarily
+# intended for use in development builds, for those of us too lazy to
+# set and reset JAVA_HOME as required.
+
+if ! command -v ant > /dev/null 2>&1; then
+	echo "Required program 'ant' is not available; exiting"
+	exit 1
+fi
+
+if [ -z "${JAVA_HOME}" ]; then
+	
+	read -r -d '' homes <<- EOF
+	/Library/Java/JavaVirtualMachines/adoptopenjdk-11.jdk/Contents/Home
+	/Library/Java/JavaVirtualMachines/openjdk-11.jdk/Contents/Home
+	/opt/homebrew/opt/openjdk@11
+	/usr/lib/jvm/java-11-openjdk-amd64/jre
+	/Library/Java/JavaVirtualMachines/adoptopenjdk-8.jdk/Contents/Home
+	/opt/homebrew/opt/openjdk@11
+	/usr/lib/jvm/java-8-openjdk-amd64/jre
+	EOF
+
+	for home in ${homes}; do
+		if [ -d "${home}" ]; then
+			export JAVA_HOME="${home}"
+			echo "Building with Java at ${JAVA_HOME}"
+			break
+		fi
+	done
+
+fi
+
+echo "Using JAVA_HOME: ${JAVA_HOME}"
+JAVA_HOME="${JAVA_HOME}" ant "$@"
+

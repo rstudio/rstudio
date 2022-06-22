@@ -1,7 +1,7 @@
 /*
  * IgnoreDialog.java
  *
- * Copyright (C) 2021 by RStudio, PBC
+ * Copyright (C) 2022 by RStudio, PBC
  *
  * Unless you have received this program directly from RStudio pursuant
  * to the terms of a commercial license agreement with RStudio, then
@@ -21,6 +21,7 @@ import org.rstudio.core.client.widget.DirectoryChooserTextBox;
 import org.rstudio.core.client.widget.ModalDialogBase;
 import org.rstudio.core.client.widget.ProgressIndicator;
 import org.rstudio.core.client.widget.ThemedButton;
+import org.rstudio.studio.client.common.StudioClientCommonConstants;
 import org.rstudio.studio.client.workbench.views.source.editors.text.AceEditor;
 
 import com.google.gwt.core.client.GWT;
@@ -43,7 +44,7 @@ public class IgnoreDialog extends ModalDialogBase
    public IgnoreDialog()
    {
       super(Roles.getDialogRole());
-      dirChooser_ = new DirectoryChooserTextBox("Directory:",
+      dirChooser_ = new DirectoryChooserTextBox(constants_.directoryLabel(),
                                                 "",
                                                 ElementIds.TextBoxButtonId.VCS_IGNORE,
                                                 null);
@@ -53,15 +54,15 @@ public class IgnoreDialog extends ModalDialogBase
       editor_.setUseWrapMode(false);
       editor_.setShowLineNumbers(false);
       editor_.setTabAlwaysMovesFocus();
-      editor_.setTextInputAriaLabel("Ignored files");
+      editor_.setTextInputAriaLabel(constants_.ignoredFilesLabel());
 
-      ignoresCaption_ = new CaptionWithHelp("Ignore:",
-                                             "Specifying ignored files",
+      ignoresCaption_ = new CaptionWithHelp(constants_.ignoreCaption(),
+                                             constants_.specifyingIgnoredFilesHelpCaption(),
                                              editor_.getWidget());
       ignoresCaption_.setIncludeVersionInfo(false);
       ignoresCaption_.addStyleName(RES.styles().ignoresCaption());
 
-      saveButton_ = new ThemedButton("Save", (ClickHandler)null);
+      saveButton_ = new ThemedButton(constants_.saveLabel(), (ClickHandler)null);
       addButton(saveButton_, ElementIds.DIALOG_OK_BUTTON);
       addCancelButton();
       setButtonAlignment(HasHorizontalAlignment.ALIGN_RIGHT);
@@ -200,7 +201,7 @@ public class IgnoreDialog extends ModalDialogBase
    private final AceEditor editor_;
    private final ThemedButton saveButton_;
    private final ProgressIndicator progressIndicator_;
-
+   private static final StudioClientCommonConstants constants_ = GWT.create(StudioClientCommonConstants.class);
 
 
 }

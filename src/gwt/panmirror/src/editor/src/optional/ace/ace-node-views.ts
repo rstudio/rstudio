@@ -1,7 +1,7 @@
 /*
  * ace-node-views.ts
  *
- * Copyright (C) 2021 by RStudio, PBC
+ * Copyright (C) 2022 by RStudio, PBC
  *
  * Unless you have received this program directly from RStudio pursuant
  * to the terms of a commercial license agreement with RStudio, then
@@ -37,6 +37,10 @@ export class AceNodeViews {
     if (index >= 0) {
       this.nodeViews.splice(index, 1);
     }
+  }
+
+  public activeNodeView() : AceNodeView | undefined {
+    return this.nodeViews.find(view => view.isFocused());
   }
 
   public handleClick(view: EditorView, event: Event): boolean {

@@ -1,7 +1,7 @@
 /*
  * NotebookDocQueue.cpp
  *
- * Copyright (C) 2021 by RStudio, PBC
+ * Copyright (C) 2022 by RStudio, PBC
  *
  * Unless you have received this program directly from RStudio pursuant
  * to the terms of a commercial license agreement with RStudio, then
@@ -21,8 +21,10 @@
 
 #include <session/SessionModuleContext.hpp>
 #include <session/SessionSourceDatabase.hpp>
+#include <session/SessionQuarto.hpp>
 
 using namespace rstudio::core;
+using namespace boost::placeholders;
 
 #define kDocQueueId             "doc_id"
 #define kDocQueueJobDesc        "job_desc"
@@ -72,7 +74,21 @@ NotebookDocQueue::NotebookDocQueue(const std::string& docId,
       // precedence
       setWorkingDir(docWorkingDir, SetupChunkDir);
    }
-   else if (!workingDir.empty())
+   else if (quarto::docIsQuarto(docId))
+   {
+      // Quarto documents can have an execution directory specified in their
+      // project configuration (i.e. _quarto.yml); if it's set there, use
+      // it.
+      FilePath qmdExecutionPath = quarto::getQuartoExecutionDir(docPath_);
+      if (!qmdExecutionPath.isEmpty())
+      {
+        setWorkingDir(qmdExecutionPath.getAbsolutePath(), QuartoProjectDir);
+      }
+   }
+
+   // if no working directory has been specified yet (still at defaults) and a global directory was
+   // supplied, use it
+   if (getWorkingDirSource() == DefaultDir && !workingDir.empty())
    {
       // working directory given by IDE (current dir or project dir)
       setWorkingDir(workingDir, GlobalDir);

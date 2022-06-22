@@ -2,7 +2,7 @@
 #
 # generate-options.R
 #
-# Copyright (C) 2021 by RStudio, PBC
+# Copyright (C) 2022 by RStudio, PBC
 #
 # Unless you have received this program directly from RStudio pursuant
 # to the terms of a commercial license agreement with RStudio, then
@@ -38,7 +38,7 @@ generateCopyright <- function (filename) {
    sprintf("/*
  * %s
  *
- * Copyright (C) 2021 by RStudio, PBC
+ * Copyright (C) 2022 by RStudio, PBC
  *
  * Unless you have received this program directly from RStudio pursuant
  * to the terms of a commercial license agreement with RStudio, then
@@ -105,8 +105,8 @@ cppTypeFromJsonType <- function (type) {
    type
 }
 
-# generates Rmd documentation for the given options
-generateRmd <- function (optionsJson, overlayOptionsJson) {
+# generates qmd documentation for the given options
+generateQmd <- function (optionsJson, overlayOptionsJson) {
    metadata <- optionsJson$metadata
    
    configFile <- metadata$configFile
@@ -115,15 +115,22 @@ generateRmd <- function (optionsJson, overlayOptionsJson) {
       stop(sprintf("No outputDocFile specified for %s config", configFile))
    }
    
-   rmd <- sprintf("## %s\n", configFile)
-   
+   # header for Quarto file
+   qmd <- paste("---",
+                paste0("title: \"", configFile, "\""),
+                "aliases:",
+                paste0("  - /rstudio-configuration-1.html#", configFile),
+                "---",
+                "",
+                sep = "\n")
+
    docDescription <- metadata$docDescription
    if (is.null(docDescription)) {
       docDescription <- 
          sprintf("The following is a list of available options that can be specified in the `%s` configuration file",
                  configFile)
    }
-   rmd <- paste0(rmd, "\n", docDescription, "\n\n")
+   qmd <- paste0(qmd, "\n", docDescription, "\n\n")
    
    # combine options and overlay options
    options <- optionsJson$options
@@ -202,12 +209,12 @@ generateRmd <- function (optionsJson, overlayOptionsJson) {
       }
       
       if (str_length(categoryOptions) > 0) {
-         rmd <- paste(rmd, sprintf("### *%s* Settings", category), sep="\n")
-         rmd <- paste(rmd, categoryOptions, sep="\n\n")
+         qmd <- paste(qmd, sprintf("### *%s* Settings", category), sep="\n")
+         qmd <- paste(qmd, categoryOptions, sep="\n\n")
       }
    }
    
-   writeLines(rmd, con = outputDocFile)
+   writeLines(qmd, con = outputDocFile)
 }
 
 # generates the include guard name
@@ -310,6 +317,8 @@ generateProgramOptions <- function (optionsJson, overlayOptionsJson) {
             # handle any implicit conversions that we should support
             if (identical(type, "core::FilePath")) {
                accessorCode <- sprintf("return core::FilePath(%s);", memberName)
+            } else if (identical(category, "allow")) {
+               accessorCode <- sprintf("return %s || allowOverlay();", memberName)
             } else {
                accessorCode <- sprintf("return %s;", memberName)
             }
@@ -498,11 +507,9 @@ generateProgramOptions <- function (optionsJson, overlayOptionsJson) {
    binary <- str_replace(configFile, fixed(".conf"), "")
    buildOptions <- paste0(buildOptions,
                           "\n\n",
-                          sprintf("   FilePath defaultConfigPath = core::system::xdg::systemConfigFile(\"%s\");\n", configFile),
+                          sprintf("   FilePath defaultConfigPath = core::system::xdg::findSystemConfigFile(\"%s configuration\", \"%s\");\n", binary, configFile),
                           "   std::string configFile = defaultConfigPath.exists() ?\n",
                           "      defaultConfigPath.getAbsolutePath() : \"\";\n",
-                          "   if (!configFile.empty())\n",
-                          sprintf("      LOG_INFO_MESSAGE(\"Reading %s configuration from \" + configFile);\n\n", binary),
                           sprintf("   return program_options::OptionsDescription(\"%s\", configFile);", binary))
    
    # close out the buildOptions function
@@ -511,6 +518,7 @@ generateProgramOptions <- function (optionsJson, overlayOptionsJson) {
    classContents <- paste(classContents, buildOptions, sep="\n\n")
    classContents <- paste(classContents, accessors, sep="\n\n")
    classContents <- paste(classContents, members, sep="\n\n")
+   classContents <- paste(classContents, "  virtual bool allowOverlay() const { return false; };\n")
    
    # finally, close out the class
    classContents <- paste0(classContents, "};")
@@ -757,7 +765,7 @@ generate <- function (optionsFile) {
       generateProgramOptions(optionsJson, overlayOptionsJson)
       
       cat("Generating documentation\n")
-      generateRmd(optionsJson, overlayOptionsJson)
+      generateQmd(optionsJson, overlayOptionsJson)
    } else {
       stop(sprintf("Requested generator type %s is not supported", generatorType))
    }
@@ -782,7 +790,7 @@ main <- function () {
    cat("Press [enter] to continue or CTRL+C to skip")
    a <- readLines("stdin",n=1);
 
-   system("./report-options.sh")
+   system("bash report-options.sh")
 }
 
 main()

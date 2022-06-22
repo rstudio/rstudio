@@ -1,7 +1,7 @@
 /*
  * bibliography.ts
  *
- * Copyright (C) 2021 by RStudio, PBC
+ * Copyright (C) 2022 by RStudio, PBC
  *
  * Unless you have received this program directly from RStudio pursuant
  * to the terms of a commercial license agreement with RStudio, then
@@ -22,7 +22,7 @@ import { EditorUI } from '../ui';
 import { ParsedYaml, parseYamlNodes } from '../yaml';
 import { CSL } from '../csl';
 import { ZoteroServer } from '../zotero';
-import { BibliographyDataProviderLocal, kLocalBiliographyProviderKey } from './bibliography-provider_local';
+import { BibliographyDataProviderLocal, kLocalBibliographyProviderKey } from './bibliography-provider_local';
 import { BibliographyDataProviderZotero } from './bibliography-provider_zotero';
 import { toBibTeX } from './bibDB';
 import { joinPaths, isAbsolute } from '../path';
@@ -120,7 +120,7 @@ const kFields: Fuse.FuseOptionKeyObject[] = [
   { name: 'id', weight: 30 },
   { name: 'author.family', weight: 15 },
   { name: 'author.literal', weight: 15 },
-  { name: 'issued', weight: 15 },
+  { name: 'issued.raw', weight: 15 },
   { name: 'title', weight: 15 },
   { name: 'author.given', weight: 10 },
   { name: 'providerKey', weight: 0.01 },
@@ -139,7 +139,7 @@ export class BibliographyManager {
   private providers: BibliographyDataProvider[];
   private sources?: BibliographySourceWithCollections[];
   private writable?: boolean;
-  private searchIndex?: Fuse<BibliographySourceWithCollections, Fuse.IFuseOptions<BibliographySourceWithCollections>>;
+  private searchIndex?: Fuse<BibliographySourceWithCollections>;
 
   public constructor(server: PandocServer, zoteroServer: ZoteroServer) {
     this.providers = [new BibliographyDataProviderLocal(server), new BibliographyDataProviderZotero(zoteroServer)];
@@ -193,7 +193,7 @@ export class BibliographyManager {
     if (this.sources && this.allowsWrites()) {
       return this.sources;
     } else {
-      return this.sources?.filter(source => source.providerKey === kLocalBiliographyProviderKey) || [];
+      return this.sources?.filter(source => source.providerKey === kLocalBibliographyProviderKey) || [];
     }
     return [];
   }
@@ -207,7 +207,7 @@ export class BibliographyManager {
   }
 
   public localSources(): BibliographySourceWithCollections[] {
-    return this.allSources().filter(source => source.providerKey === kLocalBiliographyProviderKey);
+    return this.allSources().filter(source => source.providerKey === kLocalBibliographyProviderKey);
   }
 
   public allowsWrites(): boolean {
@@ -341,7 +341,7 @@ export class BibliographyManager {
       // Filter out any non local items if this isn't a writable bibliography
       const filteredItems = this.allowsWrites()
         ? items
-        : items.filter(item => item.provider === kLocalBiliographyProviderKey);
+        : items.filter(item => item.provider === kLocalBibliographyProviderKey);
       return filteredItems;
     } else {
       return [];
@@ -350,10 +350,15 @@ export class BibliographyManager {
 
   // Search only a specific provider
   public searchProvider(query: string, limit: number, providerKey: string): BibliographySourceWithCollections[] {
-    const orFields = kFields.map(field => {
-      return {
-        [field.name]: query,
-      };
+    const orFields = kFields.flatMap(field => {
+      if (Array.isArray(field)) {
+        return field.map(name => ({ [name]: query }));
+      } else {
+        return {
+          [field.name as string]: query,
+        };
+      }
+      
     });
     const q = {
       $and: [
@@ -379,10 +384,15 @@ export class BibliographyManager {
     providerKey: string,
     collectionKey: string,
   ): BibliographySourceWithCollections[] {
-    const orFields = kFields.map(field => {
-      return {
-        [field.name]: query,
-      };
+    const orFields = kFields.flatMap(field => {
+      if (Array.isArray(field.name)) {
+        return field.name.map(name => ( { [name]: query }));
+      } else {
+        return {
+          [field.name as string]: query,
+        };
+      }
+      
     });
     const q = {
       $and: [

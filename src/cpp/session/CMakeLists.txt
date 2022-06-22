@@ -1,7 +1,7 @@
 #
 # CMakeLists.txt
 #
-# Copyright (C) 2021 by RStudio, PBC
+# Copyright (C) 2022 by RStudio, PBC
 #
 # Unless you have received this program directly from RStudio pursuant
 # to the terms of a commercial license agreement with RStudio, then
@@ -17,14 +17,17 @@ project(SESSION)
 
 add_subdirectory(workers)
 
+if(WIN32 AND NOT RSTUDIO_SESSION_WIN32)
+   set(RSTUDIO_WIN32_BUILD_UTF8_SESSION TRUE)
+endif()
+
 # verify that install-dictionaries, install-mathjax, install-pandoc,
 # and install-rmarkdown have been run as required
-set(PANDOC_VERSION "2.11.4" CACHE INTERNAL "Pandoc version")
 
 if(WIN32)
    set(RSTUDIO_DEPENDENCIES_DICTIONARIES_DIR "${RSTUDIO_DEPENDENCIES_DIR}/common/dictionaries")
    set(RSTUDIO_DEPENDENCIES_MATHJAX_DIR      "${RSTUDIO_DEPENDENCIES_DIR}/common/mathjax-27")
-   set(RSTUDIO_DEPENDENCIES_PANDOC_DIR       "${RSTUDIO_DEPENDENCIES_DIR}/common/pandoc/${PANDOC_VERSION}")
+   set(RSTUDIO_DEPENDENCIES_QUARTO_DIR       "${RSTUDIO_DEPENDENCIES_DIR}/common/quarto")
 else()
 
    # indirection to help build machine find these libraries?
@@ -40,20 +43,47 @@ else()
       set(RSTUDIO_DEPENDENCIES_MATHJAX_DIR "${RSTUDIO_DEPENDENCIES_DIR}/mathjax-27")
    endif()
 
-   if(EXISTS "${RSTUDIO_TOOLS_ROOT}/pandoc/${PANDOC_VERSION}")
-      set(RSTUDIO_DEPENDENCIES_PANDOC_DIR "${RSTUDIO_TOOLS_ROOT}/pandoc/${PANDOC_VERSION}")
+   if(EXISTS "${RSTUDIO_TOOLS_ROOT}/quarto")
+      set(RSTUDIO_DEPENDENCIES_QUARTO_DIR "${RSTUDIO_TOOLS_ROOT}/quarto")
    else()
-      set(RSTUDIO_DEPENDENCIES_PANDOC_DIR "${RSTUDIO_DEPENDENCIES_DIR}/pandoc/${PANDOC_VERSION}")
+      set(RSTUDIO_DEPENDENCIES_QUARTO_DIR "${RSTUDIO_DEPENDENCIES_DIR}/quarto")
    endif()
 
 endif()
 
-foreach(DEP "${RSTUDIO_DEPENDENCIES_DICTIONARIES_DIR}"
-            "${RSTUDIO_DEPENDENCIES_MATHJAX_DIR}"
-            "${RSTUDIO_DEPENDENCIES_PANDOC_DIR}")
-   if(NOT EXISTS "${DEP}")
-      message(FATAL_ERROR "${DEP} not found (re-run install-dependencies script to install")
+
+# install pandoc
+# - by default, we use quarto + quarto's bundled pandoc
+# - if quarto is not enabled, use pandoc fallback
+if(QUARTO_ENABLED)
+   set(RSTUDIO_DEPENDENCIES_PANDOC_DIR "${RSTUDIO_DEPENDENCIES_QUARTO_DIR}/bin/tools")
+elseif(EXISTS "${RSTUDIO_TOOLS_ROOT}/pandoc/${PANDOC_VERSION}")
+   set(RSTUDIO_DEPENDENCIES_PANDOC_DIR "${RSTUDIO_TOOLS_ROOT}/pandoc/${PANDOC_VERSION}")
+else()
+   set(RSTUDIO_DEPENDENCIES_PANDOC_DIR "${RSTUDIO_DEPENDENCIES_DIR}/pandoc/${PANDOC_VERSION}")
+endif()
+
+
+# validate our dependencies exist
+foreach(VAR RSTUDIO_DEPENDENCIES_DICTIONARIES_DIR
+            RSTUDIO_DEPENDENCIES_MATHJAX_DIR
+            RSTUDIO_DEPENDENCIES_PANDOC_DIR
+            RSTUDIO_DEPENDENCIES_QUARTO_DIR)
+
+ 
+   # skip quarto if not enabled
+   if("${VAR}" STREQUAL "RSTUDIO_DEPENDENCIES_QUARTO_DIR" AND NOT QUARTO_ENABLED)
+      continue()
    endif()
+
+   # validate existence
+   if(NOT EXISTS "${${VAR}}")
+      message(FATAL_ERROR "${${VAR}} not found (re-run install-dependencies script to install")
+   endif()
+
+   # cache variables so they can be seen by configure_file
+   set("${VAR}" "${${VAR}}" CACHE INTERNAL "")
+   
 endforeach()
 
 # verify embedded packages are available
@@ -66,15 +96,10 @@ endforeach()
 
 # verify libclang is installed (Windows only)
 if(WIN32)
-   set(LIBCLANG_VERSION "5.0.2")
+   set(LIBCLANG_VERSION "13.0.1")
    set(LIBCLANG_DIR "${RSTUDIO_DEPENDENCIES_DIR}/common/libclang/${LIBCLANG_VERSION}")
    if(NOT EXISTS "${LIBCLANG_DIR}")
       message(FATAL_ERROR "libclang ${LIBCLANG_VERSION} not found  (re-run install-dependencies script to install)")
-   endif()
-
-   set(LIBCLANG_HEADERS_DIR "${RSTUDIO_DEPENDENCIES_DIR}/common/libclang/builtin-headers")
-   if(NOT EXISTS "${LIBCLANG_HEADERS_DIR}")
-      message(FATAL_ERROR "libclang builtin-headers not found  (re-run install-dependencies script to install)")
    endif()
 endif()
 
@@ -84,6 +109,7 @@ file(GLOB_RECURSE SESSION_HEADER_FILES "*.h*")
 
 # source files
 set(SESSION_SOURCE_FILES
+   SessionActiveSessionsStorage.cpp
    SessionAsyncRProcess.cpp
    SessionAsyncDownloadFile.cpp
    SessionClientEvent.cpp
@@ -111,15 +137,20 @@ set(SESSION_SOURCE_FILES
    SessionOptionsOverlay.cpp
    SessionPandoc.cpp
    SessionPasswordManager.cpp
+   SessionPerFilePathStorage.cpp
    SessionPersistentState.cpp
    SessionPostback.cpp
+   SessionServerRpc.cpp
+   SessionServerRpcOverlay.cpp
    SessionSSH.cpp
    SessionSourceDatabase.cpp
    SessionSourceDatabaseSupervisor.cpp
    SessionSuspend.cpp
+   SessionSuspendFilter.cpp
    SessionUriHandlers.cpp
    SessionUrlPorts.cpp
    SessionWorkerContext.cpp
+   SessionOfflineService.cpp
    http/SessionHttpConnectionQueue.cpp
    http/SessionHttpConnectionUtils.cpp
    modules/RStudioAPI.cpp
@@ -133,9 +164,10 @@ set(SESSION_SOURCE_FILES
    modules/SessionCodeSearch.cpp
    modules/SessionConfigFile.cpp
    modules/SessionCRANMirrors.cpp
+   modules/SessionClipboard.cpp
    modules/SessionCrashHandler.cpp
-   modules/SessionUserCommands.cpp
    modules/SessionConsole.cpp
+   modules/SessionCpp.cpp
    modules/SessionDependencies.cpp
    modules/SessionDependencyList.cpp
    modules/SessionDiagnostics.cpp
@@ -189,6 +221,7 @@ set(SESSION_SOURCE_FILES
    modules/SessionSVN.cpp
    modules/SessionSystemResources.cpp
    modules/SessionUpdates.cpp
+   modules/SessionUserCommands.cpp
    modules/SessionVCS.cpp
    modules/SessionWorkbench.cpp
    modules/SessionUserPrefs.cpp
@@ -268,6 +301,12 @@ set(SESSION_SOURCE_FILES
    modules/rmarkdown/NotebookWorkingDir.cpp
    modules/rmarkdown/RMarkdownPresentation.cpp
    modules/rmarkdown/RMarkdownTemplates.cpp
+   modules/quarto/SessionQuarto.cpp
+   modules/quarto/SessionQuartoJob.cpp
+   modules/quarto/SessionQuartoPreview.cpp
+   modules/quarto/SessionQuartoResources.cpp
+   modules/quarto/SessionQuartoServe.cpp
+   modules/quarto/SessionQuartoXRefs.cpp
    modules/shiny/SessionShiny.cpp
    modules/shiny/ShinyAsyncJob.cpp
    modules/sql/SessionSql.cpp
@@ -331,7 +370,6 @@ else()
    set(SESSION_SOURCE_FILES ${SESSION_SOURCE_FILES}
       http/SessionWin32HttpConnectionListener.cpp
       modules/build/SessionInstallRtools.cpp
-      "${CMAKE_CURRENT_BINARY_DIR}/rsession.rc"
    )
 endif()
 
@@ -425,24 +463,70 @@ include_directories(
 link_directories(${R_GRAPHICS_HANDLER_SYSTEM_LIBRARY_DIRS})
 
 if(WIN32)
+
    # configure rsession.rc
-   configure_file (${CMAKE_CURRENT_SOURCE_DIR}/rsession.rc.in
-                   ${CMAKE_CURRENT_BINARY_DIR}/rsession.rc)
+   set(RSESSION_EXE_MANIFEST "rsession.exe.manifest")
+   configure_file(
+      ${CMAKE_CURRENT_SOURCE_DIR}/rsession.rc.in
+      ${CMAKE_CURRENT_BINARY_DIR}/rsession.rc)
 
+   # configure manifest
+   configure_file(
+      ${CMAKE_CURRENT_SOURCE_DIR}/rsession.exe.manifest
+      ${CMAKE_CURRENT_BINARY_DIR}/rsession.exe.manifest COPYONLY)
 
-   configure_file (${CMAKE_CURRENT_SOURCE_DIR}/rsession.exe.manifest
-                   ${CMAKE_CURRENT_BINARY_DIR}/rsession.exe.manifest COPYONLY)
+   # similar for UTF-8 session
+   if(RSTUDIO_WIN32_BUILD_UTF8_SESSION)
+
+      # configure rsession-utf8.rc
+      set(RSESSION_EXE_MANIFEST "rsession-utf8.exe.manifest")
+      configure_file(
+         ${CMAKE_CURRENT_SOURCE_DIR}/rsession.rc.in
+         ${CMAKE_CURRENT_BINARY_DIR}/rsession-utf8.rc)
+
+      # configure manifest
+      configure_file(
+         ${CMAKE_CURRENT_SOURCE_DIR}/rsession-utf8.exe.manifest
+         ${CMAKE_CURRENT_BINARY_DIR}/rsession-utf8.exe.manifest COPYONLY)
+
+   endif()
 
    if(NOT RSTUDIO_SESSION_WIN32)
       add_subdirectory(consoleio)
    endif()
+
 endif()
 
 # define executable
-add_stripped_executable(
-   rsession
-   ${SESSION_SOURCE_FILES}
-   ${SESSION_HEADER_FILES})
+if(WIN32)
+
+   # define shared object library (avoid re-compiling source files twice)
+   add_library(rsession-objects OBJECT
+       ${SESSION_SOURCE_FILES}
+       ${SESSION_HEADER_FILES})
+
+   # main executable
+   add_stripped_executable(
+      rsession
+      "${CMAKE_CURRENT_BINARY_DIR}/rsession.rc"
+      $<TARGET_OBJECTS:rsession-objects>)
+
+   # UTF-8 alternative
+   if(RSTUDIO_WIN32_BUILD_UTF8_SESSION)
+      add_stripped_executable(
+         rsession-utf8
+         "${CMAKE_CURRENT_BINARY_DIR}/rsession-utf8.rc"
+         $<TARGET_OBJECTS:rsession-objects>)
+   endif()
+
+else()
+
+   add_stripped_executable(
+      rsession
+      ${SESSION_SOURCE_FILES}
+      ${SESSION_HEADER_FILES})
+
+endif()
 
 # skip libR RPATH at development time
 if(RSTUDIO_DEVELOPMENT OR RSTUDIO_RUN_IN_PLACE)
@@ -456,12 +540,12 @@ if(WIN32)
 endif()
 if(APPLE)
    find_library(MAC_APPKIT_LIBRARY NAMES AppKit)
-   set (SESSION_SYSTEM_LIBRARIES
-        ${SESSION_SYSTEM_LIBRARIES}
-        ${MAC_APPKIT_LIBRARY})
+   set(SESSION_SYSTEM_LIBRARIES
+      ${SESSION_SYSTEM_LIBRARIES}
+      ${MAC_APPKIT_LIBRARY})
 endif()
 
-target_link_libraries(rsession
+set(SESSION_LIBRARIES
    rstudio-core
    rstudio-core-hunspell
    rstudio-core-synctex
@@ -471,13 +555,20 @@ target_link_libraries(rsession
    rstudio-session-workers
    ${SESSION_SYSTEM_LIBRARIES}
    ${CMAKE_DL_LIBS}
-   ${CRASHPAD_LIBRARIES}
-)
+   ${CRASHPAD_LIBRARIES})
+
+target_link_libraries(rsession ${SESSION_LIBRARIES})
+if(RSTUDIO_WIN32_BUILD_UTF8_SESSION)
+   target_link_libraries(rsession-utf8 ${SESSION_LIBRARIES})
+endif()
 
 if(APPLE)
    target_link_libraries(rsession "-undefined dynamic_lookup")
 else()
    target_link_libraries(rsession "${LIBR_LIBRARIES}")
+   if(RSTUDIO_WIN32_BUILD_UTF8_SESSION)
+      target_link_libraries(rsession-utf8 "${LIBR_LIBRARIES}")
+   endif()
 endif()
 
 if(RSTUDIO_SERVER)
@@ -502,6 +593,9 @@ endif()
 
 # install binary
 install(TARGETS rsession DESTINATION "${RSTUDIO_INSTALL_BIN}")
+if(RSTUDIO_WIN32_BUILD_UTF8_SESSION)
+    install(TARGETS rsession-utf8 DESTINATION "${RSTUDIO_INSTALL_BIN}")
+endif()
 
 # include resources, R scripts and binaries if this isn't a session 32-bit build
 if(NOT RSTUDIO_SESSION_WIN32 AND NOT RSESSION_ALTERNATE_BUILD)
@@ -519,6 +613,9 @@ if(NOT RSTUDIO_SESSION_WIN32 AND NOT RSESSION_ALTERNATE_BUILD)
            DESTINATION ${RSTUDIO_INSTALL_SUPPORTING}/resources)
    # templates
    install(DIRECTORY "resources/templates"
+           DESTINATION ${RSTUDIO_INSTALL_SUPPORTING}/resources)
+   # pandoc
+   install(DIRECTORY "resources/pandoc"
            DESTINATION ${RSTUDIO_INSTALL_SUPPORTING}/resources)
    # JS resources
    file(GLOB JS_RESOURCE_FILES "resources/*.js")
@@ -578,11 +675,33 @@ if(NOT RSTUDIO_SESSION_WIN32 AND NOT RSESSION_ALTERNATE_BUILD)
    install(DIRECTORY "${RSTUDIO_DEPENDENCIES_MATHJAX_DIR}"
            DESTINATION "${RSTUDIO_INSTALL_SUPPORTING}/resources")
 
-   # install pandoc
-   file(GLOB PANDOC_FILES "${RSTUDIO_DEPENDENCIES_PANDOC_DIR}/pandoc*")
-   install(FILES ${PANDOC_FILES}
-           PERMISSIONS OWNER_READ OWNER_WRITE OWNER_EXECUTE GROUP_READ GROUP_EXECUTE WORLD_READ WORLD_EXECUTE
-           DESTINATION "${RSTUDIO_INSTALL_BIN}/pandoc")
+   # install quarto (or pandoc if quarto disabled)
+   if(QUARTO_ENABLED)
+      # install some quarto folders into Resources, as needed
+      if(APPLE)
+         if (RSTUDIO_ELECTRON)
+            install(DIRECTORY "${RSTUDIO_DEPENDENCIES_QUARTO_DIR}" 
+                  DESTINATION "${RSTUDIO_INSTALL_RESOURCES}/app"
+                  USE_SOURCE_PERMISSIONS)
+         else()
+            install(DIRECTORY "${RSTUDIO_DEPENDENCIES_QUARTO_DIR}"
+                  DESTINATION "${RSTUDIO_INSTALL_BIN}"
+                  USE_SOURCE_PERMISSIONS
+                  PATTERN "*/share" EXCLUDE)
+            install(DIRECTORY "${RSTUDIO_DEPENDENCIES_QUARTO_DIR}/share" 
+                  DESTINATION "${RSTUDIO_INSTALL_SUPPORTING}/quarto"
+                  USE_SOURCE_PERMISSIONS)
+         endif()
+      else()
+         install(DIRECTORY "${RSTUDIO_DEPENDENCIES_QUARTO_DIR}"
+               DESTINATION "${RSTUDIO_INSTALL_BIN}"
+               USE_SOURCE_PERMISSIONS)
+      endif()
+   else()
+      install(DIRECTORY "${RSTUDIO_DEPENDENCIES_PANDOC_DIR}/"
+              DESTINATION "${RSTUDIO_INSTALL_BIN}/pandoc"
+              USE_SOURCE_PERMISSIONS)
+   endif()
 
    # install embedded packages
    foreach(PKG ${RSTUDIO_EMBEDDED_PACKAGES})
@@ -629,10 +748,6 @@ if(NOT RSTUDIO_SESSION_WIN32 AND NOT RSESSION_ALTERNATE_BUILD)
       file(GLOB LIBCLANG_64_FILES "${LIBCLANG_DIR}/x86_64/*")
       install(PROGRAMS ${LIBCLANG_64_FILES}
               DESTINATION  ${RSTUDIO_INSTALL_BIN}/rsclang/x86_64)
-
-      # install libclang builtin-headers
-      install(DIRECTORY "${RSTUDIO_DEPENDENCIES_DIR}/common/libclang/builtin-headers"
-              DESTINATION "${RSTUDIO_INSTALL_SUPPORTING}/resources/libclang")
    endif()
 
    # install winpty on windows
@@ -653,14 +768,14 @@ if(NOT RSTUDIO_SESSION_WIN32 AND NOT RSESSION_ALTERNATE_BUILD)
               DESTINATION "${RSTUDIO_INSTALL_BIN}/x86")
    endif()
 
-   # install gnudiff, mysys_ssh, and sumatra-pdf on windows
+   # install gnudiff, gnugrep, mysys_ssh, and sumatra-pdf on windows
    if(WIN32)
       install(DIRECTORY "${RSTUDIO_WINDOWS_DEPENDENCIES_DIR}/gnudiff"
               USE_SOURCE_PERMISSIONS
               DESTINATION  ${RSTUDIO_INSTALL_BIN})
-      install(DIRECTORY "${RSTUDIO_WINDOWS_DEPENDENCIES_DIR}/gnugrep"
+      install(DIRECTORY "${RSTUDIO_WINDOWS_DEPENDENCIES_DIR}/gnugrep/3.0"
               USE_SOURCE_PERMISSIONS
-              DESTINATION  ${RSTUDIO_INSTALL_BIN})
+              DESTINATION  "${RSTUDIO_INSTALL_BIN}/gnugrep")
       install(DIRECTORY "${RSTUDIO_WINDOWS_DEPENDENCIES_DIR}/msys-ssh-1000-18"
               USE_SOURCE_PERMISSIONS
               DESTINATION  ${RSTUDIO_INSTALL_BIN})

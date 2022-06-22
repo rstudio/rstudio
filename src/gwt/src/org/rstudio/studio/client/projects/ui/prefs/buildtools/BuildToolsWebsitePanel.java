@@ -1,7 +1,7 @@
 /*
  * BuildToolsWebsitePanel.java
  *
- * Copyright (C) 2021 by RStudio, PBC
+ * Copyright (C) 2022 by RStudio, PBC
  *
  * Unless you have received this program directly from RStudio pursuant
  * to the terms of a commercial license agreement with RStudio, then
@@ -19,6 +19,7 @@ package org.rstudio.studio.client.projects.ui.prefs.buildtools;
 import java.util.ArrayList;
 
 import org.rstudio.core.client.widget.SelectWidget;
+import org.rstudio.studio.client.projects.StudioClientProjectConstants;
 import org.rstudio.studio.client.projects.model.RProjectBuildContext;
 import org.rstudio.studio.client.projects.model.RProjectBuildOptions;
 import org.rstudio.studio.client.projects.model.RProjectConfig;
@@ -32,26 +33,26 @@ public class BuildToolsWebsitePanel extends BuildToolsPanel
 {
    public BuildToolsWebsitePanel()
    {
-      pathSelector_ = new DirectorySelector("Site directory:");
+      pathSelector_ = new DirectorySelector(constants_.pathSelectorSiteDir());
       add(pathSelector_);    
        
-      websiteOutputFormat_ = new SelectWidget("Book output format(s):",
-                                              new String[]{"all"});
+      websiteOutputFormat_ = new SelectWidget(constants_.websiteOutputFormatLabel(),
+                                              new String[]{constants_.allLabel()});
       websiteOutputFormat_.addStyleName(RES.styles().websiteOutputFormat());
       add(websiteOutputFormat_);
       websiteOutputFormat_.setVisible(false);
       
-      chkPreviewAfterBuilding_ = checkBox("Preview site after building");
+      chkPreviewAfterBuilding_ = checkBox(constants_.chkPreviewAfterBuildingCaption());
       chkPreviewAfterBuilding_.addStyleName(RES.styles().previewWebsite());
       add(chkPreviewAfterBuilding_); 
       
       chkLivePreviewSite_ = checkBox(
-            "Re-knit current preview when supporting files change");
+            constants_.chkLivePreviewSiteCaption());
       chkLivePreviewSite_.addStyleName(RES.styles().previewWebsite());
       add(chkLivePreviewSite_); 
       
       Label infoLabel = new Label(
-         "Supporting files include Rmd partials, R scripts, YAML config files, etc.");
+         constants_.infoLabel());
       infoLabel.addStyleName(RES.styles().infoLabel());
       add(infoLabel);
    }
@@ -70,7 +71,7 @@ public class BuildToolsWebsitePanel extends BuildToolsPanel
       if (buildContext.isBookdownSite())
       {
          // change caption
-         chkPreviewAfterBuilding_.setText("Preview book after building");
+         chkPreviewAfterBuilding_.setText(constants_.chkPreviewAfterBuilding());
          
          // get all available output formats
          JsArrayString formatsJson = buildContext.getWebsiteOutputFormats();
@@ -78,8 +79,8 @@ public class BuildToolsWebsitePanel extends BuildToolsPanel
          ArrayList<String> formats = new ArrayList<>();
         
          // always include "All Formats"
-         formatNames.add("(All Formats)");
-         formats.add("all");
+         formatNames.add(constants_.allFormatsLabel());
+         formats.add(constants_.allLabel());
          for (int i = 0; i<formatsJson.length(); i++) 
          {
             formatNames.add(formatsJson.get(i));
@@ -111,4 +112,5 @@ public class BuildToolsWebsitePanel extends BuildToolsPanel
    
    
    private SelectWidget websiteOutputFormat_;
+   private static final StudioClientProjectConstants constants_ = com.google.gwt.core.client.GWT.create(StudioClientProjectConstants.class);
 }

@@ -1,7 +1,7 @@
 /*
  * PublishRPubsPage.java
  *
- * Copyright (C) 2021 by RStudio, PBC
+ * Copyright (C) 2022 by RStudio, PBC
  *
  * Unless you have received this program directly from RStudio pursuant
  * to the terms of a commercial license agreement with RStudio, then
@@ -14,8 +14,10 @@
  */
 package org.rstudio.studio.client.rsconnect.ui;
 
+import com.google.gwt.core.client.GWT;
 import org.rstudio.core.client.resources.ImageResource2x;
 import org.rstudio.core.client.widget.WizardPage;
+import org.rstudio.studio.client.rsconnect.RsconnectConstants;
 import org.rstudio.studio.client.rsconnect.model.RSConnectPublishInput;
 import org.rstudio.studio.client.rsconnect.model.RSConnectPublishResult;
 import org.rstudio.studio.client.rsconnect.model.RSConnectPublishSource;
@@ -27,7 +29,7 @@ public class PublishRPubsPage
 {
    public PublishRPubsPage(String title, String subTitle)
    {
-      super(title, subTitle, "Publish to RPubs", 
+      super(title, subTitle, constants_.publishToRpubs(),
             new ImageResource2x(RSConnectResources.INSTANCE.rpubsPublish2x()), 
             new ImageResource2x(RSConnectResources.INSTANCE.rpubsPublishLarge2x()));
    }
@@ -62,6 +64,7 @@ public class PublishRPubsPage
                   initialData_.isSelfContained(),
                   true, // as static
                   initialData_.isShiny(),
+                  initialData_.isQuarto(),
                   initialData_.getDescription(),
                   initialData_.getContentType()));
    }
@@ -73,4 +76,5 @@ public class PublishRPubsPage
    }
 
    private RSConnectPublishInput initialData_;
+   private static final RsconnectConstants constants_ = GWT.create(RsconnectConstants.class);
 }

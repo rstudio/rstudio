@@ -1,7 +1,7 @@
 /*
  * WebApplicationHeader.java
  *
- * Copyright (C) 2021 by RStudio, PBC
+ * Copyright (C) 2022 by RStudio, PBC
  *
  * Unless you have received this program directly from RStudio pursuant
  * to the terms of a commercial license agreement with RStudio, then
@@ -59,6 +59,7 @@ import org.rstudio.core.client.widget.ToolbarLabel;
 import org.rstudio.core.client.widget.ToolbarSeparator;
 import org.rstudio.core.client.widget.events.GlassVisibilityEvent;
 import org.rstudio.studio.client.RStudioGinjector;
+import org.rstudio.studio.client.application.StudioClientApplicationConstants;
 import org.rstudio.studio.client.application.Desktop;
 import org.rstudio.studio.client.application.events.EventBus;
 import org.rstudio.studio.client.application.events.LogoutRequestedEvent;
@@ -101,6 +102,7 @@ public class WebApplicationHeader extends Composite
 
       // remove some desktop-only commands
       commands.showGpuDiagnostics().remove();
+      commands.showA11yDiagnostics().remove();
       commands.reloadUi().remove();
       commands.openDeveloperConsole().remove();
 
@@ -199,7 +201,7 @@ public class WebApplicationHeader extends Composite
          if (logoTargetUrl_ != null)
          {
             logoAnchor_.setHref(logoTargetUrl_);
-            logoAnchor_.setTitle("RStudio Server Home");
+            logoAnchor_.setTitle(constants_.rStudioServerHomeTitle());
          }
          else
          {
@@ -344,9 +346,9 @@ public class WebApplicationHeader extends Composite
          public void onCommand(AppCommand command)
          {
             MessageDialogLabel label = new MessageDialogLabel();
-            label.setHtml("Your browser does not allow access to your<br/>" +
-                          "computer's clipboard. As a result you must<br/>" +
-                          "use keyboard shortcuts for:" +
+            label.setHtml(constants_.browserNotAllowAccessLabel() + "<br/>" +
+                          constants_.computerClipBoardLabel() + "<br/>" +
+                          constants_.useKeyboardShortcutsLabel() +
                           "<br/><br/><table cellpadding=0 cellspacing=0 border=0>" +
                           makeRow(commands.undoDummy()) +
                           makeRow(commands.redoDummy()) +
@@ -358,7 +360,7 @@ public class WebApplicationHeader extends Composite
                           );
             new WebDialogBuilderFactory().create(
                   GlobalDisplay.MSG_WARNING,
-                  "Use Keyboard Shortcut",
+                  constants_.useKeyboardShortcutCaption(),
                   label).showModal();
          }
 
@@ -407,7 +409,7 @@ public class WebApplicationHeader extends Composite
 
          ToolbarButton signOutButton = new ToolbarButton(
                ToolbarButton.NoText,
-               "Sign out",
+               constants_.signOutTitle(),
                new ImageResource2x(RESOURCES.signOut2x()),
                event -> eventBus_.fireEvent(new LogoutRequestedEvent()));
          headerBarCommandsPanel_.add(signOutButton);
@@ -576,4 +578,5 @@ public class WebApplicationHeader extends Composite
    private WebApplicationHeaderOverlay overlay_;
    private boolean hostedMode_;
    private boolean toolbarVisible_;
+   private static final StudioClientApplicationConstants constants_ = GWT.create(StudioClientApplicationConstants.class);
 }

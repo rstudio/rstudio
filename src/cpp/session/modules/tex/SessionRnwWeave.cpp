@@ -1,7 +1,7 @@
 /*
  * SessionRnwWeave.cpp
  *
- * Copyright (C) 2021 by RStudio, PBC
+ * Copyright (C) 2022 by RStudio, PBC
  *
  * Unless you have received this program directly from RStudio pursuant
  * to the terms of a commercial license agreement with RStudio, then
@@ -40,6 +40,7 @@
 
 using namespace rstudio::core;
 using namespace rstudio::session::modules::tex::rnw_concordance;
+using namespace boost::placeholders;
 
 namespace rstudio {
 namespace session {
@@ -102,9 +103,9 @@ public:
                                        const std::string& driver) const
    {
       std::vector<std::string> args;
-      args.push_back("--slave");
       args.push_back("--no-save");
       args.push_back("--no-restore");
+      args.push_back("-s");
       args.push_back("-e");
       std::string cmd = "grDevices::pdf.options(useDingbats = FALSE); "
                         + weaveCommand(file, encoding, driver);
@@ -123,7 +124,7 @@ public:
    {
       // split into lines so we can determine the line numbers for the chunks
       // NOTE: will need to read this using global/project encoding if we
-      // want to look for text outside of theh orignal error parsing
+      // want to look for text outside of theh original error parsing
       // scenario (which only required ascii)
       std::string rnwContents;
       Error error = core::readStringFromFile(rnwFilePath, &rnwContents);

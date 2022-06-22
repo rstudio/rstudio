@@ -1,7 +1,7 @@
 /*
  * FindOutputPane.java
  *
- * Copyright (C) 2021 by RStudio, PBC
+ * Copyright (C) 2022 by RStudio, PBC
  *
  * Unless you have received this program directly from RStudio pursuant
  * to the terms of a commercial license agreement with RStudio, then
@@ -32,11 +32,13 @@ import org.rstudio.core.client.dom.DomUtils;
 import org.rstudio.core.client.events.EnsureVisibleEvent;
 import org.rstudio.core.client.events.HasSelectionCommitHandlers;
 import org.rstudio.core.client.events.SelectionCommitEvent;
+import org.rstudio.core.client.theme.res.ThemeStyles;
 import org.rstudio.core.client.widget.*;
 import org.rstudio.core.client.widget.events.SelectionChangedEvent;
 import org.rstudio.studio.client.application.events.EventBus;
 import org.rstudio.studio.client.workbench.commands.Commands;
 import org.rstudio.studio.client.workbench.ui.WorkbenchPane;
+import org.rstudio.studio.client.workbench.views.output.OutputConstants;
 import org.rstudio.studio.client.workbench.views.output.find.model.FindResult;
 import org.rstudio.studio.client.workbench.views.output.find.events.PreviewReplaceEvent;
 
@@ -51,7 +53,7 @@ public class FindOutputPane extends WorkbenchPane
    public FindOutputPane(Commands commands,
                          EventBus eventBus)
    {
-      super("Find Results");
+      super(constants_.findResultsTitle());
       commands_ = commands;
       eventBus_ = eventBus;
       ensureWidget();
@@ -60,56 +62,41 @@ public class FindOutputPane extends WorkbenchPane
    @Override
    protected Toolbar createMainToolbar()
    {
-      Toolbar toolbar = new Toolbar("Find Output Tab");
+      Toolbar toolbar = new Toolbar(constants_.findOutputTabLabel());
 
       searchLabel_ = new Label();
       toolbar.addLeftWidget(searchLabel_);
 
       stopSearch_ = new ToolbarButton(
             ToolbarButton.NoText,
-            "Stop find in files",
+            constants_.stopFindInFilesTitle(),
             commands_.interruptR().getImageResource());
-      stopSearch_.setVisible(false);
       toolbar.addRightWidget(stopSearch_);
 
-      showFindButton_ = new LeftRightToggleButton("Find", "Replace", true);
+      refreshButton_ = commands_.refreshFindInFiles().createToolbarButton();
+      refreshButton_.addStyleName(ThemeStyles.INSTANCE.refreshToolbarButton());
+      toolbar.addRightWidget(refreshButton_);
+      setStopSearchButtonVisible(false);
+
+      showFindButton_ = new LeftRightToggleButton(constants_.findLabel(), constants_.replaceLabel(), true);
       showFindButton_.addClickHandler(new ClickHandler() {
          @Override
          public void onClick(ClickEvent event)
          {
             if (!replaceMode_)
-            {
-               showFindButton_.setVisible(false);
-               showReplaceButton_.setVisible(true);
-               setReplaceMode(true);
-               setSecondaryToolbarVisible(true);
-               if (displayPreview_ == null)
-                  createDisplayPreview();
-               if (!replaceTextBox_.getValue().isEmpty())
-                  displayPreview_.nudge();
-            }
+               turnOnReplaceMode();
          }
       });
       toolbar.addRightWidget(showFindButton_);
 
-      showReplaceButton_ = new LeftRightToggleButton("Find", "Replace", false);
+      showReplaceButton_ = new LeftRightToggleButton(constants_.findLabel(), constants_.replaceLabel(), false);
       showReplaceButton_.setVisible(false);
       showReplaceButton_.addClickHandler(new ClickHandler() {
          @Override
          public void onClick(ClickEvent event)
          {
             if (replaceMode_)
-            {
-               showFindButton_.setVisible(true);
-               showReplaceButton_.setVisible(false);
-               setSecondaryToolbarVisible(false);
-               if (!replaceTextBox_.getValue().isEmpty())
-               {
-                  //setRegexPreviewMode(false);
-                  addReplaceMatches("");
-               }
-               setReplaceMode(false);
-            }
+               turnOffReplaceMode();
          }
       });
       toolbar.addRightWidget(showReplaceButton_);
@@ -120,7 +107,7 @@ public class FindOutputPane extends WorkbenchPane
    @Override
    protected SecondaryToolbar createSecondaryToolbar()
    {
-      SecondaryToolbar replaceToolbar = new SecondaryToolbar("Replace");
+      SecondaryToolbar replaceToolbar = new SecondaryToolbar(constants_.replaceLabel());
       replaceMode_ = true;
 
       replaceTextBox_ = new TextBox();
@@ -131,18 +118,18 @@ public class FindOutputPane extends WorkbenchPane
             displayPreview_.nudge();
          }
       });
-      FormLabel replaceLabel = new FormLabel("Replace with: ", replaceTextBox_);
+      FormLabel replaceLabel = new FormLabel(constants_.replaceWithLabel(), replaceTextBox_);
       replaceToolbar.addLeftWidget(replaceLabel);
       replaceToolbar.addLeftWidget(replaceTextBox_);
 
       stopReplace_ = new ToolbarButton(
             ToolbarButton.NoText,
-            "Stop replace",
+            constants_.stopReplaceTitle(),
             commands_.interruptR().getImageResource());
-      stopReplace_.setVisible(false);
       replaceToolbar.addRightWidget(stopReplace_);
+      setStopReplaceButtonVisible(false);
 
-      replaceAllButton_ = new ToolbarButton("Replace All", "Replace All", null);
+      replaceAllButton_ = new ToolbarButton(constants_.replaceAllText(), constants_.replaceAllText(), null);
       replaceToolbar.addRightWidget(replaceAllButton_);
 
       replaceProgress_ = new ProgressBar();
@@ -167,7 +154,7 @@ public class FindOutputPane extends WorkbenchPane
             resources.styles().selectedRow(),
             true,
             false,
-            "Find in Files Results");
+            constants_.findInFilesResultsTitle());
       FontSizer.applyNormalFontSize(table_);
       table_.addStyleName(resources.styles().findOutput());
       table_.addClickHandler(new ClickHandler()
@@ -276,7 +263,7 @@ public class FindOutputPane extends WorkbenchPane
    public void showSearchCompleted()
    {
       if (matchCount_ == 0)
-         statusPanel_.setStatusText("(No results found)");
+         statusPanel_.setStatusText(constants_.noResultsFoundText());
    }
 
    @Override
@@ -308,7 +295,10 @@ public class FindOutputPane extends WorkbenchPane
    @Override
    public void setStopSearchButtonVisible(boolean visible)
    {
+      // only one of the stop search and refresh search buttons should show in the toolbar at a time
+      // when search is in progress, stopSearch_ will be visible and refreshButton_ will be hidden
       stopSearch_.setVisible(visible);
+      refreshButton_.setVisible(!visible);
    }
 
    @Override
@@ -343,13 +333,13 @@ public class FindOutputPane extends WorkbenchPane
    @Override
    public void updateSearchLabel(String query, String path, boolean wholeWord)
    {
-      String intro = wholeWord ? "Results for whole word " : "Results for ";
+      String intro = wholeWord ? constants_.resultsForWholeWordText() : constants_.resultsForText();
       SafeHtmlBuilder builder = new SafeHtmlBuilder();
       builder.appendEscaped(intro)
             .appendHtmlConstant("<strong>")
             .appendEscaped(query)
             .appendHtmlConstant("</strong>")
-            .appendEscaped(" in ")
+            .appendEscaped(" " + constants_.inText())
             .appendEscaped(path);
       searchLabel_.getElement().setInnerHTML(builder.toSafeHtml().asString());
    }
@@ -357,17 +347,17 @@ public class FindOutputPane extends WorkbenchPane
    @Override
    public void updateSearchLabel(String query, String path, String replace, boolean wholeWord)
    {
-      String intro = wholeWord ? "Replace results for whole word " : "Replace results for ";
+      String intro = wholeWord ? constants_.replaceResultsWholeWordText() : constants_.replaceResultsForText();
       SafeHtmlBuilder builder = new SafeHtmlBuilder();
       builder.appendEscaped(intro)
             .appendHtmlConstant("<strong>")
             .appendEscaped(query)
             .appendHtmlConstant("</strong>")
-            .appendEscaped(" with ")
+            .appendEscaped(" " + constants_.withText())
             .appendHtmlConstant("<strong>")
             .appendEscaped(replace)
             .appendHtmlConstant("</strong>")
-            .appendEscaped(" in ")
+            .appendEscaped(" " + constants_.inText())
             .appendEscaped(path);
       searchLabel_.getElement().setInnerHTML(builder.toSafeHtml().asString());
    }
@@ -376,20 +366,20 @@ public class FindOutputPane extends WorkbenchPane
    public void updateSearchLabel(String query, String path, String replace,
                                  boolean wholeWord, int successCount, int errorCount)
    {
-      String intro = wholeWord ? "Replace results for whole word " : "Replace results for ";
+      String intro = wholeWord ? constants_.replaceResultsWholeWordText() : constants_.replaceResultsForText();
       SafeHtmlBuilder builder = new SafeHtmlBuilder();
       builder.appendEscaped(intro)
             .appendHtmlConstant("<strong>")
             .appendEscaped(query)
             .appendHtmlConstant("</strong>")
-            .appendEscaped(" with ")
+            .appendEscaped(" " + constants_.withText())
             .appendHtmlConstant("<strong>")
             .appendEscaped(replace)
             .appendHtmlConstant("</strong>")
-            .appendEscaped(" in ")
+            .appendEscaped(" " + constants_.inText())
             .appendEscaped(path);
       {
-         String summary = ": " + successCount + " successful, " + errorCount + " failed";
+         String summary = constants_.summaryLabel(successCount, errorCount);
          builder.appendEscaped(summary);
       }
       searchLabel_.getElement().setInnerHTML(builder.toSafeHtml().asString());
@@ -442,6 +432,7 @@ public class FindOutputPane extends WorkbenchPane
    public void setStopReplaceButtonVisible(boolean visible)
    {
       stopReplace_.setVisible(visible);
+      refreshButton_.setVisible(!visible);
    }
 
    @Override
@@ -462,6 +453,30 @@ public class FindOutputPane extends WorkbenchPane
    {
       replaceTextBox_.setReadOnly(true);
       replaceAllButton_.setEnabled(false);
+   }
+
+   @Override
+   public void turnOnReplaceMode()
+   {
+      showFindButton_.setVisible(false);
+      showReplaceButton_.setVisible(true);
+      setReplaceMode(true);
+      setSecondaryToolbarVisible(true);
+      if (displayPreview_ == null)
+         createDisplayPreview();
+      if (!replaceTextBox_.getValue().isEmpty())
+         displayPreview_.nudge();
+   }
+
+   @Override
+   public void turnOffReplaceMode()
+   {
+      showFindButton_.setVisible(true);
+      showReplaceButton_.setVisible(false);
+      setSecondaryToolbarVisible(false);
+      if (!replaceTextBox_.getValue().isEmpty())
+         addReplaceMatches("");
+      setReplaceMode(false);
    }
 
    @Override
@@ -523,6 +538,7 @@ public class FindOutputPane extends WorkbenchPane
    private final EventBus eventBus_;
    private Label searchLabel_;
    private ToolbarButton stopSearch_;
+   private ToolbarButton refreshButton_;
    private SimplePanel container_;
    private ScrollPanel scrollPanel_;
    private StatusPanel statusPanel_;
@@ -545,4 +561,5 @@ public class FindOutputPane extends WorkbenchPane
 
    // This must be the same as MAX_COUNT in SessionFind.cpp
    private static final int MAX_COUNT = 1000;
+   private static final OutputConstants constants_ = GWT.create(OutputConstants.class);
 }

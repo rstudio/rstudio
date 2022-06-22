@@ -1,7 +1,7 @@
 /*
  * ServerMain.cpp
  *
- * Copyright (C) 2021 by RStudio, PBC
+ * Copyright (C) 2022 by RStudio, PBC
  *
  * Unless you have received this program directly from RStudio pursuant
  * to the terms of a commercial license agreement with RStudio, then
@@ -22,21 +22,25 @@
 #include <core/Log.hpp>
 #include <core/ProgramStatus.hpp>
 #include <core/ProgramOptions.hpp>
+#include <core/SocketRpc.hpp>
+#include <core/json/JsonRpc.hpp>
 
 #include <core/text/TemplateFilter.hpp>
 
+#include <core/system/PosixChildProcess.hpp>
 #include <core/system/PosixSystem.hpp>
 #include <core/system/Crypto.hpp>
 
 #include <core/http/URL.hpp>
 #include <core/http/AsyncUriHandler.hpp>
-#include <server_core/http/SecureCookie.hpp>
 #include <core/http/TcpIpAsyncServer.hpp>
 
 #include <core/gwt/GwtLogHandler.hpp>
 #include <core/gwt/GwtFileHandler.hpp>
 
+#include <server_core/SecureKeyFile.hpp>
 #include <server_core/ServerDatabase.hpp>
+#include <server_core/http/SecureCookie.hpp>
 
 #include <monitor/MonitorClient.hpp>
 
@@ -50,14 +54,17 @@
 #include <server/ServerOptions.hpp>
 #include <server/ServerUriHandlers.hpp>
 #include <server/ServerScheduler.hpp>
-#include <server/ServerSessionProxy.hpp>
-#include <server/ServerSessionManager.hpp>
 #include <server/ServerProcessSupervisor.hpp>
 #include <server/ServerPaths.hpp>
+
+#include <server/session/ServerSessionProxy.hpp>
+#include <server/session/ServerSessionManager.hpp>
+#include <server/session/ServerSessionMetadataRpc.hpp>
 
 #include <shared_core/Error.hpp>
 #include <shared_core/system/User.hpp>
 
+#include "server-config.h"
 #include "ServerAddins.hpp"
 #include "ServerBrowser.hpp"
 #include "ServerEval.hpp"
@@ -68,10 +75,12 @@
 #include "ServerPAMAuth.hpp"
 #include "ServerREnvironment.hpp"
 #include "ServerXdgVars.hpp"
+#include "ServerLogVars.hpp"
 
 using namespace rstudio;
 using namespace rstudio::core;
 using namespace rstudio::server;
+using namespace boost::placeholders;
 
 // forward-declare overlay methods
 namespace rstudio {
@@ -90,6 +99,8 @@ bool requireLocalR();
 
 namespace {
 
+std::string s_rpcSecret;
+
 const char * const kProgramIdentity = "rserver";
    
 bool mainPageFilter(const core::http::Request& request,
@@ -99,7 +110,6 @@ bool mainPageFilter(const core::http::Request& request,
           server::browser::supportedBrowserFilter(request, pResponse) &&
           auth::handler::mainPageFilter(request, pResponse);
 }
-
 
 http::UriHandlerFunction blockingFileHandler()
 {
@@ -246,6 +256,7 @@ void httpServerAddHandlers()
    uri_handlers::add("/fonts", secureAsyncHttpHandler(proxyContentRequest));
    uri_handlers::add("/python", secureAsyncHttpHandler(proxyContentRequest));
    uri_handlers::add("/tutorial", secureAsyncHttpHandler(proxyContentRequest));
+   uri_handlers::add("/quarto", secureAsyncHttpHandler(proxyContentRequest));
 
    // content handlers which might be accessed outside the context of the
    // workbench get secure + authentication when required
@@ -302,16 +313,11 @@ void httpServerAddHandlers()
    uri_handlers::setBlockingDefault(blockingFileHandler());
 }
 
-Error initLog()
-{
-   return core::system::initializeSystemLog(kProgramIdentity, core::log::LogLevel::WARN, false);
-}
-
 bool reloadLoggingConfiguration()
 {
    LOG_INFO_MESSAGE("Reloading logging configuration...");
 
-   Error error = initLog();
+   Error error = core::system::reinitLog();
    if (error)
    {
       LOG_ERROR_MESSAGE("Failed to reload logging configuration");
@@ -438,6 +444,24 @@ Error waitForSignals()
       else if (sig == SIGHUP)
       {
          reloadConfiguration();
+
+         // forward signal to specific RStudio child processes
+         // this will allow them to also reload their configuration / logging if applicable
+         // care is taken not to send errant SIGHUP signals to processes we don't control
+         std::set<std::string> reloadableProcs =  {"rsession",
+                                                   "rserver-launcher",
+                                                   "rstudio-launcher",
+                                                   "rworkspaces",
+                                                   "rserver-monitor"};
+
+         Error error = core::system::sendSignalToSpecifiedChildProcesses(reloadableProcs, SIGHUP);
+         if (error)
+         {
+            error.addProperty("description", "Error occurred while notifying child processes of SIGHUP");
+            LOG_ERROR(error);
+         }
+         else
+            LOG_INFO_MESSAGE("Successfully notified children of SIGHUP");
       }
 
       // Unexpected signal
@@ -527,7 +551,15 @@ int main(int argc, char * const argv[])
 {
    try
    {
-      Error error = initLog();
+      // read environment variables from config file; we have to do this before initializing logging
+      // so that logging environment variables like RS_LOG_LEVEL stored in this file will be
+      // respected when logging is initialized (below).
+      //
+      // note that we can't emit any logs or errors while reading this config file since logging
+      // isn't initialized yet, so we suppress logging in this step
+      env_vars::readEnvConfigFile(false /* suppress logs */);
+
+      Error error = core::system::initializeLog(kProgramIdentity, core::log::LogLevel::WARN, false);
       if (error)
       {
          core::log::writeError(error, std::cerr);
@@ -573,8 +605,8 @@ int main(int argc, char * const argv[])
          if (error)
             return core::system::exitFailure(error, ERROR_LOCATION);
 
-         // Reload the loggers after succesful daemonize to clear out old FDs.
-         core::log::reloadAllLogDestinations();
+         // Refresh the loggers after successful daemonize to clear out old FDs
+         core::log::refreshAllLogDestinations();
 
          // set file creation mask to 022 (might have inherted 0 from init)
          if (options.serverSetUmask())
@@ -613,7 +645,8 @@ int main(int argc, char * const argv[])
 
             if (depth == 1 &&
                 (boost::ends_with(file.getFilename(), "-d") ||
-                 boost::ends_with(file.getFilename(), "-d.pid")))
+                 boost::ends_with(file.getFilename(), "-d.pid") ||
+                 boost::ends_with(file.getFilename(), "-d.ctx")))
                return false;
 
             return true;
@@ -666,6 +699,7 @@ int main(int argc, char * const argv[])
       // export important environment variables
       core::system::setenv(kServerDataDirEnvVar, serverDataDir.getAbsolutePath());
       core::system::setenv(kSessionTmpDirEnvVar, sessionTmpDir().getAbsolutePath());
+      core::system::setenv(kServerRpcSocketPathEnvVar, serverRpcSocketPath().getAbsolutePath());
 
       // initialize File Lock
       FileLock::initialize();
@@ -719,11 +753,16 @@ int main(int argc, char * const argv[])
       {
          // add a monitor log writer
          core::log::addLogDestination(
-            monitor::client().createLogDestination(core::log::LogLevel::WARN, kProgramIdentity));
+            monitor::client().createLogDestination(core::system::generateShortenedUuid(), core::log::LogLevel::WARN, kProgramIdentity));
       }
 
       // initialize XDG var insertion
       error = xdg_vars::initialize();
+      if (error)
+         return core::system::exitFailure(error, ERROR_LOCATION);
+
+      // initialize log var insertion
+      error = log_vars::initialize();
       if (error)
          return core::system::exitFailure(error, ERROR_LOCATION);
 
@@ -741,9 +780,26 @@ int main(int argc, char * const argv[])
          // inject the path prefix as the root path for all requests
          uri_handlers::setRequestFilter(rootPathRequestFilter);
       }
+      // initialize socket rpc so we can send distributed events
+      error = key_file::readSecureKeyFile("session-rpc-key", &s_rpcSecret);
+      if (error)
+         return core::system::exitFailure(error, ERROR_LOCATION);
+
+      error = core::socket_rpc::initializeSecret(s_rpcSecret);
+      if (error)
+         return core::system::exitFailure(error, ERROR_LOCATION);
+
+      // initialize the session rpc handler
+      error = session_rpc::initialize();
+      if (error)
+         return core::system::exitFailure(error, ERROR_LOCATION);
 
       // call overlay initialize
       error = overlay::initialize();
+      if (error)
+         return core::system::exitFailure(error, ERROR_LOCATION);
+
+      error = session_metadata::initialize();
       if (error)
          return core::system::exitFailure(error, ERROR_LOCATION);
 
@@ -786,14 +842,17 @@ int main(int argc, char * const argv[])
          }
       }
 
-      // give up root privilige if requested
-      std::string runAsUser = options.serverUser();
-      if (!runAsUser.empty())
+      // give up root privilege if requested and running as root
+      if (core::system::realUserIsRoot())
       {
-         // drop root priv
-         error = core::system::temporarilyDropPriv(runAsUser);
-         if (error)
-            return core::system::exitFailure(error, ERROR_LOCATION);
+         std::string runAsUser = options.serverUser();
+         if (!runAsUser.empty())
+         {
+            // drop root priv
+            error = core::system::temporarilyDropPriv(runAsUser, true);
+            if (error)
+               return core::system::exitFailure(error, ERROR_LOCATION);
+         }
       }
 
       // run special verify installation mode if requested
@@ -814,10 +873,29 @@ int main(int argc, char * const argv[])
       if (error)
          LOG_ERROR(error);
 
+      server::session_rpc::addHandler(
+         "/server_version", 
+         [](const std::string&, boost::shared_ptr<core::http::AsyncConnection> pConnection)
+         {
+            json::Object obj;
+            obj["version"] = RSTUDIO_VERSION;
+
+            json::JsonRpcResponse response;
+            response.setResult(obj);
+
+            json::setJsonRpcResponse(response, &(pConnection->response()));
+            pConnection->writeResponse();
+         });
+
       // call overlay startup
       error = overlay::startup();
       if (error)
          return core::system::exitFailure(error, ERROR_LOCATION);
+
+      // Start the session RPC
+      error = server::session_rpc::startup();
+      if (error)
+         LOG_ERROR(error);
 
       // add http server not found handler
       s_pHttpServer->setNotFoundHandler(pageNotFoundHandler);

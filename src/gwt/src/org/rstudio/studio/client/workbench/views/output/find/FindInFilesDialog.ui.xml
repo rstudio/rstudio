@@ -1,6 +1,9 @@
 <ui:UiBinder xmlns:ui='urn:ui:com.google.gwt.uibinder'
              xmlns:g='urn:import:com.google.gwt.user.client.ui'
-             xmlns:rw="urn:import:org.rstudio.core.client.widget">
+             xmlns:rw="urn:import:org.rstudio.core.client.widget"
+             ui:generateFormat='com.google.gwt.i18n.server.PropertyCatalogFactory'
+             ui:generateKeys="com.google.gwt.i18n.server.keygen.MD5KeyGenerator"
+             ui:generateLocales="default">
    <ui:with field="ElementIds" type="org.rstudio.core.client.ElementIds"/>
 
    <ui:style>
@@ -35,11 +38,14 @@
       <p>
          <rw:LabeledTextBox textBoxId="{ElementIds.getFindFilesText}" ui:field="txtSearchPattern_"
                             labelText="Find:" enableSpellcheck="false" styleName="{style.pattern}"/>
-         <rw:FormCheckBox elementId="{ElementIds.getFindFilesCase}" ui:field="checkboxCaseSensitive_" text="Case sensitive"/>
+         <rw:FormCheckBox elementId="{ElementIds.getFindFilesCase}" ui:field="checkboxCaseSensitive_" text="Case sensitive"><ui:attribute
+                 name="text" key="caseSensitiveText"/></rw:FormCheckBox>
          &#x00a0;
-         <rw:FormCheckBox elementId="{ElementIds.getFindFilesWholeWord}" ui:field="checkboxWholeWord_" text="Whole word"/>
+         <rw:FormCheckBox elementId="{ElementIds.getFindFilesWholeWord}" ui:field="checkboxWholeWord_" text="Whole word"><ui:attribute
+                 name="text" key="wholeWordText"/></rw:FormCheckBox>
          &#x00a0;
-         <rw:FormCheckBox elementId="{ElementIds.getFindFilesRegex}" ui:field="checkboxRegex_" text="Regular expression"/>
+         <rw:FormCheckBox elementId="{ElementIds.getFindFilesRegex}" ui:field="checkboxRegex_" text="Regular expression"><ui:attribute
+                 name="text" key="regularExpressionText"/></rw:FormCheckBox>
          &#x00a0;
       </p>
 
@@ -47,36 +53,37 @@
          <rw:DirectoryChooserTextBox ui:field="dirChooser_"/>
       </p>
 
-      <p><rw:FormLabel ui:field="labelFilePatterns_" text="Search these files:"/>
+      <p><rw:FormLabel ui:field="labelFilePatterns_" text="Search these files:"><ui:attribute name="text" key="searchFilesText"/></rw:FormLabel>
          <rw:FormListBox ui:field="listPresetFilePatterns_"
                     styleName="{style.presetFilePatterns}">
-            <g:item value="">All Files</g:item>
-            <g:item value="*.r, *.R, *.rnw, *.Rnw, *.rmd, *.Rmd, *.rmarkdown, *.Rmarkdown, *.rhtml, *.Rhtml, *.h, *.hpp, *.c, *.cpp">Common R source files (R, C/C++, Rnw, Rmd, Rhtml)</g:item>
-            <g:item value="*.r, *.R">R Scripts</g:item>
-            <g:item value="packageSource">Package Sources (R/ , src/)</g:item>
-            <g:item value="packageTests">Package Tests (tests/)</g:item>
-            <g:item value="custom">Custom Filter</g:item>
+            <g:item value=""><ui:msg key="allFiles">All Files</ui:msg></g:item>
+            <g:item value="*.r, *.R, *.rnw, *.Rnw, *.rmd, *.Rmd, *.rmarkdown, *.Rmarkdown, *.qmd, *.Qmd, *.md, *.rhtml, *.Rhtml, *.h, *.hpp, *.c, *.cpp, *.js, *.yml, *.yaml"><ui:msg key="commonSourceFiles">Common source files (R, C/C++, Markdown, Rnw, Rhtml, JS, YAML)</ui:msg></g:item>
+            <g:item value="*.r, *.R"><ui:msg key="rScripts">R Scripts</ui:msg></g:item>
+            <g:item value="packageSource"><ui:msg key="packageSources">Package Sources (R/ , src/)</ui:msg></g:item>
+            <g:item value="packageTests"><ui:msg key="packageTests">Package Tests (tests/)</ui:msg></g:item>
+            <g:item value="custom"><ui:msg key="customFilter">Custom Filter</ui:msg></g:item>
          </rw:FormListBox>
          <div ui:field="divCustomFilter_">
             <g:TextBox ui:field="txtFilePattern_" styleName="{style.filePattern}"/>
             <br/>
-            <span ui:field="spanPatternExample_" class="{style.example}">Example: *.R, *.r, *.csv. Separate multiple types with commas.</span>
+            <span ui:field="spanPatternExample_" class="{style.example}"><ui:msg key="spanPatternExample">Example: *.R, *.r, *.csv. Separate multiple types with commas.</ui:msg></span>
          </div>
       </p>
 
-      <p><rw:FormLabel ui:field="labelExcludeFilePatterns_" text="Exclude these files:"/>
-         <rw:FormListBox ui:field="listPresetExcludeFilePatterns_"
-                    styleName="{style.presetFilePatterns}">
-            <g:item value="">None</g:item>
-            <g:item value="gitExclusions">Standard Git exclusions</g:item>
-            <g:item value="custom">Custom Filter</g:item>
-         </rw:FormListBox>
-         <div ui:field="divExcludeCustomFilter_">
-            <g:TextBox ui:field="txtExcludeFilePattern_" styleName="{style.filePattern}"/>
-            <br/>
-            <span ui:field="spanExcludePatternExample_" class="{style.example}">Example: *.R, *.r, *.csv. Separate multiple types with commas.</span>
-         </div>
-      </p>
+      <div ui:field="divExcludeGitIgnore_">
+         <rw:FormCheckBox elementId="{ElementIds.getExcludeGitIgnore}" ui:field="checkboxExcludeGitIgnore_" text="Exclude files matched by .gitignore">
+            <ui:attribute name="text" key="gitExclusionsText"/>
+         </rw:FormCheckBox>
+      </div>
+
+      <rw:FormCheckBox elementId="{ElementIds.getExcludeCustom}" ui:field="checkboxExcludeCustom_" text="Exclude these files:">
+            <ui:attribute name="text" key="customExclusionsText"/>
+      </rw:FormCheckBox>
+      <div ui:field="divExcludeCustomFilter_">
+         <g:TextBox ui:field="txtExcludeFilePattern_" styleName="{style.filePattern}"/>
+         <br/>
+         <span ui:field="spanExcludePatternExample_" class="{style.example}"><ui:msg key="exampleText">Example: *.R, *.r, *.csv. Separate multiple types with commas.</ui:msg></span>
+      </div>
    </g:HTMLPanel>
 
 </ui:UiBinder>

@@ -4,14 +4,13 @@
 @eval THEME_DARK_ROW_SELECTED org.rstudio.core.client.theme.ThemeColors.darkRowSelected;
 @eval THEME_DARK_ROW_FOCUSED org.rstudio.core.client.theme.ThemeColors.darkRowFocused;
 
-@external rstudio-themes-flat;
 @external editor_dark, ace_editor_theme;
 
 .selected {
    background-color: #ccc;
 }
 
-.rstudio-themes-flat.editor_dark .ace_editor_theme .selected {
+.editor_dark .ace_editor_theme .selected {
    background-color: THEME_DARK_ROW_SELECTED;
 }
 
@@ -19,14 +18,8 @@
    background-color: rgb(146, 193, 240)
 }
 
-.rstudio-themes-flat.editor_dark .ace_editor_theme *:focus .selected, .inboundFocus .selected, .fakeFocus .selected {
+.editor_dark .ace_editor_theme *:focus .selected, .inboundFocus .selected, .fakeFocus .selected {
    background-color: THEME_DARK_ROW_FOCUSED;
-}
-
-@if user.agent ie8 {
-   .selected {
-      background-color: rgb(146, 193, 240)
-   }
 }
 
 .historyTable:focus {
@@ -63,7 +56,7 @@
    text-indent: -28px;
 }
 
-.rstudio-themes-flat.editor_dark .ace_editor_theme .historyTable .selected td:first-child div {
+.editor_dark .ace_editor_theme .historyTable .selected td:first-child div {
    color: #FFF;
 }
 

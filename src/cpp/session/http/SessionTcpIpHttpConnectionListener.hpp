@@ -1,7 +1,7 @@
 /*
  * SessionTcpIpHttpConnectionListener.hpp
  *
- * Copyright (C) 2021 by RStudio, PBC
+ * Copyright (C) 2022 by RStudio, PBC
  *
  * This program is licensed to you under the terms of version 3 of the
  * GNU Affero General Public License. This program is distributed WITHOUT
@@ -41,9 +41,24 @@ public:
    {
    }
 
+   TcpIpHttpConnectionListener(const std::string& address,
+                               const std::string& port,
+                               const std::string& sharedSecret,
+                               FilePath certFile,
+                               FilePath keyFile)
+      : address_(address), port_(port), secret_(sharedSecret),
+        certFile_(certFile), keyFile_(keyFile)
+   {
+   }
+
    boost::asio::ip::tcp::endpoint getLocalEndpoint() const
    {
       return localEndpoint_;
+   }
+
+   bool isSsl() const
+   {
+      return !certFile_.isEmpty();
    }
 
 protected:
@@ -58,6 +73,52 @@ private:
    virtual Error initializeAcceptor(
       http::SocketAcceptorService<boost::asio::ip::tcp>* pAcceptor)
    {
+      if (isSsl())
+      {
+         if (!certFile_.exists())
+         {
+            return systemError(boost::system::errc::no_such_file_or_directory,
+                               "Session http certificate file does not exist: " + certFile_.getAbsolutePath(),
+                               ERROR_LOCATION);
+         }
+         if (keyFile_.isEmpty())
+         {
+            return systemError(boost::system::errc::no_such_file_or_directory,
+                               "Session http missing key file",
+                               ERROR_LOCATION);
+         }
+         if (!keyFile_.exists())
+         {
+            return systemError(boost::system::errc::no_such_file_or_directory,
+                               "Session http certificate key file does not exist: " + keyFile_.getAbsolutePath(),
+                               ERROR_LOCATION);
+         }
+
+         boost::shared_ptr<boost::asio::ssl::context> context(
+                  new boost::asio::ssl::context(boost::asio::ssl::context::sslv23));
+         context->set_options(boost::asio::ssl::context::default_workarounds |
+                              boost::asio::ssl::context::no_sslv2 |
+                              boost::asio::ssl::context::single_dh_use);
+
+         boost::system::error_code ec;
+         context->use_certificate_chain_file(certFile_.getAbsolutePath(), ec);
+         if (ec)
+            return Error(ec, "Invalid cert with path: " + certFile_.getAbsolutePath(), ERROR_LOCATION);
+
+         context->use_private_key_file(keyFile_.getAbsolutePath(), boost::asio::ssl::context::pem, ec);
+         if (ec)
+            return Error(ec, "Invalid cert key file with path: " + keyFile_.getAbsolutePath(), ERROR_LOCATION);
+
+         setSslContext(context);
+      }
+      else if (!keyFile_.isEmpty())
+      {
+         return systemError(boost::system::errc::no_such_file_or_directory,
+                            "Session http cert key specified without a cert",
+                            ERROR_LOCATION);
+      }
+      
+
       Error error = http::initTcpIpAcceptor(*pAcceptor, address_, port_);
       if (error)
          return error;
@@ -78,12 +139,13 @@ private:
       return Success();
    }
 
-
 private:
    std::string address_;
    std::string port_;
    std::string secret_;
    boost::asio::ip::tcp::endpoint localEndpoint_;
+   FilePath certFile_;
+   FilePath keyFile_;
 };
 
 } // namespace session

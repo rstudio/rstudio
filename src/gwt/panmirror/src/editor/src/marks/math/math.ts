@@ -1,7 +1,7 @@
 /*
  * math.ts
  *
- * Copyright (C) 2021 by RStudio, PBC
+ * Copyright (C) 2022 by RStudio, PBC
  *
  * Unless you have received this program directly from RStudio pursuant
  * to the terms of a commercial license agreement with RStudio, then
@@ -20,10 +20,12 @@ import { InputRule } from 'prosemirror-inputrules';
 
 import { Extension, ExtensionContext } from '../../api/extension';
 import { PandocTokenType, PandocToken, PandocOutput } from '../../api/pandoc';
-import { BaseKey } from '../../api/basekeys';
-import { markIsActive, getMarkAttrs } from '../../api/mark';
+import { BaseKey, BaseKeyBinding } from '../../api/basekeys';
+import { markIsActive } from '../../api/mark';
 import { kCodeText } from '../../api/code';
-import { kMathContent, kMathType, delimiterForType, MathType } from '../../api/math';
+import { kPasteTransaction } from '../../api/transaction';
+import { kQuartoDocType } from '../../api/format';
+import { kMathContent, kMathType, delimiterForType, MathType, kMathId } from '../../api/math';
 import { MarkInputRuleFilter } from '../../api/input_rule';
 
 import { InsertInlineMathCommand, InsertDisplayMathCommand, insertMath } from './math-commands';
@@ -31,9 +33,9 @@ import { mathAppendMarkTransaction } from './math-transaction';
 import { mathHighlightPlugin } from './math-highlight';
 import { MathPopupPlugin } from './math-popup';
 import { mathViewPlugins } from './math-view';
+import { displayMathNewline, inlineMathNav } from './math-keys';
 
 import './math-styles.css';
-import { kPasteTransaction } from '../../api/transaction';
 
 const kInlineMathPattern = '\\$[^ ].*?[^\\ ]?\\$';
 const kInlineMathRegex = new RegExp(kInlineMathPattern);
@@ -42,11 +44,10 @@ const kSingleLineDisplayMathPattern = '\\$\\$[^\n]*?\\$\\$';
 const kSingleLineDisplayMathRegex = new RegExp(kSingleLineDisplayMathPattern);
 
 const extension = (context: ExtensionContext): Extension | null => {
-  const { pandocExtensions, ui, format, math, events } = context;
+  const {  ui, format, math, events } = context;
 
-  if (!pandocExtensions.tex_math_dollars) {
-    return null;
-  }
+  // note that we always enable math (harmless as worst case it is 
+  // simply output as ascii math by pandoc) so no check is made here
 
   // special blogdown handling for markdown renderers that don't support math
   const blogdownMathInCode = format.rmdExtensions.blogdownMathInCode;
@@ -61,6 +62,7 @@ const extension = (context: ExtensionContext): Extension | null => {
         spec: {
           attrs: {
             type: {},
+            id: { default: null }
           },
           inclusive: false,
           excludes: 'formatting',
@@ -96,6 +98,7 @@ const extension = (context: ExtensionContext): Extension | null => {
               getAttrs: (tok: PandocToken) => {
                 return {
                   type: tok.c[kMathType].t,
+                  id: tok.c[kMathId] || null
                 };
               },
               getText: (tok: PandocToken) => {
@@ -146,11 +149,22 @@ const extension = (context: ExtensionContext): Extension | null => {
                   // remove delimiter
                   mathText = mathText.substr(delimiter.length, mathText.length - 2 * delimiter.length);
 
-                  // trim inline math
+                
                   if (mark.attrs.type === MathType.Inline) {
+                    // trim inline math
                     mathText = mathText.trim();
+                  } else if (mark.attrs.type === MathType.Display) {
+                    // remove blank lines from display math (but preserve enclosing whitespace)
+                    const beginMatch = mathText.match(/^\s*/);
+                    const begin = beginMatch ? beginMatch[0].replace(/\n{2,}/g, "\n") : '';
+                    const endMatch = mathText.match(/\s*$/);
+                    const end = endMatch ? endMatch[0].replace(/\n{2,}/g, "\n") : '';
+                    mathText = begin + mathText.trim()
+                      .split("\n")
+                      .filter(line => line.trim().length > 0)
+                      .join("\n") + end;
                   }
-
+                  
                   // if it's just whitespace then it's not actually math (we allow this state
                   // in the editor because it's the natural starting place for new equations)
                   if (mathText.length === 0) {
@@ -163,6 +177,10 @@ const extension = (context: ExtensionContext): Extension | null => {
                       );
                       output.write(mathText);
                     });
+                    // write id if we have it
+                    if (mark.attrs.id) {
+                      output.writeRawMarkdown(` {#${mark.attrs.id}}`);
+                    }
                   }
                 } else {
                   // user removed the delimiter so write the content literally. when it round trips
@@ -172,16 +190,76 @@ const extension = (context: ExtensionContext): Extension | null => {
               }
             },
           },
+          // filter for picking out id for quarto crossref
+          tokensFilter: format.docTypes.includes(kQuartoDocType) ? (tokens: PandocToken[]) => {
+            const pendingTokens: PandocToken[] = [];
+            const filteredTokens: PandocToken[] = [];
+
+            const clearPendingTokens = () => {
+              pendingTokens.splice(0, pendingTokens.length);
+            };
+
+            const flushPendingTokens = () => {
+              filteredTokens.push(...pendingTokens);
+              clearPendingTokens();
+            };
+
+            for (const token of tokens) {
+              switch(token.t) {
+                case PandocTokenType.Math: 
+                  flushPendingTokens();
+                  if (token.c[kMathType].t === PandocTokenType.DisplayMath) {
+                    pendingTokens.push(token);
+                  } else {
+                    filteredTokens.push(token);
+                  }
+                  break;
+                case PandocTokenType.Space:
+                  if (pendingTokens.length > 0) {
+                    pendingTokens.push(token);
+                  } else {
+                    filteredTokens.push(token);
+                  }
+                  break;
+                case PandocTokenType.Str:
+                  if (pendingTokens.length > 0) {
+                    const match = (token.c as string).match(/{#(eq-[^ }]+)}/);
+                    if (match) {
+                      const mathToken = pendingTokens[0];
+                      mathToken.c[kMathId] = match[1];
+                      clearPendingTokens();
+                      filteredTokens.push(mathToken);
+                    } else {
+                      flushPendingTokens();
+                      filteredTokens.push(token);
+                    }
+                  } else {
+                    filteredTokens.push(token);
+                  }
+                  break;
+                default:
+                  flushPendingTokens();
+                  filteredTokens.push(token);
+                  break;
+              }
+            }
+            flushPendingTokens();
+
+            return filteredTokens;
+          } : undefined
         },
       },
     ],
 
     baseKeys: (_schema: Schema) => {
+      const keys: BaseKeyBinding[] = [
+        { key: BaseKey.Home, command: inlineMathNav(true) },
+        { key: BaseKey.End, command: inlineMathNav(false) }
+      ];
       if (!singleLineDisplayMath) {
-        return [{ key: BaseKey.Enter, command: displayMathNewline() }];
-      } else {
-        return [];
-      }
+        keys.push({ key: BaseKey.Enter, command: displayMathNewline });
+      } 
+      return keys;
     },
 
     inputRules: (schema: Schema, filter: MarkInputRuleFilter) => {
@@ -191,10 +269,11 @@ const extension = (context: ExtensionContext): Extension | null => {
         new InputRule(
           new RegExp('(^|[^`])' + kInlineMathInputRulePattern + '$'),
           (state: EditorState, match: string[], start: number, end: number) => {
-            if (!markIsActive(state, schema.marks.math) && filter(state, start, end)) {
+            if (!markIsActive(state, schema.marks.math) && filter(state)) {
               const tr = state.tr;
               tr.insertText('$');
               const mark = schema.marks.math.create({ type: MathType.Inline });
+              tr.removeMark(start + match[1].length, end + 1, undefined);
               tr.addMark(start + match[1].length, end + 1, mark);
               return tr;
             } else {
@@ -257,7 +336,7 @@ const extension = (context: ExtensionContext): Extension | null => {
       ];
       if (math) {
         plugins.push(new MathPopupPlugin(ui, math, events, false));
-        plugins.push(...mathViewPlugins(schema, ui, math));
+        plugins.push(...mathViewPlugins(schema, format, ui, math));
       }
       return plugins;
     },
@@ -291,31 +370,5 @@ function handlePasteIntoMath() {
   };
 }
 
-// enable insertion of newlines
-function displayMathNewline() {
-  return (state: EditorState, dispatch?: (tr: Transaction) => void) => {
-    // display math mark must be active
-
-    if (!displayMathIsActive(state)) {
-      return false;
-    }
-
-    // insert a newline
-    if (dispatch) {
-      const tr = state.tr;
-      tr.insertText('\n');
-      dispatch(tr);
-    }
-    return true;
-  };
-}
-
-function displayMathIsActive(state: EditorState) {
-  const schema = state.schema;
-  return (
-    markIsActive(state, schema.marks.math) &&
-    getMarkAttrs(state.doc, state.selection, schema.marks.math).type === MathType.Display
-  );
-}
 
 export default extension;

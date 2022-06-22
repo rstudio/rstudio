@@ -1,7 +1,7 @@
 /*
  * AddinsToolbarButton.java
  *
- * Copyright (C) 2021 by RStudio, PBC
+ * Copyright (C) 2022 by RStudio, PBC
  *
  * Unless you have received this program directly from RStudio pursuant
  * to the terms of a commercial license agreement with RStudio, then
@@ -20,6 +20,7 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
+import com.google.gwt.core.client.GWT;
 import org.rstudio.core.client.ElementIds;
 import org.rstudio.core.client.MapUtil;
 import org.rstudio.core.client.js.JsUtil;
@@ -32,6 +33,7 @@ import org.rstudio.core.client.widget.ToolbarButton;
 import org.rstudio.core.client.widget.ToolbarMenuButton;
 import org.rstudio.core.client.widget.ToolbarPopupMenu;
 import org.rstudio.studio.client.RStudioGinjector;
+import org.rstudio.studio.client.application.StudioClientApplicationConstants;
 import org.rstudio.studio.client.workbench.addins.Addins.AddinExecutor;
 import org.rstudio.studio.client.workbench.addins.Addins.RAddin;
 import org.rstudio.studio.client.workbench.addins.Addins.RAddins;
@@ -57,7 +59,7 @@ public class AddinsToolbarButton extends ToolbarMenuButton
 {
    public AddinsToolbarButton()
    {
-      super("Addins",
+      super(constants_.addinsText(),
             ToolbarButton.NoTitle,
             CoreResources.INSTANCE.iconEmpty(),
             new ScrollableToolbarPopupMenu()
@@ -102,7 +104,7 @@ public class AddinsToolbarButton extends ToolbarMenuButton
          }
       });
 
-      searchWidget_ = new SearchWidget("Search for addins");
+      searchWidget_ = new SearchWidget(constants_.searchForAddinsLabel());
       searchValueChangeTimer_ = new Timer()
       {
          @Override
@@ -205,7 +207,7 @@ public class AddinsToolbarButton extends ToolbarMenuButton
          @Override
          public Element createMainElement()
          {
-            Label label = new Label("No addins found");
+            Label label = new Label(constants_.noAddinsFound());
             label.addStyleName(ThemeStyles.INSTANCE.menuSubheader());
             label.getElement().getStyle().setPaddingLeft(2, Unit.PX);
             return createSearchSeparator(label);
@@ -308,4 +310,5 @@ public class AddinsToolbarButton extends ToolbarMenuButton
    private AddinExecutor executor_;
 
    private static final int MIN_WIDTH_PX = 260;
+   private static final StudioClientApplicationConstants constants_ = GWT.create(StudioClientApplicationConstants.class);
 }

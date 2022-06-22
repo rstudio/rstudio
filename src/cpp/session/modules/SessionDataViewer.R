@@ -1,7 +1,7 @@
 #
 # SessionDataViewer.R
 #
-# Copyright (C) 2021 by RStudio, PBC
+# Copyright (C) 2022 by RStudio, PBC
 #
 # Unless you have received this program directly from RStudio pursuant
 # to the terms of a commercial license agreement with RStudio, then
@@ -35,17 +35,25 @@
    # otherwise, delegate to internal methods
    if (is.numeric(col))
       .rs.formatDataColumnNumeric(col, ...)
+   else if (is.list(col) && !is.data.frame(col))
+      .rs.formatDataColumnList(col, ...)
    else
       .rs.formatDataColumnDefault(col, ...)
 })
 
 .rs.addFunction("formatDataColumnDispatch", function(col, ...)
 {
-   formatter <- utils::getS3method(
-      "format",
-      class = class(col),
-      optional = TRUE
-   )
+   formatter <- NULL
+   for (class in class(col))
+   {
+      formatter <- utils::getS3method(
+         "format",
+         class = class,
+         optional = TRUE
+      )
+      if (!is.null(formatter))
+         break
+   }
    
    if (is.null(formatter))
       return(NULL)
@@ -77,6 +85,20 @@
    
    # return formatted values
    vals
+})
+
+.rs.addFunction("formatDataColumnList", function(col, ...)
+{
+   limit <- .rs.readUserPref("data_viewer_max_cell_size")
+   if (is.null(limit)) {
+      limit <- 50L
+   }
+
+   formatted <- as.character(col)
+   large <- nchar(formatted) > limit
+   formatted <- substr(formatted, 1, limit)
+   formatted <- paste0(formatted, ifelse(large, " [...]", ""))
+   formatted
 })
 
 .rs.addFunction("formatDataColumnDefault", function(col, ...)
@@ -129,12 +151,21 @@
       
       # extract label, if any, or use global label, if any
       label <- attr(x[[idx]], "label", exact = TRUE)
-      if (is.character(label))
-         col_label <- label
+      col_label <- if (is.character(label))
+      {
+         label
+      }
       else if (idx <= length(colLabels))
-         col_label <- colLabels[[idx]]
-      else 
-         col_label <- ""
+      {
+         if (col_name %in% names(colLabels))
+            colLabels[[col_name]]
+         else
+            colLabels[[idx]]
+      }
+      else
+      {
+         ""
+      }
       
       # ensure that the column contains some scalar values we can examine 
       if (length(x[[idx]]) > 0)
@@ -319,61 +350,67 @@
       if (is.null(names(x)))
          names(x) <- paste("V", seq_along(x), sep = "")
       
-      if (!flatten) {
-         return(x)
-      }
-      frameCols <- .rs.frameCols(x)
-      if (length(frameCols) > 0) {
-         return(.rs.flattenFrame(x, frameCols))
-      } else {
-         return(x)
-      }
+      if (flatten) {
+         x <- .rs.flattenFrame(x)
+      } 
+      return(x)
    }
 })
 
-.rs.addFunction("frameCols", function(x) {
-   which(vapply(x, is.data.frame, TRUE))
+.rs.addFunction("multiCols", function(x) {
+   fun <- function(col) is.data.frame(col) || is.matrix(col)
+   which(vapply(x, fun, TRUE))
 })
 
-.rs.addFunction("flattenFrame", function(x, framecols) {
-   while (length(framecols) > 0) {
-      framecol <- framecols[1]
-      newcols <- ncol(x[[framecol]])
-      if (identical(newcols, 0)) 
-      {
-         # remove columns consisting of empty frames
-         x[[framecol]] <- NULL
-      }
-      else
-      {
-         # recursive--are any columns in the nested frame themselves frames?
-         nestedFrameCols <- .rs.frameCols(x[[framecol]]) 
-         if (length(nestedFrameCols) > 0) {
-            x[[framecol]] <- .rs.flattenFrame(x[[framecol]], nestedFrameCols)
-            
-            # readjust indices
-            newcols <- ncol(x[[framecol]])
-         }
-         
-         # apply column names
-         cols <- x[[framecol]]
-         if (length(names(framecols)) > 0) {
-            names(cols) <- paste(names(framecol)[[1]], names(cols), sep = ".")
-         }
-         
-         # replace other columns in place
-         if (framecol >= ncol(x))  {
-            x <- cbind(x[0:(framecol-1)], cols)
-         } else {
-            x <- cbind(x[0:(framecol-1)], cols, x[(framecol+1):ncol(x)])
-         }
+.rs.addFunction("flattenFrame", function(x) {
+  multicols <- .rs.multiCols(x)
+  while (length(multicols) > 0) {
+    multicol <- multicols[1]
+    newcols <- ncol(x[[multicol]])
+    if (identical(newcols, 0)) 
+    {
+      # remove columns consisting of empty frames
+      x[[multicol]] <- NULL
+    }
+    else
+    {
+      cols <- x[[multicol]]
+
+      # recurse because x[[multicol]] might also need flattening
+      if (length(.rs.multiCols(cols)) > 0L) {
+        cols <- x[[multicol]] <- .rs.flattenFrame(cols)
+        
+        # readjust indices
+        newcols <- ncol(cols)
       }
       
-      # pop this frame off the list and adjust the other indices to account for
-      # the columns we just added, if any
-      framecols <- framecols[-1] + (max(newcols, 1) - 1) 
-   }
-   x
+      # apply column names
+      prefix <- names(multicol)[[1]]
+      if (is.matrix(cols)) {
+        colnames <- colnames(cols)
+        if (is.null(colnames)) {
+          colnames(cols) <- paste0(prefix, '[,', 1:ncol(cols), ']')
+        } else {
+          colnames(cols) <- paste0(prefix, '[,"', colnames, '"]')
+        }
+
+      } else if (is.data.frame(cols)) {
+        names(cols) <- paste(prefix, names(cols), sep = "$")
+      }
+      
+      # replace other columns in place
+      if (multicol >= ncol(x))  {
+        x <- cbind(x[0:(multicol-1)], cols)
+      } else {
+        x <- cbind(x[0:(multicol-1)], cols, x[(multicol+1):ncol(x)])
+      }
+    }
+    
+    # pop this frame off the list and adjust the other indices to account for
+    # the columns we just added, if any
+    multicols <- multicols[-1] + (max(newcols, 1) - 1) 
+  }
+  x
 })
 
 .rs.addFunction("applyTransform", function(x, filtered, search, cols, dirs)

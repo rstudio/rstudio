@@ -1,7 +1,7 @@
 /*
  * EnvironmentPane.java
  *
- * Copyright (C) 2021 by RStudio, PBC
+ * Copyright (C) 2022 by RStudio, PBC
  *
  * Unless you have received this program directly from RStudio pursuant
  * to the terms of a commercial license agreement with RStudio, then
@@ -18,6 +18,7 @@ package org.rstudio.studio.client.workbench.views.environment;
 import java.util.ArrayList;
 import java.util.List;
 
+import com.google.gwt.core.client.GWT;
 import com.google.gwt.event.logical.shared.ResizeEvent;
 import com.google.gwt.event.logical.shared.ResizeHandler;
 import org.rstudio.core.client.Debug;
@@ -39,7 +40,6 @@ import org.rstudio.studio.client.application.events.EventBus;
 import org.rstudio.studio.client.application.events.SessionSerializationEvent;
 import org.rstudio.studio.client.application.events.SuspendAndRestartEvent;
 import org.rstudio.studio.client.application.model.SessionSerializationAction;
-import org.rstudio.studio.client.application.ui.RStudioThemes;
 import org.rstudio.studio.client.common.GlobalDisplay;
 import org.rstudio.studio.client.common.ImageMenuItem;
 import org.rstudio.studio.client.common.SimpleRequestCallback;
@@ -100,7 +100,7 @@ public class EnvironmentPane extends WorkbenchPane
                           UserPrefs prefs,
                           DependencyManager dependencyManager)
    {
-      super("Environment", events);
+      super(constants_.environmentCapitalized(), events);
 
       commands_ = commands;
       server_ = serverOperations;
@@ -147,7 +147,7 @@ public class EnvironmentPane extends WorkbenchPane
    @Override
    protected Toolbar createMainToolbar()
    {
-      Toolbar toolbar = new Toolbar("Environment Tab");
+      Toolbar toolbar = new Toolbar(constants_.environmentTab());
       toolbar.addLeftWidget(commands_.loadWorkspace().createToolbarButton());
       toolbar.addLeftWidget(commands_.saveWorkspace().createToolbarButton());
       toolbar.addLeftSeparator();
@@ -181,11 +181,11 @@ public class EnvironmentPane extends WorkbenchPane
       refreshMenu.addSeparator();
 
       refreshMenu.addItem(new MenuItem(
-            AppCommand.formatMenuLabel(null, "Refresh Now", null),
+            AppCommand.formatMenuLabel(null, constants_.refreshNow(), null),
             true, // as HTML
             () -> commands_.refreshEnvironment().execute()));
       ToolbarMenuButton refreshMenuBtn =
-         new ToolbarMenuButton(ToolbarButton.NoText, "Refresh options", refreshMenu, false);
+         new ToolbarMenuButton(ToolbarButton.NoText, constants_.refreshOptions(), refreshMenu, false);
       ElementIds.assignElementId(refreshMenuBtn, ElementIds.MB_REFRESH_OPTS);
       toolbar.addRightWidget(refreshMenuBtn);
 
@@ -201,7 +201,7 @@ public class EnvironmentPane extends WorkbenchPane
 
    private void initSecondaryToolbar()
    {
-      SecondaryToolbar toolbar = new SecondaryToolbar("Environment Tab Second");
+      SecondaryToolbar toolbar = new SecondaryToolbar(constants_.environmentTabSecond());
 
       languageMenu_ = new ToolbarPopupMenu();
       toolbar.addHandler(new ResizeHandler()
@@ -219,8 +219,8 @@ public class EnvironmentPane extends WorkbenchPane
       MenuItem pyMenuItem = new MenuItem("Python", () ->
       {
          dependencyManager_.withReticulate(
-               "Viewing Python Objects",
-               "Viewing Python objects",
+               constants_.viewingPythonObjectsCapitalized(),
+               constants_.viewingPythonObjects(),
                () -> setActiveLanguage("Python", true));
       });
       languageMenu_.addItem(pyMenuItem);
@@ -250,7 +250,7 @@ public class EnvironmentPane extends WorkbenchPane
       ThemeStyles styles = ThemeStyles.INSTANCE;
       toolbar.getWrapper().addStyleName(styles.tallerToolbarWrapper());
 
-      SearchWidget searchWidget = new SearchWidget("Search environment", new SuggestOracle() {
+      SearchWidget searchWidget = new SearchWidget(constants_.searchEnvironment(), new SuggestOracle() {
          @Override
          public void requestSuggestions(Request request, Callback callback)
          {
@@ -269,10 +269,6 @@ public class EnvironmentPane extends WorkbenchPane
             objects_.setFilterText(event.getValue());
          }
       });
-
-      if (!RStudioThemes.isFlat(prefs_)) {
-         searchWidget.getElement().getStyle().setMarginTop(1, Unit.PX);
-      }
 
       toolbar.addRightWidget(searchWidget);
 
@@ -419,7 +415,7 @@ public class EnvironmentPane extends WorkbenchPane
    {
       server_.setContextDepth(
             newDepth,
-            new SimpleRequestCallback<>("Error opening call frame"));
+            new SimpleRequestCallback<>(constants_.errorOpeningCallFrame()));
    }
 
    public boolean clientStateDirty()
@@ -570,7 +566,7 @@ public class EnvironmentPane extends WorkbenchPane
       menu.addItem(commands_.importDatasetFromStata().createMenuItem(false));
 
       dataImportButton_ = new ToolbarMenuButton(
-              "Import Dataset",
+              constants_.importDataset(),
               ToolbarButton.NoTitle,
               new ImageResource2x(StandardIcons.INSTANCE.import_dataset2x()),
               menu);
@@ -824,7 +820,7 @@ public class EnvironmentPane extends WorkbenchPane
             public void onError(ServerError error)
             {
                globalDisplay_.showErrorMessage(
-                     "Could not change monitoring state",
+                     constants_.couldNotChangeMonitoringState(),
                      error.getMessage());
             }
          });
@@ -906,12 +902,12 @@ public class EnvironmentPane extends WorkbenchPane
       if (width > 400)
       {
          // Full width: show full label for data import
-         dataImportButton_.setText("Import Dataset");
+         dataImportButton_.setText(constants_.importDataset());
       }
       else if (width > 350)
       {
          // Reduced width: shorten label
-         dataImportButton_.setText("Import");
+         dataImportButton_.setText(constants_.importCapitalized());
       }
       else if (width > 325)
       {
@@ -966,4 +962,5 @@ public class EnvironmentPane extends WorkbenchPane
    private String environmentName_;
    private boolean environmentIsLocal_;
    private String activeLanguage_ = "R";
+   private static final ViewEnvironmentConstants constants_ = GWT.create(ViewEnvironmentConstants.class);
 }

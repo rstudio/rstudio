@@ -1,7 +1,7 @@
 /*
  * math-viewts
  *
- * Copyright (C) 2021 by RStudio, PBC
+ * Copyright (C) 2022 by RStudio, PBC
  *
  * Unless you have received this program directly from RStudio pursuant
  * to the terms of a commercial license agreement with RStudio, then
@@ -26,14 +26,17 @@ import { getMarkRange, getMarkAttrs } from '../../api/mark';
 import { EditorMath, MathType } from '../../api/math';
 import { EditorUI } from '../../api/ui';
 import { kSetMarkdownTransaction } from '../../api/transaction';
+import { attrEditDecorationWidget } from '../../api/attr_edit/attr_edit-decoration';
+import { EditorFormat } from '../../api/format';
+import { editMathAttributes, editMathAttributesEnabled } from './math-commands';
 
 // NOTE: rendered equations don't curently show selection background color when part
 // of a larger selection (in spite of a few failed attempts to get this to work)
 // it would be nice to figure out how to do this
 
-export function mathViewPlugins(schema: Schema, ui: EditorUI, math: EditorMath): Plugin[] {
+export function mathViewPlugins(schema: Schema, format: EditorFormat, ui: EditorUI, math: EditorMath): Plugin[] {
   return [
-    mathViewPlugin(schema, ui, math),
+    mathViewPlugin(schema, format, ui, math),
     keymap({
       ArrowUp: verticalArrowHandler('up'),
       ArrowDown: verticalArrowHandler('down'),
@@ -41,7 +44,7 @@ export function mathViewPlugins(schema: Schema, ui: EditorUI, math: EditorMath):
   ];
 }
 
-function mathViewPlugin(schema: Schema, ui: EditorUI, math: EditorMath) {
+function mathViewPlugin(schema: Schema, format: EditorFormat, ui: EditorUI, math: EditorMath) {
   const key = new PluginKey<DecorationSet>('math-view');
 
   function decorationsForDoc(state: EditorState) {
@@ -52,7 +55,8 @@ function mathViewPlugin(schema: Schema, ui: EditorUI, math: EditorMath) {
       const attrs = getMarkAttrs(state.doc, range, schema.marks.math);
 
       // if the selection isn't in the mark, then show the preview
-      if (state.selection.from < range.from || state.selection.from > range.to) {
+      const preview = state.selection.from < range.from || state.selection.from > range.to;
+      if (preview) {
         // get the math text
         const mathText = state.doc.textBetween(range.from, range.to);
 
@@ -90,6 +94,17 @@ function mathViewPlugin(schema: Schema, ui: EditorUI, math: EditorMath) {
             { key: mathText },
           ),
         );
+      } 
+
+      // for display math in quarto, show an edit widget
+      if (editMathAttributesEnabled(format, state, range)) {
+        decorations.push(attrEditDecorationWidget({
+          pos: markedNode.pos-1,
+          tags: attrs.id ? [`#${attrs.id}`] : [],
+          editFn: editMathAttributes(ui),
+          ui,
+          offset: { top: 0, right: 6 },
+        }));
       }
     });
 

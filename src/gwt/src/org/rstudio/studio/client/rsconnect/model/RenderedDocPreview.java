@@ -1,7 +1,7 @@
 /*
  * RenderedDocPreview.java
  *
- * Copyright (C) 2021 by RStudio, PBC
+ * Copyright (C) 2022 by RStudio, PBC
  *
  * Unless you have received this program directly from RStudio pursuant
  * to the terms of a commercial license agreement with RStudio, then
@@ -28,6 +28,7 @@ public class RenderedDocPreview
       outputFile_ = params.getOutputFile();
       isStatic_ = !params.isShinyDocument();
       websiteDir_ = params.getWebsiteDir();
+      isQuarto_ = params.getResult() != null && params.getResult().isQuarto();
    }
    
    public RenderedDocPreview(HTMLPreviewResult result)
@@ -44,15 +45,17 @@ public class RenderedDocPreview
       outputFile_ = result.getOutputFile();
       isStatic_ = !result.isShinyDocument();
       websiteDir_ = null;
+      isQuarto_ = result.isQuarto();
    }
    
    public RenderedDocPreview(String sourceFile, String outputFile, 
-                             boolean isStatic)
+                             boolean isStatic, boolean isQuarto)
    {
       sourceFile_ = sourceFile;
       outputFile_ = outputFile;
       isStatic_ = isStatic;
       websiteDir_ = null;
+      isQuarto_ = isQuarto;
    }
    
    public String getSourceFile()
@@ -64,15 +67,30 @@ public class RenderedDocPreview
    {
       return outputFile_;
    }
-   
+
+   public void setOutputFile(String outputFile)
+   {
+      outputFile_ = outputFile;
+   }
+
    public String getWebsiteDir()
    {
       return websiteDir_;
    }
-   
+
+   public void setWebsiteDir(String websiteDir)
+   {
+      websiteDir_ = websiteDir;
+   }
+
    public boolean isStatic()
    {
       return isStatic_;
+   }
+
+   public boolean isQuarto()
+   {
+      return isQuarto_;
    }
    
    public void setIsStatic(boolean isStatic)
@@ -84,9 +102,10 @@ public class RenderedDocPreview
    {
       return !StringUtil.isNullOrEmpty(websiteDir_);
    }
-   
+
    private final String sourceFile_;
-   private final String outputFile_;
-   private final String websiteDir_;
+   private String websiteDir_;
+   private String outputFile_;
    private boolean isStatic_;
+   private boolean isQuarto_ = false;
 }

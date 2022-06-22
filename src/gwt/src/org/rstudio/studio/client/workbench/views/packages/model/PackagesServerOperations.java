@@ -1,7 +1,7 @@
 /*
  * PackagesServerOperations.java
  *
- * Copyright (C) 2021 by RStudio, PBC
+ * Copyright (C) 2022 by RStudio, PBC
  *
  * Unless you have received this program directly from RStudio pursuant
  * to the terms of a commercial license agreement with RStudio, then
@@ -16,6 +16,7 @@ package org.rstudio.studio.client.workbench.views.packages.model;
 
 import java.util.List;
 
+import com.google.gwt.core.client.JavaScriptObject;
 import com.google.gwt.core.client.JsArray;
 import com.google.gwt.core.client.JsArrayString;
 
@@ -35,6 +36,9 @@ public interface PackagesServerOperations extends PackratServerOperations
    
    void isPackageLoaded(String packageName, String libName,
                         ServerRequestCallback<Boolean> requestCallback);
+   
+   void isPackageHyperlinkSafe(String packageName,
+                               ServerRequestCallback<Boolean> requestCallback);
    
    void isPackageInstalled(String packageName,
                            String version,
@@ -59,4 +63,6 @@ public interface PackagesServerOperations extends PackratServerOperations
                         String packageName,
                         String libraryPath,
                         ServerRequestCallback<String> requestCallback);
+   
+   void getPackageCitations(String packageName, ServerRequestCallback<JavaScriptObject> requestCallback);
 }

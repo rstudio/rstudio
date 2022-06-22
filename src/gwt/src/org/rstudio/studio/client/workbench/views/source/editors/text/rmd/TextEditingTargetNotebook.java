@@ -1,7 +1,7 @@
 /*
  * TextEditingTargetNotebook.java
  *
- * Copyright (C) 2021 by RStudio, PBC
+ * Copyright (C) 2022 by RStudio, PBC
  *
  * Unless you have received this program directly from RStudio pursuant
  * to the terms of a commercial license agreement with RStudio, then
@@ -18,7 +18,9 @@ package org.rstudio.studio.client.workbench.views.source.editors.text.rmd;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 
+import com.google.gwt.core.client.GWT;
 import org.rstudio.core.client.CommandWithArg;
 import org.rstudio.core.client.Debug;
 import org.rstudio.core.client.JsArrayUtil;
@@ -58,6 +60,7 @@ import org.rstudio.studio.client.workbench.views.console.model.ConsoleServerOper
 import org.rstudio.studio.client.workbench.views.console.shell.ConsoleLanguageTracker;
 import org.rstudio.studio.client.workbench.views.source.Source;
 import org.rstudio.studio.client.workbench.views.source.SourceWindowManager;
+import org.rstudio.studio.client.workbench.views.source.ViewsSourceConstants;
 import org.rstudio.studio.client.workbench.views.source.editors.text.ChunkOutputWidget;
 import org.rstudio.studio.client.workbench.views.source.editors.text.ChunkRowExecState;
 import org.rstudio.studio.client.workbench.views.source.editors.text.DocDisplay;
@@ -71,6 +74,7 @@ import org.rstudio.studio.client.workbench.views.source.editors.text.TextEditing
 import org.rstudio.studio.client.workbench.views.source.editors.text.ace.LineWidget;
 import org.rstudio.studio.client.workbench.views.source.editors.text.ace.Position;
 import org.rstudio.studio.client.workbench.views.source.editors.text.ace.Range;
+import org.rstudio.studio.client.workbench.views.source.editors.text.assist.RChunkHeaderParser;
 import org.rstudio.studio.client.workbench.views.source.editors.text.events.RenderFinishedEvent;
 import org.rstudio.studio.client.workbench.views.source.editors.text.events.ScopeTreeReadyEvent;
 import org.rstudio.studio.client.workbench.views.source.editors.text.events.ChunkSatelliteCacheEditorStyleEvent;
@@ -182,7 +186,7 @@ public class TextEditingTargetNotebook
             // propagate to YAML
             String yaml = RmdEditorOptions.set(
                   YamlFrontMatter.getFrontMatter(docDisplay_),
-                  CHUNK_OUTPUT_TYPE, event.getValue());
+                  CHUNK_OUTPUT_TYPE, event.getValue(), false);
 
             if (editingTarget_.isVisualEditorActive())
             {
@@ -407,10 +411,8 @@ public class TextEditingTargetNotebook
       if (queue_.isExecuting())
       {
          RStudioGinjector.INSTANCE.getGlobalDisplay().showErrorMessage(
-               jobDesc + ": Chunks Currently Executing",
-               "RStudio cannot execute '" + jobDesc + "' because this " +
-               "notebook is already executing code. Interrupt R, or wait " +
-               "for execution to complete.");
+               constants_.jobChunkCurrentlyExecuting(jobDesc),
+               constants_.rStudioCannotExecuteJob(jobDesc));
          return;
       }
       docUpdateSentinel_.withSavedDoc(new Command()
@@ -425,13 +427,22 @@ public class TextEditingTargetNotebook
 
    public void executeChunk(final Scope chunk)
    {
-      // note that all chunks (including Python chunks) execute
-      // within the 'R' scope. this primarily implies ensuring
-      // that a reticulate REPL (if any) is deactivated before
-      // attempting to run a chunk of code, and the underlying
-      // notebook logic will ensure Python chunks use reticulate
+      // ensure we're executing in R context by default
+      String language = ConsoleLanguageTracker.LANGUAGE_R;
+      
+      // if we're executing a Python chunk, we'll need to activate
+      // the Python REPL first
+      String header = docDisplay_.getLine(chunk.getPreamble().getRow());
+      Map<String, String> chunkOptions = RChunkHeaderParser.parse(header);
+      if (chunkOptions.containsKey("engine"))
+      {
+         String engine = chunkOptions.get("engine");
+         if (engine.contains("python"))
+            language = ConsoleLanguageTracker.LANGUAGE_PYTHON;
+      }
+      
       languageTracker_.adaptToLanguage(
-            ConsoleLanguageTracker.LANGUAGE_R,
+            language,
             () -> { executeChunkImpl(chunk); });
    }
 
@@ -460,7 +471,7 @@ public class TextEditingTargetNotebook
                      NotebookQueueUnit.EXEC_MODE_BATCH));
                chunks.add(new ChunkExecUnit(chunk,
                      NotebookQueueUnit.EXEC_MODE_SINGLE));
-               queue_.executeChunks("Run Chunks", chunks);
+               queue_.executeChunks(constants_.runChunks(), chunks);
             }
             else
             {
@@ -556,9 +567,8 @@ public class TextEditingTargetNotebook
       {
          RStudioGinjector.INSTANCE.getGlobalDisplay().showYesNoMessage(
                GlobalDisplay.MSG_INFO,
-               "Chunks Currently Running",
-               "Output can't be cleared because there are still chunks " +
-               "running. Do you want to interrupt them?",
+               constants_.chunksCurrentlyRunning(),
+               constants_.outputCantBeClearedBecauseChunks(),
                false,
                new Operation()
                {
@@ -575,8 +585,8 @@ public class TextEditingTargetNotebook
                },
                null,
                null,
-               "Interrupt and Clear Output",
-               "Cancel",
+               constants_.interruptAndClearOutput(),
+               constants_.cancel(),
                false);
       }
    }
@@ -668,7 +678,7 @@ public class TextEditingTargetNotebook
                NotebookQueueUnit.EXEC_MODE_BATCH));
          chunks.add(new ChunkExecUnit(event.getScope(), event.getRange(),
                NotebookQueueUnit.EXEC_MODE_SINGLE, event.getExecScope()));
-         queue_.executeChunks("Run Chunks", chunks);
+         queue_.executeChunks(constants_.runChunks(), chunks);
       }
       else
       {
@@ -980,7 +990,7 @@ public class TextEditingTargetNotebook
          // update that silently if needed
          if (initialChunkDefs_.length() > 0)
          {
-            dependencyManager_.withRMarkdown("R Notebook",
+            dependencyManager_.withRMarkdown(constants_.rNotebook(),
                null, new CommandWithArg<Boolean>()
                {
                   @Override
@@ -1749,9 +1759,8 @@ public class TextEditingTargetNotebook
       // if we do have inline output, offer to clean it up
       RStudioGinjector.INSTANCE.getGlobalDisplay().showYesNoMessage(
             GlobalDisplay.MSG_QUESTION,
-            "Remove Inline Chunk Output",
-            "Do you want to clear all the existing chunk output from your " +
-            "notebook?", false,
+            constants_.removeInlineChunkOutput(),
+            constants_.clearExistingChunkOutputMessage(), false,
             new Operation()
             {
                @Override
@@ -1769,8 +1778,8 @@ public class TextEditingTargetNotebook
                }
             },
             null,
-            "Remove Output",
-            "Keep Output",
+            constants_.removeOutput(),
+            constants_.keepOutput(),
             false);
    }
 
@@ -2159,5 +2168,6 @@ public class TextEditingTargetNotebook
 
    public final static int MODE_COMMITTED   = 0;
    public final static int MODE_UNCOMMITTED = 1;
+   private static final ViewsSourceConstants constants_ = GWT.create(ViewsSourceConstants.class);
 }
 

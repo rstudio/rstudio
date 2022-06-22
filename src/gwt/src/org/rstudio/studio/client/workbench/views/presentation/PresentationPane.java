@@ -1,7 +1,7 @@
 /*
  * PresentationPane.java
  *
- * Copyright (C) 2021 by RStudio, PBC
+ * Copyright (C) 2022 by RStudio, PBC
  *
  * Unless you have received this program directly from RStudio pursuant
  * to the terms of a commercial license agreement with RStudio, then
@@ -64,7 +64,7 @@ public class PresentationPane extends WorkbenchPane implements Presentation.Disp
    public PresentationPane(Commands commands, Session session,
          PresentationServerOperations server, GlobalDisplay display)
    {
-      super("Presentation");
+      super(constants_.presentationTitle());
       commands_ = commands;
       session_ = session;
       server_ = server;
@@ -77,7 +77,7 @@ public class PresentationPane extends WorkbenchPane implements Presentation.Disp
    @Override
    protected Toolbar createMainToolbar()
    {
-      Toolbar toolbar = new Toolbar("Presentation Tab");
+      Toolbar toolbar = new Toolbar(constants_.presentationTabLabel());
       
       slideNavigationMenu_ = new SlideNavigationToolbarMenu(toolbar); 
       slideNavigationMenu_.setEditButtonVisible(true);
@@ -93,8 +93,8 @@ public class PresentationPane extends WorkbenchPane implements Presentation.Disp
       moreMenu.addItem(commands_.presentationViewInBrowser().createMenuItem(false));
       moreMenu.addItem(commands_.presentationSaveAsStandalone().createMenuItem(false));
 
-      ToolbarMenuButton moreButton = new ToolbarMenuButton("More",
-            "More presentation commands",
+      ToolbarMenuButton moreButton = new ToolbarMenuButton(constants_.moreText(),
+            constants_.morePresentationCommandsTitle(),
             new ImageResource2x(StandardIcons.INSTANCE.more_actions2x()),
             moreMenu);
 
@@ -123,7 +123,7 @@ public class PresentationPane extends WorkbenchPane implements Presentation.Disp
                   @Override
                   public void onError(ServerError error)
                   {
-                     display_.showErrorMessage("Error Saving Presentation",
+                     display_.showErrorMessage(constants_.errorSavingPresentationCaption(),
                        Presentation.getErrorMessage(error));
                   }
             });
@@ -132,7 +132,7 @@ public class PresentationPane extends WorkbenchPane implements Presentation.Disp
          @Override
          public String getTitle()
          {
-            return "Presentation:\n" + getPresentationTitle();
+            return constants_.presentationLabel(getPresentationTitle());
          }
       });
       toolbar.addRightSeparator();
@@ -346,4 +346,5 @@ public class PresentationPane extends WorkbenchPane implements Presentation.Disp
    private final GlobalDisplay display_;
    
    private FullscreenPopupPanel activeZoomPanel_ = null;
+   private static final PresentationConstants constants_ = com.google.gwt.core.client.GWT.create(PresentationConstants.class);
 }

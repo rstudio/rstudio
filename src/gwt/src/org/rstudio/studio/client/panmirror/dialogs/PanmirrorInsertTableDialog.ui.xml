@@ -2,7 +2,10 @@
 <ui:UiBinder xmlns:ui="urn:ui:com.google.gwt.uibinder"
    xmlns:g="urn:import:com.google.gwt.user.client.ui"
    xmlns:rw="urn:import:org.rstudio.core.client.widget"
-   xmlns:dialogs="urn:import:org.rstudio.studio.client.panmirror.dialogs">
+   xmlns:dialogs="urn:import:org.rstudio.studio.client.panmirror.dialogs"
+   ui:generateFormat='com.google.gwt.i18n.server.PropertyCatalogFactory'
+   ui:generateKeys="com.google.gwt.i18n.server.keygen.MD5KeyGenerator"
+   ui:generateLocales="default">
    <ui:with field="res" type="org.rstudio.studio.client.panmirror.dialogs.PanmirrorDialogsResources" />
    <ui:with field="ElementIds" type="org.rstudio.core.client.ElementIds"/>
    <ui:style>
@@ -17,6 +20,18 @@
 
       .header input[type="checkbox"] {
          margin-right: 5px;
+      }
+      
+      /* Chrome, Safari, Edge, Opera */
+      .column input::-webkit-outer-spin-button,
+      .column input::-webkit-inner-spin-button {
+        -webkit-appearance: none;
+		    margin: 0;
+		  }
+		
+      /* Firefox */
+      .column input[type=number] {
+        -moz-appearance: textfield;
       }
    </ui:style>
 
@@ -33,12 +48,14 @@
          </rw:row>
       </rw:LayoutGrid>
 
-      <rw:FormLabel for="{ElementIds.getVisualMdInsertTableCaption}" text="Caption:" ui:field="captionLabel_"></rw:FormLabel>
+      <rw:FormLabel for="{ElementIds.getVisualMdInsertTableCaption}" text="Caption:" ui:field="captionLabel_"><ui:attribute
+              name="text" key="captionText"/></rw:FormLabel>
       <rw:TextBoxWithCue elementId="{ElementIds.getVisualMdInsertTableCaption}" cueText="(Optional)" styleName="{style.caption} {res.styles.spaced}" ui:field="caption_"/>
 
       <g:cell><g:Label></g:Label></g:cell>
 
-      <g:CheckBox styleName="{res.styles.checkBox} {res.styles.spaced}" text="Include table header" ui:field="header_"></g:CheckBox>
+      <g:CheckBox styleName="{res.styles.checkBox} {res.styles.spaced}" text="Include table header" ui:field="header_"><ui:attribute
+              name="text" key="includeTableHeader"/></g:CheckBox>
 
 
 

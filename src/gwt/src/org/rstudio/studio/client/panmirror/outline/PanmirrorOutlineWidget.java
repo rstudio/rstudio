@@ -1,7 +1,7 @@
 /*
  * PanmirrorOutlineWidget.java
  *
- * Copyright (C) 2021 by RStudio, PBC
+ * Copyright (C) 2022 by RStudio, PBC
  *
  * Unless you have received this program directly from RStudio pursuant
  * to the terms of a commercial license agreement with RStudio, then
@@ -20,11 +20,13 @@ package org.rstudio.studio.client.panmirror.outline;
 import java.util.ArrayList;
 import java.util.Iterator;
 
+import com.google.gwt.core.client.GWT;
 import org.rstudio.core.client.StringUtil;
 import org.rstudio.core.client.a11y.A11y;
 import org.rstudio.core.client.dom.DomUtils;
 import org.rstudio.core.client.theme.res.ThemeStyles;
 import org.rstudio.studio.client.RStudioGinjector;
+import org.rstudio.studio.client.panmirror.PanmirrorConstants;
 import org.rstudio.studio.client.panmirror.PanmirrorSelection;
 import org.rstudio.studio.client.panmirror.events.PanmirrorOutlineNavigationEvent;
 import org.rstudio.studio.client.workbench.prefs.model.UserPrefs;
@@ -342,7 +344,7 @@ public class PanmirrorOutlineWidget extends Composite
          if (StringUtil.equals(item.type, PanmirrorOutlineItemType.RmdChunk) &&
              StringUtil.equals(item.title, PanmirrorOutlineItemType.RmdChunk))
          {
-            text = "(chunk " + item.sequence + ")";
+            text = constants_.chunkText(item.sequence);
          }
        
          if (label_ == null)
@@ -407,5 +409,5 @@ public class PanmirrorOutlineWidget extends Composite
    private final DocumentOutlineWidget.EmptyPlaceholder emptyPlaceholder_;
     
    private final HandlerManager handlers_ = new HandlerManager(this);
-  
+   private static final PanmirrorConstants constants_ = GWT.create(PanmirrorConstants.class);
 }

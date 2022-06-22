@@ -1,7 +1,7 @@
 /*
  * VirtualConsole.java
  *
- * Copyright (C) 2021 by RStudio, PBC
+ * Copyright (C) 2022 by RStudio, PBC
  *
  * Unless you have received this program directly from RStudio pursuant
  * to the terms of a commercial license agreement with RStudio, then
@@ -26,6 +26,8 @@ import java.util.TreeSet;
 import com.google.gwt.dom.client.Node;
 import com.google.inject.Provider;
 import com.google.inject.assistedinject.Assisted;
+
+import org.rstudio.core.client.hyperlink.Hyperlink;
 import org.rstudio.core.client.regex.Match;
 import org.rstudio.core.client.regex.Pattern;
 import org.rstudio.core.client.virtualscroller.VirtualScrollerManager;
@@ -34,7 +36,6 @@ import org.rstudio.studio.client.workbench.prefs.model.UserPrefs;
 import com.google.gwt.core.client.JsArrayString;
 import com.google.gwt.dom.client.Document;
 import com.google.gwt.dom.client.Element;
-import com.google.gwt.dom.client.SpanElement;
 import com.google.inject.Inject;
 import org.rstudio.studio.client.workbench.prefs.model.UserPrefsSubset;
 
@@ -91,7 +92,6 @@ public class VirtualConsole
    {
       prefs_ = prefs;
       parent_ = parent;
-
       VirtualScrollerManager.init();
    }
 
@@ -108,6 +108,11 @@ public class VirtualConsole
    public void setVirtualizedDisableOverride(boolean override)
    {
       virtualizedDisableOverride_ = override;
+   }
+
+   public void setPreserveHTML(boolean preserveHTML)
+   {
+      preserveHTML_ = preserveHTML;
    }
 
    public boolean isVirtualized()
@@ -240,17 +245,25 @@ public class VirtualConsole
       Entry<Integer, ClassRange> last = class_.lastEntry();
       ClassRange range = last.getValue();
 
-      if (!forceNewRange && StringUtil.equals(range.clazz, clazz))
+      if (hyperlink_ != null || range.hyperlink_ != null || !StringUtil.equals(range.clazz, clazz))
       {
-         // just append to the existing output stream
-         range.appendRight(text, 0);
+         // force if this needs to display an hyperlink
+         // or if the previous range was an hyperlink
+         // or the classes differ (change of colour)
+         forceNewRange = true;
+      }
+      
+      if (forceNewRange)
+      {
+         // create a new output range with this class
+         final ClassRange newRange = new ClassRange(cursor_, clazz, text, preserveHTML_, hyperlink_);
+         appendChild(newRange.element);
+         class_.put(cursor_, newRange);
       }
       else
       {
-         // create a new output range with this class
-         final ClassRange newRange = new ClassRange(cursor_, clazz, text);
-         appendChild(newRange.element);
-         class_.put(cursor_, newRange);
+         // just append to the existing output stream
+         range.appendRight(text, 0);
       }
    }
 
@@ -263,20 +276,27 @@ public class VirtualConsole
    {
       int start = range.start;
       int end = start + range.length;
-
+      
       Entry<Integer, ClassRange> left = class_.floorEntry(start);
       Entry<Integer, ClassRange> right = class_.floorEntry(end);
-
+      
       // create a view into the map representing the ranges that this class
       // overlaps
       SortedMap<Integer, ClassRange> view = null;
-      if (left != null && right != null)
+      
+      if (left != null && right != null) 
+      {
          view = class_.subMap(left.getKey(), true, right.getKey(), true);
-      else if (left == null && right != null)
+      } 
+      else if (left == null && right != null) 
+      {
          view = class_.tailMap(right.getKey(), true);
-      else if (left != null)
+      } 
+      else if (left != null) 
+      {
          view = class_.headMap(left.getKey(), true);
-
+      }
+      
       // if no overlapping ranges exist, we can just create a new one
       if (view == null)
       {
@@ -358,12 +378,15 @@ public class VirtualConsole
                // reduce the original range and add ours
                overlap.trimLeft(delta);
 
+               // move the shortened range to its new start position
+               // unless it's empty
+               if (overlap.length > 0) {
+                  moves.put(l, overlap.start);
+               }
+
                if (!range.text().isEmpty())
                   insertions.add(range);
-
-               // move the shortened range to its new start position
-               moves.put(l, overlap.start);
-
+               
                if (parent_ != null && !range.text().isEmpty())
                   overlap.element.getParentElement().insertBefore(range.element, overlap.element);
 
@@ -401,7 +424,9 @@ public class VirtualConsole
                ClassRange remainder = new ClassRange(
                      end,
                      overlap.clazz,
-                     text.substring((text.length() - (amountTrimmed - range.length))));
+                     text.substring((text.length() - (amountTrimmed - range.length))),
+                     preserveHTML_,
+                     overlap.hyperlink_);
                insertions.add(remainder);
                if (parent_ != null)
                   range.element.getParentElement().insertAfter(remainder.element, range.element);
@@ -462,7 +487,7 @@ public class VirtualConsole
          if (cursor_ == output_.length() && !class_.isEmpty())
             appendText(text, clazz, forceNewRange);
          else
-            insertText(new ClassRange(start, clazz, text));
+            insertText(new ClassRange(start, clazz, text, preserveHTML_, hyperlink_));
       }
 
       output_.replace(start, end, text);
@@ -541,10 +566,10 @@ public class VirtualConsole
       }
 
       int tail = 0;
+      
       while (match != null)
       {
          int pos = match.getIndex();
-
          // If we passed over any plain text on the way to this control
          // character, add it.
          if (tail != pos)
@@ -580,6 +605,32 @@ public class VirtualConsole
                // we don't support. Tricky part is we might get codes split across
                // submit calls.
 
+               // match hyperlink, either start or end (if [url] is empty
+               // <ESC> ] 8 ; [params] ; [url] \7
+               if (ansi_ == null)
+                  ansi_ = new AnsiCode();
+                     
+               Match hyperlinkMatch = AnsiCode.HYPERLINK_PATTERN.match(data.substring(pos), 0);
+               
+               if (hyperlinkMatch != null)
+               {
+                  String url = hyperlinkMatch.getGroup(2);
+
+                  // toggle hyperlink_
+                  if (!StringUtil.equals(url, ""))
+                  {
+                     hyperlink_ = new HyperlinkInfo(url, /*params=*/ hyperlinkMatch.getGroup(1));
+                  }
+                  else
+                  {
+                     hyperlink_ = null;   
+                  }
+
+                  // discard either start or end anchor code
+                  tail = pos + hyperlinkMatch.getValue().length();
+                  break;
+               }
+               
                // match complete SGR codes
                Match sgrMatch = AnsiCode.SGR_ESCAPE_PATTERN.match(data, pos);
                if (sgrMatch == null)
@@ -619,28 +670,9 @@ public class VirtualConsole
                else
                {
                   // process the SGR code
-                  if (ansi_ == null)
-                     ansi_ = new AnsiCode();
                   ansiCodeStyles_ = ansi_.processCode(sgrMatch.getValue());
-                  if (ansiColorMode == UserPrefs.ANSI_CONSOLE_MODE_STRIP)
-                  {
-                     currentClazz = clazz;
-                  }
-                  else
-                  {
-                     if (clazz != null)
-                     {
-                        currentClazz = clazz;
-                        if (ansiCodeStyles_.inlineClazzes != null)
-                        {
-                           currentClazz = currentClazz + " " + ansiCodeStyles_.inlineClazzes;
-                        }
-                     }
-                     else
-                     {
-                        currentClazz = ansiCodeStyles_.inlineClazzes;
-                     }
-                  }
+                  currentClazz = setCurrentClazz(ansiColorMode, clazz);
+                  
                   tail = pos + sgrMatch.getValue().length();
                }
                break;
@@ -663,7 +695,7 @@ public class VirtualConsole
       // If there was any plain text after the last control character, add it
       if (tail < data.length())
          text(data.substring(tail), currentClazz, forceNewRange);
-
+         
       if (wasAtBottom && isVirtualized())
          VirtualScrollerManager.scrollToBottom(parent_.getParentElement());
    }
@@ -695,41 +727,91 @@ public class VirtualConsole
             submit("\n");
       }
    }
+
+   private String setCurrentClazz(String ansiColorMode, String clazz)
+   {
+      String currentClazz;
+      if (ansiColorMode == UserPrefs.ANSI_CONSOLE_MODE_STRIP)
+      {
+         currentClazz = clazz;
+      }
+      else
+      {
+         if (clazz != null)
+         {
+            currentClazz = clazz;
+            if (ansiCodeStyles_.inlineClazzes != null)
+            {
+               currentClazz = currentClazz + " " + ansiCodeStyles_.inlineClazzes;
+            }
+         }
+         else
+         {
+            currentClazz = ansiCodeStyles_.inlineClazzes;
+         }
+      }
+      return currentClazz;
+   }
+
    private class ClassRange
    {
-      public ClassRange(int pos, String className, String text)
+      public ClassRange(int pos, String className, String text, boolean isHTML, HyperlinkInfo hyperlink)
       {
          clazz  = className;
          start = pos;
          length = text.length();
-         element = Document.get().createSpanElement();
-         if (className != null)
-            element.addClassName(clazz);
-         element.setInnerText(text);
+         isHTML_ = isHTML;
+        
+         hyperlink_ = hyperlink;
+         
+         if (hyperlink_ == null) 
+         {
+            element = Document.get().createSpanElement();
+            if (className != null)
+               element.addClassName(clazz);
+
+            setText(text);
+         }
+         else 
+         {
+            element = Hyperlink.create(hyperlink.url_, hyperlink_.params_, text, clazz).getElement();
+         }
 
          if (captureNewElements_)
             newElements_.add(element);
+      }
+
+      private void setText(String text)
+      {
+         if (isHTML_)
+         {
+            element.setInnerHTML(text);
+         }
+         else
+         {
+            element.setInnerText(text);
+         }
       }
 
       public void trimLeft(int delta)
       {
          length -= delta;
          start += delta;
-         element.setInnerText(element.getInnerText().substring(delta));
+         setText(element.getInnerText().substring(delta));
       }
 
       public void trimRight(int delta)
       {
          length -= delta;
          String text = element.getInnerText();
-         element.setInnerText(text.substring(0, text.length() - delta));
+         setText(text.substring(0, text.length() - delta));
       }
 
       public void appendLeft(String content, int delta)
       {
          length += content.length() - delta;
          start -= (content.length() - delta);
-         element.setInnerText(content +
+         setText(content +
                element.getInnerText().substring(delta));
       }
 
@@ -737,21 +819,20 @@ public class VirtualConsole
       {
          length += content.length() - delta;
          String text = text();
-         element.setInnerText(text.substring(0,
-               text.length() - delta) + content);
+         setText(text.substring(0, text.length() - delta) + content);
       }
 
       public void overwrite(String content, int pos)
       {
          String text = element.getInnerText();
-         element.setInnerText(
+         setText(
                text.substring(0, pos) + content +
                text.substring(pos + content.length()));
       }
 
       public String text()
       {
-         return element.getInnerText();
+         return isHTML_ ? element.getInnerHTML() : element.getInnerText();
       }
 
       public void clearText()
@@ -768,13 +849,29 @@ public class VirtualConsole
       public final String clazz;
       public int length;
       public int start;
-      public final SpanElement element;
+      public final Element element;
+      public final HyperlinkInfo hyperlink_;
+      private boolean isHTML_;
    }
 
+   private class HyperlinkInfo
+   {
+      public HyperlinkInfo(String url, String params)
+      {
+         url_ = url;
+         params_ = params;
+      }
+
+      public String url_;
+      public String params_;
+   }
    private static final Pattern CONTROL = Pattern.create("[\r\b\f\n]");
 
    // only a select few panes should be virtualized. default it to off everywhere.
    private boolean virtualizedDisableOverride_ = true;
+
+   // allows &entity_name; entities like &amp;
+   private boolean preserveHTML_ = false;
 
    private final StringBuilder output_ = new StringBuilder();
    private final TreeMap<Integer, ClassRange> class_ = new TreeMap<>();
@@ -784,6 +881,7 @@ public class VirtualConsole
    private AnsiCode ansi_;
    private String partialAnsiCode_;
    private AnsiCode.AnsiClazzes ansiCodeStyles_ = new AnsiCode.AnsiClazzes();
+   private HyperlinkInfo hyperlink_;
 
    // Elements added by last submit call (only if forceNewRange was true)
    private boolean captureNewElements_ = false;

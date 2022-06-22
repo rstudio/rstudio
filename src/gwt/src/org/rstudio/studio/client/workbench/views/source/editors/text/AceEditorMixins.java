@@ -1,7 +1,7 @@
 /*
  * AceEditorMixins.java
  *
- * Copyright (C) 2021 by RStudio, PBC
+ * Copyright (C) 2022 by RStudio, PBC
  *
  * Unless you have received this program directly from RStudio pursuant
  * to the terms of a commercial license agreement with RStudio, then
@@ -24,7 +24,7 @@ import org.rstudio.studio.client.application.Desktop;
 import org.rstudio.studio.client.workbench.views.source.editors.text.ace.AceEditorNative;
 import org.rstudio.studio.client.workbench.views.source.editors.text.events.AceSelectionChangedEvent;
 
-import com.google.gwt.core.client.Scheduler;
+import com.google.gwt.user.client.Timer;
 import com.google.inject.Inject;
 
 public class AceEditorMixins
@@ -34,6 +34,14 @@ public class AceEditorMixins
       RStudioGinjector.INSTANCE.injectMembers(this);
       
       editor_ = editor.getWidget().getEditor();
+      timer_ = new Timer()
+      {
+         @Override
+         public void run()
+         {
+            Desktop.getFrame().setGlobalMouseSelection(lastSelection_);
+         }
+      };
       
       initializeMixins(editor_);
       
@@ -45,14 +53,14 @@ public class AceEditorMixins
             @Override
             public void onSelectionChanged(AceSelectionChangedEvent event)
             {
+               // only relevant if this editor is focused
+               if (!editor_.isFocused())
+                  return;
+               
+               // save the current selection, and prepare to update pasteboard
                String selection = editor_.getSelectedText();
-               if (!StringUtil.isNullOrEmpty(selection))
-               {
-                  Scheduler.get().scheduleDeferred(() ->
-                  {
-                     Desktop.getFrame().setGlobalMouseSelection(selection);
-                  });
-               }
+               lastSelection_ = selection;
+               timer_.schedule(TIMER_DELAY_MS);
             }
          });
       }
@@ -75,7 +83,8 @@ public class AceEditorMixins
       editor.onPaste = $entry(function(text) {
          
          // call mixins method
-         self.@org.rstudio.studio.client.workbench.views.source.editors.text.AceEditorMixins::onPaste(Lorg/rstudio/studio/client/workbench/views/source/editors/text/ace/AceEditorNative;Ljava/lang/String;)(this, text);
+         self.@org.rstudio.studio.client.workbench.views.source.editors.text.AceEditorMixins::onPaste(*)(this, text);
+         
       });
       
    }-*/;
@@ -160,7 +169,12 @@ public class AceEditorMixins
       editor.$onPaste(text);
    }-*/;
    
+   private static final int TIMER_DELAY_MS = 100;
+   
    private final AceEditorNative editor_;
+   private final Timer timer_;
+   
+   private String lastSelection_;
    
    // Injected ----
    private static JavaScriptEventHistory history_;

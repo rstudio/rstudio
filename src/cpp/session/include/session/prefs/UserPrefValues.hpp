@@ -1,6 +1,6 @@
 /* UserPrefValues.hpp
  *
- * Copyright (C) 2021 by RStudio, PBC
+ * Copyright (C) 2022 by RStudio, PBC
  *
  * Unless you have received this program directly from RStudio pursuant
  * to the terms of a commercial license agreement with RStudio, then
@@ -70,6 +70,7 @@ namespace prefs {
 #define kCustomShellCommand "custom_shell_command"
 #define kCustomShellOptions "custom_shell_options"
 #define kShowLineNumbers "show_line_numbers"
+#define kRelativeLineNumbers "relative_line_numbers"
 #define kHighlightSelectedWord "highlight_selected_word"
 #define kHighlightSelectedLine "highlight_selected_line"
 #define kPanes "panes"
@@ -122,6 +123,7 @@ namespace prefs {
 #define kShowFunctionSignatureTooltips "show_function_signature_tooltips"
 #define kShowDiagnosticsR "show_diagnostics_r"
 #define kShowDiagnosticsCpp "show_diagnostics_cpp"
+#define kShowDiagnosticsYaml "show_diagnostics_yaml"
 #define kShowDiagnosticsOther "show_diagnostics_other"
 #define kStyleDiagnostics "style_diagnostics"
 #define kDiagnosticsOnSave "diagnostics_on_save"
@@ -169,7 +171,6 @@ namespace prefs {
 #define kToolbarVisible "toolbar_visible"
 #define kDefaultProjectLocation "default_project_location"
 #define kSourceWithEcho "source_with_echo"
-#define kNewProjectGitInit "new_project_git_init"
 #define kDefaultSweaveEngine "default_sweave_engine"
 #define kDefaultLatexProgram "default_latex_program"
 #define kUseRoxygen "use_roxygen"
@@ -190,7 +191,7 @@ namespace prefs {
 #define kRealTimeSpellchecking "real_time_spellchecking"
 #define kNavigateToBuildError "navigate_to_build_error"
 #define kPackagesPaneEnabled "packages_pane_enabled"
-#define kUseRcppTemplate "use_rcpp_template"
+#define kCppTemplate "cpp_template"
 #define kRestoreSourceDocuments "restore_source_documents"
 #define kHandleErrorsInUserCodeOnly "handle_errors_in_user_code_only"
 #define kAutoExpandErrorTracebacks "auto_expand_error_tracebacks"
@@ -210,6 +211,7 @@ namespace prefs {
 #define kPlumberViewerTypeWindow "window"
 #define kPlumberViewerTypeBrowser "browser"
 #define kDocumentAuthor "document_author"
+#define kRmdAutoDate "rmd_auto_date"
 #define kRmdPreferredTemplatePath "rmd_preferred_template_path"
 #define kRmdViewerType "rmd_viewer_type"
 #define kRmdViewerTypeWindow "window"
@@ -248,6 +250,7 @@ namespace prefs {
 #define kAlwaysShownFiles "always_shown_files"
 #define kAlwaysShownExtensions "always_shown_extensions"
 #define kSortFileNamesNaturally "sort_file_names_naturally"
+#define kSyncFilesPaneWorkingDir "sync_files_pane_working_dir"
 #define kJobsTabVisibility "jobs_tab_visibility"
 #define kJobsTabVisibilityClosed "closed"
 #define kJobsTabVisibilityShown "shown"
@@ -259,8 +262,8 @@ namespace prefs {
 #define kBusyDetection "busy_detection"
 #define kBusyDetectionAlways "always"
 #define kBusyDetectionNever "never"
-#define kBusyDetectionWhitelist "whitelist"
-#define kBusyWhitelist "busy_whitelist"
+#define kBusyDetectionList "list"
+#define kBusyExclusionList "busy_exclusion_list"
 #define kKnitWorkingDir "knit_working_dir"
 #define kKnitWorkingDirDefault "default"
 #define kKnitWorkingDirCurrent "current"
@@ -275,12 +278,14 @@ namespace prefs {
 #define kLatexPreviewOnCursorIdleAlways "always"
 #define kWrapTabNavigation "wrap_tab_navigation"
 #define kGlobalTheme "global_theme"
-#define kGlobalThemeClassic "classic"
 #define kGlobalThemeDefault "default"
 #define kGlobalThemeAlternate "alternate"
 #define kGitDiffIgnoreWhitespace "git_diff_ignore_whitespace"
 #define kConsoleDoubleClickSelect "console_double_click_select"
+#define kConsoleSuspendBlockedNotice "console_suspend_blocked_notice"
+#define kConsoleSuspendBlockedNoticeDelay "console_suspend_blocked_notice_delay"
 #define kNewProjGitInit "new_proj_git_init"
+#define kNewProjUseRenv "new_proj_use_renv"
 #define kRootDocument "root_document"
 #define kShowUserHomePage "show_user_home_page"
 #define kShowUserHomePageAlways "always"
@@ -293,7 +298,11 @@ namespace prefs {
 #define kSvnExePath "svn_exe_path"
 #define kTerminalPath "terminal_path"
 #define kRsaKeyPath "rsa_key_path"
+#define kSshKeyType "ssh_key_type"
+#define kSshKeyTypeEd25519 "ed25519"
+#define kSshKeyTypeRsa "rsa"
 #define kUseDevtools "use_devtools"
+#define kCleanBeforeInstall "clean_before_install"
 #define kUseInternet2 "use_internet2"
 #define kUseSecureDownload "use_secure_download"
 #define kCleanupAfterRCmdCheck "cleanup_after_r_cmd_check"
@@ -311,7 +320,9 @@ namespace prefs {
 #define kDefaultRVersionVersion "version"
 #define kDefaultRVersionRHome "r_home"
 #define kDefaultRVersionLabel "label"
+#define kDefaultRVersionModule "module"
 #define kDataViewerMaxColumns "data_viewer_max_columns"
+#define kDataViewerMaxCellSize "data_viewer_max_cell_size"
 #define kEnableScreenReader "enable_screen_reader"
 #define kTypingStatusDelayMs "typing_status_delay_ms"
 #define kReducedMotion "reduced_motion"
@@ -347,6 +358,7 @@ namespace prefs {
 #define kVisualMarkdownEditingMaxContentWidth "visual_markdown_editing_max_content_width"
 #define kVisualMarkdownEditingShowDocOutline "visual_markdown_editing_show_doc_outline"
 #define kVisualMarkdownEditingShowMargin "visual_markdown_editing_show_margin"
+#define kVisualMarkdownCodeEditorLineNumbers "visual_markdown_code_editor_line_numbers"
 #define kVisualMarkdownEditingFontSizePoints "visual_markdown_editing_font_size_points"
 #define kVisualMarkdownCodeEditor "visual_markdown_code_editor"
 #define kVisualMarkdownCodeEditorAce "ace"
@@ -386,6 +398,13 @@ namespace prefs {
 #define kShowMemoryUsage "show_memory_usage"
 #define kMemoryQueryIntervalSeconds "memory_query_interval_seconds"
 #define kTerminalPythonIntegration "terminal_python_integration"
+#define kSessionProtocolDebug "session_protocol_debug"
+#define kPythonProjectEnvironmentAutomaticActivate "python_project_environment_automatic_activate"
+#define kCheckNullExternalPointers "check_null_external_pointers"
+#define kUiLanguage "ui_language"
+#define kUiLanguageEn "en"
+#define kUiLanguageFr "fr"
+#define kNativeFileDialogs "native_file_dialogs"
 
 class UserPrefValues: public Preferences
 {
@@ -494,6 +513,12 @@ public:
    core::Error setShowLineNumbers(bool val);
 
    /**
+    * Show relative, rather than absolute, line numbers in RStudio's code editor.
+    */
+   bool relativeLineNumbers();
+   core::Error setRelativeLineNumbers(bool val);
+
+   /**
     * Highlight the selected word in RStudio's code editor.
     */
    bool highlightSelectedWord();
@@ -566,7 +591,7 @@ public:
    core::Error setShowIndentGuides(bool val);
 
    /**
-    * Whether continue comments (by inserting the comment character) after adding a new line.
+    * Whether to continue comments (by inserting the comment character) after adding a new line.
     */
    bool continueCommentsOnNewline();
    core::Error setContinueCommentsOnNewline(bool val);
@@ -680,7 +705,13 @@ public:
    core::Error setShowDiagnosticsCpp(bool val);
 
    /**
-    * Whether to show diagnostic messages for other types of code (not R or C++).
+    * Whether to show diagnostic messages for YAML code as you type.
+    */
+   bool showDiagnosticsYaml();
+   core::Error setShowDiagnosticsYaml(bool val);
+
+   /**
+    * Whether to show diagnostic messages for other types of code (not R, C++, or YAML).
     */
    bool showDiagnosticsOther();
    core::Error setShowDiagnosticsOther(bool val);
@@ -932,12 +963,6 @@ public:
    core::Error setSourceWithEcho(bool val);
 
    /**
-    * Whether to initialize new projects with a Git repo by default.
-    */
-   bool newProjectGitInit();
-   core::Error setNewProjectGitInit(bool val);
-
-   /**
     * The default engine to use when processing Sweave documents.
     */
    std::string defaultSweaveEngine();
@@ -1028,10 +1053,10 @@ public:
    core::Error setPackagesPaneEnabled(bool val);
 
    /**
-    * Whether to use RCPP templates.
+    * C++ template.
     */
-   bool useRcppTemplate();
-   core::Error setUseRcppTemplate(bool val);
+   std::string cppTemplate();
+   core::Error setCppTemplate(std::string val);
 
    /**
     * Whether to restore the last opened source documents when RStudio starts up.
@@ -1086,6 +1111,12 @@ public:
     */
    std::string documentAuthor();
    core::Error setDocumentAuthor(std::string val);
+
+   /**
+    * Use current date when rendering document
+    */
+   bool rmdAutoDate();
+   core::Error setRmdAutoDate(bool val);
 
    /**
     * The path to the preferred R Markdown template.
@@ -1238,19 +1269,25 @@ public:
    core::Error setSortFileNamesNaturally(bool val);
 
    /**
+    * Whether to change the directory in the Files pane automatically when the working directory in R changes.
+    */
+   bool syncFilesPaneWorkingDir();
+   core::Error setSyncFilesPaneWorkingDir(bool val);
+
+   /**
     * The visibility of the Jobs tab.
     */
    std::string jobsTabVisibility();
    core::Error setJobsTabVisibility(std::string val);
 
    /**
-    * Whether to show the Launcher jobs tab in RStudio Pro and RStudio Workbench.
+    * Whether to show the Workbench Jobs tab in RStudio Pro and RStudio Workbench.
     */
    bool showLauncherJobsTab();
    core::Error setShowLauncherJobsTab(bool val);
 
    /**
-    * How to sort jobs in the Launcher tab in RStudio Pro and RStudio Workbench.
+    * How to sort jobs in the Workbench Jobs tab in RStudio Pro and RStudio Workbench.
     */
    std::string launcherJobsSort();
    core::Error setLauncherJobsSort(std::string val);
@@ -1262,10 +1299,10 @@ public:
    core::Error setBusyDetection(std::string val);
 
    /**
-    * A whitelist of apps that should not be considered busy in the Terminal.
+    * A list of apps that should not be considered busy in the Terminal.
     */
-   core::json::Array busyWhitelist();
-   core::Error setBusyWhitelist(core::json::Array val);
+   core::json::Array busyExclusionList();
+   core::Error setBusyExclusionList(core::json::Array val);
 
    /**
     * The working directory to use when knitting R Markdown documents.
@@ -1310,10 +1347,28 @@ public:
    core::Error setConsoleDoubleClickSelect(bool val);
 
    /**
+    * Whether the 'Auto Suspension Blocked' icon should appear in the R Console toolbar.
+    */
+   bool consoleSuspendBlockedNotice();
+   core::Error setConsoleSuspendBlockedNotice(bool val);
+
+   /**
+    * How long to wait before warning that automatic session suspension has been paused. Higher values for less frequent notices.
+    */
+   int consoleSuspendBlockedNoticeDelay();
+   core::Error setConsoleSuspendBlockedNoticeDelay(int val);
+
+   /**
     * Whether a git repo should be initialized inside new projects by default.
     */
    bool newProjGitInit();
    core::Error setNewProjGitInit(bool val);
+
+   /**
+    * Whether an renv environment should be created inside new projects by default.
+    */
+   bool newProjUseRenv();
+   core::Error setNewProjUseRenv(bool val);
 
    /**
     * The root document to use when compiling PDF documents.
@@ -1364,16 +1419,28 @@ public:
    core::Error setTerminalPath(std::string val);
 
    /**
-    * The path to the RSA key file to use.
+    * The path to the SSH key file to use.
     */
    std::string rsaKeyPath();
    core::Error setRsaKeyPath(std::string val);
+
+   /**
+    * The encryption type to use for the SSH key file.
+    */
+   std::string sshKeyType();
+   core::Error setSshKeyType(std::string val);
 
    /**
     * Whether to use the devtools R package.
     */
    bool useDevtools();
    core::Error setUseDevtools(bool val);
+
+   /**
+    * Always use --preclean when installing package.
+    */
+   bool cleanBeforeInstall();
+   core::Error setCleanBeforeInstall(bool val);
 
    /**
     * Whether to use Internet2 for networking on R for Windows.
@@ -1464,6 +1531,12 @@ public:
     */
    int dataViewerMaxColumns();
    core::Error setDataViewerMaxColumns(int val);
+
+   /**
+    * The maximum number of characters to show in a data viewer cell.
+    */
+   int dataViewerMaxCellSize();
+   core::Error setDataViewerMaxCellSize(int val);
 
    /**
     * Support accessibility aids such as screen readers (RStudio Server).
@@ -1592,6 +1665,12 @@ public:
    core::Error setVisualMarkdownEditingShowMargin(bool val);
 
    /**
+    * Whether to show line numbers in the code editors used in visual mode
+    */
+   bool visualMarkdownCodeEditorLineNumbers();
+   core::Error setVisualMarkdownCodeEditorLineNumbers(bool val);
+
+   /**
     * The default visual editing mode font size, in points
     */
    int visualMarkdownEditingFontSizePoints();
@@ -1682,7 +1761,7 @@ public:
    core::Error setSaveRetryTimeout(int val);
 
    /**
-    * Whether the Insert Pipe Operator command should insert the native R pipe operator, |>
+    * Whether the Insert Pipe Operator command should use the native R pipe operator, |>
     */
    bool insertNativePipeOperator();
    core::Error setInsertNativePipeOperator(bool val);
@@ -1710,6 +1789,36 @@ public:
     */
    bool terminalPythonIntegration();
    core::Error setTerminalPythonIntegration(bool val);
+
+   /**
+    * Enable session protocol debug logging showing all session requests and events
+    */
+   bool sessionProtocolDebug();
+   core::Error setSessionProtocolDebug(bool val);
+
+   /**
+    * When enabled, if the active project contains a Python virtual environment, then RStudio will automatically activate this environment on startup.
+    */
+   bool pythonProjectEnvironmentAutomaticActivate();
+   core::Error setPythonProjectEnvironmentAutomaticActivate(bool val);
+
+   /**
+    * When enabled, RStudio will detect R objects containing null external pointers when building the Environment pane, and avoid introspecting their contents further.
+    */
+   bool checkNullExternalPointers();
+   core::Error setCheckNullExternalPointers(bool val);
+
+   /**
+    * The IDE's user-interface language.
+    */
+   std::string uiLanguage();
+   core::Error setUiLanguage(std::string val);
+
+   /**
+    * Whether RStudio Desktop will use the operating system's native File and Message dialog boxes.
+    */
+   bool nativeFileDialogs();
+   core::Error setNativeFileDialogs(bool val);
 
 };
 

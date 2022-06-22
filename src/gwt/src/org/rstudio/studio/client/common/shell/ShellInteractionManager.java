@@ -1,7 +1,7 @@
 /*
  * ShellInteractionManager.java
  *
- * Copyright (C) 2021 by RStudio, PBC
+ * Copyright (C) 2022 by RStudio, PBC
  *
  * Unless you have received this program directly from RStudio pursuant
  * to the terms of a commercial license agreement with RStudio, then
@@ -15,12 +15,14 @@
 package org.rstudio.studio.client.common.shell;
 
 
+import com.google.gwt.core.client.GWT;
 import org.rstudio.core.client.BrowseCap;
 import org.rstudio.core.client.CommandWithArg;
 import org.rstudio.core.client.StringUtil;
 import org.rstudio.core.client.command.KeyboardShortcut;
 import org.rstudio.studio.client.application.Desktop;
 import org.rstudio.studio.client.common.CommandLineHistory;
+import org.rstudio.studio.client.common.StudioClientCommonConstants;
 import org.rstudio.studio.client.common.debugging.model.UnhandledError;
 import org.rstudio.studio.client.workbench.views.console.shell.editor.InputEditorDisplay;
 
@@ -79,7 +81,7 @@ public class ShellInteractionManager implements ShellOutputWriter
    {
       // show the error in the console then re-prompt
       display_.consoleWriteError(
-            "Error: " + error + "\n");
+              constants_.consoleWriteError(error));
       if (lastPromptText_ != null)
          consolePrompt(lastPromptText_, false);
    }
@@ -282,4 +284,5 @@ public class ShellInteractionManager implements ShellOutputWriter
     * it off.
     */
    private String outputPrefixToSuppress_;
+   private static final StudioClientCommonConstants constants_ = GWT.create(StudioClientCommonConstants.class);
 }

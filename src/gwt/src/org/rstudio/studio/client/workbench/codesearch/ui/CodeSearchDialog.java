@@ -1,7 +1,7 @@
 /*
  * CodeSearchDialog.java
  *
- * Copyright (C) 2021 by RStudio, PBC
+ * Copyright (C) 2022 by RStudio, PBC
  *
  * Unless you have received this program directly from RStudio pursuant
  * to the terms of a commercial license agreement with RStudio, then
@@ -15,6 +15,7 @@
 package org.rstudio.studio.client.workbench.codesearch.ui;
 
 import com.google.gwt.aria.client.Roles;
+import com.google.gwt.core.client.GWT;
 import org.rstudio.core.client.widget.CanFocus;
 import org.rstudio.core.client.widget.ModalDialogBase;
 import org.rstudio.studio.client.workbench.codesearch.CodeSearch;
@@ -25,6 +26,7 @@ import com.google.gwt.user.client.Window;
 import com.google.gwt.user.client.ui.VerticalPanel;
 import com.google.gwt.user.client.ui.Widget;
 import com.google.inject.Provider;
+import org.rstudio.studio.client.workbench.codesearch.CodeSearchConstants;
 
 public class CodeSearchDialog extends ModalDialogBase 
                               implements CodeSearch.Observer
@@ -37,7 +39,7 @@ public class CodeSearchDialog extends ModalDialogBase
       setGlassEnabled(false);
       setAutoHideEnabled(true);
       
-      setText("Go to File/Function");
+      setText(constants_.fileFunctionLabel());
       
       pCodeSearch_ = pCodeSearch;
    }
@@ -101,6 +103,5 @@ public class CodeSearchDialog extends ModalDialogBase
   
    Provider<CodeSearch> pCodeSearch_;
    CodeSearch codeSearch_;
-   
-   
+   private static final CodeSearchConstants constants_ = GWT.create(CodeSearchConstants.class);
 }

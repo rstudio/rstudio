@@ -3,7 +3,7 @@
 #
 # install-dependencies-osx
 #
-# Copyright (C) 2021 by RStudio, PBC
+# Copyright (C) 2022 by RStudio, PBC
 #
 # Unless you have received this program directly from RStudio pursuant
 # to the terms of a commercial license agreement with RStudio, then
@@ -43,14 +43,16 @@ if [ "$(arch)" = "arm64" ]; then
 
    # install x86_64 dependencies
    PATH="$(dirname "${BREW_X86}"):${OLDPATH}"
-   RSTUDIO_TOOLS_ROOT=$(realpath -m "${OLDROOT}/../x86_64")
+   mkdir-sudo-if-necessary "${OLDROOT}/../x86_64"
+   RSTUDIO_TOOLS_ROOT=$(cd "${OLDROOT}/../x86_64"; pwd -P)
 
    section "Installing x86_64 Dependencies"
    arch -x86_64 ./install-dependencies-osx-arch
 
    # install arm64 dependencies
    PATH="$(dirname "${BREW_ARM}"):${OLDPATH}"
-   RSTUDIO_TOOLS_ROOT=$(realpath -m "${OLDROOT}/../arm64")
+   mkdir-sudo-if-necessary "${OLDROOT}/../arm64"
+   RSTUDIO_TOOLS_ROOT=$(cd "${OLDROOT}/../arm64"; pwd -P)
 
    section "Installing arm64 Dependencies"
    arch -arm64 ./install-dependencies-osx-arch
@@ -71,7 +73,8 @@ else
    OLDROOT="${RSTUDIO_TOOLS_ROOT}"
 
    PATH="$(dirname "${BREW_X86}"):${OLDPATH}"
-   RSTUDIO_TOOLS_ROOT=$(realpath -m "${RSTUDIO_TOOLS_ROOT}/../x86_64")
+   mkdir-sudo-if-necessary "${OLDROOT}/../x86_64"
+   RSTUDIO_TOOLS_ROOT=$(cd "${OLDROOT}/../x86_64"; pwd -P)
 
    ./install-dependencies-osx-arch
 
@@ -102,3 +105,13 @@ if ! is-jenkins; then
    fi
 fi
 
+# ensure python requirements are installed
+if ! is-jenkins; then
+   if has-program python3; then
+     section "Installing python packages for i18n"
+     pushd ../../src/gwt/tools/i18n-helpers
+     python3 -m venv VENV
+     ./VENV/bin/pip install --disable-pip-version-check -r commands.cmd.xml/requirements.txt
+     popd
+   fi
+fi

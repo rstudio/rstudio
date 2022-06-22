@@ -1,7 +1,7 @@
 /*
  * LauncherJobsPresenter.java
  *
- * Copyright (C) 2021 by RStudio, PBC
+ * Copyright (C) 2022 by RStudio, PBC
  *
  * Unless you have received this program directly from RStudio pursuant
  * to the terms of a commercial license agreement with RStudio, then
@@ -20,6 +20,7 @@ import org.rstudio.core.client.command.Handler;
 import org.rstudio.studio.client.workbench.commands.Commands;
 import org.rstudio.studio.client.workbench.views.BasePresenter;
 import org.rstudio.studio.client.workbench.views.jobs.events.JobUpdatedEvent;
+import org.rstudio.studio.client.workbench.views.jobs.events.JobsActivateEvent;
 import org.rstudio.studio.client.workbench.views.jobs.events.JobElapsedTickEvent;
 import org.rstudio.studio.client.workbench.views.jobs.events.JobOutputEvent;
 import org.rstudio.studio.client.workbench.views.jobs.events.JobSelectionEvent;
@@ -87,6 +88,12 @@ public class LauncherJobsPresenter extends BasePresenter
    }
    
    @Override
+   public void onJobsActivate(JobsActivateEvent event)
+   {
+      jobEventHandler_.onJobsActivate(event);
+   }
+   
+   @Override
    public void onBeforeUnselected()
    {
       super.onBeforeUnselected();
@@ -108,7 +115,7 @@ public class LauncherJobsPresenter extends BasePresenter
    }
    
    @Handler
-   public void onActivateLauncherJobs()
+   public void onActivateWorkbenchJobs()
    {
       // Ensure that console pane is not minimized
       commands_.activateConsolePane().execute();
@@ -123,4 +130,5 @@ public class LauncherJobsPresenter extends BasePresenter
    private final Display display_;
    private final Commands commands_;
    private final LauncherJobManager launcherJobManager_;
+  
 }

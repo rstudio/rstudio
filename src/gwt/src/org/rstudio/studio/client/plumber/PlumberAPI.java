@@ -1,7 +1,7 @@
 /*
  * PlumberAPI.java
  *
- * Copyright (C) 2021 by RStudio, PBC
+ * Copyright (C) 2022 by RStudio, PBC
  *
  * Unless you have received this program directly from RStudio pursuant
  * to the terms of a commercial license agreement with RStudio, then
@@ -14,6 +14,7 @@
  */
 package org.rstudio.studio.client.plumber;
 
+import com.google.gwt.core.client.GWT;
 import org.rstudio.core.client.BrowseCap;
 import org.rstudio.core.client.Size;
 import org.rstudio.core.client.StringUtil;
@@ -251,7 +252,7 @@ public class PlumberAPI implements PlumberAPIStatusEvent.Handler,
       else
       {
          // Nothing else running, start this API.
-         dependencyManager_.withRPlumber("Running Plumber API", () -> launchPlumberFile(filePath));
+         dependencyManager_.withRPlumber(constants_.runningPlumberApiUserAction(), () -> launchPlumberFile(filePath));
       }
    }
 
@@ -385,7 +386,7 @@ public class PlumberAPI implements PlumberAPIStatusEvent.Handler,
                @Override
                public void onError(ServerError error)
                {
-                  display_.showErrorMessage("Plumber API Launch Failed", error.getMessage());
+                  display_.showErrorMessage(constants_.apiLaunchFailedCaption(), error.getMessage());
                }
             });
    }
@@ -425,7 +426,9 @@ public class PlumberAPI implements PlumberAPIStatusEvent.Handler,
          satelliteManager_.activateSatelliteWindow(PlumberAPISatellite.NAME);
       }
    }
-   
+
+   private static final PlumberConstants constants_ = GWT.create(PlumberConstants.class);
+
    private final EventBus eventBus_;
    private final SatelliteManager satelliteManager_;
    private final DependencyManager dependencyManager_;

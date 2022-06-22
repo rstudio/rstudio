@@ -1,7 +1,7 @@
 /*
  * RCompletionToolTip.java
  *
- * Copyright (C) 2021 by RStudio, PBC
+ * Copyright (C) 2022 by RStudio, PBC
  *
  * Unless you have received this program directly from RStudio pursuant
  * to the terms of a commercial license agreement with RStudio, then
@@ -16,11 +16,13 @@ package org.rstudio.studio.client.workbench.views.source.editors.text.r;
 
 import java.util.ArrayList;
 
+import com.google.gwt.core.client.GWT;
 import org.rstudio.core.client.HandlerRegistrations;
 import org.rstudio.core.client.Rectangle;
 import org.rstudio.core.client.StringUtil;
 import org.rstudio.studio.client.workbench.views.console.shell.assist.PopupPositioner;
 import org.rstudio.studio.client.workbench.views.console.shell.assist.PopupPositioner.Coordinates;
+import org.rstudio.studio.client.workbench.views.source.ViewsSourceConstants;
 import org.rstudio.studio.client.workbench.views.source.editors.text.DocDisplay;
 import org.rstudio.studio.client.workbench.views.source.editors.text.DocDisplay.AnchoredSelection;
 import org.rstudio.studio.client.workbench.views.source.editors.text.ace.Position;
@@ -138,7 +140,7 @@ public class RCompletionToolTip extends CppCompletionToolTip
             }
          }
 
-         return truncated + " <...truncated...> )";
+         return constants_.truncatedEllipses(truncated);
       }
 
       return signature;
@@ -320,5 +322,5 @@ public class RCompletionToolTip extends CppCompletionToolTip
 
    private HandlerRegistration nativePreviewReg_;
    private AnchoredSelection anchor_;
-
+   private static final ViewsSourceConstants constants_ = GWT.create(ViewsSourceConstants.class);
 }

@@ -1,7 +1,7 @@
 /*
  * SessionProjectContext.cpp
  *
- * Copyright (C) 2021 by RStudio, PBC
+ * Copyright (C) 2022 by RStudio, PBC
  *
  * Unless you have received this program directly from RStudio pursuant
  * to the terms of a commercial license agreement with RStudio, then
@@ -46,6 +46,7 @@
 #define kStorageFolder "projects"
 
 using namespace rstudio::core;
+using namespace boost::placeholders;
 
 namespace rstudio {
 namespace session {
@@ -84,7 +85,7 @@ void onProjectFilesChanged(const std::vector<core::system::FileChangeEvent>& eve
 }  // anonymous namespace
 
 
-Error computeScratchPaths(const FilePath& projectFile, 
+Error computeScratchPaths(const FilePath& projectFile,
                           FilePath* pScratchPath,
                           FilePath* pSharedScratchPath)
 {
@@ -162,15 +163,15 @@ FilePath ProjectContext::websitePath() const
 
 FilePath ProjectContext::fileUnderWebsitePath(const core::FilePath& file) const
 {
-   // first check same folder; this will catch building simple R Markdown websites 
+   // first check same folder; this will catch building simple R Markdown websites
    // even without an RStudio project in play
    if (r_util::isWebsiteDirectory(file.getParent()))
       return file.getParent();
-   
+
    // otherwise see if this file is under a website project
    if (!websitePath().isEmpty() && file.isWithin(websitePath()))
       return websitePath();
-   
+
    return FilePath();
 }
 
@@ -191,7 +192,7 @@ Error ProjectContext::startup(const FilePath& projectFile,
       return pathNotFoundError(projectFile.getAbsolutePath(), ERROR_LOCATION);
    }
 
-   // test for writeabilty of parent
+   // test for writeability of parent
    if (!file_utils::isDirectoryWriteable(projectFile.getParent()))
    {
       *pUserErrMsg = "the project directory is not writeable";
@@ -260,6 +261,19 @@ Error ProjectContext::startup(const FilePath& projectFile,
    sharedScratchPath_ = sharedScratchPath;
    config_ = config;
 
+   // look for directories that contain python environments
+   std::vector<FilePath> children;
+   error = directory_.getChildren(children);
+   if (error)
+      LOG_ERROR(error);
+   algorithm::copy_if(children.begin(), children.end(),
+                      std::back_inserter(pythonEnvs_), [](const FilePath& child) {
+      return child.isDirectory() &&
+            (child.completeChildPath("pyvenv.cfg").exists() ||
+             child.completeChildPath("conda-meta").exists());
+   });
+
+
    // assume true so that the initial files pane listing doesn't register
    // a duplicate monitor. if it turns out to be false then this can be
    // repaired by a single refresh of the files pane
@@ -284,7 +298,7 @@ void ProjectContext::augmentRbuildignore()
 
       std::string ignoreLines = kIgnoreRproj + newLine +
                                 kIgnoreRprojUser + newLine;
-      
+
       if (session::options().packageOutputInPackageFolder())
       {
          // if package build is writing output into the package directory,
@@ -349,7 +363,7 @@ void ProjectContext::augmentRbuildignore()
             if (!packageName.empty())
             {
                packageName.insert(0, "^");
-               
+
                if (strIgnore.find(packageName + kIgnoreRCheck) == std::string::npos)
                {
                   hasAllPackageExclusions = false;
@@ -401,20 +415,20 @@ SEXP rs_hasFileMonitor()
 SEXP rs_computeScratchPaths(SEXP projectFileSEXP)
 {
    std::string projectFile = r::sexp::asString(projectFileSEXP);
-   
+
    FilePath scratchPath;
    FilePath sharedScratchPath;
    Error error = computeScratchPaths(
             module_context::resolveAliasedPath(projectFile),
             &scratchPath,
             &sharedScratchPath);
-   
+
    if (error)
    {
       LOG_ERROR(error);
       return R_NilValue;
    }
-   
+
    r::sexp::Protect protect;
    r::sexp::ListBuilder builder(&protect);
    builder.add("scratch_path", scratchPath.getAbsolutePath());
@@ -482,7 +496,7 @@ Error ProjectContext::initialize()
 
    // compute storage path from project ID
    storagePath_ = module_context::userScratchPath().completePath(kStorageFolder).completePath(projectId);
-   
+
    return Success();
 }
 
@@ -496,32 +510,47 @@ std::vector<std::string> fileMonitorIgnoredComponents()
       // don't monitor things in .Rproj.user
       "/.Rproj.user",
 
+      // don't monitor things in .quarto
+      "/.quarto",
+
       // ignore things within a .git folder
-      "/.git",
-      
+      // ... but allow e.g. .github
+      "/.git/",
+
       // ignore some directories within the revdep folder
       "/revdep/checks",
       "/revdep/library",
 
       // ignore files within an renv or packrat library
       "/renv/library",
+      "/renv/python",
       "/renv/staging",
       "/packrat/lib",
-      
+      "/packrat/src"
+
       // ignore things marked .noindex
       ".noindex"
 
    };
-   
+
    // now add user-defined ignores
    json::Array userIgnores = prefs::userPrefs().fileMonitorIgnoredComponents();
    for (auto&& userIgnore : userIgnores)
       if (userIgnore.isString())
          ignores.push_back(userIgnore.getString());
-   
+
+   // don't monitor python envs
+   if (projects::projectContext().hasProject())
+   {
+      const std::vector<FilePath>& envs = projects::projectContext().pythonEnvs();
+      std::transform(envs.begin(), envs.end(), std::back_inserter(ignores), [](const FilePath& envPath) {
+         return "/" + envPath.getRelativePath(projects::projectContext().directory());
+      });
+   }
+
    // return vector of ignored components
    return ignores;
-   
+
 }
 
 } // end anonymous namespace
@@ -549,7 +578,7 @@ void ProjectContext::onDeferredInit(bool newSession)
    FileMonitorFilterContext context;
    context.ignoreObjectFiles = prefs::userPrefs().hideObjectFiles();
    context.ignoredComponents = fileMonitorIgnoredComponents();
-   
+
    core::system::file_monitor::registerMonitor(
          directory(),
          true,
@@ -640,7 +669,7 @@ bool ProjectContext::fileMonitorFilter(
    for (auto&& component : context.ignoredComponents)
       if (boost::algorithm::icontains(path, component))
          return false;
-   
+
    return module_context::fileListingFilter(fileInfo, context.ignoreObjectFiles);
 }
 
@@ -746,6 +775,11 @@ json::Object ProjectContext::uiPrefs() const
    json::Object uiPrefs;
    uiPrefs[kUseSpacesForTab] = config_.useSpacesForTab;
    uiPrefs[kNumSpacesForTab] = config_.numSpacesForTab;
+   // only set project value if explicitly set to Yes or No
+   if (config_.useNativePipeOperator == r_util::YesValue)
+      uiPrefs[kInsertNativePipeOperator] = true;
+   if (config_.useNativePipeOperator == r_util::NoValue)
+      uiPrefs[kInsertNativePipeOperator] = false;
    uiPrefs[kAutoAppendNewline] = config_.autoAppendNewline;
    uiPrefs[kStripTrailingWhitespace] = config_.stripTrailingWhitespace;
    uiPrefs[kDefaultEncoding] = defaultEncoding();
@@ -753,7 +787,7 @@ json::Object ProjectContext::uiPrefs() const
    uiPrefs[kDefaultLatexProgram] = config_.defaultLatexProgram;
    uiPrefs[kRootDocument] = config_.rootDocument;
    uiPrefs[kUseRoxygen] = !config_.packageRoxygenize.empty();
-   
+
    // python prefs -- only activate when non-empty
    if (!config_.pythonType.empty() ||
        !config_.pythonVersion.empty() ||
@@ -771,10 +805,10 @@ json::Object ProjectContext::uiPrefs() const
       if (config_.markdownWrap == kMarkdownWrapColumn)
          uiPrefs[kVisualMarkdownEditingWrapAtColumn] = config_.markdownWrapAtColumn;
    }
-   
+
    if (config_.markdownReferences != kMarkdownReferencesUseDefault)
       uiPrefs[kVisualMarkdownEditingReferencesLocation] = boost::algorithm::to_lower_copy(config_.markdownReferences);
-   
+
    if (config_.markdownCanonical != DefaultValue)
       uiPrefs[kVisualMarkdownEditingCanonical] = config_.markdownCanonical == YesValue;
 
@@ -815,6 +849,7 @@ r_util::RProjectConfig ProjectContext::defaultConfig()
    defaultConfig.rVersion = r_util::RVersionInfo(kRVersionDefault);
    defaultConfig.useSpacesForTab = prefs::userPrefs().useSpacesForTab();
    defaultConfig.numSpacesForTab = prefs::userPrefs().numSpacesForTab();
+   defaultConfig.useNativePipeOperator = r_util::DefaultValue;
    defaultConfig.autoAppendNewline = prefs::userPrefs().autoAppendNewline();
    defaultConfig.stripTrailingWhitespace =
                               prefs::userPrefs().stripTrailingWhitespace();
@@ -828,6 +863,7 @@ r_util::RProjectConfig ProjectContext::defaultConfig()
    defaultConfig.buildType = std::string();
    defaultConfig.tutorialPath = std::string();
    defaultConfig.packageUseDevtools = prefs::userPrefs().useDevtools();
+   defaultConfig.packageCleanBeforeInstall = prefs::userPrefs().cleanBeforeInstall();
    return defaultConfig;
 }
 
@@ -978,7 +1014,7 @@ bool ProjectContext::parentBrowseable()
    if (error)
    {
       // if we can't figure it out, presume it to be browseable (this preserves
-      // existing behavior) 
+      // existing behavior)
       LOG_ERROR(error);
       return true;
    }
@@ -1010,4 +1046,3 @@ void ProjectContext::addDefaultOpenDocs()
 } // namespace projects
 } // namespace session
 } // namespace rstudio
-

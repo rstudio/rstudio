@@ -229,7 +229,7 @@ public:
     /// Validate the server's response to an outgoing handshake request
     /**
      * @param req The original request sent
-     * @param res The reponse to generate
+     * @param res The response to generate
      * @return An error code, 0 on success, non-zero for other errors
      */
     lib::error_code validate_server_handshake_response(request_type const & req,

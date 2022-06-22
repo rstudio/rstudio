@@ -11,14 +11,14 @@
 #     docker-compile.sh IMAGE-NAME FLAVOR-NAME [VERSION]
 #
 # where the image name is the platform and architecture, the flavor name is
-# the kind of package you wish to build (desktop or server), and the version
-# is the number to assign to the resulting build.
+# the kind of package you wish to build (desktop, electron or server), and the
+# version is the number to assign to the resulting build.
 #
 # For example:
 # 
-#     docker-compile.sh centos7-amd64 desktop 1.2.345
+#     docker-compile.sh rhel8-x86_64 desktop 1.2.345
 #
-# will produce an RPM of RStudio Desktop from the 64bit CentOS 7 container, 
+# will produce an RPM of RStudio Desktop from the 64bit RHEL8 container, 
 # with build version 1.2.345, in your package/linux/ directory.
 #
 # For convenience, this script will build the required image if it doesn't
@@ -59,6 +59,7 @@ if [ -z "$IMAGE" ] || [ -z "$FLAVOR" ]; then
     ls -f docker/jenkins/Dockerfile.* | sed -e 's/.*Dockerfile.//'
     echo -e "\nValid flavors:\n"
     echo -e "desktop"
+    echo -e "electron"
     echo -e "server"
     exit 1
 fi
@@ -90,6 +91,9 @@ if [ "${IMAGE:0:6}" = "centos" ]; then
 elif [ "${IMAGE:0:6}" = "fedora" ]; then
     PACKAGE=RPM
     INSTALLER=yum
+elif [ "${IMAGE:0:4}" = "rhel" ]; then
+    PACKAGE=RPM
+    INSTALLER=yum
 elif [ "${IMAGE:0:8}" = "opensuse" ]; then
     PACKAGE=RPM
     INSTALLER=zypper
@@ -99,17 +103,17 @@ else
 fi
 
 if [ -n "$VERSION" ]; then
-    SPLIT=(${VERSION//\./ })
-    PATCH="${SPLIT[2]}"
-    # determine major and minor versions
-    ENV="RSTUDIO_VERSION_MAJOR=${SPLIT[0]} RSTUDIO_VERSION_MINOR=${SPLIT[1]}"
+    SPLIT=(${VERSION//[-+]/ })
+    FIRST_HALF=(${SPLIT[0]//\./ })
 
-    # supply suffix if embedded in patch
-    if [[ $PATCH == *"-"* ]]; then
-        PATCH=(${PATCH//-/ })
-        ENV="$ENV RSTUDIO_VERSION_PATCH=${PATCH[0]} RSTUDIO_VERSION_SUFFIX=${PATCH[1]}"
+    # determine major and minor versions
+    ENV="RSTUDIO_VERSION_MAJOR=${FIRST_HALF[0]} RSTUDIO_VERSION_MINOR=${FIRST_HALF[1]} RSTUDIO_VERSION_PATCH=${FIRST_HALF[2]}"
+
+    # supply suffix
+    if [[ ${#SPLIT[@]} -gt 2 ]]; then
+        ENV="$ENV RSTUDIO_VERSION_SUFFIX=-${SPLIT[1]}+${SPLIT[2]}"
     else
-        ENV="$ENV RSTUDIO_VERSION_PATCH=$PATCH"
+        ENV="$ENV RSTUDIO_VERSION_SUFFIX=+${SPLIT[1]}"
     fi
 fi
 
@@ -118,11 +122,10 @@ ENV="$ENV GIT_COMMIT=$(git rev-parse HEAD)"
 ENV="$ENV BUILD_ID=local"
 
 # infer make parallelism
-if hash sysctl 2>/dev/null; then
-    # macos; we could use `sysctl -n hw.ncpu` but that would likely be too
-    # high. Docker for Mac defaults to half that value. Instead, use -j2 
-    # to match what we currently do in the official build.
-    ENV="$ENV MAKEFLAGS=-j2"
+if [ "$(uname)" = "Darwin" ]; then
+    # macos; Docker for Mac defaults to half of host's cores
+    JVALUE=$(( `sysctl -n hw.ncpu` / 2 ))
+    ENV="$ENV MAKEFLAGS=-j${JVALUE}"
 elif hash nproc 2>/dev/null; then
     # linux
     ENV="$ENV MAKEFLAGS=-j$(nproc --all)"

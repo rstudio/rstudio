@@ -1,0 +1,113 @@
+{
+  "common": {
+    "buttonOk": "OK",
+    "buttonCancel": "Annuler",
+    "buttonBrowse": "Parcourir...",
+    "unknownErrorOccurred": "Une erreur inconnue s'est produite."
+  },
+  "contextMenu": {
+    "saveImageAsDots": "Enregistrer l'image sous...",
+    "saveImageAs": "Enregistrer l'image sous",
+    "copyImage": "Copier l'image",
+    "reload": "Recharger",
+    "copyImageAddress": "Copier l'adresse de l'image",
+    "cut": "Couper",
+    "copy": "Copier",
+    "paste": "Coller",
+    "selectAll": "Tout sélectionner",
+    "inspectElement": "Inspecter l'élément",
+    "errorDownloadingImage": "Erreur de téléchargement de l'image",
+    "downloadCancelledMessage": "Le téléchargement a été annulé",
+    "downloadInterruptedMessage": "Le téléchargement a été interrompu.",
+    "save": "Sauvegarder"
+  },
+  "chooseRDialog": {
+    "documentTitle": "Choisir l'installation de R",
+    "title": "RStudio requiert une installation existante de R.",
+    "subtitle": "Veuillez sélectionner la version de R à utiliser.",
+    "use64BitR": "Utilisez la version 64 bits par défaut de R sur votre machine",
+    "use32BitR": "Utilisez la version 32 bits par défaut de R sur votre machine",
+    "useCustom": "Choisissez une version spécifique de R :",
+    "customizeRenderingEngine": "Vous pouvez également personnaliser le moteur de rendu utilisé par RStudio",
+    "renderingEngineLabel": "Moteur de rendu :",
+    "renderingEngineOptionAuto": "Détection automatique (recommandée)",
+    "renderingEngineOptionDesktop": "Espace de travail",
+    "renderingEngineOptionSoftware": "Logiciel",
+    "renderingEngineChangedTitle": "Moteur de rendu modifié",
+    "renderingEngineChangedMessage": "Le moteur de rendu a été modifié. Veuillez redémarrer RStudio pour que ces modifications prennent effet.",
+    "rLaunchFailedTitle": "Erreur de chargement de R",
+    "rLaunchFailedMessage": "Une erreur s'est produite lors de la tentative de chargement de la version sélectionnée de R. Veuillez sélectionner une installation de R différente."
+  },
+  "uiFolder": {
+    "chooseRExecutable": "Choisissez l'exécutable de R",
+    "rExecutable": "Exécutable R",
+    "browseDots": "Parcourir...",
+    "okCaps": "OK",
+    "cancel": "Annuler",
+    "errorStartingR": "Erreur de démarrage de R",
+    "problemReportCopiedToClipboard": "Rapport d'erreur copié dans le presse-papiers.",
+    "couldNotCopyProblemReportToClipboard": "Impossible de copier le rapport d'erreur dans le presse-papiers.",
+    "rLogo": "Logo de R",
+    "warning": "Avertissement",
+    "rstudioVersion": "Version de RStudio",
+    "errorMessage": "Message d'erreur",
+    "processOutput": "Sortie du processus",
+    "rSessionExitedWithCode": "Le processus de la session R a quitté avec le code {{- exitCode}}.",
+    "errors": "Erreurs",
+    "output": "Sortie",
+    "recentLog": "Journal récent",
+    "nextSteps": "Prochaines étapes",
+    "rCanFailToStartupForManyReasons": "R peut échouer au démarrage pour de nombreuses raisons. Les éléments suivants peuvent vous aider à résoudre le problème :",
+    "investigateAnyErrorsAbove": "Examinez toutes les erreurs ci-dessus.",
+    "makeSureThatRStartsUpCorrectly": "Assurez-vous que R démarre correctement en dehors de RStudio (en utilisant RGui, R.app, ou R dans un terminal).",
+    "fullyUninstallAllVersionsOfRFromYourMachine": "Désinstaller complètement toutes les versions de R de votre machine, et réinstaller la version que vous souhaitez utiliser avec RStudio.",
+    "removeStartupCustomizationsSuchAs": "Supprimez les personnalisations de démarrage telles qu'un fichier {{- rProfileFileExtension}}, s'il est présent.",
+    "ifPostingThisReportOnlineUseTheCopyProblemReport": "Si vous publiez ce rapport en ligne, utilisez le bouton Copier le rapport de problème ci-dessous pour générer une version textuelle de ce diagnostic.",
+    "furtherTroubleshootingHelpCanBeFound": "Une aide supplémentaire au dépannage peut être trouvée sur notre site Web :",
+    "troubleshootingRstudioStartup": "Dépannage du démarrage de RStudio",
+    "copyProblemReport": "Copier le rapport de problème",
+    "cannotConnectToR": "Impossible de se connecter à R",
+    "rstudioCantEstablishAConnectionToR": "RStudio ne peut pas établir de connexion à R. Cela indique généralement l'une des situations suivantes :",
+    "theRSessionIsTakingAnUnusuallyLongTimeToStart": "La session R prend un temps anormalement long pour démarrer, peut-être en raison de la lenteur des opérations dans les scripts de démarrage ou de l'accès lent au lecteur réseau.",
+    "rstudioIsUnableToCommunicateWithR": "RStudio est incapable de communiquer avec R sur un port du réseau local, peut-être à cause de restrictions du pare-feu ou d'un logiciel anti-virus.",
+    "pleaseTryTheFollowing": "Veuillez essayer ce qui suit :",
+    "ifYouveCustomizedRSessionCreation": "Si vous avez personnalisé la création de session R en créant un profil R (par exemple, situé à {{- rProfileFileExtension}}, envisagez de le supprimer temporairement.",
+    "ifYouAreUsingAFirewallOrAntivirus": "Si vous utilisez un pare-feu ou un logiciel antivirus qui surveille l'accès aux ports du réseau local, ajoutez une exclusion pour les exécutables RStudio et rsession.",
+    "runRguiRAppOrRInATerminalToEnsure": "Exécutez RGui, R.app, ou R dans un terminal pour vous assurer que R lui-même démarre correctement.",
+    "retry": "Réessayer",
+    "initializingR": "Initialisation de R",
+    "theRsessionIsInitializing": "La session R est en train de s'initialiser {{- mdash}} veuillez patienter un instant...",
+    "rSessionFailedToStart": "La session R n'a pas réussi à démarrer."
+  },
+  "applicationTs": {
+    "devModeConfig": "Mode Config DEV",
+    "confColon": "conf :",
+    "notFoundDotLowercase": "non trouvé.",
+    "errorFindingR": "Erreur de recherche de R",
+    "rstudioFailedToFindRInstalationsOnTheSystem": "RStudio n'a pas réussi à trouver d'installations R sur le système."
+  },
+  "detectRTs": {
+    "rNotFound": "R non trouvé",
+    "couldNotLocateAnRInstallationOnTheSystem": "Impossible de localiser une installation R sur le système."
+  },
+  "gwtCallbackTs": {
+    "unimplemented": "Non implémenté",
+    "callbackNyiLowercase": "{{ipcName}} pas encore implémenté"
+  },
+  "mainTs": {
+    "unhandledException": "Exception non gérée"
+  },
+  "sessionLauncherTs": {
+    "rSessionFatalError": "La session R a eu une erreur fatale.",
+    "errorWasCausedByRAttemptingToLoadPackagesFromADifferentIncompatibleRVersion": "Cette erreur a très probablement été causée par la tentative de R de charger des paquets à partir d'une autre version incompatible de R sur votre système. Veuillez supprimer les autres versions de R et/ou supprimer les variables d'environnement qui font référence aux bibliothèques d'autres versions de R avant de poursuivre."
+  },
+  "utilsTs": {
+    "rsessionNotFoundError": "Impossible de trouver l'exécutable rsession. Essayez de définir la variable d'environnement \"RSTUDIO_CPP_BUILD_OUTPUT\" à l'emplacement où src/cpp a été construit.\n( Répertoire de travail : {{workingDirectory}} )"
+  },
+  "mainWindowTs": {
+    "rSessionFailedToStart": "La session R n'a pas réussi à démarrer."
+  },
+  "i18nManager": {
+    "errorLocalizingDocument": "Erreur de localisation du document :"
+  }
+}

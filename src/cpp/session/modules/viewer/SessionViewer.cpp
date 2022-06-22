@@ -1,7 +1,7 @@
 /*
  * SessionViewer.cpp
  *
- * Copyright (C) 2021 by RStudio, PBC
+ * Copyright (C) 2022 by RStudio, PBC
  *
  * Unless you have received this program directly from RStudio pursuant
  * to the terms of a commercial license agreement with RStudio, then
@@ -38,34 +38,50 @@ using namespace rstudio::core;
 
 namespace rstudio {
 namespace session {
-namespace modules { 
-namespace viewer {
 
 namespace {
 
+using namespace modules::viewer;
+
 // track the current viewed url and whether it is a static widget
+std::string s_currentUnmappedUrl;
 std::string s_currentUrl;
 bool s_isHTMLWidget = false;
 
 void viewerNavigate(const std::string& url,
                     int height,
                     bool isHTMLWidget,
+                    const module_context::QuartoNavigate& quartoNavigate,
                     bool bringToFront)
 {
    // record the url (for reloads)
+   s_currentUnmappedUrl = url;
    s_currentUrl = url_ports::mapUrlPorts(url);
    s_isHTMLWidget = isHTMLWidget;
+
+   // create quarto nav object
+   json::Value quartoNav = module_context::quartoNavigateAsJson(quartoNavigate);
 
    // enque the event
    json::Object dataJson;
    dataJson["url"] = s_currentUrl;
    dataJson["height"] = height;
    dataJson["html_widget"] = isHTMLWidget;
+   dataJson["quarto_navigate"] = quartoNav;
    dataJson["has_next"] = isHTMLWidget && viewerHistory().hasNext();
    dataJson["has_previous"] = isHTMLWidget && viewerHistory().hasPrevious();
    dataJson["bring_to_front"] = bringToFront;
    ClientEvent event(client_events::kViewerNavigate, dataJson);
    module_context::enqueClientEvent(event);
+}
+
+// overload for non-Quarto navigation
+void viewerNavigate(const std::string& url,
+                    int height,
+                    bool isHTMLWidget,
+                    bool bringToFront)
+{
+   viewerNavigate(url, height, isHTMLWidget, module_context::QuartoNavigate(), bringToFront);
 }
 
 void viewerNavigateToCurrent(bool bringToFront = true)
@@ -75,49 +91,50 @@ void viewerNavigateToCurrent(bool bringToFront = true)
       viewerNavigate(current.url(), 0, true, bringToFront);
 }
 
-Error viewerStopped(const json::JsonRpcRequest& request,
-                    json::JsonRpcResponse* pResponse)
+Error viewerStopped(const json::JsonRpcRequest&,
+                    json::JsonRpcResponse*)
 {
    // clear current state
+   s_currentUnmappedUrl.clear();
    s_currentUrl.clear();
    s_isHTMLWidget = false;
 
    return Success();
 }
 
-Error viewerBack(const json::JsonRpcRequest& request,
-                 json::JsonRpcResponse* pResponse)
+Error viewerBack(const json::JsonRpcRequest&,
+                 json::JsonRpcResponse*)
 {
    if (viewerHistory().hasPrevious())
       viewerNavigate(viewerHistory().goBack().url(), 0, true, true);
    return Success();
 }
 
-Error viewerForward(const json::JsonRpcRequest& request,
-                    json::JsonRpcResponse* pResponse)
+Error viewerForward(const json::JsonRpcRequest&,
+                    json::JsonRpcResponse*)
 {
    if (viewerHistory().hasNext())
       viewerNavigate(viewerHistory().goForward().url(), 0, true, true);
    return Success();
 }
 
-Error viewerCurrent(const json::JsonRpcRequest& request,
-                    json::JsonRpcResponse* pResponse)
+Error viewerCurrent(const json::JsonRpcRequest&,
+                    json::JsonRpcResponse*)
 {
    viewerNavigateToCurrent();
    return Success();
 }
 
-Error viewerClearCurrent(const json::JsonRpcRequest& request,
-                        json::JsonRpcResponse* pResponse)
+Error viewerClearCurrent(const json::JsonRpcRequest&,
+                        json::JsonRpcResponse*)
 {
    viewerHistory().clearCurrent();
    viewerNavigateToCurrent();
    return Success();
 }
 
-Error viewerClearAll(const json::JsonRpcRequest& request,
-                        json::JsonRpcResponse* pResponse)
+Error viewerClearAll(const json::JsonRpcRequest&,
+                        json::JsonRpcResponse*)
 {
    viewerHistory().clear();
    return Success();
@@ -187,7 +204,7 @@ Error currentViewerSourcePath(FilePath* pSourcePath)
 }
 
 Error viewerSaveAsWebPage(const json::JsonRpcRequest& request,
-                          json::JsonRpcResponse* pResponse)
+                          json::JsonRpcResponse*)
 {
    // get target path
    std::string targetPath;
@@ -277,73 +294,9 @@ SEXP rs_viewer(SEXP urlSEXP, SEXP heightSEXP)
       int height = 0;
       if (!r::sexp::isNull(heightSEXP))
          height = r::sexp::asInteger(heightSEXP);
-
-      // transform the url to a localhost:<port>/session one if it's
-      // a path to a file within the R session temporary directory
       std::string url = r::sexp::safeAsString(urlSEXP);
-      if (!boost::algorithm::starts_with(url, "http"))
-      {
-         // get the path to the tempdir and the file
-         FilePath tempDir = module_context::tempDir();
-         FilePath filePath = module_context::resolveAliasedPath(url);
 
-         // canoncialize paths for comparison
-         Error error = core::system::realPath(tempDir, &tempDir);
-         if (error)
-            LOG_ERROR(error);
-         error = core::system::realPath(filePath, &filePath);
-         if (error)
-            LOG_ERROR(error);
-
-         // if it's in the temp dir then we can serve it via the help server,
-         // otherwise we need to show it in an external browser
-         if (filePath.isWithin(tempDir))
-         {
-            // calculate the relative path
-            std::string path = filePath.getRelativePath(tempDir);
-
-            // add to history and treat as a widget if appropriate
-            if (isHTMLWidgetPath(filePath))
-            {
-               // add it to our history
-               viewerHistory().add(module_context::ViewerHistoryEntry(path));
-
-               // view it
-               viewerNavigate(viewerHistory().current().url(),
-                              height,
-                              true,
-                              true);
-            }
-            else
-            {
-               viewerNavigate(module_context::sessionTempDirUrl(path),
-                              height,
-                              false,
-                              true);
-            }
-         }
-         else
-         {
-            module_context::showFile(filePath);
-         }
-      }
-      else
-      {
-         // in desktop mode make sure we have the right version of httpuv
-         if (options().programMode() == kSessionProgramModeDesktop)
-         {
-            if (!module_context::isPackageVersionInstalled("httpuv", "1.2"))
-            {
-               module_context::consoleWriteError("\nWARNING: To run "
-                 "applications within the RStudio Viewer pane you need to "
-                 "install the latest version of the httpuv package from "
-                 "CRAN (version 1.2 or higher is required).\n\n");
-            }
-         }
-
-         // navigate the viewer
-         viewerNavigate(url, height, false, true);
-      }
+      module_context::viewer(url, height);
    }
    CATCH_UNEXPECTED_EXCEPTION
 
@@ -381,6 +334,9 @@ void onClientInit()
 
 } // anonymous namespace
 
+namespace modules {
+namespace viewer {
+
 Error initialize()
 {
    RS_REGISTER_CALL_METHOD(rs_viewer);
@@ -416,6 +372,101 @@ Error initialize()
 
 } // namespace viewer
 } // namespace modules
+
+namespace module_context {
+
+void clearViewerCurrentUrl()
+{
+   s_currentUrl = "";
+   s_currentUnmappedUrl = "";
+}
+
+std::string viewerCurrentUrl(bool mapped)
+{
+   if (mapped)
+      return s_currentUrl;
+   else
+      return s_currentUnmappedUrl;
+}
+
+void viewer(const std::string& url,
+            int height, // pass 0 for no height change, // pass -1 for maximize
+            const QuartoNavigate& quartoNav)
+{
+   // transform the url to a localhost:<port>/session one if it's
+   // a path to a file within the R session temporary directory
+
+   if (!boost::algorithm::starts_with(url, "http"))
+   {
+      // get the path to the tempdir and the file
+      FilePath tempDir = module_context::tempDir();
+      FilePath filePath = module_context::resolveAliasedPath(url);
+
+      // canoncialize paths for comparison
+      Error error = core::system::realPath(tempDir, &tempDir);
+      if (error)
+         LOG_ERROR(error);
+      error = core::system::realPath(filePath, &filePath);
+      if (error)
+         LOG_ERROR(error);
+
+      // if it's in the temp dir then we can serve it via the help server,
+      // otherwise we need to show it in an external browser
+      if (filePath.isWithin(tempDir))
+      {
+         // calculate the relative path
+         std::string path = filePath.getRelativePath(tempDir);
+
+         // add to history and treat as a widget if appropriate
+         if (isHTMLWidgetPath(filePath))
+         {
+            // add it to our history
+            viewerHistory().add(module_context::ViewerHistoryEntry(path));
+
+            // view it
+            viewerNavigate(viewerHistory().current().url(),
+                           height,
+                           true,  // is HTML widget
+                           true);
+         }
+         else
+         {
+            viewerNavigate(module_context::sessionTempDirUrl(path),
+                           height,
+                           false,
+                           quartoNav,
+                           true);
+         }
+      }
+      else
+      {
+         module_context::showFile(filePath);
+      }
+   }
+   else
+   {
+      // in desktop mode make sure we have the right version of httpuv
+      if (options().programMode() == kSessionProgramModeDesktop)
+      {
+         if (!module_context::isPackageVersionInstalled("httpuv", "1.2"))
+         {
+            if (quartoNav.empty())
+            {
+               module_context::consoleWriteError("\nWARNING: To run "
+                 "applications within the RStudio Viewer pane you need to "
+                 "install the latest version of the httpuv package from "
+                 "CRAN (version 1.2 or higher is required).\n\n");
+            }
+         }
+      }
+
+      // navigate the viewer
+      viewerNavigate(url, height, false, quartoNav, true);
+   }
+}
+
+} // module_context
+
 } // namespace session
 } // namespace rstudio
 

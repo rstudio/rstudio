@@ -1,7 +1,7 @@
 /*
  * insert_citation-source-panel-pubmed.tsx
  *
- * Copyright (C) 2021 by RStudio, PBC
+ * Copyright (C) 2022 by RStudio, PBC
  *
  * Unless you have received this program directly from RStudio pursuant
  * to the terms of a commercial license agreement with RStudio, then
@@ -52,9 +52,6 @@ export function pubmedSourcePanel(
         children: [],
         expanded: true,
       };
-    },
-    typeAheadSearch: (_searchTerm: string, _selectedNode: NavigationTreeNode, _existingCitationIds: string[]) => {
-      return null;
     },
     progressMessage: ui.context.translateText('Searching PubMed....'),
     placeHolderMessage: ui.context.translateText('Enter a PubMed query to search for citations.'),

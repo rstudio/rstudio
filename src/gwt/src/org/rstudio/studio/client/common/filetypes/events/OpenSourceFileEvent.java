@@ -1,7 +1,7 @@
 /*
  * OpenSourceFileEvent.java
  *
- * Copyright (C) 2021 by RStudio, PBC
+ * Copyright (C) 2022 by RStudio, PBC
  *
  * Unless you have received this program directly from RStudio pursuant
  * to the terms of a commercial license agreement with RStudio, then
@@ -14,6 +14,7 @@
  */
 package org.rstudio.studio.client.common.filetypes.events;
 
+import com.google.gwt.core.client.JavaScriptObject;
 import com.google.gwt.event.shared.EventHandler;
 
 import org.rstudio.core.client.FilePosition;
@@ -21,6 +22,7 @@ import org.rstudio.core.client.files.FileSystemItem;
 import org.rstudio.core.client.js.JavaScriptSerializable;
 import org.rstudio.studio.client.RStudioGinjector;
 import org.rstudio.studio.client.application.events.CrossWindowEvent;
+import org.rstudio.studio.client.common.filetypes.FileTypeRegistry;
 import org.rstudio.studio.client.common.filetypes.TextFileType;
 import org.rstudio.studio.client.common.filetypes.model.NavigationMethods;
 
@@ -36,6 +38,40 @@ public class OpenSourceFileEvent extends CrossWindowEvent<OpenSourceFileEvent.Ha
 
    public OpenSourceFileEvent()
    {
+   }
+   
+   public static class Data extends JavaScriptObject
+   {
+      protected Data()
+      {
+      }
+
+      public final native String getFileName() /*-{
+         return this.file_name;
+      }-*/;
+
+      public final native int getLineNumber() /*-{
+         return this.line_number;
+      }-*/;
+
+      public final native int getColumnNumber() /*-{
+         return this.column_number;
+      }-*/;
+   }
+   
+   public static OpenSourceFileEvent fromData(Data data)
+   {
+      FileSystemItem destFile = FileSystemItem.createFile(
+            data.getFileName());
+      FilePosition pos = FilePosition.create(data.getLineNumber(),
+            data.getColumnNumber());
+      FileTypeRegistry registry = RStudioGinjector.INSTANCE.getFileTypeRegistry();
+      return new OpenSourceFileEvent(
+         destFile, 
+         pos, 
+         registry.getTextTypeForFile(destFile)
+      );
+         
    }
 
    public OpenSourceFileEvent(FileSystemItem file, TextFileType fileType)

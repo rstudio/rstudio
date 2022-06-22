@@ -1,0 +1,36 @@
+@startuml
+title Electron Desktop Window Classes
+legend top center
+Major classes related to top-level windows and Electron in RStudio Desktop.
+endlegend
+
+hide empty members
+
+skinparam class {
+BackgroundColor<<Electron>> PaleGreen
+BorderColor<<Electron>> SpringGreen
+}
+
+class BrowserWindow << Electron >>
+class WebContents << Electron >>
+class WebFrameMain << Electron >>
+class Session << Electron >>
+
+BrowserWindow *-- WebContents : webContents
+WebContents *-- WebFrameMain : mainFrame
+WebContents *-- Session : session
+
+class RStudioBrowserWindow 
+desktopInfo ()- RStudioBrowserWindow 
+class GwtWindow extends RStudioBrowserWindow
+class SecondaryWindow extends RStudioBrowserWindow
+class SatelliteWindow extends GwtWindow
+desktop ()- SatelliteWindow
+class MainWindow extends GwtWindow
+desktop ()- MainWindow
+menu ()- MainWindow
+class MinimalWindow extends RStudioBrowserWindow
+
+RStudioBrowserWindow *-- "1" BrowserWindow
+
+@enduml

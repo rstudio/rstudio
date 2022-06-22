@@ -1,7 +1,7 @@
 /*
  * AsyncClient.hpp
  *
- * Copyright (C) 2021 by RStudio, PBC
+ * Copyright (C) 2022 by RStudio, PBC
  *
  * Unless you have received this program directly from RStudio pursuant
  * to the terms of a commercial license agreement with RStudio, then
@@ -134,7 +134,7 @@ public:
       if (request_.host().empty())
          request_.setHost(getDefaultHostHeader());
 
-      // connect and write request (implmented in a protocol
+      // connect and write request (implemented in a protocol
       // specific manner by subclassees)
       connectAndWriteRequest();
    }
@@ -297,6 +297,9 @@ protected:
 
    void handleError(const Error& error)
    {
+      Error httpError = error;
+      addErrorProperties(httpError);
+
       // check to see if the socket was closed purposefully
       // if so, we will ignore the error
       LOCK_MUTEX(socketMutex_)
@@ -311,7 +314,7 @@ protected:
 
       // invoke error handler
       if (errorHandler_)
-         errorHandler_(error);
+         errorHandler_(httpError);
 
       // free handlers to ensure they do not keep a strong reference to us
       // this will allow us to properly clean up in that case
@@ -331,6 +334,16 @@ protected:
                                 description,
                                 location);
       handleError(error);
+   }
+
+   virtual void addErrorProperties(Error& error)
+   {
+      std::string host = request_.host();
+      if (!host.empty())
+         error.addProperty("host", host);
+      std::string uri = request_.uri();
+      if (!uri.empty())
+         error.addProperty("uri", uri);
    }
    
 private:
@@ -369,7 +382,7 @@ private:
             }
          }
 
-         // if we aren't alrady past the maximum wait time then
+         // if we aren't already past the maximum wait time then
          // wait the appropriate interval and attempt connection again
          if (boost::posix_time::microsec_clock::universal_time() <
              connectionRetryContext_.stopTryingTime)

@@ -1,7 +1,7 @@
 /*
  * JobsPane.java
  *
- * Copyright (C) 2021 by RStudio, PBC
+ * Copyright (C) 2022 by RStudio, PBC
  *
  * Unless you have received this program directly from RStudio pursuant
  * to the terms of a commercial license agreement with RStudio, then
@@ -14,8 +14,10 @@
  */
 package org.rstudio.studio.client.workbench.views.jobs.view;
 
+import com.google.gwt.core.client.GWT;
 import org.rstudio.studio.client.workbench.prefs.model.UserPrefs;
 import org.rstudio.studio.client.workbench.prefs.model.UserPrefsAccessor;
+import org.rstudio.studio.client.workbench.views.jobs.JobsConstants;
 import org.rstudio.studio.client.workbench.views.jobs.JobsPresenter;
 import org.rstudio.studio.client.workbench.views.jobs.model.Job;
 import org.rstudio.studio.client.workbench.views.jobs.model.JobOutput;
@@ -36,8 +38,8 @@ public class JobsPane extends WorkbenchPane
    public JobsPane(UserPrefs uiPrefs,
                    JobsPaneWidgets widgets)
    {
-      super("Jobs");
-      
+      super(constants_.backgroundJobsTitle());
+
       userPrefs_ = uiPrefs;
       widgets_ = widgets;
 
@@ -118,4 +120,5 @@ public class JobsPane extends WorkbenchPane
    // injected
    private final UserPrefs userPrefs_;
    private final JobsPaneWidgets widgets_;
+   private static final JobsConstants constants_ = GWT.create(JobsConstants.class);
 }

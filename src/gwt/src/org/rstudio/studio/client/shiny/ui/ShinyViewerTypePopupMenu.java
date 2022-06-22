@@ -1,7 +1,7 @@
 /*
  * ShinyViewerTypePopupMenu.java
  *
- * Copyright (C) 2021 by RStudio, PBC
+ * Copyright (C) 2022 by RStudio, PBC
  *
  * Unless you have received this program directly from RStudio pursuant
  * to the terms of a commercial license agreement with RStudio, then
@@ -14,12 +14,14 @@
  */
 package org.rstudio.studio.client.shiny.ui;
 
+import com.google.gwt.core.client.GWT;
 import org.rstudio.core.client.StringUtil;
 import org.rstudio.core.client.widget.ToolbarPopupMenu;
 import org.rstudio.core.client.widget.UserPrefMenuItem;
 import org.rstudio.studio.client.common.shiny.model.ShinyServerOperations;
 import org.rstudio.studio.client.server.ServerError;
 import org.rstudio.studio.client.server.ServerRequestCallback;
+import org.rstudio.studio.client.shiny.ShinyConstants;
 import org.rstudio.studio.client.workbench.commands.Commands;
 import org.rstudio.studio.client.workbench.prefs.model.UserPrefs;
 
@@ -42,9 +44,9 @@ public class ShinyViewerTypePopupMenu extends ToolbarPopupMenu
       addItem(commands.shinyRunInBrowser().createMenuItem(false));
       addSeparator();
       addItem(new UserPrefMenuItem<>(prefs.shinyBackgroundJobs(), 
-            false, "In R Console", prefs));
+            false, constants_.inRConsoleLabel(), prefs));
       addItem(new UserPrefMenuItem<>(prefs.shinyBackgroundJobs(), 
-            true, "In Background Job", prefs));
+            true, constants_.inBackgroundJobLabel(), prefs));
       addSeparator();
       addItem(commands.shinyRecordTest().createMenuItem(false));
       addItem(commands.shinyRunAllTests().createMenuItem(false));
@@ -83,4 +85,6 @@ public class ShinyViewerTypePopupMenu extends ToolbarPopupMenu
    
    private final ShinyServerOperations server_;
    private final Commands commands_;
+
+   private static final ShinyConstants constants_ = GWT.create(ShinyConstants.class);
 }

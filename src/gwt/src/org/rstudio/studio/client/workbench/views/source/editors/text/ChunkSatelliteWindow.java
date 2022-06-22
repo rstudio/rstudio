@@ -1,7 +1,7 @@
 /*
  * ChunkSatelliteWindow.java
  *
- * Copyright (C) 2021 by RStudio, PBC
+ * Copyright (C) 2022 by RStudio, PBC
  *
  * Unless you have received this program directly from RStudio pursuant
  * to the terms of a commercial license agreement with RStudio, then
@@ -15,6 +15,7 @@
 
 package org.rstudio.studio.client.workbench.views.source.editors.text;
 
+import com.google.gwt.core.client.GWT;
 import com.google.gwt.core.client.JavaScriptObject;
 import com.google.gwt.dom.client.Element;
 import com.google.gwt.dom.client.Style.Unit;
@@ -85,7 +86,7 @@ public class ChunkSatelliteWindow extends SatelliteWindow
    {
       chunkWindowParams_ = params.cast();
 
-      String title = "RStudio: Notebook Output";
+      String title = constants_.chunkSatelliteWindowInitTitle();
       Window.setTitle(title);
 
       ChunkOutputHost chunkOutputHost = new ChunkOutputHost()
@@ -323,6 +324,6 @@ public class ChunkSatelliteWindow extends SatelliteWindow
    
    private final Provider<EventBus> pEventBus_;
    private final RMarkdownServerOperations server_;
-
+   private static final EditorsTextConstants constants_ = GWT.create(EditorsTextConstants.class);
    private String currentPlotsReplayId_ = null;
 }

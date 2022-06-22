@@ -1,7 +1,7 @@
 /*
  * PDFViewer.java
  *
- * Copyright (C) 2021 by RStudio, PBC
+ * Copyright (C) 2022 by RStudio, PBC
  *
  * Unless you have received this program directly from RStudio pursuant
  * to the terms of a commercial license agreement with RStudio, then
@@ -54,22 +54,24 @@ public class PDFViewer implements CompilePdfCompletedEvent.Handler,
                                   WindowOpenedEvent.Handler
 {
    @Inject
-   public PDFViewer(EventBus eventBus,
+   public PDFViewer(final EventBus events,
                     final ApplicationServerOperations server,
                     final GlobalDisplay display,
                     final SatelliteManager satelliteManager,
                     final Synctex synctex,
                     final UserPrefs prefs)
-   {  
+   {
+      events_ = events;
       display_ = display;
       server_ = server;
       synctex_ = synctex;
       prefs_ = prefs;
       
-      eventBus.addHandler(CompilePdfCompletedEvent.TYPE, this);
-      eventBus.addHandler(SynctexViewPdfEvent.TYPE, this);
-      eventBus.addHandler(PDFLoadEvent.TYPE, this);
-      eventBus.addHandler(WindowOpenedEvent.TYPE, this);
+      events_.addHandler(CompilePdfCompletedEvent.TYPE, this);
+      events_.addHandler(SynctexViewPdfEvent.TYPE, this);
+      events_.addHandler(PDFLoadEvent.TYPE, this);
+      events_.addHandler(WindowOpenedEvent.TYPE, this);
+      
       PdfJsWindow.addPDFLoadHandler(this);
       PdfJsWindow.addPageClickHandler(this);
       PdfJsWindow.addWindowClosedHandler(this);
@@ -83,8 +85,10 @@ public class PDFViewer implements CompilePdfCompletedEvent.Handler,
          public void onClose(CloseEvent<Window> event)
          {
             if (pdfJsWindow_ != null)
+            {
                pdfJsWindow_.close();
-            pdfJsWindow_ = null;
+               pdfJsWindow_ = null;
+            }
          }
       });
    }
@@ -127,8 +131,11 @@ public class PDFViewer implements CompilePdfCompletedEvent.Handler,
       }
          
       lastSuccessfulPdfPath_ = result.getPdfPath();
-      openPdfUrl(result.getViewPdfUrl(), result.isSynctexAvailable(), 
-                 pdfLocation == null);
+      openPdfUrl(
+            result.getViewPdfUrl(),
+            result.getPdfPath(),
+            result.isSynctexAvailable(), 
+            pdfLocation == null);
    }
 
    @Override
@@ -189,7 +196,15 @@ public class PDFViewer implements CompilePdfCompletedEvent.Handler,
       }
    }
    
-   public void viewPdfUrl(final String url, final Integer initialPage)
+   public void viewPdfUrl(final String url,
+                          final Integer initialPage)
+   {
+      viewPdfUrl(url, null, initialPage);
+   }
+   
+   public void viewPdfUrl(final String url,
+                          final String path,
+                          final Integer initialPage)
    {
       if (initialPage != null)
       {
@@ -202,13 +217,15 @@ public class PDFViewer implements CompilePdfCompletedEvent.Handler,
             }
          };
       }
-      lastSuccessfulPdfPath_ = null;
-      openPdfUrl(url, false, initialPage == null);
+      lastSuccessfulPdfPath_ = path;
+      openPdfUrl(url, path, false, initialPage == null);
    }
   
    // Private methods ---------------------------------------------------------
    
-   private void openPdfUrl(final String url, final boolean synctex, 
+   private void openPdfUrl(final String url,
+                           final String path,
+                           final boolean synctex, 
                            boolean restorePosition)
    {
       int width = 1070;
@@ -216,7 +233,9 @@ public class PDFViewer implements CompilePdfCompletedEvent.Handler,
       Point pos = null;
       
       // if there's a window open, restore the position when we're done
-      if (restorePosition && url == lastSuccessfulPdfUrl_)
+      if (restorePosition && (
+            url == lastSuccessfulPdfUrl_ ||
+            path == lastSuccessfulPdfPath_))
       {
          // if we don't have an active window, we'll use the hash stored when
          // the window closed
@@ -329,6 +348,7 @@ public class PDFViewer implements CompilePdfCompletedEvent.Handler,
    private Operation executeOnPdfJsLoad_;
    private Operation executeOnPdfLoad_;
 
+   private final EventBus events_;
    private final GlobalDisplay display_;
    private final ApplicationServerOperations server_;
    private final Synctex synctex_;

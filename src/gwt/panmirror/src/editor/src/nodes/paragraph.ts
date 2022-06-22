@@ -1,7 +1,7 @@
 /*
  * paragraph.ts
  *
- * Copyright (C) 2021 by RStudio, PBC
+ * Copyright (C) 2022 by RStudio, PBC
  *
  * Unless you have received this program directly from RStudio pursuant
  * to the terms of a commercial license agreement with RStudio, then
@@ -19,8 +19,9 @@ import { BlockCommand, EditorCommandId, ProsemirrorCommand } from '../api/comman
 import { Extension } from '../api/extension';
 import { PandocOutput, PandocTokenType } from '../api/pandoc';
 import { insertParagraph } from '../api/paragraph';
-import { EditorUI } from '../api/ui';
-import { OmniInsertGroup } from '../api/omni_insert';
+import { emptyNodePlaceholderPlugin } from '../api/placeholder';
+import { selectionWithinLastBodyParagraph } from '../api/selection';
+import { kAddToHistoryTransaction } from '../api/transaction';
 
 const extension: Extension = {
   nodes: [
@@ -53,6 +54,26 @@ const extension: Extension = {
       new BlockCommand(EditorCommandId.Paragraph, ['Mod-Alt-0'], schema.nodes.paragraph, schema.nodes.paragraph),
       new InsertParagraphCommand(),
     ];
+  },
+
+  plugins: (schema: Schema) => {
+    let showHint = true;
+    return [emptyNodePlaceholderPlugin(schema.nodes.paragraph, node => " type / to insert a block (code, math, figure, div, etc.)", tr => {
+      if (showHint !== false) {
+        if (selectionWithinLastBodyParagraph(tr.selection)) {
+          if (tr.docChanged) {
+            showHint = false;
+            return false;
+          } else {
+            return true;
+          }
+        } else {
+          return false;
+        }
+      } else {
+        return false;
+      }
+    })];
   },
 };
 

@@ -1,7 +1,7 @@
 /*
  * ConnectionCodePanel.java
  *
- * Copyright (C) 2021 by RStudio, PBC
+ * Copyright (C) 2022 by RStudio, PBC
  *
  * Unless you have received this program directly from RStudio pursuant
  * to the terms of a commercial license agreement with RStudio, then
@@ -16,11 +16,13 @@
 
 package org.rstudio.studio.client.workbench.views.connections.ui;
 
+import com.google.gwt.core.client.GWT;
 import org.rstudio.core.client.BrowseCap;
 import org.rstudio.core.client.theme.res.ThemeStyles;
 import org.rstudio.core.client.widget.FormLabel;
 import org.rstudio.studio.client.RStudioGinjector;
 import org.rstudio.studio.client.common.reditor.EditorLanguage;
+import org.rstudio.studio.client.workbench.views.connections.ConnectionsConstants;
 import org.rstudio.studio.client.workbench.views.connections.model.ConnectionOptions;
 import org.rstudio.studio.client.workbench.views.source.editors.text.AceEditorWidget;
 import org.rstudio.studio.client.workbench.views.source.editors.text.AceEditorWidget.TabKeyMode;
@@ -55,12 +57,12 @@ public class ConnectionCodePanel extends Composite implements RequiresResize
       HorizontalPanel codeHeaderPanel = new HorizontalPanel();
       codeHeaderPanel.addStyleName(RES.styles().codePanelHeader());
       codeHeaderPanel.setWidth("100%");
-      codeLabel_ = new FormLabel("Connection:");
+      codeLabel_ = new FormLabel(constants_.connectionTitle());
       codeHeaderPanel.add(codeLabel_);
       codeHeaderPanel.setCellHorizontalAlignment(
                codeLabel_, HasHorizontalAlignment.ALIGN_LEFT);
       HorizontalPanel connectPanel = new HorizontalPanel();
-      FormLabel connectLabel = new FormLabel("Connect from:");
+      FormLabel connectLabel = new FormLabel(constants_.connectFromText());
       connectLabel.addStyleName(RES.styles().leftLabel());
       connectPanel.add(connectLabel);
       connectVia_ = new ListBox();
@@ -84,12 +86,12 @@ public class ConnectionCodePanel extends Composite implements RequiresResize
             }
          }
       };
-      connectVia_.addItem("R Console", ConnectionOptions.CONNECT_R_CONSOLE);
-      connectVia_.addItem("New R Script", ConnectionOptions.CONNECT_NEW_R_SCRIPT);
-      connectVia_.addItem("New R Notebook", ConnectionOptions.CONNECT_NEW_R_NOTEBOOK);
+      connectVia_.addItem(constants_.rConsoleItem(), ConnectionOptions.CONNECT_R_CONSOLE);
+      connectVia_.addItem(constants_.newRScriptItem(), ConnectionOptions.CONNECT_NEW_R_SCRIPT);
+      connectVia_.addItem(constants_.newRNotebookItem(), ConnectionOptions.CONNECT_NEW_R_NOTEBOOK);
       if (BrowseCap.INSTANCE.canCopyToClipboard())
       {
-         connectVia_.addItem("Copy to Clipboard",
+         connectVia_.addItem(constants_.copyToClipboardItem(),
                              ConnectionOptions.CONNECT_COPY_TO_CLIPBOARD);
       }
       updateConnectViaUI_.execute();
@@ -220,4 +222,5 @@ public class ConnectionCodePanel extends Composite implements RequiresResize
    private final Command updateConnectViaUI_;
 
    private static NewConnectionShinyHost.Resources RES = NewConnectionShinyHost.RES;
+   private static final ConnectionsConstants constants_ = GWT.create(ConnectionsConstants.class);
 }

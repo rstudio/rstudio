@@ -1,7 +1,7 @@
 /*
  * NotebookPlots.cpp
  *
- * Copyright (C) 2021 by RStudio, PBC
+ * Copyright (C) 2022 by RStudio, PBC
  *
  * Unless you have received this program directly from RStudio pursuant
  * to the terms of a commercial license agreement with RStudio, then
@@ -31,6 +31,7 @@
 #include <r/RExec.hpp>
 #include <r/RSexp.hpp>
 #include <r/session/RGraphics.hpp>
+#include <r/session/RGraphicsConstants.h>
 #include <r/ROptions.hpp>
 #include <r/RRoutines.hpp>
 
@@ -280,17 +281,31 @@ void PlotCapture::onNewPlot()
 core::Error PlotCapture::connectPlots(const std::string& docId, 
       const std::string& chunkId, const std::string& nbCtxId, 
       double height, double width, PlotSizeBehavior sizeBehavior,
-      const FilePath& plotFolder)
+      const FilePath& plotFolder, const std::string& chunkGraphicsBackend)
 {
    // save identifiers
    docId_ = docId;
    chunkId_ = chunkId;
    nbCtxId_ = nbCtxId;
 
+   // the graphics backend device set by the knitr chunk option 'dev'
+   chunkGraphicsBackend_ = chunkGraphicsBackend;
+   // the graphics backend device set by the kGraphicsOptionBackend option
+   defaultGraphicsBackend_.set(r::options::getOption(kGraphicsOptionBackend));
+
+   // overwrite the original option, if appropriate
+   Error error = setBackendDeviceOption();
+   if (error)
+   {
+      LOG_ERROR(error);
+      r::options::setOption(kGraphicsOptionBackend, defaultGraphicsBackend_.get());
+   }
+
+
    // clean up any stale plots from the folder
    plotFolder_ = plotFolder;
    std::vector<FilePath> folderContents;
-   Error error = plotFolder.getChildren(folderContents);
+   error = plotFolder.getChildren(folderContents);
    if (error)
       return error;
 
@@ -347,12 +362,32 @@ void PlotCapture::disconnect()
 
       // restore the graphics device option
       r::options::setOption("device", deviceOption_.get());
+      r::options::setOption(kGraphicsOptionBackend, defaultGraphicsBackend_.get());
 
       onNewPlot_.disconnect();
       onBeforeNewPlot_.disconnect();
       onBeforeNewGridPage_.disconnect();
    }
    NotebookCapture::disconnect();
+}
+
+core::Error PlotCapture::setBackendDeviceOption()
+{
+   // if chunkGraphicsBackend_ starts with 'ragg', 'quartz' or 'Cairo' then we should use the
+   // corresponding backend instead of the global default
+   if (chunkGraphicsBackend_.find("ragg") == 0)
+   {
+      return r::options::setOption(kGraphicsOptionBackend, "ragg");
+   }
+   if (chunkGraphicsBackend_.find("quartz") == 0)
+   {
+      return r::options::setOption(kGraphicsOptionBackend, "quartz");
+   }
+   if (chunkGraphicsBackend_.find("cairo") == 0 || chunkGraphicsBackend_.find("Cairo") == 0)
+   {
+      return r::options::setOption(kGraphicsOptionBackend, "cairo");
+   }
+   return Success();
 }
 
 core::Error PlotCapture::setGraphicsOption()

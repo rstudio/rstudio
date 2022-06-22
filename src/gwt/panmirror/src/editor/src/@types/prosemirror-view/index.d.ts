@@ -325,7 +325,7 @@ declare module 'prosemirror-view' {
      *
      * This is intended to be able to call things like getBoundingClientRect
      * on that DOM node. Do not mutate the editor DOM directly, or add
-     * styling this way, since that will be immediately overriden by the
+     * styling this way, since that will be immediately overridden by the
      * editor as it redraws the node.
      */
     nodeDOM(pos: number): Node | null | undefined;

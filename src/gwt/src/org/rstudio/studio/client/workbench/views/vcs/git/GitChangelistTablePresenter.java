@@ -1,7 +1,7 @@
 /*
  * GitChangelistTablePresenter.java
  *
- * Copyright (C) 2021 by RStudio, PBC
+ * Copyright (C) 2022 by RStudio, PBC
  *
  * Unless you have received this program directly from RStudio pursuant
  * to the terms of a commercial license agreement with RStudio, then
@@ -14,12 +14,14 @@
  */
 package org.rstudio.studio.client.workbench.views.vcs.git;
 
+import com.google.gwt.core.client.GWT;
 import com.google.inject.Inject;
 import org.rstudio.studio.client.common.SimpleRequestCallback;
 import org.rstudio.studio.client.common.vcs.GitServerOperations;
 import org.rstudio.studio.client.common.vcs.RemoteBranchInfo;
 import org.rstudio.studio.client.common.vcs.StatusAndPath;
 import org.rstudio.studio.client.workbench.prefs.model.UserPrefs;
+import org.rstudio.studio.client.workbench.views.vcs.ViewVcsConstants;
 import org.rstudio.studio.client.workbench.views.vcs.common.events.StageUnstageEvent;
 import org.rstudio.studio.client.workbench.views.vcs.common.events.VcsRefreshEvent;
 import org.rstudio.studio.client.workbench.views.vcs.git.model.GitState;
@@ -72,9 +74,9 @@ public class GitChangelistTablePresenter
             if (remote != null && remote.getCommitsBehind() > 0)
             {
                String message =
-                  "Your branch is ahead of '" + remote.getName() + "' by " +
-                  remote.getCommitsBehind() + " commit" +
-                  (remote.getCommitsBehind() > 1 ? "s" : "") + ".";
+                  remote.getCommitsBehind() > 1 ? constants_.branchAheadOfRemotePlural(remote.getName(),
+                          remote.getCommitsBehind()) : constants_.branchAheadOfRemoteSingular(remote.getName(),
+                          remote.getCommitsBehind());
 
                view_.showInfoBar(message, !prefs.reducedMotion().getValue());
             }
@@ -100,4 +102,5 @@ public class GitChangelistTablePresenter
    private final GitChangelistTable view_;
    private final GitState gitState_;
    private final UserPrefs prefs_;
+   private static final ViewVcsConstants constants_ = GWT.create(ViewVcsConstants.class);
 }

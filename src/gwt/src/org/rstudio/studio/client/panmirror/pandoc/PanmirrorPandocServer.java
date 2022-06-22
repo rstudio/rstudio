@@ -1,7 +1,7 @@
 /*
  * PanmirrorPandocServer.java
  *
- * Copyright (C) 2021 by RStudio, PBC
+ * Copyright (C) 2022 by RStudio, PBC
  *
  * Unless you have received this program directly from RStudio pursuant
  * to the terms of a commercial license agreement with RStudio, then
@@ -15,6 +15,7 @@
 
 package org.rstudio.studio.client.panmirror.pandoc;
 
+import com.google.gwt.core.client.GWT;
 import org.rstudio.core.client.StringUtil;
 import org.rstudio.core.client.promise.PromiseServerRequestCallback;
 import org.rstudio.studio.client.RStudioGinjector;
@@ -28,6 +29,7 @@ import elemental2.promise.Promise.PromiseExecutorCallbackFn.RejectCallbackFn;
 import elemental2.promise.Promise.PromiseExecutorCallbackFn.ResolveCallbackFn;
 
 import jsinterop.annotations.JsType;
+import org.rstudio.studio.client.panmirror.PanmirrorConstants;
 
 
 @JsType
@@ -86,7 +88,7 @@ public class PanmirrorPandocServer {
             bibliographies,
             refBlock,
             etag,
-            new PromiseServerRequestCallback<>(resolve, reject, "Reading bibliography...", 1500)
+            new PromiseServerRequestCallback<>(resolve, reject, constants_.readingBibliographyProgressText(), 1500)
          );
       });
    }
@@ -100,7 +102,7 @@ public class PanmirrorPandocServer {
            id,
            sourceAsJson,
            sourceAsBibTeX,
-           new PromiseServerRequestCallback<>(resolve, reject, "Saving biliography...", 1500)
+           new PromiseServerRequestCallback<>(resolve, reject, constants_.savingBibliographyProgressText(), 1500)
         );
      }); 
    }
@@ -124,5 +126,5 @@ public class PanmirrorPandocServer {
    }
 
    private PanmirrorPandocServerOperations server_;
-   
+   private static final PanmirrorConstants constants_ = GWT.create(PanmirrorConstants.class);
 }

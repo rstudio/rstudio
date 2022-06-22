@@ -1,7 +1,7 @@
 /*
  * ChooseEncodingDialog.java
  *
- * Copyright (C) 2021 by RStudio, PBC
+ * Copyright (C) 2022 by RStudio, PBC
  *
  * Unless you have received this program directly from RStudio pursuant
  * to the terms of a commercial license agreement with RStudio, then
@@ -15,6 +15,7 @@
 package org.rstudio.studio.client.workbench.views.source.editors.text.ui;
 
 import com.google.gwt.aria.client.Roles;
+import com.google.gwt.core.client.GWT;
 import com.google.gwt.core.client.JsArrayString;
 import com.google.gwt.dom.client.Style.Display;
 import com.google.gwt.dom.client.Style.Unit;
@@ -29,9 +30,11 @@ import org.rstudio.core.client.widget.ModalDialog;
 import org.rstudio.core.client.widget.OperationWithInput;
 import org.rstudio.studio.client.RStudioGinjector;
 import org.rstudio.studio.client.workbench.model.Session;
+import org.rstudio.studio.client.workbench.views.source.ViewsSourceConstants;
 
 public class ChooseEncodingDialog extends ModalDialog<String>
 {
+   private static final ViewsSourceConstants constants_ = GWT.create(ViewsSourceConstants.class);
    public ChooseEncodingDialog(JsArrayString commonEncodings,
                                JsArrayString allEncodings,
                                String currentEncoding,
@@ -39,7 +42,7 @@ public class ChooseEncodingDialog extends ModalDialog<String>
                                boolean includeSaveAsDefault,
                                OperationWithInput<String> operation)
    {
-      super("Choose Encoding", Roles.getDialogRole(), operation);
+      super(constants_.chooseEncoding(), Roles.getDialogRole(), operation);
       commonEncodings_ = commonEncodings;
       allEncodings_ = allEncodings;
       currentEncoding_ = currentEncoding;
@@ -90,11 +93,11 @@ public class ChooseEncodingDialog extends ModalDialog<String>
       listBox_ = new ListBox();
       listBox_.setVisibleItemCount(15);
       listBox_.setWidth("350px");
-      Roles.getListboxRole().setAriaLabelProperty(listBox_.getElement(), "Encodings");
+      Roles.getListboxRole().setAriaLabelProperty(listBox_.getElement(), constants_.encodingsCapitalized());
 
       setEncodings(commonEncodings_, currentEncoding_);
 
-      CheckBox showAll = new FormCheckBox("Show all encodings", ElementIds.ENC_SHOW_ALL);
+      CheckBox showAll = new FormCheckBox(constants_.showAllEncodings(), ElementIds.ENC_SHOW_ALL);
       showAll.addValueChangeHandler(valueChangeEvent ->
       {
          if (valueChangeEvent.getValue())
@@ -110,7 +113,7 @@ public class ChooseEncodingDialog extends ModalDialog<String>
 
       if (includeSaveAsDefault_)
       {
-         saveAsDefault_ = new FormCheckBox("Set as default encoding for source files",
+         saveAsDefault_ = new FormCheckBox(constants_.setAsDefaultEncodingSourceFiles(),
                                            ElementIds.ENC_SET_DEFAULT);
          setCheckBoxMargins(showAll, 8, 0);
          setCheckBoxMargins(saveAsDefault_, 3, 12);
@@ -154,7 +157,7 @@ public class ChooseEncodingDialog extends ModalDialog<String>
                                           : listBox_.getValue(sysIndex);
          if (sysIndex >= 0)
             listBox_.removeItem(sysIndex);
-         listBox_.insertItem(sysEncName + " (System default)",
+         listBox_.insertItem(constants_.sysEncNameDefault(sysEncName),
                              systemEncoding_,
                              0);
       }
@@ -198,5 +201,5 @@ public class ChooseEncodingDialog extends ModalDialog<String>
    private CheckBox saveAsDefault_;
    private final String systemEncoding_;
    private final String systemEncodingNormalized_;
-   public static final String ASK_LABEL = "[Ask]";
+   public static final String ASK_LABEL = constants_.askSquareBrackets();
 }

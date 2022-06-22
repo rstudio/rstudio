@@ -1,7 +1,7 @@
 /*
  * AskSecretDialog.java
  *
- * Copyright (C) 2021 by RStudio, PBC
+ * Copyright (C) 2022 by RStudio, PBC
  *
  * Unless you have received this program directly from RStudio pursuant
  * to the terms of a commercial license agreement with RStudio, then
@@ -42,6 +42,7 @@ import org.rstudio.core.client.widget.ModalDialog;
 import org.rstudio.core.client.widget.Operation;
 import org.rstudio.core.client.widget.ProgressOperationWithInput;
 import org.rstudio.studio.client.common.HelpLink;
+import org.rstudio.studio.client.common.StudioClientCommonConstants;
 import org.rstudio.studio.client.common.dependencies.DependencyManager;
 
 public class AskSecretDialog extends ModalDialog<AskSecretDialogResult>
@@ -62,7 +63,7 @@ public class AskSecretDialog extends ModalDialog<AskSecretDialogResult>
       mainWidget_ = GWT.<Binder>create(Binder.class).createAndBindUi(this);
      
       setHelpLink(new HelpLink(
-         "Using Keyring",
+         constants_.usingKeyringCaption(),
          "using_keyring",
          false,
          true)
@@ -113,13 +114,11 @@ public class AskSecretDialog extends ModalDialog<AskSecretDialogResult>
          );
 
          Label infoLabel = new Label(
-            "Keyring is an R package that provides access to " +
-            "the operating systems credential store to allow you " +
-            "to remember, securely, passwords and secrets. "
+                 constants_.keyringDesc()
          );
 
          HTML questionHtml = new HTML(
-            "<br>Would you like to install keyring?<br><br>"
+            "<br>"+constants_.installKeyringMessage() + "<br><br>"
          );
 
          verticalPanel.add(infoLabel);
@@ -127,10 +126,10 @@ public class AskSecretDialog extends ModalDialog<AskSecretDialogResult>
 
          MessageDialog dialog = new MessageDialog(
             MessageDialog.QUESTION,
-            "Keyring",
+            constants_.keyringCaption(),
             verticalPanel);
 
-         dialog.addButton("Install", ElementIds.DIALOG_OK_BUTTON, new Operation()
+         dialog.addButton(constants_.installLabel(), ElementIds.DIALOG_OK_BUTTON, new Operation()
          {
             @Override
             public void execute()
@@ -148,7 +147,7 @@ public class AskSecretDialog extends ModalDialog<AskSecretDialogResult>
             }
          }, true, false);
 
-         dialog.addButton("Cancel", ElementIds.DIALOG_CANCEL_BUTTON, (Operation)null, false, true);
+         dialog.addButton(constants_.cancelTitle(), ElementIds.DIALOG_CANCEL_BUTTON, (Operation)null, false, true);
          dialog.showModal();
       });
 
@@ -202,9 +201,9 @@ public class AskSecretDialog extends ModalDialog<AskSecretDialogResult>
       if (StringUtil.isNullOrEmpty(input.getSecret()))
       {
          MessageDialog dialog = new MessageDialog(MessageDialog.ERROR,
-                                                  "Error",
-                                                  "You must enter a value.");
-         dialog.addButton("OK", ElementIds.DIALOG_OK_BUTTON, (Operation)null, true, true);
+                                                  constants_.errorCaption(),
+                                                  constants_.enterValueMessage());
+         dialog.addButton(constants_.okTitle(), ElementIds.DIALOG_OK_BUTTON, (Operation)null, true, true);
          dialog.showModal();
          textbox_.setFocus(true);
 
@@ -245,4 +244,5 @@ public class AskSecretDialog extends ModalDialog<AskSecretDialogResult>
    private boolean hasChanged_ = false;
    private boolean stillHasSecret_ = false;
    private static String secretPlaceholder_ = "00000000";
+   private static final StudioClientCommonConstants constants_ = GWT.create(StudioClientCommonConstants.class);
 }

@@ -1,7 +1,7 @@
 /*
  * DataEditingTargetWidget.java
  *
- * Copyright (C) 2021 by RStudio, PBC
+ * Copyright (C) 2022 by RStudio, PBC
  *
  * Unless you have received this program directly from RStudio pursuant
  * to the terms of a commercial license agreement with RStudio, then
@@ -38,6 +38,7 @@ import org.rstudio.studio.client.workbench.commands.Commands;
 import org.rstudio.studio.client.workbench.views.console.events.SendToConsoleEvent;
 import org.rstudio.studio.client.workbench.views.source.PanelWithToolbars;
 import org.rstudio.studio.client.workbench.views.source.SourceColumn;
+import org.rstudio.studio.client.workbench.views.source.ViewsSourceConstants;
 import org.rstudio.studio.client.workbench.views.source.editors.EditingTargetToolbar;
 import org.rstudio.studio.client.workbench.views.source.editors.urlcontent.UrlContentEditingTarget;
 import org.rstudio.studio.client.workbench.views.source.model.DataItem;
@@ -134,15 +135,12 @@ public class DataEditingTargetWidget extends Composite
          statusBar.setStylePrimaryName(styles.statusBar());
          statusBar.setSize("100%", "100%");
          Label label1 = new Label(
-               "Displayed "
-               + StringUtil.formatGeneralNumber(dataItem.getDisplayedObservations())
-               + " rows of "
-               + StringUtil.formatGeneralNumber(dataItem.getTotalObservations()));
+               constants_.dataEditingTargetWidgetLabel1(StringUtil.formatGeneralNumber(dataItem.getDisplayedObservations()),
+                       StringUtil.formatGeneralNumber(dataItem.getTotalObservations())));
          int omitted = dataItem.getTotalObservations()
                        - dataItem.getDisplayedObservations();
-         Label label2 = new Label("(" +
-                                  StringUtil.formatGeneralNumber(omitted) +
-                                  " omitted)");
+         Label label2 = new Label(constants_.dataEditingTargetWidgetLabel2(
+                                  StringUtil.formatGeneralNumber(omitted)));
 
          label1.addStyleName(styles.statusBarDisplayed());
          label2.addStyleName(styles.statusBarOmitted());
@@ -235,4 +233,5 @@ public class DataEditingTargetWidget extends Composite
    private RStudioThemedFrame frame_;
    private DataTable table_;
    private SourceColumn column_;
+   private static final ViewsSourceConstants constants_ = GWT.create(ViewsSourceConstants.class);
 }

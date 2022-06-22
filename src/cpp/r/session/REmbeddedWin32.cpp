@@ -1,7 +1,7 @@
 /*
  * REmbeddedWin32.cpp
  *
- * Copyright (C) 2021 by RStudio, PBC
+ * Copyright (C) 2022 by RStudio, PBC
  *
  * Unless you have received this program directly from RStudio pursuant
  * to the terms of a commercial license agreement with RStudio, then
@@ -22,6 +22,7 @@
 #define R_INTERNAL_FUNCTIONS
 #include <Rversion.h>
 #include <r/RInternal.hpp>
+#include <r/RUtil.hpp>
 #include <r/RVersionInfo.hpp>
 
 #define Win32
@@ -36,6 +37,7 @@
 #include <shared_core/FilePath.hpp>
 #include <core/Exec.hpp>
 #include <core/StringUtils.hpp>
+#include <core/Version.hpp>
 #include <core/system/LibraryLoader.hpp>
 
 #include <r/RInterface.hpp>
@@ -47,16 +49,88 @@
 #include <Rembedded.h>
 #include <graphapp.h>
 
+#ifdef ReadConsole
+# undef ReadConsole
+#endif
+
+#ifdef WriteConsole
+# undef WriteConsole
+#endif
+
+// needed for compilation with older versions of R
+#ifndef R_SIZE_T
+# include <cstddef>
+# define R_SIZE_T std::size_t
+#endif
+
+
 extern "C" void R_ProcessEvents(void);
 extern "C" void R_CleanUp(SA_TYPE, int, int);
 extern "C" void cmdlineoptions(int, char**);
 
 extern "C" {
-   __declspec(dllimport) UImode CharacterMode;
+__declspec(dllimport) UImode CharacterMode;
 }
+
+// Added in R 4.2.0; loaded dynamically
+namespace rstudio {
+namespace dynload {
+int (*R_DefParamsEx)(Rstart, int);
+} // namespace dynload
+} // namespace rstudio
 
 using namespace rstudio::core;
 using namespace boost::placeholders;
+
+// local copy of R startup struct, with support for R_ResetConsole
+extern "C" {
+typedef struct
+{
+    Rboolean R_Quiet;
+    Rboolean R_NoEcho;
+    Rboolean R_Interactive;
+    Rboolean R_Verbose;
+    Rboolean LoadSiteFile;
+    Rboolean LoadInitFile;
+    Rboolean DebugInitFile;
+    SA_TYPE RestoreAction;
+    SA_TYPE SaveAction;
+    R_SIZE_T vsize;
+    R_SIZE_T nsize;
+    R_SIZE_T max_vsize;
+    R_SIZE_T max_nsize;
+    R_SIZE_T ppsize;
+    int NoRenviron;
+
+    char* rhome;
+    char* home;
+    int (*ReadConsole)(const char *, char *, int, int);
+    void (*WriteConsole)(const char *, int);
+    void (*CallBack)(void);
+    void (*ShowMessage)(const char *);
+    int (*YesNoCancel)(const char *);
+    void (*Busy)(int);
+    UImode CharacterMode;
+    void (*WriteConsoleEx)(const char *, int, int);
+
+    // Added in R 4.0.0
+    Rboolean EmitEmbeddedUTF8;
+
+    // Added in R 4.2.0
+    void (*CleanUp)(SA_TYPE, int, int);
+    void (*ClearerrConsole)(void);
+    void (*FlushConsole)(void);
+    void (*ResetConsole)(void);
+    void (*Suicide)(const char*);
+
+    // Padding, to allow for extensions in newer versions of R,
+    // in case newer versions of R expect a struct with extra
+    // memory available.
+    char padding[128];
+
+} RStartup;
+} // extern "C"
+
 
 namespace rstudio {
 namespace r {
@@ -171,8 +245,45 @@ bool initializeMaxMemoryViaCmdLineOptions()
 
 void initializeMaxMemory(const core::FilePath& rHome)
 {
+   // no action required with newer versions of R
+   const char* dllVersion = getDLLVersion();
+   core::Version rVersion(dllVersion);
+   if (rVersion >= core::Version("4.2.0"))
+      return;
+
    initializeMaxMemoryDangerously() ||
          initializeMaxMemoryViaCmdLineOptions();
+}
+
+void initializeParams(RStartup* pRP)
+{
+   // use R_DefParams for older versions of R
+   Version dllVersion(getDLLVersion());
+   if (dllVersion < Version("4.2.0"))
+      return R_DefParams((Rstart) pRP);
+
+   // otherwise, try and get the R_DefParamsEx routine and use that
+   core::system::Library rLibrary("R.dll");
+   if (rLibrary == nullptr)
+   {
+      LOG_WARNING_MESSAGE("Couldn't load R.dll");
+      return R_DefParams((Rstart) pRP);
+   }
+
+   // try to load R_DefParamsEx routine
+   Error error = core::system::loadSymbol(
+            rLibrary,
+            "R_DefParamsEx",
+            (void**) &rstudio::dynload::R_DefParamsEx);
+
+   if (error)
+   {
+      LOG_ERROR(error);
+      return R_DefParams((Rstart) pRP);
+   }
+
+   // invoke it
+   rstudio::dynload::R_DefParamsEx((Rstart) pRP, 1);
 }
 
 } // end anonymous namespace
@@ -192,9 +303,12 @@ void runEmbeddedR(const core::FilePath& rHome,
    initializeMaxMemory(rHome);
 
    // setup params structure
-   structRstart rp;
-   Rstart pRP = &rp;
-   ::R_DefParams(pRP);
+   RStartup rp;
+   RStartup* pRP = &rp;
+   memset(&rp, 0, sizeof(rp));
+
+   // initialize params
+   initializeParams(pRP);
 
    // set paths (copy to new string so we can provide char*)
    std::string* pRHome = new std::string(
@@ -206,11 +320,7 @@ void runEmbeddedR(const core::FilePath& rHome,
 
    // more configuration
    pRP->CharacterMode = RGui;
-#if R_VERSION < R_Version(4, 0, 0)
-   pRP->R_Slave = FALSE;
-#else
    pRP->R_NoEcho = FALSE;
-#endif
    pRP->R_Quiet = quiet ? TRUE : FALSE;
    pRP->R_Interactive = TRUE;
    pRP->SaveAction = defaultSaveAction;
@@ -226,6 +336,12 @@ void runEmbeddedR(const core::FilePath& rHome,
    pRP->YesNoCancel = askYesNoCancel;
    pRP->Busy = callbacks.busy;
 
+   // R 4.0.0 hooks
+   pRP->EmitEmbeddedUTF8 = TRUE;
+
+   // R 4.2.0 hooks
+   pRP->ResetConsole = callbacks.resetConsole;
+
    // set internal callbacks
    pInternal->cleanUp = R_CleanUp;
    pInternal->suicide = R_Suicide;
@@ -236,7 +352,7 @@ void runEmbeddedR(const core::FilePath& rHome,
    ::R_set_command_line_arguments(argc, const_cast<char**>(argv));
 
    // set params
-   ::R_SetParams(pRP);
+   ::R_SetParams((Rstart) pRP);
 
    // clear console input buffer
    ::FlushConsoleInputBuffer(GetStdHandle(STD_INPUT_HANDLE));

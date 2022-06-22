@@ -1,0 +1,79 @@
+/* Stores users of RStudio Server */
+CREATE TABLE IF NOT EXISTS licensed_users(
+
+   /* The username associated with the user */
+   user_name text NOT NULL,
+
+   /* Always false column, to keep the order the same as in Workbench */
+   locked boolean NOT NULL DEFAULT false,
+
+   /* The date time when the user last signed in */
+   last_sign_in text NOT NULL,
+
+   /* Always false column, to keep the order the same as in Workbench */
+   is_admin boolean NOT NULL DEFAULT false,
+
+   /* The Posix/Operating-System-Level ID of the user */
+   user_id integer NOT NULL DEFAULT -1,
+
+   /* Auto incrementing ID for each user for internal FK relationships. */
+   id SERIAL PRIMARY KEY
+
+);
+
+/* Stores metadata about actvie sessions */ 
+CREATE TABLE IF NOT EXISTS active_session_metadata(
+
+   /* The ID of the session which this row describes */
+   session_id text NOT NULL,
+
+   /* The ID of the row in licensed_users which corresponds to the user that owns this session */
+   user_id integer NOT NULL,
+
+   /* The type of workbench for this session */
+   workbench text NOT NULL,
+
+   /* The time at which this session was first created */
+   created text NOT NULL,
+
+   /* The time at which this session was last used */
+   last_used text NOT NULL,
+
+   /* The version of R in use, if this session's workbench type is R */
+   r_version text,
+
+   /* The label of the version of R in use, if this session's workbench type is R */
+   r_version_label text,
+
+   /* The R home of the version of R in use, if this session's workbench type is R */
+   r_version_home text,
+
+   /* The open project, if any */
+   project text,
+
+   /* The working directory of the session */
+   working_directory text,
+
+   /* The state of the session (running, executing, suspended) */
+   activity_state text NOT NULL,
+
+   /* The display label for this session */
+   label text NOT NULL,
+
+   /* The parameters with which this session was launched */
+   launch_parameters text NOT NULL,
+
+   /* Whether or not a save prompt is required */
+   save_prompt_required text NOT NULL DEFAULT 'not_required',
+
+   PRIMARY KEY (session_id),
+   
+   /* User entries should not be deleted, but if they are, remove all of that user's sessions */
+   CONSTRAINT fk_user
+      FOREIGN KEY (user_id) 
+         REFERENCES licensed_users(id) 
+         ON DELETE CASCADE
+);
+
+/* Update the version to the latest after all alter statements are applied. */
+UPDATE schema_version SET current_version = '20210916132211194382021' , release_name = 'Prairie Trillium';

@@ -1,7 +1,7 @@
 /*
  * SessionReticulate.hpp
  *
- * Copyright (C) 2021 by RStudio, PBC
+ * Copyright (C) 2022 by RStudio, PBC
  *
  * Unless you have received this program directly from RStudio pursuant
  * to the terms of a commercial license agreement with RStudio, then
@@ -15,6 +15,8 @@
 
 #ifndef SESSION_MODULES_RETICULATE_HPP
 #define SESSION_MODULES_RETICULATE_HPP
+
+#include <string>
 
 namespace rstudio {
 namespace core {
@@ -33,6 +35,8 @@ bool isPythonInitialized();
 bool isReplActive();
 
 core::Error initialize();
+
+std::string reticulatePython();
 
 } // end namespace reticulate
 } // end namespace modules

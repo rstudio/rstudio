@@ -1,7 +1,7 @@
 #
 # CMakeLists.txt
 #
-# Copyright (C) 2021 by RStudio, PBC
+# Copyright (C) 2022 by RStudio, PBC
 #
 # Unless you have received this program directly from RStudio pursuant
 # to the terms of a commercial license agreement with RStudio, then
@@ -35,7 +35,6 @@ set(CORE_SOURCE_FILES
    ConfigProfile.cpp
    ConfigUtils.cpp
    CrashHandler.cpp
-   Database.cpp
    DateTime.cpp
    ExponentialBackoff.cpp
    Exec.cpp
@@ -51,6 +50,7 @@ set(CORE_SOURCE_FILES
    RegexUtils.cpp
    RecursionGuard.cpp
    Settings.cpp
+   SocketRpc.cpp
    StringUtils.cpp
    ColorUtils.cpp
    Thread.cpp
@@ -102,6 +102,8 @@ set(CORE_SOURCE_FILES
    markdown/sundown/markdown.c
    markdown/sundown/stack.c
    r_util/RActiveSessions.cpp
+   r_util/RActiveSessionStorage.cpp
+   r_util/RActiveSessionsStorage.cpp
    r_util/RPackageInfo.cpp
    r_util/RProjectFile.cpp
    r_util/RSessionContext.cpp
@@ -130,6 +132,10 @@ set(CORE_SOURCE_FILES
    text/TermBufferParser.cpp
    zlib/zlib.cpp
 )
+
+if (RSTUDIO_HAS_SOCI)
+   list(APPEND CORE_SOURCE_FILES Database.cpp)
+endif()
 
 # UNIX specific
 if (UNIX)
@@ -313,12 +319,16 @@ target_link_libraries(rstudio-core
    ${SOCI_LIBRARIES}
    ${CORE_SYSTEM_LIBRARIES}
    ${YAML_CPP_LIBRARIES}
+   fmt::fmt
 )
 
 # define executable (for running unit tests)
 if (RSTUDIO_UNIT_TESTS_ENABLED)
 
    file(GLOB_RECURSE CORE_TEST_FILES "*Tests.cpp")
+   if (NOT RSTUDIO_HAS_SOCI)
+      list(REMOVE_ITEM CORE_TEST_FILES "${CMAKE_CURRENT_SOURCE_DIR}/DatabaseTests.cpp")
+   endif()
 
    add_executable(rstudio-core-tests
       TestMain.cpp

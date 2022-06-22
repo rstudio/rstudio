@@ -1,6 +1,6 @@
 /* PackratRestoreDialogContents.java
  *
- * Copyright (C) 2021 by RStudio, PBC
+ * Copyright (C) 2022 by RStudio, PBC
  *
  * Unless you have received this program directly from RStudio pursuant
  * to the terms of a commercial license agreement with RStudio, then
@@ -14,13 +14,6 @@
 
 package org.rstudio.studio.client.packrat.ui;
 
-import java.util.ArrayList;
-
-import org.rstudio.core.client.JsArrayUtil;
-import org.rstudio.core.client.widget.RStudioDataGrid;
-import org.rstudio.studio.client.packrat.model.PackratPackageAction;
-import org.rstudio.studio.client.workbench.views.packages.ui.PackagesDataGridCommon;
-
 import com.google.gwt.core.client.GWT;
 import com.google.gwt.core.client.JsArray;
 import com.google.gwt.uibinder.client.UiBinder;
@@ -29,6 +22,13 @@ import com.google.gwt.user.cellview.client.DataGrid;
 import com.google.gwt.user.client.ui.Composite;
 import com.google.gwt.user.client.ui.Label;
 import com.google.gwt.user.client.ui.Widget;
+import org.rstudio.core.client.JsArrayUtil;
+import org.rstudio.core.client.widget.RStudioDataGrid;
+import org.rstudio.studio.client.packrat.PackratConstants;
+import org.rstudio.studio.client.packrat.model.PackratPackageAction;
+import org.rstudio.studio.client.workbench.views.packages.ui.PackagesDataGridCommon;
+
+import java.util.ArrayList;
 
 public class PackratActionDialogContents extends Composite {
 
@@ -56,15 +56,11 @@ public class PackratActionDialogContents extends Composite {
 
       if (packratAction == "Snapshot")
       {
-         summaryLabel_.setText("The following packages have changed in " +
-               "your project's private library. Select Snapshot to save " + 
-               "these changes in Packrat.");
+         summaryLabel_.setText(constants_.snapshotSummaryLabel());
       }
       else if (packratAction == "Restore")
       {
-         summaryLabel_.setText("The following packages have changed in " +
-               "Packrat. Select Restore to apply these changes to your " +
-               "project's private library.");
+         summaryLabel_.setText(constants_.restoreSummaryLabel());
       }
    }
    
@@ -77,10 +73,10 @@ public class PackratActionDialogContents extends Composite {
    
    private void initTableColumns()
    {      
-      addColumn(table_, new SortableColumnWithHeader<>(prRestoreActionsList_, "package", "Package"));
-      addColumn(table_, new SortableColumnWithHeader<>(prRestoreActionsList_, "packrat.version", "Packrat"));
-      addColumn(table_, new SortableColumnWithHeader<>(prRestoreActionsList_, "library.version", "Library"));
-      addColumn(table_, new SortableColumnWithHeader<>(prRestoreActionsList_, "message", "Action"));
+      addColumn(table_, new SortableColumnWithHeader<>(prRestoreActionsList_, "package", constants_.packageColumnHeaderLabel()));
+      addColumn(table_, new SortableColumnWithHeader<>(prRestoreActionsList_, "packrat.version", constants_.packratColumnHeaderLabel()));
+      addColumn(table_, new SortableColumnWithHeader<>(prRestoreActionsList_, "library.version", constants_.libraryColumnHeaderLabel()));
+      addColumn(table_, new SortableColumnWithHeader<>(prRestoreActionsList_, "message", constants_.actionColumnHeaderLabel()));
       
       table_.setColumnWidth(0, "15%");
       table_.setColumnWidth(1, "15%");
@@ -92,4 +88,6 @@ public class PackratActionDialogContents extends Composite {
    private ArrayList<PackratPackageAction> prRestoreActionsList_;
    @UiField (provided = true) DataGrid<PackratPackageAction> table_;
    @UiField Label summaryLabel_;
+
+   private static final PackratConstants constants_ = GWT.create(PackratConstants.class);
 }

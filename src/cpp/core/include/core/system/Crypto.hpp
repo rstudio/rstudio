@@ -1,7 +1,7 @@
 /*
  * Crypto.hpp
  *
- * Copyright (C) 2021 by RStudio, PBC
+ * Copyright (C) 2022 by RStudio, PBC
  *
  * Unless you have received this program directly from RStudio pursuant
  * to the terms of a commercial license agreement with RStudio, then
@@ -56,6 +56,14 @@ core::Error generateRsaKeyPair(std::string* pOutPublicKey,
 
 core::Error generateRsaKeyFiles(const FilePath& publicKeyPath,
                                 const FilePath& privateKeyPath);
+
+core::Error generateRsaCertAndKeyPair(const std::string& in_certCommonName,
+                                      std::string& out_cert,
+                                      std::string& out_privateKey);
+
+core::Error generateRsaCertAndKeyFiles(const std::string& in_certCommonName,
+                                       const FilePath& in_certPath,
+                                       const FilePath& in_certKeyPath);
 
 void rsaPublicKey(std::string* pExponent, std::string* pModulo);
 

@@ -1,7 +1,7 @@
 /*
  * SessionClang.cpp
  *
- * Copyright (C) 2021 by RStudio, PBC
+ * Copyright (C) 2022 by RStudio, PBC
  *
  * Unless you have received this program directly from RStudio pursuant
  * to the terms of a commercial license agreement with RStudio, then
@@ -49,7 +49,6 @@ namespace clang {
 
 namespace {
 
-
 std::string embeddedLibClangPath()
 {
 #if defined(_WIN64)
@@ -64,23 +63,16 @@ std::string embeddedLibClangPath()
    return options().libclangPath().completeChildPath(libclang).getAbsolutePath();
 }
 
+LibraryVersion embeddedLibClangVersion()
+{
+   return LibraryVersion(Version(kEmbeddedLibClangVersion));
+}
+
 std::vector<std::string> embeddedLibClangCompileArgs(const LibraryVersion& version,
                                                      bool isCppFile)
 {
-   std::vector<std::string> compileArgs;
-
-   // headers path
-   FilePath headersPath = options().libclangHeadersPath();
-
-   // add compiler headers
-   std::string headersVersion = "5.0.2";
-   compileArgs.push_back("-I" + headersPath.completeChildPath(headersVersion).getAbsolutePath());
-
-   // add libc++ for embedded clang 3.5
-   if (isCppFile)
-      compileArgs.push_back("-I" + headersPath.completeChildPath("libc++/5.0.2").getAbsolutePath());
-
-   return compileArgs;
+   // we no longer include builtin libclang headers, so this is a no-op
+   return {};
 }
 
 EmbeddedLibrary embeddedLibClang()
@@ -161,7 +153,7 @@ void onPackageLibraryMutated()
 
 bool cppIndexingDisabled()
 {
-   return ! r::options::getOption<bool>("rstudio.indexCpp", true, false);
+   return !r::options::getOption<bool>("rstudio.indexCpp", true, false);
 }
 
 // diagnostic function to assist in determine whether/where
@@ -183,7 +175,7 @@ SEXP rs_isLibClangAvailable()
    {
       LibClang lib;
       isAvailable = lib.load(embeddedLibClang(),
-                             LibraryVersion(3,4,0),
+                             embeddedLibClangVersion(),
                              &diagnostics);
    }
 
@@ -233,7 +225,7 @@ Error initialize()
       return Success();
 
    // attempt to load libclang
-   if (!libclang::clang().load(embeddedLibClang(), LibraryVersion(3,4,0)))
+   if (!libclang::clang().load(embeddedLibClang(), embeddedLibClangVersion()))
       return Success();
 
    // enable crash recovery

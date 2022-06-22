@@ -1,7 +1,7 @@
 /*
  * AboutDialogContents.java
  *
- * Copyright (C) 2021 by RStudio, PBC
+ * Copyright (C) 2022 by RStudio, PBC
  *
  * Unless you have received this program directly from RStudio pursuant
  * to the terms of a commercial license agreement with RStudio, then
@@ -21,6 +21,7 @@ import com.google.gwt.user.client.ui.Anchor;
 import org.rstudio.core.client.Debug;
 import org.rstudio.core.client.widget.HyperlinkLabel;
 import org.rstudio.studio.client.RStudioGinjector;
+import org.rstudio.studio.client.application.StudioClientApplicationConstants;
 import org.rstudio.studio.client.application.Desktop;
 import org.rstudio.studio.client.application.model.ProductEditionInfo;
 import org.rstudio.studio.client.application.model.ProductInfo;
@@ -62,7 +63,8 @@ public class AboutDialogContents extends Composite
    public AboutDialogContents(ProductInfo info, ProductEditionInfo editionInfo)
    {
       initWidget(uiBinder.createAndBindUi(this));
-      versionLabel.setText(info.version);
+      versionMajorLabel.setText(info.version_major + "." + info.version_minor + "." + info.version_patch);
+      versionBuildLabel.setText(constants_.versionBuildLabel() + info.version_suffix.split("\\+")[1]);
 
       // a11y
       productInfo.getElement().setId("productinfo");
@@ -72,10 +74,26 @@ public class AboutDialogContents extends Composite
       userAgentLabel.setText(
             Window.Navigator.getUserAgent());
       buildLabel.setText(
-           "\"" + info.release_name + "\" (" + info.commit.substring(0, 8) + ", " +
-           info.date + ") for " + info.os);
+           "\"" + info.release_name + "\" " + info.build_type + " (" + info.commit.substring(0, 8) + ", " +
+           info.date + constants_.buildLabelForText() + info.os);
       productName.setText(editionInfo.editionName());
       copyrightYearLabel.setText("2009-" + info.copyright_year);
+
+      // Warn that dailies and previews aren't supported
+      if (!info.build_type.equals("Release")) {
+         supportNotice.setText(
+            constants_.buildTypeThisText() +
+            info.build_type +
+            " " + constants_.buildOfText() +
+            editionInfo.editionName() +
+            " " + constants_.supportNoticeText()
+         );
+      }
+      else
+      {
+         preReleaseRibbon.setVisible(false);
+      }
+
 
       showNoticelink_.setClickHandler(() ->
       {
@@ -106,7 +124,7 @@ public class AboutDialogContents extends Composite
             licenseBox.setVisibleLines(3);
             licenseLabel.setVisible(true);
             licenseBox.setVisible(true);
-            licenseBox.setText("Loading...");
+            licenseBox.setText(constants_.licenseBoxLoadingText());
             Desktop.getFrame().getLicenseStatusMessage(licenseStatus ->
             {
                licenseBox.setText(licenseStatus);
@@ -120,16 +138,20 @@ public class AboutDialogContents extends Composite
       return productInfo.getElement();
    }
 
-   @UiField InlineLabel versionLabel;
+   @UiField InlineLabel versionMajorLabel;
+   @UiField InlineLabel versionBuildLabel;
    @UiField InlineLabel userAgentLabel;
    @UiField InlineLabel buildLabel;
    @UiField InlineLabel copyrightYearLabel;
    @UiField HyperlinkLabel showNoticelink_;
    @UiField HTMLPanel gplNotice;
    @UiField HTMLPanel licenseLabel;
+   @UiField HTMLPanel preReleaseRibbon;
    @UiField TextArea licenseBox;
    @UiField Label productName;
    @UiField HTMLPanel productInfo;
+   @UiField InlineLabel supportNotice;
    @UiField Anchor gplLink;
    @UiField Label gplLinkLabel;
+   private static final StudioClientApplicationConstants constants_ = GWT.create(StudioClientApplicationConstants.class);
 }

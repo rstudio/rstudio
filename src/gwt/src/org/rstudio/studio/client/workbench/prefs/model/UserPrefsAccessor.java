@@ -1,6 +1,6 @@
 /* UserPrefsAccessor.java
  *
- * Copyright (C) 2021 by RStudio, PBC
+ * Copyright (C) 2022 by RStudio, PBC
  *
  * Unless you have received this program directly from RStudio pursuant
  * to the terms of a commercial license agreement with RStudio, then
@@ -30,6 +30,8 @@ import org.rstudio.core.client.JsArrayUtil;
 import java.util.ArrayList;
 import java.util.List;
 
+import com.google.gwt.core.client.GWT;
+
 
 /**
  * Accessor class for user preferences.
@@ -49,8 +51,8 @@ public class UserPrefsAccessor extends Prefs
    {
       return bool(
          "run_rprofile_on_resume",
-         "Run .Rprofile on resume", 
-         "Whether to run .Rprofile again after resuming a suspended R session.", 
+         _constants.runRprofileOnResumeTitle(), 
+         _constants.runRprofileOnResumeDescription(), 
          false);
    }
 
@@ -61,8 +63,8 @@ public class UserPrefsAccessor extends Prefs
    {
       return enumeration(
          "save_workspace",
-         "Save workspace on quit", 
-         "Whether to save the workspace to an .Rdata file after the R session ends.", 
+         _constants.saveWorkspaceTitle(), 
+         _constants.saveWorkspaceDescription(), 
          new String[] {
             SAVE_WORKSPACE_ALWAYS,
             SAVE_WORKSPACE_NEVER,
@@ -82,8 +84,8 @@ public class UserPrefsAccessor extends Prefs
    {
       return bool(
          "load_workspace",
-         "Load workspace on start", 
-         "Whether to load the workspace when the R session begins.", 
+         _constants.loadWorkspaceTitle(), 
+         _constants.loadWorkspaceDescription(), 
          true);
    }
 
@@ -94,8 +96,8 @@ public class UserPrefsAccessor extends Prefs
    {
       return string(
          "initial_working_directory",
-         "Initial working directory", 
-         "The initial working directory for new R sessions.", 
+         _constants.initialWorkingDirectoryTitle(), 
+         _constants.initialWorkingDirectoryDescription(), 
          "");
    }
 
@@ -106,8 +108,8 @@ public class UserPrefsAccessor extends Prefs
    {
       return object(
          "cran_mirror",
-         "", 
-         "The CRAN mirror to use.", 
+         _constants.cranMirrorTitle(), 
+         _constants.cranMirrorDescription(), 
          null);
    }
 
@@ -148,8 +150,8 @@ public class UserPrefsAccessor extends Prefs
    {
       return string(
          "bioconductor_mirror_name",
-         "", 
-         "The name of the default Bioconductor mirror.", 
+         _constants.bioconductorMirrorNameTitle(), 
+         _constants.bioconductorMirrorNameDescription(), 
          "Seattle (USA)");
    }
 
@@ -160,8 +162,8 @@ public class UserPrefsAccessor extends Prefs
    {
       return string(
          "bioconductor_mirror_url",
-         "", 
-         "The URL of the default Bioconductor mirror.", 
+         _constants.bioconductorMirrorUrlTitle(), 
+         _constants.bioconductorMirrorUrlDescription(), 
          "http://www.bioconductor.org");
    }
 
@@ -172,8 +174,8 @@ public class UserPrefsAccessor extends Prefs
    {
       return bool(
          "always_save_history",
-         "Save R console history", 
-         "Whether to always save the R console history.", 
+         _constants.alwaysSaveHistoryTitle(), 
+         _constants.alwaysSaveHistoryDescription(), 
          true);
    }
 
@@ -184,8 +186,8 @@ public class UserPrefsAccessor extends Prefs
    {
       return bool(
          "remove_history_duplicates",
-         "Remove duplicates from console history", 
-         "Whether to remove duplicate entries from the R console history.", 
+         _constants.removeHistoryDuplicatesTitle(), 
+         _constants.removeHistoryDuplicatesDescription(), 
          false);
    }
 
@@ -196,8 +198,8 @@ public class UserPrefsAccessor extends Prefs
    {
       return bool(
          "show_last_dot_value",
-         "Show .Last.value in Environment pane", 
-         "Show the result of the last expression (.Last.value) in the Environment pane.", 
+         _constants.showLastDotValueTitle(), 
+         _constants.showLastDotValueDescription(), 
          false);
    }
 
@@ -208,8 +210,8 @@ public class UserPrefsAccessor extends Prefs
    {
       return enumeration(
          "line_ending_conversion",
-         "Line ending format", 
-         "The line ending format to use when saving files.", 
+         _constants.lineEndingConversionTitle(), 
+         _constants.lineEndingConversionDescription(), 
          new String[] {
             LINE_ENDING_CONVERSION_DEFAULT,
             LINE_ENDING_CONVERSION_WINDOWS,
@@ -233,8 +235,8 @@ public class UserPrefsAccessor extends Prefs
    {
       return bool(
          "use_newlines_in_makefiles",
-         "Use newlines in Makefiles", 
-         "Whether to use newlines when saving Makefiles.", 
+         _constants.useNewlinesInMakefilesTitle(), 
+         _constants.useNewlinesInMakefilesDescription(), 
          true);
    }
 
@@ -245,8 +247,8 @@ public class UserPrefsAccessor extends Prefs
    {
       return enumeration(
          "windows_terminal_shell",
-         "", 
-         "The terminal shell to use on Windows.", 
+         _constants.windowsTerminalShellTitle(), 
+         _constants.windowsTerminalShellDescription(), 
          new String[] {
             WINDOWS_TERMINAL_SHELL_DEFAULT,
             WINDOWS_TERMINAL_SHELL_WIN_GIT_BASH,
@@ -276,8 +278,8 @@ public class UserPrefsAccessor extends Prefs
    {
       return enumeration(
          "posix_terminal_shell",
-         "", 
-         "The terminal shell to use on POSIX operating systems (MacOS and Linux).", 
+         _constants.posixTerminalShellTitle(), 
+         _constants.posixTerminalShellDescription(), 
          new String[] {
             POSIX_TERMINAL_SHELL_DEFAULT,
             POSIX_TERMINAL_SHELL_BASH,
@@ -301,8 +303,8 @@ public class UserPrefsAccessor extends Prefs
    {
       return string(
          "custom_shell_command",
-         "", 
-         "The fully qualified path to the custom shell command to use in the Terminal tab.", 
+         _constants.customShellCommandTitle(), 
+         _constants.customShellCommandDescription(), 
          "");
    }
 
@@ -313,8 +315,8 @@ public class UserPrefsAccessor extends Prefs
    {
       return string(
          "custom_shell_options",
-         "", 
-         "The command-line options to pass to the custom shell command.", 
+         _constants.customShellOptionsTitle(), 
+         _constants.customShellOptionsDescription(), 
          "");
    }
 
@@ -325,9 +327,21 @@ public class UserPrefsAccessor extends Prefs
    {
       return bool(
          "show_line_numbers",
-         "Show line numbers in editor", 
-         "Show line numbers in RStudio's code editor.", 
+         _constants.showLineNumbersTitle(), 
+         _constants.showLineNumbersDescription(), 
          true);
+   }
+
+   /**
+    * Show relative, rather than absolute, line numbers in RStudio's code editor.
+    */
+   public PrefValue<Boolean> relativeLineNumbers()
+   {
+      return bool(
+         "relative_line_numbers",
+         _constants.relativeLineNumbersTitle(), 
+         _constants.relativeLineNumbersDescription(), 
+         false);
    }
 
    /**
@@ -337,8 +351,8 @@ public class UserPrefsAccessor extends Prefs
    {
       return bool(
          "highlight_selected_word",
-         "Highlight selected word in editor", 
-         "Highlight the selected word in RStudio's code editor.", 
+         _constants.highlightSelectedWordTitle(), 
+         _constants.highlightSelectedWordDescription(), 
          true);
    }
 
@@ -349,8 +363,8 @@ public class UserPrefsAccessor extends Prefs
    {
       return bool(
          "highlight_selected_line",
-         "Highlight selected line in editor", 
-         "Highlight the selected line in RStudio's code editor.", 
+         _constants.highlightSelectedLineTitle(), 
+         _constants.highlightSelectedLineDescription(), 
          false);
    }
 
@@ -361,8 +375,8 @@ public class UserPrefsAccessor extends Prefs
    {
       return object(
          "panes",
-         "", 
-         "Layout of panes in the RStudio workbench.", 
+         _constants.panesTitle(), 
+         _constants.panesDescription(), 
          null);
    }
 
@@ -385,7 +399,7 @@ public class UserPrefsAccessor extends Prefs
       }-*/;
 
       public final native JsArrayString getTabSet2() /*-{
-         return this && this.tabSet2 || ["Files","Plots","Packages","Help","Viewer"];
+         return this && this.tabSet2 || ["Files","Plots","Packages","Help","Viewer","Presentations"];
       }-*/;
 
       public final native JsArrayString getHiddenTabSet() /*-{
@@ -413,8 +427,8 @@ public class UserPrefsAccessor extends Prefs
    {
       return bool(
          "allow_source_columns",
-         "Allow source columns", 
-         "Whether to enable the ability to add source columns to display.", 
+         _constants.allowSourceColumnsTitle(), 
+         _constants.allowSourceColumnsDescription(), 
          true);
    }
 
@@ -425,8 +439,8 @@ public class UserPrefsAccessor extends Prefs
    {
       return bool(
          "use_spaces_for_tab",
-         "Insert spaces for Tab", 
-         "Whether to insert spaces when pressing the Tab key.", 
+         _constants.useSpacesForTabTitle(), 
+         _constants.useSpacesForTabDescription(), 
          true);
    }
 
@@ -437,8 +451,8 @@ public class UserPrefsAccessor extends Prefs
    {
       return integer(
          "num_spaces_for_tab",
-         "Number of spaces for Tab", 
-         "The number of spaces to insert when pressing the Tab key.", 
+         _constants.numSpacesForTabTitle(), 
+         _constants.numSpacesForTabDescription(), 
          2);
    }
 
@@ -449,9 +463,9 @@ public class UserPrefsAccessor extends Prefs
    {
       return bool(
          "auto_detect_indentation",
-         "Autodetect indentation in files", 
-         "Whether to automatically detect indentation settings from file contents.", 
-         true);
+         _constants.autoDetectIndentationTitle(), 
+         _constants.autoDetectIndentationDescription(), 
+         false);
    }
 
    /**
@@ -461,8 +475,8 @@ public class UserPrefsAccessor extends Prefs
    {
       return bool(
          "show_margin",
-         "Show margin in editor", 
-         "Whether to show the margin guide in the RStudio code editor.", 
+         _constants.showMarginTitle(), 
+         _constants.showMarginDescription(), 
          true);
    }
 
@@ -473,8 +487,8 @@ public class UserPrefsAccessor extends Prefs
    {
       return bool(
          "blinking_cursor",
-         "Use a blinking cursor", 
-         "Whether to flash the cursor off and on.", 
+         _constants.blinkingCursorTitle(), 
+         _constants.blinkingCursorDescription(), 
          true);
    }
 
@@ -485,8 +499,8 @@ public class UserPrefsAccessor extends Prefs
    {
       return integer(
          "margin_column",
-         "Margin column", 
-         "The number of columns of text after which the margin is shown.", 
+         _constants.marginColumnTitle(), 
+         _constants.marginColumnDescription(), 
          80);
    }
 
@@ -497,8 +511,8 @@ public class UserPrefsAccessor extends Prefs
    {
       return bool(
          "show_invisibles",
-         "Show invisible characters in editor", 
-         "Whether to show invisible characters, such as spaces and tabs, in the RStudio code editor.", 
+         _constants.showInvisiblesTitle(), 
+         _constants.showInvisiblesDescription(), 
          false);
    }
 
@@ -509,20 +523,20 @@ public class UserPrefsAccessor extends Prefs
    {
       return bool(
          "show_indent_guides",
-         "Show indentation guides", 
-         "Whether to show indentation guides in the RStudio code editor.", 
+         _constants.showIndentGuidesTitle(), 
+         _constants.showIndentGuidesDescription(), 
          false);
    }
 
    /**
-    * Whether continue comments (by inserting the comment character) after adding a new line.
+    * Whether to continue comments (by inserting the comment character) after adding a new line.
     */
    public PrefValue<Boolean> continueCommentsOnNewline()
    {
       return bool(
          "continue_comments_on_newline",
-         "Continue comments after adding new line", 
-         "Whether continue comments (by inserting the comment character) after adding a new line.", 
+         _constants.continueCommentsOnNewlineTitle(), 
+         _constants.continueCommentsOnNewlineDescription(), 
          false);
    }
 
@@ -533,8 +547,8 @@ public class UserPrefsAccessor extends Prefs
    {
       return bool(
          "highlight_web_link",
-         "", 
-         "Whether web links in comments are clickable.", 
+         _constants.highlightWebLinkTitle(), 
+         _constants.highlightWebLinkDescription(), 
          true);
    }
 
@@ -545,15 +559,21 @@ public class UserPrefsAccessor extends Prefs
    {
       return enumeration(
          "editor_keybindings",
-         "Keybinding set for editor", 
-         "The keybindings to use in the RStudio code editor.", 
+         _constants.editorKeybindingsTitle(), 
+         _constants.editorKeybindingsDescription(), 
          new String[] {
             EDITOR_KEYBINDINGS_DEFAULT,
             EDITOR_KEYBINDINGS_VIM,
             EDITOR_KEYBINDINGS_EMACS,
             EDITOR_KEYBINDINGS_SUBLIME
          },
-         "default");
+         "default",
+         new String[] {
+            _constants.editorKeybindingsEnum_default(),
+            _constants.editorKeybindingsEnum_vim(),
+            _constants.editorKeybindingsEnum_emacs(),
+            _constants.editorKeybindingsEnum_sublime()
+         });
    }
 
    public final static String EDITOR_KEYBINDINGS_DEFAULT = "default";
@@ -568,8 +588,8 @@ public class UserPrefsAccessor extends Prefs
    {
       return bool(
          "insert_matching",
-         "Auto-insert matching parentheses and brackets", 
-         "Whether to insert matching pairs, such as () and [], when the first is typed.", 
+         _constants.insertMatchingTitle(), 
+         _constants.insertMatchingDescription(), 
          true);
    }
 
@@ -580,8 +600,8 @@ public class UserPrefsAccessor extends Prefs
    {
       return bool(
          "insert_spaces_around_equals",
-         "Insert spaces around = in R code", 
-         "Whether to insert spaces around the equals sign in R code.", 
+         _constants.insertSpacesAroundEqualsTitle(), 
+         _constants.insertSpacesAroundEqualsDescription(), 
          true);
    }
 
@@ -592,8 +612,8 @@ public class UserPrefsAccessor extends Prefs
    {
       return bool(
          "insert_parens_after_function_completion",
-         "Insert parentheses after functions", 
-         "Whether to insert parentheses after function completions.", 
+         _constants.insertParensAfterFunctionCompletionTitle(), 
+         _constants.insertParensAfterFunctionCompletionDescription(), 
          true);
    }
 
@@ -604,8 +624,8 @@ public class UserPrefsAccessor extends Prefs
    {
       return bool(
          "tab_multiline_completion",
-         "Complete multi-line statements with Tab", 
-         "Whether to attempt completion of multiple-line statements when pressing Tab.", 
+         _constants.tabMultilineCompletionTitle(), 
+         _constants.tabMultilineCompletionDescription(), 
          false);
    }
 
@@ -616,8 +636,8 @@ public class UserPrefsAccessor extends Prefs
    {
       return bool(
          "tab_completion",
-         "Use Tab to trigger autocompletion", 
-         "Whether to attempt completion of statements when pressing Tab.", 
+         _constants.tabCompletionTitle(), 
+         _constants.tabCompletionDescription(), 
          true);
    }
 
@@ -628,8 +648,8 @@ public class UserPrefsAccessor extends Prefs
    {
       return bool(
          "show_help_tooltip_on_idle",
-         "Show function help tooltips on idle", 
-         "Whether to show help tooltips for functions when the cursor has not been recently moved.", 
+         _constants.showHelpTooltipOnIdleTitle(), 
+         _constants.showHelpTooltipOnIdleDescription(), 
          false);
    }
 
@@ -640,14 +660,19 @@ public class UserPrefsAccessor extends Prefs
    {
       return enumeration(
          "surround_selection",
-         "Surround selections with", 
-         "Which kinds of delimiters can be used to surround the current selection.", 
+         _constants.surroundSelectionTitle(), 
+         _constants.surroundSelectionDescription(), 
          new String[] {
             SURROUND_SELECTION_NEVER,
             SURROUND_SELECTION_QUOTES,
             SURROUND_SELECTION_QUOTES_AND_BRACKETS
          },
-         "quotes_and_brackets");
+         "quotes_and_brackets",
+         new String[] {
+            _constants.surroundSelectionEnum_never(),
+            _constants.surroundSelectionEnum_quotes(),
+            _constants.surroundSelectionEnum_quotes_and_brackets()
+         });
    }
 
    public final static String SURROUND_SELECTION_NEVER = "never";
@@ -661,8 +686,8 @@ public class UserPrefsAccessor extends Prefs
    {
       return bool(
          "enable_snippets",
-         "Enable code snippets", 
-         "Whether to enable code snippets in the RStudio code editor.", 
+         _constants.enableSnippetsTitle(), 
+         _constants.enableSnippetsDescription(), 
          true);
    }
 
@@ -673,15 +698,21 @@ public class UserPrefsAccessor extends Prefs
    {
       return enumeration(
          "code_completion",
-         "Use code completion for R", 
-         "When to use auto-completion for R code in the RStudio code editor.", 
+         _constants.codeCompletionTitle(), 
+         _constants.codeCompletionDescription(), 
          new String[] {
             CODE_COMPLETION_ALWAYS,
             CODE_COMPLETION_NEVER,
             CODE_COMPLETION_TRIGGERED,
             CODE_COMPLETION_MANUAL
          },
-         "always");
+         "always",
+         new String[] {
+            _constants.codeCompletionEnum_always(),
+            _constants.codeCompletionEnum_never(),
+            _constants.codeCompletionEnum_triggered(),
+            _constants.codeCompletionEnum_manual()
+         });
    }
 
    public final static String CODE_COMPLETION_ALWAYS = "always";
@@ -696,14 +727,19 @@ public class UserPrefsAccessor extends Prefs
    {
       return enumeration(
          "code_completion_other",
-         "Use code completion for other languages", 
-         "When to use auto-completion for other languages (such as JavaScript and SQL) in the RStudio code editor.", 
+         _constants.codeCompletionOtherTitle(), 
+         _constants.codeCompletionOtherDescription(), 
          new String[] {
             CODE_COMPLETION_OTHER_ALWAYS,
             CODE_COMPLETION_OTHER_TRIGGERED,
             CODE_COMPLETION_OTHER_MANUAL
          },
-         "always");
+         "always",
+         new String[] {
+            _constants.codeCompletionOtherEnum_always(),
+            _constants.codeCompletionOtherEnum_triggered(),
+            _constants.codeCompletionOtherEnum_manual()
+         });
    }
 
    public final static String CODE_COMPLETION_OTHER_ALWAYS = "always";
@@ -717,8 +753,8 @@ public class UserPrefsAccessor extends Prefs
    {
       return bool(
          "console_code_completion",
-         "Use code completion in the R console", 
-         "Whether to always use code completion in the R console.", 
+         _constants.consoleCodeCompletionTitle(), 
+         _constants.consoleCodeCompletionDescription(), 
          true);
    }
 
@@ -729,8 +765,8 @@ public class UserPrefsAccessor extends Prefs
    {
       return integer(
          "code_completion_delay",
-         "Delay before completing code (ms)", 
-         "The number of milliseconds to wait before offering code suggestions.", 
+         _constants.codeCompletionDelayTitle(), 
+         _constants.codeCompletionDelayDescription(), 
          250);
    }
 
@@ -741,8 +777,8 @@ public class UserPrefsAccessor extends Prefs
    {
       return integer(
          "code_completion_characters",
-         "Number of characters for code completion", 
-         "The number of characters in a symbol that can be entered before completions are offered.", 
+         _constants.codeCompletionCharactersTitle(), 
+         _constants.codeCompletionCharactersDescription(), 
          3);
    }
 
@@ -753,8 +789,8 @@ public class UserPrefsAccessor extends Prefs
    {
       return bool(
          "show_function_signature_tooltips",
-         "Show function signature tooltips", 
-         "Whether to show function signature tooltips during autocompletion.", 
+         _constants.showFunctionSignatureTooltipsTitle(), 
+         _constants.showFunctionSignatureTooltipsDescription(), 
          true);
    }
 
@@ -765,8 +801,8 @@ public class UserPrefsAccessor extends Prefs
    {
       return bool(
          "show_diagnostics_r",
-         "Show diagnostics in R code", 
-         "Whether to show diagnostic messages (such as syntax and usage errors) for R code as you type.", 
+         _constants.showDiagnosticsRTitle(), 
+         _constants.showDiagnosticsRDescription(), 
          true);
    }
 
@@ -777,20 +813,32 @@ public class UserPrefsAccessor extends Prefs
    {
       return bool(
          "show_diagnostics_cpp",
-         "Show diagnostics in C++ code", 
-         "Whether to show diagnostic messages for C++ code as you type.", 
+         _constants.showDiagnosticsCppTitle(), 
+         _constants.showDiagnosticsCppDescription(), 
          true);
    }
 
    /**
-    * Whether to show diagnostic messages for other types of code (not R or C++).
+    * Whether to show diagnostic messages for YAML code as you type.
+    */
+   public PrefValue<Boolean> showDiagnosticsYaml()
+   {
+      return bool(
+         "show_diagnostics_yaml",
+         _constants.showDiagnosticsYamlTitle(), 
+         _constants.showDiagnosticsYamlDescription(), 
+         true);
+   }
+
+   /**
+    * Whether to show diagnostic messages for other types of code (not R, C++, or YAML).
     */
    public PrefValue<Boolean> showDiagnosticsOther()
    {
       return bool(
          "show_diagnostics_other",
-         "Show diagnostics in other languages", 
-         "Whether to show diagnostic messages for other types of code (not R or C++).", 
+         _constants.showDiagnosticsOtherTitle(), 
+         _constants.showDiagnosticsOtherDescription(), 
          false);
    }
 
@@ -801,8 +849,8 @@ public class UserPrefsAccessor extends Prefs
    {
       return bool(
          "style_diagnostics",
-         "Show style diagnostics for R code", 
-         "Whether to show style diagnostics (suggestions for improving R code style)", 
+         _constants.styleDiagnosticsTitle(), 
+         _constants.styleDiagnosticsDescription(), 
          false);
    }
 
@@ -813,8 +861,8 @@ public class UserPrefsAccessor extends Prefs
    {
       return bool(
          "diagnostics_on_save",
-         "Check code for problems when saving", 
-         "Whether to check code for problems after saving it.", 
+         _constants.diagnosticsOnSaveTitle(), 
+         _constants.diagnosticsOnSaveDescription(), 
          true);
    }
 
@@ -825,8 +873,8 @@ public class UserPrefsAccessor extends Prefs
    {
       return bool(
          "background_diagnostics",
-         "Run R code diagnostics in the background", 
-         "Whether to run code diagnostics in the background, as you type.", 
+         _constants.backgroundDiagnosticsTitle(), 
+         _constants.backgroundDiagnosticsDescription(), 
          true);
    }
 
@@ -837,8 +885,8 @@ public class UserPrefsAccessor extends Prefs
    {
       return integer(
          "background_diagnostics_delay_ms",
-         "Run R code diagnostics after (ms)", 
-         "The number of milliseconds to delay before running code diagnostics in the background.", 
+         _constants.backgroundDiagnosticsDelayMsTitle(), 
+         _constants.backgroundDiagnosticsDelayMsDescription(), 
          2000);
    }
 
@@ -849,8 +897,8 @@ public class UserPrefsAccessor extends Prefs
    {
       return bool(
          "diagnostics_in_r_function_calls",
-         "Run diagnostics on R function calls", 
-         "Whether to run diagnostics in R function calls.", 
+         _constants.diagnosticsInRFunctionCallsTitle(), 
+         _constants.diagnosticsInRFunctionCallsDescription(), 
          true);
    }
 
@@ -861,8 +909,8 @@ public class UserPrefsAccessor extends Prefs
    {
       return bool(
          "check_arguments_to_r_function_calls",
-         "Check arguments to R function calls", 
-         "Whether to check arguments to R function calls.", 
+         _constants.checkArgumentsToRFunctionCallsTitle(), 
+         _constants.checkArgumentsToRFunctionCallsDescription(), 
          false);
    }
 
@@ -873,8 +921,8 @@ public class UserPrefsAccessor extends Prefs
    {
       return bool(
          "check_unexpected_assignment_in_function_call",
-         "Check for unexpected assignments", 
-         "Whether to check for unexpected variable assignments inside R function calls.", 
+         _constants.checkUnexpectedAssignmentInFunctionCallTitle(), 
+         _constants.checkUnexpectedAssignmentInFunctionCallDescription(), 
          false);
    }
 
@@ -885,8 +933,8 @@ public class UserPrefsAccessor extends Prefs
    {
       return bool(
          "warn_if_no_such_variable_in_scope",
-         "Warn when R variable used but not defined", 
-         "Whether to generate a warning if a variable is used without being defined in the current scope.", 
+         _constants.warnIfNoSuchVariableInScopeTitle(), 
+         _constants.warnIfNoSuchVariableInScopeDescription(), 
          false);
    }
 
@@ -897,8 +945,8 @@ public class UserPrefsAccessor extends Prefs
    {
       return bool(
          "warn_variable_defined_but_not_used",
-         "Warn when R variable defined but not used", 
-         "Whether to generate a warning if a variable is defined without being used in the current scope", 
+         _constants.warnVariableDefinedButNotUsedTitle(), 
+         _constants.warnVariableDefinedButNotUsedDescription(), 
          false);
    }
 
@@ -909,8 +957,8 @@ public class UserPrefsAccessor extends Prefs
    {
       return bool(
          "auto_discover_package_dependencies",
-         "Detect missing R packages in the editor", 
-         "Whether to automatically discover and offer to install missing R package dependencies.", 
+         _constants.autoDiscoverPackageDependenciesTitle(), 
+         _constants.autoDiscoverPackageDependenciesDescription(), 
          true);
    }
 
@@ -921,8 +969,8 @@ public class UserPrefsAccessor extends Prefs
    {
       return bool(
          "auto_append_newline",
-         "Ensure files end with a newline when saving", 
-         "Whether to ensure that source files end with a newline character.", 
+         _constants.autoAppendNewlineTitle(), 
+         _constants.autoAppendNewlineDescription(), 
          false);
    }
 
@@ -933,8 +981,8 @@ public class UserPrefsAccessor extends Prefs
    {
       return bool(
          "strip_trailing_whitespace",
-         "Strip trailing whitespace when saving", 
-         "Whether to strip trailing whitespace from each line when saving.", 
+         _constants.stripTrailingWhitespaceTitle(), 
+         _constants.stripTrailingWhitespaceDescription(), 
          false);
    }
 
@@ -945,8 +993,8 @@ public class UserPrefsAccessor extends Prefs
    {
       return bool(
          "restore_source_document_cursor_position",
-         "Restore cursor position when reopening files", 
-         "Whether to save the position of the cursor when a file is closed, restore it when the file is opened.", 
+         _constants.restoreSourceDocumentCursorPositionTitle(), 
+         _constants.restoreSourceDocumentCursorPositionDescription(), 
          true);
    }
 
@@ -957,8 +1005,8 @@ public class UserPrefsAccessor extends Prefs
    {
       return bool(
          "reindent_on_paste",
-         "Re-indent code when pasting", 
-         "Whether to automatically re-indent code when it's pasted into RStudio.", 
+         _constants.reindentOnPasteTitle(), 
+         _constants.reindentOnPasteDescription(), 
          true);
    }
 
@@ -969,8 +1017,8 @@ public class UserPrefsAccessor extends Prefs
    {
       return bool(
          "vertically_align_arguments_indent",
-         "Vertically align function arguments", 
-         "Whether to vertically align arguments to R function calls during automatic indentation.", 
+         _constants.verticallyAlignArgumentsIndentTitle(), 
+         _constants.verticallyAlignArgumentsIndentDescription(), 
          true);
    }
 
@@ -981,8 +1029,8 @@ public class UserPrefsAccessor extends Prefs
    {
       return bool(
          "soft_wrap_r_files",
-         "Soft-wrap R source files", 
-         "Whether to soft-wrap R source files, wrapping the text for display without inserting newline characters.", 
+         _constants.softWrapRFilesTitle(), 
+         _constants.softWrapRFilesDescription(), 
          false);
    }
 
@@ -993,8 +1041,8 @@ public class UserPrefsAccessor extends Prefs
    {
       return bool(
          "soft_wrap_rmd_files",
-         "Soft-wrap R Markdown files", 
-         "Whether to soft-wrap R Markdown files (and similar types such as R HTML and R Notebooks)", 
+         _constants.softWrapRmdFilesTitle(), 
+         _constants.softWrapRmdFilesDescription(), 
          true);
    }
 
@@ -1005,8 +1053,8 @@ public class UserPrefsAccessor extends Prefs
    {
       return bool(
          "focus_console_after_exec",
-         "Focus console after executing R code", 
-         "Whether to focus the R console after executing an R command from a script.", 
+         _constants.focusConsoleAfterExecTitle(), 
+         _constants.focusConsoleAfterExecDescription(), 
          false);
    }
 
@@ -1017,13 +1065,17 @@ public class UserPrefsAccessor extends Prefs
    {
       return enumeration(
          "fold_style",
-         "Fold style in editor", 
-         "The style of folding to use.", 
+         _constants.foldStyleTitle(), 
+         _constants.foldStyleDescription(), 
          new String[] {
             FOLD_STYLE_BEGIN_ONLY,
             FOLD_STYLE_BEGIN_AND_END
          },
-         "begin-and-end");
+         "begin-and-end",
+         new String[] {
+            _constants.foldStyleEnum_begin_only(),
+            _constants.foldStyleEnum_begin_and_end()
+         });
    }
 
    public final static String FOLD_STYLE_BEGIN_ONLY = "begin-only";
@@ -1036,8 +1088,8 @@ public class UserPrefsAccessor extends Prefs
    {
       return bool(
          "save_before_sourcing",
-         "Save R scripts before sourcing", 
-         "Whether to automatically save scripts before executing them.", 
+         _constants.saveBeforeSourcingTitle(), 
+         _constants.saveBeforeSourcingDescription(), 
          true);
    }
 
@@ -1048,8 +1100,8 @@ public class UserPrefsAccessor extends Prefs
    {
       return bool(
          "syntax_color_console",
-         "Syntax highlighting in R console", 
-         "Whether to use syntax highlighting in the R console.", 
+         _constants.syntaxColorConsoleTitle(), 
+         _constants.syntaxColorConsoleDescription(), 
          false);
    }
 
@@ -1060,8 +1112,8 @@ public class UserPrefsAccessor extends Prefs
    {
       return bool(
          "highlight_console_errors",
-         "Different color for error output in R console", 
-         "Whether to display error, warning, and message output in a different color.", 
+         _constants.highlightConsoleErrorsTitle(), 
+         _constants.highlightConsoleErrorsDescription(), 
          true);
    }
 
@@ -1072,8 +1124,8 @@ public class UserPrefsAccessor extends Prefs
    {
       return bool(
          "scroll_past_end_of_document",
-         "Scroll past end of file", 
-         "Whether to allow scrolling past the end of a file.", 
+         _constants.scrollPastEndOfDocumentTitle(), 
+         _constants.scrollPastEndOfDocumentDescription(), 
          false);
    }
 
@@ -1084,8 +1136,8 @@ public class UserPrefsAccessor extends Prefs
    {
       return bool(
          "highlight_r_function_calls",
-         "Highlight R function calls", 
-         "Whether to highlight R function calls in the code editor.", 
+         _constants.highlightRFunctionCallsTitle(), 
+         _constants.highlightRFunctionCallsDescription(), 
          false);
    }
 
@@ -1096,8 +1148,8 @@ public class UserPrefsAccessor extends Prefs
    {
       return bool(
          "rainbow_parentheses",
-         "Rainbow parentheses", 
-         "Whether to highlight parentheses in a variety of colors.", 
+         _constants.rainbowParenthesesTitle(), 
+         _constants.rainbowParenthesesDescription(), 
          false);
    }
 
@@ -1108,8 +1160,8 @@ public class UserPrefsAccessor extends Prefs
    {
       return integer(
          "console_line_length_limit",
-         "Maximum characters per line in R console", 
-         "The maximum number of characters to display in a single line in the R console.", 
+         _constants.consoleLineLengthLimitTitle(), 
+         _constants.consoleLineLengthLimitDescription(), 
          1000);
    }
 
@@ -1120,8 +1172,8 @@ public class UserPrefsAccessor extends Prefs
    {
       return integer(
          "console_max_lines",
-         "Maximum lines in R console", 
-         "The maximum number of console actions to store and display in the console scrollback buffer.", 
+         _constants.consoleMaxLinesTitle(), 
+         _constants.consoleMaxLinesDescription(), 
          1000);
    }
 
@@ -1132,8 +1184,8 @@ public class UserPrefsAccessor extends Prefs
    {
       return enumeration(
          "ansi_console_mode",
-         "ANSI escape codes in R console", 
-         "How to treat ANSI escape codes in the console.", 
+         _constants.ansiConsoleModeTitle(), 
+         _constants.ansiConsoleModeDescription(), 
          new String[] {
             ANSI_CONSOLE_MODE_OFF,
             ANSI_CONSOLE_MODE_ON,
@@ -1153,9 +1205,9 @@ public class UserPrefsAccessor extends Prefs
    {
       return bool(
          "limit_visible_console",
-         "Limit visible console output", 
-         "Whether to only show a limited window of the total console output", 
-         true);
+         _constants.limitVisibleConsoleTitle(), 
+         _constants.limitVisibleConsoleDescription(), 
+         false);
    }
 
    /**
@@ -1165,8 +1217,8 @@ public class UserPrefsAccessor extends Prefs
    {
       return bool(
          "show_inline_toolbar_for_r_code_chunks",
-         "Show toolbar on R Markdown chunks", 
-         "Whether to show a toolbar on code chunks in R Markdown documents.", 
+         _constants.showInlineToolbarForRCodeChunksTitle(), 
+         _constants.showInlineToolbarForRCodeChunksDescription(), 
          true);
    }
 
@@ -1177,8 +1229,8 @@ public class UserPrefsAccessor extends Prefs
    {
       return bool(
          "highlight_code_chunks",
-         "Highlight code chunks in R Markdown files", 
-         "Whether to highlight code chunks in R Markdown documents with a different background color.", 
+         _constants.highlightCodeChunksTitle(), 
+         _constants.highlightCodeChunksDescription(), 
          true);
    }
 
@@ -1189,8 +1241,8 @@ public class UserPrefsAccessor extends Prefs
    {
       return bool(
          "save_files_before_build",
-         "Save files before building", 
-         "Whether to save all open, unsaved files before building the project.", 
+         _constants.saveFilesBeforeBuildTitle(), 
+         _constants.saveFilesBeforeBuildDescription(), 
          false);
    }
 
@@ -1201,8 +1253,8 @@ public class UserPrefsAccessor extends Prefs
    {
       return dbl(
          "font_size_points",
-         "Editor font size (points)", 
-         "The default editor font size, in points.", 
+         _constants.fontSizePointsTitle(), 
+         _constants.fontSizePointsDescription(), 
          10.0);
    }
 
@@ -1213,8 +1265,8 @@ public class UserPrefsAccessor extends Prefs
    {
       return dbl(
          "help_font_size_points",
-         "Help panel font size (points)", 
-         "The help panel font size, in points.", 
+         _constants.helpFontSizePointsTitle(), 
+         _constants.helpFontSizePointsDescription(), 
          10.0);
    }
 
@@ -1225,8 +1277,8 @@ public class UserPrefsAccessor extends Prefs
    {
       return string(
          "editor_theme",
-         "Theme", 
-         "The name of the color theme to apply to the text editor in RStudio.", 
+         _constants.editorThemeTitle(), 
+         _constants.editorThemeDescription(), 
          "Textmate (default)");
    }
 
@@ -1237,8 +1289,8 @@ public class UserPrefsAccessor extends Prefs
    {
       return bool(
          "server_editor_font_enabled",
-         "Enable editor fonts on RStudio Server", 
-         "Whether to use a custom editor font in RStudio Server.", 
+         _constants.serverEditorFontEnabledTitle(), 
+         _constants.serverEditorFontEnabledDescription(), 
          false);
    }
 
@@ -1249,8 +1301,8 @@ public class UserPrefsAccessor extends Prefs
    {
       return string(
          "server_editor_font",
-         "Editor font", 
-         "The name of the fixed-width editor font to use with RStudio Server.", 
+         _constants.serverEditorFontTitle(), 
+         _constants.serverEditorFontDescription(), 
          "");
    }
 
@@ -1261,8 +1313,8 @@ public class UserPrefsAccessor extends Prefs
    {
       return string(
          "default_encoding",
-         "Default character encoding", 
-         "The default character encoding to use when saving files.", 
+         _constants.defaultEncodingTitle(), 
+         _constants.defaultEncodingDescription(), 
          "");
    }
 
@@ -1273,8 +1325,8 @@ public class UserPrefsAccessor extends Prefs
    {
       return bool(
          "toolbar_visible",
-         "Show top toolbar", 
-         "Whether to show the toolbar at the top of the RStudio workbench.", 
+         _constants.toolbarVisibleTitle(), 
+         _constants.toolbarVisibleDescription(), 
          true);
    }
 
@@ -1285,8 +1337,8 @@ public class UserPrefsAccessor extends Prefs
    {
       return string(
          "default_project_location",
-         "Default new project location", 
-         "The directory path under which to place new projects by default.", 
+         _constants.defaultProjectLocationTitle(), 
+         _constants.defaultProjectLocationDescription(), 
          "");
    }
 
@@ -1297,20 +1349,8 @@ public class UserPrefsAccessor extends Prefs
    {
       return bool(
          "source_with_echo",
-         "Source with echo by default", 
-         "Whether to echo R code when sourcing it.", 
-         false);
-   }
-
-   /**
-    * Whether to initialize new projects with a Git repo by default.
-    */
-   public PrefValue<Boolean> newProjectGitInit()
-   {
-      return bool(
-         "new_project_git_init",
-         "Initialize new projects with Git", 
-         "Whether to initialize new projects with a Git repo by default.", 
+         _constants.sourceWithEchoTitle(), 
+         _constants.sourceWithEchoDescription(), 
          false);
    }
 
@@ -1321,8 +1361,8 @@ public class UserPrefsAccessor extends Prefs
    {
       return string(
          "default_sweave_engine",
-         "Default Sweave engine", 
-         "The default engine to use when processing Sweave documents.", 
+         _constants.defaultSweaveEngineTitle(), 
+         _constants.defaultSweaveEngineDescription(), 
          "Sweave");
    }
 
@@ -1333,8 +1373,8 @@ public class UserPrefsAccessor extends Prefs
    {
       return string(
          "default_latex_program",
-         "Default LaTeX program", 
-         "The default program to use when processing LaTeX documents.", 
+         _constants.defaultLatexProgramTitle(), 
+         _constants.defaultLatexProgramDescription(), 
          "pdfLaTeX");
    }
 
@@ -1345,8 +1385,8 @@ public class UserPrefsAccessor extends Prefs
    {
       return bool(
          "use_roxygen",
-         "Use Roxygen for documentation", 
-         "Whether to use Roxygen for documentation.", 
+         _constants.useRoxygenTitle(), 
+         _constants.useRoxygenDescription(), 
          false);
    }
 
@@ -1357,8 +1397,8 @@ public class UserPrefsAccessor extends Prefs
    {
       return bool(
          "use_dataimport",
-         "Enable data import", 
-         "Whether to use RStudio's data import feature.", 
+         _constants.useDataimportTitle(), 
+         _constants.useDataimportDescription(), 
          true);
    }
 
@@ -1369,8 +1409,8 @@ public class UserPrefsAccessor extends Prefs
    {
       return enumeration(
          "pdf_previewer",
-         "PDF previewer", 
-         "The program to use to preview PDF files after generation.", 
+         _constants.pdfPreviewerTitle(), 
+         _constants.pdfPreviewerDescription(), 
          new String[] {
             PDF_PREVIEWER_NONE,
             PDF_PREVIEWER_DEFAULT,
@@ -1394,8 +1434,8 @@ public class UserPrefsAccessor extends Prefs
    {
       return bool(
          "always_enable_rnw_concordance",
-         "Enable Rnw concordance", 
-         "Whether to always enable the concordance for RNW files.", 
+         _constants.alwaysEnableRnwConcordanceTitle(), 
+         _constants.alwaysEnableRnwConcordanceDescription(), 
          true);
    }
 
@@ -1406,8 +1446,8 @@ public class UserPrefsAccessor extends Prefs
    {
       return bool(
          "insert_numbered_latex_sections",
-         "Insert numbered LaTeX sections", 
-         "Whether to insert numbered sections in LaTeX.", 
+         _constants.insertNumberedLatexSectionsTitle(), 
+         _constants.insertNumberedLatexSectionsDescription(), 
          false);
    }
 
@@ -1418,8 +1458,8 @@ public class UserPrefsAccessor extends Prefs
    {
       return string(
          "spelling_dictionary_language",
-         "Spelling dictionary language", 
-         "The language of the spelling dictionary to use for spell checking.", 
+         _constants.spellingDictionaryLanguageTitle(), 
+         _constants.spellingDictionaryLanguageDescription(), 
          "en_US");
    }
 
@@ -1430,8 +1470,8 @@ public class UserPrefsAccessor extends Prefs
    {
       return object(
          "spelling_custom_dictionaries",
-         "Custom spelling dictionaries", 
-         "The list of custom dictionaries to use when spell checking.", 
+         _constants.spellingCustomDictionariesTitle(), 
+         _constants.spellingCustomDictionariesDescription(), 
          JsArrayUtil.createStringArray());
    }
 
@@ -1442,8 +1482,8 @@ public class UserPrefsAccessor extends Prefs
    {
       return integer(
          "document_load_lint_delay",
-         "Lint document after load (ms)", 
-         "The number of milliseconds to wait before linting a document after it is loaded.", 
+         _constants.documentLoadLintDelayTitle(), 
+         _constants.documentLoadLintDelayDescription(), 
          5000);
    }
 
@@ -1454,8 +1494,8 @@ public class UserPrefsAccessor extends Prefs
    {
       return bool(
          "ignore_uppercase_words",
-         "Ignore uppercase words in spell check", 
-         "Whether to ignore words in uppercase when spell checking.", 
+         _constants.ignoreUppercaseWordsTitle(), 
+         _constants.ignoreUppercaseWordsDescription(), 
          true);
    }
 
@@ -1466,8 +1506,8 @@ public class UserPrefsAccessor extends Prefs
    {
       return bool(
          "ignore_words_with_numbers",
-         "Ignore words with numbers in spell check", 
-         "Whether to ignore words with numbers in them when spell checking.", 
+         _constants.ignoreWordsWithNumbersTitle(), 
+         _constants.ignoreWordsWithNumbersDescription(), 
          true);
    }
 
@@ -1478,8 +1518,8 @@ public class UserPrefsAccessor extends Prefs
    {
       return bool(
          "real_time_spellchecking",
-         "Use real-time spellchecking", 
-         "Whether to enable real-time spellchecking by default.", 
+         _constants.realTimeSpellcheckingTitle(), 
+         _constants.realTimeSpellcheckingDescription(), 
          true);
    }
 
@@ -1490,8 +1530,8 @@ public class UserPrefsAccessor extends Prefs
    {
       return bool(
          "navigate_to_build_error",
-         "Navigate to build errors", 
-         "Whether to navigate to build errors.", 
+         _constants.navigateToBuildErrorTitle(), 
+         _constants.navigateToBuildErrorDescription(), 
          true);
    }
 
@@ -1502,21 +1542,21 @@ public class UserPrefsAccessor extends Prefs
    {
       return bool(
          "packages_pane_enabled",
-         "Enable the Packages pane", 
-         "Whether to enable RStudio's Packages pane.", 
+         _constants.packagesPaneEnabledTitle(), 
+         _constants.packagesPaneEnabledDescription(), 
          true);
    }
 
    /**
-    * Whether to use RCPP templates.
+    * C++ template.
     */
-   public PrefValue<Boolean> useRcppTemplate()
+   public PrefValue<String> cppTemplate()
    {
-      return bool(
-         "use_rcpp_template",
-         "Use RCpp file templates", 
-         "Whether to use RCPP templates.", 
-         true);
+      return string(
+         "cpp_template",
+         _constants.cppTemplateTitle(), 
+         _constants.cppTemplateDescription(), 
+         "Rcpp");
    }
 
    /**
@@ -1526,8 +1566,8 @@ public class UserPrefsAccessor extends Prefs
    {
       return bool(
          "restore_source_documents",
-         "Restore last opened documents on startup", 
-         "Whether to restore the last opened source documents when RStudio starts up.", 
+         _constants.restoreSourceDocumentsTitle(), 
+         _constants.restoreSourceDocumentsDescription(), 
          true);
    }
 
@@ -1538,8 +1578,8 @@ public class UserPrefsAccessor extends Prefs
    {
       return bool(
          "handle_errors_in_user_code_only",
-         "Handle errors only when user code present", 
-         "Whether to handle errors only when user code is on the stack.", 
+         _constants.handleErrorsInUserCodeOnlyTitle(), 
+         _constants.handleErrorsInUserCodeOnlyDescription(), 
          true);
    }
 
@@ -1550,8 +1590,8 @@ public class UserPrefsAccessor extends Prefs
    {
       return bool(
          "auto_expand_error_tracebacks",
-         "Auto-expand error tracebacks", 
-         "Whether to automatically expand tracebacks when an error occurs.", 
+         _constants.autoExpandErrorTracebacksTitle(), 
+         _constants.autoExpandErrorTracebacksDescription(), 
          false);
    }
 
@@ -1562,8 +1602,8 @@ public class UserPrefsAccessor extends Prefs
    {
       return bool(
          "check_for_updates",
-         "Check for new version at startup", 
-         "Whether to check for new versions of RStudio when RStudio starts.", 
+         _constants.checkForUpdatesTitle(), 
+         _constants.checkForUpdatesDescription(), 
          true);
    }
 
@@ -1574,8 +1614,8 @@ public class UserPrefsAccessor extends Prefs
    {
       return bool(
          "show_internal_functions",
-         "Show internal functions when debugging", 
-         "Whether to show functions without source references in the Traceback pane while debugging.", 
+         _constants.showInternalFunctionsTitle(), 
+         _constants.showInternalFunctionsDescription(), 
          false);
    }
 
@@ -1586,8 +1626,8 @@ public class UserPrefsAccessor extends Prefs
    {
       return enumeration(
          "shiny_viewer_type",
-         "Run Shiny applications in", 
-         "Where to display Shiny applications when they are run.", 
+         _constants.shinyViewerTypeTitle(), 
+         _constants.shinyViewerTypeDescription(), 
          new String[] {
             SHINY_VIEWER_TYPE_USER,
             SHINY_VIEWER_TYPE_NONE,
@@ -1611,8 +1651,8 @@ public class UserPrefsAccessor extends Prefs
    {
       return bool(
          "shiny_background_jobs",
-         "Run Shiny applications in the background", 
-         "Whether to run Shiny applications as background jobs.", 
+         _constants.shinyBackgroundJobsTitle(), 
+         _constants.shinyBackgroundJobsDescription(), 
          false);
    }
 
@@ -1623,8 +1663,8 @@ public class UserPrefsAccessor extends Prefs
    {
       return enumeration(
          "plumber_viewer_type",
-         "Run Plumber APIs in", 
-         "Where to display Shiny applications when they are run.", 
+         _constants.plumberViewerTypeTitle(), 
+         _constants.plumberViewerTypeDescription(), 
          new String[] {
             PLUMBER_VIEWER_TYPE_USER,
             PLUMBER_VIEWER_TYPE_NONE,
@@ -1648,9 +1688,21 @@ public class UserPrefsAccessor extends Prefs
    {
       return string(
          "document_author",
-         "Document author", 
-         "The default name to use as the document author when creating new documents.", 
+         _constants.documentAuthorTitle(), 
+         _constants.documentAuthorDescription(), 
          "");
+   }
+
+   /**
+    * Use current date when rendering document
+    */
+   public PrefValue<Boolean> rmdAutoDate()
+   {
+      return bool(
+         "rmd_auto_date",
+         _constants.rmdAutoDateTitle(), 
+         _constants.rmdAutoDateDescription(), 
+         false);
    }
 
    /**
@@ -1660,8 +1712,8 @@ public class UserPrefsAccessor extends Prefs
    {
       return string(
          "rmd_preferred_template_path",
-         "Path to preferred R Markdown template", 
-         "The path to the preferred R Markdown template.", 
+         _constants.rmdPreferredTemplatePathTitle(), 
+         _constants.rmdPreferredTemplatePathDescription(), 
          "");
    }
 
@@ -1672,8 +1724,8 @@ public class UserPrefsAccessor extends Prefs
    {
       return enumeration(
          "rmd_viewer_type",
-         "Display R Markdown documents in", 
-         "Where to display R Markdown documents when they have completed rendering.", 
+         _constants.rmdViewerTypeTitle(), 
+         _constants.rmdViewerTypeDescription(), 
          new String[] {
             RMD_VIEWER_TYPE_WINDOW,
             RMD_VIEWER_TYPE_PANE,
@@ -1693,8 +1745,8 @@ public class UserPrefsAccessor extends Prefs
    {
       return bool(
          "show_publish_diagnostics",
-         "Show diagnostic info when publishing", 
-         "Whether to show verbose diagnostic information when publishing content.", 
+         _constants.showPublishDiagnosticsTitle(), 
+         _constants.showPublishDiagnosticsDescription(), 
          false);
    }
 
@@ -1705,8 +1757,8 @@ public class UserPrefsAccessor extends Prefs
    {
       return bool(
          "publish_check_certificates",
-         "Check SSL certificates when publishing", 
-         "Whether to check remote server SSL certificates when publishing content.", 
+         _constants.publishCheckCertificatesTitle(), 
+         _constants.publishCheckCertificatesDescription(), 
          true);
    }
 
@@ -1717,8 +1769,8 @@ public class UserPrefsAccessor extends Prefs
    {
       return bool(
          "use_publish_ca_bundle",
-         "Use custom CA bundle when publishing", 
-         "Whether to use a custom certificate authority (CA) bundle when publishing content.", 
+         _constants.usePublishCaBundleTitle(), 
+         _constants.usePublishCaBundleDescription(), 
          false);
    }
 
@@ -1729,8 +1781,8 @@ public class UserPrefsAccessor extends Prefs
    {
       return string(
          "publish_ca_bundle",
-         "Path to custom CA bundle for publishing", 
-         "The path to the custom certificate authority (CA) bundle to use when publishing content.", 
+         _constants.publishCaBundleTitle(), 
+         _constants.publishCaBundleDescription(), 
          "");
    }
 
@@ -1741,8 +1793,8 @@ public class UserPrefsAccessor extends Prefs
    {
       return bool(
          "rmd_chunk_output_inline",
-         "Show chunk output inline in all documents", 
-         "Whether to show chunk output inline for ordinary R Markdown documents.", 
+         _constants.rmdChunkOutputInlineTitle(), 
+         _constants.rmdChunkOutputInlineDescription(), 
          true);
    }
 
@@ -1753,8 +1805,8 @@ public class UserPrefsAccessor extends Prefs
    {
       return bool(
          "show_doc_outline_rmd",
-         "Open document outline by default", 
-         "Whether to show the document outline by default when opening R Markdown documents.", 
+         _constants.showDocOutlineRmdTitle(), 
+         _constants.showDocOutlineRmdDescription(), 
          false);
    }
 
@@ -1765,8 +1817,8 @@ public class UserPrefsAccessor extends Prefs
    {
       return bool(
          "auto_run_setup_chunk",
-         "Automatically run Setup chunk when needed", 
-         "Whether to automatically run an R Markdown document's Setup chunk before running other chunks.", 
+         _constants.autoRunSetupChunkTitle(), 
+         _constants.autoRunSetupChunkDescription(), 
          true);
    }
 
@@ -1777,8 +1829,8 @@ public class UserPrefsAccessor extends Prefs
    {
       return bool(
          "hide_console_on_chunk_execute",
-         "Hide console when running R Markdown chunks", 
-         "Whether to hide the R console when executing inline R Markdown chunks.", 
+         _constants.hideConsoleOnChunkExecuteTitle(), 
+         _constants.hideConsoleOnChunkExecuteDescription(), 
          true);
    }
 
@@ -1789,14 +1841,19 @@ public class UserPrefsAccessor extends Prefs
    {
       return enumeration(
          "execution_behavior",
-         "Unit of R code execution", 
-         "The unit of R code to execute when the Execute command is invoked.", 
+         _constants.executionBehaviorTitle(), 
+         _constants.executionBehaviorDescription(), 
          new String[] {
             EXECUTION_BEHAVIOR_LINE,
             EXECUTION_BEHAVIOR_STATEMENT,
             EXECUTION_BEHAVIOR_PARAGRAPH
          },
-         "statement");
+         "statement",
+         new String[] {
+            _constants.executionBehaviorEnum_line(),
+            _constants.executionBehaviorEnum_statement(),
+            _constants.executionBehaviorEnum_paragraph()
+         });
    }
 
    public final static String EXECUTION_BEHAVIOR_LINE = "line";
@@ -1810,8 +1867,8 @@ public class UserPrefsAccessor extends Prefs
    {
       return bool(
          "show_terminal_tab",
-         "Show the Terminal tab", 
-         "Whether to show the Terminal tab.", 
+         _constants.showTerminalTabTitle(), 
+         _constants.showTerminalTabDescription(), 
          true);
    }
 
@@ -1822,8 +1879,8 @@ public class UserPrefsAccessor extends Prefs
    {
       return bool(
          "terminal_local_echo",
-         "Use local echo in the Terminal", 
-         "Whether to use local echo in the Terminal.", 
+         _constants.terminalLocalEchoTitle(), 
+         _constants.terminalLocalEchoDescription(), 
          true);
    }
 
@@ -1834,8 +1891,8 @@ public class UserPrefsAccessor extends Prefs
    {
       return bool(
          "terminal_websockets",
-         "Use websockets in the Terminal", 
-         "Whether to use websockets to communicate with the shell in the Terminal tab.", 
+         _constants.terminalWebsocketsTitle(), 
+         _constants.terminalWebsocketsDescription(), 
          true);
    }
 
@@ -1846,8 +1903,8 @@ public class UserPrefsAccessor extends Prefs
    {
       return enumeration(
          "terminal_close_behavior",
-         "Close Terminal pane after shell exit", 
-         "Whether to close the terminal pane after the shell exits.", 
+         _constants.terminalCloseBehaviorTitle(), 
+         _constants.terminalCloseBehaviorDescription(), 
          new String[] {
             TERMINAL_CLOSE_BEHAVIOR_ALWAYS,
             TERMINAL_CLOSE_BEHAVIOR_CLEAN,
@@ -1867,8 +1924,8 @@ public class UserPrefsAccessor extends Prefs
    {
       return bool(
          "terminal_track_environment",
-         "Save and restore system environment in Terminal tab", 
-         "Whether to track and save changes to system environment variables in the Terminal.", 
+         _constants.terminalTrackEnvironmentTitle(), 
+         _constants.terminalTrackEnvironmentDescription(), 
          true);
    }
 
@@ -1879,8 +1936,8 @@ public class UserPrefsAccessor extends Prefs
    {
       return enumeration(
          "terminal_bell_style",
-         "Terminal bell style", 
-         "Terminal bell style", 
+         _constants.terminalBellStyleTitle(), 
+         _constants.terminalBellStyleDescription(), 
          new String[] {
             TERMINAL_BELL_STYLE_NONE,
             TERMINAL_BELL_STYLE_SOUND
@@ -1898,8 +1955,8 @@ public class UserPrefsAccessor extends Prefs
    {
       return enumeration(
          "terminal_renderer",
-         "Terminal tab rendering engine", 
-         "Terminal rendering engine: canvas is faster, dom may be needed for some browsers or graphics cards", 
+         _constants.terminalRendererTitle(), 
+         _constants.terminalRendererDescription(), 
          new String[] {
             TERMINAL_RENDERER_CANVAS,
             TERMINAL_RENDERER_DOM
@@ -1917,8 +1974,8 @@ public class UserPrefsAccessor extends Prefs
    {
       return bool(
          "terminal_weblinks",
-         "Make links in Terminal clickable", 
-         "Whether web links displayed in the Terminal tab are made clickable.", 
+         _constants.terminalWeblinksTitle(), 
+         _constants.terminalWeblinksDescription(), 
          true);
    }
 
@@ -1929,8 +1986,8 @@ public class UserPrefsAccessor extends Prefs
    {
       return bool(
          "show_rmd_render_command",
-         "Show R Markdown render command", 
-         "Whether to print the render command use to knit R Markdown documents in the R Markdown tab.", 
+         _constants.showRmdRenderCommandTitle(), 
+         _constants.showRmdRenderCommandDescription(), 
          false);
    }
 
@@ -1941,8 +1998,8 @@ public class UserPrefsAccessor extends Prefs
    {
       return bool(
          "enable_text_drag",
-         "Enable dragging text in code editor", 
-         "Whether to enable moving text on the editing surface by clicking and dragging it.", 
+         _constants.enableTextDragTitle(), 
+         _constants.enableTextDragDescription(), 
          true);
    }
 
@@ -1953,8 +2010,8 @@ public class UserPrefsAccessor extends Prefs
    {
       return bool(
          "show_hidden_files",
-         "Show hidden files in Files pane", 
-         "Whether to show hidden files in the Files pane.", 
+         _constants.showHiddenFilesTitle(), 
+         _constants.showHiddenFilesDescription(), 
          false);
    }
 
@@ -1965,8 +2022,8 @@ public class UserPrefsAccessor extends Prefs
    {
       return object(
          "always_shown_files",
-         "Files always shown in the Files Pane", 
-         "List of file names (case sensitive) that are always shown in the Files Pane, regardless of whether hidden files are shown", 
+         _constants.alwaysShownFilesTitle(), 
+         _constants.alwaysShownFilesDescription(), 
          JsArrayUtil.createStringArray(".build.yml", ".gitlab-ci.yml", ".travis.yml"));
    }
 
@@ -1977,9 +2034,9 @@ public class UserPrefsAccessor extends Prefs
    {
       return object(
          "always_shown_extensions",
-         "Extensions always shown in the Files Pane", 
-         "List of file extensions (beginning with ., not case sensitive) that are always shown in the Files Pane, regardless of whether hidden files are shown", 
-         JsArrayUtil.createStringArray(".circleci", ".gitattributes", ".github", ".gitignore", ".httr-oauth", ".r", ".rbuildignore", ".rdata", ".renvignore", ".renviron", ".rhistory", ".rprofile", ".ruserdata"));
+         _constants.alwaysShownExtensionsTitle(), 
+         _constants.alwaysShownExtensionsDescription(), 
+         JsArrayUtil.createStringArray(".circleci", ".gitattributes", ".github", ".gitignore", ".httr-oauth", ".lintr", ".r", ".rbuildignore", ".rdata", ".renvignore", ".renviron", ".rhistory", ".rprofile", ".ruserdata"));
    }
 
    /**
@@ -1989,9 +2046,21 @@ public class UserPrefsAccessor extends Prefs
    {
       return bool(
          "sort_file_names_naturally",
-         "Sort file names naturally in Files pane", 
-         "Whether to sort file names naturally, so that e.g., file10.R comes after file9.R", 
+         _constants.sortFileNamesNaturallyTitle(), 
+         _constants.sortFileNamesNaturallyDescription(), 
          true);
+   }
+
+   /**
+    * Whether to change the directory in the Files pane automatically when the working directory in R changes.
+    */
+   public PrefValue<Boolean> syncFilesPaneWorkingDir()
+   {
+      return bool(
+         "sync_files_pane_working_dir",
+         _constants.syncFilesPaneWorkingDirTitle(), 
+         _constants.syncFilesPaneWorkingDirDescription(), 
+         false);
    }
 
    /**
@@ -2001,8 +2070,8 @@ public class UserPrefsAccessor extends Prefs
    {
       return enumeration(
          "jobs_tab_visibility",
-         "Jobs tab visibility", 
-         "The visibility of the Jobs tab.", 
+         _constants.jobsTabVisibilityTitle(), 
+         _constants.jobsTabVisibilityDescription(), 
          new String[] {
             JOBS_TAB_VISIBILITY_CLOSED,
             JOBS_TAB_VISIBILITY_SHOWN,
@@ -2016,26 +2085,26 @@ public class UserPrefsAccessor extends Prefs
    public final static String JOBS_TAB_VISIBILITY_DEFAULT = "default";
 
    /**
-    * Whether to show the Launcher jobs tab in RStudio Pro and RStudio Workbench.
+    * Whether to show the Workbench Jobs tab in RStudio Pro and RStudio Workbench.
     */
    public PrefValue<Boolean> showLauncherJobsTab()
    {
       return bool(
          "show_launcher_jobs_tab",
-         "", 
-         "Whether to show the Launcher jobs tab in RStudio Pro and RStudio Workbench.", 
+         _constants.showLauncherJobsTabTitle(), 
+         _constants.showLauncherJobsTabDescription(), 
          true);
    }
 
    /**
-    * How to sort jobs in the Launcher tab in RStudio Pro and RStudio Workbench.
+    * How to sort jobs in the Workbench Jobs tab in RStudio Pro and RStudio Workbench.
     */
    public PrefValue<String> launcherJobsSort()
    {
       return enumeration(
          "launcher_jobs_sort",
-         "", 
-         "How to sort jobs in the Launcher tab in RStudio Pro and RStudio Workbench.", 
+         _constants.launcherJobsSortTitle(), 
+         _constants.launcherJobsSortDescription(), 
          new String[] {
             LAUNCHER_JOBS_SORT_RECORDED,
             LAUNCHER_JOBS_SORT_STATE
@@ -2053,29 +2122,29 @@ public class UserPrefsAccessor extends Prefs
    {
       return enumeration(
          "busy_detection",
-         "", 
-         "How to detect busy status in the Terminal.", 
+         _constants.busyDetectionTitle(), 
+         _constants.busyDetectionDescription(), 
          new String[] {
             BUSY_DETECTION_ALWAYS,
             BUSY_DETECTION_NEVER,
-            BUSY_DETECTION_WHITELIST
+            BUSY_DETECTION_LIST
          },
          "always");
    }
 
    public final static String BUSY_DETECTION_ALWAYS = "always";
    public final static String BUSY_DETECTION_NEVER = "never";
-   public final static String BUSY_DETECTION_WHITELIST = "whitelist";
+   public final static String BUSY_DETECTION_LIST = "list";
 
    /**
-    * A whitelist of apps that should not be considered busy in the Terminal.
+    * A list of apps that should not be considered busy in the Terminal.
     */
-   public PrefValue<JsArrayString> busyWhitelist()
+   public PrefValue<JsArrayString> busyExclusionList()
    {
       return object(
-         "busy_whitelist",
-         "", 
-         "A whitelist of apps that should not be considered busy in the Terminal.", 
+         "busy_exclusion_list",
+         _constants.busyExclusionListTitle(), 
+         _constants.busyExclusionListDescription(), 
          JsArrayUtil.createStringArray("tmux", "screen"));
    }
 
@@ -2086,8 +2155,8 @@ public class UserPrefsAccessor extends Prefs
    {
       return enumeration(
          "knit_working_dir",
-         "Working directory for knitting", 
-         "The working directory to use when knitting R Markdown documents.", 
+         _constants.knitWorkingDirTitle(), 
+         _constants.knitWorkingDirDescription(), 
          new String[] {
             KNIT_WORKING_DIR_DEFAULT,
             KNIT_WORKING_DIR_CURRENT,
@@ -2107,8 +2176,8 @@ public class UserPrefsAccessor extends Prefs
    {
       return enumeration(
          "doc_outline_show",
-         "Show in Document Outline", 
-         "Which objects to show in the document outline pane.", 
+         _constants.docOutlineShowTitle(), 
+         _constants.docOutlineShowDescription(), 
          new String[] {
             DOC_OUTLINE_SHOW_SECTIONS_ONLY,
             DOC_OUTLINE_SHOW_SECTIONS_AND_CHUNKS,
@@ -2128,8 +2197,8 @@ public class UserPrefsAccessor extends Prefs
    {
       return enumeration(
          "latex_preview_on_cursor_idle",
-         "Preview LaTeX equations on idle", 
-         "When to preview LaTeX mathematical equations when cursor has not moved recently.", 
+         _constants.latexPreviewOnCursorIdleTitle(), 
+         _constants.latexPreviewOnCursorIdleDescription(), 
          new String[] {
             LATEX_PREVIEW_ON_CURSOR_IDLE_NEVER,
             LATEX_PREVIEW_ON_CURSOR_IDLE_INLINE_ONLY,
@@ -2149,8 +2218,8 @@ public class UserPrefsAccessor extends Prefs
    {
       return bool(
          "wrap_tab_navigation",
-         "Wrap around when going to previous/next tab", 
-         "Whether to wrap around when going to the previous or next editor tab.", 
+         _constants.wrapTabNavigationTitle(), 
+         _constants.wrapTabNavigationDescription(), 
          true);
    }
 
@@ -2161,17 +2230,15 @@ public class UserPrefsAccessor extends Prefs
    {
       return enumeration(
          "global_theme",
-         "Global theme", 
-         "The theme to use for the main RStudio user interface.", 
+         _constants.globalThemeTitle(), 
+         _constants.globalThemeDescription(), 
          new String[] {
-            GLOBAL_THEME_CLASSIC,
             GLOBAL_THEME_DEFAULT,
             GLOBAL_THEME_ALTERNATE
          },
          "default");
    }
 
-   public final static String GLOBAL_THEME_CLASSIC = "classic";
    public final static String GLOBAL_THEME_DEFAULT = "default";
    public final static String GLOBAL_THEME_ALTERNATE = "alternate";
 
@@ -2182,8 +2249,8 @@ public class UserPrefsAccessor extends Prefs
    {
       return bool(
          "git_diff_ignore_whitespace",
-         "Ignore whitespace in VCS diffs", 
-         "Whether to ignore whitespace when generating diffs of version controlled files.", 
+         _constants.gitDiffIgnoreWhitespaceTitle(), 
+         _constants.gitDiffIgnoreWhitespaceDescription(), 
          false);
    }
 
@@ -2194,9 +2261,33 @@ public class UserPrefsAccessor extends Prefs
    {
       return bool(
          "console_double_click_select",
-         "Double click to select in the Console", 
-         "Whether double-clicking should select a word in the Console pane.", 
+         _constants.consoleDoubleClickSelectTitle(), 
+         _constants.consoleDoubleClickSelectDescription(), 
          false);
+   }
+
+   /**
+    * Whether the 'Auto Suspension Blocked' icon should appear in the R Console toolbar.
+    */
+   public PrefValue<Boolean> consoleSuspendBlockedNotice()
+   {
+      return bool(
+         "console_suspend_blocked_notice",
+         _constants.consoleSuspendBlockedNoticeTitle(), 
+         _constants.consoleSuspendBlockedNoticeDescription(), 
+         true);
+   }
+
+   /**
+    * How long to wait before warning that automatic session suspension has been paused. Higher values for less frequent notices.
+    */
+   public PrefValue<Integer> consoleSuspendBlockedNoticeDelay()
+   {
+      return integer(
+         "console_suspend_blocked_notice_delay",
+         _constants.consoleSuspendBlockedNoticeDelayTitle(), 
+         _constants.consoleSuspendBlockedNoticeDelayDescription(), 
+         5);
    }
 
    /**
@@ -2206,8 +2297,20 @@ public class UserPrefsAccessor extends Prefs
    {
       return bool(
          "new_proj_git_init",
-         "Create a Git repo in new projects", 
-         "Whether a git repo should be initialized inside new projects by default.", 
+         _constants.newProjGitInitTitle(), 
+         _constants.newProjGitInitDescription(), 
+         false);
+   }
+
+   /**
+    * Whether an renv environment should be created inside new projects by default.
+    */
+   public PrefValue<Boolean> newProjUseRenv()
+   {
+      return bool(
+         "new_proj_use_renv",
+         _constants.newProjUseRenvTitle(), 
+         _constants.newProjUseRenvDescription(), 
          false);
    }
 
@@ -2218,8 +2321,8 @@ public class UserPrefsAccessor extends Prefs
    {
       return string(
          "root_document",
-         "Root document for PDF compilation", 
-         "The root document to use when compiling PDF documents.", 
+         _constants.rootDocumentTitle(), 
+         _constants.rootDocumentDescription(), 
          "");
    }
 
@@ -2230,8 +2333,8 @@ public class UserPrefsAccessor extends Prefs
    {
       return enumeration(
          "show_user_home_page",
-         "Show user home page in RStudio Workbench", 
-         "When to show the server home page in RStudio Workbench.", 
+         _constants.showUserHomePageTitle(), 
+         _constants.showUserHomePageDescription(), 
          new String[] {
             SHOW_USER_HOME_PAGE_ALWAYS,
             SHOW_USER_HOME_PAGE_NEVER,
@@ -2251,8 +2354,8 @@ public class UserPrefsAccessor extends Prefs
    {
       return bool(
          "reuse_sessions_for_project_links",
-         "", 
-         "Whether to reuse sessions when opening projects in RStudio Workbench.", 
+         _constants.reuseSessionsForProjectLinksTitle(), 
+         _constants.reuseSessionsForProjectLinksDescription(), 
          false);
    }
 
@@ -2263,8 +2366,8 @@ public class UserPrefsAccessor extends Prefs
    {
       return bool(
          "vcs_enabled",
-         "Enable version control if available", 
-         "Whether to enable RStudio's version control system interface.", 
+         _constants.vcsEnabledTitle(), 
+         _constants.vcsEnabledDescription(), 
          true);
    }
 
@@ -2275,8 +2378,8 @@ public class UserPrefsAccessor extends Prefs
    {
       return bool(
          "vcs_autorefresh",
-         "Auto-refresh state from version control", 
-         "Automatically refresh VCS status?", 
+         _constants.vcsAutorefreshTitle(), 
+         _constants.vcsAutorefreshDescription(), 
          true);
    }
 
@@ -2287,8 +2390,8 @@ public class UserPrefsAccessor extends Prefs
    {
       return string(
          "git_exe_path",
-         "Path to Git executable", 
-         "The path to the Git executable to use.", 
+         _constants.gitExePathTitle(), 
+         _constants.gitExePathDescription(), 
          "");
    }
 
@@ -2299,8 +2402,8 @@ public class UserPrefsAccessor extends Prefs
    {
       return string(
          "svn_exe_path",
-         "Path to Subversion executable", 
-         "The path to the Subversion executable to use.", 
+         _constants.svnExePathTitle(), 
+         _constants.svnExePathDescription(), 
          "");
    }
 
@@ -2311,22 +2414,45 @@ public class UserPrefsAccessor extends Prefs
    {
       return string(
          "terminal_path",
-         "", 
-         "The path to the terminal executable to use.", 
+         _constants.terminalPathTitle(), 
+         _constants.terminalPathDescription(), 
          "");
    }
 
    /**
-    * The path to the RSA key file to use.
+    * The path to the SSH key file to use.
     */
    public PrefValue<String> rsaKeyPath()
    {
       return string(
          "rsa_key_path",
-         "", 
-         "The path to the RSA key file to use.", 
+         _constants.rsaKeyPathTitle(), 
+         _constants.rsaKeyPathDescription(), 
          "");
    }
+
+   /**
+    * The encryption type to use for the SSH key file.
+    */
+   public PrefValue<String> sshKeyType()
+   {
+      return enumeration(
+         "ssh_key_type",
+         _constants.sshKeyTypeTitle(), 
+         _constants.sshKeyTypeDescription(), 
+         new String[] {
+            SSH_KEY_TYPE_ED25519,
+            SSH_KEY_TYPE_RSA
+         },
+         "ed25519",
+         new String[] {
+            _constants.sshKeyTypeEnum_ed25519(),
+            _constants.sshKeyTypeEnum_rsa()
+         });
+   }
+
+   public final static String SSH_KEY_TYPE_ED25519 = "ed25519";
+   public final static String SSH_KEY_TYPE_RSA = "rsa";
 
    /**
     * Whether to use the devtools R package.
@@ -2335,8 +2461,20 @@ public class UserPrefsAccessor extends Prefs
    {
       return bool(
          "use_devtools",
-         "Use the devtools R package if available", 
-         "Whether to use the devtools R package.", 
+         _constants.useDevtoolsTitle(), 
+         _constants.useDevtoolsDescription(), 
+         true);
+   }
+
+   /**
+    * Always use --preclean when installing package.
+    */
+   public PrefValue<Boolean> cleanBeforeInstall()
+   {
+      return bool(
+         "clean_before_install",
+         _constants.cleanBeforeInstallTitle(), 
+         _constants.cleanBeforeInstallDescription(), 
          true);
    }
 
@@ -2347,8 +2485,8 @@ public class UserPrefsAccessor extends Prefs
    {
       return bool(
          "use_internet2",
-         "", 
-         "Whether to use Internet2 for networking on R for Windows.", 
+         _constants.useInternet2Title(), 
+         _constants.useInternet2Description(), 
          true);
    }
 
@@ -2359,8 +2497,8 @@ public class UserPrefsAccessor extends Prefs
    {
       return bool(
          "use_secure_download",
-         "Download R packages securely", 
-         "Whether to use secure downloads when fetching R packages.", 
+         _constants.useSecureDownloadTitle(), 
+         _constants.useSecureDownloadDescription(), 
          true);
    }
 
@@ -2371,8 +2509,8 @@ public class UserPrefsAccessor extends Prefs
    {
       return bool(
          "cleanup_after_r_cmd_check",
-         "Clean up temporary files after R CMD CHECK", 
-         "Whether to clean up temporary files after running R CMD CHECK.", 
+         _constants.cleanupAfterRCmdCheckTitle(), 
+         _constants.cleanupAfterRCmdCheckDescription(), 
          true);
    }
 
@@ -2383,8 +2521,8 @@ public class UserPrefsAccessor extends Prefs
    {
       return bool(
          "view_dir_after_r_cmd_check",
-         "View directory after R CMD CHECK", 
-         "Whether to view the directory after running R CMD CHECK.", 
+         _constants.viewDirAfterRCmdCheckTitle(), 
+         _constants.viewDirAfterRCmdCheckDescription(), 
          false);
    }
 
@@ -2395,8 +2533,8 @@ public class UserPrefsAccessor extends Prefs
    {
       return bool(
          "hide_object_files",
-         "Hide object files in the Files pane", 
-         "Whether to hide object files in the Files pane.", 
+         _constants.hideObjectFilesTitle(), 
+         _constants.hideObjectFilesDescription(), 
          true);
    }
 
@@ -2407,8 +2545,8 @@ public class UserPrefsAccessor extends Prefs
    {
       return bool(
          "restore_last_project",
-         "Restore last project when starting RStudio", 
-         "Whether to restore the last project when starting RStudio.", 
+         _constants.restoreLastProjectTitle(), 
+         _constants.restoreLastProjectDescription(), 
          true);
    }
 
@@ -2419,8 +2557,8 @@ public class UserPrefsAccessor extends Prefs
    {
       return integer(
          "project_safe_startup_seconds",
-         "Number of seconds for safe project startup", 
-         "The number of seconds after which a project is deemed to have successfully started.", 
+         _constants.projectSafeStartupSecondsTitle(), 
+         _constants.projectSafeStartupSecondsDescription(), 
          30);
    }
 
@@ -2431,8 +2569,8 @@ public class UserPrefsAccessor extends Prefs
    {
       return bool(
          "use_tinytex",
-         "Use tinytex to compile .tex files", 
-         "Use tinytex to compile .tex files.", 
+         _constants.useTinytexTitle(), 
+         _constants.useTinytexDescription(), 
          false);
    }
 
@@ -2443,8 +2581,8 @@ public class UserPrefsAccessor extends Prefs
    {
       return bool(
          "clean_texi2dvi_output",
-         "Clean output after running Texi2Dvi", 
-         "Whether to clean output after running Texi2Dvi.", 
+         _constants.cleanTexi2dviOutputTitle(), 
+         _constants.cleanTexi2dviOutputDescription(), 
          true);
    }
 
@@ -2455,8 +2593,8 @@ public class UserPrefsAccessor extends Prefs
    {
       return bool(
          "latex_shell_escape",
-         "Shell escape LaTeX documents", 
-         "Whether to enable shell escaping with LaTeX documents.", 
+         _constants.latexShellEscapeTitle(), 
+         _constants.latexShellEscapeDescription(), 
          false);
    }
 
@@ -2467,8 +2605,8 @@ public class UserPrefsAccessor extends Prefs
    {
       return bool(
          "restore_project_r_version",
-         "Restore project R version in RStudio Pro and RStudio Workbench", 
-         "Whether to restore the last version of R used by the project in RStudio Pro and RStudio Workbench.", 
+         _constants.restoreProjectRVersionTitle(), 
+         _constants.restoreProjectRVersionDescription(), 
          true);
    }
 
@@ -2479,8 +2617,8 @@ public class UserPrefsAccessor extends Prefs
    {
       return integer(
          "clang_verbose",
-         "Clang verbosity level (0 - 2)", 
-         "The verbosity level to use with Clang (0 - 2)", 
+         _constants.clangVerboseTitle(), 
+         _constants.clangVerboseDescription(), 
          0);
    }
 
@@ -2491,8 +2629,8 @@ public class UserPrefsAccessor extends Prefs
    {
       return bool(
          "submit_crash_reports",
-         "Submit crash reports to RStudio", 
-         "Whether to automatically submit crash reports to RStudio.", 
+         _constants.submitCrashReportsTitle(), 
+         _constants.submitCrashReportsDescription(), 
          true);
    }
 
@@ -2503,8 +2641,8 @@ public class UserPrefsAccessor extends Prefs
    {
       return object(
          "default_r_version",
-         "", 
-         "The R version to use by default.", 
+         _constants.defaultRVersionTitle(), 
+         _constants.defaultRVersionDescription(), 
          null);
    }
 
@@ -2524,6 +2662,10 @@ public class UserPrefsAccessor extends Prefs
          return this && this.label || "";
       }-*/;
 
+      public final native String getModule() /*-{
+         return this && this.module || "";
+      }-*/;
+
    }
 
    /**
@@ -2533,8 +2675,20 @@ public class UserPrefsAccessor extends Prefs
    {
       return integer(
          "data_viewer_max_columns",
-         "Maximum number of columns in data viewer", 
-         "The maximum number of columns to show at once in the data viewer.", 
+         _constants.dataViewerMaxColumnsTitle(), 
+         _constants.dataViewerMaxColumnsDescription(), 
+         50);
+   }
+
+   /**
+    * The maximum number of characters to show in a data viewer cell.
+    */
+   public PrefValue<Integer> dataViewerMaxCellSize()
+   {
+      return integer(
+         "data_viewer_max_cell_size",
+         _constants.dataViewerMaxCellSizeTitle(), 
+         _constants.dataViewerMaxCellSizeDescription(), 
          50);
    }
 
@@ -2545,8 +2699,8 @@ public class UserPrefsAccessor extends Prefs
    {
       return bool(
          "enable_screen_reader",
-         "Enable support for screen readers in RStudio Server", 
-         "Support accessibility aids such as screen readers (RStudio Server).", 
+         _constants.enableScreenReaderTitle(), 
+         _constants.enableScreenReaderDescription(), 
          false);
    }
 
@@ -2557,8 +2711,8 @@ public class UserPrefsAccessor extends Prefs
    {
       return integer(
          "typing_status_delay_ms",
-         "Seconds to wait before updating ARIA live region", 
-         "Number of milliseconds to wait after last keystroke before updating live region.", 
+         _constants.typingStatusDelayMsTitle(), 
+         _constants.typingStatusDelayMsDescription(), 
          2000);
    }
 
@@ -2569,8 +2723,8 @@ public class UserPrefsAccessor extends Prefs
    {
       return bool(
          "reduced_motion",
-         "Reduced animation/motion mode", 
-         "Reduce use of animations in the user interface.", 
+         _constants.reducedMotionTitle(), 
+         _constants.reducedMotionDescription(), 
          false);
    }
 
@@ -2581,8 +2735,8 @@ public class UserPrefsAccessor extends Prefs
    {
       return bool(
          "tab_key_move_focus",
-         "Tab key always moves focus", 
-         "Tab key moves focus out of text editing controls instead of inserting tabs.", 
+         _constants.tabKeyMoveFocusTitle(), 
+         _constants.tabKeyMoveFocusDescription(), 
          false);
    }
 
@@ -2593,8 +2747,8 @@ public class UserPrefsAccessor extends Prefs
    {
       return bool(
          "find_panel_legacy_tab_sequence",
-         "Tab key moves focus directly from find text to replace text in find panel", 
-         "In source editor find panel, tab key moves focus directly from find text to replace text.", 
+         _constants.findPanelLegacyTabSequenceTitle(), 
+         _constants.findPanelLegacyTabSequenceDescription(), 
          false);
    }
 
@@ -2605,8 +2759,8 @@ public class UserPrefsAccessor extends Prefs
    {
       return bool(
          "show_focus_rectangles",
-         "Always show focus outlines", 
-         "Control with keyboard focus displays a visual focus indicator.", 
+         _constants.showFocusRectanglesTitle(), 
+         _constants.showFocusRectanglesDescription(), 
          true);
    }
 
@@ -2617,8 +2771,8 @@ public class UserPrefsAccessor extends Prefs
    {
       return bool(
          "show_panel_focus_rectangle",
-         "Show focus outline around focused panel", 
-         "Show which panel contains keyboard focus.", 
+         _constants.showPanelFocusRectangleTitle(), 
+         _constants.showPanelFocusRectangleDescription(), 
          false);
    }
 
@@ -2629,14 +2783,19 @@ public class UserPrefsAccessor extends Prefs
    {
       return enumeration(
          "auto_save_on_idle",
-         "Autosave mode on idle", 
-         "How to deal with changes to documents on idle.", 
+         _constants.autoSaveOnIdleTitle(), 
+         _constants.autoSaveOnIdleDescription(), 
          new String[] {
             AUTO_SAVE_ON_IDLE_COMMIT,
             AUTO_SAVE_ON_IDLE_BACKUP,
             AUTO_SAVE_ON_IDLE_NONE
          },
-         "backup");
+         "backup",
+         new String[] {
+            _constants.autoSaveOnIdleEnum_commit(),
+            _constants.autoSaveOnIdleEnum_backup(),
+            _constants.autoSaveOnIdleEnum_none()
+         });
    }
 
    public final static String AUTO_SAVE_ON_IDLE_COMMIT = "commit";
@@ -2650,8 +2809,8 @@ public class UserPrefsAccessor extends Prefs
    {
       return integer(
          "auto_save_idle_ms",
-         "Idle period for document autosave (ms)", 
-         "The idle period, in milliseconds, after which documents should be auto-saved.", 
+         _constants.autoSaveIdleMsTitle(), 
+         _constants.autoSaveIdleMsDescription(), 
          1000);
    }
 
@@ -2662,8 +2821,8 @@ public class UserPrefsAccessor extends Prefs
    {
       return bool(
          "auto_save_on_blur",
-         "Save documents when editor loses input focus", 
-         "Whether to automatically save when the editor loses focus.", 
+         _constants.autoSaveOnBlurTitle(), 
+         _constants.autoSaveOnBlurDescription(), 
          false);
    }
 
@@ -2674,8 +2833,8 @@ public class UserPrefsAccessor extends Prefs
    {
       return enumeration(
          "terminal_initial_directory",
-         "Initial working directory for new terminals", 
-         "Initial directory for new terminals.", 
+         _constants.terminalInitialDirectoryTitle(), 
+         _constants.terminalInitialDirectoryDescription(), 
          new String[] {
             TERMINAL_INITIAL_DIRECTORY_PROJECT,
             TERMINAL_INITIAL_DIRECTORY_CURRENT,
@@ -2695,8 +2854,8 @@ public class UserPrefsAccessor extends Prefs
    {
       return bool(
          "full_project_path_in_window_title",
-         "Show full path to project in RStudio Desktop windows", 
-         "Whether to show the full path to project in desktop window title.", 
+         _constants.fullProjectPathInWindowTitleTitle(), 
+         _constants.fullProjectPathInWindowTitleDescription(), 
          false);
    }
 
@@ -2707,8 +2866,8 @@ public class UserPrefsAccessor extends Prefs
    {
       return bool(
          "visual_markdown_editing_is_default",
-         "Use visual editing by default for new markdown documents", 
-         "Whether to enable visual editing by default for new markdown documents", 
+         _constants.visualMarkdownEditingIsDefaultTitle(), 
+         _constants.visualMarkdownEditingIsDefaultDescription(), 
          false);
    }
 
@@ -2719,8 +2878,8 @@ public class UserPrefsAccessor extends Prefs
    {
       return enumeration(
          "visual_markdown_editing_list_spacing",
-         "Default list spacing in visual markdown editing mode", 
-         "Default spacing for lists created in the visual editor", 
+         _constants.visualMarkdownEditingListSpacingTitle(), 
+         _constants.visualMarkdownEditingListSpacingDescription(), 
          new String[] {
             VISUAL_MARKDOWN_EDITING_LIST_SPACING_TIGHT,
             VISUAL_MARKDOWN_EDITING_LIST_SPACING_SPACED
@@ -2738,8 +2897,8 @@ public class UserPrefsAccessor extends Prefs
    {
       return enumeration(
          "visual_markdown_editing_wrap",
-         "Wrap text in visual markdown editing mode", 
-         "Whether to automatically wrap text when writing markdown", 
+         _constants.visualMarkdownEditingWrapTitle(), 
+         _constants.visualMarkdownEditingWrapDescription(), 
          new String[] {
             VISUAL_MARKDOWN_EDITING_WRAP_NONE,
             VISUAL_MARKDOWN_EDITING_WRAP_COLUMN,
@@ -2759,8 +2918,8 @@ public class UserPrefsAccessor extends Prefs
    {
       return integer(
          "visual_markdown_editing_wrap_at_column",
-         "Wrap column for visual markdown editing mode", 
-         "The column to wrap text at when writing markdown", 
+         _constants.visualMarkdownEditingWrapAtColumnTitle(), 
+         _constants.visualMarkdownEditingWrapAtColumnDescription(), 
          72);
    }
 
@@ -2771,8 +2930,8 @@ public class UserPrefsAccessor extends Prefs
    {
       return enumeration(
          "visual_markdown_editing_references_location",
-         "Place visual markdown footnotes in", 
-         "Placement of footnotes within markdown output.", 
+         _constants.visualMarkdownEditingReferencesLocationTitle(), 
+         _constants.visualMarkdownEditingReferencesLocationDescription(), 
          new String[] {
             VISUAL_MARKDOWN_EDITING_REFERENCES_LOCATION_BLOCK,
             VISUAL_MARKDOWN_EDITING_REFERENCES_LOCATION_SECTION,
@@ -2792,8 +2951,8 @@ public class UserPrefsAccessor extends Prefs
    {
       return bool(
          "visual_markdown_editing_canonical",
-         "Write canonical visual mode markdown in source mode", 
-         "Whether to write canonical visual mode markdown when saving from source mode.", 
+         _constants.visualMarkdownEditingCanonicalTitle(), 
+         _constants.visualMarkdownEditingCanonicalDescription(), 
          false);
    }
 
@@ -2804,8 +2963,8 @@ public class UserPrefsAccessor extends Prefs
    {
       return integer(
          "visual_markdown_editing_max_content_width",
-         "Max content width for visual markdown editor (px)", 
-         "Maximum content width for visual editing mode, in pixels", 
+         _constants.visualMarkdownEditingMaxContentWidthTitle(), 
+         _constants.visualMarkdownEditingMaxContentWidthDescription(), 
          700);
    }
 
@@ -2816,8 +2975,8 @@ public class UserPrefsAccessor extends Prefs
    {
       return bool(
          "visual_markdown_editing_show_doc_outline",
-         "Show document outline in visual markdown editing mode", 
-         "Whether to show the document outline by default when opening R Markdown documents in visual mode.", 
+         _constants.visualMarkdownEditingShowDocOutlineTitle(), 
+         _constants.visualMarkdownEditingShowDocOutlineDescription(), 
          true);
    }
 
@@ -2828,8 +2987,20 @@ public class UserPrefsAccessor extends Prefs
    {
       return bool(
          "visual_markdown_editing_show_margin",
-         "Show margin in visual mode code blocks", 
-         "Whether to show the margin guide in the visual mode code blocks.", 
+         _constants.visualMarkdownEditingShowMarginTitle(), 
+         _constants.visualMarkdownEditingShowMarginDescription(), 
+         false);
+   }
+
+   /**
+    * Whether to show line numbers in the code editors used in visual mode
+    */
+   public PrefValue<Boolean> visualMarkdownCodeEditorLineNumbers()
+   {
+      return bool(
+         "visual_markdown_code_editor_line_numbers",
+         _constants.visualMarkdownCodeEditorLineNumbersTitle(), 
+         _constants.visualMarkdownCodeEditorLineNumbersDescription(), 
          false);
    }
 
@@ -2840,8 +3011,8 @@ public class UserPrefsAccessor extends Prefs
    {
       return integer(
          "visual_markdown_editing_font_size_points",
-         "Font size for visual editing mode", 
-         "The default visual editing mode font size, in points", 
+         _constants.visualMarkdownEditingFontSizePointsTitle(), 
+         _constants.visualMarkdownEditingFontSizePointsDescription(), 
          0);
    }
 
@@ -2852,8 +3023,8 @@ public class UserPrefsAccessor extends Prefs
    {
       return enumeration(
          "visual_markdown_code_editor",
-         "Editor for code chunks in visual editing mode", 
-         "The name of the editor to use to provide code editing in visual mode", 
+         _constants.visualMarkdownCodeEditorTitle(), 
+         _constants.visualMarkdownCodeEditorDescription(), 
          new String[] {
             VISUAL_MARKDOWN_CODE_EDITOR_ACE,
             VISUAL_MARKDOWN_CODE_EDITOR_CODEMIRROR
@@ -2871,8 +3042,8 @@ public class UserPrefsAccessor extends Prefs
    {
       return object(
          "zotero_libraries",
-         "Zotero libraries", 
-         "Zotero libraries to insert citations from.", 
+         _constants.zoteroLibrariesTitle(), 
+         _constants.zoteroLibrariesDescription(), 
          JsArrayUtil.createStringArray("My Library"));
    }
 
@@ -2883,8 +3054,8 @@ public class UserPrefsAccessor extends Prefs
    {
       return enumeration(
          "emoji_skintone",
-         "", 
-         "Preferred emoji skintone", 
+         _constants.emojiSkintoneTitle(), 
+         _constants.emojiSkintoneDescription(), 
          new String[] {
             EMOJI_SKINTONE__NONE_,
             EMOJI_SKINTONE__DEFAULT_,
@@ -2912,8 +3083,8 @@ public class UserPrefsAccessor extends Prefs
    {
       return object(
          "disabled_aria_live_announcements",
-         "Disabled aria-live announcements", 
-         "List of aria-live announcements to disable.", 
+         _constants.disabledAriaLiveAnnouncementsTitle(), 
+         _constants.disabledAriaLiveAnnouncementsDescription(), 
          JsArrayUtil.createStringArray());
    }
 
@@ -2924,8 +3095,8 @@ public class UserPrefsAccessor extends Prefs
    {
       return integer(
          "screenreader_console_announce_limit",
-         "Maximum number of console lines to announce", 
-         "Maximum number of lines of console output announced after a command.", 
+         _constants.screenreaderConsoleAnnounceLimitTitle(), 
+         _constants.screenreaderConsoleAnnounceLimitDescription(), 
          25);
    }
 
@@ -2936,8 +3107,8 @@ public class UserPrefsAccessor extends Prefs
    {
       return object(
          "file_monitor_ignored_components",
-         "List of path components ignored by file monitor", 
-         "List of path components; file monitor will ignore paths containing one or more of these components.", 
+         _constants.fileMonitorIgnoredComponentsTitle(), 
+         _constants.fileMonitorIgnoredComponentsDescription(), 
          JsArrayUtil.createStringArray());
    }
 
@@ -2948,8 +3119,8 @@ public class UserPrefsAccessor extends Prefs
    {
       return bool(
          "install_pkg_deps_individually",
-         "Install R package dependencies one at a time", 
-         "Whether to install R package dependencies one at a time.", 
+         _constants.installPkgDepsIndividuallyTitle(), 
+         _constants.installPkgDepsIndividuallyDescription(), 
          true);
    }
 
@@ -2960,8 +3131,8 @@ public class UserPrefsAccessor extends Prefs
    {
       return enumeration(
          "graphics_backend",
-         "R graphics backend", 
-         "R graphics backend.", 
+         _constants.graphicsBackendTitle(), 
+         _constants.graphicsBackendDescription(), 
          new String[] {
             GRAPHICS_BACKEND_DEFAULT,
             GRAPHICS_BACKEND_CAIRO,
@@ -2987,8 +3158,8 @@ public class UserPrefsAccessor extends Prefs
    {
       return enumeration(
          "graphics_antialiasing",
-         "R graphics antialiasing method", 
-         "Type of anti-aliasing to be used for generated R plots.", 
+         _constants.graphicsAntialiasingTitle(), 
+         _constants.graphicsAntialiasingDescription(), 
          new String[] {
             GRAPHICS_ANTIALIASING_DEFAULT,
             GRAPHICS_ANTIALIASING_NONE,
@@ -3010,8 +3181,8 @@ public class UserPrefsAccessor extends Prefs
    {
       return object(
          "browser_fixed_width_fonts",
-         "Fixed-width font list for RStudio Server", 
-         "List of fixed-width fonts to check for browser support.", 
+         _constants.browserFixedWidthFontsTitle(), 
+         _constants.browserFixedWidthFontsDescription(), 
          JsArrayUtil.createStringArray("Andale Mono", "Bitstream Vera Sans Mono", "Cascadia Code", "Consolas", "Courier New", "Courier", "DejaVu Sans Mono", "Droid Sans Mono", "Fira Code", "Hack", "IBM Plex Mono", "Inconsolata", "JetBrains Mono", "Lucida Console", "Lucida Sans Typewriter", "Menlo", "Monaco", "Monoid", "Operator Mono", "Pragmata", "SF Mono", "Source Code Pro", "Vera Sans Mono", "Victor Mono", "Ubuntu Mono"));
    }
 
@@ -3022,8 +3193,8 @@ public class UserPrefsAccessor extends Prefs
    {
       return string(
          "python_type",
-         "", 
-         "The Python type.", 
+         _constants.pythonTypeTitle(), 
+         _constants.pythonTypeDescription(), 
          "");
    }
 
@@ -3034,8 +3205,8 @@ public class UserPrefsAccessor extends Prefs
    {
       return string(
          "python_version",
-         "", 
-         "The Python version.", 
+         _constants.pythonVersionTitle(), 
+         _constants.pythonVersionDescription(), 
          "");
    }
 
@@ -3046,8 +3217,8 @@ public class UserPrefsAccessor extends Prefs
    {
       return string(
          "python_path",
-         "", 
-         "The path to the default Python interpreter.", 
+         _constants.pythonPathTitle(), 
+         _constants.pythonPathDescription(), 
          "");
    }
 
@@ -3058,20 +3229,20 @@ public class UserPrefsAccessor extends Prefs
    {
       return integer(
          "save_retry_timeout",
-         "Save Retry Timeout", 
-         "The maximum amount of seconds of retry for save operations.", 
+         _constants.saveRetryTimeoutTitle(), 
+         _constants.saveRetryTimeoutDescription(), 
          15);
    }
 
    /**
-    * Whether the Insert Pipe Operator command should insert the native R pipe operator, |>
+    * Whether the Insert Pipe Operator command should use the native R pipe operator, |>
     */
    public PrefValue<Boolean> insertNativePipeOperator()
    {
       return bool(
          "insert_native_pipe_operator",
-         "Use R's native pipe operator, |>", 
-         "Whether the Insert Pipe Operator command should insert the native R pipe operator, |>", 
+         _constants.insertNativePipeOperatorTitle(), 
+         _constants.insertNativePipeOperatorDescription(), 
          false);
    }
 
@@ -3082,8 +3253,8 @@ public class UserPrefsAccessor extends Prefs
    {
       return bool(
          "command_palette_mru",
-         "Remember recently used items in Command Palette", 
-         "Whether to keep track of recently used commands in the Command Palette", 
+         _constants.commandPaletteMruTitle(), 
+         _constants.commandPaletteMruDescription(), 
          true);
    }
 
@@ -3094,8 +3265,8 @@ public class UserPrefsAccessor extends Prefs
    {
       return bool(
          "show_memory_usage",
-         "Show memory usage in Environment Pane", 
-         "Whether to compute and show memory usage in the Environment Pane", 
+         _constants.showMemoryUsageTitle(), 
+         _constants.showMemoryUsageDescription(), 
          true);
    }
 
@@ -3106,8 +3277,8 @@ public class UserPrefsAccessor extends Prefs
    {
       return integer(
          "memory_query_interval_seconds",
-         "Interval for requerying memory stats (seconds)", 
-         "How many seconds to wait between automatic requeries of memory statistics (0 to disable)", 
+         _constants.memoryQueryIntervalSecondsTitle(), 
+         _constants.memoryQueryIntervalSecondsDescription(), 
          10);
    }
 
@@ -3118,8 +3289,75 @@ public class UserPrefsAccessor extends Prefs
    {
       return bool(
          "terminal_python_integration",
-         "Enable terminal Python integration", 
-         "Enable Python terminal hooks. When enabled, the RStudio-configured version of Python will be placed on the PATH.", 
+         _constants.terminalPythonIntegrationTitle(), 
+         _constants.terminalPythonIntegrationDescription(), 
+         true);
+   }
+
+   /**
+    * Enable session protocol debug logging showing all session requests and events
+    */
+   public PrefValue<Boolean> sessionProtocolDebug()
+   {
+      return bool(
+         "session_protocol_debug",
+         _constants.sessionProtocolDebugTitle(), 
+         _constants.sessionProtocolDebugDescription(), 
+         false);
+   }
+
+   /**
+    * When enabled, if the active project contains a Python virtual environment, then RStudio will automatically activate this environment on startup.
+    */
+   public PrefValue<Boolean> pythonProjectEnvironmentAutomaticActivate()
+   {
+      return bool(
+         "python_project_environment_automatic_activate",
+         _constants.pythonProjectEnvironmentAutomaticActivateTitle(), 
+         _constants.pythonProjectEnvironmentAutomaticActivateDescription(), 
+         true);
+   }
+
+   /**
+    * When enabled, RStudio will detect R objects containing null external pointers when building the Environment pane, and avoid introspecting their contents further.
+    */
+   public PrefValue<Boolean> checkNullExternalPointers()
+   {
+      return bool(
+         "check_null_external_pointers",
+         _constants.checkNullExternalPointersTitle(), 
+         _constants.checkNullExternalPointersDescription(), 
+         false);
+   }
+
+   /**
+    * The IDE's user-interface language.
+    */
+   public PrefValue<String> uiLanguage()
+   {
+      return enumeration(
+         "ui_language",
+         _constants.uiLanguageTitle(), 
+         _constants.uiLanguageDescription(), 
+         new String[] {
+            UI_LANGUAGE_EN,
+            UI_LANGUAGE_FR
+         },
+         "en");
+   }
+
+   public final static String UI_LANGUAGE_EN = "en";
+   public final static String UI_LANGUAGE_FR = "fr";
+
+   /**
+    * Whether RStudio Desktop will use the operating system's native File and Message dialog boxes.
+    */
+   public PrefValue<Boolean> nativeFileDialogs()
+   {
+      return bool(
+         "native_file_dialogs",
+         _constants.nativeFileDialogsTitle(), 
+         _constants.nativeFileDialogsDescription(), 
          true);
    }
 
@@ -3159,6 +3397,8 @@ public class UserPrefsAccessor extends Prefs
          customShellOptions().setValue(layer, source.getString("custom_shell_options"));
       if (source.hasKey("show_line_numbers"))
          showLineNumbers().setValue(layer, source.getBool("show_line_numbers"));
+      if (source.hasKey("relative_line_numbers"))
+         relativeLineNumbers().setValue(layer, source.getBool("relative_line_numbers"));
       if (source.hasKey("highlight_selected_word"))
          highlightSelectedWord().setValue(layer, source.getBool("highlight_selected_word"));
       if (source.hasKey("highlight_selected_line"))
@@ -3221,6 +3461,8 @@ public class UserPrefsAccessor extends Prefs
          showDiagnosticsR().setValue(layer, source.getBool("show_diagnostics_r"));
       if (source.hasKey("show_diagnostics_cpp"))
          showDiagnosticsCpp().setValue(layer, source.getBool("show_diagnostics_cpp"));
+      if (source.hasKey("show_diagnostics_yaml"))
+         showDiagnosticsYaml().setValue(layer, source.getBool("show_diagnostics_yaml"));
       if (source.hasKey("show_diagnostics_other"))
          showDiagnosticsOther().setValue(layer, source.getBool("show_diagnostics_other"));
       if (source.hasKey("style_diagnostics"))
@@ -3305,8 +3547,6 @@ public class UserPrefsAccessor extends Prefs
          defaultProjectLocation().setValue(layer, source.getString("default_project_location"));
       if (source.hasKey("source_with_echo"))
          sourceWithEcho().setValue(layer, source.getBool("source_with_echo"));
-      if (source.hasKey("new_project_git_init"))
-         newProjectGitInit().setValue(layer, source.getBool("new_project_git_init"));
       if (source.hasKey("default_sweave_engine"))
          defaultSweaveEngine().setValue(layer, source.getString("default_sweave_engine"));
       if (source.hasKey("default_latex_program"))
@@ -3337,8 +3577,8 @@ public class UserPrefsAccessor extends Prefs
          navigateToBuildError().setValue(layer, source.getBool("navigate_to_build_error"));
       if (source.hasKey("packages_pane_enabled"))
          packagesPaneEnabled().setValue(layer, source.getBool("packages_pane_enabled"));
-      if (source.hasKey("use_rcpp_template"))
-         useRcppTemplate().setValue(layer, source.getBool("use_rcpp_template"));
+      if (source.hasKey("cpp_template"))
+         cppTemplate().setValue(layer, source.getString("cpp_template"));
       if (source.hasKey("restore_source_documents"))
          restoreSourceDocuments().setValue(layer, source.getBool("restore_source_documents"));
       if (source.hasKey("handle_errors_in_user_code_only"))
@@ -3357,6 +3597,8 @@ public class UserPrefsAccessor extends Prefs
          plumberViewerType().setValue(layer, source.getString("plumber_viewer_type"));
       if (source.hasKey("document_author"))
          documentAuthor().setValue(layer, source.getString("document_author"));
+      if (source.hasKey("rmd_auto_date"))
+         rmdAutoDate().setValue(layer, source.getBool("rmd_auto_date"));
       if (source.hasKey("rmd_preferred_template_path"))
          rmdPreferredTemplatePath().setValue(layer, source.getString("rmd_preferred_template_path"));
       if (source.hasKey("rmd_viewer_type"))
@@ -3407,6 +3649,8 @@ public class UserPrefsAccessor extends Prefs
          alwaysShownExtensions().setValue(layer, source.getObject("always_shown_extensions"));
       if (source.hasKey("sort_file_names_naturally"))
          sortFileNamesNaturally().setValue(layer, source.getBool("sort_file_names_naturally"));
+      if (source.hasKey("sync_files_pane_working_dir"))
+         syncFilesPaneWorkingDir().setValue(layer, source.getBool("sync_files_pane_working_dir"));
       if (source.hasKey("jobs_tab_visibility"))
          jobsTabVisibility().setValue(layer, source.getString("jobs_tab_visibility"));
       if (source.hasKey("show_launcher_jobs_tab"))
@@ -3415,8 +3659,8 @@ public class UserPrefsAccessor extends Prefs
          launcherJobsSort().setValue(layer, source.getString("launcher_jobs_sort"));
       if (source.hasKey("busy_detection"))
          busyDetection().setValue(layer, source.getString("busy_detection"));
-      if (source.hasKey("busy_whitelist"))
-         busyWhitelist().setValue(layer, source.getObject("busy_whitelist"));
+      if (source.hasKey("busy_exclusion_list"))
+         busyExclusionList().setValue(layer, source.getObject("busy_exclusion_list"));
       if (source.hasKey("knit_working_dir"))
          knitWorkingDir().setValue(layer, source.getString("knit_working_dir"));
       if (source.hasKey("doc_outline_show"))
@@ -3431,8 +3675,14 @@ public class UserPrefsAccessor extends Prefs
          gitDiffIgnoreWhitespace().setValue(layer, source.getBool("git_diff_ignore_whitespace"));
       if (source.hasKey("console_double_click_select"))
          consoleDoubleClickSelect().setValue(layer, source.getBool("console_double_click_select"));
+      if (source.hasKey("console_suspend_blocked_notice"))
+         consoleSuspendBlockedNotice().setValue(layer, source.getBool("console_suspend_blocked_notice"));
+      if (source.hasKey("console_suspend_blocked_notice_delay"))
+         consoleSuspendBlockedNoticeDelay().setValue(layer, source.getInteger("console_suspend_blocked_notice_delay"));
       if (source.hasKey("new_proj_git_init"))
          newProjGitInit().setValue(layer, source.getBool("new_proj_git_init"));
+      if (source.hasKey("new_proj_use_renv"))
+         newProjUseRenv().setValue(layer, source.getBool("new_proj_use_renv"));
       if (source.hasKey("root_document"))
          rootDocument().setValue(layer, source.getString("root_document"));
       if (source.hasKey("show_user_home_page"))
@@ -3451,8 +3701,12 @@ public class UserPrefsAccessor extends Prefs
          terminalPath().setValue(layer, source.getString("terminal_path"));
       if (source.hasKey("rsa_key_path"))
          rsaKeyPath().setValue(layer, source.getString("rsa_key_path"));
+      if (source.hasKey("ssh_key_type"))
+         sshKeyType().setValue(layer, source.getString("ssh_key_type"));
       if (source.hasKey("use_devtools"))
          useDevtools().setValue(layer, source.getBool("use_devtools"));
+      if (source.hasKey("clean_before_install"))
+         cleanBeforeInstall().setValue(layer, source.getBool("clean_before_install"));
       if (source.hasKey("use_internet2"))
          useInternet2().setValue(layer, source.getBool("use_internet2"));
       if (source.hasKey("use_secure_download"))
@@ -3483,6 +3737,8 @@ public class UserPrefsAccessor extends Prefs
          defaultRVersion().setValue(layer, source.getObject("default_r_version"));
       if (source.hasKey("data_viewer_max_columns"))
          dataViewerMaxColumns().setValue(layer, source.getInteger("data_viewer_max_columns"));
+      if (source.hasKey("data_viewer_max_cell_size"))
+         dataViewerMaxCellSize().setValue(layer, source.getInteger("data_viewer_max_cell_size"));
       if (source.hasKey("enable_screen_reader"))
          enableScreenReader().setValue(layer, source.getBool("enable_screen_reader"));
       if (source.hasKey("typing_status_delay_ms"))
@@ -3525,6 +3781,8 @@ public class UserPrefsAccessor extends Prefs
          visualMarkdownEditingShowDocOutline().setValue(layer, source.getBool("visual_markdown_editing_show_doc_outline"));
       if (source.hasKey("visual_markdown_editing_show_margin"))
          visualMarkdownEditingShowMargin().setValue(layer, source.getBool("visual_markdown_editing_show_margin"));
+      if (source.hasKey("visual_markdown_code_editor_line_numbers"))
+         visualMarkdownCodeEditorLineNumbers().setValue(layer, source.getBool("visual_markdown_code_editor_line_numbers"));
       if (source.hasKey("visual_markdown_editing_font_size_points"))
          visualMarkdownEditingFontSizePoints().setValue(layer, source.getInteger("visual_markdown_editing_font_size_points"));
       if (source.hasKey("visual_markdown_code_editor"))
@@ -3565,6 +3823,16 @@ public class UserPrefsAccessor extends Prefs
          memoryQueryIntervalSeconds().setValue(layer, source.getInteger("memory_query_interval_seconds"));
       if (source.hasKey("terminal_python_integration"))
          terminalPythonIntegration().setValue(layer, source.getBool("terminal_python_integration"));
+      if (source.hasKey("session_protocol_debug"))
+         sessionProtocolDebug().setValue(layer, source.getBool("session_protocol_debug"));
+      if (source.hasKey("python_project_environment_automatic_activate"))
+         pythonProjectEnvironmentAutomaticActivate().setValue(layer, source.getBool("python_project_environment_automatic_activate"));
+      if (source.hasKey("check_null_external_pointers"))
+         checkNullExternalPointers().setValue(layer, source.getBool("check_null_external_pointers"));
+      if (source.hasKey("ui_language"))
+         uiLanguage().setValue(layer, source.getString("ui_language"));
+      if (source.hasKey("native_file_dialogs"))
+         nativeFileDialogs().setValue(layer, source.getBool("native_file_dialogs"));
    }
    public List<PrefValue<?>> allPrefs()
    {
@@ -3586,6 +3854,7 @@ public class UserPrefsAccessor extends Prefs
       prefs.add(customShellCommand());
       prefs.add(customShellOptions());
       prefs.add(showLineNumbers());
+      prefs.add(relativeLineNumbers());
       prefs.add(highlightSelectedWord());
       prefs.add(highlightSelectedLine());
       prefs.add(panes());
@@ -3617,6 +3886,7 @@ public class UserPrefsAccessor extends Prefs
       prefs.add(showFunctionSignatureTooltips());
       prefs.add(showDiagnosticsR());
       prefs.add(showDiagnosticsCpp());
+      prefs.add(showDiagnosticsYaml());
       prefs.add(showDiagnosticsOther());
       prefs.add(styleDiagnostics());
       prefs.add(diagnosticsOnSave());
@@ -3659,7 +3929,6 @@ public class UserPrefsAccessor extends Prefs
       prefs.add(toolbarVisible());
       prefs.add(defaultProjectLocation());
       prefs.add(sourceWithEcho());
-      prefs.add(newProjectGitInit());
       prefs.add(defaultSweaveEngine());
       prefs.add(defaultLatexProgram());
       prefs.add(useRoxygen());
@@ -3675,7 +3944,7 @@ public class UserPrefsAccessor extends Prefs
       prefs.add(realTimeSpellchecking());
       prefs.add(navigateToBuildError());
       prefs.add(packagesPaneEnabled());
-      prefs.add(useRcppTemplate());
+      prefs.add(cppTemplate());
       prefs.add(restoreSourceDocuments());
       prefs.add(handleErrorsInUserCodeOnly());
       prefs.add(autoExpandErrorTracebacks());
@@ -3685,6 +3954,7 @@ public class UserPrefsAccessor extends Prefs
       prefs.add(shinyBackgroundJobs());
       prefs.add(plumberViewerType());
       prefs.add(documentAuthor());
+      prefs.add(rmdAutoDate());
       prefs.add(rmdPreferredTemplatePath());
       prefs.add(rmdViewerType());
       prefs.add(showPublishDiagnostics());
@@ -3710,11 +3980,12 @@ public class UserPrefsAccessor extends Prefs
       prefs.add(alwaysShownFiles());
       prefs.add(alwaysShownExtensions());
       prefs.add(sortFileNamesNaturally());
+      prefs.add(syncFilesPaneWorkingDir());
       prefs.add(jobsTabVisibility());
       prefs.add(showLauncherJobsTab());
       prefs.add(launcherJobsSort());
       prefs.add(busyDetection());
-      prefs.add(busyWhitelist());
+      prefs.add(busyExclusionList());
       prefs.add(knitWorkingDir());
       prefs.add(docOutlineShow());
       prefs.add(latexPreviewOnCursorIdle());
@@ -3722,7 +3993,10 @@ public class UserPrefsAccessor extends Prefs
       prefs.add(globalTheme());
       prefs.add(gitDiffIgnoreWhitespace());
       prefs.add(consoleDoubleClickSelect());
+      prefs.add(consoleSuspendBlockedNotice());
+      prefs.add(consoleSuspendBlockedNoticeDelay());
       prefs.add(newProjGitInit());
+      prefs.add(newProjUseRenv());
       prefs.add(rootDocument());
       prefs.add(showUserHomePage());
       prefs.add(reuseSessionsForProjectLinks());
@@ -3732,7 +4006,9 @@ public class UserPrefsAccessor extends Prefs
       prefs.add(svnExePath());
       prefs.add(terminalPath());
       prefs.add(rsaKeyPath());
+      prefs.add(sshKeyType());
       prefs.add(useDevtools());
+      prefs.add(cleanBeforeInstall());
       prefs.add(useInternet2());
       prefs.add(useSecureDownload());
       prefs.add(cleanupAfterRCmdCheck());
@@ -3748,6 +4024,7 @@ public class UserPrefsAccessor extends Prefs
       prefs.add(submitCrashReports());
       prefs.add(defaultRVersion());
       prefs.add(dataViewerMaxColumns());
+      prefs.add(dataViewerMaxCellSize());
       prefs.add(enableScreenReader());
       prefs.add(typingStatusDelayMs());
       prefs.add(reducedMotion());
@@ -3769,6 +4046,7 @@ public class UserPrefsAccessor extends Prefs
       prefs.add(visualMarkdownEditingMaxContentWidth());
       prefs.add(visualMarkdownEditingShowDocOutline());
       prefs.add(visualMarkdownEditingShowMargin());
+      prefs.add(visualMarkdownCodeEditorLineNumbers());
       prefs.add(visualMarkdownEditingFontSizePoints());
       prefs.add(visualMarkdownCodeEditor());
       prefs.add(zoteroLibraries());
@@ -3789,6 +4067,11 @@ public class UserPrefsAccessor extends Prefs
       prefs.add(showMemoryUsage());
       prefs.add(memoryQueryIntervalSeconds());
       prefs.add(terminalPythonIntegration());
+      prefs.add(sessionProtocolDebug());
+      prefs.add(pythonProjectEnvironmentAutomaticActivate());
+      prefs.add(checkNullExternalPointers());
+      prefs.add(uiLanguage());
+      prefs.add(nativeFileDialogs());
       return prefs;
    }
    
@@ -3808,4 +4091,6 @@ public class UserPrefsAccessor extends Prefs
    public static final int LAYER_SYSTEM   = 2;
    public static final int LAYER_USER     = 3;
    public static final int LAYER_PROJECT  = 4;
+
+   private UserPrefsAccessorConstants _constants = GWT.create(UserPrefsAccessorConstants.class);
 }

@@ -1,7 +1,7 @@
 /*
  * WebFileDialogs.java
  *
- * Copyright (C) 2021 by RStudio, PBC
+ * Copyright (C) 2022 by RStudio, PBC
  *
  * Unless you have received this program directly from RStudio pursuant
  * to the terms of a commercial license agreement with RStudio, then
@@ -14,6 +14,7 @@
  */
 package org.rstudio.studio.client.common.impl;
 
+import com.google.gwt.core.client.GWT;
 import org.rstudio.core.client.files.FileSystemContext;
 import org.rstudio.core.client.files.FileSystemItem;
 import org.rstudio.core.client.files.filedialog.ChooseFolderDialog2;
@@ -23,6 +24,7 @@ import org.rstudio.core.client.files.filedialog.OpenProjectDialog;
 import org.rstudio.core.client.files.filedialog.SaveFileDialog;
 import org.rstudio.core.client.widget.ProgressOperationWithInput;
 import org.rstudio.studio.client.common.FileDialogs;
+import org.rstudio.studio.client.common.StudioClientCommonConstants;
 import org.rstudio.studio.client.projects.model.OpenProjectParams;
 
 public class WebFileDialogs implements FileDialogs
@@ -51,7 +53,7 @@ public class WebFileDialogs implements FileDialogs
                         boolean canChooseDirectories,
                         ProgressOperationWithInput<FileSystemItem> operation)
    {
-      openFile(caption, "Open", fsContext, initialFilePath, filter, canChooseDirectories, operation);
+      openFile(caption, constants_.openLabel(), fsContext, initialFilePath, filter, canChooseDirectories, operation);
    }
    
    public void openFile(String caption,
@@ -107,7 +109,7 @@ public class WebFileDialogs implements FileDialogs
                         boolean forceDefaultExtension,
                         ProgressOperationWithInput<FileSystemItem> operation)
    {
-      saveFile(caption, "Save", fsContext, initialFilePath, defaultExtension, forceDefaultExtension, operation);
+      saveFile(caption, constants_.saveLabel(), fsContext, initialFilePath, defaultExtension, forceDefaultExtension, operation);
    }
    
    public void saveFile(String caption,
@@ -147,7 +149,7 @@ public class WebFileDialogs implements FileDialogs
                             FileSystemItem initialDir,
                             ProgressOperationWithInput<FileSystemItem> operation)
    {
-      chooseFolder(caption, "Choose", fsContext, initialDir, operation);
+      chooseFolder(caption, constants_.chooseLabel(), fsContext, initialDir, operation);
    }
    
    public void chooseFolder(String caption,
@@ -201,4 +203,5 @@ public class WebFileDialogs implements FileDialogs
       }
       dialog.showModal();
    }
+   private static final StudioClientCommonConstants constants_ = GWT.create(StudioClientCommonConstants.class);
 }

@@ -1,7 +1,7 @@
 /*
  * ui.ts
  *
- * Copyright (C) 2021 by RStudio, PBC
+ * Copyright (C) 2022 by RStudio, PBC
  *
  * Unless you have received this program directly from RStudio pursuant
  * to the terms of a commercial license agreement with RStudio, then
@@ -14,7 +14,6 @@
  */
 
 import { SkinTone } from './emoji';
-import { EditorRmdChunk } from './rmd';
 import { XRef } from './xref';
 
 import { EditorUIImages } from './ui-images';
@@ -39,11 +38,15 @@ export interface EditorUIChunkCallbacks {
   getPos: () => number;
   scrollIntoView: (ele: HTMLElement) => void;
   scrollCursorIntoView: () => void;
+  getTextContent: () => string;
 }
 
 export interface EditorUIChunks {
   // create a code chunk editor
-  createChunkEditor: (type: string, index: number, callbacks: EditorUIChunkCallbacks) => ChunkEditor;
+  createChunkEditor: (type: string, element: Element, index: number, classes: string[], callbacks: EditorUIChunkCallbacks) => ChunkEditor;
+
+  // expand or collapse all chunk editors
+  setChunksExpanded: (expanded: boolean) => void;
 }
 
 export interface ChunkEditor {
@@ -52,6 +55,8 @@ export interface ChunkEditor {
   executeSelection(): void;
   element: HTMLElement;
   destroy(): void;
+  setExpanded(expanded: boolean): void;
+  getExpanded(): boolean;
 }
 
 export interface EditorUIContext {
@@ -125,6 +130,7 @@ export interface EditorUIPrefs {
   darkMode: () => boolean;
   listSpacing: () => ListSpacing;
   equationPreview: () => boolean;
+  packageListingEnabled: () => boolean;
   tabKeyMoveFocus: () => boolean;
   emojiSkinTone: () => SkinTone;
   setEmojiSkinTone: (skinTone: SkinTone) => void;

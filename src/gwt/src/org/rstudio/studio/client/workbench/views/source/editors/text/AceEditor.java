@@ -1,7 +1,7 @@
 /*
  * AceEditor.java
  *
- * Copyright (C) 2021 by RStudio, PBC
+ * Copyright (C) 2022 by RStudio, PBC
  *
  * Unless you have received this program directly from RStudio pursuant
  * to the terms of a commercial license agreement with RStudio, then
@@ -42,6 +42,7 @@ import com.google.gwt.event.logical.shared.ValueChangeHandler;
 import com.google.gwt.event.shared.GwtEvent;
 import com.google.gwt.event.shared.HandlerManager;
 import com.google.gwt.event.shared.HandlerRegistration;
+import com.google.gwt.core.client.GWT;
 
 import java.util.function.BiPredicate;
 import java.util.function.Consumer;
@@ -52,6 +53,7 @@ import com.google.gwt.user.client.ui.RootPanel;
 import com.google.gwt.user.client.ui.Widget;
 import com.google.inject.Inject;
 import org.rstudio.core.client.AceSupport;
+import org.rstudio.core.client.BrowseCap;
 import org.rstudio.core.client.CommandWithArg;
 import org.rstudio.core.client.ElementIds;
 import org.rstudio.core.client.ExternalJavaScriptLoader;
@@ -156,6 +158,7 @@ import org.rstudio.studio.client.workbench.views.source.editors.text.events.Undo
 import org.rstudio.studio.client.workbench.views.source.editors.text.rmd.ChunkDefinition;
 import org.rstudio.studio.client.workbench.views.source.editors.text.rmd.TextEditingTargetNotebook;
 import org.rstudio.studio.client.workbench.views.source.editors.text.spelling.SpellingDoc;
+import org.rstudio.studio.client.workbench.views.source.editors.text.yaml.YamlCompletionManager;
 import org.rstudio.studio.client.workbench.views.source.events.CollabEditStartParams;
 import org.rstudio.studio.client.workbench.views.source.events.RecordNavigationPositionEvent;
 import org.rstudio.studio.client.workbench.views.source.events.SaveFileEvent;
@@ -632,16 +635,15 @@ public class AceEditor implements DocDisplay,
    public void insertAssignmentOperator()
    {
       if (DocumentMode.isCursorInRMode(this))
-         insertAssignmentOperatorImpl("<-");
+         insertOperatorWithSpacing("<-");
       else
-         insertAssignmentOperatorImpl("=");
+         insertOperatorWithSpacing("=");
    }
 
-   @SuppressWarnings("deprecation")
-   private void insertAssignmentOperatorImpl(String op)
+   private void insertOperatorWithSpacing(String op)
    {
       boolean hasWhitespaceBefore =
-            Character.isSpace(getCharacterBeforeCursor()) ||
+            Character.isWhitespace(getCharacterBeforeCursor()) ||
             (!hasSelection() && getCursorPosition().getColumn() == 0);
 
       String insertion = hasWhitespaceBefore
@@ -651,20 +653,12 @@ public class AceEditor implements DocDisplay,
       insertCode(insertion, false);
    }
 
-   @SuppressWarnings("deprecation")
-   public void insertPipeOperator()
+   private void insertPipeOperator()
    {
-      boolean hasWhitespaceBefore =
-            Character.isSpace(getCharacterBeforeCursor()) ||
-            (!hasSelection() && getCursorPosition().getColumn() == 0);
-
-      // Use magrittr style pipes unless user has opted into new native pipe syntax in R 4.1+
-      String pipe = userPrefs_.insertNativePipeOperator().getValue() ? "|>" : "%>%";
-
-      if (hasWhitespaceBefore)
-         insertCode(pipe + " ", false);
-      else
-         insertCode(" " + pipe + " ", false);
+      // Use magrittr style pipes if the user has not opted into new native pipe syntax
+      boolean nativePipePreferred = RStudioGinjector.INSTANCE.getUserPrefs().insertNativePipeOperator().getValue();
+      String pipe =  nativePipePreferred ? NATIVE_R_PIPE : MAGRITTR_PIPE;
+      insertOperatorWithSpacing(pipe);
    }
 
    private boolean shouldIndentOnPaste()
@@ -768,6 +762,11 @@ public class AceEditor implements DocDisplay,
       behavior_ = behavior;
    }
 
+   public EditorBehavior getEditorBehavior()
+   {
+      return behavior_;
+   }
+
    @Override
    public void setRnwCompletionContext(RnwCompletionContext rnwContext)
    {
@@ -843,7 +842,7 @@ public class AceEditor implements DocDisplay,
                // Markdown completion manager
                if (fileType_.isMarkdown() || fileType_.isRmd())
                {
-                  managers.put(DocumentMode.Mode.MARKDOWN, new MarkdownCompletionManager(
+                  managers.put(DocumentMode.Mode.MARKDOWN, MarkdownCompletionManager.create(
                         editor,
                         new CompletionPopupPanel(),
                         server_,
@@ -853,7 +852,7 @@ public class AceEditor implements DocDisplay,
                // Python completion manager
                if (fileType_.isPython() || fileType_.isRmd())
                {
-                  managers.put(DocumentMode.Mode.PYTHON, new PythonCompletionManager(
+                  managers.put(DocumentMode.Mode.PYTHON, PythonCompletionManager.create(
                         editor,
                         new CompletionPopupPanel(),
                         server_,
@@ -872,7 +871,7 @@ public class AceEditor implements DocDisplay,
                // SQL completion manager
                if (fileType_.isSql() || fileType_.isRmd())
                {
-                  managers.put(DocumentMode.Mode.SQL, new SqlCompletionManager(
+                  managers.put(DocumentMode.Mode.SQL, SqlCompletionManager.create(
                         editor,
                         new CompletionPopupPanel(),
                         server_,
@@ -882,11 +881,23 @@ public class AceEditor implements DocDisplay,
                // Stan completion manager
                if (fileType_.isStan() || fileType_.isRmd())
                {
-                  managers.put(DocumentMode.Mode.STAN, new StanCompletionManager(
+                  managers.put(DocumentMode.Mode.STAN, StanCompletionManager.create(
                         editor,
                         new CompletionPopupPanel(),
                         server_,
                         context_));
+               }
+
+               // Yaml completion manager
+               if (fileType_.isYaml() || fileType_.isRmd() ||
+                   (behavior_ == EditorBehavior.AceBehaviorEmbedded && (fileType_.isR() || fileType_.isPython())))
+               {
+                  managers.put(DocumentMode.Mode.YAML, YamlCompletionManager.create(
+                       editor,
+                       new CompletionPopupPanel(),
+                       server_,
+                       context_
+                  ));
                }
             }
          };
@@ -1255,7 +1266,8 @@ public class AceEditor implements DocDisplay,
       // iterate through rows until we've consumed all the chars
       int row = startPos.getRow();
       int col = startPos.getColumn();
-      while (row < session.getLength()) {
+      while (row < session.getLength())
+      {
 
          // how many chars left in the current column?
          String line = session.getLine(row);
@@ -1283,23 +1295,13 @@ public class AceEditor implements DocDisplay,
    @Override
    public Position positionFromIndex(int index)
    {
-      EditSession session = widget_.getEditor().getSession();
-      return advancePosition(session, Position.create(0,0), index);
+      return widget_.getEditor().getSession().getDocument().indexToPosition(index, 0);
    }
 
    @Override
    public int indexFromPosition(Position position)
    {
-      EditSession session = widget_.getEditor().getSession();
-      int index = 0;
-      int row = 0;
-      while (row < position.getRow())
-      {
-         index += (session.getLine(row).length() + 1); // +1 for newline
-         row++;
-      }
-      index += position.getColumn();
-      return index;
+      return widget_.getEditor().getSession().getDocument().positionToIndex(position, 0);
    }
 
 
@@ -1426,7 +1428,7 @@ public class AceEditor implements DocDisplay,
    {
       public PrintIFrame(String code, double fontSize)
       {
-         super("Print Frame");
+         super(constants_.printFrame());
          code_ = code;
          fontSize_ = fontSize;
 
@@ -1467,7 +1469,7 @@ public class AceEditor implements DocDisplay,
 
    public void print()
    {
-      if (Desktop.hasDesktopFrame())
+      if (Desktop.hasDesktopFrame() && !BrowseCap.isElectron())
       {
          // the desktop frame prints the code directly
          Desktop.getFrame().printText(StringUtil.notNull(getCode()));
@@ -1646,7 +1648,6 @@ public class AceEditor implements DocDisplay,
 
       return new SpellingDoc() {
 
-
          @Override
          public Iterable<WordRange> getWords(int start, int end)
          {
@@ -1655,9 +1656,15 @@ public class AceEditor implements DocDisplay,
                @Override
                public Iterator<WordRange> iterator()
                {
+                  TokenPredicate spellCheckPredicate = fileType_.getSpellCheckTokenPredicate();
+                  TokenPredicate filteredTokenPredicate = (token, row, column) ->
+                  {
+                     return getSession().getFoldAt(row, column) == null && spellCheckPredicate.test(token, row, column);
+                  };
+
                   // get underlying iterator
                   Iterator<Range> ranges = AceEditor.this.getWords(
-                        fileType_.getSpellCheckTokenPredicate(),
+                        filteredTokenPredicate,
                         fileType_.getCharPredicate(),
                         positionFromIndex(start),
                         end != -1 ? positionFromIndex(end) : null).iterator();
@@ -2406,6 +2413,11 @@ public class AceEditor implements DocDisplay,
       widget_.getEditor().getRenderer().setShowGutter(on);
    }
 
+   public void setRelativeLineNumbers(boolean relative)
+   {
+      widget_.getEditor().setRelativeLineNumbers(relative);
+   }
+
    public boolean getUseSoftTabs()
    {
       return getSession().getUseSoftTabs();
@@ -2780,6 +2792,16 @@ public class AceEditor implements DocDisplay,
       return widget_.getEditor().getCursorPositionScreen();
    }
 
+   public int getCursorRow()
+   {
+      return getSession().getSelection().getCursor().getRow();
+   }
+
+   public int getCursorColumn()
+   {
+      return getSession().getSelection().getCursor().getColumn();
+   }
+
    public void setCursorPosition(Position position)
    {
       getSession().getSelection().setSelectionRange(
@@ -2872,9 +2894,9 @@ public class AceEditor implements DocDisplay,
    }
 
    @Override
-   public boolean isCursorInSingleLineString()
+   public boolean isCursorInSingleLineString(boolean allowInComment)
    {
-      return StringUtil.isEndOfLineInRStringState(getCurrentLineUpToCursor());
+      return StringUtil.isEndOfLineInRStringState(getCurrentLineUpToCursor(), allowInComment);
    }
 
    public void gotoPageUp()
@@ -4606,6 +4628,8 @@ public class AceEditor implements DocDisplay,
    }
 
    private static final int DEBUG_CONTEXT_LINES = 2;
+   private static final String MAGRITTR_PIPE = "%>%";
+   private static final String NATIVE_R_PIPE = "|>";
    private final HandlerManager handlers_ = new HandlerManager(this);
    private final AceEditorWidget widget_;
    private final SnippetHelper snippets_;
@@ -4689,5 +4713,5 @@ public class AceEditor implements DocDisplay,
    private static AceEditor s_lastFocusedEditor = null;
 
    private final List<HandlerRegistration> editorEventListeners_;
-
+   private static final EditorsTextConstants constants_ = GWT.create(EditorsTextConstants.class);
 }

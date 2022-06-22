@@ -1,7 +1,7 @@
 /*
  * MessageDisplay.java
  *
- * Copyright (C) 2021 by RStudio, PBC
+ * Copyright (C) 2022 by RStudio, PBC
  *
  * Unless you have received this program directly from RStudio pursuant
  * to the terms of a commercial license agreement with RStudio, then
@@ -19,6 +19,7 @@ import java.util.List;
 import com.google.gwt.user.client.Window;
 import com.google.gwt.user.client.ui.Focusable;
 
+import com.google.gwt.core.client.GWT;
 import org.rstudio.core.client.widget.CanFocus;
 import org.rstudio.core.client.widget.DialogBuilder;
 import org.rstudio.core.client.widget.FocusHelper;
@@ -140,7 +141,7 @@ public abstract class MessageDisplay
                            Operation dismissed)
    {
       createDialog(type, caption, message)
-            .addButton("OK", ElementIds.DIALOG_OK_BUTTON, dismissed)
+            .addButton(constants_.okayLabel(), ElementIds.DIALOG_OK_BUTTON, dismissed)
             .showModal();
    }
 
@@ -154,7 +155,7 @@ public abstract class MessageDisplay
       DialogBuilder dialog = createDialog(type, caption, message)
             .addButton(okLabel, ElementIds.DIALOG_OK_BUTTON, dismissed);
       if (includeCancel)
-         dialog.addButton("Cancel", ElementIds.DIALOG_CANCEL_BUTTON);
+         dialog.addButton(constants_.cancelLabel(), ElementIds.DIALOG_CANCEL_BUTTON);
       dialog.showModal();
    }
 
@@ -164,7 +165,7 @@ public abstract class MessageDisplay
                            final Focusable focusAfter)
    {
       createDialog(type, caption, message)
-      .addButton("OK", ElementIds.DIALOG_OK_BUTTON, () -> FocusHelper.setFocusDeferred(focusAfter))
+      .addButton(constants_.okayLabel(), ElementIds.DIALOG_OK_BUTTON, () -> FocusHelper.setFocusDeferred(focusAfter))
       .showModal();
    }
 
@@ -174,7 +175,7 @@ public abstract class MessageDisplay
                            final CanFocus focusAfter)
    {
       createDialog(type, caption, message)
-      .addButton("OK", ElementIds.DIALOG_OK_BUTTON, () -> FocusHelper.setFocusDeferred(focusAfter))
+      .addButton(constants_.okayLabel(), ElementIds.DIALOG_OK_BUTTON, () -> FocusHelper.setFocusDeferred(focusAfter))
       .showModal();
    }
 
@@ -185,8 +186,8 @@ public abstract class MessageDisplay
                                 boolean yesIsDefault)
    {
       createDialog(type, caption, message)
-            .addButton("Yes", ElementIds.DIALOG_YES_BUTTON, yesOperation)
-            .addButton("No", ElementIds.DIALOG_NO_BUTTON)
+            .addButton(constants_.yesLabel(), ElementIds.DIALOG_YES_BUTTON, yesOperation)
+            .addButton(constants_.noLabel(), ElementIds.DIALOG_NO_BUTTON)
             .setDefaultButton(yesIsDefault ? 0 : 1)
             .showModal();
    }
@@ -198,8 +199,8 @@ public abstract class MessageDisplay
                                 boolean yesIsDefault)
    {
       createDialog(type, caption, message)
-            .addButton("Yes", ElementIds.DIALOG_YES_BUTTON, yesOperation)
-            .addButton("No", ElementIds.DIALOG_NO_BUTTON)
+            .addButton(constants_.yesLabel(), ElementIds.DIALOG_YES_BUTTON, yesOperation)
+            .addButton(constants_.noLabel(), ElementIds.DIALOG_NO_BUTTON)
             .setDefaultButton(yesIsDefault ? 0 : 1)
             .showModal();
    }
@@ -213,11 +214,11 @@ public abstract class MessageDisplay
                                 boolean yesIsDefault)
    {
       DialogBuilder dialog = createDialog(type, caption, message)
-            .addButton("Yes", ElementIds.DIALOG_YES_BUTTON, yesOperation)
-            .addButton("No", ElementIds.DIALOG_NO_BUTTON, noOperation)
+            .addButton(constants_.yesLabel(), ElementIds.DIALOG_YES_BUTTON, yesOperation)
+            .addButton(constants_.noLabel(), ElementIds.DIALOG_NO_BUTTON, noOperation)
             .setDefaultButton(yesIsDefault ? 0 : 1);
       if (includeCancel)
-         dialog.addButton("Cancel", ElementIds.DIALOG_CANCEL_BUTTON);
+         dialog.addButton(constants_.cancelLabel(), ElementIds.DIALOG_CANCEL_BUTTON);
       dialog.showModal();
    }
 
@@ -237,7 +238,7 @@ public abstract class MessageDisplay
             .addButton(noLabel, ElementIds.DIALOG_NO_BUTTON, noOperation)
             .setDefaultButton(yesIsDefault ? 0 : 1);
       if (includeCancel)
-         dialog.addButton("Cancel", ElementIds.DIALOG_CANCEL_BUTTON, cancelOperation);
+         dialog.addButton(constants_.cancelLabel(), ElementIds.DIALOG_CANCEL_BUTTON, cancelOperation);
       dialog.showModal();
    }
 
@@ -255,8 +256,8 @@ public abstract class MessageDisplay
                        includeCancel, 
                        yesOperation,
                        noOperation,
-                       "Yes",
-                       "No",
+                       constants_.yesLabel(),
+                       constants_.noLabel(),
                        yesIsDefault);
    }
 
@@ -275,7 +276,7 @@ public abstract class MessageDisplay
             .addButton(noLabel, ElementIds.DIALOG_NO_BUTTON, noOperation)
             .setDefaultButton(yesIsDefault ? 0 : 1);
       if (includeCancel)
-         dialog.addButton("Cancel", ElementIds.DIALOG_CANCEL_BUTTON);
+         dialog.addButton(constants_.cancelLabel(), ElementIds.DIALOG_CANCEL_BUTTON);
       dialog.showModal();
    }
 
@@ -309,7 +310,7 @@ public abstract class MessageDisplay
                                 Operation dismissed)
    {
       createDialog(MSG_ERROR, caption, message)
-            .addButton("OK", ElementIds.DIALOG_OK_BUTTON, dismissed)
+            .addButton(constants_.okayLabel(), ElementIds.DIALOG_OK_BUTTON, dismissed)
             .showModal();
    }
 
@@ -331,27 +332,21 @@ public abstract class MessageDisplay
    {
       showYesNoMessage(
             GlobalDisplay.MSG_POPUP_BLOCKED,
-            "Popup Blocked",
-            "We attempted to open an external browser window, but " +
-            "the action was prevented by your popup blocker. You " +
-            "can attempt to open the window again by pressing the " +
-            "\"Try Again\" button below.\n\n" +
-            "NOTE: To prevent seeing this message in the future, you " +
-            "should configure your browser to allow popup windows " +
-            "for " + Window.Location.getHostName() + ".",
+            constants_.popupBlockCaption(), constants_.showPopupBlockMessage(Window.Location.getHostName()),
             false,
             yesOperation,
             () -> {},
             null,
-            "Try Again",
-            "Cancel",
+            constants_.popupBlockTryAgainLabel(),
+              constants_.cancelLabel(),
             true);
    }
 
    public void showNotYetImplemented()
    {
       showMessage(MSG_INFO, 
-                 "Not Yet Implemented",
-                 "This feature has not yet been implemented.");
+                 constants_.notYetImplementedCaption(),
+                 constants_.notYetImplementedMessage());
    }
+   private static final CoreClientConstants constants_ = GWT.create(CoreClientConstants.class);
 }

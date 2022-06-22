@@ -1,7 +1,7 @@
 /*
  * ServerConstants.hpp
  *
- * Copyright (C) 2021 by RStudio, PBC
+ * Copyright (C) 2022 by RStudio, PBC
  *
  * Unless you have received this program directly from RStudio pursuant
  * to the terms of a commercial license agreement with RStudio, then
@@ -22,6 +22,8 @@
 #define kServerTmpDir                 "rstudio-rserver"
 #define kServerDataDirEnvVar          "RS_SERVER_DATA_DIR"
 #define kServerTmpDirEnvVar           "RS_SERVER_TMP_DIR"
+
+#define kServerSessionSslCertCommonName "RS_SESSION_CN"
 
 #include <core/http/AuthCookies.hpp>
 

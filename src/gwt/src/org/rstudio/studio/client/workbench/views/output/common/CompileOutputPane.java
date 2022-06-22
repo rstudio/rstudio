@@ -1,7 +1,7 @@
 /*
  * CompileOutputPane.java
  *
- * Copyright (C) 2021 by RStudio, PBC
+ * Copyright (C) 2022 by RStudio, PBC
  *
  * Unless you have received this program directly from RStudio pursuant
  * to the terms of a commercial license agreement with RStudio, then
@@ -14,6 +14,7 @@
  */
 package org.rstudio.studio.client.workbench.views.output.common;
 
+import com.google.gwt.core.client.GWT;
 import com.google.gwt.core.client.JsArray;
 import com.google.gwt.dom.client.Style.Unit;
 import com.google.gwt.event.dom.client.*;
@@ -35,6 +36,7 @@ import org.rstudio.studio.client.common.icons.StandardIcons;
 import org.rstudio.studio.client.common.sourcemarkers.SourceMarker;
 import org.rstudio.studio.client.common.sourcemarkers.SourceMarkerList;
 import org.rstudio.studio.client.workbench.ui.WorkbenchPane;
+import org.rstudio.studio.client.workbench.views.output.OutputConstants;
 
 public class CompileOutputPane extends WorkbenchPane
       implements CompileOutputPaneDisplay
@@ -58,14 +60,14 @@ public class CompileOutputPane extends WorkbenchPane
    @Override
    protected Toolbar createMainToolbar()
    {
-      Toolbar toolbar = new Toolbar(getTitle() + " Tab");
+      Toolbar toolbar = new Toolbar(constants_.toolBarTitle(getTitle()));
       
       fileLabel_ = new ToolbarFileLabel(toolbar, 200);
       
       ImageResource showLogImage = new ImageResource2x(StandardIcons.INSTANCE.show_log2x());
       if (hasLogs_)
       {
-         showLogButton_ = new ToolbarButton("View Log", ToolbarButton.NoTitle, showLogImage);
+         showLogButton_ = new ToolbarButton(constants_.viewLogText(), ToolbarButton.NoTitle, showLogImage);
          showLogButton_.getElement().getStyle().setMarginBottom(3, Unit.PX);
          showLogButton_.setTitle(logTitle_);
          showLogSeparator_ = toolbar.addLeftSeparator();
@@ -186,4 +188,5 @@ public class CompileOutputPane extends WorkbenchPane
    private CompilePanel compilePanel_;
    private String logTitle_;
    private boolean hasLogs_ = true;
+   private static final OutputConstants constants_ = GWT.create(OutputConstants.class);
 }

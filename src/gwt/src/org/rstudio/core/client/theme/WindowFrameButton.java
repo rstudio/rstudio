@@ -1,7 +1,7 @@
 /*
  * WindowFrameButton.java
  *
- * Copyright (C) 2021 by RStudio, PBC
+ * Copyright (C) 2022 by RStudio, PBC
  *
  * Unless you have received this program directly from RStudio pursuant
  * to the terms of a commercial license agreement with RStudio, then
@@ -15,6 +15,7 @@
 package org.rstudio.core.client.theme;
 
 import com.google.gwt.aria.client.Roles;
+import com.google.gwt.core.client.GWT;
 import com.google.gwt.event.dom.client.ClickHandler;
 import com.google.gwt.event.dom.client.KeyCodes;
 import com.google.gwt.event.shared.HandlerRegistration;
@@ -22,6 +23,7 @@ import com.google.gwt.user.client.Command;
 import com.google.gwt.user.client.ui.FocusWidget;
 import com.google.gwt.user.client.ui.HTML;
 import org.rstudio.core.client.ClassIds;
+import org.rstudio.core.client.CoreClientConstants;
 import org.rstudio.core.client.Debug;
 import org.rstudio.core.client.HandlerRegistrations;
 import org.rstudio.core.client.layout.WindowState;
@@ -70,7 +72,7 @@ public class WindowFrameButton extends FocusWidget
       WindowState computedState = defaultState_;
       if (maximized_ || exclusive_)
          computedState = WindowState.NORMAL; // "restore"
-      Roles.getButtonRole().setAriaLabelProperty(getElement(), stateString(computedState) + " " + name_);
+      Roles.getButtonRole().setAriaLabelProperty(getElement(), stateString(computedState, name_));
    }
 
    public void setClickHandler(Command clickHandler)
@@ -141,25 +143,25 @@ public class WindowFrameButton extends FocusWidget
       ClassIds.assignClassId(getElement(), classId + "_" + ClassIds.idSafeString(panelName));
    }
 
-   private String stateString(WindowState state)
+   private String stateString(WindowState state, String title)
    {
       switch (state)
       {
       case MINIMIZE:
-         return "Minimize";
+         return constants_.minimizeState(title);
 
       case MAXIMIZE:
-         return "Maximize";
+         return constants_.maximizeState(title);
 
       case NORMAL:
       default:
-         return "Restore";
+         return constants_.normalState(title);
 
       case HIDE:
-         return "Hide";
+         return constants_.hideState(title);
 
       case EXCLUSIVE:
-         return "Exclusive";
+         return constants_.exclusiveState(title);
       }
    }
 
@@ -173,4 +175,5 @@ public class WindowFrameButton extends FocusWidget
    private Command clickHandler_;
    private final HandlerRegistrations releaseOnUnload_ = new HandlerRegistrations();
    private final DoubleClickState doubleClickState_ = new DoubleClickState();
+   private static final CoreClientConstants constants_ = GWT.create(CoreClientConstants.class);
 }

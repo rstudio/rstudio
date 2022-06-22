@@ -1,7 +1,7 @@
 /*
  * c_cpp_highlight_rules.js
  *
- * Copyright (C) 2021 by RStudio, PBC
+ * Copyright (C) 2022 by RStudio, PBC
  *
  * The Original Code is Ajax.org Code Editor (ACE).
  *
@@ -105,9 +105,13 @@ var c_cppHighlightRules = function() {
    this.$rules = {
       "start" : [
          {
-            // Attributes
+            // Comment Attributes
             token: "comment.doc.tag",
             regex: "\\/\\/\\s*\\[\\[.*\\]\\].*$"
+         }, {
+            // C++11 Attributes
+            token: "comment.doc.tag",
+            regex: "^\\s*\\[\\[(.*)\\]\\]"
          }, {
             // Roxygen
             token : "comment",

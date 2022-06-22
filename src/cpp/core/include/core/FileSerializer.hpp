@@ -1,7 +1,7 @@
 /*
  * FileSerializer.hpp
  *
- * Copyright (C) 2021 by RStudio, PBC
+ * Copyright (C) 2022 by RStudio, PBC
  *
  * Unless you have received this program directly from RStudio pursuant
  * to the terms of a commercial license agreement with RStudio, then
@@ -32,6 +32,7 @@
 #include <shared_core/Error.hpp>
 #include <shared_core/FilePath.hpp>
 #include <core/StringUtils.hpp>
+#include <core/Algorithm.hpp>
 
 namespace rstudio {
 namespace core {
@@ -272,7 +273,7 @@ Error readStructVectorFromFile(const core::FilePath& filePath,
 
 
 
-// convenince methods for simple string collections
+// convenience methods for simple string collections
 ReadCollectionAction parseString(const std::string& line, std::string* pStr);
 std::string stringifyString(const std::string& str);
 
@@ -356,6 +357,17 @@ Error readStringFromFile(
     return Success();
 }
 
+inline core::Error readLinesFromFile(const core::FilePath& filePath, std::vector<std::string>* pLines)
+{
+   std::string contents;
+   Error error = core::readStringFromFile(filePath, &contents);
+   if (error)
+      return error;
+
+   string_utils::convertLineEndings(&contents, string_utils::LineEndingPosix);
+   core::algorithm::append(pLines, core::algorithm::split(contents, "\n"));
+   return Success();
+}
 
 
 bool stripBOM(std::string* pStr);

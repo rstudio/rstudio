@@ -1,7 +1,7 @@
 /*
  * TextEditingTargetFindReplace.java
  *
- * Copyright (C) 2021 by RStudio, PBC
+ * Copyright (C) 2022 by RStudio, PBC
  *
  * Unless you have received this program directly from RStudio pursuant
  * to the terms of a commercial license agreement with RStudio, then
@@ -14,6 +14,7 @@
  */
 package org.rstudio.studio.client.workbench.views.source.editors.text;
 
+import com.google.gwt.core.client.GWT;
 import org.rstudio.core.client.widget.ToolbarButton;
 import org.rstudio.studio.client.RStudioGinjector;
 import org.rstudio.studio.client.workbench.views.source.editors.text.findreplace.FindReplace;
@@ -59,7 +60,7 @@ public class TextEditingTargetFindReplace
       {
          findReplaceButton_ = new ToolbarButton(
                ToolbarButton.NoText,
-               showReplace_ ? "Find/Replace" : "Find",
+               showReplace_ ? constants_.findOrReplace() : constants_.find(),
                FindReplaceBar.getFindIcon(),
                new ClickHandler() {
                   public void onClick(ClickEvent event)
@@ -195,4 +196,5 @@ public class TextEditingTargetFindReplace
    private FindReplace findReplace_;
    private FindReplaceBar findReplaceBar_;
    private ToolbarButton findReplaceButton_;
+   private static final EditorsTextConstants constants_ = GWT.create(EditorsTextConstants.class);
 }

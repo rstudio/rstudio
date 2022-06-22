@@ -1,7 +1,7 @@
 /*
  * GitReviewPanel.java
  *
- * Copyright (C) 2021 by RStudio, PBC
+ * Copyright (C) 2022 by RStudio, PBC
  *
  * Unless you have received this program directly from RStudio pursuant
  * to the terms of a commercial license agreement with RStudio, then
@@ -57,6 +57,7 @@ import org.rstudio.studio.client.common.vcs.StatusAndPath;
 import org.rstudio.studio.client.workbench.commands.Commands;
 import org.rstudio.studio.client.workbench.prefs.model.UserPrefs;
 import org.rstudio.studio.client.workbench.views.vcs.CheckoutBranchToolbarButton;
+import org.rstudio.studio.client.workbench.views.vcs.ViewVcsConstants;
 import org.rstudio.studio.client.workbench.views.vcs.common.ChangelistTable;
 import org.rstudio.studio.client.workbench.views.vcs.common.diff.ChunkOrLine;
 import org.rstudio.studio.client.workbench.views.vcs.common.diff.LineTablePresenter;
@@ -225,17 +226,17 @@ public class GitReviewPanel extends ResizeComposite implements Display
       splitPanel_ = new SplitLayoutPanel(4);
       splitPanelCommit_ = new SplitLayoutPanel(4);
 
-      commitButton_ = new ThemedButton("Commit");
+      commitButton_ = new ThemedButton(constants_.commitCapitalized());
       commitButton_.addStyleName(RES.styles().commitButton());
 
       changelist_ = changelist.getView();
       lines_ = diffPane;
       lines_.getElement().setTabIndex(-1);
 
-      overrideSizeWarning_ = new SizeWarningWidget("diff");
+      overrideSizeWarning_ = new SizeWarningWidget(constants_.diff());
 
-      topToolbar_ = new Toolbar("Git Review");
-      diffToolbar_ = new Toolbar("Git Diff");
+      topToolbar_ = new Toolbar(constants_.gitReviewCapitalized());
+      diffToolbar_ = new Toolbar(constants_.gitDiffCapitalized());
 
       changelist.setSelectFirstItemByDefault(true);
 
@@ -245,7 +246,7 @@ public class GitReviewPanel extends ResizeComposite implements Display
       topToolbar_.addStyleName(RES.styles().toolbar());
       topToolbar_.getWrapper().addStyleName(RES.styles().toolbarInnerWrapper());
 
-      switchViewButton_ = new LeftRightToggleButton("Changes", "History", true);
+      switchViewButton_ = new LeftRightToggleButton(constants_.changesCapitalized(), constants_.historyCapitalized(), true);
       topToolbar_.addLeftWidget(switchViewButton_);
 
       topToolbar_.addLeftWidget(branchToolbarButton);
@@ -268,7 +269,7 @@ public class GitReviewPanel extends ResizeComposite implements Display
       topToolbar_.addLeftSeparator();
 
       stageFilesButton_ = topToolbar_.addLeftWidget(new ToolbarButton(
-            "Stage",
+            constants_.stageCapitalized(),
             ToolbarButton.NoTitle,
             new ImageResource2x(RES.stage2x()),
             (ClickHandler) null));
@@ -276,13 +277,13 @@ public class GitReviewPanel extends ResizeComposite implements Display
       topToolbar_.addLeftSeparator();
 
       revertFilesButton_ = topToolbar_.addLeftWidget(new ToolbarButton(
-            "Revert",
+            constants_.revertCapitalized(),
             ToolbarButton.NoTitle,
             commands.vcsRevert().getImageResource(),
             (ClickHandler) null));
 
       ignoreButton_ = topToolbar_.addLeftWidget(new ToolbarButton(
-            "Ignore", ToolbarButton.NoTitle, new ImageResource2x(RES.ignore2x())));
+            constants_.ignoreCapitalized(), ToolbarButton.NoTitle, new ImageResource2x(RES.ignore2x())));
 
       topToolbar_.addRightWidget(commands.vcsPull().createToolbarButton());
 
@@ -297,13 +298,13 @@ public class GitReviewPanel extends ResizeComposite implements Display
       toolbarWrapper_.setCellWidth(diffToolbar_, "100%");
 
       stageAllButton_ = diffToolbar_.addLeftWidget(new ToolbarButton(
-            "Stage All", ToolbarButton.NoTitle, new ImageResource2x(RES.stage2x())));
+            constants_.stageAllCapitalized(), ToolbarButton.NoTitle, new ImageResource2x(RES.stage2x())));
       diffToolbar_.addLeftSeparator();
       discardAllButton_ = diffToolbar_.addLeftWidget(new ToolbarButton(
-            "Discard All", ToolbarButton.NoTitle, new ImageResource2x(RES.discard2x())));
+            constants_.discardAllCapitalized(), ToolbarButton.NoTitle, new ImageResource2x(RES.discard2x())));
 
       unstageAllButton_ = diffToolbar_.addLeftWidget(new ToolbarButton(
-            "Unstage All", ToolbarButton.NoTitle, new ImageResource2x(RES.discard2x())));
+            constants_.unstageAllCapitalized(), ToolbarButton.NoTitle, new ImageResource2x(RES.discard2x())));
       unstageAllButton_.setVisible(false);
 
       lblCommit_.setFor(commitMessage_);
@@ -617,7 +618,7 @@ public class GitReviewPanel extends ResizeComposite implements Display
       final ToolbarPopupMenu menu = new ToolbarPopupMenu();
 
       MenuItem stageMenu = new MenuItem(
-           AppCommand.formatMenuLabel(new ImageResource2x(RES.stage2x()), "Stage", ""),
+           AppCommand.formatMenuLabel(new ImageResource2x(RES.stage2x()), constants_.stageCapitalized(), ""),
            true,
            new Command() {
               @Override
@@ -636,7 +637,7 @@ public class GitReviewPanel extends ResizeComposite implements Display
 
 
      MenuItem revertMenu = new MenuItem(
-           AppCommand.formatMenuLabel(new ImageResource2x(RES.discard2x()), "Revert...", ""),
+           AppCommand.formatMenuLabel(new ImageResource2x(RES.discard2x()), constants_.revertEllipses(), ""),
            true,
            new Command() {
               @Override
@@ -650,7 +651,7 @@ public class GitReviewPanel extends ResizeComposite implements Display
          menu.addItem(revertMenu);
 
       MenuItem ignoreMenu = new MenuItem(
-            AppCommand.formatMenuLabel(new ImageResource2x(RES.ignore2x()), "Ignore...", ""),
+            AppCommand.formatMenuLabel(new ImageResource2x(RES.ignore2x()), constants_.ignoreEllipses(), ""),
             true,
             new Command() {
                @Override
@@ -665,7 +666,7 @@ public class GitReviewPanel extends ResizeComposite implements Display
 
       menu.addSeparator();
       MenuItem openMenu = new MenuItem(
-                           AppCommand.formatMenuLabel(null, "Open File", ""),
+                           AppCommand.formatMenuLabel(null, constants_.openFileCapitalized(), ""),
                            true,
                            openSelectedCommand);
       menu.addItem(openMenu);
@@ -708,8 +709,8 @@ public class GitReviewPanel extends ResizeComposite implements Display
       }
       else
       {
-         lblCharCount_.setText(length + " characters");
-         liveRegionMessage = length + " characters in message";
+         lblCharCount_.setText(constants_.lengthCharacters(length));
+         liveRegionMessage = constants_.lengthCharactersInMessage(length);
       }
 
       // Debounce an update to the accessible character count
@@ -777,4 +778,5 @@ public class GitReviewPanel extends ResizeComposite implements Display
    static {
       RES.styles().ensureInjected();
    }
+   private static final ViewVcsConstants constants_ = GWT.create(ViewVcsConstants.class);
 }

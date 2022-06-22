@@ -1,7 +1,7 @@
 /*
  * SessionConsoleProcess.cpp
  *
- * Copyright (C) 2021 by RStudio, PBC
+ * Copyright (C) 2022 by RStudio, PBC
  *
  * Unless you have received this program directly from RStudio pursuant
  * to the terms of a commercial license agreement with RStudio, then
@@ -27,7 +27,10 @@
 #include "modules/SessionWorkbench.hpp"
 #include "SessionConsoleProcessTable.hpp"
 
+#include "modules/SessionReticulate.hpp"
+
 using namespace rstudio::core;
+using namespace boost::placeholders;
 
 namespace rstudio {
 namespace session {
@@ -106,15 +109,16 @@ core::system::ProcessOptions ConsoleProcess::createTerminalProcOptions(
 #else
    options.reportHasSubprocs = true;
 #endif
+   options.callbacksRequireMainThread = false; // to allow use of terminal from offline thread
    options.trackCwd = true;
    options.cols = procInfo.getCols();
    options.rows = procInfo.getRows();
 
-   if (prefs::userPrefs().busyDetection() == kBusyDetectionWhitelist)
+   if (prefs::userPrefs().busyDetection() == kBusyDetectionList)
    {
-      std::vector<std::string> whitelist;
-      prefs::userPrefs().busyWhitelist().toVectorString(whitelist);
-      options.subprocWhitelist = whitelist;
+      std::vector<std::string> exclusionList;
+      prefs::userPrefs().busyExclusionList().toVectorString(exclusionList);
+      options.ignoredSubprocs = exclusionList;
    }
 
    // set path to shell
@@ -186,6 +190,14 @@ void ConsoleProcess::commonInit()
    // always redirect stderr to stdout so output is interleaved
    options_.redirectStdErrToStdOut = true;
 
+   // ensure that we have an environment block to modify
+   if (!options_.environment)
+   {
+      core::system::Options childEnv;
+      core::system::environment(&childEnv);
+      options_.environment = childEnv;
+   }
+
    if (interactionMode() != InteractionNever || options_.smartTerminal)
    {
 #ifdef _WIN32
@@ -216,15 +228,7 @@ void ConsoleProcess::commonInit()
       }
       else // terminal
       {
-         // undefine TERM, as it puts git-bash in a mode that winpty doesn't
-         // support; was set in SessionMain.cpp::main to support color in
-         // the R Console
-         if (!options_.environment)
-         {
-            core::system::Options childEnv;
-            core::system::environment(&childEnv);
-            options_.environment = childEnv;
-         }
+         // undefine TERM, as it puts git-bash in a mode that winpty doesn't support;
          core::system::unsetenv(&(options_.environment.get()), "TERM");
 
          // request a pseudoterminal if this is an interactive console process
@@ -240,15 +244,7 @@ void ConsoleProcess::commonInit()
       options_.pseudoterminal = core::system::Pseudoterminal(options_.cols,
                                                              options_.rows);
 
-      // define TERM (but first make sure we have an environment
-      // block to modify)
-      if (!options_.environment)
-      {
-         core::system::Options childEnv;
-         core::system::environment(&childEnv);
-         options_.environment = childEnv;
-      }
-
+      // define TERM
       core::system::setenv(&(options_.environment.get()), "TERM",
                            options_.smartTerminal ? core::system::kSmartTerm :
                                                     core::system::kDumbTerm);
@@ -262,6 +258,9 @@ void ConsoleProcess::commonInit()
                            module_context::activeSession().id());
 #endif
    }
+   
+   // this runs in the terminal pane as a child process of this process
+   core::system::setenv(&(options_.environment.get()), "RSTUDIO_CHILD_PROCESS_PANE", "terminal");
    
    // When we retrieve from outputBuffer, we only want complete lines. Add a
    // dummy \n so we can tell the first line is a complete line.
@@ -695,12 +694,12 @@ void ConsoleProcess::onExit(int exitCode)
    onExit_(exitCode);
 }
 
-void ConsoleProcess::onHasSubprocs(bool hasNonWhitelistSubprocs, bool hasWhitelistSubprocs)
+void ConsoleProcess::onHasSubprocs(bool hasNonIgnoredSubprocs, bool hasIgnoredSubprocs)
 {
-   whitelistChildProc_ = hasWhitelistSubprocs;
-   if (hasNonWhitelistSubprocs != procInfo_->getHasChildProcs() || !childProcsSent_)
+   ignoredChildProc_ = hasIgnoredSubprocs;
+   if (hasNonIgnoredSubprocs != procInfo_->getHasChildProcs() || !childProcsSent_)
    {
-      procInfo_->setHasChildProcs(hasNonWhitelistSubprocs);
+      procInfo_->setHasChildProcs(hasNonIgnoredSubprocs);
 
       json::Object subProcs;
       subProcs["handle"] = handle();
@@ -817,25 +816,24 @@ bool augmentTerminalProcessPython(ConsoleProcessPtr cp)
    if (!prefs::userPrefs().terminalPythonIntegration())
       return false;
    
-   // find currently-configured version of Python
-   std::string reticulatePython = core::system::getenv("RETICULATE_PYTHON");
-   if (reticulatePython.empty())
-   {
-      Error error = r::exec::RFunction(".rs.inferReticulatePython")
-            .call(&reticulatePython);
+   // forward RETICULATE_PYTHON_FALLBACK if set
+   std::string reticulatePythonFallback = modules::reticulate::reticulatePython();
 
-      if (error)
-         LOG_ERROR(error);
-
-      if (!reticulatePython.empty())
-      {
-         cp->setenv("RETICULATE_PYTHON", reticulatePython);
-      }
-   }
+   if (!reticulatePythonFallback.empty())
+      cp->setenv("RETICULATE_PYTHON_FALLBACK", reticulatePythonFallback);
    
+   // forward CONDA_PREFIX if set
+   // use custom environment variable name since the user profile
+   // might override this to use the 'base' environment by default;
+   // our terminal hooks ensure we 'clean up' after whatever the
+   // user profile might've done
+   std::string condaPrefix = core::system::getenv("CONDA_PREFIX");
+   if (!condaPrefix.empty())
+      cp->setenv("_RS_CONDA_PREFIX", condaPrefix);
+
    // return true if we have a configured version of python
    // (indicating that we want terminal hooks to be installed)
-   return !reticulatePython.empty();
+   return !reticulatePythonFallback.empty();
 }
 
 void useTerminalHooks(ConsoleProcessPtr cp)

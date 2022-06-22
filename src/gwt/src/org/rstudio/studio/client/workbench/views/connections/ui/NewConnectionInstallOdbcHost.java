@@ -1,7 +1,7 @@
 /*
  * NewConnectionInstallOdbcHost.java
  *
- * Copyright (C) 2021 by RStudio, PBC
+ * Copyright (C) 2022 by RStudio, PBC
  *
  * Unless you have received this program directly from RStudio pursuant
  * to the terms of a commercial license agreement with RStudio, then
@@ -31,6 +31,7 @@ import org.rstudio.studio.client.server.ServerError;
 import org.rstudio.studio.client.server.ServerRequestCallback;
 import org.rstudio.studio.client.server.Void;
 import org.rstudio.studio.client.server.VoidServerRequestCallback;
+import org.rstudio.studio.client.workbench.views.connections.ConnectionsConstants;
 import org.rstudio.studio.client.workbench.views.connections.model.ConnectionOptions;
 import org.rstudio.studio.client.workbench.views.connections.model.ConnectionsServerOperations;
 import org.rstudio.studio.client.workbench.views.connections.model.NewConnectionInfo;
@@ -169,7 +170,7 @@ public class NewConnectionInstallOdbcHost extends Composite
          {
             Debug.logError(error);
             globalDisplay_.showErrorMessage(
-               "Installation failed",
+               constants_.installationFailedCaption(),
                error.getUserMessage());
             
             unregisterHandlers();
@@ -179,7 +180,7 @@ public class NewConnectionInstallOdbcHost extends Composite
 
    private void installOdbcDriver()
    {
-      label_.setText("The " + info_.getName() + " driver is being installed...");
+      label_.setText(constants_.installOdbcDriverText(info_.getName()));
       
       server_.installOdbcDriver(
          info_.getName(), 
@@ -197,7 +198,7 @@ public class NewConnectionInstallOdbcHost extends Composite
                      public void onProcessExit(ProcessExitEvent event)
                      {
                         if (event.getExitCode() != 0) {
-                           label_.setText("Installation for the " + info_.getName() + " driver failed with status " + event.getExitCode() + ".");
+                           label_.setText(constants_.installationFailedMessage(info_.getName(), event.getExitCode()));
                         }
                         else {
                            server_.getOdbcConnectionContext(
@@ -208,13 +209,13 @@ public class NewConnectionInstallOdbcHost extends Composite
                                  {
                                     if (!StringUtil.isNullOrEmpty(info.getError())) {
                                        globalDisplay_.showErrorMessage(
-                                          "Installation failed",
+                                          constants_.installationFailedCaption(),
                                           info.getError());
 
                                        label_.setText(info.getError());
                                     }
                                     else {
-                                       label_.setText("The " + info_.getName() + " driver is now installed!");
+                                       label_.setText(constants_.driverInstalledText(info.getName()));
                                        nextPageEnabledOperation_.execute(true);
                                        driverInstalled_ = true;
 
@@ -227,7 +228,7 @@ public class NewConnectionInstallOdbcHost extends Composite
                                  {
                                     Debug.logError(error);
                                     globalDisplay_.showErrorMessage(
-                                       "Installation failed",
+                                       constants_.installationFailedCaption(),
                                        error.getMessage());
                                  }
                               }
@@ -242,7 +243,7 @@ public class NewConnectionInstallOdbcHost extends Composite
             {
                Debug.logError(error);
                globalDisplay_.showErrorMessage(
-                  "Installation failed",
+                  constants_.installationFailedCaption(),
                   error.getUserMessage());
             }
          });
@@ -304,4 +305,6 @@ public class NewConnectionInstallOdbcHost extends Composite
    private Boolean driverInstalled_ = false;
 
    private ConnectionOptions options_;
+
+   private static final ConnectionsConstants constants_ = GWT.create(ConnectionsConstants.class);
 }

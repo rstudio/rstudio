@@ -1,7 +1,7 @@
 /*
  * format.ts
  *
- * Copyright (C) 2021 by RStudio, PBC
+ * Copyright (C) 2022 by RStudio, PBC
  *
  * Unless you have received this program directly from RStudio pursuant
  * to the terms of a commercial license agreement with RStudio, then
@@ -35,5 +35,7 @@ export interface EditorHugoExtensions {
 
 export const kBookdownDocType = 'bookdown';
 export const kHugoDocType = 'hugo';
+export const kQuartoDocType = 'quarto';
+export const kPresentationDocType = 'presentation';
 
-export type EditorExtendedDocType = 'bookdown' | 'hugo';
+export type EditorExtendedDocType = 'bookdown' | 'hugo' | 'quarto' | 'presentation';

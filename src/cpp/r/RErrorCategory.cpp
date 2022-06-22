@@ -1,7 +1,7 @@
 /*
  * RErrorCategory.cpp
  *
- * Copyright (C) 2021 by RStudio, PBC
+ * Copyright (C) 2022 by RStudio, PBC
  *
  * Unless you have received this program directly from RStudio pursuant
  * to the terms of a commercial license agreement with RStudio, then
@@ -84,7 +84,7 @@ std::string RErrorCategory::message( int ev ) const
 core::Error rCodeExecutionError(const std::string& errMsg, 
                                 const core::ErrorLocation& location)
 {
-   core::Error error(errc::CodeExecutionError, location);
+   core::Error error(errc::CodeExecutionError, errMsg, location);
    error.addProperty("errormsg", errMsg);
    return error;
 }

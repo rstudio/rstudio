@@ -1,7 +1,7 @@
 /*
  * MessageDialogImages.java
  *
- * Copyright (C) 2021 by RStudio, PBC
+ * Copyright (C) 2022 by RStudio, PBC
  *
  * Unless you have received this program directly from RStudio pursuant
  * to the terms of a commercial license agreement with RStudio, then
@@ -17,28 +17,30 @@ package org.rstudio.core.client.widget.images;
 import com.google.gwt.core.client.GWT;
 import com.google.gwt.resources.client.ClientBundle;
 import com.google.gwt.resources.client.ImageResource;
+import org.rstudio.core.client.CoreClientConstants;
 
 public interface MessageDialogImages extends ClientBundle
 {
     MessageDialogImages INSTANCE = GWT.create(MessageDialogImages.class);
+    static final CoreClientConstants constants_ = GWT.create(CoreClientConstants.class);
 
    @Source("dialog_info_2x.png")
    ImageResource dialog_info2x();
-   String DIALOG_INFO_TEXT = "Info";
+   String DIALOG_INFO_TEXT = constants_.dialogInfoText();
 
    @Source("dialog_error_2x.png")
    ImageResource dialog_error2x();
-   String DIALOG_ERROR_TEXT = "Error";
+   String DIALOG_ERROR_TEXT = constants_.dialogErrorText();
 
    @Source("dialog_warning_2x.png")
    ImageResource dialog_warning2x();
-   String DIALOG_WARNING_TEXT = "Warning";
+   String DIALOG_WARNING_TEXT = constants_.dialogWarningText();
 
    @Source("dialog_question_2x.png")
    ImageResource dialog_question2x();
-   String DIALOG_QUESTION_TEXT = "Question";
+   String DIALOG_QUESTION_TEXT = constants_.dialogQuestionText();
 
    @Source("dialog_popup_blocked_2x.png")
    ImageResource dialog_popup_blocked2x();
-   String DIALOG_POPUP_BLOCKED_TEXT = "Popup Blocked";
+   String DIALOG_POPUP_BLOCKED_TEXT = constants_.dialogPopupBlockedText();
 }

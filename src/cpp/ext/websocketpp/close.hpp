@@ -241,7 +241,7 @@ namespace status {
             case invalid_payload:
                 return "Invalid payload";
             case policy_violation:
-                return "Policy violoation";
+                return "Policy violation";
             case message_too_big:
                 return "Message too big";
             case extension_required:

@@ -1,7 +1,7 @@
 /*
  * RmdOutput.java
  *
- * Copyright (C) 2021 by RStudio, PBC
+ * Copyright (C) 2022 by RStudio, PBC
  *
  * Unless you have received this program directly from RStudio pursuant
  * to the terms of a commercial license agreement with RStudio, then
@@ -17,6 +17,7 @@ package org.rstudio.studio.client.rmarkdown;
 import java.util.Map;
 import java.util.HashMap;
 
+import com.google.gwt.core.client.GWT;
 import org.rstudio.core.client.CommandWithArg;
 import org.rstudio.core.client.StringUtil;
 import org.rstudio.core.client.command.CommandBinder;
@@ -477,7 +478,8 @@ public class RmdOutput implements RmdRenderStartedEvent.Handler,
 
          // open a new one with the same parameters
          outputFrame_ = createOutputFrame(newViewerType);
-         outputFrame_.showRmdPreview(params, true);
+         if (outputFrame_ != null)
+            outputFrame_.showRmdPreview(params, true);
       }
       else if (outputFrame_ != null &&
                outputFrame_.getWindowObject() == null &&
@@ -520,9 +522,8 @@ public class RmdOutput implements RmdRenderStartedEvent.Handler,
             @Override
             public void onError(ServerError error)
             {
-               globalDisplay_.showErrorMessage("Shiny Terminate Failed",
-                     "The Shiny document " + shinyDoc_.getFile() + " needs to " +
-                     "be stopped before the document can be rendered.");
+               globalDisplay_.showErrorMessage(constants_.shinyTerminalErrorCaption(),
+                     constants_.shinyTerminalErrorMsg(shinyDoc_.getFile()));
             }
          });
       }
@@ -564,7 +565,8 @@ public class RmdOutput implements RmdRenderStartedEvent.Handler,
    private void displayRenderResult(final RmdRenderResult result)
    {
       // don't display anything if user doesn't want to
-      if (prefs_.rmdViewerType().getValue() == UserPrefs.RMD_VIEWER_TYPE_NONE)
+      if (prefs_.rmdViewerType().getValue() == UserPrefs.RMD_VIEWER_TYPE_NONE ||
+          result.getViewerType() == UserPrefs.RMD_VIEWER_TYPE_NONE)
          return;
 
       String extension = FileSystemItem.getExtensionFromPath(
@@ -635,10 +637,8 @@ public class RmdOutput implements RmdRenderStartedEvent.Handler,
          final RmdRenderResult result, final Command onDownload)
    {
       globalDisplay_.showYesNoMessage(GlobalDisplay.MSG_INFO,
-            "R Markdown Render Completed",
-            "R Markdown has finished rendering " +
-            result.getTargetFile() + " to " +
-            result.getOutputFile() + ".",
+            constants_.renderCompletedCaption(),
+              constants_.renderCompletedMsg(result.getTargetFile(), result.getOutputFile()),
             false,
             new ProgressOperation()
             {
@@ -650,8 +650,8 @@ public class RmdOutput implements RmdRenderStartedEvent.Handler,
                }
             },
             null,
-            "Download File",
-            "OK",
+              constants_.yesLabel(),
+              constants_.noLabel(),
             false);
    }
 
@@ -874,4 +874,6 @@ public class RmdOutput implements RmdRenderStartedEvent.Handler,
    public final static int TYPE_STATIC   = 0;
    public final static int TYPE_SHINY    = 1;
    public final static int TYPE_NOTEBOOK = 2;
+
+   private static final RMarkdownConstants constants_ = GWT.create(RMarkdownConstants.class);
 }

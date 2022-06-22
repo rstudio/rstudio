@@ -1,7 +1,7 @@
 /*
  * ConsoleTabPanel.java
  *
- * Copyright (C) 2021 by RStudio, PBC
+ * Copyright (C) 2022 by RStudio, PBC
  *
  * Unless you have received this program directly from RStudio pursuant
  * to the terms of a commercial license agreement with RStudio, then
@@ -32,6 +32,7 @@ import org.rstudio.studio.client.workbench.views.console.ConsoleInterruptButton;
 import org.rstudio.studio.client.workbench.views.console.ConsoleInterruptProfilerButton;
 import org.rstudio.studio.client.workbench.views.console.ConsolePane;
 import org.rstudio.studio.client.workbench.views.console.events.WorkingDirChangedEvent;
+import org.rstudio.studio.client.workbench.views.console.events.ConsoleRestartRCompletedEvent;
 import org.rstudio.studio.client.workbench.views.output.find.FindOutputTab;
 import org.rstudio.studio.client.workbench.views.output.markers.MarkersOutputTab;
 
@@ -70,8 +71,8 @@ public class ConsoleTabPanel extends WorkbenchTabPanel
                           ToolbarButton goToWorkingDirButton,
                           WorkbenchTab testsTab,
                           WorkbenchTab dataTab,
-                          WorkbenchTab jobsTab,
-                          WorkbenchTab launcherJobsTab)
+                          WorkbenchTab backgroundJobsTab,
+                          WorkbenchTab workbenchJobsTab)
    {
       super(owner, parentWindow, "ConsoleTabSet");
       owner_ = owner;
@@ -86,8 +87,8 @@ public class ConsoleTabPanel extends WorkbenchTabPanel
       terminalTab_ = terminalTab;
       testsTab_ = testsTab;
       dataTab_ = dataTab;
-      jobsTab_ = jobsTab;
-      launcherJobsTab_ = launcherJobsTab;
+      backgroundJobsTab_ = backgroundJobsTab;
+      workbenchJobsTab_ = workbenchJobsTab;
       
       RStudioGinjector.INSTANCE.injectMembers(this);
 
@@ -228,31 +229,31 @@ public class ConsoleTabPanel extends WorkbenchTabPanel
             selectTab(0);
       });
 
-      jobsTab.addEnsureVisibleHandler(ensureVisibleEvent ->
+      backgroundJobsTab.addEnsureVisibleHandler(ensureVisibleEvent ->
       {
-         jobsTabVisible_ = true;
+         backgroundJobsTabVisible_ = true;
          managePanels();
          if (ensureVisibleEvent.getActivate())
-            selectTab(jobsTab_);
+            selectTab(backgroundJobsTab_);
       });
-      jobsTab.addEnsureHiddenHandler(ensureHiddenEvent ->
+      backgroundJobsTab.addEnsureHiddenHandler(ensureHiddenEvent ->
       {
-         jobsTabVisible_ = false;
+         backgroundJobsTabVisible_ = false;
          managePanels();
          if (!consoleOnly_)
             selectTab(0);
       });
 
-      launcherJobsTab.addEnsureVisibleHandler(ensureVisibleEvent ->
+      workbenchJobsTab.addEnsureVisibleHandler(ensureVisibleEvent ->
       {
-         launcherJobsTabVisible_ = true;
+         workbenchJobsTabVisible_ = true;
          managePanels();
          if (ensureVisibleEvent.getActivate())
-            selectTab(launcherJobsTab_);
+            selectTab(workbenchJobsTab_);
       });
-      launcherJobsTab.addEnsureHiddenHandler(ensureHiddenEvent ->
+      workbenchJobsTab.addEnsureHiddenHandler(ensureHiddenEvent ->
       {
-         launcherJobsTabVisible_ = false;
+         workbenchJobsTabVisible_ = false;
          managePanels();
          if (!consoleOnly_)
             selectTab(0);
@@ -267,6 +268,12 @@ public class ConsoleTabPanel extends WorkbenchTabPanel
          owner.setSubtitle(path);
       });
 
+      // listen for R session restarts, and update ConsoleInterpreterVersion after event completes
+      events.addHandler(ConsoleRestartRCompletedEvent.TYPE, consoleRestartRCompletedEvent ->
+      {
+         consolePane_.updateConsoleInterpreterVersion();
+      });
+
       // Determine initial visibility of terminal tab
       terminalTabVisible_ = userPrefs_.showTerminalTab().getValue();
       if (terminalTabVisible_ && !session_.getSessionInfo().getAllowShell())
@@ -274,82 +281,82 @@ public class ConsoleTabPanel extends WorkbenchTabPanel
          terminalTabVisible_ = false;
       }
       
-      // Determine initial visibility of local jobs and launcher jobs tabs
-      String jobsTabVisibilitySetting = userPrefs_.jobsTabVisibility().getValue();
-      Command showLauncherTab = () ->
+      // Determine initial visibility of background jobs and workbench jobs tabs
+      String backgroundJobsTabVisibilitySetting = userPrefs_.jobsTabVisibility().getValue();
+      Command showWorkbenchJobsTab = () ->
       {
-         launcherJobsTabVisible_ = userPrefs_.showLauncherJobsTab().getValue();
+         workbenchJobsTabVisible_ = userPrefs_.showLauncherJobsTab().getValue();
 
-         // By default, we don't show the Jobs tab when Launcher tab is visible.
-         // However, if user has explicitly shown or hidden Jobs, we'll
-         // honor that independent of Launcher tabs visibility.
-         switch (jobsTabVisibilitySetting)
+         // By default, we don't show the Background Jobs tab when Workbench Jobs tab is visible.
+         // However, if user has explicitly shown or hidden Background Jobs, we'll
+         // honor that independent of Workbench Jobs tabs visibility.
+         switch (backgroundJobsTabVisibilitySetting)
          {
             default:
             case UserPrefs.JOBS_TAB_VISIBILITY_DEFAULT:
-               jobsTabVisible_ = !launcherJobsTabVisible_;
+               backgroundJobsTabVisible_ = !workbenchJobsTabVisible_;
                break;
 
             case UserPrefs.JOBS_TAB_VISIBILITY_CLOSED:
-               jobsTabVisible_ = false;
+               backgroundJobsTabVisible_ = false;
                break;
 
             case UserPrefs.JOBS_TAB_VISIBILITY_SHOWN:
-               jobsTabVisible_ = true;
+               backgroundJobsTabVisible_ = true;
                break;
          }
       };
 
 
-      if (session_.getSessionInfo().getLauncherJobsEnabled())
+      if (session_.getSessionInfo().getWorkbenchJobsEnabled())
       {
-         showLauncherTab.execute();
+         showWorkbenchJobsTab.execute();
       }
       else
       {
-         Command hideLauncherTab = () ->
+         Command hideWorkbenchJobsTab = () ->
          {
-            launcherJobsTabVisible_ = false;
-            switch (jobsTabVisibilitySetting)
+            workbenchJobsTabVisible_ = false;
+            switch (backgroundJobsTabVisibilitySetting)
             {
                default:
                case UserPrefs.JOBS_TAB_VISIBILITY_DEFAULT:
                case UserPrefs.JOBS_TAB_VISIBILITY_SHOWN:
-                  jobsTabVisible_ = true;
+                  backgroundJobsTabVisible_ = true;
                   break;
 
                case UserPrefs.JOBS_TAB_VISIBILITY_CLOSED:
-                  jobsTabVisible_ = false;
+                  backgroundJobsTabVisible_ = false;
                   break;
             }
          };
 
          if (Desktop.hasDesktopFrame())
          {
-            // if there are session servers defined, we will show the launcher tab
+            // if there are session servers defined, we will show the Workbench Jobs tab
             Desktop.getFrame().getSessionServers(servers ->
             {
                if (servers.length() > 0)
                {
-                  showLauncherTab.execute();
+                  showWorkbenchJobsTab.execute();
                   managePanels();
                }
                else
                {
-                  hideLauncherTab.execute();
+                  hideWorkbenchJobsTab.execute();
                   managePanels();
                }
             });
          }
          else
          {
-            hideLauncherTab.execute();
+            hideWorkbenchJobsTab.execute();
          }
       }
 
       // This ensures the logic in managePanels() works whether starting
       // up with terminal tab on by default or not.
-      consoleOnly_ = terminalTabVisible_ || jobsTabVisible_ || launcherJobsTabVisible_;
+      consoleOnly_ = terminalTabVisible_ || backgroundJobsTabVisible_ || workbenchJobsTabVisible_;
       managePanels();
    }
 
@@ -364,8 +371,8 @@ public class ConsoleTabPanel extends WorkbenchTabPanel
                             !markersTabVisible_ &&
                             !testsTabVisible_ &&
                             !dataTabVisible_ &&
-                            !jobsTabVisible_ &&
-                            !launcherJobsTabVisible_;
+                            !backgroundJobsTabVisible_ &&
+                            !workbenchJobsTabVisible_;
       
       if (consoleOnly)
          owner_.addStyleName(ThemeResources.INSTANCE.themeStyles().consoleOnlyWindowFrame());
@@ -394,10 +401,10 @@ public class ConsoleTabPanel extends WorkbenchTabPanel
             tabs.add(testsTab_);
          if (dataTabVisible_)
             tabs.add(dataTab_);
-         if (jobsTabVisible_)
-            tabs.add(jobsTab_);
-         if (launcherJobsTabVisible_)
-            tabs.add(launcherJobsTab_);
+         if (backgroundJobsTabVisible_)
+            tabs.add(backgroundJobsTab_);
+         if (workbenchJobsTabVisible_)
+            tabs.add(workbenchJobsTab_);
 
          setTabs(tabs);
       }
@@ -492,6 +499,7 @@ public class ConsoleTabPanel extends WorkbenchTabPanel
    private ConsoleInterruptButton consoleInterrupt_;
    private ConsoleInterruptProfilerButton consoleInterruptProfiler_;
    private ConsoleClearButton consoleClearButton_;
+   @SuppressWarnings("unused")
    private ConsoleInterpreterVersion consoleInterpreterVersion_;
    private final ToolbarButton goToWorkingDirButton_;
    private boolean findResultsTabVisible_;
@@ -502,8 +510,8 @@ public class ConsoleTabPanel extends WorkbenchTabPanel
    private boolean testsTabVisible_;
    private final WorkbenchTab dataTab_;
    private boolean dataTabVisible_;
-   private final WorkbenchTab jobsTab_;
-   private boolean jobsTabVisible_;
-   private final WorkbenchTab launcherJobsTab_;
-   private boolean launcherJobsTabVisible_;
+   private final WorkbenchTab backgroundJobsTab_;
+   private boolean backgroundJobsTabVisible_;
+   private final WorkbenchTab workbenchJobsTab_;
+   private boolean workbenchJobsTabVisible_;
 }

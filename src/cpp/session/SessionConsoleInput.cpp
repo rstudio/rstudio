@@ -1,7 +1,7 @@
 /*
  * SessionConsoleInput.cpp
  *
- * Copyright (C) 2021 by RStudio, PBC
+ * Copyright (C) 2022 by RStudio, PBC
  *
  * Unless you have received this program directly from RStudio pursuant
  * to the terms of a commercial license agreement with RStudio, then
@@ -32,6 +32,7 @@
 #include "modules/overlay/SessionOverlay.hpp"
 
 #include <session/SessionModuleContext.hpp>
+#include <session/SessionSuspend.hpp>
 
 #include <r/session/RSession.hpp>
 #include <r/ROptions.hpp>
@@ -55,6 +56,9 @@ std::string s_lastPrompt;
 
 void setExecuting(bool executing)
 {
+   // Executing also prevents suspension
+   suspend::checkBlockingOp(executing, suspend::kExecuting);
+
    s_rProcessingInput = executing;
    module_context::activeSession().setExecuting(executing);
 }
@@ -96,12 +100,15 @@ void consolePrompt(const std::string& prompt, bool addToHistory)
 
 bool canSuspend(const std::string& prompt)
 {
-   return !main_process::haveActiveChildren() && 
-          modules::connections::isSuspendable() &&
-          modules::overlay::isSuspendable() &&
-          modules::environment::isSuspendable() &&
-          modules::jobs::isSuspendable() &&
-          rstudio::r::session::isSuspendable(prompt);
+   bool suspendIsBlocked = false;
+   suspendIsBlocked |= session::suspend::checkBlockingOp(main_process::haveActiveChildren(), suspend::kChildProcess);
+   suspendIsBlocked |= session::suspend::checkBlockingOp(!modules::connections::isSuspendable(), suspend::kConnection);
+   suspendIsBlocked |= session::suspend::checkBlockingOp(!modules::environment::isSuspendable(), suspend::kExternalPointer);
+   suspendIsBlocked |= session::suspend::checkBlockingOp(!modules::jobs::isSuspendable(), suspend::kActiveJob);
+   suspendIsBlocked |= session::suspend::checkBlockingOp(!rstudio::r::session::isSuspendable(prompt), suspend::kCommandPrompt);
+   suspendIsBlocked |= !modules::overlay::isSuspendable();
+
+   return !suspendIsBlocked;
 }
 
 } // anonymous namespace
@@ -285,6 +292,11 @@ void popConsoleInput(rstudio::r::session::RConsoleInput* pConsoleInput)
    fixupPendingConsoleInput();
    *pConsoleInput = s_consoleInputBuffer.front();
    s_consoleInputBuffer.pop_front();
+
+   if (http_methods::protocolDebugEnabled())
+   {
+      LOG_DEBUG_MESSAGE("Handle console_input:     " + pConsoleInput->text);
+   }
 }
 
 } // end anonymous namespace
@@ -297,7 +309,7 @@ bool rConsoleRead(const std::string& prompt,
    // this is an invalid state in a forked (multicore) process
    if (main_process::wasForked())
    {
-      LOG_WARNING_MESSAGE("rConsoleRead called in forked processs");
+      LOG_WARNING_MESSAGE("rConsoleRead called in forked process");
       return false;
    }
 
@@ -364,9 +376,12 @@ bool rConsoleRead(const std::string& prompt,
                pConsoleInput->text);
    }
 
-   ClientEvent promptEvent(client_events::kConsoleWritePrompt, prompt);
-   clientEventQueue().add(promptEvent);
-   enqueueConsoleInput(*pConsoleInput);
+   if (!pConsoleInput->isNoEcho()) 
+   {
+      ClientEvent promptEvent(client_events::kConsoleWritePrompt, prompt);
+      clientEventQueue().add(promptEvent);
+      enqueueConsoleInput(*pConsoleInput);
+   }
 
    // always return true (returning false causes the process to exit)
    return true;

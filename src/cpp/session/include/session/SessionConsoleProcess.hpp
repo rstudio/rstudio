@@ -1,7 +1,7 @@
 /*
  * SessionConsoleProcess.hpp
  *
- * Copyright (C) 2021 by RStudio, PBC
+ * Copyright (C) 2022 by RStudio, PBC
  *
  * Unless you have received this program directly from RStudio pursuant
  * to the terms of a commercial license agreement with RStudio, then
@@ -169,8 +169,8 @@ public:
    std::string getTitle() const { return procInfo_->getTitle(); }
    void deleteLogFile(bool lastLineOnly = false) const;
    void deleteEnvFile() const;
-   void setNotBusy() { procInfo_->setHasChildProcs(false); whitelistChildProc_ = false; }
-   bool getIsBusy() const { return procInfo_->getHasChildProcs() || whitelistChildProc_; }
+   void setNotBusy() { procInfo_->setHasChildProcs(false); ignoredChildProc_ = false; }
+   bool getIsBusy() const { return procInfo_->getHasChildProcs() || ignoredChildProc_; }
    bool getAllowRestart() const { return procInfo_->getAllowRestart(); }
    std::string getChannelMode() const;
    int getTerminalSequence() const { return procInfo_->getTerminalSequence(); }
@@ -213,7 +213,7 @@ private:
    void onStdout(core::system::ProcessOperations& ops,
                  const std::string& output);
    void onExit(int exitCode);
-   void onHasSubprocs(bool hasNonWhitelistSubProcs, bool hasWhitelistSubprocs);
+   void onHasSubprocs(bool hasNonIgnoredSubProcs, bool hasIgnoredSubprocs);
    void reportCwd(const core::FilePath& cwd);
    void processQueuedInput(core::system::ProcessOperations& ops);
 
@@ -256,8 +256,8 @@ private:
    // Has client been notified of state of childProcs_ at least once?
    bool childProcsSent_ = false;
 
-   // Is there a child process matching the whitelist?
-   bool whitelistChildProc_ = false;
+   // Is there a child process matching the ignore list?
+   bool ignoredChildProc_ = false;
 
    // Pending input (writes or ptyInterrupts)
    std::deque<Input> inputQueue_;

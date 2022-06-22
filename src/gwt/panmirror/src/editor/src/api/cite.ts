@@ -1,7 +1,7 @@
 /*
  * cite.ts
  *
- * Copyright (C) 2021 by RStudio, PBC
+ * Copyright (C) 2022 by RStudio, PBC
  *
  * Unless you have received this program directly from RStudio pursuant
  * to the terms of a commercial license agreement with RStudio, then
@@ -17,18 +17,32 @@ import { CSLName, CSLDate, CSL } from './csl';
 import { InsertCiteProps, InsertCiteUI } from './ui-dialogs';
 import { urlForDOI } from './doi';
 
+import pinyin from 'pinyin';
+import { transliterate } from 'transliteration';
+
 export const kInvalidCiteKeyChars = /[\]\[\s@',\\\#}{~%&\$\^_]/g;
 const kCiteIdLeadingLength = 8;
 
 export function createUniqueCiteId(existingIds: string[], baseId: string): string {
   let count = 0;
 
-  // Remove any non-8bit ascii characters
+  // Remove any non-8bit ascii characters, if possible
+  // convert Hanzi characters to ascii
   let asciiOnlyBaseId = '';
+
+  const isHanzi = (char: number) => {
+    return char >= 13312 && char <= 40895;
+  };
+
   for (let i = 0; i < baseId.length; i++) {
     const char = baseId.charCodeAt(i);
     if (char <= 255) {
       asciiOnlyBaseId = asciiOnlyBaseId + String.fromCharCode(char);
+    } else if (isHanzi(char)) {
+      asciiOnlyBaseId = asciiOnlyBaseId + pinyin(String.fromCharCode(char));
+    } else {
+      // Transliterate other non ascii characters to the citekey
+      asciiOnlyBaseId = asciiOnlyBaseId + transliterate(String.fromCharCode(char));
     }
   }
 

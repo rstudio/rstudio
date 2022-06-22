@@ -1,7 +1,7 @@
 /*
  * SessionProjects.cpp
  *
- * Copyright (C) 2021 by RStudio, PBC
+ * Copyright (C) 2022 by RStudio, PBC
  *
  * Unless you have received this program directly from RStudio pursuant
  * to the terms of a commercial license agreement with RStudio, then
@@ -24,6 +24,7 @@
 #include <session/SessionModuleContext.hpp>
 #include <session/SessionProjectTemplate.hpp>
 #include <session/SessionScopes.hpp>
+#include <session/SessionQuarto.hpp>
 #include <session/prefs/UserPrefs.hpp>
 
 #include <r/RExec.hpp>
@@ -42,6 +43,8 @@ namespace projects {
 namespace {
 
 ProjectContext s_projectContext;
+
+core::r_util::ProjectId s_projectId;
 
 
 void onSuspend(Settings*)
@@ -136,7 +139,7 @@ bool findProjectFile(const std::string& path, std::string* pResult)
    // sets that as the result and returns true.
    //
    // Otherwise, looks for an .Rproj file in the specified path as follows:
-   // 
+   //
    // 1. If it finds an .Rproj with same name as folder, returns it:
    //          /home/gary/foo -> /home/gary/foo/foo.Rproj
    //
@@ -180,7 +183,7 @@ Error findProjectInFolder(const json::JsonRpcRequest& request,
    Error error = json::readParams(request.params, &folder);
    if (error)
       return error;
-   
+
    std::string result;
    findProjectFile(folder, &result);
    pResponse->setResult(result);
@@ -196,6 +199,7 @@ Error getNewProjectContext(const json::JsonRpcRequest& request,
    contextJson["packrat_available"] =
          module_context::packratContext().available &&
          module_context::canBuildCpp();
+   contextJson["quarto_capabilities"] = quarto::quartoCapabilities();
    contextJson["working_directory"] = module_context::createAliasedPath(
          r::session::utils::safeCurrentPath());
 
@@ -218,9 +222,9 @@ Error initializeProjectFromTemplate(const FilePath& projectFilePath,
                             "inputs", inputsJson);
    if (error)
       return error;
-   
+
    FilePath projectPath = projectFilePath.getParent();
-   
+
    return r::exec::RFunction(".rs.initializeProjectFromTemplate")
          .addParam(string_utils::utf8ToSystem(projectFilePath.getAbsolutePath()))
          .addParam(string_utils::utf8ToSystem(projectPath.getAbsolutePath()))
@@ -247,10 +251,10 @@ Error createProject(const json::JsonRpcRequest& request,
       return error;
    FilePath projectFilePath = module_context::resolveAliasedPath(projectFile);
 
-   // Shiny application
+   // new shiny or quarto project
    if (!newShinyAppJson.isNull())
    {
-      // error if the shiny app dir already exists
+      // error if the dir already exists
       FilePath appDir = projectFilePath.getParent();
       if (appDir.exists())
          return core::fileExistsError(ERROR_LOCATION);
@@ -260,16 +264,19 @@ Error createProject(const json::JsonRpcRequest& request,
       if (error)
          return error;
 
+      // new shiny project
+
       // copy app.R into the project
       FilePath shinyDir = session::options().rResourcesPath()
                                             .completeChildPath("templates/shiny");
-      
+
       error = shinyDir.completeChildPath("app.R").copy(appDir.completeChildPath("app.R"));
       if (error)
          LOG_ERROR(error);
 
       // add first run actions for the source files
-      addFirstRunDoc(projectFilePath, "app.R");
+      addFirstRunDocs(projectFilePath, { "app.R" });
+
 
       std::string existingProjectFilePath;
       if (!findProjectFile(projectFilePath.getParent().getAbsolutePath(), &existingProjectFilePath))
@@ -284,9 +291,11 @@ Error createProject(const json::JsonRpcRequest& request,
          pResponse->setResult(existingProjectFilePath);
          return Success();
       }
-      
+
+
    }
-   
+
+
    // if we have a custom project template, call that first
    if (!projectTemplateOptions.isNull() &&
        json::isType<json::Object>(projectTemplateOptions))
@@ -295,7 +304,7 @@ Error createProject(const json::JsonRpcRequest& request,
       if (error)
          return error;
    }
-   
+
    // default project scaffolding
    error = projectFilePath.getParent().ensureDirectory();
    if (error)
@@ -310,7 +319,7 @@ Error createProject(const json::JsonRpcRequest& request,
                                        ProjectContext::defaultConfig());
       if (error)
          return error;
-   
+
       return Success();
    }
    else
@@ -324,12 +333,12 @@ Error createProjectFile(const json::JsonRpcRequest& request,
                         json::JsonRpcResponse* pResponse)
 {
    using namespace projects;
-   
+
    std::string projDir;
    Error error = json::readParams(request.params, &projDir);
    if (error)
       return error;
-   
+
    // Resolve the path and ensure it exists
    FilePath projDirPath = module_context::resolveAliasedPath(projDir);
    FilePath projFilePath;
@@ -350,11 +359,11 @@ Error createProjectFile(const json::JsonRpcRequest& request,
                projFilePath,
                ProjectContext::buildDefaults(),
                ProjectContext::defaultConfig());
-      
+
       if (error)
          LOG_ERROR(error);
    }
-   
+
    // Return the name of the discovered and/or created .Rproj filename
    pResponse->setResult(module_context::createAliasedPath(projFilePath));
    return Success();
@@ -374,6 +383,7 @@ json::Object projectConfigJson(const r_util::RProjectConfig& config)
    configJson["enable_code_indexing"] = config.enableCodeIndexing;
    configJson["use_spaces_for_tab"] = config.useSpacesForTab;
    configJson["num_spaces_for_tab"] = config.numSpacesForTab;
+   configJson["use_native_pipe_operator"] = config.useNativePipeOperator;
    configJson["auto_append_newline"] = config.autoAppendNewline;
    configJson["strip_trailing_whitespace"] = config.stripTrailingWhitespace;
    configJson["line_endings"] = config.lineEndings;
@@ -383,6 +393,7 @@ json::Object projectConfigJson(const r_util::RProjectConfig& config)
    configJson["root_document"] = config.rootDocument;
    configJson["build_type"] = config.buildType;
    configJson["package_use_devtools"] = config.packageUseDevtools;
+   configJson["package_clean_before_install"] = config.packageCleanBeforeInstall;
    configJson["package_path"] = config.packagePath;
    configJson["package_install_args"] = config.packageInstallArgs;
    configJson["package_build_args"] = config.packageBuildArgs;
@@ -575,6 +586,7 @@ Error writeProjectConfig(const json::Object& configJson)
                     "enable_code_indexing", config.enableCodeIndexing,
                     "use_spaces_for_tab", config.useSpacesForTab,
                     "num_spaces_for_tab", config.numSpacesForTab,
+                    "use_native_pipe_operator", config.useNativePipeOperator,
                     "default_encoding", config.encoding,
                     "default_sweave_engine", config.defaultSweaveEngine,
                     "default_latex_program", config.defaultLatexProgram,
@@ -624,6 +636,7 @@ Error writeProjectConfig(const json::Object& configJson)
                     configJson,
                     "build_type", config.buildType,
                     "package_use_devtools", config.packageUseDevtools,
+                    "package_clean_before_install", config.packageCleanBeforeInstall,
                     "package_path", config.packagePath,
                     "package_install_args", config.packageInstallArgs,
                     "package_build_args", config.packageBuildArgs,
@@ -671,9 +684,15 @@ Error writeProjectConfig(const json::Object& configJson)
                             "python_type", config.pythonType,
                             "python_version", config.pythonVersion,
                             "python_path", config.pythonPath);
-   
+
    if (error)
       return error;
+
+   // ensure Python path is project-relative
+   FilePath projectDir = s_projectContext.directory();
+   FilePath pythonPath = module_context::resolveAliasedPath(config.pythonPath);
+   if (pythonPath.isWithin(projectDir))
+      config.pythonPath = pythonPath.getRelativePath(projectDir);
 
    // read spelling options
    error = json::readObject(configJson,
@@ -879,7 +898,7 @@ void startup(const std::string& firstProjectPath)
    std::string switchToProject = projSettings.switchToProjectPath();
    FilePath lastProjectPath = projSettings.lastProjectPath();
 
-   // check for explicit project none scope
+   // check for explicit project none scope specified on the command line or desktop via initialProjectPath env var
    if (session::options().sessionScope().isProjectNone() ||
       session::options().initialProjectPath().getAbsolutePath() == kProjectNone)
    {
@@ -920,7 +939,6 @@ void startup(const std::string& firstProjectPath)
    else if (prefs::userPrefs().restoreLastProject() &&
             !lastProjectPath.isEmpty())
    {
-
       // get last project path
       projectFilePath = lastProjectPath;
 
@@ -957,13 +975,51 @@ void startup(const std::string& firstProjectPath)
          module_context::events().onClientInit.connect(boost::bind(onClientInit, openProjectError));
       }
    }
+
+   core::FilePath sessionTmpDir(core::system::getenv(kSessionTmpDirEnvVar));
+   core::FilePath ctxFile = sessionTmpDir.completeChildPath(system::username() + "-d.ctx");
+
+   bool needsCtxFile = options().supportsProjectSharing();
+   if (needsCtxFile)
+      ctxFile.removeIfExists();
+
+   if (options().sessionScope().empty())
+   {
+      // This is single-session mode where the project is discovered from last-project-path and other places
+      // depending on how we are started. The server needs to know the project and session id for routing of
+      // sharing events so that's stored in the "user-d.ctx" file.
+      const core::r_util::ActiveSession& session = module_context::activeSession();
+      core::r_util::ProjectId projectId = session::projectToProjectId(
+               options().userScratchPath(),
+               FilePath(options().getOverlayOption(kSessionSharedStoragePath)),
+               module_context::createAliasedPath(projectFilePath.getParent()));
+      s_projectId = projectId;
+
+#ifndef _WIN32
+      if (needsCtxFile)
+      {
+         std::string sessionId = session.id();
+         std::string sessionCtxStr = projectId.userId() + projectId.id() + ":" + sessionId;
+         core::writeStringToFile(ctxFile, sessionCtxStr);
+
+         // This file is written by the session user and accessed by rserver so needs open read access
+         ctxFile.changeFileMode(FileMode::USER_READ_WRITE_ALL_READ);
+      }
+#endif
+   }
+   else
+   {
+      // multi-session mode where the -p option specified the project, and it's discovered via the stream path
+      // for project sharing events
+      s_projectId = options().sessionScope().projectId();
+   }
 }
 
 SEXP rs_writeProjectFile(SEXP projectFilePathSEXP)
 {
    std::string absolutePath = r::sexp::asUtf8String(projectFilePathSEXP);
    FilePath projectFilePath(absolutePath);
-   
+
    Error error = r_util::writeProjectFile(
             projectFilePath,
             ProjectContext::buildDefaults(),
@@ -981,17 +1037,17 @@ SEXP rs_addFirstRunDoc(SEXP projectFileAbsolutePathSEXP, SEXP docRelativePathsSE
 {
    std::string projectFileAbsolutePath = r::sexp::asString(projectFileAbsolutePathSEXP);
    const FilePath projectFilePath(projectFileAbsolutePath);
-   
+
    std::vector<std::string> docRelativePaths;
    bool success = r::sexp::fillVectorString(docRelativePathsSEXP, &docRelativePaths);
    if (!success)
       return R_NilValue;
-   
+
    for (const std::string& path : docRelativePaths)
    {
       addFirstRunDoc(projectFilePath, path);
    }
-   
+
    return R_NilValue;
 }
 
@@ -999,7 +1055,7 @@ SEXP rs_requestOpenProject(SEXP projectFileSEXP, SEXP newSessionSEXP)
 {
    std::string projectFile = r::sexp::asUtf8String(projectFileSEXP);
    bool newSession = r::sexp::asLogical(newSessionSEXP);
-   
+
    // opening projects in a new session is only supported in desktop, RSP
    if (newSession &&
        options().programMode() == kSessionProgramModeServer &&
@@ -1007,14 +1063,14 @@ SEXP rs_requestOpenProject(SEXP projectFileSEXP, SEXP newSessionSEXP)
    {
       newSession = false;
    }
-   
+
    json::Object data;
    data["project_file"] = projectFile;
    data["new_session"] = newSession;
-   
+
    ClientEvent event(client_events::kRequestOpenProject, data);
    module_context::enqueClientEvent(event);
-   
+
    return R_NilValue;
 }
 
@@ -1024,7 +1080,7 @@ Error initialize()
    RS_REGISTER_CALL_METHOD(rs_writeProjectFile);
    RS_REGISTER_CALL_METHOD(rs_addFirstRunDoc);
    RS_REGISTER_CALL_METHOD(rs_requestOpenProject);
-   
+
    // call project-context initialize
    Error error = s_projectContext.initialize();
    if (error)
@@ -1076,21 +1132,40 @@ ProjectContext& projectContext()
    return s_projectContext;
 }
 
+core::r_util::ProjectId& projectId()
+{
+   return s_projectId;
+}
+
+void addFirstRunDocs(const FilePath& projectFilePath, const std::vector<std::string>& docs)
+{
+   FilePath scratchPath, sharedScratchPath;
+   Error error = computeScratchPaths(
+            projectFilePath,
+            &scratchPath,
+            &sharedScratchPath);
+
+   for(auto doc : docs) {
+      addFirstRunDoc(scratchPath, doc);
+   }
+}
+
+
 json::Array websiteOutputFormatsJson()
 {
    json::Array formatsJson;
    if (projectContext().config().buildType == r_util::kBuildTypeWebsite)
    {
       std::vector<std::string> formats;
-      
+
       Error error = r::exec::RFunction(".rs.getAllOutputFormats")
             .addUtf8Param(projectContext().buildTargetPath())
             .addParam(projectContext().defaultEncoding())
             .call(&formats);
-      
+
       if (error)
          LOG_ERROR(error);
-      
+
       formatsJson = json::toJsonArray(formats);
    }
    return formatsJson;
@@ -1099,4 +1174,3 @@ json::Array websiteOutputFormatsJson()
 } // namespace projects
 } // namespace session
 } // namespace rstudio
-

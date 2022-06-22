@@ -1,7 +1,7 @@
 /*
  * MemoryUsagePieChart.java
  *
- * Copyright (C) 2021 by RStudio, PBC
+ * Copyright (C) 2022 by RStudio, PBC
  *
  * Unless you have received this program directly from RStudio pursuant
  * to the terms of a commercial license agreement with RStudio, then
@@ -14,9 +14,10 @@
  */
 package org.rstudio.studio.client.workbench.views.environment.view;
 
+import com.google.gwt.core.client.GWT;
 import com.google.gwt.user.client.ui.Composite;
-import com.google.gwt.user.client.ui.HasWidgets;
 import org.rstudio.core.client.widget.MiniPieWidget;
+import org.rstudio.studio.client.workbench.views.environment.ViewEnvironmentConstants;
 import org.rstudio.studio.client.workbench.views.environment.model.MemoryUsage;
 
 /**
@@ -27,8 +28,8 @@ public class MemoryUsagePieChart extends Composite
    public MemoryUsagePieChart(MemoryUsage usage)
    {
       pie_ = new MiniPieWidget(
-         "Memory in use: " + usage.getPercentUsed() + "% (source: " + usage.getTotal().getProviderName() + ")",
-         "Pie chart depicting the percentage of total memory in use",
+         constants_.memoryInUse(usage.getPercentUsed(), usage.getTotal().getProviderName()),
+         constants_.pieChartDepictingMemoryInUse(),
          MemUsageWidget.MEMORY_PIE_UNUSED_COLOR);
 
       // Add a segment with the overall usage
@@ -81,4 +82,5 @@ public class MemoryUsagePieChart extends Composite
    }
 
    private final MiniPieWidget pie_;
+   private static final ViewEnvironmentConstants constants_ = GWT.create(ViewEnvironmentConstants.class);
 }

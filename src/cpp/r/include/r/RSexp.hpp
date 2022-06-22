@@ -1,7 +1,7 @@
 /*
  * RSexp.hpp
  *
- * Copyright (C) 2021 by RStudio, PBC
+ * Copyright (C) 2022 by RStudio, PBC
  *
  * Unless you have received this program directly from RStudio pursuant
  * to the terms of a commercial license agreement with RStudio, then
@@ -135,8 +135,9 @@ core::Error extract(SEXP valueSEXP, std::vector<int>* pVector);
 core::Error extract(SEXP valueSEXP, std::string* pString, bool asUtf8 = false);
 core::Error extract(SEXP valueSEXP, std::vector<std::string>* pVector, bool asUtf8 = false);
 core::Error extract(SEXP valueSEXP, std::set<std::string>* pSet, bool asUtf8 = false);
-core::Error extract(SEXP valueSEXP, std::map< std::string, std::set<std::string> >* pMap, bool asUtf8 = false);
+core::Error extract(SEXP valueSEXP, std::map<std::string, std::set<std::string>>* pMap, bool asUtf8 = false);
 core::Error extract(SEXP valueSEXP, core::json::Value* pJson);
+core::Error extract(SEXP valueSEXP, core::FilePath* pFilePath);
 
 // create SEXP from c++ type
 SEXP create(SEXP valueSEXP, Protect* pProtect);
@@ -169,6 +170,7 @@ SEXP create(const std::map<std::string, SEXP> &value,
 // Create a UTF-8 encoded character vector
 SEXP createUtf8(const std::string& data, Protect* pProtect);
 SEXP createUtf8(const core::FilePath& filePath, Protect* pProtect);
+SEXP createUtf8(const std::vector<std::string>& data, Protect* pProtect);
 
 // Create a raw vector (binary data)
 SEXP createRawVector(const std::string& data, Protect* pProtect);
@@ -322,15 +324,9 @@ public:
    SEXP get() const { return sexp_; }
    bool isNil() const { return sexp_ == R_NilValue; }
 
-   typedef void (*unspecified_bool_type)();
-   static void unspecified_bool_true() {}
-   operator unspecified_bool_type() const
+   explicit operator bool() const
    {
-      return isNil() ? 0 : unspecified_bool_true;
-   }
-   bool operator!() const
-   {
-      return isNil();
+      return !isNil();
    }
 
    void releaseNow();

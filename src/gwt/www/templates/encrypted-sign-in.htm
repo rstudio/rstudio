@@ -4,7 +4,7 @@
 #
 # encrypted-sign-in.htm
 #
-# Copyright (C) 2021 by RStudio, PBC
+# Copyright (C) 2022 by RStudio, PBC
 #
 # This program is licensed to you under the terms of version 3 of the
 # GNU Affero General Public License. This program is distributed WITHOUT
@@ -89,7 +89,7 @@
                   <span style="font-size:10px">You will automatically be signed out after #authTimeoutMinutes# minutes of inactivity.</span>
                </p>
             </div>
-            <input type="hidden" name="csrf-token" value="#csrf_token#" />
+            <input type="hidden" name="#csrf_token_meta#" value="#csrf_token#" />
             <input type="hidden" name="appUri" value="#appUri#"/>
             <div class="buttonpanel">
                <button id="signinbutton" class="fancy" type="submit">Sign In</button>
@@ -116,7 +116,7 @@
 
 <form action="#action#" name="realform" method="POST">
    <input type="hidden" name="persist" id="persist" value=""/>
-   <input type="hidden" name="csrf-token" value="#csrf_token#" />
+   <input type="hidden" name="#csrf_token_meta#" value="#csrf_token#" />
    <input type="hidden" name="appUri" value="#appUri#"/>
    <input type="hidden" name="clientPath" id="clientPath" value=""/>
    <input id="package" type="hidden" name="v" value=""/>

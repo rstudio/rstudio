@@ -1,7 +1,7 @@
 /*
  * Job.cpp
  *
- * Copyright (C) 2021 by RStudio, PBC
+ * Copyright (C) 2022 by RStudio, PBC
  *
  * Unless you have received this program directly from RStudio pursuant
  * to the terms of a commercial license agreement with RStudio, then
@@ -29,6 +29,7 @@
 #define kJobStatus      "status"
 #define kJobProgress    "progress"
 #define kJobMax         "max"
+#define kJobConfirmTerm "confirm_term"
 #define kJobState       "state"
 #define kJobType        "type"
 #define kJobCluster     "cluster"
@@ -62,11 +63,13 @@ Job::Job(const std::string& id,
          const std::string& group,
          int progress, 
          int max,
+         bool confirmTermination,
          JobState state,
          JobType type,
          const std::string& cluster,
          bool autoRemove,
          SEXP actions,
+         JobActions cppActions,
          bool show,
          bool saveOutput,
          const std::vector<std::string>& tags):
@@ -79,6 +82,7 @@ Job::Job(const std::string& id,
    cluster_(cluster),
    progress_(progress),
    max_(max),
+   confirmTermination_(confirmTermination),
    recorded_(recorded),
    started_(started),
    completed_(completed),
@@ -87,6 +91,7 @@ Job::Job(const std::string& id,
    saveOutput_(saveOutput),
    show_(show),
    actions_(actions),
+   cppActions_(cppActions),
    tags_(tags)
 {
    setState(state);
@@ -97,6 +102,7 @@ Job::Job():
    type_(JobTypeSession),
    progress_(0),
    max_(0),
+   confirmTermination_(true),
    recorded_(::time(0)),
    started_(0),
    completed_(0),
@@ -106,6 +112,43 @@ Job::Job():
    show_(true),
    actions_(R_NilValue)
 {
+}
+
+Error Job::reset()
+{
+   // if the job is still running, we can't reset it
+   if (started_ > 0 && completed_ == 0)
+   {
+      Error error = systemError(boost::system::errc::operation_in_progress, ERROR_LOCATION);
+      error.addProperty("id", id());
+      error.addProperty("description", "Job cannot be reset while it is running.");
+      return error;
+   }
+
+   // remove the stored output (cache) from the previous run
+   outputCacheFile().removeIfExists();
+
+   // emit a formfeed as job output if the client is listening so that output from the previous run
+   // is cleared
+   if (listening_)
+   {
+      json::Array data;
+      data.push_back(id_);
+      data.push_back(module_context::kCompileOutputNormal);
+      data.push_back("\f");
+      module_context::enqueClientEvent(
+            ClientEvent(client_events::kJobOutput, data));
+   }
+
+   // reset run timers
+   completed_ = 0;
+   started_ = 0;
+
+   // reset progress and state
+   progress_ = 0;
+   state_ = JobIdle;
+
+   return Success();
 }
 
 std::string Job::id() const
@@ -136,6 +179,11 @@ int Job::progress() const
 int Job::max() const
 {
     return max_;
+}
+
+bool Job::confirmTermination() const
+{
+   return confirmTermination_;
 }
 
 JobState Job::state() const
@@ -170,6 +218,7 @@ json::Object Job::toJson() const
    job[kJobStatus]     = status_;
    job[kJobProgress]   = progress_;
    job[kJobMax]        = max_;
+   job[kJobConfirmTerm] = confirmTermination_;
    job[kJobState]      = static_cast<int>(state_);
    job[kJobType]       = static_cast<int>(type_);
    job[kJobCluster]    = cluster_;
@@ -202,6 +251,7 @@ json::Object Job::toJson() const
    json::Array actions;
 
    // if this job has custom actions, send the list to the client
+
    if (!actions_.isNil())
    {
       std::vector<std::string> names;
@@ -215,6 +265,9 @@ json::Object Job::toJson() const
             [](const std::string& val) { return json::Value(val); });
       }
    }
+   std::transform(cppActions_.begin(), cppActions_.end(), std::back_inserter(actions),
+                  [](const JobActions::value_type& pair) { return json::Value(pair.first); });
+
 
    job["actions"] = actions;
    job[kJobTags] = json::toJsonArray(tags_);
@@ -243,6 +296,10 @@ Error Job::fromJson(const json::Object& src, boost::shared_ptr<Job> *pJobOut)
       kJobTags,      pJob->tags_);
    if (error)
       return error;
+
+   // confirmTermination added to schema later so tolerate it being missing
+   pJob->confirmTermination_ = true;
+   json::readObject(src, kJobConfirmTerm, pJob->confirmTermination_);
    
    error = json::readObject(src,
       kJobSaveOutput, pJob->saveOutput_,
@@ -505,6 +562,17 @@ JobState Job::stringAsState(const std::string& state)
 
 Error Job::executeAction(const std::string& action)
 {
+   // first look in the cpp actions
+   JobActions::const_iterator it = std::find_if(cppActions_.begin(), cppActions_.end(),
+                                                [&action](const JobActions::value_type& pair) {
+      return boost::iequals(action, pair.first);
+   });
+   if (it != cppActions_.end())
+   {
+      it->second(id());
+      return Success();
+   }
+
    // find the action in the list of named actions
    SEXP method = R_NilValue;
    Error error = r::sexp::getNamedListSEXP(actions_.get(), action, &method);

@@ -1,7 +1,7 @@
 #
 # Tools.R
 #
-# Copyright (C) 2021 by RStudio, PBC
+# Copyright (C) 2022 by RStudio, PBC
 #
 # Unless you have received this program directly from RStudio pursuant
 # to the terms of a commercial license agreement with RStudio, then
@@ -25,6 +25,12 @@
 assign(".rs.toolsEnv", function()
 {
    .rs.Env
+}, envir = .rs.Env)
+
+# target environment for symbol lookup, with all necessary base packages
+assign(".rs.symbolLookupEnv", function()
+{
+   new.env(parent = .rs.toolsEnv())
 }, envir = .rs.Env)
 
 #' Add a function to the 'tools:rstudio' environment.
@@ -82,7 +88,9 @@ environment(.rs.Env[[".rs.addFunction"]]) <- .rs.Env
 .rs.addFunction("addApiFunction", function(name, FN)
 {
    fullName <- paste("api.", name, sep = "")
-   .rs.addFunction(fullName, FN, envir = globalenv())
+   envir <- .rs.symbolLookupEnv()
+   environment(FN) <- envir
+   .rs.addFunction(fullName, FN, envir = envir)
 })
 
 .rs.addFunction("setVar", function(name, var)
@@ -389,14 +397,14 @@ environment(.rs.Env[[".rs.addFunction"]]) <- .rs.Env
 })
 
 # record an object to a file
-.rs.addFunction( "saveGraphics", function(filename)
+.rs.addFunction("saveGraphics", function(filename)
 {
-   plot = grDevices::recordPlot()
-   save(plot, file=filename)
+   plot <- grDevices::recordPlot()
+   save(plot, file = filename)
 })
 
 # restore an object from a file
-.rs.addFunction( "restoreGraphics", function(filename)
+.rs.addFunction("restoreGraphics", function(filename)
 {
    # load the 'plot' object
    envir <- new.env(parent = emptyenv())
@@ -454,7 +462,19 @@ environment(.rs.Env[[".rs.addFunction"]]) <- .rs.Env
    if (is.null(plotPid) || (plotPid != Sys.getpid()))
       attr(plot, "pid") <- Sys.getpid()
    
-   # we suppressWarnings so that R doesnt print a warning if we restore
+   # if this plot depends on the grid package, and we don't have a graphics
+   # device open, then we'll have to create a new one
+   # https://github.com/rstudio/rstudio/issues/2919
+   for (item in plot) {
+      name <- attr(item, "pkgName", exact = TRUE)
+      if (is.character(name) && name[[1L]] %in% c("grid", "ggplot2")) {
+         if (requireNamespace("grid", quietly = TRUE))
+            grid::grid.newpage()
+         break
+      }
+   }
+   
+   # we suppressWarnings so that R doesn't print a warning if we restore
    # a plot saved from a previous version of R (which will occur if we 
    # do a resume after upgrading the version of R on the server)
    suppressWarnings(grDevices::replayPlot(plot))
@@ -484,6 +504,15 @@ environment(.rs.Env[[".rs.addFunction"]]) <- .rs.Env
 
       .Call("rs_showFile", fileTitle, files[[i]], delete.file)
    }
+})
+
+.rs.addFunction("canonicalizePath", function(path, winslash = "/")
+{
+   file.path(
+      normalizePath(dirname(path), winslash = winslash, mustWork = FALSE),
+      basename(path),
+      fsep = winslash
+   )
 })
 
 # alias for normalizePath function
@@ -562,7 +591,7 @@ environment(.rs.Env[[".rs.addFunction"]]) <- .rs.Env
 {
    # TODO: figure out how to print the args (...) as part of the message
    
-   # run the original function (f). setup condition handlers soley so that
+   # run the original function (f). setup condition handlers solely so that
    # we can correctly print the name of the function called in error
    # and warning messages -- otherwise R prints "original(...)"
    withCallingHandlers(
@@ -1215,6 +1244,178 @@ environment(.rs.Env[[".rs.addFunction"]]) <- .rs.Env
       action   = "append"
    )
       
+})
+
+.rs.addFunction("prependToPath", function(entry)
+{
+   oldPath <- Sys.getenv("PATH")
+   newPath <- paste(normalizePath(entry), oldPath, sep = .Platform$path.sep)
+   Sys.setenv(PATH = newPath)
+})
+
+.rs.addFunction("callSafely", function(call, args)
+{
+   call <- match.fun(call)
+   args <- args[intersect(names(formals(call)), names(args))]
+   envir <- parent.frame()
+   do.call(call, args, envir = envir)
+})
+
+.rs.addFunction("attachConflicts", function(envirs)
+{
+   for (envir in envirs)
+   {
+      # read position
+      pos <- attr(envir, "pos", exact = TRUE)
+      attr(envir, "pos") <- NULL
+      
+      .rs.callSafely(attach, list(
+         what = envir,
+         name = ".conflicts",
+         pos = pos,
+         warn.conflicts = FALSE
+      ))
+   }
+})
+
+.rs.addFunction("detachConflicts", function()
+{
+   # check for .conflicts on the search path
+   pos <- which(search() == ".conflicts")
+   if (length(pos) == 0)
+      return(NULL)
+   
+   # get references to each environment
+   envirs <- lapply(pos, as.environment)
+   for (i in seq_along(envirs))
+      attr(envirs[[i]], "pos") <- pos[[i]]
+   
+   # now detach those from the search path
+   for (i in rev(seq_along(pos)))
+      detach(pos = pos[[i]])
+   
+   # return the environments
+   envirs
+})
+
+.rs.addFunction("heredoc", function(text)
+{
+   # remove leading, trailing whitespace
+   trimmed <- gsub("^\\s*\\n|\\n\\s*$", "", text)
+   
+   # split into lines
+   lines <- strsplit(trimmed, "\n", fixed = TRUE)[[1L]]
+   
+   # compute common indent
+   indent <- regexpr("[^[:space:]]", lines)
+   common <- min(setdiff(indent, -1L))
+   paste(substring(lines, common), collapse = "\n")
+})
+
+.rs.addFunction("bugReport", function(pro = NULL)
+{
+   # collect information about the running version of R / RStudio
+   rstudioInfo <- .rs.api.versionInfo()
+   rstudioVersion <- format(rstudioInfo$long_version)
+   
+   rstudioEdition <- sprintf(
+      "%s [%s]",
+      if (rstudioInfo$mode == "desktop") "Desktop" else "Server",
+      if (is.null(rstudioInfo$edition)) "Open Source" else toupper(rstudioInfo$edition)
+   )
+   
+   rInfo <- utils::sessionInfo()
+   rVersion <- rInfo$R.version$version.string
+   rVersion <- sub("^R version", "", rVersion, fixed = TRUE)
+   osVersion <- rInfo$running
+   
+   rInfoText <- local({
+      op <- options(width = 78)
+      on.exit(options(op), add = TRUE)
+      paste(capture.output(print(rInfo)), collapse = "\n")
+   })
+   
+   # create issue template and fill in the pieces
+   template <- .rs.heredoc("
+      ### System details
+
+          RStudio Edition : %s
+          RStudio Version : %s
+          OS Version      : %s
+          R Version       : %s
+  
+      ### Steps to reproduce the problem
+      
+      ### Describe the problem in detail
+      
+      ### Describe the behavior you expected
+      
+      ---
+      
+      <details>
+      
+      <summary>Session Info</summary>
+      
+      ``` r
+      %s
+      ```
+      
+      </details>
+   ")
+   
+   rendered <- sprintf(template, rstudioVersion, rstudioEdition, osVersion, rVersion, rInfoText)
+   
+   if (rstudioInfo$mode == "desktop") {
+      
+      # on desktop, we copy the text directly to the clipboard
+      text <- paste(rendered, collapse = "\n")
+      .Call("rs_clipboardSetText", text, PACKAGE = "(embedding)")
+      
+      writeLines(.rs.heredoc("
+         * The bug report template has been written to the clipboard.
+         * Please paste the clipboard contents into the issue comment section,
+         * and then fill out the rest of the issue details.
+         *
+      "))
+      
+   } else {
+      
+      # on server, we ask the user to copy the text to the clipboard
+      header <- .rs.heredoc("
+         <!--
+         Please copy the following text to your clipboard,
+         and then click 'Cancel' to close the dialog.
+         -->
+      ")
+      
+      # write generated text to file, then open it in an editor
+      text <- c(header, "", rendered)
+      file <- tempfile("rstudio-bug-report-", fileext = ".html")
+      on.exit(unlink(file), add = TRUE)
+      writeLines(text, con = file)
+      utils::file.edit(file)
+
+   }
+   
+   # if 'pro' wasn't supplied, then try to guess based on the running edition
+   if (is.null(pro))
+      pro <- !is.null(rstudioInfo$edition)
+   
+   # tell the user we're about to navigate away
+   url <- if (pro) {
+      "https://github.com/rstudio/rstudio-pro/issues/new"
+   } else {
+      "https://github.com/rstudio/rstudio/issues/new"
+   }
+   
+   # notify the user
+   fmt <- " * Navigating to '%s' in 3 seconds ... "
+   msg <- sprintf(fmt, url)
+   writeLines(msg)
+   Sys.sleep(3)
+   
+   # perform navigation
+   utils::browseURL(url)
 })
 
 .rs.addFunction("initTools", function()

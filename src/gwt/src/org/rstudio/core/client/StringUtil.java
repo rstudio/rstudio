@@ -1,7 +1,7 @@
 /*
  * StringUtil.java
  *
- * Copyright (C) 2021 by RStudio, PBC
+ * Copyright (C) 2022 by RStudio, PBC
  *
  * Unless you have received this program directly from RStudio pursuant
  * to the terms of a commercial license agreement with RStudio, then
@@ -14,6 +14,7 @@
  */
 package org.rstudio.core.client;
 
+import com.google.gwt.core.client.GWT;
 import com.google.gwt.core.client.JsArrayString;
 import com.google.gwt.i18n.client.DateTimeFormat;
 import com.google.gwt.i18n.client.NumberFormat;
@@ -132,11 +133,11 @@ public class StringUtil
    public static String formatElapsedTime(int seconds)
    {
       if (seconds < 60)
-         return seconds + " second" + (seconds == 1 ? "" : "s");
+         return (seconds == 1 ? constants_.secondLabel(seconds)  : constants_.secondPluralLabel(seconds));
       else if (seconds < 3600)
-         return (seconds / 60) + " minute" + ((seconds / 60) == 1 ? "" : "s");
+         return (seconds / 60) == 1 ? constants_.minuteLabel(seconds / 60) : constants_.minutePluralLabel(seconds / 60);
       else
-         return (seconds / 3600) + " hour" + ((seconds / 3600) == 1 ? "" : "s");
+         return (seconds / 3600) == 1 ? constants_.hourLabel(seconds / 3600) : constants_.hourPluralLabel(seconds / 3600);
    }
 
    /**
@@ -502,7 +503,7 @@ public class StringUtil
       return prefix;
    }
 
-   private static boolean isWhitespace(char c)
+   public static boolean isWhitespace(char c)
    {
       switch (c)
       {
@@ -800,7 +801,7 @@ public class StringUtil
    }
 
 
-   public static boolean isEndOfLineInRStringState(String string)
+   public static boolean isEndOfLineInRStringState(String string, boolean allowInComment)
    {
       if (string == null)
          return false;
@@ -825,7 +826,7 @@ public class StringUtil
             previousChar = string.charAt(i - 1);
          }
 
-         if (currentChar == '#' && !inQuotes)
+         if (!allowInComment && currentChar == '#' && !inQuotes)
          {
             return false;
          }
@@ -1467,6 +1468,11 @@ public class StringUtil
 
       return result;
    }
+   
+   public static final String nullCoalesce(String value, String defaultValue)
+   {
+      return value == null ? defaultValue : value;
+   }
 
    /**
     * Perform a natural order comparison between two strings. Natural ordering
@@ -1489,4 +1495,5 @@ public class StringUtil
                           = DateTimeFormat.getFormat("MMM d, yyyy, h:mm a");
    private static final Pattern RE_INDENT = Pattern.create("^\\s*", "");
    private static final Pattern BASH_RESERVED_CHAR = Pattern.create("[^a-zA-Z0-9,._+@%/-]");
+   private static final CoreClientConstants constants_ = GWT.create(CoreClientConstants.class);
 }

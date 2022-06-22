@@ -1,7 +1,7 @@
 #
 # FindLibR.cmake
 #
-# Copyright (C) 2021 by RStudio, PBC
+# Copyright (C) 2022 by RStudio, PBC
 #
 # This program is licensed to you under the terms of version 3 of the
 # GNU Affero General Public License. This program is distributed WITHOUT
@@ -32,7 +32,7 @@ if(APPLE)
       get_filename_component(_LIBR_LIBRARIES_DIR "${_LIBR_LIBRARIES}" PATH)
       set(LIBR_EXECUTABLE "${_LIBR_LIBRARIES_DIR}/../bin/R")
       execute_process(
-         COMMAND ${LIBR_EXECUTABLE} "--slave" "--vanilla" "-e" "cat(R.home())"
+         COMMAND ${LIBR_EXECUTABLE} "--vanilla" "-s" "-e" "cat(R.home())"
                    OUTPUT_VARIABLE LIBR_HOME
       )
       set(LIBR_HOME ${LIBR_HOME} CACHE PATH "R home directory")
@@ -57,7 +57,7 @@ else()
       # ask R for the home path
       if(NOT LIBR_HOME)
          execute_process(
-            COMMAND ${LIBR_EXECUTABLE} "--slave" "--vanilla" "-e" "cat(R.home())"
+            COMMAND ${LIBR_EXECUTABLE} "--vanilla" "-s" "-e" "cat(R.home())"
                       OUTPUT_VARIABLE LIBR_HOME
          )
          if(LIBR_HOME)
@@ -68,7 +68,7 @@ else()
       # ask R for the include dir
       if(NOT LIBR_INCLUDE_DIRS)
          execute_process(
-            COMMAND ${LIBR_EXECUTABLE} "--slave" "--no-save" "-e" "cat(R.home('include'))"
+            COMMAND ${LIBR_EXECUTABLE} "--no-save" "-s" "-e" "cat(R.home('include'))"
             OUTPUT_VARIABLE LIBR_INCLUDE_DIRS
          )
          if(LIBR_INCLUDE_DIRS)
@@ -79,7 +79,7 @@ else()
       # ask R for the doc dir
       if(NOT LIBR_DOC_DIR)
          execute_process(
-            COMMAND ${LIBR_EXECUTABLE} "--slave" "--no-save" "-e" "cat(R.home('doc'))"
+            COMMAND ${LIBR_EXECUTABLE} "--no-save" "-s" "-e" "cat(R.home('doc'))"
             OUTPUT_VARIABLE LIBR_DOC_DIR
          )
          if(LIBR_DOC_DIR)
@@ -90,13 +90,18 @@ else()
       # ask R for the lib dir
       if(NOT LIBR_LIB_DIR)
          execute_process(
-            COMMAND ${LIBR_EXECUTABLE} "--slave" "--no-save" "-e" "cat(R.home('lib'))"
+            COMMAND ${LIBR_EXECUTABLE} "--no-save" "-s" "-e" "cat(R.home('lib'))"
             OUTPUT_VARIABLE LIBR_LIB_DIR
          )
       endif()
 
    # Find R executable and paths (Win32)
    else()
+
+      # allow environment variable override
+      if(DEFINED ENV{LIBR_HOME})
+         set(LIBR_HOME "$ENV{LIBR_HOME}" CACHE INTERNAL "")
+      endif()
 
       # find the home path
       if(NOT LIBR_HOME)
@@ -109,6 +114,11 @@ else()
          # print message if not found
          if(NOT LIBR_HOME)
             message(STATUS "Unable to locate R home (not written to registry)")
+         endif()
+
+         # make sure path exists
+         if (NOT EXISTS "${LIBR_HOME}")
+            message(STATUS "Path to R found in registry '${LIBR_HOME}' doesn't exist")
          endif()
 
       endif()
@@ -125,10 +135,11 @@ else()
          set(LIBR_ARCH "x64")
          set(LIBRARY_ARCH_HINT_PATH "${LIBR_HOME}/bin/x64")
       endif()
+      message(STATUS "LIBR_HOME: ${LIBR_HOME}")
 
       # call dll2lib.R to ensure export files are generated
       execute_process(
-          
+
          COMMAND
             "${LIBR_HOME}/bin/${LIBR_ARCH}/Rscript.exe"
             "dll2lib.R"
@@ -147,8 +158,9 @@ else()
             LIBR_DLL2LIB_RESULT)
 
       if(NOT LIBR_DLL2LIB_RESULT EQUAL 0)
-         message(STATUS "${LIBR_DLL2LIB_STDOUT}")
-         message(STATUS "${LIBR_DLL2LIB_STDERR}")
+         message(STATUS "Error converting R DLLs")
+         message(STATUS "Output: ${LIBR_DLL2LIB_STDOUT}")
+         message(STATUS "Error: ${LIBR_DLL2LIB_STDERR}")
          message(FATAL_ERROR "Failed to generate .lib files for R DLLs!")
       endif()
 

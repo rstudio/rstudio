@@ -1,7 +1,7 @@
 /*
  * SlideRequestHandler.cpp
  *
- * Copyright (C) 2021 by RStudio, PBC
+ * Copyright (C) 2022 by RStudio, PBC
  *
  * Unless you have received this program directly from RStudio pursuant
  * to the terms of a commercial license agreement with RStudio, then
@@ -310,9 +310,9 @@ bool performKnit(const FilePath& rmdPath,
 
    // args
    std::vector<std::string> args;
-   args.push_back("--slave");
    args.push_back("--no-save");
    args.push_back("--no-restore");
+   args.push_back("-s");
    args.push_back("-e");
    boost::format fmt("library(knitr); "
                      "opts_chunk$set(cache.path='%1%-cache/', "
@@ -448,7 +448,7 @@ std::string fixupLink(const boost::cmatch& match)
          return match[0];
       }
 
-      // bulid the call
+      // build the call
       std::string onClick;
       if (href.size() > colonLoc+2)
       {

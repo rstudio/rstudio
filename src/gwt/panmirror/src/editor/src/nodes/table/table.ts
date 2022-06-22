@@ -1,7 +1,7 @@
 /*
  * table.ts
  *
- * Copyright (C) 2021 by RStudio, PBC
+ * Copyright (C) 2022 by RStudio, PBC
  *
  * Unless you have received this program directly from RStudio pursuant
  * to the terms of a commercial license agreement with RStudio, then
@@ -15,20 +15,18 @@
 
 import { Schema } from 'prosemirror-model';
 import { EditorView } from 'prosemirror-view';
-import { Transaction } from 'prosemirror-state';
+import { Transaction, EditorState } from 'prosemirror-state';
 import { Transform } from 'prosemirror-transform';
 import { tableEditing, columnResizing, goToNextCell, deleteColumn, deleteRow } from 'prosemirror-tables';
+import { sinkListItem, liftListItem } from 'prosemirror-schema-list';
 
 import { findChildrenByType } from 'prosemirror-utils';
 
-import { EditorUI } from '../../api/ui';
 import { Extension, ExtensionContext } from '../../api/extension';
-import { PandocExtensions } from '../../api/pandoc';
 import { BaseKey } from '../../api/basekeys';
 import { ProsemirrorCommand, EditorCommandId, exitNode } from '../../api/command';
 import { TableCapabilities } from '../../api/table';
 import { trTransform } from '../../api/transaction';
-import { PandocCapabilities } from '../../api/pandoc_capabilities';
 
 import {
   insertTable,
@@ -69,7 +67,8 @@ const extension = (context: ExtensionContext): Extension | null => {
     !pandocExtensions.grid_tables &&
     !pandocExtensions.pipe_tables &&
     !pandocExtensions.simple_tables &&
-    !pandocExtensions.multiline_tables
+    !pandocExtensions.multiline_tables &&
+    !pandocExtensions.raw_html
   ) {
     return null;
   }
@@ -94,10 +93,15 @@ const extension = (context: ExtensionContext): Extension | null => {
     commands: (_schema: Schema) => {
       const commands = [
         new ProsemirrorCommand(
-          EditorCommandId.TableInsertTable,
+          EditorCommandId.Table,
           ['Alt-Mod-t'],
           insertTable(capabilities, ui),
           insertTableOmniInsert(ui),
+        ),
+        new ProsemirrorCommand(
+          EditorCommandId.TableInsertTable,
+          [],
+          insertTable(capabilities, ui),
         ),
         new ProsemirrorCommand(EditorCommandId.TableNextCell, ['Tab'], goToNextCell(1)),
         new ProsemirrorCommand(EditorCommandId.TablePreviousCell, ['Shift-Tab'], goToNextCell(-1)),
@@ -138,8 +142,8 @@ const extension = (context: ExtensionContext): Extension | null => {
       const keys = [
         { key: BaseKey.Backspace, command: deleteTableCaption() },
         { key: BaseKey.Enter, command: exitNode(schema.nodes.table_caption, -2, false) },
-        { key: BaseKey.Tab, command: goToNextCell(1) },
-        { key: BaseKey.ShiftTab, command: goToNextCell(-1) },
+        { key: BaseKey.Tab, command: tableTabKey },
+        { key: BaseKey.ShiftTab, command: tableShiftTabKey },
       ];
 
       // turn enter key variations into tab if we don't support multi-line
@@ -169,6 +173,22 @@ const extension = (context: ExtensionContext): Extension | null => {
     },
   };
 };
+
+export function tableTabKey(state: EditorState, dispatch?: (tr: Transaction) => void): boolean {
+  if (sinkListItem(state.schema.nodes.list_item)(state)) {
+    return false;
+  } else {
+    return goToNextCell(1)(state, dispatch);
+  }
+}
+
+export function tableShiftTabKey(state: EditorState, dispatch?: (tr: Transaction) => void): boolean {
+  if (liftListItem(state.schema.nodes.list_item)(state)) {
+    return false;
+  } else {
+    return goToNextCell(-1)(state, dispatch);
+  }
+}
 
 function tableRepairTransform(tr: Transform) {
   const schema = tr.doc.type.schema;

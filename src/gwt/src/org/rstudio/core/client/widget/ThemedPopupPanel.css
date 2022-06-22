@@ -12,7 +12,7 @@
    suggestPopupContent, suggestPopupTop, suggestPopupBottom;
 @external gwt-MenuBar-vertical;
 
-@external rstudio-themes-flat;
+@external safari;
 @external rstudio-themes-dark-menus;
 
 @external menuPopupTop, menuPopupBottom, menuPopupMiddle;
@@ -25,10 +25,16 @@
 @eval THEME_DARKGREY_MENU_BACKGROUND org.rstudio.core.client.theme.ThemeColors.darkGreyMenuBackground;
 @eval THEME_DARKGREY_MENU_BORDER org.rstudio.core.client.theme.ThemeColors.darkGreyMenuBorder;
 
+/* https://github.com/rstudio/rstudio/issues/10821 */
+.safari .themedPopupPanel, .safari .gwt-MenuBarPopup {
+   transform: translateZ(0);
+}
+
 .themedPopupPanel {
    margin: -6px;
    margin-top: 0px;
    z-index: 99999;
+   box-shadow: 0 2px 12px 0 rgba(0,0,0,0.3);
 }
 
 @sprite .themedPopupPanel .popupTopLeft, .menuPopupTopLeft, .suggestPopupTopLeft {
@@ -81,54 +87,54 @@
    z-index: 1000;
 }
 
-.rstudio-themes-flat .gwt-MenuBarPopup,
-.rstudio-themes-flat .gwt-DecoratedPopupPanel,
-.rstudio-themes-flat .gwt-SuggestBoxPopup {
+.gwt-MenuBarPopup,
+.gwt-DecoratedPopupPanel,
+.gwt-SuggestBoxPopup {
    box-shadow: 0px 2px 10px rgba(0, 0, 0, 0.1);
 }
 
-.rstudio-themes-flat .gwt-SuggestBoxPopup {
+.gwt-SuggestBoxPopup {
    margin-top: 3px;
 }
 
-.rstudio-themes-flat .menuPopupMiddleCenter,
-.rstudio-themes-flat .popupMiddleCenter {
+.menuPopupMiddleCenter,
+.popupMiddleCenter {
    padding: 4px;
 }
 
-.rstudio-themes-flat .menuPopupMiddleCenter,
-.rstudio-themes-flat .popupMiddleCenter,
-.rstudio-themes-flat .gwt-SuggestBoxPopup .suggestPopupMiddleCenter {
+.menuPopupMiddleCenter,
+.popupMiddleCenter,
+.gwt-SuggestBoxPopup .suggestPopupMiddleCenter {
    border: solid 1px #a3a8b2;
 }
 
-.rstudio-themes-flat .menuPopupTop,
-.rstudio-themes-flat .popupTop,
-.rstudio-themes-flat .suggestPopupTop {
+.menuPopupTop,
+.popupTop,
+.suggestPopupTop {
    display: none;
 }
 
-.rstudio-themes-flat .menuPopupMiddle .menuPopupMiddleLeft,
-.rstudio-themes-flat .popupMiddle .popupMiddleLeft,
-.rstudio-themes-flat .suggestPopupMiddleLeft {
+.menuPopupMiddle .menuPopupMiddleLeft,
+.popupMiddle .popupMiddleLeft,
+.suggestPopupMiddleLeft {
    display: none;
 }
 
-.rstudio-themes-flat .menuPopupMiddle .menuPopupMiddleRight,
-.rstudio-themes-flat .popupMiddle .popupMiddleRight,
-.rstudio-themes-flat .suggestPopupMiddleRight {
+.menuPopupMiddle .menuPopupMiddleRight,
+.popupMiddle .popupMiddleRight,
+.suggestPopupMiddleRight {
    display: none;
 }
 
-.rstudio-themes-flat .menuPopupBottom,
-.rstudio-themes-flat .popupBottom,
-.rstudio-themes-flat .suggestPopupBottom {
+.menuPopupBottom,
+.popupBottom,
+.suggestPopupBottom {
    display: none;
 }
 
-.rstudio-themes-flat.rstudio-themes-dark-menus .menuPopupMiddleCenter,
-.rstudio-themes-flat.rstudio-themes-dark-menus .themedPopupPanel .popupMiddleCenter,
-.rstudio-themes-flat.rstudio-themes-dark-menus .gwt-SuggestBoxPopup .suggestPopupMiddleCenter {
+.rstudio-themes-dark-menus .menuPopupMiddleCenter,
+.rstudio-themes-dark-menus .themedPopupPanel .popupMiddleCenter,
+.rstudio-themes-dark-menus .gwt-SuggestBoxPopup .suggestPopupMiddleCenter {
    background: THEME_DARKGREY_MENU_BACKGROUND;
    border: solid 1px THEME_DARKGREY_MENU_BORDER;
    color: #f0f0f0;

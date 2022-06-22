@@ -1,7 +1,7 @@
 /*
  * trailing_p.ts
  *
- * Copyright (C) 2021 by RStudio, PBC
+ * Copyright (C) 2022 by RStudio, PBC
  *
  * Unless you have received this program directly from RStudio pursuant
  * to the terms of a commercial license agreement with RStudio, then
@@ -13,18 +13,14 @@
  *
  */
 
-import { Transaction, Selection } from 'prosemirror-state';
-import { Node as ProsemirrorNode, Schema } from 'prosemirror-model';
-import { Transform } from 'prosemirror-transform';
-import { ContentNodeWithPos } from 'prosemirror-utils';
-
+import { Transaction } from 'prosemirror-state';
+import { Schema } from 'prosemirror-model';
 import { Extension } from '../api/extension';
-import { editingRootNode } from '../api/node';
 import { FixupContext } from '../api/fixup';
-import { trTransform } from '../api/transaction';
+import { requiresTrailingP, insertTrailingP } from '../api/trailing_p';
 
 const extension: Extension = {
-  fixups: (schema: Schema) => {
+  fixups: () => {
     return [
       (tr: Transaction, context: FixupContext) => {
         if (context === FixupContext.Load) {
@@ -51,45 +47,5 @@ const extension: Extension = {
     ];
   },
 };
-
-function insertTrailingP(tr: Transaction) {
-  const editingNode = editingRootNode(tr.selection);
-  if (editingNode) {
-    trTransform(tr, insertTrailingPTransform(editingNode));
-  }
-}
-
-function insertTrailingPTransform(editingNode: ContentNodeWithPos) {
-  return (tr: Transform) => {
-    const schema = editingNode.node.type.schema;
-    tr.insert(editingNode.pos + editingNode.node.nodeSize - 1, schema.nodes.paragraph.create());
-  };
-}
-
-function requiresTrailingP(selection: Selection) {
-  const editingRoot = editingRootNode(selection);
-  if (editingRoot) {
-    return !isParagraphNode(editingRoot.node.lastChild) || isDisplayMathNode(editingRoot.node.lastChild);
-  } else {
-    return false;
-  }
-}
-
-function isParagraphNode(node: ProsemirrorNode | null | undefined) {
-  if (node) {
-    const schema = node.type.schema;
-    return node.type === schema.nodes.paragraph;
-  } else {
-    return false;
-  }
-}
-
-function isDisplayMathNode(node: ProsemirrorNode | null | undefined) {
-  if (node && node.firstChild) {
-    return node.childCount === 1 && node.type.schema.marks.math?.isInSet(node.firstChild.marks);
-  } else {
-    return false;
-  }
-}
 
 export default extension;

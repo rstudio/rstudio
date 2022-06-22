@@ -1,7 +1,7 @@
 /*
  * TextEntryModalDialog.java
  *
- * Copyright (C) 2021 by RStudio, PBC
+ * Copyright (C) 2022 by RStudio, PBC
  *
  * Unless you have received this program directly from RStudio pursuant
  * to the terms of a commercial license agreement with RStudio, then
@@ -15,6 +15,7 @@
 package org.rstudio.core.client.widget;
 
 import com.google.gwt.aria.client.Roles;
+import com.google.gwt.core.client.GWT;
 import com.google.gwt.dom.client.Style.Unit;
 
 import com.google.gwt.user.client.ui.CheckBox;
@@ -22,6 +23,7 @@ import com.google.gwt.user.client.ui.PasswordTextBox;
 import com.google.gwt.user.client.ui.TextBox;
 import com.google.gwt.user.client.ui.VerticalPanel;
 import com.google.gwt.user.client.ui.Widget;
+import org.rstudio.core.client.CoreClientConstants;
 import org.rstudio.core.client.ElementIds;
 import org.rstudio.core.client.MessageDisplay;
 import org.rstudio.core.client.StringUtil;
@@ -118,9 +120,9 @@ public class TextEntryModalDialog extends ModalDialog<String>
       if (input.length() == 0 && type_ != MessageDisplay.INPUT_OPTIONAL_TEXT)
       {
          MessageDialog dialog = new MessageDialog(MessageDialog.ERROR,
-                                                  "Error",
-                                                  "You must enter a value.");
-         dialog.addButton("OK", ElementIds.DIALOG_OK_BUTTON, (Operation)null, true, true);
+                                                  constants_.errorCaption(),
+                                                  constants_.validateMessage());
+         dialog.addButton(constants_.okayLabel(), ElementIds.DIALOG_OK_BUTTON, (Operation)null, true, true);
          dialog.showModal();
          textBox_.setFocus(true);
          return false;
@@ -135,9 +137,9 @@ public class TextEntryModalDialog extends ModalDialog<String>
          catch (NumberFormatException nfe)
          {
             MessageDialog dialog = new MessageDialog(MessageDialog.ERROR,
-                                                     "Error",
-                                                     "Not a valid number.");
-            dialog.addButton("OK", ElementIds.DIALOG_OK_BUTTON, (Operation)null, true, true);
+                                                      constants_.errorCaption(),
+                                                     constants_.notValidNumberMessage());
+            dialog.addButton(constants_.okayLabel(), ElementIds.DIALOG_OK_BUTTON, (Operation)null, true, true);
             dialog.showModal();
             textBox_.setFocus(true);
             textBox_.selectAll();
@@ -162,4 +164,5 @@ public class TextEntryModalDialog extends ModalDialog<String>
    private final int selectionIndex_;
    private final int selectionLength_;
    private final int type_;
+   private static final CoreClientConstants constants_ = GWT.create(CoreClientConstants.class);
 }

@@ -1,5 +1,8 @@
 <ui:UiBinder xmlns:ui='urn:ui:com.google.gwt.uibinder'
-             xmlns:g='urn:import:com.google.gwt.user.client.ui'>
+             xmlns:g='urn:import:com.google.gwt.user.client.ui'
+             ui:generateFormat='com.google.gwt.i18n.server.PropertyCatalogFactory'
+             ui:generateKeys="com.google.gwt.i18n.server.keygen.MD5KeyGenerator"
+             ui:generateLocales="default">
    <ui:style>
 
    </ui:style>
@@ -18,329 +21,329 @@ https://github.com/ajaxorg/ace/blob/master/lib/ace/keyboard/vim.js
       <table>
          <tr>
          <td><strong>h, j, k, l</strong></td>
-         <td>Left, down, up, right</td>
+         <td><ui:msg key="motions">Left, down, up, right</ui:msg></td>
          </tr>
          <tr>
          <td><strong>gj, gk</strong></td>
-         <td>Down, up (by screen lines)</td>
+         <td><ui:msg key="downUp">Down, up (by screen lines)</ui:msg></td>
          </tr>
          <tr>
          <td><strong>w, W, e, E</strong></td>
-         <td>Forward to beginning, end of next word</td>
+         <td><ui:msg key="fowardToBeginning">Forward to beginning, end of next word</ui:msg></td>
          </tr>
          <tr>
          <td><strong>b, B, ge, gE</strong></td>
-         <td>Back to beginning, end of previous word</td>
+         <td> <ui:msg key="backToBeginning">Back to beginning, end of previous word</ui:msg></td>
          </tr>
          <tr>
          <td><strong>f<i>x</i>, F<i>x</i></strong></td>
-         <td>Forward, backward to character <i>x</i></td>
+         <td><ui:msg key="backwardToCharacter">Forward, backward to character <i>x</i></ui:msg></td>
          </tr>
          <tr>
          <td><strong>t<i>x</i>, T<i>x</i></strong></td>
-         <td>Forward, backward to before character <i>x</i></td>
+         <td><ui:msg key="backwardToBefore">Forward, backward to before character <i>x</i></ui:msg></td>
          </tr>
          <tr>
          <td><strong>;, ,</strong></td>
-         <td>Repeat last f/t command forward, backward</td>
+         <td><ui:msg key="repeatLast">Repeat last f/t command forward, backward</ui:msg></td>
          </tr>
          <tr>
          <td><strong>^, $</strong></td>
-         <td>To first, last character on line</td>
+         <td><ui:msg key="firstLast">To first, last character on line</ui:msg></td>
          </tr>
          <tr>
          <td><strong>0, _</strong></td>
-         <td>To first column</td>
+         <td><ui:msg key="firstColumn">To first column</ui:msg></td>
          </tr>
          <tr>
          <td><strong>-, +</strong></td>
-         <td>To first character on previous, next line</td>
+         <td><ui:msg key="firstCharacter">To first character on previous, next line</ui:msg></td>
          </tr>
          <tr>
          <td><strong>gg, G</strong></td>
-         <td>To first, last line</td>
+         <td><ui:msg key="firstLastLine">To first, last line</ui:msg></td>
          </tr>
          <tr>
          <td><strong><i>{number}</i>G</strong></td>
-         <td>To line <i>number</i></td>
+         <td><ui:msg key="toLineNumber">To line <i>number</i></ui:msg></td>
          </tr>
          <tr>
          <td><strong>%</strong></td>
-         <td>To matching brace/bracket</td>
+         <td><ui:msg key="matchingBraceBracket">To matching brace/bracket</ui:msg></td>
          </tr>
          <tr>
          <td><strong>'x, `x</strong></td>
-         <td>To mark x</td>
+         <td><ui:msg key="toMarkX">To mark x</ui:msg></td>
          </tr>
          <tr>
          <td><strong>H, M, L</strong></td>
-         <td>To top, middle, bottom of screen</td>
+         <td><ui:msg key="topMiddleBottomScreen">To top, middle, bottom of screen</ui:msg></td>
          </tr>
          <tr>
          <td><strong>Ctrl+U, Ctrl+D</strong></td>
-         <td>Up, down by 1/2 screen</td>
+         <td><ui:msg key="upDownScreen">Up, down by 1/2 screen</ui:msg></td>
          </tr>
          <tr>
          <td><strong>{, }</strong></td>
-         <td>Back, forward by paragraph</td>
+         <td><ui:msg key="backForwardParagraph">Back, forward by paragraph</ui:msg></td>
          </tr>
       </table>
 
-        <h2>Operators</h2>
+        <h2> <ui:msg key="operators">Operators</ui:msg></h2>
         <table>
          <tr>
          <td><strong>d<i>{motion}</i></strong></td>
-         <td>Delete (cut) text</td>
+         <td><ui:msg key="deleteText">Delete (cut) text</ui:msg></td>
          </tr>
          <tr>
          <td><strong>y<i>{motion}</i></strong></td>
-         <td>Yank (copy) text</td>
+         <td> <ui:msg key="yankText">Yank (copy) text</ui:msg></td>
          </tr>
          <tr>
          <td><strong>c<i>{motion}</i></strong></td>
-         <td>Change (cut, insert) text</td>
+         <td> <ui:msg key="changeText">Change (cut, insert) text</ui:msg></td>
          </tr>
          <tr>
          <td><strong>g~<i>{motion}</i></strong></td>
-         <td>Invert text case</td>
+         <td><ui:msg key="invertTextCase">Invert text case</ui:msg></td>
          </tr>
          <tr>
          <td><strong>g~g~</strong></td>
-         <td>Invert current line case</td>
+         <td><ui:msg key="invertCurrentLine">Invert current line case</ui:msg></td>
          </tr>
          <tr>
          <td><strong>&gt;<i>{motion}</i></strong></td>
-         <td>Indent text</td>
+         <td><ui:msg key="indentText">Indent text</ui:msg></td>
          </tr>
          <tr>
          <td><strong>&lt;<i>{motion}</i></strong></td>
-         <td>Unindent text</td>
+         <td><ui:msg key="unindent">Unindent text</ui:msg></td>
          </tr>
          <tr>
          <td><strong>&gt;&gt;, &lt;&lt;</strong></td>
-         <td>Indent, unindent lines</td>
+         <td><ui:msg key="indentUnindent">Indent, unindent lines</ui:msg></td>
          </tr>
         </table>
    </td>
    <td width="33%">
-        <h2>Operator Motions</h2>
+        <h2><ui:msg key="operatorMotions">Operator Motions</ui:msg></h2>
         <table>
          <tr>
          <td><strong>x, X</strong></td>
-         <td>Delete current, previous character</td>
+         <td><ui:msg key="deleteCurrent">Delete current, previous character</ui:msg></td>
          </tr>
          <tr>
          <td><strong>D</strong></td>
-         <td>Delete to end of line</td>
+         <td><ui:msg key="deleteEndOfLine">Delete to end of line</ui:msg></td>
          </tr>
          <tr>
          <td><strong>Y</strong></td>
-         <td>Yank to end of line</td>
+         <td><ui:msg key="yankToEndOfLine">Yank to end of line</ui:msg></td>
          </tr>
          <tr>
          <td><strong>C</strong></td>
-         <td>Change to end of line</td>
+         <td><ui:msg key="changeToEndOfLine">Change to end of line</ui:msg></td>
          </tr>
          <tr>
          <td><strong>~</strong></td>
-         <td>Switch case</td>
+         <td><ui:msg key="switchCase">Switch case</ui:msg></td>
          </tr>
         </table>
 
-        <h2>Actions</h2>
+        <h2><ui:msg key="actions">Actions</ui:msg></h2>
         <table>
            <tr>
            <td><strong>a, A</strong></td>
-           <td>Insert text after cursor, line</td>
+           <td><ui:msg key="insertTextAfterCursor">Insert text after cursor, line</ui:msg></td>
            </tr>
            <tr>
            <td><strong>i, I</strong></td>
-           <td>Insert text before cursor, line</td>
+           <td><ui:msg key="inserTextBeforeCursor">Insert text before cursor, line</ui:msg></td>
            </tr>
            <tr>
            <td><strong>s, S</strong></td>
-           <td>Change character, line</td>
+           <td><ui:msg key="changeCharacter">Change character, line</ui:msg></td>
            </tr>
            <tr>
            <td><strong>o, O</strong></td>
-           <td>Insert line after, before current</td>
+           <td><ui:msg key="insertLineAfter">Insert line after, before current</ui:msg></td>
            </tr>
            <tr>
            <td><strong>dd</strong></td>
-           <td>Delete current line</td>
+           <td><ui:msg key="deleteCurrentLine">Delete current line</ui:msg></td>
            </tr>
            <tr>
            <td><strong>cc</strong></td>
-           <td>Change current line</td>
+           <td><ui:msg key="changeCurrentLine">Change current line</ui:msg></td>
            </tr>
         </table>
 
-        <h2>Other</h2>
+        <h2><ui:msg key="other">Other</ui:msg></h2>
         <table>
          <tr>
          <td><strong>v, V, Ctrl+V</strong></td>
-         <td>Select characters, lines, blocks</td>
+         <td><ui:msg key="selectCharacter">Select characters, lines, blocks</ui:msg></td>
          </tr>
          <tr>
          <td><strong>gv</strong></td>
-         <td>Reselect last selection</td>
+         <td><ui:msg key="reselectLast">Reselect last selection</ui:msg></td>
          </tr>
          <tr>
          <td><strong>p, P</strong></td>
-         <td>Paste after, before cursor</td>
+         <td><ui:msg key="pasteAfter">Paste after, before cursor</ui:msg></td>
          </tr>
          <tr>
          <td><strong>R</strong></td>
-         <td>Replace (overwrite) mode</td>
+         <td><ui:msg key="replaceMode">Replace (overwrite) mode</ui:msg></td>
          </tr>
          <tr>
          <td><strong>r</strong></td>
-         <td>Replace character</td>
+         <td><ui:msg key="replaceCharacter">Replace character</ui:msg></td>
          </tr>
          <tr>
          <td><strong>J</strong></td>
-         <td>Join line with next</td>
+         <td><ui:msg key="joinLine">Join line with next</ui:msg></td>
          </tr>
          <tr>
          <td><strong>u, Ctrl+R</strong></td>
-         <td>Undo, redo</td>
+         <td><ui:msg key="undoRedo">Undo, redo</ui:msg></td>
          </tr>
          <tr>
          <td><strong>mx</strong></td>
-         <td>Create mark x at cursor</td>
+         <td><ui:msg key="createMark">Create mark x at cursor</ui:msg></td>
          </tr>
          <tr>
          <td><strong>K</strong></td>
-         <td>Show help for topic under cursor</td>
+         <td><ui:msg key="showHelp">Show help for topic under cursor</ui:msg></td>
          </tr>
          <tr>
          <td><strong>.</strong></td>
-         <td>Repeat last operation</td>
+         <td><ui:msg key="repeatLastOperation">Repeat last operation</ui:msg></td>
          </tr>
          <tr>
          <td><strong>N<i>{operation}</i></strong></td>
-         <td>Perform <i>operation</i> N times</td>
+         <td><ui:msg key="performOperation">Perform <i>operation</i> N times</ui:msg></td>
          </tr>
          <tr>
          <td><strong>"<i>{register}</i></strong></td>
-         <td>Copy/paste to/from <i>register</i></td>
+         <td><ui:msg key="copyPasteRegister">Copy/paste to/from <i>register</i></ui:msg></td>
          </tr>
          <tr>
          <td><strong>Ctrl+A, Ctrl+X</strong></td>
-         <td>Increment, decrement next number</td>
+         <td><ui:msg key="incrementDecrement">Increment, decrement next number</ui:msg></td>
          </tr>
          <tr>
          <td><strong>Esc, Ctrl+[</strong></td>
-         <td>Leave insert mode</td>
+         <td><ui:msg key="leaveInsertMode">Leave insert mode</ui:msg></td>
          </tr>
          <tr>
          <td><strong>gq</strong></td>
-         <td>Reflow text</td>
+         <td><ui:msg key="reflowText">Reflow text</ui:msg></td>
          </tr>
         </table>
    </td>
    <td width="33%">
-        <h2>Searching</h2>
+        <h2><ui:msg key="searching">Searching</ui:msg></h2>
         <table>
          <tr>
          <td><strong>/text, ?text</strong></td>
-         <td>Search forward, back for <i>text</i></td>
+         <td><ui:msg key="searchForward">Search forward, back for <i>text</i></ui:msg></td>
          </tr>
          <tr>
          <td><strong>*, #</strong></td>
-         <td>Search forward, back for word under cursor</td>
+         <td><ui:msg key="searchFowardWord">Search forward, back for word under cursor</ui:msg></td>
          </tr>
          <tr>
          <td><strong>g*, g#</strong></td>
-         <td>Search forward, back for text under cursor</td>
+         <td><ui:msg key="searchForwardText">Search forward, back for text under cursor</ui:msg></td>
          </tr>
          <tr>
          <td><strong>n, N</strong></td>
-         <td>Go to next, previous search match</td>
+         <td><ui:msg key="goToNext">Go to next, previous search match</ui:msg></td>
          </tr>
         </table>
 
-        <h2>Macros</h2>
+        <h2><ui:msg key="macros">Macros</ui:msg></h2>
         <table>
          <tr>
          <td><strong>q<i>{register}</i>, q</strong></td>
-         <td>Begin, end recording macro to <i>register</i></td>
+         <td><ui:msg key="beginEndRecording">Begin, end recording macro to <i>register</i></ui:msg></td>
          </tr>
          <tr>
          <td><strong>@<i>{register}</i></strong></td>
-         <td>Replay macro in <i>register</i></td>
+         <td><ui:msg key="replayMacro">Replay macro in <i>register</i></ui:msg></td>
          </tr>
         </table>
 
-        <h2>Scrolling</h2>
+        <h2><ui:msg key="scrolling">Scrolling</ui:msg></h2>
         <table>
          <tr>
          <td><strong>Ctrl+E, Ctrl+Y</strong></td>
-         <td>Scroll down, up</td>
+         <td><ui:msg key="scrollDownUp">Scroll down, up</ui:msg></td>
          </tr>
            <tr>
            <td><strong>zz, zt, zb</strong></td>
-           <td>Scroll current line to center, top, bottom</td>
+           <td><ui:msg key="scrollCurrentLine">Scroll current line to center, top, bottom</ui:msg></td>
            </tr>
         </table>
 
-        <h2>Ex Commands</h2>
+        <h2><ui:msg key="exCommands">Ex Commands</ui:msg></h2>
         <table>
          <tr>
          <td><strong>:w, :wq, wq!</strong></td>
-         <td>Save, save and quit, without prompt</td>
+         <td><ui:msg key="saveQuit">Save, save and quit, without prompt</ui:msg></td>
          </tr>
          <tr>
          <td><strong>:q, :bd</strong></td>
-         <td>Close tab</td>
+         <td><ui:msg key="closeTab">Close tab</ui:msg></td>
          </tr>
          <tr>
          <td><strong>:qall</strong></td>
-         <td>Close all tabs</td>
+         <td><ui:msg key="closeAllTabs">Close all tabs</ui:msg></td>
          </tr>
          <tr>
          <td><strong>:bn, :bp</strong></td>
-         <td>Go to previous, next tab</td>
+         <td><ui:msg key="previousNextTab">Go to previous, next tab</ui:msg></td>
          </tr>
          <tr>
          <td><strong>:badd, :e <i>file</i></strong></td>
-         <td>Add new tab, for <i>file</i></td>
+         <td><ui:msg key="addNewTab">Add new tab, for <i>file</i></ui:msg></td>
          </tr>
          <tr>
          <td><strong>:N</strong></td>
-         <td>Go to line N</td>
+         <td><ui:msg key="goToLine">Go to line N</ui:msg></td>
          </tr>
          <tr>
          <td><strong>:R <i>expr</i></strong></td>
-         <td>Evaluate R expression</td>
+         <td><ui:msg key="evaluateR">Evaluate R expression</ui:msg></td>
          </tr>
          <tr>
          <td><strong>:r <i>file</i></strong></td>
-         <td>Insert contents of <i>file</i></td>
+         <td><ui:msg key="insertContents">Insert contents of <i>file</i></ui:msg></td>
          </tr>
          <tr>
          <td><strong>:%s/<i>text</i>/<i>rep</i>/g</strong></td>
-         <td>Replace <i>text</i> with <i>rep</i> in file</td>
+         <td><ui:msg key="replaceTextFile">Replace <i>text</i> with <i>rep</i> in file</ui:msg></td>
          </tr>
          <tr>
          <td><strong>:'&lt;,'&gt;s/<i>text</i>/<i>rep</i>/g</strong></td>
-         <td>Replace in selection</td>
+         <td><ui:msg key="replaceSelection">Replace in selection</ui:msg></td>
          </tr>
          <tr>
          <td><strong>:'&lt;,'&gt;sort</strong></td>
-         <td>Sort selected lines</td>
+         <td><ui:msg key="sortSelectedLines">Sort selected lines</ui:msg></td>
          </tr>
          <tr>
          <td><strong>:help</strong></td>
-         <td>Show this screen</td>
+         <td><ui:msg key="showScreen">Show this screen</ui:msg></td>
          </tr>
         </table>
 
-        <h2>Registers</h2>
+        <h2><ui:msg key="registers">Registers</ui:msg></h2>
         <p>
-        The registers <strong>-</strong>, <strong>a-z</strong>, <strong>A-Z</strong>,
-        and <strong>0-9</strong> are available. Use <strong>:registers</strong>
-        to see current register contents.
+        <ui:msg key="registersAvailable">The registers <strong>-</strong>, <strong>a-z</strong>, <strong>A-Z</strong>,
+            and <strong>0-9</strong> are available. Use <strong>:registers</strong>
+            to see current register contents.</ui:msg>
         </p>
    </td>
  </tr>

@@ -1,7 +1,7 @@
 /*
  * RPubsUploader.java
  *
- * Copyright (C) 2021 by RStudio, PBC
+ * Copyright (C) 2022 by RStudio, PBC
  *
  * Unless you have received this program directly from RStudio pursuant
  * to the terms of a commercial license agreement with RStudio, then
@@ -14,6 +14,7 @@
  */
 package org.rstudio.studio.client.common.rpubs;
 
+import com.google.gwt.core.client.GWT;
 import org.rstudio.core.client.CommandWithArg;
 import org.rstudio.core.client.HandlerRegistrations;
 import org.rstudio.core.client.StringUtil;
@@ -22,6 +23,7 @@ import org.rstudio.core.client.widget.OperationWithInput;
 import org.rstudio.studio.client.application.Desktop;
 import org.rstudio.studio.client.application.events.EventBus;
 import org.rstudio.studio.client.common.GlobalDisplay;
+import org.rstudio.studio.client.common.StudioClientCommonConstants;
 import org.rstudio.studio.client.common.rpubs.events.RPubsUploadStatusEvent;
 import org.rstudio.studio.client.common.rpubs.model.RPubsServerOperations;
 import org.rstudio.studio.client.server.ServerError;
@@ -126,7 +128,7 @@ public class RPubsUploader
                if (progressWindow != null)
                   progressWindow.close();
                
-               new ConsoleProgressDialog("Upload Error Occurred", 
+               new ConsoleProgressDialog(constants_.uploadErrorTitle(),
                      status.getError(),
                      1).showModal();
             }
@@ -161,9 +163,8 @@ public class RPubsUploader
                {
                   onUploadComplete(false);
                   globalDisplay_.showErrorMessage(
-                         "Error",
-                         "Unable to continue " +
-                         "(another publish is currently running)");
+                         constants_.errorCaption(),
+                         constants_.unableToContinueMessage());
                }
             }
             
@@ -171,7 +172,7 @@ public class RPubsUploader
             public void onError(ServerError error)
             {
                onUploadComplete(false);
-               globalDisplay_.showErrorMessage("Error",
+               globalDisplay_.showErrorMessage(constants_.errorCaption(),
                                                error.getUserMessage());
             }
         });
@@ -193,9 +194,9 @@ public class RPubsUploader
    private String contextId_ = "";
    private WindowEx uploadProgressWindow_ = null;
    private CommandWithArg<Boolean> onUploadComplete_ = null;
-   
+   private static final StudioClientCommonConstants constants_ = GWT.create(StudioClientCommonConstants.class);
    public static final String PROGRESS_MESSAGE = 
-         "Uploading document to RPubs...";
+         constants_.uploadingDocumentRPubsMessage();
    private HandlerRegistrations eventRegistrations_ = 
          new HandlerRegistrations();
 }

@@ -1,0 +1,95 @@
+/*
+ * VisualModeChunk.css
+ *
+ * Copyright (C) 2022 by RStudio, PBC
+ *
+ * Unless you have received this program directly from RStudio pursuant
+ * to the terms of a commercial license agreement with RStudio, then
+ * this program is licensed to you under the terms of version 3 of the
+ * GNU Affero General Public License. This program is distributed WITHOUT
+ * ANY EXPRESS OR IMPLIED WARRANTY, INCLUDING THOSE OF NON-INFRINGEMENT,
+ * MERCHANTABILITY OR FITNESS FOR A PARTICULAR PURPOSE. Please refer to the
+ * AGPL (http://www.gnu.org/licenses/agpl-3.0.txt) for more details.
+ *
+ */
+@external pm-ace-collapsed;
+
+/*
+ * Style for element hosting the entire chunk.
+ */
+.host
+{
+    position: relative;
+    transition-property: height;
+    transition-duration: 0.5s;
+}
+
+/*
+ * Style for summary element (shown when chunk is collapsed)
+ */
+.summary
+{
+    position: relative;
+    top: 2px;
+    left: 5px;
+    margin-bottom: 5px;
+    font-size: 12px;
+    display: none;
+    user-select: none;
+}
+
+/*
+ * Style for gutter host. The gutter host shows either line-by-line execution status (when code is running)
+ * or lint errors (when it isn't).
+ */
+.gutter
+{
+    position: absolute;
+    top: 3px;
+    left: -2px;
+}
+
+.gutterIcon
+{
+    left: -18px;
+    width: 16px;
+    margin-top: -1px;
+    background-position: 1px 0px;
+}
+
+/*
+ * Style for chunk host (wraps Ace editor instance and output)
+ */
+.chunkHost
+{
+    position: relative;
+    overflow: hidden;
+}
+
+/*
+ * Style for editor itself (Ace instance)
+ */
+.editor
+{
+    display: block;
+}
+
+/*
+ * Show/hide affected UI elements when chunk code is collaped
+ */
+.pm-ace-collapsed .gutter,
+.pm-ace-collapsed .toolbar
+{
+    display: none;
+}
+
+.pm-ace-collapsed .editorHost
+{
+    height: 0px;
+    overflow: hidden;
+}
+
+.pm-ace-collapsed .summary
+{
+    display: block;
+}

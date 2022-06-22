@@ -3,7 +3,7 @@
 #
 # CMakeGlobals.txt
 #
-# Copyright (C) 2021 by RStudio, PBC
+# Copyright (C) 2022 by RStudio, PBC
 #
 # Unless you have received this program directly from RStudio pursuant
 # to the terms of a commercial license agreement with RStudio, then
@@ -21,31 +21,51 @@ if(RSTUDIO_CMAKE_GLOBALS_INCLUDED)
 endif()
 set(RSTUDIO_CMAKE_GLOBALS_INCLUDED YES)
 
+# helper for detecting Linux
+if(UNIX AND NOT APPLE)
+   set(LINUX TRUE)
+endif()
+
 # version info
 if ("$ENV{RSTUDIO_VERSION_MAJOR}" STREQUAL "")
-  set(CPACK_PACKAGE_VERSION_MAJOR "99")
+  string(TIMESTAMP CPACK_PACKAGE_VERSION_MAJOR "%Y")
   set(RSTUDIO_UNVERSIONED_BUILD TRUE)
 else()
   set(CPACK_PACKAGE_VERSION_MAJOR $ENV{RSTUDIO_VERSION_MAJOR})
 endif()
 if ("$ENV{RSTUDIO_VERSION_MINOR}" STREQUAL "")
-  set(CPACK_PACKAGE_VERSION_MINOR "9")
+   string(TIMESTAMP CPACK_PACKAGE_VERSION_MINOR "%m")
 else()
   set(CPACK_PACKAGE_VERSION_MINOR $ENV{RSTUDIO_VERSION_MINOR})
 endif()
 if ("$ENV{RSTUDIO_VERSION_PATCH}" STREQUAL "")
-  set(CPACK_PACKAGE_VERSION_PATCH "9")
+  set(CPACK_PACKAGE_VERSION_PATCH "999")
 else()
   set(CPACK_PACKAGE_VERSION_PATCH $ENV{RSTUDIO_VERSION_PATCH})
 endif()
-set(CPACK_PACKAGE_VERSION "${CPACK_PACKAGE_VERSION_MAJOR}.${CPACK_PACKAGE_VERSION_MINOR}.${CPACK_PACKAGE_VERSION_PATCH}")
+if ("$ENV{RSTUDIO_VERSION_PATCH}" STREQUAL "")
+  set(CPACK_PACKAGE_VERSION_SUFFIX "-dev+999")
+else()
+  set(CPACK_PACKAGE_VERSION_SUFFIX $ENV{RSTUDIO_VERSION_SUFFIX})
+endif()
+set(CPACK_PACKAGE_VERSION "${CPACK_PACKAGE_VERSION_MAJOR}.${CPACK_PACKAGE_VERSION_MINOR}.${CPACK_PACKAGE_VERSION_PATCH}${CPACK_PACKAGE_VERSION_SUFFIX}")
 
 string(TIMESTAMP CPACK_COPYRIGHT_YEAR "%Y")
 string(TIMESTAMP CPACK_BUILD_DATE "%Y-%m-%d")
 
-# pick up suffix if present
-if(NOT "$ENV{RSTUDIO_VERSION_SUFFIX}" STREQUAL "" AND NOT "$ENV{RSTUDIO_VERSION_SUFFIX}" STREQUAL "0")
-   set(CPACK_PACKAGE_VERSION "${CPACK_PACKAGE_VERSION}-$ENV{RSTUDIO_VERSION_SUFFIX}")
+# create numeric format for major version (needed when version must be strictly numeric)
+set(CPACK_PACKAGE_VERSION_MAJOR_NUMERIC "${CPACK_PACKAGE_VERSION_MAJOR}${CPACK_PACKAGE_VERSION_MINOR}")
+message(STATUS "Building RStudio ${CPACK_PACKAGE_VERSION}")
+
+# detect pro builds
+if(EXISTS "${CMAKE_CURRENT_LIST_DIR}/upstream")
+   set(RSTUDIO_PRO_BUILD 1)
+else()
+   set(RSTUDIO_PRO_BUILD 0)
+endif()
+
+if (NOT DEFINED RSTUDIO_DEFAULT_LOG_PATH)
+   set(RSTUDIO_DEFAULT_LOG_PATH "/var/log/rstudio/rstudio-server")
 endif()
 
 # detect architecture
@@ -55,9 +75,14 @@ if(UNIX)
       COMMAND uname -m
       OUTPUT_VARIABLE UNAME_M
       OUTPUT_STRIP_TRAILING_WHITESPACE)
-   message(STATUS "Machine architecture: ${UNAME_M}")
 
+elseif(WIN32)
+   set(UNAME_M $ENV{PROCESSOR_ARCHITECTURE})
+else()
+   set(UNAME_M UnknownArchitecture)
 endif()
+
+message(STATUS "Machine architecture: ${UNAME_M}")
 
 # default to debug builds
 if(NOT CMAKE_BUILD_TYPE)
@@ -79,15 +104,25 @@ endif()
 message(STATUS "CMake build type: ${CMAKE_BUILD_TYPE}")
 
 # enable testing on all builds unless explicitly disabled
-if (NOT RSTUDIO_UNIT_TESTS_DISABLED)
+if(NOT RSTUDIO_UNIT_TESTS_DISABLED)
   set(RSTUDIO_UNIT_TESTS_ENABLED true)
   add_definitions(-DRSTUDIO_UNIT_TESTS_ENABLED)
 endif()
 
 # platform specific default for targets
 if(NOT RSTUDIO_TARGET)
-   set(RSTUDIO_TARGET "Development")
+
+   # for macOS pro builds, default to desktop as otherwise
+   # we will try (and fail) to build Linux-only launcher pieces
+   if(APPLE AND RSTUDIO_PRO_BUILD)
+      set(RSTUDIO_TARGET "Desktop")
+   else()
+      set(RSTUDIO_TARGET "Development")
+   endif()
+
+   # if no target was set, assume this is a development build
    set(RSTUDIO_DEVELOPMENT TRUE)
+
 endif()
 
 # set desktop and server build flags
@@ -98,12 +133,22 @@ if(NOT DEFINED RSTUDIO_SERVER)
 endif()
 
 if(NOT DEFINED RSTUDIO_DESKTOP)
-   if(APPLE AND UNAME_M STREQUAL arm64)
+   if(RSTUDIO_TARGET STREQUAL "Electron")
+      set(RSTUDIO_ELECTRON TRUE)
+   elseif(LINUX AND UNAME_M STREQUAL aarch64)
+      message(STATUS "Desktop builds not currently supported on aarch64; disabling RSTUDIO_DESKTOP")
+      set(RSTUDIO_DESKTOP FALSE)
+   elseif(APPLE AND UNAME_M STREQUAL arm64)
       message(STATUS "Desktop builds not currently supported on arm64; disabling RSTUDIO_DESKTOP")
       set(RSTUDIO_DESKTOP FALSE)
    elseif(RSTUDIO_TARGET STREQUAL "Development" OR RSTUDIO_TARGET STREQUAL "Desktop")
       set(RSTUDIO_DESKTOP TRUE)
    endif()
+endif()
+
+# make sure RSTUDIO_ELECTRON is defined so it can be used in configure_file
+if(NOT DEFINED RSTUDIO_ELECTRON)
+   set(RSTUDIO_ELECTRON FALSE)
 endif()
 
 # override if requested
@@ -112,8 +157,13 @@ if(RSTUDIO_NO_DESKTOP)
 endif()
 
 # set session32 if specified
-if(RSTUDIO_TARGET STREQUAL "SessionWin32")
-   set(RSTUDIO_SESSION_WIN32 TRUE)
+if(WIN32)
+   if(RSTUDIO_TARGET STREQUAL "SessionWin32")
+      set(RSTUDIO_SESSION_WIN32 TRUE)
+      add_definitions(-D_X86_)
+   else()
+      add_definitions(-D_AMD64_)
+   endif()
 endif()
 
 # record git revision hash (cache it since we don't use this in development
@@ -152,16 +202,24 @@ else()
   set(RSTUDIO_BUILD_ID $ENV{BUILD_ID})
 endif()
 if("$ENV{PACKAGE_OS}" STREQUAL "")
-  # no known package OS
-  set(RSTUDIO_PACKAGE_OS "Unknown OS")
+  if(WIN32)
+    set(RSTUDIO_PACKAGE_OS "Windows")
+  elseif(APPLE)
+    set(RSTUDIO_PACKAGE_OS "macOS")
+  elseif(LINUX)
+    set(RSTUDIO_PACKAGE_OS "Linux")
+  else()
+    set(RSTUDIO_PACKAGE_OS "Unknown OS")
+  endif()
 else()
   set(RSTUDIO_PACKAGE_OS $ENV{PACKAGE_OS})
 endif()
 
 # required R version
+set(RSTUDIO_R_VERSION_REQUIRED "3.3.0")
 set(RSTUDIO_R_MAJOR_VERSION_REQUIRED 3)
-set(RSTUDIO_R_MINOR_VERSION_REQUIRED 0)
-set(RSTUDIO_R_PATCH_VERSION_REQUIRED 1)
+set(RSTUDIO_R_MINOR_VERSION_REQUIRED 3)
+set(RSTUDIO_R_PATCH_VERSION_REQUIRED 0)
 
 # allow opting out of version checking (for building on older distros)
 if(NOT DEFINED RSTUDIO_VERIFY_R_VERSION)
@@ -170,6 +228,34 @@ if(NOT DEFINED RSTUDIO_VERIFY_R_VERSION)
    else()
       set(RSTUDIO_VERIFY_R_VERSION TRUE)
    endif()
+endif()
+
+# pandoc version
+set(PANDOC_VERSION "2.18" CACHE INTERNAL "Pandoc version")
+
+# detect Centos 7, because we don't support Quarto on Centos7
+set(IS_CENTOS7 FALSE)
+if(LINUX AND EXISTS "/etc/centos-release")
+   file(READ "/etc/centos-release" CENTOS_RELEASE)
+   string(FIND "${CENTOS_RELEASE}" "release 7" CENTOS_RELEASE_POS)
+   if(CENTOS_RELEASE_POS GREATER 0)
+     set(IS_CENTOS7 TRUE)
+   endif()
+endif()
+
+# quarto support
+if(LINUX AND UNAME_M STREQUAL aarch64)
+   # disabled on linux aarch64
+   message(STATUS "quarto does not yet support aarch64 builds of Linux; disabling quarto")
+   set(QUARTO_ENABLED FALSE CACHE INTERNAL "")
+elseif(IS_CENTOS7)
+   # disable quarto on Centos 7
+   message(STATUS "quarto is not supported on Centos7; disabling quarto")
+   set(QUARTO_ENABLED FALSE CACHE INTERNAL "")
+else()
+   # enable by default
+   set(QUARTO_ENABLED TRUE CACHE INTERNAL "")
+   add_definitions(-DQUARTO_ENABLED)
 endif()
 
 # install freedesktop integration files if we are installing into /usr
@@ -225,16 +311,33 @@ endif()
 message(STATUS "Using RStudio tools root: ${RSTUDIO_TOOLS_ROOT}")
 
 # special install directories for apple desktop
-if (APPLE AND RSTUDIO_DESKTOP)
-   set(RSTUDIO_INSTALL_BIN RStudio.app/Contents/MacOS)
-   set(RSTUDIO_INSTALL_SUPPORTING RStudio.app/Contents/Resources)
-else()
-   if (RSTUDIO_SESSION_WIN32)
-     set(RSTUDIO_INSTALL_BIN x86)
+if (APPLE)
+   if (RSTUDIO_ELECTRON)
+      set(RSTUDIO_INSTALL_BIN        RStudio.app/Contents/Resources/app/bin)
+      set(RSTUDIO_INSTALL_SUPPORTING RStudio.app/Contents/Resources/app)
+      # handles Quarto share when not stored alongside bin
+      set(RSTUDIO_INSTALL_RESOURCES RStudio.app/Contents/Resources)
    else()
-     set(RSTUDIO_INSTALL_BIN bin)
+      set(RSTUDIO_INSTALL_BIN        RStudio.app/Contents/MacOS)
+      set(RSTUDIO_INSTALL_SUPPORTING RStudio.app/Contents/Resources)
    endif()
-   set(RSTUDIO_INSTALL_SUPPORTING .)
+else()
+   if (RSTUDIO_ELECTRON)
+      if (RSTUDIO_SESSION_WIN32)
+         set(RSTUDIO_INSTALL_BIN resources/app/bin/x86)
+      else()
+         set(RSTUDIO_INSTALL_BIN resources/app/bin)
+      endif()
+      set(RSTUDIO_INSTALL_SUPPORTING resources/app)
+      set(RSTUDIO_INSTALL_ELECTRON .)
+   else()
+      if (RSTUDIO_SESSION_WIN32)
+         set(RSTUDIO_INSTALL_BIN x86)
+      else()
+         set(RSTUDIO_INSTALL_BIN bin)
+      endif()
+      set(RSTUDIO_INSTALL_SUPPORTING .)
+   endif()
 endif()
 
 # if the install prefix is /usr/local then tweak as appropriate
@@ -242,7 +345,7 @@ if(NOT DEFINED CMAKE_INSTALL_PREFIX)
    if(APPLE)
       set(CMAKE_INSTALL_PREFIX "/Applications")
    elseif(UNIX)
-      if(RSTUDIO_DESKTOP)
+      if(RSTUDIO_DESKTOP OR RSTUDIO_ELECTRON)
          set(CMAKE_INSTALL_PREFIX "/usr/local/lib/rstudio")
       else()
          set(CMAKE_INSTALL_PREFIX "/usr/local/lib/rstudio-server")
@@ -272,7 +375,7 @@ file(TO_CMAKE_PATH "${CMAKE_INSTALL_PREFIX}" CMAKE_INSTALL_PREFIX)
 set(RSTUDIO_EMBEDDED_PACKAGES "" CACHE INTERNAL "Embedded R Packages")
 
 # embedded packages
-# set(RSTUDIO_EMBEDDED_PACKAGES rmarkdown CACHE INTERNAL "Embedded R Packages")
+# set(RSTUDIO_EMBEDDED_PACKAGES rmarkdown rsconnect CACHE INTERNAL "Embedded R Packages")
 
 # include utilities
 include(RStudioCMakeUtils)
@@ -369,7 +472,18 @@ if(APPLE)
 
    # set OPENSSL_ROOT_DIR if unset
    if(NOT DEFINED OPENSSL_ROOT_DIR)
-      set(OPENSSL_ROOT_DIR "${HOMEBREW_PREFIX}/opt/openssl" CACHE INTERNAL "")
+
+      # Homebrew now defaults to OpenSSL 3, but some older formulae that
+      # we use require OpenSSL 1.1. Try to force CMake to use that OpenSSL.
+      file(GLOB OPENSSL_ROOT_CANDIDATE "${HOMEBREW_PREFIX}/Cellar/openssl@1.1/*")
+      if(EXISTS "${OPENSSL_ROOT_CANDIDATE}")
+         set(OPENSSL_ROOT_DIR "${OPENSSL_ROOT_CANDIDATE}" CACHE INTERNAL "")
+      elseif(EXISTS "${HOMEBREW_PREFIX}/opt/openssl@1.1")
+         set(OPENSSL_ROOT_DIR "${HOMEBREW_PREFIX}/opt/openssl@1.1" CACHE INTERNAL "")
+      else()
+         set(OPENSSL_ROOT_DIR "${HOMEBREW_PREFIX}/opt/openssl" CACHE INTERNAL "")
+      endif()
+
    endif()
 
 endif()

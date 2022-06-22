@@ -1,7 +1,7 @@
 /*
  * JobLauncherDialog.java
  *
- * Copyright (C) 2021 by RStudio, PBC
+ * Copyright (C) 2022 by RStudio, PBC
  *
  * Unless you have received this program directly from RStudio pursuant
  * to the terms of a commercial license agreement with RStudio, then
@@ -15,10 +15,12 @@
 package org.rstudio.studio.client.workbench.views.jobs.view;
 
 import com.google.gwt.aria.client.Roles;
+import com.google.gwt.core.client.GWT;
 import org.rstudio.core.client.StringUtil;
 import org.rstudio.core.client.files.FileSystemItem;
 import org.rstudio.core.client.widget.ModalDialog;
 import org.rstudio.core.client.widget.OperationWithInput;
+import org.rstudio.studio.client.workbench.views.jobs.JobsConstants;
 import org.rstudio.studio.client.workbench.views.jobs.model.JobLaunchSpec;
 
 import com.google.gwt.user.client.ui.Widget;
@@ -62,7 +64,7 @@ public class JobLauncherDialog extends ModalDialog<JobLaunchSpec>
       code_ = code;
       source_ = source;
 
-      setOkButtonCaption("Start");
+      setOkButtonCaption(constants_.startButtonCaption());
    }
 
    @Override
@@ -116,15 +118,16 @@ public class JobLauncherDialog extends ModalDialog<JobLaunchSpec>
    {
       if (StringUtil.isNullOrEmpty(path))
       {
-         return "Current selection";
+         return constants_.currentSelectionText();
       }
       else
       {
-         return FileSystemItem.getNameFromPath(path) + " selection";
+         return constants_.selectionText(FileSystemItem.getNameFromPath(path));
       }
    }
    
    private final String code_;
    private final JobSource source_;
    private JobLauncherControls controls_;
+   private static final JobsConstants constants_ = GWT.create(JobsConstants.class);
 }

@@ -1,7 +1,7 @@
 /*
  * CompileNotebookOptionsDialog.java
  *
- * Copyright (C) 2021 by RStudio, PBC
+ * Copyright (C) 2022 by RStudio, PBC
  *
  * Unless you have received this program directly from RStudio pursuant
  * to the terms of a commercial license agreement with RStudio, then
@@ -53,7 +53,7 @@ public class CompileNotebookOptionsDialog extends ModalDialog<CompileNotebookOpt
          String defaultType,
          final OperationWithInput<CompileNotebookOptions> operation)
    {
-      super("Compile Report from R Script", Roles.getDialogRole(), operation);
+      super(constants_.compileNotebookOptionsDialogCaption(), Roles.getDialogRole(), operation);
       docId_ = docId;
       RStudioGinjector.INSTANCE.injectMembers(this);
 
@@ -71,7 +71,7 @@ public class CompileNotebookOptionsDialog extends ModalDialog<CompileNotebookOpt
                                        lblType_, 
                                        HasVerticalAlignment.ALIGN_MIDDLE);
          
-         HelpButton helpButton = HelpButton.createHelpButton("notebook_types", "Help on report types");
+         HelpButton helpButton = HelpButton.createHelpButton("notebook_types", constants_.helpButtonTitle());
          typeLabelPanel_.add(helpButton);
          typeLabelPanel_.setCellVerticalAlignment(
                                        helpButton, 
@@ -87,7 +87,7 @@ public class CompileNotebookOptionsDialog extends ModalDialog<CompileNotebookOpt
          divTypeSelector_.getStyle().setDisplay(Style.Display.NONE);
       }
       
-      setOkButtonCaption("Compile");
+      setOkButtonCaption(constants_.okButtonCaption());
 
       // read the message when dialog is shown
       setARIADescribedBy(dialogInfo_);
@@ -202,4 +202,6 @@ public class CompileNotebookOptionsDialog extends ModalDialog<CompileNotebookOpt
    private boolean showTypes_;
 
    private Widget widget_;
+
+   private static final NotebookConstants constants_ = GWT.create(NotebookConstants.class);
 }

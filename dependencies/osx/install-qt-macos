@@ -3,7 +3,7 @@
 #
 # install-qt-macos
 #
-# Copyright (C) 2021 by RStudio, PBC
+# Copyright (C) 2022 by RStudio, PBC
 #
 # Unless you have received this program directly from RStudio pursuant
 # to the terms of a commercial license agreement with RStudio, then
@@ -21,7 +21,7 @@
 set -e
 
 if [ -z "$QT_VERSION" ]; then
-    QT_VERSION=5.12.8
+    QT_VERSION=5.12.10
 fi
 if [ -z "$QT_SDK_DIR" ]; then
 

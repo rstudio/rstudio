@@ -1,7 +1,7 @@
 /*
  * LineTableView.java
  *
- * Copyright (C) 2021 by RStudio, PBC
+ * Copyright (C) 2022 by RStudio, PBC
  *
  * Unless you have received this program directly from RStudio pursuant
  * to the terms of a commercial license agreement with RStudio, then
@@ -39,6 +39,7 @@ import org.rstudio.core.client.theme.RStudioCellTableStyle;
 import org.rstudio.core.client.widget.FontSizer;
 import org.rstudio.core.client.widget.MultiSelectCellTable;
 import org.rstudio.studio.client.common.vcs.GitServerOperations.PatchMode;
+import org.rstudio.studio.client.workbench.views.vcs.ViewVcsConstants;
 import org.rstudio.studio.client.workbench.views.vcs.common.diff.Line.Type;
 import org.rstudio.studio.client.workbench.views.vcs.common.diff.LineTablePresenter.Display;
 import org.rstudio.studio.client.workbench.views.vcs.common.events.DiffChunkActionEvent;
@@ -148,8 +149,8 @@ public class LineTableView extends MultiSelectCellTable<ChunkOrLine> implements 
                      sb,
                      RES.cellTableStyle().lineActions(),
                      selectionModel_.getSelectedSet().size() > 1
-                     ? " selection"
-                     : " line");
+                     ? constants_.selectionSuffix("")
+                     : constants_.lineSuffix(""));
             }
          }
          else
@@ -159,7 +160,7 @@ public class LineTableView extends MultiSelectCellTable<ChunkOrLine> implements 
             {
                renderActionButtons(sb,
                                    RES.cellTableStyle().chunkActions(),
-                                   " chunk");
+                                   constants_.chunkSuffix(""));
             }
          }
       }
@@ -554,4 +555,5 @@ public class LineTableView extends MultiSelectCellTable<ChunkOrLine> implements 
    private static final LineTableViewCellTableResources RES = GWT.create(LineTableViewCellTableResources.class);
    private static final LineActionButtonRenderer blueButtonRenderer_ = LineActionButtonRenderer.createBlue();
    private static final LineActionButtonRenderer grayButtonRenderer_ = LineActionButtonRenderer.createGray();
+   private static final ViewVcsConstants constants_ = GWT.create(ViewVcsConstants.class);
 }

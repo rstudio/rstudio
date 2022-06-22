@@ -1,7 +1,7 @@
 /*
  * Ignore.java
  *
- * Copyright (C) 2021 by RStudio, PBC
+ * Copyright (C) 2022 by RStudio, PBC
  *
  * Unless you have received this program directly from RStudio pursuant
  * to the terms of a commercial license agreement with RStudio, then
@@ -16,6 +16,7 @@ package org.rstudio.studio.client.common.vcs.ignore;
 
 import java.util.ArrayList;
 
+import com.google.gwt.core.client.GWT;
 import org.rstudio.core.client.StringUtil;
 import org.rstudio.core.client.files.FileSystemItem;
 import org.rstudio.core.client.widget.MessageDialog;
@@ -23,6 +24,7 @@ import org.rstudio.core.client.widget.ProgressIndicator;
 import org.rstudio.studio.client.RStudioGinjector;
 import org.rstudio.studio.client.common.GlobalDisplay;
 import org.rstudio.studio.client.common.GlobalProgressDelayer;
+import org.rstudio.studio.client.common.StudioClientCommonConstants;
 import org.rstudio.studio.client.common.vcs.ProcessResult;
 import org.rstudio.studio.client.server.ServerError;
 import org.rstudio.studio.client.server.ServerRequestCallback;
@@ -110,7 +112,7 @@ public class Ignore
       final ProgressIndicator globalIndicator = new GlobalProgressDelayer(
                        globalDisplay_,
                        500,
-                       "Getting ignored files for path...").getIndicator();
+                       constants_.gettingIgnoredFilesProgressMessage()).getIndicator();
 
       // get existing ignores
       final String fullPath = projPathToFullPath(ignoreList.getPath());
@@ -158,7 +160,7 @@ public class Ignore
          {
             display.setIgnored("");
 
-            indicator.onProgress("Getting ignored files for path...");
+            indicator.onProgress(constants_.gettingIgnoredFilesProgressMessage());
 
             strategy.getIgnores(display.getCurrentPath(),
                   new ServerRequestCallback<ProcessResult>() {
@@ -188,7 +190,7 @@ public class Ignore
          @Override
          public void onClick(ClickEvent event)
          {
-            indicator.onProgress("Setting ignored files for path...");
+            indicator.onProgress(constants_.settingIgnoredFilesProgressMessage());
 
             strategy.setIgnores(
                   display.getCurrentPath(),
@@ -249,10 +251,8 @@ public class Ignore
             GlobalDisplay gDisp = RStudioGinjector.INSTANCE.getGlobalDisplay();
             gDisp.showMessage(
                   MessageDialog.ERROR,
-                  "Error: Multiple Directories",
-                  "The selected files are not all within the same directory " +
-                  "(you can only ignore multiple files in one operation if " +
-                  "they are located within the same directory).");
+                  constants_.multipleDirectoriesCaption(),
+                  constants_.selectedFilesNotInSameDirectoryMessage());
 
             return null;
          }
@@ -317,5 +317,6 @@ public class Ignore
    private final GlobalDisplay globalDisplay_;
    private final Session session_;
    private final Provider<Display> pDisplay_;
+   private static final StudioClientCommonConstants constants_ = GWT.create(StudioClientCommonConstants.class);
 
 }

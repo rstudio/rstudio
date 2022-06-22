@@ -1,7 +1,7 @@
 /*
  * TextEditingTargetCppHelper.java
  *
- * Copyright (C) 2021 by RStudio, PBC
+ * Copyright (C) 2022 by RStudio, PBC
  *
  * Unless you have received this program directly from RStudio pursuant
  * to the terms of a commercial license agreement with RStudio, then
@@ -14,6 +14,7 @@
  */
 package org.rstudio.studio.client.workbench.views.source.editors.text;
 
+import com.google.gwt.core.client.GWT;
 import org.rstudio.studio.client.RStudioGinjector;
 import org.rstudio.studio.client.common.SimpleRequestCallback;
 import org.rstudio.studio.client.common.filetypes.TextFileType;
@@ -66,13 +67,11 @@ public class TextEditingTargetCppHelper
             {
                if (!capabilities.getCanBuild())
                {
-                  warningBar.showWarningBar(
-                     "The tools required to build C/C++ code for R " +
-                     "are not currently installed");
+                  warningBar.showWarningBar(constants_.checkBuildCppDependenciesToolsNotInstalled());
                   
                   // do a prompted install of the build tools
                   server_.installBuildTools(
-                           "Compiling C/C++ code for R",
+                           constants_.compilingCode(),
                            new SimpleRequestCallback<Boolean>() {
                               @Override
                               public void onResponseReceived(Boolean confirmed)
@@ -88,8 +87,7 @@ public class TextEditingTargetCppHelper
                   if (editingTarget.search("Rcpp\\:\\:export") != null)
                   {
                      warningBar.showWarningBar(
-                        "The Rcpp package (version 0.10.1 or higher) is not " +
-                        "currently installed");
+                        constants_.checkBuildCppDependenciesRcppPackage());
                   }
                }
             }
@@ -115,7 +113,7 @@ public class TextEditingTargetCppHelper
                   line, 
                   column, 
                   new CppCompletionServerRequestCallback<>(
-                                          "Finding usages..."));
+                                          constants_.findingUsages()));
          }
          
       });
@@ -128,4 +126,5 @@ public class TextEditingTargetCppHelper
    // we never check again
    private static CppCapabilities capabilities_ 
                                     = CppCapabilities.createDefault();
+   private static final EditorsTextConstants constants_ = GWT.create(EditorsTextConstants.class);
 }

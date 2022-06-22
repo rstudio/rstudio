@@ -1,7 +1,7 @@
 /*
  * raw_tex.ts
  *
- * Copyright (C) 2021 by RStudio, PBC
+ * Copyright (C) 2022 by RStudio, PBC
  *
  * Unless you have received this program directly from RStudio pursuant
  * to the terms of a commercial license agreement with RStudio, then
@@ -58,7 +58,7 @@ const extension = (context: ExtensionContext): Extension | null => {
           ],
           toDOM(_mark: Mark) {
             const attr: any = {
-              class: 'raw-tex pm-fixedwidth-font',
+              class: 'raw-tex pm-fixedwidth-font pm-light-text-color',
             };
             return ['span', attr];
           },
@@ -188,7 +188,7 @@ function texInputRule(schema: Schema, filter: MarkInputRuleFilter) {
       }
     }
 
-    // didn't find a valid context for a tex comand
+    // didn't find a valid context for a tex command
     return null;
   });
 }
@@ -214,12 +214,9 @@ function setTexSelectionAfterInsert(tr: Transaction) {
 const key = new PluginKey<DecorationSet>('latex-highlight');
 
 export function latexHighlightingPlugin(schema: Schema) {
-  const kLightTextClass = 'pm-light-text-color';
   return markHighlightPlugin(key, schema.marks.raw_tex, (text, _attrs, markRange) => {
     const kIdClass = 'pm-markup-text-color';
-    let decorations = markHighlightDecorations(markRange, text, /\\[A-Za-z]+/g, kIdClass);
-    decorations = decorations.concat(markHighlightDecorations(markRange, text, /[{}[\]]/g, kLightTextClass));
-    return decorations;
+    return markHighlightDecorations(markRange, text, /\\[A-Za-z]+/g, kIdClass);
   });
 }
 

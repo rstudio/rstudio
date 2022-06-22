@@ -1,7 +1,7 @@
 /*
  * RmdTemplateOptionsWidget.java
  *
- * Copyright (C) 2021 by RStudio, PBC
+ * Copyright (C) 2022 by RStudio, PBC
  *
  * Unless you have received this program directly from RStudio pursuant
  * to the terms of a commercial license agreement with RStudio, then
@@ -14,44 +14,34 @@
  */
 package org.rstudio.studio.client.rmarkdown.ui;
 
-import java.util.ArrayList;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
-
 import com.google.gwt.aria.client.Id;
 import com.google.gwt.aria.client.Roles;
-import com.google.gwt.dom.client.Style;
-import com.google.gwt.user.client.DOM;
-import org.rstudio.core.client.JsArrayUtil;
-import org.rstudio.core.client.files.FileSystemItem;
-import org.rstudio.core.client.theme.res.ThemeResources;
-import org.rstudio.core.client.theme.res.ThemeStyles;
-import org.rstudio.studio.client.common.FilePathUtils;
-import org.rstudio.studio.client.rmarkdown.model.RmdFrontMatter;
-import org.rstudio.studio.client.rmarkdown.model.RmdFrontMatterOutputOptions;
-import org.rstudio.studio.client.rmarkdown.model.RmdTemplate;
-import org.rstudio.studio.client.rmarkdown.model.RmdTemplateFormat;
-import org.rstudio.studio.client.rmarkdown.model.RmdTemplateFormatOption;
-
 import com.google.gwt.core.client.GWT;
 import com.google.gwt.core.client.JavaScriptObject;
 import com.google.gwt.core.client.JsArray;
 import com.google.gwt.core.client.JsArrayString;
 import com.google.gwt.dom.client.Element;
+import com.google.gwt.dom.client.Style;
 import com.google.gwt.dom.client.Style.Overflow;
 import com.google.gwt.event.dom.client.ChangeEvent;
 import com.google.gwt.event.dom.client.ChangeHandler;
 import com.google.gwt.resources.client.CssResource;
 import com.google.gwt.uibinder.client.UiBinder;
 import com.google.gwt.uibinder.client.UiField;
-import com.google.gwt.user.client.ui.Composite;
-import com.google.gwt.user.client.ui.FlowPanel;
-import com.google.gwt.user.client.ui.Label;
-import com.google.gwt.user.client.ui.ListBox;
-import com.google.gwt.user.client.ui.ScrollPanel;
-import com.google.gwt.user.client.ui.TabLayoutPanel;
-import com.google.gwt.user.client.ui.Widget;
+import com.google.gwt.user.client.DOM;
+import com.google.gwt.user.client.ui.*;
+import org.rstudio.core.client.JsArrayUtil;
+import org.rstudio.core.client.files.FileSystemItem;
+import org.rstudio.core.client.theme.res.ThemeResources;
+import org.rstudio.core.client.theme.res.ThemeStyles;
+import org.rstudio.studio.client.common.FilePathUtils;
+import org.rstudio.studio.client.rmarkdown.RMarkdownConstants;
+import org.rstudio.studio.client.rmarkdown.model.*;
+
+import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
 
 public class RmdTemplateOptionsWidget extends Composite
 {
@@ -71,7 +61,7 @@ public class RmdTemplateOptionsWidget extends Composite
 
    public RmdTemplateOptionsWidget(boolean allowFormatChange)
    {
-      optionsTabs_ = new TabLayoutPanel(30, Style.Unit.PX, "R Markdown Options");
+      optionsTabs_ = new TabLayoutPanel(30, Style.Unit.PX, constants_.rMarkdownOptionstabListLabel());
       initWidget(uiBinder.createAndBindUi(this));
       style.ensureInjected();
       allowFormatChange_ = allowFormatChange;
@@ -415,4 +405,6 @@ public class RmdTemplateOptionsWidget extends Composite
    @UiField Label labelFormatName_;
    @UiField(provided=true) TabLayoutPanel optionsTabs_;
    @UiField OptionsStyle style;
+
+   private static final RMarkdownConstants constants_ = GWT.create(RMarkdownConstants.class);
 }

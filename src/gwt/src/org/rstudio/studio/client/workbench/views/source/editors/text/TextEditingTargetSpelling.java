@@ -1,7 +1,7 @@
 /*
  * TextEditingTargetSpelling.java
  *
- * Copyright (C) 2021 by RStudio, PBC
+ * Copyright (C) 2022 by RStudio, PBC
  *
  * Unless you have received this program directly from RStudio pursuant
  * to the terms of a commercial license agreement with RStudio, then
@@ -78,7 +78,6 @@ public class TextEditingTargetSpelling extends SpellingContext
         docDisplay_.getLength(docDisplay_.getLastVisibleRow()))));
 
       HashMap<String, ArrayList<SpellingDoc.WordRange>> wordsInRanges = new HashMap<>();
-      int checkedRanges = 0;
 
       for (SpellingDoc.WordRange wordRange : wordSource)
       {
@@ -98,7 +97,6 @@ public class TextEditingTargetSpelling extends SpellingContext
          }
          list.add(wordRange);
          wordsInRanges.put(word, list);
-         checkedRanges++;
       }
 
       spellChecker().checkWords(new ArrayList<>(wordsInRanges.keySet()), new ServerRequestCallback<SpellCheckerResult>()
@@ -116,7 +114,19 @@ public class TextEditingTargetSpelling extends SpellingContext
                   Position wordStart = docDisplay_.positionFromIndex(r.start);
                   Position wordEnd = docDisplay_.positionFromIndex(r.end);
 
-                  lint.push(LintItem.create(wordStart.getRow(), wordStart.getColumn(), wordEnd.getRow(), wordEnd.getColumn(), "Spellcheck", "spelling"));
+                  // bail if this is a yaml comment
+                  if (docDisplay_.getFileType().isRmd())
+                  {
+                     Scope scope = docDisplay_.getChunkAtPosition(wordStart);
+                     if (scope != null && scope.isChunk())
+                     {
+                        String line = docDisplay_.getLine(wordStart.getRow());
+                        if (line.trim().startsWith("#|"))
+                           continue;
+                     }
+                  }
+                  
+                  lint.push(LintItem.create(wordStart.getRow(), wordStart.getColumn(), wordEnd.getRow(), wordEnd.getColumn(), constants_.spellcheck(), "spelling"));
                }
             }
 
@@ -218,7 +228,7 @@ public class TextEditingTargetSpelling extends SpellingContext
                                 if (response.length() > 0)
                                    menu.addSeparator();
 
-                                MenuItem ignoreItem = new MenuItem(AppCommand.formatMenuLabel(null, "Ignore word", ""), true, () ->
+                                MenuItem ignoreItem = new MenuItem(AppCommand.formatMenuLabel(null, constants_.ignoreWord(), ""), true, () ->
                                 {
                                    spellChecker().addIgnoredWord(replaceWord);
                                    docDisplay_.removeMarkersAtCursorPosition();
@@ -227,7 +237,7 @@ public class TextEditingTargetSpelling extends SpellingContext
                                 menu.addItem(ignoreItem);
                                 menu.addSeparator();
 
-                                MenuItem addToDictionaryItem = new MenuItem(AppCommand.formatMenuLabel(RES.addToDictIcon(), "Add to user dictionary", ""), true, () ->
+                                MenuItem addToDictionaryItem = new MenuItem(AppCommand.formatMenuLabel(RES.addToDictIcon(), constants_.addToUserDictionary(), ""), true, () ->
                                 {
                                    spellChecker().addToUserDictionary(replaceWord);
                                    docDisplay_.removeMarkersAtCursorPosition();
@@ -294,6 +304,6 @@ public class TextEditingTargetSpelling extends SpellingContext
    private final DocDisplay docDisplay_;
    private final LintManager lintManager_;
    private final UserPrefs prefs_;
-  
+   private static final EditorsTextConstants constants_ = GWT.create(EditorsTextConstants.class);
 
 }

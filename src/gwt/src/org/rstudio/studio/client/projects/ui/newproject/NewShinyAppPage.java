@@ -1,7 +1,7 @@
 /*
  * NewShinyAppPage.java
  *
- * Copyright (C) 2021 by RStudio, PBC
+ * Copyright (C) 2022 by RStudio, PBC
  *
  * Unless you have received this program directly from RStudio pursuant
  * to the terms of a commercial license agreement with RStudio, then
@@ -14,7 +14,9 @@
  */
 package org.rstudio.studio.client.projects.ui.newproject;
 
+import com.google.gwt.core.client.GWT;
 import org.rstudio.core.client.resources.ImageResource2x;
+import org.rstudio.studio.client.projects.StudioClientProjectConstants;
 import org.rstudio.studio.client.projects.model.NewProjectInput;
 import org.rstudio.studio.client.projects.model.NewShinyAppOptions;
 
@@ -25,9 +27,9 @@ public class NewShinyAppPage extends NewDirectoryPage
 {
    public NewShinyAppPage()
    {
-      super("Shiny Web Application", 
-            "Create a new Shiny web application",
-            "Create Shiny Web Application",
+      super(constants_.shinyApplicationTitle(),
+            constants_.shinyApplicationSubTitle(),
+            constants_.shinyApplicationPageCaption(),
             new ImageResource2x(NewProjectResources.INSTANCE.shinyAppIcon2x()),
             new ImageResource2x(NewProjectResources.INSTANCE.shinyAppIconLarge2x()));
    }
@@ -39,7 +41,7 @@ public class NewShinyAppPage extends NewDirectoryPage
    }
    
    @Override
-   protected void onAddBodyWidgets()
+   protected void onAddTopWidgets()
    {
      
    }
@@ -56,4 +58,5 @@ public class NewShinyAppPage extends NewDirectoryPage
    {
       return NewShinyAppOptions.create();
    }
+   private static final StudioClientProjectConstants constants_ = GWT.create(StudioClientProjectConstants.class);
 }

@@ -1,7 +1,7 @@
 /*
  * SessionBuildEnvironment.cpp
  *
- * Copyright (C) 2021 by RStudio, PBC
+ * Copyright (C) 2022 by RStudio, PBC
  *
  * Unless you have received this program directly from RStudio pursuant
  * to the terms of a commercial license agreement with RStudio, then
@@ -113,7 +113,7 @@ bool doAddRtoolsToPathIfNecessary(T* pTarget,
     if (rToolsOnPath)
     {
        // perform an extra check to see if the version on the path is not
-       // compatible with the currenly running version of R
+       // compatible with the currently running version of R
        r_util::RToolsInfo rTools = scanPathForRTools();
        if (!rTools.empty())
        {
@@ -136,17 +136,11 @@ bool doAddRtoolsToPathIfNecessary(T* pTarget,
        return false;
     }
 
-    std::string rtoolsHomeEnvVar;
-
-    // Rtools 4.0 will set RTOOLS40_HOME
-    auto rVersion = r::version_info::currentRVersion();
-    if (rVersion.versionMajor() == 4)
-       rtoolsHomeEnvVar = "RTOOLS40_HOME";
-
     // ok so scan for R tools
+    std::string rVersion = module_context::rVersion();
     bool usingGcc49 = module_context::usingMingwGcc49();
     std::vector<r_util::RToolsInfo> rTools;
-    core::r_util::scanForRTools(usingGcc49, rtoolsHomeEnvVar, &rTools);
+    core::r_util::scanForRTools(usingGcc49, rVersion, &rTools);
 
     // enumerate them to see if we have a compatible version
     // (go in reverse order for most recent first)

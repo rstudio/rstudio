@@ -1,7 +1,7 @@
 /*
  * SessionGit.cpp
  *
- * Copyright (C) 2021 by RStudio, PBC
+ * Copyright (C) 2022 by RStudio, PBC
  *
  * Unless you have received this program directly from RStudio pursuant
  * to the terms of a commercial license agreement with RStudio, then
@@ -78,6 +78,7 @@ using namespace rstudio::session::modules::vcs_utils;
 using rstudio::session::modules::source_control::FileWithStatus;
 using rstudio::session::modules::source_control::VCSStatus;
 using rstudio::session::modules::source_control::StatusResult;
+using namespace boost::placeholders;
 
 namespace rstudio {
 namespace session {
@@ -321,33 +322,32 @@ Error gitExec(const ShellArgs& args,
    // if we see an 'index.lock' file within the associated
    // git repository, try waiting a bit until it's removed
    waitForIndexLock(workingDir);
-   
+
+   // initialize process options
    core::system::ProcessOptions options = procOptions();
-   options.workingDir = workingDir;
+   if (!workingDir.isEmpty())
+      options.workingDir = workingDir;
+
    // Important to ensure SSH_ASKPASS works
 #ifdef _WIN32
    options.detachProcess = true;
 #endif
 
+   // log diagnostics if enabled
    std::string log = core::system::getenv("RSTUDIO_GIT_LOG");
    if (string_utils::isTruthy(log))
       std::cout << gitText(args);
 
    Error error;
-   
+
+   // on Windows, we prefer runProgram() rather than runCommand()
+   // as runCommand() requires going through a cmd.exe shell, which
+   // doesn't support UNC paths.
+   // https://github.com/rstudio/rstudio/issues/4137
 #ifdef _WIN32
-   error = runProgram(
-            gitBin(),
-            args.args(),
-            "",
-            options,
-            pResult);
+   error = runProgram(gitBin(), args.args(), "", options, pResult);
 #else
-   error = runCommand(
-            git() << args.args(),
-            "",
-            options,
-            pResult);
+   error = runCommand(git() << args.args(), "", options, pResult);
 #endif
 
 #ifdef __APPLE__
@@ -356,8 +356,14 @@ Error gitExec(const ShellArgs& args,
 #endif
 
    return error;
-      
 }
+
+Error gitExec(const ShellArgs& args,
+              core::system::ProcessResult* pResult)
+{
+   return gitExec(args, FilePath(), pResult);
+}
+
 
 bool commitIsMatch(const std::vector<std::string>& patterns,
                    const CommitInfo& commit)
@@ -1530,17 +1536,10 @@ std::vector<FilePath> resolveAliasedPaths(const json::Array& paths,
 
 FilePath detectGitDir(const FilePath& workingDir)
 {
-   core::system::ProcessOptions options = procOptions();
-   options.workingDir = workingDir;
-#ifndef _WIN32
-   options.detachSession = true;
-#endif
-
    core::system::ProcessResult result;
-   Error error = core::system::runCommand(
-            git() << "rev-parse" << "--show-toplevel",
-            "",
-            options,
+   Error error = gitExec(
+            gitArgs() << "rev-parse" << "--show-toplevel",
+            workingDir,
             &result);
 
    if (error || result.exitStatus != 0)
@@ -2494,14 +2493,12 @@ Error vcsInitRepo(const json::JsonRpcRequest& request,
    Error error = json::readParam(request.params, 0, &directory);
    if (error)
       return error;
-   FilePath dirPath = module_context::resolveAliasedPath(directory);
 
-   core::system::ProcessOptions options = procOptions();
-   options.workingDir = dirPath;
+   FilePath workingDir = module_context::resolveAliasedPath(directory);
 
    // run it
    core::system::ProcessResult result;
-   error = runCommand(git() << "init", options, &result);
+   error = gitExec(gitArgs() << "init", workingDir, &result);
    if (error)
       return error;
 
@@ -2992,6 +2989,7 @@ Error addFilesToGitIgnore(const FilePath& gitIgnoreFile,
    return Success();
 }
 
+
 Error augmentGitIgnore(const FilePath& gitIgnoreFile)
 {
    // Add stuff to .gitignore
@@ -3090,9 +3088,7 @@ bool isGitInstalled()
       return false;
 
    core::system::ProcessResult result;
-   Error error = core::system::runCommand(git() << "--version",
-                                          procOptions(),
-                                          &result);
+   Error error = gitExec(gitArgs() << "--version", &result);
    if (error)
       return false;
    

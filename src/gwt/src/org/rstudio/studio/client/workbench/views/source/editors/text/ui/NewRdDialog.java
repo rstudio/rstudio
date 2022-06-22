@@ -1,7 +1,7 @@
 /*
  * NewRdDialog.java
  *
- * Copyright (C) 2021 by RStudio, PBC
+ * Copyright (C) 2022 by RStudio, PBC
  *
  * Unless you have received this program directly from RStudio pursuant
  * to the terms of a commercial license agreement with RStudio, then
@@ -26,6 +26,7 @@ import com.google.gwt.core.client.GWT;
 import com.google.gwt.uibinder.client.UiBinder;
 import com.google.gwt.uibinder.client.UiField;
 import com.google.gwt.user.client.ui.Widget;
+import org.rstudio.studio.client.workbench.views.source.ViewsSourceConstants;
 
 public class NewRdDialog extends ModalDialog<NewRdDialog.Result>
 {
@@ -48,7 +49,7 @@ public class NewRdDialog extends ModalDialog<NewRdDialog.Result>
 
    public NewRdDialog(OperationWithInput<Result> operation)
    {
-      super("New R Documentation File", Roles.getDialogRole(), operation);
+      super(constants_.newRDocumentationFile(), Roles.getDialogRole(), operation);
       mainWidget_ = GWT.<Binder>create(Binder.class).createAndBindUi(this);
 
    }
@@ -80,8 +81,8 @@ public class NewRdDialog extends ModalDialog<NewRdDialog.Result>
       if (input.name.length() == 0)
       {
          RStudioGinjector.INSTANCE.getGlobalDisplay().showErrorMessage(
-               "Name Not Specified",
-               "You must specify a topic name for the new Rd file.",
+               constants_.nameNotSpecified(),
+               constants_.mustSpecifyTopicNameForRdFile(),
                txtName_);
 
          return false;
@@ -99,4 +100,5 @@ public class NewRdDialog extends ModalDialog<NewRdDialog.Result>
    FormListBox listDocType_;
 
    private Widget mainWidget_;
+   private static final ViewsSourceConstants constants_ = GWT.create(ViewsSourceConstants.class);
 }

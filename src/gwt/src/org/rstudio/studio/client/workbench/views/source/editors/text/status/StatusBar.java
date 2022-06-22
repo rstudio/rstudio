@@ -1,7 +1,7 @@
 /*
  * StatusBar.java
  *
- * Copyright (C) 2021 by RStudio, PBC
+ * Copyright (C) 2022 by RStudio, PBC
  *
  * Unless you have received this program directly from RStudio pursuant
  * to the terms of a commercial license agreement with RStudio, then
@@ -36,6 +36,7 @@ public interface StatusBar
    int SCOPE_LAMBDA     = 7;
    int SCOPE_ANON       = 8;
    int SCOPE_TOP_LEVEL  = 9;
+   int SCOPE_TEST       = 10;
 
    StatusBarElement getPosition();
    StatusBarElement getScope();

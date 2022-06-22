@@ -1,7 +1,7 @@
 /*
 * stan_highlight_rules.js
 *
-* Copyright (C) 2021 by RStudio, PBC
+* Copyright (C) 2022 by RStudio, PBC
 *
 * The Initial Developer of the Original Code is Jeffrey Arnold
 * Portions created by the Initial Developer are Copyright (C) 2014

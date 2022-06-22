@@ -1,7 +1,7 @@
 /*
  * ChunkOutputWidget.java
  *
- * Copyright (C) 2021 by RStudio, PBC
+ * Copyright (C) 2022 by RStudio, PBC
  *
  * Unless you have received this program directly from RStudio pursuant
  * to the terms of a commercial license agreement with RStudio, then
@@ -115,6 +115,7 @@ public class ChunkOutputWidget extends Composite
       chunkOutputSize_ = chunkOutputSize;
       initWidget(uiBinder.createAndBindUi(this));
       expansionState_ = new Value<>(expansionState);
+      visible_ = new Value<>(isVisible());
       applyCachedEditorStyle();
       if (expansionState_.getValue() == COLLAPSED)
          setCollapsedStyles();
@@ -140,7 +141,8 @@ public class ChunkOutputWidget extends Composite
          addStyleName(style.noclear());
 
       // create the initial output stream and attach it to the frame
-      attachPresenter(new ChunkOutputStream(this, chunkOutputSize_));
+      Widget widg = attachPresenter(new ChunkOutputStream(this, chunkOutputSize_));
+      setUpEvents(widg.getElement());
       
       DOM.sinkEvents(clear_.getElement(), Event.ONCLICK);
       DOM.setEventListener(clear_.getElement(), new EventListener()
@@ -261,6 +263,20 @@ public class ChunkOutputWidget extends Composite
          ValueChangeHandler<Integer> handler)
    {
       return expansionState_.addValueChangeHandler(handler);
+   }
+
+   /**
+    * Adds a handler for the widget's visibility state. Note that this handler
+    * will only be invoked when the state is manipulated via setVisible() so
+    * doesn't cover all possible transitions in visibility.
+    *
+    * @param handler The handler to attach
+    * @return A HandlerRegistration that can be used to unregister the handler
+    */
+   public HandlerRegistration addVisibleChangeHandler(
+      ValueChangeHandler<Boolean> handler)
+   {
+      return visible_.addValueChangeHandler(handler);
    }
 
    public void renderHtml(String htmlOutput, Element parentElement)
@@ -427,7 +443,8 @@ public class ChunkOutputWidget extends Composite
       if (state_ == CHUNK_READY)
       {
          presenter_.clearOutput();
-         attachPresenter(new ChunkOutputStream(this, chunkOutputSize_));
+         Widget widg = attachPresenter(new ChunkOutputStream(this, chunkOutputSize_));
+         setUpEvents(widg.getElement());
       }
 
       registerConsoleEvents();
@@ -603,6 +620,18 @@ public class ChunkOutputWidget extends Composite
          removeStyleName(style.embedded());
          removeStyleName(FontSizer.getNormalFontSizeClass());
       }
+   }
+
+   /**
+    * Sets the visibility state of the output widget.
+    *
+    * @param visible Whether the output widget should be visible.
+    */
+   @Override
+   public void setVisible(boolean visible)
+   {
+      super.setVisible(visible);
+      visible_.setValue(visible, true);
    }
 
    // Private methods ---------------------------------------------------------
@@ -870,12 +899,14 @@ public class ChunkOutputWidget extends Composite
       frame_.getElement().getStyle().clearHeight();
    }
    
-   private void attachPresenter(ChunkOutputPresenter presenter)
+   private Widget attachPresenter(ChunkOutputPresenter presenter)
    {
       if (root_.getWidget() != null)
          root_.remove(root_.getWidget());
       presenter_ = presenter;
-      root_.add(presenter.asWidget());
+      Widget widg = presenter.asWidget();
+      root_.add(widg);
+      return widg;
    }
    
    private void initializeOutput(int type)
@@ -898,6 +929,7 @@ public class ChunkOutputWidget extends Composite
                chunkOutputSize_);
 
          attachPresenter(gallery);
+         setUpEvents(gallery.viewer_.getElement());
          
          // extract all the pages from the stream and populate the gallery
          List<ChunkOutputPage> pages = stream.extractPages();
@@ -944,6 +976,87 @@ public class ChunkOutputWidget extends Composite
       }
       return true;
    }
+
+   /** 
+    * A native hack function to workaround {@code <iframes>} stealing all pointer events.
+    *  
+    * @param el the Element to target for event setup, which should always be {@code this}
+    */
+   private native void setUpEvents(Element el) /*-{
+                                             
+      // debounce user inputs to make scrolling behavior more forgiving: the user does not have to keep their
+      // mouse exactly in place to continue scrolling. The user must pause over the sub-content after
+      // scrolling before we allow them to enable it with a mousemove.
+      var debounceId = -1
+      var debounceHandler = function(dispatch) {
+         return function() {
+            el.removeEventListener("mouseover", overEventHandler);
+            el.removeEventListener("mousemove", moveEventHandler);
+            el.addEventListener("mouseout", outEventHandler, { once: true });
+            clearTimeout(debounceId);
+            debounceId = setTimeout(function() {
+
+               if (dispatch)
+                  moveEventHandler();
+               else
+                  el.addEventListener("mousemove", moveEventHandler, { once: true });
+            }, 333);
+         };
+      };
+
+      var overEventHandler = debounceHandler(true);
+
+      // create two event handlers: 
+      // - one to handle when the mouse leaves the iframe,
+      // - another to handle when the mouse moves inside the current widget
+      //
+      // mousemove events signal user intent to do something with the current iframe, which will
+      // "unlock" the frame for interaction. When the mouse leaves, the frame is disabled, which prevents the
+      // frame from eating mouse events (like scroll). This makes it possible to scroll across iframes
+      // without interruptions, assuming the user keeps their mouse perfectly still.
+      //
+      // Each event sets up the other in such a way that they can only ever trigger once at a time.
+      var moveEventHandler = function() {
+         // need to remove the mouseout event on the parent el, stop it from firing when the
+         // iframe starts intercepting events -- it actually counts as a mouseout on the parent.
+         el.removeEventListener("mouseout", outEventHandler);
+         var frames = el.querySelectorAll("iframe");
+         if (!frames.length)
+            return;
+
+         frames.forEach(function(frame) {
+            frame.style.pointerEvents = "all";
+            frame.style.opacity = 1;
+            frame.style.border = "1px solid rgb(128,128,128,30%)";
+            frame.addEventListener("mouseout", outEventHandler, { once: true });
+         });
+      };
+
+      var outEventHandler = function() {
+         clearTimeout(debounceId);
+         var frames = el.querySelectorAll("iframe");
+
+         if (!frames.length)
+            return;
+
+         frames.forEach(function(frame) {
+            frame.style.pointerEvents = "none"; 
+            frame.style.opacity = 0.7;
+            frame.style.border = "1px dashed rgb(128,128,128,25%)";
+         });
+
+         el.addEventListener("mouseover", overEventHandler, { once: true });
+      }
+
+      el.addEventListener("click", function() { 
+         clearTimeout(debounceId);
+         el.removeEventListener("mouseover", overEventHandler);
+         el.removeEventListener("mousemove", moveEventHandler);
+         moveEventHandler(); 
+      });
+      el.addEventListener("wheel", debounceHandler());
+      el.addEventListener("mouseover", overEventHandler, { once: true });
+   }-*/;
    
    @UiField HTMLPanel clear_;
    @UiField HTMLPanel expand_;
@@ -973,6 +1086,7 @@ public class ChunkOutputWidget extends Composite
    private final String documentId_;
    private final String chunkId_;
    private final Value<Integer> expansionState_;
+   private final Value<Boolean> visible_;
 
    private static EditorThemeListener.Colors s_colors;
 

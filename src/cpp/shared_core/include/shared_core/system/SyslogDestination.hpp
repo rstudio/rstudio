@@ -1,7 +1,7 @@
 /*
  * SyslogDestination.hpp
  * 
- * Copyright (C) 2021 by RStudio, PBC
+ * Copyright (C) 2022 by RStudio, PBC
  *
  * Unless you have received this program directly from RStudio pursuant to the terms of a commercial license agreement
  * with RStudio, then this program is licensed to you under the following terms:
@@ -43,10 +43,19 @@ public:
    /**
     * @brief Constructor.
     *
+    * @param in_id              The unique ID of this log destination.
     * @param in_logLevel        The most detailed level of log to be written to syslog.
+    * @param in_formatType      The format type for log messages.
     * @param in_programId       The ID of this program.
+    * @param in_reloadable      Whether or not the destination is reloadable. If so, reloading of logging configuration
+    *                           will cause the log destination to be removed. Set this to true only for log destinations
+    *                           that are intended to be hot-reconfigurable, such as the global default logger.
     */
-   SyslogDestination(log::LogLevel in_logLevel, const std::string& in_programId);
+   SyslogDestination(const std::string& in_id,
+                     log::LogLevel in_logLevel,
+                     log::LogMessageFormatType in_formatType,
+                     const std::string& in_programId,
+                     bool in_reloadable = false);
 
    /**
     * @brief Destructor.
@@ -54,24 +63,11 @@ public:
    ~SyslogDestination() override;
 
    /**
-    * @brief Gets the unique ID for the syslog destination. There should only be one syslog destination for the whole
-    *        program.
+    * @brief Refreshes the log destintation. Ensures that the log does not have any stale file handles.
     *
-    * @return The unique ID of the syslog destination.
+    * @param in_refreshParams   Refresh params to use when refreshing the log destinations (if applicable).
     */
-   static unsigned int getSyslogId();
-
-   /**
-    * @brief Gets the unique ID of the syslog destination.
-    *
-    * @return The unique ID of the syslog destination.
-    */
-   unsigned int getId() const override;
-
-   /**
-    * @brief Reloads the log destintation. Ensures that the log does not have any stale file handles.
-    */
-   void reload() override;
+   void refresh(const log::RefreshParams& in_refreshParams = log::RefreshParams()) override;
 
    /**
     * @brief Writes a message to syslog.

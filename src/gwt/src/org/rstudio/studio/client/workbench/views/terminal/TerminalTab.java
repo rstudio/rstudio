@@ -1,7 +1,7 @@
 /*
  * TerminalTab.java
  *
- * Copyright (C) 2021 by RStudio, PBC
+ * Copyright (C) 2022 by RStudio, PBC
  *
  * Unless you have received this program directly from RStudio pursuant
  * to the terms of a commercial license agreement with RStudio, then
@@ -106,7 +106,7 @@ public class TerminalTab extends DelayLoadWorkbenchTab<TerminalTabPresenter>
                       Provider<ConsoleProcessFactory> pConsoleProcessFactory,
                       final Session session)
    {
-      super("Terminal", shim);
+      super(constants_.terminalText(), shim);
       shim_ = shim;
       pConsoleProcessFactory_ = pConsoleProcessFactory;
 
@@ -194,4 +194,5 @@ public class TerminalTab extends DelayLoadWorkbenchTab<TerminalTabPresenter>
    private final Shim shim_;
 
    private final Provider<ConsoleProcessFactory> pConsoleProcessFactory_;
+   private static final TerminalConstants constants_ = com.google.gwt.core.client.GWT.create(TerminalConstants.class);
 }

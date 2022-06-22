@@ -1,7 +1,7 @@
 /*
  * DesktopTextInput.java
  *
- * Copyright (C) 2021 by RStudio, PBC
+ * Copyright (C) 2022 by RStudio, PBC
  *
  * Unless you have received this program directly from RStudio pursuant
  * to the terms of a commercial license agreement with RStudio, then
@@ -14,12 +14,14 @@
  */
 package org.rstudio.studio.client.common.impl;
 
+import com.google.gwt.core.client.GWT;
 import org.rstudio.core.client.MessageDisplay.PromptWithOptionResult;
 import org.rstudio.core.client.StringUtil;
 import org.rstudio.core.client.widget.Operation;
 import org.rstudio.core.client.widget.ProgressOperationWithInput;
 import org.rstudio.studio.client.RStudioGinjector;
 import org.rstudio.studio.client.application.Desktop;
+import org.rstudio.studio.client.common.StudioClientCommonConstants;
 import org.rstudio.studio.client.common.TextInput;
 
 public class DesktopTextInput implements TextInput
@@ -57,7 +59,7 @@ public class DesktopTextInput implements TextInput
                   okOperation.execute(lines[0],
                         RStudioGinjector.INSTANCE
                         .getGlobalDisplay()
-                        .getProgressIndicator("Error"));
+                        .getProgressIndicator(constants_.errorCaption()));
                }
             });
    }
@@ -101,8 +103,9 @@ public class DesktopTextInput implements TextInput
                   okOperation.execute(presult,
                         RStudioGinjector.INSTANCE
                         .getGlobalDisplay()
-                        .getProgressIndicator("Error"));
+                        .getProgressIndicator(constants_.errorCaption()));
                }
             });
    }
+   private static final StudioClientCommonConstants constants_ = GWT.create(StudioClientCommonConstants.class);
 }

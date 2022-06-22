@@ -1,7 +1,7 @@
 /*
  * paragraph.ts
  *
- * Copyright (C) 2021 by RStudio, PBC
+ * Copyright (C) 2022 by RStudio, PBC
  *
  * Unless you have received this program directly from RStudio pursuant
  * to the terms of a commercial license agreement with RStudio, then
@@ -14,6 +14,7 @@
  */
 
 import { EditorState, Transaction } from 'prosemirror-state';
+import { Node as ProsemirrorNode } from 'prosemirror-model';
 
 import { setTextSelection } from 'prosemirror-utils';
 
@@ -34,4 +35,13 @@ export function insertParagraph(state: EditorState, dispatch?: (tr: Transaction)
   }
 
   return true;
+}
+
+export function isParagraphNode(node: ProsemirrorNode | null | undefined) {
+  if (node) {
+    const schema = node.type.schema;
+    return node.type === schema.nodes.paragraph;
+  } else {
+    return false;
+  }
 }

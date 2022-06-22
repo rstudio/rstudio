@@ -1,7 +1,7 @@
 /*
  * DesktopMenuCallback.cpp
  *
- * Copyright (C) 2021 by RStudio, PBC
+ * Copyright (C) 2022 by RStudio, PBC
  *
  * Unless you have received this program directly from RStudio pursuant
  * to the terms of a commercial license agreement with RStudio, then
@@ -12,7 +12,6 @@
  * AGPL (http://www.gnu.org/licenses/agpl-3.0.txt) for more details.
  *
  */
-
 #include "DesktopMenuCallback.hpp"
 
 #include <core/Algorithm.hpp>
@@ -23,6 +22,27 @@
 
 namespace rstudio {
 namespace desktop {
+
+namespace {
+
+void adjustShortcutForPlatform(QString *pShortcut)
+{
+   #ifdef Q_OS_MAC
+   // on macOS, replace instances of 'Ctrl' with 'Meta'; QKeySequence renders "Ctrl" using the
+   // macOS command symbol, but we want the menu to show the literal Ctrl symbol (^)
+   pShortcut->replace(QStringLiteral("Ctrl"), QStringLiteral("Meta"));
+
+   // on Mac the enter key and return keys have different symbols
+   // https://github.com/rstudio/rstudio/issues/6524
+   pShortcut->replace(QStringLiteral("Enter"), QStringLiteral("Return"));
+#endif
+
+   // replace instances of 'Cmd' with 'Ctrl' -- note that on macOS
+   // Qt automatically maps that to the Command key
+   pShortcut->replace(QStringLiteral("Cmd"), QStringLiteral("Ctrl"));
+}
+
+} // anonymous namespace
 
 MenuCallback::MenuCallback(QObject *parent) :
     QObject(parent)
@@ -37,7 +57,12 @@ void MenuCallback::beginMainMenu()
 void MenuCallback::beginMenu(QString label)
 {
 #ifdef Q_OS_MAC
-   if (label == QString::fromUtf8("&Help"))
+
+   if (label == QString::fromUtf8("&Fichier"))
+      this->isEnglish = false;
+
+   if (label == QString::fromUtf8("&Help") ||
+       label == QString::fromUtf8("Aide"))
    {
       pMainMenu_->addMenu(new WindowMenu(pMainMenu_));
    }
@@ -58,7 +83,8 @@ QAction* MenuCallback::addCustomAction(QString commandId,
                                        QString label,
                                        QString tooltip,
                                        QKeySequence keySequence,
-                                       bool checkable)
+                                       bool checkable,
+                                       bool isRadio)
 {
 
    QAction* pAction = nullptr;
@@ -66,23 +92,38 @@ QAction* MenuCallback::addCustomAction(QString commandId,
 #ifdef Q_OS_MAC
    // On Mac, certain commands will be automatically moved to Application Menu by Qt. If we want them to also
    // appear in RStudio menus, check for them here and return nullptr.
-   if (duplicateAppMenuAction(QString::fromUtf8("showAboutDialog"),
-                              commandId, label, tooltip, keySequence, checkable))
+   if (this->isEnglish && duplicateAppMenuAction(QString::fromUtf8("showAboutDialog"),
+                              commandId, label, tooltip, keySequence, checkable, isRadio))
    {
       return nullptr;
    }
    else if (duplicateAppMenuAction(QString::fromUtf8("quitSession"),
-                              commandId, label, tooltip, keySequence, checkable))
+                              commandId, label, tooltip, keySequence, checkable, isRadio))
+   {
+      return nullptr;
+   }
+   else if (!this->isEnglish &&
+            duplicateAppMenuAction(QString::fromUtf8("showOptions"),
+                              commandId, label, tooltip, keySequence, checkable, isRadio))
    {
       return nullptr;
    }
 
+
    // If we want a command to not be automatically moved to Application Menu, include it here and return the
    // created action.
    pAction = duplicateAppMenuAction(QString::fromUtf8("buildToolsProjectSetup"),
-                                    commandId, label, tooltip, keySequence, checkable);
+                                    commandId, label, tooltip, keySequence, checkable, isRadio);
    if (pAction)
       return pAction;
+
+   if (!this->isEnglish)
+   {
+      pAction = duplicateAppMenuAction(QString::fromUtf8("projectOptions"),
+                                    commandId, label, tooltip, keySequence, checkable, isRadio);
+      if (pAction)
+         return pAction;
+   }
 
 #endif // Q_OS_MAC
 
@@ -93,7 +134,7 @@ QAction* MenuCallback::addCustomAction(QString commandId,
    }
    
    // on macOS, these bindings are hooked up on the GWT side (mainly to ensure
-   // that zoom requests targetted to a GWT window work as expected)
+   // that zoom requests targeted to a GWT window work as expected)
 #ifndef Q_OS_MAC
    else if (commandId == QStringLiteral("zoomActualSize"))
    {
@@ -186,7 +227,8 @@ QAction* MenuCallback::duplicateAppMenuAction(QString commandToDuplicate,
                                               QString label,
                                               QString tooltip,
                                               QKeySequence keySequence,
-                                              bool checkable)
+                                              bool checkable,
+                                              bool isRadio)
 {
    QAction* pAction = nullptr;
    if (commandId == commandToDuplicate)
@@ -202,8 +244,10 @@ QAction* MenuCallback::duplicateAppMenuAction(QString commandToDuplicate,
       menuStack_.top()->addAction(pAction);
 
       auto* pBinder = new MenuActionBinder(menuStack_.top(), pAction);
-      connect(pBinder, SIGNAL(manageCommand(QString, QAction * )), this, SIGNAL(manageCommand(QString, QAction * )));
+      connect(pBinder, SIGNAL(manageCommand(QString, QAction*)),
+              this, SIGNAL(manageCommand(QString, QAction*)));
       connect(pAction, SIGNAL(triggered()), this, SLOT(actionInvoked()));
+      binders_[commandId].push_back(pBinder);
    }
    return pAction;
 }
@@ -212,23 +256,13 @@ void MenuCallback::addCommand(QString commandId,
                               QString label,
                               QString tooltip,
                               QString shortcut,
-                              bool checkable)
+                              bool checkable,
+                              bool isRadio,
+                              bool isVisible)
 {
 
-#ifdef Q_OS_MAC
-   // on macOS, replace instances of 'Ctrl' with 'Meta'; QKeySequence renders "Ctrl" using the
-   // macOS command symbol, but we want the menu to show the literal Ctrl symbol (^)
-   shortcut.replace(QStringLiteral("Ctrl"), QStringLiteral("Meta"));
-
-   // on Mac the enter key and return keys have different symbols
-   // https://github.com/rstudio/rstudio/issues/6524
-   shortcut.replace(QStringLiteral("Enter"), QStringLiteral("Return"));
-#endif
-
-   // replace instances of 'Cmd' with 'Ctrl' -- note that on macOS
-   // Qt automatically maps that to the Command key
-   shortcut.replace(QStringLiteral("Cmd"), QStringLiteral("Ctrl"));
-   
+   adjustShortcutForPlatform(&shortcut);
+  
    QKeySequence keySequence(shortcut);
 
    // some shortcuts (namely, the Edit shortcuts) don't have bindings on the client side.
@@ -268,7 +302,7 @@ void MenuCallback::addCommand(QString commandId,
 
    // allow custom action handlers first shot
    QPointer<QAction> pAction =
-         addCustomAction(commandId, label, tooltip, keySequence, checkable);
+         addCustomAction(commandId, label, tooltip, keySequence, checkable, isRadio);
 
    // if there was no custom handler then do stock command-id processing
    if (pAction == nullptr)
@@ -282,10 +316,12 @@ void MenuCallback::addCommand(QString commandId,
       pAction->setToolTip(tooltip);
       if (checkable)
          pAction->setCheckable(true);
+      pAction->setVisible(isVisible);
 
-      auto * pBinder = new MenuActionBinder(menuStack_.top(), pAction);
-      connect(pBinder, SIGNAL(manageCommand(QString,QAction*)),
-              this, SIGNAL(manageCommand(QString,QAction*)));
+      auto* pBinder = new MenuActionBinder(menuStack_.top(), pAction);
+      connect(pBinder, SIGNAL(manageCommand(QString, QAction*)),
+              this, SIGNAL(manageCommand(QString, QAction*)));
+      binders_[commandId].push_back(pBinder);
    }
 
    // remember action for later
@@ -337,30 +373,46 @@ void setCommandProperty(T& actions, QString commandId, F&& setter)
 
 void MenuCallback::setCommandEnabled(QString commandId, bool enabled)
 {
-   setCommandProperty(actions_, commandId, [=](QPointer<QAction> pAction) {
+   setCommandProperty(actions_, commandId, [=](QPointer<QAction> pAction) 
+   {
       pAction->setEnabled(enabled);
    });
 }
 
 void MenuCallback::setCommandVisible(QString commandId, bool visible)
 {
-   setCommandProperty(actions_, commandId, [=](QPointer<QAction> pAction) {
+   setCommandProperty(actions_, commandId, [=](QPointer<QAction> pAction) 
+   {
       pAction->setVisible(visible);
    });
 }
 
 void MenuCallback::setCommandLabel(QString commandId, QString label)
 {
-   setCommandProperty(actions_, commandId, [=](QPointer<QAction> pAction) {
+   setCommandProperty(actions_, commandId, [=](QPointer<QAction> pAction) 
+   {
       pAction->setText(label);
    });
 }
 
 void MenuCallback::setCommandChecked(QString commandId, bool checked)
 {
-   setCommandProperty(actions_, commandId, [=](QPointer<QAction> pAction) {
+   setCommandProperty(actions_, commandId, [=](QPointer<QAction> pAction) 
+   {
       pAction->setChecked(checked);
    });
+}
+
+void MenuCallback::setCommandShortcut(QString commandId, QString shortcut) 
+{
+   adjustShortcutForPlatform(&shortcut);
+   setCommandProperty(binders_,
+                      commandId,
+                      [=](QPointer<MenuActionBinder> binder)
+                      {
+                         QKeySequence keySequence(shortcut);
+                         binder->setCustomSequence(keySequence);
+                      });
 }
 
 void MenuCallback::setMainMenuEnabled(bool enabled)
@@ -373,7 +425,8 @@ void MenuCallback::cleanUpActions()
 {
    for (auto& actions : actions_.values())
    {
-      core::algorithm::expel_if(actions, [](QPointer<QAction> pAction) {
+      core::algorithm::expel_if(actions, [](QPointer<QAction> pAction) 
+      {
          return pAction.isNull();
       });
    }
@@ -388,10 +441,18 @@ MenuActionBinder::MenuActionBinder(QMenu* pMenu, QAction* pAction) : QObject(pAc
    pAction->setShortcut(QKeySequence());
 }
 
+void MenuActionBinder::setCustomSequence(QKeySequence seq) 
+{
+   customSequence_ = seq;
+}
+
 void MenuActionBinder::onShowMenu()
 {
    QString commandId = pAction_->data().toString();
-   pAction_->setShortcut(keySequence_);
+   if (!customSequence_.isEmpty())
+      pAction_->setShortcut(customSequence_);
+   else 
+      pAction_->setShortcut(keySequence_);
 }
 
 void MenuActionBinder::onHideMenu()
@@ -424,6 +485,7 @@ WindowMenu::WindowMenu(QWidget *parent) : QMenu(QString::fromUtf8("&Window"), pa
 
    connect(this, SIGNAL(aboutToShow()),
            this, SLOT(onAboutToShow()));
+
    connect(this, SIGNAL(aboutToHide()),
            this, SLOT(onAboutToHide()));
 }
@@ -432,18 +494,14 @@ void WindowMenu::onMinimize()
 {
    QWidget* pWin = QApplication::activeWindow();
    if (pWin)
-   {
       pWin->setWindowState(Qt::WindowMinimized);
-   }
 }
 
 void WindowMenu::onZoom()
 {
    QWidget* pWin = QApplication::activeWindow();
    if (pWin)
-   {
       pWin->setWindowState(pWin->windowState() ^ Qt::WindowMaximized);
-   }
 }
 
 void WindowMenu::onBringAllToFront()
@@ -501,11 +559,14 @@ void WindowMenu::showWindow()
    auto* pAction = qobject_cast<QAction*>(sender());
    if (!pAction)
       return;
+
    auto* pWidget = pAction->data().value<QWidget*>();
    if (!pWidget)
       return;
+
    if (pWidget->isMinimized())
       pWidget->setWindowState(pWidget->windowState() & ~Qt::WindowMinimized);
+
    pWidget->activateWindow();
    pWidget->raise();
 }

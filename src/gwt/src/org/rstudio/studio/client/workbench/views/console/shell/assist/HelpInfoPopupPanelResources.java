@@ -1,7 +1,7 @@
 /*
  * HelpInfoPopupPanelResources.java
  *
- * Copyright (C) 2021 by RStudio, PBC
+ * Copyright (C) 2022 by RStudio, PBC
  *
  * Unless you have received this program directly from RStudio pursuant
  * to the terms of a commercial license agreement with RStudio, then
@@ -24,6 +24,7 @@ public interface HelpInfoPopupPanelResources extends ClientBundle
    public static interface Styles extends CssResource
    {
       String helpPopup();
+      String helpTitleText();
       String helpBodyText();
       String snippetText();
    }
@@ -35,5 +36,4 @@ public interface HelpInfoPopupPanelResources extends ClientBundle
    public static HelpInfoPopupPanelResources INSTANCE = 
       (HelpInfoPopupPanelResources)GWT.create(HelpInfoPopupPanelResources.class);
    
-  
 }

@@ -1,7 +1,7 @@
 /*
  * PanmirrorToolbarCommands.java
  *
- * Copyright (C) 2021 by RStudio, PBC
+ * Copyright (C) 2022 by RStudio, PBC
  *
  * Unless you have received this program directly from RStudio pursuant
  * to the terms of a commercial license agreement with RStudio, then
@@ -19,6 +19,7 @@ import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 
+import com.google.gwt.core.client.GWT;
 import org.rstudio.core.client.Debug;
 import org.rstudio.core.client.StringUtil;
 import org.rstudio.studio.client.palette.model.CommandPaletteEntryProvider;
@@ -27,6 +28,7 @@ import org.rstudio.studio.client.palette.model.CommandPaletteItem;
 import com.google.gwt.aria.client.MenuitemRole;
 import com.google.gwt.aria.client.Roles;
 import org.rstudio.studio.client.palette.ui.CommandPalette;
+import org.rstudio.studio.client.panmirror.PanmirrorConstants;
 
 public class PanmirrorToolbarCommands implements CommandPaletteEntryProvider
 { 
@@ -38,43 +40,43 @@ public class PanmirrorToolbarCommands implements CommandPaletteEntryProvider
       commands_ = commands;
       
       // text editing
-      add(PanmirrorCommands.Undo, "Undo");
-      add(PanmirrorCommands.Redo, "Redo");
-      add(PanmirrorCommands.SelectAll, "Select All");
+      add(PanmirrorCommands.Undo, constants_.undoMenuText());
+      add(PanmirrorCommands.Redo, constants_.redoMenuText());
+      add(PanmirrorCommands.SelectAll, constants_.selectAllMenuText());
       
       // formatting
-      add(PanmirrorCommands.Strong, "Bold", icons.BOLD);
-      add(PanmirrorCommands.Em, "Italic", icons.ITALIC);
-      add(PanmirrorCommands.Code, "Code", icons.CODE);
-      add(PanmirrorCommands.Strikeout, "Strikeout");
-      add(PanmirrorCommands.Superscript, "Superscript");
-      add(PanmirrorCommands.Subscript, "Subscript");
-      add(PanmirrorCommands.Smallcaps, "Small Caps");
-      add(PanmirrorCommands.Underline, "Underline", icons.UNDERLINE);
-      add(PanmirrorCommands.Span, "Span...");
-      add(PanmirrorCommands.Paragraph, "Normal", Roles.getMenuitemradioRole());
-      add(PanmirrorCommands.Heading1, "Heading 1", Roles.getMenuitemradioRole());
-      add(PanmirrorCommands.Heading2, "Heading 2", Roles.getMenuitemradioRole());
-      add(PanmirrorCommands.Heading3, "Heading 3", Roles.getMenuitemradioRole());
-      add(PanmirrorCommands.Heading4, "Heading 4", Roles.getMenuitemradioRole());
-      add(PanmirrorCommands.Heading5, "Heading 5", Roles.getMenuitemradioRole());
-      add(PanmirrorCommands.Heading6, "Heading 6", Roles.getMenuitemradioRole());
-      add(PanmirrorCommands.CodeBlock, "Code Block", Roles.getMenuitemradioRole());
-      add(PanmirrorCommands.CodeBlockFormat, "Code Block...");
+      add(PanmirrorCommands.Strong, constants_.boldMenuText(), icons.BOLD);
+      add(PanmirrorCommands.Em, constants_.italicMenuText(), icons.ITALIC);
+      add(PanmirrorCommands.Code, constants_.codeMenuText(), icons.CODE);
+      add(PanmirrorCommands.Strikeout, constants_.strikeoutMenuText());
+      add(PanmirrorCommands.Superscript, constants_.superscriptMenuText());
+      add(PanmirrorCommands.Subscript, constants_.subscriptMenuText());
+      add(PanmirrorCommands.Smallcaps, constants_.smallCapsMenuText());
+      add(PanmirrorCommands.Underline, constants_.underlineMenuText(), icons.UNDERLINE);
+      add(PanmirrorCommands.Span, constants_.spanMenuText());
+      add(PanmirrorCommands.Paragraph, constants_.normalMenuText(), Roles.getMenuitemradioRole());
+      add(PanmirrorCommands.Heading1, constants_.heading1MenuText(), Roles.getMenuitemradioRole());
+      add(PanmirrorCommands.Heading2, constants_.heading2MenuText(), Roles.getMenuitemradioRole());
+      add(PanmirrorCommands.Heading3, constants_.heading3MenuText(), Roles.getMenuitemradioRole());
+      add(PanmirrorCommands.Heading4, constants_.heading4MenuText(), Roles.getMenuitemradioRole());
+      add(PanmirrorCommands.Heading5, constants_.heading5MenuText(), Roles.getMenuitemradioRole());
+      add(PanmirrorCommands.Heading6, constants_.heading6MenuText(), Roles.getMenuitemradioRole());
+      add(PanmirrorCommands.CodeBlock, constants_.codeBlockMenuText(), Roles.getMenuitemradioRole());
+      add(PanmirrorCommands.CodeBlockFormat, constants_.codeBlockFormatMenuText());
       
-      add(PanmirrorCommands.Blockquote, "Blockquote", Roles.getMenuitemcheckboxRole(), icons.BLOCKQUOTE);
-      add(PanmirrorCommands.LineBlock, "Line Block", Roles.getMenuitemcheckboxRole());
-      add(PanmirrorCommands.Div, "Div...");
-      add(PanmirrorCommands.AttrEdit, "Edit Attributes...");
-      add(PanmirrorCommands.ClearFormatting, "Clear Formatting", icons.CLEAR_FORMATTING);
+      add(PanmirrorCommands.Blockquote, constants_.blockquoteMenuText(), Roles.getMenuitemcheckboxRole(), icons.BLOCKQUOTE);
+      add(PanmirrorCommands.LineBlock, constants_.linkBlockMenuText(), Roles.getMenuitemcheckboxRole());
+      add(PanmirrorCommands.Div, constants_.divMenuText());
+      add(PanmirrorCommands.AttrEdit, constants_.editAttributesMenuText());
+      add(PanmirrorCommands.ClearFormatting, constants_.clearFormattingMenuText(), icons.CLEAR_FORMATTING);
       
       // raw
-      add(PanmirrorCommands.TexInline, "TeX Inline", Roles.getMenuitemcheckboxRole());
-      add(PanmirrorCommands.TexBlock, "TeX Block", Roles.getMenuitemcheckboxRole());
-      add(PanmirrorCommands.HTMLInline, "HTML Inline...");
-      add(PanmirrorCommands.HTMLBlock, "HTML Block", Roles.getMenuitemcheckboxRole());
-      add(PanmirrorCommands.RawInline, "Raw Inline...");
-      add(PanmirrorCommands.RawBlock, "Raw Block...");
+      add(PanmirrorCommands.TexInline, constants_.texInlineMenuText(), Roles.getMenuitemcheckboxRole());
+      add(PanmirrorCommands.TexBlock, constants_.texBlockMenuText(), Roles.getMenuitemcheckboxRole());
+      add(PanmirrorCommands.HTMLInline, constants_.htmlInlineMenuText());
+      add(PanmirrorCommands.HTMLBlock, constants_.htmlBlockMenuText(), Roles.getMenuitemcheckboxRole());
+      add(PanmirrorCommands.RawInline, constants_.rawInlineMenuText());
+      add(PanmirrorCommands.RawBlock, constants_.rawBlockMenuText());
       
       // chunk
       add(PanmirrorCommands.RCodeChunk, "R");
@@ -84,66 +86,78 @@ public class PanmirrorToolbarCommands implements CommandPaletteEntryProvider
       add(PanmirrorCommands.RcppCodeChunk, "Rcpp");
       add(PanmirrorCommands.SQLCodeChunk, "SQL");
       add(PanmirrorCommands.StanCodeChunk, "Stan");
+      add(PanmirrorCommands.ExpandChunk, constants_.expandChunkMenuText(), false);
+      add(PanmirrorCommands.CollapseChunk, constants_.collapseChunkMenuText(), false);
+      add(PanmirrorCommands.ExpandAllChunks, constants_.expandAllChunksMenuText(), false);
+      add(PanmirrorCommands.CollapseAllChunks, constants_.collapseAllChunksMenuText(), false);
 
       // lists
-      add(PanmirrorCommands.BulletList, "Bulleted List", Roles.getMenuitemcheckboxRole(), icons.BULLET_LIST);
-      add(PanmirrorCommands.OrderedList, "Numbered List", Roles.getMenuitemcheckboxRole(), icons.NUMBERED_LIST);
-      add(PanmirrorCommands.TightList, "Tight List", Roles.getMenuitemcheckboxRole());
-      add(PanmirrorCommands.ListItemSink, "Sink Item");
-      add(PanmirrorCommands.ListItemLift, "Lift Item");
-      add(PanmirrorCommands.ListItemCheck, "Item Checkbox");
-      add(PanmirrorCommands.ListItemCheckToggle, "Item Checked", Roles.getMenuitemcheckboxRole());
-      add(PanmirrorCommands.EditListProperties, "List Attributes...");
+      add(PanmirrorCommands.BulletList, constants_.bulletedListMenuText(), Roles.getMenuitemcheckboxRole(), icons.BULLET_LIST);
+      add(PanmirrorCommands.OrderedList, constants_.numberedListMenuText(), Roles.getMenuitemcheckboxRole(), icons.NUMBERED_LIST);
+      add(PanmirrorCommands.TightList, constants_.tightListMenuText(), Roles.getMenuitemcheckboxRole());
+      add(PanmirrorCommands.ListItemSink, constants_.sinkItemMenuText());
+      add(PanmirrorCommands.ListItemLift, constants_.liftItemMenuText());
+      add(PanmirrorCommands.ListItemCheck, constants_.itemCheckboxMenuText());
+      add(PanmirrorCommands.ListItemCheckToggle, constants_.itemCheckedMenuText(), Roles.getMenuitemcheckboxRole());
+      add(PanmirrorCommands.EditListProperties, constants_.listAttributesMenuText());
       
       // tables
-      add(PanmirrorCommands.TableInsertTable, "Insert Table...", icons.TABLE);
-      add(PanmirrorCommands.TableToggleHeader, "Table Header", Roles.getMenuitemcheckboxRole());
-      add(PanmirrorCommands.TableToggleCaption, "Table Caption", Roles.getMenuitemcheckboxRole());
-      add(PanmirrorCommands.TableAddColumnAfter, "Table:::Insert Column Right", "Insert %d Columns Right", null);
-      add(PanmirrorCommands.TableAddColumnBefore, "Table:::Insert Column Left", "Insert %d Columns Left", null);
-      add(PanmirrorCommands.TableDeleteColumn, "Table:::Delete Column", "Table:::Delete %d Columns", null);
-      add(PanmirrorCommands.TableAddRowAfter, "Table:::Insert Row Below", "Table:::Insert %d Rows Below", null);
-      add(PanmirrorCommands.TableAddRowBefore, "Table:::Insert Row Above", "Table:::Insert %d Rows Above", null);
-      add(PanmirrorCommands.TableDeleteRow, "Table:::Delete Row", "Delete %d Rows", null);
-      add(PanmirrorCommands.TableDeleteTable, "Delete Table");
-      add(PanmirrorCommands.TableNextCell, "Table:::Next Cell");
-      add(PanmirrorCommands.TablePreviousCell, "Table:::Previous Cell");
-      add(PanmirrorCommands.TableAlignColumnLeft, "Table Align Column:::Left", Roles.getMenuitemcheckboxRole());
-      add(PanmirrorCommands.TableAlignColumnRight, "Table Align Column:::Right", Roles.getMenuitemcheckboxRole());
-      add(PanmirrorCommands.TableAlignColumnCenter, "Table Align Column:::Center", Roles.getMenuitemcheckboxRole());
-      add(PanmirrorCommands.TableAlignColumnDefault, "Table Align Column:::Default", Roles.getMenuitemcheckboxRole());
+      add(PanmirrorCommands.TableInsertTable, constants_.insertTableMenuText(), icons.TABLE);
+      add(PanmirrorCommands.TableToggleHeader, constants_.tableHeaderMenuText(), Roles.getMenuitemcheckboxRole());
+      add(PanmirrorCommands.TableToggleCaption, constants_.tableCaptionMenuText(), Roles.getMenuitemcheckboxRole());
+      add(PanmirrorCommands.TableAddColumnAfter, constants_.tableInsertColumnRightMenuText(), constants_.tableInsertColumnRightPluralMenuText(), null);
+      add(PanmirrorCommands.TableAddColumnBefore, constants_.tableInsertColumnLeftMenuText(), constants_.tableInsertColumnLeftPluralMenuText(), null);
+      add(PanmirrorCommands.TableDeleteColumn, constants_.tableDeleteColumnMenuText(), constants_.tableDeleteColumnPluralMenuText(), null);
+      add(PanmirrorCommands.TableAddRowAfter, constants_.tableInsertRowBelowMenuText(), constants_.tableInsertRowBelowPluralMenuText(), null);
+      add(PanmirrorCommands.TableAddRowBefore, constants_.tableInsertRowAboveMenuText(), constants_.tableInsertRowAbovePluralMenuText(), null);
+      add(PanmirrorCommands.TableDeleteRow, constants_.tableDeleteRowMenuText(), constants_.tableDeleteRowPluralMenuText(), null);
+      add(PanmirrorCommands.TableDeleteTable, constants_.deleteTableMenuText());
+      add(PanmirrorCommands.TableNextCell, constants_.tableNextCellMenuText());
+      add(PanmirrorCommands.TablePreviousCell, constants_.tablePreviousCellMenuText());
+      add(PanmirrorCommands.TableAlignColumnLeft, constants_.tableAlignColumnLeftMenuText(), Roles.getMenuitemcheckboxRole());
+      add(PanmirrorCommands.TableAlignColumnRight, constants_.tableAlignColumnRightMenuText(), Roles.getMenuitemcheckboxRole());
+      add(PanmirrorCommands.TableAlignColumnCenter, constants_.tableAlignColumnCenterMenuText(), Roles.getMenuitemcheckboxRole());
+      add(PanmirrorCommands.TableAlignColumnDefault, constants_.tableAlignColumnDefaultMenuText(), Roles.getMenuitemcheckboxRole());
      
       // insert
-      add(PanmirrorCommands.OmniInsert, "Any...", icons.OMNI);
-      add(PanmirrorCommands.Link, "Link...", icons.LINK);
-      add(PanmirrorCommands.RemoveLink, "Remove Link");
-      add(PanmirrorCommands.Image, "Image...", icons.IMAGE);
-      add(PanmirrorCommands.Footnote, "Footnote");
-      add(PanmirrorCommands.HorizontalRule, "Horizontal Rule");
-      add(PanmirrorCommands.ParagraphInsert, "Paragraph");
-      add(PanmirrorCommands.HTMLComment, "Comment", icons.COMMENT);
-      add(PanmirrorCommands.YamlMetadata, "YAML Block");
-      add(PanmirrorCommands.Shortcode, "Shortcode");
-      add(PanmirrorCommands.InsertDiv, "Div...");
-      add(PanmirrorCommands.InlineMath, "Inline Math");
-      add(PanmirrorCommands.DisplayMath, "Display Math");
-      add(PanmirrorCommands.DefinitionList, "Definition List");
-      add(PanmirrorCommands.DefinitionTerm, "Term");
-      add(PanmirrorCommands.DefinitionDescription, "Description");
-      add(PanmirrorCommands.Citation, "Citation...", icons.CITATION);   
-      add(PanmirrorCommands.CrossReference, "Cross Reference");
-      add(PanmirrorCommands.InsertEmoji, "Insert Emoji...");
-      add(PanmirrorCommands.InsertSymbol, "Insert Unicode...");
-      add(PanmirrorCommands.EmDash, "Insert:::Em Dash (—)");
-      add(PanmirrorCommands.EnDash, "Insert:::En Dash (–)");
-      add(PanmirrorCommands.NonBreakingSpace, "Insert:::Non-Breaking Space");
-      add(PanmirrorCommands.HardLineBreak, "Insert:::Hard Line Break");
+      add(PanmirrorCommands.OmniInsert, constants_.anyMenuText(), icons.OMNI);
+      add(PanmirrorCommands.Table, constants_.tableMenuText(), icons.TABLE);
+      add(PanmirrorCommands.Link, constants_.linkMenuText(), icons.LINK);
+      add(PanmirrorCommands.RemoveLink, constants_.removeLinkMenuText());
+      add(PanmirrorCommands.Image, constants_.figureImageMenuText(), icons.IMAGE);
+      add(PanmirrorCommands.Footnote, constants_.footnoteMenuText());
+      add(PanmirrorCommands.HorizontalRule, constants_.horizontalRuleMenuText());
+      add(PanmirrorCommands.ParagraphInsert, constants_.paragraphMenuText());
+      add(PanmirrorCommands.HTMLComment, constants_.commentMenuText(), icons.COMMENT);
+      add(PanmirrorCommands.YamlMetadata, constants_.yamlBlockMenuText());
+      add(PanmirrorCommands.Shortcode, constants_.shortcodeMenuText());
+      add(PanmirrorCommands.InsertDiv, constants_.divMenuText());
+      add(PanmirrorCommands.InlineMath, constants_.inlineMathMenuText());
+      add(PanmirrorCommands.DisplayMath, constants_.displayMathMenuText());
+      add(PanmirrorCommands.DefinitionList, constants_.definitionListMenuText());
+      add(PanmirrorCommands.DefinitionTerm, constants_.termMenuText());
+      add(PanmirrorCommands.DefinitionDescription, constants_.descriptionMenuText());
+      add(PanmirrorCommands.Citation, constants_.citationMenuText(), icons.CITATION);
+      add(PanmirrorCommands.CrossReference, constants_.crossReferenceMenuText());
+      add(PanmirrorCommands.InsertEmoji, constants_.insertEmojiMenuText());
+      add(PanmirrorCommands.InsertSymbol, constants_.insertUnicodeMenuText());
+      add(PanmirrorCommands.EmDash, constants_.insertEmDashMenuText());
+      add(PanmirrorCommands.EnDash, constants_.insertEnDashMenuText());
+      add(PanmirrorCommands.NonBreakingSpace, constants_.insertNonBreakingSpaceMenuText());
+      add(PanmirrorCommands.HardLineBreak, constants_.insertHardLinkBreakMenuText());
+      add(PanmirrorCommands.Tabset, constants_.insertTabsetMenuText());
+      add(PanmirrorCommands.Callout, constants_.insertCalloutMenuText());
       
       // outline
-      add(PanmirrorCommands.GoToNextSection, "Go to Next Section");
-      add(PanmirrorCommands.GoToPreviousSection, "Go to Previous Section");
-      add(PanmirrorCommands.GoToNextChunk, "Go to Next Chunk");
-      add(PanmirrorCommands.GoToPreviousChunk, "Go to Previous Chunk");
+      add(PanmirrorCommands.GoToNextSection, constants_.goToNextSectionMenuText());
+      add(PanmirrorCommands.GoToPreviousSection, constants_.goToPreviousSectionMenuText());
+      add(PanmirrorCommands.GoToNextChunk, constants_.goToNextChunkMenuText());
+      add(PanmirrorCommands.GoToPreviousChunk, constants_.goToPreviousSectionMenuText());
+      
+      // slides
+      add(PanmirrorCommands.InsertSlidePause, constants_.insertSlidePauseMenuText());
+      add(PanmirrorCommands.InsertSlideNotes, constants_.insertSlideNotesMenuText());
+      add(PanmirrorCommands.InsertSlideColumns, constants_.insertSlideColumnsMenuText());
    }
    
    public PanmirrorCommandUI get(String id)
@@ -174,7 +188,7 @@ public class PanmirrorToolbarCommands implements CommandPaletteEntryProvider
       List<CommandPaletteItem> items = new ArrayList<>();
       for (PanmirrorCommandUI cmd: commandsUI_.values())
       {
-         if (cmd != null && cmd.isVisible())
+         if (cmd != null && cmd.isVisible() && cmd.getCommandPallette())
          {
             items.add(new PanmirrorCommandPaletteItem(cmd));
          }
@@ -210,9 +224,14 @@ public class PanmirrorToolbarCommands implements CommandPaletteEntryProvider
       add(id, menuText, Roles.getMenuitemRole());
    }
    
+   private void add(String id, String menuText, boolean commandPallette)
+   {
+      add(id, menuText, null, Roles.getMenuitemRole(), null, commandPallette);
+   }
+   
    private void add(String id, String menuText, String pluralMenuText, String image)
    {
-      add(id, menuText, pluralMenuText, Roles.getMenuitemRole(), image);
+      add(id, menuText, pluralMenuText, Roles.getMenuitemRole(), image, true);
    }
    
    private void add(String id, String menuText, String image)
@@ -228,10 +247,10 @@ public class PanmirrorToolbarCommands implements CommandPaletteEntryProvider
    
    private void add(String id, String menuText, MenuitemRole role, String image)
    {
-      add(id, menuText, null, role, image);
+      add(id, menuText, null, role, image, true);
    }
    
-   private void add(String id, String menuText, String pluralMenuText, MenuitemRole role, String image)
+   private void add(String id, String menuText, String pluralMenuText, MenuitemRole role, String image, boolean commandPallette)
    {
       // lookup the underlying command
       PanmirrorCommand command = null;
@@ -242,9 +261,10 @@ public class PanmirrorToolbarCommands implements CommandPaletteEntryProvider
          }
       }
       // add it
-      commandsUI_.put(id, new PanmirrorCommandUI(command, menuText, pluralMenuText, role, image));
+      commandsUI_.put(id, new PanmirrorCommandUI(command, menuText, pluralMenuText, role, image, commandPallette));
    }
    
    private PanmirrorCommand[] commands_ = null;
    private final HashMap<String,PanmirrorCommandUI> commandsUI_ = new HashMap<>();
+   private static final PanmirrorConstants constants_ = GWT.create(PanmirrorConstants.class);
 }

@@ -1,7 +1,7 @@
 /*
  * SshKeyWidget.java
  *
- * Copyright (C) 2021 by RStudio, PBC
+ * Copyright (C) 2022 by RStudio, PBC
  *
  * Unless you have received this program directly from RStudio pursuant
  * to the terms of a commercial license agreement with RStudio, then
@@ -14,12 +14,14 @@
  */
 package org.rstudio.studio.client.common.vcs;
 
+import org.rstudio.core.client.ElementIds;
 import org.rstudio.core.client.files.FileSystemItem;
 import org.rstudio.core.client.widget.FormLabel;
 import org.rstudio.core.client.widget.HyperlinkLabel;
 import org.rstudio.core.client.widget.NullProgressIndicator;
 import org.rstudio.core.client.widget.ProgressIndicator;
 import org.rstudio.core.client.widget.SmallButton;
+import org.rstudio.studio.client.common.StudioClientCommonConstants;
 import org.rstudio.studio.client.server.ServerError;
 import org.rstudio.studio.client.server.ServerRequestCallback;
 
@@ -47,19 +49,24 @@ public class SshKeyWidget extends Composite
       txtSshKeyPath_.setReadOnly(true);
       txtSshKeyPath_.setWidth(textWidth);
 
+      ElementIds.assignElementId(txtSshKeyPath_, ElementIds.TEXTBOX_SSH_KEY_PATH);
+
       // caption panel
       HorizontalPanel captionPanel = new HorizontalPanel();
       captionPanel.addStyleName(RES.styles().captionPanel());
       captionPanel.setWidth(textWidth);
-      FormLabel sshKeyPathLabel = new FormLabel("SSH RSA key:", txtSshKeyPath_);
+      FormLabel sshKeyPathLabel = new FormLabel(constants_.sshRSAKeyFormLabel(), txtSshKeyPath_);
       captionPanel.add(sshKeyPathLabel);
       captionPanel.setCellHorizontalAlignment(
             sshKeyPathLabel,
             HasHorizontalAlignment.ALIGN_LEFT);
 
       HorizontalPanel linkPanel = new HorizontalPanel();
-      publicKeyLink_ = new HyperlinkLabel("View public key", () -> viewPublicKey());
+      publicKeyLink_ = new HyperlinkLabel(constants_.viewPublicKeyCaption(), () -> viewPublicKey());
       publicKeyLink_.addStyleName(RES.styles().viewPublicKeyLink());
+
+      ElementIds.assignElementId(publicKeyLink_, ElementIds.HYPERLINKLABEL_SSH_SHOW_PUBLIC_KEY);
+
       linkPanel.add(publicKeyLink_);
       captionPanel.add(publicKeyLink_);
       captionPanel.setCellHorizontalAlignment(
@@ -73,8 +80,11 @@ public class SshKeyWidget extends Composite
       HorizontalPanel sshButtonPanel = new HorizontalPanel();
       sshButtonPanel.addStyleName(RES.styles().sshButtonPanel());
       SmallButton createKeyButton = new SmallButton();
-      createKeyButton.setText("Create RSA Key...");
+      createKeyButton.setText(constants_.createRSAKeyButtonLabel());
       createKeyButton.addClickHandler(event -> showCreateKeyDialog());
+      
+      ElementIds.assignElementId(createKeyButton, ElementIds.BUTTON_SSH_KEY_CREATE);
+
       sshButtonPanel.add(createKeyButton);
       panel.add(sshButtonPanel);
 
@@ -127,7 +137,7 @@ public class SshKeyWidget extends Composite
 
    private void viewPublicKey()
    {
-      progressIndicator_.onProgress("Reading public key...");
+      progressIndicator_.onProgress(constants_.readingPublicKeyProgressCaption());
 
       // compute path to public key
       FileSystemItem privKey = 
@@ -143,15 +153,14 @@ public class SshKeyWidget extends Composite
          {
             progressIndicator_.onCompleted();
             
-            new ShowPublicKeyDialog("Public Key",
+            new ShowPublicKeyDialog(constants_.showPublicKeyDialogCaption(),
                                     publicKeyContents).showModal();
          }
 
          @Override
          public void onError(ServerError error)
          {
-            String msg = "Error attempting to read key '" + keyPath + "' (" +
-                         error.getUserMessage() + ")";
+            String msg = constants_.onSSHErrorMessage(keyPath,error.getUserMessage());
             progressIndicator_.onError(msg);
          }
       });
@@ -184,6 +193,6 @@ public class SshKeyWidget extends Composite
    private final GitServerOperations server_;
    private ProgressIndicator progressIndicator_;
    private String rsaSshKeyPath_;
-
-   private static final String NONE = "(None)";
+   private static final StudioClientCommonConstants constants_ = GWT.create(StudioClientCommonConstants.class);
+   private static final String NONE = constants_.noneLabel();
 }

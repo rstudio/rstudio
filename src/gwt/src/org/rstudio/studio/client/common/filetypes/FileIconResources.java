@@ -1,7 +1,7 @@
 /*
  * FileIconResources.java
  *
- * Copyright (C) 2021 by RStudio, PBC
+ * Copyright (C) 2022 by RStudio, PBC
  *
  * Unless you have received this program directly from RStudio pursuant
  * to the terms of a commercial license agreement with RStudio, then
@@ -93,6 +93,9 @@ public interface FileIconResources extends ClientBundle
 
    @Source("iconRmarkdown_2x.png")
    ImageResource iconRmarkdown2x();
+   
+   @Source("iconQuarto_2x.png")
+   ImageResource iconQuarto2x();
 
    @Source("iconC_2x.png")
    ImageResource iconC2x();

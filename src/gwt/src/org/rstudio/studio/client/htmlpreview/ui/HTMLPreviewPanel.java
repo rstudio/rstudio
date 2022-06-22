@@ -1,7 +1,7 @@
 /*
  * HTMLPreviewPanel.java
  *
- * Copyright (C) 2021 by RStudio, PBC
+ * Copyright (C) 2022 by RStudio, PBC
  *
  * Unless you have received this program directly from RStudio pursuant
  * to the terms of a commercial license agreement with RStudio, then
@@ -14,6 +14,7 @@
  */
 package org.rstudio.studio.client.htmlpreview.ui;
 
+import com.google.gwt.core.client.GWT;
 import com.google.gwt.dom.client.Style.Unit;
 import com.google.gwt.event.dom.client.ClickEvent;
 import com.google.gwt.event.dom.client.ClickHandler;
@@ -43,6 +44,7 @@ import org.rstudio.core.client.widget.ToolbarPopupMenu;
 import org.rstudio.studio.client.RStudioGinjector;
 import org.rstudio.studio.client.application.Desktop;
 import org.rstudio.studio.client.htmlpreview.HTMLPreviewPresenter;
+import org.rstudio.studio.client.htmlpreview.HtmlPreviewConstants;
 import org.rstudio.studio.client.htmlpreview.model.HTMLPreviewResult;
 import org.rstudio.studio.client.rsconnect.RSConnect;
 import org.rstudio.studio.client.rsconnect.ui.RSConnectPublishButton;
@@ -62,7 +64,7 @@ public class HTMLPreviewPanel extends ResizeComposite
       layoutPanel_.setWidgetLeftRight(toolbar_, 0, Unit.PX, 0, Unit.PX);
       layoutPanel_.setWidgetTopHeight(toolbar_, 0, Unit.PX, tbHeight_, Unit.PX);
       
-      previewFrame_ = new AnchorableFrame("HTML Preview Panel");
+      previewFrame_ = new AnchorableFrame(constants_.htmlPreviewPanelTitle());
       previewFrame_.setSize("100%", "100%");
       layoutPanel_.add(previewFrame_);
       layoutPanel_.setWidgetLeftRight(previewFrame_,  0, Unit.PX, 0, Unit.PX);
@@ -81,9 +83,9 @@ public class HTMLPreviewPanel extends ResizeComposite
    
    private Toolbar createToolbar(Commands commands)
    {
-      Toolbar toolbar = new Toolbar("Preview Tab");
+      Toolbar toolbar = new Toolbar(constants_.previewTabToolbarLabel());
       
-      fileCaption_ = new ToolbarLabel("Preview: ");
+      fileCaption_ = new ToolbarLabel(constants_.previewToolbarLabelText());
       toolbar.addLeftWidget(fileCaption_);
       fileLabel_ = new ToolbarLabel();
       fileLabel_.addStyleName(ThemeStyles.INSTANCE.subtitle());
@@ -110,7 +112,7 @@ public class HTMLPreviewPanel extends ResizeComposite
          menu.addItem(commands.saveHtmlPreviewAsLocalFile().createMenuItem(false));
       
          saveHtmlPreviewAs_ = toolbar.addLeftWidget(new ToolbarMenuButton(
-               "Save As",
+               constants_.saveAsToolbarMenuButtonText(),
                ToolbarButton.NoTitle,
                commands.saveSourceDoc().getImageResource(),
                menu));
@@ -124,7 +126,7 @@ public class HTMLPreviewPanel extends ResizeComposite
                      RSConnectPublishButton.HOST_HTML_PREVIEW,
                      RSConnect.CONTENT_TYPE_DOCUMENT, true, null));
       
-      findTextBox_ = new FindTextBox("Find");
+      findTextBox_ = new FindTextBox(constants_.findTextBoxCueText());
       findTextBox_.setIconVisible(true);
       findTextBox_.setOverrideWidth(120);
       findTextBox_.getElement().getStyle().setMarginRight(6, Unit.PX);
@@ -159,8 +161,8 @@ public class HTMLPreviewPanel extends ResizeComposite
             {
                RStudioGinjector.INSTANCE.getGlobalDisplay().showMessage(
                      MessageDialog.INFO,
-                     "Find in Page", 
-                     "No occurrences found",
+                     constants_.findInPageText(),
+                     constants_.noOccurrencesFoundText(),
                      findInputSource);
             }     
          }
@@ -182,7 +184,7 @@ public class HTMLPreviewPanel extends ResizeComposite
    public void showLog(String log)
    {
       final HTMLPreviewProgressDialog dialog = 
-                              new HTMLPreviewProgressDialog("Log");
+                              new HTMLPreviewProgressDialog(constants_.showLogDialogCaption());
       dialog.showOutput(log);
       dialog.stopProgress();
       dialog.addClickHandler(new ClickHandler() {
@@ -320,4 +322,6 @@ public class HTMLPreviewPanel extends ResizeComposite
    private Widget showLogButtonSeparator_;
    private ToolbarButton showLogButton_;
    private HTMLPreviewProgressDialog activeProgressDialog_;
+
+   private static final HtmlPreviewConstants constants_ = GWT.create(HtmlPreviewConstants.class);
 }

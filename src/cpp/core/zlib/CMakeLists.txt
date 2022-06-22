@@ -1,7 +1,7 @@
 #
 # CMakeLists.txt
 #
-# Copyright (C) 2021 by RStudio, PBC
+# Copyright (C) 2022 by RStudio, PBC
 #
 # Unless you have received this program directly from RStudio pursuant
 # to the terms of a commercial license agreement with RStudio, then
@@ -26,7 +26,7 @@ include(CheckFunctionExists)
 include(CheckIncludeFile)
 include(CheckCSourceCompiles)
 
-# disable gcc visiblity attribute (not supported by some mingw versinos)
+# disable gcc visibility attribute (not supported by some mingw versions)
 set(EXTRA_COMPILE_DEFINITIONS "NO_VIZ")
 
 if(MSVC)

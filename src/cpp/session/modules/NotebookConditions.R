@@ -1,7 +1,7 @@
 #
 # NotebookConditions.R
 #
-# Copyright (C) 2021 by RStudio, PBC
+# Copyright (C) 2022 by RStudio, PBC
 #
 # Unless you have received this program directly from RStudio pursuant
 # to the terms of a commercial license agreement with RStudio, then
@@ -42,13 +42,13 @@
 
 .rs.addFunction("notebookConditions.connectImpl", function()
 {
+  
    # NOTE: because the body of this function will be evaluated in the
    # global environment, we need to avoid defining variables here.
    #
    # https://github.com/rstudio/rstudio/issues/8834
-   base::assign(
-      x = ".rs.notebookConditions.handlerStack",
-      value = .Internal(.addCondHands(
+  .rs.notebookConditions.handlerStack <-
+   .Internal(.addCondHands(
          c("warning", "message"),
          list(
             warning = .rs.notebookConditions.onWarning,
@@ -57,9 +57,11 @@
          base::globalenv(),
          NULL,
          TRUE
-      )),
-      envir = base::as.environment("tools:rstudio")
-   )
+      ))
+  base::assign(x = ".rs.notebookConditions.handlerStack", 
+               value = .rs.notebookConditions.handlerStack,
+               envir = .rs.toolsEnv())
+  base::rm(.rs.notebookConditions.handlerStack)
 })
 
 .rs.addFunction("notebookConditions.disconnectCall", function()
@@ -74,14 +76,11 @@
    #
    # https://github.com/rstudio/rstudio/issues/8834
    .Internal(.resetCondHands(
-      base::get(
-         x = ".rs.notebookConditions.handlerStack",
-         envir = base::as.environment("tools:rstudio")
-      )
+     base::get(
+       x = ".rs.notebookConditions.handlerStack",
+       envir = .rs.toolsEnv()
+     )
+     
    ))
-   
-   base::rm(
-      list = ".rs.notebookConditions.handlerStack",
-      envir = base::as.environment("tools:rstudio")
-   )
+  base::rm(.rs.notebookConditions.handlerStack, envir = .rs.toolsEnv())
 })

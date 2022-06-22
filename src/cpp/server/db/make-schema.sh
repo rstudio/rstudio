@@ -3,13 +3,15 @@
 if [ -z "$1" ]
 then
    echo "Must specify at least one argument."
-   echo "Invocation: ./make-schema.sh name [sql]"
-   echo "Ex: ./make-schema.sh AddMyTable"
+   echo "Invocation: ./make-schema.sh [upgradeVersion] [sql]"
+   echo "Ex: ./make-schema.sh \"Ghost Orchid\" sql"
    exit 1
 fi
 
-filename=$(date '+%Y%m%d%H%M%S%N')
-filename="${filename}_${1}"
+filename=$(date -u '+%Y%m%d%H%M%S%N')
+filename="${filename}_${1}_AlterTables"
+
+filename=$(echo "${filename}" | tr ' ' '-')
 
 if [ -z "$2" ]
 then

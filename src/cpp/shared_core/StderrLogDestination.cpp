@@ -1,7 +1,7 @@
 /*
  * StderrDestination.cpp
  * 
- * Copyright (C) 2021 by RStudio, PBC
+ * Copyright (C) 2022 by RStudio, PBC
  *
  * Unless you have received this program directly from RStudio pursuant to the terms of a commercial license agreement
  * with RStudio, then this program is licensed to you under the following terms:
@@ -29,17 +29,15 @@ namespace rstudio {
 namespace core {
 namespace log {
 
-StderrLogDestination::StderrLogDestination(LogLevel in_logLevel) :
-   ILogDestination(in_logLevel)
+StderrLogDestination::StderrLogDestination(const std::string& in_id,
+                                           LogLevel in_logLevel,
+                                           LogMessageFormatType in_formatType,
+                                           bool in_reloadable) :
+   ILogDestination(in_id, in_logLevel, in_formatType, in_reloadable)
 {
 }
 
-unsigned int StderrLogDestination::getId() const
-{
-   return 0;
-}
-
-void StderrLogDestination::reload()
+void StderrLogDestination::refresh(const RefreshParams&)
 {
    // No action necessary.
 }

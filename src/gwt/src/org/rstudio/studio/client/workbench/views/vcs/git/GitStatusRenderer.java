@@ -1,7 +1,7 @@
 /*
  * GitStatusRenderer.java
  *
- * Copyright (C) 2021 by RStudio, PBC
+ * Copyright (C) 2022 by RStudio, PBC
  *
  * Unless you have received this program directly from RStudio pursuant
  * to the terms of a commercial license agreement with RStudio, then
@@ -23,6 +23,7 @@ import com.google.gwt.safehtml.shared.SafeHtmlUtils;
 import com.google.gwt.text.shared.SafeHtmlRenderer;
 
 import org.rstudio.core.client.resources.ImageResource2x;
+import org.rstudio.studio.client.workbench.views.vcs.ViewVcsConstants;
 import org.rstudio.studio.client.workbench.views.vcs.common.ChangelistTable.ChangelistTableCellTableResources;
 
 public class GitStatusRenderer implements SafeHtmlRenderer<String>
@@ -99,19 +100,19 @@ public class GitStatusRenderer implements SafeHtmlRenderer<String>
       switch (c)
       {
          case 'A':
-            return "Added";
+            return constants_.addedCapitalized();
          case 'M':
-            return "Modified";
+            return constants_.modifiedCapitalized();
          case 'D':
-            return "Deleted";
+            return constants_.deletedCapitalized();
          case 'R':
-            return "Renamed";
+            return constants_.renamedCapitalized();
          case 'C':
-            return "Copied";
+            return constants_.copiedCapitalized();
          case '?':
-            return "Untracked";
+            return constants_.untrackedCapitalized();
          case 'U':
-            return "Unmerged";
+            return constants_.unmergedCapitalized();
          case ' ':
             return "";
          default:
@@ -154,4 +155,5 @@ public class GitStatusRenderer implements SafeHtmlRenderer<String>
 
    private static final StatusResources resources_ = GWT.create(StatusResources.class);
    private static final ChangelistTableCellTableResources ctRes_ = GWT.create(ChangelistTableCellTableResources.class);
+   private static final ViewVcsConstants constants_ = GWT.create(ViewVcsConstants.class);
 }

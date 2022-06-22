@@ -1,7 +1,7 @@
 /*
  * CallFrameItem.java
  *
- * Copyright (C) 2021 by RStudio, PBC
+ * Copyright (C) 2022 by RStudio, PBC
  *
  * Unless you have received this program directly from RStudio pursuant
  * to the terms of a commercial license agreement with RStudio, then
@@ -28,6 +28,7 @@ import com.google.gwt.user.client.ui.Widget;
 import org.rstudio.core.client.theme.res.ThemeResources;
 import org.rstudio.core.client.widget.FontSizer;
 import org.rstudio.studio.client.common.FilePathUtils;
+import org.rstudio.studio.client.workbench.views.environment.ViewEnvironmentConstants;
 import org.rstudio.studio.client.workbench.views.environment.model.CallFrame;
 
 public class CallFrameItem extends Composite
@@ -127,10 +128,8 @@ public class CallFrameItem extends Composite
          String fileLocation = "";
          if (hasFileLocation())
          {
-            fileLocation = " at " +
-                           FilePathUtils.friendlyFileName(
-                                 frame_.getFileName()) + ":" +
-                           lineNumber;
+            fileLocation = constants_.fileLocationAtLine("",FilePathUtils.friendlyFileName(
+                    frame_.getFileName()),lineNumber);
          }
          functionName.setText(
                  getFrameLabel() + 
@@ -151,7 +150,7 @@ public class CallFrameItem extends Composite
    {
       if (frame_.isSourceEquiv())
       {
-         return "[Debug source]";
+         return constants_.debugSourceBrackets();
       }
       if (frame_.getShinyFunctionLabel().isEmpty())
       {
@@ -159,7 +158,7 @@ public class CallFrameItem extends Composite
       }
       else
       {
-         return "[Shiny: " + frame_.getShinyFunctionLabel() + "]";
+         return constants_.shinyFunctionLabel(frame_.getShinyFunctionLabel());
       }
    }
 
@@ -170,4 +169,5 @@ public class CallFrameItem extends Composite
    CallFrame frame_;
    boolean isActive_;
    boolean isVisible_;
+   private static final ViewEnvironmentConstants constants_ = GWT.create(ViewEnvironmentConstants.class);
 }

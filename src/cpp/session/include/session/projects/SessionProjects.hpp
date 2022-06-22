@@ -1,7 +1,7 @@
 /*
  * SessionProjects.hpp
  *
- * Copyright (C) 2021 by RStudio, PBC
+ * Copyright (C) 2022 by RStudio, PBC
  *
  * Unless you have received this program directly from RStudio pursuant
  * to the terms of a commercial license agreement with RStudio, then
@@ -37,6 +37,7 @@
 #include <core/r_util/RProjectFile.hpp>
 #include <core/r_util/RSourceIndex.hpp>
 #include <core/r_util/RPackageInfo.hpp>
+#include <core/r_util/RSessionContext.hpp>
 
 namespace rstudio {
 namespace session {
@@ -121,6 +122,9 @@ public:
    // Path to external user and project-specific storage folder outside .Rproj.user (in e.g.
    // .rstudio or .rstudio-desktop)
    const core::FilePath& externalStoragePath() const { return storagePath_; }
+
+   // Paths to python virtual environments at the top level of the project
+   const std::vector<core::FilePath>& pythonEnvs() const { return pythonEnvs_; }
 
    core::FilePath oldScratchPath() const;
    core::FilePath websitePath() const;
@@ -246,6 +250,7 @@ private:
    core::FilePath scratchPath_;
    core::FilePath sharedScratchPath_;
    core::FilePath storagePath_;
+   std::vector<core::FilePath> pythonEnvs_;
    core::r_util::RProjectConfig config_;
    std::string defaultEncoding_;
    core::FilePath buildTargetPath_;
@@ -262,6 +267,10 @@ private:
 };
 
 ProjectContext& projectContext();
+
+core::r_util::ProjectId& projectId();
+
+void addFirstRunDocs(const core::FilePath& projectFilePath, const std::vector<std::string>& docs);
 
 core::json::Array websiteOutputFormatsJson();
 

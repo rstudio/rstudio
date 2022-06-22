@@ -1,7 +1,7 @@
 /*
  * RSessionContext.hpp
  *
- * Copyright (C) 2021 by RStudio, PBC
+ * Copyright (C) 2022 by RStudio, PBC
  *
  * Unless you have received this program directly from RStudio pursuant
  * to the terms of a commercial license agreement with RStudio, then
@@ -52,6 +52,8 @@ namespace core {
 class FilePath;
 
 namespace r_util {
+
+class IActiveSessionsStorage;
 
 enum SessionScopeState
 {
@@ -157,6 +159,8 @@ public:
 
    static SessionScope vscodeSession(const std::string& id);
 
+   static SessionScope fromSessionId(const std::string &id, const std::string& editor);
+
    SessionScope()
    {
    }
@@ -198,12 +202,14 @@ private:
    std::string id_;
 };
 
-SessionScopeState validateSessionScope(const SessionScope& scope,
-                          const core::FilePath& userHomePath,
-                          const core::FilePath& userScratchPath,
-                          core::r_util::ProjectIdToFilePath projectIdToFilePath,
-                          bool projectSharingEnabled,
-                          std::string* pProjectFilePath);
+SessionScopeState validateSessionScope(
+   std::shared_ptr<IActiveSessionsStorage> storage,
+   const SessionScope& scope,
+   const core::FilePath& userHomePath,
+   const core::FilePath& userScratchPath,
+   core::r_util::ProjectIdToFilePath projectIdToFilePath,
+   bool projectSharingEnabled,
+   std::string* pProjectFilePath);
 
 bool isSharedPath(const std::string& projectPath,
                   const core::FilePath& userHomePath);

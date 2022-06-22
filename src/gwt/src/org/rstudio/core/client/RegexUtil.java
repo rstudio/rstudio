@@ -1,7 +1,7 @@
 /*
  * RegexUtil.java
  *
- * Copyright (C) 2021 by RStudio, PBC
+ * Copyright (C) 2022 by RStudio, PBC
  *
  * Unless you have received this program directly from RStudio pursuant
  * to the terms of a commercial license agreement with RStudio, then
@@ -52,6 +52,9 @@ public class RegexUtil
    
    public static final Pattern RE_RMARKDOWN_CHUNK_BEGIN =
          Pattern.create("^\\s*```\\{(.*?)\\}\\s*$", "");
+   
+   public static final Pattern RE_RMARKDOWN_ENGINE_NAME =
+         Pattern.create("^\\w+", "");
    
    public static final Pattern RE_RMARKDOWN_CHUNK_END =
          Pattern.create("^\\s*```\\s*$", "");

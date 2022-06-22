@@ -1,7 +1,7 @@
 /*
  * AceEditorPreview.java
  *
- * Copyright (C) 2021 by RStudio, PBC
+ * Copyright (C) 2022 by RStudio, PBC
  *
  * Unless you have received this program directly from RStudio pursuant
  * to the terms of a commercial license agreement with RStudio, then
@@ -28,12 +28,13 @@ import org.rstudio.core.client.widget.DynamicIFrame;
 import org.rstudio.core.client.widget.FontSizer;
 import org.rstudio.studio.client.application.Desktop;
 import org.rstudio.studio.client.workbench.views.source.editors.text.ace.AceResources;
+import org.rstudio.studio.client.workbench.prefs.PrefsConstants;
 
 public class AceEditorPreview extends DynamicIFrame
 {
    public AceEditorPreview(String code)
    {
-      super("Editor Theme Preview");
+      super(constants_.editorThemePreview());
       code_ = code;
       Style style = getStyleElement().getStyle();
       style.setBorderColor("#CCC");
@@ -170,10 +171,11 @@ public class AceEditorPreview extends DynamicIFrame
          webFont_ = font;
       }
 
+      String quotedFont = font.startsWith("\"") && font.endsWith("\"") ? font : "\"" + font + "\"";
       StyleElement style = document.createStyleElement();
       style.setAttribute("type", "text/css");
       style.setInnerText(".ace_editor, .ace_text-layer {\n" +
-                         "font-family: \"" + font + "\" !important;\n" +
+                         "font-family: " + quotedFont + ", monospace !important;\n" +
                          "}");
 
       document.getBody().appendChild(style);
@@ -212,4 +214,5 @@ public class AceEditorPreview extends DynamicIFrame
 
    private static Resources RES = GWT.create(Resources.class);
 
+   private static final PrefsConstants constants_ = GWT.create(PrefsConstants.class);
 }

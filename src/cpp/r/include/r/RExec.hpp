@@ -1,7 +1,7 @@
 /*
  * RExec.hpp
  *
- * Copyright (C) 2021 by RStudio, PBC
+ * Copyright (C) 2022 by RStudio, PBC
  *
  * Unless you have received this program directly from RStudio pursuant
  * to the terms of a commercial license agreement with RStudio, then
@@ -44,8 +44,10 @@ namespace rstudio {
 namespace r {
 namespace exec {
 
-// safe (no r error longjump) execution of abritrary nullary function
+// safe (no r error longjump) execution of arbitrary nullary function
 core::Error executeSafely(boost::function<void()> function);
+
+typedef boost::function<bool()> MainThreadFunction;
 
 // helper class for variation of executeSafely w/ return value (impl below)
 template <typename T>
@@ -64,7 +66,7 @@ private:
    T* pReturn_;
 };
  
-// safe (no r error longjump) execution of abritrary nullary function w/ return
+// safe (no r error longjump) execution of arbitrary nullary function w/ return
 template <typename T>
 core::Error executeSafely(boost::function<T()> function, T* pReturn)
 {
@@ -138,9 +140,9 @@ public:
    
    // COPYING: boost::noncopyable
    
-   RFunction& addParam(SEXP param)
+   RFunction& addParam(SEXP paramSEXP)
    {
-      addParam(std::string(), param);
+      addParam(std::string(), paramSEXP);
       return *this;
    }
    
@@ -151,9 +153,10 @@ public:
       return *this;
    }
    
-   RFunction& addParam(const std::string& name, SEXP param)
+   RFunction& addParam(const std::string& name, SEXP paramSEXP)
    {
-      params_.push_back(Param(name, param));
+      preserver_.add(paramSEXP);
+      params_.push_back(Param(name, paramSEXP));
       return *this;
    }
                         
@@ -300,7 +303,6 @@ bool interruptsPending();
 void setInterruptsPending(bool pending);
 void checkUserInterrupt();
 
-   
 class IgnoreInterruptsScope : boost::noncopyable
 {
 public:
