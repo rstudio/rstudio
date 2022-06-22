@@ -90,12 +90,12 @@ int findOpenPort()
       auto result = safe_convert::stringTo<int>(override);
       if (result)
       {
-         DLOGF("Using session port override: {}", *result);
+         DLOGF("Using session port override '{}'", *result);
          return *result;
       }
       else
       {
-         DLOGF("Ignoring invalid session port override {}", override);
+         DLOGF("Ignoring invalid session port override '{}'", override);
       }
    }
 #endif
@@ -122,12 +122,11 @@ int findOpenPort()
       }
    }
 
-   for (int i = 0; i < 10; i++)
+   DLOGF("Using port range [{}, {})", portRangeStart, portRangeEnd);
+   for (int i = 0; i < 20; i++)
    {
       // generate a port number
       int port = core::random::uniformRandomInteger<int>(portRangeStart, portRangeEnd);
-      DLOGF("Trying port {}", port);
-
       if (portIsOpen(port))
          return port;
    }
@@ -268,6 +267,7 @@ QString Options::portNumber() const
    }
 
    // compute the port number to use
+   DLOGF("Finding open port for communication with rsession");
    int port = findOpenPort();
 
    DLOGF("Using port: {}", port);
