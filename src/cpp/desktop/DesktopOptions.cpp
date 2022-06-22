@@ -35,6 +35,9 @@
 #define kRStudioDesktopSessionPortRange "RSTUDIO_DESKTOP_SESSION_PORT_RANGE"
 #define kRStudioDesktopSessionPort "RSTUDIO_DESKTOP_SESSION_PORT"
 
+#define kDefaultPortRangeStart 49152
+#define kDefaultPortRangeEnd 65535
+
 using namespace rstudio::core;
 
 namespace rstudio {
@@ -101,8 +104,8 @@ int findOpenPort()
 #endif
 
    // RFC 6335 suggests the range 49152-65535 for dynamic / private ephemeral ports
-   int portRangeStart = 49152;
-   int portRangeEnd = 65535;
+   int portRangeStart = kDefaultPortRangeStart;
+   int portRangeEnd = kDefaultPortRangeEnd;
 
    // allow override if necessary
    std::string portRangeOverride = core::system::getenv(kRStudioDesktopSessionPortRange);
@@ -113,8 +116,19 @@ int findOpenPort()
 
       if (parts.size() == 2)
       {
-         portRangeStart = safe_convert::stringTo<int>(parts[0], portRangeStart);
-         portRangeEnd   = safe_convert::stringTo<int>(parts[1], portRangeEnd);
+         auto start = safe_convert::stringTo<int>(parts[0], portRangeStart);
+         auto end   = safe_convert::stringTo<int>(parts[1], portRangeEnd);
+
+         // If the ports appear invalid, fall back to defaults
+         if (start >= end || start < 0 || start > 65535 || end < 0 || end > 65535)
+         {
+            DLOGF("Ignoring invalid port range value '{}'", portRangeOverride);
+         }
+         else
+         {
+            portRangeStart = start;
+            portRangeEnd = end;
+         }
       }
       else
       {
@@ -123,7 +137,7 @@ int findOpenPort()
    }
 
    DLOGF("Using port range [{}, {})", portRangeStart, portRangeEnd);
-   for (int i = 0; i < 20; i++)
+   for (int i = 0; i < 100; i++)
    {
       // generate a port number
       int port = core::random::uniformRandomInteger<int>(portRangeStart, portRangeEnd);
@@ -131,7 +145,7 @@ int findOpenPort()
          return port;
    }
 
-   // we couldn't find an open port; just choose and random port and hope for the best
+   // we couldn't find an open port; just choose a random port and hope for the best
    int port = core::random::uniformRandomInteger<int>(portRangeStart, portRangeEnd);
    DLOGF("Failed to find open port; defaulting to port {}", port);
    return port;
