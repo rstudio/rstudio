@@ -213,7 +213,14 @@ assign(x = ".rs.acCompletionTypes",
       "@templateVar ",
       "@title ",
       "@usage ",
-      "@useDynLib "
+      "@useDynLib ",
+      
+      # Two tags from roxytest (https://github.com/mikldk/roxytest/).
+      # They must be here as later it is checked whether
+      #    if (.rs.acContextTypes$ROXYGEN %in% type)
+      # and the roxytest tags are used in roxygen context
+      "@tests ",
+      "@testexamples "
    )
    
    matchingTags <- grep(paste("^", tag, sep = ""), tags, value = TRUE)
