@@ -69,6 +69,7 @@
 * Fixed issue importing dataset author data from DOIs in the visual editor (#9059)
 * Fixed issue where the Insert Citation dialog in the visual editor would clear selected citation when typeahead searching (#8521)
 * Fixed issue where the bibliography path is assumed to be document relative when inserting citations in the visual editor (#8847)
+* Added `roxytest` tags `@tests` and `@testexamples` (#10266)
 
 ### Misc
 
