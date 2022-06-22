@@ -22,10 +22,13 @@
 #include <vector>
 #include <sstream>
 
+#include <fmt/format.h>
+
 #include <shared_core/FilePath.hpp>
 #include <shared_core/json/Json.hpp>
-#include <core/json/JsonRpc.hpp>
 #include <shared_core/Error.hpp>
+
+#include <core/json/JsonRpc.hpp>
 
 #include <boost/format.hpp>
 #include <boost/algorithm/string.hpp>
@@ -194,15 +197,10 @@ void AsyncPackageInformationProcess::onCompleted(int exitStatus)
       std::string line = splat[i].substr(::strlen("#!json: "));
       
       json::Value value;
-      if (!value.parse(line))
+      Error jsonError = value.parse(line);
+      if (jsonError)
       {
-         std::string subset;
-         if (splat[i].length() > 60)
-            subset = splat[i].substr(0, 60) + "...";
-         else
-            subset = splat[i];
-
-         LOG_ERROR_MESSAGE("Failed to parse JSON: '" + subset + "'");
+         LOG_ERROR(jsonError);
          continue;
       }
       
@@ -261,21 +259,11 @@ void AsyncPackageInformationProcess::update()
    // alias for readability
    const std::vector<std::string>& pkgs = s_pkgsToUpdate_;
    
-   DEBUG_BLOCK("Completions")
+   DEBUG_BLOCK("")
    {
       if (!pkgs.empty())
       {
-         std::cerr << "Updating packages: [";
-         std::cerr << "'" << pkgs[0] << "'";
-         for (std::size_t i = 1; i < pkgs.size(); i++)
-         {
-            std::cerr << ", '" << pkgs[i] << "'";
-         }
-         std::cerr << "]\n";
-      }
-      else
-      {
-         std::cerr << "No packages to update; bailing out" << std::endl;
+         fmt::print(stderr, "Updating packages: {}\n", core::algorithm::join(pkgs, ", "));
       }
    }
    
@@ -291,9 +279,7 @@ void AsyncPackageInformationProcess::update()
    
    if (pkgs.size() > 0)
    {
-      for (std::vector<std::string>::const_iterator it = pkgs.begin() + 1;
-           it != pkgs.end();
-           ++it)
+      for (auto it = pkgs.begin() + 1; it != pkgs.end(); ++it)
       {
          ss << ",'" << *it << "'";
       }

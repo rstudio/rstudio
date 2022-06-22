@@ -351,7 +351,10 @@
       list(generic = generic)
    )
 
-   methods <- eval(call, envir = globalenv())
+   methods <- .rs.tryCatch(eval(call, envir = globalenv()))
+   if (inherits(methods, "error"))
+      return(NULL)
+      
    info <- attr(methods, "info")
    if (!is.data.frame(info))
       return(NULL)
@@ -1414,43 +1417,7 @@
 
    # Find the functions, and generate information on each formal
    # (does it have a default argument; is missingness handled; etc)
-   functionInfo <- lapply(functions, function(f) {
-
-      formals <- formals(f)
-      if (!length(formals))
-         return(.rs.emptyFunctionInfo())
-
-      formalNames <- names(formals)
-      hasDefault <- vapply(formals, FUN.VALUE = integer(1), USE.NAMES = FALSE, function(x) {
-         !identical(x, quote(expr = ))
-      })
-
-      # Record which symbols in the function body handle missingness,
-      # to check if missingness of default arguments is handled
-      missingEnv <- new.env(parent = emptyenv())
-      usedSymbolsEnv <- new.env(parent = emptyenv())
-      .rs.recursiveWalk(body(f), function(node) {
-         .rs.recordFunctionInformation(node, missingEnv, usedSymbolsEnv)
-      })
-
-      # Figure out which functions perform NSE.
-      # TODO: Figure out which arguments are actually involved in NSE.
-      performsNse <- .rs.performsNonstandardEvaluation(f)
-
-      formalInfo <- lapply(seq_along(formalNames), function(i) {
-         as.integer(c(
-            hasDefault[[i]],
-            formalNames[[i]] == "..." || exists(formalNames[[i]], envir = missingEnv),
-            exists(formalNames[[i]], envir = usedSymbolsEnv)
-         ))
-      })
-
-      list(
-         formal_names = formalNames,
-         formal_info  = formalInfo,
-         performs_nse = I(as.integer(performsNse))
-      )
-   })
+   functionInfo <- lapply(functions, .rs.generateFunctionInformation)
 
    # List data objects exported by this package
    datasets <- .rs.listDatasetsProvidedByPackage(package)
@@ -1464,12 +1431,53 @@
       datasets = datasets
    )
 
-   # Write the JSON to stdout; parent processes
+   # Write the JSON to stdout; the parent will read and process it
+   flush.console()
    json <- paste("#!json:", .rs.toJSON(output))
-   cat(json, sep = "\n")
+   writeLines(c("", json, ""))
+   flush.console()
 
    # Return output for debug purposes
    invisible(output)
+})
+
+.rs.addFunction("generateFunctionInformation", function(func) {
+
+  formals <- formals(func)
+  if (!length(formals))
+     return(.rs.emptyFunctionInfo())
+
+  formalNames <- names(formals)
+  hasDefault <- vapply(formals, FUN.VALUE = integer(1), USE.NAMES = FALSE, function(x) {
+     !identical(x, quote(expr = ))
+  })
+
+  # Record which symbols in the function body handle missingness,
+  # to check if missingness of default arguments is handled
+  missingEnv <- new.env(parent = emptyenv())
+  usedSymbolsEnv <- new.env(parent = emptyenv())
+  .rs.recursiveWalk(body(func), function(node) {
+     .rs.recordFunctionInformation(node, missingEnv, usedSymbolsEnv)
+  })
+
+  # Figure out which functions perform NSE.
+  # TODO: Figure out which arguments are actually involved in NSE.
+  performsNse <- .rs.performsNonstandardEvaluation(func)
+
+  formalInfo <- lapply(seq_along(formalNames), function(i) {
+     as.integer(c(
+        hasDefault[[i]],
+        formalNames[[i]] == "..." || exists(formalNames[[i]], envir = missingEnv),
+        exists(formalNames[[i]], envir = usedSymbolsEnv)
+     ))
+  })
+
+  list(
+     formal_names = formalNames,
+     formal_info  = formalInfo,
+     performs_nse = I(as.integer(performsNse))
+  )
+ 
 })
 
 .rs.setVar("nse.primitives", c(

@@ -52,6 +52,11 @@ private:
    std::string needle_;
 };
 
+bool hasSubstringAtOffset(
+      const std::string& string,
+      const std::string& substring,
+      std::size_t offset = 0);
+
 bool hasTruthyValue(const std::string& string);
 bool hasFalsyValue(const std::string& string);
 
@@ -99,6 +104,9 @@ std::string jsonLiteralEscape(const std::string& str);
 std::string jsonLiteralUnescape(const std::string& str);
 std::string jsonHtmlEscape(const std::string& str);
 std::string singleQuotedStrEscape(const std::string& str);
+
+Error jsonLiteralUnescape(const std::string& string,
+                          std::string* pEscaped);
 
 void convertLineEndings(std::string* str, LineEnding type);
 

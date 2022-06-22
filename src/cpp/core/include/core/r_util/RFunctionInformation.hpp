@@ -167,7 +167,16 @@ public:
          if (formals_[i].name() == formalName)
             return formals_[i];
       
-      LOG_WARNING_MESSAGE("No such formal '" + formalName + "'");
+      if (binding_)
+      {
+         const Binding& binding = *binding_;
+         DLOGF("Function '{}' from '{}' has no formal '{}'", binding.name, binding.origin, formalName);
+      }
+      else
+      {
+         DLOGF("Synthetic function has no formal '{}'", formalName);
+      };
+      
       return noSuchFormal_;
    }
    

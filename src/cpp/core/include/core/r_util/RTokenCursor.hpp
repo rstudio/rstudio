@@ -264,6 +264,12 @@ public:
       return currentToken().contentAsUtf8();
    }
    
+   bool isAtEndOfDocument() const
+   {
+      auto cursor = clone();
+      return !cursor.moveToNextSignificantToken();
+   }
+   
    bool moveToNextSignificantToken()
    {
       if (!moveToNextToken())
@@ -364,27 +370,7 @@ public:
       return true;
    }
    
-   // We are at the end of the document if there are no
-   // more significant tokens following.
-   bool isAtEndOfDocument()
-   {
-      if (offset_ == n_ - 1)
-         return true;
-      
-      RTokenCursor cursor = clone();
-      ++cursor.offset_;
-      
-      if (!isWhitespaceOrComment(cursor))
-         return false;
-      
-      cursor.fwdOverWhitespaceAndComments();
-      if (isWhitespaceOrComment(cursor) && cursor.offset_ == n_ - 1)
-         return true;
-      
-      return false;
-   }
-   
-   bool finishesExpression()
+   bool finishesExpression() const
    {
       const RToken& token = currentToken();
       bool isSemi = token.isType(RToken::SEMI);

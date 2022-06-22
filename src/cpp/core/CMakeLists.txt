@@ -128,6 +128,7 @@ set(CORE_SOURCE_FILES
    tex/TexSynctex.cpp
    text/AnsiCodeParser.cpp
    text/DcfParser.cpp
+   text/TextCursor.cpp
    text/TemplateFilter.cpp
    text/TermBufferParser.cpp
    zlib/zlib.cpp

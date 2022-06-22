@@ -371,7 +371,7 @@ public:
            it != allInferredPkgNames().end();
            ++it)
       {
-         if (allInferredPkgNames().count(*it) == 0)
+         if (packageInformation().count(*it) == 0)
             result.push_back(*it);
       }
       return result;
