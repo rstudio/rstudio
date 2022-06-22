@@ -777,9 +777,7 @@ export class GwtCallback extends EventEmitter {
     });
 
     ipcMain.on('desktop_install_rtools', (_event, version, installerPath) => {
-      console.debug(version, installerPath);
-
-      var command = `${installerPath} /SP- /SILENT`
+      let command = `${installerPath} /SP- /SILENT`;
       const systemDrive = process.env.SYSTEMDRIVE;
 
       if (systemDrive?.length && existsSync(systemDrive)) {
@@ -788,7 +786,7 @@ export class GwtCallback extends EventEmitter {
 
       exec(command, (error, _stdout, stderr) => {
         if (error) {
-          console.error(stderr);
+          logger().logError(stderr);
         }
       });
     });
