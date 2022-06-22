@@ -19,17 +19,126 @@
 #include <QApplication>
 #include <QDesktopWidget>
 
+#include <boost/algorithm/string/split.hpp>
+
+#include <shared_core/SafeConvert.hpp>
+
 #include <core/Random.hpp>
+#include <core/StringUtils.hpp>
 #include <core/system/System.hpp>
 #include <core/system/Environment.hpp>
 
 #include "DesktopInfo.hpp"
 #include "DesktopUtils.hpp"
 
+#define kRStudioDesktopSessionPortValidationEnabled "RSTUDIO_DESKTOP_SESSION_PORT_VALIDATION_ENABLED"
+#define kRStudioDesktopSessionPortRange "RSTUDIO_DESKTOP_SESSION_PORT_RANGE"
+#define kRStudioDesktopSessionPort "RSTUDIO_DESKTOP_SESSION_PORT"
+
 using namespace rstudio::core;
 
 namespace rstudio {
 namespace desktop {
+
+namespace {
+
+bool portIsOpen(int port)
+{
+   // Disable validation checks if requested; mainly for testing in cases
+   // where QTcpSocket is unable to successfully bind to an open port
+   std::string envvar = core::system::getenv(kRStudioDesktopSessionPortValidationEnabled);
+   bool needsValidation = core::string_utils::isTruthy(envvar, true);
+   if (!needsValidation)
+      return true;
+
+   // Create a socket
+   QTcpSocket socket;
+
+   // Set up an error handler
+   QObject::connect(&socket, QOverload<QAbstractSocket::SocketError>::of(&QAbstractSocket::error), [&]()
+   {
+      DLOGF(
+               "An error occurred while attempting to bind to port {}: {}",
+               port,
+               socket.errorString().toStdString());
+   });
+
+   if (!socket.bind(port))
+   {
+      DLOGF("Failed to bind TCP socket to port {}", port);
+      return false;
+   }
+
+   // we found a good port; close our socket and save it
+   //
+   // TODO: it'd be nice to keep the port locked until we are
+   // officially ready to launch the rsession, or let rsession
+   // communicate to us which port it wants to use via some
+   // separate channel
+   DLOGF("Successfully bound TCP socket to port {}", port);
+   socket.close();
+   return true;
+}
+
+int findOpenPort()
+{
+   // allow for override in non-package builds, for testing
+#ifndef RSTUDIO_PACKAGE_BUILD
+   std::string override = core::system::getenv(kRStudioDesktopSessionPort);
+   if (!override.empty())
+   {
+      auto result = safe_convert::stringTo<int>(override);
+      if (result)
+      {
+         DLOGF("Using session port override: {}", *result);
+         return *result;
+      }
+      else
+      {
+         DLOGF("Ignoring invalid session port override {}", override);
+      }
+   }
+#endif
+
+   // RFC 6335 suggests the range 49152-65535 for dynamic / private ephemeral ports
+   int portRangeStart = 49152;
+   int portRangeEnd = 65535;
+
+   // allow override if necessary
+   std::string portRangeOverride = core::system::getenv(kRStudioDesktopSessionPortRange);
+   if (!portRangeOverride.empty())
+   {
+      std::vector<std::string> parts;
+      boost::algorithm::split(parts, portRangeOverride, boost::is_any_of(":-,"));
+
+      if (parts.size() == 2)
+      {
+         portRangeStart = safe_convert::stringTo<int>(parts[0], portRangeStart);
+         portRangeEnd   = safe_convert::stringTo<int>(parts[1], portRangeEnd);
+      }
+      else
+      {
+         DLOGF("Unexpected value '{}' for {}", portRangeOverride, kRStudioDesktopSessionPortRange);
+      }
+   }
+
+   for (int i = 0; i < 10; i++)
+   {
+      // generate a port number
+      int port = core::random::uniformRandomInteger<int>(portRangeStart, portRangeEnd);
+      DLOGF("Trying port {}", port);
+
+      if (portIsOpen(port))
+         return port;
+   }
+
+   // we couldn't find an open port; just choose and random port and hope for the best
+   int port = core::random::uniformRandomInteger<int>(portRangeStart, portRangeEnd);
+   DLOGF("Failed to find open port; defaulting to port {}", port);
+   return port;
+}
+
+} // end anonymous namespace
 
 #ifdef _WIN32
 // Defined in DesktopRVersion.cpp
@@ -151,64 +260,28 @@ void Options::saveMainWindowBounds(QMainWindow* win)
 
 QString Options::portNumber() const
 {
-#ifndef RSTUDIO_PACKAGE_BUILD
-   // allow for hard-coded port, for debugging
-   std::string port = core::system::getenv("RSTUDIO_RSESSION_PORT");
-   if (!port.empty())
-   {
-      portNumber_ = QString::fromStdString(port);
-      return portNumber_;
-   }
-#endif
-
    // if we already have a port number, use it
    if (!portNumber_.isEmpty())
    {
       LOG_DEBUG_MESSAGE("Using port: " + portNumber_.toStdString());
       return portNumber_;
    }
-   
-   // otherwise, try to find an open port
-   for (int i = 0; i < 100; i++)
-   {
-      // generate a port number
-      // RFC 6335 suggests the range 49152-65535 for dynamic ports
-      int port = core::random::uniformRandomInteger<int>(49152, 65535);
-      LOG_DEBUG_MESSAGE("Trying port " + std::to_string(port));
 
-      // try to bind to it -- if this fails, try a new port number
-      QTcpSocket socket;
-      if (!socket.bind(port))
-      {
-         LOG_DEBUG_MESSAGE("Couldn't bind to port " + std::to_string(port) + "; trying new port");
-         continue;
-      }
+   // compute the port number to use
+   int port = findOpenPort();
 
-      // we found a good port; close our socket and save it
-      //
-      // TODO: it'd be nice to keep the port locked until we are
-      // officially ready to launch the rsession, or let rsession
-      // communicate to us which port it wants to use via some
-      // separate channel
-      LOG_DEBUG_MESSAGE("Successfully bound to port " + std::to_string(port) + "; saving");
-      socket.close();
-      portNumber_ = QString::number(port);
+   DLOGF("Using port: {}", port);
+   portNumber_ = QString::number(port);
 
-      // recalculate the local peer and set RS_LOCAL_PEER so that
-      // rsession and it's children can use it
+   // recalculate the local peer and set RS_LOCAL_PEER so that
+   // rsession and its children can use it
 #ifdef _WIN32
-      QString localPeer =  QStringLiteral("\\\\.\\pipe\\%1-rsession").arg(portNumber_);
-      localPeer_ = localPeer.toUtf8().constData();
-      core::system::setenv("RS_LOCAL_PEER", localPeer_);
+   QString localPeer =  QStringLiteral("\\\\.\\pipe\\%1-rsession").arg(portNumber_);
+   localPeer_ = localPeer.toUtf8().constData();
+   core::system::setenv("RS_LOCAL_PEER", localPeer_);
 #endif
-    
-      // return discovered port
-      return portNumber_;
-   }
 
-   // if we get here, we failed to find an open port
-   LOG_WARNING_MESSAGE("failed to find open port; defaulting to port 8789");
-   return QStringLiteral("8789");
+   return portNumber_;
 }
 
 QString Options::newPortNumber()
