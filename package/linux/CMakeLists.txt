@@ -87,7 +87,7 @@ if(RSTUDIO_SERVER)
   # automatic dependency resolution use e.g.
   #   sudo apt-get install gdebi-core
   #   sudo gdebi rstudio-server-0.97.151-amd64.deb
-  set(RSTUDIO_DEBIAN_DEPENDS "psmisc, libedit2, sudo, lsb-release, ${RSTUDIO_DEBIAN_DEPENDS_SSL}, libclang-dev, libsqlite3-0, libpq5, ")
+  set(RSTUDIO_DEBIAN_DEPENDS "psmisc, sudo, lsb-release, ${RSTUDIO_DEBIAN_DEPENDS_SSL}, libclang-dev, libsqlite3-0, libpq5, ")
 
 elseif(RSTUDIO_DESKTOP OR RSTUDIO_ELECTRON)
 
@@ -119,7 +119,7 @@ elseif(RSTUDIO_DESKTOP OR RSTUDIO_ELECTRON)
   endif()
 
   # deb dependencies
-  set(RSTUDIO_DEBIAN_DEPENDS "libedit2, ${RSTUDIO_DEBIAN_DEPENDS_SSL}, libclang-dev, libxkbcommon-x11-0, libsqlite3-0, libpq5, ")
+  set(RSTUDIO_DEBIAN_DEPENDS "${RSTUDIO_DEBIAN_DEPENDS_SSL}, libclang-dev, libxkbcommon-x11-0, libsqlite3-0, libpq5, ")
 
 endif()
 
