@@ -15,6 +15,12 @@
 
 #ifdef _WIN32
 # include <winsock.h>
+#else
+# include <sys/types.h>
+# include <sys/socket.h>
+# include <arpa/inet.h>
+# include <netinet/in.h>
+# include <netinet/ip.h>
 #endif
 
 #include "DesktopOptions.hpp"
