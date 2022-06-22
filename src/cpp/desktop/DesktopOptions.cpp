@@ -79,6 +79,7 @@ bool portIsOpen(int port)
    address.sin_family = AF_INET;
    address.sin_addr.s_addr = inet_addr("127.0.0.1");
    address.sin_port = htons(port);
+   memset(address.sin_zero, 0, sizeof(address.sin_zero));
 
    // try to bind the socket
    int bindResult = bind(listener, (SOCKADDR*) &address, sizeof(address));
@@ -96,19 +97,40 @@ bool portIsOpen(int port)
    closesocket(listener);
 
    return bindResult != SOCKET_ERROR;
+
 #else
-   // TODO: macOS / Linux
+
+   // create a socket
+   int fd = socket(AF_INET, SOCK_STREAM, 0);
+   if (fd == -1)
+   {
+      int errorNumber = errno;
+      DLOGF("Error in socket() [error code {}]; assuming port open", errorNumber);
+      return true;
+   }
+
+   // define the address we want to bind to
+   struct sockaddr_in address;
+   address.sin_family = AF_INET;
+   address.sin_addr.s_addr = inet_addr("127.0.0.1");
+   address.sin_port = htons(port);
+   memset(address.sin_zero, 0, sizeof(address.sin_zero));
+
+   // try to bind to the address
+   int bindResult = bind(fd, (struct sockaddr *) &address, sizeof(address));
+   if (bindResult == -1)
+   {
+      int errorNumber = errno;
+      DLOGF("Error binding to port {} [error code {}]", port, errorNumber);
+   }
+   else
+   {
+      DLOGF("Successfully bound to port {}", port);
+      close(fd);
+   }
+
+   return bindResult != -1;
 #endif
-
-
-   // we found a good port; close our socket and save it
-   //
-   // TODO: it'd be nice to keep the port locked until we are
-   // officially ready to launch the rsession, or let rsession
-   // communicate to us which port it wants to use via some
-   // separate channel
-   DLOGF("Successfully bound TCP socket to port {}", port);
-   return true;
 }
 
 int findOpenPort()
