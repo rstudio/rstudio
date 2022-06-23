@@ -261,9 +261,6 @@ for (themeFile in themeFiles) {
    jsContents <- readLines(sub("css$", "js", themeFile), warn = FALSE)
    isDark <- any(grepl("exports.isDark = true;", jsContents))
    
-   print(fileName)
-   print(is.null(xterm_16color_map[[fileName]]))
-   
    content <- .rs.compile_theme(
       content,
       isDark,
