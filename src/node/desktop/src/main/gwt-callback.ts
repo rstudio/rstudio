@@ -13,6 +13,7 @@
  *
  */
 
+import { exec } from 'child_process';
 import {
   app,
   BrowserWindow,
@@ -23,15 +24,15 @@ import {
   screen,
   shell,
   webContents,
-  webFrameMain,
+  webFrameMain
 } from 'electron';
 import { IpcMainEvent, MessageBoxOptions, OpenDialogOptions, SaveDialogOptions } from 'electron/main';
 import EventEmitter from 'events';
-import { mkdtempSync, writeFileSync } from 'fs';
-import { pathToFileURL } from 'url';
+import { existsSync, mkdtempSync, writeFileSync } from 'fs';
 import i18next from 'i18next';
 import { findFontsSync } from 'node-system-fonts';
 import path, { dirname } from 'path';
+import { pathToFileURL } from 'url';
 import { FilePath, normalizeSeparatorsNative } from '../core/file-path';
 import { logger } from '../core/logger';
 import { isCentOS } from '../core/system';
@@ -45,11 +46,8 @@ import { MainWindow } from './main-window';
 import { openMinimalWindow } from './minimal-window';
 import { defaultFonts, ElectronDesktopOptions } from './preferences/electron-desktop-options';
 import {
-  findRepoRoot,
-  getAppPath,
-  filterFromQFileDialogFilter,
-  resolveAliasedPath,
-  handleLocaleCookies,
+  filterFromQFileDialogFilter, findRepoRoot,
+  getAppPath, handleLocaleCookies, resolveAliasedPath
 } from './utils';
 import { activateWindow } from './window-utils';
 
@@ -774,8 +772,19 @@ export class GwtCallback extends EventEmitter {
       this.mainWindow.window.setTitle(`${title} - ${appState().activation().editionName()}`);
     });
 
-    ipcMain.on('desktop_install_rtools', (event, version, installerPath) => {
-      GwtCallback.unimpl('desktop_install_rtools');
+    ipcMain.on('desktop_install_rtools', (_event, version, installerPath) => {
+      let command = `${installerPath} /SP- /SILENT`;
+      const systemDrive = process.env.SYSTEMDRIVE;
+
+      if (systemDrive?.length && existsSync(systemDrive)) {
+        command = `${command} /DIR=${systemDrive}\\RBuildTools\\${version}`;
+      }
+
+      exec(command, (error, _stdout, stderr) => {
+        if (error) {
+          logger().logError(stderr);
+        }
+      });
     });
 
     ipcMain.handle('desktop_get_display_dpi', () => {
