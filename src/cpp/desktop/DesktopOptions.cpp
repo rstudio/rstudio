@@ -14,7 +14,9 @@
  */
 
 #ifdef _WIN32
-# include <winsock.h>
+# define _WINSOCK_DEPRECATED_NO_WARNINGS
+# include <windows.h>
+# include <winsock2.h>
 #else
 # include <sys/types.h>
 # include <sys/socket.h>
@@ -80,11 +82,19 @@ bool portIsOpen(int port)
       return true;
    }
 
+   // request exclusive access (similar to session behavior)
+   std::string enableExclusiveAddrUse = core::system::getenv("RSTUDIO_DESKTOP_EXCLUSIVE_ADDR_USE");
+   if (core::string_utils::isTruthy(enableExclusiveAddrUse, true))
+   {
+      int exclusiveAddrUse = 1;
+      setsockopt(listener, SOL_SOCKET, SO_EXCLUSIVEADDRUSE, (char*) &exclusiveAddrUse, sizeof(exclusiveAddrUse));
+   }
+
    // define the address we want to bind to
    sockaddr_in address;
    address.sin_family = AF_INET;
-   address.sin_addr.s_addr = inet_addr("127.0.0.1");
    address.sin_port = htons(port);
+   address.sin_addr.s_addr = inet_addr("127.0.0.1");
    memset(address.sin_zero, 0, sizeof(address.sin_zero));
 
    // try to bind the socket
