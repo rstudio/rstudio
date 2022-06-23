@@ -649,7 +649,7 @@
 
 .rs.addFunction("create_xterm_color_rules", function(background, foreground, isDark, xterm16ColorMap = NULL) {
 
-   default_16_colors <- c(
+   default_16_colors_light <- c(
       "0"  = "#2e3436", 
       "1"  = "#cc0000", 
       "2"  = "#4e9a06", 
@@ -668,9 +668,29 @@
       "15" = "#eeeeec"
    )
 
+   # borrowed from "pastel on dark" theme
+   default_16_colors_dark <- c(
+      "0"  = "#4f4f4f", 
+      "1"  = "#ff6c60", 
+      "2"  = "#a8ff60", 
+      "3"  = "#ffffb6", 
+      "4"  = "#96cbfe", 
+      "5"  = "#ff73fd", 
+      "6"  = "#c6c5fe", 
+      "7"  = "#eeeeee", 
+      "8"  = "#7c7c7c", 
+      "9"  = "#ffb6b0", 
+      "10" = "#ceffac", 
+      "11" = "#ffffcc", 
+      "12" = "#b5dcff", 
+      "13" = "#ff9cfe", 
+      "14" = "#dfdffe", 
+      "15" = "#ffffff"
+   )
+
    generate_16_colors <- function(xterm16ColorMap) {
      if (is.null(xterm16ColorMap)) {
-       colors <- default_16_colors
+       colors <- if (isDark) default_16_colors_dark else default_16_colors_light
      } else {
        colors <- xterm16ColorMap[order(as.numeric(names(xterm16ColorMap)))]
      }
