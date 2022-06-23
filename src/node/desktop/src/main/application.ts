@@ -299,13 +299,15 @@ export class Application implements AppState {
   }
 
   setDockMenu(){
-    const  menuDock = Menu.buildFromTemplate([{
-      label: 'New RStudio Window',
-      click: () => {
-        this.appLaunch?.launchRStudio({});
-      }
-    }]);
+    if (process.platform === 'darwin'){
+      const  menuDock = Menu.buildFromTemplate([{
+        label: 'New RStudio Window',
+        click: () => {
+          this.appLaunch?.launchRStudio({});
+        }
+      }]);
 
-    app.dock.setMenu(menuDock);
+      app.dock.setMenu(menuDock);
+    }
   }
 }
