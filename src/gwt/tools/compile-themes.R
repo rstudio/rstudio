@@ -136,6 +136,28 @@ active_dgb_line_map <- list(
    "solarized_dark" = "#585B2C"
 )
 
+generate_xterm_16color_map <- function(path = "xrdb") {
+   files <- list.files(path = path, full.names = TRUE, pattern = ".*[.]xrdb")
+
+   parse_xrdb_file <- function(file) {
+      data <- read.table(file, col.names = c("define", "color", "value"), stringsAsFactors = FALSE, comment.char = "")
+
+      # Keep only the ANSI color definitions
+      data <- data[grepl("^Ansi", data$color), ]
+
+      # Rename them
+      data$color <- sub("Ansi_(\\d+)_Color", "\\1", data$color)
+
+      setNames(data$value, data$color)
+   }
+
+   nms <- sub("[.]xrdb", "", basename(files))
+
+   lapply(setNames(files, nms), parse_xrdb_file)
+}
+
+xterm_16color_map <- generate_xterm_16color_map()
+
 applyFixups <- function(content, fileName, parsed) {
    
    methodName <- paste("applyFixups", fileName, sep = ".")
@@ -239,6 +261,9 @@ for (themeFile in themeFiles) {
    jsContents <- readLines(sub("css$", "js", themeFile), warn = FALSE)
    isDark <- any(grepl("exports.isDark = true;", jsContents))
    
+   print(fileName)
+   print(is.null(xterm_16color_map[[fileName]]))
+   
    content <- .rs.compile_theme(
       content,
       isDark,
@@ -247,7 +272,8 @@ for (themeFile in themeFiles) {
       operatorOverrideMap = operator_theme_map,
       keywordOverrideMap = keyword_theme_map,
       nodeSelectorOverrideMap = node_selector_map,
-      commentBgOverrideMap = comment_bg_map)
+      commentBgOverrideMap = comment_bg_map, 
+      xterm16ColorMap = xterm_16color_map[[fileName]])
 
    if (length(content) > 0)
    {
