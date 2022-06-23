@@ -2,7 +2,7 @@
    popupMiddleLeft, popupMiddleCenter, popupMiddleRight,
    popupBottomLeft, popupBottomCenter, popupBottomRight,
    popupContent;
-@external gwt-MenuBarPopup, menuPopupTopLeft, menuPopupTopCenter, menuPopupTopRight,
+@external gwt-MenuBarPopup, gwt-PopupPanel, menuPopupTopLeft, menuPopupTopCenter, menuPopupTopRight,
    menuPopupMiddleLeft, menuPopupMiddleCenter, menuPopupMiddleRight,
    menuPopupBottomLeft, menuPopupBottomCenter, menuPopupBottomRight,
    menuPopupContent;
@@ -26,7 +26,7 @@
 @eval THEME_DARKGREY_MENU_BORDER org.rstudio.core.client.theme.ThemeColors.darkGreyMenuBorder;
 
 /* https://github.com/rstudio/rstudio/issues/10821 */
-.safari .themedPopupPanel, .safari .gwt-MenuBarPopup {
+.safari .themedPopupPanel, .safari .gwt-MenuBarPopup, .safari .gwt-PopupPanel {
    transform: translateZ(0);
 }
 
