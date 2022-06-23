@@ -16,8 +16,6 @@
 #ifndef SESSION_MODULES_CLANG_HPP
 #define SESSION_MODULES_CLANG_HPP
 
-#define kEmbeddedLibClangVersion "13.0.1"
-
 #include <shared_core/Error.hpp>
 
 namespace rstudio {

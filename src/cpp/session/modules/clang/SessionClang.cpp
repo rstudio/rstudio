@@ -63,11 +63,6 @@ std::string embeddedLibClangPath()
    return options().libclangPath().completeChildPath(libclang).getAbsolutePath();
 }
 
-LibraryVersion embeddedLibClangVersion()
-{
-   return LibraryVersion(Version(kEmbeddedLibClangVersion));
-}
-
 std::vector<std::string> embeddedLibClangCompileArgs(const LibraryVersion& version,
                                                      bool isCppFile)
 {
@@ -174,9 +169,7 @@ SEXP rs_isLibClangAvailable()
    else
    {
       LibClang lib;
-      isAvailable = lib.load(embeddedLibClang(),
-                             embeddedLibClangVersion(),
-                             &diagnostics);
+      isAvailable = lib.load(embeddedLibClang(), &diagnostics);
    }
 
    // print diagnostics
@@ -225,7 +218,7 @@ Error initialize()
       return Success();
 
    // attempt to load libclang
-   if (!libclang::clang().load(embeddedLibClang(), embeddedLibClangVersion()))
+   if (!libclang::clang().load(embeddedLibClang()))
       return Success();
 
    // enable crash recovery
