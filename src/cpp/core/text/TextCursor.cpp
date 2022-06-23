@@ -15,6 +15,9 @@
 
 #include <core/text/TextCursor.hpp>
 
+#include <algorithm>
+#include <string>
+
 #include <core/Macros.hpp>
 
 namespace rstudio {
