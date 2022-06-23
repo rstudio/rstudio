@@ -126,7 +126,7 @@ var RCodeModel = function(session, tokenizer,
 
    function pFunction(t)
    {
-      return t.type == 'keyword' && t.value == 'function';
+      return t.type == 'keyword' && (t.value == 'function' || t.value == '\\');
    }
 
    function pAssign(t)
