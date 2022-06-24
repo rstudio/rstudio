@@ -11,3 +11,7 @@
 ### Deprecated / Removed
 
 - Removed the Tools / Shell command (#11253)
+
+### Fixed
+
+- Fixed visual mode outline missing nested R code chunks (#11410)
