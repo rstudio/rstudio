@@ -4022,7 +4022,7 @@ public class AceEditor implements DocDisplay,
       // discover end of current statement -- we search from the inferred statement
       // start, so that we can perform counting of matching pairs of brackets
       endRow = startRow;
-
+      
       // NOTE: '[[' is not tokenized as a single token in our Ace tokenizer,
       // so it is not included here (this shouldn't cause issues in practice
       // since balanced pairs of '[' and '[[' would still imply a correct count
@@ -4033,15 +4033,6 @@ public class AceEditor implements DocDisplay,
 
       while (endRow <= endRowLimit)
       {
-         // continue search if we're in a multi-line string
-         // (forego updating our bracket counts)
-         String state = getSession().getState(endRow);
-         if (state == "qstring" || state == "qqstring" || state == "rawstring")
-         {
-            endRow++;
-            continue;
-         }
-
          // update bracket token counts
          JsArray<Token> tokens = getTokens(endRow);
          for (Token token : JsUtil.asIterable(tokens))
@@ -4067,6 +4058,14 @@ public class AceEditor implements DocDisplay,
 
          // continue search if we have unbalanced brackets
          if (parenCount > 0 || braceCount > 0 || bracketCount > 0)
+         {
+            endRow++;
+            continue;
+         }
+
+         // continue search if end of row is in a multiline string
+         String state = getSession().getState(endRow);
+         if (state == "qstring" || state == "qqstring" || state == "rawstring")
          {
             endRow++;
             continue;
@@ -4110,11 +4109,11 @@ public class AceEditor implements DocDisplay,
          if (fn != null)
             return Range.fromPoints(fn.getPreamble(), fn.getEnd());
       }
-
+ 
       // construct range
       int endColumn = getSession().getLine(endRow).length();
       Range range = Range.create(startRow, 0, endRow, endColumn);
-
+      
       // return empty range if nothing to execute
       if (getTextForRange(range).trim().isEmpty())
          range = Range.fromPoints(pos, pos);
