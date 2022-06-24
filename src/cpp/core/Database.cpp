@@ -769,8 +769,8 @@ bool SchemaVersion::operator<(const SchemaVersion& other) const
       return false;
 
    const auto& versions = versionMap();
-   int thisFlowerIndex = (versions.find(Flower) != versions.end()) ? versions.at(Flower) : -1;
-   int otherFlowerIndex = (versions.find(other.Flower) != versions.end()) ? versions.at(other.Flower) : -1;
+   int thisFlowerIndex = (versions.find(Flower) != versions.end()) ? versions.at(Flower) : INT_MAX;
+   int otherFlowerIndex = (versions.find(other.Flower) != versions.end()) ? versions.at(other.Flower) : INT_MAX;
 
    if (thisFlowerIndex < otherFlowerIndex)
       return true;
