@@ -75,10 +75,12 @@ public class JsVectorString extends JavaScriptObject
 
    public final native int indexOf(String value)
    /*-{
-      for (var i = 0, n = this.length; i < n; i++)
-         if (this[i] === value)
-           return i;
-      return -1;
+      return this.indexOf(value);
+   }-*/;
+   
+   public final native int indexOf(String value, int offset)
+   /*-{
+      return this.indexOf(value, offset);
    }-*/;
 
    public final native boolean isEmpty()
