@@ -3904,7 +3904,7 @@ public class AceEditor implements DocDisplay,
 
       }
       while (false);
-
+      
       // check for lines of the form:
       //
       //     ) foo +
@@ -4009,7 +4009,7 @@ public class AceEditor implements DocDisplay,
 
          // keep going if we're in a multiline string
          String state = getSession().getState(prevRow);
-         if (state == "qstring" || state == "qqstring")
+         if (state == "qstring" || state == "qqstring" || state == "rawstring")
          {
             startRow--;
             continue;
@@ -4036,7 +4036,7 @@ public class AceEditor implements DocDisplay,
          // continue search if we're in a multi-line string
          // (forego updating our bracket counts)
          String state = getSession().getState(endRow);
-         if (state == "qstring" || state == "qqstring")
+         if (state == "qstring" || state == "qqstring" || state == "rawstring")
          {
             endRow++;
             continue;
@@ -4075,7 +4075,7 @@ public class AceEditor implements DocDisplay,
          // we had balanced brackets and no trailing binary operator; bail
          break;
       }
-
+      
       // if we're unbalanced at this point, that means we tried to
       // expand in an unclosed expression -- just execute the current
       // line rather than potentially executing unintended code
