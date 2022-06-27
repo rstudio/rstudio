@@ -752,7 +752,7 @@ void handleRdPreviewRequest(const http::Request& request,
       pResponse->setNotFoundError(request);
       return;
    }
-
+   
    // build command used to convert to HTML
    FilePath rHomeBinDir;
    Error error = module_context::rBinDir(&rHomeBinDir);
@@ -781,6 +781,15 @@ void handleRdPreviewRequest(const http::Request& request,
    }
 
    rCmd << filePath;
+
+   // instead of runCommand() 
+   // 
+   // call R code:
+   // .rs.R2HTML(<filePath>, 
+   //            package = <package>,   # optional depending on `pkgInfo`
+   //            Rdmacros = <macros>)   # optional
+   //
+   // result is a string that would be suitable for ->setBody()
 
    // run the conversion and return it
    core::system::ProcessOptions options;

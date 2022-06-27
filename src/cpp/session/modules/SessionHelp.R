@@ -799,3 +799,11 @@ options(help_type = "html")
 {
    .rs.followHelpTopic(url)
 })
+
+.rs.addFunction("Rd2HTML", function(file, package = "", Rdmacros = "")
+{
+   tf <- tempfile(); on.exit(unlink(tf))
+   macros <- suppressWarnings(tools:::initialRdMacros(Rdmacros))
+   tools::Rd2HTML(file, out = tf, package = package, macros = macros)
+   paste(readLines(tf), collapse = "\n")
+})
