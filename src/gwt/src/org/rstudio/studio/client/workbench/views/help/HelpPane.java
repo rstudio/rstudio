@@ -429,7 +429,10 @@ public class HelpPane extends WorkbenchPane
                      {
                         popup_.setContent(panel);
 
-                        Rectangle bounds = new Rectangle(event.getClientX() + getIFrameEx().getAbsoluteLeft(), event.getClientY() + getIFrameEx().getAbsoluteTop(), anchor.getClientWidth(), anchor.getClientHeight());
+                        Rectangle bounds = new Rectangle(event.getClientX() + getIFrameEx().getAbsoluteLeft(), 
+                                                         event.getClientY() + getIFrameEx().getAbsoluteTop(), 
+                                                         anchor.getClientWidth(), 
+                                                         anchor.getClientHeight());
                         HyperlinkPopupPositioner positioner = new HyperlinkPopupPositioner(bounds, popup_);
                         popup_.setPopupPositionAndShow(positioner);
                      }));
