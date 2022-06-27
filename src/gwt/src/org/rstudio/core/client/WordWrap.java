@@ -141,11 +141,14 @@ public class WordWrap
          line = trimmed;
       }
 
-      // Now just append the rest of the line
-      int lastInsertionRow = row_;
-      int lastInsertionPoint = lineLength_;
-      appendRawWithIndent(line);
-      onChunkWritten(line, lastInsertionRow, lastInsertionPoint, origStringPos);
+      // Now just append the rest of the line if needed
+      if (line.length() > 0)
+      {
+         int lastInsertionRow = row_;
+         int lastInsertionPoint = lineLength_;
+         appendRawWithIndent(line);
+         onChunkWritten(line, lastInsertionRow, lastInsertionPoint, origStringPos);
+      }
    }
 
    protected void onChunkWritten(String chunk,
@@ -180,12 +183,9 @@ public class WordWrap
    private void appendRawWithIndent(String value)
    {
       assert value.indexOf('\n') < 0;
-      if (value.length() > 0)
-      {
-         if (lineLength_ == 0 && indent_ != null)
-            appendRaw(indent_);
-         appendRaw(value);
-      }
+      if (lineLength_ == 0 && indent_ != null)
+         appendRaw(indent_);
+      appendRaw(value);
    }
 
    private void appendRaw(String value)
