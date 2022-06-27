@@ -58,13 +58,13 @@
     "mocha": "9.2.2",
     "node-loader": "2.0.0",
     "nyc": "15.1.0",
-    "prettier": "2.4.1",
+    "prettier": "2.7.1",
     "recursive-copy": "2.0.13",
     "sinon": "13.0.1",
     "style-loader": "3.3.1",
     "ts-loader": "9.2.6",
-    "ts-node": "10.4.0",
-    "typescript": "4.5.2"
+    "ts-node": "10.8.1",
+    "typescript": "4.7.4"
   },
   "dependencies": {
     "crc": "3.8.0",
