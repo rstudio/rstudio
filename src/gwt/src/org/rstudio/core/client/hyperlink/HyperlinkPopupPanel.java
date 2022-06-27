@@ -89,7 +89,7 @@ public class HyperlinkPopupPanel extends ThemedPopupPanel implements HyperlinkPo
                     }
                     else if (keyCode == KeyCodes.KEY_F1)
                     {
-                        hyperlink_.showHelpPage();
+                        hyperlink_.showHelp();
                     }
                 }
             }
