@@ -932,7 +932,8 @@ public class SourceColumnManager implements CommandPaletteEntrySource,
 
    public void activateObjectExplorer(ObjectExplorerHandle handle)
    {
-      columnList_.forEach((column) -> {
+      for (SourceColumn column : columnList_)
+      {
          for (EditingTarget target : column.getEditors())
          {
             // bail if this isn't an object explorer filetype
@@ -949,8 +950,8 @@ public class SourceColumnManager implements CommandPaletteEntrySource,
                return;
             }
          }
-      });
-
+      }
+      
       ensureVisible(true);
       server_.newDocument(
          FileTypeRegistry.OBJECT_EXPLORER.getTypeId(),
