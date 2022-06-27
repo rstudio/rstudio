@@ -180,9 +180,12 @@ public class WordWrap
    private void appendRawWithIndent(String value)
    {
       assert value.indexOf('\n') < 0;
-      if (lineLength_ == 0 && indent_ != null)
-         appendRaw(indent_);
-      appendRaw(value);
+      if (value.length() > 0)
+      {
+         if (lineLength_ == 0 && indent_ != null)
+            appendRaw(indent_);
+         appendRaw(value);
+      }
    }
 
    private void appendRaw(String value)
