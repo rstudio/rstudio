@@ -80,7 +80,7 @@ public abstract class Hyperlink implements HelpPageShower
     public void getPopupContent(CommandWithArg<Widget> onReady){}
     
     @Override
-    public void showHelpPage(){}
+    public void showHelp(){}
 
     public static Hyperlink create(String url, String paramsTxt, String text, String clazz)
     {

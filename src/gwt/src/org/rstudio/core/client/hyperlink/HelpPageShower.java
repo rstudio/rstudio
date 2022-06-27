@@ -15,5 +15,5 @@
 package org.rstudio.core.client.hyperlink;
 
 public interface HelpPageShower {
-   void showHelpPage(); 
+   void showHelp(); 
 }

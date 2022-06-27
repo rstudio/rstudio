@@ -406,8 +406,8 @@ public class HelpPane extends WorkbenchPane
             popup_ = new HyperlinkPopupPanel(new HelpPageShower() {
 
                @Override
-               public void showHelpPage() {
-                  showHelp(url);
+               public void showHelp() {
+                  HelpPane.this.showHelp(url);
                }
                
             });
