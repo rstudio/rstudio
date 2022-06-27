@@ -760,3 +760,42 @@ options(help_type = "html")
    fmt <- "help/doc/html/Search?pattern=%s&title=1&keyword=1&alias=1"
    sprintf(fmt, utils::URLencode(query, reserved = TRUE))
 })
+
+.rs.addFunction("followHelpTopic", function(url)
+{
+   tryCatch({
+      rx <- "^.*/help/library/([^/]*)/help/(.*)$"
+      pkg <- sub(rx, "\\1", url)
+      topic <- utils::URLdecode(sub(rx, "\\2", url))
+
+      # first look in the specified package
+      file <- utils::help(topic, package = (pkg), help_type = "text", try.all.packages = FALSE)
+
+      # TODO: copy behaviour from utils:::str2logical()
+      linksToTopics <- identical(Sys.getenv("_R_HELP_LINKS_TO_TOPICS_", "TRUE"), "TRUE")
+      
+      # check if topic.Rd exist 
+      if (!length(file) && linksToTopics) {
+         helppath <- system.file("help", package = package)
+         if (nzchar(helppath)) {
+            contents <- readRDS(sub("/help$", "/Meta/Rd.rds", helppath, fixed = FALSE))
+            helpfiles <- sub("\\.[Rr]d$", "", contents$File)
+            if (topic %in% helpfiles) file <- file.path(helppath, topic)
+         }
+      }
+
+      # next, search for topic in all installed packages
+      if (!length(file)) {
+         file <- utils::help(topic, help_type = "text", try.all.packages = TRUE)
+      }
+
+      as.character(file)
+
+   }, error = function(e) character())
+   
+})
+
+.rs.addJsonRpcHandler("follow_help_topic", function(url)
+{
+   .rs.followHelpTopic(url)
+})

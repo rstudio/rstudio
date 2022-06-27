@@ -285,6 +285,12 @@ const char * const kJsCallbacks = R"EOF(
    if (window.parent.helpMousedown)
       window.onmousedown = function(e) { window.parent.helpMousedown(e); }
 
+   if (window.parent.helpMouseover)
+      window.onmouseover = function(e) { window.parent.helpMouseover(e); }
+
+   if (window.parent.helpClick)
+      window.onclick = function(e) { window.parent.helpClick(e); } 
+
    window.addEventListener("load", function(event) {
 
       // https://github.com/rstudio/rmarkdown/blob/de02c926371fdadc4d92f08e1ad7b77db069be49/inst/rmarkdown/templates/html_vignette/resources/vignette.css#L187-L201

@@ -1508,6 +1508,18 @@ public class RemoteServer implements Server
                   params,
                   null);
    }
+
+   public void followHelpTopic(String url, ServerRequestCallback<JsArrayString> requestCallback)
+   {
+      JSONArray params = new JSONArrayBuilder()
+            .add(url)
+            .get();
+
+      sendRequest(RPC_SCOPE,
+                  FOLLOW_HELP_TOPIC,
+                  params,
+                  requestCallback);
+   }
    
    public void search(String query,
                       ServerRequestCallback<JsArrayString> requestCallback)
@@ -6692,6 +6704,7 @@ public class RemoteServer implements Server
    private static final String GET_VIGNETTE_TITLE = "get_vignette_title";
    private static final String GET_VIGNETTE_DESCRIPTION = "get_vignette_description";
    private static final String SHOW_VIGNETTE = "show_vignette";
+   private static final String FOLLOW_HELP_TOPIC = "follow_help_topic";
 
    private static final String STAT = "stat";
    private static final String IS_TEXT_FILE = "is_text_file";
