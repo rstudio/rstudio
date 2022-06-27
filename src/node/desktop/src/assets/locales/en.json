@@ -84,7 +84,8 @@
     "confColon": "conf:",
     "notFoundDotLowercase": "not found.",
     "errorFindingR": "Error Finding R",
-    "rstudioFailedToFindRInstalationsOnTheSystem": "RStudio failed to find any R installations on the system."
+    "rstudioFailedToFindRInstalationsOnTheSystem": "RStudio failed to find any R installations on the system.",
+    "newRstudioWindow": "New RStudio Window"
   },
   "detectRTs": {
     "rNotFound": "R not found",
