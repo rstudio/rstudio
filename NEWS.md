@@ -15,3 +15,5 @@
 ### Fixed
 
 - Fixed visual mode outline missing nested R code chunks (#11410)
+- Fixed an issue where chunks containing multibyte characters was not executed correctly (#10632)
+

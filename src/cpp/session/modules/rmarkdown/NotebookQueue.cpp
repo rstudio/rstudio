@@ -441,9 +441,8 @@ private:
             if (label != "setup")
                workingDir = docQueue->workingDir();
 
-            std::string codeString = string_utils::wideToUtf8(unit->code());
             execContext_ = boost::make_shared<ChunkExecContext>(
-               unit->docId(), unit->chunkId(), codeString, label, ctx, engine,
+               unit->docId(), unit->chunkId(), unit->code(), label, ctx, engine,
                unit->execScope(), workingDir, options,
                docQueue->pixelWidth(), docQueue->charWidth());
             execContext_->connect();
