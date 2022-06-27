@@ -1511,9 +1511,10 @@ public class RemoteServer implements Server
 
    public void followHelpTopic(String topic, String pkg, ServerRequestCallback<JsArrayString> requestCallback)
    {
-      JSONArray params = new JSONArray();
-      params.set(0, new JSONString(topic));
-      params.set(1, new JSONString(pkg));
+      JSONArray params = new JSONArrayBuilder()
+            .add(topic)
+            .add(pkg)
+            .get();
 
       sendRequest(RPC_SCOPE,
                   FOLLOW_HELP_TOPIC,
