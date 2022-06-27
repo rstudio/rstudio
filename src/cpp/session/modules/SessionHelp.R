@@ -761,15 +761,15 @@ options(help_type = "html")
    sprintf(fmt, utils::URLencode(query, reserved = TRUE))
 })
 
-.rs.addFunction("followHelpTopic", function(topic, package)
+.rs.addFunction("followHelpTopic", function(url)
 {
    tryCatch({
-      # useful for topic like ">=" that gets encoded by the help 
-      # system as ">%3D"
-      topic <- utils::URLdecode(topic)
+      rx <- "^.*/help/library/([^/]*)/help/(.*)$"
+      pkg <- sub(rx, "\\1", url)
+      topic <- utils::URLdecode(sub(rx, "\\2", url))
 
       # first look in the specified package
-      file <- utils::help(topic, package = (package), help_type = "text", try.all.packages = FALSE)
+      file <- utils::help(topic, package = (pkg), help_type = "text", try.all.packages = FALSE)
 
       # TODO: copy behaviour from utils:::str2logical()
       linksToTopics <- identical(Sys.getenv("_R_HELP_LINKS_TO_TOPICS_", "TRUE"), "TRUE")
@@ -795,7 +795,7 @@ options(help_type = "html")
    
 })
 
-.rs.addJsonRpcHandler("follow_help_topic", function(topic, package)
+.rs.addJsonRpcHandler("follow_help_topic", function(url)
 {
-   .rs.followHelpTopic(topic, package)
+   .rs.followHelpTopic(url)
 })

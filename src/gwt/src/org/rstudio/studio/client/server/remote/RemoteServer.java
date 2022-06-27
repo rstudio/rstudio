@@ -1509,11 +1509,10 @@ public class RemoteServer implements Server
                   null);
    }
 
-   public void followHelpTopic(String topic, String pkg, ServerRequestCallback<JsArrayString> requestCallback)
+   public void followHelpTopic(String url, ServerRequestCallback<JsArrayString> requestCallback)
    {
       JSONArray params = new JSONArrayBuilder()
-            .add(topic)
-            .add(pkg)
+            .add(url)
             .get();
 
       sendRequest(RPC_SCOPE,

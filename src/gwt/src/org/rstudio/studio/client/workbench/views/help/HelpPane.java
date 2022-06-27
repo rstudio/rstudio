@@ -398,9 +398,8 @@ public class HelpPane extends WorkbenchPane
          Match match = HELP_PATTERN.match(url, 0);
          if (match != null) 
          {
-            String pkg = match.getGroup(1);
-            String topic = match.getGroup(2);
-
+            String topic = decodeURIComponent(match.getGroup(2));
+            
             if (popup_ != null)
                popup_.hide();
             popup_ = new HyperlinkPopupPanel(new HelpPageShower() {
@@ -414,18 +413,18 @@ public class HelpPane extends WorkbenchPane
 
             // pkg might not be the actual package
             // so we need to do the same as what the internal help system would:
-            server_.followHelpTopic(topic, pkg, new SimpleRequestCallback<JsArrayString>(){
+            server_.followHelpTopic(url, new SimpleRequestCallback<JsArrayString>(){
 
                @Override
                public void onResponseReceived(JsArrayString files)
                {
                   if (files.length() == 1)
                   {
-                     String resolvedPackage = files.get(0).replaceFirst("/help/.*$", "").replaceFirst("^.*/", "");
+                     String pkg = files.get(0).replaceFirst("/help/.*$", "").replaceFirst("^.*/", "");
                      
                      final VerticalPanel panel = new VerticalPanel();
-                     panel.add(new HelpHyperlinkPopupHeader(topic, resolvedPackage));
-                     panel.add(new HelpPreview(topic, resolvedPackage, () -> 
+                     panel.add(new HelpHyperlinkPopupHeader(topic, pkg));
+                     panel.add(new HelpPreview(topic, pkg, () -> 
                      {
                         popup_.setContent(panel);
 
@@ -444,6 +443,10 @@ public class HelpPane extends WorkbenchPane
          
       }
    }
+
+   private native String decodeURIComponent(String encoded) /*-{
+      return decodeURIComponent(encoded);
+   }-*/;
 
    private void handleClick(NativeEvent event)
    {
