@@ -762,7 +762,7 @@ bool handleDevRequest(const http::Request& request,
    
    r::exec::RFunction dev_topic_find("pkgload:::dev_topic_find", topic);
    r::sexp::Protect protect;
-   SEXP res;
+   SEXP res = R_NilValue;
    Error error = dev_topic_find.call(&res, &protect);
    if (error || res == R_NilValue)
    {
