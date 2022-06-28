@@ -732,6 +732,65 @@ r_util::RPackageInfo packageInfoForRd(const FilePath& rdFilePath)
    }
 }
 
+Error Rd2HTML(FilePath filePath, std::string* html)
+{
+   r::exec::RFunction fun(".rs.Rd2HTML", filePath.getAbsolutePath());
+
+   // add in package-specific information if available
+   r_util::RPackageInfo pkgInfo = packageInfoForRd(filePath);
+   if (!pkgInfo.empty())
+   {
+      if (!pkgInfo.name().empty())
+         fun.addParam(pkgInfo.name());
+
+      std::string macros = pkgInfo.name();
+      if (!pkgInfo.rdMacros().empty())
+         macros = macros + "," + pkgInfo.rdMacros();
+      fun.addParam(macros);
+   }
+
+   return fun.call(html);
+}
+
+template <typename Filter>
+bool handleDevRequest(const http::Request& request,
+                      const Filter& filter,
+                      http::Response* pResponse)
+{
+   std::string topic = request.queryParamValue("dev");
+   
+   r::exec::RFunction dev_topic_find("pkgload:::dev_topic_find", topic);
+   r::sexp::Protect protect;
+   SEXP res;
+   Error error = dev_topic_find.call(&res, &protect);
+   if (error || res == R_NilValue)
+   {
+      return false;
+   }
+   std::string file = CHAR(STRING_ELT(VECTOR_ELT(res, 0), 0));
+
+   // ensure file exists
+   FilePath filePath = module_context::resolveAliasedPath(file);
+   if (!filePath.exists())
+   {
+      return false;
+   }
+   std::string html;
+   error = Rd2HTML(filePath, &html);
+   
+   if (error)
+   {
+      return false;
+   }
+   else 
+   {
+      pResponse->setContentType("text/html");
+      pResponse->setNoCacheHeaders();
+      pResponse->setBody(html, filter);
+      return true;
+   }
+}
+
 template <typename Filter>
 void handleRdPreviewRequest(const http::Request& request,
                             const Filter& filter,
@@ -752,33 +811,8 @@ void handleRdPreviewRequest(const http::Request& request,
       pResponse->setNotFoundError(request);
       return;
    }
-   
-   // build command used to convert to HTML
-   FilePath rHomeBinDir;
-   Error error = module_context::rBinDir(&rHomeBinDir);
-   if (error)
-   {
-      pResponse->setError(error);
-      return;
-   }
-
-   r::exec::RFunction Rd2HTML(".rs.Rd2HTML", filePath.getAbsolutePath());
-
-   // add in package-specific information if available
-   r_util::RPackageInfo pkgInfo = packageInfoForRd(filePath);
-   if (!pkgInfo.empty())
-   {
-      if (!pkgInfo.name().empty())
-         Rd2HTML.addParam(pkgInfo.name());
-
-      std::string macros = pkgInfo.name();
-      if (!pkgInfo.rdMacros().empty())
-         macros = macros + "," + pkgInfo.rdMacros();
-      Rd2HTML.addParam(macros);
-   }
-
    std::string html;
-   error = Rd2HTML.call(&html);
+   Error error = Rd2HTML(filePath, &html);
    if (error)
    {
       pResponse->setError(error);
@@ -820,6 +854,14 @@ void handleHttpdRequest(const std::string& location,
       presentation::handlePresentationHelpRequest(request, kJsCallbacks, pResponse);
       return;
    }
+
+   // if there is a dev= parameter, then try to render dev documentation
+   // dev= is added .rs.Rd2HTML when serving preview file
+   if (!request.queryParamValue("dev").empty())
+   {
+      if (handleDevRequest(request, filter, pResponse))
+         return;
+   }
    
    // handle Rd file preview
    if (boost::algorithm::starts_with(path, "/preview"))
@@ -827,7 +869,7 @@ void handleHttpdRequest(const std::string& location,
       handleRdPreviewRequest(request, filter, pResponse);
       return;
    }
-   
+
    // markdown help is also a special case
    if (path == "/doc/markdown_help.html")
    {
@@ -867,7 +909,7 @@ void handleHttpdRequest(const std::string& location,
                         handlerSource,
                         &rp),
          &httpdSEXP);
-
+   
    // error calling the function
    if (error)
    {
