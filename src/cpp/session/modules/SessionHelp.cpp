@@ -768,8 +768,13 @@ bool handleDevRequest(const http::Request& request,
    {
       return false;
    }
-   std::string file = CHAR(STRING_ELT(VECTOR_ELT(res, 0), 0));
-
+   std::string file;
+   error = r::sexp::getNamedListElement(res, "path", &file);
+   if (error)
+   {
+      return false;
+   }
+   
    // ensure file exists
    FilePath filePath = module_context::resolveAliasedPath(file);
    if (!filePath.exists())
