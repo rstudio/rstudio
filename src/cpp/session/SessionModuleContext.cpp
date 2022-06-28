@@ -22,14 +22,16 @@
 #include <boost/format.hpp>
 #include <boost/numeric/conversion/cast.hpp>
 
-#include <core/BoostSignals.hpp>
-#include <core/BoostThread.hpp>
 #include <shared_core/Error.hpp>
 #include <shared_core/FilePath.hpp>
+#include <shared_core/Hash.hpp>
+
+#include <core/BoostSignals.hpp>
+#include <core/BoostThread.hpp>
+#include <core/Debug.hpp>
 #include <core/FileInfo.hpp>
 #include <core/Log.hpp>
 #include <core/Base64.hpp>
-#include <shared_core/Hash.hpp>
 #include <core/Settings.hpp>
 #include <core/DateTime.hpp>
 #include <core/FileSerializer.hpp>
@@ -2921,16 +2923,25 @@ void checkXcodeLicense()
 std::vector<FilePath> ignoreContentDirs()
 {
    std::vector<FilePath> ignoreDirs;
-   if (projects::projectContext().hasProject()) {
+   
+   if (projects::projectContext().hasProject())
+   {
       // python virtual environments
       ignoreDirs = projects::projectContext().pythonEnvs();
       quarto::QuartoConfig quartoConf = quarto::quartoConfig();
+      
       // quarto site output dir
-      if (quartoConf.is_project) {
+      if (quartoConf.is_project)
+      {
          FilePath quartoProjDir = module_context::resolveAliasedPath(quartoConf.project_dir);
-         ignoreDirs.push_back(quartoProjDir.completeChildPath(quartoConf.project_output_dir));
+         
+         std::string quartoOutputDir = quartoConf.project_output_dir;
+         if (!quartoOutputDir.empty())
+            ignoreDirs.push_back(quartoProjDir.completeChildPath(quartoOutputDir));
+         
          ignoreDirs.push_back(quartoProjDir.completeChildPath("_freeze"));
       }
+      
       // rmarkdown site output dir
       if (module_context::isWebsiteProject())
       {
@@ -2939,8 +2950,8 @@ std::vector<FilePath> ignoreContentDirs()
          if (!outputDir.empty())
             ignoreDirs.push_back(buildTargetPath.completeChildPath(outputDir));
       }
-
    }
+   
    return ignoreDirs;
 }
 
