@@ -761,55 +761,33 @@ void handleRdPreviewRequest(const http::Request& request,
       pResponse->setError(error);
       return;
    }
-   
-   shell_utils::ShellCommand rCmd = module_context::rCmd(rHomeBinDir);
-   rCmd << "Rdconv";
-   rCmd << "--type=html";
-   
+
+   r::exec::RFunction Rd2HTML(".rs.Rd2HTML", filePath.getAbsolutePath());
+
    // add in package-specific information if available
    r_util::RPackageInfo pkgInfo = packageInfoForRd(filePath);
    if (!pkgInfo.empty())
    {
       if (!pkgInfo.name().empty())
-         rCmd << "--package=" + pkgInfo.name();
-      
+         Rd2HTML.addParam(pkgInfo.name());
+
       std::string macros = pkgInfo.name();
       if (!pkgInfo.rdMacros().empty())
          macros = macros + "," + pkgInfo.rdMacros();
-      
-      rCmd << "--RdMacros=" + macros;
+      Rd2HTML.addParam(macros);
    }
 
-   rCmd << filePath;
-
-   // instead of runCommand() 
-   // 
-   // call R code:
-   // .rs.R2HTML(<filePath>, 
-   //            package = <package>,   # optional depending on `pkgInfo`
-   //            Rdmacros = <macros>)   # optional
-   //
-   // result is a string that would be suitable for ->setBody()
-
-   // run the conversion and return it
-   core::system::ProcessOptions options;
-   core::system::ProcessResult result;
-   error = core::system::runCommand(rCmd, options, &result);
+   std::string html;
+   error = Rd2HTML.call(&html);
    if (error)
    {
       pResponse->setError(error);
    }
-   else if (result.exitStatus != EXIT_SUCCESS)
-   {
-      LOG_ERROR_MESSAGE("Rd preview error: " + result.stdErr);
-      pResponse->setError(http::status::InternalServerError, "Internal Server Error");
-   }
-   else
+   else 
    {
       pResponse->setContentType("text/html");
       pResponse->setNoCacheHeaders();
-      std::istringstream istr(result.stdOut);
-      pResponse->setBody(istr, filter);
+      pResponse->setBody(html, filter);
    }
 }
 
