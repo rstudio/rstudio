@@ -1918,16 +1918,39 @@ public class RCompletionManager implements CompletionManager
                StringUtil.equals(source,  "<file>") ||
                StringUtil.equals(source,  "<directory>") ||
                StringUtil.equals(source,  "<chunk-option>");
-         
          if (isSpecialSource)
             return value;
          
          // if this is already a syntactic identifier, no quote is required
-         if (RegexUtil.isSyntacticRIdentifier(value))
+         if (RegexUtil.isSyntacticRIdentifier(value) && !isKeyword(value))
             return value;
          
          // otherwise, quote
          return "`" + value.replaceAll("`", "\\`") + "`";
+      }
+
+      private boolean isKeyword(String value)
+      {
+         return StringUtil.equals(value, "NULL") || 
+                StringUtil.equals(value, "NA") || 
+                StringUtil.equals(value, "TRUE") ||
+                StringUtil.equals(value, "FALSE") ||  
+                StringUtil.equals(value, "Inf") ||  
+                StringUtil.equals(value, "NaN") ||  
+                StringUtil.equals(value, "NA_integer_") || 
+                StringUtil.equals(value, "NA_real_") ||  
+                StringUtil.equals(value, "NA_character_") || 
+                StringUtil.equals(value, "NA_complex_") ||
+                StringUtil.equals(value, "function") ||
+                StringUtil.equals(value, "while") ||
+                StringUtil.equals(value, "repeat") ||
+                StringUtil.equals(value, "for") ||
+                StringUtil.equals(value, "if") || 
+                StringUtil.equals(value, "in") ||
+                StringUtil.equals(value, "else") || 
+                StringUtil.equals(value, "next") ||
+                StringUtil.equals(value, "break")
+                ;
       }
       
       private void applyValueRmdOption(final String value)
