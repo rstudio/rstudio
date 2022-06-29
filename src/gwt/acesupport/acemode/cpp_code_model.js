@@ -1066,6 +1066,11 @@ var CppCodeModel = function(session, tokenizer,
             return indent;
          }
 
+         // Don't indent for function modifiers on their own: static, inline
+         if (/\b(static|inline)\b/.test(line)) {
+            return indent;
+         }
+
          // Indent following an opening paren.
          // We prefer inserting two tabs here, reflecting the rules of
          // the Google C++ style guide:
