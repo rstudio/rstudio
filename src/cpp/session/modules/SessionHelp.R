@@ -761,13 +761,9 @@ options(help_type = "html")
    sprintf(fmt, utils::URLencode(query, reserved = TRUE))
 })
 
-.rs.addFunction("followHelpTopic", function(url)
+.rs.addFunction("followHelpTopic", function(pkg, topic)
 {
    tryCatch({
-      rx <- "^.*/help/library/([^/]*)/help/(.*)$"
-      pkg <- sub(rx, "\\1", url)
-      topic <- utils::URLdecode(sub(rx, "\\2", url))
-
       # first look in the specified package
       file <- utils::help(topic, package = (pkg), help_type = "text", try.all.packages = FALSE)
 
@@ -797,5 +793,29 @@ options(help_type = "html")
 
 .rs.addJsonRpcHandler("follow_help_topic", function(url)
 {
-   .rs.followHelpTopic(url)
+   rx <- "^.*/help/library/([^/]*)/help/(.*)$"
+   pkg <- sub(rx, "\\1", url)
+   topic <- utils::URLdecode(sub(rx, "\\2", url))
+
+   .rs.followHelpTopic(pkg = pkg, topic = topic)
+})
+
+.rs.addFunction("Rd2HTML", function(file, package = "", Rdmacros = "")
+{
+   tf <- tempfile(); on.exit(unlink(tf))
+   macros <- suppressWarnings(tools:::initialRdMacros(Rdmacros))
+   tools::Rd2HTML(file, out = tf, package = package, macros = macros, dynamic = TRUE)
+   lines <- readLines(tf, warn = FALSE)
+   lines <- sub("R Documentation</td></tr></table>", "(preview) R Documentation</td></tr></table>", lines)
+   if (nzchar(package))
+   {
+      # replace with "dev-figure" and parameters so that the server 
+      # can look for figures in `man/` of the dev package
+      lines <- sub('img src="figures/([^"]*)"', sprintf('img src="dev-figure?pkg=%s&figure=\\1"', package), lines)
+
+      # add ?dev=<topic>
+      lines <- gsub('a href="../../([^/]*/help/)([^/]*)">', 'a href="/library/\\1\\2?dev=\\2">', lines)
+   }
+   
+   paste(lines, collapse = "\n")
 })
