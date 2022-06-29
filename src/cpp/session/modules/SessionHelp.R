@@ -809,8 +809,9 @@ options(help_type = "html")
    lines <- sub("R Documentation</td></tr></table>", "(preview) R Documentation</td></tr></table>", lines)
    if (nzchar(package))
    {
-      # does not work, need to find a way to serve the figures from the dev directory
-      # lines <- sub('img src="figures/', sprintf('img src="help/library/%s/html/figures/', package), lines, fixed = TRUE)
+      # replace with "dev-figure" and parameters so that the server 
+      # can look for figures in `man/` of the dev package
+      lines <- sub('img src="figures/([^"]*)"', sprintf('img src="dev-figure?pkg=%s&figure=\\1"', package), lines)
 
       # add ?dev=<topic>
       lines <- gsub('a href="../../([^/]*/help/)([^/]*)">', 'a href="/library/\\1\\2?dev=\\2">', lines)

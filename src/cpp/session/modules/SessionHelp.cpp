@@ -753,6 +753,35 @@ Error Rd2HTML(FilePath filePath, std::string* html)
    return fun.call(html);
 }
 
+void handleDevFigure(const http::Request& request,
+                     http::Response* pResponse)
+{
+   // read parameters
+   std::string pkg = request.queryParamValue("pkg");
+   std::string figure = request.queryParamValue("figure");
+   
+   if (pkg.empty() || figure.empty())
+   {
+      pResponse->setError(http::status::BadRequest, "Malformed dev-figure. Needs pkg and figure parameters");
+      return;
+   }
+
+   r::exec::RFunction system_file("base:::system.file");
+   system_file.addUtf8Param("package", pkg);
+   system_file.addParam("man");
+   system_file.addParam("figures");
+   system_file.addUtf8Param(figure);
+
+   std::string file;
+   Error error = system_file.call(&file);
+   if (error) 
+   {
+      pResponse->setError(http::status::InternalServerError, "figure not found");
+      return;
+   }
+   pResponse->setFile(FilePath(file), request);
+}
+
 template <typename Filter>
 bool handleDevRequest(const http::Request& request,
                       const Filter& filter,
@@ -861,6 +890,12 @@ void handleHttpdRequest(const std::string& location,
       return;
    }
 
+   if (path == "/dev-figure")
+   {
+      handleDevFigure(request, pResponse);
+      return;   
+   }
+
    // if there is a dev= parameter, then try to render dev documentation
    // dev= is added .rs.Rd2HTML when serving preview file
    if (!request.queryParamValue("dev").empty())
@@ -915,7 +950,7 @@ void handleHttpdRequest(const std::string& location,
                         handlerSource,
                         &rp),
          &httpdSEXP);
-   
+
    // error calling the function
    if (error)
    {
