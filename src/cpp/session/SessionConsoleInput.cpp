@@ -33,6 +33,7 @@
 
 #include <session/SessionModuleContext.hpp>
 #include <session/SessionSuspend.hpp>
+#include <session/prefs/UserPrefs.hpp>
 
 #include <r/session/RSession.hpp>
 #include <r/ROptions.hpp>
@@ -301,6 +302,22 @@ void popConsoleInput(rstudio::r::session::RConsoleInput* pConsoleInput)
 
 } // end anonymous namespace
 
+struct DisableCompletions {
+   DisableCompletions(bool addToHistory) : old_(rstudio::session::prefs::userPrefs().codeCompletion())
+   {
+      if (!addToHistory)
+      {
+         rstudio::session::prefs::userPrefs().setCodeCompletion("never");
+      }
+   }
+
+   ~DisableCompletions()
+   {
+      rstudio::session::prefs::userPrefs().setCodeCompletion(old_);
+   }
+
+   std::string old_;
+};
 
 bool rConsoleRead(const std::string& prompt,
                   bool addToHistory,
@@ -332,6 +349,7 @@ bool rConsoleRead(const std::string& prompt,
          consolePrompt(prompt, addToHistory);
 
       // wait for console_input
+      DisableCompletions here(addToHistory);
       json::JsonRpcRequest request;
       bool succeeded = http_methods::waitForMethod(
                         kConsoleInput,
