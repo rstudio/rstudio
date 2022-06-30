@@ -1066,11 +1066,6 @@ var CppCodeModel = function(session, tokenizer,
             return indent;
          }
 
-         // Don't indent for function modifiers on their own: static, inline
-         if (/\b(static|inline)\b/.test(line)) {
-            return indent;
-         }
-
          // Indent following an opening paren.
          // We prefer inserting two tabs here, reflecting the rules of
          // the Google C++ style guide:
@@ -1085,6 +1080,15 @@ var CppCodeModel = function(session, tokenizer,
             if (line.indexOf("=") !== -1 || /^\s*(return\s+)?[a-zA-Z0-9_.->:]+\(\s*$/.test(line))
                return indent + tab;
             return indent + tab + tab;
+         }
+
+         // If we have a class on its own, indent
+         //
+         //   class Foo
+         //       ^
+         //
+         if (/^\s*(class|struct)\s*[\w]+\s*$/.test(line)) {
+            return indent + tab;
          }
 
          // If we have a class with an open brace on the same line, indent
@@ -1260,6 +1264,17 @@ var CppCodeModel = function(session, tokenizer,
             i--;
          }
 
+         // e.g. __attribute__((noreturn))
+         if (/^\s*__attribute__\(\(.*\)\)\s*$/.test(line)) {
+            return this.$getIndent(line);
+         }
+
+         // modifiers on their own line, e.g.
+         // static , static inline
+         if (/^\s*[\w\s]+\s*$/.test(line) && ! /(class|struct|for|while|do|if|else|try)/.test(line) ) {
+            return this.$getIndent(line);
+         }
+
          if (reContinuation(line) && reContinuation(prevLineNotWhitespace))
             return this.$getIndent(line);
 
@@ -1323,10 +1338,7 @@ var CppCodeModel = function(session, tokenizer,
                var startValue = startCursor.currentValue();
                var startType = startCursor.currentType();
 
-               if (startType === "constant" ||
-                   startType === "keyword" ||
-                   startType === "identifier" ||
-                   contains(["{", ")", ">", ":"], startValue))
+               if (startType === "keyword" || contains(["{", ")", ">", ":"], startValue))
                {
                   additionalIndent = tab;
                }
