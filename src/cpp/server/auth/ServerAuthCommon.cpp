@@ -334,7 +334,7 @@ boost::optional<boost::posix_time::time_duration> getCookieExpiry(bool staySigne
       // legacy auth expiration - users do not idle
       // and stay signed in for multiple days
       // not very secure, but maintained for those users that want this
-      // optional persistance beyond the browser session
+      // optional persistence beyond the browser session
       boost::optional<boost::posix_time::time_duration> expiry;
       if (staySignedIn)
          expiry = boost::posix_time::hours(24 * staySignedInDays);

@@ -276,7 +276,7 @@ TEST_CASE("Database Session Storage, Sqlite","[database][integration][session][s
    runTests(storage);
 }
 
-TEST_CASE("Databse Session Storage, Postgres","[database][integration][session][.postgres]")
+TEST_CASE("Database Session Storage, Postgres","[database][integration][session][.postgres]")
 {
    system::User currUser;
    Error error = system::User::getCurrentUser(currUser);

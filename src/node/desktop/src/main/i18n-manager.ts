@@ -49,7 +49,7 @@ const changeLanguage = async (language = 'en') => {
  * translated equivalent (if any).
  *
  * @param document The document, whose elements will be translated.
- * @param scope The scope in which translations are defiend.
+ * @param scope The scope in which translations are defined.
  */
 function localize(document: Document, scope: string): void {
   try {
