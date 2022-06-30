@@ -158,6 +158,11 @@ assign(x = ".rs.acCompletionTypes",
    tag <- sub(".*(?=@)", '', token, perl = TRUE)
    
    # All known Roxygen2 tags, in alphabetical order
+   #
+   # library(roxygen2)
+   # methods <- as.vector(methods("roxy_tag_parse"))
+   # prefix <- "roxy_tag_parse.roxy_tag_"
+   # paste0("@", gsub(prefix, "", methods[grepl(prefix, methods, fixed = TRUE)], fixed = TRUE), " ")
    tags <- c(
       "@aliases ",
       "@author ",
