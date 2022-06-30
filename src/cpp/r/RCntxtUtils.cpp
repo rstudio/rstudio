@@ -138,6 +138,17 @@ bool inBrowseContext()
    return false;
 }
 
+bool inReadlineContext()
+{
+   SEXP readline = r::sexp::forcePromise(Rf_findVarInFrame(R_BaseEnv, Rf_install("readline")));
+   for (RCntxt::iterator ctxt = RCntxt::begin(); ctxt != RCntxt::end(); ctxt++)
+   {
+      if (ctxt->callfun() == readline)
+         return true;
+   }
+   return false;
+}
+
 // Return whether the current context is being evaluated inside a hidden
 // (debugger internal) function at the top level.
 bool inDebugHiddenContext()
