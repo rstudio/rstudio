@@ -75,7 +75,7 @@ std::string typeToString(DatasetType type)
         case Postgres:
             return "Postgres";
         default:
-            return "UKNOWN";
+            return "UNKNOWN";
     }
 }
 

@@ -420,7 +420,7 @@ Error RpcActiveSessionStorage::destroy()
 
    error = Error(json::errc::ExecutionError, ERROR_LOCATION);
    error.addProperty(
-      "descritpion",
+      "description",
       "Server was unable to destroy the session " + id_ + ".");
       
    LOG_ERROR(error);

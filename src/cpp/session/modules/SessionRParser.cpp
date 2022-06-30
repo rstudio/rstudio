@@ -1524,7 +1524,7 @@ void handleIdentifier(RTokenCursor& cursor,
           isParentRightAssign(cursor.previousSignificantToken()))
       {
          
-         // A parent assignment eithers modifes a binding in a parent scope,
+         // A parent assignment eithers modifies a binding in a parent scope,
          // or adds a binding at the top level. Check and see if this symbol
          // has already been defined; if not, add a top-level definition.
          auto symbolName = token_utils::getSymbolName(cursor);

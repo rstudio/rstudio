@@ -66,7 +66,7 @@ std::vector< std::string > DBActiveSessionsStorage::listSessionIds() const
    }
    else
    {
-      Error logError("DatabaseException", errc::DBError, "Exception occured while ", error, ERROR_LOCATION);
+      Error logError("DatabaseException", errc::DBError, "Exception occurred while ", error, ERROR_LOCATION);
       LOG_ERROR(logError);
    }
    return sessions;

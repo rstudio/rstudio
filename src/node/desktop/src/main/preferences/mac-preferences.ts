@@ -21,7 +21,7 @@ import DesktopOptions from './desktop-options';
 /**
  * MacOS specific implementation
  *
- * The preferences are stored in defauls, which is MacOS specific.
+ * The preferences are stored in defaults, which is MacOS specific.
  */
 class MacPreferences extends DesktopOptions {
   constructor() {

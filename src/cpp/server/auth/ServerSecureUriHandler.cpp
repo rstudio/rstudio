@@ -290,7 +290,7 @@ http::UriHandlerFunction secureHttpHandler(SecureUriHandlerFunction handler,
 http::UriHandlerFunction secureJsonRpcHandler(
                                        SecureUriHandlerFunction handler)
 {
-   // automatic auth refresh is dependant on the actual RPC being invoked
+   // automatic auth refresh is dependent on the actual RPC being invoked
    // (since many of them are invoked automatically on timers)
    // therefore, auth refresh is handled in the session proxy, before the request
    // is forwarded to the actual session

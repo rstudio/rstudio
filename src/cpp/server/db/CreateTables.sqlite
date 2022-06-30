@@ -109,7 +109,7 @@ CREATE TABLE active_session_metadata(
    /* Things which are blocking the suspension of the session, if any */
    blocking_suspend TEXT,
 
-   /* Time at which the session suspeneded */
+   /* Time at which the session suspended */
    suspend_timestamp TEXT,
 
    PRIMARY KEY (session_id),
