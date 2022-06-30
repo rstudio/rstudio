@@ -1066,6 +1066,11 @@ var CppCodeModel = function(session, tokenizer,
             return indent;
          }
 
+         // Don't indent for function modifiers on their own: static, inline
+         if (/\b(static|inline)\b/.test(line)) {
+            return indent;
+         }
+
          // Indent following an opening paren.
          // We prefer inserting two tabs here, reflecting the rules of
          // the Google C++ style guide:
@@ -1444,7 +1449,7 @@ var CppCodeModel = function(session, tokenizer,
                         while (lines[row] != null && /^\s*#/.test(lines[row]))
                            ++row;
                         
-                        return this.$getIndent(lines[row]);
+                        return this.$getIndent(lines[row]) + additionalIndent;
                      }
                   }
 
@@ -1457,6 +1462,7 @@ var CppCodeModel = function(session, tokenizer,
                      if (startValue !== ";") {
                         return this.$getIndent(lines[tokenCursor.$row]) + additionalIndent;
                      }
+                     
                   }
 
                   // We hit a colon ':'...
