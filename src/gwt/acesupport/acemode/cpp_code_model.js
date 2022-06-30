@@ -1423,7 +1423,6 @@ var CppCodeModel = function(session, tokenizer,
 
                while (true)
                {
-
                   // The token cursor is undefined (we moved past the start of the
                   // document)
                   if (typeof tokenCursor.currentValue() === "undefined") {
@@ -1584,8 +1583,7 @@ var CppCodeModel = function(session, tokenizer,
                      var clone = tokenCursor.cloneCursor();
                      if (clone.bwdToMatchingArrow()) {
                         if (clone.peekBwd().currentValue() === "template") {
-                           if (startValue === ">") additionalIndent = "";
-                           return this.$getIndent(lines[clone.$row]) + additionalIndent;
+                           return this.$getIndent(lines[clone.$row]);
                         }
                      }
                   }
