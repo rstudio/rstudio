@@ -2017,13 +2017,6 @@ assign(x = ".rs.acCompletionTypes",
                                                   line,
                                                   isConsole)
 {
-   nframes <- sys.nframe()
-   for (i in seq_along(nframes)) {
-      fun <- sys.function(i)
-      if (identical(fun, base::readline))
-         return(.rs.emptyCompletions(excludeOtherCompletions = TRUE))
-   }
-
    # Ensure UTF-8 encoding, as that's the encoding set when passed down from
    # the client
    token <- .rs.setEncodingUnknownToUTF8(token)
@@ -2035,6 +2028,31 @@ assign(x = ".rs.acCompletionTypes",
    excludeArgsFromObject <- .rs.setEncodingUnknownToUTF8(excludeArgsFromObject)
    filePath <- .rs.setEncodingUnknownToUTF8(filePath)
    
+   # if base::readline() is on the stack, try to extract choices i.e. (yes/no)
+   # and offer those as completions.
+   nframes <- sys.nframe()
+   for (i in seq_along(nframes)) {
+      fun <- sys.function(i)
+      if (identical(fun, base::readline))
+      {
+         frame <- sys.frame(i)
+         prompt <- frame$prompt
+         rx <- "^.*[(]([^)]+)[)].*$"
+         if (grepl(rx, prompt)) 
+         {
+            results <- strsplit(sub(rx, "\\1", prompt), "/")[[1L]]
+            return(.rs.makeCompletions(token = token,
+                       results = results,
+                       quote = FALSE,
+                       type = .rs.acCompletionTypes$STRING))
+         }
+         else 
+         {
+            return(.rs.emptyCompletions(excludeOtherCompletions = TRUE))
+         }
+      }  
+   }
+
    # If the R console is requesting completions, but the Python REPL is
    # active, then delegate to that machinery.
    if (isConsole && .rs.reticulate.replIsActive())
