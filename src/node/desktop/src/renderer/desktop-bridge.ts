@@ -13,7 +13,7 @@
  *
  */
 
-import { ipcRenderer, webContents } from 'electron';
+import { ipcRenderer, SaveDialogReturnValue, webContents } from 'electron';
 import { logger } from '../core/logger';
 import { normalizeSeparators } from '../ui/utils';
 
@@ -69,7 +69,7 @@ export function getDesktopBridge() {
     ) => {
       ipcRenderer
         .invoke('desktop_get_save_file_name', caption, label, dir, defaultExtension, forceDefaultExtension, focusOwner)
-        .then((result) => {
+        .then((result: SaveDialogReturnValue) => {
           // if the result was canceled, bail early
           if (result.canceled as boolean) {
             return callback('');
@@ -93,12 +93,14 @@ export function getDesktopBridge() {
             filePath = normalizeSeparators(filePath, '/');
           }
 
-          const expandedHomePath = normalizeSeparators(process.env.HOME as string, '/');
+          const expandedHomePath = normalizeSeparators(process.env.HOME ?? '', '/');
           const homePath = '~';
 
-          /* this makes sure the file path and HOME path 
+          /* this makes sure the file path and HOME path
           only contains forward slashes as separators for correct comparison */
-          filePath = homePath + filePath.substring(expandedHomePath.length);
+          if (expandedHomePath.length && filePath.startsWith(expandedHomePath)) {
+            filePath = homePath + filePath.substring(expandedHomePath.length);
+          }
 
           // invoke callback
           return callback(filePath);
