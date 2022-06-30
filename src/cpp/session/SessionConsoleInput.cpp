@@ -33,11 +33,9 @@
 
 #include <session/SessionModuleContext.hpp>
 #include <session/SessionSuspend.hpp>
-#include <session/prefs/UserPrefs.hpp>
 
 #include <r/session/RSession.hpp>
 #include <r/ROptions.hpp>
-#include <r/RCntxtUtils.hpp>
 
 using namespace rstudio::core;
 
@@ -303,23 +301,6 @@ void popConsoleInput(rstudio::r::session::RConsoleInput* pConsoleInput)
 
 } // end anonymous namespace
 
-struct DisableCompletions {
-   DisableCompletions(bool disallow) : old_(rstudio::session::prefs::userPrefs().codeCompletion())
-   {
-      if (disallow)
-      {
-         rstudio::session::prefs::userPrefs().setCodeCompletion("never");
-      }
-   }
-
-   ~DisableCompletions()
-   {
-      rstudio::session::prefs::userPrefs().setCodeCompletion(old_);
-   }
-
-   std::string old_;
-};
-
 bool rConsoleRead(const std::string& prompt,
                   bool addToHistory,
                   rstudio::r::session::RConsoleInput* pConsoleInput)
@@ -349,8 +330,6 @@ bool rConsoleRead(const std::string& prompt,
       if (init::isSessionInitialized())
          consolePrompt(prompt, addToHistory);
 
-      DisableCompletions when(r::context::inReadlineContext());
-      
       // wait for console_input
       json::JsonRpcRequest request;
       bool succeeded = http_methods::waitForMethod(

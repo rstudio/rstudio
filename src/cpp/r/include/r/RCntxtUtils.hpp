@@ -43,8 +43,6 @@ bool inBrowseContext();
 
 bool inDebugHiddenContext();
 
-bool inReadlineContext();
-
 RCntxt firstFunctionContext();
 
 RCntxt getFunctionContext(const int depth, 

@@ -2017,6 +2017,13 @@ assign(x = ".rs.acCompletionTypes",
                                                   line,
                                                   isConsole)
 {
+   nframes <- sys.nframe()
+   for (i in seq_along(nframes)) {
+      fun <- sys.function(i)
+      if (identical(fun, base::readline))
+         return(.rs.emptyCompletions(excludeOtherCompletions = TRUE))
+   }
+
    # Ensure UTF-8 encoding, as that's the encoding set when passed down from
    # the client
    token <- .rs.setEncodingUnknownToUTF8(token)
