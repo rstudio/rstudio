@@ -2031,14 +2031,14 @@ assign(x = ".rs.acCompletionTypes",
    # if base::readline() is on the stack, try to extract choices i.e. (yes/no)
    # and offer those as completions.
    nframes <- sys.nframe()
-   for (i in seq_along(nframes)) {
+   for (i in seq_len(nframes)) {
       fun <- sys.function(i)
       if (identical(fun, base::readline))
       {
          frame <- sys.frame(i)
          rx <- "^.*(\\(|\\[)(.*)(\\)|\\]).*$"
          prompt <- frame$prompt
-
+         
          if (is.character(prompt) && grepl(rx, prompt)) 
          {
             results <- strsplit(sub(rx, "\\2", prompt), "/")[[1L]]
