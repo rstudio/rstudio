@@ -2028,6 +2028,37 @@ assign(x = ".rs.acCompletionTypes",
    excludeArgsFromObject <- .rs.setEncodingUnknownToUTF8(excludeArgsFromObject)
    filePath <- .rs.setEncodingUnknownToUTF8(filePath)
    
+   # if base::readline() is on the stack, try to extract choices i.e. (yes/no)
+   # and offer those as completions.
+   nframes <- sys.nframe()
+   for (i in seq_len(nframes)) {
+      fun <- sys.function(i)
+      if (identical(fun, base::readline))
+      {
+         frame <- sys.frame(i)
+         rx <- "^.*(\\(|\\[)(.*)(\\)|\\]).*$"
+         prompt <- frame$prompt
+         
+         if (is.character(prompt) && grepl(rx, prompt)) 
+         {
+            results <- strsplit(sub(rx, "\\2", prompt), "/")[[1L]]
+
+            # capitalized first as this is likely to be the default
+            cap <- grepl("^[A-Z]", results)
+            c(results[cap], results[!cap])
+
+            return(.rs.makeCompletions(token = token,
+                                       results = results,
+                                       quote = FALSE,
+                                       type = .rs.acCompletionTypes$STRING))
+         }
+         else 
+         {
+            return(.rs.emptyCompletions(excludeOtherCompletions = TRUE))
+         }
+      }  
+   }
+
    # If the R console is requesting completions, but the Python REPL is
    # active, then delegate to that machinery.
    if (isConsole && .rs.reticulate.replIsActive())

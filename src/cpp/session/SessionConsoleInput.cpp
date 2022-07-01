@@ -301,7 +301,6 @@ void popConsoleInput(rstudio::r::session::RConsoleInput* pConsoleInput)
 
 } // end anonymous namespace
 
-
 bool rConsoleRead(const std::string& prompt,
                   bool addToHistory,
                   rstudio::r::session::RConsoleInput* pConsoleInput)
