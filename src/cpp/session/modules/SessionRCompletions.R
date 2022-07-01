@@ -2037,14 +2037,19 @@ assign(x = ".rs.acCompletionTypes",
       {
          frame <- sys.frame(i)
          prompt <- frame$prompt
-         rx <- "^.*[(]([^)]+)[)].*$"
+         rx <- "^.*(\\(|\\[)(.*)(\\)|\\]).*$"
          if (grepl(rx, prompt)) 
          {
-            results <- strsplit(sub(rx, "\\1", prompt), "/")[[1L]]
+            results <- strsplit(sub(rx, "\\2", prompt), "/")[[1L]]
+
+            # capitalized first as this is likely to be the default
+            cap <- grepl("[A-Z]", results)
+            c(results[cap], results[!cap])
+            
             return(.rs.makeCompletions(token = token,
-                       results = results,
-                       quote = FALSE,
-                       type = .rs.acCompletionTypes$STRING))
+                                       results = results,
+                                       quote = FALSE,
+                                       type = .rs.acCompletionTypes$STRING))
          }
          else 
          {
