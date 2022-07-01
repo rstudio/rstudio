@@ -2043,9 +2043,9 @@ assign(x = ".rs.acCompletionTypes",
             results <- strsplit(sub(rx, "\\2", prompt), "/")[[1L]]
 
             # capitalized first as this is likely to be the default
-            cap <- grepl("[A-Z]", results)
+            cap <- grepl("^[A-Z]", results)
             c(results[cap], results[!cap])
-            
+
             return(.rs.makeCompletions(token = token,
                                        results = results,
                                        quote = FALSE,
