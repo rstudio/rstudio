@@ -2036,9 +2036,10 @@ assign(x = ".rs.acCompletionTypes",
       if (identical(fun, base::readline))
       {
          frame <- sys.frame(i)
-         prompt <- frame$prompt
          rx <- "^.*(\\(|\\[)(.*)(\\)|\\]).*$"
-         if (grepl(rx, prompt)) 
+         prompt <- frame$prompt
+
+         if (is.character(prompt) && grepl(rx, prompt)) 
          {
             results <- strsplit(sub(rx, "\\2", prompt), "/")[[1L]]
 
