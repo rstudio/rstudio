@@ -88,8 +88,11 @@ Error initJobObject(bool* detachFromJob)
    }
 
    JOBOBJECT_EXTENDED_LIMIT_INFORMATION jeli = { 0 };
-   jeli.BasicLimitInformation.LimitFlags = JOB_OBJECT_LIMIT_KILL_ON_JOB_CLOSE |
-                                           JOB_OBJECT_LIMIT_BREAKAWAY_OK;
+   jeli.BasicLimitInformation.LimitFlags =
+         JOB_OBJECT_LIMIT_KILL_ON_JOB_CLOSE |
+         JOB_OBJECT_LIMIT_BREAKAWAY_OK |
+         JOB_OBJECT_LIMIT_DIE_ON_UNHANDLED_EXCEPTION;
+
    ::SetInformationJobObject(hJob,
                              JobObjectExtendedLimitInformation,
                              &jeli,

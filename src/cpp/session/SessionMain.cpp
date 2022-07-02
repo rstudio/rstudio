@@ -1885,6 +1885,18 @@ int main(int argc, char * const argv[])
 {
    try
    {
+      // create and use a job object -- this is necessary on Electron as node
+      // creates processes with JOB_OBJECT_LIMIT_SILENT_BREAKAWAY_OK, and we want
+      // to make sure child processes for the rsession are terminated if the rsession
+      // process itself is shut down.
+      //
+      // the downside here is that the desktop front-end and the session will no
+      // longer be part of the same job, but because rsession is not detached from
+      // the desktop frontend, it will still be closed if the frontend is closed
+#ifdef _WIN32
+      core::system::initHook();
+#endif
+
       // save fallback library path
       s_fallbackLibraryPath = core::system::getenv("RSTUDIO_FALLBACK_LIBRARY_PATH");
       
