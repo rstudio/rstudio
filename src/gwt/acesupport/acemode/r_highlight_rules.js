@@ -181,6 +181,17 @@ define("mode/r_highlight_rules", ["require", "exports", "module"], function(requ
 
   oop.inherits(RoxygenHighlightRules, TextHighlightRules);
 
+  var isColorBright = function(col)
+  {
+    // based on https://github.com/bgrins/TinyColor
+    var rgb = parseInt(col, 16); // convert rrggbb to decimal
+    var r = (rgb >> 16) & 0xff;  // extract red
+    var g = (rgb >>  8) & 0xff;  // extract green
+    var b = (rgb >>  0) & 0xff;  // extract blue
+    
+    return (r * 299 + g * 587 + b * 114) / 1000 > 128;
+  };
+
   var RHighlightRules = function()
   {
     // NOTE: The backslash character is an alias for the 'function' symbol,
@@ -285,6 +296,36 @@ define("mode/r_highlight_rules", ["require", "exports", "module"], function(requ
             value[1];
 
           return this.token;
+        }
+      },
+      {
+        token : "string", // hex color #rrggbb or #rrggbbaa
+        regex : '(["\'])(#[0-9a-fA-F]{6})([0-9a-fA-F]{2})?(\\1)',
+        next  : "start", 
+        onMatch: function(value, state, stack, line) {
+          var quote = value.substring(0,1);
+          var col = value.substring(2, value.length - 1);
+          var textColor = isColorBright(col.substring(0, 6)) ? "black" : "white";
+          return [
+              { type: "string", value: quote },
+              { type: "string.hexcolor", value: "#" + col, style: "background: #"+col+"; color: " + textColor + " !important;" }, 
+              { type: "string", value: quote }
+          ];
+        }
+      },
+      {
+        token : "string", // hex color #rgb
+        regex : '(["\'])(#[0-9a-fA-F]{3})(\\1)',
+        next  : "start", 
+        onMatch: function(value, state, stack, line) {
+          var quote = value.substring(0,1);
+          var col = value.substring(2, value.length - 1); 
+          var textColor = isColorBright(col.replace(/./g, "$&$&")) ? "black" : "white";
+          return [
+              { type: "string", value: quote },
+              { type: "string.hexcolor", value: "#" + col, style: "background: #"+col+"; color: " + textColor + " !important;" }, 
+              { type: "string", value: quote }
+          ];
         }
       },
       {
