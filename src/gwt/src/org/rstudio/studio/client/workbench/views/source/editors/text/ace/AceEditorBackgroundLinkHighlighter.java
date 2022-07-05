@@ -153,6 +153,7 @@ public class AceEditorBackgroundLinkHighlighter
          {
             TextFileType fileType = editor_.getFileType();
             highlighters_.clear();
+            highlighters_.add(issueHighlighter());
             pUserPrefs_.get().highlightWebLink().bind(new CommandWithArg<Boolean>() {
                public void execute(Boolean arg) {
                   if (arg)
@@ -351,6 +352,13 @@ public class AceEditorBackgroundLinkHighlighter
       if (reSrcRef.test(url))
          return;
 
+      // github issues
+      Pattern reIssue = Pattern.create("^#[0-9]+$");
+      if (reIssue.test(url))
+      {
+         // TODO: globalDisplay_.openWindow(BugReports + /url)
+      }
+
       // treat other URLs as paths to files on the server
       final String finalUrl = url;
       server_.stat(finalUrl, new ServerRequestCallback<FileSystemItem>()
@@ -494,6 +502,36 @@ public class AceEditorBackgroundLinkHighlighter
             reWebLink()
       }, "|");
       return Pattern.create(rePattern);
+   }
+
+   private Highlighter issueHighlighter()
+   {
+      return new Highlighter() {
+         @Override
+         public void highlight(AceEditor editor, String line, int row)
+         {
+            onIssueHighlight(editor, line, row);
+         }
+      };
+   }
+
+   private void onIssueHighlight(AceEditor editor, String line, int row)
+   {
+      Pattern reIssueLink = createIssueLinkPattern();
+      for (Match match = reIssueLink.match(line, 0);
+           match != null;
+           match = match.nextMatch())
+      {
+         int startIdx = match.getIndex() + 1;
+         int endIdx   = match.getIndex() + match.getValue().length() - 1;
+
+         highlight(editor, row, startIdx, endIdx);
+      }
+   }
+
+   private static Pattern createIssueLinkPattern()
+   {
+      return Pattern.create("[(]#([0-9]+)[)]");
    }
 
    private Highlighter markdownLinkHighlighter()
