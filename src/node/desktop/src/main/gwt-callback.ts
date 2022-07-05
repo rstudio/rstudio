@@ -790,7 +790,10 @@ export class GwtCallback extends EventEmitter {
     });
 
     ipcMain.handle('desktop_get_display_dpi', () => {
-      return '72';
+      const primaryDisplay = screen.getPrimaryDisplay();
+      // scaling factor of 1 = 96 dpi
+      const dpi = primaryDisplay.scaleFactor * 96;
+      return dpi.toString();
     });
 
     ipcMain.on('desktop_on_session_quit', () => {
