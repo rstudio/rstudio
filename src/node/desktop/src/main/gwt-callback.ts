@@ -793,7 +793,6 @@ export class GwtCallback extends EventEmitter {
       const primaryDisplay = screen.getPrimaryDisplay();
       // scaling factor of 1 = 96 dpi
       const dpi = primaryDisplay.scaleFactor * 96;
-      logger().logDebug(`dpi: ${dpi.toString()}`);
       return dpi.toString();
     });
 
