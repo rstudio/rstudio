@@ -366,7 +366,12 @@ export class GwtCallback extends EventEmitter {
     });
 
     ipcMain.on('desktop_show_pdf', (event, path: string, pdfPage: string) => {
-      GwtCallback.unimpl('desktop_show_pdf');
+      // TODO: when desktop_external_synctex_view is implemented, use synctex viewer as appropriate
+      // pdfPage is only relevant for synctex
+      shell.openPath(resolveAliasedPath(normalizeSeparatorsNative(path))).catch((value) => {
+        console.log('error:', value);
+        logger().logErrorMessage(value);
+      });
     });
 
     ipcMain.on('desktop_prepare_show_word_doc', () => {
