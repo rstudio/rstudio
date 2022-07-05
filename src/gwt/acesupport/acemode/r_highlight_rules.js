@@ -18,6 +18,7 @@
  *
  */
 var $colorFunctionCalls = false;
+var $colorPreview = false;
 
 define("mode/r_highlight_rules", ["require", "exports", "module"], function(require, exports, module)
 {
@@ -974,6 +975,9 @@ define("mode/r_highlight_rules", ["require", "exports", "module"], function(requ
         regex : '(["\'])(#[0-9a-fA-F]{6})([0-9a-fA-F]{2})?(\\1)',
         next  : "start", 
         onMatch: function(value, state, stack, line) {
+          if (!$colorPreview) 
+            return this.token;
+
           var quote = value.substring(0,1);
           var col = value.substring(2, value.length - 1);
           var textColor = isColorBright(col.substring(0, 6)) ? "black" : "white";
@@ -989,6 +993,9 @@ define("mode/r_highlight_rules", ["require", "exports", "module"], function(requ
         regex : '(["\'])(#[0-9a-fA-F]{3})(\\1)',
         next  : "start", 
         onMatch: function(value, state, stack, line) {
+          if (!$colorPreview) 
+            return this.token;
+          
           var quote = value.substring(0, 1);
           var col = value.substring(2, value.length - 1); 
           var textColor = isColorBright(col.replace(/./g, "$&$&")) ? "black" : "white";
@@ -1004,6 +1011,9 @@ define("mode/r_highlight_rules", ["require", "exports", "module"], function(requ
         regex : '(["\'])([a-z0-9]+)(\\1)', 
         next  : "start", 
         onMatch: function(value, state, stack, line) {
+          if (!$colorPreview) 
+            return this.token;
+          
           var quote = value.substring(0, 1);
           var content = value.substring(1, value.length - 1);
           var rgb = builtInColors.get(content);
@@ -1289,4 +1299,7 @@ define("mode/r_highlight_rules", ["require", "exports", "module"], function(requ
   exports.setHighlightRFunctionCalls = function(value) {
     $colorFunctionCalls = value;
   };
+  exports.setColorPreview = function(value) {
+    $colorPreview = value;
+  }
 });

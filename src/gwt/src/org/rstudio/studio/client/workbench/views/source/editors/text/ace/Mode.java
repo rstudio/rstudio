@@ -103,5 +103,9 @@ public class Mode extends JavaScriptObject
    public native final void setInsertMatching(boolean value) /*-{
       this.insertMatching = value;
    }-*/;
+
+   public native final void setColorPreview(boolean show) /*-{
+      this.setColorPreview && this.setColorPreview(show);
+   }-*/;
    
 }

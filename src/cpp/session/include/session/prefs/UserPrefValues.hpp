@@ -151,6 +151,7 @@ namespace prefs {
 #define kHighlightConsoleErrors "highlight_console_errors"
 #define kScrollPastEndOfDocument "scroll_past_end_of_document"
 #define kHighlightRFunctionCalls "highlight_r_function_calls"
+#define kColorPreview "color_preview"
 #define kRainbowParentheses "rainbow_parentheses"
 #define kConsoleLineLengthLimit "console_line_length_limit"
 #define kConsoleMaxLines "console_max_lines"
@@ -859,6 +860,12 @@ public:
     */
    bool highlightRFunctionCalls();
    core::Error setHighlightRFunctionCalls(bool val);
+
+   /**
+    * Whether to show color preview in the code editor.
+    */
+   bool colorPreview();
+   core::Error setColorPreview(bool val);
 
    /**
     * Whether to highlight parentheses in a variety of colors.
