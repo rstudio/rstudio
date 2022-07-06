@@ -198,7 +198,7 @@ define("mode/r_highlight_rules", ["require", "exports", "module"], function(requ
     var textColor = isColorBright(rgb.substring(0, 6)) ? "black" : "white";
     return [
       { type: "string", value: quote },
-      { type: "string.hexcolor", value: text, style: "background: #"+rgb+"; color: " + textColor + " !important;" }, 
+      { type: "string.hexcolor", value: text, style: `background: #${rgb}; color: ${textColor} !important;` }, 
       { type: "string", value: quote }
     ];
   };
