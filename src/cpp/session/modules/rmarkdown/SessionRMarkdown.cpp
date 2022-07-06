@@ -645,7 +645,7 @@ private:
       if (!reticulatePython.empty())
       {
          // we found a Python version; forward it
-         environment.push_back({"RETICULATE_PYTHON_FALLBACK", reticulatePython});
+         environment.push_back({"RETICULATE_PYTHON", reticulatePython});
          
          // also update the PATH so this version of Python is visible
          core::system::addToPath(
