@@ -193,6 +193,16 @@ define("mode/r_highlight_rules", ["require", "exports", "module"], function(requ
     return (r * 299 + g * 587 + b * 114) / 1000 > 128;
   };
 
+  var colorTokens = function(quote, text, rgb)
+  {
+    var textColor = isColorBright(rgb.substring(0, 6)) ? "black" : "white";
+    return [
+      { type: "string", value: quote },
+      { type: "string.hexcolor", value: text, style: "background: #"+rgb+"; color: " + textColor + " !important;" }, 
+      { type: "string", value: quote }
+    ];
+  };
+
   var RHighlightRules = function()
   {
     // NOTE: The backslash character is an alias for the 'function' symbol,
@@ -982,12 +992,7 @@ define("mode/r_highlight_rules", ["require", "exports", "module"], function(requ
 
           var quote = value.substring(0,1);
           var col = value.substring(2, value.length - 1);
-          var textColor = isColorBright(col.substring(0, 6)) ? "black" : "white";
-          return [
-              { type: "string", value: quote },
-              { type: "string.hexcolor", value: "#" + col, style: "background: #"+col+"; color: " + textColor + " !important;" }, 
-              { type: "string", value: quote }
-          ];
+          return colorTokens(quote, "#" + col, col);
         }
       },
       {
@@ -1000,12 +1005,7 @@ define("mode/r_highlight_rules", ["require", "exports", "module"], function(requ
           
           var quote = value.substring(0, 1);
           var col = value.substring(2, value.length - 1); 
-          var textColor = isColorBright(col.replace(/./g, "$&$&")) ? "black" : "white";
-          return [
-              { type: "string", value: quote },
-              { type: "string.hexcolor", value: "#" + col, style: "background: #"+col+"; color: " + textColor + " !important;" }, 
-              { type: "string", value: quote }
-          ];
+          return colorTokens(quote, "#" + col, col.replace(/./g, "$&$&"));
         }
       },
       {
@@ -1023,18 +1023,9 @@ define("mode/r_highlight_rules", ["require", "exports", "module"], function(requ
           var content = value.substring(1, value.length - 1);
           var rgb = builtInColors.get(content);
           if (rgb === undefined)
-          {
             return this.token;
-          }
           else
-          {
-            var textColor = isColorBright(rgb) ? "black" : "white";
-            return [
-                { type: "string", value: quote },
-                { type: "string.hexcolor", value: content, style: "background: #"+rgb+"; color: " + textColor + " !important;" }, 
-                { type: "string", value: quote }
-            ];
-          }
+            return colorTokens(quote, content, rgb);
         }
       },
       {
