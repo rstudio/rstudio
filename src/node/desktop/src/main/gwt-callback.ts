@@ -534,7 +534,14 @@ export class GwtCallback extends EventEmitter {
     });
 
     ipcMain.on('desktop_bring_main_frame_behind_active', () => {
-      GwtCallback.unimpl('desktop_bring_main_frame_behind_active');
+      const mainWindow = this.mainWindow.window;
+      const activeWindow = BrowserWindow.getFocusedWindow();
+
+      // bring main window under active window by focusing main window then back to active
+      if (activeWindow && mainWindow !== activeWindow) {
+        mainWindow.focus();
+        activeWindow.focus();
+      }
     });
 
     ipcMain.handle('desktop_rendering_engine', () => {
