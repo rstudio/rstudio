@@ -77,8 +77,8 @@
 #' Run `code` in a child \R process, launched via `system2()`.
 #' 
 #' @param callback An \R function, to be executed within the child process.
-#'   It should take a single parameter, which represents the `data` to
-#'   be supplied to the callback.
+#'   The callback should take a number of arguments equal to, or compatible
+#'   with, the supplied `data` parameter.
 #' 
 #' @param data An optional list of side-car data, to be referenced from
 #'   `code` via the `data` argument. These arguments will be applied to
@@ -90,14 +90,19 @@
 #' 
 #' @param libPaths The library paths to be set and used by the child process.
 #'   By default, the parent's library paths are used.
+#'   
+#' @param rFlags A set of flags to be supplied for launched \R processes.
+#'   Arguments should be quoted by the caller.
 #'
 #' @param ... Optional arguments passed to `system2()`.
 #' 
-.rs.addFunction("executeFunctionInChildProcess", function(callback, 
-                                                          data = list(),
-                                                          workingDir = NULL,
-                                                          libPaths = .libPaths(),
-                                                          ...)
+.rs.addFunction("executeFunctionInChildProcess", function(
+      callback,
+      data = list(),
+      workingDir = NULL,
+      libPaths = .libPaths(),
+      rFlags = c("--vanilla", "-s"),
+      ...)
 {
    # create and move to directory we'll use to stage our scripts
    scriptDir <- tempfile("rstudio-script-")
@@ -173,7 +178,7 @@
    r <- file.path(R.home("bin"), exe)
    
    # form command line arguments
-   args <- c("--vanilla", "-s", "-f", shQuote("script.R"))
+   args <- c(rFlags, "-f", shQuote("script.R"))
    
    # run the script
    status <- system2(r, args, ...)
