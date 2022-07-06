@@ -553,7 +553,7 @@
         "color_preview": {
             "type": "boolean", 
             "default": true, 
-            "title": "Show preview of colors", 
+            "title": "Show color preview", 
             "description": "Whether to show color preview in the code editor."
         },
         "rainbow_parentheses": {

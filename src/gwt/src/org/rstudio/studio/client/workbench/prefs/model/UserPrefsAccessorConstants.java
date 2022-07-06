@@ -658,7 +658,7 @@ public interface UserPrefsAccessorConstants extends Constants {
    /**
     * Whether to show color preview in the code editor.
     */
-   @DefaultStringValue("Show preview of colors")
+   @DefaultStringValue("Show color preview")
    String colorPreviewTitle();
    @DefaultStringValue("Whether to show color preview in the code editor.")
    String colorPreviewDescription();
