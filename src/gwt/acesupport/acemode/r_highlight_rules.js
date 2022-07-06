@@ -1009,8 +1009,11 @@ define("mode/r_highlight_rules", ["require", "exports", "module"], function(requ
         }
       },
       {
-        token : "string", // maybe R color strings
-        regex : '(["\'])([a-z0-9]+)(\\1)', 
+        // strings that *might* be R named colors
+        // - first check that they are lower-case letters maybe followed by numbers
+        // - then in that case test against the builtInColors map
+        token : "string",
+        regex : '(["\'])([a-z]+[0-9]*)(\\1)', 
         next  : "start", 
         onMatch: function(value, state, stack, line) {
           if (!$colorPreview) 
