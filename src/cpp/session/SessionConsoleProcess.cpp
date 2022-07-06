@@ -816,11 +816,10 @@ bool augmentTerminalProcessPython(ConsoleProcessPtr cp)
    if (!prefs::userPrefs().terminalPythonIntegration())
       return false;
    
-   // forward RETICULATE_PYTHON_FALLBACK if set
-   std::string reticulatePythonFallback = modules::reticulate::reticulatePython();
-
-   if (!reticulatePythonFallback.empty())
-      cp->setenv("RETICULATE_PYTHON_FALLBACK", reticulatePythonFallback);
+   // forward RETICULATE_PYTHON if set
+   std::string reticulatePython = modules::reticulate::reticulatePython();
+   if (!reticulatePython.empty())
+      cp->setenv("RETICULATE_PYTHON", reticulatePython);
    
    // forward CONDA_PREFIX if set
    // use custom environment variable name since the user profile
@@ -833,7 +832,7 @@ bool augmentTerminalProcessPython(ConsoleProcessPtr cp)
 
    // return true if we have a configured version of python
    // (indicating that we want terminal hooks to be installed)
-   return !reticulatePythonFallback.empty();
+   return !reticulatePython.empty();
 }
 
 void useTerminalHooks(ConsoleProcessPtr cp)
