@@ -1,9 +1,9 @@
 Configure Windows for RStudio Development
 =============================================================================
 
-These instructions are intended for a clean Windows-10 machine and may not
-produce a successful build environment if any dependencies are already 
-installed.
+These instructions are intended for a clean Windows-10 (or Windows-11)
+x64 (not ARM) machine and may not produce a successful build environment if any 
+dependencies are already installed.
 
 Bootstrap
 =============================================================================
