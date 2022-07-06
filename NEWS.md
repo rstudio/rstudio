@@ -6,7 +6,8 @@
 * Improved handling of diagnostics within glue() expressions. 
 * RStudio now provides autocompletion results for packages used but not loaded within a project.
 * Improved handling of missing arguments for some functions in the diagnostics system.
-
+* Code editor can show previews of color in strings (R named colors e.g. "tomato3" or of the forms "#rgb", "#rrggbb", "#rrggbbaa")
+  when `Options > Code > Display > [ ] Show color preview` is checked. 
 
 ### Deprecated / Removed
 
