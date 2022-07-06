@@ -104,6 +104,9 @@
    dir.create(scriptDir, recursive = TRUE, showWarnings = FALSE)
    owd <- setwd(scriptDir)
    
+   # path for outputs from script
+   outputFile <- file.path(scriptDir, "output.rds")
+   
    # clean up when we're done
    on.exit({
       setwd(owd)
@@ -124,7 +127,8 @@
    bundle <- list(
       callback   = callback,
       data       = data,
-      workingDir = workingDir
+      workingDir = workingDir,
+      outputFile = outputFile
    )
    
    # define runner script (will load data and execute user-defined callback)
@@ -143,10 +147,17 @@
       
       # retrieve callback data
       callback <- bundle[["callback"]]
-      data     <- bundle[["data"]]
+      data <- bundle[["data"]]
       
       # execute callback
-      do.call(callback, data)
+      result <- tryCatch(
+         do.call(callback, data),
+         error = identity
+      )
+      
+      # write result to file
+      outputFile <- bundle[["outputFile"]]
+      saveRDS(result, file = outputFile)
       
    })
    
@@ -165,7 +176,21 @@
    args <- c("--vanilla", "-s", "-f", shQuote("script.R"))
    
    # run the script
-   system2(r, args, ...)
+   status <- system2(r, args, ...)
+   if (!identical(status, 0L))
+      stop("error executing script (unknown reason)")
+   
+   # check for output file
+   if (!file.exists(outputFile))
+      stop("error executing script (no output was generated)")
+   
+   # read response and handle errors
+   response <- readRDS(outputFile)
+   if (inherits(response, "error"))
+      stop(response)
+   
+   # return result
+   response
    
 })
 

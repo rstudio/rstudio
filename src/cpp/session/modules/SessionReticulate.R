@@ -2084,25 +2084,25 @@ options(reticulate.repl.teardown = function()
    
    # if reticulate is installed, then try to load it and ask what
    # version of Python it would choose to bind to.
-   #
-   # TODO: we might want to avoid loading reticulate if possible here?
    if (.rs.isPackageInstalled("reticulate")) {
       
       # avoid miniconda prompts
-      prev_miniconda <- Sys.getenv("RETICULATE_MINICONDA_ENABLED")
+      oldMinicondaEnabled <- Sys.getenv("RETICULATE_MINICONDA_ENABLED", unset = NA)
       Sys.setenv(RETICULATE_MINICONDA_ENABLED = "FALSE")
+      on.exit({
+         if (is.na(oldMinicondaEnabled))
+            Sys.unsetenv(oldMinicondaEnabled)
+         else
+            Sys.setenv(RETICULATE_MINICONDA_ENABLED = oldMinicondaEnabled)
+      }, add = TRUE)
 
-      # Then perform a Python version scan/discovery
-      py_config <- NULL
-      tryCatch({
-         py_config <- reticulate::py_discover_config()
-      }, finally = {
-         Sys.setenv(RETICULATE_MINICONDA_ENABLED = prev_miniconda)
-      })
-
+      pyConfig <- .rs.executeFunctionInChildProcess(
+         function() reticulate::py_discover_config()
+      )
+      
       # Return a Python binary if we found one
-      if (!is.null(py_config) && !is.null(py_config$python)) {
-         return(py_config$python)
+      if (!is.null(pyConfig) && !is.null(pyConfig$python)) {
+         return(pyConfig$python)
       }
       
    }
