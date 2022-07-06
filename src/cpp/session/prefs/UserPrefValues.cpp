@@ -999,6 +999,19 @@ core::Error UserPrefValues::setHighlightRFunctionCalls(bool val)
 }
 
 /**
+ * Whether to show color preview in the code editor.
+ */
+bool UserPrefValues::colorPreview()
+{
+   return readPref<bool>("color_preview");
+}
+
+core::Error UserPrefValues::setColorPreview(bool val)
+{
+   return writePref("color_preview", val);
+}
+
+/**
  * Whether to highlight parentheses in a variety of colors.
  */
 bool UserPrefValues::rainbowParentheses()
@@ -3156,6 +3169,7 @@ std::vector<std::string> UserPrefValues::allKeys()
       kHighlightConsoleErrors,
       kScrollPastEndOfDocument,
       kHighlightRFunctionCalls,
+      kColorPreview,
       kRainbowParentheses,
       kConsoleLineLengthLimit,
       kConsoleMaxLines,

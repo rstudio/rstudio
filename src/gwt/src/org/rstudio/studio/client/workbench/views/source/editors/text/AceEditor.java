@@ -2439,6 +2439,12 @@ public class AceEditor implements DocDisplay,
       widget_.getEditor().retokenizeDocument();
    }
 
+   public void setColorPreview(boolean show)
+   {
+      _setColorPreviewImpl(show);
+      widget_.getEditor().retokenizeDocument();
+   }
+
    public void setRainbowParentheses(boolean rainbow)
    {
       _setRainbowParenthesesImpl(rainbow);
@@ -2470,6 +2476,12 @@ public class AceEditor implements DocDisplay,
    /*-{
       var Mode = $wnd.require("mode/r_highlight_rules");
       Mode.setHighlightRFunctionCalls(highlight);
+   }-*/;
+
+   private native final void _setColorPreviewImpl(boolean show)
+   /*-{
+      var Mode = $wnd.require("mode/r_highlight_rules");
+      Mode.setColorPreview(show);
    }-*/;
 
    private native final void _setRainbowParenthesesImpl(boolean rainbow)

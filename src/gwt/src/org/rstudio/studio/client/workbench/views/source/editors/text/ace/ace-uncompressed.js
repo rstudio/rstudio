@@ -2951,7 +2951,7 @@ var Tokenizer = function(rules) {
             }
         }
 
-	token.column = lastIndex - token.value.length;
+	    token.column = lastIndex - token.value.length;
         if (token.type)
             tokens.push(token);
         
@@ -15203,7 +15203,7 @@ var MarkdownHighlightRules = function() {
         },
         codeBlockStartRule,
         {
-            defaultToken : "list" //do not use markup.list to allow stling leading `*` differently
+            defaultToken : "list" //do not use markup.list to allow stling leading `*` differntly
         } ],
 
         "blockquote" : [ { // Blockquotes only escape on blank lines.
@@ -62819,7 +62819,8 @@ var Text = function(parentEl) {
             var span = this.dom.createElement("span");
             if (token.type == "fold")
                 span.style.width = (token.value.length * this.config.characterWidth) + "px";
-                
+            if (token.style)
+                span.setAttribute("style", token.style);
             span.className = classes;
             span.appendChild(valueFragment);
             

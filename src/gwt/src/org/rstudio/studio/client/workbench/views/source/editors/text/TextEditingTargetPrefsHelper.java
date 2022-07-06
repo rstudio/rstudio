@@ -125,6 +125,11 @@ public class TextEditingTargetPrefsHelper
             {
                docDisplay.setHighlightRFunctionCalls(arg);
             }));
+      releaseOnDismiss.add(prefs.colorPreview().bind(
+            (arg) ->
+            {
+               docDisplay.setColorPreview(arg);
+            }));
       releaseOnDismiss.add(prefs.rainbowParentheses().bind(
             (arg) ->
             {

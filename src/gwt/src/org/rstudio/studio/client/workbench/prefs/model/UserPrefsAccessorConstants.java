@@ -656,6 +656,14 @@ public interface UserPrefsAccessorConstants extends Constants {
    String highlightRFunctionCallsDescription();
 
    /**
+    * Whether to show color preview in the code editor.
+    */
+   @DefaultStringValue("Show color preview")
+   String colorPreviewTitle();
+   @DefaultStringValue("Whether to show color preview in the code editor.")
+   String colorPreviewDescription();
+
+   /**
     * Whether to highlight parentheses in a variety of colors.
     */
    @DefaultStringValue("Rainbow parentheses")

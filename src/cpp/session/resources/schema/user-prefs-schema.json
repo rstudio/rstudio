@@ -550,6 +550,12 @@
             "title": "Highlight R function calls",
             "description": "Whether to highlight R function calls in the code editor."
         },
+        "color_preview": {
+            "type": "boolean", 
+            "default": true, 
+            "title": "Show color preview", 
+            "description": "Whether to show color preview in the code editor."
+        },
         "rainbow_parentheses": {
             "type": "boolean",
             "default": false,
