@@ -118,28 +118,9 @@
   background: rgb(250, 250, 255);
   border: 1px solid rgb(200, 200, 250);
 }
-.ace_line .ace_indent-guide:nth-child(7n){
-  background: linear-gradient(to left, #ed90a4bb 1px, transparent 1px, transparent);
+.ace_indent-guide {
+  background: url("data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAEAAAACCAYAAACZgbYnAAAAE0lEQVQImWP4////f4bLly//BwAmVgd1/w11/gAAAABJRU5ErkJggg==") right repeat-y;
 }
-.ace_line .ace_indent-guide:nth-child(7n+1){
-  background: linear-gradient(to left, #d3a263bb 1px, transparent 1px, transparent);
-}
-.ace_line .ace_indent-guide:nth-child(7n+2){
-  background: linear-gradient(to left, #99b657bb 1px, transparent 1px, transparent);
-}
-.ace_line .ace_indent-guide:nth-child(7n+3){
-  background: linear-gradient(to left, #33c192bb 1px, transparent 1px, transparent);
-}
-.ace_line .ace_indent-guide:nth-child(7n+4){
-  background: linear-gradient(to left, #00bdcebb 1px, transparent 1px, transparent);
-}
-.ace_line .ace_indent-guide:nth-child(7n+5){
-  background: linear-gradient(to left, #94a9ebbb 1px, transparent 1px, transparent);
-}
-.ace_line .ace_indent-guide:nth-child(7n+6){
-  background: linear-gradient(to left, #dc91dbbb 1px, transparent 1px, transparent);
-}
-
 .nocolor.ace_editor .ace_line span {
   color: blue !important;
 }
