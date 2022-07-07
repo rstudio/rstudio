@@ -49,7 +49,7 @@
 #include <gsl/gsl>
 #endif
 
-#ifdef __linux__
+#ifndef __APPLE__
 #include <sys/prctl.h>
 #include <sys/sysinfo.h>
 #include <linux/kernel.h>
@@ -1479,7 +1479,7 @@ Error osResourceLimit(ResourceLimit limit, int* pLimit)
       case CpuLimit:
          *pLimit = RLIMIT_CPU;
          break;
-#ifdef __linux__
+#ifndef __APPLE__
       case NiceLimit:
          *pLimit = RLIMIT_NICE;
          break;
@@ -1552,7 +1552,7 @@ Error systemInformation(SysInfo* pSysInfo)
 {
    pSysInfo->cores = boost::thread::hardware_concurrency();
 
-#ifdef __linux__
+#ifndef __APPLE__
    struct sysinfo info;
    if (::sysinfo(&info) == -1)
       return systemError(errno, ERROR_LOCATION);
@@ -1956,7 +1956,7 @@ Error restrictCoreDumps()
       return error;
 
    // no ptrace core dumps permitted
-#ifndef __linux__
+#ifndef __APPLE__
    int res = ::prctl(PR_SET_DUMPABLE, 0);
    if (res == -1)
       return systemError(errno, ERROR_LOCATION);
@@ -1987,7 +1987,7 @@ void printCoreDumpable(const std::string& context)
    ostr << "  hard limit: " << rLimitHard << std::endl;
 
    // ptrace
-#ifndef __linux__
+#ifndef __APPLE__
    int dumpable = ::prctl(PR_GET_DUMPABLE, nullptr, nullptr, nullptr, nullptr);
    if (dumpable == -1)
       LOG_ERROR(systemError(errno, ERROR_LOCATION));

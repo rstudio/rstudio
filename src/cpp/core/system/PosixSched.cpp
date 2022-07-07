@@ -41,7 +41,7 @@ bool isCpuAffinityEmpty(const CpuAffinity& cpus)
 
 Error getCpuAffinity(CpuAffinity* pCpus)
 {
-#ifdef __linux__
+#ifndef __APPLE__
    cpu_set_t cs;
    CPU_ZERO(&cs);
    if (::sched_getaffinity(0, sizeof(cs), &cs) == -1)
@@ -66,7 +66,7 @@ Error getCpuAffinity(CpuAffinity* pCpus)
 
 Error setCpuAffinity(const CpuAffinity& cpus)
 {
-#ifdef __linux__
+#ifndef __APPLE__
    cpu_set_t cs;
    CPU_ZERO(&cs);
 

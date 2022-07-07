@@ -24,7 +24,7 @@
 #include <util.h>
 #include <sys/ttycom.h>
 #include <sys/ioctl.h>
-#elif defined(__linux__)
+#else
 #include <pty.h>
 #include <asm/ioctls.h>
 #include <sys/prctl.h>
