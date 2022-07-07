@@ -48,6 +48,10 @@
 
 #include "config.h"
 
+#if !defined(HAVE_GROUP_MEMBER) && !defined(_WIN32)
+#include <limits.h> // for NGROUPS_MAX
+#endif
+
 // must be included after config.h for RSTUDIO_SERVER define
 #include <core/system/UserObfuscation.hpp>
 
@@ -207,12 +211,29 @@ bool isSharedPath(const std::string& projectPath,
       if (st.st_gid == user.getGroupId())
          return false;
 
-#ifndef __APPLE__
       // not shared if we're in any of the groups that own the directory
       // (note that this checks supplementary group IDs only, so the check
       // against the primary group ID above is still required)
+#ifdef HAVE_GROUP_MEMBER
       if (::group_member(st.st_gid))
          return false;
+#else
+      // this is basically what glibc, gnulib, and glibcompat do to implement
+      // group_member()
+      gid_t groups[NGROUPS_MAX];
+      int ngroups = ::getgroups(NGROUPS_MAX, groups);
+      if (ngroups < 0)
+      {
+         // if we can't get the supplementary groups due to a system-level
+         // error, ignore them but complain in the logs
+         LOG_ERROR(systemError(errno, ERROR_LOCATION));
+      }
+
+      for (int i = 0; i < ngroups; ++i) {
+         if (groups[i] == st.st_gid) {
+            return false;
+         }
+      }
 #endif 
 
       // if we got this far, we likely have access due to project sharing

@@ -167,6 +167,20 @@ if (UNIX)
       set(HAVE_PROCSELF TRUE)
    endif()
 
+   # missing on non-glibc platforms like macOS, musl-based Linux distros, and
+   # the BSDs
+   check_function_exists(group_member HAVE_GROUP_MEMBER)
+
+   # missing on musl-based Linux distros and some BSDs
+   CHECK_CXX_SOURCE_COMPILES (
+   "#include <execinfo.h>
+   int main (int, char **)
+   {
+      return 0;
+   }
+   "
+   HAVE_EXECINFO)
+
    # find packages and libraries
    find_library(PTHREAD_LIBRARIES pthread)
    if(NOT APPLE)
