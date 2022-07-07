@@ -2456,6 +2456,14 @@ public class AceEditor implements DocDisplay,
       return _getRainbowParenthesesImpl();
    }
 
+   public void setRainbowIndentGuides(boolean rainbow)
+   {
+      if (rainbow)
+         widget_.addStyleName("rstudio_rainbow_indent_guides");
+      else 
+         widget_.removeStyleName("rstudio_rainbow_indent_guides");
+   }
+
    public void setScrollLeft(int x)
    {
       getSession().setScrollLeft(x);

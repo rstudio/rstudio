@@ -135,6 +135,11 @@ public class TextEditingTargetPrefsHelper
             {
                docDisplay.setRainbowParentheses(arg);
             }));
+      releaseOnDismiss.add(prefs.rainbowIndentGuides().bind(
+            (arg) ->
+            {
+               docDisplay.setRainbowIndentGuides(arg);
+            }));
       releaseOnDismiss.add(prefs.codeCompletionOther().bind(
             (arg) ->
             {
