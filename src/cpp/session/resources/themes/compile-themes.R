@@ -1196,6 +1196,21 @@
          ".xtermBgColor255 { background-color: #eeeeee; }")
 })
 
+.rs.addFunction("themes_rainbow_indent_guides", function(colors = c("#ed90a4bb", "#d3a263bb", "#99b657bb", "#33c192bb", "#00bdcebb", "#94a9ebbb", "#dc91dbbb")) {
+   n <- length(colors)
+
+   content <- "/* Rainbow indent guides */"
+   for (i in seq_len(n)) {
+      content <- c(content, 
+         paste0(".ace_line .ace_indent-guide:nth-child(", n ,"n+", i, "){" ), 
+         paste0("    background: linear-gradient(to left, ", colors[i], " 1px, transparent 1px, transparent);"),
+         "}"
+      )
+   }
+
+   content
+})
+
 .rs.addFunction("themes_static_rules", function(isDark) {
    content <- paste(".editor_dark.ace_editor_theme a {",
                     "   color: #FFF !important;",
@@ -1416,6 +1431,11 @@
    content <- c(content,
                 .rs.themes_static_rules(isDark)) 
    
+   # rainbow indent guides
+   content <- c(content, 
+      .rs.themes_rainbow_indent_guides()
+   )
+
    # All done, return the lines.
    content
 })
