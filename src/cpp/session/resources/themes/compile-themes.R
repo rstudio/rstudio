@@ -1202,7 +1202,7 @@
    content <- "/* Rainbow indent guides */"
    for (i in seq_len(n)) {
       content <- c(content, 
-         paste0(".ace_line .ace_indent-guide:nth-child(", n ,"n+", i, "){" ), 
+         paste0(".rstudio_rainbow_indent_guides .ace_line .ace_indent-guide:nth-child(", n ,"n+", i, "){" ), 
          paste0("    background: linear-gradient(to left, ", colors[i], " 1px, transparent 1px, transparent);"),
          "}"
       )
