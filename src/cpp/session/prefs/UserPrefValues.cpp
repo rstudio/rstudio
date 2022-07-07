@@ -1025,6 +1025,19 @@ core::Error UserPrefValues::setRainbowParentheses(bool val)
 }
 
 /**
+ * Whether to use multiple colors for indent guides.
+ */
+bool UserPrefValues::rainbowIndentGuides()
+{
+   return readPref<bool>("rainbow_indent_guides");
+}
+
+core::Error UserPrefValues::setRainbowIndentGuides(bool val)
+{
+   return writePref("rainbow_indent_guides", val);
+}
+
+/**
  * The maximum number of characters to display in a single line in the R console.
  */
 int UserPrefValues::consoleLineLengthLimit()
@@ -3171,6 +3184,7 @@ std::vector<std::string> UserPrefValues::allKeys()
       kHighlightRFunctionCalls,
       kColorPreview,
       kRainbowParentheses,
+      kRainbowIndentGuides,
       kConsoleLineLengthLimit,
       kConsoleMaxLines,
       kAnsiConsoleMode,

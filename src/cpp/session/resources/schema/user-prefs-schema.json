@@ -562,6 +562,12 @@
             "title": "Rainbow parentheses",
             "description": "Whether to highlight parentheses in a variety of colors."
         },
+        "rainbow_indent_guides": {
+            "type": "boolean", 
+            "default": false, 
+            "title": "Use rainbow indent guides", 
+            "description": "Whether to use multiple colors for indent guides."
+        },
         "console_line_length_limit": {
             "type": "integer",
             "default": 1000,

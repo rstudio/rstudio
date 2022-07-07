@@ -1166,6 +1166,18 @@ public class UserPrefsAccessor extends Prefs
    }
 
    /**
+    * Whether to use multiple colors for indent guides.
+    */
+   public PrefValue<Boolean> rainbowIndentGuides()
+   {
+      return bool(
+         "rainbow_indent_guides",
+         _constants.rainbowIndentGuidesTitle(), 
+         _constants.rainbowIndentGuidesDescription(), 
+         false);
+   }
+
+   /**
     * The maximum number of characters to display in a single line in the R console.
     */
    public PrefValue<Integer> consoleLineLengthLimit()
@@ -3529,6 +3541,8 @@ public class UserPrefsAccessor extends Prefs
          colorPreview().setValue(layer, source.getBool("color_preview"));
       if (source.hasKey("rainbow_parentheses"))
          rainbowParentheses().setValue(layer, source.getBool("rainbow_parentheses"));
+      if (source.hasKey("rainbow_indent_guides"))
+         rainbowIndentGuides().setValue(layer, source.getBool("rainbow_indent_guides"));
       if (source.hasKey("console_line_length_limit"))
          consoleLineLengthLimit().setValue(layer, source.getInteger("console_line_length_limit"));
       if (source.hasKey("console_max_lines"))
@@ -3928,6 +3942,7 @@ public class UserPrefsAccessor extends Prefs
       prefs.add(highlightRFunctionCalls());
       prefs.add(colorPreview());
       prefs.add(rainbowParentheses());
+      prefs.add(rainbowIndentGuides());
       prefs.add(consoleLineLengthLimit());
       prefs.add(consoleMaxLines());
       prefs.add(ansiConsoleMode());

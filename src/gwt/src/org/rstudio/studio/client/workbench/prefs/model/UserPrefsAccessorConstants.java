@@ -672,6 +672,14 @@ public interface UserPrefsAccessorConstants extends Constants {
    String rainbowParenthesesDescription();
 
    /**
+    * Whether to use multiple colors for indent guides.
+    */
+   @DefaultStringValue("Use rainbow indent guides")
+   String rainbowIndentGuidesTitle();
+   @DefaultStringValue("Whether to use multiple colors for indent guides.")
+   String rainbowIndentGuidesDescription();
+
+   /**
     * The maximum number of characters to display in a single line in the R console.
     */
    @DefaultStringValue("Maximum characters per line in R console")

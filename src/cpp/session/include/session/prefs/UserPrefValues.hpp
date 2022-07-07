@@ -153,6 +153,7 @@ namespace prefs {
 #define kHighlightRFunctionCalls "highlight_r_function_calls"
 #define kColorPreview "color_preview"
 #define kRainbowParentheses "rainbow_parentheses"
+#define kRainbowIndentGuides "rainbow_indent_guides"
 #define kConsoleLineLengthLimit "console_line_length_limit"
 #define kConsoleMaxLines "console_max_lines"
 #define kAnsiConsoleMode "ansi_console_mode"
@@ -872,6 +873,12 @@ public:
     */
    bool rainbowParentheses();
    core::Error setRainbowParentheses(bool val);
+
+   /**
+    * Whether to use multiple colors for indent guides.
+    */
+   bool rainbowIndentGuides();
+   core::Error setRainbowIndentGuides(bool val);
 
    /**
     * The maximum number of characters to display in a single line in the R console.
