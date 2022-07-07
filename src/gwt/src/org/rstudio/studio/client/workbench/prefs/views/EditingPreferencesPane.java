@@ -211,11 +211,7 @@ public class EditingPreferencesPane extends PreferencesPane
       displayPanel.add(checkboxPref(constants_.displayBlinkingCursorLabel(), prefs_.blinkingCursor()));
       displayPanel.add(checkboxPref(constants_.displayScrollPastEndOfDocumentLabel(), prefs_.scrollPastEndOfDocument()));
       displayPanel.add(checkboxPref(constants_.displayEnableTextDragLabel(), prefs_.enableTextDrag()));
-      displayPanel.add(checkboxPref(prefs_.highlightRFunctionCalls()));
-      displayPanel.add(checkboxPref(prefs_.colorPreview()));
-      displayPanel.add(extraSpaced(
-         checkboxPref(prefs_.rainbowParentheses(), false /* defaultSpace */)));
-
+      
       foldMode_ = new SelectWidget(
             constants_.displayFoldStyleLabel(),
             (Prefs.EnumValue) prefs_.foldStyle(),
@@ -225,6 +221,13 @@ public class EditingPreferencesPane extends PreferencesPane
 
       displayPanel.add(foldMode_);
 
+      displayPanel.add(headerLabel(constants_.syntaxHeaderLabel()));
+      displayPanel.add(checkboxPref(prefs_.highlightRFunctionCalls()));
+      displayPanel.add(checkboxPref(prefs_.colorPreview()));
+      displayPanel.add(checkboxPref(prefs_.rainbowParentheses()));
+      displayPanel.add(checkboxPref(prefs_.rainbowIndentGuides()));
+
+      
       VerticalTabPanel savePanel = new VerticalTabPanel(ElementIds.EDIT_SAVING_PREFS);
 
       savePanel.add(headerLabel(constants_.generalHeaderLabel()));

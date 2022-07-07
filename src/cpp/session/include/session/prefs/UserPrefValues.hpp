@@ -863,7 +863,7 @@ public:
    core::Error setHighlightRFunctionCalls(bool val);
 
    /**
-    * Whether to show color preview in the code editor.
+    * Whether to show preview for named and hexadecimal colors.
     */
    bool colorPreview();
    core::Error setColorPreview(bool val);

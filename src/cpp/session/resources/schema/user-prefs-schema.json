@@ -553,13 +553,13 @@
         "color_preview": {
             "type": "boolean", 
             "default": true, 
-            "title": "Show color preview", 
-            "description": "Whether to show color preview in the code editor."
+            "title": "Enable preview of named and hexadecimal colors", 
+            "description": "Whether to show preview for named and hexadecimal colors."
         },
         "rainbow_parentheses": {
             "type": "boolean",
             "default": false,
-            "title": "Rainbow parentheses",
+            "title": "Use rainbow parentheses",
             "description": "Whether to highlight parentheses in a variety of colors."
         },
         "rainbow_indent_guides": {

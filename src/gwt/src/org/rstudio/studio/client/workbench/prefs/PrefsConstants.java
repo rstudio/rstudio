@@ -4125,6 +4125,15 @@ public interface PrefsConstants extends com.google.gwt.i18n.client.Messages {
     String generalHeaderLabel();
 
     /**
+     * Translated "Syntax".
+     *
+     * @return translated "Syntax"
+     */
+    @DefaultMessage("Syntax")
+    @Key("syntaxHeaderLabel")
+    String syntaxHeaderLabel();
+
+    /**
      * Translated "Edit Snippets...".
      *
      * @return translated "Edit Snippets..."

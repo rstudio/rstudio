@@ -999,7 +999,7 @@ core::Error UserPrefValues::setHighlightRFunctionCalls(bool val)
 }
 
 /**
- * Whether to show color preview in the code editor.
+ * Whether to show preview for named and hexadecimal colors.
  */
 bool UserPrefValues::colorPreview()
 {

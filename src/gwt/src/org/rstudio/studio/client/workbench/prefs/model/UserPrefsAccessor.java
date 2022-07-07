@@ -1142,7 +1142,7 @@ public class UserPrefsAccessor extends Prefs
    }
 
    /**
-    * Whether to show color preview in the code editor.
+    * Whether to show preview for named and hexadecimal colors.
     */
    public PrefValue<Boolean> colorPreview()
    {
