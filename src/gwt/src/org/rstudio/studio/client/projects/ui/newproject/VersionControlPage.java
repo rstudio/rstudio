@@ -23,7 +23,6 @@ import org.rstudio.core.client.widget.DirectoryChooserTextBox;
 import org.rstudio.core.client.widget.FormLabel;
 import org.rstudio.core.client.widget.MessageDialog;
 import org.rstudio.core.client.widget.Operation;
-import org.rstudio.studio.client.RStudioGinjector;
 import org.rstudio.studio.client.application.Desktop;
 import org.rstudio.studio.client.common.HelpLink;
 import org.rstudio.studio.client.common.vcs.VcsCloneOptions;
@@ -32,7 +31,6 @@ import org.rstudio.studio.client.projects.Projects;
 import org.rstudio.studio.client.projects.StudioClientProjectConstants;
 import org.rstudio.studio.client.projects.model.NewProjectInput;
 import org.rstudio.studio.client.projects.model.NewProjectResult;
-import org.rstudio.studio.client.workbench.model.Session;
 import org.rstudio.studio.client.workbench.model.SessionInfo;
 
 import com.google.gwt.core.client.Scheduler;
@@ -61,8 +59,7 @@ public abstract class VersionControlPage extends NewProjectWizardPage
    @Override
    protected boolean acceptNavigation()
    {
-      SessionInfo sessionInfo = 
-                     RStudioGinjector.INSTANCE.getSession().getSessionInfo();
+      SessionInfo sessionInfo = this.getSessionInfo();
       if (!sessionInfo.isVcsAvailable(getVcsId()))
       {         
          NewProjectResources.Styles styles = 
