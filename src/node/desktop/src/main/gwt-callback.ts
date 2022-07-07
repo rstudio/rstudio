@@ -365,7 +365,10 @@ export class GwtCallback extends EventEmitter {
     });
 
     ipcMain.on('desktop_show_ppt_presentation', (event, pptDoc: string) => {
-      GwtCallback.unimpl('desktop_show_ppt_presentation');
+      shell.openPath(resolveAliasedPath(normalizeSeparatorsNative(pptDoc))).catch((value) => {
+        console.log('error:', value);
+        logger().logErrorMessage(value);
+      });
     });
 
     ipcMain.on('desktop_show_pdf', (event, path: string, pdfPage: string) => {
@@ -383,7 +386,8 @@ export class GwtCallback extends EventEmitter {
     });
 
     ipcMain.on('desktop_prepare_show_ppt_presentation', () => {
-      GwtCallback.unimpl('desktop_prepare_show_ppt_presentation');
+      // if possible, close most recently rendered pptx item
+      return '';
     });
 
     ipcMain.handle('desktop_get_r_version', () => {
