@@ -718,7 +718,7 @@
 .ace_layer.ace_marker-layer {
    z-index: 1;
 }
-/* Rainbow indent guides */
+/* Rainbow indent lines */
 .rstudio_rainbow_indent_guides .ace_line .ace_indent-guide:nth-child(7n+1){
     background: linear-gradient(to left, #ed90a4bb 1px, transparent 1px, transparent);
 }
@@ -739,4 +739,26 @@
 }
 .rstudio_rainbow_indent_guides .ace_line .ace_indent-guide:nth-child(7n+7){
     background: linear-gradient(to left, #dc91dbbb 1px, transparent 1px, transparent);
+}
+/* Rainbow indent fills */
+.rstudio_rainbow_indent_fills .ace_line .ace_indent-guide:nth-child(7n+1){
+    background: #ed90a4bb;
+}
+.rstudio_rainbow_indent_fills .ace_line .ace_indent-guide:nth-child(7n+2){
+    background: #d3a263bb;
+}
+.rstudio_rainbow_indent_fills .ace_line .ace_indent-guide:nth-child(7n+3){
+    background: #99b657bb;
+}
+.rstudio_rainbow_indent_fills .ace_line .ace_indent-guide:nth-child(7n+4){
+    background: #33c192bb;
+}
+.rstudio_rainbow_indent_fills .ace_line .ace_indent-guide:nth-child(7n+5){
+    background: #00bdcebb;
+}
+.rstudio_rainbow_indent_fills .ace_line .ace_indent-guide:nth-child(7n+6){
+    background: #94a9ebbb;
+}
+.rstudio_rainbow_indent_fills .ace_line .ace_indent-guide:nth-child(7n+7){
+    background: #dc91dbbb;
 }

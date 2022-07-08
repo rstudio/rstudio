@@ -110,10 +110,10 @@ public class TextEditingTargetPrefsHelper
             {
                docDisplay.setShowInvisibles(arg);
             }));
-      releaseOnDismiss.add(prefs.showIndentGuides().bind(
+      releaseOnDismiss.add(prefs.indentGuides().bind(
             (arg) ->
             {
-               docDisplay.setShowIndentGuides(arg);
+               docDisplay.setIndentGuides(arg);
             }));
       releaseOnDismiss.add(prefs.scrollPastEndOfDocument().bind(
             (arg) ->
@@ -134,11 +134,6 @@ public class TextEditingTargetPrefsHelper
             (arg) ->
             {
                docDisplay.setRainbowParentheses(arg);
-            }));
-      releaseOnDismiss.add(prefs.rainbowIndentGuides().bind(
-            (arg) ->
-            {
-               docDisplay.setRainbowIndentGuides(arg);
             }));
       releaseOnDismiss.add(prefs.codeCompletionOther().bind(
             (arg) ->

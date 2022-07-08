@@ -2456,14 +2456,6 @@ public class AceEditor implements DocDisplay,
       return _getRainbowParenthesesImpl();
    }
 
-   public void setRainbowIndentGuides(boolean rainbow)
-   {
-      if (rainbow)
-         widget_.addStyleName("rstudio_rainbow_indent_guides");
-      else 
-         widget_.removeStyleName("rstudio_rainbow_indent_guides");
-   }
-
    public void setScrollLeft(int x)
    {
       getSession().setScrollLeft(x);
@@ -2557,10 +2549,33 @@ public class AceEditor implements DocDisplay,
       widget_.getEditor().getRenderer().setShowInvisibles(show);
    }
 
-   public void setShowIndentGuides(boolean show)
+   public void setIndentGuides(String choice)
    {
-      widget_.getEditor().getRenderer().setShowIndentGuides(show);
+      if (StringUtil.equals(choice, "none"))
+      {
+         widget_.getEditor().getRenderer().setShowIndentGuides(false);
+      } 
+      else 
+      {
+         if (StringUtil.equals(choice, "gray"))
+         {
+            widget_.removeStyleName("rstudio_rainbow_indent_guides");
+            widget_.removeStyleName("rstudio_rainbow_indent_fills");
+         }
+         else if (StringUtil.equals(choice, "rainbowlines"))
+         {
+            widget_.removeStyleName("rstudio_rainbow_indent_fills");
+            widget_.addStyleName("rstudio_rainbow_indent_guides");
+         }
+         else if (StringUtil.equals(choice, "rainbowfills"))
+         {
+            widget_.addStyleName("rstudio_rainbow_indent_fills");
+            widget_.removeStyleName("rstudio_rainbow_indent_guides");
+         }
+         widget_.getEditor().getRenderer().setShowIndentGuides(true);
+      }
    }
+
 
    public void setBlinkingCursor(boolean blinking)
    {

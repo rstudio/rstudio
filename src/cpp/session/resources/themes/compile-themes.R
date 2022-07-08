@@ -1199,11 +1199,20 @@
 .rs.addFunction("themes_rainbow_indent_guides", function(colors = c("#ed90a4bb", "#d3a263bb", "#99b657bb", "#33c192bb", "#00bdcebb", "#94a9ebbb", "#dc91dbbb")) {
    n <- length(colors)
 
-   content <- "/* Rainbow indent guides */"
+   content <- "/* Rainbow indent lines */"
    for (i in seq_len(n)) {
       content <- c(content, 
          paste0(".rstudio_rainbow_indent_guides .ace_line .ace_indent-guide:nth-child(", n ,"n+", i, "){" ), 
          paste0("    background: linear-gradient(to left, ", colors[i], " 1px, transparent 1px, transparent);"),
+         "}"
+      )
+   }
+
+   content <- c(content, "/* Rainbow indent fills */")
+   for (i in seq_len(n)) {
+      content <- c(content, 
+         paste0(".rstudio_rainbow_indent_fills .ace_line .ace_indent-guide:nth-child(", n ,"n+", i, "){" ), 
+         paste0("    background: ", colors[i], ";"),
          "}"
       )
    }

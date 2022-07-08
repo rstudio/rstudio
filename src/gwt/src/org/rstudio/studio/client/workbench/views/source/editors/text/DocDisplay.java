@@ -195,13 +195,12 @@ public interface DocDisplay extends HasValueChangeHandlers<Void>,
    void setShowPrintMargin(boolean on);
    void setPrintMarginColumn(int column);
    void setShowInvisibles(boolean show);
-   void setShowIndentGuides(boolean show);
+   void setIndentGuides(String choice);
    void setBlinkingCursor(boolean blinking);
    void setScrollPastEndOfDocument(boolean enable);
    void setHighlightRFunctionCalls(boolean highlight);
    void setColorPreview(boolean show);
    void setRainbowParentheses(boolean rainbow);
-   void setRainbowIndentGuides(boolean rainbow);
    boolean getRainbowParentheses();
 
    void setScrollLeft(int x);
