@@ -401,16 +401,16 @@ core::Error UserPrefValues::setShowInvisibles(bool val)
 }
 
 /**
- * Whether to show indentation guides in the RStudio code editor.
+ * Style for indentation guides in the RStudio code editor.
  */
-bool UserPrefValues::showIndentGuides()
+std::string UserPrefValues::indentGuides()
 {
-   return readPref<bool>("show_indent_guides");
+   return readPref<std::string>("indent_guides");
 }
 
-core::Error UserPrefValues::setShowIndentGuides(bool val)
+core::Error UserPrefValues::setIndentGuides(std::string val)
 {
-   return writePref("show_indent_guides", val);
+   return writePref("indent_guides", val);
 }
 
 /**
@@ -1022,19 +1022,6 @@ bool UserPrefValues::rainbowParentheses()
 core::Error UserPrefValues::setRainbowParentheses(bool val)
 {
    return writePref("rainbow_parentheses", val);
-}
-
-/**
- * Whether to use multiple colors for indent guides.
- */
-bool UserPrefValues::rainbowIndentGuides()
-{
-   return readPref<bool>("rainbow_indent_guides");
-}
-
-core::Error UserPrefValues::setRainbowIndentGuides(bool val)
-{
-   return writePref("rainbow_indent_guides", val);
 }
 
 /**
@@ -3136,7 +3123,7 @@ std::vector<std::string> UserPrefValues::allKeys()
       kBlinkingCursor,
       kMarginColumn,
       kShowInvisibles,
-      kShowIndentGuides,
+      kIndentGuides,
       kContinueCommentsOnNewline,
       kHighlightWebLink,
       kEditorKeybindings,
@@ -3184,7 +3171,6 @@ std::vector<std::string> UserPrefValues::allKeys()
       kHighlightRFunctionCalls,
       kColorPreview,
       kRainbowParentheses,
-      kRainbowIndentGuides,
       kConsoleLineLengthLimit,
       kConsoleMaxLines,
       kAnsiConsoleMode,

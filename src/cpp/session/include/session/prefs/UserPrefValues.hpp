@@ -89,7 +89,11 @@ namespace prefs {
 #define kBlinkingCursor "blinking_cursor"
 #define kMarginColumn "margin_column"
 #define kShowInvisibles "show_invisibles"
-#define kShowIndentGuides "show_indent_guides"
+#define kIndentGuides "indent_guides"
+#define kIndentGuidesNone "none"
+#define kIndentGuidesGray "gray"
+#define kIndentGuidesRainbowlines "rainbowlines"
+#define kIndentGuidesRainbowfills "rainbowfills"
 #define kContinueCommentsOnNewline "continue_comments_on_newline"
 #define kHighlightWebLink "highlight_web_link"
 #define kEditorKeybindings "editor_keybindings"
@@ -153,7 +157,6 @@ namespace prefs {
 #define kHighlightRFunctionCalls "highlight_r_function_calls"
 #define kColorPreview "color_preview"
 #define kRainbowParentheses "rainbow_parentheses"
-#define kRainbowIndentGuides "rainbow_indent_guides"
 #define kConsoleLineLengthLimit "console_line_length_limit"
 #define kConsoleMaxLines "console_max_lines"
 #define kAnsiConsoleMode "ansi_console_mode"
@@ -587,10 +590,10 @@ public:
    core::Error setShowInvisibles(bool val);
 
    /**
-    * Whether to show indentation guides in the RStudio code editor.
+    * Style for indentation guides in the RStudio code editor.
     */
-   bool showIndentGuides();
-   core::Error setShowIndentGuides(bool val);
+   std::string indentGuides();
+   core::Error setIndentGuides(std::string val);
 
    /**
     * Whether to continue comments (by inserting the comment character) after adding a new line.
@@ -873,12 +876,6 @@ public:
     */
    bool rainbowParentheses();
    core::Error setRainbowParentheses(bool val);
-
-   /**
-    * Whether to use multiple colors for indent guides.
-    */
-   bool rainbowIndentGuides();
-   core::Error setRainbowIndentGuides(bool val);
 
    /**
     * The maximum number of characters to display in a single line in the R console.

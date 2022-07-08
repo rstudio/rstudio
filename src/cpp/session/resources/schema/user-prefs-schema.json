@@ -264,11 +264,12 @@
             "title": "Show invisible characters in editor",
             "description": "Whether to show invisible characters, such as spaces and tabs, in the RStudio code editor."
         },
-        "show_indent_guides": {
-            "type": "boolean",
-            "default": false,
-            "title": "Show indentation guides",
-            "description": "Whether to show indentation guides in the RStudio code editor."
+        "indent_guides": {
+            "type": "string",
+            "enum": ["none", "gray", "rainbowlines", "rainbowfills"],
+            "enumReadable": ["None", "Gray lines", "Rainbow lines", "Rainbow fills"],
+            "title": "Indentation guides",
+            "description": "Style for indentation guides in the RStudio code editor."
         },
         "continue_comments_on_newline": {
             "type": "boolean",
@@ -561,12 +562,6 @@
             "default": false,
             "title": "Use rainbow parentheses",
             "description": "Whether to highlight parentheses in a variety of colors."
-        },
-        "rainbow_indent_guides": {
-            "type": "boolean", 
-            "default": false, 
-            "title": "Use rainbow indent guides", 
-            "description": "Whether to use multiple colors for indent guides."
         },
         "console_line_length_limit": {
             "type": "integer",

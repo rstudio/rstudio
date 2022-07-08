@@ -256,12 +256,20 @@ public interface UserPrefsAccessorConstants extends Constants {
    String showInvisiblesDescription();
 
    /**
-    * Whether to show indentation guides in the RStudio code editor.
+    * Style for indentation guides in the RStudio code editor.
     */
-   @DefaultStringValue("Show indentation guides")
-   String showIndentGuidesTitle();
-   @DefaultStringValue("Whether to show indentation guides in the RStudio code editor.")
-   String showIndentGuidesDescription();
+   @DefaultStringValue("Indentation guides")
+   String indentGuidesTitle();
+   @DefaultStringValue("Style for indentation guides in the RStudio code editor.")
+   String indentGuidesDescription();
+   @DefaultStringValue("None")
+   String indentGuidesEnum_none();
+   @DefaultStringValue("Gray lines")
+   String indentGuidesEnum_gray();
+   @DefaultStringValue("Rainbow lines")
+   String indentGuidesEnum_rainbowlines();
+   @DefaultStringValue("Rainbow fills")
+   String indentGuidesEnum_rainbowfills();
 
    /**
     * Whether to continue comments (by inserting the comment character) after adding a new line.
@@ -670,14 +678,6 @@ public interface UserPrefsAccessorConstants extends Constants {
    String rainbowParenthesesTitle();
    @DefaultStringValue("Whether to highlight parentheses in a variety of colors.")
    String rainbowParenthesesDescription();
-
-   /**
-    * Whether to use multiple colors for indent guides.
-    */
-   @DefaultStringValue("Use rainbow indent guides")
-   String rainbowIndentGuidesTitle();
-   @DefaultStringValue("Whether to use multiple colors for indent guides.")
-   String rainbowIndentGuidesDescription();
 
    /**
     * The maximum number of characters to display in a single line in the R console.

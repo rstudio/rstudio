@@ -517,16 +517,33 @@ public class UserPrefsAccessor extends Prefs
    }
 
    /**
-    * Whether to show indentation guides in the RStudio code editor.
+    * Style for indentation guides in the RStudio code editor.
     */
-   public PrefValue<Boolean> showIndentGuides()
+   public PrefValue<String> indentGuides()
    {
-      return bool(
-         "show_indent_guides",
-         _constants.showIndentGuidesTitle(), 
-         _constants.showIndentGuidesDescription(), 
-         false);
+      return enumeration(
+         "indent_guides",
+         _constants.indentGuidesTitle(), 
+         _constants.indentGuidesDescription(), 
+         new String[] {
+            INDENT_GUIDES_NONE,
+            INDENT_GUIDES_GRAY,
+            INDENT_GUIDES_RAINBOWLINES,
+            INDENT_GUIDES_RAINBOWFILLS
+         },
+         "",
+         new String[] {
+            _constants.indentGuidesEnum_none(),
+            _constants.indentGuidesEnum_gray(),
+            _constants.indentGuidesEnum_rainbowlines(),
+            _constants.indentGuidesEnum_rainbowfills()
+         });
    }
+
+   public final static String INDENT_GUIDES_NONE = "none";
+   public final static String INDENT_GUIDES_GRAY = "gray";
+   public final static String INDENT_GUIDES_RAINBOWLINES = "rainbowlines";
+   public final static String INDENT_GUIDES_RAINBOWFILLS = "rainbowfills";
 
    /**
     * Whether to continue comments (by inserting the comment character) after adding a new line.
@@ -1162,18 +1179,6 @@ public class UserPrefsAccessor extends Prefs
          "rainbow_parentheses",
          _constants.rainbowParenthesesTitle(), 
          _constants.rainbowParenthesesDescription(), 
-         false);
-   }
-
-   /**
-    * Whether to use multiple colors for indent guides.
-    */
-   public PrefValue<Boolean> rainbowIndentGuides()
-   {
-      return bool(
-         "rainbow_indent_guides",
-         _constants.rainbowIndentGuidesTitle(), 
-         _constants.rainbowIndentGuidesDescription(), 
          false);
    }
 
@@ -3445,8 +3450,8 @@ public class UserPrefsAccessor extends Prefs
          marginColumn().setValue(layer, source.getInteger("margin_column"));
       if (source.hasKey("show_invisibles"))
          showInvisibles().setValue(layer, source.getBool("show_invisibles"));
-      if (source.hasKey("show_indent_guides"))
-         showIndentGuides().setValue(layer, source.getBool("show_indent_guides"));
+      if (source.hasKey("indent_guides"))
+         indentGuides().setValue(layer, source.getString("indent_guides"));
       if (source.hasKey("continue_comments_on_newline"))
          continueCommentsOnNewline().setValue(layer, source.getBool("continue_comments_on_newline"));
       if (source.hasKey("highlight_web_link"))
@@ -3541,8 +3546,6 @@ public class UserPrefsAccessor extends Prefs
          colorPreview().setValue(layer, source.getBool("color_preview"));
       if (source.hasKey("rainbow_parentheses"))
          rainbowParentheses().setValue(layer, source.getBool("rainbow_parentheses"));
-      if (source.hasKey("rainbow_indent_guides"))
-         rainbowIndentGuides().setValue(layer, source.getBool("rainbow_indent_guides"));
       if (source.hasKey("console_line_length_limit"))
          consoleLineLengthLimit().setValue(layer, source.getInteger("console_line_length_limit"));
       if (source.hasKey("console_max_lines"))
@@ -3894,7 +3897,7 @@ public class UserPrefsAccessor extends Prefs
       prefs.add(blinkingCursor());
       prefs.add(marginColumn());
       prefs.add(showInvisibles());
-      prefs.add(showIndentGuides());
+      prefs.add(indentGuides());
       prefs.add(continueCommentsOnNewline());
       prefs.add(highlightWebLink());
       prefs.add(editorKeybindings());
@@ -3942,7 +3945,6 @@ public class UserPrefsAccessor extends Prefs
       prefs.add(highlightRFunctionCalls());
       prefs.add(colorPreview());
       prefs.add(rainbowParentheses());
-      prefs.add(rainbowIndentGuides());
       prefs.add(consoleLineLengthLimit());
       prefs.add(consoleMaxLines());
       prefs.add(ansiConsoleMode());
