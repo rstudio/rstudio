@@ -25,12 +25,15 @@ set (SERVER_CORE_SOURCE_FILES
    SecureKeyFile.cpp
    ServerLicense.cpp
    sessions/SessionSignature.cpp
-   system/Pam.cpp
    UrlPorts.cpp
 )
 
 if (RSTUDIO_HAS_SOCI)
    list(APPEND SERVER_CORE_SOURCE_FILES ServerDatabase.cpp)
+endif()
+
+if (RSTUDIO_USE_PAM)
+   list(APPEND SERVER_CORE_SOURCE_FILES system/Pam.cpp)
 endif()
 
 # define server core include dir

@@ -604,6 +604,12 @@ elseif(RSTUDIO_CONFIG_SESSION_ONLY)
    message(STATUS, "Configured to build SESSION_ONLY")
 endif()
 
+# the core libs can be built without libpam (for Launcher, originally), but we
+# use it by default
+if (NOT DEFINED RSTUDIO_USE_PAM)
+  message(STATUS "Configured to build with libpam features")
+  set(RSTUDIO_USE_PAM TRUE)
+endif()
 
 # are we in CORE_DEV mode? if so then just add the core/dev project
 # otherwise, add the rest of our projects
