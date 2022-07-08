@@ -523,7 +523,7 @@ public class EditingPreferencesPane extends PreferencesPane
       showCompletionsOther_.setValue(prefs_.codeCompletionOther().getValue());
       editorMode_.setValue(prefs_.editorKeybindings().getValue());
       foldMode_.setValue(prefs_.foldStyle().getValue());
-      indentGuides_.setValue(prefs_.indentGuides().getValue());
+      indentGuides_.setValue(prefs.indentGuides().getValue());
       delimiterSurroundWidget_.setValue(prefs_.surroundSelection().getValue());
       executionBehavior_.setValue(prefs_.executionBehavior().getValue());
       autoSaveOnIdle_.setValue(prefs_.autoSaveOnIdle().getValue());

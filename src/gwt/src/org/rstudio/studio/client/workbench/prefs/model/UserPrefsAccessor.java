@@ -531,7 +531,7 @@ public class UserPrefsAccessor extends Prefs
             INDENT_GUIDES_RAINBOWLINES,
             INDENT_GUIDES_RAINBOWFILLS
          },
-         "",
+         "none",
          new String[] {
             _constants.indentGuidesEnum_none(),
             _constants.indentGuidesEnum_gray(),

@@ -718,23 +718,23 @@
 }
 /* Rainbow indent fills */
 .rstudio_rainbow_indent_fills .ace_line .ace_indent-guide:nth-child(7n+1){
-    background: #ed90a4bb;
+    background: linear-gradient(to left, #ed90a4bb 1px, #ed90a477 1px, #ed90a477 );
 }
 .rstudio_rainbow_indent_fills .ace_line .ace_indent-guide:nth-child(7n+2){
-    background: #d3a263bb;
+    background: linear-gradient(to left, #d3a263bb 1px, #d3a26377 1px, #d3a26377 );
 }
 .rstudio_rainbow_indent_fills .ace_line .ace_indent-guide:nth-child(7n+3){
-    background: #99b657bb;
+    background: linear-gradient(to left, #99b657bb 1px, #99b65777 1px, #99b65777 );
 }
 .rstudio_rainbow_indent_fills .ace_line .ace_indent-guide:nth-child(7n+4){
-    background: #33c192bb;
+    background: linear-gradient(to left, #33c192bb 1px, #33c19277 1px, #33c19277 );
 }
 .rstudio_rainbow_indent_fills .ace_line .ace_indent-guide:nth-child(7n+5){
-    background: #00bdcebb;
+    background: linear-gradient(to left, #00bdcebb 1px, #00bdce77 1px, #00bdce77 );
 }
 .rstudio_rainbow_indent_fills .ace_line .ace_indent-guide:nth-child(7n+6){
-    background: #94a9ebbb;
+    background: linear-gradient(to left, #94a9ebbb 1px, #94a9eb77 1px, #94a9eb77 );
 }
 .rstudio_rainbow_indent_fills .ace_line .ace_indent-guide:nth-child(7n+7){
-    background: #dc91dbbb;
+    background: linear-gradient(to left, #dc91dbbb 1px, #dc91db77 1px, #dc91db77 );
 }
