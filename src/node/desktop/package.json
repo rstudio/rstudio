@@ -59,7 +59,6 @@
     "node-loader": "2.0.0",
     "nyc": "15.1.0",
     "prettier": "2.7.1",
-    "recursive-copy": "2.0.13",
     "sinon": "13.0.1",
     "style-loader": "3.3.1",
     "ts-loader": "9.2.6",
