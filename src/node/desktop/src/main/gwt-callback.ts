@@ -13,31 +13,78 @@
  *
  */
 
-// TODO clean this up
-
-import { app, BrowserWindow, dialog, ipcMain, screen, shell, webContents, webFrameMain } from 'electron';
+import { exec } from 'child_process';
+import {
+  app,
+  BrowserWindow,
+  clipboard,
+  dialog,
+  ipcMain,
+  Rectangle,
+  screen,
+  shell,
+  webContents,
+  webFrameMain
+} from 'electron';
 import { IpcMainEvent, MessageBoxOptions, OpenDialogOptions, SaveDialogOptions } from 'electron/main';
 import EventEmitter from 'events';
+import { existsSync, mkdtempSync, writeFileSync } from 'fs';
 import i18next from 'i18next';
-import { FilePath } from '../core/file-path';
+import { findFontsSync } from 'node-system-fonts';
+import path, { dirname } from 'path';
+import { pathToFileURL } from 'url';
+import { FilePath, normalizeSeparatorsNative } from '../core/file-path';
 import { logger } from '../core/logger';
 import { isCentOS } from '../core/system';
 import { resolveTemplateVar } from '../core/template-filter';
-import { userHomePath } from '../core/user';
+import desktop from '../native/desktop.node';
+import { ChooseRModalWindow } from '../ui/widgets/choose-r';
 import { appState } from './app-state';
+import { findRInstallationsWin32 } from './detect-r';
 import { GwtWindow } from './gwt-window';
 import { MainWindow } from './main-window';
 import { openMinimalWindow } from './minimal-window';
-import { filterFromQFileDialogFilter, resolveAliasedPath } from './utils';
+import { defaultFonts, ElectronDesktopOptions } from './preferences/electron-desktop-options';
+import {
+  filterFromQFileDialogFilter, findRepoRoot,
+  getAppPath, handleLocaleCookies, resolveAliasedPath
+} from './utils';
 import { activateWindow } from './window-utils';
-
-import desktop from '../native/desktop.node';
 
 export enum PendingQuit {
   PendingQuitNone,
   PendingQuitAndExit,
   PendingQuitAndRestart,
   PendingQuitRestartAndReload,
+}
+
+function formatSelectedVersionForUi(rBinDir: string) {
+  // binDir will have format <R_HOME>/bin/<arch>,
+  // so we need two dirname()s to get the home path
+  const rHome = dirname(dirname(rBinDir));
+
+  // return formatted string as appropriate
+  if (rBinDir.endsWith('x64')) {
+    return `[64-bit] ${rHome}`;
+  } else if (rBinDir.endsWith('i386')) {
+    return `[32-bit] ${rHome}`;
+  } else {
+    return rHome;
+  }
+}
+
+// The documentation for getFocusedWebContents() has:
+//
+// /**
+//  * The web contents that is focused in this application, otherwise returns `null`.
+//  */
+//
+//  static getFocusedWebContents(): WebContents;
+//
+// and so the documentation appears to state that the return value may be 'null',
+// but the type definition doesn't propagate that reality. Hence, this wrapper function.
+function focusedWebContents(): Electron.WebContents | null {
+  return webContents.getFocusedWebContents();
 }
 
 /**
@@ -48,11 +95,26 @@ export class GwtCallback extends EventEmitter {
   static WORKBENCH_INITIALIZED = 'gwt-callback-workbench_initialized';
   static SESSION_QUIT = 'gwt-callback-session_quit';
 
+  initialized = false;
   pendingQuit: number = PendingQuit.PendingQuitNone;
   private owners = new Set<GwtWindow>();
 
   // Info used by the "session failed to load" error page (error.html)
   errorPageData = new Map<string, string>();
+
+  // https://github.com/foliojs/font-manager/issues/15
+  // the fork did not correct usage of Fontconfig
+  // getAvailableFontsSync() incorrectly sets the monospace property
+  monospaceFonts = [
+    ...new Set<string>(
+      findFontsSync({ monospace: true }).map((fd) => {
+        return process.platform === 'darwin' ? fd.postscriptName : fd.family;
+      }),
+    ),
+  ].sort((a, b) => a.localeCompare(b));
+  proportionalFonts = [...new Set<string>(findFontsSync({ monospace: false }).map((fd) => fd.family))].sort((a, b) =>
+    a.localeCompare(b),
+  );
 
   constructor(public mainWindow: MainWindow, public isRemoteDesktop: boolean) {
     super();
@@ -74,12 +136,12 @@ export class GwtCallback extends EventEmitter {
         canChooseDirectories: boolean,
         focusOwner: boolean,
       ) => {
+        console.log('desktop_get_open_file_name');
         const openDialogOptions: OpenDialogOptions = {
           title: caption,
-          defaultPath: dir,
+          defaultPath: resolveAliasedPath(dir),
           buttonLabel: label,
         };
-
         openDialogOptions.properties = ['openFile'];
 
         // FileOpen dialog can't be both a file opener and a directory opener on Windows
@@ -116,11 +178,10 @@ export class GwtCallback extends EventEmitter {
         forceDefaultExtension: boolean,
         focusOwner: boolean,
       ) => {
-        const resolvedDir = FilePath.resolveAliasedPathSync(dir, userHomePath()).toString();
-
+        console.log('desktop_get_save_file_name');
         const saveDialogOptions: SaveDialogOptions = {
           title: caption,
-          defaultPath: resolvedDir,
+          defaultPath: resolveAliasedPath(dir),
           buttonLabel: label,
         };
 
@@ -143,9 +204,10 @@ export class GwtCallback extends EventEmitter {
     ipcMain.handle(
       'desktop_get_existing_directory',
       async (event, caption: string, label: string, dir: string, focusOwner: boolean) => {
+        console.log('desktop_get_existing_directory');
         const openDialogOptions: OpenDialogOptions = {
           title: caption,
-          defaultPath: dir,
+          defaultPath: resolveAliasedPath(dir),
           buttonLabel: label,
           properties: ['openDirectory', 'createDirectory', 'promptToCreate'],
         };
@@ -154,6 +216,7 @@ export class GwtCallback extends EventEmitter {
         if (focusOwner) {
           focusedWindow = this.getSender('desktop_open_minimal_window', event.processId, event.frameId).window;
         }
+
         if (focusedWindow) {
           return dialog.showOpenDialog(focusedWindow, openDialogOptions);
         } else {
@@ -163,57 +226,94 @@ export class GwtCallback extends EventEmitter {
     );
 
     ipcMain.on('desktop_on_clipboard_selection_changed', () => {
-      GwtCallback.unimpl('desktop_on_clipboard_selection_changed');
+      // This was previously used for Ace-specific workarounds on Qt
+      // Desktop. Those workarounds no longer appear necessary.
     });
 
     ipcMain.on('desktop_undo', () => {
       // unless the active element is the ACE editor, the web page will handle it
-      webContents.getFocusedWebContents().undo();
+      focusedWebContents()?.undo();
     });
 
     ipcMain.on('desktop_redo', () => {
       // unless the active element is the ACE editor, the web page will handle it
-      webContents.getFocusedWebContents().redo();
+      focusedWebContents()?.redo();
     });
 
     ipcMain.on('desktop_clipboard_cut', () => {
-      GwtCallback.unimpl('desktop_clipboard_cut');
+      focusedWebContents()?.cut();
     });
 
     ipcMain.on('desktop_clipboard_copy', () => {
-      GwtCallback.unimpl('desktop_clipboard_copy');
+      focusedWebContents()?.copy();
     });
 
     ipcMain.on('desktop_clipboard_paste', () => {
-      GwtCallback.unimpl('desktop_clipboard_paste');
+      focusedWebContents()?.paste();
     });
 
     ipcMain.on('desktop_set_clipboard_text', (event, text: string) => {
-      GwtCallback.unimpl('desktop_set_clipboard_text');
+      clipboard.writeText(text, 'clipboard');
     });
 
     ipcMain.handle('desktop_get_clipboard_text', () => {
-      GwtCallback.unimpl('desktop_get_clipboard_text');
-      return '';
+      const text = clipboard.readText('clipboard');
+      return text;
     });
 
     ipcMain.handle('desktop_get_clipboard_uris', () => {
-      GwtCallback.unimpl('desktop_get_clipboard_uris');
-      return '';
+      // if we don't have a URI list, nothing to do
+      if (!clipboard.has('text/uri-list')) {
+        return [];
+      }
+
+      // return uri list as array
+      const data = clipboard.read('text/uri-list');
+      const parts = data.split('\n');
+
+      // strip off file prefix, if any
+      const filePrefix = process.platform === 'win32' ? 'file:///' : 'file://';
+      const trimmed = parts.map((x) => {
+        if (x.startsWith(filePrefix)) {
+          x = x.substring(filePrefix.length);
+        }
+        return x;
+      });
+
+      return trimmed;
     });
 
+    // Check for an image on the clipboard; if one exists,
+    // write it to file in the temporary directory and
+    // return the path to that file.
     ipcMain.handle('desktop_get_clipboard_image', () => {
-      GwtCallback.unimpl('desktop_get_clipboard_image');
-      return '';
+      // if we don't have any image, bail
+      if (!clipboard.has('image/png')) {
+        return '';
+      }
+
+      // read image from clipboard
+      const image = clipboard.readImage('clipboard');
+      const pngData = image.toPNG();
+
+      // write to file
+      const scratchDir = appState().scratchTempDir(new FilePath('/tmp'));
+      const prefix = path.join(scratchDir.getAbsolutePath(), 'rstudio-clipboard', 'image-');
+      const tempdir = mkdtempSync(prefix);
+      const pngPath = path.join(tempdir, 'image.png');
+      writeFileSync(pngPath, pngData);
+
+      // return file path
+      return pngPath;
     });
 
     ipcMain.on('desktop_set_global_mouse_selection', (event, selection: string) => {
-      GwtCallback.unimpl('desktop_set_global_mouse_selection');
+      clipboard.writeText(selection, 'selection');
     });
 
     ipcMain.handle('desktop_get_global_mouse_selection', () => {
-      GwtCallback.unimpl('desktop_get_global_mouse_selection');
-      return '';
+      const selection = clipboard.readText('selection');
+      return selection;
     });
 
     ipcMain.handle('desktop_get_cursor_position', () => {
@@ -241,12 +341,14 @@ export class GwtCallback extends EventEmitter {
     });
 
     ipcMain.on('desktop_on_workbench_initialized', (event, scratchPath: string) => {
+      this.initialized = true;
       this.emit(GwtCallback.WORKBENCH_INITIALIZED);
       appState().setScratchTempDir(new FilePath(scratchPath));
     });
 
     ipcMain.on('desktop_show_folder', (event, path: string) => {
-      shell.openPath(path).catch((value) => {
+      shell.openPath(normalizeSeparatorsNative(path)).catch((value) => {
+        console.log('error:', value);
         logger().logErrorMessage(value);
       });
     });
@@ -256,42 +358,101 @@ export class GwtCallback extends EventEmitter {
     });
 
     ipcMain.on('desktop_show_word_doc', (event, wordDoc: string) => {
-      GwtCallback.unimpl('desktop_show_word_doc');
+      shell.openPath(resolveAliasedPath(normalizeSeparatorsNative(wordDoc))).catch((value) => {
+        console.log('error:', value);
+        logger().logErrorMessage(value);
+      });
     });
 
     ipcMain.on('desktop_show_ppt_presentation', (event, pptDoc: string) => {
-      GwtCallback.unimpl('desktop_show_ppt_presentation');
+      shell.openPath(resolveAliasedPath(normalizeSeparatorsNative(pptDoc))).catch((value) => {
+        console.log('error:', value);
+        logger().logErrorMessage(value);
+      });
     });
 
     ipcMain.on('desktop_show_pdf', (event, path: string, pdfPage: string) => {
-      GwtCallback.unimpl('desktop_show_pdf');
+      // TODO: when desktop_external_synctex_view is implemented, use synctex viewer as appropriate
+      // pdfPage is only relevant for synctex
+      shell.openPath(resolveAliasedPath(normalizeSeparatorsNative(path))).catch((value) => {
+        console.log('error:', value);
+        logger().logErrorMessage(value);
+      });
     });
 
     ipcMain.on('desktop_prepare_show_word_doc', () => {
-      GwtCallback.unimpl('desktop_prepare_show_word_doc');
+      // if possible, close most recently rendered docx item
+      return '';
     });
 
     ipcMain.on('desktop_prepare_show_ppt_presentation', () => {
-      GwtCallback.unimpl('desktop_prepare_show_ppt_presentation');
+      // if possible, close most recently rendered pptx item
+      return '';
     });
 
     ipcMain.handle('desktop_get_r_version', () => {
-      return '';
+      const rBinDir = ElectronDesktopOptions().rBinDir();
+      return formatSelectedVersionForUi(rBinDir);
     });
 
-    ipcMain.handle('desktop_choose_r_version', () => {
-      GwtCallback.unimpl('desktop_choose_r_version');
-      return '';
-    });
+    ipcMain.handle('desktop_choose_r_version', async () => {
+      // discover available R installations
+      const rInstalls = findRInstallationsWin32();
+      if (rInstalls.length === 0) {
+        return '';
+      }
 
-    ipcMain.handle('desktop_device_pixel_ratio', () => {
-      GwtCallback.unimpl('desktop_device_pixel_ratio');
-      return 1.0;
+      // ask the user what version of R they'd like to use
+      const chooseRDialog = new ChooseRModalWindow(rInstalls, mainWindow.window);
+
+      void handleLocaleCookies(chooseRDialog);
+
+      const [data, error] = await chooseRDialog.showModal();
+      if (error) {
+        logger().logError(error);
+        return '';
+      }
+
+      // if the dialog was cancelled, the path may be null
+      if (data == null || data.binaryPath == null) {
+        return '';
+      }
+
+      // we need to save the binary directory in the options, but
+      // return a formatted string for the client, so do that here
+      const path = data.binaryPath as string;
+      const rBinDir = dirname(path);
+
+      ElectronDesktopOptions().setRExecutablePath(path);
+
+      logger().logDebug(`Using R: ${rBinDir}`);
+      return formatSelectedVersionForUi(rBinDir);
     });
 
     ipcMain.on(
       'desktop_open_minimal_window',
       (event: IpcMainEvent, name: string, url: string, width: number, height: number) => {
+        // handle some internal chrome urls specially
+        if (url === 'chrome://gpu' || url === 'chrome://accessibility') {
+          const window = new BrowserWindow({
+            autoHideMenuBar: true,
+            webPreferences: { sandbox: true },
+            acceptFirstMouse: true,
+          });
+
+          // ensure window can be closed with Ctrl+W (Cmd+W on macOS)
+          window.webContents.on('before-input-event', (event, input) => {
+            const ctrlOrMeta = process.platform === 'darwin' ? input.meta : input.control;
+            if (ctrlOrMeta && input.key.toLowerCase() === 'w') {
+              event.preventDefault();
+              window.close();
+            }
+          });
+
+          return window.loadURL(url);
+        }
+
+        // regular path for other windows
         const sender = this.getSender('desktop_open_minimal_window', event.processId, event.frameId);
         const minimalWindow = openMinimalWindow(sender, name, url, width, height);
         minimalWindow.window.once('ready-to-show', () => {
@@ -339,31 +500,23 @@ export class GwtCallback extends EventEmitter {
       },
     );
 
-    ipcMain.on('desktop_close_named_window', (event, name: string) => {
-      GwtCallback.unimpl('desktop_close_named_window');
-    });
-
-    ipcMain.on(
+    ipcMain.handle(
       'desktop_copy_page_region_to_clipboard',
-      (event, left: number, top: number, width: number, height: number) => {
-        GwtCallback.unimpl('desktop_copy_page_region_to_clipboard');
+      (_event, x: number, y: number, width: number, height: number) => {
+        const rect: Rectangle = { x, y, width, height };
+        this.mainWindow.window
+          .capturePage(rect)
+          .then((image) => {
+            clipboard.writeImage(image);
+          })
+          .catch((error) => {
+            logger().logError(error);
+          });
       },
     );
 
     ipcMain.on('desktop_export_page_region_to_file', (event, targetPath, format, left, top, width, height) => {
       GwtCallback.unimpl('desktop_export_page_region_to_file');
-    });
-
-    ipcMain.on('desktop_print_text', (event, text) => {
-      GwtCallback.unimpl('desktop_print_text');
-    });
-
-    ipcMain.on('desktop_paint_print_text', (event, printer) => {
-      GwtCallback.unimpl('desktop_paint_print_text');
-    });
-
-    ipcMain.on('desktop_print_finished', (event, result) => {
-      GwtCallback.unimpl('desktop_print_finished');
     });
 
     ipcMain.handle('desktop_supports_clipboard_metafile', () => {
@@ -389,37 +542,42 @@ export class GwtCallback extends EventEmitter {
       },
     );
 
-    ipcMain.on('desktop_bring_main_frame_to_front', () => {});
+    ipcMain.on('desktop_bring_main_frame_to_front', () => {
+      this.mainWindow.window.focus();
+    });
 
     ipcMain.on('desktop_bring_main_frame_behind_active', () => {
-      GwtCallback.unimpl('desktop_bring_main_frame_behind_active');
+      const mainWindow = this.mainWindow.window;
+      const activeWindow = BrowserWindow.getFocusedWindow();
+
+      // bring main window under active window by focusing main window then back to active
+      if (activeWindow && mainWindow !== activeWindow) {
+        mainWindow.focus();
+        activeWindow.focus();
+      }
     });
 
     ipcMain.handle('desktop_rendering_engine', () => {
-      return '';
+      return ElectronDesktopOptions().renderingEngine();
     });
 
     ipcMain.on('desktop_set_desktop_rendering_engine', (event, engine) => {
-      GwtCallback.unimpl('desktop_set_desktop_rendering_engine');
-    });
-
-    ipcMain.handle('desktop_filter_text', (event, text: string) => {
-      GwtCallback.unimpl('desktop_filter_text');
-      return text;
+      ElectronDesktopOptions().setRenderingEngine(engine);
     });
 
     ipcMain.on('desktop_clean_clipboard', (event, stripHtml) => {
       desktop.cleanClipboard(stripHtml);
     });
 
-    ipcMain.on('desktop_set_pending_quit', (event, pendingQuit: number) => {
+    ipcMain.handle('desktop_set_pending_quit', (event, pendingQuit: number) => {
       this.pendingQuit = pendingQuit;
     });
 
     ipcMain.on('desktop_open_project_in_new_window', (event, projectFilePath) => {
       if (!this.isRemoteDesktop) {
-        const args = [resolveAliasedPath(projectFilePath)];
-        this.mainWindow.launchRStudio(args);
+        this.mainWindow.launchRStudio({
+          projectFilePath: resolveAliasedPath(projectFilePath),
+        });
       } else {
         // start new Remote Desktop RStudio process with the session URL
         this.mainWindow.launchRemoteRStudioProject(projectFilePath);
@@ -428,44 +586,68 @@ export class GwtCallback extends EventEmitter {
 
     ipcMain.on('desktop_open_session_in_new_window', (event, workingDirectoryPath) => {
       if (!this.isRemoteDesktop) {
-        workingDirectoryPath = resolveAliasedPath(workingDirectoryPath);
-        this.mainWindow.launchRStudio([], workingDirectoryPath);
+        this.mainWindow.launchRStudio({
+          workingDirectory: resolveAliasedPath(workingDirectoryPath),
+        });
       } else {
         // start the new session on the currently connected server
         this.mainWindow.launchRemoteRStudio();
       }
     });
 
-    ipcMain.on('desktop_open_terminal', (event, terminalPath, workingDirectory, extraPathEntries, shellType) => {
-      GwtCallback.unimpl('desktop_open_terminal');
+    ipcMain.on('desktop_get_fixed_width_font_list', (event) => {
+      event.returnValue = this.monospaceFonts.join('\n');
     });
 
-    ipcMain.handle('desktop_get_fixed_width_font_list', () => {
-      GwtCallback.unimpl('desktop_get_fixed_width_font_list');
-      return '';
+    ipcMain.on('desktop_get_fixed_width_font', (event) => {
+      let fixedWidthFont = ElectronDesktopOptions().fixedWidthFont();
+
+      if (!fixedWidthFont) {
+        fixedWidthFont = defaultFonts[0];
+
+        for (const font of defaultFonts) {
+          if (this.monospaceFonts.includes(font)) {
+            fixedWidthFont = font;
+            break;
+          }
+        }
+      }
+
+      event.returnValue = `"${fixedWidthFont}"`;
     });
 
-    ipcMain.handle('desktop_get_fixed_width_font', () => {
-      GwtCallback.unimpl('desktop_get_fixed_width_font');
-      return '';
+    ipcMain.on('desktop_get_proportional_font', (event) => {
+      let defaultFonts: string[];
+      if (process.platform === 'darwin') {
+        defaultFonts = ['Lucida Grande', 'Lucida Sans', 'DejaVu Sans', 'Segoe UI', 'Verdana', 'Helvetica'];
+      } else if (process.platform === 'win32') {
+        defaultFonts = ['Segoe UI', 'Verdana', 'Lucida Sans', 'DejaVu Sans', 'Lucida Grande', 'Helvetica'];
+      } else {
+        defaultFonts = ['Lucida Sans', 'DejaVu Sans', 'Lucida Grande', 'Segoe UI', 'Verdana', 'Helvetica'];
+      }
+
+      let proportionalFont = defaultFonts[0];
+      for (const font of defaultFonts) {
+        if (this.proportionalFonts.includes(font)) {
+          proportionalFont = font;
+          break;
+        }
+      }
+      event.returnValue = `"${proportionalFont}"`;
     });
 
-    ipcMain.on('desktop_set_fixed_width_font', (event, font) => {
-      GwtCallback.unimpl('desktop_set_fixed_width_font');
+    ipcMain.on('desktop_set_fixed_width_font', (_event, font) => {
+      if (font !== undefined) {
+        ElectronDesktopOptions().setFixedWidthFont(font);
+      }
     });
 
-    ipcMain.handle('desktop_get_zoom_levels', () => {
-      GwtCallback.unimpl('desktop_get_zoom_levels');
-      return '';
-    });
-
-    ipcMain.handle('desktop_get_zoom_level', () => {
-      GwtCallback.unimpl('desktop_get_zoom_level');
-      return 1.0;
+    ipcMain.on('desktop_get_zoom_level', (event) => {
+      event.returnValue = ElectronDesktopOptions().zoomLevel();
     });
 
     ipcMain.on('desktop_set_zoom_level', (event, zoomLevel) => {
-      GwtCallback.unimpl('desktop_set_zoom_level');
+      this.getSender('desktop_zoom_actual_size', event.processId, event.frameId).setZoomLevel(zoomLevel);
     });
 
     ipcMain.on('desktop_zoom_in', (event) => {
@@ -487,37 +669,27 @@ export class GwtCallback extends EventEmitter {
     ipcMain.on('desktop_sync_to_editor_theme', (event, isDark) => {});
 
     ipcMain.handle('desktop_get_enable_accessibility', () => {
-      GwtCallback.unimpl('desktop_get_enable_accessibility');
-      return true;
+      return ElectronDesktopOptions().accessibility();
     });
 
     ipcMain.on('desktop_set_enable_accessibility', (event, enable) => {
-      GwtCallback.unimpl('desktop_set_enable_accessibility');
-    });
-
-    ipcMain.handle('desktop_get_clipboard_monitoring', () => {
-      GwtCallback.unimpl('desktop_get_clipboard_monitoring');
-      return false;
-    });
-
-    ipcMain.on('desktop_set_clipboard_monitoring', (event, monitoring) => {
-      GwtCallback.unimpl('desktop_set_clipboard_monitoring');
+      ElectronDesktopOptions().setAccessibility(enable);
     });
 
     ipcMain.handle('desktop_get_ignore_gpu_exclusion_list', (event, ignore) => {
-      return true;
+      return !ElectronDesktopOptions().useGpuExclusionList();
     });
 
-    ipcMain.on('desktop_set_ignore_gpu_exclusion_list', (event, ignore) => {
-      GwtCallback.unimpl('desktop_set_ignore_gpu_exclusion_list');
+    ipcMain.on('desktop_set_ignore_gpu_exclusion_list', (event, ignore: boolean) => {
+      ElectronDesktopOptions().setUseGpuExclusionList(!ignore);
     });
 
     ipcMain.handle('desktop_get_disable_gpu_driver_bug_workarounds', () => {
-      return false;
+      return !ElectronDesktopOptions().useGpuDriverBugWorkarounds();
     });
 
-    ipcMain.on('desktop_set_disable_gpu_driver_bug_workarounds', (event, disable) => {
-      GwtCallback.unimpl('desktop_set_disable_gpu_driver_bug_workarounds');
+    ipcMain.on('desktop_set_disable_gpu_driver_bug_workarounds', (event, disable: boolean) => {
+      ElectronDesktopOptions().setUseGpuDriverBugWorkarounds(!disable);
     });
 
     ipcMain.on('desktop_show_license_dialog', () => {
@@ -566,7 +738,16 @@ export class GwtCallback extends EventEmitter {
     });
 
     ipcMain.on('desktop_show_keyboard_shortcut_help', () => {
-      GwtCallback.unimpl('desktop_show_keyboard_shortcut_help');
+      let docUrl: URL;
+      if (app.isPackaged) {
+        docUrl = pathToFileURL(path.join(getAppPath(), 'www', 'docs', 'keyboard.htm'));
+      } else {
+        // dev build scenario
+        docUrl = pathToFileURL(
+          new FilePath(findRepoRoot()).completeChildPath('src/gwt/www/docs/keyboard.htm').getAbsolutePath(),
+        );
+      }
+      shell.openExternal(docUrl.toString());
     });
 
     ipcMain.on('desktop_launch_session', (event, reload) => {
@@ -599,11 +780,6 @@ export class GwtCallback extends EventEmitter {
       GwtCallback.unimpl('desktop_set_shiny_dialog_url');
     });
 
-    ipcMain.handle('desktop_get_scrolling_compensation_type', () => {
-      GwtCallback.unimpl('desktop_get_scrolling_compensation_type');
-      return '';
-    });
-
     ipcMain.handle('desktop_is_macos', () => {
       return process.platform === 'darwin';
     });
@@ -615,15 +791,29 @@ export class GwtCallback extends EventEmitter {
     ipcMain.on('desktop_set_busy', (event, busy) => {});
 
     ipcMain.on('desktop_set_window_title', (event, title: string) => {
-      this.mainWindow.window.setTitle(`${title} - RStudio`);
+      this.mainWindow.window.setTitle(`${title} - ${appState().activation().editionName()}`);
     });
 
-    ipcMain.on('desktop_install_rtools', (event, version, installerPath) => {
-      GwtCallback.unimpl('desktop_install_rtools');
+    ipcMain.on('desktop_install_rtools', (_event, version, installerPath) => {
+      let command = `${installerPath} /SP- /SILENT`;
+      const systemDrive = process.env.SYSTEMDRIVE;
+
+      if (systemDrive?.length && existsSync(systemDrive)) {
+        command = `${command} /DIR=${systemDrive}\\RBuildTools\\${version}`;
+      }
+
+      exec(command, (error, _stdout, stderr) => {
+        if (error) {
+          logger().logError(stderr);
+        }
+      });
     });
 
     ipcMain.handle('desktop_get_display_dpi', () => {
-      return '72';
+      const primaryDisplay = screen.getPrimaryDisplay();
+      // scaling factor of 1 = 96 dpi
+      const dpi = primaryDisplay.scaleFactor * 96;
+      return dpi.toString();
     });
 
     ipcMain.on('desktop_on_session_quit', () => {

@@ -21,6 +21,8 @@
 #include <core/system/Process.hpp>
 #include <core/http/Response.hpp>
 
+using namespace boost::placeholders;
+
 namespace rstudio {
 namespace core {
 namespace json {

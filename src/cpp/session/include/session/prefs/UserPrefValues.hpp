@@ -70,6 +70,7 @@ namespace prefs {
 #define kCustomShellCommand "custom_shell_command"
 #define kCustomShellOptions "custom_shell_options"
 #define kShowLineNumbers "show_line_numbers"
+#define kRelativeLineNumbers "relative_line_numbers"
 #define kHighlightSelectedWord "highlight_selected_word"
 #define kHighlightSelectedLine "highlight_selected_line"
 #define kPanes "panes"
@@ -150,6 +151,7 @@ namespace prefs {
 #define kHighlightConsoleErrors "highlight_console_errors"
 #define kScrollPastEndOfDocument "scroll_past_end_of_document"
 #define kHighlightRFunctionCalls "highlight_r_function_calls"
+#define kColorPreview "color_preview"
 #define kRainbowParentheses "rainbow_parentheses"
 #define kConsoleLineLengthLimit "console_line_length_limit"
 #define kConsoleMaxLines "console_max_lines"
@@ -297,6 +299,9 @@ namespace prefs {
 #define kSvnExePath "svn_exe_path"
 #define kTerminalPath "terminal_path"
 #define kRsaKeyPath "rsa_key_path"
+#define kSshKeyType "ssh_key_type"
+#define kSshKeyTypeEd25519 "ed25519"
+#define kSshKeyTypeRsa "rsa"
 #define kUseDevtools "use_devtools"
 #define kCleanBeforeInstall "clean_before_install"
 #define kUseInternet2 "use_internet2"
@@ -397,11 +402,10 @@ namespace prefs {
 #define kSessionProtocolDebug "session_protocol_debug"
 #define kPythonProjectEnvironmentAutomaticActivate "python_project_environment_automatic_activate"
 #define kCheckNullExternalPointers "check_null_external_pointers"
-#define kQuartoEnabled "quarto_enabled"
-#define kQuartoEnabledAuto "auto"
-#define kQuartoEnabledEnabled "enabled"
-#define kQuartoEnabledDisabled "disabled"
-#define kQuartoEnabledHidden "hidden"
+#define kUiLanguage "ui_language"
+#define kUiLanguageEn "en"
+#define kUiLanguageFr "fr"
+#define kNativeFileDialogs "native_file_dialogs"
 
 class UserPrefValues: public Preferences
 {
@@ -508,6 +512,12 @@ public:
     */
    bool showLineNumbers();
    core::Error setShowLineNumbers(bool val);
+
+   /**
+    * Show relative, rather than absolute, line numbers in RStudio's code editor.
+    */
+   bool relativeLineNumbers();
+   core::Error setRelativeLineNumbers(bool val);
 
    /**
     * Highlight the selected word in RStudio's code editor.
@@ -850,6 +860,12 @@ public:
     */
    bool highlightRFunctionCalls();
    core::Error setHighlightRFunctionCalls(bool val);
+
+   /**
+    * Whether to show color preview in the code editor.
+    */
+   bool colorPreview();
+   core::Error setColorPreview(bool val);
 
    /**
     * Whether to highlight parentheses in a variety of colors.
@@ -1272,13 +1288,13 @@ public:
    core::Error setJobsTabVisibility(std::string val);
 
    /**
-    * Whether to show the Launcher jobs tab in RStudio Pro and RStudio Workbench.
+    * Whether to show the Workbench Jobs tab in RStudio Pro and RStudio Workbench.
     */
    bool showLauncherJobsTab();
    core::Error setShowLauncherJobsTab(bool val);
 
    /**
-    * How to sort jobs in the Launcher tab in RStudio Pro and RStudio Workbench.
+    * How to sort jobs in the Workbench Jobs tab in RStudio Pro and RStudio Workbench.
     */
    std::string launcherJobsSort();
    core::Error setLauncherJobsSort(std::string val);
@@ -1410,10 +1426,16 @@ public:
    core::Error setTerminalPath(std::string val);
 
    /**
-    * The path to the RSA key file to use.
+    * The path to the SSH key file to use.
     */
    std::string rsaKeyPath();
    core::Error setRsaKeyPath(std::string val);
+
+   /**
+    * The encryption type to use for the SSH key file.
+    */
+   std::string sshKeyType();
+   core::Error setSshKeyType(std::string val);
 
    /**
     * Whether to use the devtools R package.
@@ -1422,7 +1444,7 @@ public:
    core::Error setUseDevtools(bool val);
 
    /**
-    * Clean before install.
+    * Always use --preclean when installing package.
     */
    bool cleanBeforeInstall();
    core::Error setCleanBeforeInstall(bool val);
@@ -1746,7 +1768,7 @@ public:
    core::Error setSaveRetryTimeout(int val);
 
    /**
-    * Whether the Insert Pipe Operator command should insert the native R pipe operator, |>
+    * Whether the Insert Pipe Operator command should use the native R pipe operator, |>
     */
    bool insertNativePipeOperator();
    core::Error setInsertNativePipeOperator(bool val);
@@ -1794,10 +1816,16 @@ public:
    core::Error setCheckNullExternalPointers(bool val);
 
    /**
-    * Enable IDE features for the Quarto publishing system.
+    * The IDE's user-interface language.
     */
-   std::string quartoEnabled();
-   core::Error setQuartoEnabled(std::string val);
+   std::string uiLanguage();
+   core::Error setUiLanguage(std::string val);
+
+   /**
+    * Whether RStudio Desktop will use the operating system's native File and Message dialog boxes.
+    */
+   bool nativeFileDialogs();
+   core::Error setNativeFileDialogs(bool val);
 
 };
 

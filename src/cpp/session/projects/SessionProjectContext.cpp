@@ -46,6 +46,7 @@
 #define kStorageFolder "projects"
 
 using namespace rstudio::core;
+using namespace boost::placeholders;
 
 namespace rstudio {
 namespace session {
@@ -84,7 +85,7 @@ void onProjectFilesChanged(const std::vector<core::system::FileChangeEvent>& eve
 }  // anonymous namespace
 
 
-Error computeScratchPaths(const FilePath& projectFile, 
+Error computeScratchPaths(const FilePath& projectFile,
                           FilePath* pScratchPath,
                           FilePath* pSharedScratchPath)
 {
@@ -162,15 +163,15 @@ FilePath ProjectContext::websitePath() const
 
 FilePath ProjectContext::fileUnderWebsitePath(const core::FilePath& file) const
 {
-   // first check same folder; this will catch building simple R Markdown websites 
+   // first check same folder; this will catch building simple R Markdown websites
    // even without an RStudio project in play
    if (r_util::isWebsiteDirectory(file.getParent()))
       return file.getParent();
-   
+
    // otherwise see if this file is under a website project
    if (!websitePath().isEmpty() && file.isWithin(websitePath()))
       return websitePath();
-   
+
    return FilePath();
 }
 
@@ -297,7 +298,7 @@ void ProjectContext::augmentRbuildignore()
 
       std::string ignoreLines = kIgnoreRproj + newLine +
                                 kIgnoreRprojUser + newLine;
-      
+
       if (session::options().packageOutputInPackageFolder())
       {
          // if package build is writing output into the package directory,
@@ -362,7 +363,7 @@ void ProjectContext::augmentRbuildignore()
             if (!packageName.empty())
             {
                packageName.insert(0, "^");
-               
+
                if (strIgnore.find(packageName + kIgnoreRCheck) == std::string::npos)
                {
                   hasAllPackageExclusions = false;
@@ -414,20 +415,20 @@ SEXP rs_hasFileMonitor()
 SEXP rs_computeScratchPaths(SEXP projectFileSEXP)
 {
    std::string projectFile = r::sexp::asString(projectFileSEXP);
-   
+
    FilePath scratchPath;
    FilePath sharedScratchPath;
    Error error = computeScratchPaths(
             module_context::resolveAliasedPath(projectFile),
             &scratchPath,
             &sharedScratchPath);
-   
+
    if (error)
    {
       LOG_ERROR(error);
       return R_NilValue;
    }
-   
+
    r::sexp::Protect protect;
    r::sexp::ListBuilder builder(&protect);
    builder.add("scratch_path", scratchPath.getAbsolutePath());
@@ -495,7 +496,7 @@ Error ProjectContext::initialize()
 
    // compute storage path from project ID
    storagePath_ = module_context::userScratchPath().completePath(kStorageFolder).completePath(projectId);
-   
+
    return Success();
 }
 
@@ -513,8 +514,9 @@ std::vector<std::string> fileMonitorIgnoredComponents()
       "/.quarto",
 
       // ignore things within a .git folder
-      "/.git",
-      
+      // ... but allow e.g. .github
+      "/.git/",
+
       // ignore some directories within the revdep folder
       "/revdep/checks",
       "/revdep/library",
@@ -525,12 +527,12 @@ std::vector<std::string> fileMonitorIgnoredComponents()
       "/renv/staging",
       "/packrat/lib",
       "/packrat/src"
-      
+
       // ignore things marked .noindex
       ".noindex"
 
    };
-   
+
    // now add user-defined ignores
    json::Array userIgnores = prefs::userPrefs().fileMonitorIgnoredComponents();
    for (auto&& userIgnore : userIgnores)
@@ -545,10 +547,10 @@ std::vector<std::string> fileMonitorIgnoredComponents()
          return "/" + envPath.getRelativePath(projects::projectContext().directory());
       });
    }
-   
+
    // return vector of ignored components
    return ignores;
-   
+
 }
 
 } // end anonymous namespace
@@ -576,7 +578,7 @@ void ProjectContext::onDeferredInit(bool newSession)
    FileMonitorFilterContext context;
    context.ignoreObjectFiles = prefs::userPrefs().hideObjectFiles();
    context.ignoredComponents = fileMonitorIgnoredComponents();
-   
+
    core::system::file_monitor::registerMonitor(
          directory(),
          true,
@@ -667,7 +669,7 @@ bool ProjectContext::fileMonitorFilter(
    for (auto&& component : context.ignoredComponents)
       if (boost::algorithm::icontains(path, component))
          return false;
-   
+
    return module_context::fileListingFilter(fileInfo, context.ignoreObjectFiles);
 }
 
@@ -773,6 +775,11 @@ json::Object ProjectContext::uiPrefs() const
    json::Object uiPrefs;
    uiPrefs[kUseSpacesForTab] = config_.useSpacesForTab;
    uiPrefs[kNumSpacesForTab] = config_.numSpacesForTab;
+   // only set project value if explicitly set to Yes or No
+   if (config_.useNativePipeOperator == r_util::YesValue)
+      uiPrefs[kInsertNativePipeOperator] = true;
+   if (config_.useNativePipeOperator == r_util::NoValue)
+      uiPrefs[kInsertNativePipeOperator] = false;
    uiPrefs[kAutoAppendNewline] = config_.autoAppendNewline;
    uiPrefs[kStripTrailingWhitespace] = config_.stripTrailingWhitespace;
    uiPrefs[kDefaultEncoding] = defaultEncoding();
@@ -780,7 +787,7 @@ json::Object ProjectContext::uiPrefs() const
    uiPrefs[kDefaultLatexProgram] = config_.defaultLatexProgram;
    uiPrefs[kRootDocument] = config_.rootDocument;
    uiPrefs[kUseRoxygen] = !config_.packageRoxygenize.empty();
-   
+
    // python prefs -- only activate when non-empty
    if (!config_.pythonType.empty() ||
        !config_.pythonVersion.empty() ||
@@ -798,10 +805,10 @@ json::Object ProjectContext::uiPrefs() const
       if (config_.markdownWrap == kMarkdownWrapColumn)
          uiPrefs[kVisualMarkdownEditingWrapAtColumn] = config_.markdownWrapAtColumn;
    }
-   
+
    if (config_.markdownReferences != kMarkdownReferencesUseDefault)
       uiPrefs[kVisualMarkdownEditingReferencesLocation] = boost::algorithm::to_lower_copy(config_.markdownReferences);
-   
+
    if (config_.markdownCanonical != DefaultValue)
       uiPrefs[kVisualMarkdownEditingCanonical] = config_.markdownCanonical == YesValue;
 
@@ -842,6 +849,7 @@ r_util::RProjectConfig ProjectContext::defaultConfig()
    defaultConfig.rVersion = r_util::RVersionInfo(kRVersionDefault);
    defaultConfig.useSpacesForTab = prefs::userPrefs().useSpacesForTab();
    defaultConfig.numSpacesForTab = prefs::userPrefs().numSpacesForTab();
+   defaultConfig.useNativePipeOperator = r_util::DefaultValue;
    defaultConfig.autoAppendNewline = prefs::userPrefs().autoAppendNewline();
    defaultConfig.stripTrailingWhitespace =
                               prefs::userPrefs().stripTrailingWhitespace();
@@ -1006,7 +1014,7 @@ bool ProjectContext::parentBrowseable()
    if (error)
    {
       // if we can't figure it out, presume it to be browseable (this preserves
-      // existing behavior) 
+      // existing behavior)
       LOG_ERROR(error);
       return true;
    }
@@ -1038,4 +1046,3 @@ void ProjectContext::addDefaultOpenDocs()
 } // namespace projects
 } // namespace session
 } // namespace rstudio
-

@@ -27,6 +27,8 @@
 #include <core/http/TcpIpSocketUtils.hpp>
 #include <core/http/TcpIpAsyncConnector.hpp>
 
+using namespace boost::placeholders;
+
 namespace rstudio {
 namespace core {
 namespace http {  
@@ -77,6 +79,13 @@ private:
    virtual std::string getDefaultHostHeader()
    {
       return address_ + ":" + port_;
+   }
+
+   virtual void addErrorProperties(Error& error)
+   {
+      AsyncClient::addErrorProperties(error);
+      error.addProperty("address", address_);
+      error.addProperty("port", port_);
    }
 
    const boost::shared_ptr<TcpIpAsyncClient> sharedFromThis()

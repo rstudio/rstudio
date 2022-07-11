@@ -17,6 +17,7 @@ package org.rstudio.studio.client.workbench.views.help;
 
 import com.google.gwt.core.client.GWT;
 import com.google.gwt.core.client.JavaScriptObject;
+import com.google.gwt.core.client.JsArrayString;
 import com.google.gwt.core.client.Scheduler;
 import com.google.gwt.core.client.Scheduler.RepeatingCommand;
 import com.google.gwt.core.client.Scheduler.ScheduledCommand;
@@ -44,9 +45,9 @@ import com.google.inject.Inject;
 import com.google.inject.Provider;
 
 import org.rstudio.core.client.BrowseCap;
-import org.rstudio.core.client.Debug;
 import org.rstudio.core.client.ElementIds;
 import org.rstudio.core.client.Point;
+import org.rstudio.core.client.Rectangle;
 import org.rstudio.core.client.StringUtil;
 import org.rstudio.core.client.command.KeyboardShortcut;
 import org.rstudio.core.client.command.ShortcutManager;
@@ -57,6 +58,13 @@ import org.rstudio.core.client.dom.IFrameElementEx;
 import org.rstudio.core.client.dom.WindowEx;
 import org.rstudio.core.client.events.NativeKeyDownEvent;
 import org.rstudio.core.client.files.FileSystemItem;
+import org.rstudio.core.client.hyperlink.HelpHyperlinkPopupHeader;
+import org.rstudio.core.client.hyperlink.HelpPageShower;
+import org.rstudio.core.client.hyperlink.HelpPreview;
+import org.rstudio.core.client.hyperlink.HyperlinkPopupPanel;
+import org.rstudio.core.client.hyperlink.HyperlinkPopupPositioner;
+import org.rstudio.core.client.regex.Match;
+import org.rstudio.core.client.regex.Pattern;
 import org.rstudio.core.client.theme.res.ThemeStyles;
 import org.rstudio.core.client.widget.CanFocus;
 import org.rstudio.core.client.widget.FindTextBox;
@@ -68,12 +76,15 @@ import org.rstudio.core.client.widget.SecondaryToolbar;
 import org.rstudio.core.client.widget.SmallButton;
 import org.rstudio.core.client.widget.Toolbar;
 import org.rstudio.core.client.widget.ToolbarButton;
+import org.rstudio.studio.client.RStudioGinjector;
 import org.rstudio.studio.client.application.Desktop;
 import org.rstudio.studio.client.application.events.EventBus;
 import org.rstudio.studio.client.application.events.MouseNavigateEvent;
 import org.rstudio.studio.client.common.AutoGlassPanel;
 import org.rstudio.studio.client.common.GlobalDisplay;
+import org.rstudio.studio.client.common.SimpleRequestCallback;
 import org.rstudio.studio.client.common.GlobalDisplay.NewWindowOptions;
+import org.rstudio.studio.client.server.Server;
 import org.rstudio.studio.client.workbench.commands.Commands;
 import org.rstudio.studio.client.workbench.prefs.model.UserPrefs;
 import org.rstudio.studio.client.workbench.ui.WorkbenchPane;
@@ -93,11 +104,12 @@ public class HelpPane extends WorkbenchPane
                    EventBus events,
                    UserPrefs prefs)
    {
-      super("Help", events);
+      super(constants_.helpText(), events);
 
       searchProvider_ = searchProvider;
       globalDisplay_ = globalDisplay;
       commands_ = commands;
+      server_ = RStudioGinjector.INSTANCE.getServer();
 
       prefs_ = prefs;
 
@@ -286,6 +298,14 @@ public class HelpPane extends WorkbenchPane
       $wnd.helpMousedown = function(e) {
          thiz.@org.rstudio.studio.client.workbench.views.help.HelpPane::handleMouseDown(*)(e);
       };
+
+      $wnd.helpMouseover = function(e) {
+         thiz.@org.rstudio.studio.client.workbench.views.help.HelpPane::handleMouseOver(*)(e);
+      }
+
+      $wnd.helpClick = function(e) {
+         thiz.@org.rstudio.studio.client.workbench.views.help.HelpPane::handleClick(*)(e);
+      }
       
    }-*/;
 
@@ -326,10 +346,17 @@ public class HelpPane extends WorkbenchPane
          }
       }
 
-
       // don't let backspace perform browser back
       DomUtils.preventBackspaceCausingBrowserBack(e);
 
+      // ESC closes help preview popup
+      if (e.getKeyCode() == KeyCodes.KEY_ESCAPE)
+      {
+         if (popup_ != null)
+            popup_.hide();
+         popup_ = null;
+      }
+      
       // delegate to the shortcut manager
       NativeKeyDownEvent evt = new NativeKeyDownEvent(e);
       ShortcutManager.INSTANCE.onKeyDown(evt);
@@ -359,6 +386,73 @@ public class HelpPane extends WorkbenchPane
          event.preventDefault();
          commands_.helpForward().execute();
       }
+   }
+
+   private void handleMouseOver(NativeEvent event)
+   {
+      EventTarget target = event.getEventTarget();
+      if (AnchorElement.is(target)) 
+      {
+         AnchorElement anchor = AnchorElement.as(Element.as(target));
+         String url = anchor.getHref();
+         Match match = HELP_PATTERN.match(url, 0);
+         if (match != null) 
+         {
+            String topic = decodeURIComponent(match.getGroup(2));
+            
+            if (popup_ != null)
+               popup_.hide();
+            popup_ = new HyperlinkPopupPanel(new HelpPageShower() {
+
+               @Override
+               public void showHelp() {
+                  HelpPane.this.showHelp(url);
+               }
+               
+            });
+
+            // pkg might not be the actual package
+            // so we need to do the same as what the internal help system would:
+            server_.followHelpTopic(url, new SimpleRequestCallback<JsArrayString>(){
+
+               @Override
+               public void onResponseReceived(JsArrayString files)
+               {
+                  if (files.length() == 1)
+                  {
+                     String pkg = files.get(0).replaceFirst("/help/.*$", "").replaceFirst("^.*/", "");
+                     
+                     final VerticalPanel panel = new VerticalPanel();
+                     panel.add(new HelpHyperlinkPopupHeader(topic, pkg));
+                     panel.add(new HelpPreview(topic, pkg, () -> 
+                     {
+                        popup_.setContent(panel);
+
+                        Rectangle bounds = new Rectangle(event.getClientX() + getIFrameEx().getAbsoluteLeft(), 
+                                                         event.getClientY() + getIFrameEx().getAbsoluteTop(), 
+                                                         anchor.getClientWidth(), 
+                                                         anchor.getClientHeight());
+                        HyperlinkPopupPositioner positioner = new HyperlinkPopupPositioner(bounds, popup_);
+                        popup_.setPopupPositionAndShow(positioner);
+                     }));
+                  }
+               }
+            });
+
+         }
+         
+      }
+   }
+
+   private native String decodeURIComponent(String encoded) /*-{
+      return decodeURIComponent(encoded);
+   }-*/;
+
+   private void handleClick(NativeEvent event)
+   {
+      if (popup_ != null)
+         popup_.hide();
+      popup_ = null;
    }
 
    private void helpNavigated(Document doc)
@@ -912,4 +1006,8 @@ public class HelpPane extends WorkbenchPane
    private static int popoutCount_ = 0;
    private SearchDisplay searchWidget_;
    private static final HelpConstants constants_ = GWT.create(HelpConstants.class);
+   private Server server_;
+   HyperlinkPopupPanel popup_;
+
+   private static final Pattern HELP_PATTERN = Pattern.create("^.*/help/library/([^/]*)/help/(.*)$", "");
 }

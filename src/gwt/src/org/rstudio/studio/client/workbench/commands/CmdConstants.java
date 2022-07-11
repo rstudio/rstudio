@@ -674,17 +674,17 @@ public interface CmdConstants extends Constants {
     @DefaultStringValue("Show _Tutorial") // $NON-NLS-1$
     String activateTutorialMenuLabel();
     
-    // activateJobs
-    @DefaultStringValue("Show Jobs Pane") // $NON-NLS-1$
-    String activateJobsLabel();
-    @DefaultStringValue("Show _Jobs") // $NON-NLS-1$
-    String activateJobsMenuLabel();
+    // activateBackgroundJobs
+    @DefaultStringValue("Show Background Jobs Pane") // $NON-NLS-1$
+    String activateBackgroundJobsLabel();
+    @DefaultStringValue("Show Background _Jobs") // $NON-NLS-1$
+    String activateBackgroundJobsMenuLabel();
     
-    // activateLauncherJobs
-    @DefaultStringValue("Show Launcher Pane") // $NON-NLS-1$
-    String activateLauncherJobsLabel();
-    @DefaultStringValue("Show _Launcher") // $NON-NLS-1$
-    String activateLauncherJobsMenuLabel();
+    // activateWorkbenchJobs
+    @DefaultStringValue("Show Workbench Jobs Pane") // $NON-NLS-1$
+    String activateWorkbenchJobsLabel();
+    @DefaultStringValue("Show _Workbench Jobs") // $NON-NLS-1$
+    String activateWorkbenchJobsMenuLabel();
     
     // activateCompilePDF
     @DefaultStringValue("Show Compile PDF Pane") // $NON-NLS-1$
@@ -939,7 +939,7 @@ public interface CmdConstants extends Constants {
     String quickAddNextButtonLabel();
     @DefaultStringValue("Find and Add Next") // $NON-NLS-1$
     String quickAddNextMenuLabel();
-    @DefaultStringValue("Find and add next occurence") // $NON-NLS-1$
+    @DefaultStringValue("Find and add next occurrence") // $NON-NLS-1$
     String quickAddNextDesc();
     
     // findAll
@@ -953,7 +953,7 @@ public interface CmdConstants extends Constants {
     String findReplaceMenuLabel();
     
     // findNext
-    @DefaultStringValue("Find Next Occurence") // $NON-NLS-1$
+    @DefaultStringValue("Find Next Occurrence") // $NON-NLS-1$
     String findNextLabel();
     @DefaultStringValue("Next") // $NON-NLS-1$
     String findNextButtonLabel();
@@ -963,7 +963,7 @@ public interface CmdConstants extends Constants {
     String findNextDesc();
     
     // findPrevious
-    @DefaultStringValue("Find Previous Occurence") // $NON-NLS-1$
+    @DefaultStringValue("Find Previous Occurrence") // $NON-NLS-1$
     String findPreviousLabel();
     @DefaultStringValue("Prev") // $NON-NLS-1$
     String findPreviousButtonLabel();
@@ -995,6 +995,14 @@ public interface CmdConstants extends Constants {
     // findInFiles
     @DefaultStringValue("Find _in Files...") // $NON-NLS-1$
     String findInFilesMenuLabel();
+    
+    // refreshFindInFiles
+    @DefaultStringValue("") // $NON-NLS-1$
+    String refreshFindInFilesButtonLabel();
+    @DefaultStringValue("_Refresh Find in Files") // $NON-NLS-1$
+    String refreshFindInFilesMenuLabel();
+    @DefaultStringValue("Refresh Find in Files results") // $NON-NLS-1$
+    String refreshFindInFilesDesc();
     
     // fold
     @DefaultStringValue("Collapse Fold") // $NON-NLS-1$
@@ -2662,14 +2670,6 @@ public interface CmdConstants extends Constants {
     @DefaultStringValue("Setup version control for the current project") // $NON-NLS-1$
     String versionControlProjectSetupDesc();
     
-    // showShellDialog
-    @DefaultStringValue("Open Shell") // $NON-NLS-1$
-    String showShellDialogLabel();
-    @DefaultStringValue("_Shell...") // $NON-NLS-1$
-    String showShellDialogMenuLabel();
-    @DefaultStringValue("Execute shell commands") // $NON-NLS-1$
-    String showShellDialogDesc();
-    
     // newTerminal
     @DefaultStringValue("New Terminal") // $NON-NLS-1$
     String newTerminalLabel();
@@ -3202,13 +3202,21 @@ public interface CmdConstants extends Constants {
     @DefaultStringValue("Install the package and restart R") // $NON-NLS-1$
     String buildAllDesc();
     
-    // rebuildAll
-    @DefaultStringValue("Clean and Rebuild") // $NON-NLS-1$
-    String rebuildAllLabel();
-    @DefaultStringValue("Clean and _Rebuild") // $NON-NLS-1$
-    String rebuildAllMenuLabel();
-    @DefaultStringValue("Clean previous output and rebuild all") // $NON-NLS-1$
-    String rebuildAllDesc();
+    // buildIncremental
+    @DefaultStringValue("Install Package") // $NON-NLS-1$
+    String buildIncrementalLabel();
+    @DefaultStringValue("Install Package") // $NON-NLS-1$
+    String buildIncrementalMenuLabel();
+    @DefaultStringValue("Install the package and restart R") // $NON-NLS-1$
+    String buildIncrementalDesc();
+    
+    // buildFull
+    @DefaultStringValue("Clean and Install") // $NON-NLS-1$
+    String buildFullLabel();
+    @DefaultStringValue("Clean and Install") // $NON-NLS-1$
+    String buildFullMenuLabel();
+    @DefaultStringValue("Clean, install the package, and restart R") // $NON-NLS-1$
+    String buildFullDesc();
     
     // cleanAll
     @DefaultStringValue("Clean All") // $NON-NLS-1$
@@ -3656,6 +3664,10 @@ public interface CmdConstants extends Constants {
     @DefaultStringValue("Show _GPU Diagnostics") // $NON-NLS-1$
     String showGpuDiagnosticsMenuLabel();
     
+    // showA11yDiagnostics
+    @DefaultStringValue("Show _Accessibility Diagnostics") // $NON-NLS-1$
+    String showA11yDiagnosticsMenuLabel();
+    
     // toggleEditorTokenInfo
     @DefaultStringValue("_Toggle Editor Token Information") // $NON-NLS-1$
     String toggleEditorTokenInfoMenuLabel();
@@ -3721,62 +3733,62 @@ public interface CmdConstants extends Constants {
     String sparkHelpDesc();
     
     // startJob
-    @DefaultStringValue("Start Local Job") // $NON-NLS-1$
+    @DefaultStringValue("Start Background Job") // $NON-NLS-1$
     String startJobButtonLabel();
-    @DefaultStringValue("_Start Local Job...") // $NON-NLS-1$
+    @DefaultStringValue("_Start Background Job...") // $NON-NLS-1$
     String startJobMenuLabel();
     @DefaultStringValue("Run a background local job") // $NON-NLS-1$
     String startJobDesc();
     
     // sourceAsJob
-    @DefaultStringValue("Source as Local Job...") // $NON-NLS-1$
+    @DefaultStringValue("Source as Background Job...") // $NON-NLS-1$
     String sourceAsJobMenuLabel();
-    @DefaultStringValue("Run the current R script as a local job") // $NON-NLS-1$
+    @DefaultStringValue("Run the current R script as a background job") // $NON-NLS-1$
     String sourceAsJobDesc();
     
-    // clearJobs
-    @DefaultStringValue("_Clear Local Jobs") // $NON-NLS-1$
-    String clearJobsMenuLabel();
-    @DefaultStringValue("Clean up all completed local jobs") // $NON-NLS-1$
-    String clearJobsDesc();
+    // clearBackgroundJobs
+    @DefaultStringValue("_Clear Background Jobs") // $NON-NLS-1$
+    String clearBackgroundJobsMenuLabel();
+    @DefaultStringValue("Clean up all completed background jobs") // $NON-NLS-1$
+    String clearBackgroundJobsDesc();
     
-    // runSelectionAsJob
-    @DefaultStringValue("Ru_n Selection as Local Job") // $NON-NLS-1$
-    String runSelectionAsJobMenuLabel();
-    @DefaultStringValue("Run the selected code as a local job") // $NON-NLS-1$
-    String runSelectionAsJobDesc();
+    // runSelectionAsBackgroundJob
+    @DefaultStringValue("Ru_n Selection as Background Job") // $NON-NLS-1$
+    String runSelectionAsBackgroundJobMenuLabel();
+    @DefaultStringValue("Run the selected code as a background job") // $NON-NLS-1$
+    String runSelectionAsBackgroundJobDesc();
     
-    // startLauncherJob
-    @DefaultStringValue("Start Launcher Job") // $NON-NLS-1$
-    String startLauncherJobButtonLabel();
-    @DefaultStringValue("Start Launcher _Job...") // $NON-NLS-1$
-    String startLauncherJobMenuLabel();
-    @DefaultStringValue("Run a background job on a cluster") // $NON-NLS-1$
-    String startLauncherJobDesc();
+    // startWorkbenchJob
+    @DefaultStringValue("Start Workbench Job") // $NON-NLS-1$
+    String startWorkbenchJobButtonLabel();
+    @DefaultStringValue("Start Workbench _Job...") // $NON-NLS-1$
+    String startWorkbenchJobMenuLabel();
+    @DefaultStringValue("Run a job on a cluster") // $NON-NLS-1$
+    String startWorkbenchJobDesc();
     
-    // sourceAsLauncherJob
-    @DefaultStringValue("Source as Launcher Job...") // $NON-NLS-1$
-    String sourceAsLauncherJobMenuLabel();
+    // sourceAsWorkbenchJob
+    @DefaultStringValue("Source as Workbench Job...") // $NON-NLS-1$
+    String sourceAsWorkbenchJobMenuLabel();
     @DefaultStringValue("Run the current R script on a cluster") // $NON-NLS-1$
-    String sourceAsLauncherJobDesc();
+    String sourceAsWorkbenchJobDesc();
     
-    // runSelectionAsLauncherJob
-    @DefaultStringValue("Run Selection as _Launcher Job") // $NON-NLS-1$
-    String runSelectionAsLauncherJobMenuLabel();
-    @DefaultStringValue("Run the selected code as a launcher job") // $NON-NLS-1$
-    String runSelectionAsLauncherJobDesc();
+    // runSelectionAsWorkbenchJob
+    @DefaultStringValue("Run Selection as _Workbench Job") // $NON-NLS-1$
+    String runSelectionAsWorkbenchJobMenuLabel();
+    @DefaultStringValue("Run the selected code as a Workbench job") // $NON-NLS-1$
+    String runSelectionAsWorkbenchJobDesc();
     
-    // sortLauncherJobsRecorded
+    // sortWorkbenchJobsRecorded
     @DefaultStringValue("Sort by Submission Time") // $NON-NLS-1$
-    String sortLauncherJobsRecordedMenuLabel();
-    @DefaultStringValue("Sort jobs by time submitted") // $NON-NLS-1$
-    String sortLauncherJobsRecordedDesc();
+    String sortWorkbenchJobsRecordedMenuLabel();
+    @DefaultStringValue("Sort Workbench jobs by time submitted") // $NON-NLS-1$
+    String sortWorkbenchJobsRecordedDesc();
     
-    // sortLauncherJobsState
+    // sortWorkbenchJobsState
     @DefaultStringValue("Sort by Job State") // $NON-NLS-1$
-    String sortLauncherJobsStateMenuLabel();
-    @DefaultStringValue("Sort jobs by current state") // $NON-NLS-1$
-    String sortLauncherJobsStateDesc();
+    String sortWorkbenchJobsStateMenuLabel();
+    @DefaultStringValue("Sort Workbench jobs by current state") // $NON-NLS-1$
+    String sortWorkbenchJobsStateDesc();
     
     // showFileMenu
     @DefaultStringValue("Show File Menu") // $NON-NLS-1$

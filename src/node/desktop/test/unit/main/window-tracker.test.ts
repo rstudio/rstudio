@@ -18,6 +18,7 @@ import { assert } from 'chai';
 
 import { NullLogger, setLogger } from '../../../src/core/logger';
 
+import { isWindowsDocker } from '../unit-utils';
 import { WindowTracker } from '../../../src/main/window-tracker';
 import { DesktopBrowserWindow } from '../../../src/main/desktop-browser-window';
 import { GwtWindow } from '../../../src/main/gwt-window';
@@ -30,7 +31,7 @@ class TestGwtWindow extends GwtWindow {
   }
 }
 
-describe('window-tracker', () => {
+describe('WindowTracker', () => {
   beforeEach(() => {
     clearCoreSingleton();
     const f = new NullLogger();
@@ -40,44 +41,62 @@ describe('window-tracker', () => {
   it('empty after creation', () => {
     assert.equal(new WindowTracker().length(), 0);
   });
-  it('tracks and returns a window by name', () => {
-    const tracker = new WindowTracker();
-    const oneWin = new DesktopBrowserWindow(false, false, false, 'some name');
-    tracker.addWindow('one', oneWin);
-    assert.equal(tracker.length(), 1);
-    const result = tracker.getWindow('one');
-    assert.isObject(result);
-    assert.deepEqual(result, oneWin);
-  });
-  it('tracks and returns two windows by name', () => {
-    const tracker = new WindowTracker();
-    const oneWin = new DesktopBrowserWindow(false, false, false, 'some name');
-    tracker.addWindow('one', oneWin);
-    const twoWin = new DesktopBrowserWindow(false, false, false, 'another name');
-    tracker.addWindow('two', twoWin);
-    const twoResult = tracker.getWindow('two');
-    const oneResult = tracker.getWindow('one');
-    assert.isObject(oneResult);
-    assert.deepEqual(oneResult, oneWin);
-    assert.isObject(twoResult);
-    assert.deepEqual(twoResult, twoWin);
-  });
-  it('duplicate name replaces the original', () => {
-    const tracker = new WindowTracker();
-    const oneWin = new DesktopBrowserWindow(false, false, false, 'some name');
-    tracker.addWindow('one', oneWin);
-    const twoWin = new TestGwtWindow(false, false, false, 'the gwt window');
-    tracker.addWindow('one', twoWin);
-    assert.equal(tracker.length(), 1);
-    const result = tracker.getWindow('one');
-    assert.deepEqual(result, twoWin);
-  });
-  it('delete window removes it from map', async function () {
-    const tracker = new WindowTracker();
-    const oneWin = new DesktopBrowserWindow(false, false, false, 'some name');
-    tracker.addWindow('one', oneWin);
-    oneWin.window.close();
-    await setTimeoutPromise(200); // TODO: yuck, find a better way to do this
-    assert.equal(tracker.length(), 0);
-  });
+  if (!isWindowsDocker()) {
+    it('tracks and returns a window by name', () => {
+      const tracker = new WindowTracker();
+      const oneWin = new DesktopBrowserWindow({ name: 'some name', skipLocaleDetection: true });
+      tracker.addWindow('one', oneWin);
+      assert.equal(tracker.length(), 1);
+      const result = tracker.getWindow('one');
+      assert.isObject(result);
+      assert.deepEqual(result, oneWin);
+    });
+    it('tracks and returns two windows by name', () => {
+      const tracker = new WindowTracker();
+      const oneWin = new DesktopBrowserWindow({ name: 'some name', skipLocaleDetection: true });
+      tracker.addWindow('one', oneWin);
+      const twoWin = new DesktopBrowserWindow({ name: 'another name', skipLocaleDetection: true });
+      tracker.addWindow('two', twoWin);
+      const twoResult = tracker.getWindow('two');
+      const oneResult = tracker.getWindow('one');
+      assert.isObject(oneResult);
+      assert.deepEqual(oneResult, oneWin);
+      assert.isObject(twoResult);
+      assert.deepEqual(twoResult, twoWin);
+    });
+    it('duplicate name replaces the original', () => {
+      const tracker = new WindowTracker();
+      const oneWin = new DesktopBrowserWindow({ name: 'some name', skipLocaleDetection: true });
+      tracker.addWindow('one', oneWin);
+      const twoWin = new TestGwtWindow({ name: 'the gwt window', skipLocaleDetection: true });
+      tracker.addWindow('one', twoWin);
+      assert.equal(tracker.length(), 1);
+      const result = tracker.getWindow('one');
+      assert.deepEqual(result, twoWin);
+    });
+    it('delete window removes it from map', async function () {
+      const tracker = new WindowTracker();
+      const oneWin = new DesktopBrowserWindow({ name: 'some name', skipLocaleDetection: true });
+      tracker.addWindow('one', oneWin);
+      oneWin.window.close();
+      await setTimeoutPromise(200); // TODO: yuck, find a better way to do this
+      assert.equal(tracker.length(), 0);
+    });
+
+    it('delete window removes it from map', async function () {
+      const tracker = new WindowTracker();
+      const oneWin = new DesktopBrowserWindow({ name: 'some name', skipLocaleDetection: true });
+      tracker.addWindow('one', oneWin);
+      assert.equal(tracker.length(), 1);
+      const result = tracker.getWindow('one');
+
+      assert.isObject(result);
+      assert.deepEqual(result, oneWin);
+
+      tracker.onWindowDestroyed('one');
+
+      assert.equal(tracker.length(), 0);
+      assert.isUndefined(tracker.getWindow('one'));
+    });
+  }
 });

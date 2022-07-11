@@ -22,14 +22,16 @@
 #include <boost/format.hpp>
 #include <boost/numeric/conversion/cast.hpp>
 
-#include <core/BoostSignals.hpp>
-#include <core/BoostThread.hpp>
 #include <shared_core/Error.hpp>
 #include <shared_core/FilePath.hpp>
+#include <shared_core/Hash.hpp>
+
+#include <core/BoostSignals.hpp>
+#include <core/BoostThread.hpp>
+#include <core/Debug.hpp>
 #include <core/FileInfo.hpp>
 #include <core/Log.hpp>
 #include <core/Base64.hpp>
-#include <shared_core/Hash.hpp>
 #include <core/Settings.hpp>
 #include <core/DateTime.hpp>
 #include <core/FileSerializer.hpp>
@@ -49,6 +51,7 @@
 #include <core/system/Xdg.hpp>
 
 #include <core/r_util/RPackageInfo.hpp>
+#include <core/r_util/RActiveSessionsStorage.hpp>
 
 #include <r/RSexp.hpp>
 #include <r/RUtil.hpp>
@@ -62,6 +65,7 @@
 #include <r/session/RSession.hpp>
 #include <r/session/RConsoleActions.hpp>
 
+#include <session/SessionActiveSessionsStorage.hpp>
 #include <session/SessionOptions.hpp>
 #include <session/SessionPersistentState.hpp>
 #include <session/SessionClientEvent.hpp>
@@ -92,10 +96,23 @@
 #include "session-config.h"
 
 using namespace rstudio::core;
+using namespace boost::placeholders;
 
 namespace rstudio {
 namespace session {   
 namespace module_context {
+
+bool isSessionSslEnabled()
+{
+   return !options().getOverlayOption(kSessionSslCertKeyOption).empty();
+}
+
+core::Error sendSessionRequest(const std::string& uri,
+                               const std::string& body,
+                               core::http::Response* pResponse)
+{
+   return session::http::sendSessionRequest(uri, body, isSessionSslEnabled(), pResponse);
+}
       
 namespace {
 
@@ -134,7 +151,7 @@ private:
                return;
             
             core::http::Response response;
-            Error error = session::http::sendSessionRequest(
+            Error error = session::module_context::sendSessionRequest(
                      "/rpc/console_input",
                      input,
                      &response);
@@ -1172,49 +1189,23 @@ FilePath tempDir()
 
 FilePath findProgram(const std::string& name)
 {
-   // Added isMainThread() test here to allow the console to run offline.
-   // On starting a terminal, it does 'which svn' and adds that dir to the
-   // path if it find one
-   // FUTURE: Can we always use findProgramOnPath? It will be a lot faster since R's
-   // version seems to fork a process to call the shell's 'which'
-   // Be careful of Windows there are two copies of the environment so
-   // R's env might be out of sync with rsession's PATH.
-   if (!core::thread::isMainThread())
-   {
-      FilePath resultPath;
-      Error error = system::findProgramOnPath(name, &resultPath);
-      if (error)
-      {
-         return FilePath();
-      }
-      return resultPath;
-   }
-   else
-   {
-      std::string which;
-      FilePath resultPath;
+   // NOTE: Previously, we checked both 'system::findProgramOnPath()' as well
+   // as R's 'Sys.which()'. We prefer using 'findProgramOnPath()' here as it
+   // is threadsafe, and there are some contexts where this function might be
+   // invoked on a background thread, e.g. when called via the offlineService()
+   // thread.
+   //
+   // The main concern is Windows, where it's possible that the rsession and
+   // embedded R process could be referencing separate 'environ' blocks,
+   // and so the PATHs used for finding programs may be different. However,
+   // ~1 year of testing didn't identify any real issues so we just use the
+   // thread-safe version now.
+   FilePath resultPath;
+   Error error = system::findProgramOnPath(name, &resultPath);
+   if (error)
+      return FilePath();
 
-      // For now, going to check both ways and log warnings if they don't match
-      Error error = r::exec::RFunction("Sys.which", name).call(&which);
-      Error dbgError = system::findProgramOnPath(name, &resultPath);
-      if (error)
-      {
-         LOG_ERROR(error);
-         return FilePath();
-      }
-      else
-      {
-         if (dbgError && which != "")
-         {
-            LOG_WARNING_MESSAGE("findProgramOnPath returns error: " + dbgError.asString() + " Sys.which returns: " + resultPath.getAbsolutePath());
-         }
-         else if (which != resultPath.getAbsolutePath())
-         {
-            LOG_WARNING_MESSAGE("findProgramOnPath returns wrong result: " + which + " != " + resultPath.getAbsolutePath());
-         }
-         return FilePath(which);
-      }
-   }
+   return resultPath;
 }
 
 bool addTinytexToPathIfNecessary()
@@ -1879,6 +1870,7 @@ r_util::ActiveSession& activeSession()
    if (!pSession)
    {
       std::string id = options().sessionScope().id();
+
       if (!id.empty())
          pSession = activeSessions().get(id);
       else if (options().programMode() == kSessionProgramModeDesktop)
@@ -1899,15 +1891,21 @@ r_util::ActiveSession& activeSession()
          // if no scope was specified, we are in singleton session mode
          // check to see if there is an existing active session, and use that
          std::vector<boost::shared_ptr<r_util::ActiveSession> > sessions =
-               activeSessions().list(userHomePath(), options().projectSharingEnabled());
-         if (sessions.size() == 1)
+               activeSessions().list(userHomePath(), options().projectSharingEnabled(), true);
+         if (sessions.size() > 0)
          {
-            // there is only one session, so this must be singleton session mode
-            // reopen that session
+            // there is more than one session but no session id was passed in. This is OS server or pro with server-multiple-sessions=0
+            // so we must be referring to the most recent session.
             pSession = sessions.front();
+
+            if (sessions.size() == 1)
+               LOG_DEBUG_MESSAGE("Reusing singleton session: " + pSession->id());
+            else
+               LOG_DEBUG_MESSAGE("Reusing most recent session: " + pSession->id() + " out of: " + std::to_string(sessions.size()));
          }
          else
          {
+
             // create a new session entry
             // this should not really run because in single session mode there will
             // only be one session but we'll create one here just in case for safety
@@ -1918,6 +1916,8 @@ r_util::ActiveSession& activeSession()
             // the actual user preference or session default directory that it should be
             activeSessions().create(options().sessionScope().project(), "~", &sessionId);
             pSession = activeSessions().get(sessionId);
+
+            LOG_DEBUG_MESSAGE("Creating new session in singleton session mode: " + sessionId);
          }
       }
    }
@@ -1929,7 +1929,21 @@ r_util::ActiveSessions& activeSessions()
 {
    static boost::shared_ptr<r_util::ActiveSessions> pSessions;
    if (!pSessions)
-      pSessions.reset(new r_util::ActiveSessions(userScratchPath()));
+   {
+      std::shared_ptr<r_util::IActiveSessionsStorage> storage;
+      Error error = storage::activeSessionsStorage(&storage);
+
+      // The only real error we can get here is if the current user can't 
+      // be retrieved, but if that's the case we should have exited with a 
+      // failure during start-up. We'll probably SegFault in any calls to the
+      // ActiveSession object, but the process is in a very broken state anyway
+      // Log before we crash so we can know what went wrong
+      if (error)
+         LOG_ERROR(error);
+
+      pSessions.reset(new r_util::ActiveSessions(storage, userScratchPath()));
+   }
+   
    return *pSessions;
 }
 
@@ -2909,16 +2923,25 @@ void checkXcodeLicense()
 std::vector<FilePath> ignoreContentDirs()
 {
    std::vector<FilePath> ignoreDirs;
-   if (projects::projectContext().hasProject()) {
+   
+   if (projects::projectContext().hasProject())
+   {
       // python virtual environments
       ignoreDirs = projects::projectContext().pythonEnvs();
       quarto::QuartoConfig quartoConf = quarto::quartoConfig();
+      
       // quarto site output dir
-      if (quartoConf.is_project) {
+      if (quartoConf.is_project)
+      {
          FilePath quartoProjDir = module_context::resolveAliasedPath(quartoConf.project_dir);
-         ignoreDirs.push_back(quartoProjDir.completeChildPath(quartoConf.project_output_dir));
+         
+         std::string quartoOutputDir = quartoConf.project_output_dir;
+         if (!quartoOutputDir.empty())
+            ignoreDirs.push_back(quartoProjDir.completeChildPath(quartoOutputDir));
+         
          ignoreDirs.push_back(quartoProjDir.completeChildPath("_freeze"));
       }
+      
       // rmarkdown site output dir
       if (module_context::isWebsiteProject())
       {
@@ -2927,8 +2950,8 @@ std::vector<FilePath> ignoreContentDirs()
          if (!outputDir.empty())
             ignoreDirs.push_back(buildTargetPath.completeChildPath(outputDir));
       }
-
    }
+   
    return ignoreDirs;
 }
 

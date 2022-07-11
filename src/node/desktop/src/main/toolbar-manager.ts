@@ -19,20 +19,21 @@ import { BrowserWindow } from 'electron';
 import * as fs from 'fs';
 import { logger } from '../core/logger';
 
+type ToolbarButton = {
+  iconPath: string;
+  tooltip: string;
+  onClick: string;
+};
+
 export interface ToolbarData {
-  buttons: {
-    iconPath: string;
-    tooltip: string;
-    onClick: string;
-  }[];
+  buttons: ToolbarButton[];
 }
 
 export class ToolbarManager {
   constructor() {}
 
-  async createToolbar(window: BrowserWindow, toolbarData: ToolbarData) {
-    const jsScript =
-      this.addToolbarJsAsText() + ';' + this.addStylesJsAsText() + ';' + this.addButtonsJsAsText(toolbarData);
+  async createAndShowToolbar(window: BrowserWindow, toolbarData: ToolbarData) {
+    const jsScript = this.createToolbarData(toolbarData.buttons);
 
     try {
       await window.webContents.executeJavaScript(jsScript);
@@ -50,6 +51,13 @@ export class ToolbarManager {
         logger().logError(error);
       }
     }
+  }
+
+  createToolbarData(buttons: ToolbarButton[]) {
+    const jsScript =
+      this.addToolbarJsAsText() + ';' + this.addStylesJsAsText() + ';' + this.addButtonsJsAsText(buttons);
+
+    return jsScript;
   }
 
   addToolbarJsAsText() {
@@ -131,7 +139,7 @@ export class ToolbarManager {
       `;
   }
 
-  addButtonsJsAsText(toolbarData: ToolbarData) {
+  addButtonsJsAsText(buttons: ToolbarButton[]) {
     let addButtonsFn = `
       const createButton = (iconPath, tooltip, onClick, index) => {
         const button = document.createElement('button');
@@ -159,7 +167,7 @@ export class ToolbarManager {
       };    
     `;
 
-    toolbarData.buttons.forEach((button, index) => {
+    buttons.forEach((button, index) => {
       addButtonsFn += `const button${index} = createButton('${this.convertImagePathToBase64(button.iconPath)}', '${
         button.tooltip
       }', ${button.onClick}, ${index});

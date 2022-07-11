@@ -856,6 +856,26 @@ public class SourceColumnManager implements CommandPaletteEntrySource,
       editingTarget.getEditorContext();
       return true;
    }
+   
+   public boolean requestEditorContext(String id)
+   {
+      for (SourceColumn column : columnList_)
+      {
+         for (EditingTarget target : column.getEditors())
+         {
+            if (target instanceof TextEditingTarget)
+            {
+               if (StringUtil.equals(target.getId(), id))
+               {
+                  ((TextEditingTarget) target).getEditorContext();
+                  return true;
+               }
+            }
+         }
+      }
+      
+      return false;
+   }
 
    public void activateCodeBrowser(
       final String codeBrowserPath,
@@ -912,7 +932,8 @@ public class SourceColumnManager implements CommandPaletteEntrySource,
 
    public void activateObjectExplorer(ObjectExplorerHandle handle)
    {
-      columnList_.forEach((column) -> {
+      for (SourceColumn column : columnList_)
+      {
          for (EditingTarget target : column.getEditors())
          {
             // bail if this isn't an object explorer filetype
@@ -929,8 +950,8 @@ public class SourceColumnManager implements CommandPaletteEntrySource,
                return;
             }
          }
-      });
-
+      }
+      
       ensureVisible(true);
       server_.newDocument(
          FileTypeRegistry.OBJECT_EXPLORER.getTypeId(),
@@ -2270,10 +2291,10 @@ public class SourceColumnManager implements CommandPaletteEntrySource,
       dynamicCommands_.add(commands_.openNewTerminalAtEditorLocation());
       dynamicCommands_.add(commands_.sendFilenameToTerminal());
       dynamicCommands_.add(commands_.renameSourceDoc());
-      dynamicCommands_.add(commands_.sourceAsLauncherJob());
+      dynamicCommands_.add(commands_.sourceAsWorkbenchJob());
       dynamicCommands_.add(commands_.sourceAsJob());
-      dynamicCommands_.add(commands_.runSelectionAsJob());
-      dynamicCommands_.add(commands_.runSelectionAsLauncherJob());
+      dynamicCommands_.add(commands_.runSelectionAsBackgroundJob());
+      dynamicCommands_.add(commands_.runSelectionAsWorkbenchJob());
       dynamicCommands_.add(commands_.toggleSoftWrapMode());
       for (AppCommand command : dynamicCommands_)
       {

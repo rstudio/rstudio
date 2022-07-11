@@ -106,6 +106,7 @@ void lintRFilesInSubdirectory(const FilePath& path)
          continue;
       
       FilePath filePath = core::toFilePath(info);
+      std::cerr << "Parsing: " << filePath << std::endl;
       ParseResults results = parse(filePath);
       
       if (results.lint().hasErrors())
@@ -294,9 +295,14 @@ test_context("Diagnostics")
       EXPECT_NO_LINT("x <- ( 1 + 1 )");
       EXPECT_NO_LINT("x <- {1}");
       EXPECT_NO_LINT("x <- (1)");
+      
+      EXPECT_NO_LINT("apples <- 42; glue(\"{apples} and {bananas}\", bananas = 24)");
    }
    
-   lintRStudioRFiles();
+   test_that("RStudio files can be successfully linted")
+   {
+      lintRStudioRFiles();
+   }
 }
 
 } // namespace linter

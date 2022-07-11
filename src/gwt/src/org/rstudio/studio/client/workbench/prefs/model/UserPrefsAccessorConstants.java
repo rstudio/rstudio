@@ -1,4 +1,5 @@
-/* UserPrefsAccessorConstants.java
+/*
+ * UserPrefsAccessorConstants.java
  *
  * Copyright (C) 2022 by RStudio, PBC
  *
@@ -157,6 +158,14 @@ public interface UserPrefsAccessorConstants extends Constants {
    String showLineNumbersTitle();
    @DefaultStringValue("Show line numbers in RStudio's code editor.")
    String showLineNumbersDescription();
+
+   /**
+    * Show relative, rather than absolute, line numbers in RStudio's code editor.
+    */
+   @DefaultStringValue("Use relative line numbers in editor")
+   String relativeLineNumbersTitle();
+   @DefaultStringValue("Show relative, rather than absolute, line numbers in RStudio's code editor.")
+   String relativeLineNumbersDescription();
 
    /**
     * Highlight the selected word in RStudio's code editor.
@@ -645,6 +654,14 @@ public interface UserPrefsAccessorConstants extends Constants {
    String highlightRFunctionCallsTitle();
    @DefaultStringValue("Whether to highlight R function calls in the code editor.")
    String highlightRFunctionCallsDescription();
+
+   /**
+    * Whether to show color preview in the code editor.
+    */
+   @DefaultStringValue("Show color preview")
+   String colorPreviewTitle();
+   @DefaultStringValue("Whether to show color preview in the code editor.")
+   String colorPreviewDescription();
 
    /**
     * Whether to highlight parentheses in a variety of colors.
@@ -1213,19 +1230,19 @@ public interface UserPrefsAccessorConstants extends Constants {
    String jobsTabVisibilityDescription();
 
    /**
-    * Whether to show the Launcher jobs tab in RStudio Pro and RStudio Workbench.
+    * Whether to show the Workbench Jobs tab in RStudio Pro and RStudio Workbench.
     */
    @DefaultStringValue("")
    String showLauncherJobsTabTitle();
-   @DefaultStringValue("Whether to show the Launcher jobs tab in RStudio Pro and RStudio Workbench.")
+   @DefaultStringValue("Whether to show the Workbench Jobs tab in RStudio Pro and RStudio Workbench.")
    String showLauncherJobsTabDescription();
 
    /**
-    * How to sort jobs in the Launcher tab in RStudio Pro and RStudio Workbench.
+    * How to sort jobs in the Workbench Jobs tab in RStudio Pro and RStudio Workbench.
     */
    @DefaultStringValue("")
    String launcherJobsSortTitle();
-   @DefaultStringValue("How to sort jobs in the Launcher tab in RStudio Pro and RStudio Workbench.")
+   @DefaultStringValue("How to sort jobs in the Workbench Jobs tab in RStudio Pro and RStudio Workbench.")
    String launcherJobsSortDescription();
 
    /**
@@ -1397,12 +1414,24 @@ public interface UserPrefsAccessorConstants extends Constants {
    String terminalPathDescription();
 
    /**
-    * The path to the RSA key file to use.
+    * The path to the SSH key file to use.
     */
    @DefaultStringValue("")
    String rsaKeyPathTitle();
-   @DefaultStringValue("The path to the RSA key file to use.")
+   @DefaultStringValue("The path to the SSH key file to use.")
    String rsaKeyPathDescription();
+
+   /**
+    * The encryption type to use for the SSH key file.
+    */
+   @DefaultStringValue("")
+   String sshKeyTypeTitle();
+   @DefaultStringValue("The encryption type to use for the SSH key file.")
+   String sshKeyTypeDescription();
+   @DefaultStringValue("ED25519")
+   String sshKeyTypeEnum_ed25519();
+   @DefaultStringValue("RSA")
+   String sshKeyTypeEnum_rsa();
 
    /**
     * Whether to use the devtools R package.
@@ -1413,11 +1442,11 @@ public interface UserPrefsAccessorConstants extends Constants {
    String useDevtoolsDescription();
 
    /**
-    * Clean before install.
+    * Always use --preclean when installing package.
     */
-   @DefaultStringValue("Clean before install")
+   @DefaultStringValue("Always use --preclean when installing package")
    String cleanBeforeInstallTitle();
-   @DefaultStringValue("Clean before install.")
+   @DefaultStringValue("Always use --preclean when installing package.")
    String cleanBeforeInstallDescription();
 
    /**
@@ -1851,11 +1880,11 @@ public interface UserPrefsAccessorConstants extends Constants {
    String saveRetryTimeoutDescription();
 
    /**
-    * Whether the Insert Pipe Operator command should insert the native R pipe operator, |>
+    * Whether the Insert Pipe Operator command should use the native R pipe operator, |>
     */
    @DefaultStringValue("Use R's native pipe operator, |>")
    String insertNativePipeOperatorTitle();
-   @DefaultStringValue("Whether the Insert Pipe Operator command should insert the native R pipe operator, |>")
+   @DefaultStringValue("Whether the Insert Pipe Operator command should use the native R pipe operator, |>")
    String insertNativePipeOperatorDescription();
 
    /**
@@ -1915,12 +1944,20 @@ public interface UserPrefsAccessorConstants extends Constants {
    String checkNullExternalPointersDescription();
 
    /**
-    * Enable IDE features for the Quarto publishing system.
+    * The IDE's user-interface language.
     */
-   @DefaultStringValue("Enble Quarto features")
-   String quartoEnabledTitle();
-   @DefaultStringValue("Enable IDE features for the Quarto publishing system.")
-   String quartoEnabledDescription();
+   @DefaultStringValue("User Interface Language:")
+   String uiLanguageTitle();
+   @DefaultStringValue("The IDE's user-interface language.")
+   String uiLanguageDescription();
+
+   /**
+    * Whether RStudio Desktop will use the operating system's native File and Message dialog boxes.
+    */
+   @DefaultStringValue("Use native file and message dialog boxes")
+   String nativeFileDialogsTitle();
+   @DefaultStringValue("Whether RStudio Desktop will use the operating system's native File and Message dialog boxes.")
+   String nativeFileDialogsDescription();
 
 
 

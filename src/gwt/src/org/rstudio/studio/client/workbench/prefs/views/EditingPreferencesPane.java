@@ -48,6 +48,8 @@ import org.rstudio.core.client.widget.TextBoxWithButton;
 import org.rstudio.studio.client.common.DiagnosticsHelpLink;
 import org.rstudio.studio.client.common.HelpLink;
 import org.rstudio.studio.client.common.SimpleRequestCallback;
+import org.rstudio.studio.client.workbench.commands.Commands;
+import org.rstudio.studio.client.workbench.model.Session;
 import org.rstudio.studio.client.workbench.prefs.PrefsConstants;
 import org.rstudio.studio.client.workbench.prefs.model.Prefs;
 import org.rstudio.studio.client.workbench.prefs.model.UserPrefs;
@@ -61,14 +63,26 @@ public class EditingPreferencesPane extends PreferencesPane
    @Inject
    public EditingPreferencesPane(UserPrefs prefs,
                                  SourceServerOperations server,
-                                 PreferencesDialogResources res)
+                                 PreferencesDialogResources res,
+                                 Commands commands,
+                                 Session session)
    {
       prefs_ = prefs;
       server_ = server;
+      commands_ = commands;
+
+      boolean hasProject = session.getSessionInfo().getActiveProjectFile() != null;
+
       PreferencesDialogBaseResources baseRes = PreferencesDialogBaseResources.INSTANCE;
 
       VerticalTabPanel editingPanel = new VerticalTabPanel(ElementIds.EDIT_EDITING_PREFS);
-      editingPanel.add(headerLabel(constants_.generalHeaderLabel()));
+      
+      // Extra UI shown when a project is open makes the pane overflow on some
+      // browsers, so don't display initial "General" section title to regain
+      // some vertical space.
+      if (!hasProject)
+         editingPanel.add(headerLabel(constants_.generalHeaderLabel()));
+
       editingPanel.add(tight(spacesForTab_ = checkboxPref(prefs_.useSpacesForTab(),false /*defaultSpace*/)));
       editingPanel.add(indent(tabWidth_ = numericPref(constants_.editingTabWidthLabel(), 1, UserPrefs.MAX_TAB_WIDTH,
             prefs_.numSpacesForTab())));
@@ -76,8 +90,8 @@ public class EditingPreferencesPane extends PreferencesPane
       editingPanel.add(checkboxPref(constants_.editingAutoDetectIndentationLabel(), prefs_.autoDetectIndentation(),
             constants_.editingAutoDetectIndentationDesc()));
       editingPanel.add(checkboxPref(constants_.editingInsertMatchingLabel(), prefs_.insertMatching()));
-      editingPanel.add(checkboxPref(constants_.editingInsertNativePipeOperatorLabel(),
-            prefs_.insertNativePipeOperator()));
+      useNativePipe_ = checkboxPref(constants_.editingUseNativePipeOperatorLabel(), prefs_.insertNativePipeOperator());
+      editingPanel.add(useNativePipe_);
       editingPanel.add(checkboxPref(constants_.editingReindentOnPasteLabel(), prefs_.reindentOnPaste()));
       editingPanel.add(checkboxPref(constants_.editingVerticallyAlignArgumentsIndentLabel(), prefs_.verticallyAlignArgumentsIndent()));
       editingPanel.add(checkboxPref(prefs_.softWrapRFiles()));
@@ -120,6 +134,28 @@ public class EditingPreferencesPane extends PreferencesPane
 
       lessSpaced(keyboardPanel);
       editingPanel.add(keyboardPanel);
+
+      HorizontalPanel projectPrefsPanel = new HorizontalPanel();
+      projectPrefsPanel.getElement().getStyle().setMarginTop(5, Unit.PX);
+      Label projectOverride = new Label(constants_.editingProjectOverrideInfoText());
+      projectOverride.addStyleName(baseRes.styles().infoLabel());
+      projectPrefsPanel.add(projectOverride);
+
+      SmallButton editProjectSettings = new SmallButton(constants_.editProjectPreferencesButtonLabel());
+      editProjectSettings.getElement().getStyle().setMarginLeft(5, Unit.PX);
+      editProjectSettings.addClickHandler(new ClickHandler() {
+         @Override
+         public void onClick(ClickEvent event)
+         {
+            // open the project options pane for editing
+            // this will open to the General tab, but it would be ideal if we could open directly to Editing tab
+            commands_.projectOptions().execute();
+         }
+      });
+      projectPrefsPanel.add(editProjectSettings);
+      editingPanel.add(projectPrefsPanel);
+
+      projectPrefsPanel.setVisible(hasProject);
 
       Label executionLabel = headerLabel(constants_.editingExecutionLabel());
       editingPanel.add(executionLabel);
@@ -167,6 +203,7 @@ public class EditingPreferencesPane extends PreferencesPane
       displayPanel.add(checkboxPref(constants_.displayHighlightSelectedWordLabel(), prefs_.highlightSelectedWord()));
       displayPanel.add(checkboxPref(constants_.displayHighlightSelectedLineLabel(), prefs_.highlightSelectedLine()));
       displayPanel.add(checkboxPref(constants_.displayShowLineNumbersLabel(), prefs_.showLineNumbers()));
+      displayPanel.add(checkboxPref(constants_.displayRelativeLineNumbersLabel(), prefs_.relativeLineNumbers()));
       displayPanel.add(tight(showMargin_ = checkboxPref(constants_.displayShowMarginLabel(), prefs_.showMargin(), false /*defaultSpace*/)));
       displayPanel.add(indent(marginCol_ = numericPref(prefs_.marginColumn())));
       displayPanel.add(checkboxPref(constants_.displayShowInvisiblesLabel(), prefs_.showInvisibles()));
@@ -175,6 +212,7 @@ public class EditingPreferencesPane extends PreferencesPane
       displayPanel.add(checkboxPref(constants_.displayScrollPastEndOfDocumentLabel(), prefs_.scrollPastEndOfDocument()));
       displayPanel.add(checkboxPref(constants_.displayEnableTextDragLabel(), prefs_.enableTextDrag()));
       displayPanel.add(checkboxPref(prefs_.highlightRFunctionCalls()));
+      displayPanel.add(checkboxPref(prefs_.colorPreview()));
       displayPanel.add(extraSpaced(
          checkboxPref(prefs_.rainbowParentheses(), false /* defaultSpace */)));
 
@@ -415,7 +453,7 @@ public class EditingPreferencesPane extends PreferencesPane
       diagnosticsPanel.add(tight(checkboxPref(constants_.diagnosticsBackgroundDiagnosticsLabel(),
             prefs_.backgroundDiagnostics(), false /*defaultSpace*/)));
       diagnosticsPanel.add(indent(backgroundDiagnosticsDelayMs_ =
-            numericPref(constants_.diagnosticsBackgroundDiagnosticsDelayMsLabel(), 0, 9999, 
+            numericPref(constants_.diagnosticsBackgroundDiagnosticsDelayMsLabel(), 0, 9999,
                   prefs_.backgroundDiagnosticsDelayMs())));
 
       HelpLink diagnosticsHelpLink = new DiagnosticsHelpLink();
@@ -473,7 +511,7 @@ public class EditingPreferencesPane extends PreferencesPane
    protected void initialize(UserPrefs prefs)
    {
       lineEndings_.setValue(prefs.lineEndingConversion().getValue());
-
+      useNativePipe_.setValue(prefs.insertNativePipeOperator().getGlobalValue());
       showCompletions_.setValue(prefs_.codeCompletion().getValue());
       showCompletionsOther_.setValue(prefs_.codeCompletionOther().getValue());
       editorMode_.setValue(prefs_.editorKeybindings().getValue());
@@ -498,7 +536,7 @@ public class EditingPreferencesPane extends PreferencesPane
 
       // editing prefs
       prefs_.lineEndingConversion().setGlobalValue(lineEndings_.getValue());
-
+      prefs_.insertNativePipeOperator().setGlobalValue(useNativePipe_.getValue());
       prefs_.defaultEncoding().setGlobalValue(encodingValue_);
 
       prefs_.codeCompletion().setGlobalValue(showCompletions_.getValue());
@@ -562,6 +600,7 @@ public class EditingPreferencesPane extends PreferencesPane
 
    private final UserPrefs prefs_;
    private final SourceServerOperations server_;
+   private final Commands commands_;
    private final NumericValueWidget tabWidth_;
    private final NumericValueWidget marginCol_;
    private final LineEndingsSelectWidget lineEndings_;
@@ -570,6 +609,7 @@ public class EditingPreferencesPane extends PreferencesPane
    private final NumericValueWidget backgroundDiagnosticsDelayMs_;
    private final CheckBox spacesForTab_;
    private final CheckBox showMargin_;
+   private final CheckBox useNativePipe_;
    private final SelectWidget showCompletions_;
    private final SelectWidget showCompletionsOther_;
    private final SelectWidget editorMode_;

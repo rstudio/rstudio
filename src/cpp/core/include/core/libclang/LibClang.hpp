@@ -116,7 +116,6 @@ public:
 
    // loading
    bool load(EmbeddedLibrary embedded,
-             LibraryVersion requiredVersion,
              std::string* pDiagnostics = nullptr);
 
    core::Error unload();
@@ -636,8 +635,7 @@ public:
    CXString (*CompileCommand_getArg)(CXCompileCommand, unsigned I);
 
 private:
-   core::Error tryLoad(const std::string& libraryPath,
-                       LibraryVersion requiredVersion);
+   core::Error tryLoad(const std::string& libraryPath);
 
 private:
    void* pLib_;

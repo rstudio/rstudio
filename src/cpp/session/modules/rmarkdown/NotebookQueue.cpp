@@ -49,6 +49,7 @@
 #define kThreadQuitCommand "thread_quit"
 
 using namespace rstudio::core;
+using namespace boost::placeholders;
 
 namespace rstudio {
 namespace session {
@@ -440,9 +441,8 @@ private:
             if (label != "setup")
                workingDir = docQueue->workingDir();
 
-            std::string codeString = string_utils::wideToUtf8(unit->code());
             execContext_ = boost::make_shared<ChunkExecContext>(
-               unit->docId(), unit->chunkId(), codeString, label, ctx, engine,
+               unit->docId(), unit->chunkId(), unit->code(), label, ctx, engine,
                unit->execScope(), workingDir, options,
                docQueue->pixelWidth(), docQueue->charWidth());
             execContext_->connect();
@@ -518,7 +518,7 @@ private:
          // loop back console input request to session -- this allows us to treat 
          // notebook console input exactly as user console input
          core::http::Response response;
-         Error error = session::http::sendSessionRequest(
+         Error error = session::module_context::sendSessionRequest(
                "/rpc/console_input", input, &response);
 
          if (error)

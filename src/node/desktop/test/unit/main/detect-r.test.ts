@@ -14,10 +14,12 @@
  */
 
 import { describe } from 'mocha';
+import { assert } from 'chai';
 
 import { saveAndClear, restore } from '../unit-utils';
+import { promptUserForR } from '../../../src/main/detect-r';
 
-describe('detect-r', () => {
+describe('DetectR', () => {
   const vars: Record<string, string> = {
     RSTUDIO_WHICH_R: '',
   };
@@ -28,5 +30,13 @@ describe('detect-r', () => {
 
   afterEach(() => {
     restore(vars);
+  });
+
+  it('Prompt User for R on Non-Windows OS', async () => {
+    const platform = 'linux';
+
+    const [path, preflightError] = await promptUserForR(platform);
+    assert.equal(path, null);
+    assert.equal(preflightError?.message, 'This window can only be opened on Windows');
   });
 });

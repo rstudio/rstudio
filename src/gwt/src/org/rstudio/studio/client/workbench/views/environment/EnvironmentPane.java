@@ -100,7 +100,7 @@ public class EnvironmentPane extends WorkbenchPane
                           UserPrefs prefs,
                           DependencyManager dependencyManager)
    {
-      super("Environment", events);
+      super(constants_.environmentCapitalized(), events);
 
       commands_ = commands;
       server_ = serverOperations;

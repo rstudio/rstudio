@@ -73,16 +73,22 @@ namespace {
 FilePath defaultLogPathImpl()
 {
 #ifdef RSTUDIO_SERVER
+#ifdef RSTUDIO_PRO_BUILD
+   return FilePath(RSTUDIO_DEFAULT_LOG_PATH);
+#else
+   // For open-source Server, support logging even if RStudio Server is run
+   // as a non-root user.
    if (core::system::effectiveUserIsRoot())
    {
       // server: root uses default documented logging directory
-      return FilePath("/var/log/rstudio/rstudio-server");
+      return FilePath(RSTUDIO_DEFAULT_LOG_PATH);
    }
    else
    {
       // server: prefer user data directory if we're not running as root
       return core::system::xdg::userDataDir().completePath("log");
    }
+#endif
 #else
    // desktop: always stored in user data directory
    return core::system::xdg::userDataDir().completePath("log");

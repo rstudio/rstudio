@@ -309,7 +309,12 @@ export interface PandocMarkWriter {
 
 export type PandocMarkWriterFn = (output: PandocOutput, mark: Mark, parent: Fragment) => void;
 
-export type PandocOutputOption = 'writeSpaces';
+export const kWriteSpaces = 'writeSpaces';
+export const kPreventBracketEscape = 'preventBracketEscape';
+
+export type PandocOutputOption = typeof kWriteSpaces | typeof kPreventBracketEscape;
+
+
 
 export interface PandocOutput {
   extensions: PandocExtensions;

@@ -13,8 +13,9 @@
  *
  */
 
-import { ipcRenderer } from 'electron';
-import { FilePath } from '../core/file-path';
+import { ipcRenderer, SaveDialogReturnValue, webContents } from 'electron';
+import { logger } from '../core/logger';
+import { normalizeSeparators } from '../ui/utils';
 
 interface VoidCallback<Type> {
   (result: Type): void;
@@ -68,21 +69,41 @@ export function getDesktopBridge() {
     ) => {
       ipcRenderer
         .invoke('desktop_get_save_file_name', caption, label, dir, defaultExtension, forceDefaultExtension, focusOwner)
-        .then((result) => {
+        .then((result: SaveDialogReturnValue) => {
+          // if the result was canceled, bail early
           if (result.canceled as boolean) {
-            callback('');
-          } else {
-            if (defaultExtension.length !== 0) {
-              // Add default extension, if it's missing
-              const fp = new FilePath(result.filePath);
-              if (fp.getExtension().length == 0 || (forceDefaultExtension && fp.getExtension() !== defaultExtension)) {
-                callback(fp.getStem() + defaultExtension);
-                return;
-              }
-            }
-
-            callback(result.filePath);
+            return callback('');
           }
+
+          // if we don't have a default extension, just invoke callback
+          let filePath = result.filePath as string;
+          if (defaultExtension.length === 0) {
+            return callback(filePath);
+          }
+
+          // add default extension if necessary
+          const dotIndex = filePath.lastIndexOf('.');
+          const ext = dotIndex > 0 ? filePath.substring(dotIndex) : '';
+          if (ext.length === 0 || (forceDefaultExtension && ext !== defaultExtension)) {
+            const name = dotIndex > 0 ? filePath.substring(0, dotIndex) : filePath;
+            filePath = name + defaultExtension;
+          }
+
+          if (process.platform === 'win32') {
+            filePath = normalizeSeparators(filePath, '/');
+          }
+
+          const expandedHomePath = normalizeSeparators(process.env.HOME ?? '', '/');
+          const homePath = '~';
+
+          /* this makes sure the file path and HOME path
+          only contains forward slashes as separators for correct comparison */
+          if (expandedHomePath.length && filePath.startsWith(expandedHomePath)) {
+            filePath = homePath + filePath.substring(expandedHomePath.length);
+          }
+
+          // invoke callback
+          return callback(filePath);
         })
         .catch((error) => reportIpcError('getSaveFileName', error));
     },
@@ -227,13 +248,6 @@ export function getDesktopBridge() {
         .catch((error) => reportIpcError('chooseRVersion', error));
     },
 
-    devicePixelRatio: (callback: VoidCallback<number>) => {
-      ipcRenderer
-        .invoke('desktop_device_pixel_ratio')
-        .then((ratio) => callback(ratio))
-        .catch((error) => reportIpcError('devicePixelRatio', error));
-    },
-
     openMinimalWindow: (name: string, url: string, width: number, height: number) => {
       ipcRenderer.send('desktop_open_minimal_window', name, url, width, height);
     },
@@ -272,12 +286,11 @@ export function getDesktopBridge() {
         .catch((error) => reportIpcError('prepareForNamedWindow', error));
     },
 
-    closeNamedWindow: (name: string) => {
-      ipcRenderer.send('desktop_close_named_window', name);
-    },
-
-    copyPageRegionToClipboard: (left: number, top: number, width: number, height: number) => {
-      ipcRenderer.send('desktop_copy_page_region_to_clipboard', left, top, width, height);
+    copyPageRegionToClipboard: (x: number, y: number, width: number, height: number, callback: () => void) => {
+      ipcRenderer
+        .invoke('desktop_copy_page_region_to_clipboard', x, y, width, height)
+        .then(() => callback())
+        .catch((error) => reportIpcError('desktop_copy_page_region_to_clipboard', error));
     },
 
     exportPageRegionToFile: (
@@ -289,18 +302,6 @@ export function getDesktopBridge() {
       height: number,
     ) => {
       ipcRenderer.send('desktop_export_page_region_to_file', targetPath, format, left, top, width, height);
-    },
-
-    printText: (text: string) => {
-      ipcRenderer.send('desktop_print_text', text);
-    },
-
-    paintPrintText: (printer: string) => {
-      ipcRenderer.send('desktop_paint_print_text', printer);
-    },
-
-    printFinished: (result: number) => {
-      ipcRenderer.send('desktop_print_finished', result);
     },
 
     supportsClipboardMetafile: (callback: VoidCallback<boolean>) => {
@@ -344,19 +345,29 @@ export function getDesktopBridge() {
       ipcRenderer.send('desktop_set_desktop_rendering_engine', engine);
     },
 
-    filterText: (text: string, callback: VoidCallback<string>) => {
-      ipcRenderer
-        .invoke('desktop_filter_text', text)
-        .then((filtered) => callback(filtered))
-        .catch((error) => reportIpcError('filterText', error));
-    },
-
     cleanClipboard: (stripHtml: boolean) => {
       ipcRenderer.send('desktop_clean_clipboard', stripHtml);
     },
 
-    setPendingQuit: (pendingQuit: number) => {
-      ipcRenderer.send('desktop_set_pending_quit', pendingQuit);
+    setPendingQuit: (pendingQuit: number, callback: VoidCallback<unknown>) => {
+      ipcRenderer
+        .invoke('desktop_set_pending_quit', pendingQuit)
+        .then((response) => callback(response))
+        .catch((error) => reportIpcError('setPendingQuit', error));
+    },
+
+    openFile: (path: string) => {
+      if (!path) {
+        return;
+      }
+      const webcontents = webContents.getAllWebContents();
+
+      if (webcontents.length) {
+        path = path.replaceAll('\\', '\\\\').replaceAll('"', '\\"').replaceAll('\n', '\\n');
+        webcontents[0]
+          .executeJavaScript(`window.desktopHooks.openFile("${path}")`)
+          .catch((error: unknown) => logger().logError(error));
+      }
     },
 
     openProjectInNewWindow: (projectFilePath: string) => {
@@ -365,10 +376,6 @@ export function getDesktopBridge() {
 
     openSessionInNewWindow: (workingDirectoryPath: string) => {
       ipcRenderer.send('desktop_open_session_in_new_window', workingDirectoryPath);
-    },
-
-    openTerminal: (terminalPath: string, workingDirectory: string, extraPathEntries: string, shellType: string) => {
-      ipcRenderer.send('desktop_open_terminal', terminalPath, workingDirectory, extraPathEntries, shellType);
     },
 
     getFixedWidthFontList: (callback: VoidCallback<string>) => {
@@ -389,18 +396,9 @@ export function getDesktopBridge() {
       ipcRenderer.send('desktop_set_fixed_width_font', font);
     },
 
-    getZoomLevels: (callback: VoidCallback<string>) => {
-      ipcRenderer
-        .invoke('desktop_get_zoom_levels')
-        .then((levels) => callback(levels))
-        .catch((error) => reportIpcError('getZoomLevels', error));
-    },
-
     getZoomLevel: (callback: VoidCallback<number>) => {
-      ipcRenderer
-        .invoke('desktop_get_zoom_level')
-        .then((zoomLevel) => callback(zoomLevel))
-        .catch((error) => reportIpcError('getZoomLevel', error));
+      const zoomLevel = ipcRenderer.sendSync('desktop_get_zoom_level');
+      callback(zoomLevel);
     },
 
     setZoomLevel: (zoomLevel: number) => {
@@ -440,17 +438,6 @@ export function getDesktopBridge() {
 
     setEnableAccessibility: (enable: boolean) => {
       ipcRenderer.send('desktop_set_enable_accessibility', enable);
-    },
-
-    getClipboardMonitoring: (callback: VoidCallback<boolean>) => {
-      ipcRenderer
-        .invoke('desktop_get_clipboard_monitoring')
-        .then((monitoring) => callback(monitoring))
-        .catch((error) => reportIpcError('getClipboardMonitoring', error));
-    },
-
-    setClipboardMonitoring: (monitoring: boolean) => {
-      ipcRenderer.send('desktop_set_clipboard_monitoring', monitoring);
     },
 
     getIgnoreGpuExclusionList: (callback: VoidCallback<boolean>) => {
@@ -556,13 +543,6 @@ export function getDesktopBridge() {
 
     setShinyDialogUrl: (url: string) => {
       ipcRenderer.send('desktop_set_shiny_dialog_url', url);
-    },
-
-    getScrollingCompensationType: (callback: VoidCallback<string>) => {
-      ipcRenderer
-        .invoke('desktop_get_scrolling_compensation_type')
-        .then((compensationType) => callback(compensationType))
-        .catch((error) => reportIpcError('getScrollingCompensationType', error));
     },
 
     isMacOS: (callback: VoidCallback<boolean>) => {

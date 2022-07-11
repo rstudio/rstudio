@@ -15,7 +15,6 @@
 
 import { promises } from 'fs';
 import path from 'path';
-import copy, { CopyErrorInfo } from 'recursive-copy';
 import lineReader from 'line-reader';
 
 /**
@@ -132,25 +131,4 @@ export async function isDirectory(path): Promise<boolean> {
   } catch (err) {
     return false;
   }
-}
-
-/**
- * Copy files. Throws an exception on error.
- *
- * @param files file(s) to copy
- * @param sourceDir source directory
- * @param destDir destination directory
- */
-export async function copyFiles(files: Array<string>, sourceDir: string, destDir: string): Promise<void> {
-  await copy(sourceDir, destDir, {
-    filter: files,
-    dot: true,
-  })
-    .on(copy.events.COPY_FILE_COMPLETE, function (copyOperation) {
-      // Too verbose normally but helpful when debugging
-      // console.log('Copied to ' + copyOperation.dest);
-    })
-    .on(copy.events.ERROR, function (error: Error, info: CopyErrorInfo) {
-      throw error;
-    });
 }

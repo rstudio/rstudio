@@ -237,13 +237,6 @@ void handleClientInit(const boost::function<void()>& initFunction,
       sessionInfo["scratch_dir"] = options.userScratchPath().getAbsolutePath();
    }
 
-   // temp dir
-   FilePath tempDir = rstudio::r::session::utils::tempDir();
-   Error error = tempDir.ensureDirectory();
-   if (error)
-      LOG_ERROR(error);
-   sessionInfo["temp_dir"] = tempDir.getAbsolutePath();
-
    // R_LIBS_USER
    sessionInfo["r_libs_user"] = module_context::rLibsUser();
    
@@ -263,7 +256,7 @@ void handleClientInit(const boost::function<void()>& initFunction,
    
    // source documents
    json::Array jsonDocs;
-   error = modules::source::clientInitDocuments(&jsonDocs);
+   Error error = modules::source::clientInitDocuments(&jsonDocs);
    if (error)
       LOG_ERROR(error);
    sessionInfo["source_documents"] = jsonDocs;
@@ -282,10 +275,7 @@ void handleClientInit(const boost::function<void()>& initFunction,
    sessionInfo["python_repl_active"] = modules::reticulate::isReplActive();
    
    // propagate RETICULATE_PYTHON if set
-   std::string reticulate_python = core::system::getenv("RETICULATE_PYTHON");
-   if (reticulate_python.empty())
-      reticulate_python = core::system::getenv("RETICULATE_PYTHON_FALLBACK");
-   sessionInfo["reticulate_python"] = reticulate_python;
+   sessionInfo["reticulate_python"] = core::system::getenv("RETICULATE_PYTHON");
    
    // get current console language
    sessionInfo["console_language"] = modules::reticulate::isReplActive() ? "Python" : "R";
@@ -577,7 +567,7 @@ void handleClientInit(const boost::function<void()>& initFunction,
 
    sessionInfo["job_state"] = modules::jobs::jobState();
 
-   sessionInfo["launcher_jobs_enabled"] = modules::overlay::launcherJobsFeatureDisplayed();
+   sessionInfo["workbench_jobs_enabled"] = modules::overlay::workbenchJobsFeatureDisplayed();
 
    json::Object packageDependencies;
    error = modules::dependency_list::getDependencyList(&packageDependencies);

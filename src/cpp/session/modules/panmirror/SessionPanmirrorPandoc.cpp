@@ -27,6 +27,7 @@
 #include <session/SessionModuleContext.hpp>
 
 using namespace rstudio::core;
+using namespace boost::placeholders;
 
 namespace rstudio {
 namespace session {
@@ -216,6 +217,11 @@ void pandocMarkdownToAst(const json::JsonRpcRequest& request,
    std::vector<std::string> args;
    args.push_back("--from");
    args.push_back(format);
+   args.push_back("--abbreviations");
+   FilePath abbrevFile =  session::options().rResourcesPath()
+      .completeChildPath("pandoc")
+      .completeChildPath("abbreviations");
+   args.push_back(string_utils::utf8ToSystem(abbrevFile.getAbsolutePath()));
    args.push_back("--to");
    args.push_back("json");
    std::copy(options.begin(), options.end(), std::back_inserter(args));

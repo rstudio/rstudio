@@ -353,10 +353,28 @@
       file_list <- c(file_list, deploy_frame$path)
     } 
     file_list <- c(file_list, basename(t))
+  }
 
-    # if this is a quarto doc then query quarto for resources
-    if (nzchar(quartoSrcFile)) {
-      file_list <- c(file_list, .rs.quartoFileResources(quartoSrcFile))
+  if (nzchar(quartoSrcFile)) {
+    # query quarto for project and resources
+    project <- .rs.quartoFileProject(quartoSrcFile)
+    resources <- project$resources
+    project <- project$project
+    
+    # query quarto for resources
+    file_list <- c(file_list, resources)
+
+    # per-directory option may be given in _metadata.yml
+    if (file.exists(file.path(dirname(quartoSrcFile), "_metadata.yml"))) {
+      file_list <- c(file_list, "_metadata.yml")
+    }
+    
+    if (length(project)) {
+      if (identical(project, "")) {
+        file_list <- c(file_list, "_quarto.yml")
+      } else {
+        file_list <- c(file_list, file.path(project, "_quarto.yml"))
+      }
     }
   }
 
@@ -365,7 +383,7 @@
   file_list <- unique(file_list)
 
   # compose the result
-  list (
+  list(
     contents = file_list,
     totalSize = sum(
        file.info(file.path(dirname(target), file_list))$size))
@@ -384,6 +402,9 @@
    .Call("rs_quartoFileResources", target)
 })
 
+.rs.addFunction("quartoFileProject", function(target) {
+   .Call("rs_quartoFileProject", basename(target), dirname(target), PACKAGE = "(embedding)")
+})
 
 # Given a list of files of the form:
 # 

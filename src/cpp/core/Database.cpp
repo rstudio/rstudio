@@ -562,7 +562,9 @@ Error Connection::executeStr(const std::string& queryStr)
    }
    catch (soci::soci_error& error)
    {
-      return DatabaseError(error);
+      Error res = DatabaseError(error);
+      res.addProperty("query", queryStr);
+      return res;
    }
 }
 
@@ -827,6 +829,7 @@ const std::map<std::string, int>& SchemaVersion::versionMap()
             versions[""] = 0;
             versions["Ghost Orchid"] = 1;
             versions["Prairie Trillium"] = 2;
+            versions["Spotted Wakerobin"] = 3;
          }
       }
       END_LOCK_MUTEX
@@ -945,6 +948,7 @@ Error SchemaUpdater::getSchemaTableColumnCount(int* pColumnCount)
    }
 
    *pColumnCount = columnCount;
+
    return Success();
 }
 
@@ -1222,6 +1226,43 @@ Error createConnectionPool(size_t poolSize,
    }
 
    return Success();
+}
+
+Error execAndProcessQuery(boost::shared_ptr<database::IConnection> pConnection,
+                          const std::string& sql,
+                          const boost::function<void(const database::Row&)>& rowHandler)
+{
+   Rowset rows;
+   Query query = pConnection->query(sql);
+   Error error = pConnection->execute(query, rows);
+   if (error)
+      return error;
+
+   LOG_DEBUG_MESSAGE("SQL Executed: " + sql);
+   if (!rowHandler.empty())
+   {
+      std::size_t rowCount = 0;
+      for (RowsetIterator it = rows.begin(); it != rows.end(); ++it)
+      {
+         const Row& row = *it;
+         rowHandler(row);
+         rowCount++;
+      }
+      LOG_DEBUG_MESSAGE("SQL Processed: " + std::to_string(rowCount) + " rows");
+   }
+
+   return Success();
+}
+
+std::string getRowStringValue(const Row& row, const std::string& column)
+{
+   soci::indicator indicator = row.get_indicator(column);
+   if (indicator == soci::i_ok)
+   {
+      return row.get<std::string>(column);
+   }
+   LOG_WARNING_MESSAGE("Could not retrieve " + column + " value from database row.");
+   return std::string();
 }
 
 } // namespace database

@@ -7,7 +7,7 @@ RStudio 1.4 uses xterm.js 4.x
 RStudio 1.3 uses xterm.js 3.14.5.
 
 ### Getting the Code (1.3+)
-Xterm.js and its addins are distribued via npm. Run the build-xterm script from this folder to 
+Xterm.js and its addins are distributed via npm. Run the build-xterm script from this folder to 
 pull down the release and minify it into the source tree.
 
 ## RStudio 1.1/1.2
@@ -74,7 +74,7 @@ this rule from `tweak-xterm-css.R` and `compile-themes.R`. Ignore
 obsolete selectors, i.e. remove selectors that have been eliminated from 
 `tweak-xterm.css.R` and `compile-themes.R`.
 
-4) Once `build-xterm` runs successfuly and ends with **Done!** examine the
+4) Once `build-xterm` runs successfully and ends with **Done!** examine the
 difference between new and previous
 `rstudio/src/gwt/src/org/rstudio/studio/client/workbench/views/terminal/xterm/xterm.css`
 and look for added instances of `color:` or `background-color:` (ignoring
@@ -91,7 +91,7 @@ they contain the rules removed by `tweak-xterm.cs.R`.
 changes from another dark theme such as Merbivore Soft and copy them over.
 Be careful to preserve foreground and background colors.
 
-### Evaluting the JavaScript Changes (1.2)
+### Evaluating the JavaScript Changes (1.2)
 Ideally, this would be completely handled by running the client-side unit 
 tests via **ant unittest**. This is not currently the case, however on the
 positive side, XTerm.js 2.x releases have rarely required code changes in 

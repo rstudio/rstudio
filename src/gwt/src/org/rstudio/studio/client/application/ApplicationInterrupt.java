@@ -39,6 +39,7 @@ import org.rstudio.studio.client.server.VoidServerRequestCallback;
 import org.rstudio.studio.client.workbench.WorkbenchContext;
 import org.rstudio.studio.client.workbench.commands.Commands;
 
+import com.google.gwt.user.client.Command;
 import com.google.gwt.user.client.Timer;
 import com.google.inject.Inject;
 import com.google.inject.Provider;
@@ -232,33 +233,42 @@ public class ApplicationInterrupt implements ConsoleBusyEvent.Handler
             message,
             false, 
             new ProgressOperation() {
+               
                @Override
                public void execute(ProgressIndicator indicator)
                {
-                  setPendinqQuit(DesktopFrame.PENDING_QUIT_RESTART_AND_RELOAD);
-                        
+                  DesktopFrameHelper.setPendingQuit(DesktopFrame.PENDING_QUIT_RESTART_AND_RELOAD, () ->
+                  {
+                     executeImpl(indicator);
+                  });
+               }
+               
+               private void executeImpl(ProgressIndicator indicator)
+               {
                   // determine the next session project
-                  String nextProj = pWorkbenchContext_.get()
-                                                      .getActiveProjectFile();
+                  String nextProj = pWorkbenchContext_.get().getActiveProjectFile();
                   if (nextProj == null)
                      nextProj = Projects.NONE;
                   
                   // force the abort
-                  server_.abort(nextProj,
-                                new VoidServerRequestCallback(indicator) {
+                  server_.abort(nextProj, new VoidServerRequestCallback(indicator) {
+                     
                      @Override 
                      protected void onSuccess()
                      {
                         if (!Desktop.isDesktop())
                            eventBus_.fireEvent(new ReloadEvent());
                      }
+                     
                      @Override
                      protected void onFailure()
                      {
-                        setPendinqQuit(DesktopFrame.PENDING_QUIT_NONE);
+                        DesktopFrameHelper.setPendingQuit(DesktopFrame.PENDING_QUIT_NONE, () -> {});
                      }
+                     
                   }); 
                } 
+               
             },
             new ProgressOperation() {
 
@@ -269,12 +279,6 @@ public class ApplicationInterrupt implements ConsoleBusyEvent.Handler
                } 
             }, 
             false);   
-   }
-   
-   private void setPendinqQuit(int pendingQuit)
-   {
-      if (Desktop.hasDesktopFrame())
-         Desktop.getFrame().setPendingQuit(pendingQuit);
    }
    
    private void finishInterrupt(InterruptHandler handler)

@@ -1,3 +1,4 @@
+#!groovy
 @Library('pipeline-shared-libraries@feature/windows-pbp') _
 
 rstudioVersionMajor = 0
@@ -221,14 +222,14 @@ pipeline {
               name 'flavor'
               values 'desktop', 'server', 'electron'
           }
-        }
+                            }
 
         excludes {
           exclude {
             axis {
               name 'flavor'
               values 'electron'
-            }
+                            }
             axis {
               name 'os'
               notValues 'bionic', 'windows'
@@ -238,6 +239,7 @@ pipeline {
             axis {
               name 'agent_label'
               values 'windows'
+                                    }
             }
             axis {
               name 'os'
@@ -268,6 +270,7 @@ pipeline {
 
         // Linux specific steps ===================================================================================================================================================
         stages {
+                retry(2) {
           stage('Compile Package') {
             when {
               not { environment name: 'os', value: 'windows' }
@@ -279,8 +282,8 @@ pipeline {
                 registryCredentialsId 'ecr:us-east-1:aws-build-role'
                 registryUrl 'https://263245908434.dkr.ecr.us-east-1.amazonaws.com'
                 reuseNode true
-              }
-            }
+                  }
+                }
 
             environment {
               CODESIGN_KEY = credentials('gpg-codesign-private-key')
@@ -289,37 +292,46 @@ pipeline {
               RSTUDIO_VERSION_MINOR = '${rstudioVersionMinor}'
               RSTUDIO_VERSION_PATCH = '${rstudioVersionPatch}'
               RSTUDIO_VERSION_SUFFIX = '${rstudioVersionSuffix}'
-            }
 
-            steps {
               dir('package/linux') {
                 sh "./make-${flavor}-package ${PACKAGE_TYPE} clean"
                 sh "../../docker/jenkins/sign-release.sh /build-${flavor.capitalize()}-${PACKAGE_TYPE}/rstudio-*.${PACKAGE_TYPE.toLowerCase()} ${CODESIGN_KEY} ${CODESIGN_PASS}"
-              }
-            }
-          }
+                  }
+                }
+                }
 
           stage('Run Tests') {
             when {
               not { environment name: 'os', value: 'windows' }
-            }
+                  }
 
             agent {
               docker {
                 image "jenkins/ide:${os}-${arch}-${env.BRANCH_NAME}"
                 reuseNode true
-              }
-            }
+                  }
+                }
+                                if (current_container.flavor == "electron") {
+                                    stage('electron tests'){
+                                        try {
+                                            bat 'cd src/node/desktop && scripts\\run-unit-tests.cmd'
+                                        }
+                                        catch(err){
+                                            currentBuild.result = "UNSTABLE"
+                                        }
+                                    }
+                                }
 
             steps {
               dir("package/linux/${flavor.capitalize()}-${PACKAGE_TYPE}/src/gwt") {
                 sh './gwt-unit-tests.sh'
               }
               dir("package/linux/${flavor.capitalize()}-${PACKAGE_TYPE}/src/cpp") {
-                sh './rstudio-tests.sh'
+                    bat "\"C:\\Program Files (x86)\\Windows Kits\\10\\bin\\10.0.17134.0\\x86\\signtool\" sign /f %pfx-file% /p %pfx-passphrase% /v /debug /n \"RStudio PBC\" /t http://timestamp.digicert.com  package\\win32\\build\\${packageName}.exe"
               }
-            }
-          }
+                    bat "\"C:\\Program Files (x86)\\Windows Kits\\10\\bin\\10.0.17134.0\\x86\\signtool\" verify /v /pa package\\win32\\build\\${packageName}.exe"
+                  }
+                }
 
           stage('Upload Artifacts') {
             when {
@@ -330,8 +342,8 @@ pipeline {
               docker {
                 image "jenkins/ide:${os}-${arch}-${env.BRANCH_NAME}"
                 reuseNode true
-              }
-            }
+                    }
+                  }
 
             environment {
               SENTRY_API_KEY = credentials('ide-sentry-api-key')
@@ -340,18 +352,18 @@ pipeline {
               AWS_PATH="${flavor}/${os}/${PACKAGE_ARCH}/"
               PRODUCT="${flavor}"
               RSTUDIO_VERSION=" ${rstudioVersionMajor}.${rstudioVersionMinor}.${rstudioVersionPatch}${rstudioVersionSuffix}"
-            }
+                }
 
             steps {
               script {
-                if (rstudioVersionSuffix.contains("pro")) {
+                    if (rstudioVersionSuffix.contains("pro")) {
                   if (env.PRODUCT == "desktop") {
                     env.PRODUCT = "desktop-pro"
                   } else if (env.PRODUCT == "electron") {
                     env.PRODUCT = "electron-pro"
                   } else if (env.PRODUCT == "server") {
                     env.PRODUCT = "workbench"
-                  }
+                    }
                 }
 
                 def packageDir = "package/linux/build-${flavor.capitalize()}-${PACKAGE_TYPE}/"
@@ -381,8 +393,9 @@ pipeline {
 
                       withAWS(credentials: 'jenkins-aws') {
                         s3Upload acl: 'BucketOwnerFullControl', bucket: "$AWS_BUCKET", file: "$tarballFile", path: "$AWS_PATH"
-                      }
-                    }
+                  }
+                }
+                                    stage('upload debug symbols') {
                   }
 
                   // Upload stripped debinfo to sentry
@@ -390,19 +403,21 @@ pipeline {
                     retry 5 {
                       timeout activity: true, time: 15 {
                         sh "../../../../../docker/jenkins/sentry-upload.sh ${SENTRY_API_KEY}"
-                      }
                     }
                   }
                 }
+              }
 
                 // Publish to the dailies page
                 dir('docker/jenkins') {
                   sh "./publish-build.sh --build ${PRODUCT}/${os} --url https://s3.amazonaws.com/rstudio-ide-build/${flavor}/${os}/${PACKAGE_ARCH}/${packageFile} --pat ${GITHUB_LOGIN_PSW} --file ${packageDir}/${packageFile} --version ${RSTUDIO_VERSION}"
                   if ((flavor == "desktop") || (flavor == "electron")) {
                     sh "./publish-build.sh --build ${PRODUCT}/${os} --url https://s3.amazonaws.com/rstudio-ide-build/${flavor}/${os}/${PACKAGE_ARCH}/${tarballFile} --pat ${GITHUB_LOGIN_PSW} --file ${packageDir}/${tarballDir}/${tarballFile} --version ${RSTUDIO_VERSION}"
-                  }
-                }
-              }
+            }
+          }
+        }
+            }
+        }
             }
           }
           // ========================================================================================================================================================================

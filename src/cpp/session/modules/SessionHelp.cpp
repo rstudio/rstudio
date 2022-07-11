@@ -68,6 +68,7 @@
 #undef FALSE
 
 using namespace rstudio::core;
+using namespace boost::placeholders;
 
 namespace rstudio {
 namespace session {
@@ -283,6 +284,37 @@ const char * const kJsCallbacks = R"EOF(
 
    if (window.parent.helpMousedown)
       window.onmousedown = function(e) { window.parent.helpMousedown(e); }
+
+   if (window.parent.helpMouseover)
+      window.onmouseover = function(e) { window.parent.helpMouseover(e); }
+
+   if (window.parent.helpClick)
+      window.onclick = function(e) { window.parent.helpClick(e); } 
+
+   window.addEventListener("load", function(event) {
+
+      // https://github.com/rstudio/rmarkdown/blob/de02c926371fdadc4d92f08e1ad7b77db069be49/inst/rmarkdown/templates/html_vignette/resources/vignette.css#L187-L201
+      var classMap = {
+         "at": "ace_keyword ace_operator",
+         "ch": "ace_string",
+         "co": "ace_comment",
+         "cf": "ace_keyword",
+         "cn": "ace_constant ace_language",
+         "dt": "ace_identifier",
+         "dv": "ace_constant ace_numeric",
+         "er": "ace_keyword ace_operator",
+         "fu": "ace_identifier",
+         "kw": "ace_keyword",
+         "ot": "ace_keyword ace_operator",
+         "sc": "ace_keyword ace_operator",
+         "st": "ace_string",
+      };
+
+      var els = document.querySelectorAll(".sourceCode span");
+      for (el of els)
+         el.className = classMap[el.className] || el.className;
+
+   });
 
 </script>
 )EOF";
@@ -700,6 +732,100 @@ r_util::RPackageInfo packageInfoForRd(const FilePath& rdFilePath)
    }
 }
 
+Error Rd2HTML(FilePath filePath, std::string* html)
+{
+   r::exec::RFunction fun(".rs.Rd2HTML");
+   fun.addUtf8Param(filePath.getAbsolutePath());
+
+   // add in package-specific information if available
+   r_util::RPackageInfo pkgInfo = packageInfoForRd(filePath);
+   if (!pkgInfo.empty())
+   {
+      if (!pkgInfo.name().empty())
+         fun.addParam(pkgInfo.name());
+
+      std::string macros = pkgInfo.name();
+      if (!pkgInfo.rdMacros().empty())
+         macros = macros + "," + pkgInfo.rdMacros();
+      fun.addParam(macros);
+   }
+
+   return fun.call(html);
+}
+
+void handleDevFigure(const http::Request& request,
+                     http::Response* pResponse)
+{
+   // read parameters
+   std::string pkg = request.queryParamValue("pkg");
+   std::string figure = request.queryParamValue("figure");
+   
+   if (pkg.empty() || figure.empty())
+   {
+      pResponse->setError(http::status::BadRequest, "Malformed dev-figure. Needs pkg and figure parameters");
+      return;
+   }
+
+   r::exec::RFunction system_file("base:::system.file");
+   system_file.addUtf8Param("package", pkg);
+   system_file.addParam("man");
+   system_file.addParam("figures");
+   system_file.addUtf8Param(figure);
+
+   std::string file;
+   Error error = system_file.call(&file);
+   if (error) 
+   {
+      pResponse->setError(http::status::InternalServerError, "figure not found");
+      return;
+   }
+   pResponse->setFile(FilePath(file), request);
+}
+
+template <typename Filter>
+bool handleDevRequest(const http::Request& request,
+                      const Filter& filter,
+                      http::Response* pResponse)
+{
+   std::string topic = request.queryParamValue("dev");
+   
+   r::exec::RFunction dev_topic_find("pkgload:::dev_topic_find", topic);
+   r::sexp::Protect protect;
+   SEXP res = R_NilValue;
+   Error error = dev_topic_find.call(&res, &protect);
+   if (error || res == R_NilValue)
+   {
+      return false;
+   }
+   std::string file;
+   error = r::sexp::getNamedListElement(res, "path", &file);
+   if (error)
+   {
+      return false;
+   }
+   
+   // ensure file exists
+   FilePath filePath = module_context::resolveAliasedPath(file);
+   if (!filePath.exists())
+   {
+      return false;
+   }
+   std::string html;
+   error = Rd2HTML(filePath, &html);
+   
+   if (error)
+   {
+      return false;
+   }
+   else 
+   {
+      pResponse->setContentType("text/html");
+      pResponse->setNoCacheHeaders();
+      pResponse->setBody(html, filter);
+      return true;
+   }
+}
+
 template <typename Filter>
 void handleRdPreviewRequest(const http::Request& request,
                             const Filter& filter,
@@ -720,55 +846,17 @@ void handleRdPreviewRequest(const http::Request& request,
       pResponse->setNotFoundError(request);
       return;
    }
-
-   // build command used to convert to HTML
-   FilePath rHomeBinDir;
-   Error error = module_context::rBinDir(&rHomeBinDir);
-   if (error)
-   {
-      pResponse->setError(error);
-      return;
-   }
-   
-   shell_utils::ShellCommand rCmd = module_context::rCmd(rHomeBinDir);
-   rCmd << "Rdconv";
-   rCmd << "--type=html";
-   
-   // add in package-specific information if available
-   r_util::RPackageInfo pkgInfo = packageInfoForRd(filePath);
-   if (!pkgInfo.empty())
-   {
-      if (!pkgInfo.name().empty())
-         rCmd << "--package=" + pkgInfo.name();
-      
-      std::string macros = pkgInfo.name();
-      if (!pkgInfo.rdMacros().empty())
-         macros = macros + "," + pkgInfo.rdMacros();
-      
-      rCmd << "--RdMacros=" + macros;
-   }
-
-   rCmd << filePath;
-
-   // run the conversion and return it
-   core::system::ProcessOptions options;
-   core::system::ProcessResult result;
-   error = core::system::runCommand(rCmd, options, &result);
+   std::string html;
+   Error error = Rd2HTML(filePath, &html);
    if (error)
    {
       pResponse->setError(error);
    }
-   else if (result.exitStatus != EXIT_SUCCESS)
-   {
-      LOG_ERROR_MESSAGE("Rd preview error: " + result.stdErr);
-      pResponse->setError(http::status::InternalServerError, "Internal Server Error");
-   }
-   else
+   else 
    {
       pResponse->setContentType("text/html");
       pResponse->setNoCacheHeaders();
-      std::istringstream istr(result.stdOut);
-      pResponse->setBody(istr, filter);
+      pResponse->setBody(html, filter);
    }
 }
 
@@ -801,6 +889,20 @@ void handleHttpdRequest(const std::string& location,
       presentation::handlePresentationHelpRequest(request, kJsCallbacks, pResponse);
       return;
    }
+
+   if (path == "/dev-figure")
+   {
+      handleDevFigure(request, pResponse);
+      return;   
+   }
+
+   // if there is a dev= parameter, then try to render dev documentation
+   // dev= is added .rs.Rd2HTML when serving preview file
+   if (!request.queryParamValue("dev").empty())
+   {
+      if (handleDevRequest(request, filter, pResponse))
+         return;
+   }
    
    // handle Rd file preview
    if (boost::algorithm::starts_with(path, "/preview"))
@@ -808,7 +910,7 @@ void handleHttpdRequest(const std::string& location,
       handleRdPreviewRequest(request, filter, pResponse);
       return;
    }
-   
+
    // markdown help is also a special case
    if (path == "/doc/markdown_help.html")
    {

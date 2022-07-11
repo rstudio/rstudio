@@ -30,6 +30,9 @@ import { Err } from '../core/err';
 
 import { MainWindow } from './main-window';
 import i18next from 'i18next';
+import { spawnSync } from 'child_process';
+import { changeLanguage } from './i18n-manager';
+import { randomUUID } from 'crypto';
 
 // work around Electron resolving the application path to 'app.asar'
 const appPath = path.join(path.dirname(app.getAppPath()), 'app');
@@ -39,7 +42,7 @@ export function getAppPath(): string {
 }
 
 export function initializeSharedSecret(): void {
-  const sharedSecret = randomString() + randomString() + randomString();
+  const sharedSecret = randomUUID();
   setenv('RS_SHARED_SECRET', sharedSecret);
 }
 
@@ -85,12 +88,34 @@ export function augmentCommandLineArguments(): void {
 
   const pieces = user.split(' ');
   pieces.forEach((piece) => {
-    if (piece.startsWith('-')) {
-      app.commandLine.appendSwitch(piece);
-    } else {
+
+    // if this piece doesn't start with '-', treat it as a plain argument
+    if (!piece.startsWith('-')) {
       app.commandLine.appendArgument(piece);
+      return;
     }
+
+    // otherwise, parse it as a switch and add it
+    // switches will have the form '--key=value', so split on the first '='
+    const idx = piece.indexOf('=');
+    if (idx == -1) {
+      if (!app.commandLine.hasSwitch(piece)) {
+        app.commandLine.appendSwitch(piece);
+      }
+      return;
+    }
+
+    const lhs = piece.substring(0, idx);
+    const rhs = piece.substring(idx + 1);
+
+    // replace the old switch if needed
+    if (app.commandLine.hasSwitch(lhs)) {
+      app.commandLine.removeSwitch(lhs);
+    }
+
+    app.commandLine.appendSwitch(lhs, rhs);
   });
+
 }
 
 /**
@@ -131,17 +156,32 @@ export function rsessionExeName(): string {
   }
 }
 
+/**
+ * 
+ * @returns Root of the RStudio repo for a dev build, nothing for packaged build
+ */
+export function findRepoRoot(): string {
+  if (app.isPackaged) {
+    return '';
+  }
+  for (let dir = process.cwd(); dir !== path.dirname(dir); dir = path.dirname(dir)) {
+    // check for release file
+    const releaseFile = path.join(dir, 'version', 'RELEASE');
+    if (existsSync(releaseFile)) {
+      return dir;
+    }
+  }
+  return '';
+}
+
 // used to help find built C++ sources in developer configurations
 function findBuildRoot(): string {
   // look for the project root directory. note that the current
   // working directory may differ depending on how we are launched
   // (e.g. unit tests will have their parent folder as the working directory)
-  for (let dir = process.cwd(); dir !== path.dirname(dir); dir = path.dirname(dir)) {
-    // check for release file
-    const releaseFile = path.join(dir, 'version', 'RELEASE');
-    if (existsSync(releaseFile)) {
-      return findBuildRootImpl(dir);
-    }
+  const dir = findRepoRoot();
+  if (dir.length > 0) {
+    return findBuildRootImpl(dir);
   }
 
   throw rsessionNotFoundError();
@@ -152,13 +192,20 @@ function findBuildRootImpl(rootDir: string): string {
   const buildDirs = [];
 
   // root directories to search
-  const buildDirParents = [`${rootDir}`, `${rootDir}/src`, `${rootDir}/src/cpp`];
+  const buildDirParents = [
+    `${rootDir}`,
+    `${rootDir}/src`,
+    `${rootDir}/src/cpp`,
+    `${rootDir}/package/linux`,
+    `${rootDir}/package/osx`,
+    `${rootDir}/package/win32`
+  ];
 
   // list all files + directories in root folder
   for (const buildDirParent of buildDirParents) {
     const buildDirFiles = fs.readdirSync(buildDirParent);
     for (const file of buildDirFiles) {
-      if (file.startsWith('build')) {
+      if (file.startsWith('build') || file.startsWith('cmake-build-')) {
         const path = `${buildDirParent}/${file}`;
         const stat = fs.statSync(path);
         if (stat.isDirectory()) {
@@ -348,9 +395,6 @@ export function raiseAndActivateWindow(window: BrowserWindow): void {
 }
 
 export function getDpiZoomScaling(): number {
-  // TODO: because Qt is already high-DPI aware and automatically
-  // scales in most scenarios, we no longer need to detect and
-  // apply a custom scale -- but more testing is warranted
   return 1.0;
 }
 
@@ -368,19 +412,45 @@ export function isSafeHost(host: string): boolean {
   return false;
 }
 
+// this code follows in the footsteps of R.app
+function initializeLangDarwin(): string {
+
+  {
+    // if 'force.LANG' is set, that takes precedencec
+    const args = ['read', 'org.R-project.R', 'force.LANG'];
+    const result = spawnSync('/usr/bin/defaults', args, { encoding: 'utf-8' });
+    if (result.status === 0) {
+      return result.stdout.trim();
+    }
+  }
+
+  {
+    // if 'ignore.system.locale' is set, we'll use a UTF-8 locale
+    const args = ['read', 'org.R-project.R', 'ignore.system.locale'];
+    const result = spawnSync('/usr/bin/defaults', args, { encoding: 'utf-8' });
+    if (result.status === 0 && result.stdout.trim() === 'YES') {
+      return 'en_US.UTF-8';
+    }
+  }
+
+  // next, check the LANG environment variable
+  const lang = getenv('LANG');
+  if (lang.length !== 0) {
+    return lang;
+  }
+
+  // otherwise, just use UTF-8 locale
+  return 'en_US.UTF-8';
+
+}
+
 export function initializeLang(): void {
   if (process.platform === 'darwin') {
-    // TODO: port full language detection, see initializeLang() in DesktopUtilsMac.mm
-
-    let lang = getenv('LANG');
-
-    // None of the above worked. Just hard code it.
-    if (!lang) {
-      lang = 'en_US.UTF-8';
+    const lang = initializeLangDarwin();
+    if (lang.length !== 0) {
+      setenv('LANG', lang);
+      setenv('LC_CTYPE', lang);
     }
-
-    setenv('LANG', lang);
-    setenv('LC_CTYPE', lang);
   }
 }
 
@@ -429,3 +499,40 @@ export async function createStandaloneErrorDialog(
     console.error('[utils.ts] [createStandaloneErrorDialog] Error when creating Standalone Error Dialog: ', error);
   }
 }
+
+export const handleLocaleCookies = async (window: BrowserWindow, isMainWindow = false) => {
+  const updateLocaleFromCookie = async (cookie: Electron.Cookie, window: BrowserWindow) => {
+    const localeCookieName = 'LOCALE';
+
+    if (cookie.name == localeCookieName) {
+      const localeLastTimeSetStorageItemKey = 'LAST_TIME';
+
+      const newLanguage = cookie.value;
+
+      const jsSetLocaleScript = `
+          window.localStorage.setItem('${localeCookieName}', '${newLanguage}');
+          window.localStorage.setItem('${localeLastTimeSetStorageItemKey}', '${new Date().getTime()}');
+      `;
+
+      await window.webContents.executeJavaScript(jsSetLocaleScript);
+
+      await changeLanguage(newLanguage);
+    }
+  };
+
+  if (isMainWindow) {
+    window.webContents.session.cookies.on('changed', async (_, cookie) => {
+      await updateLocaleFromCookie(cookie, window);
+    });
+  }
+
+  await window.webContents.session.cookies.get({}).then(async (cookies) => {
+    if (cookies.length === 0) {
+      await updateLocaleFromCookie({ name: 'LOCALE', value: 'en' } as any, window);
+    } else {
+      cookies.forEach(async (cookie) => {
+        await updateLocaleFromCookie(cookie, window);
+      });
+    }
+  });
+};

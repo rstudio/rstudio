@@ -17,6 +17,15 @@ package org.rstudio.studio.client.workbench.views.buildtools;
 public interface ViewBuildtoolsConstants extends com.google.gwt.i18n.client.Messages {
 
     /**
+     * Translated "Build".
+     *
+     * @return translated "Build"
+     */
+    @DefaultMessage("Build")
+    @Key("buildText")
+    String buildText();
+
+    /**
      * Translated "Build Tab".
      *
      * @return translated "Build Tab"
@@ -240,6 +249,5 @@ public interface ViewBuildtoolsConstants extends com.google.gwt.i18n.client.Mess
     @DefaultMessage("Preview ")
     @Key("serveLabel")
     String serveLabel();
-
 
 }

@@ -90,7 +90,7 @@ export function attrEditCommandFn(
         if (mark) {
           await editMarkAttrs(mark, state, dispatch, ui);
         } else {
-          await editNodeAttrs(pos, state, dispatch, ui, pandocExtensions);
+          await editNodeAttrs(pos, node, state, dispatch, ui, pandocExtensions);
         }
         if (view) {
           view.focus();
@@ -123,7 +123,7 @@ export function attrEditNodeCommandFn(nodeWithPos: NodeWithPos,
     // generic editor
     async function asyncEditAttrs() {
       if (dispatch) {
-        await editNodeAttrs(pos, state, dispatch, ui, pandocExtensions);
+        await editNodeAttrs(pos, node, state, dispatch, ui, pandocExtensions);
         if (view) {
           view.focus();
         }
@@ -163,12 +163,12 @@ async function editMarkAttrs(
 
 async function editNodeAttrs(
   pos: number,
+  node: ProsemirrorNode | null,
   state: EditorState,
   dispatch: (tr: Transaction<any>) => void,
   ui: EditorUI,
   pandocExtensions: PandocExtensions,
 ): Promise<void> {
-  const node = state.doc.nodeAt(pos);
   if (node) {
     const attrs = node.attrs;
     const result = await ui.dialogs.editAttr({ ...attrs }, idHint(node, pandocExtensions));
@@ -189,7 +189,7 @@ async function editNodeAttrs(
 function idHint(node: ProsemirrorNode, pandocExtensions: PandocExtensions) {
   if (node.type === node.type.schema.nodes.heading) {
     const unemoji = pandocExtensions.gfm_auto_identifiers;
-    const text = fragmentText(node.content, unemoji);
+    const text = `sec-${fragmentText(node.content, unemoji)}`;
 
     if (pandocExtensions.gfm_auto_identifiers) {
       return gfmAutoIdentifier(text, pandocExtensions.ascii_identifiers);

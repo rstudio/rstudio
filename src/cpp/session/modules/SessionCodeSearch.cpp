@@ -213,7 +213,7 @@ void print_tree(tree<Entry> const& tr)
       int depth = tr.depth(it);
       for (int i = 0; i < depth; i++)
          std::cerr << "--";
-      std::cerr << (*it).fileInfo.getAbsolutePath() << "\n";
+      std::cerr << (*it).fileInfo.absolutePath() << "\n";
    }
 #endif
 }
@@ -269,7 +269,7 @@ public:
       //     --> foo/bar
       //                  --> foo/bar/baz
       iterator parent = begin();
-      DEBUG("First parent: '" << (*parent).fileInfo.getAbsolutePath() << "'");
+      DEBUG("First parent: '" << (*parent).fileInfo.absolutePath() << "'");
 
       std::string::size_type matchIndex = absolutePath.find('/');
       
@@ -281,7 +281,7 @@ public:
                   true);
          
          Entry entry(path);
-         DEBUG("Entry: '" << entry.fileInfo.getAbsolutePath() << "'");
+         DEBUG("Entry: '" << entry.fileInfo.absolutePath() << "'");
 
          if (isSamePath(*parent, entry))
          {
@@ -290,7 +290,7 @@ public:
 
          else if (number_of_children(parent) == 0)
          {
-            DEBUG("- Inserting new node as first child of '" << (*parent).fileInfo.getAbsolutePath() << "'");
+            DEBUG("- Inserting new node as first child of '" << (*parent).fileInfo.absolutePath() << "'");
 
             iterator newItr = append_child(parent, entry);
             DEBUG("- Parent now has " << number_of_children(parent) << " children.");
@@ -305,7 +305,7 @@ public:
 
             for (; it != end; ++it)
             {
-               DEBUG("-- Current node: '" << (*it).fileInfo.getAbsolutePath() << "'");
+               DEBUG("-- Current node: '" << (*it).fileInfo.absolutePath() << "'");
                if (isSamePath(*it, entry))
                {
                   DEBUG("-- Found it!");
@@ -315,12 +315,12 @@ public:
 
             if (it == end)
             {
-               DEBUG("- Adding another child to parent '" << (*parent).fileInfo.getAbsolutePath() << "'");
+               DEBUG("- Adding another child to parent '" << (*parent).fileInfo.absolutePath() << "'");
                parent = append_child(parent, entry);
             }
             else
             {
-               DEBUG("- Node already exists; setting parent to child (" << (*parent).fileInfo.getAbsolutePath() << ")");
+               DEBUG("- Node already exists; setting parent to child (" << (*parent).fileInfo.absolutePath() << ")");
                parent = it;
             }
          }
@@ -330,8 +330,8 @@ public:
       DEBUG("Exiting directory node insertion phase");
       
       // Now, we have the filename. We append that to the parent.
-      DEBUG("Parent: '" << (*parent).fileInfo.getAbsolutePath() << "'");
-      DEBUG("Entry: '" << entry.fileInfo.getAbsolutePath() << "'");
+      DEBUG("Parent: '" << (*parent).fileInfo.absolutePath() << "'");
+      DEBUG("Entry: '" << entry.fileInfo.absolutePath() << "'");
       if (parent.number_of_children() == 0)
       {
          DEBUG("- No children at parent node; adding child");
@@ -357,8 +357,8 @@ public:
          sibling_iterator end = parent.end();
          for (; it != end; ++it)
          {
-            DEBUG("-- Current node: '" << (*it).fileInfo.getAbsolutePath() << "'");
-            DEBUG("-- Entry       : '" << entry.fileInfo.getAbsolutePath() << "'");
+            DEBUG("-- Current node: '" << (*it).fileInfo.absolutePath() << "'");
+            DEBUG("-- Entry       : '" << entry.fileInfo.absolutePath() << "'");
             
             if (isSamePath(*it, entry))
             {
@@ -423,7 +423,7 @@ private:
       sibling_iterator end = parent.end();
       for (; it != end; ++it)
       {
-         DEBUG("- Current branch: '" << (*it).fileInfo.getAbsolutePath() << "'");
+         DEBUG("- Current branch: '" << (*it).fileInfo.absolutePath() << "'");
          if (isSamePath(*it, entry))
          {
             *pResult = it;
@@ -621,7 +621,7 @@ public:
       EntryTree::iterator parent = pEntries_->find(parentEntry);
       if (parent != pEntries_->end())
       {
-         DEBUG("Found node: '" + (*parent).fileInfo.getAbsolutePath() + "'");
+         DEBUG("Found node: '" + (*parent).fileInfo.absolutePath() + "'");
          DEBUG("Node has: '" << pEntries_->number_of_children(parent) << "' children.");
          DEBUG("Node has: '" << pEntries_->number_of_siblings(parent) << "' siblings.");
 
@@ -639,7 +639,7 @@ public:
       {
          const Entry& entry = *it;
          
-         DEBUG("Node: '" << (*it).fileInfo.getAbsolutePath() << "'");
+         DEBUG("Node: '" << (*it).fileInfo.absolutePath() << "'");
          
          // skip if it's not a source file
          if (sourceFilesOnly && !isSourceFile(entry.fileInfo))
@@ -900,7 +900,7 @@ private:
          pEntries_->erase(it);
       else
       {
-         DEBUG("Failed to remove index entry for file: '" << fileInfo.getAbsolutePath() << "'");
+         DEBUG("Failed to remove index entry for file: '" << fileInfo.absolutePath() << "'");
          print_tree(*pEntries_);
       }
    }
@@ -1299,6 +1299,23 @@ void searchFiles(const std::string& term,
    }
 }
 
+bool isUninterestingFile(const std::string& filename) 
+{
+   if (filename == "RcppExports.R" ||
+       filename == "RcppExports.cpp" ||
+       filename == "cpp11.R" ||
+       filename == "cpp11.cpp" ||
+       filename == "arrowExports.R" ||
+       filename == "arrowExports.cpp")
+      return true;
+
+   std::string extension = string_utils::getExtension(filename);
+   if (boost::algorithm::to_lower_copy(extension) == ".rd")
+      return true;
+   
+   return false;
+}
+
 // NOTE: When modifying this code, you should ensure that corresponding
 // changes are made to the client side scoreMatch function as well
 // (See: CodeSearchOracle.java)
@@ -1334,22 +1351,18 @@ int scoreMatch(std::string const& suggestion,
       // Less penalty for perfect match (ie, reward case-sensitive match)
       penalty -= suggestion[matchPos] == query[j];
       
-      // More penalty for 'uninteresting' files
-      if (suggestion == "RcppExports.R" ||
-          suggestion == "RcppExports.cpp")
-         penalty += 6;
-      
-      // More penalty for 'uninteresting' extensions (e.g. .Rd)
-      std::string extension = string_utils::getExtension(suggestion);
-      if (boost::algorithm::to_lower_copy(extension) == ".rd")
-         penalty += 6;
-
       totalPenalty += penalty;
    }
    
    // Penalize files
    if (isFile)
+   {
       ++totalPenalty;
+
+      // More penalty for 'uninteresting' files
+      if (isUninterestingFile(suggestion))
+         totalPenalty += 6;
+   }
    
    // Penalize unmatched characters
    totalPenalty += gsl::narrow_cast<int>((query.size() - matches.size()) * query.size());
@@ -1428,10 +1441,11 @@ public:
       Figure    = 8,
       Table     = 9,
       Math      = 10,
+      Test      = 11
    };
 
    SourceItem()
-      : type_(None), line_(-1), column_(-1)
+      : type_(None), line_(-1), column_(-1), hidden_(false)
    {
    }
 
@@ -1442,6 +1456,7 @@ public:
               const std::string& context,
               int line,
               int column,
+              bool hidden,
               const json::Object& metadata = json::Object())
       : type_(type),
         name_(name),
@@ -1450,6 +1465,7 @@ public:
         context_(context),
         line_(line),
         column_(column),
+        hidden_(hidden),
         metadata_(metadata)
    {
    }
@@ -1463,6 +1479,7 @@ public:
    const std::string& context() const { return context_; }
    int line() const { return line_; }
    int column() const { return column_; }
+   bool hidden() const { return hidden_; }
    const json::Object& metadata() const { return metadata_; }
 
 private:
@@ -1473,6 +1490,7 @@ private:
    std::string context_;
    int line_;
    int column_;
+   bool hidden_;
    json::Object metadata_;
 };
 
@@ -1491,6 +1509,9 @@ SourceItem fromRSourceItem(const r_util::RSourceItem& rSourceItem)
       break;
    case RSourceItem::Class:
       type = SourceItem::Class;
+      break;
+   case RSourceItem::Test:
+      type = SourceItem::Test;
       break;
    case RSourceItem::None:
    default:
@@ -1520,7 +1541,8 @@ SourceItem fromRSourceItem(const r_util::RSourceItem& rSourceItem)
                      extraInfo,
                      rSourceItem.context(),
                      rSourceItem.line(),
-                     rSourceItem.column());
+                     rSourceItem.column(), 
+                     rSourceItem.hidden());
 }
 
 SourceItem fromCppDefinition(const clang::CppDefinition& cppDefinition)
@@ -1566,7 +1588,8 @@ SourceItem fromCppDefinition(const clang::CppDefinition& cppDefinition)
       "",
       module_context::createAliasedPath(cppDefinition.location.filePath),
       safe_convert::numberTo<int>(cppDefinition.location.line, 1),
-      safe_convert::numberTo<int>(cppDefinition.location.column, 1));
+      safe_convert::numberTo<int>(cppDefinition.location.column, 1), 
+      cppDefinition.hidden);
 }
 
 void fillFromCrossrefs(const std::string& term,
@@ -1695,7 +1718,8 @@ void fillFromCrossrefs(const std::string& term,
                sourceType, displayText, "", "",
                module_context::createAliasedPath(
                   basePath.completeChildPath(file)),
-               -1, -1,
+               -1, -1, 
+               false, /* hidden */
                meta);
       
       pSourceItems->push_back(item);
@@ -1738,11 +1762,13 @@ Error searchCode(const json::JsonRpcRequest& request,
    std::vector<std::string> names;
    std::vector<std::string> paths;
    bool moreFilesAvailable = false;
+   bool onlyTests = boost::algorithm::starts_with(term, "t ");
 
    // TODO: Refactor searchSourceFiles, searchSource to no longer take maximum number
    // of results (since we want to grab everything possible then filter before
    // sending over the wire). Simiarly with the 'more*Available' bools
-   searchFiles(term, 100, true, &names, &paths, &moreFilesAvailable);
+   if (!onlyTests)
+      searchFiles(term, 100, true, &names, &paths, &moreFilesAvailable);
 
    // search source and convert to source items
    std::vector<SourceItem> srcItems;
@@ -1756,11 +1782,14 @@ Error searchCode(const json::JsonRpcRequest& request,
 
    // search cpp source and convert to source items
    std::vector<clang::CppDefinition> cppDefinitions;
-   clang::searchDefinitions(term, &cppDefinitions);
-   std::transform(cppDefinitions.begin(),
-                  cppDefinitions.end(),
-                  std::back_inserter(srcItems),
-                  fromCppDefinition);
+   if (!onlyTests)
+   {
+      clang::searchDefinitions(term, &cppDefinitions);
+      std::transform(cppDefinitions.begin(),
+                     cppDefinitions.end(),
+                     std::back_inserter(srcItems),
+                     fromCppDefinition);
+   }
    
    // search bookdown xref index
    fillFromCrossrefs(term, &srcItems);
@@ -1783,13 +1812,11 @@ Error searchCode(const json::JsonRpcRequest& request,
    for (std::size_t i = 0; i < srcItems.size(); ++i)
    {
       const SourceItem& item = srcItems[i];
-      
-      // don't index auto-generated files
-      const std::string& context = item.context();
-      if (boost::algorithm::ends_with(context, "RcppExports.R") ||
-          boost::algorithm::ends_with(context, "RcppExports.cpp"))
+      // items are hidden() when coming from R and C++ files
+      // that contain the text "do not edit by hand" 
+      if (item.hidden())
          continue;
-         
+      
       int score = scoreMatch(item.name(), term, false);
       srcItemScores.push_back(std::make_pair(gsl::narrow_cast<int>(i), score));
    }

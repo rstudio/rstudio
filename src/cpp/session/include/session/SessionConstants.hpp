@@ -88,6 +88,7 @@
 #define kSessionAsyncRpcTimeoutMs         "session-async-rpc-timeout-ms"
 #define kSessionHandleOfflineEnabled      "session-handle-offline-enabled"
 #define kSessionHandleOfflineTimeoutMs    "session-handle-offline-timeout-ms"
+#define kSessionUseFileStorage            "session-use-file-storage"
 
 #define kLauncherSessionOption            "launcher-session"
 
@@ -138,7 +139,7 @@
 #define kSessionTmpDir             "rstudio-rsession"
 
 #ifdef QUARTO_ENABLED
-# define kDefaultPandocPath        "bin/quarto/bin"
+# define kDefaultPandocPath        "bin/quarto/bin/tools"
 #else
 # define kDefaultPandocPath        "bin/pandoc"
 #endif

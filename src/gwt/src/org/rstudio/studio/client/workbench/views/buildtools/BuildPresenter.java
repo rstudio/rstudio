@@ -309,6 +309,16 @@ public class BuildPresenter extends BasePresenter
       startBuild("build-all");
    }
 
+   void onBuildIncremental()
+   {
+      startBuild("build-incremental");
+   }
+
+   void onBuildFull()
+   {
+      startBuild("build-full");
+   }
+
    void onDevtoolsLoadAll()
    {
       source_.withSaveFilesBeforeCommand(() ->
@@ -317,7 +327,7 @@ public class BuildPresenter extends BasePresenter
          {
             sendLoadCommandToConsole("devtools::load_all(\"" + loadAllPath + "\")");
          });
-      }, () -> {}, "Build");
+      }, () -> {}, constants_.buildText());
    }
    
    void onServeQuartoSite()
@@ -359,11 +369,6 @@ public class BuildPresenter extends BasePresenter
 
    void onTestShinytestFile()
    {
-   }
-
-   void onRebuildAll()
-   {
-      startBuild("rebuild-all");
    }
 
    void onCleanAll()
@@ -417,8 +422,7 @@ public class BuildPresenter extends BasePresenter
 
    private void executeBuild(final String type, final String subType)
    {
-      if ((type != "build-all" && type != "rebuild-all") ||
-            session_.getSessionInfo().getBuildToolsType() == SessionInfo.BUILD_TOOLS_QUARTO)
+      if (type != "build-all" || session_.getSessionInfo().getBuildToolsType() == SessionInfo.BUILD_TOOLS_QUARTO)
       {
          executeBuildNoBusyCheck(type, subType);
          return;
@@ -431,7 +435,7 @@ public class BuildPresenter extends BasePresenter
          {
             terminalHelper_.warnBusyTerminalBeforeCommand(() ->
                   executeBuildNoBusyCheck(type, subType),
-                  "Build", constants_.terminalTerminatedQuestion(),
+                  constants_.buildText(), constants_.terminalTerminatedQuestion(),
                   userPrefs_.busyDetection().getValue());
          }
       });
@@ -459,7 +463,7 @@ public class BuildPresenter extends BasePresenter
             }
 
          });
-      }, () -> {}, "Build");
+      }, () -> {}, constants_.buildText());
    }
 
    void onStopBuild()

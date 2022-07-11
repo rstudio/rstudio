@@ -68,7 +68,7 @@ public class ConsolePane extends WorkbenchPane
    {
       // We pass null in place of events here to prevent ActivePaneEvent from being called.
       // ActivatePaneEvent isn't necessary and causes an exception for the Console Pane.
-      super("Console", null);
+      super(constants_.consoleLabel(), null);
 
       consoleProvider_ = consoleProvider;
       progressProvider_ = progressProvider;

@@ -1,4 +1,10 @@
 {
+  "common": {
+    "buttonOk": "OK",
+    "buttonCancel": "Cancel",
+    "buttonBrowse": "Browse...",
+    "unknownErrorOccurred": "An unknown error occurred."
+  },
   "contextMenu": {
     "saveImageAsDots": "Save image as...",
     "saveImageAs": "Save image as",
@@ -15,15 +21,26 @@
     "downloadInterruptedMessage": "The download was interrupted.",
     "save": "Save"
   },
+  "chooseRDialog": {
+    "documentTitle": "Choose R Installation",
+    "title": "RStudio requires an existing installation of R.",
+    "subtitle": "Please select the version of R to use.",
+    "use64BitR": "Use your machine's default 64-bit version of R",
+    "use32BitR": "Use your machine's default 32-bit version of R",
+    "useCustom": "Choose a specific version of R:",
+    "customizeRenderingEngine": "You can also customize the rendering engine used by RStudio.",
+    "renderingEngineLabel": "Rendering Engine:",
+    "renderingEngineOptionAuto": "Auto-detect (recommended)",
+    "renderingEngineOptionDesktop": "Desktop",
+    "renderingEngineOptionSoftware": "Software",
+    "renderingEngineChangedTitle": "Rendering Engine Changed",
+    "renderingEngineChangedMessage": "The rendering engine has been changed.\nPlease restart RStudio for these changes to take effect.",
+    "rLaunchFailedTitle": "Error Loading R",
+    "rLaunchFailedMessage": "An error occurred while attempting to load the selected version of R. Please select a different R installation."
+  },
   "uiFolder": {
     "chooseRExecutable": "Choose R Executable",
     "rExecutable": "R Executable",
-    "chooseRInstallation": "Choose R Installation",
-    "rstudioRequiresAnExistingRInstallationTitle": "RStudio requires an existing installation of R.",
-    "rstudioRequiresAnExistingRInstallationSubtitle": "Please select the version of R to use.",
-    "useYourMachineDefault64BitR": "Use your machine's default 64-bit version of R",
-    "useYourMachineDefault32BitR": "Use your machine's default 32-bit version of R",
-    "chooseASpecificVersionOfR": "Choose a specific version of R:",
     "browseDots": "Browse...",
     "okCaps": "OK",
     "cancel": "Cancel",
@@ -67,7 +84,8 @@
     "confColon": "conf:",
     "notFoundDotLowercase": "not found.",
     "errorFindingR": "Error Finding R",
-    "rstudioFailedToFindRInstalationsOnTheSystem": "RStudio failed to find any R installations on the system."
+    "rstudioFailedToFindRInstalationsOnTheSystem": "RStudio failed to find any R installations on the system.",
+    "newRstudioWindow": "New RStudio Window"
   },
   "detectRTs": {
     "rNotFound": "R not found",
@@ -89,5 +107,8 @@
   },
   "mainWindowTs": {
     "rSessionFailedToStart": "The R session failed to start."
+  },
+  "i18nManager": {
+    "errorLocalizingDocument": "Error localizing document:"
   }
 }

@@ -70,6 +70,7 @@
 #define kShinyContentWarning "Warning: Shiny application in a static R Markdown document"
 
 using namespace rstudio::core;
+using namespace boost::placeholders;
 
 namespace rstudio {
 namespace session {
@@ -269,21 +270,6 @@ enum RenderTerminateType
 #define kMaxRenderOutputs 5
 std::vector<std::string> s_renderOutputs(kMaxRenderOutputs);
 int s_currentRenderOutput = 0;
-
-std::string parsableRStudioVersion()
-{
-   std::string version(RSTUDIO_VERSION_MAJOR);
-   version.append(".")
-      .append(RSTUDIO_VERSION_MINOR)
-      .append(".")
-      .append(RSTUDIO_VERSION_PATCH)
-      .append(".")
-      .append(boost::regex_replace(
-         std::string(RSTUDIO_VERSION_SUFFIX),
-         boost::regex("[a-zA-Z\\-+]"),
-         ""));
-   return version;
-}
 
 FilePath outputCachePath()
 {
@@ -640,6 +626,9 @@ private:
       environment.push_back(std::make_pair("RSTUDIO_VERSION", parsableRStudioVersion()));
       environment.push_back(std::make_pair("RSTUDIO_LONG_VERSION", RSTUDIO_VERSION));
 
+      // inform that this runs in the Render pane
+      environment.push_back(std::make_pair("RSTUDIO_CHILD_PROCESS_PANE", "render"));
+      
       // set the not cran env var
       environment.push_back(std::make_pair("NOT_CRAN", "true"));
 
@@ -656,7 +645,7 @@ private:
       if (!reticulatePython.empty())
       {
          // we found a Python version; forward it
-         environment.push_back({"RETICULATE_PYTHON_FALLBACK", reticulatePython});
+         environment.push_back({"RETICULATE_PYTHON", reticulatePython});
          
          // also update the PATH so this version of Python is visible
          core::system::addToPath(
@@ -1058,6 +1047,7 @@ void initEnvironment()
    std::string rstudioPandoc = core::system::getenv(kRStudioPandoc);
    if (rstudioPandoc.empty())
       rstudioPandoc = session::options().pandocPath().getAbsolutePath();
+   
    r::exec::RFunction sysSetenv("Sys.setenv");
    sysSetenv.addParam(kRStudioPandoc, rstudioPandoc);
 
@@ -1708,6 +1698,21 @@ bool isSiteProject(const std::string& site)
    if (error)
       LOG_ERROR(error);
    return isSite;
+}
+
+std::string parsableRStudioVersion()
+{
+   std::string version(RSTUDIO_VERSION_MAJOR);
+   version.append(".")
+         .append(RSTUDIO_VERSION_MINOR)
+         .append(".")
+         .append(RSTUDIO_VERSION_PATCH)
+         .append(".")
+         .append(boost::regex_replace(
+               std::string(RSTUDIO_VERSION_SUFFIX),
+               boost::regex("[a-zA-Z\\-+]"),
+               ""));
+   return version;
 }
 
 

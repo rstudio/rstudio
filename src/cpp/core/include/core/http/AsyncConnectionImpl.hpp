@@ -40,6 +40,8 @@
 #include <core/http/RequestParser.hpp>
 #include <core/http/AsyncConnection.hpp>
 
+using namespace boost::placeholders;
+
 namespace rstudio {
 namespace core {
 namespace http {

@@ -114,7 +114,7 @@ import { defaultEditorUIImages } from './editor-images';
 import { editorMenus, EditorMenus } from './editor-menus';
 import { editorSchema } from './editor-schema';
 
-// import styles before extensions so they can be overriden by extensions
+// import styles before extensions so they can be overridden by extensions
 import './styles/frame.css';
 import './styles/styles.css';
 import { getPresentationEditorLocation, PresentationEditorLocation, positionForPresentationEditorLocation } from '../api/presentation';
@@ -557,7 +557,7 @@ export class Editor {
 
   // flag indicating whether we've ever had setMarkdown (currently we need this
   // because getMarkdown can only be called after setMarkdown b/c it needs
-  // the API version retreived in setMarkdown -- we should remedy this)
+  // the API version retrieved in setMarkdown -- we should remedy this)
   public isInitialDoc() {
     return this.state.doc.attrs.initial;
   }

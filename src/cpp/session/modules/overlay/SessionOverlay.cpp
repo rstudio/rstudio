@@ -34,7 +34,7 @@ bool isSuspendable()
    return true;
 }
 
-bool launcherJobsFeatureDisplayed()
+bool workbenchJobsFeatureDisplayed()
 {
    return false;
 }

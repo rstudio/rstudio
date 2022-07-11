@@ -43,7 +43,7 @@ public class RVersionSelectWidget extends SelectWidget
                                boolean includeHelpButton,
                                boolean fillContainer)
    {
-      this(caption, uniqueId, rVersions, false, true, false, false);
+      this(caption, uniqueId, rVersions, includeSystemDefault, includeHelpButton, fillContainer, false);
    }
 
    public RVersionSelectWidget(String caption,

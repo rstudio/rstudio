@@ -2,7 +2,7 @@
    popupMiddleLeft, popupMiddleCenter, popupMiddleRight,
    popupBottomLeft, popupBottomCenter, popupBottomRight,
    popupContent;
-@external gwt-MenuBarPopup, menuPopupTopLeft, menuPopupTopCenter, menuPopupTopRight,
+@external gwt-MenuBarPopup, gwt-PopupPanel, menuPopupTopLeft, menuPopupTopCenter, menuPopupTopRight,
    menuPopupMiddleLeft, menuPopupMiddleCenter, menuPopupMiddleRight,
    menuPopupBottomLeft, menuPopupBottomCenter, menuPopupBottomRight,
    menuPopupContent;
@@ -12,6 +12,7 @@
    suggestPopupContent, suggestPopupTop, suggestPopupBottom;
 @external gwt-MenuBar-vertical;
 
+@external safari;
 @external rstudio-themes-dark-menus;
 
 @external menuPopupTop, menuPopupBottom, menuPopupMiddle;
@@ -24,10 +25,16 @@
 @eval THEME_DARKGREY_MENU_BACKGROUND org.rstudio.core.client.theme.ThemeColors.darkGreyMenuBackground;
 @eval THEME_DARKGREY_MENU_BORDER org.rstudio.core.client.theme.ThemeColors.darkGreyMenuBorder;
 
+/* https://github.com/rstudio/rstudio/issues/10821 */
+.safari .themedPopupPanel, .safari .gwt-MenuBarPopup, .safari .gwt-PopupPanel {
+   transform: translateZ(0);
+}
+
 .themedPopupPanel {
    margin: -6px;
    margin-top: 0px;
    z-index: 99999;
+   box-shadow: 0 2px 12px 0 rgba(0,0,0,0.3);
 }
 
 @sprite .themedPopupPanel .popupTopLeft, .menuPopupTopLeft, .suggestPopupTopLeft {

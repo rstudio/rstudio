@@ -26,7 +26,17 @@ export class SecondaryWindow extends DesktopBrowserWindow {
     allowExternalNavigate = false,
     existingWindow?: BrowserWindow,
   ) {
-    super(showToolbar, true, true, name, baseUrl, parent, opener, allowExternalNavigate, undefined, existingWindow);
+    super({
+      showToolbar: showToolbar,
+      adjustTitle: true,
+      autohideMenu: true,
+      name: name,
+      baseUrl: baseUrl,
+      parent: parent,
+      opener: opener,
+      allowExternalNavigate: allowExternalNavigate,
+      existingWindow: existingWindow,
+    });
 
     this.on(DesktopBrowserWindow.CLOSE_WINDOW_SHORTCUT, this.onCloseWindowShortcut.bind(this));
   }
@@ -52,7 +62,7 @@ export class SecondaryWindow extends DesktopBrowserWindow {
         width: width,
         height: height,
         webPreferences: {
-          additionalArguments: ['--apiKeys=desktopInfo'],
+          additionalArguments: ['--api-keys=desktopInfo'],
           preload: DesktopBrowserWindow.getPreload(),
         },
       },

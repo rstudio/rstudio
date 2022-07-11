@@ -71,7 +71,7 @@ if(GWT_BUILD)
    endif()
 
    # depend on Java source files
-   file(GLOB_RECURSE GWT_SOURCE_FILES CONFIGURE_DEPENDS "${CMAKE_CURRENT_SOURCE_DIR}/src/*")
+   file(GLOB_RECURSE GWT_SOURCE_FILES CONFIGURE_DEPENDS "${CMAKE_CURRENT_SOURCE_DIR}/src/*.java")
 
    # generated during GWT build command
    set(GWT_BUILD_TIMESTAMP "${CMAKE_CURRENT_BINARY_DIR}/timestamp")

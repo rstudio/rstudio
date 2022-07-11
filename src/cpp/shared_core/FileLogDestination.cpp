@@ -38,6 +38,8 @@
 #include <shared_core/system/SyslogDestination.hpp>
 #endif
 
+#include "config.h"
+
 namespace rstudio {
 namespace core {
 namespace log {
@@ -229,12 +231,12 @@ struct FileLogDestination::Impl
             }
          }
       }
-      else if (LogOptions.getDirectory().getAbsolutePath() == "/var/log/rstudio/rstudio-server")
+      else if (LogOptions.getDirectory().getAbsolutePath() == RSTUDIO_DEFAULT_LOG_PATH)
       {
          // fix-up legacy log directory permissions
          // the original release of standardized file-logging caused logging dirs
          // to be created with 0777 permissions which is too permissive
-         FilePath paths[2] = {FilePath("/var/log/rstudio"), FilePath("/var/log/rstudio/rstudio-server")};
+         FilePath paths[2] = {FilePath("/var/log/rstudio"), FilePath(RSTUDIO_DEFAULT_LOG_PATH)};
          for (const FilePath& path : paths)
          {
             FileMode mode;

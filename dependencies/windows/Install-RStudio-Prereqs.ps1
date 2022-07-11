@@ -70,15 +70,17 @@ choco install -y -i ant
 choco install -y 7zip
 choco install -y git
 choco install -y ninja
-choco install -y windows-sdk-10.1 --version 10.1.17134.12
-choco install -y visualstudio2017buildtools --version 15.8.2.0
-choco install -y visualstudio2017-workload-vctools --version 1.3.0
+choco install -y windows-sdk-10.1 --version 10.1.19041.0
+choco install -y visualstudio2019buildtools --version 16.11.10.0
+choco install -y visualstudio2019-workload-vctools --version 1.0.1
 choco install -y nsis
-choco install -y activeperl
 choco install -y python
+choco install -y jq
 
 # cpack (an alias from chocolatey) and cmake's cpack conflict.
-Remove-Item -Force 'C:\ProgramData\chocolatey\bin\cpack.exe'
+# Newer choco doesn't have this so don't fail if not found
+$ChocoCPack = 'C:\ProgramData\chocolatey\bin\cpack.exe'
+if (Test-Path $ChocoCPack) { Remove-Item -Force $ChocoCPack }
 
 [System.Net.ServicePointManager]::SecurityProtocol = $securityProtocolSettingsOriginal
 

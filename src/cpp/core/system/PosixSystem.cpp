@@ -49,7 +49,7 @@
 #include <gsl/gsl>
 #endif
 
-#ifndef __APPLE__
+#ifdef __linux__
 #include <sys/prctl.h>
 #include <sys/sysinfo.h>
 #include <linux/kernel.h>
@@ -1479,7 +1479,7 @@ Error osResourceLimit(ResourceLimit limit, int* pLimit)
       case CpuLimit:
          *pLimit = RLIMIT_CPU;
          break;
-#ifndef __APPLE__
+#ifdef __linux__
       case NiceLimit:
          *pLimit = RLIMIT_NICE;
          break;
@@ -1552,7 +1552,7 @@ Error systemInformation(SysInfo* pSysInfo)
 {
    pSysInfo->cores = boost::thread::hardware_concurrency();
 
-#ifndef __APPLE__
+#ifdef __linux__
    struct sysinfo info;
    if (::sysinfo(&info) == -1)
       return systemError(errno, ERROR_LOCATION);
@@ -1956,7 +1956,7 @@ Error restrictCoreDumps()
       return error;
 
    // no ptrace core dumps permitted
-#ifndef __APPLE__
+#ifdef __linux__
    int res = ::prctl(PR_SET_DUMPABLE, 0);
    if (res == -1)
       return systemError(errno, ERROR_LOCATION);
@@ -1987,7 +1987,7 @@ void printCoreDumpable(const std::string& context)
    ostr << "  hard limit: " << rLimitHard << std::endl;
 
    // ptrace
-#ifndef __APPLE__
+#ifdef __linux__
    int dumpable = ::prctl(PR_GET_DUMPABLE, nullptr, nullptr, nullptr, nullptr);
    if (dumpable == -1)
       LOG_ERROR(systemError(errno, ERROR_LOCATION));
@@ -2398,11 +2398,34 @@ bool isUserNotFoundError(const Error& error)
    return error == systemError(boost::system::errc::permission_denied, ErrorLocation());
 }
 
-Error userBelongsToGroup(const User& user,
-                         const std::string& groupName,
-                         bool* pBelongs)
+Error userBelongsToGroupViaGroupList(const User& user,
+                                     const std::string& groupName,
+                                     bool* pBelongs)
 {
    *pBelongs = false; // default to not found
+
+   // get a list of the user's groups
+   std::vector<group::Group> groups;
+   Error error = group::userGroups(user.getUsername(), &groups);
+   if (error)
+      return error;
+
+   // scan the user's groups to see if they are a member of the target group
+   *pBelongs = std::find_if(groups.begin(),
+                            groups.end(),
+                            [&](const group::Group& group)
+                            { return group.name == groupName; }) != groups.end();
+
+   return Success();
+}
+
+Error userBelongsToGroupViaGroupName(const User& user,
+                                     const std::string& groupName,
+                                     bool* pBelongs)
+{
+   *pBelongs = false; // default to not found
+
+   // fetch the group by its name
    group::Group group;
    Error error = group::groupFromName(groupName, &group);
    if (error)
@@ -2413,7 +2436,7 @@ Error userBelongsToGroup(const User& user,
    {
       *pBelongs = true;
    }
-   // else scan the list of member names for this user
+   // else scan the list of group members looking for this user
    else
    {
       *pBelongs = std::find(group.members.begin(),
@@ -2425,6 +2448,42 @@ Error userBelongsToGroup(const User& user,
 }
 
 
+// first try to get the user's groups via getgrouplist. we prefer this to
+// fetching information about the group to test membership because
+// this can fail in the case where SSSD group member data is disabled
+// via ignore_group_members (see https://jhrozek.fedorapeople.org/sssd/1.9.91/man/sssd.conf.5.html)
+//
+// we fallback to the old implementation if this method did not yield a positive result
+// to ensure backwards compatibility in existing customer environments. however,
+// group member enumeration of large groups is expensive and this has been known
+// to be slow in some environments.
+//
+// if the first try fails via getgrouplist, we hold the error and attempt
+// the old implementation before returning. if both calls fail, we return the first error
+Error userBelongsToGroup(const User& user,
+                         const std::string& groupName,
+                         bool* pBelongs)
+{
+   *pBelongs = false; // default to not found
+
+   // first we try to use the getgrouplist(3) implementation to determine
+   // if the user is a member of the target groupName.
+   Error groupListError = userBelongsToGroupViaGroupList(user, groupName, pBelongs);
+
+   // if there was no error, then we can return early.
+   // otherwise, we fallback to the legacy implementation
+   if (!groupListError)
+      return Success();
+
+   // next we try to lookup the target group using the getgrnam_r(3) implementation
+   Error groupNameError = userBelongsToGroupViaGroupName(user, groupName, pBelongs);
+
+   // if both attempts fail, return the first error we encountered
+   if (groupNameError)
+      return groupListError;
+
+   return Success();
+}
 
 /////////////////////////////////////////////////////////////////////
 //
@@ -2463,7 +2522,9 @@ Error temporarilyDropPriv(const std::string& newUsername,
    {
       // verify that the user is a member of the provided group
       bool belongs = false;
-      userBelongsToGroup(user, newGroupname, &belongs);
+      error = userBelongsToGroup(user, newGroupname, &belongs);
+      if (error)
+         return error;
 
       if (!belongs)
          return systemError(boost::system::errc::permission_denied, ERROR_LOCATION);
@@ -2513,7 +2574,9 @@ Error permanentlyDropPriv(const std::string& newUsername, const std::string& new
    {
       // verify that the user is a member of the provided group
       bool belongs = false;
-      userBelongsToGroup(user, newGroupname, &belongs);
+      error = userBelongsToGroup(user, newGroupname, &belongs);
+      if (error)
+         return error;
 
       if (!belongs)
          return systemError(boost::system::errc::permission_denied, ERROR_LOCATION);
@@ -2528,9 +2591,9 @@ Error permanentlyDropPriv(const std::string& newUsername, const std::string& new
 
    GidType targetGID = groupOpt.value_or(user.getGroupId());
 
-   // Refresh the destinations without providing a user since we are have the parent processes's file destinations
-   // and don't want to change the ownership of the log files to newUsername. We do still want to make sure we are set up to log in case
-   // there are errors before we call ::execve - in particular, for syslog
+   // Refresh the destinations without providing a user since we have the parent processes's file destinations
+   // and don't want to change the ownership of the log files to newUsername. We do still want to make sure we
+   // are set up to log in case there are errors before we call ::execve - in particular, for syslog
    core::log::refreshAllLogDestinations();
 
    // clear error state
@@ -2572,10 +2635,6 @@ Error permanentlyDropPriv(const std::string& newUsername, const std::string& new
 // privilege manipulation for systems that don't support setresuid/getresuid
 #else
 
-namespace {
-   uid_t s_privUid;
-}
-
 Error permanentlyDropPriv(const std::string& newUsername)
 {
    return permanentlyDropPriv(newUsername, std::string());
@@ -2598,7 +2657,9 @@ Error permanentlyDropPriv(const std::string& newUsername, const std::string& new
    {
       // verify that the user is a member of the provided group
       bool belongs = false;
-      userBelongsToGroup(user, newGroupname, &belongs);
+      error = userBelongsToGroup(user, newGroupname, &belongs);
+      if (error)
+         return error;
 
       if (!belongs)
          return systemError(boost::system::errc::permission_denied, ERROR_LOCATION);

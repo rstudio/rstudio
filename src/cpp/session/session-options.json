@@ -374,6 +374,14 @@
             "memberName": "handleOfflineTimeoutMs_",
             "defaultValue": 200,
             "description": "Duration in millis before requests that can be handled offline are processed by the offline handler thread."
+         },
+         {
+            "name": {"constant": "kSessionUseFileStorage", "value": "session-use-file-storage"},
+            "type": "bool",
+            "isHidden": true,
+            "memberName": "sessionUseFileStorage_",
+            "defaultValue": true,
+            "description": "Controls whether the session should store its metadata on the file system or send it to the server to be stored in the internal database."
          }
       ],
       "allow": [
@@ -694,7 +702,7 @@
             "name": "external-pandoc-path",
             "type": "core::FilePath",
             "memberName": "pandocPath_",
-            "defaultValue": {"code": "kDefaultPandocPath", "description": "bin/quarto/bin"},
+            "defaultValue": {"code": "kDefaultPandocPath", "description": "bin/quarto/bin/tools"},
             "description": "Specifies the path to pandoc binaries."
          },
          {
@@ -709,14 +717,18 @@
             "type": "core::FilePath",
             "memberName": "libclangPath_",
             "defaultValue": {"code": "kDefaultRsclangPath", "description": "bin/rsclang"},
-            "description": "Specifies the path to the libclang shared library"
+            "description": "Specifies the path to the libclang shared library",
+            "isDeprecated": true,
+            "isHidden": true
          },
          {
             "name": "external-libclang-headers-path",
             "type": "core::FilePath",
             "memberName": "libclangHeadersPath_",
             "defaultValue": "resources/libclang/builtin-headers",
-            "description": "Specifies the path to the libclang builtin headers."
+            "description": "Specifies the path to the libclang builtin headers.",
+            "isDeprecated": true,
+            "isHidden": true
          },
          {
             "name": "external-winpty-path",

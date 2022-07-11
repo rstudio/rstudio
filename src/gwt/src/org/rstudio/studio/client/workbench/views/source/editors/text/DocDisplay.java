@@ -186,6 +186,7 @@ public interface DocDisplay extends HasValueChangeHandlers<Void>,
    void setHighlightSelectedLine(boolean on);
    void setHighlightSelectedWord(boolean on);
    void setShowLineNumbers(boolean on);
+   void setRelativeLineNumbers(boolean relative);
    void setUseSoftTabs(boolean on);
    void setUseWrapMode(boolean on);
    boolean getUseWrapMode();
@@ -198,6 +199,7 @@ public interface DocDisplay extends HasValueChangeHandlers<Void>,
    void setBlinkingCursor(boolean blinking);
    void setScrollPastEndOfDocument(boolean enable);
    void setHighlightRFunctionCalls(boolean highlight);
+   void setColorPreview(boolean show);
    void setRainbowParentheses(boolean rainbow);
    boolean getRainbowParentheses();
 

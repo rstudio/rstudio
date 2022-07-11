@@ -57,7 +57,12 @@ void MenuCallback::beginMainMenu()
 void MenuCallback::beginMenu(QString label)
 {
 #ifdef Q_OS_MAC
-   if (label == QString::fromUtf8("&Help"))
+
+   if (label == QString::fromUtf8("&Fichier"))
+      this->isEnglish = false;
+
+   if (label == QString::fromUtf8("&Help") ||
+       label == QString::fromUtf8("Aide"))
    {
       pMainMenu_->addMenu(new WindowMenu(pMainMenu_));
    }
@@ -78,7 +83,8 @@ QAction* MenuCallback::addCustomAction(QString commandId,
                                        QString label,
                                        QString tooltip,
                                        QKeySequence keySequence,
-                                       bool checkable)
+                                       bool checkable,
+                                       bool isRadio)
 {
 
    QAction* pAction = nullptr;
@@ -86,23 +92,38 @@ QAction* MenuCallback::addCustomAction(QString commandId,
 #ifdef Q_OS_MAC
    // On Mac, certain commands will be automatically moved to Application Menu by Qt. If we want them to also
    // appear in RStudio menus, check for them here and return nullptr.
-   if (duplicateAppMenuAction(QString::fromUtf8("showAboutDialog"),
-                              commandId, label, tooltip, keySequence, checkable))
+   if (this->isEnglish && duplicateAppMenuAction(QString::fromUtf8("showAboutDialog"),
+                              commandId, label, tooltip, keySequence, checkable, isRadio))
    {
       return nullptr;
    }
    else if (duplicateAppMenuAction(QString::fromUtf8("quitSession"),
-                              commandId, label, tooltip, keySequence, checkable))
+                              commandId, label, tooltip, keySequence, checkable, isRadio))
+   {
+      return nullptr;
+   }
+   else if (!this->isEnglish &&
+            duplicateAppMenuAction(QString::fromUtf8("showOptions"),
+                              commandId, label, tooltip, keySequence, checkable, isRadio))
    {
       return nullptr;
    }
 
+
    // If we want a command to not be automatically moved to Application Menu, include it here and return the
    // created action.
    pAction = duplicateAppMenuAction(QString::fromUtf8("buildToolsProjectSetup"),
-                                    commandId, label, tooltip, keySequence, checkable);
+                                    commandId, label, tooltip, keySequence, checkable, isRadio);
    if (pAction)
       return pAction;
+
+   if (!this->isEnglish)
+   {
+      pAction = duplicateAppMenuAction(QString::fromUtf8("projectOptions"),
+                                    commandId, label, tooltip, keySequence, checkable, isRadio);
+      if (pAction)
+         return pAction;
+   }
 
 #endif // Q_OS_MAC
 
@@ -206,7 +227,8 @@ QAction* MenuCallback::duplicateAppMenuAction(QString commandToDuplicate,
                                               QString label,
                                               QString tooltip,
                                               QKeySequence keySequence,
-                                              bool checkable)
+                                              bool checkable,
+                                              bool isRadio)
 {
    QAction* pAction = nullptr;
    if (commandId == commandToDuplicate)
@@ -235,6 +257,7 @@ void MenuCallback::addCommand(QString commandId,
                               QString tooltip,
                               QString shortcut,
                               bool checkable,
+                              bool isRadio,
                               bool isVisible)
 {
 
@@ -279,7 +302,7 @@ void MenuCallback::addCommand(QString commandId,
 
    // allow custom action handlers first shot
    QPointer<QAction> pAction =
-         addCustomAction(commandId, label, tooltip, keySequence, checkable);
+         addCustomAction(commandId, label, tooltip, keySequence, checkable, isRadio);
 
    // if there was no custom handler then do stock command-id processing
    if (pAction == nullptr)

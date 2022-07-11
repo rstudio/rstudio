@@ -48,14 +48,6 @@ public class BuildCommands
          commands.buildAll().setMenuLabel("_" + constants_.buildAllLabel());
          commands.buildAll().setButtonLabel(constants_.buildAllLabel());
          commands.buildAll().setDesc(constants_.buildAllDesc());
-         
-      }
-      
-      // remove makefile commands if this isn't a makefile
-      if (type != SessionInfo.BUILD_TOOLS_MAKEFILE)
-      {
-         // TODO: should probably just be called "Make"
-         commands.rebuildAll().remove();
       }
       
       if (type == SessionInfo.BUILD_TOOLS_CUSTOM ||
@@ -96,7 +88,6 @@ public class BuildCommands
       if (type == SessionInfo.BUILD_TOOLS_NONE)
       {
          commands.buildAll().remove();
-         commands.rebuildAll().remove();
          commands.cleanAll().remove();
          commands.stopBuild().remove();
          commands.activateBuild().remove();

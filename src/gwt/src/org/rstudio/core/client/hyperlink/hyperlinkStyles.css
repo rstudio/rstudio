@@ -1,0 +1,109 @@
+@eval proportionalFont org.rstudio.core.client.theme.ThemeFonts.getProportionalFont();
+@eval fixedWidthFont org.rstudio.core.client.theme.ThemeFonts.getFixedWidthFont();
+@eval THEME_DEFAULT_BACKGROUND org.rstudio.core.client.theme.ThemeColors.defaultBackground;
+@eval THEME_DARKGREY_BACKGROUND org.rstudio.core.client.theme.ThemeColors.darkGreyBackground;
+@external rstudio-themes-dark-menus;
+
+.hyperlink {
+    text-decoration: underline; 
+    cursor: pointer; 
+    text-decoration-style: dotted;
+}
+
+.hyperlink:hover { 
+    text-decoration: underline; 
+    text-decoration-style: solid; 
+}
+
+.hyperlinkUnsupported { 
+    text-decoration: underline; 
+    text-decoration-style: dotted;
+    cursor: not-allowed;
+}
+
+.warning {
+    font-size: smaller;
+    font-style: italic;
+    padding: 5px;
+}
+
+.hyperlinkPopup {
+    max-width: 400px;
+}
+
+.hyperlinkPopupHeader {
+    width: 100%;
+    padding: 5px;
+}
+
+.hyperlinkPopupHeaderLeft {
+    font-family: fixedWidthFont;
+}
+
+.hyperlinkPopupHeaderRight {
+    font-family: fixedWidthFont;
+    float: right;
+    color: #ccc;
+    padding-left: 20px;
+}
+
+.hyperlinkPopupHeaderRun::before {
+    content: "\025B6";
+    color: green;
+    margin-right: 0.5em;
+}
+
+.rstudio-themes-dark-menus .hyperlinkPopupHeaderRun::before {
+    color: #2bc52b;
+}
+
+.hyperlinkPopupHeaderHelp::before {
+    content: "?";
+    color: green;
+    margin-right: 0.5em;
+    font-weight: bolder;
+}
+
+.rstudio-themes-dark-menus .hyperlinkPopupHeaderHelp::before {
+    color: #2bc52b;
+}
+
+.helpPreview {
+    color: #000023;
+    background-color: THEME_DEFAULT_BACKGROUND;
+    padding: 5px;
+    border-top: 1px solid #ccc;
+    z-index: 9001;
+    
+    padding: 5px;
+    margin-left: 0px;
+    width: 100%;
+}
+
+.rstudio-themes-dark-menus .helpPreview {
+    background-color: THEME_DARKGREY_BACKGROUND;
+    color: white;
+}
+ 
+.helpPreviewTitle {
+    font-weight: bold;
+}
+ 
+.helpPreviewDescription {
+    margin-top: 4px;
+    margin-bottom: 4px; 
+}
+
+.helpPreviewDescription a {
+    pointer-events: none;
+    text-decoration: none;
+    color: #000023;
+}
+
+.rstudio-themes-dark-menus .helpPreviewDescription a {
+    color: #FFF;
+}
+
+.rstudio-themes-dark-menus .helpPreviewDescription span {
+    color: #bfbfbf !important;
+}

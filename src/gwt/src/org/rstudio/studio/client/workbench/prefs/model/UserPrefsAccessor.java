@@ -333,6 +333,18 @@ public class UserPrefsAccessor extends Prefs
    }
 
    /**
+    * Show relative, rather than absolute, line numbers in RStudio's code editor.
+    */
+   public PrefValue<Boolean> relativeLineNumbers()
+   {
+      return bool(
+         "relative_line_numbers",
+         _constants.relativeLineNumbersTitle(), 
+         _constants.relativeLineNumbersDescription(), 
+         false);
+   }
+
+   /**
     * Highlight the selected word in RStudio's code editor.
     */
    public PrefValue<Boolean> highlightSelectedWord()
@@ -1127,6 +1139,18 @@ public class UserPrefsAccessor extends Prefs
          _constants.highlightRFunctionCallsTitle(), 
          _constants.highlightRFunctionCallsDescription(), 
          false);
+   }
+
+   /**
+    * Whether to show color preview in the code editor.
+    */
+   public PrefValue<Boolean> colorPreview()
+   {
+      return bool(
+         "color_preview",
+         _constants.colorPreviewTitle(), 
+         _constants.colorPreviewDescription(), 
+         true);
    }
 
    /**
@@ -2024,7 +2048,7 @@ public class UserPrefsAccessor extends Prefs
          "always_shown_extensions",
          _constants.alwaysShownExtensionsTitle(), 
          _constants.alwaysShownExtensionsDescription(), 
-         JsArrayUtil.createStringArray(".circleci", ".gitattributes", ".github", ".gitignore", ".httr-oauth", ".r", ".rbuildignore", ".rdata", ".renvignore", ".renviron", ".rhistory", ".rprofile", ".ruserdata"));
+         JsArrayUtil.createStringArray(".circleci", ".gitattributes", ".github", ".gitignore", ".httr-oauth", ".lintr", ".r", ".rbuildignore", ".rdata", ".renvignore", ".renviron", ".rhistory", ".rprofile", ".ruserdata"));
    }
 
    /**
@@ -2073,7 +2097,7 @@ public class UserPrefsAccessor extends Prefs
    public final static String JOBS_TAB_VISIBILITY_DEFAULT = "default";
 
    /**
-    * Whether to show the Launcher jobs tab in RStudio Pro and RStudio Workbench.
+    * Whether to show the Workbench Jobs tab in RStudio Pro and RStudio Workbench.
     */
    public PrefValue<Boolean> showLauncherJobsTab()
    {
@@ -2085,7 +2109,7 @@ public class UserPrefsAccessor extends Prefs
    }
 
    /**
-    * How to sort jobs in the Launcher tab in RStudio Pro and RStudio Workbench.
+    * How to sort jobs in the Workbench Jobs tab in RStudio Pro and RStudio Workbench.
     */
    public PrefValue<String> launcherJobsSort()
    {
@@ -2408,7 +2432,7 @@ public class UserPrefsAccessor extends Prefs
    }
 
    /**
-    * The path to the RSA key file to use.
+    * The path to the SSH key file to use.
     */
    public PrefValue<String> rsaKeyPath()
    {
@@ -2418,6 +2442,29 @@ public class UserPrefsAccessor extends Prefs
          _constants.rsaKeyPathDescription(), 
          "");
    }
+
+   /**
+    * The encryption type to use for the SSH key file.
+    */
+   public PrefValue<String> sshKeyType()
+   {
+      return enumeration(
+         "ssh_key_type",
+         _constants.sshKeyTypeTitle(), 
+         _constants.sshKeyTypeDescription(), 
+         new String[] {
+            SSH_KEY_TYPE_ED25519,
+            SSH_KEY_TYPE_RSA
+         },
+         "ed25519",
+         new String[] {
+            _constants.sshKeyTypeEnum_ed25519(),
+            _constants.sshKeyTypeEnum_rsa()
+         });
+   }
+
+   public final static String SSH_KEY_TYPE_ED25519 = "ed25519";
+   public final static String SSH_KEY_TYPE_RSA = "rsa";
 
    /**
     * Whether to use the devtools R package.
@@ -2432,7 +2479,7 @@ public class UserPrefsAccessor extends Prefs
    }
 
    /**
-    * Clean before install.
+    * Always use --preclean when installing package.
     */
    public PrefValue<Boolean> cleanBeforeInstall()
    {
@@ -3200,7 +3247,7 @@ public class UserPrefsAccessor extends Prefs
    }
 
    /**
-    * Whether the Insert Pipe Operator command should insert the native R pipe operator, |>
+    * Whether the Insert Pipe Operator command should use the native R pipe operator, |>
     */
    public PrefValue<Boolean> insertNativePipeOperator()
    {
@@ -3296,27 +3343,35 @@ public class UserPrefsAccessor extends Prefs
    }
 
    /**
-    * Enable IDE features for the Quarto publishing system.
+    * The IDE's user-interface language.
     */
-   public PrefValue<String> quartoEnabled()
+   public PrefValue<String> uiLanguage()
    {
       return enumeration(
-         "quarto_enabled",
-         _constants.quartoEnabledTitle(), 
-         _constants.quartoEnabledDescription(), 
+         "ui_language",
+         _constants.uiLanguageTitle(), 
+         _constants.uiLanguageDescription(), 
          new String[] {
-            QUARTO_ENABLED_AUTO,
-            QUARTO_ENABLED_ENABLED,
-            QUARTO_ENABLED_DISABLED,
-            QUARTO_ENABLED_HIDDEN
+            UI_LANGUAGE_EN,
+            UI_LANGUAGE_FR
          },
-         "auto");
+         "en");
    }
 
-   public final static String QUARTO_ENABLED_AUTO = "auto";
-   public final static String QUARTO_ENABLED_ENABLED = "enabled";
-   public final static String QUARTO_ENABLED_DISABLED = "disabled";
-   public final static String QUARTO_ENABLED_HIDDEN = "hidden";
+   public final static String UI_LANGUAGE_EN = "en";
+   public final static String UI_LANGUAGE_FR = "fr";
+
+   /**
+    * Whether RStudio Desktop will use the operating system's native File and Message dialog boxes.
+    */
+   public PrefValue<Boolean> nativeFileDialogs()
+   {
+      return bool(
+         "native_file_dialogs",
+         _constants.nativeFileDialogsTitle(), 
+         _constants.nativeFileDialogsDescription(), 
+         true);
+   }
 
    public void syncPrefs(String layer, JsObject source)
    {
@@ -3354,6 +3409,8 @@ public class UserPrefsAccessor extends Prefs
          customShellOptions().setValue(layer, source.getString("custom_shell_options"));
       if (source.hasKey("show_line_numbers"))
          showLineNumbers().setValue(layer, source.getBool("show_line_numbers"));
+      if (source.hasKey("relative_line_numbers"))
+         relativeLineNumbers().setValue(layer, source.getBool("relative_line_numbers"));
       if (source.hasKey("highlight_selected_word"))
          highlightSelectedWord().setValue(layer, source.getBool("highlight_selected_word"));
       if (source.hasKey("highlight_selected_line"))
@@ -3468,6 +3525,8 @@ public class UserPrefsAccessor extends Prefs
          scrollPastEndOfDocument().setValue(layer, source.getBool("scroll_past_end_of_document"));
       if (source.hasKey("highlight_r_function_calls"))
          highlightRFunctionCalls().setValue(layer, source.getBool("highlight_r_function_calls"));
+      if (source.hasKey("color_preview"))
+         colorPreview().setValue(layer, source.getBool("color_preview"));
       if (source.hasKey("rainbow_parentheses"))
          rainbowParentheses().setValue(layer, source.getBool("rainbow_parentheses"));
       if (source.hasKey("console_line_length_limit"))
@@ -3656,6 +3715,8 @@ public class UserPrefsAccessor extends Prefs
          terminalPath().setValue(layer, source.getString("terminal_path"));
       if (source.hasKey("rsa_key_path"))
          rsaKeyPath().setValue(layer, source.getString("rsa_key_path"));
+      if (source.hasKey("ssh_key_type"))
+         sshKeyType().setValue(layer, source.getString("ssh_key_type"));
       if (source.hasKey("use_devtools"))
          useDevtools().setValue(layer, source.getBool("use_devtools"));
       if (source.hasKey("clean_before_install"))
@@ -3782,8 +3843,10 @@ public class UserPrefsAccessor extends Prefs
          pythonProjectEnvironmentAutomaticActivate().setValue(layer, source.getBool("python_project_environment_automatic_activate"));
       if (source.hasKey("check_null_external_pointers"))
          checkNullExternalPointers().setValue(layer, source.getBool("check_null_external_pointers"));
-      if (source.hasKey("quarto_enabled"))
-         quartoEnabled().setValue(layer, source.getString("quarto_enabled"));
+      if (source.hasKey("ui_language"))
+         uiLanguage().setValue(layer, source.getString("ui_language"));
+      if (source.hasKey("native_file_dialogs"))
+         nativeFileDialogs().setValue(layer, source.getBool("native_file_dialogs"));
    }
    public List<PrefValue<?>> allPrefs()
    {
@@ -3805,6 +3868,7 @@ public class UserPrefsAccessor extends Prefs
       prefs.add(customShellCommand());
       prefs.add(customShellOptions());
       prefs.add(showLineNumbers());
+      prefs.add(relativeLineNumbers());
       prefs.add(highlightSelectedWord());
       prefs.add(highlightSelectedLine());
       prefs.add(panes());
@@ -3862,6 +3926,7 @@ public class UserPrefsAccessor extends Prefs
       prefs.add(highlightConsoleErrors());
       prefs.add(scrollPastEndOfDocument());
       prefs.add(highlightRFunctionCalls());
+      prefs.add(colorPreview());
       prefs.add(rainbowParentheses());
       prefs.add(consoleLineLengthLimit());
       prefs.add(consoleMaxLines());
@@ -3956,6 +4021,7 @@ public class UserPrefsAccessor extends Prefs
       prefs.add(svnExePath());
       prefs.add(terminalPath());
       prefs.add(rsaKeyPath());
+      prefs.add(sshKeyType());
       prefs.add(useDevtools());
       prefs.add(cleanBeforeInstall());
       prefs.add(useInternet2());
@@ -4019,7 +4085,8 @@ public class UserPrefsAccessor extends Prefs
       prefs.add(sessionProtocolDebug());
       prefs.add(pythonProjectEnvironmentAutomaticActivate());
       prefs.add(checkNullExternalPointers());
-      prefs.add(quartoEnabled());
+      prefs.add(uiLanguage());
+      prefs.add(nativeFileDialogs());
       return prefs;
    }
    

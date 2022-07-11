@@ -459,7 +459,7 @@ function isValidSymbol(rawChar: { [x: string]: any }): boolean {
     return false;
   }
 
-  // no exluded characters
+  // no excluded characters
   const codepoint = Number.parseInt(rawChar['@_cp'], 16);
   if (excludedChars.includes(codepoint)) {
     return false;

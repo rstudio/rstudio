@@ -24,6 +24,7 @@ sudo zypper --non-interactive in gcc-c++
 sudo zypper --non-interactive in gcc-fortran
 sudo zypper --non-interactive in build
 sudo zypper --non-interactive in cmake
+sudo zypper --non-interactive in jq
 
 # core system libraries
 sudo zypper --non-interactive in libbz2-devel

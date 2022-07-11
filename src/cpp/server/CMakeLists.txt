@@ -23,6 +23,8 @@ file(GLOB_RECURSE SERVER_HEADER_FILES "*.h*")
 
 # source files
 set(SERVER_SOURCE_FILES
+   DBActiveSessionStorage.cpp
+   DBActiveSessionsStorage.cpp
    ServerBrowser.cpp
    ServerErrorCategory.cpp
    ServerEval.cpp
@@ -39,14 +41,18 @@ set(SERVER_SOURCE_FILES
    ServerPAMAuthOverlay.cpp
    ServerProcessSupervisor.cpp
    ServerREnvironment.cpp
-   ServerSessionProxy.cpp
-   ServerSessionProxyOverlay.cpp
-   ServerSessionManager.cpp
    ServerXdgVars.cpp
    auth/ServerAuthHandler.cpp
    auth/ServerAuthCommon.cpp
    auth/ServerSecureUriHandler.cpp
    auth/ServerValidateUser.cpp
+   session/ServerSessionProxy.cpp
+   session/ServerSessionProxyOverlay.cpp
+   session/ServerSessionRpc.cpp
+   session/ServerSessionRpcOverlay.cpp
+   session/ServerSessionManager.cpp
+   session/ServerSessionMetadataRpc.cpp
+   session/ServerSessionMetadataRpcOverlay.cpp
    ${CMAKE_CURRENT_BINARY_DIR}/ServerAddins.cpp
 )
 
@@ -282,6 +288,7 @@ if (RSTUDIO_UNIT_TESTS_ENABLED)
   endforeach()
 
   set(SERVER_TEST_FILES
+     DBActiveSessionStorageTests.cpp
      ServerEnvVarsTests.cpp
      ServerDatabaseMigrationTests.cpp
      ServerDatabaseMigrationOverlayTests.cpp)

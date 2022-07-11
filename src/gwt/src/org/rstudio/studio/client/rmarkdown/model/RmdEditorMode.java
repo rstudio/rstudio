@@ -42,7 +42,7 @@ public class RmdEditorMode
    public static String getProjectEditorMode(String path, SessionInfo sessionInfo)
    {
       QuartoConfig config = sessionInfo.getQuartoConfig();
-      String editor = config.project_editor;
+      String editor = config.project_editor != null ? config.project_editor.mode : null;
       if (StringUtil.isNullOrEmpty(editor))
          editor = null;
       

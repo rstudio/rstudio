@@ -37,6 +37,7 @@
 #include <core/r_util/RPackageInfo.hpp>
 
 #include <session/SessionOptions.hpp>
+#include "../modules/rmarkdown/SessionRMarkdown.hpp"
 
 #ifdef _WIN32
 #include <core/r_util/RToolsInfo.hpp>
@@ -59,6 +60,7 @@
 #include "SessionInstallRtools.hpp"
 
 using namespace rstudio::core;
+using namespace boost::placeholders;
 
 namespace rstudio {
 namespace session {
@@ -236,7 +238,8 @@ const char * const kBuildBinaryPackage = "build-binary-package";
 const char * const kTestPackage = "test-package";
 const char * const kCheckPackage = "check-package";
 const char * const kBuildAndReload = "build-all";
-const char * const kRebuildAll = "rebuild-all";
+const char * const kBuildIncremental = "build-incremental";
+const char * const kBuildFull = "build-full";
 const char * const kTestFile = "test-file";
 const char * const kTestShiny = "test-shiny";
 const char * const kTestShinyFile = "test-shiny-file";
@@ -316,6 +319,9 @@ private:
       else
          core::system::unsetenv(&environment, "RSTUDIO_CONSOLE_WIDTH");
 
+      // this runs in the build pane as a child process of this process
+      core::system::setenv(&environment, "RSTUDIO_CHILD_PROCESS_PANE", "build");
+      
       FilePath buildTargetPath = projects::projectContext().buildTargetPath();
       const core::r_util::RProjectConfig& config = projectConfig();
       if (type == kTestFile)
@@ -352,7 +358,8 @@ private:
             core::system::setenv(&environment, "R_LIBS", rLibs);
 
          // pass along RSTUDIO_VERSION
-         core::system::setenv(&environment, "RSTUDIO_VERSION", RSTUDIO_VERSION);
+         core::system::setenv(&environment, "RSTUDIO_VERSION", modules::rmarkdown::parsableRStudioVersion());
+         core::system::setenv(&environment, "RSTUDIO_LONG_VERSION", RSTUDIO_VERSION);
 
          options.environment = environment;
          
@@ -464,8 +471,15 @@ private:
    {
       if (!projectConfig().packageRoxygenize.empty())
       {
-         if ((type == kBuildAndReload || type == kRebuildAll) &&
-             options_.autoRoxygenizeForBuildAndReload)
+         if (type == kBuildAndReload && options_.autoRoxygenizeForBuildAndReload)
+         {
+            return true;
+         }
+         else if (type == kBuildIncremental && options_.autoRoxygenizeForBuildAndReload)
+         {
+            return true;
+         }
+         else if (type == kBuildFull && options_.autoRoxygenizeForBuildAndReload)
          {
             return true;
          }
@@ -659,8 +673,7 @@ private:
       // windows we need to unload the library first
 #ifdef _WIN32
       if (packagePath.completeChildPath("src").exists() &&
-         (type == kBuildAndReload || type == kRebuildAll ||
-          type == kBuildBinaryPackage))
+         (type == kBuildAndReload || type == kBuildIncremental || type == kBuildFull || type == kBuildBinaryPackage))
       {
          std::string pkg = pkgInfo_.name();
          Error error = r::exec::RFunction(".rs.forceUnloadPackage", pkg).call();
@@ -743,7 +756,7 @@ private:
       errorOutputFilterFunction_ = isPackageBuildError;
 
       // build command
-      if (type == kBuildAndReload || type == kRebuildAll)
+      if (type == kBuildAndReload || type == kBuildIncremental || type == kBuildFull)
       {
          // restart R after build is completed
          restartR_ = true;
@@ -755,8 +768,8 @@ private:
          // get extra args
          std::string extraArgs = projectConfig().packageInstallArgs;
 
-         // add --preclean if this is a rebuild all
-         if (collectForcePackageRebuild() || (type == kRebuildAll) || cleanBeforeInstall() )
+         // add --preclean if necessary
+         if (type == kBuildFull || collectForcePackageRebuild() || (type == kBuildAndReload && cleanBeforeInstall()) )
          {
             if (!boost::algorithm::contains(extraArgs, "--preclean"))
                rCmd << "--preclean";
@@ -1449,17 +1462,14 @@ private:
       std::string cmd;
       if (type == "build-all")
       {
+         // cmd = shell_utils::join_and(makeClean, make);
          cmd = make;
       }
       else if (type == "clean-all")
       {
          cmd = makeClean;
       }
-      else if (type == "rebuild-all")
-      {
-         cmd = shell_utils::join_and(makeClean, make);
-      }
-
+      
       module_context::processSupervisor().runCommand(cmd,
                                                      options,
                                                      cb);
@@ -2333,6 +2343,7 @@ Error initialize()
       (bind(registerRpcMethod, "devtools_load_all_path", devtoolsLoadAllPath))
       (bind(registerRpcMethod, "get_bookdown_formats", getBookdownFormats))
       (bind(sourceModuleRFile, "SessionBuild.R"))
+      (bind(sourceModuleRFile, "SessionInstallRtools.R"))
       (bind(source_cpp::initialize));
    return initBlock.execute();
 }

@@ -47,6 +47,24 @@
       return window.navigator.userAgent.indexOf("Electron") > 0 ? "true" : "false";
    ]]></property-provider>
 
+   <!-- Detect option to stop use of native OS file dialogs on Electron Desktop -->
+   <define-property name="rstudio.useNativeDialogs" values="true,false"/>
+   <property-provider name="rstudio.useNativeDialogs"><![CDATA[
+      try {
+         if (window.navigator.userAgent.indexOf("Electron") > 0) {
+            var cookieArr = window.document.cookie.split(";");
+            for (var i = 0; i < cookieArr.length; i++) {
+               var cookiePair = cookieArr[i].split("=");
+               if ('WEBDIALOG' === cookiePair[0].trim().toUpperCase()) {
+                  return "false";
+               }
+            }
+         }
+      } catch (e) {
+         console.error(e);
+      }
+      return "true";
+   ]]></property-provider>
 
    <!-- Set the user agent. Note that we no longer support older IE. -->
    <!-- Note that 'safari' here is effectively an alias for modern browsers. -->
@@ -77,6 +95,7 @@
       <when-type-is class="org.rstudio.studio.client.common.FileDialogs" />
       <all>
          <when-property-is name="rstudio.desktop" value="true"/>
+         <when-property-is name="rstudio.useNativeDialogs" value="true"/>
          <when-property-is name="rstudio.remoteDesktop" value="false"/>
       </all>
    </replace-with>
@@ -86,25 +105,6 @@
    </replace-with>
    <replace-with class="org.rstudio.studio.client.application.ui.impl.DesktopApplicationHeader">
       <when-type-is class="org.rstudio.studio.client.application.ui.ApplicationHeader" />
-      <when-property-is name="rstudio.desktop" value="true"/>
-   </replace-with>
-
-   <replace-with class="org.rstudio.studio.client.workbench.views.packages.impl.WebCRANChooser">
-      <when-type-is class="org.rstudio.studio.client.workbench.views.packages.CRANChooser"/>
-   </replace-with>
-   <replace-with class="org.rstudio.studio.client.workbench.views.packages.impl.DesktopCRANChooser">
-      <when-type-is class="org.rstudio.studio.client.workbench.views.packages.CRANChooser"/>
-      <all>
-         <when-property-is name="rstudio.desktop" value="true"/>
-         <when-property-is name="rstudio.remoteDesktop" value="false"/>
-      </all>
-   </replace-with>
-
-   <replace-with class="org.rstudio.studio.client.workbench.views.plots.ui.impl.WebActionsWidget">
-      <when-type-is class="org.rstudio.studio.client.workbench.views.plots.ui.ActionsWidget"/>
-   </replace-with>
-   <replace-with class="org.rstudio.studio.client.workbench.views.plots.ui.impl.DesktopActionsWidget">
-      <when-type-is class="org.rstudio.studio.client.workbench.views.plots.ui.ActionsWidget"/>
       <when-property-is name="rstudio.desktop" value="true"/>
    </replace-with>
 
@@ -121,7 +121,10 @@
    </replace-with>
    <replace-with class="org.rstudio.studio.client.common.dialog.DesktopDialogBuilderFactory">
       <when-type-is class="org.rstudio.studio.client.common.dialog.DialogBuilderFactory"/>
-      <when-property-is name="rstudio.desktop" value="true"/>
+      <all>
+         <when-property-is name="rstudio.desktop" value="true"/>
+         <when-property-is name="rstudio.useNativeDialogs" value="true"/>
+      </all>
    </replace-with>
 
    <replace-with class="org.rstudio.studio.client.common.impl.WebTextInput">
@@ -146,7 +149,8 @@
    <set-configuration-property name="locale.useragent" value="Y"/>
 
    <!-- Set order of precidence for locale settings -->
-   <set-configuration-property name="locale.searchorder" value="queryparam,cookie,useragent,meta"/>
+   <set-configuration-property name="locale.searchorder" value="cookie"/>
+   <set-configuration-property name="locale.cookie" value="LOCALE"/>
 
    <!-- Specify supported locales -->
    <extend-property name="locale" values="en,fr"/>

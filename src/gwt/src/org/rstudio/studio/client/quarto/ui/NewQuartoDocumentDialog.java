@@ -149,7 +149,7 @@ public class NewQuartoDocumentDialog extends ModalDialog<NewQuartoDocumentDialog
       formatNames_ = new ArrayList<>();
       resources.styles().ensureInjected();
       
-      txtTitle_.setText(constants_.newDocTitleText());
+      txtTitle_.setText("Untitled"); //$NON-NLS-1$
       DomUtils.setPlaceholder(txtAuthor_, constants_.newDocAuthorPlaceholderText());
       Roles.getListboxRole().setAriaLabelProperty(listTemplates_.getElement(), constants_.templateAriaLabelValue());
       listTemplates_.addChangeHandler(new ChangeHandler()
@@ -206,7 +206,7 @@ public class NewQuartoDocumentDialog extends ModalDialog<NewQuartoDocumentDialog
       
       // use project default if available, otherwise use last result
       QuartoConfig config = session_.getSessionInfo().getQuartoConfig();
-      String editor = config.project_editor;
+      String editor = config.project_editor != null ? config.project_editor.mode : null;
       if (StringUtil.isNullOrEmpty(editor))
          editor = lastResult_.getEditor();
       editorCheckBox_.setValue(editor.equals(QuartoCommandConstants.EDITOR_VISUAL));

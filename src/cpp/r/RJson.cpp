@@ -66,6 +66,44 @@ namespace json {
 
 namespace {
 
+enum IntValueType
+{
+   UNKNOWN,
+   UINT16,
+   UINT32,
+   UINT64,
+   INT,
+   INT16,
+   INT32,
+   INT64
+};
+
+IntValueType getIntType(SEXP vectorSEXP)
+{
+   std::string intSign;
+   SEXP intSignSEXP = sexp::getAttrib(vectorSEXP, "rs.valueType");
+
+   if ((intSignSEXP != R_NilValue && TYPEOF(intSignSEXP) == STRSXP))
+      intSign = sexp::asString(intSignSEXP);
+
+   if (intSign == "uint16_t")
+      return UINT16;
+   if (intSign == "uint32_t")
+      return UINT32;
+   if (intSign == "uint64_t")
+      return UINT64;
+   if (intSign == "int16_t")
+      return INT16;
+   if (intSign == "int32_t")
+      return INT32;
+   if (intSign == "int64_t")
+      return INT64;
+   if (intSign == "int")
+      return INT;
+
+   return UNKNOWN;
+}
+
 Error jsonValueFromVectorElement(SEXP vectorSEXP, 
                                  int i, 
                                  core::json::Value* pValue)
@@ -106,8 +144,73 @@ Error jsonValueFromVectorElement(SEXP vectorSEXP,
       case INTSXP:
       {
          int value = INTEGER(vectorSEXP)[i];
+         IntValueType type = getIntType(vectorSEXP);
+
          if (value != NA_INTEGER)
-            *pValue = value;
+         {
+            switch (type)
+            {
+               case UINT16:
+               {
+                  if ((value >= 0) && (value <= UINT16_MAX))
+                  {
+                     *pValue = static_cast<uint16_t>(value);
+                     break;
+                  }
+
+                  // Fall through intentional - upgrading type size.
+               }
+               case UINT32:
+               {
+                  if (value >= 0)
+                  {
+                     *pValue = static_cast<uint32_t>(value);
+                     break;
+                  }
+
+                  // Fall through intentional - upgrading type size.
+               }
+               case UINT64:
+               {
+                  if (value >= 0)
+                  {
+                     *pValue = static_cast<uint64_t>(value);
+                     break;
+                  }
+
+                  // Fall through intentional - upgrading type size.
+               }
+               case INT16:
+               {
+                  if (value <= INT16_MAX)
+                  {
+                     *pValue = static_cast<int16_t>(value);
+                     break;
+                  }
+
+                  // Fall through intentional - upgrading type size.
+               }
+               case INT32:
+               {
+                  if (value <= INT32_MAX)
+                  {
+                     *pValue = static_cast<int32_t>(value);
+                     break;
+                  }
+
+                  // Fall through intentional - upgrading type size.
+               }
+               case INT64:
+               {
+                  *pValue = static_cast<uint64_t>(value);
+                  break;
+               }
+               case UNKNOWN:
+               case INT:
+                  *pValue = value;
+            }
+         }
+
          break;
       }
       case REALSXP:

@@ -4,9 +4,11 @@ set -e
 # Build and copy ace, ace-uncompressed to RStudio
 cd rstudio-ace
 
+# Build ace. Note that we pass an explicit larger stack size to accommodate
+# https://github.com/ajaxorg/ace/issues/4596.
 NODEJS="$(command -v nodejs &> /dev/null && echo nodejs || echo node)"
-${NODEJS} ./Makefile.dryice.js normal
-${NODEJS} ./Makefile.dryice.js -m normal
+${NODEJS} --stack_size=2048 ./Makefile.dryice.js normal
+${NODEJS} --stack_size=2048 ./Makefile.dryice.js -m normal
 
 cp build/src/ace.js ../../src/org/rstudio/studio/client/workbench/views/source/editors/text/ace/ace-uncompressed.js
 cp build/src-min/ace.js ../../src/org/rstudio/studio/client/workbench/views/source/editors/text/ace/ace.js

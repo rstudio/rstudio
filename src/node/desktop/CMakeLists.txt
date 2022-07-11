@@ -117,6 +117,10 @@ endif()
 
 set(ELECTRON_SOURCE_DIR "${CMAKE_CURRENT_SOURCE_DIR}" CACHE INTERNAL "")
 if (APPLE)
+   # configure Info.plist
+   configure_file (${CMAKE_CURRENT_SOURCE_DIR}/Info.plist.in
+      ${CMAKE_CURRENT_SOURCE_DIR}/Info.plist)
+
    # copy sources to build directory. note that the build directory cannot
    # be the "true" CMake directory as some files are resolved relative to
    # the desktop project's relative path in the application structure
@@ -162,7 +166,6 @@ else()
       COMMAND
          ${CMAKE_COMMAND} -E env
          "PATH=${MODIFIED_PATH}"
-         "PLAYWRIGHT_SKIP_BROWSER_DOWNLOAD=1"
          "MAKEFLAGS="
          ${NPM} run package
    )
@@ -189,8 +192,15 @@ if(WIN32)
 
    install(
       DIRECTORY "${ELECTRON_BUILD_DIR}/out/RStudio-win32-x64/"
-      DESTINATION "${RSTUDIO_INSTALL_ELECTRON}"
-   )
+      DESTINATION "${RSTUDIO_INSTALL_ELECTRON}")
+
+   # install system components as well
+   set(CMAKE_INSTALL_SYSTEM_RUNTIME_LIBS_SKIP TRUE)
+   set(CMAKE_INSTALL_UCRT_LIBRARIES TRUE)
+   include(InstallRequiredSystemLibraries)
+   install(
+         PROGRAMS ${CMAKE_INSTALL_SYSTEM_RUNTIME_LIBS}
+         DESTINATION "${RSTUDIO_INSTALL_BIN}")
 
 elseif(LINUX)
 
@@ -201,7 +211,7 @@ elseif(LINUX)
    endif()
 
    install(
-      DIRECTORY "${ELECTRON_BUILD_DIR}/out/rstudio-linux-${ELECTRON_ARCH}/"
+      DIRECTORY "${ELECTRON_BUILD_DIR}/out/RStudio-linux-${ELECTRON_ARCH}/"
       DESTINATION "${RSTUDIO_INSTALL_ELECTRON}"
       USE_SOURCE_PERMISSIONS
    )

@@ -52,8 +52,16 @@ public class QuartoHelper
    
    public static boolean isWithinQuartoProjectDir(String qmd, QuartoConfig config)
    {
-      FileSystemItem projectDir = FileSystemItem.createDir(config.project_dir);
-      FileSystemItem qmdFile = FileSystemItem.createFile(qmd);
-      return qmdFile.getPathRelativeTo(projectDir) != null;
+      if (!StringUtil.isNullOrEmpty(qmd))
+      {
+         FileSystemItem projectDir = FileSystemItem.createDir(config.project_dir);
+         FileSystemItem qmdFile = FileSystemItem.createFile(qmd);
+         return qmdFile.getPathRelativeTo(projectDir) != null;
+      } 
+      else
+      {
+         return false;
+      }
+     
    }
 }

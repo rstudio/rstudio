@@ -20,9 +20,9 @@ import { randomString } from '../unit-utils';
 import fs from 'fs';
 import fsPromises from 'fs/promises';
 import path from 'path';
-import os from 'os';
+import os, { platform } from 'os';
 
-import { FilePath } from '../../../src/core/file-path';
+import { FilePath, normalizeSeparatorsNative } from '../../../src/core/file-path';
 import { userHomePath } from '../../../src/core/user';
 import { setLogger, NullLogger } from '../../../src/core/logger';
 import { clearCoreSingleton } from '../../../src/core/core-state';
@@ -44,7 +44,7 @@ function getTestDir(): FilePath {
 const bogusPath = '/super/bogus/path/42';
 
 // A path that a non-elevated user cannot create
-const cannotCreatePath = process.platform === 'win32' ? 'C:\\Program Files\\a_test_folder' : '/foo/bar/crazy';
+const cannotCreatePath = process.platform === 'win32' ? '\\\\rstudio-foo-bar-23456\\a_test_folder' : '/foo/bar/crazy';
 
 // An absolute path in generic format (see boost filesystem for description of "generic" format)
 const absolutePath = process.platform === 'win32' ? 'C:/Users/human/documents' : '/users/human/documents';
@@ -407,7 +407,7 @@ describe('FilePath', () => {
       assert(isSuccessful(result));
       const newPath = path.join(target, extraFolder);
       assert.isTrue(fs.existsSync(newPath));
-      fs.rmdirSync(path.join(os.tmpdir(), firstLevel), { recursive: true });
+      fs.rmSync(path.join(os.tmpdir(), firstLevel), { recursive: true });
     });
     it('createDirectorySync should fail when it cannot create the directory', () => {
       const fp = new FilePath(cannotCreatePath);
@@ -502,7 +502,7 @@ describe('FilePath', () => {
       assert(isSuccessful(result));
       const newPath = path.join(target, extraFolder);
       assert.isTrue(await FilePath.existsAsync(newPath));
-      await fsPromises.rmdir(path.join(os.tmpdir(), firstLevel), { recursive: true });
+      await fsPromises.rm(path.join(os.tmpdir(), firstLevel), { recursive: true });
     });
     it('createDirectory should fail when it cannot create the directory', async () => {
       const fp = new FilePath(cannotCreatePath);
@@ -602,6 +602,35 @@ describe('FilePath', () => {
       const cPath = new FilePath('/path/to/foo');
       assert.strictEqual(cPath.completeChildPath('../bar'), cPath);
       assert.strictEqual(cPath.completeChildPath('/path/to/quux'), cPath);
+    });
+    it('Paths contain correct slashes based on OS', () => {
+      const paths = [
+        'c:\\www\\app\\my/folder/file.r',
+        'C:\\R\\4.1.2/bin/R.exe',
+        'c:\\www\\\\app\\my/folder/file.r',
+        'T:\\R-3.6.3\\bin\\x64\\R.exe',
+        '\\\\TOWER\\downloads\\R-3.6.3\\bin\\x64\\R.exe',
+        'C:\\R\\4.1.2/bin/R.exe'
+      ];
+    
+      const correctSeparator = process.platform === 'win32' ? '\\' : '/';
+      const wrongSeparator = process.platform !== 'win32' ? '\\' : '/';
+
+      paths.forEach((path) => {
+        const normalizedPath = normalizeSeparatorsNative(path);
+       
+        assert.include(
+          normalizedPath,
+          correctSeparator,
+          `Path ${normalizedPath} should contain backward slashes for this test to be valid after normalization`,
+        );
+       
+        assert.notInclude(
+          normalizedPath,
+          wrongSeparator,
+          `Path ${normalizedPath} should NOT forward slashes for this test to be valid after normalization`,
+        );
+      });
     });
   });
 
@@ -786,7 +815,6 @@ describe('FilePath', () => {
       assert.throws(() => fp1.hasExtension('.txt'));
       assert.throws(() => fp1.hasExtensionLowerCase('.txt'));
       assert.throws(() => fp1.hasTextMimeType());
-      assert.throws(() => fp1.isDirectory());
       assert.throws(() => fp1.isEquivalentTo(fp2));
       assert.throws(() => fp1.isHidden());
       assert.throws(() => fp1.isJunction());

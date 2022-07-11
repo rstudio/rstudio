@@ -37,6 +37,8 @@ extern const char* const kQuartoProjectDefault;
 extern const char* const kQuartoProjectWebsite;
 extern const char* const kQuartoProjectSite;
 extern const char* const kQuartoProjectBook;
+extern const char* const kQuartoExecuteDirProject;
+extern const char* const kQuartoExecuteDirFile;
 
 struct QuartoConfig
 {
@@ -58,9 +60,10 @@ struct QuartoConfig
    std::string project_type;
    std::string project_dir;
    std::string project_output_dir;
+   std::string project_execute_dir;
    std::vector<std::string> project_formats;
    std::vector<std::string> project_bibliographies;
-   std::string project_editor;
+   core::json::Object project_editor;
 };
 
 QuartoConfig quartoConfig(bool refresh = false);
@@ -87,16 +90,21 @@ core::FilePath quartoBinary();
 
 bool projectIsQuarto();
 
+bool docIsQuarto(const std::string& docId);
+
 core::FilePath quartoProjectConfigFile(const core::FilePath& filePath);
 
 void readQuartoProjectConfig(const core::FilePath& configFile,
                              std::string* pType,
                              std::string* pOutputDir = nullptr,
+                             std::string* pExecuteDir = nullptr,
                              std::vector<std::string>* pFormats = nullptr,
                              std::vector<std::string>* pBibliographies = nullptr,
-                             std::string* pEditor = nullptr);
+                             core::json::Object* pEditor = nullptr);
 
 core::json::Value quartoXRefIndex();
+
+core::FilePath getQuartoExecutionDir(const std::string& docPath);
 
 } // namespace quarto
 } // namespace session

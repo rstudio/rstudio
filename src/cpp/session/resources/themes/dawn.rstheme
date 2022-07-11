@@ -171,9 +171,8 @@
 .xtermInvertColor { color: #f9f9f9; }
 .xtermInvertBgColor { background-color: #080808; }
 .xtermBold { font-weight: bold; }
+.xtermBlur { filter: blur(1px); }
 .xtermUnderline { text-decoration: underline; }
-.xtermHyperlink { cursor: pointer; }
-.xtermHyperlink:hover { text-decoration: underline; }
 .xtermBlink { text-decoration: blink; }
 .xtermHidden { visibility: hidden; }
 .xtermItalic { font-style: italic; }

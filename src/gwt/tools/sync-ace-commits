@@ -1,7 +1,7 @@
 #!/usr/bin/env bash
 set -e
 
-BRANCH=rstudio/v1.4
+BRANCH=rstudio/elsbeth-geranium
 
 PROGRAMS=("git" "npm")
 for PROGRAM in "${PROGRAMS[@]}"; do

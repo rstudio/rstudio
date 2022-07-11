@@ -122,5 +122,17 @@ mtcars %>%
    mutate(
       x2 = "not ok") # use Ctrl + Enter in this line
 
+# 19: multi line rawstring
+r"(
+ a
+ b
+ c
+)"
+
+# 20: multi line string preceded with opening bracket
+c("a
+b"
+)
+
 # cursor should end here after executing all lines
 EOF

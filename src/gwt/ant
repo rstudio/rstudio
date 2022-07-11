@@ -13,8 +13,8 @@ fi
 if [ -z "${JAVA_HOME}" ]; then
 	
 	read -r -d '' homes <<- EOF
-	/Library/Java/JavaVirtualMachines/zulu-11.jdk/Contents/Home
 	/Library/Java/JavaVirtualMachines/adoptopenjdk-11.jdk/Contents/Home
+	/Library/Java/JavaVirtualMachines/openjdk-11.jdk/Contents/Home
 	/opt/homebrew/opt/openjdk@11
 	/usr/lib/jvm/java-11-openjdk-amd64/jre
 	/Library/Java/JavaVirtualMachines/adoptopenjdk-8.jdk/Contents/Home

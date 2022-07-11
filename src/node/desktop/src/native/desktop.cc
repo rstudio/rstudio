@@ -30,6 +30,10 @@
 # include <Carbon/Carbon.h>
 #endif
 
+#ifdef _WIN32
+# include <Windows.h>
+#endif
+
 #define RS_EXPORT_FUNCTION(__NAME__, __FUNCTION__) \
   exports.Set(                                     \
     Napi::String::New(env, __NAME__),              \
@@ -171,15 +175,38 @@ Napi::Value cleanClipboard(const Napi::CallbackInfo& info)
    return Napi::Value();
 }
 
+namespace {
+
+bool isCtrlKeyDownImpl()
+{
+   bool result = false;
+
+#ifdef _WIN32
+   result = ::GetAsyncKeyState(VK_CONTROL) & ~1;
+#endif
+
+   return result;
+
+}
+
+} // end anonymous namespace
+
+Napi::Value isCtrlKeyDown(const Napi::CallbackInfo& info)
+{
+   bool value = isCtrlKeyDownImpl();
+   return Napi::Boolean::From(info.Env(), value);
+}
+
 } // end namespace desktop
 } // end namespace rstudio
 
 Napi::Object Init(Napi::Env env, Napi::Object exports) {
 
   RS_EXPORT_FUNCTION("cleanClipboard", rstudio::desktop::cleanClipboard);
+  RS_EXPORT_FUNCTION("isCtrlKeyDown", rstudio::desktop::isCtrlKeyDown);
 
   return exports;
 
 }
 
-NODE_API_MODULE(hello, Init)
+NODE_API_MODULE(rstudio, Init)

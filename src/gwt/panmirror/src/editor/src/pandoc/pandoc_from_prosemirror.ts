@@ -27,6 +27,7 @@ import {
   PandocOutputOption,
   PandocExtensions,
   marksByPriority,
+  kPreventBracketEscape,
 } from '../api/pandoc';
 
 import { PandocFormat, kGfmFormat } from '../api/pandoc_format';
@@ -210,7 +211,13 @@ class PandocWriter implements PandocOutput {
 
   public writeText(text: string | null) {
     // determine which characters we shouldn't escape
-    const preventEscapeCharacters = this.preventEscapeCharacters;
+    const preventEscapeCharacters = [ ...this.preventEscapeCharacters ];
+    if (this.options[kPreventBracketEscape]) {
+      preventEscapeCharacters.push('[', ']');
+    }
+    if (this.extensions.smart) {
+      preventEscapeCharacters.push('\'', '"');
+    }
 
     if (text) {
       let textRun = '';
@@ -223,17 +230,9 @@ class PandocWriter implements PandocOutput {
             });
           }
 
-          // reverse smart punctuation. pandoc does this autmoatically for markdown
-          // writing w/ +smart, however this also results in nbsp's being inserted
-          // after selected abbreviations like e.g. and Mr., and we don't want that
-          // to happen for editing (b/c the nbsp's weren't put there by the user
-          // and are not obviously visible)
+          // no smart quotes in editor
           if (this.extensions.smart) {
-            textRun = textRun
-              .replace(/—/g, '---')
-              .replace(/–/g, '--')
-              .replace(/…/g, '...');
-              textRun = fancyQuotesToSimple(textRun);
+            textRun = fancyQuotesToSimple(textRun);
           }
        
           this.writeToken(PandocTokenType.Str, textRun);

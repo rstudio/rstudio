@@ -28,10 +28,11 @@
 
 #include <server/ServerOptions.hpp>
 #include <server/ServerUriHandlers.hpp>
-#include <server/ServerSessionProxy.hpp>
 
 #include <server/auth/ServerAuthHandler.hpp>
 #include <server/auth/ServerAuthCommon.hpp>
+
+#include <server/session/ServerSessionProxy.hpp>
 
 #include "ServerLoginPages.hpp"
 
@@ -40,6 +41,7 @@ namespace server {
 namespace pam_auth {
 
 using namespace rstudio::core;
+using namespace boost::placeholders;
 
 namespace {
 

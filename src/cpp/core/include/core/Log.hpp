@@ -16,12 +16,12 @@
 #ifndef CORE_LOG_HPP
 #define CORE_LOG_HPP
 
-#include <shared_core/Logger.hpp>
+#include <fmt/format.h>
 
 #include <string>
 
 #include <shared_core/Error.hpp>
-#include <boost/function.hpp>
+#include <shared_core/Logger.hpp>
 
 namespace rstudio {
 namespace core {
@@ -96,6 +96,31 @@ std::string errorAsLogEntry(const Error& error);
                                                                                       action)
 
 #define LOG_PASSTHROUGH_MESSAGE(source, message) rstudio::core::log::logPassthroughMessage(source, message)
+
+#define DLOGF(__FMT__, ...)                                                    \
+  do {                                                                         \
+    std::string message = fmt::format(FMT_STRING(__FMT__), ##__VA_ARGS__);     \
+    ::rstudio::core::log::logDebugMessage(message);                            \
+  } while (0)
+
+#define ILOGF(__FMT__, ...)                                                    \
+  do {                                                                         \
+    std::string message = fmt::format(FMT_STRING(__FMT__), ##__VA_ARGS__);     \
+    ::rstudio::core::log::logInfoMessage(message);                             \
+  } while (0)
+
+#define WLOGF(__FMT__, ...)                                                    \
+  do {                                                                         \
+    std::string message = fmt::format(FMT_STRING(__FMT__), ##__VA_ARGS__);     \
+    ::rstudio::core::log::logWarningMessage(message);                          \
+  } while (0)
+
+#define ELOGF(__FMT__, ...)                                                    \
+  do {                                                                         \
+    std::string message = fmt::format(FMT_STRING(__FMT__), ##__VA_ARGS__);     \
+    ::rstudio::core::log::logErrorMessage(message);                            \
+  } while (0)
+
 
 // define named logging sections
 #define kFileLockingLogSection "file-locking"

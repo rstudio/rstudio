@@ -125,7 +125,8 @@ public class RStudioThemedFrame extends RStudioFrame
          style.setInnerHTML(customStyle);
          document.getHead().appendChild(style);
          
-         if (urlStyle != null) {
+         if (urlStyle != null)
+         {
             LinkElement styleLink = document.createLinkElement();
             styleLink.setHref(urlStyle);
             styleLink.setRel("stylesheet");
@@ -137,7 +138,8 @@ public class RStudioThemedFrame extends RStudioFrame
          BodyElement body = document.getBody();
          if (body != null)
          {
-            if (removeBodyStyle) body.removeAttribute("style");
+            if (removeBodyStyle)
+               body.removeAttribute("style");
             
             RStudioThemes.initializeThemes(
                RStudioGinjector.INSTANCE.getUserPrefs(),
@@ -179,8 +181,22 @@ public class RStudioThemedFrame extends RStudioFrame
    
    private static final native boolean isEligibleForCustomStyles(Document document)
    /*-{
+      // We disable custom styling for most vignettes, as we cannot guarantee
+      // the vignette will remain legible after attempting to re-style with
+      // a dark theme.
+      
+      // If the document contains an 'article', avoid custom styling.
       var articles = document.getElementsByTagName("article");
-      return articles.length === 0;
+      if (articles.length !== 0)
+         return false;
+         
+      // If the document uses hljs, avoid custom styling.
+      // https://github.com/rstudio/rstudio/issues/11022
+      var hljs = document.defaultView.hljs;
+      if (hljs != null)
+         return false;
+         
+      return true;
    }-*/;
    
    // Resources ----

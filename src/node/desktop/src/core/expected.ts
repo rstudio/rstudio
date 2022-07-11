@@ -15,6 +15,29 @@
 
 export type Expected<T> = [T, Error | null];
 
+// Execute a callback wrapped within 'try-catch', and return
+// the result as an Expected<T>.
+//
+// On success, returns `ok(callback())`.
+// On error, return `err(error)`.
+//
+// This can be useful for wrapping execution of a function
+// which might throw an exception within the expectation style.
+//
+// Example usage:
+//
+// const [result, error] = expect(() => {
+//   return mightThrow();
+// });
+export function expect<T>(callback: () => T): Expected<T> {
+  try {
+    const result = callback();
+    return ok(result);
+  } catch (error: unknown) {
+    return err(error as any);
+  }
+}
+
 export function ok<T>(value: T): Expected<T> {
   return [value, null];
 }
@@ -24,5 +47,6 @@ export function ok<T>(value: T): Expected<T> {
 // unset. Effectively, this implies that "correct" usages of Expected will never
 // give the user a non-T value.
 export function err<T>(error?: Error): Expected<T> {
-  return [null as unknown as T, error ?? new Error()];
+  return [null as unknown as T, error ?? new Error(error)];
 }
+

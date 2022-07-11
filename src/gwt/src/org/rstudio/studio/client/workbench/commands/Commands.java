@@ -147,6 +147,7 @@ public abstract class
    public abstract AppCommand findAll();
    public abstract AppCommand replaceAndFind();
    public abstract AppCommand findInFiles();
+   public abstract AppCommand refreshFindInFiles();
    public abstract AppCommand newSourceColumn();
    public abstract AppCommand fold();
    public abstract AppCommand unfold();
@@ -468,7 +469,6 @@ public abstract class
    public abstract AppCommand openProfileInBrowser();
 
    // Tools
-   public abstract AppCommand showShellDialog();
    public abstract AppCommand macPreferences();
    public abstract AppCommand showOptions();
    public abstract AppCommand showCodeOptions();
@@ -572,6 +572,7 @@ public abstract class
    public abstract AppCommand openDeveloperConsole();
    public abstract AppCommand reloadUi();
    public abstract AppCommand showGpuDiagnostics();
+   public abstract AppCommand showA11yDiagnostics();
    public abstract AppCommand showLogFiles();
    public abstract AppCommand rstudioSupport();
    public abstract AppCommand rstudioCommunityForum();
@@ -584,8 +585,9 @@ public abstract class
    // Build
    public abstract AppCommand clearBuild();
    public abstract AppCommand buildAll();
+   public abstract AppCommand buildIncremental();
+   public abstract AppCommand buildFull();
    public abstract AppCommand devtoolsLoadAll();
-   public abstract AppCommand rebuildAll();
    public abstract AppCommand serveQuartoSite();
    public abstract AppCommand cleanAll();
    public abstract AppCommand buildSourcePackage();
@@ -670,20 +672,20 @@ public abstract class
    // Addins
    public abstract AppCommand browseAddins();
 
-   // Jobs
+   // Background Jobs
    public abstract AppCommand startJob();
    public abstract AppCommand sourceAsJob();
-   public abstract AppCommand clearJobs();
-   public abstract AppCommand activateJobs();
-   public abstract AppCommand runSelectionAsJob();
+   public abstract AppCommand clearBackgroundJobs();
+   public abstract AppCommand activateBackgroundJobs();
+   public abstract AppCommand runSelectionAsBackgroundJob();
 
-   // Launcher Jobs
-   public abstract AppCommand startLauncherJob();
-   public abstract AppCommand sourceAsLauncherJob();
-   public abstract AppCommand runSelectionAsLauncherJob();
-   public abstract AppCommand activateLauncherJobs();
-   public abstract AppCommand sortLauncherJobsRecorded();
-   public abstract AppCommand sortLauncherJobsState();
+   // Workbench Jobs
+   public abstract AppCommand startWorkbenchJob();
+   public abstract AppCommand sourceAsWorkbenchJob();
+   public abstract AppCommand runSelectionAsWorkbenchJob();
+   public abstract AppCommand activateWorkbenchJobs();
+   public abstract AppCommand sortWorkbenchJobsRecorded();
+   public abstract AppCommand sortWorkbenchJobsState();
 
    // Other
    public abstract AppCommand checkSpelling();

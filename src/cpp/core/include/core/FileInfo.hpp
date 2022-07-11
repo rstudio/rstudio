@@ -69,7 +69,7 @@ public:
    {
    }
 
-   // COPYING: via compliler (copyable members)
+   // COPYING: via compiler (copyable members)
 
 public:
    bool empty() const { return absolutePath_.empty(); }

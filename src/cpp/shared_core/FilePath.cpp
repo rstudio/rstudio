@@ -137,6 +137,7 @@ MimeType s_mimeTypes[] =
       { "txt",          "text/plain" },
       { "mml",          "text/mathml" },
       { "log",          "text/plain" },
+      { "lintr",        "text/plain" },
       { "out",          "text/plain" },
       { "csl",          "text/x-csl" },
       { "R",            "text/x-r-source" },

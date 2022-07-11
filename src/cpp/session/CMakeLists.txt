@@ -56,7 +56,7 @@ endif()
 # - by default, we use quarto + quarto's bundled pandoc
 # - if quarto is not enabled, use pandoc fallback
 if(QUARTO_ENABLED)
-   set(RSTUDIO_DEPENDENCIES_PANDOC_DIR "${RSTUDIO_DEPENDENCIES_QUARTO_DIR}/bin")
+   set(RSTUDIO_DEPENDENCIES_PANDOC_DIR "${RSTUDIO_DEPENDENCIES_QUARTO_DIR}/bin/tools")
 elseif(EXISTS "${RSTUDIO_TOOLS_ROOT}/pandoc/${PANDOC_VERSION}")
    set(RSTUDIO_DEPENDENCIES_PANDOC_DIR "${RSTUDIO_TOOLS_ROOT}/pandoc/${PANDOC_VERSION}")
 else()
@@ -96,15 +96,10 @@ endforeach()
 
 # verify libclang is installed (Windows only)
 if(WIN32)
-   set(LIBCLANG_VERSION "5.0.2")
+   set(LIBCLANG_VERSION "13.0.1")
    set(LIBCLANG_DIR "${RSTUDIO_DEPENDENCIES_DIR}/common/libclang/${LIBCLANG_VERSION}")
    if(NOT EXISTS "${LIBCLANG_DIR}")
       message(FATAL_ERROR "libclang ${LIBCLANG_VERSION} not found  (re-run install-dependencies script to install)")
-   endif()
-
-   set(LIBCLANG_HEADERS_DIR "${RSTUDIO_DEPENDENCIES_DIR}/common/libclang/builtin-headers")
-   if(NOT EXISTS "${LIBCLANG_HEADERS_DIR}")
-      message(FATAL_ERROR "libclang builtin-headers not found  (re-run install-dependencies script to install)")
    endif()
 endif()
 
@@ -114,6 +109,7 @@ file(GLOB_RECURSE SESSION_HEADER_FILES "*.h*")
 
 # source files
 set(SESSION_SOURCE_FILES
+   SessionActiveSessionsStorage.cpp
    SessionAsyncRProcess.cpp
    SessionAsyncDownloadFile.cpp
    SessionClientEvent.cpp
@@ -144,10 +140,13 @@ set(SESSION_SOURCE_FILES
    SessionPerFilePathStorage.cpp
    SessionPersistentState.cpp
    SessionPostback.cpp
+   SessionServerRpc.cpp
+   SessionServerRpcOverlay.cpp
    SessionSSH.cpp
    SessionSourceDatabase.cpp
    SessionSourceDatabaseSupervisor.cpp
    SessionSuspend.cpp
+   SessionSuspendFilter.cpp
    SessionUriHandlers.cpp
    SessionUrlPorts.cpp
    SessionWorkerContext.cpp
@@ -615,6 +614,9 @@ if(NOT RSTUDIO_SESSION_WIN32 AND NOT RSESSION_ALTERNATE_BUILD)
    # templates
    install(DIRECTORY "resources/templates"
            DESTINATION ${RSTUDIO_INSTALL_SUPPORTING}/resources)
+   # pandoc
+   install(DIRECTORY "resources/pandoc"
+           DESTINATION ${RSTUDIO_INSTALL_SUPPORTING}/resources)
    # JS resources
    file(GLOB JS_RESOURCE_FILES "resources/*.js")
    install(FILES ${JS_RESOURCE_FILES}
@@ -677,13 +679,19 @@ if(NOT RSTUDIO_SESSION_WIN32 AND NOT RSESSION_ALTERNATE_BUILD)
    if(QUARTO_ENABLED)
       # install some quarto folders into Resources, as needed
       if(APPLE)
-         install(DIRECTORY "${RSTUDIO_DEPENDENCIES_QUARTO_DIR}"
-               DESTINATION "${RSTUDIO_INSTALL_BIN}"
-               USE_SOURCE_PERMISSIONS
-               PATTERN "*/share" EXCLUDE)
-         install(DIRECTORY "${RSTUDIO_DEPENDENCIES_QUARTO_DIR}/share" 
-               DESTINATION "${RSTUDIO_INSTALL_SUPPORTING}/quarto"
-               USE_SOURCE_PERMISSIONS)
+         if (RSTUDIO_ELECTRON)
+            install(DIRECTORY "${RSTUDIO_DEPENDENCIES_QUARTO_DIR}" 
+                  DESTINATION "${RSTUDIO_INSTALL_RESOURCES}/app"
+                  USE_SOURCE_PERMISSIONS)
+         else()
+            install(DIRECTORY "${RSTUDIO_DEPENDENCIES_QUARTO_DIR}"
+                  DESTINATION "${RSTUDIO_INSTALL_BIN}"
+                  USE_SOURCE_PERMISSIONS
+                  PATTERN "*/share" EXCLUDE)
+            install(DIRECTORY "${RSTUDIO_DEPENDENCIES_QUARTO_DIR}/share" 
+                  DESTINATION "${RSTUDIO_INSTALL_SUPPORTING}/quarto"
+                  USE_SOURCE_PERMISSIONS)
+         endif()
       else()
          install(DIRECTORY "${RSTUDIO_DEPENDENCIES_QUARTO_DIR}"
                DESTINATION "${RSTUDIO_INSTALL_BIN}"
@@ -740,10 +748,6 @@ if(NOT RSTUDIO_SESSION_WIN32 AND NOT RSESSION_ALTERNATE_BUILD)
       file(GLOB LIBCLANG_64_FILES "${LIBCLANG_DIR}/x86_64/*")
       install(PROGRAMS ${LIBCLANG_64_FILES}
               DESTINATION  ${RSTUDIO_INSTALL_BIN}/rsclang/x86_64)
-
-      # install libclang builtin-headers
-      install(DIRECTORY "${RSTUDIO_DEPENDENCIES_DIR}/common/libclang/builtin-headers"
-              DESTINATION "${RSTUDIO_INSTALL_SUPPORTING}/resources/libclang")
    endif()
 
    # install winpty on windows

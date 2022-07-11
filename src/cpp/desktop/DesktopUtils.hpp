@@ -40,8 +40,6 @@ void reattachConsoleIfNecessary();
 rstudio::core::FilePath userLogPath();
 rstudio::core::FilePath userWebCachePath();
 
-double devicePixelRatio(QMainWindow* pMainWindow);
-
 bool isWindows();
 bool isMacOS();
 bool isCentOS();

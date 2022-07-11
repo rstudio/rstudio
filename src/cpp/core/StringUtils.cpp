@@ -47,6 +47,39 @@ namespace rstudio {
 namespace core {
 namespace string_utils {
 
+bool hasSubstringAtOffset(
+      const std::string& string,
+      const std::string& substring,
+      std::size_t offset)
+{
+   if (substring.size() + offset > string.size())
+      return false;
+   
+   for (std::size_t i = 0, n = substring.size(); i < n; i++)
+      if (string[offset + i] != substring[i])
+         return false;
+   
+   return true;
+}
+
+bool hasTruthyValue(const std::string& string)
+{
+   for (const char* value : { "TRUE", "True", "true", "YES", "Yes", "yes", "1" })
+      if (string == value)
+         return true;
+   
+   return false;
+}
+
+bool hasFalsyValue(const std::string& string)
+{
+   for (const char* value : { "FALSE", "False", "false", "NO", "No", "no", "0" })
+      if (string == value)
+         return true;
+   
+   return false;
+}
+
 bool isTruthy(const std::string& string,
               bool valueIfEmpty)
 {
@@ -482,6 +515,21 @@ std::string jsonLiteralUnescape(const std::string& str)
    }
 
    return value.getString();
+}
+
+Error jsonLiteralUnescape(const std::string& str, std::string* pEscaped)
+{
+   json::Value value;
+   
+   Error error = value.parse(str);
+   if (error)
+      return error;
+   
+   if (!json::isType<std::string>(value))
+      return Error(boost::system::errc::invalid_argument, ERROR_LOCATION);
+   
+   *pEscaped = value.getString();
+   return Success();
 }
 
 std::string singleQuotedStrEscape(const std::string& str)

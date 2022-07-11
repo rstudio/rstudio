@@ -72,6 +72,13 @@ extern "C" {
 __declspec(dllimport) UImode CharacterMode;
 }
 
+// Added in R 4.2.0; loaded dynamically
+namespace rstudio {
+namespace dynload {
+int (*R_DefParamsEx)(Rstart, int);
+} // namespace dynload
+} // namespace rstudio
+
 using namespace rstudio::core;
 using namespace boost::placeholders;
 
@@ -105,7 +112,21 @@ typedef struct
     void (*Busy)(int);
     UImode CharacterMode;
     void (*WriteConsoleEx)(const char *, int, int);
+
+    // Added in R 4.0.0
     Rboolean EmitEmbeddedUTF8;
+
+    // Added in R 4.2.0
+    void (*CleanUp)(SA_TYPE, int, int);
+    void (*ClearerrConsole)(void);
+    void (*FlushConsole)(void);
+    void (*ResetConsole)(void);
+    void (*Suicide)(const char*);
+
+    // Padding, to allow for extensions in newer versions of R,
+    // in case newer versions of R expect a struct with extra
+    // memory available.
+    char padding[128];
 
 } RStartup;
 } // extern "C"
@@ -234,18 +255,35 @@ void initializeMaxMemory(const core::FilePath& rHome)
          initializeMaxMemoryViaCmdLineOptions();
 }
 
-template <typename T>
-Error setHook(const core::system::Library& library,
-             const char* name,
-             T hook)
+void initializeParams(RStartup* pRP)
 {
-   void* pSymbol = nullptr;
-   Error error = core::system::loadSymbol(library, name, &pSymbol);
-   if (error)
-      return error;
+   // use R_DefParams for older versions of R
+   Version dllVersion(getDLLVersion());
+   if (dllVersion < Version("4.2.0"))
+      return R_DefParams((Rstart) pRP);
 
-   *(T*) pSymbol = hook;
-   return Success();
+   // otherwise, try and get the R_DefParamsEx routine and use that
+   core::system::Library rLibrary("R.dll");
+   if (rLibrary == nullptr)
+   {
+      LOG_WARNING_MESSAGE("Couldn't load R.dll");
+      return R_DefParams((Rstart) pRP);
+   }
+
+   // try to load R_DefParamsEx routine
+   Error error = core::system::loadSymbol(
+            rLibrary,
+            "R_DefParamsEx",
+            (void**) &rstudio::dynload::R_DefParamsEx);
+
+   if (error)
+   {
+      LOG_ERROR(error);
+      return R_DefParams((Rstart) pRP);
+   }
+
+   // invoke it
+   rstudio::dynload::R_DefParamsEx((Rstart) pRP, 1);
 }
 
 } // end anonymous namespace
@@ -267,7 +305,10 @@ void runEmbeddedR(const core::FilePath& rHome,
    // setup params structure
    RStartup rp;
    RStartup* pRP = &rp;
-   ::R_DefParams((Rstart) pRP);
+   memset(&rp, 0, sizeof(rp));
+
+   // initialize params
+   initializeParams(pRP);
 
    // set paths (copy to new string so we can provide char*)
    std::string* pRHome = new std::string(
@@ -295,15 +336,11 @@ void runEmbeddedR(const core::FilePath& rHome,
    pRP->YesNoCancel = askYesNoCancel;
    pRP->Busy = callbacks.busy;
 
-   {
-      // extra hooks
-      core::system::Library rLibrary("R.dll");
-      if (rLibrary != nullptr)
-      {
-         // added with R 4.2.0
-         setHook(rLibrary, "ptr_R_ResetConsole", callbacks.resetConsole);
-      }
-   }
+   // R 4.0.0 hooks
+   pRP->EmitEmbeddedUTF8 = TRUE;
+
+   // R 4.2.0 hooks
+   pRP->ResetConsole = callbacks.resetConsole;
 
    // set internal callbacks
    pInternal->cleanUp = R_CleanUp;

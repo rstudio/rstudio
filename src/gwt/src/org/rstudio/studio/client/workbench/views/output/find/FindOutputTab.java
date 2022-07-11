@@ -38,6 +38,9 @@ public class FindOutputTab extends DelayLoadWorkbenchTab<FindOutputPresenter>
 
       @Handler
       public abstract void onActivateFindInFiles();
+
+      @Handler
+      public abstract void onRefreshFindInFiles();
    }
 
    static interface Binder extends CommandBinder<Commands, Shim>
@@ -49,7 +52,7 @@ public class FindOutputTab extends DelayLoadWorkbenchTab<FindOutputPresenter>
                         Commands commands,
                         final Session session)
    {
-      super("Find in Files", shim);
+      super(constants_.findInFilesCaption(), shim);
       shim_ = shim;
 
       events.addHandler(SessionInitEvent.TYPE, (SessionInitEvent sie) ->

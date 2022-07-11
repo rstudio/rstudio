@@ -31,6 +31,7 @@
 #include <server/auth/ServerValidateUser.hpp>
 
 using namespace rstudio::core;
+using namespace boost::placeholders;
 
 namespace rstudio {
 namespace server {
@@ -271,24 +272,25 @@ SecureAsyncUriHandlerFunctionEx makeExtendedAsyncUriHandler(SecureAsyncUriHandle
    
 http::UriHandlerFunction secureHttpHandler(SecureUriHandlerFunction handler,
                                            bool authenticate,
-                                           bool requireUserListCookie)
+                                           bool requireUserListCookie,
+                                           bool refreshAuthCookies)
 {
    if (authenticate)
       return UriHandler(makeExtendedUriHandler(handler),
                         auth::handler::signInThenContinue,
-                        true,
+                        refreshAuthCookies,
                         requireUserListCookie);
    else
       return UriHandler(makeExtendedUriHandler(handler),
                         setHttpError,
-                        true,
+                        refreshAuthCookies,
                         requireUserListCookie);
 }
 
 http::UriHandlerFunction secureJsonRpcHandler(
                                        SecureUriHandlerFunction handler)
 {
-   // automatic auth refresh is dependant on the actual RPC being invoked
+   // automatic auth refresh is dependent on the actual RPC being invoked
    // (since many of them are invoked automatically on timers)
    // therefore, auth refresh is handled in the session proxy, before the request
    // is forwarded to the actual session

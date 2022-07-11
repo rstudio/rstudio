@@ -22,6 +22,8 @@
 #include <core/http/Response.hpp>
 #include <core/http/AsyncClient.hpp>
 
+using namespace boost::placeholders;
+
 namespace rstudio {
 namespace core {
 namespace http {

@@ -123,6 +123,7 @@ import org.rstudio.studio.client.workbench.model.helper.IntStateValue;
 import org.rstudio.studio.client.workbench.prefs.model.UserPrefs;
 import org.rstudio.studio.client.workbench.snippets.SnippetHelper;
 import org.rstudio.studio.client.workbench.snippets.model.SnippetsChangedEvent;
+import org.rstudio.studio.client.workbench.ui.PaneManager;
 import org.rstudio.studio.client.workbench.ui.unsaved.UnsavedChangesDialog;
 import org.rstudio.studio.client.workbench.views.console.shell.editor.InputEditorDisplay;
 import org.rstudio.studio.client.workbench.views.console.shell.events.SuppressNextShellFocusEvent;
@@ -1417,7 +1418,7 @@ public class Source implements InsertSourceEvent.Handler,
             public void execute()
             {
                events_.fireEvent(new ZoomPaneEvent(columnManager_.getActive().getName(),
-                  "SourceColumn"));
+                  PaneManager.SOURCE_COLUMN));
             }
          });
    }
@@ -2902,6 +2903,7 @@ public class Source implements InsertSourceEvent.Handler,
    {
       GetEditorContextEvent.Data data = event.getData();
       int type = data.getType();
+      String id = data.getDocId();
 
       if (type == GetEditorContextEvent.TYPE_ACTIVE_EDITOR)
       {
@@ -2922,8 +2924,16 @@ public class Source implements InsertSourceEvent.Handler,
       }
       else if (type == GetEditorContextEvent.TYPE_SOURCE_EDITOR)
       {
-         if (columnManager_.requestActiveEditorContext())
-            return;
+         if (StringUtil.isNullOrEmpty(id))
+         {
+            if (columnManager_.requestActiveEditorContext())
+               return;
+         }
+         else
+         {
+            if (columnManager_.requestEditorContext(id))
+               return;
+         }
       }
 
       // We need to ensure a 'getEditorContext' event is always

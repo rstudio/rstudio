@@ -13,34 +13,28 @@
  *
  */
 
-import { BrowserWindow, WebContents } from 'electron';
-import { logger } from '../core/logger';
-
 import { nextHighest, nextLowest } from '../core/array-utils';
-
-import { DesktopBrowserWindow } from './desktop-browser-window';
-import { DesktopOptions } from './desktop-options';
+import { logger } from '../core/logger';
+import { DesktopBrowserWindow, WindowConstructorOptions } from './desktop-browser-window';
+import { ElectronDesktopOptions } from './preferences/electron-desktop-options';
 
 export abstract class GwtWindow extends DesktopBrowserWindow {
   // initialize zoom levels (synchronize with AppearancePreferencesPane.java)
   zoomLevels = [0.25, 0.5, 0.75, 0.8, 0.9, 1.0, 1.1, 1.25, 1.5, 1.75, 2.0, 2.5, 3.0, 4.0, 5.0];
 
-  constructor(
-    showToolbar: boolean,
-    adjustTitle: boolean,
-    autohideMenu: boolean,
-    name: string,
-    baseUrl?: string,
-    parent?: DesktopBrowserWindow,
-    opener?: WebContents,
-    isRemoteDesktop = false,
-    addedCallbacks: string[] = [],
-    existingWindow?: BrowserWindow,
-  ) {
-    super(showToolbar, adjustTitle, autohideMenu, name, baseUrl, parent, opener,
-      isRemoteDesktop, addedCallbacks, existingWindow);
-
+  constructor(options: WindowConstructorOptions) {
+    super(options);
     this.window.on('focus', this.onActivated.bind(this));
+
+    // when a GWT window is navigated (for example, because we opened a new project),
+    // we need to clear the history -- otherwise, Electron may attempt to handle the
+    // mouse forward + backward buttons and "navigate" to the previously-open project,
+    // which will fail
+    //
+    // https://github.com/rstudio/rstudio/issues/11016
+    this.window.webContents.on('did-navigate', (event, params) => {
+      this.window.webContents.clearHistory();
+    });
   }
 
   zoomActualSize(): void {
@@ -52,7 +46,7 @@ export abstract class GwtWindow extends DesktopBrowserWindow {
   }
 
   zoomIn(): void {
-    const zoomLevel = DesktopOptions().zoomLevel();
+    const zoomLevel = ElectronDesktopOptions().zoomLevel();
 
     // get next greatest value
     const newZoomLevel = nextHighest(zoomLevel, this.zoomLevels);
@@ -63,7 +57,7 @@ export abstract class GwtWindow extends DesktopBrowserWindow {
 
   zoomOut(): void {
     // get next smallest value
-    const zoomLevel = DesktopOptions().zoomLevel();
+    const zoomLevel = ElectronDesktopOptions().zoomLevel();
     const newZoomLevel = nextLowest(zoomLevel, this.zoomLevels);
     if (newZoomLevel != zoomLevel) {
       this.setWindowZoomLevel(newZoomLevel);
@@ -89,7 +83,7 @@ export abstract class GwtWindow extends DesktopBrowserWindow {
   }
 
   private setWindowZoomLevel(zoomLevel: number): void {
-    DesktopOptions().setZoomLevel(zoomLevel);
+    ElectronDesktopOptions().setZoomLevel(zoomLevel);
     this.window.webContents.setZoomFactor(zoomLevel);
   }
 }

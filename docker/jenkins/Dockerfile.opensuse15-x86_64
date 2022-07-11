@@ -22,10 +22,15 @@ RUN zypper --non-interactive --gpg-auto-import-keys refresh && \
     gdb \
     git \
     java-1_8_0-openjdk-devel  \
+    jq \
     libacl-devel \
+    libatk-1_0-0 \
+    libatk-bridge-2_0-0 \
     libattr-devel \
     libcap-devel \
+    libcups2 \
     libcurl-devel \
+    libgtk-3-0 \
     libuser-devel \
     libuuid-devel \
     libxml2-devel \
@@ -41,6 +46,7 @@ RUN zypper --non-interactive --gpg-auto-import-keys refresh && \
     postgresql-devel \
     python \
     python-xml \
+    python3 \
     R \
     rpm-build \
     sqlite-devel \
@@ -50,6 +56,7 @@ RUN zypper --non-interactive --gpg-auto-import-keys refresh && \
     valgrind \
     wget \
     xml-commons-apis \
+    xvfb-run \
     zlib-devel
 
 # copy RStudio tools (needed so that our other dependency scripts can find it)
@@ -87,12 +94,6 @@ COPY src/gwt/panmirror/src/editor/package.json /opt/rstudio-tools/panmirror/
 # install common dependencies
 RUN cd /opt/rstudio-tools/dependencies/common && /bin/bash ./install-common opensuse15
 
-# install Qt SDK
-COPY dependencies/common/install-qt.sh /tmp/
-COPY dependencies/linux/install-qt-linux /tmp/
-RUN export QT_VERSION=5.12.8 && \
-    cd /tmp && /bin/bash ./install-qt-linux
-
 # install GnuPG 1.4 from source (needed for release signing)
 RUN cd /tmp && \
     wget https://gnupg.org/ftp/gcrypt/gnupg/gnupg-1.4.23.tar.bz2 && \
@@ -103,9 +104,17 @@ RUN cd /tmp && \
     make && \
     make install
 
+# cachebust for Quarto release
+ADD https://quarto.org/docs/download/_download.json quarto_releases
+RUN cd /opt/rstudio-tools/dependencies/common && /bin/bash ./install-quarto
+
 # set github login from build argument if defined
 ARG GITHUB_LOGIN
 ENV RSTUDIO_GITHUB_LOGIN=$GITHUB_LOGIN
+
+# create nobody user and group, used by unit tests
+RUN groupadd -g 65534 nobody && \
+    useradd -m -d /var/lib/nobody -u 65534 -g nobody nobody
 
 # create jenkins user, make sudo. try to keep this toward the bottom for less cache busting
 ARG JENKINS_GID=999

@@ -2679,8 +2679,10 @@ var Tokenizer = function(rules) {
             var rule = state[i];
             if (rule.defaultToken)
                 mapping.defaultToken = rule.defaultToken;
-            if (rule.caseInsensitive)
-                flag = "gi";
+            if (rule.caseInsensitive && flag.indexOf("i") === -1)
+                flag += "i";
+            if (rule.unicode && flag.indexOf("u") === -1)
+                flag += "u";
             if (rule.regex == null)
                 continue;
 
@@ -2949,7 +2951,7 @@ var Tokenizer = function(rules) {
             }
         }
 
-	token.column = lastIndex - token.value.length;
+	    token.column = lastIndex - token.value.length;
         if (token.type)
             tokens.push(token);
         
@@ -62817,7 +62819,8 @@ var Text = function(parentEl) {
             var span = this.dom.createElement("span");
             if (token.type == "fold")
                 span.style.width = (token.value.length * this.config.characterWidth) + "px";
-                
+            if (token.style)
+                span.setAttribute("style", token.style);
             span.className = classes;
             span.appendChild(valueFragment);
             

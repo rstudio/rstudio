@@ -105,4 +105,7 @@ public interface CodeIcons extends ClientBundle
 
    @Source("conda_2x.png")
    ImageResource conda2x();
+
+   @Source("test_2x.png")
+   ImageResource test2x();
 }

@@ -32,6 +32,7 @@ import org.rstudio.core.client.dom.DomUtils;
 import org.rstudio.core.client.events.EnsureVisibleEvent;
 import org.rstudio.core.client.events.HasSelectionCommitHandlers;
 import org.rstudio.core.client.events.SelectionCommitEvent;
+import org.rstudio.core.client.theme.res.ThemeStyles;
 import org.rstudio.core.client.widget.*;
 import org.rstudio.core.client.widget.events.SelectionChangedEvent;
 import org.rstudio.studio.client.application.events.EventBus;
@@ -52,7 +53,7 @@ public class FindOutputPane extends WorkbenchPane
    public FindOutputPane(Commands commands,
                          EventBus eventBus)
    {
-      super("Find Results");
+      super(constants_.findResultsTitle());
       commands_ = commands;
       eventBus_ = eventBus;
       ensureWidget();
@@ -70,8 +71,12 @@ public class FindOutputPane extends WorkbenchPane
             ToolbarButton.NoText,
             constants_.stopFindInFilesTitle(),
             commands_.interruptR().getImageResource());
-      stopSearch_.setVisible(false);
       toolbar.addRightWidget(stopSearch_);
+
+      refreshButton_ = commands_.refreshFindInFiles().createToolbarButton();
+      refreshButton_.addStyleName(ThemeStyles.INSTANCE.refreshToolbarButton());
+      toolbar.addRightWidget(refreshButton_);
+      setStopSearchButtonVisible(false);
 
       showFindButton_ = new LeftRightToggleButton(constants_.findLabel(), constants_.replaceLabel(), true);
       showFindButton_.addClickHandler(new ClickHandler() {
@@ -79,16 +84,7 @@ public class FindOutputPane extends WorkbenchPane
          public void onClick(ClickEvent event)
          {
             if (!replaceMode_)
-            {
-               showFindButton_.setVisible(false);
-               showReplaceButton_.setVisible(true);
-               setReplaceMode(true);
-               setSecondaryToolbarVisible(true);
-               if (displayPreview_ == null)
-                  createDisplayPreview();
-               if (!replaceTextBox_.getValue().isEmpty())
-                  displayPreview_.nudge();
-            }
+               turnOnReplaceMode();
          }
       });
       toolbar.addRightWidget(showFindButton_);
@@ -100,17 +96,7 @@ public class FindOutputPane extends WorkbenchPane
          public void onClick(ClickEvent event)
          {
             if (replaceMode_)
-            {
-               showFindButton_.setVisible(true);
-               showReplaceButton_.setVisible(false);
-               setSecondaryToolbarVisible(false);
-               if (!replaceTextBox_.getValue().isEmpty())
-               {
-                  //setRegexPreviewMode(false);
-                  addReplaceMatches("");
-               }
-               setReplaceMode(false);
-            }
+               turnOffReplaceMode();
          }
       });
       toolbar.addRightWidget(showReplaceButton_);
@@ -140,8 +126,8 @@ public class FindOutputPane extends WorkbenchPane
             ToolbarButton.NoText,
             constants_.stopReplaceTitle(),
             commands_.interruptR().getImageResource());
-      stopReplace_.setVisible(false);
       replaceToolbar.addRightWidget(stopReplace_);
+      setStopReplaceButtonVisible(false);
 
       replaceAllButton_ = new ToolbarButton(constants_.replaceAllText(), constants_.replaceAllText(), null);
       replaceToolbar.addRightWidget(replaceAllButton_);
@@ -309,7 +295,10 @@ public class FindOutputPane extends WorkbenchPane
    @Override
    public void setStopSearchButtonVisible(boolean visible)
    {
+      // only one of the stop search and refresh search buttons should show in the toolbar at a time
+      // when search is in progress, stopSearch_ will be visible and refreshButton_ will be hidden
       stopSearch_.setVisible(visible);
+      refreshButton_.setVisible(!visible);
    }
 
    @Override
@@ -443,6 +432,7 @@ public class FindOutputPane extends WorkbenchPane
    public void setStopReplaceButtonVisible(boolean visible)
    {
       stopReplace_.setVisible(visible);
+      refreshButton_.setVisible(!visible);
    }
 
    @Override
@@ -463,6 +453,30 @@ public class FindOutputPane extends WorkbenchPane
    {
       replaceTextBox_.setReadOnly(true);
       replaceAllButton_.setEnabled(false);
+   }
+
+   @Override
+   public void turnOnReplaceMode()
+   {
+      showFindButton_.setVisible(false);
+      showReplaceButton_.setVisible(true);
+      setReplaceMode(true);
+      setSecondaryToolbarVisible(true);
+      if (displayPreview_ == null)
+         createDisplayPreview();
+      if (!replaceTextBox_.getValue().isEmpty())
+         displayPreview_.nudge();
+   }
+
+   @Override
+   public void turnOffReplaceMode()
+   {
+      showFindButton_.setVisible(true);
+      showReplaceButton_.setVisible(false);
+      setSecondaryToolbarVisible(false);
+      if (!replaceTextBox_.getValue().isEmpty())
+         addReplaceMatches("");
+      setReplaceMode(false);
    }
 
    @Override
@@ -524,6 +538,7 @@ public class FindOutputPane extends WorkbenchPane
    private final EventBus eventBus_;
    private Label searchLabel_;
    private ToolbarButton stopSearch_;
+   private ToolbarButton refreshButton_;
    private SimplePanel container_;
    private ScrollPanel scrollPanel_;
    private StatusPanel statusPanel_;

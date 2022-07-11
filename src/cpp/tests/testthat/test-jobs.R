@@ -121,7 +121,7 @@ test_that("jobs can be cleaned up", {
    expect_true(job8 %in% names(jobs))
 
    # clean it up
-   .rs.invokeRpc("clear_jobs")
+   .rs.invokeRpc("clear_background_jobs")
 
    # there should be 1 job remaining (only the completed job should be cleared)
    jobs <- .rs.invokeRpc("get_jobs")

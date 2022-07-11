@@ -396,123 +396,6 @@ public interface StudioClientProjectConstants extends com.google.gwt.i18n.client
     String noneLabel();
 
     /**
-     * Translated "None".
-     *
-     * @return translated "None"
-     */
-    @DefaultMessage("None")
-    @Key("noneProjectLabel")
-    String noneProjectLabel();
-
-    /**
-     * Translated "Package".
-     *
-     * @return translated "Package"
-     */
-    @DefaultMessage("Package")
-    @Key("buildTypePackageLabel")
-    String buildTypePackageLabel();
-
-    /**
-     * Translated "Website".
-     *
-     * @return translated "Website"
-     */
-    @DefaultMessage("Website")
-    @Key("buildTypeWebsiteLabel")
-    String buildTypeWebsiteLabel();
-
-    /**
-     * Translated "Custom".
-     *
-     * @return translated "Custom"
-     */
-    @DefaultMessage("Custom")
-    @Key("buildTypeCustomLabel")
-    String buildTypeCustomLabel();
-
-    /**
-     * Translated "namespace".
-     *
-     * @return translated "namespace"
-     */
-    @DefaultMessage("namespace")
-    @Key("rOxygenizenamespace")
-    String rOxygenizenamespace();
-
-    /**
-     * Translated "Default".
-     *
-     * @return translated "Default"
-     */
-    @DefaultMessage("Default")
-    @Key("defaultLabel")
-    String defaultLabel();
-
-    /**
-     * Translated "Column".
-     *
-     * @return translated "Column"
-     */
-    @DefaultMessage("Column")
-    @Key("columnLabel")
-    String columnLabel();
-
-    /**
-     * Translated "Sentence".
-     *
-     * @return translated "Sentence"
-     */
-    @DefaultMessage("Sentence")
-    @Key("sentenceLabel")
-    String sentenceLabel();
-
-    /**
-     * Translated "Block".
-     *
-     * @return translated "Block"
-     */
-    @DefaultMessage("Block")
-    @Key("blockLabel")
-    String blockLabel();
-
-    /**
-     * Translated "Section".
-     *
-     * @return translated "Section"
-     */
-    @DefaultMessage("Section")
-    @Key("sectionLabel")
-    String sectionLabel();
-
-    /**
-     * Translated "Document".
-     *
-     * @return translated "Document"
-     */
-    @DefaultMessage("Document")
-    @Key("documentLabel")
-    String documentLabel();
-
-    /**
-     * Translated "collate".
-     *
-     * @return translated "collate"
-     */
-    @DefaultMessage("collate")
-    @Key("collateLabel")
-    String collateLabel();
-
-    /**
-     * Translated "vignette".
-     *
-     * @return translated "vignette"
-     */
-    @DefaultMessage("vignette")
-    @Key("vignetteLabel")
-    String vignetteLabel();
-
-    /**
      * Translated "Create package based on source files:".
      *
      * @return translated "Create package based on source files:"
@@ -838,13 +721,13 @@ public interface StudioClientProjectConstants extends com.google.gwt.i18n.client
     String validateAsyncMessage(String packageName);
 
     /**
-     * Translated "A file already exists at path ''{0}''".
+     * Translated "A file already exists at path ''{0}''.".
      *
-     * @return translated "A file already exists at path ''{0}''"
+     * @return translated "A file already exists at path ''{0}''."
      */
-    @DefaultMessage("A file already exists at path ''{0}''")
-    @Key("onResponseReceivedErrorMessage")
-    String onResponseReceivedErrorMessage(String path);
+    @DefaultMessage("A file already exists at path ''{0}''.")
+    @Key("fileAlreadyExistsMessage")
+    String fileAlreadyExistsMessage(String path);
 
     /**
      * Translated "Directory ''{0}'' already exists and is not empty.".
@@ -854,6 +737,15 @@ public interface StudioClientProjectConstants extends com.google.gwt.i18n.client
     @DefaultMessage("Directory ''{0}'' already exists and is not empty.")
     @Key("directoryAlreadyExistsMessage")
     String directoryAlreadyExistsMessage(String path);
+
+    /**
+     * Translated "Please enter a new directory name.".
+     *
+     * @return translated "Please enter a new directory name."
+     */
+    @DefaultMessage("Please enter a new directory name.")
+    @Key("pleaseEnterDirectoryNameMessage")
+    String pleaseEnterDirectoryNameMessage();
 
     /**
      * Translated "Quarto Book".
@@ -1043,7 +935,7 @@ public interface StudioClientProjectConstants extends com.google.gwt.i18n.client
     @DefaultMessage("Create Quarto Blog")
     @Key("quartoBlogPageCaption")
     String quartoBlogPageCaption();
-    
+
     /**
      * Translated "Quarto Website".
      *
@@ -1351,6 +1243,15 @@ public interface StudioClientProjectConstants extends com.google.gwt.i18n.client
     String tabWidthLabel();
 
     /**
+     * Translated "Use native pipe operator, |> (requires R 4.1+)"
+     *
+     * @return translated "Use native pipe operator, |> (requires R 4.1+)"
+     */
+    @DefaultMessage("Use native pipe operator, |> (requires R 4.1+)")
+    @Key("useNativePipeOperatorLabel")
+    String useNativePipeOperatorLabel();
+
+    /**
      * Translated "Ensure that source files end with newline".
      *
      * @return translated "Ensure that source files end with newline"
@@ -1398,9 +1299,9 @@ public interface StudioClientProjectConstants extends com.google.gwt.i18n.client
     /**
      * Translated "Use (Default) to inherit the global default setting".
      *
-     * @return translated "Use (Default) to inherit the global default setting"
+     * @return translated "Use (Default) to inherit the global default setting."
      */
-    @DefaultMessage("Use (Default) to inherit the global default setting")
+    @DefaultMessage("Use (Default) to inherit the global default setting.")
     @Key("projectGeneralInfoLabel")
     String projectGeneralInfoLabel();
 
@@ -1623,9 +1524,9 @@ public interface StudioClientProjectConstants extends com.google.gwt.i18n.client
     /**
      * Translated "Use (Default) to inherit the global default setting".
      *
-     * @return translated "Use (Default) to inherit the global default setting"
+     * @return translated "Use (Default) to inherit the global default setting."
      */
-    @DefaultMessage("Use (Default) to inherit the global default setting")
+    @DefaultMessage("Use (Default) to inherit the global default setting.")
     @Key("rMarkdownInfoLabel")
     String rMarkdownInfoLabel();
 
@@ -1821,9 +1722,9 @@ public interface StudioClientProjectConstants extends com.google.gwt.i18n.client
     /**
      * Translated "Use (Default) to inherit the global default dictionary".
      *
-     * @return translated "Use (Default) to inherit the global default dictionary"
+     * @return translated "Use (Default) to inherit the global default dictionary."
      */
-    @DefaultMessage("Use (Default) to inherit the global default dictionary")
+    @DefaultMessage("Use (Default) to inherit the global default dictionary.")
     @Key("dictionariesInfoLabel")
     String dictionariesInfoLabel();
 
@@ -1927,11 +1828,11 @@ public interface StudioClientProjectConstants extends com.google.gwt.i18n.client
     String chkUseDevtoolsCaption();
 
     /**
-     * Translated "Clean before install".
+     * Translated "Always use --preclean when installing package".
      *
-     * @return translated "Clean before install"
+     * @return translated "Always use --preclean when installing package"
      */
-    @DefaultMessage("Clean before install")
+    @DefaultMessage("Always use --preclean when installing package")
     @Key("cleanBeforeInstallLabel")
     String cleanBeforeInstallLabel();
 

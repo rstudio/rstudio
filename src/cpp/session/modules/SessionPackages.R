@@ -255,7 +255,7 @@ if (identical(as.character(Sys.info()["sysname"]), "Darwin") &&
       packagePath <- .rs.pathPackage(packageName, quiet=TRUE)
 
       # alias (for comparison against libName, which comes from the client and
-      # is alised)
+      # is aliased)
       packagePath <- .rs.createAliasedPath(packagePath)
 
       # compare with the library given by the client
@@ -268,6 +268,22 @@ if (identical(as.character(Sys.info()["sysname"]), "Darwin") &&
 .rs.addJsonRpcHandler( "is_package_loaded", function(packageName, libName)
 {
    .rs.isPackageLoaded(packageName, libName)
+})
+
+.rs.addFunction("isPackageHyperlinkSafe", function(packageName)
+{
+   allowed <- setdiff(
+      c(.packages(), "testthat", "rlang", "devtools", "usethis"), 
+      c("base", "stats", "utils")
+   )
+   .rs.scalar(
+      packageName %in% allowed
+   )
+})
+
+.rs.addJsonRpcHandler("is_package_hyperlink_safe", function(packageName)
+{
+   .rs.isPackageHyperlinkSafe(packageName)
 })
 
 .rs.addFunction("forceUnloadPackage", function(package)

@@ -15,12 +15,54 @@
 
 import { describe } from 'mocha';
 import { assert } from 'chai';
+import fs from 'fs';
 
-import { ApplicationLaunch } from '../../../src/main/application-launch';
+import { ApplicationLaunch, resolveProjectFile } from '../../../src/main/application-launch';
+import { MainWindow } from '../../../src/main/main-window';
+import { createSinonStubInstance } from '../unit-utils';
 
 describe('ApplicationLaunch', () => {
   it('static init returns new instance', () => {
     const appLaunch = ApplicationLaunch.init();
     assert.isObject(appLaunch);
+  });
+
+  it('new window matches created window', () => {
+    const appLaunch = ApplicationLaunch.init();
+    const testWindow = createSinonStubInstance(MainWindow);
+    appLaunch.setActivationWindow(testWindow);
+
+    const createdWindow = appLaunch.mainWindow as MainWindow;
+
+    assert.strictEqual(testWindow, createdWindow, 'Test window does not match created window');
+  });
+
+  it('Resolve Empty Project File Path', () => {
+    const projectFilePath = resolveProjectFile('./../');
+    assert.isEmpty(projectFilePath);
+  });
+
+  it('Resolve Project File Path', () => {
+    const filename = 'test.rproj';
+    fs.writeFileSync('./' + filename, '');
+
+    const rprojExtension = 'rproj';
+    const projectFilePath = resolveProjectFile('./');
+    const extensionRegexp = new RegExp(/(?:\.([^.]+))?$/);
+
+    const hasExtension = extensionRegexp.test(projectFilePath);
+    assert.isTrue(hasExtension, 'File does not have extension');
+    assert.equal(projectFilePath, filename, 'Filename does not match with test file');
+
+    try {
+      const isRprojExtensionValid =
+        (extensionRegexp.exec(projectFilePath) as string[])[1].toLowerCase() === rprojExtension;
+
+      assert.isTrue(isRprojExtensionValid, 'File extension is not .rproj');
+
+      fs.unlinkSync('./' + filename);
+    } catch (err: unknown) {
+      assert.isTrue(false, 'Error happened when trying to assert rproj extension');
+    }
   });
 });

@@ -1,0 +1,8 @@
+ALTER TABLE active_session_metadata
+ADD COLUMN blocking_suspend TEXT;
+
+ALTER TABLE active_session_metadata
+ADD COLUMN suspend_timestamp TEXT;
+
+/* Update the version to the latest after all alter statements are applied. */
+UPDATE schema_version SET current_version = '20220610180402900844286' , release_name = 'Spotted Wakerobin';

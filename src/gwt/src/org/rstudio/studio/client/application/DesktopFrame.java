@@ -88,7 +88,6 @@ public interface DesktopFrame extends JavaScriptPassthrough
                                   int height, Command onPrepared);
    void prepareForNamedWindow(String name, boolean allowExternalNavigation,
          boolean showDesktopToolbar, Command onPrepared);
-   void closeNamedWindow(String name);
    
    void copyPageRegionToClipboard(int left, int top, int width, int height,
                                   Command onCopied);
@@ -142,17 +141,12 @@ public interface DesktopFrame extends JavaScriptPassthrough
    public static final int PENDING_QUIT_AND_RESTART = 2;
    public static final int PENDING_QUIT_RESTART_AND_RELOAD = 3;
    
-   void setPendingQuit(int pendingQuit);
+   void setPendingQuit(int pendingQuit, CommandWithArg<Void> callback);
    void setPendingProject(String projectFilePath);
    void launchSession(boolean reload);
    
    void openProjectInNewWindow(String projectFilePath);
    void openSessionInNewWindow(String workingDirectoryPath);
-   
-   void openTerminal(String terminalPath,
-                     String workingDirectory,
-                     String extraPathEntries,
-                     String shellType);
 
    void setFixedWidthFont(String font);
    void setZoomLevel(double zoomLevel);
@@ -160,6 +154,7 @@ public interface DesktopFrame extends JavaScriptPassthrough
    void zoomIn();
    void zoomOut();
    void zoomActualSize();
+   void getZoomLevel(CommandWithArg<Double> callback);
    
    void setBackgroundColor(JsArrayInteger rgbColor);
    void changeTitleBarColor(int r, int g, int b);

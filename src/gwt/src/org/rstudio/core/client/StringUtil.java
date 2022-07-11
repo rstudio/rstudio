@@ -1468,6 +1468,11 @@ public class StringUtil
 
       return result;
    }
+   
+   public static final String nullCoalesce(String value, String defaultValue)
+   {
+      return value == null ? defaultValue : value;
+   }
 
    /**
     * Perform a natural order comparison between two strings. Natural ordering

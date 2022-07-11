@@ -41,7 +41,7 @@ public class LauncherJobsTab extends DelayLoadWorkbenchTab<LauncherJobsPresenter
       abstract void confirmClose(Command onConfirmed);
       
       @Handler
-      public abstract void onActivateLauncherJobs();
+      public abstract void onActivateWorkbenchJobs();
    }
    
    public interface Binder extends CommandBinder<Commands, LauncherJobsTab.Shim> {}
@@ -52,7 +52,7 @@ public class LauncherJobsTab extends DelayLoadWorkbenchTab<LauncherJobsPresenter
                           Commands commands,
                           EventBus events)
    {
-      super("Launcher", shim);
+      super(constants_.workbenchJobsTitle(), shim);
       shim_ = shim;
       
       binder.bind(commands, shim);

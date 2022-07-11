@@ -91,7 +91,7 @@ public class TerminalPane extends WorkbenchPane
                           WorkbenchContext workbenchContext,
                           WorkbenchServerOperations server)
    {
-      super("Terminal", events);
+      super(constants_.terminalText(), events);
       globalDisplay_ = globalDisplay;
       commands_ = commands;
       uiPrefs_ = uiPrefs;

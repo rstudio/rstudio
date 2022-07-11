@@ -17,7 +17,7 @@ import fs from 'fs';
 import fsPromises from 'fs/promises';
 
 import { logger } from './logger';
-import path from 'path';
+import path, { sep } from 'path';
 import { Err, success, safeError } from './err';
 import { userHomePath } from './user';
 import { err, Expected, ok } from './expected';
@@ -34,13 +34,26 @@ export class FilePathError extends Error {
 const homePathAlias = '~/';
 const homePathLeafAlias = '~';
 
+/**
+ * Normalize separators of a given path.
+ *
+ * @param {string} path
+ * @param {string} [separator='/']
+ * @return {*} 
+ */
 function normalizeSeparators(path: string, separator = '/') {
   return path.replace(/[\\/]/g, separator);
 }
 
-function normalizeSeparatorsNative(path: string) {
-  const separator = process.platform === 'win32' ? '\\' : '/';
-  return normalizeSeparators(path, separator);
+/**
+ * Normalizes separators of a given path based on the current platform.
+ *
+ * @export
+ * @param {string} path
+ * @return {*} 
+ */
+export function normalizeSeparatorsNative(path: string) {
+  return normalizeSeparators(path, sep);
 }
 
 /**
@@ -671,7 +684,11 @@ export class FilePath {
    * Checks whether this file path is a directory.
    */
   isDirectory(): boolean {
-    throw Error('isDirectory is NYI');
+    const stat = fs.lstatSync(this.path, {
+      throwIfNoEntry: false,
+    });
+
+    return stat != null && stat.isDirectory();
   }
 
   /**

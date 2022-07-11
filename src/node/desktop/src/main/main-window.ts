@@ -23,10 +23,10 @@ import { GwtCallback, PendingQuit } from './gwt-callback';
 import { MenuCallback, showPlaceholderMenu } from './menu-callback';
 import { RCommandEvaluator } from './r-command-evaluator';
 import { SessionLauncher } from './session-launcher';
-import { ApplicationLaunch } from './application-launch';
+import { ApplicationLaunch, LaunchRStudioOptions } from './application-launch';
 import { GwtWindow } from './gwt-window';
 import { appState } from './app-state';
-import { DesktopOptions } from './desktop-options';
+import { ElectronDesktopOptions } from './preferences/electron-desktop-options';
 import { RemoteDesktopSessionLauncher } from './remote-desktop-session-launcher-overlay';
 import { CloseServerSessions } from './session-servers-overlay';
 import { waitForUrlWithTimeout } from './utils';
@@ -79,7 +79,12 @@ export class MainWindow extends GwtWindow {
   //#endif
 
   constructor(url: string, public isRemoteDesktop = false) {
-    super(false, false, false, '', url, undefined, undefined, isRemoteDesktop, ['desktop', 'desktopMenuCallback']);
+    super({
+      name: '',
+      baseUrl: url,
+      allowExternalNavigate: isRemoteDesktop,
+      addApiKeys: ['desktop', 'desktopMenuCallback'],
+    });
 
     appState().gwtCallback = new GwtCallback(this, isRemoteDesktop);
     this.menuCallback = new MenuCallback();
@@ -155,7 +160,7 @@ export class MainWindow extends GwtWindow {
     //         Qt::DirectConnection);
 
     // setWindowIcon(QIcon(QString::fromUtf8(":/icons/RStudio.ico")));
-    // setWindowTitle(desktop::activation().editionName());
+    this.window.setTitle(appState().activation().editionName());
 
     // Error error = pLauncher_->initialize();
     // if (error) {
@@ -186,8 +191,8 @@ export class MainWindow extends GwtWindow {
     }
   }
 
-  launchRStudio(args: string[] = [], initialDir = ''): void {
-    this.appLauncher?.launchRStudio(args, initialDir);
+  launchRStudio(options: LaunchRStudioOptions): void {
+    this.appLauncher?.launchRStudio(options);
   }
 
   saveRemoteAuthCookies(): void {
@@ -213,9 +218,9 @@ export class MainWindow extends GwtWindow {
     this.executeJavaScript('window.desktopHooks.getActiveProjectDir()')
       .then((projectDir) => {
         if (projectDir.length > 0) {
-          this.window.setTitle(`${projectDir} - RStudio`);
+          this.window.setTitle(`${projectDir} - ${appState().activation().editionName()}`);
         } else {
-          this.window.setTitle('RStudio');
+          this.window.setTitle(appState().activation().editionName());
         }
         this.avoidMoveCursorIfNecessary();
       })
@@ -329,7 +334,7 @@ export class MainWindow extends GwtWindow {
 
     if (!this.geometrySaved) {
       const bounds = this.window.getBounds();
-      DesktopOptions().saveWindowBounds(bounds);
+      ElectronDesktopOptions().saveWindowBounds(bounds);
       this.geometrySaved = true;
     }
 
@@ -388,7 +393,7 @@ export class MainWindow extends GwtWindow {
       return;
     }
     reloadCount++;
-    this.loadUrl(this.baseUrl ?? '').catch(logger().logError);
+    this.loadUrl(this.options.baseUrl ?? '').catch(logger().logError);
   }
 
   onLoadFinished(ok: boolean): void {
@@ -403,7 +408,7 @@ export class MainWindow extends GwtWindow {
         // session has failed to load. let the user know that the R
         // session is still initializing, and then reload the page.
         this.loadUrl(LOADING_WINDOW_WEBPACK_ENTRY).catch(logger().logError);
-        waitForUrlWithTimeout(this.baseUrl ?? '', reloadWaitDuration, reloadWaitDuration, 10)
+        waitForUrlWithTimeout(this.options.baseUrl ?? '', reloadWaitDuration, reloadWaitDuration, 10)
           .then((error: Err) => {
             if (error) {
               logger().logError(error);
@@ -428,7 +433,7 @@ export class MainWindow extends GwtWindow {
     }
 
     const vars = new Map<string, string>();
-    vars.set('retry_url', this.baseUrl ?? '');
+    vars.set('retry_url', this.options.baseUrl ?? '');
     appState().gwtCallback?.setErrorPageInfo(vars);
     this.loadUrl(CONNECT_WINDOW_WEBPACK_ENTRY).catch(logger().logError);
   }

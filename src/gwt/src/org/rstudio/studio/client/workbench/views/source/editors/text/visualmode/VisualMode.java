@@ -133,9 +133,9 @@ public class VisualMode implements VisualModeEditorSync,
       visualModeFormat_ = new VisualModePanmirrorFormat(docUpdateSentinel_, docDisplay_, target_, view_);
       visualModeChunks_ = new VisualModeChunks(docUpdateSentinel_, docDisplay_, target_, releaseOnDismiss, this);
       visualModeLocation_ = new VisualModeEditingLocation(docUpdateSentinel_, docDisplay_);
-      visualModeWriterOptions_ = new VisualModeMarkdownWriter(docUpdateSentinel_, visualModeFormat_);
+      visualModeWriterOptions_ = new VisualModeMarkdownWriter(docUpdateSentinel_, docDisplay_, visualModeFormat_);
       visualModeNavigation_ = new VisualModeNavigation(navigationContext_);
-      visualModeConfirm_ = new VisualModeConfirm(docUpdateSentinel_, docDisplay, this);
+      visualModeConfirm_ = new VisualModeConfirm(docUpdateSentinel_, docDisplay, target_, this);
       visualModeSpelling_ = new VisualModeSpelling(docUpdateSentinel_, docDisplay, this);
       visualModeContext_ = new VisualModePanmirrorContext(
          docUpdateSentinel_, 
@@ -162,9 +162,12 @@ public class VisualMode implements VisualModeEditorSync,
       
       // sync to outline visible prop
       releaseOnDismiss.add(onDocPropChanged(TextEditingTarget.DOC_OUTLINE_VISIBLE, (value) -> {
-         withPanmirror(() -> {
-            panmirror_.showOutline(getOutlineVisible(), getOutlineWidth(), true);
-         });
+         if (isVisualEditorActive()) 
+         {
+            withPanmirror(() -> {
+               panmirror_.showOutline(getOutlineVisible(), getOutlineWidth(), true);
+            });
+         }
       }));
    } 
    
@@ -826,8 +829,8 @@ public class VisualMode implements VisualModeEditorSync,
          commands_.reformatCode(),
          commands_.reindent(),
          commands_.renameInScope(),
-         commands_.runSelectionAsJob(),
-         commands_.runSelectionAsLauncherJob(),
+         commands_.runSelectionAsBackgroundJob(),
+         commands_.runSelectionAsWorkbenchJob(),
          commands_.sendToTerminal(),
          commands_.yankAfterCursor(),
          commands_.yankBeforeCursor()

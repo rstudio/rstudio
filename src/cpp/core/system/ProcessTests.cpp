@@ -139,7 +139,7 @@ test_context("ProcessTests")
       callbacks.onStdout = boost::bind(&appendOutput, _2, &output);
 
       // run command
-      std::string command = "bash -c \"python -c $'for i in range(10):\n   print(i)'\"";
+      std::string command = "bash -c \"python3 -c $'for i in range(10):\n   print(i)'\"";
       supervisor.runCommand(command, options, callbacks);
 
       // wait for it to exit
@@ -588,7 +588,9 @@ test_context("ProcessTests")
       }
       lock.unlock();
 
-      REQUIRE(exitCode == 1);
+      // 143 is the exit code for SIGTERM - it's 128 + signum (15 = SIGTERM) as set by the shell
+      // We also sometimes see exitCode of 1 for generic exits so we allow either one.
+      REQUIRE((exitCode == 1 || exitCode == 143));
    }
 }
 

@@ -91,6 +91,27 @@ CREATE TABLE active_session_metadata(
    /* Whether or not a save prompt is required */
    save_prompt_required text NOT NULL DEFAULT 'not_required',
 
+   /* Boolean representing whether the session is currently executing R code */
+   executing TEXT,
+
+   /* Boolean representing whether the session is currently running */
+   running TEXT,
+
+   /* The last session state updated */
+   last_state_updated TEXT,
+
+   /* Initial */
+   initial TEXT,
+
+   /* Time the session was last resumed */
+   last_resumed TEXT,
+
+   /* Things which are blocking the suspension of the session, if any */
+   blocking_suspend TEXT,
+
+   /* Time at which the session suspended */
+   suspend_timestamp TEXT,
+
    PRIMARY KEY (session_id),
    
    /* User entries should not be deleted, but if they are, remove all of that user's sessions */
@@ -100,4 +121,4 @@ CREATE TABLE active_session_metadata(
 /* Index to be used for sorting revoked cookies by expiration */
 CREATE INDEX revoked_cookie_expiration_index ON revoked_cookie(expiration);
 
-INSERT INTO schema_version (current_version, release_name) VALUES ('20210916132211194382021', 'Prairie Trillium');
+INSERT INTO schema_version (current_version, release_name) VALUES ('20220610180402900844286', 'Spotted Wakerobin');

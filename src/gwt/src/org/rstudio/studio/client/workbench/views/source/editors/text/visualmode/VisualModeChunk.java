@@ -59,6 +59,7 @@ import org.rstudio.studio.client.workbench.views.source.editors.text.TextEditing
 import org.rstudio.studio.client.workbench.views.source.editors.text.TextEditingTargetCompilePdfHelper;
 import org.rstudio.studio.client.workbench.views.source.editors.text.TextEditingTargetPrefsHelper;
 import org.rstudio.studio.client.workbench.views.source.editors.text.TextEditingTargetQuartoHelper;
+import org.rstudio.studio.client.workbench.views.source.editors.text.TextEditingTargetScopeHelper;
 import org.rstudio.studio.client.workbench.views.source.editors.text.AceEditor.EditorBehavior;
 import org.rstudio.studio.client.workbench.views.source.editors.text.ace.AceEditorNative;
 import org.rstudio.studio.client.workbench.views.source.editors.text.ace.Position;
@@ -139,7 +140,7 @@ public class VisualModeChunk
       outputHost_.getStyle().setPosition(com.google.gwt.dom.client.Style.Position.RELATIVE);
 
       ChunkOutputUi output = null;
-      if (index > 0)
+      if (index >= 0)
       {
          Position pos = parent_.positionFromIndex(index);
          scope_ = parent_.getScopeAtPosition(pos);
@@ -277,7 +278,7 @@ public class VisualModeChunk
       chunkHost_.appendChild(outputHost_);
       
       // Create the chunk toolbar
-      if (scope_ != null)
+      if (scope_ != null && isRunnableChunk(scope_))
       {
          createToolbar();
       }
@@ -472,23 +473,40 @@ public class VisualModeChunk
    public void setScope(Scope scope)
    {
       scope_ = scope;
-
-      // Update the toolbar's location, or create one if we don't have one yet
-      if (toolbar_ == null)
-      {
-         createToolbar();
-      }
-      else
-      {
-         toolbar_.setScope(scope);
-      }
       
+      if (isRunnableChunk(scope))
+      {
+         if (toolbar_ == null)
+         {
+            createToolbar();
+         }
+         else
+         {
+            toolbar_.setScope(scope);
+         }
+      }
+      else if (toolbar_ != null)
+      {
+         host_.removeChild(toolbar_.getToolbar().getElement());
+         toolbar_ = null;
+      }
+     
       // Update the chunk definition location
       if (def_ != null)
       {
          def_.setRow(scope.getEnd().getRow());
       }
    }
+   
+  
+   private boolean isRunnableChunk(Scope scope)
+   {
+      return TextEditingTargetScopeHelper.isRunnableChunk(
+         target_.getDocDisplay(),
+         scope.getPreamble().getRow()
+      );
+   }
+   
    
    /**
     * Loads a chunk output widget into the chunk.
@@ -719,6 +737,12 @@ public class VisualModeChunk
       case "ojs":
          editor.setFileType(FileTypeRegistry.JS);
          break;
+      case "mermaid":
+         editor.setFileType(FileTypeRegistry.MERMAID);
+         break;
+      case "dot":
+         editor.setFileType(FileTypeRegistry.GRAPHVIZ);
+         break;
       case "tex":
       case "latex":
          editor.setFileType(FileTypeRegistry.TEX);
@@ -857,7 +881,7 @@ public class VisualModeChunk
             String clazz = style_.gutterIcon() + " ";
             if (StringUtil.equals(item.getType(), "error"))
                clazz += ThemeStyles.INSTANCE.gutterError();
-            else if (StringUtil.equals(item.getType(), "info"))
+            else if (StringUtil.equals(item.getType(), "info") || StringUtil.equals(item.getType(), "style"))
                clazz += ThemeStyles.INSTANCE.gutterInfo();
             else if (StringUtil.equals(item.getType(), "warning"))
                clazz += ThemeStyles.INSTANCE.gutterWarning();
@@ -870,7 +894,10 @@ public class VisualModeChunk
             // Apply title to elements so lint text appears when hovered
             for (VisualModeChunkRowState state: states)
             {
-               state.setTitle(item.getText());
+               if (state.getTitle().isEmpty())
+                  state.setTitle(item.getText());
+               else
+                  state.appendToTitle(item.getText());
             }
          }
       }

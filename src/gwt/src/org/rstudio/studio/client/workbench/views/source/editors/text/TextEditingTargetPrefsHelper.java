@@ -125,6 +125,11 @@ public class TextEditingTargetPrefsHelper
             {
                docDisplay.setHighlightRFunctionCalls(arg);
             }));
+      releaseOnDismiss.add(prefs.colorPreview().bind(
+            (arg) ->
+            {
+               docDisplay.setColorPreview(arg);
+            }));
       releaseOnDismiss.add(prefs.rainbowParentheses().bind(
             (arg) ->
             {
@@ -179,6 +184,11 @@ public class TextEditingTargetPrefsHelper
             (arg) ->
             {
                docDisplay.setDragEnabled(arg);
+            }));
+      releaseOnDismiss.add(prefs.relativeLineNumbers().bind(
+            (arg) ->
+            {
+               docDisplay.setRelativeLineNumbers(arg);
             }));
 
       // Full editors get additional prefs (we don't use these in embedded editors)

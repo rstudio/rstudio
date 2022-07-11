@@ -171,10 +171,11 @@ public class AceEditorPreview extends DynamicIFrame
          webFont_ = font;
       }
 
+      String quotedFont = font.startsWith("\"") && font.endsWith("\"") ? font : "\"" + font + "\"";
       StyleElement style = document.createStyleElement();
       style.setAttribute("type", "text/css");
       style.setInnerText(".ace_editor, .ace_text-layer {\n" +
-                         "font-family: \"" + font + "\" !important;\n" +
+                         "font-family: " + quotedFont + ", monospace !important;\n" +
                          "}");
 
       document.getBody().appendChild(style);

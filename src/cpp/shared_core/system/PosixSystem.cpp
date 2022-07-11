@@ -29,7 +29,7 @@
 #include <netdb.h>
 #include <pwd.h>
 
-#ifndef __APPLE__
+#ifdef __linux__
 #include <sys/prctl.h>
 #endif
 
@@ -79,7 +79,7 @@ Error restorePrivilegesImpl(uid_t in_uid)
 
 Error enableCoreDumps()
 {
-#ifndef __APPLE__
+#ifdef __linux__
    int res = ::prctl(PR_SET_DUMPABLE, 1);
    if (res == -1)
       return systemError(errno, ERROR_LOCATION);

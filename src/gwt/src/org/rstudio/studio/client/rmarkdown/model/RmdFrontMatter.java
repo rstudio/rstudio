@@ -136,19 +136,24 @@ public class RmdFrontMatter extends JavaScriptObject
                                         String format, boolean isShiny)
    {
       setTitle(title);
+      
       if (author.length() > 0)
       {
          setAuthor(author);
       }
+      
       if (isShiny)
       {
          setRuntime(SHINY_RUNTIME);
       }
+      
       if (format != null)
       {
          setOutputOption(format, RmdFrontMatterOutputOptions.create());
       }
-      if (date.length() > 0) {
+      
+      if (date.length() > 0)
+      {
          setDate(date);
       }
    }

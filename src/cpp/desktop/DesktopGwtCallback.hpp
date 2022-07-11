@@ -124,8 +124,6 @@ public Q_SLOTS:
    QString getRVersion();
    QString chooseRVersion();
 
-   double devicePixelRatio();
-
    void openMinimalWindow(QString name, QString url, int width, int height);
    void activateMinimalWindow(QString name);
    void activateSatelliteWindow(QString name);
@@ -133,7 +131,6 @@ public Q_SLOTS:
                                   int height);
    void prepareForNamedWindow(QString name, bool allowExternalNavigate,
                               bool showToolbar);
-   void closeNamedWindow(QString name);
 
    // coordinates are relative to entire containing web page
    void copyPageRegionToClipboard(int left, int top, int width, int height);

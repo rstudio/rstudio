@@ -20,27 +20,29 @@
 #include <boost/property_tree/ptree.hpp>
 #include <boost/property_tree/ini_parser.hpp>
 
+#include <shared_core/Error.hpp>
 #include <shared_core/FilePath.hpp>
-#include <core/ProgramStatus.hpp>
 #include <shared_core/SafeConvert.hpp>
+
+#include <core/Log.hpp>
+#include <core/ProgramStatus.hpp>
 #include <core/system/Crypto.hpp>
 #include <core/system/System.hpp>
 #include <core/system/Environment.hpp>
 #include <core/system/Xdg.hpp>
 
-#include <shared_core/Error.hpp>
-#include <core/Log.hpp>
-
 #include <core/r_util/RProjectFile.hpp>
 #include <core/r_util/RUserData.hpp>
 #include <core/r_util/RSessionContext.hpp>
 #include <core/r_util/RActiveSessions.hpp>
+#include <core/r_util/RActiveSessionsStorage.hpp>
 #include <core/r_util/RVersionsPosix.hpp>
 
 #include <monitor/MonitorConstants.hpp>
 
 #include <r/session/RSession.hpp>
 
+#include <session/SessionActiveSessionsStorage.hpp>
 #include <session/SessionConstants.hpp>
 #include <session/SessionScopes.hpp>
 #include <session/projects/SessionProjectSharing.hpp>
@@ -306,14 +308,13 @@ core::ProgramStatus Options::read(int argc, char * const argv[], std::ostream& o
 #endif // _WIN32
    resolvePath(resourcePath_, &hunspellDictionariesPath_);
    resolvePath(resourcePath_, &mathjaxPath_);
-   resolvePath(resourcePath_, &libclangHeadersPath_);
    resolvePandocPath(resourcePath_, &pandocPath_);
    resolveQuartoPath(resourcePath_, &quartoPath_);
 
    // rsclang
    if (libclangPath_ != kDefaultRsclangPath)
    {
-      libclangPath_ += "/5.0.2";
+      libclangPath_ += "/13.0.1";
    }
    resolveRsclangPath(resourcePath_, &libclangPath_);
 
@@ -353,15 +354,24 @@ core::ProgramStatus Options::read(int argc, char * const argv[], std::ostream& o
    r_util::SessionScope scope = sessionScope();
    if (!scope.empty())
    {
-        scopeState_ = r_util::validateSessionScope(
-                       scope,
-                       userHomePath(),
-                       userScratchPath(),
-                       session::projectIdToFilePath(userScratchPath(), 
-                                 FilePath(getOverlayOption(
-                                       kSessionSharedStoragePath))),
-                       projectSharingEnabled(),
-                       &initialProjectPath_);
+      std::shared_ptr<r_util::IActiveSessionsStorage> storage;
+      Error error = storage::activeSessionsStorage(&storage);
+      if (error)
+      {
+         LOG_ERROR(error);
+         return ProgramStatus::exitFailure();
+      }
+
+      scopeState_ = r_util::validateSessionScope(
+         storage,
+         scope,
+         userHomePath(),
+         userScratchPath(),
+         session::projectIdToFilePath(userScratchPath(), 
+         FilePath(getOverlayOption(
+                  kSessionSharedStoragePath))),
+         projectSharingEnabled(),
+         &initialProjectPath_);
    }
    else
    {
@@ -424,6 +434,54 @@ core::ProgramStatus Options::read(int argc, char * const argv[], std::ostream& o
    // load cran options from repos.conf
    FilePath reposFile(rCRANReposFile());
    rCRANMultipleRepos_ = parseReposConfig(reposFile);
+
+   // if the allow overlay is enabled, emit warnings for any overlay option it masks
+   if (allowOverlay())
+   {
+      // it'd be nicer to iterate over the `allow` options_description object, but the
+      // variable-to-value mapping is not accessible here since it's only available
+      // during the parse phase
+      std::vector<std::string> violations;
+      if (!allowVcsExecutableEdit_)
+         violations.push_back("allow-vcs-executable-edit");
+      if (!allowCRANReposEdit_)
+         violations.push_back("allow-r-cran-repos-edit");
+      if (!allowVcs_)
+         violations.push_back("allow-vcs");
+      if (!allowPackageInstallation_)
+         violations.push_back("allow-package-installation");
+      if (!allowShell_)
+         violations.push_back("allow-shell");
+      if (!allowTerminalWebsockets_)
+         violations.push_back("allow-terminal-websockets");
+      if (!allowFileDownloads_)
+         violations.push_back("allow-file-downloads");
+      if (!allowFileUploads_)
+         violations.push_back("allow-file-uploads");
+      if (!allowRemovePublicFolder_)
+         violations.push_back("allow-remove-public-folder");
+      if (!allowRpubsPublish_)
+         violations.push_back("allow-rpubs-publish");
+      if (!allowExternalPublish_)
+         violations.push_back("allow-external-publish");
+      if (!allowFullUI_)
+         violations.push_back("allow-full-ui");
+      if (!allowLauncherJobs_)
+         violations.push_back("allow-launcher-jobs");
+
+      if (violations.size() == 1)
+      {
+         LOG_WARNING_MESSAGE("The option '" +
+                             violations[0] +
+                             "' was set, but it is not supported in this edition of RStudio and will be ignored");
+      }
+      else if (violations.size() > 1)
+      {
+         LOG_WARNING_MESSAGE("The following options were set, but are not supported in this edition of RStudio "
+                             "and will be ignored: " +
+                             boost::algorithm::join(violations, ", "));
+      }
+   }
 
    // return status
    return status;
@@ -496,6 +554,29 @@ void Options::resolvePath(const FilePath& resourcePath,
 
 #ifdef __APPLE__
 
+namespace {
+
+FilePath macBinaryPath(const FilePath& resourcePath,
+                       const std::string& stem)
+{
+   // otherwise, look in default Qt location
+   FilePath qtPath = resourcePath.getParent().completePath("MacOS").completePath(stem);
+   if (qtPath.exists())
+      return qtPath;
+
+   FilePath electronPath =
+         resourcePath.completePath("bin").completePath(stem);
+   
+   if (electronPath.exists())
+      return electronPath;
+
+   // alternate Electron binary path
+   electronPath = resourcePath.completePath(stem);
+   return electronPath;
+}
+
+} // end anonymous namespace
+
 void Options::resolvePostbackPath(const FilePath& resourcePath,
                                   std::string* pPath)
 {
@@ -504,7 +585,7 @@ void Options::resolvePostbackPath(const FilePath& resourcePath,
    // when the default postback path has been passed
    if (*pPath == kDefaultPostbackPath && programMode() == kSessionProgramModeDesktop)
    {
-      FilePath path = resourcePath.getParent().completePath("MacOS/postback/rpostback");
+      FilePath path = macBinaryPath(resourcePath, "rpostback");
       *pPath = path.getAbsolutePath();
    }
    else
@@ -518,7 +599,7 @@ void Options::resolvePandocPath(const FilePath& resourcePath,
 {
    if (*pPath == kDefaultPandocPath && programMode() == kSessionProgramModeDesktop)
    {
-      FilePath path = resourcePath.getParent().completePath("MacOS/quarto/bin");
+      FilePath path = macBinaryPath(resourcePath, "quarto/bin/tools");
       *pPath = path.getAbsolutePath();
    }
    else
@@ -532,7 +613,7 @@ void Options::resolveQuartoPath(const FilePath& resourcePath,
 {
    if (*pPath == kDefaultQuartoPath && programMode() == kSessionProgramModeDesktop)
    {
-      FilePath path = resourcePath.getParent().completePath("MacOS/quarto");
+      FilePath path = macBinaryPath(resourcePath, "quarto");
       *pPath = path.getAbsolutePath();
    }
    else
@@ -546,7 +627,7 @@ void Options::resolveRsclangPath(const FilePath& resourcePath,
 {
    if (*pPath == kDefaultRsclangPath && programMode() == kSessionProgramModeDesktop)
    {
-      FilePath path = resourcePath.getParent().completePath("MacOS/rsclang");
+      FilePath path = macBinaryPath(resourcePath, "rsclang");
       *pPath = path.getAbsolutePath();
    }
    else
@@ -581,6 +662,11 @@ void Options::resolveRsclangPath(const FilePath& resourcePath,
    resolvePath(resourcePath, pPath);
 }
 #endif
+
+bool Options::supportsProjectSharing() const
+{
+   return false;
+}
    
 } // namespace session
 } // namespace rstudio

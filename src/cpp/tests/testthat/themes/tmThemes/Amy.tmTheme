@@ -506,7 +506,7 @@
 		</dict>
 		<dict>
 			<key>name</key>
-			<string>Invalid - depricated</string>
+			<string>Invalid - deprecated</string>
 			<key>scope</key>
 			<string>invalid.deprecated</string>
 			<key>settings</key>

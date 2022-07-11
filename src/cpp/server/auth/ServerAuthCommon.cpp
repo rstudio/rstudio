@@ -35,6 +35,7 @@
 #include "../ServerLoginPages.hpp"
 
 using namespace rstudio::core;
+using namespace boost::placeholders;
 
 namespace rstudio {
 namespace server {
@@ -79,7 +80,6 @@ void refreshCredentialsThenContinue(
 }
 
 // implemented below
-boost::optional<boost::posix_time::time_duration> getCookieExpiry(bool staySignedIn);
 bool isSecureCookie(const core::http::Request& request);
 
 void signIn(const core::http::Request& request,
@@ -138,6 +138,18 @@ bool validateSignIn(const core::http::Request& request,
 
 ErrorType checkUser(const std::string& username, bool authenticated)
 {
+   if (!authenticated) {
+      LOG_DEBUG_MESSAGE("Failed to authenticate username: " + username);
+      // register failed login with monitor
+      using namespace monitor;
+      client().logEvent(Event(kAuthScope,
+                              kAuthLoginFailedEvent,
+                              "",
+                              username));
+
+      return kErrorInvalidLogin;
+   }
+
    // ensure user is valid
    if (!server::auth::validateUser(username))
    {
@@ -167,7 +179,7 @@ ErrorType checkUser(const std::string& username, bool authenticated)
 
    // ensure user is licensed to use the product
    bool isLicensed = false;
-   core::Error error = auth::handler::overlay::isUserLicensed(username, &isLicensed);
+   core::Error error = auth::handler::isUserLicensed(username, &isLicensed);
    if (error)
    {
       using namespace monitor;
@@ -190,17 +202,6 @@ ErrorType checkUser(const std::string& username, bool authenticated)
                               username));
 
       return kErrorUserLicenseLimitReached;
-   }
-
-   if (!authenticated) {
-      // register failed login with monitor
-      using namespace monitor;
-      client().logEvent(Event(kAuthScope,
-                              kAuthLoginFailedEvent,
-                              "",
-                              username));
-
-      return kErrorInvalidLogin;
    }
 
    using namespace monitor;
@@ -266,9 +267,10 @@ std::string signOut(const core::http::Request& request,
                               username));
    }
 
-   // invalidate the auth cookie so that it can no longer be used
    clearSignInCookies(request, pResponse);
-   auth::handler::invalidateAuthCookie(request.cookieValue(kUserIdCookie));
+
+   // Invalidating the session will revoke all auth cookies allocated
+   auth::handler::UserSession::invalidateUserSession(username);
 
    // adjust sign out url point internally
    if (!signOutUrl.empty() && signOutUrl[0] == '/')
@@ -332,7 +334,7 @@ boost::optional<boost::posix_time::time_duration> getCookieExpiry(bool staySigne
       // legacy auth expiration - users do not idle
       // and stay signed in for multiple days
       // not very secure, but maintained for those users that want this
-      // optional persistance beyond the browser session
+      // optional persistence beyond the browser session
       boost::optional<boost::posix_time::time_duration> expiry;
       if (staySignedIn)
          expiry = boost::posix_time::hours(24 * staySignedInDays);
@@ -365,7 +367,7 @@ void setSignInCookies(const core::http::Request& request,
    core::http::Cookie::SameSite sameSite = server::options().wwwSameSite();
 
    // set the secure user id cookie
-   core::http::secure_cookie::set(kUserIdCookie,
+   http::Cookie cookie = core::http::secure_cookie::set(kUserIdCookie,
                                   userIdentifier,
                                   request,
                                   validity,
@@ -374,6 +376,8 @@ void setSignInCookies(const core::http::Request& request,
                                   pResponse,
                                   secureCookie,
                                   sameSite);
+
+   auth::handler::UserSession::insertSessionCookie(userIdentifier, cookie.value());
 
    // set a cookie that is tied to the specific user list we have written
    // if the user list ever has conflicting changes (e.g. a user is locked),

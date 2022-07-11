@@ -16,6 +16,8 @@
 #include <core/http/ChunkProxy.hpp>
 #include <core/http/Util.hpp>
 
+using namespace boost::placeholders;
+
 namespace rstudio {
 namespace core {
 namespace http {

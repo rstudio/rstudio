@@ -26,6 +26,7 @@ RUN yum install -y \
     gtk3 \
     java-1.8.0-openjdk \
     java-1.8.0-openjdk-devel \
+    jq \
     libcurl-devel \
     libacl-devel \
     libcap-devel \ 
@@ -57,6 +58,7 @@ RUN yum install -y \
     sudo \
     valgrind \
     wget \
+    xorg-x11-server-Xvfb \
     zlib-devel
 
 # copy RStudio tools (needed so that our other dependency scripts can find it)
@@ -94,12 +96,6 @@ COPY src/gwt/panmirror/src/editor/package.json /opt/rstudio-tools/panmirror/
 # install common dependencies
 RUN cd /opt/rstudio-tools/dependencies/common && /bin/bash ./install-common rhel8
 
-# install Qt SDK
-COPY dependencies/common/install-qt.sh /tmp/
-COPY dependencies/linux/install-qt-linux /tmp/
-RUN export QT_VERSION=5.12.8 && \
-    cd /tmp && /bin/bash ./install-qt-linux
-
 # get libuser header files (libuser-devel not currently available on rhel8)
 RUN wget https://pagure.io/libuser/archive/libuser-0.62/libuser-libuser-0.62.tar.gz
 RUN tar zxvf libuser-libuser-0.62.tar.gz
@@ -112,6 +108,10 @@ RUN wget https://gnupg.org/ftp/gcrypt/gnupg/gnupg-1.4.23.tar.bz2
 RUN tar xvf gnupg-1.4.23.tar.bz2
 RUN cd gnupg-1.4.23 && ./configure --prefix=/gnupg1 && make && make install
 RUN ln -s /gnupg1/bin/gpg /usr/local/bin/gpg1 
+
+# cachebust for Quarto release
+ADD https://quarto.org/docs/download/_download.json quarto_releases
+RUN cd /opt/rstudio-tools/dependencies/common && /bin/bash ./install-quarto
 
 # set github login from build argument if defined
 ARG GITHUB_LOGIN

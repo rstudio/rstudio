@@ -28,6 +28,8 @@
 
 #include "config.h"
 
+using namespace boost::placeholders;
+
 namespace rstudio {
 namespace core {
 namespace gwt {

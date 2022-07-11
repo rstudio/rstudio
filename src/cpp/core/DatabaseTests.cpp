@@ -20,7 +20,6 @@
 #include <core/system/System.hpp>
 #include <shared_core/SafeConvert.hpp>
 
-#include <soci/boost-tuple.h>
 #include <soci/session.h>
 #include <soci/sqlite3/soci-sqlite3.h>
 
@@ -89,14 +88,16 @@ TEST_CASE("Database", "[.database]")
             .withInput(text);
       REQUIRE_FALSE(connection->execute(query));
 
-      boost::tuple<int, std::string> row;
+      int rowId;
+      std::string rowText;
       query = connection->query("select id, text from Test where id = (:id)")
             .withInput(id)
-            .withOutput(row);
+            .withOutput(rowId)
+            .withOutput(rowText);
       REQUIRE_FALSE(connection->execute(query));
 
-      CHECK(row.get<0>() == id);
-      CHECK(row.get<1>() == text);
+      CHECK(rowId == id);
+      CHECK(rowText == text);
    }
 
    test_that("Can create PostgreSQL database")
@@ -115,14 +116,16 @@ TEST_CASE("Database", "[.database]")
             .withInput(text);
       REQUIRE_FALSE(connection->execute(query));
 
-      boost::tuple<int, std::string> row;
+      int rowId;
+      std::string rowText;
       query = connection->query("select id, text from Test where id = (:id)")
             .withInput(id)
-            .withOutput(row);
+            .withOutput(rowId)
+            .withOutput(rowText);
       REQUIRE_FALSE(connection->execute(query));
 
-      CHECK(row.get<0>() == id);
-      CHECK(row.get<1>() == text);
+      CHECK(rowId == id);
+      CHECK(rowText == text);
    }
 
    test_that("Can perform transactions")
@@ -148,14 +151,17 @@ TEST_CASE("Database", "[.database]")
       REQUIRE(numFailed == 0);
       transaction.commit();
 
-      boost::tuple<int, std::string> row;
+
+      int rowId;
+      std::string rowText;
       query = connection->query("select id, text from Test where id = 50")
-            .withOutput(row);
+         .withOutput(rowId)
+         .withOutput(rowText);
 
       REQUIRE_FALSE(connection->execute(query, &dataReturned));
       REQUIRE(dataReturned);
-      REQUIRE(row.get<0>() == 50);
-      REQUIRE(row.get<1>() == "Test text 50");
+      REQUIRE(rowId == 50);
+      REQUIRE(rowText == "Test text 50");
 
       // now attempt to rollback a transaction
       Transaction transaction2(connection);
@@ -173,7 +179,8 @@ TEST_CASE("Database", "[.database]")
       transaction2.rollback();
 
       query = connection->query("select id, text from Test where id = 150")
-            .withOutput(row);
+         .withOutput(rowId)
+         .withOutput(rowText);
 
       // expect no data
       REQUIRE_FALSE(connection->execute(query, &dataReturned));
@@ -232,9 +239,12 @@ TEST_CASE("Database", "[.database]")
       REQUIRE_FALSE(createConnectionPool(5, sqliteConnectionOptions(), &connectionPool));
 
       boost::shared_ptr<IConnection> connection = connectionPool->getConnection();
-      boost::tuple<int, std::string> row;
+
+      int rowId;
+      std::string rowText;
       Query query = connection->query("select id, text from Test where id = 50")
-            .withOutput(row);
+         .withOutput(rowId)
+         .withOutput(rowText);
 
       bool dataReturned = false;
       REQUIRE_FALSE(connection->execute(query, &dataReturned));
@@ -242,7 +252,8 @@ TEST_CASE("Database", "[.database]")
 
       boost::shared_ptr<IConnection> connection2 = connectionPool->getConnection();
       Query query2 = connection2->query("select id, text from Test where id = 25")
-            .withOutput(row);
+         .withOutput(rowId)
+         .withOutput(rowText);
 
       dataReturned = false;
       REQUIRE_FALSE(connection2->execute(query2, &dataReturned));

@@ -350,6 +350,14 @@ public interface FilesConstants extends com.google.gwt.i18n.client.Messages {
     @Key("copyingLabel")
     String copyingLabel(String objectName);
 
+    /**
+     * Translated "Files".
+     *
+     * @return translated "Files"
+     */
+    @DefaultMessage("Files")
+    @Key("filesTitle")
+    String filesTitle();
 
     /**
      * Translated "File Listing Error".

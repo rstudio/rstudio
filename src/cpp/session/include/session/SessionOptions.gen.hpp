@@ -220,7 +220,10 @@ protected:
       "Enables offline request handling. When the R session is busy, some requests are allowed to run")
       (kSessionHandleOfflineTimeoutMs,
       value<int>(&handleOfflineTimeoutMs_)->default_value(200),
-      "Duration in millis before requests that can be handled offline are processed by the offline handler thread.");
+      "Duration in millis before requests that can be handled offline are processed by the offline handler thread.")
+      (kSessionUseFileStorage,
+      value<bool>(&sessionUseFileStorage_)->default_value(true),
+      "Controls whether the session should store its metadata on the file system or send it to the server to be stored in the internal database.");
 
    pAllow->add_options()
       ("allow-vcs-executable-edit",
@@ -452,21 +455,22 @@ public:
    int asyncRpcTimeoutMs() const { return asyncRpcTimeoutMs_; }
    bool handleOfflineEnabled() const { return handleOfflineEnabled_; }
    int handleOfflineTimeoutMs() const { return handleOfflineTimeoutMs_; }
-   bool allowVcsExecutableEdit() const { return allowVcsExecutableEdit_; }
-   bool allowCRANReposEdit() const { return allowCRANReposEdit_; }
-   bool allowVcs() const { return allowVcs_; }
-   bool allowPackageInstallation() const { return allowPackageInstallation_; }
-   bool allowShell() const { return allowShell_; }
-   bool allowTerminalWebsockets() const { return allowTerminalWebsockets_; }
-   bool allowFileDownloads() const { return allowFileDownloads_; }
-   bool allowFileUploads() const { return allowFileUploads_; }
-   bool allowRemovePublicFolder() const { return allowRemovePublicFolder_; }
-   bool allowRpubsPublish() const { return allowRpubsPublish_; }
-   bool allowExternalPublish() const { return allowExternalPublish_; }
-   bool allowPublish() const { return allowPublish_; }
-   bool allowPresentationCommands() const { return allowPresentationCommands_; }
-   bool allowFullUI() const { return allowFullUI_; }
-   bool allowLauncherJobs() const { return allowLauncherJobs_; }
+   bool sessionUseFileStorage() const { return sessionUseFileStorage_; }
+   bool allowVcsExecutableEdit() const { return allowVcsExecutableEdit_ || allowOverlay(); }
+   bool allowCRANReposEdit() const { return allowCRANReposEdit_ || allowOverlay(); }
+   bool allowVcs() const { return allowVcs_ || allowOverlay(); }
+   bool allowPackageInstallation() const { return allowPackageInstallation_ || allowOverlay(); }
+   bool allowShell() const { return allowShell_ || allowOverlay(); }
+   bool allowTerminalWebsockets() const { return allowTerminalWebsockets_ || allowOverlay(); }
+   bool allowFileDownloads() const { return allowFileDownloads_ || allowOverlay(); }
+   bool allowFileUploads() const { return allowFileUploads_ || allowOverlay(); }
+   bool allowRemovePublicFolder() const { return allowRemovePublicFolder_ || allowOverlay(); }
+   bool allowRpubsPublish() const { return allowRpubsPublish_ || allowOverlay(); }
+   bool allowExternalPublish() const { return allowExternalPublish_ || allowOverlay(); }
+   bool allowPublish() const { return allowPublish_ || allowOverlay(); }
+   bool allowPresentationCommands() const { return allowPresentationCommands_ || allowOverlay(); }
+   bool allowFullUI() const { return allowFullUI_ || allowOverlay(); }
+   bool allowLauncherJobs() const { return allowLauncherJobs_ || allowOverlay(); }
    core::FilePath coreRSourcePath() const { return core::FilePath(coreRSourcePath_); }
    core::FilePath modulesRSourcePath() const { return core::FilePath(modulesRSourcePath_); }
    core::FilePath sessionLibraryPath() const { return core::FilePath(sessionLibraryPath_); }
@@ -554,6 +558,7 @@ protected:
    int asyncRpcTimeoutMs_;
    bool handleOfflineEnabled_;
    int handleOfflineTimeoutMs_;
+   bool sessionUseFileStorage_;
    bool allowVcsExecutableEdit_;
    bool allowCRANReposEdit_;
    bool allowVcs_;
@@ -608,6 +613,7 @@ protected:
    std::string projectId_;
    std::string scopeId_;
    std::string launcherToken_;
+   virtual bool allowOverlay() const { return false; };
 };
 
 } // namespace session

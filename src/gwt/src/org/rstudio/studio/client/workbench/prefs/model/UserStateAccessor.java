@@ -1,4 +1,5 @@
-/* UserStateAccessor.java
+/*
+ * UserStateAccessor.java
  *
  * Copyright (C) 2022 by RStudio, PBC
  *
@@ -24,6 +25,7 @@ import org.rstudio.studio.client.workbench.model.SessionInfo;
 
 import com.google.gwt.core.client.JavaScriptObject;
 import com.google.gwt.core.client.JsArray;
+import com.google.gwt.core.client.JsArrayString;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -41,6 +43,166 @@ public class UserStateAccessor extends Prefs
       super(stateLayers);
    }
    
+   /**
+    * 
+    */
+   public PrefValue<General> general()
+   {
+      return object(
+         "general",
+         _constants.generalTitle(), 
+         _constants.generalDescription(), 
+         null);
+   }
+
+   public static class General extends JavaScriptObject
+   {
+      protected General() {} 
+
+      public final native JsArrayString getIgnoredUpdateVersions() /*-{
+         return this && this.ignoredUpdateVersions || [];
+      }-*/;
+
+   }
+
+   /**
+    * Font options from the Appearance category
+    */
+   public PrefValue<Font> font()
+   {
+      return object(
+         "font",
+         _constants.fontTitle(), 
+         _constants.fontDescription(), 
+         null);
+   }
+
+   public static class Font extends JavaScriptObject
+   {
+      protected Font() {} 
+
+      public final native String getProportionalFont() /*-{
+         return this && this.proportionalFont || "";
+      }-*/;
+
+      public final native String getFixedWidthFont() /*-{
+         return this && this.fixedWidthFont || "";
+      }-*/;
+
+   }
+
+   /**
+    * 
+    */
+   public PrefValue<View> view()
+   {
+      return object(
+         "view",
+         _constants.viewTitle(), 
+         _constants.viewDescription(), 
+         null);
+   }
+
+   public static class View extends JavaScriptObject
+   {
+      protected View() {} 
+
+      public final native double getZoomLevel() /*-{
+         return this && this.zoomLevel || 1;
+      }-*/;
+
+      public final native JavaScriptObject getWindowBounds() /*-{
+         return this && this.windowBounds || {"width":1200,"height":900,"x":0,"y":0};
+      }-*/;
+
+      public final native boolean getAccessibility() /*-{
+         return this && this.accessibility || false;
+      }-*/;
+
+   }
+
+   /**
+    * 
+    */
+   public PrefValue<RemoteSession> remoteSession()
+   {
+      return object(
+         "remote_session",
+         _constants.remoteSessionTitle(), 
+         _constants.remoteSessionDescription(), 
+         null);
+   }
+
+   public static class RemoteSession extends JavaScriptObject
+   {
+      protected RemoteSession() {} 
+
+      public final native String getLastRemoteSessionUrl() /*-{
+         return this && this.lastRemoteSessionUrl || "";
+      }-*/;
+
+      public final native JsArrayString getAuthCookies() /*-{
+         return this && this.authCookies || [];
+      }-*/;
+
+      public final native JsArrayString getTempAuthCookies() /*-{
+         return this && this.tempAuthCookies || [];
+      }-*/;
+
+   }
+
+   /**
+    * 
+    */
+   public PrefValue<Renderer> renderer()
+   {
+      return object(
+         "renderer",
+         _constants.rendererTitle(), 
+         _constants.rendererDescription(), 
+         null);
+   }
+
+   public static class Renderer extends JavaScriptObject
+   {
+      protected Renderer() {} 
+
+      public final native String getEngine() /*-{
+         return this && this.engine || "auto";
+      }-*/;
+
+      public final native boolean getUseGpuExclusionList() /*-{
+         return this && this.useGpuExclusionList || true;
+      }-*/;
+
+      public final native boolean getUseGpuDriverBugWorkarounds() /*-{
+         return this && this.useGpuDriverBugWorkarounds || true;
+      }-*/;
+
+   }
+
+   /**
+    * 
+    */
+   public PrefValue<Platform> platform()
+   {
+      return object(
+         "platform",
+         _constants.platformTitle(), 
+         _constants.platformDescription(), 
+         null);
+   }
+
+   public static class Platform extends JavaScriptObject
+   {
+      protected Platform() {} 
+
+      public final native JavaScriptObject getWindows() /*-{
+         return this && this.windows || {"rBinDir":"","preferR64":true,"rExecutablePath":""};
+      }-*/;
+
+   }
+
    /**
     * A unique identifier representing the user and machine.
     */
@@ -529,6 +691,18 @@ public class UserStateAccessor extends Prefs
 
    public void syncPrefs(String layer, JsObject source)
    {
+      if (source.hasKey("general"))
+         general().setValue(layer, source.getObject("general"));
+      if (source.hasKey("font"))
+         font().setValue(layer, source.getObject("font"));
+      if (source.hasKey("view"))
+         view().setValue(layer, source.getObject("view"));
+      if (source.hasKey("remote_session"))
+         remoteSession().setValue(layer, source.getObject("remote_session"));
+      if (source.hasKey("renderer"))
+         renderer().setValue(layer, source.getObject("renderer"));
+      if (source.hasKey("platform"))
+         platform().setValue(layer, source.getObject("platform"));
       if (source.hasKey("context_id"))
          contextId().setValue(layer, source.getString("context_id"));
       if (source.hasKey("auto_created_profile"))
@@ -583,6 +757,12 @@ public class UserStateAccessor extends Prefs
    public List<PrefValue<?>> allPrefs()
    {
       ArrayList<PrefValue<?>> prefs = new ArrayList<PrefValue<?>>();
+      prefs.add(general());
+      prefs.add(font());
+      prefs.add(view());
+      prefs.add(remoteSession());
+      prefs.add(renderer());
+      prefs.add(platform());
       prefs.add(contextId());
       prefs.add(autoCreatedProfile());
       prefs.add(theme());

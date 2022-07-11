@@ -245,6 +245,19 @@ core::Error UserPrefValues::setShowLineNumbers(bool val)
 }
 
 /**
+ * Show relative, rather than absolute, line numbers in RStudio's code editor.
+ */
+bool UserPrefValues::relativeLineNumbers()
+{
+   return readPref<bool>("relative_line_numbers");
+}
+
+core::Error UserPrefValues::setRelativeLineNumbers(bool val)
+{
+   return writePref("relative_line_numbers", val);
+}
+
+/**
  * Highlight the selected word in RStudio's code editor.
  */
 bool UserPrefValues::highlightSelectedWord()
@@ -983,6 +996,19 @@ bool UserPrefValues::highlightRFunctionCalls()
 core::Error UserPrefValues::setHighlightRFunctionCalls(bool val)
 {
    return writePref("highlight_r_function_calls", val);
+}
+
+/**
+ * Whether to show color preview in the code editor.
+ */
+bool UserPrefValues::colorPreview()
+{
+   return readPref<bool>("color_preview");
+}
+
+core::Error UserPrefValues::setColorPreview(bool val)
+{
+   return writePref("color_preview", val);
 }
 
 /**
@@ -1896,7 +1922,7 @@ core::Error UserPrefValues::setJobsTabVisibility(std::string val)
 }
 
 /**
- * Whether to show the Launcher jobs tab in RStudio Pro and RStudio Workbench.
+ * Whether to show the Workbench Jobs tab in RStudio Pro and RStudio Workbench.
  */
 bool UserPrefValues::showLauncherJobsTab()
 {
@@ -1909,7 +1935,7 @@ core::Error UserPrefValues::setShowLauncherJobsTab(bool val)
 }
 
 /**
- * How to sort jobs in the Launcher tab in RStudio Pro and RStudio Workbench.
+ * How to sort jobs in the Workbench Jobs tab in RStudio Pro and RStudio Workbench.
  */
 std::string UserPrefValues::launcherJobsSort()
 {
@@ -2195,7 +2221,7 @@ core::Error UserPrefValues::setTerminalPath(std::string val)
 }
 
 /**
- * The path to the RSA key file to use.
+ * The path to the SSH key file to use.
  */
 std::string UserPrefValues::rsaKeyPath()
 {
@@ -2205,6 +2231,19 @@ std::string UserPrefValues::rsaKeyPath()
 core::Error UserPrefValues::setRsaKeyPath(std::string val)
 {
    return writePref("rsa_key_path", val);
+}
+
+/**
+ * The encryption type to use for the SSH key file.
+ */
+std::string UserPrefValues::sshKeyType()
+{
+   return readPref<std::string>("ssh_key_type");
+}
+
+core::Error UserPrefValues::setSshKeyType(std::string val)
+{
+   return writePref("ssh_key_type", val);
 }
 
 /**
@@ -2221,7 +2260,7 @@ core::Error UserPrefValues::setUseDevtools(bool val)
 }
 
 /**
- * Clean before install.
+ * Always use --preclean when installing package.
  */
 bool UserPrefValues::cleanBeforeInstall()
 {
@@ -2923,7 +2962,7 @@ core::Error UserPrefValues::setSaveRetryTimeout(int val)
 }
 
 /**
- * Whether the Insert Pipe Operator command should insert the native R pipe operator, |>
+ * Whether the Insert Pipe Operator command should use the native R pipe operator, |>
  */
 bool UserPrefValues::insertNativePipeOperator()
 {
@@ -3027,16 +3066,29 @@ core::Error UserPrefValues::setCheckNullExternalPointers(bool val)
 }
 
 /**
- * Enable IDE features for the Quarto publishing system.
+ * The IDE's user-interface language.
  */
-std::string UserPrefValues::quartoEnabled()
+std::string UserPrefValues::uiLanguage()
 {
-   return readPref<std::string>("quarto_enabled");
+   return readPref<std::string>("ui_language");
 }
 
-core::Error UserPrefValues::setQuartoEnabled(std::string val)
+core::Error UserPrefValues::setUiLanguage(std::string val)
 {
-   return writePref("quarto_enabled", val);
+   return writePref("ui_language", val);
+}
+
+/**
+ * Whether RStudio Desktop will use the operating system's native File and Message dialog boxes.
+ */
+bool UserPrefValues::nativeFileDialogs()
+{
+   return readPref<bool>("native_file_dialogs");
+}
+
+core::Error UserPrefValues::setNativeFileDialogs(bool val)
+{
+   return writePref("native_file_dialogs", val);
 }
 
 std::vector<std::string> UserPrefValues::allKeys()
@@ -3059,6 +3111,7 @@ std::vector<std::string> UserPrefValues::allKeys()
       kCustomShellCommand,
       kCustomShellOptions,
       kShowLineNumbers,
+      kRelativeLineNumbers,
       kHighlightSelectedWord,
       kHighlightSelectedLine,
       kPanes,
@@ -3116,6 +3169,7 @@ std::vector<std::string> UserPrefValues::allKeys()
       kHighlightConsoleErrors,
       kScrollPastEndOfDocument,
       kHighlightRFunctionCalls,
+      kColorPreview,
       kRainbowParentheses,
       kConsoleLineLengthLimit,
       kConsoleMaxLines,
@@ -3210,6 +3264,7 @@ std::vector<std::string> UserPrefValues::allKeys()
       kSvnExePath,
       kTerminalPath,
       kRsaKeyPath,
+      kSshKeyType,
       kUseDevtools,
       kCleanBeforeInstall,
       kUseInternet2,
@@ -3273,7 +3328,8 @@ std::vector<std::string> UserPrefValues::allKeys()
       kSessionProtocolDebug,
       kPythonProjectEnvironmentAutomaticActivate,
       kCheckNullExternalPointers,
-      kQuartoEnabled,
+      kUiLanguage,
+      kNativeFileDialogs,
    });
 }
    

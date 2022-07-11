@@ -88,8 +88,11 @@ Error initJobObject(bool* detachFromJob)
    }
 
    JOBOBJECT_EXTENDED_LIMIT_INFORMATION jeli = { 0 };
-   jeli.BasicLimitInformation.LimitFlags = JOB_OBJECT_LIMIT_KILL_ON_JOB_CLOSE |
-                                           JOB_OBJECT_LIMIT_BREAKAWAY_OK;
+   jeli.BasicLimitInformation.LimitFlags =
+         JOB_OBJECT_LIMIT_KILL_ON_JOB_CLOSE |
+         JOB_OBJECT_LIMIT_BREAKAWAY_OK |
+         JOB_OBJECT_LIMIT_DIE_ON_UNHANDLED_EXCEPTION;
+
    ::SetInformationJobObject(hJob,
                              JobObjectExtendedLimitInformation,
                              &jeli,
@@ -335,7 +338,7 @@ FilePath userSettingsPath(const FilePath& userHomeDirectory,
    if (hr != S_OK)
    {
       LOG_ERROR_MESSAGE("Unable to retrieve user home path. HRESULT:  " +
-                        safe_convert::numberToString(hr));
+                        safe_convert::numberToHexString(hr));
       return FilePath();
    }
 
@@ -353,7 +356,7 @@ FilePath systemSettingsPath(const std::string& appName, bool create)
    if (hr != S_OK)
    {
       LOG_ERROR_MESSAGE("Unable to retrieve per machine configuration path. HRESULT:  " +
-                        safe_convert::numberToString(hr));
+                        safe_convert::numberToHexString(hr));
       return FilePath();
    }
 
@@ -368,7 +371,7 @@ FilePath systemSettingsPath(const std::string& appName, bool create)
       if (hr != S_OK)
       {
          LOG_ERROR_MESSAGE("Cannot create folder under per machine configuration path. HRESULT:  " +
-                           safe_convert::numberToString(hr));
+                           safe_convert::numberToHexString(hr));
          return FilePath();
       }
    }

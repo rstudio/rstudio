@@ -29,7 +29,7 @@ export function htmlEscape(str: string, isAttributeValue: boolean): string {
         return '&gt;';
       case '&':
         return '&amp;';
-      case "'":
+      case '\'':
         return '&#x27;';
       case '"':
         return '&quot;';
@@ -52,8 +52,8 @@ export function jsLiteralEscape(str: string): string {
     switch (match) {
       case '\\':
         return '\\\\';
-      case "'":
-        return "\\'";
+      case '\'':
+        return '\\\'';
       case '"':
         return '\\"';
       case '\r':

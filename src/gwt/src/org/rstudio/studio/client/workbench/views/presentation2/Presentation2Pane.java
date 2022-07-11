@@ -18,7 +18,6 @@ package org.rstudio.studio.client.workbench.views.presentation2;
 import org.rstudio.core.client.StringUtil;
 import org.rstudio.core.client.URIConstants;
 import org.rstudio.core.client.URIUtils;
-import org.rstudio.core.client.command.AppCommand;
 import org.rstudio.core.client.theme.res.ThemeResources;
 import org.rstudio.core.client.theme.res.ThemeStyles;
 import org.rstudio.core.client.widget.RStudioFrame;
@@ -64,7 +63,7 @@ public class Presentation2Pane extends WorkbenchPane implements Presentation2.Di
       // This should always be title "Presentation" (rather than the name of the underlying
       // tab "Presentations". The proper name is "Presentation", we just used
       // "Presentations" so the configurations wouldn't conflict.
-      super("Presentation");
+      super(constants_.presentationTitle());
       commands_ = commands;
       server_ = server;
       ensureWidget();
@@ -341,8 +340,7 @@ public class Presentation2Pane extends WorkbenchPane implements Presentation2.Di
       @Override
       protected int getMaxHeight()
       {
-         return Window.getClientHeight() - toolbar_.getAbsoluteTop() -
-               toolbar_.getOffsetHeight() - 200;
+         return 350;
       }
    }
    

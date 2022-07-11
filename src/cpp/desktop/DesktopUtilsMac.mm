@@ -65,20 +65,6 @@ void initializeSystemPrefs()
 
 } // anonymous namespace
 
-double devicePixelRatio(QMainWindow* pMainWindow)
-{
-   NSWindow* pWindow = nsWindowForMainWindow(pMainWindow);
-
-   if ([pWindow respondsToSelector:@selector(backingScaleFactor)])
-   {
-      return [pWindow backingScaleFactor];
-   }
-   else
-   {
-      return 1.0;
-   }
-}
-
 bool isMacOS()
 {
    return true;

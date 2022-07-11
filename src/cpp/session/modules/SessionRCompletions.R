@@ -158,6 +158,11 @@ assign(x = ".rs.acCompletionTypes",
    tag <- sub(".*(?=@)", '', token, perl = TRUE)
    
    # All known Roxygen2 tags, in alphabetical order
+   #
+   # library(roxygen2)
+   # methods <- as.vector(methods("roxy_tag_parse"))
+   # prefix <- "roxy_tag_parse.roxy_tag_"
+   # paste0("@", gsub(prefix, "", methods[grepl(prefix, methods, fixed = TRUE)], fixed = TRUE), " ")
    tags <- c(
       "@aliases ",
       "@author ",
@@ -173,6 +178,7 @@ assign(x = ".rs.acCompletionTypes",
       "@evalRd ",
       "@example ",
       "@examples ",
+      "@examplesIf ",
       "@export",
       "@exportClass ",
       "@exportMethod ",
@@ -198,6 +204,7 @@ assign(x = ".rs.acCompletionTypes",
       "@note ",
       "@noMd",
       "@noRd",
+      "@order ",
       "@param ",
       "@rawNamespace ",
       "@rawRd ",
@@ -2028,6 +2035,37 @@ assign(x = ".rs.acCompletionTypes",
    excludeArgsFromObject <- .rs.setEncodingUnknownToUTF8(excludeArgsFromObject)
    filePath <- .rs.setEncodingUnknownToUTF8(filePath)
    
+   # if base::readline() is on the stack, try to extract choices i.e. (yes/no)
+   # and offer those as completions.
+   nframes <- sys.nframe()
+   for (i in seq_len(nframes)) {
+      fun <- sys.function(i)
+      if (identical(fun, base::readline))
+      {
+         frame <- sys.frame(i)
+         rx <- "^.*(\\(|\\[)(.*)(\\)|\\]).*$"
+         prompt <- frame$prompt
+         
+         if (is.character(prompt) && grepl(rx, prompt)) 
+         {
+            results <- strsplit(sub(rx, "\\2", prompt), "/")[[1L]]
+
+            # capitalized first as this is likely to be the default
+            cap <- grepl("^[A-Z]", results)
+            c(results[cap], results[!cap])
+
+            return(.rs.makeCompletions(token = token,
+                                       results = results,
+                                       quote = FALSE,
+                                       type = .rs.acCompletionTypes$STRING))
+         }
+         else 
+         {
+            return(.rs.emptyCompletions(excludeOtherCompletions = TRUE))
+         }
+      }  
+   }
+
    # If the R console is requesting completions, but the Python REPL is
    # active, then delegate to that machinery.
    if (isConsole && .rs.reticulate.replIsActive())
@@ -2297,18 +2335,19 @@ assign(x = ".rs.acCompletionTypes",
       # NOTE: For Markdown link completions, we overload the meaning of the
       # function call string here, and use it as a signal to generate paths
       # relative to the R markdown path.
-      isRmd <- .rs.endsWith(tolower(filePath), ".rmd")
+      isNotebook <- .rs.endsWith(tolower(filePath), ".rmd") ||
+                    .rs.endsWith(tolower(filePath), ".qmd")
       
       path <- NULL
       
       # if in an Rmd file, ask it for its desired working dir (can be changed
       # with the knitr root.dir option)
-      if (isRmd)
+      if (isNotebook)
       {
-         path <- .Call("rs_getRmdWorkingDir", filePath, documentId)
+         path <- .Call("rs_getNotebookWorkingDir", filePath, documentId)
       }
       
-      if (is.null(path) && isRmd)
+      if (is.null(path) && isNotebook)
       {
          # for R Markdown documents without an explicit working dir,
          # use preferences instead

@@ -20,15 +20,23 @@ import { DesktopBrowserWindow } from './desktop-browser-window';
 import { GwtWindow } from './gwt-window';
 
 class MinimalWindow extends DesktopBrowserWindow {
-  constructor(
-    adjustTitle: boolean,
-    name: string,
-    baseUrl?: string,
-    parent?: DesktopBrowserWindow,
-    opener?: WebContents,
-    allowExternalNavigate = false,
-  ) {
-    super(false, adjustTitle, true/*autohideMenu*/, name, baseUrl, parent, opener, allowExternalNavigate);
+  constructor(options: {
+    adjustTitle: boolean;
+    name: string;
+    baseUrl?: string;
+    parent?: DesktopBrowserWindow;
+    opener?: WebContents;
+    allowExternalNavigate?: boolean;
+  }) {
+    super({
+      adjustTitle: options.adjustTitle,
+      autohideMenu: true,
+      name: options.name,
+      baseUrl: options.baseUrl,
+      parent: options.parent,
+      opener: options.opener,
+      allowExternalNavigate: options.allowExternalNavigate,
+    });
 
     // ensure minimal windows can be closed with Ctrl+W (Cmd+W on macOS)
     this.window.webContents.on('before-input-event', (event, input) => {
@@ -41,11 +49,11 @@ class MinimalWindow extends DesktopBrowserWindow {
 
     // ensure this window closes when the creating window closes
     this.parentWindowDestroyed = this.parentWindowDestroyed.bind(this);
-    parent?.on(DesktopBrowserWindow.WINDOW_DESTROYED, this.parentWindowDestroyed);
+    this.options.parent?.on(DesktopBrowserWindow.WINDOW_DESTROYED, this.parentWindowDestroyed);
 
     this.window.on('close', () => {
       // release external event listeners
-      parent?.removeListener(DesktopBrowserWindow.WINDOW_DESTROYED, this.parentWindowDestroyed);
+      this.options.parent?.removeListener(DesktopBrowserWindow.WINDOW_DESTROYED, this.parentWindowDestroyed);
     });
   }
 
@@ -73,13 +81,12 @@ export function openMinimalWindow(
 
     // pass along our own base URL so that the new window's WebProfile knows how to
     // apply the appropriate headers
-    browser = new MinimalWindow(
-      !isViewerZoomWindow,
-      name,
-      '', // TODO pMainWindow_->webView()->baseUrl()
-      sender,
-      undefined /* opener */,
-    );
+    browser = new MinimalWindow({
+      adjustTitle: !isViewerZoomWindow,
+      name: name,
+      baseUrl: '', // TODO pMainWindow_->webView()->baseUrl()
+      parent: sender,
+    });
 
     if (named) {
       appState().windowTracker.addWindow(name, browser);

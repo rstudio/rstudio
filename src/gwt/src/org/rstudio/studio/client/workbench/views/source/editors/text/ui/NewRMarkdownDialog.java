@@ -186,7 +186,7 @@ public class NewRMarkdownDialog extends ModalDialog<NewRMarkdownDialog.Result>
       formatOptions_ = new ArrayList<>();
       resources.styles().ensureInjected();
       txtAuthor_.setText(prefs.documentAuthor().getGlobalValue());
-      txtTitle_.setText(constants_.untitledCapitalized());
+      txtTitle_.setText("Untitled"); //$NON-NLS-1$
       checkboxAutoDate_.setText(prefs.rmdAutoDate().getDescription());
       
       boolean auto = prefs.rmdAutoDate().getGlobalValue();

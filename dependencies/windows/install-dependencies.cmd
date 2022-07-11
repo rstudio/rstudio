@@ -15,7 +15,7 @@ for %%X in (R.exe 7z.exe cmake.exe) do (
   )
 )
 
-set WGET_ARGS=-c --no-check-certificate
+set WGET_ARGS=-c --no-check-certificate --no-hsts
 set UNZIP_ARGS=-q
 
 set BASEURL=https://s3.amazonaws.com/rstudio-buildtools/
@@ -32,17 +32,23 @@ set SUMATRA_PDF_FILE=SumatraPDF-3.1.2-64.zip
 set WINUTILS_FILE=winutils-1.0.zip
 set WINPTY_FILES=winpty-0.4.3-msys2-2.7.0.zip
 set OPENSSL_FILES=openssl-1.1.1i.zip
-set BOOST_FILES=boost-1.69.0-win-msvc141.zip
+set BOOST_FILES=boost-1.78.0-win-msvc142.zip
 set YAML_CPP_FILES=yaml-cpp-0.6.3.zip
 
-set PANDOC_VERSION=2.16.2
+set PANDOC_VERSION=2.18
 set PANDOC_NAME=pandoc-%PANDOC_VERSION%
 set PANDOC_FILE=%PANDOC_NAME%-windows-x86_64.zip
 
-set QUARTO_VERSION=0.9.16
+REM set QUARTO_VERSION=0.9.230
+
+REM Get latest Quarto release version
+cd install-quarto
+for /F "delims=" %%L in ('powershell.exe -File get-quarto-version.ps1') do (set "QUARTO_VERSION=%%L")
+cd ..
+
 set QUARTO_FILE=quarto-%QUARTO_VERSION%-win.zip
 
-set LIBCLANG_VERSION=5.0.2
+set LIBCLANG_VERSION=13.0.1
 set LIBCLANG_NAME=libclang-windows-%LIBCLANG_VERSION%
 set LIBCLANG_FILE=%LIBCLANG_NAME%.zip
 
@@ -168,7 +174,8 @@ if not exist pandoc\%PANDOC_VERSION% (
 
 
 
-wget %WGET_ARGS% https://s3.amazonaws.com/rstudio-buildtools/quarto/%QUARTO_VERSION%/%QUARTO_FILE%
+REM wget %WGET_ARGS% https://s3.amazonaws.com/rstudio-buildtools/quarto/%QUARTO_VERSION%/%QUARTO_FILE%
+wget %WGET_ARGS% https://github.com/quarto-dev/quarto-cli/releases/latest/download/%QUARTO_FILE%
 echo Unzipping Quarto %QUARTO_FILE%
 rmdir /s /q quarto
 mkdir quarto
@@ -218,7 +225,7 @@ call install-packages.cmd
 
 popd
 
-regsvr32 /s "C:\Program Files (x86)\Microsoft Visual Studio\2017\BuildTools\DIA SDK\bin\msdia140.dll"
+regsvr32 /s "C:\Program Files (x86)\Microsoft Visual Studio\2019\BuildTools\DIA SDK\bin\msdia140.dll"
 
 call install-crashpad.cmd
 call install-soci.cmd

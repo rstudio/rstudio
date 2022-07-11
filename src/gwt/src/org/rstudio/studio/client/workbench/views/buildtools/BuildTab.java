@@ -38,9 +38,11 @@ public class BuildTab extends DelayLoadWorkbenchTab<BuildPresenter>
       @Handler
       public abstract void onBuildAll();
       @Handler
-      public abstract void onDevtoolsLoadAll();
+      public abstract void onBuildIncremental();
       @Handler
-      public abstract void onRebuildAll();
+      public abstract void onBuildFull();
+      @Handler
+      public abstract void onDevtoolsLoadAll();
       @Handler
       public abstract void onCleanAll();
       @Handler
@@ -73,8 +75,8 @@ public class BuildTab extends DelayLoadWorkbenchTab<BuildPresenter>
                    EventBus eventBus,
                    UserPrefs uiPrefs)
    {
-      super("Build",  shim);
-      
+      super(constants_.buildText(), shim);
+
       session_ = session;
       binder.bind(commands, shim);
 

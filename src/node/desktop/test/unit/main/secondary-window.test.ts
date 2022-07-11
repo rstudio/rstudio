@@ -16,13 +16,16 @@
 import { describe } from 'mocha';
 import { assert } from 'chai';
 
+import { isWindowsDocker } from '../unit-utils';
 import { SecondaryWindow } from '../../../src/main/secondary-window';
 
-describe('SecondaryWindow', () => {
-  it('construction creates a hidden BrowserWindow', () => {
-    const win = new SecondaryWindow(false, 'some name');
-    assert.isObject(win);
-    assert.isObject(win.window);
-    assert.isFalse(win.window.isVisible());
+if (!isWindowsDocker()) {
+  describe('SecondaryWindow', () => {
+    it('construction creates a hidden BrowserWindow', () => {
+      const win = new SecondaryWindow(false, 'some name');
+      assert.isObject(win);
+      assert.isObject(win.window);
+      assert.isFalse(win.window.isVisible());
+    });
   });
-});
+}

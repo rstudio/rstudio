@@ -51,7 +51,7 @@ public class PlotsPane extends WorkbenchPane implements Plots.Display,
    public PlotsPane(Commands commands, EventBus events, PlotsServerOperations server,
          DependencyManager dependencies)
    {
-      super("Plots", events);
+      super(constants_.plotsTitle(), events);
       commands_ = commands;
       server_ = server;
       dependencies_ = dependencies;
@@ -126,7 +126,7 @@ public class PlotsPane extends WorkbenchPane implements Plots.Display,
       panel_.setWidgetLeftRight(frame_, 0, Unit.PX, 0, Unit.PX);
 
       // Provide a widget container where adornments can be added on top of the
-      // plots panel (e.g. manipulator button). Hidden initially so it doens't
+      // plots panel (e.g. manipulator button). Hidden initially so it doesn't
       // block context menu actions such as Copy Image.
       plotsSurface_ = new PlotsSurface(panel_);
       panel_.add(plotsSurface_);

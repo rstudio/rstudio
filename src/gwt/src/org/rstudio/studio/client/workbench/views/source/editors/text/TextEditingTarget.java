@@ -2509,6 +2509,8 @@ public class TextEditingTarget implements
                      statusBar_.setScopeType(StatusBar.SCOPE_SECTION);
                   else if (scope.isTopLevel())
                      statusBar_.setScopeType(StatusBar.SCOPE_TOP_LEVEL);
+                  else if (scope.isTest())
+                     statusBar_.setScopeType(StatusBar.SCOPE_TEST);
                   else if (scope.isFunction())
                      statusBar_.setScopeType(StatusBar.SCOPE_FUNCTION);
                   else if (scope.isLambda())
@@ -3281,16 +3283,35 @@ public class TextEditingTarget implements
       // only do this for markdown files
       if (fileType_.isMarkdown())
       {
-         // check canonical pref
-         boolean canonical = prefs_.visualMarkdownEditingCanonical().getValue();
+         boolean canonical = false;
          
-         // if we are cannonical but the global value isn't canonical then make sure this
-         // file is in the current project
-         if (canonical && !prefs_.visualMarkdownEditingCanonical().getGlobalValue())
+         // start with quarto project level pref if its in play
+         boolean foundQuartoCanonical = false;
+         QuartoConfig quarto = session_.getSessionInfo().getQuartoConfig();
+         boolean isQuartoDoc = QuartoHelper.isWithinQuartoProjectDir(docUpdateSentinel_.getPath(), quarto);
+         if (isQuartoDoc)
          {
-            canonical = VisualModeUtil.isDocInProject(workbenchContext_, docUpdateSentinel_);
+            if (quarto.project_editor != null && quarto.project_editor.markdown != null && quarto.project_editor.markdown.canonical != null)
+            {
+               canonical = Boolean.parseBoolean(quarto.project_editor.markdown.canonical);
+               foundQuartoCanonical = true;
+            }
          }
-
+         
+         if (!foundQuartoCanonical)
+         {
+            // check canonical pref
+            canonical = prefs_.visualMarkdownEditingCanonical().getValue();
+            
+            // if we are cannonical but the global value isn't canonical then make sure this
+            // file is in the current project
+            if (canonical && !prefs_.visualMarkdownEditingCanonical().getGlobalValue())
+            {
+               canonical = VisualModeUtil.isDocInProject(workbenchContext_, docUpdateSentinel_);
+            }
+         }
+        
+         
          // check for a file based canonical setting
          String yaml = YamlFrontMatter.getFrontMatter(docDisplay_);
          String yamlCanonical = RmdEditorOptions.getMarkdownOption(yaml,  "canonical");
@@ -5219,20 +5240,20 @@ public class TextEditingTarget implements
    }
 
    @Handler
-   void onRunSelectionAsJob()
+   void onRunSelectionAsBackgroundJob()
    {
       withVisualModeSelection(() ->
       {
-         codeExecution_.runSelectionAsJob(false /*useLauncher*/);
+         codeExecution_.runSelectionAsJob(false /*isWorkbenchJob*/);
       });
    }
 
    @Handler
-   void onRunSelectionAsLauncherJob()
+   void onRunSelectionAsWorkbenchJob()
    {
       withVisualModeSelection(() ->
       {
-         codeExecution_.runSelectionAsJob(true /*useLauncher*/);
+         codeExecution_.runSelectionAsJob(true /*isWorkbenchJob*/);
       });
    }
 
@@ -6160,6 +6181,28 @@ public class TextEditingTarget implements
       if (reEvalFalse.test(headerText))
          return false;
 
+      // Also check for YAML style chunk option with eval false
+      Pattern reYamlOpt = Pattern.create("^#\\| .*");
+      Pattern reYamlEvalFalse = Pattern.create("eval\\s*:\\s*false");
+      int start = chunk.getBodyStart().getRow();
+      int end = chunk.getEnd().getRow();
+      ArrayList<String> chunkBody = JsArrayUtil.fromJsArrayString(docDisplay_.getLines(start, end));
+      for (String line : chunkBody)
+      {
+         if (reYamlOpt.test(line))
+         {
+            // both #| eval: false and #| eval = FALSE style comments are permitted
+            if (reYamlEvalFalse.test(line) || reEvalFalse.test(line))
+               return false;
+         }
+         else
+         {
+            // all yaml chunk options should be at the beginning of the chunk, so we can stop early once we get to a
+            // line that does not start with #|
+            break;
+         }
+      }
+
       return true;
    }
 
@@ -6374,7 +6417,7 @@ public class TextEditingTarget implements
    }
 
    @Handler
-   public void onSourceAsLauncherJob()
+   public void onSourceAsWorkbenchJob()
    {
       saveThenExecute(null, true, () ->
       {
@@ -7050,8 +7093,19 @@ public class TextEditingTarget implements
                   QUARTO_BEAMER_FORMAT, 
                   QUARTO_HTML_FORMAT, 
                   QUARTO_REVEALJS_FORMAT, 
-                  QUARTO_SLIDY_FORMAT)
-            );
+                  QUARTO_SLIDY_FORMAT,
+                  QUARTO_MARKDOWN_FORMAT,
+                  QUARTO_COMMONMARK_FORMAT,
+                  QUARTO_GFM_FORMAT,
+                  QUARTO_MARKUA_FORMAT,
+                  QUARTO_LATEX_FORMAT,
+                  QUARTO_JATS_FORMAT,
+                  QUARTO_DOCBOOK_FORMAT,
+                  QUARTO_ASCIIDOC_FORMAT,
+                  QUARTO_RST_FORMAT,
+                  QUARTO_MEDIAWIKI_FORMAT,
+                  QUARTO_NATIVE_FORMAT
+            ));
             return previewFormats.stream()
                .filter(fmt -> format.startsWith(fmt))
                .findAny()
@@ -7088,6 +7142,19 @@ public class TextEditingTarget implements
    private static final String QUARTO_HTML_FORMAT = "html";
    private static final String QUARTO_SLIDY_FORMAT = "slidy";
    private static final String QUARTO_REVEALJS_FORMAT = "revealjs";
+   private static final String QUARTO_MARKDOWN_FORMAT = "markdown";
+   private static final String QUARTO_COMMONMARK_FORMAT = "commonmark";
+   private static final String QUARTO_GFM_FORMAT = "gfm";
+   private static final String QUARTO_MARKUA_FORMAT = "markua";
+   private static final String QUARTO_LATEX_FORMAT = "latex";
+   private static final String QUARTO_JATS_FORMAT = "jats";
+   private static final String QUARTO_DOCBOOK_FORMAT = "docbook";
+   private static final String QUARTO_ASCIIDOC_FORMAT = "asciidoc";
+   private static final String QUARTO_RST_FORMAT = "asciidoc";
+   private static final String QUARTO_MEDIAWIKI_FORMAT = "mediawiki";
+   private static final String QUARTO_NATIVE_FORMAT = "native";
+   
+   
    
    private boolean isQuartoRevealJs(String format)
    {

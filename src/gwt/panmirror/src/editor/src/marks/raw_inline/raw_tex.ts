@@ -188,7 +188,7 @@ function texInputRule(schema: Schema, filter: MarkInputRuleFilter) {
       }
     }
 
-    // didn't find a valid context for a tex comand
+    // didn't find a valid context for a tex command
     return null;
   });
 }

@@ -24,6 +24,7 @@ public interface HelpInfoPopupPanelResources extends ClientBundle
    public static interface Styles extends CssResource
    {
       String helpPopup();
+      String helpTitleText();
       String helpBodyText();
       String snippetText();
    }
@@ -35,5 +36,4 @@ public interface HelpInfoPopupPanelResources extends ClientBundle
    public static HelpInfoPopupPanelResources INSTANCE = 
       (HelpInfoPopupPanelResources)GWT.create(HelpInfoPopupPanelResources.class);
    
-  
 }

@@ -392,19 +392,19 @@
 # of the 'rstudioapi' package -- it is superceded by
 # '.rs.getLastActiveEditorContext()'.
 .rs.addApiFunction("getActiveDocumentContext", function() {
-   .Call("rs_getEditorContext", 0L, PACKAGE = "(embedding)")
+   .Call("rs_getEditorContext", 0L, NULL, PACKAGE = "(embedding)")
 })
 
 .rs.addApiFunction("getLastActiveEditorContext", function() {
-   .Call("rs_getEditorContext", 0L, PACKAGE = "(embedding)")
+   .Call("rs_getEditorContext", 0L, NULL, PACKAGE = "(embedding)")
 })
 
 .rs.addApiFunction("getConsoleEditorContext", function() {
-   .Call("rs_getEditorContext", 1L, PACKAGE = "(embedding)")
+   .Call("rs_getEditorContext", 1L, NULL, PACKAGE = "(embedding)")
 })
 
-.rs.addApiFunction("getSourceEditorContext", function() {
-   .Call("rs_getEditorContext", 2L, PACKAGE = "(embedding)")
+.rs.addApiFunction("getSourceEditorContext", function(id = NULL) {
+   .Call("rs_getEditorContext", 2L, id, PACKAGE = "(embedding)")
 })
 
 .rs.addApiFunction("getActiveProject", function() {
@@ -659,6 +659,9 @@
    if (hasFile && !is.character(path)) {
       stop("path must be a character")
    }
+   if (length(path) > 1L) {
+      stop("path must be a single file")
+   }
    if (hasFile && !file.exists(path)) {
       stop(path, " does not exist.")
    }
@@ -671,10 +674,10 @@
    }
 
    # transform numeric line, column values to integer
-   if (is.numeric(line))
+   if (is.double(line))
       line <- as.integer(line)
    
-   if (is.numeric(col))
+   if (is.double(col))
       col <- as.integer(col)
 
    # validate line/col arguments

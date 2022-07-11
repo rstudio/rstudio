@@ -187,7 +187,7 @@ void removeAllJobs()
    s_jobs.clear();
 }
 
-void removeAllLocalJobs()
+void removeAllBackgroundJobs()
 {
    for (auto it = s_jobs.cbegin(); it != s_jobs.cend() ; )
    {
@@ -202,7 +202,7 @@ void removeAllLocalJobs()
    }
 }
 
-void removeAllLauncherJobs()
+void removeAllWorkbenchJobs()
 {
    for (auto it = s_jobs.cbegin(); it != s_jobs.cend() ; )
    {
@@ -216,7 +216,7 @@ void removeAllLauncherJobs()
    }
 }
 
-void removeCompletedLocalJobs()
+void removeCompletedBackgroundJobs()
 {
    // collect completed jobs
    std::vector<boost::shared_ptr<Job> > completed;
@@ -241,7 +241,7 @@ void endAllJobStreaming()
    }
 }
 
-bool localJobsRunning()
+bool backgroundJobsRunning()
 {
    for (auto& job: s_jobs)
    {

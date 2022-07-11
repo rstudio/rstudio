@@ -67,6 +67,7 @@
 #include "SessionAsyncRpcConnection.hpp"
 
 using namespace rstudio::core;
+using namespace boost::placeholders;
 
 namespace rstudio {
 namespace session {
@@ -529,7 +530,7 @@ bool waitForMethod(const std::string& method,
          }
 
          // since we got a connection we can reset the timeout time
-         suspend::resetSuspendTimeout();
+         suspend::resetSuspendTimeout(ptrConnection);
 
          // after we've processed at least one waitForMethod it is now safe to
          // initialize the polledEventHandler (which is used to maintain rsession
@@ -606,6 +607,7 @@ void handleConnection(boost::shared_ptr<HttpConnection> ptrConnection,
    }
    else if (isJsonRpcRequest(ptrConnection)) // check for json-rpc
    {
+      using namespace module_context;
       // r code may execute - ensure session is initialized
       init::ensureSessionInitialized();
 
@@ -663,7 +665,6 @@ void handleConnection(boost::shared_ptr<HttpConnection> ptrConnection,
                }
 
                // update project and working dir
-               using namespace module_context;
                if (switchToProject == kProjectNone)
                {
                   // update the project and working dir
@@ -690,7 +691,6 @@ void handleConnection(boost::shared_ptr<HttpConnection> ptrConnection,
                   else
                   {
                      // extract the directory (aliased)
-                     using namespace module_context;
                      FilePath projFile = module_context::resolveAliasedPath(switchToProject);
                      std::string projDir = createAliasedPath(projFile.getParent());
                      scope = r_util::SessionScope::fromProject(
@@ -714,7 +714,6 @@ void handleConnection(boost::shared_ptr<HttpConnection> ptrConnection,
                // note switch to R version if requested
                if (json::isType<json::Object>(switchToVersionJson))
                {
-                  using namespace module_context;
                   std::string version, rHome, label;
                   Error error = json::readObject(
                                             switchToVersionJson.getObject(),
@@ -747,7 +746,13 @@ void handleConnection(boost::shared_ptr<HttpConnection> ptrConnection,
                  else
                     LOG_ERROR(error);
                }
+               LOG_DEBUG_MESSAGE("Switching projects: setting activityState to shutting_down");
             }
+            else
+               LOG_DEBUG_MESSAGE("Quitting session: setting activityState to shutting_down");
+
+            // Mark this session as "Shutting Down" in the homepage (do we need a "SwitchingProjects" state?)
+            activeSession().setActivityState(r_util::kActivityStateShuttingDown, true);
 
             // exit status
             int status = switchToProject.empty() ? EXIT_SUCCESS : EX_CONTINUE;

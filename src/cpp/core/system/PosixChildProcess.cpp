@@ -24,9 +24,10 @@
 #include <util.h>
 #include <sys/ttycom.h>
 #include <sys/ioctl.h>
-#else
+#elif defined(__linux__)
 #include <pty.h>
 #include <asm/ioctls.h>
+#include <sys/prctl.h>
 #endif
 
 #include <sys/wait.h>
@@ -72,10 +73,6 @@ const boost::posix_time::milliseconds kCheckSubprocDelay =
 // how often we query and store current working directory of subprocess
 const boost::posix_time::milliseconds kCheckCwdDelay =
                                          boost::posix_time::milliseconds(2000);
-
-// exit code for when a thread-safe spawn fails - chosen to be something "unique" enough to identify
-// since thread-safe forks cannot actually log effectively
-const int kThreadSafeForkErrorExit = 153;
 
 int resolveExitStatus(int status)
 {
@@ -494,7 +491,11 @@ Error ChildProcess::run()
       // fetch the user to switch to before forking, as the method is not
       // async signal safe and could cause lockups
       core::system::User user;
-      error = User::getUserFromIdentifier(options_.runAsUser, user);
+      if (options_.runAsUser == "root")
+         error = User::getUserFromIdentifier(0, user);
+      else
+         error = User::getUserFromIdentifier(options_.runAsUser, user);
+
       if (error)
          return error;
 
@@ -601,10 +602,14 @@ Error ChildProcess::run()
             if (error)
                LOG_ERROR(error);
 
-            // switch user
-            error = core::system::permanentlyDropPriv(options_.runAsUser);
-            if (error)
-               LOG_ERROR(error);
+
+            if (options_.runAsUser != "root")
+            {
+               // switch user if not root
+               error = core::system::permanentlyDropPriv(options_.runAsUser);
+               if (error)
+                  LOG_ERROR(error);
+            }
          }
 
          // check for an onAfterFork function
@@ -752,24 +757,24 @@ Error ChildProcess::run()
          if (runAsUser)
          {
             if (signal_safe::permanentlyDropPriv(runAsUser.get()) == -1)
-               ::_exit(kThreadSafeForkErrorExit);
+               ::_exit(errno);
          }
 
          if (options_.detachSession)
          {
             if (::setsid() == -1)
-               ::_exit(kThreadSafeForkErrorExit);
+               ::_exit(errno);
          }
          else if (options_.terminateChildren)
          {
             if (::setpgid(0,0) == -1)
-               ::_exit(kThreadSafeForkErrorExit);
+               ::_exit(errno);
          }
 
          // clear signal mask so that child process does not unintentionally
          // block any signals that our parent is blocking
          if (signal_safe::clearSignalMask() != 0)
-            ::_exit(kThreadSafeForkErrorExit);
+            ::_exit(errno);
 
          // close pipe end that we do not need
          // this is not critical and as such, is best effort
@@ -782,15 +787,15 @@ Error ChildProcess::run()
          // wire standard streams
          int result = ::dup2(fdInput[READ], STDIN_FILENO);
          if (result == -1)
-            ::_exit(kThreadSafeForkErrorExit);
+            ::_exit(errno);
 
          result = ::dup2(fdOutput[WRITE], STDOUT_FILENO);
          if (result == -1)
-            ::_exit(kThreadSafeForkErrorExit);
+            ::_exit(errno);
 
          result = ::dup2(options_.redirectStdErrToStdOut ? fdOutput[WRITE] : fdError[WRITE], STDERR_FILENO);
          if (result == -1)
-            ::_exit(kThreadSafeForkErrorExit);
+            ::_exit(errno);
 
          // close inherited file descriptors - this prevents
          // the child from clobbering the parent's FDs
@@ -798,6 +803,15 @@ Error ChildProcess::run()
          // clobbering of FDs affecting epoll calls
          signal_safe::closeFileDescriptorsFromParent(fdCloseFd[READ], STDERR_FILENO+1, hard);
          ::close(fdCloseFd[READ]);
+      }
+
+      if (options_.exitWithParent)
+      {
+#ifndef __APPLE__
+         // set a bit indicating we want to die when our parent dies
+         if (::prctl(PR_SET_PDEATHSIG, SIGTERM) == -1)
+            LOG_ERROR(systemError(errno, ERROR_LOCATION));
+#endif
       }
 
       if (options_.environment)
@@ -822,7 +836,7 @@ Error ChildProcess::run()
          ::exit(EXIT_FAILURE);
       }
       else
-         ::_exit(kThreadSafeForkErrorExit);
+         ::_exit(errno);
    }
 
    // parent

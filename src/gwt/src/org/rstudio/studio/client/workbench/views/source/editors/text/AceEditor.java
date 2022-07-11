@@ -53,6 +53,7 @@ import com.google.gwt.user.client.ui.RootPanel;
 import com.google.gwt.user.client.ui.Widget;
 import com.google.inject.Inject;
 import org.rstudio.core.client.AceSupport;
+import org.rstudio.core.client.BrowseCap;
 import org.rstudio.core.client.CommandWithArg;
 import org.rstudio.core.client.ElementIds;
 import org.rstudio.core.client.ExternalJavaScriptLoader;
@@ -634,16 +635,15 @@ public class AceEditor implements DocDisplay,
    public void insertAssignmentOperator()
    {
       if (DocumentMode.isCursorInRMode(this))
-         insertAssignmentOperatorImpl("<-");
+         insertOperatorWithSpacing("<-");
       else
-         insertAssignmentOperatorImpl("=");
+         insertOperatorWithSpacing("=");
    }
 
-   @SuppressWarnings("deprecation")
-   private void insertAssignmentOperatorImpl(String op)
+   private void insertOperatorWithSpacing(String op)
    {
       boolean hasWhitespaceBefore =
-            Character.isSpace(getCharacterBeforeCursor()) ||
+            Character.isWhitespace(getCharacterBeforeCursor()) ||
             (!hasSelection() && getCursorPosition().getColumn() == 0);
 
       String insertion = hasWhitespaceBefore
@@ -653,20 +653,12 @@ public class AceEditor implements DocDisplay,
       insertCode(insertion, false);
    }
 
-   @SuppressWarnings("deprecation")
-   public void insertPipeOperator()
+   private void insertPipeOperator()
    {
-      boolean hasWhitespaceBefore =
-            Character.isSpace(getCharacterBeforeCursor()) ||
-            (!hasSelection() && getCursorPosition().getColumn() == 0);
-
-      // Use magrittr style pipes unless user has opted into new native pipe syntax in R 4.1+
-      String pipe = userPrefs_.insertNativePipeOperator().getValue() ? "|>" : "%>%";
-
-      if (hasWhitespaceBefore)
-         insertCode(pipe + " ", false);
-      else
-         insertCode(" " + pipe + " ", false);
+      // Use magrittr style pipes if the user has not opted into new native pipe syntax
+      boolean nativePipePreferred = RStudioGinjector.INSTANCE.getUserPrefs().insertNativePipeOperator().getValue();
+      String pipe =  nativePipePreferred ? NATIVE_R_PIPE : MAGRITTR_PIPE;
+      insertOperatorWithSpacing(pipe);
    }
 
    private boolean shouldIndentOnPaste()
@@ -769,7 +761,7 @@ public class AceEditor implements DocDisplay,
    {
       behavior_ = behavior;
    }
-   
+
    public EditorBehavior getEditorBehavior()
    {
       return behavior_;
@@ -895,15 +887,15 @@ public class AceEditor implements DocDisplay,
                         server_,
                         context_));
                }
-               
+
                // Yaml completion manager
-               if (fileType_.isYaml() || fileType_.isRmd() || 
+               if (fileType_.isYaml() || fileType_.isRmd() ||
                    (behavior_ == EditorBehavior.AceBehaviorEmbedded && (fileType_.isR() || fileType_.isPython())))
                {
                   managers.put(DocumentMode.Mode.YAML, YamlCompletionManager.create(
-                       editor, 
-                       new CompletionPopupPanel(), 
-                       server_, 
+                       editor,
+                       new CompletionPopupPanel(),
+                       server_,
                        context_
                   ));
                }
@@ -1274,7 +1266,8 @@ public class AceEditor implements DocDisplay,
       // iterate through rows until we've consumed all the chars
       int row = startPos.getRow();
       int col = startPos.getColumn();
-      while (row < session.getLength()) {
+      while (row < session.getLength())
+      {
 
          // how many chars left in the current column?
          String line = session.getLine(row);
@@ -1302,23 +1295,13 @@ public class AceEditor implements DocDisplay,
    @Override
    public Position positionFromIndex(int index)
    {
-      EditSession session = widget_.getEditor().getSession();
-      return advancePosition(session, Position.create(0,0), index);
+      return widget_.getEditor().getSession().getDocument().indexToPosition(index, 0);
    }
 
    @Override
    public int indexFromPosition(Position position)
    {
-      EditSession session = widget_.getEditor().getSession();
-      int index = 0;
-      int row = 0;
-      while (row < position.getRow())
-      {
-         index += (session.getLine(row).length() + 1); // +1 for newline
-         row++;
-      }
-      index += position.getColumn();
-      return index;
+      return widget_.getEditor().getSession().getDocument().positionToIndex(position, 0);
    }
 
 
@@ -1486,7 +1469,7 @@ public class AceEditor implements DocDisplay,
 
    public void print()
    {
-      if (Desktop.hasDesktopFrame())
+      if (Desktop.hasDesktopFrame() && !BrowseCap.isElectron())
       {
          // the desktop frame prints the code directly
          Desktop.getFrame().printText(StringUtil.notNull(getCode()));
@@ -1665,7 +1648,6 @@ public class AceEditor implements DocDisplay,
 
       return new SpellingDoc() {
 
-
          @Override
          public Iterable<WordRange> getWords(int start, int end)
          {
@@ -1674,9 +1656,15 @@ public class AceEditor implements DocDisplay,
                @Override
                public Iterator<WordRange> iterator()
                {
+                  TokenPredicate spellCheckPredicate = fileType_.getSpellCheckTokenPredicate();
+                  TokenPredicate filteredTokenPredicate = (token, row, column) ->
+                  {
+                     return getSession().getFoldAt(row, column) == null && spellCheckPredicate.test(token, row, column);
+                  };
+
                   // get underlying iterator
                   Iterator<Range> ranges = AceEditor.this.getWords(
-                        fileType_.getSpellCheckTokenPredicate(),
+                        filteredTokenPredicate,
                         fileType_.getCharPredicate(),
                         positionFromIndex(start),
                         end != -1 ? positionFromIndex(end) : null).iterator();
@@ -2425,6 +2413,11 @@ public class AceEditor implements DocDisplay,
       widget_.getEditor().getRenderer().setShowGutter(on);
    }
 
+   public void setRelativeLineNumbers(boolean relative)
+   {
+      widget_.getEditor().setRelativeLineNumbers(relative);
+   }
+
    public boolean getUseSoftTabs()
    {
       return getSession().getUseSoftTabs();
@@ -2443,6 +2436,12 @@ public class AceEditor implements DocDisplay,
    public void setHighlightRFunctionCalls(boolean highlight)
    {
       _setHighlightRFunctionCallsImpl(highlight);
+      widget_.getEditor().retokenizeDocument();
+   }
+
+   public void setColorPreview(boolean show)
+   {
+      _setColorPreviewImpl(show);
       widget_.getEditor().retokenizeDocument();
    }
 
@@ -2477,6 +2476,12 @@ public class AceEditor implements DocDisplay,
    /*-{
       var Mode = $wnd.require("mode/r_highlight_rules");
       Mode.setHighlightRFunctionCalls(highlight);
+   }-*/;
+
+   private native final void _setColorPreviewImpl(boolean show)
+   /*-{
+      var Mode = $wnd.require("mode/r_highlight_rules");
+      Mode.setColorPreview(show);
    }-*/;
 
    private native final void _setRainbowParenthesesImpl(boolean rainbow)
@@ -2798,7 +2803,7 @@ public class AceEditor implements DocDisplay,
    {
       return widget_.getEditor().getCursorPositionScreen();
    }
-   
+
    public int getCursorRow()
    {
       return getSession().getSelection().getCursor().getRow();
@@ -2808,7 +2813,7 @@ public class AceEditor implements DocDisplay,
    {
       return getSession().getSelection().getCursor().getColumn();
    }
-   
+
    public void setCursorPosition(Position position)
    {
       getSession().getSelection().setSelectionRange(
@@ -3911,7 +3916,7 @@ public class AceEditor implements DocDisplay,
 
       }
       while (false);
-
+      
       // check for lines of the form:
       //
       //     ) foo +
@@ -4016,7 +4021,7 @@ public class AceEditor implements DocDisplay,
 
          // keep going if we're in a multiline string
          String state = getSession().getState(prevRow);
-         if (state == "qstring" || state == "qqstring")
+         if (state == "qstring" || state == "qqstring" || state == "rawstring")
          {
             startRow--;
             continue;
@@ -4029,7 +4034,7 @@ public class AceEditor implements DocDisplay,
       // discover end of current statement -- we search from the inferred statement
       // start, so that we can perform counting of matching pairs of brackets
       endRow = startRow;
-
+      
       // NOTE: '[[' is not tokenized as a single token in our Ace tokenizer,
       // so it is not included here (this shouldn't cause issues in practice
       // since balanced pairs of '[' and '[[' would still imply a correct count
@@ -4040,15 +4045,6 @@ public class AceEditor implements DocDisplay,
 
       while (endRow <= endRowLimit)
       {
-         // continue search if we're in a multi-line string
-         // (forego updating our bracket counts)
-         String state = getSession().getState(endRow);
-         if (state == "qstring" || state == "qqstring")
-         {
-            endRow++;
-            continue;
-         }
-
          // update bracket token counts
          JsArray<Token> tokens = getTokens(endRow);
          for (Token token : JsUtil.asIterable(tokens))
@@ -4079,10 +4075,18 @@ public class AceEditor implements DocDisplay,
             continue;
          }
 
+         // continue search if end of row is in a multiline string
+         String state = getSession().getState(endRow);
+         if (state == "qstring" || state == "qqstring" || state == "rawstring")
+         {
+            endRow++;
+            continue;
+         }
+
          // we had balanced brackets and no trailing binary operator; bail
          break;
       }
-
+      
       // if we're unbalanced at this point, that means we tried to
       // expand in an unclosed expression -- just execute the current
       // line rather than potentially executing unintended code
@@ -4117,11 +4121,11 @@ public class AceEditor implements DocDisplay,
          if (fn != null)
             return Range.fromPoints(fn.getPreamble(), fn.getEnd());
       }
-
+ 
       // construct range
       int endColumn = getSession().getLine(endRow).length();
       Range range = Range.create(startRow, 0, endRow, endColumn);
-
+      
       // return empty range if nothing to execute
       if (getTextForRange(range).trim().isEmpty())
          range = Range.fromPoints(pos, pos);
@@ -4635,6 +4639,8 @@ public class AceEditor implements DocDisplay,
    }
 
    private static final int DEBUG_CONTEXT_LINES = 2;
+   private static final String MAGRITTR_PIPE = "%>%";
+   private static final String NATIVE_R_PIPE = "|>";
    private final HandlerManager handlers_ = new HandlerManager(this);
    private final AceEditorWidget widget_;
    private final SnippetHelper snippets_;

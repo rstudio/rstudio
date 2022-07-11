@@ -184,6 +184,7 @@ public class ElementIds
    public final static String PACKAGE_MANAGEMENT_PREFS = "package_management_prefs";
    public final static String PACKAGE_DEVELOPMENT_PREFS = "package_development_prefs";
    public final static String PACKAGE_CPP_PREFS = "package_cpp_prefs";
+   public final static String PACKAGE_INFO_BAR = "package_info_bar";
 
    public final static String TERMINAL_GENERAL_PREFS = "terminal_general_prefs";
    public final static String TERMINAL_CLOSING_PREFS = "terminal_closing_prefs";
@@ -212,6 +213,10 @@ public class ElementIds
    public static String getFindFilesWholeWord() { return getElementId(FIND_FILES_WHOLE_WORD); }
    public final static String FIND_FILES_REGEX = "find_files_regex";
    public static String getFindFilesRegex() { return getElementId(FIND_FILES_REGEX); }
+   public final static String FIND_FILES_EXCLUDE_GIT_IGNORE = "find_files_exclude_git_ignore";
+   public static String getExcludeGitIgnore() { return getElementId(FIND_FILES_EXCLUDE_GIT_IGNORE); }
+   public final static String FIND_FILES_EXCLUDE_CUSTOM = "find_files_exclude_custom";
+   public static String getExcludeCustom() { return getElementId(FIND_FILES_EXCLUDE_CUSTOM); }
 
    // ImportFileSettingsDialog
    public final static String IMPORT_FILE_NAME = "import_file_name";

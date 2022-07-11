@@ -767,7 +767,7 @@ TEST_CASE("Json")
       CHECK(obj1 == obj2);
    }
 
-   SECTION("Object deep comparsion - insertion order doesn't matter")
+   SECTION("Object deep comparison - insertion order doesn't matter")
    {
       json::Object obj1;
       obj1.insert("member1", json::Value(1));

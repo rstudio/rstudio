@@ -198,7 +198,7 @@ public:
 
     /// Set the fin bit
     /**
-     * @see get_fin for a more detailed explaination of the fin bit
+     * @see get_fin for a more detailed explanation of the fin bit
      *
      * @param value The value to set the fin bit to.
      */

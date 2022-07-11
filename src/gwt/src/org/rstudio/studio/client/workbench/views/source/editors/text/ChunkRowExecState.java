@@ -79,6 +79,8 @@ public abstract class ChunkRowExecState
 
    protected abstract void setTitle(String title);
 
+   protected abstract void appendToTitle(String text);
+
    // Private methods ---------------------------------------------------------
    
    private void scheduleDismiss()

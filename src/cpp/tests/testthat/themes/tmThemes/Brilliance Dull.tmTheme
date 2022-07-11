@@ -1624,7 +1624,7 @@
 		</dict>
 		<dict>
 			<key>name</key>
-			<string>◊ Source Embeded Source</string>
+			<string>◊ Source Embedded Source</string>
 			<key>scope</key>
 			<string>source.java.embedded</string>
 			<key>settings</key>

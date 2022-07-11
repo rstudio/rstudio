@@ -64,6 +64,10 @@ else()
    set(RSTUDIO_PRO_BUILD 0)
 endif()
 
+if (NOT DEFINED RSTUDIO_DEFAULT_LOG_PATH)
+   set(RSTUDIO_DEFAULT_LOG_PATH "/var/log/rstudio/rstudio-server")
+endif()
+
 # detect architecture
 if(UNIX)
 
@@ -212,9 +216,10 @@ else()
 endif()
 
 # required R version
+set(RSTUDIO_R_VERSION_REQUIRED "3.3.0")
 set(RSTUDIO_R_MAJOR_VERSION_REQUIRED 3)
-set(RSTUDIO_R_MINOR_VERSION_REQUIRED 0)
-set(RSTUDIO_R_PATCH_VERSION_REQUIRED 1)
+set(RSTUDIO_R_MINOR_VERSION_REQUIRED 3)
+set(RSTUDIO_R_PATCH_VERSION_REQUIRED 0)
 
 # allow opting out of version checking (for building on older distros)
 if(NOT DEFINED RSTUDIO_VERIFY_R_VERSION)
@@ -226,12 +231,26 @@ if(NOT DEFINED RSTUDIO_VERIFY_R_VERSION)
 endif()
 
 # pandoc version
-set(PANDOC_VERSION "2.16.2" CACHE INTERNAL "Pandoc version")
+set(PANDOC_VERSION "2.18" CACHE INTERNAL "Pandoc version")
+
+# detect Centos 7, because we don't support Quarto on Centos7
+set(IS_CENTOS7 FALSE)
+if(LINUX AND EXISTS "/etc/centos-release")
+   file(READ "/etc/centos-release" CENTOS_RELEASE)
+   string(FIND "${CENTOS_RELEASE}" "release 7" CENTOS_RELEASE_POS)
+   if(CENTOS_RELEASE_POS GREATER 0)
+     set(IS_CENTOS7 TRUE)
+   endif()
+endif()
 
 # quarto support
 if(LINUX AND UNAME_M STREQUAL aarch64)
    # disabled on linux aarch64
    message(STATUS "quarto does not yet support aarch64 builds of Linux; disabling quarto")
+   set(QUARTO_ENABLED FALSE CACHE INTERNAL "")
+elseif(IS_CENTOS7)
+   # disable quarto on Centos 7
+   message(STATUS "quarto is not supported on Centos7; disabling quarto")
    set(QUARTO_ENABLED FALSE CACHE INTERNAL "")
 else()
    # enable by default
@@ -296,6 +315,8 @@ if (APPLE)
    if (RSTUDIO_ELECTRON)
       set(RSTUDIO_INSTALL_BIN        RStudio.app/Contents/Resources/app/bin)
       set(RSTUDIO_INSTALL_SUPPORTING RStudio.app/Contents/Resources/app)
+      # handles Quarto share when not stored alongside bin
+      set(RSTUDIO_INSTALL_RESOURCES RStudio.app/Contents/Resources)
    else()
       set(RSTUDIO_INSTALL_BIN        RStudio.app/Contents/MacOS)
       set(RSTUDIO_INSTALL_SUPPORTING RStudio.app/Contents/Resources)

@@ -37,6 +37,7 @@
 
 using namespace rstudio::core;
 using namespace rstudio::session::module_context;
+using namespace boost::placeholders;
 
 namespace rstudio {
 namespace session {
@@ -129,6 +130,27 @@ json::Array readXRefIndex(const FilePath& indexPath, const std::string& filename
    return xrefs;
 }
 
+FilePath quartoPandocPath(const QuartoConfig& config)
+{
+#ifndef WIN32
+   std::string target = "pandoc";
+#else
+   std::string target = "pandoc.exe";
+#endif
+
+   // find quarto pandoc (it could be directly in the bin_path or it could be in the "tools"dir)
+   FilePath quartoPandoc = FilePath(config.bin_path).completeChildPath(target);
+   if (!quartoPandoc.exists())
+   {
+      FilePath quartoTools = FilePath(config.bin_path).completeChildPath("tools");
+      if (quartoTools.exists())
+      {
+         quartoPandoc = quartoTools.completeChildPath(target);
+      }
+   }
+  return quartoPandoc;
+}
+
 json::Array indexSourceFile(const std::string& contents, const std::string& filename)
 {
    QuartoConfig config = quartoConfig();
@@ -188,7 +210,7 @@ json::Array indexSourceFile(const std::string& contents, const std::string& file
    core::system::ProcessResult result;
 
    error = module_context::runPandoc(
-      FilePath(config.bin_path).completeChildPath("pandoc").getAbsolutePath(),
+      quartoPandocPath(config).getAbsolutePath(),
       args,
       contents,
       options,

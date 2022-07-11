@@ -327,6 +327,8 @@ public class FileTypeRegistry
       register("README", TEXT, new ImageResource2x(icons.iconText2x()));
       register(".gitignore", TEXT, new ImageResource2x(icons.iconText2x()));
       register(".Rbuildignore", TEXT, new ImageResource2x(icons.iconText2x()));
+      register(".lintr", TEXT, new ImageResource2x(icons.iconText2x()));
+      register("renv.lock", JSON, new ImageResource2x(icons.iconDCF2x()));
       register("packrat.lock", DCF, new ImageResource2x(icons.iconDCF2x()));
       register("*.r", R, new ImageResource2x(icons.iconRdoc2x()));
       register("*.q", R, new ImageResource2x(icons.iconRdoc2x()));
@@ -607,12 +609,9 @@ public class FileTypeRegistry
    public FileType getTypeForFile(FileSystemItem file)
    {
       // last ditch default type -- see if this either a known text file type
-      // or (for server mode) NOT a known binary type. the result of this is
+      // or NOT a known binary type. the result of this is
       // that unknown files types are treated as text and opened in the editor
-      // (we don't do this on desktop because  in that case users have the
-      // recourse of using a local editor)
-      String defaultType = Desktop.isDesktop() ? "application/octet-stream" :
-                                                 "text/plain";
+      String defaultType = "text/plain";
       return getTypeForFile(file, defaultType);
    }
 
