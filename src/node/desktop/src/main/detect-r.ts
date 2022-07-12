@@ -278,27 +278,28 @@ function scanForR(): Expected<string> {
 }
 
 function scanForRPosix(): Expected<string> {
-  // first, look for R on the PATH
+  if (process.platform == 'darwin') {
+    // For Mac, we want to look in a list of hard-coded locations
+    const defaultLocations = ['/opt/local/bin/R', '/usr/local/bin/R', '/usr/bin/R'];
+    // also check framework directory and homebrew ARM locations for macOS
+    defaultLocations.push('/Library/Frameworks/R.framework/Resources/bin/R');
+    defaultLocations.push('/opt/homebrew/bin/R');
+
+    for (const location of defaultLocations) {
+      if (isValidBinary(location)) {
+        logger().logDebug(`Using ${location} (found by searching known locations)`);
+        return ok(location);
+      }
+    }
+  }
+
+  // look for R on the PATH
+  // should we launch the default shell to pick up the user modifications to the path?
   const [rLocation, error] = executeCommand('/usr/bin/which R');
   if (!error && rLocation) {
+    logger().logDebug(`PATH: ${getenv("PATH")}`);
     logger().logDebug(`Using ${rLocation} (found by /usr/bin/which/R)`);
     return ok(rLocation);
-  }
-
-  // otherwise, look in some hard-coded locations
-  const defaultLocations = ['/opt/local/bin/R', '/usr/local/bin/R', '/usr/bin/R'];
-
-  // also check framework directory and homebrew ARM locations for macOS
-  if (process.platform === 'darwin') {
-    defaultLocations.push('/opt/homebrew/bin/R');
-    defaultLocations.push('/Library/Frameworks/R.framework/Resources/bin/R');
-  }
-
-  for (const location of defaultLocations) {
-    if (isValidBinary(location)) {
-      logger().logDebug(`Using ${rLocation} (found by searching known locations)`);
-      return ok(location);
-    }
   }
 
   // nothing found
