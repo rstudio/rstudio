@@ -122,7 +122,7 @@
         decimal=dec,
         quote=quote,
         comment=comment,
-        defaultStringsAsFactors=default.stringsAsFactors())
+        defaultStringsAsFactors=ifelse(getRversion() >= '4.2.0', FALSE, default.stringsAsFactors()))
 })
 
 .rs.addJsonRpcHandler("get_output_preview", function(path, encoding, header,
@@ -141,5 +141,5 @@
         separator=sep,
         quote=quote,
         comment=comment,
-        defaultStringsAsFactors=default.stringsAsFactors())
+        defaultStringsAsFactors=ifelse(getRversion() >= '4.2.0', FALSE, default.stringsAsFactors()))
 })
