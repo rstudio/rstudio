@@ -1,5 +1,7 @@
 #!groovy
 
+import org.jenkinsci.plugins.workflow.steps.FlowInterruptedException
+
 properties([
     disableConcurrentBuilds(),
     buildDiscarder(logRotator(artifactDaysToKeepStr: '',
