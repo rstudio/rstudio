@@ -175,7 +175,7 @@ if not exist pandoc\%PANDOC_VERSION% (
 
 
 REM wget %WGET_ARGS% https://s3.amazonaws.com/rstudio-buildtools/quarto/%QUARTO_VERSION%/%QUARTO_FILE%
-wget %WGET_ARGS% https://github.com/quarto-dev/quarto-cli/releases/v%QUARTO_VERSION%/download/%QUARTO_FILE%
+wget %WGET_ARGS% https://github.com/quarto-dev/quarto-cli/releases/download/v%QUARTO_VERSION%/%QUARTO_FILE%
 echo Unzipping Quarto %QUARTO_FILE%
 rmdir /s /q quarto
 mkdir quarto
