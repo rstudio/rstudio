@@ -271,7 +271,7 @@ export class MainWindow extends GwtWindow {
   invokeCommand(cmdId: string): void {
     let cmd = '';
     if (process.platform === 'darwin') {
-      cmd = ` 
+      cmd = `
         var wnd;
         try {
           wnd = window.$RStudio.last_focused_window;

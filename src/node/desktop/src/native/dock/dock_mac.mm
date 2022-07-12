@@ -1,5 +1,5 @@
 /*
- * dock.cc
+ * dock_mac.mm
  *
  * Copyright (C) 2022 by RStudio, PBC
  *
