@@ -120,6 +120,8 @@ RUN cd /opt/rstudio-tools/dependencies/common && /bin/bash ./install-sentry-cli
 
 # NPM dependencies
 COPY ./dependencies/common/install-npm-dependencies /opt/rstudio-tools/dependencies/common/
+COPY ./dependencies/common/install-node /opt/rstudio-tools/dependencies/common/
+COPY ./dependencies/common/install-yarn /opt/rstudio-tools/dependencies/common/
 RUN cd /opt/rstudio-tools/dependencies/common && /bin/bash ./install-npm-dependencies
 
 # soci
@@ -129,10 +131,6 @@ RUN cd /opt/rstudio-tools/dependencies/common && /bin/bash ./install-soci
 # yaml-cpp
 COPY ./dependencies/common/install-yaml-cpp /opt/rstudio-tools/dependencies/common/
 RUN cd /opt/rstudio-tools/dependencies/common && /bin/bash ./install-yaml-cpp
-
-# Qt SDK
-COPY ./dependencies/common/install-qt.sh /opt/rstudio-tools/dependencies/linux
-COPY ./dependencies/linux/install-qt-linux /opt/rstudio-tools/dependencies/linux
 
 # Create the user
 RUN groupadd --gid $USER_GID $USERNAME \

@@ -18,7 +18,7 @@
 
     "C_Cpp.default.includePath": [
       "${workspaceFolder}/src/cpp/**",
-      "/opt/rstudio-tools/x86_64/boost/boost_1_69_0/include"
+      "/opt/rstudio-tools/x86_64/boost/boost_1_78_0/include"
     ],
   },
 
