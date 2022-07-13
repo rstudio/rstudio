@@ -32,6 +32,7 @@ import { CloseServerSessions } from './session-servers-overlay';
 import { waitForUrlWithTimeout } from './utils';
 import { DesktopBrowserWindow } from './desktop-browser-window';
 import i18next from 'i18next';
+import { setDockLabel } from '../native/dock.node';
 
 export function closeAllSatellites(mainWindow: BrowserWindow): void {
   const topLevels = BrowserWindow.getAllWindows();
@@ -219,8 +220,10 @@ export class MainWindow extends GwtWindow {
       .then((projectDir) => {
         if (projectDir.length > 0) {
           this.window.setTitle(`${projectDir} - ${appState().activation().editionName()}`);
+          setDockLabel(projectDir);
         } else {
           this.window.setTitle(appState().activation().editionName());
+          setDockLabel('');
         }
         this.avoidMoveCursorIfNecessary();
       })
@@ -268,7 +271,7 @@ export class MainWindow extends GwtWindow {
   invokeCommand(cmdId: string): void {
     let cmd = '';
     if (process.platform === 'darwin') {
-      cmd = ` 
+      cmd = `
         var wnd;
         try {
           wnd = window.$RStudio.last_focused_window;
