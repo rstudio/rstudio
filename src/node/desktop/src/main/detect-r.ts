@@ -263,7 +263,9 @@ export function detectREnvironment(rPath?: string): Expected<REnvironment> {
 
 function scanForR(): Expected<string> {
   // if the RSTUDIO_WHICH_R environment variable is set, use that
+  // note that this does not pick up variables set in a user's bash profile, for example
   const rstudioWhichR = getenv('RSTUDIO_WHICH_R');
+
   if (rstudioWhichR) {
     logger().logDebug(`Using ${rstudioWhichR} (found by RSTUDIO_WHICH_R environment variable)`);
     return ok(rstudioWhichR);
@@ -278,29 +280,29 @@ function scanForR(): Expected<string> {
 }
 
 function scanForRPosix(): Expected<string> {
-  // first, look for R on the PATH
-  const [rLocation, error] = executeCommand('/usr/bin/which R');
-  if (!error && rLocation) {
-    logger().logDebug(`Using ${rLocation} (found by /usr/bin/which/R)`);
-    return ok(rLocation);
-  }
+  const defaultLocations = ['/usr/bin/R', '/usr/local/bin/R', '/opt/local/bin/R'];
 
-  // otherwise, look in some hard-coded locations
-  const defaultLocations = ['/opt/local/bin/R', '/usr/local/bin/R', '/usr/bin/R'];
-
-  // also check framework directory and homebrew ARM locations for macOS
-  if (process.platform === 'darwin') {
-    defaultLocations.push('/opt/homebrew/bin/R');
+  if (process.platform == 'darwin') {
+    // For Mac, we want to first look in a list of hard-coded locations
+    // also check framework directory and then homebrew ARM locations for macOS
     defaultLocations.push('/Library/Frameworks/R.framework/Resources/bin/R');
+    defaultLocations.push('/opt/homebrew/bin/R');
+  } else {
+    // for linux, look for R on the PATH
+    // should we launch the default shell to pick up the user modifications to the path?
+    const [rLocation, error] = executeCommand('/usr/bin/which R');
+    if (!error && rLocation) {
+      logger().logDebug(`Using ${rLocation} (found by /usr/bin/which/R)`);
+      return ok(rLocation);
+    } 
   }
 
   for (const location of defaultLocations) {
     if (isValidBinary(location)) {
-      logger().logDebug(`Using ${rLocation} (found by searching known locations)`);
+      logger().logDebug(`Using ${location} (found by searching known locations)`);
       return ok(location);
     }
   }
-
   // nothing found
   return err();
 }
