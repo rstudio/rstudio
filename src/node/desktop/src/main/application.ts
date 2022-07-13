@@ -283,10 +283,12 @@ export class Application implements AppState {
     if (process.platform === 'win32') {
       const [path, preflightError] = await promptUserForR();
       if (preflightError) {
-        await createStandaloneErrorDialog(
-          i18next.t('applicationTs.errorFindingR'),
-          i18next.t('applicationTs.rstudioFailedToFindRInstalationsOnTheSystem'),
-        );
+        dialog.showMessageBoxSync({
+          type: 'error',
+          title: i18next.t('applicationTs.errorFindingR'),
+          message: i18next.t('applicationTs.rstudioFailedToFindRInstalationsOnTheSystem'),
+          buttons: [ i18next.t('common.buttonYes', 'common.buttonNo'), ],
+        });
         logger().logError(preflightError);
         return exitFailure();
       }
