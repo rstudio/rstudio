@@ -544,7 +544,6 @@ export class GwtCallback extends EventEmitter {
 
     ipcMain.on('desktop_bring_main_frame_to_front', () => {
       this.mainWindow.window.focus();
-      console.debug('desktop_bring_main_frame_to_front');
     });
 
     ipcMain.on('desktop_bring_main_frame_behind_active', () => {
