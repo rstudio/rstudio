@@ -263,7 +263,9 @@ export function detectREnvironment(rPath?: string): Expected<REnvironment> {
 
 function scanForR(): Expected<string> {
   // if the RSTUDIO_WHICH_R environment variable is set, use that
+  // note that this does not pick up variables set in a user's bash profile, for example
   const rstudioWhichR = getenv('RSTUDIO_WHICH_R');
+
   if (rstudioWhichR) {
     logger().logDebug(`Using ${rstudioWhichR} (found by RSTUDIO_WHICH_R environment variable)`);
     return ok(rstudioWhichR);
@@ -278,6 +280,8 @@ function scanForR(): Expected<string> {
 }
 
 function scanForRPosix(): Expected<string> {
+  const defaultLocations = ['/usr/bin/R', '/usr/local/bin/R', '/opt/local/bin/R'];
+
   if (process.platform == 'darwin') {
     // For Mac, we want to first look in a list of hard-coded locations
     // also check framework directory and then homebrew ARM locations for macOS
@@ -288,7 +292,6 @@ function scanForRPosix(): Expected<string> {
     // should we launch the default shell to pick up the user modifications to the path?
     const [rLocation, error] = executeCommand('/usr/bin/which R');
     if (!error && rLocation) {
-      logger().logDebug(`PATH: ${getenv("PATH")}`);
       logger().logDebug(`Using ${rLocation} (found by /usr/bin/which/R)`);
       return ok(rLocation);
     } 
