@@ -19,7 +19,6 @@
               "",
             ],
             "defines": [ "NAPI_DISABLE_CPP_EXCEPTIONS" ],
-            "sources": ["src/native/dock/dock.cc"],
             "conditions": [
               [
                 'OS=="mac"',
@@ -28,6 +27,10 @@
                   "link_settings": {
                     "libraries": ["AppKit.framework"]
                   },
+                },
+                'OS!="mac"',
+                {
+                  "sources": ["src/native/dock/dock.cc"],
                 }
               ]
             ]
