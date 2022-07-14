@@ -13,7 +13,7 @@
  *
  */
 
-import { app, BrowserWindow, Menu, screen, WebContents } from 'electron';
+import { app, BrowserWindow, globalShortcut, Menu, screen, WebContents } from 'electron';
 import i18next from 'i18next';
 import path from 'path';
 import { getenv, setenv } from '../core/environment';
@@ -44,7 +44,7 @@ import {
   resolveAliasedPath
 } from './utils';
 import { WindowTracker } from './window-tracker';
-import { configureSatelliteWindow, configureSecondaryWindow } from './window-utils';
+import { configureSatelliteWindow, configureSecondaryWindow, focusedWebContents } from './window-utils';
 
 /**
  * The RStudio application
@@ -133,6 +133,17 @@ export class Application implements AppState {
         })
         .catch((error: unknown) => logger().logError(error));
     });
+
+    // Workaround for selecting all text in the input field: https://github.com/rstudio/rstudio/issues/11581
+    if (process.platform === 'darwin') {
+      app.whenReady()
+        .then(() => {
+          globalShortcut.register('Cmd+A', () => {
+            focusedWebContents()?.selectAll();
+          });
+        })
+        .catch((error: unknown) => logger().logError(error));
+    }
   }
 
   /**

@@ -23,7 +23,6 @@ import {
   Rectangle,
   screen,
   shell,
-  webContents,
   webFrameMain
 } from 'electron';
 import { IpcMainEvent, MessageBoxOptions, OpenDialogOptions, SaveDialogOptions } from 'electron/main';
@@ -49,7 +48,7 @@ import {
   filterFromQFileDialogFilter, findRepoRoot,
   getAppPath, handleLocaleCookies, resolveAliasedPath
 } from './utils';
-import { activateWindow } from './window-utils';
+import { activateWindow, focusedWebContents } from './window-utils';
 
 export enum PendingQuit {
   PendingQuitNone,
@@ -71,20 +70,6 @@ function formatSelectedVersionForUi(rBinDir: string) {
   } else {
     return rHome;
   }
-}
-
-// The documentation for getFocusedWebContents() has:
-//
-// /**
-//  * The web contents that is focused in this application, otherwise returns `null`.
-//  */
-//
-//  static getFocusedWebContents(): WebContents;
-//
-// and so the documentation appears to state that the return value may be 'null',
-// but the type definition doesn't propagate that reality. Hence, this wrapper function.
-function focusedWebContents(): Electron.WebContents | null {
-  return webContents.getFocusedWebContents();
 }
 
 /**
