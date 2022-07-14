@@ -260,7 +260,8 @@ public class ImagePreviewer
             imgEl.setId(parsedAttributes.getIdentifier());
 
          for (String className : parsedAttributes.getClasses())
-            imgEl.addClassName(className);
+            if (!className.isEmpty())
+               imgEl.addClassName(className);
       }
       
       // add load handlers to image
@@ -372,7 +373,8 @@ public class ImagePreviewer
                   imgEl.setId(parsedAttributes.getIdentifier());
                
                for (String className : parsedAttributes.getClasses())
-                  imgEl.addClassName(className);
+                  if (!className.isEmpty())
+                     imgEl.addClassName(className);
             }
          };
          
