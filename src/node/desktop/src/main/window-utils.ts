@@ -13,7 +13,7 @@
  *
  */
 
-import { BrowserWindow, WebContents } from 'electron';
+import { BrowserWindow, webContents, WebContents } from 'electron';
 import { appState } from './app-state';
 import { PendingSatelliteWindow, PendingSecondaryWindow } from './pending-window';
 import { SatelliteWindow } from './satellite-window';
@@ -105,4 +105,18 @@ export function activateWindow(name: string): void {
       return;
     }
   }
+}
+
+// The documentation for getFocusedWebContents() has:
+//
+// /**
+//  * The web contents that is focused in this application, otherwise returns `null`.
+//  */
+//
+//  static getFocusedWebContents(): WebContents;
+//
+// and so the documentation appears to state that the return value may be 'null',
+// but the type definition doesn't propagate that reality. Hence, this wrapper function.
+export function focusedWebContents(): Electron.WebContents | null {
+  return webContents.getFocusedWebContents();
 }
