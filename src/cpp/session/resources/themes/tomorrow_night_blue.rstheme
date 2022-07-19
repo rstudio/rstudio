@@ -188,8 +188,8 @@
 .xtermBgColor6 { background-color: #99ffff; }
 .xtermColor7 { color: #ffffff !important; }
 .xtermBgColor7 { background-color: #ffffff; }
-.xtermColor8 { color: #000000 !important; }
-.xtermBgColor8 { background-color: #000000; }
+.xtermColor8 { color: #7c7c7c !important; }
+.xtermBgColor8 { background-color: #7c7c7c; }
 .xtermColor9 { color: #ff9da4 !important; }
 .xtermBgColor9 { background-color: #ff9da4; }
 .xtermColor10 { color: #d1f1a9 !important; }

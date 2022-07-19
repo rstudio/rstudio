@@ -203,8 +203,8 @@
 .xtermBgColor6 { background-color: #70c0b1; }
 .xtermColor7 { color: #ffffff !important; }
 .xtermBgColor7 { background-color: #ffffff; }
-.xtermColor8 { color: #000000 !important; }
-.xtermBgColor8 { background-color: #000000; }
+.xtermColor8 { color: #7c7c7c !important; }
+.xtermBgColor8 { background-color: #7c7c7c; }
 .xtermColor9 { color: #d54e53 !important; }
 .xtermBgColor9 { background-color: #d54e53; }
 .xtermColor10 { color: #b9ca4a !important; }
