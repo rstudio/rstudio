@@ -29,7 +29,7 @@ import { ArgsManager } from './args-manager';
 import { prepareEnvironment, promptUserForR } from './detect-r';
 import { GwtCallback } from './gwt-callback';
 import { PendingWindow } from './pending-window';
-import { exitFailure, ProgramStatus, run } from './program-status';
+import { exitFailure, exitSuccess, ProgramStatus, run } from './program-status';
 import { SatelliteWindow } from './satellite-window';
 import { SecondaryWindow } from './secondary-window';
 import { SessionLauncher } from './session-launcher';
@@ -76,6 +76,14 @@ export class Application implements AppState {
 
     if (status.exit) {
       return status;
+    }
+
+    const hasInstanceLock = app.requestSingleInstanceLock();
+    const hasProjectToOpen = this.argsManager.getProjectFileArg() || getenv('RS_INITIAL_PROJECT');
+    const hasFileToOpen = this.argsManager.getFileArgs().length > 0;
+    if (!hasInstanceLock && !hasProjectToOpen && hasFileToOpen) {
+      logger().logDebug('No instance lock - exiting');
+      return exitSuccess();
     }
 
     // attempt to remove stale lockfiles, as they can impede application startup
@@ -132,6 +140,14 @@ export class Application implements AppState {
           }
         })
         .catch((error: unknown) => logger().logError(error));
+    });
+
+    app.on('second-instance', (_event, argv) => {
+      logger().logDebug(`second-instance event: ARGS ${argv}`);
+      // for files, open in the existing instance
+      this.argsManager.setUnswitchedArgs(argv);
+      if (!this.argsManager.getProjectFileArg())
+        this.argsManager.handleAfterSessionLaunchCommands();
     });
 
     // Workaround for selecting all text in the input field: https://github.com/rstudio/rstudio/issues/11581
