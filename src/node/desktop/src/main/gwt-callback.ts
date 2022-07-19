@@ -501,22 +501,18 @@ export class GwtCallback extends EventEmitter {
     ipcMain.on('desktop_export_page_region_to_file', 
       (event, targetPath, format, left, top, width, height) => {
         const rect: Rectangle = { x: left, y: top, width, height };
-        logger().logDebug(`rect: ${rect.x} ${rect.y} ${rect.width} ${rect.height}`);
         targetPath = resolveAliasedPath(targetPath);
-        logger().logDebug(`targetPath: ${targetPath}`);
         this.mainWindow.window
           .capturePage(rect)
           .then((image) => {
             let buffer: Buffer;
-            if (format == 'BMP') {
+            if (format == 'bmp') {
               buffer = image.toBitmap();
-            } else if (format == 'JPEG') {
+            } else if (format == 'jpeg') {
               buffer = image.toJPEG(100);
             } else {
-              logger().logDebug('creating PNG');
               buffer = image.toPNG();
             }
-            logger().logDebug('writing file');
             writeFileSync(targetPath, buffer);
           })
           .catch((error) => {
