@@ -54,11 +54,12 @@ public class DesktopExport
          }
 
          private void performExport(double zoomLevel) {
+            
             // get the preview iframe rect
             ElementEx iframe = sizeEditor.getPreviewIFrame().<ElementEx>cast();
             final Rectangle viewerRect = new Rectangle(
-                   (int) Math.ceil(zoomLevel * iframe.getClientLeft()),
-                   (int) Math.ceil(zoomLevel * iframe.getClientTop()),
+                   (int) Math.ceil(zoomLevel * ElementEx.clientLeft(iframe)),
+                   (int) Math.ceil(zoomLevel * ElementEx.clientTop(iframe)),
                    (int) Math.ceil(zoomLevel * iframe.getClientWidth()),
                    (int) Math.ceil(zoomLevel * iframe.getClientHeight())).inflate(-1);
 

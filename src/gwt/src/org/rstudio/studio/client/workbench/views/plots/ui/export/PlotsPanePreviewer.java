@@ -82,8 +82,8 @@ public class PlotsPanePreviewer implements ExportPlotPreviewer
       if (images.getLength() > 0)
       {
          ElementEx img = images.getItem(0).cast();
-         return new Rectangle(img.getClientLeft(),
-                              img.getClientTop(),
+         return new Rectangle(img.clientLeft(),
+                              img.clientTop(),
                               img.getClientWidth(),
                               img.getClientHeight());
       }
