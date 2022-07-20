@@ -18,7 +18,7 @@ patches <- list(
     solarized_dark = c(Ansi_0_Color = "#4f4f4f", Ansi_8_Color = "#7c7c7c"), 
     solarized_light = c(Ansi_7_Color = "#d3d7cf", Ansi_15_Color = "#d3d7cf"),
     tomorrow = c(Ansi_7_Color = "#d3d7cf", Ansi_15_Color = "#eeeeec"),
-    tomorrow_night = c(Ansi_0_Color = "#4f4f4f"), 
+    tomorrow_night = c(Ansi_0_Color = "#4f4f4f", Ansi_8_Color = "#7c7c7c"), 
     tomorrow_night_blue = c(Ansi_0_Color = "#4f4f4f"), 
     tomorrow_night_bright = c(Ansi_0_Color = "#4f4f4f", Ansi_8_Color = "#7c7c7c"),
     tomorrow_night_eighties = c(Ansi_0_Color = "#4f4f4f"),
