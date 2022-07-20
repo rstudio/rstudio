@@ -2,7 +2,7 @@
 #define Ansi_1_Color #ff6600
 #define Ansi_10_Color #00ff00
 #define Ansi_11_Color #ffff00
-#define Ansi_12_Color #0000ff
+#define Ansi_12_Color #5959ff
 #define Ansi_13_Color #ff00ff
 #define Ansi_14_Color #00ffff
 #define Ansi_15_Color #e5e5e5

@@ -187,8 +187,8 @@
 .xtermBgColor10 { background-color: #00ff00; }
 .xtermColor11 { color: #ffff00 !important; }
 .xtermBgColor11 { background-color: #ffff00; }
-.xtermColor12 { color: #0000ff !important; }
-.xtermBgColor12 { background-color: #0000ff; }
+.xtermColor12 { color: #5959ff !important; }
+.xtermBgColor12 { background-color: #5959ff; }
 .xtermColor13 { color: #ff00ff !important; }
 .xtermBgColor13 { background-color: #ff00ff; }
 .xtermColor14 { color: #00ffff !important; }
