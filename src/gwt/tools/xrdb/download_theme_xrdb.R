@@ -11,7 +11,8 @@ for (i in seq_len(nrow(themes))) {
 patches <- list(
     cobalt = c(Ansi_0_Color = "#4f4f4f"), 
     dracula = c(Ansi_0_Color = "#4f4f4f"),
-    material = c(Ansi_0_Color = "#4f4f4f"),
+    # just here for the record, but material needs manual updating
+    material = c(Ansi_0_Color = "#4f4f4f"), 
     monokai = c(Ansi_0_Color = "#4f4f4f"), 
     pastel_on_dark = c(Ansi_8_Color = "#7c7c7c"),
     solarized_dark = c(Ansi_0_Color = "#4f4f4f", Ansi_8_Color = "#7c7c7c"), 
@@ -39,3 +40,5 @@ for (i in seq_along(patches)) {
     }
     writeLines(txt, filename)
 }
+
+
