@@ -537,7 +537,7 @@ export class GwtCallback extends EventEmitter {
 
       // bring main window under active window by focusing main window then back to active
       if (activeWindow && mainWindow !== activeWindow) {
-        mainWindow.focus();
+        mainWindow.show();
         activeWindow.focus();
       }
     });
