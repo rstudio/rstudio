@@ -1,4 +1,4 @@
-#define Ansi_0_Color #000000
+#define Ansi_0_Color #4f4f4f
 #define Ansi_1_Color #d54e53
 #define Ansi_10_Color #b9ca4a
 #define Ansi_11_Color #e7c547
@@ -12,7 +12,7 @@
 #define Ansi_5_Color #c397d8
 #define Ansi_6_Color #70c0b1
 #define Ansi_7_Color #ffffff
-#define Ansi_8_Color #000000
+#define Ansi_8_Color #7c7c7c
 #define Ansi_9_Color #d54e53
 #define Background_Color #000000
 #define Bold_Color #eaeaea

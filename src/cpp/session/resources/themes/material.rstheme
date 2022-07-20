@@ -207,8 +207,8 @@
 .xtermHidden { visibility: hidden; }
 .xtermItalic { font-style: italic; }
 .xtermStrike { text-decoration: line-through; }
-.xtermColor0 { color: #2e3436 !important; }
-.xtermBgColor0 { background-color: #2e3436; }
+.xtermColor0 { color: #4f4f4f !important; }
+.xtermBgColor0 { background-color: #4f4f4f; }
 .xtermColor1 { color: #cc0000 !important; }
 .xtermBgColor1 { background-color: #cc0000; }
 .xtermColor2 { color: #4e9a06 !important; }
