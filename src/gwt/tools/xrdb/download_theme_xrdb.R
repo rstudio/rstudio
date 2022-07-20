@@ -16,7 +16,7 @@ patches <- list(
     monokai = c(Ansi_0_Color = "#4f4f4f"), 
     pastel_on_dark = c(Ansi_8_Color = "#7c7c7c"),
     solarized_dark = c(Ansi_0_Color = "#4f4f4f", Ansi_8_Color = "#7c7c7c"), 
-    solarized_light = c(Ansi_7_Color = "#d3d7cf", Ansi_15_Color = "#d3d7cf"),
+    solarized_light = c(Ansi_7_Color = "#d3d7cf", Ansi_8_Color = "#acacac", Ansi_15_Color = "#d3d7cf"),
     tomorrow = c(Ansi_7_Color = "#d3d7cf", Ansi_15_Color = "#eeeeec"),
     tomorrow_night = c(Ansi_0_Color = "#4f4f4f", Ansi_8_Color = "#7c7c7c"), 
     tomorrow_night_blue = c(Ansi_0_Color = "#4f4f4f", Ansi_8_Color = "#7c7c7c"), 
