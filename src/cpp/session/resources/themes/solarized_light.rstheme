@@ -176,8 +176,8 @@
 .xtermBgColor6 { background-color: #2aa198; }
 .xtermColor7 { color: #d3d7cf !important; }
 .xtermBgColor7 { background-color: #d3d7cf; }
-.xtermColor8 { color: #002b36 !important; }
-.xtermBgColor8 { background-color: #002b36; }
+.xtermColor8 { color: #acacac !important; }
+.xtermBgColor8 { background-color: #acacac; }
 .xtermColor9 { color: #cb4b16 !important; }
 .xtermBgColor9 { background-color: #cb4b16; }
 .xtermColor10 { color: #586e75 !important; }
