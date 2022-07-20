@@ -178,8 +178,8 @@
 .xtermHidden { visibility: hidden; }
 .xtermItalic { font-style: italic; }
 .xtermStrike { text-decoration: line-through; }
-.xtermColor0 { color: #141414 !important; }
-.xtermBgColor0 { background-color: #141414; }
+.xtermColor0 { color: #4f4f4f !important; }
+.xtermBgColor0 { background-color: #4f4f4f; }
 .xtermColor1 { color: #c06d44 !important; }
 .xtermBgColor1 { background-color: #c06d44; }
 .xtermColor2 { color: #afb97a !important; }
@@ -194,8 +194,8 @@
 .xtermBgColor6 { background-color: #778385; }
 .xtermColor7 { color: #ffffd4 !important; }
 .xtermBgColor7 { background-color: #ffffd4; }
-.xtermColor8 { color: #262626 !important; }
-.xtermBgColor8 { background-color: #262626; }
+.xtermColor8 { color: #7c7c7c !important; }
+.xtermBgColor8 { background-color: #7c7c7c; }
 .xtermColor9 { color: #de7c4c !important; }
 .xtermBgColor9 { background-color: #de7c4c; }
 .xtermColor10 { color: #ccd88c !important; }

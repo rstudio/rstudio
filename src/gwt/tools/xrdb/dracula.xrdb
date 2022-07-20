@@ -1,4 +1,4 @@
-#define Ansi_0_Color #000000
+#define Ansi_0_Color #4f4f4f
 #define Ansi_1_Color #ff5555
 #define Ansi_10_Color #50fa7b
 #define Ansi_11_Color #f1fa8c

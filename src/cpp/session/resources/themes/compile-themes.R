@@ -647,6 +647,18 @@
            background)
 })
 
+.rs.addFunction("show_xterm16", function() {
+  names <- sprintf("%-8s ", c("black", "red", "green", "yellow", "blue", "magenta", "cyan", "white"))
+  colors <- glue::glue(
+    "{names}  ", 
+    "\033[{40 + 0:7}m     \033[49m \033[{30 + 0:7}mxtermColor{0:7}\033[39m", "    ",
+    "\033[{100 + 0:7}m     \033[49m \033[{90 + 0:7}mxtermColor{8 + 0:7}\033[39m", 
+  )
+  cat("name       standard             bright\n\n")
+  writeLines(colors)
+  cat("\n")
+})
+
 .rs.addFunction("create_xterm_color_rules", function(background, foreground, isDark, xterm16ColorMap = NULL) {
 
    default_16_colors_light <- c(

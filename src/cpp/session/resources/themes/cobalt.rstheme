@@ -181,8 +181,8 @@
 .xtermHidden { visibility: hidden; }
 .xtermItalic { font-style: italic; }
 .xtermStrike { text-decoration: line-through; }
-.xtermColor0 { color: #142631 !important; }
-.xtermBgColor0 { background-color: #142631; }
+.xtermColor0 { color: #4f4f4f !important; }
+.xtermBgColor0 { background-color: #4f4f4f; }
 .xtermColor1 { color: #ff2320 !important; }
 .xtermBgColor1 { background-color: #ff2320; }
 .xtermColor2 { color: #3ba5ff !important; }
