@@ -707,11 +707,6 @@
        colors <- xterm16ColorMap[order(as.numeric(names(xterm16ColorMap)))]
      }
 
-     # fix themes that incorrectly set silver (xtermColor8) to black
-     if (identical(colors[["8"]], "#000000")) {
-        colors[["8"]] <- if (isDark) "#7c7c7c" else "#555753"
-     }
-
      paste0(collapse = "\n",
        sprintf(names(colors), colors, names(colors), colors,
          fmt =

@@ -12,7 +12,7 @@
 #define Ansi_5_Color #9933cc
 #define Ansi_6_Color #44b4cc
 #define Ansi_7_Color #f5f5f5
-#define Ansi_8_Color #555555
+#define Ansi_8_Color #7c7c7c
 #define Ansi_9_Color #ff0000
 #define Background_Color #000000
 #define Bold_Color #ffffff
