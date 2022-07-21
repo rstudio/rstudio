@@ -27,5 +27,7 @@
 #cmakedefine HAVE_PROCSELF
 #cmakedefine HAVE_SETRESUID
 #cmakedefine HAVE_SCANDIR_POSIX
+#cmakedefine HAVE_GROUP_MEMBER
+#cmakedefine HAVE_EXECINFO
 #cmakedefine RSTUDIO_SERVER
 #cmakedefine RSTUDIO_PRO_BUILD
