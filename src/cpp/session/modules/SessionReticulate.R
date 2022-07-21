@@ -2095,10 +2095,9 @@ options(reticulate.repl.teardown = function()
       # do this in child process so we don't pollute the namespace
       # callback must be passed as a func within a func to avoid loading reticulate
       py_config <- NULL
-       tryCatch({
+      tryCatch({
          py_config <- .rs.executeFunctionInChildProcess(
-            callback   = function() reticulate::py_discover_config(),
-            returnVal  = TRUE
+            callback   = function() reticulate::py_discover_config()
          )
        }, finally = {
          Sys.setenv(RETICULATE_MINICONDA_ENABLED = prev_miniconda)

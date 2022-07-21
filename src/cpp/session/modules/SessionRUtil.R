@@ -91,16 +91,15 @@
 #' @param libPaths The library paths to be set and used by the child process.
 #'   By default, the parent's library paths are used.
 #'
-#' @param returnVal Whether or not the callback should return a value. By
-#'   default, nothing will be returned.
-#'
 #' @param ... Optional arguments passed to `system2()`.
+#' 
+#' @return The return value of the callback will be returned. Any returned
+#'   values should be cheap to serialize with RDS.
 #' 
 .rs.addFunction("executeFunctionInChildProcess", function(callback, 
                                                           data = list(),
                                                           workingDir = NULL,
                                                           libPaths = .libPaths(),
-                                                          returnVal = FALSE,
                                                           ...)
 {
    # create and move to directory we'll use to stage our scripts
@@ -128,8 +127,7 @@
    bundle <- list(
       callback   = callback,
       data       = data,
-      workingDir = workingDir,
-      returnVal  = returnVal
+      workingDir = workingDir
    )
    
    # define runner script (will load data and execute user-defined callback)
@@ -149,12 +147,10 @@
       # retrieve callback data
       callback <- bundle[["callback"]]
       data     <- bundle[["data"]]
-      returnVal <- bundle[["returnVal"]]
       
       # execute callback
       rval <- do.call(callback, data)
-      if (returnVal)
-         saveRDS(object = rval, file = "output.rds")
+      saveRDS(object = rval, file = "output.rds")
    })
    
    # write bundle to file
@@ -173,9 +169,8 @@
    
    # run the script
    system2(r, args, ...)
-   # if callback has a return value, read in the serialized value and return it
-   if (returnVal)
-      return(readRDS("output.rds"))
+   # read in the serialized return value of the callback and return it
+   readRDS("output.rds")
 })
 
 # NOTE: this uses a bundled YAML library in the IDE as opposed to the R
