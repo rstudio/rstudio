@@ -437,6 +437,38 @@ TEST_CASE("Database", "[.database]")
       CHECK(postgresConnection->execute(postgresInsertQuery2));
    }
 
+   test_that("Schema Version comparisons are correct")
+   {
+      std::vector<SchemaVersion> versions {
+         {},
+         {"", "20200226141952248123456_AddRevokedCookie"},
+         {"Ghost Orchid", "20210712182145921760944"},
+         {"Prairie Trillium", "20210916132211194382021"},
+         {"Aphid", "21210916132211194382021"}
+      };
+
+      for(int i=0; i < (int) versions.size(); i++)
+      {
+         //Compare against smaller
+         for(int j=0; j < i; j++){
+            REQUIRE(versions[j] < versions[i]);
+            REQUIRE_FALSE(versions[j] > versions[i]);
+            REQUIRE(versions[j] <= versions[i]);
+         }
+
+         SchemaVersion sameVersion(versions[i]);
+         REQUIRE(sameVersion == versions[i]);
+
+         //Compare against larger
+         for(int j=i+1; j < (int) versions.size(); j++)
+         {
+            REQUIRE(versions[i] < versions[j]);
+            REQUIRE_FALSE(versions[i] > versions[j]);
+            REQUIRE(versions[i] <= versions[j]);
+         }
+      }
+   }
+
    test_that("Can execute str with multiple queries")
    {
       boost::shared_ptr<IConnection> connection;
