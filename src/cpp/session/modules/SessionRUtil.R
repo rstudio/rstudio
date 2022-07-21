@@ -97,6 +97,7 @@
                                                           data = list(),
                                                           workingDir = NULL,
                                                           libPaths = .libPaths(),
+                                                          returnVal = FALSE,
                                                           ...)
 {
    # create and move to directory we'll use to stage our scripts
@@ -124,7 +125,8 @@
    bundle <- list(
       callback   = callback,
       data       = data,
-      workingDir = workingDir
+      workingDir = workingDir,
+      returnVal  = returnVal
    )
    
    # define runner script (will load data and execute user-defined callback)
@@ -144,15 +146,17 @@
       # retrieve callback data
       callback <- bundle[["callback"]]
       data     <- bundle[["data"]]
+      returnVal <- bundle[["returnVal"]]
       
       # execute callback
-      do.call(callback, data)
-      
+      rval <- do.call(callback, data)
+      if (returnVal)
+         saveRDS(object = rval, file = "output.rds")
    })
    
    # write bundle to file
    # (suppress 'may not be available when loading' warnings)
-   suppressWarnings(saveRDS(bundle, file = "bundle.rds"))
+   suppressWarnings(saveRDS(bundlle, file = "bundle.rds"))
    
    # write script to file
    writeLines(deparse(script), con = "script.R")
@@ -166,7 +170,9 @@
    
    # run the script
    system2(r, args, ...)
-   
+   # if callback has a return value, read in the serialized value and return it
+   if (returnVal)
+      return(readRDS("output.rds"))
 })
 
 # NOTE: this uses a bundled YAML library in the IDE as opposed to the R
