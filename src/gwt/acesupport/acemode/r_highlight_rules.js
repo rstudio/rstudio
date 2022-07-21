@@ -182,27 +182,11 @@ define("mode/r_highlight_rules", ["require", "exports", "module"], function(requ
 
   oop.inherits(RoxygenHighlightRules, TextHighlightRules);
 
-  var isColorBright = function(col)
-  {
-    // based on https://github.com/bgrins/TinyColor
-    var rgb = parseInt(col, 16); // convert rrggbb to decimal
-    var r = (rgb >> 16) & 0xff;  // extract red
-    var g = (rgb >>  8) & 0xff;  // extract green
-    var b = (rgb >>  0) & 0xff;  // extract blue
-    
-    return (r * 299 + g * 587 + b * 114) / 1000 > 128;
-  };
-
-  var colorToken = function(type, text, rgb) {
-    var textColor = isColorBright(rgb.substring(0, 6)) ? "black" : "white";
-    return { type: type, value: text, style: `background: #${rgb}; color: ${textColor} !important;` };
-  };
-
   var colorStringTokens = function(quote, text, rgb)
   {
     return [
       { type: "string", value: quote },
-      colorToken("string.hexcolor", text, rgb), 
+      { type: "string.hexcolor", value: text, bg: rgb},
       { type: "string", value: quote }
     ];
   };
