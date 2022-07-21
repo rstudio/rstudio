@@ -207,15 +207,17 @@ public class EditingPreferencesPane extends PreferencesPane
       displayPanel.add(tight(showMargin_ = checkboxPref(constants_.displayShowMarginLabel(), prefs_.showMargin(), false /*defaultSpace*/)));
       displayPanel.add(indent(marginCol_ = numericPref(prefs_.marginColumn())));
       displayPanel.add(checkboxPref(constants_.displayShowInvisiblesLabel(), prefs_.showInvisibles()));
-      displayPanel.add(checkboxPref(constants_.displayShowIndentGuidesLabel(), prefs_.showIndentGuides()));
+      indentGuides_ = new SelectWidget(
+         prefs_.indentGuides().getTitle() + ":",
+         (Prefs.EnumValue) prefs_.indentGuides(),
+         false,
+         true,
+         false);
+      displayPanel.add(indentGuides_);
       displayPanel.add(checkboxPref(constants_.displayBlinkingCursorLabel(), prefs_.blinkingCursor()));
       displayPanel.add(checkboxPref(constants_.displayScrollPastEndOfDocumentLabel(), prefs_.scrollPastEndOfDocument()));
       displayPanel.add(checkboxPref(constants_.displayEnableTextDragLabel(), prefs_.enableTextDrag()));
-      displayPanel.add(checkboxPref(prefs_.highlightRFunctionCalls()));
-      displayPanel.add(checkboxPref(prefs_.colorPreview()));
-      displayPanel.add(extraSpaced(
-         checkboxPref(prefs_.rainbowParentheses(), false /* defaultSpace */)));
-
+      
       foldMode_ = new SelectWidget(
             constants_.displayFoldStyleLabel(),
             (Prefs.EnumValue) prefs_.foldStyle(),
@@ -225,6 +227,11 @@ public class EditingPreferencesPane extends PreferencesPane
 
       displayPanel.add(foldMode_);
 
+      displayPanel.add(headerLabel(constants_.syntaxHeaderLabel()));
+      displayPanel.add(checkboxPref(prefs_.highlightRFunctionCalls()));
+      displayPanel.add(checkboxPref(prefs_.colorPreview()));
+      displayPanel.add(checkboxPref(prefs_.rainbowParentheses()));
+      
       VerticalTabPanel savePanel = new VerticalTabPanel(ElementIds.EDIT_SAVING_PREFS);
 
       savePanel.add(headerLabel(constants_.generalHeaderLabel()));
@@ -516,6 +523,7 @@ public class EditingPreferencesPane extends PreferencesPane
       showCompletionsOther_.setValue(prefs_.codeCompletionOther().getValue());
       editorMode_.setValue(prefs_.editorKeybindings().getValue());
       foldMode_.setValue(prefs_.foldStyle().getValue());
+      indentGuides_.setValue(prefs.indentGuides().getValue());
       delimiterSurroundWidget_.setValue(prefs_.surroundSelection().getValue());
       executionBehavior_.setValue(prefs_.executionBehavior().getValue());
       autoSaveOnIdle_.setValue(prefs_.autoSaveOnIdle().getValue());
@@ -558,6 +566,7 @@ public class EditingPreferencesPane extends PreferencesPane
       else
          ShortcutManager.INSTANCE.setEditorMode(KeyboardShortcut.MODE_DEFAULT);
 
+      prefs_.indentGuides().setGlobalValue(indentGuides_.getValue());
       prefs_.foldStyle().setGlobalValue(foldMode_.getValue());
       prefs_.surroundSelection().setGlobalValue(delimiterSurroundWidget_.getValue());
       prefs_.executionBehavior().setGlobalValue(executionBehavior_.getValue());
@@ -614,6 +623,7 @@ public class EditingPreferencesPane extends PreferencesPane
    private final SelectWidget showCompletionsOther_;
    private final SelectWidget editorMode_;
    private final SelectWidget foldMode_;
+   private final SelectWidget indentGuides_;
    private final SelectWidget delimiterSurroundWidget_;
    private final SelectWidget executionBehavior_;
    private final SelectWidget autoSaveOnIdle_;

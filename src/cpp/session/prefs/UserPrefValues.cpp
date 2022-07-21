@@ -401,16 +401,16 @@ core::Error UserPrefValues::setShowInvisibles(bool val)
 }
 
 /**
- * Whether to show indentation guides in the RStudio code editor.
+ * Style for indentation guides in the RStudio code editor.
  */
-bool UserPrefValues::showIndentGuides()
+std::string UserPrefValues::indentGuides()
 {
-   return readPref<bool>("show_indent_guides");
+   return readPref<std::string>("indent_guides");
 }
 
-core::Error UserPrefValues::setShowIndentGuides(bool val)
+core::Error UserPrefValues::setIndentGuides(std::string val)
 {
-   return writePref("show_indent_guides", val);
+   return writePref("indent_guides", val);
 }
 
 /**
@@ -999,7 +999,7 @@ core::Error UserPrefValues::setHighlightRFunctionCalls(bool val)
 }
 
 /**
- * Whether to show color preview in the code editor.
+ * Whether to show preview for named and hexadecimal colors.
  */
 bool UserPrefValues::colorPreview()
 {
@@ -3123,7 +3123,7 @@ std::vector<std::string> UserPrefValues::allKeys()
       kBlinkingCursor,
       kMarginColumn,
       kShowInvisibles,
-      kShowIndentGuides,
+      kIndentGuides,
       kContinueCommentsOnNewline,
       kHighlightWebLink,
       kEditorKeybindings,

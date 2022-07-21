@@ -21,6 +21,7 @@ import org.rstudio.studio.client.workbench.prefs.model.UserPrefs;
 import org.rstudio.studio.client.workbench.views.source.model.ProjectConfig;
 import org.rstudio.studio.client.workbench.views.source.model.SourceDocument;
 
+import com.google.gwt.core.client.GWT;
 import com.google.gwt.event.shared.HandlerRegistration;
 
 public class TextEditingTargetPrefsHelper
@@ -110,10 +111,10 @@ public class TextEditingTargetPrefsHelper
             {
                docDisplay.setShowInvisibles(arg);
             }));
-      releaseOnDismiss.add(prefs.showIndentGuides().bind(
+      releaseOnDismiss.add(prefs.indentGuides().bind(
             (arg) ->
             {
-               docDisplay.setShowIndentGuides(arg);
+               docDisplay.setIndentGuides(IndentGuideStyle.fromPref(arg));
             }));
       releaseOnDismiss.add(prefs.scrollPastEndOfDocument().bind(
             (arg) ->

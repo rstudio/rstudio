@@ -89,7 +89,11 @@ namespace prefs {
 #define kBlinkingCursor "blinking_cursor"
 #define kMarginColumn "margin_column"
 #define kShowInvisibles "show_invisibles"
-#define kShowIndentGuides "show_indent_guides"
+#define kIndentGuides "indent_guides"
+#define kIndentGuidesNone "none"
+#define kIndentGuidesGray "gray"
+#define kIndentGuidesRainbowlines "rainbowlines"
+#define kIndentGuidesRainbowfills "rainbowfills"
 #define kContinueCommentsOnNewline "continue_comments_on_newline"
 #define kHighlightWebLink "highlight_web_link"
 #define kEditorKeybindings "editor_keybindings"
@@ -586,10 +590,10 @@ public:
    core::Error setShowInvisibles(bool val);
 
    /**
-    * Whether to show indentation guides in the RStudio code editor.
+    * Style for indentation guides in the RStudio code editor.
     */
-   bool showIndentGuides();
-   core::Error setShowIndentGuides(bool val);
+   std::string indentGuides();
+   core::Error setIndentGuides(std::string val);
 
    /**
     * Whether to continue comments (by inserting the comment character) after adding a new line.
@@ -862,7 +866,7 @@ public:
    core::Error setHighlightRFunctionCalls(bool val);
 
    /**
-    * Whether to show color preview in the code editor.
+    * Whether to show preview for named and hexadecimal colors.
     */
    bool colorPreview();
    core::Error setColorPreview(bool val);
