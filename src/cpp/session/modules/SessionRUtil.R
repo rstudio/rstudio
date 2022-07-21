@@ -91,6 +91,9 @@
 #' @param libPaths The library paths to be set and used by the child process.
 #'   By default, the parent's library paths are used.
 #'
+#' @param returnVal Whether or not the callback should return a value. By
+#'   default, nothing will be returned.
+#'
 #' @param ... Optional arguments passed to `system2()`.
 #' 
 .rs.addFunction("executeFunctionInChildProcess", function(callback, 

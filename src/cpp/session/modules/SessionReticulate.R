@@ -2093,13 +2093,14 @@ options(reticulate.repl.teardown = function()
 
       # Then perform a Python version scan/discovery
       # do this in child process so we don't pollute the namespace
+      # callback must be passed as a func within a func to avoid loading reticulate
       py_config <- NULL
-      tryCatch({
+       tryCatch({
          py_config <- .rs.executeFunctionInChildProcess(
-            callback   = reticulate::py_discover_config,
+            callback   = function() reticulate::py_discover_config(),
             returnVal  = TRUE
          )
-      }, finally = {
+       }, finally = {
          Sys.setenv(RETICULATE_MINICONDA_ENABLED = prev_miniconda)
       })
 
