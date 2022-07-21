@@ -7359,9 +7359,9 @@ var numRe = exports.numRe = "\\-?(?:(?:[0-9]+(?:\\.[0-9]+)?)|(?:\\.[0-9]+))";
 var pseudoElements = exports.pseudoElements = "(\\:+)\\b(after|before|first-letter|first-line|moz-selection|selection)\\b";
 var pseudoClasses  = exports.pseudoClasses =  "(:)\\b(active|checked|disabled|empty|enabled|first-child|first-of-type|focus|hover|indeterminate|invalid|last-child|last-of-type|link|not|nth-child|nth-last-child|nth-last-of-type|nth-of-type|only-child|only-of-type|required|root|target|valid|visited)\\b";
 
-var rgb256Regex = /(rgba?)[(]([0-9]+)\s*,\s*([0-9]+)\s*,\s*([0-9]+)\s*(,\s*)?([0-9]+)?[)]/;
+var rgb256Regex = /(rgba?)[(]([0-9]+)\s*,\s*([0-9]+)\s*,\s*([0-9]+)\s*(,\s*)?([0-9.]+)?[)]/;
 var numberToHex = function(s) {
-    var result = parseInt(s).toString(16);
+    var result = s.toString(16);
     return (result.length == 1) ? "0" + result : result;
 };
 
@@ -7475,10 +7475,11 @@ var CssHighlightRules = function() {
 
                 var a = "";
                 if (has_alpha) {
-                    a = parseInt(match[6]);
-                    if (a > 255)
+                    a = parseFloat(match[6]);
+                    if (a < 0 || a > 1)
                         return "constant.color";
-                    a = numberToHex(a);
+
+                    a = numberToHex(parseInt(255 * a));
                 }
 
                 var r = numberToHex(r);
@@ -7487,8 +7488,8 @@ var CssHighlightRules = function() {
                
                 return [
                     { type: "constant.color", value: value, bg: "#" + r + g + b + a}
-                ];
-             }
+                ];    
+            }
          }, {
             regex : "#[a-fA-F0-9]{6}", // hex6 color
             onMatch: function(value, state, stack, line) {
@@ -62967,7 +62968,7 @@ var Text = function(parentEl) {
         } else {
             rgb = namedColors[color].substring(1);
         }
-        var textColor = isColorBright(rgb) ? "black" : "white";
+        var textColor = isColorBright(rgb.substring(0, 6)) ? "black" : "white";
         return "background: #" + rgb + "; color: " + textColor + "!important";
     };
 
