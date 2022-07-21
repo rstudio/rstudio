@@ -62932,7 +62932,7 @@ var Text = function(parentEl) {
                 rgb = rgb.replace(/./g, "$&$&");
             }
         } else {
-            rgb = namedColors[color];
+            rgb = namedColors[color].substring(1);
         }
         var textColor = isColorBright(rgb) ? "black" : "white";
         return "background: #" + rgb + "; color: " + textColor + "!important";
