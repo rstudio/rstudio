@@ -7457,11 +7457,19 @@ var CssHighlightRules = function() {
             token : "constant.numeric",
             regex : numRe
         }, {
-            token : "constant.numeric",  // hex6 color
-            regex : "#[a-f0-9]{6}"
+            regex : "#[a-f0-9]{6}", // hex6 color
+            onMatch: function(value, state, stack, line) {
+                return [
+                    { type: "constant.color", value: value, bg: value.substring(1)}
+                ];
+            }
         }, {
-            token : "constant.numeric", // hex3 color
-            regex : "#[a-f0-9]{3}"
+            regex : "#[a-f0-9]{3}", // hex3 color
+            onMatch: function(value, state, stack, line) {
+                return [
+                    { type: "constant.color", value: value, bg: value.substring(1).replace(/./g, "$&$&")}
+                ];
+            }
         }, {
             token : ["punctuation", "entity.other.attribute-name.pseudo-element.css"],
             regex : pseudoElements
