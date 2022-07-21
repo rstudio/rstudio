@@ -2084,7 +2084,7 @@ options(reticulate.repl.teardown = function()
    # Use existing RETICULATE_PYTHON_FALLBACK if set
    python <- Sys.getenv("RETICULATE_PYTHON_FALLBACK", unset = NA)
    if (!is.na(python))
-     return(python)
+      return(python)
    if (.rs.isPackageInstalled("reticulate")) {
       
       # avoid miniconda prompts

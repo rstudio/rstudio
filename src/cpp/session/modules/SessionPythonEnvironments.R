@@ -157,7 +157,7 @@
    {
      pythonPath <- .rs.python.findWindowsPython()
      if (file.exists(pythonPath))
-       return(pythonPath)
+        return(pythonPath)
    }
 
    # look for python + python3 on the PATH
@@ -165,7 +165,7 @@
    {
      python3 <- Sys.which("python3")
      if (nzchar(python3) && python3 != "/usr/bin/python3")
-       return(python3)
+        return(python3)
 
      python <- Sys.which("python")
      if (nzchar(python) && python != "/usr/bin/python")
@@ -173,7 +173,7 @@
        info <- .rs.python.interpreterInfo(python, NULL)
        version <- numeric_version(info$version, strict = FALSE)
        if (!is.na(version) && version >= "3.2")
-         return(python)
+          return(python)
      }
    }
 
@@ -185,7 +185,7 @@
      pythonPath <- if (.rs.platform.isWindows) "../python.exe" else "../bin/python"
      python <- file.path(dirname(conda), pythonPath)
      if (file.exists(python))
-       return(python)
+        return(python)
    }
 
    # fall back to versions of python in /usr/bin if available
@@ -193,7 +193,7 @@
    {
      python3 <- Sys.which("python3")
      if (nzchar(python3) && python3 == "/usr/bin/python3")
-       return(python3)
+        return(python3)
 
      python <- Sys.which("python")
      if (nzchar(python) && python == "/usr/bin/python")
@@ -201,7 +201,7 @@
        info <- .rs.python.interpreterInfo(python, NULL)
        version <- numeric_version(info$version, strict = FALSE)
        if (!is.na(version) && version >= "3.2")
-         return(python)
+          return(python)
      }
    }
 
