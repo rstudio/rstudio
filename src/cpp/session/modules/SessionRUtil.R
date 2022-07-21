@@ -156,7 +156,7 @@
    
    # write bundle to file
    # (suppress 'may not be available when loading' warnings)
-   suppressWarnings(saveRDS(bundlle, file = "bundle.rds"))
+   suppressWarnings(saveRDS(bundle, file = "bundle.rds"))
    
    # write script to file
    writeLines(deparse(script), con = "script.R")
