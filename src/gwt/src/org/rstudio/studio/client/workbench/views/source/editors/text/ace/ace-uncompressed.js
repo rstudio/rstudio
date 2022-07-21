@@ -7359,6 +7359,12 @@ var numRe = exports.numRe = "\\-?(?:(?:[0-9]+(?:\\.[0-9]+)?)|(?:\\.[0-9]+))";
 var pseudoElements = exports.pseudoElements = "(\\:+)\\b(after|before|first-letter|first-line|moz-selection|selection)\\b";
 var pseudoClasses  = exports.pseudoClasses =  "(:)\\b(active|checked|disabled|empty|enabled|first-child|first-of-type|focus|hover|indeterminate|invalid|last-child|last-of-type|link|not|nth-child|nth-last-child|nth-last-of-type|nth-of-type|only-child|only-of-type|required|root|target|valid|visited)\\b";
 
+var rgb256Regex = /(rgba?)[(]([0-9]+)\s*,\s*([0-9]+)\s*,\s*([0-9]+)\s*(,\s*)?([0-9]+)?[)]/;
+var numberToHex = function(s) {
+    var result = parseInt(s).toString(16);
+    return (result.length == 1) ? "0" + result : result;
+};
+
 var CssHighlightRules = function() {
 
     var keywordMapper = this.createKeywordMapper({
@@ -7457,6 +7463,33 @@ var CssHighlightRules = function() {
             token : "constant.numeric",
             regex : numRe
         }, {
+            regex: rgb256Regex,
+            onMatch: function(value, state, stack, line) {
+                var match = value.match(rgb256Regex);
+                var r = parseInt(match[2]);
+                var g = parseInt(match[3]);
+                var b = parseInt(match[4]);
+                var has_alpha = match[6] != null;
+                if (r > 255 || g > 255 || b > 255)
+                    return "constant.color";
+
+                var a = "";
+                if (has_alpha) {
+                    a = parseInt(match[6]);
+                    if (a > 255)
+                        return "constant.color";
+                    a = numberToHex(a);
+                }
+
+                var r = numberToHex(r);
+                var g = numberToHex(g);
+                var b = numberToHex(b);
+               
+                return [
+                    { type: "constant.color", value: value, bg: "#" + r + g + b + a}
+                ];
+             }
+         }, {
             regex : "#[a-fA-F0-9]{6}", // hex6 color
             onMatch: function(value, state, stack, line) {
                 return [
