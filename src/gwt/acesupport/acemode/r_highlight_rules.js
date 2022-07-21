@@ -979,8 +979,8 @@ define("mode/r_highlight_rules", ["require", "exports", "module"], function(requ
             return this.token;
 
           var quote = value.substring(0,1);
-          var col = value.substring(2, value.length - 1);
-          return colorStringTokens(quote, "#" + col, col);
+          var col = value.substring(1, value.length - 1);
+          return colorStringTokens(quote, col, col);
         }
       },
       {
@@ -992,8 +992,8 @@ define("mode/r_highlight_rules", ["require", "exports", "module"], function(requ
             return this.token;
           
           var quote = value.substring(0, 1);
-          var col = value.substring(2, value.length - 1); 
-          return colorStringTokens(quote, "#" + col, col.replace(/./g, "$&$&"));
+          var col = value.substring(1, value.length - 1); 
+          return colorStringTokens(quote, col, col);
         }
       },
       {
@@ -1013,7 +1013,7 @@ define("mode/r_highlight_rules", ["require", "exports", "module"], function(requ
           if (rgb === undefined)
             return this.token;
           else
-            return colorStringTokens(quote, content, rgb);
+            return colorStringTokens(quote, content, "#" + rgb);
         }
       },
       {
