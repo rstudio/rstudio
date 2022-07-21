@@ -1,5 +1,3 @@
-> **Note:** On May 6, 2021, this repository's default branch was changed from `master` to `main`. See [Regarding Git and Branch Naming](https://sfconservancy.org/news/2020/jun/23/gitbranchname/) from the Software Freedom Conservancy for more information.
-
 RStudio
 =============================================================================
 
