@@ -275,7 +275,10 @@ void handleClientInit(const boost::function<void()>& initFunction,
    sessionInfo["python_repl_active"] = modules::reticulate::isReplActive();
    
    // propagate RETICULATE_PYTHON if set
-   sessionInfo["reticulate_python"] = core::system::getenv("RETICULATE_PYTHON");
+   std::string reticulate_python = core::system::getenv("RETICULATE_PYTHON");
+   if (reticulate_python.empty())
+      reticulate_python = core::system::getenv("RETICULATE_PYTHON_FALLBACK");
+   sessionInfo["reticulate_python"] = reticulate_python;
    
    // get current console language
    sessionInfo["console_language"] = modules::reticulate::isReplActive() ? "Python" : "R";
