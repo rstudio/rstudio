@@ -193,12 +193,16 @@ define("mode/r_highlight_rules", ["require", "exports", "module"], function(requ
     return (r * 299 + g * 587 + b * 114) / 1000 > 128;
   };
 
-  var colorTokens = function(quote, text, rgb)
-  {
+  var colorToken = function(type, text, rgb) {
     var textColor = isColorBright(rgb.substring(0, 6)) ? "black" : "white";
+    return { type: type, value: text, style: `background: #${rgb}; color: ${textColor} !important;` };
+  };
+
+  var colorStringTokens = function(quote, text, rgb)
+  {
     return [
       { type: "string", value: quote },
-      { type: "string.hexcolor", value: text, style: `background: #${rgb}; color: ${textColor} !important;` }, 
+      colorToken("string.hexcolor", text, rgb), 
       { type: "string", value: quote }
     ];
   };
@@ -992,7 +996,7 @@ define("mode/r_highlight_rules", ["require", "exports", "module"], function(requ
 
           var quote = value.substring(0,1);
           var col = value.substring(2, value.length - 1);
-          return colorTokens(quote, "#" + col, col);
+          return colorStringTokens(quote, "#" + col, col);
         }
       },
       {
@@ -1005,7 +1009,7 @@ define("mode/r_highlight_rules", ["require", "exports", "module"], function(requ
           
           var quote = value.substring(0, 1);
           var col = value.substring(2, value.length - 1); 
-          return colorTokens(quote, "#" + col, col.replace(/./g, "$&$&"));
+          return colorStringTokens(quote, "#" + col, col.replace(/./g, "$&$&"));
         }
       },
       {
@@ -1025,7 +1029,7 @@ define("mode/r_highlight_rules", ["require", "exports", "module"], function(requ
           if (rgb === undefined)
             return this.token;
           else
-            return colorTokens(quote, content, rgb);
+            return colorStringTokens(quote, content, rgb);
         }
       },
       {
