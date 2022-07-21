@@ -93,6 +93,9 @@
 #'
 #' @param ... Optional arguments passed to `system2()`.
 #' 
+#' @return The return value of the callback will be returned. Any returned
+#'   values should be cheap to serialize with RDS.
+#' 
 .rs.addFunction("executeFunctionInChildProcess", function(callback, 
                                                           data = list(),
                                                           workingDir = NULL,
@@ -146,8 +149,8 @@
       data     <- bundle[["data"]]
       
       # execute callback
-      do.call(callback, data)
-      
+      rval <- do.call(callback, data)
+      saveRDS(object = rval, file = "output.rds")
    })
    
    # write bundle to file
@@ -166,7 +169,8 @@
    
    # run the script
    system2(r, args, ...)
-   
+   # read in the serialized return value of the callback and return it
+   readRDS("output.rds")
 })
 
 # NOTE: this uses a bundled YAML library in the IDE as opposed to the R

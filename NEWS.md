@@ -8,6 +8,10 @@
 * Improved handling of missing arguments for some functions in the diagnostics system.
 * Code editor can show previews of color in strings (R named colors e.g. "tomato3" or of the forms "#rgb", "#rrggbb", "#rrggbbaa")
   when `Options > Code > Display > [ ] Show color preview` is checked. 
+  
+### Python
+
+- RStudio attempts to infer the appropriate version of Python when "Automatically activate project-local Python environments" is checked and the user has not requested a specific version of Python. This Python will be stored in the environment variable "RETICULATE_PYTHON_FALLBACK", available from the R console, the Python REPL, and the RStudio Terminal (#9990)
 
 ### Deprecated / Removed
 

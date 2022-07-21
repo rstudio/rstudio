@@ -2074,13 +2074,17 @@ options(reticulate.repl.teardown = function()
    # if the user has configured RStudio to use a particular version
    # of Python, then use that
    python <- .rs.readUiPref("python_path")
-   if (!is.null(python))
+   if (!is.null(python) && !identical(python, ""))
       return(path.expand(python))
    
-   # if reticulate is installed, then try to load it and ask what
-   # version of Python it would choose to bind to.
-   #
-   # TODO: we might want to avoid loading reticulate if possible here?
+   
+   # if reticulate is installed, then try to load it in a child process and 
+   # ask what version of Python it would choose to bind to.
+   
+   # Use existing RETICULATE_PYTHON_FALLBACK if set
+   python <- Sys.getenv("RETICULATE_PYTHON_FALLBACK", unset = NA)
+   if (!is.na(python))
+      return(python)
    if (.rs.isPackageInstalled("reticulate")) {
       
       # avoid miniconda prompts
@@ -2088,10 +2092,14 @@ options(reticulate.repl.teardown = function()
       Sys.setenv(RETICULATE_MINICONDA_ENABLED = "FALSE")
 
       # Then perform a Python version scan/discovery
+      # do this in child process so we don't pollute the namespace
+      # callback must be passed as a func within a func to avoid loading reticulate
       py_config <- NULL
       tryCatch({
-         py_config <- reticulate::py_discover_config()
-      }, finally = {
+         py_config <- .rs.executeFunctionInChildProcess(
+            callback   = function() reticulate::py_discover_config()
+         )
+       }, finally = {
          Sys.setenv(RETICULATE_MINICONDA_ENABLED = prev_miniconda)
       })
 
