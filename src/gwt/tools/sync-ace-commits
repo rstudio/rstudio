@@ -1,7 +1,7 @@
 #!/usr/bin/env bash
 set -e
 
-BRANCH=rstudio/elsbeth-geraninum
+BRANCH=alternative_color_dark_and_light
 
 PROGRAMS=("git" "npm")
 for PROGRAM in "${PROGRAMS[@]}"; do
@@ -27,4 +27,3 @@ npm install
 cd ..
 
 ./build-ace
-
