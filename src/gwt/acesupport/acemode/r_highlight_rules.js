@@ -186,7 +186,7 @@ define("mode/r_highlight_rules", ["require", "exports", "module"], function(requ
   {
     return [
       { type: "string", value: quote },
-      { type: "string.hexcolor", value: text, bg: rgb},
+      { type: "color", value: text, bg: rgb},
       { type: "string", value: quote }
     ];
   };

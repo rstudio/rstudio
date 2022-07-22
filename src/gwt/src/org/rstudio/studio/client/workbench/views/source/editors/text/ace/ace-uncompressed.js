@@ -64185,7 +64185,7 @@ position: absolute;\
 z-index: 8;\
 }\
 .ace_color {\
-color: white;\
+color: white !important;\
 text-shadow: 1px 1px rgba(0,0,0,0.5), -1px 1px rgba(0,0,0,0.5), 1px -1px rgba(0,0,0,0.5), -1px -1px rgba(0,0,0,0.5);\
 }\
 ";
