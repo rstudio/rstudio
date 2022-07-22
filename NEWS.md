@@ -8,6 +8,7 @@
 * Improved handling of missing arguments for some functions in the diagnostics system.
 * Code editor can show previews of color in strings (R named colors e.g. "tomato3" or of the forms "#rgb", "#rrggbb", "#rrggbbaa")
   when `Options > Code > Display > [ ] Show color preview` is checked. 
+* Fixes the bug introduced with `rlang` >= 1.03 where Rmd documents show the error message `object 'partition_yaml_front_matter' not found` upon project startup (#11552)
   
 ### Python
 
