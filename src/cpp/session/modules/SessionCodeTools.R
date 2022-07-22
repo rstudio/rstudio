@@ -2260,7 +2260,8 @@
 
    # for R Markdown docs, scan the YAML header (requires the rmarkdown package and the yaml package,
    # a dependency of rmarkdown)
-   if (identical(extension, ".Rmd") && 
+   if (identical(extension, ".Rmd") &&
+       is.null(dynGet("__NameSpacesLoading__", NULL)) &&
        requireNamespace("rmarkdown", quietly = TRUE) &&
        requireNamespace("yaml", quietly = TRUE))
    {
