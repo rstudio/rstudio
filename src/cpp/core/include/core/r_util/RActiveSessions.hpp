@@ -349,6 +349,11 @@ public:
       return timestampProperty(kLastStateUpdated);
    }
 
+   boost::posix_time::ptime lastStateUpdatedTime() const
+   {
+      return timestampToPtime(lastStateUpdated());
+   }
+
    void setLastStateUpdated()
    {
       setTimestampProperty(kLastStateUpdated);
@@ -361,7 +366,7 @@ public:
 
    boost::posix_time::ptime createdTime() const
    {
-      return ptimeTimestampProperty(kCreated);
+      return timestampToPtime(created());
    }
 
    void setCreated()
@@ -607,6 +612,13 @@ public:
    {
       double now = date_time::millisecondsSinceEpoch();
       return safe_convert::numberToString(now);
+   }
+
+   static boost::posix_time::ptime timestampToPtime(double millisTime)
+   {
+      long time = (long) millisTime;
+      return boost::posix_time::from_time_t(time / 1000) +
+             boost::posix_time::millisec(time % 1000);
    }
 
    double timestampProperty(const std::string& property) const
