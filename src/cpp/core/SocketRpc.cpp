@@ -22,6 +22,7 @@
 #include <core/http/LocalStreamAsyncClient.hpp>
 #endif
 
+#include <core/http/HeaderCookieConstants.hpp>
 #include <core/http/TcpIpBlockingClient.hpp>
 #include <core/http/TcpIpBlockingClientSsl.hpp>
 #include <core/http/TcpIpAsyncClient.hpp>
@@ -218,7 +219,7 @@ void constructTcpRequest(const std::string& address,
    // stamp auth cookie on the request
    // this lets the server know the RPC is coming from a trusted sourcce,
    // and on behalf of which user
-   pRequest->setHeader(kRstudioRpcCookieHeader, core::system::getenv(kRstudioRpcCookieEnvVar));
+   pRequest->setHeader(kRStudioRpcCookieHeader, core::system::getenv(kRstudioRpcCookieEnvVar));
 
    // add additional Host header (needed for TCP connections)
    pRequest->setHost(address);

@@ -16,10 +16,6 @@
 #ifndef AUTH_COOKIES_HPP
 #define AUTH_COOKIES_HPP
 
-#define kUserIdCookie      "user-id"
-#define kUserListCookie    "user-list-id"
-#define kPersistAuthCookie "persist-auth"
-
 #define kSameSiteOmitOption ""
 #define kSameSiteNoneOption "none"
 #define kSameSiteLaxOption  "lax"

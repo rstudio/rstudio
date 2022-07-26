@@ -20,7 +20,6 @@
 // URLs.
 
 #define kDefaultPortToken "a433e59dc087"
-#define kPortTokenCookie  "port-token"
 
 #include <string>
 

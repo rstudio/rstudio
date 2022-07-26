@@ -16,7 +16,6 @@
 #ifndef SERVER_CONSTANTS_HPP
 #define SERVER_CONSTANTS_HPP
 
-#define kRStudioSessionRequiredHeader "X-RStudio-Session-Required"
 #define kServerLocalSocket            "rserver.socket"
 #define kServerLocalSocketPathEnvVar  "RS_SERVER_LOCAL_SOCKET_PATH"
 #define kServerTmpDir                 "rstudio-rserver"

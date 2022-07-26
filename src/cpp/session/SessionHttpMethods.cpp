@@ -131,7 +131,8 @@ bool parseAndValidateJsonRpcConnection(
        !core::http::validateCSRFHeaders(ptrConnection->request()))
    {
       LOG_WARNING_MESSAGE("RPC request to '" + ptrConnection->request().uri() + "' has missing or "
-            "mismatched " kCSRFTokenCookie " cookie or " kCSRFTokenHeader " header");
+            "mismatched " + std::string(kCSRFTokenCookie) + " cookie or " +
+            std::string(kCSRFTokenHeader) + " header");
       ptrConnection->sendJsonRpcError(Error(json::errc::Unauthorized, ERROR_LOCATION));
       return false;
    }

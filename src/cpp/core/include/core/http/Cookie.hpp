@@ -26,8 +26,6 @@ namespace http {
 
 class Request;
 
-#define kLegacyCookieSuffix "-legacy"
-
 class Cookie
 {
 public:

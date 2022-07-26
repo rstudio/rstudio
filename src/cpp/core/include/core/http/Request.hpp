@@ -16,12 +16,12 @@
 #ifndef CORE_HTTP_REQUEST_HPP
 #define CORE_HTTP_REQUEST_HPP
 
+#include "HeaderCookieConstants.hpp"
 #include "Message.hpp"
 #include "Util.hpp"
 #include "Cookie.hpp"
 
 #define kRequestDefaultRootPath "/"
-#define kVirtualPathHeader "X-RStudio-Virtual-Path"
 
 namespace rstudio {
 namespace core {

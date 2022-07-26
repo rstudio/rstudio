@@ -21,9 +21,7 @@
 #include <shared_core/json/Json.hpp>
 #include <boost/date_time/posix_time/posix_time.hpp>
 
-#define kServerRpcSecretHeader        "X-RS-Session-Server-RPC-Secret"
 #define kServerRpcSecretEnvVar        "RS_SESSION_SERVER_RPC_SECRET"
-#define kRstudioRpcCookieHeader       "X-RS-Session-Server-RPC-Cookie"
 #define kRstudioRpcCookieEnvVar       "RS_SESSION_RPC_COOKIE"
 #define kServerRpcSocketPathEnvVar    "RS_SERVER_RPC_SOCKET_PATH"
 

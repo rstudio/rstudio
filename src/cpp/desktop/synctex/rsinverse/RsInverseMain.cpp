@@ -35,7 +35,6 @@
 // should not be changed unless also changed there
 #define kLocalUriLocationPrefix           "/rsession-local/"
 #define kPostbackUriScope                 "postback/"
-#define kPostbackExitCodeHeader           "X-Postback-ExitCode"
 
 using namespace rstudio;
 using namespace rstudio::core;

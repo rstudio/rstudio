@@ -87,7 +87,7 @@ bool validateSecureCookie(boost::shared_ptr<core::http::AsyncConnection> pConnec
 {
    const http::Request& request = pConnection->request();
 
-   std::string cookieValue = request.cookieValueFromHeader(kRstudioRpcCookieHeader);
+   std::string cookieValue = request.cookieValueFromHeader(kRStudioRpcCookieHeader);
    if (cookieValue.empty())
    {
       if (!fallbackAllowed)

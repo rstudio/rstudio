@@ -107,7 +107,6 @@
 // project so they should be updated there as well if they are changed
 #define kLocalUriLocationPrefix           "/rsession-local/"
 #define kPostbackUriScope                 "postback/"
-#define kPostbackExitCodeHeader           "X-Postback-ExitCode"
 
 #define kMonitoredPath      "monitored"
 #define kListsPath          "lists"

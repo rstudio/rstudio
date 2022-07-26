@@ -38,6 +38,7 @@
 #include <core/WaitUtils.hpp>
 #include <core/RegexUtils.hpp>
 
+#include <core/http/HeaderCookieConstants.hpp>
 #include <core/http/CSRFToken.hpp>
 #include <core/http/SocketUtils.hpp>
 #include <core/http/SocketProxy.hpp>
@@ -55,7 +56,6 @@
 
 #include <core/json/JsonRpc.hpp>
 
-#include <server_core/http/HeaderConstants.hpp>
 #include <server_core/http/LocalhostAsyncClient.hpp>
 #include <server_core/sessions/SessionLocalStreams.hpp>
 #include <server_core/UrlPorts.hpp>
