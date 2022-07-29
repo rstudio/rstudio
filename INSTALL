@@ -7,6 +7,10 @@ distribution. Information on obtaining the RStudio source code can be found
 in the file SOURCE. Note that precompiled binaries are also available for
 Windows, macOS, as well as recent versions of various Linux distributions.
 
+Note, the target "Electron" should be used when building the Desktop IDE.
+The "Desktop" target builds the legacy Qt application, is no longer 
+supported, and will eventually be removed.
+
 1) Installing Dependencies
 ----------------------------------------------------------------------------
 
@@ -42,14 +46,14 @@ b) Configure the build using cmake as appropriate, e.g.
 
    RSTUDIO_TARGET        Electron or Server
 
-   RSTUDIO_PACKAGE_BUILD Desktop: must be set to 1 for following cases:
+   RSTUDIO_PACKAGE_BUILD Electron: must be set to 1 for following cases:
                            "make install"
                            "make-package"
 
    CMAKE_BUILD_TYPE      Debug, Release, RelMinSize, or RelWithDebInfo
 
    CMAKE_INSTALL_PREFIX  Defaults:
-                           Linux (Desktop):     /usr/local/lib/rstudio
+                           Linux (Electron):    /usr/local/lib/rstudio
                            Linux (Server):      /usr/local/lib/rstudio-server
                            macOS:               /Applications/RStudio
                            Windows:             C:\Program Files\RStudio
@@ -57,7 +61,7 @@ b) Configure the build using cmake as appropriate, e.g.
 
 c) There are additional considerations on Windows. First, RStudio Server
    is not supported on Windows so the configuration always defaults to
-   Desktop. Second, you need to add an extra -G parameter to specify the
+   Electron. Second, you need to add an extra -G parameter to specify the
    correct build toolchain, for example:
 
    cmake .. -G "Visual Studio 16 2019" -A Win64 -DCMAKE_BUILD_TYPE=Release
