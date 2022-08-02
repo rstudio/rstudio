@@ -1,6 +1,10 @@
 ---
-name  : Feature request
-about : Request a new feature.
+name: Feature request
+about: Request a new feature.
+title: ''
+labels: ''
+assignees: ''
+
 ---
 
 <!--
@@ -14,4 +18,3 @@ https://github.com/rstudio/rstudio/wiki/Writing-Good-Feature-Requests
 for a guide on how to write good feature requests.
 
 -->
-
