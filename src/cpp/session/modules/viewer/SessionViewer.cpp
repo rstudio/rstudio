@@ -158,10 +158,7 @@ Error getViewerExportContext(const json::JsonRpcRequest& request,
    json::Array formats;
    formats.push_back(plotExportFormat("PNG", kPngFormat));
    formats.push_back(plotExportFormat("JPEG", kJpegFormat));
-   #ifndef __APPLE__
-      formats.push_back(plotExportFormat("BMP", kBmpFormat));
-   #endif // !__APPLE__
-   // TIFF and SVG formats not currently supported in Electron
+   // BMP, TIFF and SVG formats not currently supported in Electron
    contextJson["formats"] = formats;
 
    // get directory path -- if it doesn't exist revert to the current

@@ -506,9 +506,7 @@ export class GwtCallback extends EventEmitter {
           .capturePage(rect)
           .then((image) => {
             let buffer: Buffer;
-            if (format == 'bmp') {
-              buffer = image.toBitmap();
-            } else if (format == 'jpeg') {
+            if (format == 'jpeg') {
               buffer = image.toJPEG(100);
             } else {
               buffer = image.toPNG();
