@@ -93,8 +93,8 @@ public class CopyPlotToClipboardDesktopDialog
                // NOTE: we use a one-pixel fudge factor here to avoid copying
                // bits of the border; see https://github.com/rstudio/rstudio/issues/4864
                frame.copyPageRegionToClipboard(
-                     ElementEx.clientLeft(img) + 1,
-                     ElementEx.clientTop(img) + 1,
+                     ElementEx.getClientLeft(img) + 1,
+                     ElementEx.getClientTop(img) + 1,
                      img.getClientWidth(),
                      img.getClientHeight(),
                      completed);
