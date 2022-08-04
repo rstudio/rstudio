@@ -339,7 +339,7 @@ export class GwtCallback extends EventEmitter {
     });
 
     function showFileInSystemViewer(file: string) {
-      shell.openPath(resolveAliasedPath(normalizeSeparatorsNative(wordDoc))).catch((value) => {
+      shell.openPath(resolveAliasedPath(normalizeSeparatorsNative(file))).catch((value) => {
         console.log('error:', value);
         logger().logErrorMessage(value);
       });
