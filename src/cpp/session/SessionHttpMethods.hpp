@@ -58,6 +58,7 @@ std::string clientVersion();
 std::string nextSessionUrl();
 bool protocolDebugEnabled();
 core::Error initialize();
+bool verifyRequestSignature(const core::http::Request& request);
 
 } // namespace http_methods
 } // namespace session

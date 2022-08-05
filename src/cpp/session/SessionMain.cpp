@@ -779,7 +779,7 @@ Error rInit(const rstudio::r::session::RInitInfo& rInitInfo)
    // begin session
    using namespace module_context;
    activeSession().beginSession(rVersion(), rHomeDir(), rVersionLabel());
-   LOG_DEBUG_MESSAGE("Beginning session: " + activeSession().id() + " with activityState: " + activeSession().activityState());
+   LOG_DEBUG_MESSAGE("Beginning session: " + activeSession().id() + " with activityState: " + activeSession().activityState() + " for username: " + core::system::username() + " effective uid: " + std::to_string(core::system::effectiveUserId()));
 
    // setup fork handlers
    main_process::setupForkHandlers();
