@@ -338,31 +338,29 @@ export class GwtCallback extends EventEmitter {
       });
     });
 
+    function showFileInSystemViewer(file: string) {
+      shell.openPath(resolveAliasedPath(normalizeSeparatorsNative(file))).catch((value) => {
+        console.log('error:', value);
+        logger().logErrorMessage(value);
+      });
+    };
+
     ipcMain.on('desktop_show_file', (event, file: string) => {
-      shell.showItemInFolder(file);
+      showFileInSystemViewer(file);
     });
 
     ipcMain.on('desktop_show_word_doc', (event, wordDoc: string) => {
-      shell.openPath(resolveAliasedPath(normalizeSeparatorsNative(wordDoc))).catch((value) => {
-        console.log('error:', value);
-        logger().logErrorMessage(value);
-      });
+      showFileInSystemViewer(wordDoc);
     });
 
     ipcMain.on('desktop_show_ppt_presentation', (event, pptDoc: string) => {
-      shell.openPath(resolveAliasedPath(normalizeSeparatorsNative(pptDoc))).catch((value) => {
-        console.log('error:', value);
-        logger().logErrorMessage(value);
-      });
+      showFileInSystemViewer(pptDoc);
     });
 
     ipcMain.on('desktop_show_pdf', (event, path: string, pdfPage: string) => {
       // TODO: when desktop_external_synctex_view is implemented, use synctex viewer as appropriate
       // pdfPage is only relevant for synctex
-      shell.openPath(resolveAliasedPath(normalizeSeparatorsNative(path))).catch((value) => {
-        console.log('error:', value);
-        logger().logErrorMessage(value);
-      });
+      showFileInSystemViewer(path);
     });
 
     ipcMain.on('desktop_prepare_show_word_doc', () => {

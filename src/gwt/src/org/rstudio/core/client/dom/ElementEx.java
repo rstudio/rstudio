@@ -46,38 +46,35 @@ public class ElementEx extends Element
       return (result == null) ? '' : result + '';
    }-*/;
 
-   // NOTE: We intentionally avoid calling this method 'getClientLeft()',
-   // as it seems to collide with other GWT definitions and causes GWT to
-   // fail to see the function definition.
-   public final int clientLeft()
+   public final int getClientLeft()
    {
       int left = getAbsoluteLeft();
       ElementEx iFrame = getOwningIFrame();
       if (iFrame != null)
-         left += iFrame.clientLeft();
+         left += iFrame.getClientLeft();
       return left;
    }
 
-   // NOTE: We intentionally avoid calling this method 'getClientTop()',
-   // as it seems to collide with other GWT definitions and causes GWT to
-   // fail to see the function definition.
-   public final int clientTop()
+   public final int getClientTop()
    {
       int top = getAbsoluteTop();
       ElementEx iFrame = getOwningIFrame();
       if (iFrame != null)
-         top += iFrame.clientTop();
+         top += iFrame.getClientTop();
       return top;
    }
 
-   public static final int clientLeft(Element el)
+   // NOTE: these static methods are provided only because
+   // GWT seems unable to find the instance methods of the
+   // same name in some contexts in devmode
+   public static final int getClientLeft(Element el)
    {
-      return ((ElementEx) el).clientLeft();
+      return ((ElementEx) el).getClientLeft();
    }
 
-   public static final int clientTop(Element el)
+   public static final int getClientTop(Element el)
    {
-      return ((ElementEx) el).clientTop();
+      return ((ElementEx) el).getClientTop();
    }
 
    public static final DOMRect getBoundingClientRect(Element el)
