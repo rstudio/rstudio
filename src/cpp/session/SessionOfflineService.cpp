@@ -241,6 +241,16 @@ void OfflineService::run()
                   ptrConnection = mainConnectionQueue.dequeMatchingConnection(offlineConnectionMatcher, now);
                   if (ptrConnection)
                   {
+                     // ensure request signature is valid
+                     if (!http_methods::verifyRequestSignature(ptrConnection->request()))
+                     {
+                        LOG_ERROR_MESSAGE("Invalid signature in offline handler for request URI " + ptrConnection->request().uri());
+                        core::http::Response response;
+                        response.setError(http::status::Unauthorized, "Invalid message signature");
+                        ptrConnection->sendResponse(response);
+                        continue;
+                     }
+
                      if (http_methods::protocolDebugEnabled())
                      {
                         std::chrono::duration<double> beforeTime = now - ptrConnection->receivedTime();

@@ -44,6 +44,9 @@ void initTcpHttpConnectionListener(const std::string& wwwAddress,
                                    const std::string& sharedSecret,
                                    const std::string& debugName)
 {
+   if (core::system::effectiveUserIsRoot())
+      LOG_WARNING_MESSAGE("Initializing tcp connection listener with effective user as 'root': verify request signatures diabled");
+
    if (!options.getOverlayOption(kSessionSslCertOption).empty())
    {
       LOG_DEBUG_MESSAGE("Initializing " + debugName + " tcp ssl listener for : " + options.wwwAddress() + ":" + safe_convert::numberToString(options.wwwPort()));
@@ -65,6 +68,17 @@ void initTcpHttpConnectionListener(const std::string& wwwAddress,
                                          bindPort,
                                          options.sharedSecret());
    }
+   if (sharedSecret.empty())
+   {
+      if (!options.standalone())
+         LOG_WARNING_MESSAGE("The tcp http listener initialized without signature validation: --standalone option missing");
+      if (!options.verifySignatures())
+         LOG_WARNING_MESSAGE("The tcp http listener initialized without signature validation: --verify-signatures option missing");
+      if (options.standalone() && options.verifySignatures() && !core::system::effectiveUserIsRoot())
+         LOG_DEBUG_MESSAGE("Verify signatures enabled for tcp http listener");
+   }
+   else
+      LOG_DEBUG_MESSAGE("Validating tcp http connections with a shared secret");
 }
 
 }  // anonymous namespace
@@ -160,7 +174,7 @@ void initializeHttpConnectionListener()
          std::string streamFile = r_util::sessionContextFile(context);
          FilePath localStreamPath = local_streams::streamPath(streamFile);
 
-         LOG_DEBUG_MESSAGE("Initializing local stream listener for : " + localStreamPath.getAbsolutePath());
+         LOG_DEBUG_MESSAGE("Initializing local stream listener for : " + localStreamPath.getAbsolutePath() + " limited to UID: " + std::to_string(options.limitRpcClientUid()));
 
          s_pHttpConnectionListener = new LocalStreamHttpConnectionListener(
                                           localStreamPath,
