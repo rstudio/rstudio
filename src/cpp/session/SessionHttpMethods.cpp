@@ -292,6 +292,16 @@ void polledEventHandler()
             httpConnectionListener().mainConnectionQueue().dequeConnection();
       if (ptrConnection)
       {
+         // ensure request signature is valid
+         if (!http_methods::verifyRequestSignature(ptrConnection->request()))
+         {
+            LOG_ERROR_MESSAGE("Invalid signature in poll handler for request URI " + ptrConnection->request().uri());
+            core::http::Response response;
+            response.setError(http::status::Unauthorized, "Invalid message signature");
+            ptrConnection->sendResponse(response);
+            return;
+         }
+
          if ( isMethod(ptrConnection, kClientInit) )
          {
             if (ptrConnection->isAsyncRpc())
@@ -336,6 +346,22 @@ bool registeredWaitForMethod(const std::string& method,
                         pRequest);
 }
 
+
+} // anonymous namespace
+
+namespace module_context
+{
+module_context::WaitForMethodFunction registerWaitForMethod(
+      const std::string& methodName)
+{
+   s_waitForMethodNames.push_back(methodName);
+   return boost::bind(registeredWaitForMethod, methodName, _2, _1);
+}
+
+} // namespace module_context
+
+namespace http_methods {
+
 bool verifyRequestSignature(const core::http::Request& request)
 {
 #ifndef RSTUDIO_SERVER
@@ -371,21 +397,6 @@ bool verifyRequestSignature(const core::http::Request& request)
 #endif
 }
 
-
-} // anonymous namespace
-
-namespace module_context
-{
-module_context::WaitForMethodFunction registerWaitForMethod(
-      const std::string& methodName)
-{
-   s_waitForMethodNames.push_back(methodName);
-   return boost::bind(registeredWaitForMethod, methodName, _2, _1);
-}
-
-} // namespace module_context
-
-namespace http_methods {
 
 // client version -- this is determined by the git revision hash. the client
 // and the server can diverge if a new version of the server was installed
@@ -476,7 +487,7 @@ bool waitForMethod(const std::string& method,
       if (ptrConnection)
       {
          // ensure request signature is valid
-         if (!verifyRequestSignature(ptrConnection->request()))
+         if (!http_methods::verifyRequestSignature(ptrConnection->request()))
          {
             LOG_ERROR_MESSAGE("Invalid signature for request URI " + ptrConnection->request().uri());
             core::http::Response response;
