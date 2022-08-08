@@ -62948,13 +62948,13 @@ var Text = function(parentEl) {
         yellowgreen     :"#9acd32"
     };
 
-    var isColorBright = function(hex6, opacity) {
+    var isColorBright = function(hex6) {
         var rgb = parseInt(hex6, 16); // convert rrggbb to decimal
         var r = (rgb >> 16) & 0xff;  // extract red
         var g = (rgb >>  8) & 0xff;  // extract green
         var b = (rgb >>  0) & 0xff;  // extract blue
 
-        return (r * 299 + g * 587 + b * 114) / 1000 > (128 * opacity);
+        return (r * 299 + g * 587 + b * 114) / 1000 > 128;
     };
 
     var bgStyle = function(color) {
@@ -62966,13 +62966,9 @@ var Text = function(parentEl) {
                 rgb = rgb.replace(/./g, "$&$&");
             }
         } else {
-            rgb = namedColors[color].substring(1);
+            rgb = namedColors[color].substring(1, 7);
         }
-        var opacity = 1;
-        if (rgb.length == 8) {
-            opacity = parseInt(rgb.substring(6,8), 16) / 255;
-        }
-        var textColor = isColorBright(rgb.substring(0, 6), opacity) ? "#00000080" : "#ffffff80";
+        var textColor = isColorBright(rgb) ? "#000000a0" : "#ffffffa0";
         return "background: #" + rgb + "; color: " + textColor + "!important";
     };
 
