@@ -353,7 +353,7 @@ bool rConsoleRead(const std::string& prompt,
       }
       else
       {
-            popConsoleInput(pConsoleInput);
+         popConsoleInput(pConsoleInput);
       }
    }
 
