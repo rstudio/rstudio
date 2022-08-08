@@ -498,9 +498,26 @@ export class GwtCallback extends EventEmitter {
       },
     );
 
-    ipcMain.on('desktop_export_page_region_to_file', (event, targetPath, format, left, top, width, height) => {
-      GwtCallback.unimpl('desktop_export_page_region_to_file');
-    });
+    ipcMain.on('desktop_export_page_region_to_file', 
+      (event, targetPath, format, left, top, width, height) => {
+        const rect: Rectangle = { x: left, y: top, width, height };
+        targetPath = resolveAliasedPath(targetPath);
+        this.mainWindow.window
+          .capturePage(rect)
+          .then((image) => {
+            let buffer: Buffer;
+            if (format == 'jpeg') {
+              buffer = image.toJPEG(100);
+            } else {
+              buffer = image.toPNG();
+            }
+            writeFileSync(targetPath, buffer);
+          })
+          .catch((error) => {
+            logger().logError(error);
+          });
+      },
+    );
 
     ipcMain.handle('desktop_supports_clipboard_metafile', () => {
       return process.platform === 'win32';
