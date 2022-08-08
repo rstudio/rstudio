@@ -2,7 +2,7 @@
 name: Bug report
 about: Report a bug in RStudio.
 title: ''
-labels: 'bug'
+labels: ['bug', 'new']
 assignees: ''
 
 ---
