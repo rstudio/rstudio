@@ -62965,8 +62965,12 @@ var Text = function(parentEl) {
             if (rgb.length == 3) {
                 rgb = rgb.replace(/./g, "$&$&");
             }
+            else
+            {
+                rgb = substring(0, 6);
+            }
         } else {
-            rgb = namedColors[color].substring(1, 7);
+            rgb = namedColors[color].substring(1);
         }
         var textColor = isColorBright(rgb) ? "#000000a0" : "#ffffffa0";
         return "background: #" + rgb + "; color: " + textColor + "!important";
