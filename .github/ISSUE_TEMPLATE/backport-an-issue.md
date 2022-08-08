@@ -2,7 +2,7 @@
 name: Backport an issue
 about: File an issue to backport another issue to a specific previous version.
 title: 'Backport #<issue> to <version name> <YYYY.MM.patch>'
-labels: backport
+labels: ['backport', 'new']
 assignees: ''
 
 ---
