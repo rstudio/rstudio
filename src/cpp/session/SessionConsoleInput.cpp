@@ -170,9 +170,9 @@ void fixupPendingConsoleInput()
       return;
    
    // if this has no newlines, then nothing to do
-   auto index = input.text.find('\n');
-   if (index == std::string::npos)
-      return;
+   //auto index = input.text.find('\n');
+   //if (index == std::string::npos)
+   //   return;
    
    // if we're about to send code to the Python REPL, then
    // we need to fix whitespace in the code before sending
@@ -353,7 +353,7 @@ bool rConsoleRead(const std::string& prompt,
       }
       else
       {
-         popConsoleInput(pConsoleInput);
+            popConsoleInput(pConsoleInput);
       }
    }
 

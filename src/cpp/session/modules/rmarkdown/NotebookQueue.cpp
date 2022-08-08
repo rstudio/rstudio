@@ -283,7 +283,7 @@ private:
          execContext_->onExprComplete();
          
       ExecRange range;
-      std::string code = execUnit_->popExecRange(&range, mode);
+      std::string code = execUnit_->popExecRange(&range, mode, execContext_->engine());
       if (code.empty())
       {
          // no code to evaluate--skip this unit
