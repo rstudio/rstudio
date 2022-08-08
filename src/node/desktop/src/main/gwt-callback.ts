@@ -163,7 +163,6 @@ export class GwtCallback extends EventEmitter {
         forceDefaultExtension: boolean,
         focusOwner: boolean,
       ) => {
-        console.log('desktop_get_save_file_name');
         const saveDialogOptions: SaveDialogOptions = {
           title: caption,
           defaultPath: resolveAliasedPath(dir),
