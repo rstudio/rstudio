@@ -62967,7 +62967,7 @@ var Text = function(parentEl) {
             }
             else
             {
-                rgb = substring(0, 6);
+                rgb = rgb.substring(0, 6);
             }
         } else {
             rgb = namedColors[color].substring(1);
