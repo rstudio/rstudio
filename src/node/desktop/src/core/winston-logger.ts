@@ -28,7 +28,7 @@ import { Logger, showDiagnosticsOutput } from './logger';
 export class WinstonLogger implements Logger {
   logger: winston.Logger;
 
-  constructor(logFile: FilePath, level: winston.level) {
+  constructor(logFile: FilePath, level: string) {
 
     level = this.readLogLevelOverride(level);
     this.logger = winston.createLogger({ level: level });
@@ -47,13 +47,13 @@ export class WinstonLogger implements Logger {
 
   }
 
-  readLogLevelOverride(defaultLevel: winston.level): winston.level {
+  readLogLevelOverride(defaultLevel: string): string {
 
     const envvars = ['RSTUDIO_DESKTOP_LOG_LEVEL', 'RS_LOG_LEVEL'];
     for (const envvar of envvars) {
       const envval = getenv(envvar);
       if (envval.length !== 0) {
-        return envval as winston.level;
+        return envval as string;
       }
     }
 
@@ -61,15 +61,15 @@ export class WinstonLogger implements Logger {
 
   }
 
-  logLevel(): winston.level {
+  logLevel(): string {
     return this.logger.level;
   }
 
-  setLogLevel(level: winston.level): void {
+  setLogLevel(level: string): void {
     this.logger.level = level;
   }
 
-  log(level: winston.level, message: string): void {
+  log(level: string, message: string): void {
 
     // log to default log locations
     this.logger.log(level, message);
@@ -89,7 +89,7 @@ export class WinstonLogger implements Logger {
     this.logErrorAtLevel('error', err);
   }
 
-  logErrorAtLevel(level: winston.level, err: unknown): void {
+  logErrorAtLevel(level: string, err: unknown): void {
     this.log(level, safeError(err).message);
   }
 
