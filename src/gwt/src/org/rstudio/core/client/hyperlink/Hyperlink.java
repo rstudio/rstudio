@@ -65,6 +65,10 @@ public abstract class Hyperlink implements HelpPageShower
                 popup_.hide();
                 onClick();
             }
+            else if (event.getTypeInt() == Event.ONMOUSEOUT)
+            {
+                popup_.hide();
+            }
         });
 
         return anchor_;
