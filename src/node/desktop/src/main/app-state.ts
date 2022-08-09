@@ -14,6 +14,7 @@
  */
 
 import { BrowserWindow, WebContents } from 'electron';
+import { Client, Server } from 'net-ipc';
 import { FilePath } from '../core/file-path';
 
 import { DesktopActivation } from './activation-overlay';
@@ -43,6 +44,8 @@ export interface AppState {
     | { action: 'deny' }
     | { action: 'allow'; overrideBrowserWindowOptions?: Electron.BrowserWindowConstructorOptions | undefined };
   windowCreated(newWindow: BrowserWindow, owner: WebContents, baseUrl?: string): void;
+  server?: Server;
+  client?: Client;
 }
 
 let rstudio: AppState | null = null;

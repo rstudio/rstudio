@@ -71,6 +71,7 @@
     "i18next": "21.8.13",
     "line-reader": "0.4.0",
     "lodash.debounce": "4.0.8",
+    "net-ipc": "2.0.1",
     "node-addon-api": "5.0.0",
     "node-system-fonts": "1.0.1",
     "properties-reader": "2.2.0",

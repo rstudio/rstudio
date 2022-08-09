@@ -29,7 +29,7 @@ import { ArgsManager } from './args-manager';
 import { prepareEnvironment, promptUserForR } from './detect-r';
 import { GwtCallback } from './gwt-callback';
 import { PendingWindow } from './pending-window';
-import { exitFailure, ProgramStatus, run } from './program-status';
+import { exitFailure, exitSuccess, ProgramStatus, run } from './program-status';
 import { SatelliteWindow } from './satellite-window';
 import { SecondaryWindow } from './secondary-window';
 import { SessionLauncher } from './session-launcher';
@@ -45,6 +45,7 @@ import {
 } from './utils';
 import { WindowTracker } from './window-tracker';
 import { configureSatelliteWindow, configureSecondaryWindow, focusedWebContents } from './window-utils';
+import { Client, Server } from 'net-ipc';
 
 /**
  * The RStudio application
@@ -60,6 +61,8 @@ export class Application implements AppState {
   sessionStartDelaySeconds = 0;
   sessionEarlyExitCode = 0;
   pendingWindows = new Array<PendingWindow>();
+  server?: Server;
+  client?: Client;
 
   appLaunch?: ApplicationLaunch;
   sessionLauncher?: SessionLauncher;
@@ -76,6 +79,18 @@ export class Application implements AppState {
 
     if (status.exit) {
       return status;
+    }
+
+    // check if this is the primary instance
+    // projects always open in a new instance
+    // files prefer to reuse the primary instance
+    const hasInstanceLock = app.requestSingleInstanceLock();
+    const hasProjectToOpen = this.argsManager.getProjectFileArg() || getenv('RS_INITIAL_PROJECT');
+    const hasFileToOpen = this.argsManager.getFileArgs().length > 0;
+    logger().logDebug(`instance lock: ${hasInstanceLock}, project: ${hasProjectToOpen}, file: ${hasFileToOpen}`);
+    if (!hasInstanceLock && !hasProjectToOpen && hasFileToOpen) {
+      logger().logDebug('No instance lock - exiting');
+      return exitSuccess();
     }
 
     // attempt to remove stale lockfiles, as they can impede application startup
@@ -95,6 +110,7 @@ export class Application implements AppState {
 
     initializeSharedSecret();
     this.registerAppEvents();
+    this.initializeInstance();
 
     // allow users to supply extra command-line arguments for Chromium
     augmentCommandLineArguments();
@@ -102,7 +118,78 @@ export class Application implements AppState {
     return run();
   }
 
+  private initializeInstance() {
+    const hasInstanceLock = app.hasSingleInstanceLock();
+
+    if (hasInstanceLock) {
+      this.createMessageServer();
+    } else {
+      this.createMessageClient();
+    }
+  }
+
+  // listens for messages from the server
+  // currently, clients only listen for a close event to determine the next primary instance
+  private createMessageClient() {
+    const options = { path: 'rstudio', retries: 10 };
+    this.client = new Client(options);
+
+    // connect to primary RStudio instance
+    this.client.connect({ path: 'rstudio' })
+      .then(() => logger().logDebug(`net-ipc: ${process.pid} connected to primary instance`))
+      .catch((error: unknown) => logger().logError(error));
+
+    this.client.on('close', (reason: unknown) => {
+      logger().logDebug(`net-ipc: ${process.pid} server close event ${reason}`);
+
+      // close out connection to primary instance that just quit
+      // another connection will be created to either be the primary or listen to the new primary instance
+      this.client?.close()
+        .then(() => {
+          logger().logDebug(`net-ipc: ${process.pid} close client connection`);
+          this.client = undefined;
+        })
+        .catch((error: unknown) => logger().logError(error));
+
+      const instanceLock = app.requestSingleInstanceLock();
+      if (instanceLock) {
+        this.createMessageServer();
+      } else {
+        this.createMessageClient();
+      }
+    });
+  }
+
+  // create a new local socket to co-ordinate and become the primary instance
+  private createMessageServer() {
+    const options = { path: 'rstudio' };
+    this.server = new Server(options);
+    logger().logDebug('net-ipc: creating new message server');
+    this.server.start()
+      .then(() => {
+        this.client = undefined;
+        logger().logDebug(`net-ipc: ${process.pid} taking over as primary instance`);
+      })
+      .catch((error: unknown) => logger().logError(`net-ipc: ${process.pid} ${error}`));
+  }
+
   private registerAppEvents() {
+    app.on('before-quit', () => {
+      app.releaseSingleInstanceLock();
+
+      // closing will send an event to all other instances
+      // one of the other instances will take over as primary
+      this.server?.close()
+        .then(() => {
+          logger().logDebug(`net-ipc: ${process.pid} is shutting down and releasing the instance lock`);
+        })
+        .catch((error: unknown) => logger().logError(error));
+
+      this.client?.close()
+        .then(() => logger().logDebug(`net-ipc: ${process.pid} is disconnecting from the primary instance`))
+        .catch((error: unknown) => logger().logError(error));
+    });
+
     app.on('open-file', (event: Event, filepath: string) => {
       const resolvedPath = resolveAliasedPath(filepath);
       event.preventDefault();
@@ -132,6 +219,15 @@ export class Application implements AppState {
           }
         })
         .catch((error: unknown) => logger().logError(error));
+    });
+
+    app.on('second-instance', (_event, argv) => {
+      logger().logDebug(`second-instance event: ARGS ${argv}`);
+
+      // for files, open in the existing instance
+      this.argsManager.setUnswitchedArgs(argv);
+      if (this.argsManager.getProjectFileArg() === undefined)
+        this.argsManager.handleAfterSessionLaunchCommands();
     });
 
     // Workaround for selecting all text in the input field: https://github.com/rstudio/rstudio/issues/11581

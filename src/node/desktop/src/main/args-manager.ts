@@ -13,7 +13,7 @@
  *
  */
 
-import { app } from 'electron';
+import { app, webContents } from 'electron';
 import path from 'path';
 import { setenv } from '../core/environment';
 import { FilePath } from '../core/file-path';
@@ -29,6 +29,7 @@ import { getDesktopBridge } from '../renderer/desktop-bridge';
 import { Application } from './application';
 import { exitSuccess, ProgramStatus, run } from './program-status';
 import { getComponentVersions, userLogPath } from './utils';
+import { activateWindow } from './window-utils';
 
 // RStudio command-line switches
 export const kRunDiagnosticsOption = '--run-diagnostics';
@@ -49,7 +50,6 @@ export class ArgsManager {
   unswitchedArgs: string[] = [];
 
   initCommandLine(application: Application, argv: string[] = process.argv): ProgramStatus {
-
     // display usage help
     if (argv.indexOf(kHelp) > -1) {
       console.log('Options:');
@@ -81,12 +81,30 @@ export class ArgsManager {
       enableDiagnosticsOutput();
     }
 
-    // filter out the process path and . (occurs in dev mode)
-    this.unswitchedArgs = process.argv.filter(
-      (value) => !value.startsWith('--') && value !== process.execPath && value !== '.'
-    );
+    this.setUnswitchedArgs(process.argv);
 
     return run();
+  }
+
+  setUnswitchedArgs(args: string[]) {
+    // filter out the process path and . (occurs in dev mode)
+    this.unswitchedArgs = args.filter(
+      (value) => !value.startsWith('--') && value !== process.execPath && value !== '.'
+    );
+  }
+
+  getProjectFileArg(): string | undefined {
+    const projectFile = this.unswitchedArgs.find((arg) => {
+      return FilePath.existsSync(arg) && path.extname(arg).toLowerCase() === '.rproj';
+    });
+    return projectFile;
+  }
+
+  getFileArgs(): string[] {
+    const files = this.unswitchedArgs.filter((arg) => {
+      return FilePath.existsSync(arg) && path.extname(arg).toLowerCase() !== '.rproj';
+    });
+    return files;
   }
 
   handleAfterSessionLaunchCommands() {
@@ -96,6 +114,8 @@ export class ArgsManager {
           app.whenReady()
             .then(() => {
               getDesktopBridge().openFile(arg);
+              const name = webContents.getAllWebContents()[0].mainFrame.name;
+              activateWindow(name);
             })
             .catch((error: unknown) => {
               logger().logError(error);
