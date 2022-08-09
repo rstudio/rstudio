@@ -42,7 +42,7 @@ public abstract class Hyperlink implements HelpPageShower
 
         anchor_.setInnerText(text);
         anchor_.setClassName(getAnchorClass());
-        anchor_.setAttribute("href", url);
+        anchor_.setAttribute("data-url", url);
         
         if (clazz != null)
             anchor_.addClassName(clazz);

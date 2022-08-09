@@ -149,6 +149,11 @@ for (binding in bindings)
    .rs.scalar(identical(file.info(path)$isdir, FALSE))
 })
 
+.rs.addJsonRpcHandler("file_exists", function(path)
+{
+   .rs.scalar(file.exists(path))
+})
+
 .rs.addFunction("scanFiles", function(path,
                                       pattern,
                                       asRelativePath = TRUE,

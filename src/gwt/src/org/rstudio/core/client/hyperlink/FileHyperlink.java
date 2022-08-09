@@ -22,9 +22,11 @@ import org.rstudio.core.client.FilePosition;
 import org.rstudio.core.client.ResultCallback;
 import org.rstudio.core.client.StringUtil;
 import org.rstudio.studio.client.RStudioGinjector;
+import org.rstudio.studio.client.common.SimpleRequestCallback;
 import org.rstudio.studio.client.server.ServerError;
 import org.rstudio.studio.client.workbench.views.source.SourceColumnManager;
 import org.rstudio.studio.client.workbench.views.source.editors.EditingTarget;
+import org.rstudio.studio.client.workbench.views.source.model.SourceServerOperations;
 
 public class FileHyperlink extends Hyperlink 
 {
@@ -49,25 +51,37 @@ public class FileHyperlink extends Hyperlink
         
         if (params.containsKey("col"))
             col = StringUtil.parseInt(params.get("col"), -1);    
+
+        server_ = RStudioGinjector.INSTANCE.getServer();
     }
 
     @Override
     public void onClick()
     {
-        final SourceColumnManager columnManager = RStudioGinjector.INSTANCE.getSourceColumnManager(); 
-        
-        columnManager.editFile(filename, new ResultCallback<EditingTarget, ServerError>()
+        server_.fileExists(filename, new SimpleRequestCallback<Boolean>()
         {
             @Override
-            public void onSuccess(final EditingTarget result)
+            public void onResponseReceived(Boolean response)
             {
-                if (line != -1) 
+                if (response)
                 {
-                    // give ace time to render before scrolling to position
-                    Scheduler.get().scheduleDeferred(() ->
+                    final SourceColumnManager columnManager = RStudioGinjector.INSTANCE.getSourceColumnManager(); 
+        
+                    columnManager.editFile(filename, new ResultCallback<EditingTarget, ServerError>()
                     {
-                        FilePosition position = FilePosition.create(line, Math.max(col, 1));
-                        columnManager.scrollToPosition(position, true, () -> {});
+                        @Override
+                        public void onSuccess(final EditingTarget result)
+                        {
+                            if (line != -1) 
+                            {
+                                // give ace time to render before scrolling to position
+                                Scheduler.get().scheduleDeferred(() ->
+                                {
+                                    FilePosition position = FilePosition.create(line, Math.max(col, 1));
+                                    columnManager.scrollToPosition(position, true, () -> {});
+                                });
+                            }
+                        }
                     });
                 }
             }
@@ -82,5 +96,7 @@ public class FileHyperlink extends Hyperlink
     private String filename;
     private int line;
     private int col;
+
+    private SourceServerOperations server_;
 
 }
