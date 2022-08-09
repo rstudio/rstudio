@@ -84,6 +84,13 @@ public class FileHyperlink extends Hyperlink
                         }
                     });
                 }
+                else 
+                {
+                    RStudioGinjector.INSTANCE.getGlobalDisplay().showErrorMessage(
+                        "No such file",
+                        "'" + filename + "' does not exist"
+                        );
+                }
             }
         });
     }
