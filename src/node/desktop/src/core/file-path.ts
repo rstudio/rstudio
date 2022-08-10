@@ -190,8 +190,9 @@ export class FilePath {
     }
 
     // if the path starts with the home alias then substitute the home path
-    if (aliasedPath.startsWith(homePathAlias)) {
-      return new FilePath(path.join(userHomePath.getAbsolutePath(), aliasedPath.substr(1)));
+    // note: Windows paths use \ so will not match ~/ if they start with ~\
+    if (aliasedPath.startsWith(homePathLeafAlias)) {
+      return new FilePath(path.join(userHomePath.getAbsolutePath(), aliasedPath.substring(1)));
     } else {
       // no aliasing, this is either an absolute path or path
       // relative to the current directory
