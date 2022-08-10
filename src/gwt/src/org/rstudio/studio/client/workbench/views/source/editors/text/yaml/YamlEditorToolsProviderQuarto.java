@@ -62,7 +62,8 @@ public class YamlEditorToolsProviderQuarto implements YamlEditorToolsProvider
       {
          String filename = FileSystemItem.getNameFromPath(StringUtil.notNull(path));
          return SourceDocument.XT_QUARTO_DOCUMENT.equals(extendedType) ||
-                isQuartoProjectYaml(filename) || isQuartoMetadataYaml(path);
+                isQuartoProjectYaml(filename) ||  isQuartoExtensionYaml(filename) ||
+                isQuartoMetadataYaml(path);
       }
       else
       {
@@ -74,6 +75,12 @@ public class YamlEditorToolsProviderQuarto implements YamlEditorToolsProvider
    {
       return filename.equals("_quarto.yml") ||
              filename.equals("_quarto.yaml");
+   }
+   
+   private boolean isQuartoExtensionYaml(String filename)
+   {
+      return filename.equals("_extension.yml") ||
+             filename.equals("_extension.yaml");
    }
    
    private boolean isQuartoMetadataYaml(String path)
