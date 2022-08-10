@@ -52,7 +52,6 @@ public abstract class Hyperlink implements HelpPageShower
             @Override
             public void run()
             {
-                cancelPopup_ = false;
                 getPopupContent((content) -> {
                     if (!cancelPopup_)
                     {
@@ -73,6 +72,7 @@ public abstract class Hyperlink implements HelpPageShower
             if (event.getTypeInt() == Event.ONMOUSEOVER)
             {   
                 timer_.cancel();
+                cancelPopup_ = false;
                 timer_.schedule(400);
             } 
             else if (event.getTypeInt() == Event.ONCLICK) 
