@@ -182,3 +182,13 @@
    yamlCode <- paste(yamlCode, collapse = "\n")
    .Call("rs_fromYAML", yamlCode, PACKAGE = "(embedding)")
 })
+
+.rs.addFunction("systemToUtf8", function(text)
+{
+   .Call("rs_systemToUtf8", as.character(text), PACKAGE = "(embedding)")
+})
+
+.rs.addFunction("utf8ToSystem", function(text)
+{
+   .Call("rs_utf8ToSystem", as.character(text), PACKAGE = "(embedding)")
+})

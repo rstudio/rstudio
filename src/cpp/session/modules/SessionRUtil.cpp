@@ -322,6 +322,24 @@ SEXP rs_runAsyncRProcess(SEXP codeSEXP,
    return r::sexp::create(true, &protect);
 }
 
+SEXP rs_systemToUtf8(SEXP stringSEXP)
+{
+   std::string text = r::sexp::asString(stringSEXP);
+   std::string asUtf8 = core::string_utils::systemToUtf8(text);
+
+   r::sexp::Protect protect;
+   return r::sexp::createUtf8(asUtf8, &protect);
+}
+
+SEXP rs_utf8ToSystem(SEXP stringSEXP)
+{
+   std::string text = r::sexp::asUtf8String(stringSEXP);
+   std::string asNative = core::string_utils::utf8ToSystem(text);
+
+   r::sexp::Protect protect;
+   return r::sexp::create(asNative, &protect);
+}
+
 } // anonymous namespace
 
 Error initialize()
@@ -333,6 +351,8 @@ Error initialize()
    RS_REGISTER_CALL_METHOD(rs_readIniFile);
    RS_REGISTER_CALL_METHOD(rs_rResourcesPath);
    RS_REGISTER_CALL_METHOD(rs_runAsyncRProcess);
+   RS_REGISTER_CALL_METHOD(rs_systemToUtf8);
+   RS_REGISTER_CALL_METHOD(rs_utf8ToSystem);
    
    using boost::bind;
    using namespace module_context;

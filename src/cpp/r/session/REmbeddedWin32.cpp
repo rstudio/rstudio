@@ -316,7 +316,7 @@ void runEmbeddedR(const core::FilePath& rHome,
    std::string* pRHome;
    std::string* pUserHome;
 
-   // With R 4.2.x, using UCRT, we avoid converting to the system encoding
+   // With R 4.2.x, using UCRT, we avoid converting to the native encoding
    // and retain the UTF-8 encoding here
    if (core::Version(getDLLVersion()) >= core::Version("4.2.0"))
    {
