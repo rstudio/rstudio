@@ -772,7 +772,7 @@ options(help_type = "html")
       
       # check if topic.Rd exist 
       if (!length(file) && linksToTopics) {
-         helppath <- system.file("help", package = package)
+         helppath <- system.file("help", package = pkg)
          if (nzchar(helppath)) {
             contents <- readRDS(sub("/help$", "/Meta/Rd.rds", helppath, fixed = FALSE))
             helpfiles <- sub("\\.[Rr]d$", "", contents$File)
