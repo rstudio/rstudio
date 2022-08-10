@@ -71,21 +71,39 @@ public abstract class Hyperlink implements HelpPageShower
         {
             if (event.getTypeInt() == Event.ONMOUSEOVER)
             {   
+                // cancel previous timer
                 timer_.cancel();
+
+                // the link was just hovered: settting cancelPopup_ to false
+                // to signal that the popup should be shown
                 cancelPopup_ = false;
+
+                // but with some delay
                 timer_.schedule(400);
             } 
             else if (event.getTypeInt() == Event.ONCLICK) 
             {
-                cancelPopup_ = true;
+                // link was clicked. Various cleanup before calling onClick():
+
+                // - cancel the timer if possible so that the popup is not shown
                 timer_.cancel();
+
+                // - also set cancelPopup_ to true in case the timer has finished
+                //   but the getPopupContent() call has not
+                cancelPopup_ = true;
+
+                // - if the popup was visible: hide it
                 popup_.hide();
+
                 onClick();
             }
             else if (event.getTypeInt() == Event.ONMOUSEOUT)
             {
-                cancelPopup_ = true;
+                // hide the popup if it is visible, or 
+                // attempt to prevent it from showing
                 timer_.cancel();
+                cancelPopup_ = true;
+
                 popup_.hide();
             }
         });
