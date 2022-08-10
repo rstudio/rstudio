@@ -64,7 +64,7 @@ public:
    core::json::Object toJson() const;
 
    core::Error parseOptions(core::json::Object* pOptions);
-   std::string popExecRange(ExecRange* pRange, ExpressionMode mode);
+   std::string popExecRange(ExecRange* pRange, ExpressionMode mode, const std::string& engine);
    bool complete() const;
    core::Error innerCode(std::string* pCode);
    void updateFrom(const NotebookQueueUnit& other);
