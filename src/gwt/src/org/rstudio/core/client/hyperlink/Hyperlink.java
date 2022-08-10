@@ -17,7 +17,6 @@ package org.rstudio.core.client.hyperlink;
 import java.util.Map;
 import java.util.TreeMap;
 
-import com.google.gwt.core.client.GWT;
 import com.google.gwt.dom.client.AnchorElement;
 import com.google.gwt.dom.client.Document;
 import com.google.gwt.dom.client.Element;
