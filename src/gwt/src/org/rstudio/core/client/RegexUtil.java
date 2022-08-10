@@ -33,7 +33,7 @@ public class RegexUtil
    {
       String regex =
             "^" +
-            "(?!_*[0-9])" +
+            "(?!_*[" + WORD_CHARACTER +"])" +
             "[" + WORD_CHARACTER + ".]" +
             "[" + WORD_CHARACTER +  "._]*" +
             "$";
