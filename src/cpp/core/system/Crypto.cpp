@@ -108,19 +108,12 @@ Error HMAC_SHA2(const std::string& data,
 Error sha256(const std::string& message,
              std::string* pHash)
 {
-   SHA256_CTX shaCtx;
-   int ret = SHA256_Init(&shaCtx);
-   if (ret != 1)
-      return getLastCryptoError(ERROR_LOCATION);
-
-   ret = SHA256_Update(&shaCtx, message.c_str(), message.size());
-   if (ret != 1)
-      return getLastCryptoError(ERROR_LOCATION);
-
    unsigned char hash[SHA256_DIGEST_LENGTH];
-   ret = SHA256_Final(hash, &shaCtx);
-   if (ret != 1)
+   if (SHA256(reinterpret_cast<const unsigned char*>(message.c_str()),
+              message.size(), hash) == nullptr)
+   {
       return getLastCryptoError(ERROR_LOCATION);
+   }
 
    *pHash = std::string((const char*)hash, SHA256_DIGEST_LENGTH);
    return Success();
