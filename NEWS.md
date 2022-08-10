@@ -24,3 +24,4 @@
 - Fixed visual mode outline missing nested R code chunks (#11410)
 - Fixed an issue where chunks containing multibyte characters was not executed correctly (#10632)
 - Fixed bringing main window under active secondary window when executing background command (#11407)
+- Fix for schema version comparison that breaks db in downgrade -> upgrade scenarios (rstudio-pro#3572)
