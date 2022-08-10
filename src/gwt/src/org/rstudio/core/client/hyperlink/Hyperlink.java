@@ -78,6 +78,7 @@ public abstract class Hyperlink implements HelpPageShower
             else if (event.getTypeInt() == Event.ONCLICK) 
             {
                 cancelPopup_ = true;
+                timer_.cancel();
                 popup_.hide();
                 onClick();
             }
