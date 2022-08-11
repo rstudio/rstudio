@@ -226,7 +226,7 @@ public interface SourceServerOperations extends FilesServerOperations,
                          ServerRequestCallback<Boolean> requestCallback);
 
    void fileExists(String path,
-                   ServerRequestCallback<Boolean> requestCallback);
+                   ServerRequestCallback<String> requestCallback);
    
    public void getFileContents(String path,
                                String encoding,

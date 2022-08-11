@@ -151,6 +151,11 @@ for (binding in bindings)
 
 .rs.addJsonRpcHandler("file_exists", function(path)
 {
+   if (file.exists(path)) {
+      return(.rs.scalar(.rs.createAliasedPath(path)))
+   } else {
+      return(.rs.scalar(""))
+   }
    .rs.scalar(file.exists(path))
 })
 

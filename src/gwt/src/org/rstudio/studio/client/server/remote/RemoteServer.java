@@ -2502,7 +2502,7 @@ public class RemoteServer implements Server
    }
 
    public void fileExists(String path,
-                          ServerRequestCallback<Boolean> requestCallback)
+                          ServerRequestCallback<String> requestCallback)
    {
       JSONArray params = new JSONArray();
       params.set(0, new JSONString(path));

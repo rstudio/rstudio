@@ -58,16 +58,16 @@ public class FileHyperlink extends Hyperlink
     @Override
     public void onClick()
     {
-        server_.fileExists(filename, new SimpleRequestCallback<Boolean>()
+        server_.fileExists(filename, new SimpleRequestCallback<String>()
         {
             @Override
-            public void onResponseReceived(Boolean response)
+            public void onResponseReceived(String response)
             {
-                if (response)
+                if (response.length() > 0)
                 {
                     final SourceColumnManager columnManager = RStudioGinjector.INSTANCE.getSourceColumnManager(); 
         
-                    columnManager.editFile(filename, new ResultCallback<EditingTarget, ServerError>()
+                    columnManager.editFile(response, new ResultCallback<EditingTarget, ServerError>()
                     {
                         @Override
                         public void onSuccess(final EditingTarget result)
