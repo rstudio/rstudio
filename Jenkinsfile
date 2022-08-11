@@ -98,7 +98,7 @@ def s3_upload(type, flavor, os, arch) {
   def renamedTarballFile = ""
   
   // add installer-less tarball if desktop
-  if (flavor == "electron") {
+  if (flavor == "desktop" || flavor == "electron") {
     tarballFile = sh (
       script: "basename `ls ${buildFolder}/_CPack_Packages/Linux/${type}/*.tar.gz`",
       returnStdout: true
@@ -132,7 +132,9 @@ def s3_upload(type, flavor, os, arch) {
     // derive product
     def product="${flavor}"
     if (rstudioVersionSuffix.contains("pro")) {
-        if (product == "electron") {
+        if (product == "desktop") {
+            product = "desktop-pro"
+        } else if (product == "electron") {
             product = "electron-pro"
         } else if (product == "server") {
             product = "workbench"

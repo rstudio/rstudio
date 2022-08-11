@@ -1,0 +1,50 @@
+#!/usr/bin/env bash
+
+#
+# install-qt-sdk
+#
+# Copyright (C) 2022 by RStudio, PBC
+#
+# Unless you have received this program directly from RStudio pursuant
+# to the terms of a commercial license agreement with RStudio, then
+# this program is licensed to you under the terms of version 3 of the
+# GNU Affero General Public License. This program is distributed WITHOUT
+# ANY EXPRESS OR IMPLIED WARRANTY, INCLUDING THOSE OF NON-INFRINGEMENT,
+# MERCHANTABILITY OR FITNESS FOR A PARTICULAR PURPOSE. Please refer to the
+# AGPL (http://www.gnu.org/licenses/agpl-3.0.txt) for more details.
+#
+
+# Used to install legacy Qt version via direct-download and extraction of a 
+# prepared archive.
+
+if [ -z "$QT_VERSION" ]; then
+   echo Error: QT_VERSION must be specified
+   exit 1
+fi
+if [ -z "$QT_SDK_CUSTOM" ]; then
+   echo Error: QT_SDK_CUSTOM must be supplied
+   exit 1
+fi
+if [ -z "$QT_SDK_DIR" ]; then
+   echo Error: QT_SDK_DIR must be specified
+   exit 1
+fi
+
+if [ ! -e "$QT_SDK_DIR" ]
+then
+   QT_SDK_URL=https://s3.amazonaws.com/rstudio-buildtools/$QT_SDK_CUSTOM
+   
+   # download and install
+   wget $QT_SDK_URL -O /tmp/$QT_SDK_CUSTOM
+   cd `dirname $QT_SDK_DIR`
+   tar xzf /tmp/$QT_SDK_CUSTOM
+   rm /tmp/$QT_SDK_CUSTOM
+   
+   if [ ! -e "$QT_SDK_DIR" ]; then
+      echo "Error: Unable to install Qt, run script again or install manually." 
+      exit 1
+   fi
+else
+   echo "Qt $QT_VERSION SDK already installed"
+fi
+

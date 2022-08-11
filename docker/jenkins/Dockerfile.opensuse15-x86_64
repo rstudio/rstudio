@@ -91,6 +91,12 @@ COPY src/gwt/panmirror/src/editor/package.json /opt/rstudio-tools/panmirror/
 # install common dependencies
 RUN cd /opt/rstudio-tools/dependencies/common && /bin/bash ./install-common opensuse15
 
+# install Qt SDK
+COPY dependencies/common/install-qt.sh /tmp/
+COPY dependencies/linux/install-qt-linux /tmp/
+RUN export QT_VERSION=5.12.8 && \
+    cd /tmp && /bin/bash ./install-qt-linux
+
 # install GnuPG 1.4 from source (needed for release signing)
 RUN cd /tmp && \
     wget https://gnupg.org/ftp/gcrypt/gnupg/gnupg-1.4.23.tar.bz2 && \
