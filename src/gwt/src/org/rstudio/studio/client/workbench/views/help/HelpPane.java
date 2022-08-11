@@ -111,6 +111,14 @@ public class HelpPane extends WorkbenchPane
       commands_ = commands;
       server_ = RStudioGinjector.INSTANCE.getServer();
 
+      // init with a no-op timer
+      popupTimer_ = new Timer()
+      {
+         @Override
+         public void run() {}
+      };
+      popupCancelled_ = false;
+
       prefs_ = prefs;
 
       MenuItem clear = commands.clearHelpHistory().createMenuItem(false);
@@ -303,6 +311,10 @@ public class HelpPane extends WorkbenchPane
          thiz.@org.rstudio.studio.client.workbench.views.help.HelpPane::handleMouseOver(*)(e);
       }
 
+      $wnd.helpMouseout = function(e) {
+         thiz.@org.rstudio.studio.client.workbench.views.help.HelpPane::handleMouseOut(*)(e);
+      }
+
       $wnd.helpClick = function(e) {
          thiz.@org.rstudio.studio.client.workbench.views.help.HelpPane::handleClick(*)(e);
       }
@@ -398,49 +410,83 @@ public class HelpPane extends WorkbenchPane
          Match match = HELP_PATTERN.match(url, 0);
          if (match != null) 
          {
-            String topic = decodeURIComponent(match.getGroup(2));
-            
+            // cancel previous timer
+            popupTimer_.cancel();
+
+            // hide previous popup immediately
             if (popup_ != null)
                popup_.hide();
-            popup_ = new HyperlinkPopupPanel(new HelpPageShower() {
-
+            
+            // and schedule a new one
+            popupTimer_ = new Timer()
+            {
                @Override
-               public void showHelp() {
-                  HelpPane.this.showHelp(url);
-               }
-               
-            });
-
-            // pkg might not be the actual package
-            // so we need to do the same as what the internal help system would:
-            server_.followHelpTopic(url, new SimpleRequestCallback<JsArrayString>(){
-
-               @Override
-               public void onResponseReceived(JsArrayString files)
+               public void run()
                {
-                  if (files.length() == 1)
-                  {
-                     String pkg = files.get(0).replaceFirst("/help/.*$", "").replaceFirst("^.*/", "");
+                  String topic = decodeURIComponent(match.getGroup(2));
+                  
+                  popup_ = new HyperlinkPopupPanel(new HelpPageShower() {
+
+                     @Override
+                     public void showHelp() {
+                        HelpPane.this.showHelp(url);
+                     }
                      
-                     final VerticalPanel panel = new VerticalPanel();
-                     panel.add(new HelpHyperlinkPopupHeader(topic, pkg));
-                     panel.add(new HelpPreview(topic, pkg, () -> 
+                  });
+
+                  // pkg might not be the actual package
+                  // so we need to do the same as what the internal help system would:
+                  server_.followHelpTopic(url, new SimpleRequestCallback<JsArrayString>(){
+
+                     @Override
+                     public void onResponseReceived(JsArrayString files)
                      {
-                        popup_.setContent(panel);
+                        if (files.length() == 1)
+                        {
+                           String pkg = files.get(0).replaceFirst("/help/.*$", "").replaceFirst("^.*/", "");
+                        
+                           final VerticalPanel panel = new VerticalPanel();
+                           panel.add(new HelpHyperlinkPopupHeader(topic, pkg));
+                           panel.add(new HelpPreview(topic, pkg, () -> 
+                           {
+                              popup_.setContent(panel);
 
-                        Rectangle bounds = new Rectangle(event.getClientX() + getIFrameEx().getAbsoluteLeft(), 
-                                                         event.getClientY() + getIFrameEx().getAbsoluteTop(), 
-                                                         anchor.getClientWidth(), 
-                                                         anchor.getClientHeight());
-                        HyperlinkPopupPositioner positioner = new HyperlinkPopupPositioner(bounds, popup_);
-                        popup_.setPopupPositionAndShow(positioner);
-                     }));
-                  }
+                              Rectangle bounds = new Rectangle(event.getClientX() + getIFrameEx().getAbsoluteLeft(), 
+                                                               event.getClientY() + getIFrameEx().getAbsoluteTop(), 
+                                                               anchor.getClientWidth(), 
+                                                               anchor.getClientWidth());
+                              HyperlinkPopupPositioner positioner = new HyperlinkPopupPositioner(bounds, popup_);
+                                 
+                              if (!popupCancelled_) 
+                                 popup_.setPopupPositionAndShow(positioner);
+                           }));
+                        }
+                     }
+                  });
+
                }
-            });
-
+            };
+            popupCancelled_ = false;
+            popupTimer_.schedule(400);
          }
+      }
+   }
+
+   private void handleMouseOut(NativeEvent event) {
+      EventTarget target = event.getEventTarget();
+      if (AnchorElement.is(target)) 
+      {
+         // mark the popup as cancelled. This handles the case when the 
+         // timer has finished but the popup has not been 
+         // calculated yet, i.e. server_.followHelpTopic() has not returned
+         popupCancelled_ = true;
+
+         // cancel a popup that is scheduled for later
+         popupTimer_.cancel();
          
+         // then hide popup if necessary
+         if (popup_ != null)
+            popup_.hide();
       }
    }
 
@@ -452,7 +498,6 @@ public class HelpPane extends WorkbenchPane
    {
       if (popup_ != null)
          popup_.hide();
-      popup_ = null;
    }
 
    private void helpNavigated(Document doc)
@@ -1008,6 +1053,8 @@ public class HelpPane extends WorkbenchPane
    private static final HelpConstants constants_ = GWT.create(HelpConstants.class);
    private Server server_;
    HyperlinkPopupPanel popup_;
+   Timer popupTimer_;
+   boolean popupCancelled_;
 
    private static final Pattern HELP_PATTERN = Pattern.create("^.*/help/library/([^/]*)/help/(.*)$", "");
 }
