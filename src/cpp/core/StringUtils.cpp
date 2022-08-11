@@ -901,6 +901,45 @@ std::string sprintf(const char* fmt, ...)
    return std::string(&buffer[0], n);
 }
 
+// return all of stdin as a string
+std::string consumeStdin(StdinLines kind, unsigned maxChars)
+{
+   std::string input;
+   int ch;
+   for (unsigned i = 0; i < maxChars; i++)
+   {
+      ch = ::fgetc(stdin);
+      if (feof(stdin))
+      {
+         // reached end of standard input
+         break;
+      }
+      if (kind == StdinSingleLine && ch == '\n')
+      {
+         // reached end of single line and that's all we wanted
+         break;
+      }
+      if (ferror(stdin))
+      {
+         // something bad happened
+         LOG_WARNING_MESSAGE("Error reading from stdin stream!");
+         break;
+      }
+
+      // all is well, add the character and advance
+      input.push_back(ch);
+
+      // warn if we are about to truncate
+      if (i == (maxChars - 1))
+      {
+         LOG_WARNING_MESSAGE("Gave up reading stdin after consuming " +
+            safe_convert::numberToString(maxChars) + " characters");
+      }
+   }
+
+   return input;
+}
+
 } // namespace string_utils
 } // namespace core 
 } // namespace rstudio

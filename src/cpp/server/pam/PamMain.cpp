@@ -20,6 +20,7 @@
 #include <boost/format.hpp>
 
 #include <core/CrashHandler.hpp>
+#include <core/StringUtils.hpp>
 #include <shared_core/Error.hpp>
 #include <core/Log.hpp>
 #include <core/system/System.hpp>
@@ -92,22 +93,15 @@ int main(int argc, char * const argv[])
       }
 
       // read password (up to 200 chars in length)
-      std::string password;
       const int MAXPASS = 200;
-      int ch = 0;
-      int count = 0;
-      while((ch = ::fgetc(stdin)) != EOF)
+      std::string password = string_utils::consumeStdin(string_utils::StdinSingleLine);
+      if (password.size() > MAXPASS)
       {
-         if (++count <= MAXPASS)
-         {
-            password.push_back(static_cast<char>(ch));
-         }
-         else
-         {
-            LOG_WARNING_MESSAGE("Password exceeded maximum length for "
-                                "user " + username);
-            return EXIT_FAILURE;
-         }
+         // would be nice to log some details here but better not to leak any
+         // information about passwords or limits
+         LOG_WARNING_MESSAGE("Password exceeded maximum length for "
+                              "user " + username);
+         return EXIT_FAILURE;
       }
 
       // verify password

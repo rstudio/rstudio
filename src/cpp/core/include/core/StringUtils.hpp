@@ -35,6 +35,11 @@ enum LineEnding {
    LineEndingPassthrough = 3
 };
 
+enum StdinLines {
+   StdinMultiLine,
+   StdinSingleLine
+};
+
 class Contains
 {
 public:
@@ -308,6 +313,10 @@ std::string extractIndent(const std::string& line);
 std::string formatDouble(const double d, const int precision);
 
 std::string sprintf(const char* fmt, ...);
+
+// consume all of standard input and return it as a string; used for processes
+// that consume standard input. reads a maximum of 1mb by default.
+std::string consumeStdin(StdinLines kind, unsigned maxChars = 1048576);
 
 } // namespace string_utils
 
