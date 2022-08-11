@@ -240,7 +240,8 @@ json::Object NotebookQueueUnit::toJson() const
 }
 
 std::string NotebookQueueUnit::popExecRange(ExecRange* pRange, 
-                                            ExpressionMode mode)
+                                            ExpressionMode mode,
+                                            const std::string& engine)
 {
    // do we have any unevaluated code in this execution unit?
    if (pending_.empty())
@@ -258,9 +259,16 @@ std::string NotebookQueueUnit::popExecRange(ExecRange* pRange,
    int start = range.start;
    int stop = range.stop;
 
-   // use the first line of the range if it's multi-line
+   // for python chunks, use the entire range, even when it's multi-line
+   // otherwise, use the first line of the range if it's multi-line
    size_t idx = code_.find('\n', start + 1);
-   if (idx != std::string::npos && gsl::narrow_cast<int>(idx) < (stop - 1))
+   if (engine == "python")
+   {
+      code_ = code_ + "\n"; // add a newline to terminate the multiline chunk
+      stop = stop + 1;
+      pending_.pop_front();
+   }
+   else if (idx != std::string::npos && gsl::narrow_cast<int>(idx) < (stop - 1))
    {
       stop = gsl::narrow_cast<int>(idx);
 

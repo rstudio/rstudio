@@ -134,6 +134,22 @@ test_context("CryptoTests")
       REQUIRE(priv.rfind("-----BEGIN PRIVATE KEY-----", 0) == 0);
       REQUIRE(sig.size() == 256);
    }
+
+   test_that("SHA-256 hashing works correctly")
+   {
+      // Generated with openssl sha256 -hex.
+      std::string message = "secret message";
+      std::vector<unsigned char> raw = {
+         0xbb, 0x0b, 0x57, 0x00, 0x5f, 0x01, 0x01, 0x8b, 0x19, 0xc2, 0x78, 0xc5,
+         0x52, 0x73, 0xa6, 0x01, 0x18, 0xff, 0xdd, 0x3e, 0x57, 0x90, 0xcc, 0xc8,
+         0xa4, 0x8c, 0xad, 0x03, 0x90, 0x7f, 0xa5, 0x21
+      };
+      std::string expected(raw.begin(), raw.end());
+      std::string hash;
+      REQUIRE_FALSE(core::system::crypto::sha256(message, &hash));
+      REQUIRE(hash.size() == 32);
+      REQUIRE(hash == expected);
+   }
 }
 
 } // end namespace tests

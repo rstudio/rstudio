@@ -288,6 +288,9 @@ const char * const kJsCallbacks = R"EOF(
    if (window.parent.helpMouseover)
       window.onmouseover = function(e) { window.parent.helpMouseover(e); }
 
+   if (window.parent.helpMouseout)
+      window.onmouseout = function(e) { window.parent.helpMouseout(e); }
+
    if (window.parent.helpClick)
       window.onclick = function(e) { window.parent.helpClick(e); } 
 
