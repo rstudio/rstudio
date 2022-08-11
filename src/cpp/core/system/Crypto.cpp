@@ -138,26 +138,40 @@ Error rsaSign(const std::string& message,
       return systemError(boost::system::errc::not_enough_memory, "RSA sign", ERROR_LOCATION);
 
 
-   std::unique_ptr<RSA, decltype(&RSA_free)> pRsa(PEM_read_bio_RSAPrivateKey(pKeyBuff.get(), nullptr, nullptr, nullptr),
-                                                  RSA_free);
+   std::unique_ptr<EVP_PKEY, decltype(&EVP_PKEY_free)> pRsa(PEM_read_bio_PrivateKey(pKeyBuff.get(), nullptr, nullptr, nullptr),
+                                                            EVP_PKEY_free);
    if (!pRsa)
       return systemError(boost::system::errc::not_enough_memory, "RSA private key", ERROR_LOCATION);
 
 
    // sign the message hash
-   std::unique_ptr<unsigned char, decltype(&free)> pSignature((unsigned char*)malloc(RSA_size(pRsa.get())),
-                                                              free);
-   if (!pSignature)
-      return systemError(boost::system::errc::not_enough_memory, "RSA signature", ERROR_LOCATION);
+   std::vector<unsigned char> pSignature(EVP_PKEY_size(pRsa.get()));
+   size_t sigLen;
+   std::unique_ptr<EVP_PKEY_CTX, decltype(&EVP_PKEY_CTX_free)> ctx(EVP_PKEY_CTX_new(pRsa.get(), NULL),
+                                                                   EVP_PKEY_CTX_free);
+   if (!ctx)
+   {
+      return systemError(boost::system::errc::not_enough_memory,
+                         "EVP_PKEY_CTX_new()", ERROR_LOCATION);
+   }
 
-   unsigned int sigLen = 0;
-   int ret = RSA_sign(NID_sha256, (const unsigned char*)hash.c_str(),
-                      static_cast<unsigned int>(hash.size()), pSignature.get(), &sigLen, pRsa.get());
-   if (ret != 1)
+   if (!EVP_PKEY_sign_init(ctx.get()) ||
+       !EVP_PKEY_CTX_set_rsa_padding(ctx.get(), RSA_PKCS1_PADDING) ||
+       !EVP_PKEY_CTX_set_signature_md(ctx.get(), EVP_sha256()))
+   {
       return getLastCryptoError(ERROR_LOCATION);
+   }
+
+   if (!EVP_PKEY_sign(ctx.get(), &pSignature[0], &sigLen,
+                      reinterpret_cast<const unsigned char*>(hash.c_str()),
+                      hash.size()))
+   {
+      return getLastCryptoError(ERROR_LOCATION);
+   }
 
    // store signature in output param
-   *pOutSignature = std::string((const char*)pSignature.get(), sigLen);
+   pSignature.resize(sigLen);
+   pOutSignature->assign(pSignature.begin(), pSignature.end());
 
    return Success();
 }
@@ -181,16 +195,35 @@ Error rsaVerify(const std::string& message,
    if (!pKeyBuff)
       return systemError(boost::system::errc::not_enough_memory, "RSA bio public key", ERROR_LOCATION);
 
-   std::unique_ptr<RSA, decltype(&RSA_free)> pRsa(PEM_read_bio_RSA_PUBKEY(pKeyBuff.get(), nullptr, nullptr, nullptr),
-                                                  RSA_free);
+   std::unique_ptr<EVP_PKEY, decltype(&EVP_PKEY_free)> pRsa(PEM_read_bio_PUBKEY(pKeyBuff.get(), nullptr, nullptr, nullptr),
+                                                            EVP_PKEY_free);
    if (!pRsa)
       return systemError(boost::system::errc::not_enough_memory, "RSA pub key", ERROR_LOCATION);
 
    // verify the message hash
-   int ret = RSA_verify(NID_sha256, (const unsigned char*)hash.c_str(), static_cast<unsigned int>(hash.size()),
-                       (const unsigned char*)signature.c_str(), static_cast<unsigned int>(signature.size()), pRsa.get());
-   if (ret != 1)
+   std::unique_ptr<EVP_PKEY_CTX, decltype(&EVP_PKEY_CTX_free)> ctx(EVP_PKEY_CTX_new(pRsa.get(), NULL),
+                                                                   EVP_PKEY_CTX_free);
+   if (!ctx)
+   {
+      return systemError(boost::system::errc::not_enough_memory,
+                         "EVP_PKEY_CTX_new()", ERROR_LOCATION);
+   }
+
+   if (!EVP_PKEY_verify_init(ctx.get()) ||
+       !EVP_PKEY_CTX_set_rsa_padding(ctx.get(), RSA_PKCS1_PADDING) ||
+       !EVP_PKEY_CTX_set_signature_md(ctx.get(), EVP_sha256()))
+   {
       return getLastCryptoError(ERROR_LOCATION);
+   }
+
+   if (!EVP_PKEY_verify(ctx.get(),
+                        reinterpret_cast<const unsigned char*>(signature.c_str()),
+                        signature.size(),
+                        reinterpret_cast<const unsigned char*>(hash.c_str()),
+                        hash.size()))
+   {
+      return getLastCryptoError(ERROR_LOCATION);
+   }
 
    return Success();
 }

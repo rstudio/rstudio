@@ -122,6 +122,19 @@ test_context("CryptoTests")
       BIO_free(keyBIO);
    }
 
+   test_that("Roundtrip RSA signing and verification works")
+   {
+      std::string message = "message from the key holder";
+      std::string pub, priv, sig;
+      REQUIRE_FALSE(core::system::crypto::generateRsaKeyPair(&pub, &priv));
+      REQUIRE_FALSE(core::system::crypto::rsaSign(message, priv, &sig));
+      REQUIRE_FALSE(core::system::crypto::rsaVerify(message, sig, pub));
+      // Sanity checks.
+      REQUIRE(pub.rfind("-----BEGIN PUBLIC KEY-----", 0) == 0);
+      REQUIRE(priv.rfind("-----BEGIN PRIVATE KEY-----", 0) == 0);
+      REQUIRE(sig.size() == 256);
+   }
+
    test_that("SHA-256 hashing works correctly")
    {
       // Generated with openssl sha256 -hex.
