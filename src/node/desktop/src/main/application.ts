@@ -13,7 +13,7 @@
  *
  */
 
-import { app, BrowserWindow, globalShortcut, Menu, screen, WebContents } from 'electron';
+import { app, BrowserWindow, dialog, globalShortcut, Menu, screen, shell, WebContents } from 'electron';
 import i18next from 'i18next';
 import path from 'path';
 import { getenv, setenv } from '../core/environment';
@@ -283,13 +283,22 @@ export class Application implements AppState {
     if (process.platform === 'win32') {
       const [path, preflightError] = await promptUserForR();
       if (preflightError) {
-        dialog.showMessageBoxSync({
+
+        await dialog.showMessageBox({
           type: 'error',
           title: i18next.t('applicationTs.errorFindingR'),
           message: i18next.t('applicationTs.rstudioFailedToFindRInstalationsOnTheSystem'),
-          buttons: [ i18next.t('common.buttonYes', 'common.buttonNo'), ],
-        });
-        logger().logError(preflightError);
+          buttons: [ i18next.t('common.buttonYes'), i18next.t('common.buttonNo') ],
+        }).then(result => {
+          
+          logger().logDebug(`You clicked ${result.response == 0 ? 'Yes' : 'No'}`);
+          if (result.response == 0) {
+            const rProjectUrl = 'https://www.rstudio.org/links/r-project';
+            void shell.openExternal(rProjectUrl);
+          }
+        })
+          .catch((error: unknown) => logger().logError(error));
+        
         return exitFailure();
       }
 
