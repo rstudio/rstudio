@@ -285,7 +285,7 @@ export class Application implements AppState {
       if (preflightError) {
 
         await dialog.showMessageBox({
-          type: 'error',
+          type: 'warning',
           title: i18next.t('applicationTs.errorFindingR'),
           message: i18next.t('applicationTs.rstudioFailedToFindRInstalationsOnTheSystem'),
           buttons: [ i18next.t('common.buttonYes'), i18next.t('common.buttonNo') ],
