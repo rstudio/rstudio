@@ -86,7 +86,7 @@
     "confColon": "conf:",
     "notFoundDotLowercase": "not found.",
     "errorFindingR": "R Not Installed",
-    "rstudioFailedToFindRInstalationsOnTheSystem": "R does not appear to be installed. Please install R before using RStudio.\nYou can download R from the official R Project website. Would you like to go there now?",
+    "rstudioFailedToFindRInstalationsOnTheSystem": "R does not appear to be installed. Please install R before using RStudio.\n\nYou can download R from the official R Project website.\nWould you like to go there now?",
     "newRstudioWindow": "New RStudio Window"
   },
   "detectRTs": {
