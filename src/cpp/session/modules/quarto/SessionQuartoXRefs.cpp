@@ -154,6 +154,7 @@ FilePath quartoPandocPath(const QuartoConfig& config)
 json::Array indexSourceFile(const std::string& contents, const std::string& filename)
 {
    QuartoConfig config = quartoConfig();
+   FilePath resourcesPath(config.resources_path);
 
    static FilePath xrefIndexingDir;
    if (xrefIndexingDir.isEmpty())
@@ -169,11 +170,10 @@ json::Array indexSourceFile(const std::string& contents, const std::string& file
 
       // write defaults file with filters
       FilePath defaultsFile = xrefIndexingDir.completePath("defaults.yml");
-      FilePath resourcesPath(config.resources_path);
       FilePath filtersPath = resourcesPath.completePath("filters");
       boost::format fmt("filters:\n  - %1%\n  - %2%\n");
       std::string defaults = boost::str(fmt %
-         string_utils::utf8ToSystem(filtersPath.completePath("init/init.lua").getAbsolutePath()) %
+         string_utils::utf8ToSystem(filtersPath.completePath("quarto-init/quarto-init.lua").getAbsolutePath()) %
          string_utils::utf8ToSystem(filtersPath.completePath("crossref/crossref.lua").getAbsolutePath())
       );
       error = core::writeStringToFile(defaultsFile, defaults);
@@ -199,6 +199,7 @@ json::Array indexSourceFile(const std::string& contents, const std::string& file
    core::system::Options env;
    core::system::environment(&env);
    core::system::setenv(&env, "QUARTO_FILTER_PARAMS", filterParams);
+   core::system::setenv(&env, "QUARTO_SHARE_PATH", resourcesPath.getAbsolutePath());
    options.environment = env;
    std::vector<std::string> args;
    args.push_back("--from");
@@ -207,6 +208,12 @@ json::Array indexSourceFile(const std::string& contents, const std::string& file
    args.push_back("native");
    args.push_back("--defaults");
    args.push_back("defaults.yml");
+
+   // add data-dir
+   FilePath dataDirPath = resourcesPath.completePath("pandoc/datadir");
+   args.push_back(("--data-dir"));
+   args.push_back(core::string_utils::utf8ToSystem(dataDirPath.getAbsolutePath()));
+
    core::system::ProcessResult result;
 
    error = module_context::runPandoc(
