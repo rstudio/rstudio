@@ -1,0 +1,50 @@
+#!/usr/bin/env bash
+
+#
+# install-qt-linux
+#
+# Copyright (C) 2022 by RStudio, PBC
+#
+# Unless you have received this program directly from RStudio pursuant
+# to the terms of a commercial license agreement with RStudio, then
+# this program is licensed to you under the terms of version 3 of the
+# GNU Affero General Public License. This program is distributed WITHOUT
+# ANY EXPRESS OR IMPLIED WARRANTY, INCLUDING THOSE OF NON-INFRINGEMENT,
+# MERCHANTABILITY OR FITNESS FOR A PARTICULAR PURPOSE. Please refer to the
+# AGPL (http://www.gnu.org/licenses/agpl-3.0.txt) for more details.
+#
+#
+
+# Install minimal Qt bits needed to build via command-line (e.g. Docker).
+# For developer environments, better to install using Qt's online installer.
+
+set -e
+command -v 7z >/dev/null 2>&1 || { echo >&2 "7z command required to install Qt but not found."; exit 1; }
+
+if [ -z "$QT_VERSION" ]; then
+   echo Error: QT_VERSION must be specified
+   exit 1
+fi
+if [ -z "$QT_SDK_DIR" ]; then
+   QT_SDK_DIR=/opt/RStudio-QtSDK
+fi
+
+mkdir -p "${QT_SDK_DIR}"
+./install-qt.sh --version $QT_VERSION --directory "${QT_SDK_DIR}/Qt$QT_VERSION" \
+    qtbase \
+    qtwebengine \
+    qtwebchannel \
+    qtquick \
+    qtquickcontrols2 \
+    qtdeclarative \
+    qtsensors \
+    qtlocation \
+    qtsvg \
+    qtxmlpatterns \
+    qttools \
+    icu \
+    qttranslations \
+    qtwayland \
+    qtwebsockets \
+    qtimageformats \
+

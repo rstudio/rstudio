@@ -48,6 +48,12 @@ RUN $ErrorActionPreference = 'Stop' ;`
 RUN $env:path += ';C:\R\R-3.3.0\bin\i386\' ;`
   [Environment]::SetEnvironmentVariable('Path', $env:path, [System.EnvironmentVariableTarget]::Machine);
 
+# install qt (note that we are using the current directory's context)
+RUN [System.Net.ServicePointManager]::SecurityProtocol = 3072 -bor 768 -bor 192 -bor 48; `
+  (New-Object System.Net.WebClient).DownloadFile('https://s3.amazonaws.com/rstudio-buildtools/Qt/QtSDK-5.12.8-msvc2017_64.7z', 'c:\QtSDK-5.12.8-msvc2017_64.7z'); `
+  7z x c:\QtSDK-5.12.8-msvc2017_64.7z -oc:\ ; `
+  Remove-Item c:\QtSDK-5.12.8-msvc2017_64.7z -Force
+
 # cpack (an alias from chocolatey) and cmake's cpack conflict.
 # Newer choco doesn't have this so don't fail if not found
 RUN if (Test-Path 'C:\ProgramData\chocolatey\bin\cpack.exe') { Remove-Item -Force 'C:\ProgramData\chocolatey\bin\cpack.exe' }
