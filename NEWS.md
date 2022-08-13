@@ -15,6 +15,10 @@
 
 - RStudio attempts to infer the appropriate version of Python when "Automatically activate project-local Python environments" is checked and the user has not requested a specific version of Python. This Python will be stored in the environment variable "RETICULATE_PYTHON_FALLBACK", available from the R console, the Python REPL, and the RStudio Terminal (#9990)
 
+### Quarto
+
+- Support for v2 format of Quarto crossref index
+
 ### Deprecated / Removed
 
 - Removed the Tools / Shell command (#11253)
