@@ -21,6 +21,7 @@
 #include <shared_core/json/Json.hpp>
 #include <core/Exec.hpp>
 #include <core/Base64.hpp>
+#include <core/Version.hpp>
 #include <core/FileSerializer.hpp>
 #include <core/PerformanceTimer.hpp>
 #include <core/system/FileScanner.hpp>
@@ -58,11 +59,18 @@ const char * const kFigType = "fig";
 const char * const kTblType = "tbl";
 
 
-FilePath quartoCrossrefDir(const FilePath& projectDir)
+FilePath quartoCrossrefDirV1(const FilePath& projectDir)
 {
    return projectDir
        .completeChildPath(".quarto")
        .completeChildPath("crossref");
+}
+
+FilePath quartoCrossrefDirV2(const FilePath& projectDir)
+{
+   return projectDir
+      .completeChildPath(".quarto")
+      .completeChildPath("xref");
 }
 
 
@@ -416,10 +424,10 @@ json::Array readProjectXRefIndex(const FilePath& indexPath, const FilePath& srcP
    }
 }
 
-json::Array readProjectXRefIndex(const FilePath& projectDir, const FilePath& srcFile)
+json::Array readProjectXRefIndexV1(const FilePath& projectDir, const FilePath& srcFile)
 {
    std::string projRelative = srcFile.getRelativePath(projectDir);
-   FilePath indexPath = quartoCrossrefDir(projectDir).completeChildPath(projRelative);
+   FilePath indexPath = quartoCrossrefDirV1(projectDir).completeChildPath(projRelative);
    return readProjectXRefIndex(indexPath, srcFile, projRelative);
 
 }
@@ -441,9 +449,9 @@ bool projectXRefIndexFilter(const FilePath& projectDir,
    }
 }
 
-json::Array readAllProjectXRefIndexes(const core::FilePath& projectDir)
+json::Array readAllProjectXRefIndexesV1(const core::FilePath& projectDir)
 {
-   FilePath crossrefDir = quartoCrossrefDir(projectDir);
+   FilePath crossrefDir = quartoCrossrefDirV1(projectDir);
    if (!crossrefDir.exists())
       return json::Array();
 
@@ -473,6 +481,124 @@ json::Array readAllProjectXRefIndexes(const core::FilePath& projectDir)
    }
 
    return projectXRefs;
+}
+
+
+bool useXRefIndexV2()
+{
+   QuartoConfig config = quarto::quartoConfig();
+   return Version(config.version) >= Version("1.1.62");
+}
+
+std::map<std::string,FilePath> readProjectXRrefMainIndex(const FilePath& projectDir)
+{
+   std::map<std::string,FilePath>  mainIndex;
+   FilePath xrefDir = quartoCrossrefDirV2(projectDir);
+   if (xrefDir.exists())
+   {
+      FilePath mainIndexFile = xrefDir.completeChildPath("INDEX");
+      if (mainIndexFile.exists())
+      {
+         std::string mainIndexSrc;
+         Error error = core::readStringFromFile(mainIndexFile, &mainIndexSrc);
+         if (error)
+         {
+            LOG_ERROR(error);
+            return mainIndex;
+         }
+         json::Object mainIndexJson;
+         error = mainIndexJson.parse(mainIndexSrc);
+         if (error)
+         {
+           LOG_ERROR(error);
+           return mainIndex;
+         }
+         // iterate over input files
+         for (auto member : mainIndexJson)
+         {
+            // ensure the input maps to an existing source file
+            std::string input = member.getName();
+            FilePath inputFilePath = projectDir.completeChildPath(input);
+            if (inputFilePath.exists())
+            {
+               // pick the most recently written output
+               for (auto outputMember : member.getValue().getObject())
+               {
+                  FilePath jsonPath = xrefDir.completeChildPath(outputMember.getValue().getString());
+                  if (jsonPath.exists())
+                  {
+                     // if there is already an entry, compare the file last write time
+                     auto it = mainIndex.find(input);
+                     if (it != mainIndex.end())
+                     {
+                        if (jsonPath.getLastWriteTime() > it->second.getLastWriteTime())
+                        {
+                           it->second = jsonPath;
+                        }
+                     }
+                     // if there is no entry just use this output
+                     else
+                     {
+                        mainIndex[input] = jsonPath;
+                     }
+                  }
+
+               }
+            }
+         }
+      }
+   }
+
+   return mainIndex;
+}
+
+json::Array readProjectXRefIndexV2(const FilePath& projectDir, const FilePath& srcFile)
+{
+   auto mainIndex = readProjectXRrefMainIndex(projectDir);
+   std::string projRelative = srcFile.getRelativePath(projectDir);
+   boost::algorithm::replace_all(projRelative, "\\", "/");
+   auto it = mainIndex.find(projRelative);
+   if (it != mainIndex.end())
+   {
+      return resolvedXRefIndex(it->second, srcFile, projRelative);
+   }
+   else
+   {
+      return resolvedXRefIndex(FilePath(), srcFile, projRelative);
+   }
+}
+
+json::Array readAllProjectXRefIndexesV2(const core::FilePath& projectDir)
+{
+   json::Array projectXRefs;
+   auto mainIndex = readProjectXRrefMainIndex(projectDir);
+   for (auto member : mainIndex)
+   {
+      std::string projRelative = member.first;
+      FilePath indexPath = member.second;
+      json::Array xrefs = resolvedXRefIndex(indexPath,
+                                            projectDir.completeChildPath(projRelative),
+                                            projRelative);
+      std::copy(xrefs.begin(), xrefs.end(), std::back_inserter(projectXRefs));
+   }
+   return projectXRefs;
+}
+
+
+json::Array readProjectXRefIndex(const FilePath& projectDir, const FilePath& srcFile)
+{
+   if (useXRefIndexV2())
+      return readProjectXRefIndexV2(projectDir, srcFile);
+   else
+      return readProjectXRefIndexV1(projectDir, srcFile);
+}
+
+json::Array readAllProjectXRefIndexes(const core::FilePath& projectDir)
+{
+   if (useXRefIndexV2())
+      return readAllProjectXRefIndexesV2(projectDir);
+   else
+      return readAllProjectXRefIndexesV1(projectDir);
 }
 
 } // anonymous namespace
