@@ -35,9 +35,11 @@
 #include <boost/date_time/posix_time/posix_time_duration.hpp>
 
 #include <shared_core/FilePath.hpp>
+
 #include <core/Exec.hpp>
 #include <core/StringUtils.hpp>
 #include <core/Version.hpp>
+#include <core/system/Environment.hpp>
 #include <core/system/LibraryLoader.hpp>
 
 #include <r/RInterface.hpp>
@@ -311,10 +313,23 @@ void runEmbeddedR(const core::FilePath& rHome,
    initializeParams(pRP);
 
    // set paths (copy to new string so we can provide char*)
-   std::string* pRHome = new std::string(
-            core::string_utils::utf8ToSystem(rHome.getAbsolutePath()));
-   std::string* pUserHome = new std::string(
-            core::string_utils::utf8ToSystem(userHome.getAbsolutePath()));
+   std::string* pRHome;
+   std::string* pUserHome;
+
+   // With R 4.2.x, using UCRT, we avoid converting to the native encoding
+   // and retain the UTF-8 encoding here
+   if (core::Version(getDLLVersion()) >= core::Version("4.2.0"))
+   {
+      pRHome = new std::string(rHome.getAbsolutePath());
+      pUserHome = new std::string(userHome.getAbsolutePath());
+   }
+   else
+   {
+      using string_utils::utf8ToSystem;
+      pRHome = new std::string(utf8ToSystem(rHome.getAbsolutePath()));
+      pUserHome = new std::string(utf8ToSystem(userHome.getAbsolutePath()));
+   }
+
    pRP->rhome = const_cast<char*>(pRHome->c_str());
    pRP->home = const_cast<char*>(pUserHome->c_str());
 

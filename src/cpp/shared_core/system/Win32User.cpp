@@ -19,6 +19,7 @@
 
 #include <boost/algorithm/string.hpp>
 #include <boost/bind/bind.hpp>
+#include <boost/format.hpp>
 
 #include <shared_core/FilePath.hpp>
 #include <shared_core/Logger.hpp>
@@ -46,8 +47,10 @@ FilePath environmentHomePath(std::string envVariables)
            it != split_iterator<std::string::iterator>();
            ++it)
       {
+         // NOTE: returns a UTF-8 value
          std::string envHomePath =
             detail::getenv(boost::copy_range<std::string>(*it));
+
          if (!envHomePath.empty())
          {
             FilePath userHomePath(envHomePath);
@@ -192,6 +195,12 @@ FilePath User::getUserHomePath(const std::string& in_envOverride)
                path[0] = toupper(path[0]);
                homePath = FilePath(path);
             }
+
+            std::string message = boost::format("Using home directory %1% (from %2%)")
+                  .bind_arg(1, path)
+                  .bind_arg(2, source.first)
+                  .str();
+            log::logDebugMessage(message);
 
             return homePath;
          }
