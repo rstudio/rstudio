@@ -1,28 +1,12 @@
-## RStudio 2022-07.1 "Spotted Wakerobin" Release Notes
+## RStudio 2022-07.2 "Spotted Wakerobin" Release Notes
 
-### New
-* Update Quarto to 1.0.36
-## RStudio 2022-10.0 "Elsbeth Geranium" Release Notes
+### Quarto
 
-### R
-
-* Improved handling of diagnostics within glue() expressions. 
-* RStudio now provides autocompletion results for packages used but not loaded within a project.
-* Improved handling of missing arguments for some functions in the diagnostics system.
-* Code editor can show previews of color in strings (R named colors e.g. "tomato3" or of the forms "#rgb", "#rrggbb", "#rrggbbaa")
-  when `Options > Code > Display > [ ] Show color preview` is checked. 
-* Fixes the bug introduced with `rlang` >= 1.03 where Rmd documents show the error message `object 'partition_yaml_front_matter' not found` upon project startup (#11552)
-  
-### Python
-
-- RStudio attempts to infer the appropriate version of Python when "Automatically activate project-local Python environments" is checked and the user has not requested a specific version of Python. This Python will be stored in the environment variable "RETICULATE_PYTHON_FALLBACK", available from the R console, the Python REPL, and the RStudio Terminal (#9990)
-
-### Deprecated / Removed
-
-- Removed the Tools / Shell command (#11253)
+* Support for v2 format of Quarto crossref index
 
 ### Fixed
 
-- Fixed visual mode outline missing nested R code chunks (#11410)
-- Fixed an issue where chunks containing multibyte characters was not executed correctly (#10632)
-- Fixed bringing main window under active secondary window when executing background command (#11407)
+* Fix for schema version comparison that breaks db in downgrade -> upgrade scenarios (rstudio-pro#3572)
+* Fix for Quarto crossref indexing/completion not working with Quarto v1.0
+* Fixed homepage session status problems (rstudio-pro#3644, #3671, and #3669)
+* Fixed regression in spotted-wakerobin that prevented sessions from starting when launcher-sessions-use-password=1 (rstudio-pro#3664)
