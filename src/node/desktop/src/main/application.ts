@@ -230,16 +230,16 @@ export class Application implements AppState {
         this.argsManager.handleAfterSessionLaunchCommands();
     });
 
-    // Workaround for selecting all text in the input field: https://github.com/rstudio/rstudio/issues/11581
-    if (process.platform === 'darwin') {
-      app.whenReady()
-        .then(() => {
-          globalShortcut.register('Cmd+A', () => {
-            focusedWebContents()?.selectAll();
-          });
-        })
-        .catch((error: unknown) => logger().logError(error));
-    }
+    // // Workaround for selecting all text in the input field: https://github.com/rstudio/rstudio/issues/11581
+    // if (process.platform === 'darwin') {
+    //   app.whenReady()
+    //     .then(() => {
+    //       globalShortcut.register('Cmd+A', () => {
+    //         focusedWebContents()?.selectAll();
+    //       });
+    //     })
+    //     .catch((error: unknown) => logger().logError(error));
+    // }
   }
 
   /**
