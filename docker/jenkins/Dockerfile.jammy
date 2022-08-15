@@ -1,4 +1,6 @@
-FROM ubuntu:jammy
+ARG ARCH=amd64
+FROM --platform=linux/$ARCH ubuntu:jammy
+ARG ARCH
 
 ENV OPERATING_SYSTEM=ubuntu_jammy
 
