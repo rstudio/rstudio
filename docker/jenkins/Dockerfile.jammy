@@ -61,7 +61,7 @@ RUN apt-get update && \
     zlib1g-dev
 
 # ensure we use the java 11 compiler
-RUN update-alternatives --set java /usr/lib/jvm/java-11-openjdk-amd64/bin/java
+RUN update-alternatives --set java /usr/lib/jvm/java-11-openjdk-$(dpkg --print-architecture)/bin/java
 
 # copy RStudio tools (needed so that our other dependency scripts can find it)
 RUN mkdir -p /tools
