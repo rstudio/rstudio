@@ -1,10 +1,16 @@
 ARG ARCH=amd64
-FROM --platform=linux/$ARCH fedora:36
+FROM --platform=linux/$ARCH rockylinux:9
 ARG ARCH
 
-ENV OPERATING_SYSTEM=fedora_36
+ENV OPERATING_SYSTEM=rockylinux_9
 
 ARG AWS_REGION=us-east-1
+
+RUN set -x \
+      && yum install epel-release -y \
+      && yum install dnf-plugins-core -y \ 
+      && yum config-manager --set-enabled crb \
+      && yum update -y
 
 RUN dnf install -y \
     R \
@@ -46,7 +52,6 @@ RUN dnf install -y \
     patchelf \
     postgresql-devel \
     procps \
-    python2 \
     python3 \
     rpm-sign \
     rpmdevtools \
@@ -77,9 +82,6 @@ RUN bash /tmp/install-boost || bash /tmp/install-boost
 COPY package/linux/install-dependencies /tmp/
 RUN bash /tmp/install-dependencies
 
-# copy python2 to python so that it can be picked up by Google scripts
-RUN cp /usr/bin/python2 /usr/bin/python
-
 # install crashpad and its dependencies
 COPY dependencies/common/install-crashpad /tmp/
 RUN bash /tmp/install-crashpad rhel8
@@ -94,7 +96,7 @@ COPY src/gwt/panmirror/src/editor/yarn.lock /opt/rstudio-tools/panmirror/
 COPY src/gwt/panmirror/src/editor/package.json /opt/rstudio-tools/panmirror/
 
 # install common dependencies
-RUN cd /opt/rstudio-tools/dependencies/common && /bin/bash ./install-common fedora36
+RUN cd /opt/rstudio-tools/dependencies/common && /bin/bash ./install-common rhel9
 
 # install Qt SDK
 COPY dependencies/common/install-qt.sh /tmp/
