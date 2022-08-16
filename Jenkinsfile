@@ -162,10 +162,15 @@ def sentry_upload(type, flavor) {
   }
 }
 
-def jenkins_user_build_args() {
+def jenkins_user_build_args(arch) {
+  // all builds run on AMD64 (x86_64) architecture except ARM64 builds
+  def container_arch = 'amd64'
+  if (arch == 'arm64') {
+    container_arch = 'arm64'
+  }
   def jenkins_uid = sh (script: 'id -u jenkins', returnStdout: true).trim()
   def jenkins_gid = sh (script: 'id -g jenkins', returnStdout: true).trim()
-  return " --build-arg JENKINS_UID=${jenkins_uid} --build-arg JENKINS_GID=${jenkins_gid}"
+  return " --build-arg JENKINS_UID=${jenkins_uid} --build-arg JENKINS_GID=${jenkins_gid} --build-arg ARCH=${container_arch}"
 }
 
 def get_type_from_os(os) {
@@ -239,9 +244,13 @@ try {
           [os: 'bionic',     arch: 'amd64',  flavor: 'server',   variant: '',  package_os: 'Ubuntu Bionic'],
           [os: 'bionic',     arch: 'amd64',  flavor: 'electron', variant: '',  package_os: 'Ubuntu Bionic'],
           [os: 'jammy',      arch: 'amd64',  flavor: 'server',   variant: '',  package_os: 'Ubuntu Jammy'],
+          [os: 'jammy',      arch: 'arm64',  flavor: 'server',   variant: '',  package_os: 'Ubuntu Jammy'],
           [os: 'jammy',      arch: 'amd64',  flavor: 'electron', variant: '',  package_os: 'Ubuntu Jammy'],
+          [os: 'jammy',      arch: 'arm64',  flavor: 'electron', variant: '',  package_os: 'Ubuntu Jammy'],
           [os: 'rhel9',      arch: 'x86_64', flavor: 'server',   variant: '',  package_os: 'RHEL 9'],
+          [os: 'rhel9',      arch: 'arm64',  flavor: 'server',   variant: '',  package_os: 'RHEL 9'],
           [os: 'rhel9',      arch: 'x86_64', flavor: 'electron', variant: '',  package_os: 'RHEL 9'],
+          [os: 'rhel9',      arch: 'arm64',  flavor: 'electron', variant: '',  package_os: 'RHEL 9'],
           [os: 'rhel8',      arch: 'x86_64', flavor: 'server',   variant: '',  package_os: 'RHEL 8'],
           [os: 'rhel8',      arch: 'x86_64', flavor: 'electron', variant: '',  package_os: 'RHEL 8']
         ]
@@ -253,7 +262,7 @@ try {
                 prepareWorkspace()
                 archiveArtifacts artifacts: 'version/RELEASE', followSymlinks: false
 
-                container = pullBuildPush(image_name: 'jenkins/ide', dockerfile: "docker/jenkins/Dockerfile.versioning", image_tag: "rstudio-versioning", build_args: jenkins_user_build_args(), retry_image_pull: 5)
+                container = pullBuildPush(image_name: 'jenkins/ide', dockerfile: "docker/jenkins/Dockerfile.versioning", image_tag: "rstudio-versioning", build_args: jenkins_user_build_args('amd64'), retry_image_pull: 5)
                 container.inside() {
                     stage('bump version') {
                         def rstudioVersion = sh (
@@ -296,15 +305,15 @@ try {
             // on the same image)
             if (!parallel_images.keySet().contains(image_tag)) {
                 parallel_images[image_tag] = {
-                    node('docker') {
+                    node(current_image.arch) {
                         stage('prepare Linux container') {
                             prepareWorkspace()
                             withCredentials([usernameColonPassword(credentialsId: 'github-rstudio-jenkins', variable: "github_login")]) {
                               def github_args = "--build-arg GITHUB_LOGIN=${github_login}"
                               pullBuildPush(image_name: 'jenkins/ide',
-                                dockerfile: "docker/jenkins/Dockerfile.${current_image.os}-${current_image.arch}",
+                                dockerfile: "docker/jenkins/Dockerfile.${current_image.os}",
                                 image_tag: image_tag,
-                                build_args: github_args + " " + jenkins_user_build_args(),
+                                build_args: github_args + " " + jenkins_user_build_args(current_image.arch),
                                 retry_image_pull: 5)
                             }
                         }
