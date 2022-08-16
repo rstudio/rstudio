@@ -182,7 +182,7 @@ export R_HOME=$(R RHOME)
 export R_DOC_DIR=$(R --vanilla -s -e "cat(paste(R.home('doc'), sep=':'))")
 export R_LIB_DIR=$(R --vanilla -s -e "cat(paste(R.home('lib'), sep=':'))")
 
-# Hack: on Fedora36 (docker), the reported R_DOC_DIR doesn't exist which triggers
+# Hack: on RHEL9 (docker), the reported R_DOC_DIR doesn't exist which triggers
 # test failures; create the folder if missing
 if [ ! -e "${R_DOC_DIR}" ]; then
    sudo mkdir "${R_DOC_DIR}"
