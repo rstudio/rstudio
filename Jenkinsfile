@@ -142,11 +142,11 @@ def s3_upload(type, flavor, os, arch) {
     }
 
     // publish the build
-    sh "docker/jenkins/publish-build.sh --build ${product}/${os} --url https://s3.amazonaws.com/rstudio-ide-build/${flavor}/${os}/${arch}/${packageFile} --pat ${GITHUB_PAT} --file ${buildFolder}/${packageFile} --version ${rstudioVersionMajor}.${rstudioVersionMinor}.${rstudioVersionPatch}${rstudioVersionSuffix}"
+    sh "docker/jenkins/publish-build.sh --build ${product}/${os}-${arch} --url https://s3.amazonaws.com/rstudio-ide-build/${flavor}/${os}/${arch}/${packageFile} --pat ${GITHUB_PAT} --file ${buildFolder}/${packageFile} --version ${rstudioVersionMajor}.${rstudioVersionMinor}.${rstudioVersionPatch}${rstudioVersionSuffix}"
 
     // publish the installer-less version of the build if we made one
     if (tarballFile) {
-      sh "docker/jenkins/publish-build.sh --build ${product}/${os}-xcopy --url https://s3.amazonaws.com/rstudio-ide-build/${flavor}/${os}/${arch}/${renamedTarballFile} --pat ${GITHUB_PAT} --file ${buildFolder}/_CPack_Packages/Linux/${type}/${renamedTarballFile} --version ${rstudioVersionMajor}.${rstudioVersionMinor}.${rstudioVersionPatch}${rstudioVersionSuffix}"
+      sh "docker/jenkins/publish-build.sh --build ${product}/${os}-${arch}-xcopy --url https://s3.amazonaws.com/rstudio-ide-build/${flavor}/${os}/${arch}/${renamedTarballFile} --pat ${GITHUB_PAT} --file ${buildFolder}/_CPack_Packages/Linux/${type}/${renamedTarballFile} --version ${rstudioVersionMajor}.${rstudioVersionMinor}.${rstudioVersionPatch}${rstudioVersionSuffix}"
     }
   }
 }
