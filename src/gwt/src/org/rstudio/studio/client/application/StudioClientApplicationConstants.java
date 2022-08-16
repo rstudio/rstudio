@@ -765,11 +765,11 @@ public interface StudioClientApplicationConstants extends com.google.gwt.i18n.cl
     String buildOfText();
 
     /**
-     * Translated "is provided by RStudio, PBC for testing purposes only and is not an officially supported release.".
+     * Translated "is provided by Posit, PBC for testing purposes only and is not an officially supported release.".
      *
-     * @return translated "is provided by RStudio, PBC for testing purposes only and is not an officially supported release."
+     * @return translated "is provided by Posit, PBC for testing purposes only and is not an officially supported release."
      */
-    @DefaultMessage("is provided by RStudio, PBC for testing purposes only and is not an officially supported release.")
+    @DefaultMessage("is provided by Posit, PBC for testing purposes only and is not an officially supported release.")
     @Key("supportNoticeText")
     String supportNoticeText();
 

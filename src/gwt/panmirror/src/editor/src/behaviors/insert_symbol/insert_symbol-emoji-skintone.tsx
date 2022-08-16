@@ -1,7 +1,7 @@
 /*
  * insert_symbol-emoji-skintone.ts
  *
- * Copyright (C) 2019-20 by RStudio, PBC
+ * Copyright (C) 2022 by Posit, PBC
  *
  * Unless you have received this program directly from Posit pursuant
  * to the terms of a commercial license agreement with Posit, then
