@@ -2501,12 +2501,12 @@ public class RemoteServer implements Server
       sendRequest(RPC_SCOPE, ENSURE_FILE_EXISTS, params, requestCallback);
    }
 
-   public void fileExists(String path,
+   public void getAliasedPath(String path,
                           ServerRequestCallback<String> requestCallback)
    {
       JSONArray params = new JSONArray();
       params.set(0, new JSONString(path));
-      sendRequest(RPC_SCOPE, FILE_EXISTS, params, requestCallback);
+      sendRequest(RPC_SCOPE, GET_ALIASED_PATH, params, requestCallback);
    }
 
    public void detectFreeVars(String code,
@@ -6791,7 +6791,7 @@ public class RemoteServer implements Server
    private static final String SET_DOC_ORDER = "set_doc_order";
    private static final String REMOVE_CACHED_DATA = "remove_cached_data";
    private static final String ENSURE_FILE_EXISTS = "ensure_file_exists";
-   private static final String FILE_EXISTS = "file_exists";
+   private static final String GET_ALIASED_PATH = "get_aliased_path";
    private static final String GET_SOURCE_DOCUMENT = "get_source_document";
 
    private static final String EXPLORER_INSPECT_OBJECT = "explorer_inspect_object";
