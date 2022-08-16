@@ -20,10 +20,10 @@ import { FilePath } from './file-path';
 
 export function userHomePath(): FilePath {
   const user = getenv('R_USER');
-  if (user != '') 
+  if (user !== '') 
     return new FilePath(user);
   const home = getenv('HOME');
-  if (home != '')
+  if (home !== '')
     return new FilePath(home);
   return new FilePath(os.homedir());
 }
