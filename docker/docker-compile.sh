@@ -16,9 +16,9 @@
 #
 # For example:
 # 
-#     docker-compile.sh rhel8-x86_64 desktop 1.2.345
+#     docker-compile.sh rhel8 desktop 1.2.345
 #
-# will produce an RPM of RStudio Desktop from the 64bit RHEL8 container, 
+# will produce an RPM of RStudio Desktop from the RHEL8 container, 
 # with build version 1.2.345, in your package/linux/ directory.
 #
 # For convenience, this script will build the required image if it doesn't
@@ -26,6 +26,11 @@
 # it's already built. If you're iterating on the Dockerfiles themselves, you'll
 # want to use "docker build" directly until you're happy with the
 # configuration, then use this script to test a build under the new config.
+#
+# By default, the script will build packages that match the architecture of the
+# host machine -- i.e. you will get AMD64 builds or ARM64 builds depending on 
+# your processor's architecture. To force a mismatch, set the environment 
+# variable CONTAINER_ARCH to "amd64" or "arm64".
 #
 # To produce a debug build, set the environment variable CMAKE_BUILD_TYPE to
 # "Debug" before invoking the script.
@@ -64,22 +69,40 @@ if [ -z "$IMAGE" ] || [ -z "$FLAVOR" ]; then
     exit 1
 fi
 
-# check to see if there's already a built image
-IMAGEID=$(docker images "$REPO:$IMAGE" --format "{{.ID}}")
-if [ -z "$IMAGEID" ]; then
-    echo "No image found for $REPO:$IMAGE."
+# set container architecture from system architecture (if unspecified)
+SYSTEM_ARCH=$(uname -m)
+if [ -z "$CONTAINER_ARCH" ]; then
+   if [ "$SYSTEM_ARCH" = "aarch64" ] || [ "$SYSTEM_ARCH" = "arm64" ]; then
+      CONTAINER_ARCH="arm64"
+   else
+      CONTAINER_ARCH="amd64"
+   fi
 else
-    echo "Found image $IMAGEID for $REPO:$IMAGE."
+   echo "Building package for ${CONTAINER_ARCH} (system architecture is ${SYSTEM_ARCH})"
 fi
 
+# form image tag from container architecture
+IMAGE_TAG="${IMAGE}-${CONTAINER_ARCH}"
+
+# check to see if there's already a built image
+IMAGEID=$(docker images "$REPO:$IMAGE_TAG" --format "{{.ID}}")
+if [ -z "$IMAGEID" ]; then
+    echo "No image found for $REPO:$IMAGE_TAG."
+else
+    echo "Found image $IMAGEID for $REPO:$IMAGE_TAG."
+fi
+
+# add architecture to build arguments
+BUILD_ARGS="--build-arg ARCH=${CONTAINER_ARCH}"
+
 # get build arg env vars, if any
-if [ -n "${DOCKER_GITHUB_LOGIN}" ]; then
-   BUILD_ARGS="--build-arg GITHUB_LOGIN=${DOCKER_GITHUB_LOGIN}"
+if [ ! -z "${DOCKER_GITHUB_LOGIN}" ]; then
+   BUILD_ARGS="${BUILD_ARGS} --build-arg GITHUB_LOGIN=${DOCKER_GITHUB_LOGIN}"
 fi
 
 # rebuild the image if necessary
 docker build                                \
-  --tag "$REPO:$IMAGE"                      \
+  --tag "$REPO:$IMAGE_TAG"                  \
   --file "docker/jenkins/Dockerfile.$IMAGE" \
   $BUILD_ARGS                               \
   .
@@ -142,7 +165,7 @@ if [ "$CMAKE_BUILD_TYPE" = "Debug" ]; then
 fi
 
 # remove previous image if it exists
-CONTAINER_ID="build-$REPO-$IMAGE"
+CONTAINER_ID="build-$REPO-$IMAGE_TAG"
 echo "Cleaning up container $CONTAINER_ID if it exists..."
 docker rm "$CONTAINER_ID" || true
 
@@ -166,7 +189,7 @@ echo "${CMD}"
 docker run                 \
   --name "$CONTAINER_ID"   \
   --volume "$(pwd):/src"   \
-  "$REPO:$IMAGE" bash -c "${CMD}"
+  "$REPO:$IMAGE_TAG" bash -c "${CMD}"
 
 # extract logs to get filename (should be on the last line)
 PKG_FILENAME=$(docker logs --tail 1 "$CONTAINER_ID")

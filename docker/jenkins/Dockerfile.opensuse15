@@ -1,80 +1,62 @@
-FROM ubuntu:bionic
+ARG ARCH=amd64
+FROM --platform=linux/$ARCH opensuse/leap:15.1
+ARG ARCH
 
-ENV OPERATING_SYSTEM=ubuntu_bionic
+ENV OPERATING_SYSTEM=opensus_leap15
 
-ARG AWS_REGION=us-east-1
+# needed to build RPMs
+RUN zypper --non-interactive addrepo http://download.opensuse.org/repositories/systemsmanagement:wbem:deps/openSUSE_Tumbleweed/systemsmanagement:wbem:deps.repo
 
-# install needed packages. replace httpredir apt source with cloudfront
-RUN set -x \
-    && sed -i "s/archive.ubuntu.com/$AWS_REGION.ec2.archive.ubuntu.com/" /etc/apt/sources.list \
-    && export DEBIAN_FRONTEND=noninteractive \
-    && apt-get update \
-    && apt-get install -y gnupg1 \
-    && apt-key adv --keyserver keyserver.ubuntu.com --recv-keys 0x51716619e084dab9 \
-    && echo 'deb http://cran.rstudio.com/bin/linux/ubuntu bionic-cran35/' >> /etc/apt/sources.list \
-    && apt-get update
-
-# add ppa repository so we can install java 8 (not in any official repo for bionic)
-RUN apt-get update \
-  && apt-get install -y software-properties-common \
-  && add-apt-repository ppa:openjdk-r/ppa
-
-RUN apt-get update && \
-    export DEBIAN_FRONTEND=noninteractive && \
-    apt-get install -y \
+# refresh repos and install required packages
+RUN zypper --non-interactive --gpg-auto-import-keys refresh && \
+    zypper --non-interactive install -y \
     ant \
-    build-essential \
+    boost-devel \
     clang \
     curl \
-    debsigs \
-    dpkg-sig \
     expect \
     fakeroot \
-    git-core \
+    gcc \
+    gcc-c++ \
+    gdb \
+    git \
+    java-1_8_0-openjdk-devel  \
     jq \
-    libattr1-dev \
-    libacl1-dev \
-    libbz2-dev \
-    libcap-dev \
-    libcurl4-openssl-dev \
-    libfuse2 \
+    libacl-devel \
+    libatk-1_0-0 \
+    libatk-bridge-2_0-0 \
+    libattr-devel \
+    libcap-devel \
+    libcups2 \
+    libcurl-devel \
     libgtk-3-0 \
-    libgl1-mesa-dev \
-    libegl1-mesa \
-    libpam-dev \
-    libpango1.0-dev \
-    libpq-dev \
-    libsqlite3-dev \
-    libuser1-dev \
-    libssl-dev \
-    libxml2-dev \
-    libxslt1-dev \
+    libuser-devel \
+    libuuid-devel \
+    libxml2-devel \
+    libXcursor-devel \
+    libXrandr-devel \
     lsof \
-    ninja-build \
-    openjdk-8-jdk \
-    p7zip-full \
-    pkg-config \
+    make \
+    ninja \
+    openssl-devel \
+    p7zip \
+    pam-devel \
+    pango-devel \
+    postgresql-devel \
     python \
-    r-base \
+    python-xml \
+    python3 \
+    R \
+    rpm-build \
+    sqlite-devel \
     sudo \
+    tar \
     unzip \
-    uuid-dev \
     valgrind \
     wget \
-    xvfb \
-    zlib1g-dev
-
-# ensure we use the java 8 compiler
-RUN update-alternatives --set java /usr/lib/jvm/java-8-openjdk-amd64/jre/bin/java
-
-## build patchelf
-RUN cd /tmp \
-    && wget https://nixos.org/releases/patchelf/patchelf-0.9/patchelf-0.9.tar.gz \
-    && tar xzvf patchelf-0.9.tar.gz \
-    && cd patchelf-0.9 \
-    && ./configure \
-    && make \
-    && make install
+    xml-commons-apis \
+    xvfb-run \
+    zlib-devel
 
 # copy RStudio tools (needed so that our other dependency scripts can find it)
 RUN mkdir -p /tools
@@ -90,11 +72,14 @@ RUN bash /tmp/install-boost || bash /tmp/install-boost
 
 # install cmake
 COPY package/linux/install-dependencies /tmp/
-RUN /bin/bash /tmp/install-dependencies
+RUN bash /tmp/install-dependencies
 
 # install crashpad and its dependencies
 COPY dependencies/common/install-crashpad /tmp/
-RUN bash /tmp/install-crashpad bionic
+RUN bash /tmp/install-crashpad opensuse15
+
+# ensure we use the java 8 compiler
+RUN update-alternatives --set java /usr/lib64/jvm/jre-1.8.0-openjdk/bin/java
 
 # copy common dependency installation scripts
 RUN mkdir -p /opt/rstudio-tools/dependencies/common
@@ -106,13 +91,23 @@ COPY src/gwt/panmirror/src/editor/yarn.lock /opt/rstudio-tools/panmirror/
 COPY src/gwt/panmirror/src/editor/package.json /opt/rstudio-tools/panmirror/
 
 # install common dependencies
-RUN cd /opt/rstudio-tools/dependencies/common && /bin/bash ./install-common bionic
+RUN cd /opt/rstudio-tools/dependencies/common && /bin/bash ./install-common opensuse15
 
 # install Qt SDK
 COPY dependencies/common/install-qt.sh /tmp/
 COPY dependencies/linux/install-qt-linux /tmp/
 RUN export QT_VERSION=5.12.8 && \
     cd /tmp && /bin/bash ./install-qt-linux
+
+# install GnuPG 1.4 from source (needed for release signing)
+RUN cd /tmp && \
+    wget https://gnupg.org/ftp/gcrypt/gnupg/gnupg-1.4.23.tar.bz2 && \
+    bzip2 -d gnupg-1.4.23.tar.bz2 && \
+    tar xvf gnupg-1.4.23.tar && \
+    cd gnupg-1.4.23 && \
+    ./configure && \
+    make && \
+    make install
 
 # cachebust for Quarto release
 ADD https://quarto.org/docs/download/_download.json quarto_releases
@@ -122,10 +117,13 @@ RUN cd /opt/rstudio-tools/dependencies/common && /bin/bash ./install-quarto
 ARG GITHUB_LOGIN
 ENV RSTUDIO_GITHUB_LOGIN=$GITHUB_LOGIN
 
+# create nobody user and group, used by unit tests
+RUN groupadd -g 65534 nobody && \
+    useradd -m -d /var/lib/nobody -u 65534 -g nobody nobody
+
 # create jenkins user, make sudo. try to keep this toward the bottom for less cache busting
 ARG JENKINS_GID=999
 ARG JENKINS_UID=999
 RUN groupadd -g $JENKINS_GID jenkins && \
     useradd -m -d /var/lib/jenkins -u $JENKINS_UID -g jenkins jenkins && \
     echo "jenkins ALL=(ALL) NOPASSWD: ALL" >> /etc/sudoers
-

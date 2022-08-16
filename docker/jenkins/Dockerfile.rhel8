@@ -1,4 +1,6 @@
-FROM rockylinux/rockylinux:8
+ARG ARCH=amd64
+FROM --platform=linux/$ARCH rockylinux/rockylinux:8
+ARG ARCH
 
 ENV OPERATING_SYSTEM=rockylinux_8
 

@@ -1,6 +1,8 @@
-FROM ubuntu:jammy
+ARG ARCH=amd64
+FROM --platform=linux/$ARCH ubuntu:bionic
+ARG ARCH
 
-ENV OPERATING_SYSTEM=ubuntu_jammy
+ENV OPERATING_SYSTEM=ubuntu_bionic
 
 ARG AWS_REGION=us-east-1
 
@@ -9,7 +11,15 @@ RUN set -x \
     && sed -i "s/archive.ubuntu.com/$AWS_REGION.ec2.archive.ubuntu.com/" /etc/apt/sources.list \
     && export DEBIAN_FRONTEND=noninteractive \
     && apt-get update \
-    && apt-get install -y gnupg1
+    && apt-get install -y gnupg1 \
+    && apt-key adv --keyserver keyserver.ubuntu.com --recv-keys 0x51716619e084dab9 \
+    && echo 'deb http://cran.rstudio.com/bin/linux/ubuntu bionic-cran40/' >> /etc/apt/sources.list \
+    && apt-get update
+
+# add ppa repository so we can install java 8 (not in any official repo for bionic)
+RUN apt-get update \
+  && apt-get install -y software-properties-common \
+  && add-apt-repository ppa:openjdk-r/ppa
 
 RUN apt-get update && \
     export DEBIAN_FRONTEND=noninteractive && \
@@ -43,12 +53,10 @@ RUN apt-get update && \
     libxslt1-dev \
     lsof \
     ninja-build \
-    openjdk-11-jdk \
+    openjdk-8-jdk \
     p7zip-full \
-    patchelf \
     pkg-config \
-    python3-dev \
-    python-is-python3 \
+    python \
     r-base \
     sudo \
     unzip \
@@ -58,8 +66,17 @@ RUN apt-get update && \
     xvfb \
     zlib1g-dev
 
-# ensure we use the java 11 compiler
-RUN update-alternatives --set java /usr/lib/jvm/java-11-openjdk-amd64/bin/java
+# ensure we use the java 8 compiler
+RUN update-alternatives --set java /usr/lib/jvm/java-8-openjdk-$(dpkg --print-architecture)/jre/bin/java
+
+## build patchelf
+RUN cd /tmp \
+    && wget https://nixos.org/releases/patchelf/patchelf-0.9/patchelf-0.9.tar.gz \
+    && tar xzvf patchelf-0.9.tar.gz \
+    && cd patchelf-0.9 \
+    && ./configure \
+    && make \
+    && make install
 
 # copy RStudio tools (needed so that our other dependency scripts can find it)
 RUN mkdir -p /tools
@@ -91,7 +108,7 @@ COPY src/gwt/panmirror/src/editor/yarn.lock /opt/rstudio-tools/panmirror/
 COPY src/gwt/panmirror/src/editor/package.json /opt/rstudio-tools/panmirror/
 
 # install common dependencies
-RUN cd /opt/rstudio-tools/dependencies/common && /bin/bash ./install-common jammy
+RUN cd /opt/rstudio-tools/dependencies/common && /bin/bash ./install-common bionic
 
 # install Qt SDK
 COPY dependencies/common/install-qt.sh /tmp/
