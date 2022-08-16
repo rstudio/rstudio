@@ -9,12 +9,12 @@ BEGIN
     BEGIN
         BLOCK "040904E4"
         BEGIN
-            VALUE "CompanyName",      "RStudio, PBC\0"
+            VALUE "CompanyName",      "Posit, PBC\0"
             VALUE "FileDescription",  "RStudio ConsoleIO\0"
             VALUE "FileVersion",      "${CPACK_PACKAGE_VERSION_MAJOR},${CPACK_PACKAGE_VERSION_MINOR},${CPACK_PACKAGE_VERSION_PATCH},0\0"
             VALUE "InternalName",     "consoleio\0"
             VALUE "LegalCopyright",   "Copyright (C) 2022 by Posit, PBC\0"
-            VALUE "LegalTrademarks",  "RStudio (TM) is a trademark of RStudio, PBC\0"
+            VALUE "LegalTrademarks",  "RStudio (TM) is a trademark of Posit, PBC\0"
             VALUE "OriginalFilename", "consoleio.exe\0"
             VALUE "ProductName",      "RStudio\0"
             VALUE "ProductVersion",   "${CPACK_PACKAGE_VERSION_MAJOR},${CPACK_PACKAGE_VERSION_MINOR},${CPACK_PACKAGE_VERSION_PATCH},0\0"

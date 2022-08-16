@@ -1,7 +1,7 @@
 /*
  * %FILENAME%
  *
- * Copyright (C) %YEAR% by RStudio, PBC
+ * Copyright (C) %YEAR% by Posit, PBC
  *
  * Unless you have received this program directly from Posit pursuant
  * to the terms of a commercial license agreement with Posit, then

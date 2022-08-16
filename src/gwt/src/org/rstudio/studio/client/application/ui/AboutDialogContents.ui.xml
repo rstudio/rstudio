@@ -159,7 +159,7 @@
                      <g:HTMLPanel styleName="{style.productCopyright}">
                          <g:InlineLabel text="&#xA9;"></g:InlineLabel>
                          <g:InlineLabel ui:field="copyrightYearLabel"></g:InlineLabel>
-                         <g:InlineLabel text="RStudio, PBC"></g:InlineLabel>
+                         <g:InlineLabel text="Posit, PBC"></g:InlineLabel>
                      </g:HTMLPanel>
                   </g:HTMLPanel>
                </g:HTMLPanel>
@@ -175,7 +175,7 @@
             </g:HTMLPanel>
             <g:HTMLPanel styleName="{style.trademarkNotice}">
                <g:InlineLabel
-                  text="RStudio and Shiny are registered trademarks of RStudio, PBC, all rights reserved. See">
+                  text="RStudio and Shiny are registered trademarks of Posit, PBC, all rights reserved. See">
                </g:InlineLabel>
                <g:Anchor
                   href="https://www.rstudio.com/about/trademark/"

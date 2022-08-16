@@ -54,7 +54,7 @@ const config = {
     name: 'RStudio',
     executableName: process.platform === 'darwin' ? 'RStudio' : 'rstudio',
     win32metadata: {
-      CompanyName: "RStudio, PBC",
+      CompanyName: "Posit, PBC",
       FileDescription: "RStudio",
       InternalName: "RStudio",
       ProductName: "RStudio",
