@@ -240,8 +240,8 @@ try {
           [os: 'bionic',     arch: 'amd64',  flavor: 'electron', variant: '',  package_os: 'Ubuntu Bionic'],
           [os: 'jammy',      arch: 'amd64',  flavor: 'server',   variant: '',  package_os: 'Ubuntu Jammy'],
           [os: 'jammy',      arch: 'amd64',  flavor: 'electron', variant: '',  package_os: 'Ubuntu Jammy'],
-          [os: 'fedora36',   arch: 'x86_64', flavor: 'server',   variant: '',  package_os: 'Fedora 36'],
-          [os: 'fedora36',   arch: 'x86_64', flavor: 'electron', variant: '',  package_os: 'Fedora 36'],
+          [os: 'rhel9',      arch: 'x86_64', flavor: 'server',   variant: '',  package_os: 'RHEL 9'],
+          [os: 'rhel9',      arch: 'x86_64', flavor: 'electron', variant: '',  package_os: 'RHEL 9'],
           [os: 'rhel8',      arch: 'x86_64', flavor: 'server',   variant: '',  package_os: 'RHEL 8'],
           [os: 'rhel8',      arch: 'x86_64', flavor: 'electron', variant: '',  package_os: 'RHEL 8']
         ]
