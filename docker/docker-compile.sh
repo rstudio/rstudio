@@ -165,7 +165,7 @@ if [ "$CMAKE_BUILD_TYPE" = "Debug" ]; then
 fi
 
 # remove previous image if it exists
-CONTAINER_ID="build-$REPO-$IMAGE"
+CONTAINER_ID="build-$REPO-$IMAGE_TAG"
 echo "Cleaning up container $CONTAINER_ID if it exists..."
 docker rm "$CONTAINER_ID" || true
 
@@ -189,7 +189,7 @@ echo "${CMD}"
 docker run                 \
   --name "$CONTAINER_ID"   \
   --volume "$(pwd):/src"   \
-  "$REPO:$IMAGE" bash -c "${CMD}"
+  "$REPO:$IMAGE_TAG" bash -c "${CMD}"
 
 # extract logs to get filename (should be on the last line)
 PKG_FILENAME=$(docker logs --tail 1 "$CONTAINER_ID")
