@@ -307,6 +307,27 @@ function scanForRPosix(): Expected<string> {
   return err();
 }
 
+function regQuery(cmd: string, rInstallations: Set<string>): Set<string> {
+  const [output, error] = executeCommand(cmd);
+    if (error) {
+      logger().logError(error);
+      return rInstallations;
+    }
+
+  // parse the actual path from the output
+  const lines = output.split(EOL);
+  for (const line of lines) {
+    const match = /^\s*InstallPath\s*REG_SZ\s*(.*)$/.exec(line);
+    if (match != null) {
+      const rInstallation = match[1];
+      if (existsSync(rInstallation)) {
+        rInstallations.add(rInstallation);
+      }
+    }
+  }
+  return rInstallations;
+}
+
 export function findRInstallationsWin32(): string[] {
 
   const rInstallations = new Set<string>();
@@ -314,26 +335,12 @@ export function findRInstallationsWin32(): string[] {
   for (const view of ['/reg:32', '/reg:64']) {
 
     // list all installed versions from registry
-    const keyName = 'HKEY_LOCAL_MACHINE\\SOFTWARE\\R-Core';
-    const regQueryCommand = `reg query ${keyName} /s /v InstallPath ${view}`;
-    const [output, error] = executeCommand(regQueryCommand);
-    if (error) {
-      logger().logError(error);
-      continue;
-    }
-
-    // parse the actual path from the output
-    const lines = output.split(EOL);
-    for (const line of lines) {
-      const match = /^\s*InstallPath\s*REG_SZ\s*(.*)$/.exec(line);
-      if (match != null) {
-        const rInstallation = match[1];
-        if (existsSync(rInstallation)) {
-          rInstallations.add(rInstallation);
-        }
-      }
-    }
-
+    const keyNames = [
+      'HKEY_LOCAL_MACHINE',
+      'HKEY_CURRENT_USER',
+    ];
+    const regQueryCommands = keyNames.map(key => `reg query ${key}\\SOFTWARE\\R-Core /s /v InstallPath ${view}`);  
+    regQueryCommands.map(cmd => regQuery(cmd, rInstallations));
   }
 
   // look for R installations in some common locations
