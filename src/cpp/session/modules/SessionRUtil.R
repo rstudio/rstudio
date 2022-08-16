@@ -133,6 +133,9 @@
    # define runner script (will load data and execute user-defined callback)
    script <- quote({
       
+      # save the original working directory
+      originalWorkingDir <- getwd()
+      
       # read side-car data file
       bundle <- readRDS("bundle.rds")
       
@@ -149,8 +152,12 @@
       data     <- bundle[["data"]]
       
       # execute callback
-      rval <- do.call(callback, data)
-      saveRDS(object = rval, file = "output.rds")
+      result <- do.call(callback, data)
+      
+      # return to original directory
+      setwd(originalWorkingDir)
+      saveRDS(object = result, file = "output.rds")
+      
    })
    
    # write bundle to file
@@ -169,8 +176,10 @@
    
    # run the script
    system2(r, args, ...)
+   
    # read in the serialized return value of the callback and return it
-   readRDS("output.rds")
+   if (file.exists("output.rds"))
+      readRDS("output.rds")
 })
 
 # NOTE: this uses a bundled YAML library in the IDE as opposed to the R
