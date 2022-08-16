@@ -347,7 +347,8 @@ export function findRInstallationsWin32(): string[] {
   const commonLocations = [
     'C:/R',
     `${getenv('ProgramFiles')}/R`,
-    `${getenv('ProgramFiles(x86)')}/R`
+    `${getenv('ProgramFiles(x86)')}/R`,
+    `${getenv('LOCALAPPDATA')}/Programs/R`
   ];
 
   for (const location of commonLocations) {
