@@ -52,4 +52,22 @@ public interface HyperlinkConstants extends com.google.gwt.i18n.client.Messages 
     @Key("clickToRun")
     String clickToRun();
 
+    /**
+     * Translated "No such file".
+     *
+     * @return translated "No such file"
+     */
+    @DefaultMessage("No such file")
+    @Key("noSuchFile")
+    String noSuchFile();
+
+    /**
+     * Translated "'{0}' does not exist.".
+     *
+     * @return translated "'{0}' does not exist."
+     */
+    @DefaultMessage("'{0}' does not exist.")
+    @Key("doesNotExist")
+    String doesNotExist(String filename);
+
 }

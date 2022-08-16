@@ -16,6 +16,7 @@ package org.rstudio.core.client.hyperlink;
 
 import java.util.Map;
 
+import com.google.gwt.core.client.GWT;
 import com.google.gwt.core.client.Scheduler;
 
 import org.rstudio.core.client.FilePosition;
@@ -87,8 +88,8 @@ public class FileHyperlink extends Hyperlink
                 else 
                 {
                     RStudioGinjector.INSTANCE.getGlobalDisplay().showErrorMessage(
-                        "No such file",
-                        "'" + filename + "' does not exist"
+                        constants_.noSuchFile(),
+                        constants_.doesNotExist(filename)
                         );
                 }
             }
@@ -105,5 +106,5 @@ public class FileHyperlink extends Hyperlink
     private int col;
 
     private SourceServerOperations server_;
-
+    private static final HyperlinkConstants constants_ = GWT.create(HyperlinkConstants.class);
 }
