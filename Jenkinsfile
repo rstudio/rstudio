@@ -305,7 +305,7 @@ try {
             // on the same image)
             if (!parallel_images.keySet().contains(image_tag)) {
                 parallel_images[image_tag] = {
-                    node(current_image.arch) {
+                    node("${current_image.arch} && linux") {
                         stage('prepare Linux container') {
                             prepareWorkspace()
                             withCredentials([usernameColonPassword(credentialsId: 'github-rstudio-jenkins', variable: "github_login")]) {
@@ -366,7 +366,7 @@ try {
             def index = i
             parallel_containers["${containers[i].os}-${containers[i].arch}-${containers[i].flavor}-${containers[i].variant}"] = {
                 def current_container = containers[index]
-                node(current_container.arch) {
+                node("${current_container.arch} && linux") {
                     def current_image
                     docker.withRegistry('https://263245908434.dkr.ecr.us-east-1.amazonaws.com', 'ecr:us-east-1:jenkins-aws') {
                         stage('prepare ws/container') {
