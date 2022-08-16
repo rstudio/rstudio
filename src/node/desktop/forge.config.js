@@ -50,7 +50,7 @@ const config = {
   packagerConfig: {
     icon: './resources/icons/RStudio',
     appBundleId: 'com.rstudio.desktop',
-    appCopyright: 'Copyright (C) 2022 by RStudio, PBC',
+    appCopyright: 'Copyright (C) 2022 by Posit, PBC',
     name: 'RStudio',
     executableName: process.platform === 'darwin' ? 'RStudio' : 'rstudio',
     win32metadata: {
