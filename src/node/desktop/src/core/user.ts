@@ -14,10 +14,17 @@
  */
 
 import os from 'os';
+import { getenv } from './environment';
 
 import { FilePath } from './file-path';
 
 export function userHomePath(): FilePath {
+  const user = getenv('R_USER');
+  if (user !== '') 
+    return new FilePath(user);
+  const home = getenv('HOME');
+  if (home !== '')
+    return new FilePath(home);
   return new FilePath(os.homedir());
 }
 
