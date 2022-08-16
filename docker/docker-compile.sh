@@ -97,7 +97,7 @@ BUILD_ARGS="--build-arg ARCH=${CONTAINER_ARCH}"
 
 # get build arg env vars, if any
 if [ ! -z "${DOCKER_GITHUB_LOGIN}" ]; then
-   BUILD_ARGS="${BUILD_ARGS} GITHUB_LOGIN=${DOCKER_GITHUB_LOGIN}"
+   BUILD_ARGS="${BUILD_ARGS} --build-arg GITHUB_LOGIN=${DOCKER_GITHUB_LOGIN}"
 fi
 
 # rebuild the image if necessary
