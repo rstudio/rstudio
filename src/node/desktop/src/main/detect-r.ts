@@ -307,7 +307,7 @@ function scanForRPosix(): Expected<string> {
   return err();
 }
 
-function regQuery(cmd: string, rInstallations: Set<string>): Set<string> {
+function queryRegistry(cmd: string, rInstallations: Set<string>): Set<string> {
   const [output, error] = executeCommand(cmd);
     if (error) {
       logger().logError(error);
@@ -340,7 +340,7 @@ export function findRInstallationsWin32(): string[] {
       'HKEY_CURRENT_USER',
     ];
     const regQueryCommands = keyNames.map(key => `reg query ${key}\\SOFTWARE\\R-Core /s /v InstallPath ${view}`);  
-    regQueryCommands.map(cmd => regQuery(cmd, rInstallations));
+    regQueryCommands.map(cmd => queryRegistry(cmd, rInstallations));
   }
 
   // look for R installations in some common locations
