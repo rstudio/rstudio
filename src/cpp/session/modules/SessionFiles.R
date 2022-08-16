@@ -156,7 +156,6 @@ for (binding in bindings)
    } else {
       return(.rs.scalar(""))
    }
-   .rs.scalar(file.exists(path))
 })
 
 .rs.addFunction("scanFiles", function(path,
