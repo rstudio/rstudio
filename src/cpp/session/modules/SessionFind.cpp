@@ -1571,7 +1571,7 @@ core::Error runGrepOperation(const GrepOptions& grepOptions, const ReplaceOption
    return Success();
 }
 
-std::string escapeCharacters(const std::string& query)
+std::string escapeForRegex(const std::string& query)
 {
    std::string specialChars("([.|*?+(){}^$\\[\\]])");
    // Note that we need four backslashes in order to add a backslash before each special character to turn into a literal
@@ -1604,7 +1604,7 @@ core::Error beginFind(const json::JsonRpcRequest& request,
       return error;
 
    if (isWholeWord)
-      searchString = "\\b" + escapeCharacters(searchString) + "\\b";
+      searchString = "\\b" + escapeForRegex(searchString) + "\\b";
 
    GrepOptions grepOptions(searchString, directory, includeFilePatterns, useGitGrep, excludeGitIgnore, excludeFilePatterns,
       asRegex, ignoreCase);
@@ -1697,7 +1697,7 @@ core::Error completeReplace(const json::JsonRpcRequest& request,
       return error;
 
    if (isWholeWord)
-      searchString = "\\b" + escapeCharacters(searchString) + "\\b";
+      searchString = "\\b" + escapeForRegex(searchString) + "\\b";
 
    // 5 was chosen based on testing to find a value that was both responsive
    // and not overly frequent
