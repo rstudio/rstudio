@@ -23,6 +23,7 @@ public interface FindInFilesServerOperations
 {
    void beginFind(String searchString,
                   boolean regex,
+                  boolean isWholeWord,
                   boolean ignoreCase,
                   FileSystemItem directory,
                   JsArrayString includeFilePatterns,
@@ -49,6 +50,7 @@ public interface FindInFilesServerOperations
 
    void completeReplace(String searchString,
                         boolean regex,
+                        boolean isWholeWord,
                         boolean searchIgnoreCase,
                         FileSystemItem dictionary,
                         JsArrayString includeFilePatterns,

@@ -1571,11 +1571,21 @@ core::Error runGrepOperation(const GrepOptions& grepOptions, const ReplaceOption
    return Success();
 }
 
+std::string escapeForRegex(const std::string& query)
+{
+   std::string specialChars("([.|*?+(){}^$\\[\\]])");
+   // Note that we need four backslashes in order to add a backslash before each special character to turn into a literal
+   // \\1 is a backreference that refers to the original symbol we want to escape
+   boost::regex_constants::syntax_option_type flags = 0;
+   std::string updatedQuery = boost::regex_replace(query, boost::regex(specialChars, flags), "\\\\\\1");
+   return updatedQuery;
+}
+
 core::Error beginFind(const json::JsonRpcRequest& request,
                       json::JsonRpcResponse* pResponse)
 {
    std::string searchString;
-   bool asRegex, ignoreCase;
+   bool asRegex, isWholeWord, ignoreCase;
    std::string directory;
    json::Array includeFilePatterns, excludeFilePatterns;
    bool useGitGrep, excludeGitIgnore;
@@ -1583,6 +1593,7 @@ core::Error beginFind(const json::JsonRpcRequest& request,
    Error error = json::readParams(request.params,
                                   &searchString,
                                   &asRegex,
+                                  &isWholeWord,
                                   &ignoreCase,
                                   &directory,
                                   &includeFilePatterns,
@@ -1592,9 +1603,14 @@ core::Error beginFind(const json::JsonRpcRequest& request,
    if (error)
       return error;
 
+   if (isWholeWord)
+      searchString = "\\b" + escapeForRegex(searchString) + "\\b";
+
    GrepOptions grepOptions(searchString, directory, includeFilePatterns, useGitGrep, excludeGitIgnore, excludeFilePatterns,
       asRegex, ignoreCase);
    error = runGrepOperation(grepOptions, ReplaceOptions(), nullptr, pResponse);
+   if (error)
+      LOG_DEBUG_MESSAGE("Error running grep operation with search string " + searchString);
    return error;
 }
 
@@ -1656,12 +1672,11 @@ core::Error previewReplace(const json::JsonRpcRequest& request,
 core::Error completeReplace(const json::JsonRpcRequest& request,
                             json::JsonRpcResponse* pResponse)
 {
-   bool asRegex, ignoreCase;
+   bool asRegex, isWholeWord, ignoreCase;
    std::string searchString;
    std::string replacePattern;
    std::string directory;
-   bool useGitGrep;
-   bool excludeGitIgnore;
+   bool useGitGrep, excludeGitIgnore;
    json::Array includeFilePatterns, excludeFilePatterns;
    // only used to estimate progress
    int originalFindCount;
@@ -1669,6 +1684,7 @@ core::Error completeReplace(const json::JsonRpcRequest& request,
    Error error = json::readParams(request.params,
                                   &searchString,
                                   &asRegex,
+                                  &isWholeWord,
                                   &ignoreCase,
                                   &directory,
                                   &includeFilePatterns,
@@ -1679,6 +1695,9 @@ core::Error completeReplace(const json::JsonRpcRequest& request,
                                   &replacePattern);
    if (error)
       return error;
+
+   if (isWholeWord)
+      searchString = "\\b" + escapeForRegex(searchString) + "\\b";
 
    // 5 was chosen based on testing to find a value that was both responsive
    // and not overly frequent
