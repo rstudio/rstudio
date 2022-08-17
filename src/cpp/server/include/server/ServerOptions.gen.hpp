@@ -125,10 +125,10 @@ protected:
       "Indicates whether or not to verify connecting browser user agents to ensure they are compatible with RStudio Server.")
       ("www-same-site",
       value<std::string>(wwwSameSite)->default_value(""),
-      "The value of the 'SameSite' attribute on the cookies issued by RStudio Server. Accepted values are 'none' or 'lax'. The value 'none' should be used only when RStudio is hosted into an iFrame. For compatibility with some browsers (i.e. Safari 12), duplicate cookies will be issued by RStudio Server when 'none' is used.")
+      "The value of the 'SameSite' attribute on the cookies issued by RStudio Server. Accepted values are 'none' or 'lax'. The value 'none' should be used only when RStudio is hosted into an iframe. For compatibility with some browsers (i.e. Safari 12), duplicate cookies will be issued by RStudio Server when 'none' is used.")
       ("www-frame-origin",
       value<std::string>(&wwwFrameOrigin_)->default_value("none"),
-      "Specifies the allowed origin for the iFrame hosting RStudio if iFrame embedding is enabled.")
+      "Specifies the allowed origin for the iframe hosting RStudio if iframe embedding is enabled.")
       ("www-enable-origin-check",
       value<bool>(&wwwEnableOriginCheck_)->default_value(false),
       "If enabled, cause RStudio to enforce that incoming request origins are from the host domain. This can be added for additional security. See https://cheatsheetseries.owasp.org/cheatsheets/Cross-Site_Request_Forgery_Prevention_Cheat_Sheet.html#verifying-origin-with-standard-headers")
@@ -174,7 +174,10 @@ protected:
       "If set, overrides the path to the /etc/rstudio/database.conf configuration file.")
       ("db-command",
       value<std::string>(&dbCommand_)->default_value(std::string()),
-      "Executes the shell command specified injecting the current database configuration in the command.");
+      "Executes the shell command specified injecting the current database configuration in the command.")
+      ("db-connection-timeout",
+      value<int>(&dbConnectionTimeout_)->default_value(15),
+      "Specifies the number of seconds to wait for making a new db connection");
 
    pAuth->add_options()
       ("auth-none",
@@ -221,7 +224,7 @@ protected:
       "If set, overrides the path to the directory which contains the revocation list to be used for storing expired tokens. As of RStudio Server 1.4, this has been moved to database storage, and so this setting is deprecated, but will be used to port over any existing file-based expired tokens.")
       ("auth-cookies-force-secure",
       value<bool>(&authCookiesForceSecure_)->default_value(false),
-      "Indicates whether or not auth cookies should be forcefully marked as secure. This should be enabled if running an SSL terminator infront of RStudio Server. Otherwise, cookies will be marked secure if SSL is configured.");
+      "Indicates whether or not auth cookies should be forcefully marked as secure. This should be enabled if running an SSL terminator in front of RStudio Server. Otherwise, cookies will be marked secure if SSL is configured.");
 
    pMonitor->add_options()
       (kMonitorIntervalSeconds,
@@ -265,6 +268,7 @@ public:
    int rsessionProxyMaxWaitSeconds() const { return rsessionProxyMaxWaitSeconds_; }
    std::string databaseConfigFile() const { return databaseConfigFile_; }
    std::string dbCommand() const { return dbCommand_; }
+   int dbConnectionTimeout() const { return dbConnectionTimeout_; }
    bool authNone() const { return authNone_; }
    bool authValidateUsers() const { return authValidateUsers_; }
    int authStaySignedInDays() const { return authStaySignedInDays_; }
@@ -318,6 +322,7 @@ protected:
    int deprecatedUserProcessLimit_;
    std::string databaseConfigFile_;
    std::string dbCommand_;
+   int dbConnectionTimeout_;
    bool authNone_;
    bool authValidateUsers_;
    int authStaySignedInDays_;

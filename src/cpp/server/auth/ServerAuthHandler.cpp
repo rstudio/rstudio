@@ -132,8 +132,6 @@ Error readRevocationListFromDatabase(std::vector<std::string>* pEntries)
 {
    // establish a new transaction with the database
    boost::shared_ptr<IConnection> connection = server_core::database::getConnection();
-   Transaction transaction(connection);
-
    // first, delete all stale cookies from the database
    std::string expiration = date_time::format(boost::posix_time::microsec_clock::universal_time(),
                                               date_time::kIso8601Format);
@@ -161,8 +159,6 @@ Error readRevocationListFromDatabase(std::vector<std::string>* pEntries)
       Row& row = *it;
       pEntries->push_back(row.get<std::string>(0));
    }
-
-   transaction.commit();
    return Success();
 }
 
@@ -457,7 +453,7 @@ Error addUser(boost::asio::io_service& ioService,
               bool isAdmin)
 {
    boost::shared_ptr<IConnection> connection;
-   if (!server_core::database::getConnection(boost::posix_time::seconds(5), &connection))
+   if (!server_core::database::getConnection(boost::posix_time::seconds(server::options().dbConnectionTimeout()), &connection))
    {
       return dbUnavailableError("Cannot add user", username, ERROR_LOCATION);
    }
@@ -508,7 +504,7 @@ Error addUser(boost::asio::io_service& ioService,
 json::Array getAllUsers()
 {
    boost::shared_ptr<IConnection> connection;
-   if (!server_core::database::getConnection(boost::posix_time::seconds(5), &connection))
+   if (!server_core::database::getConnection(boost::posix_time::seconds(server::options().dbConnectionTimeout()), &connection))
    {
       LOG_ERROR_MESSAGE("Could not get licensed users - "
                         "timed out while attempting to get database connection");
@@ -631,7 +627,7 @@ Error isUserLicensed(const system::User& user,
    const unsigned int userLimit = overlay::getNamedUserLimit();
 
    boost::shared_ptr<IConnection> connection;
-   if (!server_core::database::getConnection(boost::posix_time::seconds(10), &connection))
+   if (!server_core::database::getConnection(boost::posix_time::seconds(server::options().dbConnectionTimeout()), &connection))
       return dbUnavailableError("Cannot check user license state", user.getUsername(), ERROR_LOCATION);
 
    // check to see if the user is in the list of named users
@@ -672,7 +668,6 @@ Error isUserLicensed(const system::User& user,
          // user is not active, meaning they haven't signed in for over a year
          // attempt to making them active again by updating their signin time
          // and checking to make sure this doesn't cause us to go over user limit
-         Transaction transaction(connection);
 
          error = updateLastSignin(connection, user);
          if (error)
@@ -698,7 +693,6 @@ Error isUserLicensed(const system::User& user,
          else
          {
             // there was room for this user, so let them sign in
-            transaction.commit();
             *pLicensed = true;
             return Success();
          }
@@ -709,8 +703,6 @@ Error isUserLicensed(const system::User& user,
       // since the user is not already a named user, we need to either make them one
       // (by assigning them as an active user), or we've run out of spaces for the
       // license and auth should fail
-      Transaction transaction(connection);
-
       size_t numActiveUsers = 0;
       error = getNumActiveUsers(connection, &numActiveUsers);
       if (error)
@@ -726,7 +718,6 @@ Error isUserLicensed(const system::User& user,
       addUserToDatabase(connection, user, isAdmin);
       
       // added successfully, and there's space for the user
-      transaction.commit();
       *pLicensed = true;
       return Success();
    }
@@ -738,7 +729,7 @@ unsigned int getActiveUserCount()
       return 0;
 
    boost::shared_ptr<IConnection> connection;
-   if (!server_core::database::getConnection(boost::posix_time::seconds(5), &connection))
+   if (!server_core::database::getConnection(boost::posix_time::seconds(server::options().dbConnectionTimeout()), &connection))
    {
       LOG_ERROR(systemError(boost::system::errc::timed_out,
                             "Could not determine active user count - named user "

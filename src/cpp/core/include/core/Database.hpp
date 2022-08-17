@@ -248,7 +248,7 @@ private:
                                      boost::shared_ptr<ConnectionPool>* pPool);
 
    void returnConnection(const boost::shared_ptr<Connection>& connection);
-   void testAndReconnect(boost::shared_ptr<Connection>& connection);
+   bool testAndReconnect(boost::shared_ptr<Connection>& connection);
 
    thread::ThreadsafeQueue<boost::shared_ptr<Connection> > connections_;
    ConnectionOptions connectionOptions_;
