@@ -20,6 +20,7 @@
 #include <boost/bind/bind.hpp>
 
 #include <core/Algorithm.hpp>
+#include <core/RecursionGuard.hpp>
 #include <shared_core/Error.hpp>
 #include <core/Exec.hpp>
 
@@ -193,6 +194,20 @@ void onDeferredInit(bool)
       LOG_ERROR(error);
 }
 
+void onDetectChanges(module_context::ChangeSource source)
+{
+   DROP_RECURSIVE_CALLS;
+
+   if (!core::thread::isMainThread())
+      return;
+
+   // unlikely that data will change outside of a REPL
+   if (source != module_context::ChangeSourceREPL) 
+      return;
+
+   // TODO: implement something similar to the DataViewer.cpp / onDetectChanges()
+}
+
 SEXP rs_objectClass(SEXP objectSEXP)
 {
    SEXP attribSEXP = ATTRIB(objectSEXP);
@@ -267,6 +282,8 @@ core::Error initialize()
    
    module_context::events().onDeferredInit.connect(onDeferredInit);
    module_context::events().onShutdown.connect(onShutdown);
+   // TODO: uncomment when doing something useful
+   // module_context::events().onDetectChanges.connect(onDetectChanges);
    addSuspendHandler(SuspendHandler(onSuspend, onResume));
    
    source_database::events().onDocPendingRemove.connect(onDocPendingRemove);
