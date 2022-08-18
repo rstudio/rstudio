@@ -65,6 +65,29 @@ bool copySourceFile(const FilePath& sourceDir,
 
 } // anonymous namespace
 
+// NOTE: Assumes that the path string is UTF-8 encoded.
+std::string shortPathName(const std::string& path)
+{
+#ifdef _WIN32
+
+   std::wstring widePath = string_utils::utf8ToWide(path);
+   DWORD length = ::GetShortPathNameW(widePath.c_str(), nullptr, 0);
+   if (length == 0)
+      return path;
+
+   std::vector<WCHAR> buffer(length, 0);
+   DWORD result = ::GetShortPathNameW(widePath.c_str(), &buffer[0], length);
+   if (result == 0)
+      return path;
+
+   return string_utils::wideToUtf8(std::wstring(&buffer[0]));
+
+#else
+   return string;
+#endif
+
+}
+
 FilePath uniqueFilePath(const FilePath& parent, const std::string& prefix, const std::string& extension)
 {
    // try up to 100 times then fallback to a uuid
