@@ -21,17 +21,17 @@ if "%1" == "/?" goto :showhelp
 
 for %%A in (%*) do (
       if /I "%%A" == "clean" set CLEANBUILD=1	  
-	  if /I "%%A" == "debug" set DEBUG_BUILD=1
+      if /I "%%A" == "debug" set DEBUG_BUILD=1
       if /I "%%A" == "desktop" set RSTUDIO_TARGET=Desktop
       if /I "%%A" == "electron" set RSTUDIO_TARGET=Electron
-      if /I "%%A" == "quick" set QUICK=1
       if /I "%%A" == "nogwt" set BUILD_GWT=0
       if /I "%%A" == "nozip" set NOZIP=1
+      if /I "%%A" == "quick" set QUICK=1
 )
 
 REM check for debug build
 if defined DEBUG_BUILD (
-	set CMAKE_BUILD_TYPE=Debug
+      set CMAKE_BUILD_TYPE=Debug
 )
 
 REM clean if requested
