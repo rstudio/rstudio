@@ -78,6 +78,7 @@ export class SatelliteWindow extends GwtWindow {
           if (readyToClose) {
             this.closeStage = 'CloseStageAccepted';
             this.window.close();
+            appState().gwtCallback?.unregisterOwner(this);
           } else {
             // not ready to close, revert close stage and take care of business
             this.closeStage = 'CloseStageOpen';
@@ -88,6 +89,7 @@ export class SatelliteWindow extends GwtWindow {
     } else {
       // not a  source window, just close it
       this.closeSatellite(event);
+      appState().gwtCallback?.unregisterOwner(this);
     }
   }
 
