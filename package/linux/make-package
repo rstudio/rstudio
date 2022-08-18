@@ -219,6 +219,12 @@ else
    GWT_BUILD="no"
 fi
 
+# show build environment when building in CI
+if [ -n "${JENKINS_URL}" ]; then 
+   echo "Build environment: "
+   printenv
+fi
+
 cmake -G"${CMAKE_GENERATOR}"                           \
       -DRSTUDIO_TARGET=$RSTUDIO_TARGET                 \
       -DCMAKE_BUILD_TYPE=$CMAKE_BUILD_TYPE             \
