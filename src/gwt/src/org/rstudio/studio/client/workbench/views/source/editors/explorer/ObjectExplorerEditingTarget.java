@@ -14,18 +14,25 @@
  */
 package org.rstudio.studio.client.workbench.views.source.editors.explorer;
 
+import java.util.HashMap;
+
 import com.google.gwt.aria.client.Roles;
 import com.google.gwt.core.client.GWT;
 import com.google.gwt.user.client.ui.Widget;
 import com.google.inject.Inject;
 
+
 import org.rstudio.core.client.StringUtil;
 import org.rstudio.core.client.widget.SimplePanelWithProgress;
 import org.rstudio.studio.client.application.events.EventBus;
 import org.rstudio.studio.client.common.GlobalDisplay;
+import org.rstudio.studio.client.common.SimpleRequestCallback;
 import org.rstudio.studio.client.common.filetypes.FileIcon;
 import org.rstudio.studio.client.common.filetypes.FileType;
 import org.rstudio.studio.client.common.filetypes.FileTypeRegistry;
+import org.rstudio.studio.client.server.Void;
+import org.rstudio.studio.client.server.ErrorLoggingServerRequestCallback;
+import org.rstudio.studio.client.server.ServerError;
 import org.rstudio.studio.client.workbench.commands.Commands;
 import org.rstudio.studio.client.workbench.views.source.ViewsSourceConstants;
 import org.rstudio.studio.client.workbench.views.source.editors.explorer.model.ObjectExplorerHandle;
@@ -142,16 +149,44 @@ public class ObjectExplorerEditingTarget
       return fileType_;
    }
 
+   private void clearDisplay()
+   {
+      progressPanel_.showProgress(1);
+   }
+
    // Public methods ----
 
    public void update(ObjectExplorerHandle handle)
    {
-      if (isActive_)
-      {
-         reloadDisplay();
-      }
 
-      view_.refresh();
+      final Widget originalWidget = progressPanel_.getWidget();
+
+      clearDisplay();
+      final String oldHandleId = getHandle().getId();
+      HashMap<String, String> props = new HashMap<>();
+      handle.fillProperties(props);
+
+      server_.modifyDocumentProperties(
+         doc_.getId(),
+         props,
+         new SimpleRequestCallback<Void>(constants_.errorCapitalized())
+         {
+            @Override
+            public void onResponseReceived(Void response)
+            {
+               server_.explorerEndInspect(oldHandleId, new ErrorLoggingServerRequestCallback<>());
+
+               handle.fillProperties(doc_.getProperties());
+               reloadDisplay();
+            }
+
+            @Override
+            public void onError(ServerError error)
+            {
+               super.onError(error);
+               progressPanel_.setWidget(originalWidget);
+            }
+         });
    }
 
    @Override
