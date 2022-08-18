@@ -615,6 +615,7 @@ public abstract class
    public abstract AppCommand copyDummy();
    public abstract AppCommand pasteDummy();
    public abstract AppCommand pasteWithIndentDummy();
+   public abstract AppCommand selectAllDummy();
 
    // Placeholder for most recently used files
    public abstract AppCommand mru0();

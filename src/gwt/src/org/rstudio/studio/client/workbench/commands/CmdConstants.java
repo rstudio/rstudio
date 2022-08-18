@@ -3336,6 +3336,10 @@ public interface CmdConstants extends Constants {
     @DefaultStringValue("Pa_ste with Indent") // $NON-NLS-1$
     String pasteWithIndentDummyMenuLabel();
     
+    // selectAllDummy
+    @DefaultStringValue("Select _All") // $NON-NLS-1$
+    String selectAllDummyMenuLabel();
+    
     // yankBeforeCursor
     @DefaultStringValue("Yank Before Cursor") // $NON-NLS-1$
     String yankBeforeCursorLabel();

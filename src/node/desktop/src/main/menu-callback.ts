@@ -455,6 +455,8 @@ export class MenuCallback extends EventEmitter {
       menuItemOpts.role = 'paste';
     } else if (cmdId === 'pasteWithIndentDummy') {
       menuItemOpts.role = 'pasteAndMatchStyle';
+    } else if (cmdId == 'selectAllDummy') {
+      menuItemOpts.role = 'selectAll';
     } else if (cmdId === 'undoDummy') {
       menuItemOpts.accelerator = 'CommandOrControl+Z';
     } else if (cmdId === 'redoDummy') {
