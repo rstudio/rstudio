@@ -108,6 +108,23 @@ RUN export QT_VERSION=5.12.8 && \
 ADD https://quarto.org/docs/download/_download.json quarto_releases
 RUN cd /opt/rstudio-tools/dependencies/common && /bin/bash ./install-quarto
 
+# work around bug in Rocky Linux 9 in which file(1) fails on WASM files with 
+# this error:
+#
+#  ERROR: Bad magic format `version %#x (MVP)' (bad format char: #)
+# 
+# create a /usr/local/bin script that wraps file but always assumes files
+# ending in *.wasm are WASM modules, without invoking file(1) on them
+#
+RUN printf '\
+#!/usr/bin/env bash \n\
+if [[ $1 == *.wasm ]]; then \n\
+    echo "$1: WebAssembly (wasm) binary module version 0x1 (MVP)" \n\
+else \n\
+    /usr/bin/file "$@" \n\
+fi \n' > /usr/local/bin/file
+RUN chmod 755 /usr/local/bin/file
+
 # set github login from build argument if defined
 ARG GITHUB_LOGIN
 ENV RSTUDIO_GITHUB_LOGIN=$GITHUB_LOGIN
