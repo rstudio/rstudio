@@ -13,7 +13,7 @@
  *
  */
 
-import { app, BrowserWindow, dialog, globalShortcut, Menu, screen, shell, WebContents } from 'electron';
+import { app, BrowserWindow, dialog, Menu, screen, shell, WebContents } from 'electron';
 import i18next from 'i18next';
 import path from 'path';
 import { getenv, setenv } from '../core/environment';
@@ -85,10 +85,10 @@ export class Application implements AppState {
     // projects always open in a new instance
     // files prefer to reuse the primary instance
     const hasInstanceLock = app.requestSingleInstanceLock();
-    const hasProjectToOpen = this.argsManager.getProjectFileArg() || getenv('RS_INITIAL_PROJECT');
+    const hasProjectToOpen = this.argsManager.getProjectFileArg() ?? getenv('RS_INITIAL_PROJECT');
     const hasFileToOpen = this.argsManager.getFileArgs().length > 0;
     logger().logDebug(`instance lock: ${hasInstanceLock}, project: ${hasProjectToOpen}, file: ${hasFileToOpen}`);
-    if (!hasInstanceLock && !hasProjectToOpen && hasFileToOpen) {
+    if (!hasInstanceLock && !(hasProjectToOpen.length > 0) && hasFileToOpen) {
       logger().logDebug('No instance lock - exiting');
       return exitSuccess();
     }
@@ -408,7 +408,13 @@ export class Application implements AppState {
     } else {
       // No pending window, make it a generic secondary window
       configureSecondaryWindow(
-        { type: 'secondary', name: '', allowExternalNavigate: false, showToolbar: true },
+        {
+          type: 'secondary',
+          name: '',
+          allowExternalNavigate: false,
+          showToolbar: true,
+          mainWindow: this.gwtCallback?.mainWindow,
+        },
         newWindow,
         owner,
         baseUrl,

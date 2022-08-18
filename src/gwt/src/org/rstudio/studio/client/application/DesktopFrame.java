@@ -193,9 +193,11 @@ public interface DesktopFrame extends JavaScriptPassthrough
    void reloadViewerZoomWindow(String url);
    void setPresentationUrl(String url);
    void setTutorialUrl(String url);
-   
+
    void setShinyDialogUrl(String url);
-   
+
+   void allowNavigation(String url, CommandWithArg<Boolean> callback);
+
    void setBusy(boolean busy);
    
    void setWindowTitle(String title);

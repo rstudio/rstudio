@@ -13,26 +13,26 @@
  *
  */
 
-import { BrowserWindow, dialog, Menu, session } from 'electron';
 import { ChildProcess } from 'child_process';
+import { BrowserWindow, dialog, Menu, session } from 'electron';
 
-import { logger } from '../core/logger';
 import { Err } from '../core/err';
+import { logger } from '../core/logger';
 
-import { GwtCallback, PendingQuit } from './gwt-callback';
-import { MenuCallback, showPlaceholderMenu } from './menu-callback';
-import { RCommandEvaluator } from './r-command-evaluator';
-import { SessionLauncher } from './session-launcher';
-import { ApplicationLaunch, LaunchRStudioOptions } from './application-launch';
-import { GwtWindow } from './gwt-window';
-import { appState } from './app-state';
-import { ElectronDesktopOptions } from './preferences/electron-desktop-options';
-import { RemoteDesktopSessionLauncher } from './remote-desktop-session-launcher-overlay';
-import { CloseServerSessions } from './session-servers-overlay';
-import { waitForUrlWithTimeout } from './utils';
-import { DesktopBrowserWindow } from './desktop-browser-window';
 import i18next from 'i18next';
 import { setDockLabel } from '../native/dock.node';
+import { appState } from './app-state';
+import { ApplicationLaunch, LaunchRStudioOptions } from './application-launch';
+import { DesktopBrowserWindow } from './desktop-browser-window';
+import { GwtCallback, PendingQuit } from './gwt-callback';
+import { GwtWindow } from './gwt-window';
+import { MenuCallback, showPlaceholderMenu } from './menu-callback';
+import { ElectronDesktopOptions } from './preferences/electron-desktop-options';
+import { RCommandEvaluator } from './r-command-evaluator';
+import { RemoteDesktopSessionLauncher } from './remote-desktop-session-launcher-overlay';
+import { SessionLauncher } from './session-launcher';
+import { CloseServerSessions } from './session-servers-overlay';
+import { waitForUrlWithTimeout } from './url-utils';
 
 export function closeAllSatellites(mainWindow: BrowserWindow): void {
   const topLevels = BrowserWindow.getAllWindows();
@@ -256,6 +256,9 @@ export class MainWindow extends GwtWindow {
       details.requestHeaders['X-Shared-Secret'] = process.env.RS_SHARED_SECRET ?? '';
       callback({ requestHeaders: details.requestHeaders });
     });
+
+    logger().logDebug(`Setting base URL: ${url}`);
+    this.options.baseUrl = url;
 
     this.window.loadURL(url).catch((reason) => {
       logger().logErrorMessage(`Failed to load ${url}: ${reason}`);
