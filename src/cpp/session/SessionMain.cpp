@@ -1983,6 +1983,8 @@ int main(int argc, char * const argv[])
 
       // Initialize rpc to rserver before options. Rpc validates session scope with db session storage
       error = socket_rpc::initialize();
+      if (error)
+         return sessionExitFailure(error, ERROR_LOCATION);
 
       // read program options
       std::ostringstream osWarnings;
@@ -2064,9 +2066,6 @@ int main(int argc, char * const argv[])
                                         true); // force log dir to be under user's home directory
          }
       }
-
-      if (error)
-         return sessionExitFailure(error, ERROR_LOCATION);
 
       error = rpc::initialize();
       if (error)
