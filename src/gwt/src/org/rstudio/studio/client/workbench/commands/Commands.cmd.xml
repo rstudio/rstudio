@@ -182,6 +182,7 @@ See `/src/gwt/tools/i18n-helpers/README.md`.
          <cmd refid="copyDummy"/>
          <cmd refid="pasteDummy"/>
          <cmd refid="pasteWithIndentDummy"/>
+         <cmd refid="selectAllDummy"/>
          <separator/>
          <menu label="_Folding">
             <cmd refid="fold"/>
@@ -3698,6 +3699,10 @@ See `/src/gwt/tools/i18n-helpers/README.md`.
 
    <cmd id="pasteWithIndentDummy"
         menuLabel="Pa_ste with Indent"
+        rebindable="false"/>
+
+   <cmd id="selectAllDummy"
+        menuLabel="Select _All"
         rebindable="false"/>
 
    <cmd id="yankBeforeCursor"
