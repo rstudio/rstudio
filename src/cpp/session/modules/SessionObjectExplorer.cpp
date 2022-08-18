@@ -205,7 +205,59 @@ void onDetectChanges(module_context::ChangeSource source)
    if (source != module_context::ChangeSourceREPL) 
       return;
 
-   // TODO: implement something similar to the DataViewer.cpp / onDetectChanges()
+   Error error;
+   r::sexp::Protect rProtect;
+   SEXP envCache;
+   error = r::exec::RFunction(".rs.explorer.getCache").call(&envCache, &rProtect);
+   if (error)
+   {
+      LOG_ERROR(error);
+      return;
+   }
+
+   std::vector<std::string> cached;
+   error = r::sexp::objects(envCache, false, &cached);
+   if (error)
+   {
+      LOG_ERROR(error);
+      return;
+   }
+   
+   for (const std::string& id: cached)
+   {
+      SEXP s = Rf_install(id.c_str());
+      SEXP handle = Rf_findVarInFrame(envCache, s);
+
+      SEXP object = VECTOR_ELT(handle, 0);
+      SEXP name = VECTOR_ELT(handle, 1);
+      // SEXP title = VECTOR_ELT(handle, 2);
+      SEXP language = VECTOR_ELT(handle, 3);
+      SEXP envir = VECTOR_ELT(handle, 4);
+
+      // when envir is the empty env, don't try to refresh
+      if (envir == R_EmptyEnv)
+         continue;
+
+      // TODO: deal with python
+      if (std::string("R") != CHAR(STRING_ELT(language, 0))) 
+         continue;
+
+      SEXP symbol = Rf_install(CHAR(STRING_ELT(name, 0)));
+      SEXP newObject = Rf_findVarInFrame(envir, symbol);
+      
+      // no object of that name, don't update
+      if (newObject == R_UnboundValue)
+         continue;
+      
+      // no change
+      if (newObject == object)
+         continue;
+
+      // update the object
+      SET_VECTOR_ELT(handle, 0, newObject);
+
+      // TODO: inform the client with an event
+   }
 }
 
 SEXP rs_objectClass(SEXP objectSEXP)
@@ -282,8 +334,7 @@ core::Error initialize()
    
    module_context::events().onDeferredInit.connect(onDeferredInit);
    module_context::events().onShutdown.connect(onShutdown);
-   // TODO: uncomment when doing something useful
-   // module_context::events().onDetectChanges.connect(onDetectChanges);
+   module_context::events().onDetectChanges.connect(onDetectChanges);
    addSuspendHandler(SuspendHandler(onSuspend, onResume));
    
    source_database::events().onDocPendingRemove.connect(onDocPendingRemove);
