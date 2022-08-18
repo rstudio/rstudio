@@ -163,8 +163,7 @@ void readOptions()
 base::FilePath googleFilePath(const std::string& str)
 {
 #ifdef _WIN32
-   std::string utf8Str = core::string_utils::systemToUtf8(str);
-   std::wstring wideStr = core::string_utils::utf8ToWide(utf8Str);
+   std::wstring wideStr = core::string_utils::utf8ToWide(str);
    return base::FilePath(wideStr);
 #else
    return base::FilePath(str);
