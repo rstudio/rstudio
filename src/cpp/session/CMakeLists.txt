@@ -597,6 +597,18 @@ if(RSTUDIO_WIN32_BUILD_UTF8_SESSION)
     install(TARGETS rsession-utf8 DESTINATION "${RSTUDIO_INSTALL_BIN}")
 endif()
 
+# install binary .pdb on Windows
+if(WIN32 AND CMAKE_BUILD_TYPE STREQUAL Debug)
+   install(
+      FILES "$<TARGET_PDB_FILE:rsession>"
+      DESTINATION "${RSTUDIO_INSTALL_BIN}")
+   if(RSTUDIO_WIN32_BUILD_UTF8_SESSION)
+      install(
+         FILES "$<TARGET_PDB_FILE:rsession-utf8>"
+         DESTINATION "${RSTUDIO_INSTALL_BIN}")
+   endif()
+endif()
+
 # include resources, R scripts and binaries if this isn't a session 32-bit build
 if(NOT RSTUDIO_SESSION_WIN32 AND NOT RSESSION_ALTERNATE_BUILD)
 
@@ -790,6 +802,7 @@ if(NOT RSTUDIO_SESSION_WIN32 AND NOT RSESSION_ALTERNATE_BUILD)
       install(PROGRAMS "${RSTUDIO_WINDOWS_DEPENDENCIES_DIR}/winutils/1.0/x64/winutils.exe"
               DESTINATION ${RSTUDIO_INSTALL_BIN}/winutils/x64)
    endif()
+
 endif()
 
 # install 32-bit MSVC runtime for session win32

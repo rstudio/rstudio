@@ -12,6 +12,7 @@ set NOZIP=
 set CLEANBUILD=
 set RSTUDIO_TARGET=Desktop
 set PACKAGE_VERSION_SET=
+set DEBUG_BUILD=
 
 if "%1" == "--help" goto :showhelp
 if "%1" == "-h" goto :showhelp
@@ -19,12 +20,18 @@ if "%1" == "help" goto :showhelp
 if "%1" == "/?" goto :showhelp
 
 for %%A in (%*) do (
-      if /I "%%A" == "clean" set CLEANBUILD=1
-      if /I "%%A" == "quick" set QUICK=1
-      if /I "%%A" == "nozip" set NOZIP=1
-      if /I "%%A" == "electron" set RSTUDIO_TARGET=Electron
+      if /I "%%A" == "clean" set CLEANBUILD=1	  
+      if /I "%%A" == "debug" set DEBUG_BUILD=1
       if /I "%%A" == "desktop" set RSTUDIO_TARGET=Desktop
+      if /I "%%A" == "electron" set RSTUDIO_TARGET=Electron
       if /I "%%A" == "nogwt" set BUILD_GWT=0
+      if /I "%%A" == "nozip" set NOZIP=1
+      if /I "%%A" == "quick" set QUICK=1
+)
+
+REM check for debug build
+if defined DEBUG_BUILD (
+      set CMAKE_BUILD_TYPE=Debug
 )
 
 REM clean if requested
@@ -173,13 +180,17 @@ echo Failed to build RStudio! Error: %ERRORLEVEL%
 exit /b %ERRORLEVEL%
 
 :showhelp
-echo make-package [clean] [quick] [nozip] [electron] [desktop] [nogwt]
-echo     clean: full rebuild
-echo     quick: skip creation of setup package
-echo     nozip: skip creation of ZIP file
-echo     electron: build Electron instead of Qt desktop
-echo     desktop: build Qt desktop (default)
-echo     nogwt: use results of last GWT build
+echo.
+echo make-package [clean] [debug] [desktop] [electron] [nogwt] [nozip] [quick]
+echo.
+echo     clean:     perform full rebuild
+echo     debug:     perform a debug build
+echo     desktop:   build Qt desktop (default)
+echo     electron:  build Electron instead of Qt desktop
+echo     nogwt:     skip GWT build (use previous GWT build)
+echo     nozip:     skip creation of ZIP file
+echo     quick:     skip creation of setup package
+echo.
 exit /b 0
 
 REM For a full package build the package.json file gets modified with the 
