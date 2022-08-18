@@ -283,6 +283,10 @@ void MenuCallback::addCommand(QString commandId,
    {
       keySequence = QKeySequence(Qt::CTRL + Qt::SHIFT + Qt::Key_V);
    }
+   else if (commandId == QStringLiteral("selectAllDummy"))
+   {
+      keySequence = QKeySequence(QKeySequence::SelectAll);
+   }
    else if (commandId == QStringLiteral("undoDummy"))
    {
       keySequence = QKeySequence(QKeySequence::Undo);
