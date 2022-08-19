@@ -256,8 +256,11 @@ if(NOT DEFINED QUARTO_ENABLED)
    else()
       # enable by default
       set(QUARTO_ENABLED TRUE CACHE INTERNAL "")
-      add_definitions(-DQUARTO_ENABLED)
    endif()
+endif()
+
+if(QUARTO_ENABLED)
+   add_definitions(-DQUARTO_ENABLED)
 endif()
 
 # install freedesktop integration files if we are installing into /usr
