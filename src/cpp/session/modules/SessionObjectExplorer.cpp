@@ -241,10 +241,6 @@ void onDetectChanges(module_context::ChangeSource source)
       if (envir == R_EmptyEnv)
          continue;
 
-      // TODO: deal with python
-      if (std::string("R") != CHAR(STRING_ELT(language, 0)))
-         continue;
-
       SEXP symbol = Rf_install(CHAR(STRING_ELT(name, 0)));
       SEXP newObject = Rf_findVarInFrame(envir, symbol);
 
