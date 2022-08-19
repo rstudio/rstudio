@@ -65,7 +65,10 @@ protected:
 
    bool authenticate(boost::shared_ptr<HttpConnection> ptrConnection)
    {
-      return connection::authenticate(ptrConnection, secret_);
+      bool res = connection::authenticate(ptrConnection, secret_);
+      if (!res)
+         return false;
+      return HttpConnectionListenerImpl::authenticate(ptrConnection);
    }
 
 private:

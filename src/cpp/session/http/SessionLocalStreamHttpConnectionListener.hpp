@@ -127,7 +127,9 @@ protected:
 
    virtual bool authenticate(boost::shared_ptr<HttpConnection> ptrConnection)
    {
-      return connection::authenticate(ptrConnection, secret_);
+      if (!connection::authenticate(ptrConnection, secret_))
+         return false;
+      return HttpConnectionListenerImpl::authenticate(ptrConnection);
    }
 
 private:
