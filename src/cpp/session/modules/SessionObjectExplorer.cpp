@@ -234,8 +234,10 @@ void onDetectChanges(module_context::ChangeSource source)
       SEXP language = VECTOR_ELT(entry, 3);
       SEXP envir = VECTOR_ELT(entry, 4);
 
-      // when envir is the empty env, don't try to refresh
-      // TODO: is that correct ?
+      // when envir is the empty env, this indicates
+      // that this was initially a View(<some code>)
+      // i.e. `x` is not a named object from an environment
+      // so don't update it
       if (envir == R_EmptyEnv)
          continue;
 
