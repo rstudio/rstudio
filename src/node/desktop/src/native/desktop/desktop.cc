@@ -201,7 +201,7 @@ Napi::Value isCtrlKeyDown(const Napi::CallbackInfo& info)
 
 namespace {
 
-std::string currentCSIDLPersonalHomePathImpl()
+wchar_t* currentCSIDLPersonalHomePathImpl()
 {
    #ifdef _WIN32
    // query for My Documents directory
@@ -215,19 +215,22 @@ std::string currentCSIDLPersonalHomePathImpl()
    if (SUCCEEDED(hr))
       return homePath;
    #endif
-   return "";
+   return homePath;
 }
 } // end anonymous namespace
 
 Napi::Value currentCSIDLPersonalHomePath(const Napi::CallbackInfo& info)
 {
-   std::string value = currentCSIDLPersonalHomePathImpl();
-   return Napi::String::New(info.Env(), value);
+   wchar_t* value = currentCSIDLPersonalHomePathImpl();
+   // wide to UTF-8
+    std::wstring_convert<std::codecvt_utf8<wchar_t>> conv1;
+    std::string u8str = conv1.to_bytes(value);
+   return Napi::String::New(info.Env(), u8str);
 }
 
 namespace {
 
-std::string defaultCSIDLPersonalHomePathImpl()
+wchar_t* defaultCSIDLPersonalHomePathImpl()
 {
    #ifdef _WIN32
    // query for default and force creation (works around situations
@@ -242,14 +245,17 @@ std::string defaultCSIDLPersonalHomePathImpl()
    if (SUCCEEDED(hr))
       return homePath;
    #endif
-   return "";
+   return homePath;
 }
 } // end anonymous namespace
 
 Napi::Value defaultCSIDLPersonalHomePath(const Napi::CallbackInfo& info)
 {
-   std::string value = defaultCSIDLPersonalHomePathImpl();
-   return Napi::String::New(info.Env(), value);
+   wchar_t* value = defaultCSIDLPersonalHomePathImpl();
+      // wide to UTF-8
+    std::wstring_convert<std::codecvt_utf8<wchar_t>> conv1;
+    std::string u8str = conv1.to_bytes(value);
+   return Napi::String::New(info.Env(), u8str);
 }
 
 } // end namespace desktop
