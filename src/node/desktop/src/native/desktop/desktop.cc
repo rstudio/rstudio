@@ -212,8 +212,8 @@ wchar_t* currentCSIDLPersonalHomePathImpl()
                                    nullptr,
                                    SHGFP_TYPE_CURRENT,
                                    homePath);
-   if (SUCCEEDED(hr))
-      return homePath;
+   #else
+   wchar_t homePath[1024] = {};
    #endif
    return homePath;
 }
@@ -232,6 +232,7 @@ namespace {
 
 wchar_t* defaultCSIDLPersonalHomePathImpl()
 {
+   
    #ifdef _WIN32
    // query for default and force creation (works around situations
    // where redirected path is not available)
@@ -242,8 +243,8 @@ wchar_t* defaultCSIDLPersonalHomePathImpl()
                                    nullptr,
                                    SHGFP_TYPE_DEFAULT,
                                    homePath);
-   if (SUCCEEDED(hr))
-      return homePath;
+   #else
+   wchar_t homePath[1024] = {};
    #endif
    return homePath;
 }
