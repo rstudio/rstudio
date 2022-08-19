@@ -244,18 +244,20 @@ if(LINUX AND EXISTS "/etc/centos-release")
 endif()
 
 # quarto support
-if(LINUX AND UNAME_M STREQUAL aarch64)
-   # disabled on linux aarch64
-   message(STATUS "quarto does not yet support aarch64 builds of Linux; disabling quarto")
-   set(QUARTO_ENABLED FALSE CACHE INTERNAL "")
-elseif(IS_CENTOS7)
-   # disable quarto on Centos 7
-   message(STATUS "quarto is not supported on Centos7; disabling quarto")
-   set(QUARTO_ENABLED FALSE CACHE INTERNAL "")
-else()
-   # enable by default
-   set(QUARTO_ENABLED TRUE CACHE INTERNAL "")
-   add_definitions(-DQUARTO_ENABLED)
+if(NOT DEFINED QUARTO_ENABLED)
+   if(LINUX AND UNAME_M STREQUAL aarch64)
+      # disabled on linux aarch64
+      message(STATUS "quarto does not yet support aarch64 builds of Linux; disabling quarto")
+      set(QUARTO_ENABLED FALSE CACHE INTERNAL "")
+   elseif(IS_CENTOS7)
+      # disable quarto on Centos 7
+      message(STATUS "quarto is not supported on Centos7; disabling quarto")
+      set(QUARTO_ENABLED FALSE CACHE INTERNAL "")
+   else()
+      # enable by default
+      set(QUARTO_ENABLED TRUE CACHE INTERNAL "")
+      add_definitions(-DQUARTO_ENABLED)
+   endif()
 endif()
 
 # install freedesktop integration files if we are installing into /usr
