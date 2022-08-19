@@ -222,9 +222,9 @@ wchar_t* currentCSIDLPersonalHomePathImpl()
 Napi::Value currentCSIDLPersonalHomePath(const Napi::CallbackInfo& info)
 {
    wchar_t* value = currentCSIDLPersonalHomePathImpl();
-   // wide to UTF-8
-    std::wstring_convert<std::codecvt_utf8<wchar_t>> conv1;
-    std::string u8str = conv1.to_bytes(value);
+   // convert wide to UTF-8
+   std::wstring_convert<std::codecvt_utf8<wchar_t>> conv1;
+   std::string u8str = conv1.to_bytes(value);
    return Napi::String::New(info.Env(), u8str);
 }
 
@@ -253,9 +253,9 @@ wchar_t* defaultCSIDLPersonalHomePathImpl()
 Napi::Value defaultCSIDLPersonalHomePath(const Napi::CallbackInfo& info)
 {
    wchar_t* value = defaultCSIDLPersonalHomePathImpl();
-      // wide to UTF-8
-    std::wstring_convert<std::codecvt_utf8<wchar_t>> conv1;
-    std::string u8str = conv1.to_bytes(value);
+   // convert wide to UTF-8
+   std::wstring_convert<std::codecvt_utf8<wchar_t>> conv1;
+   std::string u8str = conv1.to_bytes(value);
    return Napi::String::New(info.Env(), u8str);
 }
 
