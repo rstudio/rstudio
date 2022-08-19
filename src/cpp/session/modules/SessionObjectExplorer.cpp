@@ -226,25 +226,26 @@ void onDetectChanges(module_context::ChangeSource source)
    for (const std::string& id: cached)
    {
       SEXP s = Rf_install(id.c_str());
-      SEXP handle = Rf_findVarInFrame(envCache, s);
-
-      SEXP object = VECTOR_ELT(handle, 0);
-      SEXP name = VECTOR_ELT(handle, 1);
-      // SEXP title = VECTOR_ELT(handle, 2);
-      SEXP language = VECTOR_ELT(handle, 3);
-      SEXP envir = VECTOR_ELT(handle, 4);
+      SEXP entry = Rf_findVarInFrame(envCache, s);
+      
+      SEXP object = VECTOR_ELT(entry, 0);
+      SEXP name = VECTOR_ELT(entry, 1);
+      // SEXP title = VECTOR_ELT(entry, 2);
+      SEXP language = VECTOR_ELT(entry, 3);
+      SEXP envir = VECTOR_ELT(entry, 4);
 
       // when envir is the empty env, don't try to refresh
+      // TODO: is that correct ?
       if (envir == R_EmptyEnv)
          continue;
 
       // TODO: deal with python
-      if (std::string("R") != CHAR(STRING_ELT(language, 0))) 
+      if (std::string("R") != CHAR(STRING_ELT(language, 0)))
          continue;
 
       SEXP symbol = Rf_install(CHAR(STRING_ELT(name, 0)));
       SEXP newObject = Rf_findVarInFrame(envir, symbol);
-      
+
       // no object of that name, don't update
       if (newObject == R_UnboundValue)
          continue;
@@ -254,9 +255,18 @@ void onDetectChanges(module_context::ChangeSource source)
          continue;
 
       // update the object
-      SET_VECTOR_ELT(handle, 0, newObject);
+      SET_VECTOR_ELT(entry, 0, newObject);
 
-      // TODO: inform the client with an event
+      error = r::exec::RFunction(".rs.explorer.refresh")
+         .addUtf8Param(id)
+         .addParam(entry)
+         .call();
+
+      if (error)
+      {
+         LOG_ERROR(error);
+         return;
+      }
    }
 }
 

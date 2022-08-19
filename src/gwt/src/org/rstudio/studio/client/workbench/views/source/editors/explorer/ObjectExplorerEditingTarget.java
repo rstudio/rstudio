@@ -156,13 +156,13 @@ public class ObjectExplorerEditingTarget
 
    // Public methods ----
 
-   public void update(ObjectExplorerHandle handle)
+   public void update(ObjectExplorerHandle handle, boolean remove)
    {
-
       final Widget originalWidget = progressPanel_.getWidget();
 
       clearDisplay();
       final String oldHandleId = getHandle().getId();
+      
       HashMap<String, String> props = new HashMap<>();
       handle.fillProperties(props);
 
@@ -174,8 +174,10 @@ public class ObjectExplorerEditingTarget
             @Override
             public void onResponseReceived(Void response)
             {
-               server_.explorerEndInspect(oldHandleId, new ErrorLoggingServerRequestCallback<>());
-
+               // The id does not change when this
+               if (remove)
+                  server_.explorerEndInspect(oldHandleId, new ErrorLoggingServerRequestCallback<>());
+               
                handle.fillProperties(doc_.getProperties());
                reloadDisplay();
             }

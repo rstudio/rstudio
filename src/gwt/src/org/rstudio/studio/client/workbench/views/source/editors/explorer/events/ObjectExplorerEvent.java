@@ -37,7 +37,10 @@ public class ObjectExplorerEvent extends GwtEvent<ObjectExplorerEvent.Handler>
       OPEN_NODE,
 
       // close a node
-      CLOSE_NODE
+      CLOSE_NODE, 
+
+      // refresh an explorer tab
+      REFRESH
    }
 
    public static class Data extends JavaScriptObject
