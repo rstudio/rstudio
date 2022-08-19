@@ -191,8 +191,11 @@ public:
 
 protected:
 
-   virtual bool authenticate(boost::shared_ptr<HttpConnection>)
+   virtual bool authenticate(boost::shared_ptr<HttpConnection> ptrConnection)
    {
+      // ensure request signature is valid
+      if (!http_methods::verifyRequestSignature(ptrConnection->request()))
+         return false;
       return true;
    }
 
@@ -353,15 +356,6 @@ private:
          if (options().handleOfflineEnabled() && options().handleOfflineTimeoutMs() == 0 &&
              rpc::isOfflineableRequest(ptrHttpConnection) && init::isSessionInitialized())
          {
-            // ensure request signature is valid
-            if (!http_methods::verifyRequestSignature(ptrConnection->request()))
-            {
-               LOG_ERROR_MESSAGE("Invalid signature in immediate handler for request URI " + ptrConnection->request().uri());
-               core::http::Response response;
-               response.setError(core::http::status::Unauthorized, "Invalid message signature");
-               ptrConnection->sendResponse(response);
-               return;
-            }
             // TODO: handleOffline - should these be put into a separate queue and run in a dedicated thread?
             if (http_methods::protocolDebugEnabled())
             {
