@@ -92,3 +92,10 @@ for FILE in "${FILES[@]}"; do
      mv "${QUARTO_SUBDIR}-${QUARTO_VERSION}" "${QUARTO_SUBDIR}"
    fi
 done
+
+# ensure WASM files don't have the execute bit set; when they do, it causes
+# errors on Linux platforms where file(1) can't identify them
+if [ "$(uname)" = "Linux" ]; then
+   find "${QUARTO_SUBDIR}" -iname "*.wasm" | xargs chmod 644
+fi
+
