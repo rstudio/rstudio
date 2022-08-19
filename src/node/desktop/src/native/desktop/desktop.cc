@@ -32,6 +32,7 @@
 
 #ifdef _WIN32
 # include <Windows.h>
+# include <shlobj.h>
 #endif
 
 #define RS_EXPORT_FUNCTION(__NAME__, __FUNCTION__) \
@@ -197,6 +198,62 @@ Napi::Value isCtrlKeyDown(const Napi::CallbackInfo& info)
    return Napi::Boolean::From(info.Env(), value);
 }
 
+
+namespace {
+#ifdef _WIN32
+
+std::string currentCSIDLPersonalHomePath()
+{
+   // query for My Documents directory
+   const DWORD SHGFP_TYPE_CURRENT = 0;
+   wchar_t homePath[MAX_PATH];
+   HRESULT hr = ::SHGetFolderPathW(nullptr,
+                                   CSIDL_PERSONAL,
+                                   nullptr,
+                                   SHGFP_TYPE_CURRENT,
+                                   homePath);
+   if (SUCCEEDED(hr))
+      return homePath;
+   else
+      return "";
+}
+#endif // _WIN32
+} // end anonymous namespace
+
+Napi::Value currentCSIDLPersonalHomePath(const Napi::CallbackInfo& info)
+{
+   String value = currentCSIDLPersonalHomePath();
+   return Napi::String::From(info.Env(), value);
+}
+
+namespace {
+#ifdef _WIN32
+
+std::string defaultCSIDLPersonalHomePath()
+{
+   // query for default and force creation (works around situations
+   // where redirected path is not available)
+   const DWORD SHGFP_TYPE_DEFAULT = 1;
+   wchar_t homePath[MAX_PATH];
+   HRESULT hr = ::SHGetFolderPathW(nullptr,
+                                   CSIDL_PERSONAL|CSIDL_FLAG_CREATE,
+                                   nullptr,
+                                   SHGFP_TYPE_DEFAULT,
+                                   homePath);
+   if (SUCCEEDED(hr))
+      return homePath;
+   else
+      return "";
+}
+#endif // _WIN32
+} // end anonymous namespace
+
+Napi::Value defaultCSIDLPersonalHomePath(const Napi::CallbackInfo& info)
+{
+   String value = defaultCSIDLPersonalHomePath();
+   return Napi::String::From(info.Env(), value);
+}
+
 } // end namespace desktop
 } // end namespace rstudio
 
@@ -204,6 +261,8 @@ Napi::Object Init(Napi::Env env, Napi::Object exports) {
 
   RS_EXPORT_FUNCTION("cleanClipboard", rstudio::desktop::cleanClipboard);
   RS_EXPORT_FUNCTION("isCtrlKeyDown", rstudio::desktop::isCtrlKeyDown);
+  RS_EXPORT_FUNCTION("currentCSIDLPersonalHomePath", rstudio::desktop::currentCSIDLPersonalHomePath);
+  RS_EXPORT_FUNCTION("defaultCSIDLPersonalHomePath", rstudio::desktop::defaultCSIDLPersonalHomePath);
 
   return exports;
 
