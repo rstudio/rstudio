@@ -200,10 +200,10 @@ Napi::Value isCtrlKeyDown(const Napi::CallbackInfo& info)
 
 
 namespace {
-#ifdef _WIN32
 
-std::string currentCSIDLPersonalHomePath()
+std::string currentCSIDLPersonalHomePathImpl()
 {
+   #ifdef _WIN32
    // query for My Documents directory
    const DWORD SHGFP_TYPE_CURRENT = 0;
    wchar_t homePath[MAX_PATH];
@@ -214,23 +214,22 @@ std::string currentCSIDLPersonalHomePath()
                                    homePath);
    if (SUCCEEDED(hr))
       return homePath;
-   else
-      return "";
+   #endif
+   return "";
 }
-#endif // _WIN32
 } // end anonymous namespace
 
 Napi::Value currentCSIDLPersonalHomePath(const Napi::CallbackInfo& info)
 {
-   String value = currentCSIDLPersonalHomePath();
-   return Napi::String::From(info.Env(), value);
+   std::string value = currentCSIDLPersonalHomePathImpl();
+   return Napi::String::New(info.Env(), value);
 }
 
 namespace {
-#ifdef _WIN32
 
-std::string defaultCSIDLPersonalHomePath()
+std::string defaultCSIDLPersonalHomePathImpl()
 {
+   #ifdef _WIN32
    // query for default and force creation (works around situations
    // where redirected path is not available)
    const DWORD SHGFP_TYPE_DEFAULT = 1;
@@ -242,16 +241,15 @@ std::string defaultCSIDLPersonalHomePath()
                                    homePath);
    if (SUCCEEDED(hr))
       return homePath;
-   else
-      return "";
+   #endif
+   return "";
 }
-#endif // _WIN32
 } // end anonymous namespace
 
 Napi::Value defaultCSIDLPersonalHomePath(const Napi::CallbackInfo& info)
 {
-   String value = defaultCSIDLPersonalHomePath();
-   return Napi::String::From(info.Env(), value);
+   std::string value = defaultCSIDLPersonalHomePathImpl();
+   return Napi::String::New(info.Env(), value);
 }
 
 } // end namespace desktop
