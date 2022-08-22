@@ -86,7 +86,12 @@ std::string quartoDefaultFormat(const core::FilePath& sourceFile);
 bool isFileInSessionQuartoProject(const core::FilePath& file);
 std::string urlPathForQuartoProjectOutputFile(const core::FilePath& outputFile);
 
+// NOTE: Prefer using 'quartoExecutablePath()' when running quarto
+// as a program / command, as this will use a Windows-safe short
+// path and so avoid issues with paths containing spaces in some contexts
+// https://github.com/rstudio/rstudio/issues/11779
 core::FilePath quartoBinary();
+std::string quartoExecutablePath();
 
 bool projectIsQuarto();
 
