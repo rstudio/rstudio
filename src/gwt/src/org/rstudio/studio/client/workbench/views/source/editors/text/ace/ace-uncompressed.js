@@ -62948,32 +62948,51 @@ var Text = function(parentEl) {
         yellowgreen     :"#9acd32"
     };
 
-    var isColorBright = function(hex6) {
-        var rgb = parseInt(hex6, 16); // convert rrggbb to decimal
-        var r = (rgb >> 16) & 0xff;  // extract red
-        var g = (rgb >>  8) & 0xff;  // extract green
-        var b = (rgb >>  0) & 0xff;  // extract blue
-
-        return (r * 299 + g * 587 + b * 114) / 1000 > 128;
-    };
+    var brightness = function(r, g, b)
+    {
+        return (r * 299 + g * 587 + b * 114) / 1000 / 255;
+    }
 
     var bgStyle = function(color) {
-        var rgb;
+        var hex;
         if (color.startsWith("#")) 
         {
-            rgb = color.substring(1);
-            if (rgb.length == 3) {
-                rgb = rgb.replace(/./g, "$&$&");
-            }
-            else
-            {
-                rgb = rgb.substring(0, 6);
+            hex = color.substring(1);
+            if (hex.length == 3) {
+                hex = hex.replace(/./g, "$&$&");
             }
         } else {
-            rgb = namedColors[color].substring(1);
+            hex = namedColors[color].substring(1);
         }
-        var textColor = isColorBright(rgb) ? "#000000a0" : "#ffffffa0";
-        return "background: #" + rgb + "; color: " + textColor + "!important";
+
+        var rgb = parseInt(hex.substring(0, 6), 16);
+        var r = (rgb >> 16) & 0xff;
+        var g = (rgb >>  8) & 0xff;
+        var b = (rgb >>  0) & 0xff;
+        
+        var colBrightness = brightness(r, g, b);
+        
+        var textColor;
+        var bright;
+        if (hex.length > 6) 
+        {
+            // brightness of the editor background color
+            var themeBg = getComputedStyle(document.querySelector(".ace_editor_theme")).backgroundColor;
+            var parts = themeBg.replace("rgb(", "").replace(")", "").split(",");
+            var bgBrightness = brightness(parseInt(parts[0]), parseInt(parts[1]), parseInt(parts[2]));
+
+            // alpha
+            var alpha = parseInt(hex.substring(6), 16) / 255;
+            
+            bright = (colBrightness * (alpha) + bgBrightness * (1 - alpha)) > 0.5;
+        } 
+        else 
+        {
+            bright = (colBrightness > .5);
+        }
+        var textColor = bright ? "#000000a0" : "#ffffffa0";
+        
+        return "background: #" + hex + "; color: " + textColor + "!important";
     };
 
     this.$renderToken = function(parent, screenColumn, token, value) {
@@ -63047,7 +63066,10 @@ var Text = function(parentEl) {
             if (token.type == "fold")
                 span.style.width = (token.value.length * this.config.characterWidth) + "px";
             if (token.bg)
+            {
                 span.setAttribute("style", bgStyle(token.bg));
+            }
+                
             if (token.style)
                 span.setAttribute("style", token.style);
             span.className = classes;
@@ -65534,6 +65556,7 @@ var VirtualRenderer = function(container, theme) {
     };
     this.setTheme = function(theme, cb) {
         var _self = this;
+        
         this.$themeId = theme;
         _self._dispatchEvent('themeChange',{theme:theme});
 
