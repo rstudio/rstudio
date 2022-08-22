@@ -83,7 +83,7 @@ std::string shortPathName(const std::string& path)
    return string_utils::wideToUtf8(std::wstring(&buffer[0]));
 
 #else
-   return string;
+   return path;
 #endif
 
 }
