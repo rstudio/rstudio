@@ -16,15 +16,18 @@ package org.rstudio.core.client.hyperlink;
 
 import java.util.Map;
 
+import com.google.gwt.core.client.GWT;
 import com.google.gwt.core.client.Scheduler;
 
 import org.rstudio.core.client.FilePosition;
 import org.rstudio.core.client.ResultCallback;
 import org.rstudio.core.client.StringUtil;
 import org.rstudio.studio.client.RStudioGinjector;
+import org.rstudio.studio.client.common.SimpleRequestCallback;
 import org.rstudio.studio.client.server.ServerError;
 import org.rstudio.studio.client.workbench.views.source.SourceColumnManager;
 import org.rstudio.studio.client.workbench.views.source.editors.EditingTarget;
+import org.rstudio.studio.client.workbench.views.source.model.SourceServerOperations;
 
 public class FileHyperlink extends Hyperlink 
 {
@@ -49,26 +52,45 @@ public class FileHyperlink extends Hyperlink
         
         if (params.containsKey("col"))
             col = StringUtil.parseInt(params.get("col"), -1);    
+
+        server_ = RStudioGinjector.INSTANCE.getServer();
     }
 
     @Override
     public void onClick()
     {
-        final SourceColumnManager columnManager = RStudioGinjector.INSTANCE.getSourceColumnManager(); 
-        
-        columnManager.editFile(filename, new ResultCallback<EditingTarget, ServerError>()
+        server_.createAliasedPath(filename, new SimpleRequestCallback<String>()
         {
             @Override
-            public void onSuccess(final EditingTarget result)
+            public void onResponseReceived(String response)
             {
-                if (line != -1) 
+                if (response.length() > 0)
                 {
-                    // give ace time to render before scrolling to position
-                    Scheduler.get().scheduleDeferred(() ->
+                    final SourceColumnManager columnManager = RStudioGinjector.INSTANCE.getSourceColumnManager(); 
+        
+                    columnManager.editFile(response, new ResultCallback<EditingTarget, ServerError>()
                     {
-                        FilePosition position = FilePosition.create(line, Math.max(col, 1));
-                        columnManager.scrollToPosition(position, true, () -> {});
+                        @Override
+                        public void onSuccess(final EditingTarget result)
+                        {
+                            if (line != -1) 
+                            {
+                                // give ace time to render before scrolling to position
+                                Scheduler.get().scheduleDeferred(() ->
+                                {
+                                    FilePosition position = FilePosition.create(line, Math.max(col, 1));
+                                    columnManager.scrollToPosition(position, true, () -> {});
+                                });
+                            }
+                        }
                     });
+                }
+                else 
+                {
+                    RStudioGinjector.INSTANCE.getGlobalDisplay().showErrorMessage(
+                        constants_.noSuchFile(),
+                        constants_.doesNotExist(filename)
+                        );
                 }
             }
         });
@@ -83,4 +105,6 @@ public class FileHyperlink extends Hyperlink
     private int line;
     private int col;
 
+    private SourceServerOperations server_;
+    private static final HyperlinkConstants constants_ = GWT.create(HyperlinkConstants.class);
 }
