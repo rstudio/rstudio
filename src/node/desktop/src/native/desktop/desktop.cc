@@ -32,6 +32,7 @@
 
 #ifdef _WIN32
 # include <Windows.h>
+# include <shlobj.h>
 #endif
 
 #define RS_EXPORT_FUNCTION(__NAME__, __FUNCTION__) \
@@ -197,6 +198,67 @@ Napi::Value isCtrlKeyDown(const Napi::CallbackInfo& info)
    return Napi::Boolean::From(info.Env(), value);
 }
 
+
+namespace {
+
+wchar_t* currentCSIDLPersonalHomePathImpl()
+{
+   #ifdef _WIN32
+   // query for My Documents directory
+   const DWORD SHGFP_TYPE_CURRENT = 0;
+   wchar_t homePath[MAX_PATH];
+   HRESULT hr = ::SHGetFolderPathW(nullptr,
+                                   CSIDL_PERSONAL,
+                                   nullptr,
+                                   SHGFP_TYPE_CURRENT,
+                                   homePath);
+   #else
+   wchar_t homePath[1024] = {};
+   #endif
+   return homePath;
+}
+} // end anonymous namespace
+
+Napi::Value currentCSIDLPersonalHomePath(const Napi::CallbackInfo& info)
+{
+   wchar_t* value = currentCSIDLPersonalHomePathImpl();
+   // convert wide to UTF-8
+   std::wstring_convert<std::codecvt_utf8<wchar_t>> conv1;
+   std::string u8str = conv1.to_bytes(value);
+   return Napi::String::New(info.Env(), u8str);
+}
+
+namespace {
+
+wchar_t* defaultCSIDLPersonalHomePathImpl()
+{
+   
+   #ifdef _WIN32
+   // query for default and force creation (works around situations
+   // where redirected path is not available)
+   const DWORD SHGFP_TYPE_DEFAULT = 1;
+   wchar_t homePath[MAX_PATH];
+   HRESULT hr = ::SHGetFolderPathW(nullptr,
+                                   CSIDL_PERSONAL|CSIDL_FLAG_CREATE,
+                                   nullptr,
+                                   SHGFP_TYPE_DEFAULT,
+                                   homePath);
+   #else
+   wchar_t homePath[1024] = {};
+   #endif
+   return homePath;
+}
+} // end anonymous namespace
+
+Napi::Value defaultCSIDLPersonalHomePath(const Napi::CallbackInfo& info)
+{
+   wchar_t* value = defaultCSIDLPersonalHomePathImpl();
+   // convert wide to UTF-8
+   std::wstring_convert<std::codecvt_utf8<wchar_t>> conv1;
+   std::string u8str = conv1.to_bytes(value);
+   return Napi::String::New(info.Env(), u8str);
+}
+
 } // end namespace desktop
 } // end namespace rstudio
 
@@ -204,6 +266,8 @@ Napi::Object Init(Napi::Env env, Napi::Object exports) {
 
   RS_EXPORT_FUNCTION("cleanClipboard", rstudio::desktop::cleanClipboard);
   RS_EXPORT_FUNCTION("isCtrlKeyDown", rstudio::desktop::isCtrlKeyDown);
+  RS_EXPORT_FUNCTION("currentCSIDLPersonalHomePath", rstudio::desktop::currentCSIDLPersonalHomePath);
+  RS_EXPORT_FUNCTION("defaultCSIDLPersonalHomePath", rstudio::desktop::defaultCSIDLPersonalHomePath);
 
   return exports;
 
