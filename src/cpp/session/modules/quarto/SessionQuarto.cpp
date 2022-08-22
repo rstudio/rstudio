@@ -384,7 +384,7 @@ Error runQuarto(const std::vector<std::string>& args,
       options.workingDir = workingDir;
 
    return core::system::runProgram(
-      string_utils::utf8ToSystem(s_quartoPath.getAbsolutePath()),
+      string_utils::utf8ToSystem(quartoExecutablePath()),
       args,
       "",
       options,
@@ -790,7 +790,7 @@ Error quartoCreateProject(const json::JsonRpcRequest& request,
          boost::make_shared<ConsoleProcessInfo>("Creating project...",
                                                 console_process::InteractionNever);
    boost::shared_ptr<console_process::ConsoleProcess> pCP = ConsoleProcess::create(
-     string_utils::utf8ToSystem(s_quartoPath.getAbsolutePath()),
+     string_utils::utf8ToSystem(quartoExecutablePath()),
       args,
       options,
       pCPI);
@@ -1066,7 +1066,12 @@ json::Object quartoConfigJSON(bool refresh)
 
 FilePath quartoBinary()
 {
-    return s_quartoPath;
+   return s_quartoPath;
+}
+
+std::string quartoExecutablePath()
+{
+   return file_utils::shortPathName(s_quartoPath.getAbsolutePath());
 }
 
 bool projectIsQuarto()

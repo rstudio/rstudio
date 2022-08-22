@@ -24,6 +24,8 @@ namespace rstudio {
 namespace core {
 namespace file_utils {
 
+std::string shortPathName(const std::string& string);
+
 FilePath uniqueFilePath(const core::FilePath& parent,
                         const std::string& prefix = "",
                         const std::string& extension = "");

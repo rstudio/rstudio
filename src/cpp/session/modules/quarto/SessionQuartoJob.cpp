@@ -71,10 +71,11 @@ Error QuartoJob::start()
    cb.onExit =  boost::bind(&QuartoJob::onCompleted,
                              QuartoJob::shared_from_this(), _1);
 
-   Error error = processSupervisor().runProgram(string_utils::utf8ToSystem(quartoBinary().getAbsolutePath()),
-                                  args(),
-                                  options,
-                                  cb);
+   Error error = processSupervisor().runProgram(
+            string_utils::utf8ToSystem(quartoExecutablePath()),
+            args(),
+            options,
+            cb);
 
    if (error)
       return error;
