@@ -59,7 +59,7 @@ public class FileHyperlink extends Hyperlink
     @Override
     public void onClick()
     {
-        server_.getAliasedPath(filename, new SimpleRequestCallback<String>()
+        server_.createAliasedPath(filename, new SimpleRequestCallback<String>()
         {
             @Override
             public void onResponseReceived(String response)

@@ -149,7 +149,7 @@ for (binding in bindings)
    .rs.scalar(identical(file.info(path)$isdir, FALSE))
 })
 
-.rs.addJsonRpcHandler("get_aliased_path", function(path)
+.rs.addJsonRpcHandler("create_aliased_path", function(path)
 {
    if (file.exists(path)) {
       return(.rs.scalar(.rs.createAliasedPath(path)))
