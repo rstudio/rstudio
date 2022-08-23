@@ -62,11 +62,11 @@ public interface HyperlinkConstants extends com.google.gwt.i18n.client.Messages 
     String noSuchFile();
 
     /**
-     * Translated "'{0}' does not exist.".
+     * Translated "''{0}'' does not exist.".
      *
-     * @return translated "'{0}' does not exist."
+     * @return translated "''{0}'' does not exist."
      */
-    @DefaultMessage("'{0}' does not exist.")
+    @DefaultMessage("''{0}'' does not exist.")
     @Key("doesNotExist")
     String doesNotExist(String filename);
 
