@@ -944,7 +944,7 @@ public class SourceColumnManager implements CommandPaletteEntrySource,
             // check for identical titles
             if (handle.getTitle() == target.getTitle())
             {
-               ((ObjectExplorerEditingTarget) target).update(handle);
+               ((ObjectExplorerEditingTarget) target).update(handle, true);
                ensureVisible(false);
                column.selectTab(target.asWidget());
                return;
@@ -965,6 +965,27 @@ public class SourceColumnManager implements CommandPaletteEntrySource,
                getActive().addTab(response, Source.OPEN_INTERACTIVE);
             }
          });
+   }
+
+   public void refreshObjectExplorer(ObjectExplorerHandle handle)
+   {
+      for (SourceColumn column : columnList_)
+      {
+         for (EditingTarget target : column.getEditors())
+         {
+            // bail if this isn't an object explorer filetype
+            FileType fileType = target.getFileType();
+            if (!(fileType instanceof ObjectExplorerFileType))
+               continue;
+
+            // check for identical titles
+            if (handle.getTitle() == target.getTitle())
+            {
+               ((ObjectExplorerEditingTarget) target).update(handle, false);
+               return;
+            }
+         }
+      }
    }
 
    public void showOverflowPopout()

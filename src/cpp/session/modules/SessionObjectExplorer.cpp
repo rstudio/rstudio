@@ -20,6 +20,7 @@
 #include <boost/bind/bind.hpp>
 
 #include <core/Algorithm.hpp>
+#include <core/RecursionGuard.hpp>
 #include <shared_core/Error.hpp>
 #include <core/Exec.hpp>
 
@@ -193,6 +194,83 @@ void onDeferredInit(bool)
       LOG_ERROR(error);
 }
 
+void onDetectChanges(module_context::ChangeSource source)
+{
+   DROP_RECURSIVE_CALLS;
+
+   if (!core::thread::isMainThread())
+      return;
+
+   // unlikely that data will change outside of a REPL
+   if (source != module_context::ChangeSourceREPL) 
+      return;
+
+   Error error;
+   r::sexp::Protect rProtect;
+   SEXP envCache = R_NilValue;
+   error = r::exec::RFunction(".rs.explorer.getCache").call(&envCache, &rProtect);
+   if (error)
+   {
+      LOG_ERROR(error);
+      return;
+   }
+
+   std::vector<std::string> cached;
+   error = r::sexp::objects(envCache, false, &cached);
+   if (error)
+   {
+      LOG_ERROR(error);
+      return;
+   }
+   
+   for (const std::string& id: cached)
+   {
+      SEXP s = Rf_install(id.c_str());
+      SEXP entry = Rf_findVarInFrame(envCache, s);
+
+      // basic safety check on entry: make sure it's a 
+      // list of 5 elements
+      if (TYPEOF(entry) != VECSXP || Rf_length(entry) != 5)
+         continue;
+      
+      SEXP object = VECTOR_ELT(entry, 0);
+      SEXP name = VECTOR_ELT(entry, 1);
+      SEXP envir = VECTOR_ELT(entry, 4);
+
+      // when envir is the empty env, this indicates
+      // that this was initially a View(<some code>)
+      // i.e. `x` is not a named object from an environment
+      // so don't update it
+      if (envir == R_EmptyEnv)
+         continue;
+
+      SEXP symbol = Rf_install(CHAR(STRING_ELT(name, 0)));
+      SEXP newObject = Rf_findVarInFrame(envir, symbol);
+
+      // no object of that name, don't update
+      if (newObject == R_UnboundValue)
+         continue;
+      
+      // no change
+      if (newObject == object)
+         continue;
+
+      // update the object
+      SET_VECTOR_ELT(entry, 0, newObject);
+
+      error = r::exec::RFunction(".rs.explorer.refresh")
+         .addUtf8Param(id)
+         .addParam(entry)
+         .call();
+
+      if (error)
+      {
+         LOG_ERROR(error);
+         return;
+      }
+   }
+}
+
 SEXP rs_objectClass(SEXP objectSEXP)
 {
    SEXP attribSEXP = ATTRIB(objectSEXP);
@@ -267,6 +345,7 @@ core::Error initialize()
    
    module_context::events().onDeferredInit.connect(onDeferredInit);
    module_context::events().onShutdown.connect(onShutdown);
+   module_context::events().onDetectChanges.connect(onDetectChanges);
    addSuspendHandler(SuspendHandler(onSuspend, onResume));
    
    source_database::events().onDocPendingRemove.connect(onDocPendingRemove);

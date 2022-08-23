@@ -17,6 +17,7 @@ package org.rstudio.studio.client.workbench.views.source.editors.explorer;
 import org.rstudio.studio.client.application.events.EventBus;
 import org.rstudio.studio.client.workbench.views.source.editors.explorer.events.ObjectExplorerEvent;
 import org.rstudio.studio.client.workbench.views.source.editors.explorer.events.OpenObjectExplorerEvent;
+import org.rstudio.studio.client.workbench.views.source.editors.explorer.events.RefreshObjectExplorerEvent;
 import org.rstudio.studio.client.workbench.views.source.editors.explorer.model.ObjectExplorerHandle;
 import com.google.inject.Inject;
 import com.google.inject.Singleton;
@@ -43,6 +44,7 @@ public class ObjectExplorerPresenter
       case NEW:        onNew(event.getData());       break;
       case OPEN_NODE:  onOpenNode(event.getData());  break;
       case CLOSE_NODE: onCloseNode(event.getData()); break;
+      case REFRESH:    onRefresh(event.getData());   break;
       case UNKNOWN:    break;
       }
    }
@@ -53,6 +55,13 @@ public class ObjectExplorerPresenter
    {
       ObjectExplorerHandle handle = eventData.getHandle();
       OpenObjectExplorerEvent event = new OpenObjectExplorerEvent(handle);
+      events_.fireEvent(event);
+   }
+
+   private void onRefresh(ObjectExplorerEvent.Data eventData)
+   {
+      ObjectExplorerHandle handle = eventData.getHandle();
+      RefreshObjectExplorerEvent event = new RefreshObjectExplorerEvent(handle);
       events_.fireEvent(event);
    }
    
