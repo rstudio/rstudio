@@ -62979,17 +62979,19 @@ var Text = function(parentEl) {
             hex = namedColors[color].substring(1);
         }
         var colBrightness = brightness(hex.substring(0, 6));
+        var bgBrightness = brightness(background.substring(1));
+
         var bright = (colBrightness > .5);
         if (hex.length > 6) 
         {
             var alpha = parseInt(hex.substring(6), 16) / 255;
-            var bgBrightness = brightness(background.substring(1));
-
+            
             bright = (colBrightness * (alpha) + bgBrightness * (1 - alpha)) > 0.5;
         }
         var textColor = bright ? "#000000a0" : "#ffffffa0";
+        var borderColor = bgBrightness > 0.5 ? "#000000a0" : "#ffffffa0";
         
-        return "background: #" + hex + "; color: " + textColor + "!important";
+        return "background: #" + hex + "; color: " + textColor + "!important; margin-left: -1px; margin-right:-1px; border: 1px solid " + borderColor + ";";
     };
 
     this.$renderToken = function(parent, screenColumn, token, value) {
