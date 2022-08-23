@@ -18,7 +18,6 @@
  *
  */
 var $colorFunctionCalls = false;
-var $colorPreview = false;
 
 define("mode/r_highlight_rules", ["require", "exports", "module"], function(require, exports, module)
 {
@@ -182,23 +181,11 @@ define("mode/r_highlight_rules", ["require", "exports", "module"], function(requ
 
   oop.inherits(RoxygenHighlightRules, TextHighlightRules);
 
-  var isColorBright = function(col)
+  var colorStringTokens = function(quote, text, rgb)
   {
-    // based on https://github.com/bgrins/TinyColor
-    var rgb = parseInt(col, 16); // convert rrggbb to decimal
-    var r = (rgb >> 16) & 0xff;  // extract red
-    var g = (rgb >>  8) & 0xff;  // extract green
-    var b = (rgb >>  0) & 0xff;  // extract blue
-    
-    return (r * 299 + g * 587 + b * 114) / 1000 > 128;
-  };
-
-  var colorTokens = function(quote, text, rgb)
-  {
-    var textColor = isColorBright(rgb.substring(0, 6)) ? "black" : "white";
     return [
       { type: "string", value: quote },
-      { type: "string.hexcolor", value: text, style: `background: #${rgb}; color: ${textColor} !important;` }, 
+      { type: "string.color", value: text, bg: rgb},
       { type: "string", value: quote }
     ];
   };
@@ -987,12 +974,9 @@ define("mode/r_highlight_rules", ["require", "exports", "module"], function(requ
         regex : '(["\'])(#[0-9a-fA-F]{6})([0-9a-fA-F]{2})?(\\1)',
         next  : "start", 
         onMatch: function(value, state, stack, line) {
-          if (!$colorPreview) 
-            return this.token;
-
           var quote = value.substring(0,1);
-          var col = value.substring(2, value.length - 1);
-          return colorTokens(quote, "#" + col, col);
+          var col = value.substring(1, value.length - 1);
+          return colorStringTokens(quote, col, col);
         }
       },
       {
@@ -1000,12 +984,9 @@ define("mode/r_highlight_rules", ["require", "exports", "module"], function(requ
         regex : '(["\'])(#[0-9a-fA-F]{3})(\\1)',
         next  : "start", 
         onMatch: function(value, state, stack, line) {
-          if (!$colorPreview) 
-            return this.token;
-          
           var quote = value.substring(0, 1);
-          var col = value.substring(2, value.length - 1); 
-          return colorTokens(quote, "#" + col, col.replace(/./g, "$&$&"));
+          var col = value.substring(1, value.length - 1); 
+          return colorStringTokens(quote, col, col);
         }
       },
       {
@@ -1016,16 +997,13 @@ define("mode/r_highlight_rules", ["require", "exports", "module"], function(requ
         regex : '(["\'])([a-z]+[0-9]*)(\\1)', 
         next  : "start", 
         onMatch: function(value, state, stack, line) {
-          if (!$colorPreview) 
-            return this.token;
-          
           var quote = value.substring(0, 1);
           var content = value.substring(1, value.length - 1);
           var rgb = builtInColors.get(content);
           if (rgb === undefined)
             return this.token;
           else
-            return colorTokens(quote, content, rgb);
+            return colorStringTokens(quote, content, "#" + rgb);
         }
       },
       {
@@ -1295,7 +1273,4 @@ define("mode/r_highlight_rules", ["require", "exports", "module"], function(requ
   exports.setHighlightRFunctionCalls = function(value) {
     $colorFunctionCalls = value;
   };
-  exports.setColorPreview = function(value) {
-    $colorPreview = value;
-  }
 });

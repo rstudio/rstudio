@@ -2441,7 +2441,7 @@ public class AceEditor implements DocDisplay,
 
    public void setColorPreview(boolean show)
    {
-      _setColorPreviewImpl(show);
+      widget_.getEditor().getRenderer().setColorPreview(show);
       widget_.getEditor().retokenizeDocument();
    }
 
@@ -2454,6 +2454,12 @@ public class AceEditor implements DocDisplay,
    public boolean getRainbowParentheses()
    {
       return _getRainbowParenthesesImpl();
+   }
+
+   public void setBackgroundColor(String color) 
+   {
+      widget_.getEditor().getRenderer().setBackgroundColor(color);
+      widget_.getEditor().retokenizeDocument();
    }
 
    public void setScrollLeft(int x)
@@ -2476,12 +2482,6 @@ public class AceEditor implements DocDisplay,
    /*-{
       var Mode = $wnd.require("mode/r_highlight_rules");
       Mode.setHighlightRFunctionCalls(highlight);
-   }-*/;
-
-   private native final void _setColorPreviewImpl(boolean show)
-   /*-{
-      var Mode = $wnd.require("mode/r_highlight_rules");
-      Mode.setColorPreview(show);
    }-*/;
 
    private native final void _setRainbowParenthesesImpl(boolean rainbow)

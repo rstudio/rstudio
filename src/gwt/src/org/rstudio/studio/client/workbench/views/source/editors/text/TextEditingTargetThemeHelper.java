@@ -16,6 +16,7 @@ package org.rstudio.studio.client.workbench.views.source.editors.text;
 
 import java.util.ArrayList;
 
+import org.rstudio.core.client.ColorUtil;
 import org.rstudio.core.client.dom.DomUtils;
 import org.rstudio.studio.client.application.events.EventBus;
 import org.rstudio.studio.client.common.Timers;
@@ -77,7 +78,7 @@ public class TextEditingTargetThemeHelper
       Element editorContainer = editingWidget.getElement();
       Element[] aceContentElements =
             DomUtils.getElementsByClassName(editorContainer, "ace_scroller");
-      
+
       int n = aceContentElements.length;
       if (editingTarget.isVisualModeActivated())
       {
@@ -98,6 +99,9 @@ public class TextEditingTargetThemeHelper
       currentStyle_ = DomUtils.getComputedStyles(content);
       currentContent_ = content;
       
+      String bg = ColorUtil.RGBColor.fromCss(currentStyle_.getBackgroundColor()).asHex();
+      editingTarget.getDocDisplay().setBackgroundColor(bg);
+
       // call all registered handlers
       handlers_.fireEvent(new EditorThemeStyleChangedEvent(content, currentStyle_));
    }
