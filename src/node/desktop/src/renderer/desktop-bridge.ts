@@ -545,6 +545,12 @@ export function getDesktopBridge() {
       ipcRenderer.send('desktop_set_shiny_dialog_url', url);
     },
 
+    allowNavigation: (url: string, callback: VoidCallback<boolean>) => {
+      ipcRenderer.invoke('desktop_allow_navigation', url)
+        .then((isSafe) => callback(isSafe))
+        .catch((error) => reportIpcError('desktop_allow_navigation', error));
+    },
+
     isMacOS: (callback: VoidCallback<boolean>) => {
       ipcRenderer
         .invoke('desktop_is_macos')

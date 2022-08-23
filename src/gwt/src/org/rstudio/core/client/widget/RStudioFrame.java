@@ -15,11 +15,14 @@
 
 package org.rstudio.core.client.widget;
 
+import org.rstudio.core.client.CommandWithArg;
 import org.rstudio.core.client.StringUtil;
+import org.rstudio.core.client.dom.DomUtils;
 import org.rstudio.core.client.dom.IFrameElementEx;
 import org.rstudio.core.client.dom.WindowEx;
 
 import com.google.gwt.user.client.ui.Frame;
+import org.rstudio.studio.client.application.Desktop;
 
 public class RStudioFrame extends Frame
 {
@@ -83,4 +86,17 @@ public class RStudioFrame extends Frame
       getIFrame().getContentWindow().replaceLocationHref(url);
    }
 
+   @Override
+   public void setUrl(String url)
+   {
+      Desktop.getFrame().allowNavigation(DomUtils.makeAbsoluteUrl(url), new CommandWithArg<Boolean>() {
+         @Override
+         public void execute(Boolean arg) {
+            if (arg)
+            {
+               RStudioFrame.super.setUrl(url);
+            }
+         }
+      });
+   }
 }

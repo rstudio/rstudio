@@ -342,7 +342,7 @@ export class GwtCallback extends EventEmitter {
         console.log('error:', value);
         logger().logErrorMessage(value);
       });
-    };
+    }
 
     ipcMain.on('desktop_show_file', (event, file: string) => {
       showFileInSystemViewer(file);
@@ -478,6 +478,7 @@ export class GwtCallback extends EventEmitter {
           name: name,
           allowExternalNavigate: allowExternalNavigate,
           showToolbar: showToolbar,
+          mainWindow: this.mainWindow,
         });
       },
     );
@@ -761,14 +762,14 @@ export class GwtCallback extends EventEmitter {
     });
 
     ipcMain.on('desktop_set_tutorial_url', (event, url) => {
-      GwtCallback.unimpl('desktop_set_tutorial_url');
+      this.getSender('desktop_set_tutorial_url', event.processId, event.frameId).setTutorialUrl(url);
     });
 
     ipcMain.on('desktop_set_viewer_url', (event, url) => {
       this.getSender('desktop_set_viewer_url', event.processId, event.frameId).setViewerUrl(url);
     });
 
-    ipcMain.on('desktop_reload_viewer_zoom_window', (event, url) => {
+    ipcMain.on('desktop_reload_viewer_zoom_window', (_event, url) => {
       const browser = appState().windowTracker.getWindow('_rstudio_viewer_zoom');
       if (browser) {
         void browser.window.webContents.loadURL(url);
@@ -776,7 +777,11 @@ export class GwtCallback extends EventEmitter {
     });
 
     ipcMain.on('desktop_set_shiny_dialog_url', (event, url) => {
-      GwtCallback.unimpl('desktop_set_shiny_dialog_url');
+      this.getSender('desktop_set_shiny_dialog_url', event.processId, event.frameId).setShinyDialogUrl(url);
+    });
+
+    ipcMain.handle('desktop_allow_navigation', (event, url) => {
+      return this.getSender('desktop_allow_navigation', event.processId, event.frameId).allowNavigation(url);
     });
 
     ipcMain.handle('desktop_is_macos', () => {

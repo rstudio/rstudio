@@ -31,6 +31,7 @@ export interface PendingSecondaryWindow {
   name: string;
   allowExternalNavigate: boolean;
   showToolbar: boolean;
+  mainWindow?: MainWindow;
 }
 
 export type PendingWindow = PendingSatelliteWindow | PendingSecondaryWindow;

@@ -138,12 +138,4 @@ describe('Utils', () => {
     const result = Utils.filterFromQFileDialogFilter(input);
     assert.deepEqual(expected, result);
   });
-  it('isSafeHost detects safe host', () => {
-    const host = 'somewhere.c9.ms';
-    assert.isTrue(Utils.isSafeHost(host));
-  });
-  it('isSafeHost detects unsafe host', () => {
-    const host = 'bad.place.foo';
-    assert.isFalse(Utils.isSafeHost(host));
-  });
 });
