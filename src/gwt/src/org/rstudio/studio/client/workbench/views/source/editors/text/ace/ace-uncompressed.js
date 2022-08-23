@@ -64377,11 +64377,6 @@ background-color: rgba(255, 255, 0,0.2);\
 position: absolute;\
 z-index: 8;\
 }\
-.ace_color {\
-border: 1px solid rgba(0,0,0,0.5);\
-margin-left: -1px;\
-margin-right:-1px;\
-}\
 ";
 
 var useragent = require("./lib/useragent");
