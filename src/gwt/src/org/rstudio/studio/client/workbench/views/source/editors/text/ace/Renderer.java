@@ -195,4 +195,8 @@ public class Renderer extends JavaScriptObject
       return this.getFirstFullyVisibleRow();
    }-*/;
    
+   public final native void setBackgroundColor(String color) /*-{
+      this.$textLayer.setBackgroundColor(color);
+   }-*/;
+
 }

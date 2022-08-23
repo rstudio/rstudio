@@ -2456,6 +2456,12 @@ public class AceEditor implements DocDisplay,
       return _getRainbowParenthesesImpl();
    }
 
+   public void setBackgroundColor(String color) 
+   {
+      widget_.getEditor().getRenderer().setBackgroundColor(color);
+      widget_.getEditor().retokenizeDocument();
+   }
+
    public void setScrollLeft(int x)
    {
       getSession().setScrollLeft(x);
