@@ -62596,9 +62596,9 @@ var Text = function(parentEl) {
         this.backgroundColor = color;
     };
 
-    this.colorPreview = true;
+    this.showColorPreview = true;
     this.setColorPreview = function(showColorPreview) {
-        this.colorPreview = showColorPreview;
+        this.showColorPreview = showColorPreview;
     };
 
     this.$tabStrings = [];
