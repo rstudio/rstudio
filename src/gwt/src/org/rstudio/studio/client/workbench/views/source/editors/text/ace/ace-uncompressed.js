@@ -62591,6 +62591,11 @@ var Text = function(parentEl) {
         return true;
     };
 
+    this.backgroundColor = "#ffffff";
+    this.setBackgroundColor = function(color){
+        this.backgroundColor = color;
+    };
+
     this.$tabStrings = [];
     this.onChangeTabSize =
     this.$computeTabString = function() {
@@ -62948,12 +62953,16 @@ var Text = function(parentEl) {
         yellowgreen     :"#9acd32"
     };
 
-    var brightness = function(r, g, b)
-    {
+    var brightness = function(hex6) {
+        var rgb = parseInt(hex, 16);
+        var r = (rgb >> 16) & 0xff;
+        var g = (rgb >>  8) & 0xff;
+        var b = (rgb >>  0) & 0xff;
+
         return (r * 299 + g * 587 + b * 114) / 1000 / 255;
     }
 
-    var bgStyle = function(color) {
+    var bgStyle = function(color, background) {
         var hex;
         if (color.startsWith("#")) 
         {
@@ -62964,31 +62973,14 @@ var Text = function(parentEl) {
         } else {
             hex = namedColors[color].substring(1);
         }
-
-        var rgb = parseInt(hex.substring(0, 6), 16);
-        var r = (rgb >> 16) & 0xff;
-        var g = (rgb >>  8) & 0xff;
-        var b = (rgb >>  0) & 0xff;
-        
-        var colBrightness = brightness(r, g, b);
-        
-        var textColor;
-        var bright;
+        var colBrightness = brightness(hex.substring(0, 6));
+        var bright = (colBrightness > .5);
         if (hex.length > 6) 
         {
-            // brightness of the editor background color
-            var themeBg = getComputedStyle(document.querySelector(".ace_editor_theme")).backgroundColor;
-            var parts = themeBg.replace("rgb(", "").replace(")", "").split(",");
-            var bgBrightness = brightness(parseInt(parts[0]), parseInt(parts[1]), parseInt(parts[2]));
-
-            // alpha
             var alpha = parseInt(hex.substring(6), 16) / 255;
-            
+            var bgBrightness = brightness(background.substring(1));
+
             bright = (colBrightness * (alpha) + bgBrightness * (1 - alpha)) > 0.5;
-        } 
-        else 
-        {
-            bright = (colBrightness > .5);
         }
         var textColor = bright ? "#000000a0" : "#ffffffa0";
         
@@ -63066,10 +63058,7 @@ var Text = function(parentEl) {
             if (token.type == "fold")
                 span.style.width = (token.value.length * this.config.characterWidth) + "px";
             if (token.bg)
-            {
-                span.setAttribute("style", bgStyle(token.bg));
-            }
-                
+                span.setAttribute("style", bgStyle(token.bg, this.backgroundColor));
             if (token.style)
                 span.setAttribute("style", token.style);
             span.className = classes;
@@ -65556,7 +65545,6 @@ var VirtualRenderer = function(container, theme) {
     };
     this.setTheme = function(theme, cb) {
         var _self = this;
-        
         this.$themeId = theme;
         _self._dispatchEvent('themeChange',{theme:theme});
 
