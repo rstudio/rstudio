@@ -62596,6 +62596,11 @@ var Text = function(parentEl) {
         this.backgroundColor = color;
     };
 
+    this.colorPreview = true;
+    this.setColorPreview = function(showColorPreview) {
+        this.colorPreview = showColorPreview;
+    };
+
     this.$tabStrings = [];
     this.onChangeTabSize =
     this.$computeTabString = function() {
@@ -63057,7 +63062,7 @@ var Text = function(parentEl) {
             var span = this.dom.createElement("span");
             if (token.type == "fold")
                 span.style.width = (token.value.length * this.config.characterWidth) + "px";
-            if (token.bg)
+            if (token.bg && this.showColorPreview)
                 span.setAttribute("style", bgStyle(token.bg, this.backgroundColor));
             if (token.style)
                 span.setAttribute("style", token.style);
