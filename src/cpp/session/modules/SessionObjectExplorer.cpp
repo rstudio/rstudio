@@ -235,7 +235,6 @@ void onDetectChanges(module_context::ChangeSource source)
       
       SEXP object = VECTOR_ELT(entry, 0);
       SEXP name = VECTOR_ELT(entry, 1);
-      SEXP language = VECTOR_ELT(entry, 3);
       SEXP envir = VECTOR_ELT(entry, 4);
 
       // when envir is the empty env, this indicates
