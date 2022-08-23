@@ -207,7 +207,7 @@ void onDetectChanges(module_context::ChangeSource source)
 
    Error error;
    r::sexp::Protect rProtect;
-   SEXP envCache;
+   SEXP envCache = R_NilValue;
    error = r::exec::RFunction(".rs.explorer.getCache").call(&envCache, &rProtect);
    if (error)
    {
@@ -227,10 +227,14 @@ void onDetectChanges(module_context::ChangeSource source)
    {
       SEXP s = Rf_install(id.c_str());
       SEXP entry = Rf_findVarInFrame(envCache, s);
+
+      // basic safety check on entry: make sure it's a 
+      // list of 5 elements
+      if (TYPEOF(entry) != VECSXP || Rf_length(entry) != 5)
+         continue;
       
       SEXP object = VECTOR_ELT(entry, 0);
       SEXP name = VECTOR_ELT(entry, 1);
-      // SEXP title = VECTOR_ELT(entry, 2);
       SEXP language = VECTOR_ELT(entry, 3);
       SEXP envir = VECTOR_ELT(entry, 4);
 
