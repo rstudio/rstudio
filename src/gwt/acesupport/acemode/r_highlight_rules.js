@@ -975,9 +975,6 @@ define("mode/r_highlight_rules", ["require", "exports", "module"], function(requ
         regex : '(["\'])(#[0-9a-fA-F]{6})([0-9a-fA-F]{2})?(\\1)',
         next  : "start", 
         onMatch: function(value, state, stack, line) {
-          if (!$colorPreview) 
-            return this.token;
-
           var quote = value.substring(0,1);
           var col = value.substring(1, value.length - 1);
           return colorStringTokens(quote, col, col);
@@ -988,9 +985,6 @@ define("mode/r_highlight_rules", ["require", "exports", "module"], function(requ
         regex : '(["\'])(#[0-9a-fA-F]{3})(\\1)',
         next  : "start", 
         onMatch: function(value, state, stack, line) {
-          if (!$colorPreview) 
-            return this.token;
-          
           var quote = value.substring(0, 1);
           var col = value.substring(1, value.length - 1); 
           return colorStringTokens(quote, col, col);
@@ -1004,9 +998,6 @@ define("mode/r_highlight_rules", ["require", "exports", "module"], function(requ
         regex : '(["\'])([a-z]+[0-9]*)(\\1)', 
         next  : "start", 
         onMatch: function(value, state, stack, line) {
-          if (!$colorPreview) 
-            return this.token;
-          
           var quote = value.substring(0, 1);
           var content = value.substring(1, value.length - 1);
           var rgb = builtInColors.get(content);
