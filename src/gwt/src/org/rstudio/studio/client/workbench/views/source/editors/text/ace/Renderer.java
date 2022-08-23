@@ -199,4 +199,8 @@ public class Renderer extends JavaScriptObject
       this.$textLayer.setBackgroundColor(color);
    }-*/;
 
+   public final native void setColorPreview(boolean show) /*-{
+      this.$textLayer.setColorPreview(show);
+   }-*/;
+
 }

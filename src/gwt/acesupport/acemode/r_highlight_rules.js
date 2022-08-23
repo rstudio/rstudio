@@ -18,7 +18,6 @@
  *
  */
 var $colorFunctionCalls = false;
-var $colorPreview = false;
 
 define("mode/r_highlight_rules", ["require", "exports", "module"], function(require, exports, module)
 {
@@ -1274,7 +1273,4 @@ define("mode/r_highlight_rules", ["require", "exports", "module"], function(requ
   exports.setHighlightRFunctionCalls = function(value) {
     $colorFunctionCalls = value;
   };
-  exports.setColorPreview = function(value) {
-    $colorPreview = value;
-  }
 });
