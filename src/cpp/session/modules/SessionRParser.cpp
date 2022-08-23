@@ -871,7 +871,17 @@ public:
       // Figure out if this function call is being made as part of a magrittr
       // chain. If so, then we implicitly set the first argument as that object.
       RToken prevToken = cursor.previousSignificantToken();
-
+      if (token_utils::isNamespaceExtractionOperator(prevToken))
+      {
+         RTokenCursor clone = cursor.clone();
+         if (clone.moveToPreviousSignificantToken() &&
+             clone.moveToPreviousSignificantToken() &&
+             clone.moveToPreviousSignificantToken())
+         {
+            prevToken = clone.currentToken();
+         }
+      }
+      
       if (isPipeOperator(prevToken))
       {
          // For a magrittr style pipe, if magrittr sees a '.' at the top level (ie: used standalone as

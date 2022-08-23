@@ -945,7 +945,22 @@ public:
      std::string onFailure;
      
 PIPE_START:
-
+     
+     // Handle the case where the cursor is on top of
+     // a qualified function call, e.g.
+     //
+     // mtcars %>% pkg::func()
+     //        ??? ^<<<<^
+     //
+     if (isNamespaceExtractionOperator(cursor.previousSignificantToken()))
+     {
+        if (!cursor.moveToPreviousSignificantToken())
+           return onFailure;
+        
+        if (!cursor.moveToPreviousSignificantToken())
+           return onFailure;
+     }
+     
      // mtcars %>% foo$bar(
      //        ???
      if (!isPipeOperator(cursor.previousSignificantToken()))
