@@ -62954,7 +62954,7 @@ var Text = function(parentEl) {
     };
 
     var brightness = function(hex6) {
-        var rgb = parseInt(hex, 16);
+        var rgb = parseInt(hex6, 16);
         var r = (rgb >> 16) & 0xff;
         var g = (rgb >>  8) & 0xff;
         var b = (rgb >>  0) & 0xff;
