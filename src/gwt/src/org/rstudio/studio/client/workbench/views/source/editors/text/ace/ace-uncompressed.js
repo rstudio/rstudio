@@ -7491,6 +7491,13 @@ var CssHighlightRules = function() {
                 ];    
             }
          }, {
+            regex : "#[a-fA-F0-9]{8}", // hex8 color
+            onMatch: function(value, state, stack, line) {
+                return [
+                    { type: "constant.color", value: value, bg: value}
+                ];
+            }
+        }, {
             regex : "#[a-fA-F0-9]{6}", // hex6 color
             onMatch: function(value, state, stack, line) {
                 return [
