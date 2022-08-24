@@ -139,7 +139,7 @@ public class AceEditorBackgroundLinkHighlighter
       handlers_.add(editor_.addMouseMoveHandler(this));
       handlers_.add(editor_.addMouseUpHandler(this));
 
-      // refreshHighlighters(editor_.getModeId());
+      refreshHighlighters(editor_.getModeId());
    }
 
    private void refreshHighlighters(String mode)
