@@ -139,7 +139,7 @@ public class AceEditorBackgroundLinkHighlighter
       handlers_.add(editor_.addMouseMoveHandler(this));
       handlers_.add(editor_.addMouseUpHandler(this));
 
-      refreshHighlighters(editor_.getModeId());
+      // refreshHighlighters(editor_.getModeId());
    }
 
    private void refreshHighlighters(String mode)
@@ -167,7 +167,7 @@ public class AceEditorBackgroundLinkHighlighter
             if (fileType != null && (fileType.isMarkdown() || fileType.isRmd()))
                highlighters_.add(markdownLinkHighlighter());
             nextHighlightStart_ = 0;
-            timer_.schedule(700);
+            timer_.schedule(100);
          }
       });
    }
@@ -639,7 +639,7 @@ public class AceEditorBackgroundLinkHighlighter
       // prepare highlighter
       int row = event.getEvent().getRange().getStart().getRow();
       nextHighlightStart_ = Math.min(nextHighlightStart_, row);
-      timer_.schedule(700);
+      timer_.schedule(100);
 
       // update marker positions (deferred so that anchors update)
       Scheduler.get().scheduleDeferred(new ScheduledCommand()
