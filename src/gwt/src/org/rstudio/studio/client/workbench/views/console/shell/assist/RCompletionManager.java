@@ -1908,7 +1908,8 @@ public class RCompletionManager implements CompletionManager
              type == RCompletionType.ARGUMENT ||
              type == RCompletionType.OPTION ||
              type == RCompletionType.CONTEXT ||
-             type == RCompletionType.KEYWORD)
+             type == RCompletionType.KEYWORD ||
+             type == RCompletionType.FUNCTION)
          {
             return value;
          }
