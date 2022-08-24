@@ -181,7 +181,8 @@ public class NewQuartoProjectPage extends NewDirectoryPage
       
       // popuplate kernel list from caps
       quartoCaps_ = input.getContext().getQuartoCapabilities();
-      JsArray<QuartoJupyterKernel> kernels = quartoCaps_.jupyterKernels();
+      JsArray<QuartoJupyterKernel> kernels = quartoCaps_ == null ?
+              JsArray.createArray().cast() : quartoCaps_.jupyterKernels();
       
       String[] kernelNames = new String[kernels.length()];
       String[] kernelDisplayNames = new String[kernels.length()];

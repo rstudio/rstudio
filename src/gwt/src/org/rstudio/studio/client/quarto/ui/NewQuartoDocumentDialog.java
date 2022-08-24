@@ -188,7 +188,8 @@ public class NewQuartoDocumentDialog extends ModalDialog<NewQuartoDocumentDialog
       setListBoxValue(engineSelect_, lastResult_.getEngine());
             
       Label kernelLabel = createLabel(constants_.kernelLabelCaption());
-      JsArray<QuartoJupyterKernel> kernels = caps.jupyterKernels();
+      JsArray<QuartoJupyterKernel> kernels = caps == null ?
+              JsArray.createArray().cast() : caps.jupyterKernels();
       
       String[] kernelNames = new String[kernels.length()];
       String[] kernelDisplayNames = new String[kernels.length()];
@@ -293,7 +294,7 @@ public class NewQuartoDocumentDialog extends ModalDialog<NewQuartoDocumentDialog
       {
          language = "r";
       }
-      else
+      else if (caps_ != null)
       {
          JsArray<QuartoJupyterKernel> kernels = caps_.jupyterKernels();
          for (int i=0; i<kernels.length(); i++)
