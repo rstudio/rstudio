@@ -300,6 +300,11 @@ public abstract class MessageDisplay
       dialog.showModal();
    }
    
+   public void showErrorMessage(String message)
+   {
+      showErrorMessage(constants_.errorCaption(), message);
+   }
+
    public void showErrorMessage(String caption, String message)
    {
       createDialog(MSG_ERROR, caption, message).showModal();
