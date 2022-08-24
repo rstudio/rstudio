@@ -178,7 +178,14 @@ for (binding in bindings)
 .rs.addJsonRpcHandler("get_issue_url", function(id)
 {
    project <- .rs.getProjectDirectory()
-   BugReports <- as.character(read.dcf(file.path(.rs.getProjectDirectory(), "DESCRIPTION"), fields = "BugReports"))
+   if (is.null(project)) {
+      return(.rs.scalar(""))
+   }
+   
+   BugReports <- as.character(read.dcf(file.path(project, "DESCRIPTION"), fields = "BugReports"))
+   if (is.na(BugReports)) {
+      return(.rs.scalar(""))
+   }
 
    url <- paste0(BugReports, "/", sub("#", "", id))
    .rs.scalar(url)

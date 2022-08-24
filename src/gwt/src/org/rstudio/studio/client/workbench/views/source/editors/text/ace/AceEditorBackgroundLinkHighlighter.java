@@ -352,6 +352,8 @@ public class AceEditorBackgroundLinkHighlighter
       if (reSrcRef.test(url))
          return;
 
+      final String finalUrl = url;
+      
       // github issues for this package (uses BugReports)
       Pattern reIssue = Pattern.create("^#[0-9]+$");
       if (reIssue.test(url))
@@ -361,7 +363,11 @@ public class AceEditorBackgroundLinkHighlighter
             @Override
             public void onResponseReceived(String response)
             {
-               globalDisplay_.openWindow(response);
+               if (response.length() > 0)
+                  globalDisplay_.openWindow(response); 
+               else 
+                  RStudioGinjector.INSTANCE.getGlobalDisplay().showErrorMessage(
+                     "Could not resolve " + finalUrl + ". Please make sure this is an R package project with a BugReports field set.");
             }
          });
 
@@ -380,7 +386,6 @@ public class AceEditorBackgroundLinkHighlighter
       }
 
       // treat other URLs as paths to files on the server
-      final String finalUrl = url;
       server_.stat(finalUrl, new ServerRequestCallback<FileSystemItem>()
       {
          @Override
