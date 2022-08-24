@@ -17,8 +17,21 @@ import { describe } from 'mocha';
 import { assert } from 'chai';
 import { WinstonLogger } from '../../../src/core/winston-logger';
 import { FilePath } from '../../../src/core/file-path';
+import { restore, saveAndClear } from '../unit-utils';
+import { ArgsManager } from '../../../src/main/args-manager';
+import { coreState } from '../../../src/core/core-state';
 
 describe('WinstonLogger', () => {
+  const testEnv = { RS_LOG_LEVEL: '' };
+
+  beforeEach(() => {
+    saveAndClear(testEnv);
+  });
+
+  afterEach(() => {
+    restore(testEnv);
+  });
+
   it('Logger is created correctly', () => {
     const logLevels: any[] = ['warn', 'error', 'info', 'http', 'verbose', 'debug', 'silly'];
 
@@ -39,4 +52,16 @@ describe('WinstonLogger', () => {
       assert.equal(logger.logLevel(), logLevel, 'Logger log level should be ' + logLevel);
     });
   });
+
+  it('Logger level is set correctly from environment variable', () => {
+    const argsMananager = new ArgsManager();
+
+    process.env.RS_LOG_LEVEL = 'debug';
+    argsMananager.handleLogLevel();
+    assert.equal(coreState().logOptions.logger.logLevel(), 'debug');
+
+    process.env.RS_LOG_LEVEL = 'info';
+    argsMananager.handleLogLevel();
+    assert.equal(coreState().logOptions.logger.logLevel(), 'info');
+  })
 });
