@@ -153,7 +153,6 @@ public class AceEditorBackgroundLinkHighlighter
          {
             TextFileType fileType = editor_.getFileType();
             highlighters_.clear();
-            highlighters_.add(issueHighlighter());
             pUserPrefs_.get().highlightWebLink().bind(new CommandWithArg<Boolean>() {
                public void execute(Boolean arg) {
                   if (arg)
@@ -165,8 +164,11 @@ public class AceEditorBackgroundLinkHighlighter
                      highlighters_.remove(webLinkHighlighter());
                   }
             }});
+            if (fileType.isR())
+               highlighters_.add(issueHighlighter());
             if (fileType != null && (fileType.isMarkdown() || fileType.isRmd()))
                highlighters_.add(markdownLinkHighlighter());
+
             nextHighlightStart_ = 0;
             timer_.schedule(100);
          }
@@ -561,7 +563,7 @@ public class AceEditorBackgroundLinkHighlighter
 
    private static Pattern createIssueLinkPattern()
    {
-      return Pattern.create("[(]([-a-zA-Z0-9]+/[-a-zA-Z0-9]+)?#([0-9]+)[)]");
+      return Pattern.create("(?<=test_that.*)[(]((?:[-a-zA-Z0-9]+/[-a-zA-Z0-9]+)?#[0-9]+)[)]");
    }
 
    private Highlighter markdownLinkHighlighter()
