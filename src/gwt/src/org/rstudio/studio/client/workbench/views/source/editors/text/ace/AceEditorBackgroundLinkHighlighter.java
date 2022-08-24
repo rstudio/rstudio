@@ -352,7 +352,7 @@ public class AceEditorBackgroundLinkHighlighter
       if (reSrcRef.test(url))
          return;
 
-      // github issues
+      // github issues for this package (uses BugReports)
       Pattern reIssue = Pattern.create("^#[0-9]+$");
       if (reIssue.test(url))
       {
@@ -364,6 +364,17 @@ public class AceEditorBackgroundLinkHighlighter
                globalDisplay_.openWindow(response);
             }
          });
+
+         return;
+      }
+
+      // explicit github issues
+      Pattern reSpecificGithubIssue = Pattern.create("[-a-zA-Z0-9]+/[-a-zA-Z0-9]+#[0-9]+");
+      if (reSpecificGithubIssue.test(url))
+      {
+         String[] parts = url.split("#");
+         String issueUrl = "https://www.github.com/" + parts[0] + "/issues/" + parts[1];
+         globalDisplay_.openWindow(issueUrl);
 
          return;
       }
@@ -545,7 +556,7 @@ public class AceEditorBackgroundLinkHighlighter
 
    private static Pattern createIssueLinkPattern()
    {
-      return Pattern.create("[(]#([0-9]+)[)]");
+      return Pattern.create("[(]([-a-zA-Z0-9]+/[-a-zA-Z0-9]+)?#([0-9]+)[)]");
    }
 
    private Highlighter markdownLinkHighlighter()
