@@ -202,7 +202,7 @@ export class MenuCallback extends EventEmitter {
   menuEnd(): void {
     if (this.lastWasDiagnostics) {
       this.lastWasDiagnostics = false;
-      const template: MenuItemConstructorOptions = { role: 'toggleDevTools' };
+      const template: MenuItemConstructorOptions = { role: 'toggleDevTools', accelerator: '' };
       this.addToCurrentMenu(template);
     }
 
