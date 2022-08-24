@@ -26,6 +26,7 @@
 
 ### Fixed
 
+- Fixed an issue where Find in Files could fail to find results with certain versions of git (#11822)
 - Fixed visual mode outline missing nested R code chunks (#11410)
 - Fixed an issue where chunks containing multibyte characters was not executed correctly (#10632)
 - Fixed bringing main window under active secondary window when executing background command (#11407)

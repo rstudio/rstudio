@@ -1474,7 +1474,7 @@ core::Error runGrepOperation(const GrepOptions& grepOptions, const ReplaceOption
       cmd << "-I"; // ignore binaries
       cmd << "--untracked"; // include files not tracked by git...
       cmd << (grepOptions.excludeGitIgnore() ? "--exclude-standard" : "--no-exclude-standard");
-      cmd << "-rHn";
+      cmd << "-Hn";
       cmd << "--color=always";
       if (grepOptions.ignoreCase())
          cmd << "-i";
