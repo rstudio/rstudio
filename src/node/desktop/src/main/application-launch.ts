@@ -17,6 +17,7 @@ import path from 'path';
 import { spawn } from 'child_process';
 import { existsSync, readdirSync } from 'fs';
 import { setenv, unsetenv } from '../core/environment';
+import { kRStudioInitialProject, kRStudioInitialWorkingDir } from '../core/r-user-data';
 import { MainWindow } from './main-window';
 import { app } from 'electron';
 
@@ -70,19 +71,18 @@ export class ApplicationLaunch {
 
     // resolve working directory
     const workingDir = options.workingDirectory ?? path.dirname(options.projectFilePath || '');
-    setenv('RS_INITIAL_WD', workingDir);
+    setenv(kRStudioInitialWorkingDir, workingDir);
 
     // resolve project file, if any
     const projectFile = options.projectFilePath ?? resolveProjectFile(workingDir);
     if (existsSync(projectFile)) {
-      setenv('RS_INITIAL_PROJECT', projectFile);
+      setenv(kRStudioInitialProject, projectFile);
     }
 
     // run it
     spawn(process.execPath, argv, { detached: true });
 
     // restore environment variables
-    unsetenv('RS_INSTALL_WD');
-    unsetenv('RS_INITIAL_PROJECT');
+    unsetenv(kRStudioInitialProject);
   }
 }
