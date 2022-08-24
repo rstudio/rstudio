@@ -122,7 +122,6 @@ export class ArgsManager {
             });
         }
       });
-      logger().logDebug(`RS_INITIAL_WD: ${getenv(kRStudioInitialWorkingDir)}`); 
     }
   }
 
@@ -140,7 +139,6 @@ export class ArgsManager {
 
     if (this.unswitchedArgs.length) {
       this.unswitchedArgs = this.unswitchedArgs.filter((arg) => {
-        logger().logDebug(`arg: ${arg}`);
         if (FilePath.existsSync(arg)) {
           const ext = path.extname(arg).toLowerCase();
 
@@ -149,7 +147,8 @@ export class ArgsManager {
             return false;
           }
           else {
-            setenv(kRStudioInitialWorkingDir, arg);
+            const workingDir = path.dirname(arg);
+            setenv(kRStudioInitialWorkingDir, workingDir);
           }
         }
         logger().logDebug(`RS_INITIAL_WD: ${getenv(kRStudioInitialWorkingDir)}`);
