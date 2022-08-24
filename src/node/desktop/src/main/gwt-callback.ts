@@ -769,6 +769,10 @@ export class GwtCallback extends EventEmitter {
       this.getSender('desktop_set_viewer_url', event.processId, event.frameId).setViewerUrl(url);
     });
 
+    ipcMain.on('desktop_set_presentation_url', (event, url) => {
+      this.getSender('desktop_set_presentation_url', event.processId, event.frameId).setPresentationUrl(url);
+    });
+
     ipcMain.on('desktop_reload_viewer_zoom_window', (_event, url) => {
       const browser = appState().windowTracker.getWindow('_rstudio_viewer_zoom');
       if (browser) {

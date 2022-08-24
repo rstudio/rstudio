@@ -537,6 +537,10 @@ export function getDesktopBridge() {
       ipcRenderer.send('desktop_set_viewer_url', url);
     },
 
+    setPresentationUrl: (url: string) => {
+      ipcRenderer.send('desktop_set_presentation_url', url);
+    },
+
     reloadViewerZoomWindow: (url: string) => {
       ipcRenderer.send('desktop_reload_viewer_zoom_window', url);
     },
