@@ -15,7 +15,7 @@
 
 import { app, webContents } from 'electron';
 import path from 'path';
-import { setenv } from '../core/environment';
+import { setenv, getenv } from '../core/environment';
 import { FilePath } from '../core/file-path';
 import {
   enableDiagnosticsOutput,
@@ -23,7 +23,7 @@ import {
   parseCommandLineLogLevel,
   setLogger
 } from '../core/logger';
-import { kRStudioInitialProject } from '../core/r-user-data';
+import { kRStudioInitialProject, kRStudioInitialWorkingDir } from '../core/r-user-data';
 import { WinstonLogger } from '../core/winston-logger';
 import { getDesktopBridge } from '../renderer/desktop-bridge';
 import { Application } from './application';
@@ -122,6 +122,7 @@ export class ArgsManager {
             });
         }
       });
+      logger().logDebug(`RS_INITIAL_WD: ${getenv(kRStudioInitialWorkingDir)}`); 
     }
   }
 
@@ -139,6 +140,7 @@ export class ArgsManager {
 
     if (this.unswitchedArgs.length) {
       this.unswitchedArgs = this.unswitchedArgs.filter((arg) => {
+        logger().logDebug(`arg: ${arg}`);
         if (FilePath.existsSync(arg)) {
           const ext = path.extname(arg).toLowerCase();
 
@@ -146,8 +148,11 @@ export class ArgsManager {
             setenv(kRStudioInitialProject, arg);
             return false;
           }
+          else {
+            setenv(kRStudioInitialWorkingDir, arg);
+          }
         }
-
+        logger().logDebug(`RS_INITIAL_WD: ${getenv(kRStudioInitialWorkingDir)}`);
         return true;
       });
     }
