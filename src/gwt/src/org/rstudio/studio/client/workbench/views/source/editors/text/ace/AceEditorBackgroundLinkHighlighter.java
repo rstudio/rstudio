@@ -35,6 +35,7 @@ import org.rstudio.core.client.regex.Pattern;
 import org.rstudio.studio.client.RStudioGinjector;
 import org.rstudio.studio.client.application.events.EventBus;
 import org.rstudio.studio.client.common.GlobalDisplay;
+import org.rstudio.studio.client.common.SimpleRequestCallback;
 import org.rstudio.studio.client.common.filetypes.EditableFileType;
 import org.rstudio.studio.client.common.filetypes.FileType;
 import org.rstudio.studio.client.common.filetypes.FileTypeRegistry;
@@ -355,7 +356,16 @@ public class AceEditorBackgroundLinkHighlighter
       Pattern reIssue = Pattern.create("^#[0-9]+$");
       if (reIssue.test(url))
       {
-         // TODO: globalDisplay_.openWindow(BugReports + /url)
+         server_.getIssueUrl(url, new SimpleRequestCallback<String>()
+         {
+            @Override
+            public void onResponseReceived(String response)
+            {
+               globalDisplay_.openWindow(response);
+            }
+         });
+
+         return;
       }
 
       // treat other URLs as paths to files on the server
