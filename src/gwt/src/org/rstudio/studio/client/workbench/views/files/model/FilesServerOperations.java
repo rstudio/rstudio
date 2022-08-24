@@ -102,6 +102,9 @@ public interface FilesServerOperations
                  boolean logErrorIfNotFound,
                  ServerRequestCallback<JavaScriptObject> requestCallback);
 
+   void getIssueUrl(String id, 
+                    ServerRequestCallback<String> requestCallback);
+
    /**
     * Use VERY sparingly; we generally don't want to expose
     * non-aliased paths to other parts of the client codebase

@@ -174,3 +174,12 @@ for (binding in bindings)
 {
    .Call("rs_readLines", path.expand(filePath))
 })
+
+.rs.addJsonRpcHandler("get_issue_url", function(id)
+{
+   project <- .rs.getProjectDirectory()
+   BugReports <- as.character(read.dcf(file.path(.rs.getProjectDirectory(), "DESCRIPTION"), fields = "BugReports"))
+
+   url <- paste0(BugReports, "/", sub("#", "", id))
+   .rs.scalar(url)
+})
