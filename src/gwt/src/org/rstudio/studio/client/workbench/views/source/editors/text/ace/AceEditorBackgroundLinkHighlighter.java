@@ -52,7 +52,6 @@ import org.rstudio.studio.client.workbench.views.source.editors.text.events.Edit
 import org.rstudio.studio.client.workbench.views.source.editors.text.events.CommandClickEvent;
 
 import com.google.gwt.core.client.GWT;
-import com.google.gwt.core.client.JavaScriptObject;
 import com.google.gwt.core.client.Scheduler;
 import com.google.gwt.core.client.Scheduler.ScheduledCommand;
 import com.google.gwt.dom.client.Element;
@@ -423,13 +422,18 @@ public class AceEditorBackgroundLinkHighlighter
       final String styles = RES.styles().highlight() + " ace_marker " + id;
       AnchoredRange anchoredRange = editor.getSession().createAnchoredRange(start, end, true);
 
+      /*
+      // TODO: leaving this here for now. This was meant to be added as a title= attribute on the marker
+      //       but the previously used hack does not work anymore
+      // 
+      //       maybe instead we could pass an attributes array to addMarker() and use it on the ace side. 
+
       final String title = BrowseCap.isMacintosh()
             ? constants_.openLinkMacCommand()
             : constants_.openLinkNotMacCommand();
-      MarkerRenderer renderer =
-            MarkerRenderer.create(editor.getWidget().getEditor(), styles, title);
-
-      int markerId = editor.getSession().addMarker(anchoredRange, styles, renderer, true);
+      */
+      int markerId = editor.getSession().addMarker(anchoredRange, styles, "text", true);
+      
       registerActiveMarker(row, id, markerId, anchoredRange);
    }
 
@@ -773,34 +777,6 @@ public class AceEditorBackgroundLinkHighlighter
    }
 
    // Private Members ----
-
-   private static class MarkerRenderer extends JavaScriptObject
-   {
-      protected MarkerRenderer() {}
-
-      public static final native MarkerRenderer create(final AceEditorNative editor,
-                                                       final String clazz,
-                                                       final String title)
-      /*-{
-         var markerBack = editor.renderer.$markerBack;
-         return $entry(function(html, range, left, top, config) {
-            // HACK: we take advantage of an implementation detail of
-            // Ace's 'drawTextMarker' implementation. Ace constructs
-            // HTML for the generated markers with code of the form:
-            //
-            //    html = "<div style='..." + extraStyle + "'>"
-            //
-            // We take advantage of this, and inject our 'extraStyle'
-            // to close the style attribute we were intended to be
-            // locked in, and instead inject a 'title' attribute instead.
-            var extra = "' title='" + title;
-            if (range.isMultiLine())
-               return markerBack.drawTextMarker(html, range, clazz, config, extra);
-            else
-               return markerBack.drawSingleLineMarker(html, range, clazz, config, 0, extra);
-         });
-      }-*/;
-   }
 
    private class MarkerRegistration
    {
