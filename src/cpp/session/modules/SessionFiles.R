@@ -202,6 +202,8 @@ for (binding in bindings)
 
    if (grepl("^https://github.com/[-a-zA-Z0-9]+/[-a-zA-Z0-9]+/issues", BugReports)) {
       .rs.scalar(paste0(BugReports, "/", sub("#", "", id)))
+   } else if (grepl("^https?://", BugReports)) {
+      .rs.scalar(BugReports)
    } else {
       .rs.scalar("")
    }
