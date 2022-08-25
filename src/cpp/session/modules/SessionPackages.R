@@ -376,7 +376,7 @@ if (identical(as.character(Sys.info()["sysname"]), "Darwin") &&
          url <- ""
       } else if (!is.null(desc$URL)) {
          source <- "Custom"
-         url <- strsplit(desc$URL, "\\s*,\\s*")[[1]][[1]]
+         url <- sub("[ ,].*", "", trimws(desc$URL))
       } else if ("biocViews" %in% names(desc)) {
          source <- "Bioconductor"
          url <- sprintf("https://www.bioconductor.org/packages/release/bioc/html/%s.html", desc$Package)
