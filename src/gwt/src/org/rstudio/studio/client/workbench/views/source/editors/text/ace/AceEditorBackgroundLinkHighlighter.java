@@ -170,7 +170,7 @@ public class AceEditorBackgroundLinkHighlighter
                highlighters_.add(markdownLinkHighlighter());
 
             nextHighlightStart_ = 0;
-            timer_.schedule(700);
+            timer_.schedule(100);
          }
       });
    }
