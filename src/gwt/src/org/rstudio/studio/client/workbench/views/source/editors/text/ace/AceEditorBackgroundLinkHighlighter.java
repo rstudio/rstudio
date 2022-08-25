@@ -456,7 +456,7 @@ public class AceEditorBackgroundLinkHighlighter
             : constants_.openLinkNotMacCommand();
       MarkerRenderer renderer =
              MarkerRenderer.create(editor.getWidget().getEditor(), styles, title);
-      int markerId = editor.getSession().addMarker(anchoredRange, styles, renderer, true);
+      int markerId = editor.getSession().addMarker(anchoredRange, styles, renderer, false);
       registerActiveMarker(row, id, markerId, anchoredRange);
    }
 
@@ -809,15 +809,15 @@ public class AceEditorBackgroundLinkHighlighter
                                                       final String clazz,
                                                       final String title)
       /*-{
-         var markerFront = editor.renderer.$markerFront;
+         var markerBack = editor.renderer.$markerBack;
          return $entry(function(html, range, left, top, config) {
-            markerFront.drawSingleLineMarker(html, range, clazz, config, 0);
+            markerBack.drawSingleLineMarker(html, range, clazz, config, 0);
             
-            // HACK: after the marker is drawn, retrieve it based on markerFront.i
+            // HACK: after the marker is drawn, retrieve it based on markerBack.i
             //       and squeeze in a title attribute
             var x;
-            var i = markerFront.i;
-            var markers = markerFront.element.childNodes;
+            var i = markerBack.i;
+            var markers = markerBack.element.childNodes;
             if (i == -1) {
                x = markers[markers.length - 1];
             } else {
