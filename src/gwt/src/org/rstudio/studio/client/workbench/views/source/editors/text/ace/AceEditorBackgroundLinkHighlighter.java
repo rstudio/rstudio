@@ -53,6 +53,7 @@ import org.rstudio.studio.client.workbench.views.source.editors.text.events.Edit
 import org.rstudio.studio.client.workbench.views.source.editors.text.events.CommandClickEvent;
 
 import com.google.gwt.core.client.GWT;
+import com.google.gwt.core.client.JavaScriptObject;
 import com.google.gwt.core.client.Scheduler;
 import com.google.gwt.core.client.Scheduler.ScheduledCommand;
 import com.google.gwt.dom.client.Element;
@@ -450,18 +451,12 @@ public class AceEditorBackgroundLinkHighlighter
       final String styles = RES.styles().highlight() + " ace_marker " + id;
       AnchoredRange anchoredRange = editor.getSession().createAnchoredRange(start, end, true);
 
-      /*
-      // TODO: leaving this here for now. This was meant to be added as a title= attribute on the marker
-      //       but the previously used hack does not work anymore
-      // 
-      //       maybe instead we could pass an attributes array to addMarker() and use it on the ace side. 
-
       final String title = BrowseCap.isMacintosh()
             ? constants_.openLinkMacCommand()
             : constants_.openLinkNotMacCommand();
-      */
-      int markerId = editor.getSession().addMarker(anchoredRange, styles, "text", true);
-      
+      MarkerRenderer renderer =
+             MarkerRenderer.create(editor.getWidget().getEditor(), styles, title);
+      int markerId = editor.getSession().addMarker(anchoredRange, styles, renderer, true);
       registerActiveMarker(row, id, markerId, anchoredRange);
    }
 
@@ -806,6 +801,33 @@ public class AceEditorBackgroundLinkHighlighter
 
    // Private Members ----
 
+   private static class MarkerRenderer extends JavaScriptObject
+   {
+      protected MarkerRenderer() {}
+
+      public static final native MarkerRenderer create(final AceEditorNative editor,
+                                                      final String clazz,
+                                                      final String title)
+      /*-{
+         var markerFront = editor.renderer.$markerFront;
+         return $entry(function(html, range, left, top, config) {
+            markerFront.drawSingleLineMarker(html, range, clazz, config, 0);
+            
+            // HACK: after the marker is drawn, retrieve it based on markerFront.i
+            //       and squeeze in a title attribute
+            var x;
+            var i = markerFront.i;
+            var markers = markerFront.element.childNodes;
+            if (i == -1) {
+               x = markers[markers.length - 1];
+            } else {
+               x = markers[i - 1];
+            }
+
+            x.setAttribute("title", title);
+         });
+      }-*/;
+   }
    private class MarkerRegistration
    {
       public MarkerRegistration(String id, int markerId, AnchoredRange range)
