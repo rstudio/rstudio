@@ -208,9 +208,7 @@ export class Application implements AppState {
       }
       else {
         // for non-Rproj files, we want to set the initial working directory, before opening the file
-        if (app.isReady()) {
-          this.appLaunch?.launchRStudio({workingDirectory: path.dirname(filepath)});
-        } else {
+        if (!app.isReady()) {
           setenv(kRStudioInitialWorkingDir, path.dirname(filepath));
         }
       }
