@@ -238,7 +238,7 @@ public class NewQuartoDocumentDialog extends ModalDialog<NewQuartoDocumentDialog
                                     "https://quarto.org");
       quartoPresentationsHelpLink_ = addHelpLink(
          constants_.learnMorePresentationsLinkCaption(),
-         "https:/quarto.org/docs/presentations/");
+         "https://quarto.org/docs/presentations/");
       quartoInteractiveHelpLink_ = addHelpLink(
          constants_.learnMoreInteractiveDocsLinkCaption(),
          "https://quarto.org/docs/interactive/");
