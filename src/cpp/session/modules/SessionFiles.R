@@ -182,7 +182,16 @@ for (binding in bindings)
       return(.rs.scalar(""))
    }
    
-   BugReports <- as.character(read.dcf(file.path(project, "DESCRIPTION"), fields = "BugReports"))
+   DESCRIPTION <- file.path(project, "DESCRIPTION")
+   if (!file.exists(DESCRIPTION)) {
+      return(.rs.scalar(""))
+   }
+
+   BugReports <- tryCatch(
+      read.dcf(DESCRIPTION, fields = "BugReports"), 
+      error = function(e) NA, 
+      warning = function(w) NA
+   )
    if (is.na(BugReports)) {
       return(.rs.scalar(""))
    }
