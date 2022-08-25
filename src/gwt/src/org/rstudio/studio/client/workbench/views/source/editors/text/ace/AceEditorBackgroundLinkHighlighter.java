@@ -24,7 +24,6 @@ import org.rstudio.core.client.MapUtil;
 import org.rstudio.core.client.MapUtil.ForEachCommand;
 import org.rstudio.core.client.StringUtil;
 import org.rstudio.core.client.ListUtil.FilterPredicate;
-import org.rstudio.core.client.MouseTracker;
 import org.rstudio.core.client.CommandWithArg;
 import org.rstudio.core.client.command.KeyboardShortcut;
 import org.rstudio.core.client.container.SafeMap;
@@ -55,11 +54,8 @@ import com.google.gwt.core.client.GWT;
 import com.google.gwt.core.client.JavaScriptObject;
 import com.google.gwt.core.client.Scheduler;
 import com.google.gwt.core.client.Scheduler.ScheduledCommand;
-import com.google.gwt.dom.client.NativeEvent;
 import com.google.gwt.event.dom.client.MouseMoveEvent;
 import com.google.gwt.event.dom.client.MouseMoveHandler;
-import com.google.gwt.event.dom.client.MouseUpEvent;
-import com.google.gwt.event.dom.client.MouseUpHandler;
 import com.google.gwt.event.logical.shared.AttachEvent;
 import com.google.gwt.event.shared.HandlerRegistration;
 import com.google.gwt.resources.client.ClientBundle;
@@ -73,13 +69,11 @@ import com.google.inject.Provider;
 
 public class AceEditorBackgroundLinkHighlighter
       implements
-            AceClickEvent.Handler,
             AttachEvent.Handler,
             CommandClickEvent.Handler,
             DocumentChangedEvent.Handler,
             EditorModeChangedEvent.Handler,
-            MouseMoveHandler,
-            MouseUpHandler
+            MouseMoveHandler
 {
    interface Highlighter
    {
@@ -91,14 +85,12 @@ public class AceEditorBackgroundLinkHighlighter
                            FileTypeRegistry fileTypeRegistry,
                            EventBus events,
                            FilesServerOperations server,
-                           MouseTracker mouseTracker,
                            Provider<UserPrefs> pUserPrefs)
    {
       globalDisplay_ = globalDisplay;
       fileTypeRegistry_ = fileTypeRegistry;
       events_ = events;
       server_ = server;
-      mouseTracker_ = mouseTracker;
       pUserPrefs_ = pUserPrefs;
    }
 
@@ -132,12 +124,11 @@ public class AceEditorBackgroundLinkHighlighter
       highlighters_ = new ArrayList<>();
 
       handlers_ = new ArrayList<>();
-      handlers_.add(editor_.addAceClickHandler(this));
       handlers_.add(editor_.addAttachHandler(this));
       handlers_.add(editor_.addDocumentChangedHandler(this));
       handlers_.add(editor_.addEditorModeChangedHandler(this));
       handlers_.add(editor_.addMouseMoveHandler(this));
-      handlers_.add(editor_.addMouseUpHandler(this));
+      handlers_.add(editor_.addCommandClickHandler(this));
 
       refreshHighlighters(editor_.getModeId());
    }
@@ -213,33 +204,6 @@ public class AceEditorBackgroundLinkHighlighter
       return BrowseCap.isMacintosh()
             ? modifier == KeyboardShortcut.META
             : modifier == KeyboardShortcut.SHIFT;
-   }
-
-   private boolean isRequiredClickModifier(NativeEvent event)
-   {
-      return isRequiredClickModifier(KeyboardShortcut.getModifierValue(event));
-   }
-
-   private MarkerRegistration getTargetedMarker(NativeEvent event)
-   {
-      int pageX = event.getClientX();
-      int pageY = event.getClientY();
-      return getTargetedMarker(pageX, pageY);
-   }
-
-   private MarkerRegistration getTargetedMarker(int pageX, int pageY)
-   {
-      Position position = editor_.screenCoordinatesToDocumentPosition(pageX, pageY);
-      int row = position.getRow();
-      if (!activeMarkers_.containsKey(row))
-         return null;
-
-      List<MarkerRegistration> markers = activeMarkers_.get(row);
-      for (MarkerRegistration marker : markers)
-         if (marker.getRange().contains(position))
-            return marker;
-
-      return null;
    }
 
    private void beginDetectClickTarget(int modifier)
@@ -679,60 +643,6 @@ public class AceEditorBackgroundLinkHighlighter
    }
 
    @Override
-   public void onAceClick(AceClickEvent clickEvent)
-   {
-      NativeEvent event = clickEvent.getNativeEvent();
-      if (!isRequiredClickModifier(event))
-         return;
-
-      MarkerRegistration marker = getTargetedMarker(event);
-      if (marker == null)
-         return;
-
-      clickEvent.stopPropagation();
-      clickEvent.preventDefault();
-
-      // on OS X, we immediately open the popup as otherwise the link
-      // will be opened in the background
-      if (BrowseCap.isMacintosh() && !BrowseCap.isMacintoshDesktop())
-      {
-         endDetectClickTarget();
-         String url = editor_.getTextForRange(marker.getRange());
-         navigateToUrl(url);
-      }
-   }
-
-   @Override
-   public void onMouseUp(MouseUpEvent mouseUpEvent)
-   {
-      // clicks handled in 'onAceClick' for OS X web mode
-      if (BrowseCap.isMacintosh() && !BrowseCap.isMacintoshDesktop())
-         return;
-
-      NativeEvent event = mouseUpEvent.getNativeEvent();
-      if (!isRequiredClickModifier(event))
-         return;
-
-      MarkerRegistration marker = getTargetedMarker(event);
-      if (marker == null)
-         return;
-
-      boolean hasMouseMoved =
-            Math.abs(event.getClientX() - mouseTracker_.getLastMouseX()) >= 2 ||
-            Math.abs(event.getClientY() - mouseTracker_.getLastMouseY()) >= 2;
-
-      if (hasMouseMoved)
-         return;
-
-      event.stopPropagation();
-      event.preventDefault();
-
-      endDetectClickTarget();
-      String url = editor_.getTextForRange(marker.getRange());
-      navigateToUrl(url);
-   }
-
-   @Override
    public void onMouseMove(MouseMoveEvent event)
    {
       int modifier = KeyboardShortcut.getModifierValue(event.getNativeEvent());
@@ -831,7 +741,6 @@ public class AceEditorBackgroundLinkHighlighter
    private FileTypeRegistry fileTypeRegistry_;
    private EventBus events_;
    private FilesServerOperations server_;
-   private MouseTracker mouseTracker_;
    private Provider<UserPrefs> pUserPrefs_;
    private static final ViewsSourceConstants constants_ = GWT.create(ViewsSourceConstants.class);
 }
