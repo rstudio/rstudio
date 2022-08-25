@@ -7,10 +7,7 @@
    pointer-events: all;
 }
 
-.hover {
-   position: absolute;
-   margin-top: -3px;
-   border-bottom: 1px solid BORDER_COLOR;
+.modified .highlight:hover {
    pointer-events: auto;
    cursor: pointer;
 }

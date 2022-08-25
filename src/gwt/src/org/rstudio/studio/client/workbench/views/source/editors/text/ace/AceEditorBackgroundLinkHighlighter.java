@@ -28,7 +28,6 @@ import org.rstudio.core.client.MouseTracker;
 import org.rstudio.core.client.CommandWithArg;
 import org.rstudio.core.client.command.KeyboardShortcut;
 import org.rstudio.core.client.container.SafeMap;
-import org.rstudio.core.client.dom.DomUtils;
 import org.rstudio.core.client.files.FileSystemItem;
 import org.rstudio.core.client.regex.Match;
 import org.rstudio.core.client.regex.Pattern;
@@ -56,7 +55,6 @@ import com.google.gwt.core.client.GWT;
 import com.google.gwt.core.client.JavaScriptObject;
 import com.google.gwt.core.client.Scheduler;
 import com.google.gwt.core.client.Scheduler.ScheduledCommand;
-import com.google.gwt.dom.client.Element;
 import com.google.gwt.dom.client.NativeEvent;
 import com.google.gwt.event.dom.client.MouseMoveEvent;
 import com.google.gwt.event.dom.client.MouseMoveHandler;
@@ -183,7 +181,6 @@ public class AceEditorBackgroundLinkHighlighter
    }
 
    private void registerActiveMarker(int row,
-                                     String id,
                                      int markerId,
                                      final AnchoredRange range)
    {
@@ -207,7 +204,7 @@ public class AceEditorBackgroundLinkHighlighter
       });
 
       // add our new marker
-      filtered.add(new MarkerRegistration(id, markerId, range));
+      filtered.add(new MarkerRegistration(markerId, range));
       activeMarkers_.put(row, filtered);
    }
 
@@ -245,50 +242,15 @@ public class AceEditorBackgroundLinkHighlighter
       return null;
    }
 
-   private void beginDetectClickTarget(int pageX, int pageY, int modifier)
+   private void beginDetectClickTarget(int modifier)
    {
-      if (!isRequiredClickModifier(modifier))
-         return;
-
-      MarkerRegistration activeMarker = getTargetedMarker(pageX, pageY);
-      if (activeMarker == null)
-         return;
-
-      Element el = DomUtils.elementFromPoint(pageX, pageY);
-      if (el == null)
-         return;
-
-      // the element might itself be the marker we want to update, or
-      // it may be the editor instance. handle each case
-      String id = activeMarker.getId();
-      Element markerEl = el.hasClassName(id)
-            ? el
-            : DomUtils.getFirstElementWithClassName(el, id);
-      if (markerEl == null)
-         return;
-
-      if (activeHighlightMarkerEl_ != null && activeHighlightMarkerEl_ != markerEl)
-      {
-         activeHighlightMarkerEl_.addClassName(RES.styles().highlight());
-         activeHighlightMarkerEl_.removeClassName(RES.styles().hover());
-      }
-
-      markerEl.removeClassName(RES.styles().highlight());
-      markerEl.addClassName(RES.styles().hover());
-      activeHighlightMarkerEl_ = markerEl;
+      if (isRequiredClickModifier(modifier))
+         editor_.getWidget().getElement().addClassName(RES.styles().modified()); 
    }
 
    private void endDetectClickTarget()
    {
-      if (activeHighlightMarkerEl_ == null)
-         return;
-
-      // restore highlight styles
-      activeHighlightMarkerEl_.addClassName(RES.styles().highlight());
-      activeHighlightMarkerEl_.removeClassName(RES.styles().hover());
-
-      // unset active el
-      activeHighlightMarkerEl_ = null;
+      editor_.getWidget().getElement().removeClassName(RES.styles().modified()); 
    }
 
    private void clearAllMarkers()
@@ -447,8 +409,7 @@ public class AceEditorBackgroundLinkHighlighter
       }
 
       // create an anchored range and add a marker for it
-      final String id = "ace_marker-" + StringUtil.makeRandomId(16);
-      final String styles = RES.styles().highlight() + " ace_marker " + id;
+      final String styles = RES.styles().highlight() + " ace_marker ";
       AnchoredRange anchoredRange = editor.getSession().createAnchoredRange(start, end, true);
 
       final String title = BrowseCap.isMacintosh()
@@ -457,7 +418,7 @@ public class AceEditorBackgroundLinkHighlighter
       MarkerRenderer renderer =
              MarkerRenderer.create(editor.getWidget().getEditor(), styles, title);
       int markerId = editor.getSession().addMarker(anchoredRange, styles, renderer, false);
-      registerActiveMarker(row, id, markerId, anchoredRange);
+      registerActiveMarker(row, markerId, anchoredRange);
    }
 
    private Highlighter webLinkHighlighter()
@@ -630,7 +591,7 @@ public class AceEditorBackgroundLinkHighlighter
                if (type == Event.ONKEYDOWN)
                {
                   int modifier = KeyboardShortcut.getModifierValue(preview.getNativeEvent());
-                  beginDetectClickTarget(mouseTracker_.getLastMouseX(), mouseTracker_.getLastMouseY(), modifier);
+                  beginDetectClickTarget(modifier);
                }
                else if (type == Event.ONKEYUP)
                {
@@ -774,10 +735,8 @@ public class AceEditorBackgroundLinkHighlighter
    @Override
    public void onMouseMove(MouseMoveEvent event)
    {
-      beginDetectClickTarget(
-            event.getClientX(),
-            event.getClientY(),
-            KeyboardShortcut.getModifierValue(event.getNativeEvent()));
+      int modifier = KeyboardShortcut.getModifierValue(event.getNativeEvent());
+      beginDetectClickTarget(modifier);
    }
 
    // Resources ----
@@ -791,7 +750,7 @@ public class AceEditorBackgroundLinkHighlighter
    interface Styles extends CssResource
    {
       String highlight();
-      String hover();
+      String modified();
    }
 
    public static Resources RES = GWT.create(Resources.class);
@@ -830,9 +789,8 @@ public class AceEditorBackgroundLinkHighlighter
    }
    private class MarkerRegistration
    {
-      public MarkerRegistration(String id, int markerId, AnchoredRange range)
+      public MarkerRegistration(int markerId, AnchoredRange range)
       {
-         id_ = id;
          markerId_ = markerId;
          range_ = range;
       }
@@ -841,11 +799,6 @@ public class AceEditorBackgroundLinkHighlighter
       {
          editor_.getSession().removeMarker(getMarkerId());
          range_.detach();
-      }
-
-      public String getId()
-      {
-         return id_;
       }
 
       public int getMarkerId()
@@ -858,7 +811,6 @@ public class AceEditorBackgroundLinkHighlighter
          return range_;
       }
 
-      private final String id_;
       private final int markerId_;
       private final AnchoredRange range_;
    }
@@ -873,8 +825,7 @@ public class AceEditorBackgroundLinkHighlighter
    private static final int N_HIGHLIGHT_ROWS = 200;
 
    private HandlerRegistration previewHandler_;
-   private Element activeHighlightMarkerEl_;
-
+   
    // Injected ----
    private GlobalDisplay globalDisplay_;
    private FileTypeRegistry fileTypeRegistry_;
