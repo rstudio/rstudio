@@ -170,7 +170,7 @@ public class AceEditorBackgroundLinkHighlighter
                highlighters_.add(markdownLinkHighlighter());
 
             nextHighlightStart_ = 0;
-            timer_.schedule(100);
+            timer_.schedule(700);
          }
       });
    }
@@ -667,7 +667,7 @@ public class AceEditorBackgroundLinkHighlighter
       // prepare highlighter
       int row = event.getEvent().getRange().getStart().getRow();
       nextHighlightStart_ = Math.min(nextHighlightStart_, row);
-      timer_.schedule(100);
+      timer_.schedule(700);
 
       // update marker positions (deferred so that anchors update)
       Scheduler.get().scheduleDeferred(new ScheduledCommand()
