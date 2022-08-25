@@ -196,6 +196,13 @@ for (binding in bindings)
       return(.rs.scalar(""))
    }
 
-   url <- paste0(BugReports, "/", sub("#", "", id))
-   .rs.scalar(url)
+   if (!is.character(BugReports) || length(BugReports) != 1L) {
+      return(.rs.scalar(""))
+   }
+
+   if (grepl("^https://github.com/[-a-zA-Z0-9]+/[-a-zA-Z0-9]+/issues", BugReports)) {
+      .rs.scalar(paste0(BugReports, "/", sub("#", "", id)))
+   } else {
+      .rs.scalar("")
+   }
 })
