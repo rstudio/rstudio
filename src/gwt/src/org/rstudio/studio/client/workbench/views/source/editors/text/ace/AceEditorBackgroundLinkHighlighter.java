@@ -164,7 +164,7 @@ public class AceEditorBackgroundLinkHighlighter
                      highlighters_.remove(webLinkHighlighter());
                   }
             }});
-            if (fileType.isR())
+            if (fileType != null && fileType.isR())
                highlighters_.add(issueHighlighter());
             if (fileType != null && (fileType.isMarkdown() || fileType.isRmd()))
                highlighters_.add(markdownLinkHighlighter());
