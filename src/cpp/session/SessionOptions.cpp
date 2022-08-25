@@ -566,7 +566,6 @@ FilePath macBinaryPath(const FilePath& resourcePath,
 
    FilePath electronPath =
          resourcePath.completePath("bin").completePath(stem);
-   
    if (electronPath.exists())
       return electronPath;
 
