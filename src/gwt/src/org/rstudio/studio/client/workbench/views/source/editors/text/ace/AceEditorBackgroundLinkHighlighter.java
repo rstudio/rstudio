@@ -211,6 +211,8 @@ public class AceEditorBackgroundLinkHighlighter
    {
       if (isRequiredClickModifier(modifier))
          editor_.getWidget().getElement().addClassName(RES.styles().modified()); 
+      else 
+         endDetectClickTarget();
    }
 
    private void endDetectClickTarget()
