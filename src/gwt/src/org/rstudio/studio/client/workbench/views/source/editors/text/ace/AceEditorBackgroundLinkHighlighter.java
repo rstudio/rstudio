@@ -75,9 +75,9 @@ public class AceEditorBackgroundLinkHighlighter
             EditorModeChangedEvent.Handler,
             MouseMoveHandler
 {
-   interface Highlighter
+   private interface Highlighter
    {
-      void highlight(AceEditor editor, String line, int row);
+      void highlight(String line, int row);
    }
 
    @Inject
@@ -167,8 +167,9 @@ public class AceEditorBackgroundLinkHighlighter
 
    private void highlightRow(int row)
    {
+      String line = editor_.getLine(row);
       for (Highlighter highlighter : highlighters_)
-         highlighter.highlight(editor_, editor_.getLine(row), row);
+         highlighter.highlight(line, row);
    }
 
    private void registerActiveMarker(int row,
@@ -350,11 +351,7 @@ public class AceEditorBackgroundLinkHighlighter
       });
    }
 
-
-   // Highlighter Implementations ----
-
-   private void highlight(final AceEditor editor,
-                          int row,
+   private void highlight(int row,
                           int startColumn,
                           int endColumn)
    {
@@ -374,30 +371,33 @@ public class AceEditorBackgroundLinkHighlighter
 
       // create an anchored range and add a marker for it
       final String styles = RES.styles().highlight() + " ace_marker ";
-      AnchoredRange anchoredRange = editor.getSession().createAnchoredRange(start, end, true);
+      AnchoredRange anchoredRange = editor_.getSession().createAnchoredRange(start, end, true);
 
       final String title = BrowseCap.isMacintosh()
             ? constants_.openLinkMacCommand()
             : constants_.openLinkNotMacCommand();
       MarkerRenderer renderer =
-             MarkerRenderer.create(editor.getWidget().getEditor(), styles, title);
-      int markerId = editor.getSession().addMarker(anchoredRange, styles, renderer, false);
+             MarkerRenderer.create(editor_.getWidget().getEditor(), styles, title);
+      int markerId = editor_.getSession().addMarker(anchoredRange, styles, renderer, false);
+
       registerActiveMarker(row, markerId, anchoredRange);
    }
+
+   // Highlighter Implementations ----
 
    private Highlighter webLinkHighlighter()
    {
       return new Highlighter()
       {
          @Override
-         public void highlight(AceEditor editor, String line, int row)
+         public void highlight(String line, int row)
          {
-            onWebLinkHighlight(editor, line, row);
+            onWebLinkHighlight(line, row);
          }
       };
    }
 
-   private void onWebLinkHighlight(AceEditor editor, String line, int row)
+   private void onWebLinkHighlight(String line, int row)
    {
       // use a regex that captures all non-space characters within
       // a web link, and then fix up the captured link by removing
@@ -433,7 +433,7 @@ public class AceEditorBackgroundLinkHighlighter
          url = trimmed;
 
          // perform highlighting
-         highlight(editor, row, startIdx, endIdx);
+         highlight(row, startIdx, endIdx);
       }
    }
 
@@ -460,14 +460,14 @@ public class AceEditorBackgroundLinkHighlighter
    {
       return new Highlighter() {
          @Override
-         public void highlight(AceEditor editor, String line, int row)
+         public void highlight(String line, int row)
          {
-            onIssueHighlight(editor, line, row);
+            onIssueHighlight(line, row);
          }
       };
    }
 
-   private void onIssueHighlight(AceEditor editor, String line, int row)
+   private void onIssueHighlight(String line, int row)
    {
       Pattern reIssueLink = createIssueLinkPattern();
       for (Match match = reIssueLink.match(line, 0);
@@ -477,7 +477,7 @@ public class AceEditorBackgroundLinkHighlighter
          int startIdx = match.getIndex() + 1;
          int endIdx   = match.getIndex() + match.getValue().length() - 1;
 
-         highlight(editor, row, startIdx, endIdx);
+         highlight(row, startIdx, endIdx);
       }
    }
 
@@ -491,15 +491,14 @@ public class AceEditorBackgroundLinkHighlighter
       return new Highlighter()
       {
          @Override
-         public void highlight(AceEditor editor, String line, int row)
+         public void highlight(String line, int row)
          {
-            onMarkdownLinkHighlight(editor, line, row);
+            onMarkdownLinkHighlight(line, row);
          }
       };
    }
 
-   private void onMarkdownLinkHighlight(AceEditor editor,
-                                        String line,
+   private void onMarkdownLinkHighlight(String line,
                                         int row)
    {
       Pattern reMarkdownLink = Pattern.create("(\\[[^\\]]+\\])(\\([^\\)]+\\))");
@@ -509,7 +508,7 @@ public class AceEditorBackgroundLinkHighlighter
       {
          int startIdx = match.getIndex() + match.getGroup(1).length() + 1;
          int endIdx   = match.getIndex() + match.getValue().length() - 1;
-         highlight(editor, row, startIdx, endIdx);
+         highlight(row, startIdx, endIdx);
       }
    }
 
@@ -519,14 +518,14 @@ public class AceEditorBackgroundLinkHighlighter
       return new Highlighter()
       {
          @Override
-         public void highlight(AceEditor editor, String line, int row)
+         public void highlight(String line, int row)
          {
-            onTestthatErrorHighlight(editor, line, row);
+            onTestthatErrorHighlight(line, row);
          }
       };
    }
 
-   private void onTestthatErrorHighlight(AceEditor editor, String line, int row)
+   private void onTestthatErrorHighlight(String line, int row)
    {
       Pattern reTestthatError = Pattern.create("\\(@[^#]+#\\d+\\)");
       for (Match match = reTestthatError.match(line, 0);
@@ -535,7 +534,7 @@ public class AceEditorBackgroundLinkHighlighter
       {
          int startIdx = match.getIndex() + 1;
          int endIdx   = match.getIndex() + match.getValue().length() - 1;
-         highlight(editor, row, startIdx, endIdx);
+         highlight(row, startIdx, endIdx);
       }
    }
 
