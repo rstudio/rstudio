@@ -14,5 +14,3 @@
 * Fixed regression in spotted-wakerobin that prevents R sessions from starting when the crashhandler reports an error (#11717)
 * Fixed problems with load balancing when database connections are timed out, and fail to restore (pro #3714)
 - Fixed visual mode outline missing nested R code chunks (#11410)
-- Fixed an issue where chunks containing multibyte characters was not executed correctly (#10632)
-
