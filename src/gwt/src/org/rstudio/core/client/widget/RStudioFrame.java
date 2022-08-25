@@ -15,6 +15,7 @@
 
 package org.rstudio.core.client.widget;
 
+import org.rstudio.core.client.BrowseCap;
 import org.rstudio.core.client.CommandWithArg;
 import org.rstudio.core.client.StringUtil;
 import org.rstudio.core.client.dom.DomUtils;
@@ -89,14 +90,22 @@ public class RStudioFrame extends Frame
    @Override
    public void setUrl(String url)
    {
-      Desktop.getFrame().allowNavigation(DomUtils.makeAbsoluteUrl(url), new CommandWithArg<Boolean>() {
-         @Override
-         public void execute(Boolean arg) {
-            if (arg)
-            {
-               RStudioFrame.super.setUrl(url);
+      if (BrowseCap.isElectron())
+      {
+         // Electron workaround to checking URL for iframe navigation intent
+         Desktop.getFrame().allowNavigation(DomUtils.makeAbsoluteUrl(url), new CommandWithArg<Boolean>() {
+            @Override
+            public void execute(Boolean arg) {
+               if (arg)
+               {
+                  RStudioFrame.super.setUrl(url);
+               }
             }
-         }
-      });
+         });
+      }
+      else
+      {
+         super.setUrl(url);
+      }
    }
 }
