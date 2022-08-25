@@ -265,6 +265,12 @@ boost::optional<core::json::Value> PrefLayer::readValue(const std::string& name)
 {
    RECURSIVE_LOCK_MUTEX(mutex_)
    {
+      if (!cache_)
+      {
+         WLOGF("Attempt to look up preference '{}' in layer '{}' before it was initialized", name, layerName());
+         return boost::none;
+      }
+      
       const auto it = cache_->find(name);
       if (it == cache_->end())
       {
@@ -282,6 +288,12 @@ Error PrefLayer::clearValue(const std::string& name)
 {
    RECURSIVE_LOCK_MUTEX(mutex_)
    {
+      if (!cache_)
+      {
+         WLOGF("Attempt to clear preference '{}' in layer '{}' before it was initialized", name, layerName());
+         return Success();
+      }
+      
       auto it = cache_->find(name);
       if (it == cache_->end())
       {
