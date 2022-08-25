@@ -483,7 +483,7 @@ public class AceEditorBackgroundLinkHighlighter
 
    private static Pattern createIssueLinkPattern()
    {
-      return Pattern.create("(?<=test_that.*)[(]((?:[-a-zA-Z0-9]+/[-a-zA-Z0-9]+)?#[0-9]+)[)]");
+      return Pattern.create("(?<=test_that.*)[(]((?:[-a-zA-Z0-9]+/[-a-zA-Z0-9]+)?#[0-9]+|https?://.*)[)]");
    }
 
    private Highlighter markdownLinkHighlighter()
