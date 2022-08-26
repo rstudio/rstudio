@@ -48,7 +48,7 @@ public class PackageLibraryUtils
       // 
       // Either way, we compute library paths using forward slashes, so it's
       // prudent for us to normalize slashes before comparison here.
-      if (BrowseCap.isWindows() && hasRLibsUser)
+      if (BrowseCap.isWindowsDesktop() && hasRLibsUser)
       {
          rLibsUser = rLibsUser.replace('\\', '/');
       }
