@@ -99,7 +99,6 @@ if [ "$EXT" == "deb" ]; then
 
     echo "Signing with dpkg-sig..."
     dpkg-sig -k $KEY_ID --verbose --sign builder $INSTALLER --gpg-options="--no-default-keyring --keyring=$TMP_PUB_KEYRING --secret-keyring=$TMP_SEC_KEYRING --no-tty --no-use-agent --passphrase-file $PASSFILE"
-    dpkg-sig --verify $INSTALLER
 elif [ "$EXT" == "rpm" ]; then
     # ------------------------------------------------------------------------
     # Redhat packages (.rpm)
