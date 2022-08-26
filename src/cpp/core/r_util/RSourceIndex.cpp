@@ -479,7 +479,7 @@ void nameRoxygenIndexer(const RTokenCursor& cursor,
       if (boost::algorithm::starts_with(clone.content(), "#' @name "))
       {
          std::string name = clone.contentAsUtf8();
-         boost::algorithm::replace_first(name, "#' @name", "");
+         boost::algorithm::replace_first(name, "#' ", "");
 
          RSourceItem item(
             RSourceItem::Roxygen,
