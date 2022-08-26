@@ -418,6 +418,40 @@ void testThatCallIndexer(const RTokenCursor& cursor,
    }
 }
 
+void stringAfterRoxygenIndexer(const RTokenCursor& cursor,
+                               const IndexStatus& status,
+                               bool isReadOnlyFile, 
+                               RSourceIndex* pIndex)
+{
+   if (!cursor.isType(RToken::STRING))
+      return;
+   
+   RTokenCursor clone = cursor.clone();
+   if (!clone.bwdOverWhitespace())
+      return;
+
+   if (!clone.moveToPreviousToken())
+      return;   
+
+   if (!clone.isType(RToken::COMMENT))
+      return;
+
+   if (!boost::algorithm::starts_with(clone.content(), "#'"))
+      return;
+
+   RSourceItem item(
+      RSourceItem::StringAfterRoxygen,
+      cursor.contentAsUtf8(),
+      std::vector<RS4MethodParam>(), 
+      status.count(RToken::LBRACE),
+      cursor.row() + 1, 
+      cursor.column() + 1, 
+      isReadOnlyFile
+   );
+
+   pIndex->addSourceItem(item);
+}
+
 void s4MethodIndexer(const RTokenCursor& cursor,
                      const IndexStatus& status,
                      bool isReadOnlyFile, 
@@ -604,6 +638,7 @@ std::vector<Indexer> makeIndexers()
    indexers.push_back(s4MethodIndexer);
    indexers.push_back(variableAssignmentIndexer);
    indexers.push_back(testThatCallIndexer);
+   indexers.push_back(stringAfterRoxygenIndexer);
 
    return indexers;
 }
@@ -622,7 +657,7 @@ RSourceIndex::RSourceIndex(const std::string& context, const std::string& code)
 
    // tokenize and create token cursor
    std::wstring wCode = string_utils::utf8ToWide(code, context);
-   RTokens rTokens(wCode, RTokens::StripWhitespace | RTokens::StripComments);
+   RTokens rTokens(wCode, RTokens::StripWhitespace);
    if (rTokens.empty())
       return;
    

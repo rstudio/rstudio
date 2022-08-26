@@ -74,7 +74,8 @@ public:
       Method = 2,
       Class = 3,
       Variable = 4, 
-      Test = 11
+      Test = 11, 
+      StringAfterRoxygen = 12
    };
 
 public:
