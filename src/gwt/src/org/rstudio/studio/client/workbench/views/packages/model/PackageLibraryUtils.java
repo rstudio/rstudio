@@ -30,7 +30,7 @@ public class PackageLibraryUtils
       User,
       System
    }
-
+   
    public static PackageLibraryType typeOfLibrary(Session session, 
                                                   String library)
    {
@@ -42,11 +42,16 @@ public class PackageLibraryUtils
       String rLibsUser = sessionInfo.getRLibsUser();
       boolean hasRLibsUser = !StringUtil.isNullOrEmpty(rLibsUser);
       
-      // On Windows with R 4.2.x, the default value of R_LIBS_USER can
-      // have mixed slashes, but the path comparisons below assume paths
-      // will be using forward slashes. Normalize slashes here.
+      // On Windows with R 4.2.x, the default value of R_LIBS_USER can have
+      // mixed slashes, but the path comparisons below assume paths will be
+      // using forward slashes.
+      // 
+      // Either way, we compute library paths using forward slashes, so it's
+      // prudent for us to normalize slashes before comparison here.
       if (BrowseCap.isWindows() && hasRLibsUser)
+      {
          rLibsUser = rLibsUser.replace('\\', '/');
+      }
       
       // if there's an active project and this package is in its library or
       // the package has no recorded library (i.e. it's not installed), it
@@ -82,5 +87,6 @@ public class PackageLibraryUtils
    {
       return nameOfLibraryType(typeOfLibrary(session, library));
    }
+   
    private static final PackagesConstants constants_ = com.google.gwt.core.client.GWT.create(PackagesConstants.class);
 }
