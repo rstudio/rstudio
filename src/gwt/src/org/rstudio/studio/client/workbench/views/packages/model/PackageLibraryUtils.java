@@ -14,6 +14,7 @@
  */
 package org.rstudio.studio.client.workbench.views.packages.model;
 
+import org.rstudio.core.client.BrowseCap;
 import org.rstudio.core.client.StringUtil;
 import org.rstudio.core.client.files.FileSystemItem;
 import org.rstudio.studio.client.workbench.model.Session;
@@ -40,6 +41,12 @@ public class PackageLibraryUtils
       
       String rLibsUser = sessionInfo.getRLibsUser();
       boolean hasRLibsUser = !StringUtil.isNullOrEmpty(rLibsUser);
+      
+      // On Windows with R 4.2.x, the default value of R_LIBS_USER can
+      // have mixed slashes, but the path comparisons below assume paths
+      // will be using forward slashes. Normalize slashes here.
+      if (BrowseCap.isWindows() && hasRLibsUser)
+         rLibsUser = rLibsUser.replace('\\', '/');
       
       // if there's an active project and this package is in its library or
       // the package has no recorded library (i.e. it's not installed), it
@@ -71,7 +78,7 @@ public class PackageLibraryUtils
       return constants_.libraryText();
    }
    
-   public static String getLibraryDescription (Session session, String library)
+   public static String getLibraryDescription(Session session, String library)
    {
       return nameOfLibraryType(typeOfLibrary(session, library));
    }
