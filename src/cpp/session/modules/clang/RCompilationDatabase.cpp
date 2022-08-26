@@ -436,32 +436,37 @@ std::string packagePCH(const std::string& linkingTo)
 
 bool packageIsCpp(const std::string& linkingTo, const FilePath& srcDir)
 {
+   // check first for LinkingTo with C++ package
    if (boost::algorithm::contains(linkingTo, "Rcpp") || boost::algorithm::contains(linkingTo, "cpp11"))
-   {
       return true;
-   }
-   else
-   {
-      if (!srcDir.exists())
-         return false;
+   
+   // otherwise, check the src directory for C++ files
+   if (!srcDir.exists())
+      return false;
       
-      std::vector<FilePath> allSrcFiles;
-      Error error = srcDir.getChildren(allSrcFiles);
-      if (error)
-      {
-         LOG_ERROR(error);
-         return false;
-      }
-
-      for (const FilePath& srcFile : allSrcFiles)
-      {
-         std::string ext = srcFile.getExtensionLowerCase();
-         if (ext == ".cpp" || ext == ".cc")
-            return true;
-      }
-
+   std::vector<FilePath> allSrcFiles;
+   Error error = srcDir.getChildren(allSrcFiles);
+   if (error)
+   {
+      LOG_ERROR(error);
       return false;
    }
+
+   for (const FilePath& srcFile : allSrcFiles)
+   {
+      // some projects that are other pure C might depend on some
+      // C++ extensions from rlang; ignore those if they exist
+      std::string name = srcFile.getFilename();
+      if (name == "rlang-rcc.cpp")
+         continue;
+      
+      // otherwise, check for a file containing a C++ extension
+      std::string ext = srcFile.getExtensionLowerCase();
+      if (ext == ".cpp" || ext == ".cc")
+         return true;
+   }
+
+   return false;
 }
 
 std::vector<std::string> includesForLinkingTo(const std::string& linkingTo)
