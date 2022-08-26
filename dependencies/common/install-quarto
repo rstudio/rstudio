@@ -27,13 +27,13 @@ fi
 
 # variables that control download + installation process
 # update to latest Quarto release
-QUARTO_VERSION=`curl https://quarto.org/docs/download/_download.json | jq ".version" | grep -oE '[0-9]+\.[0-9]+\.[0-9]+'`
-QUARTO_URL_BASE="https://github.com/quarto-dev/quarto-cli/releases/latest/download"
+#QUARTO_VERSION=`curl https://quarto.org/docs/download/_download.json | jq ".version" | grep -oE '[0-9]+\.[0-9]+\.[0-9]+'`
+#QUARTO_URL_BASE="https://github.com/quarto-dev/quarto-cli/releases/latest/download"
 
 # specify a version to pin for releases
-#QUARTO_VERSION="0.9.230"
+QUARTO_VERSION="1.0.38"
 QUARTO_SUBDIR="quarto"
-#QUARTO_URL_BASE="https://s3.amazonaws.com/rstudio-buildtools/quarto/${QUARTO_VERSION}"
+QUARTO_URL_BASE="https://s3.amazonaws.com/rstudio-buildtools/quarto/${QUARTO_VERSION}"
 
 # move to tools root
 sudo-if-necessary-for "${RSTUDIO_TOOLS_ROOT}" "$@"
@@ -79,7 +79,7 @@ case "${PLATFORM}" in
 
 esac
 
-# download and extract files 
+# download and extract files
 for FILE in "${FILES[@]}"; do
    echo "Downloading ${FILE} from ${QUARTO_URL_BASE}/${FILE}"
    download "${QUARTO_URL_BASE}/${FILE}" "${FILE}"

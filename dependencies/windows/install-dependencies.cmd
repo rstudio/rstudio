@@ -39,12 +39,12 @@ set PANDOC_VERSION=2.18
 set PANDOC_NAME=pandoc-%PANDOC_VERSION%
 set PANDOC_FILE=%PANDOC_NAME%-windows-x86_64.zip
 
-REM set QUARTO_VERSION=0.9.230
+set QUARTO_VERSION=1.0.38
 
 REM Get latest Quarto release version
-cd install-quarto
-for /F "delims=" %%L in ('powershell.exe -File get-quarto-version.ps1') do (set "QUARTO_VERSION=%%L")
-cd ..
+REM cd install-quarto
+REM for /F "delims=" %%L in ('powershell.exe -File get-quarto-version.ps1') do (set "QUARTO_VERSION=%%L")
+REM cd ..
 
 set QUARTO_FILE=quarto-%QUARTO_VERSION%-win.zip
 
@@ -174,8 +174,8 @@ if not exist pandoc\%PANDOC_VERSION% (
 
 
 
-REM wget %WGET_ARGS% https://s3.amazonaws.com/rstudio-buildtools/quarto/%QUARTO_VERSION%/%QUARTO_FILE%
-wget %WGET_ARGS% https://github.com/quarto-dev/quarto-cli/releases/latest/download/%QUARTO_FILE%
+wget %WGET_ARGS% https://s3.amazonaws.com/rstudio-buildtools/quarto/%QUARTO_VERSION%/%QUARTO_FILE%
+REM wget %WGET_ARGS% https://github.com/quarto-dev/quarto-cli/releases/latest/download/%QUARTO_FILE%
 echo Unzipping Quarto %QUARTO_FILE%
 rmdir /s /q quarto
 mkdir quarto
