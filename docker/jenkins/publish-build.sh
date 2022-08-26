@@ -176,7 +176,7 @@ else
   base64_contents=$(echo "$md_contents" | base64 --wrap=0)
 fi
 
-payload="{\"message\":\"Add $flower build $version in $build\",\"content\":\"$base64_contents\"}"
+payload="{\"message\":\"Add $flower build $version in $build\",\"content\":\"$base64_contents\",\"sha\":\"$sha256\"}"
 echo "Sending to Github: $payload"
 
 curl \
