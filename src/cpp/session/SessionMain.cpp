@@ -410,19 +410,21 @@ Error registerSignalHandlers()
    registerBlock.addFunctions()
          (bind(handleSignal, SigInt, handleINT));
 
-   // USR1 and USR2: perform suspend in server mode
+   // USR1, USR2, and TERM: perform suspend in server mode
    if (rsession::options().programMode() == kSessionProgramModeServer)
    {
       registerBlock.addFunctions()
          (bind(handleSignal, SigUsr1, suspend::handleUSR1))
-         (bind(handleSignal, SigUsr2, suspend::handleUSR2));
+         (bind(handleSignal, SigUsr2, suspend::handleUSR2))
+         (bind(handleSignal, SigTerm, suspend::handleUSR2));
    }
-   // USR1 and USR2: ignore in desktop mode
+   // USR1, USR2, TERM: ignore in desktop mode
    else
    {
       registerBlock.addFunctions()
          (bind(ignoreSignal, SigUsr1))
-         (bind(ignoreSignal, SigUsr2));
+         (bind(ignoreSignal, SigUsr2))
+         (bind(ignoreSignal, SigTerm));
    }
 
    return registerBlock.execute();
