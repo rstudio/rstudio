@@ -429,11 +429,6 @@ public class AceEditorBackgroundLinkHighlighter
          int startIdx = match.getIndex();
          int endIdx   = match.getIndex() + match.getValue().length();
 
-         // ensure that the discovered url is not within a string
-         Token token = editor_.getTokenAt(Position.create(row, startIdx));
-         if (token.hasType("string"))
-            continue;
-
          String url = match.getValue();
 
          // trim off enclosing brackets
