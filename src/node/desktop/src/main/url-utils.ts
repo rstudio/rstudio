@@ -33,8 +33,14 @@ export function getAuthority(url: string): string {
     return url;
   }
 
-  const targetUrl = new URL(url);
-  return `${targetUrl.protocol}//${targetUrl.host}`;
+  try {
+    // uses 127.0.0.1 for host if url is just a path
+    const targetUrl = new URL(url, 'http://127.0.0.1');
+    return `${targetUrl.protocol}//${targetUrl.host}`;
+  } catch (error: unknown) {
+    logger().logError(error);
+    return '';
+  }
 }
 
 export function isChromeGpuUrl(url: string): boolean {

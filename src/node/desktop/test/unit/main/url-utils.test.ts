@@ -86,4 +86,16 @@ describe('URL Utils', () => {
     assert.equal(getAuthority(url), 'http://localhost:123');
     assert.equal(getAuthority(`${url}?param_one=test`), 'http://localhost:123');
   });
+
+  it('gets authority for localhost paths', () => {
+    assert.equal(getAuthority('rmd_output/0'), 'http://127.0.0.1');
+  });
+  
+  it('gets authority for external URLs', () => {
+    assert.equal(getAuthority('http://www.rstudio.com/download'), 'http://www.rstudio.com');
+  });
+
+  it('handles invalid url', () => {
+    assert.equal(getAuthority('http://bad^url'), '');
+  });
 });
