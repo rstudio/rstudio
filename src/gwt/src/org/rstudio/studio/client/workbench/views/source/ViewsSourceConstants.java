@@ -2710,4 +2710,14 @@ public interface ViewsSourceConstants extends com.google.gwt.i18n.client.Message
     @DefaultMessage("The profiler")
     @Key("theProfilerText")
     String theProfilerText();
+
+    /**
+     * Translated "Could not resolve {0}. Please make sure this is an R package project with a BugReports field set.".
+     *
+     * @return translated "Could not resolve {0}. Please make sure this is an R package project with a BugReports field set."
+     */
+    @DefaultMessage("Could not resolve {0}. Please make sure this is an R package project with a BugReports field set.")
+    @Key("couldNotResolveIssue")
+    String couldNotResolveIssue(String issue);
+
 }

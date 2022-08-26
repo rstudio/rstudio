@@ -299,7 +299,7 @@ public class AceEditorBackgroundLinkHighlighter
                   globalDisplay_.openWindow(response); 
                else 
                   RStudioGinjector.INSTANCE.getGlobalDisplay().showErrorMessage(
-                     "Could not resolve " + finalUrl + ". Please make sure this is an R package project with a BugReports field set.");
+                     constants_.couldNotResolveIssue(finalUrl));
             }
          });
 
