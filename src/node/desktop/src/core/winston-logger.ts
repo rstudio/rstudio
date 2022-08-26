@@ -22,6 +22,8 @@ import { safeError } from './err';
 import { FilePath } from './file-path';
 import { Logger, showDiagnosticsOutput } from './logger';
 
+const { combine, printf, timestamp } = winston.format;
+
 /**
  * A Logger using winston package: https://www.npmjs.com/package/winston
  */
@@ -29,9 +31,14 @@ export class WinstonLogger implements Logger {
   logger: winston.Logger;
 
   constructor(logFile: FilePath, level: string) {
-
     level = this.readLogLevelOverride(level);
-    this.logger = winston.createLogger({ level: level });
+    this.logger = winston.createLogger({
+      level: level,
+      format: combine(
+        timestamp(),
+        printf((info) => `${info.timestamp} ${info.level}: ${info.message}`)
+      ),
+    });
 
     if (!logFile.isEmpty()) {
       const logName = `${logFile.getStem()}.%DATE%${logFile.getExtension()}`;
@@ -41,14 +48,12 @@ export class WinstonLogger implements Logger {
           dirname: logFile.getParent().getAbsolutePath(),
           datePattern: 'YYYY-MM-DD',
           frequency: '1d',
-        }),
+        })
       );
     }
-
   }
 
   readLogLevelOverride(defaultLevel: string): string {
-
     const envvars = ['RSTUDIO_DESKTOP_LOG_LEVEL', 'RS_LOG_LEVEL'];
     for (const envvar of envvars) {
       const envval = getenv(envvar);
@@ -58,7 +63,6 @@ export class WinstonLogger implements Logger {
     }
 
     return defaultLevel;
-
   }
 
   logLevel(): string {
@@ -70,7 +74,6 @@ export class WinstonLogger implements Logger {
   }
 
   log(level: string, message: string): void {
-
     // log to default log locations
     this.logger.log(level, message);
 
@@ -82,7 +85,6 @@ export class WinstonLogger implements Logger {
       const tmessage = message.replace(/\n/g, '|||') + '\n';
       process.stderr.write(`${ts} ${tlevel} ${tmessage}`);
     }
-
   }
 
   logError(err: unknown): void {
