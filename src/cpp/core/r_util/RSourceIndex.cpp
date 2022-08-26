@@ -440,7 +440,7 @@ void stringAfterRoxygenIndexer(const RTokenCursor& cursor,
       return;
 
    RSourceItem item(
-      RSourceItem::StringAfterRoxygen,
+      RSourceItem::Roxygen,
       cursor.contentAsUtf8(),
       std::vector<RS4MethodParam>(), 
       status.count(RToken::LBRACE),
@@ -450,6 +450,53 @@ void stringAfterRoxygenIndexer(const RTokenCursor& cursor,
    );
 
    pIndex->addSourceItem(item);
+}
+
+void nameRoxygenIndexer(const RTokenCursor& cursor,
+                        const IndexStatus& status,
+                        bool isReadOnlyFile, 
+                        RSourceIndex* pIndex)
+{
+   if (!cursor.isType(RToken::ID))
+      return;
+
+   if (!cursor.contentEquals(L"NULL"))
+      return;
+
+   RTokenCursor clone = cursor.clone();
+   
+   if (!clone.bwdOverWhitespace())
+      return;
+
+   while (clone.moveToPreviousToken()) 
+   {
+      if (!clone.isType(RToken::COMMENT))
+         return;
+
+      if (!boost::algorithm::starts_with(clone.content(), "#'"))
+         return;
+
+      if (boost::algorithm::starts_with(clone.content(), "#' @name "))
+      {
+         std::string name = clone.contentAsUtf8();
+         boost::algorithm::replace_first(name, "#' @name", "");
+
+         RSourceItem item(
+            RSourceItem::Roxygen,
+            name,
+            std::vector<RS4MethodParam>(), 
+            status.count(RToken::LBRACE),
+            clone.row() + 1, 
+            clone.column() + 1, 
+            isReadOnlyFile
+         );
+
+         pIndex->addSourceItem(item);
+
+         return;
+      }
+   }
+
 }
 
 void s4MethodIndexer(const RTokenCursor& cursor,
@@ -639,6 +686,7 @@ std::vector<Indexer> makeIndexers()
    indexers.push_back(variableAssignmentIndexer);
    indexers.push_back(testThatCallIndexer);
    indexers.push_back(stringAfterRoxygenIndexer);
+   indexers.push_back(nameRoxygenIndexer);
 
    return indexers;
 }

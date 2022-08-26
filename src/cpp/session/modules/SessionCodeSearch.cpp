@@ -1430,19 +1430,19 @@ class SourceItem
 public:
    enum Type
    {
-      None               = 0,
-      Function           = 1,
-      Method             = 2,
-      Class              = 3,
-      Enum               = 4,
-      EnumValue          = 5,
-      Namespace          = 6,
-      Section            = 7,
-      Figure             = 8,
-      Table              = 9,
-      Math               = 10,
-      Test               = 11, 
-      StringAfterRoxygen = 12
+      None       = 0,
+      Function   = 1,
+      Method     = 2,
+      Class      = 3,
+      Enum       = 4,
+      EnumValue  = 5,
+      Namespace  = 6,
+      Section    = 7,
+      Figure     = 8,
+      Table      = 9,
+      Math       = 10,
+      Test       = 11, 
+      Roxygen    = 12
    };
 
    SourceItem()
@@ -1514,8 +1514,8 @@ SourceItem fromRSourceItem(const r_util::RSourceItem& rSourceItem)
    case RSourceItem::Test:
       type = SourceItem::Test;
       break;
-   case RSourceItem::StringAfterRoxygen:
-      type = SourceItem::StringAfterRoxygen;
+   case RSourceItem::Roxygen:
+      type = SourceItem::Roxygen;
       break;
    case RSourceItem::None:
    default:

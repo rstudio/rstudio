@@ -40,7 +40,7 @@ public class SourceItem extends JavaScriptObject
    public static final int TABLE                =  9;
    public static final int MATH                 = 10;
    public static final int TEST                 = 11;
-   public static final int STRING_AFTER_ROXYGEN = 12;
+   public static final int ROXYGEN              = 12;
 
    public final native int getType() /*-{
       return this.type;
