@@ -306,14 +306,30 @@ public class AceEditorBackgroundLinkHighlighter
          return;
       }
 
-      // explicit github issues
-      Pattern reSpecificGithubIssue = Pattern.create("[-a-zA-Z0-9]+/[-a-zA-Z0-9]+#[0-9]+");
-      if (reSpecificGithubIssue.test(url))
+      // explicit issue:
+      // 
+      // - tidyverse/dplyr#123
+      // - github::tidyverse/dplyr#123
+      // 
+      // - gitlab::jimhester/covr#214
+      Pattern reSpecificIssue = createSpecificIssuePattern();
+      Match match = reSpecificIssue.match(url, 0);
+      if (match != null)
       {
-         String[] parts = url.split("#");
-         String issueUrl = "https://www.github.com/" + parts[0] + "/issues/" + parts[1];
-         globalDisplay_.openWindow(issueUrl);
-
+         String remote = match.getGroup(1);
+         String org = match.getGroup(2);
+         String repo = match.getGroup(3);
+         String issue = match.getGroup(4);
+         
+         if (remote == null || StringUtil.equals(remote, "github::"))
+         {
+            globalDisplay_.openWindow("https://www.github.com/" + org + "/" + repo + "/issues/" + issue);
+         } 
+         else if (StringUtil.equals(remote, "gitlab::"))
+         {
+            globalDisplay_.openWindow("https://www.gitlab.com/" + org + "/" + repo + "/issues/" + issue);
+         }
+         
          return;
       }
 
@@ -485,7 +501,12 @@ public class AceEditorBackgroundLinkHighlighter
 
    private static Pattern createIssueLinkPattern()
    {
-      return Pattern.create("(?<=test_that.*)[(]((?:[-a-zA-Z0-9]+/[-a-zA-Z0-9]+)?#[0-9]+|https?://.*)[)]");
+      return Pattern.create("(?<=test_that.*)[(]((github|gitlab)::)?(?:[-a-zA-Z0-9.]+/[-a-zA-Z0-9.]+)?#[0-9]+[)]");
+   }
+
+   private static Pattern createSpecificIssuePattern()
+   {
+      return Pattern.create("((?:github|gitlab)::)?([^/]+)/([^#]+)#([0-9]+)");
    }
 
    private Highlighter markdownLinkHighlighter()
