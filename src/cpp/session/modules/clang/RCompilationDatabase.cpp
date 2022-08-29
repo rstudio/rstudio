@@ -454,7 +454,7 @@ bool packageIsCpp(const std::string& linkingTo, const FilePath& srcDir)
 
    for (const FilePath& srcFile : allSrcFiles)
    {
-      // some projects that are other pure C might depend on some
+      // some projects that are otherwise pure C might depend on some
       // C++ extensions from rlang; ignore those if they exist
       std::string name = srcFile.getFilename();
       if (name == "rlang-rcc.cpp")
