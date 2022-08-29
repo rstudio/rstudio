@@ -522,30 +522,34 @@ void s4MethodIndexer(const RTokenCursor& cursor,
          return;
       }
 
-      // make sure there are at least 4 more tokens
-      const RTokens& rTokens = cursor.tokens();
-      std::size_t i = cursor.offset();
-      
-      if (i + 3 >= rTokens.size())
-         return;
-      
-      if ( (rTokens.at(i + 1).type() != RToken::LPAREN) ||
-           (rTokens.at(i + 2).type() != RToken::STRING) ||
-           (rTokens.at(i + 3).type() != RToken::COMMA))
+      RTokenCursor clone = cursor.clone();
+      if (!clone.moveToNextSignificantToken() || clone.type() != RToken::LPAREN)
          return;
 
+      if (!clone.moveToNextSignificantToken() || clone.type() != RToken::STRING)
+         return;
+      RToken nameToken = clone.currentToken();
+
+      if (!clone.moveToNextSignificantToken() || clone.type() != RToken::COMMA)
+         return;
+
+      if (!clone.moveToNextSignificantToken())
+         return;
+   
       // if this was a setMethod then try to lookahead for the signature
       std::vector<RS4MethodParam> signature;
       if (isSetMethod)
       {
-         parseSignature(rTokens.begin() + (i + 4),
+         const RTokens& rTokens = clone.tokens();
+      
+         parseSignature(rTokens.begin(),
                         rTokens.end(),
                         &signature);
       }
       
       addSourceItem(setType,
                     signature,
-                    rTokens.at(i + 2),
+                    nameToken,
                     status,
                     isReadOnlyFile,
                     pIndex);
