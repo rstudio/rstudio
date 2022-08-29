@@ -128,6 +128,22 @@ std::string readFile(const FilePath& filePath)
    return content;
 }
 
+Error writeFile(const FilePath& filePath, const std::string& content)
+{
+   std::shared_ptr<std::ostream> stream;
+   Error error = filePath.openForWrite(stream);
+   if (error)
+   {
+      return error;
+   }
+   *stream << content;
+
+   stream->flush();
+   stream.reset(); 
+
+   return Success();
+}
+
 #ifdef _WIN32
 // test a filename to see if it corresponds to a reserved device name on
 // Windows

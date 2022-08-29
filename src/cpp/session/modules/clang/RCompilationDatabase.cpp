@@ -559,11 +559,16 @@ std::vector<std::string> RCompilationDatabase::compileArgsForPackage(
       return {};
    }
 
+   static const boost::regex objectsRegex("^OBJECTS *=");
+
    // copy Makevars to tempdir if it exists
    FilePath makevarsPath = srcDir.completeChildPath("Makevars");
    if (makevarsPath.exists())
    {
-      Error error = makevarsPath.copy(tempDir.completeChildPath("Makevars"));
+      std::string Makevars = file_utils::readFile(makevarsPath);
+      Makevars = boost::regex_replace(Makevars, objectsRegex, "zzzOBJECTS =");
+      
+      error = file_utils::writeFile(tempDir.completeChildPath("Makevars"), Makevars);
       if (error)
       {
          LOG_ERROR(error);
@@ -574,7 +579,10 @@ std::vector<std::string> RCompilationDatabase::compileArgsForPackage(
    FilePath makevarsWinPath = srcDir.completeChildPath("Makevars.win");
    if (makevarsWinPath.exists())
    {
-      Error error = makevarsWinPath.copy(tempDir.completeChildPath("Makevars.win"));
+      std::string MakevarsWin = file_utils::readFile(makevarsWinPath);
+      MakevarsWin = boost::regex_replace(MakevarsWin, objectsRegex, "zzzOBJECTS =");
+      
+      error = file_utils::writeFile(tempDir.completeChildPath("Makevars.win"), MakevarsWin);
       if (error)
       {
          LOG_ERROR(error);
