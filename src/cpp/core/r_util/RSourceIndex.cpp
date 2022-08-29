@@ -433,10 +433,7 @@ void stringAfterRoxygenIndexer(const RTokenCursor& cursor,
    if (!clone.moveToPreviousToken())
       return;   
 
-   if (!clone.isType(RToken::COMMENT))
-      return;
-
-   if (!boost::algorithm::starts_with(clone.content(), "#'"))
+   if (!isRoxygenComment(clone))
       return;
 
    RSourceItem item(
@@ -457,10 +454,7 @@ void nameRoxygenIndexer(const RTokenCursor& cursor,
                         bool isReadOnlyFile, 
                         RSourceIndex* pIndex)
 {
-   if (!cursor.isType(RToken::ID))
-      return;
-
-   if (!cursor.contentEquals(L"NULL"))
+   if (!cursor.isType(RToken::ID) || !cursor.contentEquals(L"NULL"))
       return;
 
    RTokenCursor clone = cursor.clone();
@@ -470,17 +464,16 @@ void nameRoxygenIndexer(const RTokenCursor& cursor,
 
    while (clone.moveToPreviousToken()) 
    {
-      if (!clone.isType(RToken::COMMENT))
+      if (!isRoxygenComment(clone))
          return;
-
-      if (!boost::algorithm::starts_with(clone.content(), "#'"))
-         return;
-
-      if (boost::algorithm::starts_with(clone.content(), "#' @name "))
+      
+      static const boost::regex nameRoxygenRegex("^#+' +(@name +.*)$");
+   
+      std::string content = clone.contentAsUtf8();
+      if (boost::regex_match(content, nameRoxygenRegex))
       {
-         std::string name = clone.contentAsUtf8();
-         boost::algorithm::replace_first(name, "#' ", "");
-
+         std::string name = boost::regex_replace(content, nameRoxygenRegex, "\\1");
+         
          RSourceItem item(
             RSourceItem::Roxygen,
             name,
@@ -496,7 +489,6 @@ void nameRoxygenIndexer(const RTokenCursor& cursor,
          return;
       }
    }
-
 }
 
 void s4MethodIndexer(const RTokenCursor& cursor,
