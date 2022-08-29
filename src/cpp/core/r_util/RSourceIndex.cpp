@@ -75,10 +75,18 @@ bool advancePastNextToken(
          RTokens::const_iterator end,
          const boost::function<bool(const RToken&)>& tokenCondition)
 {
-   // alias and advance past current token
+   // alias
    RTokens::const_iterator& begin = *pBegin;
+   
+   // advance past current token 
    begin++;
 
+   // skipping comment tokens
+   while (begin < end && begin->isType(RToken::COMMENT)) 
+   {
+      begin++;   
+   }
+   
    // check for end
    if (begin == end)
    {
@@ -94,7 +102,12 @@ bool advancePastNextToken(
    // advance and return true
    else
    {
-      begin++;
+      // skipping comment tokens
+      while (begin < end && begin->isType(RToken::COMMENT)) 
+      {
+         begin++;   
+      }
+
       return true;
    }
 }
