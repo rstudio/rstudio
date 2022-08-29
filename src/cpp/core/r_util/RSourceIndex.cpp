@@ -99,9 +99,11 @@ bool advancePastNextToken(
       return false;
    }
 
-   // advance and return true
    else
    {
+      // advance, skip further comments and return true
+      begin++;
+
       // skipping comment tokens
       while (begin < end && begin->isType(RToken::COMMENT)) 
       {
@@ -552,7 +554,7 @@ void s4MethodIndexer(const RTokenCursor& cursor,
       {
          const RTokens& rTokens = clone.tokens();
       
-         parseSignature(rTokens.begin(),
+         parseSignature(rTokens.begin() + clone.offset(),
                         rTokens.end(),
                         &signature);
       }
