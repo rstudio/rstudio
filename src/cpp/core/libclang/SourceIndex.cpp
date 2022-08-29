@@ -255,7 +255,25 @@ TranslationUnit SourceIndex::getTranslationUnit(const std::string& filename,
    // add verbose output if requested
    if (verbose_ >= 2)
      args.push_back("-v");
-
+   
+   // fix up '-std=' arguments; in particular, we only pass the C++
+   // '-std' flags when compiling C++ sources, and the C '-std' flags
+   // whe compiling C sources
+   if (FilePath(filename).hasExtensionLowerCase(".c"))
+   {
+      core::algorithm::expel_if(args, [](const std::string& arg)
+      {
+         return arg.find("-std") == 0 && arg.find("++") != 0;
+      });
+   }
+   else
+   {
+      core::algorithm::expel_if(args, [](const std::string& arg)
+      {
+         return arg.find("-std") == 0 && arg.find("++") == 0;
+      });
+   }
+   
    // report to user if requested
    if (verbose_ > 1)
    {
