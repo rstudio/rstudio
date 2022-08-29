@@ -132,7 +132,15 @@ std::string DatabaseErrorCategory::message(int ev) const
    }
 }
 
-#define DatabaseError(sociError) Error(sociError.get_error_category(), sociError.get_error_message(), ERROR_LOCATION);
+#define DatabaseError(sociError) getDatabaseError(sociError, ERROR_LOCATION);
+
+Error getDatabaseError(const soci::soci_error& sociError, const ErrorLocation& in_location)
+{
+   // The value() for the connection_error enum is 0 which looks like Success if used in Error
+   if (sociError.get_error_category() == soci::soci_error::connection_error)
+      return Error(boost::system::errc::not_connected, sociError.get_error_message(), in_location);
+   return Error(sociError.get_error_category(), sociError.get_error_message(), in_location);
+}
 
 // Database errors =================================================================================================
 
