@@ -1764,6 +1764,14 @@ public class RemoteServer implements Server
       sendRequest(RPC_SCOPE, "read_config_json", params, requestCallback);
    }
 
+   public void getIssueUrl(String id, 
+                           ServerRequestCallback<String> requestCallback)
+   {
+      JSONArray params = new JSONArray();
+      params.set(0, new JSONString(id));
+      sendRequest(RPC_SCOPE, GET_ISSUE_URL, params, requestCallback);
+   }
+
    public String getFileExportUrl(String name,
                                   FileSystemItem parentDirectory,
                                   ArrayList<String> filenames)
@@ -6731,6 +6739,7 @@ public class RemoteServer implements Server
    private static final String RENAME_FILE = "rename_file";
    private static final String TOUCH_FILE = "touch_file";
    private static final String COMPLETE_UPLOAD = "complete_upload";
+   private static final String GET_ISSUE_URL = "get_issue_url";
 
    private static final String GET_PLOT_TEMPDIR = "get_plot_tempdir";
    private static final String NEXT_PLOT = "next_plot";

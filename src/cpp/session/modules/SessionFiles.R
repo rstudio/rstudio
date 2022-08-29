@@ -174,3 +174,36 @@ for (binding in bindings)
 {
    .Call("rs_readLines", path.expand(filePath))
 })
+
+.rs.addJsonRpcHandler("get_issue_url", function(id)
+{
+   project <- .rs.getProjectDirectory()
+   if (is.null(project)) {
+      return(.rs.scalar(""))
+   }
+   
+   DESCRIPTION <- file.path(project, "DESCRIPTION")
+   if (!file.exists(DESCRIPTION)) {
+      return(.rs.scalar(""))
+   }
+
+   BugReports <- tryCatch(
+      read.dcf(DESCRIPTION, fields = "BugReports"), 
+      error = function(e) NA, 
+      warning = function(w) NA
+   )
+   if (is.na(BugReports)) {
+      return(.rs.scalar(""))
+   }
+
+   if (!is.character(BugReports) || length(BugReports) != 1L) {
+      return(.rs.scalar(""))
+   }
+
+   # make sure BugReports is a url and append the id to it
+   if (grepl("^(https?://|www.)", BugReports)) {
+      .rs.scalar(paste0(BugReports, "/", sub("#", "", id)))
+   } else {
+      .rs.scalar("")
+   }
+})
