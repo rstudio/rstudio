@@ -75,7 +75,7 @@ public class AceEditorBackgroundLinkHighlighter
             EditorModeChangedEvent.Handler,
             MouseMoveHandler
 {
-   private interface Highlighter
+   interface Highlighter
    {
       void highlight(String line, int row);
    }
