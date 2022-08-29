@@ -384,10 +384,7 @@ void testThatCallIndexer(const RTokenCursor& cursor,
                          bool isReadOnlyFile, 
                          RSourceIndex* pIndex)
 {
-   if (!cursor.isType(RToken::ID))
-      return;
-   
-   if (!(cursor.contentEquals(L"test_that")))
+   if (!cursor.isType(RToken::ID) || !cursor.contentEquals(L"test_that"))
       return;
    
    RTokenCursor clone = cursor.clone();
