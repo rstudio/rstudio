@@ -619,7 +619,7 @@ void variableAssignmentIndexer(const RTokenCursor& cursor,
 
    // validate that the previous token is a symbol / string
    // (valid target for assignment)
-   const RToken& prevToken = cursor.previousToken();
+   const RToken& prevToken = cursor.previousSignificantToken();
    bool isExpectedType =
          prevToken.isType(RToken::ID) ||
          prevToken.isType(RToken::STRING);
@@ -631,13 +631,13 @@ void variableAssignmentIndexer(const RTokenCursor& cursor,
    // a sub-member of some object; e.g. 'foo$bar <- 1'
    if (cursor.offset() >= 2)
    {
-      const RToken& prevPrevToken = cursor.previousToken(2);
+      const RToken& prevPrevToken = cursor.previousSignificantToken(2);
       if (isBinaryOp(prevPrevToken))
          return;
    }
    
    // determine index type (function or variable?)
-   const RToken& nextToken = cursor.nextToken();
+   const RToken& nextToken = cursor.nextSignificantToken();
    RSourceItem::Type type = token_utils::isFunctionKeyword(nextToken)
          ? RSourceItem::Function
          : RSourceItem::Variable;
@@ -663,7 +663,7 @@ void variableAssignmentIndexer(const RTokenCursor& cursor,
       
       // don't index non-function things within an R6Class
       // (otherwise we can end up indexing the `public = list(...)`
-      // defintiions, which are not useful)
+      // definitions, which are not useful)
       if (type != RSourceItem::Function)
          return;
     
