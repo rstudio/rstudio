@@ -31,6 +31,7 @@ FilePath uniqueFilePath(const core::FilePath& parent,
                         const std::string& extension = "");
 
 std::string readFile(const core::FilePath& filePath);
+Error writeFile(const FilePath& filePath, const std::string& content);
 
 #ifdef _WIN32
 bool isWindowsReservedName(const std::string& name);
