@@ -122,13 +122,19 @@ public class AceEditorBackgroundLinkHighlighter
 
 
       highlighters_ = new ArrayList<>();
-
+      
       handlers_ = new ArrayList<>();
       handlers_.add(editor_.addAttachHandler(this));
       handlers_.add(editor_.addDocumentChangedHandler(this));
       handlers_.add(editor_.addEditorModeChangedHandler(this));
       handlers_.add(editor_.addMouseMoveHandler(this));
       handlers_.add(editor_.addCommandClickHandler(this));
+      
+      pUserPrefs_.get().highlightWebLink().bind((Boolean enabled) ->
+      {
+         if (editor_ != null)
+            refreshHighlighters(editor_.getModeId());
+      });
 
       refreshHighlighters(editor_.getModeId());
    }
@@ -143,19 +149,13 @@ public class AceEditorBackgroundLinkHighlighter
          {
             TextFileType fileType = editor_.getFileType();
             highlighters_.clear();
-            pUserPrefs_.get().highlightWebLink().bind(new CommandWithArg<Boolean>() {
-               public void execute(Boolean arg) {
-                  if (arg)
-                  {
-                     highlighters_.add(webLinkHighlighter());
-                  }
-                  else
-                  {
-                     highlighters_.remove(webLinkHighlighter());
-                  }
-            }});
+            
+            if (pUserPrefs_.get().highlightWebLink().getGlobalValue())
+               highlighters_.add(webLinkHighlighter());
+            
             if (fileType != null && fileType.isR())
                highlighters_.add(issueHighlighter());
+            
             if (fileType != null && (fileType.isMarkdown() || fileType.isRmd()))
                highlighters_.add(markdownLinkHighlighter());
 
@@ -471,7 +471,8 @@ public class AceEditorBackgroundLinkHighlighter
 
    private Highlighter issueHighlighter()
    {
-      return new Highlighter() {
+      return new Highlighter()
+      {
          @Override
          public void highlight(String line, int row)
          {
