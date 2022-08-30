@@ -448,8 +448,9 @@ inline bool isRoxygenComment(const RToken& rToken)
       return false;
 
    std::string content = rToken.contentAsUtf8();
+   size_t n = content.size();
    char c;
-   for (size_t i = 1; i < content.size(); i++) 
+   for (size_t i = 0; i < n; i++) 
    {
       c = content.at(i);
       if (c == '#')
