@@ -85,13 +85,13 @@ public class AceEditorBackgroundLinkHighlighter
                            FileTypeRegistry fileTypeRegistry,
                            EventBus events,
                            FilesServerOperations server,
-                           Provider<UserPrefs> pUserPrefs)
+                           UserPrefs userPrefs)
    {
       globalDisplay_ = globalDisplay;
       fileTypeRegistry_ = fileTypeRegistry;
       events_ = events;
       server_ = server;
-      pUserPrefs_ = pUserPrefs;
+      userPrefs_ = userPrefs;
    }
 
    public AceEditorBackgroundLinkHighlighter(AceEditor editor)
@@ -130,7 +130,7 @@ public class AceEditorBackgroundLinkHighlighter
       handlers_.add(editor_.addMouseMoveHandler(this));
       handlers_.add(editor_.addCommandClickHandler(this));
       
-      pUserPrefs_.get().highlightWebLink().bind((Boolean enabled) ->
+      userPrefs_.highlightWebLink().bind((Boolean enabled) ->
       {
          if (editor_ != null)
             refreshHighlighters(editor_.getModeId());
@@ -142,6 +142,7 @@ public class AceEditorBackgroundLinkHighlighter
    private void refreshHighlighters(String mode)
    {
       clearAllMarkers();
+      
       Scheduler.get().scheduleDeferred(new ScheduledCommand()
       {
          @Override
@@ -150,7 +151,7 @@ public class AceEditorBackgroundLinkHighlighter
             TextFileType fileType = editor_.getFileType();
             highlighters_.clear();
             
-            if (pUserPrefs_.get().highlightWebLink().getGlobalValue())
+            if (userPrefs_.highlightWebLink().getGlobalValue())
                highlighters_.add(webLinkHighlighter());
             
             if (fileType != null && fileType.isR())
@@ -759,6 +760,6 @@ public class AceEditorBackgroundLinkHighlighter
    private FileTypeRegistry fileTypeRegistry_;
    private EventBus events_;
    private FilesServerOperations server_;
-   private Provider<UserPrefs> pUserPrefs_;
+   private UserPrefs userPrefs_;
    private static final ViewsSourceConstants constants_ = GWT.create(ViewsSourceConstants.class);
 }
