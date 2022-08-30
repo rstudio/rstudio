@@ -442,6 +442,28 @@ inline bool isWhitespaceOrComment(const RToken& rToken)
           rToken.isType(RToken::COMMENT);
 }
 
+inline bool isRoxygenComment(const RToken& rToken)
+{
+   if (!rToken.isType(RToken::COMMENT))
+      return false;
+
+   std::string content = rToken.contentAsUtf8();
+   size_t n = content.size();
+   char c;
+   for (size_t i = 0; i < n; i++) 
+   {
+      c = content.at(i);
+      if (c == '#')
+         continue;
+
+      if (c == '\'')
+         return true;
+
+      break;
+   }
+   return false;
+}
+
 inline bool isValidAsIdentifier(const RToken& rToken)
 {
    return rToken.isType(RToken::ID) ||

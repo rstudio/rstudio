@@ -69,12 +69,13 @@ class RSourceItem
 public:
    enum Type
    {
-      None = 0,
-      Function = 1,
-      Method = 2,
-      Class = 3,
-      Variable = 4, 
-      Test = 11
+      None       = 0,
+      Function   = 1,
+      Method     = 2,
+      Class      = 3,
+      Variable   = 4, 
+      Test       = 11, 
+      Roxygen    = 12
    };
 
 public:

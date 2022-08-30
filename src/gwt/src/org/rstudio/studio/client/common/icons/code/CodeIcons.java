@@ -108,4 +108,7 @@ public interface CodeIcons extends ClientBundle
 
    @Source("test_2x.png")
    ImageResource test2x();
+
+   @Source("roxygen_2x.png")
+   ImageResource roxygen2x();
 }

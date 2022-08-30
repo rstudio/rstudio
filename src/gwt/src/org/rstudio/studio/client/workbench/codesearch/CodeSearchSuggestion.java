@@ -102,6 +102,9 @@ class CodeSearchSuggestion implements Suggestion
       case SourceItem.TEST:
          image = new ImageResource2x(CodeIcons.INSTANCE.test2x());
          break;
+      case SourceItem.ROXYGEN:
+         image = new ImageResource2x(CodeIcons.INSTANCE.roxygen2x());
+         break;
       case SourceItem.NONE:
       default:
          image = new ImageResource2x(CodeIcons.INSTANCE.keyword2x());

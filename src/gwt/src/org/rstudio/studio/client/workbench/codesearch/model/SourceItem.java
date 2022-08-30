@@ -28,18 +28,19 @@ public class SourceItem extends JavaScriptObject
    }
    
    // NOTE: synchronize with class in SessionCodeSearch.cpp
-   public static final int NONE       =  0;
-   public static final int FUNCTION   =  1;
-   public static final int METHOD     =  2;
-   public static final int CLASS      =  3;
-   public static final int ENUM       =  4;
-   public static final int ENUM_VALUE =  5;
-   public static final int NAMESPACE  =  6; 
-   public static final int SECTION    =  7;
-   public static final int FIGURE     =  8;
-   public static final int TABLE      =  9;
-   public static final int MATH       = 10;
-   public static final int TEST       = 11;
+   public static final int NONE                 =  0;
+   public static final int FUNCTION             =  1;
+   public static final int METHOD               =  2;
+   public static final int CLASS                =  3;
+   public static final int ENUM                 =  4;
+   public static final int ENUM_VALUE           =  5;
+   public static final int NAMESPACE            =  6; 
+   public static final int SECTION              =  7;
+   public static final int FIGURE               =  8;
+   public static final int TABLE                =  9;
+   public static final int MATH                 = 10;
+   public static final int TEST                 = 11;
+   public static final int ROXYGEN              = 12;
 
    public final native int getType() /*-{
       return this.type;

@@ -75,10 +75,18 @@ bool advancePastNextToken(
          RTokens::const_iterator end,
          const boost::function<bool(const RToken&)>& tokenCondition)
 {
-   // alias and advance past current token
+   // alias
    RTokens::const_iterator& begin = *pBegin;
+   
+   // advance past current token 
    begin++;
 
+   // skipping comment tokens
+   while (begin < end && begin->isType(RToken::COMMENT)) 
+   {
+      begin++;   
+   }
+   
    // check for end
    if (begin == end)
    {
@@ -91,10 +99,17 @@ bool advancePastNextToken(
       return false;
    }
 
-   // advance and return true
    else
    {
+      // advance, skip further comments and return true
       begin++;
+
+      // skipping comment tokens
+      while (begin < end && begin->isType(RToken::COMMENT)) 
+      {
+         begin++;   
+      }
+
       return true;
    }
 }
@@ -339,13 +354,13 @@ void libraryCallIndexer(const RTokenCursor& cursor,
       return;
    
    RTokenCursor clone = cursor.clone();
-   if (!clone.moveToNextToken())
+   if (!clone.moveToNextSignificantToken())
       return;
    
    if (!clone.isType(RToken::LPAREN))
       return;
    
-   if (!clone.moveToNextToken())
+   if (!clone.moveToNextSignificantToken())
       return;
    
    // If the package name is supplied as a string, then we're done.
@@ -371,10 +386,7 @@ void testThatCallIndexer(const RTokenCursor& cursor,
                          bool isReadOnlyFile, 
                          RSourceIndex* pIndex)
 {
-   if (!cursor.isType(RToken::ID))
-      return;
-   
-   if (!(cursor.contentEquals(L"test_that")))
+   if (!cursor.isType(RToken::ID) || !cursor.contentEquals(L"test_that"))
       return;
    
    RTokenCursor clone = cursor.clone();
@@ -418,6 +430,79 @@ void testThatCallIndexer(const RTokenCursor& cursor,
    }
 }
 
+void stringAfterRoxygenIndexer(const RTokenCursor& cursor,
+                               const IndexStatus& status,
+                               bool isReadOnlyFile, 
+                               RSourceIndex* pIndex)
+{
+   if (!cursor.isType(RToken::STRING))
+      return;
+   
+   RTokenCursor clone = cursor.clone();
+   if (!clone.bwdOverWhitespace())
+      return;
+
+   if (!clone.moveToPreviousToken())
+      return;   
+
+   if (!isRoxygenComment(clone))
+      return;
+
+   RSourceItem item(
+      RSourceItem::Roxygen,
+      cursor.contentAsUtf8(),
+      std::vector<RS4MethodParam>(), 
+      status.count(RToken::LBRACE),
+      cursor.row() + 1, 
+      cursor.column() + 1, 
+      isReadOnlyFile
+   );
+
+   pIndex->addSourceItem(item);
+}
+
+void nameRoxygenIndexer(const RTokenCursor& cursor,
+                        const IndexStatus& status,
+                        bool isReadOnlyFile, 
+                        RSourceIndex* pIndex)
+{
+   if (!cursor.isType(RToken::ID) || !cursor.contentEquals(L"NULL"))
+      return;
+
+   RTokenCursor clone = cursor.clone();
+   
+   if (!clone.bwdOverWhitespace())
+      return;
+
+   while (clone.moveToPreviousToken()) 
+   {
+      if (!isRoxygenComment(clone))
+         return;
+      
+      static const boost::regex nameRoxygenRegex("^#+'\\s+(@name +.*)$");
+   
+      std::string content = clone.contentAsUtf8();
+      if (boost::regex_match(content, nameRoxygenRegex))
+      {
+         std::string name = boost::regex_replace(content, nameRoxygenRegex, "\\1");
+         
+         RSourceItem item(
+            RSourceItem::Roxygen,
+            name,
+            std::vector<RS4MethodParam>(), 
+            status.count(RToken::LBRACE),
+            clone.row() + 1, 
+            clone.column() + 1, 
+            isReadOnlyFile
+         );
+
+         pIndex->addSourceItem(item);
+
+         return;
+      }
+   }
+}
+
 void s4MethodIndexer(const RTokenCursor& cursor,
                      const IndexStatus& status,
                      bool isReadOnlyFile, 
@@ -449,30 +534,34 @@ void s4MethodIndexer(const RTokenCursor& cursor,
          return;
       }
 
-      // make sure there are at least 4 more tokens
-      const RTokens& rTokens = cursor.tokens();
-      std::size_t i = cursor.offset();
-      
-      if (i + 3 >= rTokens.size())
-         return;
-      
-      if ( (rTokens.at(i + 1).type() != RToken::LPAREN) ||
-           (rTokens.at(i + 2).type() != RToken::STRING) ||
-           (rTokens.at(i + 3).type() != RToken::COMMA))
+      RTokenCursor clone = cursor.clone();
+      if (!clone.moveToNextSignificantToken() || clone.type() != RToken::LPAREN)
          return;
 
+      if (!clone.moveToNextSignificantToken() || clone.type() != RToken::STRING)
+         return;
+      RToken nameToken = clone.currentToken();
+
+      if (!clone.moveToNextSignificantToken() || clone.type() != RToken::COMMA)
+         return;
+
+      if (!clone.moveToNextSignificantToken())
+         return;
+   
       // if this was a setMethod then try to lookahead for the signature
       std::vector<RS4MethodParam> signature;
       if (isSetMethod)
       {
-         parseSignature(rTokens.begin() + (i + 4),
+         const RTokens& rTokens = clone.tokens();
+      
+         parseSignature(rTokens.begin() + clone.offset(),
                         rTokens.end(),
                         &signature);
       }
       
       addSourceItem(setType,
                     signature,
-                    rTokens.at(i + 2),
+                    nameToken,
                     status,
                     isReadOnlyFile,
                     pIndex);
@@ -529,7 +618,7 @@ void variableAssignmentIndexer(const RTokenCursor& cursor,
 
    // validate that the previous token is a symbol / string
    // (valid target for assignment)
-   const RToken& prevToken = cursor.previousToken();
+   const RToken& prevToken = cursor.previousSignificantToken();
    bool isExpectedType =
          prevToken.isType(RToken::ID) ||
          prevToken.isType(RToken::STRING);
@@ -541,13 +630,13 @@ void variableAssignmentIndexer(const RTokenCursor& cursor,
    // a sub-member of some object; e.g. 'foo$bar <- 1'
    if (cursor.offset() >= 2)
    {
-      const RToken& prevPrevToken = cursor.previousToken(2);
+      const RToken& prevPrevToken = cursor.previousSignificantToken(2);
       if (isBinaryOp(prevPrevToken))
          return;
    }
    
    // determine index type (function or variable?)
-   const RToken& nextToken = cursor.nextToken();
+   const RToken& nextToken = cursor.nextSignificantToken();
    RSourceItem::Type type = token_utils::isFunctionKeyword(nextToken)
          ? RSourceItem::Function
          : RSourceItem::Variable;
@@ -573,7 +662,7 @@ void variableAssignmentIndexer(const RTokenCursor& cursor,
       
       // don't index non-function things within an R6Class
       // (otherwise we can end up indexing the `public = list(...)`
-      // defintiions, which are not useful)
+      // definitions, which are not useful)
       if (type != RSourceItem::Function)
          return;
     
@@ -604,6 +693,8 @@ std::vector<Indexer> makeIndexers()
    indexers.push_back(s4MethodIndexer);
    indexers.push_back(variableAssignmentIndexer);
    indexers.push_back(testThatCallIndexer);
+   indexers.push_back(stringAfterRoxygenIndexer);
+   indexers.push_back(nameRoxygenIndexer);
 
    return indexers;
 }
@@ -622,7 +713,7 @@ RSourceIndex::RSourceIndex(const std::string& context, const std::string& code)
 
    // tokenize and create token cursor
    std::wstring wCode = string_utils::utf8ToWide(code, context);
-   RTokens rTokens(wCode, RTokens::StripWhitespace | RTokens::StripComments);
+   RTokens rTokens(wCode, RTokens::StripWhitespace);
    if (rTokens.empty())
       return;
    
