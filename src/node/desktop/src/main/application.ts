@@ -19,7 +19,7 @@ import path from 'path';
 import { getenv, setenv } from '../core/environment';
 import { FilePath } from '../core/file-path';
 import { logger } from '../core/logger';
-import { kRStudioInitialProject } from '../core/r-user-data';
+import { kRStudioInitialProject, kRStudioInitialWorkingDir } from '../core/r-user-data';
 import { generateRandomPort } from '../core/system';
 import { getDesktopBridge } from '../renderer/desktop-bridge';
 import { DesktopActivation } from './activation-overlay';
@@ -205,6 +205,13 @@ export class Application implements AppState {
           setenv(kRStudioInitialProject, filepath);
         }
         return;
+      }
+      else {
+        // for non-Rproj files, we want to set the initial working directory, before opening the file
+        // if a session does not already exist (otherwise, just open the file)
+        if (!app.isReady()) {
+          setenv(kRStudioInitialWorkingDir, path.dirname(filepath));
+        }
       }
 
       app.whenReady()
