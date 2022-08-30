@@ -26,6 +26,7 @@ public interface CompletionRequesterResources extends ClientBundle
       String fileIcon();
       String completion();
       String packageName();
+      String dollarName();
    }
    
    @Source("CompletionRequester.css")

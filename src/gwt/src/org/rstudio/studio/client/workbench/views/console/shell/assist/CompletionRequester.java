@@ -965,10 +965,15 @@ public class CompletionRequester
 
       private void doAddDisplayNameGeneric(SafeHtmlBuilder sb)
       {
+         String style = RES.styles().completion();
+         if (source.startsWith("[")) {
+            style = style + " " + RES.styles().dollarName();
+         }
+
          // Get the name for the completion
          SafeHtmlUtil.appendSpan(
                sb,
-               RES.styles().completion(),
+               style,
                display);
 
          // Display the source for functions and snippets (unless there
