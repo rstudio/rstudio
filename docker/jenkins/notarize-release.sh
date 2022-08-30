@@ -52,7 +52,6 @@ xcrun altool --notarize-app \
     --password "@env:APPLE_ID_PASSWORD" \
     --file $1 \
     --output-format xml \
-    --options runtime \
     -itc_provider RStudioInc > $XCRUN_RESULT
 
 # Check result
