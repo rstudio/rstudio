@@ -23,6 +23,7 @@ import org.rstudio.studio.client.common.Timers;
 import org.rstudio.studio.client.workbench.views.source.editors.text.events.EditorThemeChangedEvent;
 import org.rstudio.studio.client.workbench.views.source.editors.text.events.EditorThemeStyleChangedEvent;
 
+import com.google.gwt.core.client.Scheduler;
 import com.google.gwt.dom.client.Element;
 import com.google.gwt.dom.client.Style;
 import com.google.gwt.event.shared.HandlerManager;
@@ -70,11 +71,22 @@ public class TextEditingTargetThemeHelper
  
    private void syncToEditorTheme(TextEditingTarget editingTarget)
    {
+      // delay execution so that the browser has a chance to apply styles
+      // https://github.com/rstudio/rstudio/issues/11868
+      Scheduler.get().scheduleDeferred(() ->
+      {
+         syncToEditorThemeImpl(editingTarget);
+      });
+   }
+   
+   private void syncToEditorThemeImpl(TextEditingTarget editingTarget)
+   {
       // ensure we're passed a real widget
       Widget editingWidget = editingTarget.asWidget();
       if (editingWidget == null)
          return;
       
+      // get the element containing the editor
       Element editorContainer = editingWidget.getElement();
       Element[] aceContentElements =
             DomUtils.getElementsByClassName(editorContainer, "ace_scroller");
