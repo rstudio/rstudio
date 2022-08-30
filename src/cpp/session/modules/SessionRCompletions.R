@@ -2141,6 +2141,15 @@ assign(x = ".rs.acCompletionTypes",
             functionCallString,
             fixed = TRUE
          )
+      } else if (nzchar(chainObjectName)) {
+         dropFirstArgument <- TRUE
+         
+         functionCallString <- sub(
+            "(",
+            paste("(", chainObjectName, ",", sep = ""),
+            functionCallString,
+            fixed = TRUE
+         )
       }
    }
    
