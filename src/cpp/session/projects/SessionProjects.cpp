@@ -496,11 +496,13 @@ void setProjectConfig(const r_util::RProjectConfig& config)
 
 void syncProjectFileChanges()
 {
+   FilePath projectFile = s_projectContext.file();
+   
    // read project file config
    bool providedDefaults;
    std::string userErrMsg;
    r_util::RProjectConfig config;
-   Error error = r_util::readProjectFile(s_projectContext.file(),
+   Error error = r_util::readProjectFile(projectFile,
                                          ProjectContext::defaultConfig(),
                                          ProjectContext::buildDefaults(),
                                          &config,
@@ -508,7 +510,9 @@ void syncProjectFileChanges()
                                          &userErrMsg);
    if (error)
    {
-      LOG_ERROR(error);
+      if (!projectFile.isEmpty())
+         LOG_ERROR(error);
+      
       return;
    }
 
