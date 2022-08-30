@@ -479,7 +479,7 @@ void nameRoxygenIndexer(const RTokenCursor& cursor,
       if (!isRoxygenComment(clone))
          return;
       
-      static const boost::regex nameRoxygenRegex("^#+' +(@name +.*)$");
+      static const boost::regex nameRoxygenRegex("^#+'\\s+(@name +.*)$");
    
       std::string content = clone.contentAsUtf8();
       if (boost::regex_match(content, nameRoxygenRegex))
