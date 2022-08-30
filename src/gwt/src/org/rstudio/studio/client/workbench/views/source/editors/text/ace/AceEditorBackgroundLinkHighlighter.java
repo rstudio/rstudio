@@ -156,9 +156,12 @@ public class AceEditorBackgroundLinkHighlighter
             
             if (fileType != null && fileType.isR())
                highlighters_.add(issueHighlighter());
-            
-            if (fileType != null && (fileType.isMarkdown() || fileType.isRmd()))
+            if (fileType != null && (fileType.isMarkdown() || fileType.isRmd())) 
+            {
+               highlighters_.add(issueHighlighter());
                highlighters_.add(markdownLinkHighlighter());
+            }
+               
 
             nextHighlightStart_ = 0;
             timer_.schedule(100);
@@ -498,7 +501,7 @@ public class AceEditorBackgroundLinkHighlighter
 
    private static Pattern createIssueLinkPattern()
    {
-      return Pattern.create("(?<=test_that.*)[(]((github|gitlab)::)?(?:[-a-zA-Z0-9.]+/[-a-zA-Z0-9.]+)?#[0-9]+[)]");
+      return Pattern.create("[(]((github|gitlab)::)?(?:[-a-zA-Z0-9.]+/[-a-zA-Z0-9.]+)?#[0-9]+[)]");
    }
 
    private static Pattern createSpecificIssuePattern()
