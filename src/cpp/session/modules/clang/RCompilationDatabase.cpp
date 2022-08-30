@@ -50,7 +50,7 @@ using namespace rstudio::core;
 using namespace rstudio::core::libclang;
 using namespace boost::placeholders;
 
-#define kCompilationDatabaseVersion 1
+#define kCompilationDatabaseVersion 2
 
 namespace rstudio {
 namespace session {
