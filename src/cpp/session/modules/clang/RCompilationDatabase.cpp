@@ -595,26 +595,9 @@ std::vector<std::string> RCompilationDatabase::compileArgsForPackage(
       }
    }
 
-   // try to generate an appropriate name for the C++ source file.
-   // if we have Makevars / Makevars.site, they may define OBJECT
-   // targets; if we pick a file name not matching any OBJECT target
-   // then R CMD SHLIB will fail. (technically this implies that we
-   // need OBJECT-specific compilation configs but in practice one
-   // often just enumerates each OBJECT explicitly and re-uses the
-   // same compilation config for each file)
+   // generate an appropriate name for the C++ source file.
    std::string ext = isCpp ? ".cpp" : ".c";
    std::string filename = kCompilationDbPrefix + core::system::generateUuid() + ext;
-
-   std::vector<FilePath> children;
-   srcDir.getChildren(children);
-   for (const FilePath& child : children)
-   {
-      if (child.getExtension() == ext)
-      {
-         filename = child.getFilename();
-         break;
-      }
-   }
 
    // call R CMD SHLIB on a temp file to capture the compilation args
    FilePath tempSrcFile = tempDir.completeChildPath(filename);
