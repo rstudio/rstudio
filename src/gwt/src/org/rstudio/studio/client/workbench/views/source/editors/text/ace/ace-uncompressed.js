@@ -46215,7 +46215,7 @@ EditSession.$uid = 0;
         delete this.$breakpoints[row];
         this._signal("changeBreakpoint", {});
     };
-    this.addMarker = function(range, clazz, type, inFront) {
+    this.addMarker = function(range, clazz, type, inFront, extraStyle) {
         var id = this.$markerId++;
 
         var marker = {
@@ -46224,9 +46224,10 @@ EditSession.$uid = 0;
             renderer: typeof type == "function" ? type : null,
             clazz : clazz,
             inFront: !!inFront,
-            id: id
+            id: id, 
+            extraStyle: extraStyle
         };
-
+        
         if (inFront) {
             this.$frontMarkers[id] = marker;
             this._signal("changeFrontMarker");
@@ -62341,7 +62342,8 @@ var Marker = function(parentEl) {
                 var left = this.$padding + range.start.column * config.characterWidth;
                 marker.renderer(html, range, left, top, config);
             } else if (marker.type == "fullLine") {
-                this.drawFullLineMarker(html, range, marker.clazz, config);
+                console.log(" marker.extraStyle = " +  marker.extraStyle);
+                this.drawFullLineMarker(html, range, marker.clazz, config, marker.extraStyle);
             } else if (marker.type == "screenLine") {
                 this.drawScreenLineMarker(html, range, marker.clazz, config);
             } else if (range.isMultiLine()) {
