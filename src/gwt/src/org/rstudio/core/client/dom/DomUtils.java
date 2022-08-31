@@ -958,7 +958,6 @@ public class DomUtils
       return parent;
    }
 
-   // NOTE: Not supported in IE8
    public static final native Style getComputedStyles(Element el)
    /*-{
       return $wnd.getComputedStyle(el);
@@ -1329,8 +1328,7 @@ public class DomUtils
    /*-{
       return el.getBoundingClientRect();
    }-*/;
-
-
+   
    public static final int ESTIMATED_SCROLLBAR_WIDTH = 19;
    private static int SCROLLBAR_WIDTH = -1;
 }
