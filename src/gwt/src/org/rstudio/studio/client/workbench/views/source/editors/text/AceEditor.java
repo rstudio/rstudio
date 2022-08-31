@@ -111,6 +111,7 @@ import org.rstudio.studio.client.workbench.views.source.editors.text.ace.AceClic
 import org.rstudio.studio.client.workbench.views.source.editors.text.ace.AceCommand;
 import org.rstudio.studio.client.workbench.views.source.editors.text.ace.AceCommandManager;
 import org.rstudio.studio.client.workbench.views.source.editors.text.ace.AceEditorBackgroundLinkHighlighter;
+import org.rstudio.studio.client.workbench.views.source.editors.text.ace.AceEditorCoverageHighlighter;
 import org.rstudio.studio.client.workbench.views.source.editors.text.ace.AceEditorCommandEvent;
 import org.rstudio.studio.client.workbench.views.source.editors.text.ace.AceEditorNative;
 import org.rstudio.studio.client.workbench.views.source.editors.text.ace.AceFold;
@@ -354,6 +355,7 @@ public class AceEditor implements DocDisplay,
       vim_ = new Vim(this);
       bgLinkHighlighter_ = new AceEditorBackgroundLinkHighlighter(this);
       bgChunkHighlighter_ = new AceBackgroundHighlighter(this);
+      coverageHighlighter_ = new AceEditorCoverageHighlighter(this);
 
       widget_.addValueChangeHandler(evt ->
       {
@@ -3623,7 +3625,7 @@ public class AceEditor implements DocDisplay,
          String style)
    {
       Range range = Range.fromPoints(start, end);
-      return getSession().addMarker(range, style, "text", false);
+      return getSession().addMarker(range, style, "text", false, null);
    }
 
 
@@ -4717,6 +4719,7 @@ public class AceEditor implements DocDisplay,
    private final Vim vim_;
    private final AceBackgroundHighlighter bgChunkHighlighter_;
    private final AceEditorBackgroundLinkHighlighter bgLinkHighlighter_;
+   private final AceEditorCoverageHighlighter coverageHighlighter_;
    private int scrollTarget_ = 0;
    private HandlerRegistration scrollCompleteReg_;
    private final AceEditorMixins mixins_;

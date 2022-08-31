@@ -240,8 +240,9 @@ public class EditSession extends JavaScriptObject
    public native final int addMarker(Range range,
                                      String clazz,
                                      String type,
-                                     boolean inFront) /*-{
-      return this.addMarker(range, clazz, type, inFront);
+                                     boolean inFront, 
+                                     String extraStyle) /*-{
+      return this.addMarker(range, clazz, type, inFront, extraStyle);
    }-*/;
    
    public native final int addMarker(Range range,

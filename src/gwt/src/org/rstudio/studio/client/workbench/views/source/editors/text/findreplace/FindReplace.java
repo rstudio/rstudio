@@ -551,7 +551,8 @@ public class FindReplace
          markerId_ = editor_.getSession().addMarker(getRange(),
                                                    "ace_find_line",
                                                    "background",
-                                                   false);
+                                                   false, 
+                                                   null);
       }
 
       public void clear()

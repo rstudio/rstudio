@@ -1092,11 +1092,12 @@ public class AceEditorWidget extends Composite
          else if (item.getType() == "spelling")
             clazz = lintStyles_.spelling();
 
-         int id = editor_.getSession().addMarker(range, clazz, "text", true);
+
+         int id = editor_.getSession().addMarker(range, clazz, "text", true, null);
          annotations_.add(new AnchoredAceAnnotation(
-            annotations.get(i),
-            range,
-            id));
+               annotations.get(i),
+               range,
+               id));
       }
    }
 

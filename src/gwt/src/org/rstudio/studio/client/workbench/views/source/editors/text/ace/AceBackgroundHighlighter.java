@@ -128,7 +128,8 @@ public class AceBackgroundHighlighter
                      Range.create(row, 0, row, Integer.MAX_VALUE),
                      MARKER_CLASS,
                      MARKER_TYPE,
-                     false);
+                     false, 
+                     null);
                
                markerIds_.set(row, markerId);
             }
