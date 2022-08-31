@@ -14,7 +14,11 @@
  */
 package org.rstudio.core.client.widget;
 
+import org.rstudio.core.client.dom.IFrameElementEx;
+import org.rstudio.core.client.dom.WindowEx;
+
 import com.google.gwt.core.client.JavaScriptObject;
+import com.google.gwt.dom.client.Document;
 import com.google.gwt.dom.client.Element;
 import com.google.gwt.dom.client.Node;
 import com.google.gwt.dom.client.TagName;
@@ -52,6 +56,26 @@ public class WebviewElement extends Element
    {
       return elem != null && elem.hasTagName(TAG);
    }
+   
+   public final WindowEx getContentWindow()
+   {
+      return getIFrameElement().getContentWindow();
+   }
+   
+   public final Document getContentDocument()
+   {
+      return getIFrameElement().getContentDocument();
+   }
+   
+   public final native IFrameElementEx getIFrameElement()
+   /*-{
+      var children = this.shadowRoot.childNodes;
+      for (var i = 0; i < children.length; i++) {
+         if (children[i].tagName === "IFRAME") {
+            return chilren[i];
+         }
+      }
+   }-*/;
    
    public static final String TAG = "webview";
    

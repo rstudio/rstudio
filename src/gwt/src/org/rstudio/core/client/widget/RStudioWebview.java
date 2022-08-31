@@ -14,7 +14,6 @@
  */
 package org.rstudio.core.client.widget;
 
-import org.rstudio.core.client.Debug;
 import org.rstudio.core.client.dom.WindowEx;
 import org.rstudio.studio.client.workbench.views.viewer.ViewerPane;
 
@@ -27,11 +26,9 @@ public class RStudioWebview extends Widget implements ViewerPane.Display
 {
    public RStudioWebview(String title)
    {
-      view_ = Document.get().createElement("webview").cast();
-      view_.setAttribute("plugins", "");
-      view_.setTitle(title);
-      
-      setElement(view_);
+      WebviewElement view = Document.get().createElement("webview").cast();
+      view.setTitle(title);
+      setElement(view);
    }
    
    @Override
@@ -49,28 +46,28 @@ public class RStudioWebview extends Widget implements ViewerPane.Display
    @Override
    public String getCurrentUrl()
    {
-      Debug.breakpoint();
-      return "NYI";
+      WebviewElement view = getElement().cast();
+      return view.getIFrameElement().getCurrentUrl();
    }
 
    @Override
    public void reload()
    {
-      Debug.breakpoint();
+      setUrl(getUrl());
    }
 
    @Override
    public WindowEx getContentWindow()
    {
-      Debug.breakpoint();
-      return null;
+      WebviewElement view = getElement().cast();
+      return view.getIFrameElement().getContentWindow();
    }
 
    @Override
    public Document getContentDocument()
    {
-      Debug.breakpoint();
-      return null;
+      WebviewElement view = getElement().cast();
+      return view.getIFrameElement().getContentDocument();
    }
 
    @Override
@@ -84,7 +81,5 @@ public class RStudioWebview extends Widget implements ViewerPane.Display
    {
       return this.addLoadHandler(handler);
    }
-   
-   private final WebviewElement view_;
    
 }
