@@ -126,7 +126,7 @@ public class RStudioFrame extends Frame implements ViewerPane.Display
    {
       getContentWindow().reload();
    }
-
+   
    @Override
    public WindowEx getContentWindow()
    {

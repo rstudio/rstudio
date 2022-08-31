@@ -32,6 +32,7 @@ import org.rstudio.core.client.StringUtil;
 import org.rstudio.core.client.URIConstants;
 import org.rstudio.core.client.URIUtils;
 import org.rstudio.core.client.dom.DocumentEx;
+import org.rstudio.core.client.dom.IFrameElementEx;
 import org.rstudio.core.client.dom.WindowEx;
 import org.rstudio.core.client.files.FileSystemItem;
 import org.rstudio.core.client.resources.ImageResource2x;
@@ -73,6 +74,8 @@ public class ViewerPane extends WorkbenchPane implements ViewerPresenter.Display
       void setUrl(String url);
       String getCurrentUrl();
       void reload();
+      
+      IFrameElementEx getIFrame();
       WindowEx getContentWindow();
       Document getContentDocument();
       

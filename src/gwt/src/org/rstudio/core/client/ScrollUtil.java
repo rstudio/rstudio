@@ -14,6 +14,7 @@
  */
 package org.rstudio.core.client;
 
+import org.rstudio.core.client.dom.IFrameElementEx;
 import org.rstudio.studio.client.workbench.views.viewer.ViewerPane;
 
 import com.google.gwt.core.client.Scheduler;
@@ -35,7 +36,11 @@ public class ScrollUtil
                return false;
 
             // wait for a document to become available in the frame
-            Document doc = frame.getContentDocument();
+            IFrameElementEx iframeEl = frame.getIFrame();
+            if (iframeEl == null)
+               return true;
+            
+            Document doc = iframeEl.getContentDocument();
             if (doc == null)
                return true;
 

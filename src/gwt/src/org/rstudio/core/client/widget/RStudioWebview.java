@@ -14,6 +14,7 @@
  */
 package org.rstudio.core.client.widget;
 
+import org.rstudio.core.client.dom.IFrameElementEx;
 import org.rstudio.core.client.dom.WindowEx;
 import org.rstudio.studio.client.workbench.views.viewer.ViewerPane;
 
@@ -54,6 +55,13 @@ public class RStudioWebview extends Widget implements ViewerPane.Display
    public void reload()
    {
       setUrl(getUrl());
+   }
+   
+   @Override
+   public IFrameElementEx getIFrame()
+   {
+      WebviewElement view = getElement().cast();
+      return view.getIFrameElement();
    }
 
    @Override
