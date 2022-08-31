@@ -201,61 +201,75 @@ Napi::Value isCtrlKeyDown(const Napi::CallbackInfo& info)
 
 namespace {
 
-wchar_t* currentCSIDLPersonalHomePathImpl()
+std::wstring currentCSIDLPersonalHomePathImpl()
 {
-   #ifdef _WIN32
+#ifdef _WIN32
+
+   wchar_t buffer[MAX_PATH] = {};
+
    // query for My Documents directory
    const DWORD SHGFP_TYPE_CURRENT = 0;
-   wchar_t homePath[MAX_PATH];
    HRESULT hr = ::SHGetFolderPathW(nullptr,
                                    CSIDL_PERSONAL,
                                    nullptr,
                                    SHGFP_TYPE_CURRENT,
-                                   homePath);
-   #else
-   wchar_t homePath[1024] = {};
-   #endif
-   return homePath;
+                                   buffer);
+
+   return std::wstring(buffer);
+
+#else
+
+   return std::wstring();
+
+#endif
 }
+
 } // end anonymous namespace
 
 Napi::Value currentCSIDLPersonalHomePath(const Napi::CallbackInfo& info)
 {
-   wchar_t* value = currentCSIDLPersonalHomePathImpl();
+   auto value = currentCSIDLPersonalHomePathImpl();
+
    // convert wide to UTF-8
-   std::wstring_convert<std::codecvt_utf8<wchar_t>> conv1;
-   std::string u8str = conv1.to_bytes(value);
+   std::wstring_convert<std::codecvt_utf8<wchar_t>> converter;
+   std::string u8str = converter.to_bytes(value);
    return Napi::String::New(info.Env(), u8str);
 }
 
 namespace {
 
-wchar_t* defaultCSIDLPersonalHomePathImpl()
+std::wstring defaultCSIDLPersonalHomePathImpl()
 {
-   
-   #ifdef _WIN32
+#ifdef _WIN32
+   wchar_t buffer[MAX_PATH];
+
    // query for default and force creation (works around situations
    // where redirected path is not available)
    const DWORD SHGFP_TYPE_DEFAULT = 1;
-   wchar_t homePath[MAX_PATH];
    HRESULT hr = ::SHGetFolderPathW(nullptr,
-                                   CSIDL_PERSONAL|CSIDL_FLAG_CREATE,
+                                   CSIDL_PERSONAL | CSIDL_FLAG_CREATE,
                                    nullptr,
                                    SHGFP_TYPE_DEFAULT,
-                                   homePath);
-   #else
-   wchar_t homePath[1024] = {};
-   #endif
-   return homePath;
+                                   buffer);
+
+   return std::wstring(buffer);
+
+#else
+
+   return std::wstring();
+
+#endif
 }
+
 } // end anonymous namespace
 
 Napi::Value defaultCSIDLPersonalHomePath(const Napi::CallbackInfo& info)
 {
-   wchar_t* value = defaultCSIDLPersonalHomePathImpl();
+   auto value = defaultCSIDLPersonalHomePathImpl();
+
    // convert wide to UTF-8
-   std::wstring_convert<std::codecvt_utf8<wchar_t>> conv1;
-   std::string u8str = conv1.to_bytes(value);
+   std::wstring_convert<std::codecvt_utf8<wchar_t>> converter;
+   std::string u8str = converter.to_bytes(value);
    return Napi::String::New(info.Env(), u8str);
 }
 
