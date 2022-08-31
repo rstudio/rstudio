@@ -25,6 +25,7 @@ import org.rstudio.studio.client.rmarkdown.model.RmdPreviewParams;
 import org.rstudio.studio.client.server.VoidServerRequestCallback;
 import org.rstudio.studio.client.shiny.ShinyFrameHelper;
 import org.rstudio.studio.client.workbench.prefs.model.UserPrefs;
+import org.rstudio.studio.client.workbench.views.viewer.ViewerPane;
 import org.rstudio.studio.client.workbench.views.viewer.events.ViewerClearedEvent;
 import org.rstudio.studio.client.workbench.views.viewer.events.ViewerNavigatedEvent;
 import org.rstudio.studio.client.workbench.views.viewer.events.ViewerPreviewRmdEvent;
@@ -57,7 +58,8 @@ public class RmdOutputFramePane extends RmdOutputFrameBase
    {
       if (frame_ == null)
          return null;
-      return frame_.getWindow();
+      
+      return frame_.getContentWindow();
    }
 
    @Override
@@ -132,7 +134,7 @@ public class RmdOutputFramePane extends RmdOutputFrameBase
          int position = 0;
          try
          {
-            position = frame_.getIFrame().getContentWindow().getScrollTop();
+            position = frame_.getContentWindow().getScrollTop();
          }
          catch(Exception ex)
          {
@@ -157,7 +159,7 @@ public class RmdOutputFramePane extends RmdOutputFrameBase
       {
          try
          {
-            url = frame_.getIFrame().getContentDocument().getURL();
+            url = frame_.getCurrentUrl();
          }
          catch(Exception x)
          {
@@ -172,7 +174,7 @@ public class RmdOutputFramePane extends RmdOutputFrameBase
       return anchorPos > 0 ? url.substring(anchorPos + 1) : "";
    }
    
-   private RStudioFrame frame_;
+   private ViewerPane.Display frame_;
    private ShinyFrameHelper shinyFrame_;
    private boolean isShiny_;
    

@@ -13,7 +13,7 @@
  *
  */
 
-import { app, BrowserWindow, dialog, Menu, screen, shell, WebContents } from 'electron';
+import { app, BrowserWindow, dialog, Menu, MenuItem, screen, shell, WebContents } from 'electron';
 import i18next from 'i18next';
 import path from 'path';
 import { getenv, setenv } from '../core/environment';
@@ -46,6 +46,10 @@ import {
 import { WindowTracker } from './window-tracker';
 import { configureSatelliteWindow, configureSecondaryWindow, focusedWebContents } from './window-utils';
 import { Client, Server } from 'net-ipc';
+import contextMenu from 'electron-context-menu';
+import { showContextMenu } from './context-menu';
+import { isLocalUrl } from './url-utils';
+import { URL } from 'url';
 
 /**
  * The RStudio application
@@ -174,6 +178,7 @@ export class Application implements AppState {
   }
 
   private registerAppEvents() {
+
     app.on('before-quit', () => {
       app.releaseSingleInstanceLock();
 
@@ -237,16 +242,32 @@ export class Application implements AppState {
         this.argsManager.handleAfterSessionLaunchCommands();
     });
 
-    // // Workaround for selecting all text in the input field: https://github.com/rstudio/rstudio/issues/11581
-    // if (process.platform === 'darwin') {
-    //   app.whenReady()
-    //     .then(() => {
-    //       globalShortcut.register('Cmd+A', () => {
-    //         focusedWebContents()?.selectAll();
-    //       });
-    //     })
-    //     .catch((error: unknown) => logger().logError(error));
-    // }
+    // Used to initialize behaviors for so-called 'webview's, which are
+    // effectively Chromium's own "enhanced" version of an iframe. However, we
+    // use these just because we rely on some navigation behaviors not yet
+    // exposed by Electron for iframes.
+    app.on('web-contents-created', (event, webContents) => {
+
+      if (webContents.getType() === 'webview') {
+
+        webContents.on('context-menu', (event, params) => {
+          showContextMenu(webContents, params);
+        });
+
+        // calling event.preventDefault() prevents navigation
+        webContents.on('will-navigate', async (event, url) => {
+
+          // TODO: Should we allow non-local navigation?
+          if (!isLocalUrl(url)) {
+            event.preventDefault();
+            await shell.openExternal(url);
+          }
+
+        });
+
+      }
+    });
+
   }
 
   /**
@@ -297,7 +318,7 @@ export class Application implements AppState {
           message: i18next.t('applicationTs.rstudioFailedToFindRInstalationsOnTheSystem'),
           buttons: [ i18next.t('common.buttonYes'), i18next.t('common.buttonNo') ],
         }).then(result => {
-          
+
           logger().logDebug(`You clicked ${result.response == 0 ? 'Yes' : 'No'}`);
           if (result.response == 0) {
             const rProjectUrl = 'https://www.rstudio.org/links/r-project';
@@ -305,7 +326,7 @@ export class Application implements AppState {
           }
         })
           .catch((error: unknown) => logger().logError(error));
-        
+
         return exitFailure();
       }
 

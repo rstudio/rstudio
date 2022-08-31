@@ -154,7 +154,7 @@ export function rsessionExeName(): string {
 }
 
 /**
- * 
+ *
  * @returns Root of the RStudio repo for a dev build, nothing for packaged build
  */
 export function findRepoRoot(): string {

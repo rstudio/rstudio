@@ -14,7 +14,7 @@
  */
 package org.rstudio.core.client;
 
-import org.rstudio.core.client.widget.RStudioFrame;
+import org.rstudio.studio.client.workbench.views.viewer.ViewerPane;
 
 import com.google.gwt.core.client.Scheduler;
 import com.google.gwt.core.client.Scheduler.RepeatingCommand;
@@ -22,7 +22,7 @@ import com.google.gwt.dom.client.Document;
 
 public class ScrollUtil
 {
-   public static void setScrollPositionOnLoad(final RStudioFrame frame, 
+   public static void setScrollPositionOnLoad(final ViewerPane.Display frame,
                                               final int scrollPosition)
    {
       Scheduler.get().scheduleFixedDelay(new RepeatingCommand() {
@@ -35,14 +35,11 @@ public class ScrollUtil
                return false;
 
             // wait for a document to become available in the frame
-            if (frame.getIFrame() == null)
-               return true;
-            
-            if (frame.getIFrame().getContentDocument() == null)
+            Document doc = frame.getContentDocument();
+            if (doc == null)
                return true;
 
             // wait for the document to finish loading
-            Document doc = frame.getIFrame().getContentDocument();
             String readyState = getDocumentReadyState(doc);
             if (readyState == null)
                return true;

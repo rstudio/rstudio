@@ -19,29 +19,30 @@ import i18next from 'i18next';
 
 type ContextMenuItem = Electron.MenuItem | Electron.MenuItemConstructorOptions;
 
-export const showContextMenu = (event: Electron.IpcMainEvent, params: Electron.ContextMenuParams): void => {
-  const template = _createContextMenuTemplate(event, params);
+export const showContextMenu = (webContents: Electron.WebContents, params: Electron.ContextMenuParams): void => {
+  const template = _createContextMenuTemplate(webContents, params);
 
   const menu = Menu.buildFromTemplate(template);
   menu.popup();
 };
 
 export const _createContextMenuTemplate = (
-  event: Electron.IpcMainEvent,
+  webContents: Electron.WebContents,
   params: Electron.ContextMenuParams,
 ): ContextMenuItem[] => {
+
   let template: ContextMenuItem[] = [];
   if (params.hasImageContents) {
-    template = createContextMenuImageTemplate(event, params);
+    template = createContextMenuImageTemplate(webContents, params);
   } else {
-    template = createContextMenuTextTemplate(event, params);
+    template = createContextMenuTextTemplate(webContents, params);
   }
 
   return template;
 };
 
 const createContextMenuImageTemplate = (
-  event: Electron.IpcMainEvent,
+  webContents: Electron.WebContents,
   params: Electron.ContextMenuParams,
 ): ContextMenuItem[] => {
   return [
@@ -52,7 +53,6 @@ const createContextMenuImageTemplate = (
         // ask the user for a download file path.  in theory, we could let the
         // default download handler do this, but Electron appears to barf if the
         // user cancels that dialog
-        const webContents = event.sender;
         const window = BrowserWindow.fromWebContents(webContents) as BrowserWindow;
         const downloadPath = dialog.showSaveDialogSync(window, {
           title: i18next.t('contextMenu.saveImageAs'),
@@ -66,7 +66,7 @@ const createContextMenuImageTemplate = (
         }
 
         // set up a download handler
-        event.sender.session.once('will-download', (event, item) => {
+        webContents.session.once('will-download', (event, item) => {
           // set the download path (so Electron doesn't try to prompt)
           item.setSavePath(downloadPath);
 
@@ -93,7 +93,7 @@ const createContextMenuImageTemplate = (
         });
 
         // initiate the actual download
-        event.sender.downloadURL(params.srcURL);
+        webContents.downloadURL(params.srcURL);
       },
     },
 
@@ -101,7 +101,7 @@ const createContextMenuImageTemplate = (
     {
       label: i18next.t('contextMenu.copyImage'),
       click: () => {
-        event.sender.copyImageAt(params.x, params.y);
+        webContents.copyImageAt(params.x, params.y);
       },
     },
 
@@ -119,20 +119,25 @@ const createContextMenuImageTemplate = (
     },
 
     // Reload
-    { label: i18next.t('contextMenu.reload'), role: 'reload' },
+    {
+      label: i18next.t('contextMenu.reload'),
+      click: () => {
+        webContents.reload();
+      }
+    },
 
     // Inspect Element
     {
       label: i18next.t('contextMenu.inspectElement'),
       click: () => {
-        event.sender.inspectElement(params.x, params.y);
+        webContents.inspectElement(params.x, params.y);
       },
     },
   ];
 };
 
 const createContextMenuTextTemplate = (
-  event: Electron.IpcMainEvent,
+  webContents: Electron.WebContents,
   params: Electron.ContextMenuParams,
 ): ContextMenuItem[] => {
   // We would like to just always use the already-existing roles for clipboard
@@ -171,12 +176,15 @@ const createContextMenuTextTemplate = (
 
   template.push({ type: 'separator' });
 
-  template.push({ label: i18next.t('contextMenu.reload'), role: 'reload' });
+  template.push({
+    label: i18next.t('contextMenu.reload'),
+    click: () => { webContents.reload(); }
+  });
 
   template.push({
     label: i18next.t('contextMenu.inspectElement'),
     click: () => {
-      event.sender.inspectElement(params.x, params.y);
+      webContents.inspectElement(params.x, params.y);
     },
   });
 

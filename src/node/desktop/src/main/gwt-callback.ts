@@ -418,7 +418,10 @@ export class GwtCallback extends EventEmitter {
         if (url === 'chrome://gpu' || url === 'chrome://accessibility') {
           const window = new BrowserWindow({
             autoHideMenuBar: true,
-            webPreferences: { sandbox: true },
+            webPreferences: {
+              sandbox: true,
+              webviewTag: true,
+            },
             acceptFirstMouse: true,
           });
 
@@ -498,7 +501,7 @@ export class GwtCallback extends EventEmitter {
       },
     );
 
-    ipcMain.on('desktop_export_page_region_to_file', 
+    ipcMain.on('desktop_export_page_region_to_file',
       (event, targetPath, format, left, top, width, height) => {
         const rect: Rectangle = { x: left, y: top, width, height };
         targetPath = resolveAliasedPath(targetPath);

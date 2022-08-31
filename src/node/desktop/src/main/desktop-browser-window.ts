@@ -122,6 +122,7 @@ export class DesktopBrowserWindow extends EventEmitter {
           nodeIntegration: false,
           preload: preload,
           sandbox: true,
+          webviewTag: true,
         },
         show: false,
         acceptFirstMouse: true,
@@ -152,7 +153,7 @@ export class DesktopBrowserWindow extends EventEmitter {
 
     // register context menu (right click) handler
     this.window.webContents.on('context-menu', (event, params) => {
-      showContextMenu(event as IpcMainEvent, params);
+      showContextMenu(this.window.webContents, params);
     });
 
     this.window.webContents.on('before-input-event', (event, input) => {
@@ -274,7 +275,7 @@ export class DesktopBrowserWindow extends EventEmitter {
       logger().logDebug(`allowNavigation: disallowed protocol ${url}`);
       return false;
     }
-    
+
     // determine if this is a local request (handle internally only if local)
     const isLocal = isLocalUrl(targetUrl);
 

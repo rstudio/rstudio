@@ -8,6 +8,8 @@
     "buttonNo": "No"
   },
   "contextMenu": {
+    "back": "Back",
+    "forward": "Forward",
     "saveImageAsDots": "Save image as...",
     "saveImageAs": "Save image as",
     "copyImage": "Copy Image",
