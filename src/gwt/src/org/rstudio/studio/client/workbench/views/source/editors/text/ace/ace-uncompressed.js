@@ -46227,7 +46227,7 @@ EditSession.$uid = 0;
             id: id, 
             extraStyle: extraStyle
         };
-        
+
         if (inFront) {
             this.$frontMarkers[id] = marker;
             this._signal("changeFrontMarker");
@@ -62342,17 +62342,16 @@ var Marker = function(parentEl) {
                 var left = this.$padding + range.start.column * config.characterWidth;
                 marker.renderer(html, range, left, top, config);
             } else if (marker.type == "fullLine") {
-                console.log(" marker.extraStyle = " +  marker.extraStyle);
                 this.drawFullLineMarker(html, range, marker.clazz, config, marker.extraStyle);
             } else if (marker.type == "screenLine") {
-                this.drawScreenLineMarker(html, range, marker.clazz, config);
+                this.drawScreenLineMarker(html, range, marker.clazz, config, marker.extraStyle);
             } else if (range.isMultiLine()) {
                 if (marker.type == "text")
-                    this.drawTextMarker(html, range, marker.clazz, config);
+                    this.drawTextMarker(html, range, marker.clazz, config, marker.extraStyle);
                 else
-                    this.drawMultiLineMarker(html, range, marker.clazz, config);
+                    this.drawMultiLineMarker(html, range, marker.clazz, config, marker.extraStyle);
             } else {
-                this.drawSingleLineMarker(html, range, marker.clazz + " ace_start" + " ace_br15", config);
+                this.drawSingleLineMarker(html, range, marker.clazz + " ace_start" + " ace_br15", config, marker.extraStyle);
             }
         }
         if (this.i !=-1) {
