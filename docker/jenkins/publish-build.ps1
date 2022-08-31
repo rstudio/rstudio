@@ -88,7 +88,7 @@ $base64 = [System.Convert]::ToBase64String($bytes)
 
 # Prepare the payload for the Github API
 $payload = @"
-{ "message": "Add $flower build $version in $build", "content": "$base64", "sha": "$sha256" }
+{ "message": "Add $flower build $version in $build", "content": "$base64" }
 "@
 Write-Host "Sending to Github: $payload"
 
