@@ -246,6 +246,8 @@ export class Application implements AppState {
     // effectively Chromium's own "enhanced" version of an iframe. However, we
     // use these just because we rely on some navigation behaviors not yet
     // exposed by Electron for iframes.
+    //
+    // https://github.com/rstudio/rstudio/issues/11611
     app.on('web-contents-created', (event, webContents) => {
 
       if (webContents.getType() === 'webview') {
