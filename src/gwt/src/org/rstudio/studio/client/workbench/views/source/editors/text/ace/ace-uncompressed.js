@@ -46243,7 +46243,7 @@ EditSession.$uid = 0;
             id: id, 
             extraStyle: extraStyle
         };
-        
+
         if (inFront) {
             this.$frontMarkers[id] = marker;
             this._signal("changeFrontMarker");
