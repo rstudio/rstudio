@@ -185,7 +185,7 @@ private:
 class CGroupsMemoryProvider : public LinuxMemoryProvider
 {
 public:
-   CGroupsMemoryProvider(const std::string& path)
+   CGroupsMemoryProvider(const std::string& path) : isV2_(false)
    {
       // In some environments, scoped memory stats are available in e.g.,
       //
@@ -196,24 +196,45 @@ public:
       //
       // /sys/fs/cgroup/memory/memory.usage_in_bytes
       //
+      // For those using cgroups v2, all stats are under the same unified
+      // heirarchy, e.g.
+      //
+      // /sys/fs/cgroup/user.slice/user-1000.slice/user@1000.service/memory.max
+      //
       // Check to see whether the path we read from the process's cgroup file
       // exists. If it does, we can read scoped memory stats.
-      FilePath statPath("/sys/fs/cgroup/memory" + path);
-      if (statPath.exists())
+      if (FilePath("/sys/fs/cgroup/memory" + path).exists())
       {
          // Use scoped memory stats
-         path_ = path;
+         path_ = FilePath("/sys/fs/cgroup/memory" + path);
+      }
+      else if (FilePath("/sys/fs/cgroup" + path).exists())
+      {
+         // Use cgroups v2 stats
+         path_ = FilePath("/sys/fs/cgroup" + path);
+         isV2_ = true;
       }
       else
       {
-         // Use system memory stats
-         path_ = "";
+         // Container runtimes using cgroups v1 do not use namespacing, so the
+         // cgroup path entries in /proc/self/cgroup will not exist. When this
+         // occurs, we default to /sys/fs/cgroup/memory, which is the mount path
+         // of the v1 memory cgroup most container runtimes use.
+         path_ = FilePath("/sys/fs/cgroup/memory");
       }
    }
 
    Error getTotalMemoryUsed(long *pUsedKb, MemoryProvider *pProvider)
    {
-      Error error = getCgroupMemoryStat("memory.usage_in_bytes", pUsedKb); 
+      Error error;
+      if (!isV2_)
+      {
+         error = getCgroupMemoryStat("memory.usage_in_bytes", pUsedKb);
+      }
+      else
+      {
+         error = getCgroupMemoryStat("memory.current", pUsedKb);
+      }
       if (!error)
       {
          *pProvider = MemoryProviderLinuxCgroups;
@@ -223,7 +244,25 @@ public:
 
    Error getTotalMemory(long *pTotalKb, MemoryProvider *pProvider)
    {
-      Error error = getCgroupMemoryStat("memory.limit_in_bytes", pTotalKb); 
+      Error error;
+      if (!isV2_)
+      {
+         error = getCgroupMemoryStat("memory.limit_in_bytes", pTotalKb);
+      }
+      else
+      {
+         // cgroups v2 furnishes both a soft and a hard memory limit; we need to
+         // check them both.
+         error = getCgroupMemoryStat("memory.high", pTotalKb);
+         if (error)
+         {
+           return error;
+         }
+         if (*pTotalKb == LONG_MAX) // check the hard limit
+         {
+            error = getCgroupMemoryStat("memory.max", pTotalKb);
+         }
+      }
       if (!error)
       {
          *pProvider = MemoryProviderLinuxCgroups;
@@ -231,11 +270,12 @@ public:
       return error;
    }
 
-   // Gets a memory value from cgroup virtual file
-   Error getCGroupMemoryValue(const std::string&key, std::string *pValue)
+private:
+   // Gets a memory statistic from cgroup virtual file
+   Error getCgroupMemoryStat(const std::string& key, long *pValue)
    {
       // Attempt to read the statistic from the file.
-      FilePath statPath = FilePath("/sys/fs/cgroup/memory" + path_).completePath(key);
+      FilePath statPath = path_.completePath(key);
       std::string val;
       Error error = readStringFromFile(statPath, &val);
       if (error)
@@ -245,21 +285,15 @@ public:
 
       // Remove whitespace; these virtual files usually end with a newline
       val = string_utils::trimWhitespace(val);
-      *pValue = val;
 
-      return Success();
-   }
-
-private:
-   // Gets a memory statistic from cgroup virtual file
-   Error getCgroupMemoryStat(const std::string& key, long *pValue)
-   {
-      // Get the raw value from the file
-      std::string val;
-      Error error = getCGroupMemoryValue(key, &val);
-      if (error)
+      if (val == "9223372036854771712" || val == "max")
       {
-         return error;
+         // The number above is a special value indicating no memory limit (it
+         // is roughly the maximum int64 value), which is used for cgroups v1.
+         // Under cgroups v2, the value will be the literal string "max"
+         // instead.
+         *pValue = LONG_MAX;
+         return Success();
       }
 
       // Attempt to convert the file's contents to a stat
@@ -280,7 +314,8 @@ private:
       return Success();
    }
 
-   std::string path_;
+   FilePath path_;
+   bool isV2_;
 };
 
 // Returns the memory cgroup path.
@@ -306,6 +341,9 @@ std::string getMemoryCgroup()
    // Loop through lines in cgroup file. We're trying to figure out where our memory entry is.
    // It looks like this:
    // 9:memory:/user.slice/user-1000.slice/user@1000.service
+   //
+   // When using cgroups v2, it looks instead like this:
+   // 0::/user.slice/user-1000.slice/user@1000.service
    try
    {
       while (!pCgroupStream->eof())
@@ -321,6 +359,12 @@ std::string getMemoryCgroup()
          if (entries.size() != 3)
          {
             continue;
+         }
+
+         // cgroups v2; everything is under one heirarchy.
+         if (entries[0] == "0")
+         {
+            return entries[2];
          }
 
          // We are only interested in the "memory" entry.
@@ -366,18 +410,16 @@ boost::shared_ptr<LinuxMemoryProvider> getMemoryProvider()
             boost::make_shared<CGroupsMemoryProvider>(cgroup);
 
          // Check memory limit
-         std::string val;
-         Error error = provider->getCGroupMemoryValue("memory.limit_in_bytes", &val);
+         long totalKb;
+         MemoryProvider tmpProvider;
+         Error error = provider->getTotalMemory(&totalKb, &tmpProvider);
 
          if (error)
          {
             LOG_ERROR(error);
          }
-         else if (val != "9223372036854771712")
+         else if (totalKb != LONG_MAX) // i.e. no limitation via cgroups
          {
-            // The above is a special value indicating no memory limit (it is
-            // roughly the maximum int64 value). If we don't find it, we can use
-            // the cgroup to provide a memory limit.
             s_provider = provider;
          }
       }

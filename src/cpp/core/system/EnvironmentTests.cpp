@@ -108,8 +108,12 @@ test_context("Resources")
       expect_true(total > used);
 
       // It'd also be weird if the process used more memory than the total
-      // amount of used memory
-      expect_true(used > process);
+      // amount of used memory -- well, except in the presence of cgroups. See
+      // https://github.com/rstudio/rstudio/issues/9353
+      if (provider != MemoryProviderLinuxCgroups)
+      {
+         expect_true(used > process);
+      }
    }
 }
 
