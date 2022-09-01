@@ -22,15 +22,10 @@ import org.rstudio.core.client.dom.DomUtils;
 import org.rstudio.core.client.dom.IFrameElementEx;
 import org.rstudio.core.client.dom.WindowEx;
 
-import com.google.gwt.dom.client.Document;
-import com.google.gwt.dom.client.IFrameElement;
 import com.google.gwt.user.client.ui.Frame;
-import com.google.gwt.user.client.ui.Widget;
-
 import org.rstudio.studio.client.application.Desktop;
-import org.rstudio.studio.client.workbench.views.viewer.ViewerPane;
 
-public class RStudioFrame extends Frame implements ViewerPane.Display
+public class RStudioFrame extends Frame
 {
    public RStudioFrame(String title)
    {
@@ -44,12 +39,11 @@ public class RStudioFrame extends Frame implements ViewerPane.Display
    
    public RStudioFrame(String title, String url, boolean sandbox, String sandboxAllow)
    {
+      super();
       if (sandbox)
          getElement().setAttribute("sandbox", StringUtil.notNull(sandboxAllow));
-      
       if (url != null)
          setUrl(url);
-      
       setTitle(title);
    }
    
@@ -113,35 +107,5 @@ public class RStudioFrame extends Frame implements ViewerPane.Display
       {
          super.setUrl(url);
       }
-   }
-
-   @Override
-   public String getCurrentUrl()
-   {
-      return getWindowUrl();
-   }
-
-   @Override
-   public void reload()
-   {
-      getContentWindow().reload();
-   }
-   
-   @Override
-   public WindowEx getContentWindow()
-   {
-      return getIFrame().getContentWindow();
-   }
-
-   @Override
-   public Document getContentDocument()
-   {
-      return getIFrame().getContentDocument();
-   }
-
-   @Override
-   public Widget getWidget()
-   {
-      return this;
    }
 }

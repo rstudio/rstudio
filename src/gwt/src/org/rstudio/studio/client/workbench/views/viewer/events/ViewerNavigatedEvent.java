@@ -15,7 +15,6 @@
 package org.rstudio.studio.client.workbench.views.viewer.events;
 
 import org.rstudio.core.client.widget.RStudioFrame;
-import org.rstudio.studio.client.workbench.views.viewer.ViewerPane;
 
 import com.google.gwt.event.shared.EventHandler;
 import com.google.gwt.event.shared.GwtEvent;
@@ -27,7 +26,7 @@ public class ViewerNavigatedEvent extends GwtEvent<ViewerNavigatedEvent.Handler>
       void onViewerNavigated(ViewerNavigatedEvent event);
    }
 
-   public ViewerNavigatedEvent(String url, ViewerPane.Display frame)
+   public ViewerNavigatedEvent(String url, RStudioFrame frame)
    {
       url_ = url;
       frame_ = frame;
@@ -38,7 +37,7 @@ public class ViewerNavigatedEvent extends GwtEvent<ViewerNavigatedEvent.Handler>
       return url_;
    }
 
-   public ViewerPane.Display getFrame()
+   public RStudioFrame getFrame()
    {
       return frame_;
    }
@@ -56,7 +55,7 @@ public class ViewerNavigatedEvent extends GwtEvent<ViewerNavigatedEvent.Handler>
    }
 
    private final String url_;
-   private final ViewerPane.Display frame_;
+   private final RStudioFrame frame_;
 
    public static final Type<Handler> TYPE = new Type<>();
 }

@@ -12,32 +12,24 @@
  */
 package org.rstudio.studio.client.workbench.views.viewer;
 
-import com.google.gwt.dom.client.Document;
-import com.google.gwt.dom.client.Element;
 import com.google.gwt.dom.client.Style.Unit;
 import com.google.gwt.event.dom.client.LoadHandler;
 import com.google.gwt.event.shared.HandlerRegistration;
 import com.google.gwt.user.client.Timer;
-import com.google.gwt.user.client.Window;
 import com.google.gwt.user.client.ui.CheckBox;
 import com.google.gwt.user.client.ui.Widget;
 import com.google.inject.Inject;
 import com.google.inject.Provider;
 
 import org.rstudio.core.client.HtmlMessageListener;
-import org.rstudio.core.client.BrowseCap;
 import org.rstudio.core.client.CommandWithArg;
 import org.rstudio.core.client.Size;
 import org.rstudio.core.client.StringUtil;
 import org.rstudio.core.client.URIConstants;
 import org.rstudio.core.client.URIUtils;
-import org.rstudio.core.client.dom.DocumentEx;
-import org.rstudio.core.client.dom.IFrameElementEx;
-import org.rstudio.core.client.dom.WindowEx;
 import org.rstudio.core.client.files.FileSystemItem;
 import org.rstudio.core.client.resources.ImageResource2x;
 import org.rstudio.core.client.widget.RStudioFrame;
-import org.rstudio.core.client.widget.RStudioWebview;
 import org.rstudio.core.client.widget.Toolbar;
 import org.rstudio.core.client.widget.ToolbarButton;
 import org.rstudio.core.client.widget.ToolbarMenuButton;
@@ -46,7 +38,6 @@ import org.rstudio.studio.client.application.Desktop;
 import org.rstudio.studio.client.application.events.EventBus;
 import org.rstudio.studio.client.common.AutoGlassPanel;
 import org.rstudio.studio.client.common.GlobalDisplay;
-import org.rstudio.studio.client.common.Timers;
 import org.rstudio.studio.client.common.filetypes.FileTypeRegistry;
 import org.rstudio.studio.client.common.icons.StandardIcons;
 import org.rstudio.studio.client.plumber.model.PlumberAPIParams;
@@ -67,24 +58,6 @@ import org.rstudio.studio.client.workbench.views.viewer.quarto.QuartoConnection;
 
 public class ViewerPane extends WorkbenchPane implements ViewerPresenter.Display
 {
-   public interface Display
-   {
-      String getTitle();
-      String getUrl();
-      void setUrl(String url);
-      String getCurrentUrl();
-      void reload();
-      
-      IFrameElementEx getIFrame();
-      WindowEx getContentWindow();
-      Document getContentDocument();
-      
-      Element getElement();
-      Widget getWidget();
-      
-      HandlerRegistration addLoadHandler(LoadHandler handler);
-   }
-   
    @Inject
    public ViewerPane(Commands commands,
                      GlobalDisplay globalDisplay,
@@ -208,19 +181,11 @@ public class ViewerPane extends WorkbenchPane implements ViewerPresenter.Display
    @Override
    protected Widget createMainWidget()
    {
-      if (BrowseCap.isElectron())
-      {
-         frame_ = new RStudioWebview(constants_.viewerPaneTitle());
-      }
-      else
-      {
-         frame_ = new RStudioFrame(constants_.viewerPaneTitle());
-      }
-      
-      frame_.getWidget().setSize("100%", "100%");
-      frame_.getWidget().addStyleName("ace_editor_theme");
+      frame_ = new RStudioFrame(constants_.viewerPaneTitle());
+      frame_.setSize("100%", "100%");
+      frame_.addStyleName("ace_editor_theme");
       navigate(URIConstants.ABOUT_BLANK, false);
-      return new AutoGlassPanel(frame_.getWidget());
+      return new AutoGlassPanel(frame_);
    }
 
    @Override
@@ -317,15 +282,15 @@ public class ViewerPane extends WorkbenchPane implements ViewerPresenter.Display
          globalDisplay_.openWindow(quartoConnection_.getUrl());
       }
       else if (frame_ != null &&
-          frame_.getCurrentUrl() != null &&
-          !StringUtil.equals(urlWithoutHash(frame_.getCurrentUrl()), 
+          frame_.getIFrame().getCurrentUrl() != null &&
+          !StringUtil.equals(urlWithoutHash(frame_.getIFrame().getCurrentUrl()), 
                              urlWithoutHash(getUrl())))
       {
          // Typically we navigate to the unmodified URL (i.e. without the
          // viewer_pane=1 query params, etc.) However, if the URL currently
          // loaded in the frame is different, the user probably navigated away
          // from original URL, so load that URL as-is.
-         globalDisplay_.openWindow(frame_.getCurrentUrl());
+         globalDisplay_.openWindow(frame_.getIFrame().getCurrentUrl());
       }
       else if (unmodifiedUrl_ != null)
       {
@@ -338,7 +303,7 @@ public class ViewerPane extends WorkbenchPane implements ViewerPresenter.Display
    {
       try
       {
-         frame_.reload();
+         frame_.getWindow().reload();
       }
       catch (Exception e)
       {
@@ -355,7 +320,13 @@ public class ViewerPane extends WorkbenchPane implements ViewerPresenter.Display
       if (srcFile != null)
       {
          fileTypeRegistry_.editFile(srcFile);
-         Timers.singleShot(200, () -> commands_.activateSource());
+         new Timer() {
+            @Override
+            public void run()
+            {
+               commands_.activateSource();
+            }
+         }.schedule(200);
       }
    }
 
@@ -368,9 +339,7 @@ public class ViewerPane extends WorkbenchPane implements ViewerPresenter.Display
    @Override
    public Size getViewerFrameSize()
    {
-      return new Size(
-            frame_.getWidget().getOffsetWidth(),
-            frame_.getWidget().getOffsetHeight());
+      return new Size(frame_.getOffsetWidth(), frame_.getOffsetHeight());
    }
 
    @Override
@@ -524,7 +493,7 @@ public class ViewerPane extends WorkbenchPane implements ViewerPresenter.Display
       OpenFile
    }
 
-   private Display frame_;
+   private RStudioFrame frame_;
    private String unmodifiedUrl_;
    private RmdPreviewParams rmdPreviewParams_;
    private final Commands commands_;
