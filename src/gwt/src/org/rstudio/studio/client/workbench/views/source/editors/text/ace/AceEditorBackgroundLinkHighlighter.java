@@ -483,7 +483,7 @@ public class AceEditorBackgroundLinkHighlighter
 
    private void onIssueHighlight(String line, int row)
    {
-      for (Match match = kIssueLinkPattern.match(line, 0);
+      for (Match match = ISSUE_LINK_PATTERN.match(line, 0);
            match != null;
            match = match.nextMatch())
       {
