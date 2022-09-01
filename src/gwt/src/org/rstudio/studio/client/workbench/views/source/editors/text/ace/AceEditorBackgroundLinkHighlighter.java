@@ -304,7 +304,7 @@ public class AceEditorBackgroundLinkHighlighter
 
          // special case when simple issue: #123
          // because this needs to query BugReports
-         if (remote == null && org_repo == null)
+         if (remote == null && orgRepo == null)
          {
             server_.getIssueUrl(url, new SimpleRequestCallback<String>()
             {
