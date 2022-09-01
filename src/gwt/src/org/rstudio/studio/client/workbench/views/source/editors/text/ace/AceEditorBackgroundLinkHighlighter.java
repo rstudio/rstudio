@@ -24,7 +24,6 @@ import org.rstudio.core.client.MapUtil;
 import org.rstudio.core.client.MapUtil.ForEachCommand;
 import org.rstudio.core.client.StringUtil;
 import org.rstudio.core.client.ListUtil.FilterPredicate;
-import org.rstudio.core.client.CommandWithArg;
 import org.rstudio.core.client.command.KeyboardShortcut;
 import org.rstudio.core.client.container.SafeMap;
 import org.rstudio.core.client.files.FileSystemItem;
@@ -65,7 +64,6 @@ import com.google.gwt.user.client.Timer;
 import com.google.gwt.user.client.Event.NativePreviewEvent;
 import com.google.gwt.user.client.Event.NativePreviewHandler;
 import com.google.inject.Inject;
-import com.google.inject.Provider;
 
 public class AceEditorBackgroundLinkHighlighter
       implements
@@ -156,10 +154,12 @@ public class AceEditorBackgroundLinkHighlighter
             
             if (fileType != null && fileType.isR())
                highlighters_.add(issueHighlighter());
-            
-            if (fileType != null && (fileType.isMarkdown() || fileType.isRmd()))
+            if (fileType != null && (fileType.isMarkdown() || fileType.isRmd())) 
+            {
+               highlighters_.add(issueHighlighter());
                highlighters_.add(markdownLinkHighlighter());
-
+            }
+            
             nextHighlightStart_ = 0;
             timer_.schedule(100);
          }
@@ -287,48 +287,47 @@ public class AceEditorBackgroundLinkHighlighter
 
       final String finalUrl = url;
       
-      // github issues for this package (uses BugReports)
-      Pattern reIssue = Pattern.create("^#[0-9]+$");
-      if (reIssue.test(url))
-      {
-         server_.getIssueUrl(url, new SimpleRequestCallback<String>()
-         {
-            @Override
-            public void onResponseReceived(String response)
-            {
-               if (response.length() > 0)
-                  globalDisplay_.openWindow(response); 
-               else 
-                  RStudioGinjector.INSTANCE.getGlobalDisplay().showErrorMessage(
-                     constants_.couldNotResolveIssue(finalUrl));
-            }
-         });
-
-         return;
-      }
-
-      // explicit issue:
+      // issue:
       // 
+      // - #123 
+      //
       // - tidyverse/dplyr#123
       // - github::tidyverse/dplyr#123
       // 
       // - gitlab::jimhester/covr#214
-      Pattern reSpecificIssue = createSpecificIssuePattern();
-      Match match = reSpecificIssue.match(url, 0);
+      Match match = ISSUE_LINK_PATTERN.match(url, 0);
       if (match != null)
       {
          String remote = match.getGroup(1);
-         String org = match.getGroup(2);
-         String repo = match.getGroup(3);
-         String issue = match.getGroup(4);
-         
+         String orgRepo = match.getGroup(2);
+         String issue = match.getGroup(3);
+
+         // special case when simple issue: #123
+         // because this needs to query BugReports
+         if (remote == null && orgRepo == null)
+         {
+            server_.getIssueUrl(url, new SimpleRequestCallback<String>()
+            {
+               @Override
+               public void onResponseReceived(String response)
+               {
+                  if (response.length() > 0)
+                     globalDisplay_.openWindow(response); 
+                  else 
+                     RStudioGinjector.INSTANCE.getGlobalDisplay().showErrorMessage(
+                        constants_.couldNotResolveIssue(finalUrl));
+               }
+            });
+            return;
+         }
+
          if (remote == null || StringUtil.equals(remote, "github::"))
          {
-            globalDisplay_.openWindow("https://www.github.com/" + org + "/" + repo + "/issues/" + issue);
+            globalDisplay_.openWindow("https://www.github.com/" + orgRepo + "/issues/" + issue);
          } 
          else if (StringUtil.equals(remote, "gitlab::"))
          {
-            globalDisplay_.openWindow("https://www.gitlab.com/" + org + "/" + repo + "/issues/" + issue);
+            globalDisplay_.openWindow("https://www.gitlab.com/" + orgRepo + "/issues/" + issue);
          }
          
          return;
@@ -484,26 +483,25 @@ public class AceEditorBackgroundLinkHighlighter
 
    private void onIssueHighlight(String line, int row)
    {
-      Pattern reIssueLink = createIssueLinkPattern();
-      for (Match match = reIssueLink.match(line, 0);
+      for (Match match = ISSUE_LINK_PATTERN.match(line, 0);
            match != null;
            match = match.nextMatch())
       {
-         int startIdx = match.getIndex() + 1;
-         int endIdx   = match.getIndex() + match.getValue().length() - 1;
+         int startIdx = match.getIndex();
+         int endIdx   = match.getIndex() + match.getValue().length();
 
+         if (startIdx > 0 && endIdx < line.length())
+         {
+            char before = line.charAt(startIdx - 1);
+            char after  = line.charAt(endIdx);
+         
+            // bail if the match is surrounded by quotes
+            // because this may be an hex color
+            if ( (before == '\'' || before == '"') && after == before)
+               continue;
+         }
          highlight(row, startIdx, endIdx);
       }
-   }
-
-   private static Pattern createIssueLinkPattern()
-   {
-      return Pattern.create("(?<=test_that.*)[(]((github|gitlab)::)?(?:[-a-zA-Z0-9.]+/[-a-zA-Z0-9.]+)?#[0-9]+[)]");
-   }
-
-   private static Pattern createSpecificIssuePattern()
-   {
-      return Pattern.create("((?:github|gitlab)::)?([^/]+)/([^#]+)#([0-9]+)");
    }
 
    private Highlighter markdownLinkHighlighter()
@@ -762,4 +760,7 @@ public class AceEditorBackgroundLinkHighlighter
    private FilesServerOperations server_;
    private UserPrefs userPrefs_;
    private static final ViewsSourceConstants constants_ = GWT.create(ViewsSourceConstants.class);
+
+   // constants
+   private static final Pattern ISSUE_LINK_PATTERN = Pattern.create("((?:github|gitlab)::)?([-a-zA-Z0-9.]+/[-a-zA-Z0-9.]+)?#([0-9]+)");
 }
