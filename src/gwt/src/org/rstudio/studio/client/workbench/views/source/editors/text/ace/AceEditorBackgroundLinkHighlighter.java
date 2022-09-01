@@ -762,5 +762,5 @@ public class AceEditorBackgroundLinkHighlighter
    private static final ViewsSourceConstants constants_ = GWT.create(ViewsSourceConstants.class);
 
    // constants
-   private static final Pattern ISSUE_LINK_PATTERN = Pattern.create("((?:github|gitlab)::)?([-a-zA-Z0-9.]+/[-a-zA-Z0-9.]+)?#([0-9]+)", "");
+   private static final Pattern ISSUE_LINK_PATTERN = Pattern.create("((?:github|gitlab)::)?([-a-zA-Z0-9.]+/[-a-zA-Z0-9.]+)?#([0-9]+)");
 }
