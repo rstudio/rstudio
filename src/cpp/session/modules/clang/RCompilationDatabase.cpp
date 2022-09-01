@@ -518,7 +518,7 @@ void RCompilationDatabase::updateForCurrentPackage()
          packageBuildFileHash == packageBuildFileHash_ &&
          compilerHash == compilerHash_ &&
          module_context::rVersion() == rVersion_;
-
+   
    if (isCurrent && !s_rebuildCompilationDatabase)
       return;
 
@@ -555,59 +555,37 @@ std::vector<std::string> RCompilationDatabase::compileArgsForPackage(
       const FilePath& srcDir,
       bool isCpp)
 {
-   // create a temp dir to call R CMD SHLIB within
-   FilePath tempDir = module_context::tempFile(kCompilationDbPrefix, "dir");
-   Error error = tempDir.ensureDirectory();
-   if (error)
-   {
-      LOG_ERROR(error);
-      return {};
-   }
-
-   static const boost::regex objectsRegex("^OBJECTS *=");
-
-   // copy Makevars to tempdir if it exists
-   FilePath makevarsPath = srcDir.completeChildPath("Makevars");
-   if (makevarsPath.exists())
-   {
-      std::string Makevars = file_utils::readFile(makevarsPath);
-      Makevars = boost::regex_replace(Makevars, objectsRegex, "zzzOBJECTS =");
-      
-      error = file_utils::writeFile(tempDir.completeChildPath("Makevars"), Makevars);
-      if (error)
-      {
-         LOG_ERROR(error);
-         return {};
-      }
-   }
-
-   FilePath makevarsWinPath = srcDir.completeChildPath("Makevars.win");
-   if (makevarsWinPath.exists())
-   {
-      std::string MakevarsWin = file_utils::readFile(makevarsWinPath);
-      MakevarsWin = boost::regex_replace(MakevarsWin, objectsRegex, "zzzOBJECTS =");
-      
-      error = file_utils::writeFile(tempDir.completeChildPath("Makevars.win"), MakevarsWin);
-      if (error)
-      {
-         LOG_ERROR(error);
-         return {};
-      }
-   }
-
+   
    // generate an appropriate name for the C++ source file.
    std::string ext = isCpp ? ".cpp" : ".c";
    std::string filename = kCompilationDbPrefix + core::system::generateUuid() + ext;
+   bool clean = true;
+
+   // but prefer any existing file 
+   std::vector<FilePath> children;
+   srcDir.getChildren(children);
+   for (const FilePath& child : children)
+   {
+      if (child.getExtension() == ext)
+      {
+         filename = child.getFilename();
+         clean = false;
+         break;
+      }
+   }
 
    // call R CMD SHLIB on a temp file to capture the compilation args
-   FilePath tempSrcFile = tempDir.completeChildPath(filename);
-   std::vector<std::string> compileArgs = argsForRCmdSHLIB(env, tempSrcFile);
+   FilePath srcFile = srcDir.completeChildPath(filename);
+   std::vector<std::string> compileArgs = argsForRCmdSHLIB(env, srcFile);
 
-   // remove the tempDir
-   error = tempDir.remove();
-   if (error)
-      LOG_ERROR(error);
-
+   // remove the srcFile if we had to make one
+   if (clean)
+   {
+      Error error = srcFile.remove();
+      if (error)
+         LOG_ERROR(error);
+   }
+   
    // diagnostics
    if (verbose(3))
    {
@@ -857,6 +835,8 @@ core::Error RCompilationDatabase::executeRCmdSHLIB(
    // set options and run
    core::system::ProcessOptions options;
    options.workingDir = srcPath.getParent();
+
+   core::system::setenv(&env, "MAKE", "make --always-make");
    options.environment = env;
    Error result = core::system::runCommand(
             rCmd.shellCommand(),
