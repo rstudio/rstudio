@@ -17,6 +17,7 @@ package org.rstudio.studio.client.common.codetools;
 import java.util.List;
 
 import org.rstudio.core.client.js.JsObject;
+import org.rstudio.studio.client.common.coverage.CodeCoverage;
 import org.rstudio.studio.client.server.*;
 import org.rstudio.studio.client.server.Void;
 import org.rstudio.studio.client.workbench.codesearch.model.CodeSearchServerOperations;
@@ -122,5 +123,9 @@ public interface CodeToolsServerOperations extends HelpServerOperations,
          String connection,
          SqlCompletionParseContext context,
          ServerRequestCallback<Completions> requestCallback);
+
+   void getCoverageInformation(
+         String path, 
+         ServerRequestCallback<CodeCoverage> requestCallback);
    
 }

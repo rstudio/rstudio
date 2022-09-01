@@ -47,6 +47,7 @@ import org.rstudio.studio.client.common.JSONUtils;
 import org.rstudio.studio.client.common.codetools.Completions;
 import org.rstudio.studio.client.common.console.ConsoleProcess;
 import org.rstudio.studio.client.common.console.ConsoleProcess.ConsoleProcessFactory;
+import org.rstudio.studio.client.common.coverage.CodeCoverage;
 import org.rstudio.studio.client.common.console.ConsoleProcessInfo;
 import org.rstudio.studio.client.common.crypto.PublicKeyInfo;
 import org.rstudio.studio.client.common.debugging.model.Breakpoint;
@@ -1160,6 +1161,16 @@ public class RemoteServer implements Server
             .get();
 
       sendRequest(RPC_SCOPE, SQL_GET_COMPLETIONS, params, requestCallback);
+   }
+
+   public void getCoverageInformation(String path, 
+                                      ServerRequestCallback<CodeCoverage> requestCallback)
+   {
+      JSONArray params = new JSONArrayBuilder()
+         .add(path)
+         .get();
+
+      sendRequest(RPC_SCOPE, GET_COVERAGE_INFORMATION, params, requestCallback);
    }
 
    public void getHelpAtCursor(String line, int cursorPos,
@@ -6947,6 +6958,8 @@ public class RemoteServer implements Server
    private static final String STAN_RUN_DIAGNOSTICS = "stan_run_diagnostics";
 
    private static final String SQL_GET_COMPLETIONS = "sql_get_completions";
+
+   private static final String GET_COVERAGE_INFORMATION = "coverage_get_information";
 
    private static final String GET_CPP_CAPABILITIES = "get_cpp_capabilities";
    private static final String INSTALL_BUILD_TOOLS = "install_build_tools";
