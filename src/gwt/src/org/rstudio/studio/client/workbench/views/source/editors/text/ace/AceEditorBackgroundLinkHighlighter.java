@@ -295,7 +295,7 @@ public class AceEditorBackgroundLinkHighlighter
       // - github::tidyverse/dplyr#123
       // 
       // - gitlab::jimhester/covr#214
-      Match match = kIssueLinkPattern.match(url, 0);
+      Match match = ISSUE_LINK_PATTERN.match(url, 0);
       if (match != null)
       {
          String remote = match.getGroup(1);
