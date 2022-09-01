@@ -299,7 +299,7 @@ public class AceEditorBackgroundLinkHighlighter
       if (match != null)
       {
          String remote = match.getGroup(1);
-         String org_repo = match.getGroup(2);
+         String orgRepo = match.getGroup(2);
          String issue = match.getGroup(3);
 
          // special case when simple issue: #123
