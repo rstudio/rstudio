@@ -137,6 +137,7 @@
 #include "modules/SessionHTMLPreview.hpp"
 #include "modules/SessionClipboard.hpp"
 #include "modules/SessionCodeSearch.hpp"
+#include "modules/SessionCodeCoverage.hpp"
 #include "modules/SessionConfigFile.hpp"
 #include "modules/SessionConsole.hpp"
 #include "modules/SessionCRANMirrors.hpp"
@@ -652,6 +653,7 @@ Error rInit(const rstudio::r::session::RInitInfo& rInitInfo)
       (modules::graphics::initialize)
       (modules::fonts::initialize)
       (modules::system_resources::initialize)
+      (modules::coverage::initialize)
 
       // workers
       (workers::web_request::initialize)

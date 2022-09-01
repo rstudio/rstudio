@@ -176,6 +176,7 @@ import org.rstudio.studio.client.workbench.views.source.editors.text.TextEditing
 import org.rstudio.studio.client.workbench.views.source.editors.text.TextEditingTargetRMarkdownHelper;
 import org.rstudio.studio.client.workbench.views.source.editors.text.ace.AceBackgroundHighlighter;
 import org.rstudio.studio.client.workbench.views.source.editors.text.ace.AceEditorBackgroundLinkHighlighter;
+import org.rstudio.studio.client.workbench.views.source.editors.text.ace.AceEditorCoverageHighlighter;
 import org.rstudio.studio.client.workbench.views.source.editors.text.cpp.CppCompletionManager;
 import org.rstudio.studio.client.workbench.views.source.editors.text.cpp.CppCompletionRequest;
 import org.rstudio.studio.client.workbench.views.source.model.CppCompletion;
@@ -291,6 +292,7 @@ public interface RStudioGinjector extends Ginjector
    void injectMembers(ChunkOptionsPopupPanel panel);
    void injectMembers(ChunkSatellite satellite);
    void injectMembers(AceEditorBackgroundLinkHighlighter highlighter);
+   void injectMembers(AceEditorCoverageHighlighter highlighter);
    void injectMembers(TextEditingTargetIdleMonitor monitor);
    void injectMembers(AceEditorIdleCommands commands);
    void injectMembers(EditingTargetInlineChunkExecution executor);
@@ -400,6 +402,6 @@ public interface RStudioGinjector extends Ginjector
    JobItemFactory getJobItemFactory();
    FocusVisiblePolyfill getFocusVisiblePolyfill();
    AriaLiveService getAriaLiveService();
-
+   
    // Pro-only below here
 }

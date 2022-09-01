@@ -166,6 +166,7 @@ set(SESSION_SOURCE_FILES
    modules/SessionCRANMirrors.cpp
    modules/SessionClipboard.cpp
    modules/SessionCrashHandler.cpp
+   modules/SessionCodeCoverage.cpp
    modules/SessionConsole.cpp
    modules/SessionCpp.cpp
    modules/SessionDependencies.cpp
