@@ -323,7 +323,7 @@ public class AceEditorBackgroundLinkHighlighter
 
          if (remote == null || StringUtil.equals(remote, "github::"))
          {
-            globalDisplay_.openWindow("https://www.github.com/" + org_repo + "/issues/" + issue);
+            globalDisplay_.openWindow("https://www.github.com/" + orgRepo + "/issues/" + issue);
          } 
          else if (StringUtil.equals(remote, "gitlab::"))
          {
