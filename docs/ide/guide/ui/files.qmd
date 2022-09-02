@@ -1,0 +1,45 @@
+---
+title: "Managing Files"
+---
+
+Created from <https://support.rstudio.com/hc/en-us/articles/200484448-Editing-and-Executing-Code-in-the-RStudio-IDE>
+
+RStudio supports syntax highlighting and other specialized code-editing features for:
+
+-   R, Python, and SQL scripts
+
+-   R Markdown, Quarto, and other markdown documents
+
+-   HTML files
+
+-   TeX documents
+
+-   and many more
+
+## File Menu
+
+To create a new file you use the **File -\> New File** menu:
+
+![https://support.rstudio.com/hc/en-us/article_attachments/201460948/Screen_Shot_2015-04-02_at_3.55.43_PM.png](images/system-files-menu.png){alt=""}
+
+An alternative workflow is to use the visual elements in the RStudio menu.
+
+![](images/files-menu.png)
+
+To open an existing file you use either the **File -\> Open File\...** menu or the **Recent Files** menu to select from recently opened files.
+
+## Files tab
+
+The **Output** pane has a **Files** tab that includes several buttons for managing files within the currently selected folder.
+
+![](images/file-pane-blank-file.png)
+
+## Switching files
+
+If you open several files within RStudio they are all available as tabs within the **Source** pane to facilitate quick switching between open documents. If you have a large number of open documents you can also navigate between them using the "**\>\>"** icon on the tab bar or the **View -\> Switch to Tab\...**) menu item:
+
+![](images/file-switch.png "Image: http://www.rstudio.com/images/docs/source_tabs.png"){alt="" width="500"}
+
+You can quickly navigate to an existing file in the current RStudio Project via the <kbd>Ctrl + .</kbd> shortcut which will bring up the **Go to File/Function** search bar with auto-completion of file names.
+
+![](images/go-to-file.png){width="350"}

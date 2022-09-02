@@ -1,0 +1,49 @@
+# Jobs in action
+
+Copied from: <https://solutions.rstudio.com/r/jobs/>
+
+[RStudio 1.2](https://www.rstudio.com/products/rstudio/) introduced the ability to send long running R scripts to [local and remote background jobs](https://www.rstudio.com/blog/rstudio-1-2-jobs/). This functionality can dramatically improve the productivity of data scientists and analysts using R since they can continue working in RStudio while jobs are running in the background.
+
+Local background jobs are supported by all versions of the RStudio, server and desktop. Remote background jobs are a feature of [RStudio Workbench](https://www.rstudio.com/products/workbench/) and are orchestrated by the [Launcher](https://docs.rstudio.com/job-launcher/), which also supports running interactive sessions on remote resource managers like [Kubernetes](https://kubernetes.io/). More information about setting up and adminstering the Launcher can be found [here](https://solutions.rstudio.com/launcher/overview).
+
+Background jobs can be started manually or programatically. As mentioned in the [RStudio blog post](https://www.rstudio.com/blog/rstudio-1-2-jobs/), local background jobs are ideal for interactive, ad-hoc usage. The [`callr`](https://callr.r-lib.org/) package provides a mechanism for programatically orchestrating background R processes.
+
+![](https://solutions.rstudio.com/r/jobs/images/use-cases.drawio.svg){alt=""}
+
+------------------------------------------------------------------------
+
+## Shiny App
+
+Running a [Shiny](http://shiny.rstudio.com/) application as a local background job allows the current R session to remain free to work on other things. This can be especially helpful for making changes to the Shiny code and seeing the changes in real time.
+
+![](https://solutions.rstudio.com/r/jobs/images/shiny.gif){alt=""}
+
+## Plumber API
+
+Similar to Shiny applications, [plumber](https://www.rplumber.io/) APIs can be run as a local background job. This allows the current R session to remain open for things like testing or interacting with the API.
+
+![](https://solutions.rstudio.com/r/jobs/images/plumber.gif){alt=""}
+
+## Extract, Transform, Load (ETL)
+
+Background and Launcher jobs are ideal for long running processes, like loading data from an external database or API.
+
+![](https://solutions.rstudio.com/r/jobs/images/etl.gif){alt=""}
+
+## Simulations
+
+Long running tasks like simulation studies can be run as background or Launcher jobs in order to keep the original R session open for other work.
+
+![](https://solutions.rstudio.com/r/jobs/images/simulation-launcher.gif){alt=""}
+
+## Model Training
+
+Model training, which can often take a long time, is another great use case for background and Launcher jobs. Local jobs are ideal for sequential model training while Launcher jobs can be used to train multiple models in parallel.
+
+![](https://solutions.rstudio.com/r/jobs/images/ames.gif){alt=""}
+
+## Programmatic Jobs
+
+The [`rstudioapi`](https://github.com/rstudio/rstudioapi) package provides tools for programmatically creating local and Launcher jobs.
+
+![](https://solutions.rstudio.com/r/jobs/images/programmatic.gif){alt=""}

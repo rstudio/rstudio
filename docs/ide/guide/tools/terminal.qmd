@@ -1,0 +1,95 @@
+---
+title: "Terminal"
+---
+
+Adapted from: <https://support.rstudio.com/hc/en-us/articles/115010737148-Using-the-RStudio-Terminal-in-the-RStudio-IDE>
+
+!!!NOTE LEFT OUT APPENDIX AND ADVANCED SECTIONS
+
+The RStudio terminal provides access to the system shell from within the RStudio. It supports full-screen terminal applications such as vim, Emacs, and tmux as, well as regular command-line operations with line-editing and shell history.
+
+Potential uses of the shell including advanced source control operations, execution of long-running jobs, remote logins, system administration of RStudio Workbench or RStudio Server, and the aforementioned full-screen terminal programs.
+
+This article does not attempt to cover fundamentals on when and how to use a system shell. Instead, it focuses on the features, design, options, and limitations of the RStudio terminal feature itself.
+
+Unlike most RStudio features, the nature of the terminal leads to several platform-specific differences. These primarily break down into two categories: Windows, and everything else (Mac, Linux, and Server). [Appendix A](https://support.rstudio.com/hc/en-us/articles/115010737148-Using-the-RStudio-Terminal-in-the-RStudio-IDE#appendixa) provides a summary.
+
+## Getting Started
+
+The **Terminal tab** is next to the **Console tab**. Click on the Terminal tab and a new terminal session will be created (if there isn't one already).
+
+-   If the tab isn't visible, show it via **Shift+Alt+T** (**Tools-\>Terminal-\>Move Focus to Terminal**).
+
+-   The full list of terminal-related RStudio commands and keyboard shortcuts is in [Appendix B](https://support.rstudio.com/hc/en-us/articles/115010737148-Using-the-RStudio-Terminal-in-the-RStudio-IDE#appendixb). Most terminal-related commands can be found on the **Terminal dropdown** menu in the terminal pane, and on the **Tools-\>Terminal** menu.
+
+Here's a terminal with the output of simple command:
+
+![](images/terminal-basic.png){fig-alt="screenshot of terminal showing simple output"}
+
+The visual appearance of the terminal is controlled via the **Tools-\>Global Options-\>Appearance** settings. 
+
+## Multiple Terminals
+
+RStudio supports multiple terminal sessions. To start another terminal session, use the **New Terminal** command on the Terminal dropdown menu, or **Alt+Shift+R**.
+
+![](images/terminal-menu.png){fig-alt="screenshot showing terminal menu opened"}
+
+Each terminal session is independent, with its own system shell process and buffer. Switch between them by **(1)** using the arrows next to the drop-down menu, **(2)** clicking on the terminal's name in the drop-down, or **(3)** using the **Previous Terminal**/**Next Terminal** drop-down menu commands. The dropdown button shows the name of the currently selected terminal session ("Terminal 3" in the following screenshot):
+
+![](images/terminal-menu-labeled.png){fig-alt="screenshot showing navigation between multiple terminals"}
+
+\
+Terminal Names
+
+Terminal sessions have a default name, "Terminal 1", "Terminal 2", and so on. Rename the current terminal via the **Rename Terminal** command on the drop-down. 
+
+Thus, in your workflow, you can create multiple terminals and give them meaningful names to simplify navigation. A collection of named terminals, or "terminal set", is generally associated with an RStudio project. For more details, see [Terminal Architecture and Lifetime](https://support.rstudio.com/hc/en-us/articles/115010737148-Using-the-RStudio-Terminal-in-the-RStudio-IDE#lifetime).
+
+An alternative (or complementary) approach is to use a terminal multiplexer as described in [Advanced - Using Tmux or Screen](https://support.rstudio.com/hc/en-us/articles/115010737148-Using-the-RStudio-Terminal-in-the-RStudio-IDE#tmux).
+
+## Execute in Terminal
+
+When editing files in the RStudio editor, any selection (or the current line if nothing is selected) can be sent to the active terminal via **Ctrl+Alt+Enter** (also **Cmd+Alt+Enter** on the Mac). If a single-line was sent to the terminal the cursor will advance automatically to the next line, allowing single-stepping.
+
+In following example, a simple Python source file was loaded, a Python interpreter started in the current terminal, and Ctrl+Alt+Enter used to step through the script:
+
+![](images/terminal-python.png){fig-alt="screenshot of a simple Python repl example"}
+
+This is just an example; for more powerful integrated Python support [look at the reticulate package](https://rstudio.github.io/reticulate/).
+
+If a shell file is being edited (*\*.sh*), **Ctrl+Enter** (plus **Cmd+Enter** on Mac) can be used to single-step, as can the **Run** toolbar button. This will also work on Windows, but no check is done that the shell-type loaded in the active terminal session matches the commands being sent.
+
+\
+![](images/terminal-shell.png){fig-alt="screenshot example of running a shell script"} 
+
+Note that the **Run Script** button does the same as prior versions of RStudio, and will save and run the entire script via **system()** in the R Console. This button does not appear in Windows.
+
+## Busy Terminals
+
+Programs running in a terminal do not block the rest of the RStudio user-interface, so work can continue working in RStudio even when one or more terminal sessions have a child process running.
+
+A terminal with child processes is considered *busy* by RStudio, and will have **(busy)** next to its name, and the close \[x\] changes to a **stop** button.
+
+![screenshot showing a busy terminal](images/terminal-sleep.png){fig-alt="screenshot showing a busy terminal"}
+
+This "busy detection" feature is only available on Mac, Linux, and RStudio Workbench / RStudio Server and not on Windows. See [Appendix A - Platform Specifics](https://support.rstudio.com/hc/en-us/articles/115010737148-Using-the-RStudio-Terminal-in-the-RStudio-IDE#appendixa) for more details.
+
+## Closing Terminal Sessions
+
+To close a terminal session, use the **Close Terminal** command on the Terminal dropdown menu, click the \[x\] on the far-right of the Terminal pane toolbar, or type **exit** from within the shell itself.
+
+As discussed earlier, if a terminal is currently busy, the \[x\] changes to a **stop** **button**.
+
+Clicking the **stop button** will trigger the **Interrupt Current Terminal** command, sending an interrupt to the terminal; this may close the currently running program (the program itself decides what to do when receiving an interrupt), but will not close the terminal.
+
+Finally, if the terminal feature it not useful to your workflow, you can remove the tab altogether by clicking the \[x\] on the Terminal tab itself. This will close all running terminal sessions, including any custom-named terminal sessions. Subsequent instances of RStudio will not show the Terminal tab: to bring it back, use **Shift+Alt+T** (**Tools-\>Terminal-\>Move Focus to Terminal**).
+
+## Terminal Buffer
+
+The terminal buffer keeps the last 1000 lines of output when running non-full-screen terminal programs. You can scroll through this buffer using the scrollbars (via the mouse) or a mouse-wheel if your system supports it. Full-screen programs typically have their own built-in buffers and navigation conventions.
+
+Clearing the display with the native shell command (e.g. **clear** for a Posix-style shell, **cls** for a Windows Command Prompt, or **Clear-Host** for PowerShell) will only clear the visible portion of the buffer. To clear the entire buffer, use **Ctrl+L** when focus is in the terminal.
+
+The mouse can be used to select text in the terminal so it can be copied & pasted elsewhere.
+
+To send the entire terminal buffer to a new RStudio editor buffer, use the **Copy Terminal to Editor** command on the terminal drop-down menu.
