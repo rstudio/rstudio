@@ -20,7 +20,7 @@ import { logger } from '../core/logger';
 import { WaitResult, WaitTimeoutFn, waitWithTimeout } from '../core/wait-utils';
 
 /**
- * 
+ *
  * @param url the URL to check
  * @returns true if is an about: url
  */
@@ -49,23 +49,33 @@ export function isChromeGpuUrl(url: string): boolean {
 
 /**
  * Checks the `url` if it is local
- * 
+ *
  * @param url the URL to check
  * @returns true if it is local
  */
-export function isLocalUrl(url: URL) {
-  const host = url.hostname;
+export function isLocalUrl(url: URL | string) {
 
+  if (typeof url === 'string') {
+    url = new URL(url);
+  }
+
+  const host = url.hostname;
   return host === 'localhost' || host === '127.0.0.1' || host === '[::1]';
+
 }
 
 /**
  * Checks the `url` if it is allowed
- * 
+ *
  * @param url the URL to check
  * @returns true if the protocol is allowed
  */
-export function isAllowedProtocol(url: URL) {
+export function isAllowedProtocol(url: URL | string) {
+
+  if (typeof url === 'string') {
+    url = new URL(url);
+  }
+
   const protocol = url.protocol;
   const allowedProtocols = [
     'http:',
@@ -73,7 +83,9 @@ export function isAllowedProtocol(url: URL) {
     'mailto:',
     'data:',
   ];
+
   return allowedProtocols.includes(protocol);
+
 }
 
 /**
