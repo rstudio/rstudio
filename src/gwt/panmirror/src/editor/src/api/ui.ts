@@ -119,6 +119,7 @@ export interface EditorUIMath {
 export interface EditorDisplay {
   openURL: (url: string) => void;
   navigateToXRef: (file: string, xref: XRef) => void;
+  navigateToFile: (file: string) => void;
   showContextMenu?: (items: EditorMenuItem[], clientX: number, clientY: number) => Promise<boolean>;
 }
 

@@ -48,6 +48,15 @@ public class PanmirrorUIDisplay {
    
    public NavigateToXRef navigateToXRef;
    
+   public NavigateToFile navigateToFile;
+   
+   
+   @JsFunction
+   public interface NavigateToFile
+   {
+      void navigate(String file);
+   }
+   
    @JsFunction
    public interface NavigateToXRef
    {

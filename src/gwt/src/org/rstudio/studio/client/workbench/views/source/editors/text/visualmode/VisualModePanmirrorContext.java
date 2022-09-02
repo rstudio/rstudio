@@ -32,6 +32,7 @@ import org.rstudio.studio.client.application.Desktop;
 import org.rstudio.studio.client.application.events.EventBus;
 import org.rstudio.studio.client.common.FilePathUtils;
 import org.rstudio.studio.client.common.SimpleRequestCallback;
+import org.rstudio.studio.client.common.filetypes.events.OpenSourceFileEvent;
 import org.rstudio.studio.client.panmirror.PanmirrorContext;
 import org.rstudio.studio.client.panmirror.ui.PanmirrorUIContext;
 import org.rstudio.studio.client.panmirror.ui.PanmirrorUIDisplay;
@@ -304,6 +305,23 @@ public class VisualModePanmirrorContext
       {
          FileSystemItem srcFile = FileSystemItem.createFile(file);
          events_.fireEvent(new XRefNavigationEvent(xref, srcFile, true));
+      };
+      uiDisplay.navigateToFile = (String file) -> {
+         if (this.docUpdateSentinel_.getPath() != null)
+         {
+            // only navigate in website projects
+            QuartoConfig config = sessionInfo_.getQuartoConfig();
+            FileSystemItem projectDir = FileSystemItem.createDir(config.project_dir);
+            FileSystemItem editorFile = FileSystemItem.createFile(this.docUpdateSentinel_.getPath());
+            if (QuartoHelper.isQuartoWebsiteDoc(editorFile.getPath(), config))
+            {
+               // absolute links go relative to website root
+               FileSystemItem targetFile = FileSystemItem.createFile(file.startsWith("/") 
+                  ? projectDir.completePath(file.substring(1))
+                  : editorFile.getParentPath().completePath(file));
+               events_.fireEvent(new OpenSourceFileEvent(targetFile));   
+            }
+         }        
       };
 
       return uiDisplay;

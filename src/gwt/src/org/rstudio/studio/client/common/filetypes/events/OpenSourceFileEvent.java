@@ -73,6 +73,11 @@ public class OpenSourceFileEvent extends CrossWindowEvent<OpenSourceFileEvent.Ha
       );
          
    }
+   
+   public OpenSourceFileEvent(FileSystemItem file)
+   {
+      this(file, RStudioGinjector.INSTANCE.getFileTypeRegistry().getTextTypeForFile(file));  
+   }
 
    public OpenSourceFileEvent(FileSystemItem file, TextFileType fileType)
    {

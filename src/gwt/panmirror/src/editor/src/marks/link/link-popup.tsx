@@ -34,6 +34,7 @@ import { Popup } from '../../api/widgets/popup';
 import { EditorNavigation, NavigationType } from '../../api/navigation';
 import { Schema } from 'prosemirror-model';
 import { textPopupDecorationPlugin, TextPopupTarget } from '../../api/text-popup';
+import { isHttpURL } from '../../api/url';
 
 export function linkPopupPlugin(
   schema: Schema,
@@ -96,8 +97,10 @@ const LinkPopup: React.FC<LinkPopupProps> = props => {
       props.nav.navigate(NavigationType.Heading, props.link.heading);
     } else if (props.link.href.startsWith('#')) {
       props.nav.navigate(NavigationType.Href, props.link.href.substr(1));
-    } else {
+    } else if (isHttpURL(props.link.href)) {
       props.ui.display.openURL(props.link.href);
+    } else {
+      props.ui.display.navigateToFile(props.link.href);
     }
   };
 
