@@ -50,7 +50,7 @@ using namespace rstudio::core;
 using namespace rstudio::core::libclang;
 using namespace boost::placeholders;
 
-#define kCompilationDatabaseVersion 2
+#define kCompilationDatabaseVersion 3
 
 namespace rstudio {
 namespace session {
@@ -559,33 +559,11 @@ std::vector<std::string> RCompilationDatabase::compileArgsForPackage(
    // generate an appropriate name for the C++ source file.
    std::string ext = isCpp ? ".cpp" : ".c";
    std::string filename = kCompilationDbPrefix + core::system::generateUuid() + ext;
-   bool clean = true;
-
-   // but prefer any existing file 
-   std::vector<FilePath> children;
-   srcDir.getChildren(children);
-   for (const FilePath& child : children)
-   {
-      if (child.getExtension() == ext)
-      {
-         filename = child.getFilename();
-         clean = false;
-         break;
-      }
-   }
-
+   
    // call R CMD SHLIB on a temp file to capture the compilation args
    FilePath srcFile = srcDir.completeChildPath(filename);
    std::vector<std::string> compileArgs = argsForRCmdSHLIB(env, srcFile);
 
-   // remove the srcFile if we had to make one
-   if (clean)
-   {
-      Error error = srcFile.remove();
-      if (error)
-         LOG_ERROR(error);
-   }
-   
    // diagnostics
    if (verbose(3))
    {
@@ -830,13 +808,16 @@ core::Error RCompilationDatabase::executeRCmdSHLIB(
    module_context::RCommand rCmd(rBinDir);
    rCmd << "SHLIB";
    rCmd << "--dry-run";
+
+   // non existing output
+   std::string output = std::string("--output=") + kCompilationDbPrefix + core::system::generateUuid() + ".so";
+   rCmd << output;
+   
    rCmd << srcPath.getFilename();
 
    // set options and run
    core::system::ProcessOptions options;
    options.workingDir = srcPath.getParent();
-
-   core::system::setenv(&env, "MAKE", "make --always-make");
    options.environment = env;
    Error result = core::system::runCommand(
             rCmd.shellCommand(),
