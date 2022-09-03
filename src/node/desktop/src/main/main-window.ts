@@ -72,7 +72,7 @@ export class MainWindow extends GwtWindow {
 
   // if loading fails and emits `did-fail-load` it will be followed by a
   // 'did-finish-load'; use this bool to differentiate
-  private mainFailLoad = false;
+  private didMainFrameLoadSuccessfully = false;
 
   // TODO
   //#ifdef _WIN32
@@ -134,20 +134,21 @@ export class MainWindow extends GwtWindow {
     // connect(webView(), &WebView::urlChanged,
     //         this, &MainWindow::onUrlChanged);
 
-    this.window.webContents.on('did-finish-load', () => {
-      if (!this.mainFailLoad) {
-        this.onLoadFinished(true);
-      } else {
-        this.mainFailLoad = false;
-      }
-    });
+    // NOTE: This callback will be executed when sub-frames (e.g. those in the Viewer pane)
+    // fail to navigate, so we need to keep track of whether the main frame succeeded or
+    // failed to load and ignore 'did-fail-load' events that come after a successful load.
     this.window.webContents.on('did-fail-load', () => {
-      this.mainFailLoad = true;
-      this.onLoadFinished(false);
+      console.log('did-fail-load');
+      if (!this.didMainFrameLoadSuccessfully) {
+        this.onLoadFinished(false);
+      }
     });
 
     this.window.webContents.on('did-finish-load', () => {
+      console.log('did-finish-load');
+      this.didMainFrameLoadSuccessfully = true;
       this.menuCallback.cleanUpActions();
+      this.onLoadFinished(true);
     });
 
     // connect(&desktopInfo(), &DesktopInfo::fixedWidthFontListChanged, [this]() {
