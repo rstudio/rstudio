@@ -134,18 +134,34 @@ export class MainWindow extends GwtWindow {
     // connect(webView(), &WebView::urlChanged,
     //         this, &MainWindow::onUrlChanged);
 
-    // NOTE: This callback will be executed when sub-frames (e.g. those in the Viewer pane)
-    // fail to navigate, so we need to keep track of whether the main frame succeeded or
-    // failed to load and ignore 'did-fail-load' events that come after a successful load.
+    this.window.webContents.on('did-start-loading', () => {
+      logger().logDebug('did-start-loading');
+    });
+
+    this.window.webContents.on('did-start-navigation', (event, url, isInPlace, isMainFrame) => {
+      logger().logDebug(`did-start-navigation: ${url} [${isMainFrame ? 'main frame' : 'sub frame'}]`);
+
+      // If we're about to attempt navigation in the main frame, unset
+      // the loaded successfully flag and then let it get reset after
+      // the following success / failure.
+      if (isMainFrame) {
+        this.didMainFrameLoadSuccessfully = false;
+      }
+    });
+
+    // NOTE: This callback will be executed when sub-frames (e.g. those in the
+    // Viewer pane) fail to navigate as well, so we need to keep track of
+    // whether the main frame succeeded or failed to load and ignore
+    // 'did-fail-load' events that come after a successful load.
     this.window.webContents.on('did-fail-load', () => {
-      console.log('did-fail-load');
+      logger().logDebug('did-fail-load');
       if (!this.didMainFrameLoadSuccessfully) {
         this.onLoadFinished(false);
       }
     });
 
     this.window.webContents.on('did-finish-load', () => {
-      console.log('did-finish-load');
+      logger().logDebug('did-finish-load');
       this.didMainFrameLoadSuccessfully = true;
       this.menuCallback.cleanUpActions();
       this.onLoadFinished(true);
