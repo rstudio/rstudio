@@ -256,18 +256,36 @@ void onDetectChanges(module_context::ChangeSource source)
          continue;
 
       // update the object
-      SET_VECTOR_ELT(entry, 0, newObject);
+         SET_VECTOR_ELT(entry, 0, newObject);
 
-      error = r::exec::RFunction(".rs.explorer.refresh")
-         .addUtf8Param(id)
-         .addParam(entry)
-         .call();
-
-      if (error)
+      if (Rf_inherits(newObject, "data.frame")) 
       {
-         LOG_ERROR(error);
-         return;
+         // close it
+         error = r::exec::RFunction(".rs.explorer.close")
+            .addUtf8Param(id)
+            .addParam(entry)
+            .call();
+
+         if (error)
+         {
+            LOG_ERROR(error);
+            return;
+         }
       }
+      else 
+      {
+         error = r::exec::RFunction(".rs.explorer.refresh")
+            .addUtf8Param(id)
+            .addParam(entry)
+            .call();
+
+         if (error)
+         {
+            LOG_ERROR(error);
+            return;
+         }
+      }
+      
    }
 }
 

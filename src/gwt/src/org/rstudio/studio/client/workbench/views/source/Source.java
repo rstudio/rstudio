@@ -134,6 +134,7 @@ import org.rstudio.studio.client.workbench.views.source.editors.EditingTarget;
 import org.rstudio.studio.client.workbench.views.source.editors.codebrowser.CodeBrowserEditingTarget;
 import org.rstudio.studio.client.workbench.views.source.editors.explorer.events.OpenObjectExplorerEvent;
 import org.rstudio.studio.client.workbench.views.source.editors.explorer.events.RefreshObjectExplorerEvent;
+import org.rstudio.studio.client.workbench.views.source.editors.explorer.events.CloseObjectExplorerEvent;
 import org.rstudio.studio.client.workbench.views.source.editors.explorer.model.ObjectExplorerHandle;
 import org.rstudio.studio.client.workbench.views.source.editors.profiler.OpenProfileEvent;
 import org.rstudio.studio.client.workbench.views.source.editors.profiler.model.ProfilerContents;
@@ -207,6 +208,7 @@ public class Source implements InsertSourceEvent.Handler,
                                OpenProfileEvent.Handler,
                                OpenObjectExplorerEvent.Handler,
                                RefreshObjectExplorerEvent.Handler,
+                               CloseObjectExplorerEvent.Handler,
                                ReplaceRangesEvent.Handler,
                                SetSelectionRangesEvent.Handler,
                                GetEditorContextEvent.Handler,
@@ -326,6 +328,7 @@ public class Source implements InsertSourceEvent.Handler,
       events_.addHandler(ShowDataEvent.TYPE, this);
       events_.addHandler(OpenObjectExplorerEvent.TYPE, this);
       events_.addHandler(RefreshObjectExplorerEvent.TYPE, this);
+      events_.addHandler(CloseObjectExplorerEvent.TYPE, this);
       events_.addHandler(OpenPresentationSourceFileEvent.TYPE, this);
       events_.addHandler(OpenSourceFileEvent.TYPE, this);
       events_.addHandler(CodeBrowserNavigationEvent.TYPE, this);
@@ -798,6 +801,16 @@ public class Source implements InsertSourceEvent.Handler,
          return;
 
       columnManager_.refreshObjectExplorer(event.getHandle());
+   }
+
+   @Override
+   public void onCloseObjectExplorerEvent(CloseObjectExplorerEvent event)
+   {
+      // ignore if we're a satellite
+      if (!SourceWindowManager.isMainSourceWindow())
+         return;
+
+      columnManager_.closeObjectExplorer(event.getHandle());
    }
 
    @Override

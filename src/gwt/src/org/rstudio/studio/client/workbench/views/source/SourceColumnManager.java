@@ -981,7 +981,29 @@ public class SourceColumnManager implements CommandPaletteEntrySource,
             // check for identical titles
             if (handle.getTitle() == target.getTitle())
             {
+               
                ((ObjectExplorerEditingTarget) target).update(handle, false);
+               return;
+            }
+         }
+      }
+   }
+
+   public void closeObjectExplorer(ObjectExplorerHandle handle)
+   {
+      for (SourceColumn column : columnList_)
+      {
+         for (EditingTarget target : column.getEditors())
+         {
+            // bail if this isn't an object explorer filetype
+            FileType fileType = target.getFileType();
+            if (!(fileType instanceof ObjectExplorerFileType))
+               continue;
+
+            // check for identical titles
+            if (handle.getTitle() == target.getTitle())
+            {
+               column.closeTab(target.asWidget(), false);
                return;
             }
          }
