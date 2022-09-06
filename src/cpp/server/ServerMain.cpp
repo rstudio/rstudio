@@ -423,8 +423,15 @@ Error waitForSignals()
          // call overlay shutdown
          overlay::shutdown();
 
-         // forward signal to all child processes
-         Error error = core::system::sendSignalToAllChildProcesses(sig);
+         // forward signal to specific RStudio child processes
+         // this way user processes will not receive the signal until it traverses the tree
+         std::set<std::string> interruptProcs =  {"rsession",
+                                                   "rserver-launcher",
+                                                   "rstudio-launcher",
+                                                   "rworkspaces",
+                                                   "rserver-monitor"};
+
+         Error error = core::system::sendSignalToSpecifiedChildProcesses(interruptProcs, sig);
 
          if (error)
          {
