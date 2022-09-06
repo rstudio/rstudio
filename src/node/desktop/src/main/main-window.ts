@@ -33,6 +33,7 @@ import { RemoteDesktopSessionLauncher } from './remote-desktop-session-launcher-
 import { SessionLauncher } from './session-launcher';
 import { CloseServerSessions } from './session-servers-overlay';
 import { waitForUrlWithTimeout } from './url-utils';
+import { registerWebContentsDebugHandlers } from './utils';
 
 export function closeAllSatellites(mainWindow: BrowserWindow): void {
   const topLevels = BrowserWindow.getAllWindows();
@@ -131,16 +132,9 @@ export class MainWindow extends GwtWindow {
 
     this.on(DesktopBrowserWindow.CLOSE_WINDOW_SHORTCUT, this.onCloseWindowShortcut.bind(this));
 
-    // connect(webView(), &WebView::urlChanged,
-    //         this, &MainWindow::onUrlChanged);
-
-    this.window.webContents.on('did-start-loading', () => {
-      logger().logDebug('did-start-loading');
-    });
+    registerWebContentsDebugHandlers(this.window.webContents);
 
     this.window.webContents.on('did-start-navigation', (event, url, isInPlace, isMainFrame) => {
-      logger().logDebug(`did-start-navigation: ${url} [${isMainFrame ? 'main frame' : 'sub frame'}]`);
-
       // If we're about to attempt navigation in the main frame, unset
       // the loaded successfully flag and then let it get reset after
       // the following success / failure.
@@ -154,17 +148,19 @@ export class MainWindow extends GwtWindow {
     // whether the main frame succeeded or failed to load and ignore
     // 'did-fail-load' events that come after a successful load.
     this.window.webContents.on('did-fail-load', () => {
-      logger().logDebug('did-fail-load');
       if (!this.didMainFrameLoadSuccessfully) {
         this.onLoadFinished(false);
       }
     });
 
-    this.window.webContents.on('did-finish-load', () => {
-      logger().logDebug('did-finish-load');
-      this.didMainFrameLoadSuccessfully = true;
-      this.menuCallback.cleanUpActions();
-      this.onLoadFinished(true);
+    // NOTE: This callback is executed only when the main frame successfully
+    // finishes navigating to a page.
+    this.window.webContents.on('did-frame-finish-load', (event, isMainFrame) => {
+      if (isMainFrame) {
+        this.didMainFrameLoadSuccessfully = true;
+        this.menuCallback.cleanUpActions();
+        this.onLoadFinished(true);
+      }
     });
 
     // connect(&desktopInfo(), &DesktopInfo::fixedWidthFontListChanged, [this]() {
