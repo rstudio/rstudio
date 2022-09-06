@@ -92,8 +92,6 @@ Error forkAndRun(const boost::function<int(void)>& func,
 // if this is not the case, the method will be run as the calling user
 Error forkAndRunPrivileged(const boost::function<int(void)>& func);
 
-Error sendSignalToAllChildProcesses(int signal);
-
 // sends a signal to all child processes with the specified process name
 Error sendSignalToSpecifiedChildProcesses(const std::set<std::string>& procNames,
                                           int signal);
