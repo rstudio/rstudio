@@ -14,7 +14,7 @@
  */
 
 import { ChildProcess } from 'child_process';
-import { BrowserWindow, dialog, Menu, session } from 'electron';
+import { BrowserWindow, dialog, Menu, session, shell } from 'electron';
 
 import { Err } from '../core/err';
 import { logger } from '../core/logger';
@@ -32,7 +32,7 @@ import { RCommandEvaluator } from './r-command-evaluator';
 import { RemoteDesktopSessionLauncher } from './remote-desktop-session-launcher-overlay';
 import { SessionLauncher } from './session-launcher';
 import { CloseServerSessions } from './session-servers-overlay';
-import { waitForUrlWithTimeout } from './url-utils';
+import { isLocalUrl, waitForUrlWithTimeout } from './url-utils';
 import { registerWebContentsDebugHandlers } from './utils';
 
 export function closeAllSatellites(mainWindow: BrowserWindow): void {
@@ -70,10 +70,7 @@ export class MainWindow extends GwtWindow {
 
   private sessionProcess?: ChildProcess;
   private isErrorDisplayed = false;
-
-  // if loading fails and emits `did-fail-load` it will be followed by a
-  // 'did-finish-load'; use this bool to differentiate
-  private didMainFrameLoadSuccessfully = false;
+  private didMainFrameLoadSuccessfully = true;
 
   // TODO
   //#ifdef _WIN32
@@ -134,32 +131,46 @@ export class MainWindow extends GwtWindow {
 
     registerWebContentsDebugHandlers(this.window.webContents);
 
+    // Detect attempts to navigate externally within subframes, and prevent them.
+    // The implementation here is pretty sub-optimal, but it's the best we can do until
+    // we get 'will-frame-navigate' support. In effect, we detect attempts to navigate
+    // externally within an iframe, and instead:
+    //
+    // 1. Open the page externally,
+    // 2. Re-direct the iframe back to the source URL (bleh).
+    //
+    this.window.webContents.session.webRequest.onBeforeRequest((details, callback) => {
+
+      logger().logDebug(`${details.method} ${details.url} [${details.resourceType}]`);
+
+      const url = new URL(details.url);
+      if (details.resourceType === 'subFrame' && !isLocalUrl(url)) {
+        shell.openExternal(details.url).catch((error) => { logger().logError(error); });
+        callback({ cancel: false, redirectURL: details.frame?.url });
+      } else {
+        callback({ cancel: false });
+      }
+    });
+
     this.window.webContents.on('did-start-navigation', (event, url, isInPlace, isMainFrame) => {
-      // If we're about to attempt navigation in the main frame, unset
-      // the loaded successfully flag and then let it get reset after
-      // the following success / failure.
+      if (isMainFrame) {
+        this.didMainFrameLoadSuccessfully = true;
+      }
+    });
+
+    this.window.webContents.on('did-fail-load', (event, errorCode, errorDescription, validatedURL, isMainFrame) => {
       if (isMainFrame) {
         this.didMainFrameLoadSuccessfully = false;
       }
     });
 
-    // NOTE: This callback will be executed when sub-frames (e.g. those in the
-    // Viewer pane) fail to navigate as well, so we need to keep track of
-    // whether the main frame succeeded or failed to load and ignore
-    // 'did-fail-load' events that come after a successful load.
-    this.window.webContents.on('did-fail-load', () => {
-      if (!this.didMainFrameLoadSuccessfully) {
-        this.onLoadFinished(false);
-      }
-    });
-
-    // NOTE: This callback is executed only when the main frame successfully
-    // finishes navigating to a page.
-    this.window.webContents.on('did-frame-finish-load', (event, isMainFrame) => {
+    // NOTE: This callback is called regardless of whether the frame's page was
+    // loaded successfully or not, so we need to detect failures to load within
+    // 'did-fail-load' and then pass that state along here.
+    this.window.webContents.on('did-frame-finish-load', async (event, isMainFrame) => {
       if (isMainFrame) {
-        this.didMainFrameLoadSuccessfully = true;
         this.menuCallback.cleanUpActions();
-        this.onLoadFinished(true);
+        this.onLoadFinished(this.didMainFrameLoadSuccessfully);
       }
     });
 

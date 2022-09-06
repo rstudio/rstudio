@@ -17,7 +17,7 @@ import fs, { existsSync } from 'fs';
 import os from 'os';
 import path from 'path';
 import { sep } from 'path';
-import { app, BrowserWindow, dialog, FileFilter, MessageBoxOptions, WebContents } from 'electron';
+import { app, BrowserWindow, dialog, FileFilter, MessageBoxOptions, WebContents, WebRequest } from 'electron';
 
 import { Xdg } from '../core/xdg';
 import { getenv, setenv } from '../core/environment';
@@ -529,8 +529,11 @@ export function registerWebContentsDebugHandlers(webContents: WebContents) {
     'focus',
     'found-in-page',
     'frame-created',
-    'ipc-message',
-    'ipc-message-sync',
+
+    // TODO: These are pretty noisy.
+    // 'ipc-message',
+    // 'ipc-message-sync',
+
     'leave-html-full-screen',
     'login',
     'media-paused',
