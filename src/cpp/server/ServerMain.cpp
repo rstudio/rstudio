@@ -423,8 +423,25 @@ Error waitForSignals()
          // call overlay shutdown
          overlay::shutdown();
 
+         // forward signal to all child processes
+         Error error = core::system::sendSignalToAllChildProcesses(sig);
+
+         if (error)
+         {
+            std::string message = "Error occurred while notifying child processes of ";
+            message += strsignal(sig);
+            error.addProperty("description", message);
+            LOG_ERROR(error);
+         }
+         else
+         {
+            std::string message = "Successfully notified children of ";
+            message += strsignal(sig);
+            LOG_INFO_MESSAGE(message);
+         }
+
          // clear the signal mask
-         Error error = core::system::clearSignalMask();
+         error = core::system::clearSignalMask();
          if (error)
             LOG_ERROR(error);
 
