@@ -327,6 +327,28 @@ SEXP findInNamedEnvir(const std::string& envir, const std::string& name)
    return obj == R_UnboundValue ? nullptr : obj;
 }
 
+SEXP getNamedEnvir(const std::string& envir)
+{
+   SEXP env = nullptr;
+   r::sexp::Protect protect;
+
+   // shortcut for unbound environment
+   if (envir == kNoBoundEnv)
+      return nullptr;
+
+   // use the global environment or resolve environment name
+   if (envir.empty() || envir == "R_GlobalEnv")
+      return R_GlobalEnv;
+   
+   r::exec::RFunction(".rs.safeAsEnvironment", envir).call(&env, &protect);
+
+   // if we failed to find an environment by name, return a null SEXP
+   if (env == nullptr || TYPEOF(env) == NILSXP || Rf_isNull(env))
+      return nullptr; 
+
+   return env;
+}
+
 // data items are used both as the payload for the client event that opens an
 // editor viewer tab and as a server response when duplicating that tab's
 // contents
@@ -984,12 +1006,32 @@ void onDetectChanges(module_context::ChangeSource source)
          }
          else 
          {
+            // emit client event to close the tab because the type has changed
             json::Object changed;
             changed["cache_key"] = i->first;
             changed["type_changed"] = true;
             changed["structure_changed"] = true;
             ClientEvent event(client_events::kDataViewChanged, changed);
             module_context::enqueClientEvent(event);
+
+            // then View() it again
+            r::sexp::Protect protect;
+            SEXP env = getNamedEnvir(i->second.envName);
+            if (env != nullptr)
+            {
+               protect.add(env);
+
+               SEXP symbol = Rf_install(i->second.objName.c_str());
+
+               Error error = r::exec::RFunction("View")
+                  .addParam(symbol)
+                  .call(env, true);
+               if (error)
+               {
+                  LOG_ERROR(error);
+               }
+
+            }
          }
       }
    }
