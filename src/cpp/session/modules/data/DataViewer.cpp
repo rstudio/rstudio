@@ -957,27 +957,40 @@ void onDetectChanges(module_context::ChangeSource source)
       SEXP sexp = findInNamedEnvir(i->second.envName, i->second.objName);
       if (sexp != i->second.observedSEXP) 
       {
-         // create a new frame object to capture the new state of the frame
-         CachedFrame newFrame(i->second.envName, i->second.objName, sexp);
-
          // clear working data for the object
          r::exec::RFunction(".rs.removeWorkingData", i->first).call();
+   
+         if (Rf_inherits(sexp, "data.frame"))
+         {
+            // create a new frame object to capture the new state of the frame
+            CachedFrame newFrame(i->second.envName, i->second.objName, sexp);
 
-         // replace cached copy (if we have something to replace it with)
-         if (sexp != nullptr)
-            r::exec::RFunction(".rs.assignCachedData", 
-                  i->first, sexp, i->second.objName).call();
+            // replace cached copy (if we have something to replace it with)
+            if (sexp != nullptr)
+               r::exec::RFunction(".rs.assignCachedData", 
+                     i->first, sexp, i->second.objName).call();
 
-         // emit client event
-         json::Object changed;
-         changed["cache_key"] = i->first;
-         changed["structure_changed"] = i->second.ncol != newFrame.ncol || 
-            i->second.colNames != newFrame.colNames;
-         ClientEvent event(client_events::kDataViewChanged, changed);
-         module_context::enqueClientEvent(event);
+            // emit client event
+            json::Object changed;
+            changed["cache_key"] = i->first;
+            changed["structure_changed"] = i->second.ncol != newFrame.ncol || 
+               i->second.colNames != newFrame.colNames;
+            changed["type_changed"] = false;
+            ClientEvent event(client_events::kDataViewChanged, changed);
+            module_context::enqueClientEvent(event);
 
-         // replace old frame with new
-         s_cachedFrames[i->first] = newFrame;
+            // replace old frame with new
+            s_cachedFrames[i->first] = newFrame;
+         }
+         else 
+         {
+            json::Object changed;
+            changed["cache_key"] = i->first;
+            changed["type_changed"] = true;
+            changed["structure_changed"] = true;
+            ClientEvent event(client_events::kDataViewChanged, changed);
+            module_context::enqueClientEvent(event);
+         }
       }
    }
 }

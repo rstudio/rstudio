@@ -170,6 +170,7 @@ import org.rstudio.studio.client.workbench.views.source.events.PopoutDocEvent;
 import org.rstudio.studio.client.workbench.views.source.events.PopoutDocInitiatedEvent;
 import org.rstudio.studio.client.workbench.views.source.events.ShowContentEvent;
 import org.rstudio.studio.client.workbench.views.source.events.ShowDataEvent;
+import org.rstudio.studio.client.workbench.views.source.events.CloseDataEvent;
 import org.rstudio.studio.client.workbench.views.source.events.SourceFileSavedEvent;
 import org.rstudio.studio.client.workbench.views.source.events.SourceNavigationEvent;
 import org.rstudio.studio.client.workbench.views.source.events.SourcePathChangedEvent;
@@ -197,6 +198,7 @@ public class Source implements InsertSourceEvent.Handler,
                                FileEditEvent.Handler,
                                ShowContentEvent.Handler,
                                ShowDataEvent.Handler,
+                               CloseDataEvent.Handler,
                                CodeBrowserNavigationEvent.Handler,
                                CodeBrowserFinishedEvent.Handler,
                                CodeBrowserHighlightEvent.Handler,
@@ -326,6 +328,8 @@ public class Source implements InsertSourceEvent.Handler,
       events_.addHandler(InsertSourceEvent.TYPE, this);
       events_.addHandler(ShowContentEvent.TYPE, this);
       events_.addHandler(ShowDataEvent.TYPE, this);
+      events_.addHandler(CloseDataEvent.TYPE, this);
+      events_.addHandler(CloseDataEvent.TYPE, this);
       events_.addHandler(OpenObjectExplorerEvent.TYPE, this);
       events_.addHandler(RefreshObjectExplorerEvent.TYPE, this);
       events_.addHandler(CloseObjectExplorerEvent.TYPE, this);
@@ -821,6 +825,16 @@ public class Source implements InsertSourceEvent.Handler,
          return;
 
       columnManager_.showDataItem(event.getData());
+   }
+
+   @Override
+   public void onCloseData(CloseDataEvent event)
+   {
+      // ignore if we're a satellite
+      if (!SourceWindowManager.isMainSourceWindow())
+         return;
+
+      columnManager_.closeDataItem(event.getData());
    }
 
    public void onShowProfiler(OpenProfileEvent event)

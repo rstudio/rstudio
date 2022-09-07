@@ -1049,6 +1049,22 @@ public class SourceColumnManager implements CommandPaletteEntrySource,
          });
    }
 
+   public void closeDataItem(DataItem data)
+   {
+      for (SourceColumn column : columnList_)
+      {
+         for (EditingTarget target : column.getEditors())
+         {
+            String path = target.getPath();
+            if (path != null && path.equals(data.getURI()))
+            {
+               column.closeTab(target.asWidget(), false);
+               return;
+            }
+         }
+      }
+   }
+
    public void showUnsavedChangesDialog(
       String title,
       ArrayList<UnsavedChangesTarget> dirtyTargets,
