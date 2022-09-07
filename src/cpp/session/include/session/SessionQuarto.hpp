@@ -66,12 +66,12 @@ struct QuartoConfig
    core::json::Object project_editor;
 };
 
-QuartoConfig quartoConfig(bool refresh = false);
+QuartoConfig quartoConfig();
 
 core::Error quartoInspect(const std::string& path,
                           core::json::Object *pResultObject);
 
-core::json::Object quartoConfigJSON(bool refresh = false);
+core::json::Object quartoConfigJSON();
 
 core::json::Value quartoCapabilities();
 
