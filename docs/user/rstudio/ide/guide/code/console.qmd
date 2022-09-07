@@ -1,0 +1,65 @@
+---
+title: "R Console"
+---
+
+## Overview
+
+The Console in the RStudio includes a variety of features intended to make working with R more productive and straightforward. This article reviews these features. Learning to use these features along with the related features available in the [Source](https://support.rstudio.com/hc/en-us/articles/200484448) and [History](https://support.rstudio.com/hc/en-us/articles/200526217) panes can have a substantial payoff in your overall productivity with R.
+
+Copied from: <https://support.rstudio.com/hc/en-us/articles/200404846-Working-in-the-Console>
+
+## Code Completion
+
+The RStudio supports the automatic completion of code using the **Tab** key. For example, if you have an object named `pollResults` in your workspace you can type `poll` and then **Tab** and RStudio will automatically complete the full name of the object.
+
+The code completion feature also provides inline help for functions whenever possible. For example, if you typed `med` then pressed **Tab** you would see:
+
+![](images/console-completion.png){fig-alt="A screenshot of the RStudio console displaying tab-completion of the median function."}
+
+Code completion also works for function arguments, so if you typed `median(` and then pressed **Tab** you'd see the following:
+
+![](images/console-completion-args.png){fig-alt="Code completion of variables within the median function, displaying the 'x', 'na.rm' and '...' function arguments."}
+
+## Retrieving Previous Commands
+
+As you work with R you'll often want to re-execute a command which you previously entered. As with the standard R console, the RStudio console supports the ability to recall previous commands using the arrow keys:
+
+-   **Up** --- Recall previous command(s)
+
+-   **Down** --- Reverse of Up
+
+If you wish to review a list of your recent commands and then select a command from this list you can use **Ctrl+Up** to review the list (note that on the Mac you can also use **Command-Up**):
+
+![](images/retrieve-console-commands.png){fig-alt="A screenshot of the history of commands executed in the RStudio console."}
+
+You can also use this same keyboard shortcut to quickly search for commands that match a given prefix. For example, to search for previous instances of the `glimpse` function start typing `glimpse` and then **Ctrl+Up**:
+
+![](images/previous-commands.png){fig-alt="A screenshot of the R console in RStudio, showing a filtered list of executed commands that match 'glimpse'"}
+
+## Console Title Bar
+
+This screenshot illustrates a few additional capabilities provided by the Console title bar:
+
+-   Display of the current version of R and working directory.
+
+-   The ability to interrupt R during a long computation.
+
+-   Minimizing and maximizing the Console in relation to the Source pane (using the buttons at the top-right or by double-clicking the title bar).
+
+- There are two additional tabs **Terminal** and **Background Jobs** which are covered in the [Terminal](../tools/terminal.html) and [Background Jobs](../tools/jobs.html) sections of the User Guide.
+
+![](images/console-buttons.png){fig-alt="A screenshot of R console menu bar, showing the red 'stopsign' indicating the ability to stop the currently executed R code"}
+
+## Keyboard Shortcuts
+
+Beyond the history and code-completion oriented keyboard shortcuts described above, there are a wide variety of other shortcuts available. Some of the more useful shortcuts include:
+
+-   <kbd>Ctrl+1</kbd> --- Move focus to the Source Editor
+
+-   <kbd>Ctrl+2</kbd> --- Move focus to the Console
+
+-   <kbd>Ctrl+L</kbd> --- Clear the Console
+
+-   <kbd>Esc</kbd> --- Interrupt R
+
+-   <kbd>Ctrl+Shift+F10</kbd> or <kbd>Cmd+Shift+F10</kbd> (Mac) - Restart R

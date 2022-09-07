@@ -1,0 +1,123 @@
+---
+title: "RStudio Projects"
+---
+
+Expert data scientists keep all the files associated with a given project together --- input data, scripts, analytical results, and figures. This is such a wise and common practice that RStudio has built-in support for this via Projects. -[R4DS](https://r4ds.hadley.nz/workflow-scripts.html#workflow-projects)
+
+RStudio Projects make it straightforward to divide your work into multiple contexts, each with their own working directory, workspace, history, and source documents.
+
+Created from [Support article](https://support.rstudio.com/hc/en-us/articles/200526207-Using-RStudio-Projects)
+
+## Creating Projects
+
+RStudio projects are associated with R working directories. You can create an RStudio project:
+
+-   In a brand new directory
+
+-   In an existing directory where you already have R code and data
+
+-   By cloning a version control (Git or Subversion) repository
+
+To create a new project in the RStudio, use the **Create Project** command (available on the Projects menu and on the global toolbar):
+
+![](images/projects_new.png){fig-alt="A screenshot of the RStudio \"New Project Wizard\" popup. It starts with Create Project from: and the choice of \"New Directory\", \"Existing directory\", or from \"Version control\""}
+
+When a new project is created RStudio:
+
+1.  Creates a project file (with an .Rproj extension) within the project directory. This file contains various project options (discussed below) and can also be used as a shortcut for opening the project directly from the filesystem.
+
+2.  Creates a hidden directory (named .Rproj.user) where project-specific temporary files (e.g. auto-saved source documents, window-state, etc.) are stored. This directory is also automatically added to .Rbuildignore, .gitignore, etc. if required.
+
+3.  Loads the project into RStudio and display its name in the Projects toolbar (which is located on the far right side of the main toolbar)
+
+## Working with Projects
+
+The **Projects Toolbar** is located at the top right corner of RStudio. It displays the current Project name, and has commands for:
+
+-   Creating a New Project
+-   Opening existing projects in current or a new RStudio session
+-   Closing the currently active Project
+-   Clearing the list of recently opened Projects
+-   Controlling Project Options
+
+![](images/project-open.png){fig-alt="A screenshot of the New Project dropdown menu, providing commands for creating or opening projects" width="350"}
+
+### Opening Projects
+
+There are several ways to open a project:
+
+1.  Using the **Open Project** command (available from both the **File** \> **Open Project** menu and the **Projects toolbar**) to browse for and select an existing project file (e.g. MyProject.Rproj).
+
+2.  Selecting a project from the list of most recently opened projects (also available from both the **File** \> **Projects** menu and toolbar).
+
+3.  Double-clicking on the project file within the system shell (e.g. Windows Explorer, OSX Finder, etc.).
+
+When a project is opened within RStudio the following actions are taken:
+
+-   A new R session (process) is started
+
+-   The .Rprofile file in the project's main directory (if any) is sourced by R
+
+-   The .RData file in the project's main directory is loaded (if project options indicate that it should be loaded).
+
+-   The .Rhistory file in the project's main directory is loaded into the RStudio History pane (and used for Console Up/Down arrow command history).
+
+-   The current working directory is set to the project directory.
+
+-   Previously edited source documents are restored into editor tabs
+
+-   Other RStudio settings (e.g. active tabs, splitter positions, etc.) are restored to where they were the last time the project was closed.
+
+### Quitting a Project
+
+When you are within a project and choose to either Quit, close the project, or open another project the following actions are taken:
+
+-   .RData and/or .Rhistory are written to the project directory (if current options indicate they should be)
+
+-   The list of open source documents is saved (so it can be restored next time the project is opened)
+
+-   Other RStudio settings (as described above) are saved.
+
+-   The R session is terminated.
+
+### Working with Multiple Projects at Once
+
+You can work with more than one RStudio project at a time by simply opening each project in its own instance of RStudio. There are two ways to accomplish this:
+
+1.  Use the **Open Project in New Session** command located on the Project menu.
+
+2.  Opening multiple project files via the system shell (i.e. double-clicking on the project file).
+
+### Project Options
+
+There are several options that can be set on a per-project basis to customize the behavior of RStudio. You can edit these options using the **Project Options** command on the **Project** menu:
+
+![](images/project-options.png){fig-alt="A screenshot of the Project Options popup - it has tabs for General, Code Editing, RMarkdown, Python, Sweave, Spelling, Build Tools, Git/SVN, Environments."}
+
+## General
+
+Note that the General project options are all overrides of existing global options. To inherit the default global behavior for a project you can specify (Default) as the option value.
+
+-   **Restore .RData into workspace at startup** --- Load the .RData file (if any) found in the initial working directory into the R workspace (global environment) at startup. If you have a very large .RData file then unchecking this option will improve startup time considerably.
+
+-   **Save workspace to .RData on exit** --- Ask whether to save .RData on exit, always save it, or never save it. Note that if the workspace is not dirty (no changes made) at the end of a session then no prompt to save occurs even if Ask is specified.
+
+-   **Always save history (even when not saving .RData)** --- Make sure that the .Rhistory file is always saved with the commands from your session even if you choose not to save the .RData file when exiting.
+
+### Code Editing
+
+-   **Index R source files** --- Determines whether R source files within the project directory are indexed for code navigation (i.e. go to file/function, go to function definition). Normally this should remain enabled, however if you have a project directory with thousands of files and are concerned about the overhead of monitoring and indexing them you can disable indexing here.
+
+-   **Insert spaces for tab** --- Determine whether the tab key inserts multiple spaces rather than a tab character (soft tabs). Configure the number of spaces per soft-tab.
+
+-   **Text encoding** --- Specify the default text encoding for source files. Note that source files which don't match the default encoding can still be opened correctly using the **File : Reopen with Encoding** menu command.
+
+### Git/SVN
+
+-   **Version control system** --- Specify the version control system to use with this project. Note that RStudio automatically detects the presence of version control for projects by scanning for a .git or .svn directory. Therefore it isn't normally necessary to change this setting. You may want to change the setting for the following reasons:
+
+    1.  You have both a .git and .svn directory within the project and wish to specify which version control system RStudio should bind to.
+
+    2.  You have no version control setup for the project and you want to add a local git repository (equivalent to executing `git init` from the project root directory).
+
+-   **Origin** --- Read-only display of the remote origin (if any) for the project version control repository.
