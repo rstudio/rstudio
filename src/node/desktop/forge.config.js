@@ -42,6 +42,9 @@ const config = {
             },
           ],
         },
+        // uncoment and change these ports to launch multiple debug instances
+        // port: 3000,
+        // loggerPort: 9000,
       },
     ],
   ],

@@ -80,7 +80,12 @@ export class ApplicationLaunch {
     }
 
     // run it
-    spawn(process.execPath, argv, { detached: true });
+    const childProcess = spawn(process.execPath, argv,
+      {
+        detached: true,
+        stdio: 'ignore', // don't reuse the stdio from parent
+      });
+    childProcess.unref();
 
     // restore environment variables
     unsetenv(kRStudioInitialProject);
