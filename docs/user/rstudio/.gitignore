@@ -1,0 +1,9 @@
+/.quarto/
+_site
+_freeze
+*.aux
+*.log
+*.tex
+*.toc
+
+.Rproj.user
