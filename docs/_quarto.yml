@@ -1,14 +1,12 @@
 project:
   type: website
-  output-dir: _site
-  
-execute:
-  freeze: true
 
 website:
   title: "RStudio User Guide"
   favicon: images/RStudio-ball.svg
   twitter-card: true
+  page-navigation: true
+  site-url: https://docs.rstudio.com/ide/user/
   page-footer:
     left: |
       Copyright © 2022 Posit Software, PBC. All Rights Reserved.
@@ -117,12 +115,9 @@ format:
     theme:
       - cosmo
       - styles/styles.scss
-    include-in-header: google_analytics.html
     toc: true
     code-overflow: scroll
-
-  # pdf:
-  #   toc: true
-  #
-  # docx:
-  #   toc: true
+#  pdf:
+#    toc: true
+#  docx:
+#    toc: true
