@@ -129,6 +129,12 @@ bool ExponentialBackoff::next()
    return false;
 }
 
+void ExponentialBackoff::reset()
+{
+   totalNumTries_ = 0;
+   lastWait_ = boost::posix_time::not_a_date_time;
+}
+
 } // namespace core 
 } // namespace rstudio
 

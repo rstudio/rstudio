@@ -52,6 +52,8 @@ public:
    // returns false if the max number of retries has been reached
    bool next();
 
+   void reset();
+
 private:
    boost::asio::io_service& ioService_;
    boost::posix_time::time_duration initialWait_;
