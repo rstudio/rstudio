@@ -36,15 +36,13 @@ The following documentation helps a user understand the core workflows in RStudi
 
 ### Commercial
 
-- [RStudio Workbench install](https://docs.rstudio.com/rsw/installation/) - administration guide for installation and configuration
+- [Posit Workbench](https://docs.rstudio.com/rsw/installation/) - administration guide for installation and configuration
 
 ::: {.callout-caution }
 
 ### Daily Builds
 
-- [RStudio Daily builds](https://dailies.rstudio.com/)
-
-Daily builds are intended for testing purposes, and are not recommended for general use. For stable builds, please use one of the above links for Open Source or Commercial downloads.
+[RStudio Daily builds](https://dailies.rstudio.com/) are intended for testing purposes, and are not recommended for general use. For stable builds, please use one of the above links for Open Source or Commercial downloads.
 :::
 
 

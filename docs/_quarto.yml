@@ -1,6 +1,9 @@
 project:
   type: website
   output-dir: _site
+  
+execute:
+  freeze: true
 
 website:
   title: "RStudio User Guide"
@@ -25,7 +28,7 @@ website:
     left:
       - href: index.qmd
         text: "Overview"
-      - href: ide/get-started/tidyverse.qmd
+      - href: ide/get-started/intro.qmd
         text: "Getting Started"
       - href: ide/guide/ui/ui-panes.qmd
         text: "Guide"
@@ -42,7 +45,7 @@ website:
       collapse-level: 2
       contents:
       - text: "Getting Started"
-        href: ide/get-started/tidyverse.qmd
+        href: ide/get-started/intro.qmd
       - section: "Guide"
         contents:
           - section: "Accessibility"
@@ -101,6 +104,8 @@ website:
         collapse-level: 1
         contents:
           - ide/reference/shortcuts.qmd
+          
+
 
 format:
   html:

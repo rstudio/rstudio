@@ -2,12 +2,6 @@
 title: "Get Started"
 ---
 
-::: callout-caution
-## Under Construction
-
-This page is very much under construction
-:::
-
 This page walks through an example of using the `ggplot2` and RStudio for basic data visualization. If you are new to R and want to learn more about using R for Data Science, also see the [R for Data Science](https://r4ds.had.co.nz) textbook which is available in [print](https://www.oreilly.com/library/view/r-for-data/9781491910382/) or as a [freely available website](https://r4ds.hadley.nz/)
 
 `ggplot2` is part of the `tidyverse` ecosystem of packages.
@@ -16,23 +10,23 @@ This page walks through an example of using the `ggplot2` and RStudio for basic 
 
 ## Hello RStudio
 
-RStudio is a set of integrated tools designed to help you be more productive with R and Python.
+RStudio is a set of integrated tools designed to help you be more productive in your daily data science work.
 
 After you have installed R and RStudio, you are ready to begin this section!
 
-When you start RStudio, you'll see four key regions or "panes" in the interface: the source pane, the console pane, the environment pane and the Output Pane.
+When you start RStudio, you'll see four key regions or "panes" in the interface: the Source pane, the Console pane, the Environment pane and the Output Pane.
 
 ### RStudio Panes
 
-1.  The **source pane** is where you can edit and save R or Python scripts or even author computational documents like Quarto.
+1.  The **Source pane** is where you can edit and save R or Python scripts or author computational documents like Quarto and R Markdown.
 
-2.  The **console pane** is used to write short interactive R commands.
+2.  The **Console pane** is used to write short interactive R commands.
 
-3.  The **environment pane** displays temporary R objects as created during that R session.
+3.  The **Environment pane** displays temporary R objects as created during that R session.
 
-4.  The **output pane** displays the plots, tables, or HTML outputs of executed code along with files saved to disk.
+4.  The **Output pane** displays the plots, tables, or HTML outputs of executed code along with files saved to disk.
 
-![](rstudio-panes-labeled.jpeg){fig-alt="A screenshot of the RStudio UI. There are 4 primary panes, the source, console, environment, and output panes."}
+![](images/rstudio-panes-labeled.jpeg){fig-alt="A screenshot of the RStudio UI. There are 4 primary panes, the source, console, environment, and output panes."}
 
 ### Hello RStudio Projects
 
@@ -73,17 +67,17 @@ install.packages("ggplot2")
 
 You only need to install a package once, but you need to load it with `library()` every time you start a new session.
 
--   Using the **File Menu** in RStudio, create a new .R file and label it `ggplot2.R`
+-   In RStudio, create a new .R file and label it `ggplot2.R` via **File Menu** > **New File** > **R Script**
 
-The `ggplot2.R` file you have just created will be in the **Source Pane**, which by default is in the top left.
+The `ggplot2.R` file you have just created will open in the **Source Pane**, which by default is in the top left.
 
-Once you have successfully installed `ggplot2`, you can then write the following code into the first line of your `ggplot2.R` script.
+Since you have already installed `ggplot2`, you can write the following code into the first line of your `ggplot2.R` script to load the `ggplot2` package for that session.
 
-The `library()` function will load a specific R package (`ggplot2`) so you can use the R functions within it. In the case of `ggplot2`, it contains many functions for creating useful and elegant graphs in R.
-
-```r
+``` r
 library(ggplot2)
 ```
+
+The `library()` function will load a specific R package (`ggplot2`) so you can use the R functions within it. In the case of `ggplot2`, it contains many functions for creating useful and elegant graphs in R.
 
 To execute that code in the R console, you can move your cursor to the specific line of code and either use the Run command in RStudio or the <kbd>`Ctrl + Enter`</kbd> (<kbd>`Cmd + Enter`</kbd> on Mac) shortcut.
 
@@ -99,36 +93,30 @@ We can temporarily save this data frame object in R to our **Environments pane**
 
 As a beginning R user, it's OK to consider your environment (i.e. the objects listed in the environment pane) "real". However, in the long run, you'll be much better off if you consider your R scripts as "real". With your R scripts (and your data files), you can recreate the environment. It's much harder to recreate your R scripts from your environment!
 
-```r
+``` r
 # this will temporarily assign the mpg dataset 
 # to the mpg object in our current session
 mpg <- ggplot2::mpg
 ```
 
-### View the data
+### Display the data
 
-You can then see the first few rows of the `mpg` dataframe like so:
+You can then display the first few rows of the `mpg` dataframe like so:
+
+``` r
+head(mpg)
+```
 
 ```r
-mpg
-```
-
-```
-# A tibble: 234 × 11
-   manufa…¹ model displ  year   cyl trans drv     cty   hwy fl    class
-   <chr>    <chr> <dbl> <int> <int> <chr> <chr> <int> <int> <chr> <chr>
- 1 audi     a4      1.8  1999     4 auto… f        18    29 p     comp…
- 2 audi     a4      1.8  1999     4 manu… f        21    29 p     comp…
- 3 audi     a4      2    2008     4 manu… f        20    31 p     comp…
- 4 audi     a4      2    2008     4 auto… f        21    30 p     comp…
- 5 audi     a4      2.8  1999     6 auto… f        16    26 p     comp…
- 6 audi     a4      2.8  1999     6 manu… f        18    26 p     comp…
- 7 audi     a4      3.1  2008     6 auto… f        18    27 p     comp…
- 8 audi     a4 q…   1.8  1999     4 manu… 4        18    26 p     comp…
- 9 audi     a4 q…   1.8  1999     4 auto… 4        16    25 p     comp…
-10 audi     a4 q…   2    2008     4 manu… 4        20    28 p     comp…
-# … with 224 more rows, and abbreviated variable name ¹manufacturer
-# ℹ Use `print(n = ...)` to see more rows
+#> # A tibble: 6 × 11
+#>   manufacturer model displ  year   cyl trans      drv     cty   hwy fl    class  
+#>   <chr>        <chr> <dbl> <int> <int> <chr>      <chr> <int> <int> <chr> <chr>  
+#> 1 audi         a4      1.8  1999     4 auto(l5)   f        18    29 p     compact
+#> 2 audi         a4      1.8  1999     4 manual(m5) f        21    29 p     compact
+#> 3 audi         a4      2    2008     4 manual(m6) f        20    31 p     compact
+#> 4 audi         a4      2    2008     4 auto(av)   f        21    30 p     compact
+#> 5 audi         a4      2.8  1999     6 auto(l5)   f        16    26 p     compact
+#> 6 audi         a4      2.8  1999     6 manual(m5) f        18    26 p     compact
 ```
 
 Among the variables in `mpg` are:
@@ -146,29 +134,33 @@ View(mpg)
 
 This will open up a new tab in the **Source pane** titled "mpg". You can explore the data here interactively. To get back to your "ggplot2.R" file, select the `ggplot2.R` tab in the **Source pane**.
 
+![](images/mpg-view.png){fig-alt="A screenshot of the output of `View(mpg)` which creates a spreadsheet-like view of the mpg dataset."}
+
 ### Create a graph
 
 Next, in your `ggplot2.R` file in the source pane, you can type the following code:
 
-```r
+``` r
 mpg_plot <- ggplot(data = mpg, mapping = aes(x = displ, y = hwy)) +
   geom_point(mapping = aes(colour = class)) +
   geom_smooth(method = "lm", formula = "y ~ x")
 ```
 
-![](basic-car-plot.png){fig-alt="A ggplot of fuel displacement on the x-axis and highway miles per gallon on the y-axis. There is a negative, roughly linear relationship between mpg and displacement, as fuel displacement increases, the highway mpg decreases. The points are colored by class of vehicle, where pickups and SUVs have larger engines and worse fuel-efficiency than subcompact, compact, or midsize vehicles."}
+Again, you will want to execute that by either the Run command or shortcut (<kbd>`Ctrl + Enter`</kbd> or <kbd>`Cmd + Enter`</kbd> on Mac). Note that we are using the `<-` operator to assign this plot to the `mpg_plot` object.  The `mpg_plot` object will be visible in the top right **Environment Pane**.
 
-Again, you will want to execute that by either the Run command or shortcut (<kbd>`Ctrl + Enter`</kbd> or <kbd>`Cmd + Enter`</kbd> on Mac). Note that we are using the `<-` operator to assign this plot to the `mpg_plot` object. You can see the object name in the top right **Environment Pane**.
+![](images/get-started-environment.png){fig-alt="A screenshot of the Environments pane, showing the mpg and mpg_plot objects"}
 
 ### Print the graph
 
 To print the graph in the **Output Pane**, we can add and then execute one more line of code:
 
-```r
+``` r
 mpg_plot
 ```
 
 That will then display the plot into the **Output Pane** \> **Plots** tab.
+
+![](images/basic-car-plot.png){fig-alt="A ggplot of fuel displacement on the x-axis and highway miles per gallon on the y-axis. There is a negative, roughly linear relationship between mpg and displacement, as fuel displacement increases, the highway mpg decreases. The points are colored by class of vehicle, where pickups and SUVs have larger engines and worse fuel-efficiency than subcompact, compact, or midsize vehicles."}
 
 The plot shows a negative relationship between engine size (`displ`) and fuel efficiency (`hwy`). In other words, cars with smaller engine sizes have higher fuel efficiency and, in general, as engine size increases, fuel efficiency decreases. Does this confirm or refute your hypothesis about fuel efficiency and engine size?
 
@@ -176,15 +168,15 @@ The plot shows a negative relationship between engine size (`displ`) and fuel ef
 
 Lastly, we may want to save this image as proof of our hardwork! We can use `ggplot2` to save the image to disk with the below code *or* use the Export button in the **Plot Pane**.
 
-```r
-ggsave("my-first-plot.png", plot = mpg_plot)
+``` r
+ggsave("my-first-plot.png", plot = mpg_plot, height = 4, width = 6)
 ```
 
-Now that the file has been saved to disk, we can find it by switching from the **Plot tab** to the **Files tab**, both of which are located by default in the **Output Pane**. 
+Now that the file has been saved to disk, we can find it by switching from the **Plot tab** to the **Files tab**, both of which are located by default in the **Output Pane**.
 
-You should also save your `ggplot2.R` file at this point. From the **Files Tab** you can find your saved `ggplot2` graph, and if you have saved your `ggplot2.R` script - it will also be in this same folder.
+If you haven't already, you should also save your `ggplot2.R` file at this point. From the **Files Tab** you can find your saved `ggplot2` graph as "my-first-plot.png", and if you have saved your `ggplot2.R` script - it will also be in this same folder.
 
-Remember - with your R scripts and data files you can recreate the temporary session environment! To prove our point, after you have saved your `ggplot2.R` file, restart your session with the RStudio menu: **Session > Restart R**. Even in this fresh environment, you can recreate your plot by re-executing the source code with the same data!
+Remember - with your R scripts and data files you can recreate this temporary session environment! To prove our point, after you have saved your `ggplot2.R` file, restart your session with the RStudio menu: **Session \> Restart R**. Even in this fresh environment, you can recreate your plot by re-executing the source code with the same data!
 
 ## Closing
 

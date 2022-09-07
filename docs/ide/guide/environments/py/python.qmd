@@ -28,46 +28,54 @@ First, Python needs to be installed on your machine. If you haven't already inst
 
 Note that if you are installing Python from sources, it must be configured with \--enable-shared; e.g.
 
-```bash
+``` bash
 ./configure --enable-shared
 make
 make install
 ```
+
+or for `pyenv`
+
+``` bash
+env PYTHON_CONFIGURE_OPTS="--enable-shared" pyenv install ${PY_VERSION}
+```
+
 reticulate will be unable to bind to a version of Python without an accompanying shared library available.
 
 ### Installing reticulate
 
 The reticulate package can be installed from CRAN, with:
 
-```r
+``` r
 install.packages("reticulate")
 ```
-Note that if you are installing reticulate from sources, you will need the requisite build tools available \-- see [https://support.rstudio.com/hc/en-us/articles/200486498-Package-Development-Prerequisites ](https://support.rstudio.com/hc/en-us/articles/200486498-Package-Development-Prerequisites)for more details.
+
+Note that if you are installing reticulate from sources, you will need the requisite build tools available \-- see <https://support.rstudio.com/hc/en-us/articles/200486498-Package-Development-Prerequisites>for more details.
 
 ## Using Python
 
 The reticulate package makes it possible to load and use Python within the currently running R session. After reticulate has been installed, Python scripts (with the extension .py) can be opened, and the code within executed, similarly to R.
 
-![Screen_Shot_2021-04-21_at_3.42.51_PM.png](https://support.rstudio.com/hc/article_attachments/1500011460562/Screen_Shot_2021-04-21_at_3.42.51_PM.png){alt="Screen_Shot_2021-04-21_at_3.42.51_PM.png"}
+![](images/python-hello-world.png){alt="Screen_Shot_2021-04-21_at_3.42.51_PM.png"}
 
 Note that RStudio uses the reticulate Python REPL to execute code, and automatically switches between R and Python as appropriate for the script being executed.
 
-When the reticulate REPL is active, objects in the R session can be accessed via the r helper object. For example, r\["mtcars"\] can be used to access the mtcars dataset from R, and convert that to a pandas DataFrame (if available), or a Python dictionary if not.
+When the reticulate REPL is active, objects in the R session can be accessed via the r helper object. For example, `r["mtcars"]` can be used to access the mtcars dataset from R, and convert that to a pandas DataFrame (if available), or a Python dictionary if not.
 
 \
-![Screen_Shot_2021-04-21_at_3.41.01_PM.png](https://support.rstudio.com/hc/article_attachments/1500011460542/Screen_Shot_2021-04-21_at_3.41.01_PM.png){alt="Screen_Shot_2021-04-21_at_3.41.01_PM.png"}
+![](images/python-mtcars.png){alt="Screen_Shot_2021-04-21_at_3.41.01_PM.png"}
 
 ## Selecting a Default Version of Python
 
-It is possible to configure a default version of Python to be used with RStudio via Tools -\> Global Options\... -\> Python:
+It is possible to configure a default version of Python to be used with RStudio via **Tools** > **Global Options** > **Python**:
 
-![Screen_Shot_2021-04-21_at_3.33.02_PM.png](https://support.rstudio.com/hc/article_attachments/1500011460282/Screen_Shot_2021-04-21_at_3.33.02_PM.png){alt="Screen_Shot_2021-04-21_at_3.33.02_PM.png"}
+![](images/python-versions.png){fig-alt="Screen_Shot_2021-04-21_at_3.33.02_PM.png"}
 
 The "Python interpreter:" text box shows the default Python interpreter to be used (if any). If you already know the location of the Python interpreter you wish to use, you can type the location of the interpreter into that text box.
 
 Otherwise, Python interpreters can be discovered on the system by clicking the "Select\..." button:
 
-![Screen_Shot_2021-04-21_at_3.34.00_PM.png](https://support.rstudio.com/hc/article_attachments/1500011460302/Screen_Shot_2021-04-21_at_3.34.00_PM.png){alt="Screen_Shot_2021-04-21_at_3.34.00_PM.png"}
+![](images/python-interpreter.png){fig-alt="Screen_Shot_2021-04-21_at_3.34.00_PM.png"}
 
 RStudio will search for Python interpreters via a few different methods:
 
@@ -87,7 +95,7 @@ The RETICULATE_PYTHON environment variable can also be used to configure the def
 
 If you have Python installed into a custom location, and you'd like for that location to be visible to RStudio, you can set the following R option:
 
-```r
+``` r
 options(rstudio.python.installationPath = "/path/to/python")
 ```
 
@@ -97,7 +105,7 @@ This can be set within an appropriate R startup file; for example, your R instal
 
 When the reticulate Python REPL is active, the RStudio Environment pane will update to show any available Python objects. For example:
 
-![Screen_Shot_2021-05-12_at_12.44.13_PM.png](https://support.rstudio.com/hc/article_attachments/1500017144041/Screen_Shot_2021-05-12_at_12.44.13_PM.png){alt="Screen_Shot_2021-05-12_at_12.44.13_PM.png"}
+![](images/python-environment.png){alt="Screen_Shot_2021-05-12_at_12.44.13_PM.png"}
 
 The Environment pane will automatically update to show objects as they are added and removed.
 
