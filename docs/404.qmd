@@ -1,7 +1,0 @@
----
-title: "Page not found"
----
-
-![404: Not found](images/404.png "You have arrived at a 404 page."){fig.alt="The link you used may longer be valid. Please use the links or the search function in the navbr to get you back on track."}
-
-To find the information you were looking for, please use the links or the search functionality on the top navigation bar.
