@@ -58,6 +58,7 @@ void removeOrphanedCacheItems()
    // list source documents
    std::vector<FilePath> docPaths;
    error = source_database::list(&docPaths);
+   LOG_AND_RETURN_IF_ERROR(error);
    if (error)
    {
       LOG_ERROR(error);
@@ -235,6 +236,7 @@ void onDetectChanges(module_context::ChangeSource source)
       
       SEXP object = VECTOR_ELT(entry, 0);
       SEXP name = VECTOR_ELT(entry, 1);
+      SEXP title = VECTOR_ELT(entry, 2);
       SEXP envir = VECTOR_ELT(entry, 4);
 
       // when envir is the empty env, this indicates
@@ -256,34 +258,39 @@ void onDetectChanges(module_context::ChangeSource source)
          continue;
 
       // update the object
-         SET_VECTOR_ELT(entry, 0, newObject);
+      SET_VECTOR_ELT(entry, 0, newObject);
 
-      if (Rf_inherits(newObject, "data.frame")) 
+      // Should the new object still use objcet explorer 
+      bool shouldUseExplorer = true;
+      error = r::exec::RFunction(".rs.dataViewer.shouldUseObjectExplorer")
+         .addParam(newObject)
+         .call(&shouldUseExplorer);
+      
+      if (shouldUseExplorer) 
       {
-         // close it
-         error = r::exec::RFunction(".rs.explorer.close")
-            .addUtf8Param(id)
-            .addParam(entry)
-            .call();
-
-         if (error)
-         {
-            LOG_ERROR(error);
-            return;
-         }
-      }
-      else 
-      {
+         // just refresh the View
          error = r::exec::RFunction(".rs.explorer.refresh")
             .addUtf8Param(id)
             .addParam(entry)
             .call();
+         LOG_AND_RETURN_IF_ERROR(error);
+      }
+      else 
+      {
+         // close it, because the object explorer is no longer 
+         // the best way to show that object. 
+         error = r::exec::RFunction(".rs.explorer.close")
+            .addUtf8Param(id)
+            .addParam(entry)
+            .call();
+         LOG_AND_RETURN_IF_ERROR(error);
 
-         if (error)
-         {
-            LOG_ERROR(error);
-            return;
-         }
+         // then just let View() show it
+         error = r::exec::RFunction("View")
+            .addParam(symbol)
+            .addParam(title)
+            .call(envir, true);
+         LOG_AND_RETURN_IF_ERROR(error);
       }
       
    }

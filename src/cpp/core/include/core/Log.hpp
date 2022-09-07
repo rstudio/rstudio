@@ -42,6 +42,8 @@ std::string errorAsLogEntry(const Error& error);
 #define LOG_ERROR(error) rstudio::core::log::logError(error, \
                                                       ERROR_LOCATION)
 
+#define LOG_AND_RETURN_IF_ERROR(error) do { if (error) { LOG_ERROR(error); return; } } while(false)
+
 #define LOG_ERROR_NAMED(logSection, error) rstudio::core::log::logError(logSection, \
                                                                         error, \
                                                                         ERROR_LOCATION)

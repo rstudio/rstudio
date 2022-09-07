@@ -653,7 +653,6 @@
    name <- ""
    env <- emptyenv()
    
-   
    if (.rs.isViewOverride()) 
    {
       # if the View() invoked wasn't our own, we have no way of knowing what's
