@@ -14,7 +14,7 @@
  */
 
 import { ChildProcess } from 'child_process';
-import { BrowserWindow, dialog, Menu, session } from 'electron';
+import { BrowserWindow, dialog, Menu, session, shell } from 'electron';
 
 import { Err } from '../core/err';
 import { logger } from '../core/logger';
@@ -32,7 +32,8 @@ import { RCommandEvaluator } from './r-command-evaluator';
 import { RemoteDesktopSessionLauncher } from './remote-desktop-session-launcher-overlay';
 import { SessionLauncher } from './session-launcher';
 import { CloseServerSessions } from './session-servers-overlay';
-import { waitForUrlWithTimeout } from './url-utils';
+import { isLocalUrl, waitForUrlWithTimeout } from './url-utils';
+import { registerWebContentsDebugHandlers } from './utils';
 
 export function closeAllSatellites(mainWindow: BrowserWindow): void {
   const topLevels = BrowserWindow.getAllWindows();
@@ -69,10 +70,7 @@ export class MainWindow extends GwtWindow {
 
   private sessionProcess?: ChildProcess;
   private isErrorDisplayed = false;
-
-  // if loading fails and emits `did-fail-load` it will be followed by a
-  // 'did-finish-load'; use this bool to differentiate
-  private mainFailLoad = false;
+  private didMainFrameLoadSuccessfully = true;
 
   // TODO
   //#ifdef _WIN32
@@ -131,23 +129,49 @@ export class MainWindow extends GwtWindow {
 
     this.on(DesktopBrowserWindow.CLOSE_WINDOW_SHORTCUT, this.onCloseWindowShortcut.bind(this));
 
-    // connect(webView(), &WebView::urlChanged,
-    //         this, &MainWindow::onUrlChanged);
+    registerWebContentsDebugHandlers(this.window.webContents);
 
-    this.window.webContents.on('did-finish-load', () => {
-      if (!this.mainFailLoad) {
-        this.onLoadFinished(true);
+    // Detect attempts to navigate externally within subframes, and prevent them.
+    // The implementation here is pretty sub-optimal, but it's the best we can do until
+    // we get 'will-frame-navigate' support. In effect, we detect attempts to navigate
+    // externally within an iframe, and instead:
+    //
+    // 1. Open the page externally,
+    // 2. Re-direct the iframe back to the source URL (bleh).
+    //
+    this.window.webContents.session.webRequest.onBeforeRequest((details, callback) => {
+
+      logger().logDebug(`${details.method} ${details.url} [${details.resourceType}]`);
+
+      const url = new URL(details.url);
+      if (details.resourceType === 'subFrame' && !isLocalUrl(url)) {
+        shell.openExternal(details.url).catch((error) => { logger().logError(error); });
+        callback({ cancel: false, redirectURL: details.frame?.url });
       } else {
-        this.mainFailLoad = false;
+        callback({ cancel: false });
       }
     });
-    this.window.webContents.on('did-fail-load', () => {
-      this.mainFailLoad = true;
-      this.onLoadFinished(false);
+
+    this.window.webContents.on('did-start-navigation', (event, url, isInPlace, isMainFrame) => {
+      if (isMainFrame) {
+        this.didMainFrameLoadSuccessfully = true;
+      }
     });
 
-    this.window.webContents.on('did-finish-load', () => {
-      this.menuCallback.cleanUpActions();
+    this.window.webContents.on('did-fail-load', (event, errorCode, errorDescription, validatedURL, isMainFrame) => {
+      if (isMainFrame) {
+        this.didMainFrameLoadSuccessfully = false;
+      }
+    });
+
+    // NOTE: This callback is called regardless of whether the frame's page was
+    // loaded successfully or not, so we need to detect failures to load within
+    // 'did-fail-load' and then pass that state along here.
+    this.window.webContents.on('did-frame-finish-load', async (event, isMainFrame) => {
+      if (isMainFrame) {
+        this.menuCallback.cleanUpActions();
+        this.onLoadFinished(this.didMainFrameLoadSuccessfully);
+      }
     });
 
     // connect(&desktopInfo(), &DesktopInfo::fixedWidthFontListChanged, [this]() {

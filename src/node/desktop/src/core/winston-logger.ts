@@ -82,8 +82,8 @@ export class WinstonLogger implements Logger {
     if (!app.isPackaged && this.logger.isLevelEnabled(level)) {
       const ts = new Date().toISOString();
       const tlevel = level.toUpperCase();
-      const tmessage = message.replace(/\n/g, '|||') + '\n';
-      process.stderr.write(`${ts} ${tlevel} ${tmessage}`);
+      const tmessage = message.replace(/\n/g, '|||');
+      console.log(`${ts} ${tlevel} ${tmessage}`);
     }
   }
 
