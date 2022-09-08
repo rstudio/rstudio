@@ -1,4 +1,6 @@
 .marker {
     position: absolute;
     z-index: 8;
+    text-align: right;
+    padding-right: 5px;
 }

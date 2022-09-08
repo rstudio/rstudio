@@ -14,62 +14,49 @@
  */
 package org.rstudio.studio.client.workbench.views.source.editors.text.ace;
 
+import java.util.ArrayList;
+import java.util.List;
+
 import com.google.gwt.core.client.GWT;
 import com.google.gwt.core.client.JsArrayInteger;
+import com.google.gwt.core.client.JsArrayString;
 import com.google.gwt.resources.client.ClientBundle;
 import com.google.gwt.resources.client.CssResource;
 import com.google.inject.Inject;
 
 import org.rstudio.studio.client.RStudioGinjector;
+import org.rstudio.studio.client.application.events.EventBus;
 import org.rstudio.studio.client.common.SimpleRequestCallback;
 import org.rstudio.studio.client.common.codetools.CodeToolsServerOperations;
 import org.rstudio.studio.client.common.coverage.CodeCoverage;
 import org.rstudio.studio.client.workbench.views.source.editors.text.AceEditor;
+import org.rstudio.studio.client.workbench.views.source.events.DocFocusedEvent;
 
 import com.google.inject.Inject;
 
-public class AceEditorCoverageHighlighter {
+public class AceEditorCoverageHighlighter implements DocFocusedEvent.Handler {
     
     public AceEditorCoverageHighlighter(AceEditor editor)
     {
         RStudioGinjector.INSTANCE.injectMembers(this);
-
         editor_ = editor;
-
-        mockup();
+        markers_ = new ArrayList<Integer>();
     }
 
     @Inject
-    private void initialize(CodeToolsServerOperations server)
+    private void initialize(CodeToolsServerOperations server, EventBus events)
     {
         server_ = server;
-    }
+        events_ = events;
 
-
-    void mockup() 
-    {
-        server_.getCoverageInformation("R/summarise.R", new SimpleRequestCallback<CodeCoverage>()
-        {
-            @Override
-            public void onResponseReceived(CodeCoverage information)
-            {
-                JsArrayInteger values = information.getValue();
-                JsArrayInteger lines = information.getLine();
-
-                int n = values.length();
-
-                for (int i = 0; i < n; i++) 
-                {
-                    highlight(lines.get(i), values.get(i) > 0 ? "#00ff0040" : "#ff000040");
-                }
-            }
-            
-        });
+        events_.addHandler(DocFocusedEvent.TYPE, this);
     }
 
     void highlight(int line, String color) {
         Range range = Range.fromPoints(Position.create(line, 1), Position.create(line, Integer.MAX_VALUE));
-        editor_.getSession().addMarker(range, RES.styles().marker(), "fullLine", false, "background-color: " + color + " !important; ");
+        
+        int markerId = editor_.getSession().addMarker(range, RES.styles().marker(), "fullLine", false, "background-color: " + color + " !important; ");
+        markers_.add(markerId);
     }
 
     interface Resources extends ClientBundle
@@ -89,5 +76,36 @@ public class AceEditorCoverageHighlighter {
     }
 
     CodeToolsServerOperations server_;
+    EventBus events_;
+    
     private AceEditor editor_;
+    private List<Integer> markers_;
+
+    @Override
+    public void onDocFocused(DocFocusedEvent event) {
+
+        for (Integer id: markers_) {
+            editor_.getSession().removeMarker(id);
+        }
+        markers_.clear();
+
+        server_.getCoverageInformation(event.getPath(), new SimpleRequestCallback<CodeCoverage>()
+        {
+            @Override
+            public void onResponseReceived(CodeCoverage information)
+            {
+                JsArrayInteger values = information.getValue();
+                JsArrayInteger lines = information.getLine();
+                JsArrayString colors = information.getColor();
+
+                int n = values.length();
+
+                for (int i = 0; i < n; i++) 
+                {
+                    highlight(lines.get(i) - 1, colors.get(i));
+                }
+            }
+            
+        });
+    }
 }

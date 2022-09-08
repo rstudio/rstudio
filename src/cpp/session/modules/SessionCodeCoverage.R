@@ -13,15 +13,27 @@
 #
 #
 
+.rs.setVar("coverageEnv", new.env(parent = emptyenv()))
+
+.rs.addFunction("coverage_update", function(tcov) {
+    tcov$filename <- .rs.createAliasedPath(normalizePath(tcov$filename))
+    if (is.null(tcov$color)) {
+        tcov$color <- ifelse(tcov$value > 0, "#00ff0020", "#ff000020")
+    }
+    assign("coverage_data", tcov, .rs.coverageEnv)
+})
+
 .rs.addJsonRpcHandler("coverage_get_information", function(path) {
 
-    # mockup data
-    line <- c(120L, 128L, 129L)
-    value <- c(1L, 0L, 0L)
+    coverage_data <- .rs.coverageEnv[["coverage_data"]]
 
-    list( 
-        filename = .rs.scalar("R/summarise.R"), 
-        line = line,
-        value = value
-    )
+    info <- list(filename = path, line = integer(), value = integer(), color = character())
+    if (!is.null(coverage_data)) 
+    {
+        data <- coverage_data[coverage_data$filename == path, ]
+        info$line  <- data$line
+        info$value <- data$value
+        info$color <- data$color
+    }
+    info
 })
