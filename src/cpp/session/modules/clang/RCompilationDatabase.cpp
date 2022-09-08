@@ -842,20 +842,14 @@ core::Error RCompilationDatabase::executeRCmdSHLIB(
    if (error)
       return error;
    
-   // update the file modification time, so that make assumes the output file is out-of-date
-   auto lastWriteTime = srcPath.getLastWriteTime();
-   srcPath.setLastWriteTime();
-   
-   // use custom output shlib (help ensure we always try to make)
-   std::string outputSo = kCompilationDbPrefix + core::system::generateShortenedUuid() + ".so";
-   std::string outputFlag = fmt::format("--output={}", outputSo);
-   
    // compile the file as dry-run
    module_context::RCommand rCmd(rBinDir);
    rCmd << "SHLIB";
    rCmd << "--dry-run";
-   rCmd << outputFlag;
    rCmd << srcPath.getFilename();
+   
+   // a dirty trick to inject '--always-make' into the make invocation
+   rCmd << "\"' --always-make IGNORED='\"";
    
    if (verbose(3))
    {
@@ -871,9 +865,6 @@ core::Error RCompilationDatabase::executeRCmdSHLIB(
             rCmd.shellCommand(),
             options,
             pResult);
-   
-   // restore last write time
-   srcPath.setLastWriteTime(lastWriteTime);
    
    if (verbose(3))
    {
