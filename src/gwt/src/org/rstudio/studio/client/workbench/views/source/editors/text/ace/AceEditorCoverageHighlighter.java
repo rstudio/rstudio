@@ -22,6 +22,7 @@ import com.google.gwt.core.client.JsArrayInteger;
 import com.google.gwt.core.client.JsArrayString;
 import com.google.gwt.resources.client.ClientBundle;
 import com.google.gwt.resources.client.CssResource;
+import com.google.gwt.user.client.Timer;
 import com.google.inject.Inject;
 
 import org.rstudio.studio.client.RStudioGinjector;
@@ -41,6 +42,15 @@ public class AceEditorCoverageHighlighter implements DocFocusedEvent.Handler {
         RStudioGinjector.INSTANCE.injectMembers(this);
         editor_ = editor;
         markers_ = new ArrayList<Integer>();
+
+        timer_ = new Timer(){
+
+            @Override
+            public void run() {
+                updateMarkers();
+            }
+            
+        };
     }
 
     @Inject
@@ -70,26 +80,14 @@ public class AceEditorCoverageHighlighter implements DocFocusedEvent.Handler {
         String marker();
     }
 
-    public static Resources RES = GWT.create(Resources.class);
-    static {
-        RES.styles().ensureInjected();
-    }
-
-    CodeToolsServerOperations server_;
-    EventBus events_;
-    
-    private AceEditor editor_;
-    private List<Integer> markers_;
-
-    @Override
-    public void onDocFocused(DocFocusedEvent event) {
-
+    void updateMarkers() 
+    {
         for (Integer id: markers_) {
             editor_.getSession().removeMarker(id);
         }
         markers_.clear();
 
-        server_.getCoverageInformation(event.getPath(), new SimpleRequestCallback<CodeCoverage>()
+        server_.getCoverageInformation(path_, new SimpleRequestCallback<CodeCoverage>()
         {
             @Override
             public void onResponseReceived(CodeCoverage information)
@@ -107,5 +105,25 @@ public class AceEditorCoverageHighlighter implements DocFocusedEvent.Handler {
             }
             
         });
+    }
+
+    public static Resources RES = GWT.create(Resources.class);
+    static {
+        RES.styles().ensureInjected();
+    }
+
+    CodeToolsServerOperations server_;
+    EventBus events_;
+    
+    private AceEditor editor_;
+    private List<Integer> markers_;
+    
+    String path_;
+    Timer timer_;
+
+    @Override
+    public void onDocFocused(DocFocusedEvent event) {
+        path_ = event.getPath();
+        timer_.schedule(100);
     }
 }
