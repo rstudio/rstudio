@@ -746,6 +746,9 @@
 
 .rs.addFunction("dataViewer.shouldUseObjectExplorer", function(object)
 {
+   if (inherits(object, c("function", "vignette")))
+      return(FALSE)
+
    # prefer data viewer for pandas DataFrames
    if (inherits(object, "pandas.core.frame.DataFrame"))
       return(FALSE)
