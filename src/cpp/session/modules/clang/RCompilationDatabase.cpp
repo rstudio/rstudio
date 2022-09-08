@@ -526,6 +526,11 @@ void RCompilationDatabase::updateForCurrentPackage()
 
    if (isCurrent && !s_rebuildCompilationDatabase)
       return;
+   
+   if (verbose(2))
+   {
+      std::cerr << "[!] The compilation database is out-of-date and will be rebuilt." << std::endl << std::endl;
+   }
 
    // we're about to rebuild the database, so unset flag now
    s_rebuildCompilationDatabase = false;
