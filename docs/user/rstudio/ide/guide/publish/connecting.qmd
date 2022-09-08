@@ -1,0 +1,35 @@
+---
+title: "Connecting"
+---
+
+Adapted from <https://docs.rstudio.com/connect/user/connecting/>
+
+## Connecting Your Account
+
+![Global options menu](https://docs.rstudio.com/connect/user/images/screenshots/connecting-1.png){alt="Global options menu"}
+
+You'll need to connect your IDE to RStudio Connect and authorize the IDE to use your Connect account. To add a publishing account to the RStudio IDE, click **Tools** in the main menu, then **Global Options\...**.
+
+\
+![Publishing account configuration](https://docs.rstudio.com/connect/user/images/screenshots/connecting-2.png){alt="Publishing account configuration"}
+
+In the Options panel that appears, choose **Publishing** in the sidebar, and use the **Connect\...** button to add a new account.
+
+![RStudio Connect account configuration](https://docs.rstudio.com/connect/user/images/screenshots/connecting-3.png){alt="RStudio Connect account configuration"}
+
+Select that you want to configure an RStudio Connect account, then enter the address of your server. Your Connect administrator can provide you with the address of the RStudio Connect server.
+
+Clicking **Next** opens a login window for RStudio Connect.
+
+\
+![Link RStudio Connect to the IDE](https://docs.rstudio.com/connect/user/images/screenshots/loggedin.png){alt="Link RStudio Connect to the IDE"}
+
+Log into Connect and click **Connect** to authorize the IDE to deploy on your behalf. Then return to the IDE and click the **Connect Account** button.
+
+Once you have successfully configured the RStudio IDE, you may now publish content to RStudio Connect.
+
+If you are ready to publish content to RStudio Connect, continue to the [Publishing](https://docs.rstudio.com/connect/user/publishing/) chapter.
+
+## Update the IDE
+
+You will need to install at least version 1.0.44 of the RStudio IDE to interact with Connect. You can confirm this by opening the IDE and clicking "Help" \> "About RStudio" and checking the version number at the top of that pane. If you are not running at least version 1.0.44, you should [download the latest release](https://www.rstudio.com/products/rstudio/download/).

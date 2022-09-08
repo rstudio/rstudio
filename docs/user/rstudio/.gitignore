@@ -1,0 +1,10 @@
+/.quarto/
+.DS_Store
+_site
+_freeze
+*.aux
+*.log
+*.tex
+*.toc
+
+.Rproj.user

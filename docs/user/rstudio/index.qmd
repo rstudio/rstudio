@@ -1,0 +1,52 @@
+---
+title: "RStudio"
+subtitle: "User Guide"
+date: today
+date-format: iso
+---
+
+## Overview
+
+RStudio is a set of integrated tools designed to help you be more productive with R and Python. It includes a console, syntax-highlighting editor that supports direct code execution, and a variety of robust tools for plotting, viewing history, debugging and managing your workspace.
+
+RStudio is available in open source and commercial editions and runs on the desktop (Windows, Mac, and Linux) or in a browser connected to RStudio Server or RStudio Workbench (Debian/Ubuntu, Red Hat/CentOS, and SUSE Linux). - [RStudio](https://www.rstudio.com/products/rstudio/)
+
+Some of the functionality that RStudio provides is:
+
+-   Access RStudio locally\
+-   Syntax highlighting, code completion, and smart indentation\
+-   Execute R code directly from the source editor\
+-   Quickly jump to function definitions\
+-   View content changes in real-time with the Visual Markdown Editor for RMarkdown or Quarto documents\
+-   Easily manage multiple working directories using Projects\
+-   Integrated R help and documentation\
+-   View Python data, publish and render in Python and share objects with R
+-   Interactive debugger to diagnose and fix errors\
+-   Extensive package development tools\
+-   Easily publish apps and reports\
+
+The following documentation helps a user understand the core workflows in RStudio. It provides information for navigating the user interface and appearance, managing R and R packages, working with Python, authoring code or text editing, debugging and diagnostics, using the Visual Editor for Quarto and RMarkdown, reading in data from local and remote sources, and integrations with version control systems and the terminal.
+
+## Install Links
+
+### Open Source
+
+- [RStudio Desktop download](https://www.rstudio.com/products/rstudio/download/) - available for Windows/Mac/Linux
+- [RStudio Server download](https://www.rstudio.com/products/rstudio/download-server/) - available for Linux
+
+### Commercial
+
+- [Posit Workbench](https://docs.rstudio.com/rsw/installation/) - administration guide for installation and configuration
+
+::: {.callout-caution }
+
+### Daily Builds
+
+[RStudio Daily builds](https://dailies.rstudio.com/) are intended for testing purposes, and are not recommended for general use. For stable builds, please use one of the above links for Open Source or Commercial downloads.
+:::
+
+
+### Additional Resources
+
+- [RStudio Extensions](https://rstudio.github.io/rstudio-extensions/index.html)
+- [RStudio Support tagged IDE](https://support.rstudio.com/hc/en-us/sections/203994097-RStudio-IDE)
