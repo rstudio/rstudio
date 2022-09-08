@@ -595,12 +595,32 @@ std::vector<std::string> RCompilationDatabase::compileArgsForPackage(
          break;
       }
    }
-   
+
+   // if we couldn't find a source file, create and use a tempfile
+   // (presumedly this could happen in a brand new project?)
+   // (or should we be waiting for the user to create a file?)
+   bool removeOnExit = false;
    if (targetSrcFile.isEmpty())
-      return {};
+   {
+      removeOnExit = true;
+      std::string name = kCompilationDbPrefix + core::system::generateShortenedUuid() + (isCpp ? ".cpp" : ".c");
+      targetSrcFile = srcDir.completeChildPath(name);
+      Error error = core::writeStringToFile(targetSrcFile, "void test() {}\n");
+      if (error)
+      {
+         LOG_ERROR(error);
+         return {};
+      }
+   }
    
    // call R CMD shlib on that file
    std::vector<std::string> compileArgs = argsForRCmdSHLIB(env, targetSrcFile);
+
+   // clena up
+   if (removeOnExit)
+   {
+      targetSrcFile.removeIfExists();
+   }
 
    // diagnostics
    if (verbose(3))
