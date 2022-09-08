@@ -13,24 +13,24 @@
 #
 #
 
-.rs.setVar("coverageEnv", new.env(parent = emptyenv()))
-
 .rs.addFunction("coverage_update", function(tcov) {
-    tcov$filename <- .rs.createAliasedPath(normalizePath(tcov$filename))
-    if (is.null(tcov$color)) {
-        tcov$color <- ifelse(tcov$value > 0, "#00ff0020", "#ff000020")
+    if (!is.null(tcov)) {
+        tcov$filename <- .rs.createAliasedPath(normalizePath(tcov$filename))
+        if (is.null(tcov$color)) {
+            tcov$color <- ifelse(tcov$value > 0, "#00ff0020", "#ff000020")
+        }
     }
-    assign("coverage_data", tcov, .rs.coverageEnv)
+    .rs.setVar("coverage_data", tcov)
 })
 
 .rs.addJsonRpcHandler("coverage_get_information", function(path) {
-
-    coverage_data <- .rs.coverageEnv[["coverage_data"]]
-
+    coverage_data <- .rs.getVar("coverage_data")
+    
     info <- list(filename = path, line = integer(), value = integer(), color = character())
-    if (!is.null(coverage_data)) 
+    if (!is.null(coverage_data))
     {
         data <- coverage_data[coverage_data$filename == path, ]
+        
         info$line  <- data$line
         info$value <- data$value
         info$color <- data$color
