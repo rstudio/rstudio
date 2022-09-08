@@ -616,7 +616,7 @@ std::vector<std::string> RCompilationDatabase::compileArgsForPackage(
    // call R CMD shlib on that file
    std::vector<std::string> compileArgs = argsForRCmdSHLIB(env, targetSrcFile);
 
-   // clena up
+   // clean up
    if (removeOnExit)
    {
       targetSrcFile.removeIfExists();
