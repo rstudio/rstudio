@@ -16,6 +16,7 @@ package org.rstudio.studio.client.common.coverage;
 
 import com.google.gwt.core.client.JavaScriptObject;
 import com.google.gwt.core.client.JsArrayInteger;
+import com.google.gwt.core.client.JsArrayString;
 
 public class CodeCoverage extends JavaScriptObject
 {
@@ -24,8 +25,8 @@ public class CodeCoverage extends JavaScriptObject
     {
     }
 
-    public static native CodeCoverage create(String filename, JsArrayInteger line, JsArrayInteger value) /*-{
-        return {filename: filename, line: line, value: value};
+    public static native CodeCoverage create(String filename, JsArrayInteger line, JsArrayInteger value, JsArrayString color) /*-{
+        return {filename: filename, line: line, value: value, color: color};
     }-*/;
 
     public final native String getFilename() /*-{
@@ -38,6 +39,10 @@ public class CodeCoverage extends JavaScriptObject
 
     public final native JsArrayInteger getValue() /*-{
         return this.value;
+    }-*/;
+
+    public final native JsArrayString getColor() /*-{
+        return this.color;
     }-*/;
 
 
