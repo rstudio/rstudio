@@ -1183,7 +1183,7 @@ std::vector<std::string> RCompilationDatabase::baseCompilationArgs(bool isCpp) c
 
    // add Rtools arguments
    auto rtInfo = rToolsInfo();
-   auto rtArgs = rtInfo.clangArgs();
+   auto rtArgs = rtInfo.clangArgs(isCpp);
    args.insert(args.end(), rtArgs.begin(), rtArgs.end());
 
    // re-generate compiler definitions
@@ -1224,9 +1224,6 @@ std::vector<std::string> RCompilationDatabase::packageCompilationArgs(
       core::r_util::RPackageInfo* pPkgInfo,
       bool* pIsCpp)
 {
-   // start with base args
-   std::vector<std::string> args = baseCompilationArgs(true);
-
    // read the package description file
    using namespace projects;
    FilePath pkgPath = projectContext().buildTargetPath();
@@ -1237,6 +1234,13 @@ std::vector<std::string> RCompilationDatabase::packageCompilationArgs(
       LOG_ERROR(error);
       return {};
    }
+
+   // determine if package is cpp
+   FilePath srcDir = pkgPath.completeChildPath("src");
+   bool isCpp = packageIsCpp(pkgInfo.linkingTo(), srcDir);
+
+   // start with base args
+   std::vector<std::string> args = baseCompilationArgs(isCpp);
 
    // Discover all of the LinkingTo relationships and add -I
    // arguments for them
@@ -1270,8 +1274,6 @@ std::vector<std::string> RCompilationDatabase::packageCompilationArgs(
    }
 
    // Run R CMD SHLIB
-   FilePath srcDir = pkgPath.completeChildPath("src");
-   bool isCpp = packageIsCpp(pkgInfo.linkingTo(), srcDir);
    std::vector<std::string> compileArgs = compileArgsForPackage(env, srcDir, isCpp);
 
    // perform path substitution

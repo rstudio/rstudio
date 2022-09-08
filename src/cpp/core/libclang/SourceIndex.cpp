@@ -253,7 +253,7 @@ TranslationUnit SourceIndex::getTranslationUnit(const std::string& filename,
    removeTranslationUnit(filename);
 
    // add verbose output if requested
-   if (verbose_ >= 2)
+   if (verbose_ >= 3)
      args.push_back("-v");
    
    // fix up '-std=' arguments; in particular, we only pass the C++
