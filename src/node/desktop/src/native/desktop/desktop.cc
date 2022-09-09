@@ -125,7 +125,7 @@ void cleanClipboardImpl(bool stripHtml)
 
    // read HTML data
    CFReleaseHandle<CFDataRef> htmlData;
-   if (stripHtml)
+   if (!stripHtml)
    {
       err = ::PasteboardCopyItemFlavorData(clipboard, itemId, CFSTR("public.html"), &htmlData);
       if (err && err != badPasteboardFlavorErr)
