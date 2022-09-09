@@ -578,7 +578,7 @@ function registerWebContentsDebugHandlerImpl(webContents: WebContents, event: st
       // check for an Electron Event and handle it specially here
       // eslint-disable-next-line @typescript-eslint/no-explicit-any
       const electronEvent = arg as any;
-      if (typeof electronEvent.preventDefault !== 'undefined') {
+      if (electronEvent != null && typeof electronEvent.preventDefault !== 'undefined') {
         return '<event>';
       }
 
