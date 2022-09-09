@@ -281,7 +281,7 @@ environment(.rs.Env[[".rs.addFunction"]]) <- .rs.Env
    # dependencies may live within a separate library path from the package to be
    # loaded; it should suffice to place the requested library at the front of
    # the library paths
-   if (nzchar(lib)) {
+   if (nzchar(lib) && file.exists(file.path(lib, packageName, "Meta"))) {
       libPaths <- .libPaths()
       .libPaths(c(lib, libPaths))
       on.exit(.libPaths(libPaths), add = TRUE)
