@@ -340,7 +340,7 @@ public class GeneralPreferencesPane extends PreferencesPane
 
          fullPathInTitle_ = new CheckBox(constants_.fullProjectPathInWindowTitleLabel());
          advanced.add(lessSpaced(fullPathInTitle_));
-         if (BrowseCap.isElectron())
+         if (BrowseCap.isElectron() && !BrowseCap.isLinuxDesktop())
          {
             nativeFileDialogs_ = checkboxPref(prefs_.nativeFileDialogs());
             advanced.add(nativeFileDialogs_);

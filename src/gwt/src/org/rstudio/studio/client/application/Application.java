@@ -946,7 +946,7 @@ public class Application implements ApplicationEventHandlers
       // preference. If not, set it and reload the page.
       if (BrowseCap.isElectron())
       {
-         boolean prefUseWebDialogs = !userPrefs_.get().nativeFileDialogs().getValue();
+         boolean prefUseWebDialogs = BrowseCap.isLinuxDesktop() || !userPrefs_.get().nativeFileDialogs().getValue();
          if (WebDialogCookie.getUseWebDialogs() != prefUseWebDialogs)
          {
             WebDialogCookie.setUseWebDialogs(prefUseWebDialogs);
