@@ -980,7 +980,8 @@ void rConsoleHistoryReset()
 
 void rConsoleReset()
 {
-   rsession::console_input::clearConsoleInputBuffer();
+   if (prefs::userPrefs().discardPendingConsoleInputOnError())
+      rsession::console_input::clearConsoleInputBuffer();
 }
 
 bool rLocator(double* x, double* y)

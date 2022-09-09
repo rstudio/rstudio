@@ -1611,6 +1611,12 @@
             "title": "Use native file and message dialog boxes",
             "type": "boolean",
             "default": true
+        },
+        "discard_pending_console_input_on_error": {
+            "description": "When enabled, any pending console input will be discarded when an (uncaught) R error occurs.",
+            "title": "Discard pending console input on error",
+            "type": "boolean",
+            "default": true
         }
     }
 }

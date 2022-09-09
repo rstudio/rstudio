@@ -1104,6 +1104,25 @@ public interface PrefsConstants extends com.google.gwt.i18n.client.Messages {
     String pdfPreviewSystemViewerOption();
 
     /**
+     * Translated "Execution".
+     *
+     * @return translated "Execution"
+     */
+    @DefaultMessage("Execution")
+    @Key("consoleExecutionLabel")
+    String consoleExecutionLabel();
+    
+    /**
+     * Translated "Discard pending console input on error".
+     *
+     * @return translated "Discard pending console input on error"
+     */
+    @DefaultMessage("Discard pending console input on error")
+    @Key("consoleDiscardPendingConsoleInputOnErrorLabel")
+    String consoleDiscardPendingConsoleInputOnErrorLabel();
+    
+    
+    /**
      * Translated "Display".
      *
      * @return translated "Display"

@@ -3091,6 +3091,19 @@ core::Error UserPrefValues::setNativeFileDialogs(bool val)
    return writePref("native_file_dialogs", val);
 }
 
+/**
+ * When enabled, any pending console input will be discarded when an (uncaught) R error occurs.
+ */
+bool UserPrefValues::discardPendingConsoleInputOnError()
+{
+   return readPref<bool>("discard_pending_console_input_on_error");
+}
+
+core::Error UserPrefValues::setDiscardPendingConsoleInputOnError(bool val)
+{
+   return writePref("discard_pending_console_input_on_error", val);
+}
+
 std::vector<std::string> UserPrefValues::allKeys()
 {
    return std::vector<std::string>({
@@ -3330,6 +3343,7 @@ std::vector<std::string> UserPrefValues::allKeys()
       kCheckNullExternalPointers,
       kUiLanguage,
       kNativeFileDialogs,
+      kDiscardPendingConsoleInputOnError,
    });
 }
    

@@ -410,6 +410,7 @@ namespace prefs {
 #define kUiLanguageEn "en"
 #define kUiLanguageFr "fr"
 #define kNativeFileDialogs "native_file_dialogs"
+#define kDiscardPendingConsoleInputOnError "discard_pending_console_input_on_error"
 
 class UserPrefValues: public Preferences
 {
@@ -1830,6 +1831,12 @@ public:
     */
    bool nativeFileDialogs();
    core::Error setNativeFileDialogs(bool val);
+
+   /**
+    * When enabled, any pending console input will be discarded when an (uncaught) R error occurs.
+    */
+   bool discardPendingConsoleInputOnError();
+   core::Error setDiscardPendingConsoleInputOnError(bool val);
 
 };
 
