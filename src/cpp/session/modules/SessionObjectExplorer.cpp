@@ -58,7 +58,6 @@ void removeOrphanedCacheItems()
    // list source documents
    std::vector<FilePath> docPaths;
    error = source_database::list(&docPaths);
-   LOG_AND_RETURN_IF_ERROR(error);
    if (error)
    {
       LOG_ERROR(error);
@@ -273,7 +272,11 @@ void onDetectChanges(module_context::ChangeSource source)
             .addUtf8Param(id)
             .addParam(entry)
             .call();
-         LOG_AND_RETURN_IF_ERROR(error);
+         if (error)
+         {
+            LOG_ERROR(error);
+            return;
+         }
       }
       else 
       {
@@ -283,14 +286,22 @@ void onDetectChanges(module_context::ChangeSource source)
             .addUtf8Param(id)
             .addParam(entry)
             .call();
-         LOG_AND_RETURN_IF_ERROR(error);
+         if (error)
+         {
+            LOG_ERROR(error);
+            return;
+         }
 
          // then just let View() show it
          error = r::exec::RFunction("View")
             .addParam(symbol)
             .addParam(title)
             .call(envir, true);
-         LOG_AND_RETURN_IF_ERROR(error);
+         if (error)
+         {
+            LOG_ERROR(error);
+            return;
+         }
       }
       
    }
