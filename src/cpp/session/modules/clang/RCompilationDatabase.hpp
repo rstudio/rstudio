@@ -76,7 +76,7 @@ private:
    void updateForSourceCpp(const core::FilePath& cppPath);
    std::vector<std::string> compileArgsForPackage(
                                      const core::system::Options& env,
-                                     const core::FilePath& pkgPath,
+                                     const core::FilePath& srcDir,
                                      bool isCpp);
 
 
@@ -96,7 +96,7 @@ private:
                                         core::FilePath srcFile);
 
    std::vector<std::string> argsForRCmdSHLIB(core::system::Options env,
-                                             core::FilePath tempSrcFile);
+                                             core::FilePath srcFile);
 
    std::vector<std::string> baseCompilationArgs(bool isCppFile) const;
    std::vector<std::string> packageCompilationArgs(
