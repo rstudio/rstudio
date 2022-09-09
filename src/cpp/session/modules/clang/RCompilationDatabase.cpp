@@ -50,7 +50,12 @@ using namespace rstudio::core;
 using namespace rstudio::core::libclang;
 using namespace boost::placeholders;
 
-#define kCompilationDatabaseVersion 3
+// The compilation database version.
+//
+// Bump this version if you'd like newer versions of RStudio
+// to be forced to rebuild the compilation database, e.g. because
+// the methodology used to infer compilation flags has changed.
+#define kCompilationDatabaseVersion 4
 
 namespace rstudio {
 namespace session {
@@ -518,9 +523,14 @@ void RCompilationDatabase::updateForCurrentPackage()
          packageBuildFileHash == packageBuildFileHash_ &&
          compilerHash == compilerHash_ &&
          module_context::rVersion() == rVersion_;
-   
+
    if (isCurrent && !s_rebuildCompilationDatabase)
       return;
+   
+   if (verbose(2))
+   {
+      std::cerr << "[!] The compilation database is out-of-date and will be rebuilt." << std::endl << std::endl;
+   }
 
    // we're about to rebuild the database, so unset flag now
    s_rebuildCompilationDatabase = false;
@@ -555,9 +565,47 @@ std::vector<std::string> RCompilationDatabase::compileArgsForPackage(
       const FilePath& srcDir,
       bool isCpp)
 {
+   // find an appropriate source file to use as the target for compilation
+   auto isCompatibleSrcFile = [=](const FilePath& filePath)
+   {
+      if (isCpp)
+      {
+         return filePath.hasExtension(".cpp") || filePath.hasExtension(".cc");
+      }
+      else
+      {
+         return filePath.hasExtension(".c");
+      }
+   };
    
-   // R CMD SHLIB dry run to capture the compilation args
-   std::vector<std::string> compileArgs = argsForRCmdSHLIB(env, srcDir);
+   std::vector<FilePath> srcFiles;
+   Error error = srcDir.getChildren(srcFiles);
+   if (error)
+   {
+      LOG_ERROR(error);
+      return {};
+   }
+   
+   FilePath targetSrcFile;
+   for (auto&& srcFile : srcFiles)
+   {
+      if (isCompatibleSrcFile(srcFile))
+      {
+         targetSrcFile = srcFile;
+         break;
+      }
+   }
+   
+   // if we couldn't find a source file for some reason, just try to rebuild
+   // the compilation database again next time
+   if (!targetSrcFile.exists())
+   {
+      s_rebuildCompilationDatabase = true;
+      return {};
+   }
+   
+   // call R CMD shlib on that file
+   std::vector<std::string> compileArgs = argsForRCmdSHLIB(env, targetSrcFile);
 
    // diagnostics
    if (verbose(3))
@@ -790,7 +838,7 @@ Error RCompilationDatabase::executeSourceCpp(
 
 core::Error RCompilationDatabase::executeRCmdSHLIB(
                                  core::system::Options env,
-                                 const core::FilePath& srcDir,
+                                 const core::FilePath& srcPath,
                                  core::system::ProcessResult* pResult)
 {
    // get R bin directory
@@ -798,23 +846,37 @@ core::Error RCompilationDatabase::executeRCmdSHLIB(
    Error error = module_context::rBinDir(&rBinDir);
    if (error)
       return error;
-
-   std::string output = std::string("--output=") + kCompilationDbPrefix + core::system::generateUuid() + ".so";
    
    // compile the file as dry-run
    module_context::RCommand rCmd(rBinDir);
    rCmd << "SHLIB";
    rCmd << "--dry-run";
-   rCmd << output;
+   rCmd << srcPath.getFilename();
+   
+   // a dirty trick to inject '--always-make' into the make invocation
+   rCmd << "\"' --always-make IGNORED='\"";
+   
+   if (verbose(3))
+   {
+      std::cerr << "EXECUTING R CMD SHLIB ----" << std::endl;
+      std::cerr << rCmd.commandString() << std::endl;
+   }
 
    // set options and run
    core::system::ProcessOptions options;
-   options.workingDir = srcDir;
+   options.workingDir = srcPath.getParent();
    options.environment = env;
    Error result = core::system::runCommand(
             rCmd.shellCommand(),
             options,
             pResult);
+   
+   if (verbose(3))
+   {
+      std::cerr << "stdout: " << pResult->stdOut << std::endl;
+      std::cerr << "stderr: " << pResult->stdErr << std::endl;
+   }
+   
    return result;
 }
 
@@ -1060,12 +1122,12 @@ RCompilationDatabase::CompilationConfig
 }
 
 std::vector<std::string> RCompilationDatabase::argsForRCmdSHLIB(
-                                          core::system::Options env,
-                                          const FilePath& srcDir)
+      core::system::Options env,
+      FilePath srcFile)
 {
    // execute R CMD SHLIB
    core::system::ProcessResult result;
-   Error error = executeRCmdSHLIB(env, srcDir, &result);
+   Error error = executeRCmdSHLIB(env, srcFile, &result);
 
    // process results of R CMD SHLIB
    if (error)
@@ -1083,32 +1145,7 @@ std::vector<std::string> RCompilationDatabase::argsForRCmdSHLIB(
       // parse the compilation results
       if (verbose(3))
       {
-         std::cerr << "# COMPILATION OUTPUT for R CMD SHLIB --dry-run ----" << std::endl;
-         std::cerr << result.stdOut << std::endl;
-      }
-
-      std::vector<std::string> lines;
-      boost::algorithm::split(lines, result.stdOut, boost::algorithm::is_any_of("\r\n"));
-      std::string makeCmd = lines[1] + " --dry-run --always-make";
-
-      result.stdOut = "";
-      result.stdErr = "";
-      core::system::ProcessOptions options;
-      options.workingDir = srcDir;
-      options.environment = env;
-      error = core::system::runCommand(
-               makeCmd,
-               options,
-               &result);
-      if (error)
-      {
-         LOG_ERROR(error);
-         return {};
-      }
-
-      if (verbose(3))
-      {
-         std::cerr << "# COMPILATION OUTPUT for make --dry-run --always-run ----" << std::endl;
+         std::cerr << "# PARSING COMPILATION OUTPUT ----" << std::endl;
          std::cerr << result.stdOut << std::endl;
       }
 
@@ -1142,7 +1179,7 @@ std::vector<std::string> RCompilationDatabase::baseCompilationArgs(bool isCpp) c
 
    // add Rtools arguments
    auto rtInfo = rToolsInfo();
-   auto rtArgs = rtInfo.clangArgs();
+   auto rtArgs = rtInfo.clangArgs(isCpp);
    args.insert(args.end(), rtArgs.begin(), rtArgs.end());
 
    // re-generate compiler definitions
@@ -1183,9 +1220,6 @@ std::vector<std::string> RCompilationDatabase::packageCompilationArgs(
       core::r_util::RPackageInfo* pPkgInfo,
       bool* pIsCpp)
 {
-   // start with base args
-   std::vector<std::string> args = baseCompilationArgs(true);
-
    // read the package description file
    using namespace projects;
    FilePath pkgPath = projectContext().buildTargetPath();
@@ -1196,6 +1230,13 @@ std::vector<std::string> RCompilationDatabase::packageCompilationArgs(
       LOG_ERROR(error);
       return {};
    }
+
+   // determine if package is cpp
+   FilePath srcDir = pkgPath.completeChildPath("src");
+   bool isCpp = packageIsCpp(pkgInfo.linkingTo(), srcDir);
+
+   // start with base args
+   std::vector<std::string> args = baseCompilationArgs(isCpp);
 
    // Discover all of the LinkingTo relationships and add -I
    // arguments for them
@@ -1229,8 +1270,6 @@ std::vector<std::string> RCompilationDatabase::packageCompilationArgs(
    }
 
    // Run R CMD SHLIB
-   FilePath srcDir = pkgPath.completeChildPath("src");
-   bool isCpp = packageIsCpp(pkgInfo.linkingTo(), srcDir);
    std::vector<std::string> compileArgs = compileArgsForPackage(env, srcDir, isCpp);
 
    // perform path substitution

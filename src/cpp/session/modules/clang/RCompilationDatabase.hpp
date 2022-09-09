@@ -69,14 +69,14 @@ private:
                                 core::system::ProcessResult* pResult);
 
    core::Error executeRCmdSHLIB(core::system::Options env,
-                                const core::FilePath& srcDir,
+                                const core::FilePath& srcPath,
                                 core::system::ProcessResult* pResult);
 
    void updateForCurrentPackage();
    void updateForSourceCpp(const core::FilePath& cppPath);
    std::vector<std::string> compileArgsForPackage(
                                      const core::system::Options& env,
-                                     const core::FilePath& pkgPath,
+                                     const core::FilePath& srcDir,
                                      bool isCpp);
 
 
@@ -96,7 +96,7 @@ private:
                                         core::FilePath srcFile);
 
    std::vector<std::string> argsForRCmdSHLIB(core::system::Options env,
-                                             const core::FilePath& srcDir);
+                                             core::FilePath srcFile);
 
    std::vector<std::string> baseCompilationArgs(bool isCppFile) const;
    std::vector<std::string> packageCompilationArgs(
