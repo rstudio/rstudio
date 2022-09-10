@@ -180,6 +180,12 @@ bool isWSUpgradeRequest(const Request& request);
 // does the given error represent SSL truncation/shutdown?
 bool isSslShutdownError(const boost::system::error_code& code);
 
+#ifndef _WIN32
+
+bool isSslCertificateVerifyFailedError(const rstudio::core::Error& error);
+
+#endif
+
 std::string addQueryParam(const std::string& uri,
                           const std::string& queryParam);
 

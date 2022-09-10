@@ -552,6 +552,17 @@ bool isSslShutdownError(const boost::system::error_code& ec)
 }
 #endif
 
+#ifndef _WIN32
+
+bool isSslCertificateVerifyFailedError(const core::Error& error)
+{
+   return error.getName() == boost::asio::error::get_ssl_category().name() &&
+              ERR_GET_LIB(error.getCode()) == ERR_LIB_SSL &&
+              ERR_GET_REASON(error.getCode()) == SSL_R_CERTIFICATE_VERIFY_FAILED;
+}
+
+#endif
+
 std::string addQueryParam(const std::string& uri,
                           const std::string& queryParam)
 {
