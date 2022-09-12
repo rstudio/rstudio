@@ -151,7 +151,6 @@ void runEmbeddedR(const core::FilePath& /*rHome*/,    // ignored on posix
 
    // NOTE: we do not hook the following callbacks because they are targeted
    // at clients that have a stdio-based console
-   //    ptr_R_ResetConsole
    //    ptr_R_FlushConsole
    //    ptr_R_ClearerrConsole
 
