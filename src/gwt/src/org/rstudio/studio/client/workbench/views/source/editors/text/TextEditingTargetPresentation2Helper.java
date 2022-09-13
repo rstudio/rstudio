@@ -1,7 +1,7 @@
 /*
  * TextEditingTargetPresentation2Helper.java
  *
- * Copyright (C) 2022 by Posit, PBC
+ * Copyright (C) 2022 by Posit Software, PBC
  *
  * Unless you have received this program directly from Posit pursuant
  * to the terms of a commercial license agreement with Posit, then

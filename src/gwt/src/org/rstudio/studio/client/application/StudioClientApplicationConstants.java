@@ -1,7 +1,7 @@
 /*
  * StudioClientApplicationConstants.java
  *
- * Copyright (C) 2022 by Posit, PBC
+ * Copyright (C) 2022 by Posit Software, PBC
  *
  * Unless you have received this program directly from Posit pursuant
  * to the terms of a commercial license agreement with Posit, then
@@ -765,11 +765,11 @@ public interface StudioClientApplicationConstants extends com.google.gwt.i18n.cl
     String buildOfText();
 
     /**
-     * Translated "is provided by Posit, PBC for testing purposes only and is not an officially supported release.".
+     * Translated "is provided by Posit Software, PBC for testing purposes only and is not an officially supported release.".
      *
-     * @return translated "is provided by Posit, PBC for testing purposes only and is not an officially supported release."
+     * @return translated "is provided by Posit Software, PBC for testing purposes only and is not an officially supported release."
      */
-    @DefaultMessage("is provided by Posit, PBC for testing purposes only and is not an officially supported release.")
+    @DefaultMessage("is provided by Posit Software, PBC for testing purposes only and is not an officially supported release.")
     @Key("supportNoticeText")
     String supportNoticeText();
 

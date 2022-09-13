@@ -1,7 +1,7 @@
 <?xml version="1.0" encoding="UTF-8" standalone="no"?><templates><template autoinsert="true" context="java" deleted="false" description="Boilerplate for a GWT event." enabled="true" name="GWTEvent">/*
  * ${event}Event.java
  *
- * Copyright (C) ${year} by Posit, PBC
+ * Copyright (C) ${year} by Posit Software, PBC
  *
  * Unless you have received this program directly from Posit pursuant
  * to the terms of a commercial license agreement with Posit, then

@@ -1,7 +1,7 @@
 /*
  * RequestParser.hpp
  *
- * Copyright (C) 2022 by Posit, PBC
+ * Copyright (C) 2022 by Posit Software, PBC
  * Copyright (c) 2003-2008 Christopher M. Kohlhoff (chris at kohlhoff dot com)
  *
  * Unless you have received this program directly from Posit pursuant

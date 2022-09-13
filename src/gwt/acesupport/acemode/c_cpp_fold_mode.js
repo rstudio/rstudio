@@ -1,7 +1,7 @@
 /*
  * c_cpp_fold_mode.js
  *
- * Copyright (C) 2022 by Posit, PBC
+ * Copyright (C) 2022 by Posit Software, PBC
  *
  * The Original Code is Ajax.org Code Editor (ACE).
  *

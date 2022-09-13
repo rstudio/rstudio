@@ -1,7 +1,7 @@
 /*
  * Tree.hpp
  *
- * Copyright (C) 2022 by Posit, PBC
+ * Copyright (C) 2022 by Posit Software, PBC
  * Copyright (C) 2001-2011 Kasper Peeters <kasper@phi-sci.com>
  *
  * Unless you have received this program directly from Posit pursuant
