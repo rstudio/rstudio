@@ -908,9 +908,15 @@ public class TextEditingTargetWidget
       testShinyButton_.setVisible(false);
       testThatButton_.setVisible(false);
       compareTestButton_.setVisible(false);
-      if (isShinyFile() || isPyShinyFile())
+      if (isShinyFile())
       {
          shinyLaunchButton_.setVisible(true);
+         plumberLaunchButton_.setVisible(false);
+         setSourceButtonFromShinyState();
+      }
+      else if (isPyShinyFile())
+      {
+         shinyLaunchButton_.setVisible(false);
          plumberLaunchButton_.setVisible(false);
          setSourceButtonFromShinyState();
       }

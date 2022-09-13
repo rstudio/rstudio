@@ -6590,7 +6590,6 @@ public class TextEditingTarget implements
       {
          // TODO: quote or shell-escape file path
          // TODO: launch URL
-         // TODO: figure out how to invoke venv!?
          events_.fireEvent(new SendToTerminalEvent("command shiny run --reload " + getPath() + "\n", true));
       }, () -> {}, "Run Shiny Application");
    }
