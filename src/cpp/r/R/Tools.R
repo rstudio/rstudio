@@ -748,19 +748,10 @@ environment(.rs.Env[[".rs.addFunction"]]) <- .rs.Env
    
 })
 
-.rs.addFunction( "defaultLibPathIsWriteable", function()
+.rs.addFunction("defaultLibPathIsWriteable", function()
 {
    .rs.isLibraryWriteable(.libPaths()[1L])
 })
-
-.rs.addFunction( "disableQuartz", function()
-{
-  .rs.registerReplaceHook("quartz", "grDevices", function(...) {
-    stop(paste("RStudio does not support the quartz device in R <= 2.11.1.",
-               "Please upgrade to a newer version of R to use quartz."))
-  })
-})
-
 
 # Support for implementing json-rpc methods directly in R:
 # 
