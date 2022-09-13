@@ -40,7 +40,7 @@ public class TextEditingTargetThemeHelper
       Timers.singleShot(100, () -> {
 
          // do the sync
-         syncToEditorTheme(editingTarget);
+         syncToEditorThemeImpl(editingTarget);
 
          // register for notification on subsequent changes
          releaseOnDismiss.add(
@@ -73,8 +73,7 @@ public class TextEditingTargetThemeHelper
    {
       // delay execution so that the browser has a chance to apply styles
       // https://github.com/rstudio/rstudio/issues/11868
-      Scheduler.get().scheduleDeferred(() ->
-      {
+      Timers.singleShot(100, () -> {
          syncToEditorThemeImpl(editingTarget);
       });
    }
