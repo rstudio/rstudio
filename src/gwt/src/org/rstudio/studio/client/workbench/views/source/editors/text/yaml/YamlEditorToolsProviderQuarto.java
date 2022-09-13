@@ -73,8 +73,7 @@ public class YamlEditorToolsProviderQuarto implements YamlEditorToolsProvider
    
    private boolean isQuartoProjectYaml(String filename)
    {
-      return filename.equals("_quarto.yml") ||
-             filename.equals("_quarto.yaml");
+      return filename.matches("^_quarto(-.*?)?\\.(yml|yaml)$");
    }
    
    private boolean isQuartoExtensionYaml(String filename)
