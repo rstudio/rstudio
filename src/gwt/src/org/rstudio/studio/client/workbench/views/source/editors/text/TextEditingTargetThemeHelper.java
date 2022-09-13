@@ -36,7 +36,8 @@ public class TextEditingTargetThemeHelper
                                        final EventBus eventBus,
                                        final ArrayList<HandlerRegistration> releaseOnDismiss)
    {
-      timer_ = new Timer() {
+      timer_ = new Timer()
+      {
          @Override
          public void run() {
             syncToEditorTheme(editingTarget);
