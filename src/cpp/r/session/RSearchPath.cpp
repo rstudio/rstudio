@@ -283,6 +283,15 @@ Error save(const FilePath& statePath)
       if (boost::algorithm::starts_with(elementName, "package:"))
       {
          std::string name = elementName.substr(strlen("package:"));
+
+         // skip if this is a dev package, i.e. loaded with load_all()
+         bool isDev = false;
+         Error error = r::exec::RFunction(".rs.isDevPackage").addParam(name).call(&isDev);
+         if (error)
+            return error;
+         if (isDev)
+            continue;
+
          SEXP pathSEXP = Rf_getAttrib(envSEXP, Rf_install("path"));
          if (Rf_isString(pathSEXP) && Rf_length(pathSEXP) == 1)
          {

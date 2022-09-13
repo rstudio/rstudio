@@ -269,6 +269,17 @@ environment(.rs.Env[[".rs.addFunction"]]) <- .rs.Env
   devToolsPath %in% .libPaths()
 })
 
+.rs.addFunction("isDevPackage", function(name) {
+   # use pkgload if available
+   if (.rs.isPackageInstalled("pkgload")) {
+      return(pkgload::is_dev_package(name))
+   }
+
+   # otherwise infer based on the Meta directory
+   path <- attr(as.environment(paste0("package:", name)), "path")
+   !file.exists(file.path(path, "Meta"))
+})
+
 # load a package by name
 .rs.addFunction( "loadPackage", function(packageName, lib)
 {
@@ -281,7 +292,7 @@ environment(.rs.Env[[".rs.addFunction"]]) <- .rs.Env
    # dependencies may live within a separate library path from the package to be
    # loaded; it should suffice to place the requested library at the front of
    # the library paths
-   if (nzchar(lib) && file.exists(file.path(lib, packageName, "Meta"))) {
+   if (nzchar(lib)) {
       libPaths <- .libPaths()
       .libPaths(c(lib, libPaths))
       on.exit(.libPaths(libPaths), add = TRUE)
