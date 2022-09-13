@@ -39,7 +39,8 @@ public class TextEditingTargetThemeHelper
       timer_ = new Timer()
       {
          @Override
-         public void run() {
+         public void run()
+         {
             syncToEditorTheme(editingTarget);
          }
       };
