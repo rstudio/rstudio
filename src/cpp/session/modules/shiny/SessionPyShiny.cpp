@@ -50,8 +50,12 @@ std::string onDetectPyShinySourceType(
    if (!pDoc->path().empty() && pDoc->type().size() != 0 && pDoc->type() == kSourceDocumentTypePython)
    {
       FilePath filePath = module_context::resolveAliasedPath(pDoc->path());
-      // ShinyFileType type = getShinyFileType(filePath, pDoc->contents());
-      return kPyShinyXt;
+      std::string filename = filePath.getFilename();
+      if (boost::algorithm::iequals(filename, "app.py") &&
+          boost::algorithm::icontains(pDoc->contents(), "shiny"))
+      {
+         return kPyShinyXt;
+      }
    }
 
    return std::string();
