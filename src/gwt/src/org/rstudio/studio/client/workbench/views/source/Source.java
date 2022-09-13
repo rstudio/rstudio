@@ -134,6 +134,7 @@ import org.rstudio.studio.client.workbench.views.source.editors.EditingTarget;
 import org.rstudio.studio.client.workbench.views.source.editors.codebrowser.CodeBrowserEditingTarget;
 import org.rstudio.studio.client.workbench.views.source.editors.explorer.events.OpenObjectExplorerEvent;
 import org.rstudio.studio.client.workbench.views.source.editors.explorer.events.RefreshObjectExplorerEvent;
+import org.rstudio.studio.client.workbench.views.source.editors.explorer.events.CloseObjectExplorerEvent;
 import org.rstudio.studio.client.workbench.views.source.editors.explorer.model.ObjectExplorerHandle;
 import org.rstudio.studio.client.workbench.views.source.editors.profiler.OpenProfileEvent;
 import org.rstudio.studio.client.workbench.views.source.editors.profiler.model.ProfilerContents;
@@ -169,6 +170,7 @@ import org.rstudio.studio.client.workbench.views.source.events.PopoutDocEvent;
 import org.rstudio.studio.client.workbench.views.source.events.PopoutDocInitiatedEvent;
 import org.rstudio.studio.client.workbench.views.source.events.ShowContentEvent;
 import org.rstudio.studio.client.workbench.views.source.events.ShowDataEvent;
+import org.rstudio.studio.client.workbench.views.source.events.CloseDataEvent;
 import org.rstudio.studio.client.workbench.views.source.events.SourceFileSavedEvent;
 import org.rstudio.studio.client.workbench.views.source.events.SourceNavigationEvent;
 import org.rstudio.studio.client.workbench.views.source.events.SourcePathChangedEvent;
@@ -196,6 +198,7 @@ public class Source implements InsertSourceEvent.Handler,
                                FileEditEvent.Handler,
                                ShowContentEvent.Handler,
                                ShowDataEvent.Handler,
+                               CloseDataEvent.Handler,
                                CodeBrowserNavigationEvent.Handler,
                                CodeBrowserFinishedEvent.Handler,
                                CodeBrowserHighlightEvent.Handler,
@@ -207,6 +210,7 @@ public class Source implements InsertSourceEvent.Handler,
                                OpenProfileEvent.Handler,
                                OpenObjectExplorerEvent.Handler,
                                RefreshObjectExplorerEvent.Handler,
+                               CloseObjectExplorerEvent.Handler,
                                ReplaceRangesEvent.Handler,
                                SetSelectionRangesEvent.Handler,
                                GetEditorContextEvent.Handler,
@@ -324,8 +328,11 @@ public class Source implements InsertSourceEvent.Handler,
       events_.addHandler(InsertSourceEvent.TYPE, this);
       events_.addHandler(ShowContentEvent.TYPE, this);
       events_.addHandler(ShowDataEvent.TYPE, this);
+      events_.addHandler(CloseDataEvent.TYPE, this);
+      events_.addHandler(CloseDataEvent.TYPE, this);
       events_.addHandler(OpenObjectExplorerEvent.TYPE, this);
       events_.addHandler(RefreshObjectExplorerEvent.TYPE, this);
+      events_.addHandler(CloseObjectExplorerEvent.TYPE, this);
       events_.addHandler(OpenPresentationSourceFileEvent.TYPE, this);
       events_.addHandler(OpenSourceFileEvent.TYPE, this);
       events_.addHandler(CodeBrowserNavigationEvent.TYPE, this);
@@ -801,6 +808,16 @@ public class Source implements InsertSourceEvent.Handler,
    }
 
    @Override
+   public void onCloseObjectExplorerEvent(CloseObjectExplorerEvent event)
+   {
+      // ignore if we're a satellite
+      if (!SourceWindowManager.isMainSourceWindow())
+         return;
+
+      columnManager_.closeObjectExplorer(event.getHandle());
+   }
+
+   @Override
    public void onShowData(ShowDataEvent event)
    {
       // ignore if we're a satellite
@@ -808,6 +825,16 @@ public class Source implements InsertSourceEvent.Handler,
          return;
 
       columnManager_.showDataItem(event.getData());
+   }
+
+   @Override
+   public void onCloseData(CloseDataEvent event)
+   {
+      // ignore if we're a satellite
+      if (!SourceWindowManager.isMainSourceWindow())
+         return;
+
+      columnManager_.closeDataItem(event.getData());
    }
 
    public void onShowProfiler(OpenProfileEvent event)

@@ -15,6 +15,7 @@
 package org.rstudio.studio.client.workbench.views.source.editors.explorer;
 
 import org.rstudio.studio.client.application.events.EventBus;
+import org.rstudio.studio.client.workbench.views.source.editors.explorer.events.CloseObjectExplorerEvent;
 import org.rstudio.studio.client.workbench.views.source.editors.explorer.events.ObjectExplorerEvent;
 import org.rstudio.studio.client.workbench.views.source.editors.explorer.events.OpenObjectExplorerEvent;
 import org.rstudio.studio.client.workbench.views.source.editors.explorer.events.RefreshObjectExplorerEvent;
@@ -30,7 +31,6 @@ public class ObjectExplorerPresenter
    public ObjectExplorerPresenter(EventBus events)
    {
       events_ = events;
-      
       events_.addHandler(ObjectExplorerEvent.TYPE, this);
    }
    
@@ -69,8 +69,9 @@ public class ObjectExplorerPresenter
    {
    }
    
-   private void onCloseNode(ObjectExplorerEvent.Data data)
+   private void onCloseNode(ObjectExplorerEvent.Data eventData)
    {
+      events_.fireEvent(new CloseObjectExplorerEvent(eventData.getHandle()));
    }
    
    // Private members ----

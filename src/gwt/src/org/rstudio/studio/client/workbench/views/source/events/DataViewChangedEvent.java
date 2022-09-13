@@ -29,7 +29,11 @@ public class DataViewChangedEvent extends GwtEvent<DataViewChangedEvent.Handler>
       }-*/;
 
       public final native boolean structureChanged() /*-{
-         return this.structure_changed;
+         return this.structure_changed || false;
+      }-*/;
+
+      public final native boolean typeChanged() /*-{
+         return this.type_changed || false;
       }-*/;
    }
 

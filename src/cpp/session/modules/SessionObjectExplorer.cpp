@@ -235,6 +235,7 @@ void onDetectChanges(module_context::ChangeSource source)
       
       SEXP object = VECTOR_ELT(entry, 0);
       SEXP name = VECTOR_ELT(entry, 1);
+      SEXP title = VECTOR_ELT(entry, 2);
       SEXP envir = VECTOR_ELT(entry, 4);
 
       // when envir is the empty env, this indicates
@@ -258,16 +259,51 @@ void onDetectChanges(module_context::ChangeSource source)
       // update the object
       SET_VECTOR_ELT(entry, 0, newObject);
 
-      error = r::exec::RFunction(".rs.explorer.refresh")
-         .addUtf8Param(id)
-         .addParam(entry)
-         .call();
-
-      if (error)
+      // Should the new object still use objcet explorer 
+      bool shouldUseExplorer = true;
+      error = r::exec::RFunction(".rs.dataViewer.shouldUseObjectExplorer")
+         .addParam(newObject)
+         .call(&shouldUseExplorer);
+      
+      if (shouldUseExplorer) 
       {
-         LOG_ERROR(error);
-         return;
+         // just refresh the View
+         error = r::exec::RFunction(".rs.explorer.refresh")
+            .addUtf8Param(id)
+            .addParam(entry)
+            .call();
+         if (error)
+         {
+            LOG_ERROR(error);
+            return;
+         }
       }
+      else 
+      {
+         // close it, because the object explorer is no longer 
+         // the best way to show that object. 
+         error = r::exec::RFunction(".rs.explorer.close")
+            .addUtf8Param(id)
+            .addParam(entry)
+            .call();
+         if (error)
+         {
+            LOG_ERROR(error);
+            return;
+         }
+
+         // then just let View() show it
+         error = r::exec::RFunction("View")
+            .addParam(symbol)
+            .addParam(title)
+            .call(envir, true);
+         if (error)
+         {
+            LOG_ERROR(error);
+            return;
+         }
+      }
+      
    }
 }
 

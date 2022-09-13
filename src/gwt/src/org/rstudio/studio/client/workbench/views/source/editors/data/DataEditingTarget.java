@@ -31,6 +31,7 @@ import org.rstudio.studio.client.server.Void;
 import org.rstudio.studio.client.workbench.commands.Commands;
 import org.rstudio.studio.client.workbench.views.source.ViewsSourceConstants;
 import org.rstudio.studio.client.workbench.views.source.editors.urlcontent.UrlContentEditingTarget;
+import org.rstudio.studio.client.workbench.views.source.events.CloseDataEvent;
 import org.rstudio.studio.client.workbench.views.source.events.DataViewChangedEvent;
 import org.rstudio.studio.client.workbench.views.source.events.PopoutDocEvent;
 import org.rstudio.studio.client.workbench.views.source.model.DataItem;
@@ -89,8 +90,16 @@ public class DataEditingTarget extends UrlContentEditingTarget
    @Override
    public void onDataViewChanged(DataViewChangedEvent event)
    {
-      if (event.getData().getCacheKey().equals(getDataItem().getCacheKey()))
+      DataViewChangedEvent.Data eventData = event.getData();
+      if (eventData.getCacheKey().equals(getDataItem().getCacheKey()))
       {
+         // when this is no longer a data frame, close it
+         if (eventData.typeChanged())
+         {
+            events_.fireEvent(new CloseDataEvent(getDataItem()));
+            return;
+         }
+
          queuedRefresh_ = QueuedRefreshType.StructureRefresh;
          // perform the refresh immediately if the tab is active; otherwise,
          // leave it in the queue and it'll be run when the tab is activated
