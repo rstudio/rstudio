@@ -269,6 +269,10 @@ environment(.rs.Env[[".rs.addFunction"]]) <- .rs.Env
   devToolsPath %in% .libPaths()
 })
 
+.rs.addFunction("isDevPackage", function(name) {
+   "pkgload" %in% loadedNamespaces() && pkgload::is_dev_package(name)
+})
+
 # load a package by name
 .rs.addFunction( "loadPackage", function(packageName, lib)
 {
