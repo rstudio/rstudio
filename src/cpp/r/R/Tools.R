@@ -270,14 +270,7 @@ environment(.rs.Env[[".rs.addFunction"]]) <- .rs.Env
 })
 
 .rs.addFunction("isDevPackage", function(name) {
-   # use pkgload if available
-   if (.rs.isPackageInstalled("pkgload")) {
-      return(pkgload::is_dev_package(name))
-   }
-
-   # otherwise infer based on the Meta directory
-   path <- attr(as.environment(paste0("package:", name)), "path")
-   !file.exists(file.path(path, "Meta"))
+   "pkgload" %in% loadedNamespaces() && pkgload::is_dev_package(name)
 })
 
 # load a package by name
