@@ -1466,7 +1466,7 @@ core::Error runGrepOperation(const GrepOptions& grepOptions, const ReplaceOption
       cmd << "-c" << "grep.lineNumber=true";
       cmd << "-c" << "grep.column=false";
       cmd << "-c" << "grep.patternType=default";
-      cmd << "-c" << "grep.extendedRegexp=false";
+      cmd << "-c" << "grep.extendedRegexp=true";
       cmd << "-c" << "grep.fullName=false";
       cmd << "-C";
       cmd << dirPath.getAbsolutePath();
@@ -1604,7 +1604,7 @@ core::Error beginFind(const json::JsonRpcRequest& request,
       return error;
 
    if (isWholeWord)
-      searchString = "\\b" + escapeForRegex(searchString) + "\\b";
+      searchString = "(\\b|^)" + escapeForRegex(searchString) + "(\\b|$)";
 
    GrepOptions grepOptions(searchString, directory, includeFilePatterns, useGitGrep, excludeGitIgnore, excludeFilePatterns,
       asRegex, ignoreCase);
