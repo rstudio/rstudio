@@ -3,6 +3,7 @@
 
 ### R
 
+* Whether pending console input is discarded on error can now be controlled via a preference in the Console pane. (#10391)
 * Improved handling of diagnostics within pipeline expressions. (#11780)
 * Improved handling of diagnostics within glue() expressions. 
 * RStudio now provides autocompletion results for packages used but not loaded within a project.

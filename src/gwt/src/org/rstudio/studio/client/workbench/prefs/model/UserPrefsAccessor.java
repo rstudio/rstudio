@@ -3390,6 +3390,18 @@ public class UserPrefsAccessor extends Prefs
          true);
    }
 
+   /**
+    * When enabled, any pending console input will be discarded when an (uncaught) R error occurs.
+    */
+   public PrefValue<Boolean> discardPendingConsoleInputOnError()
+   {
+      return bool(
+         "discard_pending_console_input_on_error",
+         _constants.discardPendingConsoleInputOnErrorTitle(), 
+         _constants.discardPendingConsoleInputOnErrorDescription(), 
+         true);
+   }
+
    public void syncPrefs(String layer, JsObject source)
    {
       if (source.hasKey("run_rprofile_on_resume"))
@@ -3864,6 +3876,8 @@ public class UserPrefsAccessor extends Prefs
          uiLanguage().setValue(layer, source.getString("ui_language"));
       if (source.hasKey("native_file_dialogs"))
          nativeFileDialogs().setValue(layer, source.getBool("native_file_dialogs"));
+      if (source.hasKey("discard_pending_console_input_on_error"))
+         discardPendingConsoleInputOnError().setValue(layer, source.getBool("discard_pending_console_input_on_error"));
    }
    public List<PrefValue<?>> allPrefs()
    {
@@ -4104,6 +4118,7 @@ public class UserPrefsAccessor extends Prefs
       prefs.add(checkNullExternalPointers());
       prefs.add(uiLanguage());
       prefs.add(nativeFileDialogs());
+      prefs.add(discardPendingConsoleInputOnError());
       return prefs;
    }
    

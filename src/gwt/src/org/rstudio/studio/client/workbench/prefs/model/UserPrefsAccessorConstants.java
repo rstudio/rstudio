@@ -1967,6 +1967,14 @@ public interface UserPrefsAccessorConstants extends Constants {
    @DefaultStringValue("Whether RStudio Desktop will use the operating system's native File and Message dialog boxes.")
    String nativeFileDialogsDescription();
 
+   /**
+    * When enabled, any pending console input will be discarded when an (uncaught) R error occurs.
+    */
+   @DefaultStringValue("Discard pending console input on error")
+   String discardPendingConsoleInputOnErrorTitle();
+   @DefaultStringValue("When enabled, any pending console input will be discarded when an (uncaught) R error occurs.")
+   String discardPendingConsoleInputOnErrorDescription();
+
 
 
 }

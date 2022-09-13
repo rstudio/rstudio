@@ -55,6 +55,7 @@ namespace themes {
 namespace {
 
 bool s_deferredInitComplete = false;
+bool s_shuttingDown = false;
 module_context::WaitForMethodFunction s_waitForThemeColors;
 
 const std::string kDefaultThemeLocation = "theme/default/";
@@ -358,15 +359,17 @@ SEXP rs_getThemes()
  */
 SEXP rs_getThemeColors()
 {
-   r::sexp::Protect protect;
-   json::JsonRpcRequest request;
-   r::sexp::ListBuilder themeColors(&protect);
-
    // Don't attempt to call the WaitForMethod unless the session has fully initialized.
    if (!s_deferredInitComplete)
       return R_NilValue;
+   
+   // Don't do anything if we're shutting down
+   if (s_shuttingDown)
+      return R_NilValue;
 
    // Query the client for its current theme colors
+   json::JsonRpcRequest request;
+
    if (!s_waitForThemeColors(&request, 
             ClientEvent(client_events::kComputeThemeColors, json::Value())))
    {
@@ -386,6 +389,8 @@ SEXP rs_getThemeColors()
    }
 
    // Form the list and return to caller 
+   r::sexp::Protect protect;
+   r::sexp::ListBuilder themeColors(&protect);
    themeColors.add("foreground", foreground);
    themeColors.add("background", background);
    return r::sexp::create(themeColors, &protect);
@@ -559,6 +564,11 @@ void onDeferredInit(bool)
    s_deferredInitComplete = true;
 }
 
+void onShutdown(bool exitedGracefully)
+{
+   s_shuttingDown = true;
+}
+
 void setCacheableFile(const FilePath& filePath,
                       const http::Request& request,
                       http::Response* pResponse)
@@ -709,6 +719,7 @@ Error initialize()
    RS_REGISTER_CALL_METHOD(rs_getLocalThemePath);
 
    events().onDeferredInit.connect(onDeferredInit);
+   events().onShutdown.connect(onShutdown);
 
    // We need to register our URI handlers twice to cover the data viewer grid document because those
    // links have a different prefix.
