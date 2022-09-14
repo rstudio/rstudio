@@ -125,6 +125,8 @@ bool hasEnvironmentData(const std::string& elementName)
       return false;
    else if (elementName == ".GlobalEnv") // saved and restored separately
       return false;
+   else if (elementName == "org:r-lib")
+      return false;
    else 
       return true;
 }
