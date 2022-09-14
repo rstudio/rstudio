@@ -201,8 +201,6 @@ REM put these back to their original state at the end of the package build.
 if "%RSTUDIO_TARGET%" == "Electron" (
       pushd %ELECTRON_SOURCE_DIR%
 REM clearing the cache to avoid intermittent build problem from https://github.com/nodejs/node-gyp/issues/2482
-      echo Clearing node-gyp cache to workaround bug: %LocalAppData%/node-gyp/Cache
-      if exist "%LocalAppData%/node-gyp/Cache" rmdir /s /q "%LocalAppData%/node-gyp/Cache"
       call %NPM% ci
 
       REM Set package.json info
