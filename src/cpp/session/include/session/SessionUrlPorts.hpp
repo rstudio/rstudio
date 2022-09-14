@@ -29,6 +29,8 @@ namespace rstudio {
 namespace session {
 namespace url_ports {
 
+std::string translateLocalUrl(const std::string& localUrl, bool absolute = true);
+
 std::string mapUrlPorts(const std::string& url);
 
 core::Error initialize();

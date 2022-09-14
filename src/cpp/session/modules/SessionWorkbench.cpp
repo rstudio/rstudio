@@ -50,6 +50,8 @@
 #include <session/RVersionSettings.hpp>
 #include <session/SessionTerminalShell.hpp>
 
+#include <session/SessionUrlPorts.hpp>
+
 #include "SessionSpelling.hpp"
 #include "SessionReticulate.hpp"
 
@@ -419,6 +421,18 @@ void viewPdfPostback(const std::string& pdfPath,
    cont(EXIT_SUCCESS, "");
 }
 
+// $BROWSER
+void browserPostback(const std::string& url,
+                     const module_context::PostbackHandlerContinuation& cont)
+{
+   // TODO: Translate local URL and enqueue event
+   LOG_DEBUG_MESSAGE("browser postback called with url " + url);
+   auto transformedUrl = session::url_ports::translateLocalUrl(url);
+   auto event = browseUrlEvent(transformedUrl);
+   module_context::enqueClientEvent(event);
+   cont(EXIT_SUCCESS, "");
+}
+
 
 void handleFileShow(const http::Request& request, http::Response* pResponse)
 {
@@ -513,6 +527,14 @@ Error initialize()
       // register edit_completed waitForMethod handler
       s_waitForEditCompleted = module_context::registerWaitForMethod(
                                                          "edit_completed");
+
+      std::string browserCommand;
+      error = module_context::registerPostbackHandler("browser",
+                                                      browserPostback,
+                                                      &browserCommand);
+      if (error)
+         return error;
+      core::system::setenv("BROWSER", browserCommand);
    }
    
    // register waitForMethod for active document context
