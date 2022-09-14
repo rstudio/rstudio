@@ -47,12 +47,6 @@
       return window.navigator.userAgent.indexOf("Electron") > 0 ? "true" : "false";
    ]]></property-provider>
 
-   <!-- Detect RStudio Linux builds -->
-   <define-property name="rstudio.linux" values="true,false"/>
-   <property-provider name="rstudio.linux"><![CDATA[
-      return window.navigator.platform.indexOf("Linux") > 0 ? "true" : "false";
-   ]]></property-provider>
-
    <!-- Detect option to stop use of native OS file dialogs on Electron Desktop -->
    <define-property name="rstudio.useNativeDialogs" values="true,false"/>
    <property-provider name="rstudio.useNativeDialogs"><![CDATA[
@@ -103,7 +97,6 @@
          <when-property-is name="rstudio.desktop" value="true"/>
          <when-property-is name="rstudio.useNativeDialogs" value="true"/>
          <when-property-is name="rstudio.remoteDesktop" value="false"/>
-         <when-property-is name="rstudio.linux" value="false"/>
       </all>
    </replace-with>
 
