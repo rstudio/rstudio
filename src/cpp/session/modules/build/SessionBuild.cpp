@@ -1077,7 +1077,8 @@ private:
           !options_.autoRoxygenizeForCheck)
          args.push_back("document = FALSE");
 
-      if (!prefs::userPrefs().cleanupAfterRCmdCheck())
+      if (!prefs::userPrefs().cleanupAfterRCmdCheck() && 
+          !module_context::isPackageVersionInstalled("devtools", "2.4.4"))
          args.push_back("cleanup = FALSE");
 
       // optional extra check args
