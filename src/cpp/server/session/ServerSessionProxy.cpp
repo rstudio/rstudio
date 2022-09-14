@@ -429,6 +429,15 @@ void handleLocalhostResponse(
          {         
             sendSparkUIResponse(response, ptrConnection);
          }
+         else if (response.headerValue("Transfer-Encoding") == "chunked")
+         {
+            // Even if the response from upstream is "Transfer-Encoding: chunked", 
+            http::Response response1;
+            response1.assign(response);
+            response1.removeHeader("Transfer-Encoding");
+            response1.setContentLength(response.body().size());
+            ptrConnection->writeResponse(response1);
+         }
          else
          {
             ptrConnection->writeResponse(response);
@@ -1102,6 +1111,8 @@ void proxyLocalhostRequest(
    }
 
    std::string port = safe_convert::numberToString(portNum);
+
+   LOG_DEBUG_MESSAGE("Localhost proxying is over port " + port);
 
    // strip the port part of the uri
    using namespace boost::algorithm;
