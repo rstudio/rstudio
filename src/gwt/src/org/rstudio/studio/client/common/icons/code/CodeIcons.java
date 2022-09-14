@@ -111,4 +111,7 @@ public interface CodeIcons extends ClientBundle
 
    @Source("roxygen_2x.png")
    ImageResource roxygen2x();
+
+   @Source("column_2x.png")
+   ImageResource column2x();
 }
