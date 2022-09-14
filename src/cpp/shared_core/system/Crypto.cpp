@@ -1,10 +1,10 @@
 /*
  * Crypto.cpp
  *
- * Copyright (C) 2022 by RStudio, PBC
+ * Copyright (C) 2022 by Posit Software, PBC
  *
- * Unless you have received this program directly from RStudio pursuant to the
- * terms of a commercial license agreement with RStudio, then this program is
+ * Unless you have received this program directly from Posit pursuant to the
+ * terms of a commercial license agreement with Posit, then this program is
  * licensed to you under the following terms:
  *
  * Permission is hereby granted, free of charge, to any person obtaining a copy
