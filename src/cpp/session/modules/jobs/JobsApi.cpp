@@ -13,6 +13,8 @@
  *
  */
 
+#include <core/Algorithm.hpp>
+
 #include <session/jobs/JobsApi.hpp>
 #include <session/SessionModuleContext.hpp>
 
@@ -241,15 +243,19 @@ void endAllJobStreaming()
    }
 }
 
-bool backgroundJobsRunning()
+bool durableJobsRunning()
 {
    for (auto& job: s_jobs)
    {
-      if (job.second->type() == JobType::JobTypeSession && !job.second->complete())
+      if (job.second->type() == JobType::JobTypeSession &&
+          !job.second->complete() &&
+          !algorithm::contains(job.second->tags(), kJobTagTransient))
       {
+         std::cerr << "durable jobs running" << std::endl;
          return true;
       }
    }
+   std::cerr << "durable jobs NOT running" << std::endl;
    return false;
 }
 

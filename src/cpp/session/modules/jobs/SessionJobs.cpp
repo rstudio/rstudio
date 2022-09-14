@@ -469,8 +469,8 @@ core::json::Object jobState()
 
 bool isSuspendable()
 {
-   // don't suspend while we're running background jobs
-   return !backgroundJobsRunning();
+   // don't suspend while we're running durable jobs
+   return !durableJobsRunning();
 }
 
 core::Error initialize()

@@ -87,7 +87,7 @@ void removeCompletedBackgroundJobs();
 
 void endAllJobStreaming();
 
-bool backgroundJobsRunning();
+bool durableJobsRunning();
 
 } // namespace jobs
 } // namespace modules

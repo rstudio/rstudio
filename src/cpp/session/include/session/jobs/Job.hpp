@@ -21,6 +21,8 @@
 #include <r/RSexp.hpp>
 #include <boost/date_time/posix_time/posix_time.hpp>
 
+#define kJobTagTransient "transient"
+
 namespace rstudio {
 namespace session {
 namespace modules {      
