@@ -200,7 +200,6 @@ REM put these back to their original state at the end of the package build.
 :set-version
 if "%RSTUDIO_TARGET%" == "Electron" (
       pushd %ELECTRON_SOURCE_DIR%
-REM clearing the cache to avoid intermittent build problem from https://github.com/nodejs/node-gyp/issues/2482
       call %NPM% ci
 
       REM Set package.json info

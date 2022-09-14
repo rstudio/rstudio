@@ -153,7 +153,6 @@ if (WIN32)
       DEPENDS "${DESKTOP_SOURCES}"
       COMMENT "Building desktop (Electron ${UNAME_M})"
       WORKING_DIRECTORY "${ELECTRON_BUILD_DIR}"
-      COMMAND rmdir /s /q "%LocalAppData%/node-gyp/Cache"
       COMMAND ${NPM} run package
    )
 
