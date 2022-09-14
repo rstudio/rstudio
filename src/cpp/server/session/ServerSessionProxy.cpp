@@ -1121,8 +1121,6 @@ void proxyLocalhostRequest(
 
    std::string port = safe_convert::numberToString(portNum);
 
-   LOG_DEBUG_MESSAGE("Localhost proxying is over port " + port);
-
    // strip the port part of the uri
    using namespace boost::algorithm;
    std::string portPath = match[0];
