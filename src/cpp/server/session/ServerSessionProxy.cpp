@@ -431,7 +431,16 @@ void handleLocalhostResponse(
          }
          else if (response.headerValue("Transfer-Encoding") == "chunked")
          {
-            // Even if the response from upstream is "Transfer-Encoding: chunked", 
+            // Even if the response from upstream is "Transfer-Encoding: chunked",
+            // our response to the client is no longer chunked; the AsyncClient
+            // parses and consumes the chunk lengths. Therefore, remove the
+            // Transfer-Encoding header and set the content length, to reflect
+            // that the body will come all at once.
+            //
+            // TODO: Determine what happens when the Transfer-Encoding is both
+            // chunked and something else ("gzip, chunked" or "chunked, gzip").
+            // TODO: What other hop-by-hop response headers are we not removing
+            // but should?
             http::Response response1;
             response1.assign(response);
             response1.removeHeader("Transfer-Encoding");
