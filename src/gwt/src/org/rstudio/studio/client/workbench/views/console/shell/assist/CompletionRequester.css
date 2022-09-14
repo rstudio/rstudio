@@ -22,6 +22,19 @@
    color: #999;
 }
 
-.dollarName {
+.dataframe {
+   float: right;
+   padding-right: 8px;
+   color: #888;
+   font-style: italic;
+}
+
+.argument {
+   float: right;
+   padding-right: 8px;
+   color: #888;
+}
+
+.column {
    font-style: italic;
 }

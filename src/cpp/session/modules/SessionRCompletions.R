@@ -65,6 +65,7 @@ assign(x = ".rs.acCompletionTypes",
           KEYWORD     = 22,
           OPTION      = 23,
           DATASET     = 24,
+          COLUMN      = 27,
           CONTEXT     = 99
        )
 )
@@ -1220,7 +1221,7 @@ assign(x = ".rs.acCompletionTypes",
    # Put package completions at the end
    idx <- completions$type == .rs.acCompletionTypes$PACKAGE
    scores[idx] <- scores[idx] + 10
-   
+
    # Protect against NULL / otherwise invalid scores.
    # TODO: figure out what, upstream, might cause this
    if (length(scores))
@@ -2702,22 +2703,30 @@ assign(x = ".rs.acCompletionTypes",
       if (inherits(object, "python.builtin.object"))
          return(.rs.emptyCompletions())
       
-      if (length(object))
-      {
+      if (length(object)) {
          objectNames <- .rs.getNames(object)
          if (length(objectNames))
          {
             completions <- .rs.selectFuzzyMatches(objectNames, token)
-            type <- vapply(completions, FUN.VALUE = numeric(1), USE.NAMES = FALSE, function(i) {
-               .rs.getCompletionType(object[[i]])
-            })
+            if (inherits(object, "data.frame")) {
+               # when the chain object is a data frame, 
+               # set the completion type to COLUMN
+               types <- rep(.rs.acCompletionTypes$COLUMN, length(completions))
+               packages <- chainObjectName
+            } else {
+               # otherwise infer from the object
+               types <- vapply(completions, FUN.VALUE = numeric(1), USE.NAMES = FALSE, function(i) {
+                  .rs.getCompletionType(object[[i]])
+               })
+               packages <- paste("[", chainObjectName, "]", sep = "") 
+            }
             
             result <- .rs.makeCompletions(
                token = token,
                results = completions,
-               packages = paste("[", chainObjectName, "]", sep = ""),
+               packages = packages,
                quote = FALSE,
-               type = type
+               type = types
             )
          }
       }
