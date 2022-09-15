@@ -54,6 +54,7 @@ set(CORE_SOURCE_FILES
    StringUtils.cpp
    ColorUtils.cpp
    Thread.cpp
+   Timer.cpp
    Trace.cpp
    WaitUtils.cpp
    YamlUtil.cpp
