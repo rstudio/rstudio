@@ -1,4 +1,5 @@
-if exist "%LocalAppData%\node-gyp\Cache" rmdir /s /q "%LocalAppData%\node-gyp\Cache"
+ls C:\Users\ContainerAdministrator\AppData\Local\node-gyp\Cache
+rmdir /s /q C:\Users\ContainerAdministrator\AppData\Local\node-gyp\Cache
 @echo off
 
 if exist build rmdir /s /q build 
