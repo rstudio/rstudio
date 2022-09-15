@@ -86,6 +86,10 @@ Error UserPrefsComputedLayer::readPrefs()
    defaultRVersionJson["label"] = versionSettings.defaultRVersionLabel();
    layer[kDefaultRVersion] = defaultRVersionJson;
 
+   #ifdef __linux__
+   layer[kNativeFileDialogs] = false;
+   #endif
+
    // Synctex viewer ----------------------------------------------------------
 #ifdef __APPLE__
 # define kDefaultDesktopPdfPreviewer kPdfPreviewerRstudio
