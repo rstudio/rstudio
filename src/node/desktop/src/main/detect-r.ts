@@ -309,10 +309,8 @@ function scanForRPosix(): Expected<string> {
 
 function queryRegistry(cmd: string, rInstallations: Set<string>): Set<string> {
   const [output, error] = executeCommand(cmd);
-    if (error) {
-      logger().logError(error);
-      return rInstallations;
-    }
+  if (error)      
+    return rInstallations;
 
   // parse the actual path from the output
   const lines = output.split(EOL);
@@ -339,7 +337,12 @@ export function findRInstallationsWin32(): string[] {
       'HKEY_LOCAL_MACHINE',
       'HKEY_CURRENT_USER',
     ];
-    const regQueryCommands = keyNames.map(key => `reg query ${key}\\SOFTWARE\\R-Core /s /v InstallPath ${view}`);  
+
+    // look specifically for R or R64, ignore Rtools directory
+    const rBinaryNames = ['R', 'R64'];
+
+    const regQueryCommands = keyNames.flatMap(key => rBinaryNames.map(
+      rBin => `reg query ${key}\\SOFTWARE\\R-Core\\${rBin} /s /v InstallPath ${view}`));  
     regQueryCommands.map(cmd => queryRegistry(cmd, rInstallations));
   }
 
