@@ -985,6 +985,7 @@
                 ".gitignore",
                 ".httr-oauth",
                 ".lintr",
+                ".quartoignore",
                 ".r",
                 ".rbuildignore",
                 ".rdata"   ,
