@@ -1,15 +1,15 @@
 bibentry("Manual",
          title = "RStudio: Integrated Development Environment for R",
-         author = person("Posit Team"),
+         author = person("Posit team"),
          organization = "Posit Software, PBC",
          address      = "Boston, MA",
          year         = "${CPACK_COPYRIGHT_YEAR}",
          url          = "http://www.posit.co/",
          
          textVersion = 
-         paste("Posit Team (${CPACK_COPYRIGHT_YEAR}). ", 
+         paste("Posit team (${CPACK_COPYRIGHT_YEAR}). ", 
                "RStudio: Integrated Development Environment for R. ",
-               "Posit Software, PBC, Boston, MA ",
+               "Posit Software, PBC, Boston, MA. ",
                "URL http://www.posit.co/.",
                sep=""),
          
