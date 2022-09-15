@@ -221,18 +221,21 @@ Error restoreEnvironmentVars(const FilePath& envFile)
    return Success();
 }
    
-Error restoreWorkingDirectory(const FilePath& userHomePath, 
-                              const std::string& workingDirectory)
+Error restoreWorkingDirectory(const std::string& workingDirectory,
+                              const FilePath& userHomePath, 
+                              const FilePath& projectPath)
 {
    // resolve working dir
-   FilePath workingDirPath = FilePath::resolveAliasedPath(workingDirectory,
-                                                          userHomePath);
-
-   // restore working path if it exists (else revert to home)
+   FilePath workingDirPath = FilePath::resolveAliasedPath(workingDirectory, userHomePath);
    if (workingDirPath.exists())
       return workingDirPath.makeCurrentPath();
-   else
-      return utils::userHomePath().makeCurrentPath();
+   
+   // if that didn't work, use project directory
+   if (projectPath.isDirectory())
+      return projectPath.makeCurrentPath();
+   
+   // otehrwise, use home directory
+   return utils::userHomePath().makeCurrentPath();
 }
 
 const char * const kSaving = "saving";
@@ -632,8 +635,11 @@ bool restore(const FilePath& statePath,
       
    // restore working directory
    std::string workingDir = settings.get(kWorkingDirectory);
-   error = restoreWorkingDirectory(r::session::utils::userHomePath(), 
-                                   workingDir);
+   error = restoreWorkingDirectory(
+            workingDir,
+            r::session::utils::userHomePath(),
+            r::session::utils::projectPath());
+   
    if (error)
       reportError(kRestoring, kWorkingDirectory, error, ERROR_LOCATION, er);
    

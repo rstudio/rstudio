@@ -320,7 +320,7 @@ Error run(const ROptions& options, const RCallbacks& callbacks)
 
    // set source reloading behavior
    sourceManager().setAutoReload(options.autoReloadSource);
-     
+   
    // initialize suspended session path
    FilePath userScratch = s_options.userScratchPath;
    FilePath oldSuspendedSessionPath = userScratch.completePath("suspended-session");
@@ -534,6 +534,11 @@ bool isDefaultPrompt(const std::string& prompt)
 bool isServerMode()
 {
    return s_options.serverMode;
+}
+
+const FilePath& projectPath()
+{
+   return s_options.projectPath;
 }
 
 const FilePath& userHomePath()

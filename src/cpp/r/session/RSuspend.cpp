@@ -173,10 +173,13 @@ SerializationCallbackScope::SerializationCallbackScope(int action,
 
 SerializationCallbackScope::~SerializationCallbackScope()
 {
-   try {
-      rCallbacks().serialization(kSerializationActionCompleted,
-                                 FilePath());
-   } catch(...) {}
+   try
+   {
+      rCallbacks().serialization(kSerializationActionCompleted, FilePath());
+   }
+   catch(...)
+   {
+   }
 }
 
 bool suspended()

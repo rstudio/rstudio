@@ -27,11 +27,13 @@ struct RSuspendOptions;
 void setSuspendPaths(const core::FilePath& sessionPath, 
       const core::FilePath& clientStatePath, 
       const core::FilePath& projectClientStatePath);
+
 core::FilePath suspendedSessionPath();
 bool suspend(const RSuspendOptions& options,
              const core::FilePath& suspendedSessionPath,
              bool disableSaveCompression,
              bool force);
+
 bool suspended();
 
 void saveClientState(ClientStateCommitType commitType);

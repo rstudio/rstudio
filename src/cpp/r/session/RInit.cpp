@@ -183,7 +183,7 @@ void restoreSession(const FilePath& suspendedSessionPath,
    // don't show output during deserialization (packages loaded
    // during deserialization sometimes print messages)
    utils::SuppressOutputInScope suppressOutput;
-
+   
    // deserialize session. if any part of this fails then the errors
    // will be logged and error messages will be returned in the passed
    // errorMessages buffer (this mechanism is used because we generally

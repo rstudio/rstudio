@@ -2298,6 +2298,7 @@ int main(int argc, char * const argv[])
 
       // r options
       rstudio::r::session::ROptions rOptions;
+      rOptions.projectPath = projects::projectContext().hasProject() ? projects::projectContext().directory() : FilePath();
       rOptions.userHomePath = options.userHomePath();
       rOptions.userScratchPath = options.userScratchPath();
       rOptions.scopedScratchPath = module_context::scopedScratchPath();

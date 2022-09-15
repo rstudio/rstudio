@@ -77,6 +77,8 @@ struct ROptions
          suspendOnIncompleteStatement(false)
    {
    }
+   
+   core::FilePath projectPath;
    core::FilePath userHomePath;
    core::FilePath userScratchPath;
    core::FilePath scopedScratchPath;
