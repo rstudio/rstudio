@@ -27,13 +27,13 @@ fi
 
 # variables that control download + installation process
 # update to latest Quarto release
-QUARTO_VERSION=`curl https://quarto.org/docs/download/_download.json | jq ".version" | grep -oE '[0-9]+\.[0-9]+\.[0-9]+'`
-QUARTO_URL_BASE="https://github.com/quarto-dev/quarto-cli/releases/latest/download"
+#QUARTO_VERSION=`curl https://quarto.org/docs/download/_download.json | jq ".version" | grep -oE '[0-9]+\.[0-9]+\.[0-9]+'`
+#QUARTO_URL_BASE="https://github.com/quarto-dev/quarto-cli/releases/latest/download"
 
 # specify a version to pin for releases
-#QUARTO_VERSION="0.9.230"
+QUARTO_VERSION="1.1.189"
 QUARTO_SUBDIR="quarto"
-#QUARTO_URL_BASE="https://s3.amazonaws.com/rstudio-buildtools/quarto/${QUARTO_VERSION}"
+QUARTO_URL_BASE="https://s3.amazonaws.com/rstudio-buildtools/quarto/${QUARTO_VERSION}"
 
 # move to tools root
 sudo-if-necessary-for "${RSTUDIO_TOOLS_ROOT}" "$@"
