@@ -146,7 +146,7 @@ Error rsaSign(const std::string& message,
 
    // sign the message hash
    std::vector<unsigned char> pSignature(EVP_PKEY_size(pRsa.get()));
-   size_t sigLen;
+   size_t sigLen = pSignature.size();
    std::unique_ptr<EVP_PKEY_CTX, decltype(&EVP_PKEY_CTX_free)> ctx(EVP_PKEY_CTX_new(pRsa.get(), NULL),
                                                                    EVP_PKEY_CTX_free);
    if (!ctx)
