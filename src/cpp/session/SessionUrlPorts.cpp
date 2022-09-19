@@ -66,12 +66,20 @@ std::string translateLocalUrl(const std::string& localUrl, bool absolute)
       return localUrl;
    }
 
+   auto prefix = persistentState().activeClientUrl();
+   if (!prefix.empty() && localUrl.rfind(prefix, 0) == 0)
+   {
+      // Transformation is not necessary because it's not a hidden port.
+      // e.g.: rstudioapi::translateLocalUrl(rstudioapi::translateLocalUrl("http://127.0.0.1:9000", TRUE), TRUE)
+      // should NOT return a URL with TWO portmaps
+      return localUrl;
+   }
+
    // The URL was transformed. mapUrlPorts takes an absolute URL and returns a relative URL like
    // "p/08afc455", so make it absolute again if requested by prefixing it with the URL of the
    // connected client.
    if (absolute)
    {
-      auto prefix = persistentState().activeClientUrl();
       if (!prefix.empty())
       {
          // Ensure trailing slash before we stick the strings, since mapUrlPorts doesn't return one

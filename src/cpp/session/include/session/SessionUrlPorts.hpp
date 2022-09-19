@@ -29,6 +29,8 @@ namespace rstudio {
 namespace session {
 namespace url_ports {
 
+// localUrl is a full URL that may or may not be local.
+// If absolute, return a full URL, not just the portion of the path following the workbench URL.
 std::string translateLocalUrl(const std::string& localUrl, bool absolute = true);
 
 std::string mapUrlPorts(const std::string& url);

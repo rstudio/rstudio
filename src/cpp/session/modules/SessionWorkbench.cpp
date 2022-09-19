@@ -425,7 +425,7 @@ void viewPdfPostback(const std::string& pdfPath,
 void browserPostback(const std::string& url,
                      const module_context::PostbackHandlerContinuation& cont)
 {
-   auto transformedUrl = session::url_ports::translateLocalUrl(url);
+   auto transformedUrl = session::url_ports::translateLocalUrl(url, true);
    auto event = browseUrlEvent(transformedUrl);
    module_context::enqueClientEvent(event);
    cont(EXIT_SUCCESS, "");

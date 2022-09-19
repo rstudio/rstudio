@@ -116,11 +116,18 @@ Error makePortTokenCookie(boost::shared_ptr<HttpConnection> ptrConnection,
    if (error)
       return error;
 
-   // save the base URL to persistent state (for forming absolute URLs)
+      // save the base URL to persistent state (for forming absolute URLs)
    persistentState().setActiveClientUrl(baseURL);
 
    // generate a new port token
    persistentState().setPortToken(server_core::generateNewPortToken());
+
+   // Set environment variables RS_SERVER_URL, RS_SESSION_URL, and RS_PORT_TOKEN,
+   // needed for subprocesses to use the rserver-url binary with the -l option.
+   core::system::setenv(kPortTokenEnvVar, persistentState().portToken());
+   core::system::setenv(kServerUrlEnvVar, baseURL);
+   core::system::setenv(kSessionUrlEnvVar,
+                        core::r_util::urlPathForSessionScope(options().sessionScope()));
 
    std::string path = ptrConnection->request().rootPath();
 
