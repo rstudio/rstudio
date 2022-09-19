@@ -1,4 +1,4 @@
-ls C:\Users\ContainerAdministrator\AppData\Local\node-gyp\Cache
+dir C:\Users\ContainerAdministrator\AppData\Local\node-gyp
 rmdir /s /q C:\Users\ContainerAdministrator\AppData\Local\node-gyp\Cache
 @echo off
 
