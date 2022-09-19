@@ -83,12 +83,23 @@ public class AceDiffGutter implements SaveFileEvent.Handler
                     
                     for (Integer newLine: activeModifiedLines_)
                     {
-                        editor_.getWidget().getEditor().getRenderer().removeGutterDecoration(newLine - 1, RES.styles().insertion());
+                        editor_.getWidget().getEditor().getRenderer().removeGutterDecoration(newLine - 1, RES.styles().added());
+                        editor_.getWidget().getEditor().getRenderer().removeGutterDecoration(newLine - 1, RES.styles().modified());
                     }
                     activeModifiedLines_.clear();
                     
                     for (DiffChunk chunk; null != (chunk = parser.nextChunk());)
                     {
+                        boolean chunkHasDeletion = false;
+                        for (Line line : chunk.getLines()) 
+                        {
+                            if (line.getType() == Line.Type.Deletion)
+                            {
+                                chunkHasDeletion = true;
+                                break;
+                            }
+                        }
+
                         for (Line line : chunk.getLines())
                         {
                             if (line.getType() == Line.Type.Insertion) {
@@ -96,7 +107,7 @@ public class AceDiffGutter implements SaveFileEvent.Handler
                                 activeModifiedLines_.add(newLine);
                                 editor_.getWidget().getEditor().getRenderer().addGutterDecoration(
                                     newLine - 1, 
-                                    " " + RES.styles().insertion());
+                                    chunkHasDeletion ? RES.styles().modified() : RES.styles().added());
                             }
                         }
                             
@@ -123,7 +134,8 @@ public class AceDiffGutter implements SaveFileEvent.Handler
 
     interface Styles extends CssResource
     {
-        String insertion();
+        String modified();
+        String added();
     }
     public static Resources RES = GWT.create(Resources.class);
     static {
