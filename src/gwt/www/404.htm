@@ -1,83 +1,80 @@
 <!DOCTYPE html>
 <html lang="en">
-  <head>
-    <meta charset="utf-8" />
-    <meta http-equiv="X-UA-Compatible" content="IE=edge" />
-    <meta name="viewport" content="width=device-width, initial-scale=1" />
-    <title>RStudio Server</title>
-    <style id="page-style">
-      #banner {
-        margin-bottom: 0;
-      }
-      p {
-        margin: 20px 40px 10px 40px;
-      }
-    </style>
-  </head>
-  <body>
-    <header role="banner">
-      <div id="banner">
-        <picture>
-          <source
-            id="logo-reverse"
-            srcset="images/Posit-ProductLogo_rst-server-reverse.svg"
-            media="(prefers-color-scheme: dark)"
-          />
-          <img
-            id="logo-full-color"
-            src="images/Posit-ProductLogo_rst-server-full-color.svg"
-            height="27"
-            alt="RStudio Logo"
-          />
-        </picture>
-      </div>
-    </header>
-
-    <div role="main" id="view" class="container">
-      <p>The requested page was not found.</p>
-
-      <p>
-        Please contact your system administrator for assistance, or click
-        <a href="#" onClick="history.back();">here</a> to go back.
-      </p>
+<head>
+  <meta charset="utf-8" />
+  <meta http-equiv="X-UA-Compatible" content="IE=edge" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>RStudio Server</title>
+  <style id="page-style">
+    #banner {
+      margin-bottom: 0;
+    }
+    p {
+      margin: 20px 40px 10px 40px;
+    }
+  </style>
+</head>
+<body>
+  <header role="banner">
+    <div id="banner">
+      <picture>
+        <source
+          id="logo-reverse"
+          srcset="images/Posit-ProductLogo_rst-server-reverse.svg"
+          media="(prefers-color-scheme: dark)"
+        />
+        <img
+          id="logo-full-color"
+          src="images/Posit-ProductLogo_rst-server-full-color.svg"
+          height="27"
+          alt="RStudio Logo"
+        />
+      </picture>
     </div>
-    <script>
-      function getBaseUri() {
-        var baseUri = "#!base_uri#";
-        if (!baseUri) {
-          baseUri = window.location.href;
-        }
-        var index = baseUri.lastIndexOf("#!request_uri#");
-        if (index > 0) {
-          return baseUri.substring(0, index);
-        }
-        return "";
+  </header>
+
+  <div role="main" id="view" class="container">
+    <p>The requested page was not found.</p>
+
+    <p>
+      Please contact your system administrator for assistance, or click
+      <a href="#" onClick="history.back();">here</a> to go back.
+    </p>
+  </div>
+  <script>
+    function getBaseUri() {
+      var baseUri = "#!base_uri#";
+      if (!baseUri) {
+        baseUri = window.location.href;
       }
+      var index = baseUri.lastIndexOf("#!request_uri#");
+      if (index > 0) {
+        return baseUri.substring(0, index);
+      }
+      return "";
+    }
 
-      var style = document.getElementById("page-style");
+    var style = document.getElementById("page-style");
 
-      var cssLink = document.createElement("link");
-      cssLink.href = getBaseUri() + "/css/page.css";
-      cssLink.type = "text/css";
-      cssLink.rel = "stylesheet";
-      style.insertAdjacentElement("beforebegin", cssLink);
+    var cssLink = document.createElement("link");
+    cssLink.href = getBaseUri() + "/css/page.css";
+    cssLink.type = "text/css";
+    cssLink.rel = "stylesheet";
+    style.insertAdjacentElement("beforebegin", cssLink);
 
-      cssLink = document.createElement("link");
-      cssLink.href = getBaseUri() + "/rstudio.css";
-      cssLink.type = "text/css";
-      cssLink.rel = "stylesheet";
-      style.insertAdjacentElement("beforebegin", cssLink);
+    cssLink = document.createElement("link");
+    cssLink.href = getBaseUri() + "/rstudio.css";
+    cssLink.type = "text/css";
+    cssLink.rel = "stylesheet";
+    style.insertAdjacentElement("beforebegin", cssLink);
 
-      var iconLink = document.createElement("link");
-      iconLink.href =
-        getBaseUri() + "/images/Posit-Product_rst-server-favicon.svg";
-      iconLink.rel = "shortcut icon";
-      style.insertAdjacentElement("beforebegin", iconLink);
+    var iconLink = document.createElement("link");
+    iconLink.href = getBaseUri() + "/images/Posit-Product_rst-server-favicon.svg";
+    iconLink.rel = "shortcut icon";
+    style.insertAdjacentElement("beforebegin", iconLink);
 
-      document.getElementById("logo-reverse").srcset =
-        getBaseUri() + "/images/Posit-ProductLogo_rst-server-reverse.svg";
-      document.getElementById("logo-full-color").src =
-        getBaseUri() + "/images/Posit-ProductLogo_rst-server-full-color.svg";
-    </script>
-  </body>
+    document.getElementById("logo-reverse").srcset = getBaseUri() + "/images/Posit-ProductLogo_rst-server-reverse.svg";
+    document.getElementById("logo-full-color").src = getBaseUri() + "/images/Posit-ProductLogo_rst-server-full-color.svg";
+  </script>
+</body>
 </html>
