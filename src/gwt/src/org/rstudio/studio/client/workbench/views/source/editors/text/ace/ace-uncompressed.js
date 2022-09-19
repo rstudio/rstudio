@@ -62160,7 +62160,7 @@ var Gutter = function(parentEl) {
             className += breakpoints[row];
         if (decorations[row])
             className += decorations[row];
-        if (this.$annotations[row])
+        if (this.$annotations[row] && this.$annotations[row].className)
             className += this.$annotations[row].className;
         if (element.className != className)
             element.className = className;
