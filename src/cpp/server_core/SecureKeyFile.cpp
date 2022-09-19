@@ -113,7 +113,7 @@ core::Error readSecureKeyFile(const std::string& filename,
    }
    else
    {
-      secureKeyPath = core::FilePath("/tmp/rstudio-server").completePath(filename);
+      secureKeyPath = core::system::xdg::userCacheDir().completePath(filename);
       if (secureKeyPath.exists())
       {
          LOG_INFO_MESSAGE("Running without privilege; using secure key at " + secureKeyPath.getAbsolutePath());

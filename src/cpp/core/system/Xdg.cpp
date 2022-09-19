@@ -218,6 +218,21 @@ FilePath userDataDir(
    );
 }
 
+FilePath userCacheDir(
+        const boost::optional<std::string>& user,
+        const boost::optional<FilePath>& homeDir)
+{
+   return resolveXdgDir("RSTUDIO_CACHE_HOME",
+         "XDG_CACHE_HOME",
+#ifdef _WIN32
+         FOLDERID_InternetCache,
+#endif
+         "~/.cache",
+         user,
+         homeDir
+   );
+}
+
 FilePath userLogDir()
 {
    return userDataDir().completePath("log");
