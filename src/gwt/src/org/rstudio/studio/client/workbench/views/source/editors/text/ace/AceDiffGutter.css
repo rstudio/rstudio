@@ -1,3 +1,7 @@
 .insertion {
-    background: linear-gradient(to left, green 5px, transparent 5px, transparent);
+    background: linear-gradient(to left, green 4px, transparent 4px, transparent);
+}
+
+.insertion:hover {
+    background: linear-gradient(to left, green 8px, transparent 8px, transparent);
 }
