@@ -110,6 +110,7 @@ import org.rstudio.studio.client.workbench.views.source.editors.text.ace.AceBack
 import org.rstudio.studio.client.workbench.views.source.editors.text.ace.AceClickEvent.Handler;
 import org.rstudio.studio.client.workbench.views.source.editors.text.ace.AceCommand;
 import org.rstudio.studio.client.workbench.views.source.editors.text.ace.AceCommandManager;
+import org.rstudio.studio.client.workbench.views.source.editors.text.ace.AceDiffGutter;
 import org.rstudio.studio.client.workbench.views.source.editors.text.ace.AceEditorBackgroundLinkHighlighter;
 import org.rstudio.studio.client.workbench.views.source.editors.text.ace.AceEditorCommandEvent;
 import org.rstudio.studio.client.workbench.views.source.editors.text.ace.AceEditorNative;
@@ -354,6 +355,7 @@ public class AceEditor implements DocDisplay,
       vim_ = new Vim(this);
       bgLinkHighlighter_ = new AceEditorBackgroundLinkHighlighter(this);
       bgChunkHighlighter_ = new AceBackgroundHighlighter(this);
+      bgDiffHighlighter_ =  new AceDiffGutter(this);
 
       widget_.addValueChangeHandler(evt ->
       {
@@ -4717,6 +4719,8 @@ public class AceEditor implements DocDisplay,
    private final Vim vim_;
    private final AceBackgroundHighlighter bgChunkHighlighter_;
    private final AceEditorBackgroundLinkHighlighter bgLinkHighlighter_;
+   private final AceDiffGutter bgDiffHighlighter_;
+
    private int scrollTarget_ = 0;
    private HandlerRegistration scrollCompleteReg_;
    private final AceEditorMixins mixins_;
