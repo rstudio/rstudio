@@ -1305,11 +1305,11 @@ public interface StudioClientApplicationConstants extends com.google.gwt.i18n.cl
     String usingNewestVersionMessage();
 
     /**
-     * Translated "RStudio Server Home".
+     * Translated "Posit Workbench".
      *
-     * @return translated "RStudio Server Home"
+     * @return translated "Posit Workbench"
      */
-    @DefaultMessage("RStudio Server Home")
+    @DefaultMessage("Posit Workbench")
     @Key("rStudioServerHomeTitle")
     String rStudioServerHomeTitle();
 

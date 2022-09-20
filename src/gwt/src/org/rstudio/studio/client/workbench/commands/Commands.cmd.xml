@@ -4169,7 +4169,7 @@ See `/src/gwt/tools/i18n-helpers/README.md`.
 
    <cmd id="loadServerHome"
         buttonLabel=""
-        menuLabel="RStudio Server _Home"
+        menuLabel="Posit Workbench _Home"
         windowMode="main"/>
 
    <cmd id="speakEditorLocation"
