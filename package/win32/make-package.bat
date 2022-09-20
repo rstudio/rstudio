@@ -201,16 +201,13 @@ REM put these back to their original state at the end of the package build.
 if "%RSTUDIO_TARGET%" == "Electron" (
       pushd %ELECTRON_SOURCE_DIR%
 
-      echo show environment variables
-      set
       echo ensure msvs_version=2019
-      %NPM% set msvs_version 2019
-      dir C:\Users\ContainerAdministrator
-      type C:\Users\ContainerAdministrator\.npmrc
+      call %NPM% set msvs_version 2019
 
       echo ensure node-gyp installed for node %RSTUDIO_NODE_VERSION%
-      %NPX% node-gyp install %RSTUDIO_NODE_VERSION%
-      dir C:\Users\ContainerAdministrator\AppData\Local\node-gyp\Cache\%RSTUDIO_NODE_VERSION%\include\node
+      call %NPX% node-gyp install %RSTUDIO_NODE_VERSION%
+      echo %LOCALAPPDATA%\node-gyp\Cache\%RSTUDIO_NODE_VERSION%\include\node
+      dir %LOCALAPPDATA%\node-gyp\Cache\%RSTUDIO_NODE_VERSION%\include\node
 
       call %NPM% ci
 
