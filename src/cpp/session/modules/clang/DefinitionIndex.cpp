@@ -120,6 +120,7 @@ CXChildVisitResult cursorVisitor(CXCursor cxCursor,
          kind = CppTypedefDefinition;
          break;
       case CXCursor_MacroDefinition:
+         
          kind = CppMacroDefinition;
          break;
       default:
@@ -134,6 +135,18 @@ CXChildVisitResult cursorVisitor(CXCursor cxCursor,
    // build name (strip trailing parens)
    std::string name = cursor.displayName();
    boost::algorithm::replace_last(name, "()", "");
+
+   // skip macros that are header guards
+   if (kind == CppMacroDefinition)
+   {
+      if (boost::algorithm::ends_with(name, "_H") ||
+          boost::algorithm::ends_with(name, "_HPP") ||
+          boost::algorithm::ends_with(name, "_H_") ||
+          boost::algorithm::ends_with(name, "_HPP_"))
+      {
+         return CXChildVisit_Continue;
+      }
+   }
 
    // empty display name for a namespace === anonymous
    if ((kind == CppNamespaceDefinition) && name.empty())
