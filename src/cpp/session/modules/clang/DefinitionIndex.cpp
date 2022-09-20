@@ -83,7 +83,8 @@ CXChildVisitResult cursorVisitor(CXCursor cxCursor,
 
    // ensure it's a definition with linkage or a typedef
    if ((!cursor.isDefinition() || !cursor.hasLinkage()) &&
-       cursorKind != CXCursor_TypedefDecl)
+       cursorKind != CXCursor_TypedefDecl &&
+       cursorKind != CXCursor_MacroDefinition)
    {
       return CXChildVisit_Continue;
    }
@@ -117,6 +118,9 @@ CXChildVisitResult cursorVisitor(CXCursor cxCursor,
          break;
       case CXCursor_TypedefDecl:
          kind = CppTypedefDefinition;
+         break;
+      case CXCursor_MacroDefinition:
+         kind = CppMacroDefinition;
          break;
       default:
          kind = CppInvalidDefinition;
@@ -233,7 +237,8 @@ void fileChangeHandler(const core::system::FileChangeEvent& event)
                                gsl::narrow_cast<int>(argsArray.argCount()),
                                nullptr, 0, // no unsaved files
                                CXTranslationUnit_None |
-                               CXTranslationUnit_Incomplete);
+                               CXTranslationUnit_Incomplete |
+                               CXTranslationUnit_DetailedPreprocessingRecord);
 
 
          // create definitions and wire visitor to it
@@ -291,6 +296,9 @@ std::ostream& operator<<(std::ostream& os, const CppDefinition& definition)
          break;
       case CppTypedefDefinition:
          kindStr = "T";
+         break;
+      case CppMacroDefinition:
+         kindStr = "#";
          break;
       default:
          kindStr = " ";

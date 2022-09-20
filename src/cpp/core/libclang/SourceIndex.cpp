@@ -300,7 +300,7 @@ TranslationUnit SourceIndex::getTranslationUnit(const std::string& filename,
                          gsl::narrow_cast<int>(argsArray.argCount()),
                          unsavedFiles().unsavedFilesArray(),
                          unsavedFiles().numUnsavedFiles(),
-                         options);
+                         options | CXTranslationUnit_DetailedPreprocessingRecord);
 
 
    // save and return it if we succeeded
