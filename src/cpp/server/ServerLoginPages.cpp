@@ -84,16 +84,16 @@ void fillLoginFields(const core::http::Request& request,
    boost::format logoImgHtmlFormat(R"DELIM(
 <picture>
    <source
-      srcset="images/rstudio-dark.png"
+      srcset="images/Posit-ProductLogo_rst-server-reverse.svg"
       media="(prefers-color-scheme: dark)"/>
-   <img src="images/rstudio.png" width="78" height="27" alt="%1%"/>
+   <img src="images/Posit-ProductLogo_rst-server-full-color.svg" height="27" alt="%1%"/>
 </picture>)DELIM");
    if (!isRdp)
    {
       variables[kLoginPageHtml] = server::options().authLoginPageHtml();
 
       // render logo with links
-      std::string logoImgHtml = boost::str(logoImgHtmlFormat % "RStudio Logo (goes to external site)");
+      std::string logoImgHtml = boost::str(logoImgHtmlFormat % "RStudio Server Logo (goes to external site)");
       variables[kLogoHtml] = R"DELIM(<a href="https://www.rstudio.com/">)DELIM" + logoImgHtml + "</a>";
    }
    else

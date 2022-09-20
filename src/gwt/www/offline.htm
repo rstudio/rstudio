@@ -14,108 +14,98 @@
 -->
 
 <html lang="en">
-
 <head>
-<meta charset="utf-8">
-<title>RStudio Offline</title>
-<link rel="shortcut icon" href="images/favicon.ico" />
+  <meta charset="utf-8" />
+  <title>RStudio Offline</title>
+  <link rel="stylesheet" href="rstudio.css" type="text/css" />
 
-<style>
+  <style id="page-style">
+    #border {
+      border: 4px solid var(--lt-grey);
+      padding: 8px;
+      -moz-border-radius: 10px;
+      -webkit-border-radius: 10px;
+      margin: 0 auto;
+    }
 
-body {
-  background-color: #fff;
-}
-body, td {
-  font-family: Lucida Grande, Lucida Sans Unicode, Helvetica, sans-serif;
-  font-size: 11pt;
-}
+    #image {
+      filter:
+        drop-shadow(0 1px 0 var(--lt-grey))
+        drop-shadow(1px 0 0 var(--lt-grey))
+        drop-shadow(0 -1px 0 var(--lt-grey))
+        drop-shadow(-1px 0 0 var(--lt-grey));
+    }
 
-
-
-#banner {
-  background-color: #e0e2e5;
-  margin: 30px 20px 70px 20px;
-  padding: 8px;
-  -moz-border-radius: 5px;
-  -webkit-border-radius: 5px;
-}
-#border {
-  width: 300px;
-  border: 4px solid #e0e2e5;
-  padding: 8px;
-  -moz-border-radius: 10px;
-  -webkit-border-radius: 10px;
-  margin: 0 auto;
-}
-#image {
-  margin-right: -18px;
-}
-
-#caption {
-  text-align: left;
-  border-bottom: 4px solid #e0e2e5;
-  padding-bottom: 8px;
-  margin-bottom: 8px;
-  margin-right: 10px;
-  font-size: 16px;
-  font-weight: normal;
-  width: 250px;
-}
-
-#detail {
-  color: #aaa;
-  margin-top: 8px;
-  margin-right: 10px;
-}
-
-</style>
-
-<script>
-   function getBaseUri()
-   {
-      var baseUri = "#!base_uri#";
-      if (!baseUri)
-      {
-        baseUri = window.location.href;
+    @media (prefers-color-scheme: dark) {
+      #image {
+        filter:
+          invert(1)
+          hue-rotate(180deg)
+          drop-shadow(0 1px 0 var(--lt-grey))
+          drop-shadow(1px 0 0 var(--lt-grey))
+          drop-shadow(0 -1px 0 var(--lt-grey))
+          drop-shadow(-1px 0 0 var(--lt-grey));
       }
-      var index = baseUri.lastIndexOf("#!request_uri#");
-      if (index > 0)
-      {
-        return baseUri.substring(0, index);
-      }
-      return "/";
-   }
-
-   var iconLink = document.createElement("link");
-   iconLink.href = getBaseUri() + "/images/favicon.ico";
-   iconLink.rel = "shortcut icon";
-
-   document.getElementsByTagName("head")[0].appendChild(iconLink);
-</script>
+    }
+  </style>
 
 </head>
 
 <body>
+  <header role="banner">
+    <div id="banner">
+      <picture>
+        <source
+          id="logo-reverse"
+          srcset="images/Posit-ProductLogo_rst-server-reverse.svg"
+          media="(prefers-color-scheme: dark)"
+        />
+        <img
+          id="logo-full-color"
+          src="images/Posit-ProductLogo_rst-server-full-color.svg"
+          height="27"
+          alt="RStudio Logo"
+        />
+      </picture>
+    </div>
+  </header>
 
-<h3 id="banner"><a href="http://www.rstudio.com"><img src="images/rstudio.png" id="bannerImage" width="78" height="27" title="RStudio" alt="RStudio"/></a></h3>
-
-<table id="border">
-  <tr>
-    <td><img alt id="image" src="images/offline.png"/></td>
-    <td>
+  <div id="border">
+    <div id="image-container">
+      <img alt id="image" src="images/offline.png" />
+    </div>
+    <div>
       <h2 id="caption">RStudio Temporarily Offline</h2>
-      <div id="detail">RStudio is temporarily offline due to system maintenance. We apologize for the inconvenience, please try again in a few minutes.</div>
-    </td>
-  </tr>
-</table>
+      <div id="detail">
+        RStudio is temporarily offline due to system maintenance. We
+        apologize for the inconvenience, please try again in a few minutes.
+      </div>
+    </div>
+  </div>
+  <script>
+    function getBaseUri() {
+      var baseUri = "#!base_uri#";
+      if (!baseUri) {
+        baseUri = window.location.href;
+      }
+      var index = baseUri.lastIndexOf("#!request_uri#");
+      if (index > 0) {
+        return baseUri.substring(0, index);
+      }
+      return "";
+    }
 
-<script>
+    var style = document.getElementById("page-style");
 
-  document.getElementById("bannerImage").src = getBaseUri() + "/images/rstudio.png";
-  document.getElementById("image").src = getBaseUri() + "/images/offline.png";
+    var iconLink = document.createElement("link");
+    iconLink.href = getBaseUri() + "/images/Posit-Product_rst-server-favicon.svg";
+    iconLink.rel = "shortcut icon";
+    style.insertAdjacentElement("beforebegin", iconLink);
 
-</script>
+    document.getElementById("logo-reverse").srcset = getBaseUri() + "images/Posit-ProductLogo_rst-server-reverse.svg";
+    document.getElementById("logo-full-color").src = getBaseUri() + "images/Posit-ProductLogo_rst-server-full-color.svg";
 
+    document.getElementById("image").src = getBaseUri() + "/images/offline.png";
+  </script>
 </body>
-
 </html>
