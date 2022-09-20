@@ -10,9 +10,9 @@ This page walks through an example of using the `ggplot2` R package and RStudio 
 
 ## Hello RStudio
 
-RStudio is a set of integrated tools designed to help you be more productive in your daily data science work.
+RStudio is an integrated development environment, or IDE, designed to help you be more productive in your daily data science work.
 
-After you have installed R and RStudio, you are ready to begin this section!
+After you have installed [R](https://cloud.r-project.org/) and [RStudio](https://www.rstudio.com/products/rstudio/download/), you are ready to begin this section!
 
 When you start RStudio, you'll see four key regions or "panes" in the interface: the Source pane, the Console pane, the Environment pane and the Output Pane.
 
@@ -27,6 +27,14 @@ When you start RStudio, you'll see four key regions or "panes" in the interface:
 4.  The **Output pane** displays the plots, tables, or HTML outputs of executed code along with files saved to disk.
 
 ![](images/rstudio-panes-labeled.jpeg){fig-alt="A screenshot of the RStudio UI. There are 4 primary panes, the source, console, environment, and output panes."}
+
+### Blank slate
+
+When you quit R, do not save the workspace to an .Rdata file. When you launch, do not reload the workspace from an `.Rdata` file. Long-term reproducibility is enhanced when you turn this feature off and clear R's memory at every restart. Starting with a blank slate provides timely feedback that encourages the development of scripts that are complete and self-contained.
+
+In RStudio, set this via **Tools** > **Global Options**, making sure to uncheck "Restore .RData into Workspace at Startup" and choosing **Never** on the "Save workspace to .RData on exit".
+
+![](images/blank-slate.png){fig-alt="A screenshot of Tools > Global Options in RStudio. It highlights turning off the saving of workspace and restoration of .RData into workspace."}
 
 ### Hello RStudio Projects
 
@@ -52,7 +60,7 @@ Everything you need is in one place, and cleanly separated from all the other pr
 
 ## Hello `ggplot2`
 
-The following section is adapted from the ["Data Visualization" chapter](https://r4ds.had.co.nz/data-visualisation.html) of R for Data Science.
+The following section is adapted from the ["Data Visualization" chapter](https://r4ds.hadley.nz/data-visualisation.html) of R for Data Science.
 
 > R has several systems for making graphs, but `ggplot2` is one of the most elegant and most versatile.
 
