@@ -3891,7 +3891,7 @@ public interface CmdConstants extends Constants {
     // loadServerHome
     @DefaultStringValue("") // $NON-NLS-1$
     String loadServerHomeButtonLabel();
-    @DefaultStringValue("RStudio Server _Home") // $NON-NLS-1$
+    @DefaultStringValue("Posit Workbench _Home") // $NON-NLS-1$
     String loadServerHomeMenuLabel();
     
     // speakEditorLocation
