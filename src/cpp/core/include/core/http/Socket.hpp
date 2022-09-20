@@ -39,11 +39,11 @@ public:
 
    virtual void asyncWrite(
                      const boost::asio::const_buffers_1& buffer,
-                     Handler Handler) = 0;
+                     Handler handler) = 0;
 
    virtual void asyncWrite(
                      const std::vector<boost::asio::const_buffer>& buffers,
-                     Handler Handler) = 0;
+                     Handler handler) = 0;
 
    virtual void close() = 0;
 };
