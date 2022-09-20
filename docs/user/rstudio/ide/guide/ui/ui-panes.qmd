@@ -2,14 +2,14 @@
 title: "Pane Layout"
 ---
 
-The RStudio User interface is broken up into 4 primary panes:
+The RStudio user interface is broken up into 4 primary panes:
 
 1.  **Source pane**\
 2.  **Console pane**\
 3.  **Environment pane**, containing the **Environment**, **History**, **Connections**, **Build**, and **VCS** tabs\
 4.  **Output pane**, containing the **Files**, **Plots**, **Packages**, **Help**, **Tutorial**, **Viewer**, and **Presentation** tabs
 
-Each pane can be minimized or maximized within the column by clicking the minimize/maximize buttons ![](images/min-max.png){width="28"}.
+Each pane can be minimized or maximized within the column by clicking the minimize/maximize buttons ![](images/min-max.png){width="30" fig-alt="The min-max button which shows a collapsed or expanded Window."}.
 
 ![](images/rstudio-panes-labeled.jpeg){fig-alt="A screenshot of the four RStudio panes, labeled Source, Environments, Console, and Output."}
 
@@ -23,9 +23,9 @@ Additional source columns can be added or removed to the left of the 4 primary p
 
 The source pane allows users to view and edit various code-related files, such as .R, .rmd, .qmd, .py, .css, or general text files such as .txt or .md. By default it is the top-left panel and can be launched by opening any editable file in RStudio. Each additional file that is opened will be added as a new tab within the Source Pane.
 
-Additional source "columns" can be added from the **Global Options** > **Pane Layout** > **Add Source Column**, which provides the ability to work on two (or more) source files at a time within the Source Pane.
+Additional source "columns" can be added to the left of the four primary panes. To add additional source columns, from the RStudio menu: **Global Options** \> **Pane Layout** \> **Add Source Column**, which provides the ability to work on two (or more) source files at a time within the Source Pane.
 
-Individual source files can also be opened in their own window, rather than only within the **Source Pane**.  Source Windows allow you to edit files outside the main RStudio window. This is useful for splitting your work among multiple monitors, or devoting more space to your editor.
+Individual source files can also be opened in their own window, rather than only within the **Source Pane**. Source Windows allow you to edit files outside the main RStudio window. This is useful for splitting your work among multiple monitors, or devoting more space to your editor.
 
 ### Creating Source Windows
 
@@ -43,13 +43,13 @@ You can have as many source windows open as you like.
 
 Each source window has its own set of tabs; these tabs are independent of the tabs in RStudio's main source pane.
 
-To return a document to the main window, click the **Return to Main Window** button on the editor toolbar. 
+To return a document to the main window, click the **Return to Main Window** button on the editor toolbar.
 
 ![](images/source-return.png){fig-alt="A screenshot of the Source Pane toolbar, highlighting the Return to Main Window button"}
 
 ### Navigating to Source Windows
 
-The easiest way to jump to a source window is to use the global **Go To File/Function** tool (<kbd>Ctrl + .</kbd>). Begin typing the name of the file you want to navigate to; when it appears, select it and press Enter. 
+The easiest way to jump to a source window is to use the global **Go To File/Function** tool (<kbd>Ctrl + .</kbd>). Begin typing the name of the file you want to navigate to; when it appears, select it and press Enter.
 
 When a document is open in a source window, RStudio will jump to that window whenever you navigate to the document, or to a symbol in the document.
 
@@ -92,14 +92,11 @@ The Console pane also includes an integrated **Terminal** tab for executing syst
 
 The **Background Jobs** tab provides the ability to send long running R scripts to [local and remote background jobs](../tools/jobs.html). This functionality can dramatically improve the productivity of data scientists and analysts using R since they can continue working in RStudio while jobs are running in the background.
 
-<kbd>Ctrl+1</kbd> — Move focus to the Source Pane
-<kbd>Ctrl+2</kbd> — Move focus to the Console
-<kbd>Ctrl+L</kbd> — Clear the Console
-<kbd>Esc</kbd> — Interrupt R
+<kbd>Ctrl+1</kbd> --- Move focus to the Source Pane <kbd>Ctrl+2</kbd> --- Move focus to the Console <kbd>Ctrl+L</kbd> --- Clear the Console <kbd>Esc</kbd> --- Interrupt R
 
 ## Environment Pane
 
-The Environment pane by default includes the Environment, History, Connections, Build, VCS (Version Control System). By default it is the top-right pane.
+By default, the Environment pane is located in the top-right and includes the Environment, History, Connections, Build, VCS (Version Control System) tabs.
 
 ### Environment
 
@@ -147,7 +144,7 @@ The VCS tab will change based on the version control system you have enabled for
 
 ## Output Pane
 
-The **Output pane** by default is the bottom-right pane and displays various outputs such as plots, HTML content, or on-disk files. It contains the Files, Plots, R Packages, Help, Tutorial, Viewer, and Presentation tabs. 
+By default, the **Output pane** is the bottom-right pane and displays various outputs such as plots, HTML content, or on-disk files. It contains the Files, Plots, R Packages, Help, Tutorial, Viewer, and Presentation tabs.
 
 ### Files
 
@@ -181,8 +178,6 @@ The tutorial tab is used to load interactive `learnr` tutorials. These tutorials
 
 The viewer tab is used to display web content such as Shiny apps, Quarto generated web pages, or interactive `htmlwidgets` like `plotly` graphs.
 
-Note that there are arrow icons to navigate to older or more recent generated content. The document delete button removes the currently displayed content, while the broom icon will remove all of the displayed content from the current session. The browser + arrow icon will open the currently displayed content in the default browser on your system. The Edit button will allow you to edit the source file of the displayed content, while the Sync Editor button will sync the displayed content with the specific area of the source file. Note there is also a Publish Button for sending content out to Posit Connect, ShinyApps.io, Quarto Pubs, or RPubs. Lastly, there is a refresh button.
-
 ### Presentation
 
-The Presentation tab is used to display HTML slides generated from Quarto. 
+The Presentation tab is used to display HTML slides generated via Quarto's `revealjs` format.

@@ -2,15 +2,9 @@
 title: "Screen Reader"
 ---
 
-Adapted from: <https://support.rstudio.com/hc/en-us/articles/360045612413-RStudio-Screen-Reader-Support>
-
 This article aims to provide screen-reader users with some effective strategies for RStudio IDE navigation.
 
-Some features discussed in this document require RStudio 1.3 or newer. In a few cases you need to know if you are using RStudio Desktop or RStudio Workbench / RStudio Server. If RStudio is loaded in your web browser, then you are using RStudio Workbench or RStudio Server; otherwise you have RStudio Desktop.
-
-## Screen Reader
-
-Please see the [article on RStudio Screen Reader support](https://support.rstudio.com/hc/en-us/articles/360045612413-RStudio-Screen-Reader-Support) for details on using the RStudio IDE with a screen reader.
+Some features discussed in this document require RStudio 1.3 or newer. In a few cases you need to know if you are using RStudio Desktop or Posit Workbench / RStudio Server. If RStudio is loaded in your web browser, then you are using Posit Workbench or RStudio Server; otherwise you have RStudio Desktop.
 
 ## Accessibility Menu
 
@@ -30,11 +24,11 @@ Several accessibility-related options are available under the Help / Accessibili
 
 -   Notes: Due to underlying accessibility issues introduced by components used to build RStudio Desktop, we cannot yet recommend its use via a screen reader except in an experimental fashion. We are actively working with the developer of these components to get these issues addressed, and will be releasing updates with these fixes as soon as we can.
 
-## RStudio Workbench / RStudio Server
+## Posit Workbench / RStudio Server
 
 ### Basic Concept
 
-RStudio Workbench (previously RStudio Server Pro) and RStudio Server Open Source are web-based applications loaded in your preferred browser. To put it simply, you can understand it as an online version of RStudio Desktop.
+Posit Workbench (previously RStudio Server Pro/RStudio Workbench) and RStudio Server Open Source are web-based applications loaded in your preferred browser. To put it simply, you can understand it as an online version of RStudio Desktop.
 
 Since the main menubar (File, Edit, and so on) is actually part of the web page, it requires slightly different shortcuts. Tapping Alt (on Windows), for example, puts focus on the Web Browser\'s main menu, not the RStudio menu.
 
@@ -101,7 +95,7 @@ Our last recommendation, \"Reduce User Interface Animations,\" will simplify som
 
 ### Application Layout
 
-As described in the [basic concept](https://support.rstudio.com/hc/en-us/articles/360045612413-RStudio-Screen-Reader-Support#server-concept) above, RStudio Workbench and RStudio Server are web-based applications loaded inside your browser.
+As described in the [basic concept](#basic-concept) above, Posit Workbench and RStudio Server are web-based applications loaded inside your browser.
 
 To provide screen-reader users with overview of the application layout, the RStudio 1.3 or later has been annotated to divide it up into named landmarks (also known as regions in some screen readers). The regions in the default visual layout of RStudio are as follows:
 

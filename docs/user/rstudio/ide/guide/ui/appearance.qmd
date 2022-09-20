@@ -2,8 +2,6 @@
 title: "Appearance"
 ---
 
-Adapted from: <https://www.rstudio.com/blog/rstudio-ide-custom-theme-support/> and <https://rstudio.github.io/rstudio-extensions/rstudio-theme-creation.html> and <https://support.rstudio.com/hc/en-us/articles/115011846747-Using-Themes-in-the-RStudio-IDE>
-
 ## Switching Global Themes
 
 RStudio provides support for two global themes that customize the RStudio IDE's user interface: Modern and Sky. By default, the Modern theme is selected.
@@ -14,11 +12,13 @@ To switch between RStudio themes, from the **Tools** \> **Global Options \> Appe
 
 ## Editor Themes
 
-RStudio provides support for adding custom editor themes in one of two formats: tmTheme or rstheme. The tmTheme format was first introduced for TextMate, and has since become one of the standard formats for themes. This [tmTheme editor](https://tmtheme-editor.herokuapp.com/) also includes a large collection of tmThemes. The rstheme format is specific to RStudio.
+RStudio provides support for adding custom editor themes in one of two formats: tmTheme or rstheme. The tmTheme format was first introduced for TextMate, and has since become one of the standard formats for themes. This [tmTheme editor](https://tmtheme-editor.herokuapp.com/) also includes a large collection of tmThemes. The rstheme format is specific to RStudio.
 
-To switch between the Editor themes, from the **Tools** \> **Global Options \> Appearance** menu, use the **Editor theme** selector. A number of common themes are included, but users can also define and uploaded their own themes.
+To switch between the Editor themes, from the **Tools** \> **Global Options \> Appearance** menu, use the **Editor theme** selector. A number of common themes are included, but users can also define and uploaded their own themes. The [`rsthemes` R package](https://www.garrickadenbuie.com/project/rsthemes/) provides a number of additional common themes for use in RStudio.
 
-![](images/rstudio-theme.png){width="800"}
+![](images/rstudio-theme.png){width="800" fig-alt="A screenshot of the Global Options > Appearance tab, so that the theme of the IDE can be changed."}
+
+
 
 ## Creating Custom Themes for RStudio
 

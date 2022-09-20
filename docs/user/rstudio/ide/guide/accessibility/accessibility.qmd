@@ -2,10 +2,6 @@
 title: "Simplified Interface"
 ---
 
-Adapted from <https://support.rstudio.com/hc/en-us/articles/360044226673-RStudio-Accessibility-Features>
-
-## Introduction
-
 The RStudio IDE has many features and options to help you work the way that best suits your needs.
 
 Some features discussed in this article require RStudio 1.3 or newer. In a few cases you need to know if you are using RStudio Desktop or RStudio Server: if RStudio is loaded in your web browser, then you are using RStudio Server; otherwise, you have RStudio Desktop.

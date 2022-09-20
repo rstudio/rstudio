@@ -6,9 +6,7 @@ title: "Command Palette"
 
 Just as a paint palette gives the artist instant access to all their colors, a command palette is a software affordance that gives instant, searchable access to all of a program's commands.
 
-Copied from: <https://www.rstudio.com/blog/rstudio-v1-4-preview-command-palette/>
-
-![](images/command-palette.png){width="1200"}
+![](images/command-palette.png){fig-alt="A screenshot of the Command Palette in use, which provides a search bar for all available RStudio shortcuts." width="1200"}
 
 Command palettes have become a fixture of modern IDEs, and with good reason. They improve:
 
@@ -25,6 +23,10 @@ The palette can be invoked with the keyboard shortcut:\
 
 It's also available on the **Tools** menu (**Tools** \> **Show Command Palette**).
 
+## Search Syntax
+
+The command palette's search syntax is simple; it looks for complete matches for each space-separated term you enter. So, for example, a query for `new proj` will find all of the entries that contain the term `new` AND the term `proj`.
+
 ## Content
 
 RStudio's command palette has three main types of content:
@@ -35,9 +37,9 @@ First and foremost, the command palette serves as a way to search for and invoke
 
 To find a command, enter a word or short sequence of characters from the command. For example, to create a new script, start typing `new scr`.
 
-![](https://www.rstudio.com/blog/rstudio-v1-4-preview-command-palette/new-script.png)
+![](images/new-script.png){fig-alt="A screenshot of the Command Palette and search results for 'new scr'."}
 
-You can keep typing to filter the list, or press Up/Down to choose a command from the list and then Enter to execute the chosen command. Commands are displayed with their bound keyboard shortcuts, if any, so that you know how to invoke the command directly with the keyboard next time.
+Keep typing to filter the list, or press Up/Down to choose a command from the list and then Enter to execute the chosen command. Commands are displayed with their bound keyboard shortcuts, if any, so that you know how to invoke the command directly with the keyboard next time.
 
 If your command doesn't have a shortcut, you can [use the *Modify Keyboard Shortcuts* command](https://support.rstudio.com/hc/en-us/articles/206382178-Customizing-Keyboard-Shortcuts) to add one.
 
@@ -47,7 +49,7 @@ In addition to all of RStudio's commands, the command palette provides easy acce
 
 For example, you can turn RStudio's code margin indicator off and on or move it to a different column. If you have a code editor open, you'll see these changes reflected in real time as you make them.
 
-![](https://www.rstudio.com/blog/rstudio-v1-4-preview-command-palette/margin.png)
+![](images/margin.png){fig-alt="A screenshot of the command palette, displaying toggle options for the margin in RStudio."}
 
 Note that the settings displayed are your personal (user-level) settings. Just like the settings in Global Options, they can be overridden by project-level settings, and some settings don't take effect until after a restart.
 
@@ -55,10 +57,6 @@ Note that the settings displayed are your personal (user-level) settings. Just l
 
 Finally, the command palette shows all of the commands exposed by any installed RStudio add-ins. You can find these by typing any part of the add-in name and/or part of the command. For example, to use a command from the excellent [styler addin](https://github.com/r-lib/styler):
 
-![](https://www.rstudio.com/blog/rstudio-v1-4-preview-command-palette/style-selection.png)
+![](images/style-selection.png){fig-alt="A screenshot of the command palette displaying 'style' search and the styler add-in results."}
 
-This makes the palette user-extensible; if you want to add your own commands to the palette, you can [create an RStudio Addin](https://rstudio.github.io/rstudioaddins/) to do so with just a few lines of code, or use the [shrtcts addin](https://www.garrickadenbuie.com/blog/shrtcts/) to do so in even fewer lines of code!
-
-## Search Syntax
-
-The command palette's search syntax is simple; it looks for complete matches for each space-separated term you enter. So, for example, a query for `new proj` will find all of the entries that contain the term `new` AND the term `proj`.
+This makes the palette user-extensible; to add additional commands to the palette [create an RStudio Addin](https://rstudio.github.io/rstudioaddins/).  The [`shrtcts` addin](https://www.garrickadenbuie.com/blog/shrtcts/) also allows for creating shortcuts for common tasks.
