@@ -445,6 +445,7 @@ public class FileTypeRegistry
       register("*.el", LISP, new ImageResource2x(icons.iconLisp2x()));
       register("*.lua", LUA, new ImageResource2x(icons.iconLua2x()));
       register("*.m", MATLAB, new ImageResource2x(icons.iconMatlab2x()));
+      register("*.nf", GROOVY, new ImageResource2x(icons.iconGroovy2x()));
       register("*.pl", PERL, new ImageResource2x(icons.iconPerl2x()));
       register("*.rb", RUBY, new ImageResource2x(icons.iconRuby2x()));
       register("*.rs", RUST, new ImageResource2x(icons.iconRust2x()));

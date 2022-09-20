@@ -112,6 +112,8 @@ MimeType s_mimeTypes[] =
       { "ts",           "text/x-typescript"},
       { "ojs",          "text/javascript" },
       { "lua",          "text/x-lua"},
+      { "groovy",       "text/x-groovy"},
+      { "nf",           "text/x-groovy"},
 
       // other types we are likely to serve
       { "xml",          "text/xml" },
