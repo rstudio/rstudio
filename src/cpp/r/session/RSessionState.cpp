@@ -222,8 +222,8 @@ Error restoreEnvironmentVars(const FilePath& envFile)
 }
    
 Error restoreWorkingDirectory(const std::string& workingDirectory,
-                              const FilePath& userHomePath, 
-                              const FilePath& projectPath)
+                              const FilePath& projectPath,
+                              const FilePath& userHomePath)
 {
    // resolve working dir
    FilePath workingDirPath = FilePath::resolveAliasedPath(workingDirectory, userHomePath);
@@ -637,8 +637,8 @@ bool restore(const FilePath& statePath,
    std::string workingDir = settings.get(kWorkingDirectory);
    error = restoreWorkingDirectory(
             workingDir,
-            r::session::utils::userHomePath(),
-            r::session::utils::projectPath());
+            r::session::utils::projectPath(),
+            r::session::utils::userHomePath());
    
    if (error)
       reportError(kRestoring, kWorkingDirectory, error, ERROR_LOCATION, er);
