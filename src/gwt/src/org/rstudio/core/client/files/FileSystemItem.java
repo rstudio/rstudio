@@ -377,6 +377,8 @@ public class FileSystemItem extends JavaScriptObject
       MIME_TYPES.put( "sql",       "text/x-sql" );
       MIME_TYPES.put( "stan",      "text/x-stan" );
       MIME_TYPES.put( "clj",       "text/x-clojure");
+      MIME_TYPES.put( "groovy",    "text/x-groovy");
+      MIME_TYPES.put( "nf",        "text/x-groovy");
 
       // other types we are likely to serve
       MIME_TYPES.put( "xml",   "text/xml" );
