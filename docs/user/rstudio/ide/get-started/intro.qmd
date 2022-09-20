@@ -2,7 +2,7 @@
 title: "Get Started"
 ---
 
-This page walks through an example of using the `ggplot2` and RStudio for basic data visualization. If you are new to R and want to learn more about using R for Data Science, also see the [R for Data Science](https://r4ds.had.co.nz) textbook which is available in [print](https://www.oreilly.com/library/view/r-for-data/9781491910382/) or as a [freely available website](https://r4ds.hadley.nz/)
+This page walks through an example of using the `ggplot2` R package and RStudio for basic data visualization. If you are new to R and want to learn more about using R for Data Science, also see the [R for Data Science](https://r4ds.hadley.nz/) textbook which is available in [print](https://www.oreilly.com/library/view/r-for-data/9781491910382/) or as a [freely available website](https://r4ds.hadley.nz/)
 
 `ggplot2` is part of the `tidyverse` ecosystem of packages.
 
