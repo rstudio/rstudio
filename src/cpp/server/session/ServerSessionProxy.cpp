@@ -351,6 +351,36 @@ void sendSparkUIResponse(
    ptrConnection->writeResponse(fixedResponse);
 }
 
+void handleWriteResponseForUpgrade(
+      boost::shared_ptr<core::http::AsyncConnection> ptrConnection,
+      boost::shared_ptr<http::IAsyncClient> ptrLocalhost,
+      const std::string& username,
+      const boost::system::error_code& ec,
+      size_t bytes_transferred)
+{
+   if (ec)
+   {
+      // Something went wrong with the writeResponse; the socket will be closed
+      // for us and an error logged. No need for us to continue doing work
+      // against this socket.
+      return;
+   }
+
+   // cast to generic socket types
+   boost::shared_ptr<http::Socket> ptrClient =
+      boost::static_pointer_cast<http::Socket>(ptrConnection);
+   boost::shared_ptr<http::Socket> ptrServer =
+      boost::static_pointer_cast<http::Socket>(ptrLocalhost);
+
+   auth::handler::UserSession::addUserSessionConnection(username);
+
+   // connect the sockets
+   http::SocketProxy::create(ptrClient, ptrServer,
+                              boost::bind(checkForValidUserSession, username),
+                              boost::bind(socketConnectionClosed, username));
+
+}
+
 void handleLocalhostResponse(
       boost::shared_ptr<core::http::AsyncConnection> ptrConnection,
       boost::shared_ptr<http::IAsyncClient> ptrLocalhost,
@@ -365,21 +395,17 @@ void handleLocalhostResponse(
    {
       LOG_DEBUG_MESSAGE("Upgrading localhost connection for socket proxy");
 
-      // write the response but don't close the connection
-      ptrConnection->writeResponse(response, false);
-
-      // cast to generic socket types
-      boost::shared_ptr<http::Socket> ptrClient =
-         boost::static_pointer_cast<http::Socket>(ptrConnection);
-      boost::shared_ptr<http::Socket> ptrServer =
-         boost::static_pointer_cast<http::Socket>(ptrLocalhost);
-
-      auth::handler::UserSession::addUserSessionConnection(username);
-
-      // connect the sockets
-      http::SocketProxy::create(ptrClient, ptrServer,
-                                boost::bind(checkForValidUserSession, username),
-                                boost::bind(socketConnectionClosed, username));
+      // write the response but don't close the connection. Once the response is
+      // written, call handleWriteResponseForUpgrade to begin streaming the
+      // WebSocket traffic.
+      ptrConnection->writeResponse(response, false, http::Headers(), boost::bind(
+         handleWriteResponseForUpgrade,
+         ptrConnection,
+         ptrLocalhost,
+         username,
+         _1,
+         _2
+      ));
    }
    // normal response, write and close (handle redirects if necessary)
    else

@@ -33,6 +33,19 @@ public:
    typedef boost::function<void(const boost::system::error_code&, std::size_t)>
                                                          Handler;
 
+   // An implementatino of Handler that does nothing.   
+   static void NullHandler(const boost::system::error_code& ec, std::size_t bytes_transferred)
+   {   
+   }
+
+   // boost::bind two handlers to the first two arguments, and you've got
+   // yourself a Handler that invokes each of those handler arguments in turn.
+   static void joinHandlers(Handler a, Handler b, const boost::system::error_code& ec, std::size_t bytes_transferred)
+   {
+      a(ec, bytes_transferred);
+      b(ec, bytes_transferred);
+   }
+
 public:
    virtual void asyncReadSome(boost::asio::mutable_buffers_1 buffers,
                               Handler handler) = 0;
