@@ -22,6 +22,20 @@
 
 - Support for v2 format of Quarto crossref index
 
+### Posit Workbench
+- Adds `-l` (long) option to `rserver-url`. When `/usr/lib/rstudio-server/bin/rserver-url -l <port number>` is executed within a VS Code or Jupyter session, the full URL where a user can view a server proxied at that port is displayed (rstudio-pro#3620)
+- Sets the `UVICORN_ROOT_PATH` environment variable to the proxied port URL for port 8000 in VS Code and Jupyter sessions, allowing FastAPI applications to run without additional configuration. (rstudio-pro#2660)
+
+#### Posit Workbench VS Code Extension
+
+##### New
+- Introduce Workbench Job management to VS Code Extension (rstudio/rstudio-pro#3784, rstudio/rstudio-pro#3565)
+- Added a pop-up notification when working with certain relevant filetypes that makes it easier to find the Workbench Extension. This notification is a one-time view per user. It can be re-enabled in the user settings (vscode-ext#96).
+- Rebranded the interface to match Posit Software, PBC's new branding terminology and iconography
+
+##### Fixed
+- Fixed extension servers appearing in Proxied Servers list (vscode-ext#116)
+
 ### Deprecated / Removed
 
 - Removed the Tools / Shell command (#11253)
