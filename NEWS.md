@@ -28,12 +28,9 @@
 
 #### Posit Workbench VS Code Extension
 
-##### New
 - Introduce Workbench Job management to VS Code Extension (rstudio/rstudio-pro#3784, rstudio/rstudio-pro#3565)
 - Added a pop-up notification when working with certain relevant filetypes that makes it easier to find the Workbench Extension. This notification is a one-time view per user. It can be re-enabled in the user settings (vscode-ext#96).
 - Rebranded the interface to match Posit Software, PBC's new branding terminology and iconography
-
-##### Fixed
 - Fixed extension servers appearing in Proxied Servers list (vscode-ext#116)
 
 ### Deprecated / Removed
