@@ -120,7 +120,6 @@ CXChildVisitResult cursorVisitor(CXCursor cxCursor,
          kind = CppTypedefDefinition;
          break;
       case CXCursor_MacroDefinition:
-         
          kind = CppMacroDefinition;
          break;
       default:
