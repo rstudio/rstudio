@@ -69,9 +69,13 @@ public class PublishDocServicePage
       WizardPage<RSConnectPublishInput, RSConnectPublishResult> rpubsPage  =
             new PublishRPubsPage("RPubs", constants_.rPubsSubtitle());
 
+      WizardPage<RSConnectPublishInput, RSConnectPublishResult> cloudPage  =
+         new PublishRPubsPage("Posit Cloud", constants_.cloudSubtitle());
+
       // make Rpubs the top selection for now since RStudioConnect is in beta
       pages.add(rpubsPage);
       pages.add(connectPage);
+      pages.add(cloudPage);
       
       return pages;
    }

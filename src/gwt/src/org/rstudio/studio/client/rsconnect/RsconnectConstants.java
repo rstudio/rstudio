@@ -710,6 +710,15 @@ public interface RsconnectConstants extends com.google.gwt.i18n.client.Messages{
     String rPubsSubtitle();
 
     /**
+     * Translated "PLACEHOLDER-Waiting on the actual copy from Cloud team".
+     *
+     * @return translated "PLACEHOLDER-Waiting on the actual copy from Cloud team"
+     */
+    @DefaultMessage("PLACEHOLDER-Waiting on the actual copy from Cloud team")
+    @Key("cloudSubtitle")
+    String cloudSubtitle();
+
+    /**
      * Translated "Publish To".
      *
      * @return translated "Publish To"
