@@ -228,6 +228,29 @@ var RCodeModel = function(session, tokenizer,
       return true;
    }
 
+   // Move from the function call token to the end of the 
+   // assigned token
+   //
+   //     result <- foo(a, b, c) {
+   //          ^~~~~^
+   function moveFromFunctionCallTokenToEndOfResultName(tokenCursor)
+   {
+      var clonedCursor = tokenCursor.cloneCursor();
+      if (!pIdentifier(clonedCursor.currentToken()))
+         return false;
+      if (!clonedCursor.moveToPreviousToken())
+         return false;
+      if (!pAssign(clonedCursor.currentToken()))
+         return false;
+      if (!clonedCursor.moveToPreviousToken())
+         return false;
+
+      tokenCursor.$row = clonedCursor.$row;
+      tokenCursor.$offset = clonedCursor.$offset;
+      return true;
+   }
+
+
    this.getFunctionsInScope = function(pos) {
       this.$buildScopeTreeUpToRow(pos.row);
       return this.$scopes.getFunctionsInScope(pos);
@@ -593,10 +616,10 @@ var RCodeModel = function(session, tokenizer,
 
    // Moves out of an argument list for a function, e.g.
    //
-   //     x <- function(a, b|
-   //          ^~~~~~~~~~~~~^
+   //     x <- func(a, b|
+   //          ^~~~~~~~~^
    //
-   // The cursor will be placed on the associated 'function' token
+   // The cursor will be placed on the associated 'func' token
    // on success, and unmoved on failure.
    var moveOutOfArgList = function(tokenCursor)
    {
@@ -607,16 +630,12 @@ var RCodeModel = function(session, tokenizer,
       if (!clone.moveToPreviousToken())
          return false;
       
-      if (clone.currentValue() !== "function")
-         return false;
-
       tokenCursor.$row = clone.$row;
       tokenCursor.$offset = clone.$offset;
       return true;
    };
 
    this.getVariablesInScope = function(pos) {
-
       var tokenCursor = this.getTokenCursor();
       if (!tokenCursor.moveToPosition(pos))
          return [];
@@ -629,10 +648,22 @@ var RCodeModel = function(session, tokenizer,
       // we don't pick up 'func', 'x', and 'y' as potential completions
       // since they will not be valid in all contexts
       if (moveOutOfArgList(tokenCursor))
-         if (moveFromFunctionTokenToEndOfFunctionName(tokenCursor))
-            if (tokenCursor.findStartOfEvaluationContext())
-               {} // previous statements will move the cursor as necessary
-
+      {
+         var moved = false;
+         if (pFunction(tokenCursor.currentToken()))
+         {
+            moved = moveFromFunctionTokenToEndOfFunctionName(tokenCursor); 
+         }
+         else 
+         {
+            moved = moveFromFunctionCallTokenToEndOfResultName(tokenCursor);
+         }
+         
+         // previous statements will move the cursor as necessary
+         if (moved) 
+            tokenCursor.findStartOfEvaluationContext();
+      }
+         
       var scopedVariables = {};
       do
       {
@@ -678,7 +709,6 @@ var RCodeModel = function(session, tokenizer,
       
       result.sort();
       return result;
-      
    };
 
    // Get function arguments, starting at the start of a function definition, e.g.
