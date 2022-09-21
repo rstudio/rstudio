@@ -379,9 +379,7 @@ core::Error findReferences(const core::libclang::FileLocation& location,
                                   argsArray.args(),
                                   gsl::narrow_cast<int>(argsArray.argCount()),
                                   nullptr, 0, // no unsaved files
-                                  CXTranslationUnit_None |
-                                  CXTranslationUnit_Incomplete |
-                                  CXTranslationUnit_DetailedPreprocessingRecord);
+                                  parseTranslationUnitOptions());
 
             // find references
             findReferences(USR, tu, pSpelling, pRefs);

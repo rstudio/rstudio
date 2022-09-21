@@ -33,6 +33,8 @@ namespace rstudio {
 namespace core {
 namespace libclang {
 
+unsigned parseTranslationUnitOptions();
+
 struct CompilationDatabase
 {
    boost::function<bool(const std::string&)> hasTranslationUnit;
