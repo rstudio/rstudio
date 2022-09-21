@@ -35,13 +35,16 @@ namespace rstudio {
 namespace core {
 namespace libclang {
 
-namespace {
-
-inline unsigned applyTranslationUnitOptions(unsigned defaultOptions)
+unsigned parseTranslationUnitOptions()
 {
-   // for now just reflect back the defaults
-   return defaultOptions;
+   return (
+      CXTranslationUnit_None |
+      CXTranslationUnit_Incomplete |
+      CXTranslationUnit_DetailedPreprocessingRecord
+   );
 }
+
+namespace {
 
 bool isHeaderExtension(const std::string& ex)
 {
@@ -224,13 +227,11 @@ TranslationUnit SourceIndex::getTranslationUnit(const std::string& filename,
             std::cerr << "  " << reason << std::endl;
          }
 
-         unsigned options = applyTranslationUnitOptions(
-                                    clang().defaultReparseOptions(stored.tu));
          int ret = clang().reparseTranslationUnit(
                                 stored.tu,
                                 unsavedFiles().numUnsavedFiles(),
                                 unsavedFiles().unsavedFilesArray(),
-                                options);
+                                parseTranslationUnitOptions());
 
          if (ret == 0)
          {
@@ -290,9 +291,6 @@ TranslationUnit SourceIndex::getTranslationUnit(const std::string& filename,
    }
    
    // create a new translation unit from the file
-   unsigned options = applyTranslationUnitOptions(
-                           clang().defaultEditingTranslationUnitOptions());
-   
    CXTranslationUnit tu = clang().parseTranslationUnit(
                          index_,
                          filename.c_str(),
@@ -300,7 +298,8 @@ TranslationUnit SourceIndex::getTranslationUnit(const std::string& filename,
                          gsl::narrow_cast<int>(argsArray.argCount()),
                          unsavedFiles().unsavedFilesArray(),
                          unsavedFiles().numUnsavedFiles(),
-                         options);
+                         parseTranslationUnitOptions()
+                         );
 
 
    // save and return it if we succeeded

@@ -1442,7 +1442,8 @@ public:
       Table      = 9,
       Math       = 10,
       Test       = 11, 
-      Roxygen    = 12
+      Roxygen    = 12, 
+      Macro      = 13
    };
 
    SourceItem()
@@ -1578,6 +1579,9 @@ SourceItem fromCppDefinition(const clang::CppDefinition& cppDefinition)
       break;
    case CppMemberFunctionDefinition:
       type = SourceItem::Method;
+      break;
+   case CppMacroDefinition:
+      type = SourceItem::Macro;
       break;
    default:
       type = SourceItem::None;
