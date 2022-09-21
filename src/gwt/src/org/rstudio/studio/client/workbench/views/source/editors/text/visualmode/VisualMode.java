@@ -354,7 +354,15 @@ public class VisualMode implements VisualModeEditorSync,
                             alignScopeTreeAfterUpdate(markdown.location);
                         }
                         
-                        // apply diffs unless the wrap column changed (too expensive)
+                        // we used to apply diffs here unless the wrapChanged (which was too expensive
+                        // for the diff-match-patch algorithem), now we *never* apply diffs b/c
+                        // we had some reports of source editor corruption. when investigating
+                        // this, also noted that we turned off diff changes already for the cannonical
+                        // source transform b/c we actually did find another case that confused the
+                        // algorithm enough to cause data corrupt there. if there is one case there
+                        // are certainly others, so we are going to turn this off entirely unless/until
+                        // we understand its limitations better
+                        /*
                         if (!writerOptions.wrapChanged) 
                         {
                            TextEditorContainer.Changes changes = toEditorChanges(markdown);
@@ -364,6 +372,10 @@ public class VisualMode implements VisualModeEditorSync,
                         {
                            getSourceEditor().setCode(markdown.code);
                         }
+                        */
+                        
+                        // always set all of the code (no diffs, see comment above)
+                        getSourceEditor().setCode(markdown.code);
                         
                         // if the format comment has changed then show the reload prompt
                         if ((panmirrorFormatConfig_ != null) && panmirrorFormatConfig_.requiresReload())
