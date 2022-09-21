@@ -395,6 +395,10 @@ public class VisualMode implements VisualModeEditorSync,
                            // if syncing for execution, force a rebuild of the scope tree 
                            alignScopeOutline(markdown.location);
                         }
+                        else
+                        {
+                           syncSourceOutlineLocation();
+                        }
    
                         // invoke ready callback if supplied
                         if (ready != null)
