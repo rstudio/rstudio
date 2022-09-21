@@ -5,8 +5,11 @@ website:
   title: "RStudio User Guide"
   favicon: images/RStudio-ball.svg
   twitter-card: true
+  open-graph: true
   page-navigation: true
   site-url: https://docs.rstudio.com/ide/user/
+  repo-url: https://github.com/rstudio/rstudio/tree/main/docs/user/rstudio
+  repo-actions: [edit, issue]
   page-footer:
     left: |
       Copyright © 2022 Posit Software, PBC. All Rights Reserved.
