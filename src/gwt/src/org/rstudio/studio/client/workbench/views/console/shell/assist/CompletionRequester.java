@@ -14,6 +14,7 @@
  */
 package org.rstudio.studio.client.workbench.views.console.shell.assist;
 
+import com.google.gwt.core.client.GWT;
 import com.google.gwt.core.client.JsArray;
 import com.google.gwt.core.client.JsArrayBoolean;
 import com.google.gwt.core.client.JsArrayInteger;
@@ -198,6 +199,10 @@ public class CompletionRequester
             // Place arguments higher (give less penalty)
             if (lhs.type == RCompletionType.ARGUMENT) lhsScore -= 3;
             if (rhs.type == RCompletionType.ARGUMENT) rhsScore -= 3;
+
+            // Place columns even higher (give less penalty)
+            if (lhs.type == RCompletionType.COLUMN) lhsScore -= 5;
+            if (rhs.type == RCompletionType.COLUMN) rhsScore -= 5;
 
             if (lhsScore == rhsScore)
                return lhs.compareTo(rhs);
@@ -398,6 +403,7 @@ public class CompletionRequester
             // Get function completions from the server
             for (int i = 0; i < comp.length(); i++)
             {
+               GWT.log("comp[" + i + "] = " + comp.get(i) + ", type = " + type.get(i));
                if (comp.get(i).endsWith(" = "))
                {
                   newComp.add(new QualifiedName(
