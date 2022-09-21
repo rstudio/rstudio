@@ -18,13 +18,13 @@ RStudio supports syntax highlighting and other specialized code-editing features
 
 To create a new file you use the **File -\> New File** menu:
 
-![](images/system-files-menu.png){fig-alt="A screenshot of the File Menu dropdown which has features like New File, Open File, Save File."}
+![](images/system-files-menu.png){fig-alt="A screenshot of the File Menu drop-down which has features like New File, Open File, Save File."}
 
 An alternative workflow is to use the visual elements in the RStudio menu.
 
 ![](images/files-menu.png){fig-alt="A screenshot of the New File dropdown in RStudio, which provides new R, Python, Quarto, Rmarkdown, Shiny or Plumber files."}
 
-To open an existing file you use either the **File -\> Open File\...** menu or the **Recent Files** menu to select from recently opened files.
+To open an existing file, use either the **File -\> Open File\...** menu or the **Recent Files** menu to select from recently opened files.
 
 ## Files tab
 
@@ -34,7 +34,7 @@ The **Output** pane has a **Files** tab that includes several buttons for managi
 
 ## Switching files
 
-If you open several files within RStudio they are all available as tabs within the **Source** pane to facilitate quick switching between open documents. If you have a large number of open documents you can also navigate between them using the "**\>\>"** icon at the end of the tab bar or the **View -\> Switch to Tab\...**) menu item:
+If several files are opened within RStudio, then they are all available as tabs within the **Source** pane to facilitate quick switching between open documents. If you have a large number of open documents you can also navigate between them using the "**\>\>"** icon at the end of the tab bar or the **View -\> Switch to Tab\...**) menu item:
 
 ![](images/file-switch.png){fig-alt="A screenshot of the Switching Files popup - it is a dropdown from the end of the Source pane, d" width="500"}
 

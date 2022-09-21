@@ -25,7 +25,7 @@ It's also available on the **Tools** menu (**Tools** \> **Show Command Palette**
 
 ## Search Syntax
 
-The command palette's search syntax is simple; it looks for complete matches for each space-separated term you enter. So, for example, a query for `new proj` will find all of the entries that contain the term `new` AND the term `proj`.
+The command palette's search syntax is simple; it looks for complete matches for each space-separated term you enter. For example, a query for `new proj` will find all of the entries that contain the term `new` AND the term `proj`.
 
 ## Content
 
@@ -39,7 +39,7 @@ To find a command, enter a word or short sequence of characters from the command
 
 ![](images/new-script.png){fig-alt="A screenshot of the Command Palette and search results for 'new scr'."}
 
-Keep typing to filter the list, or press Up/Down to choose a command from the list and then Enter to execute the chosen command. Commands are displayed with their bound keyboard shortcuts, if any, so that you know how to invoke the command directly with the keyboard next time.
+Keep typing to filter the list, or press Up/Down to choose a command from the list and then press **Enter** to execute the chosen command. Commands are displayed with their bound keyboard shortcuts, if any, so that you know how to invoke the command directly with the keyboard next time.
 
 If your command doesn't have a shortcut, you can [use the *Modify Keyboard Shortcuts* command](https://support.rstudio.com/hc/en-us/articles/206382178-Customizing-Keyboard-Shortcuts) to add one.
 
