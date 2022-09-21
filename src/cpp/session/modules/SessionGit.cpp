@@ -1396,13 +1396,17 @@ public:
                currentCommit.description.append("\n");
             currentCommit.description.append(it->substr(4));
          }
+         else if (it->length() == 1 && it->at(0) == ' ')
+         {
+            // ignore spaces
+         }
          else if (it->length() == 0)
          {
             // ignore empty lines
          }
          else
          {
-            LOG_ERROR_MESSAGE("Unexpected git-log output");
+            LOG_WARNING_MESSAGE("Unexpected git-log output");
          }
       }
 
@@ -1430,7 +1434,9 @@ public:
       ShellArgs args = gitArgs()
             << "-c" << "core.quotepath=false"
             << "diff"
-            << (revision + "^!");
+            << (revision + "^")
+            << revision;
+
 
       return runGit(args, pOutput);
    }

@@ -27,6 +27,7 @@
 
 ### Fixed
 
+- Fixed an issue where the Git History window inverted the display of merge diffs (#10150)
 - Fixed an issue where Find in Files could fail to find results with certain versions of git (#11822)
 - Fixed visual mode outline missing nested R code chunks (#11410)
 - Fixed an issue where chunks containing multibyte characters was not executed correctly (#10632)
