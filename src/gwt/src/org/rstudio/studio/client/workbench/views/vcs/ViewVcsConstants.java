@@ -683,6 +683,15 @@ public interface ViewVcsConstants extends com.google.gwt.i18n.client.Messages{
     String gitIgnoreCapitalized();
 
     /**
+     * Translated "Diff".
+     *
+     * @return translated "Diff"
+     */
+    @DefaultMessage("Diff")
+    @Key("diffCapitalized")
+    String diffCapitalized();
+
+    /**
      * Translated "Commit".
      *
      * @return translated "Commit"

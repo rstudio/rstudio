@@ -128,9 +128,9 @@ public class GitPane extends WorkbenchPane implements Display
       pullMoreMenu.addItem(commands_.vcsPullRebase().createMenuItem(false));
 
       Toolbar toolbar = new Toolbar(constants_.gitTabCapitalized());
-      toolbar.addLeftWidget(commands_.vcsDiff().createToolbarButton());
+      toolbar.addLeftWidget(diffButton_ = commands_.vcsDiff().createToolbarButton());
       toolbar.addLeftSeparator();
-      toolbar.addLeftWidget(commands_.vcsCommit().createToolbarButton());
+      toolbar.addLeftWidget(commitButton_ = commands_.vcsCommit().createToolbarButton());
       toolbar.addLeftSeparator();
       toolbar.addLeftWidget(pullButton_ = commands_.vcsPull().createToolbarButton());
       toolbar.addLeftWidget(new ToolbarMenuButton(ToolbarButton.NoText, constants_.pullOptions(), pullMoreMenu, true));
@@ -210,7 +210,6 @@ public class GitPane extends WorkbenchPane implements Display
       super.onResize();
 
       manageToolbarSizes();
-
    }
 
    private void manageToolbarSizes()
@@ -220,6 +219,8 @@ public class GitPane extends WorkbenchPane implements Display
       if (width == 0)
          return;
 
+      diffButton_.setText(width > 600, constants_.diffCapitalized());
+      commitButton_.setText(width > 600, constants_.commitCapitalized());
       pullButton_.setText(width > 600, constants_.pullCapitalized());
       pushButton_.setText(width > 600, constants_.pushCapitalized());
       historyButton_.setText(width > 680, constants_.historyCapitalized());
@@ -290,6 +291,8 @@ public class GitPane extends WorkbenchPane implements Display
       menu.showRelativeTo(clientX, clientY, ElementIds.GIT_TAB_CONTEXT);
    }
 
+   private ToolbarButton diffButton_;
+   private ToolbarButton commitButton_;
    private ToolbarButton historyButton_;
    private ToolbarMenuButton moreButton_;
    private ToolbarButton pullButton_;
