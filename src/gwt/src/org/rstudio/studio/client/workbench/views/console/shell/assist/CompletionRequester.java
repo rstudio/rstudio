@@ -996,7 +996,7 @@ public class CompletionRequester
             SafeHtmlUtil.appendSpan(
                   sb,
                   RES.styles().dataframe(),
-                  source + "$");
+                  "[" + source + "]");
          }
 
          if (type == RCompletionType.ARGUMENT) 
