@@ -315,7 +315,7 @@ void setSuspendedFromTimeout(bool suspended)
 bool suspendSession(bool force, int status)
 {
    // need to make sure the global environment is loaded before we
-   // attemmpt to save it!
+   // attempt to save it!
    r::session::ensureDeserialized();
 
    // If we're suspending then clear list of blocking ops

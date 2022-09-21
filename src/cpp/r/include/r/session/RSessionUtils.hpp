@@ -44,6 +44,9 @@ bool isDefaultPrompt(const std::string& prompt);
 
 bool isServerMode();
 
+// project path
+const core::FilePath& projectPath();
+
 // user home path
 const core::FilePath& userHomePath();
 

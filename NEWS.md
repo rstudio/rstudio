@@ -12,6 +12,7 @@
   when `Options > Code > Display > [ ] Show color preview` is checked. 
 * Fixes the bug introduced with `rlang` >= 1.03 where Rmd documents show the error message `object 'partition_yaml_front_matter' not found` upon project startup (#11552)
 * Name autocompletion following a `$` now correctly quotes names that start with underscore followed by alphanumeric characters (#11689)
+* Suspended sessions will now default to using the project directory, rather than the user home directory, if the prior working directory is no longer accessible. (#11960)
   
 ### Python
 
