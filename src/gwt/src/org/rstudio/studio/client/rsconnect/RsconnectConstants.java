@@ -710,11 +710,11 @@ public interface RsconnectConstants extends com.google.gwt.i18n.client.Messages{
     String rPubsSubtitle();
 
     /**
-     * Translated "PLACEHOLDER-Waiting on the actual copy from Cloud team".
+     * Translated "Posit Cloud is our online service that lets you do, share, teach and learn data science in your web browser.".
      *
-     * @return translated "PLACEHOLDER-Waiting on the actual copy from Cloud team"
+     * @return translated "Posit Cloud is our online service that lets you do, share, teach and learn data science in your web browser."
      */
-    @DefaultMessage("PLACEHOLDER-Waiting on the actual copy from Cloud team")
+    @DefaultMessage("Posit Cloud is our online service that lets you do, share, teach and learn data science in your web browser.")
     @Key("cloudSubtitle")
     String cloudSubtitle();
 
@@ -870,6 +870,15 @@ public interface RsconnectConstants extends com.google.gwt.i18n.client.Messages{
     @DefaultMessage("Publish to RStudio Connect")
     @Key("publishToRstudioConnect")
     String publishToRstudioConnect();
+
+    /**
+     * Translated "Publish to Posit Cloud".
+     *
+     * @return translated "Publish to Posit Cloud"
+     */
+    @DefaultMessage("Publish to Posit Cloud")
+    @Key("publishToPositCloud")
+    String publishToPositCloud();
 
     /**
      * Translated "Publish to RPubs".

@@ -67,9 +67,11 @@ public class PublishMultiplePage
       else
       {
          pages.add(new PublishReportSourcePage(singleTitle, singleSubtitle,
+               constants_.publishToRstudioConnect(),
                new ImageResource2x(
                   RSConnectResources.INSTANCE.publishSingleRmd2x()), input, false));
          pages.add(new PublishReportSourcePage(multipleTitle, multipleSubtitle,
+               constants_.publishToRstudioConnect(),
                new ImageResource2x(
                   RSConnectResources.INSTANCE.publishMultipleRmd2x()), input, true));
       }

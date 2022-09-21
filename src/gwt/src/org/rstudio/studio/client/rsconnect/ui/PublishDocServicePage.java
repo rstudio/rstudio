@@ -47,7 +47,7 @@ public class PublishDocServicePage
       WizardPage<RSConnectPublishInput, RSConnectPublishResult> connectPage;
       if (input.isMultiRmd() && !input.isWebsiteRmd())
       {
-         connectPage = new PublishMultiplePage(rscTitle, rscDesc, 
+         connectPage = new PublishMultiplePage(rscTitle, rscDesc,
                new ImageResource2x(RSConnectResources.INSTANCE.localAccountIcon2x()), input);
       }
       else 
@@ -56,12 +56,13 @@ public class PublishDocServicePage
          {
             // static input implies static output
             connectPage = new PublishFilesPage(rscTitle, rscDesc,
-                  new ImageResource2x(RSConnectResources.INSTANCE.localAccountIcon2x()), input, 
+                  new ImageResource2x(RSConnectResources.INSTANCE.localAccountIcon2x()), input,
                   false, true);
          }
          else
          {
-            connectPage = new PublishReportSourcePage(rscTitle, rscDesc, 
+            connectPage = new PublishReportSourcePage(rscTitle, rscDesc,
+                  constants_.publishToRstudioConnect(),
                   new ImageResource2x(RSConnectResources.INSTANCE.localAccountIcon2x()), input, 
                   false);
          }
@@ -69,8 +70,23 @@ public class PublishDocServicePage
       WizardPage<RSConnectPublishInput, RSConnectPublishResult> rpubsPage  =
             new PublishRPubsPage("RPubs", constants_.rPubsSubtitle());
 
-      WizardPage<RSConnectPublishInput, RSConnectPublishResult> cloudPage  =
-         new PublishRPubsPage("Posit Cloud", constants_.cloudSubtitle());
+      String cloudTitle = "Posit Cloud";
+      String cloudSubtitle = constants_.cloudSubtitle();
+
+      WizardPage<RSConnectPublishInput, RSConnectPublishResult> cloudPage;
+      if (input.isMultiRmd() && !input.isWebsiteRmd())
+      {
+         cloudPage = new PublishMultiplePage(cloudTitle, cloudSubtitle,
+            new ImageResource2x(RSConnectResources.INSTANCE.cloudAccountIcon2x()), input);
+      }
+      else
+      {
+         // Posit cloud does not support static content publishing
+         cloudPage = new PublishReportSourcePage(cloudTitle, cloudSubtitle,
+            constants_.publishToPositCloud(),
+            new ImageResource2x(RSConnectResources.INSTANCE.cloudAccountIcon2x()), input,
+            false);
+      }
 
       // make Rpubs the top selection for now since RStudioConnect is in beta
       pages.add(rpubsPage);
