@@ -442,14 +442,6 @@ public class RCompletionManager implements CompletionManager
                      return false;
                }
 
-               // only allow roxygen completion after a @
-               if (PATTERN_ROXYGEN_LINE.test(currentLine)) 
-               {
-                  if (!PATTERN_ROXYGEN_CAN_COMPLETE.test(currentLine)) {
-                     return false;
-                  }  
-               }
-               
                return beginSuggest(true, false, true);
             }
          }
@@ -1082,8 +1074,7 @@ public class RCompletionManager implements CompletionManager
    
    private boolean isLineInRoxygenComment(String line)
    {
-      Pattern pattern = Pattern.create("^\\s*#+'");
-      return pattern.test(line);
+      return DocumentMode.PATTERN_ROXYGEN_LINE.test(line);
    }
 
    private boolean isLineInPlumberComment(String line)
@@ -1131,6 +1122,22 @@ public class RCompletionManager implements CompletionManager
             !isLineInPlumberComment(firstLine))
          return false;
       
+      if (isLineInRoxygenComment(firstLine)) 
+      {
+         if (!DocumentMode.PATTERN_ROXYGEN_CAN_COMPLETE.test(firstLine))
+         {
+            if (DocumentMode.isCursorInRoxygenExamples(docDisplay_)) 
+            {
+               // GWT.log("insert tab manually");
+               return true;
+            }
+            else 
+            {
+               return false;
+            }
+         }
+      }
+
       // don't autocomplete if the cursor lies within the text of a
       // multi-line string. the logic here isn't perfect (ideally, we'd detect
       // whether we're in the 'qstring' or 'qqstring' state), but this will catch
@@ -2283,8 +2290,4 @@ public class RCompletionManager implements CompletionManager
    
    private final HandlerRegistrations handlers_;
    private static final ConsoleConstants constants_ = GWT.create(ConsoleConstants.class);
-
-   public static Pattern PATTERN_ROXYGEN_LINE = Pattern.create("^\\s*#'", "");
-   public static Pattern PATTERN_ROXYGEN_CAN_COMPLETE = Pattern.create("^\\s*#'\\s*@[a-zA-Z]*", "");
-
 }

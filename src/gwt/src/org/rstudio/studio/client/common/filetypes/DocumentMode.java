@@ -14,6 +14,9 @@
  */
 package org.rstudio.studio.client.common.filetypes;
 
+import com.google.gwt.core.client.GWT;
+
+import org.rstudio.core.client.regex.Pattern;
 import org.rstudio.studio.client.workbench.views.source.editors.text.DocDisplay;
 import org.rstudio.studio.client.workbench.views.source.editors.text.ace.Position;
 
@@ -272,7 +275,24 @@ public class DocumentMode
              isPositionInStanMode(docDisplay, docDisplay.getSelectionEnd());
    }
    
-   
-   
+   public static boolean isCursorInRoxygenExamples(DocDisplay docDisplay)
+   {
+      int i = docDisplay.getCurrentLineNum();
+      while (i > 0) 
+      {
+         String line = docDisplay.getLine(i);
+         if (!PATTERN_ROXYGEN_LINE.test(line))
+            return false;
+            
+         if (PATTERN_ROXYGEN_EXAMPLES_LINE.test(line))
+            return true;
+         
+         i--;
+      }
+      return false;
+   }
 
+   public static Pattern PATTERN_ROXYGEN_LINE = Pattern.create("^\\s*#+'", "");
+   public static Pattern PATTERN_ROXYGEN_CAN_COMPLETE = Pattern.create("^\\s*#+'\\s*@[a-zA-Z]*", "");
+   public static Pattern PATTERN_ROXYGEN_EXAMPLES_LINE = Pattern.create("^\\s*#+'\\s*@examples", "");
 }
