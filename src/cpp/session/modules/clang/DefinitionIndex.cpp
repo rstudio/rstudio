@@ -54,6 +54,12 @@ struct CppDefinitions
    std::deque<CppDefinition> definitions;
 };
 
+bool isHeaderGuard(const std::string& name)
+{
+   static boost::regex kHeaderGuardRegex("_h(pp)?_*$", boost::regex::icase);
+   return boost::regex_search(name, kHeaderGuardRegex);
+}
+
 // store definitions by file
 typedef std::map<std::string,CppDefinitions> DefinitionsByFile;
 DefinitionsByFile s_definitionsByFile;
@@ -143,7 +149,7 @@ CXChildVisitResult cursorVisitor(CXCursor cxCursor,
    DefinitionVisitor& visitor = *((DefinitionVisitor*)clientData);
 
    // skip the first macro if it looks like an header guard
-   if (kind == CppMacroDefinition && visitor.index == 0 && boost::algorithm::iends_with(name, "_h(?pp)?_*$"))
+   if (kind == CppMacroDefinition && visitor.index == 0 && isHeaderGuard(name))
    {
       visitor.index++;
       return CXChildVisit_Continue;
