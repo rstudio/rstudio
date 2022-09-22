@@ -81,11 +81,10 @@ public class PublishDocServicePage
       }
       else
       {
-         // Posit cloud does not support static content publishing
-         cloudPage = new PublishReportSourcePage(cloudTitle, cloudSubtitle,
-            constants_.publishToPositCloud(),
+         // Posit cloud does not yet support static content publishing
+         cloudPage = new PublishFilesPage(cloudTitle, cloudSubtitle,
             new ImageResource2x(RSConnectResources.INSTANCE.cloudAccountIcon2x()), input,
-            false);
+            false, false);
       }
 
       // make Rpubs the top selection for now since RStudioConnect is in beta
