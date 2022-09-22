@@ -102,7 +102,7 @@
    pythonPath <- .rs.tryCatch(
       system2(
          command = pythonCommand,
-         args    = c("-E"),
+         args    = c("-E", "-Xutf8"),
          input   = "import sys; print(sys.executable)",
          stdout  = TRUE,
          stderr  = TRUE
@@ -112,6 +112,7 @@
    if (inherits(pythonPath, "error"))
       return("")
 
+   Encoding(pythonPath) <- "UTF-8"
    pythonPath
 })
 
