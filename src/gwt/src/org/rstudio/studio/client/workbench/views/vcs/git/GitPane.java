@@ -21,6 +21,8 @@ import com.google.gwt.event.dom.client.ClickEvent;
 import com.google.gwt.event.dom.client.ClickHandler;
 import com.google.gwt.event.dom.client.FocusEvent;
 import com.google.gwt.event.dom.client.FocusHandler;
+import com.google.gwt.event.logical.shared.ValueChangeEvent;
+import com.google.gwt.event.logical.shared.ValueChangeHandler;
 import com.google.gwt.event.shared.HandlerRegistration;
 import com.google.gwt.user.client.ui.Widget;
 import com.google.gwt.user.client.ui.MenuItem;
@@ -72,6 +74,15 @@ public class GitPane extends WorkbenchPane implements Display
       prefs_ = prefs;
 
       switchBranchToolbarButton_ = switchBranchToolbarButton;
+      switchBranchToolbarButton_.addValueChangeHandler(new ValueChangeHandler<String>() {
+
+         @Override
+         public void onValueChange(ValueChangeEvent<String> event)
+         {
+            manageToolbarSizes();
+         }
+         
+      });
       createBranchToolbarButton_ = createBranchToolbarButton;
 
       table_ = changelistTablePresenter.getView();
@@ -219,13 +230,15 @@ public class GitPane extends WorkbenchPane implements Display
       if (width == 0)
          return;
 
-      diffButton_.setText(width > 600, constants_.diffCapitalized());
-      commitButton_.setText(width > 600, constants_.commitCapitalized());
-      pullButton_.setText(width > 600, constants_.pullCapitalized());
-      pushButton_.setText(width > 600, constants_.pushCapitalized());
-      historyButton_.setText(width > 680, constants_.historyCapitalized());
-      moreButton_.setText(width > 680, constants_.moreCapitalized());
-      createBranchToolbarButton_.setText(width > 730, constants_.newBranchCapitalized());
+      width = width - switchBranchToolbarButton_.getText().length() * 8 ;
+
+      diffButton_.setText(width > 360, constants_.diffCapitalized());
+      commitButton_.setText(width > 360, constants_.commitCapitalized());
+      pullButton_.setText(width > 430, constants_.pullCapitalized());
+      pushButton_.setText(width > 430, constants_.pushCapitalized());
+      historyButton_.setText(width > 470, constants_.historyCapitalized());
+      moreButton_.setText(width > 470, constants_.moreCapitalized());
+      createBranchToolbarButton_.setText(width > 510, constants_.newBranchCapitalized());
    }
 
    @Override
