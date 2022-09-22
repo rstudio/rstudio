@@ -779,8 +779,29 @@ void AsyncChildProcess::poll()
          LOG_ERROR(error);
       }
 
+      // check stdout, stderr once more
+      std::string stdOut;
+      error = WinPty::readFromPty(pImpl_->hStdOutRead, &stdOut);
+      if (error)
+         reportError(error);
+
+      if (!stdOut.empty() && callbacks_.onStdout)
+         callbacks_.onStdout(*this, stdOut);
+
+      // check stderr
+      if (pImpl_->hStdErrRead)
+      {
+         std::string stdErr;
+         error = WinPty::readFromPty(pImpl_->hStdErrRead, &stdErr);
+         if (error)
+            reportError(error);
+
+         if (!stdErr.empty() && callbacks_.onStderr)
+            callbacks_.onStderr(*this, stdErr);
+      }
+
       // close the process handle
-      Error error = closeHandle(&pImpl_->hProcess, ERROR_LOCATION);
+      error = closeHandle(&pImpl_->hProcess, ERROR_LOCATION);
       if (error)
          LOG_ERROR(error);
 
