@@ -33,7 +33,7 @@ public:
    typedef boost::function<void(const boost::system::error_code&, std::size_t)>
                                                          Handler;
 
-   // An implementatino of Handler that does nothing.   
+   // An implementation of Handler that does nothing.   
    static void NullHandler(const boost::system::error_code& ec, std::size_t bytes_transferred)
    {   
    }
