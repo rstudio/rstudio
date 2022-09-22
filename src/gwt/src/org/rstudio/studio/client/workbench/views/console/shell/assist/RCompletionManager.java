@@ -422,11 +422,12 @@ public class RCompletionManager implements CompletionManager
          {
             if (initFilter_ == null || initFilter_.shouldComplete(event))
             {
+               String currentLine = docDisplay_.getCurrentLineUpToCursor();
+
                // If we're in markdown mode, only autocomplete in '```{r',
                // '[](', or '`r |' contexts
                if (DocumentMode.isCursorInMarkdownMode(docDisplay_))
                {
-                  String currentLine = docDisplay_.getCurrentLineUpToCursor();
                   if (!(Pattern.create("^```{[rR]").test(currentLine) ||
                       Pattern.create(".*\\[.*\\]\\(").test(currentLine) ||
                       (Pattern.create(".*`r").test(currentLine) &&
@@ -437,10 +438,18 @@ public class RCompletionManager implements CompletionManager
                // If we're in tex mode, only provide completions in chunks
                if (DocumentMode.isCursorInTexMode(docDisplay_))
                {
-                  String currentLine = docDisplay_.getCurrentLineUpToCursor();
                   if (!Pattern.create("^<<").test(currentLine))
                      return false;
                }
+
+               // only allow roxygen completion after a @
+               if (PATTERN_ROXYGEN_LINE.test(currentLine)) 
+               {
+                  if (!PATTERN_ROXYGEN_CAN_COMPLETE.test(currentLine)) {
+                     return false;
+                  }  
+               }
+               
                return beginSuggest(true, false, true);
             }
          }
@@ -2274,4 +2283,8 @@ public class RCompletionManager implements CompletionManager
    
    private final HandlerRegistrations handlers_;
    private static final ConsoleConstants constants_ = GWT.create(ConsoleConstants.class);
+
+   public static Pattern PATTERN_ROXYGEN_LINE = Pattern.create("^\\s*#'", "");
+   public static Pattern PATTERN_ROXYGEN_CAN_COMPLETE = Pattern.create("^\\s*#'\\s*@[a-zA-Z]*", "");
+
 }
