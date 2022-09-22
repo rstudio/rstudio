@@ -67,7 +67,7 @@ public class HelpHyperlink extends Hyperlink
         if (StringUtil.equals(url, "ide:help") || StringUtil.equals(url, "rstudio:help"))
             return params.containsKey("topic") && params.containsKey("package");
         
-        return url.matches("^(ide|rstudio):help:(\\w+)::(\\w+)$");
+        return url.matches("^(ide|rstudio):help:([\\w.]+)::([\\w.-]+)$");
     }
 
     private String topic_;
