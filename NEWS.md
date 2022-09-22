@@ -24,6 +24,7 @@
 - Support for v2 format of Quarto crossref index
 
 ### Posit Workbench
+
 - Adds `-l` (long) option to `rserver-url`. When `/usr/lib/rstudio-server/bin/rserver-url -l <port number>` is executed within a VS Code or Jupyter session, the full URL where a user can view a server proxied at that port is displayed (rstudio-pro#3620)
 - Sets the `UVICORN_ROOT_PATH` environment variable to the proxied port URL for port 8000 in VS Code and Jupyter sessions, allowing FastAPI applications to run without additional configuration. (rstudio-pro#2660)
 
@@ -40,6 +41,7 @@
 
 ### Fixed
 
+- Fixed an issue where Find in Files could omit matches in some cases on Windows (#11736)
 - Fixed an issue where the Git History window inverted the display of merge diffs (#10150)
 - Fixed an issue where Find in Files could fail to find results with certain versions of git (#11822)
 - Fixed visual mode outline missing nested R code chunks (#11410)
