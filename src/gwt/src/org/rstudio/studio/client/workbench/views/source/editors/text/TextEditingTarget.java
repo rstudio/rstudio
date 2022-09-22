@@ -5084,6 +5084,7 @@ public class TextEditingTarget implements
          private final Pattern TAG_WITH_CONTENTS = Pattern.create("@\\w+\\s+[^\\s]");
       };
 
+      int macroDepth = 0;
       boolean outsideMarkdown = true;
       for (String line : lines)
       {
@@ -5101,8 +5102,32 @@ public class TextEditingTarget implements
             wordWrap.setWrappingEnabled(outsideMarkdown);
          }
 
+         boolean isWrappingEnabled = wordWrap.getWrappingEnabled();
+         boolean bullet = content.matches("^\\s*[-*].*");
+         if (bullet)
+            wordWrap.setWrappingEnabled(false);
+
+         boolean macroStart = content.matches("^\\s*\\\\[a-zA-Z]+\\{.*");
+         if (macroStart) 
+         {
+            macroDepth = macroDepth + 1;
+            wordWrap.setWrappingEnabled(false);
+         }
+
+         boolean macroEnd = content.matches("^\\s*\\}.*");
+         if (macroEnd) 
+         {
+            macroDepth = macroDepth - 1;
+            if (macroDepth == 0) 
+               wordWrap.setWrappingEnabled(true);
+         }
+         
          wwct.onBeginInputRow();
          wordWrap.appendLine(content);
+
+         // restore if was changed because of bullet
+         if (bullet)
+            wordWrap.setWrappingEnabled(isWrappingEnabled);
       }
 
       String wrappedString = wordWrap.getOutput();
