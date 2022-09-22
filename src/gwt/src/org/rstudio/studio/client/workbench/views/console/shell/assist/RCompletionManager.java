@@ -32,6 +32,7 @@ import org.rstudio.core.client.command.KeyboardHelper;
 import org.rstudio.core.client.command.KeyboardShortcut;
 import org.rstudio.core.client.dom.EventProperty;
 import org.rstudio.core.client.files.FileSystemItem;
+import org.rstudio.core.client.regex.Match;
 import org.rstudio.core.client.regex.Pattern;
 import org.rstudio.studio.client.RStudioGinjector;
 import org.rstudio.studio.client.application.events.EventBus;
@@ -1122,17 +1123,50 @@ public class RCompletionManager implements CompletionManager
             !isLineInPlumberComment(firstLine))
          return false;
       
+      AceEditor editor = (AceEditor) docDisplay_;
+      
       if (isLineInRoxygenComment(firstLine)) 
       {
          if (!DocumentMode.PATTERN_ROXYGEN_CAN_COMPLETE.test(firstLine))
          {
+            // when below @examples, handle <TAB> here and take into account
+            // the tab size, where the code begins (i.e. after |#' | ) and 
+            // where the cursor currently is
             if (DocumentMode.isCursorInRoxygenExamples(docDisplay_)) 
             {
-               // GWT.log("insert tab manually");
+               if (editor != null) 
+               {
+                  int tabSize = editor.getTabSize();
+                  int cursor = editor.getCursorColumn();
+                  
+                  int commentSize = DocumentMode.PATTERN_ROXYGEN_LINE.match(firstLine, 0).getValue().length() + 1;
+                  if (cursor < commentSize)
+                  {
+                     // #'|<TAB> : just add one space
+                     for (; cursor < commentSize; cursor++)
+                        editor.insertCode(" ");
+                  }
+                  else 
+                  {
+                     // either add a tab or the remainder spaces to the next one
+                     int remainder = (cursor - commentSize) % tabSize;
+                     if (remainder == 0)
+                     {
+                        for (int i = 0; i < tabSize; i++)
+                           editor.insertCode(" ");
+                     }
+                     else 
+                     {
+                        for (int i = 0; i < remainder; i++)
+                           editor.insertCode(" ");
+                     }
+                  }
+               }
                return true;
             }
             else 
             {
+               // otherwise let ace handle <TAB>
                return false;
             }
          }
@@ -1186,7 +1220,6 @@ public class RCompletionManager implements CompletionManager
             canAutoInsert);
       
       RInfixData infixData = RInfixData.create();
-      AceEditor editor = (AceEditor) docDisplay_;
       if (editor != null)
       {
          CodeModel codeModel = editor.getSession().getMode().getRCodeModel();
