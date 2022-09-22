@@ -4,15 +4,10 @@ title: "Managing Files"
 
 RStudio supports syntax highlighting and other specialized code-editing features for specific file types:
 
--   R, Python, and SQL scripts
-
--   R Markdown, Quarto, and other markdown documents
-
--   HTML files
-
--   TeX documents
-
--   and many more
+- Scripts in R, Python, SQL  
+- Computational and scientific documents in Quarto, RMarkdown, and TeX  
+- Web content such as HTML and CSS  
+- and many more  
 
 ## File Menu
 

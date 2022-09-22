@@ -15,7 +15,7 @@ Each pane can be minimized or maximized within the column by clicking the minimi
 
 The documentation below provides information based on the default layout/options of each pane. The specific components within each pane and overall arrangement of panes can be modified by opening the **Tools \> Global Options** \> **pane Layout**.
 
-Additional source columns can be added or removed to the left of the 4 primary panes with the **Add Column** or **Remove Column** buttons.
+Additional source "columns" can be added to the left of the four primary panes. To add additional source columns, from the RStudio menu: **Global Options** \> **Pane Layout** \> **Add Source Column**, which provides the ability to work on two (or more) source files at a time within the Source Pane.
 
 ![](images/pane-layout.png){fig-alt="Screenshot of the Tools > Global Options > pane Layout page inside RStudio."}
 
