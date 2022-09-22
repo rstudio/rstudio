@@ -5084,6 +5084,7 @@ public class TextEditingTarget implements
          private final Pattern TAG_WITH_CONTENTS = Pattern.create("@\\w+\\s+[^\\s]");
       };
 
+      boolean outsideMarkdown = true;
       for (String line : lines)
       {
          String content = line.substring(Math.min(line.length(),
@@ -5093,6 +5094,12 @@ public class TextEditingTarget implements
             wordWrap.setWrappingEnabled(false);
          else if (content.trim().startsWith("@"))
             wordWrap.setWrappingEnabled(true);
+
+         if (content.matches("^\\s*```")) 
+         {
+            outsideMarkdown = !outsideMarkdown;
+            wordWrap.setWrappingEnabled(outsideMarkdown);
+         }
 
          wwct.onBeginInputRow();
          wordWrap.appendLine(content);
