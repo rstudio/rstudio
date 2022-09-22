@@ -29,6 +29,11 @@ public class WordWrap
          appendRaw("\n");
    }
 
+   public boolean getWrappingEnabled()
+   {
+      return wrappingEnabled_;
+   }
+
    public void appendLine(String line)
    {
       if (!wrappingEnabled_)
