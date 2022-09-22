@@ -14,6 +14,13 @@ set RSTUDIO_TARGET=Desktop
 set PACKAGE_VERSION_SET=
 set DEBUG_BUILD=
 
+REM Produce multiarch builds by default on Jenkins.
+if defined JENKINS_URL (
+	set MULTIARCH=1
+) else (
+	set MULTIARCH=0
+)
+
 if "%1" == "--help" goto :showhelp
 if "%1" == "-h" goto :showhelp
 if "%1" == "help" goto :showhelp
@@ -24,6 +31,7 @@ for %%A in (%*) do (
       if /I "%%A" == "debug" set DEBUG_BUILD=1
       if /I "%%A" == "desktop" set RSTUDIO_TARGET=Desktop
       if /I "%%A" == "electron" set RSTUDIO_TARGET=Electron
+      if /I "%%A" == "multiarch" set MULTIARCH=1
       if /I "%%A" == "nogwt" set BUILD_GWT=0
       if /I "%%A" == "nozip" set NOZIP=1
       if /I "%%A" == "quick" set QUICK=1
@@ -149,7 +157,9 @@ cmake --build . --config %CMAKE_BUILD_TYPE% -- %MAKEFLAGS% || goto :error
 cd ..
 
 REM perform 32-bit build and install it into the 64-bit tree
-call make-install-win32.bat "%PACKAGE_DIR%\%BUILD_DIR%\src\cpp\session" %* || goto :error
+if "%MULTIARCH%" == "1" (
+	call make-install-win32.bat "%PACKAGE_DIR%\%BUILD_DIR%\src\cpp\session" %* || goto :error
+)
 
 REM create packages
 cd "%BUILD_DIR%"
@@ -181,15 +191,16 @@ exit /b %ERRORLEVEL%
 
 :showhelp
 echo.
-echo make-package [clean] [debug] [desktop] [electron] [nogwt] [nozip] [quick]
+echo make-package [clean] [debug] [desktop] [electron] [multiarch] [nogwt] [nozip] [quick]
 echo.
-echo     clean:     perform full rebuild
-echo     debug:     perform a debug build
-echo     desktop:   build Qt desktop (default)
-echo     electron:  build Electron instead of Qt desktop
-echo     nogwt:     skip GWT build (use previous GWT build)
-echo     nozip:     skip creation of ZIP file
-echo     quick:     skip creation of setup package
+echo     clean:      perform full rebuild
+echo     debug:      perform a debug build
+echo     desktop:    build Qt desktop (default)
+echo     electron:   build Electron instead of Qt desktop
+echo     multiarch:  produce both 32-bit and 64-bit rsession executables
+echo     nogwt:      skip GWT build (use previous GWT build)
+echo     nozip:      skip creation of ZIP file
+echo     quick:      skip creation of setup package
 echo.
 exit /b 0
 
