@@ -15,5 +15,6 @@
 
 test_that("#| comments are removed by .rs.extractChunkInnerCode() (#11606)", {
    code <- "```{sql}\n#| connection = db\n\nSELECT 'test'\n```"
-   expect_equal(.rs.extractChunkInnerCode(code), "SELECT 'test'")
+   extract <- .rs.extractChunkInnerCode(code)
+   expect_true(!any(grepl("#[|]", extract)))
 })
