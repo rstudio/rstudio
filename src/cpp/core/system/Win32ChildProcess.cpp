@@ -797,7 +797,10 @@ void AsyncChildProcess::poll()
             reportError(error);
 
          if (!stdErr.empty() && callbacks_.onStderr)
+         {
+            hasRecentOutput = true;
             callbacks_.onStderr(*this, stdErr);
+         }
       }
 
       // close the process handle
