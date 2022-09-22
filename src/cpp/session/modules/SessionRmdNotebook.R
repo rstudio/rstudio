@@ -747,8 +747,8 @@ assign(".rs.notebookVersion", envir = .rs.toolsEnv(), "1.0")
   end   <- min(length(code), grep(.rs.reRmdChunkEnd(), code, perl = TRUE))
 
   code <- code[(start + 1):(end - 1)]
-  code <- code[!grepl("^\\s*#\\|", code) & code != ""]
-
+  code <- gsub("#[|].*$", "", code)
+  
   paste(code, collapse = "\n")
 })
 
