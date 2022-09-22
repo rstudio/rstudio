@@ -746,8 +746,11 @@ assign(".rs.notebookVersion", envir = .rs.toolsEnv(), "1.0")
   start <- max(1, grep(.rs.reRmdChunkBegin(), code, perl = TRUE))
   end   <- min(length(code), grep(.rs.reRmdChunkEnd(), code, perl = TRUE))
 
-  paste(code[(start + 1):(end - 1)], collapse = "\n")
-});
+  code <- code[(start + 1):(end - 1)]
+  code <- code[!grepl("^\\s*#\\|", code) & code != ""]
+
+  paste(code, collapse = "\n")
+})
 
 .rs.addFunction("extractRmdChunkInformation", function(rmd)
 {
