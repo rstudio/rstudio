@@ -6,14 +6,14 @@ The RStudio user interface has 4 primary panes:
 
 -  **Source pane**\
 -  **Console pane**\
--  **Environment pane**, containing the **Environment**, **History**, **Connections**, **Build**, and **VCS** tabs\
--  **Output pane**, containing the **Files**, **Plots**, **Packages**, **Help**, **Tutorial**, **Viewer**, and **Presentation** tabs
+-  **Environment pane**, containing the **Environment**, **History**, **Connections**, **Build**, **VCS** , and **Tutorial** tabs\
+-  **Output pane**, containing the **Files**, **Plots**, **Packages**, **Help**, **Viewer**, and **Presentation** tabs
 
 Each pane can be minimized or maximized within the column by clicking the minimize/maximize buttons ![](images/min-max.png){width="30" fig-alt="The min-max button which shows a collapsed or expanded Window."}.
 
 ![](images/rstudio-panes-labeled.jpeg){fig-alt="A screenshot of the four RStudio panes, labeled Source, Environments, Console, and Output."}
 
-The guide below provides information based on the default layout/options of each pane. The specific components within each pane and overall arrangement of panes can be modified by opening the **Tools \> Global Options** \> **pane Layout**.
+The documentation below provides information based on the default layout/options of each pane. The specific components within each pane and overall arrangement of panes can be modified by opening the **Tools \> Global Options** \> **pane Layout**.
 
 Additional source columns can be added or removed to the left of the 4 primary panes with the **Add Column** or **Remove Column** buttons.
 
