@@ -28,16 +28,16 @@ To open an existing file, use either the **File -\> Open File\...** menu or the 
 
 ## Files tab
 
-The **Output** pane has a **Files** tab that includes several buttons for managing files within the currently selected folder.
+The **Output** pane has a **Files** tab that includes several buttons for managing files within the currently selected folder, including the **New Blank File** dropdown, **Delete** button, and the **Rename** button. These buttons will operate on files that are selected within the **Files tab**.
 
 ![](images/file-pane-blank-file.png){fig-alt="A screenshot of the create blank file dropdown."}
 
 ## Switching files
 
-If several files are opened within RStudio, then they are all available as tabs within the **Source** pane to facilitate quick switching between open documents. If you have a large number of open documents you can also navigate between them using the "**\>\>"** icon at the end of the tab bar or the **View -\> Switch to Tab\...**) menu item:
+If several files are opened within RStudio, then they are all available as tabs within the **Source** pane to facilitate quick switching between open documents. If there are a large number of open documents, navigate between them using the "**\>\>"** icon at the end of the tab bar or the **View -\> Switch to Tab\...**) menu item:
 
 ![](images/file-switch.png){fig-alt="A screenshot of the Switching Files popup - it is a dropdown from the end of the Source pane, d" width="500"}
 
-You can quickly navigate to an existing file in the current RStudio Project via the <kbd>Ctrl + .</kbd> shortcut which will bring up the **Go to File/Function** search bar with auto-completion of file names.
+To quickly navigate to an existing file in the current RStudio Project use the <kbd>Ctrl + .</kbd> shortcut. Entering the shortcut will bring up the **Go to File/Function** search bar with auto-completion of file names.
 
 ![](images/go-to-file.png){fig-alt="A screenshot of the go to file/function popup as a search bar." width="350"}
