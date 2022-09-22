@@ -103,6 +103,9 @@ public class EditingPreferencesPane extends PreferencesPane
             constants_.editingHighlightWebLinkLabel(),
             prefs_.highlightWebLink(),
             constants_.editingHighlightWebLinkDesc()));
+      editingPanel.add(indent(editorScrollMultiplier_ = numericPref(constants_.editorScrollMultiplier(), 1, UserPrefs.MAX_EDITOR_SCROLL_MULTIPLIER,
+              prefs_.editorScrollMultiplier())));
+      editorScrollMultiplier_.setWidth("38px");
 
       delimiterSurroundWidget_ = new SelectWidget(constants_.editingSurroundSelectionLabel(),
          (Prefs.EnumValue) prefs_.surroundSelection(),
@@ -589,7 +592,8 @@ public class EditingPreferencesPane extends PreferencesPane
              (!showMargin_.getValue() || marginCol_.validate()) &&
              alwaysCompleteChars_.validate() &&
              alwaysCompleteDelayMs_.validate() &&
-             backgroundDiagnosticsDelayMs_.validate();
+             backgroundDiagnosticsDelayMs_.validate() &&
+             editorScrollMultiplier_.validate();
    }
 
    @Override
@@ -610,6 +614,7 @@ public class EditingPreferencesPane extends PreferencesPane
    private final UserPrefs prefs_;
    private final SourceServerOperations server_;
    private final Commands commands_;
+   private final NumericValueWidget editorScrollMultiplier_;
    private final NumericValueWidget tabWidth_;
    private final NumericValueWidget marginCol_;
    private final LineEndingsSelectWidget lineEndings_;

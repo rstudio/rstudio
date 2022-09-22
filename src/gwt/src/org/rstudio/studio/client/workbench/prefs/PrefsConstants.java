@@ -4531,6 +4531,15 @@ public interface PrefsConstants extends com.google.gwt.i18n.client.Messages {
     String editingTabWidthLabel();
 
     /**
+     * Translated "Editor scroll sensitivity"
+     *
+     * @return translated "Editor scroll sensitivity"
+     */
+    @DefaultMessage("Editor scroll sensitivity")
+    @Key("editorScrollMultiplier")
+    String editorScrollMultiplier();
+
+    /**
      * Translated "Auto-detect code indentation"
      *
      * @return translated "Auto-detect code indentation"

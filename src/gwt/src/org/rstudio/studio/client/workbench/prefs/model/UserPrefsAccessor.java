@@ -3402,6 +3402,18 @@ public class UserPrefsAccessor extends Prefs
          true);
    }
 
+   /**
+    * A value, 1-100, for the editor scroll speed.
+    */
+   public PrefValue<Integer> editorScrollMultiplier()
+   {
+      return integer(
+              "editor_scroll_multiplier",
+              _constants.editorScrollMultiplierTitle(),
+              _constants.editorScrollMultiplierDescription(),
+              100);
+   }
+
    public void syncPrefs(String layer, JsObject source)
    {
       if (source.hasKey("run_rprofile_on_resume"))

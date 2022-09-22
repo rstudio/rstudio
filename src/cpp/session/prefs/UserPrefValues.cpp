@@ -3104,6 +3104,20 @@ core::Error UserPrefValues::setDiscardPendingConsoleInputOnError(bool val)
    return writePref("discard_pending_console_input_on_error", val);
 }
 
+/**
+ * An integer value, that sets scroll speed multipler in the editor.
+ */
+int UserPrefValues::editorScrollSpeed()
+{
+  return readPref<int>("editor_scroll_multiplier");
+}
+
+
+core::Error UserPrefValues::setEditorScrollSpeed(int val)
+{
+  return writePref("editor_scroll_multiplier", val);
+}
+
 std::vector<std::string> UserPrefValues::allKeys()
 {
    return std::vector<std::string>({
@@ -3344,6 +3358,7 @@ std::vector<std::string> UserPrefValues::allKeys()
       kUiLanguage,
       kNativeFileDialogs,
       kDiscardPendingConsoleInputOnError,
+      kEditorScrollMultiplier,
    });
 }
    

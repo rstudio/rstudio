@@ -353,6 +353,8 @@ public class UserPrefs extends UserPrefsComputed
    public static final int MAX_WRAP_COLUMN = 256;
    public static final int MAX_SCREEN_READER_CONSOLE_OUTPUT = 999;
 
+   public static final int MAX_EDITOR_SCROLL_MULTIPLIER = 200;
+
    private final Session session_;
    private final PrefsServerOperations server_;
    private final SatelliteManager satelliteManager_;
