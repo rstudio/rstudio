@@ -116,7 +116,7 @@ var c_cppHighlightRules = function() {
             // Roxygen
             token : "comment",
             regex : "\\/\\/'",
-            next : "rd-start"
+            next : "rdoc-start"
          }, {
             // Standard comment
             token : "comment",
@@ -253,21 +253,21 @@ var c_cppHighlightRules = function() {
       rdRules["start"][i].token += ".virtual-comment";
    }
 
-   this.addRules(rdRules, "rd-");
-   this.$rules["rd-start"].unshift({
+   this.addRules(rdRules, "rdoc-");
+   this.$rules["rdoc-start"].unshift({
       token: "text",
       regex: "^",
       next: "start"
    });
-   this.$rules["rd-start"].unshift({
+   this.$rules["rdoc-start"].unshift({
       token : "keyword",
       regex : "@(?!@)[^ ]*"
    });
-   this.$rules["rd-start"].unshift({
+   this.$rules["rdoc-start"].unshift({
       token : "comment",
       regex : "@@"
    });
-   this.$rules["rd-start"].push({
+   this.$rules["rdoc-start"].push({
       token : "comment",
       regex : "[^%\\\\[({\\])}]+"
    });

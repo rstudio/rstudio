@@ -901,7 +901,7 @@ var RCodeModel = function(session, tokenizer,
 
          // Skip roxygen comments.
          var state = Utils.getPrimaryState(this.$session, position.row);
-         if (state === "rd-start") {
+         if (state === "rdoc-start") {
             iterator.moveToEndOfRow();
             continue;
          }

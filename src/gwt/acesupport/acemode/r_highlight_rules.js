@@ -60,7 +60,7 @@ define("mode/r_highlight_rules", ["require", "exports", "module"], function(requ
         token : ["keyword", "comment"],
         regex : "(@(?:export|field|inheritParams|name|param|rdname|slot|template|useDynLib))(\\s+)(?=[a-zA-Z0-9._-])",
         merge : false,
-        next  : "rd-highlight"
+        next  : "rdoc-highlight"
       },
       {
         // generic roxygen tag
@@ -922,13 +922,13 @@ define("mode/r_highlight_rules", ["require", "exports", "module"], function(requ
         // Begin Roxygen with todo
         token : ["comment", "comment.keyword.operator"],
         regex : "(#+['*]\\s*)(TODO|FIXME)\\b",
-        next  : "rd-start"
+        next  : "rdoc-start"
       },
       {
         // Roxygen
         token : "comment",
         regex : "#+['*]",
-        next  : "rd-start"
+        next  : "rdoc-start"
       },
       {
         // todo in plain comment
@@ -1258,7 +1258,7 @@ define("mode/r_highlight_rules", ["require", "exports", "module"], function(requ
       }
     }
 
-    this.embedRules(rdRules, "rd-", [{
+    this.embedRules(rdRules, "rdoc-", [{
       token : "text",
       regex : "^",
       next  : "start"
