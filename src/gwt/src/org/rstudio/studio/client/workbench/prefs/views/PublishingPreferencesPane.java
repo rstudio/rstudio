@@ -399,11 +399,13 @@ public class PublishingPreferencesPane extends PreferencesPane
    private void setButtonEnabledState()
    {
       disconnectButton_.setEnabled(
-            accountList_.getSelectedAccount() != null);
+            accountList_.getSelectedAccount() != null &&
+            !accountList_.getSelectedAccount().isCloudAccount());
 
       reconnectButton_.setEnabled(
             accountList_.getSelectedAccount() != null &&
-            !accountList_.getSelectedAccount().isShinyAppsAccount());
+            !accountList_.getSelectedAccount().isShinyAppsAccount() &&
+            !accountList_.getSelectedAccount().isCloudAccount());
    }
 
    private final GlobalDisplay display_;
