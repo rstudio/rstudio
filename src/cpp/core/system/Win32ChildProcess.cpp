@@ -117,7 +117,7 @@ void resolveCommand(std::string* pExecutable, std::vector<std::string>* pArgs)
 
 Error readPipeUntilDone(HANDLE hPipe, std::string* pOutput)
 {
-   CHAR buff[256];
+   CHAR buff[1024];
    DWORD nBytesRead;
 
    while(TRUE)
@@ -165,20 +165,24 @@ struct ChildProcess::Impl
    {
    }
 
+public:
    HANDLE hStdInWrite;
    HANDLE hStdOutRead;
    HANDLE hStdErrRead;
    HANDLE hProcess;
-   PidType pid;
-   WinPty pty;
-   char ctrlC;
-   bool terminated;
 
 private:
    CloseHandleOnExitScope closeStdIn_;
    CloseHandleOnExitScope closeStdOut_;
    CloseHandleOnExitScope closeStdErr_;
    CloseHandleOnExitScope closeProcess_;
+
+public:
+   PidType pid;
+   char ctrlC;
+   bool terminated;
+   WinPty pty;
+
 };
 
 
@@ -719,21 +723,25 @@ void AsyncChildProcess::poll()
    bool hasRecentOutput = false;
 
    // check stdout
-   std::string stdOut;
-   Error error = WinPty::readFromPty(pImpl_->hStdOutRead, &stdOut);
-   if (error)
-      reportError(error);
-   if (!stdOut.empty() && callbacks_.onStdout)
-      callbacks_.onStdout(*this, stdOut);
+   if (pImpl_->hStdOutRead)
+   {
+      std::string stdOut;
+      Error error = WinPty::readFromPty(pImpl_->hStdOutRead, &stdOut);
+      if (error)
+         reportError(error);
+
+      if (!stdOut.empty() && callbacks_.onStdout)
+         callbacks_.onStdout(*this, stdOut);
+   }
 
    // check stderr
-   // when using winpty, hStdErrRead is optional
    if (pImpl_->hStdErrRead)
    {
       std::string stdErr;
-      error = WinPty::readFromPty(pImpl_->hStdErrRead, &stdErr);
+      Error error = WinPty::readFromPty(pImpl_->hStdErrRead, &stdErr);
       if (error)
          reportError(error);
+
       if (!stdErr.empty() && callbacks_.onStderr)
       {
          hasRecentOutput = true;
@@ -777,6 +785,33 @@ void AsyncChildProcess::poll()
             error.addProperty("result", result);
          }
          LOG_ERROR(error);
+      }
+
+      // read all remaining stdout
+      if (pImpl_->hStdOutRead)
+      {
+         std::string stdOut;
+         Error error = readPipeUntilDone(pImpl_->hStdOutRead, &stdOut);
+         if (error)
+            reportError(error);
+
+         if (!stdOut.empty() && callbacks_.onStdout)
+            callbacks_.onStdout(*this, stdOut);
+      }
+
+      // read all remaining stderr
+      if (pImpl_->hStdErrRead)
+      {
+         std::string stdErr;
+         Error error = readPipeUntilDone(pImpl_->hStdErrRead, &stdErr);
+         if (error)
+            reportError(error);
+
+         if (!stdErr.empty() && callbacks_.onStderr)
+         {
+            hasRecentOutput = true;
+            callbacks_.onStderr(*this, stdErr);
+         }
       }
 
       // close the process handle

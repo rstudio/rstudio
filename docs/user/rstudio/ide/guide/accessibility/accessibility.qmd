@@ -2,10 +2,6 @@
 title: "Simplified Interface"
 ---
 
-Adapted from <https://support.rstudio.com/hc/en-us/articles/360044226673-RStudio-Accessibility-Features>
-
-## Introduction
-
 The RStudio IDE has many features and options to help you work the way that best suits your needs.
 
 Some features discussed in this article require RStudio 1.3 or newer. In a few cases you need to know if you are using RStudio Desktop or RStudio Server: if RStudio is loaded in your web browser, then you are using RStudio Server; otherwise, you have RStudio Desktop.
@@ -36,7 +32,7 @@ You can change the look and feel of the RStudio user interface by choosing from 
 
 Pebble-Safe is a colorblind-friendly theme created by Desi Quintans. It can be downloaded and installed from the [Pebble-Safe GitHub page](https://github.com/DesiQuintans/Pebble-safe).
 
-More details on RStudio's theming features are in the [Using RStudio Themes article](https://support.rstudio.com/hc/en-us/articles/115011846747-Using-RStudio-Themes).
+More details on RStudio's theming features are in the [Using RStudio Themes article](../ui/appearance.html).
 
 ## Keyboard
 
@@ -46,7 +42,7 @@ Many RStudio features can be operated entirely with the keyboard. Using the keyb
 
 RStudio has many keyboard shortcuts to trigger actions, move between areas of the user interface, and so on. Many of these can be discovered by browsing the main menu, hovering the mouse cursor over toolbar buttons, and viewing keyboard shortcut reference from the Help / Keyboard Shortcut Help menu.
 
-Keyboard shortcuts may be customized using the Tools / Modify Keyboard Shortcuts menu. For more on this, see the [Customizing Keyboard Shortcuts article.](https://support.rstudio.com/hc/en-us/articles/206382178-Customizing-Keyboard-Shortcuts)
+Keyboard shortcuts may be customized using the Tools / Modify Keyboard Shortcuts menu. For more on this, see the [Customizing Keyboard Shortcuts article.](../productivity/custom-shortcuts.html)
 
 Moving between RStudio's various tabs such as the Console and the Source Editor can be achieved using shortcuts such as Ctrl+1 to move to the editor tab, and Ctrl+2 to move to the Console. Many more such commands are found under the View menu.
 
@@ -98,7 +94,7 @@ The Source and Console quadrants are currently fixed in terms of what tab-types 
 
 ## Accessibility Options
 
-The Global Options dialog contains a section dedicated to accessibility options. Options for reducing motion in the user interface, and for toggling the Tab key to always move focus, were mentioned earlier in this article. The rest of the options are specific to screen reader usage, and are discussed in the [article on RStudio Screen Reader support](https://support.rstudio.com/hc/en-us/articles/360045612413-RStudio-Screen-Reader-Support).
+The Global Options dialog contains a section dedicated to accessibility options. Options for reducing motion in the user interface, and for toggling the Tab key to always move focus, were mentioned earlier in this article. The rest of the options are specific to screen reader usage, and are discussed in the [section on RStudio Screen Reader support](screen-reader.html).
 
 ## Resources
 
