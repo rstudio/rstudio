@@ -116,7 +116,7 @@ Error makePortTokenCookie(boost::shared_ptr<HttpConnection> ptrConnection,
    if (error)
       return error;
 
-      // save the base URL to persistent state (for forming absolute URLs)
+   // save the base URL to persistent state (for forming absolute URLs)
    persistentState().setActiveClientUrl(baseURL);
 
    // generate a new port token
