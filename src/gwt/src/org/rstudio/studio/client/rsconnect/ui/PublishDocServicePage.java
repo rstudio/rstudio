@@ -73,15 +73,9 @@ public class PublishDocServicePage
       String cloudTitle = "Posit Cloud";
       String cloudSubtitle = constants_.cloudSubtitle();
 
-      WizardPage<RSConnectPublishInput, RSConnectPublishResult> cloudPage;
-      if (input.isMultiRmd() && !input.isWebsiteRmd())
+      WizardPage<RSConnectPublishInput, RSConnectPublishResult> cloudPage = null;
+      if (input.isShiny())
       {
-         cloudPage = new PublishMultiplePage(cloudTitle, cloudSubtitle,
-            new ImageResource2x(RSConnectResources.INSTANCE.cloudAccountIcon2x()), input);
-      }
-      else
-      {
-         // Posit cloud does not yet support static content publishing
          cloudPage = new PublishFilesPage(cloudTitle, cloudSubtitle,
             new ImageResource2x(RSConnectResources.INSTANCE.cloudAccountIcon2x()), input,
             false, false);
@@ -90,7 +84,9 @@ public class PublishDocServicePage
       // make Rpubs the top selection for now since RStudioConnect is in beta
       pages.add(rpubsPage);
       pages.add(connectPage);
-      pages.add(cloudPage);
+      // Only Shiny rmarkdown is supported in Posit Cloud, hide option for all other Rmds
+      if (cloudPage != null)
+         pages.add(cloudPage);
       
       return pages;
    }
