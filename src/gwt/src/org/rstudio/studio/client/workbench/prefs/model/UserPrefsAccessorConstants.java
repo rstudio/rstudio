@@ -218,9 +218,9 @@ public interface UserPrefsAccessorConstants extends Constants {
    /**
     * The editor scroll sensitivity.
     */
-   @DefaultStringValue("Editor scroll sensitivity")
+   @DefaultStringValue("Editor scroll speed sensitivity")
    String editorScrollMultiplierTitle();
-   @DefaultStringValue("The editor scroll speed")
+   @DefaultStringValue("The editor scroll speed sensitivity. Higher is faster scrolling.")
    String editorScrollMultiplierDescription();
 
    /**

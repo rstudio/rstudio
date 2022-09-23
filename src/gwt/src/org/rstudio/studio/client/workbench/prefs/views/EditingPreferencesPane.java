@@ -103,7 +103,8 @@ public class EditingPreferencesPane extends PreferencesPane
             constants_.editingHighlightWebLinkLabel(),
             prefs_.highlightWebLink(),
             constants_.editingHighlightWebLinkDesc()));
-      editingPanel.add(indent(editorScrollMultiplier_ = numericPref(constants_.editorScrollMultiplier(), 1, UserPrefs.MAX_EDITOR_SCROLL_MULTIPLIER,
+      editingPanel.add(indent(editorScrollMultiplier_ = numericPref(constants_.editorScrollMultiplier(), constants_.editorScrollMultiplierDesc(),
+              1, UserPrefs.MAX_EDITOR_SCROLL_MULTIPLIER,
               prefs_.editorScrollMultiplier())));
       editorScrollMultiplier_.setWidth("38px");
 

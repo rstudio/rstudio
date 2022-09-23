@@ -18,10 +18,11 @@ import com.google.gwt.user.client.ui.Widget;
 
 public class SpanLabel extends FormLabel
 {
-   public SpanLabel(String label, Widget labeledWidget, boolean wordWrap)
+   public SpanLabel(String label, String tooltip, Widget labeledWidget, boolean wordWrap)
    {
       super(true /*inline*/, label, NoForId);
       setWordWrap(wordWrap);
       setFor(labeledWidget);
+      setTitle(tooltip);
    }
 }
