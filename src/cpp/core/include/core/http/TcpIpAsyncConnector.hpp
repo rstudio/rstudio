@@ -109,10 +109,16 @@ private:
             if (isConnected_ || hasFailed_)
                return;
 
+            LOG_DEBUG_MESSAGE("In onConnectionTimeout - cancelling socket connection");
+
             // timer has elapsed and the socket is still not connected
             // cancel any outstanding async operations
             resolver_.cancel();
-            pSocket_->cancel();
+            // avoid throwing an exception by checking for an open socket first
+            if (pSocket_->is_open())
+               pSocket_->cancel();
+            else
+               LOG_ERROR_MESSAGE("Socket is already closed in onConnectionTimeout");
 
             // invoke error handler since the connection has failed
             handleError(systemError(boost::system::errc::timed_out, ERROR_LOCATION));
