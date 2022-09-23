@@ -16,6 +16,7 @@
 ### Python
 
 - RStudio attempts to infer the appropriate version of Python when "Automatically activate project-local Python environments" is checked and the user has not requested a specific version of Python. This Python will be stored in the environment variable "RETICULATE_PYTHON_FALLBACK", available from the R console, the Python REPL, and the RStudio Terminal (#9990)
+- Shiny for Python apps now display a "Run App" button on the Source editor toolbar. (Requires `shiny` Python package v0.2.7 or later.)
 
 ### Quarto
 
