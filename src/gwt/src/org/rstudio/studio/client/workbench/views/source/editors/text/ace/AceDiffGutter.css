@@ -1,15 +1,7 @@
 .added {
-    background: linear-gradient(to left, green 4px, transparent 4px, transparent);
-}
-
-.added:hover {
-    background: linear-gradient(to left, green 7px, transparent 8px, transparent);
+    border-right: 2px solid green;
 }
 
 .modified {
-    background: linear-gradient(to left, blue 4px, transparent 4px, transparent);
-}
-
-.modified:hover {
-    background: linear-gradient(to left, blue 7px, transparent 8px, transparent);
+    border-right: 2px solid blue;
 }
