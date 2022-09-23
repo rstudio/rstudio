@@ -2,26 +2,23 @@
 title: "Code Diagnostics"
 ---
 
-Copied from <https://support.rstudio.com/hc/en-us/articles/205753617-Code-Diagnostics-in-the-RStudio-IDE>
-
 ## Enabling Diagnostics
 
-Diagnostics can be enabled and options can be set within the `Global Options -> Code -> Diagnostics` editing pane:
+Diagnostics can be enabled and options can be set within the **Global Options** > **Code Diagnostics** editing pane:
 
-\
 ![](images/enable-diagnostics.png){fig-alt="A screenshot of the RStudio Global Options popup, selected on the Code > Diagnostics tab."}
 
 A brief outline of the options available:
 
-**Show Diagnostics for R**
+### Show Diagnostics for R
 
 Toggle the display of R code diagnostics.
 
-**Enable diagnostics within R function calls**
+### Enable diagnostics within R function calls
 
 Controls whether diagnostics are performed within function calls, e.g. `dplyr::select(mtcars, mpg, cyl)`. Toggle this if your code makes heavy use of non-standard evaluation, and RStudio is unable to produce correct diagnostics for you.
 
-**Check arguments to R function calls**
+### Check arguments to R function calls
 
 Try to detect whether a particular call to a function will succeed. The diagnostics engine will report if it detects missing arguments, unmatched arguments, partially matched arguments, and too many arguments.
 
@@ -33,13 +30,13 @@ Similarly, missing arguments (alongside extra, or missing, commas) are reported:
 
 ![](images/error-missing-comma.png){fig-alt="A screenshot of R code missing commas after each line, which returns an error 'exepcted , after expression'"}
 
-**Warn if variable used has no definition in scope**
+### Warn if variable used has no definition in scope
 
 Warn if a symbol is used with no definition in the current, or parent, scope. The diagnostics engine will supply a suggestion if there appears to be a typo in the symbol's name; that is, if a symbol with a similar name exists in scope as well.
 
 ![](images/error-missing-symbol.png){fig-alt="A screenshot of R code with a defined object not found, with a suggestion to use the correct object."}
 
-**Warn if variable is defined but not used**
+### Warn if variable is defined but not used
 
 This diagnostic helps to identify is a variable is created but never used. This can be helpful when attempting to clean up old code, or in diagnosing other errors (wherein you believe a particular variable should be used, but isn't).
 
@@ -47,7 +44,7 @@ In the following example, the variable `result` is assigned but never used or re
 
 ![](images/error-unused.png){fig-alt="A screenshot of a function where a defined object is not used, resulting a warning."}
 
-**Provide R style diagnostics (e.g. whitespace)**
+### Provide R style diagnostics (e.g. whitespace)
 
 The style diagnostic checks to see if your code conforms to [Hadley Wickham's style guide](http://adv-r.had.co.nz/Style.html), and reports style warnings when encountered. In particular, the diagnostics engine attempts to identify inappropriate use (or lack thereof) of whitespace.
 
@@ -55,13 +52,13 @@ The style diagnostic checks to see if your code conforms to [Hadley Wickham's st
 
 Currently, the style diagnostics feature is not user configurable; this may be addressed in an upcoming release.
 
-## **Other Diagnostics**
+## Other Diagnostics
 
 Diagnostics for other languages, such as C / C++, JavaScript, and Python, are also available.
 
 The C / C++ diagnostics engine is powered by `libclang`, and is able to report compiler errors and warnings inline in the source document.
 
-## **Viewing Diagnostics**
+## Viewing Diagnostics
 
 When an error or warning is discovered, it is reported in two places:
 
@@ -69,15 +66,15 @@ When an error or warning is discovered, it is reported in two places:
 
 2.  The associated diagnostic will be underlined.
 
-![](images/error-diagnostic-view.png){alt="" fig-alt="A screenshot of R code displaying a yellow warning in the gutter, a popup for result is defined but not used, and a yellow underline bellow the defined but not used element."}
+![](images/error-diagnostic-view.png){fig-alt="A screenshot of R code displaying a yellow warning in the gutter, a popup for result is defined but not used, and a yellow underline bellow the defined but not used element."}
 
-## **Show Diagnostics**
+## Show Diagnostics
 
 These features allow you to control when diagnostics are presented and updated. Diagnostics can either be shown on save, or after a certain amount of keyboard idle time.
 
 ## Project-Level Diagnostics
 
-You can run the diagnostics engine over all R files in the project either using the code wizard menu, or by pressing `CTRL + ALT + SHIFT + P` (`CMD` on Mac):
+You can run the diagnostics engine over all R files in the project either using the code wizard menu, or by pressing <kbd>CTRL + ALT + SHIFT + P</kbd> (<kbd>CMD + ALT + SHIFT + P</kbd> on Mac):
 
 ![](images/project-level-diagnostics.png){fig-alt="A screenshot of the 'Code Tools' dropdown, displaying the ability to 'Show Diagnostics' for an entire project."}
 

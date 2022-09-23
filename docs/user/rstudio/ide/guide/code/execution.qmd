@@ -2,7 +2,7 @@
 title: "Executing code"
 ---
 
-RStudio supports the direct execution of code from within the source editor (the executed commands are inserted into the console where their output also appears).
+RStudio supports the direct execution of code from within the source editor (the executed commands are inserted into the console where the output also appears).
 
 ## Source files
 
@@ -10,11 +10,11 @@ Source code files such as .R or .py can be executed in several different ways.
 
 ### Executing a Single Line
 
-To execute the line of source code where the cursor currently resides you press the **Ctrl+Enter** key (or use the **Run** toolbar button):
+To execute the line of source code where the cursor currently resides press the **Ctrl+Enter** key (or use the **Run** toolbar button):
 
 ![](images/run-current-line.png){fig-alt="A screenshot of the RStudio source pane and the 'Run' button."}
 
-After executing the line of code, RStudio automatically advances the cursor to the next line. This enables you to single-step through a sequence of lines.
+After executing the line of code, RStudio automatically advances the cursor to the next line. This enables single-stepping through a sequence of lines.
 
 ### Executing Multiple Lines
 
@@ -44,13 +44,13 @@ Code within computational documents such as Quarto or R Markdown is written insi
       geom_point()
     ```
 
-Similar to source code files, code can be executed via RStudio "Run" commands or keyboard shortcuts <kbd>Ctrl + Enter</kbd>. However, each chunk also has a "Run" button to execute that specific chunk.
+Similar to source code files, code can be executed via RStudio "Run" commands or keyboard shortcuts <kbd>Ctrl + Enter</kbd>. However, each chunk also has a green "Run" button to execute that specific chunk.
 
-![](images/document-chunk.png){fig-alt="A screenshot of a R code chunk in Quarto. It is primarily 3x backticks and a language engine."}
+![](images/document-chunk.png){fig-alt="A screenshot of a R code chunk in Quarto. It primarily consists of 3x backticks, curly brackets, and a language engine with code inside the backticks"}
 
 ### Executing a Single Line
 
-To execute the line of source code where the cursor currently resides you press the **Ctrl+Enter** key (or use the **Run** toolbar button):
+To execute the line of source code where the cursor currently resides press the **Ctrl+Enter** keys (or use the **Run** toolbar button):
 
 ![](images/quarto-execute-line.png){fig-alt="A screenshot of a '.qmd' document, highlighting the Run menu and the ability to run selected highlighted lines."}
 

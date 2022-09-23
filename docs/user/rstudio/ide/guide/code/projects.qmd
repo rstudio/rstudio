@@ -2,15 +2,13 @@
 title: "RStudio Projects"
 ---
 
-Expert data scientists keep all the files associated with a given project together --- input data, scripts, analytical results, and figures. This is such a wise and common practice that RStudio has built-in support for this via Projects. -[R4DS](https://r4ds.hadley.nz/workflow-scripts.html#workflow-projects)
-
-RStudio Projects make it straightforward to divide your work into multiple contexts, each with their own working directory, workspace, history, and source documents.
-
-Created from [Support article](https://support.rstudio.com/hc/en-us/articles/200526207-Using-RStudio-Projects)
+Expert data scientists keep all the files associated with a given project together --- input data, scripts, analytical results, and figures. This is such a wise and common practice that RStudio has built-in support for this via Projects. RStudio Projects make it straightforward to divide your work into multiple contexts, each with their own working directory, workspace, history, and source documents.
 
 ## Creating Projects
 
-RStudio projects are associated with R working directories. You can create an RStudio project:
+RStudio projects are associated with R working directories. 
+
+RStudio projects can be created:
 
 -   In a brand new directory
 
@@ -18,11 +16,13 @@ RStudio projects are associated with R working directories. You can create an RS
 
 -   By cloning a version control (Git or Subversion) repository
 
-To create a new project in the RStudio, use the **Create Project** command (available on the Projects menu and on the global toolbar):
+To create a new project in RStudio, use the **Create Project** command (available on the Projects toolbar in the top right corner or on the global toolbar at the top left corner). 
+
+This will open the "New Project Wizard" popup:
 
 ![](images/projects_new.png){fig-alt="A screenshot of the RStudio \"New Project Wizard\" popup. It starts with Create Project from: and the choice of \"New Directory\", \"Existing directory\", or from \"Version control\""}
 
-When a new project is created RStudio:
+When a new project is created, RStudio:
 
 1.  Creates a project file (with an .Rproj extension) within the project directory. This file contains various project options (discussed below) and can also be used as a shortcut for opening the project directly from the filesystem.
 
