@@ -403,7 +403,7 @@ public class PublishingPreferencesPane extends PreferencesPane
 
       reconnectButton_.setEnabled(
             accountList_.getSelectedAccount() != null &&
-            !accountList_.getSelectedAccount().isCloudAccount());
+            !accountList_.getSelectedAccount().isShinyAppsAccount());
    }
 
    private final GlobalDisplay display_;

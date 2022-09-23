@@ -531,7 +531,7 @@ public class RSConnectDeploy extends Composite
       if (getSelectedAccount() == null)
          return true;
       else
-         return !getSelectedAccount().isCloudAccount();
+         return !getSelectedAccount().isShinyAppsAccount();
    }
 
    @Override

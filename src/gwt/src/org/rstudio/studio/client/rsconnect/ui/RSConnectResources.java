@@ -58,6 +58,9 @@ public interface RSConnectResources extends ClientBundle
 
    @Source("positCloudAccountIconLarge_2x.png")
    ImageResource positCloudAccountIconLarge2x();
+
+   @Source("positCloudAccountIconSmall_2x.png")
+   ImageResource positCloudAccountIconSmall2x();
    
    @Source("publishSingleRmd_2x.png")
    ImageResource publishSingleRmd2x();
