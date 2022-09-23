@@ -50,6 +50,8 @@ public class AceDiffGutter implements SaveFileEvent.Handler, GitExpandDiffEvent.
 
         RStudioGinjector.INSTANCE.injectMembers(this);
         activeModifiedLines_ = new SafeMap<>();
+
+        diffLineWidget_ = new DiffLineWidget(editor);
     }
 
     @Inject
@@ -69,9 +71,10 @@ public class AceDiffGutter implements SaveFileEvent.Handler, GitExpandDiffEvent.
         if (!activeModifiedLines_.containsKey(event.getLineNumber()))
             return;
         
-        for (Line line: activeModifiedLines_.get(event.getLineNumber()).getLines()) {
-            GWT.log(line.getType().getValue() + " " + line.getText());
-        }
+        diffLineWidget_.show(
+            event.getLineNumber(), 
+            activeModifiedLines_.get(event.getLineNumber())
+            );
     }
 
     @Override
@@ -158,6 +161,8 @@ public class AceDiffGutter implements SaveFileEvent.Handler, GitExpandDiffEvent.
     EventBus events_;
     GitServerOperations server_;
     UserPrefs uiPrefs_;
+
+    private DiffLineWidget diffLineWidget_;
 
     private SafeMap<Integer, DiffChunk> activeModifiedLines_;
     
