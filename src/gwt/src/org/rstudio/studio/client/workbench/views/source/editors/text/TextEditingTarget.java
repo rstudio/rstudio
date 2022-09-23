@@ -6589,9 +6589,7 @@ public class TextEditingTarget implements
       source_.withSaveFilesBeforeCommand(() ->
       {
          String path = getPath();
-         // Some light shell escaping.
-         // TODO: More exhaustive escaping
-         path = path.replaceAll("([ '\"\\\\$])", "\\\\$1");
+         path = StringUtil.escapeBashPath(path, false);
          events_.fireEvent(new SendToTerminalEvent("command shiny run --reload --launch-browser --port=0 " + path + "\n", true));
       }, () -> {}, "Run Shiny Application");
    }

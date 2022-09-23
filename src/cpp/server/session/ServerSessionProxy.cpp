@@ -455,7 +455,7 @@ void handleLocalhostResponse(
          {         
             sendSparkUIResponse(response, ptrConnection);
          }
-         else if (response.headerValue(core::http::kTransferEncoding) == core:http::kChunkedTransferEncoding)
+         else if (response.headerValue(core::http::kTransferEncoding) == core::http::kChunkedTransferEncoding)
          {
             // Even if the response from upstream is "Transfer-Encoding: chunked",
             // our response to the client is no longer chunked; the AsyncClient
