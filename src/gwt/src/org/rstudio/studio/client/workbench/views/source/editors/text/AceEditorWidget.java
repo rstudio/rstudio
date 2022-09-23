@@ -73,6 +73,7 @@ import org.rstudio.studio.client.workbench.views.source.editors.text.ace.events.
 import org.rstudio.studio.client.workbench.views.source.editors.text.events.*;
 import org.rstudio.studio.client.workbench.views.source.editors.text.events.FoldChangeEvent.Handler;
 import org.rstudio.studio.client.workbench.views.source.events.ScrollYEvent;
+import org.rstudio.studio.client.workbench.views.vcs.git.GitExpandDiffEvent;
 
 public class AceEditorWidget extends Composite
       implements RequiresResize,
@@ -209,9 +210,9 @@ public class AceEditorWidget extends Composite
            }
            else
            {
-              
+              int line = lineFromRow(arg.getDocumentPosition().getRow());
+              fireEvent(new GitExpandDiffEvent(line));
            }
-
         }
       });
       editor_.getSession().getSelection().addCursorChangeHandler(new CommandWithArg<Position>()
@@ -455,6 +456,11 @@ public class AceEditorWidget extends Composite
       (BreakpointMoveEvent.Handler handler)
    {
       return addHandler(handler, BreakpointMoveEvent.TYPE);
+   }
+
+   public HandlerRegistration addGitExpandDiffHandler(GitExpandDiffEvent.Handler handler)
+   {
+      return addHandler(handler, GitExpandDiffEvent.TYPE);
    }
 
    public void toggleBreakpointAtCursor()
@@ -939,15 +945,6 @@ public class AceEditorWidget extends Composite
                BreakpointSetEvent.UNSET_BREAKPOINT_ID,
                true));
       }
-   }
-
-   private void gutterRightHalfClicked(Position pos)
-   {
-      int lineNumber = lineFromRow(pos.getRow());
-      fireEvent(new BreakpointSetEvent(
-               lineNumber,
-               BreakpointSetEvent.UNSET_BREAKPOINT_ID,
-               true));
    }
 
    private int getBreakpointIdxById(int breakpointId)
