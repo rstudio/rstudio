@@ -1618,6 +1618,12 @@
             "title": "Discard pending console input on error",
             "type": "boolean",
             "default": true
+        },
+        "editor_scroll_multiplier": {
+            "description": "A integer value, 1-200, to set the editor scroll multiplier. The higher the value, the faster the scrolling.",
+            "title": "Editor scroll speed sensitivity",
+            "type": "integer",
+            "default": 100
         }
     }
 }

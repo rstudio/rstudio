@@ -216,6 +216,14 @@ public interface UserPrefsAccessorConstants extends Constants {
    String numSpacesForTabDescription();
 
    /**
+    * The editor scroll sensitivity.
+    */
+   @DefaultStringValue("Editor scroll speed sensitivity")
+   String editorScrollMultiplierTitle();
+   @DefaultStringValue("The editor scroll speed sensitivity. Higher is faster scrolling.")
+   String editorScrollMultiplierDescription();
+
+   /**
     * Whether to automatically detect indentation settings from file contents.
     */
    @DefaultStringValue("Auto-detect indentation in files")

@@ -14,11 +14,12 @@
  */
 package org.rstudio.studio.client.workbench.views.source.editors.text;
 
-import org.rstudio.core.client.BrowseCap;
 import org.rstudio.core.client.dom.WindowEx;
 
 import com.google.gwt.core.client.Scheduler;
 import com.google.gwt.event.logical.shared.AttachEvent;
+import org.rstudio.studio.client.RStudioGinjector;
+import org.rstudio.studio.client.workbench.prefs.model.UserPrefs;
 
 public class AceEditorMonitor
 {
@@ -47,17 +48,18 @@ public class AceEditorMonitor
    {
       if (!monitoring_)
          return false;
-      
-      if (BrowseCap.isWindowsDesktop())
+
+      UserPrefs prefs = RStudioGinjector.INSTANCE.getUserPrefs();
+
+      int scrollMultiplier = prefs.editorScrollMultiplier().getValue().intValue();
+      // calculate speed ratio, lower scroll speed = higher ratio = faster scroll
+      double ratio = WindowEx.get().getDevicePixelRatio() * (100.0 / scrollMultiplier);
+      if (devicePixelRatio_ != ratio)
       {
-         double ratio = WindowEx.get().getDevicePixelRatio();
-         if (devicePixelRatio_ != ratio)
-         {
-            devicePixelRatio_ = ratio;
-            editor_.setScrollSpeed(ACE_EDITOR_DEFAULT_SCROLL_SPEED / ratio);
-         }
+         devicePixelRatio_ = ratio;
+         editor_.setScrollSpeed(ACE_EDITOR_DEFAULT_SCROLL_SPEED / ratio);
       }
-      
+
       return true;
    }
    

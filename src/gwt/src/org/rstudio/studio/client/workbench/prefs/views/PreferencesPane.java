@@ -188,7 +188,7 @@ public abstract class PreferencesPane extends PreferencesDialogPaneBase<UserPref
                                             final PrefValue<Integer> prefValue,
                                             boolean defaultSpaced)
    {
-      return numericPref(prefValue.getTitle(), minValue, maxValue, prefValue, defaultSpaced);
+      return numericPref(prefValue.getTitle(), prefValue.getDescription(), minValue, maxValue, prefValue, defaultSpaced);
    }
 
    protected NumericValueWidget numericPref(String label,
@@ -196,7 +196,25 @@ public abstract class PreferencesPane extends PreferencesDialogPaneBase<UserPref
                                             Integer maxValue,
                                             final PrefValue<Integer> prefValue)
    {
-      return numericPref(label, minValue, maxValue, prefValue, true);
+      return numericPref(label, "", minValue, maxValue, prefValue, true);
+   }
+
+   protected NumericValueWidget numericPref(String label,
+                                            Integer minValue,
+                                            Integer maxValue,
+                                            final PrefValue<Integer> prefValue,
+                                            boolean defaultSpaced)
+   {
+      return numericPref(label, "", minValue, maxValue, prefValue, defaultSpaced);
+   }
+
+   protected NumericValueWidget numericPref(String label,
+                                            String tooltip,
+                                            Integer minValue,
+                                            Integer maxValue,
+                                            final PrefValue<Integer> prefValue)
+   {
+      return numericPref(label, tooltip, minValue, maxValue, prefValue, true);
    }
 
    /**
@@ -210,12 +228,13 @@ public abstract class PreferencesPane extends PreferencesDialogPaneBase<UserPref
     * @return
     */
    protected NumericValueWidget numericPref(String label,
+                                            String tooltip,
                                             Integer minValue,
                                             Integer maxValue,
                                             final PrefValue<Integer> prefValue,
                                             boolean defaultSpaced)
    {
-      final NumericValueWidget widget = new NumericValueWidget(label, minValue, maxValue);
+      final NumericValueWidget widget = new NumericValueWidget(label, tooltip, minValue, maxValue);
       if (defaultSpaced)
          lessSpaced(widget);
       registerEnsureVisibleHandler(widget);

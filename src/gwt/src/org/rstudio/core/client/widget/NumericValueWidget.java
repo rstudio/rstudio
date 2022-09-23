@@ -34,7 +34,7 @@ public class NumericValueWidget extends Composite
 
    public NumericValueWidget()
    {
-      this("", ZeroMinimum, NoMaximum);
+      this("", "", ZeroMinimum, NoMaximum);
    }
 
    /**
@@ -46,14 +46,28 @@ public class NumericValueWidget extends Composite
     */
    public NumericValueWidget(String label, Integer minValue, Integer maxValue)
    {
+      this(label, "", minValue, maxValue);
+   }
+
+   /**
+    * Prompt for an integer in the range [min, max]
+    *
+    * @param label
+    * @param tooltip tooltip for the label
+    * @param minValue minimum, if null (ZeroMinimum), zero assumed
+    * @param maxValue maximum, if null (NoMaximum), no maximum assumed
+    */
+   public NumericValueWidget(String label, String tooltip, Integer minValue, Integer maxValue)
+   {
       label_ = label;
+      tooltip_ = tooltip;
       FlowPanel flowPanel = new FlowPanel();
 
       textBox_ = new NumericTextBox();
       textBox_.setWidth("48px");
       setLimits(minValue, maxValue);
       textBox_.getElement().getStyle().setMarginLeft(0.6, Unit.EM);
-      flowPanel.add(textBoxLabel_ = new SpanLabel(label_, textBox_, true));
+      flowPanel.add(textBoxLabel_ = new SpanLabel(label_, tooltip_, textBox_, true));
       flowPanel.add(textBox_);
 
       initWidget(flowPanel);
@@ -170,5 +184,6 @@ public class NumericValueWidget extends Composite
    private Integer minValue_;
    private Integer maxValue_;
    private String label_;
+   private String tooltip_;
    private static final CoreClientConstants constants_ = GWT.create(CoreClientConstants.class);
 }

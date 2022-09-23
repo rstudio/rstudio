@@ -3402,6 +3402,18 @@ public class UserPrefsAccessor extends Prefs
          true);
    }
 
+   /**
+    * A value, 1-200, for the editor scroll speed.
+    */
+   public PrefValue<Integer> editorScrollMultiplier()
+   {
+      return integer(
+              "editor_scroll_multiplier",
+              _constants.editorScrollMultiplierTitle(),
+              _constants.editorScrollMultiplierDescription(),
+              100);
+   }
+
    public void syncPrefs(String layer, JsObject source)
    {
       if (source.hasKey("run_rprofile_on_resume"))
@@ -3878,6 +3890,8 @@ public class UserPrefsAccessor extends Prefs
          nativeFileDialogs().setValue(layer, source.getBool("native_file_dialogs"));
       if (source.hasKey("discard_pending_console_input_on_error"))
          discardPendingConsoleInputOnError().setValue(layer, source.getBool("discard_pending_console_input_on_error"));
+      if (source.hasKey("editor_scroll_multiplier"))
+         editorScrollMultiplier().setValue(layer, source.getInteger("editor_scroll_multiplier"));
    }
    public List<PrefValue<?>> allPrefs()
    {
@@ -4119,6 +4133,7 @@ public class UserPrefsAccessor extends Prefs
       prefs.add(uiLanguage());
       prefs.add(nativeFileDialogs());
       prefs.add(discardPendingConsoleInputOnError());
+      prefs.add(editorScrollMultiplier());
       return prefs;
    }
    

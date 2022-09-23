@@ -411,6 +411,7 @@ namespace prefs {
 #define kUiLanguageFr "fr"
 #define kNativeFileDialogs "native_file_dialogs"
 #define kDiscardPendingConsoleInputOnError "discard_pending_console_input_on_error"
+#define kEditorScrollMultiplier "editor_scroll_multiplier"
 
 class UserPrefValues: public Preferences
 {
@@ -1837,6 +1838,12 @@ public:
     */
    bool discardPendingConsoleInputOnError();
    core::Error setDiscardPendingConsoleInputOnError(bool val);
+
+   /**
+    * The editor scroll speed multiplier.
+    */
+   int editorScrollSpeed();
+   core::Error setEditorScrollSpeed(int val);
 
 };
 
