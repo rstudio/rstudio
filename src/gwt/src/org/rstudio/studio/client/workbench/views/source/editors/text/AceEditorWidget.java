@@ -17,6 +17,7 @@ package org.rstudio.studio.client.workbench.views.source.editors.text;
 import java.util.ArrayList;
 import java.util.List;
 
+import com.google.gwt.core.client.GWT;
 import com.google.gwt.core.client.JsArray;
 import com.google.gwt.core.client.Scheduler;
 import com.google.gwt.core.client.Scheduler.RepeatingCommand;
@@ -206,6 +207,11 @@ public class AceEditorWidget extends Composite
            {
               toggleBreakpointAtPosition(arg.getDocumentPosition());
            }
+           else
+           {
+              
+           }
+
         }
       });
       editor_.getSession().getSelection().addCursorChangeHandler(new CommandWithArg<Position>()
@@ -933,6 +939,15 @@ public class AceEditorWidget extends Composite
                BreakpointSetEvent.UNSET_BREAKPOINT_ID,
                true));
       }
+   }
+
+   private void gutterRightHalfClicked(Position pos)
+   {
+      int lineNumber = lineFromRow(pos.getRow());
+      fireEvent(new BreakpointSetEvent(
+               lineNumber,
+               BreakpointSetEvent.UNSET_BREAKPOINT_ID,
+               true));
    }
 
    private int getBreakpointIdxById(int breakpointId)

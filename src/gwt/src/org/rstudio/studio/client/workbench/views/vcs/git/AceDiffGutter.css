@@ -1,0 +1,17 @@
+.added {
+    border-right: 2px solid green;
+    color: green;
+}
+
+.modified {
+    border-right: 2px solid blue;
+    color: blue;
+}
+
+.added:hover {
+    border-right: 10px solid green;
+}
+
+.modified:hover {
+    border-right: 10px solid blue;
+}

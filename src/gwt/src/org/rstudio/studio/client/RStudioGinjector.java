@@ -175,7 +175,6 @@ import org.rstudio.studio.client.workbench.views.source.editors.text.TextEditing
 import org.rstudio.studio.client.workbench.views.source.editors.text.TextEditingTargetQuartoHelper;
 import org.rstudio.studio.client.workbench.views.source.editors.text.TextEditingTargetRMarkdownHelper;
 import org.rstudio.studio.client.workbench.views.source.editors.text.ace.AceBackgroundHighlighter;
-import org.rstudio.studio.client.workbench.views.source.editors.text.ace.AceDiffGutter;
 import org.rstudio.studio.client.workbench.views.source.editors.text.ace.AceEditorBackgroundLinkHighlighter;
 import org.rstudio.studio.client.workbench.views.source.editors.text.cpp.CppCompletionManager;
 import org.rstudio.studio.client.workbench.views.source.editors.text.cpp.CppCompletionRequest;
@@ -197,6 +196,7 @@ import org.rstudio.studio.client.workbench.views.source.editors.text.visualmode.
 import org.rstudio.studio.client.workbench.views.source.editors.text.yaml.YamlEditorToolsProviderQuarto;
 import org.rstudio.studio.client.workbench.views.source.editors.text.visualmode.VisualModeMarkdownWriter;
 import org.rstudio.studio.client.workbench.views.source.editors.text.visualmode.VisualModeNavigation;
+import org.rstudio.studio.client.workbench.views.vcs.git.AceDiffGutter;
 import org.rstudio.studio.client.workbench.views.vcs.svn.SVNCommandHandler;
 import org.rstudio.studio.client.workbench.views.viewer.quarto.QuartoConnection;
 import org.rstudio.studio.client.workbench.views.environment.ClearAllDialog;

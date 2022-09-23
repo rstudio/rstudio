@@ -12,7 +12,7 @@
  * AGPL (http://www.gnu.org/licenses/agpl-3.0.txt) for more details.
  *
  */
-package org.rstudio.studio.client.workbench.views.source.editors.text.ace;
+package org.rstudio.studio.client.workbench.views.vcs.git;
 
 import java.util.ArrayList;
 

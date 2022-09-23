@@ -110,7 +110,6 @@ import org.rstudio.studio.client.workbench.views.source.editors.text.ace.AceBack
 import org.rstudio.studio.client.workbench.views.source.editors.text.ace.AceClickEvent.Handler;
 import org.rstudio.studio.client.workbench.views.source.editors.text.ace.AceCommand;
 import org.rstudio.studio.client.workbench.views.source.editors.text.ace.AceCommandManager;
-import org.rstudio.studio.client.workbench.views.source.editors.text.ace.AceDiffGutter;
 import org.rstudio.studio.client.workbench.views.source.editors.text.ace.AceEditorBackgroundLinkHighlighter;
 import org.rstudio.studio.client.workbench.views.source.editors.text.ace.AceEditorCommandEvent;
 import org.rstudio.studio.client.workbench.views.source.editors.text.ace.AceEditorNative;
@@ -167,15 +166,14 @@ import org.rstudio.studio.client.workbench.views.source.events.ScrollYEvent;
 import org.rstudio.studio.client.workbench.views.source.model.DirtyState;
 import org.rstudio.studio.client.workbench.views.source.model.RnwCompletionContext;
 import org.rstudio.studio.client.workbench.views.source.model.SourcePosition;
+import org.rstudio.studio.client.workbench.views.vcs.git.AceDiffGutter;
 
 import java.util.ArrayList;
 import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
 
-public class AceEditor implements DocDisplay,
-                                  InputEditorDisplay,
-                                  NavigableSourceEditor
+public class AceEditor implements DocDisplay
 {
    public enum NewLineMode
    {
