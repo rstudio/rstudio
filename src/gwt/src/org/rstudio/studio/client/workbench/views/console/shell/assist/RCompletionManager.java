@@ -1140,26 +1140,15 @@ public class RCompletionManager implements CompletionManager
                   int cursor = editor.getCursorColumn();
                   
                   int commentSize = DocumentMode.PATTERN_ROXYGEN_LINE.match(firstLine, 0).getValue().length() + 1;
-                  if (cursor < commentSize)
+                  // if just after the ': add one space
+                  String spaces = " ";
+                  if (cursor >= commentSize)
                   {
-                     // #'|<TAB> : just add one space
-                     editor.insertCode(" ");
-                  }
-                  else 
-                  {
-                     // either add a tab or the remainder spaces to the next one
+                     // othewise add a tab or the remainder spaces to the next one
                      int remainder = (cursor - commentSize) % tabSize;
-                     if (remainder == 0)
-                     {
-                        for (int i = 0; i < tabSize; i++)
-                           editor.insertCode(" ");
-                     }
-                     else 
-                     {
-                        for (int i = 0; i < remainder; i++)
-                           editor.insertCode(" ");
-                     }
+                     spaces = StringUtil.repeat(" ", remainder == 0 ? tabSize : remainder);
                   }
+                  editor.insertCode(spaces);
                }
                return true;
             }
