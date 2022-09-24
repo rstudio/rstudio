@@ -1143,8 +1143,7 @@ public class RCompletionManager implements CompletionManager
                   if (cursor < commentSize)
                   {
                      // #'|<TAB> : just add one space
-                     for (; cursor < commentSize; cursor++)
-                        editor.insertCode(" ");
+                     editor.insertCode(" ");
                   }
                   else 
                   {
