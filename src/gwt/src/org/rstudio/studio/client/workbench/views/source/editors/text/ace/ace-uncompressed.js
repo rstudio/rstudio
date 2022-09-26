@@ -15462,6 +15462,9 @@ define("ace/mode/less_highlight_rules",["require","exports","module","ace/lib/oo
 var oop = require("../lib/oop");
 var TextHighlightRules = require("./text_highlight_rules").TextHighlightRules;
 var CssHighlightRules = require('./css_highlight_rules');
+var rgb256Regex = CssHighlightRules.rgb256Regex;
+var rgb256Token = CssHighlightRules.rgb256Token;
+var colorToken = CssHighlightRules.colorToken;
 
 var LessHighlightRules = function() {
 
@@ -15503,11 +15506,17 @@ var LessHighlightRules = function() {
                 token : ["constant.numeric", "keyword"],
                 regex : "(" + numRe + ")(ch|cm|deg|em|ex|fr|gd|grad|Hz|in|kHz|mm|ms|pc|pt|px|rad|rem|s|turn|vh|vm|vw|%)"
             }, {
-                token : "constant.numeric", // hex6 color
-                regex : "#[a-f0-9]{6}"
+                regex: rgb256Regex,
+                onMatch: rgb256Token
             }, {
-                token : "constant.numeric", // hex3 color
-                regex : "#[a-f0-9]{3}"
+                regex : "#[a-fA-F0-9]{8}", // hex8 color
+                onMatch: colorToken
+            }, {
+                regex : "#[a-fA-F0-9]{6}", // hex6 color
+                onMatch: colorToken
+            }, {
+                regex : "#[A-Fa-f0-9]{3}", // hex3 color
+                onMatch: colorToken
             }, {
                 token : "constant.numeric",
                 regex : numRe
@@ -15542,8 +15551,14 @@ var LessHighlightRules = function() {
                 token : "keyword",
                 regex : "&"   // special case - always treat as keyword
             }, {
-                token : keywordMapper,
-                regex : "\\-?[@a-z_][@a-z0-9_\\-]*"
+                regex : "\\-?[@a-z_][@a-z0-9_\\-]*", 
+                onMatch: function(value, state, stack, line) {
+                    var result = keywordMapper(value);
+                    if (result == "support.constant.color") {
+                        result = colorToken(value, state, stack, line);
+                    }
+                    return result;
+                }
             }, {
                 token: "variable.language",
                 regex: "#[a-z0-9-_]+"
