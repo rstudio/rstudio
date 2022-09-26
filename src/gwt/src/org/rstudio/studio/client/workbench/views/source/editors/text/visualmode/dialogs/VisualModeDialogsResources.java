@@ -40,9 +40,4 @@ public interface VisualModeDialogsResources extends ClientBundle
    
    static VisualModeDialogsResources INSTANCE = GWT.create(VisualModeDialogsResources.class);
 
-   public static void ensureStylesInjected()
-   {
-      INSTANCE.styles().ensureInjected();
-   }
-
 }

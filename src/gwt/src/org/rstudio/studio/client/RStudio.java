@@ -470,11 +470,11 @@ public class RStudio implements EntryPoint
       NewConnectionSnippetDialog.ensureStylesInjected();
       PanmirrorResources.INSTANCE.styles().ensureInjected();
       PanmirrorDialogsResources.INSTANCE.styles().ensureInjected();
-      ZoteroResources.ensureStylesInjected();
+      ZoteroResources.INSTANCE.styles().ensureInjected();
       NewConnectionWizard.ensureStylesInjected();
       SecondaryReposWidget.ensureStylesInjected();
       SecondaryReposDialog.ensureStylesInjected();
-      VisualModeDialogsResources.ensureStylesInjected();
+      VisualModeDialogsResources.INSTANCE.styles().ensureInjected();
 
       StyleInjector.inject(
             "button::-moz-focus-inner {border:0}");

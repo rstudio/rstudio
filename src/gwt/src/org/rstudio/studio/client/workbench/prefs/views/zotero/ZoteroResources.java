@@ -38,10 +38,6 @@ public interface ZoteroResources extends ClientBundle
    Styles styles();
    
    public static final ZoteroResources INSTANCE = GWT.create(ZoteroResources.class);
-   public static void ensureStylesInjected()
-   {
-      INSTANCE.styles().ensureInjected();
-   }
 
 
 }
