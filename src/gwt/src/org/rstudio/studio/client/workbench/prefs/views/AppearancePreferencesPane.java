@@ -240,6 +240,7 @@ public class AppearancePreferencesPane extends PreferencesPane
             },
             false);
       
+      textRendering_.setValue(userPrefs_.textRendering().getGlobalValue());
       textRendering_.getListBox().addChangeHandler(new ChangeHandler()
       {
          @Override
