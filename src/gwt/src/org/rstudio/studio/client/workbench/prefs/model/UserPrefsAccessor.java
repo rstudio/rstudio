@@ -3403,16 +3403,35 @@ public class UserPrefsAccessor extends Prefs
    }
 
    /**
-    * A value, 1-200, for the editor scroll speed.
+    * A integer value, 1-200, to set the editor scroll multiplier. The higher the value, the faster the scrolling.
     */
    public PrefValue<Integer> editorScrollMultiplier()
    {
       return integer(
-              "editor_scroll_multiplier",
-              _constants.editorScrollMultiplierTitle(),
-              _constants.editorScrollMultiplierDescription(),
-              100);
+         "editor_scroll_multiplier",
+         _constants.editorScrollMultiplierTitle(), 
+         _constants.editorScrollMultiplierDescription(), 
+         100);
    }
+
+   /**
+    * Control how text is rendered within the IDE surface.
+    */
+   public PrefValue<String> textRendering()
+   {
+      return enumeration(
+         "text_rendering",
+         _constants.textRenderingTitle(), 
+         _constants.textRenderingDescription(), 
+         new String[] {
+            TEXT_RENDERING_AUTO,
+            TEXT_RENDERING_GEOMETRICPRECISION
+         },
+         "auto");
+   }
+
+   public final static String TEXT_RENDERING_AUTO = "auto";
+   public final static String TEXT_RENDERING_GEOMETRICPRECISION = "geometricPrecision";
 
    public void syncPrefs(String layer, JsObject source)
    {
@@ -3892,6 +3911,8 @@ public class UserPrefsAccessor extends Prefs
          discardPendingConsoleInputOnError().setValue(layer, source.getBool("discard_pending_console_input_on_error"));
       if (source.hasKey("editor_scroll_multiplier"))
          editorScrollMultiplier().setValue(layer, source.getInteger("editor_scroll_multiplier"));
+      if (source.hasKey("text_rendering"))
+         textRendering().setValue(layer, source.getString("text_rendering"));
    }
    public List<PrefValue<?>> allPrefs()
    {
@@ -4134,6 +4155,7 @@ public class UserPrefsAccessor extends Prefs
       prefs.add(nativeFileDialogs());
       prefs.add(discardPendingConsoleInputOnError());
       prefs.add(editorScrollMultiplier());
+      prefs.add(textRendering());
       return prefs;
    }
    

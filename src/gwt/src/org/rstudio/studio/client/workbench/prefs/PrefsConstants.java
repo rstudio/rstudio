@@ -5097,4 +5097,24 @@ public interface PrefsConstants extends com.google.gwt.i18n.client.Messages {
     @DefaultMessage("Show full path to project in window title")
     @Key("fullProjectPathInWindowTitleLabel")
     String fullProjectPathInWindowTitleLabel();
+    
+    /**
+     * Translated "Text rendering:"
+     *
+     * @return translated "Text rendering:"
+     */
+    @DefaultMessage("Text rendering:")
+    @Key("textRenderingLabel")
+    String textRenderingLabel();
+    
+    /**
+     * Translated "Geometric Precision"
+     *
+     * @return translated "Geometric Precision"
+     */
+    @DefaultMessage("Geometric Precision")
+    @Key("geometricPrecision")
+    String geometricPrecision();
+    
+    
 }

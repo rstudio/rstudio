@@ -962,6 +962,11 @@ public class Application implements ApplicationEventHandlers
 
       // Initialize application theme system
       pAppThemes_.get().initializeThemes(rootPanel_.getElement());
+      
+      // Set default text rendering
+      Document.get().getBody().getStyle().setProperty(
+            "textRendering",
+            userPrefs_.get().textRendering().getGlobalValue());
 
       // subscribe to ClientDisconnected event (wait to do this until here
       // because there were spurious ClientDisconnected events occurring

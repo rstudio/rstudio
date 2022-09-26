@@ -1624,6 +1624,13 @@
             "title": "Editor scroll speed sensitivity",
             "type": "integer",
             "default": 100
+        },
+        "text_rendering": {
+            "title": "Text rendering",
+            "description": "Control how text is rendered within the IDE surface.",
+            "type": "string",
+            "enum": ["auto", "geometricPrecision"],
+            "default": "auto"
         }
     }
 }
