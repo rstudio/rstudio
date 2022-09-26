@@ -80,6 +80,7 @@ MimeType s_mimeTypes[] =
       { "css",          "text/css" },
       { "sass",         "text/sass" },
       { "scss",         "text/scss" },
+      { "less",         "text/less" },
       { "gif",          "image/gif" },
       { "jpg",          "image/jpeg" },
       { "jpeg",         "image/jpeg" },

@@ -59,6 +59,7 @@ var HtmlHighlightRules = require("ace/mode/html_highlight_rules").HtmlHighlightR
 var CssHighlightRules = require("ace/mode/css_highlight_rules").CssHighlightRules;
 var ScssHighlightRules = require("ace/mode/scss_highlight_rules").ScssHighlightRules;
 var SassHighlightRules = require("ace/mode/sass_highlight_rules").SassHighlightRules;
+var LessHighlightRules = require("ace/mode/less_highlight_rules").LessHighlightRules;
 var PerlHighlightRules = require("ace/mode/perl_highlight_rules").PerlHighlightRules;
 var PythonHighlightRules = require("mode/python_highlight_rules").PythonHighlightRules;
 var RubyHighlightRules = require("ace/mode/ruby_highlight_rules").RubyHighlightRules;
@@ -207,6 +208,8 @@ var MarkdownHighlightRules = function() {
         github_embed("html", "htmlcode-"),
         github_embed("css", "csscode-"),
         github_embed("scss", "scsscode-"),
+        github_embed("less", "lesscode-"),
+
         github_embed("mermaid", "mermaidcode-"),
         github_embed("dot", "dotcode-"),
         github_embed("perl", "perlcode-"),
@@ -477,6 +480,12 @@ var MarkdownHighlightRules = function() {
     }]);
 
     this.embedRules(SassHighlightRules, "sasscode-", [{
+        token : "support.function",
+        regex : "^\\s*```",
+        next  : "pop"
+    }]);
+
+    this.embedRules(LessHighlightRules, "lesscode-", [{
         token : "support.function",
         regex : "^\\s*```",
         next  : "pop"
