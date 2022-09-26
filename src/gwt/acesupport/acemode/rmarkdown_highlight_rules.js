@@ -35,7 +35,7 @@ var JavaScriptHighlightRules = require("ace/mode/javascript_highlight_rules").Ja
 var CssHighlightRules = require("ace/mode/css_highlight_rules").CssHighlightRules;
 var ScssHighlightRules = require("ace/mode/scss_highlight_rules").ScssHighlightRules;
 var SassHighlightRules = require("ace/mode/sass_highlight_rules").SassHighlightRules;
-var LessHighlightRules = require("ace/mode/sass_highlight_rules").LessHighlightRules;
+var LessHighlightRules = require("ace/mode/less_highlight_rules").LessHighlightRules;
 var TextHighlightRules = require("ace/mode/text_highlight_rules").TextHighlightRules;
 var MermaidHighlightRules = require("mode/mermaid_highlight_rules").MermaidHighlightRules;
 var DotHighlightRules = require("ace/mode/dot_highlight_rules").DotHighlightRules;
@@ -243,8 +243,6 @@ var RMarkdownHighlightRules = function() {
       this.$reChunkEndString,
       ["start", "listblock", "allowBlock"]
    );
-
-
 
    // Embed YAML highlighting rules
    // (Handled specially: should only ever activate on first line of document)
