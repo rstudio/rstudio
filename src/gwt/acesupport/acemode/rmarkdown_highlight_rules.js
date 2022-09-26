@@ -33,6 +33,7 @@ var StanHighlightRules = require("mode/stan_highlight_rules").StanHighlightRules
 var SqlHighlightRules = require("mode/sql_highlight_rules").SqlHighlightRules;
 var JavaScriptHighlightRules = require("ace/mode/javascript_highlight_rules").JavaScriptHighlightRules;
 var CssHighlightRules = require("ace/mode/css_highlight_rules").CssHighlightRules;
+var ScssHighlightRules = require("ace/mode/scss_highlight_rules").ScssHighlightRules;
 var TextHighlightRules = require("ace/mode/text_highlight_rules").TextHighlightRules;
 var MermaidHighlightRules = require("mode/mermaid_highlight_rules").MermaidHighlightRules;
 var DotHighlightRules = require("ace/mode/dot_highlight_rules").DotHighlightRules;
@@ -191,7 +192,7 @@ var RMarkdownHighlightRules = function() {
       ["start", "listblock", "allowBlock"]
    );
 
-   // Embed JavaScript highlighting rules
+   // Embed css highlighting rules
    Utils.embedRules(
       this,
       CssHighlightRules,
@@ -201,6 +202,16 @@ var RMarkdownHighlightRules = function() {
       ["start", "listblock", "allowBlock"]
    );
 
+   // Embed scss highlighting rules
+   Utils.embedRules(
+      this,
+      ScssHighlightRules,
+      "scss",
+      this.$reScssChunkStartString,
+      this.$reChunkEndString,
+      ["start", "listblock", "allowBlock"]
+   );
+   
    // Embed text highlight rules
    Utils.embedRules(
       this,
@@ -262,6 +273,7 @@ oop.inherits(RMarkdownHighlightRules, TextHighlightRules);
    this.$reSqlChunkStartString        = engineRegex("sql");
    this.$reJavaScriptChunkStartString = engineRegex("(?:d3|js|ojs|observable)");
    this.$reCssChunkStartString        = engineRegex("css");
+   this.$reScssChunkStartString       = engineRegex("scss");
    this.$reTextChunkStartString       = engineRegex("(?:asis|text)");
    
 }).call(RMarkdownHighlightRules.prototype);
