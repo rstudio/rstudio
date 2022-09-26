@@ -216,14 +216,6 @@ public interface UserPrefsAccessorConstants extends Constants {
    String numSpacesForTabDescription();
 
    /**
-    * The editor scroll sensitivity.
-    */
-   @DefaultStringValue("Editor scroll speed sensitivity")
-   String editorScrollMultiplierTitle();
-   @DefaultStringValue("The editor scroll speed sensitivity. Higher is faster scrolling.")
-   String editorScrollMultiplierDescription();
-
-   /**
     * Whether to automatically detect indentation settings from file contents.
     */
    @DefaultStringValue("Auto-detect indentation in files")
@@ -1982,6 +1974,22 @@ public interface UserPrefsAccessorConstants extends Constants {
    String discardPendingConsoleInputOnErrorTitle();
    @DefaultStringValue("When enabled, any pending console input will be discarded when an (uncaught) R error occurs.")
    String discardPendingConsoleInputOnErrorDescription();
+
+   /**
+    * A integer value, 1-200, to set the editor scroll multiplier. The higher the value, the faster the scrolling.
+    */
+   @DefaultStringValue("Editor scroll speed sensitivity")
+   String editorScrollMultiplierTitle();
+   @DefaultStringValue("A integer value, 1-200, to set the editor scroll multiplier. The higher the value, the faster the scrolling.")
+   String editorScrollMultiplierDescription();
+
+   /**
+    * Control how text is rendered within the IDE surface.
+    */
+   @DefaultStringValue("Text rendering")
+   String textRenderingTitle();
+   @DefaultStringValue("Control how text is rendered within the IDE surface.")
+   String textRenderingDescription();
 
 
 

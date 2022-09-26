@@ -3105,17 +3105,29 @@ core::Error UserPrefValues::setDiscardPendingConsoleInputOnError(bool val)
 }
 
 /**
- * An integer value, that sets scroll speed multipler in the editor.
+ * A integer value, 1-200, to set the editor scroll multiplier. The higher the value, the faster the scrolling.
  */
-int UserPrefValues::editorScrollSpeed()
+int UserPrefValues::editorScrollMultiplier()
 {
-  return readPref<int>("editor_scroll_multiplier");
+   return readPref<int>("editor_scroll_multiplier");
 }
 
-
-core::Error UserPrefValues::setEditorScrollSpeed(int val)
+core::Error UserPrefValues::setEditorScrollMultiplier(int val)
 {
-  return writePref("editor_scroll_multiplier", val);
+   return writePref("editor_scroll_multiplier", val);
+}
+
+/**
+ * Control how text is rendered within the IDE surface.
+ */
+std::string UserPrefValues::textRendering()
+{
+   return readPref<std::string>("text_rendering");
+}
+
+core::Error UserPrefValues::setTextRendering(std::string val)
+{
+   return writePref("text_rendering", val);
 }
 
 std::vector<std::string> UserPrefValues::allKeys()
@@ -3359,6 +3371,7 @@ std::vector<std::string> UserPrefValues::allKeys()
       kNativeFileDialogs,
       kDiscardPendingConsoleInputOnError,
       kEditorScrollMultiplier,
+      kTextRendering,
    });
 }
    

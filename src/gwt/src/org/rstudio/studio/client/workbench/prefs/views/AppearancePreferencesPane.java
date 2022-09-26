@@ -18,6 +18,7 @@ import com.google.gwt.core.client.GWT;
 import com.google.gwt.core.client.JsArrayString;
 import com.google.gwt.core.client.Scheduler;
 import com.google.gwt.core.client.Scheduler.RepeatingCommand;
+import com.google.gwt.dom.client.Document;
 import com.google.gwt.dom.client.SelectElement;
 import com.google.gwt.dom.client.Style;
 import com.google.gwt.dom.client.Style.Unit;
@@ -51,6 +52,8 @@ import org.rstudio.studio.client.server.ServerRequestCallback;
 import org.rstudio.studio.client.workbench.WorkbenchContext;
 import org.rstudio.studio.client.workbench.prefs.PrefsConstants;
 import org.rstudio.studio.client.workbench.prefs.model.UserPrefs;
+import org.rstudio.studio.client.workbench.prefs.model.UserPrefsAccessor;
+import org.rstudio.studio.client.workbench.prefs.model.UserPrefsAccessorConstants;
 import org.rstudio.studio.client.workbench.prefs.model.UserState;
 import org.rstudio.studio.client.workbench.views.source.editors.text.themes.AceTheme;
 import org.rstudio.studio.client.workbench.views.source.editors.text.themes.AceThemes;
@@ -224,6 +227,29 @@ public class AppearancePreferencesPane extends PreferencesPane
             preview_.setFontSize(Double.parseDouble(fontSize_.getValue()));
          }
       });
+      
+      textRendering_ = new SelectWidget(
+            constants_.textRenderingLabel(),
+            new String[] {
+                  constants_.defaultInParentheses(),
+                  constants_.geometricPrecision(),
+            },
+            new String[] {
+                  UserPrefsAccessor.TEXT_RENDERING_AUTO,
+                  UserPrefsAccessor.TEXT_RENDERING_GEOMETRICPRECISION
+            },
+            false);
+      
+      textRendering_.getListBox().addChangeHandler(new ChangeHandler()
+      {
+         @Override
+         public void onChange(ChangeEvent event)
+         {
+            preview_.getDocument().getBody().getStyle().setProperty(
+                  "textRendering",
+                  textRendering_.getValue());
+         }
+      });
 
       theme_ = new SelectWidget(constants_.appearanceEditorThemeLabel(),
                                 new String[0],
@@ -289,6 +315,7 @@ public class AppearancePreferencesPane extends PreferencesPane
       buttonPanel.add(addThemeButton_);
       buttonPanel.add(removeThemeButton_);
 
+      leftPanel.add(textRendering_);
       leftPanel.add(fontSize_);
       leftPanel.add(theme_);
       leftPanel.add(buttonPanel);
@@ -610,6 +637,13 @@ public class AppearancePreferencesPane extends PreferencesPane
 
       if (relaunchRequired_)
          restartRequirement.setUiReloadRequired(true);
+      
+      String textRendering = textRendering_.getValue();
+      if (!StringUtil.equals(textRendering, userPrefs_.textRendering().getGlobalValue()))
+      {
+         userPrefs_.textRendering().setGlobalValue(textRendering);
+         Document.get().getBody().getStyle().setProperty("textRendering", textRendering);
+      }
 
       String themeName = flatTheme_.getValue();
       if (!StringUtil.equals(themeName, userPrefs_.globalTheme().getGlobalValue()))
@@ -778,6 +812,7 @@ public class AppearancePreferencesPane extends PreferencesPane
    private final UserState userState_;
    private SelectWidget helpFontSize_;
    private SelectWidget fontSize_;
+   private SelectWidget textRendering_;
    private SelectWidget theme_;
    private ThemedButton addThemeButton_;
    private ThemedButton removeThemeButton_;
