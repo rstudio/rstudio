@@ -57,7 +57,8 @@ var JavaScriptHighlightRules = require("ace/mode/javascript_highlight_rules").Ja
 var XmlHighlightRules = require("ace/mode/xml_highlight_rules").XmlHighlightRules;
 var HtmlHighlightRules = require("ace/mode/html_highlight_rules").HtmlHighlightRules;
 var CssHighlightRules = require("ace/mode/css_highlight_rules").CssHighlightRules;
-var ScssHighlightRules = require("ace/mode/css_highlight_rules").ScssHighlightRules;
+var ScssHighlightRules = require("ace/mode/scss_highlight_rules").ScssHighlightRules;
+var SassHighlightRules = require("ace/mode/sass_highlight_rules").SassHighlightRules;
 var PerlHighlightRules = require("ace/mode/perl_highlight_rules").PerlHighlightRules;
 var PythonHighlightRules = require("mode/python_highlight_rules").PythonHighlightRules;
 var RubyHighlightRules = require("ace/mode/ruby_highlight_rules").RubyHighlightRules;
@@ -470,6 +471,12 @@ var MarkdownHighlightRules = function() {
     }]);
 
     this.embedRules(ScssHighlightRules, "scsscode-", [{
+        token : "support.function",
+        regex : "^\\s*```",
+        next  : "pop"
+    }]);
+
+    this.embedRules(SassHighlightRules, "sasscode-", [{
         token : "support.function",
         regex : "^\\s*```",
         next  : "pop"
