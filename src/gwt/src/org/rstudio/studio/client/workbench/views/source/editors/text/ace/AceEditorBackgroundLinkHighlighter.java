@@ -489,7 +489,14 @@ public class AceEditorBackgroundLinkHighlighter
       {
          int startIdx = match.getIndex();
          int endIdx   = match.getIndex() + match.getValue().length();
-
+         
+         // Bail if the issue number is immediately followed by a letter
+         if (line.length() >= endIdx) {
+            char c = line.charAt(endIdx);
+            if ((c >= 'a' && c <= 'z') || (c >= 'A' && c <= 'Z'))
+               continue;
+         }
+         
          if (startIdx > 0 && endIdx < line.length())
          {
             char before = line.charAt(startIdx - 1);
