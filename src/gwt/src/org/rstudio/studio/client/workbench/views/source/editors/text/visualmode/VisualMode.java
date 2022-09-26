@@ -1866,11 +1866,22 @@ public class VisualMode implements VisualModeEditorSync,
       
       // Get all of the chunks from the outline emitted by visual mode
       ArrayList<PanmirrorEditingOutlineLocationItem> chunkItems = new ArrayList<>();
+      PanmirrorEditingOutlineLocationItem lastChunkItem = null;
       for (int j = 0; j < location.items.length; j++)
       {
-         if (StringUtil.equals(location.items[j].type, PanmirrorOutlineItemType.RmdChunk))
+         PanmirrorEditingOutlineLocationItem nextChunkItem = location.items[j];
+         if (StringUtil.equals(nextChunkItem.type, PanmirrorOutlineItemType.RmdChunk))
          {
-            chunkItems.add(location.items[j]);
+            // It is possible for the visual editor to contain two representations of the
+            // same RmdChunk when the chunk is indented. Since the items are sorted by
+            // position, we discard consecutive chunks with identical positions; they
+            // represent the same underlying scope entry.
+            if (lastChunkItem != null && lastChunkItem.position == nextChunkItem.position)
+            {
+               continue;
+            }
+            lastChunkItem = nextChunkItem;
+            chunkItems.add(nextChunkItem);
          }
       }
       
