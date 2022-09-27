@@ -685,7 +685,7 @@ Error isUserLicensed(const system::User& user,
          if (error)
             return error;
 
-         if ((userLimit > 0) || (numActiveUsers > userLimit))
+         if ((userLimit > 0) && (numActiveUsers > userLimit))
          {
             *pLicensed = false;
             return Success();
