@@ -41,7 +41,7 @@
       # the path to the project hosting the document
       # (just in case the user is editing a document that
       # belongs to an alternate project)
-      path <-  substring(props$path, 1L, nchar(props$path) - nchar(props$project_path) - 1L)
+      path <- substring(props$path, 1L, nchar(props$path) - nchar(props$project_path) - 1L)
       return(path)
    }
    
