@@ -74,7 +74,7 @@ These features allow you to control when diagnostics are presented and updated. 
 
 ## Project-Level Diagnostics
 
-You can run the diagnostics engine over all R files in the project either using the code wizard menu, or by pressing <kbd>CTRL + ALT + SHIFT + P</kbd> (<kbd>CMD + ALT + SHIFT + P</kbd> on Mac):
+You can run the diagnostics engine over all R files in the project either using the code wizard menu, or by pressing <kbd>Ctrl + Alt + Shift + P</kbd> (<kbd>Cmd + Alt + Shift + P</kbd> on Mac):
 
 ![](images/project-level-diagnostics.png){fig-alt="A screenshot of the 'Code Tools' dropdown, displaying the ability to 'Show Diagnostics' for an entire project."}
 

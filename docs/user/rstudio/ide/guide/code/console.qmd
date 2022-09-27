@@ -6,7 +6,7 @@ The **Console** in RStudio includes a variety of features intended to make inter
 
 ## Code Completion
 
-RStudio supports the automatic completion of code using the **Tab** key. For example, if an object named `pollResults` exists in the workspace, typing `poll` in the R console and then pressing **Tab** will automatically complete the full name of the object.
+RStudio supports the automatic completion of code using the <kbd>Tab</kbd> key. For example, if an object named `pollResults` exists in the workspace, typing `poll` in the R console and then pressing the <kbd>Tab</kbd> key automatically completes the full name of the object.
 
 The code completion feature also provides inline help for functions whenever possible. For example, typing `med` and then pressing **Tab** would result in a popup of possible auto-completion:
 
@@ -24,7 +24,7 @@ As with the standard R console, the RStudio console supports the ability to reca
 
 -   **Down** --- Reverse of Up
 
-To review a list of recently executed commands use the <kbd>Ctrl+Up</kbd> to review the list (on Mac <kbd>Command-Up<kbd>) and then select a command from this list by pressing <kbd>Enter</kbd>:
+To reuse recently executed commands, use the <kbd>Ctrl+Up</kbd> shortcut to review the list (on Mac <kbd>Command-Up<kbd>) and then select a command from this list by pressing <kbd>Enter</kbd>:
 
 ![](images/retrieve-console-commands.png){fig-alt="A screenshot of the history of commands executed in the RStudio console."}
 
@@ -34,7 +34,7 @@ The same keyboard shortcut can quickly search for commands that match a given pr
 
 ## Console Title Bar
 
-The below screenshot illustrates a few additional capabilities provided by the Console title bar:
+The screenshot below illustrates a few additional capabilities provided by the Console title bar:
 
 -   Display of the current version of R and working directory.
 

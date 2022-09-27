@@ -10,7 +10,7 @@ Source code files such as .R or .py can be executed in several different ways.
 
 ### Executing a Single Line
 
-To execute the line of source code where the cursor currently resides press the **Ctrl+Enter** key (or use the **Run** toolbar button):
+To execute the line of source code where the cursor currently resides press the <kbd>Ctrl+Enter</kbd> keys (or use the **Run** toolbar button):
 
 ![](images/run-current-line.png){fig-alt="A screenshot of the RStudio source pane and the 'Run' button."}
 
@@ -20,11 +20,11 @@ After executing the line of code, RStudio automatically advances the cursor to t
 
 There are three ways to execute multiple lines from within the editor:
 
--   Select the lines and press the **Ctrl+Enter** key (or use the **Run** toolbar button); or
+-   Select the lines and press the <kbd>Ctrl+Enter</kbd> keys (or use the **Run** toolbar button); or
 
 -   After executing a selection of code, use the **Re-Run Previous Region** command (or its associated toolbar button) to run the same selection again. Note that changes to the selection including additional, removal, and modification of lines will be reflected in this subsequent run of the selection.
 
--   To run the entire document press the **Ctrl+Shift+Enter** key (or use the **Source** toolbar button).
+-   To run the entire document press the <kbd>Ctrl+Shift+Enter</kbd> keys (or use the **Source** toolbar button).
 
 The difference between running lines from a selection and invoking **Source** is that when running a selection all lines are inserted directly into the console whereas for **Source** the file is saved to a temporary location and then sourced into the console from there (thereby creating less clutter in the console).
 

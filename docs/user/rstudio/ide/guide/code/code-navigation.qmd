@@ -10,7 +10,7 @@ Given a specific directory, Find in Files allows recursively searching every fil
 
 ![](images/find-in-files.png){fig-alt="A screenshot of the Find in Files popup with the 'Find' text prompt."}
 
-Find in Files also allows for further customization of the search with regular expressions and filters for specific file types. Search results will display in the pane adjacent to the console. For each matching string, the following will be displayed:
+**Find in Files** also allows for further customization of the search with regular expressions and filters for specific file types. Search results will display in the pane adjacent to the console. For each matching string, the following will be displayed:
 
 -   The file path
 
@@ -26,9 +26,9 @@ If the name of the source file or function is known, the "Go to File/Function" s
 
 ![GoToFile.png](images/go-to-function.png){fig-alt="A screenshot of the Go to File/Function menu item on the Source pane of RStudio."}
 
-The "Go to File/Function" feature works from a constantly updated index of your source code. The specific source files to index are determined as follows:
+The **Go to File/Function** feature works from a constantly updated index of your source code. The specific source files to index are determined as follows:
 
-1.  If an [RStudio Project](projects.html) is active then all R source files within the project directory are indexed.
+1.  If an [RStudio Project](projects.html) is active, then all R source files within the project directory are indexed.
 
 2.  If a Project is not active then all currently open R source files are indexed.
 
@@ -38,7 +38,7 @@ The keyboard shortcut for Go to File/Function is <kbd>Ctrl+.</kbd> which will op
 
 ## Go to Function Definition
 
-Since an index of the current Project's source code (as described above) is maintained, RStudio can also help with quick navigation to the definition of any R function. To navigate a function definition place the cursor on the function name (it doesn't have to be fully selected) and then from the RStudio menu choose the **Code** \> **Go to Function Definition** command.
+Since an index of the current Project's source code (as described above) is maintained, RStudio can also help with quick navigation to the definition of any R function. To navigate a function definition, place the cursor on the function name (it doesn't have to be fully selected), and then from the RStudio menu choose the **Code** \> **Go to Function Definition** command.
 
 From either the source editor or the console, the following shortcuts provide access to the function definition:
 
@@ -46,7 +46,7 @@ From either the source editor or the console, the following shortcuts provide ac
 
 -   Using **Ctrl+Click** with the mouse
 
-It is possible to navigate to both user-defined own functions (defined in R source files) and any other function defined within an R package. For functions defined within packages, the code is displayed in a special **Source Viewer** pane which is read-only.
+It is possible to navigate to both user-defined own functions (defined in R source files) and any other function defined within an R package. For functions defined within packages, the code is displayed in a special **Source Viewer** pane, which is read-only.
 
 ## Navigating within a Source File
 
@@ -72,6 +72,7 @@ RStudio maintains a list of active navigations and allows you to traverse them u
 
 -   Jumping to a function using the function menu
 
-**Back** and **Forward** also have dedicated shortcuts via the **Ctrl+F9**/**Ctrl+F10** (**Cmd+F9**/**Cmd+F10** on the Mac) keyboard shortcuts.
+- **Back** shortcut: <kbd>Ctrl+F9</kbd> (<kbd>Cmd+F9</kbd> on Mac)  
+- **Forward** shortcut: <kbd>Ctrl+F10</kbd> (<kbd>Cmd+F10</kbd> on Mac)  
 
 ![](images/back-forward-arrows.png){fig-alt="A screenshot of the Source Pane menu in RStudio and the Back/Forward arrows" width="350" height="35"}

@@ -6,11 +6,14 @@ Code sections provide structure for both navigation and folding of long function
 
 ## Code Folding
 
-The Source pane in RStudio supports both automatic and user-defined folding for regions of code. Code folding provides the ability to easily show and hide blocks of code to make it easier to navigate source files and focus on the coding task at hand. For example, in the following source file the body of the `rescale01` has been folded, indicated by the gutter arrow pointing to the right, instead of the down or up:
+The **Source** pane in RStudio supports both automatic and user-defined folding for regions of code. Code folding provides the ability to easily show and hide blocks of code to make it easier to navigate source files and focus on the coding task at hand. For example, in the following source file the body of the `rescale01` has been folded, indicated by the gutter arrow pointing to the right, instead of the down or up:
 
 ![](images/rescale-function-collapse.png){fig-alt="A screenshot of a collapsed user-defined function."}
 
-To expand the folded region, click on the arrow in the gutter or on the icon that overlays the folded code or use the keyboard shortcut <kbd>Ctrl+Alt+Shift+L</kbd>.
+To expand the folded region:
+- Click on the arrow in the gutter _or_ 
+- Click the icon that overlays the folded code _or_
+- Use the keyboard shortcut <kbd>Ctrl+Alt+Shift+L</kbd>.
 
 ## Foldable Regions
 
@@ -32,7 +35,7 @@ The following screenshot displays the arrow indicators for all the foldable regi
 
 ![](images/rescale-function-labeled.png){fig-alt=""}
 
-Arbitrary selections of code can be folded by using **Edit \> Folding \> Collapse** or the keyboard shortcut: **Alt-L**.
+Arbitrary selections of code can be folded by using **Edit \> Folding \> Collapse**, or the keyboard shortcut: <kbd>Alt+L</kbd>.
 
 Folded regions are preserved while editing a document; however all foldable regions are shown expanded by default when a file is closed and re-opened.
 
@@ -65,9 +68,15 @@ To insert a new code section use the **Code** -\> **Insert Section** command. Al
      ### Section Three ############################# 
      ### Section Three ####
 
-Note that as illustrated above the line can start with any number of pound signs (#) so long as it ends with a space followed by four or more `-`, `=`, or `#` characters.
+::: {callout-tip}
 
-To navigate between code sections use the **Jump To** menu available at the bottom of the editor:
+## Code Section Levels
+
+As illustrated above, the line can start with any number of pound signs (#) so long as it ends with a space followed by four or more `-`, `=`, or `#` characters.
+
+:::
+
+To navigate between code sections, use the **Jump To** menu available at the bottom of the editor:
 
 ![](images/plot-examples-navigation.png){fig-alt="A screenshot of the Jump To Menu, which is at the bottom left of the Source Pane."}
 
@@ -102,5 +111,8 @@ The following menu commands and shortcuts are available for working with folded 
 
     -   **Jump To** --- <kbd>Shift+Alt+J</kbd>
 
-Note that the **Collapse All** command collapses all of the outermost foldable regions (rather than all of the nested regions within the source file).
+::: {callout-tip}
 
+The **Collapse All** command collapses all of the outermost foldable regions (rather than all of the nested regions within the source file).
+
+:::

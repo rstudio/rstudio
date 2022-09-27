@@ -12,13 +12,16 @@ To do this:
 
 2.  Stop the code at the point where you suspect the problem is arising.
 
-3.  Look at and/or walk through the code, step-by-step at that point.
+3.  Review and/or walk through the code, step-by-step at that point.
 
-This documentation covers the last two tasks in detail.
+This documentation covers the last two tasks in detail:
+
+- Enter debug mode  
+- Stopping on a line  
 
 ## Entering debug mode (stopping)
 
-In order to enter debug mode, you'll need to tell R *when* you want to pause the computation. R doesn't have a "pause now" feature (and most computations are so fast that such a feature would not be helpful). Instead, you'll want to set "stop points" prior to starting computation.
+In order to enter debug mode, you need to tell R *when* you want to pause the computation. R doesn't have a "pause now" feature (and most computations are so fast that such a feature would not be helpful). Instead, set "stop points" prior to starting computation.
 
 There are several ways to do this; pick one that corresponds best to the current problem.
 
@@ -26,7 +29,7 @@ There are several ways to do this; pick one that corresponds best to the current
 
 #### Editor breakpoints
 
-The most common (and easiest) way to stop on a line of code is to set a breakpoint on that line. Do this in RStudio by clicking to the left of the line number in the editor, or by pressing **Shift+F9** with the cursor on the desired line.
+The most common (and easiest) way to stop on a line of code is to set a breakpoint on that line. To do this in RStudio, click to the left of the line number in the editor, or press <kbd>Shift+F9</kbd> with the cursor on the desired line.
 
 <details>
 
@@ -121,7 +124,7 @@ This overrides RStudio's error handler settings. Trapping every error will quick
 
 ## Using the debugger
 
-Once the code is stopped, the IDE will automatically enter debug mode, in which a variety of tools for inspecting and altering the state of your program become available. The debugging tools are displayed in a screenshot below, and further explored in the below sections.
+Once the code is stopped, the IDE automatically enters debug mode, in which a variety of tools for inspecting and altering the state of your program become available. The debugging tools are displayed in the screenshot below, and further explored in the below sections.
 
 ![](images/using-the-debugger.png){fig-alt="A screenshot of RStudio displaying example R code with a browser(), the R Console executing within the browser() context, the environment pane, and the traceback to the specific function with the browser." width="750"}
 
@@ -233,7 +236,7 @@ For this reason, breakpoints in Shiny applications *only* work inside the `shiny
 
 ![](images/debug-shiny.png){fig-alt="A screenshot of the debugger operating on a Shiny app"}
 
-Finally, be aware that Shiny's infrastructure will show up in the callstack, and there's quite a lot of it before control reaches your code! The ["Mastering Shiny" Debugging chapter](https://mastering-shiny.org/action-workflow.html#debugging) goes deeper on general Shiny debugging.
+Finally, be aware that Shiny's infrastructure displays in the callstack, and there's quite a lot of it before control reaches your code! The ["Mastering Shiny" Debugging chapter](https://mastering-shiny.org/action-workflow.html#debugging) goes deeper on general Shiny debugging.
 
 ### Debugging in R Markdown documents
 
@@ -266,7 +269,7 @@ options(error = function() {
 })
 ```
 
-This will generate a “no sink to remove” warning when knitr completes; you can safely ignore this warning.
+This generates a “no sink to remove” warning when knitr completes; you can safely ignore this warning.
 
 If you simply want a traceback, the easiest option is to use `rlang::trace_back()`, taking advantage of the `rlang_trace_top_env` option. This ensures that you only see the traceback from your code, instead of all the functions called by RMarkdown and knitr.
 
@@ -282,6 +285,10 @@ Finally, because R Markdown chunks don't contain [source references](http://jour
 
 ### Debugging in Quarto Documents
 
-When debugging Quarto documents with a `knitr` engine, rather than using `quarto::quarto_render()`, use `rmarkdown::render("path/to/file.qmd")`. This will provide the same workflow as above for RMarkdown documents.
+When debugging Quarto documents with a knitr engine, rather than using `quarto::quarto_render()`, use `rmarkdown::render("path/to/file.qmd")`. This will provide the same workflow as above for RMarkdown documents.
 
-Note that using `quarto::quarto_render("path/to/file.qmd")` is currently not compatible with debugging strategies outlined in this documentation.
+::: {.callout-warning}
+
+Using `quarto::quarto_render("path/to/file.qmd")` is currently not compatible with debugging strategies outlined in this documentation.
+
+:::
