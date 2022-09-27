@@ -414,6 +414,11 @@ public class ShellWidget extends Composite implements ShellDisplay,
             false /*ignoreLineCount*/, isAnnouncementEnabled(AriaLiveService.CONSOLE_COMMAND));
    }
 
+   @Override
+   public void consoleShowWidget(String url, int height) {
+      output_.showWidget(url, height);
+   }
+
    private void clearPendingInput()
    {
       pendingInput_.setText("");

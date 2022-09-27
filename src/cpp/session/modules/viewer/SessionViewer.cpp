@@ -521,7 +521,7 @@ void console_viewer(const std::string& url,
          if (isHTMLWidgetPath(filePath))
          {
             // view it
-            consoleShowWidget(path, height);
+            consoleShowWidget(module_context::sessionTempDirUrl(path), height);
          }
       }
    }

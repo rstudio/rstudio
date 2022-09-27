@@ -295,7 +295,7 @@ public class Shell implements ConsoleHistoryAddedEvent.Handler,
 
    @Override
    public void onConsoleShowWidget(ConsoleShowWidgetEvent event) {
-      GWT.log("onConsoleShowWidget:" + event.getURL());
+      view_.consoleShowWidget(event.getURL(), event.getHeight());
    }
 
    public void addKeyDownPreviewHandler(KeyDownPreviewHandler handler)

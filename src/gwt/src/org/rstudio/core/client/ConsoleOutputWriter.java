@@ -17,6 +17,7 @@ package org.rstudio.core.client;
 import java.util.List;
 
 import com.google.gwt.aria.client.Roles;
+import com.google.gwt.core.client.GWT;
 
 import org.rstudio.core.client.dom.DomUtils;
 import org.rstudio.core.client.virtualscroller.VirtualScrollerManager;
@@ -117,16 +118,6 @@ public class ConsoleOutputWriter
       // set the appendTarget to the VirtualConsole bucket if possible
       Element appendTarget = virtualConsole_.getParent();
 
-      if (text.startsWith("\u001b_") && text.endsWith("\u0007"))
-      {
-         Frame frame = new Frame("http://localhost:8787/grid_resource/gridviewer.html?env=package%3Adatasets&obj=mtcars&cache_key=9E14FE8F&max_cols=50");
-         frame.setWidth("100%");
-         frame.setHeight("400px");
-
-         appendTarget.appendChild(frame.getElement());
-         return false;
-      }
-
       // we never want to count lines based on the trailing element so grab its parent, if possible
       // otherwise just grab the outElement
       if (appendTarget.getAttribute("tabindex").equals("-1") && appendTarget.getTagName().equalsIgnoreCase("span"))
@@ -146,6 +137,33 @@ public class ConsoleOutputWriter
          lines_ += newLineCount - oldLineCount;
 
       return ignoreLineCount || !trimExcess();
+   }
+
+   public void showWidget(String url, int height) {
+      Element outEl = output_.getElement();
+
+      // create trailing output console if it doesn't already exist
+      if (virtualConsole_ == null)
+      {
+         SpanElement trailing = Document.get().createSpanElement();
+         trailing.setTabIndex(-1);
+         trailing.setClassName(ConsoleResources.INSTANCE.consoleStyles().outputChunk());
+         Roles.getDocumentRole().set(trailing); // https://github.com/rstudio/rstudio/issues/6884
+         outEl.appendChild(trailing);
+         virtualConsole_ = vcFactory_.create(trailing);
+         virtualConsole_.setVirtualizedDisableOverride(false);
+      }
+
+      // set the appendTarget to the VirtualConsole bucket if possible
+      Element appendTarget = virtualConsole_.getParent();
+
+      Frame frame = new Frame(url);
+      frame.setWidth("100%");
+      if (height > 0) 
+      {
+         frame.setHeight("" + height + "px");
+      }
+      appendTarget.appendChild(frame.getElement());
    }
 
    public boolean trimExcess()

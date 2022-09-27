@@ -32,6 +32,7 @@ public interface ShellDisplay extends ShellOutputWriter,
                                       HasKeyPressHandlers,
                                       HasKeyUpHandlers
 {
+   void consoleShowWidget(String url, int height);
    void consoleWriteInput(String input, String console);
    void consolePrompt(String prompt, boolean showInput);
    void ensureInputVisible();
