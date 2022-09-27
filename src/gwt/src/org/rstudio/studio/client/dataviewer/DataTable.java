@@ -20,11 +20,15 @@ import com.google.gwt.dom.client.Element;
 import com.google.gwt.dom.client.NativeEvent;
 import com.google.gwt.event.dom.client.ClickEvent;
 import com.google.gwt.event.dom.client.ClickHandler;
+import com.google.gwt.event.dom.client.KeyCodes;
 import com.google.gwt.event.logical.shared.ValueChangeEvent;
 import com.google.gwt.event.logical.shared.ValueChangeHandler;
 import com.google.gwt.user.client.ui.SuggestOracle;
 import com.google.gwt.user.client.ui.Widget;
+
+import org.rstudio.core.client.BrowseCap;
 import org.rstudio.core.client.CommandWith2Args;
+import org.rstudio.core.client.command.KeyboardShortcut;
 import org.rstudio.core.client.command.ShortcutManager;
 import org.rstudio.core.client.dom.IFrameElementEx;
 import org.rstudio.core.client.dom.WindowEx;
@@ -32,6 +36,7 @@ import org.rstudio.core.client.events.NativeKeyDownEvent;
 import org.rstudio.core.client.resources.ImageResource2x;
 import org.rstudio.core.client.theme.res.ThemeStyles;
 import org.rstudio.core.client.widget.*;
+import org.rstudio.studio.client.RStudioGinjector;
 
 import java.util.ArrayList;
 
@@ -213,7 +218,27 @@ public class DataTable
    
    private void onKeyDown(NativeEvent event)
    {
-      ShortcutManager.INSTANCE.onKeyDown(new NativeKeyDownEvent(event));
+      // Electron seems to handle keypresses in the main window even if
+      // a sub-frame has focus, so this handler is not necessary there.
+      //
+      // On macOS, we do need to handle Ctrl + W to close the window, though.
+      // 
+      // https://github.com/rstudio/rstudio/issues/12029
+      if (BrowseCap.isElectron())
+      {
+         if (BrowseCap.isMacintoshDesktop())
+         {
+            int modifiers = KeyboardShortcut.getModifierValue(event);
+            if (modifiers == KeyboardShortcut.CTRL && event.getKeyCode() == KeyCodes.KEY_W)
+            {
+               RStudioGinjector.INSTANCE.getCommands().closeSourceDoc().execute();
+            }
+         }
+      }
+      else
+      {
+         ShortcutManager.INSTANCE.onKeyDown(new NativeKeyDownEvent(event));
+      }
    }
 
    public boolean setFilterUIVisible(boolean visible)
