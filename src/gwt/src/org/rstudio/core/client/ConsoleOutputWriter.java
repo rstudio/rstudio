@@ -17,6 +17,7 @@ package org.rstudio.core.client;
 import java.util.List;
 
 import com.google.gwt.aria.client.Roles;
+
 import org.rstudio.core.client.dom.DomUtils;
 import org.rstudio.core.client.virtualscroller.VirtualScrollerManager;
 import org.rstudio.core.client.widget.PreWidget;
@@ -25,6 +26,8 @@ import com.google.gwt.dom.client.Document;
 import com.google.gwt.dom.client.Element;
 import com.google.gwt.dom.client.Node;
 import com.google.gwt.dom.client.SpanElement;
+import com.google.gwt.user.client.ui.Frame;
+
 import org.rstudio.studio.client.workbench.views.console.ConsoleResources;
 
 /**
@@ -85,6 +88,7 @@ public class ConsoleOutputWriter
     * @param isError Is this an error message?
     * @param ignoreLineCount Output without checking buffer length?
     * @param ariaLiveAnnounce Include in arialive output announcement
+
     * @return was this output below the maximum buffer line count?
     */
    public boolean outputToConsole(String text,
@@ -112,6 +116,16 @@ public class ConsoleOutputWriter
 
       // set the appendTarget to the VirtualConsole bucket if possible
       Element appendTarget = virtualConsole_.getParent();
+
+      if (text.startsWith("\u001b_") && text.endsWith("\u0007"))
+      {
+         Frame frame = new Frame("http://localhost:8787/grid_resource/gridviewer.html?env=package%3Adatasets&obj=mtcars&cache_key=9E14FE8F&max_cols=50");
+         frame.setWidth("100%");
+         frame.setHeight("400px");
+
+         appendTarget.appendChild(frame.getElement());
+         return false;
+      }
 
       // we never want to count lines based on the trailing element so grab its parent, if possible
       // otherwise just grab the outElement

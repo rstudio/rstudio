@@ -91,7 +91,8 @@ public class Shell implements ConsoleHistoryAddedEvent.Handler,
                               RunCommandWithDebugEvent.Handler,
                               UnhandledErrorEvent.Handler,
                               SuppressNextShellFocusEvent.Handler,
-                              RestartStatusEvent.Handler
+                              RestartStatusEvent.Handler,
+                              ConsoleShowWidgetEvent.Handler
                               
 {
    static interface Binder extends CommandBinder<Commands, Shell>
@@ -181,6 +182,7 @@ public class Shell implements ConsoleHistoryAddedEvent.Handler,
       eventBus.addHandler(UnhandledErrorEvent.TYPE, this);
       eventBus.addHandler(SuppressNextShellFocusEvent.TYPE, this);
       eventBus.addHandler(RestartStatusEvent.TYPE, this);
+      eventBus.addHandler(ConsoleShowWidgetEvent.TYPE, this);
 
       final CompletionManager completionManager = new RCompletionManager(
             view_.getInputEditorDisplay(),
@@ -289,6 +291,11 @@ public class Shell implements ConsoleHistoryAddedEvent.Handler,
          return;
       }
       view_.getConsoleOutputWriter().focusEnd();
+   }
+
+   @Override
+   public void onConsoleShowWidget(ConsoleShowWidgetEvent event) {
+      GWT.log("onConsoleShowWidget:" + event.getURL());
    }
 
    public void addKeyDownPreviewHandler(KeyDownPreviewHandler handler)
@@ -876,4 +883,5 @@ public class Shell implements ConsoleHistoryAddedEvent.Handler,
    private boolean restoreFocus_ = true;
    private boolean debugging_ = false;
    private static final ConsoleConstants constants_ = GWT.create(ConsoleConstants.class);
+   
 }

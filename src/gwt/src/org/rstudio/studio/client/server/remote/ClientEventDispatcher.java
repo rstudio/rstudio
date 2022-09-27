@@ -1126,6 +1126,11 @@ public class ClientEventDispatcher
          {
             ClipboardActionEvent.Data data = event.getData();
             eventBus_.dispatchEvent(new ClipboardActionEvent(data));
+         } 
+         else if (type == ClientEvent.ConsoleShowWidget)
+         {
+            ConsoleShowWidgetEvent.Data data = event.getData();
+            eventBus_.dispatchEvent(new ConsoleShowWidgetEvent(data));
          }
          else
          {

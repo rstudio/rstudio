@@ -172,6 +172,18 @@
   invisible(.Call("rs_viewer", url, height, PACKAGE = "(embedding)"))
 })
 
+.rs.addApiFunction("console_viewer", function(url, height = NULL) {
+   if (!is.character(url) || (length(url) != 1))
+      stop("url must be a single element character vector.")
+
+   if (identical(height, "maximize"))
+      height <- -1
+
+   if (!is.null(height) && (!is.numeric(height) || (length(height) != 1)))
+      stop("height must be a single element numeric vector or 'maximize'.")
+
+  invisible(.Call("rs_console_viewer", url, height, PACKAGE = "(embedding)"))
+})
 
 .rs.addApiFunction("savePlotAsImage", function(
                    file,

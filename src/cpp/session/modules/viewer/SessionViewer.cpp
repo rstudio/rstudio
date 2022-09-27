@@ -84,6 +84,17 @@ void viewerNavigate(const std::string& url,
    viewerNavigate(url, height, isHTMLWidget, module_context::QuartoNavigate(), bringToFront);
 }
 
+void consoleShowWidget(const std::string& url, int height)
+{
+   // enque the event
+   json::Object dataJson;
+   dataJson["url"] = url_ports::mapUrlPorts(url);
+   dataJson["height"] = height;
+   
+   ClientEvent event(client_events::kConsoleShowWidget, dataJson);
+   module_context::enqueClientEvent(event);
+}
+
 void viewerNavigateToCurrent(bool bringToFront = true)
 {
    module_context::ViewerHistoryEntry current = viewerHistory().current();
@@ -299,6 +310,23 @@ SEXP rs_viewer(SEXP urlSEXP, SEXP heightSEXP)
    return R_NilValue;
 }
 
+SEXP rs_console_viewer(SEXP urlSEXP, SEXP heightSEXP)
+{
+   try
+   {
+      // get the height parameter (0 if null)
+      int height = 0;
+      if (!r::sexp::isNull(heightSEXP))
+         height = r::sexp::asInteger(heightSEXP);
+      std::string url = r::sexp::safeAsString(urlSEXP);
+
+      module_context::console_viewer(url, height);
+   }
+   CATCH_UNEXPECTED_EXCEPTION
+
+   return R_NilValue;
+}
+
 FilePath historySerializationPath()
 {
    FilePath historyPath = module_context::sessionScratchPath()
@@ -336,6 +364,7 @@ namespace viewer {
 Error initialize()
 {
    RS_REGISTER_CALL_METHOD(rs_viewer);
+   RS_REGISTER_CALL_METHOD(rs_console_viewer);
 
    // install event handlers
    using namespace module_context;
@@ -412,7 +441,7 @@ void viewer(const std::string& url,
       {
          // calculate the relative path
          std::string path = filePath.getRelativePath(tempDir);
-
+         
          // add to history and treat as a widget if appropriate
          if (isHTMLWidgetPath(filePath))
          {
@@ -460,6 +489,44 @@ void viewer(const std::string& url,
       viewerNavigate(url, height, false, quartoNav, true);
    }
 }
+
+void console_viewer(const std::string& url,
+                    int height)
+{
+   // transform the url to a localhost:<port>/session one if it's
+   // a path to a file within the R session temporary directory
+
+   if (!boost::algorithm::starts_with(url, "http"))
+   {
+      // get the path to the tempdir and the file
+      FilePath tempDir = module_context::tempDir();
+      FilePath filePath = module_context::resolveAliasedPath(url);
+
+      // canoncialize paths for comparison
+      Error error = core::system::realPath(tempDir, &tempDir);
+      if (error)
+         LOG_ERROR(error);
+      error = core::system::realPath(filePath, &filePath);
+      if (error)
+         LOG_ERROR(error);
+
+      // if it's in the temp dir then we can serve it via the help server,
+      // otherwise we need to show it in an external browser
+      if (filePath.isWithin(tempDir))
+      {
+         // calculate the relative path
+         std::string path = filePath.getRelativePath(tempDir);
+         
+         // add to history and treat as a widget if appropriate
+         if (isHTMLWidgetPath(filePath))
+         {
+            // view it
+            consoleShowWidget(path, height);
+         }
+      }
+   }
+}
+
 
 } // module_context
 

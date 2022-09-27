@@ -203,7 +203,8 @@ class ClientEvent extends JavaScriptObject
    public static final String PresentationPreview = "presentation_preview";
    public static final String SuspendBlocked = "session_suspend_blocked";
    public static final String ClipboardAction = "clipboard_action";
-   
+   public static final String ConsoleShowWidget = "console_show_widget";
+
    protected ClientEvent()
    {
    }
