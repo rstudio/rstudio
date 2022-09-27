@@ -21,8 +21,6 @@ import com.google.gwt.event.dom.client.ClickEvent;
 import com.google.gwt.event.dom.client.ClickHandler;
 import com.google.gwt.event.dom.client.FocusEvent;
 import com.google.gwt.event.dom.client.FocusHandler;
-import com.google.gwt.event.logical.shared.ValueChangeEvent;
-import com.google.gwt.event.logical.shared.ValueChangeHandler;
 import com.google.gwt.event.shared.HandlerRegistration;
 import com.google.gwt.user.client.ui.Widget;
 import com.google.gwt.user.client.ui.MenuItem;
@@ -50,11 +48,12 @@ import org.rstudio.studio.client.workbench.ui.WorkbenchPane;
 import org.rstudio.studio.client.workbench.views.vcs.CheckoutBranchToolbarButton;
 import org.rstudio.studio.client.workbench.views.vcs.CreateBranchToolbarButton;
 import org.rstudio.studio.client.workbench.views.vcs.ViewVcsConstants;
+import org.rstudio.studio.client.workbench.views.vcs.common.events.BranchCaptionChangedEvent;
 import org.rstudio.studio.client.workbench.views.vcs.git.GitPresenter.Display;
 
 import java.util.ArrayList;
 
-public class GitPane extends WorkbenchPane implements Display
+public class GitPane extends WorkbenchPane implements Display, BranchCaptionChangedEvent.Handler
 {
    @Inject
    public GitPane(GitChangelistTablePresenter changelistTablePresenter,
@@ -74,15 +73,7 @@ public class GitPane extends WorkbenchPane implements Display
       prefs_ = prefs;
 
       switchBranchToolbarButton_ = switchBranchToolbarButton;
-      switchBranchToolbarButton_.addValueChangeHandler(new ValueChangeHandler<String>() {
-
-         @Override
-         public void onValueChange(ValueChangeEvent<String> event)
-         {
-            manageToolbarSizes();
-         }
-         
-      });
+      switchBranchToolbarButton.addBranchCaptionChangedHandler(this);
       createBranchToolbarButton_ = createBranchToolbarButton;
 
       table_ = changelistTablePresenter.getView();
@@ -216,6 +207,12 @@ public class GitPane extends WorkbenchPane implements Display
    }
 
    @Override
+   public void onBranchCaptionChanged(BranchCaptionChangedEvent event) 
+   {
+      manageToolbarSizes();
+   }
+
+   @Override
    public void onResize()
    {
       super.onResize();
@@ -230,15 +227,15 @@ public class GitPane extends WorkbenchPane implements Display
       if (width == 0)
          return;
 
-      width = width - switchBranchToolbarButton_.getText().length() * 8 ;
-
+      width = width - switchBranchToolbarButton_.getOffsetWidth() ;
+      
       diffButton_.setText(width > 360, constants_.diffCapitalized());
       commitButton_.setText(width > 360, constants_.commitCapitalized());
-      pullButton_.setText(width > 430, constants_.pullCapitalized());
-      pushButton_.setText(width > 430, constants_.pushCapitalized());
+      pullButton_.setText(width > 400, constants_.pullCapitalized());
+      pushButton_.setText(width > 440, constants_.pushCapitalized());
       historyButton_.setText(width > 470, constants_.historyCapitalized());
-      moreButton_.setText(width > 470, constants_.moreCapitalized());
-      createBranchToolbarButton_.setText(width > 510, constants_.newBranchCapitalized());
+      moreButton_.setText(width > 500, constants_.moreCapitalized());
+      createBranchToolbarButton_.setText(width > 580, constants_.newBranchCapitalized());
    }
 
    @Override
