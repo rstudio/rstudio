@@ -154,6 +154,7 @@ if (identical(as.character(Sys.info()["sysname"]), "Darwin") &&
       
       packratMode <- !is.na(Sys.getenv("R_PACKRAT_MODE", unset = NA))
       
+      repos_missing <- missing(repos)
       if (!is.null(repos) && !packratMode && .rs.loadedPackageUpdates(pkgs)) {
 
          # attempt to determine the install command
@@ -186,7 +187,11 @@ if (identical(as.character(Sys.info()["sysname"]), "Darwin") &&
       })
       
       # call original
-      original(pkgs, lib, repos, ...)
+      if (repos_missing)
+         original(pkgs, lib, ...)   
+      else 
+         original(pkgs, lib, repos, ...)
+      
    })
    
    # whenever a package is removed notify the client (leave attach/detach
