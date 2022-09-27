@@ -5,7 +5,8 @@
 
 * Whether pending console input is discarded on error can now be controlled via a preference in the Console pane. (#10391)
 * Improved handling of diagnostics within pipeline expressions. (#11780)
-* Improved handling of diagnostics within glue() expressions. 
+* Improved handling of diagnostics within glue() expressions.
+* Completions within R Markdown documents now respect the `knitr` `root.dir` chunk option if set. (#12047)
 * RStudio now provides autocompletion results for packages used but not loaded within a project.
 * Improved handling of missing arguments for some functions in the diagnostics system.
 * Code editor can show previews of color in strings (R named colors e.g. "tomato3" or of the forms "#rgb", "#rrggbb", "#rrggbbaa")
