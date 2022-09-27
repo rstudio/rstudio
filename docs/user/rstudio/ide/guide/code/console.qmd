@@ -10,7 +10,7 @@ Copied from: <https://support.rstudio.com/hc/en-us/articles/200404846-Working-in
 
 ## Code Completion
 
-The RStudio supports the automatic completion of code using the **Tab** key. For example, if you have an object named `pollResults` in your workspace you can type `poll` and then **Tab** and RStudio will automatically complete the full name of the object.
+The RStudio IDE supports the automatic completion of code using the **Tab** key. For example, if you have an object named `pollResults` in your workspace you can type `poll` and then **Tab** and RStudio will automatically complete the full name of the object.
 
 The code completion feature also provides inline help for functions whenever possible. For example, if you typed `med` then pressed **Tab** you would see:
 

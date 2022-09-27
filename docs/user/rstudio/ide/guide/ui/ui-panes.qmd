@@ -163,7 +163,7 @@ The package tab allows for viewing currently installed R packages, and has a sea
 
 ### Help
 
-The help tab is used to display package documentation and vignettes. There are arrows for navigating backwards and forwards as additional help pages are viewed. The home icon will return to the general help page, with links to Resources, Manuals, References, and RStudio Support.
+The help tab is used to display package documentation and vignettes. There are arrows for navigating backwards and forwards as additional help pages are viewed. The home icon will return to the general help page, with links to Resources, Manuals, References, and Posit Support.
 
 To get help on a specific R function use the `?functionName` or `help(functionName)` syntax, for example the following code when executed would open the help page for the `paste0()` function:
 

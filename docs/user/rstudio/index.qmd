@@ -49,4 +49,4 @@ The following documentation helps a user understand the core workflows in RStudi
 ### Additional Resources
 
 - [RStudio Extensions](https://rstudio.github.io/rstudio-extensions/index.html)
-- [RStudio Support tagged IDE](https://support.rstudio.com/hc/en-us/sections/203994097-RStudio-IDE)
+- [Posit Support tagged IDE](https://support.rstudio.com/hc/en-us/sections/203994097-RStudio-IDE)

@@ -3185,7 +3185,7 @@ public interface CmdConstants extends Constants {
     String rstudioCommunityForumMenuLabel();
     
     // rstudioSupport
-    @DefaultStringValue("RStudio _Support") // $NON-NLS-1$
+    @DefaultStringValue("Posit _Support") // $NON-NLS-1$
     String rstudioSupportMenuLabel();
     
     // rstudioLicense

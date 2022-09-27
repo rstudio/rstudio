@@ -3570,7 +3570,7 @@ See `/src/gwt/tools/i18n-helpers/README.md`.
         windowMode="main"/>
 
    <cmd id="rstudioSupport"
-        menuLabel="RStudio _Support"
+        menuLabel="Posit _Support"
         rebindable="false"
         windowMode="main"/>
 
