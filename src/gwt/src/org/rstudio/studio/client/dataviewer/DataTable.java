@@ -234,6 +234,10 @@ public class DataTable
                RStudioGinjector.INSTANCE.getCommands().closeSourceDoc().execute();
             }
          }
+         else
+         {
+            // Intentionally do nothing -- see notes above
+         }
       }
       else
       {
