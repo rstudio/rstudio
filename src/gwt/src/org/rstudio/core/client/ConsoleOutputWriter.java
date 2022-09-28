@@ -17,17 +17,17 @@ package org.rstudio.core.client;
 import java.util.List;
 
 import com.google.gwt.aria.client.Roles;
-import com.google.gwt.core.client.GWT;
 
 import org.rstudio.core.client.dom.DomUtils;
 import org.rstudio.core.client.virtualscroller.VirtualScrollerManager;
 import org.rstudio.core.client.widget.PreWidget;
+import org.rstudio.core.client.widget.RStudioFrame;
 
 import com.google.gwt.dom.client.Document;
 import com.google.gwt.dom.client.Element;
 import com.google.gwt.dom.client.Node;
 import com.google.gwt.dom.client.SpanElement;
-import com.google.gwt.user.client.ui.Frame;
+import com.google.gwt.user.client.Timer;
 
 import org.rstudio.studio.client.workbench.views.console.ConsoleResources;
 
@@ -82,6 +82,24 @@ public class ConsoleOutputWriter
       trimExcess();
    }
 
+   private void initVirtualConsole() 
+   {
+      Element outEl = output_.getElement();
+
+      // create trailing output console if it doesn't already exist
+      if (virtualConsole_ == null)
+      {
+         SpanElement trailing = Document.get().createSpanElement();
+         trailing.setTabIndex(-1);
+         trailing.setClassName(ConsoleResources.INSTANCE.consoleStyles().outputChunk());
+         Roles.getDocumentRole().set(trailing); // https://github.com/rstudio/rstudio/issues/6884
+         outEl.appendChild(trailing);
+         virtualConsole_ = vcFactory_.create(trailing);
+         virtualConsole_.setVirtualizedDisableOverride(false);
+      }
+
+   }
+
    /**
     * Send text to the console
     * @param text Text to output
@@ -102,18 +120,7 @@ public class ConsoleOutputWriter
          clearConsoleOutput();
 
       Element outEl = output_.getElement();
-
-      // create trailing output console if it doesn't already exist
-      if (virtualConsole_ == null)
-      {
-         SpanElement trailing = Document.get().createSpanElement();
-         trailing.setTabIndex(-1);
-         trailing.setClassName(ConsoleResources.INSTANCE.consoleStyles().outputChunk());
-         Roles.getDocumentRole().set(trailing); // https://github.com/rstudio/rstudio/issues/6884
-         outEl.appendChild(trailing);
-         virtualConsole_ = vcFactory_.create(trailing);
-         virtualConsole_.setVirtualizedDisableOverride(false);
-      }
+      initVirtualConsole();
 
       // set the appendTarget to the VirtualConsole bucket if possible
       Element appendTarget = virtualConsole_.getParent();
@@ -140,30 +147,35 @@ public class ConsoleOutputWriter
    }
 
    public void showWidget(String url, int height) {
-      Element outEl = output_.getElement();
-
-      // create trailing output console if it doesn't already exist
-      if (virtualConsole_ == null)
-      {
-         SpanElement trailing = Document.get().createSpanElement();
-         trailing.setTabIndex(-1);
-         trailing.setClassName(ConsoleResources.INSTANCE.consoleStyles().outputChunk());
-         Roles.getDocumentRole().set(trailing); // https://github.com/rstudio/rstudio/issues/6884
-         outEl.appendChild(trailing);
-         virtualConsole_ = vcFactory_.create(trailing);
-         virtualConsole_.setVirtualizedDisableOverride(false);
-      }
+      initVirtualConsole();
 
       // set the appendTarget to the VirtualConsole bucket if possible
       Element appendTarget = virtualConsole_.getParent();
 
-      Frame frame = new Frame(url);
+      RStudioFrame frame = new RStudioFrame("", url);
       frame.setWidth("100%");
+      frame.getIFrame().setFrameBorder(0);
+      appendTarget.appendChild(frame.getElement());
+
       if (height > 0) 
       {
          frame.setHeight("" + height + "px");
+      } 
+      else
+      {
+         // TODO: this should rather be done after the frame is loaded
+
+         // if height not specified, render then squeeze to body height
+         new Timer()
+         {
+            @Override
+            public void run()
+            {
+               int bodyHeight = frame.getWindow().getDocument().getBody().getClientHeight() + 20;
+               frame.setHeight("" + bodyHeight + "px");
+            }
+         }.schedule(500);
       }
-      appendTarget.appendChild(frame.getElement());
    }
 
    public boolean trimExcess()
