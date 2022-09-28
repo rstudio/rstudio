@@ -39,6 +39,7 @@ export const kLogLevel = 'log-level';
 export const kDelaySession = 'session-delay';
 export const kSessionExit = 'session-exit';
 export const kHelp = '--help';
+export const kSplashForce = 'startup-delay';
 
 // RStudio Pro Only
 // export const kSessionServerOption = '--session-server';
@@ -129,6 +130,11 @@ export class ArgsManager {
     // switch for setting a session start delay in seconds (used for testing, troubleshooting)
     if (app.commandLine.hasSwitch(kDelaySession)) {
       application.sessionStartDelaySeconds = 5;
+    }
+
+    // switch for forcing the splash to show by adding a startup delay
+    if (app.commandLine.hasSwitch(kSplashForce)) {
+      application.startupDelay = 5;
     }
 
     // switch for forcing rsession to exit immediately with non-zero exit code
