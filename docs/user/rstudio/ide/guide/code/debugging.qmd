@@ -2,31 +2,34 @@
 title: "Debugging"
 ---
 
-Debugging in R is a broad topic. In this article, we focus specifically on the R debugging tools built into the RStudio; for more general advice on debugging in R (such as philosophy and problem-solving strategies), we recommend this resource from Hadley Wickham: [Debugging from Advanced R](https://adv-r.hadley.nz/debugging.html)
+Debugging in R is a broad topic. This documentation focuses specifically on the R debugging tools built into the RStudio. The [Advanced R - Debugging chapter](https://adv-r.hadley.nz/debugging.html) provides more general advice on debugging in R (such as philosophy and problem-solving strategies).
 
-Copied from <https://support.rstudio.com/hc/en-us/articles/205612627-Debugging-with-the-RStudio-IDE>
+In a very general sense, debugging is designed to help find bugs by figuring out where the code is not behaving as expected. 
 
-In a very general sense, debugging is designed to help you find bugs by figuring out where the code is not behaving in the way that you expect. To do this, you need to:
+To do this:
 
-1.  Begin running the code
+1.  Begin running the code.
 
-2.  Stop the code at the point where you suspect the problem is arising, and
+2.  Stop the code at the point where you suspect the problem is arising.
 
-3.  Look at and/or walk through the code, step-by-step at that point.
+3.  Review and/or walk through the code, step-by-step at that point.
 
-We'll look at these last two tasks in detail.
+This documentation covers the last two tasks in detail:
+
+- Enter debug mode  
+- Stopping on a line  
 
 ## Entering debug mode (stopping)
 
-In order to enter debug mode, you'll need to tell R *when* you want to pause the computation. R doesn't have a "pause now" feature (and most computations are so fast that such a feature would not be helpful!). Instead, you'll want to "set your traps" prior to starting your computation.
+In order to enter debug mode, you need to tell R *when* you want to pause the computation. R doesn't have a "pause now" feature (and most computations are so fast that such a feature would not be helpful). Instead, set "stop points" prior to starting computation.
 
-There are several ways to do this; pick one that corresponds best to your problem.
+There are several ways to do this; pick one that corresponds best to the current problem.
 
 ### Stopping on a line
 
 #### Editor breakpoints
 
-The most common (and easiest) way to stop on a line of code is to set a breakpoint on that line. You can do this in RStudio by clicking to the left of the line number in the editor, or by pressing **Shift+F9** with your cursor on the desired line.
+The most common (and easiest) way to stop on a line of code is to set a breakpoint on that line. To do this in RStudio, click to the left of the line number in the editor, or press <kbd>Shift+F9</kbd> with the cursor on the desired line.
 
 <details>
 
@@ -60,25 +63,25 @@ biggest_palindrome()
 
 ![](images/breakpoint-rstudio.png){fig-alt="A screenshot of example R code, displaying a red break point in the left gutter of the code." width="400"}
 
-We call this an "editor breakpoint". Editor breakpoints take effect immediately and don't require you to change your code (unlike `browser()` breakpoints, below).
+This is an "editor breakpoint". Editor breakpoints take effect immediately and don't require changes to the code (unlike `browser()` breakpoints, below).
 
 Editor breakpoints work by injecting some tracing code into the R function object. R function objects that include this tracing code have a red dot in the environment pane, indicating that they contain breakpoints.
 
 ![](images/breakpoint-environment.png){fig-alt="A screenshot of the RStudio Environment pane, indicating a breakpoint function with a red circle." width="250"}
 
-If the function object doesn't exist yet (for instance, because you haven't called `source()` on the file), or the function object doesn't match the contents of the editor (for instance, because you've changed the file since the last `source()`), the breakpoint will be deferred.
+If the function object doesn't exist yet (for instance, because `source()` hasn't been called on the file), or the function object doesn't match the contents of the editor (for instance, because the file has changed since the last `source()`), the breakpoint will be deferred.
 
 ![](images/breakpoint-sourced.png){fig-alt="A screenshot of example R code and a warning that 'breakpoints will be activated when this file is sourced.'" width="350"}
 
-The circle outline indicates that RStudio is aware of the breakpoint, but that it hasn't been injected. In most cases, you can `source()` the file to resolve the problem.
+The hollow red circle indicates that RStudio is aware of the breakpoint, but that it hasn't been injected. In most cases, call `source()` on the file to resolve this problem.
 
 #### browser() breakpoints
 
-The R function [`browser()`](https://stat.ethz.ch/R-manual/R-devel/library/base/html/browser.html) halts execution and invokes an environment browser when it is called. You can put `browser()` anywhere in your code to stop at that point in the code for debugging. Here, for instance, it's used to halt when a function is about to return `TRUE`:
+The R function [`browser()`](https://stat.ethz.ch/R-manual/R-devel/library/base/html/browser.html) halts execution and invokes an environment browser when it is called. A `browser()` call can be added anywhere in the code to stop at that point in the code for debugging. Here, for instance, it's used to halt when a function is about to return `TRUE`:
 
 ![](images/browser-debug.png){fig-alt="A screenshot of R code with a browser() call, along with the traceback." width="450"}
 
-Unlike an editor breakpoint, the `browser()` statement is actually part of your code, so it needs to be applied like any other code change in order to become active (by sourcing the containing document, rebuilding the containing package, reloading the Shiny application, etc.).
+Unlike an editor breakpoint, the `browser()` statement is actually part of the code, so it needs to be applied like any other code change in order to become active (by sourcing the containing document, rebuilding the containing package, reloading the Shiny application, etc.).
 
 The environment browser invoked by `browser()` is the same one used in all of the other debugging facilities, so it can be considered the lowest-level debugging tool. Because the `browser()` statement requires no special tooling, it can be used in contexts where editor breakpoints won't work.
 
@@ -93,25 +96,25 @@ The environment browser invoked by `browser()` is the same one used in all of th
 
 ### Stopping when a function executes
 
-If you have the .R file corresponding to the code you want to debug, it's easy to use editor breakpoints or `browser()` to add breakpoints to it. Sometimes, however, you don't have the source file for the code you want to debug.
+If there is a local copy of the .R file corresponding to the code needing debugging, it's easy to use editor breakpoints or `browser()` to add breakpoints to it. Sometimes, however, there isn't a source file for the code.
 
-When this is the case, you can **set a debug flag** on the function you want to debug. You can think of this as setting a breakpoint before the very first statement in a function; it does not change the function itself, but it causes the debugger to activate immediately when the function is run.
+When this is the case, **set a debug flag** on the function to debug. This is similar to setting a breakpoint before the very first statement in a function; it does not change the function itself, but it causes the debugger to activate immediately when the function is run.
 
-Use the R function [`debugonce()`](https://stat.ethz.ch/R-manual/R-devel/library/base/html/debug.html) to set the debug flag on a function. For instance, if you want to debug `devtools::install()`:
+Use the R function [`debugonce()`](https://stat.ethz.ch/R-manual/R-devel/library/base/html/debug.html) to set the debug flag on a function. For instance, to debug `devtools::install()`:
 
     > debugonce(devtools::install)
 
-`debugonce()` sets a one-shot breakpoint--that is, the function will enter the debugger the very next time it runs, but not after that. If you want to debug a function *every* time it executes, call `debug(...)` on the function. Call `undebug(...)` on the function when you no longer want to debug the function each time it executes. We don't recommend this pattern, since it can leave you trapped in the debugger for some special functions.
+`debugonce()` sets a one-shot breakpoint--that is, the function will enter the debugger the very next time it runs, but not after that. To debug a function *every* time it executes, call `debug(...)` on the function. Call `undebug(...)` on the function when to stop debugging the function each time it executes. We don't recommend this pattern, since it can leave you trapped in the debugger for some special functions.
 
 ### Stopping when an error occurs
 
-If you're diagnosing a specific error, you can have RStudio halt execution at the point where the error is raised. To do this, go to *Debug -\> On Error* and change the value from "Error Inspector" to "Break in Code".
+When diagnosing a specific error, RStudio can halt execution at the point where the error is raised. To do this, go to *Debug -\> On Error* and change the value from "Error Inspector" to "Break in Code".
 
 ![](images/error-inspector.png){fig-alt="A screenshot of the Debug Menu in RStudio and selecting 'On Error > Error Inspector'" width="350"}
 
 To keep the the debugger from being invoked whenever any error anywhere happens, RStudio does not invoke the debugger if it looks like none of your own code is on the stack. If you find that this is excluding an error you want to catch, go to *Tools -\> Global Options* and uncheck "Use debug error handler only when my code contains errors".
 
-If you really want to invoke the debugger on every error, always, this will do the job:
+The following code will always invoke the debugger on every error:
 
 ``` r
 options(error = browser())
@@ -121,7 +124,7 @@ This overrides RStudio's error handler settings. Trapping every error will quick
 
 ## Using the debugger
 
-Once your code is stopped, the IDE will automatically enter debug mode, in which a variety of tools for inspecting and altering the state of your program become available. We'll look at each in turn.
+Once the code is stopped, the IDE automatically enters debug mode, in which a variety of tools for inspecting and altering the state of your program become available. The debugging tools are displayed in the screenshot below, and further explored in the below sections.
 
 ![](images/using-the-debugger.png){fig-alt="A screenshot of RStudio displaying example R code with a browser(), the R Console executing within the browser() context, the environment pane, and the traceback to the specific function with the browser." width="750"}
 
@@ -233,7 +236,7 @@ For this reason, breakpoints in Shiny applications *only* work inside the `shiny
 
 ![](images/debug-shiny.png){fig-alt="A screenshot of the debugger operating on a Shiny app"}
 
-Finally, be aware that Shiny's infrastructure will show up in the callstack, and there's quite a lot of it before control reaches your code!
+Finally, be aware that Shiny's infrastructure displays in the callstack, and there's quite a lot of it before control reaches your code! The ["Mastering Shiny" Debugging chapter](https://mastering-shiny.org/action-workflow.html#debugging) goes deeper on general Shiny debugging.
 
 ### Debugging in R Markdown documents
 
@@ -243,16 +246,49 @@ By default, RStudio renders R Markdown documents using a separate R process when
 
 To do this, call `rmarkdown::render()` directly on your file:
 
-    > rmarkdown::render("~/mydocs/doc.Rmd") 
+```r
+rmarkdown::render("path/to/file.Rmd")
+```
+
+This runs the code in the current session, which makes it easier to debug. If doing this makes the problem go away, you’ll need to figure out what makes the environments different.
+
+If the problem persists, you’ll need to use your interactive debugging skills.
 
 When the interactive debugger shows up in the console, it will not print user output. If you want to see output in the console, you should use `sink()`.
 
-    Browse[1]> sink()
+```r
+Browse[1]> sink()
+```
 
-Finally, because R Markdown chunks don't contain [source references](http://journal.r-project.org/archive/2010-2/RJournal_2010-2_Murdoch.pdf), most of the debugger's visual features are disabled; you won't see the active line highlighting in the editor and most debugging will need to be done in the console.
+This removes the default sink that knitr uses to capture all output, and ensures that you can see the results in the console. For example, to use `recover()` with RMarkdown, you’d put the following code in your setup block:
+
+```r
+options(error = function() {
+  sink()
+  recover()
+})
+```
+
+This generates a “no sink to remove” warning when knitr completes; you can safely ignore this warning.
+
+If you simply want a traceback, the easiest option is to use `rlang::trace_back()`, taking advantage of the `rlang_trace_top_env` option. This ensures that you only see the traceback from your code, instead of all the functions called by RMarkdown and knitr.
+
+```r
+options(rlang_trace_top_env = rlang::current_env())
+options(error = function() {
+  sink()
+  print(rlang::trace_back(bottom = sys.frame(-1)), simplify = "none")
+})
+```
+
+Finally, because R Markdown chunks don't contain [source references](http://journal.r-project.org/archive/2010-2/RJournal_2010-2_Murdoch.pdf), most of the debugger's visual features are disabled; you won't see the active line highlighting in the editor and most debugging will need to be done in the console. The ["Advanced R" - Debugging RMarkdown chapter](https://adv-r.hadley.nz/debugging.html#rmarkdown) has does deeper on general RMarkdown debugging.
 
 ### Debugging in Quarto Documents
 
-## Additional Resources
+When debugging Quarto documents with a knitr engine, rather than using `quarto::quarto_render()`, use `rmarkdown::render("path/to/file.qmd")`. This will provide the same workflow as above for RMarkdown documents.
 
-https://adv-r.hadley.nz/debugging.html
+::: {.callout-warning}
+
+Using `quarto::quarto_render("path/to/file.qmd")` is currently not compatible with debugging strategies outlined in this documentation.
+
+:::
