@@ -208,6 +208,7 @@ var MarkdownHighlightRules = function() {
         github_embed("html", "htmlcode-"),
         github_embed("css", "csscode-"),
         github_embed("scss", "scsscode-"),
+        github_embed("sass", "sasscode-"),
         github_embed("less", "lesscode-"),
 
         github_embed("mermaid", "mermaidcode-"),
