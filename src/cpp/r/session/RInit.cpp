@@ -392,6 +392,13 @@ void ensureDeserialized()
       s_deferredDeserializationAction.clear();
    }
 }
+
+bool isSessionRestored()
+{
+   if (s_deferredDeserializationAction)
+      return false;
+   return true;
+}
    
 FilePath rHistoryFilePath()
 {

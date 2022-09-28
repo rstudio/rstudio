@@ -53,6 +53,11 @@ bool isSessionInitialized()
    return s_sessionInitialized;
 }
 
+bool isSessionInitializedAndRestored()
+{
+   return isSessionInitialized() && rstudio::r::session::isSessionRestored();
+}
+
 } // namespace init
 } // namespace session
 } // namespace rstudio
