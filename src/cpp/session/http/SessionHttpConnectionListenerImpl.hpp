@@ -354,7 +354,7 @@ private:
             eventsActive_ = false;
          }
          if (options().handleOfflineEnabled() && options().handleOfflineTimeoutMs() == 0 &&
-             rpc::isOfflineableRequest(ptrHttpConnection) && init::isSessionInitialized())
+             rpc::isOfflineableRequest(ptrHttpConnection) && init::isSessionInitializedAndRestored())
          {
             // TODO: handleOffline - should these be put into a separate queue and run in a dedicated thread?
             if (http_methods::protocolDebugEnabled())

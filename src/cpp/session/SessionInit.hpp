@@ -27,6 +27,7 @@ namespace init {
 
 void ensureSessionInitialized();
 bool isSessionInitialized();
+bool isSessionInitializedAndRestored();
 
 } // namespace init
 } // namespace session

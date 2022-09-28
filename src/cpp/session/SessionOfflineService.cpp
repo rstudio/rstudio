@@ -232,7 +232,7 @@ void OfflineService::run()
             std::chrono::steady_clock::time_point now = std::chrono::steady_clock::now();
 
 	    // Make sure session is initialized before doing any processing in the offline thread to avoid the call to lazily init it
-            if (handleOfflineMillis > 0 && init::isSessionInitialized())
+            if (handleOfflineMillis > 0 && init::isSessionInitializedAndRestored())
             {
                boost::shared_ptr<HttpConnection> ptrConnection;
                do

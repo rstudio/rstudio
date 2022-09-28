@@ -216,6 +216,9 @@ core::Error run(const ROptions& options, const RCallbacks& callbacks);
    
 // deferred deserialization of the session
 void ensureDeserialized();
+
+// returns false if there is a pending deferred deserialization of session data
+bool isSessionRestored();
       
 // set client metrics 
 void setClientMetrics(const RClientMetrics& metrics);
