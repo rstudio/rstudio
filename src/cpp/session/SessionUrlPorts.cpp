@@ -35,27 +35,51 @@ namespace {
 // places)
 SEXP rs_translateLocalUrl(SEXP url, SEXP absolute)
 {
-   if (options().programMode() == kSessionProgramModeDesktop)
+   auto localUrl = r::sexp::safeAsString(url);
+   auto transformedUrl = translateLocalUrl(localUrl, r::sexp::asLogical(absolute));
+   if (localUrl == transformedUrl)
    {
-      // Return the URL, unchanged, in desktop mode
+      // No change
       return url;
    }
 
+   // Return the transformed URL
+   r::sexp::Protect protect;
+   return r::sexp::create(transformedUrl, &protect);
+}
+
+} // anonymous namespace
+
+std::string translateLocalUrl(const std::string& localUrl, bool absolute)
+{
+   if (options().programMode() == kSessionProgramModeDesktop)
+   {
+      // Return the URL, unchanged, in desktop mode
+      return localUrl;
+   }
+
    // Transform the URL
-   auto localUrl = r::sexp::safeAsString(url);
    auto transformed = mapUrlPorts(localUrl);
    if (transformed == localUrl)
    {
       // No transformation was necessary
-      return url;
+      return localUrl;
+   }
+
+   auto prefix = persistentState().activeClientUrl();
+   if (!prefix.empty() && localUrl.rfind(prefix, 0) == 0)
+   {
+      // Transformation is not necessary because it's not a hidden port.
+      // e.g.: rstudioapi::translateLocalUrl(rstudioapi::translateLocalUrl("http://127.0.0.1:9000", TRUE), TRUE)
+      // should NOT return a URL with TWO portmaps
+      return localUrl;
    }
 
    // The URL was transformed. mapUrlPorts takes an absolute URL and returns a relative URL like
    // "p/08afc455", so make it absolute again if requested by prefixing it with the URL of the
    // connected client.
-   if (r::sexp::asLogical(absolute))
+   if (absolute)
    {
-      auto prefix = persistentState().activeClientUrl();
       if (!prefix.empty())
       {
          // Ensure trailing slash before we stick the strings, since mapUrlPorts doesn't return one
@@ -66,13 +90,8 @@ SEXP rs_translateLocalUrl(SEXP url, SEXP absolute)
          transformed = prefix + transformed;
       }
    }
-
-   // Return the transformed URL
-   r::sexp::Protect protect;
-   return r::sexp::create(transformed, &protect);
+   return transformed;
 }
-
-} // anonymous namespace
 
 // given a url, return a portmap path if applicable (i.e. we're in server
 // mode and the path needs port mapping), and the unmodified url otherwise

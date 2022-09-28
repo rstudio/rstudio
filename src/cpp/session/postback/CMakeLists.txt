@@ -53,6 +53,7 @@ configure_file(rpostback-pdfviewer ${POSTBACK_SCRIPT_DIR}/rpostback-pdfviewer)
 configure_file(rpostback-gitssh ${POSTBACK_SCRIPT_DIR}/rpostback-gitssh)
 configure_file(rpostback-askpass ${POSTBACK_SCRIPT_DIR}/rpostback-askpass)
 configure_file(askpass-passthrough ${POSTBACK_SCRIPT_DIR}/askpass-passthrough)
+configure_file(rpostback-browser ${POSTBACK_SCRIPT_DIR}/rpostback-browser)
 
 # put rpostback in a place where it can be found for dev config
 if(NOT RSTUDIO_PACKAGE_BUILD)

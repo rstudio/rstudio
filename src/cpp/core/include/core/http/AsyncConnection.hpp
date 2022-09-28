@@ -57,12 +57,14 @@ public:
 
    // populate or set response then call writeResponse when done
    virtual http::Response& response() = 0;
-   virtual void writeResponse(bool close = true) = 0;
+   virtual void writeResponse(bool close = true,
+                              Socket::Handler handler = Socket::NullHandler) = 0;
 
    // simple wrappers for writing an existing response or error
    virtual void writeResponse(const http::Response& response,
                               bool close = true,
-                              const http::Headers& extraHeaders = http::Headers()) = 0;
+                              const http::Headers& extraHeaders = http::Headers(),
+                              Socket::Handler handler = Socket::NullHandler) = 0;
 
    // writes only the headers and not any body data
    // useful for chunked encoding (streaming)

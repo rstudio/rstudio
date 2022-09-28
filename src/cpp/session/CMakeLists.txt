@@ -308,6 +308,7 @@ set(SESSION_SOURCE_FILES
    modules/quarto/SessionQuartoServe.cpp
    modules/quarto/SessionQuartoXRefs.cpp
    modules/shiny/SessionShiny.cpp
+   modules/shiny/SessionPyShiny.cpp
    modules/shiny/ShinyAsyncJob.cpp
    modules/sql/SessionSql.cpp
    modules/stan/SessionStan.cpp

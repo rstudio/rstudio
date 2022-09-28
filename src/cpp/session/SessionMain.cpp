@@ -191,6 +191,7 @@
 #include "modules/rmarkdown/SessionBookdown.hpp"
 #include "modules/quarto/SessionQuarto.hpp"
 #include "modules/shiny/SessionShiny.hpp"
+#include "modules/shiny/SessionPyShiny.hpp"
 #include "modules/sql/SessionSql.hpp"
 #include "modules/stan/SessionStan.hpp"
 #include "modules/viewer/SessionViewer.hpp"
@@ -600,6 +601,7 @@ Error rInit(const rstudio::r::session::RInitInfo& rInitInfo)
       (modules::rmarkdown::templates::initialize)
       (modules::rmarkdown::bookdown::initialize)
       (modules::rpubs::initialize)
+      (modules::pyshiny::initialize)
       (modules::shiny::initialize)
       (modules::sql::initialize)
       (modules::stan::initialize)

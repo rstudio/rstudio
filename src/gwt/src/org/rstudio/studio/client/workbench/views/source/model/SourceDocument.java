@@ -218,4 +218,6 @@ public class SourceDocument extends JavaScriptObject
    public final static String XT_SQL_PREVIEWABLE = "sql-previewable";
    public final static String XT_PLUMBER_API = "plumber-api";
    public final static String XT_R_CUSTOM_SOURCE = "r-custom-source";
+   public final static String XT_PY_SHINY_PREFIX = "pyshiny-";
+   public final static String XT_PY_SHINY = "pyshiny-app";
 }

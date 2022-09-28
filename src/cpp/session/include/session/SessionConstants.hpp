@@ -43,6 +43,10 @@
 
 #define kRStudioUserHomePage              "RSTUDIO_USER_HOME_PAGE"
 
+#define kSessionUrlEnvVar                 "RS_SESSION_URL"
+#define kServerUrlEnvVar                  "RS_SERVER_URL"
+#define kPortTokenEnvVar                  "RS_PORT_TOKEN"
+
 #define kSessionSslCertEnvVar             "RS_SESSION_SSL_CERT"
 #define kSessionSslCertKeyEnvVar          "RS_SESSION_SSL_CERT_KEY"
 #define kSessionSslCertPathEnvVar         "RS_SESSION_SSL_CERT_PATH"

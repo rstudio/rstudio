@@ -321,6 +321,12 @@ std::string urlPathForSessionScope(const SessionScope& scope)
    std::string project = http::util::urlEncode(scope.projectId().asString());
    boost::algorithm::replace_all(project, "%2F", "/");
 
+   // This seems to be the case when running under rserver-dev
+   if (project == "" && scope.id() == "")
+   {
+      return "/";
+   }
+
    // create url
    boost::format fmt("/s/%1%%2%/");
    return boost::str(fmt % project % scope.id());
