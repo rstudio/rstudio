@@ -62,4 +62,4 @@ Posit Workbench has several features that differentiate it from the open-source 
 ### Additional Resources
 
 - [RStudio Extensions](https://rstudio.github.io/rstudio-extensions/index.html)
-- [RStudio Support tagged IDE](https://support.rstudio.com/hc/en-us/sections/203994097-RStudio-IDE)
+- [Posit Support tagged IDE](https://support.rstudio.com/hc/en-us/sections/203994097-RStudio-IDE)
