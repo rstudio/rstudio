@@ -1,10 +1,10 @@
 /*
  * SourceIndex.cpp
  *
- * Copyright (C) 2022 by RStudio, PBC
+ * Copyright (C) 2022 by Posit Software, PBC
  *
- * Unless you have received this program directly from RStudio pursuant
- * to the terms of a commercial license agreement with RStudio, then
+ * Unless you have received this program directly from Posit Software pursuant
+ * to the terms of a commercial license agreement with Posit Software, then
  * this program is licensed to you under the terms of version 3 of the
  * GNU Affero General Public License. This program is distributed WITHOUT
  * ANY EXPRESS OR IMPLIED WARRANTY, INCLUDING THOSE OF NON-INFRINGEMENT,
@@ -35,13 +35,16 @@ namespace rstudio {
 namespace core {
 namespace libclang {
 
-namespace {
-
-inline unsigned applyTranslationUnitOptions(unsigned defaultOptions)
+unsigned parseTranslationUnitOptions()
 {
-   // for now just reflect back the defaults
-   return defaultOptions;
+   return (
+      CXTranslationUnit_None |
+      CXTranslationUnit_Incomplete |
+      CXTranslationUnit_DetailedPreprocessingRecord
+   );
 }
+
+namespace {
 
 bool isHeaderExtension(const std::string& ex)
 {
@@ -224,13 +227,11 @@ TranslationUnit SourceIndex::getTranslationUnit(const std::string& filename,
             std::cerr << "  " << reason << std::endl;
          }
 
-         unsigned options = applyTranslationUnitOptions(
-                                    clang().defaultReparseOptions(stored.tu));
          int ret = clang().reparseTranslationUnit(
                                 stored.tu,
                                 unsavedFiles().numUnsavedFiles(),
                                 unsavedFiles().unsavedFilesArray(),
-                                options);
+                                parseTranslationUnitOptions());
 
          if (ret == 0)
          {
@@ -253,7 +254,7 @@ TranslationUnit SourceIndex::getTranslationUnit(const std::string& filename,
    removeTranslationUnit(filename);
 
    // add verbose output if requested
-   if (verbose_ >= 2)
+   if (verbose_ >= 3)
      args.push_back("-v");
    
    // fix up '-std=' arguments; in particular, we only pass the C++
@@ -290,9 +291,6 @@ TranslationUnit SourceIndex::getTranslationUnit(const std::string& filename,
    }
    
    // create a new translation unit from the file
-   unsigned options = applyTranslationUnitOptions(
-                           clang().defaultEditingTranslationUnitOptions());
-   
    CXTranslationUnit tu = clang().parseTranslationUnit(
                          index_,
                          filename.c_str(),
@@ -300,7 +298,8 @@ TranslationUnit SourceIndex::getTranslationUnit(const std::string& filename,
                          gsl::narrow_cast<int>(argsArray.argCount()),
                          unsavedFiles().unsavedFilesArray(),
                          unsavedFiles().numUnsavedFiles(),
-                         options);
+                         parseTranslationUnitOptions()
+                         );
 
 
    // save and return it if we succeeded

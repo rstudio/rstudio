@@ -1,10 +1,10 @@
 /*
  * AsyncConnection.hpp
  *
- * Copyright (C) 2022 by RStudio, PBC
+ * Copyright (C) 2022 by Posit Software, PBC
  *
- * Unless you have received this program directly from RStudio pursuant
- * to the terms of a commercial license agreement with RStudio, then
+ * Unless you have received this program directly from Posit Software pursuant
+ * to the terms of a commercial license agreement with Posit Software, then
  * this program is licensed to you under the terms of version 3 of the
  * GNU Affero General Public License. This program is distributed WITHOUT
  * ANY EXPRESS OR IMPLIED WARRANTY, INCLUDING THOSE OF NON-INFRINGEMENT,
@@ -57,12 +57,14 @@ public:
 
    // populate or set response then call writeResponse when done
    virtual http::Response& response() = 0;
-   virtual void writeResponse(bool close = true) = 0;
+   virtual void writeResponse(bool close = true,
+                              Socket::Handler handler = Socket::NullHandler) = 0;
 
    // simple wrappers for writing an existing response or error
    virtual void writeResponse(const http::Response& response,
                               bool close = true,
-                              const http::Headers& extraHeaders = http::Headers()) = 0;
+                              const http::Headers& extraHeaders = http::Headers(),
+                              Socket::Handler handler = Socket::NullHandler) = 0;
 
    // writes only the headers and not any body data
    // useful for chunked encoding (streaming)

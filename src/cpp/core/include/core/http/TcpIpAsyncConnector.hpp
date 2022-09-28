@@ -1,10 +1,10 @@
 /*
  * TcpIpAsyncConnector.hpp
  *
- * Copyright (C) 2022 by RStudio, PBC
+ * Copyright (C) 2022 by Posit Software, PBC
  *
- * Unless you have received this program directly from RStudio pursuant
- * to the terms of a commercial license agreement with RStudio, then
+ * Unless you have received this program directly from Posit Software pursuant
+ * to the terms of a commercial license agreement with Posit Software, then
  * this program is licensed to you under the terms of version 3 of the
  * GNU Affero General Public License. This program is distributed WITHOUT
  * ANY EXPRESS OR IMPLIED WARRANTY, INCLUDING THOSE OF NON-INFRINGEMENT,
@@ -109,10 +109,16 @@ private:
             if (isConnected_ || hasFailed_)
                return;
 
+            LOG_DEBUG_MESSAGE("In onConnectionTimeout - cancelling socket connection");
+
             // timer has elapsed and the socket is still not connected
             // cancel any outstanding async operations
             resolver_.cancel();
-            pSocket_->cancel();
+            // avoid throwing an exception by checking for an open socket first
+            if (pSocket_->is_open())
+               pSocket_->cancel();
+            else
+               LOG_ERROR_MESSAGE("Socket is already closed in onConnectionTimeout");
 
             // invoke error handler since the connection has failed
             handleError(systemError(boost::system::errc::timed_out, ERROR_LOCATION));

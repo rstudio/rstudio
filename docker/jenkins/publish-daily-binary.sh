@@ -51,8 +51,18 @@ echo "Publishing $FILENAME as daily $FLAVOR build for $OS ($PLATFORM): $LATEST..
 
 # download the current .htaccess file to a temporary location
 HTACCESS=$(mktemp)
+SCP_COUNT=0
 echo "Fetching .htaccess for update..."
-scp -o StrictHostKeyChecking=no -i $IDENTITY www-data@rstudio.org:/srv/www/rstudio.org/public_html/download/latest/daily/.htaccess $HTACCESS
+until scp -o StrictHostKeyChecking=no -i $IDENTITY www-data@rstudio.org:/srv/www/rstudio.org/public_html/download/latest/daily/.htaccess $HTACCESS || (( SCP_COUNT++ >= 5))
+do
+   echo "Error fetching .htaccess - retrying: ${SCP_COUNT}"
+   sleep 5
+done
+
+if [ "$SCP_COUNT" -ge "5" ] ; then
+   echo "Error fetching .htaccess - giving up after ${SCP_COUNT} retries"
+   exit
+fi
 
 # .htaccess expects URL encoded URLs so replace the + with %2B
 ENC_URL=`echo $URL | sed -e 's/+/%2B/'`
@@ -71,7 +81,17 @@ fi
 
 # copy it back up
 echo "Uploading new .htaccess..."
-scp -o StrictHostKeyChecking=no -i $IDENTITY $HTACCESS www-data@rstudio.org:/srv/www/rstudio.org/public_html/download/latest/daily/.htaccess
+SCP_COUNT=0
+until scp -o StrictHostKeyChecking=no -i $IDENTITY $HTACCESS www-data@rstudio.org:/srv/www/rstudio.org/public_html/download/latest/daily/.htaccess || (( SCP_COUNT++ >= 5))
+do
+   echo "Error updating .htaccess with scp - retrying: ${SCP_COUNT}"
+   sleep 5
+done
+
+if [ "$SCP_COUNT" -ge "5" ] ; then
+   echo "Error updating .htaccess - giving up after ${SCP_COUNT} retries"
+   exit
+fi
 
 # clean up
 rm -f $HTACCESS

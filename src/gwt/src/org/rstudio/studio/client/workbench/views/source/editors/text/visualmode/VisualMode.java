@@ -1,10 +1,10 @@
 /*
  * VisualMode.java
  *
- * Copyright (C) 2022 by RStudio, PBC
+ * Copyright (C) 2022 by Posit Software, PBC
  *
- * Unless you have received this program directly from RStudio pursuant
- * to the terms of a commercial license agreement with RStudio, then
+ * Unless you have received this program directly from Posit Software pursuant
+ * to the terms of a commercial license agreement with Posit Software, then
  * this program is licensed to you under the terms of version 3 of the
  * GNU Affero General Public License. This program is distributed WITHOUT
  * ANY EXPRESS OR IMPLIED WARRANTY, INCLUDING THOSE OF NON-INFRINGEMENT,
@@ -354,7 +354,15 @@ public class VisualMode implements VisualModeEditorSync,
                             alignScopeTreeAfterUpdate(markdown.location);
                         }
                         
-                        // apply diffs unless the wrap column changed (too expensive)
+                        // we used to apply diffs here unless the wrapChanged (which was too expensive
+                        // for the diff-match-patch algorithem), now we *never* apply diffs b/c
+                        // we had some reports of source editor corruption. when investigating
+                        // this, also noted that we turned off diff changes already for the cannonical
+                        // source transform b/c we actually did find another case that confused the
+                        // algorithm enough to cause data corrupt there. if there is one case there
+                        // are certainly others, so we are going to turn this off entirely unless/until
+                        // we understand its limitations better
+                        /*
                         if (!writerOptions.wrapChanged) 
                         {
                            TextEditorContainer.Changes changes = toEditorChanges(markdown);
@@ -364,6 +372,10 @@ public class VisualMode implements VisualModeEditorSync,
                         {
                            getSourceEditor().setCode(markdown.code);
                         }
+                        */
+                        
+                        // always set all of the code (no diffs, see comment above)
+                        getSourceEditor().setCode(markdown.code);
                         
                         // if the format comment has changed then show the reload prompt
                         if ((panmirrorFormatConfig_ != null) && panmirrorFormatConfig_.requiresReload())
@@ -382,6 +394,10 @@ public class VisualMode implements VisualModeEditorSync,
                         {
                            // if syncing for execution, force a rebuild of the scope tree 
                            alignScopeOutline(markdown.location);
+                        }
+                        else
+                        {
+                           syncSourceOutlineLocation();
                         }
    
                         // invoke ready callback if supplied
@@ -1850,11 +1866,22 @@ public class VisualMode implements VisualModeEditorSync,
       
       // Get all of the chunks from the outline emitted by visual mode
       ArrayList<PanmirrorEditingOutlineLocationItem> chunkItems = new ArrayList<>();
+      PanmirrorEditingOutlineLocationItem lastChunkItem = null;
       for (int j = 0; j < location.items.length; j++)
       {
-         if (StringUtil.equals(location.items[j].type, PanmirrorOutlineItemType.RmdChunk))
+         PanmirrorEditingOutlineLocationItem nextChunkItem = location.items[j];
+         if (StringUtil.equals(nextChunkItem.type, PanmirrorOutlineItemType.RmdChunk))
          {
-            chunkItems.add(location.items[j]);
+            // It is possible for the visual editor to contain two representations of the
+            // same RmdChunk when the chunk is indented. Since the items are sorted by
+            // position, we discard consecutive chunks with identical positions; they
+            // represent the same underlying scope entry.
+            if (lastChunkItem != null && lastChunkItem.position == nextChunkItem.position)
+            {
+               continue;
+            }
+            lastChunkItem = nextChunkItem;
+            chunkItems.add(nextChunkItem);
          }
       }
       

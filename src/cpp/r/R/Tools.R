@@ -1,10 +1,10 @@
 #
 # Tools.R
 #
-# Copyright (C) 2022 by RStudio, PBC
+# Copyright (C) 2022 by Posit Software, PBC
 #
-# Unless you have received this program directly from RStudio pursuant
-# to the terms of a commercial license agreement with RStudio, then
+# Unless you have received this program directly from Posit Software pursuant
+# to the terms of a commercial license agreement with Posit Software, then
 # this program is licensed to you under the terms of version 3 of the
 # GNU Affero General Public License. This program is distributed WITHOUT
 # ANY EXPRESS OR IMPLIED WARRANTY, INCLUDING THOSE OF NON-INFRINGEMENT,
@@ -267,6 +267,10 @@ environment(.rs.Env[[".rs.addFunction"]]) <- .rs.Env
   # is the devtools path active?
   devToolsPath <- .rs.normalizePath(devToolsPath, winslash = "/", mustWork = FALSE)
   devToolsPath %in% .libPaths()
+})
+
+.rs.addFunction("isDevPackage", function(name) {
+   "pkgload" %in% loadedNamespaces() && pkgload::is_dev_package(name)
 })
 
 # load a package by name
@@ -748,19 +752,10 @@ environment(.rs.Env[[".rs.addFunction"]]) <- .rs.Env
    
 })
 
-.rs.addFunction( "defaultLibPathIsWriteable", function()
+.rs.addFunction("defaultLibPathIsWriteable", function()
 {
    .rs.isLibraryWriteable(.libPaths()[1L])
 })
-
-.rs.addFunction( "disableQuartz", function()
-{
-  .rs.registerReplaceHook("quartz", "grDevices", function(...) {
-    stop(paste("RStudio does not support the quartz device in R <= 2.11.1.",
-               "Please upgrade to a newer version of R to use quartz."))
-  })
-})
-
 
 # Support for implementing json-rpc methods directly in R:
 # 

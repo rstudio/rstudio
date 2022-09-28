@@ -18,7 +18,7 @@ See our [guide to writing feature requests](https://github.com/rstudio/rstudio/w
 
 ## RStudio Pro
 
-This repo contains the code for the open source version of RStudio and RStudio Server, and its issues page is for issues pertaining specifically to the open source version of the software. To report issues or request new features for the professional version of RStudio, please get in touch with the RStudio support team at <support@rstudio.com>.
+This repo contains the code for the open source version of RStudio and RStudio Server, and its issues page is for issues pertaining specifically to the open source version of the software. To report issues or request new features for the professional version of RStudio, please get in touch with the Posit Support team at <support@rstudio.com>.
 
 ## Contributing Code
 

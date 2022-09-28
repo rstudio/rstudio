@@ -1,10 +1,10 @@
 /*
  * SessionCodeSearch.cpp
  *
- * Copyright (C) 2022 by RStudio, PBC
+ * Copyright (C) 2022 by Posit Software, PBC
  *
- * Unless you have received this program directly from RStudio pursuant
- * to the terms of a commercial license agreement with RStudio, then
+ * Unless you have received this program directly from Posit Software pursuant
+ * to the terms of a commercial license agreement with Posit Software, then
  * this program is licensed to you under the terms of version 3 of the
  * GNU Affero General Public License. This program is distributed WITHOUT
  * ANY EXPRESS OR IMPLIED WARRANTY, INCLUDING THOSE OF NON-INFRINGEMENT,
@@ -1442,7 +1442,8 @@ public:
       Table      = 9,
       Math       = 10,
       Test       = 11, 
-      Roxygen    = 12
+      Roxygen    = 12, 
+      Macro      = 13
    };
 
    SourceItem()
@@ -1578,6 +1579,9 @@ SourceItem fromCppDefinition(const clang::CppDefinition& cppDefinition)
       break;
    case CppMemberFunctionDefinition:
       type = SourceItem::Method;
+      break;
+   case CppMacroDefinition:
+      type = SourceItem::Macro;
       break;
    default:
       type = SourceItem::None;

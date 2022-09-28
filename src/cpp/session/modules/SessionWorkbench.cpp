@@ -1,10 +1,10 @@
 /*
  * SessionWorkbench.cpp
  *
- * Copyright (C) 2022 by RStudio, PBC
+ * Copyright (C) 2022 by Posit Software, PBC
  *
- * Unless you have received this program directly from RStudio pursuant
- * to the terms of a commercial license agreement with RStudio, then
+ * Unless you have received this program directly from Posit Software pursuant
+ * to the terms of a commercial license agreement with Posit Software, then
  * this program is licensed to you under the terms of version 3 of the
  * GNU Affero General Public License. This program is distributed WITHOUT
  * ANY EXPRESS OR IMPLIED WARRANTY, INCLUDING THOSE OF NON-INFRINGEMENT,
@@ -49,6 +49,8 @@
 #include <session/SessionModuleContext.hpp>
 #include <session/RVersionSettings.hpp>
 #include <session/SessionTerminalShell.hpp>
+
+#include <session/SessionUrlPorts.hpp>
 
 #include "SessionSpelling.hpp"
 #include "SessionReticulate.hpp"
@@ -419,6 +421,16 @@ void viewPdfPostback(const std::string& pdfPath,
    cont(EXIT_SUCCESS, "");
 }
 
+// $BROWSER
+void browserPostback(const std::string& url,
+                     const module_context::PostbackHandlerContinuation& cont)
+{
+   auto transformedUrl = session::url_ports::translateLocalUrl(url, true);
+   auto event = browseUrlEvent(transformedUrl);
+   module_context::enqueClientEvent(event);
+   cont(EXIT_SUCCESS, "");
+}
+
 
 void handleFileShow(const http::Request& request, http::Response* pResponse)
 {
@@ -513,6 +525,14 @@ Error initialize()
       // register edit_completed waitForMethod handler
       s_waitForEditCompleted = module_context::registerWaitForMethod(
                                                          "edit_completed");
+
+      std::string browserCommand;
+      error = module_context::registerPostbackHandler("browser",
+                                                      browserPostback,
+                                                      &browserCommand);
+      if (error)
+         return error;
+      core::system::setenv("BROWSER", browserCommand);
    }
    
    // register waitForMethod for active document context

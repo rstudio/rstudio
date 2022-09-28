@@ -1,10 +1,10 @@
 /*
  * SessionClientInit.hpp
  *
- * Copyright (C) 2022 by RStudio, PBC
+ * Copyright (C) 2022 by Posit Software, PBC
  *
- * Unless you have received this program directly from RStudio pursuant
- * to the terms of a commercial license agreement with RStudio, then
+ * Unless you have received this program directly from Posit Software pursuant
+ * to the terms of a commercial license agreement with Posit Software, then
  * this program is licensed to you under the terms of version 3 of the
  * GNU Affero General Public License. This program is distributed WITHOUT
  * ANY EXPRESS OR IMPLIED WARRANTY, INCLUDING THOSE OF NON-INFRINGEMENT,
@@ -121,6 +121,13 @@ Error makePortTokenCookie(boost::shared_ptr<HttpConnection> ptrConnection,
 
    // generate a new port token
    persistentState().setPortToken(server_core::generateNewPortToken());
+
+   // Set environment variables RS_SERVER_URL, RS_SESSION_URL, and RS_PORT_TOKEN,
+   // needed for subprocesses to use the rserver-url binary with the -l option.
+   core::system::setenv(kPortTokenEnvVar, persistentState().portToken());
+   core::system::setenv(kServerUrlEnvVar, baseURL);
+   core::system::setenv(kSessionUrlEnvVar,
+                        core::r_util::urlPathForSessionScope(options().sessionScope()));
 
    std::string path = ptrConnection->request().rootPath();
 

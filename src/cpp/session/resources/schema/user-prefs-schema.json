@@ -985,6 +985,7 @@
                 ".gitignore",
                 ".httr-oauth",
                 ".lintr",
+                ".quartoignore",
                 ".r",
                 ".rbuildignore",
                 ".rdata"   ,
@@ -1611,6 +1612,25 @@
             "title": "Use native file and message dialog boxes",
             "type": "boolean",
             "default": true
+        },
+        "discard_pending_console_input_on_error": {
+            "description": "When enabled, any pending console input will be discarded when an (uncaught) R error occurs.",
+            "title": "Discard pending console input on error",
+            "type": "boolean",
+            "default": true
+        },
+        "editor_scroll_multiplier": {
+            "description": "A integer value, 1-200, to set the editor scroll multiplier. The higher the value, the faster the scrolling.",
+            "title": "Editor scroll speed sensitivity",
+            "type": "integer",
+            "default": 100
+        },
+        "text_rendering": {
+            "title": "Text rendering",
+            "description": "Control how text is rendered within the IDE surface.",
+            "type": "string",
+            "enum": ["auto", "geometricPrecision"],
+            "default": "auto"
         }
     }
 }

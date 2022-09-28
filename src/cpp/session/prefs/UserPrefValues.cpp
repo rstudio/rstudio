@@ -1,9 +1,9 @@
 /* UserPrefValues.cpp
  *
- * Copyright (C) 2022 by RStudio, PBC
+ * Copyright (C) 2022 by Posit Software, PBC
  *
- * Unless you have received this program directly from RStudio pursuant
- * to the terms of a commercial license agreement with RStudio, then
+ * Unless you have received this program directly from Posit Software pursuant
+ * to the terms of a commercial license agreement with Posit Software, then
  * this program is licensed to you under the terms of version 3 of the
  * GNU Affero General Public License. This program is distributed WITHOUT
  * ANY EXPRESS OR IMPLIED WARRANTY, INCLUDING THOSE OF NON-INFRINGEMENT,
@@ -3091,6 +3091,45 @@ core::Error UserPrefValues::setNativeFileDialogs(bool val)
    return writePref("native_file_dialogs", val);
 }
 
+/**
+ * When enabled, any pending console input will be discarded when an (uncaught) R error occurs.
+ */
+bool UserPrefValues::discardPendingConsoleInputOnError()
+{
+   return readPref<bool>("discard_pending_console_input_on_error");
+}
+
+core::Error UserPrefValues::setDiscardPendingConsoleInputOnError(bool val)
+{
+   return writePref("discard_pending_console_input_on_error", val);
+}
+
+/**
+ * A integer value, 1-200, to set the editor scroll multiplier. The higher the value, the faster the scrolling.
+ */
+int UserPrefValues::editorScrollMultiplier()
+{
+   return readPref<int>("editor_scroll_multiplier");
+}
+
+core::Error UserPrefValues::setEditorScrollMultiplier(int val)
+{
+   return writePref("editor_scroll_multiplier", val);
+}
+
+/**
+ * Control how text is rendered within the IDE surface.
+ */
+std::string UserPrefValues::textRendering()
+{
+   return readPref<std::string>("text_rendering");
+}
+
+core::Error UserPrefValues::setTextRendering(std::string val)
+{
+   return writePref("text_rendering", val);
+}
+
 std::vector<std::string> UserPrefValues::allKeys()
 {
    return std::vector<std::string>({
@@ -3330,6 +3369,9 @@ std::vector<std::string> UserPrefValues::allKeys()
       kCheckNullExternalPointers,
       kUiLanguage,
       kNativeFileDialogs,
+      kDiscardPendingConsoleInputOnError,
+      kEditorScrollMultiplier,
+      kTextRendering,
    });
 }
    

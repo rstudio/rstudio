@@ -1,10 +1,10 @@
 /*
  * RCompletionManager.java
  *
- * Copyright (C) 2022 by RStudio, PBC
+ * Copyright (C) 2022 by Posit Software, PBC
  *
- * Unless you have received this program directly from RStudio pursuant
- * to the terms of a commercial license agreement with RStudio, then
+ * Unless you have received this program directly from Posit Software pursuant
+ * to the terms of a commercial license agreement with Posit Software, then
  * this program is licensed to you under the terms of version 3 of the
  * GNU Affero General Public License. This program is distributed WITHOUT
  * ANY EXPRESS OR IMPLIED WARRANTY, INCLUDING THOSE OF NON-INFRINGEMENT,
@@ -32,6 +32,7 @@ import org.rstudio.core.client.command.KeyboardHelper;
 import org.rstudio.core.client.command.KeyboardShortcut;
 import org.rstudio.core.client.dom.EventProperty;
 import org.rstudio.core.client.files.FileSystemItem;
+import org.rstudio.core.client.regex.Match;
 import org.rstudio.core.client.regex.Pattern;
 import org.rstudio.studio.client.RStudioGinjector;
 import org.rstudio.studio.client.application.events.EventBus;
@@ -422,11 +423,12 @@ public class RCompletionManager implements CompletionManager
          {
             if (initFilter_ == null || initFilter_.shouldComplete(event))
             {
+               String currentLine = docDisplay_.getCurrentLineUpToCursor();
+
                // If we're in markdown mode, only autocomplete in '```{r',
                // '[](', or '`r |' contexts
                if (DocumentMode.isCursorInMarkdownMode(docDisplay_))
                {
-                  String currentLine = docDisplay_.getCurrentLineUpToCursor();
                   if (!(Pattern.create("^```{[rR]").test(currentLine) ||
                       Pattern.create(".*\\[.*\\]\\(").test(currentLine) ||
                       (Pattern.create(".*`r").test(currentLine) &&
@@ -437,10 +439,10 @@ public class RCompletionManager implements CompletionManager
                // If we're in tex mode, only provide completions in chunks
                if (DocumentMode.isCursorInTexMode(docDisplay_))
                {
-                  String currentLine = docDisplay_.getCurrentLineUpToCursor();
                   if (!Pattern.create("^<<").test(currentLine))
                      return false;
                }
+
                return beginSuggest(true, false, true);
             }
          }
@@ -1073,8 +1075,7 @@ public class RCompletionManager implements CompletionManager
    
    private boolean isLineInRoxygenComment(String line)
    {
-      Pattern pattern = Pattern.create("^\\s*#+'");
-      return pattern.test(line);
+      return DocumentMode.PATTERN_ROXYGEN_LINE.test(line);
    }
 
    private boolean isLineInPlumberComment(String line)
@@ -1122,6 +1123,43 @@ public class RCompletionManager implements CompletionManager
             !isLineInPlumberComment(firstLine))
          return false;
       
+      AceEditor editor = (AceEditor) docDisplay_;
+      
+      if (isLineInRoxygenComment(firstLine)) 
+      {
+         if (!DocumentMode.PATTERN_ROXYGEN_CAN_COMPLETE.test(firstLine))
+         {
+            // when below @examples, handle <TAB> here and take into account
+            // the tab size, where the code begins (i.e. after |#' | ) and 
+            // where the cursor currently is
+            if (DocumentMode.isCursorInRoxygenExamples(docDisplay_)) 
+            {
+               if (editor != null) 
+               {
+                  int tabSize = editor.getTabSize();
+                  int cursor = editor.getCursorColumn();
+                  
+                  int commentSize = DocumentMode.PATTERN_ROXYGEN_LINE.match(firstLine, 0).getValue().length() + 1;
+                  // if just after the ': add one space
+                  String spaces = " ";
+                  if (cursor >= commentSize)
+                  {
+                     // othewise add a tab or the remainder spaces to the next one
+                     int remainder = (cursor - commentSize) % tabSize;
+                     spaces = StringUtil.repeat(" ", remainder == 0 ? tabSize : remainder);
+                  }
+                  editor.insertCode(spaces);
+               }
+               return true;
+            }
+            else 
+            {
+               // otherwise let ace handle <TAB>
+               return false;
+            }
+         }
+      }
+
       // don't autocomplete if the cursor lies within the text of a
       // multi-line string. the logic here isn't perfect (ideally, we'd detect
       // whether we're in the 'qstring' or 'qqstring' state), but this will catch
@@ -1170,7 +1208,6 @@ public class RCompletionManager implements CompletionManager
             canAutoInsert);
       
       RInfixData infixData = RInfixData.create();
-      AceEditor editor = (AceEditor) docDisplay_;
       if (editor != null)
       {
          CodeModel codeModel = editor.getSession().getMode().getRCodeModel();

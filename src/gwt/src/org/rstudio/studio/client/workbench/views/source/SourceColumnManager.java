@@ -1,10 +1,10 @@
 /*
  * SourceColumnManager.java
  *
- * Copyright (C) 2022 by RStudio, PBC
+ * Copyright (C) 2022 by Posit Software, PBC
  *
- * Unless you have received this program directly from RStudio pursuant
- * to the terms of a commercial license agreement with RStudio, then
+ * Unless you have received this program directly from Posit Software pursuant
+ * to the terms of a commercial license agreement with Posit Software, then
  * this program is licensed to you under the terms of version 3 of the
  * GNU Affero General Public License. This program is distributed WITHOUT
  * ANY EXPRESS OR IMPLIED WARRANTY, INCLUDING THOSE OF NON-INFRINGEMENT,
@@ -981,7 +981,29 @@ public class SourceColumnManager implements CommandPaletteEntrySource,
             // check for identical titles
             if (handle.getTitle() == target.getTitle())
             {
+               
                ((ObjectExplorerEditingTarget) target).update(handle, false);
+               return;
+            }
+         }
+      }
+   }
+
+   public void closeObjectExplorer(ObjectExplorerHandle handle)
+   {
+      for (SourceColumn column : columnList_)
+      {
+         for (EditingTarget target : column.getEditors())
+         {
+            // bail if this isn't an object explorer filetype
+            FileType fileType = target.getFileType();
+            if (!(fileType instanceof ObjectExplorerFileType))
+               continue;
+
+            // check for identical titles
+            if (handle.getTitle() == target.getTitle())
+            {
+               column.closeTab(target.asWidget(), false);
                return;
             }
          }
@@ -1025,6 +1047,22 @@ public class SourceColumnManager implements CommandPaletteEntrySource,
                getActive().addTab(response, Source.OPEN_INTERACTIVE);
             }
          });
+   }
+
+   public void closeDataItem(DataItem data)
+   {
+      for (SourceColumn column : columnList_)
+      {
+         for (EditingTarget target : column.getEditors())
+         {
+            String path = target.getPath();
+            if (path != null && path.equals(data.getURI()))
+            {
+               column.closeTab(target.asWidget(), false);
+               return;
+            }
+         }
+      }
    }
 
    public void showUnsavedChangesDialog(

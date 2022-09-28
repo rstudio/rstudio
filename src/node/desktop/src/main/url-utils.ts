@@ -1,10 +1,10 @@
 /*
  * url-utils.ts
  *
- * Copyright (C) 2022 by RStudio, PBC
+ * Copyright (C) 2022 by Posit Software, PBC
  *
- * Unless you have received this program directly from RStudio pursuant
- * to the terms of a commercial license agreement with RStudio, then
+ * Unless you have received this program directly from Posit Software pursuant
+ * to the terms of a commercial license agreement with Posit Software, then
  * this program is licensed to you under the terms of version 3 of the
  * GNU Affero General Public License. This program is distributed WITHOUT
  * ANY EXPRESS OR IMPLIED WARRANTY, INCLUDING THOSE OF NON-INFRINGEMENT,
@@ -14,13 +14,12 @@
  */
 
 import http from 'http';
-import { URL } from 'url';
 import { Err } from '../core/err';
 import { logger } from '../core/logger';
 import { WaitResult, WaitTimeoutFn, waitWithTimeout } from '../core/wait-utils';
 
 /**
- * 
+ *
  * @param url the URL to check
  * @returns true if is an about: url
  */
@@ -49,7 +48,7 @@ export function isChromeGpuUrl(url: string): boolean {
 
 /**
  * Checks the `url` if it is local
- * 
+ *
  * @param url the URL to check
  * @returns true if it is local
  */
@@ -61,7 +60,7 @@ export function isLocalUrl(url: URL) {
 
 /**
  * Checks the `url` if it is allowed
- * 
+ *
  * @param url the URL to check
  * @returns true if the protocol is allowed
  */

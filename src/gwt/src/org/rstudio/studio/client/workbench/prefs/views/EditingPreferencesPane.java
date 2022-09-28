@@ -1,10 +1,10 @@
 /*
  * EditingPreferencesPane.java
  *
- * Copyright (C) 2022 by RStudio, PBC
+ * Copyright (C) 2022 by Posit Software, PBC
  *
- * Unless you have received this program directly from RStudio pursuant
- * to the terms of a commercial license agreement with RStudio, then
+ * Unless you have received this program directly from Posit Software pursuant
+ * to the terms of a commercial license agreement with Posit Software, then
  * this program is licensed to you under the terms of version 3 of the
  * GNU Affero General Public License. This program is distributed WITHOUT
  * ANY EXPRESS OR IMPLIED WARRANTY, INCLUDING THOSE OF NON-INFRINGEMENT,
@@ -103,6 +103,10 @@ public class EditingPreferencesPane extends PreferencesPane
             constants_.editingHighlightWebLinkLabel(),
             prefs_.highlightWebLink(),
             constants_.editingHighlightWebLinkDesc()));
+      editingPanel.add(indent(editorScrollMultiplier_ = numericPref(constants_.editorScrollMultiplier(), constants_.editorScrollMultiplierDesc(),
+              1, UserPrefs.MAX_EDITOR_SCROLL_MULTIPLIER,
+              prefs_.editorScrollMultiplier())));
+      editorScrollMultiplier_.setWidth("38px");
 
       delimiterSurroundWidget_ = new SelectWidget(constants_.editingSurroundSelectionLabel(),
          (Prefs.EnumValue) prefs_.surroundSelection(),
@@ -589,7 +593,8 @@ public class EditingPreferencesPane extends PreferencesPane
              (!showMargin_.getValue() || marginCol_.validate()) &&
              alwaysCompleteChars_.validate() &&
              alwaysCompleteDelayMs_.validate() &&
-             backgroundDiagnosticsDelayMs_.validate();
+             backgroundDiagnosticsDelayMs_.validate() &&
+             editorScrollMultiplier_.validate();
    }
 
    @Override
@@ -610,6 +615,7 @@ public class EditingPreferencesPane extends PreferencesPane
    private final UserPrefs prefs_;
    private final SourceServerOperations server_;
    private final Commands commands_;
+   private final NumericValueWidget editorScrollMultiplier_;
    private final NumericValueWidget tabWidth_;
    private final NumericValueWidget marginCol_;
    private final LineEndingsSelectWidget lineEndings_;

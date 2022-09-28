@@ -1,10 +1,10 @@
 /*
  * RToolsInfo.hpp
  *
- * Copyright (C) 2022 by RStudio, PBC
+ * Copyright (C) 2022 by Posit Software, PBC
  *
- * Unless you have received this program directly from RStudio pursuant
- * to the terms of a commercial license agreement with RStudio, then
+ * Unless you have received this program directly from Posit Software pursuant
+ * to the terms of a commercial license agreement with Posit Software, then
  * this program is licensed to you under the terms of version 3 of the
  * GNU Affero General Public License. This program is distributed WITHOUT
  * ANY EXPRESS OR IMPLIED WARRANTY, INCLUDING THOSE OF NON-INFRINGEMENT,
@@ -47,7 +47,7 @@ public:
    std::string url(const std::string& repos) const;
    const std::string& versionPredicate() const { return versionPredicate_; }
    const FilePath& installPath() const { return installPath_; }
-   const std::vector<std::string> clangArgs() const { return clangArgs_; }
+   const std::vector<std::string> clangArgs(bool isCpp) const { return isCpp ? cppClangArgs_ : cClangArgs_; }
    const std::vector<FilePath>& pathEntries() const { return pathEntries_; }
    const std::vector<core::system::Option> environmentVars() const
    {
@@ -57,7 +57,8 @@ public:
 private:
    std::string name_;
    FilePath installPath_;
-   std::vector<std::string> clangArgs_;
+   std::vector<std::string> cClangArgs_;
+   std::vector<std::string> cppClangArgs_;
    std::string versionPredicate_;
    std::vector<FilePath> pathEntries_;
    std::vector<core::system::Option> environmentVars_;

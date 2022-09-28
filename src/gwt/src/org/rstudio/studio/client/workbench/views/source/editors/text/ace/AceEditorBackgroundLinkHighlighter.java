@@ -1,10 +1,10 @@
 /*
  * AceEditorBackgroundLinkHighlighter.java
  *
- * Copyright (C) 2022 by RStudio, PBC
+ * Copyright (C) 2022 by Posit Software, PBC
  *
- * Unless you have received this program directly from RStudio pursuant
- * to the terms of a commercial license agreement with RStudio, then
+ * Unless you have received this program directly from Posit Software pursuant
+ * to the terms of a commercial license agreement with Posit Software, then
  * this program is licensed to you under the terms of version 3 of the
  * GNU Affero General Public License. This program is distributed WITHOUT
  * ANY EXPRESS OR IMPLIED WARRANTY, INCLUDING THOSE OF NON-INFRINGEMENT,
@@ -489,7 +489,14 @@ public class AceEditorBackgroundLinkHighlighter
       {
          int startIdx = match.getIndex();
          int endIdx   = match.getIndex() + match.getValue().length();
-
+         
+         // Bail if the issue number is immediately followed by a letter
+         if (line.length() > endIdx) {
+            char c = line.charAt(endIdx);
+            if ((c >= 'a' && c <= 'z') || (c >= 'A' && c <= 'Z'))
+               continue;
+         }
+         
          if (startIdx > 0 && endIdx < line.length())
          {
             char before = line.charAt(startIdx - 1);

@@ -1,10 +1,10 @@
 /*
  * SessionFind.cpp
  *
- * Copyright (C) 2022 by RStudio, PBC
+ * Copyright (C) 2022 by Posit Software, PBC
  *
- * Unless you have received this program directly from RStudio pursuant
- * to the terms of a commercial license agreement with RStudio, then
+ * Unless you have received this program directly from Posit Software pursuant
+ * to the terms of a commercial license agreement with Posit Software, then
  * this program is licensed to you under the terms of version 3 of the
  * GNU Affero General Public License. This program is distributed WITHOUT
  * ANY EXPRESS OR IMPLIED WARRANTY, INCLUDING THOSE OF NON-INFRINGEMENT,
@@ -1466,7 +1466,7 @@ core::Error runGrepOperation(const GrepOptions& grepOptions, const ReplaceOption
       cmd << "-c" << "grep.lineNumber=true";
       cmd << "-c" << "grep.column=false";
       cmd << "-c" << "grep.patternType=default";
-      cmd << "-c" << "grep.extendedRegexp=false";
+      cmd << "-c" << "grep.extendedRegexp=true";
       cmd << "-c" << "grep.fullName=false";
       cmd << "-C";
       cmd << dirPath.getAbsolutePath();
@@ -1604,7 +1604,7 @@ core::Error beginFind(const json::JsonRpcRequest& request,
       return error;
 
    if (isWholeWord)
-      searchString = "\\b" + escapeForRegex(searchString) + "\\b";
+      searchString = "(\\b|^)" + escapeForRegex(searchString) + "(\\b|$)";
 
    GrepOptions grepOptions(searchString, directory, includeFilePatterns, useGitGrep, excludeGitIgnore, excludeFilePatterns,
       asRegex, ignoreCase);

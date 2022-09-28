@@ -1,15 +1,15 @@
 /*
  * r_highlight_rules.js
  *
- * Copyright (C) 2022 by RStudio, PBC
+ * Copyright (C) 2022 by Posit Software, PBC
  *
  * The Initial Developer of the Original Code is
  * Ajax.org B.V.
  * Portions created by the Initial Developer are Copyright (C) 2010
  * the Initial Developer. All Rights Reserved.
  *
- * Unless you have received this program directly from RStudio pursuant
- * to the terms of a commercial license agreement with RStudio, then
+ * Unless you have received this program directly from Posit Software pursuant
+ * to the terms of a commercial license agreement with Posit Software, then
  * this program is licensed to you under the terms of version 3 of the
  * GNU Affero General Public License. This program is distributed WITHOUT
  * ANY EXPRESS OR IMPLIED WARRANTY, INCLUDING THOSE OF NON-INFRINGEMENT,
@@ -60,7 +60,7 @@ define("mode/r_highlight_rules", ["require", "exports", "module"], function(requ
         token : ["keyword", "comment"],
         regex : "(@(?:export|field|inheritParams|name|param|rdname|slot|template|useDynLib))(\\s+)(?=[a-zA-Z0-9._-])",
         merge : false,
-        next  : "rd-highlight"
+        next  : "rdoc-highlight"
       },
       {
         // generic roxygen tag
@@ -922,13 +922,13 @@ define("mode/r_highlight_rules", ["require", "exports", "module"], function(requ
         // Begin Roxygen with todo
         token : ["comment", "comment.keyword.operator"],
         regex : "(#+['*]\\s*)(TODO|FIXME)\\b",
-        next  : "rd-start"
+        next  : "rdoc-start"
       },
       {
         // Roxygen
         token : "comment",
         regex : "#+['*]",
-        next  : "rd-start"
+        next  : "rdoc-start"
       },
       {
         // todo in plain comment
@@ -1258,7 +1258,7 @@ define("mode/r_highlight_rules", ["require", "exports", "module"], function(requ
       }
     }
 
-    this.embedRules(rdRules, "rd-", [{
+    this.embedRules(rdRules, "rdoc-", [{
       token : "text",
       regex : "^",
       next  : "start"

@@ -126,8 +126,6 @@ pipeline {
             }
           }
 
-          /*
-
           // upload daily build redirects
           withCredentials([file(credentialsId: 'www-rstudio-org-pem', variable: 'wwwRstudioOrgPem')]) {
             sh "docker/jenkins/publish-daily-binary.sh https://s3.amazonaws.com/rstudio-ide-build/${product}/macos/${packageFile} ${wwwRstudioOrgPem}"
@@ -160,8 +158,6 @@ pipeline {
               }
             }
           }
-
-          */
 
           // publish build to dailies page
           withCredentials([usernamePassword(credentialsId: 'github-rstudio-jenkins', usernameVariable: 'GITHUB_USERNAME', passwordVariable: 'GITHUB_PAT')]) {

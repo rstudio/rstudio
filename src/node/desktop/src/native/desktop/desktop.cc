@@ -1,10 +1,10 @@
 /*
  * desktop.cc
  *
- * Copyright (C) 2022 by RStudio, PBC
+ * Copyright (C) 2022 by Posit Software, PBC
  *
- * Unless you have received this program directly from RStudio pursuant
- * to the terms of a commercial license agreement with RStudio, then
+ * Unless you have received this program directly from Posit Software pursuant
+ * to the terms of a commercial license agreement with Posit Software, then
  * this program is licensed to you under the terms of version 3 of the
  * GNU Affero General Public License. This program is distributed WITHOUT
  * ANY EXPRESS OR IMPLIED WARRANTY, INCLUDING THOSE OF NON-INFRINGEMENT,
@@ -125,7 +125,7 @@ void cleanClipboardImpl(bool stripHtml)
 
    // read HTML data
    CFReleaseHandle<CFDataRef> htmlData;
-   if (stripHtml)
+   if (!stripHtml)
    {
       err = ::PasteboardCopyItemFlavorData(clipboard, itemId, CFSTR("public.html"), &htmlData);
       if (err && err != badPasteboardFlavorErr)

@@ -1,7 +1,7 @@
 /*
  * signin.css
  *
- * Copyright (C) 2022 by RStudio, PBC
+ * Copyright (C) 2022 by Posit Software, PBC
  *
  * This program is licensed to you under the terms of version 3 of the
  * GNU Affero General Public License. This program is distributed WITHOUT
@@ -23,6 +23,7 @@ body, td {
 
 #border {
    margin: 0 auto;
+   width: 282px;
 }
 
 .caption {
@@ -68,13 +69,13 @@ input[type=text], input[type=password] {
 }
 
 button.fancy {
-  background-color: #1e77bc;
+  background-color: var(--d-primary);
   font-size: 14px;
   padding: 10px 15px;
   cursor: pointer;
   outline: none;
-  border: 0;
-  color: white;
+  border: 1px solid var(--primary);
+  color: var(--primary-fg);
   min-width: 200px;
 }
 
@@ -108,19 +109,12 @@ div.signinhidden {
 */
 
 .signin-spinner {
-  color: white;
   display: inline-block;
   position: relative;
   width: 20px;
   height: 20px;
   text-align: center;
 } 
- 
-@media (prefers-color-scheme: dark) {
-  .signin-spinner {
-    color: black;
-  }
-}
 
 .signin-spinner div {
   transform-origin: 10px 10px;
@@ -135,13 +129,7 @@ div.signinhidden {
   left: 9px;
   width: 2px;
   height: 5px;
-  background: black;
-}
-
-@media (prefers-color-scheme: dark) {
-  .signin-spinner div:after {
-    background: white;
-  }
+  background-color: var(--fg-col);
 }
 
 .signin-spinner div:nth-child(1) {

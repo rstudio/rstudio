@@ -1,10 +1,10 @@
 /*
  * application.ts
  *
- * Copyright (C) 2022 by RStudio, PBC
+ * Copyright (C) 2022 by Posit Software, PBC
  *
- * Unless you have received this program directly from RStudio pursuant
- * to the terms of a commercial license agreement with RStudio, then
+ * Unless you have received this program directly from Posit Software pursuant
+ * to the terms of a commercial license agreement with Posit Software, then
  * this program is licensed to you under the terms of version 3 of the
  * GNU Affero General Public License. This program is distributed WITHOUT
  * ANY EXPRESS OR IMPLIED WARRANTY, INCLUDING THOSE OF NON-INFRINGEMENT,
@@ -81,18 +81,6 @@ export class Application implements AppState {
       return status;
     }
 
-    // check if this is the primary instance
-    // projects always open in a new instance
-    // files prefer to reuse the primary instance
-    const hasInstanceLock = app.requestSingleInstanceLock();
-    const hasProjectToOpen = this.argsManager.getProjectFileArg() ?? getenv('RS_INITIAL_PROJECT');
-    const hasFileToOpen = this.argsManager.getFileArgs().length > 0;
-    logger().logDebug(`instance lock: ${hasInstanceLock}, project: ${hasProjectToOpen}, file: ${hasFileToOpen}`);
-    if (!hasInstanceLock && !(hasProjectToOpen.length > 0) && hasFileToOpen) {
-      logger().logDebug('No instance lock - exiting');
-      return exitSuccess();
-    }
-
     // attempt to remove stale lockfiles, as they can impede application startup
     try {
       removeStaleOptionsLockfile();
@@ -110,12 +98,29 @@ export class Application implements AppState {
 
     initializeSharedSecret();
     this.registerAppEvents();
-    this.initializeInstance();
 
     // allow users to supply extra command-line arguments for Chromium
     augmentCommandLineArguments();
 
+    logger().logDebug('Ready to run');
     return run();
+  }
+
+  private shouldInstanceOpen() {
+    // check if this is the primary instance
+    // projects always open in a new instance
+    // files prefer to reuse the primary instance
+    const hasInstanceLock = app.requestSingleInstanceLock();
+    const hasProjectToOpen = this.argsManager.getProjectFileArg() ?? getenv('RS_INITIAL_PROJECT');
+    const hasFileToOpen = this.argsManager.getFileArgs().length > 0;
+
+    logger().logDebug(`instance lock: ${hasInstanceLock}, project: ${hasProjectToOpen}, file: ${hasFileToOpen}`);
+    if (!hasInstanceLock && !(hasProjectToOpen.length > 0) && hasFileToOpen) {
+      logger().logDebug('No instance lock - exiting');
+      return false;
+    }
+
+    return true;
   }
 
   private initializeInstance() {
@@ -126,6 +131,15 @@ export class Application implements AppState {
     } else {
       this.createMessageClient();
     }
+
+    app.on('second-instance', (_event, argv) => {
+      logger().logDebug(`second-instance event: ARGS ${argv}`);
+
+      // for files, open in the existing instance
+      this.argsManager.setUnswitchedArgs(argv);
+      if (this.argsManager.getProjectFileArg() === undefined)
+        this.argsManager.handleAfterSessionLaunchCommands();
+    });
   }
 
   // listens for messages from the server
@@ -145,11 +159,9 @@ export class Application implements AppState {
       // close out connection to primary instance that just quit
       // another connection will be created to either be the primary or listen to the new primary instance
       this.client?.close()
-        .then(() => {
-          logger().logDebug(`net-ipc: ${process.pid} close client connection`);
-          this.client = undefined;
-        })
-        .catch((error: unknown) => logger().logError(error));
+        .then(() => logger().logDebug(`net-ipc: ${process.pid} close client connection`))
+        .catch((error: unknown) => logger().logError(error))
+        .finally(() => this.client = undefined);
 
       const instanceLock = app.requestSingleInstanceLock();
       if (instanceLock) {
@@ -180,9 +192,7 @@ export class Application implements AppState {
       // closing will send an event to all other instances
       // one of the other instances will take over as primary
       this.server?.close()
-        .then(() => {
-          logger().logDebug(`net-ipc: ${process.pid} is shutting down and releasing the instance lock`);
-        })
+        .then(() => logger().logDebug(`net-ipc: ${process.pid} is shutting down and releasing the instance lock`))
         .catch((error: unknown) => logger().logError(error));
 
       this.client?.close()
@@ -228,15 +238,6 @@ export class Application implements AppState {
         .catch((error: unknown) => logger().logError(error));
     });
 
-    app.on('second-instance', (_event, argv) => {
-      logger().logDebug(`second-instance event: ARGS ${argv}`);
-
-      // for files, open in the existing instance
-      this.argsManager.setUnswitchedArgs(argv);
-      if (this.argsManager.getProjectFileArg() === undefined)
-        this.argsManager.handleAfterSessionLaunchCommands();
-    });
-
     // // Workaround for selecting all text in the input field: https://github.com/rstudio/rstudio/issues/11581
     // if (process.platform === 'darwin') {
     //   app.whenReady()
@@ -253,6 +254,11 @@ export class Application implements AppState {
    * Invoked when Electron app is 'ready'
    */
   async run(): Promise<ProgramStatus> {
+    if (!this.shouldInstanceOpen()) {
+      return exitSuccess();
+    }
+    this.initializeInstance();
+
     // prepare application for launch
     this.appLaunch = ApplicationLaunch.init();
 

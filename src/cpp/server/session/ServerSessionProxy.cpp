@@ -1,10 +1,10 @@
 /*
  * ServerSessionProxy.cpp
  *
- * Copyright (C) 2022 by RStudio, PBC
+ * Copyright (C) 2022 by Posit Software, PBC
  *
- * Unless you have received this program directly from RStudio pursuant
- * to the terms of a commercial license agreement with RStudio, then
+ * Unless you have received this program directly from Posit Software pursuant
+ * to the terms of a commercial license agreement with Posit Software, then
  * this program is licensed to you under the terms of version 3 of the
  * GNU Affero General Public License. This program is distributed WITHOUT
  * ANY EXPRESS OR IMPLIED WARRANTY, INCLUDING THOSE OF NON-INFRINGEMENT,
@@ -351,6 +351,36 @@ void sendSparkUIResponse(
    ptrConnection->writeResponse(fixedResponse);
 }
 
+void handleWriteResponseForUpgrade(
+      boost::shared_ptr<core::http::AsyncConnection> ptrConnection,
+      boost::shared_ptr<http::IAsyncClient> ptrLocalhost,
+      const std::string& username,
+      const boost::system::error_code& ec,
+      size_t bytes_transferred)
+{
+   if (ec)
+   {
+      // Something went wrong with the writeResponse; the socket will be closed
+      // for us and an error logged. No need for us to continue doing work
+      // against this socket.
+      return;
+   }
+
+   // cast to generic socket types
+   boost::shared_ptr<http::Socket> ptrClient =
+      boost::static_pointer_cast<http::Socket>(ptrConnection);
+   boost::shared_ptr<http::Socket> ptrServer =
+      boost::static_pointer_cast<http::Socket>(ptrLocalhost);
+
+   auth::handler::UserSession::addUserSessionConnection(username);
+
+   // connect the sockets
+   http::SocketProxy::create(ptrClient, ptrServer,
+                              boost::bind(checkForValidUserSession, username),
+                              boost::bind(socketConnectionClosed, username));
+
+}
+
 void handleLocalhostResponse(
       boost::shared_ptr<core::http::AsyncConnection> ptrConnection,
       boost::shared_ptr<http::IAsyncClient> ptrLocalhost,
@@ -365,21 +395,17 @@ void handleLocalhostResponse(
    {
       LOG_DEBUG_MESSAGE("Upgrading localhost connection for socket proxy");
 
-      // write the response but don't close the connection
-      ptrConnection->writeResponse(response, false);
-
-      // cast to generic socket types
-      boost::shared_ptr<http::Socket> ptrClient =
-         boost::static_pointer_cast<http::Socket>(ptrConnection);
-      boost::shared_ptr<http::Socket> ptrServer =
-         boost::static_pointer_cast<http::Socket>(ptrLocalhost);
-
-      auth::handler::UserSession::addUserSessionConnection(username);
-
-      // connect the sockets
-      http::SocketProxy::create(ptrClient, ptrServer,
-                                boost::bind(checkForValidUserSession, username),
-                                boost::bind(socketConnectionClosed, username));
+      // write the response but don't close the connection. Once the response is
+      // written, call handleWriteResponseForUpgrade to begin streaming the
+      // WebSocket traffic.
+      ptrConnection->writeResponse(response, false, http::Headers(), boost::bind(
+         handleWriteResponseForUpgrade,
+         ptrConnection,
+         ptrLocalhost,
+         username,
+         _1,
+         _2
+      ));
    }
    // normal response, write and close (handle redirects if necessary)
    else
@@ -428,6 +454,24 @@ void handleLocalhostResponse(
          if (isSparkUIResponse(response))
          {         
             sendSparkUIResponse(response, ptrConnection);
+         }
+         else if (response.headerValue(core::http::kTransferEncoding) == core::http::kChunkedTransferEncoding)
+         {
+            // Even if the response from upstream is "Transfer-Encoding: chunked",
+            // our response to the client is no longer chunked; the AsyncClient
+            // parses and consumes the chunk lengths. Therefore, remove the
+            // Transfer-Encoding header and set the content length, to reflect
+            // that the body will come all at once.
+            //
+            // TODO: Determine what happens when the Transfer-Encoding is both
+            // chunked and something else ("gzip, chunked" or "chunked, gzip").
+            // TODO: What other hop-by-hop response headers are we not removing
+            // but should?
+            http::Response response1;
+            response1.assign(response);
+            response1.removeHeader("Transfer-Encoding");
+            response1.setContentLength(response.body().size());
+            ptrConnection->writeResponse(response1);
          }
          else
          {
