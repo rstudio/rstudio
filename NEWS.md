@@ -42,6 +42,7 @@
 
 ### Fixed
 
+- Fixed an issue where the console history scroll position was not preserved when switching focus to a separate application (#1638)
 - Fixed an issue where Find in Files could omit matches in some cases on Windows (#11736)
 - Fixed an issue where the Git History window inverted the display of merge diffs (#10150)
 - Fixed an issue where Find in Files could fail to find results with certain versions of git (#11822)

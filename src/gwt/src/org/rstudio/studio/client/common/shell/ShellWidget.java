@@ -121,6 +121,7 @@ public class ShellWidget extends Composite implements ShellDisplay,
       
       WindowEx.addBlurHandler((BlurEvent event) ->
       {
+         // https://github.com/rstudio/rstudio/issues/1638
          ignoreNextFocus_ = true;
       });
       
