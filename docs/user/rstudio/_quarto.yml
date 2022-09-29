@@ -64,7 +64,6 @@ website:
               - ide/guide/code/console.qmd
               - ide/guide/code/projects.qmd
               - ide/guide/code/execution.qmd
-              # - ide/guide/code/code-editor.qmd
               - ide/guide/code/diagnostics.qmd
               - ide/guide/code/debugging.qmd
               - ide/guide/code/code-sections.qmd
@@ -73,6 +72,8 @@ website:
             contents:
               - ide/guide/data/data-local.qmd
               - ide/guide/data/data-connections.qmd
+              - ide/guide/data/connection-snippets.qmd
+              - ide/guide/data/connection-contracts.qmd
           - section: "Tools"
             contents:
               - ide/guide/tools/terminal.qmd
@@ -86,6 +87,7 @@ website:
               - ide/guide/productivity/add-ins.qmd
               - ide/guide/productivity/snippets.qmd
               - ide/guide/productivity/custom-shortcuts.qmd
+              - ide/guide/productivity/project-templates.qmd
           - section: "Computational Documents"
             contents:
               - ide/guide/documents/visual-editor.qmd

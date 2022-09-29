@@ -1,10 +1,10 @@
-# Version Control
-
-Copied from: <https://support.rstudio.com/hc/en-us/articles/200532077-Version-Control-with-Git-and-SVN>
+---
+title: "Version Control"
+---
 
 Version control helps software teams manage changes to source code over time. Version control software keeps track of every modification to the code in a special kind of database. If a mistake is made, developers can turn back the clock and compare earlier versions of the code to help fix the mistake while minimizing disruption to all team members. Version control systems have been around for a long time but continue to increase in popularity with data science workflows.
 
-The RStudio IDE has integrated support for version control. If you are new to version control, see a deeper overview in: [Happy Git and Github for the useR](https://happygitwithr.com/)
+RStudio has integrated support for version control. If you are new to version control, see a deeper overview in: [Happy Git and Github for the useR](https://happygitwithr.com/)
 
 ## Requirements
 
@@ -14,9 +14,9 @@ RStudio supports the following open source version control systems:
 
 -   [Subversion](http://subversion.apache.org/)
 
-To use version control with RStudio, you should first ensure that you have installed Git and/or Subversion tools on your workstation (details below).
+To use version control with RStudio, first ensure that Git and/or Subversion tools are installed on your workstation (details below).
 
-Version control is most useful when used with a remote repository. Remote repositories are typically managed by your company or are hosted in the cloud (e.g. [Github](https://github.com/)). Make sure you have credentials to access these systems. If you only want to learn how to use version control, you can manage a standalone system on your workstation but you will not be able to share code with others.
+Version control is most useful when used with a remote repository. Remote repositories are typically managed by your company or are hosted in the cloud (e.g. [Github](https://github.com/) or [GitLab](https://about.gitlab.com/)). Make sure you have credentials to access these systems. If you only want to learn how to use version control, you can manage a standalone system on your workstation but you will not be able to share code with others.
 
 You should also become familiar with using [RStudio Projects](../authoring/projects.html) (which are required for version control features to be enabled).
 
@@ -54,17 +54,17 @@ An excellent resource for learning more about Subversion and how to use it is th
 
 ## Getting Started
 
-Once you've installed your preferred Version Control system, you'll need to activate it on your system by following these steps:
+Once a Version Control system has been installed, it needs to be activated on the system by following these steps:
 
 1.  Go to **Global Options** (from the Tools menu)
 
-2.  Click **Git/SVN**
+2.  Press **Git/SVN**
 
-3.  Click **Enable version control interface for RStudio projects**
+3.  Press **Enable version control interface for RStudio projects**
 
-4.  If necessary, enter the path for your Git or SVN executable where provided. You can also create or add your RSA key for SSH if necessary.
+4.  If necessary, enter the path for the Git or SVN executable where provided. A RSA key can be created or added for SSH if necessary.
 
-![](images/version-control-options.png){fig-alt=""}
+![](images/version-control-options.png){fig-alt="A screenshot of the Git/SVN tab in Global Options displaying an active Git executable."}
 
 If you are using RStudio Server, by default RStudio Server will look at the PATH for the first Git executable it finds, and sets that as the default. If you have a specific version that you want to set for all users, the easiest option is to make sure it's the first available on the PATH system-wide.\
 \
@@ -86,9 +86,9 @@ The **Git menu dropdown** provides Commit, Pull/Push Branch, History and Project
 
 The **Git tab** within the **Environment pane** provides a number of useful commands such as "Diff", "Commit", Push/Pull arrows, View history 'clock', or select a specific branch.
 
-![](images/git-tab.png){width="450"}
+![](images/git-tab.png){fig-alt="A screenshot of the Git tab in RStudio, showing a few files that can be added to staging." width="450"}
 
-Once you are finished with your local work and are ready to Commit your changes, selecting Commit in either the **Git dropdown menu** or **Git tab** opens the **Review Changes popup** to select files for staging, add a commit message, and eventually push the commit.
+Once you are finished with your local work and are ready to Commit your changes, selecting **Commit** in either the **Git dropdown menu** or **Git tab** opens the **Review Changes popup** to select files for staging, add a commit message, and eventually push the commit.
 
 ![](images/git-commit-pane.png){width="450"}
 
@@ -176,6 +176,6 @@ To make working with RSA key pairs more straightforward the RStudio Version Cont
 
 While Linux and Mac OSX both include SSH as part of the base system, Windows does not. As a result the standard Windows distribution of Git (Msysgit, referenced above) also includes an SSH client.
 
-Subversion for Windows however does not include an SSH client. To overcome this limitation, RStudio includes a version of the Msys SSH client within the RStudio\\bin\\msys_ssh directory. This directory is automatically added to the PATH (for RStudio only rather than system-wide) and is also available on the PATH for command prompt windows opened using the Tools -\> Shell command. A Windows shortcut (SSH Command Prompt) is also provided within the RStudio\\bin\\msys_ssh directory if you wish to launch a console from the Desktop that supports the svn+ssh protocol.
+Subversion for Windows however does not include an SSH client. To overcome this limitation, RStudio includes a version of the Msys SSH client within the `RStudio\bin\msys_ssh directory`. This directory is automatically added to the PATH (for RStudio only rather than system-wide) and is also available on the PATH for command prompt windows opened using the **Tools** > **Shell** command. A Windows shortcut (SSH Command Prompt) is also provided within the `RStudio\bin\msys_ssh` directory to launch a console from the Desktop that supports the svn+ssh protocol.
 
 

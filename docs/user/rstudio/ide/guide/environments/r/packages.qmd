@@ -2,15 +2,13 @@
 title: "R Package Repos"
 ---
 
-Adapted from: https://support.rstudio.com/hc/en-us/articles/360004067074-Managing-Packages-with-the-RStudio-IDE
-
 R packages allow the R community to extend the base functionality provided in R with a rich set of packages available in package repositories.
 
 CRAN, The Comprehensive R Archive Network, is the primary package repository in the R community. CRAN is a network of ftp and web servers around the world that store identical, up-to-date, versions of code and documentation for R.
 
 ## Primary Repos
 
-The RStudio IDE uses the RStudio CRAN mirror ([https://cran.rstudio.com](https://cran.rstudio.com/)) by default. This mirror is globally distributed using Amazon S3 storage so should provide good performance for all locales. You may, however, wish to override the default CRAN mirror. This can be done from the Tools menu > Global Options > Packages:
+RStudio uses the RStudio CRAN mirror ([https://cran.rstudio.com](https://cran.rstudio.com/)) by default. This mirror is globally distributed using Amazon S3 storage so should provide good performance for all locales. If needed, override the default CRAN mirror from the **Tools** menu > **Global Options** > **Packages**:
 
 ![](https://support.rstudio.com/hc/article_attachments/360004901494/Screen_Shot_2018-05-09_at_12.29.53_PM.png)
 

@@ -1,0 +1,88 @@
+---
+title: "Connection Snippets"
+---
+
+RStudio connections can be extended through:
+
+1.  **Snippet Files** on a server-based version of RStudio that provide support for new connections using R templates that enable users and system administrators to list and create new connections.
+
+2.  **Packages** that do one or more of the following:
+
+    -   Implement the [Connections Contract](connections-contract.html) to manage and explore data in the **Connections** Pane and/or
+
+    -   Supply Snippet Files or a Shiny Application to extend the **New Connection** dialog.
+
+## Snippet Files
+
+A Connection Snippet File is an R code snippet with additional metadata which is intended to initialize a connection. This file can be as simple as:
+
+    library(readr)
+    data <- read_csv(readr_example("mtcars.csv"))
+
+This snippet can be saved on a server-based version of RStudio under `/etc/rstudio/connections/`. Once that file is created and RStudio is restarted, RStudio will make this connection available as:
+
+::: {layout-ncol="2"}
+![](images/motortrend-connection.png){fig-alt="A screenshot of the New Connection wizard displaying the example \"Motor Trends Cars\" existing data source"}
+
+![](images/basic-connection-interface.png){fig-alt="A screenshot of the New Connection wizard, displaying the snippet output."}
+:::
+
+### Snippet test
+
+The snippet can also be tested by pressing the **Test** button in the **New Connection** wizard. Testing will return either a success or failure based on the available code snippet.
+
+![](images/motortrend-test.png){fig-alt="A screenshot of the New Connections wizard, displaying the result of a successful connection test."}
+
+### Snippet customization
+
+The path is configurable through the `connections-path` environment variable and multiple connection files can be specified.
+
+In order to parameterize this connection, one can create fields using using the `${Position:Label=Default}` syntax:
+
+-   **Position:** The row position starting at zero.
+
+-   **Label:** The label assigned to this field.
+
+-   **Default:** An optional default value.
+
+For example, a filter interface for this dataframe can be added with the following connection snippet:
+
+    library(readr)
+    data <- read_csv(readr_example("mtcars.csv"))
+    data[data$mpg == ${0:Miles per Gallon=21.4} | data$cyl == ${1:Cylinders=6}, ]
+
+![](https://rstudio.github.io/rstudio-extensions/resources/connections/fields-connection-interface.png){fig-alt="A screenshot of the New Connection wizard, displaying the ability to add filters or other UI components to the connection/data"}
+
+In order to create a `;` separated list of values, use the syntax `${Position:Label=Default:Key}`. Semicolon-separated list are common in database connections and therefore, natevely supported in snippet files, for instance:
+
+    "${2:Letters=ABC:LettersKey}${3:Numbers=123:NumbersKey}"
+
+![](https://rstudio.github.io/rstudio-extensions/resources/connections/keyvalue-connection-interface.png){fig-alt="A screenshot of the New Connection wizard, displaying the ability to add filters or other UI components to the connection/data"}
+
+There are several escape characters supported: `$colon$` to escape `:` and `$equal` to escape `=`.
+
+## R Packages
+
+R packages provide the **New Connection** integration to both server and desktop based versions of RStudio.
+
+### Package structure
+
+A package supporting connections defines the following components:
+
+-   **Connections File:** A DCF file must be created under `inst/rstudio/connections.dcf` to enumerate each connection supported in the package.
+
+-   **Snippet Files:** Snippet files are stored under `inst/rstudio/connections/`.
+
+As a quick start, the [Rstudio Connections Example](https://github.com/rstudio/rstudio-connections-example) GitHub repo contains a working example of this structure.
+
+### Connections contract
+
+You can integrate with RStudio's Connection Pane to allow users to explore connections created with your R package by using the [Connections Contract](connection-contracts.html).
+
+### Snippet files
+
+Snippet Files are specified under the `/inst/rstudio/connections` and follow the same syntax mentioned in the "Snippet Files" section.
+
+### Shiny application
+
+For advanced connection interfaces, a shiny application can be specified. See [sparklyr](https://github.com/rstudio/sparklyr/blob/master/R/connection_shinyapp.R) for a working application.

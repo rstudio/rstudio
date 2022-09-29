@@ -2,45 +2,43 @@
 title: "RStudio Jobs"
 ---
 
-Copied from: <https://www.rstudio.com/blog/rstudio-1-2-jobs/>
-
 RStudio has the ability to send long running R scripts to [local and remote background jobs](https://www.rstudio.com/blog/rstudio-1-2-jobs/). This functionality can dramatically improve the productivity of data scientists and analysts using R since they can continue working in RStudio while jobs are running in the background.
 
 Local background jobs are supported by all versions of the RStudio IDE, server and desktop. Remote background jobs are a feature of [Posit Workbench](https://www.rstudio.com/products/workbench/) and are orchestrated by the [Launcher](https://docs.rstudio.com/job-launcher/), which also supports running interactive sessions on remote resource managers like [Kubernetes](https://kubernetes.io/). More information about setting up and administering the Launcher can be found [here](https://solutions.rstudio.com/launcher/overview).
 
-Background jobs can be started manually or programatically. As mentioned in the [RStudio blog post](https://www.rstudio.com/blog/rstudio-1-2-jobs/), local background jobs are ideal for interactive, ad-hoc usage.
+Background jobs can be started manually or programatically. Local background jobs are ideal for interactive, ad-hoc usage.
 
 ## Background jobs
 
-A "background job" is an R script that runs in a separate, dedicated R session. You can run any R script in a separate session by:
+A "background job" is an R script that runs in a separate, dedicated R session. Any R script can be run in a separate session by:
 
-Selecting "Start Background Job" from the Background Job tab in the **Console pane**
+Selecting "Start Background Job" from the **Background Job** tab in the **Console**
 
-![](images/background-job-console-start.png){width="350"}
+![](images/background-job-console-start.png){fig-alt="Screenshot of the 'Start Background job' tab in the terminal pane." width="350"}
 
-Or from within a .R file by pulling down the Source menu and choosing *Source as Background Job*.
+Or from within a .R file by pulling down the Source menu and choosing **Source as Background Job**.
 
-![](images/source-job.png){fig-alt="Source script as local job" width="350"}
+![](images/source-job.png){fig-alt="Source script as background job" width="350"}
 
 Either method will give you some options for running your job.
 
-![](images/background-job-option.png "Dialog showing options for starting R script job"){alt="" width="450"}
+![](images/background-job-option.png){fig-alt="Dialog showing options for starting R script job" width="450"}
 
 By default, the job will run in a clean R session, and its temporary workspace will be discarded when the job is complete. This is the fastest and safest configuration, good for reproducible scripts that have no side effects.
 
 However, if you want to feed data from your current R session into the job, or have the job return data to your current R session, change the dialog options as follows:
 
-**Run job with copy of global environment**: If ticked, this option saves your global environment and loads it into the job's R session before it runs. This is useful because it will allow your job to see all the same variables you can see in the IDE. Note that this can be slow if you have large objects in your environment.
+-   **Run job with copy of global environment**: If ticked, this option saves your global environment and loads it into the job's R session before it runs. This is useful because it will allow your job to see all the same variables you can see in the IDE. Note that this can be slow if you have large objects in your environment.
 
-**Copy job results**: By default, the temporary workspace in which the job runs is not saved. If you'd like to import data from your job back into your R session, you have a couple of choices:
+-   **Copy job results**: By default, the temporary workspace in which the job runs is not saved. If you'd like to import data from your job back into your R session, you have a couple of choices:
 
-*Global environment*: This places all the R objects your job creates back in your R session's global environment. Use this option with caution! The objects created by the job will overwrite, without a warning, any objects that have the same name in your environment.
+-   *Global environment*: This places all the R objects your job creates back in your R session's global environment. Use this option with caution! The objects created by the job will overwrite, without a warning, any objects that have the same name in your environment.
 
-*Results object*: This places all the R objects your job creates into a new environment named `yourscript_results`.
+-   *Results object*: This places all the R objects your job creates into a new environment named `yourscript_results`.
 
 ### Lifetime
 
-Background jobs run as non-interactive child R processes of your main R process, which means that they will be shut down if R is. While your R session is running jobs:
+Background jobs run as non-interactive child R processes of your main R process, which means that they will be shut down if R is. While the R session is running jobs:
 
 -   You will be warned if you attempt to close the window while jobs are still running (on RStudio Desktop)
 
@@ -48,7 +46,7 @@ Background jobs run as non-interactive child R processes of your main R process,
 
 While background jobs are running, a progress bar will appear in the R console summarizing the progress of all running jobs.
 
-![](images/background-job-console.png "R console pane showing job progress tab"){alt="" width="350"}
+![](images/background-job-console.png){fig-alt="R console pane showing job progress tab" width="350"}
 
 ### Detailed progress
 
@@ -62,38 +60,35 @@ When your job reaches that line in your script, the name of the section will app
 
 You can also emit output using the usual R mechanisms, such as `print`, `message`, and `cat`. This output appears in the Jobs pane when you select your job.
 
-![](images/background-job-print.png "Jobs pane with output of a local job"){alt="" width="350"}
+![](images/background-job-print.png){fig-alt="Jobs pane with output of a local job" width="350"}
 
 ### Scripting
 
 You can script the creation of jobs using the **rstudioapi** package method [jobRunScript](https://www.rdocumentation.org/packages/rstudioapi/versions/0.9.0/topics/jobRunScript); it has options which correspond to each dialog option above. This makes it possible to automate and orchestrate more complicated sets of background tasks.
 
-Note however that the IDE's background job runner is generally designed for one-off, interactive script runs. If you are writing R code and need to run a subtask asynchronously in a background R session, we recommend using the new [callr package](https://callr.r-lib.org/) instead.
-
-## Workbench (Launcher) jobs {.pro-header}
-
-On Posit Workbench, you also have the option of running your R script on your company's compute infrastructure, using the new [Job Launcher](https://blog.rstudio.com/2018/11/05/rstudio-rsp-1.2-features/). To do this, select:
-
-![](images/workbench-job.png){fig-alt="Source script as launcher job" width="350"}
-
-When launching a job, you'll have the opportunity to specify how you want to run it, depending of course on the configuration the compute infrastructure exposes to Posit Workbench. This can include settings like resource constraints as well as configuration parameters like which Docker image to use.
-
-![](images/workbench-job-option.png){fig-alt="Launcher job option dialog" width="550"}
-
-### Monitoring Workbench jobs
-
-Unlike Background Jobs, Workbench Jobs are **independent from the R session**. You can safely quit your R session without affecting any Workbench Jobs you may have started from it. Once you have started a job, you can see its status in the *Workbench Jobs* tab, which shows all your jobs (not just those launched from the current session).
-
-![](images/workbench-job-progress.png){fig-alt="IDE tab showing status of Workbench jobs" width="550"}
-
-You can also monitor the status and progress of your Workbench Jobs on your Posit Workbench dashboard:
-
-![](images/workbench-homepage-progress.png){fig-alt="Posit Workbench dashboard showing executing jobs" width="450"}
+Note however that the IDE's background job runner is generally designed for interactive script runs. If you are writing R code and need to run a subtask asynchronously in a background R session, we recommend using the [callr package](https://callr.r-lib.org/) instead.
 
 ## Showing task progress
 
 RStudio's Jobs pane can show more than just the progress of Background or Workbench jobs. It can also be scripted from R packages (and R code) to show status, progress, and output for any long-running task.
 
-If you'd like to show progress and/or output from a task using the jobs UI, refer to the [rstudioapi documentation](https://rstudio.github.io/rstudioapi/reference/index.html#jobs) for details; start with `addJob`, which creates a new job in the UI and returns a handle you can use to update the UI as the job progresses.
+To show progress and/or output from a task using the jobs UI, refer to the [rstudioapi documentation](https://rstudio.github.io/rstudioapi/reference/index.html#jobs) for details; start with `addJob`, which creates a new job in the UI and returns a handle you can use to update the UI as the job progresses.
 
-Copied from <https://solutions.rstudio.com/r/jobs/>
+| Interact with the jobs pane.                                                             |
+|:-----------------------|
+| [`jobAdd()`](https://rstudio.github.io/rstudioapi/reference/jobAdd.html)                 |
+| [`jobAddOutput()`](https://rstudio.github.io/rstudioapi/reference/jobAddOutput.html)     |
+| [`jobAddProgress()`](https://rstudio.github.io/rstudioapi/reference/jobAddProgress.html) |
+| [`jobRemove()`](https://rstudio.github.io/rstudioapi/reference/jobRemove.html)           |
+| [`jobRunScript()`](https://rstudio.github.io/rstudioapi/reference/jobRunScript.html)     |
+| [`jobSetProgress()`](https://rstudio.github.io/rstudioapi/reference/jobSetProgress.html) |
+| [`jobSetState()`](https://rstudio.github.io/rstudioapi/reference/jobSetState.html)       |
+| [`jobSetStatus()`](https://rstudio.github.io/rstudioapi/reference/jobSetStatus.html)     |
+
+## Workbench (Launcher) jobs {.pro-header}
+
+On Posit Workbench, you also have the option of running your R script on your company's compute infrastructure, using the [Job Launcher](https://blog.rstudio.com/2018/11/05/rstudio-rsp-1.2-features/). To do this, select:
+
+![](images/workbench-job.png){fig-alt="Source script as launcher job" width="350"}
+
+See more documentation specific to Workbench Launcher Jobs at
