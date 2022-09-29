@@ -965,10 +965,16 @@ public class CompletionRequester
 
       private void doAddDisplayNameGeneric(SafeHtmlBuilder sb)
       {
+         String style = RES.styles().completion();
+         if (type == RCompletionType.COLUMN) 
+         {
+            style = style + " " + RES.styles().column();
+         }
+
          // Get the name for the completion
          SafeHtmlUtil.appendSpan(
                sb,
-               RES.styles().completion(),
+               style,
                display);
 
          // Display the source for functions and snippets (unless there
@@ -983,6 +989,22 @@ public class CompletionRequester
                   sb,
                   RES.styles().packageName(),
                   "{" + source.replaceAll("package:", "") + "}");
+         }
+
+         if (type == RCompletionType.COLUMN) 
+         {
+            SafeHtmlUtil.appendSpan(
+                  sb,
+                  RES.styles().dataframe(),
+                  "[" + source + "]");
+         }
+
+         if (type == RCompletionType.ARGUMENT) 
+         {
+            SafeHtmlUtil.appendSpan(
+                  sb,
+                  RES.styles().argument(),
+                  source + "()");
          }
       }
 
@@ -1032,6 +1054,8 @@ public class CompletionRequester
             return new ImageResource2x(ICONS.context2x());
          case RCompletionType.SNIPPET:
             return new ImageResource2x(ICONS.snippet2x());
+         case RCompletionType.COLUMN:
+            return new ImageResource2x(ICONS.column2x());
          default:
             return new ImageResource2x(ICONS.variable2x());
          }
