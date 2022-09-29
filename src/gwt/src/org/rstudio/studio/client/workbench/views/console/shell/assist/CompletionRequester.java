@@ -400,29 +400,10 @@ public class CompletionRequester
             JsArrayString meta = response.getMeta();
             ArrayList<QualifiedName> newComp = new ArrayList<>();
 
-            // 1) columns
+            // Get function completions from the server
             for (int i = 0; i < comp.length(); i++)
             {
-               if (type.get(i) == RCompletionType.COLUMN)
-               {
-                  newComp.add(new QualifiedName(
-                     comp.get(i), 
-                     display.get(i),
-                     pkgs.get(i), 
-                     quote.get(i), 
-                     type.get(i), 
-                     suggestOnAccept.get(i), 
-                     replaceToEnd.get(i),
-                     meta.get(i), 
-                     response.getHelpHandler(), 
-                     response.getLanguage()
-                  ));
-               }
-            }
-
-            // 2) arguments
-            for (int i = 0; i < comp.length(); i++)
-            {
+               GWT.log("comp[" + i + "] = " + comp.get(i) + ", type = " + type.get(i));
                if (comp.get(i).endsWith(" = "))
                {
                   newComp.add(new QualifiedName(
@@ -440,24 +421,24 @@ public class CompletionRequester
                }
             }
 
-            // 3) Try getting our own function argument completions
+            // Try getting our own function argument completions
             if (!response.getExcludeOtherCompletions())
             {
                addFunctionArgumentCompletions(token, newComp);
                addScopedArgumentCompletions(token, newComp);
             }
 
-            // 4) Get variable completions from the current scope
+            // Get variable completions from the current scope
             if (!response.getExcludeOtherCompletions())
             {
                addScopedCompletions(token, newComp, "variable");
                addScopedCompletions(token, newComp, "function");
             }
 
-            // 5) any other completion from the server
+            // Get other server completions
             for (int i = 0; i < comp.length(); i++)
             {
-               if (!comp.get(i).endsWith(" = ") && type.get(i) != RCompletionType.COLUMN)
+               if (!comp.get(i).endsWith(" = "))
                {
                   newComp.add(new QualifiedName(
                      comp.get(i), 
@@ -474,7 +455,7 @@ public class CompletionRequester
                }
             }
             
-            // 6) Get snippet completions. Bail if this isn't a top-level
+            // Get snippet completions. Bail if this isn't a top-level
             // completion -- TODO is to add some more context that allows us
             // to properly ascertain this.
             if (isTopLevelCompletionRequest())
