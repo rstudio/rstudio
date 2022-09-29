@@ -510,20 +510,14 @@ void consoleViewer(const std::string& url,
       if (error)
          LOG_ERROR(error);
 
-      // if it's in the temp dir then we can serve it via the help server,
-      // otherwise we need to show it in an external browser
-      if (filePath.isWithin(tempDir))
-      {
-         // calculate the relative path
-         std::string path = filePath.getRelativePath(tempDir);
-         
-         // add to history and treat as a widget if appropriate
-         if (isHTMLWidgetPath(filePath))
-         {
-            // view it
-            consoleShowWidget(module_context::sessionTempDirUrl(path), height);
-         }
-      }
+      // we can only serve from the temp directory via the help server,
+      if (!filePath.isWithin(tempDir))
+         return;
+
+      // calculate the relative path
+      std::string path = filePath.getRelativePath(tempDir);
+      
+      consoleShowWidget(module_context::sessionTempDirUrl(path), height);
    }
 }
 
