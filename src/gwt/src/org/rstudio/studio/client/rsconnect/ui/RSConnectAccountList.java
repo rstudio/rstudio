@@ -86,7 +86,8 @@ public class RSConnectAccountList extends Composite implements CanSetControlId
       accountList_.clearItems();
       for (int i = 0; i < accounts.length(); i++)
       {
-         if (showCloudAccounts_ || !accounts.get(i).isShinyAppsAccount())
+         // hide ShinyApps and Posit.cloud accounts from the list if non-cloud supported content type
+         if (showCloudAccounts_ || !(accounts.get(i).isShinyAppsAccount() || accounts.get(i).isCloudAccount()))
          {
             accounts_.add(accounts.get(i));
             accountList_.addItem(new RSConnectAccountEntry(accounts.get(i)));
