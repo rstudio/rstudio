@@ -4,8 +4,6 @@ title: "Python"
 
 RStudio 1.4 brought improved support for the [Python](https://www.python.org/) programming language to the RStudio IDE. This article will explore how Python can be used together with R and RStudio.
 
-Copied from: <https://support.rstudio.com/hc/en-us/articles/1500007929061-Using-Python-with-the-RStudio-IDE>
-
 ## Getting Started
 
 RStudio uses the [reticulate](https://rstudio.github.io/reticulate/) R package to interface with Python, and so RStudio's Python integration requires:
@@ -16,9 +14,11 @@ RStudio uses the [reticulate](https://rstudio.github.io/reticulate/) R package t
 
 ### Installing Python
 
-First, Python needs to be installed on the machine. Python can be installed in several ways:
+First, Python needs to be installed on the machine. For Posit Workbench or RStudio Server, admins can follow the instructions at <https://docs.posit.co/resources/install-python/>
 
--  (Recommended) Using reticulate::install_miniconda(), to install a [Miniconda](https://docs.conda.io/en/latest/miniconda.html) distribution of Python using the reticulate package,
+For local installations, Python can be installed in several ways:
+
+-  (Recommended) Using `reticulate::install_miniconda()`, to install a [Miniconda](https://docs.conda.io/en/latest/miniconda.html) distribution of Python using the reticulate package,
 
 -  (Windows) Install Python via the official Python binaries available from <https://www.python.org/downloads/windows/>,
 
@@ -61,16 +61,16 @@ Note that if you are installing reticulate from sources, you will need the requi
 
 ## Using Python
 
-The reticulate package makes it possible to load and use Python within the currently running R session. After reticulate has been installed, Python scripts (with the extension .py) can be opened, and the code within executed, similarly to R.
+The reticulate package makes it possible to load and use Python within the currently running R session. After reticulate has been installed, Python scripts (with the extension .py) can be opened, and the code within executed interactively, similarly to R.
 
-![](images/python-hello-world.png){alt="Screen_Shot_2021-04-21_at_3.42.51_PM.png"}
+![](images/python-hello-world.png){fig-alt="Screenshot of a simple Python script run via reticulate in the console."}
 
-Note that RStudio uses the reticulate Python REPL to execute code, and automatically switches between R and Python as appropriate for the script being executed.
+RStudio uses the reticulate Python REPL to execute code, and automatically switches between R and Python as appropriate for the script being executed.
 
 When the reticulate REPL is active, objects in the R session can be accessed via the r helper object. For example, `r["mtcars"]` can be used to access the mtcars dataset from R, and convert that to a pandas DataFrame (if available), or a Python dictionary if not.
 
 \
-![](images/python-mtcars.png){alt="Screen_Shot_2021-04-21_at_3.41.01_PM.png"}
+![](images/python-mtcars.png){fig-alt="A screenshot of the console displaying the dataframe contents of 'mtcars' in Python from R"}
 
 ## Selecting a Default Version of Python
 
@@ -110,14 +110,14 @@ This can be set within an appropriate R startup file; for example, the R install
 
 ## Environment Pane
 
-When the reticulate Python REPL is active, the RStudio Environment pane will update to show any available Python objects. For example:
+When the reticulate Python REPL is active, the **Environment** pane will update to show any available Python objects. For example:
 
-![](images/python-environment.png){alt="Screen_Shot_2021-05-12_at_12.44.13_PM.png"}
+![](images/python-environment.png){fig-alt="A screenshot of the Environment page, displaying Python specific objects"}
 
-The Environment pane will automatically update to show objects as they are added and removed.
+The **Environment** pane will automatically update to show objects as they are added and removed.
 
-Note that mutated objects may not update in the Environment pane until the Environment pane is explicitly refreshed.
+Mutated objects may not update in the **Environment** pane until the **Environment** pane is explicitly refreshed by pressing the **Refresh** button in the top right corner of the **Environment** pane.
 
 ## Learning More
 
-For more detailed documentation around how RStudio, R, and reticulate can be used together, please consult the reticulate documentation online at <https://rstudio.github.io/reticulate/>.
+For more detailed documentation around how Python, R, and reticulate can be used together, please consult the reticulate documentation online at <https://rstudio.github.io/reticulate/>.

@@ -2,91 +2,46 @@
 title: "Publishing"
 ---
 
-adapted from: <https://docs.rstudio.com/connect/user/publishing/>
+The following documentation is an overview of "Push-button Deployment" in RStudio. 
 
-### How to install
+For full Documentation on options for specific platforms:
 
-Adapted from \<rsconnecthttps://shiny.rstudio.com/articles/shinyapps.html\>
+- [Posit Connect User Guide](https://docs.posit.co/connect/user/connecting/)
+- [ShinyApps.io User Guide](https://docs.posit.co/shinyapps.io/)
+- [RPubs Getting Started](https://rpubs.com/about/getting-started)
 
-Shinyapps.io -> https://docs.rstudio.com/shinyapps.io/ https://shiny.rstudio.com/articles/shinyapps.html
+## Push-button deployment
 
-The `rsconnect` package deploys applications to the shinyapps.io service. The `rsconnect` package is now hosted on CRAN. You can install it by running the R command:
+The blue **publishing icon** in RStudio indicates built-in support for publishing the currently selected type of content to Posit Connect, Shinyapps.io, or RPubs.com.
 
-``` r
-install.packages('rsconnect')
-```
+![The RStudio publishing icon](https://docs.rstudio.com/connect/user/images/publishIcon_2x.png){fig-alt="The RStudio publishing icon"}
 
-After the `rsconnect` package has been installed, load it into your R session:
-
-``` r
-library(rsconnect)
-```
-
-## General Publishing Instructions
-
-RStudio Connect accepts publishing Shiny applications, R Markdown documents, plots, graphs, websites, TensorFlow models, Jupyter Notebooks, Plumber APIs, and Quarto documents and projects. The blue **publishing icon** in the RStudio IDE indicates built-in support for publishing this piece of content.
-
-![The RStudio publishing icon](https://docs.rstudio.com/connect/user/images/publishIcon_2x.png){alt="The RStudio publishing icon"}
-
-You can find the blue **publishing icon** in the following locations:
+The blue **publishing icon** is present in the following locations:
 
 -   The upper right of the file editor
 
--   The document viewer when viewing a document
+-   The document **Viewer** pane when viewing a document
 
--   The embedded viewer when running a Shiny application
+-   The embedded **Viewer** when running a Shiny application
 
--   The plots pane
+-   The **Plots** pane
 
-\
-Click on this icon to open a publishing dialog where you can name your content and select additional files to include in the deployment. By default, the RStudio IDE will try to infer the data files and scripts are used in your content. This window lets you refine those file selections.
+Click on this blue **publishing icon** to open a publishing dialog where you can name your content and select additional files to include in the deployment. By default, RStudio will try to infer the data files and scripts that are used in your content. This window lets you refine those file selections.
 
-![RStudio publishing dialog](https://docs.rstudio.com/connect/user/images/screenshots/publishing-rmd.png){alt="RStudio publishing dialog"}
+![](images/publishing-quarto.png){fig-alt="RStudio publishing dialog for a Quarto document"}
 
-Most of the time, the IDE is able to determine automatically which files are needed to render your document on RStudio Connect. However, there are situations in which it will miss a file (for instance, if it isn't referenced directly in your document). The **Add More\...** button lets you add files to the bundle that will be sent to RStudio Connect so that they will be available on the server when your document is rendered. You can also use the `resource_files` field in your document's YAML header to add additional files.
+Most of the time, RStudio is able to determine automatically which files are needed to render your document on the remote server. However, there are situations in which it will miss a file (for instance, if it isn't referenced directly in your document). The **Add More\...** button lets you add files to the bundle, so that they will be available on the server when your document is rendered. You can also use the `resource_files` field in the document's YAML header to add additional files.
 
-Deployed data files must be in the same directory as your Shiny application or R Markdown document, or in a subdirectory of that location. Files stored elsewhere on your computer will not be available on the remote server and cannot be included in the content bundle.
+Deployed data files must be in the same directory as the Shiny application or R Markdown/Quarto document, or in a subdirectory of that location. Files stored elsewhere on the computer will not be available on the remote server and cannot be included in the content bundle.
 
-Click **Publish** after verifying your settings.
-
-Your first deployment may take a few minutes, as RStudio Connect attempts to recreate the R and/or Python environments your content uses locally, and referenced packages are downloaded and installed. These packages are cached on the server; subsequent deployments will be faster.
-
-Not all of your IDE environment can be replicated on the server. Different operating systems or versions of R can occasionally make content behave differently. Package installation failures may require the installation of additional system libraries on RStudio Connect.
-
-When the deployment completes, the RStudio Connect Settings page for your content will open. You should see your deployed content alongside its settings --- for example, a rendered version of your document, or a live instance of your Shiny application.
-
-![Example of a running application](https://docs.rstudio.com/connect/user/images/screenshots/running-app.png){alt="Example of a running application"}
-
-This page allows you to verify the sharing and visibility of your deployed content. See the [Content Settings Panel](https://docs.rstudio.com/connect/user/content-settings/) section for additional information.
+Click **Publish** after verifying the settings.
 
 ## Publishing Documents
 
-You can publish R Markdown (`.Rmd`) and Quarto (`.qmd`) documents to RStudio Connect.
-
-When publishing documents to RStudio Connect, you may encounter other deployment options, depending on your content. These are discussed here.
+You can publish R Markdown (`.Rmd`) and Quarto (`.qmd`) documents to Posit Connect or RPubs.com.
 
 ### Publishing Destination[\#](https://docs.rstudio.com/connect/user/publishing/#publishing-destination "Permanent link")
 
 ![Publish to RPubs or Connect](https://docs.rstudio.com/connect/user/images/screenshots/publish-rpubs-or-connect.png){alt="Publish to RPubs or Connect"}
 
-[RPubs](http://rpubs.com/) is a service for easily sharing R Markdown documents. RPubs is not related to RStudio Connect, and you should always choose "RStudio Connect" if you wish to publish your content to RStudio Connect.
-
-### Publish Source Code[\#](https://docs.rstudio.com/connect/user/publishing/#publish-source-code "Permanent link")
-
-![Dialog to publish source code](https://docs.rstudio.com/connect/user/images/screenshots/publish-source-or-finished.png){alt="Dialog to publish source code"}
-
-These options display when publishing from the document viewer.
-
-Publishing the document with source code means that your R Markdown or Quarto file (`.Rmd` or `.qmd`) will be deployed to RStudio Connect. This file will be rendered (usually to HTML) on the server.
-
-Publishing only the finished document means that the HTML file you rendered locally is deployed to RStudio Connect.
-
-We recommend publishing your documents with source code, as it allows you to re-render the document with RStudio Connect (on a weekly schedule, for example). If the document cannot be rendered by RStudio Connect because of files or data sources that are unavailable on the server, choose "Publish finished document only" so others can view your work.
-
-### Document Selection[\#](https://docs.rstudio.com/connect/user/publishing/#document-selection "Permanent link")
-
-![Dialog to publish one or all documents](https://docs.rstudio.com/connect/user/images/screenshots/publish-one-or-all.png){alt="Dialog to publish one or all documents"}
-
-This option appears when publishing an R Markdown or Quarto document from a directory that contains more than one such document. It is possible to link together multiple R Markdown or Quarto documents to make a multi-page document, so this is your chance to indicate that you've done this, and to publish all the documents at once. In most cases, you'll want to publish just the current document.
-
-\
+[RPubs](http://rpubs.com/) is a service for easily sharing R Markdown documents. RPubs is not related to Posit Connect, and you should always choose "Posit Connect" if you wish to publish your content to Posit Connect.
