@@ -220,7 +220,7 @@ public class TextEditingTargetScopeHelper
       if (docDisplay.showChunkOutputInline())
       {
          // treat all chunks as executable in notebook mode
-         List<String> dontRunEngines = Arrays.asList("js", "css", "ojs", "mermaid", "dot");
+         List<String> dontRunEngines = Arrays.asList("js", "css", "scss", "sass", "less", "ojs", "mermaid", "dot");
          return !dontRunEngines.contains(engine);
       }
       else

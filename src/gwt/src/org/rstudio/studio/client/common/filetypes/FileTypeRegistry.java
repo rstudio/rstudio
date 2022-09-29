@@ -144,7 +144,13 @@ public class FileTypeRegistry
                           new ImageResource2x(ICONS.iconScss2x()),
                           true,
                           false, false, false, false, false, false, false, false, false, false, false, false);
-
+   
+   public static final TextFileType LESS =
+         new TextFileType("less", "LESS", EditorLanguage.LANG_LESS, ".less",
+                          new ImageResource2x(ICONS.iconLess2x()),
+                          true,
+                          false, false, false, false, false, false, false, false, false, false, false, false);
+                 
    public static final TextFileType JS =
          new TextFileType("js", "JavaScript", EditorLanguage.LANG_JAVASCRIPT, ".js",
                           new ImageResource2x(ICONS.iconJavascript2x()),
@@ -388,6 +394,7 @@ public class FileTypeRegistry
       register("*.css", CSS, new ImageResource2x(icons.iconCss2x()));
       register("*.sass", SASS, new ImageResource2x(icons.iconScss2x()));
       register("*.scss", SCSS, new ImageResource2x(icons.iconScss2x()));
+      register("*.less", LESS, new ImageResource2x(icons.iconLess2x()));
       register("*.js", JS, new ImageResource2x(icons.iconJavascript2x()));
       register("*.ts", JS, new ImageResource2x(icons.iconJavascript2x()));
       register("*.ojs", JS, new ImageResource2x(icons.iconJavascript2x()));

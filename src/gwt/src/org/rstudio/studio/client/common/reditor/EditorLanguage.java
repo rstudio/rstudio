@@ -78,7 +78,9 @@ public class EditorLanguage
          "ace/mode/scss", false, true);
    public static final EditorLanguage LANG_SASS = new EditorLanguage(
          "ace/mode/sass", false, true);
-   
+   public static final EditorLanguage LANG_LESS = new EditorLanguage(
+         "ace/mode/less", false, true);
+      
    public static final EditorLanguage LANG_GRAPHVIZ = new EditorLanguage("ace/mode/dot", false, true);
    public static final EditorLanguage LANG_CLOJURE = new EditorLanguage("ace/mode/clojure", false, true);
    public static final EditorLanguage LANG_COFFEE = new EditorLanguage("ace/mode/coffee", false, true);

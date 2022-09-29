@@ -96,6 +96,7 @@ public class FileTypeCommands
          FileTypeRegistry.CSS,
          FileTypeRegistry.SASS,
          FileTypeRegistry.SCSS,
+         FileTypeRegistry.LESS,
          FileTypeRegistry.JS,
          FileTypeRegistry.JSON,
          FileTypeRegistry.CPP,
