@@ -733,7 +733,6 @@ assign(x = ".rs.acCompletionTypes",
                                                    string,
                                                    functionCall,
                                                    numCommas,
-                                                   discardFirst,
                                                    envir = parent.frame())
 {
    result <- .rs.emptyCompletions()
@@ -918,25 +917,21 @@ assign(x = ".rs.acCompletionTypes",
       else
          ""
       
+      # arguments that are already used by the matched call
+      used <- names(as.list(matchedCall)[-1]) 
+      keep <- ! names(formals$formals) %in% used
+
       result <- .rs.appendCompletions(
          argCompletions,
          .rs.makeCompletions(
             token = token,
-            results = formals$formals,
-            packages = formals$methods,
+            results = formals$formals[keep],
+            packages = formals$methods[keep],
             type = .rs.acCompletionTypes$ARGUMENT,
             fguess = fguess,
             orderStartsWithAlnumFirst = FALSE
          )
       )
-   }
-   
-   if (discardFirst)
-   {
-      result$results <- tail(result$results, length(result$results) - 1)
-      result$packages <- tail(result$packages, length(result$packages) - 1)
-      result$quote <- tail(result$quote, length(result$quote) - 1)
-      result$type <- tail(result$type, length(result$type) - 1)
    }
    
    result
@@ -2768,7 +2763,7 @@ assign(x = ".rs.acCompletionTypes",
    .rs.appendCompletions(
       .rs.getCompletionsLibraryContext(token, string, type, numCommas, functionCall, discardFirst, documentId, envir),
       if (type == .rs.acContextTypes$FUNCTION)
-         .rs.getCompletionsFunction(token, string, functionCall, numCommas, discardFirst, envir)
+         .rs.getCompletionsFunction(token, string, functionCall, numCommas, envir)
       else if (type == .rs.acContextTypes$ARGUMENT)
          .rs.getCompletionsArgument(token, string, functionCall, envir)
       else if (type == .rs.acContextTypes$SINGLE_BRACKET)
