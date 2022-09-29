@@ -77,7 +77,7 @@ public class PublishingPreferencesPane extends PreferencesPane
       HorizontalPanel hpanel = new HorizontalPanel();
 
       String accountListLabel = constants_.accountListLabel();
-      accountList_ = new RSConnectAccountList(server, globalDisplay, true, true, accountListLabel);
+      accountList_ = new RSConnectAccountList(server, globalDisplay, true, true, true, accountListLabel);
       accountList_.setHeight("150px");
       accountList_.setWidth("300px");
       accountList_.getElement().getStyle().setMarginBottom(15, Unit.PX);

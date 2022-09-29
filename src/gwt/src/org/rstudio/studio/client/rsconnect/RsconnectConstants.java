@@ -1464,4 +1464,22 @@ public interface RsconnectConstants extends com.google.gwt.i18n.client.Messages{
     @DefaultMessage("Publish Wizard")
     @Key("publishWizardLabel")
     String publishWizardLabel();
+
+    /**
+     * Translated "Connect Posit Cloud account".
+     *
+     * @return translated "Connect Posit Cloud account"
+     */
+    @DefaultMessage("Connect Posit Cloud account")
+    @Key("newPositCloudPageCaption")
+    String newPositCloudPageCaption();
+
+    /**
+     * Translated "Our online service that lets you do, share, teach and learn data science in your web browser.".
+     *
+     * @return translated "Our online service that lets you do, share, teach and learn data science in your web browser."
+     */
+    @DefaultMessage("Our online service that lets you do, share, teach and learn data science in your web browser.")
+    @Key("newPositCloudPageSubTitle")
+    String newPositCloudPageSubTitle();
 }

@@ -116,6 +116,7 @@ public class RSConnectAccountWizard
 
       pages.add(new NewRSConnectCloudPage());
       pages.add(new NewRSConnectLocalPage());
+      pages.add(new NewPositCloudPage());
       return pages;
    }
    
