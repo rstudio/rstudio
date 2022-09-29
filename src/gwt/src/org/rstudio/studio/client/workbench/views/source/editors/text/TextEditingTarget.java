@@ -5096,7 +5096,7 @@ public class TextEditingTarget implements
          else if (content.trim().startsWith("@"))
             wordWrap.setWrappingEnabled(true);
 
-         if (content.matches("^\\s*```")) 
+         if (content.matches("^\\s*```.*")) 
          {
             outsideMarkdown = !outsideMarkdown;
             wordWrap.setWrappingEnabled(outsideMarkdown);
