@@ -10,10 +10,7 @@ Running a [Shiny](http://shiny.rstudio.com/) application as a local background j
 
 A minimal example of running the a plumber API as a Job is documented below.
 
-Use the RStudio global menu: 
-- **File** \> **New File** \> **Shiny Web App\...**
-- Set the **Application Name:** as "shiny-example"
-- Set the **Application Type:** as a **Single File (app.R)** 
+Use the RStudio global menu: - **File** \> **New File** \> **Shiny Web App\...** - Set the **Application Name:** as "shiny-example" - Set the **Application Type:** as a **Single File (app.R)**
 
 ![](images/create-new-shiny.png){fig-alt="A screenshot of the RStudio > New Shiny Web Application wizard, populated with the above instructions."}
 
@@ -34,9 +31,9 @@ With **In Background Job** set, the **Run App** button will execute the Shiny ap
 
 ![](images/live-reload-shiny.png){fig-alt="A screenshot of the RStudio interface, displaying the Shiny app running as a Background Job, displaying the shiny app in the Viewer pane."}
 
-Working with Shiny apps in this way allows for interactive editing and updating the displayed Shiny app in real time - both for Shiny user interface and server components. 
+Working with Shiny apps in this way allows for interactive editing and updating the displayed Shiny app in real time - both for Shiny user interface and server components.
 
-Alternatively, in the `app.R` file, there will also be a **Run App** dropdown, select **In Background Job** and then press the **Run App** button. This will not have auto-reloading, but might be preferable for Shiny apps with a long startup time. 
+Alternatively, in the `app.R` file, there will also be a **Run App** dropdown, select **In Background Job** and then press the **Run App** button. This will not have auto-reloading, but might be preferable for Shiny apps with a long startup time.
 
 In this scenario, after making changes to the `app.R` file, the **Run App** button will be replaced with a **Reload App** button. The Shiny app will still be executed in a Background Job, but the user must explicitly reload the app after making changes and press the **Reload App** button, rather than the auto-reload behavior in the previous example.
 
@@ -44,11 +41,11 @@ In this scenario, after making changes to the `app.R` file, the **Run App** butt
 
 ## Plumber API
 
-Similar to Shiny applications, [plumber](https://www.rplumber.io/) APIs can be run as a local background job. This allows the current R session to remain open for things like testing or interacting with the API via curl or R packages for querying APIs such as [httr](https://httr.r-lib.org/). plumber v1.0.0 or later is required for the below documentation. 
+Similar to Shiny applications, [plumber](https://www.rplumber.io/) APIs can be run as a local background job. This allows the current R session to remain open for things like testing or interacting with the API via curl or R packages for querying APIs such as [httr](https://httr.r-lib.org/). plumber v1.0.0 or later is required for the below documentation.
 
 If necessary, install the latest version of plumber from CRAN:
 
-```r
+``` r
 install.packages("plumber")
 ```
 
@@ -70,7 +67,7 @@ From the **Background Jobs** tab within the **Console** pane, the running API wi
 
 ![](images/plumber-job-url.png){fig-alt="A screenshot of the Background Jobs pane, displaying the example URL to the API and the Swagger docs."}
 
-```code
+``` code
 # This is an example URL and 
 # it will vary between sessions
 Running plumber API at http://127.0.0.1:8461
@@ -124,6 +121,10 @@ for (i in 1:n){
 }
 ```
 
+This script includes:
+- `print()` calls for each 25 runs and the estimation of pi at that moment in time
+- `saveRDS()` to save out and overwrite the results after each 25 runs
+
 Executing this script as a Job and including the `print()` calls will display the current estimated value of Pi and a running number of simulations in the Background Jobs pane:
 
 ![](images/estimating-pi-output.png){fig-alt="A screenshot of the Background Jobs pane displaying the output of the current estimated value of Pi and that it is being saved to a file along with the number of simulations."}
@@ -136,7 +137,7 @@ The example script at <https://tune.tidymodels.org/reference/example_ames_knn.ht
 
 By adding `control = control_grid(verbose = TRUE)` in the tuning code:
 
-```r
+``` r
 ames_grid_search <-
   tune_grid(
     ames_wflow,
@@ -156,18 +157,38 @@ The above documentation has focused on using the RStudio user interface to kick 
 
 ### Local Jobs
 
-| Interact with the jobs pane.                                                             |
-|:-----------------------------------------------------------------------|
-| [`jobAdd()`](https://rstudio.github.io/rstudioapi/reference/jobAdd.html)                 |
-| [`jobAddOutput()`](https://rstudio.github.io/rstudioapi/reference/jobAddOutput.html)     |
-| [`jobAddProgress()`](https://rstudio.github.io/rstudioapi/reference/jobAddProgress.html) |
-| [`jobRemove()`](https://rstudio.github.io/rstudioapi/reference/jobRemove.html)           |
-| [`jobRunScript()`](https://rstudio.github.io/rstudioapi/reference/jobRunScript.html)     |
-| [`jobSetProgress()`](https://rstudio.github.io/rstudioapi/reference/jobSetProgress.html) |
-| [`jobSetState()`](https://rstudio.github.io/rstudioapi/reference/jobSetState.html)       |
-| [`jobSetStatus()`](https://rstudio.github.io/rstudioapi/reference/jobSetStatus.html)     |
+| Interact with the jobs pane.                                                             |     |
+|:------------------------------|-----------------------------------------|
+| [`jobAdd()`](https://rstudio.github.io/rstudioapi/reference/jobAdd.html)                 |     |
+| [`jobAddOutput()`](https://rstudio.github.io/rstudioapi/reference/jobAddOutput.html)     |     |
+| [`jobAddProgress()`](https://rstudio.github.io/rstudioapi/reference/jobAddProgress.html) |     |
+| [`jobRemove()`](https://rstudio.github.io/rstudioapi/reference/jobRemove.html)           |     |
+| [`jobRunScript()`](https://rstudio.github.io/rstudioapi/reference/jobRunScript.html)     |     |
+| [`jobSetProgress()`](https://rstudio.github.io/rstudioapi/reference/jobSetProgress.html) |     |
+| [`jobSetState()`](https://rstudio.github.io/rstudioapi/reference/jobSetState.html)       |     |
+| [`jobSetStatus()`](https://rstudio.github.io/rstudioapi/reference/jobSetStatus.html)     |     |
+|                                                                                          |     |
 
 ### Workbench Jobs
+   |
+| Interact with the launcher pane.                                                                                   |   |
+|:-------| :------------------------   |
+| [`launcherAvailable()`](https://rstudio.github.io/rstudioapi/reference/launcherAvailable.html)                     |   |
+| [`launcherConfig()`](https://rstudio.github.io/rstudioapi/reference/launcherConfig.html)                           |   |
+| [`launcherContainer()`](https://rstudio.github.io/rstudioapi/reference/launcherContainer.html)                     |   |
+| [`launcherControlJob()`](https://rstudio.github.io/rstudioapi/reference/launcherControlJob.html)                   |   |
+| [`launcherGetInfo()`](https://rstudio.github.io/rstudioapi/reference/launcherGetInfo.html)                         |   |
+| [`launcherGetJob()`](https://rstudio.github.io/rstudioapi/reference/launcherGetJob.html)                           |   |
+| [`launcherGetJobs()`](https://rstudio.github.io/rstudioapi/reference/launcherGetJobs.html)                         |   |
+| [`launcherHostMount()`](https://rstudio.github.io/rstudioapi/reference/launcherHostMount.html)                     |   |
+| [`launcherNfsMount()`](https://rstudio.github.io/rstudioapi/reference/launcherNfsMount.html)                       |   |
+| [`launcherPlacementConstraint()`](https://rstudio.github.io/rstudioapi/reference/launcherPlacementConstraint.html) |   |
+| [`launcherResourceLimit()`](https://rstudio.github.io/rstudioapi/reference/launcherResourceLimit.html)             |   |
+| [`launcherSubmitJob()`](https://rstudio.github.io/rstudioapi/reference/launcherSubmitJob.html)                     |   |
+| [`launcherSubmitR()`](https://rstudio.github.io/rstudioapi/reference/launcherSubmitR.html)                         |   |
+|                                                                                                                    |   |
+
+\
 
 | Interact with the launcher pane.                                                                                   |
 |:-----------------------------------------------------------------------|
