@@ -14,7 +14,7 @@ For full Documentation on options for specific platforms:
 
 The blue **publishing icon** in RStudio indicates built-in support for publishing the currently selected type of content to Posit Connect, Shinyapps.io, or RPubs.com.
 
-![The RStudio publishing icon](https://docs.rstudio.com/connect/user/images/publishIcon_2x.png){fig-alt="The RStudio publishing icon"}
+![The RStudio publishing icon](images/publishIcon_2x.png){fig-alt="The RStudio publishing icon"}
 
 The blue **publishing icon** is present in the following locations:
 
@@ -40,8 +40,8 @@ Click **Publish** after verifying the settings.
 
 You can publish R Markdown (`.Rmd`) and Quarto (`.qmd`) documents to Posit Connect or RPubs.com.
 
-### Publishing Destination[\#](https://docs.rstudio.com/connect/user/publishing/#publishing-destination "Permanent link")
+### Publishing Destination[\#](https://docs.posit.co/connect/user/publishing/#publishing-destination)
 
-![Publish to RPubs or Connect](https://docs.rstudio.com/connect/user/images/screenshots/publish-rpubs-or-connect.png){alt="Publish to RPubs or Connect"}
+![Publish to RPubs or Connect](https://docs.posit.co/connect/user/images/screenshots/publish-rpubs-or-connect.png){fig-alt="Publish to RPubs or Connect"}
 
 [RPubs](http://rpubs.com/) is a service for easily sharing R Markdown documents. RPubs is not related to Posit Connect, and you should always choose "Posit Connect" if you wish to publish your content to Posit Connect.

@@ -118,9 +118,12 @@ which returns the name of the newly added theme. It's parameters are described b
 | `globally`    | Whether to add the theme for all users (`TRUE`) or the current user (`FALSE`). Default: `FALSE`.  |
 
 To add a new tmTheme, use:
-
-`rstudioapi::convertTheme(themePath, add, outputLocation, apply, force, globally)`
-
+```r
+rstudioapi::convertTheme(
+  themePath, add, outputLocation, 
+  apply, force, globally
+)
+```
 which also returns the name of the newly added theme. It's parameters are described in the table below:
 
 | **Parameter**    | **Description**                                                                                                                                                                    |

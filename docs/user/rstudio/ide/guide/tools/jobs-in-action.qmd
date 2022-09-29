@@ -8,7 +8,7 @@ A few examples of integrating RStudio Jobs with specific development workflows i
 
 Running a [Shiny](http://shiny.rstudio.com/) application as a local background job allows the current R session to remain free to work on other things. This can be especially helpful for making changes to the Shiny code and seeing the changes in real time.
 
-A minimal example of running the a plumber API as a Job is documented below.
+A minimal example of running the Shiny app as a Job is documented below.
 
 Use the RStudio global menu: - **File** \> **New File** \> **Shiny Web App\...** - Set the **Application Name:** as "shiny-example" - Set the **Application Type:** as a **Single File (app.R)**
 
@@ -33,7 +33,9 @@ With **In Background Job** set, the **Run App** button will execute the Shiny ap
 
 Working with Shiny apps in this way allows for interactive editing and updating the displayed Shiny app in real time - both for Shiny user interface and server components.
 
-Alternatively, in the `app.R` file, there will also be a **Run App** dropdown, select **In Background Job** and then press the **Run App** button. This will not have auto-reloading, but might be preferable for Shiny apps with a long startup time.
+### Reload App
+
+Alternatively, in the Shiny `app.R` file, there will also be a **Run App** dropdown. From **Run App**, select **In Background Job** and then press the **Run App** button. This will not have auto-reloading, but might be preferable for Shiny apps with a long startup time.
 
 In this scenario, after making changes to the `app.R` file, the **Run App** button will be replaced with a **Reload App** button. The Shiny app will still be executed in a Background Job, but the user must explicitly reload the app after making changes and press the **Reload App** button, rather than the auto-reload behavior in the previous example.
 
@@ -97,6 +99,8 @@ Long running tasks like simulation studies can be run as background or Workbench
 
 For example - a Monte Carlo simulation for estimating pi could be saved as `simulate-pi.R`:
 
+<details><summary>`simulate-pi.R` Code</summary>
+
 ``` r
 # Use a monto carlo simulation to estimate pi
 n <- 1e6
@@ -121,12 +125,14 @@ for (i in 1:n){
 }
 ```
 
+</details>
+
 This script includes:  
 
 - `print()` calls for each 25 runs and the estimation of pi at that moment in time
 - `saveRDS()` to save out and overwrite the results after each 25 runs
 
-Executing this script as a Job and including the `print()` calls will display the current estimated value of Pi and a running number of simulations in the Background Jobs pane:
+Executing this script as a Job with the included `print()` calls will display the current estimated value of Pi and a running number of simulations in the Background Jobs pane:
 
 ![](images/estimating-pi-output.png){fig-alt="A screenshot of the Background Jobs pane displaying the output of the current estimated value of Pi and that it is being saved to a file along with the number of simulations."}
 

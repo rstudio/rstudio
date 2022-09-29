@@ -14,15 +14,15 @@ A "background job" is an R script that runs in a separate, dedicated R session. 
 
 Selecting "Start Background Job" from the **Background Job** tab in the **Console**
 
-![](images/background-job-console-start.png){fig-alt="Screenshot of the 'Start Background job' tab in the terminal pane." width="350"}
+![](images/background-job-console-start.png){fig-alt="Screenshot of the 'Start Background job' tab in the terminal pane."}
 
 Or from within a .R file by pulling down the Source menu and choosing **Source as Background Job**.
 
-![](images/source-job.png){fig-alt="Source script as background job" width="350"}
+![](images/source-job.png){fig-alt="Source script as background job" width="450"}
 
 Either method will give you some options for running your job.
 
-![](images/background-job-option.png){fig-alt="Dialog showing options for starting R script job" width="450"}
+![](images/background-job-option.png){fig-alt="Dialog showing options for starting R script job"}
 
 By default, the job will run in a clean R session, and its temporary workspace will be discarded when the job is complete. This is the fastest and safest configuration, good for reproducible scripts that have no side effects.
 
@@ -32,9 +32,9 @@ However, if you want to feed data from your current R session into the job, or h
 
 -   **Copy job results**: By default, the temporary workspace in which the job runs is not saved. If you'd like to import data from your job back into your R session, you have a couple of choices:
 
--   **Global environment**: This places all the R objects your job creates back in your R session's global environment. Use this option with caution! The objects created by the job will overwrite, without a warning, any objects that have the same name in your environment.
+  -   **Global environment**: This places all the R objects your job creates back in your R session's global environment. Use this option with caution! The objects created by the job will overwrite, without a warning, any objects that have the same name in your environment.
 
--   **Results object**: This places all the R objects your job creates into a new environment named `yourscript_results`.
+  -   **Results object**: This places all the R objects your job creates into a new environment named `yourscript_results`.
 
 An additional option is to include specific R code to save out the results to files on disk such as `readr::save_rds("results.rds")`
 
@@ -54,15 +54,22 @@ While background jobs are running, a progress bar will appear in the R console s
 
 The progress bar RStudio shows for your job represents the execution of each top-level statement in your R script. If you want a little more insight into which part of the script is currently running, you can use RStudio's [code sections](https://support.rstudio.com/hc/en-us/articles/200484568-Code-Folding-and-Sections) feature. Add a section marker like this to your R script:
 
-    # Apply the model ----
+```markdown
+# Apply the model ----
+```
 
 When your job reaches that line in your script, the name of the section will appear on the progress bar.
 
-![](images/background-job-name.png "Job progress bar showing section progress"){alt="" width="350"}
+![](images/background-job-name.png){fig-alt="Job progress bar showing section progress"}
 
-You can also emit output using the usual R mechanisms, such as `print`, `message`, and `cat`. This output appears in the Jobs pane when you select your job.
+You can also emit output using the usual R mechanisms, such as:
+- `print`
+- `message`
+- `cat`
 
-![](images/background-job-print.png){fig-alt="Jobs pane with output of a local job" width="350"}
+This output appears in the Jobs pane when you select your job.
+
+![](images/background-job-print.png){fig-alt="Jobs pane with output of a local job"}
 
 ### Scripting
 

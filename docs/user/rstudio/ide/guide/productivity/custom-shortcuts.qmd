@@ -2,24 +2,21 @@
 title: "Custom Shortcuts"
 ---
 
-Users can customize or bind keyboard shortcuts to execute:
-- RStudio application commands
-- Editor commands
-- User defined R functions or [RStudio Addins](https://rstudio.github.io/rstudioaddins/) or the [`shrtcts`](https://pkg.garrickadenbuie.com/shrtcts/) package
+Users can customize or bind keyboard shortcuts to execute: - RStudio application commands - Editor commands - User defined R functions or [RStudio Addins](https://rstudio.github.io/rstudioaddins/) or the [`shrtcts`](https://pkg.garrickadenbuie.com/shrtcts/) package
 
-Access the keyboard shortcuts from the RStudio menu: **Tools** > **Modify Keyboard Shortcuts**:
+Access the keyboard shortcuts from the RStudio menu: **Tools** \> **Modify Keyboard Shortcuts**:
 
-![](images/keyboard-shortcuts.png){fig-alt="A screenshot of the Tools menu bar highlighting the Modify Keyboards Shortcuts"}
+![](images/keyboard-shortcuts.png){fig-alt="A screenshot of the Tools menu bar highlighting the Modify Keyboards Shortcuts" width="300"}
 
-Seleting **Modify Keyboard Shortcts** will display available editor commands (commands that affect the current document's contents, or the current selection), alongside RStudio commands (commands whose actions are scoped beyond just the current editor).
+Selecting **Modify Keyboard Shortcuts** will display available editor commands (commands that affect the current document's contents, or the current selection), alongside RStudio commands (commands whose actions are scoped beyond just the current editor).
 
 ![](images/keyboard-shortcut-table.png){fig-alt="A screenshot of the available keyboard shortcuts."}
 
 Each row represents a particular command binding:
 
-- The command's **Name**
-- The keyboard **Shortcut** it is bound to
-- The **Scope** where that binding is active
+-   The command's **Name**
+-   The keyboard **Shortcut** it is bound to
+-   The **Scope** where that binding is active
 
 Modify a command's shortcut by clicking on the cell containing the current shortcut key sequence, and typing the new sequence to bind the command to. As you type, the current row will be marked to show that the binding has been updated, and the shortcut field will be updated based on the keys entered.
 

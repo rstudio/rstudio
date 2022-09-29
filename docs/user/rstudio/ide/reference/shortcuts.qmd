@@ -2,8 +2,6 @@
 title: "Keyboard Shortcuts"
 ---
 
-<!-- Taken from <file:///Applications/RStudio.app/Contents/Resources/www/docs/keyboard.htm> -->
-
 Some shortcuts may differ if non-default keybindings are selected (e.g. Emacs, Vim, or Sublime Text).
 
 ## Command Palette

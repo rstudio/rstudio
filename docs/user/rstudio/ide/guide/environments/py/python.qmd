@@ -26,7 +26,8 @@ For local installations, Python can be installed in several ways:
 
 -  (Linux) Install Python either from sources, or via the version of Python provided by your operating system's package manager. See <https://docs.python.org/3/using/unix.html> for more details. If you are installing Python from sources yourself, prefer installing it into a location like `/opt/python/<version>`, so that RStudio and reticulate can more easily discover it.
 
-::: {.callout-tip}
+::: {.callout-warning}
+
 Note that reticulate will be unable to bind to a version of Python without an accompanying shared library available. If installing Python from sources, it must be configured with `--enable-shared`:
 
 ``` bash
@@ -55,7 +56,7 @@ install.packages("reticulate")
 
 ::: {.callout-note}
 
-Note that if you are installing reticulate from sources, you will need the requisite build tools available - see <https://support.rstudio.com/hc/en-us/articles/200486498-Package-Development-Prerequisites>for more details.
+Note that if you are installing reticulate from sources, you will need the requisite build tools available - see <https://support.rstudio.com/hc/en-us/articles/200486498-Package-Development-Prerequisites> for more details.
 
 :::
 

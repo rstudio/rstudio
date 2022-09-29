@@ -4,10 +4,10 @@ title: "Managing Files"
 
 RStudio supports syntax highlighting and other specialized code-editing features for specific file types:
 
-- Scripts in R, Python, SQL  
-- Computational and scientific documents in Quarto, RMarkdown, and TeX  
-- Web content such as HTML and CSS  
-- and many more  
+-   Scripts in R, Python, SQL\
+-   Computational and scientific documents in Quarto, RMarkdown, and TeX\
+-   Web content such as HTML and CSS\
+-   and many more
 
 ## File Menu
 
@@ -29,10 +29,14 @@ The **Output** pane has a **Files** tab that includes several buttons for managi
 
 ## Switching files
 
-If several files are opened within RStudio, then they are all available as tabs within the **Source** pane to facilitate quick switching between open documents. If there are a large number of open documents, navigate between them using the "**\>\>"** icon at the end of the tab bar or the **View -\> Switch to Tab\...**) menu item:
+If several files are opened within RStudio, then they are all available as tabs within the **Source** pane to facilitate quick switching between open documents.
+
+Use the <kbd>Ctrl+Tab</kbd> and <kbd>Ctrl+Shift+Tab</kbd> shortcuts on desktop (<kbd>Ctrl+F12</kbd> and <kbd>Ctrl+F11</kbd> on Linux) to quickly move to the next or previous tabs, respectively.
+
+If there are a large number of open documents, navigate between them using the "**\>\>"** icon at the end of the tab bar (<kbd>Ctrl+Shift+.</kbd> shortcut or the **View -\> Switch to Tab\...** menu item). The **Switch to Tab...** provides a filtering search for all of the tabs in that **Source** pane:
 
 ![](images/file-switch.png){fig-alt="A screenshot of the Switching Files popup - it is a dropdown from the end of the Source pane, d" width="500"}
 
-To quickly navigate to an existing file in the current RStudio Project use the <kbd>Ctrl + .</kbd> shortcut. Entering the shortcut will bring up the **Go to File/Function** search bar with auto-completion of file names.
+To quickly navigate to any existing file in the current RStudio Project, even if it is not currently open, use the <kbd>Ctrl + .</kbd> shortcut. Entering the shortcut will bring up the **Go to File/Function** search bar with auto-completion of file names.
 
-![](images/go-to-file.png){fig-alt="A screenshot of the go to file/function popup as a search bar." width="350"}
+![](images/go-to-file.png){fig-alt="A screenshot of the go to file/function popup as a search bar." fig-align="center" width="450"}

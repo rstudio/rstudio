@@ -66,13 +66,13 @@ Once a Version Control system has been installed, it needs to be activated on th
 
 ![](images/version-control-options.png){fig-alt="A screenshot of the Git/SVN tab in Global Options displaying an active Git executable."}
 
-If you are using RStudio Server, by default RStudio Server will look at the PATH for the first Git executable it finds, and sets that as the default. If you have a specific version that you want to set for all users, the easiest option is to make sure it's the first available on the PATH system-wide.\
-\
-Alternately, if you are running version 1.4 or above of Posit Workbench (previously RStudio Server Pro/RStudio Workbench), you can set the default Git version system-wide by setting the `git_exe_path` option in your system rstudio-prefs.json file. See here for more:\
-<https://docs.rstudio.com/ide/server-pro/r-sessions.html#customizing-session-settings>\
-<https://docs.rstudio.com/ide/server-pro/session-user-settings.html>
+If you are using RStudio Server, by default RStudio Server will look at the PATH for the first Git executable it finds, and sets that as the default. If you have a specific version that you want to set for all users, the easiest option is to make sure it's the first available on the PATH system-wide.
 
-RStudio's version control features are tied to the use of [Projects](https://support.rstudio.com/hc/en-us/articles/200526207-Using-Projects) (which are a way of dividing work into multiple contexts, each with their own working directory).The steps required to use version control with a project vary depending on whether the project is new or existing as well as whether it is already under version control.
+Alternately, if you are running version 1.4 or above of Posit Workbench (previously RStudio Server Pro/RStudio Workbench), you can set the default Git version system-wide by setting the `git_exe_path` option in your system rstudio-prefs.json file. See here for more:\
+<https://docs.posit.co/ide/server-pro/r-sessions.html#customizing-session-settings>\
+<https://docs.posit.co/ide/server-pro/session-user-settings.html>
+
+RStudio's version control features are tied to the use of [Projects](../code/projects.html) (which are a way of dividing work into multiple contexts, each with their own working directory).The steps required to use version control with a project vary depending on whether the project is new or existing as well as whether it is already under version control.
 
 ### Integrations
 
@@ -84,9 +84,9 @@ The **Git menu dropdown** provides Commit, Pull/Push Branch, History and Project
 
 ![](images/git-drop-down.png){width="350" fig-alt="A screenshot of the git dropdown."}
 
-The **Git tab** within the **Environment pane** provides a number of useful commands such as "Diff", "Commit", Push/Pull arrows, View history 'clock', or select a specific branch.
+The **Git tab** within the **Environment pane** provides a number of useful commands such as "Diff", "Commit", the Push/Pull arrows, View history 'clock', or selecting a specific branch.
 
-![](images/git-tab.png){fig-alt="A screenshot of the Git tab in RStudio, showing a few files that can be added to staging." width="450"}
+![](images/git-tab.png){fig-alt="A screenshot of the Git tab in RStudio, showing a few files that can be added to staging."}
 
 Once you are finished with your local work and are ready to Commit your changes, selecting **Commit** in either the **Git dropdown menu** or **Git tab** opens the **Review Changes popup** to select files for staging, add a commit message, and eventually push the commit.
 

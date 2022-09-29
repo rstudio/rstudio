@@ -24,7 +24,7 @@ To upgrade Quarto out of sync with the bundled RStudio version, follows the dire
 
 ### Creating Documents
 
-Use the **File** > **New File** > **Quarto Document** command to create new Quarto documents, which will launch the **New Quarto Document** wizard:
+Use the **File** \> **New File** \> **Quarto Document** command to create new Quarto documents, which will launch the **New Quarto Document** wizard:
 
 ![](https://quarto.org/docs/tools/images/new-quarto-doc.png){fig-alt="The 'New Quarto Document' dialog menu in RStudio."}
 
@@ -48,10 +48,10 @@ Quarto documents rendered in RStudio with the **Render** button or the **Render 
 
 To access and control the Quarto render, navigate to the **Background Jobs** tab of the **Console** pane:
 
-- The duration of the current preview web server is available in the top right corner
-- Metadata, arguments, and output from the render process are printed and updated for each render
-- The URL to the preview web server is printed at the bottom of the output
-- To interrupt the render, press the red **Stop** button in the top right corner of **Background Jobs tab
+-   The duration of the current preview web server is available in the top right corner
+-   Metadata, arguments, and output from the render process are printed and updated for each render
+-   The URL to the preview web server is printed at the bottom of the output
+-   To interrupt the render, press the red **Stop** button in the top right corner of **Background Jobs** tab
 
 ![](images/quarto-job.png){fig-alt="A screenshot of the Background Jobs tab in RStudio, displaying the output of a Quarto render."}
 
@@ -73,32 +73,34 @@ Quarto is designed to be highly compatible with existing [R Markdown](https://rm
 
 One important difference between R Markdown documents and Quarto documents is that in Quarto chunk options are typically included in special comments at the top of code chunks rather than within the line that begins the chunk. For example:
 
-````
-```{{r}}
-#| echo: false
-#| fig-cap: "Air Quality"
-library(ggplot2)
-ggplot(airquality, aes(Temp, Ozone)) + 
-        geom_point() + 
-        geom_smooth(method = "loess", se = FALSE)
-```
-````
+    ```{{r}}
+    #| echo: false
+    #| fig-cap: "Air Quality"
+    library(ggplot2)
+    ggplot(airquality, aes(Temp, Ozone)) + 
+            geom_point() + 
+            geom_smooth(method = "loess", se = FALSE)
+    ```
 
 Quarto uses this approach to both better accommodate longer options like `fig-cap`, `fig-subcap`, and `fig-alt` as well as to make it straightforward to edit chunk options within more structured editors that don't have an easy way to edit chunk metadata (e.g. most traditional notebook UIs).
 
 Chunk options included this way use YAML syntax rather than R syntax for consistency with options provided in YAML front matter. You can still however use R code for option values by prefacing them with `!expr`. For example:
 
-    #| fig-cap: !expr paste("Air", "Quality")
+``` yaml
+#| fig-cap: !expr paste("Air", "Quality")
+```
 
 ## Jupyter Engine
 
 You can also work with Quarto markdown documents that target the Jupyter engine within RStudio. These files will typically include a `jupyter` option in the YAML front matter indicating which kernel to use. For example:
 
-    ---
-    title: "Matplotlib Demo"
-    author: "Norah Smith"
-    jupyter: python3
-    ---
+``` yaml
+---
+title: "Matplotlib Demo"
+author: "Norah Smith"
+jupyter: python3
+---
+```
 
 To work within a virtual environment ([venv](https://packaging.python.org/guides/installing-using-pip-and-virtual-environments/#creating-a-virtual-environment)):
 
@@ -126,19 +128,27 @@ If you have incorrect YAML it will also be highlighted when documents are saved:
 
 If you are not using RStudio and/or you prefer to render from the R console, you can do so using the [quarto](https://quarto-dev.github.io/quarto-r/) R package. To install the R package:
 
-    install.packages("quarto")
+``` r
+install.packages("quarto")
+```
 
 Then, to render a document:
 
-    library(quarto)
-    quarto_render("document.qmd")
+``` r
+library(quarto)
+quarto_render("document.qmd")
+```
 
 To live preview (automatically render & refresh the browser on save) for a document you are working on, use the `quarto_preview()` function:
 
-    library(quarto)
-    quarto_preview("document.qmd")
+``` r
+library(quarto)
+quarto_preview("document.qmd")
+```
 
 If you are working on a [website](https://quarto.org/docs/websites/) or [book](https://quarto.org/docs/books/) project, you can also use `quarto_preview()` on a project directory:
 
-    library(quarto)
-    quarto_preview()
+``` r
+library(quarto)
+quarto_preview()
+```

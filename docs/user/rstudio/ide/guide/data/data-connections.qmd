@@ -4,7 +4,7 @@ title: "Connections Pane"
 
 ## Connection history and existing connections
 
-![](images/connections-pane.png){fig-alt="A screenshot of the Connections pane in RStudio, displaying existing database connections." width="350"}
+![](images/connections-pane.png){fig-alt="A screenshot of the Connections pane in RStudio, displaying existing database connections." fig-align="center" width="450"}
 
 The Connections Pane displays all the connections to supported data sources and which connections are currently active. RStudio supports multiple, simultaneous database connections. This history is specific to your user account and is stored privately in RStudio's settings; it applies to all of your RStudio projects.
 

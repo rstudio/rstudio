@@ -9,7 +9,7 @@ This article is a practical guide to how to set particular options on R startup.
 Here is a summary table of how to control R options and environment variables on startup. More details are below.
 
 | File            | Who Controls  | Level           | Limitations                                    |
-|-----------------|---------------|-----------------|------------------------------------------------|
+|--------------|--------------|--------------|-------------------------------|
 | `.Renviron`     | User or Admin | User or Project | Set environment variables only.                |
 | `.Rprofile`     | User or Admin | User or Project | None, sourced as R code.                       |
 | `Rprofile.site` | Admin         | Version of R    | None, sourced as R code.                       |
@@ -21,9 +21,11 @@ Here is a summary table of how to control R options and environment variables on
 
 `.Renviron` is a user-controllable file that can be used to create environment variables. This is especially useful to avoid including credentials like API keys inside R scripts. This file is written in a key-value format, so environment variables are created in the format:
 
-    Key1=value1
-    Key2=value2
-    ...additional key=value pairs
+``` yaml
+Key1=value1
+Key2=value2
+...additional key=value pairs
+```
 
 And then `Sys.getenv("Key1")` will return `"value1"` in an R session.
 
@@ -35,17 +37,17 @@ The `.Renviron` file is most useful for defining sensitive information such as A
 
 The .Rprofile file contains R code to be run when R starts up. It is run after the .Renviron file is sourced.
 
-`.Rprofile` files are user-controllable files to set options and environment variables. `.Rprofile` files can be either at the user or project level. User-level `.Rprofile` files live in the base of the user's home directory, and project-level `.Rprofile` files live in the base of the project directory. 
+`.Rprofile` files are user-controllable files to set options and environment variables. `.Rprofile` files can be either at the user or project level. User-level `.Rprofile` files live in the base of the user's home directory, and project-level `.Rprofile` files live in the base of the project directory.
 
 R will source only one `.Rprofile` file. So if you have both a project-specific `.Rprofile` file and a user `.Rprofile` file that you want to use, you explicitly source the user-level `.Rprofile` at the top of your project-level `.Rprofile` with `source("~/.Rprofile")`.
 
-`.Rprofile` files are sourced as regular R code, so setting environment variables must be done inside a `Sys.setenv(key = "value")` call. 
+`.Rprofile` files are sourced as regular R code, so setting environment variables must be done inside a `Sys.setenv(key = "value")` call.
 
 The easiest way to edit your `.Rprofile` file is to use the `usethis::edit_r_profile()` function from within an R session. You can specify whether you want to edit the user or project level `.Rprofile.`
 
 A simple example of a `.Rprofile` is:
 
-```r
+``` r
 options(repos = c(CRAN = "https://packagemanager.posit.co/all/latest"))
 
 if (interactive()) {
@@ -64,5 +66,3 @@ These files are set for each version of R and should be located in `R_HOME/etc/`
 ## `rsession.conf` and `repos.conf`
 
 Posit Workbench and RStudio Server allows server admins to configure particular server-wide R package repositories via the `rsession.conf` and `repos.conf` files. Only one repository can be configured in `rsession.conf`. If multiple repositories are needed, `repos.conf` should be used. Details on configuring Posit Workbench and RStudio Server with these files are in this [support article](https://support.rstudio.com/hc/en-us/articles/360009863114).
-
- 

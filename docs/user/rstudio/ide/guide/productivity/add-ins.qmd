@@ -25,7 +25,7 @@ devtools::install_github("rstudio/addinexamples", type = "source")
 
 After installing this package, you should see the *Addins* toolbar menu populated with the addins exported by this package:
 
-![](images/addin-examples.png){alt="Addins Menu" fig-alt="A screenshot of the addinexamples dropdown - displaying the insert, find and replace, reformat R code, and Subset a data frame add-ins."}
+![](images/addin-examples.png){alt="Addins Menu" fig-alt="A screenshot of the addinexamples dropdown - displaying the insert, find and replace, reformat R code, and Subset a data frame add-ins." width="400"}
 
 Try pressing the **Insert %in%** addin -- the text `%in%` will be inserted at the cursor position.
 
@@ -45,9 +45,11 @@ Addins can be assigned a keyboard shortcut through the **Tools** \> **Modify Key
 
 The **Insert %in%** addin is implemented entirely with R code. In fact, the R function that made this happen is located [here](https://github.com/rstudio/addinexamples/blob/master/R/insertInAddin.R), and its definition is show below:
 
-    insertInAddin <- function() {
-      rstudioapi::insertText(" %in% ")
-    }
+``` r
+insertInAddin <- function() {
+  rstudioapi::insertText(" %in% ")
+}
+```
 
 Executing `addinexamples::insertInAddin()` directly at the console will insert `%in%`. RStudio is executing that R script behind the scenes, the addin is providing a user interface element and potentially a shortcut rather than manually writing and executing the function each time.
 
@@ -63,14 +65,17 @@ More details on Shiny Gadgets are provided below, but first we'll take a look at
 
 The [rstudioapi](https://rstudio.github.io/rstudioapi/) package allows interacting with RStudio directly with R code.
 
-    install.packages("rstudioapi")
+``` r
+install.packages("rstudioapi")
+```
 
 For addins in particular, a number of methods were added that allow R code to introspect and mutate the contents of a document open in RStudio. These methods are outlined below briefly, but see documentation within the [rstudioapi](https://rstudio.github.io/rstudioapi/) package for more details.
 
-| **getActiveDocumentContext()**            | Returns information about the currently active RStudio document. See below for more details. |
+|                                         |                                                                                              |
 |-----------------------|------------------------------------------------|
-| **insertText(location, text, id = NULL)** | Insert text at a specific location within a document.                                        |
-| **setDocumentContext(text, id = NULL)**   | Set the contents of a document open in RStudio.                                              |
+| `getActiveDocumentContext()`            | Returns information about the currently active RStudio document. See below for more details. |
+| `insertText(location, text, id = NULL)` | Insert text at a specific location within a document.                                        |
+| `setDocumentContext(text, id = NULL)`   | Set the contents of a document open in RStudio.                                              |
 
 The list returned from `getActiveDocumentContext()` provides the following information about the active RStudio document:
 
@@ -100,10 +105,12 @@ Addins are just R functions, distributed via R packages. The registration file l
 
 For example:
 
-    Name: Insert %in%
-    Description: Inserts `%in%` at the cursor position.
-    Binding: insertInAddin
-    Interactive: false
+``` markdown
+Name: Insert %in%
+Description: Inserts `%in%` at the cursor position.
+Binding: insertInAddin
+Interactive: false
+```
 
 To create your own RStudio addins:
 
@@ -137,18 +144,22 @@ Shiny Gadgets are similar to regular Shiny applications. You will need to develo
 
 Shiny Gadgets require the **shiny** and **miniUI** packages:
 
-    install.packages(c("shiny", "miniUI"))
+``` r
+install.packages(c("shiny", "miniUI"))
+```
 
 ### Gadget UI
 
 The UI for a Shiny Gadget can be generated using functions from the miniUI package. Typically, the UI definition of a Shiny Gadget will have the following form:
 
-    ui <- miniPage(
-      gadgetTitleBar("My Gadget"),
-      miniContentPanel(
-        ## Your UI items go here.
-      )
-    )
+``` r
+ui <- miniPage(
+  gadgetTitleBar("My Gadget"),
+  miniContentPanel(
+    ## Your UI items go here.
+  )
+)
+```
 
 If you're unfamiliar with how the UI for a Shiny application can be generated, please read the [Shiny UI Lesson](https://shiny.rstudio.com/tutorial/written-tutorial/lesson2/) to get further acquainted with how the UI for a Shiny application might be developed.
 
@@ -156,23 +167,25 @@ If you're unfamiliar with how the UI for a Shiny application can be generated, p
 
 The server function used for a Shiny Gadget is similar to one as provided for a regular Shiny application, except with the requirement that your application must respond to the `done` event. For example,
 
-    server <- function(input, output, session) {
-      
-      ## Your reactive logic goes here.
-      
-      # Listen for the 'done' event. This event will be fired when a user
-      # is finished interacting with your application, and clicks the 'done'
-      # button.
-      observeEvent(input$done, {
-        
-        # Here is where your Shiny application might now go an affect the
-        # contents of a document open in RStudio, using the `rstudioapi` package.
-        #
-        # At the end, your application should call 'stopApp()' here, to ensure that
-        # the gadget is closed after 'done' is clicked.
-        stopApp()
-      })
-    }
+``` r
+server <- function(input, output, session) {
+  
+  ## Your reactive logic goes here.
+  
+  # Listen for the 'done' event. This event will be fired when a user
+  # is finished interacting with your application, and clicks the 'done'
+  # button.
+  observeEvent(input$done, {
+    
+    # Here is where your Shiny application might now go an affect the
+    # contents of a document open in RStudio, using the `rstudioapi` package.
+    #
+    # At the end, your application should call 'stopApp()' here, to ensure that
+    # the gadget is closed after 'done' is clicked.
+    stopApp()
+  })
+}
+```
 
 ### Gadget Viewer
 
@@ -188,74 +201,76 @@ After defining the ui and server for your Shiny gadget, choose what kind of view
 
 Let's combine the above components into a simple 'Hello Shiny' gadget. We'll create a clock that updates its display every second. Try running the following code in RStudio -- you should see a clock displayed in the viewer pane. When you click `Done`, the current time will be inserted at the cursor position.
 
-    library(shiny)
-    library(miniUI)
+``` r
+library(shiny)
+library(miniUI)
 
-    # We'll wrap our Shiny Gadget in an addin.
-    # Let's call it 'clockAddin()'.
-    clockAddin <- function() {
+# We'll wrap our Shiny Gadget in an addin.
+# Let's call it 'clockAddin()'.
+clockAddin <- function() {
+  
+  # Our ui will be a simple gadget page, which
+  # simply displays the time in a 'UI' output.
+  ui <- miniPage(
+    gadgetTitleBar("Clock"),
+    miniContentPanel(
+      uiOutput("time")
+    )
+  )
+  
+  server <- function(input, output, session) {
+    
+    # Set some CSS styles for our clock.
+    clockStyles <- paste(
+      "border: 1px solid #DADADA",
+      "background-color: #EFEFEF",
+      "border-radius: 5px",
+      "font-size: 6em",
+      "margin-top: 60px",
+      "text-align: center",
+      sep = "; "
+    )
+    
+    # We'll use a 'reactiveTimer()' to force Shiny
+    # to update and show the clock every second.
+    invalidatePeriodically <- reactiveTimer(intervalMs = 1000)
+    observe({
       
-      # Our ui will be a simple gadget page, which
-      # simply displays the time in a 'UI' output.
-      ui <- miniPage(
-        gadgetTitleBar("Clock"),
-        miniContentPanel(
-          uiOutput("time")
-        )
-      )
+      # Call our reactive timer in an 'observe' function
+      # to ensure it's repeatedly fired.
+      invalidatePeriodically()
       
-      server <- function(input, output, session) {
-        
-        # Set some CSS styles for our clock.
-        clockStyles <- paste(
-          "border: 1px solid #DADADA",
-          "background-color: #EFEFEF",
-          "border-radius: 5px",
-          "font-size: 6em",
-          "margin-top: 60px",
-          "text-align: center",
-          sep = "; "
-        )
-        
-        # We'll use a 'reactiveTimer()' to force Shiny
-        # to update and show the clock every second.
-        invalidatePeriodically <- reactiveTimer(intervalMs = 1000)
-        observe({
-          
-          # Call our reactive timer in an 'observe' function
-          # to ensure it's repeatedly fired.
-          invalidatePeriodically()
-          
-          # Get the time, and render it as a large paragraph element.
-          time <- Sys.time()
-          output$time <- renderUI({
-            p(style = clockStyles, time)
-          })
-        })
-        
-        # Listen for 'done' events. When we're finished, we'll
-        # insert the current time, and then stop the gadget.
-        observeEvent(input$done, {
-          timeText <- paste0("\"", as.character(Sys.time()), "\"")
-          rstudioapi::insertText(timeText)
-          stopApp()
-        })
-        
-      }
-      
-      # We'll use a pane viwer, and set the minimum height at
-      # 300px to ensure we get enough screen space to display the clock.
-      viewer <- paneViewer(300)
-      runGadget(ui, server, viewer = viewer)
-      
-    }
+      # Get the time, and render it as a large paragraph element.
+      time <- Sys.time()
+      output$time <- renderUI({
+        p(style = clockStyles, time)
+      })
+    })
+    
+    # Listen for 'done' events. When we're finished, we'll
+    # insert the current time, and then stop the gadget.
+    observeEvent(input$done, {
+      timeText <- paste0("\"", as.character(Sys.time()), "\"")
+      rstudioapi::insertText(timeText)
+      stopApp()
+    })
+    
+  }
+  
+  # We'll use a pane viwer, and set the minimum height at
+  # 300px to ensure we get enough screen space to display the clock.
+  viewer <- paneViewer(300)
+  runGadget(ui, server, viewer = viewer)
+  
+}
 
-    # Try running the clock!
-    clockAddin()
+# Try running the clock!
+clockAddin()
 
-    # Now all that's left is sharing this addin -- put this function
-    # in an R package, provide the registration metadata at
-    # 'inst/rstudio/addins.dcf', and you're ready to go!
+# Now all that's left is sharing this addin -- put this function
+# in an R package, provide the registration metadata at
+# 'inst/rstudio/addins.dcf', and you're ready to go!
+```
 
 That example provides a fully functional Shiny gadgets. Additional documentation on creating Gadgets is available at the Shiny Developer Center:
 
@@ -267,10 +282,12 @@ That example provides a fully functional Shiny gadgets. Additional documentation
 
 Creating addins with Shiny Gadgets requires **shiny**, **miniUI**, and **rstudioapi** packages from CRAN. To create an addin package, add these packages to the package DESCRIPTION file as follows:
 
-    Imports:
-      shiny,
-      miniUI,
-      rstudioapi
+``` yaml
+Imports:
+  shiny,
+  miniUI,
+  rstudioapi
+```
 
 ### More Examples
 

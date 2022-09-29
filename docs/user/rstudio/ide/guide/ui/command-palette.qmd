@@ -41,11 +41,11 @@ To find a command, enter a word or short sequence of characters from the command
 
 Keep typing to filter the list, or press Up/Down to choose a command from the list and then press **Enter** to execute the chosen command. Commands are displayed with their bound keyboard shortcuts, if any, so that you know how to invoke the command directly with the keyboard next time.
 
-If your command doesn't have a shortcut, you can [use the *Modify Keyboard Shortcuts* command](https://support.rstudio.com/hc/en-us/articles/206382178-Customizing-Keyboard-Shortcuts) to add one.
+If your command doesn't have a shortcut, use the [**Modify Keyboard Shortcuts* command](../productivity/custom-shortcuts.html) to add one.
 
 ### Settings
 
-In addition to all of RStudio's commands, the command palette provides easy access to most of its settings. You'll see the word `Setting` in front of settings, along with a small control that allows you to change the setting.
+In addition to all of RStudio's commands, the Command Palette provides easy access to most of its settings. You'll see the word `Setting` in front of settings, along with a small control that allows you to change the setting.
 
 For example, you can turn RStudio's code margin indicator off and on or move it to a different column. If you have a code editor open, you'll see these changes reflected in real time as you make them.
 
@@ -59,4 +59,4 @@ Finally, the command palette shows all of the commands exposed by any installed 
 
 ![](images/style-selection.png){fig-alt="A screenshot of the command palette displaying 'style' search and the styler add-in results."}
 
-This makes the palette user-extensible; to add additional commands to the palette [create an RStudio Addin](https://rstudio.github.io/rstudioaddins/).  The [`shrtcts` addin](https://www.garrickadenbuie.com/blog/shrtcts/) also allows for creating shortcuts for common tasks.
+This makes the palette user-extensible; to add additional commands to the palette create an [RStudio Addin](../productivity/add-ins.html). The [`shrtcts` package](https://github.com/gadenbuie/shrtcts) can also create shortcuts for common tasks.

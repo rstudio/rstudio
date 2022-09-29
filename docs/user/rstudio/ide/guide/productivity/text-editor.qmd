@@ -6,9 +6,9 @@ RStudio's source editor includes a variety of productivity enhancing features in
 
 RStudio also enables flexible execution of R code directly from the source editor. For many R developers this represents their preferred way of working with R. Working in the source editor makes it much easier to reproduce sequences of commands and to package commands for re-use as a function. These features are described in the [Executing Code](../code/execution.html) section of the user guide.
 
-The core features listed below are accessible via the *Code Tools* "Magic Wand" dropdown menu in the **Source** pane.
+The core features listed below are accessible via the **Code Tools** "Magic Wand" dropdown menu in the **Source** pane.
 
-![](images/code-tools.png){fig-alt="Screenshot of the Code Tools dropdown" width="450"}
+![](images/code-tools.png){fig-alt="Screenshot of the Code Tools dropdown"}
 
 Most of these features have corresponding keyboard shortcuts, which also means they can be accessed via the Command Palette (<kbd>Ctrl/Cmd + Shift + P</kbd>).
 
@@ -58,11 +58,23 @@ Use the "All" button on the **Find/Replace** toolbar to create cursors at each i
 
 ![](images/multicursor-find-replace.png){fig-alt="Screenshot of 3 cursors, one at each instance of the searched term in the current R script."}
 
+## Move lines up/down
+
+Text or code in source files can be moved up or down by the <kbd>Alt+Up/Down</kbd> (<kbd>Option+Up/Down</kbd> on Mac). This applies to individual lines of code where the cursor is, as well as to multiline selections.
+
+![](images/move-lines-up-down.gif){fig-alt="A screencast of an example line of text being moved up with the move lines up/down shortcut"}
+
+## Copy lines up/down
+
+Text or code in source files can be moved up or down with the <kbd>Shift+Alt+Up/Down</kbd> (<kbd>Cmd+Option+Up/Down</kbd> on Mac) shortcut. This applies to individual lines of code where the cursor is, as well as to multiline selections.
+
+![](images/copy-lines-up-down.gif){fig-alt="A screencast of an example line of text being duplicated across multiple lines with the copy lines up/down shortcut"}
+
 ## Keyboard Shortcuts
 
 Beyond the keyboard shortcuts described above, there are a wide variety of other shortcuts available. Some of the more useful ones include:
 
--   <kbd>**Ctrl+Shift+N</kbd> --- New document
+-   <kbd>Ctrl+Shift+N</kbd> --- New document
 
 -   <kbd>Ctrl+O</kbd> --- Open document
 

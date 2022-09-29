@@ -18,6 +18,14 @@ R packages are an ideal way to package and distribute R code and data for re-use
 
 The following documentation covers fundamental R package development workflows inside RStudio. The [R packages book](https://r-pkgs.org/) provides a deeper overview of general R package development strategies.
 
+::: {.callout-tip}
+
+The [**Command Palette**](../ui/command-palette.html), accessed by <kbd>Ctrl+Shift+P</kbd>, can also execute `devtools`, `usethis`, or Package Development specific commands:
+
+![](images/command-palette-pkgs.png){fig-alt="The Command Palette filtered down to package development specific commands."}
+
+:::
+
 ### Package creation
 
 Once you've come up with a name, there are two ways to create the package.
@@ -74,7 +82,7 @@ To enable RStudio's package development tools for an existing package do the fol
 
 To work with packages in RStudio you use the **Build** pane, which includes a variety of tools for building and testing packages. While iteratively developing a package in RStudio, you typically use the **Build and Reload** command to re-build the package and reload it in a fresh R session:
 
-![](images/build-reload-pkg.png){alt=""}
+![](images/build-reload-pkg.png){fig-alt="The build pane in RStudio, showing the output of a 'Build package' command."}
 
 The Build and Reload command performs several steps in sequence to ensure a clean and correct result:
 
@@ -86,11 +94,7 @@ The Build and Reload command performs several steps in sequence to ensure a clea
 
 4.  Reloads the package in the new R session by executing the `library` function.
 
-Note that you can also execute **Build and Reload** using a keyboard shortcut <kbd>Ctrl+Shift+B</kbd> as well as configure RStudio to automatically save open source files prior to rebuiling.
-
-Note that the **Command Palette**, accessed by <kbd>Ctrl+Shift+P</kbd>, can also execute `devtools`, `usethis`, or Package Development specific commands:
-
-![](images/command-palette-pkgs.png)
+You can also execute **Build and Reload** using a keyboard shortcut <kbd>Ctrl+Shift+B</kbd> as well as configure RStudio to automatically save open source files prior to rebuiling.
 
 ## Learning More
 
