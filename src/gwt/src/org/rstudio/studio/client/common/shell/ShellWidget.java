@@ -415,7 +415,8 @@ public class ShellWidget extends Composite implements ShellDisplay,
    }
 
    @Override
-   public void consoleShowWidget(String url, int height) {
+   public void consoleShowWidget(String url, int height)
+   {
       output_.showWidget(url, height);
    }
 

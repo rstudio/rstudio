@@ -294,7 +294,8 @@ public class Shell implements ConsoleHistoryAddedEvent.Handler,
    }
 
    @Override
-   public void onConsoleShowWidget(ConsoleShowWidgetEvent event) {
+   public void onConsoleShowWidget(ConsoleShowWidgetEvent event)
+   {
       view_.consoleShowWidget(event.getURL(), event.getHeight());
    }
 

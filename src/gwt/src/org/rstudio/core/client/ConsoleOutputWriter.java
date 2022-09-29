@@ -146,7 +146,8 @@ public class ConsoleOutputWriter
       return ignoreLineCount || !trimExcess();
    }
 
-   public void showWidget(String url, int height) {
+   public void showWidget(String url, int height)
+   {
       initVirtualConsole();
 
       // set the appendTarget to the VirtualConsole bucket if possible

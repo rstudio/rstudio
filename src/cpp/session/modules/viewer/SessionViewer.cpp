@@ -310,7 +310,7 @@ SEXP rs_viewer(SEXP urlSEXP, SEXP heightSEXP)
    return R_NilValue;
 }
 
-SEXP rs_console_viewer(SEXP urlSEXP, SEXP heightSEXP)
+SEXP rs_consoleViewer(SEXP urlSEXP, SEXP heightSEXP)
 {
    try
    {
@@ -320,7 +320,7 @@ SEXP rs_console_viewer(SEXP urlSEXP, SEXP heightSEXP)
          height = r::sexp::asInteger(heightSEXP);
       std::string url = r::sexp::safeAsString(urlSEXP);
 
-      module_context::console_viewer(url, height);
+      module_context::consoleViewer(url, height);
    }
    CATCH_UNEXPECTED_EXCEPTION
 
@@ -364,7 +364,7 @@ namespace viewer {
 Error initialize()
 {
    RS_REGISTER_CALL_METHOD(rs_viewer);
-   RS_REGISTER_CALL_METHOD(rs_console_viewer);
+   RS_REGISTER_CALL_METHOD(rs_consoleViewer);
 
    // install event handlers
    using namespace module_context;
@@ -490,7 +490,7 @@ void viewer(const std::string& url,
    }
 }
 
-void console_viewer(const std::string& url,
+void consoleViewer(const std::string& url,
                     int height)
 {
    // transform the url to a localhost:<port>/session one if it's

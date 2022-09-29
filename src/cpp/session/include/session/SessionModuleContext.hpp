@@ -794,7 +794,7 @@ void viewer(const std::string& url,
             int height = 0, // pass 0 for no height change, // pass -1 for maximize
             const QuartoNavigate& quartoNav = QuartoNavigate());
       
-void console_viewer(const std::string& url, int height = 0);
+void consoleViewer(const std::string& url, int height = 0);
 
 void clearViewerCurrentUrl();
 std::string viewerCurrentUrl(bool mapped = true);

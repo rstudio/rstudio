@@ -182,7 +182,7 @@
    if (!is.null(height) && (!is.numeric(height) || (length(height) != 1)))
       stop("height must be a single element numeric vector or 'maximize'.")
 
-  invisible(.Call("rs_console_viewer", url, height, PACKAGE = "(embedding)"))
+  invisible(.Call("rs_consoleViewer", url, height, PACKAGE = "(embedding)"))
 })
 
 .rs.addApiFunction("savePlotAsImage", function(
