@@ -10,27 +10,38 @@ CRAN, The Comprehensive R Archive Network, is the primary package repository in 
 
 RStudio uses the RStudio CRAN mirror ([https://cran.rstudio.com](https://cran.rstudio.com/)) by default. This mirror is globally distributed using Amazon S3 storage so should provide good performance for all locales. If needed, override the default CRAN mirror from the **Tools** menu > **Global Options** > **Packages**:
 
-![](https://support.rstudio.com/hc/article_attachments/360004901494/Screen_Shot_2018-05-09_at_12.29.53_PM.png)
+![](images/primary-rstudio-repo.png){fig-alt="The RStudio Global options > Packages menu, highlighting RStudio's global CRAN mirror."}
 
 Then, changing the "Primary CRAN repo" to a custom CRAN mirror or a custom package manager by providing its URL:
 
-![](https://support.rstudio.com/hc/article_attachments/360004943213/Screen_Shot_2018-05-09_at_12.32.03_PM.png)
+![](images/change-primary-repo.png){fig-alt="The menu for Choosing an alternative Primary Repository"}
 
-You can configure the RStudio IDE with the [RStudio Package Manager](https://docs.rstudio.com/rpm/documentation/) or RStudio's [free Public Package Manager](https://packagemanager.rstudio.com/client/#/repos/1/overview) for even easier way to organize and centralize packages across your team, department, or entire organization.
-
-# TODO
-https://packagemanager.rstudio.com/client/#/repos/1/overview
-https://github.com/r-universe-org/help#how-to-install-r-packages-from-r-universe
+For even easier way to organize and centralize packages across your team, department, or entire organization, you can configure RStudio with [Posit Package Manager](https://www.posit.co/products/package-manager/) or Posit's [free Public Package Manager](https://packagemanager.posit.co/client/#/repos/1/overview).
 
 ## Secondary Repos
 
-While specifying the primary CRAN repo is sufficient in most cases, RStudio also allows you to specify secondary package management repos. This allows you to choose additional package repos that can be made available in your organization with solutions like [drat](https://cran.r-project.org/package=drat) and [minicran](https://cran.r-project.org/package=miniCRAN); for instance, the [cloudyr](https://github.com/cloudyr) project maintains a drat repo under <http://cloudyr.github.io/drat/> that could be easily added as a secondary repo from RStudio. Secondary repos can be named and added using "add\..." from the preferences pane and then adding a named repo entry in the as follows:![](https://support.rstudio.com/hc/article_attachments/360004902054/Screen_Shot_2018-05-09_at_12.40.57_PM.png)
+While specifying the primary CRAN repo is sufficient in most cases, RStudio also allows choosing secondary package management repos. This allows you to choose additional package repos that can be made available in your organization with solutions like [Posit Package Manager](https://www.posit.co/products/package-manager/), [drat](https://cran.r-project.org/package=drat), [minicran](https://cran.r-project.org/package=miniCRAN), or [r-universe](https://ropensci.r-universe.dev/ui#packages). 
+
+For instance, the [R Open Sci](https://ropensci.org/) project maintains a r-universe repo under <https://ropensci.r-universe.dev/> that could be easily added as a secondary repo from RStudio. Secondary repos can be named and added using **Tools** > **Global Options** > **Packages** > **Add** then adding a named repo entry in the **Add Secondary Repository** popup as follows: 
+
+![](images/ropensci-secondary.png){fig-alt="The Add Secondary Repository popup, showing adding ropensci from r-universe."}
+
+When you press ok, RStudio will validate that the URL is hosting a valid CRAN-like repository. If it doesn't adhere to the correct directory structure, it will throw an error: 
+
+> The given URL does not appear to be a valid CRAN repository
+
+Otherwise, it will succeed and move back to the previous **Packages** tab within **Global Options**.
 
 Some package management solutions can also suggest package repos which, if available, will be listed while adding secondary repos as follows:
 
-![](https://support.rstudio.com/hc/article_attachments/360004902114/Screen_Shot_2018-05-09_at_12.43.21_PM.png)
+![](images/suggested-secondary-repos.png){fig-alt="The secondary repos menu with suggested secondary options."}
 
-Notice that the secondary repos order is important since packages will be searched in priority, the order of the repos can be changed by moving up/down their priority (see also the [repos options](https://stat.ethz.ch/R-manual/R-devel/library/base/html/options.html) for additional information on this topic):
+::: {.callout-tip}
 
-\
-![](https://support.rstudio.com/hc/article_attachments/360004944033/Screen_Shot_2018-05-09_at_12.46.51_PM.png)
+Notice that the secondary repos order is important since packages will be searched in priority. The order of the repos can be changed by moving up/down their priority (see also the [repos options](https://stat.ethz.ch/R-manual/R-devel/library/base/html/options.html) for additional information on this topic):
+
+![](images/secondary-repo-order.png){fig-alt="The Global options > Packages menu - and the option to Move up/down specific repos."}
+
+:::
+
+
