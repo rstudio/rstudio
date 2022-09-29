@@ -2,6 +2,10 @@
 title: "Publishing"
 ---
 
+::: {.callout-warning}
+This section is not complete until we have updated screenshots for publishing to Posit Connect.
+:::
+
 The following documentation is an overview of "Push-button Deployment" in RStudio. 
 
 For full Documentation on options for specific platforms:
