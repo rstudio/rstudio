@@ -213,6 +213,8 @@ extern const int kJobsActivate;
 extern const int kPresentationPreview;
 extern const int kSuspendBlocked;
 extern const int kClipboardAction;
+extern const int kInterruptHandled;
+
 }
    
 class ClientEvent

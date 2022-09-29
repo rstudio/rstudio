@@ -986,6 +986,29 @@ void rConsoleReset()
       rsession::console_input::clearConsoleInputBuffer();
 }
 
+void rConsoleInterruptHandled()
+{
+   // Remove any pending console output events, so we don't
+   // overload the console when the user interrupts an operation
+   // spitting out an unbounded amount of output.
+   //
+   // https://github.com/rstudio/rstudio/issues/12059
+   clientEventQueue().removeIf([](const ClientEvent& event)
+   {
+      int type = event.type();
+      bool isConsoleOutputEvent =
+            type == client_events::kConsoleWriteOutput ||
+            type == client_events::kConsoleWriteError;
+      
+      return isConsoleOutputEvent;
+   });
+   
+   // Send a client event so that any output / error events
+   // that have already been broadcasted can be removed too
+   auto event = ClientEvent(client_events::kInterruptHandled, json::Object());
+   clientEventQueue().add(event);
+}
+
 bool rLocator(double* x, double* y)
 {
    // since locator can be called in a loop we need to checkForChanges
@@ -2421,14 +2444,15 @@ int main(int argc, char * const argv[])
       rstudio::r::session::RCallbacks rCallbacks;
       rCallbacks.init = rInit;
       rCallbacks.initComplete = rInitComplete;
-      rCallbacks.consoleRead = console_input::rConsoleRead;
       rCallbacks.editFile = rEditFile;
       rCallbacks.showFile = rShowFile;
       rCallbacks.chooseFile = rChooseFile;
       rCallbacks.busy = rBusy;
+      rCallbacks.consoleRead = console_input::rConsoleRead;
       rCallbacks.consoleWrite = rConsoleWrite;
       rCallbacks.consoleHistoryReset = rConsoleHistoryReset;
       rCallbacks.consoleReset = rConsoleReset;
+      rCallbacks.consoleInterruptHandled = rConsoleInterruptHandled;
       rCallbacks.locator = rLocator;
       rCallbacks.deferredInit = rDeferredInit;
       rCallbacks.suspended = rSuspended;

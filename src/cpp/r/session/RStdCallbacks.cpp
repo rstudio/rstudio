@@ -23,6 +23,9 @@
 #include <boost/regex.hpp>
 #include <boost/bind/bind.hpp>
 
+#include <core/FileSerializer.hpp>
+#include <core/RegexUtils.hpp>
+
 #include <r/RExec.hpp>
 #include <r/ROptions.hpp>
 #include <r/RSourceManager.hpp>
@@ -33,9 +36,6 @@
 #include <r/session/RConsoleHistory.hpp>
 #include <r/session/RSession.hpp>
 #include <r/session/RSessionState.hpp>
-
-#include <core/FileSerializer.hpp>
-#include <core/RegexUtils.hpp>
 
 #include "RInit.hpp"
 #include "REmbedded.hpp"
@@ -384,7 +384,7 @@ int RReadConsole(const char *pmt,
          return 0;
       }
    }
-   catch(r::exec::InterruptException&)
+   catch (r::exec::InterruptException&)
    {
       // set interrupts pending
       r::exec::setInterruptsPending(true);
@@ -435,7 +435,7 @@ void RShowMessage(const char* msg)
    CATCH_UNEXPECTED_EXCEPTION
 }
 
-void RWriteConsoleEx (const char *buf, int buflen, int otype)
+void RWriteConsoleEx(const char *buf, int buflen, int otype)
 {
    try
    {
@@ -450,6 +450,7 @@ void RWriteConsoleEx (const char *buf, int buflen, int otype)
          if (isInterruptOutput)
          {
             r::exec::setWasInterrupted(false);
+            s_callbacks.consoleInterruptHandled();
             return;
          }
          

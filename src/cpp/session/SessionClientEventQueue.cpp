@@ -148,6 +148,15 @@ void ClientEventQueue::remove(std::vector<ClientEvent>* pEvents)
    END_LOCK_MUTEX
 }
 
+void ClientEventQueue::removeIf(boost::function<bool(const ClientEvent&)> predicate)
+{
+   LOCK_MUTEX(*pMutex_)
+   {
+      core::algorithm::expel_if(pendingEvents_, predicate);
+   }
+   END_LOCK_MUTEX
+}
+
 void ClientEventQueue::clear()
 {
    LOCK_MUTEX(*pMutex_)
@@ -157,8 +166,7 @@ void ClientEventQueue::clear()
    }
    END_LOCK_MUTEX
 }
-  
-   
+
 bool ClientEventQueue::waitForEvent(
                         const boost::posix_time::time_duration& waitDuration)
 {
@@ -198,8 +206,7 @@ bool ClientEventQueue::eventAddedSince(const boost::posix_time::ptime& time)
 void ClientEventQueue::flushPendingConsoleOutput()
 {
    // NOTE: private helper so no lock required (mutex is not recursive) 
-   
-   if ( !pendingConsoleOutput_.empty() )
+   if (!pendingConsoleOutput_.empty())
    {
       // If there's more console output than the client can even show, then
       // truncate it to the amount that the client can show. Too much output

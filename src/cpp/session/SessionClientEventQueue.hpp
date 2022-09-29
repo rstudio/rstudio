@@ -55,6 +55,9 @@ public:
    // are there any events pending?
    bool hasEvents();
    
+   // clear events matching some predicate
+   void removeIf(boost::function<bool(const ClientEvent&)> predicate);
+   
    // clear the event queue
    void clear();
    

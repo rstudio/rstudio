@@ -22,6 +22,7 @@ import com.google.gwt.core.client.JsArrayString;
 import com.google.gwt.core.client.Scheduler;
 import com.google.gwt.core.client.Scheduler.RepeatingCommand;
 
+import org.rstudio.core.client.Mutable;
 import org.rstudio.core.client.command.CommandCallbacksChangedEvent;
 import org.rstudio.core.client.events.ExecuteAppCommandEvent;
 import org.rstudio.core.client.events.HighlightEvent;
@@ -245,6 +246,16 @@ public class ClientEventDispatcher
             }
          });
       }
+   }
+   
+   public void removeConsoleOutputEvents()
+   {
+      pendingEvents_.removeIf((ClientEvent event) ->
+      {
+         return
+               event.getType() == ClientEvent.ConsoleOutput ||
+               event.getType() == ClientEvent.ConsoleError;
+      });
    }
    
    private void dispatchEvent(ClientEvent event) 

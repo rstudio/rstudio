@@ -189,12 +189,13 @@ struct RCallbacks
 {
    boost::function<core::Error(const RInitInfo&)> init;
    boost::function<void()> initComplete;
-   boost::function<bool(const std::string&, bool, RConsoleInput*)> consoleRead;
    boost::function<void(const std::string&)> browseURL;
    boost::function<void(const core::FilePath&)> browseFile;
    boost::function<void(const std::string&)> showHelp;
    boost::function<void(const std::string&, core::FilePath&, bool)> showFile;
+   boost::function<bool(const std::string&, bool, RConsoleInput*)> consoleRead;
    boost::function<void(const std::string&, int)> consoleWrite;
+   boost::function<void()> consoleInterruptHandled;
    boost::function<void()> consoleHistoryReset;
    boost::function<void()> consoleReset;
    boost::function<bool(double*, double*)> locator;

@@ -21,6 +21,8 @@ import com.google.gwt.user.client.Window;
 import com.google.gwt.user.client.Window.ClosingEvent;
 import com.google.gwt.user.client.Window.ClosingHandler;
 
+import org.rstudio.core.client.Debug;
+import org.rstudio.core.client.StringUtil;
 import org.rstudio.core.client.jsonrpc.RpcError;
 import org.rstudio.core.client.jsonrpc.RpcRequest;
 import org.rstudio.core.client.jsonrpc.RpcRequestCallback;
@@ -268,7 +270,7 @@ class RemoteServerEventListener
                // only process events if we are still listening
                if (isListening_ && (events != null))
                {
-                  for (int i=0; i<events.length(); i++)
+                  for (int i = 0, n = events.length(); i < n; i++)
                   {
                      // we can stop listening in the middle of dispatching
                      // events (e.g. if we dispatch a Suicide event) so we 
@@ -286,7 +288,7 @@ class RemoteServerEventListener
             }
             // catch all here to make sure that in all cases we call
             // listen() again after processing
-            catch(Throwable e)
+            catch (Throwable e)
             {
                GWT.log("ERROR: Processing client events", e);
             }
@@ -376,6 +378,14 @@ class RemoteServerEventListener
    {
       // do some special handling before calling the standard dispatcher
       String type = event.getType();
+      
+      // if we receive notice that the R session has processed an interrupt,
+      // then clear out pending console output so we don't blow up the console
+      if (type == ClientEvent.InterruptHandled)
+      {
+         eventDispatcher_.removeConsoleOutputEvents();
+         return;
+      }
       
       // we handle async completions directly
       if (type == ClientEvent.AsyncCompletion)
