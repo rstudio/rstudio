@@ -919,7 +919,7 @@ assign(x = ".rs.acCompletionTypes",
       
       # arguments that are already used by the matched call
       used <- names(as.list(matchedCall)[-1]) 
-      keep <- ! names(formals$formals) %in% used
+      keep <- !names(formals$formals) %in% used
 
       result <- .rs.appendCompletions(
          argCompletions,
@@ -2138,7 +2138,6 @@ assign(x = ".rs.acCompletionTypes",
             fixed = TRUE
          )
       } else if (nzchar(chainObjectName)) {
-         dropFirstArgument <- TRUE
          
          functionCallString <- sub(
             "(",
@@ -2698,17 +2697,21 @@ assign(x = ".rs.acCompletionTypes",
       if (inherits(object, "python.builtin.object"))
          return(.rs.emptyCompletions())
       
-      if (length(object)) {
+      if (length(object))
+      {
          objectNames <- .rs.getNames(object)
          if (length(objectNames))
          {
             completions <- .rs.selectFuzzyMatches(objectNames, token)
-            if (inherits(object, "data.frame")) {
+            if (inherits(object, "data.frame"))
+            {
                # when the chain object is a data frame, 
                # set the completion type to COLUMN
                types <- rep(.rs.acCompletionTypes$COLUMN, length(completions))
                packages <- chainObjectName
-            } else {
+            }
+            else
+            {
                # otherwise infer from the object
                types <- vapply(completions, FUN.VALUE = numeric(1), USE.NAMES = FALSE, function(i) {
                   .rs.getCompletionType(object[[i]])
