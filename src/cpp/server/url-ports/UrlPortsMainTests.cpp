@@ -45,7 +45,7 @@ TEST_CASE("Url Ports Main")
       CHECK(portToken == getPortTokenEnvVar());
    }
 
-   SECTION("Provide port, long ouput");
+   SECTION("Provide port, long ouput")
    {
       int argc = 3;
       char *args[] = {
