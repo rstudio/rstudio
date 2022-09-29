@@ -121,7 +121,8 @@ for (i in 1:n){
 }
 ```
 
-This script includes:
+This script includes:  
+
 - `print()` calls for each 25 runs and the estimation of pi at that moment in time
 - `saveRDS()` to save out and overwrite the results after each 25 runs
 
@@ -135,7 +136,7 @@ Model training, which can often take a long time, is another great use case for 
 
 The example script at <https://tune.tidymodels.org/reference/example_ames_knn.html> can be executed as a Job, either making use of scaling infrastructure or to run scripts locally in parallel.
 
-By adding `control = control_grid(verbose = TRUE)` in the tuning code:
+Add `control = control_grid(verbose = TRUE)` in the tuning code:
 
 ``` r
 ames_grid_search <-
@@ -143,6 +144,7 @@ ames_grid_search <-
     ames_wflow,
     resamples = rs_splits,
     grid = ames_grid,
+    # this will print each step of the tuning process
     control = control_grid(verbose = TRUE)
   )
 ```
@@ -159,49 +161,23 @@ The above documentation has focused on using the RStudio user interface to kick 
 
 | Interact with the jobs pane.                                                             |     |
 |:------------------------------|-----------------------------------------|
-| [`jobAdd()`](https://rstudio.github.io/rstudioapi/reference/jobAdd.html)                 |     |
-| [`jobAddOutput()`](https://rstudio.github.io/rstudioapi/reference/jobAddOutput.html)     |     |
-| [`jobAddProgress()`](https://rstudio.github.io/rstudioapi/reference/jobAddProgress.html) |     |
-| [`jobRemove()`](https://rstudio.github.io/rstudioapi/reference/jobRemove.html)           |     |
-| [`jobRunScript()`](https://rstudio.github.io/rstudioapi/reference/jobRunScript.html)     |     |
-| [`jobSetProgress()`](https://rstudio.github.io/rstudioapi/reference/jobSetProgress.html) |     |
-| [`jobSetState()`](https://rstudio.github.io/rstudioapi/reference/jobSetState.html)       |     |
-| [`jobSetStatus()`](https://rstudio.github.io/rstudioapi/reference/jobSetStatus.html)     |     |
-|                                                                                          |     |
 
 ### Workbench Jobs
-   |
+
 | Interact with the launcher pane.                                                                                   |   |
-|:-------| :------------------------   |
-| [`launcherAvailable()`](https://rstudio.github.io/rstudioapi/reference/launcherAvailable.html)                     |   |
-| [`launcherConfig()`](https://rstudio.github.io/rstudioapi/reference/launcherConfig.html)                           |   |
-| [`launcherContainer()`](https://rstudio.github.io/rstudioapi/reference/launcherContainer.html)                     |   |
-| [`launcherControlJob()`](https://rstudio.github.io/rstudioapi/reference/launcherControlJob.html)                   |   |
-| [`launcherGetInfo()`](https://rstudio.github.io/rstudioapi/reference/launcherGetInfo.html)                         |   |
-| [`launcherGetJob()`](https://rstudio.github.io/rstudioapi/reference/launcherGetJob.html)                           |   |
-| [`launcherGetJobs()`](https://rstudio.github.io/rstudioapi/reference/launcherGetJobs.html)                         |   |
-| [`launcherHostMount()`](https://rstudio.github.io/rstudioapi/reference/launcherHostMount.html)                     |   |
-| [`launcherNfsMount()`](https://rstudio.github.io/rstudioapi/reference/launcherNfsMount.html)                       |   |
-| [`launcherPlacementConstraint()`](https://rstudio.github.io/rstudioapi/reference/launcherPlacementConstraint.html) |   |
-| [`launcherResourceLimit()`](https://rstudio.github.io/rstudioapi/reference/launcherResourceLimit.html)             |   |
-| [`launcherSubmitJob()`](https://rstudio.github.io/rstudioapi/reference/launcherSubmitJob.html)                     |   |
-| [`launcherSubmitR()`](https://rstudio.github.io/rstudioapi/reference/launcherSubmitR.html)                         |   |
-|                                                                                                                    |   |
+|:------------------------------|-----------------------------------------|
+| [`launcherAvailable()`](https://rstudio.github.io/rstudioapi/reference/launcherAvailable.html)                     | Check if Workbench Launcher is Available  |
+| [`launcherConfig()`](https://rstudio.github.io/rstudioapi/reference/launcherConfig.html)                           | Define a Workbench Launcher Configuration  |
+| [`launcherContainer()`](https://rstudio.github.io/rstudioapi/reference/launcherContainer.html)                     |  Define a Workbench Launcher Container |
+| [`launcherControlJob()`](https://rstudio.github.io/rstudioapi/reference/launcherControlJob.html)                   | Interact with (Control) a Workbench Job  |
+| [`launcherGetInfo()`](https://rstudio.github.io/rstudioapi/reference/launcherGetInfo.html)                         | Retrieve Workbench Launcher Information  |
+| [`launcherGetJob()`](https://rstudio.github.io/rstudioapi/reference/launcherGetJob.html)                           |  Retrieve Workbench Job Information |
+| [`launcherGetJobs()`](https://rstudio.github.io/rstudioapi/reference/launcherGetJobs.html)                         | Retrieve Workbench Job Information  |
+| [`launcherHostMount()`](https://rstudio.github.io/rstudioapi/reference/launcherHostMount.html)                     |  Define a Workbench Launcher Host Mount |
+| [`launcherNfsMount()`](https://rstudio.github.io/rstudioapi/reference/launcherNfsMount.html)                       | Define a Workbench Launcher NFS Mount  |
+| [`launcherPlacementConstraint()`](https://rstudio.github.io/rstudioapi/reference/launcherPlacementConstraint.html) | Define a Workbench Launcher Placement Constraint  |
+| [`launcherResourceLimit()`](https://rstudio.github.io/rstudioapi/reference/launcherResourceLimit.html)             |  Define a Workbench Launcher Resource Limit |
+| [`launcherSubmitJob()`](https://rstudio.github.io/rstudioapi/reference/launcherSubmitJob.html)                     | Submit a Workbench Job  |
+| [`launcherSubmitR()`](https://rstudio.github.io/rstudioapi/reference/launcherSubmitR.html)                         |  Execute an R Script as a Workbench Job |
 
 \
-
-| Interact with the launcher pane.                                                                                   |
-|:-----------------------------------------------------------------------|
-| [`launcherAvailable()`](https://rstudio.github.io/rstudioapi/reference/launcherAvailable.html)                     |
-| [`launcherConfig()`](https://rstudio.github.io/rstudioapi/reference/launcherConfig.html)                           |
-| [`launcherContainer()`](https://rstudio.github.io/rstudioapi/reference/launcherContainer.html)                     |
-| [`launcherControlJob()`](https://rstudio.github.io/rstudioapi/reference/launcherControlJob.html)                   |
-| [`launcherGetInfo()`](https://rstudio.github.io/rstudioapi/reference/launcherGetInfo.html)                         |
-| [`launcherGetJob()`](https://rstudio.github.io/rstudioapi/reference/launcherGetJob.html)                           |
-| [`launcherGetJobs()`](https://rstudio.github.io/rstudioapi/reference/launcherGetJobs.html)                         |
-| [`launcherHostMount()`](https://rstudio.github.io/rstudioapi/reference/launcherHostMount.html)                     |
-| [`launcherNfsMount()`](https://rstudio.github.io/rstudioapi/reference/launcherNfsMount.html)                       |
-| [`launcherPlacementConstraint()`](https://rstudio.github.io/rstudioapi/reference/launcherPlacementConstraint.html) |
-| [`launcherResourceLimit()`](https://rstudio.github.io/rstudioapi/reference/launcherResourceLimit.html)             |
-| [`launcherSubmitJob()`](https://rstudio.github.io/rstudioapi/reference/launcherSubmitJob.html)                     |
-| [`launcherSubmitR()`](https://rstudio.github.io/rstudioapi/reference/launcherSubmitR.html)                         |

@@ -74,18 +74,17 @@ Note however that the IDE's background job runner is generally designed for inte
 
 RStudio's Jobs pane can show more than just the progress of Background or Workbench jobs. It can also be scripted from R packages (and R code) to show status, progress, and output for any long-running task.
 
-To show progress and/or output from a task using the jobs UI, refer to the [rstudioapi documentation](https://rstudio.github.io/rstudioapi/reference/index.html#jobs) for details; start with `addJob`, which creates a new job in the UI and returns a handle you can use to update the UI as the job progresses.
+To show progress and/or output from a task using the jobs UI, refer to the [rstudioapi documentation](https://rstudio.github.io/rstudioapi/reference/index.html#jobs) for details; start with `jobAdd()`, which creates a new job in the UI and returns a handle you can use to update the UI as the job progresses.
 
-| Interact with the jobs pane.                                                             |
-|:-----------------------|
-| [`jobAdd()`](https://rstudio.github.io/rstudioapi/reference/jobAdd.html)                 |
-| [`jobAddOutput()`](https://rstudio.github.io/rstudioapi/reference/jobAddOutput.html)     |
-| [`jobAddProgress()`](https://rstudio.github.io/rstudioapi/reference/jobAddProgress.html) |
-| [`jobRemove()`](https://rstudio.github.io/rstudioapi/reference/jobRemove.html)           |
-| [`jobRunScript()`](https://rstudio.github.io/rstudioapi/reference/jobRunScript.html)     |
-| [`jobSetProgress()`](https://rstudio.github.io/rstudioapi/reference/jobSetProgress.html) |
-| [`jobSetState()`](https://rstudio.github.io/rstudioapi/reference/jobSetState.html)       |
-| [`jobSetStatus()`](https://rstudio.github.io/rstudioapi/reference/jobSetStatus.html)     |
+| Interact with the jobs pane.                                                             |     |
+|:------------------------------|-----------------------------------------|
+| [`jobAdd()`](https://rstudio.github.io/rstudioapi/reference/jobAdd.html)                 |   Add a Job  |
+| [`jobAddOutput()`](https://rstudio.github.io/rstudioapi/reference/jobAddOutput.html)     |   Add Background Job Output  |
+| [`jobAddProgress()`](https://rstudio.github.io/rstudioapi/reference/jobAddProgress.html) |  Add Background Job Progress   |
+| [`jobRemove()`](https://rstudio.github.io/rstudioapi/reference/jobRemove.html)           |   Remove a Background Job  |
+| [`jobSetProgress()`](https://rstudio.github.io/rstudioapi/reference/jobSetProgress.html) |  Set Background Job Progress   |
+| [`jobSetState()`](https://rstudio.github.io/rstudioapi/reference/jobSetState.html)       |  Set Background Job State   |
+| [`jobSetStatus()`](https://rstudio.github.io/rstudioapi/reference/jobSetStatus.html)     |   Set Background Job Status  |
 
 ## Workbench (Launcher) jobs {.pro-header}
 

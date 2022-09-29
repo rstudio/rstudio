@@ -78,11 +78,11 @@ RStudio's version control features are tied to the use of [Projects](https://sup
 
 Once version control such as Git has been enabled for the current RStudio Project, a few visual elements are added, specifically the **Git/Version control dropdown** and the **Git/Version Control tab**.
 
-![](images/rstudio-vcs-pane%20copy.png){width="550"}
+![](images/rstudio-vcs-pane-labeled.png){fig-alt="A screenshot of the RStudio interface, highlighting the Git tab in the Environments pane."}
 
 The **Git menu dropdown** provides Commit, Pull/Push Branch, History and Project Setup.
 
-![](images/git-drop-down.png){width="350"}
+![](images/git-drop-down.png){width="350" fig-alt="A screenshot of the git dropdown."}
 
 The **Git tab** within the **Environment pane** provides a number of useful commands such as "Diff", "Commit", Push/Pull arrows, View history 'clock', or select a specific branch.
 
@@ -90,7 +90,7 @@ The **Git tab** within the **Environment pane** provides a number of useful comm
 
 Once you are finished with your local work and are ready to Commit your changes, selecting **Commit** in either the **Git dropdown menu** or **Git tab** opens the **Review Changes popup** to select files for staging, add a commit message, and eventually push the commit.
 
-![](images/git-commit-pane.png){width="450"}
+![](images/git-commit-pane.png){fig-alt="A screenshot of the Review Changes popup, indicating the files for staging and the ability to commit, push and pull changes."}
 
 ## Using version control
 
