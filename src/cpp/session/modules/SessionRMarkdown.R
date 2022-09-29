@@ -41,16 +41,27 @@
       # the path to the project hosting the document
       # (just in case the user is editing a document that
       # belongs to an alternate project)
-      substring(props$path, 1L, nchar(props$path) - nchar(props$project_path) - 1L)
+      path <- substring(props$path, 1L, nchar(props$path) - nchar(props$project_path) - 1L)
+      return(path)
    }
-   else if (identical(workingDirProp, "current"))
+   
+   # if we're configured to use the working directory, use it
+   if (identical(workingDirProp, "current"))
    {
-      getwd()
+      return(getwd())
    }
-   else
+   
+   # if the 'root.dir' knitr option is set, use that
+   if ("knitr" %in% loadedNamespaces())
    {
-      dirname(path)
+      rootDir <- knitr::opts_knit$get("root.dir")
+      if (is.character(rootDir))
+         return(rootDir)
    }
+   
+   # all else fails, use the parent directory of the document
+   dirname(path)
+   
 })
 
 .rs.addFunction("markdown.getCompletionsHref", function(data)
