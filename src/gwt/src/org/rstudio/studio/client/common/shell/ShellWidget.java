@@ -25,6 +25,7 @@ import org.rstudio.core.client.TimeBufferedCommand;
 import org.rstudio.core.client.VirtualConsole;
 import org.rstudio.core.client.dom.DOMRect;
 import org.rstudio.core.client.dom.DomUtils;
+import org.rstudio.core.client.dom.WindowEx;
 import org.rstudio.core.client.jsonrpc.RpcObjectList;
 import org.rstudio.core.client.widget.BottomScrollPanel;
 import org.rstudio.core.client.widget.FontSizer;
@@ -54,6 +55,7 @@ import com.google.gwt.dom.client.Document;
 import com.google.gwt.dom.client.Element;
 import com.google.gwt.dom.client.SpanElement;
 import com.google.gwt.dom.client.Style.Unit;
+import com.google.gwt.event.dom.client.BlurEvent;
 import com.google.gwt.event.dom.client.ClickEvent;
 import com.google.gwt.event.dom.client.ClickHandler;
 import com.google.gwt.event.dom.client.FocusEvent;
@@ -116,7 +118,23 @@ public class ShellWidget extends Composite implements ShellDisplay,
          input_.setNewLineMode(NewLineMode.Unix);
 
       input_.addClickHandler(secondaryInputHandler);
-      input_.addFocusHandler((FocusEvent event) -> scrollIntoView());
+      
+      WindowEx.addBlurHandler((BlurEvent event) ->
+      {
+         // https://github.com/rstudio/rstudio/issues/1638
+         ignoreNextFocus_ = true;
+      });
+      
+      input_.addFocusHandler((FocusEvent event) ->
+      {
+         if (ignoreNextFocus_)
+         {
+            ignoreNextFocus_ = false;
+            return;
+         }
+
+         scrollIntoView();  
+      });
 
       // NOTE: we cannot scroll into view immediately after the cursor
       // has changed, as Ace may not have rendered the updated cursor
@@ -1010,6 +1028,7 @@ public class ShellWidget extends Composite implements ShellDisplay,
    }
 
    private boolean cleared_ = false;
+   private boolean ignoreNextFocus_ = false;
    private final ConsoleOutputWriter output_;
    private final PreWidget pendingInput_;
    private final HTML prompt_;
