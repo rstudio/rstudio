@@ -5088,8 +5088,11 @@ public class TextEditingTarget implements
       boolean outsideMarkdown = true;
       boolean bullet = false;
       boolean inExamples = false;
+      
       for (String line : lines)
       {
+         wwct.onBeginInputRow();
+         
          boolean isWrappingEnabled = wordWrap.getWrappingEnabled();
          bullet = false;
 
@@ -5100,18 +5103,24 @@ public class TextEditingTarget implements
          {
             wordWrap.setWrappingEnabled(false);
             inExamples = true;
+            wordWrap.appendLine(content);
          }
          else if (content.trim().startsWith("@"))
          {
             wordWrap.setWrappingEnabled(true);
             inExamples = false;
+            wordWrap.appendLine(content);
          }
          else if (inExamples)
          {
             // still in @examples, keep being disabled
+            wordWrap.appendLine(content);
          }
          else if (content.matches("^\\s*```.*")) 
          {
+            wordWrap.setWrappingEnabled(false);
+            wordWrap.appendLine(content);
+            
             outsideMarkdown = !outsideMarkdown;
             wordWrap.setWrappingEnabled(outsideMarkdown);
          }
@@ -5123,9 +5132,12 @@ public class TextEditingTarget implements
             {
                // this is a bullet line, temporarily disable
                wordWrap.setWrappingEnabled(false);
+               wordWrap.appendLine(content);
+               wordWrap.setWrappingEnabled(isWrappingEnabled);
             }
             else 
             {
+               int previousMacroDepth = macroDepth;
                Pattern macro = Pattern.create("(\\{|\\})");
                Match macroMatch = macro.match(content, 0);
                while (macroMatch != null) 
@@ -5143,7 +5155,10 @@ public class TextEditingTarget implements
                   // should not happen, reset
                   macroDepth = 0;
                }
-               wordWrap.setWrappingEnabled(macroDepth == 0);
+
+               wordWrap.setWrappingEnabled(macroDepth == 0 && previousMacroDepth == 0);
+               wordWrap.appendLine(content);
+               
             }
          }
          else
@@ -5151,17 +5166,9 @@ public class TextEditingTarget implements
             // the line is in a markdown chunk, disable for good measure
             // but not necessary really, because was disabled when seeing the ```
             wordWrap.setWrappingEnabled(false);
+            wordWrap.appendLine(content);
          }
 
-         wwct.onBeginInputRow();
-         wordWrap.appendLine(content);
-
-         // restore if was changed because of bullet
-         if (bullet)
-         {
-            wordWrap.setWrappingEnabled(isWrappingEnabled);
-         }
-            
       }
 
       String wrappedString = wordWrap.getOutput();
