@@ -1,5 +1,6 @@
 ---
 title: "Code Snippets"
+engine: knitr
 ---
 
 Code snippets are text macros that are used for quickly inserting common snippets of code. For example, the `fun` snippet inserts an R function definition:
@@ -67,9 +68,10 @@ R code can also be executed in a custom snippet. Use `` `r ` `` anywhere in the 
 
 As an example, here is a variant of the `ts` snippet to insert a datetime into a code section:
 
-```markdown
+```{verbatim, lang="markdown"}
 snippet time
     `r paste("#", Sys.time(), "------------------------------\n")`
+
 ```
 
 ## Saving and Sharing Snippets**
@@ -78,21 +80,21 @@ Customized snippets for a given language are written into the `~/.R/snippets` di
 
 ### RStudio 1.2 and Prior
 
-``` code
+``` bash
 ~/.R/snippets/r.snippets
 ~/.R/snippets/c_cpp.snippets
 ```
 
 ### RStudio 1.3 and Later (Windows)
 
-``` code
+``` bash
 %appdata%/Roaming/RStudio/snippets/r.snippets
 %appdata%/Roaming/RStudio/snippets/c_cpp.snippets
 ```
 
 ### RStudio 1.3 and Later (macOS/Linux)
 
-``` code
+``` bash
 ~/.config/rstudio/snippets/r.snippets
 ~/.config/rstudio/snippets/c_cpp.snippets
 ```
