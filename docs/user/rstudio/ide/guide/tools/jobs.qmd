@@ -32,9 +32,11 @@ However, if you want to feed data from your current R session into the job, or h
 
 -   **Copy job results**: By default, the temporary workspace in which the job runs is not saved. If you'd like to import data from your job back into your R session, you have a couple of choices:
 
--   *Global environment*: This places all the R objects your job creates back in your R session's global environment. Use this option with caution! The objects created by the job will overwrite, without a warning, any objects that have the same name in your environment.
+-   **Global environment**: This places all the R objects your job creates back in your R session's global environment. Use this option with caution! The objects created by the job will overwrite, without a warning, any objects that have the same name in your environment.
 
--   *Results object*: This places all the R objects your job creates into a new environment named `yourscript_results`.
+-   **Results object**: This places all the R objects your job creates into a new environment named `yourscript_results`.
+
+An additional option is to include specific R code to save out the results to files on disk such as `readr::save_rds("results.rds")`
 
 ### Lifetime
 
@@ -91,4 +93,4 @@ On Posit Workbench, you also have the option of running your R script on your co
 
 ![](images/workbench-job.png){fig-alt="Source script as launcher job" width="350"}
 
-See more documentation specific to Workbench Launcher Jobs at
+See more documentation specific to Workbench Launcher Jobs at <https://docs.posit.co/ide/server-pro/user>
