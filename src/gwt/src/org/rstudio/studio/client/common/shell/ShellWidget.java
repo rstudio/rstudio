@@ -127,11 +127,13 @@ public class ShellWidget extends Composite implements ShellDisplay,
       
       input_.addFocusHandler((FocusEvent event) ->
       {
-         if (!ignoreNextFocus_)
+         if (ignoreNextFocus_)
          {
             ignoreNextFocus_ = false;
-            scrollIntoView();  
+            return;
          }
+
+         scrollIntoView();  
       });
 
       // NOTE: we cannot scroll into view immediately after the cursor
