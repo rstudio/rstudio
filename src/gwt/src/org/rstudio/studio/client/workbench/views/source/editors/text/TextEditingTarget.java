@@ -5084,18 +5084,91 @@ public class TextEditingTarget implements
          private final Pattern TAG_WITH_CONTENTS = Pattern.create("@\\w+\\s+[^\\s]");
       };
 
+      int macroDepth = 0;
+      boolean outsideMarkdown = true;
+      boolean bullet = false;
+      boolean inExamples = false;
+      
       for (String line : lines)
       {
+         wwct.onBeginInputRow();
+         
+         boolean isWrappingEnabled = wordWrap.getWrappingEnabled();
+         bullet = false;
+
          String content = line.substring(Math.min(line.length(),
                                                   prefix.length()));
 
          if (content.matches("^\\s*\\@examples\\b.*$"))
+         {
             wordWrap.setWrappingEnabled(false);
+            inExamples = true;
+            wordWrap.appendLine(content);
+         }
          else if (content.trim().startsWith("@"))
+         {
             wordWrap.setWrappingEnabled(true);
+            inExamples = false;
+            wordWrap.appendLine(content);
+         }
+         else if (inExamples)
+         {
+            // still in @examples, keep being disabled
+            wordWrap.appendLine(content);
+         }
+         else if (content.matches("^\\s*```.*")) 
+         {
+            wordWrap.setWrappingEnabled(false);
+            wordWrap.appendLine(content);
+            
+            outsideMarkdown = !outsideMarkdown;
+            wordWrap.setWrappingEnabled(outsideMarkdown);
+         }
+         else if (outsideMarkdown)
+         {
+            // the line is not in a markdown chunk
+            bullet = content.matches("^\\s*[-*].*");
+            if (bullet)
+            {
+               // this is a bullet line, temporarily disable
+               wordWrap.setWrappingEnabled(false);
+               wordWrap.appendLine(content);
+               wordWrap.setWrappingEnabled(isWrappingEnabled);
+            }
+            else 
+            {
+               int previousMacroDepth = macroDepth;
+               Pattern macro = Pattern.create("(\\{|\\})");
+               Match macroMatch = macro.match(content, 0);
+               while (macroMatch != null) 
+               {
+                  String value = macroMatch.getValue();
+                  if (value.contains("}")) 
+                     macroDepth--;
+                  else 
+                     macroDepth++;
+                  
+                  macroMatch = macroMatch.nextMatch();
+               }
+               if (macroDepth < 0)
+               {
+                  // should not happen, reset
+                  macroDepth = 0;
+               }
 
-         wwct.onBeginInputRow();
-         wordWrap.appendLine(content);
+               wordWrap.setWrappingEnabled(macroDepth == 0 && previousMacroDepth == 0);
+               wordWrap.appendLine(content);
+               
+            }
+         }
+         else
+         {
+            // the line is in a markdown chunk, disable for good measure
+            // but not necessary really, because was disabled when seeing the ```
+            wordWrap.setWrappingEnabled(false);
+            wordWrap.appendLine(content);
+         }
+
       }
 
       String wrappedString = wordWrap.getOutput();
