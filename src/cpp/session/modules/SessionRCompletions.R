@@ -1218,16 +1218,14 @@ assign(x = ".rs.acCompletionTypes",
 {
    scores <- .rs.scoreMatches(completions$results, token)
    
+   # Put package completions at the end
+   idx <- completions$type == .rs.acCompletionTypes$PACKAGE
+   scores[idx] <- scores[idx] + 10
+
    # Protect against NULL / otherwise invalid scores.
    # TODO: figure out what, upstream, might cause this
    if (length(scores))
    {
-      priority <- rep(0, length(scores))
-      priority[completions$type == .rs.acCompletionTypes$PACKAGE]  <- 10
-      priority[completions$type == .rs.acCompletionTypes$ARGUMENT] <- -3
-      priority[completions$type == .rs.acCompletionTypes$COLUMN]   <- -6
-      scores <- scores + priority
-
       order <- if (shortestFirst)
          order(scores, nchar(completions$results))
       else
@@ -2580,7 +2578,8 @@ assign(x = ".rs.acCompletionTypes",
       }
    }
    
-   completions <- .rs.sortCompletions(completions, token)
+   if (nzchar(token))
+      completions <- .rs.sortCompletions(completions, token)
    
    completions$token <- token
    completions
