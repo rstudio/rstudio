@@ -2689,6 +2689,20 @@ assign(x = ".rs.acCompletionTypes",
    ## `%>%` chain -- use completions from the associated data object.
    result <- .rs.emptyCompletions()
    
+   if (length(additionalArgs))
+   {
+      argsToAdd <- .rs.selectFuzzyMatches(additionalArgs, token)
+      result <- .rs.appendCompletions(
+         result,
+         .rs.makeCompletions(
+            token = token,
+            results = argsToAdd,
+            packages = paste0(chainObjectName, " %>% ..."),
+            type = .rs.acCompletionTypes$COLUMN
+         )
+      )
+   }
+   
    if (!is.null(chainObjectName) && !excludeArgsFromObject)
    {
       object <- .rs.getAnywhere(chainObjectName, envir = envir)
@@ -2697,7 +2711,7 @@ assign(x = ".rs.acCompletionTypes",
       
       if (length(object))
       {
-         objectNames <- .rs.getNames(object)
+         objectNames <- setdiff(.rs.getNames(object), additionalArgs)
          if (length(objectNames))
          {
             completions <- .rs.selectFuzzyMatches(objectNames, token)
@@ -2717,29 +2731,17 @@ assign(x = ".rs.acCompletionTypes",
                packages <- paste("[", chainObjectName, "]", sep = "") 
             }
             
-            result <- .rs.makeCompletions(
-               token = token,
-               results = completions,
-               packages = packages,
-               quote = FALSE,
-               type = types
+            result <- .rs.appendCompletions(
+               result, .rs.makeCompletions(
+                  token = token,
+                  results = completions,
+                  packages = packages,
+                  quote = FALSE,
+                  type = types
+               )
             )
          }
       }
-   }
-   
-   if (length(additionalArgs))
-   {
-      argsToAdd <- .rs.selectFuzzyMatches(additionalArgs, token)
-      result <- .rs.appendCompletions(
-         result,
-         .rs.makeCompletions(
-            token = token,
-            results = argsToAdd,
-            packages = paste("*", chainObjectName, "*", sep = ""),
-            type = .rs.acCompletionTypes$COLUMN
-         )
-      )
    }
    
    if (length(excludeArgs))
