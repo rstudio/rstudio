@@ -54,7 +54,7 @@ The editor toolbar includes buttons for the most commonly used formatting comman
 Additional commands are available on the **Format**, **Insert**, and **Table** menus:
 
 | Format                                                                                           | Insert                                                                                           | Table                                                                                          |
-|------------------------|------------------------|------------------------|
+|--------------------------------------------------------------------------------------------------|--------------------------------------------------------------------------------------------------|------------------------------------------------------------------------------------------------|
 | ![](images/visual-editing-format-menu.png){fig-alt="The contents of the Format drop down menu."} | ![](images/visual-editing-insert-menu.png){fig-alt="The contents of the Insert drop down menu."} | ![](images/visual-editing-table-menu.png){fig-alt="The contents of the Table drop down menu."} |
 
 ## Learning More

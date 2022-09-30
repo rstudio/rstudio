@@ -32,7 +32,7 @@ Once you've come up with a name, there are two ways to create the package.
 
 -   Call [`usethis::create_package()`](https://usethis.r-lib.org/reference/create_package.html).
 
--   In RStudio, do *File \> New Project \> New Directory \> R Package*. This ultimately calls [`usethis::create_package()`](https://usethis.r-lib.org/reference/create_package.html), so really there's just one way.
+-   In RStudio, do **File** \> **New Project** \> **New Directory** \> **R Package**. This ultimately calls [`usethis::create_package()`](https://usethis.r-lib.org/reference/create_package.html), so really there's just one way.
 
 ### Package Development Basics
 

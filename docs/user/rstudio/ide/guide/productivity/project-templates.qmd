@@ -177,4 +177,3 @@ Parameter: file
 Widget: FileInput
 Label: Data file
 ```
-

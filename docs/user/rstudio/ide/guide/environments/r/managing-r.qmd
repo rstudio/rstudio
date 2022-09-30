@@ -9,7 +9,7 @@ This article is a practical guide to how to set particular options on R startup.
 Here is a summary table of how to control R options and environment variables on startup. More details are below.
 
 | File            | Who Controls  | Level           | Limitations                                    |
-|--------------|--------------|--------------|-------------------------------|
+|-----------------|---------------|-----------------|------------------------------------------------|
 | `.Renviron`     | User or Admin | User or Project | Set environment variables only.                |
 | `.Rprofile`     | User or Admin | User or Project | None, sourced as R code.                       |
 | `Rprofile.site` | Admin         | Version of R    | None, sourced as R code.                       |

@@ -72,7 +72,7 @@ install.packages("rstudioapi")
 For addins in particular, a number of methods were added that allow R code to introspect and mutate the contents of a document open in RStudio. These methods are outlined below briefly, but see documentation within the [rstudioapi](https://rstudio.github.io/rstudioapi/) package for more details.
 
 |                                         |                                                                                              |
-|-----------------------|------------------------------------------------|
+|-----------------------------------------|----------------------------------------------------------------------------------------------|
 | `getActiveDocumentContext()`            | Returns information about the currently active RStudio document. See below for more details. |
 | `insertText(location, text, id = NULL)` | Insert text at a specific location within a document.                                        |
 | `setDocumentContext(text, id = NULL)`   | Set the contents of a document open in RStudio.                                              |

@@ -22,7 +22,7 @@ Here's a terminal with the output of simple command:
 
 ![](images/terminal-basic.png){fig-alt="screenshot of terminal showing simple output"}
 
-The visual appearance of the terminal is controlled via the **Tools** \>**Global Options** \> **Appearance** settings. 
+The visual appearance of the terminal is controlled via the **Tools** \> **Global Options** \> **Appearance** settings. 
 
 ## Multiple Terminals
 
@@ -70,7 +70,12 @@ Note that the **Run Script** button does the same as prior versions of RStudio, 
 
 Programs running in a terminal do not block the rest of the RStudio user-interface, so work can continue working in RStudio even when one or more terminal sessions have a child process running.
 
-A terminal with child processes is considered *busy* by RStudio, and will have **(busy)** next to its name, and the close **x** changes to a **STOP** button.
+A terminal with child processes is considered *busy* by RStudio, and will have:
+
+1. **(busy)** next to the terminal name.
+2. The close **x** changes to a **STOP** button.
+
+![](images/terminal-close.png){fig-alt="The RStudio integrated terminal, highlighting the 'x' button to close."}
 
 ![screenshot showing a busy terminal](images/terminal-sleep.png){fig-alt="screenshot showing a busy terminal"}
 

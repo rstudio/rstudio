@@ -89,6 +89,7 @@ website:
               - ide/guide/productivity/snippets.qmd
               - ide/guide/productivity/custom-shortcuts.qmd
               - ide/guide/productivity/project-templates.qmd
+              - ide/guide/productivity/custom-settings.qmd
           - section: "Computational Documents"
             contents:
               - ide/guide/documents/visual-editor.qmd
