@@ -2544,7 +2544,6 @@ assign(x = ".rs.acCompletionTypes",
                                additionalArgs,
                                excludeArgs,
                                excludeArgsFromObject,
-                               discardFirst,
                                envir)
    )
    
@@ -2683,7 +2682,6 @@ assign(x = ".rs.acCompletionTypes",
                                                  additionalArgs,
                                                  excludeArgs,
                                                  excludeArgsFromObject,
-                                                 discardFirst,
                                                  envir)
 {
    ## chainObjectName will be provided if the client detected
