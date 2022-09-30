@@ -2737,7 +2737,7 @@ assign(x = ".rs.acCompletionTypes",
             token = token,
             results = argsToAdd,
             packages = paste("*", chainObjectName, "*", sep = ""),
-            type = .rs.acCompletionTypes$UNKNOWN
+            type = .rs.acCompletionTypes$COLUMN
          )
       )
    }
