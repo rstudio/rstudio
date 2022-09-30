@@ -373,7 +373,6 @@ var RCodeModel = function(session, tokenizer,
    };
 
    var $dplyrMutaterVerbs = [
-      "pull",
       "mutate", "summarise", "summarize", "rename", "transmute",
       "select", "rename_vars",
       "inner_join", "left_join", "right_join", "semi_join", "anti_join",
@@ -418,12 +417,6 @@ var RCodeModel = function(session, tokenizer,
       if (fnName === "select")
       {
          data.excludeArgsFromObject = true;
-      }
-
-      if (fnName === "pull")
-      {
-         data.excludeArgsFromObject = true;
-         data.additionalArgs = [];
       }
 
       do
@@ -559,9 +552,18 @@ var RCodeModel = function(session, tokenizer,
          // If this identifier is a dplyr 'mutate'r, then parse
          // those variables.
          var value = clone.currentValue();
+
+         // pull() cancels the column completions
+         if (value === "pull")
+         {
+            data.excludeArgsFromObject = true;
+            data.additionalArgs = [];
+            break;
+         }
+
          if (contains($dplyrMutaterVerbs, value))
             addDplyrArguments(clone.cloneCursor(), data, tokenCursor, value);
-
+         
          // Move off of identifier, on to new infix operator.
          // Note that we may already be at the start of the document,
          // so check for that.
