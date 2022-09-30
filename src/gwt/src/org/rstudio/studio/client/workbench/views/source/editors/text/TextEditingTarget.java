@@ -6975,11 +6975,8 @@ public class TextEditingTarget implements
             
             // check for some special case behavior for quarto
             String quartoPreviewFormat = useQuartoPreview();
-            boolean quartoServeRenderer = format == null && useQuartoServeRenderer();
-            
-            
+                        
             // see if we should be using quarto preview
-           
             if (quartoPreviewFormat != null)
             {    
                // command to execute quarto preview
@@ -7017,23 +7014,6 @@ public class TextEditingTarget implements
                {
                   quartoPreviewCmd.execute();
                }
-            }
-            else if (quartoServeRenderer)
-            {
-               // quarto serve can reject the render (e.g. if serve 
-               // isn't already running)
-               server_.quartoServeRender(
-                  docUpdateSentinel_.getPath(), 
-                  new SimpleRequestCallback<Boolean>() {
-                     @Override
-                     public void onResponseReceived(Boolean rendered)
-                     {
-                        if (!rendered) 
-                        {
-                           renderCmd.execute();
-                        }
-                     }
-                  });
             }
             else
             {
@@ -7166,8 +7146,8 @@ public class TextEditingTarget implements
    private String useQuartoPreview()
    {
       if (session_.getSessionInfo().getQuartoConfig().enabled &&
-          (extendedType_ == SourceDocument.XT_QUARTO_DOCUMENT) && 
-          !isShinyDoc() && !isRmdNotebook() && !isQuartoWebsiteDefaultHtmlDoc())
+          (extendedType_ == SourceDocument.XT_QUARTO_DOCUMENT) &&
+          !isShinyDoc() && !isRmdNotebook())
       {  
          String format = quartoFormat();
          if (format == null)
@@ -7208,22 +7188,6 @@ public class TextEditingTarget implements
      
    }
    
-   private boolean useQuartoServeRenderer()
-   {
-      QuartoConfig config = session_.getSessionInfo().getQuartoConfig();
-      if (config.enabled && 
-          (extendedType_ == SourceDocument.XT_QUARTO_DOCUMENT) &&
-          QuartoHelper.isQuartoWebsiteDoc(docUpdateSentinel_.getPath(), config)
-         )
-      {
-         return true;
-      }
-      else
-      {
-         return false;
-      }
-   }
-
    
    private static final String QUARTO_PDF_FORMAT = "pdf";
    private static final String QUARTO_BEAMER_FORMAT = "beamer";

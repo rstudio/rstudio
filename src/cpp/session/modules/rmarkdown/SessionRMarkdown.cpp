@@ -514,7 +514,7 @@ private:
 
       // if we are using a quarto command to render, we must be a quarto doc. read
       // all of the input file lines to be used in error navigation
-      if (renderFunc == "quarto serve" || renderFunc == "quarto render")
+      if (renderFunc == "quarto serve")
       {
           isQuarto_ = true;
           Error error = core::readLinesFromFile(targetFile_, &targetFileLines_);
@@ -580,16 +580,6 @@ private:
       if (renderFunc != kStandardRenderFunc && renderFunc != kShinyRenderFunc)
       {
          std::string extraArgs;
-         if (isQuarto_ && !isShiny_)
-         {
-            std::string to = format;
-            if (to.empty())
-            {
-               to = session::quarto::quartoDefaultFormat(targetFile_);
-            }
-            if (!to.empty())
-               extraArgs = "--to " + to;
-         }
          r::sexp::Protect rProtect;
          SEXP renderFuncSEXP;
          error = r::exec::evaluateString(renderFunc, &renderFuncSEXP, &rProtect);
@@ -770,10 +760,6 @@ private:
       {
          // record output file
          outputFile_ = outputFile;
-
-         // see if the quarto module wants to handle the preview
-         if (quarto::handleQuartoPreview(targetFile_, outputFile_, allOutput_, true))
-            viewerType_ = kRmdViewerTypeNone;
       }
 
 

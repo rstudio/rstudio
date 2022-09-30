@@ -6554,24 +6554,6 @@ public class RemoteServer implements Server
    }
    
    @Override
-   public void quartoServe(String format, boolean render, ServerRequestCallback<Void> callback)
-   {
-      JSONArray params = new JSONArray();
-      params.set(0, new JSONString(StringUtil.isNullOrEmpty(format) ? "default" : format));
-      params.set(1,  JSONBoolean.getInstance(render));
-      sendRequest(RPC_SCOPE, QUARTO_SERVE, params, callback);
-   }
-   
-   @Override
-   public void quartoServeRender(String file, ServerRequestCallback<Boolean> callback)
-   {
-      JSONArray params = new JSONArray();
-      params.set(0, new JSONString(file));
-      sendRequest(RPC_SCOPE, QUARTO_SERVE_RENDER, params, callback);
-   }
-   
-   
-   @Override
    public void quartoCreateProject(String projectFile, 
                                    QuartoNewProjectOptions options, 
                                    ServerRequestCallback<ConsoleProcess> callback)

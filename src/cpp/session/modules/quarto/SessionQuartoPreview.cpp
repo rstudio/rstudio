@@ -18,6 +18,7 @@
 #include <string>
 
 #include <shared_core/Error.hpp>
+#include <shared_core/FilePath.hpp>
 #include <core/Exec.hpp>
 #include <core/RegexUtils.hpp>
 #include <core/FileSerializer.hpp>
@@ -65,9 +66,9 @@ public:
    {
    }
 
-   FilePath previewFile()
+   FilePath previewTarget()
    {
-      return previewFile_;
+      return previewTarget_;
    }
 
    std::string format()
@@ -85,19 +86,6 @@ public:
       return slideLevel_;
    }
 
-   bool hasModifiedProject()
-   {
-      if (!projectFile_.empty())
-      {
-         return FilePath(projectFile_.absolutePath()).getLastWriteTime() >
-                projectFile_.lastWriteTime();
-      }
-      else
-      {
-         return false;
-      }
-   }
-
    int port()
    {
       return port_;
@@ -113,9 +101,10 @@ public:
       return viewerType_;
    }
 
-   Error render(const json::Value& editorState)
+   bool render(const core::FilePath& previewfile, const json::Value& editorState)
    {
       // reset state
+      previewTarget_ = previewfile;
       slideLevel_= -1;
       editorState_ = editorState;
       outputFile_ = FilePath();
@@ -125,39 +114,54 @@ public:
       readInputFileLines();
 
       // render
-      return r::exec::RFunction(".rs.quarto.renderPreview",
-                                safe_convert::numberToString(port())).call();
+      Error error = r::exec::RFunction(".rs.quarto.renderPreview",
+                                       safe_convert::numberToString(port()),
+                                       renderToken_,
+                                       previewTarget().getAbsolutePath(),
+                                       this->format()).call();
+      if (error)
+      {
+         return false;
+      }
+      else
+      {
+         return true;
+      }
    }
 
 protected:
    explicit QuartoPreview(const FilePath& previewFile, const std::string& format, const json::Value& editorState)
-      : QuartoJob(), previewFile_(previewFile), format_(format), editorState_(editorState), slideLevel_(-1), port_(0), viewerType_(prefs::userPrefs().rmdViewerType())
+      : QuartoJob(), previewTarget_(previewFile), format_(format), editorState_(editorState), slideLevel_(-1), port_(0), viewerType_(prefs::userPrefs().rmdViewerType())
    {
-     readInputFileLines();
+     renderToken_ = core::system::generateUuid();
 
-     FilePath projectFile = quartoProjectConfigFile(previewFile_);
-     if (!projectFile.isEmpty())
-        projectFile_ = FileInfo(projectFile);
+     readInputFileLines();
    }
 
    virtual std::string name()
    {
-      return "Preview: " + previewFile_.getFilename();
+      return "Preview: " + previewTarget_.getFilename();
    }
 
    virtual std::vector<std::string> args()
    {
       // preview target file
       std::vector<std::string> args({"preview"});
-      args.push_back(string_utils::utf8ToSystem(previewFile_.getFilename()));
+      if (!previewTarget_.isDirectory())
+      {
+         args.push_back(string_utils::utf8ToSystem(previewTarget_.getFilename()));
+         args.push_back("--to");
+         args.push_back(!format_.empty() ? format_ : "default");
+      }
+      else
+      {
+         args.push_back("--render");
+         args.push_back(!format_.empty() ? format_ : "default");
+      }
 
       // presentation mode if this is reveal
       if (formatIsRevealJs())
          args.push_back("--presentation");
-
-      // format (or default if none specified)
-      args.push_back("--to");
-      args.push_back(!format_.empty() ? format_ : "default");
 
       // no watching inputs and no browser
       args.push_back("--no-watch-inputs");
@@ -168,29 +172,40 @@ protected:
 
    virtual void environment(core::system::Options* pEnv)
    {
+      // set render token
+      core::system::setenv(pEnv, "QUARTO_RENDER_TOKEN", renderToken_);
+
+
       // if this file isn't in a project then add the QUARTO_CROSSREF_INDEX_PATH
-      if (!isFileInSessionQuartoProject(previewFile_))
+      if (!previewTarget_.isDirectory())
       {
-         FilePath indexPath;
-         Error error = module_context::perFilePathStorage(
-            kQuartoCrossrefScope, previewFile_, false, &indexPath
-         );
-         if (error)
+         if (!isFileInSessionQuartoProject(previewTarget_))
          {
-            LOG_ERROR(error);
-            return;
+            FilePath indexPath;
+            Error error = module_context::perFilePathStorage(
+               kQuartoCrossrefScope, previewTarget_, false, &indexPath
+            );
+            if (error)
+            {
+               LOG_ERROR(error);
+               return;
+            }
+            core::system::setenv(pEnv, "QUARTO_CROSSREF_INDEX_PATH", indexPath.getAbsolutePath());
          }
-         core::system::setenv(pEnv, "QUARTO_CROSSREF_INDEX_PATH", indexPath.getAbsolutePath());
       }
    }
 
    virtual core::FilePath workingDir()
    {
-      return previewFile_.getParent();
+      return previewDir();
    }
 
-
 private:
+
+   core::FilePath previewDir()
+   {
+     return previewTarget_.isDirectory() ? previewTarget_ :  previewTarget_.getParent();
+   }
 
    virtual void onStdErr(const std::string& output)
    {
@@ -199,7 +214,7 @@ private:
 
       // always be looking for an output file
       FilePath outputFile =
-         module_context::extractOutputFileCreated(previewFile_.getParent(), output);
+         module_context::extractOutputFileCreated(previewDir(), output);
       if (!outputFile.isEmpty())
          outputFile_ = outputFile;
 
@@ -266,7 +281,8 @@ private:
       }
 
       // look for an error and do source navigation as necessary
-      navigateToRenderPreviewError(previewFile_, previewFileLines_, output, allOutput_);
+      if (!previewTarget_.isDirectory())
+         navigateToRenderPreviewError(previewTarget_, previewFileLines_, output, allOutput_);
 
       // standard output forwarding
       QuartoJob::onStdErr(output);
@@ -303,17 +319,21 @@ private:
              minHeight = 500;
          }
 
-         std::string sourceFile = module_context::createAliasedPath(previewFile_);
          std::string outputFile;
          if (!outputFile_.isEmpty())
             outputFile = module_context::createAliasedPath(outputFile_);
-         QuartoNavigate quartoNav = QuartoNavigate::navDoc(sourceFile, outputFile, jobId());
+         QuartoNavigate quartoNav;
+         if (!previewTarget_.isDirectory())
+         {
+            std::string sourceFile = module_context::createAliasedPath(previewTarget_);
+            quartoNav = QuartoNavigate::navDoc(sourceFile, outputFile, jobId());
+         }
 
          // route to either viewer or presentation pane (for reveal)
          if (isReveal)
          {
             std::string url = url_ports::mapUrlPorts(viewerUrl());
-            if (isFileInSessionQuartoProject(previewFile_))
+            if (isFileInSessionQuartoProject(previewTarget_))
             {
                url = url + urlPathForQuartoProjectOutputFile(outputFile_);
             }
@@ -332,7 +352,7 @@ private:
 
             if (outputFile_.getExtensionLowerCase() != ".pdf")
             {
-               if (isFileInSessionQuartoProject(previewFile_))
+               if (isFileInSessionQuartoProject(previewTarget_))
                   url = url + urlPathForQuartoProjectOutputFile(outputFile_);
             }
 
@@ -350,7 +370,7 @@ private:
    std::string rstudioServerPreviewWindowUrl()
    {
       std::string url = url_ports::mapUrlPorts(viewerUrl());
-      if (isFileInSessionQuartoProject(previewFile_))
+      if (isFileInSessionQuartoProject(previewTarget_))
       {
          url = url + urlPathForQuartoProjectOutputFile(outputFile_);
       }
@@ -364,9 +384,12 @@ private:
 
    void readInputFileLines()
    {
-      Error error = core::readLinesFromFile(previewFile_, &previewFileLines_);
-      if (error)
-         LOG_ERROR(error);
+      if (!previewTarget_.isDirectory())
+      {
+         Error error = core::readLinesFromFile(previewTarget_, &previewFileLines_);
+         if (error)
+            LOG_ERROR(error);
+      }
    }
 
    int quartoSlideLevelFromOutput(const std::string& output)
@@ -384,12 +407,12 @@ private:
    }
 
 private:
-   FilePath previewFile_;
-   FileInfo projectFile_;
+   FilePath previewTarget_;
    std::vector<std::string> previewFileLines_;
    FilePath outputFile_;
    std::string allOutput_;
    std::string format_;
+   std::string renderToken_;
    json::Value editorState_;
    int slideLevel_;
    int port_;
@@ -438,40 +461,39 @@ Error quartoPreviewRpc(const json::JsonRpcRequest& request,
       return error;
    FilePath previewFilePath = module_context::resolveAliasedPath(previewFile);
 
-   // first check to see if this file is in a book project (if so then fail and fall
-   // back on normal render)
-   bool canPreview = true;
-   FilePath quartoConfig = session::quarto::quartoProjectConfigFile(previewFilePath);
-   if (!quartoConfig.isEmpty())
+   // we can always preview
+   pResponse->setResult(true);
+
+   // if this is a full project render then do that
+   if (previewFilePath.isDirectory())
    {
-      std::string type;
-      readQuartoProjectConfig(quartoConfig, &type);
-      canPreview = type != session::quarto::kQuartoProjectBook;
+      return createPreview(previewFilePath, format, editorState);
    }
-
-   // set result
-   pResponse->setResult(canPreview);
-
-   if (canPreview)
+   else
    {
+      // see if there is a running preview w/ the same viewer type we can target
       if (s_pPreview && s_pPreview->isRunning() && (s_pPreview->port() > 0) &&
-          (s_pPreview->previewFile() == previewFilePath) &&
-          (s_pPreview->format() == format && !s_pPreview->hasModifiedProject()) &&
           (s_pPreview->viewerType() == prefs::userPrefs().rmdViewerType()))
       {
          json::Object eventJson;
          eventJson["id"] = s_pPreview->jobId();
          module_context::enqueClientEvent(ClientEvent(client_events::kJobsActivate, eventJson));
-         return s_pPreview->render(editorState);
+         // can we render in-place?
+         if  (s_pPreview->render(previewFilePath, editorState))
+         {
+           return Success();
+         }
+         // create a new preview
+         else
+         {
+           return createPreview(previewFilePath, format, editorState);
+         }
       }
+      // create a new preview
       else
       {
          return createPreview(previewFilePath, format, editorState);
       }
-   }
-   else
-   {
-      return Success();
    }
 }
 
@@ -482,7 +504,7 @@ void onSourceDocRemoved(const std::string& id, const std::string& path)
 
    // if this is our active preview then terminate it
    if (s_pPreview && s_pPreview->isRunning() &&
-       (s_pPreview->previewFile() == resolvedPath))
+       (s_pPreview->previewTarget() == resolvedPath))
    {
       stopPreview();
    }

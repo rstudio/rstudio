@@ -1491,10 +1491,6 @@ private:
                            const core::system::ProcessOptions& options,
                            const core::system::ProcessCallbacks& cb)
    {
-      // show preview on complete
-      successFunction_ = boost::bind(&Build::showQuartoSitePreview,
-                                     Build::shared_from_this());
-
        auto cmd = shell_utils::ShellCommand("quarto");
        cmd << "render";
        if (!subType.empty())
@@ -1593,15 +1589,7 @@ private:
       );
       if (!outputFile.isEmpty())
       {
-         // it will be html if we did a sub-project render.
-         if (outputFile.hasExtensionLowerCase(".html") || outputFile.hasExtensionLowerCase("pdf"))
-         {
-            quarto::handleQuartoPreview(sourceFile, outputFile, output, false);
-         }
-         else
-         {
-            enquePreviewRmdEvent(sourceFile, outputFile);
-         }
+         enquePreviewRmdEvent(sourceFile, outputFile);
       }
    }
 

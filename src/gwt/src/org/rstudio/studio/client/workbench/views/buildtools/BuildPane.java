@@ -183,29 +183,7 @@ public class BuildPane extends WorkbenchPane
       // sync build all button caption
       syncBuildAllUI();
       toolbar.addLeftSeparator();
-     
-      if (quarto)
-      {
-         // quarto book gets a menu
-         if (QuartoHelper.isQuartoBookConfig(quartoConfig) && quartoConfig.project_formats.length > 1)
-         {
-            ToolbarPopupMenu bookServeMenu = new QuartoBookServePopupMenu();
-            ToolbarMenuButton menuButton =  new ToolbarMenuButton(
-                  constants_.serveBookText(),
-                  constants_.serveBookText(),
-                  commands_.serveQuartoSite().getImageResource(), 
-                  bookServeMenu
-            );
-            toolbar.addLeftWidget(menuButton);
-            toolbar.addLeftSeparator();
-         }
-         // quarto website gets generic serve site
-         else if (QuartoHelper.isQuartoWebsiteConfig(quartoConfig))
-         {
-            toolbar.addLeftWidget(commands_.serveQuartoSite().createToolbarButton());
-            toolbar.addLeftSeparator();
-         }
-      }
+ 
       
       // packages get check package
       if (pkg)

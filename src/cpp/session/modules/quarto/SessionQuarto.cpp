@@ -49,7 +49,6 @@
 #include <session/SessionQuarto.hpp>
 
 #include "SessionQuartoPreview.hpp"
-#include "SessionQuartoServe.hpp"
 #include "SessionQuartoXRefs.hpp"
 #include "SessionQuartoResources.hpp"
 
@@ -243,7 +242,7 @@ void detectQuartoInstallation()
 #ifndef WIN32
    std::string target = "quarto";
 #else
-   std::string target = "quarto.cmd";
+   std::string target = "quarto.exe";
 #endif
    FilePath embeddedQuartoPath = session::options().quartoPath()
       .completeChildPath("bin")
@@ -856,8 +855,6 @@ void readQuartoConfig()
          // record the project directory as an aliased path
          s_quartoConfig.project_dir = module_context::createAliasedPath(configFile.getParent());
 
-         // INSPECT TODO: call quarto inspect to determine project type (only if there is a project file)
-
          // read additional config from yaml
          readQuartoProjectConfig(configFile,
                                  &s_quartoConfig.project_type,
@@ -934,69 +931,6 @@ Error quartoInspect(const std::string& path,
    return pResultObject->parse(result.stdOut);
 }
 
-bool handleQuartoPreview(const core::FilePath& sourceFile,
-                         const core::FilePath& outputFile,
-                         const std::string& renderOutput,
-                         bool validateExtendedType)
-{
-   // don't do anything if user prefs are set to no preview
-   if (prefs::userPrefs().rmdViewerType() == kRmdViewerTypeNone)
-      return false;
-
-   // don't do anything if there is no quarto
-   if (!quartoIsInstalled())
-      return false;
-
-   // don't do anything if this isn't a quarto doc
-   if (validateExtendedType)
-   {
-      std::string extendedType;
-      Error error = source_database::detectExtendedType(sourceFile, &extendedType);
-      if (error)
-         return false;
-      if (extendedType != kQuartoXt)
-         return false;
-   }
-
-   // if the current project is a site or book and this file is within it,
-   // then initiate a preview (one might be already running)
-   auto config = quartoConfig();
-   if ((config.project_type == kQuartoProjectWebsite ||
-        config.project_type == kQuartoProjectBook) &&
-       sourceFile.isWithin(module_context::resolveAliasedPath(config.project_dir)))
-   {
-      if (outputFile.hasExtensionLowerCase(".html") || outputFile.hasExtensionLowerCase(".pdf"))
-      {
-         // preview the doc (but schedule it for later so we can get out of the onCompleted
-         // handler this was called from -- launching a new process in the supervisor when
-         // an old one is in the middle of executing onCompleted doesn't work
-         module_context::scheduleDelayedWork(boost::posix_time::milliseconds(10),
-                                             boost::bind(modules::quarto::serve::previewDocPath,
-                                                         renderOutput, outputFile),
-                                             false);
-         return true;
-      }
-      else
-      {
-         return false;
-      }
-   }
-
-   // if this file is within another quarto site or book project then no preview at all
-   // (as it will more than likely be broken)
-   FilePath configFile = quartoProjectConfigFile(sourceFile);
-   if (!configFile.isEmpty())
-   {
-      std::string type;
-      readQuartoProjectConfig(configFile, &type);
-      if (type == kQuartoProjectWebsite || type == kQuartoProjectBook)
-         return true;
-   }
-
-   // continue with preview
-   return false;
-}
-
 const char* const kQuartoCrossrefScope = "quarto-crossref";
 const char* const kQuartoProjectDefault = "default";
 const char* const kQuartoProjectWebsite = "website";
@@ -1018,7 +952,7 @@ bool isFileInSessionQuartoProject(const core::FilePath& file)
    if (config.is_project)
    {
       FilePath projDir = module_context::resolveAliasedPath(config.project_dir);
-      return file.isWithin(projDir);
+      return (projDir == file) || file.isWithin(projDir);
    }
    else
    {
@@ -1124,7 +1058,9 @@ FilePath quartoProjectConfigFile(const core::FilePath& filePath)
       anchorPaths.push_back(anchorPath);
 
    // scan through parents
-   for (FilePath targetPath = filePath.getParent(); targetPath.exists(); targetPath = targetPath.getParent())
+   for (FilePath targetPath = filePath.isDirectory() ? filePath : filePath.getParent();
+        targetPath.exists();
+        targetPath = targetPath.getParent())
    {
       // bail if we've hit our anchor
       for (const FilePath& anchorPath : anchorPaths)
@@ -1447,7 +1383,6 @@ Error initialize()
      (boost::bind(module_context::registerRpcMethod, "get_qmd_publish_details", getQmdPublishDetails))
      (boost::bind(module_context::registerRpcMethod, "quarto_create_project", quartoCreateProject))
      (boost::bind(quarto::preview::initialize))
-     (boost::bind(quarto::serve::initialize))
      (boost::bind(quarto::xrefs::initialize))
      (boost::bind(quarto::resources::initialize))
    ;

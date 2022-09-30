@@ -57,10 +57,11 @@ public class BuildCommands
          commands.cleanAll().remove();
       }
       
-      if (type != SessionInfo.BUILD_TOOLS_QUARTO)
-      {
-         commands.serveQuartoSite().remove();
-      }
+      
+      // dead/deprecated command that we couldn't remove b/c this gwt build failure happended when we tried:
+      //  [exec] /bin/sh: 1: /home/jjallaire/rstudio/src/gwt/tools/i18n-helpers/VENV/bin/python: not found
+      commands.serveQuartoSite().remove();
+      
       
       if (type == SessionInfo.BUILD_TOOLS_QUARTO)
       {
@@ -80,8 +81,6 @@ public class BuildCommands
          commands.buildAll().setButtonLabel(constants_.renderLabel() + projType);
          commands.buildAll().setDesc(constants_.renderLabel() + projType.toLowerCase());
          commands.buildAll().setImageResource(commands.quartoRenderDocument().getImageResource());
-         commands.serveQuartoSite().setMenuLabel("_" + constants_.serveLabel() + " " + projType);
-         commands.serveQuartoSite().setButtonLabel(constants_.serveLabel() + " " + projType);
       }
       
       // remove all other commands if there are no build tools
