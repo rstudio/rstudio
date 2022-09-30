@@ -4,12 +4,12 @@ themes <- read.delim("theme_urls.tsv", sep = "\t")
 themes <- themes[!is.na(themes$url), ]
 
 for (i in seq_len(nrow(themes))) {
+    cat(themes$url[i], " ...\n")
     download.file(themes$url[i], themes$filename[i], quiet = TRUE)
 }
 
 # fix some invisible colors
 patches <- list(
-    cobalt = c(Ansi_0_Color = "#4f4f4f"), 
     dracula = c(Ansi_0_Color = "#4f4f4f"),
     # just here for the record, but material needs manual updating
     material = c(Ansi_0_Color = "#4f4f4f"), 
@@ -40,5 +40,3 @@ for (i in seq_along(patches)) {
     }
     writeLines(txt, filename)
 }
-
-
