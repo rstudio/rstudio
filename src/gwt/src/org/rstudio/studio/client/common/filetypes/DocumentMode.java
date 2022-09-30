@@ -275,7 +275,7 @@ public class DocumentMode
    
    public static boolean isCursorInRoxygenExamples(DocDisplay docDisplay)
    {
-      int i = docDisplay.getCurrentLineNum();
+      int i = docDisplay.getCurrentLineNum() - 1;
       while (i >= 0) 
       {
          String line = docDisplay.getLine(i);
