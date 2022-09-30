@@ -361,6 +361,13 @@ var RCodeModel = function(session, tokenizer,
          name = tokenCursor.currentValue();
          additionalArgs = data.additionalArgs;
          excludeArgs = data.excludeArgs;
+
+         if (data.cancel == true)
+         {
+            excludeArgsFromObject = true;
+            additionalArgs = [];
+            excludeArgs = [];
+         }
       }
 
       return {
@@ -526,7 +533,8 @@ var RCodeModel = function(session, tokenizer,
       // Fill custom args
       var data = {
          additionalArgs: [],
-         excludeArgs: []
+         excludeArgs: [], 
+         cancel: false
       };
       
       // Repeat the walk -- keep walking as we can find '%%'
@@ -552,15 +560,11 @@ var RCodeModel = function(session, tokenizer,
          // If this identifier is a dplyr 'mutate'r, then parse
          // those variables.
          var value = clone.currentValue();
-
+         
          // pull() cancels the column completions
          if (value === "pull")
-         {
-            data.excludeArgsFromObject = true;
-            data.additionalArgs = [];
-            break;
-         }
-
+            data.cancel = true;
+         
          if (contains($dplyrMutaterVerbs, value))
             addDplyrArguments(clone.cloneCursor(), data, tokenCursor, value);
          
