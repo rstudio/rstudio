@@ -1131,7 +1131,7 @@ public class RCompletionManager implements CompletionManager
             // when below @examples, handle <TAB> here and take into account
             // the tab size, where the code begins (i.e. after |#' | ) and 
             // where the cursor currently is
-            if (DocumentMode.isCursorInRoxygenExamples(docDisplay_)) 
+            if (DocumentMode.isCursorInRoxygenExamples(docDisplay_) && !implicit) 
             {
                if (editor != null) 
                {
@@ -2275,6 +2275,7 @@ public class RCompletionManager implements CompletionManager
             @Override
             public void run()
             {
+               GWT.log("SuggestionTimer.run(flushCache_ = " + flushCache_ + ", implicit_ = " + implicit_ + ", canAutoInsert_ = " + canAutoInsert_);
                manager_.beginSuggest(
                      flushCache_,
                      implicit_,
