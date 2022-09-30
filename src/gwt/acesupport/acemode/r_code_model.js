@@ -373,6 +373,7 @@ var RCodeModel = function(session, tokenizer,
    };
 
    var $dplyrMutaterVerbs = [
+      "pull",
       "mutate", "summarise", "summarize", "rename", "transmute",
       "select", "rename_vars",
       "inner_join", "left_join", "right_join", "semi_join", "anti_join",
@@ -417,6 +418,12 @@ var RCodeModel = function(session, tokenizer,
       if (fnName === "select")
       {
          data.excludeArgsFromObject = true;
+      }
+
+      if (fnName === "pull")
+      {
+         data.excludeArgsFromObject = true;
+         data.additionalArgs = [];
       }
 
       do
