@@ -192,10 +192,10 @@ void detectQuartoInstallation()
 {
 #ifdef QUARTO_ENABLED
    // required quarto version (quarto features don't work w/o it)
-   const Version kQuartoRequiredVersion("0.9.230");
+   const Version kQuartoRequiredVersion("1.1.251");
 
    // recommended quarto version (a bit more pestery than required)
-   const Version kQuartoRecommendedVersion("0.9.230");
+   const Version kQuartoRecommendedVersion("1.1.251");
 
    // reset
    s_userInstalledPath = FilePath();
