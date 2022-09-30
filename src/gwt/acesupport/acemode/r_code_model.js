@@ -404,7 +404,14 @@ var RCodeModel = function(session, tokenizer,
       {
          if (!cursor.moveToNextToken())
             return false;
-         data.excludeArgs.push(cursor.currentValue());
+
+         if (cursor.currentValue() === "=")
+         {
+            if (!cursor.moveToNextToken())
+               return false;
+            
+            data.excludeArgs.push(cursor.currentValue());
+         }
       }
 
       if (fnName === "select")
