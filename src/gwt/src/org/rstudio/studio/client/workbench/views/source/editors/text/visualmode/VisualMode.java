@@ -1402,6 +1402,7 @@ public class VisualMode implements VisualModeEditorSync,
             new VoidServerRequestCallback());
    }
    
+   @SuppressWarnings("unused")
    private TextEditorContainer.Changes toEditorChanges(PanmirrorCode panmirrorCode)
    {
       // code to diff

@@ -487,7 +487,6 @@ public abstract class Prefs
       return val;
    }
 
-   @SuppressWarnings("unchecked")
    protected PrefValue<String> enumeration(
       String name, String title, String description, String[] values, String defaultValue)
    {

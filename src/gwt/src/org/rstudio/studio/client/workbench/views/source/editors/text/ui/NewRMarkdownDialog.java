@@ -482,7 +482,6 @@ public class NewRMarkdownDialog extends ModalDialog<NewRMarkdownDialog.Result>
    private JsArray<RmdTemplate> templates_;
    private RmdTemplate currentTemplate_;
 
-   @SuppressWarnings("unused")
    private final RMarkdownContext context_;
    private final RMarkdownServerOperations server_;
    

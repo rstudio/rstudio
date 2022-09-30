@@ -39,7 +39,6 @@ import org.rstudio.core.client.widget.ModalDialog;
 import org.rstudio.core.client.widget.OperationWithInput;
 import org.rstudio.studio.client.RStudioGinjector;
 import org.rstudio.studio.client.common.GlobalDisplay;
-import org.rstudio.studio.client.workbench.model.Session;
 import org.rstudio.studio.client.workbench.views.output.OutputConstants;
 
 import java.util.ArrayList;
@@ -453,6 +452,5 @@ public class FindInFilesDialog extends ModalDialog<FindInFilesDialog.State>
    private boolean packageStatus_;
    private final Widget mainWidget_;
    private final GlobalDisplay globalDisplay_ = RStudioGinjector.INSTANCE.getGlobalDisplay();
-   private final Session session_ = RStudioGinjector.INSTANCE.getSession();
    private static final OutputConstants constants_ = GWT.create(OutputConstants.class);
 }

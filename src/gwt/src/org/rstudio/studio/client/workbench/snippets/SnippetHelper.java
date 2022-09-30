@@ -15,7 +15,6 @@
 
 package org.rstudio.studio.client.workbench.snippets;
 
-import com.google.gwt.core.client.GWT;
 import com.google.gwt.core.client.JavaScriptException;
 import com.google.gwt.core.client.JavaScriptObject;
 import com.google.gwt.core.client.JsArray;

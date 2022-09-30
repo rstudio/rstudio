@@ -21,7 +21,6 @@ import org.rstudio.studio.client.workbench.prefs.model.UserPrefs;
 import org.rstudio.studio.client.workbench.views.source.model.ProjectConfig;
 import org.rstudio.studio.client.workbench.views.source.model.SourceDocument;
 
-import com.google.gwt.core.client.GWT;
 import com.google.gwt.event.shared.HandlerRegistration;
 
 public class TextEditingTargetPrefsHelper

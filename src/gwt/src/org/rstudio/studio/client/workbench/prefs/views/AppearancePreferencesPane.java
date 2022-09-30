@@ -53,7 +53,6 @@ import org.rstudio.studio.client.workbench.WorkbenchContext;
 import org.rstudio.studio.client.workbench.prefs.PrefsConstants;
 import org.rstudio.studio.client.workbench.prefs.model.UserPrefs;
 import org.rstudio.studio.client.workbench.prefs.model.UserPrefsAccessor;
-import org.rstudio.studio.client.workbench.prefs.model.UserPrefsAccessorConstants;
 import org.rstudio.studio.client.workbench.prefs.model.UserState;
 import org.rstudio.studio.client.workbench.views.source.editors.text.themes.AceTheme;
 import org.rstudio.studio.client.workbench.views.source.editors.text.themes.AceThemes;

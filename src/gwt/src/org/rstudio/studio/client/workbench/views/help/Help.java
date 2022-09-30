@@ -14,7 +14,6 @@
  */
 package org.rstudio.studio.client.workbench.views.help;
 
-import com.google.gwt.core.client.GWT;
 import com.google.gwt.event.logical.shared.HasSelectionHandlers;
 import com.google.gwt.event.logical.shared.SelectionEvent;
 import com.google.gwt.event.logical.shared.SelectionHandler;
@@ -319,5 +318,4 @@ public class Help extends BasePresenter implements ShowHelpEvent.Handler
    private boolean historyInitialized_;
    private GlobalDisplay globalDisplay_;
    private EventBus events_;
-   private static final HelpConstants constants_ = GWT.create(HelpConstants.class);
 }

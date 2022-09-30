@@ -53,7 +53,6 @@ public class ObjectExplorerEditingTarget
       super(server, commands, globalDisplay, events);
       fileType_ = FileTypeRegistry.OBJECT_EXPLORER;
       events_ = events;
-      isActive_ = false;
    }
 
    // Implementation ----
@@ -90,7 +89,6 @@ public class ObjectExplorerEditingTarget
    {
       super.onActivate();
       view_.onActivate();
-      isActive_ = true;
    }
 
    @Override
@@ -98,7 +96,6 @@ public class ObjectExplorerEditingTarget
    {
       super.onDeactivate();
       view_.onDeactivate();
-      isActive_ = false;
    }
 
    @Override
@@ -224,6 +221,5 @@ public class ObjectExplorerEditingTarget
    private ObjectExplorerEditingTargetWidget view_;
    private final EventBus events_;
    private final FileType fileType_;
-   private boolean isActive_;
    private static final ViewsSourceConstants constants_ = GWT.create(ViewsSourceConstants.class);
 }

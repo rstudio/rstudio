@@ -19,7 +19,6 @@ import com.google.gwt.core.client.GWT;
 import com.google.gwt.user.client.Window;
 import org.rstudio.core.client.ElementIds;
 import org.rstudio.core.client.dom.Clipboard;
-import org.rstudio.core.client.dom.DomUtils;
 import org.rstudio.core.client.widget.ModalDialogBase;
 import org.rstudio.core.client.widget.ThemedButton;
 import org.rstudio.studio.client.RStudioGinjector;

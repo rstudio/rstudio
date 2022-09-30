@@ -14,7 +14,6 @@
  */
 package org.rstudio.studio.client.common.filetypes;
 
-import com.google.gwt.core.client.GWT;
 
 import org.rstudio.core.client.regex.Pattern;
 import org.rstudio.studio.client.workbench.views.source.editors.text.DocDisplay;

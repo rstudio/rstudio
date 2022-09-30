@@ -23,7 +23,6 @@ import org.rstudio.core.client.BrowseCap;
 import org.rstudio.core.client.CommandWithArg;
 import org.rstudio.core.client.StringUtil;
 import org.rstudio.core.client.dom.Clipboard;
-import org.rstudio.core.client.dom.DomUtils;
 import org.rstudio.core.client.files.ConfigFileBacked;
 import org.rstudio.core.client.files.FileSystemItem;
 import org.rstudio.core.client.js.JsObject;

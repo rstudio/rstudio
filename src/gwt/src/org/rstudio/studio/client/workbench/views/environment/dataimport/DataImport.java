@@ -19,7 +19,6 @@ import org.rstudio.core.client.Debug;
 import org.rstudio.core.client.Size;
 import org.rstudio.core.client.dom.Clipboard;
 import org.rstudio.core.client.dom.DomMetrics;
-import org.rstudio.core.client.dom.DomUtils;
 import org.rstudio.core.client.resources.ImageResource2x;
 import org.rstudio.core.client.widget.GridViewerFrame;
 import org.rstudio.core.client.widget.ImageButton;

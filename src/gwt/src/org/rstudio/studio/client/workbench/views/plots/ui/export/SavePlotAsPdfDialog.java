@@ -37,7 +37,6 @@ import org.rstudio.studio.client.common.FileDialogs;
 import org.rstudio.studio.client.common.GlobalDisplay;
 import org.rstudio.studio.client.common.SimpleRequestCallback;
 import org.rstudio.studio.client.server.Bool;
-import org.rstudio.studio.client.server.ServerError;
 import org.rstudio.studio.client.server.ServerRequestCallback;
 import org.rstudio.studio.client.workbench.exportplot.ExportPlotResources;
 import org.rstudio.studio.client.workbench.exportplot.ExportPlotUtils;

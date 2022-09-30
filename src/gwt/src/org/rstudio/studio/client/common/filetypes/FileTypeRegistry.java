@@ -20,7 +20,6 @@ import com.google.gwt.core.client.GWT;
 import org.rstudio.core.client.FilePosition;
 import org.rstudio.core.client.files.FileSystemItem;
 import org.rstudio.core.client.resources.ImageResource2x;
-import org.rstudio.studio.client.application.Desktop;
 import org.rstudio.studio.client.application.events.EventBus;
 import org.rstudio.studio.client.common.GlobalDisplay;
 import org.rstudio.studio.client.common.StudioClientCommonConstants;

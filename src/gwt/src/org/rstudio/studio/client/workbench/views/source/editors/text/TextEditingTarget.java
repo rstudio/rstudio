@@ -101,7 +101,6 @@ import org.rstudio.studio.client.plumber.events.PlumberAPIStatusEvent;
 import org.rstudio.studio.client.plumber.model.PlumberAPIParams;
 import org.rstudio.studio.client.quarto.QuartoHelper;
 import org.rstudio.studio.client.quarto.model.QuartoConfig;
-import org.rstudio.studio.client.quarto.model.QuartoCommandConstants;
 import org.rstudio.studio.client.rmarkdown.RmdOutput;
 import org.rstudio.studio.client.rmarkdown.events.ConvertToShinyDocEvent;
 import org.rstudio.studio.client.rmarkdown.events.RmdOutputFormatChangedEvent;

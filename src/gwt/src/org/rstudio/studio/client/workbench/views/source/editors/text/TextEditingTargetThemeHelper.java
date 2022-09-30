@@ -19,7 +19,6 @@ import java.util.ArrayList;
 import org.rstudio.core.client.ColorUtil;
 import org.rstudio.core.client.dom.DomUtils;
 import org.rstudio.studio.client.application.events.EventBus;
-import org.rstudio.studio.client.common.Timers;
 import org.rstudio.studio.client.workbench.views.source.editors.text.events.EditorThemeChangedEvent;
 import org.rstudio.studio.client.workbench.views.source.editors.text.events.EditorThemeStyleChangedEvent;
 

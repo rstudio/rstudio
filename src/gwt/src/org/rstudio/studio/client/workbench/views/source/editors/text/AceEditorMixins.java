@@ -16,7 +16,6 @@ package org.rstudio.studio.client.workbench.views.source.editors.text;
 
 import org.rstudio.core.client.BrowseCap;
 import org.rstudio.core.client.CommandWithArg;
-import org.rstudio.core.client.StringUtil;
 import org.rstudio.studio.client.JavaScriptEventHistory;
 import org.rstudio.studio.client.RStudioGinjector;
 import org.rstudio.studio.client.JavaScriptEventHistory.EventData;

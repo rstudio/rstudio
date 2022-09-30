@@ -156,7 +156,7 @@ public class HelpInfo extends JavaScriptObject
    {
       for (Node node = (Node) heading; node != null; node = node.getNextSibling())
       {
-         if (node.getNodeType() != node.ELEMENT_NODE)
+         if (node.getNodeType() != Node.ELEMENT_NODE)
             continue;
          
          if (StringUtil.equals(node.getNodeName(), "TABLE"))

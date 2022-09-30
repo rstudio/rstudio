@@ -32,7 +32,6 @@ import org.rstudio.core.client.command.KeyboardHelper;
 import org.rstudio.core.client.command.KeyboardShortcut;
 import org.rstudio.core.client.dom.EventProperty;
 import org.rstudio.core.client.files.FileSystemItem;
-import org.rstudio.core.client.regex.Match;
 import org.rstudio.core.client.regex.Pattern;
 import org.rstudio.studio.client.RStudioGinjector;
 import org.rstudio.studio.client.application.events.EventBus;

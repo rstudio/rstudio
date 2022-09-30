@@ -331,6 +331,7 @@ public class VisualModePanmirrorFormat
       return getOutputFormats().contains("hugodown::md_document");
    }
    
+   @SuppressWarnings("unused")
    private boolean isGitHubDocument()
    {
       List<String> formats = getOutputFormats();
