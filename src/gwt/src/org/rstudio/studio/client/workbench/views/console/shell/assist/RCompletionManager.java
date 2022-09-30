@@ -2275,7 +2275,6 @@ public class RCompletionManager implements CompletionManager
             @Override
             public void run()
             {
-               GWT.log("SuggestionTimer.run(flushCache_ = " + flushCache_ + ", implicit_ = " + implicit_ + ", canAutoInsert_ = " + canAutoInsert_);
                manager_.beginSuggest(
                      flushCache_,
                      implicit_,
