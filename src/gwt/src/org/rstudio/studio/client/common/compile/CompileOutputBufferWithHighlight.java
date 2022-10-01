@@ -16,7 +16,9 @@
 
 package org.rstudio.studio.client.common.compile;
 
+import org.rstudio.core.client.Debug;
 import org.rstudio.core.client.VirtualConsole;
+import org.rstudio.core.client.dom.DomUtils;
 import org.rstudio.core.client.widget.BottomScrollPanel;
 import org.rstudio.core.client.widget.FontSizer;
 import org.rstudio.core.client.widget.PreWidget;
@@ -24,11 +26,16 @@ import org.rstudio.studio.client.RStudioGinjector;
 import org.rstudio.studio.client.workbench.views.console.ConsoleResources;
 import org.rstudio.studio.client.workbench.views.source.editors.text.themes.AceTheme;
 
+import com.google.gwt.dom.client.Element;
+import com.google.gwt.dom.client.NodeList;
+import com.google.gwt.dom.client.Style.WhiteSpace;
 import com.google.gwt.user.client.ui.Composite;
 
 public class CompileOutputBufferWithHighlight extends Composite 
                                 implements CompileOutputDisplay
 {
+   public static enum OutputType { Command, Output, Error };
+   
    public CompileOutputBufferWithHighlight()
    {
       styles_ = ConsoleResources.INSTANCE.consoleStyles();
@@ -52,19 +59,19 @@ public class CompileOutputBufferWithHighlight extends Composite
    @Override
    public void writeCommand(String command)
    {
-      write(command, styles_.command() + ConsoleResources.KEYWORD_CLASS_NAME);
+      write(command, OutputType.Command, styles_.command() + ConsoleResources.KEYWORD_CLASS_NAME);
    }
    
    @Override
    public void writeOutput(String output)
    {
-      write(output, styles_.output());
+      write(output, OutputType.Output, styles_.output());
    }
 
    @Override
    public void writeError(String error)
    {
-      write(error, getErrorClass());
+      write(error, OutputType.Error, getErrorClass());
    }
    
    @Override
@@ -77,12 +84,30 @@ public class CompileOutputBufferWithHighlight extends Composite
    public void clear()
    {
       console_.clear();
+      totalSubmittedLines_ = 0;
       output_.setText("");
    }
    
-   private void write(String output, String className)
+   private void write(String output, OutputType outputType, String className)
    {
+      if (totalSubmittedLines_ > MAX_LINES_DISABLE && outputType == OutputType.Output)
+         return;
+      
+      int oldLineCount = DomUtils.countLines(output_.getElement(), true);
       console_.submit(output, className);
+      int newLineCount = DomUtils.countLines(output_.getElement(), true);
+      totalSubmittedLines_ += newLineCount - oldLineCount;
+      
+      if (newLineCount > MAX_LINES_SHOWN)
+      {
+         DomUtils.trimLines(output_.getElement(), newLineCount - MAX_LINES_SHOWN);
+      }
+      
+      if (totalSubmittedLines_ > MAX_LINES_DISABLE)
+      {
+         console_.submit("[Detected output overflow; truncating build output]", className);
+      }
+      
       scrollPanel_.onContentSizeChanged();
    }
    
@@ -95,6 +120,10 @@ public class CompileOutputBufferWithHighlight extends Composite
  
    PreWidget output_;
    VirtualConsole console_;
+   private int totalSubmittedLines_;
    private BottomScrollPanel scrollPanel_;
    private ConsoleResources.ConsoleStyles styles_;
+   
+   private static final int MAX_LINES_SHOWN = 1000;
+   private static final int MAX_LINES_DISABLE = 10000;
 }

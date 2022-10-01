@@ -51,8 +51,15 @@ ClientEventQueue& clientEventQueue()
 ClientEventQueue::ClientEventQueue()
    :  pMutex_(new boost::mutex()),
       pWaitForEventCondition_(new boost::condition()),
-      lastEventAddTime_(boost::posix_time::not_a_date_time)
+      lastEventAddTime_(boost::posix_time::not_a_date_time),
+      consoleOutput_(client_events::kConsoleWriteOutput, true),
+      consoleErrors_(client_events::kConsoleWriteError, true),
+      buildOutput_(client_events::kBuildOutput, false)
 {
+   // buffered outputs (required for parts that might overflow)
+   bufferedOutputs_.push_back(&consoleOutput_);
+   bufferedOutputs_.push_back(&consoleErrors_);
+   bufferedOutputs_.push_back(&buildOutput_);
 }
 
 bool ClientEventQueue::setActiveConsole(const std::string& console)
@@ -63,7 +70,7 @@ bool ClientEventQueue::setActiveConsole(const std::string& console)
       if (activeConsole_ != console)
       {
          // flush events to the previous console
-         flushAllPendingConsoleOutput();
+         flushAllBufferedOutput();
          
          // switch to the new one
          activeConsole_ = console;
@@ -103,20 +110,24 @@ void ClientEventQueue::add(const ClientEvent& event)
       if (event.type() == client_events::kConsoleWriteOutput &&
           event.data().getType() == json::Type::STRING)
       {
-         flushPendingConsoleErrors();
-         pendingConsoleOutput_ += event.data().getString();
+         flushBufferedOutput(&consoleErrors_);
+         consoleOutput_.append(event.data().getString());
       }
       else if (event.type() == client_events::kConsoleWriteError &&
                event.data().getType() == json::Type::STRING)
       {
-         flushPendingConsoleOutput();
-         pendingConsoleErrors_ += event.data().getString();
+         flushBufferedOutput(&consoleOutput_);
+         consoleErrors_.append(event.data().getString());
+      }
+      else if (event.type() == client_events::kBuildOutput &&
+               event.data().getType() == json::Type::OBJECT)
+      {
+         buildOutput_.append(event.data().getObject()["output"].getString());
       }
       else
       {
-         // flush existing console output prior to adding an 
-         // action of another type
-         flushAllPendingConsoleOutput();
+         // flush existing console output prior to adding an action of another type
+         flushAllBufferedOutput();
          
          // add event to queue
          pendingEvents_.push_back(event);
@@ -134,7 +145,14 @@ bool ClientEventQueue::hasEvents()
 {
    LOCK_MUTEX(*pMutex_)
    {
-      return pendingEvents_.size() > 0 || pendingConsoleOutput_.length() > 0;
+      if (pendingEvents_.size() > 0)
+         return true;
+      
+      for (BufferedOutput* pOutput : bufferedOutputs_)
+         if (!pOutput->empty())
+            return true;
+      
+      return false;
    }
    END_LOCK_MUTEX
    
@@ -146,8 +164,8 @@ void ClientEventQueue::remove(std::vector<ClientEvent>* pEvents)
 {
    LOCK_MUTEX(*pMutex_)
    {
-      // flush any pending output
-      flushAllPendingConsoleOutput();
+      // flush any buffered output
+      flushAllBufferedOutput();
       
       // copy the events to the caller
       pEvents->insert(pEvents->begin(), 
@@ -164,7 +182,9 @@ void ClientEventQueue::clear()
 {
    LOCK_MUTEX(*pMutex_)
    {
-      pendingConsoleOutput_.clear();
+      for (BufferedOutput* pOutput : bufferedOutputs_)
+         pOutput->clear();
+      
       pendingEvents_.clear();
    }
    END_LOCK_MUTEX
@@ -206,53 +226,52 @@ bool ClientEventQueue::eventAddedSince(const boost::posix_time::ptime& time)
    return false;
 }
 
-void ClientEventQueue::flushAllPendingConsoleOutput()
+void ClientEventQueue::flushAllBufferedOutput()
 {
    // NOTE: Private helper so no lock required (mutex is not recursive)
    //
    // NOTE: Order shouldn't matter here as long as we ensure that
    // stdout is flushed whenever stderr is received, and vice versa.
    // This happens as events are received so we should be safe.
-   flushPendingConsoleOutput();
-   flushPendingConsoleErrors();
+   for (BufferedOutput* pOutput : bufferedOutputs_)
+      flushBufferedOutput(pOutput);
 }
 
-void ClientEventQueue::flushPendingConsoleOutput()
+void ClientEventQueue::flushBufferedOutput(BufferedOutput* pBuffer)
 {
    // NOTE: Private helper so no lock required (mutex is not recursive)
-   flushPendingOutputImpl(
-            client_events::kConsoleWriteOutput,
-            pendingConsoleOutput_);
-}
-
-void ClientEventQueue::flushPendingConsoleErrors()
-{
-   // NOTE: Private helper so no lock required (mutex is not recursive)
-   flushPendingOutputImpl(
-            client_events::kConsoleWriteError,
-            pendingConsoleErrors_);
-}
-
-void ClientEventQueue::flushPendingOutputImpl(int event, std::string& output)
-{
-   // NOTE: Private helper so no lock required (mutex is not recursive)
-   if (output.empty())
+   if (pBuffer->empty())
       return;
    
-   int limit = r::session::consoleActions().capacity() + 1;
-   string_utils::trimLeadingLines(limit, &output);
+   int event = pBuffer->event();
+   std::string output = pBuffer->output();
+   if (pBuffer->useConsoleActionLimit())
+   {
+      int limit = r::session::consoleActions().capacity() + 1;
+      string_utils::trimLeadingLines(limit, &output);
+   }
    
-   enqueueClientOutputEvent(event, output);
-   output.clear();
-}
-
-void ClientEventQueue::enqueueClientOutputEvent(
-      int event, const std::string& text)
-{
-   json::Object output;
-   output[kConsoleText] = text;
-   output[kConsoleId]   = activeConsole_;
-   pendingEvents_.push_back(ClientEvent(event, output));
+   if (event == client_events::kConsoleWriteOutput ||
+       event == client_events::kConsoleWriteError)
+   {
+      json::Object payload;
+      payload[kConsoleText] = output;
+      payload[kConsoleId]   = activeConsole_;
+      pendingEvents_.push_back(ClientEvent(event, payload));
+   }
+   else if (event == client_events::kBuildOutput)
+   {
+      using namespace module_context;
+      CompileOutput compileOutput(kCompileOutputNormal, output);
+      json::Object payload = compileOutputAsJson(compileOutput);
+      pendingEvents_.push_back(ClientEvent(event, payload));
+   }
+   else
+   {
+      ELOGF("internal error: don't know how to flush buffer for event '{}'", event);
+   }
+   
+   pBuffer->clear();
 }
 
 } // namespace session
