@@ -258,7 +258,7 @@ public class ClientEventDispatcher
       {
          ConsoleText output = event.getData();
          
-         for (int i = 0, n = Math.max(20, pendingEvents_.size()); i < n; i++)
+         for (int i = 0, n = Math.min(100, pendingEvents_.size()); i < n; i++)
          {
             ClientEvent peekedEvent = pendingEvents_.get(0);
             if (peekedEvent.getType() != ClientEvent.ConsoleOutput)
@@ -273,7 +273,7 @@ public class ClientEventDispatcher
       {
          ConsoleText output = event.getData();
          
-         for (int i = 0, n = Math.max(200, pendingEvents_.size()); i < n; i++)
+         for (int i = 0, n = Math.min(100, pendingEvents_.size()); i < n; i++)
          {
             ClientEvent peekedEvent = pendingEvents_.get(0);
             if (peekedEvent.getType() != ClientEvent.ConsoleError)
