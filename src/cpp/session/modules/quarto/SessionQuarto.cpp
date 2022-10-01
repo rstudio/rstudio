@@ -952,7 +952,7 @@ bool isFileInSessionQuartoProject(const core::FilePath& file)
    if (config.is_project)
    {
       FilePath projDir = module_context::resolveAliasedPath(config.project_dir);
-      return (projDir == file) || file.isWithin(projDir);
+      return file.isWithin(projDir);
    }
    else
    {

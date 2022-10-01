@@ -177,24 +177,21 @@ protected:
       // set render token
       core::system::setenv(pEnv, "QUARTO_RENDER_TOKEN", renderToken_);
 
-
       // if this file isn't in a project then add the QUARTO_CROSSREF_INDEX_PATH
-      if (!previewTarget_.isDirectory())
+      if (!isFileInSessionQuartoProject(previewTarget_))
       {
-         if (!isFileInSessionQuartoProject(previewTarget_))
+         FilePath indexPath;
+         Error error = module_context::perFilePathStorage(
+            kQuartoCrossrefScope, previewTarget_, false, &indexPath
+         );
+         if (error)
          {
-            FilePath indexPath;
-            Error error = module_context::perFilePathStorage(
-               kQuartoCrossrefScope, previewTarget_, false, &indexPath
-            );
-            if (error)
-            {
-               LOG_ERROR(error);
-               return;
-            }
-            core::system::setenv(pEnv, "QUARTO_CROSSREF_INDEX_PATH", indexPath.getAbsolutePath());
+            LOG_ERROR(error);
+            return;
          }
+         core::system::setenv(pEnv, "QUARTO_CROSSREF_INDEX_PATH", indexPath.getAbsolutePath());
       }
+
    }
 
    virtual core::FilePath workingDir()
@@ -266,19 +263,10 @@ private:
          // activate the console
          activateConsole();
 
-         // if the viewer is already on the site just activate it (however for revealjs go
-         // back through standard presentation pane logic)
+         // show in viewer
          if (viewerType_ == kRmdViewerTypePane)
          {
-            if (!formatIsRevealJs() &&
-                 boost::algorithm::starts_with(module_context::viewerCurrentUrl(false), viewerUrl()))
-            {
-               module_context::activatePane("viewer");
-            }
-            else
-            {
-               showInViewer();
-            }
+            showInViewer();
          }
       }
 
@@ -305,6 +293,10 @@ private:
    {
       if (viewerType_ == kRmdViewerTypePane)
       {
+         // get proj dir
+         QuartoConfig config = quartoConfig();
+         FilePath projDir = module_context::resolveAliasedPath(config.project_dir);
+
          // format info
          bool isReveal = formatIsRevealJs();
          bool isSlidy = boost::algorithm::starts_with(format_, "slidy");
@@ -325,10 +317,14 @@ private:
          if (!outputFile_.isEmpty())
             outputFile = module_context::createAliasedPath(outputFile_);
          QuartoNavigate quartoNav;
-         if (!previewTarget_.isDirectory())
+         if ((previewTarget()) == projDir || isFileInSessionQuartoProject((previewTarget())))
          {
-            std::string sourceFile = module_context::createAliasedPath(previewTarget_);
-            quartoNav = QuartoNavigate::navDoc(sourceFile, outputFile, jobId());
+            quartoNav = module_context::QuartoNavigate::navWebsite(pJob_->id());
+         }
+         else if (!this->previewTarget_.isDirectory())
+         {
+           std::string sourceFile = module_context::createAliasedPath(previewTarget_);
+           quartoNav = QuartoNavigate::navDoc(sourceFile, outputFile, jobId());
          }
 
          // route to either viewer or presentation pane (for reveal)
