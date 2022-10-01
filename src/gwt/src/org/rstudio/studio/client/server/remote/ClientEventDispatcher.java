@@ -238,13 +238,54 @@ public class ClientEventDispatcher
                     i < MAX_EVENTS_AT_ONCE && pendingEvents_.size() > 0;
                     i++)
                {
-                  ClientEvent currentEvent = pendingEvents_.remove(0);
+                  ClientEvent currentEvent = collectPendingEvent();
                   dispatchEvent(currentEvent);
                }
                return pendingEvents_.size() > 0;
             }
          });
       }
+   }
+   
+   private ClientEvent collectPendingEvent()
+   {
+      // Get the next event.
+      ClientEvent event = pendingEvents_.remove(0);
+      
+      // If we have multiple console output events of the same type,
+      // coalesce them together to avoid flooding the console with events.
+      if (event.getType() == ClientEvent.ConsoleOutput)
+      {
+         ConsoleText output = event.getData();
+         
+         for (int i = 0, n = Math.max(20, pendingEvents_.size()); i < n; i++)
+         {
+            ClientEvent peekedEvent = pendingEvents_.get(0);
+            if (peekedEvent.getType() != ClientEvent.ConsoleOutput)
+               break;
+            
+            ConsoleText peekedOutput = peekedEvent.getData();
+            pendingEvents_.remove(0);
+            output.text = output.text + peekedOutput.text;
+         }
+      }
+      else if (event.getType() == ClientEvent.ConsoleError)
+      {
+         ConsoleText output = event.getData();
+         
+         for (int i = 0, n = Math.max(200, pendingEvents_.size()); i < n; i++)
+         {
+            ClientEvent peekedEvent = pendingEvents_.get(0);
+            if (peekedEvent.getType() != ClientEvent.ConsoleError)
+               break;
+            
+            ConsoleText peekedOutput = peekedEvent.getData();
+            pendingEvents_.remove(0);
+            output.text = output.text + peekedOutput.text;
+         }
+      }
+      
+      return event;
    }
    
    private void dispatchEvent(ClientEvent event) 
