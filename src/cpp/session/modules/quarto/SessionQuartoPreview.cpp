@@ -101,7 +101,7 @@ public:
       return viewerType_;
    }
 
-   bool render(const core::FilePath& previewfile, const json::Value& editorState)
+   bool render(const core::FilePath& previewfile,  std::string format, const json::Value& editorState)
    {
       // reset state
       previewTarget_ = previewfile;
@@ -120,7 +120,7 @@ public:
          safe_convert::numberToString(port()),
          renderToken_,
          previewTarget().getAbsolutePath(),
-         this->format()).call(&result, &rProtect);
+         format).call(&result, &rProtect);
       if (error || r::sexp::inherits(result, "error"))
       {
          return false;
@@ -477,7 +477,7 @@ Error quartoPreviewRpc(const json::JsonRpcRequest& request,
          eventJson["id"] = s_pPreview->jobId();
          module_context::enqueClientEvent(ClientEvent(client_events::kJobsActivate, eventJson));
          // can we render in-place?
-         if  (s_pPreview->render(previewFilePath, editorState))
+         if  (s_pPreview->render(previewFilePath, format, editorState))
          {
            return Success();
          }
