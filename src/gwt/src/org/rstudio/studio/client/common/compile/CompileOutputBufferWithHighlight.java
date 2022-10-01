@@ -17,6 +17,7 @@
 package org.rstudio.studio.client.common.compile;
 
 import org.rstudio.core.client.Debug;
+import org.rstudio.core.client.StringUtil;
 import org.rstudio.core.client.VirtualConsole;
 import org.rstudio.core.client.dom.DomUtils;
 import org.rstudio.core.client.widget.BottomScrollPanel;
@@ -26,9 +27,6 @@ import org.rstudio.studio.client.RStudioGinjector;
 import org.rstudio.studio.client.workbench.views.console.ConsoleResources;
 import org.rstudio.studio.client.workbench.views.source.editors.text.themes.AceTheme;
 
-import com.google.gwt.dom.client.Element;
-import com.google.gwt.dom.client.NodeList;
-import com.google.gwt.dom.client.Style.WhiteSpace;
 import com.google.gwt.user.client.ui.Composite;
 
 public class CompileOutputBufferWithHighlight extends Composite 
@@ -54,7 +52,6 @@ public class CompileOutputBufferWithHighlight extends Composite
       
       initWidget(scrollPanel_);
    }
-   
    
    @Override
    public void writeCommand(String command)
@@ -85,27 +82,49 @@ public class CompileOutputBufferWithHighlight extends Composite
    {
       console_.clear();
       totalSubmittedLines_ = 0;
+      numDisplayedLines_ = 0;
       output_.setText("");
+   }
+   
+   @Override
+   public void onCompileCompleted()
+   {
+      if (savedOutput_.isEmpty())
+         return;
+      
+      String outputClass = styles_.output();
+      console_.submit("\n", outputClass);
+      
+      String[] lines = savedOutput_.split("\n");
+      int end = lines.length - 1;
+      int start = Math.max(0, end - 100);
+      for (int i = start; i < end; i++)
+         console_.submit(lines[i] + "\n", outputClass);
    }
    
    private void write(String output, OutputType outputType, String className)
    {
       if (totalSubmittedLines_ > MAX_LINES_DISABLE && outputType == OutputType.Output)
-         return;
-      
-      int oldLineCount = DomUtils.countLines(output_.getElement(), true);
-      console_.submit(output, className);
-      int newLineCount = DomUtils.countLines(output_.getElement(), true);
-      totalSubmittedLines_ += newLineCount - oldLineCount;
-      
-      if (newLineCount > MAX_LINES_SHOWN)
       {
-         DomUtils.trimLines(output_.getElement(), newLineCount - MAX_LINES_SHOWN);
+         savedOutput_ += output;
+         return;
+      }
+      
+      console_.submit(output, className);
+      
+      int numNewlines = StringUtil.newlineCount(output);
+      totalSubmittedLines_ += numNewlines;
+      numDisplayedLines_ += numNewlines;
+      
+      if (numDisplayedLines_ > MAX_LINES_SHOWN)
+      {
+         DomUtils.trimLines(output_.getElement(), numDisplayedLines_ - MAX_LINES_SHOWN);
+         numDisplayedLines_ = MAX_LINES_SHOWN;
       }
       
       if (totalSubmittedLines_ > MAX_LINES_DISABLE)
       {
-         console_.submit("[Detected output overflow; truncating build output]", className);
+         console_.submit("\n[Detected output overflow; truncating build output]\n", className);
       }
       
       scrollPanel_.onContentSizeChanged();
@@ -120,7 +139,9 @@ public class CompileOutputBufferWithHighlight extends Composite
  
    PreWidget output_;
    VirtualConsole console_;
+   private int numDisplayedLines_;
    private int totalSubmittedLines_;
+   private String savedOutput_;
    private BottomScrollPanel scrollPanel_;
    private ConsoleResources.ConsoleStyles styles_;
    

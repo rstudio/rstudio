@@ -41,4 +41,8 @@ public class CompileOutput extends JavaScriptObject
    public native final String getOutput() /*-{
       return this.output;
    }-*/;
+   
+   public native final void appendOutput(String output) /*-{
+      this.output += output;
+   }-*/;
 }

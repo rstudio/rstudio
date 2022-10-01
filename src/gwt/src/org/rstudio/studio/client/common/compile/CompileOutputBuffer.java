@@ -81,6 +81,11 @@ public class CompileOutputBuffer extends Composite
       output_.setText("");
       virtualConsole_ = RStudioGinjector.INSTANCE.getVirtualConsoleFactory().create(output_.getElement());
    }
+   
+   @Override
+   public void onCompileCompleted()
+   {
+   }
  
    private PreWidget output_;
    private VirtualConsole virtualConsole_;

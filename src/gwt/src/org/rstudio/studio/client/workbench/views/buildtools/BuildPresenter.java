@@ -29,6 +29,7 @@ import org.rstudio.core.client.CodeNavigationTarget;
 import org.rstudio.core.client.CommandWithArg;
 import org.rstudio.core.client.Debug;
 import org.rstudio.core.client.FilePosition;
+import org.rstudio.core.client.JsVector;
 import org.rstudio.core.client.events.HasSelectionCommitHandlers;
 import org.rstudio.core.client.events.SelectionCommitEvent;
 import org.rstudio.core.client.files.FileSystemItem;
@@ -278,8 +279,11 @@ public class BuildPresenter extends BasePresenter
    {
       view_.buildStarted();
 
-      JsArray<CompileOutput> outputs = buildState.getOutputs();
-      for (int i = 0; i<outputs.length(); i++)
+      JsVector<CompileOutput> outputs = buildState.getOutputs().cast();
+      if (outputs.length() > 1000)
+         outputs = outputs.slice(outputs.length() - 1000);
+      
+      for (int i = 0; i < outputs.length(); i++)
          view_.showOutput(outputs.get(i), false);
 
       if (buildState.getErrors().length() > 0)
