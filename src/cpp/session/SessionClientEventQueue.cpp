@@ -32,8 +32,10 @@ namespace rstudio {
 namespace session {
  
 namespace {
+
 ClientEventQueue* s_pClientEventQueue = nullptr;
-}
+
+} // end anonymous namespace
 
 void initializeClientEventQueue()
 {
@@ -61,8 +63,7 @@ bool ClientEventQueue::setActiveConsole(const std::string& console)
       if (activeConsole_ != console)
       {
          // flush events to the previous console
-         flushPendingConsoleOutput();
-         flushPendingConsoleErrors();
+         flushAllPendingConsoleOutput();
          
          // switch to the new one
          activeConsole_ = console;
@@ -95,9 +96,10 @@ void ClientEventQueue::add(const ClientEvent& event)
    LOCK_MUTEX(*pMutex_)
    {
       // console output and errors are batched up for compactness / efficiency
+      //
       // note that 'errors' are really just anything written to stderr, and this
       // includes things like output from 'message()' and so it's feasible that
-      // stderr could become overwhelmed in the same way stdout might
+      // stderr could become overwhelmed in the same way stdout might.
       if (event.type() == client_events::kConsoleWriteOutput &&
           event.data().getType() == json::Type::STRING)
       {
@@ -114,8 +116,7 @@ void ClientEventQueue::add(const ClientEvent& event)
       {
          // flush existing console output prior to adding an 
          // action of another type
-         flushPendingConsoleOutput();
-         flushPendingConsoleErrors();
+         flushAllPendingConsoleOutput();
          
          // add event to queue
          pendingEvents_.push_back(event);
@@ -146,8 +147,7 @@ void ClientEventQueue::remove(std::vector<ClientEvent>* pEvents)
    LOCK_MUTEX(*pMutex_)
    {
       // flush any pending output
-      flushPendingConsoleOutput();
-      flushPendingConsoleErrors();
+      flushAllPendingConsoleOutput();
       
       // copy the events to the caller
       pEvents->insert(pEvents->begin(), 
@@ -206,41 +206,39 @@ bool ClientEventQueue::eventAddedSince(const boost::posix_time::ptime& time)
    return false;
 }
 
+void ClientEventQueue::flushAllPendingConsoleOutput()
+{
+   // NOTE: Order shouldn't matter here as long as we ensure that
+   // stdout is flushed whenever stderr is received, and vice versa.
+   // This happens as events are received so we should be safe.
+   flushPendingConsoleOutput();
+   flushPendingConsoleErrors();
+}
+
 void ClientEventQueue::flushPendingConsoleOutput()
 {
-   // NOTE: private helper so no lock required (mutex is not recursive) 
-   if (!pendingConsoleOutput_.empty())
-   {
-      // If there's more console output than the client can even show, then
-      // truncate it to the amount that the client can show. Too much output
-      // can overwhelm the client, causing it to become unresponsive.
-      int limit = r::session::consoleActions().capacity() + 1;
-      string_utils::trimLeadingLines(limit, &pendingConsoleOutput_);
-
-      enqueueClientOutputEvent(
-               client_events::kConsoleWriteOutput, 
-               pendingConsoleOutput_);
-      pendingConsoleOutput_.clear();
-   }
+   flushPendingOutputImpl(
+            client_events::kConsoleWriteOutput,
+            pendingConsoleOutput_);
 }
 
 void ClientEventQueue::flushPendingConsoleErrors()
 {
-   // NOTE: private helper so no lock required (mutex is not recursive) 
-   if (!pendingConsoleErrors_.empty())
-   {
-      // If there's more console output than the client can even show, then
-      // truncate it to the amount that the client can show. Too much output
-      // can overwhelm the client, causing it to become unresponsive.
-      int limit = r::session::consoleActions().capacity() + 1;
-      string_utils::trimLeadingLines(limit, &pendingConsoleErrors_);
+   flushPendingOutputImpl(
+            client_events::kConsoleWriteError,
+            pendingConsoleErrors_);
+}
 
-      enqueueClientOutputEvent(
-               client_events::kConsoleWriteError, 
-               pendingConsoleErrors_);
-      pendingConsoleErrors_.clear();
-   }
+void ClientEventQueue::flushPendingOutputImpl(int event, std::string& output)
+{
+   if (output.empty())
+      return;
    
+   int limit = r::session::consoleActions().capacity() + 1;
+   string_utils::trimLeadingLines(limit, &output);
+   
+   enqueueClientOutputEvent(event, output);
+   output.clear();
 }
 
 void ClientEventQueue::enqueueClientOutputEvent(

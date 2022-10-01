@@ -69,9 +69,12 @@ public:
    bool setActiveConsole(const std::string& console);
       
 private:   
+   void flushAllPendingConsoleOutput();
+   
    void flushPendingConsoleOutput();
    void flushPendingConsoleErrors();
 
+   void flushPendingOutputImpl(int event, std::string& output);
    void enqueueClientOutputEvent(int event, const std::string& text);
  
 private:
