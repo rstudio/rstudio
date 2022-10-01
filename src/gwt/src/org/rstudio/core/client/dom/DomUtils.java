@@ -246,7 +246,24 @@ public class DomUtils
       }
       else
       {
-         return countLinesInternal(node);
+         // Just count the total number of <br> elements
+         switch (node.getNodeType())
+         {
+         
+         case Node.ELEMENT_NODE:
+            
+            if (Element.as(node).getTagName() == BRElement.TAG)
+            {
+               return 1;
+            }
+            else
+            {
+               return DomUtils.querySelectorAll(Element.as(node), "br").getLength();
+            }
+            
+         default:
+            return 0;
+         }
       }
    }
 
