@@ -233,7 +233,6 @@ public class ClientEventDispatcher
          {
             public boolean execute()
             {
-               final int MAX_EVENTS_AT_ONCE = 200;
                for (int i = 0;
                     i < MAX_EVENTS_AT_ONCE && pendingEvents_.size() > 0;
                     i++)
@@ -258,7 +257,8 @@ public class ClientEventDispatcher
       {
          ConsoleText output = event.getData();
          
-         for (int i = 0, n = Math.min(100, pendingEvents_.size()); i < n; i++)
+         int n = Math.min(pendingEvents_.size(), MAX_COALESCED_CONSOLE_OUTPUT_EVENTS);
+         for (int i = 0; i < n; i++)
          {
             ClientEvent peekedEvent = pendingEvents_.get(0);
             if (peekedEvent.getType() != ClientEvent.ConsoleOutput)
@@ -273,7 +273,8 @@ public class ClientEventDispatcher
       {
          ConsoleText output = event.getData();
          
-         for (int i = 0, n = Math.min(100, pendingEvents_.size()); i < n; i++)
+         int n = Math.min(pendingEvents_.size(), MAX_COALESCED_CONSOLE_OUTPUT_EVENTS);
+         for (int i = 0; i < n; i++)
          {
             ClientEvent peekedEvent = pendingEvents_.get(0);
             if (peekedEvent.getType() != ClientEvent.ConsoleError)
@@ -1185,5 +1186,7 @@ public class ClientEventDispatcher
 
    private final ArrayList<ClientEvent> pendingEvents_ = new ArrayList<>();
 
+   private static final int MAX_EVENTS_AT_ONCE = 200;
+   private static final int MAX_COALESCED_CONSOLE_OUTPUT_EVENTS = 100;
 
 }
