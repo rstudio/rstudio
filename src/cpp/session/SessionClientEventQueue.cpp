@@ -208,6 +208,8 @@ bool ClientEventQueue::eventAddedSince(const boost::posix_time::ptime& time)
 
 void ClientEventQueue::flushAllPendingConsoleOutput()
 {
+   // NOTE: Private helper so no lock required (mutex is not recursive)
+   //
    // NOTE: Order shouldn't matter here as long as we ensure that
    // stdout is flushed whenever stderr is received, and vice versa.
    // This happens as events are received so we should be safe.
@@ -217,6 +219,7 @@ void ClientEventQueue::flushAllPendingConsoleOutput()
 
 void ClientEventQueue::flushPendingConsoleOutput()
 {
+   // NOTE: Private helper so no lock required (mutex is not recursive)
    flushPendingOutputImpl(
             client_events::kConsoleWriteOutput,
             pendingConsoleOutput_);
@@ -224,6 +227,7 @@ void ClientEventQueue::flushPendingConsoleOutput()
 
 void ClientEventQueue::flushPendingConsoleErrors()
 {
+   // NOTE: Private helper so no lock required (mutex is not recursive)
    flushPendingOutputImpl(
             client_events::kConsoleWriteError,
             pendingConsoleErrors_);
@@ -231,6 +235,7 @@ void ClientEventQueue::flushPendingConsoleErrors()
 
 void ClientEventQueue::flushPendingOutputImpl(int event, std::string& output)
 {
+   // NOTE: Private helper so no lock required (mutex is not recursive)
    if (output.empty())
       return;
    
