@@ -62,6 +62,7 @@ bool ClientEventQueue::setActiveConsole(const std::string& console)
       {
          // flush events to the previous console
          flushPendingConsoleOutput();
+         flushPendingConsoleErrors();
          
          // switch to the new one
          activeConsole_ = console;
@@ -77,34 +78,44 @@ void ClientEventQueue::add(const ClientEvent& event)
    if (http_methods::protocolDebugEnabled() && event.type() != client_events::kConsoleWriteError)
    {
       if (event.data().getType() == json::Type::STRING)
+      {
          LOG_DEBUG_MESSAGE("Queued event: " + event.typeName() + ": " + event.data().getString());
+      }
       else if (event.typeName() == "busy")
       {
          bool val = event.data().getObject()["value"].getBool();
          LOG_DEBUG_MESSAGE("Queued event: " + event.typeName() + ": " + safe_convert::numberToString(val));
       }
       else
+      {
          LOG_DEBUG_MESSAGE("Queued event: " + event.typeName());
+      }
    }
+   
    LOCK_MUTEX(*pMutex_)
    {
-      // console output is batched up for compactness/efficiency.
-      if (event.type() == client_events::kConsoleWriteOutput)
+      // console output and errors are batched up for compactness / efficiency
+      // note that 'errors' are really just anything written to stderr, and this
+      // includes things like output from 'message()' and so it's feasible that
+      // stderr could become overwhelmed in the same way stdout might
+      if (event.type() == client_events::kConsoleWriteOutput &&
+          event.data().getType() == json::Type::STRING)
       {
-         if (event.data().getType() == json::Type::STRING)
-            pendingConsoleOutput_ += event.data().getString();
+         flushPendingConsoleErrors();
+         pendingConsoleOutput_ += event.data().getString();
       }
       else if (event.type() == client_events::kConsoleWriteError &&
                event.data().getType() == json::Type::STRING)
       {
          flushPendingConsoleOutput();
-         enqueueClientOutputEvent(event.type(), event.data().getString());
+         pendingConsoleErrors_ += event.data().getString();
       }
       else
       {
          // flush existing console output prior to adding an 
          // action of another type
          flushPendingConsoleOutput();
+         flushPendingConsoleErrors();
          
          // add event to queue
          pendingEvents_.push_back(event);
@@ -136,6 +147,7 @@ void ClientEventQueue::remove(std::vector<ClientEvent>* pEvents)
    {
       // flush any pending output
       flushPendingConsoleOutput();
+      flushPendingConsoleErrors();
       
       // copy the events to the caller
       pEvents->insert(pEvents->begin(), 
@@ -193,13 +205,11 @@ bool ClientEventQueue::eventAddedSince(const boost::posix_time::ptime& time)
    // keep compiler happy
    return false;
 }
-   
 
 void ClientEventQueue::flushPendingConsoleOutput()
 {
    // NOTE: private helper so no lock required (mutex is not recursive) 
-   
-   if ( !pendingConsoleOutput_.empty() )
+   if (!pendingConsoleOutput_.empty())
    {
       // If there's more console output than the client can even show, then
       // truncate it to the amount that the client can show. Too much output
@@ -207,10 +217,30 @@ void ClientEventQueue::flushPendingConsoleOutput()
       int limit = r::session::consoleActions().capacity() + 1;
       string_utils::trimLeadingLines(limit, &pendingConsoleOutput_);
 
-      enqueueClientOutputEvent(client_events::kConsoleWriteOutput, 
-            pendingConsoleOutput_);
+      enqueueClientOutputEvent(
+               client_events::kConsoleWriteOutput, 
+               pendingConsoleOutput_);
       pendingConsoleOutput_.clear();
    }
+}
+
+void ClientEventQueue::flushPendingConsoleErrors()
+{
+   // NOTE: private helper so no lock required (mutex is not recursive) 
+   if (!pendingConsoleErrors_.empty())
+   {
+      // If there's more console output than the client can even show, then
+      // truncate it to the amount that the client can show. Too much output
+      // can overwhelm the client, causing it to become unresponsive.
+      int limit = r::session::consoleActions().capacity() + 1;
+      string_utils::trimLeadingLines(limit, &pendingConsoleErrors_);
+
+      enqueueClientOutputEvent(
+               client_events::kConsoleWriteError, 
+               pendingConsoleErrors_);
+      pendingConsoleErrors_.clear();
+   }
+   
 }
 
 void ClientEventQueue::enqueueClientOutputEvent(

@@ -70,6 +70,7 @@ public:
       
 private:   
    void flushPendingConsoleOutput();
+   void flushPendingConsoleErrors();
 
    void enqueueClientOutputEvent(int event, const std::string& text);
  
@@ -84,6 +85,7 @@ private:
 
    // instance data
    std::string pendingConsoleOutput_;
+   std::string pendingConsoleErrors_;
    std::string activeConsole_;
    std::vector<ClientEvent> pendingEvents_;
    boost::posix_time::ptime lastEventAddTime_;

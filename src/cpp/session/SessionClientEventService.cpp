@@ -326,8 +326,7 @@ void ClientEventService::run()
             clientEventQueue.remove(&events);
             
             // convert to json and add event id
-            for (std::vector<ClientEvent>::const_iterator 
-                 it = events.begin(); it != events.end(); ++it)
+            for (auto it = events.begin(); it != events.end(); ++it)
             {
                json::Object event;
                it->asJsonObject(nextEventId++, &event);
