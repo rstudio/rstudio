@@ -56,12 +56,14 @@
 })
 
 .rs.addFunction("quarto.renderPreview", function(port, token, path, format) {
-   suppressWarnings(utils::download.file(paste0("http://localhost:", port, "/", token,
-                               "/?path=", utils::URLencode(path, TRUE),
-                               ifelse(nzchar(format), paste0("&format=", format), "")),
-                        destfile = tempfile(),
-                        quiet = TRUE,
-                        cacheOK = FALSE))
+   .rs.tryCatch(utils::download.file(
+      paste0("http://localhost:", port, "/", token,
+            "/?path=", utils::URLencode(path, TRUE),
+            ifelse(nzchar(format), paste0("&format=", format), "")),
+      destfile = tempfile(),
+      quiet = TRUE,
+      cacheOK = FALSE)
+   )
 })
 
 

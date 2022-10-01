@@ -114,12 +114,14 @@ public:
       readInputFileLines();
 
       // render
+      SEXP result;
+      r::sexp::Protect rProtect;
       Error error = r::exec::RFunction(".rs.quarto.renderPreview",
-                                       safe_convert::numberToString(port()),
-                                       renderToken_,
-                                       previewTarget().getAbsolutePath(),
-                                       this->format()).call();
-      if (error)
+         safe_convert::numberToString(port()),
+         renderToken_,
+         previewTarget().getAbsolutePath(),
+         this->format()).call(&result, &rProtect);
+      if (error || r::sexp::inherits(result, "error"))
       {
          return false;
       }
@@ -497,7 +499,7 @@ Error quartoPreviewRpc(const json::JsonRpcRequest& request,
    }
 }
 
-void onSourceDocRemoved(const std::string& id, const std::string& path)
+void onSourceDocRemoved(const std::string&, const std::string& path)
 {
    // resolve source database path
    FilePath resolvedPath = module_context::resolveAliasedPath(path);
