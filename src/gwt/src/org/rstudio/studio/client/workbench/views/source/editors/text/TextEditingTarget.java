@@ -2012,14 +2012,7 @@ public class TextEditingTarget implements
          {
             if (event.isQuarto())
             {
-               if (event.isQuartoBook())
-               {
-                  renderRmd(event.getFormat(), null);
-               }
-               else
-               {
-                  setQuartoFormat(event.getFormat());
-               }
+               setQuartoFormat(event.getFormat());
             }
             else
             {
@@ -4776,6 +4769,16 @@ public class TextEditingTarget implements
          formats = new ArrayList<>();
       return formats;
    }
+   
+   public List<String> getDocumentQuartoBookFormats()
+   {
+      QuartoConfig quartoConfig = session_.getSessionInfo().getQuartoConfig();
+      boolean quartoBookDoc = QuartoHelper.isQuartoBookDoc(
+         docUpdateSentinel_.getPath(), 
+         quartoConfig
+      );
+      return quartoBookDoc ? Arrays.asList(quartoConfig.project_formats) : null;
+   }
 
    private void updateRmdFormat()
    {
@@ -4797,16 +4800,12 @@ public class TextEditingTarget implements
          {
             view_.setIsNotShinyFormat();
             
-            QuartoConfig quartoConfig = session_.getSessionInfo().getQuartoConfig();
-            boolean quartoBookDoc = QuartoHelper.isQuartoBookDoc(
-               docUpdateSentinel_.getPath(), 
-               quartoConfig
-            );
-            List<String> formats = quartoBookDoc ? Arrays.asList(quartoConfig.project_formats) : getQuartoOutputFormats();
+            List<String> bookFormats = this.getDocumentQuartoBookFormats();
+            List<String> formats = bookFormats != null ? bookFormats : getQuartoOutputFormats();
             view_.setQuartoFormatOptions(fileType_, 
                                          getCustomKnit().length() == 0,
                                          formats,
-                                         quartoBookDoc);
+                                         bookFormats != null);
          }
         
       }
@@ -7114,8 +7113,13 @@ public class TextEditingTarget implements
       if (session_.getSessionInfo().getQuartoConfig().enabled &&
          (extendedType_ == SourceDocument.XT_QUARTO_DOCUMENT))
       {
+         
          List<String> outputFormats = getQuartoOutputFormats();
-         if (outputFormats.size() >= 1)
+         if (outputFormats.size() == 0) 
+         {
+            outputFormats = this.getDocumentQuartoBookFormats();
+         }
+         if (outputFormats != null && outputFormats.size() >= 1)
          {
             // see if there is a recorded override for this 
             String previewFormat = docUpdateSentinel_.getProperty(TextEditingTarget.QUARTO_PREVIEW_FORMAT);          
@@ -7130,7 +7134,7 @@ public class TextEditingTarget implements
          }
          else
          {
-            return null;
+           return null;
          }
       }
       else
@@ -8321,6 +8325,7 @@ public class TextEditingTarget implements
             return new String[] {};
          }
       }
+      
 
       @Override
       public String[] getQuartoProjectFormats()
