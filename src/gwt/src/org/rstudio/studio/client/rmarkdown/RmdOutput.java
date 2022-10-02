@@ -18,15 +18,12 @@ import java.util.Map;
 import java.util.HashMap;
 
 import com.google.gwt.core.client.GWT;
-import org.rstudio.core.client.CommandWithArg;
 import org.rstudio.core.client.StringUtil;
 import org.rstudio.core.client.command.CommandBinder;
 import org.rstudio.core.client.dom.WindowEx;
 import org.rstudio.core.client.files.FileSystemItem;
 import org.rstudio.core.client.widget.Operation;
 import org.rstudio.core.client.widget.OperationWithInput;
-import org.rstudio.core.client.widget.ProgressIndicator;
-import org.rstudio.core.client.widget.ProgressOperation;
 import org.rstudio.studio.client.RStudioGinjector;
 import org.rstudio.studio.client.application.Desktop;
 import org.rstudio.studio.client.application.events.EventBus;
@@ -72,7 +69,6 @@ import com.google.gwt.core.client.Scheduler;
 import com.google.gwt.core.client.Scheduler.ScheduledCommand;
 import com.google.gwt.event.logical.shared.ValueChangeEvent;
 import com.google.gwt.event.logical.shared.ValueChangeHandler;
-import com.google.gwt.user.client.Command;
 import com.google.inject.Inject;
 import com.google.inject.Provider;
 import com.google.inject.Singleton;
@@ -541,27 +537,7 @@ public class RmdOutput implements RmdRenderStartedEvent.Handler,
             RmdOutput.TYPE_SHINY, null, null, result.getViewerType()));
    }
 
-   private void displayOfficeDoc(final RmdRenderResult result,
-                                 final CommandWithArg<String> displayResult)
-   {
-      // in desktop mode, the document can be displayed directly
-      if (Desktop.isDesktop())
-         displayResult.execute(result.getOutputFile());
-
-      // it's not possible to show Office docs inline in a useful way from
-      // within the browser, so just offer to download the file.
-      else
-      {
-         showDownloadPreviewFileDialog(result, new Command() {
-            @Override
-            public void execute()
-            {
-               displayResult.execute(result.getOutputFile());
-            }
-         });
-      }
-   }
-
+   
    private void displayRenderResult(final RmdRenderResult result)
    {
       // don't display anything if user doesn't want to
@@ -594,11 +570,11 @@ public class RmdOutput implements RmdRenderStartedEvent.Handler,
                ".rtf".equals(extension) ||
                ".odt".equals(extension))
       {
-         displayOfficeDoc(result, (r) -> globalDisplay_.showWordDoc(r));
+         RmdOutputDisplay.displayWordDoc(result.getTargetFile(), result.getOutputFile());
       }
       else if (".pptx".equals(extension))
       {
-         displayOfficeDoc(result, (r) -> globalDisplay_.showPptPresentation(r));
+         RmdOutputDisplay.displayPptDoc(result.getTargetFile(), result.getOutputFile());
       }
       else if (".html".equals(extension) ||
                NOTEBOOK_EXT.equals(extension))
@@ -615,44 +591,8 @@ public class RmdOutput implements RmdRenderStartedEvent.Handler,
       }
       else
       {
-         if (Desktop.hasDesktopFrame())
-            Desktop.getFrame().showFile(StringUtil.notNull(result.getOutputFile()));
-         else
-         {
-            showDownloadPreviewFileDialog(result, new Command() {
-               @Override
-               public void execute()
-               {
-                  String url = server_.getFileUrl(
-                        FileSystemItem.createFile(result.getOutputFile()));
-                  globalDisplay_.openWindow(url);
-               }
-            });
-         }
-
+         RmdOutputDisplay.displayBinaryDoc(result.getTargetFile(), result.getOutputFile());
       }
-   }
-
-   private void showDownloadPreviewFileDialog(
-         final RmdRenderResult result, final Command onDownload)
-   {
-      globalDisplay_.showYesNoMessage(GlobalDisplay.MSG_INFO,
-            constants_.renderCompletedCaption(),
-              constants_.renderCompletedMsg(result.getTargetFile(), result.getOutputFile()),
-            false,
-            new ProgressOperation()
-            {
-               @Override
-               public void execute(ProgressIndicator indicator)
-               {
-                  onDownload.execute();
-                  indicator.onCompleted();
-               }
-            },
-            null,
-              constants_.yesLabel(),
-              constants_.noLabel(),
-            false);
    }
 
    private void displayHTMLRenderResult(RmdRenderResult result)

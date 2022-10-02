@@ -354,6 +354,17 @@ private:
                   url = url + urlPathForQuartoProjectOutputFile(outputFile_);
             }
 
+            // if we are dealing with a binary output file then make sure nav is for the file
+            // not the project (as would occur for epub, docx in book output)
+            if (quartoNav.website &&
+                (outputFile_.getExtensionLowerCase() == ".docx" ||
+                 outputFile_.getExtensionLowerCase() == ".epub"))
+            {
+               std::string sourceFile = module_context::createAliasedPath(previewDir()
+                   .completeChildPath("index.qmd"));
+               quartoNav = QuartoNavigate::navDoc(sourceFile, outputFile, jobId());
+            }
+
             module_context::viewer(url,  minHeight, quartoNav);
          }
       }
