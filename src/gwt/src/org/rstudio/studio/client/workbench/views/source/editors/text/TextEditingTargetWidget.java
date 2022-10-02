@@ -1441,8 +1441,7 @@ public class TextEditingTargetWidget
    @Override
    public void setQuartoFormatOptions(TextFileType fileType, 
                                       boolean showRmdFormatMenu,
-                                      List<String> formats,
-                                      boolean isBook)
+                                      List<String> formats)
    {
       showRmdFormatMenu = showRmdFormatMenu && formats.size() > 1;
       setRmdFormatButtonVisible(showRmdFormatMenu);
@@ -1453,7 +1452,7 @@ public class TextEditingTargetWidget
       {
          String format = formats.get(i);
          ScheduledCommand cmd = () -> handlerManager_.fireEvent(
-               new RmdOutputFormatChangedEvent(format, true, isBook));
+               new RmdOutputFormatChangedEvent(format, true));
          ImageResource img = fileTypeRegistry_.getIconForFilename("output." + format)
                .getImageResource();
          MenuItem item = ImageMenuItem.create(img, constants_.renderFormatName(formatName(format)), cmd, 2);
