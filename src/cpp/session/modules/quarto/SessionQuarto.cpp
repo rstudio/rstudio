@@ -230,12 +230,9 @@ void detectQuartoInstallation()
             LOG_DEBUG_MESSAGE("Error setting PATH: " + sysPath);
             LOG_ERROR(error);
          }
+
+         return;
       }
-      else
-      {
-         showQuartoVersionWarning(s_quartoVersion, kQuartoRecommendedVersion);
-      }
-      return;
    }
 
    // embedded version of quarto (subject to required version)
