@@ -6548,7 +6548,7 @@ public class RemoteServer implements Server
    {
       JSONArray params = new JSONArray();
       params.set(0, new JSONString(file));
-      params.set(1,  new JSONString(format));
+      params.set(1, new JSONString(StringUtil.notNull(format)));
       params.set(2,  editorState != null ? new JSONObject(editorState) : JSONNull.getInstance());
       sendRequest(RPC_SCOPE, QUARTO_PREVIEW, params, requestCallback);
    }
