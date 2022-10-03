@@ -1144,6 +1144,5 @@ public class ClientEventDispatcher
    private final ArrayList<ClientEvent> pendingEvents_ = new ArrayList<>();
 
    private static final int MAX_EVENTS_AT_ONCE = 200;
-   private static final int MAX_COALESCED_CONSOLE_OUTPUT_EVENTS = 100;
 
 }
