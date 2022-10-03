@@ -238,7 +238,7 @@ private:
          // if we are running on rstudio server and there is a control port then
          // refresh the viewer manually (as whatever livereload scheme is in use
          // won't work via direct port connection)
-         if (isServer && (controlPort() > 0))
+         if (isServer && (controlPort_ > 0))
          {
            refreshViewer();
          }
