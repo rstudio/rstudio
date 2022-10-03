@@ -54,7 +54,7 @@ public class AceEditorMonitor
       int scrollMultiplier = prefs.editorScrollMultiplier().getValue().intValue();
       // calculate speed ratio, lower scroll speed = higher ratio = faster scroll
       double ratio = WindowEx.get().getDevicePixelRatio() * (100.0 / scrollMultiplier);
-      if (devicePixelRatio_ != ratio)
+      if (devicePixelRatio_ != ratio && editor_ != null)
       {
          devicePixelRatio_ = ratio;
          editor_.setScrollSpeed(ACE_EDITOR_DEFAULT_SCROLL_SPEED / ratio);
