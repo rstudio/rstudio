@@ -166,26 +166,9 @@
       list()
     }
   )
-  
-  haveQuarto <- function() {
-    nzchar(Sys.which("quarto"))
-  }
-
-  isQuartoDoc <- function() {
-     # .qmd file
-     .rs.endsWith(file, ".qmd") ||
-     # file with "format" yaml and no "output" yaml
-     (is.null(yamlFrontMatter[["output"]]) && !is.null(yamlFrontMatter[["format"]])) ||
-     # quarto extended type
-     identical(.Call("rs_detectExtendedType", file), "quarto-document") ||
-     # plain markdown file w/ "jupyter" metadata
-     (.rs.endsWith(file, ".md") && !is.null(yamlFrontMatter[["jupyter"]]))
-  }
 
   if (is.character(yamlFrontMatter[["knit"]]))
     yamlFrontMatter[["knit"]][[1]]
-  else if (haveQuarto() && isQuartoDoc())
-     "quarto render"
   else if (!is.null(yamlFrontMatter$runtime) &&
            grepl('^shiny', yamlFrontMatter$runtime)) {
     # use run as a wrapper for render when the doc requires the Shiny runtime,

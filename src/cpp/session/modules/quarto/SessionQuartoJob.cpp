@@ -87,7 +87,7 @@ Error QuartoJob::start()
    // hit onCompleted (because our status won't be "running"). if we passed shared_from_this
    // then we'd be keeping this object around forever (because jobs are never discarded).
    jobActions.push_back(std::make_pair("stop", boost::bind(&QuartoJob::stop, this)));
-   pJob_ = addJob(name(), "", "", 0, false, JobRunning, JobTypeSession, false, R_NilValue, jobActions, true, {});
+   pJob_ = addJob(name(), "", "", 0, false, JobRunning, JobTypeSession, false, R_NilValue, jobActions, true, {"quarto"});
    pJob_->addOutput("\n", true);
 
    // return success

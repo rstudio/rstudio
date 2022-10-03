@@ -26,8 +26,8 @@ if [ "$(arch)" = "aarch64" ]; then
 fi
 
 # variables that control download + installation process
-# update to latest Quarto release
-QUARTO_VERSION=`curl https://quarto.org/docs/download/_download.json | jq ".version" | grep -oE '[0-9]+\.[0-9]+\.[0-9]+'`
+# update to latest Quarto release 
+QUARTO_VERSION=`curl https://quarto.org/docs/download/_prerelease.json | jq ".version" | grep -oE '[0-9]+\.[0-9]+\.[0-9]+'`
 QUARTO_URL_BASE="https://github.com/quarto-dev/quarto-cli/releases/download/v${QUARTO_VERSION}"
 
 # specify a version to pin for releases

@@ -6548,28 +6548,10 @@ public class RemoteServer implements Server
    {
       JSONArray params = new JSONArray();
       params.set(0, new JSONString(file));
-      params.set(1,  new JSONString(format));
+      params.set(1, new JSONString(StringUtil.notNull(format)));
       params.set(2,  editorState != null ? new JSONObject(editorState) : JSONNull.getInstance());
       sendRequest(RPC_SCOPE, QUARTO_PREVIEW, params, requestCallback);
    }
-   
-   @Override
-   public void quartoServe(String format, boolean render, ServerRequestCallback<Void> callback)
-   {
-      JSONArray params = new JSONArray();
-      params.set(0, new JSONString(StringUtil.isNullOrEmpty(format) ? "default" : format));
-      params.set(1,  JSONBoolean.getInstance(render));
-      sendRequest(RPC_SCOPE, QUARTO_SERVE, params, callback);
-   }
-   
-   @Override
-   public void quartoServeRender(String file, ServerRequestCallback<Boolean> callback)
-   {
-      JSONArray params = new JSONArray();
-      params.set(0, new JSONString(file));
-      sendRequest(RPC_SCOPE, QUARTO_SERVE_RENDER, params, callback);
-   }
-   
    
    @Override
    public void quartoCreateProject(String projectFile, 

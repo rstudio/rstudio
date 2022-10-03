@@ -55,17 +55,26 @@
    return(editor)
 })
 
-.rs.addFunction("quarto.renderPreview", function(port) {
-   utils::download.file(paste0("http://localhost:", port, "/quarto-render/"),
-                        destfile = tempfile(),
-                        quiet = TRUE,
-                        cacheOK = FALSE)
+.rs.addFunction("quarto.renderPreview", function(port, token, path, format) {
+   .rs.tryCatch(utils::download.file(
+      paste0("http://localhost:", port, "/", token,
+            "/?path=", utils::URLencode(path, TRUE),
+            ifelse(nzchar(format), paste0("&format=", format), "")),
+      destfile = tempfile(),
+      quiet = TRUE,
+      cacheOK = FALSE
+   ))
 })
 
-.rs.addFunction("quarto.serveRender", function(port, path) {
-   utils::download.file(paste0("http://localhost:", port, "/90B3C9E8-0DBC-4BC0-B164-AA2D5C031B28/", path),
-                        destfile = tempfile(),
-                        quiet = TRUE,
-                        cacheOK = FALSE)
+
+.rs.addFunction("quarto.terminatePreview", function(port) {
+   token <- "4231F431-58D3-4320-9713-994558E4CC45"
+   .rs.tryCatch(utils::download.file(
+      paste0("http://localhost:", port, "/", token),
+      destfile = tempfile(),
+      quiet = TRUE,
+      cacheOK = FALSE
+   ))
 })
+
 

@@ -18,6 +18,9 @@ import com.google.gwt.user.client.Command;
 import com.google.inject.Inject;
 import com.google.inject.Provider;
 
+import java.util.ArrayList;
+import java.util.Arrays;
+
 import org.rstudio.core.client.BrowseCap;
 import org.rstudio.core.client.HtmlMessageListener;
 import org.rstudio.core.client.SingleShotTimer;
@@ -46,6 +49,7 @@ import org.rstudio.studio.client.common.zoom.ZoomUtils;
 import org.rstudio.studio.client.plumber.events.PlumberAPIStatusEvent;
 import org.rstudio.studio.client.plumber.model.PlumberAPIParams;
 import org.rstudio.studio.client.quarto.model.QuartoNavigate;
+import org.rstudio.studio.client.rmarkdown.RmdOutputDisplay;
 import org.rstudio.studio.client.rmarkdown.model.RmdPreviewParams;
 import org.rstudio.studio.client.server.ServerError;
 import org.rstudio.studio.client.server.VoidServerRequestCallback;
@@ -180,12 +184,17 @@ public class ViewerPresenter extends BasePresenter
       if (!event.isForStop())
          navigate(URIConstants.ABOUT_BLANK);
    }
+   
 
    @Override
    public void onViewerNavigate(ViewerNavigateEvent event)
    {
       if (event.getURL().length() > 0)
       {
+         // check for alternative viewer (e.g. a quarto preview of a docx file)
+         if (alternativeViewer(event))
+            return;
+          
          manageCommands(true, event);
 
          if (event.getBringToFront()) {
@@ -523,7 +532,7 @@ public class ViewerPresenter extends BasePresenter
    }
 
    private void navigateQuarto(String url, QuartoNavigate quartoNav)
-   {
+   { 
       if (Desktop.hasDesktopFrame())
          Desktop.getFrame().setViewerUrl(StringUtil.notNull(url));
       display_.previewQuarto(url, quartoNav);
@@ -588,6 +597,72 @@ public class ViewerPresenter extends BasePresenter
       else
          server_.viewerCurrent(new VoidServerRequestCallback());
    }
+   
+   private boolean alternativeViewer(ViewerNavigateEvent event)
+   {
+      QuartoNavigate quartoNav = event.getQuartoNavigate();
+      if (quartoNav == null)
+         return false;
+      
+      String sourceFile = quartoNav.getSourceFile();
+      String outputFile = quartoNav.getOutputFile();
+      if (StringUtil.isNullOrEmpty(sourceFile) || StringUtil.isNullOrEmpty(outputFile))
+         return false;
+      
+      String extension = FileSystemItem.getExtensionFromPath(outputFile).toLowerCase();
+      if (viewerCanPreview(extension))
+         return false;
+      
+      if (".docx".equals(extension) ||
+          ".rtf".equals(extension) ||
+          ".odt".equals(extension))
+      {
+         RmdOutputDisplay.displayWordDoc(sourceFile, outputFile);
+      }
+      else if ("pptx".equals(extension))
+      {
+         RmdOutputDisplay.displayPptDoc(sourceFile, outputFile);
+      }
+      else
+      {
+         RmdOutputDisplay.displayBinaryDoc(sourceFile, outputFile);
+      }
+      
+      return true;
+   }
+   
+   private boolean viewerCanPreview(String extension)
+   { 
+      ArrayList<String> previewable = new ArrayList<String>(Arrays.asList(
+        ".md",
+        ".markdown",
+        ".html",
+        ".htm",
+        ".txt",
+        ".tex",
+        ".adoc",
+        ".asciidoc",
+        ".pdf",
+        ".textile",
+        ".texinfo",
+        ".tei",
+        ".rst",
+        ".org",
+        ".opml",
+        ".muse",
+        ".ms",
+        ".native",
+        ".man",
+        ".docuwiki",
+        ".haddock",
+        ".icml",
+        ".jira",
+        ".mediawiki",
+        ".xwiki",
+        ".zim"
+      ));
+      return previewable.contains(extension);
+   };
 
    private void manageCommands(boolean enable)
    {

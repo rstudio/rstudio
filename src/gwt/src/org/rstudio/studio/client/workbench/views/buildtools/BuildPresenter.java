@@ -46,7 +46,6 @@ import org.rstudio.studio.client.quarto.QuartoHelper;
 import org.rstudio.studio.client.quarto.model.QuartoConfig;
 import org.rstudio.studio.client.server.ServerError;
 import org.rstudio.studio.client.server.ServerRequestCallback;
-import org.rstudio.studio.client.server.Void;
 import org.rstudio.studio.client.workbench.WorkbenchContext;
 import org.rstudio.studio.client.workbench.WorkbenchView;
 import org.rstudio.studio.client.workbench.commands.Commands;
@@ -259,10 +258,7 @@ public class BuildPresenter extends BasePresenter
       view_.addBuildRenderSubTypeHandler(event -> {
          startBuild("build-all", event.getSubType());
       });
-      
-      view_.addBuildServeSubTypeHandler(event -> {
-         quartoServe(event.getSubType(), false);
-      });
+  
    
 
       view_.stopButton().addClickHandler(new ClickHandler() {
@@ -329,12 +325,7 @@ public class BuildPresenter extends BasePresenter
          });
       }, () -> {}, constants_.buildText());
    }
-   
-   void onServeQuartoSite()
-   {
-      quartoServe("default", false);
-   }
-
+ 
    void onBuildSourcePackage()
    {
       startBuild("build-source-package");
@@ -400,7 +391,7 @@ public class BuildPresenter extends BasePresenter
          if (config.project_type.equals(SessionInfo.QUARTO_PROJECT_TYPE_BOOK))
          {
             if (shouldRenderAndServeBook(subType))
-               quartoServe(subType, true);
+               quartoServe(subType);
             else
                executeBuild("build-all", subType);
          }
@@ -410,7 +401,7 @@ public class BuildPresenter extends BasePresenter
          }
          else 
          {
-            quartoServe("default", true);
+            quartoServe("default");
          }
       }
       else
@@ -551,10 +542,15 @@ public class BuildPresenter extends BasePresenter
       return !config.project_dir.equals(workbenchContext_.getActiveProjectDir().getPath());
    }
    
-   private void quartoServe(String format, boolean render)
+   private void quartoServe(String format)
    {
       source_.withSaveFilesBeforeCommand(() -> {
-         server_.quartoServe(format, render, new SimpleRequestCallback<Void>(constants_.quartoServeError()));
+         server_.quartoPreview(
+            workbenchContext_.getActiveProjectDir().getPath(), 
+            format, 
+            null, 
+            new SimpleRequestCallback<Boolean>(constants_.quartoServeError())
+         );
       }, () -> {}, "Quarto");
    }
 

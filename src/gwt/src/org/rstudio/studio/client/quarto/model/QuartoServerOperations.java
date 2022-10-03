@@ -18,14 +18,10 @@ import org.rstudio.studio.client.common.console.ConsoleProcess;
 import org.rstudio.studio.client.common.presentation2.model.PresentationEditorLocation;
 import org.rstudio.studio.client.rsconnect.model.QmdPublishDetails;
 import org.rstudio.studio.client.server.ServerRequestCallback;
-import org.rstudio.studio.client.server.Void;
-
 
 public interface QuartoServerOperations 
 {
    void quartoCapabilities(ServerRequestCallback<QuartoCapabilities> requestCallback);
-   void quartoServe(String format, boolean render, ServerRequestCallback<Void> requestCallback);
-   void quartoServeRender(String file, ServerRequestCallback<Boolean> requestCallback);
    void quartoPreview(String file, 
                       String format, 
                       PresentationEditorLocation editorState,

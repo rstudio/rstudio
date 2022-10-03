@@ -75,14 +75,6 @@ core::json::Object quartoConfigJSON();
 
 core::json::Value quartoCapabilities();
 
-// see if quarto wants to handle the preview
-bool handleQuartoPreview(const core::FilePath& sourceFile,
-                         const core::FilePath& outputFile,
-                         const std::string& renderOutput,
-                         bool validateExtendedType);
-
-std::string quartoDefaultFormat(const core::FilePath& sourceFile);
-
 bool isFileInSessionQuartoProject(const core::FilePath& file);
 std::string urlPathForQuartoProjectOutputFile(const core::FilePath& outputFile);
 
