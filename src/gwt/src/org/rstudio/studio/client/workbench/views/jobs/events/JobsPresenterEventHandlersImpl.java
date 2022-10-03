@@ -193,6 +193,8 @@ public class JobsPresenterEventHandlersImpl implements JobsPresenterEventHandler
    private void selectJob(final String id, boolean animate, boolean isLauncherJob)
    {
       boolean bypassLauncherCall = (isLauncherJob && getSessionServer() != null);
+      
+      Job job = pJobManager_.get().getJob(id);
 
       server_.setJobListening(id, true, bypassLauncherCall, new ServerRequestCallback<JsArray<JobOutput>>()
       {
@@ -212,8 +214,7 @@ public class JobsPresenterEventHandlersImpl implements JobsPresenterEventHandler
          {
             // ignore failure to retreive status from quarto as it kills and
             // restarts preview jobs in quick succession
-            Job job = pJobManager_.get().getJob(id);
-            if (job != null && JsArrayUtil.jsArrayStringContains(job.tags,  "quarto"))
+            if (job == null || JsArrayUtil.jsArrayStringContains(job.tags,  "quarto"))
                return;
             
             // CONSIDER: this error is unlikely, but it'd be nicer to show the
