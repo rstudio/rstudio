@@ -122,7 +122,12 @@ void ClientEventQueue::add(const ClientEvent& event)
       else if (event.type() == client_events::kBuildOutput &&
                event.data().getType() == json::Type::OBJECT)
       {
-         buildOutput_.append(event.data().getObject()["output"].getString());
+         // read output -- don't log errors as this routine is called very frequently
+         // during build and we don't want to overload the logs
+         auto jsonData = event.data().getObject();
+         std::string output;
+         json::readObject(jsonData, "output", output);
+         buildOutput_.append(output);
       }
       else
       {
