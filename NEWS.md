@@ -3,7 +3,7 @@
 
 ### New
 
-* Splash screen on startup (#11604)
+* RStudio now displays a splash screen on startup, while the R session is being initialized. (#11604)
 
 ### R
 
