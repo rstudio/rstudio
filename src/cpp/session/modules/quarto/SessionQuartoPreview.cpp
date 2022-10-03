@@ -433,16 +433,31 @@ private:
 boost::shared_ptr<QuartoPreview> s_pPreview;
 
 // stop any running preview
-void stopPreview()
+bool stopPreview()
 {
    if (s_pPreview)
    {
       // stop the job if it's running
       if (s_pPreview->isRunning())
+      {
+         // cooperative termination
+         SEXP result;
+         r::sexp::Protect rProtect;
+         r::exec::RFunction(".rs.quarto.terminatePreview",
+            safe_convert::numberToString(s_pPreview->port())).call(&result, &rProtect);
+
+         // job manager termination
          s_pPreview->stop();
+      }
 
       // remove the job (will be replaced by a new quarto serve)
       s_pPreview->remove();
+
+      return true;
+   }
+   else
+   {
+      return false;
    }
 }
 

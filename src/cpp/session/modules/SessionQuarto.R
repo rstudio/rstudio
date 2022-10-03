@@ -62,8 +62,19 @@
             ifelse(nzchar(format), paste0("&format=", format), "")),
       destfile = tempfile(),
       quiet = TRUE,
-      cacheOK = FALSE)
-   )
+      cacheOK = FALSE
+   ))
+})
+
+
+.rs.addFunction("quarto.terminatePreview", function(port) {
+   token <- "4231F431-58D3-4320-9713-994558E4CC45"
+   .rs.tryCatch(utils::download.file(
+      paste0("http://localhost:", port, "/", token),
+      destfile = tempfile(),
+      quiet = TRUE,
+      cacheOK = FALSE
+   ))
 })
 
 
