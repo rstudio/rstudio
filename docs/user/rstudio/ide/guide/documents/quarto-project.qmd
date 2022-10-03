@@ -16,19 +16,19 @@ RStudio v2022.07.1 and beyond includes support for editing and preview of [Quart
 
 If you are using Quarto within RStudio it is **strongly** recommended that you use RStudio v2022.07.1 or a later version (the documentation below assumes you are using this build).
 
-### Installing Quarto
+## Installing Quarto
 
 A stable release of Quarto is bundled with RStudio v2022.07.1 and later. Upgrading to new versions of RStudio in the future will also upgrade the bundled Quarto version.
 
 To upgrade Quarto out of sync with the bundled RStudio version, follows the directions at <https://quarto.org/docs/download/>
 
-### Creating Documents
+## Creating Documents
 
 Use the **File** \> **New File** \> **Quarto Document** command to create new Quarto documents, which will launch the **New Quarto Document** wizard:
 
 ![](https://quarto.org/docs/tools/images/new-quarto-doc.png){fig-alt="The 'New Quarto Document' dialog menu in RStudio."}
 
-### Render and Preview
+## Render and Preview
 
 Use the **Render** button to preview documents as you edit them:
 
@@ -42,7 +42,35 @@ The preview will appear alongside the editor in the **Viewer** pane:
 
 The preview will update whenever document is re-rendered. Side-by-side preview works for both HTML and PDF output.
 
-### Quarto Background Job
+### Controlling output and preview
+
+RStudio provides a dropdown menu to control the format options, such as the display location of preview renders, visual content such as tables and graphics, and raw text output from code.
+
+![](images/quarto-preview-control.png){fig-alt="Screenshot of the 'Gear' menu dropdown for controlling format options of a Quarto document."}
+
+#### Control location of rendered preview
+
+Select one of the three following options:
+
+- **Preview in Window**, opening in the default browser
+- **Preview in Viewer Pane**, displaying the entire document preview in the **Viewer** Pane
+- **(No Preview)**, there will not be a preview displayed when rendering
+
+#### Control preview of markdown output
+
+Select or deselect one of the following options:
+
+- **Preview Images and Equations**
+- **Show Previews Inline**
+
+#### Control output of code chunks
+
+Turn the following features on or off:
+
+- **Chunk Output Inline**, code output including graphics, tables, and printed output will display inline in the source document
+- **Chunk Output in Console**, code output will display in the console, graphics and tables in the **Viewer** pane
+
+## Quarto Background Job
 
 Quarto documents rendered in RStudio with the **Render** button or the **Render on Save** option are rendered within a [Background Job](../tools/jobs.html) which maintains a background preview web server. This provides a fresh R session for the rendered document along with a consistent URL to access the preview content.
 
@@ -55,7 +83,7 @@ To access and control the Quarto render, navigate to the **Background Jobs** tab
 
 ![](images/quarto-job.png){fig-alt="A screenshot of the Background Jobs tab in RStudio, displaying the output of a Quarto render."}
 
-### Projects
+## Projects
 
 To create a new project for a Quarto document or set of documents:
 
