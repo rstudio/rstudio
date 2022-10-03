@@ -970,7 +970,8 @@ core::json::Value bookdownXRefIndex();
 core::FilePath bookdownCSL();
 
 core::FilePath extractOutputFileCreated(const core::FilePath& inputDir,
-                                        const std::string& output);
+                                        const std::string& output,
+                                        bool ignoreHugo = true);
 
 bool isPathViewAllowed(const core::FilePath& path);
 

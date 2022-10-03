@@ -202,7 +202,8 @@ void initWebsiteOutputDir()
 namespace module_context {
 
 FilePath extractOutputFileCreated(const FilePath& inputDir,
-                                  const std::string& output)
+                                  const std::string& output,
+                                  bool ignoreHugo)
 {
    // check each line of the emitted output; if it starts with a token
    // indicating rendering is complete, store the remainder of the emitted
@@ -233,6 +234,7 @@ FilePath extractOutputFileCreated(const FilePath& inputDir,
             // if it's a plain .md file and we are in a Hugo project then
             // don't preview it (as the user is likely running a Hugo preview)
             if (outputFile.getExtensionLowerCase() == ".md" &&
+                ignoreHugo &&
                 session::modules::rmarkdown::blogdown::isHugoProject())
             {
                return FilePath();

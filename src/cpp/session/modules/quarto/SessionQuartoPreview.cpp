@@ -222,14 +222,27 @@ private:
 
    virtual void onStdErr(const std::string& output)
    {
+      bool isServer =  session::options().programMode() == kSessionProgramModeServer;
+
       // accumulate output (used for error scanning)
       allOutput_ += output;
 
       // always be looking for an output file
       FilePath outputFile =
-         module_context::extractOutputFileCreated(previewDir(), output);
+         module_context::extractOutputFileCreated(previewDir(), output, false);
       if (!outputFile.isEmpty())
+      {
+         // capture output file
          outputFile_ = outputFile;
+
+         // if we are running on rstudio server and there is a control port then
+         // refresh the viewer manually (as whatever livereload scheme is in use
+         // won't work via direct port connection)
+         if (isServer && (controlPort() > 0))
+         {
+           refreshViewer();
+         }
+      }
 
       // always be looking for slide-level
       int slideLevel = quartoSlideLevelFromOutput(output);
@@ -264,7 +277,7 @@ private:
             activateConsole();
 
             // emit filtered output if we are on rstudio server and using the viewer
-            if (session::options().programMode() == kSessionProgramModeServer)
+            if (isServer)
             {
                QuartoJob::onStdErr(location.filteredOutput);
                QuartoJob::onStdErr("Browse at: " +
@@ -395,6 +408,20 @@ private:
          ClientEvent event = browseUrlEvent(url);
          module_context::enqueClientEvent(event);
       }
+   }
+
+   void refreshViewer()
+   {
+      module_context::scheduleDelayedWork(
+         boost::posix_time::milliseconds(1000),
+            []() {
+               json::Object data;
+               data["command"] = "viewerRefresh";
+               data["quiet"] = false;
+               ClientEvent event(client_events::kExecuteAppCommand, data);
+               module_context::enqueClientEvent(event);
+            },
+         false);
    }
 
    std::string rstudioServerPreviewWindowUrl()
