@@ -88,7 +88,7 @@ If you're modifying a theme which has already been added to RStudio, you may nee
 
 ## Sharing a Theme
 
-Once you're satisfied with your theme, you can easily share it with anyone by simply sharing the tmTheme or rstheme file. You can find rstheme files in `C:\\Users\\<your user account>\\Documents\\.R\\rstudio\\themes` on Windows and `~/.R/rstudio/themes` on linux and Mac.
+Once you're satisfied with your theme, you can easily share it with anyone by simply sharing the tmTheme or rstheme file. You can find rstheme files in `appdata/roaming/rstudio/themes` on Windows and `~/.config/rstudio/themes` on linux and Mac.
 
 ## Themes API
 
@@ -102,7 +102,7 @@ which, for the Modern theme and Xcode this function would return:
 
 `$editor[1] "Xcode"$global[1] "Modern"$dark[1] TRUE`
 
-This can be used to properly customize the output from your package to match the RStudio theme selected by each user.
+This can be used to properly customize the output from your package to match the RStudio theme selected by each user.
 
 To add a new rstheme, use:
 
