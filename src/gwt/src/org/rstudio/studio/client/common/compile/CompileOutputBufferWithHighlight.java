@@ -16,7 +16,6 @@
 
 package org.rstudio.studio.client.common.compile;
 
-import org.rstudio.core.client.Debug;
 import org.rstudio.core.client.StringUtil;
 import org.rstudio.core.client.VirtualConsole;
 import org.rstudio.core.client.dom.DomUtils;
@@ -32,6 +31,7 @@ import com.google.gwt.user.client.ui.Composite;
 public class CompileOutputBufferWithHighlight extends Composite 
                                 implements CompileOutputDisplay
 {
+   public static enum PanelState { OK, OVERLOADED };
    public static enum OutputType { Command, Output, Error };
    
    public CompileOutputBufferWithHighlight()
@@ -81,6 +81,7 @@ public class CompileOutputBufferWithHighlight extends Composite
    public void clear()
    {
       console_.clear();
+      state_ = PanelState.OK;
       totalSubmittedLines_ = 0;
       numDisplayedLines_ = 0;
       output_.setText("");
@@ -89,6 +90,7 @@ public class CompileOutputBufferWithHighlight extends Composite
    @Override
    public void onCompileCompleted()
    {
+      state_ = PanelState.OK;
       if (savedOutput_.isEmpty())
          return;
       
@@ -104,30 +106,39 @@ public class CompileOutputBufferWithHighlight extends Composite
    
    private void write(String output, OutputType outputType, String className)
    {
-      if (totalSubmittedLines_ > MAX_LINES_DISABLE && outputType == OutputType.Output)
+      switch (state_)
+      {
+      
+      case OK:
+      {
+         console_.submit(output, className);
+         int numNewlines = StringUtil.newlineCount(output);
+         totalSubmittedLines_ += numNewlines;
+         numDisplayedLines_ += numNewlines;
+
+         if (numDisplayedLines_ > MAX_LINES_DISPLAY)
+         {
+            DomUtils.trimLines(output_.getElement(), numDisplayedLines_ - MAX_LINES_DISPLAY);
+            numDisplayedLines_ = MAX_LINES_DISPLAY;
+         }
+
+         if (totalSubmittedLines_ > MAX_LINES_OVERLOAD)
+         {
+            state_ = PanelState.OVERLOADED;
+            console_.submit("\n\n[Detected output overflow; truncating build output]\n\n", className);
+         }
+
+         scrollPanel_.onContentSizeChanged();
+         return;
+      }
+         
+      case OVERLOADED:
       {
          savedOutput_ += output;
          return;
       }
       
-      console_.submit(output, className);
-      
-      int numNewlines = StringUtil.newlineCount(output);
-      totalSubmittedLines_ += numNewlines;
-      numDisplayedLines_ += numNewlines;
-      
-      if (numDisplayedLines_ > MAX_LINES_SHOWN)
-      {
-         DomUtils.trimLines(output_.getElement(), numDisplayedLines_ - MAX_LINES_SHOWN);
-         numDisplayedLines_ = MAX_LINES_SHOWN;
       }
-      
-      if (totalSubmittedLines_ > MAX_LINES_DISABLE)
-      {
-         console_.submit("\n[Detected output overflow; truncating build output]\n", className);
-      }
-      
-      scrollPanel_.onContentSizeChanged();
    }
    
    private String getErrorClass()
@@ -139,12 +150,13 @@ public class CompileOutputBufferWithHighlight extends Composite
  
    PreWidget output_;
    VirtualConsole console_;
+   PanelState state_ = PanelState.OK;
    private int numDisplayedLines_;
    private int totalSubmittedLines_;
    private String savedOutput_;
    private BottomScrollPanel scrollPanel_;
    private ConsoleResources.ConsoleStyles styles_;
    
-   private static final int MAX_LINES_SHOWN = 1000;
-   private static final int MAX_LINES_DISABLE = 10000;
+   private static final int MAX_LINES_DISPLAY = 500;
+   private static final int MAX_LINES_OVERLOAD = 5000;
 }
