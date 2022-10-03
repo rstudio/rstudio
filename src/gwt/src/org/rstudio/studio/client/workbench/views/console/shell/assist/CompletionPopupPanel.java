@@ -338,7 +338,7 @@ public class CompletionPopupPanel extends ThemedPopupPanel
       int top = getAbsoluteTop();
       int left = getAbsoluteLeft();
       int bottom = top + getOffsetHeight() + 9;
-      int width = getOffsetWidth();
+      int width = getWidget().getOffsetWidth();
 
       if (!help_.isShowing())
          help_.show();
