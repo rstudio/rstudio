@@ -71,7 +71,7 @@ The Excel importer provides support to:
 
 -   Select NA identifiers
 
-For example, the **Import Excel Data** wizard can import an xls file from the `readxl` R package by pasting this url <https://github.com/tidyverse/readxl/blob/main/inst/extdata/deaths.xlsx?raw=true> and pressing **Update**.
+For example, the **Import Excel Data** wizard can import an xls file from the `readxl` R package by pasting this url: <https://github.com/tidyverse/readxl/blob/main/inst/extdata/deaths.xlsx?raw=true> and pressing **Update**.
 
 ::: {.callout-tip}
 This file contains text at the top of the file and therefore, requires the first few rows to be removed, which can be accomplished by changing `Skip: 4` and pressing **Update**.

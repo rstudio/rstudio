@@ -8,7 +8,11 @@ An addin can be as simple as a function that inserts a commonly used snippet of 
 
 ## Using Addins
 
-The following documentation covers: - Basics of installing addins - Binding keyboard shorcuts to them - Developing new addins
+The following documentation covers:  
+
+- Basics of installing addins  
+- Binding keyboard shortcuts to them  
+- Developing new addins  
 
 ## Installation
 
@@ -72,7 +76,7 @@ install.packages("rstudioapi")
 For addins in particular, a number of methods were added that allow R code to introspect and mutate the contents of a document open in RStudio. These methods are outlined below briefly, but see documentation within the [rstudioapi](https://rstudio.github.io/rstudioapi/) package for more details.
 
 |                                         |                                                                                              |
-|-----------------------------------------|----------------------------------------------------------------------------------------------|
+|----------------------|--------------------------------------------------|
 | `getActiveDocumentContext()`            | Returns information about the currently active RStudio document. See below for more details. |
 | `insertText(location, text, id = NULL)` | Insert text at a specific location within a document.                                        |
 | `setDocumentContext(text, id = NULL)`   | Set the contents of a document open in RStudio.                                              |
@@ -177,7 +181,7 @@ server <- function(input, output, session) {
   # button.
   observeEvent(input$done, {
     
-    # Here is where your Shiny application might now go an affect the
+    # Here is where your Shiny application might now go and affect the
     # contents of a document open in RStudio, using the `rstudioapi` package.
     #
     # At the end, your application should call 'stopApp()' here, to ensure that

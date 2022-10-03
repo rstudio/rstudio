@@ -6,13 +6,13 @@ R packages are an ideal way to package and distribute R code and data for re-use
 
 -   Build pane with package development commands and a view of build output and errors
 
--   Build and Reload command that rebuilds the package and reloads it in a fresh R session
+-   Build and Reload command that rebuilds the package and reloads it in a fresh R session.
 
 -   R documentation tools including previewing, spell-checking, and [Roxygen](https://roxygen2.r-lib.org/) aware editing.
 
--   Integration with [devtools](https://github.com/r-lib/devtools) package development functions
+-   Integration with [devtools](https://devtools.r-lib.org/) package development functions.
 
--   Support for [Rcpp](http://dirk.eddelbuettel.com/code/rcpp.html) including syntax highlighting for C/C++ and gcc error navigation
+-   Support for [Rcpp](http://dirk.eddelbuettel.com/code/rcpp.html) including syntax highlighting for C/C++ and gcc error navigation.
 
 ## Getting Started
 
@@ -40,7 +40,7 @@ If you aren't already familiar with the basics of R package development, the fol
 
 -   [Writing R Extensions](https://rstudio.github.io/r-manuals/)
 
--   [R Packages (Hadley Wickham)](http://r-pkgs.had.co.nz/)
+-   [R Packages (Hadley Wickham)](https://r-pkgs.org/)
 
 ### Software Prerequisites
 
@@ -56,7 +56,7 @@ To easily build and document robust R packages, you will also need the following
 install.packages(c("devtools", "roxygen2", "testthat", "knitr"))
 ```
 
-If you don't already have these tools installed on your system please consult the article on [Package Development Prerequisites](https://support.rstudio.com/hc/en-us/articles/200486498-Package-Development-Prerequisites) for additional details on how to install these dependencies.
+If you don't already have these tools installed on your system please consult the "R Packages" chapter on [R build toolchain](https://r-pkgs.org/Setup.html#setup-tools) for additional details on how to install these dependencies.
 
 ### Creating a New Package
 
@@ -80,11 +80,11 @@ To enable RStudio's package development tools for an existing package do the fol
 
 ## Building a Package
 
-To work with packages in RStudio you use the **Build** pane, which includes a variety of tools for building and testing packages. While iteratively developing a package in RStudio, you typically use the **Build and Reload** command to re-build the package and reload it in a fresh R session:
+To work with packages in RStudio you use the **Build** pane, which includes a variety of tools for building and testing packages. While iteratively developing a package in RStudio, you typically use the **Install** > **Clean and Install** command or call **Clean and Install** from the Command Palette to re-build the package and reload it in a fresh R session:
 
-![](images/build-reload-pkg.png){fig-alt="The build pane in RStudio, showing the output of a 'Build package' command."}
+![](images/build-reload-pkg.png){fig-alt="The build pane in RStudio, showing the output of a 'Clean and Install' command."}
 
-The Build and Reload command performs several steps in sequence to ensure a clean and correct result:
+The **Clean and Install** command performs several steps in sequence to ensure a clean and correct result:
 
 1.  Unloads any existing version of the package (including shared libraries if necessary).
 
@@ -94,7 +94,7 @@ The Build and Reload command performs several steps in sequence to ensure a clea
 
 4.  Reloads the package in the new R session by executing the `library` function.
 
-You can also execute **Build and Reload** using a keyboard shortcut <kbd>Ctrl+Shift+B</kbd> as well as configure RStudio to automatically save open source files prior to rebuiling.
+You can also execute **Clean and Install** using the the Command Palette <kbd>Ctrl+Shift+P</kbd> (<kbd>Cmd+Shift+P</kbd> on Mac) or configure RStudio to automatically save open source files prior to rebuilding from the **Tools** > **Global Options** > **Packages** tab > **Development** tab > **Save all files prior to building packages** option.
 
 ## Learning More
 

@@ -20,7 +20,7 @@ If you are using Quarto within RStudio it is **strongly** recommended that you u
 
 A stable release of Quarto is bundled with RStudio v2022.07.1 and later. Upgrading to new versions of RStudio in the future will also upgrade the bundled Quarto version.
 
-To upgrade Quarto out of sync with the bundled RStudio version, follows the directions at <https://quarto.org/docs/download/>
+To upgrade Quarto out of sync with the bundled version in RStudio, follow the directions at <https://quarto.org/docs/download/>
 
 ## Creating Documents
 

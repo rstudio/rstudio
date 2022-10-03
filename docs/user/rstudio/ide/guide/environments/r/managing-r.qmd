@@ -2,14 +2,14 @@
 title: "R Startup"
 ---
 
-Upon startup, R and RStudio look for a few different files used to control the behavior of the R session, for example by setting options or environment variables. In the context of RStudio Team, these settings are often used to set RStudio Workbench (previously RStudio Server Pro) to search for packages in an RStudio Package Manager repository.
+Upon startup, R and RStudio look for a few different files used to control the behavior of the R session, for example by setting options or environment variables. In the context of Posit Team, these settings are often used to set RStudio Workbench (previously RStudio Server Pro) to search for packages in an Posit Package Manager repository.
 
 This article is a practical guide to how to set particular options on R startup. General information on how to manage R package environments is available at [environments.rstudio.com](https://environments.rstudio.com/), and a deeper treatment of R process startup is available in [this article](https://rviews.rstudio.com/2017/04/19/r-for-enterprise-understanding-r-s-startup/) or [What They Forgot to Teach You About R](https://rstats.wtf/r-startup.html).
 
 Here is a summary table of how to control R options and environment variables on startup. More details are below.
 
 | File            | Who Controls  | Level           | Limitations                                    |
-|-----------------|---------------|-----------------|------------------------------------------------|
+|--------------|--------------|--------------|-------------------------------|
 | `.Renviron`     | User or Admin | User or Project | Set environment variables only.                |
 | `.Rprofile`     | User or Admin | User or Project | None, sourced as R code.                       |
 | `Rprofile.site` | Admin         | Version of R    | None, sourced as R code.                       |
@@ -65,4 +65,4 @@ These files are set for each version of R and should be located in `R_HOME/etc/`
 
 ## `rsession.conf` and `repos.conf`
 
-Posit Workbench and RStudio Server allows server admins to configure particular server-wide R package repositories via the `rsession.conf` and `repos.conf` files. Only one repository can be configured in `rsession.conf`. If multiple repositories are needed, `repos.conf` should be used. Details on configuring Posit Workbench and RStudio Server with these files are in this [support article](https://support.rstudio.com/hc/en-us/articles/360009863114).
+Posit Workbench and RStudio Server allow server admins to configure particular server-wide R package repositories via the `rsession.conf` and `repos.conf` files. Only one repository can be configured in `rsession.conf`. If multiple repositories are needed, `repos.conf` should be used. Details on configuring Posit Workbench and RStudio Server with these files are in this [support article](https://support.rstudio.com/hc/en-us/articles/360009863114).
