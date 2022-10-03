@@ -91,6 +91,14 @@ public:
       return port_;
    }
 
+   int controlPort()
+   {
+      if (controlPort_ > 0)
+         return controlPort_;
+      else
+         return port();
+   }
+
    std::string jobId()
    {
       return pJob_->id();
@@ -113,11 +121,15 @@ public:
       // re-read input file
       readInputFileLines();
 
+      // provide format default
+      if (format.empty())
+         format = "default";
+
       // render
       SEXP result;
       r::sexp::Protect rProtect;
       Error error = r::exec::RFunction(".rs.quarto.renderPreview",
-         safe_convert::numberToString(port()),
+         safe_convert::numberToString(controlPort()),
          renderToken_,
          previewTarget().getAbsolutePath(),
          format).call(&result, &rProtect);
@@ -133,7 +145,8 @@ public:
 
 protected:
    explicit QuartoPreview(const FilePath& previewFile, const std::string& format, const json::Value& editorState)
-      : QuartoJob(), previewTarget_(previewFile), format_(format), editorState_(editorState), slideLevel_(-1), port_(0), viewerType_(prefs::userPrefs().rmdViewerType())
+      : QuartoJob(), previewTarget_(previewFile), format_(format), editorState_(editorState),
+                     slideLevel_(-1), port_(0), controlPort_(0), viewerType_(prefs::userPrefs().rmdViewerType())
    {
      renderToken_ = core::system::generateUuid();
 
@@ -152,6 +165,7 @@ protected:
       if (!previewTarget_.isDirectory())
       {
          args.push_back(string_utils::utf8ToSystem(previewTarget_.getFilename()));
+
          args.push_back("--to");
          args.push_back(!format_.empty() ? format_ : "default");
       }
@@ -222,6 +236,13 @@ private:
       if (slideLevel != -1)
       {
          slideLevel_ = slideLevel;
+      }
+
+      // always be looking for the control port
+      int cPort = quartoControlPortFromOutput(output);
+      if (cPort != -1)
+      {
+         controlPort_ = cPort;
       }
 
       // detect browse directive
@@ -415,6 +436,20 @@ private:
       }
    }
 
+   int quartoControlPortFromOutput(const std::string& output)
+   {
+      boost::regex controlPortRe("Preview service running \\((\\d+)\\)");
+      boost::smatch match;
+      if (regex_utils::search(output, match, controlPortRe))
+      {
+         return safe_convert::stringTo<int>(match[1], -1);
+      }
+      else
+      {
+         return -1;
+      }
+   }
+
 private:
    FilePath previewTarget_;
    std::vector<std::string> previewFileLines_;
@@ -425,6 +460,7 @@ private:
    json::Value editorState_;
    int slideLevel_;
    int port_;
+   int controlPort_;
    std::string path_;
    std::string viewerType_;
 };
@@ -444,7 +480,7 @@ bool stopPreview()
          SEXP result;
          r::sexp::Protect rProtect;
          r::exec::RFunction(".rs.quarto.terminatePreview",
-            safe_convert::numberToString(s_pPreview->port())).call(&result, &rProtect);
+            safe_convert::numberToString(s_pPreview->controlPort())).call(&result, &rProtect);
 
          // job manager termination
          s_pPreview->stop();
