@@ -74,7 +74,7 @@ public abstract class Hyperlink implements HelpPageShower
                 // cancel previous timer
                 timer_.cancel();
 
-                // the link was just hovered: settting cancelPopup_ to false
+                // the link was just hovered: setting cancelPopup_ to false
                 // to signal that the popup should be shown
                 cancelPopup_ = false;
 
