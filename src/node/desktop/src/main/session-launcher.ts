@@ -233,7 +233,10 @@ export class SessionLauncher {
     // show the window (but don't if we are doing a --run-diagnostics)
     if (!appState().runDiagnostics) {
       finalPlatformInitialize(this.mainWindow);
-      this.mainWindow.window.once('ready-to-show', () => {
+      this.mainWindow.window.once('ready-to-show', async () => {
+        if (appState().startupDelayMs > 0) {
+          await setTimeoutPromise(appState().startupDelayMs);
+        }
         this.showSplash = false;
         this.mainWindow?.window.show();
         this.splash.close();

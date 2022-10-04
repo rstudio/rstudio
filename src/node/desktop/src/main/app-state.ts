@@ -39,6 +39,7 @@ export interface AppState {
   scratchTempDir(defaultPath: FilePath): FilePath;
   sessionStartDelaySeconds: number;
   sessionEarlyExitCode: number;
+  startupDelayMs: number;
   prepareForWindow(pendingWindow: PendingWindow): void;
   windowOpening():
     | { action: 'deny' }

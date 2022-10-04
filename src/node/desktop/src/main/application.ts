@@ -46,7 +46,6 @@ import {
 import { WindowTracker } from './window-tracker';
 import { configureSatelliteWindow, configureSecondaryWindow } from './window-utils';
 import { Client, Server } from 'net-ipc';
-import { setTimeoutPromise } from '../core/wait-utils';
 
 /**
  * The RStudio application
@@ -61,7 +60,7 @@ export class Application implements AppState {
   gwtCallback?: GwtCallback;
   sessionStartDelaySeconds = 0;
   sessionEarlyExitCode = 0;
-  startupDelay = 0;
+  startupDelayMs = 0;
   pendingWindows = new Array<PendingWindow>();
   server?: Server;
   client?: Client;
@@ -292,10 +291,6 @@ export class Application implements AppState {
     initializeLang();
 
     this.argsManager.handleAppReadyCommands(this);
-
-    if (this.startupDelay) {
-      await setTimeoutPromise(this.startupDelay * 1000);
-    }
 
     // on Windows, ask the user what version of R they'd like to use
     let rPath = '';
