@@ -25,11 +25,11 @@ Other useful snippets include:
 
 Snippets are a great way to automate inserting common/boilerplate code and are available for R, C/C++, Python, JavaScript, and several other languages.
 
-## Inserting Snippets
+## Inserting snippets
 
 As illustrated above, code snippets show up alongside other code completion results and can be inserted by picking them from the completion list. By default the completion list will show up automatically when you pause typing for >= 250 milliseconds and can also be manually activated via the **Tab** key. In addition, if you have typed the character sequence for a snippet and want to insert it immediately (without going through the completion list) you can press **Shift+Tab**.
 
-### Markdown Snippets
+### Markdown snippets
 
 For markdown snippets within R Markdown or Quarto documents using the <kbd>Shift+Tab</kbd> sequence is always required as there is no standard tab completion available within the markdown editing mode.
 
@@ -45,7 +45,7 @@ snippet callout
 ```
 
 
-## Customizing Snippets
+## Customizing snippets
 
 Users can edit the built-in snippet definitions and even add snippets of your their via the **Edit Snippets** button in **Global Options** -\> **Code**:
 
@@ -62,7 +62,7 @@ snippet sm
 
 Because `$` is used as a special character to denote where the cursor should jump after completing each section of a snippet, in order to insert a literal `$` it must be escaped as `\$`.
 
-### Including R Code
+### Including R code
 
 R code can also be executed in a custom snippet. Use `` `r ` `` anywhere in the snippet; the R code will be executed when the snippet is expanded, and the result inserted into the document.
 
@@ -74,25 +74,25 @@ snippet time
 
 ```
 
-## Saving and Sharing Snippets**
+## Saving and sharing snippets
 
 Customized snippets for a given language are written into the `~/.R/snippets` directory. For example, the customized versions of R and C/C++ snippets are written to:
 
-### RStudio 1.2 and Prior
+### RStudio 1.2 and prior
 
 ``` bash
 ~/.R/snippets/r.snippets
 ~/.R/snippets/c_cpp.snippets
 ```
 
-### RStudio 1.3 and Later (Windows)
+### RStudio 1.3 and later (Windows)
 
 ``` bash
 %appdata%/Roaming/RStudio/snippets/r.snippets
 %appdata%/Roaming/RStudio/snippets/c_cpp.snippets
 ```
 
-### RStudio 1.3 and Later (macOS/Linux)
+### RStudio 1.3 and later (macOS/Linux)
 
 ``` bash
 ~/.config/rstudio/snippets/r.snippets

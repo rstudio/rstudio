@@ -16,7 +16,7 @@ RStudio supports the following open source version control systems:
 
 To use version control with RStudio, first ensure that Git and/or Subversion tools are installed on your workstation (details below).
 
-Version control is most useful when used with a remote repository. Remote repositories are typically managed by your company or are hosted in the cloud (e.g. [Github](https://github.com/) or [GitLab](https://about.gitlab.com/)). Make sure you have credentials to access these systems. If you only want to learn how to use version control, you can manage a standalone system on your workstation but you will not be able to share code with others.
+Version control is most useful when used with a remote repository. Remote repositories are typically managed by your company or are hosted in the cloud (e.g., [Github](https://github.com/) or [GitLab](https://about.gitlab.com/)). Make sure you have credentials to access these systems. If you only want to learn how to use version control, you can manage a standalone system on your workstation but you will not be able to share code with others.
 
 You should also become familiar with using [RStudio Projects](../authoring/projects.html) (which are required for version control features to be enabled).
 
@@ -56,11 +56,11 @@ An excellent resource for learning more about Subversion and how to use it is th
 
 Once a Version Control system has been installed, it needs to be activated on the system by following these steps:
 
-1.  Go to **Global Options** (from the Tools menu)
+1.  From the **Tools** menu, click **Global Options**
 
-2.  Press **Git/SVN**
+2.  Click on the **Git/SVN** tab
 
-3.  Press **Enable version control interface for RStudio projects**
+3.  Click **Enable version control interface for RStudio projects**
 
 4.  If necessary, enter the path for the Git or SVN executable where provided. A RSA key can be created or added for SSH if necessary.
 
@@ -88,9 +88,9 @@ The **Git tab** within the **Environment pane** provides a number of useful comm
 
 ![](images/git-tab.png){fig-alt="A screenshot of the Git tab in RStudio, showing a few files that can be added to staging."}
 
-Once you are finished with your local work and are ready to Commit your changes, selecting **Commit** in either the **Git dropdown menu** or **Git tab** opens the **Review Changes popup** to select files for staging, add a commit message, and eventually push the commit.
+Once you are finished with your local work and are ready to Commit your changes, selecting **Commit** in either the **Git** drop-down menu** or **Git** tab opens the **Review Changes** pop-up to select files for staging, add a commit message, and eventually push the commit.
 
-![](images/git-commit-pane.png){fig-alt="A screenshot of the Review Changes popup, indicating the files for staging and the ability to commit, push and pull changes."}
+![](images/git-commit-pane.png){fig-alt="A screenshot of the Review Changes pop-up, indicating the files for staging and the ability to commit, push and pull changes."}
 
 ## Using version control
 

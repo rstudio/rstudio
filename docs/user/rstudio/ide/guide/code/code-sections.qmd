@@ -4,7 +4,7 @@ title: "Code Sections"
 
 Code sections provide structure for both navigation and folding of long functions or other code control flow.
 
-## Code Folding
+## Code folding
 
 The **Source** pane in RStudio supports both automatic and user-defined folding for regions of code. Code folding provides the ability to easily show and hide blocks of code to make it easier to navigate source files and focus on the coding task at hand. For example, in the following source file the body of the `rescale01` has been folded, indicated by the gutter arrow pointing to the right, instead of the down or up:
 
@@ -15,7 +15,7 @@ To expand the folded region:
 - Click the icon that overlays the folded code _or_
 - Use the keyboard shortcut <kbd>Ctrl+Alt+Shift+L</kbd>.
 
-## Foldable Regions
+## Foldable regions
 
 The following types of code regions are automatically foldable within RStudio:
 
@@ -39,7 +39,7 @@ Arbitrary selections of code can be folded by using **Edit \> Folding \> Collaps
 
 Folded regions are preserved while editing a document; however all foldable regions are shown expanded by default when a file is closed and re-opened.
 
-### Computational Documents
+### Computational documents
 
 In Quarto and R Markdown documents, the following sections can also be collapsed separately:
 
@@ -49,7 +49,7 @@ In Quarto and R Markdown documents, the following sections can also be collapsed
 
 ![](images/quarto-folding.png){fig-alt=""}
 
-## Code Sections
+## Code sections
 
 Code sections allow breaking a larger source file into a set of discrete regions for easy navigation between them. Code sections are automatically foldable.
 
@@ -70,7 +70,7 @@ To insert a new code section use the **Code** -\> **Insert Section** command. Al
 
 ::: {callout-tip}
 
-## Code Section Levels
+## Code section levels
 
 As illustrated above, the line can start with any number of pound signs (#) so long as it ends with a space followed by four or more `-`, `=`, or `#` characters.
 
@@ -84,14 +84,14 @@ Code sections can also be navigated with the **Document Outline** on the **Sourc
 
 ![](images/plot-examples-outline.png){fig-alt = "A screenshot of a .R file with code sections that can be navigated via the Document Outline"}
 
-### Computational Documents
+### Computational documents
 
 In Quarto and R Markdown documents, headings/subheadings and labeled code chunks are automatically added to the document **Outline** and **Jump To** menus:
 
 ![](images/quarto-sections.png){fig-alt="A screenshot of a Quarto document with the Outline and Jump To menus expanded for navigating the document headings and code chunks."}
 
 
-## Menu Commands and Shortcuts
+## Menu commands and shortcuts
 
 The following menu commands and shortcuts are available for working with folded regions and code sections:
 

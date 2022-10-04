@@ -2,24 +2,24 @@
 title: "Connection Snippets"
 ---
 
-RStudio connections can be extended through:
+RStudio connections can be extended through two methods:
 
-1.  **Snippet Files** on a server-based version of RStudio that provide support for new connections using R templates that enable users and system administrators to list and create new connections.
+-  **Snippet Files** on a server-based version of RStudio that provide support for new connections using R templates that enable users and system administrators to list and create new connections.
 
-2.  **Packages** that do one or more of the following:
+-  **Packages** that do one or more of the following:
 
     -   Implement the [Connections Contract](connection-contracts.html) to manage and explore data in the **Connections** Pane and/or
 
     -   Supply Snippet Files or a Shiny Application to extend the **New Connection** dialog.
 
-## Snippet Files
+## Snippet files
 
-A Connection Snippet File is an R code snippet with additional metadata which is intended to initialize a connection. This file can be as simple as:
+A Connection snippet file is an R code snippet with additional metadata which is intended to initialize a connection. This file can be as simple as:
 
     library(readr)
     data <- read_csv(readr_example("mtcars.csv"))
 
-This snippet can be saved on a server-based version of RStudio under `/etc/rstudio/connections/`. Once that file is created and RStudio is restarted, RStudio will make this connection available as "Motor Trend Cars" underneath **Connect to Existing Data Sources**:
+This snippet can be saved on a server-based version of RStudio under `/etc/rstudio/connections/`. Once that file is created and RStudio is restarted, RStudio will make this connection available as *Motor Trend Cars* underneath **Connect to Existing Data Sources**:
 
 ::: {layout-ncol="2"}
 ![](images/motortrend-connection.png){fig-alt="A screenshot of the New Connection wizard displaying the example \"Motor Trends Cars\" existing data source"}
@@ -61,7 +61,7 @@ In order to create a `;` separated list of values, use the syntax `${Position:La
 
 There are several escape characters supported: `$colon$` to escape `:` and `$equal` to escape `=`.
 
-## R Packages
+## R packages
 
 R packages provide the **New Connection** integration to both server and desktop based versions of RStudio.
 
@@ -77,7 +77,7 @@ As a quick start, the [Rstudio Connections Example](https://github.com/rstudio/r
 
 ### Connections contract
 
-You can integrate with RStudio's Connection Pane to allow users to explore connections created with your R package by using the [Connections Contract](connection-contracts.html).
+You can integrate with RStudio's **Connections** pane to allow users to explore connections created with your R package by using the [Connections Contract](connection-contracts.html).
 
 ### Snippet files
 

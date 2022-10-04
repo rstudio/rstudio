@@ -12,11 +12,12 @@ The data import features can be accessed from the **Environment pane** or from t
 - Excel data 
 - Statistical data 
 
-To access this feature, use the **Import Dataset** dropdown from the **Environment** pane:
+To access this feature, do one of the following:  
+
+- Through the RStudio menu: **File** \> **Import Dataset**
+- From the **Environment** pane use the **Import Dataset** dropdown menu:
 
 ![](images/import-dataset.png){fig-alt="A screenshot of the Import Dataset dropdown."}
-
-Or through the RStudio menu: **File** \> **Import Dataset**
 
 ## Importing data from Text and CSV files
 
@@ -79,7 +80,7 @@ This file contains text at the top of the file and therefore, requires the first
 
 ![](images/import-excel.png){fig-alt="A screenshot of the Import Excel Data popup wizard."}
 
-The final step is to press **Import** to execute the code under "Code Preview" and import the data into RStudio.
+The final step is to press **Import** to execute the code under **Code Preview** and import the data into RStudio.
 
 ## Importing data from SPSS, SAS and Stata files
 
@@ -91,4 +92,4 @@ The SPSS, SAS and Stata importer provides support to:
 
 -   Specify a model file
 
-An example `.sav` file is available at: <https://github.com/rstudio/webinars/raw/master/23-Importing-Data-into-R/data/Child_Data.sav>. Paste that url under "File/Url" and press **Update** and then press **Import**.
+An example `.sav` file is available at: <https://github.com/rstudio/webinars/raw/master/23-Importing-Data-into-R/data/Child_Data.sav>. Paste that URL under **File/Url**, press **Update** and then press **Import**.

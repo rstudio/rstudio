@@ -1,12 +1,12 @@
 ---
-title: "R Package Repos"
+title: "R Package Repositories"
 ---
 
 R packages allow the R community to extend the base functionality provided in R with a rich set of packages available in package repositories.
 
 CRAN, The Comprehensive R Archive Network, is the primary package repository in the R community. CRAN is a network of ftp and web servers around the world that store identical, up-to-date, versions of code and documentation for R.
 
-## Primary Repos
+## Primary repository
 
 RStudio uses the RStudio CRAN mirror ([https://cran.rstudio.com](https://cran.rstudio.com/)) by default. This mirror is globally distributed using Amazon S3 storage so should provide good performance for all locales. If needed, override the default CRAN mirror from the **Tools** menu > **Global Options** > **Packages**:
 
@@ -18,15 +18,15 @@ Then, changing the "Primary CRAN repo" to a custom CRAN mirror or a custom packa
 
 For even easier way to organize and centralize packages across your team, department, or entire organization, you can configure RStudio with [Posit Package Manager](https://www.posit.co/products/package-manager/) or Posit's [free Public Package Manager](https://packagemanager.posit.co/client/#/repos/1/overview).
 
-## Secondary Repos
+## Secondary repositories
 
-While specifying the primary CRAN repo is sufficient in most cases, RStudio also allows choosing secondary package management repos. This allows you to choose additional package repos that can be made available in your organization with solutions like [Posit Package Manager](https://www.posit.co/products/package-manager/), [drat](https://cran.r-project.org/package=drat), [minicran](https://cran.r-project.org/package=miniCRAN), or [r-universe](https://ropensci.r-universe.dev/ui#packages). 
+While specifying the primary CRAN repo is sufficient in most cases, RStudio also allows specifying a secondary package management repository. This allows you to choose additional package repositories that can be made available in your organization with solutions like [Posit Package Manager](https://www.posit.co/products/package-manager/), [drat](https://cran.r-project.org/package=drat), [minicran](https://cran.r-project.org/package=miniCRAN), or [r-universe](https://ropensci.r-universe.dev/ui#packages). 
 
-For instance, the [R Open Sci](https://ropensci.org/) project maintains a r-universe repo under <https://ropensci.r-universe.dev/> that could be easily added as a secondary repo from RStudio. Secondary repos can be named and added using **Tools** > **Global Options** > **Packages** > **Add** then adding a named repo entry in the **Add Secondary Repository** popup as follows: 
+For instance, the [rOpenSci](https://ropensci.org/) project maintains a r-universe repository under <https://ropensci.r-universe.dev/> that could be easily added as a secondary repo from RStudio. Secondary repositories can be named and added using **Tools** > **Global Options** > **Packages** > **Add** then adding a named repository entry in the **Add Secondary Repository** popup as follows: 
 
 ![](images/ropensci-secondary.png){fig-alt="The Add Secondary Repository popup, showing adding ropensci from r-universe."}
 
-When you press ok, RStudio will validate that the URL is hosting a valid CRAN-like repository. If it doesn't adhere to the correct directory structure, it will throw an error: 
+When you press ok, RStudio will validate that the URL is hosting a valid CRAN-like repository. If it doesn't adhere to the correct directory structure, it will return an error: 
 
 > The given URL does not appear to be a valid CRAN repository
 
@@ -38,7 +38,7 @@ Some package management solutions can also suggest package repos which, if avail
 
 ::: {.callout-tip}
 
-Notice that the secondary repos order is important since packages will be searched in priority. The order of the repos can be changed by moving up/down their priority (see also the [repos options](https://stat.ethz.ch/R-manual/R-devel/library/base/html/options.html) for additional information on this topic):
+Notice that the secondary repository's order is important since packages will be searched in priority. The order of the repositories can be changed by moving up/down their priority (see also the [repository options](https://stat.ethz.ch/R-manual/R-devel/library/base/html/options.html) for additional information on this topic):
 
 ![](images/secondary-repo-order.png){fig-alt="The Global options > Packages menu - and the option to Move up/down specific repos."}
 

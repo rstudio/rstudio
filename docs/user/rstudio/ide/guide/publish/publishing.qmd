@@ -8,7 +8,7 @@ This section is not complete until we have updated screenshots for publishing to
 
 The following documentation is an overview of "Push-button Deployment" in RStudio. 
 
-For full Documentation on options for specific platforms:
+For full documentation on options for specific platforms:  
 
 - [Posit Connect User Guide](https://docs.posit.co/connect/user/connecting/)
 - [ShinyApps.io User Guide](https://docs.posit.co/shinyapps.io/)
@@ -30,17 +30,17 @@ The blue **publishing icon** is present in the following locations:
 
 -   The **Plots** pane
 
-Click on this blue **publishing icon** to open a publishing dialog where you can name your content and select additional files to include in the deployment. By default, RStudio will try to infer the data files and scripts that are used in your content. This window lets you refine those file selections.
+Click the blue **publishing icon** to open a publishing dialog where you can name your content and select additional files to include in the deployment. By default, RStudio will try to infer the data files and scripts that are used in your content. This window lets you refine those file selections.
 
 ![](images/publishing-quarto.png){fig-alt="RStudio publishing dialog for a Quarto document"}
 
-Most of the time, RStudio is able to determine automatically which files are needed to render your document on the remote server. However, there are situations in which it will miss a file (for instance, if it isn't referenced directly in your document). The **Add More\...** button lets you add files to the bundle, so that they will be available on the server when your document is rendered. You can also use the `resource_files` field in the document's YAML header to add additional files.
+Typically, RStudio is able to determine automatically which files are needed to render your document on the remote server. However, there are situations in which it will miss a file (for instance, if it isn't referenced directly in your document). The **Add More\...** button lets you add files to the bundle, so that they will be available on the server when your document is rendered. You can also use the `resource_files` field in the document's YAML header to add additional files.
 
 Deployed data files must be in the same directory as the Shiny application or R Markdown/Quarto document, or in a subdirectory of that location. Files stored elsewhere on the computer will not be available on the remote server and cannot be included in the content bundle.
 
 Click **Publish** after verifying the settings.
 
-## Publishing Documents
+## Publishing documents
 
 You can publish R Markdown (`.Rmd`) and Quarto (`.qmd`) documents to Posit Connect or RPubs.com.
 

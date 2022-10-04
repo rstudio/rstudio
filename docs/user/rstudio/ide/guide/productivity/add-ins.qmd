@@ -6,7 +6,7 @@ RStudio addins provide a mechanism for executing R functions interactively from 
 
 An addin can be as simple as a function that inserts a commonly used snippet of text, and as complex as a Shiny application that accepts input from the user, and later mutates a document open in RStudio.
 
-## Using Addins
+## Using addins
 
 The following documentation covers:  
 
@@ -16,7 +16,7 @@ The following documentation covers:
 
 ## Installation
 
-RStudio Addins are distributed as [R packages](http://r-pkgs.had.co.nz/). Once you've installed an R package that contains addins, they'll be immediately become available within RStudio.
+RStudio addins are distributed as [R packages](http://r-pkgs.had.co.nz/). Once you've installed an R package that contains addins, they'll be immediately become available within RStudio.
 
 Let's start by playing around with a couple of the example addins provided by the [addinexamples](https://github.com/rstudio/addinexamples) package. Within RStudio, install this package (plus its requisite dependencies) with:
 
@@ -25,7 +25,7 @@ Let's start by playing around with a couple of the example addins provided by th
 devtools::install_github("rstudio/addinexamples", type = "source")
 ```
 
-## Running Addins
+## Running addins
 
 After installing this package, you should see the *Addins* toolbar menu populated with the addins exported by this package:
 
@@ -43,9 +43,9 @@ Addins can be assigned a keyboard shortcut through the **Tools** \> **Modify Key
 
 ![](images/addin-shortcut.png){fig-alt="A screenshot of the Customize Keyboard shortcuts menu"}
 
-## Developing Addins
+## Developing addins
 
-### Addin Basics
+### Addin basics
 
 The **Insert %in%** addin is implemented entirely with R code. In fact, the R function that made this happen is located [here](https://github.com/rstudio/addinexamples/blob/master/R/insertInAddin.R), and its definition is show below:
 
@@ -95,7 +95,7 @@ The `id` can be passed to other functions within the API to address a specific d
 
 The `location` argument to several of the API functions specifies a position or range to operate on. See the [rstudioapi manual](https://rstudio.github.io/rstudioapi/) for more details on specifying locations.
 
-### Registering Addins
+### Registering addins
 
 Addins are just R functions, distributed via R packages. The registration file located at [inst/rstudio/addins.dcf](https://github.com/rstudio/addinexamples/blob/master/inst/rstudio/addins.dcf) lets RStudio know which addins are available. Each addin should have the following four fields:
 

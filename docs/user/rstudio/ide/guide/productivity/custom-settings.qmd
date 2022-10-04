@@ -11,7 +11,7 @@ The examples in this section presume you are setting individual user account set
 AppData/Roaming/RStudio/
 ```
 
-## User Preferences
+## User preferences
 
 User preferences set in the RStudio **Global Options** dialog can also be set in the JSON file `rstudio-prefs.json`, located in the settings directory:
 
@@ -26,7 +26,7 @@ You can see a summary of this information in the [Session User Settings](https:/
 
 ## Snippets
 
-You can install snippets files into `~/.config/rstudio/snippets` (Mac/Linux) or `AppData/Roaming/RStudio/snippets` (Windows). For example, if you\'d like to create a snippet `lib` for an R library call:
+You can install snippets files into `~/.config/rstudio/snippets` (Mac/Linux) or `AppData/Roaming/RStudio/snippets` (Windows). For example, if you'd like to create a snippet `lib` for an R library call:
 
 
 ```r
@@ -39,13 +39,13 @@ You can also define snippets for CSS files in the file `css.snippets`, and so on
 
 ::: {.callout-note}
 
-Note that RStudio will not merge snippet files.
+RStudio will not merge snippet files.
 
 If you define your own snippets (for a given file type), they will replace those that ship with RStudio (for that same file type).
 
 :::
 
-## Default Document Templates
+## Default document templates
 
 RStudio typically opens new documents with completely blank contents. You can, however, define the contents of the blank document by creating a file named `default.X` in `~/.config/rstudio/templates` (Mac/Linux) or `AppData/Roaming/RStudio/templates` (Windows), where `X` is the file extension you wish to customize. For example, to start all R scripts with a standard comment header users can fill out, you could use the following:
 
@@ -76,7 +76,7 @@ There are also some special template files which ship with RStudio; these, too, 
 
 For Quarto and RMarkdown documents, templates should not have a YAML header. The **File** > **New File** workflow provides a popup wizard where users select specific options that populate the YAML header.
 
-## Color Themes
+## Color themes
 
 You can define additional custom themes for RStudio by placing `.rstheme` files in the following directory:
 
@@ -103,11 +103,14 @@ AppData/Roaming/RStudio/keybindings/editor_commands.json
 AppData/Roaming/RStudio/keybindings/rstudio_commands.json
 ```
 
-For more information on creating custom shortcuts, see the [RStudio Custom Shortcuts section](../productivity/custom-shortcuts.qmd).
+For more information on creating custom shortcuts, see [RStudio Custom Shortcuts](../productivity/custom-shortcuts.qmd).
 
 ## Spelling
 
 You can define additional spelling dictionaries for RStudio by placing dictionary files in the following folders:
+
+- Languages in `rstudio/dictionaries/languages-system`
+- Dictionaries in `rstudio/dictionaries/custom`
 
 ### Languages
 

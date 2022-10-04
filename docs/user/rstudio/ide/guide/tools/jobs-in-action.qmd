@@ -1,10 +1,12 @@
-# Jobs in action
+---
+title: "Jobs in action"
+---
 
 As mentioned in [RStudio Jobs](jobs.html), RStudio has the ability to send long running R scripts to [local and remote background jobs](https://www.rstudio.com/blog/rstudio-1-2-jobs/). This functionality can dramatically improve the productivity of data scientists and analysts using R since they can continue working in RStudio while jobs are running in the background.
 
 A few examples of integrating RStudio Jobs with specific development workflows in shiny, plumber, machine learning, or any long-running process are documented below.
 
-## Shiny App
+## Shiny app
 
 Running a [Shiny](http://shiny.rstudio.com/) application as a local background job allows the current R session to remain free to work on other things. This can be especially helpful for making changes to the Shiny code and seeing the changes in real time.
 
@@ -23,7 +25,7 @@ shiny::runApp()
 
 The `shiny.autoreload=TRUE` option provides the real-time updating of the Shiny app code without requiring an explicit reload of the Shiny app, and the `shiny::runApp()` code enables running all the Shiny components within the "shiny-example" folder.
 
-The `shiny-job.R` source file will have a **Run App** dropdown menu. From the **Run App** dropdown, select **In Background Job** and then press the **Run App** button:
+The `shiny-job.R` source file will have a **Run App** drop-down menu. From the **Run App** drop-down, select **In Background Job** and then press the **Run App** button:
 
 ![](images/run-shiny-background.png){fig-alt="A screenshot of the shiny-job.R file, with the Run App > In Background Job menu option highlighted."}
 
@@ -35,7 +37,7 @@ Working with Shiny apps in this way allows for interactive editing and updating 
 
 ### Reload App
 
-Alternatively, in the Shiny `app.R` file, there will also be a **Run App** dropdown. From **Run App**, select **In Background Job** and then press the **Run App** button. This will not have auto-reloading, but might be preferable for Shiny apps with a long startup time.
+Alternatively, in the Shiny `app.R` file, there will also be a **Run App** drop-down. From **Run App**, select **In Background Job** and then press the **Run App** button. This will not have auto-reloading but might be preferable for Shiny apps with a long startup time.
 
 In this scenario, after making changes to the `app.R` file, the **Run App** button will be replaced with a **Reload App** button. The Shiny app will still be executed in a Background Job, but the user must explicitly reload the app after making changes and press the **Reload App** button, rather than the auto-reload behavior in the previous example.
 
@@ -53,7 +55,7 @@ install.packages("plumber")
 
 A minimal example of running a plumber API as a Job is documented below:
 
-Use the RStudio global menu: **File** \> **New File** \> **Plumber API\...** and save it as `plumber-example`
+Use the RStudio global menu: **File** \> **New File** \> **Plumber API\...** and save it as `plumber-example`.
 
 In the *same directory* as `plumber.R`, create a second .R file titled `plumber-job.R` with the following example code:
 
@@ -61,7 +63,7 @@ In the *same directory* as `plumber.R`, create a second .R file titled `plumber-
 plumber::plumb("plumber.R")$run(swagger=TRUE)
 ```
 
--   Execute it as a Job from the **Source** pane via the **Source \> Source as a Background Job** dropdown option.
+-   Execute it as a Job from the **Source** pane via the **Source** > **Source as a Background Job** drop-down option.
 
 ![](images/source-plumber-job.png){fig-alt="A screenshot of the Source pane, with the Source > Source as Background Job dropdown option highlighted."}
 
@@ -89,7 +91,7 @@ This will display the plumber API's Swagger interface in the **Viewer** pane, al
 
 ![](images/plumber-interaction.png){fig-alt="A screenshot of RStudio with the plumber-job.R file open in the Source pane, the Background job tab selected from the Console pane displaying the url to the API and it's docs, and the Viewer pane displaying the plumber API's Swagger docs."}
 
-## Extract, Transform, Load (ETL)
+## Extract, transform, load (ETL)
 
 Background and Workbench Jobs are ideal for long running processes, like interactively loading data from an external database or API. Non-interactive, scheduled ETL scripts should be handled by Posit Connect.
 
@@ -136,7 +138,7 @@ Executing this script as a Job with the included `print()` calls will display th
 
 ![](images/estimating-pi-output.png){fig-alt="A screenshot of the Background Jobs pane displaying the output of the current estimated value of Pi and that it is being saved to a file along with the number of simulations."}
 
-## Model Training
+## Model training
 
 Model training and tuning, which can often take a long time, is another great use case for background and Workbench Jobs. Local jobs are ideal for sequential model training while Workbench Jobs can be used to train multiple models in parallel on elastic scaling infrastructure.
 
@@ -163,7 +165,7 @@ Including the `control_grid(verbose = TRUE)` means the output from that grid tun
 
 The above documentation has focused on using the RStudio user interface to kick off and interact with Jobs. The [`rstudioapi`](https://github.com/rstudio/rstudioapi) package provides tools for programmatically creating local and Workbench jobs.
 
-### Local Jobs
+### Local Background Jobs
 
 | Interact with the jobs pane.                                                             |     |
 |:------------------------------|-----------------------------------------|

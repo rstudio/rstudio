@@ -4,7 +4,7 @@ title: "R Console"
 
 The **Console** in RStudio includes a variety of features intended to make interactively working with code more productive and straightforward. This documentation reviews these features. Learning to use these features along with the related features available in the [Source](execution.html) pane can have a substantial payoff in your overall productivity.
 
-## Code Completion
+## Code completion
 
 RStudio supports the automatic completion of code using the <kbd>Tab</kbd> key. For example, if an object named `pollResults` exists in the workspace, typing `poll` in the R console and then pressing the <kbd>Tab</kbd> key automatically completes the full name of the object. 
 
@@ -16,7 +16,7 @@ Code completion also works for function arguments, so typing `median(` and then 
 
 ![](images/console-completion-args.png){fig-alt="Code completion of variables within the median function, displaying the 'x', 'na.rm' and '...' function arguments."}
 
-## Retrieving Previous Commands
+## Retrieving previous commands
 
 As with the standard R console, the RStudio console supports the ability to recall previous commands using the arrow keys:
 
@@ -32,7 +32,7 @@ The same keyboard shortcut can quickly search for commands that match a given pr
 
 ![](images/previous-commands.png){fig-alt="A screenshot of the R console in RStudio, showing a filtered list of executed commands that match 'glimpse'"}
 
-## Console Title Bar
+## Console title bar
 
 The screenshot below illustrates a few additional capabilities provided by the Console title bar:
 
@@ -46,7 +46,7 @@ The screenshot below illustrates a few additional capabilities provided by the C
 
 ![](images/console-buttons.png){fig-alt="A screenshot of R console menu bar, showing the red 'stopsign' indicating the ability to stop the currently executed R code"}
 
-## Keyboard Shortcuts
+## Keyboard shortcuts
 
 Beyond the history and code-completion oriented keyboard shortcuts described above, there are a wide variety of other shortcuts available. Some of the more useful shortcuts include:
 

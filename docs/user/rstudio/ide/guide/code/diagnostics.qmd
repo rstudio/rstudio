@@ -2,7 +2,7 @@
 title: "Code Diagnostics"
 ---
 
-## Enabling Diagnostics
+## Enabling diagnostics
 
 Diagnostics can be enabled and options can be set within the **Global Options** > **Code Diagnostics** editing pane:
 
@@ -10,7 +10,7 @@ Diagnostics can be enabled and options can be set within the **Global Options** 
 
 A brief outline of the options available:
 
-### Show Diagnostics for R
+### Show diagnostics for R
 
 Toggle the display of R code diagnostics.
 
@@ -52,13 +52,13 @@ The style diagnostic checks to see if your code conforms to [Hadley Wickham's st
 
 Currently, the style diagnostics feature is not user configurable; this may be addressed in an upcoming release.
 
-## Other Diagnostics
+## Other diagnostics
 
 Diagnostics for other languages, such as C / C++, JavaScript, and Python, are also available.
 
 The C / C++ diagnostics engine is powered by `libclang`, and is able to report compiler errors and warnings inline in the source document.
 
-## Viewing Diagnostics
+## Viewing diagnostics
 
 When an error or warning is discovered, it is reported in two places:
 
@@ -68,11 +68,11 @@ When an error or warning is discovered, it is reported in two places:
 
 ![](images/error-diagnostic-view.png){fig-alt="A screenshot of R code displaying a yellow warning in the gutter, a popup for result is defined but not used, and a yellow underline bellow the defined but not used element."}
 
-## Show Diagnostics
+## Show diagnostics
 
 These features allow you to control when diagnostics are presented and updated. Diagnostics can either be shown on save, or after a certain amount of keyboard idle time.
 
-## Project-Level Diagnostics
+## Project-level diagnostics
 
 You can run the diagnostics engine over all R files in the project either using the code wizard menu, or by pressing <kbd>Ctrl + Alt + Shift + P</kbd> (<kbd>Cmd + Alt + Shift + P</kbd> on Mac):
 
@@ -82,7 +82,7 @@ After running diagnostics over the project (this may take some time), you will s
 
 ![](images/project-diagnostics.png){fig-alt="A screenshot of the Markers for the addtwo.R file and other diagnostics across the project."}
 
-## Magic Comments
+## Magic comments
 
 RStudio's diagnostics engine can be controlled on a per-file basis by adding magic comments to the document.
 

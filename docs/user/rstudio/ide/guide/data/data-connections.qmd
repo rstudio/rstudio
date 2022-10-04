@@ -6,9 +6,9 @@ title: "Connections Pane"
 
 ![](images/connections-pane.png){fig-alt="A screenshot of the Connections pane in RStudio, displaying existing database connections." fig-align="center" width="450"}
 
-The Connections Pane displays all the connections to supported data sources and which connections are currently active. RStudio supports multiple, simultaneous database connections. This history is specific to your user account and is stored privately in RStudio's settings; it applies to all of your RStudio projects.
+The **Connections** pane displays all the connections to supported data sources and which connections are currently active. RStudio supports multiple, simultaneous database connections. This history is specific to your user account and is stored privately in RStudio's settings; it applies to all of your RStudio projects.
 
-## Connecting to a Database in R
+## Connecting to a database in R
 
 In RStudio, there are two ways to connect to a database:
 
@@ -16,7 +16,7 @@ In RStudio, there are two ways to connect to a database:
 
 -   Use the **New Connection** interface. The dialog lists all the connection types and drivers it can find on the system. See the next section for more information.
 
-### New Connection interface
+### New connection interface
 
 The **New Connection** interface will list possible connections:
 

@@ -2,7 +2,7 @@
 title: "Quarto Integration"
 ---
 
-RStudio v2022.07.1 and beyond includes support for editing and preview of [Quarto documents](https://quarto.org/).
+RStudio v2022.07.1 and later includes support for editing and preview of [Quarto documents](https://quarto.org/).
 
 > Quarto^®^ is an open-source scientific and technical publishing system built on [Pandoc](https://pandoc.org/)
 >
@@ -14,15 +14,15 @@ RStudio v2022.07.1 and beyond includes support for editing and preview of [Quart
 >
 > -   Author with scientific markdown, including equations, citations, crossrefs, figure panels, callouts, advanced layout, and more.
 
-If you are using Quarto within RStudio it is **strongly** recommended that you use RStudio v2022.07.1 or a later version (the documentation below assumes you are using this build).
+If you are using Quarto within RStudio, it is **strongly** recommended that you use RStudio v2022.07.1 or a later version (the documentation below assumes you are using this build).
 
 ## Installing Quarto
 
-A stable release of Quarto is bundled with RStudio v2022.07.1 and later. Upgrading to new versions of RStudio in the future will also upgrade the bundled Quarto version.
+A stable release of Quarto is bundled with RStudio v2022.07.1, and later. Upgrading to new versions of RStudio in the future will also upgrade the bundled Quarto version.
 
 To upgrade Quarto out of sync with the bundled version in RStudio, follow the directions at <https://quarto.org/docs/download/>
 
-## Creating Documents
+## Creating new documents
 
 Use the **File** \> **New File** \> **Quarto Document** command to create new Quarto documents, which will launch the **New Quarto Document** wizard:
 
@@ -36,7 +36,7 @@ Use the **Render** button to preview documents as you edit them:
 
 If you prefer to automatically render whenever you save you can check the **Render on Save** option on the editor toolbar.
 
-The preview will appear alongside the editor in the **Viewer** pane:
+The preview appears alongside the editor in the **Viewer** pane:
 
 ![](images/rstudio-preview.png){fig-alt="An RStudio window. On the left half of the page is a Quarto document and the 'Jobs' pane open underneath that. There is messages in green text in the 'Jobs' pane that say: 'Watching files for changes. Browse at http://localhost:4064'. On the right half of the window is the Quarto output of the document on the left, as rendered by Knitr."}
 
@@ -72,14 +72,14 @@ Turn the following features on or off:
 
 ## Quarto Background Job
 
-Quarto documents rendered in RStudio with the **Render** button or the **Render on Save** option are rendered within a [Background Job](../tools/jobs.html) which maintains a background preview web server. This provides a fresh R session for the rendered document along with a consistent URL to access the preview content.
+Quarto documents are primarily rendered in RStudio with the **Render** button or the **Render on Save** option. Both of these options render the document within a [Background Job](../tools/jobs.html) which maintains a background preview web server. This provides a fresh R session for the rendered document along with a consistent URL to access the preview content.
 
-To access and control the Quarto render, navigate to the **Background Jobs** tab of the **Console** pane:
+To access and control the Quarto render, navigate to the **Console** pane and select the **Background Jobs** tab:
 
--   The duration of the current preview web server is available in the top right corner
+-   The duration of the current preview web server is available in the upper-right corner
 -   Metadata, arguments, and output from the render process are printed and updated for each render
 -   The URL to the preview web server is printed at the bottom of the output
--   To interrupt the render, press the red **Stop** button in the top right corner of **Background Jobs** tab
+-   To interrupt the render, press the red **Stop** button in the upper-right corner of the **Background Jobs** tab
 
 ![](images/quarto-job.png){fig-alt="A screenshot of the Background Jobs tab in RStudio, displaying the output of a Quarto render."}
 
@@ -89,13 +89,13 @@ To create a new project for a Quarto document or set of documents:
 
 1.  Use the **File : New Project...** command
 2.  Specify **New Directory**
-3.  Choose **Quarto Project**
+3.  Select **Quarto Project**
 
 ![](https://quarto.org/docs/tools/images/rstudio-new-knitr-project.png){fig-alt="A section of the 'New Project Wizard' menu from Rstudio. This section is titled 'Create Quarto Project'. The Quarto logo is displayed on the left. ON the right are fields for 'Type', 'Directory name', and 'Create project as subdirectory of:'. Underneath that are options for 'Engine', 'Create a git repository', and 'Use renv with this project'. The option for 'Engine' is set to 'Knitr'. There are buttons for 'Create Project' and 'Cancel' arranged side-by-side in the bottom right of the window. There is an option to 'Open in new session' in the button left corner."}
 
 You can use this UI to create both vanilla projects as well as [websites](https://quarto.org/docs/websites/) and [books](https://quarto.org/docs/books/). Options are also provided for creating a [git](https://git-scm.com/) repository and initializing an [renv](https://rstudio.github.io/renv/) environment for the project.
 
-## Knitr Engine
+## Knitr engine
 
 Quarto is designed to be highly compatible with existing [R Markdown](https://rmarkdown.rstudio.com/) documents. You should generally be able to use Quarto to render any existing Rmd document without changes.
 
@@ -110,7 +110,7 @@ One important difference between R Markdown documents and Quarto documents is th
             geom_smooth(method = "loess", se = FALSE)
     ```
 
-Quarto uses this approach to both better accommodate longer options like `fig-cap`, `fig-subcap`, and `fig-alt` as well as to make it straightforward to edit chunk options within more structured editors that don't have an easy way to edit chunk metadata (e.g. most traditional notebook UIs).
+Quarto uses this approach to both better accommodate longer options like `fig-cap`, `fig-subcap`, and `fig-alt` as well as to make it straightforward to edit chunk options within more structured editors that don't have an easy way to edit chunk metadata (e.g., most traditional notebook UIs).
 
 Chunk options included this way use YAML syntax rather than R syntax for consistency with options provided in YAML front matter. You can still however use R code for option values by prefacing them with `!expr`. For example:
 
@@ -118,7 +118,7 @@ Chunk options included this way use YAML syntax rather than R syntax for consist
 #| fig-cap: !expr paste("Air", "Quality")
 ```
 
-## Jupyter Engine
+## Jupyter engine
 
 You can also work with Quarto markdown documents that target the Jupyter engine within RStudio. These files will typically include a `jupyter` option in the YAML front matter indicating which kernel to use. For example:
 
@@ -142,7 +142,7 @@ RStudio will automatically activate this virtual environment whenever you open t
 
 ![An RStudio terminal window. The prompt is prefixed by the word '(env)', indicating that this prompt is taking place in a Python virtual environment named 'env.' The first line is empty and the second line contains the command 'python3 -m pip install scikit-learn.'](https://quarto.org/docs/tools/images/rstudio-pip-install.png){alt="An RStudio terminal window. The prompt is prefixed by the word '(env)', indicating that this prompt is taking place in a Python virtual environment named 'env.' The first line is empty and the second line contains the command 'python3 -m pip install scikit-learn.'"}
 
-## YAML Intelligence
+## YAML intelligence
 
 YAML code completion is available for project files, YAML front matter, and executable cell options:
 
@@ -152,7 +152,7 @@ If you have incorrect YAML it will also be highlighted when documents are saved:
 
 ![](https://quarto.org/docs/tools/images/rstudio-yaml-diagnostics.png){fig-alt="Quarto document YAML metadata with an incorrect option underlined in red."}
 
-## R Package
+## R package
 
 If you are not using RStudio and/or you prefer to render from the R console, you can do so using the [quarto](https://quarto-dev.github.io/quarto-r/) R package. To install the R package:
 

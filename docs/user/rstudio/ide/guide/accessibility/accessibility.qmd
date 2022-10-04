@@ -10,7 +10,7 @@ For the purposes of this discussion, "RStudio Server" encompasses both RStudio S
 
 Email accessibility-related questions and comments to [accessibility\@rstudio.com](mailto:accessibility@rstudio.com).
 
-## Zoom Level
+## Zoom level
 
 The size of text and other RStudio user-interface elements can be adjusted using the Zoom feature.
 
@@ -26,7 +26,7 @@ RStudio Server relies on your web browser's zooming features. Consult web browse
 
 -   [Microsoft Edge Accessibility Features](https://support.microsoft.com/en-us/help/4000734/microsoft-edge-accessibility-features)
 
-## Look and Feel
+## Look and feel
 
 You can change the look and feel of the RStudio user interface by choosing from three RStudio themes, and many editor themes. Use the Tools / Global Options / Appearance settings pane to experiment and find the look that works best for you.
 
@@ -38,7 +38,7 @@ More details on RStudio's theming features are in the [Using RStudio Themes arti
 
 Many RStudio features can be operated entirely with the keyboard. Using the keyboard can be an efficient way to get things done whether you are a keyboard-only user, or just prefer to reduce how often you have to reach for the mouse or touchpad.
 
-### Keyboard Shortcuts
+### Keyboard shortcuts
 
 RStudio has many keyboard shortcuts to trigger actions, move between areas of the user interface, and so on. Many of these can be discovered by browsing the main menu, hovering the mouse cursor over toolbar buttons, and viewing keyboard shortcut reference from the Help / Keyboard Shortcut Help menu.
 
@@ -48,7 +48,7 @@ Moving between RStudio's various tabs such as the Console and the Source Editor 
 
 The keyboard shortcuts available for manipulating text in the Source Editor will vary depending which editor keybindings are selected in Global Options / Code / Keybindings.
 
-### Main Menu
+### Main menu
 
 In RStudio Desktop, the main menu is operated via keyboard the same as the main menu in other applications on your operating system. For example, on Microsoft Windows, Alt+F will open the file menu.
 
@@ -58,15 +58,15 @@ A full list of Main Menu shortcuts is available in the Help / Keyboard Shortcuts
 
 If you wish to customize these shortcuts, they are named "Show File Menu", "Show Help Menu", and so on.
 
-### Navigating Dialog Boxes
+### Navigating dialog boxes
 
 When a dialog box such as Global Options is opened, you can move around it using a combination of arrow keys and Tab and Shift+Tab. Generally the spacebar and/or Enter key can be used to "click" a button, just like other desktop applications.
 
-## Reduced Motion
+## Reduced motion
 
-Some aspects of RStudio's user interface use subtle motion or animations. There is an option to eliminate these via the Tools / Global Options / Accessibility / Reduce User Interface Animations checkbox.
+Some aspects of RStudio's user interface use subtle motion or animations. There is an option to eliminate these via the **Tools** > **Global Options** > **Accessibility** > **Reduce User Interface Animations** checkbox.
 
-## Simplify Layout
+## Simplify layout
 
 RStudio's main window is quite visually complex. There is a menubar at the top, a toolbar, and up to four quadrants each potentially containing many different types of tabs which in turn contain RStudio's many features! Additionally, some features will open entirely new windows.
 
@@ -76,7 +76,7 @@ This can be overwhelming when first learning to use RStudio, and potentially dis
 
 If you are not going to use it, the main toolbar can be hidden via View / Hide Toolbar, and redisplayed with View / Show Toolbar.
 
-### Zooming a Region
+### Zooming a region
 
 A strategy you can employ is to "zoom" the region you are currently using. For example, View / Panes / Zoom Console will cause the Console to fill the entire RStudio Window. Note this is a different meaning of "Zoom" than was mentioned earlier in this document where it referred to changing the overall size of all elements in the window.
 
@@ -86,13 +86,13 @@ For mouse users, there are also widgets in the upper-right corner of each quadra
 
 Another strategy to employ is zooming a single column of the user interface. For example, in the default layout the Source Editor is in the top-left (assuming you have some files open) and the Console is below it. If you then use View / Panes / Zoom Left Column, those two panes will expand to fill the entire main window.
 
-### Customizing Pane Layout
+### Customizing pane layout
 
 Another tool you can experiment with is customizing which quadrants contain certain tabs, as well as where each quadrant is displayed relative to the others. This is configured via View / Panes / Pane Layout dialog (also available within the Global Options dialog under Pane Layout).
 
 The Source and Console quadrants are currently fixed in terms of what tab-types may appear in them. You can, however, configure the other two quadrants to hold specific tabs. The only limitation is that a quadrant must contain at least one tab, so it is not possible to completely eliminate one quadrant. Still, you can move the tabs you don't routinely use into one quadrant then minimize that quadrant, giving what is essentially a 3 panel layout.
 
-## Accessibility Options
+## Accessibility options
 
 The Global Options dialog contains a section dedicated to accessibility options. Options for reducing motion in the user interface, and for toggling the Tab key to always move focus, were mentioned earlier in this article. The rest of the options are specific to screen reader usage, and are discussed in the [section on RStudio Screen Reader support](screen-reader.html).
 

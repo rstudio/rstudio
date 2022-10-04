@@ -14,7 +14,7 @@ R packages are an ideal way to package and distribute R code and data for re-use
 
 -   Support for [Rcpp](http://dirk.eddelbuettel.com/code/rcpp.html) including syntax highlighting for C/C++ and gcc error navigation.
 
-## Getting Started
+## Getting started
 
 The following documentation covers fundamental R package development workflows inside RStudio. The [R packages book](https://r-pkgs.org/) provides a deeper overview of general R package development strategies.
 
@@ -34,7 +34,7 @@ Once you've come up with a name, there are two ways to create the package.
 
 -   In RStudio, do **File** \> **New Project** \> **New Directory** \> **R Package**. This ultimately calls [`usethis::create_package()`](https://usethis.r-lib.org/reference/create_package.html), so really there's just one way.
 
-### Package Development Basics
+### Package development basics
 
 If you aren't already familiar with the basics of R package development, the following links provide additional documentation and tutorials:
 
@@ -42,7 +42,7 @@ If you aren't already familiar with the basics of R package development, the fol
 
 -   [R Packages (Hadley Wickham)](https://r-pkgs.org/)
 
-### Software Prerequisites
+### Software prerequisites
 
 There are two main prerequisites for building R packages:
 
@@ -56,31 +56,35 @@ To easily build and document robust R packages, you will also need the following
 install.packages(c("devtools", "roxygen2", "testthat", "knitr"))
 ```
 
-If you don't already have these tools installed on your system please consult the "R Packages" chapter on [R build toolchain](https://r-pkgs.org/Setup.html#setup-tools) for additional details on how to install these dependencies.
+If you don't already have these tools installed on your system, please consult the "R Packages" chapter on [R build toolchain](https://r-pkgs.org/Setup.html#setup-tools) for additional details on how to install these dependencies.
 
-### Creating a New Package
+### Creating a new package
 
-To create a new package use the **Create Project** command (available on the **Projects** menu and on the global toolbar) and select the **New Directory** option. Then on the following screen specify the project type as **R Package**:
+To create a new package, use the **Create Project** command (available on the **Projects** menu and on the global toolbar) and select the **New Directory** option. Then on the following screen specify the project type as **R Package**:
 
 ![](images/create-r-pkg.png){fig-alt="A screenshot of the New Project Wizard"}
 
 ::: callout-tip
-If you have existing R scripts that you'd like to use as the basis for the new package you can specify them here and they'll be included in the new package.
+
+## Using existing R scripts
+
+If you have existing R scripts that you'd like to use as the basis for the new package, you can specify them here and they'll be included in the new package.
+
 :::
 
-### Working with an Existing Package
+### Working with an existing package
 
 To enable RStudio's package development tools for an existing package do the following:
 
 1.  Create a new [RStudio Project](../code/projects.html) associated with the package's directory.
 
-2.  If the package `DESCRIPTION` file is located either in the project's root directory or at `pkg/DESCRIPTION` then it will be automatically discovered.
+2.  If the package `DESCRIPTION` file is located either in the project's root directory or at `pkg/DESCRIPTION`, then it will be automatically discovered.
 
-3.  Alternatively, go to **Tools** \> **Project Options** \> **Build Tools**, select "Package" as the project build tools type, and then specify the the subdirectory containing the package's `DESCRIPTION` file.
+3.  Alternatively, navigate to **Tools** \> **Project Options** \> **Build Tools**, select "Package" as the project build tools type, and then specify the the subdirectory containing the package's `DESCRIPTION` file.
 
-## Building a Package
+## Building a package
 
-To work with packages in RStudio you use the **Build** pane, which includes a variety of tools for building and testing packages. While iteratively developing a package in RStudio, you typically use the **Install** > **Clean and Install** command or call **Clean and Install** from the Command Palette to re-build the package and reload it in a fresh R session:
+To build the completed package in RStudio, use the **Build** pane, which includes a variety of tools for building and testing packages. While iteratively developing a package in RStudio, you typically use the **Install** > **Clean and Install** command or call **Clean and Install** from the Command Palette to re-build the package and reload it in a fresh R session:
 
 ![](images/build-reload-pkg.png){fig-alt="The build pane in RStudio, showing the output of a 'Clean and Install' command."}
 
@@ -94,8 +98,19 @@ The **Clean and Install** command performs several steps in sequence to ensure a
 
 4.  Reloads the package in the new R session by executing the `library` function.
 
-You can also execute **Clean and Install** using the the Command Palette <kbd>Ctrl+Shift+P</kbd> (<kbd>Cmd+Shift+P</kbd> on Mac) or configure RStudio to automatically save open source files prior to rebuilding from the **Tools** > **Global Options** > **Packages** tab > **Development** tab > **Save all files prior to building packages** option.
+You can also execute **Clean and Install** using the the Command Palette <kbd>Ctrl+Shift+P</kbd> (<kbd>Cmd+Shift+P</kbd> on Mac) or configure RStudio to automatically save open source files prior to rebuilding from the **Tools** > **Global Options** > **Packages** tab > **Development** tab > **Save all files prior to building packages** option. 
 
-## Learning More
+The **Build** pane also includes buttons for:  
 
-Once you've got a basic package built within RStudio you'll want to learn about the tools that can be used to test, document, and prepare packages for distribution. Please consult the "R Packages" book at <https://r-pkgs.org/>.
+![](images/build-pane.png){fig-alt="The build pane in RStudio, displaying the buttons available."}
+
+- **Test** - run tests for current R package
+- **Check** - run `R CMD Check` to test for package code or documentation problems
+- **Load All** - runs `devtools::load_all()`
+- **Build Source Package** - build a source package
+- **Build Binary Package** - build a binary package
+- **Configure Build Tools** - Opens **Project Options** > **Build Tools**
+
+## Learning more
+
+Once you've built a basic package with RStudio you'll want to learn about the tools that can be used to test, document, and prepare packages for distribution. Please consult the "R Packages" book at <https://r-pkgs.org/>.

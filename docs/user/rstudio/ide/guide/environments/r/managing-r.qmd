@@ -2,9 +2,9 @@
 title: "R Startup"
 ---
 
-Upon startup, R and RStudio look for a few different files used to control the behavior of the R session, for example by setting options or environment variables. In the context of Posit Team, these settings are often used to set RStudio Workbench (previously RStudio Server Pro) to search for packages in an Posit Package Manager repository.
+Upon startup, R and RStudio look for a few different files used to control the behavior of the R session, for example by setting options or environment variables. In the context of [Posit Team](https://docs.posit.co/posit-team/), these settings are often used to set RStudio Workbench (previously RStudio Server Pro) to search for packages in an Posit Package Manager repository.
 
-This article is a practical guide to how to set particular options on R startup. General information on how to manage R package environments is available at [environments.rstudio.com](https://environments.rstudio.com/), and a deeper treatment of R process startup is available in [this article](https://rviews.rstudio.com/2017/04/19/r-for-enterprise-understanding-r-s-startup/) or [What They Forgot to Teach You About R](https://rstats.wtf/r-startup.html).
+This section is a practical guide on how to set particular options on R startup. General information on how to manage R package environments is available at [environments.rstudio.com](https://environments.rstudio.com/), and a deeper treatment of R process startup is available in [this article](https://rviews.rstudio.com/2017/04/19/r-for-enterprise-understanding-r-s-startup/) or [What They Forgot to Teach You About R](https://rstats.wtf/r-startup.html).
 
 Here is a summary table of how to control R options and environment variables on startup. More details are below.
 

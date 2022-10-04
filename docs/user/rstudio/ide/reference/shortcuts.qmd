@@ -2,7 +2,7 @@
 title: "Keyboard Shortcuts"
 ---
 
-Some shortcuts may differ if non-default keybindings are selected (e.g. Emacs, Vim, or Sublime Text).
+Some shortcuts may differ if non-default keybindings are selected (e.g., Emacs, Vim, or Sublime Text).
 
 ## Command Palette
 

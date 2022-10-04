@@ -14,9 +14,9 @@ Unlike most RStudio features, the nature of the terminal leads to several platfo
 
 The **Terminal tab** is next to the **Console tab**. Click on the Terminal tab and a new terminal session will be created (if there isn't one already).
 
--   If the tab isn't visible, show it via **Tools** \> **Terminal** \> **Move Focus to Terminal** (or use the kebyoard shortcut <kbd>Shift+Alt+T</kbd>).
+-   If the tab isn't visible, display it via **Tools** \> **Terminal** \> **Move Focus to Terminal** (or use the keyboard shortcut <kbd>Shift+Alt+T</kbd>).
 
--   The full list of terminal-related keyboard shortcuts is in the Reference: Keyboard Shortcuts [Terminal section](../../reference/shortcuts.html#terminal). Most terminal-related commands can be found on the **Terminal dropdown** menu in the terminal pane, and on the **Tools-\>Terminal** menu.
+-   The full list of terminal-related keyboard shortcuts is in the Reference: Keyboard Shortcuts [Terminal section](../../reference/shortcuts.html#terminal). Most terminal-related commands can be found on the **Terminal drop-down** menu in the terminal pane, and on the **Tools** > **Terminal** menu.
 
 Here's a terminal with the output of simple command:
 
@@ -24,16 +24,16 @@ Here's a terminal with the output of simple command:
 
 The visual appearance of the terminal is controlled via the **Tools** \> **Global Options** \> **Appearance** settings. 
 
-## Multiple Terminals
+## Multiple terminals
 
-RStudio supports multiple terminal sessions. To start another terminal session, use the **New Terminal** command on the Terminal dropdown menu, or <kbd>Alt+Shift+R</kbd>.
+RStudio supports multiple terminal sessions. To start another terminal session, use the **New Terminal** command on the Terminal drop-down menu, or <kbd>Alt+Shift+R</kbd>.
 
 ![](images/terminal-menu.png){fig-alt="screenshot showing terminal menu opened"}
-Each terminal session is independent, with its own system shell process and buffer. Switch between them by:
+Each terminal session is independent, with its own system shell process and buffer. Switch between them by:  
 
-1. Using the arrows next to the drop-down menu  
-2. Clicking on the terminal's name in the drop-down  
-3. Using the **Previous Terminal**/**Next Terminal** drop-down menu commands. The dropdown button shows the name of the currently selected terminal session ("Terminal 1" in the following screenshot):  
+- Using the arrows next to the drop-down menu  
+- Clicking on the terminal's name in the drop-down  
+- Using the **Previous Terminal**/**Next Terminal** drop-down menu commands. The drop-down button shows the name of the currently selected terminal session ("Terminal 1" in the following screenshot):  
 
 ![](images/terminal-menu-labeled.png){fig-alt="screenshot showing navigation between multiple terminals"}
 
@@ -64,7 +64,7 @@ If a shell file is being edited (`*.sh`), <kbd>Ctrl+Enter</kbd> (<kbd>Cmd+Enter<
 
 ![](images/terminal-shell.png){fig-alt="screenshot example of running a shell script"} 
 
-Note that the **Run Script** button does the same as prior versions of RStudio, and will save and run the entire script via `system()` in the R Console. This button does not appear in Windows.
+The **Run Script** button does the same as prior versions of RStudio and will save and run the entire script via `system()` in the R Console. This button does not appear in Windows.
 
 ## Busy Terminals
 
@@ -83,7 +83,7 @@ This "busy detection" feature is only available on Mac, Linux, and Posit Workben
 
 ## Closing Terminal Sessions
 
-To close a terminal session, use the **Close Terminal** command on the Terminal dropdown menu, click the **x** on the far-right of the Terminal pane toolbar, or type **exit** from within the shell itself.
+To close a terminal session, use the **Close Terminal** command on the Terminal drop-down menu, click the **x** on the far-right of the Terminal pane toolbar, or type **exit** from within the shell itself.
 
 As discussed earlier, if a terminal is currently busy, the **x** changes to a **STOP** button.
 

@@ -12,11 +12,11 @@ Background jobs can be started manually or programatically. Local background job
 
 A "background job" is an R script that runs in a separate, dedicated R session. Any R script can be run in a separate session by:
 
-Selecting "Start Background Job" from the **Background Job** tab in the **Console**
+from the **Background Job** tab in the **Console**, select **Start Background Job**.
 
 ![](images/background-job-console-start.png){fig-alt="Screenshot of the 'Start Background job' tab in the terminal pane."}
 
-Or from within a .R file by pulling down the Source menu and choosing **Source as Background Job**.
+Or from within a .R file, click the **Source** menu and select **Source as Background Job**.
 
 ![](images/source-job.png){fig-alt="Source script as background job" width="450"}
 
@@ -28,11 +28,17 @@ By default, the job will run in a clean R session, and its temporary workspace w
 
 However, if you want to feed data from your current R session into the job, or have the job return data to your current R session, change the dialog options as follows:
 
--   **Run job with copy of global environment**: If ticked, this option saves your global environment and loads it into the job's R session before it runs. This is useful because it will allow your job to see all the same variables you can see in the IDE. Note that this can be slow if you have large objects in your environment.
+-   **Run job with copy of global environment**: If selected, this option saves your global environment and loads it into the job's R session before it runs. This is useful because it will allow your job to see all the same variables you can see in the IDE. Note that this can be slow if you have large objects in your environment.
 
 -   **Copy job results**: By default, the temporary workspace in which the job runs is not saved. If you'd like to import data from your job back into your R session, you have a couple of choices:
 
-  -   **Global environment**: This places all the R objects your job creates back in your R session's global environment. Use this option with caution! The objects created by the job will overwrite, without a warning, any objects that have the same name in your environment.
+  -   **Global environment**: This places all the R objects your job creates back in your R session's global environment. 
+  
+::: {.callout-caution}
+
+Use **Copy jobs results** to **Global environment** option with caution! The objects created by the job will overwrite, without a warning, any objects that have the same name in your environment.
+
+:::
 
   -   **Results object**: This places all the R objects your job creates into a new environment named `yourscript_results`.
 
@@ -75,7 +81,7 @@ This output appears in the Jobs pane when you select your job.
 
 You can script the creation of jobs using the **rstudioapi** package method [jobRunScript](https://www.rdocumentation.org/packages/rstudioapi/versions/0.9.0/topics/jobRunScript); it has options which correspond to each dialog option above. This makes it possible to automate and orchestrate more complicated sets of background tasks.
 
-Note however that the IDE's background job runner is generally designed for interactive script runs. If you are writing R code and need to run a subtask asynchronously in a background R session, we recommend using the [callr package](https://callr.r-lib.org/) instead.
+However, the RStudio's background job runner is generally designed for interactive script runs. If you are writing R code and need to run a subtask asynchronously in a background R session, we recommend using the [callr package](https://callr.r-lib.org/) instead.
 
 ## Showing task progress
 
