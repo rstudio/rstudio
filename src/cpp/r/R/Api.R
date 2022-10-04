@@ -172,7 +172,8 @@
   invisible(.Call("rs_viewer", url, height, PACKAGE = "(embedding)"))
 })
 
-.rs.addApiFunction("console_viewer", function(url, height = NULL) {
+.rs.addApiFunction("consoleViewer", function(url, height = NULL)
+{
    if (!is.character(url) || (length(url) != 1))
       stop("url must be a single element character vector.")
 
