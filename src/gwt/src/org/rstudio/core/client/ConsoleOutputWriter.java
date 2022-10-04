@@ -162,11 +162,9 @@ public class ConsoleOutputWriter
       {
          frame.setHeight("" + height + "px");
       } 
-      else
+      else if (height == -1) // aka "fit"
       {
          // TODO: this should rather be done after the frame is loaded
-
-         // if height not specified, render then squeeze to body height
          new Timer()
          {
             @Override
