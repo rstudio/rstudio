@@ -39,7 +39,7 @@ public class RunHyperlink extends Hyperlink
         Match match = HYPERLINK_PATTERN.match(url, 0);
         package_ = match.getGroup(2);
         fun_ = match.getGroup(3);
-        code_ = url.replaceFirst("^(ide|rstudio):run:", "");
+        code_ = url.replaceFirst("^(x-r-|ide:|rstudio:)run:", "");
         
         server_ = RStudioGinjector.INSTANCE.getServer();
     }
@@ -94,5 +94,5 @@ public class RunHyperlink extends Hyperlink
     private Server server_;
 
     // allow code of the form pkg::fn(<args>) where args does not have ;()
-    private static final Pattern HYPERLINK_PATTERN = Pattern.create("^(rstudio|ide):run:(\\w+)::(\\w+)[(][^();]*[)]$", "");
+    private static final Pattern HYPERLINK_PATTERN = Pattern.create("^(x-r-|rstudio:|ide:)run:(\\w+)::(\\w+)[(][^();]*[)]$", "");
 }
