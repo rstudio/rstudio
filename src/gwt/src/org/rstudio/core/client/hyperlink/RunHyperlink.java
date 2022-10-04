@@ -77,7 +77,7 @@ public class RunHyperlink extends Hyperlink
             return false;
 
         String pkg = match.getGroup(2);
-        if (StringUtil.equals(pkg, "base") || StringUtil.equals(pkg, "utils") || StringUtil.equals(pkg, "stats"))
+        if (StringUtil.isOneOf(pkg, "base", "utils", "stats"))
             return false;
         
         return true;
