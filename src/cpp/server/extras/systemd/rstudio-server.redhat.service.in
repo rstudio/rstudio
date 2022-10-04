@@ -8,7 +8,6 @@ Type=forking
 PIDFile=/run/rstudio-server.pid
 ExecStart=${CMAKE_INSTALL_PREFIX}/bin/rserver
 ExecStop=/usr/bin/killall -TERM rserver
-KillMode=none
 Restart=on-failure
 
 [Install]
