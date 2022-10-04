@@ -712,6 +712,10 @@ public class AnsiCode
                   .replace("\b", "<BS>");
    }
 
+   private static String ESC = "\u001b";
+   private static String OSC = ESC + "\\]";
+   private static String BEL = "\7";
+   private static String ST = "(?:" + BEL + "|" + ESC +"\\\\)";
 
    // Control characters handled by R console, plus leading character of
    // ANSI escape sequences
@@ -742,9 +746,9 @@ public class AnsiCode
    public static final Pattern SGR_PARTIAL_ESCAPE_PATTERN = Pattern.create(SGR_PARTIAL_REGEX);
 
    // RegEx to match hyperlinks escape codes
-   // OSC 8 ; [params] ; [url] ; \7
+   // OSC 8 ; [params] ; [url] ; ST
    public static final String HYPERLINK_REGEX = 
-      "^\u001b\\]8;([^;]*);([^\7]*)\7";
+      "^" + OSC + "8;([^;]*);(.*?)" + ST;
 
    // Match hyperlink
    public static final Pattern HYPERLINK_PATTERN = Pattern.create(HYPERLINK_REGEX);
