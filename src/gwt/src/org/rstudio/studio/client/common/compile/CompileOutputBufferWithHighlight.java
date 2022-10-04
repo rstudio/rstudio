@@ -153,7 +153,7 @@ public class CompileOutputBufferWithHighlight extends Composite
    PanelState state_ = PanelState.OK;
    private int numDisplayedLines_;
    private int totalSubmittedLines_;
-   private String savedOutput_;
+   private String savedOutput_ = "";
    private BottomScrollPanel scrollPanel_;
    private ConsoleResources.ConsoleStyles styles_;
    
