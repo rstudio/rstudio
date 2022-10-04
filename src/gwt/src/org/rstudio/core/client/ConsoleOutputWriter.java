@@ -17,7 +17,6 @@ package org.rstudio.core.client;
 import java.util.List;
 
 import com.google.gwt.aria.client.Roles;
-
 import org.rstudio.core.client.dom.DomUtils;
 import org.rstudio.core.client.virtualscroller.VirtualScrollerManager;
 import org.rstudio.core.client.widget.PreWidget;
@@ -156,25 +155,40 @@ public class ConsoleOutputWriter
       RStudioFrame frame = new RStudioFrame("", url);
       frame.setWidth("100%");
       frame.getIFrame().setFrameBorder(0);
-      appendTarget.appendChild(frame.getElement());
-
+      
       if (height > 0) 
       {
          frame.setHeight("" + height + "px");
       } 
       else if (height == -1) // aka "fit"
       {
-         // TODO: this should rather be done after the frame is loaded
-         new Timer()
+         // initialize the frame with height 0 ...
+         frame.setHeight("0px");
+
+         Timer fitTimer = new Timer()
          {
             @Override
             public void run()
             {
-               int bodyHeight = frame.getWindow().getDocument().getBody().getClientHeight() + 20;
-               frame.setHeight("" + bodyHeight + "px");
+               int bodyHeight = frame.getWindow().getDocument().getBody().getClientHeight();
+               if (bodyHeight == 0) 
+               {
+                  // ... so that we can try again if the content was not yet loaded
+                  schedule(50);
+               }
+               else 
+               {
+                  // ... otherwise set the <iframe> height to fit the body height (and then some)
+                  frame.setHeight("" + (bodyHeight + 10 ) + "px");
+               }
+               
             }
-         }.schedule(500);
+         };
+         
+         fitTimer.schedule(50);
       }
+
+      appendTarget.appendChild(frame.getElement());
    }
 
    public boolean trimExcess()
