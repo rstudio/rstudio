@@ -39,11 +39,14 @@ export const kLogLevel = 'log-level';
 export const kDelaySession = 'session-delay';
 export const kSessionExit = 'session-exit';
 export const kHelp = '--help';
+export const kStartupDelay = 'startup-delay';
 
 // RStudio Pro Only
 // export const kSessionServerOption = '--session-server';
 // export const kSessionServerUrlOption = '--session-url';
 // export const kTempCookiesOption = '--use-temp-cookies';
+
+const defaultStartupDelaySeconds = 5;
 
 // !IMPORTANT: If some args should early exit the application, add them to `webpack.plugins.js`
 export class ArgsManager {
@@ -60,6 +63,8 @@ export class ArgsManager {
       console.log('                     --log-level=ERR|WARN|INFO|DEBUG');
       console.log('  --session-delay    Pause the rsession so the "Loading R" screen displays longer');
       console.log('  --session-exit     Terminate the rsession immediately forcing error page to display');
+      console.log('  --startup-delay    Pause before showing the application so the splash screen displays longer');
+      console.log(`                     --startup-delay=<number of seconds> ${defaultStartupDelaySeconds} by default`);
       console.log('  --help             Show this help');
       return exitSuccess();
     }
@@ -129,6 +134,17 @@ export class ArgsManager {
     // switch for setting a session start delay in seconds (used for testing, troubleshooting)
     if (app.commandLine.hasSwitch(kDelaySession)) {
       application.sessionStartDelaySeconds = 5;
+    }
+
+    // switch for forcing the splash to show by adding a startup delay
+    if (app.commandLine.hasSwitch(kStartupDelay)) {
+      let startupDelayValue = parseInt(app.commandLine.getSwitchValue(kStartupDelay));
+
+      if (startupDelayValue < 0 || isNaN(startupDelayValue)) {
+        startupDelayValue = defaultStartupDelaySeconds;
+      }
+
+      application.startupDelayMs = startupDelayValue * 1000;
     }
 
     // switch for forcing rsession to exit immediately with non-zero exit code

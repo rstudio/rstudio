@@ -1,6 +1,10 @@
 
 ## RStudio 2022-10.0 "Elsbeth Geranium" Release Notes
 
+### New
+
+* RStudio now displays a splash screen on startup, while the R session is being initialized. (#11604)
+
 ### R
 
 - Whether pending console input is discarded on error can now be controlled via a preference in the Console pane. (#10391)

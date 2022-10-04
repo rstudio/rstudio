@@ -40,6 +40,11 @@ const config = {
               },
               name: 'choose_r',
             },
+            {
+              html: './src/ui/splash/splash.html',
+              js: './src/ui/splash/splash.ts',
+              name: 'splash',
+            }
           ],
         },
         // uncoment and change these ports to launch multiple debug instances

@@ -44,7 +44,7 @@ import {
   resolveAliasedPath
 } from './utils';
 import { WindowTracker } from './window-tracker';
-import { configureSatelliteWindow, configureSecondaryWindow, focusedWebContents } from './window-utils';
+import { configureSatelliteWindow, configureSecondaryWindow } from './window-utils';
 import { Client, Server } from 'net-ipc';
 
 /**
@@ -60,6 +60,7 @@ export class Application implements AppState {
   gwtCallback?: GwtCallback;
   sessionStartDelaySeconds = 0;
   sessionEarlyExitCode = 0;
+  startupDelayMs = 0;
   pendingWindows = new Array<PendingWindow>();
   server?: Server;
   client?: Client;
