@@ -715,7 +715,7 @@ public class AnsiCode
    private static String ESC = "\u001b";
    private static String OSC = ESC + "\\]";
    private static String BEL = "\7";
-   private static String ST = "(?:" + BEL + "|" + ESC +"\\\\)";
+   private static String ST = "(?:" + BEL + "|" + ESC + "\\\\)";
 
    // Control characters handled by R console, plus leading character of
    // ANSI escape sequences
