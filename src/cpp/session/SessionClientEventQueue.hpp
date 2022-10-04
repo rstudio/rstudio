@@ -38,10 +38,34 @@ class ClientEventQueue;
 ClientEventQueue& clientEventQueue();
 
 class ClientEventQueue : boost::noncopyable
-{   
+{
 private:
    ClientEventQueue();
    friend void initializeClientEventQueue();
+   
+   class BufferedOutput : boost::noncopyable
+   {
+      
+   public:
+      BufferedOutput(int event, bool useConsoleActionLimit)
+         : event_(event),
+           useConsoleActionLimit_(useConsoleActionLimit)
+      {
+      }
+      
+      const std::string& output() const { return output_; }
+      int event() const { return event_; }
+      bool useConsoleActionLimit() const { return useConsoleActionLimit_; }
+      
+      void append(const std::string& data) { output_ += data; }
+      void clear() { output_.clear(); }
+      bool empty() const { return output_.empty(); }
+      
+   private:
+      int event_;
+      std::string output_;
+      bool useConsoleActionLimit_;
+   };
    
 public:
    // COPYING: boost::noncopyable
@@ -68,10 +92,10 @@ public:
    // the active console changed
    bool setActiveConsole(const std::string& console);
       
-private:   
-   void flushPendingConsoleOutput();
-
-   void enqueueClientOutputEvent(int event, const std::string& text);
+private:
+   
+   void flushBufferedOutput(BufferedOutput* pOutput);
+   void flushAllBufferedOutput();
  
 private:
    // synchronization objects. heap based so they are never destructed
@@ -81,13 +105,20 @@ private:
    // it is being destroyed
    boost::mutex* pMutex_;
    boost::condition* pWaitForEventCondition_;
-
+   
    // instance data
-   std::string pendingConsoleOutput_;
    std::string activeConsole_;
    std::vector<ClientEvent> pendingEvents_;
    boost::posix_time::ptime lastEventAddTime_;
    
+   // buffered outputs (required for parts that might overflow)
+   BufferedOutput consoleOutput_;
+   BufferedOutput consoleErrors_;
+   BufferedOutput buildOutput_;
+   
+   // keep vector of pointers to buffered outputs, just to make
+   // iteration easier in places where we need to flush all buffers
+   std::vector<BufferedOutput*> bufferedOutputs_;
 
 };
 

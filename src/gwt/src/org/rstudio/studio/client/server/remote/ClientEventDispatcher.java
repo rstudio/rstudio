@@ -233,7 +233,6 @@ public class ClientEventDispatcher
          {
             public boolean execute()
             {
-               final int MAX_EVENTS_AT_ONCE = 200;
                for (int i = 0;
                     i < MAX_EVENTS_AT_ONCE && pendingEvents_.size() > 0;
                     i++)
@@ -1144,5 +1143,6 @@ public class ClientEventDispatcher
 
    private final ArrayList<ClientEvent> pendingEvents_ = new ArrayList<>();
 
+   private static final int MAX_EVENTS_AT_ONCE = 200;
 
 }

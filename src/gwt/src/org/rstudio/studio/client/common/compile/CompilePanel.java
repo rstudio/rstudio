@@ -186,6 +186,7 @@ public class CompilePanel extends Composite
    public void compileCompleted()
    {
       stopButton_.setVisible(false);
+      outputDisplay_.onCompileCompleted();
 
       if (isErrorPanelShowing())
          errorList_.focus();

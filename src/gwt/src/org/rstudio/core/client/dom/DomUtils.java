@@ -226,49 +226,78 @@ public class DomUtils
    /**
     *
     * @param node
-    * @param pre Count hard returns in text nodes as newlines (only true if
-    *    white-space mode is pre*)
+    * @param pre Count hard returns in text nodes as newlines
+    *   (only true if white-space mode is pre*)
     * @return
     */
    public static int countLines(Node node, boolean pre)
    {
-      switch (node.getNodeType())
+      if (pre)
       {
+         switch (node.getNodeType())
+         {
          case Node.TEXT_NODE:
-            return countLinesInternal((Text)node, pre);
+            return countLinesInternal((Text)node);
          case Node.ELEMENT_NODE:
-            return countLinesInternal((Element)node, pre);
+            return countLinesInternal((Element)node);
          default:
             return 0;
+         }
       }
-   }
-
-   private static int countLinesInternal(Text textNode, boolean pre)
-   {
-      if (!pre)
-         return 0;
-      String value = textNode.getData();
-      Pattern pattern = Pattern.create("\\n");
-      int count = 0;
-      Match m = pattern.match(value, 0);
-      while (m != null)
+      else
       {
-         count++;
-         m = m.nextMatch();
+         // Just count the total number of <br> elements
+         switch (node.getNodeType())
+         {
+         
+         case Node.ELEMENT_NODE:
+            
+            if (Element.as(node).getTagName() == BRElement.TAG)
+            {
+               return 1;
+            }
+            else
+            {
+               return DomUtils.querySelectorAll(Element.as(node), "br").getLength();
+            }
+            
+         default:
+            return 0;
+         }
       }
-      return count;
    }
 
-   private static int countLinesInternal(Element elementNode, boolean pre)
+   private static int countLinesInternal(Node node)
    {
-      if (elementNode.getTagName().equalsIgnoreCase("br"))
-         return 1;
+      switch (node.getNodeType())
+      {
+      
+      case Node.TEXT_NODE:
+      {
+         Text textNode = Text.as(node);
+         String value = textNode.getData();
+         return StringUtil.newlineCount(value);
+      }
+      
+      case Node.ELEMENT_NODE:
+      {
+         Element elementNode = Element.as(node);
+         if (elementNode.getTagName().equalsIgnoreCase("br"))
+            return 1;
 
-      int result = 0;
-      NodeList<Node> children = elementNode.getChildNodes();
-      for (int i = 0; i < children.getLength(); i++)
-         result += countLines(children.getItem(i), pre);
-      return result;
+         int result = 0;
+         NodeList<Node> children = elementNode.getChildNodes();
+         for (int i = 0; i < children.getLength(); i++)
+            result += countLinesInternal(children.getItem(i));
+         return result;
+      }
+      
+      default:
+      {
+         return 0;
+      }
+      
+      }
    }
 
    private final static DomUtilsImpl impl = GWT.create(DomUtilsImpl.class);

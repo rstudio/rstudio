@@ -1257,8 +1257,18 @@ public class StringUtil
    }-*/;
 
    // Count newlines in a string
-   public static native int newlineCount(String str) /*-{
-      return (str.match(/\n/g)||[]).length;
+   public static native int newlineCount(String string)
+   /*-{
+      var count = 0;
+      
+      for (var index = string.indexOf('\n', 0);
+           index !== -1;
+           index = string.indexOf('\n', index + 1))
+      {
+          count++;
+      }
+      
+      return count;
    }-*/;
 
    // Automatically detect the indent size within a document (for documents

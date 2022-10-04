@@ -365,4 +365,8 @@
         <arg value="org.rstudio.studio.client.RStudioUnitTestSuite"/>
      </java>
    </target>
+
+   <target name="test" depends="unittest">
+   </target>
+
 </project>
