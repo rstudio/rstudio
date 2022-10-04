@@ -990,12 +990,12 @@ private:
             std::string file = module_context::createAliasedPath(FilePath(match[1]));
 
             // replace the leading './' with the directory name
-            // (git grep doesn't prepend a '.' so we need to be careful here)
+            // (git grep and GNU grep might not prepend a './' by default)
             if (boost::algorithm::starts_with(file, "./"))
             {
                file = workingDir_ + file.substr(1);
             }
-            else if (findResults().gitFlag())
+            else
             {
                file = workingDir_ + "/" + file;
             }
