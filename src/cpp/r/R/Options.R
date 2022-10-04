@@ -41,19 +41,7 @@
 })
 
 # default console_viewer option if not already set
-.rs.setOptionDefault("console_viewer", function(url, height = NULL)
-{
-   if (!is.character(url) || (length(url) != 1))
-      stop("url must be a single element character vector.", call. = FALSE)
-   
-   if (identical(height, "fit"))
-      height <- -1
-   
-   if (!is.null(height) && (!is.numeric(height) || (length(height) != 1)))
-      stop("height must be a single element numeric vector or 'fit'.", call. = FALSE)
-   
-   invisible(.Call("rs_consoleViewer", url, height, PACKAGE = "(embedding)"))
-})
+.rs.setOptionDefault("console_viewer", .rs.api.consoleViewer)
 
 # default page_viewer option if not already set
 .rs.setOptionDefault("page_viewer", function(url,
