@@ -3,18 +3,19 @@
 
 ### R
 
-* Whether pending console input is discarded on error can now be controlled via a preference in the Console pane. (#10391)
-* Improved handling of diagnostics within pipeline expressions. (#11780)
-* Improved handling of diagnostics within glue() expressions.
-* Completions within R Markdown documents now respect the `knitr` `root.dir` chunk option if set. (#12047)
-* RStudio now provides autocompletion results for packages used but not loaded within a project.
-* Improved handling of missing arguments for some functions in the diagnostics system.
-* Code editor can show previews of color in strings (R named colors e.g. "tomato3" or of the forms "#rgb", "#rrggbb", "#rrggbbaa")
-  when `Options > Code > Display > [ ] enable preview of named and hexadecimal colors` is checked. 
-* Fixes the bug introduced with `rlang` >= 1.03 where Rmd documents show the error message `object 'partition_yaml_front_matter' not found` upon project startup (#11552)
-* Name autocompletion following a `$` now correctly quotes names that start with underscore followed by alphanumeric characters (#11689)
-* Suspended sessions will now default to using the project directory, rather than the user home directory, if the prior working directory is no longer accessible. (#11960)
-* The fuzzy finder indexes C(++) macros (#11981)
+- Whether pending console input is discarded on error can now be controlled via a preference in the Console pane. (#10391)
+- Improved handling of diagnostics within pipeline expressions. (#11780)
+- Improved handling of diagnostics within glue() expressions.
+- Completions within R Markdown documents now respect the `knitr` `root.dir` chunk option if set. (#12047)
+- RStudio now provides autocompletion results for packages used but not loaded within a project.
+- Improved handling of missing arguments for some functions in the diagnostics system.
+- Code editor can show previews of color in strings (R named colors e.g. "tomato3" or of the forms "#rgb", "#rrggbb", "#rrggbbaa") when `Options > Code > Display > [ ] enable preview of named and hexadecimal colors` is checked.
+- Fixes the bug introduced with `rlang` >= 1.03 where Rmd documents show the error message `object 'partition_yaml_front_matter' not found` upon project startup. (#11552)
+- Name autocompletion following a `$` now correctly quotes names that start with underscore followed by alphanumeric characters. (#11689)
+- Suspended sessions will now default to using the project directory, rather than the user home directory, if the prior working directory is no longer accessible. (#11960)
+- The fuzzy finder indexes C(++) macros. (#11981)
+- Improved handling for large amounts of `message()` output in the Console pane. (#12059)
+- Build output is now truncating when very large amounts of output are produced (e.g. from C++ compilation warnings).
   
 ### Python
 
