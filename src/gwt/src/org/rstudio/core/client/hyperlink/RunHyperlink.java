@@ -83,7 +83,8 @@ public class RunHyperlink extends Hyperlink
         return true;
     }
 
-    public void showHelp(){
+    public void showHelp()
+    {
         server_.showHelpTopic(fun_, package_, RCompletionType.FUNCTION);
     }
 
