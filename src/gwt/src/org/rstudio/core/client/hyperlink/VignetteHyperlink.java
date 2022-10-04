@@ -120,7 +120,7 @@ public class VignetteHyperlink extends Hyperlink
         if (StringUtil.isOneOf(url, "x-r-vignette", "ide:vignette", "rstudio:vignette"))
             return params.containsKey("topic") && params.containsKey("package");
         
-        return url.matches("^(x-r-vignette|ide:|rstudio:)vignette:(\\w+)::([\\w-]+)$");
+        return url.matches("^(x-r-|ide:|rstudio:)vignette:(\\w+)::([\\w-]+)$");
     }
     
     private String topic_;
