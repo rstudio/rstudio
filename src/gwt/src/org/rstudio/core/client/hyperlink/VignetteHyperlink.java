@@ -113,16 +113,14 @@ public class VignetteHyperlink extends Hyperlink
 
             }
         });
-
-        
     }
 
     public static boolean handles(String url, Map<String, String> params)
     {
-        if (StringUtil.equals(url, "ide:vignette") || StringUtil.equals(url, "rstudio:vignette"))
+        if (StringUtil.isOneOf(url, "x-r-vignette", "ide:vignette", "rstudio:vignette"))
             return params.containsKey("topic") && params.containsKey("package");
         
-        return url.matches("^(ide|rstudio):vignette:(\\w+)::([\\w-]+)$");
+        return url.matches("^(x-r-vignette|ide:|rstudio:)vignette:(\\w+)::([\\w-]+)$");
     }
     
     private String topic_;
