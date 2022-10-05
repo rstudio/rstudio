@@ -2544,7 +2544,6 @@ assign(x = ".rs.acCompletionTypes",
                                additionalArgs,
                                excludeArgs,
                                excludeArgsFromObject,
-                               discardFirst,
                                envir)
    )
    
@@ -2683,13 +2682,26 @@ assign(x = ".rs.acCompletionTypes",
                                                  additionalArgs,
                                                  excludeArgs,
                                                  excludeArgsFromObject,
-                                                 discardFirst,
                                                  envir)
 {
    ## chainObjectName will be provided if the client detected
    ## that we were performing completions within an e.g.
    ## `%>%` chain -- use completions from the associated data object.
    result <- .rs.emptyCompletions()
+   
+   if (length(additionalArgs))
+   {
+      argsToAdd <- .rs.selectFuzzyMatches(additionalArgs, token)
+      result <- .rs.appendCompletions(
+         result,
+         .rs.makeCompletions(
+            token = token,
+            results = argsToAdd,
+            packages = paste0(chainObjectName, " %>% ..."),
+            type = .rs.acCompletionTypes$COLUMN
+         )
+      )
+   }
    
    if (!is.null(chainObjectName) && !excludeArgsFromObject)
    {
@@ -2699,7 +2711,7 @@ assign(x = ".rs.acCompletionTypes",
       
       if (length(object))
       {
-         objectNames <- .rs.getNames(object)
+         objectNames <- setdiff(.rs.getNames(object), additionalArgs)
          if (length(objectNames))
          {
             completions <- .rs.selectFuzzyMatches(objectNames, token)
@@ -2719,29 +2731,17 @@ assign(x = ".rs.acCompletionTypes",
                packages <- paste("[", chainObjectName, "]", sep = "") 
             }
             
-            result <- .rs.makeCompletions(
-               token = token,
-               results = completions,
-               packages = packages,
-               quote = FALSE,
-               type = types
+            result <- .rs.appendCompletions(
+               result, .rs.makeCompletions(
+                  token = token,
+                  results = completions,
+                  packages = packages,
+                  quote = FALSE,
+                  type = types
+               )
             )
          }
       }
-   }
-   
-   if (length(additionalArgs))
-   {
-      argsToAdd <- .rs.selectFuzzyMatches(additionalArgs, token)
-      result <- .rs.appendCompletions(
-         result,
-         .rs.makeCompletions(
-            token = token,
-            results = argsToAdd,
-            packages = paste("*", chainObjectName, "*", sep = ""),
-            type = .rs.acCompletionTypes$UNKNOWN
-         )
-      )
    }
    
    if (length(excludeArgs))
