@@ -297,10 +297,19 @@ private:
          // activate the console
          activateConsole();
 
-         // show in viewer
+         // if the viewer is already on the site just activate it (however for revealjs go
+         // back through standard presentation pane logic)
          if (viewerType_ == kRmdViewerTypePane)
          {
-            showInViewer();
+            if (!formatIsRevealJs() &&
+                boost::algorithm::starts_with(module_context::viewerCurrentUrl(false), viewerUrl()))
+            {
+               module_context::activatePane("viewer");
+            }
+            else
+            {
+               showInViewer();
+            }
          }
       }
 
