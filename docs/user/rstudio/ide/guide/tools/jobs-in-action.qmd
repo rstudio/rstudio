@@ -80,7 +80,7 @@ Execute it as a Job from the **Source** pane via the **Source** \> **Source as a
 
 ![](images/source-plumber-job.png){fig-alt="A screenshot of the Source pane, with the Source > Source as Background Job drop-down option highlighted."}
 
-This will display the plumber API's Swagger interface in the **Viewer** pane, allowing for interactive testing with the active plumber API in real time.
+In the upper-right corner of the RStudio **Viewer** pane, press the reload button ![](images/reload-button.png){height=30}. This will display the plumber API's rapidoc interface in the **Viewer** pane, allowing for interactive testing with the active plumber API in real time.
 
 ![](images/plumber-interaction.png){fig-alt="A screenshot of RStudio with the plumber-job.R file open in the Source pane, the Background job tab selected from the Console pane displaying the url to the API and it's docs, and the Viewer pane displaying the plumber API's Swagger docs."} 
 
@@ -186,14 +186,14 @@ You can also programatically send new data and test new predictions with the vet
 ``` bash
 # This is an example URL and 
 # it will vary between sessions
-Running plumber API at http://127.0.0.1:8322
-Running rapidoc Docs at http://127.0.0.1:8322/__docs__/
+Running plumber API at http://127.0.0.1:6030
+Running rapidoc Docs at http://127.0.0.1:6030/__docs__/
 ```
 
 Add the `/predict` endpoint to the end of the URL and save it as a `vetiver_endpoint()`.
 
 ``` r
-endpoint <- vetiver_endpoint("http://127.0.0.1:8322/predict")
+endpoint <- vetiver_endpoint("http://127.0.0.1:6030/predict")
 ```
 
 You can then make predictions with new data for that model running in the separate **Background Job** process.
