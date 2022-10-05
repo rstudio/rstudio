@@ -2,11 +2,11 @@
 title: "Simplified Interface"
 ---
 
-The RStudio IDE has many features and options to help you work the way that best suits your needs.
+RStudio has many features and options to help you work the way that best suits your needs.
 
-Some features discussed in this article require RStudio 1.3 or newer. In a few cases you need to know if you are using RStudio Desktop or RStudio Server: if RStudio is loaded in your web browser, then you are using RStudio Server; otherwise, you have RStudio Desktop.
+Some features discussed are specific to RStudio Desktop or RStudio Server: if RStudio is loaded in your web browser, then you are using RStudio Server; otherwise, you have RStudio Desktop.
 
-For the purposes of this discussion, "RStudio Server" encompasses both RStudio Server Open Source and RStudio Workbench (previously RStudio Server Pro).
+For the purposes of this discussion, "RStudio Server" encompasses both RStudio Server Open Source and Posit Workbench (previously RStudio Workbench or RStudio Server Pro).
 
 Email accessibility-related questions and comments to [accessibility\@rstudio.com](mailto:accessibility@rstudio.com).
 

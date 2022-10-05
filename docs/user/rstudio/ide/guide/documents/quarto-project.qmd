@@ -14,7 +14,7 @@ RStudio v2022.07.1 and later includes support for editing and preview of [Quarto
 >
 > -   Author with scientific markdown, including equations, citations, crossrefs, figure panels, callouts, advanced layout, and more.
 
-If you are using Quarto within RStudio, it is **strongly** recommended that you use RStudio v2022.07.1 or a later version (the documentation below assumes you are using this build).
+If you are using Quarto within RStudio, it is **strongly** recommended that you use RStudio v2022.07.1 or a later version (the documentation below assumes you are using this build or later).
 
 ## Installing Quarto
 

@@ -2,7 +2,7 @@
 title: "Python"
 ---
 
-RStudio 1.4 brought improved support for the [Python](https://www.python.org/) programming language to the RStudio IDE. This topic explores how Python can be used together with R and RStudio.
+This page explores how Python can be used together with R and RStudio.
 
 ## Getting started
 

@@ -2,9 +2,11 @@
 title: "Screen Reader"
 ---
 
-This article aims to provide screen-reader users with some effective strategies for RStudio IDE navigation.
+This article aims to provide screen-reader users with some effective strategies for RStudio navigation.
 
-Some features discussed in this document require RStudio 1.3, or newer. In a few cases, you need to know if you are using RStudio Desktop or Posit Workbench / RStudio Server. If RStudio is loaded in your web browser, then you are using Posit Workbench or RStudio Server; otherwise, you have RStudio Desktop.
+Some features discussed are specific to RStudio Desktop or RStudio Server: if RStudio is loaded in your web browser, then you are using RStudio Server; otherwise, you have RStudio Desktop.
+
+For the purposes of this discussion, "RStudio Server" encompasses both RStudio Server Open Source and Posit Workbench (previously RStudio Workbench or RStudio Server Pro).
 
 ## Accessibility menu
 
@@ -45,7 +47,7 @@ In most cases, screen reader users will have to keep turning off their virtual c
 
 ### Screen reader settings
 
-When using RStudio Workbench or RStudio Server 1.3 or later with a screen reader, it is essential to enable screen reader support. Once set, this setting is persisted for future RStudio sessions. The option is available to toggle via the main menu at Help / Accessibility / Screen Reader Support, or via the Global Options dialog, under the Accessibility panel.
+When using Posit Workbench or RStudio Server or later with a screen reader, it is essential to enable screen reader support. Once set, this setting is persisted for future RStudio sessions. The option is available to toggle via the main menu at Help / Accessibility / Screen Reader Support, or via the Global Options dialog, under the Accessibility panel.
 
 The easiest way to enable the \"Screen Reader Support\" mode, however, is using its own keyboard shortcut by pressing \"Alt+Shift+/ (forward slash)\" on Windows or Linux; \"Ctrl+Option+/ (forward slash)\" on Mac.
 
@@ -95,9 +97,9 @@ Our last recommendation, \"Reduce User Interface Animations,\" will simplify som
 
 ### Application layout
 
-As described in the [basic concept](#basic-concept) above, Posit Workbench and RStudio Server are web-based applications loaded inside your browser.
+As described in the [basic concept](#basic-concepts) above, Posit Workbench and RStudio Server are web-based applications loaded inside your browser.
 
-To provide screen-reader users with overview of the application layout, the RStudio 1.3 or later has been annotated to divide it up into named landmarks (also known as regions in some screen readers). The regions in the default visual layout of RStudio are as follows:
+To provide screen-reader users with overview of the application layout, RStudio is annotated to divide it up into named landmarks (also known as regions in some screen readers). The regions in the default visual layout of RStudio are as follows:
 
 1.  Banner (the RStudio logo in the upper-left)
 
@@ -125,7 +127,7 @@ To provide screen-reader users with overview of the application layout, the RStu
 
 ### Menubar navigation
 
-RStudio Workbench or RStudio Server 1.3 or newer adds customizable keyboard shortcuts to get focus to the main menu, at which point the arrow keys can be used to navigate around the menus in essentially the same manner as standard application menus.
+Posit Workbench or RStudio Server adds customizable keyboard shortcuts to get focus to the main menu, at which point the arrow keys can be used to navigate around the menus in essentially the same manner as standard application menus.
 
 On Windows and Linux, each menu is access via \"Alt+Shift\" key combination; on Mac, it is \"Ctrl+Opt\" modifiers.
 
