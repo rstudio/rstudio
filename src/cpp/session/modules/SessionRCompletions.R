@@ -1026,7 +1026,8 @@ assign(x = ".rs.acCompletionTypes",
          packages = string,
          quote = FALSE,
          type = type,
-         excludeOtherCompletions = TRUE
+         excludeOtherCompletions = TRUE, 
+         context = if (exportsOnly) .rs.acContextTypes$NAMESPACE_EXPORTED else .rs.acContextTypes$NAMESPACE_ALL
       )
    }
    
@@ -1450,7 +1451,8 @@ assign(x = ".rs.acCompletionTypes",
          quote = FALSE,
          type = type,
          excludeOtherCompletions = TRUE,
-         helpHandler = helpHandler
+         helpHandler = helpHandler, 
+         context = if (isAt) .rs.acContextTypes$AT else .rs.acContextTypes$DOLLAR
       )
    }
    
