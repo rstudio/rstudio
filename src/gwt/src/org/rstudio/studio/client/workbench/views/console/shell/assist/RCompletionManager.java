@@ -1936,6 +1936,7 @@ public class RCompletionManager implements CompletionManager
       private String quoteIfNotSyntacticNameCompletion(QualifiedName name)
       {
          String value = name.name;
+         
          // we don't quote for certain completion types
          int type = name.type;
          if (type == RCompletionType.ROXYGEN ||
@@ -1943,7 +1944,8 @@ public class RCompletionManager implements CompletionManager
              type == RCompletionType.ARGUMENT ||
              type == RCompletionType.OPTION ||
              type == RCompletionType.CONTEXT ||
-             type == RCompletionType.KEYWORD)
+             type == RCompletionType.KEYWORD ||
+             type == RCompletionType.FUNCTION)
          {
             return value;
          }
