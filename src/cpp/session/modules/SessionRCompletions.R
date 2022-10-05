@@ -229,7 +229,8 @@ assign(x = ".rs.acCompletionTypes",
    .rs.makeCompletions(tag,
                        matchingTags,
                        type = .rs.acCompletionTypes$ROXYGEN,
-                       excludeOtherCompletions = TRUE)
+                       excludeOtherCompletions = TRUE, 
+                       context = .rs.acContextTypes$ROXYGEN)
 })
 
 .rs.addFunction("attemptPlumberTagCompletion", function(token, line)
@@ -298,7 +299,8 @@ assign(x = ".rs.acCompletionTypes",
    .rs.makeCompletions(tag,
                        matchingTags,
                        type = .rs.acCompletionTypes$ROXYGEN,
-                       excludeOtherCompletions = TRUE)
+                       excludeOtherCompletions = TRUE, 
+                       context = .rs.acContextTypes$PLUMBER)
 })
 
 .rs.addFunction("getCompletionsVignettes", function(token)
@@ -1037,8 +1039,7 @@ assign(x = ".rs.acCompletionTypes",
                                              excludeOtherCompletions = FALSE,
                                              overrideInsertParens = FALSE,
                                              orderStartsWithAlnumFirst = TRUE,
-                                             language = "R", 
-                                             context = .rs.acContextTypes$UNKNOWN)
+                                             language = "R")
 {
    .rs.makeCompletions(
       token = token,
@@ -1051,7 +1052,7 @@ assign(x = ".rs.acCompletionTypes",
       overrideInsertParens = .rs.scalar(overrideInsertParens),
       orderStartsWithAlnumFirst = .rs.scalar(orderStartsWithAlnumFirst),
       language = .rs.scalar(language), 
-      context = context
+      context = numeric()
    )
 })
 
@@ -1103,7 +1104,7 @@ assign(x = ".rs.acCompletionTypes",
                                             cacheable = TRUE,
                                             helpHandler = NULL,
                                             language = "R", 
-                                            context = .rs.acContextTypes$UNKNOWN)
+                                            context = numeric())
 {
    if (is.null(results))
       results <- character()
@@ -1117,6 +1118,7 @@ assign(x = ".rs.acCompletionTypes",
    quote    <- .rs.formCompletionVector(quote, FALSE, n)
    type     <- .rs.formCompletionVector(type, .rs.acCompletionTypes$UNKNOWN, n)
    meta     <- .rs.formCompletionVector(meta, "", n)
+   context  <- .rs.formCompletionVector(context, .rs.acCompletionTypes$UNKNOWN, n)
    
    # Favor completions starting with a letter
    if (orderStartsWithAlnumFirst)
@@ -1592,7 +1594,8 @@ assign(x = ".rs.acCompletionTypes",
       packages = matches,
       quote = quote,
       type = .rs.acCompletionTypes$PACKAGE,
-      excludeOtherCompletions = excludeOtherCompletions
+      excludeOtherCompletions = excludeOtherCompletions, 
+      context = .rs.acContextTypes$PACKAGE
    )
    
    .rs.sortCompletions(
@@ -2010,7 +2013,7 @@ assign(x = ".rs.acCompletionTypes",
                        type = .rs.acCompletionTypes$STRING)
 })
 
-.rs.addFunction("readlineCompletions", function(token, context = .rs.acContextTypes$UNKNOWN) 
+.rs.addFunction("readlineCompletions", function(token) 
 {
    nframes <- sys.nframe()
    for (i in seq_len(nframes)) {
@@ -2032,12 +2035,11 @@ assign(x = ".rs.acCompletionTypes",
             return(.rs.makeCompletions(token = token,
                                        results = results,
                                        quote = FALSE,
-                                       type = .rs.acCompletionTypes$STRING, 
-                                       context = context))
+                                       type = .rs.acCompletionTypes$STRING))
          }
          else 
          {
-            return(.rs.emptyCompletions(excludeOtherCompletions = TRUE, context = context))
+            return(.rs.emptyCompletions(excludeOtherCompletions = TRUE))
          }
       }  
    }
@@ -2070,7 +2072,7 @@ assign(x = ".rs.acCompletionTypes",
    
    # if base::readline() is on the stack, try to extract choices i.e. (yes/no)
    # and offer those as completions.
-   readLineCompletions <- .rs.readlineCompletions(token, context)
+   readLineCompletions <- .rs.readlineCompletions(token)
    if (!is.null(readLineCompletions))
       return(readLineCompletions)
 
@@ -2179,15 +2181,16 @@ assign(x = ".rs.acCompletionTypes",
             results <- paste(formals$formals, "= ")
             results <- .rs.selectFuzzyMatches(results, token)
             return(.rs.makeCompletions(
-               token = token,
-               results = results,
-               packages = scope,
-               type = .rs.acCompletionTypes$ARGUMENT,
+               token                   = token,
+               results                 = results,
+               packages                = scope,
+               type                    = .rs.acCompletionTypes$ARGUMENT,
                excludeOtherCompletions = TRUE,
-               helpHandler = formals$helpHandler)
+               helpHandler             = formals$helpHandler, 
+               context                 = .rs.acContextTypes$FUNCTION)
             )
          } else {
-            return (.rs.emptyCompletions(excludeOtherCompletions = TRUE))
+            return(.rs.emptyCompletions(excludeOtherCompletions = TRUE))
          }
       }
    }
@@ -2226,10 +2229,7 @@ assign(x = ".rs.acCompletionTypes",
        string[[1]] %in% c(".Call", ".C", ".Fortran", ".External") &&
        numCommas[[1]] == 0)
    {
-      completions <- .rs.appendCompletions(
-         .rs.getCompletionsNativeRoutine(token, string[[1]]),
-         .rs.getCompletionsSearchPath(token))
-      return(completions)
+      return(.rs.getCompletionsNativeRoutine(token, string[[1]]))
    }
    
    # data
@@ -2768,7 +2768,7 @@ assign(x = ".rs.acCompletionTypes",
 
 .rs.addFunction("getRCompletions", function(token,
                                             string,
-                                            type,
+                                            context,
                                             numCommas,
                                             functionCall,
                                             discardFirst,
@@ -2776,14 +2776,14 @@ assign(x = ".rs.acCompletionTypes",
                                             envir)
 {
    .rs.appendCompletions(
-      .rs.getCompletionsLibraryContext(token, string, type, numCommas, functionCall, discardFirst, documentId, envir),
-      if (type == .rs.acContextTypes$FUNCTION)
+      .rs.getCompletionsLibraryContext(token, string, context, numCommas, functionCall, discardFirst, documentId, envir),
+      if (context == .rs.acContextTypes$FUNCTION)
          .rs.getCompletionsFunction(token, string, functionCall, numCommas, envir)
-      else if (type == .rs.acContextTypes$ARGUMENT)
+      else if (context == .rs.acContextTypes$ARGUMENT)
          .rs.getCompletionsArgument(token, string, functionCall, envir)
-      else if (type == .rs.acContextTypes$SINGLE_BRACKET)
+      else if (context == .rs.acContextTypes$SINGLE_BRACKET)
          .rs.getCompletionsSingleBracket(token, string, functionCall, numCommas, envir)
-      else if (type == .rs.acContextTypes$DOUBLE_BRACKET)
+      else if (context == .rs.acContextTypes$DOUBLE_BRACKET)
          .rs.getCompletionsDoubleBracket(token, string, functionCall, envir)
       else
          .rs.emptyCompletions()
@@ -2806,7 +2806,7 @@ assign(x = ".rs.acCompletionTypes",
       error = function(e) character()
    )
    
-   ## If the the current search paths have changed, invalidate
+   ## If the current search paths have changed, invalidate
    ## the cache and update our aliases
    paths <- searchpaths()[substring(search(), 1, 8) == "package:"]
    if (!identical(basename(paths), attachedPackagesCache))
@@ -2866,12 +2866,13 @@ assign(x = ".rs.acCompletionTypes",
    listed <- .rs.namedVectorAsList(filtered)
    
    completions <- .rs.makeCompletions(
-      token = token,
-      results = listed$values,
-      packages = listed$names,
-      quote = quote,
-      type = .rs.acCompletionTypes$HELP,
-      overrideInsertParens = TRUE
+      token                = token,
+      results              = listed$values,
+      packages             = listed$names,
+      quote                = quote,
+      type                 = .rs.acCompletionTypes$HELP,
+      overrideInsertParens = TRUE, 
+      context              = .rs.acContextTypes$HELP
    )
    
    .rs.sortCompletions(completions, token)
