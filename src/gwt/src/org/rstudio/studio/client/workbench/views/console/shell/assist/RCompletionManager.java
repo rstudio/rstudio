@@ -919,7 +919,7 @@ public class RCompletionManager implements CompletionManager
    // 2. The associated function call (if any -- for arguments),
    // 3. The associated data for a `[` call (if any -- completions from data object),
    // 4. The associated data for a `[[` call (if any -- completions from data object)
-   class AutocompletionContext {
+   public class AutocompletionContext {
       
       // Be sure to sync these with 'SessionRCompletions.R'!
       public static final int TYPE_UNKNOWN = 0;
@@ -1944,8 +1944,7 @@ public class RCompletionManager implements CompletionManager
              type == RCompletionType.ARGUMENT ||
              type == RCompletionType.OPTION ||
              type == RCompletionType.CONTEXT ||
-             type == RCompletionType.KEYWORD ||
-             type == RCompletionType.FUNCTION)
+             type == RCompletionType.KEYWORD)
          {
             return value;
          }
@@ -1959,12 +1958,32 @@ public class RCompletionManager implements CompletionManager
          if (isSpecialSource)
             return value;
          
-         // if this is already a syntactic identifier, no quote is required
-         if (RegexUtil.isSyntacticRIdentifier(value) && !isKeyword(value))
-            return value;
+         // quote if: 
+         // - keywords, but just in a ::, :::, $, or @ contexts
+         // - non syntactic
+         boolean quote = false;
+
+         int context = name.context;
+         if (isKeyword(value)) 
+         {
+            if (context == AutocompletionContext.TYPE_AT ||
+                context == AutocompletionContext.TYPE_DOLLAR ||
+                context == AutocompletionContext.TYPE_NAMESPACE_EXPORTED ||
+                context == AutocompletionContext.TYPE_NAMESPACE_ALL)
+            {
+               quote = true;
+            }
+         }
+         else if (!RegexUtil.isSyntacticRIdentifier(value))
+         {
+            quote = true;
+         }
          
-         // otherwise, quote
-         return "`" + value.replaceAll("`", "\\`") + "`";
+         // if this is already a syntactic identifier, no quote is required
+         if (quote)
+            return "`" + value.replaceAll("`", "\\`") + "`";
+         
+         return value;
       }
 
       private boolean isKeyword(String value)

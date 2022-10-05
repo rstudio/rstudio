@@ -755,7 +755,8 @@ public class CompletionRequester
                   false,
                   true,
                   null,
-                  null);
+                  null, 
+                  JsUtil.toJsArrayInteger(new ArrayList<>(result.completions.length())));
 
             // Unlike other completion types, Sweave completions are not
             // guaranteed to narrow the candidate list (in particular
@@ -842,6 +843,21 @@ public class CompletionRequester
                            String helpHandler,
                            String language)
       {
+         this(name, display, source, shouldQuote, type, suggestOnAccept, replaceToEnd, meta, helpHandler, language, RCompletionManager.AutocompletionContext.TYPE_UNKNOWN);
+      }
+
+      public QualifiedName(String name,
+                           String display,
+                           String source,
+                           boolean shouldQuote,
+                           int type,
+                           boolean suggestOnAccept,
+                           boolean replaceToEnd,
+                           String meta,
+                           String helpHandler,
+                           String language, 
+                           int context)
+      {
          this.name = name;
          this.display = display;
          this.source = source;
@@ -852,6 +868,7 @@ public class CompletionRequester
          this.meta = meta;
          this.helpHandler = helpHandler;
          this.language = language;
+         this.context = context;
       }
 
       public static QualifiedName createSnippet(String name)
@@ -1122,6 +1139,7 @@ public class CompletionRequester
       public final String source;
       public final boolean shouldQuote;
       public final int type;
+      public final int context;
       public final boolean suggestOnAccept;
       public final boolean replaceToEnd;
       public final String meta;

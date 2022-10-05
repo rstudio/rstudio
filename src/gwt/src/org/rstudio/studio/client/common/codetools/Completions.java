@@ -35,7 +35,8 @@ public class Completions extends JavaScriptObject
                                                       boolean overrideInsertParens,
                                                       boolean cacheable,
                                                       String helpHandler,
-                                                      String language)
+                                                      String language, 
+                                                      JsArrayInteger context)
    /*-{
       return {
          token: [token],
@@ -44,6 +45,7 @@ public class Completions extends JavaScriptObject
          packages: packages,
          quote: quote,
          type: type,
+         context: context,
          suggestOnAccept: suggestOnAccept,
          replaceToEnd: replaceToEnd,
          meta: meta,
@@ -116,6 +118,10 @@ public class Completions extends JavaScriptObject
    
    public final native JsArrayString getMeta() /*-{
       return this.meta;
+   }-*/;
+
+   public final native JsArrayInteger getContext() /*-{
+      return this.context;
    }-*/;
 
    // provide suggestOnAccept if it isn't present (server completions will 
