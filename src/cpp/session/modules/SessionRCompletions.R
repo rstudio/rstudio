@@ -2006,33 +2006,8 @@ assign(x = ".rs.acCompletionTypes",
                        type = .rs.acCompletionTypes$STRING)
 })
 
-.rs.addJsonRpcHandler("get_completions", function(token,
-                                                  string,
-                                                  context,
-                                                  numCommas,
-                                                  functionCallString,
-                                                  chainObjectName,
-                                                  additionalArgs,
-                                                  excludeArgs,
-                                                  excludeArgsFromObject,
-                                                  filePath,
-                                                  documentId,
-                                                  line,
-                                                  isConsole)
+.rs.addFunction("readlineCompletions", function(token) 
 {
-   # Ensure UTF-8 encoding, as that's the encoding set when passed down from
-   # the client
-   token <- .rs.setEncodingUnknownToUTF8(token)
-   string <- .rs.setEncodingUnknownToUTF8(string)
-   functionCallString <- .rs.setEncodingUnknownToUTF8(functionCallString)
-   chainObjectName <- .rs.setEncodingUnknownToUTF8(chainObjectName)
-   additionalArgs <- .rs.setEncodingUnknownToUTF8(additionalArgs)
-   excludeArgs <- .rs.setEncodingUnknownToUTF8(excludeArgs)
-   excludeArgsFromObject <- .rs.setEncodingUnknownToUTF8(excludeArgsFromObject)
-   filePath <- .rs.setEncodingUnknownToUTF8(filePath)
-   
-   # if base::readline() is on the stack, try to extract choices i.e. (yes/no)
-   # and offer those as completions.
    nframes <- sys.nframe()
    for (i in seq_len(nframes)) {
       fun <- sys.function(i)
@@ -2061,6 +2036,38 @@ assign(x = ".rs.acCompletionTypes",
          }
       }  
    }
+})
+
+.rs.addJsonRpcHandler("get_completions", function(token,
+                                                  string,
+                                                  context,
+                                                  numCommas,
+                                                  functionCallString,
+                                                  chainObjectName,
+                                                  additionalArgs,
+                                                  excludeArgs,
+                                                  excludeArgsFromObject,
+                                                  filePath,
+                                                  documentId,
+                                                  line,
+                                                  isConsole)
+{
+   # Ensure UTF-8 encoding, as that's the encoding set when passed down from
+   # the client
+   token <- .rs.setEncodingUnknownToUTF8(token)
+   string <- .rs.setEncodingUnknownToUTF8(string)
+   functionCallString <- .rs.setEncodingUnknownToUTF8(functionCallString)
+   chainObjectName <- .rs.setEncodingUnknownToUTF8(chainObjectName)
+   additionalArgs <- .rs.setEncodingUnknownToUTF8(additionalArgs)
+   excludeArgs <- .rs.setEncodingUnknownToUTF8(excludeArgs)
+   excludeArgsFromObject <- .rs.setEncodingUnknownToUTF8(excludeArgsFromObject)
+   filePath <- .rs.setEncodingUnknownToUTF8(filePath)
+   
+   # if base::readline() is on the stack, try to extract choices i.e. (yes/no)
+   # and offer those as completions.
+   readLineCompletions <- .rs.readlineCompletions()
+   if (!is.null(readLineCompletions))
+      return(readLineCompletions)
 
    # If the R console is requesting completions, but the Python REPL is
    # active, then delegate to that machinery.
