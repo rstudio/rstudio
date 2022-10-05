@@ -919,7 +919,7 @@ public class RCompletionManager implements CompletionManager
    // 2. The associated function call (if any -- for arguments),
    // 3. The associated data for a `[` call (if any -- completions from data object),
    // 4. The associated data for a `[[` call (if any -- completions from data object)
-   class AutocompletionContext {
+   public class AutocompletionContext {
       
       // Be sure to sync these with 'SessionRCompletions.R'!
       public static final int TYPE_UNKNOWN = 0;

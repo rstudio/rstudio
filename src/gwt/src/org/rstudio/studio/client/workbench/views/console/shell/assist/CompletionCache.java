@@ -93,6 +93,7 @@ public class CompletionCache
       JsArrayString packages    = original.getPackages();
       JsArrayBoolean quote      = original.getQuote();
       JsArrayInteger type       = original.getType();
+      JsArrayInteger context    = original.getContext();
       JsArrayBoolean suggestOnAccept = original.getSuggestOnAccept();
       JsArrayBoolean replaceToEnd = original.getReplaceToEnd();
       JsArrayString meta        = original.getMeta();
@@ -159,6 +160,7 @@ public class CompletionCache
       final JsVectorString packagesSorted    = JsVectorString.createVector().cast();
       final JsVectorBoolean quoteSorted      = JsVectorBoolean.createVector().cast();
       final JsVectorInteger typeSorted       = JsVectorInteger.createVector().cast();
+      final JsVectorInteger contextSorted    = JsVectorInteger.createVector().cast();
       final JsVectorBoolean suggestOnAcceptSorted = JsVectorBoolean.createVector().cast();
       final JsVectorBoolean replaceToEndSorted = JsVectorBoolean.createVector().cast();
       final JsVectorString metaSorted        = JsVectorString.createVector().cast();
@@ -171,6 +173,7 @@ public class CompletionCache
          packagesSorted.push(packagesNarrow.get(index));
          quoteSorted.push(quoteNarrow.get(index));
          typeSorted.push(typeNarrow.get(index));
+         contextSorted.push(context.get(index));
          suggestOnAcceptSorted.push(suggestOnAcceptNarrow.get(index));
          replaceToEndSorted.push(replaceToEndNarrow.get(index));
          metaSorted.push(metaNarrow.get(index));
@@ -192,7 +195,9 @@ public class CompletionCache
             original.getOverrideInsertParens(),
             original.isCacheable(),
             original.getHelpHandler(),
-            original.getLanguage());
+            original.getLanguage(), 
+            contextSorted.cast()
+            );
    }
    
    private final SafeMap<String, Completions> cache_;

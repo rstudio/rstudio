@@ -140,7 +140,8 @@ public class YamlCompletionManager extends CompletionManagerBase
                true,
                true,
                null,
-               null);         
+               null, 
+               JsUtil.toJsArrayInteger(new ArrayList<>(values.size())));         
          response.setCacheable(cacheable);
          context.onResponseReceived(response); 
       });
