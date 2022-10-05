@@ -1037,7 +1037,8 @@ assign(x = ".rs.acCompletionTypes",
                                              excludeOtherCompletions = FALSE,
                                              overrideInsertParens = FALSE,
                                              orderStartsWithAlnumFirst = TRUE,
-                                             language = "R")
+                                             language = "R", 
+                                             context = .rs.acContextTypes$UNKNOWN)
 {
    .rs.makeCompletions(
       token = token,
@@ -1049,7 +1050,8 @@ assign(x = ".rs.acCompletionTypes",
       excludeOtherCompletions = .rs.scalar(excludeOtherCompletions),
       overrideInsertParens = .rs.scalar(overrideInsertParens),
       orderStartsWithAlnumFirst = .rs.scalar(orderStartsWithAlnumFirst),
-      language = .rs.scalar(language)
+      language = .rs.scalar(language), 
+      context = context
    )
 })
 
@@ -1100,7 +1102,8 @@ assign(x = ".rs.acCompletionTypes",
                                             orderStartsWithAlnumFirst = TRUE,
                                             cacheable = TRUE,
                                             helpHandler = NULL,
-                                            language = "R")
+                                            language = "R", 
+                                            context = .rs.acContextTypes$UNKNOWN)
 {
    if (is.null(results))
       results <- character()
@@ -1156,7 +1159,8 @@ assign(x = ".rs.acCompletionTypes",
         overrideInsertParens = .rs.scalar(overrideInsertParens),
         cacheable = .rs.scalar(cacheable),
         helpHandler = .rs.scalar(helpHandler),
-        language = .rs.scalar(language))
+        language = .rs.scalar(language), 
+        context = context)
 })
 
 .rs.addFunction("subsetCompletions", function(completions, indices)
@@ -2006,7 +2010,7 @@ assign(x = ".rs.acCompletionTypes",
                        type = .rs.acCompletionTypes$STRING)
 })
 
-.rs.addFunction("readlineCompletions", function(token) 
+.rs.addFunction("readlineCompletions", function(token, context = .rs.acContextTypes$UNKNOWN) 
 {
    nframes <- sys.nframe()
    for (i in seq_len(nframes)) {
@@ -2028,11 +2032,12 @@ assign(x = ".rs.acCompletionTypes",
             return(.rs.makeCompletions(token = token,
                                        results = results,
                                        quote = FALSE,
-                                       type = .rs.acCompletionTypes$STRING))
+                                       type = .rs.acCompletionTypes$STRING, 
+                                       context = context))
          }
          else 
          {
-            return(.rs.emptyCompletions(excludeOtherCompletions = TRUE))
+            return(.rs.emptyCompletions(excludeOtherCompletions = TRUE, context = context))
          }
       }  
    }
@@ -2065,7 +2070,7 @@ assign(x = ".rs.acCompletionTypes",
    
    # if base::readline() is on the stack, try to extract choices i.e. (yes/no)
    # and offer those as completions.
-   readLineCompletions <- .rs.readlineCompletions()
+   readLineCompletions <- .rs.readlineCompletions(token, context)
    if (!is.null(readLineCompletions))
       return(readLineCompletions)
 
