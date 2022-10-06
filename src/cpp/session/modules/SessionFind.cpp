@@ -986,10 +986,11 @@ private:
          boost::regex pattern = getGrepOutputRegex(findResults().gitFlag());
          if (regex_utils::match(line, match, pattern) && match.size() > 1)
          {
-            
             // build the file path -- note that 'grep' results may or may not include
-            // a leading './', so we need to be careful to handle both forms of output
-            std::string file = ([&]{
+            // a leading './', so we need to be careful to handle both forms of output.
+            //
+            // use a helper lambda just to make control flow a bit easier to manage
+            auto resolveFile = [&] {
                
                // check for absolute paths
                std::string file = match[1];
@@ -1003,9 +1004,10 @@ private:
                // all else fails, assume we need to prepend the working directory
                return module_context::createAliasedPath(FilePath(workingDir_)) + "/" + file;
                
-            })();
+            };
 
             // normal skip heuristics
+            std::string file = resolveFile();
             if (shouldSkipFile(file))
                continue;
 
