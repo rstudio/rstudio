@@ -4,9 +4,9 @@ title: "Writing Packages"
 
 R packages are an ideal way to package and distribute R code and data for re-use by others. RStudio includes a variety of tools that make developing R packages easier and more productive, including:
 
--   Build pane with package development commands and a view of build output and errors
+-   **Build** pane with package development commands and a view of build output and errors
 
--   Build and Reload command that rebuilds the package and reloads it in a fresh R session.
+-   **Clean and Install** command that rebuilds the package and reloads it in a fresh R session.
 
 -   R documentation tools including previewing, spell-checking, and [Roxygen](https://roxygen2.r-lib.org/) aware editing.
 
@@ -84,7 +84,7 @@ To enable RStudio's package development tools for an existing package do the fol
 
 ## Building a package
 
-To build the completed package in RStudio, use the **Build** pane, which includes a variety of tools for building and testing packages. While iteratively developing a package in RStudio, you typically use the **Install** > **Clean and Install** command or call **Clean and Install** from the Command Palette to re-build the package and reload it in a fresh R session:
+To build the completed package in RStudio, use the **Build** pane, which includes a variety of tools for building and testing packages. While iteratively developing a package in RStudio, you typically use the **Install** > **Clean and Install** command or call **Clean and Install** from the Command Palette to re-build the package and reinstall it in a fresh R session:
 
 ![](images/build-reload-pkg.png){fig-alt="The build pane in RStudio, showing the output of a 'Clean and Install' command."}
 

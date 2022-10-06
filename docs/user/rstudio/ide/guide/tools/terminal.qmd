@@ -10,11 +10,11 @@ This article does not attempt to cover fundamentals on when and how to use a sys
 
 Unlike most RStudio features, the nature of the terminal leads to several platform-specific differences. These primarily break down into two categories: Windows, and everything else (Mac, Linux, and Server). Windows provides emulators for unix-based terminals such as Git Bash, Windows Subsystem for Linux, or PowerShell.
 
-## Getting Started
+## Getting started
 
 The **Terminal tab** is next to the **Console tab**. Click on the Terminal tab and a new terminal session will be created (if there isn't one already).
 
--   If the tab isn't visible, display it via **Tools** \> **Terminal** \> **Move Focus to Terminal** (or use the keyboard shortcut <kbd>Shift+Alt+T</kbd>).
+-   If the tab isn't visible, display it via **Tools** \> **Terminal** \> **Move Focus to Terminal** (or use the keyboard shortcut <kbd>Shift+Alt+M</kbd> or <kbd>Shift+Option+M</kbd> on Mac).
 
 -   The full list of terminal-related keyboard shortcuts is in the Reference: Keyboard Shortcuts [Terminal section](../../reference/shortcuts.html#terminal). Most terminal-related commands can be found on the **Terminal drop-down** menu in the terminal pane, and on the **Tools** > **Terminal** menu.
 
@@ -37,7 +37,7 @@ Each terminal session is independent, with its own system shell process and buff
 
 ![](images/terminal-menu-labeled.png){fig-alt="screenshot showing navigation between multiple terminals"}
 
-## Terminal Names
+## Terminal names
 
 Terminal sessions have a default name, "Terminal 1", "Terminal 2", and so on. Rename the current terminal via the **Rename Terminal** command on the drop-down. 
 
@@ -45,7 +45,7 @@ Thus, in your workflow, you can create multiple terminals and give them meaningf
 
 An alternative (or complementary) approach is to use a terminal multiplexer such as Tmux or Screen.
 
-## Execute in Terminal
+## Execute in terminal
 
 When editing files in the RStudio editor, any selection (or the current line if nothing is selected) can be sent to the active terminal via <kbd>Ctrl+Alt+Enter</kbd> (<kbd>Cmd+Alt+Enter</kbd> on the Mac). If a single-line was sent to the terminal the cursor will advance automatically to the next line, allowing single-stepping.
 
@@ -66,7 +66,7 @@ If a shell file is being edited (`*.sh`), <kbd>Ctrl+Enter</kbd> (<kbd>Cmd+Enter<
 
 The **Run Script** button does the same as prior versions of RStudio and will save and run the entire script via `system()` in the R Console. This button does not appear in Windows.
 
-## Busy Terminals
+## Busy terminals
 
 Programs running in a terminal do not block the rest of the RStudio user-interface, so work can continue working in RStudio even when one or more terminal sessions have a child process running.
 
@@ -81,7 +81,7 @@ A terminal with child processes is considered *busy* by RStudio, and will have:
 
 This "busy detection" feature is only available on Mac, Linux, and Posit Workbench / RStudio Server and not on Windows.
 
-## Closing Terminal Sessions
+## Closing terminal sessions
 
 To close a terminal session, use the **Close Terminal** command on the Terminal drop-down menu, click the **x** on the far-right of the Terminal pane toolbar, or type **exit** from within the shell itself.
 
@@ -91,7 +91,7 @@ Clicking the **STOP** button will trigger the **Interrupt Current Terminal** com
 
 Finally, if the terminal feature it not useful to your workflow, you can remove the tab altogether by clicking the **x** on the Terminal tab itself. This will close all running terminal sessions, including any custom-named terminal sessions. Subsequent instances of RStudio will not show the Terminal tab: to bring it back, use **Tools** \> **Terminal** \> **Move Focus to Terminal** (keyboard shortcut: <kbd>Shift+Alt+T</kbd>).
 
-## Terminal Buffer
+## Terminal buffer
 
 The terminal buffer keeps the last 1000 lines of output when running non-full-screen terminal programs. Scroll through this buffer using the scrollbars (via the mouse) or a mouse-wheel if the system supports it. Full-screen programs typically have their own built-in buffers and navigation conventions.
 

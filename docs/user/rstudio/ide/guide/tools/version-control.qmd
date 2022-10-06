@@ -62,7 +62,7 @@ Once a Version Control system has been installed, it needs to be activated on th
 
 3.  Click **Enable version control interface for RStudio projects**
 
-4.  If necessary, enter the path for the Git or SVN executable where provided. A RSA key can be created or added for SSH if necessary.
+4.  If necessary, enter the path for the Git or SVN executable where provided. A SSH key can be created or added for SSH if necessary.
 
 ![](images/version-control-options.png){fig-alt="A screenshot of the Git/SVN tab in Global Options displaying an active Git executable."}
 
@@ -166,13 +166,13 @@ RStudio includes functionality to make it more straightforward to use the shell 
 
 Version control repositories can typically be accessed using a variety of protocols (including http and https). Many repositories can also be accessed using SSH (this is the mode of connection for many hosting services including GitHub and R-Forge).
 
-In many cases the authentication for an SSH connection is done using public/private RSA key pairs. This type of authentication requires two steps:
+In many cases the authentication for an SSH connection is done using public/private SSH key pairs. This type of authentication requires two steps:
 
 1.  Generate a public/private key pair
 
 2.  Provide the public key to the hosting provider (e.g. GitHub or R-Forge)
 
-To make working with RSA key pairs more straightforward the RStudio Version Control options panel can be used to both create new RSA public/private key pairs as well as view and copy the current RSA public key.
+To make working with SSH key pairs more straightforward the RStudio Version Control options panel can be used to both create new SSH public/private key pairs as well as view and copy the current SSH public key.
 
 While Linux and Mac OSX both include SSH as part of the base system, Windows does not. As a result the standard Windows distribution of Git (Msysgit, referenced above) also includes an SSH client.
 

@@ -2,7 +2,7 @@
 title: "Themes"
 ---
 
-## Switching Global Themes
+## Switching global themes
 
 RStudio provides support for two global themes that customize the RStudio IDE's user interface: Modern and Sky. By default, the Modern theme is selected.
 
@@ -10,7 +10,7 @@ The Modern theme flattens all user interface elements with a default white backg
 
 To switch between RStudio themes, from the **Tools** \> **Global Options \> Appearance** menu, use the **RStudio theme** dropdown.
 
-## Editor Themes
+## Editor themes
 
 RStudio provides support for adding custom editor themes in one of two formats: tmTheme or rstheme. The tmTheme format was first introduced for TextMate, and has since become one of the standard formats for themes. This [tmTheme editor](https://tmtheme-editor.herokuapp.com/) also includes a large collection of tmThemes. The rstheme format is specific to RStudio.
 
@@ -18,7 +18,7 @@ To switch between the Editor themes, from the **Tools** \> **Global Options \> A
 
 ![](images/rstudio-theme.png){width="800" fig-alt="A screenshot of the Global Options > Appearance tab, so that the theme of the IDE can be changed."}
 
-## Creating Custom Themes for RStudio
+## Creating custom themes for RStudio
 
 User defined themes are supported in one of two formats: tmTheme and rstheme. A tmTheme is an XML based theme description first introduced by the text editor TextMate. An rstheme is a CSS based theme format designed to work specifically with RStudio. When a tmTheme is added to RStudio, it is converted to an rstheme before it is saved locally. To create a new theme for RStudio, you can write a tmTheme and import it to RStudio, write an rstheme, or write a tmTheme and then modify the rstheme that RStudio will generate for you.
 
@@ -82,11 +82,11 @@ In addition to these rule sets, you will also find a number of rule sets related
 
 Since an rstheme is just CSS, anything that you can do with CSS you can do in an rstheme.
 
-## Testing Changes to a Theme
+## Testing changes to a theme
 
 If you're modifying a theme which has already been added to RStudio, you may need to restart RStudio desktop in order to make the changes take effect.
 
-## Sharing a Theme
+## Sharing a theme
 
 Once you're satisfied with your theme, you can easily share it with anyone by simply sharing the tmTheme or rstheme file. You can find rstheme files in `appdata/roaming/rstudio/themes` on Windows and `~/.config/rstudio/themes` on linux and Mac.
 

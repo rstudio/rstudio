@@ -8,7 +8,7 @@ A few examples of integrating RStudio Jobs with specific development workflows i
 
 ## Shiny app
 
-Running a [Shiny](http://shiny.rstudio.com/) application as a local background job allows the current R session to remain free to work on other things. This can be especially helpful for making changes to the Shiny code and seeing the changes in real time.
+Running a [Shiny](http://shiny.rstudio.com/) for R application as a local background job allows the current R session to remain free to work on other things. This can be especially helpful for making changes to the Shiny code and seeing the changes in real time.
 
 A minimal example of running the Shiny app as a Job is documented below.
 
@@ -41,7 +41,7 @@ With **In Background Job** set, the **Run App** button will execute the Shiny ap
 
 Working with Shiny apps in this way allows for interactive editing and updating of the displayed Shiny app in real time - both for Shiny user interface and server components.
 
-### Reload App
+### Reload app
 
 Alternatively, in the Shiny `app.R` file, there will also be a **Run App** drop-down. From **Run App**, select **In Background Job** and then press the **Run App** button. This will not have auto-reloading but might be preferable for Shiny apps with a long startup time.
 
@@ -80,7 +80,7 @@ Execute it as a Job from the **Source** pane via the **Source** \> **Source as a
 
 ![](images/source-plumber-job.png){fig-alt="A screenshot of the Source pane, with the Source > Source as Background Job drop-down option highlighted."}
 
-In the upper-right corner of the RStudio **Viewer** pane, press the reload button ![](images/reload-button.png){height=30}. This will display the plumber API's rapidoc interface in the **Viewer** pane, allowing for interactive testing with the active plumber API in real time.
+In the upper-right corner of the RStudio **Viewer** pane, press the **Refresh Viewer** ![](images/reload-button.png){height=20}. This will display the plumber API's rapidoc interface in the **Viewer** pane, allowing for interactive testing with the active plumber API in real time.
 
 ![](images/plumber-interaction.png){fig-alt="A screenshot of RStudio with the plumber-job.R file open in the Source pane, the Background job tab selected from the Console pane displaying the url to the API and it's docs, and the Viewer pane displaying the plumber API's Swagger docs."} 
 
@@ -175,7 +175,7 @@ From the **Source** drop-down menu, select **Source as Background Job**. This wi
 
 ![](images/vetiver-source-background-job.png){fig-alt="A screenshot of the Source pane, with the Source > Source as Background Job drop-down option highlighted."}
 
-In the upper-right corner of the RStudio **Viewer** pane, press the reload button ![](images/reload-button.png){height=30}. This will display the API's interface in the **Viewer** pane, allowing for interactive testing of the temporarily hosted vetiver model in real time.
+In the upper-right corner of the RStudio **Viewer** pane, press the **Refresh Viewer** ![](images/reload-button.png){height=20}. This will display the API's interface in the **Viewer** pane, allowing for interactive testing of the temporarily hosted vetiver model in real time.
 
 ![](images/vetiver-view-docs.png){fig-alt="A screenshot of RStudio with the vetiver-local.R file open in the Source pane, the Console pane displaying the url to the API and it's docs, and the Viewer pane displaying the vetiver model API's rapidocs docs."}
 
@@ -303,7 +303,7 @@ The above documentation has focused on using the RStudio user interface to kick 
 
 ### Workbench Jobs
 
-| Interact with the launcher pane.                                                                                   |                                                  |
+| Interact with the **Workbench Jobs** pane.                                                                                   |                                                  |
 |:------------------------------|-----------------------------------------|
 | [`launcherAvailable()`](https://rstudio.github.io/rstudioapi/reference/launcherAvailable.html)                     | Check if Workbench Launcher is Available         |
 | [`launcherConfig()`](https://rstudio.github.io/rstudioapi/reference/launcherConfig.html)                           | Define a Workbench Launcher Configuration        |

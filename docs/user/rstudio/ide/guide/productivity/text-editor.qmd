@@ -14,7 +14,7 @@ Most of these features have corresponding keyboard shortcuts, which also means t
 
 ![](images/rename-in-scope.png){fig-alt="A screenshot of the Command Palette with the search limited to 'Rename' symbol in scope"}
 
-## Code Completion
+## Code completion
 
 RStudio supports the automatic completion of code using the **Tab** key. For example, start typing `return` as `ret` then **Tab** and RStudio will automatically complete the full name of the function or object.
 
