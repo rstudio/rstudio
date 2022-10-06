@@ -986,21 +986,28 @@ private:
          boost::regex pattern = getGrepOutputRegex(findResults().gitFlag());
          if (regex_utils::match(line, match, pattern) && match.size() > 1)
          {
-            // extract filename from match
-            std::string file = module_context::createAliasedPath(FilePath(match[1]));
-
-            // replace the leading './' with the directory name
-            // (git grep doesn't prepend a '.' so we need to be careful here)
-            if (boost::algorithm::starts_with(file, "./"))
-            {
-               file = workingDir_ + file.substr(1);
-            }
-            else if (findResults().gitFlag())
-            {
-               file = workingDir_ + "/" + file;
-            }
+            // build the file path -- note that 'grep' results may or may not include
+            // a leading './', so we need to be careful to handle both forms of output.
+            //
+            // use a helper lambda just to make control flow a bit easier to manage
+            auto resolveFile = [&] {
+               
+               // check for absolute paths
+               std::string file = match[1];
+               if (boost::filesystem::path(file).is_absolute())
+                  return file;
+               
+               // check for paths with a './' prefix
+               if (boost::algorithm::starts_with(file, "./"))
+                  return module_context::createAliasedPath(FilePath(workingDir_)) + file.substr(1);
+               
+               // all else fails, assume we need to prepend the working directory
+               return module_context::createAliasedPath(FilePath(workingDir_)) + "/" + file;
+               
+            };
 
             // normal skip heuristics
+            std::string file = resolveFile();
             if (shouldSkipFile(file))
                continue;
 
