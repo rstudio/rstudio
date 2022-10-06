@@ -143,8 +143,7 @@ export class MainWindow extends GwtWindow {
 
       logger().logDebug(`${details.method} ${details.url} [${details.resourceType}]`);
 
-      const url = new URL(details.url);
-      if (details.resourceType === 'subFrame' && !isLocalUrl(url)) {
+      if (details.resourceType === 'subFrame' && !this.allowNavigation(details.url)) {
         shell.openExternal(details.url).catch((error) => { logger().logError(error); });
         callback({ cancel: false, redirectURL: details.frame?.url });
       } else {
