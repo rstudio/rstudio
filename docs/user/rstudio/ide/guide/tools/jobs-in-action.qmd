@@ -129,7 +129,7 @@ If necessary, install the latest versions of these packages from CRAN:
 install.packages(c("tidymodels", "vetiver", "pins", "plumber"))
 ```
 
-First, generate a vetiver model and write out that model to a plumber API.
+First, save the below code as `vetiver-train.R` and execute it to generate a vetiver model and write out that model to a plumber API.
 
 ``` r
 library(tidymodels)

@@ -28,21 +28,27 @@ By default, the job will run in a clean R session, and its temporary workspace w
 
 However, if you want to feed data from your current R session into the job, or have the job return data to your current R session, change the dialog options as follows:
 
--   **Run job with copy of global environment**: If selected, this option saves your global environment and loads it into the job's R session before it runs. This is useful because it will allow your job to see all the same variables you can see in the IDE. Note that this can be slow if you have large objects in your environment.
+#### Run job with copy of global environment: 
 
--   **Copy job results**: By default, the temporary workspace in which the job runs is not saved. If you'd like to import data from your job back into your R session, you have a couple of choices:
+If selected, this option saves your global environment and loads it into the job's R session before it runs. This is useful because it will allow your job to see all the same variables you can see in the IDE. Note that this can be slow if you have large objects in your environment.
 
-  -   **Global environment**: This places all the R objects your job creates back in your R session's global environment. 
+#### Copy job results: 
+
+By default, the temporary workspace in which the job runs is not saved. If you'd like to import data from your job back into your R session, you have a couple of choices:
+
+-   **Global environment**: This places all the R objects your job creates back in your R session's global environment. 
   
 ::: {.callout-caution}
+
+## Copy jobs results to Global environment
 
 Use **Copy jobs results** to **Global environment** option with caution! The objects created by the job will overwrite, without a warning, any objects that have the same name in your environment.
 
 :::
 
-  -   **Results object**: This places all the R objects your job creates into a new environment named `yourscript_results`.
+-   **Results object**: This places all the R objects your job creates into a new environment named with the the following pattern "yourscriptname" + "_results". For example, a script titled `training.R` executed as Background Job would be saved back into the global environment as an object titled `training_results`.
 
-An additional option is to include specific R code to save out the results to files on disk such as `readr::save_rds("results.rds")`
+An additional option is to include specific R code to save out the results to files on disk such as `saveRDS(object, "results.rds")`.
 
 ### Lifetime
 
@@ -58,7 +64,7 @@ While background jobs are running, a progress bar will appear in the R console s
 
 ### Detailed progress
 
-The progress bar RStudio shows for your job represents the execution of each top-level statement in your R script. If you want a little more insight into which part of the script is currently running, you can use RStudio's [code sections](https://support.rstudio.com/hc/en-us/articles/200484568-Code-Folding-and-Sections) feature. Add a section marker like this to your R script:
+The progress bar RStudio shows for your job represents the execution of each top-level statement in your R script. If you want a little more insight into which part of the script is currently running, you can use RStudio's [code sections](../code/code-navigation.html) feature. Add a section marker like this to your R script:
 
 ```markdown
 # Apply the model ----
@@ -79,7 +85,7 @@ This output appears in the Jobs pane when you select your job.
 
 ### Scripting
 
-You can script the creation of jobs using the **rstudioapi** package method [jobRunScript](https://www.rdocumentation.org/packages/rstudioapi/versions/0.9.0/topics/jobRunScript); it has options which correspond to each dialog option above. This makes it possible to automate and orchestrate more complicated sets of background tasks.
+You can script the creation of jobs using the [rstudioapi](https://rstudio.github.io/rstudioapi/) package method [jobRunScript](https://rstudio.github.io/rstudioapi/reference/jobRunScript.html); it has options which correspond to each dialog option above. This makes it possible to automate and orchestrate more complicated sets of background tasks.
 
 However, the RStudio's background job runner is generally designed for interactive script runs. If you are writing R code and need to run a subtask asynchronously in a background R session, we recommend using the [callr package](https://callr.r-lib.org/) instead.
 
@@ -101,8 +107,8 @@ To show progress and/or output from a task using the jobs UI, refer to the [rstu
 
 ## Workbench (Launcher) jobs {.pro-header}
 
-On Posit Workbench, you also have the option of running your R script on your company's compute infrastructure, using the [Job Launcher](https://blog.rstudio.com/2018/11/05/rstudio-rsp-1.2-features/). To do this, select:
+On Posit Workbench, you also have the option of running your R script on your company's compute infrastructure, using a [Workbench Job](https://docs.posit.co). To do this, from the **Source** drop-down menu, select **Source as Workbench Job**:
 
 ![](images/workbench-job.png){fig-alt="Source script as launcher job" width="350"}
 
-See more documentation specific to Workbench Launcher Jobs at <https://docs.posit.co/ide/server-pro/user>
+See more documentation specific to Workbench Jobs at <https://docs.rstudio.com/ide/server-pro/>

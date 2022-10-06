@@ -118,7 +118,9 @@ format:
     link-external-newwindow: true
     # Controls whether an icon adorns external links (either true or the bootstrap icon name)
     link-external-icon: true
+    fig-responsive: true
     number-sections: false
+    dpi: 250
     theme:
       - cosmo
       - styles/styles.scss

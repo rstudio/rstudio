@@ -18,7 +18,7 @@ To use version control with RStudio, first ensure that Git and/or Subversion too
 
 Version control is most useful when used with a remote repository. Remote repositories are typically managed by your company or are hosted in the cloud (e.g., [Github](https://github.com/) or [GitLab](https://about.gitlab.com/)). Make sure you have credentials to access these systems. If you only want to learn how to use version control, you can manage a standalone system on your workstation but you will not be able to share code with others.
 
-You should also become familiar with using [RStudio Projects](../authoring/projects.html) (which are required for version control features to be enabled).
+You should also become familiar with using [RStudio Projects](../code/projects.html) (which are required for version control features to be enabled).
 
 ## Installation
 
@@ -26,29 +26,13 @@ Prior to using RStudio's version control features you will need to ensure that y
 
 ### Git
 
-Prior to using Git with RStudio you should install it using the appropriate method for your platform:
-
--   **Windows & OS X:** <http://git-scm.com/downloads>
-
--   **Debian/Ubuntu:** `sudo apt-get install git-core`
-
--   **Fedora/RedHat:** `sudo yum install git-core`
+Prior to using Git with RStudio you should install it using the appropriate method for your platform as indicated at <https://git-scm.com/download/linux>.
 
 An excellent resource for learning more about Git and how to use it is the [Pro Git](https://git-scm.com/book/en/v2) online book. Another good resource for learning about git is the [Git Bootcamp](https://help.github.com/articles/set-up-git/) provided by GitHub.
 
 ### Subversion
 
-Prior to using Subversion with RStudio you should install it using the appropriate method for your platform:
-
--   **Windows:** [SilkSVN](http://www.sliksvn.com/en/download) (or any of the other packages listed [here](http://subversion.apache.org/packages.html#windows))
-
--   **OSX (≤ v10.7):** *Not required --- already included in versions of OSX 10.7 and before*
-
--   **OSX (v10.8+):** Install Xcode's *Command Line Tools* from Apple's developer [downloads](https://developer.apple.com/downloads/index.action) (requires free [Apple Developer ID](https://developer.apple.com/programs/register/))
-
--   **Debian/Ubuntu:** `sudo apt-get install subversion`
-
--   **Fedora/RedHat:** `sudo yum install subversion`
+Prior to using Subversion with RStudio you should install it using the appropriate method for your platform as indicated at <https://subversion.apache.org/packages.html>.
 
 An excellent resource for learning more about Subversion and how to use it is the [Red Bean](http://svnbook.red-bean.com/) online book.
 

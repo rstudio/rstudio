@@ -17,7 +17,7 @@ To access this feature, do one of the following:
 - Through the RStudio menu: **File** \> **Import Dataset**
 - From the **Environment** pane use the **Import Dataset** dropdown menu:
 
-![](images/import-dataset.png){fig-alt="A screenshot of the Import Dataset dropdown."}
+![](images/import-dataset.png){fig-alt="A screenshot of the Import Dataset dropdown." width=700}
 
 ## Importing data from Text and CSV files
 
