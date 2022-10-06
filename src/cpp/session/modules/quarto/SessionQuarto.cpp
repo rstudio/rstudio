@@ -655,6 +655,15 @@ SEXP rs_quartoFileProject(SEXP basenameSEXP, SEXP dirnameSEXP)
          {
             project.push_back(proj.getString());
          }
+         // Schema changed in Quarto v1.2
+         else if (proj.isObject())
+         {
+            json::Value dir = proj.getObject()["dir"];
+            if (dir.isString())
+            {
+               project.push_back(dir.getString());
+            }
+         }
 
          jsonInspect["resources"].getArray().toVectorString(resources);   
       }
