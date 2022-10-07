@@ -75,13 +75,9 @@ public class PublishDocServicePage
       String cloudSubtitle = constants_.cloudSubtitle();
 
       WizardPage<RSConnectPublishInput, RSConnectPublishResult> cloudPage = null;
-      // Posit Cloud now supports basic static Rmarkdown document publishing
+      // Posit Cloud now supports basic Rmarkdown document publishing including the source code
       if (input.getContentType() == RSConnect.CONTENT_TYPE_DOCUMENT)
       {
-         //cloudPage = new PublishReportSourcePage(cloudTitle, cloudSubtitle,
-            //constants_.publishToPositCloud(),
-            //new ImageResource2x(RSConnectResources.INSTANCE.positCloudAccountIcon2x()), input,
-            //false);
          cloudPage = new PublishFilesPage(cloudTitle, cloudSubtitle,
             new ImageResource2x(RSConnectResources.INSTANCE.positCloudAccountIcon2x()),
                input, false, false);
