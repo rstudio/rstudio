@@ -307,7 +307,9 @@ public class CompletionRequester
             replaceToEnd.get(i),
             meta.get(i), 
             response.getHelpHandler(), 
-            response.getLanguage())
+            response.getLanguage(),
+            response.getContext().get(i)
+            )
          );
       }
 
@@ -410,7 +412,8 @@ public class CompletionRequester
                      replaceToEnd.get(i),
                      meta.get(i), 
                      response.getHelpHandler(), 
-                     response.getLanguage()
+                     response.getLanguage(), 
+                     response.getContext().get(i)
                   ));
                }
             }
@@ -444,7 +447,8 @@ public class CompletionRequester
                      replaceToEnd.get(i),
                      meta.get(i), 
                      response.getHelpHandler(), 
-                     response.getLanguage()
+                     response.getLanguage(), 
+                     response.getContext().get(i)
                   ));
                }
             }
@@ -823,29 +827,15 @@ public class CompletionRequester
                            int type,
                            boolean suggestOnAccept)
       {
-         this(name, name, source, shouldQuote, type, suggestOnAccept, false, "", null, "R");
+         this(name, name, source, shouldQuote, type, suggestOnAccept, false, "", null, "R", RCompletionManager.AutocompletionContext.TYPE_UNKNOWN);
       }
 
       public QualifiedName(String name,
                            String source)
       {
-         this(name, name, source, false, RCompletionType.UNKNOWN, false, false, "", null, "R");
+         this(name, name, source, false, RCompletionType.UNKNOWN, false, false, "", null, "R", RCompletionManager.AutocompletionContext.TYPE_UNKNOWN);
       }
       
-      public QualifiedName(String name,
-                           String display,
-                           String source,
-                           boolean shouldQuote,
-                           int type,
-                           boolean suggestOnAccept,
-                           boolean replaceToEnd,
-                           String meta,
-                           String helpHandler,
-                           String language)
-      {
-         this(name, display, source, shouldQuote, type, suggestOnAccept, replaceToEnd, meta, helpHandler, language, RCompletionManager.AutocompletionContext.TYPE_UNKNOWN);
-      }
-
       public QualifiedName(String name,
                            String display,
                            String source,
@@ -883,7 +873,8 @@ public class CompletionRequester
                false,
                "",
                null,
-               "R");
+               "R", 
+               RCompletionManager.AutocompletionContext.TYPE_UNKNOWN);
       }
       
       public QualifiedName withSuggestOnAccept()
@@ -898,7 +889,8 @@ public class CompletionRequester
             this.replaceToEnd,
             this.meta,
             this.helpHandler,
-            this.language  
+            this.language, 
+            this.context
          );
       }
       

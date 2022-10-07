@@ -151,7 +151,8 @@ public abstract class CompletionManagerBase
                completions.getReplaceToEnd().get(i),
                completions.getMeta().get(i),
                completions.getHelpHandler(),
-               completions.getLanguage()));
+               completions.getLanguage(), 
+               completions.getContext().get(i)));
       }
       
       if (userPrefs_.enableSnippets().getValue())
