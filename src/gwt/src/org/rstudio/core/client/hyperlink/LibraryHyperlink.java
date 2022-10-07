@@ -38,7 +38,8 @@ public class LibraryHyperlink extends Hyperlink
     }
 
     @Override
-    public void onClick() {
+    public void onClick()
+    {
         events_.fireEvent(new SendToConsoleEvent("library(" + package_ + ")", true));
     }
 
