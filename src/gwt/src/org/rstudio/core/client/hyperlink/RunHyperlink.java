@@ -36,7 +36,7 @@ public class RunHyperlink extends Hyperlink
     {
         super(url, params, text, clazz);
         
-        Match match = HYPERLINK_PATTERN.match(url, 0);
+        Match match = HYPERLINK_RUN_PATTERN.match(url, 0);
         package_ = match.getGroup(2);
         fun_ = match.getGroup(3);
         code_ = url.replaceFirst("^(x-r-|ide:|rstudio:)run:", "");
@@ -72,7 +72,7 @@ public class RunHyperlink extends Hyperlink
 
     public static boolean handles(String url)
     {
-        Match match = HYPERLINK_PATTERN.match(url, 0);
+        Match match = HYPERLINK_RUN_PATTERN.match(url, 0);
         if (match == null) 
             return false;
 
@@ -95,5 +95,5 @@ public class RunHyperlink extends Hyperlink
     private Server server_;
 
     // allow code of the form pkg::fn(<args>) where args does not have ;()
-    private static final Pattern HYPERLINK_PATTERN = Pattern.create("^(x-r-|rstudio:|ide:)run:(\\w+)::(\\w+)[(][^();]*[)]$", "");
+    private static final Pattern HYPERLINK_RUN_PATTERN = Pattern.create("^(x-r-|rstudio:|ide:)run:(\\w+)::(\\w+)[(][^();]*[)]$", "");
 }
