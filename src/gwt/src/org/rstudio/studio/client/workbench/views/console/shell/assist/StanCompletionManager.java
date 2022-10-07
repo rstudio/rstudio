@@ -145,7 +145,9 @@ public class StanCompletionManager extends CompletionManagerBase
                false,
                "",
                null,
-               "Stan");
+               "Stan",
+               RCompletionManager.AutocompletionContext.TYPE_UNKNOWN
+               );
          
          discoveredIdentifiers.add(value);
          completions.add(name);
