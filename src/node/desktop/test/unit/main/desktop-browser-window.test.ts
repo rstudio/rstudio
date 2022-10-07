@@ -102,5 +102,35 @@ if (!isWindowsDocker()) {
       win.setShinyDialogUrl(shinyDialogUrl);
       assert.isTrue(win.allowNavigation(shinyDialogUrl));
     });
+
+    it('isSafeHost detects unsafe host that looks safe', () => {
+      const win = new DesktopBrowserWindow({
+        name: '_blank',
+        skipLocaleDetection: true,
+        baseUrl: baseUrl,
+        allowExternalNavigate: false,
+      });
+
+      win.setViewerUrl('http://127.0.0.1:123');
+      const unsafeUrl = 'http://www.example.com/127.0.0.1:123';
+
+      assert.isFalse(win.allowNavigation(unsafeUrl));
+    });
+
+    it('set viewer URL checks for local URL', () => {
+      const win = new DesktopBrowserWindow({
+        name: '_blank',
+        skipLocaleDetection: true,
+        baseUrl:  baseUrl,
+        allowExternalNavigate: false,
+      });
+
+      const unsafeUrl = 'http://www.example.com';
+      win.setViewerUrl(unsafeUrl);
+      win.setTutorialUrl(unsafeUrl);
+      win.setPresentationUrl(unsafeUrl);
+      win.setShinyDialogUrl(unsafeUrl);
+      assert.isFalse(win.allowNavigation(unsafeUrl));
+    });
   });
 }
