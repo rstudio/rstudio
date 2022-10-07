@@ -746,11 +746,6 @@ Error Rd2HTML(FilePath filePath, std::string* html)
    {
       if (!pkgInfo.name().empty())
          fun.addParam(pkgInfo.name());
-
-      std::string macros = pkgInfo.name();
-      if (!pkgInfo.rdMacros().empty())
-         macros = macros + "," + pkgInfo.rdMacros();
-      fun.addParam(macros);
    }
 
    return fun.call(html);
