@@ -286,7 +286,7 @@ public class RSConnectDeploy extends Composite
       userPrefs_ = prefs;
       userState_ = state;
       accountList_ = new RSConnectAccountList(server_, display_, false, 
-            !asStatic_, constants_.publishFromAccount());
+            !asStatic_, !asStatic_, constants_.publishFromAccount());
       appName_ = new AppNameTextbox(this);
       
       // when the account list finishes populating, select the account from the
@@ -422,7 +422,16 @@ public class RSConnectDeploy extends Composite
       source_ = source;
       contentType_ = contentType;
       asMultipleRmd_ = asMultipleRmd;
-      
+
+      // for Plumber APIs and static Rmd docs, we want to allow for posit.cloud but not for shinyapps.io
+      boolean isPositCloudContent = contentType == RSConnect.CONTENT_TYPE_PLUMBER_API ||
+         contentType == RSConnect.CONTENT_TYPE_DOCUMENT;
+      if (isPositCloudContent != accountList_.getShowPositCloudAccounts())
+      {
+         accountList_.setShowPositCloudAccounts(isPositCloudContent);
+         accountList_.refreshAccountList();
+      }
+
       // we want to show cloud accounts only for non-static content
       if (source.isShiny() != accountList_.getShowCloudAccounts())
       {
@@ -531,7 +540,7 @@ public class RSConnectDeploy extends Composite
       if (getSelectedAccount() == null)
          return true;
       else
-         return !getSelectedAccount().isCloudAccount();
+         return !getSelectedAccount().isShinyAppsAccount();
    }
 
    @Override

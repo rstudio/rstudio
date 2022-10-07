@@ -33,11 +33,12 @@ public class PublishReportSourcePage
    public PublishReportSourcePage(
          String title,
          String subTitle,
+         String pageCaption,
          ImageResource icon,
          RSConnectPublishInput input,
          boolean asMultiple)
    {
-      super(title, subTitle, constants_.publishToRstudioConnect(), icon, null,
+      super(title, subTitle, pageCaption, icon, null,
             createPages(input, asMultiple));
    }
 

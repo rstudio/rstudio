@@ -30,10 +30,16 @@ public class RSConnectAccount extends UserStateAccessor.PublishAccount
       };
    }-*/;
    
+   public final boolean isShinyAppsAccount()
+   {
+      return getServer().compareToIgnoreCase(
+            RSConnect.SHINY_APPS_SERVICE_NAME) == 0;
+   }
+
    public final boolean isCloudAccount()
    {
       return getServer().compareToIgnoreCase(
-            RSConnect.CLOUD_SERVICE_NAME) == 0;
+         RSConnect.CLOUD_SERVICE_NAME) == 0;
    }
 
    public final boolean equals(RSConnectAccount other)

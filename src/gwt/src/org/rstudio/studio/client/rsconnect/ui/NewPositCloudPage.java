@@ -15,6 +15,7 @@
 package org.rstudio.studio.client.rsconnect.ui;
 
 import com.google.gwt.core.client.GWT;
+import com.google.gwt.user.client.ui.Widget;
 import org.rstudio.core.client.resources.ImageResource2x;
 import org.rstudio.core.client.widget.WizardPage;
 import org.rstudio.studio.client.rsconnect.RSConnect;
@@ -22,19 +23,17 @@ import org.rstudio.studio.client.rsconnect.RsconnectConstants;
 import org.rstudio.studio.client.rsconnect.model.NewRSConnectAccountInput;
 import org.rstudio.studio.client.rsconnect.model.NewRSConnectAccountResult;
 
-import com.google.gwt.user.client.ui.Widget;
-
-public class NewRSConnectCloudPage 
+public class NewPositCloudPage
             extends WizardPage<NewRSConnectAccountInput,
                                NewRSConnectAccountResult>
 {
-   public NewRSConnectCloudPage()
+   public NewPositCloudPage()
    {
-      super(RSConnect.SHINY_APPS_SERVICE_NAME,
-            constants_.newRSConnectCloudPageSubTitle(),
-            constants_.newRSConnectCloudPageCaption(),
-            new ImageResource2x(RSConnectResources.INSTANCE.cloudAccountIcon2x()), 
-            new ImageResource2x(RSConnectResources.INSTANCE.cloudAccountIconLarge2x()));
+      super(RSConnect.CLOUD_SERVICE_NAME,
+            constants_.newPositCloudPageSubTitle(),
+            constants_.newPositCloudPageCaption(),
+            new ImageResource2x(RSConnectResources.INSTANCE.positCloudAccountIcon2x()),
+            new ImageResource2x(RSConnectResources.INSTANCE.positCloudAccountIconLarge2x()));
    }
 
    @Override
@@ -48,7 +47,7 @@ public class NewRSConnectCloudPage
    protected Widget createWidget()
    {
       if (accountWidget_ == null)
-         accountWidget_ = new RSConnectCloudAccount();
+         accountWidget_ = new PositCloudAccount();
       
       return accountWidget_;
    }
@@ -71,6 +70,6 @@ public class NewRSConnectCloudPage
       return input.getCloudSecret().length() > 0;
    }
    
-   private RSConnectCloudAccount accountWidget_;
+   private PositCloudAccount accountWidget_;
    private static final RsconnectConstants constants_ = GWT.create(RsconnectConstants.class);
 }

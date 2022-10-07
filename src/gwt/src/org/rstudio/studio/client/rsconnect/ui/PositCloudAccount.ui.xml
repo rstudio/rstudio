@@ -1,0 +1,39 @@
+<!DOCTYPE ui:UiBinder SYSTEM "http://dl.google.com/gwt/DTD/xhtml.ent">
+<ui:UiBinder xmlns:ui="urn:ui:com.google.gwt.uibinder"
+   xmlns:g="urn:import:com.google.gwt.user.client.ui"
+   xmlns:rw="urn:import:org.rstudio.core.client.widget"
+   ui:generateFormat='com.google.gwt.i18n.server.PropertyCatalogFactory'
+   ui:generateKeys="com.google.gwt.i18n.server.keygen.MD5KeyGenerator"
+   ui:generateLocales="default">
+   <ui:style type="org.rstudio.studio.client.rsconnect.ui.RSConnectCloudAccount.ConnectStyle">
+    @eval fixedFont org.rstudio.core.client.theme.ThemeFonts.getFixedWidthFont();
+   
+   .accountInfo
+   {
+     font-family: fixedFont;
+     padding: 5px;
+     width: 325px;
+   }
+   
+   .connectHeader
+   {
+     font-weight: bold;
+   }
+   
+   .spaced
+   {
+      margin-bottom: 5px;
+   }
+   </ui:style>
+   <g:HTMLPanel>
+     <g:HTML>
+         <p><ui:msg key="loginPositCloudText">Log in to <a href="https://posit.cloud/" target="_blank">Posit Cloud</a>.</ui:msg></p>
+         <p><ui:msg key="chooseTokensText">Go to your Account / Tokens page (see the <a href="https://posit.cloud/learn/guide#accounts" target="_blank">Guide</a> for instructions.</ui:msg></p>
+         <p><ui:msg key="showTokenText">Copy the token you want to use and paste it below.</ui:msg></p>
+     </g:HTML>
+     <rw:FormTextArea styleName="{style.accountInfo} {style.spaced}"
+                 ui:field="accountInfo" visibleLines="5" ariaLabel="Posit.Cloud Token and Secret">
+         <ui:attribute name="ariaLabel" key="positCloudAriaLabelText"/>
+     </rw:FormTextArea>
+   </g:HTMLPanel>
+</ui:UiBinder> 
