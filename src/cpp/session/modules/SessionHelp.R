@@ -800,7 +800,7 @@ options(help_type = "html")
    .rs.followHelpTopic(pkg = pkg, topic = topic)
 })
 
-.rs.addFunction("RdLoadMacros", file)
+.rs.addFunction("RdLoadMacros", function(file)
 {
    dir <- dirname(dirname(file))
    macros <- suppressWarnings(tools::loadPkgRdMacros(dir))
