@@ -19,6 +19,7 @@ import com.google.gwt.core.client.GWT;
 import org.rstudio.core.client.resources.ImageResource2x;
 import org.rstudio.core.client.widget.WizardNavigationPage;
 import org.rstudio.core.client.widget.WizardPage;
+import org.rstudio.studio.client.rsconnect.RSConnect;
 import org.rstudio.studio.client.rsconnect.RsconnectConstants;
 import org.rstudio.studio.client.rsconnect.model.RSConnectPublishInput;
 import org.rstudio.studio.client.rsconnect.model.RSConnectPublishResult;
@@ -74,14 +75,18 @@ public class PublishDocServicePage
       String cloudSubtitle = constants_.cloudSubtitle();
 
       WizardPage<RSConnectPublishInput, RSConnectPublishResult> cloudPage = null;
-      if (input.isStaticDocInput())
+      // Posit Cloud now supports basic static Rmarkdown document publishing
+      if (input.getContentType() == RSConnect.CONTENT_TYPE_DOCUMENT)
       {
+         //cloudPage = new PublishReportSourcePage(cloudTitle, cloudSubtitle,
+            //constants_.publishToPositCloud(),
+            //new ImageResource2x(RSConnectResources.INSTANCE.positCloudAccountIcon2x()), input,
+            //false);
          cloudPage = new PublishFilesPage(cloudTitle, cloudSubtitle,
-            new ImageResource2x(RSConnectResources.INSTANCE.cloudAccountIcon2x()), input,
-            false, true);
+            new ImageResource2x(RSConnectResources.INSTANCE.positCloudAccountIcon2x()),
+               input, false, false);
       }
 
-      // make Rpubs the top selection for now since RStudioConnect is in beta
       pages.add(rpubsPage);
       pages.add(connectPage);
       if (cloudPage != null)
