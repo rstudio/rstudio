@@ -63,5 +63,5 @@ public class LibraryHyperlink extends Hyperlink
     String package_;
     private static final EventBus events_ = RStudioGinjector.INSTANCE.getEventBus();
     
-    private static final Pattern HYPERLINK_RUN_LIBRARY_PATTERN = Pattern.create("^(x-r-|rstudio:|ide:)run:library[(]([\\w.]+)[)]$", "");
+    private static final Pattern HYPERLINK_RUN_LIBRARY_PATTERN = Pattern.create("^(x-r-|rstudio:|ide:)run:library[(](?:['\"])?([\\w.]+)(?:['\"])?[)]$", "");
 }
