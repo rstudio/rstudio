@@ -70,7 +70,7 @@ typedef std::map<std::string, std::tuple<std::string, std::string, bool>> ThemeM
 
 ThemeInfo getThemeInfo()
 {
-   ThemeInfo themeInfo { "#ffffff", "#000000" };
+   ThemeInfo themeInfo { "#000000", "#ffffff" };
    
    json::Value valueJson =
          r::session::clientState().getPersistent("themes", "themeInfo");
