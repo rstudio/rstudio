@@ -914,7 +914,9 @@ public class Files
    @Handler
    void onShowFolder()
    {
-      eventBus_.fireEvent(new ShowFolderEvent(currentPath_));
+      String path = server_.resolveAliasedPath(currentPath_);
+      FileSystemItem resolvedCurrentDir = FileSystemItem.createDir(path);
+      eventBus_.fireEvent(new ShowFolderEvent(resolvedCurrentDir));
    }
 
    public void onFileChange(FileChangeEvent event)
