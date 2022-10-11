@@ -233,28 +233,19 @@ endif()
 # pandoc version
 set(PANDOC_VERSION "2.18" CACHE INTERNAL "Pandoc version")
 
-# detect Centos 7, because we don't support Quarto on Centos7
-set(IS_CENTOS7 FALSE)
-if(LINUX AND EXISTS "/etc/centos-release")
-   file(READ "/etc/centos-release" CENTOS_RELEASE)
-   string(FIND "${CENTOS_RELEASE}" "release 7" CENTOS_RELEASE_POS)
-   if(CENTOS_RELEASE_POS GREATER 0)
-     set(IS_CENTOS7 TRUE)
+# quarto support
+if(NOT DEFINED QUARTO_ENABLED)
+   if(LINUX AND UNAME_M STREQUAL aarch64)
+      # disabled on linux aarch64
+      message(STATUS "quarto does not yet support aarch64 builds of Linux; disabling quarto")
+      set(QUARTO_ENABLED FALSE CACHE INTERNAL "")
+   else()
+      # enable by default
+      set(QUARTO_ENABLED TRUE CACHE INTERNAL "")
    endif()
 endif()
 
-# quarto support
-if(LINUX AND UNAME_M STREQUAL aarch64)
-   # disabled on linux aarch64
-   message(STATUS "quarto does not yet support aarch64 builds of Linux; disabling quarto")
-   set(QUARTO_ENABLED FALSE CACHE INTERNAL "")
-elseif(IS_CENTOS7)
-   # disable quarto on Centos 7
-   message(STATUS "quarto is not supported on Centos7; disabling quarto")
-   set(QUARTO_ENABLED FALSE CACHE INTERNAL "")
-else()
-   # enable by default
-   set(QUARTO_ENABLED TRUE CACHE INTERNAL "")
+if(QUARTO_ENABLED)
    add_definitions(-DQUARTO_ENABLED)
 endif()
 
