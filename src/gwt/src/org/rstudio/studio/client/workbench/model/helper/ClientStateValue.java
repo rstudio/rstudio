@@ -84,7 +84,7 @@ public abstract class ClientStateValue<T> implements SaveClientStateEvent.Handle
    protected abstract void onInit(T value);
    protected abstract T getValue();
 
-   public void onSaveClientState(SaveClientStateEvent event)
+   public final void onSaveClientState(SaveClientStateEvent event)
    {
       try
       {
