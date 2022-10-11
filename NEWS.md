@@ -29,6 +29,7 @@
 ### Quarto
 
 - Support for v2 format of Quarto crossref index
+- Support for RHEL7 and CentOS7 and fixes missing Pandoc for RMarkdown (rstudio-pro#3804)
 
 ### Posit Workbench
 
