@@ -21,6 +21,7 @@
 - Improved handling for large amounts of `message()` output in the Console pane. (#12059)
 - Build output is now truncating when very large amounts of output are produced (e.g. from C++ compilation warnings).
 - Memory usage in the environment pane now works correctly on Linux when using cgroups v2. (#11894)
+- Fixed an issue where code execution could pause in RStudio Server after closing the browser tab even with active computations. (Pro #3943)
   
 ### Python
 
@@ -30,6 +31,7 @@
 ### Quarto
 
 - Support for v2 format of Quarto crossref index
+- Support for RHEL7 and CentOS7 and fixes missing Pandoc for RMarkdown (rstudio-pro#3804)
 
 ### Posit Workbench
 

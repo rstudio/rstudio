@@ -42,10 +42,10 @@ public abstract class JSObjectStateValue extends ClientStateValue<JsObject>
 
    @Override
    protected final void doSet(ClientState state,
-                        String group,
-                        String name,
-                        JsObject value,
-                        int persist)
+                              String group,
+                              String name,
+                              JsObject value,
+                              int persist)
    {
       state.putObject(group, name, value, persist);
    }

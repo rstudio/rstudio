@@ -399,18 +399,38 @@ export class DesktopBrowserWindow extends EventEmitter {
   }
 
   setViewerUrl(viewerUrl: string): void {
+    const url = new URL(viewerUrl);
+    if (!isLocalUrl(url)) {
+      return;
+    }
+
     this.viewerUrl = getAuthority(viewerUrl);
   }
 
   setTutorialUrl(tutorialUrl: string): void {
+    const url = new URL(tutorialUrl);
+    if (!isLocalUrl(url)) {
+      return;
+    }
+
     this.tutorialUrl = getAuthority(tutorialUrl);
   }
 
   setPresentationUrl(presentationUrl: string): void {
+    const url = new URL(presentationUrl);
+    if (!isLocalUrl(url)) {
+      return;
+    }
+
     this.presentationUrl = getAuthority(presentationUrl);
   }
 
   setShinyDialogUrl(shinyDialogUrl: string): void {
+    const url = new URL(shinyDialogUrl);
+    if (!isLocalUrl(url)) {
+      return;
+    }
+
     this.shinyDialogUrl = getAuthority(shinyDialogUrl);
   }
 

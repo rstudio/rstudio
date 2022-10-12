@@ -46,7 +46,8 @@ public class RSConnectPublishWizard
       {
          // a single doc, but it can't go to RPubs because RPubs is disabled,
          // or because the doc is not self-contained, or is a website
-         return new PublishReportSourcePage(constants_.publish(), constants_.publish(), null, input,
+         return new PublishReportSourcePage(constants_.publish(), constants_.publish(),
+               constants_.publishToRstudioConnect(),null, input,
                false);
       }
       else

@@ -800,10 +800,20 @@ options(help_type = "html")
    .rs.followHelpTopic(pkg = pkg, topic = topic)
 })
 
-.rs.addFunction("Rd2HTML", function(file, package = "", Rdmacros = "")
+.rs.addFunction("RdLoadMacros", function(file)
+{
+   dir <- dirname(dirname(file))
+   macros <- suppressWarnings(tools::loadPkgRdMacros(dir))
+   tools::loadPkgRdMacros(
+      file.path(R.home("share"), "Rd", "macros", "system.Rd"),
+      macros = macros
+   )
+})
+
+.rs.addFunction("Rd2HTML", function(file, package = "")
 {
    tf <- tempfile(); on.exit(unlink(tf))
-   macros <- suppressWarnings(tools:::initialRdMacros(Rdmacros))
+   macros <- .rs.RdLoadMacros(file)
    tools::Rd2HTML(file, out = tf, package = package, macros = macros, dynamic = TRUE)
    lines <- readLines(tf, warn = FALSE)
    lines <- sub("R Documentation</td></tr></table>", "(preview) R Documentation</td></tr></table>", lines)

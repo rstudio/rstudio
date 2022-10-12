@@ -54,7 +54,10 @@ public class ClientStateUpdater extends TimeBufferedCommand
       events_ = events;
       server_ = server;
 
-      events_.addHandler(PushClientStateEvent.TYPE, pushClientStateEvent -> reschedule());
+      events_.addHandler(PushClientStateEvent.TYPE, (event) ->
+      {
+         reschedule(event.getActive());
+      });
 
       events_.addHandler(LastChanceSaveEvent.TYPE, lastChanceSaveEvent ->
       {
@@ -82,6 +85,18 @@ public class ClientStateUpdater extends TimeBufferedCommand
    public void resumeSendingUpdates()
    {
       pauseSendingUpdates_ = false;
+   }
+   
+   private void reschedule(boolean isActive)
+   {
+      if (isActive)
+      {
+         nudge();
+      }
+      else
+      {
+         reschedule();
+      }
    }
 
    @Override
@@ -151,9 +166,7 @@ public class ClientStateUpdater extends TimeBufferedCommand
 
    private static final int INITIAL_INTERVAL_MILLIS = 2000;
    private static final int PASSIVE_INTERVAL_MILLIS = 5000;
-   private static final int ACTIVE_INTERVAL_MILLIS = Desktop.isDesktop()
-                                                     ? 100
-                                                     : 350;
+   private static final int ACTIVE_INTERVAL_MILLIS = Desktop.isDesktop() ? 100 : 350;
    private final EventBus events_;
    private final WorkbenchServerOperations server_;
    private Token barrierToken_;

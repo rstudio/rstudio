@@ -133,8 +133,8 @@ export class SessionLauncher {
   sessionStdout: string[] = [];
   sessionStderr: string[] = [];
   private nextSessionUrl?: string;
-  private splash: BrowserWindow;
-  private showSplash = true;
+  private splash: BrowserWindow | undefined;
+  private showSplash = process.env.NODE_ENV !== 'TEST';
 
   constructor(
     private sessionPath: FilePath,
@@ -142,27 +142,35 @@ export class SessionLauncher {
     private filename: FilePath,
     private appLaunch: ApplicationLaunch,
   ) {
-    this.splash = new BrowserWindow({
-      width: 500,
-      height: 500,
-      frame: false,
-      transparent: true,
-      alwaysOnTop: true,
-      center: true,
-      resizable: false,
-      show: false,
-    });
+    const splashDelay = process.env.RS_SPLASH_DELAY ? parseInt(process.env.RS_SPLASH_DELAY) : 500;
+    if (process.env.RS_NO_SPLASH) {
+      this.showSplash = false;
+    }
 
-    this.splash.loadURL(SPLASH_WEBPACK_ENTRY).catch((err: unknown) => logger().logError(err));
-    const splashDelay = process.env.RS_SPLASH_DELAY ? parseInt(process.env.RS_SPLASH_DELAY) : 250;
-
-    setTimeoutPromise(splashDelay)
-      .then(() => {
-        if (this.showSplash) {
-          this.splash.show();
-        }
-      })
-      .catch((err) => logger().logError(err));
+    // must check showSplash before and after the timeout
+    // before to determine if the timeout is required
+    // after to determine if the main window is ready to show
+    if (splashDelay > 0 && this.showSplash) {
+      setTimeoutPromise(splashDelay)
+        .then(() => {
+          if (this.showSplash) {
+            this.splash = new BrowserWindow({
+              width: 500,
+              height: 500,
+              frame: false,
+              transparent: true,
+              alwaysOnTop: true,
+              center: true,
+              resizable: false,
+              show: false,
+            });
+  
+            this.splash.loadURL(SPLASH_WEBPACK_ENTRY).catch((err: unknown) => logger().logError(err));
+            this.splash.show();
+          }
+        })
+        .catch((err) => logger().logError(err));
+    }
   }
 
   launchFirstSession(): void {
@@ -239,7 +247,7 @@ export class SessionLauncher {
         }
         this.showSplash = false;
         this.mainWindow?.window.show();
-        this.splash.close();
+        this.splash?.close();
       });
       appState().activation().setMainWindow(this.mainWindow.window);
       this.appLaunch.activateWindow();

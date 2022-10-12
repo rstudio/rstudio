@@ -30,7 +30,12 @@ fi
 # parse URL components to extract flavor/OS/platform
 FLAVOR=${COMPONENTS[4]}
 OS=${COMPONENTS[5]}
-PLATFORM=${COMPONENTS[6]}
+# linux uses: /flavor/os/platform but windows/mac only have /flavor/os
+if [ "$OS" == "macos" ] || [ "$OS" == "windows" ];  then
+   PLATFORM=""
+else
+   PLATFORM=${COMPONENTS[6]}
+fi
 
 # sanity check a URL component to fail faster if the URL is not in the format
 # we expect
@@ -42,6 +47,11 @@ fi
 # macOS => mac for URL
 if [ "$OS" == "macos" ];  then
     OS="mac"
+fi
+
+# The links for latest now always point to desktop since we don't do all of the gwt desktop builds
+if [ "$FLAVOR" == "electron" ] ; then
+    FLAVOR="desktop"
 fi
 
 # figure out the "latest" package name by replacing the version number with "latest"; for example

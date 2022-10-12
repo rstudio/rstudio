@@ -157,6 +157,10 @@ public abstract class Hyperlink implements HelpPageShower
         {
             return new VignetteHyperlink(url, params, text, clazz);
         }
+        else if (LibraryHyperlink.handles(url))
+        {
+            return new LibraryHyperlink(url, params, text, clazz);
+        }
         else if (RunHyperlink.handles(url))
         {
             return new RunHyperlink(url, params, text, clazz);
