@@ -158,79 +158,91 @@ assign(x = ".rs.acCompletionTypes",
    
    tag <- sub(".*(?=@)", '', token, perl = TRUE)
    
-   # All known Roxygen2 tags, in alphabetical order
-   #
-   # library(roxygen2)
-   # methods <- as.vector(methods("roxy_tag_parse"))
-   # prefix <- "roxy_tag_parse.roxy_tag_"
-   # paste0("@", gsub(prefix, "", methods[grepl(prefix, methods, fixed = TRUE)], fixed = TRUE), " ")
-   tags <- c(
-      "@aliases ",
-      "@author ",
-      "@backref ",
-      "@concept ",
-      "@describeIn ",
-      "@description ",
-      "@details ",
-      "@docType ",
-      "@encoding ",
-      "@eval ",
-      "@evalNamespace ",
-      "@evalRd ",
-      "@example ",
-      "@examples ",
-      "@examplesIf ",
-      "@export",
-      "@exportClass ",
-      "@exportMethod ",
-      "@exportPattern ",
-      "@exportS3Method ",
-      "@family ",
-      "@field ",
-      "@format ",
-      "@import ",
-      "@importClassesFrom ",
-      "@importFrom ",
-      "@importMethodsFrom ",
-      "@include ",
-      "@includeRmd ",
-      "@inherit ",
-      "@inheritDotParams ",
-      "@inheritParams ",
-      "@inheritSection ",
-      "@keywords ",
-      "@md",
-      "@method ",
-      "@name ",
-      "@note ",
-      "@noMd",
-      "@noRd",
-      "@order ",
-      "@param ",
-      "@rawNamespace ",
-      "@rawRd ",
-      "@rdname ",
-      "@references ",
-      "@return ",
-      "@returns ",
-      "@section ",
-      "@seealso ",
-      "@slot ",
-      "@source ",
-      "@template ",
-      "@templateVar ",
-      "@title ",
-      "@usage ",
-      "@useDynLib "
-   )
-   
-   matchingTags <- grep(paste("^", tag, sep = ""), tags, value = TRUE)
+   if (.rs.isPackageVersionInstalled("roxygen2", "7.2.1"))
+   {
+      metadata <- roxygen2::tags_metadata()
+      tags <- paste0("@", metadata$tag, " ")
+      descriptions <- sub("\n$", "", metadata$description)
+   }
+   else 
+   {
+      # All known Roxygen2 tags, in alphabetical order
+      #
+      # library(roxygen2)
+      # methods <- as.vector(methods("roxy_tag_parse"))
+      # prefix <- "roxy_tag_parse.roxy_tag_"
+      # paste0("@", gsub(prefix, "", methods[grepl(prefix, methods, fixed = TRUE)], fixed = TRUE), " ")
+      tags <- c(
+         "@aliases ",
+         "@author ",
+         "@backref ",
+         "@concept ",
+         "@describeIn ",
+         "@description ",
+         "@details ",
+         "@docType ",
+         "@encoding ",
+         "@eval ",
+         "@evalNamespace ",
+         "@evalRd ",
+         "@example ",
+         "@examples ",
+         "@examplesIf ",
+         "@export",
+         "@exportClass ",
+         "@exportMethod ",
+         "@exportPattern ",
+         "@exportS3Method ",
+         "@family ",
+         "@field ",
+         "@format ",
+         "@import ",
+         "@importClassesFrom ",
+         "@importFrom ",
+         "@importMethodsFrom ",
+         "@include ",
+         "@includeRmd ",
+         "@inherit ",
+         "@inheritDotParams ",
+         "@inheritParams ",
+         "@inheritSection ",
+         "@keywords ",
+         "@md",
+         "@method ",
+         "@name ",
+         "@note ",
+         "@noMd",
+         "@noRd",
+         "@order ",
+         "@param ",
+         "@rawNamespace ",
+         "@rawRd ",
+         "@rdname ",
+         "@references ",
+         "@return ",
+         "@returns ",
+         "@section ",
+         "@seealso ",
+         "@slot ",
+         "@source ",
+         "@template ",
+         "@templateVar ",
+         "@title ",
+         "@usage ",
+         "@useDynLib "
+      )
+      descriptions <- rep("", length(tags))
+   }
+
+   matching <- grepl(paste("^", tag, sep = ""), tags)
    
    .rs.makeCompletions(tag,
-                       matchingTags,
+                       tags[matching],
                        type = .rs.acCompletionTypes$ROXYGEN,
                        excludeOtherCompletions = TRUE, 
-                       context = .rs.acContextTypes$ROXYGEN)
+                       context = .rs.acContextTypes$ROXYGEN, 
+                       meta = descriptions[matching]
+                       )
 })
 
 .rs.addFunction("attemptPlumberTagCompletion", function(token, line)
