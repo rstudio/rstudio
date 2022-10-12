@@ -2480,8 +2480,17 @@ public interface ViewsSourceConstants extends com.google.gwt.i18n.client.Message
      * @return translated "Use {0}-based line wrapping for this document"
      */
     @DefaultMessage("Use {0}-based line wrapping for this document")
-    @Key("useBasedLineWrapping")
-    String useBasedLineWrapping(String detectedLineWrapping);
+    @Key("useBasedLineWrappingForDocument")
+    String useBasedLineWrappingForDocument(String detectedLineWrappingForDocument);
+    
+    /**
+     * Translated "Use {0}-based line wrapping for this project".
+     *
+     * @return translated "Use {0}-based line wrapping for this project"
+     */
+    @DefaultMessage("Use {0}-based line wrapping for this project")
+    @Key("useBasedLineWrappingForProject")
+    String useBasedLineWrappingForProject(String detectedLineWrappingForProject);
 
     /**
      * Translated "Use the current {0} default line wrapping for this document".
