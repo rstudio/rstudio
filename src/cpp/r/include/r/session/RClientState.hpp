@@ -64,14 +64,17 @@ public:
                       const core::json::Value& value);
    
    void putPersistent(const core::json::Object& persistentState);
+   
+   core::json::Value getPersistent(const std::string& scope,
+                                   const std::string& name);
 
    void putProjectPersistent(const std::string& scope,
                              const std::string& name,
                              const core::json::Value& value);
 
    void putProjectPersistent(const core::json::Object& projectPersistentState);
-   core::json::Value getProjectPersistent(std::string scope,
-                                          std::string name);
+   core::json::Value getProjectPersistent(const std::string& scope,
+                                          const std::string& name);
 
    core::Error commit(ClientStateCommitType commitType,
                       const core::FilePath& stateDir,

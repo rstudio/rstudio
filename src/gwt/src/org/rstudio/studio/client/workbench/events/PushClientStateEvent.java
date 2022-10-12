@@ -28,7 +28,20 @@ public class PushClientStateEvent extends GwtEvent<PushClientStateEvent.Handler>
 
    public PushClientStateEvent()
    {
+      active_ = false;
    }
+   
+   public PushClientStateEvent(boolean active)
+   {
+      active_ = active;
+   }
+   
+   public boolean getActive()
+   {
+      return active_;
+   }
+   
+   private final boolean active_;
 
    @Override
    protected void dispatch(Handler handler)

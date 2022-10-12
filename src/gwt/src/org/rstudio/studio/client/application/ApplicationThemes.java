@@ -16,15 +16,19 @@ package org.rstudio.studio.client.application;
 
 import org.rstudio.core.client.Debug;
 import org.rstudio.core.client.dom.DomUtils;
+import org.rstudio.core.client.js.JsObject;
 import org.rstudio.studio.client.application.events.ComputeThemeColorsEvent;
 import org.rstudio.studio.client.application.events.EventBus;
 import org.rstudio.studio.client.application.events.ThemeChangedEvent;
 import org.rstudio.studio.client.application.ui.RStudioThemes;
-import org.rstudio.studio.client.server.VoidServerRequestCallback;
+import org.rstudio.studio.client.common.Timers;
+import org.rstudio.studio.client.workbench.events.PushClientStateEvent;
+import org.rstudio.studio.client.workbench.model.ClientState;
+import org.rstudio.studio.client.workbench.model.Session;
+import org.rstudio.studio.client.workbench.model.helper.JSObjectStateValue;
 import org.rstudio.studio.client.workbench.prefs.model.UserPrefs;
 import org.rstudio.studio.client.workbench.prefs.model.UserState;
 import org.rstudio.studio.client.workbench.views.source.editors.text.themes.AceThemes;
-import org.rstudio.studio.client.workbench.views.source.editors.text.themes.model.ThemeServerOperations;
 
 import com.google.gwt.dom.client.Document;
 import com.google.gwt.dom.client.Element;
@@ -42,17 +46,41 @@ public class ApplicationThemes implements ThemeChangedEvent.Handler,
    public ApplicationThemes(Provider<UserPrefs> pUserPrefs,
                             Provider<UserState> pUserState,
                             Provider<AceThemes> pAceThemes,
-                            EventBus events,
-                            ThemeServerOperations server)
+                            Session session,
+                            EventBus events)
    {
       userPrefs_ = pUserPrefs;
       userState_ = pUserState;
       pAceThemes_ = pAceThemes;
       events_ = events;
-      server_ = server;
+      
+      themeColors_ = JsObject.createJsObject();
       
       events_.addHandler(ThemeChangedEvent.TYPE, this);
       events_.addHandler(ComputeThemeColorsEvent.TYPE, this);
+      
+      // NOTE: These values are read by the session, so if any names need to change
+      // here they should be synchronized on the session side as well.
+      new JSObjectStateValue(
+            "themes",
+            "themeInfo",
+            ClientState.PERSISTENT,
+            session.getSessionInfo().getClientState(),
+            false)
+      {
+         @Override
+         protected void onInit(JsObject value)
+         {
+            // nothing to do; this class is used to persist theme-related
+            // information on the session side
+         }
+
+         @Override
+         protected JsObject getValue()
+         {
+            return themeColors_;
+         }
+      };
    }
 
    public void initializeThemes(Element root)
@@ -62,7 +90,7 @@ public class ApplicationThemes implements ThemeChangedEvent.Handler,
       
       // Bind theme change handlers to the uiPrefs and immediately fire a theme changed event to
       // set the initial theme.
-      userState_.get().theme().bind(theme ->events_.fireEvent(new ThemeChangedEvent()));
+      userState_.get().theme().bind(theme -> events_.fireEvent(new ThemeChangedEvent()));
       events_.fireEvent(new ThemeChangedEvent());
       
       // Ensure creation of the Ace themes instance
@@ -72,13 +100,15 @@ public class ApplicationThemes implements ThemeChangedEvent.Handler,
    @Override
    public void onComputeThemeColors(ComputeThemeColorsEvent event)
    {
+      onComputeThemeColors();
+   }
+   
+   private void onComputeThemeColors()
+   {
       // Establish defaults
       String foreground = "#000000";
       String background = "#FFFFFF";
 
-      // We're very exception sensitive here since this code runs in a
-      // WaitForMethod (and therefore can hold the server while we wait for it
-      // to return).
       try
       {
          // Create a sampler element to read runtime styles; hide it and position
@@ -103,23 +133,30 @@ public class ApplicationThemes implements ThemeChangedEvent.Handler,
          Debug.logException(e);
       }
       
-      // Send the server the computed colors
-      server_.setComputedThemeColors(foreground, background, new VoidServerRequestCallback());
+      // update cached theme colors
+      themeColors_ = JsObject.createJsObject();
+      themeColors_.setString("foreground", foreground);
+      themeColors_.setString("background", background);
+      
+      // force eager refresh of client state after changing themes
+      events_.fireEvent(new PushClientStateEvent(true));
    }
 
    @Override
    public void onThemeChanged(ThemeChangedEvent event)
    {
-      RStudioThemes.initializeThemes(userPrefs_.get(),
-                                     userState_.get(),
-                                     Document.get(),
-                                     root_);
+      RStudioThemes.initializeThemes(userPrefs_.get(), userState_.get(), Document.get(), root_);
+      
+      // Wait a small amount of time for the theme to be applied
+      Timers.singleShot(1000, () -> {
+         onComputeThemeColors();
+      });
    }
    
    private final Provider<UserPrefs> userPrefs_;
    private final Provider<UserState> userState_;
    private final Provider<AceThemes> pAceThemes_;
    private final EventBus events_;
-   private final ThemeServerOperations server_;
+   private JsObject themeColors_;
    private Element root_;
 }

@@ -15,6 +15,10 @@
 
 #include "SessionThemes.hpp"
 
+#include <fstream>
+#include <map>
+#include <string>
+
 #include <boost/lexical_cast.hpp>
 #include <boost/regex.hpp>
 #include <boost/algorithm/string.hpp>
@@ -23,26 +27,22 @@
 #include <boost/bind/bind.hpp>
 
 #include <shared_core/Error.hpp>
-#include <core/Exec.hpp>
 #include <shared_core/FilePath.hpp>
-#include <core/json/JsonRpc.hpp>
 
+#include <core/Exec.hpp>
 #include <core/http/Request.hpp>
 #include <core/http/Response.hpp>
-
+#include <core/json/JsonRpc.hpp>
 #include <core/system/Xdg.hpp>
-
-#include <session/SessionModuleContext.hpp>
-#include <session/prefs/UserPrefs.hpp>
-#include <session/prefs/UserState.hpp>
 
 #include <r/RExec.hpp>
 #include <r/RRoutines.hpp>
 #include <r/RSexp.hpp>
+#include <r/session/RClientState.hpp>
 
-#include <fstream>
-#include <map>
-#include <string>
+#include <session/SessionModuleContext.hpp>
+#include <session/prefs/UserPrefs.hpp>
+#include <session/prefs/UserState.hpp>
 
 using namespace rstudio::core;
 using namespace boost::placeholders;
@@ -54,9 +54,11 @@ namespace themes {
 
 namespace {
 
-bool s_deferredInitComplete = false;
-bool s_shuttingDown = false;
-module_context::WaitForMethodFunction s_waitForThemeColors;
+struct ThemeInfo
+{
+   std::string foreground;
+   std::string background;
+};
 
 const std::string kDefaultThemeLocation = "theme/default/";
 const std::string kGlobalCustomThemeLocation = "theme/custom/global/";
@@ -64,7 +66,26 @@ const std::string kLocalCustomThemeLocation = "theme/custom/local/";
 
 // A map from the name of the theme to the location of the file and a boolean representing
 // whether or not the theme is dark.
-typedef std::map<std::string, std::tuple<std::string, std::string, bool> > ThemeMap;
+typedef std::map<std::string, std::tuple<std::string, std::string, bool>> ThemeMap;
+
+ThemeInfo getThemeInfo()
+{
+   ThemeInfo themeInfo { "#000000", "#ffffff" };
+   
+   json::Value valueJson =
+         r::session::clientState().getPersistent("themes", "themeInfo");
+   
+   if (!valueJson.isObject())
+      return themeInfo;
+   
+   Error error = json::readObject(valueJson.getObject(),
+                                  "foreground", themeInfo.foreground,
+                                  "background", themeInfo.background);
+   if (error)
+      LOG_ERROR(error);
+   
+   return themeInfo;
+}
 
 /**
  * @brief Gets an error out of the object, if there is one, and updates pResponse.
@@ -359,40 +380,13 @@ SEXP rs_getThemes()
  */
 SEXP rs_getThemeColors()
 {
-   // Don't attempt to call the WaitForMethod unless the session has fully initialized.
-   if (!s_deferredInitComplete)
-      return R_NilValue;
-   
-   // Don't do anything if we're shutting down
-   if (s_shuttingDown)
-      return R_NilValue;
-
-   // Query the client for its current theme colors
-   json::JsonRpcRequest request;
-
-   if (!s_waitForThemeColors(&request, 
-            ClientEvent(client_events::kComputeThemeColors, json::Value())))
-   {
-      // Client did not return colors
-      r::exec::warning("Active theme colors not available.");
-      return R_NilValue;
-   }
-   
-   // Parse the theme colors returned by the client
-   std::string foreground, background;
-   Error error = json::readParams(request.params, &foreground, &background);
-   if (error)
-   {
-      // Client returned something we didn't understand
-      r::exec::warning("No theme colors could be determined: " + error.getSummary());
-      return R_NilValue;
-   }
+   ThemeInfo info = getThemeInfo();
 
    // Form the list and return to caller 
    r::sexp::Protect protect;
    r::sexp::ListBuilder themeColors(&protect);
-   themeColors.add("foreground", foreground);
-   themeColors.add("background", background);
+   themeColors.add("foreground", info.foreground);
+   themeColors.add("background", info.background);
    return r::sexp::create(themeColors, &protect);
 }
 
@@ -559,14 +553,10 @@ Error removeTheme(const json::JsonRpcRequest& request,
    return error;
 }
 
-void onDeferredInit(bool)
+Error setComputedThemeColors(const json::JsonRpcRequest& request,
+                             json::JsonRpcResponse* pResponse)
 {
-   s_deferredInitComplete = true;
-}
-
-void onShutdown(bool exitedGracefully)
-{
-   s_shuttingDown = true;
+   return Success();
 }
 
 void setCacheableFile(const FilePath& filePath,
@@ -710,16 +700,11 @@ Error initialize()
    using boost::bind;
    using namespace module_context;
 
-   s_waitForThemeColors = registerWaitForMethod("set_computed_theme_colors");
-
    RS_REGISTER_CALL_METHOD(rs_getThemes);
    RS_REGISTER_CALL_METHOD(rs_getLocalThemeDir);
    RS_REGISTER_CALL_METHOD(rs_getGlobalThemeDir);
    RS_REGISTER_CALL_METHOD(rs_getThemeColors);
    RS_REGISTER_CALL_METHOD(rs_getLocalThemePath);
-
-   events().onDeferredInit.connect(onDeferredInit);
-   events().onShutdown.connect(onShutdown);
 
    // We need to register our URI handlers twice to cover the data viewer grid document because those
    // links have a different prefix.
@@ -732,6 +717,7 @@ Error initialize()
       (bind(registerRpcMethod, "get_themes", getThemes))
       (bind(registerRpcMethod, "add_theme", addTheme))
       (bind(registerRpcMethod, "remove_theme", removeTheme))
+      (bind(registerRpcMethod, "set_computed_theme_colors", setComputedThemeColors))
       (bind(registerUriHandler, "/" + kDefaultThemeLocation, handleDefaultThemeRequest))
       (bind(registerUriHandler, "/" + kGlobalCustomThemeLocation, handleGlobalCustomThemeRequest))
       (bind(registerUriHandler, "/" + kLocalCustomThemeLocation, handleLocalCustomThemeRequest))
