@@ -4,6 +4,7 @@
 ### New
 
 * RStudio now displays a splash screen on startup, while the R session is being initialized. (#11604)
+* Updated RStudio Desktop installer on Windows to detect running RStudio by process name. (#10588)
 
 ### R
 
