@@ -3363,7 +3363,11 @@ core::Error initialize()
    }
 
    // add postback directory to PATH
-   FilePath postbackDir = session::options().rpostbackPath().getParent();
+   FilePath postbackDir = session::options().rpostbackPath();
+   if (postbackDir.getAbsolutePath().find("session/postback") != std::string::npos) {
+      // special case for development builds only
+      postbackDir = postbackDir.getParent();
+   }
    core::system::addToPath(postbackDir.getAbsolutePath());
 
    // add suspend/resume handler
