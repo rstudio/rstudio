@@ -1757,8 +1757,8 @@ public class RCompletionManager implements CompletionManager
    private void showRoxygenHelp(QualifiedName item, 
                                 CompletionPopupDisplay popup)
    {
-      if (item.meta.length() > 0)
-         popup.displayRoxygenHelp(item.meta);
+      if (item.meta != null)
+         popup.displayRoxygenHelp(item.meta, item.source != null);
    }
    
    /**

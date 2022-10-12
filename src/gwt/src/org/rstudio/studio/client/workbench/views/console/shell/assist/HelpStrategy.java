@@ -52,6 +52,10 @@ public class HelpStrategy
                                      selectedItem.source);
          
       }
+      else if (selectedItem.type == RCompletionType.ROXYGEN)
+      {
+         server_.showVignette(selectedItem.source, "roxygen2");
+      }
       else
       {
          server_.showHelpTopic(

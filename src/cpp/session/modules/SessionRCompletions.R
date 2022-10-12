@@ -163,6 +163,7 @@ assign(x = ".rs.acCompletionTypes",
       metadata <- roxygen2::tags_metadata()
       tags <- paste0("@", metadata$tag, " ")
       descriptions <- sub("\n$", "", metadata$description)
+      vignette <- metadata$vignette
    }
    else 
    {
@@ -232,6 +233,7 @@ assign(x = ".rs.acCompletionTypes",
          "@useDynLib "
       )
       descriptions <- rep("", length(tags))
+      vignette <- rep("", length(tags))
    }
 
    matching <- grepl(paste("^", tag, sep = ""), tags)
@@ -241,7 +243,8 @@ assign(x = ".rs.acCompletionTypes",
                        type = .rs.acCompletionTypes$ROXYGEN,
                        excludeOtherCompletions = TRUE, 
                        context = .rs.acContextTypes$ROXYGEN, 
-                       meta = descriptions[matching]
+                       meta = descriptions[matching], 
+                       packages = vignette[matching]
                        )
 })
 
