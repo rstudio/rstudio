@@ -173,6 +173,18 @@ public class HelpInfoPopupPanel extends PopupPanel
       doDisplay(false);
    }
 
+   public void displayRoxygenHelp(String contents)
+   {
+      timer_.cancel();
+      vpanel_.clear();
+      
+      Label contentsLabel = new Label(contents.replace("\t", "  "));
+      contentsLabel.addStyleName(RES.styles().roxygenText());
+      vpanel_.add(contentsLabel);
+      
+      doDisplay(false);
+   }
+
    public void clearHelp(boolean downloadOperationPending)
    {
       f1prompt_.setVisible(false);

@@ -44,6 +44,11 @@
    white-space: pre-wrap;
 }
 
+.roxygenText {
+   font-family: fixedWidthFont;
+   white-space: pre-wrap;
+}
+
 .rstudio-themes-dark-menus .helpPopup {
    color: #eaeaea;
    background: #5e5e4e;
