@@ -147,7 +147,10 @@ export class SessionLauncher {
       this.showSplash = false;
     }
 
-    if (splashDelay > 0) {
+    // must check showSplash before and after the timeout
+    // before to determine if the timeout is required
+    // after to determine if the main window is ready to show
+    if (splashDelay > 0 && this.showSplash) {
       setTimeoutPromise(splashDelay)
         .then(() => {
           if (this.showSplash) {
