@@ -270,6 +270,8 @@ set(CMAKE_MODULE_PATH "${ROOT_SRC_DIR}/cmake/modules/")
 # dependencies
 if(WIN32)
    set(RSTUDIO_WINDOWS_DEPENDENCIES_DIR "${ROOT_SRC_DIR}/dependencies/windows")
+   set(CPACK_DEPENDENCIES_DIR "${RSTUDIO_WINDOWS_DEPENDENCIES_DIR}")
+   set(CPACK_NSPROCESS_VERSION "1.6")
 else()
    # look for system-wide (global) dependencies folder
    if(EXISTS "/opt/rstudio-tools/dependencies")

@@ -37,6 +37,13 @@
   InstallDir "$PROGRAMFILES64\@CPACK_PACKAGE_INSTALL_DIRECTORY@"
 
 ;--------------------------------
+;Include NsProcess to detect running RStudio instance
+
+  !addincludedir "@CPACK_DEPENDENCIES_DIR@/nsprocess/@CPACK_NSPROCESS_VERSION@/Include"
+  !addplugindir "@CPACK_DEPENDENCIES_DIR@/nsprocess/@CPACK_NSPROCESS_VERSION@/Plugin"
+  !include "nsProcess.nsh"
+
+;--------------------------------
 ;General
 
   ;Name and file
@@ -984,51 +991,12 @@ Function .onInit
 
   ; Detect whether the application is running
 
-  Push $0    ; window HWND
-  Push $1    ; window title/classname
-  Push $2    ; truncated title
-  Push $3    ; found 
-
-  ; Loop through all open windows--we want one that has window class "QWidget"
-  ; or "Qt5WindowIcon" and title containing "RStudio"
-  ;
-  ; TODO: for Electron, the window class is "Chrome_WidgetWin_1", but the same window
-  ; class is used by Chrome, Edge, and other Electron apps, so relying on that and
-  ; "RStudio" in the title would also match Chrome tabs (e.g. the RStudio download page).
-  ; So, we need something different to handle the Electron case. Maybe look for running
-  ; rstudio.exe (there's an ancient nsProcess plugin for NSIS that does this).
-  search_loop:
-   FindWindow  $0  ""  ""  0  $0
-    IntCmp  $0  0  not_running
-     IsWindow  $0  0  search_loop
-      ; check to see if we found a Qt window 
-      System::Call 'user32.dll::GetClassName(i r0, t .r1, i ${NSIS_MAX_STRLEN}) i .n'
-      StrCmp  $1  "QWidget"  found_qt_window
-      StrCmp  $1  "Qt5QWindowIcon"  found_qt_window
-      Goto search_loop
-
-      ; check to see if its title contains RStudio
-      found_qt_window:
-      System::Call 'user32.dll::GetWindowText(i r0, t .r1, i ${NSIS_MAX_STRLEN}) i .n'
-      Push $1
-      Push "@CPACK_PACKAGE_NAME@"
-      Call StrStr
-      Pop $3
-
-      ; title does not contain RStudio, continue
-      StrCmp  $3  ""  search_loop
-
-      ; title contains RStudio, bail out
-      MessageBox MB_OK|MB_ICONEXCLAMATION "@CPACK_PACKAGE_NAME@ is currently running. Please close it before installing a new version." /SD IDOK
-      Abort
-
-  not_running:
-
-  ; reload registers
-  Pop $0
-  Pop $1
-  Pop $2
-  Pop $3
+  ${nsProcess::FindProcess} "rstudio.exe" $R0
+  ${If} $R0 = 0
+    MessageBox MB_OK|MB_ICONEXCLAMATION "@CPACK_PACKAGE_NAME@ is currently running. Please close it before installing a new version." /SD IDOK
+    Abort
+  ${EndIf}
+  ${nsProcess::Unload}
 
   ; Reads components status for registry
   !insertmacro SectionList "InitSection"
