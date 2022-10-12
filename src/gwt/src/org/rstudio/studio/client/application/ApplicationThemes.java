@@ -61,6 +61,8 @@ public class ApplicationThemes implements ThemeChangedEvent.Handler,
       
       // NOTE: These values are read by the session, so if any names need to change
       // here they should be synchronized on the session side as well.
+      //
+      // See SessionThemes.cpp for more details.
       new JSObjectStateValue(
             "themes",
             "themeInfo",
