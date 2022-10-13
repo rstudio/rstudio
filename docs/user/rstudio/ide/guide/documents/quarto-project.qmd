@@ -6,7 +6,7 @@ RStudio v2022.07.1 and later includes support for editing and preview of [Quarto
 
 > Quarto^®^ is an open-source scientific and technical publishing system built on [Pandoc](https://pandoc.org/)
 >
-> -   Create dynamic content with [Python](https://quarto.org/docs/computations/python.html), \> [R](https://quarto.org/docs/computations/r.html), [Julia](https://quarto.org/docs/computations/julia.html), and \> [Observable](https://quarto.org/docs/computations/ojs.html).
+> -   Create dynamic content with [Python](https://quarto.org/docs/computations/python.html), [R](https://quarto.org/docs/computations/r.html), [Julia](https://quarto.org/docs/computations/julia.html), and  [Observable](https://quarto.org/docs/computations/ojs.html).
 >
 > -   Author documents as plain text markdown or [Jupyter](https://jupyter.org/) notebooks.
 >
@@ -26,17 +26,17 @@ To upgrade Quarto out of sync with the bundled version in RStudio, follow the di
 
 Use the **File** \> **New File** \> **Quarto Document** command to create new Quarto documents, which will launch the **New Quarto Document** wizard:
 
-![](https://quarto.org/docs/tools/images/new-quarto-doc.png){fig-alt="The 'New Quarto Document' dialog menu in RStudio."}
+![](images/new-quarto-doc.png){fig-alt="The 'New Quarto Document' dialog menu in RStudio."}
 
 ## Render and Preview
 
 Use the **Render** button to preview documents as you edit them:
 
-![](https://quarto.org/docs/tools/images/rstudio-render.png){fig-alt="The top section of a qmd file as displayed in RStudio. There is a toolbar right above the document containing various options, including 'Render.' There is a stylized, segmented blue arrow pointing at the word."}
+![](images/rstudio-render.png){fig-alt="The top section of a qmd file as displayed in RStudio. There is a toolbar right above the document containing various options, including 'Render.' There is a stylized, segmented blue arrow pointing at the word."}
 
 If you prefer to automatically render whenever you save you can check the **Render on Save** option on the editor toolbar.
 
-The preview appears alongside the editor in the **Viewer** pane:
+The preview appears alongside the editor in the **Viewer** pane if **Preview in Viewer Pane** is selected:
 
 ![](images/rstudio-preview.png){fig-alt="An RStudio window. On the left half of the page is a Quarto document and the 'Jobs' pane open underneath that. There is messages in green text in the 'Jobs' pane that say: 'Watching files for changes. Browse at http://localhost:4064'. On the right half of the window is the Quarto output of the document on the left, as rendered by Knitr."}
 
@@ -91,7 +91,7 @@ To create a new project for a Quarto document or set of documents:
 2.  Specify **New Directory**
 3.  Select **Quarto Project**
 
-![](https://quarto.org/docs/tools/images/rstudio-new-knitr-project.png){fig-alt="A section of the 'New Project Wizard' menu from Rstudio. This section is titled 'Create Quarto Project'. The Quarto logo is displayed on the left. ON the right are fields for 'Type', 'Directory name', and 'Create project as subdirectory of:'. Underneath that are options for 'Engine', 'Create a git repository', and 'Use renv with this project'. The option for 'Engine' is set to 'Knitr'. There are buttons for 'Create Project' and 'Cancel' arranged side-by-side in the bottom right of the window. There is an option to 'Open in new session' in the button left corner."}
+![](images/rstudio-new-knitr-project.png){fig-alt="A section of the 'New Project Wizard' menu from Rstudio. This section is titled 'Create Quarto Project'. The Quarto logo is displayed on the left. ON the right are fields for 'Type', 'Directory name', and 'Create project as subdirectory of:'. Underneath that are options for 'Engine', 'Create a git repository', and 'Use renv with this project'. The option for 'Engine' is set to 'Knitr'. There are buttons for 'Create Project' and 'Cancel' arranged side-by-side in the bottom right of the window. There is an option to 'Open in new session' in the button left corner."}
 
 You can use this UI to create both vanilla projects as well as [websites](https://quarto.org/docs/websites/) and [books](https://quarto.org/docs/books/). Options are also provided for creating a [git](https://git-scm.com/) repository and initializing an [renv](https://rstudio.github.io/renv/) environment for the project.
 
@@ -136,21 +136,21 @@ To work within a virtual environment ([venv](https://packaging.python.org/guides
 2.  Specify the **Jupyter** engine with a venv
 3.  Specify which packages you'd like to seed the venv with:
 
-![](https://quarto.org/docs/tools/images/rstudio-new-project.png){fig-alt="A section of the 'New Project Wizard' menu from Rstudio. This section is titled 'Create Quarto Project'. The Quarto logo is displayed on the left. ON the right are fields for 'Type', 'Directory name', and 'Create project as subdirectory of:'. Underneath that are options for 'Engine' and 'Kernel'. The option for 'Engine' is set to 'Jupyter,' and the option for 'Kernel' is set to 'Python 3'. Underneath these are options for 'Create a git repository', and 'Use venv with this project'. The button for 'Use venv...' is selected, and there is a text box to the right with the Python package names 'matplotlib' and 'pandas' filled in. There are buttons for 'Create Project' and 'Cancel' arranged side-by-side in the bottom right of the window. There is an option to 'Open in new session' in the button left corner."}
+![](images/rstudio-new-jupyter-project.png){fig-alt="A section of the 'New Project Wizard' menu from Rstudio. This section is titled 'Create Quarto Project'. The Quarto logo is displayed on the left. ON the right are fields for 'Type', 'Directory name', and 'Create project as subdirectory of:'. Underneath that are options for 'Engine' and 'Kernel'. The option for 'Engine' is set to 'Jupyter,' and the option for 'Kernel' is set to 'Python 3'. Underneath these are options for 'Create a git repository', and 'Use venv with this project'. The button for 'Use venv...' is selected, and there is a text box to the right with the Python package names 'matplotlib' and 'pandas' filled in. There are buttons for 'Create Project' and 'Cancel' arranged side-by-side in the bottom right of the window. There is an option to 'Open in new session' in the button left corner."}
 
 RStudio will automatically activate this virtual environment whenever you open the project. You can install additional Python packages into the environment using the RStudio **Terminal** tab. For example:
 
-![An RStudio terminal window. The prompt is prefixed by the word '(env)', indicating that this prompt is taking place in a Python virtual environment named 'env.' The first line is empty and the second line contains the command 'python3 -m pip install scikit-learn.'](https://quarto.org/docs/tools/images/rstudio-pip-install.png){alt="An RStudio terminal window. The prompt is prefixed by the word '(env)', indicating that this prompt is taking place in a Python virtual environment named 'env.' The first line is empty and the second line contains the command 'python3 -m pip install scikit-learn.'"}
+![](images/rstudio-pip-install.png){alt="An RStudio terminal window. The prompt is prefixed by the word '(env)', indicating that this prompt is taking place in a Python virtual environment named 'env.' The first line is empty and the second line contains the command 'python3 -m pip install scikit-learn.'"}
 
 ## YAML intelligence
 
 YAML code completion is available for project files, YAML front matter, and executable cell options:
 
-![Quarto document with YAML being edited. Next to the cursor code completion helper is open showing YAML options beginning with the letters preceding the cursor ('to').](https://quarto.org/docs/tools/images/rstudio-yaml-completion.png){alt="Quarto document with YAML being edited. Next to the cursor code completion helper is open showing YAML options beginning with the letters preceding the cursor ('to')."}
+![](images/rstudio-yaml-completion.png){alt="Quarto document with YAML being edited. Next to the cursor code completion helper is open showing YAML options beginning with the letters preceding the cursor ('to')."}
 
 If you have incorrect YAML it will also be highlighted when documents are saved:
 
-![](https://quarto.org/docs/tools/images/rstudio-yaml-diagnostics.png){fig-alt="Quarto document YAML metadata with an incorrect option underlined in red."}
+![](images/rstudio-yaml-diagnostics.png){fig-alt="Quarto document YAML metadata with an incorrect option underlined in red."}
 
 ## R package
 

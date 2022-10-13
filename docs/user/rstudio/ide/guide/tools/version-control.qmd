@@ -26,7 +26,7 @@ Prior to using RStudio's version control features you will need to ensure that y
 
 ### Git
 
-Prior to using Git with RStudio you should install it using the appropriate method for your platform as indicated at <https://git-scm.com/download/linux>.
+Prior to using Git with RStudio you should install it using the appropriate method for your platform as indicated at <https://git-scm.com/download/>.
 
 An excellent resource for learning more about Git and how to use it is the [Pro Git](https://git-scm.com/book/en/v2) online book. Another good resource for learning about git is the [Git Bootcamp](https://help.github.com/articles/set-up-git/) provided by GitHub.
 
@@ -52,11 +52,11 @@ Once a Version Control system has been installed, it needs to be activated on th
 
 If you are using RStudio Server, by default RStudio Server will look at the PATH for the first Git executable it finds, and sets that as the default. If you have a specific version that you want to set for all users, the easiest option is to make sure it's the first available on the PATH system-wide.
 
-Alternately, if you are running version 1.4 or above of Posit Workbench (previously RStudio Server Pro/RStudio Workbench), you can set the default Git version system-wide by setting the `git_exe_path` option in your system rstudio-prefs.json file. See here for more:\
+Alternately, in Posit Workbench (previously RStudio Server Pro/RStudio Workbench), you can set the default Git version system-wide by setting the `git_exe_path` option in your system rstudio-prefs.json file. See here for more:\
 <https://docs.posit.co/ide/server-pro/r-sessions.html#customizing-session-settings>\
 <https://docs.posit.co/ide/server-pro/session-user-settings.html>
 
-RStudio's version control features are tied to the use of [Projects](../code/projects.html) (which are a way of dividing work into multiple contexts, each with their own working directory).The steps required to use version control with a project vary depending on whether the project is new or existing as well as whether it is already under version control.
+RStudio's version control features are tied to the use of [Projects](../code/projects.html) (which are a way of dividing work into multiple contexts, each with their own working directory). The steps required to use version control with a project vary depending on whether the project is new or existing as well as whether it is already under version control.
 
 ### Integrations
 
@@ -72,7 +72,7 @@ The **Git tab** within the **Environment pane** provides a number of useful comm
 
 ![](images/git-tab.png){fig-alt="A screenshot of the Git tab in RStudio, showing a few files that can be added to staging."}
 
-Once you are finished with your local work and are ready to Commit your changes, selecting **Commit** in either the **Git** drop-down menu** or **Git** tab opens the **Review Changes** pop-up to select files for staging, add a commit message, and eventually push the commit.
+Once you are finished with your local work and are ready to Commit your changes, selecting **Commit** in either the **Git** drop-down menu or **Git** tab opens the **Review Changes** pop-up to select files for staging, add a commit message, and eventually push the commit.
 
 ![](images/git-commit-pane.png){fig-alt="A screenshot of the Review Changes pop-up, indicating the files for staging and the ability to commit, push and pull changes."}
 

@@ -1,14 +1,17 @@
 /*-- scss:defaults --*/
 
+@import url('https://fonts.googleapis.com/css2?family=Open+Sans:ital,wght@0,300;0,400;0,500;0,600;0,700;0,800;1,300;1,400;1,500;1,600;1,700;1,800&display=swap');
+
 // Colors
-$primary: #4d8dc9; /* rstudio blue */
+$primary: #447099; /* posit blue */
 
 // Text and Links
-$body-color: #404040; /* rstudio dark gray, matches rstudio.com */
-$headings-color: #404040; /* rstudio dark gray, matches rstudio.com */
-$code-color: #702459; /* constrast ratio: 8.94 */
-$link-color: darken($primary, 8%);
-$link-hover-color: darken($link-color, 8%);
+$body-color: #404041; /* posit gray */
+$headings-color: #404041; /* posit gray */
+// $code-color: #702459; /* constrast ratio: 8.94 */
+$link-color: darken($primary, 10%);
+$link-hover-color: darken($link-color, 10%);
+$font-family-sans-serif: "Open Sans",   system-ui, -apple-system, "Segoe UI", Roboto, "Helvetica Neue", "Noto Sans", "Liberation Sans", Arial, sans-serif, "Apple Color Emoji", "Segoe UI Emoji", "Segoe UI Symbol", "Noto Color Emoji" !default;
 
 // Customize the navbar
 $navbar-bg: #ffffff;
@@ -19,21 +22,29 @@ $navbar-brand-hl: $navbar-brand;
 
 // Customize the sidebar
 $sidebar-bg: #ffffff;
-$sidebar-fg: #404040;
+$sidebar-fg: #404041;
 
 // Customize the footer color
-$footer-fg: lighten(#404040, 30%);
+$footer-fg: lighten(#404041, 30%);
 
 /* workbench variables */
-$pro-header: #4d4d4d; /* rstudio logo gray, contrast: 8.45 */
-$pro-header-border: lighten($pro-header, 50%);
+$pro-header: #EE6331; /* posit orange, contrast: 8.45 */
+$pro-header-border: darken($pro-header, 5%);
+
+/* callout variables */
+$callout-color-important: #9A4665; // posit burgundy
+$callout-color-warning: #EE6331; //posit orange
+$callout-color-tip: #72994E; // posit green
+$callout-color-note: $primary; // posit blue
 
 /*-- scss:rules --*/
 
-/* styling underlined links */
+
+/* styling links */
 a {
   text-decoration-thickness: 0.05em;
   text-underline-offset: 0.15em;
+  color: $primary;
 }
 
 /* increase padding around code blocks */
@@ -46,25 +57,43 @@ pre.sourceCode.code-with-copy {
   letter-spacing: 0.05rem;
 }
 
+/* decrease font size for stacked title and version */
+.navbar-title {
+  font-size: 14pt;
+}
+
 /* increase padding around navbar links so less squished */
 .navbar-expand-lg .navbar-nav .nav-link {
   padding: 0rem 1rem;
+  white-space: nowrap; 
 }
 
+/* image in nav bar sizing */
+
+.navbar .img-fluid {
+  width: 70px;
+  min-width: 70px;
+}
 /* increase padding between sidebar nav items */
 .sidebar-navigation .sidebar-section.depth1 {
   padding-bottom: 0.2rem; /* double the default */
 }
 
 .sidebar nav[role=doc-toc] ul > li a.active {
-  color: #295b89 !important;
+  color: $primary !important;
   font-weight: normal;
   letter-spacing: -0.01em;
+  border-left: 1px solid $primary;
 }
 
 /* yes this is actually a default selector and needs to be overridden to improve contrast ratio */
-.sidebar nav[role=doc-toc] ul > li > ul > li > a.active {
+.sidebar nav[role=doc-toc] ul > li > ul > li > a.active { 
   color: #295b89 !important;
+}
+
+/* darken copyright color to improve contrast ratio */
+.nav-footer .nav-footer-left{
+  color: #404041;
 }
 
 /* the PRO header */
@@ -115,45 +144,49 @@ div span.pro-feature {
 }
 
 .sidebar.sidebar-navigation a.active {
-  border-left: 3px solid #4c83b6;
+  border-left: 3px solid $primary;
   padding-left: 0.5em;
 }
 
 /* darken nav page text */
 .nav-page .nav-page-text {
-  color: $pro-header;
+  color: $body-color;
+}
+
+.bi-arrow-right-short::before {
+  color: $body-color;  
 }
 
 /* Code blocks */
 
-p.code-title {
-  color: #3c3c3c;
-  background-color: rgba(219, 219, 219, 0.8);
-  margin: 1em 0 -1.2em;
-  padding: 0.1em 1em;
-  font-size: 0.9em;
-  font-family: "Roboto Mono", "Courier New", Courier, monospace;
-}
+// p.code-title {
+//   color: #3c3c3c;
+//   background-color: rgba(219, 219, 219, 0.8);
+//   margin: 1em 0 -1.2em;
+//   padding: 0.1em 1em;
+//   font-size: 0.9em;
+//   font-family: "Roboto Mono", "Courier New", Courier, monospace;
+// }
 
-div.code-title {
-  color: #3c3c3c;
-  background-color: rgba(219, 219, 219, 0.8);
-  margin: 1em 0 -1.2em;
-  padding: 0.1em 1em;
-  font-size: 0.9em;
-  font-family: "Roboto Mono", "Courier New", Courier, monospace;
-}
+// div.code-title {
+//   color: #3c3c3c;
+//   background-color: rgba(219, 219, 219, 0.8);
+//   margin: 1em 0 -1.2em;
+//   padding: 0.1em 1em;
+//   font-size: 0.9em;
+//   font-family: "Roboto Mono", "Courier New", Courier, monospace;
+// }
 
-pre .code-noselect {
-  color: #aaa;
-  -webkit-user-select: none;
-  -moz-user-select: none;
-  -ms-user-select: none;
-  user-select: none;
-  /* padding-right: 6px; */
-}
+// pre .code-noselect {
+//   color: #aaa;
+//   -webkit-user-select: none;
+//   -moz-user-select: none;
+//   -ms-user-select: none;
+//   user-select: none;
+//   /* padding-right: 6px; */
+// }
 
-pre code::-webkit-scrollbar-thumb:hover,
-.codehilite pre::-webkit-scrollbar-thumb:hover {
-  background-color: #4c83b6 !important;
-}
+// pre code::-webkit-scrollbar-thumb:hover,
+// .codehilite pre::-webkit-scrollbar-thumb:hover {
+//   background-color: #4c83b6 !important;
+// }
