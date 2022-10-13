@@ -285,9 +285,9 @@ options(help_type = "html")
       return()
    
    # If we've encoded the package and function in 'what', pull it out
-   if (grepl("|||", what, fixed = TRUE))
+   if (grepl("::", what, fixed = TRUE))
    {
-      splat <- strsplit(what, "|||", fixed = TRUE)[[1]]
+      splat <- strsplit(what, "::", fixed = TRUE)[[1]]
       from <- splat[[1]]
       what <- splat[[2]]
    }

@@ -2777,9 +2777,8 @@ assign(x = ".rs.acCompletionTypes",
                                             documentId,
                                             envir)
 {
-   .rs.appendCompletions(
-      .rs.getCompletionsLibraryContext(token, string, context, numCommas, functionCall, discardFirst, documentId, envir),
-      if (context == .rs.acContextTypes$FUNCTION)
+   libraryContextCompletions <- .rs.getCompletionsLibraryContext(token, string, context, numCommas, functionCall, discardFirst, documentId, envir)
+   completions <- if (context == .rs.acContextTypes$FUNCTION)
          .rs.getCompletionsFunction(token, string, functionCall, numCommas, envir)
       else if (context == .rs.acContextTypes$ARGUMENT)
          .rs.getCompletionsArgument(token, string, functionCall, envir)
@@ -2789,7 +2788,14 @@ assign(x = ".rs.acCompletionTypes",
          .rs.getCompletionsDoubleBracket(token, string, functionCall, envir)
       else
          .rs.emptyCompletions()
-   )
+         
+   # prefer argument completions from libraryContextCompletions
+   # because it contains the package name too
+   if (any(libraryContextCompletions$type == .rs.acCompletionTypes$ARGUMENT)) 
+   {
+      completions <- .rs.subsetCompletions(completions, completions$type != .rs.acCompletionTypes$ARGUMENT)
+   }
+   .rs.appendCompletions(libraryContextCompletions, completions)
 })
 
 ## NOTE: This is a modified version of 'matchAvailableTopics'
@@ -3493,7 +3499,7 @@ assign(x = ".rs.acCompletionTypes",
    
    .rs.makeCompletions(token = token,
                        results = results,
-                       packages = paste(pkg, string[[1]], sep = "|||"),
+                       packages = paste(pkg, string[[1]], sep = "::"),
                        type = .rs.acCompletionTypes$ARGUMENT,
                        fguess = string[[1]])
 })
