@@ -161,7 +161,14 @@ assign(x = ".rs.acCompletionTypes",
    if (.rs.isPackageVersionInstalled("roxygen2", "7.2.1"))
    {
       metadata <- roxygen2::tags_metadata()
-      tags <- paste0("@", metadata$tag, " ")
+      n <- nrow(metadata)
+      suffix <- rep("", n)
+      snippet <- metadata$snippet
+      suffix <- if (!is.null(snippet)) 
+      {
+         ifelse(nzchar(snippet), paste0(" ", snippet), "") 
+      }
+      tags <- paste0("@", metadata$tag, suffix)
       descriptions <- sub("\n$", "", metadata$description)
       vignette <- metadata$vignette
       recommend <- metadata$recommend

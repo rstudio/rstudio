@@ -2076,6 +2076,13 @@ public class RCompletionManager implements CompletionManager
             snippets_.applySnippet(completionToken, qualifiedName.name);
             return;
          }
+
+         if (qualifiedName.type == RCompletionType.ROXYGEN && qualifiedName.display.contains("{"))
+         {
+            // This is a roxygen snippet
+            snippets_.applySnippetContent(completionToken, qualifiedName.display);
+            return;
+         }
          
          boolean insertParen =
                userPrefs_.insertParensAfterFunctionCompletion().getValue() &&

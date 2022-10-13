@@ -237,6 +237,12 @@ public class SnippetHelper
       }
    }
 
+   public void applySnippetContent(final String token, final String snippetContent)
+   {
+      selectToken(token);
+      applySnippetImpl(snippetContent, manager_, editor_.getWidget().getEditor());
+   }
+
    private boolean containsExecutableRCode(String snippetContent)
    {
       return RE_R_CODE.test(snippetContent);
