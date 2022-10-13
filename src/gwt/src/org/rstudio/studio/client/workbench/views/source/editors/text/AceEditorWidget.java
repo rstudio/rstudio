@@ -1090,10 +1090,10 @@ public class AceEditorWidget extends Composite
             clazz = lintStyles_.warning();
 
          int id = editor_.getSession().addMarker(range, clazz, "text", true);
-            annotations_.add(new AnchoredAceAnnotation(
-               annotations.get(i),
-               range,
-               id));
+         annotations_.add(new AnchoredAceAnnotation(
+            annotations.get(i),
+            range,
+            id));
       }
    }
 
