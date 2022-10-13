@@ -661,7 +661,12 @@ SEXP rs_quartoFileProject(SEXP basenameSEXP, SEXP dirnameSEXP)
             json::Value dir = proj.getObject()["dir"];
             if (dir.isString())
             {
-               project.push_back(dir.getString());
+               FilePath inspectedFileDir(dirname);
+               FilePath projectDir(dir.getString());
+               std::string projectDirRelative = projectDir.getRelativePath(inspectedFileDir);
+               if (projectDirRelative == ".")
+                  projectDirRelative = "";
+               project.push_back(projectDirRelative);
             }
          }
 
