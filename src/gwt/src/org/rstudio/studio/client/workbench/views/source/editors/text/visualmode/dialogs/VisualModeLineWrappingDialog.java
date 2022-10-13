@@ -111,7 +111,7 @@ public class VisualModeLineWrappingDialog extends ModalDialog<VisualModeLineWrap
          
       
       chkConfigureFile_ = lineWrappingRadio( 
-         constants_.useBasedLineWrapping(detectedLineWrapping)
+         constants_.useBasedLineWrappingForDocument(detectedLineWrapping)
       );
       chkConfigureFile_.setValue(true);
       mainWidget_.add(chkConfigureFile_);
@@ -120,7 +120,7 @@ public class VisualModeLineWrappingDialog extends ModalDialog<VisualModeLineWrap
       mainWidget_.add(numFileColumn_);
       
       chkConfigureProject_= lineWrappingRadio(
-         constants_.useBasedLineWrapping(detectedLineWrapping)
+         constants_.useBasedLineWrappingForProject(detectedLineWrapping)
       );
       numProjectColumn_ = createColumnInput(defaultColumnBreak);
 
