@@ -60,6 +60,7 @@
 #include <core/http/Response.hpp>
 #include <core/http/Cookie.hpp>
 #include <core/http/CSRFToken.hpp>
+#include <core/r_util/RSessionContext.hpp>
 #include <core/system/Environment.hpp>
 
 #include <session/SessionConsoleProcess.hpp>
@@ -125,9 +126,16 @@ Error makePortTokenCookie(boost::shared_ptr<HttpConnection> ptrConnection,
    // Set environment variables RS_SERVER_URL, RS_SESSION_URL, and RS_PORT_TOKEN,
    // needed for subprocesses to use the rserver-url binary with the -l option.
    core::system::setenv(kPortTokenEnvVar, persistentState().portToken());
-   core::system::setenv(kServerUrlEnvVar, baseURL);
-   core::system::setenv(kSessionUrlEnvVar,
-                        core::r_util::urlPathForSessionScope(options().sessionScope()));
+
+   std::string sessionUrl;
+   std::string serverUrl;
+   r_util::parseSessionUrl(baseURL, nullptr, &sessionUrl, nullptr, &serverUrl);
+   if (sessionUrl == "" && serverUrl == "") {
+      // This is the case with RStudio Server, while Workbench has non-empty values
+      serverUrl = baseURL;
+   }
+   core::system::setenv(kServerUrlEnvVar, serverUrl);
+   core::system::setenv(kSessionUrlEnvVar, sessionUrl);
 
    std::string path = ptrConnection->request().rootPath();
 
