@@ -981,11 +981,22 @@ public class CompletionRequester
          }
 
          // Get the name for the completion
-         SafeHtmlUtil.appendSpan(
+         if (type == RCompletionType.ROXYGEN)
+         {
+            // remove the snippet part
+            SafeHtmlUtil.appendSpan(
+               sb,
+               style,
+               display.replaceFirst(" .*", ""));
+         }
+         else 
+         {
+            SafeHtmlUtil.appendSpan(
                sb,
                style,
                display);
-
+         }
+         
          // Display the source for functions and snippets (unless there
          // is a custom helpHandler provided, indicating that the "source"
          // isn't a package but rather some custom DollarNames scope)

@@ -2077,7 +2077,7 @@ public class RCompletionManager implements CompletionManager
             return;
          }
 
-         if (qualifiedName.type == RCompletionType.ROXYGEN && qualifiedName.display.contains("{"))
+         if (qualifiedName.type == RCompletionType.ROXYGEN && qualifiedName.display.contains("${"))
          {
             // This is a roxygen snippet
             snippets_.applySnippetContent(completionToken, qualifiedName.display);
