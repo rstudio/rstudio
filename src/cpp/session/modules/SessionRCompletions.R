@@ -164,6 +164,7 @@ assign(x = ".rs.acCompletionTypes",
       tags <- paste0("@", metadata$tag, " ")
       descriptions <- sub("\n$", "", metadata$description)
       vignette <- metadata$vignette
+      recommend <- metadata$recommend
    }
    else 
    {
@@ -232,19 +233,25 @@ assign(x = ".rs.acCompletionTypes",
          "@usage ",
          "@useDynLib "
       )
-      descriptions <- rep("", length(tags))
-      vignette <- rep("", length(tags))
+      n <- length(tags)
+      descriptions <- rep("", n)
+      vignette <- rep("", n)
+      recommend <- rep(TRUE, n)
    }
 
    matching <- grepl(paste("^", tag, sep = ""), tags)
+
+   # put recommended tags first
+   keep <- c(which(matching & recommend), which(matching & !recommend))
    
    .rs.makeCompletions(tag,
-                       tags[matching],
-                       type = .rs.acCompletionTypes$ROXYGEN,
+                       results  = tags[keep],
+                       type     = .rs.acCompletionTypes$ROXYGEN,
+                       context  = .rs.acContextTypes$ROXYGEN, 
+                       meta     = descriptions[keep], 
+                       packages = vignette[keep],
+
                        excludeOtherCompletions = TRUE, 
-                       context = .rs.acContextTypes$ROXYGEN, 
-                       meta = descriptions[matching], 
-                       packages = vignette[matching]
                        )
 })
 
