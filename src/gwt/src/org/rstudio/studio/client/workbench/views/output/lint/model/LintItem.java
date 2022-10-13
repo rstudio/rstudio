@@ -36,6 +36,7 @@ public class LintItem extends JavaScriptObject
          "end.row": endRow,
          "end.column": endColumn,
          "text": text,
+         "raw": text,
          "type": type
       };
                                 
