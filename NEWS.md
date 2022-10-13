@@ -1,10 +1,10 @@
 
-## RStudio 2022-10.0 "Elsbeth Geranium" Release Notes
+## RStudio 2022-12.0 "Elsbeth Geranium" Release Notes
 
 ### New
 
-* RStudio now displays a splash screen on startup, while the R session is being initialized. (#11604)
-* Updated RStudio Desktop installer on Windows to detect running RStudio by process name. (#10588)
+- RStudio now displays a splash screen on startup, while the R session is being initialized. (#11604)
+- Updated RStudio Desktop installer on Windows to detect running RStudio by process name. (#10588)
 
 ### R
 
@@ -48,9 +48,19 @@
 - Fixed extension servers appearing in Proxied Servers list (vscode-ext#116)
 - Added support for Flask, including a help dialog and the Posit Workbench Flask Interface code snippet, for proxying Flask applications (rstudio-pro#2660)
 
+
+#### Jupyter Extension
+
+- The Jupyter Notebook and JupyterLab extensions have been updated to match with the new Posit Software, PBC branding (rstudio-pro#3645)
+
 ### Deprecated / Removed
 
 - Removed the Tools / Shell command (#11253)
+
+### Experimental ARM64 and RedHat 9 support
+
+- Experimental (preview) support for Linux `aarch64` platforms, such as the Raspberry Pi and AWS Graviton
+- Experimental (preview) support for RedHat Enterprise Linux 9 and compatible platforms, such as Rocky Linux 9
 
 ### Fixed
 
@@ -64,7 +74,3 @@
 - Fix for schema version comparison that breaks db in downgrade -> upgrade scenarios (rstudio-pro#3572)
 - Fixed an issue in the Electron build of the IDE on Macs where users could not clone a git repository via password-protected SSH or HTTPS (#11693)
 - Fixed scroll speed sensitivity for Mac and Linux and added a preference to adjust it (#11578)
-
-### Jupyter
-
-* The Jupyter Notebook and JupyterLab extensions have been updated to match with the new Posit Software, PBC branding (rstudio-pro#3645)
