@@ -31,7 +31,7 @@ fi
 #QUARTO_URL_BASE="https://github.com/quarto-dev/quarto-cli/releases/latest/download"
 
 # specify a version to pin for releases
-QUARTO_VERSION="1.1.189"
+QUARTO_VERSION="1.1.251"
 QUARTO_SUBDIR="quarto"
 QUARTO_URL_BASE="https://s3.amazonaws.com/rstudio-buildtools/quarto/${QUARTO_VERSION}"
 
