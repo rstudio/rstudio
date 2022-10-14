@@ -1060,7 +1060,7 @@ public class CompletionRequester
             return new ImageResource2x(ICONS.folder2x());
          case RCompletionType.CHUNK:
          case RCompletionType.ROXYGEN:
-            return new ImageResource2x(ICONS.keyword2x());
+            return new ImageResource2x(ICONS.roxygen2x());
          case RCompletionType.HELP:
             return new ImageResource2x(ICONS.help2x());
          case RCompletionType.STRING:
