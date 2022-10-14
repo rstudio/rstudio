@@ -160,18 +160,30 @@ assign(x = ".rs.acCompletionTypes",
    
    if (.rs.isPackageVersionInstalled("roxygen2", "7.2.1"))
    {
-      metadata <- roxygen2::tags_metadata()
-      n <- nrow(metadata)
-      suffix <- rep("", n)
-      snippet <- metadata$snippet
-      suffix <- if (!is.null(snippet)) 
-      {
-         ifelse(nzchar(snippet), paste0(" ", snippet), "") 
-      }
-      tags <- paste0("@", metadata$tag, suffix)
-      descriptions <- sub("\n$", "", metadata$description)
-      vignette <- metadata$vignette
-      recommend <- metadata$recommend
+      tagsFile <- system.file("roxygen2-tags.yml", package = "roxygen2")
+      contents <- readLines(tagsFile, warn = FALSE)
+      yaml <- .rs.fromYAML(contents)
+      n <- length(yaml)
+
+      map_chr <- function(...) vapply(..., FUN.VALUE = character(1), USE.NAMES = FALSE)
+      map_lgl <- function(...) vapply(..., FUN.VALUE = logical(1), USE.NAMES = FALSE)
+      tags <- map_chr(yaml, function(.) .$name)
+      snippet <- map_chr(yaml, function(.) {
+         out <- .$snippet
+         if (is.null(out)) {
+            ""
+         } else {
+            paste0(" ", out)
+         }
+      })
+      tags <- paste0("@", tags, snippet)
+      descriptions <- sub("\n$", "", map_chr(yaml, function(.) .$description))
+      vignette <- map_chr(yaml, function(.) {
+         out <- .$vignette
+         if (is.null(out)) out <- NA_character_
+         out
+      })
+      recommend <- map_lgl(yaml, function(.) isTRUE(.$recommend))
    }
    else 
    {
@@ -2872,7 +2884,7 @@ assign(x = ".rs.acCompletionTypes",
       pkg <- splat[[1]]
       
       token <- if (length(splat) > 1)
-         splat[[2]]
+         splat[[]]
       else
          ""
       
