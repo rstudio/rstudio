@@ -16,6 +16,8 @@ properties([
                 ])
 ])
 
+sentryUploadRetryLimit=5
+
 def compile_package(os, type, flavor, variant) {
   // start with major, minor, and patch versions
   def envVars = "RSTUDIO_VERSION_MAJOR=${rstudioVersionMajor} RSTUDIO_VERSION_MINOR=${rstudioVersionMinor} RSTUDIO_VERSION_PATCH=${rstudioVersionPatch} RSTUDIO_VERSION_SUFFIX=${rstudioVersionSuffix}"
@@ -153,11 +155,9 @@ def s3_upload(type, flavor, os, arch) {
 
 def sentry_upload(type, flavor) {
   withCredentials([string(credentialsId: 'ide-sentry-api-key', variable: 'SENTRY_API_KEY')]){
-    retry(5) {
-      // timeout sentry in 15 minutes
-      timeout(activity: true, time: 15) {
-    sh "cd package/linux/build-${flavor.capitalize()}-${type}/src/cpp && ../../../../../docker/jenkins/sentry-upload.sh ${SENTRY_API_KEY}"
-      }
+    // timeout sentry in 15 minutes
+    timeout(activity: true, time: 15) {
+      sh "cd package/linux/build-${flavor.capitalize()}-${type}/src/cpp && ../../../../../docker/jenkins/sentry-upload.sh ${SENTRY_API_KEY} ${sentryUploadRetryLimit}"
     }
   }
 }
@@ -514,7 +514,7 @@ try {
 
                                         // upload the breakpad symbols
                                         withCredentials([string(credentialsId: 'ide-sentry-api-key', variable: 'SENTRY_API_KEY')]) {
-                                            bat "cd package\\win32\\build\\src\\cpp && ..\\..\\..\\..\\..\\dependencies\\windows\\sentry-cli.exe --auth-token %SENTRY_API_KEY% upload-dif --log-level=debug --org rstudio --project ide-backend -t breakpad ."
+                                            bat "cd package\\win32\\build\\src\\cpp && set SENTRY_HTTP_MAX_RETRIES=${sentryUploadRetryLimit} && ..\\..\\..\\..\\..\\dependencies\\windows\\sentry-cli.exe --auth-token %SENTRY_API_KEY% upload-dif --log-level=debug --org rstudio --project ide-backend -t breakpad ."
                                         }
                                     }
                                 }
