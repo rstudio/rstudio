@@ -187,9 +187,9 @@ public class HelpInfoPopupPanel extends PopupPanel
          vpanel_.add(label);
       }
 
-      Label contentsLabel = new Label(item.meta);
-      contentsLabel.addStyleName(RES.styles().roxygenText());
-      vpanel_.add(contentsLabel);
+      HTML contents = new HTML(item.meta);
+      contents.addStyleName(RES.styles().roxygenText());
+      vpanel_.add(contents);
       
       doDisplay(item.source != null);
    }

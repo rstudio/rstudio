@@ -117,47 +117,7 @@ assign(x = ".rs.acCompletionTypes",
       .rs.acCompletionTypes$UNKNOWN
 })
 
-.rs.addFunction("attemptRoxygenTagCompletion", function(token, line)
-{
-   emptyCompletions <- .rs.emptyCompletions(excludeOtherCompletions = TRUE)
-   
-   # fix up tokenization
-   if (grepl("^\\s*#+'\\s*$", line) && token == "'")
-      token <- ""
-   
-   # draw from 'man-roxygen' folder for '@template' completions
-   if (grepl("^\\s*#+'\\s*@template\\s+", line))
-   {
-      projDir <- .rs.getProjectDirectory()
-      if (is.null(projDir))
-         return(emptyCompletions)
-      
-      manRoxygen <- file.path(projDir, "man-roxygen")
-      if (!utils::file_test("-d", manRoxygen))
-         return(emptyCompletions)
-      
-      completions <- .rs.getCompletionsFile(token, path = manRoxygen, quote = FALSE)
-      completions$results <- sub("[.][rR]$", "", completions$results)
-      return(completions)
-   }
-   
-   # allow the token to be empty only if we're attempting completions
-   # at the start of the line
-   if (token == "")
-   {
-      match <- grepl("^\\s*#+'\\s*$", line)
-      if (!match)
-         return(emptyCompletions)
-   }
-   else
-   {
-      match <- grepl("^@[a-zA-Z0-9]*$", token, perl = TRUE)
-      if (!match)
-         return(emptyCompletions)
-   }
-   
-   tag <- sub(".*(?=@)", '', token, perl = TRUE)
-   
+.rs.addFunction("roxygenTagMetadata", function() {
    if (.rs.isPackageVersionInstalled("roxygen2", "7.2.1"))
    {
       tagsFile <- system.file("roxygen2-tags.yml", package = "roxygen2")
@@ -177,7 +137,18 @@ assign(x = ".rs.acCompletionTypes",
          }
       })
       tags <- paste0("@", tags, snippet)
-      descriptions <- sub("\n$", "", map_chr(yaml, function(.) .$description))
+      descriptions <- sub("\n$", "", map_chr(yaml, function(.) {
+         md <- paste(.$description, collapse = " ")
+         file.md <- tempfile(fileext = ".md")
+         file.html <- tempfile(fileext = ".html")
+         on.exit({
+            unlink(file.md)
+            unlink(file.html)
+         })
+         writeLines(md, file.md)
+         rmarkdown::pandoc_convert(file.md, output = file.html)
+         paste(readLines(file.html), collapse = " ")
+      }))
       vignette <- map_chr(yaml, function(.) {
          out <- .$vignette
          if (is.null(out)) out <- NA_character_
@@ -257,6 +228,61 @@ assign(x = ".rs.acCompletionTypes",
       vignette <- rep("", n)
       recommend <- rep(TRUE, n)
    }
+
+   list(
+      tags = tags, 
+      descriptions = descriptions, 
+      recommend = recommend, 
+      vignette = vignette
+   )
+})
+
+.rs.addFunction("attemptRoxygenTagCompletion", function(token, line)
+{
+   emptyCompletions <- .rs.emptyCompletions(excludeOtherCompletions = TRUE)
+   
+   # fix up tokenization
+   if (grepl("^\\s*#+'\\s*$", line) && token == "'")
+      token <- ""
+   
+   # draw from 'man-roxygen' folder for '@template' completions
+   if (grepl("^\\s*#+'\\s*@template\\s+", line))
+   {
+      projDir <- .rs.getProjectDirectory()
+      if (is.null(projDir))
+         return(emptyCompletions)
+      
+      manRoxygen <- file.path(projDir, "man-roxygen")
+      if (!utils::file_test("-d", manRoxygen))
+         return(emptyCompletions)
+      
+      completions <- .rs.getCompletionsFile(token, path = manRoxygen, quote = FALSE)
+      completions$results <- sub("[.][rR]$", "", completions$results)
+      return(completions)
+   }
+   
+   # allow the token to be empty only if we're attempting completions
+   # at the start of the line
+   if (token == "")
+   {
+      match <- grepl("^\\s*#+'\\s*$", line)
+      if (!match)
+         return(emptyCompletions)
+   }
+   else
+   {
+      match <- grepl("^@[a-zA-Z0-9]*$", token, perl = TRUE)
+      if (!match)
+         return(emptyCompletions)
+   }
+   
+   tag <- sub(".*(?=@)", '', token, perl = TRUE)
+   metadata <- .rs.roxygenTagMetadata()
+   
+   tags <- metadata$tags
+   recommend <- metadata$recommend
+   descriptions <- metadata$descriptions
+   vignette <- metadata$vignette
 
    matching <- grepl(paste("^", tag, sep = ""), tags)
 
