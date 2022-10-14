@@ -49,6 +49,13 @@
    white-space: pre-wrap;
 }
 
+.roxygenTitle {
+   font-family: fixedWidthFont;
+   color: #2154bf;
+   font-weight: bold;
+   margin-bottom: 4px;
+}
+
 .rstudio-themes-dark-menus .helpPopup {
    color: #eaeaea;
    background: #5e5e4e;

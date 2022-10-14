@@ -25,6 +25,7 @@ import org.rstudio.core.client.StringUtil;
 import org.rstudio.studio.client.application.ui.RStudioThemes;
 import org.rstudio.studio.client.workbench.views.console.ConsoleConstants;
 import org.rstudio.studio.client.workbench.views.console.ConsoleResources;
+import org.rstudio.studio.client.workbench.views.console.shell.assist.CompletionRequester.QualifiedName;
 import org.rstudio.studio.client.workbench.views.help.model.HelpInfo;
 
 public class HelpInfoPopupPanel extends PopupPanel
@@ -173,16 +174,24 @@ public class HelpInfoPopupPanel extends PopupPanel
       doDisplay(false);
    }
 
-   public void displayRoxygenHelp(String contents, boolean haveVignette)
+   public void displayRoxygenHelp(QualifiedName item)
    {
       timer_.cancel();
       vpanel_.clear();
       
-      Label contentsLabel = new Label(contents);
+      String title = item.display;
+      if (title != null)
+      {
+         Label label = new Label(title);
+         label.setStylePrimaryName(RES.styles().roxygenTitle());
+         vpanel_.add(label);
+      }
+
+      Label contentsLabel = new Label(item.meta);
       contentsLabel.addStyleName(RES.styles().roxygenText());
       vpanel_.add(contentsLabel);
       
-      doDisplay(haveVignette);
+      doDisplay(item.source != null);
    }
 
    public void clearHelp(boolean downloadOperationPending)

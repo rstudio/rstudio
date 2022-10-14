@@ -69,7 +69,7 @@ public interface CompletionPopupDisplay
    void displayPackageHelp(HelpInfo.ParsedInfo helpInfo);
    void displayDataHelp(HelpInfo.ParsedInfo helpInfo);
    void displaySnippetHelp(String contents);
-   void displayRoxygenHelp(String contents, boolean haveVignette);
+   void displayRoxygenHelp(QualifiedName item);
    void displayYAMLHelp(String value, String description);
    /**
     * Clear out the current help info

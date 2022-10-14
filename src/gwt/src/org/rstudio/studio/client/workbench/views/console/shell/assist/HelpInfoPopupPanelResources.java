@@ -28,6 +28,7 @@ public interface HelpInfoPopupPanelResources extends ClientBundle
       String helpBodyText();
       String snippetText();
       String roxygenText();
+      String roxygenTitle();
    }
 
   
