@@ -325,7 +325,6 @@ private:
 
 void addSourceItem(RSourceItem::Type type,
                    const std::string& extraInfo,
-                   const std::vector<RS4MethodParam>& signature,
                    const RToken& token,
                    const IndexStatus& status,
                    bool hidden, 
@@ -335,7 +334,6 @@ void addSourceItem(RSourceItem::Type type,
                             type,
                             string_utils::strippedOfQuotes(token.contentAsUtf8()),
                             extraInfo,
-                            signature,
                             status.count(RToken::LBRACE),
                             token.row() + 1,
                             token.column() + 1, 
@@ -423,7 +421,6 @@ void testThatCallIndexer(const RTokenCursor& cursor,
          RSourceItem::Test,
          desc,
          "",
-         std::vector<RS4MethodParam>(), 
          status.count(RToken::LBRACE),
          cursor.row() + 1, 
          cursor.column() + 1, 
@@ -455,7 +452,6 @@ void stringAfterRoxygenIndexer(const RTokenCursor& cursor,
       RSourceItem::Roxygen,
       cursor.contentAsUtf8(),
       "",
-      std::vector<RS4MethodParam>(), 
       status.count(RToken::LBRACE),
       cursor.row() + 1, 
       cursor.column() + 1, 
@@ -516,7 +512,6 @@ void nameRoxygenIndexer(const RTokenCursor& cursor,
             RSourceItem::Roxygen,
             name,
             boost::regex_replace(line, titleRoxygenRegex, "\\1"),
-            std::vector<RS4MethodParam>(), 
             status.count(RToken::LBRACE),
             clone.row() + 1, 
             clone.column() + 1, 
@@ -586,9 +581,22 @@ void s4MethodIndexer(const RTokenCursor& cursor,
                         &signature);
       }
       
+      // calculate extraInfo from signature
+      std::string extraInfo;
+      if (signature.size() > 0) 
+      {
+         extraInfo.append("");
+         for (std::size_t i = 0; i < signature.size(); i++)
+         {
+            if (i > 0)
+               extraInfo.append(", ");
+            extraInfo.append(signature[i].type());
+         }
+         extraInfo.append("}");
+      }
+      
       addSourceItem(setType,
-                    "",
-                    signature,
+                    extraInfo,
                     nameToken,
                     status,
                     isReadOnlyFile,
@@ -704,7 +712,6 @@ void variableAssignmentIndexer(const RTokenCursor& cursor,
             type,
             text,
             "",
-            std::vector<RS4MethodParam>(),
             status.count(RToken::LBRACE),
             prevToken.row() + 1,
             prevToken.column() + 1, 

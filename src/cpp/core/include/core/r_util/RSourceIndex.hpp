@@ -86,7 +86,6 @@ public:
    RSourceItem(int type,
                const std::string& name,
                const std::string& extraInfo,
-               const std::vector<RS4MethodParam>& signature,
                int braceLevel,
                std::size_t line,
                std::size_t column, 
@@ -94,7 +93,6 @@ public:
       : type_(type),
         name_(name),
         extraInfo_(extraInfo),
-        signature_(signature),
         braceLevel_(braceLevel),
         line_(line),
         column_(column), 
@@ -111,7 +109,6 @@ private:
                int type,
                const std::string& name,
                const std::string& extraInfo,
-               const std::vector<RS4MethodParam>& signature,
                int braceLevel,
                std::size_t line,
                std::size_t column, 
@@ -120,7 +117,6 @@ private:
         type_(type),
         name_(name),
         extraInfo_(extraInfo),
-        signature_(signature),
         braceLevel_(braceLevel),
         line_(line),
         column_(column), 
@@ -139,7 +135,6 @@ public:
    const std::string& context() const { return context_; }
    const std::string& name() const { return name_; }
    const std::string& extraInfo() const { return extraInfo_; }
-   const std::vector<RS4MethodParam>& signature() const { return signature_; }
    const int braceLevel() const { return braceLevel_; }
    int line() const { return core::safe_convert::numberTo<std::size_t, int>(line_,0); }
    int column() const { return core::safe_convert::numberTo<std::size_t, int>(column_,0); }
@@ -173,7 +168,6 @@ public:
                          type_,
                          name_,
                          extraInfo_,
-                         signature_,
                          braceLevel_,
                          line_,
                          column_, 
@@ -185,7 +179,6 @@ private:
    int type_;
    std::string name_;
    std::string extraInfo_;
-   std::vector<RS4MethodParam> signature_;
    int braceLevel_;
    std::size_t line_;
    std::size_t column_;
