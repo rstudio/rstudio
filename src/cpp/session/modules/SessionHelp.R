@@ -754,7 +754,11 @@ options(help_type = "html")
    pkgName <- sub(":*$", "", pkgName)
    topic <- paste(pkgName, "-package", sep = "")
    call <- .rs.makeHelpCall(topic, pkgName)
-   print(eval(call, envir = parent.frame()))
+   helpfile <- eval(call, envir = parent.frame())
+   if (length(helpfile) == 0)
+      browseURL(paste0("http://127.0.0.1:", .rs.httpdPort(), "/library/", pkgName, "/html/00Index.html"))
+   else 
+      print(helpfile)
 })
 
 .rs.addFunction("showHelpTopic", function(topic, package)
