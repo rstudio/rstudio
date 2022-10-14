@@ -124,7 +124,7 @@ export class GwtCallback extends EventEmitter {
         console.log('desktop_get_open_file_name');
         const openDialogOptions: OpenDialogOptions = {
           title: caption,
-          defaultPath: resolveAliasedPath(dir),
+          defaultPath: normalizeSeparatorsNative(resolveAliasedPath(dir)),
           buttonLabel: label,
         };
         openDialogOptions.properties = ['openFile'];
@@ -165,14 +165,15 @@ export class GwtCallback extends EventEmitter {
       ) => {
         const saveDialogOptions: SaveDialogOptions = {
           title: caption,
-          defaultPath: resolveAliasedPath(dir),
+          defaultPath: normalizeSeparatorsNative(resolveAliasedPath(dir)),
           buttonLabel: label,
         };
+        logger().logDebug(`Using path: ${saveDialogOptions.defaultPath}`);
 
         if (defaultExtension) {
           saveDialogOptions['filters'] = [{ name: '', extensions: [defaultExtension.replace('.', '')] }];
         }
-
+        
         let focusedWindow = BrowserWindow.getFocusedWindow();
         if (focusOwner) {
           focusedWindow = this.getSender('desktop_open_minimal_window', event.processId, event.frameId).window;
@@ -191,7 +192,7 @@ export class GwtCallback extends EventEmitter {
         console.log('desktop_get_existing_directory');
         const openDialogOptions: OpenDialogOptions = {
           title: caption,
-          defaultPath: resolveAliasedPath(dir),
+          defaultPath: normalizeSeparatorsNative(resolveAliasedPath(dir)),
           buttonLabel: label,
           properties: ['openDirectory', 'createDirectory', 'promptToCreate'],
         };
