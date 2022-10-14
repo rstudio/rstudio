@@ -112,7 +112,6 @@ public class HelpInfoPopupPanel extends PopupPanel
    {
       timer_.cancel();
       vpanel_.clear();
-
       
       if (name != null)
       {
@@ -174,24 +173,20 @@ public class HelpInfoPopupPanel extends PopupPanel
       doDisplay(false);
    }
 
-   public void displayRoxygenHelp(QualifiedName item)
+   public void displayRoxygenHelp(String title, String description, boolean hasVignette)
    {
       timer_.cancel();
       vpanel_.clear();
       
-      String title = item.display;
-      if (title != null)
-      {
-         Label label = new Label(title);
-         label.setStylePrimaryName(RES.styles().roxygenTitle());
-         vpanel_.add(label);
-      }
-
-      HTML contents = new HTML(item.meta);
+      Label label = new Label(title);
+      label.setStylePrimaryName(RES.styles().roxygenTitle());
+      vpanel_.add(label);
+   
+      HTML contents = new HTML(description);
       contents.addStyleName(RES.styles().roxygenText());
       vpanel_.add(contents);
       
-      doDisplay(item.source != null);
+      doDisplay(hasVignette);
    }
 
    public void clearHelp(boolean downloadOperationPending)

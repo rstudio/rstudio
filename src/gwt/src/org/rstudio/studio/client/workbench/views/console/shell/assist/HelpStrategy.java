@@ -19,6 +19,7 @@ import java.util.HashMap;
 import com.google.gwt.core.client.GWT;
 import org.rstudio.core.client.Debug;
 import org.rstudio.studio.client.RStudioGinjector;
+import org.rstudio.studio.client.common.SimpleRequestCallback;
 import org.rstudio.studio.client.common.codetools.CodeToolsServerOperations;
 import org.rstudio.studio.client.common.codetools.RCompletionType;
 import org.rstudio.studio.client.server.ServerError;
@@ -72,6 +73,9 @@ public class HelpStrategy
       {
          case RCompletionType.PACKAGE:
             showPackageHelp(item, display);
+            break;
+         case RCompletionType.ROXYGEN:
+            showRoxygenHelp(item, display);
             break;
          case RCompletionType.ARGUMENT:
          case RCompletionType.OPTION:
@@ -330,7 +334,17 @@ public class HelpStrategy
       }
    }
    
-   
+   private void showRoxygenHelp(QualifiedName item, 
+                                CompletionPopupDisplay display)
+   {
+      server_.convertRoxygenDescription(item.meta, new SimpleRequestCallback<String>(){
+         @Override
+         public void onResponseReceived(String html)
+         {
+            display.displayRoxygenHelp(item.display, html, item.source != null);
+         }
+      });
+   }
    
    private void showPackageHelp(final QualifiedName selectedItem,
                                 final CompletionPopupDisplay display)

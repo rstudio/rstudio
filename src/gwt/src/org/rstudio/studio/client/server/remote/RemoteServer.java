@@ -1162,6 +1162,17 @@ public class RemoteServer implements Server
       sendRequest(RPC_SCOPE, SQL_GET_COMPLETIONS, params, requestCallback);
    }
 
+   public void convertRoxygenDescription(
+         String md, 
+         ServerRequestCallback<String> requestCallback)
+   {
+      JSONArray params = new JSONArrayBuilder()
+            .add(md)
+            .get();
+      
+      sendRequest(RPC_SCOPE, CONVERT_ROXYGEN_DESCRIPTION, params, requestCallback);
+   }
+
    public void getHelpAtCursor(String line, int cursorPos,
                                ServerRequestCallback<Void> requestCallback)
    {
@@ -6929,6 +6940,7 @@ public class RemoteServer implements Server
    private static final String STAN_RUN_DIAGNOSTICS = "stan_run_diagnostics";
 
    private static final String SQL_GET_COMPLETIONS = "sql_get_completions";
+   private static final String CONVERT_ROXYGEN_DESCRIPTION = "convert_roxygen_description";
 
    private static final String GET_CPP_CAPABILITIES = "get_cpp_capabilities";
    private static final String INSTALL_BUILD_TOOLS = "install_build_tools";

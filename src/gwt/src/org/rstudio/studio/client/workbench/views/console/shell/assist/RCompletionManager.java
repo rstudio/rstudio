@@ -1754,13 +1754,6 @@ public class RCompletionManager implements CompletionManager
             snippets_.getSnippetContents(item.name));
    }
 
-   private void showRoxygenHelp(QualifiedName item, 
-                                CompletionPopupDisplay popup)
-   {
-      if (item.meta != null)
-         popup.displayRoxygenHelp(item);
-   }
-   
    /**
     * It's important that we create a new instance of this each time.
     * It maintains state that is associated with a completion request.
@@ -1783,8 +1776,6 @@ public class RCompletionManager implements CompletionManager
       {
          if (selectedItem.type == RCompletionType.SNIPPET)
             showSnippetHelp(selectedItem, popup_);
-         else if (selectedItem.type == RCompletionType.ROXYGEN)
-            showRoxygenHelp(selectedItem, popup_);
          else
             helpStrategy_.showHelp(selectedItem, popup_);
       }
