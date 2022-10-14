@@ -467,7 +467,24 @@ options(help_type = "html")
    # We might be getting the completion with colons appended, so strip those out.
    pkgName <- sub(":*$", "", pkgName, perl = TRUE)
    topic <- paste(pkgName, "-package", sep = "")
-   .rs.getHelp(topic, pkgName)
+   out <- .rs.getHelp(topic, pkgName)
+   if (is.null(out))
+   {
+      pkgDescription <- suppressWarnings(utils::packageDescription(pkgName))
+      if (!identical(pkgDescription, NA)) 
+      {
+         title <- .rs.htmlEscape(pkgDescription$Title)
+         description <- .rs.htmlEscape(pkgDescription$Description)
+         
+         # Format like what HelpInfo.parse() expects
+         out <- list(
+            html = paste0("<h2>", title, "</h2><h3>Description</h3><p>", description, "</p>"),
+            signature = NULL, 
+            pkgname = pkgName
+         )
+      }
+   }
+   out
 })
 
 .rs.addFunction("getHelpArgument", function(functionName, src, envir)
