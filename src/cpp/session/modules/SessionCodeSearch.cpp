@@ -1525,8 +1525,9 @@ SourceItem fromRSourceItem(const r_util::RSourceItem& rSourceItem)
    }
 
    // calculate extra info
-   std::string extraInfo;
-   if (rSourceItem.signature().size() > 0)
+   std::string extraInfo = rSourceItem.extraInfo();
+   
+   if (extraInfo.size() == 0 && rSourceItem.signature().size() > 0)
    {
       extraInfo.append("{");
       for (std::size_t i = 0; i < rSourceItem.signature().size(); i++)

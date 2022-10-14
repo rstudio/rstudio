@@ -324,6 +324,7 @@ private:
 };
 
 void addSourceItem(RSourceItem::Type type,
+                   const std::string& extraInfo,
                    const std::vector<RS4MethodParam>& signature,
                    const RToken& token,
                    const IndexStatus& status,
@@ -333,6 +334,7 @@ void addSourceItem(RSourceItem::Type type,
    pIndex->addSourceItem(RSourceItem(
                             type,
                             string_utils::strippedOfQuotes(token.contentAsUtf8()),
+                            extraInfo,
                             signature,
                             status.count(RToken::LBRACE),
                             token.row() + 1,
@@ -420,6 +422,7 @@ void testThatCallIndexer(const RTokenCursor& cursor,
       RSourceItem item(
          RSourceItem::Test,
          desc,
+         "",
          std::vector<RS4MethodParam>(), 
          status.count(RToken::LBRACE),
          cursor.row() + 1, 
@@ -451,6 +454,7 @@ void stringAfterRoxygenIndexer(const RTokenCursor& cursor,
    RSourceItem item(
       RSourceItem::Roxygen,
       cursor.contentAsUtf8(),
+      "",
       std::vector<RS4MethodParam>(), 
       status.count(RToken::LBRACE),
       cursor.row() + 1, 
@@ -474,6 +478,9 @@ void nameRoxygenIndexer(const RTokenCursor& cursor,
    if (!clone.bwdOverWhitespace())
       return;
 
+   bool isNameSection = false;
+   std::string name;
+
    while (clone.moveToPreviousToken()) 
    {
       if (!isRoxygenComment(clone))
@@ -484,18 +491,38 @@ void nameRoxygenIndexer(const RTokenCursor& cursor,
       std::string content = clone.contentAsUtf8();
       if (boost::regex_match(content, nameRoxygenRegex))
       {
-         std::string name = boost::regex_replace(content, nameRoxygenRegex, "\\1");
-         
+         name = boost::regex_replace(content, nameRoxygenRegex, "\\1");
+         isNameSection = true;
+         break;
+      }
+   }   
+
+   if (isNameSection)
+   {
+      // #' @name <name> was found, keep going back to the first line of this 
+      // roxygen section, and only keep if it has text (the title)
+
+      std::string line;
+      while (isRoxygenComment(clone)) 
+      {
+         line = clone.contentAsUtf8();
+         if (!clone.moveToPreviousToken()) break;
+      }
+
+      static const boost::regex titleRoxygenRegex("^#+'\\s+([^@]+)$");
+      if (boost::regex_match(line, titleRoxygenRegex))
+      {
          RSourceItem item(
             RSourceItem::Roxygen,
             name,
+            boost::regex_replace(line, titleRoxygenRegex, "\\1"),
             std::vector<RS4MethodParam>(), 
             status.count(RToken::LBRACE),
             clone.row() + 1, 
             clone.column() + 1, 
             isReadOnlyFile
          );
-
+         
          pIndex->addSourceItem(item);
 
          return;
@@ -560,6 +587,7 @@ void s4MethodIndexer(const RTokenCursor& cursor,
       }
       
       addSourceItem(setType,
+                    "",
                     signature,
                     nameToken,
                     status,
@@ -675,6 +703,7 @@ void variableAssignmentIndexer(const RTokenCursor& cursor,
    RSourceItem item(
             type,
             text,
+            "",
             std::vector<RS4MethodParam>(),
             status.count(RToken::LBRACE),
             prevToken.row() + 1,

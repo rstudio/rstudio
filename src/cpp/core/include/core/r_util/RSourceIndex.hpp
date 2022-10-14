@@ -85,6 +85,7 @@ public:
 
    RSourceItem(int type,
                const std::string& name,
+               const std::string& extraInfo,
                const std::vector<RS4MethodParam>& signature,
                int braceLevel,
                std::size_t line,
@@ -92,6 +93,7 @@ public:
                bool hidden)
       : type_(type),
         name_(name),
+        extraInfo_(extraInfo),
         signature_(signature),
         braceLevel_(braceLevel),
         line_(line),
@@ -108,6 +110,7 @@ private:
    RSourceItem(const std::string& context,
                int type,
                const std::string& name,
+               const std::string& extraInfo,
                const std::vector<RS4MethodParam>& signature,
                int braceLevel,
                std::size_t line,
@@ -116,6 +119,7 @@ private:
       : context_(context),
         type_(type),
         name_(name),
+        extraInfo_(extraInfo),
         signature_(signature),
         braceLevel_(braceLevel),
         line_(line),
@@ -134,6 +138,7 @@ public:
    bool isTest() const { return type_ == Test; }
    const std::string& context() const { return context_; }
    const std::string& name() const { return name_; }
+   const std::string& extraInfo() const { return extraInfo_; }
    const std::vector<RS4MethodParam>& signature() const { return signature_; }
    const int braceLevel() const { return braceLevel_; }
    int line() const { return core::safe_convert::numberTo<std::size_t, int>(line_,0); }
@@ -167,6 +172,7 @@ public:
       return RSourceItem(context,
                          type_,
                          name_,
+                         extraInfo_,
                          signature_,
                          braceLevel_,
                          line_,
@@ -178,6 +184,7 @@ private:
    std::string context_;
    int type_;
    std::string name_;
+   std::string extraInfo_;
    std::vector<RS4MethodParam> signature_;
    int braceLevel_;
    std::size_t line_;
