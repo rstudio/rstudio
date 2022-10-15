@@ -135,7 +135,8 @@ assign(x = ".rs.acCompletionTypes",
    .rs.scalar(.rs.convertRoxygenDescription(description))
 })
 
-.rs.addFunction("roxygenTagMetadata", function() {
+.rs.addFunction("roxygenTagMetadata", function()
+{
    if (.rs.isPackageVersionInstalled("roxygen2", "7.2.1"))
    {
       tagsFile <- system.file("roxygen2-tags.yml", package = "roxygen2")
