@@ -130,7 +130,8 @@ assign(x = ".rs.acCompletionTypes",
    paste(readLines(file.html), collapse = " ")
 })
 
-.rs.addJsonRpcHandler("convert_roxygen_description", function(description) {
+.rs.addJsonRpcHandler("convert_roxygen_description", function(description)
+{
    .rs.scalar(.rs.convertRoxygenDescription(description))
 })
 
