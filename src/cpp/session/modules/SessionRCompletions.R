@@ -117,7 +117,8 @@ assign(x = ".rs.acCompletionTypes",
       .rs.acCompletionTypes$UNKNOWN
 })
 
-.rs.addFunction("convertRoxygenDescription", function(description) {
+.rs.addFunction("convertRoxygenDescription", function(description)
+{
    file.md <- tempfile(fileext = ".md")
    file.html <- tempfile(fileext = ".html")
    on.exit({
