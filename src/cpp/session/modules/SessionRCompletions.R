@@ -156,9 +156,9 @@ assign(x = ".rs.acCompletionTypes",
          }
       })
       tags <- paste0("@", tags, snippet)
-      descriptions <- sub("\n$", "", map_chr(yaml, function(.) {
-         paste(.$description, collapse = "\n")
-      }))
+      descriptions <- map_chr(yaml, function(.) {
+         .rs.htmlEscape(sub("\n$", "", .$description))
+      })
       vignette <- map_chr(yaml, function(.) {
          out <- .$vignette
          if (is.null(out)) out <- NA_character_
