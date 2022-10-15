@@ -117,24 +117,6 @@ assign(x = ".rs.acCompletionTypes",
       .rs.acCompletionTypes$UNKNOWN
 })
 
-.rs.addFunction("convertRoxygenDescription", function(description)
-{
-   file.md <- tempfile(fileext = ".md")
-   file.html <- tempfile(fileext = ".html")
-   on.exit({
-      unlink(file.md)
-      unlink(file.html)
-   })
-   writeLines(description, file.md)
-   rmarkdown::pandoc_convert(file.md, output = file.html)
-   paste(readLines(file.html), collapse = " ")
-})
-
-.rs.addJsonRpcHandler("convert_roxygen_description", function(description)
-{
-   .rs.scalar(.rs.convertRoxygenDescription(description))
-})
-
 .rs.addFunction("roxygenTagMetadata", function()
 {
    if (.rs.isPackageVersionInstalled("roxygen2", "7.2.1"))

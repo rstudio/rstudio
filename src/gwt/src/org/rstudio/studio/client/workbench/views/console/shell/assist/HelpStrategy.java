@@ -337,13 +337,7 @@ public class HelpStrategy
    private void showRoxygenHelp(QualifiedName item, 
                                 CompletionPopupDisplay display)
    {
-      server_.convertRoxygenDescription(item.meta, new SimpleRequestCallback<String>(){
-         @Override
-         public void onResponseReceived(String html)
-         {
-            display.displayRoxygenHelp(item.display, html, item.source != null);
-         }
-      });
+      display.displayRoxygenHelp(item.display, item.meta, item.source != null);
    }
    
    private void showPackageHelp(final QualifiedName selectedItem,

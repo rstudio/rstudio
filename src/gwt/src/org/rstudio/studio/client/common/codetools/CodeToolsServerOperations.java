@@ -123,9 +123,4 @@ public interface CodeToolsServerOperations extends HelpServerOperations,
          SqlCompletionParseContext context,
          ServerRequestCallback<Completions> requestCallback);
 
-   void convertRoxygenDescription(
-         String md, 
-         ServerRequestCallback<String> requestCallback
-         );
-   
 }
