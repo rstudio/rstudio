@@ -2920,7 +2920,7 @@ assign(x = ".rs.acCompletionTypes",
       pkg <- splat[[1]]
       
       token <- if (length(splat) > 1)
-         splat[[]]
+         splat[[2]]
       else
          ""
       
