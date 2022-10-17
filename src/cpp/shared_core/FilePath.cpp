@@ -1064,6 +1064,24 @@ std::time_t FilePath::getLastWriteTime() const
    }
 }
 
+Error FilePath::getLastWriteTime(std::time_t& out_lastWriteTime) const
+{
+   if (!exists())
+      return notFoundError(*this, ERROR_LOCATION);
+
+   boost::system::error_code ec;
+   std::time_t lastWriteTime = boost::filesystem::last_write_time(m_impl->Path, ec);
+   if (ec)
+   {
+      Error error(ec, ERROR_LOCATION);
+      addErrorProperties(m_impl->Path, &error);
+      return error;
+   }
+
+   out_lastWriteTime = lastWriteTime;
+   return Success();
+}
+
 std::string FilePath::getLexicallyNormalPath() const
 {
    if (isEmpty())
