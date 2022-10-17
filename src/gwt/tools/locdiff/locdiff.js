@@ -38,19 +38,26 @@ async function main() {
   const report = [];
   for (const [fileId, newPropFile] of newENPropFiles) {
     const oldPropFile = oldENPropFiles.get(fileId);
+    const newFRPropFile = newFRPropFiles.get(fileId);
     for (const [stringId, stringValue] of newPropFile.strings) {
       
       // assume this is a newly added property file
       let status = 'added';
       let oldString = '';
       let newString = stringValue;
+      let currentFRString = '';
 
       if (oldPropFile !== undefined) {
         // did this string exist before?
         if (oldPropFile.strings.has(stringId)) {
           oldString = oldPropFile.strings.get(stringId);
 
-          // are they the same?
+          // get the current French value
+          if (newFRPropFile.strings.has(stringId)) {
+            currentFRString = newFRPropFile.strings.get(stringId);
+          }
+
+          // are English strings the same?
           if (oldString === newString) {
             status = 'unchanged';
             continue; // don't output unchanged strings
@@ -64,25 +71,27 @@ async function main() {
         stringId: stringId,
         status: status,
         old: oldString,
-        new: newString
+        new: newString,
+        currentFR: currentFRString
       });
     }
   }
 
   const createCsvWriter = createObjectCsvWriter;
   const csvWriter = createCsvWriter({
-    path: 'locdiff.csv',
+    path: 'locdiff-GWT.csv',
     header: [
       { id: 'fileId', title: 'FILE ID' },
       { id: 'stringId', title: 'STRING ID' },
       { id: 'status', title: 'STATUS' },
       { id: 'old', title: 'OLD VALUE' },
-      { id: 'new', title: 'NEW VALUE' }
+      { id: 'new', title: 'NEW VALUE' },
+      { id: 'currentFR', title: 'CURRENT FRENCH STRING' }
     ]
   });
 
   await csvWriter.writeRecords(report);
-  console.log(`Wrote ${report.length} items to locdiff.csv`);
+  console.log(`Wrote ${report.length} items to locdiff-GWT.csv`);
 }
 
 function gwtRoot(repoRoot) {
