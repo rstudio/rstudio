@@ -30,5 +30,7 @@ export SENTRY_HTTP_MAX_RETRIES=$2
 # Was upload successful?
 if [ $? -eq 0 ]; then
     echo "Sentry upload complete"
-    break
+else
+    echo "Sentry upload failed"
+    exit 1
 fi
