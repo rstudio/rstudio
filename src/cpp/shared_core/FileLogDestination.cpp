@@ -350,7 +350,9 @@ struct FileLogDestination::Impl
       {
          // Check to see if the logfile is stale
          // If so, we will delete it instead of rotating it
-         std::time_t lastWrite = logFile.getLastWriteTime();
+         // note: we swallow any potential error here and simply do not delete the file
+         std::time_t lastWrite = 0;
+         logFile.getLastWriteTime(lastWrite);
          boost::posix_time::ptime lastWriteTime = lastWrite != 0 ? core::date_time::timeFromStdTime(lastWrite) :
                                                                    boost::posix_time::microsec_clock::universal_time();
          boost::posix_time::ptime now = boost::posix_time::microsec_clock::universal_time();

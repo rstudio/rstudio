@@ -471,6 +471,15 @@ public:
    /**
     * @brief Get the last time this file path was written.
     *
+    * @param out_lastWriteTime  The last write time of the file.
+    *
+    * @return Success if the last write time could be retrieved; Error otherwise.
+    */
+   core::Error getLastWriteTime(std::time_t& out_lastWriteTime) const;
+
+   /**
+    * @brief Get the last time this file path was written.
+    *
     * @return The time of the last write.
     */
    std::time_t getLastWriteTime() const;
