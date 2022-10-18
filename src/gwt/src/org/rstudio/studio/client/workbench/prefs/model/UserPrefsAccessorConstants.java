@@ -680,6 +680,14 @@ public interface UserPrefsAccessorConstants extends Constants {
    String rainbowParenthesesDescription();
 
    /**
+    * Whether to highlight fenced divs in a variety of colors.
+    */
+   @DefaultStringValue("Use rainbow fenced divs")
+   String rainbowFencedDivsTitle();
+   @DefaultStringValue("Whether to highlight fenced divs in a variety of colors.")
+   String rainbowFencedDivsDescription();
+
+   /**
     * The maximum number of characters to display in a single line in the R console.
     */
    @DefaultStringValue("Maximum characters per line in R console")
