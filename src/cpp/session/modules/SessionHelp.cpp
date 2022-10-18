@@ -24,6 +24,7 @@
 #include <boost/range/iterator_range.hpp>
 #include <boost/algorithm/string/replace.hpp>
 #include <boost/algorithm/string.hpp>
+#include <boost/algorithm/string/regex.hpp>
 #include <boost/iostreams/filter/aggregate.hpp>
 
 #include <core/Algorithm.hpp>
@@ -375,9 +376,18 @@ public:
             boost::make_iterator_range(tempDest2.begin(), tempDest2.end()),
             "src=\"/",
             "src=\"" + baseUrl + "/");
+
+      // Remove the Run Examples link
+      Characters tempDest4;
+      boost::algorithm::replace_all_regex_copy(
+            std::back_inserter(tempDest4),
+            boost::make_iterator_range(tempDest3.begin(), tempDest3.end()),
+            boost::regex("<p><a href='[.][.]/Example/.*'>Run examples</a></p>"),
+            std::string(""));
+
       boost::algorithm::replace_all_copy(
             std::back_inserter(dest),
-            boost::make_iterator_range(tempDest3.begin(), tempDest3.end()),
+            boost::make_iterator_range(tempDest4.begin(), tempDest4.end()),
             "src='/",
             "src='" + baseUrl + "/");
       
