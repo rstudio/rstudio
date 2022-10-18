@@ -80,8 +80,16 @@ void AsyncRProcess::start(const char* rCommand,
    std::vector<std::string> args;
 
    if (rOptions & R_PROCESS_VANILLA)
+   {
       args.push_back("--vanilla");
-
+   }
+   else if (rOptions & R_PROCESS_VANILLA_USER)
+   {
+      args.push_back("--no-save");
+      args.push_back("--no-restore");
+      args.push_back("--no-init-file");
+   }
+   
    if (rOptions & R_PROCESS_NO_RDATA)
    {
       args.push_back("--no-save");
