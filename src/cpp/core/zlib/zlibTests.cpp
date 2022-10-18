@@ -82,6 +82,18 @@ test_context("zlib")
 
       CHECK(empty == uncompressed);
    }
+
+
+   test_that("invalid compressed string fails to decompress")
+   {
+      const std::string invalidCompressed = "H\r:ßÓø";
+
+      std::vector<unsigned char> compressed;
+      std::copy(invalidCompressed.begin(), invalidCompressed.end(), std::back_inserter(compressed));
+
+      std::string uncompressed;
+      REQUIRE(decompressString(compressed, &uncompressed));
+   }
 }
 
 } // namespace zlib

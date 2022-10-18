@@ -247,7 +247,8 @@ Error decompressString(const std::vector<unsigned char>& compressedData,
 
       res = inflate(&zStream, Z_NO_FLUSH);
       destBuff.setDataSize(zStream.total_out);
-      if ((res == Z_DATA_ERROR) || (res == Z_NEED_DICT) || (res == Z_MEM_ERROR))
+      if ((res == Z_DATA_ERROR) || (res == Z_NEED_DICT) || (res == Z_MEM_ERROR) ||
+          (res == Z_BUF_ERROR && zStream.avail_in == 0 && remainIn == 0))
       {
          inflateEnd(&zStream);
          LOG_DEBUG_MESSAGE("Could not decompress data\"" +
