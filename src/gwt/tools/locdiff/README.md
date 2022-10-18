@@ -7,7 +7,7 @@ The tool compares two cloned instances of the RStudio repo; one named "old" and 
 You must create these yourself and checkout the desired commit hashes in each.
 
 It also shows the most recent French translation (if any) for each string to make it easier to
-identify if the French translation was already completed.
+identify what work is needed.
 
 Some useful commit hashes:
 
@@ -38,7 +38,7 @@ cd ../new
 git checkout main
 cd ..
 npm i
-node locdiff
+node start
 ```
 
 Results are written to `locdiff.csv`, which can be loaded into Excel, etc.
