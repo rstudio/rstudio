@@ -88,8 +88,10 @@ async function main() {
   // discover property files and load their strings into memory
   const [oldENPropFiles, newENPropFiles, oldFRPropFiles, newFRPropFiles] = await loadPropertyFiles(oldRepo, newRepo);
 
-  // compute the results
+  // build up the results: an array of LocStrings containing data on each string
   const report: LocString[] = [];
+  
+  // first, iterate the current ("new") English strings
   for (const [fileId, newENPropFile] of newENPropFiles) {
     const oldENPropFile = oldENPropFiles.get(fileId);
     const oldFRPropFile = oldFRPropFiles.get(fileId);
@@ -136,6 +138,48 @@ async function main() {
       });
     }
   }
+
+  // second, iterate the previous ("old") English strings so we can flag deleted strings
+  for (const [fileId, oldENPropFile] of oldENPropFiles) {
+    const newENPropFile = newENPropFiles.get(fileId);
+    const oldFRPropFile = oldFRPropFiles.get(fileId);
+    const newFRPropFile = newFRPropFiles.get(fileId);
+    for (const [stringId, stringValue] of oldENPropFile.strings) {
+     
+      // assume this is a deleted string
+      let status: StringStatus = 'deleted';
+      let oldENString: string = stringValue;
+      let newENString: string = '';
+      let oldFRString: string = '';
+      let currentFRString: string = '';
+
+      if (newENPropFile !== undefined) {
+        // do we still have this string?
+        if (newENPropFile.strings.has(stringId)) {
+          // yes, nothing to do, we've already added this to the report
+          continue;
+        }
+
+        // get the French values
+        if (oldFRPropFile?.strings.has(stringId)) {
+          oldFRString = oldFRPropFile.strings.get(stringId) ?? '';
+        }
+        if (newFRPropFile?.strings.has(stringId)) {
+          currentFRString = newFRPropFile.strings.get(stringId) ?? '';
+        }
+      }
+      report.push({
+        fileId: fileId,
+        stringId: stringId,
+        status: status,
+        old: oldENString ?? '',
+        new: newENString,
+        oldFR: oldFRString,
+        currentFR: currentFRString
+      });
+    }
+  }
+
 
   const createCsvWriter = createObjectCsvWriter;
   const csvWriter = createCsvWriter({
