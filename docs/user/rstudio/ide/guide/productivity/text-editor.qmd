@@ -66,7 +66,7 @@ Text or code in source files can be moved up or down by the <kbd>Alt+Up/Down</kb
 
 ## Copy lines up/down
 
-Text or code in source files can be moved up or down with the <kbd>Shift+Alt+Up/Down</kbd> (<kbd>Cmd+Option+Up/Down</kbd> on Mac) shortcut. This applies to individual lines of code where the cursor is, as well as to multiline selections.
+Text or code in source files can be copied up or down with the <kbd>Shift+Alt+Up/Down</kbd> (<kbd>Cmd+Option+Up/Down</kbd> on Mac) shortcut. This applies to individual lines of code where the cursor is, as well as to multiline selections.
 
 ![](images/copy-lines-up-down.gif){fig-alt="A screencast of an example line of text being duplicated across multiple lines with the copy lines up/down shortcut"}
 

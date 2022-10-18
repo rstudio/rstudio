@@ -7,7 +7,7 @@ Code snippets are text macros that are used for quickly inserting common snippet
 
 ![](images/fun-snippet.png){fig-alt="A screenshot of the output from using the `fun` snippet to autocomplete to function definition."}
 
-Selecting the `fun` snippet from the completion list will insert a `function()` skeleton along with several text placeholders which you can be filled interactively and using tab to advance to the next placeholder:
+Selecting the `fun` snippet from the completion list will insert a `function()` skeleton along with several text placeholders. The placeholders can be filled interactively and then click <kbd>tab</kbd> to advance to the next placeholder:
 
 ![](images/fun-expanded.png){fig-alt="A screenshot of the output snippet highlighted on the first text placeholder."}
 
@@ -47,7 +47,7 @@ snippet callout
 
 ## Customizing snippets
 
-Users can edit the built-in snippet definitions and even add snippets of your their via the **Edit Snippets** button in **Global Options** -\> **Code**:
+Users can edit the built-in snippet definitions and even add snippets of their own via the **Edit Snippets** button in **Global Options** -\> **Code**:
 
 ![](images/edit-snippets.png){fig-alt="A screenshot of the Edit Snippets wizard, displaying the snippets for R."}
 

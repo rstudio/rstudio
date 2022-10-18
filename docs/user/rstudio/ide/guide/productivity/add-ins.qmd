@@ -2,7 +2,7 @@
 title: "RStudio Addins"
 ---
 
-RStudio addins provide a mechanism for executing R functions interactively from within the RStudio---either through keyboard shortcuts, through the **Command Palette** or through the *Addins* menu.
+RStudio addins provide a mechanism for executing R functions interactively from within RStudio; either through keyboard shortcuts, through the **Command Palette** or through the **Addins** menu.
 
 An addin can be as simple as a function that inserts a commonly used snippet of text, and as complex as a Shiny application that accepts input from the user, and later mutates a document open in RStudio.
 
@@ -61,7 +61,7 @@ There are two major types of addins:
 
 1.  Text macros, which insert text into the console or source pane and in some cases transform text within the source pane. The `insertInAddin` addin defined above is an example of a text macro.
 
-2.  Shiny Gadgets, which are fully interactive Shiny applications. Gadgets may also perform text transformations but they of course capable of much more.
+2.  Shiny Gadgets, which are fully interactive Shiny applications. Gadgets may also perform text transformations but they are capable of much more.
 
 More details on Shiny Gadgets are provided below, but first we'll take a look at using the [rstudioapi](https://rstudio.github.io/rstudioapi/) package (which allows us to interact with RStudio from R code) and then what it takes to install and register an addin.
 
@@ -128,7 +128,7 @@ RStudio will automatically discover and register these addins when your package 
 
 ### Execution Modes
 
-The `Interactive` field within the addin registration describes whether the addin is interactive or non-interactive. It's important to understand when an addin should be declared as interactive versus non-interactive, as this effects how RStudio will attempt to execute the addin:
+The `Interactive` field within the addin registration describes whether the addin is interactive or non-interactive. It's important to understand when an addin should be declared as interactive versus non-interactive, as this affects how RStudio will attempt to execute the addin:
 
 -   Interactive addins are invoked by emitting a call to their function directly into the R console. For addins that display user-interface (e.g. using a Shiny application) this enables users to stop/interrupt them.
 
