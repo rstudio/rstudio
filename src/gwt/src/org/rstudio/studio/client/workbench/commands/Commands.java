@@ -208,6 +208,7 @@ public abstract class
    public abstract AppCommand openPreviousFileOnFilesystem();
    public abstract AppCommand toggleSoftWrapMode();
    public abstract AppCommand toggleRainbowParens();
+   public abstract AppCommand toggleRainbowFencedDivs();
 
    // Projects
    public abstract AppCommand newProject();
