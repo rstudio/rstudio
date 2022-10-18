@@ -1,8 +1,9 @@
 @url NOTE note;
 @url WARNING warning;
 @url ERROR error;
+@url SPELLING spelling;
 
-.error, .fatal, .warning, .info, .ignored, .note, .style {
+.error, .fatal, .warning, .info, .ignored, .note, .style, .spelling {
    position: absolute;
    background-repeat: repeat-x;
    background-position: left bottom;
@@ -16,6 +17,10 @@
 
 .warning {
    background-image: WARNING;
+}
+
+.spelling {
+   background-image: SPELLING;
 }
 
 .info, .ignored, .note, .style {
