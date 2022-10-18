@@ -189,7 +189,6 @@ export class GwtCallback extends EventEmitter {
     ipcMain.handle(
       'desktop_get_existing_directory',
       async (event, caption: string, label: string, dir: string, focusOwner: boolean) => {
-        console.log('desktop_get_existing_directory');
         const openDialogOptions: OpenDialogOptions = {
           title: caption,
           defaultPath: normalizeSeparatorsNative(resolveAliasedPath(dir)),

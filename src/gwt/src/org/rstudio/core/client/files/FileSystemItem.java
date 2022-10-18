@@ -22,6 +22,8 @@ import org.rstudio.core.client.regex.Pattern;
 import org.rstudio.studio.client.common.filetypes.FileIcon;
 import org.rstudio.studio.client.common.filetypes.FileIconResources;
 import org.rstudio.studio.client.common.vcs.StatusAndPathInfo;
+import org.rstudio.core.client.BrowseCap;
+
 
 import com.google.gwt.core.client.JavaScriptObject;
 
@@ -36,11 +38,13 @@ public class FileSystemItem extends JavaScriptObject
 
    public static FileSystemItem createDir(String path)
    {
+      path = normalizeSeparatorsNative(path);
       return create(path, true, -1, 0);
    }
 
    public static FileSystemItem createFile(String path)
    {
+      path = normalizeSeparatorsNative(path);
       return create(path, false, -1, 0);
    }
 
@@ -130,6 +134,17 @@ public class FileSystemItem extends JavaScriptObject
          parentPath = path.substring(0, lastSlash);
          return FileSystemItem.createDir(parentPath);
       }
+   }
+
+   public final String getRootPath()
+   {
+      // returns remainder of path; inverse of getParenthPath
+      String path = getPath();
+      int lastSlash = path.lastIndexOf('/');
+      if (lastSlash <= 0)
+         return path;
+      else
+         return path.substring(lastSlash + 1);
    }
 
    public final String getParentPathString()
@@ -286,6 +301,15 @@ public class FileSystemItem extends JavaScriptObject
       return String.CASE_INSENSITIVE_ORDER.compare(getPath(),
                                                    other.getPath());
 
+   }
+
+   private final static String normalizeSeparatorsNative(String path)
+   {
+      if (BrowseCap.isWindows())
+      {
+         return path.replace('\\', '/');
+      }
+      return path;
    }
 
    public final static FileSystemItem home()
