@@ -57,6 +57,12 @@ fi
 # figure out the "latest" package name by replacing the version number with "latest"; for example
 # for "rstudio-workbench-2021.09.0-daily-123.pro1.deb", we want "rstudio-workbench-latest.deb"
 LATEST=$(echo "$FILENAME" | sed -e 's/[[:digit:]][[:digit:]][[:digit:]][[:digit:]]\.[[:digit:]][[:digit:]]\.[[:digit:]][[:digit:]]*-daily-[[:digit:]][[:digit:]]*\(\.pro[[:digit:]][[:digit:]]*\)*/latest/')
+
+if [[ $LATEST =~ "preview" ]] ; then
+   echo "Not publishing link for preview release: $FILENAME"
+   exit 0
+fi
+
 echo "Publishing $FILENAME as daily $FLAVOR build for $OS ($PLATFORM): $LATEST..."
 
 # download the current .htaccess file to a temporary location
