@@ -1091,9 +1091,7 @@
       }
    }
 
-   # all else fails, just provide a dummy return value
-   .rs.scalar("(...)")
-
+   .rs.scalar("")
 })
 
 .rs.addFunction("getActiveArgument", function(object,
