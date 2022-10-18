@@ -1,6 +1,6 @@
 # locdiff
 
-Locdiff is a command-line utility to generate CSVs showing all English UI strings that
+Locdiff is a command-line utility to generate a CSV showing all English UI strings that
 have been added or modified between two commit hashes of the RStudio IDE repository.
 
 The tool compares two cloned instances of the RStudio repo; one named "old" and one "new".
@@ -41,9 +41,9 @@ npm i
 node locdiff
 ```
 
-Results are written to `locdiff-GWT.csv` and `locdiff-Electron.csv`. These can be loaded into Excel,
-etc. To view the French strings in Excel, you will need to import (rather than open) the csv and
+Results are written to `locdiff.csv`, which can be loaded into Excel, etc.
+To view the French strings in Excel, you will need to import (rather than open) the csv and
 specify that it is comma-separated and stored as Unicode / UTF-8, otherwise the French strings
-will be garbled.
+may be garbled.
 
-The files will load directly into Apple Numbers if you have that handy.
+The file will load directly into Apple Numbers if you have that handy.
