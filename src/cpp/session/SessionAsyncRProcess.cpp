@@ -87,6 +87,7 @@ void AsyncRProcess::start(const char* rCommand,
    {
       args.push_back("--no-save");
       args.push_back("--no-restore");
+      args.push_back("--no-environ");
       args.push_back("--no-init-file");
    }
    
