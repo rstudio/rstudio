@@ -226,6 +226,7 @@ See `/src/gwt/tools/i18n-helpers/README.md`.
          <cmd refid="toggleDocumentOutline"/>
          <cmd refid="toggleSoftWrapMode"/>
          <cmd refid="toggleRainbowParens"/>
+         <cmd refid="toggleRainbowFencedDivs"/>
          <separator/>
          <cmd refid="showDiagnosticsActiveDocument"/>
          <cmd refid="showDiagnosticsProject"/>
@@ -3740,6 +3741,12 @@ See `/src/gwt/tools/i18n-helpers/README.md`.
    <cmd id="toggleRainbowParens"
         label="Toggle Rainbow Parentheses Mode"
         menuLabel="Rain_bow Parentheses"
+        checkable="true"
+        context="editor"/>
+
+   <cmd id="toggleRainbowFencedDivs"
+        label="Toggle Rainbow Fenced Divs Mode"
+        menuLabel="Rainb_ow Fenced Divs"
         checkable="true"
         context="editor"/>
 

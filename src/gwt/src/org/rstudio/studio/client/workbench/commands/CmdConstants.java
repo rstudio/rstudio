@@ -3380,6 +3380,12 @@ public interface CmdConstants extends Constants {
     @DefaultStringValue("Rain_bow Parentheses") // $NON-NLS-1$
     String toggleRainbowParensMenuLabel();
     
+    // toggleRainbowFencedDivs
+    @DefaultStringValue("Toggle Rainbow Fenced Divs Mode") // $NON-NLS-1$
+    String toggleRainbowFencedDivsLabel();
+    @DefaultStringValue("Rainb_ow Fenced Divs") // $NON-NLS-1$
+    String toggleRainbowFencedDivsMenuLabel();
+    
     // maximizeConsole
     @DefaultStringValue("Maximize Console") // $NON-NLS-1$
     String maximizeConsoleMenuLabel();

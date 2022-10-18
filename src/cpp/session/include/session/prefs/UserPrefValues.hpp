@@ -157,6 +157,7 @@ namespace prefs {
 #define kHighlightRFunctionCalls "highlight_r_function_calls"
 #define kColorPreview "color_preview"
 #define kRainbowParentheses "rainbow_parentheses"
+#define kRainbowFencedDivs "rainbow_fenced_divs"
 #define kConsoleLineLengthLimit "console_line_length_limit"
 #define kConsoleMaxLines "console_max_lines"
 #define kAnsiConsoleMode "ansi_console_mode"
@@ -881,6 +882,12 @@ public:
     */
    bool rainbowParentheses();
    core::Error setRainbowParentheses(bool val);
+
+   /**
+    * Whether to highlight fenced divs in a variety of colors.
+    */
+   bool rainbowFencedDivs();
+   core::Error setRainbowFencedDivs(bool val);
 
    /**
     * The maximum number of characters to display in a single line in the R console.

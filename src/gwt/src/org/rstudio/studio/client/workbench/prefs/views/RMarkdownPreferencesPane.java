@@ -184,7 +184,8 @@ public class RMarkdownPreferencesPane extends PreferencesPane
       final CheckBox showRmdRenderCommand = checkboxPref( constants_.advancedDisplayRender(),
             prefs_.showRmdRenderCommand());
       advanced.add(showRmdRenderCommand);
-
+      advanced.add(checkboxPref(prefs_.rainbowFencedDivs()));
+      
       VerticalTabPanel visualMode = new VerticalTabPanel(ElementIds.RMARKDOWN_VISUAL_MODE_PREFS);
 
       visualMode.add(headerLabel(constants_.visualModeGeneralCaption()));

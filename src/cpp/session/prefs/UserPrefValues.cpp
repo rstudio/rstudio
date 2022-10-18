@@ -1025,6 +1025,19 @@ core::Error UserPrefValues::setRainbowParentheses(bool val)
 }
 
 /**
+ * Whether to highlight fenced divs in a variety of colors.
+ */
+bool UserPrefValues::rainbowFencedDivs()
+{
+   return readPref<bool>("rainbow_fenced_divs");
+}
+
+core::Error UserPrefValues::setRainbowFencedDivs(bool val)
+{
+   return writePref("rainbow_fenced_divs", val);
+}
+
+/**
  * The maximum number of characters to display in a single line in the R console.
  */
 int UserPrefValues::consoleLineLengthLimit()
@@ -3210,6 +3223,7 @@ std::vector<std::string> UserPrefValues::allKeys()
       kHighlightRFunctionCalls,
       kColorPreview,
       kRainbowParentheses,
+      kRainbowFencedDivs,
       kConsoleLineLengthLimit,
       kConsoleMaxLines,
       kAnsiConsoleMode,
