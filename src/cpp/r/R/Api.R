@@ -186,6 +186,12 @@
   invisible(.Call("rs_consoleViewer", url, height, PACKAGE = "(embedding)"))
 })
 
+.rs.addApiFunction("consolePrint", function(html, background = "white", height = NULL) {
+   htmltools::html_print(html, background = background, viewer = function(url) {
+      .rs.api.consoleViewer(url, height = height)
+   })
+})
+
 .rs.addApiFunction("savePlotAsImage", function(
                    file,
                    format = c("png", "jpeg", "bmp", "tiff", "emf", "svg", "eps"),
