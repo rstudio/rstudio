@@ -78,6 +78,7 @@ website:
               - ide/guide/code/code-navigation.qmd
           - section: "Data"
             contents:
+              - ide/guide/data/data-viewer.qmd
               - ide/guide/data/data-local.qmd
               - ide/guide/data/data-connections.qmd
               - ide/guide/data/connection-snippets.qmd
