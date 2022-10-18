@@ -214,8 +214,7 @@ var MarkdownHighlightRules = function() {
             regex: "^[:]{3,}\\s*.*$", 
             onMatch: function(val, state, stack) {
                 if (!$rainbowFencedDivs) {
-                    this.token = "keyword.operator";
-                    return this.token;
+                    return "keyword.operator";
                 }
 
                 stack = stack || [];
