@@ -1183,6 +1183,18 @@ public class UserPrefsAccessor extends Prefs
    }
 
    /**
+    * Whether to highlight fenced divs in a variety of colors.
+    */
+   public PrefValue<Boolean> rainbowFencedDivs()
+   {
+      return bool(
+         "rainbow_fenced_divs",
+         _constants.rainbowFencedDivsTitle(), 
+         _constants.rainbowFencedDivsDescription(), 
+         true);
+   }
+
+   /**
     * The maximum number of characters to display in a single line in the R console.
     */
    public PrefValue<Integer> consoleLineLengthLimit()
@@ -3613,6 +3625,8 @@ public class UserPrefsAccessor extends Prefs
          colorPreview().setValue(layer, source.getBool("color_preview"));
       if (source.hasKey("rainbow_parentheses"))
          rainbowParentheses().setValue(layer, source.getBool("rainbow_parentheses"));
+      if (source.hasKey("rainbow_fenced_divs"))
+         rainbowFencedDivs().setValue(layer, source.getBool("rainbow_fenced_divs"));
       if (source.hasKey("console_line_length_limit"))
          consoleLineLengthLimit().setValue(layer, source.getInteger("console_line_length_limit"));
       if (source.hasKey("console_max_lines"))
@@ -4022,6 +4036,7 @@ public class UserPrefsAccessor extends Prefs
       prefs.add(highlightRFunctionCalls());
       prefs.add(colorPreview());
       prefs.add(rainbowParentheses());
+      prefs.add(rainbowFencedDivs());
       prefs.add(consoleLineLengthLimit());
       prefs.add(consoleMaxLines());
       prefs.add(ansiConsoleMode());

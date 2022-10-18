@@ -564,6 +564,12 @@
             "title": "Use rainbow parentheses",
             "description": "Whether to highlight parentheses in a variety of colors."
         },
+        "rainbow_fenced_divs": {
+            "type": "boolean",
+            "default": true,
+            "title": "Use rainbow fenced divs",
+            "description": "Whether to highlight fenced divs in a variety of colors."
+        },
         "console_line_length_limit": {
             "type": "integer",
             "default": 1000,
