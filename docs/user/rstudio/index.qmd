@@ -7,7 +7,7 @@ date-format: iso
 
 ## Overview
 
-RStudio is a set of integrated tools designed to support multiple languages; including both R and Python. It includes a console, syntax-highlighting editor that supports direct code execution, and a variety of robust tools for plotting, viewing history, debugging and managing your workspace.
+RStudio is a set of integrated tools designed to support multiple languages, including both R and Python. It includes a console, syntax-highlighting editor that supports direct code execution, and a variety of robust tools for plotting, viewing history, debugging and managing your workspace.
 
 RStudio is available in open source and commercial editions and runs on the desktop (Windows, Mac, and Linux) or in a browser connected to RStudio Server or Posit Workbench (Debian/Ubuntu, Red Hat/CentOS, and SUSE Linux). - [RStudio](https://www.rstudio.com/products/rstudio/)
 
