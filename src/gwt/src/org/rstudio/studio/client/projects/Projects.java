@@ -360,8 +360,10 @@ public class Projects implements OpenProjectFileEvent.Handler,
    public static String projFileFromDir(String dir)
    {
       FileSystemItem dirItem = FileSystemItem.createDir(dir);
-      return FileSystemItem.createFile(
-        dirItem.completePath(dirItem.getName() + ".Rproj")).getPath();
+      String projFilename = dirItem.getRootPath() + ".Rproj";
+      String completeProjFilename = dirItem.completePath(projFilename);
+      FileSystemItem projFile = FileSystemItem.createFile(completeProjFilename);
+      return projFile.getPath();
    }
 
    private void notifyTutorialCreateNewResult(NewProjectResult newProject,
