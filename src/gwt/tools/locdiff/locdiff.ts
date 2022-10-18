@@ -19,6 +19,26 @@ import glob from 'glob';
 import readline from 'readline';
 import { createObjectCsvWriter } from 'csv-writer'
 
+type StringStatus = 'added' | 'deleted' | 'unchanged' | 'changed' ;
+type PropFileStatus = 'added' | 'deleted' | 'unchanged';
+
+interface LocString {
+  fileId: string,
+  stringId: string,
+  status: StringStatus,
+  old: string,
+  new: string,
+  currentFR: string
+}
+
+interface PropFile {
+  path: string,
+  status: PropFileStatus,
+  strings: Map<string, string>
+}
+
+type PropFileMap = Map<string, PropFile>;
+
 await main();
 async function main() {
 
@@ -35,26 +55,26 @@ async function main() {
     await loadPropertyFiles(oldRepo, newRepo);
 
   // compute the results
-  const report = [];
+  const report: LocString[] = [];
   for (const [fileId, newPropFile] of newENPropFiles) {
     const oldPropFile = oldENPropFiles.get(fileId);
     const newFRPropFile = newFRPropFiles.get(fileId);
     for (const [stringId, stringValue] of newPropFile.strings) {
       
       // assume this is a newly added property file
-      let status = 'added';
-      let oldString = '';
-      let newString = stringValue;
-      let currentFRString = '';
+      let status: StringStatus = 'added';
+      let oldString: string = '';
+      let newString: string = stringValue;
+      let currentFRString: string = '';
 
       if (oldPropFile !== undefined) {
         // did this string exist before?
         if (oldPropFile.strings.has(stringId)) {
-          oldString = oldPropFile.strings.get(stringId);
+          oldString = oldPropFile.strings.get(stringId) ?? '';
 
           // get the current French value
-          if (newFRPropFile.strings.has(stringId)) {
-            currentFRString = newFRPropFile.strings.get(stringId);
+          if (newFRPropFile?.strings.has(stringId)) {
+            currentFRString = newFRPropFile.strings.get(stringId) ?? '';
           }
 
           // are English strings the same?
@@ -70,7 +90,7 @@ async function main() {
         fileId: fileId,
         stringId: stringId,
         status: status,
-        old: oldString,
+        old: oldString ?? '',
         new: newString,
         currentFR: currentFRString
       });
@@ -79,7 +99,7 @@ async function main() {
 
   const createCsvWriter = createObjectCsvWriter;
   const csvWriter = createCsvWriter({
-    path: 'locdiff-GWT.csv',
+    path: 'locdiff.csv',
     header: [
       { id: 'fileId', title: 'FILE ID' },
       { id: 'stringId', title: 'STRING ID' },
@@ -91,18 +111,18 @@ async function main() {
   });
 
   await csvWriter.writeRecords(report);
-  console.log(`Wrote ${report.length} items to locdiff-GWT.csv`);
+  console.log(`Wrote ${report.length} items to locdiff.csv`);
 }
 
-function gwtRoot(repoRoot) {
+function gwtRoot(repoRoot: string) {
   return path.join(repoRoot, 'src', 'gwt', 'src', 'org', 'rstudio');
 }
 
-function electronRoot(repoRoot) {
+function electronRoot(repoRoot: string) {
   return path.join(repoRoot, 'src', 'node', 'desktop', 'src');
 }
 
-function isRStudioRepo(repoPath) {
+function isRStudioRepo(repoPath: string) {
   if (fs.existsSync(repoPath) &&
     fs.existsSync(gwtRoot(repoPath)) &&
     fs.existsSync(electronRoot(repoPath))
@@ -114,7 +134,7 @@ function isRStudioRepo(repoPath) {
   return false;
 }
 
-function getJavaPropFiles(repoRoot, locale) {
+function getJavaPropFiles(repoRoot: string, locale: string): PropFileMap {
   const files = glob.sync(
     `${repoRoot}/**/*_${locale}.properties`,
     { ignore: `${repoRoot}/src/gwt/tools/prefs/*` });
@@ -133,11 +153,11 @@ function getJavaPropFiles(repoRoot, locale) {
     return a.path.localeCompare(b.path); 
   });
 
-  let result = new Map();
+  let result: PropFileMap = new Map();
   for (const file of sortedFiles) {
     // CoreClient was renamed to CoreClientConstants; use the new name as the key 
     const key = file.id === 'core/client/CoreClient' ?  'core/client/CoreClientConstants' : file.id;
-    result.set(key, { path: file.path, status: '', strings: undefined });
+    result.set(key, { path: file.path, status: 'unchanged', strings: new Map() });
   }
 
   return result;
@@ -146,10 +166,10 @@ function getJavaPropFiles(repoRoot, locale) {
 /**
  * Identify newly added property files
  */
-function markNewFiles(oldEnglishPropFiles, newEnglishPropFiles) {
-  for (const newKey of newEnglishPropFiles.keys()) {
-    if (!oldEnglishPropFiles.has(newKey)) {
-      newEnglishPropFiles.get(newKey).status = 'added';
+function markNewFiles(oldEnglishPropFiles: PropFileMap, newEnglishPropFiles: PropFileMap) {
+  for (const newPropertyFile of newEnglishPropFiles.entries()) {
+    if (!oldEnglishPropFiles.has(newPropertyFile[0])) {
+      newPropertyFile[1].status = 'added';
     }
   }
 }
@@ -157,15 +177,15 @@ function markNewFiles(oldEnglishPropFiles, newEnglishPropFiles) {
 /**
  * Identify deleted property files
  */
-function markDeletedFiles(oldEnglishPropFiles, newEnglishPropFiles) {
-  for (const oldKey of oldEnglishPropFiles.keys()) {
-    if (!newEnglishPropFiles.has(oldKey)) {
-      oldEnglishPropFiles.get(oldKey).status = 'deleted';
+function markDeletedFiles(oldEnglishPropFiles: PropFileMap, newEnglishPropFiles: PropFileMap) {
+  for (const oldPropFile of oldEnglishPropFiles.entries()) {
+    if (!newEnglishPropFiles.has(oldPropFile[0])) {
+      oldPropFile[1].status = 'deleted';
     }
   }
 }
 
-async function readStrings(propFile) {
+async function readStrings(propFile: PropFile): Promise<Map<string, string>> {
   return new Promise((resolve, reject) => {
 
     const rl = readline.createInterface({
@@ -174,7 +194,7 @@ async function readStrings(propFile) {
       terminal: false
     });
 
-    const strings = new Map();
+    const strings: Map<string, string> = new Map();
     rl.on('line', (line) => {
       line = line.trimStart();
       if (line.charAt(0) === '#') {
@@ -201,7 +221,7 @@ async function readStrings(propFile) {
   });
 }
 
-async function loadPropertyFile(repo, locale) {
+async function loadPropertyFile(repo: string, locale: string): Promise<PropFileMap> {
   const propFiles = getJavaPropFiles(repo, locale);
   for (const file of propFiles.values()) {
     file.strings = await readStrings(file);
@@ -209,7 +229,7 @@ async function loadPropertyFile(repo, locale) {
   return propFiles;
 }
 
-async function loadPropertyFiles(oldRepo, newRepo) {
+async function loadPropertyFiles(oldRepo: string, newRepo: string) {
   const oldEnglishPropFiles = await loadPropertyFile(oldRepo, 'en');
   const newEnglishPropFiles = await loadPropertyFile(newRepo, 'en');
   markNewFiles(oldEnglishPropFiles, newEnglishPropFiles);
