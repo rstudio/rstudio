@@ -83,8 +83,21 @@ function github_embed(tag, prefix) {
     };
 }
 
+var $rainbowFencedDivs = true;
+var $numFencedDivsColors = 7;
+
 var MarkdownHighlightRules = function() {
 
+    exports.setRainbowFencedDivs = function(value) {
+        $rainbowFencedDivs = value;
+    };
+    exports.getRainbowFencedDivs = function() {
+        return $rainbowFencedDivs;
+    };
+    exports.setNumFencedDivsColors = function(value) {
+        $numFencedDivsColors = value;
+    };
+    
     var slideFields = lang.arrayToMap(
         ("title|author|date|rtl|depends|autosize|width|height|transition|transition-speed|font-family|css|class|navigation|incremental|left|right|id|audio|video|type|at|help-doc|help-topic|source|console|console-input|execute|pause")
             .split("|")
@@ -196,13 +209,51 @@ var MarkdownHighlightRules = function() {
             token: "markup.heading.2",
             regex: "^\\-{3,}(?=\\s*$)"
         }, {
+            // opening fenced div
+            token: "fenced_open", 
+            regex: "^[:]{3,}\\s*.*$", 
+            onMatch: function(val, state, stack) {
+                if (!$rainbowFencedDivs) {
+                    this.token = "keyword.operator";
+                    return this.token;
+                }
+
+                stack = stack || [];
+                stack[0] = state;
+                stack[16] = stack[16] || 0;  // next open color
+                stack[17] = stack[17] || []; // stack
+
+                var close = /^[:]{3,}\s*$/.test(val);
+
+                if (close) 
+                {
+                    var color = stack[17].pop() || 0;
+                    return "fenced_div_" + color;
+                }
+                else 
+                {
+                    var color = stack[16];
+                    stack[17].push(color);
+                    stack[16] = (color + 1 ) % $numFencedDivsColors;
+
+                    // separating the fence (:::) from the follow up text
+                    // in case we want to style them differently
+                    var rx = /^([:]{3,})(.*)$/;
+                    return [
+                        { type: "fenced_div_"  + color, value: val.replace(rx, '$1')}, 
+                        { type: "fenced_div_text_" + color, value: val.replace(rx, '$2')}, 
+                    ];
+                }
+            },
+            next: "start"
+        }, {
             token : function(value) {
                 return "markup.heading." + value.length;
             },
             regex : /^#{1,6}(?=\s*[^ #]|\s+#.)/,
             next : "header"
         },
-                                     
+                         
         github_embed("(?:javascript|js)", "jscode-"),
         github_embed("xml", "xmlcode-"),
         github_embed("html", "htmlcode-"),
