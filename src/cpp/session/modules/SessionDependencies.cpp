@@ -618,7 +618,9 @@ Error installDependencies(const json::JsonRpcRequest& request,
    // Run in a vanilla session if Packrat mode isn't on (prevents problematic startup scripts/etc
    // from causing install trouble)
    if (!isProjectLocal)
-      installJob.setProcOptions(async_r::R_PROCESS_VANILLA);
+   {
+      installJob.setProcOptions(async_r::R_PROCESS_VANILLA_USER);
+   }
 
    std::string jobId;
    error = jobs::startScriptJob(installJob, [&]()

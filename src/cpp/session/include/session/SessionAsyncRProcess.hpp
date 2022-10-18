@@ -33,11 +33,12 @@ namespace async_r {
 
 enum AsyncRProcessOptions
 {
-   R_PROCESS_NORMAL         = 1 << 0,
-   R_PROCESS_REDIRECTSTDERR = 1 << 1,
-   R_PROCESS_VANILLA        = 1 << 2,
-   R_PROCESS_AUGMENTED      = 1 << 3,
-   R_PROCESS_NO_RDATA       = 1 << 4
+   R_PROCESS_NORMAL           = 1 << 0,
+   R_PROCESS_REDIRECTSTDERR   = 1 << 1,
+   R_PROCESS_VANILLA          = 1 << 2,
+   R_PROCESS_AUGMENTED        = 1 << 3,
+   R_PROCESS_NO_RDATA         = 1 << 4,
+   R_PROCESS_VANILLA_USER     = 1 << 5,
 };
 
 inline AsyncRProcessOptions operator | (AsyncRProcessOptions lhs,
