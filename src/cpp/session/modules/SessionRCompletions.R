@@ -119,7 +119,7 @@ assign(x = ".rs.acCompletionTypes",
 
 .rs.addFunction("roxygenTagMetadata", function()
 {
-   if (.rs.isPackageVersionInstalled("roxygen2", "7.2.1"))
+   if (.rs.isPackageVersionInstalled("roxygen2", "7.2.1.9000"))
    {
       tagsFile <- system.file("roxygen2-tags.yml", package = "roxygen2")
       contents <- readLines(tagsFile, warn = FALSE)
@@ -130,12 +130,11 @@ assign(x = ".rs.acCompletionTypes",
       map_lgl <- function(...) vapply(..., FUN.VALUE = logical(1), USE.NAMES = FALSE)
       tags <- map_chr(yaml, function(.) .$name)
       snippet <- map_chr(yaml, function(.) {
-         out <- .$snippet
+         out <- .$template
          if (is.null(out)) {
-            ""
-         } else {
-            paste0(" ", out)
-         }
+            out <- ""
+         } 
+         out
       })
       tags <- paste0("@", tags, snippet)
       descriptions <- map_chr(yaml, function(.) {
