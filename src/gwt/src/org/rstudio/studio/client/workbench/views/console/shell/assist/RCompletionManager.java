@@ -2068,10 +2068,18 @@ public class RCompletionManager implements CompletionManager
             return;
          }
 
-         if (qualifiedName.type == RCompletionType.ROXYGEN && qualifiedName.display.contains("${"))
+         if (qualifiedName.type == RCompletionType.ROXYGEN)
          {
-            // This is a roxygen snippet
-            snippets_.applySnippetContent(completionToken, qualifiedName.display);
+            String snippet = qualifiedName.display;
+            if (snippet.contains("\n"))
+            {
+               // inject the #' prefix
+               String prefix = docDisplay_.getCurrentLine().replaceFirst("@.*", "");
+               snippet = snippet.replace("\n", "\n" + prefix);
+            }
+            
+            snippets_.applySnippetContent(completionToken, snippet);
+
             return;
          }
          
