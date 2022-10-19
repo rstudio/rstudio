@@ -38,13 +38,13 @@ public class FileSystemItem extends JavaScriptObject
 
    public static FileSystemItem createDir(String path)
    {
-      path = normalizeSeparatorsNative(path);
+      path = normalizeSeparators(path);
       return create(path, true, -1, 0);
    }
 
    public static FileSystemItem createFile(String path)
    {
-      path = normalizeSeparatorsNative(path);
+      path = normalizeSeparators(path);
       return create(path, false, -1, 0);
    }
 
@@ -74,6 +74,7 @@ public class FileSystemItem extends JavaScriptObject
       return this.raw_path || this.path;
    }-*/;
 
+   // NOTE: Returns final part of path ie. foo/bar/baz becomes baz
    public final String getName()
    {
       return getNameFromPath(getRawPath());
@@ -134,17 +135,6 @@ public class FileSystemItem extends JavaScriptObject
          parentPath = path.substring(0, lastSlash);
          return FileSystemItem.createDir(parentPath);
       }
-   }
-
-   public final String getRootPath()
-   {
-      // returns remainder of path; inverse of getParenthPath
-      String path = getPath();
-      int lastSlash = path.lastIndexOf('/');
-      if (lastSlash <= 0)
-         return path;
-      else
-         return path.substring(lastSlash + 1);
    }
 
    public final String getParentPathString()
@@ -303,7 +293,7 @@ public class FileSystemItem extends JavaScriptObject
 
    }
 
-   private final static String normalizeSeparatorsNative(String path)
+   private final static String normalizeSeparators(String path)
    {
       if (BrowseCap.isWindows())
       {
