@@ -591,16 +591,17 @@ public class GeneralPreferencesPane extends PreferencesPane
       if (BrowseCap.isElectron())
       {
          boolean useNativeDialogsPrefValue = nativeFileDialogs_.getValue();
+         boolean useWebDialogsPrefValue = WebDialogCookie.getUseWebDialogs();
          if (useNativeDialogsPrefValue != initialNativeFileDialogs_)
          {
             restartRequirement.setUiReloadRequired(true);
          }
 
-         // The uiLanguage preference is mirrored in a cookie telling GWT which language to display.
+         // The choice of native versus web dialogs is mirrored in a cookie telling GWT which dialogs to use
          // Ensure consistency here and force a page reload if necessary.
-         if (WebDialogCookie.getUseWebDialogs() != useNativeDialogsPrefValue)
+         if (useWebDialogsPrefValue == useNativeDialogsPrefValue)
          {
-            WebDialogCookie.setUseWebDialogs(useNativeDialogsPrefValue);
+            WebDialogCookie.setUseWebDialogs(!useNativeDialogsPrefValue);
             restartRequirement.setUiReloadRequired(true);
          }
       }
