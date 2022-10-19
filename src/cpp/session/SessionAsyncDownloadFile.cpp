@@ -15,6 +15,8 @@
 
 #include <session/SessionAsyncDownloadFile.hpp>
 
+#include <boost/algorithm/string/join.hpp>
+#include <boost/algorithm/string/predicate.hpp>
 #include <boost/format.hpp>
 
 #include <shared_core/Error.hpp>

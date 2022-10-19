@@ -18,6 +18,7 @@
 #include <errno.h>
 #include <unistd.h>
 
+#include <boost/algorithm/string/join.hpp>
 #include <boost/assert.hpp>
 
 #include <shared_core/SafeConvert.hpp>

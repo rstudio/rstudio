@@ -17,6 +17,7 @@
 
 #include <vector>
 
+#include <boost/algorithm/string/predicate.hpp>
 #include <boost/format.hpp>
 
 #include <core/system/Environment.hpp>
