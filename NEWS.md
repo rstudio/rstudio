@@ -37,8 +37,14 @@
 ### Posit Workbench
 
 - Adds `-l` (long) option to `rserver-url`. When `/usr/lib/rstudio-server/bin/rserver-url -l <port number>` is executed within a VS Code or Jupyter session, the full URL where a user can view a server proxied at that port is displayed (rstudio-pro#3620)
-- Sets the `UVICORN_ROOT_PATH` environment variable to the proxied port URL for port 8000 in VS Code and Jupyter sessions, allowing FastAPI applications to run without additional configuration. (rstudio-pro#2660)
 - Handles `SIGTERM` signals to shut down more gracefully, for better interaction with service managers like `systemd`.
+
+#### Posit Workbench VS Code Sessions
+
+- Install VS Code session support (code-server) with Posit Workbench instead of requiring a separate download (rstudio-pro#3643)
+- Enable VS Code sessions by default on initial Workbench install (rstudio-pro#3643)
+- Updated code-server to version 4.7.1 (VS Code version 1.71.2) (rstudio-pro#3643)
+- Sets the `UVICORN_ROOT_PATH` environment variable to the proxied port URL for port 8000 in VS Code and Jupyter sessions, allowing FastAPI applications to run without additional configuration. (rstudio-pro#2660)
 
 #### Posit Workbench VS Code Extension
 
@@ -47,7 +53,7 @@
 - Rebranded the interface to match Posit Software, PBC's new branding terminology and iconography
 - Fixed extension servers appearing in Proxied Servers list (vscode-ext#116)
 - Added support for Flask, including a help dialog and the Posit Workbench Flask Interface code snippet, for proxying Flask applications (rstudio-pro#2660)
-
+- Install VS Code Extension with Posit Workbench instead of requiring a separate download (rstudio-pro#3643)
 
 #### Jupyter Extension
 
@@ -56,6 +62,7 @@
 ### Deprecated / Removed
 
 - Removed the Tools / Shell command (#11253)
+- Removed the "rstudio-server install-vs-code" admin command for downloading and configuring code-server; code-server is now installed with Workbench, use the "rstudio-server configure-vs-code" command for configuration (rstudio-pro#3643)
 
 ### Experimental ARM64 and RedHat 9 support
 
