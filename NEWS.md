@@ -43,6 +43,7 @@
 #### Posit Workbench VS Code Sessions
 
 - Install VS Code session support (code-server) with Posit Workbench instead of requiring a separate download (rstudio-pro#3643)
+- Enable VS Code sessions by default on initial Workbench install (rstudio-pro#3643)
 - Updated code-server to version 4.7.1 (VS Code version 1.71.2) (rstudio-pro#3643)
 
 #### Posit Workbench VS Code Extension
