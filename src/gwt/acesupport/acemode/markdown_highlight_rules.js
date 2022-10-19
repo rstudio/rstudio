@@ -98,16 +98,6 @@ exports.setNumFencedDivsColors = function(value) {
 
 var MarkdownHighlightRules = function() {
 
-    exports.setRainbowFencedDivs = function(value) {
-        $rainbowFencedDivs = value;
-    };
-    exports.getRainbowFencedDivs = function() {
-        return $rainbowFencedDivs;
-    };
-    exports.setNumFencedDivsColors = function(value) {
-        $numFencedDivsColors = value;
-    };
-    
     var slideFields = lang.arrayToMap(
         ("title|author|date|rtl|depends|autosize|width|height|transition|transition-speed|font-family|css|class|navigation|incremental|left|right|id|audio|video|type|at|help-doc|help-topic|source|console|console-input|execute|pause")
             .split("|")
