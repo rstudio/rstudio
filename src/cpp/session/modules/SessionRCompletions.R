@@ -139,7 +139,7 @@ assign(x = ".rs.acCompletionTypes",
       })
       tags <- paste0("@", tags, snippet)
       descriptions <- map_chr(yaml, function(.) {
-         .rs.htmlEscape(sub("\n$", "", .$description))
+         sub("\n$", "", .$description)
       })
       vignette <- map_chr(yaml, function(.) {
          out <- .$vignette
