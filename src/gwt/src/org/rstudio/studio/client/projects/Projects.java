@@ -360,7 +360,7 @@ public class Projects implements OpenProjectFileEvent.Handler,
    public static String projFileFromDir(String dir)
    {
       FileSystemItem dirItem = FileSystemItem.createDir(dir);
-      String projFilename = dirItem.getRootPath() + ".Rproj";
+      String projFilename = dirItem.getName() + ".Rproj";
       String completeProjFilename = dirItem.completePath(projFilename);
       FileSystemItem projFile = FileSystemItem.createFile(completeProjFilename);
       return projFile.getPath();
