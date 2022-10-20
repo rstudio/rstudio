@@ -498,10 +498,29 @@ void nameRoxygenIndexer(const RTokenCursor& cursor,
       // #' @name <name> was found, keep going back to the first line of this 
       // roxygen section, and only keep if it has text (the title)
 
+      static const boost::regex explicitTitleRoxygenRegex("^#+'\\s+@title\\s+(.*)$");
+      
       std::string line;
       while (isRoxygenComment(clone)) 
       {
          line = clone.contentAsUtf8();
+
+         // early win with #' @title Explicit title
+         if (boost::regex_match(line, explicitTitleRoxygenRegex))
+         {
+            RSourceItem item(
+               RSourceItem::Roxygen,
+               name,
+               boost::regex_replace(line, explicitTitleRoxygenRegex, "\\1"),
+               status.count(RToken::LBRACE),
+               clone.row() + 1, 
+               clone.column() + 1, 
+               isReadOnlyFile
+            );
+            pIndex->addSourceItem(item);
+            return;
+         }
+
          if (!clone.moveToPreviousToken()) break;
       }
 
