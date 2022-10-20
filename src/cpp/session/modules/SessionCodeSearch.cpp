@@ -1443,7 +1443,8 @@ public:
       Math       = 10,
       Test       = 11, 
       Roxygen    = 12, 
-      Macro      = 13
+      Macro      = 13, 
+      Package    = 14
    };
 
    SourceItem()
@@ -1517,6 +1518,9 @@ SourceItem fromRSourceItem(const r_util::RSourceItem& rSourceItem)
       break;
    case RSourceItem::Roxygen:
       type = SourceItem::Roxygen;
+      break;
+   case RSourceItem::Package:
+      type = SourceItem::Package;
       break;
    case RSourceItem::None:
    default:
