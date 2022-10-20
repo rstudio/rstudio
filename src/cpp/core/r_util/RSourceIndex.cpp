@@ -484,7 +484,7 @@ void stringAfterRoxygenIndexer(const RTokenCursor& cursor,
    findRoxygenTitle(clone, title);
 
    RSourceItem item(
-      RSourceItem::Roxygen,
+      (name == "\"_PACKAGE\"") ? RSourceItem::Package : RSourceItem::Roxygen,
       name,
       title,
       status.count(RToken::LBRACE),
