@@ -596,11 +596,13 @@ public class GeneralPreferencesPane extends PreferencesPane
             restartRequirement.setUiReloadRequired(true);
          }
 
-         // The uiLanguage preference is mirrored in a cookie telling GWT which language to display.
+         boolean useWebDialogsCookieValue = WebDialogCookie.getUseWebDialogs();
+         boolean useWebDialogsPrefValue = !useNativeDialogsPrefValue;
+         // The choice of native versus web dialogs is mirrored in a cookie telling GWT which dialogs to use
          // Ensure consistency here and force a page reload if necessary.
-         if (WebDialogCookie.getUseWebDialogs() != useNativeDialogsPrefValue)
+         if (useWebDialogsCookieValue != useWebDialogsPrefValue)
          {
-            WebDialogCookie.setUseWebDialogs(useNativeDialogsPrefValue);
+            WebDialogCookie.setUseWebDialogs(useWebDialogsPrefValue);
             restartRequirement.setUiReloadRequired(true);
          }
       }
