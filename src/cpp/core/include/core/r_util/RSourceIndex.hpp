@@ -75,7 +75,8 @@ public:
       Class      = 3,
       Variable   = 4, 
       Test       = 11, 
-      Roxygen    = 12
+      Roxygen    = 12, 
+      Package    = 14
    };
 
 public:
