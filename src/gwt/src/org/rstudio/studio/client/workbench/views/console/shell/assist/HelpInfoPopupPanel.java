@@ -25,7 +25,6 @@ import org.rstudio.core.client.StringUtil;
 import org.rstudio.studio.client.application.ui.RStudioThemes;
 import org.rstudio.studio.client.workbench.views.console.ConsoleConstants;
 import org.rstudio.studio.client.workbench.views.console.ConsoleResources;
-import org.rstudio.studio.client.workbench.views.console.shell.assist.CompletionRequester.QualifiedName;
 import org.rstudio.studio.client.workbench.views.help.model.HelpInfo;
 
 public class HelpInfoPopupPanel extends PopupPanel
@@ -181,7 +180,7 @@ public class HelpInfoPopupPanel extends PopupPanel
       Label label = new Label(title);
       label.setStylePrimaryName(RES.styles().roxygenTitle());
       vpanel_.add(label);
-   
+      
       HTML contents = new HTML(description);
       contents.addStyleName(RES.styles().roxygenText());
       vpanel_.add(contents);

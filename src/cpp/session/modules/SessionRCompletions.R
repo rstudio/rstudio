@@ -138,7 +138,10 @@ assign(x = ".rs.acCompletionTypes",
       })
       tags <- paste0("@", tags, snippet)
       descriptions <- map_chr(yaml, function(.) {
-         sub("\n$", "", .$description)
+         description <- paste0("<p>", sub("\n$", "</p>", .$description))
+         description <- gsub("`([^`])`", "<code>\\1</code>", description)
+         description <- gsub("\\n"     , "</p><p>"         , description)
+         description
       })
       vignette <- map_chr(yaml, function(.) {
          out <- .$vignette
