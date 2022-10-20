@@ -89,7 +89,7 @@ website:
               - ide/guide/tools/jobs.qmd
               - ide/guide/tools/jobs-in-action.qmd
               - ide/guide/tools/version-control.qmd
-              # - ide/guide/integration/renv.qmd <- holding off for now
+              - ide/guide/integration/renv.qmd
           - section: "Productivity"
             contents:
               - ide/guide/productivity/text-editor.qmd

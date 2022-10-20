@@ -71,7 +71,7 @@ When this function is invoked by RStudio, it will receive the `path` as the path
 
 After defining a function to be used as a project template, some initial metadata must be provided to let RStudio know how to use this function as a project template. The `ptexamples` package defines a project template in a file located at:
 
-<https://github.com/rstudio/ptexamples/blob/master/inst/rstudio/templates/project/hello_world.dcf>
+[inst/rstudio/templates/project/hello_world.dcf](https://github.com/rstudio/ptexamples/blob/master/inst/rstudio/templates/project/hello_world.dcf)
 
 The first set of fields are used to define primary information about the project template:
 
@@ -107,7 +107,7 @@ Position: left
 
 -   The **Position** field tells the RStudio IDE that this widget should be displayed on the left side of the wizard dialog.
 
-All together, this information tells RStudio that `hello_world()` is a function to be used in generating new projects, as well as what widgets should be used for arguments that the `hello_world()` can accept.
+All together, this information tells RStudio that `hello_world()` is a function to be used in generating new projects, as well as what widgets should be used for arguments that `hello_world()` can accept.
 
 ## Primary Metadata
 
