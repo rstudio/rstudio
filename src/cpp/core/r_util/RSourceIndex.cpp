@@ -430,6 +430,37 @@ void testThatCallIndexer(const RTokenCursor& cursor,
    }
 }
 
+bool findRoxygenTitle(const RTokenCursor& cursor, std::string& title)
+{
+   RTokenCursor clone = cursor.clone();
+
+   static const boost::regex explicitTitleRoxygenRegex("^#+'\\s+@title\\s+(.*)$");
+   
+   std::string line;
+   while (isRoxygenComment(clone)) 
+   {
+      line = clone.contentAsUtf8();
+
+      // early win with #' @title Explicit title
+      if (boost::regex_match(line, explicitTitleRoxygenRegex))
+      {
+         title = boost::regex_replace(line, explicitTitleRoxygenRegex, "\\1");
+         return true;
+      }
+
+      if (!clone.moveToPreviousToken()) break;
+   }
+
+   static const boost::regex titleRoxygenRegex("^#+'\\s+([^@]+)$");
+   if (boost::regex_match(line, titleRoxygenRegex))
+   {
+      title = boost::regex_replace(line, titleRoxygenRegex, "\\1");
+      return true;
+   }
+
+   return false;
+}
+
 void stringAfterRoxygenIndexer(const RTokenCursor& cursor,
                                const IndexStatus& status,
                                bool isReadOnlyFile, 
@@ -448,10 +479,14 @@ void stringAfterRoxygenIndexer(const RTokenCursor& cursor,
    if (!isRoxygenComment(clone))
       return;
 
+   std::string name = cursor.contentAsUtf8();
+   std::string title;
+   findRoxygenTitle(clone, title);
+
    RSourceItem item(
       RSourceItem::Roxygen,
-      cursor.contentAsUtf8(),
-      "",
+      name,
+      title,
       status.count(RToken::LBRACE),
       cursor.row() + 1, 
       cursor.column() + 1, 
@@ -498,49 +533,21 @@ void nameRoxygenIndexer(const RTokenCursor& cursor,
       // #' @name <name> was found, keep going back to the first line of this 
       // roxygen section, and only keep if it has text (the title)
 
-      static const boost::regex explicitTitleRoxygenRegex("^#+'\\s+@title\\s+(.*)$");
-      
-      std::string line;
-      while (isRoxygenComment(clone)) 
-      {
-         line = clone.contentAsUtf8();
-
-         // early win with #' @title Explicit title
-         if (boost::regex_match(line, explicitTitleRoxygenRegex))
-         {
-            RSourceItem item(
-               RSourceItem::Roxygen,
-               name,
-               boost::regex_replace(line, explicitTitleRoxygenRegex, "\\1"),
-               status.count(RToken::LBRACE),
-               clone.row() + 1, 
-               clone.column() + 1, 
-               isReadOnlyFile
-            );
-            pIndex->addSourceItem(item);
-            return;
-         }
-
-         if (!clone.moveToPreviousToken()) break;
-      }
-
-      static const boost::regex titleRoxygenRegex("^#+'\\s+([^@]+)$");
-      if (boost::regex_match(line, titleRoxygenRegex))
+      std::string title;
+      if (findRoxygenTitle(clone, title))
       {
          RSourceItem item(
             RSourceItem::Roxygen,
             name,
-            boost::regex_replace(line, titleRoxygenRegex, "\\1"),
+            title,
             status.count(RToken::LBRACE),
             clone.row() + 1, 
             clone.column() + 1, 
             isReadOnlyFile
          );
-         
          pIndex->addSourceItem(item);
-
-         return;
       }
+      
    }
 }
 
