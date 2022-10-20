@@ -14,15 +14,17 @@
  */
 
 import { app } from 'electron';
-import winston from 'winston';
+import winston, { format } from 'winston';
 import DailyRotateFile from 'winston-daily-rotate-file';
-
+import { Syslog } from 'winston-syslog';
+import { Console } from 'winston/lib/winston/transports';
+import LogOptions from '../main/log-options';
+import * as Transports from 'winston-transport';
 import { getenv } from './environment';
 import { safeError } from './err';
-import { FilePath } from './file-path';
 import { Logger, showDiagnosticsOutput } from './logger';
 
-const { combine, printf, timestamp } = winston.format;
+const { combine, printf, timestamp, json } = winston.format;
 
 /**
  * A Logger using winston package: https://www.npmjs.com/package/winston
@@ -30,26 +32,45 @@ const { combine, printf, timestamp } = winston.format;
 export class WinstonLogger implements Logger {
   logger: winston.Logger;
 
-  constructor(logFile: FilePath, level: string) {
-    level = this.readLogLevelOverride(level);
+  constructor(logOptions: LogOptions) {
+    const level = this.readLogLevelOverride(logOptions.getLogLevel());
+    const format = logOptions.getLogMessageFormat() === 'pretty' ? 
+      printf((info) => `${info.timestamp} ${info.level.toUpperCase()} ${info.message}`)
+      : combine(removeTimestamp(), json());
+
+    const messageFormat = combine(timestamp({alias: 'time'}), format);
+    const logFile = logOptions.getLogFile();
+
     this.logger = winston.createLogger({
       level: level,
-      format: combine(
-        timestamp(),
-        printf((info) => `${info.timestamp} ${info.level}: ${info.message}`)
-      ),
+      format: messageFormat,
+      defaultMeta: { service: 'rdesktop'}
     });
 
-    if (!logFile.isEmpty()) {
-      const logName = `${logFile.getStem()}.%DATE%${logFile.getExtension()}`;
-      this.logger.add(
-        new DailyRotateFile({
-          filename: logName,
-          dirname: logFile.getParent().getAbsolutePath(),
-          datePattern: 'YYYY-MM-DD',
-          frequency: '1d',
-        })
-      );
+    let logTransport;
+    switch(logOptions.getLoggerType()) {
+      case 'stderr':
+        logTransport = new Console();
+        break;
+      case 'syslog':
+        logTransport = new Syslog();
+        this.logger.levels = winston.config.syslog.levels;
+        break;
+      case 'file':
+      default:
+        if (!logFile.isEmpty()) {
+          const logName = `${logFile.getStem()}.%DATE%${logFile.getExtension()}`;
+          logTransport = new DailyRotateFile({
+            filename: logName,
+            dirname: logFile.getParent().getAbsolutePath(),
+            datePattern: 'YYYY-MM-DD',
+            frequency: '1d',
+          });
+        }
+    }
+
+    if(logTransport !== undefined) {
+      this.logger.add(logTransport);
     }
   }
 
@@ -126,3 +147,10 @@ export class WinstonLogger implements Logger {
     }
   }
 }
+
+// removes `timestamp` key from json since we add `time` to match Qt log format
+const removeTimestamp = format((info) => {
+  delete info.timestamp;
+
+  return info;
+});
