@@ -45,8 +45,12 @@
 }
 
 .roxygenText {
-   font-family: fixedWidthFont;
    white-space: pre-wrap;
+}
+
+.roxygenText code {
+   font-family: fixedWidthFont;
+   color: rgb(116, 116, 116);
 }
 
 .roxygenTitle {
