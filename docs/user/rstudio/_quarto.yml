@@ -89,7 +89,6 @@ website:
               - ide/guide/tools/jobs.qmd
               - ide/guide/tools/jobs-in-action.qmd
               - ide/guide/tools/version-control.qmd
-              - ide/guide/integration/renv.qmd
           - section: "Productivity"
             contents:
               - ide/guide/productivity/text-editor.qmd
@@ -112,6 +111,7 @@ website:
             contents:
               - ide/guide/environments/r/managing-r.qmd
               - ide/guide/environments/r/packages.qmd
+              - ide/guide/environments/r/renv.qmd
               - ide/guide/environments/py/python.qmd
       - section: "Reference"
         collapse-level: 1
