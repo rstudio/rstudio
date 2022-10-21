@@ -29,7 +29,8 @@ public class DataImportOptionsXls extends DataImportOptions
       String na,
       boolean openDataViewer,
       Integer nMax,
-      String range
+      String range, 
+      boolean needsColumnDefinitionsReset
       ) /*-{
          return {
             "mode": "xls",
@@ -40,7 +41,13 @@ public class DataImportOptionsXls extends DataImportOptions
             "na": na,
             "openDataViewer": openDataViewer,
             "nMax": nMax,
-            "range": range
-       }
+            "range": range, 
+            "needsColumnDefinitionsReset": needsColumnDefinitionsReset
+        };
    }-*/;
+
+   public final native boolean needsColumnDefinitionsReset() /*-{
+      return this.needsColumnDefinitionsReset;
+   }-*/;
+
 }
