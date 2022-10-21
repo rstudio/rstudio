@@ -66,6 +66,8 @@ assign(x = ".rs.acCompletionTypes",
           OPTION      = 23,
           DATASET     = 24,
           COLUMN      = 27,
+          R6_OBJECT   = 28, 
+          
           CONTEXT     = 99
        )
 )
@@ -85,6 +87,10 @@ assign(x = ".rs.acCompletionTypes",
       .rs.acCompletionTypes$R5_CLASS
    else if (inherits(object, "refClass"))
       .rs.acCompletionTypes$R5_OBJECT
+
+   # R6
+   else if (inherits(object, "R6"))
+      .rs.acCompletionTypes$R6_OBJECT
    
    # S4
    else if (isS4(object))
