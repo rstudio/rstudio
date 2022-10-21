@@ -31,7 +31,7 @@ public class GridViewerFrame extends RStudioThemedFrame
    {
       super(
          title,
-         "grid_resource/gridviewer.html?data_source=data",
+         "grid_resource/gridviewer.html?data_source=data&max_cols=-1",
          false,
          null, 
          GridViewerStyles.getCustomStyle(),

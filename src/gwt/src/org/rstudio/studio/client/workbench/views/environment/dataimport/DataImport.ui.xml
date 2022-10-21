@@ -22,11 +22,11 @@
 
             margin-bottom: 7px;
         }
-      .codePreviewImportLabel {
-         margin-top: 14px;
+        .codePreviewImportLabel {
+            margin-top: 14px;
             margin-right: 5px;
             margin-left: 5px;
-      }
+        }
         .topImportLabel {
             margin-top: 0px;
             margin-right: 5px;
