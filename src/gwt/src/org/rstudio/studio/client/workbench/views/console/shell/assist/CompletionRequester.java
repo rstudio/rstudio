@@ -1042,6 +1042,7 @@ public class CompletionRequester
          case RCompletionType.S4_OBJECT:
          case RCompletionType.R5_CLASS:
          case RCompletionType.R5_OBJECT:
+         case RCompletionType.R6_OBJECT:
             return new ImageResource2x(ICONS.clazz2x());
          case RCompletionType.FILE:
             return getIconForFilename(name);
