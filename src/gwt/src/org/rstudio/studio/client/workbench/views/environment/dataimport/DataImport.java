@@ -129,12 +129,16 @@ public class DataImport extends Composite
          @Override
          public void onValueChange(ValueChangeEvent<DataImportOptions> dataImportOptions)
          {
-            previewDataImport();
-            
             if (dataImportMode_ == DataImportModes.XLS)
             {
-               resetColumnDefinitions();
+               DataImportOptionsXls options = (DataImportOptionsXls)dataImportOptions.getValue();
+               if (options.needsColumnDefinitionsReset())
+               {
+                  resetColumnDefinitions();
+               }
             }
+            
+            previewDataImport();
          }
       });
       
