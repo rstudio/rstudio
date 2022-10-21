@@ -23,6 +23,7 @@ exemptLabels:
   - security
   - test
   - triage
+  - "tech debt"
 
 # Set to true to ignore issues in a project (defaults to false)
 exemptProjects: false
