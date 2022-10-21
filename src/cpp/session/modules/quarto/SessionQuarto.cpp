@@ -244,6 +244,8 @@ void detectQuartoInstallation()
    FilePath embeddedQuartoPath = session::options().quartoPath()
       .completeChildPath("bin")
       .completeChildPath(target);
+   if (embeddedQuartoPath.isEmpty())
+      return;
    auto embeddedVersion = readQuartoVersion(embeddedQuartoPath);
    if (embeddedVersion >= kQuartoRequiredVersion)
    {
