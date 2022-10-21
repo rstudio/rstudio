@@ -2736,7 +2736,7 @@ assign(x = ".rs.acCompletionTypes",
          {
             completions <- .rs.selectFuzzyMatches(objectNames, token)
 
-            if (inherits(object, c("data.frame")) || (isNamespaceLoaded("arrow") && inherits(object, c("ArrowTabular", "Dataset"))))
+            if (inherits(object, c("data.frame")) || (isNamespaceLoaded("arrow") && inherits(object, c("ArrowTabular", "Dataset", "arrow_dplyr_query"))))
             {
                # when the chain object is a data frame, 
                # set the completion type to COLUMN
