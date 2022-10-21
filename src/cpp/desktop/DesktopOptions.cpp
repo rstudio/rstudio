@@ -32,6 +32,7 @@
 #include <QApplication>
 #include <QDesktopWidget>
 
+#include <boost/algorithm/string/classification.hpp>
 #include <boost/algorithm/string/split.hpp>
 #include <boost/scope_exit.hpp>
 
