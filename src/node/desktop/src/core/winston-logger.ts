@@ -19,7 +19,6 @@ import DailyRotateFile from 'winston-daily-rotate-file';
 import { Syslog } from 'winston-syslog';
 import { Console } from 'winston/lib/winston/transports';
 import LogOptions from '../main/log-options';
-import * as Transports from 'winston-transport';
 import { getenv } from './environment';
 import { safeError } from './err';
 import { Logger, showDiagnosticsOutput } from './logger';
@@ -48,30 +47,25 @@ export class WinstonLogger implements Logger {
     });
 
     let logTransport;
-    switch(logOptions.getLoggerType()) {
-      case 'stderr':
-        logTransport = new Console();
-        break;
-      case 'syslog':
-        logTransport = new Syslog();
+    if (logOptions.getLoggerType() === 'stderr') {
+      logTransport = new Console();
+    } else if (logOptions.getLoggerType() === 'syslog') {
+      if (process.platform === 'linux') {
+        logTransport = new Syslog({
+          protocol: 'unix',
+          path: '/dev/log',
+          app_name: 'rdesktop',
+        });
         this.logger.levels = winston.config.syslog.levels;
-        break;
-      case 'file':
-      default:
-        if (!logFile.isEmpty()) {
-          const logName = `${logFile.getStem()}.%DATE%${logFile.getExtension()}`;
-          logTransport = new DailyRotateFile({
-            filename: logName,
-            dirname: logFile.getParent().getAbsolutePath(),
-            datePattern: 'YYYY-MM-DD',
-            frequency: '1d',
-          });
-        }
+      }
     }
 
-    if(logTransport !== undefined) {
-      this.logger.add(logTransport);
-    }
+    this.logger.add(logTransport ?? new DailyRotateFile({
+      filename: `${logFile.getStem()}.%DATE%${logFile.getExtension()}`,
+      dirname: logFile.getParent().getAbsolutePath(),
+      datePattern: 'YYYY-MM-DD',
+      frequency: '1d',
+    }));
   }
 
   readLogLevelOverride(defaultLevel: string): string {
@@ -97,15 +91,6 @@ export class WinstonLogger implements Logger {
   log(level: string, message: string): void {
     // log to default log locations
     this.logger.log(level, message);
-
-    // log to console in debug configurations
-    // NOTE: process.stderr.isTTY seems to be unreliable?
-    if (!app.isPackaged && this.logger.isLevelEnabled(level)) {
-      const ts = new Date().toISOString();
-      const tlevel = level.toUpperCase();
-      const tmessage = message.replace(/\n/g, '|||');
-      console.log(`${ts} ${tlevel} ${tmessage}`);
-    }
   }
 
   logError(err: unknown): void {
