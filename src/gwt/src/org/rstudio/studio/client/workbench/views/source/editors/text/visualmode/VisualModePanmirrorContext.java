@@ -309,18 +309,13 @@ public class VisualModePanmirrorContext
       uiDisplay.navigateToFile = (String file) -> {
          if (this.docUpdateSentinel_.getPath() != null)
          {
-            // only navigate in website projects
             QuartoConfig config = sessionInfo_.getQuartoConfig();
             FileSystemItem projectDir = FileSystemItem.createDir(config.project_dir);
             FileSystemItem editorFile = FileSystemItem.createFile(this.docUpdateSentinel_.getPath());
-            if (QuartoHelper.isQuartoWebsiteDoc(editorFile.getPath(), config))
-            {
-               // absolute links go relative to website root
-               FileSystemItem targetFile = FileSystemItem.createFile(file.startsWith("/") 
-                  ? projectDir.completePath(file.substring(1))
-                  : editorFile.getParentPath().completePath(file));
-               events_.fireEvent(new OpenSourceFileEvent(targetFile));   
-            }
+            FileSystemItem targetFile = FileSystemItem.createFile(file.startsWith("/")
+               ? projectDir.completePath(file.substring(1))
+               : editorFile.getParentPath().completePath(file));
+            events_.fireEvent(new OpenSourceFileEvent(targetFile));
          }        
       };
 
