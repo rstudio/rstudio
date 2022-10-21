@@ -66,6 +66,8 @@ assign(x = ".rs.acCompletionTypes",
           OPTION      = 23,
           DATASET     = 24,
           COLUMN      = 27,
+          R6_OBJECT   = 28, 
+
           CONTEXT     = 99
        )
 )
@@ -85,6 +87,10 @@ assign(x = ".rs.acCompletionTypes",
       .rs.acCompletionTypes$R5_CLASS
    else if (inherits(object, "refClass"))
       .rs.acCompletionTypes$R5_OBJECT
+
+   # R6
+   else if (inherits(object, "R6"))
+      .rs.acCompletionTypes$R6_OBJECT
    
    # S4
    else if (isS4(object))
@@ -2729,7 +2735,8 @@ assign(x = ".rs.acCompletionTypes",
          if (length(objectNames))
          {
             completions <- .rs.selectFuzzyMatches(objectNames, token)
-            if (inherits(object, "data.frame"))
+
+            if (inherits(object, c("data.frame")) || (isNamespaceLoaded("arrow") && inherits(object, c("ArrowTabular", "Dataset", "arrow_dplyr_query"))))
             {
                # when the chain object is a data frame, 
                # set the completion type to COLUMN
