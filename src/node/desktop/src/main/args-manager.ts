@@ -35,7 +35,7 @@ export const kLogLevel = 'log-level';
 export const kLoggerType = 'logger-type';
 export const kLogMessageFormat = 'log-message-format';
 export const kLogDir = 'log-dir';
-export const kLogConfFile = ''; // empty because Qt did not support cli argument for `logging.conf`
+export const kNoArg = '';
 export const kDelaySession = 'session-delay';
 export const kSessionExit = 'session-exit';
 export const kHelp = '--help';
@@ -61,12 +61,14 @@ export interface OptionList {
   logConfFile: Option;
 }
 
+// this maps the option key to the environment variable
+// use kNoArg if it is not configurable from the conf file
 export const options: OptionList = {
   logLevel: { arg: kLogLevel, env: 'RS_LOG_LEVEL' },
   loggerType: { arg: kLoggerType, env: 'RS_LOGGER_TYPE' },
   logMessageFormat: { arg: kLogMessageFormat, env: 'RS_LOG_MESSAGE_FORMAT' },
   logDir: { arg: kLogDir, env: 'RS_LOG_DIR' },
-  logConfFile: { arg: kLogConfFile, env: 'RS_LOG_CONF_FILE' },
+  logConfFile: { arg: kNoArg, env: 'RS_LOG_CONF_FILE' },
 };
 
 // !IMPORTANT: If some args should early exit the application, add them to `webpack.plugins.js`
