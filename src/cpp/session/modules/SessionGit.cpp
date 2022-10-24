@@ -3363,11 +3363,12 @@ core::Error initialize()
    }
 
    // add postback directory to PATH
-   FilePath postbackDir = session::options().rpostbackPath();
-   if (postbackDir.getAbsolutePath().find("session/postback") != std::string::npos) {
-      // special case for development builds only
-      postbackDir = postbackDir.getParent();
+   FilePath postbackDir = session::options().rpostbackPath().getParent();
+   if (postbackDir.getAbsolutePath().find("session/postback") == std::string::npos) {
+      // for package builds only, postback/rpostback-askpass in same directory as rpostback itself
+      postbackDir = postbackDir.completeChildPath("postback");
    }
+
    core::system::addToPath(postbackDir.getAbsolutePath());
 
    // add suspend/resume handler

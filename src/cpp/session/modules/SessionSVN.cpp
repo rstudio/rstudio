@@ -118,12 +118,13 @@ core::system::ProcessOptions procOptions(bool requiresSsh)
    core::system::environment(&childEnv);
 
    // add postback directory to PATH
-   FilePath postbackDir = session::options().rpostbackPath();
-   if (postbackDir.getAbsolutePath().find("session/postback") != std::string::npos)
-   {
-      // special case for development builds only
-      postbackDir = postbackDir.getParent();
+   FilePath postbackDir = session::options().rpostbackPath().getParent();
+   if (postbackDir.getAbsolutePath().find("session/postback") == std::string::npos) {
+      // for package builds only, postback/rpostback-askpass in same directory as rpostback itself
+      // that is, rpostback-askpass is nested inside a folder called postback which we add to PATH
+      postbackDir = postbackDir.completeChildPath("postback");
    }
+
    core::system::addToPath(&childEnv, postbackDir.getAbsolutePath());
 
    // on windows add gnudiff directory to the path
