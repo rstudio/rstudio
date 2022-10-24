@@ -1258,18 +1258,14 @@ environment(.rs.Env[[".rs.addFunction"]]) <- .rs.Env
 
 .rs.addFunction("attachConflicts", function(envirs)
 {
-   for (envir in envirs)
+   if ("conflicted" %in% loadedNamespaces())
    {
-      # read position
-      pos <- attr(envir, "pos", exact = TRUE)
-      attr(envir, "pos") <- NULL
-      
-      .rs.callSafely(attach, list(
-         what = envir,
-         name = ".conflicts",
-         pos = pos,
-         warn.conflicts = FALSE
-      ))
+      tryCatch(
+         conflicted:::conflicts_register(),
+         error = function(e) {
+            .rs.logErrorMessage(conditionMessage(e))
+         }
+      )
    }
 })
 
@@ -1280,14 +1276,13 @@ environment(.rs.Env[[".rs.addFunction"]]) <- .rs.Env
    if (length(pos) == 0)
       return(NULL)
    
-   # get references to each environment
+   # empty out the .conflicts environment
    envirs <- lapply(pos, as.environment)
-   for (i in seq_along(envirs))
-      attr(envirs[[i]], "pos") <- pos[[i]]
-   
-   # now detach those from the search path
-   for (i in rev(seq_along(pos)))
-      detach(pos = pos[[i]])
+   for (envir in envirs)
+   {
+      symbols <- ls(envir = envir, all.names = TRUE)
+      rm(list = symbols, envir = envir)
+   }
    
    # return the environments
    envirs
