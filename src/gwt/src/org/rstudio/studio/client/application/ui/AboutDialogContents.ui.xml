@@ -178,8 +178,8 @@
                   text="RStudio and Shiny are registered trademarks of Posit Software, PBC, all rights reserved. See">
                </g:InlineLabel>
                <g:Anchor
-                  href="https://www.rstudio.com/about/trademark/"
-                  text="https://www.rstudio.com/about/trademark/"
+                  href="https://www.posit.co/about/trademark/"
+                  text="https://www.posit.co/about/trademark/"
                   target="_blank"></g:Anchor>
                <g:InlineLabel text="for permitted uses and guidelines."></g:InlineLabel>
             </g:HTMLPanel>
@@ -207,4 +207,3 @@
       </g:HTMLPanel>
    </g:HTMLPanel>
 </ui:UiBinder>
-
