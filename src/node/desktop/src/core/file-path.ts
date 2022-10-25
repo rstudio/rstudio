@@ -21,6 +21,8 @@ import path, { sep } from 'path';
 import { Err, success, safeError } from './err';
 import { userHomePath } from './user';
 import { err, Expected, ok } from './expected';
+import os from 'os';
+import { randomString } from '../main/utils';
 
 /** An Error containing 'path' that triggered the error */
 export class FilePathError extends Error {
@@ -54,6 +56,23 @@ function normalizeSeparators(path: string, separator = '/') {
  */
 export function normalizeSeparatorsNative(path: string) {
   return normalizeSeparators(path, sep);
+}
+
+/**
+ * Creates a random file name located in the tmp directory
+ *
+ * @param extension The extension, if any, for the filename to have
+ * @param label A label, if any, to include inside the random name. Useful to
+ * identify the origin of any leftover files from a unit test that weren't
+ * cleaned up properly
+ *
+ * @returns The FilePath to the randomly generated filename
+ */
+export function tempFilename(extension = '', label = ''): FilePath {
+  const tempName = label
+    ? path.join(os.tmpdir(), label + '-' + randomString())
+    : path.join(os.tmpdir(), randomString());
+  return new FilePath(extension ? tempName + '.' + extension : tempName);
 }
 
 /**

@@ -19,10 +19,7 @@ import os from 'os';
 import { createStubInstance, StubbableType, SinonStubbedInstance, SinonStubbedMember, SinonSandbox } from 'sinon';
 import { getenv } from '../../src/core/environment';
 import { FilePath } from '../../src/core/file-path';
-
-export function randomString(): string {
-  return Math.trunc(Math.random() * 2147483647).toString();
-}
+import { randomString } from '../../src/main/utils';
 
 /**
  * save and clear specific env vars
@@ -83,23 +80,6 @@ export function tempDirectory(label = ''): FilePath {
     ? path.join(os.tmpdir(), label + '-' + randomString())
     : path.join(os.tmpdir(), randomString());
   return new FilePath(tempName);
-}
-
-/**
- * Creates a random file name located in the tmp directory
- *
- * @param extension The extension, if any, for the filename to have
- * @param label A label, if any, to include inside the random name. Useful to
- * identify the origin of any leftover files from a unit test that weren't
- * cleaned up properly
- *
- * @returns The FilePath to the randomly generated filename
- */
-export function tempFilename(extension = '', label = ''): FilePath {
-  const tempName = label
-    ? path.join(os.tmpdir(), label + '-' + randomString())
-    : path.join(os.tmpdir(), randomString());
-  return new FilePath(extension ? tempName + '.' + extension : tempName);
 }
 
 /**
