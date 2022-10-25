@@ -80,7 +80,7 @@ This auto-refreshing feature has some prerequisites, so if it doesn't seem to be
 
 You must call `View()` on a variable directly. If, for instance, you call `View(as.data.frame(foo))` or `View(rbind(foo, bar))`, you're invoking `View()` on a new object created by evaluating your expression, and while that object contains data, it's just a copy and won't update when `foo` and `bar` do.
 
-The variable must be on an environment in the search path ideally in the global environment.
+The variable must be in an environment in the search path ideally in the global environment.
 
 ## Labels
 

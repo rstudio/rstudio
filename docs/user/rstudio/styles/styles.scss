@@ -70,10 +70,11 @@ pre.sourceCode.code-with-copy {
 
 /* image in nav bar sizing */
 
-.navbar .img-fluid {
+#navbar-right-logo {
   width: 70px;
   min-width: 70px;
 }
+
 /* increase padding between sidebar nav items */
 .sidebar-navigation .sidebar-section.depth1 {
   padding-bottom: 0.2rem; /* double the default */

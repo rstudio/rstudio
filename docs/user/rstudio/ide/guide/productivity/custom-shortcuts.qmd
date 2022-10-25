@@ -51,11 +51,6 @@ If two commands are bound to the same key sequence, then that conflict will be h
 
 The RStudio keybindings are saved as JSON files in the directory `~/.R/rstudio/keybindings/` \-- the bindings for the editor and RStudio itself at:
 
-**RStudio 1.2, and prior**
-
-    ~/.R/rstudio/keybindings/rstudio_commands.json
-    ~/.R/rstudio/keybindings/editor_commands.json
-
 **RStudio 1.3, and later (Windows)**
 
     ~/AppData/Roaming/RStudio/keybindings/rstudio_bindings.json

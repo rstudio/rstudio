@@ -47,7 +47,7 @@ website:
       - icon: question-circle
         url: https://support.rstudio.com/
         aria-label: Posit Professional Support
-      - text: "![](https://user-images.githubusercontent.com/29187501/195717097-e8dda415-8d24-4011-8367-18ba9c83eb5b.png)"
+      - text: "<img src='/images/posit-logo-black-TM.png' id='navbar-right-logo'>"
         url: "https://posit.co"
   sidebar:
     - id: guide

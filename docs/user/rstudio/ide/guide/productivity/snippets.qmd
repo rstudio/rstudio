@@ -78,13 +78,6 @@ snippet time
 
 Customized snippets for a given language are written into the `~/.R/snippets` directory. For example, the customized versions of R and C/C++ snippets are written to:
 
-### RStudio 1.2 and prior
-
-``` bash
-~/.R/snippets/r.snippets
-~/.R/snippets/c_cpp.snippets
-```
-
 ### RStudio 1.3 and later (Windows)
 
 ``` bash
