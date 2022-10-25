@@ -399,8 +399,7 @@ public class PublishingPreferencesPane extends PreferencesPane
    private void setButtonEnabledState()
    {
       disconnectButton_.setEnabled(
-            accountList_.getSelectedAccount() != null &&
-            !accountList_.getSelectedAccount().isCloudAccount());
+            accountList_.getSelectedAccount() != null);
 
       reconnectButton_.setEnabled(
             accountList_.getSelectedAccount() != null &&
