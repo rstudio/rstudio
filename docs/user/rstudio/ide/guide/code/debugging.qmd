@@ -40,15 +40,16 @@ library(stringi)
 
 palindrome <- function(x) stri_reverse(x)==x
 
-biggest_palindrome <- function(){
-  
-  best <- 0
+biggest_palindrome <- function(best_val, print = FALSE) {
 
-  for(x in 100:999) {
-    for(y in x:999) {
+  best <- best_val
+
+  for (x in 100:999) {
+    for (y in x:999) {
       candidate <- x * y
-      if(candidate > best && palindrome(candidate)) {
+      if (candidate > best && palindrome(candidate)) {
         best <- candidate
+        if(print) message("Candidate is better!")
       }
     }
   }
@@ -56,7 +57,7 @@ biggest_palindrome <- function(){
   return(best)
 }
 
-biggest_palindrome()
+biggest_palindrome(best_val = 0, print = TRUE)
 ```
 
 </details>
@@ -87,12 +88,14 @@ The environment browser invoked by `browser()` is the same one used in all of th
 
 `browser()` is also useful for creating conditional breakpoints. For instance, if you want to start debugging after hundreds of loop iterations:
 
-    for (i in 1:1024) {
-      start_work()
-      if (i == 512)
-        browser()
-      finish_work()
-    }
+```r
+for (i in 1:1024) {
+  start_work()
+  if (i == 512)
+    browser()
+  finish_work()
+}
+```
 
 ### Stopping when a function executes
 
@@ -102,7 +105,9 @@ When this is the case, **set a debug flag** on the function to debug. This is si
 
 Use the R function [`debugonce()`](https://stat.ethz.ch/R-manual/R-devel/library/base/html/debug.html) to set the debug flag on a function. For instance, to debug `devtools::install()`:
 
-    > debugonce(devtools::install)
+```r
+> debugonce(devtools::install)
+```
 
 `debugonce()` sets a one-shot breakpoint--that is, the function will enter the debugger the very next time it runs, but not after that. To debug a function *every* time it executes, call `debug(...)` on the function. Call `undebug(...)` on the function when to stop debugging the function each time it executes. We don't recommend this pattern, since it can leave you trapped in the debugger for some special functions.
 
@@ -154,7 +159,7 @@ This is called the "call stack" in most languages; RStudio refers to it as the "
 
 You can click on any function in the callstack to see the current contents of its environment and the execution point in the function's code, if it can be determined. Note that selecting a frame in the callstack does *not* change the active environment in the console! If you need to do that, use `recover()` (described below).
 
-Most of the time you'll only be interested in looking at the portions of the callstack that contain your own code, so by default RStudio hides internal functions (i.e. those for which it does not have a corresponding .R file) in the callstack to keep it from becoming too verbose. The *View Internals* checkbox can be toggled to show or hide internal functions in the callstack. For instance, inside a `tryCatch` block, you can expand the internals to see R's exception handling functions (shown in gray):
+Most of the time you'll only be interested in looking at the portions of the callstack that contain your own code, so by default RStudio hides internal functions (i.e. those for which it does not have a corresponding .R file) in the callstack to keep it from becoming too verbose. The **View Internals** checkbox can be toggled to show or hide internal functions in the callstack. For instance, inside a `tryCatch` block, you can expand the internals to see R's exception handling functions (shown in gray):
 
 ![](images/traceback-show-internals.png){fig-alt="A screenshot of the Traceback pane, along with the 'Show Internals' box checked, displaying internal functions in grey." width=450}
 
@@ -232,7 +237,7 @@ When a breakpoint is set in a file inside a package, RStudio will automatically 
 
 Shiny applications present some challenges for the debugger because the breakpoints can't be set until the application is executed; the function objects that need to have breakpoints injected don't exist until then.
 
-For this reason, breakpoints in Shiny applications *only* work inside the `shinyServer` function. Breakpoints are not currently supported in the user interface (i.e. `ui.R`), globals (i.e. `global.R`), or other .R sources used in Shiny applcations. This may be improved in a future version of RStudio.
+For this reason, breakpoints in Shiny applications *only* work inside the `shinyServer` function. Breakpoints are not currently supported in the user interface (i.e. `ui.R`), globals (i.e. `global.R`), or other .R sources used in Shiny applications.
 
 ![](images/debug-shiny.png){fig-alt="A screenshot of the debugger operating on a Shiny app"}
 

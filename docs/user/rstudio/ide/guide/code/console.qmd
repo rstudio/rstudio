@@ -24,7 +24,7 @@ As with the standard R console, the RStudio console supports the ability to reca
 
 -   **Down** --- Reverse of Up
 
-To reuse recently executed commands, use the <kbd>Ctrl+Up</kbd> shortcut to review the list (on Mac <kbd>Command-Up<kbd>) and then select a command from this list by pressing <kbd>Enter</kbd>:
+To reuse recently executed commands, use the <kbd>Ctrl+Up</kbd> shortcut to review the list (on Mac <kbd>Command-Up</kbd>) and then select a command from this list by pressing <kbd>Enter</kbd>:
 
 ![](images/retrieve-console-commands.png){fig-alt="A screenshot of the history of commands executed in the RStudio console."}
 
@@ -61,3 +61,5 @@ Beyond the history and code-completion oriented keyboard shortcuts described abo
 -   <kbd>Ctrl+Shift+F10</kbd> or <kbd>Cmd+Shift+F10</kbd> (Mac) - Restart R
 
 -   <kbd>Ctrl+Up</kbd> or <kbd>Command-Up</kbd> on Mac --- Display recently executed commands from the console
+
+For a full list of shortcuts, see the [Shortcuts reference page](../../reference/shortcuts.qmd).

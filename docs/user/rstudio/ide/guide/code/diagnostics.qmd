@@ -2,6 +2,9 @@
 title: "Code Diagnostics"
 ---
 
+RStudio has the ability to perform static and dynamic analysis of R code or what is known as "Diagnostics". 
+Diagnostics are a way to indicate stylistic issues or errors with the code.
+
 ## Enabling diagnostics
 
 Diagnostics can be enabled and options can be set within the **Global Options** > **Code Diagnostics** editing pane:
@@ -22,7 +25,7 @@ Controls whether diagnostics are performed within function calls, e.g. `dplyr::s
 
 Try to detect whether a particular call to a function will succeed. The diagnostics engine will report if it detects missing arguments, unmatched arguments, partially matched arguments, and too many arguments.
 
-For example, in the code sample below, RStudio detects that the function `add_numbers` is missing the `y` argument. Note that it is not necessary for `add_numbers` to exist in the current environment (ie, within the running R session)
+For example, in the code sample below, RStudio detects that the function `add_numbers` is missing the `y` argument. It is not necessary for `add_numbers` to exist in the current environment (i.e., within the running R session).
 
 ![](images/argument-missing-error.png){fig-alt="A screenshot of the RStudio error diagnostics suggesting that a function argument is missing."}
 
@@ -38,7 +41,7 @@ Warn if a symbol is used with no definition in the current, or parent, scope. Th
 
 ### Warn if variable is defined but not used
 
-This diagnostic helps to identify is a variable is created but never used. This can be helpful when attempting to clean up old code, or in diagnosing other errors (wherein you believe a particular variable should be used, but isn't).
+This diagnostic helps to identify if a variable is created but never used. This can be helpful when attempting to clean up old code, or in diagnosing other errors (wherein you believe a particular variable should be used, but isn't).
 
 In the following example, the variable `result` is assigned but never used or returned; instead, the sum is re-computed and then returned.
 
@@ -74,7 +77,7 @@ These features allow you to control when diagnostics are presented and updated. 
 
 ## Project-level diagnostics
 
-You can run the diagnostics engine over all R files in the project either using the code wizard menu, or by pressing <kbd>Ctrl + Alt + Shift + P</kbd> (<kbd>Cmd + Alt + Shift + P</kbd> on Mac):
+You can run the diagnostics engine over all R files in the project either using the code wizard menu, or with the keyboard shortcut <kbd>Ctrl + Alt + Shift + D</kbd> (<kbd>Cmd + Alt + Shift + D</kbd> on Mac):
 
 ![](images/project-level-diagnostics.png){fig-alt="A screenshot of the 'Code Tools' dropdown, displaying the ability to 'Show Diagnostics' for an entire project."}
 

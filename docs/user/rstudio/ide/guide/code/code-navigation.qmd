@@ -24,7 +24,7 @@ Double clicking the line will open the file in the RStudio source editor.
 
 If the name of the source file or function is known, the "Go to File/Function" search box on the main RStudio toolbar allows for quick navigation to it:
 
-![GoToFile.png](images/go-to-function.png){fig-alt="A screenshot of the Go to File/Function menu item on the Source pane of RStudio."}
+![](images/go-to-function.png){fig-alt="A screenshot of the Go to File/Function menu item on the Source pane of RStudio."}
 
 The **Go to File/Function** feature works from a constantly updated index of your source code. The specific source files to index are determined as follows:
 
@@ -42,9 +42,9 @@ Since an index of the current Project's source code (as described above) is main
 
 From either the source editor or the console, the following shortcuts provide access to the function definition:
 
--   Using the **F2** keyboard shortcut
+-   Using the <kbd>F2</kbd> keyboard shortcut
 
--   Using **Ctrl+Click** with the mouse
+-   Using <kbd>Ctrl+Click</kbd> (<kbd>Cmd+Click</kbd> on Mac) with the mouse
 
 It is possible to navigate to both user-defined own functions (defined in R source files) and any other function defined within an R package. For functions defined within packages, the code is displayed in a special **Source Viewer** pane, which is read-only.
 

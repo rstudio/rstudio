@@ -16,7 +16,7 @@ RStudio projects can be created:
 
 -   By cloning a version control (Git or Subversion) repository
 
-To create a new project in RStudio, use the **Create Project** command (available on the Projects toolbar in the top right corner or on the global toolbar at the top left corner). 
+To create a new project in RStudio, use **File** > **New Project** or use the **New Project** button (available on the Projects toolbar in the top right corner or on the global toolbar at the top left corner). 
 
 This will open the "New Project Wizard" popup:
 
