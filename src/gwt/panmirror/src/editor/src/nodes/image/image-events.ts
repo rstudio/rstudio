@@ -71,6 +71,19 @@ function imagePaste(ui: EditorUI) {
         event.preventDefault();
         return true;
       }
+
+      // Electron specific clipboard check
+      for (const item of clipboardEvent.clipboardData.items) {
+        if (item.type === 'image/png') {
+          ui.context.clipboardImage().then(image => {
+            if (image) {
+              handleImageUris(view, view.state.selection.from, event, [image], ui);
+            }
+          });
+          event.preventDefault();
+          return true;
+        }
+      }
     }
 
     return false;

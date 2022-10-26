@@ -27,12 +27,12 @@ import {
 } from 'electron';
 import { IpcMainEvent, MessageBoxOptions, OpenDialogOptions, SaveDialogOptions } from 'electron/main';
 import EventEmitter from 'events';
-import { existsSync, mkdtempSync, writeFileSync } from 'fs';
+import { existsSync, writeFileSync } from 'fs';
 import i18next from 'i18next';
 import { findFontsSync } from 'node-system-fonts';
 import path, { dirname } from 'path';
 import { pathToFileURL } from 'url';
-import { FilePath, normalizeSeparatorsNative } from '../core/file-path';
+import { FilePath, normalizeSeparatorsNative, tempFilename } from '../core/file-path';
 import { logger } from '../core/logger';
 import { isCentOS } from '../core/system';
 import { resolveTemplateVar } from '../core/template-filter';
@@ -272,7 +272,7 @@ export class GwtCallback extends EventEmitter {
     // return the path to that file.
     ipcMain.handle('desktop_get_clipboard_image', () => {
       // if we don't have any image, bail
-      if (!clipboard.has('image/png')) {
+      if (!clipboard.availableFormats().includes('image/png')) {
         return '';
       }
 
@@ -280,11 +280,15 @@ export class GwtCallback extends EventEmitter {
       const image = clipboard.readImage('clipboard');
       const pngData = image.toPNG();
 
-      // write to file
       const scratchDir = appState().scratchTempDir(new FilePath('/tmp'));
-      const prefix = path.join(scratchDir.getAbsolutePath(), 'rstudio-clipboard', 'image-');
-      const tempdir = mkdtempSync(prefix);
-      const pngPath = path.join(tempdir, 'image.png');
+      const tempPathName = path.join(scratchDir.getAbsolutePath(), 'rstudio-clipboard');
+
+      const tempPath = new FilePath(tempPathName);
+      tempPath.ensureDirectorySync();
+
+      const pngPath = path.join(tempPathName, tempFilename('png', 'image').getFilename());
+
+      // write image to file
       writeFileSync(pngPath, pngData);
 
       // return file path
