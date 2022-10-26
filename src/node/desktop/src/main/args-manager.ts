@@ -15,20 +15,16 @@
 
 import { app, webContents } from 'electron';
 import path from 'path';
-import { setenv, getenv } from '../core/environment';
+import { getenv, setenv } from '../core/environment';
 import { FilePath } from '../core/file-path';
-import {
-  enableDiagnosticsOutput,
-  logger,
-  parseCommandLineLogLevel,
-  setLogger
-} from '../core/logger';
+import { enableDiagnosticsOutput, logger, setLogger } from '../core/logger';
 import { kRStudioInitialProject, kRStudioInitialWorkingDir } from '../core/r-user-data';
 import { WinstonLogger } from '../core/winston-logger';
 import { getDesktopBridge } from '../renderer/desktop-bridge';
 import { Application } from './application';
+import LogOptions from './log-options';
 import { exitSuccess, ProgramStatus, run } from './program-status';
-import { getComponentVersions, userLogPath } from './utils';
+import { getComponentVersions } from './utils';
 import { activateWindow } from './window-utils';
 
 // RStudio command-line switches
@@ -36,6 +32,10 @@ export const kRunDiagnosticsOption = '--run-diagnostics';
 export const kVersion = '--version';
 export const kVersionJson = '--version-json';
 export const kLogLevel = 'log-level';
+export const kLoggerType = 'logger-type';
+export const kLogMessageFormat = 'log-message-format';
+export const kLogDir = 'log-dir';
+export const kNoArg = '';
 export const kDelaySession = 'session-delay';
 export const kSessionExit = 'session-exit';
 export const kHelp = '--help';
@@ -47,6 +47,29 @@ export const kStartupDelay = 'startup-delay';
 // export const kTempCookiesOption = '--use-temp-cookies';
 
 const defaultStartupDelaySeconds = 5;
+
+export interface Option {
+  arg: string;
+  env: string;
+}
+
+export interface OptionList {
+  logLevel: Option;
+  loggerType: Option;
+  logMessageFormat: Option;
+  logDir: Option;
+  logConfFile: Option;
+}
+
+// this maps the option key to the environment variable
+// use kNoArg if it is not configurable from the conf file
+export const options: OptionList = {
+  logLevel: { arg: kLogLevel, env: 'RS_LOG_LEVEL' },
+  loggerType: { arg: kLoggerType, env: 'RS_LOGGER_TYPE' },
+  logMessageFormat: { arg: kLogMessageFormat, env: 'RS_LOG_MESSAGE_FORMAT' },
+  logDir: { arg: kLogDir, env: 'RS_LOG_DIR' },
+  logConfFile: { arg: kNoArg, env: 'RS_LOG_CONF_FILE' },
+};
 
 // !IMPORTANT: If some args should early exit the application, add them to `webpack.plugins.js`
 export class ArgsManager {
@@ -61,6 +84,8 @@ export class ArgsManager {
       console.log('  --run-diagnostics  Run diagnostics and save in a file');
       console.log('  --log-level        Sets the verbosity of the logging');
       console.log('                     --log-level=ERR|WARN|INFO|DEBUG');
+      // eslint-disable-next-line max-len
+      console.log('  --log-dir          The log directory to store log files in. The resulting log file name is based on the executable name.');
       console.log('  --session-delay    Pause the rsession so the "Loading R" screen displays longer');
       console.log('  --session-exit     Terminate the rsession immediately forcing error page to display');
       console.log('  --startup-delay    Pause before showing the application so the splash screen displays longer');
@@ -116,7 +141,8 @@ export class ArgsManager {
     if (this.unswitchedArgs.length) {
       this.unswitchedArgs.forEach((arg) => {
         if (FilePath.existsSync(arg)) {
-          app.whenReady()
+          app
+            .whenReady()
             .then(() => {
               getDesktopBridge().openFile(arg);
               const name = webContents.getAllWebContents()[0].mainFrame.name;
@@ -161,8 +187,7 @@ export class ArgsManager {
           if (ext === '.rproj') {
             setenv(kRStudioInitialProject, arg);
             return false;
-          }
-          else {
+          } else {
             const workingDir = path.dirname(arg);
             setenv(kRStudioInitialWorkingDir, workingDir);
           }
@@ -174,10 +199,8 @@ export class ArgsManager {
   }
 
   handleLogLevel() {
-    const logLevelFromArgs = app.commandLine.getSwitchValue(kLogLevel);
+    const logOptions = new LogOptions();
 
-    const logLevel = parseCommandLineLogLevel(logLevelFromArgs, 'warn');
-
-    setLogger(new WinstonLogger(userLogPath().completeChildPath('rdesktop.log'), logLevel));
+    setLogger(new WinstonLogger(logOptions));
   }
 }
