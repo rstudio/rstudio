@@ -201,6 +201,6 @@ export class ArgsManager {
   handleLogLevel() {
     const logOptions = new LogOptions();
 
-    setLogger(new WinstonLogger(logOptions)); //userLogPath().completeChildPath('rdesktop.log'), logLevel, format));
+    setLogger(new WinstonLogger(logOptions));
   }
 }

@@ -39,6 +39,7 @@ export class WinstonLogger implements Logger {
 
     const messageFormat = combine(timestamp({alias: 'time'}), format);
     const logFile = logOptions.getLogFile();
+    let optionError;
 
     this.logger = winston.createLogger({
       level: level,
@@ -47,9 +48,11 @@ export class WinstonLogger implements Logger {
     });
 
     let logTransport;
-    if (logOptions.getLoggerType() === 'stderr') {
+    if (logOptions.getLoggerType() === 'stderr' || !app.isPackaged) {
       logTransport = new Console();
-    } else if (logOptions.getLoggerType() === 'syslog') {
+    }
+
+    if (logOptions.getLoggerType() === 'syslog') {
       if (process.platform === 'linux') {
         logTransport = new Syslog({
           protocol: 'unix',
@@ -57,6 +60,8 @@ export class WinstonLogger implements Logger {
           app_name: 'rdesktop',
         });
         this.logger.levels = winston.config.syslog.levels;
+      } else {
+        optionError = 'syslog not supported';
       }
     }
 
@@ -66,6 +71,10 @@ export class WinstonLogger implements Logger {
       datePattern: 'YYYY-MM-DD',
       frequency: '1d',
     }));
+
+    if (optionError) {
+      this.logErrorMessage(optionError);
+    }
   }
 
   readLogLevelOverride(defaultLevel: string): string {
