@@ -242,11 +242,6 @@
     )
   }
 
-  needs_obj_sum <- function(x) {
-    # vctrs-based classes use custom format() method
-    is.list(x) && !inherits(x, "vctrs_vctr")
-  }
-
   e <- new.env(parent = emptyenv())
   load(file = path, envir = e)
   
@@ -298,6 +293,7 @@
 
   columns <- unname(columns)
 
+  needs_obj_sum <- function(x) is.list(x) && !inherits(x, "vctrs_vctr")
   col_needs_obj_sum <- vapply(data, needs_obj_sum, logical(1))
   data[col_needs_obj_sum] <- lapply(data[col_needs_obj_sum], function(x) {
         summary <- obj_sum(x)
