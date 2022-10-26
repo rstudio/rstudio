@@ -293,7 +293,7 @@
 
   columns <- unname(columns)
 
-  # vctrs-based classes should call custom format()
+  # preserve vctrs-based classes so custom format() is called
   is_list_not_vctrs <- function(x) is.list(x) && !inherits(x, "vctrs_vctr")
   is_list <- vapply(data, is_list_not_vctrs, logical(1))
   data[is_list] <- lapply(data[is_list], function(x) {
