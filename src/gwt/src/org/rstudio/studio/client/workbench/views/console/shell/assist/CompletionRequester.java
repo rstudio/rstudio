@@ -981,11 +981,22 @@ public class CompletionRequester
          }
 
          // Get the name for the completion
-         SafeHtmlUtil.appendSpan(
+         if (type == RCompletionType.ROXYGEN)
+         {
+            // remove the snippet part
+            SafeHtmlUtil.appendSpan(
+               sb,
+               style,
+               display.replaceFirst("[ \\n].*", ""));
+         }
+         else 
+         {
+            SafeHtmlUtil.appendSpan(
                sb,
                style,
                display);
-
+         }
+         
          // Display the source for functions and snippets (unless there
          // is a custom helpHandler provided, indicating that the "source"
          // isn't a package but rather some custom DollarNames scope)
@@ -1050,7 +1061,7 @@ public class CompletionRequester
             return new ImageResource2x(ICONS.folder2x());
          case RCompletionType.CHUNK:
          case RCompletionType.ROXYGEN:
-            return new ImageResource2x(ICONS.keyword2x());
+            return new ImageResource2x(ICONS.roxygen2x());
          case RCompletionType.HELP:
             return new ImageResource2x(ICONS.help2x());
          case RCompletionType.STRING:

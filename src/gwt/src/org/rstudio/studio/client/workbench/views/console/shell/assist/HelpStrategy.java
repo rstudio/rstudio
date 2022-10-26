@@ -19,6 +19,7 @@ import java.util.HashMap;
 import com.google.gwt.core.client.GWT;
 import org.rstudio.core.client.Debug;
 import org.rstudio.studio.client.RStudioGinjector;
+import org.rstudio.studio.client.common.SimpleRequestCallback;
 import org.rstudio.studio.client.common.codetools.CodeToolsServerOperations;
 import org.rstudio.studio.client.common.codetools.RCompletionType;
 import org.rstudio.studio.client.server.ServerError;
@@ -52,6 +53,10 @@ public class HelpStrategy
                                      selectedItem.source);
          
       }
+      else if (selectedItem.type == RCompletionType.ROXYGEN)
+      {
+         server_.showVignette(selectedItem.source, "roxygen2");
+      }
       else
       {
          server_.showHelpTopic(
@@ -68,6 +73,9 @@ public class HelpStrategy
       {
          case RCompletionType.PACKAGE:
             showPackageHelp(item, display);
+            break;
+         case RCompletionType.ROXYGEN:
+            showRoxygenHelp(item, display);
             break;
          case RCompletionType.ARGUMENT:
          case RCompletionType.OPTION:
@@ -326,7 +334,11 @@ public class HelpStrategy
       }
    }
    
-   
+   private void showRoxygenHelp(QualifiedName item, 
+                                CompletionPopupDisplay display)
+   {
+      display.displayRoxygenHelp(item.display, item.meta, item.source != null);
+   }
    
    private void showPackageHelp(final QualifiedName selectedItem,
                                 final CompletionPopupDisplay display)

@@ -123,6 +123,120 @@ assign(x = ".rs.acCompletionTypes",
       .rs.acCompletionTypes$UNKNOWN
 })
 
+.rs.addFunction("roxygenTagMetadata", function()
+{
+   if (.rs.isPackageVersionInstalled("roxygen2", "7.2.1.9000"))
+   {
+      tagsFile <- system.file("roxygen2-tags.yml", package = "roxygen2")
+      contents <- readLines(tagsFile, warn = FALSE)
+      yaml <- .rs.fromYAML(contents)
+      n <- length(yaml)
+
+      map_chr <- function(...) vapply(..., FUN.VALUE = character(1), USE.NAMES = FALSE)
+      map_lgl <- function(...) vapply(..., FUN.VALUE = logical(1), USE.NAMES = FALSE)
+      tags <- map_chr(yaml, function(.) .$name)
+      snippet <- map_chr(yaml, function(.) {
+         out <- .$template
+         if (is.null(out)) {
+            out <- ""
+         } 
+         out
+      })
+      tags <- paste0("@", tags, snippet)
+      descriptions <- map_chr(yaml, function(.) {
+         description <- paste0("<p>", sub("\n$", "</p>", .$description))
+         description <- gsub("`([^`]+)`", "<code>\\1</code>", description)
+         description <- gsub("\\n"     , "</p><p>"         , description)
+         description
+      })
+      vignette <- map_chr(yaml, function(.) {
+         out <- .$vignette
+         if (is.null(out)) out <- NA_character_
+         out
+      })
+      recommend <- map_lgl(yaml, function(.) isTRUE(.$recommend))
+   }
+   else 
+   {
+      # All known Roxygen2 tags, in alphabetical order
+      #
+      # library(roxygen2)
+      # methods <- as.vector(methods("roxy_tag_parse"))
+      # prefix <- "roxy_tag_parse.roxy_tag_"
+      # paste0("@", gsub(prefix, "", methods[grepl(prefix, methods, fixed = TRUE)], fixed = TRUE), " ")
+      tags <- c(
+         "@aliases ",
+         "@author ",
+         "@backref ",
+         "@concept ",
+         "@describeIn ",
+         "@description ",
+         "@details ",
+         "@docType ",
+         "@encoding ",
+         "@eval ",
+         "@evalNamespace ",
+         "@evalRd ",
+         "@example ",
+         "@examples ",
+         "@examplesIf ",
+         "@export",
+         "@exportClass ",
+         "@exportMethod ",
+         "@exportPattern ",
+         "@exportS3Method ",
+         "@family ",
+         "@field ",
+         "@format ",
+         "@import ",
+         "@importClassesFrom ",
+         "@importFrom ",
+         "@importMethodsFrom ",
+         "@include ",
+         "@includeRmd ",
+         "@inherit ",
+         "@inheritDotParams ",
+         "@inheritParams ",
+         "@inheritSection ",
+         "@keywords ",
+         "@md",
+         "@method ",
+         "@name ",
+         "@note ",
+         "@noMd",
+         "@noRd",
+         "@order ",
+         "@param ",
+         "@rawNamespace ",
+         "@rawRd ",
+         "@rdname ",
+         "@references ",
+         "@return ",
+         "@returns ",
+         "@section ",
+         "@seealso ",
+         "@slot ",
+         "@source ",
+         "@template ",
+         "@templateVar ",
+         "@title ",
+         "@usage ",
+         "@useDynLib "
+      )
+      n <- length(tags)
+      descriptions <- rep("", n)
+      vignette <- rep("", n)
+      recommend <- rep(TRUE, n)
+   }
+
+   list(
+      tags = tags, 
+      descriptions = descriptions, 
+      recommend = recommend, 
+      vignette = vignette
+   )
+})
+
 .rs.addFunction("attemptRoxygenTagCompletion", function(token, line)
 {
    emptyCompletions <- .rs.emptyCompletions(excludeOtherCompletions = TRUE)
@@ -163,80 +277,27 @@ assign(x = ".rs.acCompletionTypes",
    }
    
    tag <- sub(".*(?=@)", '', token, perl = TRUE)
+   metadata <- .rs.roxygenTagMetadata()
    
-   # All known Roxygen2 tags, in alphabetical order
-   #
-   # library(roxygen2)
-   # methods <- as.vector(methods("roxy_tag_parse"))
-   # prefix <- "roxy_tag_parse.roxy_tag_"
-   # paste0("@", gsub(prefix, "", methods[grepl(prefix, methods, fixed = TRUE)], fixed = TRUE), " ")
-   tags <- c(
-      "@aliases ",
-      "@author ",
-      "@backref ",
-      "@concept ",
-      "@describeIn ",
-      "@description ",
-      "@details ",
-      "@docType ",
-      "@encoding ",
-      "@eval ",
-      "@evalNamespace ",
-      "@evalRd ",
-      "@example ",
-      "@examples ",
-      "@examplesIf ",
-      "@export",
-      "@exportClass ",
-      "@exportMethod ",
-      "@exportPattern ",
-      "@exportS3Method ",
-      "@family ",
-      "@field ",
-      "@format ",
-      "@import ",
-      "@importClassesFrom ",
-      "@importFrom ",
-      "@importMethodsFrom ",
-      "@include ",
-      "@includeRmd ",
-      "@inherit ",
-      "@inheritDotParams ",
-      "@inheritParams ",
-      "@inheritSection ",
-      "@keywords ",
-      "@md",
-      "@method ",
-      "@name ",
-      "@note ",
-      "@noMd",
-      "@noRd",
-      "@order ",
-      "@param ",
-      "@rawNamespace ",
-      "@rawRd ",
-      "@rdname ",
-      "@references ",
-      "@return ",
-      "@returns ",
-      "@section ",
-      "@seealso ",
-      "@slot ",
-      "@source ",
-      "@template ",
-      "@templateVar ",
-      "@title ",
-      "@usage ",
-      "@useDynLib "
-   )
-   
-   matchingTags <- grep(paste("^", tag, sep = ""), tags, value = TRUE)
+   tags <- metadata$tags
+   recommend <- metadata$recommend
+   descriptions <- metadata$descriptions
+   vignette <- metadata$vignette
+
+   matching <- grepl(paste("^", tag, sep = ""), tags)
+
+   # put recommended tags first
+   keep <- c(which(matching & recommend), which(matching & !recommend))
    
    .rs.makeCompletions(tag,
-                       matchingTags,
-                       type = .rs.acCompletionTypes$ROXYGEN,
+                       results  = tags[keep],
+                       type     = .rs.acCompletionTypes$ROXYGEN,
+                       context  = .rs.acContextTypes$ROXYGEN, 
+                       meta     = descriptions[keep], 
+                       packages = vignette[keep],
+
                        excludeOtherCompletions = TRUE, 
-                       context = .rs.acContextTypes$ROXYGEN)
+                       )
 })
 
 .rs.addFunction("attemptPlumberTagCompletion", function(token, line)
