@@ -157,7 +157,13 @@ def sentry_upload(type, flavor) {
   withCredentials([string(credentialsId: 'ide-sentry-api-key', variable: 'SENTRY_API_KEY')]){
     // timeout sentry in 15 minutes
     timeout(activity: true, time: 15) {
-      sh "cd package/linux/build-${flavor.capitalize()}-${type}/src/cpp && ../../../../../docker/jenkins/sentry-upload.sh ${SENTRY_API_KEY} ${sentryUploadRetryLimit}"
+      try {
+        // attempt to run sentry uplaod
+        sh "cd package/linux/build-${flavor.capitalize()}-${type}/src/cpp && ../../../../../docker/jenkins/sentry-upload.sh ${SENTRY_API_KEY} ${sentryUploadRetryLimit}"
+      } catch(err) {
+        // mark build as unstable if it fails
+        unstable("Sentry upload failed (${flavor.capitalize()} ${type})")
+      }
     }
   }
 }
@@ -514,7 +520,13 @@ try {
 
                                         // upload the breakpad symbols
                                         withCredentials([string(credentialsId: 'ide-sentry-api-key', variable: 'SENTRY_API_KEY')]) {
-                                            bat "cd package\\win32\\build\\src\\cpp && set SENTRY_HTTP_MAX_RETRIES=${sentryUploadRetryLimit} && ..\\..\\..\\..\\..\\dependencies\\windows\\sentry-cli.exe --auth-token %SENTRY_API_KEY% upload-dif --log-level=debug --org rstudio --project ide-backend -t breakpad ."
+                                            try {
+                                                // attempt to run sentry uplaod
+                                                bat "cd package\\win32\\build\\src\\cpp && set SENTRY_HTTP_MAX_RETRIES=${sentryUploadRetryLimit} && ..\\..\\..\\..\\..\\dependencies\\windows\\sentry-cli.exe --auth-token %SENTRY_API_KEY% upload-dif --log-level=debug --org rstudio --project ide-backend -t breakpad ."
+                                            } catch(err) {
+                                                // mark build as unstable if it fails
+                                                currentBuild.result = "UNSTABLE"
+                                            }
                                         }
                                     }
                                 }
