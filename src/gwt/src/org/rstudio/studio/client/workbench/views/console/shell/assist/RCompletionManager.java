@@ -1753,7 +1753,7 @@ public class RCompletionManager implements CompletionManager
       popup.displaySnippetHelp(
             snippets_.getSnippetContents(item.name));
    }
-   
+
    /**
     * It's important that we create a new instance of this each time.
     * It maintains state that is associated with a completion request.
@@ -1786,7 +1786,6 @@ public class RCompletionManager implements CompletionManager
          // TODO: Show help should navigate to snippet file?
          if (selectedItem.type != RCompletionType.SNIPPET)
             helpStrategy_.showHelpTopic(selectedItem);
-            
       }
 
       @Override
@@ -2066,6 +2065,21 @@ public class RCompletionManager implements CompletionManager
          if (qualifiedName.type == RCompletionType.SNIPPET)
          {
             snippets_.applySnippet(completionToken, qualifiedName.name);
+            return;
+         }
+
+         if (qualifiedName.type == RCompletionType.ROXYGEN)
+         {
+            String snippet = qualifiedName.display;
+            if (snippet.contains("\n"))
+            {
+               // inject the #' prefix
+               String prefix = docDisplay_.getCurrentLine().replaceFirst("@.*", "");
+               snippet = snippet.replace("\n", "\n" + prefix);
+            }
+            
+            snippets_.applySnippetContent(completionToken, snippet);
+
             return;
          }
          

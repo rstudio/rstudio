@@ -6929,7 +6929,7 @@ public class RemoteServer implements Server
    private static final String STAN_RUN_DIAGNOSTICS = "stan_run_diagnostics";
 
    private static final String SQL_GET_COMPLETIONS = "sql_get_completions";
-
+   
    private static final String GET_CPP_CAPABILITIES = "get_cpp_capabilities";
    private static final String INSTALL_BUILD_TOOLS = "install_build_tools";
    private static final String START_BUILD = "start_build";
