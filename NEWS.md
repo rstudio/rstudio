@@ -23,6 +23,7 @@
 - Build output is now truncating when very large amounts of output are produced (e.g. from C++ compilation warnings).
 - Memory usage in the environment pane now works correctly on Linux when using cgroups v2. (#11894)
 - Fixed an issue where code execution could pause in RStudio Server after closing the browser tab even with active computations. (Pro #3943)
+- Chunk output calls `format()` method on vctrs-based classes stored in a dataframe. (#6878)
   
 ### Python
 
