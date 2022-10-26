@@ -155,11 +155,10 @@ export class SessionLauncher {
         .then(() => {
           if (this.showSplash) {
             this.splash = new BrowserWindow({
-              width: 500,
-              height: 500,
+              width: 250,
+              height: 250,
               frame: false,
               transparent: true,
-              alwaysOnTop: true,
               center: true,
               resizable: false,
               show: false,
