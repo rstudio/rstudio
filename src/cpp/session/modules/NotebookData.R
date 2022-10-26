@@ -293,9 +293,10 @@
 
   columns <- unname(columns)
 
-  needs_obj_sum <- function(x) is.list(x) && !inherits(x, "vctrs_vctr")
-  col_needs_obj_sum <- vapply(data, needs_obj_sum, logical(1))
-  data[col_needs_obj_sum] <- lapply(data[col_needs_obj_sum], function(x) {
+  # vctrs-based classes should call custom format()
+  is_list_not_vctrs <- function(x) is.list(x) && !inherits(x, "vctrs_vctr")
+  is_list <- vapply(data, is_list_not_vctrs, logical(1))
+  data[is_list] <- lapply(data[is_list], function(x) {
         summary <- obj_sum(x)
         paste0("<", summary, ">")
       })
