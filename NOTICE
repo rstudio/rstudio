@@ -100,7 +100,7 @@ components at:
       hadoop-common/src/main/winutils
 
 In the alternate, you may request a copy of the source code for
-any of these components by e-mail to info@rstudio.com.
+any of these components by e-mail to info@posit.co.
 
 
 GNU LGPL v2.1
@@ -4670,3 +4670,4 @@ AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
 LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
 OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 THE SOFTWARE.
+=======

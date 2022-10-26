@@ -20,7 +20,7 @@
 
 #include <boost/bind/bind.hpp>
 #include <boost/regex.hpp>
-#include <boost/system/errc.hpp>
+#include <boost/system/error_code.hpp>
 
 #include <shared_core/Error.hpp>
 #include <shared_core/FilePath.hpp>
