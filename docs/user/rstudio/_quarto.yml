@@ -11,34 +11,26 @@ website:
   repo-url: https://github.com/rstudio/rstudio/
   repo-subdir: "docs/user/rstudio/"
   repo-actions: [edit, issue]
-  page-footer:
-    left: |
-      Copyright © 2022 Posit, PBC. All Rights Reserved.
-    right:
-      - icon: house-fill
-        href: https://www.posit.co
-      - icon: question-circle-fill
-        href: https://support.rstudio.com/hc/en-us
-      - icon: lightbulb-fill
-        href: https://solutions.rstudio.com
-      - icon: twitter
-        href: https://twitter.com/rstudio
+  
   navbar:
     title: "RStudio User Guide<br>{{< var builtType >}} {{< var version >}}"
     collapse: false
     pinned: true
     search: true
     logo: images/posit-logo-fullcolor-TM.svg
-    left:
-      # - href: index.qmd
-      #   text: "Overview"
-      - href: ide/get-started/index.qmd
-        text: "Getting Started"
-      - href: ide/guide/ui/ui-panes.qmd
-        text: "Guide"
-      - href: ide/reference/shortcuts.qmd
-        text: "Reference"
     right:
+      - text: Version
+        menu:
+          - text: Additional versions
+            url: https://docs.rstudio.com/rsw/documentation/
+      - text: "Guides"
+        menu:
+          - text: "Workbench Install Guide"
+            url: 'https://docs.rstudio.com/rsw/installation/'
+          - text: "Workbench Admin Guide"
+            url: 'https://docs.rstudio.com/ide/server-pro/'
+          - text: "Posit Workbench User Guide"
+            url: 'https://docs.rstudio.com/ide/server-pro/user/'
       - text: "Release Notes"
         url: "https://www.rstudio.com/products/rstudio/release-notes/"      
       - icon: house
@@ -118,6 +110,19 @@ website:
         contents:
           - ide/reference/shortcuts.qmd
           
+          
+  page-footer:
+    left: |
+      Copyright © 2022 Posit, PBC. All Rights Reserved.
+    right:
+      - icon: house-fill
+        href: https://www.posit.co
+      - icon: question-circle-fill
+        href: https://support.rstudio.com/hc/en-us
+      - icon: lightbulb-fill
+        href: https://solutions.rstudio.com
+      - icon: twitter
+        href: https://twitter.com/rstudio
 
 
 format:
@@ -134,7 +139,9 @@ format:
     include-in-header: google_analytics.html
     toc: true
     code-overflow: scroll
-#  pdf:
-#    toc: true
-#  docx:
-#    toc: true
+
+  # pdf:
+  #   toc: true
+  # 
+  # docx:
+  #   toc: true

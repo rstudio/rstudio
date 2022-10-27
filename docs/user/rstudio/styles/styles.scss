@@ -68,8 +68,7 @@ pre.sourceCode.code-with-copy {
   white-space: nowrap; 
 }
 
-/* image in nav bar sizing */
-
+/* Posit logo - navbar */
 #navbar-right-logo {
   width: 70px;
   min-width: 70px;
@@ -158,7 +157,7 @@ div span.pro-feature {
   color: $body-color;  
 }
 
-/* Code blocks */
+/* Code blocks - These styles were taken from the code of all of the other product guides. I have added these here as a reference for if we want to align the styles across all products and guides. The current workload is too big for testing these right now, so I (Ashley) can take a look at these after the rebranding release. Please do not remove unless you check first.*/
 
 // p.code-title {
 //   color: #3c3c3c;
