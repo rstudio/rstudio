@@ -429,7 +429,9 @@ if [ "${build_package}" = "1" ]; then
 
       cd ..
 
+      # allocate oversized dmg, which will be compressed
       hdiutil create                       \
+         -size 1g                          \
          -fs "APFS"                        \
          -volname "${RSTUDIO_BUNDLE_NAME}" \
          -srcfolder "install"              \
