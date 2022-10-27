@@ -4,7 +4,7 @@ title: "Visual Editor"
 
 The Quarto visual editor provides a [WYSIWYM](https://en.wikipedia.org/wiki/WYSIWYM) editing interface for all of Pandoc markdown, including tables, citations, cross-references, footnotes, divs/spans, definition lists, attributes, raw HTML/TeX, and more. The visual editor also includes support for executing code cells and viewing their output inline:
 
-![](images/visual-editing.png){fig-alt="An RMarkdown file opened in the RStudio visual editor. The page is titled 'Filter joins'. Underneath is a table containing R syntax, mathematical notation, and definitions for the semi- and anti-joins. Underneath this table is an R code chunk that displays a graphical representation of a semi-join."}
+![](images/visual-editing.png){fig-alt="An R Markdown file opened in the RStudio visual editor. The page is titled 'Filter joins'. Underneath is a table containing R syntax, mathematical notation, and definitions for the semi- and anti-joins. Underneath this table is an R code chunk that displays a graphical representation of a semi-join."}
 
 The visual editor doesn't attempt to abstract away or obscure the underlying markdown document. Rather, it aims to provide a highly productive writing interface for people that love markdown. Most markdown constructs (e.g., `#` or `**bold**`) can be used directly for formatting.
 
@@ -49,7 +49,7 @@ If you are at the beginning of a line (as displayed above), you can also enter p
 
 The editor toolbar includes buttons for the most commonly used formatting commands:
 
-![](images/visual-editing-toolbar.png){fig-alt="A snippet of an RStudio window showing the options bar at the top of an RMarkdown document."}
+![](images/visual-editing-toolbar.png){fig-alt="A snippet of an RStudio window showing the options bar at the top of an R Markdown document."}
 
 Additional commands are available on the **Format**, **Insert**, and **Table** menus:
 

@@ -122,7 +122,7 @@ There is also a Connect button for creating a connection in the R console, scrip
 
 ### Build
 
-The Build tab is available in specific R projects that interact with it such as R packages or Quarto/RMarkdown websites/books
+The Build tab is available in specific R projects that interact with it such as R packages or Quarto/R Markdown websites/books
 
 Based on the type of R Project, the build pane will provide options for building the R Package or rendering the website.
 

@@ -74,7 +74,7 @@ There are also some special template files which ship with RStudio; these, too, 
 | `shiny.Rmd`        | The default Shiny R Markdown file content (without YAML header)        |
 | `query.sql`        | The default SQL query                                                  |
 
-For Quarto and RMarkdown documents, templates should not have a YAML header. The **File** > **New File** workflow provides a popup wizard where users select specific options that populate the YAML header.
+For Quarto and R Markdown documents, templates should not have a YAML header. The **File** > **New File** workflow provides a popup wizard where users select specific options that populate the YAML header.
 
 ## Color themes
 

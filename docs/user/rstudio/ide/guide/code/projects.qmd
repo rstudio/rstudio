@@ -92,7 +92,7 @@ You can work with more than one RStudio project at a time by simply opening each
 
 There are several options that can be set on a per-project basis to customize the behavior of RStudio. You can edit these options using the **Project Options** command on the **Project** menu:
 
-![](images/project-options.png){fig-alt="A screenshot of the Project Options popup - it has tabs for General, Code Editing, RMarkdown, Python, Sweave, Spelling, Build Tools, Git/SVN, Environments."}
+![](images/project-options.png){fig-alt="A screenshot of the Project Options popup - it has tabs for General, Code Editing, R Markdown, Python, Sweave, Spelling, Build Tools, Git/SVN, Environments."}
 
 ## General
 

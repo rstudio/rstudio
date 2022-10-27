@@ -265,7 +265,7 @@ When the interactive debugger shows up in the console, it will not print user ou
 Browse[1]> sink()
 ```
 
-This removes the default sink that knitr uses to capture all output, and ensures that you can see the results in the console. For example, to use `recover()` with RMarkdown, you’d put the following code in your setup block:
+This removes the default sink that knitr uses to capture all output, and ensures that you can see the results in the console. For example, to use `recover()` with R Markdown, you’d put the following code in your setup block:
 
 ```r
 options(error = function() {
@@ -276,7 +276,7 @@ options(error = function() {
 
 This generates a “no sink to remove” warning when knitr completes; you can safely ignore this warning.
 
-If you simply want a traceback, the easiest option is to use `rlang::trace_back()`, taking advantage of the `rlang_trace_top_env` option. This ensures that you only see the traceback from your code, instead of all the functions called by RMarkdown and knitr.
+If you simply want a traceback, the easiest option is to use `rlang::trace_back()`, taking advantage of the `rlang_trace_top_env` option. This ensures that you only see the traceback from your code, instead of all the functions called by R Markdown and knitr.
 
 ```r
 options(rlang_trace_top_env = rlang::current_env())
@@ -286,11 +286,11 @@ options(error = function() {
 })
 ```
 
-Finally, because R Markdown chunks don't contain [source references](http://journal.r-project.org/archive/2010-2/RJournal_2010-2_Murdoch.pdf), most of the debugger's visual features are disabled; you won't see the active line highlighting in the editor and most debugging will need to be done in the console. The ["Advanced R" - Debugging RMarkdown chapter](https://adv-r.hadley.nz/debugging.html#rmarkdown) has does deeper on general RMarkdown debugging.
+Finally, because R Markdown chunks don't contain [source references](http://journal.r-project.org/archive/2010-2/RJournal_2010-2_Murdoch.pdf), most of the debugger's visual features are disabled; you won't see the active line highlighting in the editor and most debugging will need to be done in the console. The ["Advanced R" - Debugging R Markdown chapter](https://adv-r.hadley.nz/debugging.html#rmarkdown) has does deeper on general R Markdown debugging.
 
 ### Debugging in Quarto Documents
 
-When debugging Quarto documents with a knitr engine, rather than using `quarto::quarto_render()`, use `rmarkdown::render("path/to/file.qmd")`. This will provide the same workflow as above for RMarkdown documents.
+When debugging Quarto documents with a knitr engine, rather than using `quarto::quarto_render()`, use `rmarkdown::render("path/to/file.qmd")`. This will provide the same workflow as above for R Markdown documents.
 
 ::: {.callout-warning}
 
