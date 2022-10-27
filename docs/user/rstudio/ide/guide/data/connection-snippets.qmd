@@ -16,10 +16,21 @@ RStudio connections can be extended through two methods:
 
 A Connection snippet file is an R code snippet with additional metadata which is intended to initialize a connection. This file can be as simple as:
 
-    library(readr)
-    data <- read_csv(readr_example("mtcars.csv"))
+```r
+library(readr)
+data <- read_csv(readr_example("mtcars.csv"))
+```
 
-This snippet can be saved on a server-based version of RStudio under `/etc/rstudio/connections/`. Once that file is created and RStudio is restarted, RStudio will make this connection available as *Motor Trend Cars* underneath **Connect to Existing Data Sources**:
+This snippet can be saved on a server-based version of RStudio under `/etc/rstudio/connections/`. For desktop versions of RStudio, Connection Snippets are distributed through R packages as detailed in the [R packages] section below.
+
+For the above example on a server, it would be saved as:
+
+```bash
+# Linux server only
+/etc/rstudio/connections/Motor Trend Cars.R
+```
+
+Once that file is created and RStudio is restarted, RStudio will make this connection available as *Motor Trend Cars* underneath **Connect to Existing Data Sources**:
 
 ::: {layout-ncol="2"}
 ![](images/motortrend-connection.png){fig-alt="A screenshot of the New Connection wizard displaying the example \"Motor Trends Cars\" existing data source"}
@@ -47,15 +58,19 @@ In order to parameterize this connection, one can create fields using using the 
 
 For example, a filter interface for this dataframe can be added with the following connection snippet:
 
-    library(readr)
-    data <- read_csv(readr_example("mtcars.csv"))
-    data[data$mpg == ${0:Miles per Gallon=21.4} | data$cyl == ${1:Cylinders=6}, ]
+```r
+library(readr)
+data <- read_csv(readr_example("mtcars.csv"))
+data[data$mpg == ${0:Miles per Gallon=21.4} | data$cyl == ${1:Cylinders=6}, ]
+```
 
 ![](https://rstudio.github.io/rstudio-extensions/resources/connections/fields-connection-interface.png){fig-alt="A screenshot of the New Connection wizard, displaying the ability to add filters or other UI components to the connection/data"}
 
-In order to create a `;` separated list of values, use the syntax `${Position:Label=Default:Key}`. Semicolon-separated list are common in database connections and therefore, natevely supported in snippet files, for instance:
+In order to create a `;` separated list of values, use the syntax `${Position:Label=Default:Key}`. Semicolon-separated list are common in database connections and therefore, natively supported in snippet files, for instance:
 
-    "${2:Letters=ABC:LettersKey}${3:Numbers=123:NumbersKey}"
+```r
+"${2:Letters=ABC:LettersKey}${3:Numbers=123:NumbersKey}"
+```
 
 ![](https://rstudio.github.io/rstudio-extensions/resources/connections/keyvalue-connection-interface.png){fig-alt="A screenshot of the New Connection wizard, displaying the ability to add filters or other UI components to the connection/data"}
 
