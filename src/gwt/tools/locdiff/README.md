@@ -11,15 +11,14 @@ identify what work is needed.
 
 Some useful commit hashes:
 
-9f796939 - Prairie Trillium release (2022.02.0+443)
-8aaa5d47 - Prairie Trillium patch 1 (2022.02.1+461)
-8acbd38b - Prairie Trillium patch 2 (2022.02.2+485)
-1db809b8 - Prairie Trillium patch 3 (2022.02.3+492)
-c0935c0f - Prairie Trillium patch 4 (2022.02.4+500)
-
-34ea3031 - Spotted Wakerobin release (2022.07.0+548)
-7872775e - Spotted Wakerobin patch 1 (2022.07.1+554)
-e7373ef8 - Spotted Wakerobin patch 2 (2022.07.2+576)
+- 9f796939 - Prairie Trillium release (2022.02.0+443)
+- 8aaa5d47 - Prairie Trillium patch 1 (2022.02.1+461)
+- 8acbd38b - Prairie Trillium patch 2 (2022.02.2+485)
+- 1db809b8 - Prairie Trillium patch 3 (2022.02.3+492)
+- c0935c0f - Prairie Trillium patch 4 (2022.02.4+500)
+- 34ea3031 - Spotted Wakerobin release (2022.07.0+548)
+- 7872775e - Spotted Wakerobin patch 1 (2022.07.1+554)
+- e7373ef8 - Spotted Wakerobin patch 2 (2022.07.2+576)
 
 ## Usage
 

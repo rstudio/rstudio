@@ -1,5 +1,5 @@
 /*
- * locdiff.js
+ * locdiff.ts
  *
  * Copyright (C) 2022 by Posit Software, PBC
  *
