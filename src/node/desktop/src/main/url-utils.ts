@@ -114,3 +114,8 @@ export async function waitForUrlWithTimeout(
 
   return waitWithTimeout(checkReady, initialWaitMs, incrementWaitMs, maxWaitSec);
 }
+
+export function makeAbsoluteUrl(url: string) : URL {
+  const link = new URL(url, 'http://127.0.0.1');
+  return link;
+}
