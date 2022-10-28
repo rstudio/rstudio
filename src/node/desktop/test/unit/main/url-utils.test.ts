@@ -21,7 +21,8 @@ import {
   isAllowedProtocol,
   isChromeGpuUrl,
   isLocalUrl,
-  isSafeHost
+  isSafeHost,
+  makeAbsoluteUrl
 } from '../../../src/main/url-utils';
 import { URL } from 'url';
 
@@ -97,5 +98,13 @@ describe('URL Utils', () => {
 
   it('handles invalid url', () => {
     assert.equal(getAuthority('http://bad^url'), '');
+  });
+
+  it('makes absolute urls from relative', () => {
+    assert.equal(makeAbsoluteUrl('rmdOutput/3').toString(), 'http://127.0.0.1/rmdOutput/3');
+  });
+
+  it('makes absolute urls from valid url', () => {
+    assert.equal(makeAbsoluteUrl('http://www.rstudio.com/download').toString(), 'http://www.rstudio.com/download');
   });
 });
