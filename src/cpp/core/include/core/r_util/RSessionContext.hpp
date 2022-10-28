@@ -24,6 +24,8 @@
 
 #include <boost/function.hpp>
 
+#include <core/http/Util.hpp>
+
 #define kProjectNone               "none"
 #define kUserIdLen                 5
 #define kProjectIdLen              8
@@ -195,6 +197,11 @@ public:
    bool operator<(const SessionScope &other) const {
        return project_ < other.project_ ||
               (project_ == other.project_ && id_ < other.id_);
+   }
+
+   const std::string sessionId() const
+   {
+      return core::http::util::urlEncode(projectId().asString()) + id();
    }
 
 private:

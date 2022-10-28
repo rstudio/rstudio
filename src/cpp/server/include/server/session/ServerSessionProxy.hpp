@@ -95,6 +95,7 @@ bool requiresSession(const core::http::Request& request);
 
 typedef boost::function<bool(
     boost::shared_ptr<core::http::AsyncConnection>,
+    boost::shared_ptr<core::http::Request>,
     const core::r_util::SessionContext&,
     const ClientHandler&
     )> ProxyFilter;
@@ -114,6 +115,12 @@ core::http::Headers getAuthCookies(const core::http::Response& response);
 bool checkForValidUserSession(const std::string& username);
 
 void socketConnectionClosed(const std::string& username);
+
+bool applyProxyFilter(
+      boost::shared_ptr<core::http::AsyncConnection> ptrConnection,
+      boost::shared_ptr<core::http::Request> pRequest,
+      const core::r_util::SessionContext& context,
+      const ClientHandler& clientHandler = ClientHandler());
 
 } // namespace session_proxy
 } // namespace server
