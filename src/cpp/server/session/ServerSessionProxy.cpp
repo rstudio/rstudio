@@ -138,8 +138,12 @@ void socketConnectionClosed(const std::string& username)
 {
    auth::handler::UserSession::removeUserSessionConnection(username);
 }
-   
+
 namespace {
+
+ProxyFilter s_proxyFilter;
+
+ProxyRequestFilter s_proxyRequestFilter;
 
 Error launchSessionRecovery(
       boost::shared_ptr<core::http::AsyncConnection> ptrConnection,
@@ -184,6 +188,7 @@ Error launchSessionRecovery(
    if (firstAttempt)
    {
       LOG_DEBUG_MESSAGE("Launching session for user: " + context.username + (context.scope.isWorkspaces() ? " - workspaces" : " id:" + context.scope.id()));
+
       bool launched;
 
       return sessionManager().launchSession(ptrConnection->ioService(), 
@@ -206,25 +211,10 @@ http::ConnectionRetryProfile sessionRetryProfile(
    return retryProfile;
 }
 
-ProxyFilter s_proxyFilter;
-
-ProxyRequestFilter s_proxyRequestFilter;
-
 void invokeRequestFilter(http::Request* pRequest)
 {
    if (s_proxyRequestFilter)
       s_proxyRequestFilter(pRequest);
-}
-
-bool applyProxyFilter(
-      boost::shared_ptr<core::http::AsyncConnection> ptrConnection,
-      const r_util::SessionContext& context,
-      const ClientHandler& clientHandler = ClientHandler())
-{
-   if (s_proxyFilter)
-      return s_proxyFilter(ptrConnection, context, clientHandler);
-   else
-      return false;
 }
 
 SessionContextSource s_sessionContextSource;
@@ -749,13 +739,13 @@ void proxyRequest(
       const http::ConnectionRetryProfile& connectionRetryProfile,
       const ClientHandler& clientHandler = ClientHandler())
 {
-   // apply optional proxy filter - this may load balance this request to another server
-   if (applyProxyFilter(ptrConnection, context, clientHandler))
-      return;
-
    // modify request
    boost::shared_ptr<http::Request> pRequest(new http::Request());
    pRequest->assign(ptrConnection->request());
+
+   // apply optional proxy filter - this may load balance this request to another server
+   if (applyProxyFilter(ptrConnection, pRequest, context, clientHandler))
+      return;
 
    // add username
    pRequest->setHeader(kRStudioUserIdentityDisplay, context.username);
@@ -877,6 +867,18 @@ bool shouldRefreshCredentials(const http::Request& request)
 }
 
 } // anonymous namespace
+
+bool applyProxyFilter(
+      boost::shared_ptr<core::http::AsyncConnection> ptrConnection,
+      boost::shared_ptr<core::http::Request> pRequest,
+      const r_util::SessionContext& context,
+      const ClientHandler& clientHandler)
+{
+   if (s_proxyFilter)
+      return s_proxyFilter(ptrConnection, pRequest, context, clientHandler);
+   else
+      return false;
+}
 
 http::Headers getAuthCookies(const http::Response& response)
 {
@@ -1024,6 +1026,7 @@ void proxyRpcRequest(
 
    // refresh auth credentials automatically if this RPC is the result of a user action
    bool refreshCredentials = shouldRefreshCredentials(ptrConnection->request());
+
    if (refreshCredentials)
    {
       auth::handler::UserSession::updateSessionLastActiveTime(username);
@@ -1103,8 +1106,11 @@ void proxyLocalhostRequest(
    if (!sessionContextForRequest(ptrConnection, username, &context))
       return;
 
-   // apply optional proxy filter
-   if (applyProxyFilter(ptrConnection, context))
+   boost::shared_ptr<http::Request> pRequest = boost::make_shared<http::Request>();
+   pRequest->assign(ptrConnection->request());
+
+   // apply optional proxy filter for load balancing
+   if (applyProxyFilter(ptrConnection, pRequest, context))
       return;
 
    LOG_DEBUG_MESSAGE("Start localhost proxy request " + ptrConnection->request().method() + " " + ptrConnection->request().uri() + " username: " + username);
