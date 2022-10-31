@@ -87,9 +87,9 @@ void initThreadId()
    s_mainThreadId = boost::this_thread::get_id();
 }
 
-bool haveActiveChildren()
+bool haveDurableChildren()
 {
-   return module_context::processSupervisor().hasActiveChildren() ||
+   return module_context::processSupervisor().hasDurableChildren() ||
           modules::authoring::hasRunningChildren();
 }
 

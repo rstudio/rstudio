@@ -82,6 +82,9 @@ public:
    // Has this process generated any recent output?
    virtual bool hasRecentOutput() const;
 
+   // Check if process allows for parent process to be suspended
+   bool allowParentSuspend() const;
+
 protected:
    Error run();
 
@@ -98,6 +101,10 @@ private:
    std::vector<std::string> args_;
    ProcessOptions options_;
 };
+
+inline bool ChildProcess::allowParentSuspend() const {
+   return options_.allowParentSuspend;
+}
 
 
 // Child process which can be run synchronously

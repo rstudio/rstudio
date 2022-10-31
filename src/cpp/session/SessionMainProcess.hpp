@@ -22,7 +22,7 @@ namespace main_process {
 
 void setupForkHandlers();
 bool wasForked();
-bool haveActiveChildren();
+bool haveDurableChildren();
 void initThreadId();
 
 } // namespace main_process

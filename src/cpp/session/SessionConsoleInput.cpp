@@ -101,7 +101,7 @@ void consolePrompt(const std::string& prompt, bool addToHistory)
 bool canSuspend(const std::string& prompt)
 {
    bool suspendIsBlocked = false;
-   suspendIsBlocked |= session::suspend::checkBlockingOp(main_process::haveActiveChildren(), suspend::kChildProcess);
+   suspendIsBlocked |= session::suspend::checkBlockingOp(main_process::haveDurableChildren(), suspend::kChildProcess);
    suspendIsBlocked |= session::suspend::checkBlockingOp(!modules::connections::isSuspendable(), suspend::kConnection);
    suspendIsBlocked |= session::suspend::checkBlockingOp(!modules::environment::isSuspendable(), suspend::kExternalPointer);
    suspendIsBlocked |= session::suspend::checkBlockingOp(!modules::jobs::isSuspendable(), suspend::kActiveJob);
