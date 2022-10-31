@@ -551,7 +551,11 @@ try {
           trigger_external_build('IDE/qa-opensource-automation')
         }
 
-        slackSend channel: params.get('SLACK_CHANNEL', '#ide-builds'), color: 'good', message: "${messagePrefix} passed (${currentBuild.result})"
+        if (currentBuild.result == "UNSTABLE") {
+          slackSend channel: params.get('SLACK_CHANNEL', '#ide-builds'), color: 'warning', message: "${messagePrefix} ${currentBuild.result}"
+        } else {
+          slackSend channel: params.get('SLACK_CHANNEL', '#ide-builds'), color: 'good', message: "${messagePrefix} passed (${currentBuild.result})"
+        }
     }
 
 } catch(FlowInterruptedException interrupted) {
