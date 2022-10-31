@@ -18,7 +18,6 @@ import com.google.gwt.core.client.GWT;
 import com.google.gwt.user.client.ui.Widget;
 import org.rstudio.core.client.resources.ImageResource2x;
 import org.rstudio.core.client.widget.WizardPage;
-import org.rstudio.studio.client.rsconnect.RSConnect;
 import org.rstudio.studio.client.rsconnect.RsconnectConstants;
 import org.rstudio.studio.client.rsconnect.model.NewRSConnectAccountInput;
 import org.rstudio.studio.client.rsconnect.model.NewRSConnectAccountResult;
@@ -29,7 +28,7 @@ public class NewPositCloudPage
 {
    public NewPositCloudPage()
    {
-      super(RSConnect.CLOUD_SERVICE_NAME,
+      super("Posit Cloud",
             constants_.newPositCloudPageSubTitle(),
             constants_.newPositCloudPageCaption(),
             new ImageResource2x(RSConnectResources.INSTANCE.positCloudAccountIcon2x()),
