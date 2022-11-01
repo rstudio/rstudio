@@ -4,35 +4,62 @@ title: "Managing Files"
 
 RStudio supports syntax highlighting and other specialized code-editing features for specific file types:
 
-- Scripts in R, Python, SQL  
-- Computational and scientific documents in Quarto, RMarkdown, and TeX  
-- Web content such as HTML and CSS  
-- and many more  
+-   Scripts in R, Python, SQL  
+-   Computational and scientific documents in Quarto, R Markdown, and TeX  
+-   Web content such as HTML and CSS  
+-   and many more  
 
 ## File Menu
 
-To create a new file you use the **File -\> New File** menu:
+You can create a new file via the **File -\> New File** menu:
 
 ![](images/system-files-menu.png){fig-alt="A screenshot of the File Menu drop-down which has features like New File, Open File, Save File."}
 
 An alternative workflow is to use the visual elements in the RStudio menu.
 
-![](images/files-menu.png){fig-alt="A screenshot of the New File dropdown in RStudio, which provides new R, Python, Quarto, Rmarkdown, Shiny or Plumber files."}
+![](images/files-menu.png){fig-alt="A screenshot of the New File drop-down in RStudio, which provides new R, Python, Quarto, Rmarkdown, Shiny or Plumber files."}
 
 To open an existing file, use either the **File -\> Open File\...** menu or the **Recent Files** menu to select from recently opened files.
 
 ## Files tab
 
-The **Output** pane has a **Files** tab that includes several buttons for managing files within the currently selected folder, including the **New Blank File** dropdown, **Delete** button, and the **Rename** button. These buttons will operate on files that are selected within the **Files tab**.
+The **Output** pane has a **Files** tab that includes several buttons for managing files within the currently selected folder, including the **New Blank File** drop-down, **Delete** button, and the **Rename** button. These buttons will operate on files that are selected within the **Files tab**.
 
-![](images/file-pane-blank-file.png){fig-alt="A screenshot of the create blank file dropdown."}
+![](images/file-pane-blank-file.png){fig-alt="A screenshot of the create blank file drop-down."}
+The **More** drop-down contains a number of other useful features:  
+
+- Copy or Move selected file(s) to a new location
+- Open selected file(s) in **Source** pane or new columns
+- Modify or navigate to the working directory
+- Open a new terminal from the displayed folder
+- Open the displayed folder in a new pop-out window
+- Show hidden files
+
+
+![](images/files-more.png){fig-alt="A screenshot of the Files tab in RStudio, with the More drop-down opened to display the possible options as expanded on above."}
+
+### Existing files
+
+To open existing files from the **Files** tab, use the **Files** tab to navigate to the folder that contains your file. Then click on the file of interest to open it in the **Source** pane of RStudio.
+
+To modify existing files from the **Files** tab, select the checkbox next the file(s) of interest, then use the UI elements such as **Delete** or **More** > **Move...**.
+
+### Display hidden files
+
+RStudio’s **Files** tab by default shows only a selection of commonly needed hidden files, such as the .Rprofile. To instead show all of the hidden files, in the **Files** pane, click the **More** drop-down, then check **Show Hidden Files**.
+
+![](images/more-show-hidden-files.png){fig-alt="The Files pane, showing the More drop-down and the Show Hidden Files check. A number of dot files such as .gitignore and folders such as .git, .Rproj.user, etc are displayed now."}
 
 ## Switching files
 
-If several files are opened within RStudio, then they are all available as tabs within the **Source** pane to facilitate quick switching between open documents. If there are a large number of open documents, navigate between them using the "**\>\>"** icon at the end of the tab bar or the **View -\> Switch to Tab\...**) menu item:
+If several files are opened within RStudio, then they are all available as tabs within the **Source** pane to facilitate quick switching between open documents.
 
-![](images/file-switch.png){fig-alt="A screenshot of the Switching Files popup - it is a dropdown from the end of the Source pane, d" width="500"}
+Use the <kbd>Ctrl+Tab</kbd> and <kbd>Ctrl+Shift+Tab</kbd> shortcuts on desktop (<kbd>Ctrl+F12</kbd> and <kbd>Ctrl+F11</kbd> on Linux) to quickly move to the next or previous tabs, respectively.
 
-To quickly navigate to an existing file in the current RStudio Project use the <kbd>Ctrl + .</kbd> shortcut. Entering the shortcut will bring up the **Go to File/Function** search bar with auto-completion of file names.
+If there are a large number of open documents, navigate between them using the "**\>\>"** icon at the end of the tab bar (<kbd>Ctrl+Shift+.</kbd> shortcut or the **View -\> Switch to Tab\...** menu item). The **Switch to Tab...** provides a filtering search for all of the tabs in that **Source** pane:
 
-![](images/go-to-file.png){fig-alt="A screenshot of the go to file/function popup as a search bar." width="350"}
+![](images/file-switch.png){fig-alt="A screenshot of the Switching Files popup - it is a drop-down from the end of the Source pane, displayed as >>." width="500"}
+
+To quickly navigate to any existing file in the current RStudio Project, even if it is not currently open, use the <kbd>Ctrl + .</kbd> shortcut. Entering the shortcut will bring up the **Go to File/Function** search bar with auto-completion of file names.
+
+![](images/go-to-file.png){fig-alt="A screenshot of the go to file/function popup as a search bar." fig-align="center" width="450"}

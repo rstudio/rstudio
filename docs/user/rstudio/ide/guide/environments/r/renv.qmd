@@ -2,9 +2,7 @@
 title: "renv"
 ---
 
-## **Overview**
-
-The `renv` package helps you create **r**eproducible **env**ironments for your R projects. Use `renv` to make your R projects more:
+The [`renv` package](https://rstudio.github.io/renv/articles/renv.html) helps you create **r**eproducible **env**ironments for your R projects. Use `renv` to make your R projects more:
 
 **Isolated**: Installing a new or updated package for one project won't break your other projects, and vice versa. That's because `renv` gives each project its own private package library.
 
@@ -32,4 +30,14 @@ Calling [`renv::init()`](https://rstudio.github.io/renv/reference/init.html) wil
 
 If you'd like to initialize a project without attempting dependency discovery and installation -- that is, you'd prefer to manually install the packages your project requires on your own -- you can use `renv::init(bare = TRUE)` to initialize a project with an empty project library.
 
-For full details, see the `renv` package documentation at: <https://rstudio.github.io/renv/articles/renv.html>
+For full details, see the [`renv` package documentation](https://rstudio.github.io/renv/articles/renv.html).
+
+## New project, use renv with this project
+
+The general details on creating a new Project in RStudio are covered in [RStudio Projects](../../code/projects.html). Users can opt in to using `renv` when creating a new Project in RStudio.
+
+![](images/use-renv-with-project.png){fig-alt="The New Project wizard in RStudio, with the 'use renv with this project' option selected."}
+
+Select the **Use renv with this project** checkbox, and the new project will automatically create and activate the necessary scaffolding for `renv` within that project. Since those files now exist in the newly created project, you can skip step 1 from the above [workflow](#Workflow).
+
+![](images/new-renv-project.png){fig-alt="The Files pane in RStudio, displaying the newly created project with a 'renv' folder, a renv.lock file, and a .Rprofile."}

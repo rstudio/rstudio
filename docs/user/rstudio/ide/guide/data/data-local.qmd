@@ -2,25 +2,26 @@
 title: "Local Data"
 ---
 
-Copied from: <https://support.rstudio.com/hc/en-us/articles/218611977-Importing-Data-with-the-RStudio-IDE>
-
-## Introduction
-
 R packages such as `readr`, `arrow`, `data.table`, `readxl`, and `haven` provide functions to read in various formats of datasets. RStudio also provides an **Import Dataset** wizard for common file types which can also output the requisite R code to reproduce.
 
 ## Importing data
 
-The data import features can be accessed from the **Environment pane** or from the **Tools** menu. The importers are grouped into 3 categories: Text data, Excel data and statistical data.
+The data import features can be accessed from the **Environment pane** or from the **Tools** menu. The importers are grouped into 3 categories: 
 
-To access this feature, use the **Import Dataset** dropdown from the **Environment pane**:
+- Text data 
+- Excel data 
+- Statistical data 
 
-![](images/import-dataset.png){fig-alt="A screenshot of the Import Dataset dropdown."}
+To access this feature, do one of the following:  
 
-Or through the RStudio menu: **File** \> **Import Dataset**
+- Through the RStudio menu: **File** \> **Import Dataset**
+- From the **Environment** pane use the **Import Dataset** dropdown menu:
+
+![](images/import-dataset.png){fig-alt="A screenshot of the Import Dataset dropdown." width=700}
 
 ## Importing data from Text and CSV files
 
-Importing "From Text (readr)" files allows you to import CSV files and in general, character delimited files using the [readr](https://readr.tidyverse.org/) package. This Text importer provides support to:
+Importing "From Text (readr)" files allows reading in CSV files and in general, character delimited files using the [readr](https://readr.tidyverse.org/) package. The **Import Text Data** wizard provides support to:
 
 -   Import from the file system or a url
 
@@ -51,7 +52,7 @@ For example, a csv can be imported by pasting this url <https://raw.githubuserco
 
 Importing using "From Text (base)" enables importing text files using the base R package:
 
-![](images/import-base.png){alt="A screenshot of the base Import Dataset wizard."}
+![](images/import-base.png){fig-alt="A screenshot of the base Import Dataset wizard."}
 
 ## Importing data from Excel files
 
@@ -71,13 +72,15 @@ The Excel importer provides support to:
 
 -   Select NA identifiers
 
-For example, one can import with ease an xls file from the `readxl` R package by pasting this url <https://github.com/tidyverse/readxl/blob/main/inst/extdata/deaths.xlsx?raw=true> and selecting "Update".
+For example, the **Import Excel Data** wizard can import an xls file from the `readxl` R package by pasting this url: <https://github.com/tidyverse/readxl/blob/main/inst/extdata/deaths.xlsx?raw=true> and pressing **Update**.
 
-Notice that this file contains text at the top of the file and therefore, requires the first few rows to be removed, which can be accomplished by changing `Skip: 4` and clicking **Update**.
+::: {.callout-tip}
+This file contains text at the top of the file and therefore, requires the first few rows to be removed, which can be accomplished by changing `Skip: 4` and pressing **Update**.
+:::
 
 ![](images/import-excel.png){fig-alt="A screenshot of the Import Excel Data popup wizard."}
 
-The final step is to click "Import" to run the code under "Code Preview" and import the data into RStudio.
+The final step is to press **Import** to execute the code under **Code Preview** and import the data into RStudio.
 
 ## Importing data from SPSS, SAS and Stata files
 
@@ -89,4 +92,4 @@ The SPSS, SAS and Stata importer provides support to:
 
 -   Specify a model file
 
-We can import <https://github.com/rstudio/webinars/raw/master/23-Importing-Data-into-R/data/Child_Data.sav> by pasting the address under File/Url and clicking "Update" followed by clicking "Import".
+An example `.sav` file is available at: <https://github.com/rstudio/webinars/raw/master/23-Importing-Data-into-R/data/Child_Data.sav>. Paste that URL under **File/Url**, press **Update** and then press **Import**.

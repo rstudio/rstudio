@@ -2,34 +2,46 @@
 title: "Connecting"
 ---
 
-Adapted from <https://docs.rstudio.com/connect/user/connecting/>
+::: {.callout-warning}
+This section is not complete until we have updated screenshots for publishing to Posit Connect.
+:::
+
+RStudio provides "Push button deployment" to Posit Connect, Shinyapps.io, and RPubs.com. [Posit Connect](https://www.posit.co/products/connect/) supports a spectrum of data products, static or dynamic, developed in R and Python: Dashboards, applications, APIs, reports, and so much more. Connect enables flexible permissions configurations and meets all enterprise security requirements. Shinyapps.io supports hosting of Shiny for R and Python, and RPubs.com supports hosting of static-content only.
+
+Full Documentation for:  
+
+- [Posit Connect User Guide](https://docs.posit.co/connect/user/connecting/)
+- [ShinyApps.io User Guide](https://docs.posit.co/shinyapps.io/)
+- [RPubs Getting Started](https://rpubs.com/about/getting-started)
 
 ## Connecting Your Account
 
-![Global options menu](https://docs.rstudio.com/connect/user/images/screenshots/connecting-1.png){alt="Global options menu"}
+Install the [rsconnect](https://rstudio.github.io/rsconnect/) R package, which is required for publishing:
 
-You'll need to connect your IDE to RStudio Connect and authorize the IDE to use your Connect account. To add a publishing account to the RStudio IDE, click **Tools** in the main menu, then **Global Options\...**.
+```r
+install.packages("rsconnect")
+# or the development version from GitHub
+# install.packages("devtools")
+# devtools::install_github("rstudio/rsconnect")
+```
 
-\
-![Publishing account configuration](https://docs.rstudio.com/connect/user/images/screenshots/connecting-2.png){alt="Publishing account configuration"}
+![Global options menu](images/connecting-1.png){fig-alt="Global options menu"}
+
+You'll need to connect RStudio to the remote hosting environment (e.g. Posit Connect, Shinyapps.io, RPubs.com) and authorize RStudio to use your account. To add a publishing account to RStudio, press **Tools** in the main menu, then **Global Options\...**.
 
 In the Options panel that appears, choose **Publishing** in the sidebar, and use the **Connect\...** button to add a new account.
 
-![RStudio Connect account configuration](https://docs.rstudio.com/connect/user/images/screenshots/connecting-3.png){alt="RStudio Connect account configuration"}
+![](images/connecting-publishing.png){fig-alt="The Global options menu, highlighting the Publishing tab and the Connect... button"}
 
-Select that you want to configure an RStudio Connect account, then enter the address of your server. Your Connect administrator can provide you with the address of the RStudio Connect server.
 
-Clicking **Next** opens a login window for RStudio Connect.
+Select the publishing destination, then follow the **Connect Account** wizard's instructions for that particular product.
 
-\
-![Link RStudio Connect to the IDE](https://docs.rstudio.com/connect/user/images/screenshots/loggedin.png){alt="Link RStudio Connect to the IDE"}
+![Publishing account configuration](images/connect-account.png){fig-alt="Publishing account configuration"}
 
-Log into Connect and click **Connect** to authorize the IDE to deploy on your behalf. Then return to the IDE and click the **Connect Account** button.
+Log in and click **Connect** to authorize the IDE to deploy on your behalf. Then return to the IDE and click the **Connect Account** button.
 
-Once you have successfully configured the RStudio IDE, you may now publish content to RStudio Connect.
+Once you have successfully configured the connection within RStudio, you may now publish content to Posit Connect or Shinyapps.io.
 
-If you are ready to publish content to RStudio Connect, continue to the [Publishing](https://docs.rstudio.com/connect/user/publishing/) chapter.
+For more information on managing or deploying content to Posit Connect, see the [Posit Connect User Guide](https://docs.posit.co/connect/user/).
 
-## Update the IDE
-
-You will need to install at least version 1.0.44 of the RStudio IDE to interact with Connect. You can confirm this by opening the IDE and clicking "Help" \> "About RStudio" and checking the version number at the top of that pane. If you are not running at least version 1.0.44, you should [download the latest release](https://www.rstudio.com/products/rstudio/download/).
+If you are ready to publish content to RStudio Connect, continue to the [Publishing](https://docs.posit.co/connect/user/publishing/) chapter.

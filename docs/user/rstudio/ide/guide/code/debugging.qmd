@@ -40,15 +40,16 @@ library(stringi)
 
 palindrome <- function(x) stri_reverse(x)==x
 
-biggest_palindrome <- function(){
-  
-  best <- 0
+biggest_palindrome <- function(best_val, print = FALSE) {
 
-  for(x in 100:999) {
-    for(y in x:999) {
+  best <- best_val
+
+  for (x in 100:999) {
+    for (y in x:999) {
       candidate <- x * y
-      if(candidate > best && palindrome(candidate)) {
+      if (candidate > best && palindrome(candidate)) {
         best <- candidate
+        if(print) message("Candidate is better!")
       }
     }
   }
@@ -56,22 +57,22 @@ biggest_palindrome <- function(){
   return(best)
 }
 
-biggest_palindrome()
+biggest_palindrome(best_val = 0, print = TRUE)
 ```
 
 </details>
 
-![](images/breakpoint-rstudio.png){fig-alt="A screenshot of example R code, displaying a red break point in the left gutter of the code." width="400"}
+![](images/breakpoint-rstudio.png){fig-alt="A screenshot of example R code, displaying a red break point in the left gutter of the code."}
 
 This is an "editor breakpoint". Editor breakpoints take effect immediately and don't require changes to the code (unlike `browser()` breakpoints, below).
 
 Editor breakpoints work by injecting some tracing code into the R function object. R function objects that include this tracing code have a red dot in the environment pane, indicating that they contain breakpoints.
 
-![](images/breakpoint-environment.png){fig-alt="A screenshot of the RStudio Environment pane, indicating a breakpoint function with a red circle." width="250"}
+![](images/breakpoint-environment.png){fig-alt="A screenshot of the RStudio Environment pane, indicating a breakpoint function with a red circle." width="450"}
 
 If the function object doesn't exist yet (for instance, because `source()` hasn't been called on the file), or the function object doesn't match the contents of the editor (for instance, because the file has changed since the last `source()`), the breakpoint will be deferred.
 
-![](images/breakpoint-sourced.png){fig-alt="A screenshot of example R code and a warning that 'breakpoints will be activated when this file is sourced.'" width="350"}
+![](images/breakpoint-sourced.png){fig-alt="A screenshot of example R code and a warning that 'breakpoints will be activated when this file is sourced.'"}
 
 The hollow red circle indicates that RStudio is aware of the breakpoint, but that it hasn't been injected. In most cases, call `source()` on the file to resolve this problem.
 
@@ -79,7 +80,7 @@ The hollow red circle indicates that RStudio is aware of the breakpoint, but tha
 
 The R function [`browser()`](https://stat.ethz.ch/R-manual/R-devel/library/base/html/browser.html) halts execution and invokes an environment browser when it is called. A `browser()` call can be added anywhere in the code to stop at that point in the code for debugging. Here, for instance, it's used to halt when a function is about to return `TRUE`:
 
-![](images/browser-debug.png){fig-alt="A screenshot of R code with a browser() call, along with the traceback." width="450"}
+![](images/browser-debug.png){fig-alt="A screenshot of R code with a browser() call, along with the traceback."}
 
 Unlike an editor breakpoint, the `browser()` statement is actually part of the code, so it needs to be applied like any other code change in order to become active (by sourcing the containing document, rebuilding the containing package, reloading the Shiny application, etc.).
 
@@ -87,12 +88,14 @@ The environment browser invoked by `browser()` is the same one used in all of th
 
 `browser()` is also useful for creating conditional breakpoints. For instance, if you want to start debugging after hundreds of loop iterations:
 
-    for (i in 1:1024) {
-      start_work()
-      if (i == 512)
-        browser()
-      finish_work()
-    }
+```r
+for (i in 1:1024) {
+  start_work()
+  if (i == 512)
+    browser()
+  finish_work()
+}
+```
 
 ### Stopping when a function executes
 
@@ -102,7 +105,9 @@ When this is the case, **set a debug flag** on the function to debug. This is si
 
 Use the R function [`debugonce()`](https://stat.ethz.ch/R-manual/R-devel/library/base/html/debug.html) to set the debug flag on a function. For instance, to debug `devtools::install()`:
 
-    > debugonce(devtools::install)
+```r
+> debugonce(devtools::install)
+```
 
 `debugonce()` sets a one-shot breakpoint--that is, the function will enter the debugger the very next time it runs, but not after that. To debug a function *every* time it executes, call `debug(...)` on the function. Call `undebug(...)` on the function when to stop debugging the function each time it executes. We don't recommend this pattern, since it can leave you trapped in the debugger for some special functions.
 
@@ -132,13 +137,13 @@ Once the code is stopped, the IDE automatically enters debug mode, in which a va
 
 Usually in R you're interacting with the "global environment", a list of named objects such as values, functions, and data. When you enter debug mode, the IDE begins viewing and interacting with the currently executing function's environment instead. That means that the objects you see in the Environment pane belong to the currently executing function, and statements you enter in the Console will be evaluated in the context of the function.
 
-![](images/environment-pane.png){fig-alt="A screenshot of the Environment Pane relevant to the currently execting function."}
+![](images/environment-pane.png){fig-alt="A screenshot of the Environment Pane relevant to the currently execting function." width=450}
 
 The gray values are promises--in this case, function arguments that haven't been evaluated yet.
 
 Above the list of local objects in the Environment pane is a drop-list that shows you the "environment stack". This shows you the inheritance chain for the active environment--that is, the list of places that will be searched to resolve variable names to values.
 
-![](images/traceback-dropdown.png){fig-alt="A screenshot of the RStudio Environment pane and the environment stack with additional packages, global environment, etc, that are all part of the debugger stack."}
+![](images/traceback-dropdown.png){fig-alt="A screenshot of the RStudio Environment pane and the environment stack with additional packages, global environment, etc, that are all part of the debugger stack." width=450}
 
 Most of the time it will include just the current function, the global environment, and some package namespaces, but if you're writing a package or nesting functions, it'll have additional entries. You can click any item in the droplist to see the contents of the corresponding environment.
 
@@ -148,15 +153,15 @@ If this all sounds confusing, don't worry--most of the time you won't need to di
 
 The traceback shares space with the environment pane. It shows you how execution reached the current point, from the first function that was run (at the bottom) to the function that is running now (at the top).
 
-![](images/traceback.png){fig-alt="A screenshot of the Traceback pane, indicating the current function that is running."}
+![](images/traceback.png){fig-alt="A screenshot of the Traceback pane, indicating the current function that is running." width=450}
 
 This is called the "call stack" in most languages; RStudio refers to it as the "traceback" for symmetry with the R command [`traceback()`](https://stat.ethz.ch/R-manual/R-devel/library/base/html/traceback.html).
 
 You can click on any function in the callstack to see the current contents of its environment and the execution point in the function's code, if it can be determined. Note that selecting a frame in the callstack does *not* change the active environment in the console! If you need to do that, use `recover()` (described below).
 
-Most of the time you'll only be interested in looking at the portions of the callstack that contain your own code, so by default RStudio hides internal functions (i.e. those for which it does not have a corresponding .R file) in the callstack to keep it from becoming too verbose. The *View Internals* checkbox can be toggled to show or hide internal functions in the callstack. For instance, inside a `tryCatch` block, you can expand the internals to see R's exception handling functions (shown in gray):
+Most of the time you'll only be interested in looking at the portions of the callstack that contain your own code, so by default RStudio hides internal functions (i.e. those for which it does not have a corresponding .R file) in the callstack to keep it from becoming too verbose. The **View Internals** checkbox can be toggled to show or hide internal functions in the callstack. For instance, inside a `tryCatch` block, you can expand the internals to see R's exception handling functions (shown in gray):
 
-![](images/traceback-show-internals.png){fig-alt="A screenshot of the Traceback pane, along with the 'Show Internals' box checked, displaying internal functions in grey."}
+![](images/traceback-show-internals.png){fig-alt="A screenshot of the Traceback pane, along with the 'Show Internals' box checked, displaying internal functions in grey." width=450}
 
 ### Code window
 
@@ -232,7 +237,7 @@ When a breakpoint is set in a file inside a package, RStudio will automatically 
 
 Shiny applications present some challenges for the debugger because the breakpoints can't be set until the application is executed; the function objects that need to have breakpoints injected don't exist until then.
 
-For this reason, breakpoints in Shiny applications *only* work inside the `shinyServer` function. Breakpoints are not currently supported in the user interface (i.e. `ui.R`), globals (i.e. `global.R`), or other .R sources used in Shiny applcations. This may be improved in a future version of RStudio.
+For this reason, breakpoints in Shiny applications *only* work inside the `shinyServer` function. Breakpoints are not currently supported in the user interface (i.e. `ui.R`), globals (i.e. `global.R`), or other .R sources used in Shiny applications.
 
 ![](images/debug-shiny.png){fig-alt="A screenshot of the debugger operating on a Shiny app"}
 
@@ -260,7 +265,7 @@ When the interactive debugger shows up in the console, it will not print user ou
 Browse[1]> sink()
 ```
 
-This removes the default sink that knitr uses to capture all output, and ensures that you can see the results in the console. For example, to use `recover()` with RMarkdown, you’d put the following code in your setup block:
+This removes the default sink that knitr uses to capture all output, and ensures that you can see the results in the console. For example, to use `recover()` with R Markdown, you’d put the following code in your setup block:
 
 ```r
 options(error = function() {
@@ -271,7 +276,7 @@ options(error = function() {
 
 This generates a “no sink to remove” warning when knitr completes; you can safely ignore this warning.
 
-If you simply want a traceback, the easiest option is to use `rlang::trace_back()`, taking advantage of the `rlang_trace_top_env` option. This ensures that you only see the traceback from your code, instead of all the functions called by RMarkdown and knitr.
+If you simply want a traceback, the easiest option is to use `rlang::trace_back()`, taking advantage of the `rlang_trace_top_env` option. This ensures that you only see the traceback from your code, instead of all the functions called by R Markdown and knitr.
 
 ```r
 options(rlang_trace_top_env = rlang::current_env())
@@ -281,14 +286,14 @@ options(error = function() {
 })
 ```
 
-Finally, because R Markdown chunks don't contain [source references](http://journal.r-project.org/archive/2010-2/RJournal_2010-2_Murdoch.pdf), most of the debugger's visual features are disabled; you won't see the active line highlighting in the editor and most debugging will need to be done in the console. The ["Advanced R" - Debugging RMarkdown chapter](https://adv-r.hadley.nz/debugging.html#rmarkdown) has does deeper on general RMarkdown debugging.
+Finally, because R Markdown chunks don't contain [source references](http://journal.r-project.org/archive/2010-2/RJournal_2010-2_Murdoch.pdf), most of the debugger's visual features are disabled; you won't see the active line highlighting in the editor and most debugging will need to be done in the console. The ["Advanced R" - Debugging R Markdown chapter](https://adv-r.hadley.nz/debugging.html#rmarkdown) has does deeper on general R Markdown debugging.
 
 ### Debugging in Quarto Documents
 
-When debugging Quarto documents with a knitr engine, rather than using `quarto::quarto_render()`, use `rmarkdown::render("path/to/file.qmd")`. This will provide the same workflow as above for RMarkdown documents.
+When debugging Quarto documents with a knitr engine, rather than using `quarto::quarto_render()`, use `rmarkdown::render("path/to/file.qmd")`. This will provide the same workflow as above for R Markdown documents.
 
 ::: {.callout-warning}
 
-Using `quarto::quarto_render("path/to/file.qmd")` is currently not compatible with debugging strategies outlined in this documentation.
+Using `quarto::quarto_render("path/to/file.qmd")` is currently not compatible with debugging strategies outlined in this documentation. Instead, use `rmarkdown::render()` to troubleshoot knitr issues as indicated above.
 
 :::
