@@ -241,11 +241,13 @@ void endAllJobStreaming()
    }
 }
 
-bool backgroundJobsRunning()
+bool durableJobsRunning()
 {
    for (auto& job: s_jobs)
    {
-      if (job.second->type() == JobType::JobTypeSession && !job.second->complete())
+      if (job.second->type() == JobType::JobTypeSession &&
+          !job.second->complete() &&
+          !algorithm::contains(job.second->tags(), kJobTagTransient))
       {
          return true;
       }

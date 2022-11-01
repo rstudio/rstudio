@@ -26,6 +26,9 @@ namespace session {
 namespace modules {      
 namespace jobs {
 
+
+static constexpr auto kJobTagTransient = "transient";
+
 enum JobState {
    // invalid state sentry
    JobInvalid    = 0,
