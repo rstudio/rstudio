@@ -170,14 +170,6 @@ To get help on a specific R function use the `?functionName` or `help(functionNa
 help(paste0)
 ```
 
-Help pages often have small code examples. RStudio includes a **Run examples** button inside the **Help** pane. For example, calling `?paste0()` will bring up the `paste0()` documentation in the **Help** pane. Scroll down to the "Examples" section and click on **Run Examples**.
-
-![](images/help-pane.png){fig-alt="The Help pane for the paste0 function. The examples section of the documentation is in focus, with the 'Run Examples' button highlighted."}
-
-This will execute the examples and display their output in the **Help** pane.
-
-![](images/help-pane-examples.png){fig-alt="The Help pane displaying the output of examples for paste function."}
-
 Additionally, sections of code can be highlighted and executed in the R console with the <kbd>Ctrl+Enter</kbd> shortcut (<kbd>Cmd+Enter</kbd> on Mac).
 
 ![](images/help-pane-console.png){fig-alt="The help pane and R console, where an example code snippet from the examples for paste function has been executed in the R console."}
