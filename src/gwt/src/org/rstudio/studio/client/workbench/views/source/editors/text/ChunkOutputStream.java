@@ -108,7 +108,7 @@ public class ChunkOutputStream extends FlowPanel
       
       // track number of newlines in output
       int newlineCount = 0;
-      int maxCount = Satellite.isCurrentWindowSatellite() ? 10000 : 2000;
+      int maxCount = Satellite.isCurrentWindowSatellite() ? 10000 : 500;
       
       for (int i = 0; i < output.length(); i++)
       {
