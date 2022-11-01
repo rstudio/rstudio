@@ -307,19 +307,19 @@ bool ProcessSupervisor::hasRunningChildren()
 
 namespace {
 
-bool hasActivity(const boost::shared_ptr<AsyncChildProcess>& childProc)
+bool hasDurableActivity(const boost::shared_ptr<AsyncChildProcess>& childProc)
 {
-   return
+   return !childProc->allowParentSuspend() && (
          childProc->hasNonIgnoredSubprocess() ||
          childProc->hasIgnoredSubprocess() ||
-         childProc->hasRecentOutput();
+         childProc->hasRecentOutput());
 }
 
 } // anonymous namespace
 
-bool ProcessSupervisor::hasActiveChildren()
+bool ProcessSupervisor::hasDurableChildren()
 {
-   return boost::algorithm::any_of(pImpl_->children, hasActivity);
+   return boost::algorithm::any_of(pImpl_->children, hasDurableActivity);
 }
 
 bool ProcessSupervisor::poll()

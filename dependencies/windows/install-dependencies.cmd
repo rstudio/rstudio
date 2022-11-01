@@ -138,8 +138,12 @@ if not exist resource-hacker (
 )
 
 if not exist sentry-cli.exe (
+  REM specify a version to install
+  set SENTRY_CLI_VERSION=2.8.0
   echo Installing sentry-cli
-  powershell.exe "[Net.ServicePointManager]::SecurityProtocol = [Net.SecurityProtocolType]::Tls12 ; Invoke-WebRequest -Uri https://github.com/getsentry/sentry-cli/releases/download/1.41.2/sentry-cli-Windows-x86_64.exe -OutFile sentry-cli.exe"
+  powershell.exe "[Net.ServicePointManager]::SecurityProtocol = [Net.SecurityProtocolType]::Tls12 ; Invoke-WebRequest -Uri https://github.com/getsentry/sentry-cli/releases/download/%SENTRY_CLI_VERSION%/sentry-cli-Windows-x86_64.exe -OutFile sentry-cli.exe"
+  for /F "delims=" %%G in ('sentry-cli.exe --version') do (set "SENTRY_CLI_INSTALLED_VERSION=%%G")
+  echo Installed Sentry CLI version: %SENTRY_CLI_INSTALLED_VERSION%
 )
 
 if not exist breakpad-tools-windows (

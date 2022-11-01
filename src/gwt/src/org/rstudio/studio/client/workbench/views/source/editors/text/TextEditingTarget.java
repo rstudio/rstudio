@@ -6679,8 +6679,15 @@ public class TextEditingTarget implements
       source_.withSaveFilesBeforeCommand(() ->
       {
          String path = getPath();
-         path = StringUtil.escapeBashPath(path, false);
-         events_.fireEvent(new SendToTerminalEvent("command shiny run --reload --launch-browser --port=0 " + path + "\n", true));
+         FileSystemItem filePath = FileSystemItem.createFile(path);
+         // resolve aliased path so that it can be understood in Windows terminal event
+
+         path = server_.resolveAliasedPath(filePath);
+         if (!BrowseCap.isWindows())
+         {
+            path = StringUtil.escapeBashPath(path, false);
+         }
+         events_.fireEvent(new SendToTerminalEvent("shiny run --reload --launch-browser --port=0 " + path + "\n", true));
       }, () -> {}, "Run Shiny Application");
    }
 
