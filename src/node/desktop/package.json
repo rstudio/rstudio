@@ -69,16 +69,16 @@
     "crc": "4.1.1",
     "electron-squirrel-startup": "1.0.0",
     "electron-store": "8.1.0",
-    "i18next": "21.9.1",
+    "i18next": "22.0.4",
     "line-reader": "0.4.0",
     "lodash.debounce": "4.0.8",
     "net-ipc": "2.0.1",
     "node-addon-api": "5.0.0",
     "node-system-fonts": "1.0.1",
     "properties-reader": "2.2.0",
-    "uuid": "8.3.2",
-    "winston": "3.8.1",
+    "uuid": "9.0.0",
+    "winston": "3.8.2",
     "winston-daily-rotate-file": "4.7.1",
-    "winston-syslog": "2.6.0"
+    "winston-syslog": "2.7.0"
   }
 }
