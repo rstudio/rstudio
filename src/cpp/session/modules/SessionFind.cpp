@@ -1,10 +1,10 @@
 /*
  * SessionFind.cpp
  *
- * Copyright (C) 2022 by RStudio, PBC
+ * Copyright (C) 2022 by Posit Software, PBC
  *
- * Unless you have received this program directly from RStudio pursuant
- * to the terms of a commercial license agreement with RStudio, then
+ * Unless you have received this program directly from Posit Software pursuant
+ * to the terms of a commercial license agreement with Posit Software, then
  * this program is licensed to you under the terms of version 3 of the
  * GNU Affero General Public License. This program is distributed WITHOUT
  * ANY EXPRESS OR IMPLIED WARRANTY, INCLUDING THOSE OF NON-INFRINGEMENT,
@@ -986,21 +986,28 @@ private:
          boost::regex pattern = getGrepOutputRegex(findResults().gitFlag());
          if (regex_utils::match(line, match, pattern) && match.size() > 1)
          {
-            // extract filename from match
-            std::string file = module_context::createAliasedPath(FilePath(match[1]));
-
-            // replace the leading './' with the directory name
-            // (git grep doesn't prepend a '.' so we need to be careful here)
-            if (boost::algorithm::starts_with(file, "./"))
-            {
-               file = workingDir_ + file.substr(1);
-            }
-            else if (findResults().gitFlag())
-            {
-               file = workingDir_ + "/" + file;
-            }
+            // build the file path -- note that 'grep' results may or may not include
+            // a leading './', so we need to be careful to handle both forms of output.
+            //
+            // use a helper lambda just to make control flow a bit easier to manage
+            auto resolveFile = [&] {
+               
+               // check for absolute paths
+               std::string file = match[1];
+               if (boost::filesystem::path(file).is_absolute())
+                  return file;
+               
+               // check for paths with a './' prefix
+               if (boost::algorithm::starts_with(file, "./"))
+                  return module_context::createAliasedPath(FilePath(workingDir_)) + file.substr(1);
+               
+               // all else fails, assume we need to prepend the working directory
+               return module_context::createAliasedPath(FilePath(workingDir_)) + "/" + file;
+               
+            };
 
             // normal skip heuristics
+            std::string file = resolveFile();
             if (shouldSkipFile(file))
                continue;
 
@@ -1466,7 +1473,7 @@ core::Error runGrepOperation(const GrepOptions& grepOptions, const ReplaceOption
       cmd << "-c" << "grep.lineNumber=true";
       cmd << "-c" << "grep.column=false";
       cmd << "-c" << "grep.patternType=default";
-      cmd << "-c" << "grep.extendedRegexp=false";
+      cmd << "-c" << "grep.extendedRegexp=true";
       cmd << "-c" << "grep.fullName=false";
       cmd << "-C";
       cmd << dirPath.getAbsolutePath();
@@ -1604,7 +1611,7 @@ core::Error beginFind(const json::JsonRpcRequest& request,
       return error;
 
    if (isWholeWord)
-      searchString = "\\b" + escapeForRegex(searchString) + "\\b";
+      searchString = "(\\b|^)" + escapeForRegex(searchString) + "(\\b|$)";
 
    GrepOptions grepOptions(searchString, directory, includeFilePatterns, useGitGrep, excludeGitIgnore, excludeFilePatterns,
       asRegex, ignoreCase);

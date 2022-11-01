@@ -1,10 +1,10 @@
 /*
  * winston-logger.ts
  *
- * Copyright (C) 2022 by RStudio, PBC
+ * Copyright (C) 2022 by Posit Software, PBC
  *
- * Unless you have received this program directly from RStudio pursuant
- * to the terms of a commercial license agreement with RStudio, then
+ * Unless you have received this program directly from Posit Software pursuant
+ * to the terms of a commercial license agreement with Posit Software, then
  * this program is licensed to you under the terms of version 3 of the
  * GNU Affero General Public License. This program is distributed WITHOUT
  * ANY EXPRESS OR IMPLIED WARRANTY, INCLUDING THOSE OF NON-INFRINGEMENT,
@@ -14,15 +14,16 @@
  */
 
 import { app } from 'electron';
-import winston from 'winston';
+import winston, { format } from 'winston';
 import DailyRotateFile from 'winston-daily-rotate-file';
-
+import { Syslog } from 'winston-syslog';
+import { Console } from 'winston/lib/winston/transports';
+import LogOptions from '../main/log-options';
 import { getenv } from './environment';
 import { safeError } from './err';
-import { FilePath } from './file-path';
 import { Logger, showDiagnosticsOutput } from './logger';
 
-const { combine, printf, timestamp } = winston.format;
+const { combine, printf, timestamp, json } = winston.format;
 
 /**
  * A Logger using winston package: https://www.npmjs.com/package/winston
@@ -30,26 +31,49 @@ const { combine, printf, timestamp } = winston.format;
 export class WinstonLogger implements Logger {
   logger: winston.Logger;
 
-  constructor(logFile: FilePath, level: string) {
-    level = this.readLogLevelOverride(level);
+  constructor(logOptions: LogOptions) {
+    const level = this.readLogLevelOverride(logOptions.getLogLevel());
+    const format = logOptions.getLogMessageFormat() === 'pretty' ? 
+      printf((info) => `${info.timestamp} ${info.level.toUpperCase()} ${info.message}`)
+      : combine(removeTimestamp(), json());
+
+    const messageFormat = combine(timestamp({alias: 'time'}), format);
+    const logFile = logOptions.getLogFile();
+    let optionError;
+
     this.logger = winston.createLogger({
       level: level,
-      format: combine(
-        timestamp(),
-        printf((info) => `${info.timestamp} ${info.level}: ${info.message}`)
-      ),
+      format: messageFormat,
+      defaultMeta: { service: 'rdesktop'}
     });
 
-    if (!logFile.isEmpty()) {
-      const logName = `${logFile.getStem()}.%DATE%${logFile.getExtension()}`;
-      this.logger.add(
-        new DailyRotateFile({
-          filename: logName,
-          dirname: logFile.getParent().getAbsolutePath(),
-          datePattern: 'YYYY-MM-DD',
-          frequency: '1d',
-        })
-      );
+    let logTransport;
+    if (logOptions.getLoggerType() === 'stderr' || !app.isPackaged) {
+      logTransport = new Console();
+    }
+
+    if (logOptions.getLoggerType() === 'syslog') {
+      if (process.platform === 'linux') {
+        logTransport = new Syslog({
+          protocol: 'unix',
+          path: '/dev/log',
+          app_name: 'rdesktop',
+        });
+        this.logger.levels = winston.config.syslog.levels;
+      } else {
+        optionError = 'syslog not supported';
+      }
+    }
+
+    this.logger.add(logTransport ?? new DailyRotateFile({
+      filename: `${logFile.getStem()}.%DATE%${logFile.getExtension()}`,
+      dirname: logFile.getParent().getAbsolutePath(),
+      datePattern: 'YYYY-MM-DD',
+      frequency: '1d',
+    }));
+
+    if (optionError) {
+      this.logErrorMessage(optionError);
     }
   }
 
@@ -76,15 +100,6 @@ export class WinstonLogger implements Logger {
   log(level: string, message: string): void {
     // log to default log locations
     this.logger.log(level, message);
-
-    // log to console in debug configurations
-    // NOTE: process.stderr.isTTY seems to be unreliable?
-    if (!app.isPackaged && this.logger.isLevelEnabled(level)) {
-      const ts = new Date().toISOString();
-      const tlevel = level.toUpperCase();
-      const tmessage = message.replace(/\n/g, '|||') + '\n';
-      process.stderr.write(`${ts} ${tlevel} ${tmessage}`);
-    }
   }
 
   logError(err: unknown): void {
@@ -126,3 +141,10 @@ export class WinstonLogger implements Logger {
     }
   }
 }
+
+// removes `timestamp` key from json since we add `time` to match Qt log format
+const removeTimestamp = format((info) => {
+  delete info.timestamp;
+
+  return info;
+});

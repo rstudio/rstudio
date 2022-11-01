@@ -1,10 +1,10 @@
 /*
  * ViewsSourceConstants.java
  *
- * Copyright (C) 2022 by RStudio, PBC
+ * Copyright (C) 2022 by Posit Software, PBC
  *
- * Unless you have received this program directly from RStudio pursuant
- * to the terms of a commercial license agreement with RStudio, then
+ * Unless you have received this program directly from Posit Software pursuant
+ * to the terms of a commercial license agreement with Posit Software, then
  * this program is licensed to you under the terms of version 3 of the
  * GNU Affero General Public License. This program is distributed WITHOUT
  * ANY EXPRESS OR IMPLIED WARRANTY, INCLUDING THOSE OF NON-INFRINGEMENT,
@@ -2480,8 +2480,17 @@ public interface ViewsSourceConstants extends com.google.gwt.i18n.client.Message
      * @return translated "Use {0}-based line wrapping for this document"
      */
     @DefaultMessage("Use {0}-based line wrapping for this document")
-    @Key("useBasedLineWrapping")
-    String useBasedLineWrapping(String detectedLineWrapping);
+    @Key("useBasedLineWrappingForDocument")
+    String useBasedLineWrappingForDocument(String detectedLineWrappingForDocument);
+    
+    /**
+     * Translated "Use {0}-based line wrapping for this project".
+     *
+     * @return translated "Use {0}-based line wrapping for this project"
+     */
+    @DefaultMessage("Use {0}-based line wrapping for this project")
+    @Key("useBasedLineWrappingForProject")
+    String useBasedLineWrappingForProject(String detectedLineWrappingForProject);
 
     /**
      * Translated "Use the current {0} default line wrapping for this document".

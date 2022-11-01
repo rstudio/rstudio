@@ -1,10 +1,10 @@
 /*
  * StudioClientApplicationConstants.java
  *
- * Copyright (C) 2022 by RStudio, PBC
+ * Copyright (C) 2022 by Posit Software, PBC
  *
- * Unless you have received this program directly from RStudio pursuant
- * to the terms of a commercial license agreement with RStudio, then
+ * Unless you have received this program directly from Posit Software pursuant
+ * to the terms of a commercial license agreement with Posit Software, then
  * this program is licensed to you under the terms of version 3 of the
  * GNU Affero General Public License. This program is distributed WITHOUT
  * ANY EXPRESS OR IMPLIED WARRANTY, INCLUDING THOSE OF NON-INFRINGEMENT,
@@ -765,11 +765,11 @@ public interface StudioClientApplicationConstants extends com.google.gwt.i18n.cl
     String buildOfText();
 
     /**
-     * Translated "is provided by RStudio, PBC for testing purposes only and is not an officially supported release.".
+     * Translated "is provided by Posit Software, PBC for testing purposes only and is not an officially supported release.".
      *
-     * @return translated "is provided by RStudio, PBC for testing purposes only and is not an officially supported release."
+     * @return translated "is provided by Posit Software, PBC for testing purposes only and is not an officially supported release."
      */
-    @DefaultMessage("is provided by RStudio, PBC for testing purposes only and is not an officially supported release.")
+    @DefaultMessage("is provided by Posit Software, PBC for testing purposes only and is not an officially supported release.")
     @Key("supportNoticeText")
     String supportNoticeText();
 
@@ -1305,11 +1305,11 @@ public interface StudioClientApplicationConstants extends com.google.gwt.i18n.cl
     String usingNewestVersionMessage();
 
     /**
-     * Translated "RStudio Server Home".
+     * Translated "Posit Workbench".
      *
-     * @return translated "RStudio Server Home"
+     * @return translated "Posit Workbench"
      */
-    @DefaultMessage("RStudio Server Home")
+    @DefaultMessage("Posit Workbench")
     @Key("rStudioServerHomeTitle")
     String rStudioServerHomeTitle();
 

@@ -1,10 +1,10 @@
 #
 # SessionReticulate.R
 #
-# Copyright (C) 2022 by RStudio, PBC
+# Copyright (C) 2022 by Posit Software, PBC
 #
-# Unless you have received this program directly from RStudio pursuant
-# to the terms of a commercial license agreement with RStudio, then
+# Unless you have received this program directly from Posit Software pursuant
+# to the terms of a commercial license agreement with Posit Software, then
 # this program is licensed to you under the terms of version 3 of the
 # GNU Affero General Public License. This program is distributed WITHOUT
 # ANY EXPRESS OR IMPLIED WARRANTY, INCLUDING THOSE OF NON-INFRINGEMENT,
@@ -21,6 +21,8 @@
    REPL_BUSY          = "repl_busy",
    REPL_TEARDOWN      = "repl_teardown"
 ))
+
+.rs.setVar("reticulate.hookedMatplotlibModules", new.env(parent = emptyenv()))
 
 .rs.setVar("python.moduleCache", new.env(parent = emptyenv()))
 
@@ -151,46 +153,69 @@
    # ensure matplotlib hooks are injected on load
    setHook(
       "reticulate::matplotlib.pyplot::load",
-      function(...) .rs.reticulate.matplotlib.onLoaded("matplotlib.pyplot")
+      function(...) .rs.reticulate.matplotlib.onLoaded()
    )
    
    setHook(
       "reticulate::matplotlib.pylab::load",
-      function(...) .rs.reticulate.matplotlib.onLoaded("matplotlib.pylab")
+      function(...) .rs.reticulate.matplotlib.onLoaded()
    )
-})
-
-.rs.addFunction("reticulate.matplotlib.onLoaded", function(module)
-{
-   # install matplotlib hook if available
-   if (requireNamespace("png", quietly = TRUE) &&
-       reticulate::py_module_available("matplotlib"))
-   {
-      matplotlib <- reticulate::import("matplotlib", convert = TRUE)
-      
-      # force the "Agg" backend (this is necessary as other backends may
-      # fail with RStudio if requisite libraries are not available)
-      backend <- matplotlib$get_backend()
-      if (!identical(tolower(backend), "agg"))
-      {
-         sys <- reticulate::import("sys", convert = TRUE)
-         if ("matplotlib.backends" %in% names(sys$modules))
-            matplotlib$pyplot$switch_backend("agg")
-         else
-            matplotlib$use("agg", warn = FALSE, force = TRUE)
-      }
-      
-      # inject our hook
-      module <- reticulate::import(module, convert = TRUE)
-      module$show <- .rs.reticulate.matplotlib.showHook
-   }
+   
+   # NOTE: Depending on how pyplot is loaded, the reticulate hooks might
+   # not 'see' it. For that reason, we also hook the base 'matplotlib'
+   # load hook, and override show when that is loaded.
+   #
+   # https://github.com/rstudio/rstudio/issues/12053
+   setHook(
+      "reticulate::matplotlib::load",
+      function(...) .rs.reticulate.matplotlib.onLoaded()
+   )
    
 })
 
-.rs.addFunction("reticulate.matplotlib.pyplot.loadHook", function(plt)
+.rs.addFunction("reticulate.matplotlib.onLoaded", function()
 {
-   .rs.setVar("reticulate.matplotlib.show", plt$show)
-   plt$show <- .rs.reticulate.matplotlib.showHook
+   # install matplotlib hook if available
+   canInstallHooks <-
+      requireNamespace("png", quietly = TRUE) &&
+      reticulate::py_module_available("matplotlib")
+   
+   if (!canInstallHooks)
+      return()
+   
+   matplotlib <- reticulate::import("matplotlib", convert = TRUE)
+   
+   # force the "Agg" backend (this is necessary as other backends may
+   # fail with RStudio if requisite libraries are not available)
+   backend <- matplotlib$get_backend()
+   if (!identical(tolower(backend), "agg"))
+   {
+      sys <- reticulate::import("sys", convert = TRUE)
+      if ("matplotlib.backends" %in% names(sys$modules))
+         matplotlib$pyplot$switch_backend("agg")
+      else
+         matplotlib$use("agg", warn = FALSE, force = TRUE)
+   }
+   
+   moduleNames <- c("matplotlib.pyplot", "matplotlib.pylab")
+   for (moduleName in moduleNames) {
+      
+      # if we've already hooked this module, nothing to do
+      if (exists(moduleName, envir = .rs.reticulate.hookedMatplotlibModules))
+         next
+      
+      # if the requisite module hasn't been loaded yet, nothing to do
+      sys <- reticulate::import("sys", convert = TRUE)
+      if (is.null(sys$modules[[moduleName]]))
+         next
+   
+      # otherwise, install our hook
+      module <- reticulate::import(moduleName, convert = TRUE)
+      module$show <- .rs.reticulate.matplotlib.showHook
+      assign(moduleName, TRUE, envir = .rs.reticulate.hookedMatplotlibModules)
+      
+   }
+   
 })
 
 .rs.addFunction("reticulate.matplotlib.showHook", function(...)

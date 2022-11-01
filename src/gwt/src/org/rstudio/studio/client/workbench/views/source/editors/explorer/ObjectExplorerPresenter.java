@@ -1,10 +1,10 @@
 /*
  * ObjectExplorerPresenter.java
  *
- * Copyright (C) 2022 by RStudio, PBC
+ * Copyright (C) 2022 by Posit Software, PBC
  *
- * Unless you have received this program directly from RStudio pursuant
- * to the terms of a commercial license agreement with RStudio, then
+ * Unless you have received this program directly from Posit Software pursuant
+ * to the terms of a commercial license agreement with Posit Software, then
  * this program is licensed to you under the terms of version 3 of the
  * GNU Affero General Public License. This program is distributed WITHOUT
  * ANY EXPRESS OR IMPLIED WARRANTY, INCLUDING THOSE OF NON-INFRINGEMENT,
@@ -15,6 +15,7 @@
 package org.rstudio.studio.client.workbench.views.source.editors.explorer;
 
 import org.rstudio.studio.client.application.events.EventBus;
+import org.rstudio.studio.client.workbench.views.source.editors.explorer.events.CloseObjectExplorerEvent;
 import org.rstudio.studio.client.workbench.views.source.editors.explorer.events.ObjectExplorerEvent;
 import org.rstudio.studio.client.workbench.views.source.editors.explorer.events.OpenObjectExplorerEvent;
 import org.rstudio.studio.client.workbench.views.source.editors.explorer.events.RefreshObjectExplorerEvent;
@@ -30,7 +31,6 @@ public class ObjectExplorerPresenter
    public ObjectExplorerPresenter(EventBus events)
    {
       events_ = events;
-      
       events_.addHandler(ObjectExplorerEvent.TYPE, this);
    }
    
@@ -69,8 +69,9 @@ public class ObjectExplorerPresenter
    {
    }
    
-   private void onCloseNode(ObjectExplorerEvent.Data data)
+   private void onCloseNode(ObjectExplorerEvent.Data eventData)
    {
+      events_.fireEvent(new CloseObjectExplorerEvent(eventData.getHandle()));
    }
    
    // Private members ----

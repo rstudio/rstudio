@@ -1,10 +1,10 @@
 /*
  * url-utils.test.ts
  *
- * Copyright (C) 2022 by RStudio, PBC
+ * Copyright (C) 2022 by Posit Software, PBC
  *
- * Unless you have received this program directly from RStudio pursuant
- * to the terms of a commercial license agreement with RStudio, then
+ * Unless you have received this program directly from Posit Software pursuant
+ * to the terms of a commercial license agreement with Posit Software, then
  * this program is licensed to you under the terms of version 3 of the
  * GNU Affero General Public License. This program is distributed WITHOUT
  * ANY EXPRESS OR IMPLIED WARRANTY, INCLUDING THOSE OF NON-INFRINGEMENT,
@@ -21,7 +21,8 @@ import {
   isAllowedProtocol,
   isChromeGpuUrl,
   isLocalUrl,
-  isSafeHost
+  isSafeHost,
+  makeAbsoluteUrl
 } from '../../../src/main/url-utils';
 import { URL } from 'url';
 
@@ -97,5 +98,13 @@ describe('URL Utils', () => {
 
   it('handles invalid url', () => {
     assert.equal(getAuthority('http://bad^url'), '');
+  });
+
+  it('makes absolute urls from relative', () => {
+    assert.equal(makeAbsoluteUrl('rmdOutput/3').toString(), 'http://127.0.0.1/rmdOutput/3');
+  });
+
+  it('makes absolute urls from valid url', () => {
+    assert.equal(makeAbsoluteUrl('http://www.rstudio.com/download').toString(), 'http://www.rstudio.com/download');
   });
 });

@@ -1,10 +1,10 @@
 /*
  * HelpHyperlink.java
  *
- * Copyright (C) 2022 by RStudio, PBC
+ * Copyright (C) 2022 by Posit Software, PBC
  *
- * Unless you have received this program directly from RStudio pursuant
- * to the terms of a commercial license agreement with RStudio, then
+ * Unless you have received this program directly from Posit Software pursuant
+ * to the terms of a commercial license agreement with Posit Software, then
  * this program is licensed to you under the terms of version 3 of the
  * GNU Affero General Public License. This program is distributed WITHOUT
  * ANY EXPRESS OR IMPLIED WARRANTY, INCLUDING THOSE OF NON-INFRINGEMENT,
@@ -30,7 +30,7 @@ public class HelpHyperlink extends Hyperlink
     public HelpHyperlink(String url, Map<String, String> params, String text, String clazz) 
     {
         super(url, params, text, clazz);
-        if (url.startsWith("ide:help:") || url.startsWith("rstudio:help:"))
+        if (url.startsWith("x-r-help:") || url.startsWith("ide:help:") || url.startsWith("rstudio:help:"))
         {
             String suffix = url.replaceFirst("^.*help:", "");
             String[] splat = suffix.split("::");
@@ -64,10 +64,10 @@ public class HelpHyperlink extends Hyperlink
 
     public static boolean handles(String url, Map<String, String> params)
     {
-        if (StringUtil.equals(url, "ide:help") || StringUtil.equals(url, "rstudio:help"))
+        if (StringUtil.isOneOf(url, "x-r-help", "ide:help", "rstudio:help"))
             return params.containsKey("topic") && params.containsKey("package");
         
-        return url.matches("^(ide|rstudio):help:(\\w+)::(\\w+)$");
+        return url.matches("^(x-r-|ide:|rstudio:)help:([\\w.]+)::([\\w.-]+)$");
     }
 
     private String topic_;

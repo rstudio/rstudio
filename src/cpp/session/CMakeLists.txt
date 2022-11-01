@@ -1,10 +1,10 @@
 #
 # CMakeLists.txt
 #
-# Copyright (C) 2022 by RStudio, PBC
+# Copyright (C) 2022 by Posit Software, PBC
 #
-# Unless you have received this program directly from RStudio pursuant
-# to the terms of a commercial license agreement with RStudio, then
+# Unless you have received this program directly from Posit Software pursuant
+# to the terms of a commercial license agreement with Posit Software, then
 # this program is licensed to you under the terms of version 3 of the
 # GNU Affero General Public License. This program is distributed WITHOUT
 # ANY EXPRESS OR IMPLIED WARRANTY, INCLUDING THOSE OF NON-INFRINGEMENT,
@@ -305,9 +305,9 @@ set(SESSION_SOURCE_FILES
    modules/quarto/SessionQuartoJob.cpp
    modules/quarto/SessionQuartoPreview.cpp
    modules/quarto/SessionQuartoResources.cpp
-   modules/quarto/SessionQuartoServe.cpp
    modules/quarto/SessionQuartoXRefs.cpp
    modules/shiny/SessionShiny.cpp
+   modules/shiny/SessionPyShiny.cpp
    modules/shiny/ShinyAsyncJob.cpp
    modules/sql/SessionSql.cpp
    modules/stan/SessionStan.cpp

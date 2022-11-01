@@ -1,10 +1,10 @@
 /*
  * RemoteServer.java
  *
- * Copyright (C) 2022 by RStudio, PBC
+ * Copyright (C) 2022 by Posit Software, PBC
  *
- * Unless you have received this program directly from RStudio pursuant
- * to the terms of a commercial license agreement with RStudio, then
+ * Unless you have received this program directly from Posit Software pursuant
+ * to the terms of a commercial license agreement with Posit Software, then
  * this program is licensed to you under the terms of version 3 of the
  * GNU Affero General Public License. This program is distributed WITHOUT
  * ANY EXPRESS OR IMPLIED WARRANTY, INCLUDING THOSE OF NON-INFRINGEMENT,
@@ -6548,28 +6548,10 @@ public class RemoteServer implements Server
    {
       JSONArray params = new JSONArray();
       params.set(0, new JSONString(file));
-      params.set(1,  new JSONString(format));
+      params.set(1, new JSONString(StringUtil.notNull(format)));
       params.set(2,  editorState != null ? new JSONObject(editorState) : JSONNull.getInstance());
       sendRequest(RPC_SCOPE, QUARTO_PREVIEW, params, requestCallback);
    }
-   
-   @Override
-   public void quartoServe(String format, boolean render, ServerRequestCallback<Void> callback)
-   {
-      JSONArray params = new JSONArray();
-      params.set(0, new JSONString(StringUtil.isNullOrEmpty(format) ? "default" : format));
-      params.set(1,  JSONBoolean.getInstance(render));
-      sendRequest(RPC_SCOPE, QUARTO_SERVE, params, callback);
-   }
-   
-   @Override
-   public void quartoServeRender(String file, ServerRequestCallback<Boolean> callback)
-   {
-      JSONArray params = new JSONArray();
-      params.set(0, new JSONString(file));
-      sendRequest(RPC_SCOPE, QUARTO_SERVE_RENDER, params, callback);
-   }
-   
    
    @Override
    public void quartoCreateProject(String projectFile, 

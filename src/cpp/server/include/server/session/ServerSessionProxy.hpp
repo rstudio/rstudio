@@ -1,10 +1,10 @@
 /*
  * ServerSessionProxy.hpp
  *
- * Copyright (C) 2022 by RStudio, PBC
+ * Copyright (C) 2022 by Posit Software, PBC
  *
- * Unless you have received this program directly from RStudio pursuant
- * to the terms of a commercial license agreement with RStudio, then
+ * Unless you have received this program directly from Posit Software pursuant
+ * to the terms of a commercial license agreement with Posit Software, then
  * this program is licensed to you under the terms of version 3 of the
  * GNU Affero General Public License. This program is distributed WITHOUT
  * ANY EXPRESS OR IMPLIED WARRANTY, INCLUDING THOSE OF NON-INFRINGEMENT,
@@ -95,6 +95,7 @@ bool requiresSession(const core::http::Request& request);
 
 typedef boost::function<bool(
     boost::shared_ptr<core::http::AsyncConnection>,
+    boost::shared_ptr<core::http::Request>,
     const core::r_util::SessionContext&,
     const ClientHandler&
     )> ProxyFilter;
@@ -114,6 +115,12 @@ core::http::Headers getAuthCookies(const core::http::Response& response);
 bool checkForValidUserSession(const std::string& username);
 
 void socketConnectionClosed(const std::string& username);
+
+bool applyProxyFilter(
+      boost::shared_ptr<core::http::AsyncConnection> ptrConnection,
+      boost::shared_ptr<core::http::Request> pRequest,
+      const core::r_util::SessionContext& context,
+      const ClientHandler& clientHandler = ClientHandler());
 
 } // namespace session_proxy
 } // namespace server

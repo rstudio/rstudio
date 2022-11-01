@@ -1,10 +1,10 @@
 /*
  * RInit.cpp
  *
- * Copyright (C) 2022 by RStudio, PBC
+ * Copyright (C) 2022 by Posit Software, PBC
  *
- * Unless you have received this program directly from RStudio pursuant
- * to the terms of a commercial license agreement with RStudio, then
+ * Unless you have received this program directly from Posit Software pursuant
+ * to the terms of a commercial license agreement with Posit Software, then
  * this program is licensed to you under the terms of version 3 of the
  * GNU Affero General Public License. This program is distributed WITHOUT
  * ANY EXPRESS OR IMPLIED WARRANTY, INCLUDING THOSE OF NON-INFRINGEMENT,
@@ -183,7 +183,7 @@ void restoreSession(const FilePath& suspendedSessionPath,
    // don't show output during deserialization (packages loaded
    // during deserialization sometimes print messages)
    utils::SuppressOutputInScope suppressOutput;
-
+   
    // deserialize session. if any part of this fails then the errors
    // will be logged and error messages will be returned in the passed
    // errorMessages buffer (this mechanism is used because we generally
@@ -391,6 +391,13 @@ void ensureDeserialized()
       s_deferredDeserializationAction();
       s_deferredDeserializationAction.clear();
    }
+}
+
+bool isSessionRestored()
+{
+   if (s_deferredDeserializationAction)
+      return false;
+   return true;
 }
    
 FilePath rHistoryFilePath()

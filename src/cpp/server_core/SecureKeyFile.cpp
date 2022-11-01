@@ -1,10 +1,10 @@
 /*
  * SecureKeyFile.cpp
  *
- * Copyright (C) 2022 by RStudio, PBC
+ * Copyright (C) 2022 by Posit Software, PBC
  *
- * Unless you have received this program directly from RStudio pursuant
- * to the terms of a commercial license agreement with RStudio, then
+ * Unless you have received this program directly from Posit Software pursuant
+ * to the terms of a commercial license agreement with Posit Software, then
  * this program is licensed to you under the terms of version 3 of the
  * GNU Affero General Public License. This program is distributed WITHOUT
  * ANY EXPRESS OR IMPLIED WARRANTY, INCLUDING THOSE OF NON-INFRINGEMENT,
@@ -113,7 +113,7 @@ core::Error readSecureKeyFile(const std::string& filename,
    }
    else
    {
-      secureKeyPath = core::FilePath("/tmp/rstudio-server").completePath(filename);
+      secureKeyPath = core::system::xdg::userCacheDir().completePath(filename);
       if (secureKeyPath.exists())
       {
          LOG_INFO_MESSAGE("Running without privilege; using secure key at " + secureKeyPath.getAbsolutePath());

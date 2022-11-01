@@ -35,6 +35,9 @@ set OPENSSL_FILES=openssl-1.1.1i.zip
 set BOOST_FILES=boost-1.78.0-win-msvc142.zip
 set YAML_CPP_FILES=yaml-cpp-0.6.3.zip
 
+set NSIS_NSPROCESS_VERSION=1.6
+set NSIS_NSPROCESS_FILE=NsProcess.zip
+
 set PANDOC_VERSION=2.18
 set PANDOC_NAME=pandoc-%PANDOC_VERSION%
 set PANDOC_FILE=%PANDOC_NAME%-windows-x86_64.zip
@@ -127,8 +130,12 @@ if not exist %YAML_CPP_FILES:~0,-4%* (
 )
 
 if not exist sentry-cli.exe (
+  REM specify a version to install
+  set SENTRY_CLI_VERSION=2.8.0
   echo Installing sentry-cli
-  powershell.exe "[Net.ServicePointManager]::SecurityProtocol = [Net.SecurityProtocolType]::Tls12 ; Invoke-WebRequest -Uri https://github.com/getsentry/sentry-cli/releases/download/1.41.2/sentry-cli-Windows-x86_64.exe -OutFile sentry-cli.exe"
+  powershell.exe "[Net.ServicePointManager]::SecurityProtocol = [Net.SecurityProtocolType]::Tls12 ; Invoke-WebRequest -Uri https://github.com/getsentry/sentry-cli/releases/download/%SENTRY_CLI_VERSION%/sentry-cli-Windows-x86_64.exe -OutFile sentry-cli.exe"
+  for /F "delims=" %%G in ('sentry-cli.exe --version') do (set "SENTRY_CLI_INSTALLED_VERSION=%%G")
+  echo Installed Sentry CLI version: %SENTRY_CLI_INSTALLED_VERSION%
 )
 
 if not exist breakpad-tools-windows (
@@ -137,6 +144,14 @@ if not exist breakpad-tools-windows (
   echo Unzipping breakpad tools
   unzip %UNZIP_ARGS% breakpad-tools-windows.zip -d breakpad-tools-windows
   del breakpad-tools-windows.zip
+)
+
+if not exist "nsprocess/%NSIS_NSPROCESS_VERSION%" (
+  wget %WGET_ARGS% "%BASEURL%nsprocess/%NSIS_NSPROCESS_FILE%"
+  echo Unzipping NSIS NsProcess plugin
+  mkdir nsprocess\%NSIS_NSPROCESS_VERSION%
+  unzip %UNZIP_ARGS% "%NSIS_NSPROCESS_FILE%" -d nsprocess\1.6
+  del %NSIS_NSPROCESS_FILE%
 )
 
 pushd ..\common

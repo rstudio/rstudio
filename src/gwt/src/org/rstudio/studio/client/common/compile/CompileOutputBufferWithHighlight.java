@@ -1,10 +1,10 @@
 /*
  * CompileOutputBufferWithHighlight.java
  *
- * Copyright (C) 2022 by RStudio, PBC
+ * Copyright (C) 2022 by Posit Software, PBC
  *
- * Unless you have received this program directly from RStudio pursuant
- * to the terms of a commercial license agreement with RStudio, then
+ * Unless you have received this program directly from Posit Software pursuant
+ * to the terms of a commercial license agreement with Posit Software, then
  * this program is licensed to you under the terms of version 3 of the
  * GNU Affero General Public License. This program is distributed WITHOUT
  * ANY EXPRESS OR IMPLIED WARRANTY, INCLUDING THOSE OF NON-INFRINGEMENT,
@@ -16,7 +16,9 @@
 
 package org.rstudio.studio.client.common.compile;
 
+import org.rstudio.core.client.StringUtil;
 import org.rstudio.core.client.VirtualConsole;
+import org.rstudio.core.client.dom.DomUtils;
 import org.rstudio.core.client.widget.BottomScrollPanel;
 import org.rstudio.core.client.widget.FontSizer;
 import org.rstudio.core.client.widget.PreWidget;
@@ -29,6 +31,9 @@ import com.google.gwt.user.client.ui.Composite;
 public class CompileOutputBufferWithHighlight extends Composite 
                                 implements CompileOutputDisplay
 {
+   public static enum PanelState { OK, OVERLOADED };
+   public static enum OutputType { Command, Output, Error };
+   
    public CompileOutputBufferWithHighlight()
    {
       styles_ = ConsoleResources.INSTANCE.consoleStyles();
@@ -48,23 +53,22 @@ public class CompileOutputBufferWithHighlight extends Composite
       initWidget(scrollPanel_);
    }
    
-   
    @Override
    public void writeCommand(String command)
    {
-      write(command, styles_.command() + ConsoleResources.KEYWORD_CLASS_NAME);
+      write(command, OutputType.Command, styles_.command() + ConsoleResources.KEYWORD_CLASS_NAME);
    }
    
    @Override
    public void writeOutput(String output)
    {
-      write(output, styles_.output());
+      write(output, OutputType.Output, styles_.output());
    }
 
    @Override
    public void writeError(String error)
    {
-      write(error, getErrorClass());
+      write(error, OutputType.Error, getErrorClass());
    }
    
    @Override
@@ -77,13 +81,64 @@ public class CompileOutputBufferWithHighlight extends Composite
    public void clear()
    {
       console_.clear();
+      state_ = PanelState.OK;
+      totalSubmittedLines_ = 0;
+      numDisplayedLines_ = 0;
       output_.setText("");
    }
    
-   private void write(String output, String className)
+   @Override
+   public void onCompileCompleted()
    {
-      console_.submit(output, className);
-      scrollPanel_.onContentSizeChanged();
+      state_ = PanelState.OK;
+      if (savedOutput_.isEmpty())
+         return;
+      
+      String outputClass = styles_.output();
+      console_.submit("\n", outputClass);
+      
+      String[] lines = savedOutput_.split("\n");
+      int end = lines.length - 1;
+      int start = Math.max(0, end - 100);
+      for (int i = start; i < end; i++)
+         console_.submit(lines[i] + "\n", outputClass);
+   }
+   
+   private void write(String output, OutputType outputType, String className)
+   {
+      switch (state_)
+      {
+      
+      case OK:
+      {
+         console_.submit(output, className);
+         int numNewlines = StringUtil.newlineCount(output);
+         totalSubmittedLines_ += numNewlines;
+         numDisplayedLines_ += numNewlines;
+
+         if (numDisplayedLines_ > MAX_LINES_DISPLAY)
+         {
+            DomUtils.trimLines(output_.getElement(), numDisplayedLines_ - MAX_LINES_DISPLAY);
+            numDisplayedLines_ = MAX_LINES_DISPLAY;
+         }
+
+         if (totalSubmittedLines_ > MAX_LINES_OVERLOAD)
+         {
+            state_ = PanelState.OVERLOADED;
+            console_.submit("\n\n[Detected output overflow; truncating build output]\n\n", className);
+         }
+
+         scrollPanel_.onContentSizeChanged();
+         return;
+      }
+         
+      case OVERLOADED:
+      {
+         savedOutput_ += output;
+         return;
+      }
+      
+      }
    }
    
    private String getErrorClass()
@@ -95,6 +150,13 @@ public class CompileOutputBufferWithHighlight extends Composite
  
    PreWidget output_;
    VirtualConsole console_;
+   PanelState state_ = PanelState.OK;
+   private int numDisplayedLines_;
+   private int totalSubmittedLines_;
+   private String savedOutput_ = "";
    private BottomScrollPanel scrollPanel_;
    private ConsoleResources.ConsoleStyles styles_;
+   
+   private static final int MAX_LINES_DISPLAY = 500;
+   private static final int MAX_LINES_OVERLOAD = 5000;
 }

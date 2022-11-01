@@ -1,9 +1,9 @@
 /* UserPrefValues.hpp
  *
- * Copyright (C) 2022 by RStudio, PBC
+ * Copyright (C) 2022 by Posit Software, PBC
  *
- * Unless you have received this program directly from RStudio pursuant
- * to the terms of a commercial license agreement with RStudio, then
+ * Unless you have received this program directly from Posit Software pursuant
+ * to the terms of a commercial license agreement with Posit Software, then
  * this program is licensed to you under the terms of version 3 of the
  * GNU Affero General Public License. This program is distributed WITHOUT
  * ANY EXPRESS OR IMPLIED WARRANTY, INCLUDING THOSE OF NON-INFRINGEMENT,
@@ -410,6 +410,11 @@ namespace prefs {
 #define kUiLanguageEn "en"
 #define kUiLanguageFr "fr"
 #define kNativeFileDialogs "native_file_dialogs"
+#define kDiscardPendingConsoleInputOnError "discard_pending_console_input_on_error"
+#define kEditorScrollMultiplier "editor_scroll_multiplier"
+#define kTextRendering "text_rendering"
+#define kTextRenderingAuto "auto"
+#define kTextRenderingGeometricPrecision "geometricPrecision"
 
 class UserPrefValues: public Preferences
 {
@@ -1830,6 +1835,24 @@ public:
     */
    bool nativeFileDialogs();
    core::Error setNativeFileDialogs(bool val);
+
+   /**
+    * When enabled, any pending console input will be discarded when an (uncaught) R error occurs.
+    */
+   bool discardPendingConsoleInputOnError();
+   core::Error setDiscardPendingConsoleInputOnError(bool val);
+
+   /**
+    * A integer value, 1-200, to set the editor scroll multiplier. The higher the value, the faster the scrolling.
+    */
+   int editorScrollMultiplier();
+   core::Error setEditorScrollMultiplier(int val);
+
+   /**
+    * Control how text is rendered within the IDE surface.
+    */
+   std::string textRendering();
+   core::Error setTextRendering(std::string val);
 
 };
 

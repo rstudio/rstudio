@@ -1,10 +1,10 @@
 /*
  * RSession.cpp
  *
- * Copyright (C) 2022 by RStudio, PBC
+ * Copyright (C) 2022 by Posit Software, PBC
  *
- * Unless you have received this program directly from RStudio pursuant
- * to the terms of a commercial license agreement with RStudio, then
+ * Unless you have received this program directly from Posit Software pursuant
+ * to the terms of a commercial license agreement with Posit Software, then
  * this program is licensed to you under the terms of version 3 of the
  * GNU Affero General Public License. This program is distributed WITHOUT
  * ANY EXPRESS OR IMPLIED WARRANTY, INCLUDING THOSE OF NON-INFRINGEMENT,
@@ -320,7 +320,7 @@ Error run(const ROptions& options, const RCallbacks& callbacks)
 
    // set source reloading behavior
    sourceManager().setAutoReload(options.autoReloadSource);
-     
+   
    // initialize suspended session path
    FilePath userScratch = s_options.userScratchPath;
    FilePath oldSuspendedSessionPath = userScratch.completePath("suspended-session");
@@ -534,6 +534,11 @@ bool isDefaultPrompt(const std::string& prompt)
 bool isServerMode()
 {
    return s_options.serverMode;
+}
+
+const FilePath& projectPath()
+{
+   return s_options.projectPath;
 }
 
 const FilePath& userHomePath()

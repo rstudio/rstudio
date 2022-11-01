@@ -71,6 +71,9 @@ ENV CC="/opt/rh/devtoolset-7/root/usr/bin/gcc"
 ENV CXX="/opt/rh/devtoolset-7/root/usr/bin/c++"
 ENV CPP="/opt/rh/devtoolset-7/root/usr/bin/cpp"
 
+# for Centos 7 specific dependencies such as Quarto
+ENV OS_DISTRO="centos7"
+
 # sudo defaults to requiretty on centos7
 RUN sed -i  's/Defaults    requiretty/Defaults !requiretty/' /etc/sudoers
 
@@ -114,7 +117,7 @@ RUN export QT_VERSION=5.12.8 && \
     cd /tmp && /bin/bash ./install-qt-linux
 
 # cachebust for Quarto release
-ADD https://quarto.org/docs/download/_download.json quarto_releases
+ADD https://quarto.org/docs/download/_prerelease.json quarto_releases
 RUN cd /opt/rstudio-tools/dependencies/common && scl enable llvm-toolset-7 "/bin/bash ./install-quarto"
 
 # set github login from build argument if defined

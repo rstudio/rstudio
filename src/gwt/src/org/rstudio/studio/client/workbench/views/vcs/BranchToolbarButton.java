@@ -1,10 +1,10 @@
 /*
  * BranchToolbarButton.java
  *
- * Copyright (C) 2022 by RStudio, PBC
+ * Copyright (C) 2022 by Posit Software, PBC
  *
- * Unless you have received this program directly from RStudio pursuant
- * to the terms of a commercial license agreement with RStudio, then
+ * Unless you have received this program directly from Posit Software pursuant
+ * to the terms of a commercial license agreement with Posit Software, then
  * this program is licensed to you under the terms of version 3 of the
  * GNU Affero General Public License. This program is distributed WITHOUT
  * ANY EXPRESS OR IMPLIED WARRANTY, INCLUDING THOSE OF NON-INFRINGEMENT,
@@ -62,6 +62,7 @@ import org.rstudio.core.client.widget.ToolbarButton;
 import org.rstudio.core.client.widget.ToolbarMenuButton;
 import org.rstudio.core.client.widget.ToolbarPopupMenu;
 import org.rstudio.studio.client.common.icons.StandardIcons;
+import org.rstudio.studio.client.workbench.views.vcs.common.events.BranchCaptionChangedEvent;
 import org.rstudio.studio.client.workbench.views.vcs.common.events.VcsRefreshEvent;
 import org.rstudio.studio.client.workbench.views.vcs.git.model.GitState;
 
@@ -173,12 +174,17 @@ public class BranchToolbarButton extends ToolbarMenuButton
          caption = NO_BRANCH;
 
       setText(caption);
+      fireEvent(new BranchCaptionChangedEvent(caption));
    }
 
    @Override
    public HandlerRegistration addValueChangeHandler(ValueChangeHandler<String> handler)
    {
       return addHandler(handler, ValueChangeEvent.getType());
+   }
+
+   public HandlerRegistration addBranchCaptionChangedHandler(BranchCaptionChangedEvent.Handler handler) {
+      return addHandler(handler, BranchCaptionChangedEvent.TYPE);
    }
 
    @Override

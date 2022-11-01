@@ -1,89 +1,107 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-   <meta charset="utf-8">
-   <meta http-equiv="X-UA-Compatible" content="IE=edge">
-   <meta name="viewport" content="width=device-width, initial-scale=1">
-   <title>RStudio Server</title>
-   <script>
-      function getBaseUri()
-      {
-         var baseUri = "#!base_uri#";
-         if (!baseUri)
-         {
-            baseUri = window.location.href;
-         }
-         var index = baseUri.lastIndexOf("#!request_uri#");
-         if (index > 0)
-         {
-            return baseUri.substring(0, index);
-         }
-         return "/";
-      }
-
-      var cssLink = document.createElement("link");
-      cssLink.href = getBaseUri() + "/css/page.css";
-      cssLink.type = "text/css";
-      cssLink.rel = "stylesheet";
- 
-      var iconLink = document.createElement("link");
-      iconLink.href = getBaseUri() + "/images/favicon.ico";
-      iconLink.rel = "shortcut icon";
-   
-      document.getElementsByTagName("head")[0].appendChild(cssLink);
-      document.getElementsByTagName("head")[0].appendChild(iconLink);
-   </script>
-   <style>
-      #banner {
-         margin-bottom: 0;
-      }
-      p {
-         margin: 20px 20px 10px 20px;
-      }
-   </style>
+  <meta charset="utf-8" />
+  <meta http-equiv="X-UA-Compatible" content="IE=edge" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>RStudio Server</title>
+  <style id="page-style">
+    #banner {
+      margin-bottom: 0;
+    }
+    p {
+      margin: 20px 40px 10px 40px;
+    }
+    ul {
+      margin-left: 40px;
+    }
+  </style>
 </head>
 
 <body>
-   <div id="view" class="container">
+  <header role="banner">
+    <div id="banner">
+      <picture>
+        <source
+          id="logo-reverse"
+          srcset="images/Posit-ProductLogo_rst-server-reverse.svg"
+          media="(prefers-color-scheme: dark)"
+        />
+        <img
+          id="logo-full-color"
+          src="images/Posit-ProductLogo_rst-server-full-color.svg"
+          height="27"
+          alt="RStudio Logo"
+        />
+      </picture>
+      <div style="flex: 1"></div>
+      <form method="post" id="signOutForm" action="auth-sign-out">
+        <input type="hidden" name="rs-csrf-token" id="rs-csrf-token" />
+        <span class="username">
+          #!username#
+          <input type="image" alt="Sign Out" id="signOut" src="images/signOut.png" />
+        </span>
+      </form>
+    </div>
+  </header>
+  <div id="view" class="container">
 
-   <form method="post" id="signOutForm" action="auth-sign-out">
-     <input type="hidden" name="rs-csrf-token" id="rs-csrf-token"/>
-     <div class="header-box">
-       <img alt class="logo-image" id="logo" src="/images/rstudio-logo.png" />
-       <span class="username">
-        #!username#
-        <input type="image" alt="Sign Out" id="signOut" src="/images/signOut.png" />
-       </span>
-       <h2>RStudio Server</h2>
-     </div>
-   </form>
+    <p>
+      RStudio encountered an error and the request could not be processed:
+    </p>
 
-   <p>RStudio encountered an error and the request could not be processed:</p>
-
-   <ul>
+    <ul>
       <li><b>#error_description#</b></li>
-   </ul>
-   <ul>
+    </ul>
+    <ul>
       <li><b>#error_message#</b></li>
-   </ul>
+    </ul>
 
-   <p>Please contact your system administrator for assistance, or click <a id="url" href="#" onClick="history.back();">here</a> to go back.</p>
+    <p>
+      Please contact your system administrator for assistance, or click
+      <a id="url" href="#" onClick="history.back();">here</a> to go back.
+    </p>
+  </div>
+  <script>
+    function getBaseUri() {
+      var baseUri = "#!base_uri#";
+      if (!baseUri) {
+        baseUri = window.location.href;
+      }
+      var index = baseUri.lastIndexOf("#!request_uri#");
+      if (index > 0) {
+        return baseUri.substring(0, index);
+      }
+      return "";
+    }
 
-   <script>
-   
-      document.getElementById("signOutForm").action = getBaseUri() + "/auth-sign-out";
-      document.getElementById("signOut").src = getBaseUri() + "/images/signOut.png";
-      document.getElementById("logo").src = getBaseUri() + "/images/rstudio-logo.png";
-      document.getElementById("url").href = getBaseUri() + "/home";
+    var style = document.getElementById("page-style");
 
-      document.getElementById('rs-csrf-token').value =
-         document.cookie.match(RegExp('(?:^|;\\s*)rs-csrf-token=([^;]*)'))[1];
+    var cssLink = document.createElement("link");
+    cssLink.href = getBaseUri() + "/css/page.css";
+    cssLink.type = "text/css";
+    cssLink.rel = "stylesheet";
+    style.insertAdjacentElement("beforebegin", cssLink);
 
-   </script>
+    cssLink = document.createElement("link");
+    cssLink.href = getBaseUri() + "/rstudio.css";
+    cssLink.type = "text/css";
+    cssLink.rel = "stylesheet";
+    style.insertAdjacentElement("beforebegin", cssLink);
 
-   </div>
+    var iconLink = document.createElement("link");
+    iconLink.href = getBaseUri() + "images/Posit-Product_rst-server-favicon.svg";
+    iconLink.rel = "shortcut icon";
+    style.insertAdjacentElement("beforebegin", iconLink);
 
+    document.getElementById("logo-reverse").srcset = getBaseUri() + "/images/Posit-ProductLogo_rst-server-reverse.svg";
+    document.getElementById("logo-full-color").src = getBaseUri() + "/images/Posit-ProductLogo_rst-server-full-color.svg";
+
+    document.getElementById("signOutForm").action = getBaseUri() + "/auth-sign-out";
+    document.getElementById("signOut").src = getBaseUri() + "/images/signOut.png";
+    document.getElementById("url").href = getBaseUri() + "/home";
+
+    document.getElementById("rs-csrf-token").value = document.cookie.match(RegExp("(?:^|;\\s*)rs-csrf-token=([^;]*)"))[1];
+  </script>
 </body>
-
 </html>
-

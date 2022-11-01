@@ -7359,10 +7359,41 @@ var numRe = exports.numRe = "\\-?(?:(?:[0-9]+(?:\\.[0-9]+)?)|(?:\\.[0-9]+))";
 var pseudoElements = exports.pseudoElements = "(\\:+)\\b(after|before|first-letter|first-line|moz-selection|selection)\\b";
 var pseudoClasses  = exports.pseudoClasses =  "(:)\\b(active|checked|disabled|empty|enabled|first-child|first-of-type|focus|hover|indeterminate|invalid|last-child|last-of-type|link|not|nth-child|nth-last-child|nth-last-of-type|nth-of-type|only-child|only-of-type|required|root|target|valid|visited)\\b";
 
-var rgb256Regex = /(rgba?)[(]([0-9]+)\s*,\s*([0-9]+)\s*,\s*([0-9]+)\s*(,\s*)?([0-9.]+)?[)]/;
-var numberToHex = function(s) {
+var rgb256Regex = exports.rgb256Regex = /(rgba?)[(]([0-9]+)\s*,\s*([0-9]+)\s*,\s*([0-9]+)\s*(,\s*)?([0-9.]+)?[)]/;
+var numberToHex = exports.numberToHex = function(s) {
     var result = s.toString(16);
     return (result.length == 1) ? "0" + result : result;
+};
+var rgb256Token = exports.rgb256Token = function(value, state, stack, line) {
+    var match = value.match(rgb256Regex);
+    var r = parseInt(match[2]);
+    var g = parseInt(match[3]);
+    var b = parseInt(match[4]);
+    var has_alpha = match[6] != null;
+    if (r > 255 || g > 255 || b > 255)
+        return "constant.color";
+
+    var a = "";
+    if (has_alpha) {
+        a = parseFloat(match[6]);
+        if (a < 0 || a > 1)
+            return "constant.color";
+
+        a = numberToHex(parseInt(255 * a));
+    }
+
+    var r = numberToHex(r);
+    var g = numberToHex(g);
+    var b = numberToHex(b);
+   
+    return [
+        { type: "constant.color", value: value, bg: "#" + r + g + b + a}
+    ];    
+};
+var colorToken = exports.colorToken = function(value, state, stack, line) {
+    return [
+        { type: "constant.color", value: value, bg: value}
+    ];
 };
 
 var CssHighlightRules = function() {
@@ -7464,53 +7495,16 @@ var CssHighlightRules = function() {
             regex : numRe
         }, {
             regex: rgb256Regex,
-            onMatch: function(value, state, stack, line) {
-                var match = value.match(rgb256Regex);
-                var r = parseInt(match[2]);
-                var g = parseInt(match[3]);
-                var b = parseInt(match[4]);
-                var has_alpha = match[6] != null;
-                if (r > 255 || g > 255 || b > 255)
-                    return "constant.color";
-
-                var a = "";
-                if (has_alpha) {
-                    a = parseFloat(match[6]);
-                    if (a < 0 || a > 1)
-                        return "constant.color";
-
-                    a = numberToHex(parseInt(255 * a));
-                }
-
-                var r = numberToHex(r);
-                var g = numberToHex(g);
-                var b = numberToHex(b);
-               
-                return [
-                    { type: "constant.color", value: value, bg: "#" + r + g + b + a}
-                ];    
-            }
+            onMatch: rgb256Token
          }, {
             regex : "#[a-fA-F0-9]{8}", // hex8 color
-            onMatch: function(value, state, stack, line) {
-                return [
-                    { type: "constant.color", value: value, bg: value}
-                ];
-            }
+            onMatch: colorToken
         }, {
             regex : "#[a-fA-F0-9]{6}", // hex6 color
-            onMatch: function(value, state, stack, line) {
-                return [
-                    { type: "constant.color", value: value, bg: value}
-                ];
-            }
+            onMatch: colorToken
         }, {
             regex : "#[A-Fa-f0-9]{3}", // hex3 color
-            onMatch: function(value, state, stack, line) {
-                return [
-                    { type: "constant.color", value: value, bg: value}
-                ];
-            }
+            onMatch: colorToken
         }, {
             token : ["punctuation", "entity.other.attribute-name.pseudo-element.css"],
             regex : pseudoElements
@@ -7524,9 +7518,7 @@ var CssHighlightRules = function() {
             onMatch: function(value, state, stack, line) {
                 var result = keywordMapper(value);
                 if (result == "support.constant.color") {
-                    result = [
-                        { type: "support.constant.color", value: value, bg: value}
-                    ];
+                    result = colorToken(value, state, stack, line);
                 }
                 return result;
             }
@@ -15294,6 +15286,9 @@ var oop = require("../lib/oop");
 var lang = require("../lib/lang");
 var TextHighlightRules = require("./text_highlight_rules").TextHighlightRules;
 var CssHighlightRules = require("./css_highlight_rules");
+var rgb256Regex = CssHighlightRules.rgb256Regex;
+var rgb256Token = CssHighlightRules.rgb256Token;
+var colorToken = CssHighlightRules.colorToken;
 
 var ScssHighlightRules = function() {
     
@@ -15357,11 +15352,17 @@ var ScssHighlightRules = function() {
                 token : "constant.numeric",
                 regex : numRe + "(?:ch|cm|deg|em|ex|fr|gd|grad|Hz|in|kHz|mm|ms|pc|pt|px|rad|rem|s|turn|vh|vmax|vmin|vm|vw|%)"
             }, {
-                token : "constant.numeric", // hex6 color
-                regex : "#[a-f0-9]{6}"
+                regex: rgb256Regex,
+                onMatch: rgb256Token
             }, {
-                token : "constant.numeric", // hex3 color
-                regex : "#[a-f0-9]{3}"
+                regex : "#[a-fA-F0-9]{8}", // hex8 color
+                onMatch: colorToken
+            }, {
+                regex : "#[a-fA-F0-9]{6}", // hex6 color
+                onMatch: colorToken
+            }, {
+                regex : "#[A-Fa-f0-9]{3}", // hex3 color
+                onMatch: colorToken
             }, {
                 token : "constant.numeric",
                 regex : numRe
@@ -15379,7 +15380,7 @@ var ScssHighlightRules = function() {
                     else if (functions.hasOwnProperty(value))
                         return "support.function";
                     else if (colors.hasOwnProperty(value.toLowerCase()))
-                        return "support.constant.color";
+                        return colorToken(value);
                     else if (tags.hasOwnProperty(value.toLowerCase()))
                         return "variable.language";
                     else
@@ -15461,6 +15462,9 @@ define("ace/mode/less_highlight_rules",["require","exports","module","ace/lib/oo
 var oop = require("../lib/oop");
 var TextHighlightRules = require("./text_highlight_rules").TextHighlightRules;
 var CssHighlightRules = require('./css_highlight_rules');
+var rgb256Regex = CssHighlightRules.rgb256Regex;
+var rgb256Token = CssHighlightRules.rgb256Token;
+var colorToken = CssHighlightRules.colorToken;
 
 var LessHighlightRules = function() {
 
@@ -15502,11 +15506,17 @@ var LessHighlightRules = function() {
                 token : ["constant.numeric", "keyword"],
                 regex : "(" + numRe + ")(ch|cm|deg|em|ex|fr|gd|grad|Hz|in|kHz|mm|ms|pc|pt|px|rad|rem|s|turn|vh|vm|vw|%)"
             }, {
-                token : "constant.numeric", // hex6 color
-                regex : "#[a-f0-9]{6}"
+                regex: rgb256Regex,
+                onMatch: rgb256Token
             }, {
-                token : "constant.numeric", // hex3 color
-                regex : "#[a-f0-9]{3}"
+                regex : "#[a-fA-F0-9]{8}", // hex8 color
+                onMatch: colorToken
+            }, {
+                regex : "#[a-fA-F0-9]{6}", // hex6 color
+                onMatch: colorToken
+            }, {
+                regex : "#[A-Fa-f0-9]{3}", // hex3 color
+                onMatch: colorToken
             }, {
                 token : "constant.numeric",
                 regex : numRe
@@ -15541,8 +15551,14 @@ var LessHighlightRules = function() {
                 token : "keyword",
                 regex : "&"   // special case - always treat as keyword
             }, {
-                token : keywordMapper,
-                regex : "\\-?[@a-z_][@a-z0-9_\\-]*"
+                regex : "\\-?[@a-z_][@a-z0-9_\\-]*", 
+                onMatch: function(value, state, stack, line) {
+                    var result = keywordMapper(value);
+                    if (result == "support.constant.color") {
+                        result = colorToken(value, state, stack, line);
+                    }
+                    return result;
+                }
             }, {
                 token: "variable.language",
                 regex: "#[a-z0-9-_]+"
@@ -46215,7 +46231,7 @@ EditSession.$uid = 0;
         delete this.$breakpoints[row];
         this._signal("changeBreakpoint", {});
     };
-    this.addMarker = function(range, clazz, type, inFront) {
+    this.addMarker = function(range, clazz, type, inFront, extraStyle) {
         var id = this.$markerId++;
 
         var marker = {
@@ -46224,7 +46240,8 @@ EditSession.$uid = 0;
             renderer: typeof type == "function" ? type : null,
             clazz : clazz,
             inFront: !!inFront,
-            id: id
+            id: id, 
+            extraStyle: extraStyle
         };
 
         if (inFront) {
@@ -62160,7 +62177,7 @@ var Gutter = function(parentEl) {
             className += breakpoints[row];
         if (decorations[row])
             className += decorations[row];
-        if (this.$annotations[row])
+        if (this.$annotations[row] && this.$annotations[row].className)
             className += this.$annotations[row].className;
         if (element.className != className)
             element.className = className;
@@ -62341,16 +62358,16 @@ var Marker = function(parentEl) {
                 var left = this.$padding + range.start.column * config.characterWidth;
                 marker.renderer(html, range, left, top, config);
             } else if (marker.type == "fullLine") {
-                this.drawFullLineMarker(html, range, marker.clazz, config);
+                this.drawFullLineMarker(html, range, marker.clazz, config, marker.extraStyle);
             } else if (marker.type == "screenLine") {
-                this.drawScreenLineMarker(html, range, marker.clazz, config);
+                this.drawScreenLineMarker(html, range, marker.clazz, config, marker.extraStyle);
             } else if (range.isMultiLine()) {
                 if (marker.type == "text")
-                    this.drawTextMarker(html, range, marker.clazz, config);
+                    this.drawTextMarker(html, range, marker.clazz, config, marker.extraStyle);
                 else
-                    this.drawMultiLineMarker(html, range, marker.clazz, config);
+                    this.drawMultiLineMarker(html, range, marker.clazz, config, marker.extraStyle);
             } else {
-                this.drawSingleLineMarker(html, range, marker.clazz + " ace_start" + " ace_br15", config);
+                this.drawSingleLineMarker(html, range, marker.clazz + " ace_start" + " ace_br15", config, marker.extraStyle);
             }
         }
         if (this.i !=-1) {

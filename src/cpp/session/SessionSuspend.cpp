@@ -1,10 +1,10 @@
 /*
  * SessionSuspend.cpp
  *
- * Copyright (C) 2022 by RStudio, PBC
+ * Copyright (C) 2022 by Posit Software, PBC
  *
- * Unless you have received this program directly from RStudio pursuant
- * to the terms of a commercial license agreement with RStudio, then
+ * Unless you have received this program directly from Posit Software pursuant
+ * to the terms of a commercial license agreement with Posit Software, then
  * this program is licensed to you under the terms of version 3 of the
  * GNU Affero General Public License. This program is distributed WITHOUT
  * ANY EXPRESS OR IMPLIED WARRANTY, INCLUDING THOSE OF NON-INFRINGEMENT,
@@ -315,7 +315,7 @@ void setSuspendedFromTimeout(bool suspended)
 bool suspendSession(bool force, int status)
 {
    // need to make sure the global environment is loaded before we
-   // attemmpt to save it!
+   // attempt to save it!
    r::session::ensureDeserialized();
 
    // If we're suspending then clear list of blocking ops

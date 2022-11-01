@@ -1,10 +1,10 @@
 /*
  * CompletionRequester.java
  *
- * Copyright (C) 2022 by RStudio, PBC
+ * Copyright (C) 2022 by Posit Software, PBC
  *
- * Unless you have received this program directly from RStudio pursuant
- * to the terms of a commercial license agreement with RStudio, then
+ * Unless you have received this program directly from Posit Software pursuant
+ * to the terms of a commercial license agreement with Posit Software, then
  * this program is licensed to you under the terms of version 3 of the
  * GNU Affero General Public License. This program is distributed WITHOUT
  * ANY EXPRESS OR IMPLIED WARRANTY, INCLUDING THOSE OF NON-INFRINGEMENT,
@@ -307,7 +307,9 @@ public class CompletionRequester
             replaceToEnd.get(i),
             meta.get(i), 
             response.getHelpHandler(), 
-            response.getLanguage())
+            response.getLanguage(),
+            response.getContext().get(i)
+            )
          );
       }
 
@@ -410,7 +412,8 @@ public class CompletionRequester
                      replaceToEnd.get(i),
                      meta.get(i), 
                      response.getHelpHandler(), 
-                     response.getLanguage()
+                     response.getLanguage(), 
+                     response.getContext().get(i)
                   ));
                }
             }
@@ -444,7 +447,8 @@ public class CompletionRequester
                      replaceToEnd.get(i),
                      meta.get(i), 
                      response.getHelpHandler(), 
-                     response.getLanguage()
+                     response.getLanguage(), 
+                     response.getContext().get(i)
                   ));
                }
             }
@@ -755,7 +759,8 @@ public class CompletionRequester
                   false,
                   true,
                   null,
-                  null);
+                  null, 
+                  JsUtil.toJsArrayInteger(new ArrayList<>(result.completions.length())));
 
             // Unlike other completion types, Sweave completions are not
             // guaranteed to narrow the candidate list (in particular
@@ -822,13 +827,13 @@ public class CompletionRequester
                            int type,
                            boolean suggestOnAccept)
       {
-         this(name, name, source, shouldQuote, type, suggestOnAccept, false, "", null, "R");
+         this(name, name, source, shouldQuote, type, suggestOnAccept, false, "", null, "R", RCompletionManager.AutocompletionContext.TYPE_UNKNOWN);
       }
 
       public QualifiedName(String name,
                            String source)
       {
-         this(name, name, source, false, RCompletionType.UNKNOWN, false, false, "", null, "R");
+         this(name, name, source, false, RCompletionType.UNKNOWN, false, false, "", null, "R", RCompletionManager.AutocompletionContext.TYPE_UNKNOWN);
       }
       
       public QualifiedName(String name,
@@ -840,7 +845,8 @@ public class CompletionRequester
                            boolean replaceToEnd,
                            String meta,
                            String helpHandler,
-                           String language)
+                           String language, 
+                           int context)
       {
          this.name = name;
          this.display = display;
@@ -852,6 +858,7 @@ public class CompletionRequester
          this.meta = meta;
          this.helpHandler = helpHandler;
          this.language = language;
+         this.context = context;
       }
 
       public static QualifiedName createSnippet(String name)
@@ -866,7 +873,8 @@ public class CompletionRequester
                false,
                "",
                null,
-               "R");
+               "R", 
+               RCompletionManager.AutocompletionContext.TYPE_UNKNOWN);
       }
       
       public QualifiedName withSuggestOnAccept()
@@ -881,7 +889,8 @@ public class CompletionRequester
             this.replaceToEnd,
             this.meta,
             this.helpHandler,
-            this.language  
+            this.language, 
+            this.context
          );
       }
       
@@ -965,10 +974,16 @@ public class CompletionRequester
 
       private void doAddDisplayNameGeneric(SafeHtmlBuilder sb)
       {
+         String style = RES.styles().completion();
+         if (type == RCompletionType.COLUMN) 
+         {
+            style = style + " " + RES.styles().column();
+         }
+
          // Get the name for the completion
          SafeHtmlUtil.appendSpan(
                sb,
-               RES.styles().completion(),
+               style,
                display);
 
          // Display the source for functions and snippets (unless there
@@ -983,6 +998,22 @@ public class CompletionRequester
                   sb,
                   RES.styles().packageName(),
                   "{" + source.replaceAll("package:", "") + "}");
+         }
+
+         if (type == RCompletionType.COLUMN) 
+         {
+            SafeHtmlUtil.appendSpan(
+                  sb,
+                  RES.styles().dataframe(),
+                  "[" + source + "]");
+         }
+
+         if (type == RCompletionType.ARGUMENT) 
+         {
+            SafeHtmlUtil.appendSpan(
+                  sb,
+                  RES.styles().argument(),
+                  source + "()");
          }
       }
 
@@ -1032,6 +1063,8 @@ public class CompletionRequester
             return new ImageResource2x(ICONS.context2x());
          case RCompletionType.SNIPPET:
             return new ImageResource2x(ICONS.snippet2x());
+         case RCompletionType.COLUMN:
+            return new ImageResource2x(ICONS.column2x());
          default:
             return new ImageResource2x(ICONS.variable2x());
          }
@@ -1098,6 +1131,7 @@ public class CompletionRequester
       public final String source;
       public final boolean shouldQuote;
       public final int type;
+      public final int context;
       public final boolean suggestOnAccept;
       public final boolean replaceToEnd;
       public final String meta;

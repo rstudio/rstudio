@@ -4,7 +4,7 @@
 #
 # encrypted-sign-in.htm
 #
-# Copyright (C) 2022 by RStudio, PBC
+# Copyright (C) 2022 by Posit Software, PBC
 #
 # This program is licensed to you under the terms of version 3 of the
 # GNU Affero General Public License. This program is distributed WITHOUT
@@ -15,118 +15,164 @@
 -->
 
 <html lang="en">
-
 <head>
-<meta charset="UTF-8" />
-<meta name="public-key-url" content="#'publicKeyUrl#"/>
-<title>RStudio Sign In</title>
-<link rel="shortcut icon" href="images/favicon.ico" />
+  <meta charset="UTF-8" />
+  <meta name="public-key-url" content="#'publicKeyUrl#" />
+  <title>RStudio Sign In</title>
+  <link rel="shortcut icon" href="/images/Posit-Product_rst-server-favicon.svg" />
 
-<link rel="stylesheet" href="rstudio.css" type="text/css"/>
-<link rel="stylesheet" href="signin.css" type="text/css"/>
-<link rel="stylesheet" href="css/focus-visible.css" type="text/css"/>
+  <link rel="stylesheet" href="rstudio.css" type="text/css" />
+  <link rel="stylesheet" href="signin.css" type="text/css" />
+  <link rel="stylesheet" href="css/focus-visible.css" type="text/css" />
 
-<style type="text/css">
+  <style type="text/css">
+    #errorpanel {
+      display: #errorDisplay#;
+    }
+  </style>
 
-#errorpanel {
-  display: #errorDisplay#;
-}
-
-</style>
-
-<script type="text/javascript" src="js/encrypt.min.js"></script>
-<script type="text/javascript" src="js/signin.js"></script>
+  <script type="text/javascript" src="js/encrypt.min.js"></script>
+  <script type="text/javascript" src="js/signin.js"></script>
 
 </head>
 <body>
-<div id="skipnav"><a href="#username">Skip navigation</a></div>
-<header role="banner" id="banner">
-  <div id="logo">
-    #!logoHtml#
-  </div>
-</header>
-<main role="main">
-<div id="errorpanel">
-<p id="errortext">Error: #errorMessage#</p>
-</div>
-<div role="alert" aria-atomic="true" class="visuallyhidden" id="live-error"></div>
+  <div id="skipnav"><a href="#username">Skip navigation</a></div>
+  <header id="banner" role="banner">
+    <div id="logo">#!logoHtml#</div>
+  </header>
+  <main role="main">
+    <div id="errorpanel">
+      <p id="errortext">Error: #errorMessage#</p>
+    </div>
+    <div
+      role="alert"
+      aria-atomic="true"
+      class="visuallyhidden"
+      id="live-error"
+    ></div>
 
-<form name="login_form" method="POST" #!formAction#>
-<table role="presentation" id="border">
-  <tr>
-    <td>
-      <div role="group" aria-labelledby="caption_header">
-         <div id="controls">
-            <h1 id="caption_header" class="caption">Sign in to RStudio</h1>
+    <form name="login_form" method="POST" #!formAction#>
+      <div role="presentation" id="border">
+        <div role="group" aria-labelledby="caption_header">
+          <div id="controls">
+            <h1 id="caption_header" class="caption">
+              Sign in to RStudio
+            </h1>
             <p>
-               <label for="username">Username:</label><br />
-               <input type='text'
-                        name='username'
-                        autocomplete='off'
-                        autocorrect='off'
-                        autocapitalize='off'
-                        spellcheck='false'
-                        value=''
-                        id='username'
-                        size='45'/><br />
+              <label for="username">Username:</label><br />
+              <input
+                type="text"
+                name="username"
+                autocomplete="off"
+                autocorrect="off"
+                autocapitalize="off"
+                spellcheck="false"
+                value=""
+                id="username"
+                size="45"
+              /><br />
             </p>
             <p>
-               <label for="password">Password:</label><br />
-               <input type='password'
-                        name='password'
-                        autocomplete='off'
-                        autocorrect='off'
-                        autocapitalize='off'
-                        spellcheck='false'
-                        value=''
-                        id='password'
-                        size='45'/><br />
+              <label for="password">Password:</label><br />
+              <input
+                type="password"
+                name="password"
+                autocomplete="off"
+                autocorrect="off"
+                autocapitalize="off"
+                spellcheck="false"
+                value=""
+                id="password"
+                size="45"
+              /><br />
             </p>
-            <div style="display: #staySignedInDisplay#;">
-               <input type="checkbox" name="staySignedIn" id="staySignedIn" value="1"/>
-               <label id="staySignedInLabel" for="staySignedIn">Stay signed in when browser closes</label>
-               <p style="display: #authTimeoutMinutesDisplay#;">
-                  <span style="font-size:10px">You will automatically be signed out after #authTimeoutMinutes# minutes of inactivity.</span>
-               </p>
+            <div style="display: #staySignedInDisplay#">
+              <input
+                type="checkbox"
+                name="staySignedIn"
+                id="staySignedIn"
+                value="1"
+              />
+              <label id="staySignedInLabel" for="staySignedIn"
+                >Stay signed in when browser closes</label
+              >
+              <p style="display: #authTimeoutMinutesDisplay#">
+                <span style="font-size: 10px"
+                  >You will automatically be signed out after
+                  #authTimeoutMinutes# minutes of inactivity.</span
+                >
+              </p>
             </div>
-            <input type="hidden" name="#csrf_token_meta#" value="#csrf_token#" />
-            <input type="hidden" name="appUri" value="#appUri#"/>
+            <input
+              type="hidden"
+              name="#csrf_token_meta#"
+              value="#csrf_token#"
+            />
+            <input type="hidden" name="appUri" value="#appUri#" />
             <div class="buttonpanel">
-               <button id="signinbutton" class="fancy" type="submit">Sign In</button>
+              <button id="signinbutton" class="fancy" type="submit">
+                Sign in
+              </button>
             </div>
-         </div>
-         <div id="goback" class="signinhidden">
+          </div>
+          <div id="goback" class="signinhidden">
             <h1 class="caption">Signed Out</h1>
-            <p role="alert" aria-atomic="true">This browser was signed out from RStudio due to inactivity or by a manual sign out initiated from another tab. A new sign in was detected and you may now return to RStudio using the button below.</p>
-            <div class="buttonpanel"><button class="fancy" type="button" onclick="window.location = responseURL;">Return to RStudio</button></div>
-         </div>
+            <p role="alert" aria-atomic="true">
+              This browser was signed out from RStudio due to
+              inactivity or by a manual sign out initiated from another tab. A
+              new sign in was detected and you may now return to Posit
+              Workbench using the button below.
+            </p>
+            <div class="buttonpanel">
+              <button
+                class="fancy"
+                type="button"
+                onclick="window.location = responseURL;"
+              >
+                Return to  RStudio
+              </button>
+            </div>
+          </div>
+        </div>
       </div>
-    </td>
-  </tr>
-</table>
-</form>
-<div class="signin-spinner-holder">
-   <div aria-live="polite" class="visuallyhidden" id="progress-message"></div>
-   <div role="progressbar" aria-labelledby="progress-message" id="spinner" class="signin-hidden signin-spinner">
-      <div></div><div></div><div></div><div></div>
-      <div></div><div></div><div></div><div></div>
-      <div></div><div></div><div></div><div></div>
-   </div>
-</div>
+    </form>
+    <div class="signin-spinner-holder">
+      <div
+        aria-live="polite"
+        class="visuallyhidden"
+        id="progress-message"
+      ></div>
+      <div
+        role="progressbar"
+        aria-labelledby="progress-message"
+        id="spinner"
+        class="signin-hidden signin-spinner"
+      >
+        <div></div>
+        <div></div>
+        <div></div>
+        <div></div>
+        <div></div>
+        <div></div>
+        <div></div>
+        <div></div>
+        <div></div>
+        <div></div>
+        <div></div>
+        <div></div>
+      </div>
+    </div>
 
-<form action="#action#" name="realform" method="POST">
-   <input type="hidden" name="persist" id="persist" value=""/>
-   <input type="hidden" name="#csrf_token_meta#" value="#csrf_token#" />
-   <input type="hidden" name="appUri" value="#appUri#"/>
-   <input type="hidden" name="clientPath" id="clientPath" value=""/>
-   <input id="package" type="hidden" name="v" value=""/>
-</form>
+    <form action="#action#" name="realform" method="POST">
+      <input type="hidden" name="persist" id="persist" value="" />
+      <input type="hidden" name="#csrf_token_meta#" value="#csrf_token#" />
+      <input type="hidden" name="appUri" value="#appUri#" />
+      <input type="hidden" name="clientPath" id="clientPath" value="" />
+      <input id="package" type="hidden" name="v" value="" />
+    </form>
 
-<div id="login-html">
-#!loginPageHtml#
-</div>
-
-</main>
-<script type="text/javascript" src="js/focus-visible.min.js"></script>
+    <div id="login-html">#!loginPageHtml#</div>
+  </main>
+  <script type="text/javascript" src="js/focus-visible.min.js"></script>
 </body>
 </html>

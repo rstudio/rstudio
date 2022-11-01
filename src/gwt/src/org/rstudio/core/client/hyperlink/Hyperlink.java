@@ -1,10 +1,10 @@
 /*
  * Hyperlink.java
  *
- * Copyright (C) 2022 by RStudio, PBC
+ * Copyright (C) 2022 by Posit Software, PBC
  *
- * Unless you have received this program directly from RStudio pursuant
- * to the terms of a commercial license agreement with RStudio, then
+ * Unless you have received this program directly from Posit Software pursuant
+ * to the terms of a commercial license agreement with Posit Software, then
  * this program is licensed to you under the terms of version 3 of the
  * GNU Affero General Public License. This program is distributed WITHOUT
  * ANY EXPRESS OR IMPLIED WARRANTY, INCLUDING THOSE OF NON-INFRINGEMENT,
@@ -74,7 +74,7 @@ public abstract class Hyperlink implements HelpPageShower
                 // cancel previous timer
                 timer_.cancel();
 
-                // the link was just hovered: settting cancelPopup_ to false
+                // the link was just hovered: setting cancelPopup_ to false
                 // to signal that the popup should be shown
                 cancelPopup_ = false;
 
@@ -156,6 +156,10 @@ public abstract class Hyperlink implements HelpPageShower
         else if (VignetteHyperlink.handles(url, params))
         {
             return new VignetteHyperlink(url, params, text, clazz);
+        }
+        else if (LibraryHyperlink.handles(url))
+        {
+            return new LibraryHyperlink(url, params, text, clazz);
         }
         else if (RunHyperlink.handles(url))
         {

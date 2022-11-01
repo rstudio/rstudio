@@ -1,10 +1,10 @@
 /*
  * ActiveSession.java
  *
- * Copyright (C) 2022 by RStudio, PBC
+ * Copyright (C) 2022 by Posit Software, PBC
  *
- * Unless you have received this program directly from RStudio pursuant
- * to the terms of a commercial license agreement with RStudio, then
+ * Unless you have received this program directly from Posit Software pursuant
+ * to the terms of a commercial license agreement with Posit Software, then
  * this program is licensed to you under the terms of version 3 of the
  * GNU Affero General Public License. This program is distributed WITHOUT
  * ANY EXPRESS OR IMPLIED WARRANTY, INCLUDING THOSE OF NON-INFRINGEMENT,
@@ -22,6 +22,10 @@ public class ActiveSession extends JavaScriptObject
    protected ActiveSession()
    {  
    }
+
+   public native final String getActivityState() /*-{
+      return this.activity_state || "";
+   }-*/;
    
    public native final String getDisplayName() /*-{
       return this.display_name;
@@ -40,7 +44,7 @@ public class ActiveSession extends JavaScriptObject
    }-*/;
    
    public native final String getWorkingDir() /*-{
-      return this.working_dir;
+      return this.working_dir || "";
    }-*/;
    
    public native final boolean getRunning() /*-{
@@ -56,11 +60,11 @@ public class ActiveSession extends JavaScriptObject
    }-*/;
    
    public native final double getLastUsed() /*-{
-      return this.last_used;
+      return this.last_used || -1.0;
    }-*/;
    
    public native final String getRVersion() /*-{
-      return this.r_version;
+      return this.r_version || "";
    }-*/;
    
    public native final String getRVersionLabel() /*-{
@@ -85,5 +89,9 @@ public class ActiveSession extends JavaScriptObject
    
    public final native String getSessionId() /*-{
       return this.id;
+   }-*/;
+
+   public final native String getWorkbench() /*-{
+      return this.workbench || "";
    }-*/;
 }

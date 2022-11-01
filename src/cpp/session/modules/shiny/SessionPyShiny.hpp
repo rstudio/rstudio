@@ -1,10 +1,10 @@
 /*
- * SessionQuartoServe.hpp
+ * SessionPyShiny.hpp
  *
- * Copyright (C) 2022 by RStudio, PBC
+ * Copyright (C) 2022 by Posit Software, PBC
  *
- * Unless you have received this program directly from RStudio pursuant
- * to the terms of a commercial license agreement with RStudio, then
+ * Unless you have received this program directly from Posit Software pursuant
+ * to the terms of a commercial license agreement with Posit Software, then
  * this program is licensed to you under the terms of version 3 of the
  * GNU Affero General Public License. This program is distributed WITHOUT
  * ANY EXPRESS OR IMPLIED WARRANTY, INCLUDING THOSE OF NON-INFRINGEMENT,
@@ -13,10 +13,10 @@
  *
  */
 
-#ifndef SESSION_QUARTO_SERVE_HPP
-#define SESSION_QUARTO_SERVE_HPP
+#ifndef SESSION_PY_SHINY_HPP
+#define SESSION_PY_SHINY_HPP
 
-#include <string>
+#include <shared_core/json/Json.hpp>
 
 namespace rstudio {
 namespace core {
@@ -24,22 +24,17 @@ namespace core {
    class FilePath;
 }
 }
-
+ 
 namespace rstudio {
 namespace session {
-namespace modules {
-namespace quarto {
-namespace serve {
-
-void previewDoc(const std::string& renderOutput, const std::string& path);
-void previewDocPath(const std::string& renderOutput, const core::FilePath& docPath);
+namespace modules { 
+namespace pyshiny {
 
 core::Error initialize();
-   
-} // namespace serve
-} // namespace quarto
+                       
+} // namespace shiny
 } // namespace modules
 } // namespace session
 } // namespace rstudio
 
-#endif
+#endif // SESSION_PY_SHINY_HPP

@@ -39,15 +39,11 @@ case "$1" in
 
     stop)
         daemonCmd "stop"
-        if (pidof rsession >/dev/null); then killall -s USR2 $2 $3 $4 $5 $6 $7 $8 $9 rsession; fi
-        if (pidof rworkspaces >/dev/null); then killall -s USR2 $2 $3 $4 $5 $6 $7 $8 $9 rworkspaces; fi
         ;;
 
     restart)
         testConfig || exit $?
         daemonCmd "restart"
-        if (pidof rsession >/dev/null); then killall -s USR2 $2 $3 $4 $5 $6 $7 $8 $9 rsession; fi
-        if (pidof rworkspaces >/dev/null); then killall -s USR2 $2 $3 $4 $5 $6 $7 $8 $9 rworkspaces; fi
         ;;
 
     test-config)
@@ -116,8 +112,6 @@ case "$1" in
         mkdir -p /var/lib/rstudio-server
         touch /var/lib/rstudio-server/offline
         daemonCmd "restart"
-        if (pidof rsession >/dev/null); then killall -s USR2 $2 $3 $4 $5 $6 $7 $8 $9 rsession; fi
-        if (pidof rworkspaces >/dev/null); then killall -s USR2 $2 $3 $4 $5 $6 $7 $8 $9 rworkspaces; fi
         ;;
 
     online)

@@ -1,10 +1,10 @@
 /*
  * RVersionsPosix.cpp
  *
- * Copyright (C) 2022 by RStudio, PBC
+ * Copyright (C) 2022 by Posit Software, PBC
  *
- * Unless you have received this program directly from RStudio pursuant
- * to the terms of a commercial license agreement with RStudio, then
+ * Unless you have received this program directly from Posit Software pursuant
+ * to the terms of a commercial license agreement with Posit Software, then
  * this program is licensed to you under the terms of version 3 of the
  * GNU Affero General Public License. This program is distributed WITHOUT
  * ANY EXPRESS OR IMPLIED WARRANTY, INCLUDING THOSE OF NON-INFRINGEMENT,
@@ -331,10 +331,16 @@ std::vector<RVersion> enumerateRVersions(
 namespace {
 
 bool isVersion(const RVersionNumber& number,
-               const std::string& rHomeDir,
                const RVersion& item)
 {
-   return number == RVersionNumber::parse(item.number()) &&
+   return number == RVersionNumber::parse(item.number());
+}
+
+bool isVersionAndHome(const RVersionNumber& number,
+                      const std::string& rHomeDir,
+                      const RVersion& item)
+{
+   return isVersion(number, item) &&
           rHomeDir == item.homeDir().getAbsolutePath();
 }
 
@@ -343,7 +349,7 @@ bool isLabelVersion(const RVersionNumber& number,
                     const std::string& label,
                     const RVersion& item)
 {
-   return isVersion(number, rHomeDir, item) &&
+   return isVersionAndHome(number, rHomeDir, item) &&
           label == item.label();
 }
 
@@ -410,7 +416,15 @@ RVersion selectVersion(const std::string& number,
    // relax the search to find a matching version with a different label
    it = std::find_if(versions.begin(),
                      versions.end(),
-                     boost::bind(isVersion, matchNumber, rHomeDir, _1));
+                     boost::bind(isVersionAndHome, matchNumber, rHomeDir, _1));
+   if (it != versions.end())
+      return *it;
+
+   // relax the search to find just an exact version match for when the homeDir doesn't
+   // match or is empty as when you restore from the project <project-dir>/.Rproj.user/shared/RVersion.
+   it = std::find_if(versions.begin(),
+                     versions.end(),
+                     boost::bind(isVersion, matchNumber, _1));
    if (it != versions.end())
       return *it;
 

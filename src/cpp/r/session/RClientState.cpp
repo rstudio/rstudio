@@ -1,10 +1,10 @@
 /*
  * RClientState.cpp
  *
- * Copyright (C) 2022 by RStudio, PBC
+ * Copyright (C) 2022 by Posit Software, PBC
  *
- * Unless you have received this program directly from RStudio pursuant
- * to the terms of a commercial license agreement with RStudio, then
+ * Unless you have received this program directly from Posit Software pursuant
+ * to the terms of a commercial license agreement with Posit Software, then
  * this program is licensed to you under the terms of version 3 of the
  * GNU Affero General Public License. This program is distributed WITHOUT
  * ANY EXPRESS OR IMPLIED WARRANTY, INCLUDING THOSE OF NON-INFRINGEMENT,
@@ -236,6 +236,24 @@ void ClientState::putPersistent(const json::Object& persistentState)
    mergeState(persistentState, &persistentState_);
 }
 
+json::Value ClientState::getPersistent(const std::string& scope,
+                                       const std::string& name)
+{
+   auto it = persistentState_.find(scope);
+   if (it == persistentState_.end())
+      return json::Value();
+ 
+   auto value = (*it).getValue();
+   if (!value.isObject())
+      return json::Value();
+   
+   auto scopeObject = value.getObject();
+   if (!scopeObject.hasMember(name))
+      return json::Value();
+   
+   return scopeObject[name].clone();
+}
+
 void ClientState::putProjectPersistent(const std::string& scope,
                                        const std::string& name,
                                        const json::Value& value)
@@ -245,8 +263,8 @@ void ClientState::putProjectPersistent(const std::string& scope,
    putProjectPersistent(stateContainer);
 }
 
-json::Value ClientState::getProjectPersistent(std::string scope,
-                                              std::string name)
+json::Value ClientState::getProjectPersistent(const std::string& scope,
+                                              const std::string& name)
 {
    json::Object::Iterator i = projectPersistentState_.find(scope);
    if (i == projectPersistentState_.end())

@@ -1,10 +1,10 @@
 /*
  * SessionDependencies.cpp
  *
- * Copyright (C) 2022 by RStudio, PBC
+ * Copyright (C) 2022 by Posit Software, PBC
  *
- * Unless you have received this program directly from RStudio pursuant
- * to the terms of a commercial license agreement with RStudio, then
+ * Unless you have received this program directly from Posit Software pursuant
+ * to the terms of a commercial license agreement with Posit Software, then
  * this program is licensed to you under the terms of version 3 of the
  * GNU Affero General Public License. This program is distributed WITHOUT
  * ANY EXPRESS OR IMPLIED WARRANTY, INCLUDING THOSE OF NON-INFRINGEMENT,
@@ -618,7 +618,9 @@ Error installDependencies(const json::JsonRpcRequest& request,
    // Run in a vanilla session if Packrat mode isn't on (prevents problematic startup scripts/etc
    // from causing install trouble)
    if (!isProjectLocal)
-      installJob.setProcOptions(async_r::R_PROCESS_VANILLA);
+   {
+      installJob.setProcOptions(async_r::R_PROCESS_VANILLA_USER);
+   }
 
    std::string jobId;
    error = jobs::startScriptJob(installJob, [&]()

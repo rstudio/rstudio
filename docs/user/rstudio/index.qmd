@@ -62,5 +62,3 @@ Posit Workbench administrators can reference the [Posit Workbench Administrator 
 ### Daily Builds
 
 [RStudio Daily builds](https://dailies.rstudio.com/) are intended for testing purposes, and are not recommended for general use. For stable builds, please use one of the above links for Open Source or Commercial downloads.
-
-:::

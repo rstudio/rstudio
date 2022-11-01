@@ -1,10 +1,10 @@
 /*
  * AsyncConnectionImpl.hpp
  *
- * Copyright (C) 2022 by RStudio, PBC
+ * Copyright (C) 2022 by Posit Software, PBC
  *
- * Unless you have received this program directly from RStudio pursuant
- * to the terms of a commercial license agreement with RStudio, then
+ * Unless you have received this program directly from Posit Software pursuant
+ * to the terms of a commercial license agreement with Posit Software, then
  * this program is licensed to you under the terms of version 3 of the
  * GNU Affero General Public License. This program is distributed WITHOUT
  * ANY EXPRESS OR IMPLIED WARRANTY, INCLUDING THOSE OF NON-INFRINGEMENT,
@@ -194,7 +194,7 @@ public:
       return response_;
    }
 
-   virtual void writeResponse(bool close = true)
+   virtual void writeResponse(bool close = true, Socket::Handler handler = Socket::NullHandler)
    {
       // add extra response headers
       if (!response_.containsHeader("Date"))
@@ -214,9 +214,13 @@ public:
                      socket(), // using socket(), not *socket in case of SSL connection
                      response_,
                      boost::bind(&AsyncConnectionImpl<SocketType>::onStreamComplete,
-                                 AsyncConnectionImpl<SocketType>::shared_from_this()),
+                                 AsyncConnectionImpl<SocketType>::shared_from_this(),
+                                 close,
+                                 handler),
                      boost::bind(&AsyncConnectionImpl<SocketType>::handleStreamError,
                                  AsyncConnectionImpl<SocketType>::shared_from_this(),
+                                 close,
+                                 handler,
                                  _1)));
 
          pWriter->write();
@@ -235,23 +239,32 @@ public:
              response_.setContentLength(0);
          }
 
+         // After asyncWrite completes, we want to first do our cleanup
+         // (this->handleWrite()) and then call the caller's handler
+         Socket::Handler handlers = boost::bind(
+            &Socket::joinHandlers,
+            static_cast<Socket::Handler>(boost::bind(
+               &AsyncConnectionImpl<SocketType>::handleWrite,
+               AsyncConnectionImpl<SocketType>::shared_from_this(),
+               boost::asio::placeholders::error,
+               close)),
+            handler,
+            _1,
+            _2
+         );
+
          // write
-         socketOperations_->asyncWrite(
-             response_.toBuffers(),
-             boost::bind(
-                  &AsyncConnectionImpl<SocketType>::handleWrite,
-                  AsyncConnectionImpl<SocketType>::shared_from_this(),
-                  boost::asio::placeholders::error,
-                  close));
+         socketOperations_->asyncWrite(response_.toBuffers(), handlers);
       }
    }
 
    virtual void writeResponse(const http::Response& response,
                               bool close = true,
-                              const Headers& additionalHeaders = Headers())
+                              const Headers& additionalHeaders = Headers(),
+                              Socket::Handler handler = Socket::NullHandler)
    {
       response_.assign(response, additionalHeaders);
-      writeResponse(close);
+      writeResponse(close, handler);
    }
 
    virtual void writeResponseHeaders(Socket::Handler handler)
@@ -529,8 +542,8 @@ private:
             }
          }
          
-         // close the socket
-         if (closeSocket)
+         // close the socket, if requested or if error
+         if (e || closeSocket)
          {
             close();
          }
@@ -567,17 +580,26 @@ private:
       readSome();
    }
 
-   void onStreamComplete()
+   void onStreamComplete(bool close, Socket::Handler handler)
    {
-      close();
+      if (close)
+         this->close();
+      // -1 isn't the correct number of bytes written, but we don't have access
+      // to that information at this point.
+      handler(boost::system::error_code(), -1);
    }
 
-   void handleStreamError(const Error& error)
+   void handleStreamError(bool close, Socket::Handler handler, const Error& error)
    {
       if (!core::http::isConnectionTerminatedError(error))
          LOG_ERROR(error);
-
-      close();
+      if (close)
+         this->close();
+      // jcheng: boost::system::generic_category() isn't correct, but I don't
+      // know how to get an error_code category out of an Error object.
+      // -1 isn't the correct number of bytes written, but we don't have access
+      // to that information at this point.
+      handler(boost::system::error_code(error.getCode(), boost::system::generic_category()), -1);
    }
 
 private:

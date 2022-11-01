@@ -1,10 +1,10 @@
 /*
  * SessionMain.cpp
  *
- * Copyright (C) 2022 by RStudio, PBC
+ * Copyright (C) 2022 by Posit Software, PBC
  *
- * Unless you have received this program directly from RStudio pursuant
- * to the terms of a commercial license agreement with RStudio, then
+ * Unless you have received this program directly from Posit Software pursuant
+ * to the terms of a commercial license agreement with Posit Software, then
  * this program is licensed to you under the terms of version 3 of the
  * GNU Affero General Public License. This program is distributed WITHOUT
  * ANY EXPRESS OR IMPLIED WARRANTY, INCLUDING THOSE OF NON-INFRINGEMENT,
@@ -191,6 +191,7 @@
 #include "modules/rmarkdown/SessionBookdown.hpp"
 #include "modules/quarto/SessionQuarto.hpp"
 #include "modules/shiny/SessionShiny.hpp"
+#include "modules/shiny/SessionPyShiny.hpp"
 #include "modules/sql/SessionSql.hpp"
 #include "modules/stan/SessionStan.hpp"
 #include "modules/viewer/SessionViewer.hpp"
@@ -410,12 +411,13 @@ Error registerSignalHandlers()
    registerBlock.addFunctions()
          (bind(handleSignal, SigInt, handleINT));
 
-   // USR1 and USR2: perform suspend in server mode
+   // USR1, USR2, and TERM: perform suspend in server mode
    if (rsession::options().programMode() == kSessionProgramModeServer)
    {
       registerBlock.addFunctions()
          (bind(handleSignal, SigUsr1, suspend::handleUSR1))
-         (bind(handleSignal, SigUsr2, suspend::handleUSR2));
+         (bind(handleSignal, SigUsr2, suspend::handleUSR2))
+         (bind(handleSignal, SigTerm, suspend::handleUSR2));
    }
    // USR1 and USR2: ignore in desktop mode
    else
@@ -600,6 +602,7 @@ Error rInit(const rstudio::r::session::RInitInfo& rInitInfo)
       (modules::rmarkdown::templates::initialize)
       (modules::rmarkdown::bookdown::initialize)
       (modules::rpubs::initialize)
+      (modules::pyshiny::initialize)
       (modules::shiny::initialize)
       (modules::sql::initialize)
       (modules::stan::initialize)
@@ -980,7 +983,8 @@ void rConsoleHistoryReset()
 
 void rConsoleReset()
 {
-   rsession::console_input::clearConsoleInputBuffer();
+   if (prefs::userPrefs().discardPendingConsoleInputOnError())
+      rsession::console_input::clearConsoleInputBuffer();
 }
 
 bool rLocator(double* x, double* y)
@@ -2156,9 +2160,15 @@ int main(int argc, char * const argv[])
          core::thread::safeLaunchThread(detectParentTermination);
 
       // set the rpostback absolute path
-      FilePath rpostback = options.rpostbackPath()
-                                  .getParent().getParent()
-                                  .completeChildPath("rpostback");
+      FilePath rpostback = options.rpostbackPath();
+   #ifndef __APPLE__
+      // package builds on Linux and Windows hoist the binary one level higher in the directory structure
+      if (rpostback.getAbsolutePath().find("session/postback") == std::string::npos) {
+         rpostback = rpostback.getParent().getParent();
+         rpostback = rpostback.completeChildPath("rpostback");
+      }
+   #endif
+
       core::system::setenv(
             "RS_RPOSTBACK_PATH",
             string_utils::utf8ToSystem(rpostback.getAbsolutePath()));
@@ -2297,6 +2307,7 @@ int main(int argc, char * const argv[])
 
       // r options
       rstudio::r::session::ROptions rOptions;
+      rOptions.projectPath = projects::projectContext().hasProject() ? projects::projectContext().directory() : FilePath();
       rOptions.userHomePath = options.userHomePath();
       rOptions.userScratchPath = options.userScratchPath();
       rOptions.scopedScratchPath = module_context::scopedScratchPath();

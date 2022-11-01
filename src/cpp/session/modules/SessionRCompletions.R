@@ -1,10 +1,10 @@
 #
 # SessionRCompletions.R
 #
-# Copyright (C) 2022 by RStudio, PBC
+# Copyright (C) 2022 by Posit Software, PBC
 #
-# Unless you have received this program directly from RStudio pursuant
-# to the terms of a commercial license agreement with RStudio, then
+# Unless you have received this program directly from Posit Software pursuant
+# to the terms of a commercial license agreement with Posit Software, then
 # this program is licensed to you under the terms of version 3 of the
 # GNU Affero General Public License. This program is distributed WITHOUT
 # ANY EXPRESS OR IMPLIED WARRANTY, INCLUDING THOSE OF NON-INFRINGEMENT,
@@ -65,6 +65,7 @@ assign(x = ".rs.acCompletionTypes",
           KEYWORD     = 22,
           OPTION      = 23,
           DATASET     = 24,
+          COLUMN      = 27,
           CONTEXT     = 99
        )
 )
@@ -228,7 +229,8 @@ assign(x = ".rs.acCompletionTypes",
    .rs.makeCompletions(tag,
                        matchingTags,
                        type = .rs.acCompletionTypes$ROXYGEN,
-                       excludeOtherCompletions = TRUE)
+                       excludeOtherCompletions = TRUE, 
+                       context = .rs.acContextTypes$ROXYGEN)
 })
 
 .rs.addFunction("attemptPlumberTagCompletion", function(token, line)
@@ -297,7 +299,8 @@ assign(x = ".rs.acCompletionTypes",
    .rs.makeCompletions(tag,
                        matchingTags,
                        type = .rs.acCompletionTypes$ROXYGEN,
-                       excludeOtherCompletions = TRUE)
+                       excludeOtherCompletions = TRUE, 
+                       context = .rs.acContextTypes$PLUMBER)
 })
 
 .rs.addFunction("getCompletionsVignettes", function(token)
@@ -732,7 +735,6 @@ assign(x = ".rs.acCompletionTypes",
                                                    string,
                                                    functionCall,
                                                    numCommas,
-                                                   discardFirst,
                                                    envir = parent.frame())
 {
    result <- .rs.emptyCompletions()
@@ -917,25 +919,21 @@ assign(x = ".rs.acCompletionTypes",
       else
          ""
       
+      # arguments that are already used by the matched call
+      used <- names(as.list(matchedCall)[-1]) 
+      keep <- !names(formals$formals) %in% used
+
       result <- .rs.appendCompletions(
          argCompletions,
          .rs.makeCompletions(
             token = token,
-            results = formals$formals,
-            packages = formals$methods,
+            results = formals$formals[keep],
+            packages = formals$methods[keep],
             type = .rs.acCompletionTypes$ARGUMENT,
             fguess = fguess,
             orderStartsWithAlnumFirst = FALSE
          )
       )
-   }
-   
-   if (discardFirst)
-   {
-      result$results <- tail(result$results, length(result$results) - 1)
-      result$packages <- tail(result$packages, length(result$packages) - 1)
-      result$quote <- tail(result$quote, length(result$quote) - 1)
-      result$type <- tail(result$type, length(result$type) - 1)
    }
    
    result
@@ -1028,7 +1026,8 @@ assign(x = ".rs.acCompletionTypes",
          packages = string,
          quote = FALSE,
          type = type,
-         excludeOtherCompletions = TRUE
+         excludeOtherCompletions = TRUE, 
+         context = if (exportsOnly) .rs.acContextTypes$NAMESPACE_EXPORTED else .rs.acContextTypes$NAMESPACE_ALL
       )
    }
    
@@ -1053,7 +1052,8 @@ assign(x = ".rs.acCompletionTypes",
       excludeOtherCompletions = .rs.scalar(excludeOtherCompletions),
       overrideInsertParens = .rs.scalar(overrideInsertParens),
       orderStartsWithAlnumFirst = .rs.scalar(orderStartsWithAlnumFirst),
-      language = .rs.scalar(language)
+      language = .rs.scalar(language), 
+      context = numeric()
    )
 })
 
@@ -1104,7 +1104,8 @@ assign(x = ".rs.acCompletionTypes",
                                             orderStartsWithAlnumFirst = TRUE,
                                             cacheable = TRUE,
                                             helpHandler = NULL,
-                                            language = "R")
+                                            language = "R", 
+                                            context = numeric())
 {
    if (is.null(results))
       results <- character()
@@ -1118,6 +1119,7 @@ assign(x = ".rs.acCompletionTypes",
    quote    <- .rs.formCompletionVector(quote, FALSE, n)
    type     <- .rs.formCompletionVector(type, .rs.acCompletionTypes$UNKNOWN, n)
    meta     <- .rs.formCompletionVector(meta, "", n)
+   context  <- .rs.formCompletionVector(context, .rs.acCompletionTypes$UNKNOWN, n)
    
    # Favor completions starting with a letter
    if (orderStartsWithAlnumFirst)
@@ -1160,7 +1162,8 @@ assign(x = ".rs.acCompletionTypes",
         overrideInsertParens = .rs.scalar(overrideInsertParens),
         cacheable = .rs.scalar(cacheable),
         helpHandler = .rs.scalar(helpHandler),
-        language = .rs.scalar(language))
+        language = .rs.scalar(language), 
+        context = context)
 })
 
 .rs.addFunction("subsetCompletions", function(completions, indices)
@@ -1220,7 +1223,7 @@ assign(x = ".rs.acCompletionTypes",
    # Put package completions at the end
    idx <- completions$type == .rs.acCompletionTypes$PACKAGE
    scores[idx] <- scores[idx] + 10
-   
+
    # Protect against NULL / otherwise invalid scores.
    # TODO: figure out what, upstream, might cause this
    if (length(scores))
@@ -1448,7 +1451,8 @@ assign(x = ".rs.acCompletionTypes",
          quote = FALSE,
          type = type,
          excludeOtherCompletions = TRUE,
-         helpHandler = helpHandler
+         helpHandler = helpHandler, 
+         context = if (isAt) .rs.acContextTypes$AT else .rs.acContextTypes$DOLLAR
       )
    }
    
@@ -1592,7 +1596,8 @@ assign(x = ".rs.acCompletionTypes",
       packages = matches,
       quote = quote,
       type = .rs.acCompletionTypes$PACKAGE,
-      excludeOtherCompletions = excludeOtherCompletions
+      excludeOtherCompletions = excludeOtherCompletions, 
+      context = .rs.acContextTypes$PACKAGE
    )
    
    .rs.sortCompletions(
@@ -2010,33 +2015,8 @@ assign(x = ".rs.acCompletionTypes",
                        type = .rs.acCompletionTypes$STRING)
 })
 
-.rs.addJsonRpcHandler("get_completions", function(token,
-                                                  string,
-                                                  type,
-                                                  numCommas,
-                                                  functionCallString,
-                                                  chainObjectName,
-                                                  additionalArgs,
-                                                  excludeArgs,
-                                                  excludeArgsFromObject,
-                                                  filePath,
-                                                  documentId,
-                                                  line,
-                                                  isConsole)
+.rs.addFunction("readlineCompletions", function(token) 
 {
-   # Ensure UTF-8 encoding, as that's the encoding set when passed down from
-   # the client
-   token <- .rs.setEncodingUnknownToUTF8(token)
-   string <- .rs.setEncodingUnknownToUTF8(string)
-   functionCallString <- .rs.setEncodingUnknownToUTF8(functionCallString)
-   chainObjectName <- .rs.setEncodingUnknownToUTF8(chainObjectName)
-   additionalArgs <- .rs.setEncodingUnknownToUTF8(additionalArgs)
-   excludeArgs <- .rs.setEncodingUnknownToUTF8(excludeArgs)
-   excludeArgsFromObject <- .rs.setEncodingUnknownToUTF8(excludeArgsFromObject)
-   filePath <- .rs.setEncodingUnknownToUTF8(filePath)
-   
-   # if base::readline() is on the stack, try to extract choices i.e. (yes/no)
-   # and offer those as completions.
    nframes <- sys.nframe()
    for (i in seq_len(nframes)) {
       fun <- sys.function(i)
@@ -2065,6 +2045,38 @@ assign(x = ".rs.acCompletionTypes",
          }
       }  
    }
+})
+
+.rs.addJsonRpcHandler("get_completions", function(token,
+                                                  string,
+                                                  context,
+                                                  numCommas,
+                                                  functionCallString,
+                                                  chainObjectName,
+                                                  additionalArgs,
+                                                  excludeArgs,
+                                                  excludeArgsFromObject,
+                                                  filePath,
+                                                  documentId,
+                                                  line,
+                                                  isConsole)
+{
+   # Ensure UTF-8 encoding, as that's the encoding set when passed down from
+   # the client
+   token <- .rs.setEncodingUnknownToUTF8(token)
+   string <- .rs.setEncodingUnknownToUTF8(string)
+   functionCallString <- .rs.setEncodingUnknownToUTF8(functionCallString)
+   chainObjectName <- .rs.setEncodingUnknownToUTF8(chainObjectName)
+   additionalArgs <- .rs.setEncodingUnknownToUTF8(additionalArgs)
+   excludeArgs <- .rs.setEncodingUnknownToUTF8(excludeArgs)
+   excludeArgsFromObject <- .rs.setEncodingUnknownToUTF8(excludeArgsFromObject)
+   filePath <- .rs.setEncodingUnknownToUTF8(filePath)
+   
+   # if base::readline() is on the stack, try to extract choices i.e. (yes/no)
+   # and offer those as completions.
+   readLineCompletions <- .rs.readlineCompletions(token)
+   if (!is.null(readLineCompletions))
+      return(readLineCompletions)
 
    # If the R console is requesting completions, but the Python REPL is
    # active, then delegate to that machinery.
@@ -2141,6 +2153,14 @@ assign(x = ".rs.acCompletionTypes",
             functionCallString,
             fixed = TRUE
          )
+      } else if (nzchar(chainObjectName)) {
+         
+         functionCallString <- sub(
+            "(",
+            paste("(", chainObjectName, ",", sep = ""),
+            functionCallString,
+            fixed = TRUE
+         )
       }
    }
    
@@ -2154,7 +2174,7 @@ assign(x = ".rs.acCompletionTypes",
    ## Handle some special cases early
    
    # custom help handler for arguments
-   if (.rs.acContextTypes$FUNCTION %in% type) {
+   if (.rs.acContextTypes$FUNCTION %in% context) {
       scope <- string[[1]]
       custom <- .rs.findCustomHelpContext(scope, "help_formals_handler")
       if (!is.null(custom)) {
@@ -2163,29 +2183,30 @@ assign(x = ".rs.acCompletionTypes",
             results <- paste(formals$formals, "= ")
             results <- .rs.selectFuzzyMatches(results, token)
             return(.rs.makeCompletions(
-               token = token,
-               results = results,
-               packages = scope,
-               type = .rs.acCompletionTypes$ARGUMENT,
+               token                   = token,
+               results                 = results,
+               packages                = scope,
+               type                    = .rs.acCompletionTypes$ARGUMENT,
                excludeOtherCompletions = TRUE,
-               helpHandler = formals$helpHandler)
+               helpHandler             = formals$helpHandler, 
+               context                 = .rs.acContextTypes$FUNCTION)
             )
          } else {
-            return (.rs.emptyCompletions(excludeOtherCompletions = TRUE))
+            return(.rs.emptyCompletions(excludeOtherCompletions = TRUE))
          }
       }
    }
    
    # help
-   if (.rs.acContextTypes$HELP %in% type)
+   if (.rs.acContextTypes$HELP %in% context)
       return(.rs.getCompletionsHelp(token))
    
    # Roxygen
-   if (.rs.acContextTypes$ROXYGEN %in% type)
+   if (.rs.acContextTypes$ROXYGEN %in% context)
       return(.rs.attemptRoxygenTagCompletion(token, line))
    
    # Plumber
-   if (.rs.acContextTypes$PLUMBER %in% type)
+   if (.rs.acContextTypes$PLUMBER %in% context)
       return(.rs.attemptPlumberTagCompletion(token, line))
    
    # install.packages
@@ -2210,15 +2231,12 @@ assign(x = ".rs.acCompletionTypes",
        string[[1]] %in% c(".Call", ".C", ".Fortran", ".External") &&
        numCommas[[1]] == 0)
    {
-      completions <- .rs.appendCompletions(
-         .rs.getCompletionsNativeRoutine(token, string[[1]]),
-         .rs.getCompletionsSearchPath(token))
-      return(completions)
+      return(.rs.getCompletionsNativeRoutine(token, string[[1]]))
    }
    
    # data
-   if (length(type) &&
-       type[[1]] == .rs.acContextTypes$FUNCTION &&
+   if (length(context) &&
+       context[[1]] == .rs.acContextTypes$FUNCTION &&
        string[[1]] == "data" &&
        numCommas[[1]] == 0)
    {
@@ -2226,7 +2244,7 @@ assign(x = ".rs.acCompletionTypes",
    }
    
    # package name
-   if (.rs.acContextTypes$PACKAGE %in% type)
+   if (.rs.acContextTypes$PACKAGE %in% context)
       return(.rs.getCompletionsPackages(token = token,
                                         appendColons = TRUE,
                                         excludeOtherCompletions = TRUE))
@@ -2260,7 +2278,7 @@ assign(x = ".rs.acCompletionTypes",
          .rs.getCompletionsActiveFrame(token, envir),
          .rs.getCompletionsLibraryContext(token,
                                           string,
-                                          type,
+                                          context,
                                           numCommas,
                                           functionCall,
                                           dropFirstArgument,
@@ -2314,9 +2332,9 @@ assign(x = ".rs.acCompletionTypes",
    }
    
    ## File-based completions
-   if (.rs.acContextTypes$FILE %in% type)
+   if (.rs.acContextTypes$FILE %in% context)
    {
-      whichIndex <- which(type == .rs.acContextTypes$FILE)
+      whichIndex <- which(context == .rs.acContextTypes$FILE)
       
       tokenToUse <- string[[whichIndex]]
       
@@ -2370,18 +2388,18 @@ assign(x = ".rs.acCompletionTypes",
    # Shiny completions
    
    ## Completions for server.r (from ui.r)
-   if (type[[1]] %in% c(.rs.acContextTypes$DOLLAR,
-                        .rs.acContextTypes$DOUBLE_BRACKET) &&
+   if (context[[1]] %in% c(.rs.acContextTypes$DOLLAR,
+                           .rs.acContextTypes$DOUBLE_BRACKET) &&
        tolower(basename(filePath)) == "server.r" &&
        string[[1]] %in% c("input", "output"))
    {
-      completions <- .rs.getCompletionsFromShinyUI(token, filePath, string[[1]], type[[1]])
+      completions <- .rs.getCompletionsFromShinyUI(token, filePath, string[[1]], context[[1]])
       if (!is.null(completions))
          return(completions)
    }
    
    ## Completions for server.r, on session
-   if (type[[1]] == .rs.acContextTypes$DOLLAR &&
+   if (context[[1]] == .rs.acContextTypes$DOLLAR &&
        tolower(basename(filePath)) == "server.r" &&
        string[[1]] == "session")
    {
@@ -2391,12 +2409,12 @@ assign(x = ".rs.acCompletionTypes",
    }
    
    ## Completions for ui.r (from server.r)
-   if (type[[1]] == .rs.acContextTypes$FUNCTION &&
+   if (context[[1]] == .rs.acContextTypes$FUNCTION &&
        tolower(basename(filePath)) == "ui.r" &&
        numCommas[[1]] == 0 &&
        .rs.mightBeShinyFunction(string[[1]]))
    {
-      completions <- .rs.getCompletionsFromShinyServer(token, filePath, string[[1]], type[[1]])
+      completions <- .rs.getCompletionsFromShinyServer(token, filePath, string[[1]], context[[1]])
       if (!is.null(completions))
          return(completions)
    }
@@ -2417,7 +2435,7 @@ assign(x = ".rs.acCompletionTypes",
    }
    
    # options
-   else if (string[[1]] == "options" && type == .rs.acContextTypes$FUNCTION)
+   else if (string[[1]] == "options" && context == .rs.acContextTypes$FUNCTION)
    {
       .rs.getCompletionsOptions(token)
    }
@@ -2431,7 +2449,7 @@ assign(x = ".rs.acCompletionTypes",
    ## If we are getting completions from a '$', '@', '::' or ':::' then we do not
    ## want to look for completions in other contexts
    # dollar context
-   dontLookBack <- length(type) && type[[1]] %in% c(
+   dontLookBack <- length(context) && context[[1]] %in% c(
       .rs.acContextTypes$DOLLAR, .rs.acContextTypes$AT,
       .rs.acContextTypes$NAMESPACE_EXPORTED,
       .rs.acContextTypes$NAMESPACE_ALL
@@ -2440,25 +2458,25 @@ assign(x = ".rs.acCompletionTypes",
    if (dontLookBack)
    {
       # dollar context
-      if (type[[1]] %in% c(.rs.acContextTypes$DOLLAR, .rs.acContextTypes$AT))
+      if (context[[1]] %in% c(.rs.acContextTypes$DOLLAR, .rs.acContextTypes$AT))
       {
          completions <- .rs.getCompletionsDollar(
             token,
             string[[1]],
             functionCall,
             envir,
-            type[[1]] == .rs.acContextTypes$AT
+            context[[1]] == .rs.acContextTypes$AT
          )
       }
       
       # namespace context
-      else if (type[[1]] %in% c(.rs.acContextTypes$NAMESPACE_EXPORTED,
+      else if (context[[1]] %in% c(.rs.acContextTypes$NAMESPACE_EXPORTED,
                                 .rs.acContextTypes$NAMESPACE_ALL))
       {
          completions <- .rs.getCompletionsNamespace(
             token,
             string[[1]],
-            type[[1]] == .rs.acContextTypes$NAMESPACE_EXPORTED,
+            context[[1]] == .rs.acContextTypes$NAMESPACE_EXPORTED,
             envir
          )
       }
@@ -2473,7 +2491,7 @@ assign(x = ".rs.acCompletionTypes",
             completions,
             .rs.getRCompletions(token,
                                 string[[i]],
-                                type[[i]],
+                                context[[i]],
                                 numCommas[[i]],
                                 functionCall,
                                 dropFirstArgument,
@@ -2485,7 +2503,7 @@ assign(x = ".rs.acCompletionTypes",
    
    # get completions from the search path for the 'generic' contexts
    if (token != "" &&
-       type[[1]] %in% c(.rs.acContextTypes$UNKNOWN,
+       context[[1]] %in% c(.rs.acContextTypes$UNKNOWN,
                         .rs.acContextTypes$FUNCTION,
                         .rs.acContextTypes$ARGUMENT,
                         .rs.acContextTypes$SINGLE_BRACKET,
@@ -2493,7 +2511,7 @@ assign(x = ".rs.acCompletionTypes",
    {
       discardFirst <-
          (dropFirstArgument) ||
-         (type[[1]] == .rs.acContextTypes$FUNCTION && chainObjectName != "")
+         (context[[1]] == .rs.acContextTypes$FUNCTION && chainObjectName != "")
       
       completions <- Reduce(.rs.appendCompletions, list(
          completions,
@@ -2502,7 +2520,7 @@ assign(x = ".rs.acCompletionTypes",
          .rs.getCompletionsActiveFrame(token, envir),
          .rs.getCompletionsLibraryContext(token,
                                           string[[1]],
-                                          type[[1]],
+                                          context[[1]],
                                           numCommas[[1]],
                                           functionCall,
                                           discardFirst,
@@ -2521,7 +2539,7 @@ assign(x = ".rs.acCompletionTypes",
    }
    
    ## Package completions (e.g. `stats::`)
-   if (token != "" && .rs.acContextTypes$UNKNOWN %in% type)
+   if (token != "" && .rs.acContextTypes$UNKNOWN %in% context)
       completions <- .rs.appendCompletions(
          completions,
          .rs.getCompletionsPackages(token, TRUE)
@@ -2540,14 +2558,13 @@ assign(x = ".rs.acCompletionTypes",
                                additionalArgs,
                                excludeArgs,
                                excludeArgsFromObject,
-                               discardFirst,
                                envir)
    )
    
    ## Override param insertion if the function was 'debug' or 'trace'
-   for (i in seq_along(type))
+   for (i in seq_along(context))
    {
-      if (type[[i]] %in% c(.rs.acContextTypes$FUNCTION, .rs.acContextTypes$UNKNOWN))
+      if (context[[i]] %in% c(.rs.acContextTypes$FUNCTION, .rs.acContextTypes$UNKNOWN))
       {
          ## Exclude certain functions
          if (string[[i]] %in% c("help", "str", "args", "debug", "debugonce", "trace"))
@@ -2679,40 +2696,12 @@ assign(x = ".rs.acCompletionTypes",
                                                  additionalArgs,
                                                  excludeArgs,
                                                  excludeArgsFromObject,
-                                                 discardFirst,
                                                  envir)
 {
    ## chainObjectName will be provided if the client detected
    ## that we were performing completions within an e.g.
    ## `%>%` chain -- use completions from the associated data object.
    result <- .rs.emptyCompletions()
-   
-   if (!is.null(chainObjectName) && !excludeArgsFromObject)
-   {
-      object <- .rs.getAnywhere(chainObjectName, envir = envir)
-      if (inherits(object, "python.builtin.object"))
-         return(.rs.emptyCompletions())
-      
-      if (length(object))
-      {
-         objectNames <- .rs.getNames(object)
-         if (length(objectNames))
-         {
-            completions <- .rs.selectFuzzyMatches(objectNames, token)
-            type <- vapply(completions, FUN.VALUE = numeric(1), USE.NAMES = FALSE, function(i) {
-               .rs.getCompletionType(object[[i]])
-            })
-            
-            result <- .rs.makeCompletions(
-               token = token,
-               results = completions,
-               packages = paste("[", chainObjectName, "]", sep = ""),
-               quote = FALSE,
-               type = type
-            )
-         }
-      }
-   }
    
    if (length(additionalArgs))
    {
@@ -2722,10 +2711,51 @@ assign(x = ".rs.acCompletionTypes",
          .rs.makeCompletions(
             token = token,
             results = argsToAdd,
-            packages = paste("*", chainObjectName, "*", sep = ""),
-            type = .rs.acCompletionTypes$UNKNOWN
+            packages = paste0(chainObjectName, " %>% ..."),
+            type = .rs.acCompletionTypes$COLUMN
          )
       )
+   }
+   
+   if (!is.null(chainObjectName) && !excludeArgsFromObject)
+   {
+      object <- .rs.getAnywhere(chainObjectName, envir = envir)
+      if (inherits(object, "python.builtin.object"))
+         return(.rs.emptyCompletions())
+      
+      if (length(object))
+      {
+         objectNames <- setdiff(.rs.getNames(object), additionalArgs)
+         if (length(objectNames))
+         {
+            completions <- .rs.selectFuzzyMatches(objectNames, token)
+            if (inherits(object, "data.frame"))
+            {
+               # when the chain object is a data frame, 
+               # set the completion type to COLUMN
+               types <- rep(.rs.acCompletionTypes$COLUMN, length(completions))
+               packages <- chainObjectName
+            }
+            else
+            {
+               # otherwise infer from the object
+               types <- vapply(completions, FUN.VALUE = numeric(1), USE.NAMES = FALSE, function(i) {
+                  .rs.getCompletionType(object[[i]])
+               })
+               packages <- paste("[", chainObjectName, "]", sep = "") 
+            }
+            
+            result <- .rs.appendCompletions(
+               result, .rs.makeCompletions(
+                  token = token,
+                  results = completions,
+                  packages = packages,
+                  quote = FALSE,
+                  type = types
+               )
+            )
+         }
+      }
    }
    
    if (length(excludeArgs))
@@ -2740,26 +2770,32 @@ assign(x = ".rs.acCompletionTypes",
 
 .rs.addFunction("getRCompletions", function(token,
                                             string,
-                                            type,
+                                            context,
                                             numCommas,
                                             functionCall,
                                             discardFirst,
                                             documentId,
                                             envir)
 {
-   .rs.appendCompletions(
-      .rs.getCompletionsLibraryContext(token, string, type, numCommas, functionCall, discardFirst, documentId, envir),
-      if (type == .rs.acContextTypes$FUNCTION)
-         .rs.getCompletionsFunction(token, string, functionCall, numCommas, discardFirst, envir)
-      else if (type == .rs.acContextTypes$ARGUMENT)
+   libraryContextCompletions <- .rs.getCompletionsLibraryContext(token, string, context, numCommas, functionCall, discardFirst, documentId, envir)
+   completions <- if (context == .rs.acContextTypes$FUNCTION)
+         .rs.getCompletionsFunction(token, string, functionCall, numCommas, envir)
+      else if (context == .rs.acContextTypes$ARGUMENT)
          .rs.getCompletionsArgument(token, string, functionCall, envir)
-      else if (type == .rs.acContextTypes$SINGLE_BRACKET)
+      else if (context == .rs.acContextTypes$SINGLE_BRACKET)
          .rs.getCompletionsSingleBracket(token, string, functionCall, numCommas, envir)
-      else if (type == .rs.acContextTypes$DOUBLE_BRACKET)
+      else if (context == .rs.acContextTypes$DOUBLE_BRACKET)
          .rs.getCompletionsDoubleBracket(token, string, functionCall, envir)
       else
          .rs.emptyCompletions()
-   )
+         
+   # prefer argument completions from libraryContextCompletions
+   # because it contains the package name too
+   if (any(libraryContextCompletions$type == .rs.acCompletionTypes$ARGUMENT)) 
+   {
+      completions <- .rs.subsetCompletions(completions, completions$type != .rs.acCompletionTypes$ARGUMENT)
+   }
+   .rs.appendCompletions(libraryContextCompletions, completions)
 })
 
 ## NOTE: This is a modified version of 'matchAvailableTopics'
@@ -2778,7 +2814,7 @@ assign(x = ".rs.acCompletionTypes",
       error = function(e) character()
    )
    
-   ## If the the current search paths have changed, invalidate
+   ## If the current search paths have changed, invalidate
    ## the cache and update our aliases
    paths <- searchpaths()[substring(search(), 1, 8) == "package:"]
    if (!identical(basename(paths), attachedPackagesCache))
@@ -2838,12 +2874,13 @@ assign(x = ".rs.acCompletionTypes",
    listed <- .rs.namedVectorAsList(filtered)
    
    completions <- .rs.makeCompletions(
-      token = token,
-      results = listed$values,
-      packages = listed$names,
-      quote = quote,
-      type = .rs.acCompletionTypes$HELP,
-      overrideInsertParens = TRUE
+      token                = token,
+      results              = listed$values,
+      packages             = listed$names,
+      quote                = quote,
+      type                 = .rs.acCompletionTypes$HELP,
+      overrideInsertParens = TRUE, 
+      context              = .rs.acContextTypes$HELP
    )
    
    .rs.sortCompletions(completions, token)
@@ -3462,14 +3499,14 @@ assign(x = ".rs.acCompletionTypes",
    
    .rs.makeCompletions(token = token,
                        results = results,
-                       packages = paste(pkg, string[[1]], sep = "|||"),
+                       packages = paste(pkg, string[[1]], sep = "::"),
                        type = .rs.acCompletionTypes$ARGUMENT,
                        fguess = string[[1]])
 })
 
 .rs.addFunction("getCompletionsLibraryContext", function(token,
                                                          string,
-                                                         type,
+                                                         context,
                                                          numCommas,
                                                          functionCall,
                                                          discardFirst,
@@ -3501,7 +3538,7 @@ assign(x = ".rs.acCompletionTypes",
    
    # If we're getting completions for a particular function's arguments,
    # use those
-   if (length(type) && type[[1]] == .rs.acContextTypes$FUNCTION)
+   if (length(context) && context[[1]] == .rs.acContextTypes$FUNCTION)
    {
       results <- .rs.appendCompletions(
          results,

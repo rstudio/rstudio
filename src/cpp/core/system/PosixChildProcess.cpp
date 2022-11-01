@@ -1,10 +1,10 @@
 /*
  * PosixChildProcess.cpp
  *
- * Copyright (C) 2022 by RStudio, PBC
+ * Copyright (C) 2022 by Posit Software, PBC
  *
- * Unless you have received this program directly from RStudio pursuant
- * to the terms of a commercial license agreement with RStudio, then
+ * Unless you have received this program directly from Posit Software pursuant
+ * to the terms of a commercial license agreement with Posit Software, then
  * this program is licensed to you under the terms of version 3 of the
  * GNU Affero General Public License. This program is distributed WITHOUT
  * ANY EXPRESS OR IMPLIED WARRANTY, INCLUDING THOSE OF NON-INFRINGEMENT,
@@ -1062,6 +1062,7 @@ void AsyncChildProcess::poll()
          callbacks_.onStarted(*this);
       pAsyncImpl_->calledOnStarted_ = true;
    }
+   
    // call onContinue
    if (callbacks_.onContinue)
    {
@@ -1079,7 +1080,7 @@ void AsyncChildProcess::poll()
    // check stdout and fire event if we got output
    if (!pAsyncImpl_->finishedStdout_)
    {
-      bool eof;
+      bool eof = false;
       std::string out;
       Error error = readPipe(pImpl_->fdStdout, &out, &eof);
       if (error)
@@ -1102,7 +1103,7 @@ void AsyncChildProcess::poll()
    // check stderr and fire event if we got output
    if (!pAsyncImpl_->finishedStderr_)
    {
-      bool eof;
+      bool eof = false;
       std::string err;
       Error error = readPipe(pImpl_->fdStderr, &err, &eof);
 
@@ -1129,13 +1130,60 @@ void AsyncChildProcess::poll()
    // which occurs if the child was reaped by a global handler) in which
    // case we'll allow the exit sequence to proceed and simply pass -1 as
    // the exit status.
-   int status;
+   int status = -1;
    PidType result = posix::posixCall<PidType>(
             boost::bind(::waitpid, pImpl_->pid, &status, WNOHANG));
 
    // either a normal exit or an error while waiting
    if (result != 0)
    {
+      // check stdout and fire event if we got output
+      if (!pAsyncImpl_->finishedStdout_)
+      {
+         bool eof = false;
+         std::string out;
+         Error error = readPipe(pImpl_->fdStdout, &out, &eof);
+         if (error)
+         {
+            reportError(error);
+         }
+         else
+         {
+            if (!out.empty() && callbacks_.onStdout)
+            {
+               hasRecentOutput = true;
+               callbacks_.onStdout(*this, out);
+            }
+
+            if (eof)
+               pAsyncImpl_->finishedStdout_ = true;
+         }
+      }
+
+      // check stderr and fire event if we got output
+      if (!pAsyncImpl_->finishedStderr_)
+      {
+         bool eof = false;
+         std::string err;
+         Error error = readPipe(pImpl_->fdStderr, &err, &eof);
+
+         if (error)
+         {
+            reportError(error);
+         }
+         else
+         {
+            if (!err.empty() && callbacks_.onStderr)
+            {
+               hasRecentOutput = true;
+               callbacks_.onStderr(*this, err);
+            }
+
+            if (eof)
+               pAsyncImpl_->finishedStderr_ = true;
+         }
+      }
+      
       // close all of our pipes
       pImpl_->closeAll(ERROR_LOCATION);
 

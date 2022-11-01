@@ -1,10 +1,10 @@
 #
 # NotebookData.R
 #
-# Copyright (C) 2022 by RStudio, PBC
+# Copyright (C) 2022 by Posit Software, PBC
 #
-# Unless you have received this program directly from RStudio pursuant
-# to the terms of a commercial license agreement with RStudio, then
+# Unless you have received this program directly from Posit Software pursuant
+# to the terms of a commercial license agreement with Posit Software, then
 # this program is licensed to you under the terms of version 3 of the
 # GNU Affero General Public License. This program is distributed WITHOUT
 # ANY EXPRESS OR IMPLIED WARRANTY, INCLUDING THOSE OF NON-INFRINGEMENT,
@@ -293,7 +293,9 @@
 
   columns <- unname(columns)
 
-  is_list <- vapply(data, is.list, logical(1))
+  # preserve vctrs-based classes so custom format() is called
+  is_list_not_vctrs <- function(x) is.list(x) && !inherits(x, "vctrs_vctr")
+  is_list <- vapply(data, is_list_not_vctrs, logical(1))
   data[is_list] <- lapply(data[is_list], function(x) {
         summary <- obj_sum(x)
         paste0("<", summary, ">")

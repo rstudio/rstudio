@@ -16,6 +16,8 @@ properties([
                 ])
 ])
 
+sentryUploadRetryLimit=5
+
 def compile_package(os, type, flavor, variant) {
   // start with major, minor, and patch versions
   def envVars = "RSTUDIO_VERSION_MAJOR=${rstudioVersionMajor} RSTUDIO_VERSION_MINOR=${rstudioVersionMinor} RSTUDIO_VERSION_PATCH=${rstudioVersionPatch} RSTUDIO_VERSION_SUFFIX=${rstudioVersionSuffix}"
@@ -153,10 +155,14 @@ def s3_upload(type, flavor, os, arch) {
 
 def sentry_upload(type, flavor) {
   withCredentials([string(credentialsId: 'ide-sentry-api-key', variable: 'SENTRY_API_KEY')]){
-    retry(5) {
-      // timeout sentry in 15 minutes
-      timeout(activity: true, time: 15) {
-    sh "cd package/linux/build-${flavor.capitalize()}-${type}/src/cpp && ../../../../../docker/jenkins/sentry-upload.sh ${SENTRY_API_KEY}"
+    // timeout sentry in 15 minutes
+    timeout(activity: true, time: 15) {
+      try {
+        // attempt to run sentry uplaod
+        sh "cd package/linux/build-${flavor.capitalize()}-${type}/src/cpp && ../../../../../docker/jenkins/sentry-upload.sh ${SENTRY_API_KEY} ${sentryUploadRetryLimit}"
+      } catch(err) {
+        // mark build as unstable if it fails
+        unstable("Sentry upload failed (${flavor.capitalize()} ${type})")
       }
     }
   }
@@ -254,7 +260,9 @@ try {
           [os: 'rhel9',      arch: 'x86_64', flavor: 'electron', variant: '',  package_os: 'RHEL 9'],
           [os: 'rhel9',      arch: 'arm64',  flavor: 'electron', variant: '',  package_os: 'RHEL 9'],
           [os: 'rhel8',      arch: 'x86_64', flavor: 'server',   variant: '',  package_os: 'RHEL 8'],
-          [os: 'rhel8',      arch: 'x86_64', flavor: 'electron', variant: '',  package_os: 'RHEL 8']
+          [os: 'rhel8',      arch: 'arm64',  flavor: 'server',   variant: '',  package_os: 'RHEL 8'],
+          [os: 'rhel8',      arch: 'x86_64', flavor: 'electron', variant: '',  package_os: 'RHEL 8'],
+          [os: 'rhel8',      arch: 'arm64',  flavor: 'electron', variant: '',  package_os: 'RHEL 8']
         ]
         containers = limit_builds(containers)
 
@@ -512,7 +520,13 @@ try {
 
                                         // upload the breakpad symbols
                                         withCredentials([string(credentialsId: 'ide-sentry-api-key', variable: 'SENTRY_API_KEY')]) {
-                                            bat "cd package\\win32\\build\\src\\cpp && ..\\..\\..\\..\\..\\dependencies\\windows\\sentry-cli.exe --auth-token %SENTRY_API_KEY% upload-dif --log-level=debug --org rstudio --project ide-backend -t breakpad ."
+                                            try {
+                                                // attempt to run sentry uplaod
+                                                bat "cd package\\win32\\build\\src\\cpp && set SENTRY_HTTP_MAX_RETRIES=${sentryUploadRetryLimit} && ..\\..\\..\\..\\..\\dependencies\\windows\\sentry-cli.exe --auth-token %SENTRY_API_KEY% upload-dif --log-level=debug --org rstudio --project ide-backend -t breakpad ."
+                                            } catch(err) {
+                                                // mark build as unstable if it fails
+                                                currentBuild.result = "UNSTABLE"
+                                            }
                                         }
                                     }
                                 }
@@ -537,7 +551,11 @@ try {
           trigger_external_build('IDE/qa-opensource-automation')
         }
 
-        slackSend channel: params.get('SLACK_CHANNEL', '#ide-builds'), color: 'good', message: "${messagePrefix} passed (${currentBuild.result})"
+        if (currentBuild.result == "UNSTABLE") {
+          slackSend channel: params.get('SLACK_CHANNEL', '#ide-builds'), color: 'warning', message: "${messagePrefix} ${currentBuild.result}"
+        } else {
+          slackSend channel: params.get('SLACK_CHANNEL', '#ide-builds'), color: 'good', message: "${messagePrefix} passed (${currentBuild.result})"
+        }
     }
 
 } catch(FlowInterruptedException interrupted) {

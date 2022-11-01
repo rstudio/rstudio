@@ -1,10 +1,10 @@
 /*
  * RSearchPath.cpp
  *
- * Copyright (C) 2022 by RStudio, PBC
+ * Copyright (C) 2022 by Posit Software, PBC
  *
- * Unless you have received this program directly from RStudio pursuant
- * to the terms of a commercial license agreement with RStudio, then
+ * Unless you have received this program directly from Posit Software pursuant
+ * to the terms of a commercial license agreement with Posit Software, then
  * this program is licensed to you under the terms of version 3 of the
  * GNU Affero General Public License. This program is distributed WITHOUT
  * ANY EXPRESS OR IMPLIED WARRANTY, INCLUDING THOSE OF NON-INFRINGEMENT,
@@ -124,6 +124,8 @@ bool hasEnvironmentData(const std::string& elementName)
    else if (elementName == "tools:rstudio")
       return false;
    else if (elementName == ".GlobalEnv") // saved and restored separately
+      return false;
+   else if (elementName == "org:r-lib")
       return false;
    else 
       return true;
@@ -283,6 +285,15 @@ Error save(const FilePath& statePath)
       if (boost::algorithm::starts_with(elementName, "package:"))
       {
          std::string name = elementName.substr(strlen("package:"));
+
+         // skip if this is a dev package, i.e. loaded with load_all()
+         bool isDev = false;
+         Error error = r::exec::RFunction(".rs.isDevPackage").addParam(name).call(&isDev);
+         if (error)
+            return error;
+         if (isDev)
+            continue;
+
          SEXP pathSEXP = Rf_getAttrib(envSEXP, Rf_install("path"));
          if (Rf_isString(pathSEXP) && Rf_length(pathSEXP) == 1)
          {

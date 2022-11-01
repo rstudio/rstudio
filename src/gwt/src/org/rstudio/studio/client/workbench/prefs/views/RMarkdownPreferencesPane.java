@@ -1,10 +1,10 @@
 /*
  * RMarkdownPreferencesPane.java
  *
- * Copyright (C) 2022 by RStudio, PBC
+ * Copyright (C) 2022 by Posit Software, PBC
  *
- * Unless you have received this program directly from RStudio pursuant
- * to the terms of a commercial license agreement with RStudio, then
+ * Unless you have received this program directly from Posit Software pursuant
+ * to the terms of a commercial license agreement with Posit Software, then
  * this program is licensed to you under the terms of version 3 of the
  * GNU Affero General Public License. This program is distributed WITHOUT
  * ANY EXPRESS OR IMPLIED WARRANTY, INCLUDING THOSE OF NON-INFRINGEMENT,
@@ -29,7 +29,6 @@ import jsinterop.base.Js;
 import org.rstudio.core.client.Debug;
 import org.rstudio.core.client.ElementIds;
 import org.rstudio.core.client.MessageDisplay;
-import org.rstudio.core.client.prefs.PreferencesDialogBaseResources;
 import org.rstudio.core.client.prefs.RestartRequirement;
 import org.rstudio.core.client.resources.ImageResource2x;
 import org.rstudio.core.client.theme.DialogTabLayoutPanel;
@@ -44,7 +43,6 @@ import org.rstudio.studio.client.common.FileDialogs;
 import org.rstudio.studio.client.common.HelpLink;
 import org.rstudio.studio.client.panmirror.server.PanmirrorZoteroLocalConfig;
 import org.rstudio.studio.client.panmirror.server.PanmirrorZoteroServerOperations;
-import org.rstudio.studio.client.quarto.model.QuartoConfig;
 import org.rstudio.studio.client.server.ServerError;
 import org.rstudio.studio.client.server.ServerRequestCallback;
 import org.rstudio.studio.client.workbench.model.RemoteFileSystemContext;
@@ -71,9 +69,7 @@ public class RMarkdownPreferencesPane extends PreferencesPane
    {
       prefs_ = prefs;
       state_ = state;
-      session_ = session;
       res_ = res;
-      PreferencesDialogBaseResources baseRes = PreferencesDialogBaseResources.INSTANCE;
       
       VerticalTabPanel basic = new VerticalTabPanel(ElementIds.RMARKDOWN_BASIC_PREFS);
 
@@ -611,7 +607,6 @@ public class RMarkdownPreferencesPane extends PreferencesPane
    private final UserState state_;
    
    private final PreferencesDialogResources res_;
-   private final Session session_;
 
    private final SelectWidget rmdViewerMode_;
    private final SelectWidget docOutlineDisplay_;

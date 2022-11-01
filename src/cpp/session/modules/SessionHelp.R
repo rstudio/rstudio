@@ -1,10 +1,10 @@
 #
 # SessionHelp.R
 #
-# Copyright (C) 2022 by RStudio, PBC
+# Copyright (C) 2022 by Posit Software, PBC
 #
-# Unless you have received this program directly from RStudio pursuant
-# to the terms of a commercial license agreement with RStudio, then
+# Unless you have received this program directly from Posit Software pursuant
+# to the terms of a commercial license agreement with Posit Software, then
 # this program is licensed to you under the terms of version 3 of the
 # GNU Affero General Public License. This program is distributed WITHOUT
 # ANY EXPRESS OR IMPLIED WARRANTY, INCLUDING THOSE OF NON-INFRINGEMENT,
@@ -285,9 +285,9 @@ options(help_type = "html")
       return()
    
    # If we've encoded the package and function in 'what', pull it out
-   if (grepl("|||", what, fixed = TRUE))
+   if (grepl("::.", what))
    {
-      splat <- strsplit(what, "|||", fixed = TRUE)[[1]]
+      splat <- strsplit(what, "::", fixed = TRUE)[[1]]
       from <- splat[[1]]
       what <- splat[[2]]
    }
@@ -800,10 +800,20 @@ options(help_type = "html")
    .rs.followHelpTopic(pkg = pkg, topic = topic)
 })
 
-.rs.addFunction("Rd2HTML", function(file, package = "", Rdmacros = "")
+.rs.addFunction("RdLoadMacros", function(file)
+{
+   dir <- dirname(dirname(file))
+   macros <- suppressWarnings(tools::loadPkgRdMacros(dir))
+   tools::loadPkgRdMacros(
+      file.path(R.home("share"), "Rd", "macros", "system.Rd"),
+      macros = macros
+   )
+})
+
+.rs.addFunction("Rd2HTML", function(file, package = "")
 {
    tf <- tempfile(); on.exit(unlink(tf))
-   macros <- suppressWarnings(tools:::initialRdMacros(Rdmacros))
+   macros <- .rs.RdLoadMacros(file)
    tools::Rd2HTML(file, out = tf, package = package, macros = macros, dynamic = TRUE)
    lines <- readLines(tf, warn = FALSE)
    lines <- sub("R Documentation</td></tr></table>", "(preview) R Documentation</td></tr></table>", lines)

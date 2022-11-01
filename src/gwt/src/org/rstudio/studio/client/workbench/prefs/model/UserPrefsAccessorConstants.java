@@ -1,10 +1,10 @@
 /*
  * UserPrefsAccessorConstants.java
  *
- * Copyright (C) 2022 by RStudio, PBC
+ * Copyright (C) 2022 by Posit Software, PBC
  *
- * Unless you have received this program directly from RStudio pursuant
- * to the terms of a commercial license agreement with RStudio, then
+ * Unless you have received this program directly from Posit Software pursuant
+ * to the terms of a commercial license agreement with Posit Software, then
  * this program is licensed to you under the terms of version 3 of the
  * GNU Affero General Public License. This program is distributed WITHOUT
  * ANY EXPRESS OR IMPLIED WARRANTY, INCLUDING THOSE OF NON-INFRINGEMENT,
@@ -1966,6 +1966,30 @@ public interface UserPrefsAccessorConstants extends Constants {
    String nativeFileDialogsTitle();
    @DefaultStringValue("Whether RStudio Desktop will use the operating system's native File and Message dialog boxes.")
    String nativeFileDialogsDescription();
+
+   /**
+    * When enabled, any pending console input will be discarded when an (uncaught) R error occurs.
+    */
+   @DefaultStringValue("Discard pending console input on error")
+   String discardPendingConsoleInputOnErrorTitle();
+   @DefaultStringValue("When enabled, any pending console input will be discarded when an (uncaught) R error occurs.")
+   String discardPendingConsoleInputOnErrorDescription();
+
+   /**
+    * A integer value, 1-200, to set the editor scroll multiplier. The higher the value, the faster the scrolling.
+    */
+   @DefaultStringValue("Editor scroll speed sensitivity")
+   String editorScrollMultiplierTitle();
+   @DefaultStringValue("A integer value, 1-200, to set the editor scroll multiplier. The higher the value, the faster the scrolling.")
+   String editorScrollMultiplierDescription();
+
+   /**
+    * Control how text is rendered within the IDE surface.
+    */
+   @DefaultStringValue("Text rendering")
+   String textRenderingTitle();
+   @DefaultStringValue("Control how text is rendered within the IDE surface.")
+   String textRenderingDescription();
 
 
 

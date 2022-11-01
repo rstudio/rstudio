@@ -1,10 +1,10 @@
 /*
  * SessionBuild.cpp
  *
- * Copyright (C) 2022 by RStudio, PBC
+ * Copyright (C) 2022 by Posit Software, PBC
  *
- * Unless you have received this program directly from RStudio pursuant
- * to the terms of a commercial license agreement with RStudio, then
+ * Unless you have received this program directly from Posit Software pursuant
+ * to the terms of a commercial license agreement with Posit Software, then
  * this program is licensed to you under the terms of version 3 of the
  * GNU Affero General Public License. This program is distributed WITHOUT
  * ANY EXPRESS OR IMPLIED WARRANTY, INCLUDING THOSE OF NON-INFRINGEMENT,
@@ -1077,7 +1077,8 @@ private:
           !options_.autoRoxygenizeForCheck)
          args.push_back("document = FALSE");
 
-      if (!prefs::userPrefs().cleanupAfterRCmdCheck())
+      if (!prefs::userPrefs().cleanupAfterRCmdCheck() && 
+          !module_context::isPackageVersionInstalled("devtools", "2.4.4"))
          args.push_back("cleanup = FALSE");
 
       // optional extra check args
@@ -1490,10 +1491,6 @@ private:
                            const core::system::ProcessOptions& options,
                            const core::system::ProcessCallbacks& cb)
    {
-      // show preview on complete
-      successFunction_ = boost::bind(&Build::showQuartoSitePreview,
-                                     Build::shared_from_this());
-
        auto cmd = shell_utils::ShellCommand("quarto");
        cmd << "render";
        if (!subType.empty())
@@ -1592,15 +1589,7 @@ private:
       );
       if (!outputFile.isEmpty())
       {
-         // it will be html if we did a sub-project render.
-         if (outputFile.hasExtensionLowerCase(".html") || outputFile.hasExtensionLowerCase("pdf"))
-         {
-            quarto::handleQuartoPreview(sourceFile, outputFile, output, false);
-         }
-         else
-         {
-            enquePreviewRmdEvent(sourceFile, outputFile);
-         }
+         enquePreviewRmdEvent(sourceFile, outputFile);
       }
    }
 

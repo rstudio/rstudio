@@ -1,10 +1,10 @@
 /*
  * FindInFilesDialog.java
  *
- * Copyright (C) 2022 by RStudio, PBC
+ * Copyright (C) 2022 by Posit Software, PBC
  *
- * Unless you have received this program directly from RStudio pursuant
- * to the terms of a commercial license agreement with RStudio, then
+ * Unless you have received this program directly from Posit Software pursuant
+ * to the terms of a commercial license agreement with Posit Software, then
  * this program is licensed to you under the terms of version 3 of the
  * GNU Affero General Public License. This program is distributed WITHOUT
  * ANY EXPRESS OR IMPLIED WARRANTY, INCLUDING THOSE OF NON-INFRINGEMENT,
@@ -39,7 +39,6 @@ import org.rstudio.core.client.widget.ModalDialog;
 import org.rstudio.core.client.widget.OperationWithInput;
 import org.rstudio.studio.client.RStudioGinjector;
 import org.rstudio.studio.client.common.GlobalDisplay;
-import org.rstudio.studio.client.workbench.model.Session;
 import org.rstudio.studio.client.workbench.views.output.OutputConstants;
 
 import java.util.ArrayList;
@@ -453,6 +452,5 @@ public class FindInFilesDialog extends ModalDialog<FindInFilesDialog.State>
    private boolean packageStatus_;
    private final Widget mainWidget_;
    private final GlobalDisplay globalDisplay_ = RStudioGinjector.INSTANCE.getGlobalDisplay();
-   private final Session session_ = RStudioGinjector.INSTANCE.getSession();
    private static final OutputConstants constants_ = GWT.create(OutputConstants.class);
 }

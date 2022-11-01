@@ -1,10 +1,10 @@
 #
 # SessionRMarkdown.R
 #
-# Copyright (C) 2022 by RStudio, PBC
+# Copyright (C) 2022 by Posit Software, PBC
 #
-# Unless you have received this program directly from RStudio pursuant
-# to the terms of a commercial license agreement with RStudio, then
+# Unless you have received this program directly from Posit Software pursuant
+# to the terms of a commercial license agreement with Posit Software, then
 # this program is licensed to you under the terms of version 3 of the
 # GNU Affero General Public License. This program is distributed WITHOUT
 # ANY EXPRESS OR IMPLIED WARRANTY, INCLUDING THOSE OF NON-INFRINGEMENT,
@@ -41,16 +41,27 @@
       # the path to the project hosting the document
       # (just in case the user is editing a document that
       # belongs to an alternate project)
-      substring(props$path, 1L, nchar(props$path) - nchar(props$project_path) - 1L)
+      path <- substring(props$path, 1L, nchar(props$path) - nchar(props$project_path) - 1L)
+      return(path)
    }
-   else if (identical(workingDirProp, "current"))
+   
+   # if we're configured to use the working directory, use it
+   if (identical(workingDirProp, "current"))
    {
-      getwd()
+      return(getwd())
    }
-   else
+   
+   # if the 'root.dir' knitr option is set, use that
+   if ("knitr" %in% loadedNamespaces())
    {
-      dirname(path)
+      rootDir <- knitr::opts_knit$get("root.dir")
+      if (is.character(rootDir))
+         return(rootDir)
    }
+   
+   # all else fails, use the parent directory of the document
+   dirname(path)
+   
 })
 
 .rs.addFunction("markdown.getCompletionsHref", function(data)
@@ -155,26 +166,9 @@
       list()
     }
   )
-  
-  haveQuarto <- function() {
-    nzchar(Sys.which("quarto"))
-  }
-
-  isQuartoDoc <- function() {
-     # .qmd file
-     .rs.endsWith(file, ".qmd") ||
-     # file with "format" yaml and no "output" yaml
-     (is.null(yamlFrontMatter[["output"]]) && !is.null(yamlFrontMatter[["format"]])) ||
-     # quarto extended type
-     identical(.Call("rs_detectExtendedType", file), "quarto-document") ||
-     # plain markdown file w/ "jupyter" metadata
-     (.rs.endsWith(file, ".md") && !is.null(yamlFrontMatter[["jupyter"]]))
-  }
 
   if (is.character(yamlFrontMatter[["knit"]]))
     yamlFrontMatter[["knit"]][[1]]
-  else if (haveQuarto() && isQuartoDoc())
-     "quarto render"
   else if (!is.null(yamlFrontMatter$runtime) &&
            grepl('^shiny', yamlFrontMatter$runtime)) {
     # use run as a wrapper for render when the doc requires the Shiny runtime,
