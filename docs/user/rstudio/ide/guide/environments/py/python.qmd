@@ -2,11 +2,9 @@
 title: "Python"
 ---
 
-RStudio 1.4 brings improved support for the [Python](https://www.python.org/) programming language to the RStudio IDE. This article will explore how Python can be used together with R and RStudio.
+This page explores how Python can be used together with R and RStudio.
 
-Copied from: <https://support.rstudio.com/hc/en-us/articles/1500007929061-Using-Python-with-the-RStudio-IDE>
-
-## Getting Started
+## Getting started
 
 RStudio uses the [reticulate](https://rstudio.github.io/reticulate/) R package to interface with Python, and so RStudio's Python integration requires:
 
@@ -14,19 +12,25 @@ RStudio uses the [reticulate](https://rstudio.github.io/reticulate/) R package t
 
 2.  The reticulate R package (1.20 or newer, as available from [CRAN](https://cran.r-project.org/package=reticulate))
 
-### Installing Python
+### Installing python
 
-First, Python needs to be installed on your machine. If you haven't already installed Python, it can be installed in a couple of ways:
+First, Python needs to be installed on the machine. For Posit Workbench or RStudio Server, admins can follow the instructions at <https://docs.posit.co/resources/install-python/>
 
-1.  (Recommended) Using reticulate::install_miniconda(), to install a [Miniconda](https://docs.conda.io/en/latest/miniconda.html) distribution of Python using the reticulate package,
+For local installations, Python can be installed in several ways:
 
-2.  (Windows) Install Python via the official Python binaries available from <https://www.python.org/downloads/windows/>,
+-  (Recommended) Using `reticulate::install_miniconda()`, to install a [Miniconda](https://docs.conda.io/en/latest/miniconda.html) distribution of Python using the reticulate package,
 
-3.  (macOS) Install Python via the official Python binaries available from <https://www.python.org/downloads/mac-osx/>,
+-  (Windows) Install Python via the official Python binaries available from <https://www.python.org/downloads/windows/>,
 
-4.  (Linux) Install Python either from sources, or via the version of Python provided by your operating system's package manager. See <https://docs.python.org/3/using/unix.html> for more details. If you are installing Python from sources yourself, prefer installing it into a location like /opt/python/\<version\>, so that RStudio and reticulate can more easily discover it.
+-  (macOS) Install Python via the official Python binaries available from <https://www.python.org/downloads/mac-osx/>,
 
-Note that if you are installing Python from sources, it must be configured with \--enable-shared; e.g.
+-  (Linux) Install Python either from sources, or via the version of Python provided by your operating system's package manager. See <https://docs.python.org/3/using/unix.html> for more details. If you are installing Python from sources yourself, prefer installing it into a location like `/opt/python/<version>`, so that RStudio and reticulate can more easily discover it.
+
+::: {.callout-warning}
+
+## `--enable-shared` requirement
+
+reticulate is unable to bind to a version of Python without an accompanying shared library available. If installing Python from sources, it must be configured with `--enable-shared`:
 
 ``` bash
 ./configure --enable-shared
@@ -40,7 +44,9 @@ or for `pyenv`
 env PYTHON_CONFIGURE_OPTS="--enable-shared" pyenv install ${PY_VERSION}
 ```
 
-reticulate will be unable to bind to a version of Python without an accompanying shared library available.
+:::
+
+
 
 ### Installing reticulate
 
@@ -50,67 +56,80 @@ The reticulate package can be installed from CRAN, with:
 install.packages("reticulate")
 ```
 
-Note that if you are installing reticulate from sources, you will need the requisite build tools available \-- see <https://support.rstudio.com/hc/en-us/articles/200486498-Package-Development-Prerequisites>for more details.
+::: {.callout-note}
+
+## Building from source
+
+The dev version of reticulate can be installed from GitHub, with:
+
+```r
+# If needed, install.packages("devtools")
+devtools::install_github("rstudio/reticulate")
+```
+
+If you are installing reticulate from sources or GitHub, you will need the requisite build tools available - see <https://r-pkgs.org/Setup.html#setup-tools> for more details.
+
+:::
 
 ## Using Python
 
-The reticulate package makes it possible to load and use Python within the currently running R session. After reticulate has been installed, Python scripts (with the extension .py) can be opened, and the code within executed, similarly to R.
+The reticulate package makes it possible to load and use Python within the currently running R session. After reticulate has been installed, Python scripts (with the extension .py) can be opened, and the code within executed interactively, similarly to R.
 
-![](images/python-hello-world.png){alt="Screen_Shot_2021-04-21_at_3.42.51_PM.png"}
+![](images/python-hello-world.png){fig-alt="Screenshot of a simple Python script run via reticulate in the console."}
 
-Note that RStudio uses the reticulate Python REPL to execute code, and automatically switches between R and Python as appropriate for the script being executed.
+RStudio uses the reticulate Python REPL to execute code, and automatically switches between R and Python as appropriate for the script being executed.
 
 When the reticulate REPL is active, objects in the R session can be accessed via the r helper object. For example, `r["mtcars"]` can be used to access the mtcars dataset from R, and convert that to a pandas DataFrame (if available), or a Python dictionary if not.
 
-\
-![](images/python-mtcars.png){alt="Screen_Shot_2021-04-21_at_3.41.01_PM.png"}
 
-## Selecting a Default Version of Python
+![](images/python-mtcars.png){fig-alt="A screenshot of the console displaying the dataframe contents of 'mtcars' in Python from R"}
+
+## Selecting a default version of Python
 
 It is possible to configure a default version of Python to be used with RStudio via **Tools** > **Global Options** > **Python**:
 
-![](images/python-versions.png){fig-alt="Screen_Shot_2021-04-21_at_3.33.02_PM.png"}
+![](images/python-versions.png){fig-alt="Screenshot of the Global Options > Python menu and choosing a specific Python interpreter."}
 
 The "Python interpreter:" text box shows the default Python interpreter to be used (if any). If you already know the location of the Python interpreter you wish to use, you can type the location of the interpreter into that text box.
 
-Otherwise, Python interpreters can be discovered on the system by clicking the "Select\..." button:
+Otherwise, Python interpreters can be discovered on the system by clicking the **Select** button:
 
-![](images/python-interpreter.png){fig-alt="Screen_Shot_2021-04-21_at_3.34.00_PM.png"}
+![](images/python-interpreter.png){fig-alt="Screenshot of the available Python versions on the system"}
 
 RStudio will search for Python interpreters via a few different methods:
 
 -   On the PATH;
 
--   For virtual environments, located within the \~/.virtualenvs folder;
+-   For virtual environments, located within the `~/.virtualenvs` folder;
 
--   For Conda environments, as reported by conda \--list,
+-   For Conda environments, as reported by `conda --list`,
 
--   For [pyenv](https://github.com/pyenv/pyenv) Python installations located in \~/.pyenv,
+-   For [pyenv](https://github.com/pyenv/pyenv) Python installations located in `~/.pyenv`,
 
--   For Python installations located in /opt/python.
+-   For Python installations located in `/opt/python`.
 
-The RETICULATE_PYTHON environment variable can also be used to configure the default version of Python to be used by reticulate. If set, that environment variable will take precedence over any value configured via RStudio options.
+The `RETICULATE_PYTHON` environment variable can also be used to configure the default version of Python to be used by reticulate. If set, that environment variable will take precedence over any value configured via RStudio options.
 
-### Custom Python Locations
+### Custom Python locations
 
-If you have Python installed into a custom location, and you'd like for that location to be visible to RStudio, you can set the following R option:
+If Python is installed into a custom location, set the following R option to make it visible to RStudio:
 
 ``` r
 options(rstudio.python.installationPath = "/path/to/python")
 ```
 
-This can be set within an appropriate R startup file; for example, your R installations etc/Rprofile.site.
+This can be set within an appropriate R startup file; for example, the R installation's `etc/Rprofile.site`.
 
-## Environment Pane
+## Environment pane
 
-When the reticulate Python REPL is active, the RStudio Environment pane will update to show any available Python objects. For example:
+When the reticulate Python REPL is active, the **Environment** pane will update to show any available Python objects. For example:
 
-![](images/python-environment.png){alt="Screen_Shot_2021-05-12_at_12.44.13_PM.png"}
+![](images/python-environment.png){fig-alt="A screenshot of the Environment page, displaying Python specific objects"}
 
-The Environment pane will automatically update to show objects as they are added and removed.
+The **Environment** pane will automatically update to show objects as they are added and removed.
 
-Note that mutated objects may not update in the Environment pane until the Environment pane is explicitly refreshed.
+Mutated objects may not update in the **Environment** pane until the **Environment** pane is explicitly refreshed by pressing the **Refresh** button in the top right corner of the **Environment** pane.
 
-## Learning More
+## Learning more
 
-For more detailed documentation around how RStudio, R, and reticulate can be used together, please consult the reticulate documentation online at <https://rstudio.github.io/reticulate/>.
+For more detailed documentation around how Python, R, and reticulate can be used together, please consult the reticulate documentation online at <https://rstudio.github.io/reticulate/>.

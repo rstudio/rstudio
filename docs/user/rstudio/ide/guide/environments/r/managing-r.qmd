@@ -2,16 +2,14 @@
 title: "R Startup"
 ---
 
-Copied from: <https://support.rstudio.com/hc/en-us/articles/360047157094-Managing-R-with-Rprofile-Renviron-Rprofile-site-Renviron-site-rsession-conf-and-repos-conf>
+Upon startup, R and RStudio look for a few different files used to control the behavior of the R session, for example by setting options or environment variables. In the context of [Posit Team](https://docs.posit.co/posit-team/), these settings are often used to set Posit Workbench (previously RStudio Server Pro) to search for packages in an Posit Package Manager repository.
 
-Upon startup, R and RStudio look for a few different files you can use to control the behavior of your R session, for example by setting options or environment variables. In the context of RStudio Team, these settings are often used to set RStudio Workbench (previously RStudio Server Pro) to search for packages in an RStudio Package Manager repository.
-
-This article is a practical guide to how to set particular options on R startup. General information on how to manage R package environments is available at [environments.rstudio.com](https://environments.rstudio.com/) , and a deeper treatment of R process startup is available in [this article](https://rviews.rstudio.com/2017/04/19/r-for-enterprise-understanding-r-s-startup/) or [What They Forgot to Teach You About R](https://rstats.wtf/r-startup.html).
+This section is a practical guide on how to set particular options on R startup. General information on how to manage R package environments is available at [environments.rstudio.com](https://environments.rstudio.com/), and a deeper treatment of R process startup is available in [this article](https://rviews.rstudio.com/2017/04/19/r-for-enterprise-understanding-r-s-startup/) or [What They Forgot to Teach You About R](https://rstats.wtf/r-startup.html).
 
 Here is a summary table of how to control R options and environment variables on startup. More details are below.
 
 | File            | Who Controls  | Level           | Limitations                                    |
-|-----------------|---------------|-----------------|------------------------------------------------|
+|--------------|--------------|--------------|-------------------------------|
 | `.Renviron`     | User or Admin | User or Project | Set environment variables only.                |
 | `.Rprofile`     | User or Admin | User or Project | None, sourced as R code.                       |
 | `Rprofile.site` | Admin         | Version of R    | None, sourced as R code.                       |
@@ -23,13 +21,15 @@ Here is a summary table of how to control R options and environment variables on
 
 `.Renviron` is a user-controllable file that can be used to create environment variables. This is especially useful to avoid including credentials like API keys inside R scripts. This file is written in a key-value format, so environment variables are created in the format:
 
-    Key1=value1
-    Key2=value2
-    ...
+``` yaml
+Key1=value1
+Key2=value2
+...additional key=value pairs
+```
 
 And then `Sys.getenv("Key1")` will return `"value1"` in an R session.
 
-Like with the `.Rprofile` file, `.Renviron` files can be at either the user or project level. If there is a project-level `.Renviron`, the user-level file will not be sourced. The `usethis` package includes a helper function for editing `.Renviron` files from an R session with `usethis::edit_r_environ()`.
+Like with the `.Rprofile` file, `.Renviron` files can be at either the user or project level. If there is a project-level `.Renviron`, the user-level file will not be sourced. The [usethis](https://usethis.r-lib.org/) package includes a helper function for editing `.Renviron` files from an R session with `usethis::edit_r_environ()`.
 
 The `.Renviron` file is most useful for defining sensitive information such as API keys (such as GitHub, Twitter, or Posit Connect) as well as R specific environment variables like the history size (`R_HISTSIZE=100000`) and default library locations `R_LIBS_USER`.
 
@@ -37,18 +37,18 @@ The `.Renviron` file is most useful for defining sensitive information such as A
 
 The .Rprofile file contains R code to be run when R starts up. It is run after the .Renviron file is sourced.
 
-`.Rprofile` files are user-controllable files to set options and environment variables. `.Rprofile` files can be either at the user or project level. User-level `.Rprofile` files live in the base of the user's home directory, and project-level `.Rprofile` files live in the base of the project directory. 
+`.Rprofile` files are user-controllable files to set options and environment variables. `.Rprofile` files can be either at the user or project level. User-level `.Rprofile` files live in the base of the user's home directory, and project-level `.Rprofile` files live in the base of the project directory.
 
 R will source only one `.Rprofile` file. So if you have both a project-specific `.Rprofile` file and a user `.Rprofile` file that you want to use, you explicitly source the user-level `.Rprofile` at the top of your project-level `.Rprofile` with `source("~/.Rprofile")`.
 
-`.Rprofile` files are sourced as regular R code, so setting environment variables must be done inside a `Sys.setenv(key = "value")` call. 
+`.Rprofile` files are sourced as regular R code, so setting environment variables must be done inside a `Sys.setenv(key = "value")` call.
 
 The easiest way to edit your `.Rprofile` file is to use the `usethis::edit_r_profile()` function from within an R session. You can specify whether you want to edit the user or project level `.Rprofile.`
 
 A simple example of a `.Rprofile` is:
 
-```r
-options(repos = c(CRAN = "https://packagemanager.rstudio.com/all/latest"))
+``` r
+options(repos = c(CRAN = "https://packagemanager.posit.co/all/latest"))
 
 if (interactive()) {
   options(width = 120)
@@ -57,14 +57,12 @@ if (interactive()) {
 
 ## `Rprofile.site` and `Renviron.site`
 
-Both `.Rprofile` and `.Renviron` files have equivalents that apply server wide. `Rprofile.site` and`Renviron.site` (no leading dot) files are managed by admins on RStudio Workbench or RStudio Server, and are specific to a particular version of R. The most common settings for these files involve access to package repositories. For example, using the [shared-baseline](https://environments.rstudio.com/shared.html) package management strategy is generally done from an `Rprofile.site`.
+Both `.Rprofile` and `.Renviron` files have equivalents that apply server wide. `Rprofile.site` and`Renviron.site` (no leading dot) files are managed by admins on Posit Workbench or RStudio Server, and are specific to a particular version of R. The most common settings for these files involve access to package repositories. For example, using the [shared-baseline](https://environments.rstudio.com/shared.html) package management strategy is generally done from an `Rprofile.site`.
 
 Users can override settings in these files with their individual `.Rprofile` files.
 
-These files are set for each version of R and should be located in `R_HOME/etc/`. You can find`R_HOME` by running the command `R.home(component = "home")` in a session of that version of R. So, for example, if you find that `R_HOME` is `/opt/R/4.2.0/lib/R`, the `Rprofile.site` for R 4.2.0 would go in `/opt/R/4.2.0/lib/R/etc/Rprofile.site`.
+These files are set for each version of R and should be located in `R_HOME/etc/`. `R_HOME` can be found by running the command `R.home(component = "home")` in a session of that version of R. So, for example, if `R_HOME` is `/opt/R/4.2.0/lib/R`, the `Rprofile.site` for R 4.2.0 would go in `/opt/R/4.2.0/lib/R/etc/Rprofile.site`.
 
 ## `rsession.conf` and `repos.conf`
 
-RStudio Workbench and RStudio Server allows server admins to configure particular server-wide R package repositories via the `rsession.conf` and `repos.conf` files. Only one repository can be configured in `rsession.conf`. If multiple repositories are needed, `repos.conf` should be used. Details on configuring RStudio Workbench and RStudio Server with these files are in this [support article](https://support.rstudio.com/hc/en-us/articles/360009863114).
-
- 
+Posit Workbench and RStudio Server allow server admins to configure particular server-wide R package repositories via the `rsession.conf` and `repos.conf` files. Only one repository can be configured in `rsession.conf`. If multiple repositories are needed, `repos.conf` should be used. Details on configuring Posit Workbench and RStudio Server with these files are in this [support article](https://support.rstudio.com/hc/en-us/articles/360009863114).

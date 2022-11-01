@@ -1,10 +1,10 @@
-# Version Control
-
-Copied from: <https://support.rstudio.com/hc/en-us/articles/200532077-Version-Control-with-Git-and-SVN>
+---
+title: "Version Control"
+---
 
 Version control helps software teams manage changes to source code over time. Version control software keeps track of every modification to the code in a special kind of database. If a mistake is made, developers can turn back the clock and compare earlier versions of the code to help fix the mistake while minimizing disruption to all team members. Version control systems have been around for a long time but continue to increase in popularity with data science workflows.
 
-The RStudio IDE has integrated support for version control. If you are new to version control, see a deeper overview in: [Happy Git and Github for the useR](https://happygitwithr.com/)
+RStudio has integrated support for version control. If you are new to version control, see a deeper overview in: [Happy Git and Github for the useR](https://happygitwithr.com/)
 
 ## Requirements
 
@@ -14,11 +14,11 @@ RStudio supports the following open source version control systems:
 
 -   [Subversion](http://subversion.apache.org/)
 
-To use version control with RStudio, you should first ensure that you have installed Git and/or Subversion tools on your workstation (details below).
+To use version control with RStudio, first ensure that Git and/or Subversion tools are installed on your workstation (details below).
 
-Version control is most useful when used with a remote repository. Remote repositories are typically managed by your company or are hosted in the cloud (e.g. [Github](https://github.com/)). Make sure you have credentials to access these systems. If you only want to learn how to use version control, you can manage a standalone system on your workstation but you will not be able to share code with others.
+Version control is most useful when used with a remote repository. Remote repositories are typically managed by your company or are hosted in the cloud (e.g., [Github](https://github.com/) or [GitLab](https://about.gitlab.com/)). Make sure you have credentials to access these systems. If you only want to learn how to use version control, you can manage a standalone system on your workstation but you will not be able to share code with others.
 
-You should also become familiar with using [RStudio Projects](../authoring/projects.html) (which are required for version control features to be enabled).
+You should also become familiar with using [RStudio Projects](../code/projects.html) (which are required for version control features to be enabled).
 
 ## Installation
 
@@ -26,71 +26,55 @@ Prior to using RStudio's version control features you will need to ensure that y
 
 ### Git
 
-Prior to using Git with RStudio you should install it using the appropriate method for your platform:
-
--   **Windows & OS X:** <http://git-scm.com/downloads>
-
--   **Debian/Ubuntu:** `sudo apt-get install git-core`
-
--   **Fedora/RedHat:** `sudo yum install git-core`
+Prior to using Git with RStudio you should install it using the appropriate method for your platform as indicated at <https://git-scm.com/download/>.
 
 An excellent resource for learning more about Git and how to use it is the [Pro Git](https://git-scm.com/book/en/v2) online book. Another good resource for learning about git is the [Git Bootcamp](https://help.github.com/articles/set-up-git/) provided by GitHub.
 
 ### Subversion
 
-Prior to using Subversion with RStudio you should install it using the appropriate method for your platform:
-
--   **Windows:** [SilkSVN](http://www.sliksvn.com/en/download) (or any of the other packages listed [here](http://subversion.apache.org/packages.html#windows))
-
--   **OSX (≤ v10.7):** *Not required --- already included in versions of OSX 10.7 and before*
-
--   **OSX (v10.8+):** Install Xcode's *Command Line Tools* from Apple's developer [downloads](https://developer.apple.com/downloads/index.action) (requires free [Apple Developer ID](https://developer.apple.com/programs/register/))
-
--   **Debian/Ubuntu:** `sudo apt-get install subversion`
-
--   **Fedora/RedHat:** `sudo yum install subversion`
+Prior to using Subversion with RStudio you should install it using the appropriate method for your platform as indicated at <https://subversion.apache.org/packages.html>.
 
 An excellent resource for learning more about Subversion and how to use it is the [Red Bean](http://svnbook.red-bean.com/) online book.
 
 ## Getting Started
 
-Once you've installed your preferred Version Control system, you'll need to activate it on your system by following these steps:
+Once a Version Control system has been installed, it needs to be activated on the system by following these steps:
 
-1.  Go to **Global Options** (from the Tools menu)
+1.  From the **Tools** menu, click **Global Options**
 
-2.  Click **Git/SVN**
+2.  Click on the **Git/SVN** tab
 
 3.  Click **Enable version control interface for RStudio projects**
 
-4.  If necessary, enter the path for your Git or SVN executable where provided. You can also create or add your RSA key for SSH if necessary.
+4.  If necessary, enter the path for the Git or SVN executable where provided. A SSH key can be created or added for SSH if necessary.
 
-![](images/version-control-options.png){fig-alt=""}
+![](images/version-control-options.png){fig-alt="A screenshot of the Git/SVN tab in Global Options displaying an active Git executable."}
 
-If you are using RStudio Server, by default RStudio Server will look at the PATH for the first Git executable it finds, and sets that as the default. If you have a specific version that you want to set for all users, the easiest option is to make sure it's the first available on the PATH system-wide.\
-\
-Alternately, if you are running version 1.4 or above of Posit Workbench (previously RStudio Server Pro/RStudio Workbench), you can set the default Git version system-wide by setting the `git_exe_path` option in your system rstudio-prefs.json file. See here for more:\
-<https://docs.rstudio.com/ide/server-pro/r-sessions.html#customizing-session-settings>\
-<https://docs.rstudio.com/ide/server-pro/session-user-settings.html>
+If you are using RStudio Server, by default RStudio Server will look at the PATH for the first Git executable it finds, and sets that as the default. If you have a specific version that you want to set for all users, the easiest option is to make sure it's the first available on the PATH system-wide.
 
-RStudio's version control features are tied to the use of [Projects](https://support.rstudio.com/hc/en-us/articles/200526207-Using-Projects) (which are a way of dividing work into multiple contexts, each with their own working directory).The steps required to use version control with a project vary depending on whether the project is new or existing as well as whether it is already under version control.
+Alternately, in Posit Workbench (previously RStudio Server Pro/RStudio Workbench), you can set the default Git version system-wide by setting the `git_exe_path` option in your system rstudio-prefs.json file. See here for more:\
+<https://docs.posit.co/ide/server-pro/r-sessions.html#customizing-session-settings>\
+<https://docs.posit.co/ide/server-pro/session-user-settings.html>
+
+RStudio's version control features are tied to the use of [Projects](../code/projects.html) (which are a way of dividing work into multiple contexts, each with their own working directory). The steps required to use version control with a project vary depending on whether the project is new or existing as well as whether it is already under version control.
 
 ### Integrations
 
 Once version control such as Git has been enabled for the current RStudio Project, a few visual elements are added, specifically the **Git/Version control dropdown** and the **Git/Version Control tab**.
 
-![](images/rstudio-vcs-pane%20copy.png){width="550"}
+![](images/rstudio-vcs-pane-labeled.png){fig-alt="A screenshot of the RStudio interface, highlighting the Git tab in the Environments pane."}
 
 The **Git menu dropdown** provides Commit, Pull/Push Branch, History and Project Setup.
 
-![](images/git-drop-down.png){width="350"}
+![](images/git-drop-down.png){width="350" fig-alt="A screenshot of the git dropdown."}
 
-The **Git tab** within the **Environment pane** provides a number of useful commands such as "Diff", "Commit", Push/Pull arrows, View history 'clock', or select a specific branch.
+The **Git tab** within the **Environment pane** provides a number of useful commands such as "Diff", "Commit", the Push/Pull arrows, View history 'clock', or selecting a specific branch.
 
-![](images/git-tab.png){width="450"}
+![](images/git-tab.png){fig-alt="A screenshot of the Git tab in RStudio, showing a few files that can be added to staging."}
 
-Once you are finished with your local work and are ready to Commit your changes, selecting Commit in either the **Git dropdown menu** or **Git tab** opens the **Review Changes popup** to select files for staging, add a commit message, and eventually push the commit.
+Once you are finished with your local work and are ready to Commit your changes, selecting **Commit** in either the **Git** drop-down menu or **Git** tab opens the **Review Changes** pop-up to select files for staging, add a commit message, and eventually push the commit.
 
-![](images/git-commit-pane.png){width="450"}
+![](images/git-commit-pane.png){fig-alt="A screenshot of the Review Changes pop-up, indicating the files for staging and the ability to commit, push and pull changes."}
 
 ## Using version control
 
@@ -166,16 +150,16 @@ RStudio includes functionality to make it more straightforward to use the shell 
 
 Version control repositories can typically be accessed using a variety of protocols (including http and https). Many repositories can also be accessed using SSH (this is the mode of connection for many hosting services including GitHub and R-Forge).
 
-In many cases the authentication for an SSH connection is done using public/private RSA key pairs. This type of authentication requires two steps:
+In many cases the authentication for an SSH connection is done using public/private SSH key pairs. This type of authentication requires two steps:
 
 1.  Generate a public/private key pair
 
 2.  Provide the public key to the hosting provider (e.g. GitHub or R-Forge)
 
-To make working with RSA key pairs more straightforward the RStudio Version Control options panel can be used to both create new RSA public/private key pairs as well as view and copy the current RSA public key.
+To make working with SSH key pairs more straightforward the RStudio Version Control options panel can be used to both create new SSH public/private key pairs as well as view and copy the current SSH public key.
 
 While Linux and Mac OSX both include SSH as part of the base system, Windows does not. As a result the standard Windows distribution of Git (Msysgit, referenced above) also includes an SSH client.
 
-Subversion for Windows however does not include an SSH client. To overcome this limitation, RStudio includes a version of the Msys SSH client within the RStudio\\bin\\msys_ssh directory. This directory is automatically added to the PATH (for RStudio only rather than system-wide) and is also available on the PATH for command prompt windows opened using the Tools -\> Shell command. A Windows shortcut (SSH Command Prompt) is also provided within the RStudio\\bin\\msys_ssh directory if you wish to launch a console from the Desktop that supports the svn+ssh protocol.
+Subversion for Windows however does not include an SSH client. To overcome this limitation, RStudio includes a version of the Msys SSH client within the `RStudio\bin\msys_ssh directory`. This directory is automatically added to the PATH (for RStudio only rather than system-wide) and is also available on the PATH for command prompt windows opened using the **Tools** > **Shell** command. A Windows shortcut (SSH Command Prompt) is also provided within the `RStudio\bin\msys_ssh` directory to launch a console from the Desktop that supports the svn+ssh protocol.
 
 

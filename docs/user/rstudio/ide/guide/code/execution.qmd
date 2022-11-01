@@ -8,7 +8,7 @@ RStudio supports the direct execution of code from within the source editor (the
 
 Source code files such as .R or .py can be executed in several different ways.
 
-### Executing a Single Line
+### Executing a single line
 
 To execute the line of source code where the cursor currently resides press the <kbd>Ctrl+Enter</kbd> keys (or use the **Run** toolbar button):
 
@@ -16,25 +16,27 @@ To execute the line of source code where the cursor currently resides press the 
 
 After executing the line of code, RStudio automatically advances the cursor to the next line. This enables single-stepping through a sequence of lines.
 
-### Executing Multiple Lines
+### Executing multiple lines
 
 There are three ways to execute multiple lines from within the editor:
 
--   Select the lines and press the <kbd>Ctrl+Enter</kbd> keys (or use the **Run** toolbar button); or
+1.   Select the lines and press the <kbd>Ctrl+Enter</kbd> keys (or use the **Run** toolbar button); or
 
--   After executing a selection of code, use the **Re-Run Previous Region** command (or its associated toolbar button) to run the same selection again. Note that changes to the selection including additional, removal, and modification of lines will be reflected in this subsequent run of the selection.
+2.  After executing a selection of code, use the **Re-Run Previous Region** command (or its associated toolbar button) to run the same selection again. Note that changes to the selection including additional, removal, and modification of lines will be reflected in this subsequent run of the selection.
 
--   To run the entire document press the <kbd>Ctrl+Shift+Enter</kbd> keys (or use the **Source** toolbar button).
+3.   To run the entire document press the <kbd>Ctrl+Shift+Enter</kbd> keys (or use the **Source** toolbar button).
 
 The difference between running lines from a selection and invoking **Source** is that when running a selection all lines are inserted directly into the console whereas for **Source** the file is saved to a temporary location and then sourced into the console from there (thereby creating less clutter in the console).
 
-### Source on Save
+![](images/re-run-source.png){fig-alt="Highlighting the Run, Run previous, and Source menu options in the Source pane."}
+
+### Source on save
 
 When editing re-usable functions (as opposed to freestanding lines of R) you may wish to set the **Source on Save** option for the document (available on the toolbar next to the Save icon). Enabling this option will cause the file to automatically be sourced into the global environment every time it is saved.
 
 Setting **Source on Save** ensures that the copy of a function within the global environment is always in sync with its source, and also provides a good way to arrange for frequent syntax checking as you develop a function.
 
-## Computational Documents
+## Computational documents
 
 Code within computational documents such as Quarto or R Markdown is written inside "code chunks" as written below:
 
@@ -48,7 +50,7 @@ Similar to source code files, code can be executed via RStudio "Run" commands or
 
 ![](images/document-chunk.png){fig-alt="A screenshot of a R code chunk in Quarto. It primarily consists of 3x backticks, curly brackets, and a language engine with code inside the backticks"}
 
-### Executing a Single Line
+### Executing a single line
 
 To execute the line of source code where the cursor currently resides press the **Ctrl+Enter** keys (or use the **Run** toolbar button):
 
@@ -56,7 +58,7 @@ To execute the line of source code where the cursor currently resides press the 
 
 After executing the line of code, RStudio automatically advances the cursor to the next line. This enables you to single-step through a sequence of lines.
 
-### Executing Multiple Lines
+### Executing multiple lines
 
 There are four ways to execute multiple lines from within the editor:
 

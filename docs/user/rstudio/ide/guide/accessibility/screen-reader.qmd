@@ -2,11 +2,13 @@
 title: "Screen Reader"
 ---
 
-This article aims to provide screen-reader users with some effective strategies for RStudio IDE navigation.
+This article aims to provide screen-reader users with some effective strategies for RStudio navigation.
 
-Some features discussed in this document require RStudio 1.3, or newer. In a few cases, you need to know if you are using RStudio Desktop or Posit Workbench / RStudio Server. If RStudio is loaded in your web browser, then you are using Posit Workbench or RStudio Server; otherwise, you have RStudio Desktop.
+Some features discussed are specific to RStudio Desktop or RStudio Server: if RStudio is loaded in your web browser, then you are using RStudio Server; otherwise, you have RStudio Desktop.
 
-## Accessibility Menu
+For the purposes of this discussion, "RStudio Server" encompasses both RStudio Server Open Source and Posit Workbench (previously RStudio Workbench or RStudio Server Pro).
+
+## Accessibility menu
 
 Several accessibility-related options are available under the Help / Accessibility menu:
 
@@ -26,7 +28,7 @@ Several accessibility-related options are available under the Help / Accessibili
 
 ## Posit Workbench / RStudio Server
 
-### Basic Concept
+### Basic concepts
 
 Posit Workbench (previously RStudio Server Pro/RStudio Workbench) and RStudio Server Open Source are web-based applications loaded in your preferred browser. Simply put, you can understand it as an online version of RStudio Desktop.
 
@@ -43,9 +45,9 @@ In most cases, screen reader users will have to keep turning off their virtual c
 | Microsoft Windows 10   | NVDA version 2020.1 | Google Chrome                                                |
 | macOS 10.15 (Catalina) | VoiceOver           | Safari                                                       |
 
-### Screen Reader Settings
+### Screen reader settings
 
-When using RStudio Workbench or RStudio Server 1.3 or later with a screen reader, it is essential to enable screen reader support. Once set, this setting is persisted for future RStudio sessions. The option is available to toggle via the main menu at Help / Accessibility / Screen Reader Support, or via the Global Options dialog, under the Accessibility panel.
+When using Posit Workbench or RStudio Server or later with a screen reader, it is essential to enable screen reader support. Once set, this setting is persisted for future RStudio sessions. The option is available to toggle via the main menu at Help / Accessibility / Screen Reader Support, or via the Global Options dialog, under the Accessibility panel.
 
 The easiest way to enable the \"Screen Reader Support\" mode, however, is using its own keyboard shortcut by pressing \"Alt+Shift+/ (forward slash)\" on Windows or Linux; \"Ctrl+Option+/ (forward slash)\" on Mac.
 
@@ -93,11 +95,11 @@ The second one, \"Entire Page Has Application Role,\" allows screen readers to a
 
 Our last recommendation, \"Reduce User Interface Animations,\" will simplify some visual aspects so that you can better understand the RStudio environment using screen readers.
 
-### Application Layout
+### Application layout
 
-As described in the [basic concept](#basic-concept) above, Posit Workbench and RStudio Server are web-based applications loaded inside your browser.
+As described in the [basic concept](#basic-concepts) above, Posit Workbench and RStudio Server are web-based applications loaded inside your browser.
 
-To provide screen-reader users with overview of the application layout, the RStudio 1.3 or later has been annotated to divide it up into named landmarks (also known as regions in some screen readers). The regions in the default visual layout of RStudio are as follows:
+To provide screen-reader users with overview of the application layout, RStudio is annotated to divide it up into named landmarks (also known as regions in some screen readers). The regions in the default visual layout of RStudio are as follows:
 
 1.  Banner (the RStudio logo in the upper-left)
 
@@ -123,9 +125,9 @@ To provide screen-reader users with overview of the application layout, the RStu
 
 -   Notes: To move around the user interface landmarks, you have to turn on screen readers\' browse mode (also known as virtual cursor or QuickNav mode).
 
-### Menubar Navigation
+### Menubar navigation
 
-RStudio Workbench or RStudio Server 1.3 or newer adds customizable keyboard shortcuts to get focus to the main menu, at which point the arrow keys can be used to navigate around the menus in essentially the same manner as standard application menus.
+Posit Workbench or RStudio Server adds customizable keyboard shortcuts to get focus to the main menu, at which point the arrow keys can be used to navigate around the menus in essentially the same manner as standard application menus.
 
 On Windows and Linux, each menu is access via \"Alt+Shift\" key combination; on Mac, it is \"Ctrl+Opt\" modifiers.
 
@@ -150,7 +152,7 @@ A full list of shortcuts for accessing each menu is as follows:
 
 -   Notes for Mac Users: the default VoiceOver modifier (VO) key conflict with any RStudio\'s shortcuts using Ctrl+Opt key combinations like above. Please use the VoiceOver pass-through keys (Ctrl+Opt+Tab) each time before pressing any RStudio\'s shortcuts requiring Ctrl+Opt key combination. Or, you can change the VO modifier key into \"Caps Lock\" via VoiceOver Utility (VO+F8) / General / \"Keys to use as the VoiceOver modifier\" setting.
 
-### Keyboard Shortcuts Help
+### Keyboard shortcuts help
 
 RStudio has a list of keyboard shortcuts that you can refer to anytime. To bring up the keyboard help, press \"Alt+Shift+K\" on Windows or Linux; \"Opt+Shift+K\" on Mac.
 
@@ -160,7 +162,7 @@ Under the headings, shortcuts are organized in a simple table form in which you 
 
 Simply close the opened tab after you finish reading the content to go back to the RStudio main page.
 
-### Console Navigation
+### Console navigation
 
 On the RStudio main page, you can move from anywhere to console by pressing \"Ctrl+2\" directly.
 
@@ -182,7 +184,7 @@ More useful keyboard shortcuts for source editor can be found under the \"Consol
 
 -   Notes for Cursor Movement: In any event your screen readers do not read anything when using up/down-arrow keys in either console input area or source editor, please place your cursor at the end of current line by pressing \"End\" key, and then try again.
 
-### Source Editor Navigation
+### Source editor navigation
 
 On the RStudio main page, you can move from anywhere to source editor by pressing \"Ctrl+1\" directly.
 
@@ -202,4 +204,4 @@ More useful keyboard shortcuts for source editor can be found under the \"Source
 
 This document will be kept updated reflecting the latest RStudio\'s accessibility improvements.
 
-We always very much welcome your feedback or questions on our product accessibility. Please email accessibility-related questions and comments anytime to [accessibility\@rstudio.com](mailto:accessibility@rstudio.com).
+We always very much welcome your feedback or questions on our product accessibility. Please email accessibility-related questions and comments anytime to [accessibility\@posit.co](mailto:accessibility@posit.co).

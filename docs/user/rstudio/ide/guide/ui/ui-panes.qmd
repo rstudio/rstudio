@@ -122,7 +122,7 @@ There is also a Connect button for creating a connection in the R console, scrip
 
 ### Build
 
-The Build tab is available in specific R projects that interact with it such as R packages or Quarto/RMarkdown websites/books
+The Build tab is available in specific R projects that interact with it such as R packages or Quarto/R Markdown websites/books
 
 Based on the type of R Project, the build pane will provide options for building the R Package or rendering the website.
 
@@ -169,6 +169,10 @@ To get help on a specific R function use the `?functionName` or `help(functionNa
 # or
 help(paste0)
 ```
+
+Additionally, sections of code can be highlighted and executed in the R console with the <kbd>Ctrl+Enter</kbd> shortcut (<kbd>Cmd+Enter</kbd> on Mac).
+
+![](images/help-pane-console.png){fig-alt="The help pane and R console, where an example code snippet from the examples for paste function has been executed in the R console."}
 
 ### Tutorial
 

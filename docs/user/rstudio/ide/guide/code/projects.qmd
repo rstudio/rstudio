@@ -16,7 +16,7 @@ RStudio projects can be created:
 
 -   By cloning a version control (Git or Subversion) repository
 
-To create a new project in RStudio, use the **Create Project** command (available on the Projects toolbar in the top right corner or on the global toolbar at the top left corner). 
+To create a new project in RStudio, use **File** > **New Project** or use the **New Project** button (available on the Projects toolbar in the top right corner or on the global toolbar at the top left corner). 
 
 This will open the "New Project Wizard" popup:
 
@@ -80,7 +80,7 @@ When you are within a project and choose to either Quit, close the project, or o
 
 -   The R session is terminated.
 
-### Working with Multiple Projects at Once
+### Working with multiple Projects at once
 
 You can work with more than one RStudio project at a time by simply opening each project in its own instance of RStudio. There are two ways to accomplish this:
 
@@ -88,11 +88,11 @@ You can work with more than one RStudio project at a time by simply opening each
 
 2.  Opening multiple project files via the system shell (i.e. double-clicking on the project file).
 
-### Project Options
+### Project options
 
 There are several options that can be set on a per-project basis to customize the behavior of RStudio. You can edit these options using the **Project Options** command on the **Project** menu:
 
-![](images/project-options.png){fig-alt="A screenshot of the Project Options popup - it has tabs for General, Code Editing, RMarkdown, Python, Sweave, Spelling, Build Tools, Git/SVN, Environments."}
+![](images/project-options.png){fig-alt="A screenshot of the Project Options popup - it has tabs for General, Code Editing, R Markdown, Python, Sweave, Spelling, Build Tools, Git/SVN, Environments."}
 
 ## General
 
@@ -104,7 +104,7 @@ Note that the General project options are all overrides of existing global optio
 
 -   **Always save history (even when not saving .RData)** --- Make sure that the .Rhistory file is always saved with the commands from your session even if you choose not to save the .RData file when exiting.
 
-### Code Editing
+### Code editing
 
 -   **Index R source files** --- Determines whether R source files within the project directory are indexed for code navigation (i.e. go to file/function, go to function definition). Normally this should remain enabled, however if you have a project directory with thousands of files and are concerned about the overhead of monitoring and indexing them you can disable indexing here.
 

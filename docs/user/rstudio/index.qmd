@@ -5,39 +5,45 @@ date: today
 date-format: iso
 ---
 
-## Overview
+RStudio is a set of integrated tools designed to support multiple languages, including both R and Python. It includes a console, syntax-highlighting editor that supports direct code execution, and a variety of robust tools for plotting, viewing history, debugging and managing your workspace.
 
-RStudio is a set of integrated tools designed to support multiple languages; including both R and Python. It includes a console, syntax-highlighting editor that supports direct code execution, and a variety of robust tools for plotting, viewing history, debugging and managing your workspace.
-
-RStudio is available in open source and commercial editions and runs on the desktop (Windows, Mac, and Linux) or in a browser connected to RStudio Server or Posit Workbench (Debian/Ubuntu, Red Hat/CentOS, and SUSE Linux). - [RStudio](https://www.rstudio.com/products/rstudio/)
+RStudio is available in open source and commercial editions and runs on the desktop (Windows, Mac, and Linux) or in a browser connected to RStudio Server or Posit Workbench (Debian/Ubuntu, Red Hat/CentOS, and SUSE Linux).
 
 Some of the functionality that RStudio provides is:
 
--   Access RStudio locally\
--   Syntax highlighting, code completion, and smart indentation\
--   Execute R code directly from the source editor\
--   Quickly jump to function definitions\
--   View content changes in real-time with the Visual Markdown Editor for RMarkdown or Quarto documents\
--   Easily manage multiple working directories using Projects\
--   Integrated R help and documentation\
--   View Python data, publish and render in Python and share objects with R
--   Interactive debugger to diagnose and fix errors\
--   Extensive package development tools\
--   Easily publish apps and reports\
+-   Access RStudio locally.  
+-   Syntax highlighting, code completion, and smart indentation.  
+-   Execute R code directly from the source editor.  
+-   Quickly jump to function definitions.  
+-   View content changes in real-time with the Visual Markdown Editor for RMarkdown or Quarto documents.  
+-   Easily manage multiple working directories using Projects.  
+-   Integrated R help and documentation.  
+-   View Python data, publish and render in Python and share objects with .  
+-   Interactive debugger to diagnose and fix errors.  
+-   Extensive package development tools.  
+-   Easily publish apps and reports.  
 
 The following documentation helps a user understand the core workflows in RStudio. It provides information for navigating the user interface and appearance, managing R and R packages, working with Python, authoring code or text editing, debugging and diagnostics, using the Visual Editor for Quarto and RMarkdown, reading in data from local and remote sources, and integrations with version control systems and the terminal.
 
 ## Commercial Edition
 
-Posit Workbench has several features that differentiate it from the open-source [RStudio desktop](https://www.rstudio.com/products/rstudio/) and [RStudio Server](https://www.rstudio.com/products/rstudio/#rstudio-server), which you can read about [here](https://www.rstudio.com/products/workbench/comparison/). The main advantages of using Posit Workbench are:
+Posit Workbench has several features that differentiate it from the open-source [RStudio desktop](https://www.rstudio.com/products/rstudio/) and [RStudio Server](https://www.rstudio.com/products/rstudio/#rstudio-server), which you can read about on the [Workbench comparison page](https://www.rstudio.com/products/workbench/comparison/). The main advantages of using Posit Workbench are:
 
-- enhanced security and authentication
-- support for multiple sessions
-- support for multiple versions of R and Python
-- support for multiple IDEs in addition to RStudio
-- the ability to fine-tune the performance of the user experience
-- the ability to monitor the performance of sessions/users
-- a commercial license to remove the restrictions of the AGPL license
+- Enhanced security and authentication.  
+- Run multiple-concurrent sessions.  
+- Use multiple different versions of R and Python.  
+- Support for multiple IDEs in addition to RStudio.  
+- Collaborate on projects.  
+- Easily connect to shared resources such as databases or mounted file systems.  
+- Launch jobs into remote or local clusters using Workbench Jobs.  
+- The ability to fine-tune the performance of the user experience.  
+- The ability to monitor the performance of sessions/users.  
+- A commercial license to remove the restrictions of the AGPL license.  
+
+
+Posit Workbench users (e.g., data scientists) can reference the [Posit Workbench User Guide](https://docs.rstudio.com/ide/server-pro/user/).
+
+Posit Workbench administrators can reference the [Posit Workbench Administrator Guide](https://docs.rstudio.com/ide/server-pro/).
 
 ## Install Links
 
@@ -49,17 +55,10 @@ Posit Workbench has several features that differentiate it from the open-source 
 ### Commercial
 
 - [Posit Workbench](https://docs.rstudio.com/rsw/installation/) - administration guide for installation and configuration
-- [RStudio Desktop Pro](https://www.rstudio.com/products/rstudio-desktop-pro/download-commercial/)
+- [RStudio Desktop Pro](https://www.rstudio.com/products/rstudio-desktop-pro/download-commercial/) - available for Windows/Mac/Linux
 
 ::: {.callout-caution }
 
 ### Daily Builds
 
 [RStudio Daily builds](https://dailies.rstudio.com/) are intended for testing purposes, and are not recommended for general use. For stable builds, please use one of the above links for Open Source or Commercial downloads.
-:::
-
-
-### Additional Resources
-
-- [RStudio Extensions](https://rstudio.github.io/rstudio-extensions/index.html)
-- [Posit Support tagged IDE](https://support.rstudio.com/hc/en-us/sections/203994097-RStudio-IDE)

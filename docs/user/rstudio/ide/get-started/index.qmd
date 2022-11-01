@@ -68,8 +68,7 @@ Let's get started creating a basic graph with R via `ggplot2`.
 
 -   Install the `ggplot2` R package by executing the below code via the R console
 
-```{r}
-#| eval: false
+``` r
 install.packages("ggplot2")
 ```
 
@@ -135,8 +134,7 @@ Among the variables in `mpg` are:
 
 To get more of a spreadsheet "view" of the data, you can use the `View()` function:
 
-```{r}
-#| eval: false
+``` r
 View(mpg)
 ```
 

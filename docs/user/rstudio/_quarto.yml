@@ -3,44 +3,44 @@ project:
 
 website:
   title: "RStudio User Guide"
-  favicon: images/RStudio-ball.svg
   twitter-card: true
   open-graph: true
+  favicon: images/favicon.svg
   page-navigation: true
   site-url: https://docs.rstudio.com/ide/user/
-  repo-url: https://github.com/rstudio/rstudio/tree/main/docs/user/rstudio
+  repo-url: https://github.com/rstudio/rstudio/
+  repo-subdir: "docs/user/rstudio/"
   repo-actions: [edit, issue]
-  page-footer:
-    left: |
-      Copyright © 2022 Posit Software, PBC. All Rights Reserved.
-    right:
-      - icon: house-fill
-        href: https://www.rstudio.com
-      - icon: question-circle-fill
-        href: https://support.rstudio.com/hc/en-us
-      - icon: lightbulb-fill
-        href: https://solutions.rstudio.com
-      - icon: twitter
-        href: https://twitter.com/rstudio
+  
   navbar:
+    title: "RStudio User Guide<br>{{< var builtType >}} {{< var version >}}"
+    collapse: false
     pinned: true
     search: true
     logo: images/posit-logo-fullcolor-TM.svg
-    left:
-      - href: index.qmd
-        text: "Overview"
-      - href: ide/get-started/index.qmd
-        text: "Getting Started"
-      - href: ide/guide/ui/ui-panes.qmd
-        text: "Guide"
-      - href: ide/reference/shortcuts.qmd
-        text: "Reference"
     right:
-      - href: "https://posit.co"
-        text: posit.co
-      - href: "https://www.rstudio.com/products/rstudio/release-notes/"
-        text: "Release Notes"
-
+      - text: Version
+        menu:
+          - text: Additional versions
+            url: https://docs.rstudio.com/rsw/documentation/
+      - text: "Guides"
+        menu:
+          - text: "Workbench Install Guide"
+            url: 'https://docs.rstudio.com/rsw/installation/'
+          - text: "Workbench Admin Guide"
+            url: 'https://docs.rstudio.com/ide/server-pro/'
+          - text: "Posit Workbench User Guide"
+            url: 'https://docs.rstudio.com/ide/server-pro/user/'
+      - text: "Release Notes"
+        url: "https://www.rstudio.com/products/rstudio/release-notes/"      
+      - icon: house
+        url: https://docs.rstudio.com/
+        aria-label: Posit Documentation website
+      - icon: question-circle
+        url: https://support.rstudio.com/
+        aria-label: Posit Professional Support
+      - text: "<img src='/images/posit-logo-black-TM.png' id='navbar-right-logo'>"
+        url: "https://posit.co"
   sidebar:
     - id: guide
       collapse-level: 2
@@ -64,28 +64,31 @@ website:
               - ide/guide/code/console.qmd
               - ide/guide/code/projects.qmd
               - ide/guide/code/execution.qmd
-              # - ide/guide/code/code-editor.qmd
               - ide/guide/code/diagnostics.qmd
               - ide/guide/code/debugging.qmd
               - ide/guide/code/code-sections.qmd
               - ide/guide/code/code-navigation.qmd
           - section: "Data"
             contents:
+              - ide/guide/data/data-viewer.qmd
               - ide/guide/data/data-local.qmd
               - ide/guide/data/data-connections.qmd
+              - ide/guide/data/connection-snippets.qmd
+              - ide/guide/data/connection-contracts.qmd
           - section: "Tools"
             contents:
               - ide/guide/tools/terminal.qmd
               - ide/guide/tools/jobs.qmd
               - ide/guide/tools/jobs-in-action.qmd
               - ide/guide/tools/version-control.qmd
-              # - ide/guide/integration/renv.qmd <- holding off for now
           - section: "Productivity"
             contents:
               - ide/guide/productivity/text-editor.qmd
               - ide/guide/productivity/add-ins.qmd
               - ide/guide/productivity/snippets.qmd
               - ide/guide/productivity/custom-shortcuts.qmd
+              - ide/guide/productivity/project-templates.qmd
+              - ide/guide/productivity/custom-settings.qmd
           - section: "Computational Documents"
             contents:
               - ide/guide/documents/visual-editor.qmd
@@ -100,12 +103,26 @@ website:
             contents:
               - ide/guide/environments/r/managing-r.qmd
               - ide/guide/environments/r/packages.qmd
+              - ide/guide/environments/r/renv.qmd
               - ide/guide/environments/py/python.qmd
       - section: "Reference"
         collapse-level: 1
         contents:
           - ide/reference/shortcuts.qmd
           
+          
+  page-footer:
+    left: |
+      Copyright © 2022 Posit, PBC. All Rights Reserved.
+    right:
+      - icon: house-fill
+        href: https://www.posit.co
+      - icon: question-circle-fill
+        href: https://support.rstudio.com/hc/en-us
+      - icon: lightbulb-fill
+        href: https://solutions.rstudio.com
+      - icon: twitter
+        href: https://twitter.com/rstudio
 
 
 format:
@@ -115,12 +132,16 @@ format:
     # Controls whether an icon adorns external links (either true or the bootstrap icon name)
     link-external-icon: true
     number-sections: false
+    fig-responsive: true
     theme:
       - cosmo
       - styles/styles.scss
+    include-in-header: google_analytics.html
     toc: true
     code-overflow: scroll
-#  pdf:
-#    toc: true
-#  docx:
-#    toc: true
+
+  # pdf:
+  #   toc: true
+  # 
+  # docx:
+  #   toc: true

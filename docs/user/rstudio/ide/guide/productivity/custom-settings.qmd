@@ -1,0 +1,135 @@
+---
+title: "Custom Settings"
+---
+
+The examples in this section presume you are setting individual user account settings by changing files in `~/.config/rstudio` (Mac/Linux) or `AppData/Roaming/RStudio/` (Windows). For information on server wide setting on Posit Workbench or RStudio Server, see the [Customizing Session Settings section](https://docs.posit.co/ide/server-pro/r_sessions/customizing_session_settings.html) from <https://docs.posit.co/ide/server-pro/>.
+
+```bash
+# Mac or Linux, user level
+~/.config/rstudio/
+# Windows
+AppData/Roaming/RStudio/
+```
+
+## User preferences
+
+User preferences set in the RStudio **Global Options** dialog can also be set in the JSON file `rstudio-prefs.json`, located in the settings directory:
+
+``` bash
+# Mac or Linux, user level
+~/.config/rstudio/rstudio-prefs.json
+# Windows
+AppData/Roaming/RStudio/rstudio-prefs.json
+```
+
+You can see a summary of this information in the [Session User Settings](https://docs.posit.co/ide/server-pro/session_user_settings/session_user_settings.html) appendix.
+
+## Snippets
+
+You can install snippets files into `~/.config/rstudio/snippets` (Mac/Linux) or `AppData/Roaming/RStudio/snippets` (Windows). For example, if you'd like to create a snippet `lib` for an R library call:
+
+
+```r
+# ~/.config/rstudio/snippets on Mac/Linux
+# AppData/Roaming/RStudio/snippets on Windows
+snippet lib
+    library(${1:package})
+```
+You can also define snippets for CSS files in the file `css.snippets`, and so on. Documentation on the snippet file format can be found in the [Cloud 9 IDE snippet documentation](https://cloud9-sdk.readme.io/docs/snippets). For more information on custom snippets, see the [RStudio Custom Snippets section](../productivity/snippets.qmd).
+
+::: {.callout-note}
+
+RStudio will not merge snippet files.
+
+If you define your own snippets (for a given file type), they will replace those that ship with RStudio (for that same file type).
+
+:::
+
+## Default document templates
+
+RStudio typically opens new documents with completely blank contents. You can, however, define the contents of the blank document by creating a file named `default.X` in `~/.config/rstudio/templates` (Mac/Linux) or `AppData/Roaming/RStudio/templates` (Windows), where `X` is the file extension you wish to customize. For example, to start all R scripts with a standard comment header users can fill out, you could use the following:
+
+```r
+# ~/.config/rstudio/templates on Mac/Linux
+# AppData/Roaming/RStudio/templates on Windows
+# -------------------------------------
+# Script:
+# Author:
+# Purpose:
+# Notes:
+#
+# Copyright(c) Corporation Name
+# -------------------------------------
+```
+
+There are also some special template files which ship with RStudio; these, too, are customizable. In `~/.config/rstudio/templates` (Mac/Linux) or `AppData/Roaming/RStudio/templates` (Windows), you can customize the following:
+
+| File               | Description                                                            |
+|:----------------------------------------------------------------------------------------------------------------------------|:------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|
+| `document.Rmd`     | The default R Markdown document file content (without YAML header)     |
+| `document.qmd`     | The default Quarto document file content (without YAML header)         |
+| `notebook.Rmd`     | The default R Notebook file content (without YAML header)              |
+| `presentation.Rmd` | The default R Markdown presentation file content (without YAML header) |
+| `presentation.qmd` | The default Quarto presentation file content (without YAML header)     |
+| `shiny.Rmd`        | The default Shiny R Markdown file content (without YAML header)        |
+| `query.sql`        | The default SQL query                                                  |
+
+For Quarto and R Markdown documents, templates should not have a YAML header. The **File** > **New File** workflow provides a popup wizard where users select specific options that populate the YAML header.
+
+## Color themes
+
+You can define additional custom themes for RStudio by placing `.rstheme` files in the following directory:
+
+```bash
+# Mac or Linux
+~/.config/rstudio/themes
+# Windows
+AppData/Roaming/RStudio/themes
+```
+
+The `.rstheme` file contains plain-text CSS with some special metadata. You can create one by importing an existing TextMate theme file, or by starting from scratch (using an existing theme file as a template). Run the R command `?rstudioapi::addTheme` for more help. For more information on custom themes, see the [RStudio Themes section](../ui/appearance.qmd).
+
+## Keybindings
+
+RStudio or editor keybindings can be defined using the following two files:
+
+```bash
+# Mac or Linux
+~/.config/rstudio/keybindings/editor_commands.json
+~/.config/rstudio/keybindings/rstudio_commands.json
+
+# Windows
+AppData/Roaming/RStudio/keybindings/editor_commands.json
+AppData/Roaming/RStudio/keybindings/rstudio_commands.json
+```
+
+For more information on creating custom shortcuts, see [RStudio Custom Shortcuts](../productivity/custom-shortcuts.qmd).
+
+## Spelling
+
+You can define additional spelling dictionaries for RStudio by placing dictionary files in the following folders:
+
+- Languages in `rstudio/dictionaries/languages-system`
+- Dictionaries in `rstudio/dictionaries/custom`
+
+### Languages
+
+Define additional system languages by placing Hunspell `.aff` files in:
+
+```bash
+# Mac or Linux
+~/.config/rstudio/dictionaries/languages-system
+# Windows
+AppData/Roaming/RStudio/dictionaries/languages-system
+```
+
+### Dictionaries
+
+Define additional custom dictionaries by placing Hunspell `.dic` files in:
+
+```bash
+# Mac or Linux
+~/.config/rstudio/dictionaries/custom
+# Windows
+AppData/Roaming/RStudio/dictionaries/custom
+```

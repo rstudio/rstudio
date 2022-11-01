@@ -4,35 +4,29 @@ title: "Connections Pane"
 
 ## Connection history and existing connections
 
-Copied from: <https://db.rstudio.com/tooling/connections/>
+![](images/connections-pane.png){fig-alt="A screenshot of the Connections pane in RStudio, displaying existing database connections." fig-align="center" width="450"}
 
-See/linkout: <https://db.rstudio.com/getting-started/overview>
+The **Connections** pane displays all the connections to supported data sources and which connections are currently active. RStudio supports multiple, simultaneous database connections. This history is specific to your user account and is stored privately in RStudio's settings; it applies to all of your RStudio projects.
 
-Consider linking to: <https://pins.rstudio.com/> and <https://docs.rstudio.com/how-to-guides/users/pro-tips/pins/>
+## Connecting to a database in R
 
-![](images/connections-pane.png){fig-alt="A screenshot of the Connections pane in RStudio, displaying existing database connections." width="350"}
+In RStudio, there are two ways to connect to a database:
 
-The Connections Pane shows you all the connections you have made to supported data sources, and lets you know which connections are currently active. RStudio supports multiple, simultaneous database connections. This history is specific to your user account and is stored privately in RStudio's settings; you will see it in all your RStudio projects.
+-   Write the connection code manually**.** See this article for more information: [Connect to a Database](https://solutions.rstudio.com/db/getting-started/connect-to-database/)
 
-## Connecting to a Database in R
+-   Use the **New Connection** interface. The dialog lists all the connection types and drivers it can find on the system. See the next section for more information.
 
-In **RStudio**, there are two ways to connect to a database:
-
--   **Write the connection code manually.** See this article for more information: [Connecting to a Database in R](https://db.rstudio.com/drivers/#connecting-to-a-database-in-r)
-
--   **Use the New Connection interface.** The dialog lists all the connection types and drivers it can find on the system. See the next section for more information.
-
-###  New Connection interface
+### New connection interface
 
 The **New Connection** interface will list possible connections:
 
--   **ODBC DSNs installed on your system** If the `odbc` package is installed, any system DSN (Data Source Name) you have installed will be listed. For more information, see [Integrated security with DSN](https://db.rstudio.com/managing-credentials/#integrated-security-with-dsn).
+-   ODBC DSNs installed on your system. If the `odbc` package is installed, any system DSN (Data Source Name) you have installed will be listed. For more information, see [Integrated security with DSN](https://solutions.rstudio.com/db/best-practices/managing-credentials/).
 
--   **Connections supplied by your administrator** An administrator may put connection snippets into a folder to make them available to end users. If you are an administrator, see our page on [RStudio Connection Snippet Files](https://rstudio.github.io/rstudio-extensions/rstudio-connections.html) for more information.
+-   Connections supplied by your administrator. An administrator may put connection snippets into a folder to make them available to end users. If you are an administrator, see our page on [RStudio Connection Snippet Files](connection-snippets.html) for more information.
 
--   **ODBC drivers installed on your system** If the `odbc` package is installed, any ODBC driver you have installed on your system will be listed. The method for installing ODBC drivers varies by system. See our page on [Setting up ODBC Drivers](https://db.rstudio.com/drivers). Because the resulting connection code in the **New Connection** interface will have to be changed significantly, it may be better to write the connection code manually. See this article for more information: [Connecting to a Database in R](https://db.rstudio.com/drivers/#connecting-to-a-database-in-r)
+-   ODBC drivers installed on your system. If the `odbc` package is installed, any ODBC driver you have installed on your system will be listed. The method for installing ODBC drivers varies by system. See our page on [Setting up ODBC Drivers](https://solutions.rstudio.com/db/best-practices/drivers/). Because the resulting connection code in the **New Connection** interface will have to be changed significantly, it may be better to write the connection code manually. See this article for more information: [Connecting to a Database in R](https://solutions.rstudio.com/db/getting-started/connect-to-database/)
 
-![](images/connect-existing-data.png){fig-alt="A screenshot of the Connections > New Connections popup, providing available ODBC connections for the system such as Snowflake, Livy, Spark, Athena, etc." width="450"}
+![](images/connect-existing-data.png){fig-alt="A screenshot of the Connections > New Connections popup, providing available ODBC connections for the system such as Snowflake, Livy, Spark, Athena, etc." fig-align="center" width="450"}
 
 ## Connections pane
 
