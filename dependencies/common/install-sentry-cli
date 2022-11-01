@@ -27,4 +27,9 @@ if ! [ -w /usr/local/bin ]; then
 	export INSTALL_DIR
 fi
 
+# specify a version
+export SENTRY_CLI_VERSION=2.8.0
+
 curl -sL https://sentry.io/get-cli/ | bash || true
+
+info "Installed Sentry CLI version: `${INSTALL_DIR}/sentry-cli --version`"
