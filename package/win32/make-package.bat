@@ -89,6 +89,13 @@ echo Using npx: %NPX%
 REM Put node on the path
 set PATH=%NODE_DIR%;%PATH%
 
+set REZH=%PACKAGE_DIR%\..\..\dependencies\windows\resource-hacker\ResourceHacker.exe
+if not exist %REZH% (
+      echo ResourceHacker.exe not found; re-run install-dependencies.cmd and try again; exiting
+      endlocal
+      exit /b 1
+)
+
 REM Build for desktop
 set GWT_MAIN_MODULE=RStudioDesktop
 
@@ -154,6 +161,15 @@ cmake -G "Ninja" ^
       ..\..\.. || goto :error
 cmake --build . --config %CMAKE_BUILD_TYPE% -- %MAKEFLAGS% || goto :error
 
+REM add icon for .rproj file extension
+if "%RSTUDIO_TARGET%" == "Electron" (
+      pushd %ELECTRON_SOURCE_DIR%
+      cd out\RStudio-win32-x64
+      %REZH% -open rstudio.exe -save rstudio.exe.new -action add -resource ..\..\resources\icons\RProject.ico -mask ICONGROUP,2,1033
+      del rstudio.exe
+      rename rstudio.exe.new rstudio.exe
+      popd
+)
 cd ..
 
 REM perform 32-bit build and install it into the 64-bit tree
