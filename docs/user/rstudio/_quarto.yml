@@ -13,7 +13,7 @@ website:
   repo-actions: [edit, issue]
   
   navbar:
-    title: "RStudio User Guide<br>{{< var builtType >}} {{< var version >}}"
+    title: "RStudio User Guide<br>{{< var buildType >}} {{< var version >}}"
     collapse: false
     pinned: true
     search: true
