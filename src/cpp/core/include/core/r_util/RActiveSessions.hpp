@@ -18,6 +18,7 @@
 #define CORE_R_UTIL_ACTIVE_SESSIONS_HPP
 
 #include <boost/noncopyable.hpp>
+#include <boost/thread/thread.hpp>
 
 #include <core/Log.hpp>
 #include <core/Settings.hpp>
@@ -231,14 +232,56 @@ public:
       return Success();
    }
 
+   bool hasProperty(const std::string& propertyName) const
+   {
+      if (empty())
+         return false;
+
+      std::string value;
+      Error error = storage_->readProperty(propertyName, &value);
+      if (error)
+         return false;
+      return true;
+   }
+
    std::string project() const
    {
       return readProperty(kProject);
    }
 
-   void setProject(const std::string& project)
+   std::string projectWithRetry() const
    {
-      writeProperty(kProject, project);
+      std::string res = project();
+      if (!res.empty())
+         return res;
+      if (hasProperty(kProject))
+      {
+         int retryCount = 5;
+         do {
+            LOG_DEBUG_MESSAGE("Found empty project ... sleeping for 200 millis to validate session: " + id());
+            boost::this_thread::sleep(boost::posix_time::milliseconds(200));
+            res = project();
+            if (!res.empty())
+               break;
+         } while (--retryCount > 0);
+
+         if (res.empty())
+            LOG_DEBUG_MESSAGE("Returning empty project after retries for: " + id());
+         else
+            LOG_DEBUG_MESSAGE("Found project after: " + std::to_string(5 - retryCount) + " retries for: " + id());
+      }
+      else
+         LOG_DEBUG_MESSAGE("Returning empty project - no project property for session: " + id());
+      return res;
+   }
+
+   void setProject(const std::string& newProject)
+   {
+      // If we are not changing the value (as when resuming), do not update the file as this can lead to nfs clients seeing an empty value
+      // that leads to an invalid session
+      if (newProject == project())
+         return;
+      writeProperty(kProject, newProject);
    }
 
    std::string workingDir() const
@@ -521,15 +564,17 @@ public:
 
       if (isRSession)
       {
-         // ensure the properties are there
-         if (project().empty() || workingDir().empty() || (lastUsed() == 0))
+         // ensure the properties are there but don't check properties like lastUsed() or workingDir() that will appear as briefly empty
+         // as they are being updated
+         std::string projectVal = projectWithRetry();
+         if (projectVal.empty())
          {
-            LOG_DEBUG_MESSAGE("ActiveSession validation failed: project info missing");
-             return false;
+            LOG_DEBUG_MESSAGE("ActiveSession validation failed - project is empty");
+            return false;
          }
 
          // for projects validate that the base directory still exists
-         std::string theProject = project();
+         std::string theProject = projectVal;
          if (theProject != kProjectNone)
          {
             FilePath projectDir = FilePath::resolveAliasedPath(theProject,
@@ -719,7 +764,10 @@ public:
                       const std::string& editor,
                       std::string* pId) const;
 
-   std::vector<boost::shared_ptr<ActiveSession> > list(FilePath userHomePath, bool projectSharingEnabled, bool validate) const;
+   std::vector<boost::shared_ptr<ActiveSession> > list(FilePath userHomePath,
+                                                       bool projectSharingEnabled,
+                                                       bool validate,
+                                                       std::vector<boost::shared_ptr<ActiveSession>>* invalidSessions = nullptr) const;
 
    size_t count(const FilePath& userHomePath,
                 bool projectSharingEnabled) const;
