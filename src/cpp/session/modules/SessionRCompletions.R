@@ -1332,7 +1332,7 @@ assign(x = ".rs.acCompletionTypes",
       completions <- .rs.appendCompletions(completions, 
          .rs.makeCompletions(
             token = token, 
-            results = c(".SD", ".BY", ".N", ".I", ".GRP", ".NGRP"), 
+            results = .rs.fuzzyMatches(c(".SD", ".BY", ".N", ".I", ".GRP", ".NGRP"), token), 
             quote = FALSE, 
             type = .rs.acCompletionTypes$UNKNOWN
          )
@@ -1344,7 +1344,7 @@ assign(x = ".rs.acCompletionTypes",
       completions <- .rs.appendCompletions(completions, 
          .rs.makeCompletions(
             token = token, 
-            results = c(".EACHI"), 
+            results = .rs.fuzzyMatches(".EACHI", token), 
             quote = FALSE, 
             type = .rs.acCompletionTypes$UNKNOWN
          )
