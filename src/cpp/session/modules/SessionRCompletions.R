@@ -802,10 +802,10 @@ assign(x = ".rs.acCompletionTypes",
                                                    string,
                                                    functionCall,
                                                    numCommas,
-                                                   envir = parent.frame())
+                                                   envir = parent.frame(), 
+                                                   object = .rs.resolveObjectFromFunctionCall(functionCall, envir))
 {
    result <- .rs.emptyCompletions()
-   object <- .rs.resolveObjectFromFunctionCall(functionCall, envir)
    
    if (!is.null(object) && is.function(object))
    {
@@ -1305,6 +1305,82 @@ assign(x = ".rs.acCompletionTypes",
    completions
 })
 
+.rs.addFunction("getDataTableCompletions", function(token, string, functionCall, numCommas, context, envir)
+{
+   name <- functionCall[[2]]
+   if (is.null(name) || !is.symbol(name))
+      return(NULL)
+
+   object <- try(.rs.getAnywhere(name, envir = envir))
+   if (!inherits(object, "data.table")) 
+      return(NULL)
+
+   completions <- .rs.emptyCompletions()
+
+   # column names
+   completions <- .rs.appendCompletions(completions, 
+      .rs.getDataTableColumnsCompletions(token, as.character(name), object)
+   )
+
+   # add data table Special Symbols, help("special-symbols", package = "data.table") on
+   # explicit (rare) or implicit `j =` completion
+   if (
+      (context == .rs.acContextTypes$ARGUMENT && identical(string, "j")) ||  # explicit
+      (context == .rs.acContextTypes$SINGLE_BRACKET && numCommas == 1)       # implicit
+   )
+   {
+      completions <- .rs.appendCompletions(completions, 
+         .rs.makeCompletions(
+            token = token, 
+            results = c(".SD", ".BY", ".N", ".I", ".GRP", ".NGRP"), 
+            quote = FALSE, 
+            type = .rs.acCompletionTypes$UNKNOWN
+         )
+      )
+   }
+   else if (context == .rs.acContextTypes$ARGUMENT && identical(string, "by"))
+   { 
+      # special case `by = .EACHI`
+      completions <- .rs.appendCompletions(completions, 
+         .rs.makeCompletions(
+            token = token, 
+            results = c(".EACHI"), 
+            quote = FALSE, 
+            type = .rs.acCompletionTypes$UNKNOWN
+         )
+      )
+   } 
+   
+   # finally, offer the arguments of data.table:::`[.data.table` 
+   if (isNamespaceLoaded("data.table") && context == .rs.acContextTypes$SINGLE_BRACKET)
+   {
+      bracket <- data.table:::`[.data.table`
+      args <- names(formals(bracket))
+
+      argCompletions <- .rs.getCompletionsFunction(token, "[.data.table", functionCall, numCommas, envir = envir, object = bracket)
+      
+      completions <- .rs.appendCompletions(
+         completions, 
+         argCompletions
+      )
+   }
+
+   completions
+})
+
+.rs.addFunction("getDataTableColumnsCompletions", function(token, string, object)
+{
+   names <- names(object)
+   results <- .rs.selectFuzzyMatches(names, token)
+   .rs.makeCompletions(
+      token = token,
+      results = results,
+      packages = string,
+      quote = FALSE,
+      type = .rs.acCompletionTypes$COLUMN
+   )
+})
+
 .rs.addFunction("excludeEvaluationDataTable", function(token, string, functionCall, envir)
 {
    tryCatch({
@@ -1318,21 +1394,11 @@ assign(x = ".rs.acCompletionTypes",
          substring(string, 1L, bracketIdx - 1L)
       
       object <- .rs.getAnywhere(objectName, envir = envir)
-      if (inherits(object, "data.table"))
-      {
-         names <- names(object)
-         results <- .rs.selectFuzzyMatches(names, token)
-         .rs.makeCompletions(
-            token = token,
-            results = results,
-            packages = string,
-            quote = FALSE,
-            type = vapply(object, FUN.VALUE = numeric(1), USE.NAMES = FALSE, .rs.getCompletionType)
-         )
-      }
-   }, error = function(e) NULL
-   )
-   
+      if (!inherits(object, "data.table"))
+         return(NULL)
+
+      .rs.getDataTableColumnsCompletions(token, string, object)
+   }, error = function(e) NULL)
 })
 
 .rs.addFunction("excludeEvaluation", function(token, string, functionCall, envir)
@@ -2485,7 +2551,15 @@ assign(x = ".rs.acCompletionTypes",
       if (!is.null(completions))
          return(completions)
    }
-   
+
+   ## data.table completions
+   if (!is.null(functionCall) && identical(functionCall[[1]], quote(`[`)))
+   {
+      completions <- .rs.getDataTableCompletions(token, string[[1]], functionCall, numCommas[[1]], context[[1]], envir)
+      if (!is.null(completions))
+         return(completions)
+   }
+
    ## Other special cases (but we may still want completions from
    ## other contexts)
    
@@ -2846,6 +2920,7 @@ assign(x = ".rs.acCompletionTypes",
                                             envir)
 {
    libraryContextCompletions <- .rs.getCompletionsLibraryContext(token, string, context, numCommas, functionCall, discardFirst, documentId, envir)
+
    completions <- if (context == .rs.acContextTypes$FUNCTION)
          .rs.getCompletionsFunction(token, string, functionCall, numCommas, envir)
       else if (context == .rs.acContextTypes$ARGUMENT)
