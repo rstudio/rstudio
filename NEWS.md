@@ -49,12 +49,17 @@
 
 #### Posit Workbench VS Code Extension
 
+- Install VS Code Extension with Posit Workbench instead of requiring a separate download (rstudio-pro#3643)
 - Introduce Workbench Job management to VS Code Extension (rstudio/rstudio-pro#3784, rstudio/rstudio-pro#3565)
 - Added a pop-up notification when working with certain relevant filetypes that makes it easier to find the Workbench Extension. This notification is a one-time view per user. It can be re-enabled in the user settings (vscode-ext#96).
 - Rebranded the interface to match Posit Software, PBC's new branding terminology and iconography
 - Fixed extension servers appearing in Proxied Servers list (vscode-ext#116)
 - Added support for Flask, including a help dialog and the Posit Workbench Flask Interface code snippet, for proxying Flask applications (rstudio-pro#2660)
-- Install VS Code Extension with Posit Workbench instead of requiring a separate download (rstudio-pro#3643)
+- Added a FastAPI help dialog and the following code snippets for setting the root_path in FastAPI applications (rstudio/rstudio-pro#3698):
+    - Posit Workbench Uvicorn Root Path Snippet
+    - Posit Workbench FastAPI Uvicorn Root Path Snippet
+- Added a Warning notification that appears when a uvicorn process was started with a custom port, without the root-path argument. These processes will now appear in the Proxied Servers view with a warning icon (rstudio/rstudio-pro#3699)
+- Fixed mislabelling of Shiny app in Proxied Servers list (#117)
 
 #### Jupyter Extension
 
