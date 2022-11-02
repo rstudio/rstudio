@@ -333,7 +333,7 @@ public class CompletionRequester
 
    }
 
-   private static final Pattern RE_EXTRACTION = Pattern.create("[$@:]", "");
+   private static final Pattern RE_EXTRACTION = Pattern.create("[$@:\\[]", "");
    private boolean isTopLevelCompletionRequest()
    {
       String line = docDisplay_.getCurrentLineUpToCursor();
