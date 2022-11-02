@@ -397,10 +397,13 @@ public class CompletionRequester
             JsArrayString meta = response.getMeta();
             ArrayList<QualifiedName> newComp = new ArrayList<>();
 
-            // Get function completions from the server
-            for (int i = 0; i < comp.length(); i++)
+            // [.data.table special case: the completions are already in the right order
+            // i.e. we don't want arguments first
+            boolean ordered = StringUtil.equals(response.getGuessedFunctionName(), "[.data.table");
+            if (ordered) 
             {
-               if (comp.get(i).endsWith(" = "))
+               // Get all server completions at once
+               for (int i = 0; i < comp.length(); i++)
                {
                   newComp.add(new QualifiedName(
                      comp.get(i), 
@@ -415,6 +418,30 @@ public class CompletionRequester
                      response.getLanguage(), 
                      response.getContext().get(i)
                   ));
+               }
+            }
+            
+            // Get function completions from the server
+            if (!ordered)
+            {
+               for (int i = 0; i < comp.length(); i++)
+               {
+                  if (comp.get(i).endsWith(" = "))
+                  {
+                     newComp.add(new QualifiedName(
+                        comp.get(i), 
+                        display.get(i),
+                        pkgs.get(i), 
+                        quote.get(i), 
+                        type.get(i), 
+                        suggestOnAccept.get(i), 
+                        replaceToEnd.get(i),
+                        meta.get(i), 
+                        response.getHelpHandler(), 
+                        response.getLanguage(), 
+                        response.getContext().get(i)
+                     ));
+                  }
                }
             }
 
@@ -433,23 +460,26 @@ public class CompletionRequester
             }
 
             // Get other server completions
-            for (int i = 0; i < comp.length(); i++)
+            if (!ordered)
             {
-               if (!comp.get(i).endsWith(" = "))
+               for (int i = 0; i < comp.length(); i++)
                {
-                  newComp.add(new QualifiedName(
-                     comp.get(i), 
-                     display.get(i),
-                     pkgs.get(i), 
-                     quote.get(i), 
-                     type.get(i), 
-                     suggestOnAccept.get(i),
-                     replaceToEnd.get(i),
-                     meta.get(i), 
-                     response.getHelpHandler(), 
-                     response.getLanguage(), 
-                     response.getContext().get(i)
-                  ));
+                  if (!comp.get(i).endsWith(" = "))
+                  {
+                     newComp.add(new QualifiedName(
+                        comp.get(i), 
+                        display.get(i),
+                        pkgs.get(i), 
+                        quote.get(i), 
+                        type.get(i), 
+                        suggestOnAccept.get(i),
+                        replaceToEnd.get(i),
+                        meta.get(i), 
+                        response.getHelpHandler(), 
+                        response.getLanguage(), 
+                        response.getContext().get(i)
+                     ));
+                  }
                }
             }
             
