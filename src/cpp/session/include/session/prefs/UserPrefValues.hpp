@@ -1832,6 +1832,12 @@ public:
    core::Error setUiLanguage(std::string val);
 
    /**
+    * Hide desktop menu bar until Alt key is pressed.
+    */
+   bool autohideMenubar();
+   core::Error setAutohideMenubar(bool val);
+
+   /**
     * Whether RStudio Desktop will use the operating system's native File and Message dialog boxes.
     */
    bool nativeFileDialogs();
@@ -1844,7 +1850,7 @@ public:
    core::Error setDiscardPendingConsoleInputOnError(bool val);
 
    /**
-    * A integer value, 1-200, to set the editor scroll multiplier. The higher the value, the faster the scrolling.
+    * An integer value, 1-200, to set the editor scroll multiplier. The higher the value, the faster the scrolling.
     */
    int editorScrollMultiplier();
    core::Error setEditorScrollMultiplier(int val);
@@ -1854,12 +1860,6 @@ public:
     */
    std::string textRendering();
    core::Error setTextRendering(std::string val);
-
-   /**
-    * Hide desktop menu bar until Alt key is pressed.
-    */
-   bool autohideMenubar();
-   core::Error setAutohideMenubar(bool val);
 
 };
 
