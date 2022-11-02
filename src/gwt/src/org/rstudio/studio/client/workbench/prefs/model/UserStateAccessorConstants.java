@@ -159,12 +159,20 @@ public interface UserStateAccessorConstants extends Constants {
    String showPublishUiDescription();
 
    /**
-    * Whether to show UI for publishing content to RStudio Connect.
+    * Whether to show UI for publishing content to Posit Connect.
     */
    @DefaultStringValue("")
    String enableRsconnectPublishUiTitle();
-   @DefaultStringValue("Whether to show UI for publishing content to RStudio Connect.")
+   @DefaultStringValue("Whether to show UI for publishing content to Posit Connect.")
    String enableRsconnectPublishUiDescription();
+
+   /**
+    * Whether to show UI for publishing content to Posit Cloud.
+    */
+   @DefaultStringValue("")
+   String enableCloudPublishUiTitle();
+   @DefaultStringValue("Whether to show UI for publishing content to Posit Cloud.")
+   String enableCloudPublishUiDescription();
 
    /**
     * The default (last) account used for publishing
@@ -269,7 +277,4 @@ public interface UserStateAccessorConstants extends Constants {
    String quartoWebsiteSyncEditorTitle();
    @DefaultStringValue("Sync source editor to Quarto website preview navigation.")
    String quartoWebsiteSyncEditorDescription();
-
-
-
 }

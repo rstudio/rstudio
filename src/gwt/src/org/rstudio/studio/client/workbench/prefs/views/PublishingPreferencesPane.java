@@ -198,6 +198,9 @@ public class PublishingPreferencesPane extends PreferencesPane
          new HelpButton("rstudio_connect", constants_.checkBoxWithHelpTitle()));
       lessSpaced(rsconnectPanel);
 
+      final CheckBox chkEnablePositCloud = checkboxPref(constants_.chkEnableCloudLabel(),
+         userState_.enableCloudPublishUi());
+
       add(headerLabel(constants_.settingsHeaderLabel()));
       CheckBox chkEnablePublishing = checkboxPref(constants_.chkEnablePublishingLabel(),
             userState_.showPublishUi());
@@ -208,12 +211,16 @@ public class PublishingPreferencesPane extends PreferencesPane
             reloadRequired_ = true;
             rsconnectPanel.setVisible(
                   RSConnect.showRSConnectUI() && event.getValue());
+            chkEnablePositCloud.setVisible(event.getValue());
+
          }
       });
       add(chkEnablePublishing);
 
       if (RSConnect.showRSConnectUI())
          add(rsconnectPanel);
+
+      add(chkEnablePositCloud);
 
       add(checkboxPref(constants_.showPublishDiagnosticsLabel(),
             userPrefs_.showPublishDiagnostics()));

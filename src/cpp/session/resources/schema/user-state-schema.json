@@ -287,7 +287,12 @@
         "enable_rsconnect_publish_ui": {
             "type": "boolean",
             "default": true,
-            "description": "Whether to show UI for publishing content to RStudio Connect."
+            "description": "Whether to show UI for publishing content to Posit Connect."
+        },
+        "enable_cloud_publish_ui": {
+          "type": "boolean",
+          "default": false,
+          "description": "Whether to show UI for publishing content to Posit Cloud."
         },
         "publish_account": {
             "type": "object",
