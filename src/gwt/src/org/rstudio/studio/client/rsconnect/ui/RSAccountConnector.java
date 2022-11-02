@@ -233,6 +233,8 @@ public class RSAccountConnector implements EnableRStudioConnectUIEvent.Handler
             forFirstAccount,
             withCloudOption &&
                SessionUtils.showExternalPublishUi(session_, pUserState_.get()),
+            pUserState_.get().enableRsconnectPublishUi().getGlobalValue(),
+            pUserState_.get().enableCloudPublishUi().getGlobalValue(),
             new ProgressOperationWithInput<NewRSConnectAccountResult>()
       {
          @Override
