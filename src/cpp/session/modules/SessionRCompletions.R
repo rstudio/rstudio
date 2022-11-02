@@ -1339,7 +1339,7 @@ assign(x = ".rs.acCompletionTypes",
       ))
       completions <- .rs.appendCompletions(completions, specialCompletions)
    }
-   else if (context == .rs.acContextTypes$ARGUMENT && identical(string, "by"))
+   else if (context == .rs.acContextTypes$ARGUMENT && string %in% c("by", "keyby"))
    { 
       # special case `by = .EACHI`
       if (.rs.fuzzyMatches(".EACHI", token))
