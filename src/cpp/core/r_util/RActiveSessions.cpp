@@ -123,7 +123,10 @@ bool compareActivityLevel(boost::shared_ptr<ActiveSession> a,
 
 } // anonymous namespace
 
-std::vector<boost::shared_ptr<ActiveSession> > ActiveSessions::list(FilePath userHomePath, bool projectSharingEnabled, bool validate) const
+std::vector<boost::shared_ptr<ActiveSession> > ActiveSessions::list(FilePath userHomePath,
+                                                                    bool projectSharingEnabled,
+                                                                    bool validate,
+                                                                    std::vector<boost::shared_ptr<ActiveSession>>* invalidSessions) const
 {
    std::vector<std::string> sessionIds = storage_->listSessionIds();
    std::vector<boost::shared_ptr<ActiveSession>> sessions{};
@@ -143,14 +146,17 @@ std::vector<boost::shared_ptr<ActiveSession> > ActiveSessions::list(FilePath use
          }
          else
          {
-            LOG_DEBUG_MESSAGE("Removing invalid session: " + candidateSession->id());
-            // remove sessions that don't have required properties
-            // (they may be here as a result of a race condition where
-            // they are removed but then suspended session data is
-            // written back into them)
-            Error error = candidateSession->destroy();
-            if (error)
-               LOG_ERROR(error);
+            if (invalidSessions != nullptr)
+            {
+               LOG_DEBUG_MESSAGE("Returning invalid session: " + candidateSession->id());
+               // the call will remove sessions that don't have required properties
+               // (they may be here as a result of a race condition where
+               // they are removed but then suspended session data is
+               // written back into them)
+               invalidSessions->push_back(candidateSession);
+            }
+            else
+               LOG_DEBUG_MESSAGE("Skipping invalid session in list: " + candidateSession->id());
          }
       }
       else
