@@ -38,7 +38,9 @@ test_that("command callbacks are invoked", {
    expect_equal(invoked, 2)
    
    # unregister the callback
-   .rs.api.unregisterCommandCallback(handle)
+   if (!is.null(handle) && !is.na(handle)) {
+      .rs.api.unregisterCommandCallback(handle)
+   }
    
    # record a third command execution
    .rs.invokeRpc("record_command_execution", "insertChunk")
@@ -64,7 +66,9 @@ test_that("command stream callbacks are invoked", {
    expect_equal(commands, c("insertChunk", "showHelpMenu", "startJob"))
    
    # unregister the callback
-   .rs.api.unregisterCommandCallback(handle)
+   if (!is.null(handle) && !is.na(handle)) {
+      .rs.api.unregisterCommandCallback(handle)
+   }
    
    # invoke one more command execution
    .rs.invokeRpc("record_command_execution", "startProfiler")
