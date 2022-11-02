@@ -34,6 +34,7 @@ set WINPTY_FILES=winpty-0.4.3-msys2-2.7.0.zip
 set OPENSSL_FILES=openssl-1.1.1i.zip
 set BOOST_FILES=boost-1.78.0-win-msvc142.zip
 set YAML_CPP_FILES=yaml-cpp-0.6.3.zip
+set RESOURCE_HACKER=resource_hacker.zip
 
 set NSIS_NSPROCESS_VERSION=1.6
 set NSIS_NSPROCESS_FILE=NsProcess.zip
@@ -127,6 +128,13 @@ if not exist %YAML_CPP_FILES:~0,-4%* (
   wget %WGET_ARGS% "%BASEURL%yaml-cpp/%YAML_CPP_FILES%
   unzip %UNZIP_ARGS% "%YAML_CPP_FILES%"
   del %YAML_CPP_FILES%
+)
+
+if not exist resource-hacker (
+  mkdir resource-hacker
+  wget %WGET_ARGS% "%BASEURL%resource-hacker/%RESOURCE_HACKER%
+  unzip %UNZIP_ARGS% "%RESOURCE_HACKER%" -d resource-hacker
+  del %RESOURCE_HACKER%
 )
 
 if not exist sentry-cli.exe (

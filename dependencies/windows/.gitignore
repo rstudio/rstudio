@@ -14,6 +14,7 @@ winpty*/
 openssl*/
 crashpad*/
 yaml-cpp-*/
+resource-hacker/
 *.zip
 breakpad-tools-windows/
 
