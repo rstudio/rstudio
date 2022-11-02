@@ -1357,7 +1357,12 @@ assign(x = ".rs.acCompletionTypes",
       bracket <- data.table:::`[.data.table`
       args <- names(formals(bracket))
 
-      argCompletions <- .rs.getCompletionsFunction(token, "[.data.table", functionCall, numCommas, envir = envir, object = bracket)
+      argCompletions <- .rs.getCompletionsFunction(token, 
+                                                   "[.data.table", 
+                                                   functionCall, 
+                                                   numCommas, 
+                                                   envir = envir, 
+                                                   object = bracket)
       
       completions <- .rs.appendCompletions(
          completions, 
