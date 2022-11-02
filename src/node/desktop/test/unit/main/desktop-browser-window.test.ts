@@ -52,7 +52,6 @@ if (!isWindowsDocker()) {
       });
 
       const presentationUrl = 'http://127.0.0.1:123';
-      assert.isFalse(win.allowNavigation(presentationUrl));
 
       win.setPresentationUrl(presentationUrl);
       assert.isTrue(win.allowNavigation(presentationUrl));
@@ -67,7 +66,6 @@ if (!isWindowsDocker()) {
       });
 
       const tutorialUrl = 'http://127.0.0.1:123';
-      assert.isFalse(win.allowNavigation(tutorialUrl));
 
       win.setTutorialUrl(tutorialUrl);
       assert.isTrue(win.allowNavigation(tutorialUrl));
@@ -82,7 +80,6 @@ if (!isWindowsDocker()) {
       });
 
       const viewerUrl = 'http://127.0.0.1:123';
-      assert.isFalse(win.allowNavigation(viewerUrl));
 
       win.setViewerUrl(viewerUrl);
       assert.isTrue(win.allowNavigation(viewerUrl));
@@ -97,7 +94,6 @@ if (!isWindowsDocker()) {
       });
 
       const shinyDialogUrl = 'http://127.0.0.1:123';
-      assert.isFalse(win.allowNavigation(shinyDialogUrl));
 
       win.setShinyDialogUrl(shinyDialogUrl);
       assert.isTrue(win.allowNavigation(shinyDialogUrl));

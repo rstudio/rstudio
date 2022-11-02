@@ -326,7 +326,11 @@ export class DesktopBrowserWindow extends EventEmitter {
 
     if (this.options.allowExternalNavigate) {
       return true;
-    } else if (isSafeHost(targetUrl.hostname)) {
+    } else if (isSafeHost(targetUrl.hostname) || isLocal) {
+      // check isLocal until it is determined why restarting R
+      // causes the old preview URL to load, even after the DOM
+      // updates to use the new URL
+      // https://github.com/rstudio/rstudio/issues/12256
       return true;
     } else {
       // open external browser only when not in test
