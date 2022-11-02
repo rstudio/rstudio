@@ -82,3 +82,5 @@
 - Fix for schema version comparison that breaks db in downgrade -> upgrade scenarios (rstudio-pro#3572)
 - Fixed an issue in the Electron build of the IDE on Macs where users could not clone a git repository via password-protected SSH or HTTPS (#11693)
 - Fixed scroll speed sensitivity for Mac and Linux and added a preference to adjust it (#11578)
+- Fixed an issue in server environments where invoking `systemd` directly could lead to orphaned processes and undefined behavior. Processes are now cleaned up more consistently as a part of server or launcher shutdown. (rstudio/rstudio-pro#2585)
+- RStudio sessions now shut down and suspend properly when they receive a `SIGTERM` signal, as they have for `SIGUSR2` (rstudio/rstudio-pro#2585)
