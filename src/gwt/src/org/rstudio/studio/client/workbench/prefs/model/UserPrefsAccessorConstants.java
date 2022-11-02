@@ -1984,11 +1984,11 @@ public interface UserPrefsAccessorConstants extends Constants {
    String discardPendingConsoleInputOnErrorDescription();
 
    /**
-    * A integer value, 1-200, to set the editor scroll multiplier. The higher the value, the faster the scrolling.
+    * An integer value, 1-200, to set the editor scroll multiplier. The higher the value, the faster the scrolling.
     */
    @DefaultStringValue("Editor scroll speed sensitivity")
    String editorScrollMultiplierTitle();
-   @DefaultStringValue("A integer value, 1-200, to set the editor scroll multiplier. The higher the value, the faster the scrolling.")
+   @DefaultStringValue("An integer value, 1-200, to set the editor scroll multiplier. The higher the value, the faster the scrolling.")
    String editorScrollMultiplierDescription();
 
    /**

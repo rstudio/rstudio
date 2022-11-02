@@ -3415,7 +3415,7 @@ public class UserPrefsAccessor extends Prefs
    }
 
    /**
-    * A integer value, 1-200, to set the editor scroll multiplier. The higher the value, the faster the scrolling.
+    * An integer value, 1-200, to set the editor scroll multiplier. The higher the value, the faster the scrolling.
     */
    public PrefValue<Integer> editorScrollMultiplier()
    {
