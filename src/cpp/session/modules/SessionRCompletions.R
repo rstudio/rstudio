@@ -36,7 +36,7 @@ assign(x = ".rs.acContextTypes",
        )
 )
 
-# Sync with RCompletionTypes.java
+# Sync with RCompletionType.java
 assign(x = ".rs.acCompletionTypes",
        envir = as.environment("tools:rstudio"),
        value = list(
@@ -67,6 +67,7 @@ assign(x = ".rs.acCompletionTypes",
           DATASET     = 24,
           COLUMN      = 27,
           R6_OBJECT   = 28, 
+          DATATABLE_SPECIAL_SYMBOL = 29,
 
           CONTEXT     = 99
        )
@@ -1329,26 +1330,30 @@ assign(x = ".rs.acCompletionTypes",
       (context == .rs.acContextTypes$SINGLE_BRACKET && numCommas == 1)       # implicit
    )
    {
-      completions <- .rs.appendCompletions(completions, 
-         .rs.makeCompletions(
-            token = token, 
-            results = .rs.fuzzyMatches(c(".SD", ".BY", ".N", ".I", ".GRP", ".NGRP"), token), 
-            quote = FALSE, 
-            type = .rs.acCompletionTypes$UNKNOWN
-         )
-      )
+      specialCompletions <- .rs.selectFuzzyMatches(token = token, .rs.makeCompletions(
+         token = token, 
+         results = c(".SD", ".BY", ".N", ".I", ".GRP", ".NGRP"), 
+         quote = FALSE, 
+         packages = "data.table",
+         type = .rs.acCompletionTypes$DATATABLE_SPECIAL_SYMBOL
+      ))
+      completions <- .rs.appendCompletions(completions, specialCompletions)
    }
    else if (context == .rs.acContextTypes$ARGUMENT && identical(string, "by"))
    { 
       # special case `by = .EACHI`
-      completions <- .rs.appendCompletions(completions, 
-         .rs.makeCompletions(
-            token = token, 
-            results = .rs.fuzzyMatches(".EACHI", token), 
-            quote = FALSE, 
-            type = .rs.acCompletionTypes$UNKNOWN
+      if (.rs.fuzzyMatches(".EACHI", token))
+      {
+         completions <- .rs.appendCompletions(completions, 
+            .rs.makeCompletions(
+               token = token, 
+               results = ".EACHI", 
+               packages = "data.table",
+               quote = FALSE, 
+               type = .rs.acCompletionTypes$DATATABLE_SPECIAL_SYMBOL
+            )
          )
-      )
+      }
    } 
    
    # finally, offer the arguments of data.table:::`[.data.table` 

@@ -1111,6 +1111,8 @@ public class CompletionRequester
             return new ImageResource2x(ICONS.snippet2x());
          case RCompletionType.COLUMN:
             return new ImageResource2x(ICONS.column2x());
+         case RCompletionType.DATATABLE_SPECIAL_SYMBOL:
+            return new ImageResource2x(ICONS.datatableSpecialSymbol2x());
          default:
             return new ImageResource2x(ICONS.variable2x());
          }
