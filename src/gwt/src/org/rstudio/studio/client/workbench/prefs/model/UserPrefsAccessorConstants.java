@@ -1,10 +1,10 @@
 /*
  * UserPrefsAccessorConstants.java
  *
- * Copyright (C) 2022 by RStudio, PBC
+ * Copyright (C) 2022 by Posit Software, PBC
  *
- * Unless you have received this program directly from RStudio pursuant
- * to the terms of a commercial license agreement with RStudio, then
+ * Unless you have received this program directly from Posit Software pursuant
+ * to the terms of a commercial license agreement with Posit Software, then
  * this program is licensed to you under the terms of version 3 of the
  * GNU Affero General Public License. This program is distributed WITHOUT
  * ANY EXPRESS OR IMPLIED WARRANTY, INCLUDING THOSE OF NON-INFRINGEMENT,
@@ -256,12 +256,20 @@ public interface UserPrefsAccessorConstants extends Constants {
    String showInvisiblesDescription();
 
    /**
-    * Whether to show indentation guides in the RStudio code editor.
+    * Style for indentation guides in the RStudio code editor.
     */
-   @DefaultStringValue("Show indentation guides")
-   String showIndentGuidesTitle();
-   @DefaultStringValue("Whether to show indentation guides in the RStudio code editor.")
-   String showIndentGuidesDescription();
+   @DefaultStringValue("Indentation guides")
+   String indentGuidesTitle();
+   @DefaultStringValue("Style for indentation guides in the RStudio code editor.")
+   String indentGuidesDescription();
+   @DefaultStringValue("None")
+   String indentGuidesEnum_none();
+   @DefaultStringValue("Gray lines")
+   String indentGuidesEnum_gray();
+   @DefaultStringValue("Rainbow lines")
+   String indentGuidesEnum_rainbowlines();
+   @DefaultStringValue("Rainbow fills")
+   String indentGuidesEnum_rainbowfills();
 
    /**
     * Whether to continue comments (by inserting the comment character) after adding a new line.
@@ -656,9 +664,17 @@ public interface UserPrefsAccessorConstants extends Constants {
    String highlightRFunctionCallsDescription();
 
    /**
+    * Whether to show preview for named and hexadecimal colors.
+    */
+   @DefaultStringValue("Enable preview of named and hexadecimal colors")
+   String colorPreviewTitle();
+   @DefaultStringValue("Whether to show preview for named and hexadecimal colors.")
+   String colorPreviewDescription();
+
+   /**
     * Whether to highlight parentheses in a variety of colors.
     */
-   @DefaultStringValue("Rainbow parentheses")
+   @DefaultStringValue("Use rainbow parentheses")
    String rainbowParenthesesTitle();
    @DefaultStringValue("Whether to highlight parentheses in a variety of colors.")
    String rainbowParenthesesDescription();
@@ -1222,19 +1238,19 @@ public interface UserPrefsAccessorConstants extends Constants {
    String jobsTabVisibilityDescription();
 
    /**
-    * Whether to show the Launcher jobs tab in RStudio Pro and RStudio Workbench.
+    * Whether to show the Workbench Jobs tab in RStudio Pro and RStudio Workbench.
     */
    @DefaultStringValue("")
    String showLauncherJobsTabTitle();
-   @DefaultStringValue("Whether to show the Launcher jobs tab in RStudio Pro and RStudio Workbench.")
+   @DefaultStringValue("Whether to show the Workbench Jobs tab in RStudio Pro and RStudio Workbench.")
    String showLauncherJobsTabDescription();
 
    /**
-    * How to sort jobs in the Launcher tab in RStudio Pro and RStudio Workbench.
+    * How to sort jobs in the Workbench Jobs tab in RStudio Pro and RStudio Workbench.
     */
    @DefaultStringValue("")
    String launcherJobsSortTitle();
-   @DefaultStringValue("How to sort jobs in the Launcher tab in RStudio Pro and RStudio Workbench.")
+   @DefaultStringValue("How to sort jobs in the Workbench Jobs tab in RStudio Pro and RStudio Workbench.")
    String launcherJobsSortDescription();
 
    /**
@@ -1434,11 +1450,11 @@ public interface UserPrefsAccessorConstants extends Constants {
    String useDevtoolsDescription();
 
    /**
-    * Clean before install.
+    * Always use --preclean when installing package.
     */
-   @DefaultStringValue("Clean before install")
+   @DefaultStringValue("Always use --preclean when installing package")
    String cleanBeforeInstallTitle();
-   @DefaultStringValue("Clean before install.")
+   @DefaultStringValue("Always use --preclean when installing package.")
    String cleanBeforeInstallDescription();
 
    /**
@@ -1938,7 +1954,7 @@ public interface UserPrefsAccessorConstants extends Constants {
    /**
     * The IDE's user-interface language.
     */
-   @DefaultStringValue("User Interface Language")
+   @DefaultStringValue("User Interface Language:")
    String uiLanguageTitle();
    @DefaultStringValue("The IDE's user-interface language.")
    String uiLanguageDescription();
@@ -1950,6 +1966,38 @@ public interface UserPrefsAccessorConstants extends Constants {
    String autohideMenubarTitle();
    @DefaultStringValue("Hide desktop menu bar until Alt key is pressed.")
    String autohideMenubarDescription();
+
+   /**
+    * Whether RStudio Desktop will use the operating system's native File and Message dialog boxes.
+    */
+   @DefaultStringValue("Use native file and message dialog boxes")
+   String nativeFileDialogsTitle();
+   @DefaultStringValue("Whether RStudio Desktop will use the operating system's native File and Message dialog boxes.")
+   String nativeFileDialogsDescription();
+
+   /**
+    * When enabled, any pending console input will be discarded when an (uncaught) R error occurs.
+    */
+   @DefaultStringValue("Discard pending console input on error")
+   String discardPendingConsoleInputOnErrorTitle();
+   @DefaultStringValue("When enabled, any pending console input will be discarded when an (uncaught) R error occurs.")
+   String discardPendingConsoleInputOnErrorDescription();
+
+   /**
+    * A integer value, 1-200, to set the editor scroll multiplier. The higher the value, the faster the scrolling.
+    */
+   @DefaultStringValue("Editor scroll speed sensitivity")
+   String editorScrollMultiplierTitle();
+   @DefaultStringValue("A integer value, 1-200, to set the editor scroll multiplier. The higher the value, the faster the scrolling.")
+   String editorScrollMultiplierDescription();
+
+   /**
+    * Control how text is rendered within the IDE surface.
+    */
+   @DefaultStringValue("Text rendering")
+   String textRenderingTitle();
+   @DefaultStringValue("Control how text is rendered within the IDE surface.")
+   String textRenderingDescription();
 
 
 

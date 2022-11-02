@@ -1,10 +1,10 @@
 /*
  * SessionHttpMethods.hpp
  *
- * Copyright (C) 2022 by RStudio, PBC
+ * Copyright (C) 2022 by Posit Software, PBC
  *
- * Unless you have received this program directly from RStudio pursuant
- * to the terms of a commercial license agreement with RStudio, then
+ * Unless you have received this program directly from Posit Software pursuant
+ * to the terms of a commercial license agreement with Posit Software, then
  * this program is licensed to you under the terms of version 3 of the
  * GNU Affero General Public License. This program is distributed WITHOUT
  * ANY EXPRESS OR IMPLIED WARRANTY, INCLUDING THOSE OF NON-INFRINGEMENT,
@@ -131,7 +131,8 @@ bool parseAndValidateJsonRpcConnection(
        !core::http::validateCSRFHeaders(ptrConnection->request()))
    {
       LOG_WARNING_MESSAGE("RPC request to '" + ptrConnection->request().uri() + "' has missing or "
-            "mismatched " kCSRFTokenCookie " cookie or " kCSRFTokenHeader " header");
+            "mismatched " + std::string(kCSRFTokenCookie) + " cookie or " +
+            std::string(kCSRFTokenHeader) + " header");
       ptrConnection->sendJsonRpcError(Error(json::errc::Unauthorized, ERROR_LOCATION));
       return false;
    }
@@ -291,6 +292,16 @@ void polledEventHandler()
             httpConnectionListener().mainConnectionQueue().dequeConnection();
       if (ptrConnection)
       {
+         // ensure request signature is valid
+         if (!http_methods::verifyRequestSignature(ptrConnection->request()))
+         {
+            LOG_ERROR_MESSAGE("Invalid signature in poll handler for request URI " + ptrConnection->request().uri());
+            core::http::Response response;
+            response.setError(http::status::Unauthorized, "Invalid message signature");
+            ptrConnection->sendResponse(response);
+            return;
+         }
+
          if ( isMethod(ptrConnection, kClientInit) )
          {
             if (ptrConnection->isAsyncRpc())
@@ -335,6 +346,22 @@ bool registeredWaitForMethod(const std::string& method,
                         pRequest);
 }
 
+
+} // anonymous namespace
+
+namespace module_context
+{
+module_context::WaitForMethodFunction registerWaitForMethod(
+      const std::string& methodName)
+{
+   s_waitForMethodNames.push_back(methodName);
+   return boost::bind(registeredWaitForMethod, methodName, _2, _1);
+}
+
+} // namespace module_context
+
+namespace http_methods {
+
 bool verifyRequestSignature(const core::http::Request& request)
 {
 #ifndef RSTUDIO_SERVER
@@ -370,21 +397,6 @@ bool verifyRequestSignature(const core::http::Request& request)
 #endif
 }
 
-
-} // anonymous namespace
-
-namespace module_context
-{
-module_context::WaitForMethodFunction registerWaitForMethod(
-      const std::string& methodName)
-{
-   s_waitForMethodNames.push_back(methodName);
-   return boost::bind(registeredWaitForMethod, methodName, _2, _1);
-}
-
-} // namespace module_context
-
-namespace http_methods {
 
 // client version -- this is determined by the git revision hash. the client
 // and the server can diverge if a new version of the server was installed
@@ -475,7 +487,7 @@ bool waitForMethod(const std::string& method,
       if (ptrConnection)
       {
          // ensure request signature is valid
-         if (!verifyRequestSignature(ptrConnection->request()))
+         if (!http_methods::verifyRequestSignature(ptrConnection->request()))
          {
             LOG_ERROR_MESSAGE("Invalid signature for request URI " + ptrConnection->request().uri());
             core::http::Response response;
@@ -530,7 +542,7 @@ bool waitForMethod(const std::string& method,
          }
 
          // since we got a connection we can reset the timeout time
-         suspend::resetSuspendTimeout();
+         suspend::resetSuspendTimeout(ptrConnection);
 
          // after we've processed at least one waitForMethod it is now safe to
          // initialize the polledEventHandler (which is used to maintain rsession
@@ -607,6 +619,7 @@ void handleConnection(boost::shared_ptr<HttpConnection> ptrConnection,
    }
    else if (isJsonRpcRequest(ptrConnection)) // check for json-rpc
    {
+      using namespace module_context;
       // r code may execute - ensure session is initialized
       init::ensureSessionInitialized();
 
@@ -664,7 +677,6 @@ void handleConnection(boost::shared_ptr<HttpConnection> ptrConnection,
                }
 
                // update project and working dir
-               using namespace module_context;
                if (switchToProject == kProjectNone)
                {
                   // update the project and working dir
@@ -691,7 +703,6 @@ void handleConnection(boost::shared_ptr<HttpConnection> ptrConnection,
                   else
                   {
                      // extract the directory (aliased)
-                     using namespace module_context;
                      FilePath projFile = module_context::resolveAliasedPath(switchToProject);
                      std::string projDir = createAliasedPath(projFile.getParent());
                      scope = r_util::SessionScope::fromProject(
@@ -715,7 +726,6 @@ void handleConnection(boost::shared_ptr<HttpConnection> ptrConnection,
                // note switch to R version if requested
                if (json::isType<json::Object>(switchToVersionJson))
                {
-                  using namespace module_context;
                   std::string version, rHome, label;
                   Error error = json::readObject(
                                             switchToVersionJson.getObject(),
@@ -748,7 +758,13 @@ void handleConnection(boost::shared_ptr<HttpConnection> ptrConnection,
                  else
                     LOG_ERROR(error);
                }
+               LOG_DEBUG_MESSAGE("Switching projects: setting activityState to shutting_down");
             }
+            else
+               LOG_DEBUG_MESSAGE("Quitting session: setting activityState to shutting_down");
+
+            // Mark this session as "Shutting Down" in the homepage (do we need a "SwitchingProjects" state?)
+            activeSession().setActivityState(r_util::kActivityStateShuttingDown, true);
 
             // exit status
             int status = switchToProject.empty() ? EXIT_SUCCESS : EX_CONTINUE;

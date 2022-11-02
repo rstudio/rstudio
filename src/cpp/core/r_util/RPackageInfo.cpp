@@ -1,10 +1,10 @@
 /*
  * RPackageInfo.cpp
  *
- * Copyright (C) 2022 by RStudio, PBC
+ * Copyright (C) 2022 by Posit Software, PBC
  *
- * Unless you have received this program directly from RStudio pursuant
- * to the terms of a commercial license agreement with RStudio, then
+ * Unless you have received this program directly from Posit Software pursuant
+ * to the terms of a commercial license agreement with Posit Software, then
  * this program is licensed to you under the terms of version 3 of the
  * GNU Affero General Public License. This program is distributed WITHOUT
  * ANY EXPRESS OR IMPLIED WARRANTY, INCLUDING THOSE OF NON-INFRINGEMENT,
@@ -75,17 +75,20 @@ Error RPackageInfo::read(const FilePath& packageDir)
    FilePath descFilePath = packageDir.completeChildPath("DESCRIPTION");
    if (!descFilePath.exists())
       return core::fileNotFoundError(descFilePath, ERROR_LOCATION);
+   
    std::string errMsg;
-   std::map<std::string,std::string> fields;
+   std::map<std::string, std::string> fields;
    Error error = text::parseDcfFile(descFilePath, true, &fields, &errMsg);
    if (error)
       return error;
 
    error = readField(fields, "Package", &name_, descFilePath, ERROR_LOCATION);
-   if (error) return error;
+   if (error)
+      return error;
    
    error = readField(fields, "Version", &version_, descFilePath, ERROR_LOCATION);
-   if (error) return error;
+   if (error)
+      return error;
    
    readField(fields, "Depends", &depends_);
    readField(fields, "Imports", &imports_);

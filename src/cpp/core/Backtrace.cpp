@@ -1,10 +1,10 @@
 /*
  * Backtrace.cpp
  *
- * Copyright (C) 2022 by RStudio, PBC
+ * Copyright (C) 2022 by Posit Software, PBC
  *
- * Unless you have received this program directly from RStudio pursuant
- * to the terms of a commercial license agreement with RStudio, then
+ * Unless you have received this program directly from Posit Software pursuant
+ * to the terms of a commercial license agreement with Posit Software, then
  * this program is licensed to you under the terms of version 3 of the
  * GNU Affero General Public License. This program is distributed WITHOUT
  * ANY EXPRESS OR IMPLIED WARRANTY, INCLUDING THOSE OF NON-INFRINGEMENT,
@@ -16,7 +16,9 @@
 #include <core/Backtrace.hpp>
 #include <core/RegexUtils.hpp>
 
-#ifndef _WIN32
+#include "config.h"
+
+#ifdef HAVE_EXECINFO
 # include <core/Algorithm.hpp>
 # include <iostream>
 # include <boost/regex.hpp>
@@ -46,7 +48,7 @@ std::string demangle(const std::string& name)
 
 void printBacktrace(std::ostream& os)
 {
-#ifndef _WIN32
+#ifdef HAVE_EXECINFO
    
    os << "Backtrace (most recent calls first):" << std::endl << std::endl;
    

@@ -1,0 +1,121 @@
+---
+title: "Code Sections"
+---
+
+Code sections provide structure for both navigation and folding of long functions or other code control flow.
+
+## Code folding
+
+The **Source** pane in RStudio supports both automatic and user-defined folding for regions of code. Code folding provides the ability to easily show and hide blocks of code to make it easier to navigate source files and focus on the coding task at hand. For example, in the following source file the body of the `rescale01` has been folded, indicated by the gutter arrow pointing to the right, instead of the down or up:
+
+![](images/rescale-function-collapse.png){fig-alt="A screenshot of a collapsed user-defined function."}
+
+To expand the folded region:
+
+- Click on the arrow in the gutter _or_  
+- Click the icon that overlays the folded code _or_  
+- Use the keyboard shortcut <kbd>Ctrl+Alt+Shift+L</kbd>  
+
+## Foldable regions
+
+The following types of code regions are automatically foldable within RStudio:
+
+-   Braced regions (function definitions, conditional blocks, etc.)
+
+-   Code chunks within Quarto or R Markdown documents
+
+-   Text sections between headers within Quarto or R Markdown documents
+
+-   Code sections (see below for details)
+
+The following screenshot displays the arrow indicators for all the foldable regions in scripts:
+
+-   Top-level code section
+-   Function body
+-   Conditional blocks
+
+![](images/rescale-function-labeled.png){fig-alt="A diagram of foldable sections including the code section, function body, and conditional blocks."}
+
+Arbitrary selections of code can be folded by using **Edit \> Folding \> Collapse**, or the keyboard shortcut: <kbd>Alt+L</kbd> (<kbd>Cmd+Option+L</kbd> on Mac).
+
+Folded regions are preserved while editing a document; however all foldable regions are shown expanded by default when a file is closed and re-opened.
+
+### Computational documents
+
+In Quarto and R Markdown documents, the following sections can also be collapsed separately:
+
+-   YAML metadata
+-   Headings and subheadings
+-   Code chunks
+
+![](images/quarto-folding.png){fig-alt="A Quarto document, highlighting the sections that can be collapsed including the YAML, section headings, and code chunks."}
+
+## Code sections
+
+Code sections allow breaking a larger source file into a set of discrete regions for easy navigation between them. Code sections are automatically foldable.
+
+For example, the following source file has three sections (one expanded and the other two folded):
+
+![](images/plot-examples.png){fig-alt="A screenshot of an example .R file with 2 folded regions and one expanded region."}
+
+To insert a new code section use the **Code** -\> **Insert Section** command. Alternatively, any comment line which includes at least four trailing dashes (-), equal signs (=), or pound signs (#) automatically creates a code section. For example, all of the following lines create valid code sections:
+
+```r
+# Section One ---------------------------------
+# Section One ----
+
+# Section Two =================================
+# Section Two ====
+
+### Section Three ############################# 
+### Section Three ####
+```
+
+::: {callout-tip}
+
+## Code section levels
+
+As illustrated above, the line can start with any number of pound signs (#) so long as it ends with a space followed by four or more `-`, `=`, or `#` characters.
+
+:::
+
+To navigate between code sections, use the **Jump To** menu available at the bottom of the editor:
+
+![](images/plot-examples-navigation.png){fig-alt="A screenshot of the Jump To Menu, which is at the bottom left of the Source Pane."}
+
+Code sections can also be navigated with the **Document Outline** on the **Source Pane** menu bar.
+
+![](images/plot-examples-outline.png){fig-alt="A screenshot of a .R file with code sections that can be navigated via the Document Outline"}
+
+### Computational documents
+
+In Quarto and R Markdown documents, headings/subheadings and labeled code chunks are automatically added to the document **Outline** and **Jump To** menus:
+
+![](images/quarto-sections.png){fig-alt="A screenshot of a Quarto document with the Outline and Jump To menus expanded for navigating the document headings and code chunks."}
+
+
+## Menu commands and shortcuts
+
+The following menu commands and shortcuts are available for working with folded regions and code sections:
+
+-   **Edit** -\> **Folding**:
+
+    -   **Collapse** --- <kbd>Alt+L</kbd> (<kbd>Cmd+Option+L</kbd> on Mac)
+
+    -   **Expand** --- <kbd> Shift+Alt+L</kbd> (<kbd>Cmd+Shift+Option+L</kbd> on Mac)
+
+    -   **Collapse All** --- <kbd>Alt+O</kbd> (<kbd>Cmd+Option+O</kbd> on Mac)
+
+    -   **Expand All** --- <kbd>Shift+Alt+O</kbd> (<kbd>Cmd+Shift+Option+O</kbd> on Mac)
+
+-   **Code**:
+
+    -   **Insert Section** --- <kbd>Ctrl+Shift+R</kbd> (<kbd>Cmd+Shift+R</kbd> on Mac)
+
+    -   **Jump To** --- <kbd>Shift+Alt+J</kbd> (<kbd>Cmd+Shift+Option+J</kbd> on Mac)
+
+::: {callout-tip}
+
+The **Collapse All** command collapses all of the outermost foldable regions (rather than all of the nested regions within the source file).
+
+:::

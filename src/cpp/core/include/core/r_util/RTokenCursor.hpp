@@ -1,10 +1,10 @@
 /*
  * RTokenCursor.hpp
  *
- * Copyright (C) 2022 by RStudio, PBC
+ * Copyright (C) 2022 by Posit Software, PBC
  *
- * Unless you have received this program directly from RStudio pursuant
- * to the terms of a commercial license agreement with RStudio, then
+ * Unless you have received this program directly from Posit Software pursuant
+ * to the terms of a commercial license agreement with Posit Software, then
  * this program is licensed to you under the terms of version 3 of the
  * GNU Affero General Public License. This program is distributed WITHOUT
  * ANY EXPRESS OR IMPLIED WARRANTY, INCLUDING THOSE OF NON-INFRINGEMENT,
@@ -264,6 +264,12 @@ public:
       return currentToken().contentAsUtf8();
    }
    
+   bool isAtEndOfDocument() const
+   {
+      auto cursor = clone();
+      return !cursor.moveToNextSignificantToken();
+   }
+   
    bool moveToNextSignificantToken()
    {
       if (!moveToNextToken())
@@ -364,27 +370,7 @@ public:
       return true;
    }
    
-   // We are at the end of the document if there are no
-   // more significant tokens following.
-   bool isAtEndOfDocument()
-   {
-      if (offset_ == n_ - 1)
-         return true;
-      
-      RTokenCursor cursor = clone();
-      ++cursor.offset_;
-      
-      if (!isWhitespaceOrComment(cursor))
-         return false;
-      
-      cursor.fwdOverWhitespaceAndComments();
-      if (isWhitespaceOrComment(cursor) && cursor.offset_ == n_ - 1)
-         return true;
-      
-      return false;
-   }
-   
-   bool finishesExpression()
+   bool finishesExpression() const
    {
       const RToken& token = currentToken();
       bool isSemi = token.isType(RToken::SEMI);
@@ -959,7 +945,22 @@ public:
      std::string onFailure;
      
 PIPE_START:
-
+     
+     // Handle the case where the cursor is on top of
+     // a qualified function call, e.g.
+     //
+     // mtcars %>% pkg::func()
+     //        ??? ^<<<<^
+     //
+     if (isNamespaceExtractionOperator(cursor.previousSignificantToken()))
+     {
+        if (!cursor.moveToPreviousSignificantToken())
+           return onFailure;
+        
+        if (!cursor.moveToPreviousSignificantToken())
+           return onFailure;
+     }
+     
      // mtcars %>% foo$bar(
      //        ???
      if (!isPipeOperator(cursor.previousSignificantToken()))

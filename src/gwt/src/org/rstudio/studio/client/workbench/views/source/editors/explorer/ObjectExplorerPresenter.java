@@ -1,10 +1,10 @@
 /*
  * ObjectExplorerPresenter.java
  *
- * Copyright (C) 2022 by RStudio, PBC
+ * Copyright (C) 2022 by Posit Software, PBC
  *
- * Unless you have received this program directly from RStudio pursuant
- * to the terms of a commercial license agreement with RStudio, then
+ * Unless you have received this program directly from Posit Software pursuant
+ * to the terms of a commercial license agreement with Posit Software, then
  * this program is licensed to you under the terms of version 3 of the
  * GNU Affero General Public License. This program is distributed WITHOUT
  * ANY EXPRESS OR IMPLIED WARRANTY, INCLUDING THOSE OF NON-INFRINGEMENT,
@@ -15,8 +15,10 @@
 package org.rstudio.studio.client.workbench.views.source.editors.explorer;
 
 import org.rstudio.studio.client.application.events.EventBus;
+import org.rstudio.studio.client.workbench.views.source.editors.explorer.events.CloseObjectExplorerEvent;
 import org.rstudio.studio.client.workbench.views.source.editors.explorer.events.ObjectExplorerEvent;
 import org.rstudio.studio.client.workbench.views.source.editors.explorer.events.OpenObjectExplorerEvent;
+import org.rstudio.studio.client.workbench.views.source.editors.explorer.events.RefreshObjectExplorerEvent;
 import org.rstudio.studio.client.workbench.views.source.editors.explorer.model.ObjectExplorerHandle;
 import com.google.inject.Inject;
 import com.google.inject.Singleton;
@@ -29,7 +31,6 @@ public class ObjectExplorerPresenter
    public ObjectExplorerPresenter(EventBus events)
    {
       events_ = events;
-      
       events_.addHandler(ObjectExplorerEvent.TYPE, this);
    }
    
@@ -43,6 +44,7 @@ public class ObjectExplorerPresenter
       case NEW:        onNew(event.getData());       break;
       case OPEN_NODE:  onOpenNode(event.getData());  break;
       case CLOSE_NODE: onCloseNode(event.getData()); break;
+      case REFRESH:    onRefresh(event.getData());   break;
       case UNKNOWN:    break;
       }
    }
@@ -55,13 +57,21 @@ public class ObjectExplorerPresenter
       OpenObjectExplorerEvent event = new OpenObjectExplorerEvent(handle);
       events_.fireEvent(event);
    }
+
+   private void onRefresh(ObjectExplorerEvent.Data eventData)
+   {
+      ObjectExplorerHandle handle = eventData.getHandle();
+      RefreshObjectExplorerEvent event = new RefreshObjectExplorerEvent(handle);
+      events_.fireEvent(event);
+   }
    
    private void onOpenNode(ObjectExplorerEvent.Data data)
    {
    }
    
-   private void onCloseNode(ObjectExplorerEvent.Data data)
+   private void onCloseNode(ObjectExplorerEvent.Data eventData)
    {
+      events_.fireEvent(new CloseObjectExplorerEvent(eventData.getHandle()));
    }
    
    // Private members ----

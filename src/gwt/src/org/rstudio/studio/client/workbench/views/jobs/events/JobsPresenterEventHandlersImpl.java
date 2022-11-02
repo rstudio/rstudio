@@ -1,10 +1,10 @@
 /*
  * JobsPresenterEventHandlersImpl.java
  *
- * Copyright (C) 2022 by RStudio, PBC
+ * Copyright (C) 2022 by Posit Software, PBC
  *
- * Unless you have received this program directly from RStudio pursuant
- * to the terms of a commercial license agreement with RStudio, then
+ * Unless you have received this program directly from Posit Software pursuant
+ * to the terms of a commercial license agreement with Posit Software, then
  * this program is licensed to you under the terms of version 3 of the
  * GNU Affero General Public License. This program is distributed WITHOUT
  * ANY EXPRESS OR IMPLIED WARRANTY, INCLUDING THOSE OF NON-INFRINGEMENT,
@@ -193,6 +193,8 @@ public class JobsPresenterEventHandlersImpl implements JobsPresenterEventHandler
    private void selectJob(final String id, boolean animate, boolean isLauncherJob)
    {
       boolean bypassLauncherCall = (isLauncherJob && getSessionServer() != null);
+      
+      Job job = pJobManager_.get().getJob(id);
 
       server_.setJobListening(id, true, bypassLauncherCall, new ServerRequestCallback<JsArray<JobOutput>>()
       {
@@ -210,6 +212,11 @@ public class JobsPresenterEventHandlersImpl implements JobsPresenterEventHandler
          @Override
          public void onError(ServerError error)
          {
+            // ignore failure to retreive status from quarto as it kills and
+            // restarts preview jobs in quick succession
+            if (job == null || JsArrayUtil.jsArrayStringContains(job.tags,  "quarto"))
+               return;
+            
             // CONSIDER: this error is unlikely, but it'd be nicer to show the
             // job output anyway, with a non-modal error in it
             globalDisplay_.showErrorMessage(constants_.cannotRetrieveJobOutputCaption(),

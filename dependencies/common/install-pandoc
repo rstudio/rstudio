@@ -3,10 +3,10 @@
 #
 # install-pandoc
 #
-# Copyright (C) 2022 by RStudio, PBC
+# Copyright (C) 2022 by Posit Software, PBC
 #
-# Unless you have received this program directly from RStudio pursuant
-# to the terms of a commercial license agreement with RStudio, then
+# Unless you have received this program directly from Posit Software pursuant
+# to the terms of a commercial license agreement with Posit Software, then
 # this program is licensed to you under the terms of version 3 of the
 # GNU Affero General Public License. This program is distributed WITHOUT
 # ANY EXPRESS OR IMPLIED WARRANTY, INCLUDING THOSE OF NON-INFRINGEMENT,
@@ -21,7 +21,7 @@ source "$(dirname "${BASH_SOURCE[0]}")/../tools/rstudio-tools.sh"
 section "Installing Pandoc"
 
 # variables that control download + installation process
-PANDOC_VERSION="2.16.2"
+PANDOC_VERSION="2.18"
 PANDOC_SUBDIR="pandoc/${PANDOC_VERSION}"
 PANDOC_URL_BASE="https://s3.amazonaws.com/rstudio-buildtools/pandoc/${PANDOC_VERSION}"
 

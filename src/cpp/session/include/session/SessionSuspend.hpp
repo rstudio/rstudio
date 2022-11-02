@@ -1,10 +1,10 @@
 /*
  * SessionSuspend.hpp
  *
- * Copyright (C) 2022 by RStudio, PBC
+ * Copyright (C) 2022 by Posit Software, PBC
  *
- * Unless you have received this program directly from RStudio pursuant
- * to the terms of a commercial license agreement with RStudio, then
+ * Unless you have received this program directly from Posit Software pursuant
+ * to the terms of a commercial license agreement with Posit Software, then
  * this program is licensed to you under the terms of version 3 of the
  * GNU Affero General Public License. This program is distributed WITHOUT
  * ANY EXPRESS OR IMPLIED WARRANTY, INCLUDING THOSE OF NON-INFRINGEMENT,
@@ -17,6 +17,14 @@
 #define SESSION_SUSPEND_HPP
 
 #include <boost/function.hpp>
+
+#include "SessionHttpConnection.hpp"
+
+namespace rstudio {
+namespace core {
+   class Error;
+}
+}
 
 namespace rstudio {
 namespace session {
@@ -32,8 +40,11 @@ const char * const kActiveJob = "An active job is running";
 const char * const kCommandPrompt = "Incomplete command prompt entered";
 const char * const kGenericMethod = "Waiting for event: ";
 
+core::Error initialize();
+
 bool disallowSuspend();
 void resetSuspendTimeout();
+void resetSuspendTimeout(boost::shared_ptr<HttpConnection> pConnection);
 void addBlockingOp(std::string op);
 void addBlockingOp(std::string method, const boost::function<bool()>& allowSuspend);
 void removeBlockingOp(std::string op);

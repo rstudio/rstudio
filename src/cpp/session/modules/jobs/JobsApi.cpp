@@ -1,10 +1,10 @@
 /*
  * JobsApi.cpp
  *
- * Copyright (C) 2022 by RStudio, PBC
+ * Copyright (C) 2022 by Posit Software, PBC
  *
- * Unless you have received this program directly from RStudio pursuant
- * to the terms of a commercial license agreement with RStudio, then
+ * Unless you have received this program directly from Posit Software pursuant
+ * to the terms of a commercial license agreement with Posit Software, then
  * this program is licensed to you under the terms of version 3 of the
  * GNU Affero General Public License. This program is distributed WITHOUT
  * ANY EXPRESS OR IMPLIED WARRANTY, INCLUDING THOSE OF NON-INFRINGEMENT,
@@ -187,7 +187,7 @@ void removeAllJobs()
    s_jobs.clear();
 }
 
-void removeAllLocalJobs()
+void removeAllBackgroundJobs()
 {
    for (auto it = s_jobs.cbegin(); it != s_jobs.cend() ; )
    {
@@ -202,7 +202,7 @@ void removeAllLocalJobs()
    }
 }
 
-void removeAllLauncherJobs()
+void removeAllWorkbenchJobs()
 {
    for (auto it = s_jobs.cbegin(); it != s_jobs.cend() ; )
    {
@@ -216,7 +216,7 @@ void removeAllLauncherJobs()
    }
 }
 
-void removeCompletedLocalJobs()
+void removeCompletedBackgroundJobs()
 {
    // collect completed jobs
    std::vector<boost::shared_ptr<Job> > completed;
@@ -241,11 +241,13 @@ void endAllJobStreaming()
    }
 }
 
-bool localJobsRunning()
+bool durableJobsRunning()
 {
    for (auto& job: s_jobs)
    {
-      if (job.second->type() == JobType::JobTypeSession && !job.second->complete())
+      if (job.second->type() == JobType::JobTypeSession &&
+          !job.second->complete() &&
+          !algorithm::contains(job.second->tags(), kJobTagTransient))
       {
          return true;
       }

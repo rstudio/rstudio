@@ -1,10 +1,10 @@
 /*
  * rmd.ts
  *
- * Copyright (C) 2022 by RStudio, PBC
+ * Copyright (C) 2022 by Posit Software, PBC
  *
- * Unless you have received this program directly from RStudio pursuant
- * to the terms of a commercial license agreement with RStudio, then
+ * Unless you have received this program directly from Posit Software pursuant
+ * to the terms of a commercial license agreement with Posit Software, then
  * this program is licensed to you under the terms of version 3 of the
  * GNU Affero General Public License. This program is distributed WITHOUT
  * ANY EXPRESS OR IMPLIED WARRANTY, INCLUDING THOSE OF NON-INFRINGEMENT,
@@ -24,12 +24,13 @@ import {
   findChildren,
   findChildrenByMark,
   setTextSelection,
+  findParentNode,
 } from 'prosemirror-utils';
 
 import { getMarkRange } from './mark';
 import { precedingListItemInsertPos, precedingListItemInsert } from './list';
 import { toggleBlockType } from './command';
-import { selectionIsBodyTopLevel } from './selection';
+import { selectionIsBodyTopLevel, selectionWithinLastBodyParagraph } from './selection';
 import { uuidv4 } from './util';
 
 export interface EditorRmdChunk {
@@ -88,7 +89,12 @@ export function insertRmdChunk(chunkPlaceholder: string) {
       if (prevListItemPos) {
         precedingListItemInsert(tr, prevListItemPos, rmdNode);
       } else {
-        tr.replaceSelectionWith(rmdNode);
+        const emptyNode = findParentNode(node => node.type === state.schema.nodes.paragraph && node.childCount === 0)(tr.selection);
+        if (emptyNode && selectionWithinLastBodyParagraph(tr.selection)) {
+          tr.insert(tr.selection.from-1, rmdNode);
+        } else {
+          tr.replaceSelectionWith(rmdNode);
+        }
         setTextSelection(tr.selection.from - 2)(tr);
       }
 
@@ -214,23 +220,43 @@ export function mergeRmdChunks(chunks: EditorRmdChunk[]) {
  * @returns An object with `engine` and `label` properties, or null.
  */
 export function rmdChunkEngineAndLabel(text: string) {
-  // Match the engine and label with a regex
-  const match = text.match(/^\{([a-zA-Z0-9_]+)[\s,]+([a-zA-Z0-9/._='"-]+)/);
+
+  // Match the engine and (maybe the) label with a regex
+  const match = text.match(/^\{([a-zA-Z0-9_]+)[\s,]*([a-zA-Z0-9/._='"-]*)/);
+  
   if (match) {
+    // The first capturing group is the engine
+    const engine = match[1];
+
     // The second capturing group in the regex matches the first string after
-    // the engine. This might be a label (e.g., {r label}), but could also be
-    // a chunk option (e.g., {r echo=FALSE}). If it has an =, presume that it's
-    // an option.
-    if (match[2].indexOf("=") !== -1) {
-      return null;
+    // the engine. This might be: 
+    // - a label (e.g., {r label})
+    // - a chunk option (e.g., {r echo=FALSE}). If it has an =, presume that it's an option.
+    // - empty
+    if (match[2].length && match[2].indexOf("=") == -1) {
+      return {
+        engine: engine,
+        label: match[2],
+      };
     }
-    return {
-      engine: match[1],
-      label: match[2],
-    };
-  } else {
-    return null;
+
+    // Finally, look for label in #| comments
+    // 
+    // ```{r}
+    // #| label: label
+    // 
+    for (var line of text.split("\n")) {
+      const labelMatch = line.match(/^#\|\s*label:\s+(.*)$/);
+      if (labelMatch) {
+        return {
+          engine: engine,
+          label: labelMatch[1],
+        };
+      }
+    }
   }
+
+  return null;
 }
 
 export function haveTableCellsWithInlineRcode(doc: ProsemirrorNode) {

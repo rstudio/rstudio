@@ -1,10 +1,10 @@
 /*
  * menu-callback.ts
  *
- * Copyright (C) 2022 by RStudio, PBC
+ * Copyright (C) 2022 by Posit Software, PBC
  *
- * Unless you have received this program directly from RStudio pursuant
- * to the terms of a commercial license agreement with RStudio, then
+ * Unless you have received this program directly from Posit Software pursuant
+ * to the terms of a commercial license agreement with Posit Software, then
  * this program is licensed to you under the terms of version 3 of the
  * GNU Affero General Public License. This program is distributed WITHOUT
  * ANY EXPRESS OR IMPLIED WARRANTY, INCLUDING THOSE OF NON-INFRINGEMENT,
@@ -202,7 +202,7 @@ export class MenuCallback extends EventEmitter {
   menuEnd(): void {
     if (this.lastWasDiagnostics) {
       this.lastWasDiagnostics = false;
-      const template: MenuItemConstructorOptions = { role: 'toggleDevTools' };
+      const template: MenuItemConstructorOptions = { role: 'toggleDevTools', accelerator: '' };
       this.addToCurrentMenu(template);
     }
 
@@ -339,7 +339,7 @@ export class MenuCallback extends EventEmitter {
      * @returns the final template list after removing unnecessary separators and hidden items
      */
     const recursiveCopy = (menuItemTemplates: MenuItemConstructorOptions[]) => {
-      const newMenuTemplate = new Array<MenuItemConstructorOptions>();
+      let newMenuTemplate = new Array<MenuItemConstructorOptions>();
 
       for (const menuItemTemplate of menuItemTemplates) {
         let referenceMenuItemTemplate;
@@ -369,7 +369,7 @@ export class MenuCallback extends EventEmitter {
         newMenuTemplate.push(newMenuItemTemplate);
       }
 
-      return newMenuTemplate.filter((item, idx, arr) => {
+      newMenuTemplate = newMenuTemplate.filter((item, idx, arr) => {
         if (item.type !== 'separator') {
           return removeItemsWithEmptySubmenuList(item);
         }
@@ -377,6 +377,25 @@ export class MenuCallback extends EventEmitter {
         const prevItem = arr[idx - 1];
         return idx !== 0 && prevItem.type !== 'separator' && idx != arr.length - 1;
       });
+
+      if (process.platform === 'darwin') {
+        newMenuTemplate = newMenuTemplate.reduce((menuTemplateList: MenuItemConstructorOptions[], menuItem) => {
+          if (menuItem.id === 'Help') {
+            const windowMenuItem: MenuItemConstructorOptions = {
+              id: 'Window',
+              visible: true,
+              role: 'windowMenu',
+              label: 'Window',
+            };
+
+            menuTemplateList.push(windowMenuItem);
+          }
+          menuTemplateList.push(menuItem);
+          return menuTemplateList;
+        }, []);
+      }
+
+      return newMenuTemplate;
     };
 
     const newMainMenuTemplate = recursiveCopy(this.mainMenuTemplate);
@@ -422,9 +441,6 @@ export class MenuCallback extends EventEmitter {
     // some shortcuts (namely, the Edit shortcuts) don't have bindings on the client side.
     // populate those here when discovered
 
-    // TODO: probably need to not use the roles here, and instead follow pattern in the C++
-    // code where we assign shortcuts to these commands and let them flow through
-    // our regular command handling
     if (cmdId === 'zoomActualSize') {
       menuItemOpts.accelerator = 'CommandOrControl+0';
     } else if (cmdId === 'zoomIn') {
@@ -439,6 +455,8 @@ export class MenuCallback extends EventEmitter {
       menuItemOpts.role = 'paste';
     } else if (cmdId === 'pasteWithIndentDummy') {
       menuItemOpts.role = 'pasteAndMatchStyle';
+    } else if (cmdId == 'selectAllDummy') {
+      menuItemOpts.role = 'selectAll';
     } else if (cmdId === 'undoDummy') {
       menuItemOpts.accelerator = 'CommandOrControl+Z';
     } else if (cmdId === 'redoDummy') {

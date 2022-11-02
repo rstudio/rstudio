@@ -1,10 +1,10 @@
 #
 # SessionRSConnect.R
 #
-# Copyright (C) 2022 by RStudio, PBC
+# Copyright (C) 2022 by Posit Software, PBC
 #
-# Unless you have received this program directly from RStudio pursuant
-# to the terms of a commercial license agreement with RStudio, then
+# Unless you have received this program directly from Posit Software pursuant
+# to the terms of a commercial license agreement with Posit Software, then
 # this program is licensed to you under the terms of version 3 of the
 # GNU Affero General Public License. This program is distributed WITHOUT
 # ANY EXPRESS OR IMPLIED WARRANTY, INCLUDING THOSE OF NON-INFRINGEMENT,
@@ -353,10 +353,28 @@
       file_list <- c(file_list, deploy_frame$path)
     } 
     file_list <- c(file_list, basename(t))
+  }
 
-    # if this is a quarto doc then query quarto for resources
-    if (nzchar(quartoSrcFile)) {
-      file_list <- c(file_list, .rs.quartoFileResources(quartoSrcFile))
+  if (nzchar(quartoSrcFile)) {
+    # query quarto for project and resources
+    project <- .rs.quartoFileProject(quartoSrcFile)
+    resources <- project$resources
+    project <- project$project
+    
+    # query quarto for resources
+    file_list <- c(file_list, resources)
+
+    # per-directory option may be given in _metadata.yml
+    if (file.exists(file.path(dirname(quartoSrcFile), "_metadata.yml"))) {
+      file_list <- c(file_list, "_metadata.yml")
+    }
+    
+    if (length(project)) {
+      if (identical(project, "")) {
+        file_list <- c(file_list, "_quarto.yml")
+      } else {
+        file_list <- c(file_list, file.path(project, "_quarto.yml"))
+      }
     }
   }
 
@@ -365,7 +383,7 @@
   file_list <- unique(file_list)
 
   # compose the result
-  list (
+  list(
     contents = file_list,
     totalSize = sum(
        file.info(file.path(dirname(target), file_list))$size))
@@ -384,6 +402,9 @@
    .Call("rs_quartoFileResources", target)
 })
 
+.rs.addFunction("quartoFileProject", function(target) {
+   .Call("rs_quartoFileProject", basename(target), dirname(target), PACKAGE = "(embedding)")
+})
 
 # Given a list of files of the form:
 # 
@@ -456,7 +477,7 @@
    tryCatch({
       # check for any non-shinyapps.io accounts
       accounts <- rsconnect::accounts()
-      accounts <- subset(accounts, server != "shinyapps.io")
+      subset(accounts, !(server %in% c("shinyapps.io", "rstudio.cloud")))
       .rs.scalar(nrow(accounts) > 0)
    }, error = function(e) { FALSE })
 })

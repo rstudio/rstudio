@@ -23,7 +23,8 @@ export const checkForNewLanguage = () => {
       } else {
         const localeLastTimeData = isLocalStorageItemSet(localeLastTimeSetStorageItemKey);
 
-        // If a new Language is set, the last time it was set will be checked against the time this function has first ran
+        // If a new Language is set, the last time it was set
+        // will be checked against the time this function has first ran
         if (localeLastTimeData.isSet) {
           const localeData = isLocalStorageItemSet(localeStorageItemKey);
 
@@ -40,3 +41,27 @@ export const checkForNewLanguage = () => {
     }, 100);
   });
 };
+
+/**
+ * Removes duplicate separators from a path, given a separator for search.
+ *
+ * @param {string} path
+ * @param {string} [separator='/']
+ * @return {*} 
+ */
+export function normalizeSeparators(path: string, separator = '/') {
+  return path.replace(/[\\/]+/g, separator);
+}
+
+/**
+ * Removes duplicated separators from a path based on platform.
+ *
+ * @export
+ * @param {string} path
+ * @return {*} 
+ */
+export function normalizeSeparatorsNative(path: string) {
+  /* using conditional to set the separator based on platform as `path` is not available here */
+  const separator = process.platform === 'win32' ? '\\' : '/';
+  return normalizeSeparators(path, separator);
+}

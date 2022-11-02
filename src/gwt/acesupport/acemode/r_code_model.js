@@ -1,10 +1,10 @@
 /*
  * r_code_model.js
  *
- * Copyright (C) 2022 by RStudio, PBC
+ * Copyright (C) 2022 by Posit Software, PBC
  *
- * Unless you have received this program directly from RStudio pursuant
- * to the terms of a commercial license agreement with RStudio, then
+ * Unless you have received this program directly from Posit Software pursuant
+ * to the terms of a commercial license agreement with Posit Software, then
  * this program is licensed to you under the terms of version 3 of the
  * GNU Affero General Public License. This program is distributed WITHOUT
  * ANY EXPRESS OR IMPLIED WARRANTY, INCLUDING THOSE OF NON-INFRINGEMENT,
@@ -126,7 +126,7 @@ var RCodeModel = function(session, tokenizer,
 
    function pFunction(t)
    {
-      return t.type == 'keyword' && t.value == 'function';
+      return t.type == 'keyword' && (t.value == 'function' || t.value == '\\');
    }
 
    function pAssign(t)
@@ -158,7 +158,33 @@ var RCodeModel = function(session, tokenizer,
       tokenCursor.$row = clonedCursor.$row;
       tokenCursor.$offset = clonedCursor.$offset;
       return true;
+   }
 
+   // Find the associated test_that() token from an open brace, e.g.
+   // 
+   // test_that("foo() does this", {
+   // ^<<<<<<<<<<<<<<<<<<<<<<<<<<<<^
+   function findAssocTestToken(tokenCursor)
+   {
+      var clonedCursor = tokenCursor.cloneCursor();
+      if (clonedCursor.currentValue() !== "{")
+         return false;
+      if (!clonedCursor.moveToPreviousToken()) 
+         return false;
+      if (!clonedCursor.currentToken().value == ",")
+         return false;
+      if (!clonedCursor.moveToPreviousToken())
+         return false;
+      if (!clonedCursor.currentToken().type == "string")
+         return false;
+      if (!clonedCursor.moveToPreviousToken())
+         return false;
+      if (!clonedCursor.currentToken().value == "(")
+         return false;
+      if (!clonedCursor.moveToPreviousToken())
+         return false;
+      var token = clonedCursor.currentToken();
+      return pIdentifier(token) && token.value == "test_that";
    }
 
    // Determine whether the token cursor lies within the
@@ -201,6 +227,29 @@ var RCodeModel = function(session, tokenizer,
       tokenCursor.$offset = clonedCursor.$offset;
       return true;
    }
+
+   // Move from the function call token to the end of the 
+   // assigned token
+   //
+   //     result <- foo(a, b, c) {
+   //          ^~~~~^
+   function moveFromFunctionCallTokenToEndOfResultName(tokenCursor)
+   {
+      var clonedCursor = tokenCursor.cloneCursor();
+      if (!pIdentifier(clonedCursor.currentToken()))
+         return false;
+      if (!clonedCursor.moveToPreviousToken())
+         return false;
+      if (!pAssign(clonedCursor.currentToken()))
+         return false;
+      if (!clonedCursor.moveToPreviousToken())
+         return false;
+
+      tokenCursor.$row = clonedCursor.$row;
+      tokenCursor.$offset = clonedCursor.$offset;
+      return true;
+   }
+
 
    this.getFunctionsInScope = function(pos) {
       this.$buildScopeTreeUpToRow(pos.row);
@@ -312,6 +361,13 @@ var RCodeModel = function(session, tokenizer,
          name = tokenCursor.currentValue();
          additionalArgs = data.additionalArgs;
          excludeArgs = data.excludeArgs;
+
+         if (data.cancel == true)
+         {
+            excludeArgsFromObject = true;
+            additionalArgs = [];
+            excludeArgs = [];
+         }
       }
 
       return {
@@ -355,7 +411,14 @@ var RCodeModel = function(session, tokenizer,
       {
          if (!cursor.moveToNextToken())
             return false;
-         data.excludeArgs.push(cursor.currentValue());
+
+         if (cursor.currentValue() === "=")
+         {
+            if (!cursor.moveToNextToken())
+               return false;
+            
+            data.excludeArgs.push(cursor.currentValue());
+         }
       }
 
       if (fnName === "select")
@@ -470,7 +533,8 @@ var RCodeModel = function(session, tokenizer,
       // Fill custom args
       var data = {
          additionalArgs: [],
-         excludeArgs: []
+         excludeArgs: [], 
+         cancel: false
       };
       
       // Repeat the walk -- keep walking as we can find '%%'
@@ -496,9 +560,14 @@ var RCodeModel = function(session, tokenizer,
          // If this identifier is a dplyr 'mutate'r, then parse
          // those variables.
          var value = clone.currentValue();
+         
+         // pull() cancels the column completions
+         if (value === "pull")
+            data.cancel = true;
+         
          if (contains($dplyrMutaterVerbs, value))
             addDplyrArguments(clone.cloneCursor(), data, tokenCursor, value);
-
+         
          // Move off of identifier, on to new infix operator.
          // Note that we may already be at the start of the document,
          // so check for that.
@@ -567,10 +636,10 @@ var RCodeModel = function(session, tokenizer,
 
    // Moves out of an argument list for a function, e.g.
    //
-   //     x <- function(a, b|
-   //          ^~~~~~~~~~~~~^
+   //     x <- func(a, b|
+   //          ^~~~~~~~~^
    //
-   // The cursor will be placed on the associated 'function' token
+   // The cursor will be placed on the associated 'func' token
    // on success, and unmoved on failure.
    var moveOutOfArgList = function(tokenCursor)
    {
@@ -581,16 +650,12 @@ var RCodeModel = function(session, tokenizer,
       if (!clone.moveToPreviousToken())
          return false;
       
-      if (clone.currentValue() !== "function")
-         return false;
-
       tokenCursor.$row = clone.$row;
       tokenCursor.$offset = clone.$offset;
       return true;
    };
 
    this.getVariablesInScope = function(pos) {
-
       var tokenCursor = this.getTokenCursor();
       if (!tokenCursor.moveToPosition(pos))
          return [];
@@ -603,10 +668,22 @@ var RCodeModel = function(session, tokenizer,
       // we don't pick up 'func', 'x', and 'y' as potential completions
       // since they will not be valid in all contexts
       if (moveOutOfArgList(tokenCursor))
-         if (moveFromFunctionTokenToEndOfFunctionName(tokenCursor))
-            if (tokenCursor.findStartOfEvaluationContext())
-               {} // previous statements will move the cursor as necessary
-
+      {
+         var moved = false;
+         if (pFunction(tokenCursor.currentToken()))
+         {
+            moved = moveFromFunctionTokenToEndOfFunctionName(tokenCursor); 
+         }
+         else 
+         {
+            moved = moveFromFunctionCallTokenToEndOfResultName(tokenCursor);
+         }
+         
+         // previous statements will move the cursor as necessary
+         if (moved) 
+            tokenCursor.findStartOfEvaluationContext();
+      }
+         
       var scopedVariables = {};
       do
       {
@@ -652,7 +729,6 @@ var RCodeModel = function(session, tokenizer,
       
       result.sort();
       return result;
-      
    };
 
    // Get function arguments, starting at the start of a function definition, e.g.
@@ -735,30 +811,52 @@ var RCodeModel = function(session, tokenizer,
 
    this.$buildScopeTreeUpToRow = function(maxRow)
    {
-      function getChunkLabel(reOptions, comment) {
+      function getChunkLabel(reOptions, comment, iterator) {
 
          if (typeof reOptions === "undefined")
             return "";
          
          var match = reOptions.exec(comment);
-         if (!match)
-            return null;
-         var value = match[1];
-         var values = value.split(',');
-         if (values.length == 0)
-            return null;
-
-         // If first arg has no =, it's a label
-         if (!/=/.test(values[0])) {
-            return values[0].replace(/(^\s+)|(\s+$)/g, '');
+         if (match)
+         {
+            var value = match[1];
+            var values = value.split(',');
+            if (values.length > 0)
+            {
+               // If first arg has no =, it's a label
+               var first = values[0];
+               if (!/=/.test(first)) {
+                  var label = first.replace(/(^\s+)|(\s+$)/g, '');
+                  if (label.length)
+                     return label;
+               }
+            
+               for (var i = 0; i < values.length; i++) {
+                  match = /^\s*label\s*=\s*(.*)$/.exec(values[i]);
+                  if (match)
+                     return Utils.stripEnclosingQuotes(match[1].trim());
+               }
+            }
          }
-
-         for (var i = 0; i < values.length; i++) {
-            match = /^\s*label\s*=\s*(.*)$/.exec(values[i]);
-            if (match)
-               return Utils.stripEnclosingQuotes(match[1].trim());
+         
+         // then look for yaml label, i.e.
+         // 
+         // ```{r}
+         // #| label: foo
+         var it = iterator.clone();
+         
+         var tok = it.moveToNextToken();
+         while(tok != null && tok.type.startsWith("comment"))
+         {
+            var value = tok.value;
+            
+            var labelRegex = /^#\|\s*label\s*:\s*(.*)$/;
+            if (labelRegex.test(value))
+               return value.replace(labelRegex, "$1");
+            
+            tok = it.moveToNextToken();
          }
-
+         
          return null;
       }
 
@@ -823,7 +921,7 @@ var RCodeModel = function(session, tokenizer,
 
          // Skip roxygen comments.
          var state = Utils.getPrimaryState(this.$session, position.row);
-         if (state === "rd-start") {
+         if (state === "rdoc-start") {
             iterator.moveToEndOfRow();
             continue;
          }
@@ -1042,11 +1140,12 @@ var RCodeModel = function(session, tokenizer,
             var chunkPos = {row: chunkStartPos.row + 1, column: 0};
             var chunkNum = chunkCount;
 
-               var chunkLabel = getChunkLabel(this.$codeBeginPattern, value);
-               var scopeName = "Chunk " + chunkNum;
-               if (chunkLabel && value !== "YAML Header")
-                  scopeName += ": " + chunkLabel;
-               this.$scopes.onChunkStart(chunkLabel,
+            var chunkLabel = getChunkLabel(this.$codeBeginPattern, value, iterator);
+            var scopeName = "Chunk " + chunkNum;
+            if (chunkLabel && value !== "YAML Header")
+               scopeName += ": " + chunkLabel;
+
+            this.$scopes.onChunkStart(chunkLabel,
                                          scopeName,
                                          chunkStartPos,
                                          chunkPos);
@@ -1138,6 +1237,23 @@ var RCodeModel = function(session, tokenizer,
                                                  functionName,
                                                  functionArgs);
             }
+            else if (findAssocTestToken(localCursor))
+            {
+               var descCursor = localCursor.cloneCursor();
+               descCursor.moveToPreviousToken();
+               descCursor.moveToPreviousToken();
+
+               var desc = descCursor.currentToken().value;
+
+               var testthatCursor = descCursor.cloneCursor();
+               testthatCursor.moveToPreviousToken();
+               testthatCursor.moveToPreviousToken();
+
+               this.$scopes.onTestScopeStart(desc,
+                  testthatCursor.currentPosition(),
+                  tokenCursor.currentPosition()
+               );
+            } 
             else
             {
                startPos = tokenCursor.currentPosition();

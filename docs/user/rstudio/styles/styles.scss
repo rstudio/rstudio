@@ -1,0 +1,192 @@
+/*-- scss:defaults --*/
+
+@import url('https://fonts.googleapis.com/css2?family=Open+Sans:ital,wght@0,300;0,400;0,500;0,600;0,700;0,800;1,300;1,400;1,500;1,600;1,700;1,800&display=swap');
+
+// Colors
+$primary: #447099; /* posit blue */
+
+// Text and Links
+$body-color: #404041; /* posit gray */
+$headings-color: #404041; /* posit gray */
+// $code-color: #702459; /* constrast ratio: 8.94 */
+$link-color: darken($primary, 10%);
+$link-hover-color: darken($link-color, 10%);
+$font-family-sans-serif: "Open Sans",   system-ui, -apple-system, "Segoe UI", Roboto, "Helvetica Neue", "Noto Sans", "Liberation Sans", Arial, sans-serif, "Apple Color Emoji", "Segoe UI Emoji", "Segoe UI Symbol", "Noto Color Emoji" !default;
+
+// Customize the navbar
+$navbar-bg: #ffffff;
+$navbar-fg: #888888;
+$navbar-hl: #000000;
+$navbar-brand: $body-color;
+$navbar-brand-hl: $navbar-brand;
+
+// Customize the sidebar
+$sidebar-bg: #ffffff;
+$sidebar-fg: #404041;
+
+// Customize the footer color
+$footer-fg: lighten(#404041, 30%);
+
+/* workbench variables */
+$pro-header: #EE6331; /* posit orange, contrast: 8.45 */
+$pro-header-border: darken($pro-header, 5%);
+
+/* callout variables */
+$callout-color-important: #9A4665; // posit burgundy
+$callout-color-warning: #EE6331; //posit orange
+$callout-color-tip: #72994E; // posit green
+$callout-color-note: $primary; // posit blue
+
+/*-- scss:rules --*/
+
+
+/* styling links */
+a {
+  text-decoration-thickness: 0.05em;
+  text-underline-offset: 0.15em;
+  color: $primary;
+}
+
+/* increase padding around code blocks */
+pre.sourceCode.code-with-copy {
+  padding: 1rem 25px 1rem 1rem;
+}
+
+/* increase title letter spacing to lighten it up */
+.navbar-brand {
+  letter-spacing: 0.05rem;
+}
+
+/* decrease font size for stacked title and version */
+.navbar-title {
+  font-size: 14pt;
+}
+
+/* increase padding around navbar links so less squished */
+.navbar-expand-lg .navbar-nav .nav-link {
+  padding: 0rem 1rem;
+  white-space: nowrap; 
+}
+
+/* Posit logo - navbar */
+#navbar-right-logo {
+  width: 70px;
+  min-width: 70px;
+}
+
+/* increase padding between sidebar nav items */
+.sidebar-navigation .sidebar-section.depth1 {
+  padding-bottom: 0.2rem; /* double the default */
+}
+
+.sidebar nav[role=doc-toc] ul > li a.active {
+  color: $primary !important;
+  font-weight: normal;
+  letter-spacing: -0.01em;
+  border-left: 1px solid $primary;
+}
+
+/* yes this is actually a default selector and needs to be overridden to improve contrast ratio */
+.sidebar nav[role=doc-toc] ul > li > ul > li > a.active { 
+  color: #295b89 !important;
+}
+
+/* darken copyright color to improve contrast ratio */
+.nav-footer .nav-footer-left{
+  color: #404041;
+}
+
+/* the PRO header */
+.pro-header > h1:after,
+.pro-header > h2:after,
+.pro-header > h3:after,
+.pro-header > h4:after,
+header h1 .pro-header {
+  content: "pro";
+  text-transform: uppercase;
+  margin-left: 1em;
+  position: relative;
+  top: -0.5em;
+}
+
+.pro-header > h1:after,
+.pro-header > h2:after,
+.pro-header > h3:after,
+.pro-header > h4:after,
+header h1 .pro-header,
+div span.pro-feature {
+  display: inline-block;
+  color: $pro-header;
+  border: 1px solid $pro-header-border;
+  font-weight: 400;
+  font-size: 9pt !important;
+  padding: 0rem 0.4rem;
+}
+
+div span.pro-feature {
+  margin-left: 1em;
+  text-transform: uppercase;
+}
+
+/* Navbar */
+
+#quarto-header {
+  border-bottom: 1px solid rgba(0, 0, 0, 0.15);
+}
+
+/* Logo */
+
+.navbar-brand img {
+  width: 3rem;
+  height: 3rem;
+  margin-right: 0rem;
+  margin-bottom: 0.3125rem; /* align the logo with text */
+}
+
+.sidebar.sidebar-navigation a.active {
+  border-left: 3px solid $primary;
+  padding-left: 0.5em;
+}
+
+/* darken nav page text */
+.nav-page .nav-page-text {
+  color: $body-color;
+}
+
+.bi-arrow-right-short::before {
+  color: $body-color;  
+}
+
+/* Code blocks - These styles were taken from the code of all of the other product guides. I have added these here as a reference for if we want to align the styles across all products and guides. The current workload is too big for testing these right now, so I (Ashley) can take a look at these after the rebranding release. Please do not remove unless you check first.*/
+
+// p.code-title {
+//   color: #3c3c3c;
+//   background-color: rgba(219, 219, 219, 0.8);
+//   margin: 1em 0 -1.2em;
+//   padding: 0.1em 1em;
+//   font-size: 0.9em;
+//   font-family: "Roboto Mono", "Courier New", Courier, monospace;
+// }
+
+// div.code-title {
+//   color: #3c3c3c;
+//   background-color: rgba(219, 219, 219, 0.8);
+//   margin: 1em 0 -1.2em;
+//   padding: 0.1em 1em;
+//   font-size: 0.9em;
+//   font-family: "Roboto Mono", "Courier New", Courier, monospace;
+// }
+
+// pre .code-noselect {
+//   color: #aaa;
+//   -webkit-user-select: none;
+//   -moz-user-select: none;
+//   -ms-user-select: none;
+//   user-select: none;
+//   /* padding-right: 6px; */
+// }
+
+// pre code::-webkit-scrollbar-thumb:hover,
+// .codehilite pre::-webkit-scrollbar-thumb:hover {
+//   background-color: #4c83b6 !important;
+// }

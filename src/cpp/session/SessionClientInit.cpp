@@ -1,10 +1,10 @@
 /*
  * SessionClientInit.hpp
  *
- * Copyright (C) 2022 by RStudio, PBC
+ * Copyright (C) 2022 by Posit Software, PBC
  *
- * Unless you have received this program directly from RStudio pursuant
- * to the terms of a commercial license agreement with RStudio, then
+ * Unless you have received this program directly from Posit Software pursuant
+ * to the terms of a commercial license agreement with Posit Software, then
  * this program is licensed to you under the terms of version 3 of the
  * GNU Affero General Public License. This program is distributed WITHOUT
  * ANY EXPRESS OR IMPLIED WARRANTY, INCLUDING THOSE OF NON-INFRINGEMENT,
@@ -60,6 +60,7 @@
 #include <core/http/Response.hpp>
 #include <core/http/Cookie.hpp>
 #include <core/http/CSRFToken.hpp>
+#include <core/r_util/RSessionContext.hpp>
 #include <core/system/Environment.hpp>
 
 #include <session/SessionConsoleProcess.hpp>
@@ -122,6 +123,20 @@ Error makePortTokenCookie(boost::shared_ptr<HttpConnection> ptrConnection,
    // generate a new port token
    persistentState().setPortToken(server_core::generateNewPortToken());
 
+   // Set environment variables RS_SERVER_URL, RS_SESSION_URL, and RS_PORT_TOKEN,
+   // needed for subprocesses to use the rserver-url binary with the -l option.
+   core::system::setenv(kPortTokenEnvVar, persistentState().portToken());
+
+   std::string sessionUrl;
+   std::string serverUrl;
+   r_util::parseSessionUrl(baseURL, nullptr, &sessionUrl, nullptr, &serverUrl);
+   if (sessionUrl == "" && serverUrl == "") {
+      // This is the case with RStudio Server, while Workbench has non-empty values
+      serverUrl = baseURL;
+   }
+   core::system::setenv(kServerUrlEnvVar, serverUrl);
+   core::system::setenv(kSessionUrlEnvVar, sessionUrl);
+
    std::string path = ptrConnection->request().rootPath();
 
    // compute the cookie path; find the first / after the http(s):// preamble. we make the cookie
@@ -172,9 +187,12 @@ void handleClientInit(const boost::function<void()>& initFunction,
        !core::http::validateCSRFHeaders(ptrConnection->request()))
    {
       LOG_WARNING_MESSAGE("Client init request to " + ptrConnection->request().uri() + 
-            " has missing or mismatched " kCSRFTokenCookie " cookie or " kCSRFTokenHeader " header");
+            " has missing or mismatched " + std::string(kCSRFTokenCookie) + " cookie or " +
+            std::string(kCSRFTokenHeader) + " header");
       // Send an error that shows up in the alert box of the browser - if we send unauthorized here, it causes an infinite sign in loop
-      ptrConnection->sendJsonRpcError(Error("MissingCSRFToken", json::errc::ParamMissing, "Client /rpc/client_init request - missing " kCSRFTokenHeader " header", ERROR_LOCATION));
+      ptrConnection->sendJsonRpcError(Error("MissingCSRFToken", json::errc::ParamMissing,
+            "Client /rpc/client_init request - missing " + std::string(kCSRFTokenHeader) +
+            " header", ERROR_LOCATION));
       return;
    }
 
@@ -237,13 +255,6 @@ void handleClientInit(const boost::function<void()>& initFunction,
       sessionInfo["scratch_dir"] = options.userScratchPath().getAbsolutePath();
    }
 
-   // temp dir
-   FilePath tempDir = rstudio::r::session::utils::tempDir();
-   Error error = tempDir.ensureDirectory();
-   if (error)
-      LOG_ERROR(error);
-   sessionInfo["temp_dir"] = tempDir.getAbsolutePath();
-
    // R_LIBS_USER
    sessionInfo["r_libs_user"] = module_context::rLibsUser();
    
@@ -263,7 +274,7 @@ void handleClientInit(const boost::function<void()>& initFunction,
    
    // source documents
    json::Array jsonDocs;
-   error = modules::source::clientInitDocuments(&jsonDocs);
+   Error error = modules::source::clientInitDocuments(&jsonDocs);
    if (error)
       LOG_ERROR(error);
    sessionInfo["source_documents"] = jsonDocs;
@@ -577,7 +588,7 @@ void handleClientInit(const boost::function<void()>& initFunction,
 
    sessionInfo["job_state"] = modules::jobs::jobState();
 
-   sessionInfo["launcher_jobs_enabled"] = modules::overlay::launcherJobsFeatureDisplayed();
+   sessionInfo["workbench_jobs_enabled"] = modules::overlay::workbenchJobsFeatureDisplayed();
 
    json::Object packageDependencies;
    error = modules::dependency_list::getDependencyList(&packageDependencies);

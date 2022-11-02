@@ -1,10 +1,10 @@
 /*
  * SessionObjectExplorer.cpp
  *
- * Copyright (C) 2022 by RStudio, PBC
+ * Copyright (C) 2022 by Posit Software, PBC
  *
- * Unless you have received this program directly from RStudio pursuant
- * to the terms of a commercial license agreement with RStudio, then
+ * Unless you have received this program directly from Posit Software pursuant
+ * to the terms of a commercial license agreement with Posit Software, then
  * this program is licensed to you under the terms of version 3 of the
  * GNU Affero General Public License. This program is distributed WITHOUT
  * ANY EXPRESS OR IMPLIED WARRANTY, INCLUDING THOSE OF NON-INFRINGEMENT,
@@ -20,6 +20,7 @@
 #include <boost/bind/bind.hpp>
 
 #include <core/Algorithm.hpp>
+#include <core/RecursionGuard.hpp>
 #include <shared_core/Error.hpp>
 #include <core/Exec.hpp>
 
@@ -193,6 +194,119 @@ void onDeferredInit(bool)
       LOG_ERROR(error);
 }
 
+void onDetectChanges(module_context::ChangeSource source)
+{
+   DROP_RECURSIVE_CALLS;
+
+   if (!core::thread::isMainThread())
+      return;
+
+   // unlikely that data will change outside of a REPL
+   if (source != module_context::ChangeSourceREPL) 
+      return;
+
+   Error error;
+   r::sexp::Protect rProtect;
+   SEXP envCache = R_NilValue;
+   error = r::exec::RFunction(".rs.explorer.getCache").call(&envCache, &rProtect);
+   if (error)
+   {
+      LOG_ERROR(error);
+      return;
+   }
+
+   std::vector<std::string> cached;
+   error = r::sexp::objects(envCache, false, &cached);
+   if (error)
+   {
+      LOG_ERROR(error);
+      return;
+   }
+   
+   for (const std::string& id: cached)
+   {
+      SEXP s = Rf_install(id.c_str());
+      SEXP entry = Rf_findVarInFrame(envCache, s);
+
+      // basic safety check on entry: make sure it's a 
+      // list of 5 elements
+      if (TYPEOF(entry) != VECSXP || Rf_length(entry) != 5)
+         continue;
+      
+      SEXP object = VECTOR_ELT(entry, 0);
+      SEXP name = VECTOR_ELT(entry, 1);
+      SEXP title = VECTOR_ELT(entry, 2);
+      SEXP envir = VECTOR_ELT(entry, 4);
+
+      // when envir is the empty env, this indicates
+      // that this was initially a View(<some code>)
+      // i.e. `x` is not a named object from an environment
+      // so don't update it
+      if (envir == R_EmptyEnv)
+         continue;
+
+      SEXP symbol = Rf_install(CHAR(STRING_ELT(name, 0)));
+      SEXP newObject = Rf_findVarInFrame(envir, symbol);
+
+      // no object of that name, don't update
+      if (newObject == R_UnboundValue)
+         continue;
+      
+      // no change
+      if (newObject == object)
+         continue;
+
+      // update the object
+      SET_VECTOR_ELT(entry, 0, newObject);
+
+      // Should the new object still use objcet explorer 
+      bool shouldUseExplorer = true;
+      error = r::exec::RFunction(".rs.dataViewer.shouldUseObjectExplorer")
+         .addParam(newObject)
+         .call(&shouldUseExplorer);
+      
+      if (shouldUseExplorer) 
+      {
+         // just refresh the View
+         error = r::exec::RFunction(".rs.explorer.refresh")
+            .addUtf8Param(id)
+            .addParam(entry)
+            .call();
+         if (error)
+         {
+            LOG_ERROR(error);
+            return;
+         }
+      }
+      else 
+      {
+         // close it, because the object explorer is no longer 
+         // the best way to show that object. 
+         error = r::exec::RFunction(".rs.explorer.close")
+            .addUtf8Param(id)
+            .addParam(entry)
+            .call();
+         if (error)
+         {
+            LOG_ERROR(error);
+            return;
+         }
+
+         // then just let View() show it
+         error = r::exec::RFunction("View")
+            .addParam(symbol)
+            .addParam(title)
+            .call(envir, true);
+         if (error)
+         {
+            LOG_ERROR(error);
+            return;
+         }
+      }
+      
+   }
+}
+
 SEXP rs_objectClass(SEXP objectSEXP)
 {
    SEXP attribSEXP = ATTRIB(objectSEXP);
@@ -267,6 +381,7 @@ core::Error initialize()
    
    module_context::events().onDeferredInit.connect(onDeferredInit);
    module_context::events().onShutdown.connect(onShutdown);
+   module_context::events().onDetectChanges.connect(onDetectChanges);
    addSuspendHandler(SuspendHandler(onSuspend, onResume));
    
    source_database::events().onDocPendingRemove.connect(onDocPendingRemove);

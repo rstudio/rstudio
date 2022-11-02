@@ -1,10 +1,10 @@
 /*
  * SessionHttpConnectionListenerImpl.hpp
  *
- * Copyright (C) 2022 by RStudio, PBC
+ * Copyright (C) 2022 by Posit Software, PBC
  *
- * Unless you have received this program directly from RStudio pursuant
- * to the terms of a commercial license agreement with RStudio, then
+ * Unless you have received this program directly from Posit Software pursuant
+ * to the terms of a commercial license agreement with Posit Software, then
  * this program is licensed to you under the terms of version 3 of the
  * GNU Affero General Public License. This program is distributed WITHOUT
  * ANY EXPRESS OR IMPLIED WARRANTY, INCLUDING THOSE OF NON-INFRINGEMENT,
@@ -191,8 +191,11 @@ public:
 
 protected:
 
-   virtual bool authenticate(boost::shared_ptr<HttpConnection>)
+   virtual bool authenticate(boost::shared_ptr<HttpConnection> ptrConnection)
    {
+      // ensure request signature is valid
+      if (!http_methods::verifyRequestSignature(ptrConnection->request()))
+         return false;
       return true;
    }
 
@@ -351,7 +354,7 @@ private:
             eventsActive_ = false;
          }
          if (options().handleOfflineEnabled() && options().handleOfflineTimeoutMs() == 0 &&
-             rpc::isOfflineableRequest(ptrHttpConnection) && init::isSessionInitialized())
+             rpc::isOfflineableRequest(ptrHttpConnection) && init::isSessionInitializedAndRestored())
          {
             // TODO: handleOffline - should these be put into a separate queue and run in a dedicated thread?
             if (http_methods::protocolDebugEnabled())

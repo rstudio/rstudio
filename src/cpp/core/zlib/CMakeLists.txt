@@ -1,10 +1,10 @@
 #
 # CMakeLists.txt
 #
-# Copyright (C) 2022 by RStudio, PBC
+# Copyright (C) 2022 by Posit Software, PBC
 #
-# Unless you have received this program directly from RStudio pursuant
-# to the terms of a commercial license agreement with RStudio, then
+# Unless you have received this program directly from Posit Software pursuant
+# to the terms of a commercial license agreement with Posit Software, then
 # this program is licensed to you under the terms of version 3 of the
 # GNU Affero General Public License. This program is distributed WITHOUT
 # ANY EXPRESS OR IMPLIED WARRANTY, INCLUDING THOSE OF NON-INFRINGEMENT,
@@ -26,7 +26,7 @@ include(CheckFunctionExists)
 include(CheckIncludeFile)
 include(CheckCSourceCompiles)
 
-# disable gcc visiblity attribute (not supported by some mingw versinos)
+# disable gcc visibility attribute (not supported by some mingw versions)
 set(EXTRA_COMPILE_DEFINITIONS "NO_VIZ")
 
 if(MSVC)

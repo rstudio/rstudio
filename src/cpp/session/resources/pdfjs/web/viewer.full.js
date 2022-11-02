@@ -2057,8 +2057,8 @@ var PDFHistory = (function () {
         // either:
         // 1. The current zoom value is such that the document does not need to,
         //    or cannot, be scrolled to display the destination.
-        // 2. The previous destination is broken, and doesn't actally point to a
-        //    position within the document.
+        // 2. The previous destination is broken, and doesn't actually point to
+        //    a position within the document.
         //    (This is either due to a bad PDF generator, or the user making a
         //     mistake when entering a destination in the hash parameters.)
         return null;
@@ -4086,7 +4086,7 @@ var PDFPageView = (function PDFPageViewClosure() {
         }, function(error) {
           console.error(error);
           // Tell the printEngine that rendering this canvas/page has failed.
-          // This will make the print proces stop.
+          // This will make the print process stop.
           if ('abort' in obj) {
             obj.abort();
           } else {

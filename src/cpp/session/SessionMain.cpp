@@ -1,10 +1,10 @@
 /*
  * SessionMain.cpp
  *
- * Copyright (C) 2022 by RStudio, PBC
+ * Copyright (C) 2022 by Posit Software, PBC
  *
- * Unless you have received this program directly from RStudio pursuant
- * to the terms of a commercial license agreement with RStudio, then
+ * Unless you have received this program directly from Posit Software pursuant
+ * to the terms of a commercial license agreement with Posit Software, then
  * this program is licensed to you under the terms of version 3 of the
  * GNU Affero General Public License. This program is distributed WITHOUT
  * ANY EXPRESS OR IMPLIED WARRANTY, INCLUDING THOSE OF NON-INFRINGEMENT,
@@ -68,17 +68,23 @@
 #include <core/system/ParentProcessMonitor.hpp>
 #include <core/system/Xdg.hpp>
 
+#ifdef _WIN32
+# include <core/system/Win32RuntimeLibrary.hpp>
+#endif
+
 #include <core/system/FileMonitor.hpp>
 #include <core/text/TemplateFilter.hpp>
 #include <core/r_util/RSessionContext.hpp>
 #include <core/r_util/REnvironment.hpp>
 #include <core/WaitUtils.hpp>
 
-#include <r/RJsonRpc.hpp>
 #include <r/RExec.hpp>
-#include <r/ROptions.hpp>
 #include <r/RFunctionHook.hpp>
 #include <r/RInterface.hpp>
+#include <r/RJsonRpc.hpp>
+#include <r/ROptions.hpp>
+#include <r/RSexp.hpp>
+#include <r/RUtil.hpp>
 #include <r/session/RSession.hpp>
 #include <r/session/RSessionState.hpp>
 #include <r/session/RClientState.hpp>
@@ -86,7 +92,6 @@
 #include <r/session/RConsoleHistory.hpp>
 #include <r/session/RGraphics.hpp>
 #include <r/session/REventLoop.hpp>
-#include <r/RUtil.hpp>
 
 #include <monitor/MonitorClient.hpp>
 
@@ -186,6 +191,7 @@
 #include "modules/rmarkdown/SessionBookdown.hpp"
 #include "modules/quarto/SessionQuarto.hpp"
 #include "modules/shiny/SessionShiny.hpp"
+#include "modules/shiny/SessionPyShiny.hpp"
 #include "modules/sql/SessionSql.hpp"
 #include "modules/stan/SessionStan.hpp"
 #include "modules/viewer/SessionViewer.hpp"
@@ -405,12 +411,13 @@ Error registerSignalHandlers()
    registerBlock.addFunctions()
          (bind(handleSignal, SigInt, handleINT));
 
-   // USR1 and USR2: perform suspend in server mode
+   // USR1, USR2, and TERM: perform suspend in server mode
    if (rsession::options().programMode() == kSessionProgramModeServer)
    {
       registerBlock.addFunctions()
          (bind(handleSignal, SigUsr1, suspend::handleUSR1))
-         (bind(handleSignal, SigUsr2, suspend::handleUSR2));
+         (bind(handleSignal, SigUsr2, suspend::handleUSR2))
+         (bind(handleSignal, SigTerm, suspend::handleUSR2));
    }
    // USR1 and USR2: ignore in desktop mode
    else
@@ -487,6 +494,21 @@ Error rInit(const rstudio::r::session::RInitInfo& rInitInfo)
    module_context::registerWaitForMethod(kHandleUnsavedChangesCompleted);
    module_context::registerWaitForMethod(kRStudioAPIShowDialogMethod);
 
+#ifdef _WIN32
+   {
+      // on Windows, check if we're using UCRT
+      // ignore errors here since older versions of R don't define
+      // the 'crt' memober on R.version
+      std::string crt;
+      rstudio::r::exec::evaluateString("R.version$crt", &crt);
+
+      // initialize runtime library
+      Error error = rstudio::core::runtime::initialize(crt == "ucrt");
+      if (error)
+         LOG_ERROR(error);
+   }
+#endif
+
    // execute core initialization functions
    using boost::bind;
    using namespace rstudio::core::system;
@@ -496,13 +518,6 @@ Error rInit(const rstudio::r::session::RInitInfo& rInitInfo)
 
       // client event service
       (startClientEventService)
-
-      // rpc methods
-      (socket_rpc::initialize)
-      (rpc::initialize)
-#ifdef RSTUDIO_SERVER
-      (server_rpc::initialize)
-#endif
 
       // json-rpc listeners
       (bind(registerRpcMethod, kConsoleInput, bufferConsoleInput))
@@ -546,6 +561,9 @@ Error rInit(const rstudio::r::session::RInitInfo& rInitInfo)
       // r utils
       (r_utils::initialize)
 
+      // suspend timeout
+      (suspend::initialize)
+
       // modules with c++ implementations
       (modules::spelling::initialize)
       (modules::lists::initialize)
@@ -584,6 +602,7 @@ Error rInit(const rstudio::r::session::RInitInfo& rInitInfo)
       (modules::rmarkdown::templates::initialize)
       (modules::rmarkdown::bookdown::initialize)
       (modules::rpubs::initialize)
+      (modules::pyshiny::initialize)
       (modules::shiny::initialize)
       (modules::sql::initialize)
       (modules::stan::initialize)
@@ -763,6 +782,7 @@ Error rInit(const rstudio::r::session::RInitInfo& rInitInfo)
    // begin session
    using namespace module_context;
    activeSession().beginSession(rVersion(), rHomeDir(), rVersionLabel());
+   LOG_DEBUG_MESSAGE("Beginning session: " + activeSession().id() + " with activityState: " + activeSession().activityState() + " for username: " + core::system::username() + " effective uid: " + std::to_string(core::system::effectiveUserId()));
 
    // setup fork handlers
    main_process::setupForkHandlers();
@@ -963,7 +983,8 @@ void rConsoleHistoryReset()
 
 void rConsoleReset()
 {
-   rsession::console_input::clearConsoleInputBuffer();
+   if (prefs::userPrefs().discardPendingConsoleInputOnError())
+      rsession::console_input::clearConsoleInputBuffer();
 }
 
 bool rLocator(double* x, double* y)
@@ -1135,6 +1156,8 @@ void rSuspended(const rstudio::r::session::RSuspendOptions& options)
 
    // fire event
    module_context::onSuspended(options, &(persistentState().settings()));
+
+   module_context::activeSession().setActivityState(core::r_util::kActivityStateSaved, true);
 }
 
 void rResumed()
@@ -1261,9 +1284,16 @@ void rCleanup(bool terminatedNormally)
       // destroy session if requested
       if (s_destroySession)
       {
-         Error error = module_context::activeSession().destroy();
-         if (error)
-            LOG_ERROR(error);
+         // If the launcher is enabled, keeping the activeSession around until the job shows an exit status
+         // at which point it will be removed by rworkspaces
+         if (options().getBoolOverlayOption(kLauncherSessionOption))
+            module_context::activeSession().setActivityState(r_util::kActivityStateDestroyPending, true);
+         else
+         {
+            Error error = module_context::activeSession().destroy();
+            if (error)
+               LOG_ERROR(error);
+         }
 
          // fire destroy event to modules
          module_context::events().onDestroyed();
@@ -1809,6 +1839,49 @@ void initMonitorClient()
    core::thread::safeLaunchThread(monitorWorkerThreadFunc);
 }
 
+void beforeResume()
+{
+   LOG_DEBUG_MESSAGE("Setting activityState to resuming from: " + module_context::activeSession().activityState());
+   module_context::activeSession().setActivityState(r_util::kActivityStateResuming, true);
+}
+
+void afterResume()
+{
+   LOG_DEBUG_MESSAGE("Resume complete");
+}
+
+std::string getenvForLog(const std::string& envVar)
+{
+   std::string envVal = core::system::getenv("LD_LIBRARY_PATH");
+   if (envVal.empty())
+     return "(empty)";
+   return envVal;
+}
+
+void logStartingEnv()
+{
+#ifdef __linux__
+   LOG_DEBUG_MESSAGE("Starting R session with LD_LIBRARY_PATH: " + getenvForLog("LD_LIBRARY_PATH"));
+#endif
+#ifdef __APPLE__
+   std::string envVars[] = {"DYLD_LIBRARY_PATH", "DYLD_FALLBACK_LIBRARY_PATH", "DYLD_INSERT_LIBRARIES"};
+   std::string msg = "Starting R session with: ";
+   bool first = true;
+   for (std::string varName:envVars)
+   {
+      if (!first)
+         msg += ", ";
+      else
+         first = false;
+      msg += varName + ": " + getenvForLog(varName);
+   }
+   LOG_DEBUG_MESSAGE(msg);
+#endif
+#ifdef _WIN32
+   LOG_DEBUG_MESSAGE("Starting R session with PATH: " + getenvForLog("PATH"));
+#endif
+}
+
 } // anonymous namespace
 
 // run session
@@ -1816,6 +1889,18 @@ int main(int argc, char * const argv[])
 {
    try
    {
+      // create and use a job object -- this is necessary on Electron as node
+      // creates processes with JOB_OBJECT_LIMIT_SILENT_BREAKAWAY_OK, and we want
+      // to make sure child processes for the rsession are terminated if the rsession
+      // process itself is shut down.
+      //
+      // the downside here is that the desktop front-end and the session will no
+      // longer be part of the same job, but because rsession is not detached from
+      // the desktop frontend, it will still be closed if the frontend is closed
+#ifdef _WIN32
+      core::system::initHook();
+#endif
+
       // save fallback library path
       s_fallbackLibraryPath = core::system::getenv("RSTUDIO_FALLBACK_LIBRARY_PATH");
       
@@ -1865,6 +1950,10 @@ int main(int argc, char * const argv[])
       ::setpgrp();
 #endif
 
+      logStartingEnv();
+
+      rstudio::r::session::setResumeCallbacks(beforeResume, afterResume);
+
       // get main thread id (used to distinguish forks which occur
       // from the main thread vs. child threads)
       main_process::initThreadId();
@@ -1885,7 +1974,7 @@ int main(int argc, char * const argv[])
       // (some users on Windows report these having trailing
       // slashes, which confuses a number of RStudio routines)
       boost::regex reTrailing("[/\\\\]+$");
-      for (const std::string& envvar : {"HOME", "R_USER"})
+      for (const char* envvar : {"HOME", "R_USER"})
       {
          std::string oldVal = core::system::getenv(envvar);
          if (!oldVal.empty())
@@ -1895,6 +1984,11 @@ int main(int argc, char * const argv[])
                core::system::setenv(envvar, newVal);
          }
       }
+
+      // Initialize rpc to rserver before options. Rpc validates session scope with db session storage
+      error = socket_rpc::initialize();
+      if (error)
+         return sessionExitFailure(error, ERROR_LOCATION);
 
       // read program options
       std::ostringstream osWarnings;
@@ -1977,6 +2071,16 @@ int main(int argc, char * const argv[])
          }
       }
 
+      error = rpc::initialize();
+      if (error)
+         return sessionExitFailure(error, ERROR_LOCATION);
+
+#ifdef RSTUDIO_SERVER
+      error = server_rpc::initialize();
+      if (error)
+         return sessionExitFailure(error, ERROR_LOCATION);
+#endif
+
       // initialize overlay
       error = rsession::overlay::initialize();
       if (error)
@@ -1985,6 +2089,9 @@ int main(int argc, char * const argv[])
       // set the rstudio environment variable so code can check for
       // whether rstudio is running
       core::system::setenv("RSTUDIO", "1");
+
+      // The pid of the session process
+      core::system::setenv("RSTUDIO_SESSION_PID", core::safe_convert::numberToString(::getpid()));
 
       // Mirror the R getOptions("width") value in an environment variable
       core::system::setenv("RSTUDIO_CONSOLE_WIDTH",
@@ -2053,9 +2160,15 @@ int main(int argc, char * const argv[])
          core::thread::safeLaunchThread(detectParentTermination);
 
       // set the rpostback absolute path
-      FilePath rpostback = options.rpostbackPath()
-                                  .getParent().getParent()
-                                  .completeChildPath("rpostback");
+      FilePath rpostback = options.rpostbackPath();
+   #ifndef __APPLE__
+      // package builds on Linux and Windows hoist the binary one level higher in the directory structure
+      if (rpostback.getAbsolutePath().find("session/postback") == std::string::npos) {
+         rpostback = rpostback.getParent().getParent();
+         rpostback = rpostback.completeChildPath("rpostback");
+      }
+   #endif
+
       core::system::setenv(
             "RS_RPOSTBACK_PATH",
             string_utils::utf8ToSystem(rpostback.getAbsolutePath()));
@@ -2194,6 +2307,7 @@ int main(int argc, char * const argv[])
 
       // r options
       rstudio::r::session::ROptions rOptions;
+      rOptions.projectPath = projects::projectContext().hasProject() ? projects::projectContext().directory() : FilePath();
       rOptions.userHomePath = options.userHomePath();
       rOptions.userScratchPath = options.userScratchPath();
       rOptions.scopedScratchPath = module_context::scopedScratchPath();

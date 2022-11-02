@@ -1,10 +1,10 @@
 /*
  * SessionPlots.cpp
  *
- * Copyright (C) 2022 by RStudio, PBC
+ * Copyright (C) 2022 by Posit Software, PBC
  *
- * Unless you have received this program directly from RStudio pursuant
- * to the terms of a commercial license agreement with RStudio, then
+ * Unless you have received this program directly from Posit Software pursuant
+ * to the terms of a commercial license agreement with Posit Software, then
  * this program is licensed to you under the terms of version 3 of the
  * GNU Affero General Public License. This program is distributed WITHOUT
  * ANY EXPRESS OR IMPLIED WARRANTY, INCLUDING THOSE OF NON-INFRINGEMENT,
@@ -37,6 +37,8 @@
 #include <r/RSexp.hpp>
 #include <r/RExec.hpp>
 #include <r/RRoutines.hpp>
+
+#include <r/session/RSessionUtils.hpp>
 #include <r/session/RGraphics.hpp>
 
 #include <session/SessionModuleContext.hpp>
@@ -55,7 +57,19 @@ namespace {
 
 // locations
 #define kGraphics "/graphics"
+
+Error getPlotTempdir(const json::JsonRpcRequest& request, 
+                     json::JsonRpcResponse* pResponse)
+{
+   std::string tempdir;
+   Error error = r::exec::RFunction("tempdir").callUtf8(&tempdir);
+   if (error)
+      LOG_ERROR(error);
    
+   pResponse->setResult(tempdir);
+   return Success();
+}
+
 Error nextPlot(const json::JsonRpcRequest& request, 
                json::JsonRpcResponse* pResponse)
 {   
@@ -903,6 +917,7 @@ Error initialize()
    using namespace module_context;
    ExecBlock initBlock;
    initBlock.addFunctions()
+      (bind(registerRpcMethod, "get_plot_tempdir", getPlotTempdir))
       (bind(registerRpcMethod, "next_plot", nextPlot))
       (bind(registerRpcMethod, "previous_plot", previousPlot))
       (bind(registerRpcMethod, "remove_plot", removePlot))

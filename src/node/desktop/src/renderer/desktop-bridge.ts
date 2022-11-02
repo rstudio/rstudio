@@ -1,10 +1,10 @@
 /*
  * desktop-bridge.ts
  *
- * Copyright (C) 2022 by RStudio, PBC
+ * Copyright (C) 2022 by Posit Software, PBC
  *
- * Unless you have received this program directly from RStudio pursuant
- * to the terms of a commercial license agreement with RStudio, then
+ * Unless you have received this program directly from Posit Software pursuant
+ * to the terms of a commercial license agreement with Posit Software, then
  * this program is licensed to you under the terms of version 3 of the
  * GNU Affero General Public License. This program is distributed WITHOUT
  * ANY EXPRESS OR IMPLIED WARRANTY, INCLUDING THOSE OF NON-INFRINGEMENT,
@@ -13,8 +13,9 @@
  *
  */
 
-import { ipcRenderer, webContents } from 'electron';
+import { ipcRenderer, SaveDialogReturnValue, webContents } from 'electron';
 import { logger } from '../core/logger';
+import { normalizeSeparators } from '../ui/utils';
 
 interface VoidCallback<Type> {
   (result: Type): void;
@@ -68,8 +69,7 @@ export function getDesktopBridge() {
     ) => {
       ipcRenderer
         .invoke('desktop_get_save_file_name', caption, label, dir, defaultExtension, forceDefaultExtension, focusOwner)
-        .then((result) => {
-
+        .then((result: SaveDialogReturnValue) => {
           // if the result was canceled, bail early
           if (result.canceled as boolean) {
             return callback('');
@@ -87,6 +87,19 @@ export function getDesktopBridge() {
           if (ext.length === 0 || (forceDefaultExtension && ext !== defaultExtension)) {
             const name = dotIndex > 0 ? filePath.substring(0, dotIndex) : filePath;
             filePath = name + defaultExtension;
+          }
+
+          if (process.platform === 'win32') {
+            filePath = normalizeSeparators(filePath, '/');
+          }
+
+          const expandedHomePath = normalizeSeparators(process.env.HOME ?? '', '/');
+          const homePath = '~';
+
+          /* this makes sure the file path and HOME path
+          only contains forward slashes as separators for correct comparison */
+          if (expandedHomePath.length && filePath.startsWith(expandedHomePath)) {
+            filePath = homePath + filePath.substring(expandedHomePath.length);
           }
 
           // invoke callback
@@ -235,13 +248,6 @@ export function getDesktopBridge() {
         .catch((error) => reportIpcError('chooseRVersion', error));
     },
 
-    devicePixelRatio: (callback: VoidCallback<number>) => {
-      ipcRenderer
-        .invoke('desktop_device_pixel_ratio')
-        .then((ratio) => callback(ratio))
-        .catch((error) => reportIpcError('devicePixelRatio', error));
-    },
-
     openMinimalWindow: (name: string, url: string, width: number, height: number) => {
       ipcRenderer.send('desktop_open_minimal_window', name, url, width, height);
     },
@@ -280,10 +286,6 @@ export function getDesktopBridge() {
         .catch((error) => reportIpcError('prepareForNamedWindow', error));
     },
 
-    closeNamedWindow: (name: string) => {
-      ipcRenderer.send('desktop_close_named_window', name);
-    },
-
     copyPageRegionToClipboard: (x: number, y: number, width: number, height: number, callback: () => void) => {
       ipcRenderer
         .invoke('desktop_copy_page_region_to_clipboard', x, y, width, height)
@@ -300,18 +302,6 @@ export function getDesktopBridge() {
       height: number,
     ) => {
       ipcRenderer.send('desktop_export_page_region_to_file', targetPath, format, left, top, width, height);
-    },
-
-    printText: (text: string) => {
-      ipcRenderer.send('desktop_print_text', text);
-    },
-
-    paintPrintText: (printer: string) => {
-      ipcRenderer.send('desktop_paint_print_text', printer);
-    },
-
-    printFinished: (result: number) => {
-      ipcRenderer.send('desktop_print_finished', result);
     },
 
     supportsClipboardMetafile: (callback: VoidCallback<boolean>) => {
@@ -355,13 +345,6 @@ export function getDesktopBridge() {
       ipcRenderer.send('desktop_set_desktop_rendering_engine', engine);
     },
 
-    filterText: (text: string, callback: VoidCallback<string>) => {
-      ipcRenderer
-        .invoke('desktop_filter_text', text)
-        .then((filtered) => callback(filtered))
-        .catch((error) => reportIpcError('filterText', error));
-    },
-
     cleanClipboard: (stripHtml: boolean) => {
       ipcRenderer.send('desktop_clean_clipboard', stripHtml);
     },
@@ -377,10 +360,10 @@ export function getDesktopBridge() {
       if (!path) {
         return;
       }
-      const webcontents = webContents
-        .getAllWebContents();
+      const webcontents = webContents.getAllWebContents();
 
       if (webcontents.length) {
+        path = path.replaceAll('\\', '\\\\').replaceAll('"', '\\"').replaceAll('\n', '\\n');
         webcontents[0]
           .executeJavaScript(`window.desktopHooks.openFile("${path}")`)
           .catch((error: unknown) => logger().logError(error));
@@ -393,10 +376,6 @@ export function getDesktopBridge() {
 
     openSessionInNewWindow: (workingDirectoryPath: string) => {
       ipcRenderer.send('desktop_open_session_in_new_window', workingDirectoryPath);
-    },
-
-    openTerminal: (terminalPath: string, workingDirectory: string, extraPathEntries: string, shellType: string) => {
-      ipcRenderer.send('desktop_open_terminal', terminalPath, workingDirectory, extraPathEntries, shellType);
     },
 
     getFixedWidthFontList: (callback: VoidCallback<string>) => {
@@ -415,13 +394,6 @@ export function getDesktopBridge() {
 
     setFixedWidthFont: (font: string) => {
       ipcRenderer.send('desktop_set_fixed_width_font', font);
-    },
-
-    getZoomLevels: (callback: VoidCallback<string>) => {
-      ipcRenderer
-        .invoke('desktop_get_zoom_levels')
-        .then((levels) => callback(levels))
-        .catch((error) => reportIpcError('getZoomLevels', error));
     },
 
     getZoomLevel: (callback: VoidCallback<number>) => {
@@ -569,6 +541,10 @@ export function getDesktopBridge() {
       ipcRenderer.send('desktop_set_viewer_url', url);
     },
 
+    setPresentationUrl: (url: string) => {
+      ipcRenderer.send('desktop_set_presentation_url', url);
+    },
+
     reloadViewerZoomWindow: (url: string) => {
       ipcRenderer.send('desktop_reload_viewer_zoom_window', url);
     },
@@ -577,11 +553,10 @@ export function getDesktopBridge() {
       ipcRenderer.send('desktop_set_shiny_dialog_url', url);
     },
 
-    getScrollingCompensationType: (callback: VoidCallback<string>) => {
-      ipcRenderer
-        .invoke('desktop_get_scrolling_compensation_type')
-        .then((compensationType) => callback(compensationType))
-        .catch((error) => reportIpcError('getScrollingCompensationType', error));
+    allowNavigation: (url: string, callback: VoidCallback<boolean>) => {
+      ipcRenderer.invoke('desktop_allow_navigation', url)
+        .then((isSafe) => callback(isSafe))
+        .catch((error) => reportIpcError('desktop_allow_navigation', error));
     },
 
     isMacOS: (callback: VoidCallback<boolean>) => {

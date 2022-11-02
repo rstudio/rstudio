@@ -1,10 +1,10 @@
 /*
  * NotebookQueueUnit.cpp
  *
- * Copyright (C) 2022 by RStudio, PBC
+ * Copyright (C) 2022 by Posit Software, PBC
  *
- * Unless you have received this program directly from RStudio pursuant
- * to the terms of a commercial license agreement with RStudio, then
+ * Unless you have received this program directly from Posit Software pursuant
+ * to the terms of a commercial license agreement with Posit Software, then
  * this program is licensed to you under the terms of version 3 of the
  * GNU Affero General Public License. This program is distributed WITHOUT
  * ANY EXPRESS OR IMPLIED WARRANTY, INCLUDING THOSE OF NON-INFRINGEMENT,
@@ -128,17 +128,16 @@ Error NotebookQueueUnit::fromJson(const json::Object& source,
    // convert enums
    unit.execMode_ = static_cast<ExecMode>(execMode);
    unit.execScope_ = static_cast<ExecScope>(execScope);
-
-   // convert code to wide chars (so we don't have to do UTF-8 math when
-   // processing execution ranges)
-   unit.code_ = string_utils::utf8ToWide(code);
+   unit.code_ = code;
 
    error = fillExecRange(completed, &unit.completed_);
    if (error)
       LOG_ERROR(error);
+
    error = fillExecRange(pending, &unit.pending_);
    if (error)
       LOG_ERROR(error);
+
    return Success();
 }
 
@@ -155,8 +154,9 @@ Error NotebookQueueUnit::parseOptions(json::Object* pOptions)
    r::sexp::Protect protect;
    SEXP sexpOptions = R_NilValue;
    Error error = r::exec::RFunction(".rs.evaluateChunkOptions")
-         .addUtf8Param(string_utils::wideToUtf8(code_))
+         .addUtf8Param(code_)
          .call(&sexpOptions, &protect);
+
    if (error)
       return error;
 
@@ -184,7 +184,7 @@ Error NotebookQueueUnit::parseOptions(json::Object* pOptions)
 Error NotebookQueueUnit::innerCode(std::string* pCode)
 {
    return r::exec::RFunction(".rs.extractChunkInnerCode")
-       .addUtf8Param(string_utils::wideToUtf8(code_))
+       .addUtf8Param(code_)
        .callUtf8(pCode);
 }
 
@@ -227,7 +227,7 @@ json::Object NotebookQueueUnit::toJson() const
 
    // emit top-level values
    json::Object unit;
-   unit[kQueueUnitCode]      = string_utils::wideToUtf8(code_);
+   unit[kQueueUnitCode]      = code_;
    unit[kQueueUnitDocId]     = docId_;
    unit[kQueueUnitChunkId]   = chunkId_;
    unit[kQueueUnitCompleted] = completed;
@@ -240,7 +240,8 @@ json::Object NotebookQueueUnit::toJson() const
 }
 
 std::string NotebookQueueUnit::popExecRange(ExecRange* pRange, 
-      ExpressionMode mode)
+                                            ExpressionMode mode,
+                                            const std::string& engine)
 {
    // do we have any unevaluated code in this execution unit?
    if (pending_.empty())
@@ -250,7 +251,7 @@ std::string NotebookQueueUnit::popExecRange(ExecRange* pRange,
    if (execScope_ == ExecScopeInline)
    {
       pending_.clear();
-      return string_utils::wideToUtf8(code_);
+      return code_;
    }
 
    // extract next range to execute
@@ -258,9 +259,16 @@ std::string NotebookQueueUnit::popExecRange(ExecRange* pRange,
    int start = range.start;
    int stop = range.stop;
 
-   // use the first line of the range if it's multi-line
+   // for python chunks, use the entire range, even when it's multi-line
+   // otherwise, use the first line of the range if it's multi-line
    size_t idx = code_.find('\n', start + 1);
-   if (idx != std::string::npos && gsl::narrow_cast<int>(idx) < (stop - 1))
+   if (engine == "python")
+   {
+      code_ = code_ + "\n"; // add a newline to terminate the multiline chunk
+      stop = stop + 1;
+      pending_.pop_front();
+   }
+   else if (idx != std::string::npos && gsl::narrow_cast<int>(idx) < (stop - 1))
    {
       stop = gsl::narrow_cast<int>(idx);
 
@@ -280,13 +288,13 @@ std::string NotebookQueueUnit::popExecRange(ExecRange* pRange,
       executing_.extendTo(ExecRange(start, stop));
 
    completed_.push_back(executing_);
-   std::wstring code = code_.substr(start, stop - start);
    
    // return values to caller
    if (pRange)
       *pRange = executing_;
 
-   return string_utils::wideToUtf8(code);
+   std::string code = code_.substr(start, stop - start);
+   return code;
 }
 
 std::string NotebookQueueUnit::docId() const
@@ -299,7 +307,7 @@ std::string NotebookQueueUnit::chunkId() const
    return chunkId_;
 }
 
-std::wstring NotebookQueueUnit::code() const
+std::string NotebookQueueUnit::code() const
 {
    return code_;
 }
@@ -321,14 +329,13 @@ ExecMode NotebookQueueUnit::execMode() const
 
 std::string NotebookQueueUnit::executingCode() const
 {
-   return string_utils::wideToUtf8(code_.substr(
-            executing_.start, executing_.stop - executing_.start));
+   return code_.substr(executing_.start, executing_.stop - executing_.start);
 }
 
 void NotebookQueueUnit::replaceCode(const std::string& code)
 {
    // replace the entire body of the code
-   code_ = string_utils::utf8ToWide(code);
+   code_ = code;
 
    // replace the pending queue with one that executes exactly the code given
    pending_.clear();

@@ -1,10 +1,10 @@
 /*
  * StatusBarWidget.java
  *
- * Copyright (C) 2022 by RStudio, PBC
+ * Copyright (C) 2022 by Posit Software, PBC
  *
- * Unless you have received this program directly from RStudio pursuant
- * to the terms of a commercial license agreement with RStudio, then
+ * Unless you have received this program directly from Posit Software pursuant
+ * to the terms of a commercial license agreement with Posit Software, then
  * this program is licensed to you under the terms of version 3 of the
  * GNU Affero General Public License. This program is distributed WITHOUT
  * ANY EXPRESS OR IMPLIED WARRANTY, INCLUDING THOSE OF NON-INFRINGEMENT,
@@ -166,6 +166,11 @@ public class StatusBarWidget extends Composite
       {
          scopeIcon_.setResource(new ImageResource2x(StandardIcons.INSTANCE.functionLetter2x()));
          scopeIcon_.setAltText(constants_.anonymousCapitalized());
+      }
+      else if (type == StatusBar.SCOPE_TEST)
+      {
+         scopeIcon_.setResource(new ImageResource2x(StandardIcons.INSTANCE.test2x()));
+         scopeIcon_.setAltText(constants_.testCapitalized());
       }
       else if (type == StatusBar.SCOPE_FUNCTION)
       {

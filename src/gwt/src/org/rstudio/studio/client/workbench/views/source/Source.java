@@ -1,10 +1,10 @@
 /*
  * Source.java
  *
- * Copyright (C) 2022 by RStudio, PBC
+ * Copyright (C) 2022 by Posit Software, PBC
  *
- * Unless you have received this program directly from RStudio pursuant
- * to the terms of a commercial license agreement with RStudio, then
+ * Unless you have received this program directly from Posit Software pursuant
+ * to the terms of a commercial license agreement with Posit Software, then
  * this program is licensed to you under the terms of version 3 of the
  * GNU Affero General Public License. This program is distributed WITHOUT
  * ANY EXPRESS OR IMPLIED WARRANTY, INCLUDING THOSE OF NON-INFRINGEMENT,
@@ -133,6 +133,8 @@ import org.rstudio.studio.client.workbench.views.source.SourceWindowManager.Navi
 import org.rstudio.studio.client.workbench.views.source.editors.EditingTarget;
 import org.rstudio.studio.client.workbench.views.source.editors.codebrowser.CodeBrowserEditingTarget;
 import org.rstudio.studio.client.workbench.views.source.editors.explorer.events.OpenObjectExplorerEvent;
+import org.rstudio.studio.client.workbench.views.source.editors.explorer.events.RefreshObjectExplorerEvent;
+import org.rstudio.studio.client.workbench.views.source.editors.explorer.events.CloseObjectExplorerEvent;
 import org.rstudio.studio.client.workbench.views.source.editors.explorer.model.ObjectExplorerHandle;
 import org.rstudio.studio.client.workbench.views.source.editors.profiler.OpenProfileEvent;
 import org.rstudio.studio.client.workbench.views.source.editors.profiler.model.ProfilerContents;
@@ -168,6 +170,7 @@ import org.rstudio.studio.client.workbench.views.source.events.PopoutDocEvent;
 import org.rstudio.studio.client.workbench.views.source.events.PopoutDocInitiatedEvent;
 import org.rstudio.studio.client.workbench.views.source.events.ShowContentEvent;
 import org.rstudio.studio.client.workbench.views.source.events.ShowDataEvent;
+import org.rstudio.studio.client.workbench.views.source.events.CloseDataEvent;
 import org.rstudio.studio.client.workbench.views.source.events.SourceFileSavedEvent;
 import org.rstudio.studio.client.workbench.views.source.events.SourceNavigationEvent;
 import org.rstudio.studio.client.workbench.views.source.events.SourcePathChangedEvent;
@@ -195,6 +198,7 @@ public class Source implements InsertSourceEvent.Handler,
                                FileEditEvent.Handler,
                                ShowContentEvent.Handler,
                                ShowDataEvent.Handler,
+                               CloseDataEvent.Handler,
                                CodeBrowserNavigationEvent.Handler,
                                CodeBrowserFinishedEvent.Handler,
                                CodeBrowserHighlightEvent.Handler,
@@ -205,6 +209,8 @@ public class Source implements InsertSourceEvent.Handler,
                                PopoutDocInitiatedEvent.Handler,
                                OpenProfileEvent.Handler,
                                OpenObjectExplorerEvent.Handler,
+                               RefreshObjectExplorerEvent.Handler,
+                               CloseObjectExplorerEvent.Handler,
                                ReplaceRangesEvent.Handler,
                                SetSelectionRangesEvent.Handler,
                                GetEditorContextEvent.Handler,
@@ -322,7 +328,11 @@ public class Source implements InsertSourceEvent.Handler,
       events_.addHandler(InsertSourceEvent.TYPE, this);
       events_.addHandler(ShowContentEvent.TYPE, this);
       events_.addHandler(ShowDataEvent.TYPE, this);
+      events_.addHandler(CloseDataEvent.TYPE, this);
+      events_.addHandler(CloseDataEvent.TYPE, this);
       events_.addHandler(OpenObjectExplorerEvent.TYPE, this);
+      events_.addHandler(RefreshObjectExplorerEvent.TYPE, this);
+      events_.addHandler(CloseObjectExplorerEvent.TYPE, this);
       events_.addHandler(OpenPresentationSourceFileEvent.TYPE, this);
       events_.addHandler(OpenSourceFileEvent.TYPE, this);
       events_.addHandler(CodeBrowserNavigationEvent.TYPE, this);
@@ -788,6 +798,26 @@ public class Source implements InsertSourceEvent.Handler,
    }
 
    @Override
+   public void onRefreshObjectExplorerEvent(RefreshObjectExplorerEvent event)
+   {
+      // ignore if we're a satellite
+      if (!SourceWindowManager.isMainSourceWindow())
+         return;
+
+      columnManager_.refreshObjectExplorer(event.getHandle());
+   }
+
+   @Override
+   public void onCloseObjectExplorerEvent(CloseObjectExplorerEvent event)
+   {
+      // ignore if we're a satellite
+      if (!SourceWindowManager.isMainSourceWindow())
+         return;
+
+      columnManager_.closeObjectExplorer(event.getHandle());
+   }
+
+   @Override
    public void onShowData(ShowDataEvent event)
    {
       // ignore if we're a satellite
@@ -795,6 +825,16 @@ public class Source implements InsertSourceEvent.Handler,
          return;
 
       columnManager_.showDataItem(event.getData());
+   }
+
+   @Override
+   public void onCloseData(CloseDataEvent event)
+   {
+      // ignore if we're a satellite
+      if (!SourceWindowManager.isMainSourceWindow())
+         return;
+
+      columnManager_.closeDataItem(event.getData());
    }
 
    public void onShowProfiler(OpenProfileEvent event)

@@ -1,10 +1,10 @@
 /*
  * Process.cpp
  *
- * Copyright (C) 2022 by RStudio, PBC
+ * Copyright (C) 2022 by Posit Software, PBC
  *
- * Unless you have received this program directly from RStudio pursuant
- * to the terms of a commercial license agreement with RStudio, then
+ * Unless you have received this program directly from Posit Software pursuant
+ * to the terms of a commercial license agreement with Posit Software, then
  * this program is licensed to you under the terms of version 3 of the
  * GNU Affero General Public License. This program is distributed WITHOUT
  * ANY EXPRESS OR IMPLIED WARRANTY, INCLUDING THOSE OF NON-INFRINGEMENT,
@@ -307,19 +307,19 @@ bool ProcessSupervisor::hasRunningChildren()
 
 namespace {
 
-bool hasActivity(const boost::shared_ptr<AsyncChildProcess>& childProc)
+bool hasDurableActivity(const boost::shared_ptr<AsyncChildProcess>& childProc)
 {
-   return
+   return !childProc->allowParentSuspend() && (
          childProc->hasNonIgnoredSubprocess() ||
          childProc->hasIgnoredSubprocess() ||
-         childProc->hasRecentOutput();
+         childProc->hasRecentOutput());
 }
 
 } // anonymous namespace
 
-bool ProcessSupervisor::hasActiveChildren()
+bool ProcessSupervisor::hasDurableChildren()
 {
-   return boost::algorithm::any_of(pImpl_->children, hasActivity);
+   return boost::algorithm::any_of(pImpl_->children, hasDurableActivity);
 }
 
 bool ProcessSupervisor::poll()

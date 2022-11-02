@@ -1,10 +1,10 @@
 /*
  * RCompilationDatabase.hpp
  *
- * Copyright (C) 2022 by RStudio, PBC
+ * Copyright (C) 2022 by Posit Software, PBC
  *
- * Unless you have received this program directly from RStudio pursuant
- * to the terms of a commercial license agreement with RStudio, then
+ * Unless you have received this program directly from Posit Software pursuant
+ * to the terms of a commercial license agreement with Posit Software, then
  * this program is licensed to you under the terms of version 3 of the
  * GNU Affero General Public License. This program is distributed WITHOUT
  * ANY EXPRESS OR IMPLIED WARRANTY, INCLUDING THOSE OF NON-INFRINGEMENT,
@@ -36,6 +36,7 @@ namespace rstudio {
 namespace core {
 namespace r_util {
 class RPackageInfo;
+class RToolsInfo;
 } // namespace r_util
 } // namespace core
 } // namespace rstudio
@@ -63,7 +64,7 @@ public:
 private:
 
    core::Error executeSourceCpp(core::system::Options env,
-                                const std::string& rcppPkg,
+                                const std::string& cppPkg,
                                 const core::FilePath& srcPath,
                                 core::system::ProcessResult* pResult);
 
@@ -75,7 +76,7 @@ private:
    void updateForSourceCpp(const core::FilePath& cppPath);
    std::vector<std::string> compileArgsForPackage(
                                      const core::system::Options& env,
-                                     const core::FilePath& pkgPath,
+                                     const core::FilePath& srcDir,
                                      bool isCpp);
 
 
@@ -90,18 +91,22 @@ private:
       std::string PCH;
       bool isCpp;
    };
-   CompilationConfig configForSourceCpp(const std::string& rcppPkg,
+
+   CompilationConfig configForSourceCpp(const std::string& cppPkg,
                                         core::FilePath srcFile);
 
    std::vector<std::string> argsForRCmdSHLIB(core::system::Options env,
-                                             core::FilePath tempSrcFile);
+                                             core::FilePath srcFile);
 
    std::vector<std::string> baseCompilationArgs(bool isCppFile) const;
    std::vector<std::string> packageCompilationArgs(
          core::r_util::RPackageInfo* pPkgInfo = nullptr,
          bool* pIsCpp = nullptr);
 
-   std::vector<std::string> rToolsArgs() const;
+#ifdef _WIN32
+   core::r_util::RToolsInfo& rToolsInfo() const;
+#endif
+
    core::system::Options compilationEnvironment() const;
    std::vector<std::string> precompiledHeaderArgs(const CompilationConfig& config);
 
@@ -109,16 +114,13 @@ private:
 
 private:
 
-   // Rtools arguments (cache once we successfully get them)
-   mutable std::vector<std::string> rToolsArgs_;
-
    // track the sourceCpp hash values used to derive args (don't re-run
    // detection if hash hasn't changed)
-   typedef std::map<std::string,std::string> SourceCppHashes;
+   typedef std::map<std::string, std::string> SourceCppHashes;
    SourceCppHashes sourceCppHashes_;
 
    // source file compilation settings
-   typedef std::map<std::string,CompilationConfig> ConfigMap;
+   typedef std::map<std::string, CompilationConfig> ConfigMap;
    ConfigMap sourceCppConfigMap_;
 
    // package compliation settings (track file modification times on build
@@ -126,6 +128,7 @@ private:
    std::string packageBuildFileHash_;
    std::string compilerHash_;
    std::string rVersion_;
+   int databaseVersion_;
    CompilationConfig packageCompilationConfig_;
    bool usePrecompiledHeaders_;
    bool forceRebuildPrecompiledHeaders_;

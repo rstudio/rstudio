@@ -1,10 +1,10 @@
 /*
  * Util.cpp
  *
- * Copyright (C) 2022 by RStudio, PBC
+ * Copyright (C) 2022 by Posit Software, PBC
  *
- * Unless you have received this program directly from RStudio pursuant
- * to the terms of a commercial license agreement with RStudio, then
+ * Unless you have received this program directly from Posit Software pursuant
+ * to the terms of a commercial license agreement with Posit Software, then
  * this program is licensed to you under the terms of version 3 of the
  * GNU Affero General Public License. This program is distributed WITHOUT
  * ANY EXPRESS OR IMPLIED WARRANTY, INCLUDING THOSE OF NON-INFRINGEMENT,
@@ -550,6 +550,17 @@ bool isSslShutdownError(const boost::system::error_code& ec)
 {
    return ec == boost::asio::ssl::error::stream_truncated;
 }
+#endif
+
+#ifndef _WIN32
+
+bool isSslCertificateVerifyFailedError(const core::Error& error)
+{
+   return error.getName() == boost::asio::error::get_ssl_category().name() &&
+              ERR_GET_LIB(error.getCode()) == ERR_LIB_SSL &&
+              ERR_GET_REASON(error.getCode()) == SSL_R_CERTIFICATE_VERIFY_FAILED;
+}
+
 #endif
 
 std::string addQueryParam(const std::string& uri,

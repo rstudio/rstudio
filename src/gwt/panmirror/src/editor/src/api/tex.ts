@@ -1,10 +1,10 @@
 /*
  * tex.ts
  *
- * Copyright (C) 2022 by RStudio, PBC
+ * Copyright (C) 2022 by Posit Software, PBC
  *
- * Unless you have received this program directly from RStudio pursuant
- * to the terms of a commercial license agreement with RStudio, then
+ * Unless you have received this program directly from Posit Software pursuant
+ * to the terms of a commercial license agreement with Posit Software, then
  * this program is licensed to you under the terms of version 3 of the
  * GNU Affero General Public License. This program is distributed WITHOUT
  * ANY EXPRESS OR IMPLIED WARRANTY, INCLUDING THOSE OF NON-INFRINGEMENT,
@@ -44,7 +44,10 @@ export function texLength(text: string) {
     // only letters, backslashes, and open brace/bracket allowed (unless we are in braces or brackets)
     const inBraces = braceLevel >= 1;
     const inBrackets = bracketLevel >= 1;
-    if (i > 0 && !isLetter(ch) && ch !== '\\' && ch !== '{' && ch !== '[' && !inBraces && !inBrackets) {
+    if (i > 0 && ch === ' ' && text[i+1] === '\\') {
+      i++; // skip the \
+      continue;
+    } if (i > 0 && !isLetter(ch) && ch !== '\\' && ch !== '{' && ch !== '[' && !inBraces && !inBrackets) {
       return i;
     }
 

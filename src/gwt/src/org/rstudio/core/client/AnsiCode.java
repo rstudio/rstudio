@@ -1,10 +1,10 @@
 /*
  * AnsiEscapeCode.java
  *
- * Copyright (C) 2022 by RStudio, PBC
+ * Copyright (C) 2022 by Posit Software, PBC
  *
- * Unless you have received this program directly from RStudio pursuant
- * to the terms of a commercial license agreement with RStudio, then
+ * Unless you have received this program directly from Posit Software pursuant
+ * to the terms of a commercial license agreement with Posit Software, then
  * this program is licensed to you under the terms of version 3 of the
  * GNU Affero General Public License. This program is distributed WITHOUT
  * ANY EXPRESS OR IMPLIED WARRANTY, INCLUDING THOSE OF NON-INFRINGEMENT,
@@ -99,8 +99,6 @@ public class AnsiCode
    public static final int FONT_SIX = 16;
    public static final int FONT_SEVEN = 17;
    public static final int FONT_EIGHT = 18;
-
-   public static final String HYPERLINK_STYLE = "xtermHyperlink";
 
    // Font-nine is used by RStudio to reduce spacing between lines
    public static final int FONT_NINE = 19;
@@ -714,6 +712,10 @@ public class AnsiCode
                   .replace("\b", "<BS>");
    }
 
+   private static String ESC = "\u001b";
+   private static String OSC = ESC + "\\]";
+   private static String BEL = "\7";
+   private static String ST = "(?:" + BEL + "|" + ESC + "\\\\)";
 
    // Control characters handled by R console, plus leading character of
    // ANSI escape sequences
@@ -744,9 +746,9 @@ public class AnsiCode
    public static final Pattern SGR_PARTIAL_ESCAPE_PATTERN = Pattern.create(SGR_PARTIAL_REGEX);
 
    // RegEx to match hyperlinks escape codes
-   // OSC 8 ; [params] ; [url] ; \7
+   // OSC 8 ; [params] ; [url] ; ST
    public static final String HYPERLINK_REGEX = 
-      "^\u001b\\]8;([^;]*);([^\7]*)\7";
+      "^" + OSC + "8;([^;]*);(.*?)" + ST;
 
    // Match hyperlink
    public static final Pattern HYPERLINK_PATTERN = Pattern.create(HYPERLINK_REGEX);

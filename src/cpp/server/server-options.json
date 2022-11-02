@@ -172,14 +172,14 @@
             "tempName": "wwwSameSite",
             "tempType": "string",
             "defaultValue": "",
-            "description": "The value of the 'SameSite' attribute on the cookies issued by RStudio Server. Accepted values are 'none' or 'lax'. The value 'none' should be used only when RStudio is hosted into an iFrame. For compatibility with some browsers (i.e. Safari 12), duplicate cookies will be issued by RStudio Server when 'none' is used."
+            "description": "The value of the 'SameSite' attribute on the cookies issued by RStudio Server. Accepted values are 'none' or 'lax'. The value 'none' should be used only when RStudio is hosted into an iframe. For compatibility with some browsers (i.e. Safari 12), duplicate cookies will be issued by RStudio Server when 'none' is used."
          },
          {
             "name": "www-frame-origin",
             "memberName": "wwwFrameOrigin_",
             "type": "string",
             "defaultValue": "none",
-            "description": "Specifies the allowed origin for the iFrame hosting RStudio if iFrame embedding is enabled."
+            "description": "Specifies the allowed origin for the iframe hosting RStudio if iframe embedding is enabled."
          },
          {
             "name": "www-enable-origin-check",
@@ -294,6 +294,13 @@
             "isHidden": true,
             "memberName": "dbCommand_",
             "description": "Executes the shell command specified injecting the current database configuration in the command."
+         },
+         {
+            "name": "db-connection-timeout",
+            "type": "int",
+            "memberName": "dbConnectionTimeout_",
+            "defaultValue": 15,
+            "description": "Specifies the number of seconds to wait for making a new db connection"
          }
       ],
       "auth": [
@@ -411,7 +418,7 @@
             "memberName": "authCookiesForceSecure_",
             "type": "bool",
             "defaultValue": false,
-            "description": "Indicates whether or not auth cookies should be forcefully marked as secure. This should be enabled if running an SSL terminator infront of RStudio Server. Otherwise, cookies will be marked secure if SSL is configured."
+            "description": "Indicates whether or not auth cookies should be forcefully marked as secure. This should be enabled if running an SSL terminator in front of RStudio Server. Otherwise, cookies will be marked secure if SSL is configured."
          }
       ],
       "monitor": [

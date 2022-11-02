@@ -189,7 +189,7 @@ InputIterator extract_all_lws(InputIterator begin, InputIterator end) {
  * @param [in] end An iterator to the end of the sequence
  * @param [out] attributes A reference to the attributes list to append
  * attribute/value pairs extracted to
- * @return An iterator to the character after the last atribute read
+ * @return An iterator to the character after the last attribute read
  */
 template <typename InputIterator>
 InputIterator extract_attributes(InputIterator begin, InputIterator end,
@@ -286,7 +286,7 @@ InputIterator extract_attributes(InputIterator begin, InputIterator end,
  * @param [in] begin An iterator to the beginning of the sequence
  * @param [in] end An iterator to the end of the sequence
  * @param [out] parameters A reference to the parameters list to append
- * paramter values extracted to
+ * parameter values extracted to
  * @return An iterator to the character after the last parameter read
  */
 template <typename InputIterator>
@@ -445,7 +445,7 @@ public:
      *
      * @todo Make this method case insensitive.
      * @todo Should there be any restrictions on which keys are allowed?
-     * @todo Exception free varient
+     * @todo Exception free variant
      *
      * @see replace_header
      *
@@ -462,7 +462,7 @@ public:
      *
      * @todo Make this method case insensitive.
      * @todo Should there be any restrictions on which keys are allowed?
-     * @todo Exception free varient
+     * @todo Exception free variant
      *
      * @see append_header
      *

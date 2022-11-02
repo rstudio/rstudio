@@ -1,10 +1,10 @@
 /*
  * SessionInfo.java
  *
- * Copyright (C) 2022 by RStudio, PBC
+ * Copyright (C) 2022 by Posit Software, PBC
  *
- * Unless you have received this program directly from RStudio pursuant
- * to the terms of a commercial license agreement with RStudio, then
+ * Unless you have received this program directly from Posit Software pursuant
+ * to the terms of a commercial license agreement with Posit Software, then
  * this program is licensed to you under the terms of version 3 of the
  * GNU Affero General Public License. This program is distributed WITHOUT
  * ANY EXPRESS OR IMPLIED WARRANTY, INCLUDING THOSE OF NON-INFRINGEMENT,
@@ -113,10 +113,6 @@ public class SessionInfo extends JavaScriptObject
 
    public final native String getScratchDir() /*-{
       return this.scratch_dir;
-   }-*/;
-
-   public final native String getTempDir() /*-{
-      return this.temp_dir;
    }-*/;
 
    public final native JsArray<PrefLayer> getPrefs() /*-{
@@ -549,8 +545,8 @@ public class SessionInfo extends JavaScriptObject
       return this.job_state;
    }-*/;
 
-   public final native boolean getLauncherJobsEnabled() /*-{
-      return this.launcher_jobs_enabled;
+   public final native boolean getWorkbenchJobsEnabled() /*-{
+      return this.workbench_jobs_enabled;
    }-*/;
 
    public final native boolean getShowHelpHome() /*-{

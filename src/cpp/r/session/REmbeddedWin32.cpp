@@ -1,10 +1,10 @@
 /*
  * REmbeddedWin32.cpp
  *
- * Copyright (C) 2022 by RStudio, PBC
+ * Copyright (C) 2022 by Posit Software, PBC
  *
- * Unless you have received this program directly from RStudio pursuant
- * to the terms of a commercial license agreement with RStudio, then
+ * Unless you have received this program directly from Posit Software pursuant
+ * to the terms of a commercial license agreement with Posit Software, then
  * this program is licensed to you under the terms of version 3 of the
  * GNU Affero General Public License. This program is distributed WITHOUT
  * ANY EXPRESS OR IMPLIED WARRANTY, INCLUDING THOSE OF NON-INFRINGEMENT,
@@ -35,9 +35,11 @@
 #include <boost/date_time/posix_time/posix_time_duration.hpp>
 
 #include <shared_core/FilePath.hpp>
+
 #include <core/Exec.hpp>
 #include <core/StringUtils.hpp>
 #include <core/Version.hpp>
+#include <core/system/Environment.hpp>
 #include <core/system/LibraryLoader.hpp>
 
 #include <r/RInterface.hpp>
@@ -73,7 +75,11 @@ __declspec(dllimport) UImode CharacterMode;
 }
 
 // Added in R 4.2.0; loaded dynamically
+namespace rstudio {
+namespace dynload {
 int (*R_DefParamsEx)(Rstart, int);
+} // namespace dynload
+} // namespace rstudio
 
 using namespace rstudio::core;
 using namespace boost::placeholders;
@@ -267,7 +273,11 @@ void initializeParams(RStartup* pRP)
    }
 
    // try to load R_DefParamsEx routine
-   Error error = core::system::loadSymbol(rLibrary, "R_DefParamsEx", (void**) &R_DefParamsEx);
+   Error error = core::system::loadSymbol(
+            rLibrary,
+            "R_DefParamsEx",
+            (void**) &rstudio::dynload::R_DefParamsEx);
+
    if (error)
    {
       LOG_ERROR(error);
@@ -275,7 +285,7 @@ void initializeParams(RStartup* pRP)
    }
 
    // invoke it
-   R_DefParamsEx((Rstart) pRP, 1);
+   rstudio::dynload::R_DefParamsEx((Rstart) pRP, 1);
 }
 
 } // end anonymous namespace
@@ -303,10 +313,23 @@ void runEmbeddedR(const core::FilePath& rHome,
    initializeParams(pRP);
 
    // set paths (copy to new string so we can provide char*)
-   std::string* pRHome = new std::string(
-            core::string_utils::utf8ToSystem(rHome.getAbsolutePath()));
-   std::string* pUserHome = new std::string(
-            core::string_utils::utf8ToSystem(userHome.getAbsolutePath()));
+   std::string* pRHome;
+   std::string* pUserHome;
+
+   // With R 4.2.x, using UCRT, we avoid converting to the native encoding
+   // and retain the UTF-8 encoding here
+   if (core::Version(getDLLVersion()) >= core::Version("4.2.0"))
+   {
+      pRHome = new std::string(rHome.getAbsolutePath());
+      pUserHome = new std::string(userHome.getAbsolutePath());
+   }
+   else
+   {
+      using string_utils::utf8ToSystem;
+      pRHome = new std::string(utf8ToSystem(rHome.getAbsolutePath()));
+      pUserHome = new std::string(utf8ToSystem(userHome.getAbsolutePath()));
+   }
+
    pRP->rhome = const_cast<char*>(pRHome->c_str());
    pRP->home = const_cast<char*>(pUserHome->c_str());
 

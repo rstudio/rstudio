@@ -1,10 +1,10 @@
 /*
  * PanmirrorDialogs.java
  *
- * Copyright (C) 2022 by RStudio, PBC
+ * Copyright (C) 2022 by Posit Software, PBC
  *
- * Unless you have received this program directly from RStudio pursuant
- * to the terms of a commercial license agreement with RStudio, then
+ * Unless you have received this program directly from Posit Software pursuant
+ * to the terms of a commercial license agreement with Posit Software, then
  * this program is licensed to you under the terms of version 3 of the
  * GNU Affero General Public License. This program is distributed WITHOUT
  * ANY EXPRESS OR IMPLIED WARRANTY, INCLUDING THOSE OF NON-INFRINGEMENT,
@@ -213,7 +213,7 @@ public class PanmirrorDialogs {
    
    public Promise<PanmirrorAttrEditResult> editDiv(PanmirrorAttrProps attr, boolean removeEnabled)
    {
-      return editPanmirrorAttr(constants_.divAttributesCaption(), removeEnabled ? constants_.unwrapSpanRemoveButtonCaption() : null, null, attr);
+      return editPanmirrorAttr(constants_.divAttributesCaption(), removeEnabled ? constants_.unwrapDivTitle() : null, null, attr);
    }
    
 

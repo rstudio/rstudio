@@ -1,10 +1,10 @@
 /*
  * file-path.ts
  *
- * Copyright (C) 2022 by RStudio, PBC
+ * Copyright (C) 2022 by Posit Software, PBC
  *
- * Unless you have received this program directly from RStudio pursuant
- * to the terms of a commercial license agreement with RStudio, then
+ * Unless you have received this program directly from Posit Software pursuant
+ * to the terms of a commercial license agreement with Posit Software, then
  * this program is licensed to you under the terms of version 3 of the
  * GNU Affero General Public License. This program is distributed WITHOUT
  * ANY EXPRESS OR IMPLIED WARRANTY, INCLUDING THOSE OF NON-INFRINGEMENT,
@@ -17,10 +17,12 @@ import fs from 'fs';
 import fsPromises from 'fs/promises';
 
 import { logger } from './logger';
-import path from 'path';
+import path, { sep } from 'path';
 import { Err, success, safeError } from './err';
 import { userHomePath } from './user';
-import { err, expect, Expected, ok } from './expected';
+import { err, Expected, ok } from './expected';
+import os from 'os';
+import { randomString } from '../main/utils';
 
 /** An Error containing 'path' that triggered the error */
 export class FilePathError extends Error {
@@ -34,13 +36,43 @@ export class FilePathError extends Error {
 const homePathAlias = '~/';
 const homePathLeafAlias = '~';
 
+/**
+ * Normalize separators of a given path.
+ *
+ * @param {string} path
+ * @param {string} [separator='/']
+ * @return {*} 
+ */
 function normalizeSeparators(path: string, separator = '/') {
   return path.replace(/[\\/]/g, separator);
 }
 
-function normalizeSeparatorsNative(path: string) {
-  const separator = process.platform === 'win32' ? '\\' : '/';
-  return normalizeSeparators(path, separator);
+/**
+ * Normalizes separators of a given path based on the current platform.
+ *
+ * @export
+ * @param {string} path
+ * @return {*} 
+ */
+export function normalizeSeparatorsNative(path: string) {
+  return normalizeSeparators(path, sep);
+}
+
+/**
+ * Creates a random file name located in the tmp directory
+ *
+ * @param extension The extension, if any, for the filename to have
+ * @param label A label, if any, to include inside the random name. Useful to
+ * identify the origin of any leftover files from a unit test that weren't
+ * cleaned up properly
+ *
+ * @returns The FilePath to the randomly generated filename
+ */
+export function tempFilename(extension = '', label = ''): FilePath {
+  const tempName = label
+    ? path.join(os.tmpdir(), label + '-' + randomString())
+    : path.join(os.tmpdir(), randomString());
+  return new FilePath(extension ? tempName + '.' + extension : tempName);
 }
 
 /**
@@ -177,8 +209,9 @@ export class FilePath {
     }
 
     // if the path starts with the home alias then substitute the home path
-    if (aliasedPath.startsWith(homePathAlias)) {
-      return new FilePath(path.join(userHomePath.getAbsolutePath(), aliasedPath.substr(1)));
+    // note: Windows paths use \ so will not match ~/ if they start with ~\
+    if (aliasedPath.startsWith(homePathLeafAlias)) {
+      return new FilePath(path.join(userHomePath.getAbsolutePath(), aliasedPath.substring(1)));
     } else {
       // no aliasing, this is either an absolute path or path
       // relative to the current directory
@@ -671,13 +704,11 @@ export class FilePath {
    * Checks whether this file path is a directory.
    */
   isDirectory(): boolean {
-    
     const stat = fs.lstatSync(this.path, {
       throwIfNoEntry: false,
     });
 
     return stat != null && stat.isDirectory();
-
   }
 
   /**

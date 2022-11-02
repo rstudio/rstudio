@@ -1,10 +1,10 @@
 /*
  * RTokenizer.hpp
  *
- * Copyright (C) 2022 by RStudio, PBC
+ * Copyright (C) 2022 by Posit Software, PBC
  *
- * Unless you have received this program directly from RStudio pursuant
- * to the terms of a commercial license agreement with RStudio, then
+ * Unless you have received this program directly from Posit Software pursuant
+ * to the terms of a commercial license agreement with Posit Software, then
  * this program is licensed to you under the terms of version 3 of the
  * GNU Affero General Public License. This program is distributed WITHOUT
  * ANY EXPRESS OR IMPLIED WARRANTY, INCLUDING THOSE OF NON-INFRINGEMENT,
@@ -194,6 +194,18 @@ public:
         column_(0)
    {
    }
+   
+   // An alternate constructor, to be used when tokenizing some code
+   // whose positions should be computed relative to some offset.
+   RTokenizer(const std::wstring& data, std::size_t row, std::size_t column)
+      : data_(data),
+        begin_(data_.begin()),
+        end_(data_.end()),
+        pos_(data_.begin()),
+        row_(row),
+        column_(column)
+   {
+   }
 
    virtual ~RTokenizer() {}
 
@@ -274,8 +286,10 @@ public:
    const_iterator begin() const { return tokens_.begin(); }
    const_iterator end() const { return tokens_.end(); }
    
-   explicit RTokens(const std::wstring& code, int flags = None)
-      : tokenizer_(code)
+   explicit RTokens(const std::wstring& code,
+                    const core::collection::Position& position,
+                    int flags = None)
+      : tokenizer_(code, position.row, position.column)
    {
       while (RToken token = tokenizer_.nextToken())
       {
@@ -287,10 +301,15 @@ public:
 
          push_back(token);
       }
+      
    }
    
-   friend std::ostream& operator <<(std::ostream& os,
-                                    const RTokens& rTokens)
+   explicit RTokens(const std::wstring& code, int flags = None)
+      : RTokens(code, core::collection::Position(), flags)
+   {
+   }
+   
+   friend std::ostream& operator <<(std::ostream& os, const RTokens& rTokens)
    {
       for (std::size_t i = 0, n = rTokens.size(); i < n; ++i)
          os << rTokens.atUnsafe(i) << std::endl;
@@ -421,6 +440,28 @@ inline bool isWhitespaceOrComment(const RToken& rToken)
 {
    return rToken.isType(RToken::WHITESPACE) ||
           rToken.isType(RToken::COMMENT);
+}
+
+inline bool isRoxygenComment(const RToken& rToken)
+{
+   if (!rToken.isType(RToken::COMMENT))
+      return false;
+
+   std::string content = rToken.contentAsUtf8();
+   size_t n = content.size();
+   char c;
+   for (size_t i = 0; i < n; i++) 
+   {
+      c = content.at(i);
+      if (c == '#')
+         continue;
+
+      if (c == '\'')
+         return true;
+
+      break;
+   }
+   return false;
 }
 
 inline bool isValidAsIdentifier(const RToken& rToken)
@@ -562,7 +603,9 @@ inline bool canFollowBinaryOperator(const RToken& rToken)
 
 inline bool isPipeOperator(const RToken& rToken)
 {
-   static const boost::wregex rePipe(L"^%[^>]*>+[^>]*%$");
+   // We're intentionally liberal here about what constitutes a pipe operator as we allow an arbitrary
+   // user-defined binary operator containing any symbols between the two % % (must contain at least one >)
+   static const boost::wregex rePipe(L"^(%[^>]*>+[^>]*%)|([|]>)$");
    return regex_utils::match(rToken.begin(), rToken.end(), rePipe);
 }
 

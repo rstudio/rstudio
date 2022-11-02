@@ -1,10 +1,10 @@
 /*
  * template-filter.ts
  *
- * Copyright (C) 2022 by RStudio, PBC
+ * Copyright (C) 2022 by Posit Software, PBC
  *
- * Unless you have received this program directly from RStudio pursuant
- * to the terms of a commercial license agreement with RStudio, then
+ * Unless you have received this program directly from Posit Software pursuant
+ * to the terms of a commercial license agreement with Posit Software, then
  * this program is licensed to you under the terms of version 3 of the
  * GNU Affero General Public License. This program is distributed WITHOUT
  * ANY EXPRESS OR IMPLIED WARRANTY, INCLUDING THOSE OF NON-INFRINGEMENT,
@@ -33,15 +33,15 @@ export function resolveTemplateVar(varName: string, vars: Map<string, string>): 
     if (varName.startsWith('!')) {
       prefix = '!';
       varName = varName.slice(1);
-    } else if (varName.startsWith("'")) {
-      prefix = "'";
+    } else if (varName.startsWith('\'')) {
+      prefix = '\'';
       varName = varName.slice(1);
     }
     const result = vars.get(varName);
     if (result) {
       if (prefix === '!') {
         return result;
-      } else if (prefix === "'") {
+      } else if (prefix === '\'') {
         return jsLiteralEscape(result);
       } else {
         return htmlEscape(result, true);

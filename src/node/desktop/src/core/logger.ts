@@ -1,10 +1,10 @@
 /*
  * log.ts
  *
- * Copyright (C) 2022 by RStudio, PBC
+ * Copyright (C) 2022 by Posit Software, PBC
  *
- * Unless you have received this program directly from RStudio pursuant
- * to the terms of a commercial license agreement with RStudio, then
+ * Unless you have received this program directly from Posit Software pursuant
+ * to the terms of a commercial license agreement with Posit Software, then
  * this program is licensed to you under the terms of version 3 of the
  * GNU Affero General Public License. This program is distributed WITHOUT
  * ANY EXPRESS OR IMPLIED WARRANTY, INCLUDING THOSE OF NON-INFRINGEMENT,
@@ -18,10 +18,10 @@ import winston from 'winston';
 import { coreState } from './core-state';
 
 export interface Logger {
-  logLevel(): winston.level;
-  setLogLevel(level: winston.level): void;
+  logLevel(): string;
+  setLogLevel(level: string): void;
   logError(err: unknown): void;
-  logErrorAtLevel(level: winston.level, err: unknown): void;
+  logErrorAtLevel(level: string, err: unknown): void;
   logErrorMessage(message: string): void;
   logWarning(warning: string): void;
   logInfo(message: string): void;
@@ -36,18 +36,18 @@ export interface LogOptions {
 }
 
 export class NullLogger implements Logger {
-  level: winston.level = 'error';
+  level = 'error';
 
-  logLevel(): winston.level {
+  logLevel(): string {
     return this.level;
   }
-  setLogLevel(level: winston.level): void {
+  setLogLevel(level: string): void {
     this.level = level;
   }
   logError(err: unknown): void {
     this.logErrorAtLevel('error', err);
   }
-  logErrorAtLevel(level: winston.level, err: unknown): void {}
+  logErrorAtLevel(level: string, err: unknown): void {}
   logErrorMessage(message: string): void {}
   logInfo(message: string): void {}
   logWarning(warning: string): void {}
@@ -66,7 +66,7 @@ export function logger(): Logger {
 /**
  * @returns Current logging level
  */
-export function logLevel(): winston.level {
+export function logLevel(): string {
   return coreState().logOptions.logger.logLevel();
 }
 
@@ -85,7 +85,7 @@ export function showDiagnosticsOutput(): boolean {
 /**
  * @param level minimum logging level
  */
-export function setLoggerLevel(level: winston.level): void {
+export function setLoggerLevel(level: string): void {
   coreState().logOptions.logger.setLogLevel(level);
 }
 
@@ -96,7 +96,7 @@ export function setLoggerLevel(level: winston.level): void {
  * @param defaultLevel Default logging level if unable to parse input
  * @returns string enum value for logging level
  */
-export function parseCommandLineLogLevel(level: string, defaultLevel: winston.level): winston.level {
+export function parseCommandLineLogLevel(level: string, defaultLevel: string): string {
   level = level.toUpperCase();
   switch (level) {
     case 'ERR':

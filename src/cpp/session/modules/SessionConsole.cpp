@@ -1,10 +1,10 @@
 /*
  * SessionConsole.cpp
  *
- * Copyright (C) 2022 by RStudio, PBC
+ * Copyright (C) 2022 by Posit Software, PBC
  *
- * Unless you have received this program directly from RStudio pursuant
- * to the terms of a commercial license agreement with RStudio, then
+ * Unless you have received this program directly from Posit Software pursuant
+ * to the terms of a commercial license agreement with Posit Software, then
  * this program is licensed to you under the terms of version 3 of the
  * GNU Affero General Public License. This program is distributed WITHOUT
  * ANY EXPRESS OR IMPLIED WARRANTY, INCLUDING THOSE OF NON-INFRINGEMENT,
@@ -193,6 +193,11 @@ void syncConsoleColorEnv()
       
       // Allow cli::style_hyperlink()
       core::system::setenv("RSTUDIO_CLI_HYPERLINKS", "true");
+
+      // Allow cli::style_hyperlink(url = "ide:run:<code>")
+      core::system::setenv("R_CLI_HAS_HYPERLINK_IDE_RUN", "true");
+      core::system::setenv("R_CLI_HAS_HYPERLINK_IDE_HELP", "true");
+      core::system::setenv("R_CLI_HAS_HYPERLINK_IDE_VIGNETTE", "true");
    }
    else
    {
@@ -200,6 +205,9 @@ void syncConsoleColorEnv()
       core::system::unsetenv("TERM");
       core::system::unsetenv("CLICOLOR_FORCE");
       core::system::unsetenv("RSTUDIO_CLI_HYPERLINKS");
+      core::system::unsetenv("R_CLI_HAS_HYPERLINK_IDE_RUN");
+      core::system::unsetenv("R_CLI_HAS_HYPERLINK_IDE_HELP");
+      core::system::unsetenv("R_CLI_HAS_HYPERLINK_IDE_VIGNETTE");
    }
 }
 
@@ -245,7 +253,6 @@ Error initialize()
    using boost::bind;
    ExecBlock initBlock;
    initBlock.addFunctions()
-      (bind(sourceModuleRFile, "SessionConsole.R"))
       (bind(registerRpcMethod, "reset_console_actions", resetConsoleActions));
 
    return initBlock.execute();

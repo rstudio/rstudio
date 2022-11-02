@@ -1,10 +1,10 @@
 /*
  * TcpIpSocketUtils.hpp
  *
- * Copyright (C) 2022 by RStudio, PBC
+ * Copyright (C) 2022 by Posit Software, PBC
  *
- * Unless you have received this program directly from RStudio pursuant
- * to the terms of a commercial license agreement with RStudio, then
+ * Unless you have received this program directly from Posit Software pursuant
+ * to the terms of a commercial license agreement with Posit Software, then
  * this program is licensed to you under the terms of version 3 of the
  * GNU Affero General Public License. This program is distributed WITHOUT
  * ANY EXPRESS OR IMPLIED WARRANTY, INCLUDING THOSE OF NON-INFRINGEMENT,
@@ -19,6 +19,9 @@
 #include <boost/asio/ip/tcp.hpp>
 
 #include <shared_core/Error.hpp>
+
+#include <core/StringUtils.hpp>
+#include <core/system/Environment.hpp>
 
 #include <core/http/SocketAcceptorService.hpp>
 
@@ -104,13 +107,29 @@ inline Error initTcpIpAcceptor(
    if (ec)
       return Error(ec, ERROR_LOCATION);
 #else
-   typedef boost::asio::detail::socket_option::boolean<
-         BOOST_ASIO_OS_DEF(SOL_SOCKET),
-         SO_EXCLUSIVEADDRUSE
-   > exclusive_addr_use;
-   acceptor.set_option(exclusive_addr_use(true), ec);
-   if (ec)
-      return Error(ec, ERROR_LOCATION);
+   // Allow users to toggle this behavior, as an escape hatch
+   // for https://github.com/rstudio/rstudio/issues/11395
+   std::string envvar = core::system::getenv("RSTUDIO_DESKTOP_EXCLUSIVE_ADDR_USE");
+   if (core::string_utils::isTruthy(envvar, true))
+   {
+      typedef boost::asio::detail::socket_option::boolean<
+            BOOST_ASIO_OS_DEF(SOL_SOCKET),
+            SO_EXCLUSIVEADDRUSE
+      > exclusive_addr_use;
+
+      DLOGF("Setting SO_EXCLUSIVEADDRUSE socket option on connection");
+      acceptor.set_option(exclusive_addr_use(true), ec);
+      if (ec)
+         return Error(ec, ERROR_LOCATION);
+   }
+   else
+   {
+      // legacy (2022.02 and older) behavior
+      DLOGF("Setting SO_REUSEADDR socket option on connection");
+      acceptor.set_option(tcp::acceptor::reuse_address(true), ec);
+      if (ec)
+         return Error(ec, ERROR_LOCATION);
+   }
 #endif
    
    acceptor.set_option(tcp::no_delay(true), ec);

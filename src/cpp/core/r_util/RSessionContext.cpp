@@ -1,10 +1,10 @@
 /*
  * RSessionContext.cpp
  *
- * Copyright (C) 2022 by RStudio, PBC
+ * Copyright (C) 2022 by Posit Software, PBC
  *
- * Unless you have received this program directly from RStudio pursuant
- * to the terms of a commercial license agreement with RStudio, then
+ * Unless you have received this program directly from Posit Software pursuant
+ * to the terms of a commercial license agreement with Posit Software, then
  * this program is licensed to you under the terms of version 3 of the
  * GNU Affero General Public License. This program is distributed WITHOUT
  * ANY EXPRESS OR IMPLIED WARRANTY, INCLUDING THOSE OF NON-INFRINGEMENT,
@@ -35,6 +35,7 @@
 
 #include <core/r_util/RActiveSessions.hpp>
 #include <core/r_util/RProjectFile.hpp>
+#include <core/r_util/RActiveSessionsStorage.hpp>
 
 #ifndef _WIN32
 #include <sys/stat.h>
@@ -46,6 +47,10 @@
 #include <core/system/Environment.hpp>
 
 #include "config.h"
+
+#if !defined(HAVE_GROUP_MEMBER) && !defined(_WIN32)
+#include <limits.h> // for NGROUPS_MAX
+#endif
 
 // must be included after config.h for RSTUDIO_SERVER define
 #include <core/system/UserObfuscation.hpp>
@@ -113,6 +118,18 @@ SessionScope SessionScope::vscodeSession(const std::string& id)
    // note: project ID is currently unused as it is meaningless
    // in the context of external workbenches
    return SessionScope(ProjectId(kVSCodeId), id);
+}
+
+SessionScope SessionScope::fromSessionId(const std::string& id, const std::string& editor)
+{
+   if (editor == kWorkbenchJupyterLab)
+      return jupyterLabSession(id);
+   else if (editor == kWorkbenchJupyterNotebook)
+      return jupyterNotebookSession(id);
+   else if (editor == kWorkbenchVSCode)
+      return vscodeSession(id);
+   else
+      return projectNone(id);
 }
 
 bool SessionScope::isProjectNone() const
@@ -194,12 +211,29 @@ bool isSharedPath(const std::string& projectPath,
       if (st.st_gid == user.getGroupId())
          return false;
 
-#ifndef __APPLE__
       // not shared if we're in any of the groups that own the directory
       // (note that this checks supplementary group IDs only, so the check
       // against the primary group ID above is still required)
+#ifdef HAVE_GROUP_MEMBER
       if (::group_member(st.st_gid))
          return false;
+#else
+      // this is basically what glibc, gnulib, and glibcompat do to implement
+      // group_member()
+      gid_t groups[NGROUPS_MAX];
+      int ngroups = ::getgroups(NGROUPS_MAX, groups);
+      if (ngroups < 0)
+      {
+         // if we can't get the supplementary groups due to a system-level
+         // error, ignore them but complain in the logs
+         LOG_ERROR(systemError(errno, ERROR_LOCATION));
+      }
+
+      for (int i = 0; i < ngroups; ++i) {
+         if (groups[i] == st.st_gid) {
+            return false;
+         }
+      }
 #endif 
 
       // if we got this far, we likely have access due to project sharing
@@ -217,15 +251,17 @@ bool isSharedPath(const std::string& projectPath,
    return false;
 }
 
-SessionScopeState validateSessionScope(const SessionScope& scope,
-                          const core::FilePath& userHomePath,
-                          const core::FilePath& userScratchPath,
-                          core::r_util::ProjectIdToFilePath projectIdToFilePath,
-                          bool projectSharingEnabled,
-                          std::string* pProjectFilePath)
+SessionScopeState validateSessionScope(
+   std::shared_ptr<IActiveSessionsStorage> storage,
+   const SessionScope& scope,
+   const core::FilePath& userHomePath,
+   const core::FilePath& userScratchPath,
+   core::r_util::ProjectIdToFilePath projectIdToFilePath,
+   bool projectSharingEnabled,
+   std::string* pProjectFilePath)
 {
    // does this session exist?
-   r_util::ActiveSessions activeSessions(userScratchPath);
+   r_util::ActiveSessions activeSessions(storage, userScratchPath);
    boost::shared_ptr<r_util::ActiveSession> pSession
                                           = activeSessions.get(scope.id());
    if (pSession->empty() || !pSession->validate(userHomePath,
@@ -284,6 +320,12 @@ std::string urlPathForSessionScope(const SessionScope& scope)
    // get a URL compatible project path
    std::string project = http::util::urlEncode(scope.projectId().asString());
    boost::algorithm::replace_all(project, "%2F", "/");
+
+   // This seems to be the case when running under rserver-dev
+   if (project == "" && scope.id() == "")
+   {
+      return "/";
+   }
 
    // create url
    boost::format fmt("/s/%1%%2%/");

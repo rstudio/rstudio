@@ -1,10 +1,10 @@
 /*
  * SessionRParser.hpp
  *
- * Copyright (C) 2022 by RStudio, PBC
+ * Copyright (C) 2022 by Posit Software, PBC
  *
- * Unless you have received this program directly from RStudio pursuant
- * to the terms of a commercial license agreement with RStudio, then
+ * Unless you have received this program directly from Posit Software pursuant
+ * to the terms of a commercial license agreement with Posit Software, then
  * this program is licensed to you under the terms of version 3 of the
  * GNU Affero General Public License. This program is distributed WITHOUT
  * ANY EXPRESS OR IMPLIED WARRANTY, INCLUDING THOSE OF NON-INFRINGEMENT,
@@ -471,7 +471,7 @@ public:
    {
       addLintItem(rToken,
                   LintTypeStyle,
-                  "no definition for '" + rToken.contentAsUtf8() + "' in scope");
+                  "no definition for '" + token_utils::getSymbolName(rToken) + "' in scope");
    }
    
    void unexpectedAssignmentInArgumentList(const RToken& rToken)
@@ -601,12 +601,18 @@ public:
    {
       return referencedSymbols_;
    }
-
+   
    void addDefinedSymbol(int row,
                          int column,
                          const std::string& name)
    {
       definedSymbols_[name].push_back(Position(row, column));
+   }
+   
+   void addDefinedSymbol(const std::string& name,
+                         const Position& position)
+   {
+      definedSymbols_[name].push_back(position);
    }
    
    void addDefinedSymbol(const RToken& rToken,
@@ -1131,6 +1137,11 @@ public:
       
       DEBUG("Entering function scope: '" << name << "' at " << position);
       pushState(ParseStateFunctionArgumentList);
+   }
+   
+   void exitFunctionScope()
+   {
+      popState();
    }
    
    void pushState(ParseState state)

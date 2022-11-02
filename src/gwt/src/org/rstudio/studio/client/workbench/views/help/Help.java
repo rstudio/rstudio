@@ -1,10 +1,10 @@
 /*
  * Help.java
  *
- * Copyright (C) 2022 by RStudio, PBC
+ * Copyright (C) 2022 by Posit Software, PBC
  *
- * Unless you have received this program directly from RStudio pursuant
- * to the terms of a commercial license agreement with RStudio, then
+ * Unless you have received this program directly from Posit Software pursuant
+ * to the terms of a commercial license agreement with Posit Software, then
  * this program is licensed to you under the terms of version 3 of the
  * GNU Affero General Public License. This program is distributed WITHOUT
  * ANY EXPRESS OR IMPLIED WARRANTY, INCLUDING THOSE OF NON-INFRINGEMENT,
@@ -14,7 +14,6 @@
  */
 package org.rstudio.studio.client.workbench.views.help;
 
-import com.google.gwt.core.client.GWT;
 import com.google.gwt.event.logical.shared.HasSelectionHandlers;
 import com.google.gwt.event.logical.shared.SelectionEvent;
 import com.google.gwt.event.logical.shared.SelectionHandler;
@@ -319,5 +318,4 @@ public class Help extends BasePresenter implements ShowHelpEvent.Handler
    private boolean historyInitialized_;
    private GlobalDisplay globalDisplay_;
    private EventBus events_;
-   private static final HelpConstants constants_ = GWT.create(HelpConstants.class);
 }

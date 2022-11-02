@@ -1,10 +1,10 @@
 /*
  * VersionControlPage.java
  *
- * Copyright (C) 2022 by RStudio, PBC
+ * Copyright (C) 2022 by Posit Software, PBC
  *
- * Unless you have received this program directly from RStudio pursuant
- * to the terms of a commercial license agreement with RStudio, then
+ * Unless you have received this program directly from Posit Software pursuant
+ * to the terms of a commercial license agreement with Posit Software, then
  * this program is licensed to you under the terms of version 3 of the
  * GNU Affero General Public License. This program is distributed WITHOUT
  * ANY EXPRESS OR IMPLIED WARRANTY, INCLUDING THOSE OF NON-INFRINGEMENT,
@@ -17,12 +17,12 @@ package org.rstudio.studio.client.projects.ui.newproject;
 import com.google.gwt.core.client.GWT;
 import org.rstudio.core.client.BrowseCap;
 import org.rstudio.core.client.ElementIds;
+import org.rstudio.core.client.StringUtil;
 import org.rstudio.core.client.files.FileSystemItem;
 import org.rstudio.core.client.widget.DirectoryChooserTextBox;
 import org.rstudio.core.client.widget.FormLabel;
 import org.rstudio.core.client.widget.MessageDialog;
 import org.rstudio.core.client.widget.Operation;
-import org.rstudio.studio.client.RStudioGinjector;
 import org.rstudio.studio.client.application.Desktop;
 import org.rstudio.studio.client.common.HelpLink;
 import org.rstudio.studio.client.common.vcs.VcsCloneOptions;
@@ -56,12 +56,10 @@ public abstract class VersionControlPage extends NewProjectWizardPage
       super(title, subTitle, pageCaption, image, largeImage);  
    }
    
-   
    @Override
    protected boolean acceptNavigation()
    {
-      SessionInfo sessionInfo = 
-                     RStudioGinjector.INSTANCE.getSession().getSessionInfo();
+      SessionInfo sessionInfo = this.getSessionInfo();
       if (!sessionInfo.isVcsAvailable(getVcsId()))
       {         
          NewProjectResources.Styles styles = 
@@ -186,8 +184,10 @@ public abstract class VersionControlPage extends NewProjectWizardPage
    protected void initialize(NewProjectInput input)
    {
       super.initialize(input);
-      existingRepoDestDir_.setText(
-                           input.getDefaultNewProjectLocation().getPath());
+      String path = input.getDefaultNewProjectLocation().getPath();
+      if (StringUtil.isNullOrEmpty(path))
+         path = this.getSessionInfo().getDefaultProjectDir();
+      existingRepoDestDir_.setText(path);
    }
 
    @Override
@@ -281,7 +281,7 @@ public abstract class VersionControlPage extends NewProjectWizardPage
    }
    
    protected abstract String guessRepoDir(String url);
-   
+
    private TextBox txtRepoUrl_;
    private TextBox txtUsername_;
    private TextBox txtDirName_;

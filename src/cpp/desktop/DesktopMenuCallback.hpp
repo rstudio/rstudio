@@ -1,10 +1,10 @@
 /*
  * DesktopMenuCallback.hpp
  *
- * Copyright (C) 2022 by RStudio, PBC
+ * Copyright (C) 2022 by Posit Software, PBC
  *
- * Unless you have received this program directly from RStudio pursuant
- * to the terms of a commercial license agreement with RStudio, then
+ * Unless you have received this program directly from Posit Software pursuant
+ * to the terms of a commercial license agreement with Posit Software, then
  * this program is licensed to you under the terms of version 3 of the
  * GNU Affero General Public License. This program is distributed WITHOUT
  * ANY EXPRESS OR IMPLIED WARRANTY, INCLUDING THOSE OF NON-INFRINGEMENT,
@@ -94,6 +94,15 @@ private:
     QStack<SubMenu*> menuStack_;
     QMap<QString, QVector<QPointer<QAction>>> actions_;
     QMap<QString, QVector<QPointer<MenuActionBinder>>> binders_;
+
+#ifdef Q_OS_MAC
+    // This terrible hack is to work around some Main Menu quirks when the UI is being
+    // displayed in French. We aren't going to ever make the Qt desktop fully
+    // support UI language switching, but want to at least make the initial experimental
+    // release work reasonably well.
+    // https://github.com/rstudio/rstudio/issues/11189
+    bool isEnglish = true;
+#endif
 };
 
 /* Previously, in desktop mode, many keyboard shortcuts were handled by Qt,

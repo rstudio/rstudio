@@ -1865,7 +1865,7 @@ source.css meta.scope.property-list meta.property-value punctuation.separator.ar
 		</dict>
 		<dict>
 			<key>name</key>
-			<string>◊ Source Embeded Source</string>
+			<string>◊ Source Embedded Source</string>
 			<key>scope</key>
 			<string>source source, source.java.embedded</string>
 			<key>settings</key>

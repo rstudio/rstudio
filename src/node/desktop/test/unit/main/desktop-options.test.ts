@@ -1,10 +1,10 @@
 /*
  * desktop-options.test.ts
  *
- * Copyright (C) 2022 by RStudio, PBC
+ * Copyright (C) 2022 by Posit Software, PBC
  *
- * Unless you have received this program directly from RStudio pursuant
- * to the terms of a commercial license agreement with RStudio, then
+ * Unless you have received this program directly from Posit Software pursuant
+ * to the terms of a commercial license agreement with Posit Software, then
  * this program is licensed to you under the terms of version 3 of the
  * GNU Affero General Public License. This program is distributed WITHOUT
  * ANY EXPRESS OR IMPLIED WARRANTY, INCLUDING THOSE OF NON-INFRINGEMENT,
@@ -19,7 +19,7 @@ import { describe } from 'mocha';
 import sinon from 'sinon';
 import { properties } from '../../../../../cpp/session/resources/schema/user-state-schema.json';
 import { Err, isSuccessful } from '../../../src/core/err';
-import { FilePath } from '../../../src/core/file-path';
+import { FilePath, normalizeSeparatorsNative } from '../../../src/core/file-path';
 import DesktopOptions from '../../../src/main/preferences/desktop-options';
 import {
   clearOptionsSingleton,
@@ -98,7 +98,10 @@ describe('DesktopOptions', () => {
     const newAuthCookies = ['test', 'Autht', 'Cookies'];
     const newTempAuthCookies = ['test', 'Temp', 'Auth', 'Cookies'];
     const newIgnoredUpdateVersions = ['test', 'Ignored', 'Update', 'Versions'];
-    const newRBinDir = 'testRBinDir';
+
+    const newRBinDir = 'C:/R/bin/x64';
+    const newRExecPath = 'C:/R/bin/x64/R.exe';
+
     const newPeferR64 = !(properties.platform.default.windows.preferR64 as boolean);
 
     const nonWindowsRBinDir = '';
@@ -113,8 +116,8 @@ describe('DesktopOptions', () => {
     options.setAuthCookies(newAuthCookies);
     options.setTempAuthCookies(newTempAuthCookies);
     options.setIgnoredUpdateVersions(newIgnoredUpdateVersions);
-    options.setRBinDir(newRBinDir);
     options.setPeferR64(newPeferR64);
+    options.setRExecutablePath(newRExecPath);
 
     assert.equal(options.proportionalFont(), newProportionalFont);
     assert.equal(options.fixedWidthFont(), newFixWidthFont);
@@ -126,7 +129,8 @@ describe('DesktopOptions', () => {
     assert.deepEqual(options.tempAuthCookies(), newTempAuthCookies);
     assert.deepEqual(options.ignoredUpdateVersions(), newIgnoredUpdateVersions);
     if (process.platform === 'win32') {
-      assert.equal(options.rBinDir(), newRBinDir);
+      assert.equal(options.rBinDir(), normalizeSeparatorsNative(newRBinDir));
+      assert.equal(options.rExecutablePath(), normalizeSeparatorsNative(newRExecPath));
       assert.equal(options.peferR64(), newPeferR64);
     } else {
       assert.equal(options.rBinDir(), nonWindowsRBinDir);
@@ -374,6 +378,8 @@ describe('Font tests', () => {
 
   it('set rBinDir overrides the legacy rBinDir (Windows)', () => {
     const testRBinDir = 'C:/R/bin/x64';
+    const testRExecPath = 'C:/R/bin/x64/R.exe';
+
     const mockLegacyOptions = new (class extends DesktopOptionsStub {
       rBinDir(): string | undefined {
         return 'C:/foo/R/bin/x64';
@@ -381,7 +387,10 @@ describe('Font tests', () => {
     })();
     const testDesktopOptions = ElectronDesktopOptions(kTestingConfigDirectory, mockLegacyOptions);
 
-    testDesktopOptions.setRBinDir(testRBinDir);
-    assert.strictEqual(testDesktopOptions.rBinDir(), process.platform === 'win32' ? testRBinDir : '');
+    testDesktopOptions.setRExecutablePath(testRExecPath);
+    assert.strictEqual(
+      testDesktopOptions.rBinDir(),
+      process.platform === 'win32' ? normalizeSeparatorsNative(testRBinDir) : '',
+    );
   });
 });

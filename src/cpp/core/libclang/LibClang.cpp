@@ -1,10 +1,10 @@
 /*
  * LibClang.cpp
  *
- * Copyright (C) 2022 by RStudio, PBC
+ * Copyright (C) 2022 by Posit Software, PBC
  *
- * Unless you have received this program directly from RStudio pursuant
- * to the terms of a commercial license agreement with RStudio, then
+ * Unless you have received this program directly from Posit Software pursuant
+ * to the terms of a commercial license agreement with Posit Software, then
  * this program is licensed to you under the terms of version 3 of the
  * GNU Affero General Public License. This program is distributed WITHOUT
  * ANY EXPRESS OR IMPLIED WARRANTY, INCLUDING THOSE OF NON-INFRINGEMENT,
@@ -18,6 +18,8 @@
 #include <iostream>
 #include <vector>
 
+#include <fmt/format.h>
+
 #include <boost/regex.hpp>
 
 #include <shared_core/FilePath.hpp>
@@ -27,6 +29,8 @@
 #include <core/RegexUtils.hpp>
 #include <core/system/Environment.hpp>
 #include <core/system/LibraryLoader.hpp>
+
+#define kMinimumSupportedLibclangVersion "5.0.2"
 
 #define LOAD_CLANG_SYMBOL(name)                                                \
    do                                                                          \
@@ -130,8 +134,7 @@ LibClang::~LibClang()
 }
 
 bool LibClang::load(EmbeddedLibrary embedded,
-                         LibraryVersion requiredVersion,
-                         std::string* pDiagnostics)
+                    std::string* pDiagnostics)
 {
    // diagnostics stream
    std::ostringstream ostr;
@@ -161,52 +164,49 @@ bool LibClang::load(EmbeddedLibrary embedded,
    {
       FilePath versionPath(version);
       ostr << versionPath << std::endl;
-      if (versionPath.exists())
-      {
-         Error error = tryLoad(versionPath.getAbsolutePath(), requiredVersion);
-         if (!error)
-         {
-            // if this was the embedded version then record it
-            if (version == embeddedVersion)
-               embedded_ = embedded;
-
-            if (embedded_.empty())
-            {
-               // save the library path
-               s_libraryPath = versionPath;
-
-               // save default compilation arguments
-               s_baseCompileArgs = defaultCompileArgs(this->version());
-            }
-
-            // print diagnostics
-            ostr << "   LOADED: " << this->version().asString()
-                 << std::endl;
-            if (pDiagnostics)
-               *pDiagnostics = ostr.str();
-
-            // return true
-            return true;
-         }
-         else
-         {
-            ostr << "   (" << error.getProperty("dlerror") <<  ")" << std::endl;
-         }
-      }
-      else
+      if (!versionPath.exists())
       {
          ostr << "   (Not Found)" << std::endl;
+         continue;
       }
+      
+      Error error = tryLoad(versionPath.getAbsolutePath());
+      if (error)
+      {
+         ostr << "   (" << error.getProperty("dlerror") <<  ")" << std::endl;
+         continue;
+      }
+         
+      // if this was the embedded version then record it
+      if (version == embeddedVersion)
+         embedded_ = embedded;
+
+      if (embedded_.empty())
+      {
+         // save the library path
+         s_libraryPath = versionPath;
+
+         // save default compilation arguments
+         s_baseCompileArgs = defaultCompileArgs(this->version());
+      }
+
+      // print diagnostics
+      ostr << "   LOADED: " << this->version().asString() << std::endl;
+      if (pDiagnostics)
+         *pDiagnostics = ostr.str();
+
+      // return true
+      return true;
    }
 
    // if we didn't find one by now then we failed
    if (pDiagnostics)
       *pDiagnostics = ostr.str();
+   
    return false;
 }
 
-Error LibClang::tryLoad(const std::string& libraryPath,
-                             LibraryVersion requiredVersion)
+Error LibClang::tryLoad(const std::string& libraryPath)
 {
    // load the library
    Error error = core::system::loadLibrary(libraryPath, &pLib_);
@@ -220,20 +220,24 @@ Error LibClang::tryLoad(const std::string& libraryPath,
 
    // verify that we have the required version
    LibraryVersion libVersion = version();
+   LibraryVersion requiredVersion(Version(kMinimumSupportedLibclangVersion));
+   
    if (libVersion < requiredVersion)
    {
       Error unloadError = unload();
       if (unloadError)
          LOG_ERROR(error);
 
-      Error error = systemError(boost::system::errc::protocol_not_supported,
-                                ERROR_LOCATION);
-      boost::format fmt("Required version %1% not found (library is "
-                        "version %2%)");
-      std::string err = boost::str(fmt %
-                                    requiredVersion.asString() %
-                                    libVersion.asString());
-      error.addProperty("dlerror", err);
+      std::string msg = fmt::format(
+               "Required version {} not found (library is version {})",
+               requiredVersion.asString(),
+               libVersion.asString());
+      
+      Error error = systemError(
+               boost::system::errc::protocol_not_supported,
+               ERROR_LOCATION);
+      
+      error.addProperty("dlerror", msg);
       return error;
    }
 

@@ -1,10 +1,10 @@
 /*
  * RsconnectConstants.java
  *
- * Copyright (C) 2022 by RStudio, PBC
+ * Copyright (C) 2022 by Posit Software, PBC
  *
- * Unless you have received this program directly from RStudio pursuant
- * to the terms of a commercial license agreement with RStudio, then
+ * Unless you have received this program directly from Posit Software pursuant
+ * to the terms of a commercial license agreement with Posit Software, then
  * this program is licensed to you under the terms of version 3 of the
  * GNU Affero General Public License. This program is distributed WITHOUT
  * ANY EXPRESS OR IMPLIED WARRANTY, INCLUDING THOSE OF NON-INFRINGEMENT,
@@ -467,11 +467,11 @@ public interface RsconnectConstants extends com.google.gwt.i18n.client.Messages{
     String lintFailed();
 
     /**
-     * Translated "Publishing to RStudio Connect is disabled in the Publishing options.".
+     * Translated "Publishing to Posit Connect is disabled in the Publishing options.".
      *
-     * @return translated "Publishing to RStudio Connect is disabled in the Publishing options."
+     * @return translated "Publishing to Posit Connect is disabled in the Publishing options."
      */
-    @DefaultMessage("Publishing to RStudio Connect is disabled in the Publishing options.")
+    @DefaultMessage("Publishing to Posit Connect is disabled in the Publishing options.")
     @Key("apiNotPublishableMessage")
     String apiNotPublishableMessage();
 
@@ -692,11 +692,11 @@ public interface RsconnectConstants extends com.google.gwt.i18n.client.Messages{
     String newRSConnectCloudPageSubTitle();
 
     /**
-     * Translated "RStudio Connect Account".
+     * Translated "Posit Connect Account".
      *
-     * @return translated "RStudio Connect Account"
+     * @return translated "Posit Connect Account"
      */
-    @DefaultMessage("RStudio Connect Account")
+    @DefaultMessage("Posit Connect Account")
     @Key("rstudioConnectAccount")
     String rstudioConnectAccount();
 
@@ -708,6 +708,15 @@ public interface RsconnectConstants extends com.google.gwt.i18n.client.Messages{
     @DefaultMessage("RPubs is a free service from RStudio for sharing documents on the web.")
     @Key("rPubsSubtitle")
     String rPubsSubtitle();
+
+    /**
+     * Translated "Posit Cloud is our online service that lets you do, share, teach and learn data science in your web browser.".
+     *
+     * @return translated "Posit Cloud is our online service that lets you do, share, teach and learn data science in your web browser."
+     */
+    @DefaultMessage("Posit Cloud is our online service that lets you do, share, teach and learn data science in your web browser.")
+    @Key("cloudSubtitle")
+    String cloudSubtitle();
 
     /**
      * Translated "Publish To".
@@ -854,13 +863,22 @@ public interface RsconnectConstants extends com.google.gwt.i18n.client.Messages{
     String documentLowercase();
 
     /**
-     * Translated "Publish to RStudio Connect".
+     * Translated "Publish to Posit Connect".
      *
-     * @return translated "Publish to RStudio Connect"
+     * @return translated "Publish to Posit Connect"
      */
-    @DefaultMessage("Publish to RStudio Connect")
+    @DefaultMessage("Publish to Posit Connect")
     @Key("publishToRstudioConnect")
     String publishToRstudioConnect();
+
+    /**
+     * Translated "Publish to Posit Cloud".
+     *
+     * @return translated "Publish to Posit Cloud"
+     */
+    @DefaultMessage("Publish to Posit Cloud")
+    @Key("publishToPositCloud")
+    String publishToPositCloud();
 
     /**
      * Translated "Publish to RPubs".
@@ -980,20 +998,20 @@ public interface RsconnectConstants extends com.google.gwt.i18n.client.Messages{
     String noAccountsConnected();
 
     /**
-     * Translated "RStudio Connect is a server product from RStudio for secure sharing of applications, reports, plots, and APIs.".
+     * Translated "Posit Connect is a server product from Posit for secure sharing of applications, reports, plots, and APIs.".
      *
-     * @return translated "RStudio Connect is a server product from RStudio for secure sharing of applications, reports, plots, and APIs."
+     * @return translated "Posit Connect is a server product from Posit for secure sharing of applications, reports, plots, and APIs."
      */
-    @DefaultMessage("RStudio Connect is a server product from RStudio for secure sharing of applications, reports, plots, and APIs.")
+    @DefaultMessage("Posit Connect is a server product from Posit for secure sharing of applications, reports, plots, and APIs.")
     @Key("rStudioConnectServiceDescription")
     String rStudioConnectServiceDescription();
 
     /**
-     * Translated "RStudio Connect".
+     * Translated "Posit Connect".
      *
-     * @return translated "RStudio Connect"
+     * @return translated "Posit Connect"
      */
-    @DefaultMessage("RStudio Connect")
+    @DefaultMessage("Posit Connect")
     @Key("rStudioConnect")
     String rStudioConnect();
 
@@ -1178,11 +1196,11 @@ public interface RsconnectConstants extends com.google.gwt.i18n.client.Messages{
     String couldNotDetermineListToDeployReRender();
 
     /**
-     * Translated "To publish finished document to RStudio Connect, you must first render it. Dismiss this message, click Knit to render the document, then try publishing again.".
+     * Translated "To publish finished document to Posit Connect, you must first render it. Dismiss this message, click Knit to render the document, then try publishing again.".
      *
-     * @return translated "To publish finished document to RStudio Connect, you must first render it. Dismiss this message, click Knit to render the document, then try publishing again."
+     * @return translated "To publish finished document to Posit Connect, you must first render it. Dismiss this message, click Knit to render the document, then try publishing again."
      */
-    @DefaultMessage("To publish finished document to RStudio Connect, you must first render it. Dismiss this message, click Knit to render the document, then try publishing again.")
+    @DefaultMessage("To publish finished document to Posit Connect, you must first render it. Dismiss this message, click Knit to render the document, then try publishing again.")
     @Key("finishedDocumentNotFoundMessage")
     String finishedDocumentNotFoundMessage();
 
@@ -1446,4 +1464,22 @@ public interface RsconnectConstants extends com.google.gwt.i18n.client.Messages{
     @DefaultMessage("Publish Wizard")
     @Key("publishWizardLabel")
     String publishWizardLabel();
+
+    /**
+     * Translated "Connect Posit Cloud account".
+     *
+     * @return translated "Connect Posit Cloud account"
+     */
+    @DefaultMessage("Connect Posit Cloud account")
+    @Key("newPositCloudPageCaption")
+    String newPositCloudPageCaption();
+
+    /**
+     * Translated "Our online service that lets you do, share, teach and learn data science in your web browser.".
+     *
+     * @return translated "Our online service that lets you do, share, teach and learn data science in your web browser."
+     */
+    @DefaultMessage("Our online service that lets you do, share, teach and learn data science in your web browser.")
+    @Key("newPositCloudPageSubTitle")
+    String newPositCloudPageSubTitle();
 }

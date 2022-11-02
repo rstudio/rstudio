@@ -1,10 +1,10 @@
 /*
  * SessionOfflineService.cpp
  *
- * Copyright (C) 2022 by RStudio, PBC
+ * Copyright (C) 2022 by Posit Software, PBC
  *
- * Unless you have received this program directly from RStudio pursuant
- * to the terms of a commercial license agreement with RStudio, then
+ * Unless you have received this program directly from Posit Software pursuant
+ * to the terms of a commercial license agreement with Posit Software, then
  * this program is licensed to you under the terms of version 3 of the
  * GNU Affero General Public License. This program is distributed WITHOUT
  * ANY EXPRESS OR IMPLIED WARRANTY, INCLUDING THOSE OF NON-INFRINGEMENT,
@@ -232,7 +232,7 @@ void OfflineService::run()
             std::chrono::steady_clock::time_point now = std::chrono::steady_clock::now();
 
 	    // Make sure session is initialized before doing any processing in the offline thread to avoid the call to lazily init it
-            if (handleOfflineMillis > 0 && init::isSessionInitialized())
+            if (handleOfflineMillis > 0 && init::isSessionInitializedAndRestored())
             {
                boost::shared_ptr<HttpConnection> ptrConnection;
                do
@@ -241,6 +241,16 @@ void OfflineService::run()
                   ptrConnection = mainConnectionQueue.dequeMatchingConnection(offlineConnectionMatcher, now);
                   if (ptrConnection)
                   {
+                     // ensure request signature is valid
+                     if (!http_methods::verifyRequestSignature(ptrConnection->request()))
+                     {
+                        LOG_ERROR_MESSAGE("Invalid signature in offline handler for request URI " + ptrConnection->request().uri());
+                        core::http::Response response;
+                        response.setError(http::status::Unauthorized, "Invalid message signature");
+                        ptrConnection->sendResponse(response);
+                        continue;
+                     }
+
                      if (http_methods::protocolDebugEnabled())
                      {
                         std::chrono::duration<double> beforeTime = now - ptrConnection->receivedTime();

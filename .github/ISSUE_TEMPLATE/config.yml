@@ -1,0 +1,5 @@
+blank_issues_enabled: false
+contact_links:
+  - name: Ask a Question
+    url: https://community.rstudio.com/c/rstudio-ide/9
+    about: This issue tracker is not for questions -- please ask questions on our community forum.

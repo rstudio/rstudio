@@ -1,10 +1,10 @@
 /*
  * SessionConsoleInput.cpp
  *
- * Copyright (C) 2022 by RStudio, PBC
+ * Copyright (C) 2022 by Posit Software, PBC
  *
- * Unless you have received this program directly from RStudio pursuant
- * to the terms of a commercial license agreement with RStudio, then
+ * Unless you have received this program directly from Posit Software pursuant
+ * to the terms of a commercial license agreement with Posit Software, then
  * this program is licensed to you under the terms of version 3 of the
  * GNU Affero General Public License. This program is distributed WITHOUT
  * ANY EXPRESS OR IMPLIED WARRANTY, INCLUDING THOSE OF NON-INFRINGEMENT,
@@ -101,7 +101,7 @@ void consolePrompt(const std::string& prompt, bool addToHistory)
 bool canSuspend(const std::string& prompt)
 {
    bool suspendIsBlocked = false;
-   suspendIsBlocked |= session::suspend::checkBlockingOp(main_process::haveActiveChildren(), suspend::kChildProcess);
+   suspendIsBlocked |= session::suspend::checkBlockingOp(main_process::haveDurableChildren(), suspend::kChildProcess);
    suspendIsBlocked |= session::suspend::checkBlockingOp(!modules::connections::isSuspendable(), suspend::kConnection);
    suspendIsBlocked |= session::suspend::checkBlockingOp(!modules::environment::isSuspendable(), suspend::kExternalPointer);
    suspendIsBlocked |= session::suspend::checkBlockingOp(!modules::jobs::isSuspendable(), suspend::kActiveJob);
@@ -300,7 +300,6 @@ void popConsoleInput(rstudio::r::session::RConsoleInput* pConsoleInput)
 }
 
 } // end anonymous namespace
-
 
 bool rConsoleRead(const std::string& prompt,
                   bool addToHistory,

@@ -1,10 +1,10 @@
 /*
  * ProjectBuildToolsPreferencesPane.java
  *
- * Copyright (C) 2022 by RStudio, PBC
+ * Copyright (C) 2022 by Posit Software, PBC
  *
- * Unless you have received this program directly from RStudio pursuant
- * to the terms of a commercial license agreement with RStudio, then
+ * Unless you have received this program directly from Posit Software pursuant
+ * to the terms of a commercial license agreement with Posit Software, then
  * this program is licensed to you under the terms of version 3 of the
  * GNU Affero General Public License. This program is distributed WITHOUT
  * ANY EXPRESS OR IMPLIED WARRANTY, INCLUDING THOSE OF NON-INFRINGEMENT,
@@ -109,11 +109,21 @@ public class ProjectBuildToolsPreferencesPane extends ProjectPreferencesPane
       for (BuildToolsPanel panel : buildToolsPanels_.values())
          panel.save(options);
 
-      // require reload if the build type or roxygen settings changed
+      boolean reload = false;
+
+      // reload if the build type or roxygen settings changed
       String initialBuildType = initialConfig_.getBuildType();
       String selectedBuildType = buildTypeSelect_.getValue();
+      if (initialBuildType != selectedBuildType)
+         reload = true;
 
-      return new RestartRequirement(initialBuildType != selectedBuildType, false, false);
+      // reload if "clean before install" changed
+      boolean initialClean = initialConfig_.getPackageCleanBeforeInstall();
+      boolean selectedClean = config.getPackageCleanBeforeInstall();
+      if (initialClean != selectedClean)
+         reload = true;
+
+      return new RestartRequirement(reload, false, false);
    }
 
 

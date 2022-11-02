@@ -10,6 +10,8 @@ if [ $# -eq 0 ]; then
     echo "--build   What kind of build is being added, as a path. Example: "
     echo "          desktop-pro/windows"
     echo ""
+    echo "--arch    The CPU architecture supported by the build. Example: arm64"
+    echo ""
     echo "--url     A URL to a location where the build can be downloaded. Example:"
     echo "          https://s3.amazonaws.com/rstudio-ide-build/desktop/windows/RStudio-pro.exe"
     echo ""
@@ -47,6 +49,11 @@ opts=$(getopt \
 # Apply to variables
 while [[ $# -gt 0 ]]; do
     case "$1" in
+        --arch)
+            arch=$2
+            shift 2
+            ;;
+
         --build)
             build=$2
             shift 2
@@ -82,6 +89,11 @@ done
 if [ -z "$build" ]; then
     echo "Build not set; specify a build with --build. Example: --build desktop/windows"
     exit 1
+fi
+
+if [ -z "$arch" ]; then
+    # No architecture set? No problem, just ask uname
+    arch=$(uname -m)
 fi
 
 if [ -z "$url" ]; then
@@ -147,6 +159,7 @@ type: build
 date: $timestamp
 link: \"$url\"
 filename: \"$filename\"
+architecture: \"$arch\"
 sha256: \"$sha256\"
 channel: \"$channel\"
 version: \"$version\"
@@ -163,7 +176,7 @@ else
   base64_contents=$(echo "$md_contents" | base64 --wrap=0)
 fi
 
-payload="{\"message\":\"Add $flower build $version in $build\",\"content\":\"$base64_contents\"}"
+payload="{\"message\":\"Add $flower build $version in $build\",\"content\":\"$base64_contents\",\"sha\":\"$sha256\"}"
 echo "Sending to Github: $payload"
 
 curl \

@@ -1,10 +1,10 @@
 /*
  * JobsPaneWidgets.java
  *
- * Copyright (C) 2022 by RStudio, PBC
+ * Copyright (C) 2022 by Posit Software, PBC
  *
- * Unless you have received this program directly from RStudio pursuant
- * to the terms of a commercial license agreement with RStudio, then
+ * Unless you have received this program directly from Posit Software pursuant
+ * to the terms of a commercial license agreement with Posit Software, then
  * this program is licensed to you under the terms of version 3 of the
  * GNU Affero General Public License. This program is distributed WITHOUT
  * ANY EXPRESS OR IMPLIED WARRANTY, INCLUDING THOSE OF NON-INFRINGEMENT,
@@ -45,7 +45,7 @@ public class JobsPaneWidgets implements JobsPaneOperations
       userPrefs_ = userPrefs;
       list_ = list;
 
-      toolbar_ = new Toolbar(constants_.jobsTabLabel());
+      toolbar_ = new Toolbar(constants_.backgroundJobsTabLabel());
       
       allJobs_ = new ToolbarButton(
             ToolbarButton.NoText,
@@ -101,7 +101,7 @@ public class JobsPaneWidgets implements JobsPaneOperations
       toolbar_.removeAllWidgets();
       toolbar_.addLeftWidget(startButton_ = commands_.startJob().createToolbarButton());
       toolbar_.addLeftSeparator();
-      toolbar_.addLeftWidget(commands_.clearJobs().createToolbarButton());
+      toolbar_.addLeftWidget(commands_.clearBackgroundJobs().createToolbarButton());
       progress_ = null;
    }
    

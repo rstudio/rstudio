@@ -1,10 +1,10 @@
 /*
- * HelpInfoPane.java
+ * HelpInfoPanel.java
  *
- * Copyright (C) 2022 by RStudio, PBC
+ * Copyright (C) 2022 by Posit Software, PBC
  *
- * Unless you have received this program directly from RStudio pursuant
- * to the terms of a commercial license agreement with RStudio, then
+ * Unless you have received this program directly from Posit Software pursuant
+ * to the terms of a commercial license agreement with Posit Software, then
  * this program is licensed to you under the terms of version 3 of the
  * GNU Affero General Public License. This program is distributed WITHOUT
  * ANY EXPRESS OR IMPLIED WARRANTY, INCLUDING THOSE OF NON-INFRINGEMENT,
@@ -20,6 +20,7 @@ import com.google.gwt.core.client.GWT;
 import com.google.gwt.user.client.Timer;
 import com.google.gwt.user.client.ui.*;
 
+import org.rstudio.core.client.BrowseCap;
 import org.rstudio.core.client.StringUtil;
 import org.rstudio.studio.client.application.ui.RStudioThemes;
 import org.rstudio.studio.client.workbench.views.console.ConsoleConstants;
@@ -51,6 +52,15 @@ public class HelpInfoPopupPanel extends PopupPanel
       if (RStudioThemes.usesScrollbars())
          addStyleName("rstudio-themes-scrollbars");
       
+      // Normally, I'd apply this via CSS styles, but Safari refuses to
+      // acknowledge my attempts to do so and so I must hack it in here
+      // https://github.com/rstudio/rstudio/issues/10821
+      if (BrowseCap.isSafari())
+      {
+         outer.getElement().getStyle().setProperty("transform", "translateZ(0)");
+         getElement().getStyle().setProperty("transform", "translateZ(0)");
+      }
+      
       timer_ = new Timer() {
          public void run()
          {
@@ -80,6 +90,10 @@ public class HelpInfoPopupPanel extends PopupPanel
       }
       vpanel_.add(lblSig);
       
+      Label lblTitle = new Label(help.getTitle());
+      lblTitle.setStylePrimaryName(RES.styles().helpTitleText());
+      vpanel_.add(lblTitle);
+
       HTML htmlDesc = new HTML(help.getDescription());
       htmlDesc.setStylePrimaryName(RES.styles().helpBodyText());
       vpanel_.add(htmlDesc);

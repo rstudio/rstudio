@@ -1,10 +1,10 @@
 /*
  * ServerAuthHandler.hpp
  *
- * Copyright (C) 2022 by RStudio, PBC
+ * Copyright (C) 2022 by Posit Software, PBC
  *
- * Unless you have received this program directly from RStudio pursuant
- * to the terms of a commercial license agreement with RStudio, then
+ * Unless you have received this program directly from Posit Software pursuant
+ * to the terms of a commercial license agreement with Posit Software, then
  * this program is licensed to you under the terms of version 3 of the
  * GNU Affero General Public License. This program is distributed WITHOUT
  * ANY EXPRESS OR IMPLIED WARRANTY, INCLUDING THOSE OF NON-INFRINGEMENT,
@@ -25,10 +25,20 @@
 #include <core/http/AsyncUriHandler.hpp>
 
 #include <shared_core/json/Json.hpp>
+#include <shared_core/system/User.hpp>
 
 #include <server/auth/ServerSecureUriHandler.hpp>
 
 namespace rstudio {
+
+
+namespace core {
+namespace database {
+   // Forward declare IConnection.
+   class IConnection;
+} // namespace database
+} // namespace core
+
 namespace server {
 namespace auth {
 namespace handler {
@@ -196,23 +206,47 @@ core::Error initialize();
 
 bool isCookieRevoked(const std::string& cookie);
 
+// User functions
+core::Error addUser(boost::asio::io_service& ioService, const std::string& username, bool isAdmin = false);
+core::json::Array getAllUsers();
+core::Error getUserFromDatabase(const boost::shared_ptr<core::database::IConnection>& connection,
+                                const core::system::User& user,
+                                bool* pLocked,
+                                boost::posix_time::ptime* pLastSignin,
+                                bool* pExists);
+bool isUserActive(const boost::posix_time::ptime& lastSignin);
+core::Error updateLastSignin(const boost::shared_ptr<core::database::IConnection>& connection,
+                             const core::system::User& user);
+
+// This function does not create a transaction - if needed, it must be created prior to calling and committed after
+core::Error addUserToDatabase(const boost::shared_ptr<core::database::IConnection>& connection,
+                              const core::system::User& user,
+                              bool isAdmin);
+
+core::Error isUserLicensed(const std::string& username,
+                           bool* pLicensed);
+core::Error isUserLicensed(const core::system::User& user,
+                           bool isAdmin,
+                           bool* pLicensed);
+unsigned int getActiveUserCount();
+std::string getExpiredDateStr();
+core::Error getNumActiveUsers(const boost::shared_ptr<core::database::IConnection>& connection,
+                              size_t* pNumActiveUsers);
+
 namespace overlay {
 
 core::Error initialize();
 bool canStaySignedIn();
-core::Error isUserLicensed(const std::string& username,
-                           bool* pLicensed);
 bool isUserListCookieValid(const std::string& cookieValue);
 bool shouldShowUserLicenseWarning();
 bool isUserAdmin(const std::string& username);
+bool isUserLocked(bool lockedColumn);
 std::string getUserListCookieValue();
-unsigned int getActiveUserCount();
+unsigned int getNamedUserLimit();
 core::json::Array getLicensedUsers();
-core::json::Array getAllUsers();
 core::Error lockUser(boost::asio::io_service& ioService, const std::string& username);
 core::Error unlockUser(boost::asio::io_service& ioService, const std::string& username);
 core::Error setAdmin(boost::asio::io_service& ioService, const std::string& username, bool isAdmin);
-core::Error addUser(boost::asio::io_service& ioService, const std::string& username, bool isAdmin);
 
 } // namespace overlay
 

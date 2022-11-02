@@ -1,10 +1,10 @@
 #
 # SessionCodeTools.R
 #
-# Copyright (C) 2022 by RStudio, PBC
+# Copyright (C) 2022 by Posit Software, PBC
 #
-# Unless you have received this program directly from RStudio pursuant
-# to the terms of a commercial license agreement with RStudio, then
+# Unless you have received this program directly from Posit Software pursuant
+# to the terms of a commercial license agreement with Posit Software, then
 # this program is licensed to you under the terms of version 3 of the
 # GNU Affero General Public License. This program is distributed WITHOUT
 # ANY EXPRESS OR IMPLIED WARRANTY, INCLUDING THOSE OF NON-INFRINGEMENT,
@@ -351,7 +351,10 @@
       list(generic = generic)
    )
 
-   methods <- eval(call, envir = globalenv())
+   methods <- .rs.tryCatch(eval(call, envir = globalenv()))
+   if (inherits(methods, "error"))
+      return(NULL)
+      
    info <- attr(methods, "info")
    if (!is.data.frame(info))
       return(NULL)
@@ -990,6 +993,16 @@
 
 .rs.addJsonRpcHandler("get_args", function(name, src, helpHandler)
 {
+   if (grepl("::", name) && identical(src, ""))
+   {
+      bits <- strsplit(name, "::")[[1L]]
+      if (length(bits) == 2L)
+      {
+         name <- bits[2L]
+         src <- bits[1L]
+      }
+   }
+
    # call custom help handler if provided
    if (nzchar(helpHandler)) {
 
@@ -1215,7 +1228,7 @@
    chars <- vapply(chars, function(x) {
       if (x %in% c('"', '\\', '/'))
          paste('\\', x, sep = '')
-      else if (charToRaw(x) < 20)
+      else if (length(charToRaw(x)) == 1 && charToRaw(x) < 32)
          paste('\\u', toupper(format(as.hexmode(as.integer(charToRaw(x))),
                                      width = 4)),
                sep = '')
@@ -1414,43 +1427,7 @@
 
    # Find the functions, and generate information on each formal
    # (does it have a default argument; is missingness handled; etc)
-   functionInfo <- lapply(functions, function(f) {
-
-      formals <- formals(f)
-      if (!length(formals))
-         return(.rs.emptyFunctionInfo())
-
-      formalNames <- names(formals)
-      hasDefault <- vapply(formals, FUN.VALUE = integer(1), USE.NAMES = FALSE, function(x) {
-         !identical(x, quote(expr = ))
-      })
-
-      # Record which symbols in the function body handle missingness,
-      # to check if missingness of default arguments is handled
-      missingEnv <- new.env(parent = emptyenv())
-      usedSymbolsEnv <- new.env(parent = emptyenv())
-      .rs.recursiveWalk(body(f), function(node) {
-         .rs.recordFunctionInformation(node, missingEnv, usedSymbolsEnv)
-      })
-
-      # Figure out which functions perform NSE.
-      # TODO: Figure out which arguments are actually involved in NSE.
-      performsNse <- .rs.performsNonstandardEvaluation(f)
-
-      formalInfo <- lapply(seq_along(formalNames), function(i) {
-         as.integer(c(
-            hasDefault[[i]],
-            formalNames[[i]] == "..." || exists(formalNames[[i]], envir = missingEnv),
-            exists(formalNames[[i]], envir = usedSymbolsEnv)
-         ))
-      })
-
-      list(
-         formal_names = formalNames,
-         formal_info  = formalInfo,
-         performs_nse = I(as.integer(performsNse))
-      )
-   })
+   functionInfo <- lapply(functions, .rs.generateFunctionInformation)
 
    # List data objects exported by this package
    datasets <- .rs.listDatasetsProvidedByPackage(package)
@@ -1464,12 +1441,53 @@
       datasets = datasets
    )
 
-   # Write the JSON to stdout; parent processes
+   # Write the JSON to stdout; the parent will read and process it
+   flush.console()
    json <- paste("#!json:", .rs.toJSON(output))
-   cat(json, sep = "\n")
+   writeLines(c("", json, ""))
+   flush.console()
 
    # Return output for debug purposes
    invisible(output)
+})
+
+.rs.addFunction("generateFunctionInformation", function(func) {
+
+  formals <- formals(func)
+  if (!length(formals))
+     return(.rs.emptyFunctionInfo())
+
+  formalNames <- names(formals)
+  hasDefault <- vapply(formals, FUN.VALUE = integer(1), USE.NAMES = FALSE, function(x) {
+     !identical(x, quote(expr = ))
+  })
+
+  # Record which symbols in the function body handle missingness,
+  # to check if missingness of default arguments is handled
+  missingEnv <- new.env(parent = emptyenv())
+  usedSymbolsEnv <- new.env(parent = emptyenv())
+  .rs.recursiveWalk(body(func), function(node) {
+     .rs.recordFunctionInformation(node, missingEnv, usedSymbolsEnv)
+  })
+
+  # Figure out which functions perform NSE.
+  # TODO: Figure out which arguments are actually involved in NSE.
+  performsNse <- .rs.performsNonstandardEvaluation(func)
+
+  formalInfo <- lapply(seq_along(formalNames), function(i) {
+     as.integer(c(
+        hasDefault[[i]],
+        formalNames[[i]] == "..." || exists(formalNames[[i]], envir = missingEnv),
+        exists(formalNames[[i]], envir = usedSymbolsEnv)
+     ))
+  })
+
+  list(
+     formal_names = formalNames,
+     formal_info  = formalInfo,
+     performs_nse = I(as.integer(performsNse))
+  )
+ 
 })
 
 .rs.setVar("nse.primitives", c(
@@ -1903,7 +1921,7 @@
 
          # Perhaps not the most efficient, but probably the easiest way to detect
          # appropriate calls to `opts_chunk$set`.
-         callName <- as.character(node)
+         callName <- as.character(node)[[1L]]
          if (callName == "knitr:::opts_chunk$set" ||
              callName == "knitr::opts_chunk$set" ||
              callName == "opts_chunk$set")
@@ -2243,7 +2261,7 @@
       return(NULL)
    # If Quarto and no R code chunks, don't parse further
    # Rmd may have yaml front matter to parse even if no R chunks
-   if (identical(code, .rs.scalar("")) && identical(extension, ".qmd"))
+   if (identical(gsub("\n", "", code), .rs.scalar("")) && identical(extension, ".qmd"))
       return(NULL)
 
    # attempt to parse extracted R code
@@ -2269,6 +2287,7 @@
    # for R Markdown docs, scan the YAML header (requires the rmarkdown package and the yaml package,
    # a dependency of rmarkdown)
    if (identical(extension, ".Rmd") &&
+       is.null(dynGet("__NameSpacesLoading__", NULL)) &&
        requireNamespace("rmarkdown", quietly = TRUE) &&
        requireNamespace("yaml", quietly = TRUE))
    {

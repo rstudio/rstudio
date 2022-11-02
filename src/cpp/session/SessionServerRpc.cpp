@@ -1,10 +1,10 @@
 /*
  * SessionServerRpc.cpp
  *
- * Copyright (C) 2022 by RStudio, PBC
+ * Copyright (C) 2022 by Posit Software, PBC
  *
- * Unless you have received this program directly from RStudio pursuant
- * to the terms of a commercial license agreement with RStudio, then
+ * Unless you have received this program directly from Posit Software pursuant
+ * to the terms of a commercial license agreement with Posit Software, then
  * this program is licensed to you under the terms of version 3 of the
  * GNU Affero General Public License. This program is distributed WITHOUT
  * ANY EXPRESS OR IMPLIED WARRANTY, INCLUDING THOSE OF NON-INFRINGEMENT,
@@ -106,6 +106,26 @@ void rpcWorkerThreadFunc()
 }
 
 } // anonymous namespace
+
+Error invokeServerRpc(const json::JsonRpcRequest& request, json::JsonRpcResponse* pResponse)
+{
+   json::Value result;
+   Error error = invokeServerRpc(request.method, request.toJsonObject(), &result);
+   if (error)
+      return error;
+
+   bool success = json::JsonRpcResponse::parse(result, pResponse);
+   if (!success)
+   {
+      error = Error(json::errc::ParseError, ERROR_LOCATION);
+      error.addProperty(
+         "description",
+         "Unable to parse the response for RPC request: " + request.toJsonObject().write());
+      error.addProperty("response", result.write());
+   }
+
+   return error;
+}
 
 Error invokeServerRpc(const std::string& endpoint,
                       const json::Object& request,

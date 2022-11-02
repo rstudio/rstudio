@@ -1,10 +1,10 @@
 /*
  * SessionRpc.cpp
  *
- * Copyright (C) 2022 by RStudio, PBC
+ * Copyright (C) 2022 by Posit Software, PBC
  *
- * Unless you have received this program directly from RStudio pursuant
- * to the terms of a commercial license agreement with RStudio, then
+ * Unless you have received this program directly from Posit Software pursuant
+ * to the terms of a commercial license agreement with Posit Software, then
  * this program is licensed to you under the terms of version 3 of the
  * GNU Affero General Public License. This program is distributed WITHOUT
  * ANY EXPRESS OR IMPLIED WARRANTY, INCLUDING THOSE OF NON-INFRINGEMENT,
@@ -255,19 +255,20 @@ void endHandleRpcRequestIndirect(
         const core::Error& executeError,
         json::JsonRpcResponse* pJsonRpcResponse)
 {
-   json::JsonRpcResponse temp;
-   json::JsonRpcResponse& jsonRpcResponse =
-           pJsonRpcResponse ? *pJsonRpcResponse : temp;
+   // pJsonRpcResponse may be a nullptr, so handle that safely
+   json::JsonRpcResponse emptyResponse;
+   if (pJsonRpcResponse == nullptr)
+      pJsonRpcResponse = &emptyResponse;
 
    if (executeError)
-      jsonRpcResponse.setError(executeError);
+      pJsonRpcResponse->setError(executeError);
    
-   if (!jsonRpcResponse.hasField(kEventsPending))
-      jsonRpcResponse.setField(kEventsPending, "false");
+   if (!pJsonRpcResponse->hasField(kEventsPending))
+      pJsonRpcResponse->setField(kEventsPending, "false");
    
    json::Object value;
    value["handle"] = asyncHandle;
-   value["response"] = jsonRpcResponse.getRawResponse();
+   value["response"] = pJsonRpcResponse->getRawResponse();
    ClientEvent evt(client_events::kAsyncCompletion, value);
    module_context::enqueClientEvent(evt);
 

@@ -1,10 +1,10 @@
 #
 # CMakeLists.txt
 #
-# Copyright (C) 2022 by RStudio, PBC
+# Copyright (C) 2022 by Posit Software, PBC
 #
-# Unless you have received this program directly from RStudio pursuant
-# to the terms of a commercial license agreement with RStudio, then
+# Unless you have received this program directly from Posit Software pursuant
+# to the terms of a commercial license agreement with Posit Software, then
 # this program is licensed to you under the terms of version 3 of the
 # GNU Affero General Public License. This program is distributed WITHOUT
 # ANY EXPRESS OR IMPLIED WARRANTY, INCLUDING THOSE OF NON-INFRINGEMENT,
@@ -23,6 +23,8 @@ file(GLOB_RECURSE SERVER_HEADER_FILES "*.h*")
 
 # source files
 set(SERVER_SOURCE_FILES
+   DBActiveSessionStorage.cpp
+   DBActiveSessionsStorage.cpp
    ServerBrowser.cpp
    ServerErrorCategory.cpp
    ServerEval.cpp
@@ -39,16 +41,18 @@ set(SERVER_SOURCE_FILES
    ServerPAMAuthOverlay.cpp
    ServerProcessSupervisor.cpp
    ServerREnvironment.cpp
-   ServerSessionProxy.cpp
-   ServerSessionProxyOverlay.cpp
-   ServerSessionRpc.cpp
-   ServerSessionRpcOverlay.cpp
-   ServerSessionManager.cpp
    ServerXdgVars.cpp
    auth/ServerAuthHandler.cpp
    auth/ServerAuthCommon.cpp
    auth/ServerSecureUriHandler.cpp
    auth/ServerValidateUser.cpp
+   session/ServerSessionProxy.cpp
+   session/ServerSessionProxyOverlay.cpp
+   session/ServerSessionRpc.cpp
+   session/ServerSessionRpcOverlay.cpp
+   session/ServerSessionManager.cpp
+   session/ServerSessionMetadataRpc.cpp
+   session/ServerSessionMetadataRpcOverlay.cpp
    ${CMAKE_CURRENT_BINARY_DIR}/ServerAddins.cpp
 )
 
@@ -284,6 +288,7 @@ if (RSTUDIO_UNIT_TESTS_ENABLED)
   endforeach()
 
   set(SERVER_TEST_FILES
+     DBActiveSessionStorageTests.cpp
      ServerEnvVarsTests.cpp
      ServerDatabaseMigrationTests.cpp
      ServerDatabaseMigrationOverlayTests.cpp)

@@ -373,7 +373,7 @@ protected:
         }
 
         // TODO: pre-init timeout. Right now no implemented socket policies
-        // actually have an asyncronous pre-init
+        // actually have an asynchronous pre-init
 
         m_init_handler = callback;
 

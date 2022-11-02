@@ -1,10 +1,10 @@
 #
 # CMakeLists.txt
 #
-# Copyright (C) 2022 by RStudio, PBC
+# Copyright (C) 2022 by Posit Software, PBC
 #
-# Unless you have received this program directly from RStudio pursuant
-# to the terms of a commercial license agreement with RStudio, then
+# Unless you have received this program directly from Posit Software pursuant
+# to the terms of a commercial license agreement with Posit Software, then
 # this program is licensed to you under the terms of version 3 of the
 # GNU Affero General Public License. This program is distributed WITHOUT
 # ANY EXPRESS OR IMPLIED WARRANTY, INCLUDING THOSE OF NON-INFRINGEMENT,
@@ -87,7 +87,7 @@ if(RSTUDIO_SERVER)
   # automatic dependency resolution use e.g.
   #   sudo apt-get install gdebi-core
   #   sudo gdebi rstudio-server-0.97.151-amd64.deb
-  set(RSTUDIO_DEBIAN_DEPENDS "psmisc, libapparmor1, libedit2, sudo, lsb-release, ${RSTUDIO_DEBIAN_DEPENDS_SSL}, libclang-dev, libsqlite3-0, libpq5, ")
+  set(RSTUDIO_DEBIAN_DEPENDS "psmisc, sudo, lsb-release, ${RSTUDIO_DEBIAN_DEPENDS_SSL}, libclang-dev, libsqlite3-0, libpq5, ")
 
 elseif(RSTUDIO_DESKTOP OR RSTUDIO_ELECTRON)
 
@@ -119,7 +119,7 @@ elseif(RSTUDIO_DESKTOP OR RSTUDIO_ELECTRON)
   endif()
 
   # deb dependencies
-  set(RSTUDIO_DEBIAN_DEPENDS "libedit2, ${RSTUDIO_DEBIAN_DEPENDS_SSL}, libclang-dev, libxkbcommon-x11-0, libsqlite3-0, libpq5, ")
+  set(RSTUDIO_DEBIAN_DEPENDS "${RSTUDIO_DEBIAN_DEPENDS_SSL}, libclang-dev, libxkbcommon-x11-0, libsqlite3-0, libpq5, ")
 
 endif()
 

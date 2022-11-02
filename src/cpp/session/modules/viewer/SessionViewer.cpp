@@ -1,10 +1,10 @@
 /*
  * SessionViewer.cpp
  *
- * Copyright (C) 2022 by RStudio, PBC
+ * Copyright (C) 2022 by Posit Software, PBC
  *
- * Unless you have received this program directly from RStudio pursuant
- * to the terms of a commercial license agreement with RStudio, then
+ * Unless you have received this program directly from Posit Software pursuant
+ * to the terms of a commercial license agreement with Posit Software, then
  * this program is licensed to you under the terms of version 3 of the
  * GNU Affero General Public License. This program is distributed WITHOUT
  * ANY EXPRESS OR IMPLIED WARRANTY, INCLUDING THOSE OF NON-INFRINGEMENT,
@@ -158,11 +158,7 @@ Error getViewerExportContext(const json::JsonRpcRequest& request,
    json::Array formats;
    formats.push_back(plotExportFormat("PNG", kPngFormat));
    formats.push_back(plotExportFormat("JPEG", kJpegFormat));
-#ifdef __APPLE__
-   formats.push_back(plotExportFormat("TIFF", kTiffFormat));
-#else
-   formats.push_back(plotExportFormat("BMP", kBmpFormat));
-#endif
+   // BMP, TIFF and SVG formats not currently supported in Electron
    contextJson["formats"] = formats;
 
    // get directory path -- if it doesn't exist revert to the current

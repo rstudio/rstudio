@@ -1,9 +1,9 @@
 /* UserPrefValues.hpp
  *
- * Copyright (C) 2022 by RStudio, PBC
+ * Copyright (C) 2022 by Posit Software, PBC
  *
- * Unless you have received this program directly from RStudio pursuant
- * to the terms of a commercial license agreement with RStudio, then
+ * Unless you have received this program directly from Posit Software pursuant
+ * to the terms of a commercial license agreement with Posit Software, then
  * this program is licensed to you under the terms of version 3 of the
  * GNU Affero General Public License. This program is distributed WITHOUT
  * ANY EXPRESS OR IMPLIED WARRANTY, INCLUDING THOSE OF NON-INFRINGEMENT,
@@ -89,7 +89,11 @@ namespace prefs {
 #define kBlinkingCursor "blinking_cursor"
 #define kMarginColumn "margin_column"
 #define kShowInvisibles "show_invisibles"
-#define kShowIndentGuides "show_indent_guides"
+#define kIndentGuides "indent_guides"
+#define kIndentGuidesNone "none"
+#define kIndentGuidesGray "gray"
+#define kIndentGuidesRainbowlines "rainbowlines"
+#define kIndentGuidesRainbowfills "rainbowfills"
 #define kContinueCommentsOnNewline "continue_comments_on_newline"
 #define kHighlightWebLink "highlight_web_link"
 #define kEditorKeybindings "editor_keybindings"
@@ -151,6 +155,7 @@ namespace prefs {
 #define kHighlightConsoleErrors "highlight_console_errors"
 #define kScrollPastEndOfDocument "scroll_past_end_of_document"
 #define kHighlightRFunctionCalls "highlight_r_function_calls"
+#define kColorPreview "color_preview"
 #define kRainbowParentheses "rainbow_parentheses"
 #define kConsoleLineLengthLimit "console_line_length_limit"
 #define kConsoleMaxLines "console_max_lines"
@@ -405,6 +410,12 @@ namespace prefs {
 #define kUiLanguageEn "en"
 #define kUiLanguageFr "fr"
 #define kAutohideMenubar "autohide_menubar"
+#define kNativeFileDialogs "native_file_dialogs"
+#define kDiscardPendingConsoleInputOnError "discard_pending_console_input_on_error"
+#define kEditorScrollMultiplier "editor_scroll_multiplier"
+#define kTextRendering "text_rendering"
+#define kTextRenderingAuto "auto"
+#define kTextRenderingGeometricPrecision "geometricPrecision"
 
 class UserPrefValues: public Preferences
 {
@@ -585,10 +596,10 @@ public:
    core::Error setShowInvisibles(bool val);
 
    /**
-    * Whether to show indentation guides in the RStudio code editor.
+    * Style for indentation guides in the RStudio code editor.
     */
-   bool showIndentGuides();
-   core::Error setShowIndentGuides(bool val);
+   std::string indentGuides();
+   core::Error setIndentGuides(std::string val);
 
    /**
     * Whether to continue comments (by inserting the comment character) after adding a new line.
@@ -859,6 +870,12 @@ public:
     */
    bool highlightRFunctionCalls();
    core::Error setHighlightRFunctionCalls(bool val);
+
+   /**
+    * Whether to show preview for named and hexadecimal colors.
+    */
+   bool colorPreview();
+   core::Error setColorPreview(bool val);
 
    /**
     * Whether to highlight parentheses in a variety of colors.
@@ -1281,13 +1298,13 @@ public:
    core::Error setJobsTabVisibility(std::string val);
 
    /**
-    * Whether to show the Launcher jobs tab in RStudio Pro and RStudio Workbench.
+    * Whether to show the Workbench Jobs tab in RStudio Pro and RStudio Workbench.
     */
    bool showLauncherJobsTab();
    core::Error setShowLauncherJobsTab(bool val);
 
    /**
-    * How to sort jobs in the Launcher tab in RStudio Pro and RStudio Workbench.
+    * How to sort jobs in the Workbench Jobs tab in RStudio Pro and RStudio Workbench.
     */
    std::string launcherJobsSort();
    core::Error setLauncherJobsSort(std::string val);
@@ -1437,7 +1454,7 @@ public:
    core::Error setUseDevtools(bool val);
 
    /**
-    * Clean before install.
+    * Always use --preclean when installing package.
     */
    bool cleanBeforeInstall();
    core::Error setCleanBeforeInstall(bool val);
@@ -1813,6 +1830,30 @@ public:
     */
    std::string uiLanguage();
    core::Error setUiLanguage(std::string val);
+
+   /**
+    * Whether RStudio Desktop will use the operating system's native File and Message dialog boxes.
+    */
+   bool nativeFileDialogs();
+   core::Error setNativeFileDialogs(bool val);
+
+   /**
+    * When enabled, any pending console input will be discarded when an (uncaught) R error occurs.
+    */
+   bool discardPendingConsoleInputOnError();
+   core::Error setDiscardPendingConsoleInputOnError(bool val);
+
+   /**
+    * A integer value, 1-200, to set the editor scroll multiplier. The higher the value, the faster the scrolling.
+    */
+   int editorScrollMultiplier();
+   core::Error setEditorScrollMultiplier(int val);
+
+   /**
+    * Control how text is rendered within the IDE surface.
+    */
+   std::string textRendering();
+   core::Error setTextRendering(std::string val);
 
    /**
     * Hide desktop menu bar until Alt key is pressed.

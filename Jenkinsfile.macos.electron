@@ -3,6 +3,8 @@ pipeline {
   agent { label 'macos-v1.4-arm64' }
 
   options {
+    // timeout regardless of activity
+    timeout(activity: false, time: 120)
     timestamps()
     disableConcurrentBuilds()
     buildDiscarder(logRotator(numToKeepStr: '100'))
@@ -74,7 +76,7 @@ pipeline {
             // attempt to run cpp unit tests
             // problems with rsession finding openssl, so those tests
             // are disabled until we solve it (#6890)
-            sh "cd package/osx/build/src/cpp && ./rstudio-tests"
+            sh "cd package/osx/build/src/cpp && arch -x86_64 ./rstudio-tests"
             
             // electron tests not working in CI environment, under investigation
             // sh "cd ../../../../../src/node/desktop/ && $HOME/.yarn/bin/yarn && $HOME/.yarn/bin/yarn test"
@@ -124,8 +126,6 @@ pipeline {
             }
           }
 
-          /*
-
           // upload daily build redirects
           withCredentials([file(credentialsId: 'www-rstudio-org-pem', variable: 'wwwRstudioOrgPem')]) {
             sh "docker/jenkins/publish-daily-binary.sh https://s3.amazonaws.com/rstudio-ide-build/${product}/macos/${packageFile} ${wwwRstudioOrgPem}"
@@ -158,8 +158,6 @@ pipeline {
               }
             }
           }
-
-          */
 
           // publish build to dailies page
           withCredentials([usernamePassword(credentialsId: 'github-rstudio-jenkins', usernameVariable: 'GITHUB_USERNAME', passwordVariable: 'GITHUB_PAT')]) {

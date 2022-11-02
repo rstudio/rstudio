@@ -1,10 +1,10 @@
 /*
  * FileSystemItem.java
  *
- * Copyright (C) 2022 by RStudio, PBC
+ * Copyright (C) 2022 by Posit Software, PBC
  *
- * Unless you have received this program directly from RStudio pursuant
- * to the terms of a commercial license agreement with RStudio, then
+ * Unless you have received this program directly from Posit Software pursuant
+ * to the terms of a commercial license agreement with Posit Software, then
  * this program is licensed to you under the terms of version 3 of the
  * GNU Affero General Public License. This program is distributed WITHOUT
  * ANY EXPRESS OR IMPLIED WARRANTY, INCLUDING THOSE OF NON-INFRINGEMENT,
@@ -22,6 +22,8 @@ import org.rstudio.core.client.regex.Pattern;
 import org.rstudio.studio.client.common.filetypes.FileIcon;
 import org.rstudio.studio.client.common.filetypes.FileIconResources;
 import org.rstudio.studio.client.common.vcs.StatusAndPathInfo;
+import org.rstudio.core.client.BrowseCap;
+
 
 import com.google.gwt.core.client.JavaScriptObject;
 
@@ -36,11 +38,13 @@ public class FileSystemItem extends JavaScriptObject
 
    public static FileSystemItem createDir(String path)
    {
+      path = normalizeSeparators(path);
       return create(path, true, -1, 0);
    }
 
    public static FileSystemItem createFile(String path)
    {
+      path = normalizeSeparators(path);
       return create(path, false, -1, 0);
    }
 
@@ -70,6 +74,7 @@ public class FileSystemItem extends JavaScriptObject
       return this.raw_path || this.path;
    }-*/;
 
+   // NOTE: Returns final part of path ie. foo/bar/baz becomes baz
    public final String getName()
    {
       return getNameFromPath(getRawPath());
@@ -288,6 +293,15 @@ public class FileSystemItem extends JavaScriptObject
 
    }
 
+   private final static String normalizeSeparators(String path)
+   {
+      if (BrowseCap.isWindows())
+      {
+         return path.replace('\\', '/');
+      }
+      return path;
+   }
+
    public final static FileSystemItem home()
    {
       return createDir(HOME_PATH);
@@ -377,6 +391,8 @@ public class FileSystemItem extends JavaScriptObject
       MIME_TYPES.put( "sql",       "text/x-sql" );
       MIME_TYPES.put( "stan",      "text/x-stan" );
       MIME_TYPES.put( "clj",       "text/x-clojure");
+      MIME_TYPES.put( "groovy",    "text/x-groovy");
+      MIME_TYPES.put( "nf",        "text/x-groovy");
 
       // other types we are likely to serve
       MIME_TYPES.put( "xml",   "text/xml" );

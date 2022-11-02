@@ -1,9 +1,9 @@
 /* UserPrefValues.cpp
  *
- * Copyright (C) 2022 by RStudio, PBC
+ * Copyright (C) 2022 by Posit Software, PBC
  *
- * Unless you have received this program directly from RStudio pursuant
- * to the terms of a commercial license agreement with RStudio, then
+ * Unless you have received this program directly from Posit Software pursuant
+ * to the terms of a commercial license agreement with Posit Software, then
  * this program is licensed to you under the terms of version 3 of the
  * GNU Affero General Public License. This program is distributed WITHOUT
  * ANY EXPRESS OR IMPLIED WARRANTY, INCLUDING THOSE OF NON-INFRINGEMENT,
@@ -401,16 +401,16 @@ core::Error UserPrefValues::setShowInvisibles(bool val)
 }
 
 /**
- * Whether to show indentation guides in the RStudio code editor.
+ * Style for indentation guides in the RStudio code editor.
  */
-bool UserPrefValues::showIndentGuides()
+std::string UserPrefValues::indentGuides()
 {
-   return readPref<bool>("show_indent_guides");
+   return readPref<std::string>("indent_guides");
 }
 
-core::Error UserPrefValues::setShowIndentGuides(bool val)
+core::Error UserPrefValues::setIndentGuides(std::string val)
 {
-   return writePref("show_indent_guides", val);
+   return writePref("indent_guides", val);
 }
 
 /**
@@ -996,6 +996,19 @@ bool UserPrefValues::highlightRFunctionCalls()
 core::Error UserPrefValues::setHighlightRFunctionCalls(bool val)
 {
    return writePref("highlight_r_function_calls", val);
+}
+
+/**
+ * Whether to show preview for named and hexadecimal colors.
+ */
+bool UserPrefValues::colorPreview()
+{
+   return readPref<bool>("color_preview");
+}
+
+core::Error UserPrefValues::setColorPreview(bool val)
+{
+   return writePref("color_preview", val);
 }
 
 /**
@@ -1909,7 +1922,7 @@ core::Error UserPrefValues::setJobsTabVisibility(std::string val)
 }
 
 /**
- * Whether to show the Launcher jobs tab in RStudio Pro and RStudio Workbench.
+ * Whether to show the Workbench Jobs tab in RStudio Pro and RStudio Workbench.
  */
 bool UserPrefValues::showLauncherJobsTab()
 {
@@ -1922,7 +1935,7 @@ core::Error UserPrefValues::setShowLauncherJobsTab(bool val)
 }
 
 /**
- * How to sort jobs in the Launcher tab in RStudio Pro and RStudio Workbench.
+ * How to sort jobs in the Workbench Jobs tab in RStudio Pro and RStudio Workbench.
  */
 std::string UserPrefValues::launcherJobsSort()
 {
@@ -2247,7 +2260,7 @@ core::Error UserPrefValues::setUseDevtools(bool val)
 }
 
 /**
- * Clean before install.
+ * Always use --preclean when installing package.
  */
 bool UserPrefValues::cleanBeforeInstall()
 {
@@ -3066,6 +3079,58 @@ core::Error UserPrefValues::setUiLanguage(std::string val)
 }
 
 /**
+ * Whether RStudio Desktop will use the operating system's native File and Message dialog boxes.
+ */
+bool UserPrefValues::nativeFileDialogs()
+{
+   return readPref<bool>("native_file_dialogs");
+}
+
+core::Error UserPrefValues::setNativeFileDialogs(bool val)
+{
+   return writePref("native_file_dialogs", val);
+}
+
+/**
+ * When enabled, any pending console input will be discarded when an (uncaught) R error occurs.
+ */
+bool UserPrefValues::discardPendingConsoleInputOnError()
+{
+   return readPref<bool>("discard_pending_console_input_on_error");
+}
+
+core::Error UserPrefValues::setDiscardPendingConsoleInputOnError(bool val)
+{
+   return writePref("discard_pending_console_input_on_error", val);
+}
+
+/**
+ * A integer value, 1-200, to set the editor scroll multiplier. The higher the value, the faster the scrolling.
+ */
+int UserPrefValues::editorScrollMultiplier()
+{
+   return readPref<int>("editor_scroll_multiplier");
+}
+
+core::Error UserPrefValues::setEditorScrollMultiplier(int val)
+{
+   return writePref("editor_scroll_multiplier", val);
+}
+
+/**
+ * Control how text is rendered within the IDE surface.
+ */
+std::string UserPrefValues::textRendering()
+{
+   return readPref<std::string>("text_rendering");
+}
+
+core::Error UserPrefValues::setTextRendering(std::string val)
+{
+   return writePref("text_rendering", val);
+}
+
+/**
  * Hide desktop menu bar until Alt key is pressed.
  */
 bool UserPrefValues::autohideMenubar()
@@ -3110,7 +3175,7 @@ std::vector<std::string> UserPrefValues::allKeys()
       kBlinkingCursor,
       kMarginColumn,
       kShowInvisibles,
-      kShowIndentGuides,
+      kIndentGuides,
       kContinueCommentsOnNewline,
       kHighlightWebLink,
       kEditorKeybindings,
@@ -3156,6 +3221,7 @@ std::vector<std::string> UserPrefValues::allKeys()
       kHighlightConsoleErrors,
       kScrollPastEndOfDocument,
       kHighlightRFunctionCalls,
+      kColorPreview,
       kRainbowParentheses,
       kConsoleLineLengthLimit,
       kConsoleMaxLines,
@@ -3316,6 +3382,10 @@ std::vector<std::string> UserPrefValues::allKeys()
       kCheckNullExternalPointers,
       kUiLanguage,
       kAutohideMenubar,
+      kNativeFileDialogs,
+      kDiscardPendingConsoleInputOnError,
+      kEditorScrollMultiplier,
+      kTextRendering,
    });
 }
    

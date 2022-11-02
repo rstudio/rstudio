@@ -1,10 +1,10 @@
 /*
  * StringUtils.cpp
  *
- * Copyright (C) 2022 by RStudio, PBC
+ * Copyright (C) 2022 by Posit Software, PBC
  *
- * Unless you have received this program directly from RStudio pursuant
- * to the terms of a commercial license agreement with RStudio, then
+ * Unless you have received this program directly from Posit Software pursuant
+ * to the terms of a commercial license agreement with Posit Software, then
  * this program is licensed to you under the terms of version 3 of the
  * GNU Affero General Public License. This program is distributed WITHOUT
  * ANY EXPRESS OR IMPLIED WARRANTY, INCLUDING THOSE OF NON-INFRINGEMENT,
@@ -46,6 +46,39 @@
 namespace rstudio {
 namespace core {
 namespace string_utils {
+
+bool hasSubstringAtOffset(
+      const std::string& string,
+      const std::string& substring,
+      std::size_t offset)
+{
+   if (substring.size() + offset > string.size())
+      return false;
+   
+   for (std::size_t i = 0, n = substring.size(); i < n; i++)
+      if (string[offset + i] != substring[i])
+         return false;
+   
+   return true;
+}
+
+bool hasTruthyValue(const std::string& string)
+{
+   for (const char* value : { "TRUE", "True", "true", "YES", "Yes", "yes", "1" })
+      if (string == value)
+         return true;
+   
+   return false;
+}
+
+bool hasFalsyValue(const std::string& string)
+{
+   for (const char* value : { "FALSE", "False", "false", "NO", "No", "no", "0" })
+      if (string == value)
+         return true;
+   
+   return false;
+}
 
 bool isTruthy(const std::string& string,
               bool valueIfEmpty)
@@ -484,6 +517,21 @@ std::string jsonLiteralUnescape(const std::string& str)
    return value.getString();
 }
 
+Error jsonLiteralUnescape(const std::string& str, std::string* pEscaped)
+{
+   json::Value value;
+   
+   Error error = value.parse(str);
+   if (error)
+      return error;
+   
+   if (!json::isType<std::string>(value))
+      return Error(boost::system::errc::invalid_argument, ERROR_LOCATION);
+   
+   *pEscaped = value.getString();
+   return Success();
+}
+
 std::string singleQuotedStrEscape(const std::string& str)
 {
    std::string escapes = "'\\";
@@ -851,6 +899,45 @@ std::string sprintf(const char* fmt, ...)
    
    // return as string
    return std::string(&buffer[0], n);
+}
+
+// return all of stdin as a string
+std::string consumeStdin(StdinLines kind, unsigned maxChars)
+{
+   std::string input;
+   int ch;
+   for (unsigned i = 0; i < maxChars; i++)
+   {
+      ch = ::fgetc(stdin);
+      if (feof(stdin))
+      {
+         // reached end of standard input
+         break;
+      }
+      if (kind == StdinSingleLine && ch == '\n')
+      {
+         // reached end of single line and that's all we wanted
+         break;
+      }
+      if (ferror(stdin))
+      {
+         // something bad happened
+         LOG_WARNING_MESSAGE("Error reading from stdin stream!");
+         break;
+      }
+
+      // all is well, add the character and advance
+      input.push_back(ch);
+
+      // warn if we are about to truncate
+      if (i == (maxChars - 1))
+      {
+         LOG_WARNING_MESSAGE("Gave up reading stdin after consuming " +
+            safe_convert::numberToString(maxChars) + " characters");
+      }
+   }
+
+   return input;
 }
 
 } // namespace string_utils

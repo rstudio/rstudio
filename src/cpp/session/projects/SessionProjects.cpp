@@ -1,10 +1,10 @@
 /*
  * SessionProjects.cpp
  *
- * Copyright (C) 2022 by RStudio, PBC
+ * Copyright (C) 2022 by Posit Software, PBC
  *
- * Unless you have received this program directly from RStudio pursuant
- * to the terms of a commercial license agreement with RStudio, then
+ * Unless you have received this program directly from Posit Software pursuant
+ * to the terms of a commercial license agreement with Posit Software, then
  * this program is licensed to you under the terms of version 3 of the
  * GNU Affero General Public License. This program is distributed WITHOUT
  * ANY EXPRESS OR IMPLIED WARRANTY, INCLUDING THOSE OF NON-INFRINGEMENT,
@@ -43,6 +43,8 @@ namespace projects {
 namespace {
 
 ProjectContext s_projectContext;
+
+core::r_util::ProjectId s_projectId;
 
 
 void onSuspend(Settings*)
@@ -494,11 +496,13 @@ void setProjectConfig(const r_util::RProjectConfig& config)
 
 void syncProjectFileChanges()
 {
+   FilePath projectFile = s_projectContext.file();
+   
    // read project file config
    bool providedDefaults;
    std::string userErrMsg;
    r_util::RProjectConfig config;
-   Error error = r_util::readProjectFile(s_projectContext.file(),
+   Error error = r_util::readProjectFile(projectFile,
                                          ProjectContext::defaultConfig(),
                                          ProjectContext::buildDefaults(),
                                          &config,
@@ -506,7 +510,9 @@ void syncProjectFileChanges()
                                          &userErrMsg);
    if (error)
    {
-      LOG_ERROR(error);
+      if (!projectFile.isEmpty())
+         LOG_ERROR(error);
+      
       return;
    }
 
@@ -896,7 +902,7 @@ void startup(const std::string& firstProjectPath)
    std::string switchToProject = projSettings.switchToProjectPath();
    FilePath lastProjectPath = projSettings.lastProjectPath();
 
-   // check for explicit project none scope
+   // check for explicit project none scope specified on the command line or desktop via initialProjectPath env var
    if (session::options().sessionScope().isProjectNone() ||
       session::options().initialProjectPath().getAbsolutePath() == kProjectNone)
    {
@@ -937,7 +943,6 @@ void startup(const std::string& firstProjectPath)
    else if (prefs::userPrefs().restoreLastProject() &&
             !lastProjectPath.isEmpty())
    {
-
       // get last project path
       projectFilePath = lastProjectPath;
 
@@ -973,6 +978,44 @@ void startup(const std::string& firstProjectPath)
 
          module_context::events().onClientInit.connect(boost::bind(onClientInit, openProjectError));
       }
+   }
+
+   core::FilePath sessionTmpDir(core::system::getenv(kSessionTmpDirEnvVar));
+   core::FilePath ctxFile = sessionTmpDir.completeChildPath(system::username() + "-d.ctx");
+
+   bool needsCtxFile = options().supportsProjectSharing();
+   if (needsCtxFile)
+      ctxFile.removeIfExists();
+
+   if (options().sessionScope().empty())
+   {
+      // This is single-session mode where the project is discovered from last-project-path and other places
+      // depending on how we are started. The server needs to know the project and session id for routing of
+      // sharing events so that's stored in the "user-d.ctx" file.
+      const core::r_util::ActiveSession& session = module_context::activeSession();
+      core::r_util::ProjectId projectId = session::projectToProjectId(
+               options().userScratchPath(),
+               FilePath(options().getOverlayOption(kSessionSharedStoragePath)),
+               module_context::createAliasedPath(projectFilePath.getParent()));
+      s_projectId = projectId;
+
+#ifndef _WIN32
+      if (needsCtxFile)
+      {
+         std::string sessionId = session.id();
+         std::string sessionCtxStr = projectId.userId() + projectId.id() + ":" + sessionId;
+         core::writeStringToFile(ctxFile, sessionCtxStr);
+
+         // This file is written by the session user and accessed by rserver so needs open read access
+         ctxFile.changeFileMode(FileMode::USER_READ_WRITE_ALL_READ);
+      }
+#endif
+   }
+   else
+   {
+      // multi-session mode where the -p option specified the project, and it's discovered via the stream path
+      // for project sharing events
+      s_projectId = options().sessionScope().projectId();
    }
 }
 
@@ -1091,6 +1134,11 @@ Error initialize()
 ProjectContext& projectContext()
 {
    return s_projectContext;
+}
+
+core::r_util::ProjectId& projectId()
+{
+   return s_projectId;
 }
 
 void addFirstRunDocs(const FilePath& projectFilePath, const std::vector<std::string>& docs)

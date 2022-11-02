@@ -1,10 +1,10 @@
 #
 # CMakeLists.txt
 #
-# Copyright (C) 2022 by RStudio, PBC
+# Copyright (C) 2022 by Posit Software, PBC
 #
-# Unless you have received this program directly from RStudio pursuant
-# to the terms of a commercial license agreement with RStudio, then
+# Unless you have received this program directly from Posit Software pursuant
+# to the terms of a commercial license agreement with Posit Software, then
 # this program is licensed to you under the terms of version 3 of the
 # GNU Affero General Public License. This program is distributed WITHOUT
 # ANY EXPRESS OR IMPLIED WARRANTY, INCLUDING THOSE OF NON-INFRINGEMENT,
@@ -51,6 +51,13 @@ if(WIN32 AND MSVC)
       -D_WEBSOCKETPP_NOEXCEPT_
       -D_WEBSOCKETPP_CPP11_CHRONO
    )
+endif()
+
+# the core libs can be built without libpam (for Launcher, originally), but we
+# use it by default
+if (NOT DEFINED RSTUDIO_USE_PAM)
+  message(STATUS "Configured to build with libpam features")
+  set(RSTUDIO_USE_PAM TRUE)
 endif()
 
 # test directory
@@ -134,7 +141,7 @@ if(UNIX)
    if(NOT APPLE)
       add_definitions(-Wformat -Wformat-security)
       add_definitions(-D_FORTIFY_SOURCE=2)
-      add_definitions(-fstack-protector --param ssp-buffer-size=4)
+      add_definitions(-fstack-protector-strong)
       add_definitions(-fPIC)
       if(CMAKE_BUILD_TYPE STREQUAL Debug)
          add_definitions(-O0)
@@ -449,6 +456,7 @@ endif()
 if(APPLE)
    include_directories(BEFORE SYSTEM "${HOMEBREW_PREFIX}/opt/postgresql/include")
    include_directories(BEFORE SYSTEM "${HOMEBREW_PREFIX}/opt/postgresql/include/libpq")
+   include_directories(BEFORE SYSTEM "${HOMEBREW_PREFIX}/opt/libpq/include")
 elseif(UNIX)
    include_directories(SYSTEM "/usr/include/postgresql")
    include_directories(SYSTEM "/usr/include/pgsql")
@@ -459,13 +467,19 @@ endif()
 
 # find SOCI libraries
 if(UNIX)
-   set(SOCI_LIBRARY_DIR "${RSTUDIO_TOOLS_SOCI}/build/lib")
    if(NOT APPLE AND RSTUDIO_USE_SYSTEM_SOCI)
-      set(SOCI_LIBRARY_DIR "/usr/lib")
+      find_library(SOCI_CORE_LIB NAMES "libsoci_core.a" "soci_core")
+      find_library(SOCI_SQLITE_LIB NAMES "libsoci_sqlite3.a" "soci_sqlite3")
+      find_library(SOCI_POSTGRESQL_LIB NAMES "libsoci_postgresql.a" "soci_postgresql")
+      if(NOT SOCI_CORE_LIB OR NOT SOCI_SQLITE_LIB OR NOT SOCI_POSTGRESQL_LIB)
+         message(FATAL_ERROR "Some or all SOCI libraries were not found. Ensure the SOCI dependency is installed and try again.")
+      endif()
+   else()
+      set(SOCI_LIBRARY_DIR "${RSTUDIO_TOOLS_SOCI}/build/lib")
+      find_library(SOCI_CORE_LIB NAMES "libsoci_core.a" "soci_core" PATHS "${SOCI_LIBRARY_DIR}" NO_DEFAULT_PATH)
+      find_library(SOCI_SQLITE_LIB NAMES "libsoci_sqlite3.a" "soci_sqlite3" PATHS "${SOCI_LIBRARY_DIR}" NO_DEFAULT_PATH)
+      find_library(SOCI_POSTGRESQL_LIB NAMES "libsoci_postgresql.a" "soci_postgresql" PATHS "${SOCI_LIBRARY_DIR}" NO_DEFAULT_PATH)
    endif()
-   find_library(SOCI_CORE_LIB NAMES "libsoci_core.a" "soci_core" PATHS "${SOCI_LIBRARY_DIR}" NO_DEFAULT_PATH)
-   find_library(SOCI_SQLITE_LIB NAMES "libsoci_sqlite3.a" "soci_sqlite3" PATHS "${SOCI_LIBRARY_DIR}" NO_DEFAULT_PATH)
-   find_library(SOCI_POSTGRESQL_LIB NAMES "libsoci_postgresql.a" "soci_postgresql" PATHS "${SOCI_LIBRARY_DIR}" NO_DEFAULT_PATH)
    find_library(DL_LIB "dl")
    find_library(SQLITE_LIB "sqlite3")
    get_filename_component(SQLITE_LIB "${SQLITE_LIB}" REALPATH)
@@ -477,20 +491,26 @@ else()
    set(SOCI_LIBRARY_DIR "${RSTUDIO_TOOLS_SOCI}/build/${SOCI_ARCH}/lib")
    if(CMAKE_BUILD_TYPE STREQUAL "Debug")
        file(GLOB_RECURSE SOCI_LIBRARIES "${SOCI_LIBRARY_DIR}/Debug/*.lib")
-       list(APPEND SOCI_LIBRARIES "Wldap32")
-       list(APPEND SOCI_LIBRARIES "Secur32")
-       list(APPEND SOCI_LIBRARIES "${RSTUDIO_WINDOWS_DEPENDENCIES_DIR}/install-soci/sqlite/sqlite3-debug-${SOCI_ARCH}.lib")
-       list(APPEND SOCI_LIBRARIES "${RSTUDIO_WINDOWS_DEPENDENCIES_DIR}/install-soci/postgresql/lib/${SOCI_ARCH}/Debug/libpq.lib")
-       list(APPEND SOCI_LIBRARIES "${RSTUDIO_WINDOWS_DEPENDENCIES_DIR}/install-soci/postgresql/lib/${SOCI_ARCH}/Debug/libpgcommon.lib")
-       list(APPEND SOCI_LIBRARIES "${RSTUDIO_WINDOWS_DEPENDENCIES_DIR}/install-soci/postgresql/lib/${SOCI_ARCH}/Debug/libpgport.lib")
+       list(LENGTH SOCI_LIBRARIES SOCI_LIB_COUNT)
+       if (NOT SOCI_LIB_COUNT EQUAL 0)
+         list(APPEND SOCI_LIBRARIES "Wldap32")
+         list(APPEND SOCI_LIBRARIES "Secur32")
+         list(APPEND SOCI_LIBRARIES "${RSTUDIO_WINDOWS_DEPENDENCIES_DIR}/install-soci/sqlite/sqlite3-debug-${SOCI_ARCH}.lib")
+         list(APPEND SOCI_LIBRARIES "${RSTUDIO_WINDOWS_DEPENDENCIES_DIR}/install-soci/postgresql/lib/${SOCI_ARCH}/Debug/libpq.lib")
+         list(APPEND SOCI_LIBRARIES "${RSTUDIO_WINDOWS_DEPENDENCIES_DIR}/install-soci/postgresql/lib/${SOCI_ARCH}/Debug/libpgcommon.lib")
+         list(APPEND SOCI_LIBRARIES "${RSTUDIO_WINDOWS_DEPENDENCIES_DIR}/install-soci/postgresql/lib/${SOCI_ARCH}/Debug/libpgport.lib")
+      endif()
    else()
        file(GLOB_RECURSE SOCI_LIBRARIES "${SOCI_LIBRARY_DIR}/Release/*.lib")
-       list(APPEND SOCI_LIBRARIES "Wldap32")
-       list(APPEND SOCI_LIBRARIES "Secur32")
-       list(APPEND SOCI_LIBRARIES "${RSTUDIO_WINDOWS_DEPENDENCIES_DIR}/install-soci/sqlite/sqlite3-release-${SOCI_ARCH}.lib")
-       list(APPEND SOCI_LIBRARIES "${RSTUDIO_WINDOWS_DEPENDENCIES_DIR}/install-soci/postgresql/lib/${SOCI_ARCH}/Release/libpq.lib")
-       list(APPEND SOCI_LIBRARIES "${RSTUDIO_WINDOWS_DEPENDENCIES_DIR}/install-soci/postgresql/lib/${SOCI_ARCH}/Release/libpgcommon.lib")
-       list(APPEND SOCI_LIBRARIES "${RSTUDIO_WINDOWS_DEPENDENCIES_DIR}/install-soci/postgresql/lib/${SOCI_ARCH}/Release/libpgport.lib")
+       list(LENGTH SOCI_LIBRARIES SOCI_LIB_COUNT) 
+       if (NOT SOCI_LIB_COUNT EQUAL 0)
+         list(APPEND SOCI_LIBRARIES "Wldap32")
+         list(APPEND SOCI_LIBRARIES "Secur32")
+         list(APPEND SOCI_LIBRARIES "${RSTUDIO_WINDOWS_DEPENDENCIES_DIR}/install-soci/sqlite/sqlite3-release-${SOCI_ARCH}.lib")
+         list(APPEND SOCI_LIBRARIES "${RSTUDIO_WINDOWS_DEPENDENCIES_DIR}/install-soci/postgresql/lib/${SOCI_ARCH}/Release/libpq.lib")
+         list(APPEND SOCI_LIBRARIES "${RSTUDIO_WINDOWS_DEPENDENCIES_DIR}/install-soci/postgresql/lib/${SOCI_ARCH}/Release/libpgcommon.lib")
+         list(APPEND SOCI_LIBRARIES "${RSTUDIO_WINDOWS_DEPENDENCIES_DIR}/install-soci/postgresql/lib/${SOCI_ARCH}/Release/libpgport.lib")
+      endif()
    endif()
 endif()
 list(LENGTH SOCI_LIBRARIES SOCI_LIB_COUNT)
@@ -598,7 +618,6 @@ elseif(RSTUDIO_CONFIG_SESSION_ONLY)
    message(STATUS, "Configured to build SESSION_ONLY")
 endif()
 
-
 # are we in CORE_DEV mode? if so then just add the core/dev project
 # otherwise, add the rest of our projects
 if(RSTUDIO_CONFIG_CORE_DEV)
@@ -694,6 +713,7 @@ else()
       # add server subprojects if we aren't building in desktop only mode
       if(RSTUDIO_SERVER)
          add_subdirectory(server)
+         add_subdirectory(server/url-ports)
          configure_file(rserver-dev.in ${CMAKE_CURRENT_BINARY_DIR}/rserver-dev)
          configure_file(conf/rserver-dev.conf ${CMAKE_CURRENT_BINARY_DIR}/conf/rserver-dev.conf)
          configure_file(conf/rsession-dev.conf ${CMAKE_CURRENT_BINARY_DIR}/conf/rsession-dev.conf)

@@ -1,10 +1,10 @@
 /*
  * SocketRpc.hpp
  *
- * Copyright (C) 2022 by RStudio, PBC
+ * Copyright (C) 2022 by Posit Software, PBC
  *
- * Unless you have received this program directly from RStudio pursuant
- * to the terms of a commercial license agreement with RStudio, then
+ * Unless you have received this program directly from Posit Software pursuant
+ * to the terms of a commercial license agreement with Posit Software, then
  * this program is licensed to you under the terms of version 3 of the
  * GNU Affero General Public License. This program is distributed WITHOUT
  * ANY EXPRESS OR IMPLIED WARRANTY, INCLUDING THOSE OF NON-INFRINGEMENT,
@@ -21,9 +21,7 @@
 #include <shared_core/json/Json.hpp>
 #include <boost/date_time/posix_time/posix_time.hpp>
 
-#define kServerRpcSecretHeader        "X-RS-Session-Server-RPC-Secret"
 #define kServerRpcSecretEnvVar        "RS_SESSION_SERVER_RPC_SECRET"
-#define kRstudioRpcCookieHeader       "X-RS-Session-Server-RPC-Cookie"
 #define kRstudioRpcCookieEnvVar       "RS_SESSION_RPC_COOKIE"
 #define kServerRpcSocketPathEnvVar    "RS_SERVER_RPC_SOCKET_PATH"
 

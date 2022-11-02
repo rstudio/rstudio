@@ -1,10 +1,10 @@
 /*
  * attr_edit-decoration.tsx
  *
- * Copyright (C) 2022 by RStudio, PBC
+ * Copyright (C) 2022 by Posit Software, PBC
  *
- * Unless you have received this program directly from RStudio pursuant
- * to the terms of a commercial license agreement with RStudio, then
+ * Unless you have received this program directly from Posit Software pursuant
+ * to the terms of a commercial license agreement with Posit Software, then
  * this program is licensed to you under the terms of version 3 of the
  * GNU Affero General Public License. This program is distributed WITHOUT
  * ANY EXPRESS OR IMPLIED WARRANTY, INCLUDING THOSE OF NON-INFRINGEMENT,
@@ -26,6 +26,7 @@ import { WidgetProps, reactRenderForEditorView } from '../../api/widgets/react';
 
 import { selectionIsWithinRange } from '../../api/selection';
 import './attr_edit-decoration.css';
+import { GapCursor } from 'prosemirror-gapcursor';
 
 export const kEditAttrShortcut = 'F4';
 
@@ -116,10 +117,11 @@ const AttrEditDecoration: React.FC<AttrEditDecorationProps> = props => {
         const tr = props.view.state.tr;
         if (node.type.spec.selectable) {
           tr.setSelection(new NodeSelection(tr.doc.resolve(pos)));
-        } else {
-          if (!selectionIsWithinRange(tr.selection, { from: pos, to: pos + node.nodeSize })) {
-            setTextSelection(pos + 1)(tr);
-          }
+        } else if (!selectionIsWithinRange(tr.selection, { from: pos, to: pos + node.nodeSize })) {
+          setTextSelection(pos + 1)(tr);
+        } else if (tr.selection instanceof NodeSelection) {
+          const cursor = new GapCursor(tr.doc.resolve(pos+1), tr.doc.resolve(pos+1));
+          tr.setSelection(cursor);
         }
         props.view.dispatch(tr);
       }

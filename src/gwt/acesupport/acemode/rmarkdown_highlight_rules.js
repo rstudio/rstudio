@@ -1,15 +1,15 @@
 /*
  * markdown_highlight_rules.js
  *
- * Copyright (C) 2022 by RStudio, PBC
+ * Copyright (C) 2022 by Posit Software, PBC
  *
  * The Initial Developer of the Original Code is
  * Ajax.org B.V.
  * Portions created by the Initial Developer are Copyright (C) 2010
  * the Initial Developer. All Rights Reserved.
  *
- * Unless you have received this program directly from RStudio pursuant
- * to the terms of a commercial license agreement with RStudio, then
+ * Unless you have received this program directly from Posit Software pursuant
+ * to the terms of a commercial license agreement with Posit Software, then
  * this program is licensed to you under the terms of version 3 of the
  * GNU Affero General Public License. This program is distributed WITHOUT
  * ANY EXPRESS OR IMPLIED WARRANTY, INCLUDING THOSE OF NON-INFRINGEMENT,
@@ -33,7 +33,13 @@ var StanHighlightRules = require("mode/stan_highlight_rules").StanHighlightRules
 var SqlHighlightRules = require("mode/sql_highlight_rules").SqlHighlightRules;
 var JavaScriptHighlightRules = require("ace/mode/javascript_highlight_rules").JavaScriptHighlightRules;
 var CssHighlightRules = require("ace/mode/css_highlight_rules").CssHighlightRules;
+var ScssHighlightRules = require("ace/mode/scss_highlight_rules").ScssHighlightRules;
+var SassHighlightRules = require("ace/mode/sass_highlight_rules").SassHighlightRules;
+var LessHighlightRules = require("ace/mode/less_highlight_rules").LessHighlightRules;
 var TextHighlightRules = require("ace/mode/text_highlight_rules").TextHighlightRules;
+var MermaidHighlightRules = require("mode/mermaid_highlight_rules").MermaidHighlightRules;
+var DotHighlightRules = require("ace/mode/dot_highlight_rules").DotHighlightRules;
+
 var Utils = require("mode/utils");
 
 function makeDateRegex()
@@ -157,7 +163,27 @@ var RMarkdownHighlightRules = function() {
       this.$reChunkEndString,
       ["start", "listblock", "allowBlock"]
    );
-
+   
+   // Embed mermaid highlight rules
+   Utils.embedRules(
+      this,
+      MermaidHighlightRules,
+      "mermaid",
+      this.$reMermaidChunkStartString,
+      this.$reChunkEndString,
+      ["start", "listblock", "allowBlock"]
+   );
+   
+   // Embed dot highlight rules
+   Utils.embedRules(
+	  this,
+	  DotHighlightRules,
+	  "dot",
+	  this.$reDotChunkStartString,
+	  this.$reChunkEndString,
+	  ["start", "listblock", "allowBlock"]
+   );
+   
    // Embed JavaScript highlighting rules
    Utils.embedRules(
       this,
@@ -168,7 +194,7 @@ var RMarkdownHighlightRules = function() {
       ["start", "listblock", "allowBlock"]
    );
 
-   // Embed JavaScript highlighting rules
+   // Embed css highlighting rules
    Utils.embedRules(
       this,
       CssHighlightRules,
@@ -178,6 +204,36 @@ var RMarkdownHighlightRules = function() {
       ["start", "listblock", "allowBlock"]
    );
 
+   // Embed scss highlighting rules
+   Utils.embedRules(
+      this,
+      ScssHighlightRules,
+      "scss",
+      this.$reScssChunkStartString,
+      this.$reChunkEndString,
+      ["start", "listblock", "allowBlock"]
+   );
+
+   // Embed sass highlighting rules
+   Utils.embedRules(
+      this,
+      SassHighlightRules,
+      "sass",
+      this.$reSassChunkStartString,
+      this.$reChunkEndString,
+      ["start", "listblock", "allowBlock"]
+   );
+
+   // Embed less highlighting rules
+   Utils.embedRules(
+      this,
+      LessHighlightRules,
+      "less",
+      this.$reLessChunkStartString,
+      this.$reChunkEndString,
+      ["start", "listblock", "allowBlock"]
+   );
+   
    // Embed text highlight rules
    Utils.embedRules(
       this,
@@ -187,8 +243,6 @@ var RMarkdownHighlightRules = function() {
       this.$reChunkEndString,
       ["start", "listblock", "allowBlock"]
    );
-
-
 
    // Embed YAML highlighting rules
    // (Handled specially: should only ever activate on first line of document)
@@ -231,12 +285,17 @@ oop.inherits(RMarkdownHighlightRules, TextHighlightRules);
    this.$reMarkdownChunkStartString   = engineRegex("block");
    this.$rePerlChunkStartString       = engineRegex("perl");
    this.$rePythonChunkStartString     = engineRegex("python");
+   this.$reMermaidChunkStartString    = engineRegex("mermaid");
+   this.$reDotChunkStartString        = engineRegex("dot");
    this.$reRubyChunkStartString       = engineRegex("ruby");
    this.$reShChunkStartString         = engineRegex("(?:bash|sh)");
    this.$reStanChunkStartString       = engineRegex("stan");
    this.$reSqlChunkStartString        = engineRegex("sql");
    this.$reJavaScriptChunkStartString = engineRegex("(?:d3|js|ojs|observable)");
    this.$reCssChunkStartString        = engineRegex("css");
+   this.$reScssChunkStartString       = engineRegex("scss");
+   this.$reSassChunkStartString       = engineRegex("sass");
+   this.$reLessChunkStartString       = engineRegex("less");
    this.$reTextChunkStartString       = engineRegex("(?:asis|text)");
    
 }).call(RMarkdownHighlightRules.prototype);

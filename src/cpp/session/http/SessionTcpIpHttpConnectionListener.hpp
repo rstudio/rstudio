@@ -1,7 +1,7 @@
 /*
  * SessionTcpIpHttpConnectionListener.hpp
  *
- * Copyright (C) 2022 by RStudio, PBC
+ * Copyright (C) 2022 by Posit Software, PBC
  *
  * This program is licensed to you under the terms of version 3 of the
  * GNU Affero General Public License. This program is distributed WITHOUT
@@ -65,7 +65,10 @@ protected:
 
    bool authenticate(boost::shared_ptr<HttpConnection> ptrConnection)
    {
-      return connection::authenticate(ptrConnection, secret_);
+      bool res = connection::authenticate(ptrConnection, secret_);
+      if (!res)
+         return false;
+      return HttpConnectionListenerImpl::authenticate(ptrConnection);
    }
 
 private:

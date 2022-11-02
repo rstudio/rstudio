@@ -1,10 +1,10 @@
 /*
  * SessionBuild.cpp
  *
- * Copyright (C) 2022 by RStudio, PBC
+ * Copyright (C) 2022 by Posit Software, PBC
  *
- * Unless you have received this program directly from RStudio pursuant
- * to the terms of a commercial license agreement with RStudio, then
+ * Unless you have received this program directly from Posit Software pursuant
+ * to the terms of a commercial license agreement with Posit Software, then
  * this program is licensed to you under the terms of version 3 of the
  * GNU Affero General Public License. This program is distributed WITHOUT
  * ANY EXPRESS OR IMPLIED WARRANTY, INCLUDING THOSE OF NON-INFRINGEMENT,
@@ -238,6 +238,8 @@ const char * const kBuildBinaryPackage = "build-binary-package";
 const char * const kTestPackage = "test-package";
 const char * const kCheckPackage = "check-package";
 const char * const kBuildAndReload = "build-all";
+const char * const kBuildIncremental = "build-incremental";
+const char * const kBuildFull = "build-full";
 const char * const kTestFile = "test-file";
 const char * const kTestShiny = "test-shiny";
 const char * const kTestShinyFile = "test-shiny-file";
@@ -317,6 +319,9 @@ private:
       else
          core::system::unsetenv(&environment, "RSTUDIO_CONSOLE_WIDTH");
 
+      // this runs in the build pane as a child process of this process
+      core::system::setenv(&environment, "RSTUDIO_CHILD_PROCESS_PANE", "build");
+      
       FilePath buildTargetPath = projects::projectContext().buildTargetPath();
       const core::r_util::RProjectConfig& config = projectConfig();
       if (type == kTestFile)
@@ -467,6 +472,14 @@ private:
       if (!projectConfig().packageRoxygenize.empty())
       {
          if (type == kBuildAndReload && options_.autoRoxygenizeForBuildAndReload)
+         {
+            return true;
+         }
+         else if (type == kBuildIncremental && options_.autoRoxygenizeForBuildAndReload)
+         {
+            return true;
+         }
+         else if (type == kBuildFull && options_.autoRoxygenizeForBuildAndReload)
          {
             return true;
          }
@@ -660,7 +673,7 @@ private:
       // windows we need to unload the library first
 #ifdef _WIN32
       if (packagePath.completeChildPath("src").exists() &&
-         (type == kBuildAndReload || type == kBuildBinaryPackage))
+         (type == kBuildAndReload || type == kBuildIncremental || type == kBuildFull || type == kBuildBinaryPackage))
       {
          std::string pkg = pkgInfo_.name();
          Error error = r::exec::RFunction(".rs.forceUnloadPackage", pkg).call();
@@ -743,7 +756,7 @@ private:
       errorOutputFilterFunction_ = isPackageBuildError;
 
       // build command
-      if (type == kBuildAndReload)
+      if (type == kBuildAndReload || type == kBuildIncremental || type == kBuildFull)
       {
          // restart R after build is completed
          restartR_ = true;
@@ -755,8 +768,8 @@ private:
          // get extra args
          std::string extraArgs = projectConfig().packageInstallArgs;
 
-         // add --preclean if this is a rebuild all
-         if (collectForcePackageRebuild() || cleanBeforeInstall() )
+         // add --preclean if necessary
+         if (type == kBuildFull || collectForcePackageRebuild() || (type == kBuildAndReload && cleanBeforeInstall()) )
          {
             if (!boost::algorithm::contains(extraArgs, "--preclean"))
                rCmd << "--preclean";
@@ -1064,7 +1077,8 @@ private:
           !options_.autoRoxygenizeForCheck)
          args.push_back("document = FALSE");
 
-      if (!prefs::userPrefs().cleanupAfterRCmdCheck())
+      if (!prefs::userPrefs().cleanupAfterRCmdCheck() && 
+          !module_context::isPackageVersionInstalled("devtools", "2.4.4"))
          args.push_back("cleanup = FALSE");
 
       // optional extra check args
@@ -1477,10 +1491,6 @@ private:
                            const core::system::ProcessOptions& options,
                            const core::system::ProcessCallbacks& cb)
    {
-      // show preview on complete
-      successFunction_ = boost::bind(&Build::showQuartoSitePreview,
-                                     Build::shared_from_this());
-
        auto cmd = shell_utils::ShellCommand("quarto");
        cmd << "render";
        if (!subType.empty())
@@ -1579,15 +1589,7 @@ private:
       );
       if (!outputFile.isEmpty())
       {
-         // it will be html if we did a sub-project render.
-         if (outputFile.hasExtensionLowerCase(".html") || outputFile.hasExtensionLowerCase("pdf"))
-         {
-            quarto::handleQuartoPreview(sourceFile, outputFile, output, false);
-         }
-         else
-         {
-            enquePreviewRmdEvent(sourceFile, outputFile);
-         }
+         enquePreviewRmdEvent(sourceFile, outputFile);
       }
    }
 
@@ -2330,6 +2332,7 @@ Error initialize()
       (bind(registerRpcMethod, "devtools_load_all_path", devtoolsLoadAllPath))
       (bind(registerRpcMethod, "get_bookdown_formats", getBookdownFormats))
       (bind(sourceModuleRFile, "SessionBuild.R"))
+      (bind(sourceModuleRFile, "SessionInstallRtools.R"))
       (bind(source_cpp::initialize));
    return initBlock.execute();
 }

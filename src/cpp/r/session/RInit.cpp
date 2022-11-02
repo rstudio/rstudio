@@ -1,10 +1,10 @@
 /*
  * RInit.cpp
  *
- * Copyright (C) 2022 by RStudio, PBC
+ * Copyright (C) 2022 by Posit Software, PBC
  *
- * Unless you have received this program directly from RStudio pursuant
- * to the terms of a commercial license agreement with RStudio, then
+ * Unless you have received this program directly from Posit Software pursuant
+ * to the terms of a commercial license agreement with Posit Software, then
  * this program is licensed to you under the terms of version 3 of the
  * GNU Affero General Public License. This program is distributed WITHOUT
  * ANY EXPRESS OR IMPLIED WARRANTY, INCLUDING THOSE OF NON-INFRINGEMENT,
@@ -50,6 +50,8 @@ bool s_isR3 = false;
 
 // is this R 3.3 or greater
 bool s_isR3_3 = false;
+
+boost::function<void()> s_beforeResumeCallback, s_afterResumeCallback;
 
 // function for deferred deserialization actions. this encapsulates parts of 
 // the initialization process that are potentially highly latent. this allows
@@ -175,10 +177,13 @@ void deferredRestoreNewSession()
 void restoreSession(const FilePath& suspendedSessionPath,
                     std::string* pErrorMessages)
 {
+   if (s_beforeResumeCallback)
+     s_beforeResumeCallback();
+
    // don't show output during deserialization (packages loaded
    // during deserialization sometimes print messages)
    utils::SuppressOutputInScope suppressOutput;
-
+   
    // deserialize session. if any part of this fails then the errors
    // will be logged and error messages will be returned in the passed
    // errorMessages buffer (this mechanism is used because we generally
@@ -196,6 +201,9 @@ void restoreSession(const FilePath& suspendedSessionPath,
                                           deferredRestoreSuspendedSession,
                                           deferredRestoreAction);
    }
+
+   if (s_afterResumeCallback)
+     s_afterResumeCallback();
 }
 
 // one-time per session initialization
@@ -384,6 +392,13 @@ void ensureDeserialized()
       s_deferredDeserializationAction.clear();
    }
 }
+
+bool isSessionRestored()
+{
+   if (s_deferredDeserializationAction)
+      return false;
+   return true;
+}
    
 FilePath rHistoryFilePath()
 {
@@ -419,6 +434,12 @@ void reportHistoryAccessError(const std::string& context,
    std::string path = createAliasedPath(historyFilePath);
    std::string errmsg = context + " " + path + ": " + summary;
    REprintf("Error attempting to %s\n", errmsg.c_str());
+}
+
+void setResumeCallbacks(boost::function<void()> before, boost::function<void()> after)
+{
+   s_beforeResumeCallback = before;
+   s_afterResumeCallback = after;
 }
    
 namespace utils {

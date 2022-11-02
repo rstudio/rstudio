@@ -1,10 +1,10 @@
 /*
  * KeyCombination.java
  *
- * Copyright (C) 2022 by RStudio, PBC
+ * Copyright (C) 2022 by Posit Software, PBC
  *
- * Unless you have received this program directly from RStudio pursuant
- * to the terms of a commercial license agreement with RStudio, then
+ * Unless you have received this program directly from Posit Software pursuant
+ * to the terms of a commercial license agreement with Posit Software, then
  * this program is licensed to you under the terms of version 3 of the
  * GNU Affero General Public License. This program is distributed WITHOUT
  * ANY EXPRESS OR IMPLIED WARRANTY, INCLUDING THOSE OF NON-INFRINGEMENT,
@@ -22,6 +22,7 @@ import org.rstudio.core.client.dom.EventProperty;
 
 import com.google.gwt.dom.client.NativeEvent;
 import com.google.gwt.event.dom.client.KeyCodes;
+import org.rstudio.studio.client.application.Desktop;
 
 public class KeyCombination
 {
@@ -112,11 +113,29 @@ public class KeyCombination
       }
       else
       {
-         return ((modifiers_ & KeyboardShortcut.CTRL) == KeyboardShortcut.CTRL ? constants_.keyComboCtrl() : "")
-               + ((modifiers_ & KeyboardShortcut.ALT) == KeyboardShortcut.ALT ? constants_.keyComboAlt() : "")
-               + ((modifiers_ & KeyboardShortcut.SHIFT) == KeyboardShortcut.SHIFT ? constants_.keyComboShift() : "")
-               + ((modifiers_ & KeyboardShortcut.META) == KeyboardShortcut.META ? constants_.keyComboCmd() : "")
+         return ((modifiers_ & KeyboardShortcut.CTRL) == KeyboardShortcut.CTRL ? keyComboString(KeyboardShortcut.CTRL) : "")
+               + ((modifiers_ & KeyboardShortcut.ALT) == KeyboardShortcut.ALT ? keyComboString(KeyboardShortcut.ALT) : "")
+               + ((modifiers_ & KeyboardShortcut.SHIFT) == KeyboardShortcut.SHIFT ? keyComboString(KeyboardShortcut.SHIFT) : "")
+               + ((modifiers_ & KeyboardShortcut.META) == KeyboardShortcut.META ? keyComboString(KeyboardShortcut.META) : "")
                + getKeyName(pretty);
+      }
+   }
+
+   // Desktop IDE requires unlocalized modifier key names for menu shortcuts: https://github.com/rstudio/rstudio/issues/11073
+   private String keyComboString(int key)
+   {
+      switch (key)
+      {
+         case KeyboardShortcut.CTRL:
+            return Desktop.hasDesktopFrame() ? "Ctrl+" : constants_.keyComboCtrl(); //$NON-NLS-1$
+         case KeyboardShortcut.ALT:
+            return Desktop.hasDesktopFrame() ? "Alt+" : constants_.keyComboAlt(); //$NON-NLS-1$
+         case KeyboardShortcut.SHIFT:
+            return Desktop.hasDesktopFrame() ? "Shift+" : constants_.keyComboShift(); //$NON-NLS-1$
+         case KeyboardShortcut.META:
+            return Desktop.hasDesktopFrame() ? "Cmd+" : constants_.keyComboCmd(); //$NON-NLS-1$
+         default:
+            return "";
       }
    }
 
@@ -124,28 +143,29 @@ public class KeyCombination
    {
       boolean macStyle = BrowseCap.hasMetaKey() && pretty;
 
+      // Desktop IDE requires unlocalized modifier key names for menu shortcuts: https://github.com/rstudio/rstudio/issues/11073
       if (keyCode_ == KeyCodes.KEY_ENTER)
-         return macStyle ? "&#8617;" : constants_.keyNameEnter();
+         return macStyle ? "&#8617;" : Desktop.hasDesktopFrame() ? "Enter" : constants_.keyNameEnter(); //$NON-NLS-1$
       else if (keyCode_ == KeyCodes.KEY_LEFT)
-         return macStyle ? "&#8592;" : constants_.keyNameLeft();
+         return macStyle ? "&#8592;" : Desktop.hasDesktopFrame() ? "Left" : constants_.keyNameLeft(); //$NON-NLS-1$
       else if (keyCode_ == KeyCodes.KEY_RIGHT)
-         return macStyle ? "&#8594;" : constants_.keyNameRight();
+         return macStyle ? "&#8594;" : Desktop.hasDesktopFrame() ? "Right" : constants_.keyNameRight(); //$NON-NLS-1$
       else if (keyCode_ == KeyCodes.KEY_UP)
-         return macStyle ? "&#8593;" : constants_.keyNameUp();
+         return macStyle ? "&#8593;" : Desktop.hasDesktopFrame() ? "Up" : constants_.keyNameUp(); //$NON-NLS-1$
       else if (keyCode_ == KeyCodes.KEY_DOWN)
-         return macStyle ? "&#8595;" : constants_.keyNameDown();
+         return macStyle ? "&#8595;" : Desktop.hasDesktopFrame() ? "Down" : constants_.keyNameDown(); //$NON-NLS-1$
       else if (keyCode_ == KeyCodes.KEY_TAB)
-         return macStyle ? "&#8677;" : constants_.keyNameTab();
+         return macStyle ? "&#8677;" : Desktop.hasDesktopFrame() ? "Tab" : constants_.keyNameTab(); //$NON-NLS-1$
       else if (keyCode_ == KeyCodes.KEY_PAGEUP)
-         return pretty ? "PgUp" : constants_.keyNamePageUp();
+         return pretty ? "PgUp" : Desktop.hasDesktopFrame() ? "PageUp" : constants_.keyNamePageUp(); //$NON-NLS-1$
       else if (keyCode_ == KeyCodes.KEY_PAGEDOWN)
-         return pretty ? "PgDn" : constants_.keyNamePageDown();
+         return pretty ? "PgDn" : Desktop.hasDesktopFrame() ? "PageDown" : constants_.keyNamePageDown(); //$NON-NLS-1$
       else if (keyCode_ == 8)
-         return macStyle ? "&#9003;" : constants_.keyNameBackspace();
+         return macStyle ? "&#9003;" : Desktop.hasDesktopFrame() ? "Backspace" : constants_.keyNameBackspace(); //$NON-NLS-1$
       else if (keyCode_ == KeyCodes.KEY_SPACE)
          // Mac spacebar shortcut character looks too much like a 'b'
          // return macStyle? "&#9250" : "Space";
-         return constants_.keyNameSpace();
+         return Desktop.hasDesktopFrame() ? "Space" : constants_.keyNameSpace(); //$NON-NLS-1$
 
       if (key_ != null)
          return key_;

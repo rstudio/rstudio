@@ -1,10 +1,10 @@
 /*
  * NotebookDocQueue.hpp
  *
- * Copyright (C) 2022 by RStudio, PBC
+ * Copyright (C) 2022 by Posit Software, PBC
  *
- * Unless you have received this program directly from RStudio pursuant
- * to the terms of a commercial license agreement with RStudio, then
+ * Unless you have received this program directly from Posit Software pursuant
+ * to the terms of a commercial license agreement with Posit Software, then
  * this program is licensed to you under the terms of version 3 of the
  * GNU Affero General Public License. This program is distributed WITHOUT
  * ANY EXPRESS OR IMPLIED WARRANTY, INCLUDING THOSE OF NON-INFRINGEMENT,
@@ -36,12 +36,14 @@ namespace modules {
 namespace rmarkdown {
 namespace notebook {
 
-// possible sources for specifying the working directory in a notebook execution queue
+// possible sources for specifying the working directory in a notebook execution queue, in
+// increasing order of precedence/specificity
 enum WorkingDirSource
 {
-   DefaultDir    = 0,    // working directory was unspecified (default)
-   GlobalDir     = 1,    // working dir was specified by the IDE (globally)
-   SetupChunkDir = 2     // working dir was specified by the doc's setup chunk
+   DefaultDir       = 0,    // working directory was unspecified (default)
+   GlobalDir        = 1,    // working dir was specified by the IDE (globally)
+   QuartoProjectDir = 2,    // working dir was specified in Quarto project config (project level)
+   SetupChunkDir    = 3     // working dir was specified by the doc's setup chunk (doc level)
 };
 
 class NotebookDocQueue : boost::noncopyable

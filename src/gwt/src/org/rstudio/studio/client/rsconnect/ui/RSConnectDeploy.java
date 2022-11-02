@@ -1,10 +1,10 @@
 /*
  * RSConnectDeploy.java
  *
- * Copyright (C) 2022 by RStudio, PBC
+ * Copyright (C) 2022 by Posit Software, PBC
  *
- * Unless you have received this program directly from RStudio pursuant
- * to the terms of a commercial license agreement with RStudio, then
+ * Unless you have received this program directly from Posit Software pursuant
+ * to the terms of a commercial license agreement with Posit Software, then
  * this program is licensed to you under the terms of version 3 of the
  * GNU Affero General Public License. This program is distributed WITHOUT
  * ANY EXPRESS OR IMPLIED WARRANTY, INCLUDING THOSE OF NON-INFRINGEMENT,
@@ -286,7 +286,7 @@ public class RSConnectDeploy extends Composite
       userPrefs_ = prefs;
       userState_ = state;
       accountList_ = new RSConnectAccountList(server_, display_, false, 
-            !asStatic_, constants_.publishFromAccount());
+            !asStatic_, !asStatic_, constants_.publishFromAccount());
       appName_ = new AppNameTextbox(this);
       
       // when the account list finishes populating, select the account from the
@@ -422,7 +422,34 @@ public class RSConnectDeploy extends Composite
       source_ = source;
       contentType_ = contentType;
       asMultipleRmd_ = asMultipleRmd;
-      
+
+      // for Plumber APIs and static Rmd docs, we want to allow for posit.cloud but not for shinyapps.io
+      boolean isPositCloudContent = contentType == RSConnect.CONTENT_TYPE_PLUMBER_API ||
+         contentType == RSConnect.CONTENT_TYPE_DOCUMENT || contentType == RSConnect.CONTENT_TYPE_PRES;
+
+      if (isPositCloudContent)
+      {
+         addAccountAnchor_.setClickHandler(() ->
+         {
+            connector_.showAccountWizard(false,
+               true,
+               successful ->
+               {
+                  if (successful)
+                  {
+                     accountList_.refreshAccountList();
+                  }
+               });
+         });
+      }
+
+
+      if (isPositCloudContent != accountList_.getShowPositCloudAccounts())
+      {
+         accountList_.setShowPositCloudAccounts(isPositCloudContent);
+         accountList_.refreshAccountList();
+      }
+
       // we want to show cloud accounts only for non-static content
       if (source.isShiny() != accountList_.getShowCloudAccounts())
       {
@@ -531,7 +558,7 @@ public class RSConnectDeploy extends Composite
       if (getSelectedAccount() == null)
          return true;
       else
-         return !getSelectedAccount().isCloudAccount();
+         return !getSelectedAccount().isShinyAppsAccount();
    }
 
    @Override

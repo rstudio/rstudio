@@ -1,10 +1,10 @@
 /*
  * EditingPreferencesPane.java
  *
- * Copyright (C) 2022 by RStudio, PBC
+ * Copyright (C) 2022 by Posit Software, PBC
  *
- * Unless you have received this program directly from RStudio pursuant
- * to the terms of a commercial license agreement with RStudio, then
+ * Unless you have received this program directly from Posit Software pursuant
+ * to the terms of a commercial license agreement with Posit Software, then
  * this program is licensed to you under the terms of version 3 of the
  * GNU Affero General Public License. This program is distributed WITHOUT
  * ANY EXPRESS OR IMPLIED WARRANTY, INCLUDING THOSE OF NON-INFRINGEMENT,
@@ -70,10 +70,18 @@ public class EditingPreferencesPane extends PreferencesPane
       prefs_ = prefs;
       server_ = server;
       commands_ = commands;
+
+      boolean hasProject = session.getSessionInfo().getActiveProjectFile() != null;
+
       PreferencesDialogBaseResources baseRes = PreferencesDialogBaseResources.INSTANCE;
 
       VerticalTabPanel editingPanel = new VerticalTabPanel(ElementIds.EDIT_EDITING_PREFS);
-      editingPanel.add(headerLabel(constants_.generalHeaderLabel()));
+      
+      // Extra UI shown when a project is open makes the pane overflow on some
+      // browsers, so don't display initial "General" section title to regain
+      // some vertical space.
+      if (!hasProject)
+         editingPanel.add(headerLabel(constants_.generalHeaderLabel()));
 
       editingPanel.add(tight(spacesForTab_ = checkboxPref(prefs_.useSpacesForTab(),false /*defaultSpace*/)));
       editingPanel.add(indent(tabWidth_ = numericPref(constants_.editingTabWidthLabel(), 1, UserPrefs.MAX_TAB_WIDTH,
@@ -95,6 +103,10 @@ public class EditingPreferencesPane extends PreferencesPane
             constants_.editingHighlightWebLinkLabel(),
             prefs_.highlightWebLink(),
             constants_.editingHighlightWebLinkDesc()));
+      editingPanel.add(indent(editorScrollMultiplier_ = numericPref(constants_.editorScrollMultiplier(), constants_.editorScrollMultiplierDesc(),
+              1, UserPrefs.MAX_EDITOR_SCROLL_MULTIPLIER,
+              prefs_.editorScrollMultiplier())));
+      editorScrollMultiplier_.setWidth("38px");
 
       delimiterSurroundWidget_ = new SelectWidget(constants_.editingSurroundSelectionLabel(),
          (Prefs.EnumValue) prefs_.surroundSelection(),
@@ -147,8 +159,6 @@ public class EditingPreferencesPane extends PreferencesPane
       projectPrefsPanel.add(editProjectSettings);
       editingPanel.add(projectPrefsPanel);
 
-      String activeProjectFile = session.getSessionInfo().getActiveProjectFile();
-      boolean hasProject = activeProjectFile != null;
       projectPrefsPanel.setVisible(hasProject);
 
       Label executionLabel = headerLabel(constants_.editingExecutionLabel());
@@ -201,14 +211,17 @@ public class EditingPreferencesPane extends PreferencesPane
       displayPanel.add(tight(showMargin_ = checkboxPref(constants_.displayShowMarginLabel(), prefs_.showMargin(), false /*defaultSpace*/)));
       displayPanel.add(indent(marginCol_ = numericPref(prefs_.marginColumn())));
       displayPanel.add(checkboxPref(constants_.displayShowInvisiblesLabel(), prefs_.showInvisibles()));
-      displayPanel.add(checkboxPref(constants_.displayShowIndentGuidesLabel(), prefs_.showIndentGuides()));
+      indentGuides_ = new SelectWidget(
+         prefs_.indentGuides().getTitle() + ":",
+         (Prefs.EnumValue) prefs_.indentGuides(),
+         false,
+         true,
+         false);
+      displayPanel.add(indentGuides_);
       displayPanel.add(checkboxPref(constants_.displayBlinkingCursorLabel(), prefs_.blinkingCursor()));
       displayPanel.add(checkboxPref(constants_.displayScrollPastEndOfDocumentLabel(), prefs_.scrollPastEndOfDocument()));
       displayPanel.add(checkboxPref(constants_.displayEnableTextDragLabel(), prefs_.enableTextDrag()));
-      displayPanel.add(checkboxPref(prefs_.highlightRFunctionCalls()));
-      displayPanel.add(extraSpaced(
-         checkboxPref(prefs_.rainbowParentheses(), false /* defaultSpace */)));
-
+      
       foldMode_ = new SelectWidget(
             constants_.displayFoldStyleLabel(),
             (Prefs.EnumValue) prefs_.foldStyle(),
@@ -218,6 +231,11 @@ public class EditingPreferencesPane extends PreferencesPane
 
       displayPanel.add(foldMode_);
 
+      displayPanel.add(headerLabel(constants_.syntaxHeaderLabel()));
+      displayPanel.add(checkboxPref(prefs_.highlightRFunctionCalls()));
+      displayPanel.add(checkboxPref(prefs_.colorPreview()));
+      displayPanel.add(checkboxPref(prefs_.rainbowParentheses()));
+      
       VerticalTabPanel savePanel = new VerticalTabPanel(ElementIds.EDIT_SAVING_PREFS);
 
       savePanel.add(headerLabel(constants_.generalHeaderLabel()));
@@ -509,6 +527,7 @@ public class EditingPreferencesPane extends PreferencesPane
       showCompletionsOther_.setValue(prefs_.codeCompletionOther().getValue());
       editorMode_.setValue(prefs_.editorKeybindings().getValue());
       foldMode_.setValue(prefs_.foldStyle().getValue());
+      indentGuides_.setValue(prefs.indentGuides().getValue());
       delimiterSurroundWidget_.setValue(prefs_.surroundSelection().getValue());
       executionBehavior_.setValue(prefs_.executionBehavior().getValue());
       autoSaveOnIdle_.setValue(prefs_.autoSaveOnIdle().getValue());
@@ -551,6 +570,7 @@ public class EditingPreferencesPane extends PreferencesPane
       else
          ShortcutManager.INSTANCE.setEditorMode(KeyboardShortcut.MODE_DEFAULT);
 
+      prefs_.indentGuides().setGlobalValue(indentGuides_.getValue());
       prefs_.foldStyle().setGlobalValue(foldMode_.getValue());
       prefs_.surroundSelection().setGlobalValue(delimiterSurroundWidget_.getValue());
       prefs_.executionBehavior().setGlobalValue(executionBehavior_.getValue());
@@ -573,7 +593,8 @@ public class EditingPreferencesPane extends PreferencesPane
              (!showMargin_.getValue() || marginCol_.validate()) &&
              alwaysCompleteChars_.validate() &&
              alwaysCompleteDelayMs_.validate() &&
-             backgroundDiagnosticsDelayMs_.validate();
+             backgroundDiagnosticsDelayMs_.validate() &&
+             editorScrollMultiplier_.validate();
    }
 
    @Override
@@ -594,6 +615,7 @@ public class EditingPreferencesPane extends PreferencesPane
    private final UserPrefs prefs_;
    private final SourceServerOperations server_;
    private final Commands commands_;
+   private final NumericValueWidget editorScrollMultiplier_;
    private final NumericValueWidget tabWidth_;
    private final NumericValueWidget marginCol_;
    private final LineEndingsSelectWidget lineEndings_;
@@ -607,6 +629,7 @@ public class EditingPreferencesPane extends PreferencesPane
    private final SelectWidget showCompletionsOther_;
    private final SelectWidget editorMode_;
    private final SelectWidget foldMode_;
+   private final SelectWidget indentGuides_;
    private final SelectWidget delimiterSurroundWidget_;
    private final SelectWidget executionBehavior_;
    private final SelectWidget autoSaveOnIdle_;

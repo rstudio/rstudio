@@ -4,7 +4,7 @@ namespace server
 {
 namespace db
 {
-    enum DatasetVersion { JulietRose, GhostOrchid };
+    enum DatasetVersion { JulietRose, GhostOrchid, PrairieTrillium, SpottedWakerobin };
     enum DatasetType { Sqlite, Postgres };
 }
 }

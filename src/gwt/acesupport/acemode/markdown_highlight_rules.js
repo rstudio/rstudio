@@ -1,15 +1,15 @@
 /*
  * markdown_highlight_rules.js
  *
- * Copyright (C) 2022 by RStudio, PBC
+ * Copyright (C) 2022 by Posit Software, PBC
  *
  * The Initial Developer of the Original Code is
  * Ajax.org B.V.
  * Portions created by the Initial Developer are Copyright (C) 2010
  * the Initial Developer. All Rights Reserved.
  *
- * Unless you have received this program directly from RStudio pursuant
- * to the terms of a commercial license agreement with RStudio, then
+ * Unless you have received this program directly from Posit Software pursuant
+ * to the terms of a commercial license agreement with Posit Software, then
  * this program is licensed to you under the terms of version 3 of the
  * GNU Affero General Public License. This program is distributed WITHOUT
  * ANY EXPRESS OR IMPLIED WARRANTY, INCLUDING THOSE OF NON-INFRINGEMENT,
@@ -57,6 +57,9 @@ var JavaScriptHighlightRules = require("ace/mode/javascript_highlight_rules").Ja
 var XmlHighlightRules = require("ace/mode/xml_highlight_rules").XmlHighlightRules;
 var HtmlHighlightRules = require("ace/mode/html_highlight_rules").HtmlHighlightRules;
 var CssHighlightRules = require("ace/mode/css_highlight_rules").CssHighlightRules;
+var ScssHighlightRules = require("ace/mode/scss_highlight_rules").ScssHighlightRules;
+var SassHighlightRules = require("ace/mode/sass_highlight_rules").SassHighlightRules;
+var LessHighlightRules = require("ace/mode/less_highlight_rules").LessHighlightRules;
 var PerlHighlightRules = require("ace/mode/perl_highlight_rules").PerlHighlightRules;
 var PythonHighlightRules = require("mode/python_highlight_rules").PythonHighlightRules;
 var RubyHighlightRules = require("ace/mode/ruby_highlight_rules").RubyHighlightRules;
@@ -64,6 +67,9 @@ var ScalaHighlightRules = require("ace/mode/scala_highlight_rules").ScalaHighlig
 var ShHighlightRules = require("mode/sh_highlight_rules").ShHighlightRules;
 var StanHighlightRules = require("mode/stan_highlight_rules").StanHighlightRules;
 var SqlHighlightRules = require("mode/sql_highlight_rules").SqlHighlightRules;
+var MermaidHighlightRules = require("mode/mermaid_highlight_rules").MermaidHighlightRules;
+var DotHighlightRules = require("ace/mode/dot_highlight_rules").DotHighlightRules;
+
 
 var escaped = function(ch) {
     return "(?:[^" + lang.escapeRegExp(ch) + "\\\\]|\\\\.)*";
@@ -201,6 +207,11 @@ var MarkdownHighlightRules = function() {
         github_embed("xml", "xmlcode-"),
         github_embed("html", "htmlcode-"),
         github_embed("css", "csscode-"),
+        github_embed("scss", "scsscode-"),
+        github_embed("sass", "sasscode-"),
+        github_embed("less", "lesscode-"),
+        github_embed("mermaid", "mermaidcode-"),
+        github_embed("dot", "dotcode-"),
         github_embed("perl", "perlcode-"),
         github_embed("python", "pythoncode-"),
         github_embed("ruby", "rubycode-"),
@@ -462,6 +473,24 @@ var MarkdownHighlightRules = function() {
         next  : "pop"
     }]);
 
+    this.embedRules(ScssHighlightRules, "scsscode-", [{
+        token : "support.function",
+        regex : "^\\s*```",
+        next  : "pop"
+    }]);
+
+    this.embedRules(SassHighlightRules, "sasscode-", [{
+        token : "support.function",
+        regex : "^\\s*```",
+        next  : "pop"
+    }]);
+
+    this.embedRules(LessHighlightRules, "lesscode-", [{
+        token : "support.function",
+        regex : "^\\s*```",
+        next  : "pop"
+    }]);
+
     this.embedRules(XmlHighlightRules, "xmlcode-", [{
         token : "support.function",
         regex : "^\\s*```",
@@ -481,6 +510,18 @@ var MarkdownHighlightRules = function() {
     }]);
     
     this.embedRules(RubyHighlightRules, "rubycode-", [{
+        token : "support.function",
+        regex : "^\\s*```",
+        next  : "pop"
+    }]);
+    
+    this.embedRules(MermaidHighlightRules, "mermaidcode-", [{
+        token : "support.function",
+        regex : "^\\s*```",
+        next  : "pop"
+    }]);
+    
+    this.embedRules(DotHighlightRules, "dotcode-", [{
         token : "support.function",
         regex : "^\\s*```",
         next  : "pop"

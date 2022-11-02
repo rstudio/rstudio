@@ -1,10 +1,10 @@
 /*
  * PackagesPreferencesPane.java
  *
- * Copyright (C) 2022 by RStudio, PBC
+ * Copyright (C) 2022 by Posit Software, PBC
  *
- * Unless you have received this program directly from RStudio pursuant
- * to the terms of a commercial license agreement with RStudio, then
+ * Unless you have received this program directly from Posit Software pursuant
+ * to the terms of a commercial license agreement with Posit Software, then
  * this program is licensed to you under the terms of version 3 of the
  * GNU Affero General Public License. This program is distributed WITHOUT
  * ANY EXPRESS OR IMPLIED WARRANTY, INCLUDING THOSE OF NON-INFRINGEMENT,
@@ -47,10 +47,12 @@ import org.rstudio.studio.client.common.mirrors.DefaultCRANMirror;
 import org.rstudio.studio.client.common.mirrors.model.CRANMirror;
 import org.rstudio.studio.client.common.mirrors.model.MirrorsServerOperations;
 import org.rstudio.studio.client.common.repos.SecondaryReposWidget;
+import org.rstudio.studio.client.projects.model.RProjectOptions;
 import org.rstudio.studio.client.server.ServerError;
 import org.rstudio.studio.client.workbench.model.Session;
 import org.rstudio.studio.client.workbench.prefs.PrefsConstants;
 import org.rstudio.studio.client.workbench.prefs.model.UserPrefs;
+import org.rstudio.studio.client.workbench.projects.RenvContext;
 
 public class PackagesPreferencesPane extends PreferencesPane
 {
@@ -78,6 +80,7 @@ public class PackagesPreferencesPane extends PreferencesPane
       infoBar_ = new InfoBar(InfoBar.WARNING);
       infoBar_.setText(constants_.packagesInfoBarText());
       infoBar_.addStyleName(res_.styles().themeInfobar());
+      infoBar_.getElement().setId(ElementIds.PACKAGE_INFO_BAR);
       spaced(infoBar_);
 
       ClickHandler selectPrimaryRepo = (clickEvent) ->
@@ -338,6 +341,25 @@ public class PackagesPreferencesPane extends PreferencesPane
             @Override
             public void onError(ServerError error)
             {
+               Debug.logError(error);
+            }
+         }
+      );
+   
+      // If renv is managing our repos, make the info bar more specific
+      server_.readProjectOptions(
+         new SimpleRequestCallback<RProjectOptions>() {
+            @Override
+            public void onResponseReceived(RProjectOptions rProjectOptions) {
+               RenvContext renvCtx = rProjectOptions.getRenvContext();
+               if (renvCtx.active) {
+                  infoBar_.setText(constants_.packagesRenvInfoBarText());
+                  infoBar_.addStyleName(res_.styles().themeInfobarShowing());
+               }
+            }
+         
+            @Override
+            public void onError(ServerError error) {
                Debug.logError(error);
             }
          }

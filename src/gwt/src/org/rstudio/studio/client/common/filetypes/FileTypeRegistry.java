@@ -1,10 +1,10 @@
 /*
  * FileTypeRegistry.java
  *
- * Copyright (C) 2022 by RStudio, PBC
+ * Copyright (C) 2022 by Posit Software, PBC
  *
- * Unless you have received this program directly from RStudio pursuant
- * to the terms of a commercial license agreement with RStudio, then
+ * Unless you have received this program directly from Posit Software pursuant
+ * to the terms of a commercial license agreement with Posit Software, then
  * this program is licensed to you under the terms of version 3 of the
  * GNU Affero General Public License. This program is distributed WITHOUT
  * ANY EXPRESS OR IMPLIED WARRANTY, INCLUDING THOSE OF NON-INFRINGEMENT,
@@ -20,7 +20,6 @@ import com.google.gwt.core.client.GWT;
 import org.rstudio.core.client.FilePosition;
 import org.rstudio.core.client.files.FileSystemItem;
 import org.rstudio.core.client.resources.ImageResource2x;
-import org.rstudio.studio.client.application.Desktop;
 import org.rstudio.studio.client.application.events.EventBus;
 import org.rstudio.studio.client.common.GlobalDisplay;
 import org.rstudio.studio.client.common.StudioClientCommonConstants;
@@ -144,7 +143,13 @@ public class FileTypeRegistry
                           new ImageResource2x(ICONS.iconScss2x()),
                           true,
                           false, false, false, false, false, false, false, false, false, false, false, false);
-
+   
+   public static final TextFileType LESS =
+         new TextFileType("less", "LESS", EditorLanguage.LANG_LESS, ".less",
+                          new ImageResource2x(ICONS.iconLess2x()),
+                          true,
+                          false, false, false, false, false, false, false, false, false, false, false, false);
+                 
    public static final TextFileType JS =
          new TextFileType("js", "JavaScript", EditorLanguage.LANG_JAVASCRIPT, ".js",
                           new ImageResource2x(ICONS.iconJavascript2x()),
@@ -327,6 +332,8 @@ public class FileTypeRegistry
       register("README", TEXT, new ImageResource2x(icons.iconText2x()));
       register(".gitignore", TEXT, new ImageResource2x(icons.iconText2x()));
       register(".Rbuildignore", TEXT, new ImageResource2x(icons.iconText2x()));
+      register(".lintr", TEXT, new ImageResource2x(icons.iconText2x()));
+      register("renv.lock", JSON, new ImageResource2x(icons.iconDCF2x()));
       register("packrat.lock", DCF, new ImageResource2x(icons.iconDCF2x()));
       register("*.r", R, new ImageResource2x(icons.iconRdoc2x()));
       register("*.q", R, new ImageResource2x(icons.iconRdoc2x()));
@@ -386,6 +393,7 @@ public class FileTypeRegistry
       register("*.css", CSS, new ImageResource2x(icons.iconCss2x()));
       register("*.sass", SASS, new ImageResource2x(icons.iconScss2x()));
       register("*.scss", SCSS, new ImageResource2x(icons.iconScss2x()));
+      register("*.less", LESS, new ImageResource2x(icons.iconLess2x()));
       register("*.js", JS, new ImageResource2x(icons.iconJavascript2x()));
       register("*.ts", JS, new ImageResource2x(icons.iconJavascript2x()));
       register("*.ojs", JS, new ImageResource2x(icons.iconJavascript2x()));
@@ -443,6 +451,7 @@ public class FileTypeRegistry
       register("*.el", LISP, new ImageResource2x(icons.iconLisp2x()));
       register("*.lua", LUA, new ImageResource2x(icons.iconLua2x()));
       register("*.m", MATLAB, new ImageResource2x(icons.iconMatlab2x()));
+      register("*.nf", GROOVY, new ImageResource2x(icons.iconGroovy2x()));
       register("*.pl", PERL, new ImageResource2x(icons.iconPerl2x()));
       register("*.rb", RUBY, new ImageResource2x(icons.iconRuby2x()));
       register("*.rs", RUST, new ImageResource2x(icons.iconRust2x()));
@@ -607,12 +616,9 @@ public class FileTypeRegistry
    public FileType getTypeForFile(FileSystemItem file)
    {
       // last ditch default type -- see if this either a known text file type
-      // or (for server mode) NOT a known binary type. the result of this is
+      // or NOT a known binary type. the result of this is
       // that unknown files types are treated as text and opened in the editor
-      // (we don't do this on desktop because  in that case users have the
-      // recourse of using a local editor)
-      String defaultType = Desktop.isDesktop() ? "application/octet-stream" :
-                                                 "text/plain";
+      String defaultType = "text/plain";
       return getTypeForFile(file, defaultType);
    }
 

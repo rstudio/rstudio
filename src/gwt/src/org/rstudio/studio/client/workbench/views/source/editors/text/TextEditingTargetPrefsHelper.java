@@ -1,10 +1,10 @@
 /*
  * TextEditingTargetPrefsHelper.java
  *
- * Copyright (C) 2022 by RStudio, PBC
+ * Copyright (C) 2022 by Posit Software, PBC
  *
- * Unless you have received this program directly from RStudio pursuant
- * to the terms of a commercial license agreement with RStudio, then
+ * Unless you have received this program directly from Posit Software pursuant
+ * to the terms of a commercial license agreement with Posit Software, then
  * this program is licensed to you under the terms of version 3 of the
  * GNU Affero General Public License. This program is distributed WITHOUT
  * ANY EXPRESS OR IMPLIED WARRANTY, INCLUDING THOSE OF NON-INFRINGEMENT,
@@ -110,10 +110,10 @@ public class TextEditingTargetPrefsHelper
             {
                docDisplay.setShowInvisibles(arg);
             }));
-      releaseOnDismiss.add(prefs.showIndentGuides().bind(
+      releaseOnDismiss.add(prefs.indentGuides().bind(
             (arg) ->
             {
-               docDisplay.setShowIndentGuides(arg);
+               docDisplay.setIndentGuides(IndentGuideStyle.fromPref(arg));
             }));
       releaseOnDismiss.add(prefs.scrollPastEndOfDocument().bind(
             (arg) ->
@@ -124,6 +124,11 @@ public class TextEditingTargetPrefsHelper
             (arg) ->
             {
                docDisplay.setHighlightRFunctionCalls(arg);
+            }));
+      releaseOnDismiss.add(prefs.colorPreview().bind(
+            (arg) ->
+            {
+               docDisplay.setColorPreview(arg);
             }));
       releaseOnDismiss.add(prefs.rainbowParentheses().bind(
             (arg) ->

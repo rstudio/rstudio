@@ -1,0 +1,43 @@
+---
+title: "renv"
+---
+
+The [`renv` package](https://rstudio.github.io/renv/articles/renv.html) helps you create **r**eproducible **env**ironments for your R projects. Use `renv` to make your R projects more:
+
+**Isolated**: Installing a new or updated package for one project won't break your other projects, and vice versa. That's because `renv` gives each project its own private package library.
+
+**Portable**: Easily transport your projects from one computer to another, even across different platforms. `renv` makes it easy to install the packages your project depends on.
+
+**Reproducible**: `renv` records the exact package versions you depend on, and ensures those exact versions are the ones that get installed wherever you go.
+
+## Workflow
+
+The general workflow when working with `renv` is:
+
+1.  Call [`renv::init()`](https://rstudio.github.io/renv/reference/init.html) to initialize a new project-local environment with a private R library,
+
+2.  Work in the project as normal, installing and removing new R packages as they are needed in the project,
+
+3.  Call [`renv::snapshot()`](https://rstudio.github.io/renv/reference/snapshot.html) to save the state of the project library to the lockfile (called `renv.lock`),
+
+4.  Continue working on your project, installing and updating R packages as needed.
+
+5.  Call [`renv::snapshot()`](https://rstudio.github.io/renv/reference/snapshot.html) again to save the state of your project library if your attempts to update R packages were successful, or call [`renv::restore()`](https://rstudio.github.io/renv/reference/restore.html) to revert to the previous state as encoded in the lockfile if your attempts to update packages introduced some new problems.
+
+The [`renv::init()`](https://rstudio.github.io/renv/reference/init.html) function attempts to ensure the newly-created project library includes all R packages currently used by the project. It does this by crawling R files within the project for dependencies with the [`renv::dependencies()`](https://rstudio.github.io/renv/reference/dependencies.html) function. The discovered packages are then installed into the project library with the [`renv::hydrate()`](https://rstudio.github.io/renv/reference/hydrate.html) function, which will also attempt to save time by copying packages from your user library (rather than reinstalling from CRAN) as appropriate.
+
+Calling [`renv::init()`](https://rstudio.github.io/renv/reference/init.html) will also write out the infrastructure necessary to automatically load and use the private library for new R sessions launched from the project root directory. This is accomplished by creating (or amending) a project-local `.Rprofile` with the necessary code to load the project when the R session is started.
+
+If you'd like to initialize a project without attempting dependency discovery and installation -- that is, you'd prefer to manually install the packages your project requires on your own -- you can use `renv::init(bare = TRUE)` to initialize a project with an empty project library.
+
+For full details, see the [`renv` package documentation](https://rstudio.github.io/renv/articles/renv.html).
+
+## New project, use renv with this project
+
+The general details on creating a new Project in RStudio are covered in [RStudio Projects](../../code/projects.html). Users can opt in to using `renv` when creating a new Project in RStudio.
+
+![](images/use-renv-with-project.png){fig-alt="The New Project wizard in RStudio, with the 'use renv with this project' option selected."}
+
+Select the **Use renv with this project** checkbox, and the new project will automatically create and activate the necessary scaffolding for `renv` within that project. Since those files now exist in the newly created project, you can skip step 1 from the above [workflow](#Workflow).
+
+![](images/new-renv-project.png){fig-alt="The Files pane in RStudio, displaying the newly created project with a 'renv' folder, a renv.lock file, and a .Rprofile."}

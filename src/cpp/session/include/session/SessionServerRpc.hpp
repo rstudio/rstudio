@@ -1,10 +1,10 @@
 /*
  * SessionServerRpc.hpp
  *
- * Copyright (C) 2022 by RStudio, PBC
+ * Copyright (C) 2022 by Posit Software, PBC
  *
- * Unless you have received this program directly from RStudio pursuant
- * to the terms of a commercial license agreement with RStudio, then
+ * Unless you have received this program directly from Posit Software pursuant
+ * to the terms of a commercial license agreement with Posit Software, then
  * this program is licensed to you under the terms of version 3 of the
  * GNU Affero General Public License. This program is distributed WITHOUT
  * ANY EXPRESS OR IMPLIED WARRANTY, INCLUDING THOSE OF NON-INFRINGEMENT,
@@ -18,11 +18,15 @@
 
 #include <shared_core/Error.hpp>
 #include <shared_core/json/Json.hpp>
+
 #include <core/SocketRpc.hpp>
+#include <core/json/JsonRpc.hpp>
 
 namespace rstudio {
 namespace session {
 namespace server_rpc {
+
+core::Error invokeServerRpc(const core::json::JsonRpcRequest& request, core::json::JsonRpcResponse* pResponse);
 
 core::Error invokeServerRpc(const std::string& endpoint,
                             const core::json::Object& request,

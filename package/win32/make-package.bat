@@ -12,6 +12,14 @@ set NOZIP=
 set CLEANBUILD=
 set RSTUDIO_TARGET=Desktop
 set PACKAGE_VERSION_SET=
+set DEBUG_BUILD=
+
+REM Produce multiarch builds by default on Jenkins.
+if defined JENKINS_URL (
+	set MULTIARCH=1
+) else (
+	set MULTIARCH=0
+)
 
 if "%1" == "--help" goto :showhelp
 if "%1" == "-h" goto :showhelp
@@ -19,12 +27,19 @@ if "%1" == "help" goto :showhelp
 if "%1" == "/?" goto :showhelp
 
 for %%A in (%*) do (
-      if /I "%%A" == "clean" set CLEANBUILD=1
-      if /I "%%A" == "quick" set QUICK=1
-      if /I "%%A" == "nozip" set NOZIP=1
-      if /I "%%A" == "electron" set RSTUDIO_TARGET=Electron
+      if /I "%%A" == "clean" set CLEANBUILD=1	  
+      if /I "%%A" == "debug" set DEBUG_BUILD=1
       if /I "%%A" == "desktop" set RSTUDIO_TARGET=Desktop
+      if /I "%%A" == "electron" set RSTUDIO_TARGET=Electron
+      if /I "%%A" == "multiarch" set MULTIARCH=1
       if /I "%%A" == "nogwt" set BUILD_GWT=0
+      if /I "%%A" == "nozip" set NOZIP=1
+      if /I "%%A" == "quick" set QUICK=1
+)
+
+REM check for debug build
+if defined DEBUG_BUILD (
+      set CMAKE_BUILD_TYPE=Debug
 )
 
 REM clean if requested
@@ -73,6 +88,13 @@ echo Using npx: %NPX%
 
 REM Put node on the path
 set PATH=%NODE_DIR%;%PATH%
+
+set REZH=%PACKAGE_DIR%\..\..\dependencies\windows\resource-hacker\ResourceHacker.exe
+if not exist %REZH% (
+      echo ResourceHacker.exe not found; re-run install-dependencies.cmd and try again; exiting
+      endlocal
+      exit /b 1
+)
 
 REM Build for desktop
 set GWT_MAIN_MODULE=RStudioDesktop
@@ -139,10 +161,21 @@ cmake -G "Ninja" ^
       ..\..\.. || goto :error
 cmake --build . --config %CMAKE_BUILD_TYPE% -- %MAKEFLAGS% || goto :error
 
+REM add icon for .rproj file extension
+if "%RSTUDIO_TARGET%" == "Electron" (
+      pushd %ELECTRON_SOURCE_DIR%
+      cd out\RStudio-win32-x64
+      %REZH% -open rstudio.exe -save rstudio.exe.new -action add -resource ..\..\resources\icons\RProject.ico -mask ICONGROUP,2,1033
+      del rstudio.exe
+      rename rstudio.exe.new rstudio.exe
+      popd
+)
 cd ..
 
 REM perform 32-bit build and install it into the 64-bit tree
-call make-install-win32.bat "%PACKAGE_DIR%\%BUILD_DIR%\src\cpp\session" %* || goto :error
+if "%MULTIARCH%" == "1" (
+	call make-install-win32.bat "%PACKAGE_DIR%\%BUILD_DIR%\src\cpp\session" %* || goto :error
+)
 
 REM create packages
 cd "%BUILD_DIR%"
@@ -173,13 +206,18 @@ echo Failed to build RStudio! Error: %ERRORLEVEL%
 exit /b %ERRORLEVEL%
 
 :showhelp
-echo make-package [clean] [quick] [nozip] [electron] [desktop] [nogwt]
-echo     clean: full rebuild
-echo     quick: skip creation of setup package
-echo     nozip: skip creation of ZIP file
-echo     electron: build Electron instead of Qt desktop
-echo     desktop: build Qt desktop (default)
-echo     nogwt: use results of last GWT build
+echo.
+echo make-package [clean] [debug] [desktop] [electron] [multiarch] [nogwt] [nozip] [quick]
+echo.
+echo     clean:      perform full rebuild
+echo     debug:      perform a debug build
+echo     desktop:    build Qt desktop (default)
+echo     electron:   build Electron instead of Qt desktop
+echo     multiarch:  produce both 32-bit and 64-bit rsession executables
+echo     nogwt:      skip GWT build (use previous GWT build)
+echo     nozip:      skip creation of ZIP file
+echo     quick:      skip creation of setup package
+echo.
 exit /b 0
 
 REM For a full package build the package.json file gets modified with the 
@@ -189,6 +227,15 @@ REM put these back to their original state at the end of the package build.
 :set-version
 if "%RSTUDIO_TARGET%" == "Electron" (
       pushd %ELECTRON_SOURCE_DIR%
+
+      echo ensure msvs_version=2019
+      call %NPM% set msvs_version 2019
+
+      echo ensure node-gyp installed for node %RSTUDIO_NODE_VERSION%
+      call %NPX% node-gyp install %RSTUDIO_NODE_VERSION%
+      echo %LOCALAPPDATA%\node-gyp\Cache\%RSTUDIO_NODE_VERSION%\include\node
+      dir %LOCALAPPDATA%\node-gyp\Cache\%RSTUDIO_NODE_VERSION%\include\node
+
       call %NPM% ci
 
       REM Set package.json info

@@ -1,10 +1,10 @@
 /*
  * PrefsConstants.java
  *
- * Copyright (C) 2022 by RStudio, PBC
+ * Copyright (C) 2022 by Posit Software, PBC
  *
- * Unless you have received this program directly from RStudio pursuant
- * to the terms of a commercial license agreement with RStudio, then
+ * Unless you have received this program directly from Posit Software pursuant
+ * to the terms of a commercial license agreement with Posit Software, then
  * this program is licensed to you under the terms of version 3 of the
  * GNU Affero General Public License. This program is distributed WITHOUT
  * ANY EXPRESS OR IMPLIED WARRANTY, INCLUDING THOSE OF NON-INFRINGEMENT,
@@ -1104,6 +1104,25 @@ public interface PrefsConstants extends com.google.gwt.i18n.client.Messages {
     String pdfPreviewSystemViewerOption();
 
     /**
+     * Translated "Execution".
+     *
+     * @return translated "Execution"
+     */
+    @DefaultMessage("Execution")
+    @Key("consoleExecutionLabel")
+    String consoleExecutionLabel();
+    
+    /**
+     * Translated "Discard pending console input on error".
+     *
+     * @return translated "Discard pending console input on error"
+     */
+    @DefaultMessage("Discard pending console input on error")
+    @Key("consoleDiscardPendingConsoleInputOnErrorLabel")
+    String consoleDiscardPendingConsoleInputOnErrorLabel();
+    
+    
+    /**
      * Translated "Display".
      *
      * @return translated "Display"
@@ -1875,6 +1894,15 @@ public interface PrefsConstants extends com.google.gwt.i18n.client.Messages {
     @DefaultMessage("CRAN repositories modified outside package preferences.")
     @Key("packagesInfoBarText")
     String packagesInfoBarText();
+    
+    /**
+     * Translated "Repositories are being managed by a renv.lock file".
+     *
+     * @return translated "Repositories are being managed by a renv.lock file"
+     */
+    @DefaultMessage("Repositories are being managed by a renv.lock file")
+    @Key("packagesRenvInfoBarText")
+    String packagesRenvInfoBarText();
 
     /**
      * Translated "Primary CRAN repository:".
@@ -4116,6 +4144,15 @@ public interface PrefsConstants extends com.google.gwt.i18n.client.Messages {
     String generalHeaderLabel();
 
     /**
+     * Translated "Syntax".
+     *
+     * @return translated "Syntax"
+     */
+    @DefaultMessage("Syntax")
+    @Key("syntaxHeaderLabel")
+    String syntaxHeaderLabel();
+
+    /**
      * Translated "Edit Snippets...".
      *
      * @return translated "Edit Snippets..."
@@ -4492,6 +4529,24 @@ public interface PrefsConstants extends com.google.gwt.i18n.client.Messages {
     @DefaultMessage("Tab width")
     @Key("editingTabWidthLabel")
     String editingTabWidthLabel();
+
+    /**
+     * Translated "Editor scroll speed sensitivity"
+     *
+     * @return translated "Editor scroll speed sensitivity"
+     */
+    @DefaultMessage("Editor scroll speed sensitivity")
+    @Key("editorScrollMultiplier")
+    String editorScrollMultiplier();
+
+    /**
+     * Translated "Adjust the editor scroll speed sensitivity. Higher is faster."
+     *
+     * @return translated "Adjust the editor scroll speed sensitivity. Higher is faster."
+     */
+    @DefaultMessage("Adjust the editor scroll speed sensitivity. Higher is faster.")
+    @Key("editorScrollMultiplierDesc")
+    String editorScrollMultiplierDesc();
 
     /**
      * Translated "Auto-detect code indentation"
@@ -5051,4 +5106,24 @@ public interface PrefsConstants extends com.google.gwt.i18n.client.Messages {
     @DefaultMessage("Hide menu bar until Alt-key pressed")
     @Key("autohideMenubarLabel")
     String autohideMenubarLabel();
+    
+    /**
+     * Translated "Text rendering:"
+     *
+     * @return translated "Text rendering:"
+     */
+    @DefaultMessage("Text rendering:")
+    @Key("textRenderingLabel")
+    String textRenderingLabel();
+    
+    /**
+     * Translated "Geometric Precision"
+     *
+     * @return translated "Geometric Precision"
+     */
+    @DefaultMessage("Geometric Precision")
+    @Key("geometricPrecision")
+    String geometricPrecision();
+    
+    
 }

@@ -1,10 +1,10 @@
 /*
  * RSessionContext.hpp
  *
- * Copyright (C) 2022 by RStudio, PBC
+ * Copyright (C) 2022 by Posit Software, PBC
  *
- * Unless you have received this program directly from RStudio pursuant
- * to the terms of a commercial license agreement with RStudio, then
+ * Unless you have received this program directly from Posit Software pursuant
+ * to the terms of a commercial license agreement with Posit Software, then
  * this program is licensed to you under the terms of version 3 of the
  * GNU Affero General Public License. This program is distributed WITHOUT
  * ANY EXPRESS OR IMPLIED WARRANTY, INCLUDING THOSE OF NON-INFRINGEMENT,
@@ -23,6 +23,8 @@
 #include <iostream>
 
 #include <boost/function.hpp>
+
+#include <core/http/Util.hpp>
 
 #define kProjectNone               "none"
 #define kUserIdLen                 5
@@ -52,6 +54,8 @@ namespace core {
 class FilePath;
 
 namespace r_util {
+
+class IActiveSessionsStorage;
 
 enum SessionScopeState
 {
@@ -157,6 +161,8 @@ public:
 
    static SessionScope vscodeSession(const std::string& id);
 
+   static SessionScope fromSessionId(const std::string &id, const std::string& editor);
+
    SessionScope()
    {
    }
@@ -193,17 +199,24 @@ public:
               (project_ == other.project_ && id_ < other.id_);
    }
 
+   const std::string sessionId() const
+   {
+      return core::http::util::urlEncode(projectId().asString()) + id();
+   }
+
 private:
    ProjectId project_;
    std::string id_;
 };
 
-SessionScopeState validateSessionScope(const SessionScope& scope,
-                          const core::FilePath& userHomePath,
-                          const core::FilePath& userScratchPath,
-                          core::r_util::ProjectIdToFilePath projectIdToFilePath,
-                          bool projectSharingEnabled,
-                          std::string* pProjectFilePath);
+SessionScopeState validateSessionScope(
+   std::shared_ptr<IActiveSessionsStorage> storage,
+   const SessionScope& scope,
+   const core::FilePath& userHomePath,
+   const core::FilePath& userScratchPath,
+   core::r_util::ProjectIdToFilePath projectIdToFilePath,
+   bool projectSharingEnabled,
+   std::string* pProjectFilePath);
 
 bool isSharedPath(const std::string& projectPath,
                   const core::FilePath& userHomePath);

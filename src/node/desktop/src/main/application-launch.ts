@@ -1,10 +1,10 @@
 /*
  * application-launch.ts
  *
- * Copyright (C) 2022 by RStudio, PBC
+ * Copyright (C) 2022 by Posit Software, PBC
  *
- * Unless you have received this program directly from RStudio pursuant
- * to the terms of a commercial license agreement with RStudio, then
+ * Unless you have received this program directly from Posit Software pursuant
+ * to the terms of a commercial license agreement with Posit Software, then
  * this program is licensed to you under the terms of version 3 of the
  * GNU Affero General Public License. This program is distributed WITHOUT
  * ANY EXPRESS OR IMPLIED WARRANTY, INCLUDING THOSE OF NON-INFRINGEMENT,
@@ -17,6 +17,7 @@ import path from 'path';
 import { spawn } from 'child_process';
 import { existsSync, readdirSync } from 'fs';
 import { setenv, unsetenv } from '../core/environment';
+import { kRStudioInitialProject, kRStudioInitialWorkingDir } from '../core/r-user-data';
 import { MainWindow } from './main-window';
 import { app } from 'electron';
 
@@ -70,19 +71,23 @@ export class ApplicationLaunch {
 
     // resolve working directory
     const workingDir = options.workingDirectory ?? path.dirname(options.projectFilePath || '');
-    setenv('RS_INITIAL_WD', workingDir);
+    setenv(kRStudioInitialWorkingDir, workingDir);
 
     // resolve project file, if any
     const projectFile = options.projectFilePath ?? resolveProjectFile(workingDir);
     if (existsSync(projectFile)) {
-      setenv('RS_INITIAL_PROJECT', projectFile);
+      setenv(kRStudioInitialProject, projectFile);
     }
 
     // run it
-    spawn(process.execPath, argv, { detached: true });
+    const childProcess = spawn(process.execPath, argv,
+      {
+        detached: true,
+        stdio: 'ignore', // don't reuse the stdio from parent
+      });
+    childProcess.unref();
 
     // restore environment variables
-    unsetenv('RS_INSTALL_WD');
-    unsetenv('RS_INITIAL_PROJECT');
+    unsetenv(kRStudioInitialProject);
   }
 }

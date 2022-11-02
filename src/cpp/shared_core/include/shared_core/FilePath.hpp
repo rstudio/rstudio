@@ -1,10 +1,10 @@
 /*
  * FilePath.hpp
  *
- * Copyright (C) 2022 by RStudio, PBC
+ * Copyright (C) 2022 by Posit Software, PBC
  *
- * Unless you have received this program directly from RStudio pursuant to the terms of a commercial license agreement
- * with RStudio, then this program is licensed to you under the following terms:
+ * Unless you have received this program directly from Posit Software pursuant to the terms of a commercial license agreement
+ * with Posit, then this program is licensed to you under the following terms:
  *
  * Permission is hereby granted, free of charge, to any person obtaining a copy of this software and associated
  * documentation files (the "Software"), to deal in the Software without restriction, including without limitation the
@@ -467,6 +467,15 @@ public:
     * @return The name of the file, including the extension.
     */
    std::string getFilename() const;
+
+   /**
+    * @brief Get the last time this file path was written.
+    *
+    * @param out_lastWriteTime  The last write time of the file.
+    *
+    * @return Success if the last write time could be retrieved; Error otherwise.
+    */
+   core::Error getLastWriteTime(std::time_t& out_lastWriteTime) const;
 
    /**
     * @brief Get the last time this file path was written.

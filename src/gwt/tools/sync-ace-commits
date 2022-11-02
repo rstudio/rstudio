@@ -1,7 +1,7 @@
 #!/usr/bin/env bash
 set -e
 
-BRANCH=rstudio/spotted-wakerobin
+BRANCH=rstudio/elsbeth-geranium
 
 PROGRAMS=("git" "npm")
 for PROGRAM in "${PROGRAMS[@]}"; do
@@ -27,4 +27,3 @@ npm install
 cd ..
 
 ./build-ace
-

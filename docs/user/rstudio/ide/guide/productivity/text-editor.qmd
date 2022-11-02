@@ -1,0 +1,87 @@
+---
+title: "Text Editor"
+---
+
+RStudio's source editor includes a variety of productivity enhancing features including syntax highlighting, code completion, multiple-file editing, and find/replace.
+
+RStudio also enables flexible execution of R code directly from the source editor. For many R developers this represents their preferred way of working with R. Working in the source editor makes it much easier to reproduce sequences of commands and to package commands for re-use as a function. These features are described in the [Executing Code](../code/execution.html) section of the user guide.
+
+The core features listed below are accessible via the **Code Tools** "Magic Wand" dropdown menu in the **Source** pane.
+
+![](images/code-tools.png){fig-alt="Screenshot of the Code Tools dropdown"}
+
+Most of these features have corresponding keyboard shortcuts, which also means they can be accessed via the Command Palette (<kbd>Ctrl/Cmd + Shift + P</kbd>).
+
+![](images/rename-in-scope.png){fig-alt="A screenshot of the Command Palette with the search limited to 'Rename' symbol in scope"}
+
+## Code completion
+
+RStudio supports the automatic completion of code using the **Tab** key. For example, start typing `return` as `ret` then **Tab** and RStudio will automatically complete the full name of the function or object.
+
+![](images/tab-completion.png){fig-alt="Screenshot of RStudio's autocompletion of the 'return' function"}
+
+Code completion also works in the console, and more details on using it can be found in the console [Console](../code/console.html) documentation.
+
+## Extract Function
+
+RStudio can analyze a selection of code from within the source editor and automatically convert it into a re-usable function. Any "free" variables within the selection (objects that are referenced but not created within the selection) are converted into function arguments:
+
+![](images/extract-function-dropdown.png){fig-alt="Screenshot of the Code Tools > Extract Function button"}
+
+## Find and Replace
+
+RStudio supports finding and replacing text within source documents:
+
+![](images/find-replace.png){fig-alt="A screenshot of the Find and Replace text interface within a source file."}
+
+Find and replace can be opened using the <kbd>Ctrl+F</kbd> shortcut key, or from the **Edit** > **Find\...** menu item. Replacement can be done all at once or by stepping through each instance.
+
+## Comment/Uncomment
+
+RStudio provides the ability to comment and uncomment entire selections of code using the **Code > Comment/Uncomment Lines** menu item or with the <kbd>Command+Shift + C</kbd> keyboard shortcut.
+
+![](images/comment-uncomment.png){fig-alt="Screenshot of the 'Comment/Uncomment Lines' button" }
+
+## Multiple Cursors
+
+-   Press **Ctrl + Alt + {Up/Down}** to create a new cursor in the pressed direction,
+
+-   Press **Ctrl + Alt + Shift + {Direction}** to move a second cursor in the specified direction,
+
+-   Use **Alt** and drag with the mouse to create a rectangular selection,
+
+-   Use **Alt + Shift** and click to create a rectangular selection from the current cursor position to the clicked position.
+
+![](images/multicursor-lines.png){fig-alt="Screenshot of multiple cursors across 3 lines of code"}
+
+Use the "All" button on the **Find/Replace** toolbar to create cursors at each instance of a word.
+
+![](images/multicursor-find-replace.png){fig-alt="Screenshot of 3 cursors, one at each instance of the searched term in the current R script."}
+
+## Move lines up/down
+
+Text or code in source files can be moved up or down by the <kbd>Alt+Up/Down</kbd> (<kbd>Option+Up/Down</kbd> on Mac). This applies to individual lines of code where the cursor is, as well as to multiline selections.
+
+![](images/move-lines-up-down.gif){fig-alt="A screencast of an example line of text being moved up with the move lines up/down shortcut"}
+
+## Copy lines up/down
+
+Text or code in source files can be copied up or down with the <kbd>Shift+Alt+Up/Down</kbd> (<kbd>Cmd+Option+Up/Down</kbd> on Mac) shortcut. This applies to individual lines of code where the cursor is, as well as to multiline selections.
+
+![](images/copy-lines-up-down.gif){fig-alt="A screencast of an example line of text being duplicated across multiple lines with the copy lines up/down shortcut"}
+
+## Keyboard Shortcuts
+
+Beyond the keyboard shortcuts described above, there are a wide variety of other shortcuts available. Some of the more useful ones include:
+
+-   <kbd>Ctrl+Shift+N</kbd> --- New document
+
+-   <kbd>Ctrl+O</kbd> --- Open document
+
+-   <kbd>Ctrl+S</kbd> --- Save active document
+
+-   <kbd>Ctrl+1</kbd> --- Move focus to the Source Editor
+
+-   <kbd>Ctrl+2</kbd> --- Move focus to the Console
+
+A list of all shortcuts in the [Keyboard Shortcuts](../../reference/shortcuts.html).

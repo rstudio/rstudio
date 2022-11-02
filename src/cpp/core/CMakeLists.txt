@@ -1,10 +1,10 @@
 #
 # CMakeLists.txt
 #
-# Copyright (C) 2022 by RStudio, PBC
+# Copyright (C) 2022 by Posit Software, PBC
 #
-# Unless you have received this program directly from RStudio pursuant
-# to the terms of a commercial license agreement with RStudio, then
+# Unless you have received this program directly from Posit Software pursuant
+# to the terms of a commercial license agreement with Posit Software, then
 # this program is licensed to you under the terms of version 3 of the
 # GNU Affero General Public License. This program is distributed WITHOUT
 # ANY EXPRESS OR IMPLIED WARRANTY, INCLUDING THOSE OF NON-INFRINGEMENT,
@@ -54,6 +54,7 @@ set(CORE_SOURCE_FILES
    StringUtils.cpp
    ColorUtils.cpp
    Thread.cpp
+   Timer.cpp
    Trace.cpp
    WaitUtils.cpp
    YamlUtil.cpp
@@ -103,6 +104,7 @@ set(CORE_SOURCE_FILES
    markdown/sundown/stack.c
    r_util/RActiveSessions.cpp
    r_util/RActiveSessionStorage.cpp
+   r_util/RActiveSessionsStorage.cpp
    r_util/RPackageInfo.cpp
    r_util/RProjectFile.cpp
    r_util/RSessionContext.cpp
@@ -127,6 +129,7 @@ set(CORE_SOURCE_FILES
    tex/TexSynctex.cpp
    text/AnsiCodeParser.cpp
    text/DcfParser.cpp
+   text/TextCursor.cpp
    text/TemplateFilter.cpp
    text/TermBufferParser.cpp
    zlib/zlib.cpp
@@ -165,6 +168,20 @@ if (UNIX)
       set(HAVE_PROCSELF TRUE)
    endif()
 
+   # missing on non-glibc platforms like macOS, musl-based Linux distros, and
+   # the BSDs
+   check_function_exists(group_member HAVE_GROUP_MEMBER)
+
+   # missing on musl-based Linux distros and some BSDs
+   CHECK_CXX_SOURCE_COMPILES (
+   "#include <execinfo.h>
+   int main (int, char **)
+   {
+      return 0;
+   }
+   "
+   HAVE_EXECINFO)
+
    # find packages and libraries
    find_library(PTHREAD_LIBRARIES pthread)
    if(NOT APPLE)
@@ -191,7 +208,7 @@ if (UNIX)
    list(APPEND CORE_SYSTEM_LIBRARIES ${OPENSSL_LIBRARIES})
    list(APPEND CORE_INCLUDE_DIRS ${OPENSSL_INCLUDE_DIR})
 
-   if(RSTUDIO_SERVER)
+   if(RSTUDIO_SERVER AND RSTUDIO_USE_PAM)
       find_package(PAM REQUIRED)
       list(APPEND CORE_SYSTEM_LIBRARIES ${PAM_LIBRARIES})
       list(APPEND CORE_INCLUDE_DIRS ${PAM_INCLUDE_DIRS})
@@ -318,6 +335,7 @@ target_link_libraries(rstudio-core
    ${SOCI_LIBRARIES}
    ${CORE_SYSTEM_LIBRARIES}
    ${YAML_CPP_LIBRARIES}
+   fmt::fmt
 )
 
 # define executable (for running unit tests)

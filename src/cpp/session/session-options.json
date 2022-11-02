@@ -717,14 +717,18 @@
             "type": "core::FilePath",
             "memberName": "libclangPath_",
             "defaultValue": {"code": "kDefaultRsclangPath", "description": "bin/rsclang"},
-            "description": "Specifies the path to the libclang shared library"
+            "description": "Specifies the path to the libclang shared library",
+            "isDeprecated": true,
+            "isHidden": true
          },
          {
             "name": "external-libclang-headers-path",
             "type": "core::FilePath",
             "memberName": "libclangHeadersPath_",
             "defaultValue": "resources/libclang/builtin-headers",
-            "description": "Specifies the path to the libclang builtin headers."
+            "description": "Specifies the path to the libclang builtin headers.",
+            "isDeprecated": true,
+            "isHidden": true
          },
          {
             "name": "external-winpty-path",

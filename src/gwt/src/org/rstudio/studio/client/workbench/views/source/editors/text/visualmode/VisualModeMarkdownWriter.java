@@ -1,10 +1,10 @@
 /*
  * VisualModeWriterOptions.java
  *
- * Copyright (C) 2022 by RStudio, PBC
+ * Copyright (C) 2022 by Posit Software, PBC
  *
- * Unless you have received this program directly from RStudio pursuant
- * to the terms of a commercial license agreement with RStudio, then
+ * Unless you have received this program directly from Posit Software pursuant
+ * to the terms of a commercial license agreement with Posit Software, then
  * this program is licensed to you under the terms of version 3 of the
  * GNU Affero General Public License. This program is distributed WITHOUT
  * ANY EXPRESS OR IMPLIED WARRANTY, INCLUDING THOSE OF NON-INFRINGEMENT,
@@ -26,9 +26,15 @@ import org.rstudio.studio.client.panmirror.uitools.PanmirrorPandocFormatConfig;
 import org.rstudio.studio.client.panmirror.uitools.PanmirrorUITools;
 import org.rstudio.studio.client.panmirror.uitools.PanmirrorUIToolsAttr;
 import org.rstudio.studio.client.panmirror.uitools.PanmirrorUIToolsFormat;
+import org.rstudio.studio.client.quarto.QuartoHelper;
+import org.rstudio.studio.client.quarto.model.QuartoConfig;
+import org.rstudio.studio.client.rmarkdown.model.YamlFrontMatter;
 import org.rstudio.studio.client.workbench.WorkbenchContext;
+import org.rstudio.studio.client.workbench.model.Session;
+import org.rstudio.studio.client.workbench.model.SessionInfo;
 import org.rstudio.studio.client.workbench.prefs.model.UserPrefs;
 import org.rstudio.studio.client.workbench.prefs.model.UserPrefsAccessor;
+import org.rstudio.studio.client.workbench.views.source.editors.text.DocDisplay;
 import org.rstudio.studio.client.workbench.views.source.model.DocUpdateSentinel;
 
 import com.google.inject.Inject;
@@ -50,18 +56,20 @@ public class VisualModeMarkdownWriter
       
    }
    
-   public VisualModeMarkdownWriter(DocUpdateSentinel docUpdateSentinel, VisualModePanmirrorFormat format)
+   public VisualModeMarkdownWriter(DocUpdateSentinel docUpdateSentinel, DocDisplay docDisplay, VisualModePanmirrorFormat format)
    {
       RStudioGinjector.INSTANCE.injectMembers(this);
       docUpdateSentinel_ = docUpdateSentinel;
+      docDisplay_ = docDisplay;
       format_ = format;
    }
    
    @Inject
-   void initialize(WorkbenchContext workbenchContext, UserPrefs prefs)
+   void initialize(WorkbenchContext workbenchContext, UserPrefs prefs, Session session)
    {
       workbenchContext_ = workbenchContext;
       prefs_ = prefs;
+      sessionInfo_ = session.getSessionInfo();
    }
 
    
@@ -74,6 +82,9 @@ public class VisualModeMarkdownWriter
    
    public Options optionsFromConfig(PanmirrorPandocFormatConfig formatConfig)
    {
+      // use quarto config
+      QuartoConfig quarto = sessionInfo_.getQuartoConfig();
+      
       // options defaults from preferences
       PanmirrorWriterOptions options = new PanmirrorWriterOptions();
       
@@ -81,14 +92,45 @@ public class VisualModeMarkdownWriter
       options.atxHeaders = true;
       
       // determine prefs based on whether this file is a project file
-      String wrapPref;
-      Integer wrapAtColumnPref;
-      String referencesLocationPref;
+      String wrapPref = null;
+      Integer wrapAtColumnPref = null;
+      String referencesLocationPref= null;
+      String referencesPrefixPref = null;
       if (VisualModeUtil.isDocInProject(workbenchContext_, docUpdateSentinel_))
       {
-         wrapPref = prefs_.visualMarkdownEditingWrap().getValue();
-         wrapAtColumnPref = prefs_.visualMarkdownEditingWrapAtColumn().getValue();
-         referencesLocationPref = prefs_.visualMarkdownEditingReferencesLocation().getValue();
+         // allow any prefs defined in quarto yaml to take precedence
+         if (QuartoHelper.isWithinQuartoProjectDir(docUpdateSentinel_.getPath(), quarto) && quarto.project_editor != null)
+         {
+            if (quarto.project_editor.markdown != null)
+            {
+               if (quarto.project_editor.markdown.wrap != null)
+               {
+                  int wrap = StringUtil.parseInt(quarto.project_editor.markdown.wrap, 0);
+                  if (wrap > 0)
+                  {
+                     wrapPref = UserPrefsAccessor.VISUAL_MARKDOWN_EDITING_WRAP_COLUMN;
+                     wrapAtColumnPref = wrap;
+                  }
+                  else
+                  {
+                     wrapPref = quarto.project_editor.markdown.wrap;
+                  }
+               }
+               
+               if (quarto.project_editor.markdown.references != null)
+               {
+                  referencesLocationPref = quarto.project_editor.markdown.references.location;
+                  referencesPrefixPref = quarto.project_editor.markdown.references.prefix;
+               }
+            }
+         }
+         
+         if (wrapPref == null)
+            wrapPref = prefs_.visualMarkdownEditingWrap().getValue();
+         if (wrapAtColumnPref == null)
+            wrapAtColumnPref = prefs_.visualMarkdownEditingWrapAtColumn().getValue();
+         if (referencesLocationPref == null)
+            referencesLocationPref = prefs_.visualMarkdownEditingReferencesLocation().getValue();
       }
       else
       {
@@ -127,24 +169,37 @@ public class VisualModeMarkdownWriter
       
       if (formatConfig.references_location != null)
          options.references.location = formatConfig.references_location;
-      if (formatConfig.references_prefix != null)
-         options.references.prefix = formatConfig.references_prefix;
       
-      // if the config doesn't have a references_prefix then provide one for
-      // bookdown documents(otherwise there will be duplicate footnotes)
-      if (options.references.prefix == null && 
-          (format_.isBookdownProjectDocument() || 
-           PanmirrorPandocFormatConfig.isDoctype(formatConfig, PanmirrorExtendedDocType.bookdown) ||
-           format_.isQuartoBookDocument()
-          )
-         )
+      // references prefix
+      if ("none".equals(formatConfig.references_prefix))
       {
-         String docPath = docUpdateSentinel_.getPath();
-         if (docPath != null)
+         options.references.prefix = null;
+      }
+      else if (formatConfig.references_prefix != null)
+      {
+         options.references.prefix = formatConfig.references_prefix + "-";
+      }
+      else if ("none".equals(referencesPrefixPref))
+      {
+         options.references.prefix = null;
+      }
+      else
+      {
+         // implement "auto" -- include a prefix for both books and docs with no front matter
+         if ((YamlFrontMatter.getFrontMatterRange(docDisplay_) == null) ||
+             format_.isBookdownProjectDocument() ||  
+             PanmirrorPandocFormatConfig.isDoctype(formatConfig, PanmirrorExtendedDocType.bookdown) ||   
+             format_.isQuartoBookDocument())
          {
-            String filename = FileSystemItem.createFile(docPath).getStem();
-            PanmirrorUIToolsAttr attr = new PanmirrorUITools().attr;
-            options.references.prefix = attr.pandocAutoIdentifier(filename) + "-";
+            
+            String docPath = docUpdateSentinel_.getPath();
+            if (docPath != null)
+            {
+               String filename = FileSystemItem.createFile(docPath).getStem();
+               PanmirrorUIToolsAttr attr = new PanmirrorUITools().attr;
+               // artifically add "a" and then remove it after pandocAutoIdentifier()
+               options.references.prefix = attr.pandocAutoIdentifier("a" + filename).substring(1) + "-";
+            }
          }
       }
       
@@ -158,12 +213,13 @@ public class VisualModeMarkdownWriter
       // return context
       return new Options(options, wrapChanged);
    }
-
    
    private PanmirrorWriterOptions lastUsedWriterOptions_ = null;
    private WorkbenchContext workbenchContext_;
    private UserPrefs prefs_;
+   private SessionInfo sessionInfo_;
    private final VisualModePanmirrorFormat format_;
    private final DocUpdateSentinel docUpdateSentinel_;
+   private final DocDisplay docDisplay_;
    
 }

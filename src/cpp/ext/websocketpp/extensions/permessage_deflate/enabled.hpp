@@ -548,7 +548,7 @@ public:
 private:
     /// Generate negotiation response
     /**
-     * @return Generate extension negotiation reponse string to send to client
+     * @return Generate extension negotiation response string to send to client
      */
     std::string generate_response() {
         std::string ret = "permessage-deflate";

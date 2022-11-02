@@ -1,10 +1,10 @@
 /*
  * RStudioGinModule.java
  *
- * Copyright (C) 2022 by RStudio, PBC
+ * Copyright (C) 2022 by Posit Software, PBC
  *
- * Unless you have received this program directly from RStudio pursuant
- * to the terms of a commercial license agreement with RStudio, then
+ * Unless you have received this program directly from Posit Software pursuant
+ * to the terms of a commercial license agreement with Posit Software, then
  * this program is licensed to you under the terms of version 3 of the
  * GNU Affero General Public License. This program is distributed WITHOUT
  * ANY EXPRESS OR IMPLIED WARRANTY, INCLUDING THOSE OF NON-INFRINGEMENT,
@@ -156,7 +156,6 @@ import org.rstudio.studio.client.workbench.views.connections.model.ConnectionsSe
 import org.rstudio.studio.client.workbench.views.connections.ui.ConnectionsPane;
 import org.rstudio.studio.client.workbench.views.console.ConsolePane;
 import org.rstudio.studio.client.workbench.views.console.model.ConsoleServerOperations;
-import org.rstudio.studio.client.workbench.views.console.model.VirtualConsoleServerOperations;
 import org.rstudio.studio.client.workbench.views.console.shell.Shell;
 import org.rstudio.studio.client.workbench.views.console.shell.ShellPane;
 import org.rstudio.studio.client.workbench.views.console.shell.assist.HelpStrategy;
@@ -436,7 +435,6 @@ public class RStudioGinModule extends AbstractGinModule
       bind(ChooseFileServerOperations.class).to(RemoteServer.class);
       bind(CodeToolsServerOperations.class).to(RemoteServer.class);
       bind(ConsoleServerOperations.class).to(RemoteServer.class);
-      bind(VirtualConsoleServerOperations.class).to(RemoteServer.class);
       bind(SourceServerOperations.class).to(RemoteServer.class);
       bind(FilesServerOperations.class).to(RemoteServer.class);
       bind(HistoryServerOperations.class).to(RemoteServer.class);

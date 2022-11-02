@@ -1,10 +1,10 @@
 /*
  * SessionFind.cpp
  *
- * Copyright (C) 2022 by RStudio, PBC
+ * Copyright (C) 2022 by Posit Software, PBC
  *
- * Unless you have received this program directly from RStudio pursuant
- * to the terms of a commercial license agreement with RStudio, then
+ * Unless you have received this program directly from Posit Software pursuant
+ * to the terms of a commercial license agreement with Posit Software, then
  * this program is licensed to you under the terms of version 3 of the
  * GNU Affero General Public License. This program is distributed WITHOUT
  * ANY EXPRESS OR IMPLIED WARRANTY, INCLUDING THOSE OF NON-INFRINGEMENT,
@@ -665,6 +665,13 @@ private:
          decodedLine.append(
             Replacer::decode(std::string(inputPos, end), encoding_, firstDecodeError_));
 
+      if (pMatchOn->getSize() == 0)
+      {
+         // If we reach here, grep has found a malformed match
+         pContent = nullptr;
+         pFullLineContent = nullptr;
+         return;
+      }
       *pFullLineContent = decodedLine;
       if (!findResults().replace())
          adjustForPreview(&decodedLine, pMatchOn, pMatchOff);
@@ -979,21 +986,28 @@ private:
          boost::regex pattern = getGrepOutputRegex(findResults().gitFlag());
          if (regex_utils::match(line, match, pattern) && match.size() > 1)
          {
-            // extract filename from match
-            std::string file = module_context::createAliasedPath(FilePath(match[1]));
-
-            // replace the leading './' with the directory name
-            // (git grep doesn't prepend a '.' so we need to be careful here)
-            if (boost::algorithm::starts_with(file, "./"))
-            {
-               file = workingDir_ + file.substr(2);
-            }
-            else if (findResults().gitFlag())
-            {
-               file = workingDir_ + "/" + file;
-            }
+            // build the file path -- note that 'grep' results may or may not include
+            // a leading './', so we need to be careful to handle both forms of output.
+            //
+            // use a helper lambda just to make control flow a bit easier to manage
+            auto resolveFile = [&] {
+               
+               // check for absolute paths
+               std::string file = match[1];
+               if (boost::filesystem::path(file).is_absolute())
+                  return file;
+               
+               // check for paths with a './' prefix
+               if (boost::algorithm::starts_with(file, "./"))
+                  return module_context::createAliasedPath(FilePath(workingDir_)) + file.substr(1);
+               
+               // all else fails, assume we need to prepend the working directory
+               return module_context::createAliasedPath(FilePath(workingDir_)) + "/" + file;
+               
+            };
 
             // normal skip heuristics
+            std::string file = resolveFile();
             if (shouldSkipFile(file))
                continue;
 
@@ -1026,6 +1040,11 @@ private:
             json::Array replaceMatchOn, replaceMatchOff;
             processContents(&lineInfo.decodedPreview, &lineInfo.decodedContents,
                &matchOn, &matchOff);
+
+            // If we reach here, grep has found a malformed match (usually due to a bad regex)
+            // and processContents was not able to identify the corresponding match string
+            if (matchOn.getSize() == 0)
+               continue;
 
             if (findResults().replace() &&
                 !(findResults().preview() &&
@@ -1447,12 +1466,14 @@ core::Error runGrepOperation(const GrepOptions& grepOptions, const ReplaceOption
    if (grepOptions.gitFlag())
    {
       cmd = shell_utils::ShellCommand("git");
+
       // -c is used to override potential user-defined git parameters
+      cmd << "-c" << "submodule.recurse=false";
       cmd << "-c" << "core.quotepath=false";
       cmd << "-c" << "grep.lineNumber=true";
       cmd << "-c" << "grep.column=false";
       cmd << "-c" << "grep.patternType=default";
-      cmd << "-c" << "grep.extendedRegexp=false";
+      cmd << "-c" << "grep.extendedRegexp=true";
       cmd << "-c" << "grep.fullName=false";
       cmd << "-C";
       cmd << dirPath.getAbsolutePath();
@@ -1460,7 +1481,7 @@ core::Error runGrepOperation(const GrepOptions& grepOptions, const ReplaceOption
       cmd << "-I"; // ignore binaries
       cmd << "--untracked"; // include files not tracked by git...
       cmd << (grepOptions.excludeGitIgnore() ? "--exclude-standard" : "--no-exclude-standard");
-      cmd << "-rHn";
+      cmd << "-Hn";
       cmd << "--color=always";
       if (grepOptions.ignoreCase())
          cmd << "-i";
@@ -1557,11 +1578,21 @@ core::Error runGrepOperation(const GrepOptions& grepOptions, const ReplaceOption
    return Success();
 }
 
+std::string escapeForRegex(const std::string& query)
+{
+   std::string specialChars("([.|*?+(){}^$\\[\\]])");
+   // Note that we need four backslashes in order to add a backslash before each special character to turn into a literal
+   // \\1 is a backreference that refers to the original symbol we want to escape
+   boost::regex_constants::syntax_option_type flags = 0;
+   std::string updatedQuery = boost::regex_replace(query, boost::regex(specialChars, flags), "\\\\\\1");
+   return updatedQuery;
+}
+
 core::Error beginFind(const json::JsonRpcRequest& request,
                       json::JsonRpcResponse* pResponse)
 {
    std::string searchString;
-   bool asRegex, ignoreCase;
+   bool asRegex, isWholeWord, ignoreCase;
    std::string directory;
    json::Array includeFilePatterns, excludeFilePatterns;
    bool useGitGrep, excludeGitIgnore;
@@ -1569,6 +1600,7 @@ core::Error beginFind(const json::JsonRpcRequest& request,
    Error error = json::readParams(request.params,
                                   &searchString,
                                   &asRegex,
+                                  &isWholeWord,
                                   &ignoreCase,
                                   &directory,
                                   &includeFilePatterns,
@@ -1578,9 +1610,14 @@ core::Error beginFind(const json::JsonRpcRequest& request,
    if (error)
       return error;
 
+   if (isWholeWord)
+      searchString = "(\\b|^)" + escapeForRegex(searchString) + "(\\b|$)";
+
    GrepOptions grepOptions(searchString, directory, includeFilePatterns, useGitGrep, excludeGitIgnore, excludeFilePatterns,
       asRegex, ignoreCase);
    error = runGrepOperation(grepOptions, ReplaceOptions(), nullptr, pResponse);
+   if (error)
+      LOG_DEBUG_MESSAGE("Error running grep operation with search string " + searchString);
    return error;
 }
 
@@ -1642,12 +1679,11 @@ core::Error previewReplace(const json::JsonRpcRequest& request,
 core::Error completeReplace(const json::JsonRpcRequest& request,
                             json::JsonRpcResponse* pResponse)
 {
-   bool asRegex, ignoreCase;
+   bool asRegex, isWholeWord, ignoreCase;
    std::string searchString;
    std::string replacePattern;
    std::string directory;
-   bool useGitGrep;
-   bool excludeGitIgnore;
+   bool useGitGrep, excludeGitIgnore;
    json::Array includeFilePatterns, excludeFilePatterns;
    // only used to estimate progress
    int originalFindCount;
@@ -1655,6 +1691,7 @@ core::Error completeReplace(const json::JsonRpcRequest& request,
    Error error = json::readParams(request.params,
                                   &searchString,
                                   &asRegex,
+                                  &isWholeWord,
                                   &ignoreCase,
                                   &directory,
                                   &includeFilePatterns,
@@ -1665,6 +1702,9 @@ core::Error completeReplace(const json::JsonRpcRequest& request,
                                   &replacePattern);
    if (error)
       return error;
+
+   if (isWholeWord)
+      searchString = "\\b" + escapeForRegex(searchString) + "\\b";
 
    // 5 was chosen based on testing to find a value that was both responsive
    // and not overly frequent

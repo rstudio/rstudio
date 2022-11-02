@@ -1,10 +1,10 @@
 /*
  * PamMain.cpp
  *
- * Copyright (C) 2022 by RStudio, PBC
+ * Copyright (C) 2022 by Posit Software, PBC
  *
- * Unless you have received this program directly from RStudio pursuant
- * to the terms of a commercial license agreement with RStudio, then
+ * Unless you have received this program directly from Posit Software pursuant
+ * to the terms of a commercial license agreement with Posit Software, then
  * this program is licensed to you under the terms of version 3 of the
  * GNU Affero General Public License. This program is distributed WITHOUT
  * ANY EXPRESS OR IMPLIED WARRANTY, INCLUDING THOSE OF NON-INFRINGEMENT,
@@ -20,6 +20,7 @@
 #include <boost/format.hpp>
 
 #include <core/CrashHandler.hpp>
+#include <core/StringUtils.hpp>
 #include <shared_core/Error.hpp>
 #include <core/Log.hpp>
 #include <core/system/System.hpp>
@@ -92,22 +93,15 @@ int main(int argc, char * const argv[])
       }
 
       // read password (up to 200 chars in length)
-      std::string password;
       const int MAXPASS = 200;
-      int ch = 0;
-      int count = 0;
-      while((ch = ::fgetc(stdin)) != EOF)
+      std::string password = string_utils::consumeStdin(string_utils::StdinSingleLine);
+      if (password.size() > MAXPASS)
       {
-         if (++count <= MAXPASS)
-         {
-            password.push_back(static_cast<char>(ch));
-         }
-         else
-         {
-            LOG_WARNING_MESSAGE("Password exceeded maximum length for "
-                                "user " + username);
-            return EXIT_FAILURE;
-         }
+         // would be nice to log some details here but better not to leak any
+         // information about passwords or limits
+         LOG_WARNING_MESSAGE("Password exceeded maximum length for "
+                              "user " + username);
+         return EXIT_FAILURE;
       }
 
       // verify password

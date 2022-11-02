@@ -1,10 +1,10 @@
 /*
  * Request.cpp
  *
- * Copyright (C) 2022 by RStudio, PBC
+ * Copyright (C) 2022 by Posit Software, PBC
  *
- * Unless you have received this program directly from RStudio pursuant
- * to the terms of a commercial license agreement with RStudio, then
+ * Unless you have received this program directly from Posit Software pursuant
+ * to the terms of a commercial license agreement with Posit Software, then
  * this program is licensed to you under the terms of version 3 of the
  * GNU Affero General Public License. This program is distributed WITHOUT
  * ANY EXPRESS OR IMPLIED WARRANTY, INCLUDING THOSE OF NON-INFRINGEMENT,
@@ -93,6 +93,19 @@ std::string Request::rootPath() const
    return rootPathHeader;
 }
 
+std::string firstInList(const std::string& input)
+{
+   std::string res;
+
+   // Take the first if there's a list
+   std::size_t pos = input.find(',');
+   if (pos != std::string::npos)
+      res = input.substr(0, pos);
+   else
+      res = input;
+   return res;
+}
+
 std::string Request::proxiedUri() const
 {
    // if using the product-specific header use it
@@ -139,15 +152,24 @@ std::string Request::proxiedUri() const
    {
       protocol = "http";
    }
+   else
+   {
+      protocol = firstInList(protocol);
+   }
+
 
    // might be using the legacy X-Forwarded headers
    std::string forwardedHost = headerValue("X-Forwarded-Host");
    if (!forwardedHost.empty())
    {
+      forwardedHost = firstInList(forwardedHost);
+
       // get the port that may be specified in the request
       std::string port = headerValue("X-Forwarded-Port");
       if (!port.empty())
       {
+         port = firstInList(port);
+
          std::size_t pos = forwardedHost.find(':');
          if (pos == std::string::npos)
          {

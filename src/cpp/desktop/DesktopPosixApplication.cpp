@@ -1,10 +1,10 @@
 /*
  * DesktopPosixApplication.cpp
  *
- * Copyright (C) 2022 by RStudio, PBC
+ * Copyright (C) 2022 by Posit Software, PBC
  *
- * Unless you have received this program directly from RStudio pursuant
- * to the terms of a commercial license agreement with RStudio, then
+ * Unless you have received this program directly from Posit Software pursuant
+ * to the terms of a commercial license agreement with Posit Software, then
  * this program is licensed to you under the terms of version 3 of the
  * GNU Affero General Public License. This program is distributed WITHOUT
  * ANY EXPRESS OR IMPLIED WARRANTY, INCLUDING THOSE OF NON-INFRINGEMENT,
@@ -47,7 +47,7 @@ bool PosixApplication::event(QEvent* pEvent)
          // otherwise we are already running so this is an apple event
          // targeted at opening a file in an existing instance
 
-         // if this is a project then re-post the request back to
+         // if this is a project or remote session then re-post the request back to
          // another instance using the command line (this is to
          // circumvent the fact that the first RStudio application
          // launched on OSX gets all of the apple events). note that
@@ -56,7 +56,8 @@ bool PosixApplication::event(QEvent* pEvent)
          // FileOpen back to existing instances (e.g. via DDE)
 
          FilePath filePath(filename.toUtf8().constData());
-         if (filePath.exists() && filePath.getExtensionLowerCase() == ".rproj")
+         if (filePath.exists() &&
+             (filePath.getExtensionLowerCase() == ".rproj" || filePath.getExtensionLowerCase() == ".rdprsp"))
          {
             std::vector<std::string> args;
             args.push_back(filePath.getAbsolutePath());

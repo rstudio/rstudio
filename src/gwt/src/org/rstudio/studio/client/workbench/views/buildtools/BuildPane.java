@@ -1,10 +1,10 @@
 /*
  * BuildPane.java
  *
- * Copyright (C) 2022 by RStudio, PBC
+ * Copyright (C) 2022 by Posit Software, PBC
  *
- * Unless you have received this program directly from RStudio pursuant
- * to the terms of a commercial license agreement with RStudio, then
+ * Unless you have received this program directly from Posit Software pursuant
+ * to the terms of a commercial license agreement with Posit Software, then
  * this program is licensed to you under the terms of version 3 of the
  * GNU Affero General Public License. This program is distributed WITHOUT
  * ANY EXPRESS OR IMPLIED WARRANTY, INCLUDING THOSE OF NON-INFRINGEMENT,
@@ -48,6 +48,9 @@ import org.rstudio.studio.client.common.compile.CompilePanel;
 import org.rstudio.studio.client.common.filetypes.FileTypeRegistry;
 import org.rstudio.studio.client.common.icons.StandardIcons;
 import org.rstudio.studio.client.common.sourcemarkers.SourceMarker;
+import org.rstudio.studio.client.projects.model.ProjectsServerOperations;
+import org.rstudio.studio.client.projects.model.RProjectConfig;
+import org.rstudio.studio.client.projects.model.RProjectOptions;
 import org.rstudio.studio.client.quarto.QuartoHelper;
 import org.rstudio.studio.client.quarto.model.QuartoConfig;
 import org.rstudio.studio.client.workbench.commands.Commands;
@@ -71,7 +74,8 @@ public class BuildPane extends WorkbenchPane
                     EventBus events,
                     Session session,
                     FileTypeRegistry fileTypeRegistry,
-                    BuildServerOperations server)
+                    BuildServerOperations server, 
+                    ProjectsServerOperations projServer)
    {
       super(constants_.buildText(), events);
       ((BuildPane.Binder) GWT.create(BuildPane.Binder.class)).bind(commands, this);
@@ -81,6 +85,7 @@ public class BuildPane extends WorkbenchPane
       fileTypeRegistry_ = fileTypeRegistry;
       server_ = server;
       compilePanel_ = new CompilePanel(new CompileOutputBufferWithHighlight());
+      projServer_ = projServer;
       ensureWidget();
    }
 
@@ -96,7 +101,6 @@ public class BuildPane extends WorkbenchPane
       boolean website = type == SessionInfo.BUILD_TOOLS_WEBSITE;
       boolean quarto = type == SessionInfo.BUILD_TOOLS_QUARTO;
 
-      
       // quarto books get special treatment (build button is a pure menu)
       QuartoConfig quartoConfig = session_.getSessionInfo().getQuartoConfig();
       if (quarto && QuartoHelper.isQuartoBookConfig(quartoConfig))
@@ -111,7 +115,7 @@ public class BuildPane extends WorkbenchPane
       }
       else
       {
-         // always include build all
+         // always include Install button
          buildAllButton_ = commands_.buildAll().createToolbarButton();
          if (website)
          {
@@ -125,6 +129,45 @@ public class BuildPane extends WorkbenchPane
             }
          }
          toolbar.addLeftWidget(buildAllButton_);
+
+         if (pkg) 
+         {
+            ToolbarPopupMenu installMoreMenu = new ToolbarPopupMenu();
+            toolbar.addLeftWidget(new ToolbarMenuButton(ToolbarButton.NoText, "", installMoreMenu, false));
+            
+            projServer_.readProjectOptions(new SimpleRequestCallback<RProjectOptions>() {
+               @Override
+               public void onResponseReceived(RProjectOptions response) 
+               {
+                  RProjectConfig config = response.getConfig();
+                  
+                  boolean preclean = config.getPackageCleanBeforeInstall();
+                  String installArgs = config.getPackageInstallArgs();
+
+                  buildAllButton_.setTitle(
+                     commands_.buildAll().getTooltip() + "\n\nR CMD INSTALL " + (preclean ? "--preclean " : " ") + installArgs + " <pkg>"
+                  );
+                  
+                  AppCommand cmdBuildFull = commands_.buildFull();
+                  cmdBuildFull.setDesc(
+                     cmdBuildFull.getTooltip() + "\n\nR CMD INSTALL --preclean " + installArgs + " <pkg>"
+                  );
+                  buildFullMenuItem_ = cmdBuildFull.createMenuItem(false);
+
+                  AppCommand cmdBuildIncremental = commands_.buildIncremental();
+                  cmdBuildIncremental.setDesc(
+                     cmdBuildIncremental.getTooltip() + "\n\nR CMD INSTALL " + installArgs + " <pkg>"
+                  );
+                  buildIncrementalMenuItem_ = cmdBuildIncremental.createMenuItem(false);
+
+                  installMoreMenu.addItem(buildFullMenuItem_);
+                  installMoreMenu.addItem(buildIncrementalMenuItem_);
+                  
+                  installMoreMenu.addSeparator();
+                  installMoreMenu.addItem(commands_.buildToolsProjectSetup().createMenuItem(false));
+               }
+            });
+         }
          
          // book build menu
          if (sessionInfo.getBuildToolsBookdownWebsite())
@@ -137,36 +180,11 @@ public class BuildPane extends WorkbenchPane
          }
       }
       
-      
       // sync build all button caption
       syncBuildAllUI();
       toolbar.addLeftSeparator();
+ 
       
-     
-      if (quarto)
-      {
-         // quarto book gets a menu
-         if (QuartoHelper.isQuartoBookConfig(quartoConfig) && quartoConfig.project_formats.length > 1)
-         {
-            ToolbarPopupMenu bookServeMenu = new QuartoBookServePopupMenu();
-            ToolbarMenuButton menuButton =  new ToolbarMenuButton(
-                  constants_.serveBookText(),
-                  constants_.serveBookText(),
-                  commands_.serveQuartoSite().getImageResource(), 
-                  bookServeMenu
-            );
-            toolbar.addLeftWidget(menuButton);
-            toolbar.addLeftSeparator();
-         }
-         // quarto website gets generic serve site
-         else if (QuartoHelper.isQuartoWebsiteConfig(quartoConfig))
-         {
-            toolbar.addLeftWidget(commands_.serveQuartoSite().createToolbarButton());
-            toolbar.addLeftSeparator();
-         }
-      }
-      
-
       // packages get check package
       if (pkg)
       {
@@ -192,10 +210,7 @@ public class BuildPane extends WorkbenchPane
          else if (pkg)
          {
             moreMenu.addItem(commands_.devtoolsLoadAll().createMenuItem(false));
-            moreMenu.addSeparator();
-            moreMenu.addItem(commands_.testPackage().createMenuItem(false));
-            moreMenu.addSeparator();
-            moreMenu.addItem(commands_.checkPackage().createMenuItem(false));
+            moreMenu.addItem(commands_.buildFull().createMenuItem(false));
             moreMenu.addSeparator();
             moreMenu.addItem(commands_.buildSourcePackage().createMenuItem(false));
             moreMenu.addItem(commands_.buildBinaryPackage().createMenuItem(false));
@@ -204,7 +219,7 @@ public class BuildPane extends WorkbenchPane
             moreMenu.addSeparator();
          }
 
-         else if(makefile)
+         else if (makefile)
          {
             moreMenu.addItem(commands_.cleanAll().createMenuItem(false));
             moreMenu.addSeparator();
@@ -450,7 +465,6 @@ public class BuildPane extends WorkbenchPane
       handlers_.fireEvent(event);
    }
    
-
    @Override
    public String errorsBuildType()
    {
@@ -517,14 +531,16 @@ public class BuildPane extends WorkbenchPane
    private final FileTypeRegistry fileTypeRegistry_;
    private final Session session_;
    private final BuildServerOperations server_;
+   ProjectsServerOperations projServer_;
    private String errorsBuildType_;
    private ToolbarButton buildAllButton_;
-
+   private MenuItem buildFullMenuItem_;
+   private MenuItem buildIncrementalMenuItem_;
 
    private final CompilePanel compilePanel_;
-
 
    private final HandlerManager handlers_ = new HandlerManager(this);
 
    private static final ViewBuildtoolsConstants constants_ = GWT.create(ViewBuildtoolsConstants.class);
+
 }

@@ -1,10 +1,10 @@
 /*
  * SessionInstallRtools.cpp
  *
- * Copyright (C) 2022 by RStudio, PBC
+ * Copyright (C) 2022 by Posit Software, PBC
  *
- * Unless you have received this program directly from RStudio pursuant
- * to the terms of a commercial license agreement with RStudio, then
+ * Unless you have received this program directly from Posit Software pursuant
+ * to the terms of a commercial license agreement with Posit Software, then
  * this program is licensed to you under the terms of version 3 of the
  * GNU Affero General Public License. This program is distributed WITHOUT
  * ANY EXPRESS OR IMPLIED WARRANTY, INCLUDING THOSE OF NON-INFRINGEMENT,
@@ -16,13 +16,17 @@
 #include "SessionInstallRtools.hpp"
 
 #include <boost/format.hpp>
+#include <boost/regex.hpp>
 
 #include <shared_core/Error.hpp>
 #include <core/StringUtils.hpp>
+#include <core/FileUtils.hpp>
+#include <core/RegexUtils.hpp>
 
 #include <core/r_util/RToolsInfo.hpp>
 
 #include <r/RExec.hpp>
+#include <r/ROptions.hpp>
 
 #include <session/SessionModuleContext.hpp>
 #include <session/SessionConsoleProcess.hpp>
@@ -35,12 +39,15 @@ namespace session {
 namespace modules {
 namespace build {
 
+std::string kFallbackUrl = "https://rstudio.org/links/rtools42";
+
 Error installRtools()
 {
    // populate list of known Rtools installers
    bool gcc49 = module_context::usingMingwGcc49();
    FilePath installPath("C:\\Rtools");
    std::vector<r_util::RToolsInfo> availableRtools;
+   availableRtools.push_back(r_util::RToolsInfo("4.2", installPath, gcc49));
    availableRtools.push_back(r_util::RToolsInfo("4.0", installPath, gcc49));
    availableRtools.push_back(r_util::RToolsInfo("3.5", installPath, gcc49));
    availableRtools.push_back(r_util::RToolsInfo("3.4", installPath, gcc49));
@@ -89,10 +96,31 @@ Error installRtools()
    if (error)
       return error;
 
+   if (version == "4.2")
+   {
+     Error error = r::exec::RFunction(".rs.findRtools42Installer")
+            .addParam("url", url)
+            .addParam("fallbackUrl", kFallbackUrl)
+            .call(&url);
+     if (error)
+     {
+        LOG_ERROR(error);
+        url = kFallbackUrl;
+     }
+   }
+
    // form path to destination file
    std::string rtoolsBinary = url.substr(url.find_last_of('/') + 1);
    FilePath installerPath = tempPath.completeChildPath(rtoolsBinary);
    std::string destfile = string_utils::utf8ToSystem(installerPath.getAbsolutePath());
+
+   // The Rtools installer can be a large file, so we want to increase the timeout option
+   // and respect the user's original configured timeout settings
+   int originalTimeoutOption = r::options::getOption<int>("timeout");
+   error = r::options::setOption<int>("timeout", std::max(3600, originalTimeoutOption));
+
+   if (error)
+       module_context::consoleWriteOutput("To avoid timeouts when downloading the installer, set `options(timeout=3600)`.\n");
 
    // download it
    error = r::exec::RFunction("utils:::download.file")
@@ -100,6 +128,8 @@ Error installRtools()
        .addParam("destfile", destfile)
        .addParam("mode", "wb")
        .call();
+
+   r::options::setOption<int>("timeout", originalTimeoutOption);
 
    if (error)
    {

@@ -1,10 +1,10 @@
 #
 # CMakeLists.txt
 #
-# Copyright (C) 2022 by RStudio, PBC
+# Copyright (C) 2022 by Posit Software, PBC
 #
-# Unless you have received this program directly from RStudio pursuant
-# to the terms of a commercial license agreement with RStudio, then
+# Unless you have received this program directly from Posit Software pursuant
+# to the terms of a commercial license agreement with Posit Software, then
 # this program is licensed to you under the terms of version 3 of the
 # GNU Affero General Public License. This program is distributed WITHOUT
 # ANY EXPRESS OR IMPLIED WARRANTY, INCLUDING THOSE OF NON-INFRINGEMENT,
@@ -96,15 +96,10 @@ endforeach()
 
 # verify libclang is installed (Windows only)
 if(WIN32)
-   set(LIBCLANG_VERSION "5.0.2")
+   set(LIBCLANG_VERSION "13.0.1")
    set(LIBCLANG_DIR "${RSTUDIO_DEPENDENCIES_DIR}/common/libclang/${LIBCLANG_VERSION}")
    if(NOT EXISTS "${LIBCLANG_DIR}")
       message(FATAL_ERROR "libclang ${LIBCLANG_VERSION} not found  (re-run install-dependencies script to install)")
-   endif()
-
-   set(LIBCLANG_HEADERS_DIR "${RSTUDIO_DEPENDENCIES_DIR}/common/libclang/builtin-headers")
-   if(NOT EXISTS "${LIBCLANG_HEADERS_DIR}")
-      message(FATAL_ERROR "libclang builtin-headers not found  (re-run install-dependencies script to install)")
    endif()
 endif()
 
@@ -114,6 +109,7 @@ file(GLOB_RECURSE SESSION_HEADER_FILES "*.h*")
 
 # source files
 set(SESSION_SOURCE_FILES
+   SessionActiveSessionsStorage.cpp
    SessionAsyncRProcess.cpp
    SessionAsyncDownloadFile.cpp
    SessionClientEvent.cpp
@@ -150,6 +146,7 @@ set(SESSION_SOURCE_FILES
    SessionSourceDatabase.cpp
    SessionSourceDatabaseSupervisor.cpp
    SessionSuspend.cpp
+   SessionSuspendFilter.cpp
    SessionUriHandlers.cpp
    SessionUrlPorts.cpp
    SessionWorkerContext.cpp
@@ -308,9 +305,9 @@ set(SESSION_SOURCE_FILES
    modules/quarto/SessionQuartoJob.cpp
    modules/quarto/SessionQuartoPreview.cpp
    modules/quarto/SessionQuartoResources.cpp
-   modules/quarto/SessionQuartoServe.cpp
    modules/quarto/SessionQuartoXRefs.cpp
    modules/shiny/SessionShiny.cpp
+   modules/shiny/SessionPyShiny.cpp
    modules/shiny/ShinyAsyncJob.cpp
    modules/sql/SessionSql.cpp
    modules/stan/SessionStan.cpp
@@ -600,6 +597,18 @@ if(RSTUDIO_WIN32_BUILD_UTF8_SESSION)
     install(TARGETS rsession-utf8 DESTINATION "${RSTUDIO_INSTALL_BIN}")
 endif()
 
+# install binary .pdb on Windows
+if(WIN32 AND CMAKE_BUILD_TYPE STREQUAL Debug)
+   install(
+      FILES "$<TARGET_PDB_FILE:rsession>"
+      DESTINATION "${RSTUDIO_INSTALL_BIN}")
+   if(RSTUDIO_WIN32_BUILD_UTF8_SESSION)
+      install(
+         FILES "$<TARGET_PDB_FILE:rsession-utf8>"
+         DESTINATION "${RSTUDIO_INSTALL_BIN}")
+   endif()
+endif()
+
 # include resources, R scripts and binaries if this isn't a session 32-bit build
 if(NOT RSTUDIO_SESSION_WIN32 AND NOT RSESSION_ALTERNATE_BUILD)
 
@@ -616,6 +625,9 @@ if(NOT RSTUDIO_SESSION_WIN32 AND NOT RSESSION_ALTERNATE_BUILD)
            DESTINATION ${RSTUDIO_INSTALL_SUPPORTING}/resources)
    # templates
    install(DIRECTORY "resources/templates"
+           DESTINATION ${RSTUDIO_INSTALL_SUPPORTING}/resources)
+   # pandoc
+   install(DIRECTORY "resources/pandoc"
            DESTINATION ${RSTUDIO_INSTALL_SUPPORTING}/resources)
    # JS resources
    file(GLOB JS_RESOURCE_FILES "resources/*.js")
@@ -748,10 +760,6 @@ if(NOT RSTUDIO_SESSION_WIN32 AND NOT RSESSION_ALTERNATE_BUILD)
       file(GLOB LIBCLANG_64_FILES "${LIBCLANG_DIR}/x86_64/*")
       install(PROGRAMS ${LIBCLANG_64_FILES}
               DESTINATION  ${RSTUDIO_INSTALL_BIN}/rsclang/x86_64)
-
-      # install libclang builtin-headers
-      install(DIRECTORY "${RSTUDIO_DEPENDENCIES_DIR}/common/libclang/builtin-headers"
-              DESTINATION "${RSTUDIO_INSTALL_SUPPORTING}/resources/libclang")
    endif()
 
    # install winpty on windows
@@ -794,6 +802,7 @@ if(NOT RSTUDIO_SESSION_WIN32 AND NOT RSESSION_ALTERNATE_BUILD)
       install(PROGRAMS "${RSTUDIO_WINDOWS_DEPENDENCIES_DIR}/winutils/1.0/x64/winutils.exe"
               DESTINATION ${RSTUDIO_INSTALL_BIN}/winutils/x64)
    endif()
+
 endif()
 
 # install 32-bit MSVC runtime for session win32

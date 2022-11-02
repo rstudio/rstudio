@@ -79,3 +79,15 @@
 .nodeLabelFunction {
    font-family: inherit;
 }
+
+.nodeLabelTest {
+   font-family: inherit;
+}
+
+.nodeLabelSecundary {
+   opacity: .7;
+}
+
+.nodeLabelSecundary:hover {
+   opacity: 1;
+}

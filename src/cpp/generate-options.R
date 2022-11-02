@@ -2,10 +2,10 @@
 #
 # generate-options.R
 #
-# Copyright (C) 2022 by RStudio, PBC
+# Copyright (C) 2022 by Posit Software, PBC
 #
-# Unless you have received this program directly from RStudio pursuant
-# to the terms of a commercial license agreement with RStudio, then
+# Unless you have received this program directly from Posit Software pursuant
+# to the terms of a commercial license agreement with Posit Software, then
 # this program is licensed to you under the terms of version 3 of the
 # GNU Affero General Public License. This program is distributed WITHOUT
 # ANY EXPRESS OR IMPLIED WARRANTY, INCLUDING THOSE OF NON-INFRINGEMENT,
@@ -38,10 +38,10 @@ generateCopyright <- function (filename) {
    sprintf("/*
  * %s
  *
- * Copyright (C) 2022 by RStudio, PBC
+ * Copyright (C) 2022 by Posit Software, PBC
  *
- * Unless you have received this program directly from RStudio pursuant
- * to the terms of a commercial license agreement with RStudio, then
+ * Unless you have received this program directly from Posit Software pursuant
+ * to the terms of a commercial license agreement with Posit Software, then
  * this program is licensed to you under the terms of version 3 of the
  * GNU Affero General Public License. This program is distributed WITHOUT
  * ANY EXPRESS OR IMPLIED WARRANTY, INCLUDING THOSE OF NON-INFRINGEMENT,
@@ -317,6 +317,8 @@ generateProgramOptions <- function (optionsJson, overlayOptionsJson) {
             # handle any implicit conversions that we should support
             if (identical(type, "core::FilePath")) {
                accessorCode <- sprintf("return core::FilePath(%s);", memberName)
+            } else if (identical(category, "allow")) {
+               accessorCode <- sprintf("return %s || allowOverlay();", memberName)
             } else {
                accessorCode <- sprintf("return %s;", memberName)
             }
@@ -516,6 +518,7 @@ generateProgramOptions <- function (optionsJson, overlayOptionsJson) {
    classContents <- paste(classContents, buildOptions, sep="\n\n")
    classContents <- paste(classContents, accessors, sep="\n\n")
    classContents <- paste(classContents, members, sep="\n\n")
+   classContents <- paste(classContents, "  virtual bool allowOverlay() const { return false; };\n")
    
    # finally, close out the class
    classContents <- paste0(classContents, "};")
@@ -787,7 +790,7 @@ main <- function () {
    cat("Press [enter] to continue or CTRL+C to skip")
    a <- readLines("stdin",n=1);
 
-   system("./report-options.sh")
+   system("bash report-options.sh")
 }
 
 main()

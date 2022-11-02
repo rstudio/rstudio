@@ -1,10 +1,10 @@
 /*
  * ApplicationInterrupt.java
  *
- * Copyright (C) 2022 by RStudio, PBC
+ * Copyright (C) 2022 by Posit Software, PBC
  *
- * Unless you have received this program directly from RStudio pursuant
- * to the terms of a commercial license agreement with RStudio, then
+ * Unless you have received this program directly from Posit Software pursuant
+ * to the terms of a commercial license agreement with Posit Software, then
  * this program is licensed to you under the terms of version 3 of the
  * GNU Affero General Public License. This program is distributed WITHOUT
  * ANY EXPRESS OR IMPLIED WARRANTY, INCLUDING THOSE OF NON-INFRINGEMENT,
@@ -39,7 +39,6 @@ import org.rstudio.studio.client.server.VoidServerRequestCallback;
 import org.rstudio.studio.client.workbench.WorkbenchContext;
 import org.rstudio.studio.client.workbench.commands.Commands;
 
-import com.google.gwt.user.client.Command;
 import com.google.gwt.user.client.Timer;
 import com.google.inject.Inject;
 import com.google.inject.Provider;

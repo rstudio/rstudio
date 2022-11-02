@@ -1,10 +1,10 @@
 /*
  * main-window.ts
  *
- * Copyright (C) 2022 by RStudio, PBC
+ * Copyright (C) 2022 by Posit Software, PBC
  *
- * Unless you have received this program directly from RStudio pursuant
- * to the terms of a commercial license agreement with RStudio, then
+ * Unless you have received this program directly from Posit Software pursuant
+ * to the terms of a commercial license agreement with Posit Software, then
  * this program is licensed to you under the terms of version 3 of the
  * GNU Affero General Public License. This program is distributed WITHOUT
  * ANY EXPRESS OR IMPLIED WARRANTY, INCLUDING THOSE OF NON-INFRINGEMENT,
@@ -13,25 +13,27 @@
  *
  */
 
-import { BrowserWindow, dialog, Menu, session } from 'electron';
 import { ChildProcess } from 'child_process';
+import { BrowserWindow, dialog, Menu, session, shell } from 'electron';
 
-import { logger } from '../core/logger';
 import { Err } from '../core/err';
+import { logger } from '../core/logger';
 
-import { GwtCallback, PendingQuit } from './gwt-callback';
-import { MenuCallback, showPlaceholderMenu } from './menu-callback';
-import { RCommandEvaluator } from './r-command-evaluator';
-import { SessionLauncher } from './session-launcher';
-import { ApplicationLaunch, LaunchRStudioOptions } from './application-launch';
-import { GwtWindow } from './gwt-window';
-import { appState } from './app-state';
-import { ElectronDesktopOptions } from './preferences/electron-desktop-options';
-import { RemoteDesktopSessionLauncher } from './remote-desktop-session-launcher-overlay';
-import { CloseServerSessions } from './session-servers-overlay';
-import { waitForUrlWithTimeout } from './utils';
-import { DesktopBrowserWindow } from './desktop-browser-window';
 import i18next from 'i18next';
+import { setDockLabel } from '../native/dock.node';
+import { appState } from './app-state';
+import { ApplicationLaunch, LaunchRStudioOptions } from './application-launch';
+import { DesktopBrowserWindow } from './desktop-browser-window';
+import { GwtCallback, PendingQuit } from './gwt-callback';
+import { GwtWindow } from './gwt-window';
+import { MenuCallback, showPlaceholderMenu } from './menu-callback';
+import { ElectronDesktopOptions } from './preferences/electron-desktop-options';
+import { RCommandEvaluator } from './r-command-evaluator';
+import { RemoteDesktopSessionLauncher } from './remote-desktop-session-launcher-overlay';
+import { SessionLauncher } from './session-launcher';
+import { CloseServerSessions } from './session-servers-overlay';
+import { isLocalUrl, waitForUrlWithTimeout } from './url-utils';
+import { registerWebContentsDebugHandlers } from './utils';
 
 export function closeAllSatellites(mainWindow: BrowserWindow): void {
   const topLevels = BrowserWindow.getAllWindows();
@@ -68,10 +70,7 @@ export class MainWindow extends GwtWindow {
 
   private sessionProcess?: ChildProcess;
   private isErrorDisplayed = false;
-
-  // if loading fails and emits `did-fail-load` it will be followed by a
-  // 'did-finish-load'; use this bool to differentiate
-  private mainFailLoad = false;
+  private didMainFrameLoadSuccessfully = true;
 
   // TODO
   //#ifdef _WIN32
@@ -130,23 +129,48 @@ export class MainWindow extends GwtWindow {
 
     this.on(DesktopBrowserWindow.CLOSE_WINDOW_SHORTCUT, this.onCloseWindowShortcut.bind(this));
 
-    // connect(webView(), &WebView::urlChanged,
-    //         this, &MainWindow::onUrlChanged);
+    registerWebContentsDebugHandlers(this.window.webContents);
 
-    this.window.webContents.on('did-finish-load', () => {
-      if (!this.mainFailLoad) {
-        this.onLoadFinished(true);
+    // Detect attempts to navigate externally within subframes, and prevent them.
+    // The implementation here is pretty sub-optimal, but it's the best we can do until
+    // we get 'will-frame-navigate' support. In effect, we detect attempts to navigate
+    // externally within an iframe, and instead:
+    //
+    // 1. Open the page externally,
+    // 2. Re-direct the iframe back to the source URL (bleh).
+    //
+    this.window.webContents.session.webRequest.onBeforeRequest((details, callback) => {
+
+      logger().logDebug(`${details.method} ${details.url} [${details.resourceType}]`);
+
+      if (details.resourceType === 'subFrame' && !this.allowNavigation(details.url)) {
+        shell.openExternal(details.url).catch((error) => { logger().logError(error); });
+        callback({ cancel: false, redirectURL: details.frame?.url });
       } else {
-        this.mainFailLoad = false;
+        callback({ cancel: false });
       }
     });
-    this.window.webContents.on('did-fail-load', () => {
-      this.mainFailLoad = true;
-      this.onLoadFinished(false);
+
+    this.window.webContents.on('did-start-navigation', (event, url, isInPlace, isMainFrame) => {
+      if (isMainFrame) {
+        this.didMainFrameLoadSuccessfully = true;
+      }
     });
 
-    this.window.webContents.on('did-finish-load', () => {
-      this.menuCallback.cleanUpActions();
+    this.window.webContents.on('did-fail-load', (event, errorCode, errorDescription, validatedURL, isMainFrame) => {
+      if (isMainFrame) {
+        this.didMainFrameLoadSuccessfully = false;
+      }
+    });
+
+    // NOTE: This callback is called regardless of whether the frame's page was
+    // loaded successfully or not, so we need to detect failures to load within
+    // 'did-fail-load' and then pass that state along here.
+    this.window.webContents.on('did-frame-finish-load', async (event, isMainFrame) => {
+      if (isMainFrame) {
+        this.menuCallback.cleanUpActions();
+        this.onLoadFinished(this.didMainFrameLoadSuccessfully);
+      }
     });
 
     // connect(&desktopInfo(), &DesktopInfo::fixedWidthFontListChanged, [this]() {
@@ -160,7 +184,7 @@ export class MainWindow extends GwtWindow {
     //         Qt::DirectConnection);
 
     // setWindowIcon(QIcon(QString::fromUtf8(":/icons/RStudio.ico")));
-    // setWindowTitle(desktop::activation().editionName());
+    this.window.setTitle(appState().activation().editionName());
 
     // Error error = pLauncher_->initialize();
     // if (error) {
@@ -218,9 +242,11 @@ export class MainWindow extends GwtWindow {
     this.executeJavaScript('window.desktopHooks.getActiveProjectDir()')
       .then((projectDir) => {
         if (projectDir.length > 0) {
-          this.window.setTitle(`${projectDir} - RStudio`);
+          this.window.setTitle(`${projectDir} - ${appState().activation().editionName()}`);
+          setDockLabel(projectDir);
         } else {
-          this.window.setTitle('RStudio');
+          this.window.setTitle(appState().activation().editionName());
+          setDockLabel('');
         }
         this.avoidMoveCursorIfNecessary();
       })
@@ -244,7 +270,7 @@ export class MainWindow extends GwtWindow {
   //   quitConfirmed_ = true;
   // }
 
-  async loadUrl(url: string): Promise<void> {
+  async loadUrl(url: string, updateBaseUrl = true): Promise<void> {
     // pass along the shared secret with every request
     const filter = {
       urls: [`${url}/*`],
@@ -253,6 +279,11 @@ export class MainWindow extends GwtWindow {
       details.requestHeaders['X-Shared-Secret'] = process.env.RS_SHARED_SECRET ?? '';
       callback({ requestHeaders: details.requestHeaders });
     });
+
+    if (updateBaseUrl) {
+      logger().logDebug(`Setting base URL: ${url}`);
+      this.options.baseUrl = url;
+    }
 
     this.window.loadURL(url).catch((reason) => {
       logger().logErrorMessage(`Failed to load ${url}: ${reason}`);
@@ -268,7 +299,7 @@ export class MainWindow extends GwtWindow {
   invokeCommand(cmdId: string): void {
     let cmd = '';
     if (process.platform === 'darwin') {
-      cmd = ` 
+      cmd = `
         var wnd;
         try {
           wnd = window.$RStudio.last_focused_window;
@@ -407,7 +438,7 @@ export class MainWindow extends GwtWindow {
         // the load failed, but we haven't yet received word that the
         // session has failed to load. let the user know that the R
         // session is still initializing, and then reload the page.
-        this.loadUrl(LOADING_WINDOW_WEBPACK_ENTRY).catch(logger().logError);
+        this.loadUrl(LOADING_WINDOW_WEBPACK_ENTRY, false).catch(logger().logError);
         waitForUrlWithTimeout(this.options.baseUrl ?? '', reloadWaitDuration, reloadWaitDuration, 10)
           .then((error: Err) => {
             if (error) {

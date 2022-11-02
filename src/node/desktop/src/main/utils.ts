@@ -1,10 +1,10 @@
 /*
  * utils.ts
  *
- * Copyright (C) 2022 by RStudio, PBC
+ * Copyright (C) 2022 by Posit Software, PBC
  *
- * Unless you have received this program directly from RStudio pursuant
- * to the terms of a commercial license agreement with RStudio, then
+ * Unless you have received this program directly from Posit Software pursuant
+ * to the terms of a commercial license agreement with Posit Software, then
  * this program is licensed to you under the terms of version 3 of the
  * GNU Affero General Public License. This program is distributed WITHOUT
  * ANY EXPRESS OR IMPLIED WARRANTY, INCLUDING THOSE OF NON-INFRINGEMENT,
@@ -17,16 +17,13 @@ import fs, { existsSync } from 'fs';
 import os from 'os';
 import path from 'path';
 import { sep } from 'path';
-import { app, BrowserWindow, dialog, FileFilter, MessageBoxOptions, WebContents } from 'electron';
-import http from 'http';
+import { app, BrowserWindow, dialog, FileFilter, MessageBoxOptions, WebContents, WebRequest } from 'electron';
 
 import { Xdg } from '../core/xdg';
 import { getenv, setenv } from '../core/environment';
 import { FilePath } from '../core/file-path';
 import { logger } from '../core/logger';
 import { userHomePath } from '../core/user';
-import { WaitResult, WaitTimeoutFn, waitWithTimeout } from '../core/wait-utils';
-import { Err } from '../core/err';
 
 import { MainWindow } from './main-window';
 import i18next from 'i18next';
@@ -157,12 +154,12 @@ export function rsessionExeName(): string {
 }
 
 /**
- * 
+ *
  * @returns Root of the RStudio repo for a dev build, nothing for packaged build
  */
 export function findRepoRoot(): string {
   if (app.isPackaged) {
-    return "";
+    return '';
   }
   for (let dir = process.cwd(); dir !== path.dirname(dir); dir = path.dirname(dir)) {
     // check for release file
@@ -171,7 +168,7 @@ export function findRepoRoot(): string {
       return dir;
     }
   }
-  return "";
+  return '';
 }
 
 // used to help find built C++ sources in developer configurations
@@ -179,7 +176,7 @@ function findBuildRoot(): string {
   // look for the project root directory. note that the current
   // working directory may differ depending on how we are launched
   // (e.g. unit tests will have their parent folder as the working directory)
-  let dir = findRepoRoot();
+  const dir = findRepoRoot();
   if (dir.length > 0) {
     return findBuildRootImpl(dir);
   }
@@ -360,32 +357,6 @@ export function filterFromQFileDialogFilter(qtFilters: string): FileFilter[] {
   return result;
 }
 
-/**
- * Wait for a URL to respond, with retries and timeout
- */
-export async function waitForUrlWithTimeout(
-  url: string,
-  initialWaitMs: number,
-  incrementWaitMs: number,
-  maxWaitSec: number,
-): Promise<Err> {
-  const checkReady: WaitTimeoutFn = async () => {
-    return new Promise((resolve) => {
-      http
-        .get(url, (res) => {
-          res.resume(); // consume response data to free up memory
-          resolve(new WaitResult('WaitSuccess'));
-        })
-        .on('error', (e) => {
-          logger().logDebug(`Connection to ${url} failed: ${e.message}`);
-          resolve(new WaitResult('WaitContinue'));
-        });
-    });
-  };
-
-  return waitWithTimeout(checkReady, initialWaitMs, incrementWaitMs, maxWaitSec);
-}
-
 export function raiseAndActivateWindow(window: BrowserWindow): void {
   if (window.isMinimized()) {
     window.restore();
@@ -395,24 +366,7 @@ export function raiseAndActivateWindow(window: BrowserWindow): void {
 }
 
 export function getDpiZoomScaling(): number {
-  // TODO: because Qt is already high-DPI aware and automatically
-  // scales in most scenarios, we no longer need to detect and
-  // apply a custom scale -- but more testing is warranted
   return 1.0;
-}
-
-/**
- * Determine if given host is considered safe to load in an IDE window.
- */
-export function isSafeHost(host: string): boolean {
-  const safeHosts = ['.youtube.com', '.vimeo.com', '.c9.ms', '.google.com'];
-
-  for (const safeHost of safeHosts) {
-    if (host.endsWith(safeHost)) {
-      return true;
-    }
-  }
-  return false;
 }
 
 // this code follows in the footsteps of R.app
@@ -539,3 +493,109 @@ export const handleLocaleCookies = async (window: BrowserWindow, isMainWindow = 
     }
   });
 };
+
+export function registerWebContentsDebugHandlers(webContents: WebContents) {
+
+  // add debug handlers for all of the various navigation and load events
+  const events = [
+    'before-input-event',
+    'blur',
+    'certificate-error',
+    'console-message',
+    'context-menu',
+    'crashed',
+    'cursor-changed',
+    'destroyed',
+    'devtools-closed',
+    'devtools-focused',
+    'devtools-opened',
+    'devtools-reload-page',
+    'did-attach-webview',
+    'did-change-theme-color',
+    'did-create-window',
+    'did-fail-load',
+    'did-fail-provisional-load',
+    'did-finish-load',
+    'did-frame-finish-load',
+    'did-frame-navigate',
+    'did-navigate',
+    'did-navigate-in-page',
+    'did-redirect-navigation',
+    'did-start-loading',
+    'did-start-navigation',
+    'did-stop-loading',
+    'dom-ready',
+    'enter-html-full-screen',
+    'focus',
+    'found-in-page',
+    'frame-created',
+
+    // TODO: These are pretty noisy.
+    // 'ipc-message',
+    // 'ipc-message-sync',
+
+    'leave-html-full-screen',
+    'login',
+    'media-paused',
+    'media-started-playing',
+    'new-window',
+    'page-favicon-updated',
+    'page-title-updated',
+    'paint',
+    'plugin-crashed',
+    'preferred-size-changed',
+    'preload-error',
+    'render-process-gone',
+    'responsive',
+    'select-bluetooth-device',
+    'select-client-certificate',
+    'unresponsive',
+    'update-target-url',
+    'will-attach-webview',
+    'will-navigate',
+    'will-prevent-unload',
+    'will-redirect',
+    'zoom-changed',
+  ] as const;
+
+  for (const event of events) {
+    try {
+      registerWebContentsDebugHandlerImpl(webContents, event);
+    } catch (error: unknown) {
+      logger().logDebug(`Error adding debug handler for event '${event}': ${error}`);
+    }
+  }
+
+}
+
+function registerWebContentsDebugHandlerImpl(webContents: WebContents, event: string) {
+
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  webContents.on(event as any, (...args) => {
+
+    const json = args.map((arg) => {
+
+      // check for an Electron Event and handle it specially here
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      const electronEvent = arg as any;
+      if (electronEvent != null && typeof electronEvent.preventDefault !== 'undefined') {
+        return '<event>';
+      }
+
+      // try to stringify other arguments
+      try {
+        if (typeof arg === 'object') {
+          return '<object>';
+        } else {
+          return JSON.stringify(arg);
+        }
+      } catch (e: unknown) {
+        return '<unknown>';
+      }
+    });
+
+    logger().logDebug(`'${event}': [${json.join(', ')}]`);
+
+  });
+
+}

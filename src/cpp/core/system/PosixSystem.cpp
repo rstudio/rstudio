@@ -1,10 +1,10 @@
 /*
  * PosixSystem.cpp
  *
- * Copyright (C) 2022 by RStudio, PBC
+ * Copyright (C) 2022 by Posit Software, PBC
  *
- * Unless you have received this program directly from RStudio pursuant
- * to the terms of a commercial license agreement with RStudio, then
+ * Unless you have received this program directly from Posit Software pursuant
+ * to the terms of a commercial license agreement with Posit Software, then
  * this program is licensed to you under the terms of version 3 of the
  * GNU Affero General Public License. This program is distributed WITHOUT
  * ANY EXPRESS OR IMPLIED WARRANTY, INCLUDING THOSE OF NON-INFRINGEMENT,
@@ -49,7 +49,7 @@
 #include <gsl/gsl>
 #endif
 
-#ifndef __APPLE__
+#ifdef __linux__
 #include <sys/prctl.h>
 #include <sys/sysinfo.h>
 #include <linux/kernel.h>
@@ -1479,7 +1479,7 @@ Error osResourceLimit(ResourceLimit limit, int* pLimit)
       case CpuLimit:
          *pLimit = RLIMIT_CPU;
          break;
-#ifndef __APPLE__
+#ifdef __linux__
       case NiceLimit:
          *pLimit = RLIMIT_NICE;
          break;
@@ -1552,7 +1552,7 @@ Error systemInformation(SysInfo* pSysInfo)
 {
    pSysInfo->cores = boost::thread::hardware_concurrency();
 
-#ifndef __APPLE__
+#ifdef __linux__
    struct sysinfo info;
    if (::sysinfo(&info) == -1)
       return systemError(errno, ERROR_LOCATION);
@@ -1956,7 +1956,7 @@ Error restrictCoreDumps()
       return error;
 
    // no ptrace core dumps permitted
-#ifndef __APPLE__
+#ifdef __linux__
    int res = ::prctl(PR_SET_DUMPABLE, 0);
    if (res == -1)
       return systemError(errno, ERROR_LOCATION);
@@ -1987,7 +1987,7 @@ void printCoreDumpable(const std::string& context)
    ostr << "  hard limit: " << rLimitHard << std::endl;
 
    // ptrace
-#ifndef __APPLE__
+#ifdef __linux__
    int dumpable = ::prctl(PR_GET_DUMPABLE, nullptr, nullptr, nullptr, nullptr);
    if (dumpable == -1)
       LOG_ERROR(systemError(errno, ERROR_LOCATION));

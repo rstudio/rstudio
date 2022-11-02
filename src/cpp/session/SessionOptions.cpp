@@ -1,10 +1,10 @@
 /*
  * SessionOptions.cpp
  *
- * Copyright (C) 2022 by RStudio, PBC
+ * Copyright (C) 2022 by Posit Software, PBC
  *
- * Unless you have received this program directly from RStudio pursuant
- * to the terms of a commercial license agreement with RStudio, then
+ * Unless you have received this program directly from Posit Software pursuant
+ * to the terms of a commercial license agreement with Posit Software, then
  * this program is licensed to you under the terms of version 3 of the
  * GNU Affero General Public License. This program is distributed WITHOUT
  * ANY EXPRESS OR IMPLIED WARRANTY, INCLUDING THOSE OF NON-INFRINGEMENT,
@@ -35,12 +35,14 @@
 #include <core/r_util/RUserData.hpp>
 #include <core/r_util/RSessionContext.hpp>
 #include <core/r_util/RActiveSessions.hpp>
+#include <core/r_util/RActiveSessionsStorage.hpp>
 #include <core/r_util/RVersionsPosix.hpp>
 
 #include <monitor/MonitorConstants.hpp>
 
 #include <r/session/RSession.hpp>
 
+#include <session/SessionActiveSessionsStorage.hpp>
 #include <session/SessionConstants.hpp>
 #include <session/SessionScopes.hpp>
 #include <session/projects/SessionProjectSharing.hpp>
@@ -306,14 +308,13 @@ core::ProgramStatus Options::read(int argc, char * const argv[], std::ostream& o
 #endif // _WIN32
    resolvePath(resourcePath_, &hunspellDictionariesPath_);
    resolvePath(resourcePath_, &mathjaxPath_);
-   resolvePath(resourcePath_, &libclangHeadersPath_);
    resolvePandocPath(resourcePath_, &pandocPath_);
    resolveQuartoPath(resourcePath_, &quartoPath_);
 
    // rsclang
    if (libclangPath_ != kDefaultRsclangPath)
    {
-      libclangPath_ += "/5.0.2";
+      libclangPath_ += "/13.0.1";
    }
    resolveRsclangPath(resourcePath_, &libclangPath_);
 
@@ -353,15 +354,24 @@ core::ProgramStatus Options::read(int argc, char * const argv[], std::ostream& o
    r_util::SessionScope scope = sessionScope();
    if (!scope.empty())
    {
-        scopeState_ = r_util::validateSessionScope(
-                       scope,
-                       userHomePath(),
-                       userScratchPath(),
-                       session::projectIdToFilePath(userScratchPath(), 
-                                 FilePath(getOverlayOption(
-                                       kSessionSharedStoragePath))),
-                       projectSharingEnabled(),
-                       &initialProjectPath_);
+      std::shared_ptr<r_util::IActiveSessionsStorage> storage;
+      Error error = storage::activeSessionsStorage(&storage);
+      if (error)
+      {
+         LOG_ERROR(error);
+         return ProgramStatus::exitFailure();
+      }
+
+      scopeState_ = r_util::validateSessionScope(
+         storage,
+         scope,
+         userHomePath(),
+         userScratchPath(),
+         session::projectIdToFilePath(userScratchPath(), 
+         FilePath(getOverlayOption(
+                  kSessionSharedStoragePath))),
+         projectSharingEnabled(),
+         &initialProjectPath_);
    }
    else
    {
@@ -424,6 +434,54 @@ core::ProgramStatus Options::read(int argc, char * const argv[], std::ostream& o
    // load cran options from repos.conf
    FilePath reposFile(rCRANReposFile());
    rCRANMultipleRepos_ = parseReposConfig(reposFile);
+
+   // if the allow overlay is enabled, emit warnings for any overlay option it masks
+   if (allowOverlay())
+   {
+      // it'd be nicer to iterate over the `allow` options_description object, but the
+      // variable-to-value mapping is not accessible here since it's only available
+      // during the parse phase
+      std::vector<std::string> violations;
+      if (!allowVcsExecutableEdit_)
+         violations.push_back("allow-vcs-executable-edit");
+      if (!allowCRANReposEdit_)
+         violations.push_back("allow-r-cran-repos-edit");
+      if (!allowVcs_)
+         violations.push_back("allow-vcs");
+      if (!allowPackageInstallation_)
+         violations.push_back("allow-package-installation");
+      if (!allowShell_)
+         violations.push_back("allow-shell");
+      if (!allowTerminalWebsockets_)
+         violations.push_back("allow-terminal-websockets");
+      if (!allowFileDownloads_)
+         violations.push_back("allow-file-downloads");
+      if (!allowFileUploads_)
+         violations.push_back("allow-file-uploads");
+      if (!allowRemovePublicFolder_)
+         violations.push_back("allow-remove-public-folder");
+      if (!allowRpubsPublish_)
+         violations.push_back("allow-rpubs-publish");
+      if (!allowExternalPublish_)
+         violations.push_back("allow-external-publish");
+      if (!allowFullUI_)
+         violations.push_back("allow-full-ui");
+      if (!allowLauncherJobs_)
+         violations.push_back("allow-launcher-jobs");
+
+      if (violations.size() == 1)
+      {
+         LOG_WARNING_MESSAGE("The option '" +
+                             violations[0] +
+                             "' was set, but it is not supported in this edition of RStudio and will be ignored");
+      }
+      else if (violations.size() > 1)
+      {
+         LOG_WARNING_MESSAGE("The following options were set, but are not supported in this edition of RStudio "
+                             "and will be ignored: " +
+                             boost::algorithm::join(violations, ", "));
+      }
+   }
 
    // return status
    return status;
@@ -508,7 +566,6 @@ FilePath macBinaryPath(const FilePath& resourcePath,
 
    FilePath electronPath =
          resourcePath.completePath("bin").completePath(stem);
-   
    if (electronPath.exists())
       return electronPath;
 
@@ -604,6 +661,11 @@ void Options::resolveRsclangPath(const FilePath& resourcePath,
    resolvePath(resourcePath, pPath);
 }
 #endif
+
+bool Options::supportsProjectSharing() const
+{
+   return false;
+}
    
 } // namespace session
 } // namespace rstudio

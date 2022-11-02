@@ -1,10 +1,10 @@
 /*
  * Commands.java
  *
- * Copyright (C) 2022 by RStudio, PBC
+ * Copyright (C) 2022 by Posit Software, PBC
  *
- * Unless you have received this program directly from RStudio pursuant
- * to the terms of a commercial license agreement with RStudio, then
+ * Unless you have received this program directly from Posit Software pursuant
+ * to the terms of a commercial license agreement with Posit Software, then
  * this program is licensed to you under the terms of version 3 of the
  * GNU Affero General Public License. This program is distributed WITHOUT
  * ANY EXPRESS OR IMPLIED WARRANTY, INCLUDING THOSE OF NON-INFRINGEMENT,
@@ -469,7 +469,6 @@ public abstract class
    public abstract AppCommand openProfileInBrowser();
 
    // Tools
-   public abstract AppCommand showShellDialog();
    public abstract AppCommand macPreferences();
    public abstract AppCommand showOptions();
    public abstract AppCommand showCodeOptions();
@@ -586,6 +585,8 @@ public abstract class
    // Build
    public abstract AppCommand clearBuild();
    public abstract AppCommand buildAll();
+   public abstract AppCommand buildIncremental();
+   public abstract AppCommand buildFull();
    public abstract AppCommand devtoolsLoadAll();
    public abstract AppCommand serveQuartoSite();
    public abstract AppCommand cleanAll();
@@ -614,6 +615,7 @@ public abstract class
    public abstract AppCommand copyDummy();
    public abstract AppCommand pasteDummy();
    public abstract AppCommand pasteWithIndentDummy();
+   public abstract AppCommand selectAllDummy();
 
    // Placeholder for most recently used files
    public abstract AppCommand mru0();
@@ -671,20 +673,20 @@ public abstract class
    // Addins
    public abstract AppCommand browseAddins();
 
-   // Jobs
+   // Background Jobs
    public abstract AppCommand startJob();
    public abstract AppCommand sourceAsJob();
-   public abstract AppCommand clearJobs();
-   public abstract AppCommand activateJobs();
-   public abstract AppCommand runSelectionAsJob();
+   public abstract AppCommand clearBackgroundJobs();
+   public abstract AppCommand activateBackgroundJobs();
+   public abstract AppCommand runSelectionAsBackgroundJob();
 
-   // Launcher Jobs
-   public abstract AppCommand startLauncherJob();
-   public abstract AppCommand sourceAsLauncherJob();
-   public abstract AppCommand runSelectionAsLauncherJob();
-   public abstract AppCommand activateLauncherJobs();
-   public abstract AppCommand sortLauncherJobsRecorded();
-   public abstract AppCommand sortLauncherJobsState();
+   // Workbench Jobs
+   public abstract AppCommand startWorkbenchJob();
+   public abstract AppCommand sourceAsWorkbenchJob();
+   public abstract AppCommand runSelectionAsWorkbenchJob();
+   public abstract AppCommand activateWorkbenchJobs();
+   public abstract AppCommand sortWorkbenchJobsRecorded();
+   public abstract AppCommand sortWorkbenchJobsState();
 
    // Other
    public abstract AppCommand checkSpelling();

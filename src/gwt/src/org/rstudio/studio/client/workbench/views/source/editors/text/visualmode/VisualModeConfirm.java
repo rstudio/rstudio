@@ -1,10 +1,10 @@
 /*
  * VisualModeConfirm.java
  *
- * Copyright (C) 2022 by RStudio, PBC
+ * Copyright (C) 2022 by Posit Software, PBC
  *
- * Unless you have received this program directly from RStudio pursuant
- * to the terms of a commercial license agreement with RStudio, then
+ * Unless you have received this program directly from Posit Software pursuant
+ * to the terms of a commercial license agreement with Posit Software, then
  * this program is licensed to you under the terms of version 3 of the
  * GNU Affero General Public License. This program is distributed WITHOUT
  * ANY EXPRESS OR IMPLIED WARRANTY, INCLUDING THOSE OF NON-INFRINGEMENT,
@@ -37,6 +37,7 @@ import org.rstudio.studio.client.workbench.views.source.editors.text.TextEditing
 import org.rstudio.studio.client.workbench.views.source.editors.text.visualmode.dialogs.VisualModeConfirmDialog;
 import org.rstudio.studio.client.workbench.views.source.editors.text.visualmode.dialogs.VisualModeLineWrappingDialog;
 import org.rstudio.studio.client.workbench.views.source.model.DocUpdateSentinel;
+import org.rstudio.studio.client.workbench.views.source.model.SourceDocument;
 
 import com.google.gwt.core.client.Scheduler;
 import com.google.gwt.user.client.Command;
@@ -50,11 +51,12 @@ public class VisualModeConfirm
       boolean applyYamlFrontMatter(String yaml);
    }
    
-   public VisualModeConfirm(DocUpdateSentinel docUpdateSentinel, DocDisplay docDisplay, Context context)
+   public VisualModeConfirm(DocUpdateSentinel docUpdateSentinel, DocDisplay docDisplay, TextEditingTarget target, Context context)
    {
       RStudioGinjector.INSTANCE.injectMembers(this);
       docUpdateSentinel_ = docUpdateSentinel;
       docDisplay_ = docDisplay; 
+      target_ = target;
       context_ = context;
    }
    
@@ -199,7 +201,9 @@ public class VisualModeConfirm
            : UserPrefsAccessor.VISUAL_MARKDOWN_EDITING_WRAP_SENTENCE;
            
          String yaml = context_.getYamlFrontMatter();
-         yaml = RmdEditorOptions.setMarkdownOption(yaml, RmdEditorOptions.MARKDOWN_WRAP_OPTION, value);
+         
+         boolean isQuartoDoc = SourceDocument.XT_QUARTO_DOCUMENT.equals(target_.getExtendedFileType());
+         yaml = RmdEditorOptions.setMarkdownOption(yaml, RmdEditorOptions.MARKDOWN_WRAP_OPTION, value, isQuartoDoc);
          context_.applyYamlFrontMatter(yaml);
       }
       else if (result.action == VisualModeLineWrappingDialog.Action.SetProjectLineWrapping)
@@ -230,6 +234,7 @@ public class VisualModeConfirm
    
    private final VisualModeConfirm.Context context_;
    private final DocUpdateSentinel docUpdateSentinel_;
+   private final TextEditingTarget target_;
    private final DocDisplay docDisplay_;
    
    private WorkbenchContext workbenchContext_;

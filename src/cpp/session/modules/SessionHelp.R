@@ -1,10 +1,10 @@
 #
 # SessionHelp.R
 #
-# Copyright (C) 2022 by RStudio, PBC
+# Copyright (C) 2022 by Posit Software, PBC
 #
-# Unless you have received this program directly from RStudio pursuant
-# to the terms of a commercial license agreement with RStudio, then
+# Unless you have received this program directly from Posit Software pursuant
+# to the terms of a commercial license agreement with Posit Software, then
 # this program is licensed to you under the terms of version 3 of the
 # GNU Affero General Public License. This program is distributed WITHOUT
 # ANY EXPRESS OR IMPLIED WARRANTY, INCLUDING THOSE OF NON-INFRINGEMENT,
@@ -285,9 +285,9 @@ options(help_type = "html")
       return()
    
    # If we've encoded the package and function in 'what', pull it out
-   if (grepl("|||", what, fixed = TRUE))
+   if (grepl("::.", what))
    {
-      splat <- strsplit(what, "|||", fixed = TRUE)[[1]]
+      splat <- strsplit(what, "::", fixed = TRUE)[[1]]
       from <- splat[[1]]
       what <- splat[[2]]
    }
@@ -398,6 +398,43 @@ options(help_type = "html")
       utils::browseURL(url)
 })
 
+.rs.addJsonRpcHandler("get_vignette_title", function(topic, package)
+{
+   title <- tryCatch(utils::vignette(topic, package)$Title, 
+                     error = function(e) "", 
+                     warning = function(e) "")
+   .rs.scalar(title)         
+})
+
+.rs.addJsonRpcHandler("get_vignette_description", function(topic, package)
+{
+   description <- tryCatch(
+      {
+         v <- vignette(topic, package)
+
+         Dir <- v$Dir
+         File <- v$File
+         if (grepl("[.]Rmd$", File))
+         {
+            description <- rmarkdown::yaml_front_matter(file.path(Dir, "doc", File))$description
+            if (is.null(description))
+            {
+               description <- ""
+            }
+            description
+         }
+         else ""
+
+      }, 
+      error = function(e) "", 
+      warning = function(e) "")
+   .rs.scalar(description)         
+})
+
+.rs.addJsonRpcHandler("show_vignette", function(topic, package)
+{
+   print(utils::vignette(topic, package))
+})
 
 .rs.addFunction("getHelpFunction", function(name, src, envir = parent.frame())
 {
@@ -722,4 +759,73 @@ options(help_type = "html")
    # if that failed, then we'll do an explicit search
    fmt <- "help/doc/html/Search?pattern=%s&title=1&keyword=1&alias=1"
    sprintf(fmt, utils::URLencode(query, reserved = TRUE))
+})
+
+.rs.addFunction("followHelpTopic", function(pkg, topic)
+{
+   tryCatch({
+      # first look in the specified package
+      file <- utils::help(topic, package = (pkg), help_type = "text", try.all.packages = FALSE)
+
+      # TODO: copy behaviour from utils:::str2logical()
+      linksToTopics <- identical(Sys.getenv("_R_HELP_LINKS_TO_TOPICS_", "TRUE"), "TRUE")
+      
+      # check if topic.Rd exist 
+      if (!length(file) && linksToTopics) {
+         helppath <- system.file("help", package = pkg)
+         if (nzchar(helppath)) {
+            contents <- readRDS(sub("/help$", "/Meta/Rd.rds", helppath, fixed = FALSE))
+            helpfiles <- sub("\\.[Rr]d$", "", contents$File)
+            if (topic %in% helpfiles) file <- file.path(helppath, topic)
+         }
+      }
+
+      # next, search for topic in all installed packages
+      if (!length(file)) {
+         file <- utils::help(topic, help_type = "text", try.all.packages = TRUE)
+      }
+
+      as.character(file)
+
+   }, error = function(e) character())
+   
+})
+
+.rs.addJsonRpcHandler("follow_help_topic", function(url)
+{
+   rx <- "^.*/help/library/([^/]*)/help/(.*)$"
+   pkg <- sub(rx, "\\1", url)
+   topic <- utils::URLdecode(sub(rx, "\\2", url))
+
+   .rs.followHelpTopic(pkg = pkg, topic = topic)
+})
+
+.rs.addFunction("RdLoadMacros", function(file)
+{
+   dir <- dirname(dirname(file))
+   macros <- suppressWarnings(tools::loadPkgRdMacros(dir))
+   tools::loadPkgRdMacros(
+      file.path(R.home("share"), "Rd", "macros", "system.Rd"),
+      macros = macros
+   )
+})
+
+.rs.addFunction("Rd2HTML", function(file, package = "")
+{
+   tf <- tempfile(); on.exit(unlink(tf))
+   macros <- .rs.RdLoadMacros(file)
+   tools::Rd2HTML(file, out = tf, package = package, macros = macros, dynamic = TRUE)
+   lines <- readLines(tf, warn = FALSE)
+   lines <- sub("R Documentation</td></tr></table>", "(preview) R Documentation</td></tr></table>", lines)
+   if (nzchar(package))
+   {
+      # replace with "dev-figure" and parameters so that the server 
+      # can look for figures in `man/` of the dev package
+      lines <- sub('img src="figures/([^"]*)"', sprintf('img src="dev-figure?pkg=%s&figure=\\1"', package), lines)
+
+      # add ?dev=<topic>
+      lines <- gsub('a href="../../([^/]*/help/)([^/]*)">', 'a href="/library/\\1\\2?dev=\\2">', lines)
+   }
+   
+   paste(lines, collapse = "\n")
 })

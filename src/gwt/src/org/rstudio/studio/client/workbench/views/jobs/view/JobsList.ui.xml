@@ -28,6 +28,6 @@
          <g:VerticalPanel styleName="{style.list}" ui:field="list_">
          </g:VerticalPanel>
       </g:ScrollPanel>
-      <g:Label ui:field="empty_" styleName="{style.empty}" text="No jobs are currently running"><ui:attribute name="text" key="noJobsRunningText"/></g:Label>
+      <g:Label ui:field="empty_" styleName="{style.empty}" text="No background jobs are currently running"><ui:attribute name="text" key="noJobsRunningText"/></g:Label>
    </g:HTMLPanel>
 </ui:UiBinder> 

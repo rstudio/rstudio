@@ -1,0 +1,106 @@
+---
+title: "Code Diagnostics"
+---
+
+RStudio has the ability to perform static and dynamic analysis of R code or what is known as "Diagnostics". 
+Diagnostics are a way to indicate stylistic issues or errors with the code.
+
+## Enabling diagnostics
+
+Diagnostics can be enabled and options can be set within the **Global Options** > **Code Diagnostics** editing pane:
+
+![](images/enable-diagnostics.png){fig-alt="A screenshot of the RStudio Global Options popup, selected on the Code > Diagnostics tab."}
+
+A brief outline of the options available:
+
+### Show diagnostics for R
+
+Toggle the display of R code diagnostics.
+
+### Enable diagnostics within R function calls
+
+Controls whether diagnostics are performed within function calls, e.g. `dplyr::select(mtcars, mpg, cyl)`. Toggle this if your code makes heavy use of non-standard evaluation, and RStudio is unable to produce correct diagnostics for you.
+
+### Check arguments to R function calls
+
+Try to detect whether a particular call to a function will succeed. The diagnostics engine will report if it detects missing arguments, unmatched arguments, partially matched arguments, and too many arguments.
+
+For example, in the code sample below, RStudio detects that the function `add_numbers` is missing the `y` argument. It is not necessary for `add_numbers` to exist in the current environment (i.e., within the running R session).
+
+![](images/argument-missing-error.png){fig-alt="A screenshot of the RStudio error diagnostics suggesting that a function argument is missing."}
+
+Similarly, missing arguments (alongside extra, or missing, commas) are reported:
+
+![](images/error-missing-comma.png){fig-alt="A screenshot of R code missing commas after each line, which returns an error 'exepcted , after expression'"}
+
+### Warn if variable used has no definition in scope
+
+Warn if a symbol is used with no definition in the current, or parent, scope. The diagnostics engine will supply a suggestion if there appears to be a typo in the symbol's name; that is, if a symbol with a similar name exists in scope as well.
+
+![](images/error-missing-symbol.png){fig-alt="A screenshot of R code with a defined object not found, with a suggestion to use the correct object."}
+
+### Warn if variable is defined but not used
+
+This diagnostic helps to identify if a variable is created but never used. This can be helpful when attempting to clean up old code, or in diagnosing other errors (wherein you believe a particular variable should be used, but isn't).
+
+In the following example, the variable `result` is assigned but never used or returned; instead, the sum is re-computed and then returned.
+
+![](images/error-unused.png){fig-alt="A screenshot of a function where a defined object is not used, resulting a warning."}
+
+### Provide R style diagnostics (e.g. whitespace)
+
+The style diagnostic checks to see if your code conforms to [Hadley Wickham's style guide](http://adv-r.had.co.nz/Style.html), and reports style warnings when encountered. In particular, the diagnostics engine attempts to identify inappropriate use (or lack thereof) of whitespace.
+
+![](images/warning-whitespace.png){alt="" fig-alt="A screenshot of x<-2+1 without any spacing - RStudio provides a note for the style issue expecting whitespace"}
+
+Currently, the style diagnostics feature is not user configurable; this may be addressed in an upcoming release.
+
+## Other diagnostics
+
+Diagnostics for other languages, such as C / C++, JavaScript, and Python, are also available.
+
+The C / C++ diagnostics engine is powered by `libclang`, and is able to report compiler errors and warnings inline in the source document.
+
+## Viewing diagnostics
+
+When an error or warning is discovered, it is reported in two places:
+
+1.  The left gutter will show an icon related to the diagnostic's severity
+
+2.  The associated diagnostic will be underlined.
+
+![](images/error-diagnostic-view.png){fig-alt="A screenshot of R code displaying a yellow warning in the gutter, a popup for result is defined but not used, and a yellow underline bellow the defined but not used element."}
+
+## Show diagnostics
+
+These features allow you to control when diagnostics are presented and updated. Diagnostics can either be shown on save, or after a certain amount of keyboard idle time.
+
+## Project-level diagnostics
+
+You can run the diagnostics engine over all R files in the project either using the code wizard menu, or with the keyboard shortcut <kbd>Ctrl + Alt + Shift + D</kbd> (<kbd>Cmd + Alt + Shift + D</kbd> on Mac):
+
+![](images/project-level-diagnostics.png){fig-alt="A screenshot of the 'Code Tools' dropdown, displaying the ability to 'Show Diagnostics' for an entire project."}
+
+After running diagnostics over the project (this may take some time), you will see the `Markers` pane populated with all discovered warnings and errors.
+
+![](images/project-diagnostics.png){fig-alt="A screenshot of the Markers for the addtwo.R file and other diagnostics across the project."}
+
+## Magic comments
+
+RStudio's diagnostics engine can be controlled on a per-file basis by adding magic comments to the document.
+
+The following settings are currently supported:
+
+`# !diagnostics off` \-- disable diagnostics within this document.
+
+`# !diagnostics style=[true/false]` \-- toggle style diagnostics for this document.
+
+`# !diagnostics level=[syntax/core/all]` \-- toggle the level, or severity, of diagnostics reported.
+
+In addition, diagnostic warnings for particular variables can be suppressed with the suppress keyword:
+
+`# !diagnostics suppress=<comma-separated list of variables>`
+
+For example, in the below code snippet, the usage of `global_variable` is not reported, while the usage of `other_global_variable` is:
+
+![](images/magic-comments.png){fig-alt="A screenshot of a magic '!diagnostics suppress' comment that prevents a warning from being displayed in RStudio."}

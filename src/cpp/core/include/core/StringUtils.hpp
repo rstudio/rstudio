@@ -1,10 +1,10 @@
 /*
  * StringUtils.hpp
  *
- * Copyright (C) 2022 by RStudio, PBC
+ * Copyright (C) 2022 by Posit Software, PBC
  *
- * Unless you have received this program directly from RStudio pursuant
- * to the terms of a commercial license agreement with RStudio, then
+ * Unless you have received this program directly from Posit Software pursuant
+ * to the terms of a commercial license agreement with Posit Software, then
  * this program is licensed to you under the terms of version 3 of the
  * GNU Affero General Public License. This program is distributed WITHOUT
  * ANY EXPRESS OR IMPLIED WARRANTY, INCLUDING THOSE OF NON-INFRINGEMENT,
@@ -35,6 +35,11 @@ enum LineEnding {
    LineEndingPassthrough = 3
 };
 
+enum StdinLines {
+   StdinMultiLine,
+   StdinSingleLine
+};
+
 class Contains
 {
 public:
@@ -51,6 +56,14 @@ public:
 private:
    std::string needle_;
 };
+
+bool hasSubstringAtOffset(
+      const std::string& string,
+      const std::string& substring,
+      std::size_t offset = 0);
+
+bool hasTruthyValue(const std::string& string);
+bool hasFalsyValue(const std::string& string);
 
 bool isTruthy(const std::string& string,
               bool valueIfEmpty = false);
@@ -96,6 +109,9 @@ std::string jsonLiteralEscape(const std::string& str);
 std::string jsonLiteralUnescape(const std::string& str);
 std::string jsonHtmlEscape(const std::string& str);
 std::string singleQuotedStrEscape(const std::string& str);
+
+Error jsonLiteralUnescape(const std::string& string,
+                          std::string* pEscaped);
 
 void convertLineEndings(std::string* str, LineEnding type);
 
@@ -297,6 +313,10 @@ std::string extractIndent(const std::string& line);
 std::string formatDouble(const double d, const int precision);
 
 std::string sprintf(const char* fmt, ...);
+
+// consume all of standard input and return it as a string; used for processes
+// that consume standard input. reads a maximum of 1mb by default.
+std::string consumeStdin(StdinLines kind, unsigned maxChars = 1048576);
 
 } // namespace string_utils
 

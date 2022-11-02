@@ -1,10 +1,10 @@
 /*
  * math.ts
  *
- * Copyright (C) 2022 by RStudio, PBC
+ * Copyright (C) 2022 by Posit Software, PBC
  *
- * Unless you have received this program directly from RStudio pursuant
- * to the terms of a commercial license agreement with RStudio, then
+ * Unless you have received this program directly from Posit Software pursuant
+ * to the terms of a commercial license agreement with Posit Software, then
  * this program is licensed to you under the terms of version 3 of the
  * GNU Affero General Public License. This program is distributed WITHOUT
  * ANY EXPRESS OR IMPLIED WARRANTY, INCLUDING THOSE OF NON-INFRINGEMENT,
@@ -269,10 +269,11 @@ const extension = (context: ExtensionContext): Extension | null => {
         new InputRule(
           new RegExp('(^|[^`])' + kInlineMathInputRulePattern + '$'),
           (state: EditorState, match: string[], start: number, end: number) => {
-            if (!markIsActive(state, schema.marks.math) && filter(state, start, end)) {
+            if (!markIsActive(state, schema.marks.math) && filter(state)) {
               const tr = state.tr;
               tr.insertText('$');
               const mark = schema.marks.math.create({ type: MathType.Inline });
+              tr.removeMark(start + match[1].length, end + 1, undefined);
               tr.addMark(start + match[1].length, end + 1, mark);
               return tr;
             } else {

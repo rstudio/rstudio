@@ -1,10 +1,10 @@
 /*
  * DatabaseTests.cpp
  *
- * Copyright (C) 2022 by RStudio, PBC
+ * Copyright (C) 2022 by Posit Software, PBC
  *
- * Unless you have received this program directly from RStudio pursuant
- * to the terms of a commercial license agreement with RStudio, then
+ * Unless you have received this program directly from Posit Software pursuant
+ * to the terms of a commercial license agreement with Posit Software, then
  * this program is licensed to you under the terms of version 3 of the
  * GNU Affero General Public License. This program is distributed WITHOUT
  * ANY EXPRESS OR IMPLIED WARRANTY, INCLUDING THOSE OF NON-INFRINGEMENT,
@@ -20,7 +20,6 @@
 #include <core/system/System.hpp>
 #include <shared_core/SafeConvert.hpp>
 
-#include <soci/boost-tuple.h>
 #include <soci/session.h>
 #include <soci/sqlite3/soci-sqlite3.h>
 
@@ -89,14 +88,16 @@ TEST_CASE("Database", "[.database]")
             .withInput(text);
       REQUIRE_FALSE(connection->execute(query));
 
-      boost::tuple<int, std::string> row;
+      int rowId;
+      std::string rowText;
       query = connection->query("select id, text from Test where id = (:id)")
             .withInput(id)
-            .withOutput(row);
+            .withOutput(rowId)
+            .withOutput(rowText);
       REQUIRE_FALSE(connection->execute(query));
 
-      CHECK(row.get<0>() == id);
-      CHECK(row.get<1>() == text);
+      CHECK(rowId == id);
+      CHECK(rowText == text);
    }
 
    test_that("Can create PostgreSQL database")
@@ -115,14 +116,16 @@ TEST_CASE("Database", "[.database]")
             .withInput(text);
       REQUIRE_FALSE(connection->execute(query));
 
-      boost::tuple<int, std::string> row;
+      int rowId;
+      std::string rowText;
       query = connection->query("select id, text from Test where id = (:id)")
             .withInput(id)
-            .withOutput(row);
+            .withOutput(rowId)
+            .withOutput(rowText);
       REQUIRE_FALSE(connection->execute(query));
 
-      CHECK(row.get<0>() == id);
-      CHECK(row.get<1>() == text);
+      CHECK(rowId == id);
+      CHECK(rowText == text);
    }
 
    test_that("Can perform transactions")
@@ -148,14 +151,17 @@ TEST_CASE("Database", "[.database]")
       REQUIRE(numFailed == 0);
       transaction.commit();
 
-      boost::tuple<int, std::string> row;
+
+      int rowId;
+      std::string rowText;
       query = connection->query("select id, text from Test where id = 50")
-            .withOutput(row);
+         .withOutput(rowId)
+         .withOutput(rowText);
 
       REQUIRE_FALSE(connection->execute(query, &dataReturned));
       REQUIRE(dataReturned);
-      REQUIRE(row.get<0>() == 50);
-      REQUIRE(row.get<1>() == "Test text 50");
+      REQUIRE(rowId == 50);
+      REQUIRE(rowText == "Test text 50");
 
       // now attempt to rollback a transaction
       Transaction transaction2(connection);
@@ -173,7 +179,8 @@ TEST_CASE("Database", "[.database]")
       transaction2.rollback();
 
       query = connection->query("select id, text from Test where id = 150")
-            .withOutput(row);
+         .withOutput(rowId)
+         .withOutput(rowText);
 
       // expect no data
       REQUIRE_FALSE(connection->execute(query, &dataReturned));
@@ -232,9 +239,12 @@ TEST_CASE("Database", "[.database]")
       REQUIRE_FALSE(createConnectionPool(5, sqliteConnectionOptions(), &connectionPool));
 
       boost::shared_ptr<IConnection> connection = connectionPool->getConnection();
-      boost::tuple<int, std::string> row;
+
+      int rowId;
+      std::string rowText;
       Query query = connection->query("select id, text from Test where id = 50")
-            .withOutput(row);
+         .withOutput(rowId)
+         .withOutput(rowText);
 
       bool dataReturned = false;
       REQUIRE_FALSE(connection->execute(query, &dataReturned));
@@ -242,7 +252,8 @@ TEST_CASE("Database", "[.database]")
 
       boost::shared_ptr<IConnection> connection2 = connectionPool->getConnection();
       Query query2 = connection2->query("select id, text from Test where id = 25")
-            .withOutput(row);
+         .withOutput(rowId)
+         .withOutput(rowText);
 
       dataReturned = false;
       REQUIRE_FALSE(connection2->execute(query2, &dataReturned));
@@ -435,6 +446,38 @@ TEST_CASE("Database", "[.database]")
             .withInput(id, "pid")
             .withInput(creationTime, "time");
       CHECK(postgresConnection->execute(postgresInsertQuery2));
+   }
+
+   test_that("Schema Version comparisons are correct")
+   {
+      std::vector<SchemaVersion> versions {
+         {},
+         {"", "20200226141952248123456_AddRevokedCookie"},
+         {"Ghost Orchid", "20210712182145921760944"},
+         {"Prairie Trillium", "20210916132211194382021"},
+         {"Aphid", "21210916132211194382021"}
+      };
+
+      for(int i=0; i < (int) versions.size(); i++)
+      {
+         //Compare against smaller
+         for(int j=0; j < i; j++){
+            REQUIRE(versions[j] < versions[i]);
+            REQUIRE_FALSE(versions[j] > versions[i]);
+            REQUIRE(versions[j] <= versions[i]);
+         }
+
+         SchemaVersion sameVersion(versions[i]);
+         REQUIRE(sameVersion == versions[i]);
+
+         //Compare against larger
+         for(int j=i+1; j < (int) versions.size(); j++)
+         {
+            REQUIRE(versions[i] < versions[j]);
+            REQUIRE_FALSE(versions[i] > versions[j]);
+            REQUIRE(versions[i] <= versions[j]);
+         }
+      }
    }
 
    test_that("Can execute str with multiple queries")

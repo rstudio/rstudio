@@ -1,10 +1,10 @@
 /*
  * AsyncClient.hpp
  *
- * Copyright (C) 2022 by RStudio, PBC
+ * Copyright (C) 2022 by Posit Software, PBC
  *
- * Unless you have received this program directly from RStudio pursuant
- * to the terms of a commercial license agreement with RStudio, then
+ * Unless you have received this program directly from Posit Software pursuant
+ * to the terms of a commercial license agreement with Posit Software, then
  * this program is licensed to you under the terms of version 3 of the
  * GNU Affero General Public License. This program is distributed WITHOUT
  * ANY EXPRESS OR IMPLIED WARRANTY, INCLUDING THOSE OF NON-INFRINGEMENT,
@@ -297,6 +297,9 @@ protected:
 
    void handleError(const Error& error)
    {
+      Error httpError = error;
+      addErrorProperties(httpError);
+
       // check to see if the socket was closed purposefully
       // if so, we will ignore the error
       LOCK_MUTEX(socketMutex_)
@@ -311,7 +314,7 @@ protected:
 
       // invoke error handler
       if (errorHandler_)
-         errorHandler_(error);
+         errorHandler_(httpError);
 
       // free handlers to ensure they do not keep a strong reference to us
       // this will allow us to properly clean up in that case
@@ -331,6 +334,16 @@ protected:
                                 description,
                                 location);
       handleError(error);
+   }
+
+   virtual void addErrorProperties(Error& error)
+   {
+      std::string host = request_.host();
+      if (!host.empty())
+         error.addProperty("host", host);
+      std::string uri = request_.uri();
+      if (!uri.empty())
+         error.addProperty("uri", uri);
    }
    
 private:

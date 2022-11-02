@@ -1,10 +1,10 @@
 /*
  * Application.java
  *
- * Copyright (C) 2022 by RStudio, PBC
+ * Copyright (C) 2022 by Posit Software, PBC
  *
- * Unless you have received this program directly from RStudio pursuant
- * to the terms of a commercial license agreement with RStudio, then
+ * Unless you have received this program directly from Posit Software pursuant
+ * to the terms of a commercial license agreement with Posit Software, then
  * this program is licensed to you under the terms of version 3 of the
  * GNU Affero General Public License. This program is distributed WITHOUT
  * ANY EXPRESS OR IMPLIED WARRANTY, INCLUDING THOSE OF NON-INFRINGEMENT,
@@ -86,6 +86,7 @@ import org.rstudio.studio.client.workbench.model.SessionUtils;
 import org.rstudio.studio.client.workbench.prefs.model.LocaleCookie;
 import org.rstudio.studio.client.workbench.prefs.model.UserPrefs;
 import org.rstudio.studio.client.workbench.prefs.model.UserState;
+import org.rstudio.studio.client.workbench.prefs.model.WebDialogCookie;
 
 @Singleton
 public class Application implements ApplicationEventHandlers
@@ -932,17 +933,40 @@ public class Application implements ApplicationEventHandlers
       // If not, we need to set it and reload the page to ensure the correct language is shown.
       // This would happen the first time in a new browser where the UI language was previously set to
       // non-English.
+      boolean needReload = false;
       String uiLanguagePrefValue = userPrefs_.get().uiLanguage().getValue();
       String cookieValue = LocaleCookie.getUiLanguage();
       if (!StringUtil.equals(uiLanguagePrefValue, cookieValue))
       {
          LocaleCookie.setUiLanguage(uiLanguagePrefValue);
+         needReload = true;
+      }
+
+      // Check if cookie used to tell GWT to use web-based dialogs on Electron Desktop IDE matches the user
+      // preference. If not, set it and reload the page.
+      if (BrowseCap.isElectron())
+      {
+         boolean prefUseWebDialogs = !userPrefs_.get().nativeFileDialogs().getValue();
+         if (WebDialogCookie.getUseWebDialogs() != prefUseWebDialogs)
+         {
+            WebDialogCookie.setUseWebDialogs(prefUseWebDialogs);
+            needReload = true;
+         }
+      }
+
+      if (needReload)
+      {
          RStudioGinjector.INSTANCE.getEventBus().fireEvent(new ReloadEvent());
          return;
       }
 
       // Initialize application theme system
       pAppThemes_.get().initializeThemes(rootPanel_.getElement());
+      
+      // Set default text rendering
+      Document.get().getBody().getStyle().setProperty(
+            "textRendering",
+            userPrefs_.get().textRendering().getGlobalValue());
 
       // subscribe to ClientDisconnected event (wait to do this until here
       // because there were spurious ClientDisconnected events occurring
@@ -967,7 +991,6 @@ public class Application implements ApplicationEventHandlers
 
       if (!sessionInfo.getAllowShell())
       {
-         commands_.showShellDialog().remove();
          removeTerminalCommands();
       }
 
@@ -998,9 +1021,9 @@ public class Application implements ApplicationEventHandlers
          commands_.loadServerHome().remove();
       }
 
-      if (!sessionInfo.getLauncherJobsEnabled())
+      if (!sessionInfo.getWorkbenchJobsEnabled())
       {
-         removeJobLauncherCommands();
+         removeWorkbenchJobCommands();
       }
 
       // only enable suspendSession() in devmode
@@ -1295,17 +1318,17 @@ public class Application implements ApplicationEventHandlers
       commands_.projectMru14().remove();
     }
 
-   private void removeJobLauncherCommands()
+   private void removeWorkbenchJobCommands()
    {
-      // we will not remove the launcher commands if we have session servers defined
+      // we will not remove the workbench job commands if we have session servers defined
       Command removeCommands = () ->
       {
-         commands_.startLauncherJob().remove();
-         commands_.sourceAsLauncherJob().remove();
-         commands_.runSelectionAsLauncherJob().remove();
-         commands_.activateLauncherJobs().remove();
-         commands_.sortLauncherJobsRecorded().remove();
-         commands_.sortLauncherJobsState().remove();
+         commands_.startWorkbenchJob().remove();
+         commands_.sourceAsWorkbenchJob().remove();
+         commands_.runSelectionAsWorkbenchJob().remove();
+         commands_.activateWorkbenchJobs().remove();
+         commands_.sortWorkbenchJobsRecorded().remove();
+         commands_.sortWorkbenchJobsState().remove();
       };
 
       if (Desktop.hasDesktopFrame())

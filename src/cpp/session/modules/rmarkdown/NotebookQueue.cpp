@@ -1,10 +1,10 @@
 /*
  * NotebookQueue.cpp
  *
- * Copyright (C) 2022 by RStudio, PBC
+ * Copyright (C) 2022 by Posit Software, PBC
  *
- * Unless you have received this program directly from RStudio pursuant
- * to the terms of a commercial license agreement with RStudio, then
+ * Unless you have received this program directly from Posit Software pursuant
+ * to the terms of a commercial license agreement with Posit Software, then
  * this program is licensed to you under the terms of version 3 of the
  * GNU Affero General Public License. This program is distributed WITHOUT
  * ANY EXPRESS OR IMPLIED WARRANTY, INCLUDING THOSE OF NON-INFRINGEMENT,
@@ -283,7 +283,7 @@ private:
          execContext_->onExprComplete();
          
       ExecRange range;
-      std::string code = execUnit_->popExecRange(&range, mode);
+      std::string code = execUnit_->popExecRange(&range, mode, execContext_->engine());
       if (code.empty())
       {
          // no code to evaluate--skip this unit
@@ -441,9 +441,8 @@ private:
             if (label != "setup")
                workingDir = docQueue->workingDir();
 
-            std::string codeString = string_utils::wideToUtf8(unit->code());
             execContext_ = boost::make_shared<ChunkExecContext>(
-               unit->docId(), unit->chunkId(), codeString, label, ctx, engine,
+               unit->docId(), unit->chunkId(), unit->code(), label, ctx, engine,
                unit->execScope(), workingDir, options,
                docQueue->pixelWidth(), docQueue->charWidth());
             execContext_->connect();

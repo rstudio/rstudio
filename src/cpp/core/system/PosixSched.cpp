@@ -1,10 +1,10 @@
 /*
  * PosixSched.cpp
  *
- * Copyright (C) 2022 by RStudio, PBC
+ * Copyright (C) 2022 by Posit Software, PBC
  *
- * Unless you have received this program directly from RStudio pursuant
- * to the terms of a commercial license agreement with RStudio, then
+ * Unless you have received this program directly from Posit Software pursuant
+ * to the terms of a commercial license agreement with Posit Software, then
  * this program is licensed to you under the terms of version 3 of the
  * GNU Affero General Public License. This program is distributed WITHOUT
  * ANY EXPRESS OR IMPLIED WARRANTY, INCLUDING THOSE OF NON-INFRINGEMENT,
@@ -41,7 +41,7 @@ bool isCpuAffinityEmpty(const CpuAffinity& cpus)
 
 Error getCpuAffinity(CpuAffinity* pCpus)
 {
-#ifndef __APPLE__
+#ifdef __linux__
    cpu_set_t cs;
    CPU_ZERO(&cs);
    if (::sched_getaffinity(0, sizeof(cs), &cs) == -1)
@@ -66,7 +66,7 @@ Error getCpuAffinity(CpuAffinity* pCpus)
 
 Error setCpuAffinity(const CpuAffinity& cpus)
 {
-#ifndef __APPLE__
+#ifdef __linux__
    cpu_set_t cs;
    CPU_ZERO(&cs);
 

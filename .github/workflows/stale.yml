@@ -3,8 +3,14 @@ on:
   schedule:
     - cron: '30 1 * * *'
 
+permissions:
+  contents: read
+
 jobs:
   stale:
+    permissions:
+      issues: write  # for actions/stale to close stale issues
+      pull-requests: write  # for actions/stale to close stale PRs
     runs-on: ubuntu-latest
     steps:
       - uses: actions/stale@v3
@@ -21,5 +27,5 @@ jobs:
             This issue has been automatically closed due to inactivity.
             
           stale-issue-label: 'stale'
-          exempt-issue-labels: 'automation,backlog,builds,codetree-epic,developer,documentation,high,in progress,security,test,triage'
+          exempt-issue-labels: 'automation,backlog,builds,codetree-epic,developer,documentation,high,in progress,security,test,triage,tech debt'
           exempt-all-milestones: true

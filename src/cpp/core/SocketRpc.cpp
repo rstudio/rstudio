@@ -1,10 +1,10 @@
 /*
  * SocketRpc.cpp
  *
- * Copyright (C) 2022 by RStudio, PBC
+ * Copyright (C) 2022 by Posit Software, PBC
  *
- * Unless you have received this program directly from RStudio pursuant
- * to the terms of a commercial license agreement with RStudio, then
+ * Unless you have received this program directly from Posit Software pursuant
+ * to the terms of a commercial license agreement with Posit Software, then
  * this program is licensed to you under the terms of version 3 of the
  * GNU Affero General Public License. This program is distributed WITHOUT
  * ANY EXPRESS OR IMPLIED WARRANTY, INCLUDING THOSE OF NON-INFRINGEMENT,
@@ -22,6 +22,7 @@
 #include <core/http/LocalStreamAsyncClient.hpp>
 #endif
 
+#include <core/http/HeaderCookieConstants.hpp>
 #include <core/http/TcpIpBlockingClient.hpp>
 #include <core/http/TcpIpBlockingClientSsl.hpp>
 #include <core/http/TcpIpAsyncClient.hpp>
@@ -218,7 +219,7 @@ void constructTcpRequest(const std::string& address,
    // stamp auth cookie on the request
    // this lets the server know the RPC is coming from a trusted sourcce,
    // and on behalf of which user
-   pRequest->setHeader(kRstudioRpcCookieHeader, core::system::getenv(kRstudioRpcCookieEnvVar));
+   pRequest->setHeader(kRStudioRpcCookieHeader, core::system::getenv(kRstudioRpcCookieEnvVar));
 
    // add additional Host header (needed for TCP connections)
    pRequest->setHost(address);

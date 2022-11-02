@@ -1,10 +1,10 @@
 /*
  * window-tracker.test.ts
  *
- * Copyright (C) 2022 by RStudio, PBC
+ * Copyright (C) 2022 by Posit Software, PBC
  *
- * Unless you have received this program directly from RStudio pursuant
- * to the terms of a commercial license agreement with RStudio, then
+ * Unless you have received this program directly from Posit Software pursuant
+ * to the terms of a commercial license agreement with Posit Software, then
  * this program is licensed to you under the terms of version 3 of the
  * GNU Affero General Public License. This program is distributed WITHOUT
  * ANY EXPRESS OR IMPLIED WARRANTY, INCLUDING THOSE OF NON-INFRINGEMENT,
@@ -44,7 +44,7 @@ describe('WindowTracker', () => {
   if (!isWindowsDocker()) {
     it('tracks and returns a window by name', () => {
       const tracker = new WindowTracker();
-      const oneWin = new DesktopBrowserWindow({ name: 'some name' });
+      const oneWin = new DesktopBrowserWindow({ name: 'some name', skipLocaleDetection: true });
       tracker.addWindow('one', oneWin);
       assert.equal(tracker.length(), 1);
       const result = tracker.getWindow('one');
@@ -53,9 +53,9 @@ describe('WindowTracker', () => {
     });
     it('tracks and returns two windows by name', () => {
       const tracker = new WindowTracker();
-      const oneWin = new DesktopBrowserWindow({ name: 'some name' });
+      const oneWin = new DesktopBrowserWindow({ name: 'some name', skipLocaleDetection: true });
       tracker.addWindow('one', oneWin);
-      const twoWin = new DesktopBrowserWindow({ name: 'another name' });
+      const twoWin = new DesktopBrowserWindow({ name: 'another name', skipLocaleDetection: true });
       tracker.addWindow('two', twoWin);
       const twoResult = tracker.getWindow('two');
       const oneResult = tracker.getWindow('one');
@@ -66,9 +66,9 @@ describe('WindowTracker', () => {
     });
     it('duplicate name replaces the original', () => {
       const tracker = new WindowTracker();
-      const oneWin = new DesktopBrowserWindow({ name: 'some name' });
+      const oneWin = new DesktopBrowserWindow({ name: 'some name', skipLocaleDetection: true });
       tracker.addWindow('one', oneWin);
-      const twoWin = new TestGwtWindow({ name: 'the gwt window' });
+      const twoWin = new TestGwtWindow({ name: 'the gwt window', skipLocaleDetection: true });
       tracker.addWindow('one', twoWin);
       assert.equal(tracker.length(), 1);
       const result = tracker.getWindow('one');
@@ -76,7 +76,7 @@ describe('WindowTracker', () => {
     });
     it('delete window removes it from map', async function () {
       const tracker = new WindowTracker();
-      const oneWin = new DesktopBrowserWindow({ name: 'some name' });
+      const oneWin = new DesktopBrowserWindow({ name: 'some name', skipLocaleDetection: true });
       tracker.addWindow('one', oneWin);
       oneWin.window.close();
       await setTimeoutPromise(200); // TODO: yuck, find a better way to do this
@@ -85,7 +85,7 @@ describe('WindowTracker', () => {
 
     it('delete window removes it from map', async function () {
       const tracker = new WindowTracker();
-      const oneWin = new DesktopBrowserWindow({ name: 'some name' });
+      const oneWin = new DesktopBrowserWindow({ name: 'some name', skipLocaleDetection: true });
       tracker.addWindow('one', oneWin);
       assert.equal(tracker.length(), 1);
       const result = tracker.getWindow('one');

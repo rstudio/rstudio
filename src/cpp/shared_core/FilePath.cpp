@@ -1,10 +1,10 @@
 /*
  * FilePath.cpp
  *
- * Copyright (C) 2022 by RStudio, PBC
+ * Copyright (C) 2022 by Posit Software, PBC
  *
- * Unless you have received this program directly from RStudio pursuant to the terms of a commercial license agreement
- * with RStudio, then this program is licensed to you under the following terms:
+ * Unless you have received this program directly from Posit Software pursuant to the terms of a commercial license agreement
+ * with Posit, then this program is licensed to you under the following terms:
  *
  * Permission is hereby granted, free of charge, to any person obtaining a copy of this software and associated
  * documentation files (the "Software"), to deal in the Software without restriction, including without limitation the
@@ -80,6 +80,7 @@ MimeType s_mimeTypes[] =
       { "css",          "text/css" },
       { "sass",         "text/sass" },
       { "scss",         "text/scss" },
+      { "less",         "text/less" },
       { "gif",          "image/gif" },
       { "jpg",          "image/jpeg" },
       { "jpeg",         "image/jpeg" },
@@ -112,6 +113,8 @@ MimeType s_mimeTypes[] =
       { "ts",           "text/x-typescript"},
       { "ojs",          "text/javascript" },
       { "lua",          "text/x-lua"},
+      { "groovy",       "text/x-groovy"},
+      { "nf",           "text/x-groovy"},
 
       // other types we are likely to serve
       { "xml",          "text/xml" },
@@ -137,6 +140,7 @@ MimeType s_mimeTypes[] =
       { "txt",          "text/plain" },
       { "mml",          "text/mathml" },
       { "log",          "text/plain" },
+      { "lintr",        "text/plain" },
       { "out",          "text/plain" },
       { "csl",          "text/x-csl" },
       { "R",            "text/x-r-source" },
@@ -1058,6 +1062,24 @@ std::time_t FilePath::getLastWriteTime() const
       logError(m_impl->Path, e, ERROR_LOCATION);
       return 0;
    }
+}
+
+Error FilePath::getLastWriteTime(std::time_t& out_lastWriteTime) const
+{
+   if (!exists())
+      return notFoundError(*this, ERROR_LOCATION);
+
+   boost::system::error_code ec;
+   std::time_t lastWriteTime = boost::filesystem::last_write_time(m_impl->Path, ec);
+   if (ec)
+   {
+      Error error(ec, ERROR_LOCATION);
+      addErrorProperties(m_impl->Path, &error);
+      return error;
+   }
+
+   out_lastWriteTime = lastWriteTime;
+   return Success();
 }
 
 std::string FilePath::getLexicallyNormalPath() const

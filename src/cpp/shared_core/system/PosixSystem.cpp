@@ -1,10 +1,10 @@
 /*
  * PosixSystem.cpp
  *
- * Copyright (C) 2022 by RStudio, PBC
+ * Copyright (C) 2022 by Posit Software, PBC
  *
- * Unless you have received this program directly from RStudio pursuant to the terms of a commercial license agreement
- * with RStudio, then this program is licensed to you under the following terms:
+ * Unless you have received this program directly from Posit Software pursuant to the terms of a commercial license agreement
+ * with Posit, then this program is licensed to you under the following terms:
  *
  * Permission is hereby granted, free of charge, to any person obtaining a copy of this software and associated
  * documentation files (the "Software"), to deal in the Software without restriction, including without limitation the
@@ -29,7 +29,7 @@
 #include <netdb.h>
 #include <pwd.h>
 
-#ifndef __APPLE__
+#ifdef __linux__
 #include <sys/prctl.h>
 #endif
 
@@ -79,7 +79,7 @@ Error restorePrivilegesImpl(uid_t in_uid)
 
 Error enableCoreDumps()
 {
-#ifndef __APPLE__
+#ifdef __linux__
    int res = ::prctl(PR_SET_DUMPABLE, 1);
    if (res == -1)
       return systemError(errno, ERROR_LOCATION);

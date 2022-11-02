@@ -1,10 +1,10 @@
 /*
  * NotebookQueueState.java
  *
- * Copyright (C) 2022 by RStudio, PBC
+ * Copyright (C) 2022 by Posit Software, PBC
  *
- * Unless you have received this program directly from RStudio pursuant
- * to the terms of a commercial license agreement with RStudio, then
+ * Unless you have received this program directly from Posit Software pursuant
+ * to the terms of a commercial license agreement with Posit Software, then
  * this program is licensed to you under the terms of version 3 of the
  * GNU Affero General Public License. This program is distributed WITHOUT
  * ANY EXPRESS OR IMPLIED WARRANTY, INCLUDING THOSE OF NON-INFRINGEMENT,
@@ -20,6 +20,7 @@ import java.util.Map;
 
 import com.google.gwt.core.client.GWT;
 import org.rstudio.core.client.Debug;
+import org.rstudio.core.client.JsVectorInteger;
 import org.rstudio.core.client.StringUtil;
 import org.rstudio.core.client.dom.DomUtils;
 import org.rstudio.core.client.js.JsUtil;
@@ -456,43 +457,24 @@ public class NotebookQueueState implements NotebookRangeExecutedEvent.Handler,
       return unit;
    }
    
+   private static final native JsVectorInteger asUtf8ByteArray(String code)
+   /*-{
+      return new $wnd.TextEncoder("utf-8").encode(code);
+   }-*/;
+   
    private NotebookExecRange getNotebookExecRange(Scope scope, Range range)
    {
-      // convert range into character offsets
-      Position startPos = range.getStart();
-      Position endPos = range.getEnd();
-      int start = 0;
-      int end = 0;
-      int pos = 0;
+      Position chunkStartPos = Position.create(scope.getPreamble().getRow(), 0);
       
-      for (int row = scope.getPreamble().getRow();
-           row < scope.getEnd().getRow();
-           row++)
-      {
-         String line = docDisplay_.getLine(row);
-         for (int col = 0; col <= line.length(); col++)
-         {
-            if (startPos.getRow() == row && startPos.getColumn() == col)
-            {
-               start = pos;
-            }
-            else if (endPos.getRow() == row && endPos.getColumn() == col)
-            {
-               end = pos;
-               break;
-            }
-            pos++;
-         }
-      }
+      String startCode = docDisplay_.getCode(chunkStartPos, range.getStart());
+      int start = asUtf8ByteArray(startCode).length();
       
-      // if we never found the end, just use the last character (less one for 
-      // the newline)
-      if (end == 0)
-         end = pos - 1;
+      String endCode = docDisplay_.getCode(chunkStartPos, range.getEnd());
+      int end = asUtf8ByteArray(endCode).length();
       
       return NotebookExecRange.create(start, end);
    }
-   
+      
    private NotebookQueueUnit getUnit(String chunkId)
    {
       JsArray<NotebookQueueUnit> units = queue_.getUnits();

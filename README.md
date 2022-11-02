@@ -1,5 +1,3 @@
-> **Note:** On May 6, 2021, this repository's default branch was changed from `master` to `main`. See [Regarding Git and Branch Naming](https://sfconservancy.org/news/2020/jun/23/gitbranchname/) from the Software Freedom Conservancy for more information.
-
 RStudio
 =============================================================================
 
@@ -18,7 +16,7 @@ features include:
   IDE using a web browser.
 
 For more information on RStudio please visit the 
-[project website](http://www.rstudio.com/).
+[project website](http://www.posit.co/).
 
 Getting the Code
 -----------------------------------------------------------------------------
@@ -46,5 +44,4 @@ See also the following files included with the distribution:
 
 If you have problems or want to share feedback with us please visit our
 [community forum](https://community.rstudio.com/c/rstudio-ide). For other
-inquiries you can also email us at [info@rstudio.com](mailto:info@rstudio.com). 
-
+inquiries you can also email us at [info@posit.co](mailto:info@posit.co). 

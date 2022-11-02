@@ -1,10 +1,10 @@
 /*
  * NewDirectoryPage.java
  *
- * Copyright (C) 2022 by RStudio, PBC
+ * Copyright (C) 2022 by Posit Software, PBC
  *
- * Unless you have received this program directly from RStudio pursuant
- * to the terms of a commercial license agreement with RStudio, then
+ * Unless you have received this program directly from Posit Software pursuant
+ * to the terms of a commercial license agreement with Posit Software, then
  * this program is licensed to you under the terms of version 3 of the
  * GNU Affero General Public License. This program is distributed WITHOUT
  * ANY EXPRESS OR IMPLIED WARRANTY, INCLUDING THOSE OF NON-INFRINGEMENT,
@@ -16,14 +16,19 @@ package org.rstudio.studio.client.projects.ui.newproject;
 
 import com.google.gwt.aria.client.Roles;
 import com.google.gwt.core.client.GWT;
+import com.google.gwt.core.client.JsArray;
+
+import org.rstudio.core.client.Debug;
 import org.rstudio.core.client.ElementIds;
 import org.rstudio.core.client.StringUtil;
 import org.rstudio.core.client.dom.DomUtils;
 import org.rstudio.core.client.files.FileSystemItem;
+import org.rstudio.core.client.js.JsUtil;
 import org.rstudio.core.client.resources.ImageResource2x;
 import org.rstudio.core.client.widget.DirectoryChooserTextBox;
 import org.rstudio.core.client.widget.FormLabel;
 import org.rstudio.core.client.widget.MessageDialog;
+import org.rstudio.core.client.widget.OperationWithInput;
 import org.rstudio.studio.client.RStudioGinjector;
 import org.rstudio.studio.client.common.dependencies.DependencyManager;
 import org.rstudio.studio.client.common.vcs.VCSConstants;
@@ -35,9 +40,13 @@ import org.rstudio.studio.client.projects.model.NewProjectResult;
 import org.rstudio.studio.client.projects.model.NewShinyAppOptions;
 import org.rstudio.studio.client.projects.model.ProjectTemplateOptions;
 import org.rstudio.studio.client.quarto.model.QuartoNewProjectOptions;
+import org.rstudio.studio.client.server.ServerError;
+import org.rstudio.studio.client.server.ServerRequestCallback;
 import org.rstudio.studio.client.workbench.model.Session;
 import org.rstudio.studio.client.workbench.model.SessionInfo;
 import org.rstudio.studio.client.workbench.prefs.model.UserPrefs;
+import org.rstudio.studio.client.workbench.views.files.model.DirectoryListing;
+import org.rstudio.studio.client.workbench.views.files.model.FilesServerOperations;
 
 import com.google.gwt.dom.client.Style.Unit;
 import com.google.gwt.event.logical.shared.ValueChangeEvent;
@@ -72,10 +81,12 @@ public class NewDirectoryPage extends NewProjectWizardPage
 
    @Inject
    private void initialize(Session session,
-                           DependencyManager dependencyManager)
+                           DependencyManager dependencyManager, 
+                           FilesServerOperations server)
    {
       session_ = session;
       dependencyManager_ = dependencyManager;
+      server_ = server;
    }
 
    @Override
@@ -315,6 +326,91 @@ public class NewDirectoryPage extends NewProjectWizardPage
       return txtProjectName_.getText().trim();
    }
    
+   @Override
+   protected void validateAsync(final NewProjectResult input,
+                                final OperationWithInput<Boolean> onValidated)
+   {
+      
+      final FileSystemItem projFile = FileSystemItem.createFile(input.getProjectFile());
+      final FileSystemItem projDir = projFile.getParentPath();
+      server_.stat(projDir.getPath(), new ServerRequestCallback<FileSystemItem>()
+      {
+         @Override
+         public void onResponseReceived(final FileSystemItem item)
+         {
+            // no file at this path -- safe for use
+            if (!item.exists())
+            {
+               onValidated.execute(true);
+               return;
+            }
+            
+            // if it was a file, bail
+            if (!item.isDirectory())
+            {
+               globalDisplay_.showMessage(
+                     MessageDialog.WARNING,
+                     constants_.creatingProjectError(),
+                     constants_.fileAlreadyExistsMessage(item.getPath()) + "\n\n" + constants_.pleaseEnterDirectoryNameMessage());
+               onValidated.execute(false);
+               return;
+            }
+            
+            // check if this directory is empty
+            server_.listFiles(item, 
+                  false, // monitor
+                  false, // show hidden
+                  new ServerRequestCallback<DirectoryListing>()
+            {
+               @Override
+               public void onResponseReceived(DirectoryListing listing)
+               {
+                  boolean ok = true;
+                  JsArray<FileSystemItem> children = listing.getFiles();
+                  for (FileSystemItem child : JsUtil.asIterable(children))
+                  {
+                     boolean canIgnore =
+                           child.getExtension() == ".Rproj" ||
+                           child.getName().startsWith(".");
+                     
+                     if (canIgnore)
+                        continue;
+                     
+                     ok = false;
+                     break;
+                  }
+                  
+                  if (!ok)
+                  {
+                     globalDisplay_.showMessage(
+                          MessageDialog.WARNING,
+                          constants_.creatingProjectError(),
+                          constants_.directoryAlreadyExistsMessage(item.getPath()) + "\n\n" + constants_.pleaseEnterDirectoryNameMessage());
+                  }
+                  
+                  onValidated.execute(ok);
+               }
+               
+               @Override
+               public void onError(ServerError error)
+               {
+                  Debug.logError(error);
+                  onValidated.execute(true);
+               }
+            });
+         }
+         
+         @Override
+         public void onError(ServerError error)
+         {
+            Debug.logError(error);
+            onValidated.execute(true);
+         }
+
+      });
+   }
+
+
    protected FormLabel dirNameLabel_;
    protected TextBox txtProjectName_;
    protected CheckBox chkGitInit_;
@@ -325,5 +421,7 @@ public class NewDirectoryPage extends NewProjectWizardPage
    // Injected ----
    private Session session_;
    private DependencyManager dependencyManager_;
+   private FilesServerOperations server_;
+   
    private static final StudioClientProjectConstants constants_ = GWT.create(StudioClientProjectConstants.class);
 }

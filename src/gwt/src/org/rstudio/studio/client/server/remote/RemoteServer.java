@@ -1,10 +1,10 @@
 /*
  * RemoteServer.java
  *
- * Copyright (C) 2022 by RStudio, PBC
+ * Copyright (C) 2022 by Posit Software, PBC
  *
- * Unless you have received this program directly from RStudio pursuant
- * to the terms of a commercial license agreement with RStudio, then
+ * Unless you have received this program directly from Posit Software pursuant
+ * to the terms of a commercial license agreement with Posit Software, then
  * this program is licensed to you under the terms of version 3 of the
  * GNU Affero General Public License. This program is distributed WITHOUT
  * ANY EXPRESS OR IMPLIED WARRANTY, INCLUDING THOSE OF NON-INFRINGEMENT,
@@ -692,17 +692,6 @@ public class RemoteServer implements Server
       sendRequest(RPC_SCOPE, CONSOLE_INPUT, params, requestCallback);
    }
 
-   @Override
-   public void consoleFollowHyperlink(String url, String text, String params, ServerRequestCallback<Void> requestCallback) {
-      JSONArray array = new JSONArrayBuilder()
-            .add(url)
-            .add(text)
-            .add(params)
-            .get();
-
-      sendRequest(RPC_SCOPE, CONSOLE_FOLLOW_HYPERLINK, array, requestCallback);
-   }
-
    public void resetConsoleActions(ServerRequestCallback<Void> requestCallback)
    {
       sendRequest(RPC_SCOPE, RESET_CONSOLE_ACTIONS, requestCallback);
@@ -1306,6 +1295,15 @@ public class RemoteServer implements Server
       sendRequest(RPC_SCOPE, IS_PACKAGE_LOADED, params, requestCallback);
    }
 
+   public void isPackageHyperlinkSafe(
+                       String packageName,
+                       ServerRequestCallback<Boolean> requestCallback)
+   {
+      JSONArray params = new JSONArray();
+      params.set(0, new JSONString(packageName));
+      sendRequest(RPC_SCOPE, IS_PACKAGE_HYPERLINK_SAFE, params, requestCallback);
+   }
+
    public void isPackageInstalled(String packageName,
                                   String version,
                                   ServerRequestCallback<Boolean> requestCallback)
@@ -1474,6 +1472,55 @@ public class RemoteServer implements Server
                   null);
    }
 
+   public void getVignetteTitle(String topic,
+                                String pkgName, 
+                                ServerRequestCallback<String> requestCallback)
+   {
+      JSONArray params = new JSONArray();
+      params.set(0, new JSONString(topic));
+      params.set(1, new JSONString(pkgName));
+      sendRequest(RPC_SCOPE,
+                  GET_VIGNETTE_TITLE,
+                  params,
+                  requestCallback);
+   }
+
+   public void getVignetteDescription(String topic,
+                                      String pkgName, 
+                                      ServerRequestCallback<String> requestCallback)
+   {
+      JSONArray params = new JSONArray();
+      params.set(0, new JSONString(topic));
+      params.set(1, new JSONString(pkgName));
+      sendRequest(RPC_SCOPE,
+                  GET_VIGNETTE_DESCRIPTION,
+                  params,
+                  requestCallback);
+   }
+
+   public void showVignette(String topic, String pkgName) 
+   {
+      JSONArray params = new JSONArray();
+      params.set(0, new JSONString(topic));
+      params.set(1, new JSONString(pkgName));
+      sendRequest(RPC_SCOPE,
+                  SHOW_VIGNETTE,
+                  params,
+                  null);
+   }
+
+   public void followHelpTopic(String url, ServerRequestCallback<JsArrayString> requestCallback)
+   {
+      JSONArray params = new JSONArrayBuilder()
+            .add(url)
+            .get();
+
+      sendRequest(RPC_SCOPE,
+                  FOLLOW_HELP_TOPIC,
+                  params,
+                  requestCallback);
+   }
+   
    public void search(String query,
                       ServerRequestCallback<JsArrayString> requestCallback)
    {
@@ -1717,6 +1764,14 @@ public class RemoteServer implements Server
       sendRequest(RPC_SCOPE, "read_config_json", params, requestCallback);
    }
 
+   public void getIssueUrl(String id, 
+                           ServerRequestCallback<String> requestCallback)
+   {
+      JSONArray params = new JSONArray();
+      params.set(0, new JSONString(id));
+      sendRequest(RPC_SCOPE, GET_ISSUE_URL, params, requestCallback);
+   }
+
    public String getFileExportUrl(String name,
                                   FileSystemItem parentDirectory,
                                   ArrayList<String> filenames)
@@ -1762,6 +1817,11 @@ public class RemoteServer implements Server
          previewURL += "&attachment=1";
 
       return previewURL;
+   }
+   
+   public void getPlotTempdir(ServerRequestCallback<String> requestCallback)
+   {
+      sendRequest(RPC_SCOPE, GET_PLOT_TEMPDIR, requestCallback);
    }
 
    public void nextPlot(ServerRequestCallback<Void> requestCallback)
@@ -2447,6 +2507,14 @@ public class RemoteServer implements Server
       JSONArray params = new JSONArray();
       params.set(0, new JSONString(path));
       sendRequest(RPC_SCOPE, ENSURE_FILE_EXISTS, params, requestCallback);
+   }
+
+   public void createAliasedPath(String path,
+                                 ServerRequestCallback<String> requestCallback)
+   {
+      JSONArray params = new JSONArray();
+      params.set(0, new JSONString(path));
+      sendRequest(RPC_SCOPE, CREATE_ALIASED_PATH, params, requestCallback);
    }
 
    public void detectFreeVars(String code,
@@ -4458,6 +4526,7 @@ public class RemoteServer implements Server
    @Override
    public void beginFind(String searchString,
                          boolean regex,
+                         boolean isWholeWord,
                          boolean ignoreCase,
                          FileSystemItem directory,
                          JsArrayString includeFilePatterns,
@@ -4469,13 +4538,14 @@ public class RemoteServer implements Server
       JSONArray params = new JSONArray();
       params.set(0, new JSONString(searchString));
       params.set(1, JSONBoolean.getInstance(regex));
-      params.set(2, JSONBoolean.getInstance(ignoreCase));
-      params.set(3, new JSONString(directory == null ? ""
+      params.set(2, JSONBoolean.getInstance(isWholeWord));
+      params.set(3, JSONBoolean.getInstance(ignoreCase));
+      params.set(4, new JSONString(directory == null ? ""
                                                      : directory.getPath()));
-      params.set(4, new JSONArray(includeFilePatterns));
-      params.set(5, JSONBoolean.getInstance(useGitGrep));
-      params.set(6, JSONBoolean.getInstance(excludeGitIgnore));
-      params.set(7, new JSONArray(excludeFilePatterns));
+      params.set(5, new JSONArray(includeFilePatterns));
+      params.set(6, JSONBoolean.getInstance(useGitGrep));
+      params.set(7, JSONBoolean.getInstance(excludeGitIgnore));
+      params.set(8, new JSONArray(excludeFilePatterns));
       sendRequest(RPC_SCOPE, BEGIN_FIND, params, requestCallback);
    }
 
@@ -4498,6 +4568,8 @@ public class RemoteServer implements Server
                               boolean searchIgnoreCase,
                               FileSystemItem directory,
                               JsArrayString includeFilePatterns,
+                              boolean useGitGrep,
+                              boolean excludeGitIgnore,
                               JsArrayString excludeFilePatterns,
                               String replaceString,
                               ServerRequestCallback<String> requestCallback)
@@ -4509,8 +4581,10 @@ public class RemoteServer implements Server
       params.set(3, new JSONString(directory == null ? ""
                                                      : directory.getPath()));
       params.set(4, new JSONArray(includeFilePatterns));
-      params.set(5, new JSONArray(excludeFilePatterns));
-      params.set(6, new JSONString(replaceString));
+      params.set(5, JSONBoolean.getInstance(useGitGrep));
+      params.set(6, JSONBoolean.getInstance(excludeGitIgnore));
+      params.set(7, new JSONArray(excludeFilePatterns));
+      params.set(8, new JSONString(replaceString));
 
       sendRequest(RPC_SCOPE, PREVIEW_REPLACE, params, requestCallback);
    }
@@ -4518,9 +4592,12 @@ public class RemoteServer implements Server
    @Override
    public void completeReplace(String searchString,
                                boolean regex,
+                               boolean isWholeWord,
                                boolean searchIgnoreCase,
                                FileSystemItem directory,
                                JsArrayString includeFilePatterns,
+                               boolean useGitGrep,
+                               boolean excludeGitIgnore,
                                JsArrayString excludeFilePatterns,
                                int searchResults,
                                String replaceString,
@@ -4529,13 +4606,16 @@ public class RemoteServer implements Server
       JSONArray params = new JSONArray();
       params.set(0, new JSONString(searchString));
       params.set(1, JSONBoolean.getInstance(regex));
-      params.set(2, JSONBoolean.getInstance(searchIgnoreCase));
-      params.set(3, new JSONString(directory == null ? ""
+      params.set(2, JSONBoolean.getInstance(isWholeWord));
+      params.set(3, JSONBoolean.getInstance(searchIgnoreCase));
+      params.set(4, new JSONString(directory == null ? ""
                                                      : directory.getPath()));
-      params.set(4, new JSONArray(includeFilePatterns));
-      params.set(5, new JSONArray(excludeFilePatterns));
-      params.set(6, new JSONNumber(searchResults));
-      params.set(7, new JSONString(replaceString));
+      params.set(5, new JSONArray(includeFilePatterns));
+      params.set(6, JSONBoolean.getInstance(useGitGrep));
+      params.set(7, JSONBoolean.getInstance(excludeGitIgnore));
+      params.set(8, new JSONArray(excludeFilePatterns));
+      params.set(9, new JSONNumber(searchResults));
+      params.set(10, new JSONString(replaceString));
 
       sendRequest(RPC_SCOPE, COMPLETE_REPLACE, params, requestCallback);
    }
@@ -6162,9 +6242,9 @@ public class RemoteServer implements Server
    }
 
    @Override
-   public void clearJobs(ServerRequestCallback<Void> callback)
+   public void clearBackgroundJobs(ServerRequestCallback<Void> callback)
    {
-      sendRequest(RPC_SCOPE, "clear_jobs", callback);
+      sendRequest(RPC_SCOPE, "clear_background_jobs", callback);
    }
 
    @Override
@@ -6468,28 +6548,10 @@ public class RemoteServer implements Server
    {
       JSONArray params = new JSONArray();
       params.set(0, new JSONString(file));
-      params.set(1,  new JSONString(format));
+      params.set(1, new JSONString(StringUtil.notNull(format)));
       params.set(2,  editorState != null ? new JSONObject(editorState) : JSONNull.getInstance());
       sendRequest(RPC_SCOPE, QUARTO_PREVIEW, params, requestCallback);
    }
-   
-   @Override
-   public void quartoServe(String format, boolean render, ServerRequestCallback<Void> callback)
-   {
-      JSONArray params = new JSONArray();
-      params.set(0, new JSONString(StringUtil.isNullOrEmpty(format) ? "default" : format));
-      params.set(1,  JSONBoolean.getInstance(render));
-      sendRequest(RPC_SCOPE, QUARTO_SERVE, params, callback);
-   }
-   
-   @Override
-   public void quartoServeRender(String file, ServerRequestCallback<Boolean> callback)
-   {
-      JSONArray params = new JSONArray();
-      params.set(0, new JSONString(file));
-      sendRequest(RPC_SCOPE, QUARTO_SERVE_RENDER, params, callback);
-   }
-   
    
    @Override
    public void quartoCreateProject(String projectFile, 
@@ -6575,7 +6637,6 @@ public class RemoteServer implements Server
    private static final String FIND_FUNCTION_IN_SEARCH_PATH = "find_function_in_search_path";
 
    private static final String CONSOLE_INPUT = "console_input";
-   private static final String CONSOLE_FOLLOW_HYPERLINK = "console_follow_hyperlink";
    private static final String RESET_CONSOLE_ACTIONS = "reset_console_actions";
    private static final String INTERRUPT = "interrupt";
    private static final String ABORT = "abort";
@@ -6627,6 +6688,7 @@ public class RemoteServer implements Server
    private static final String GET_PACKAGE_NEWS_URL = "get_package_news_url";
    private static final String GET_PACKAGE_INSTALL_CONTEXT = "get_package_install_context";
    private static final String IS_PACKAGE_LOADED = "is_package_loaded";
+   private static final String IS_PACKAGE_HYPERLINK_SAFE = "is_package_hyperlink_safe";
    private static final String IS_PACKAGE_INSTALLED = "is_package_installed";
    private static final String SET_CRAN_MIRROR = "set_cran_mirror";
    private static final String GET_CRAN_MIRRORS = "get_cran_mirrors";
@@ -6641,6 +6703,10 @@ public class RemoteServer implements Server
    private static final String GET_CUSTOM_HELP = "get_custom_help";
    private static final String GET_CUSTOM_PARAMETER_HELP = "get_custom_parameter_help";
    private static final String SHOW_CUSTOM_HELP_TOPIC = "show_custom_help_topic";
+   private static final String GET_VIGNETTE_TITLE = "get_vignette_title";
+   private static final String GET_VIGNETTE_DESCRIPTION = "get_vignette_description";
+   private static final String SHOW_VIGNETTE = "show_vignette";
+   private static final String FOLLOW_HELP_TOPIC = "follow_help_topic";
 
    private static final String STAT = "stat";
    private static final String IS_TEXT_FILE = "is_text_file";
@@ -6655,7 +6721,9 @@ public class RemoteServer implements Server
    private static final String RENAME_FILE = "rename_file";
    private static final String TOUCH_FILE = "touch_file";
    private static final String COMPLETE_UPLOAD = "complete_upload";
+   private static final String GET_ISSUE_URL = "get_issue_url";
 
+   private static final String GET_PLOT_TEMPDIR = "get_plot_tempdir";
    private static final String NEXT_PLOT = "next_plot";
    private static final String PREVIOUS_PLOT = "previous_plot";
    private static final String REMOVE_PLOT = "remove_plot";
@@ -6714,6 +6782,7 @@ public class RemoteServer implements Server
    private static final String SET_DOC_ORDER = "set_doc_order";
    private static final String REMOVE_CACHED_DATA = "remove_cached_data";
    private static final String ENSURE_FILE_EXISTS = "ensure_file_exists";
+   private static final String CREATE_ALIASED_PATH = "create_aliased_path";
    private static final String GET_SOURCE_DOCUMENT = "get_source_document";
 
    private static final String EXPLORER_INSPECT_OBJECT = "explorer_inspect_object";

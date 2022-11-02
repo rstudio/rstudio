@@ -1,10 +1,10 @@
 /*
  * satellite-window.ts
  *
- * Copyright (C) 2022 by RStudio, PBC
+ * Copyright (C) 2022 by Posit Software, PBC
  *
- * Unless you have received this program directly from RStudio pursuant
- * to the terms of a commercial license agreement with RStudio, then
+ * Unless you have received this program directly from Posit Software pursuant
+ * to the terms of a commercial license agreement with Posit Software, then
  * this program is licensed to you under the terms of version 3 of the
  * GNU Affero General Public License. This program is distributed WITHOUT
  * ANY EXPRESS OR IMPLIED WARRANTY, INCLUDING THOSE OF NON-INFRINGEMENT,
@@ -78,6 +78,7 @@ export class SatelliteWindow extends GwtWindow {
           if (readyToClose) {
             this.closeStage = 'CloseStageAccepted';
             this.window.close();
+            appState().gwtCallback?.unregisterOwner(this);
           } else {
             // not ready to close, revert close stage and take care of business
             this.closeStage = 'CloseStageOpen';
@@ -88,6 +89,7 @@ export class SatelliteWindow extends GwtWindow {
     } else {
       // not a  source window, just close it
       this.closeSatellite(event);
+      appState().gwtCallback?.unregisterOwner(this);
     }
   }
 

@@ -264,11 +264,13 @@
             "title": "Show invisible characters in editor",
             "description": "Whether to show invisible characters, such as spaces and tabs, in the RStudio code editor."
         },
-        "show_indent_guides": {
-            "type": "boolean",
-            "default": false,
-            "title": "Show indentation guides",
-            "description": "Whether to show indentation guides in the RStudio code editor."
+        "indent_guides": {
+            "type": "string",
+            "enum": ["none", "gray", "rainbowlines", "rainbowfills"],
+            "enumReadable": ["None", "Gray lines", "Rainbow lines", "Rainbow fills"],
+            "default": "none",
+            "title": "Indentation guides",
+            "description": "Style for indentation guides in the RStudio code editor."
         },
         "continue_comments_on_newline": {
             "type": "boolean",
@@ -550,10 +552,16 @@
             "title": "Highlight R function calls",
             "description": "Whether to highlight R function calls in the code editor."
         },
+        "color_preview": {
+            "type": "boolean", 
+            "default": true, 
+            "title": "Enable preview of named and hexadecimal colors", 
+            "description": "Whether to show preview for named and hexadecimal colors."
+        },
         "rainbow_parentheses": {
             "type": "boolean",
             "default": false,
-            "title": "Rainbow parentheses",
+            "title": "Use rainbow parentheses",
             "description": "Whether to highlight parentheses in a variety of colors."
         },
         "console_line_length_limit": {
@@ -976,6 +984,8 @@
                 ".github",
                 ".gitignore",
                 ".httr-oauth",
+                ".lintr",
+                ".quartoignore",
                 ".r",
                 ".rbuildignore",
                 ".rdata"   ,
@@ -1008,13 +1018,13 @@
         "show_launcher_jobs_tab": {
             "type": "boolean",
             "default": true,
-            "description": "Whether to show the Launcher jobs tab in RStudio Pro and RStudio Workbench."
+            "description": "Whether to show the Workbench Jobs tab in RStudio Pro and RStudio Workbench."
         },
         "launcher_jobs_sort": {
             "type": "string",
             "enum": ["recorded", "state"],
             "default": "recorded",
-            "description": "How to sort jobs in the Launcher tab in RStudio Pro and RStudio Workbench."
+            "description": "How to sort jobs in the Workbench Jobs tab in RStudio Pro and RStudio Workbench."
         },
         "busy_detection": {
             "type": "string",
@@ -1165,8 +1175,8 @@
         "clean_before_install": {
             "type": "boolean",
             "default": true,
-            "title": "Clean before install",
-            "description": "Clean before install."
+            "title": "Always use --preclean when installing package",
+            "description": "Always use --preclean when installing package."
         },
         "use_internet2": {
             "type": "boolean",
@@ -1594,7 +1604,7 @@
             "type": "string",
             "enum": ["en", "fr"],
             "default": "en",
-            "title": "User Interface Language",
+            "title": "User Interface Language:",
             "description": "The IDE's user-interface language."
         },
         "autohide_menubar": {
@@ -1602,6 +1612,31 @@
             "default": "false",
             "title": "Auto hide menu bar",
             "description": "Hide desktop menu bar until Alt key is pressed."
+        },
+        "native_file_dialogs": {
+            "description": "Whether RStudio Desktop will use the operating system's native File and Message dialog boxes.",
+            "title": "Use native file and message dialog boxes",
+            "type": "boolean",
+            "default": true
+        },
+        "discard_pending_console_input_on_error": {
+            "description": "When enabled, any pending console input will be discarded when an (uncaught) R error occurs.",
+            "title": "Discard pending console input on error",
+            "type": "boolean",
+            "default": true
+        },
+        "editor_scroll_multiplier": {
+            "description": "An integer value, 1-200, to set the editor scroll multiplier. The higher the value, the faster the scrolling.",
+            "title": "Editor scroll speed sensitivity",
+            "type": "integer",
+            "default": 100
+        },
+        "text_rendering": {
+            "title": "Text rendering",
+            "description": "Control how text is rendered within the IDE surface.",
+            "type": "string",
+            "enum": ["auto", "geometricPrecision"],
+            "default": "auto"
         }
     }
 }

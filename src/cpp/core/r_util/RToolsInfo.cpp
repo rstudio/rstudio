@@ -1,10 +1,10 @@
 /*
  * RToolsInfo.cpp
  *
- * Copyright (C) 2022 by RStudio, PBC
+ * Copyright (C) 2022 by Posit Software, PBC
  *
- * Unless you have received this program directly from RStudio pursuant
- * to the terms of a commercial license agreement with RStudio, then
+ * Unless you have received this program directly from Posit Software pursuant
+ * to the terms of a commercial license agreement with Posit Software, then
  * this program is licensed to you under the terms of version 3 of the
  * GNU Affero General Public License. This program is distributed WITHOUT
  * ANY EXPRESS OR IMPLIED WARRANTY, INCLUDING THOSE OF NON-INFRINGEMENT,
@@ -84,6 +84,9 @@ RToolsInfo::RToolsInfo(const std::string& name,
    std::vector<std::string> relativePathEntries;
    std::vector<std::string> clangArgs;
    std::vector<core::system::Option> environmentVars;
+
+   std::vector<std::string> cIncludePaths;
+   std::vector<std::string> cppIncludePaths;
 
    if (name == "2.11")
    {
@@ -191,7 +194,7 @@ RToolsInfo::RToolsInfo(const std::string& name,
    else if (name == "4.0")
    {
       versionMin = "4.0.0";
-      versionMax = "4.2.0";
+      versionMax = "4.1.99";
 
       // PATH for utilities
       relativePathEntries.push_back("usr/bin");
@@ -204,7 +207,19 @@ RToolsInfo::RToolsInfo(const std::string& name,
       std::replace(rtoolsPath.begin(), rtoolsPath.end(), '/', '\\');
       environmentVars.push_back({"RTOOLS40_HOME", rtoolsPath});
 
-      // set clang args
+      // undefine _MSC_VER, so that we can "pretend" to be gcc
+      // this is important for C++ libraries which might try to use
+      // MSVC-specific tools when _MSC_VER is defined (e.g. Eigen), which might
+      // not actually be defined or available in Rtools
+      clangArgs.push_back("-U_MSC_VER");
+
+      // set GNUC levels
+      // (required for _mingw.h, which otherwise tries to use incompatible MSVC defines)
+      clangArgs.push_back("-D__GNUC__=8");
+      clangArgs.push_back("-D__GNUC_MINOR__=3");
+      clangArgs.push_back("-D__GNUC_PATCHLEVEL__=0");
+
+      // set compiler include paths
 #ifdef _WIN64
       std::string baseDir = "mingw64";
       std::string triple = "x86_64-w64-mingw32";
@@ -213,7 +228,20 @@ RToolsInfo::RToolsInfo(const std::string& name,
       std::string triple = "i686-w64-mingw32";
 #endif
 
-      std::vector<std::string> stems = {
+      std::vector<std::string> cStems = {
+         "lib/gcc/" + triple + "/8.3.0/include",
+         "include",
+         "lib/gcc/" + triple + "/8.3.0/include-fixed",
+         triple + "/include"
+      };
+
+      for (auto&& cStem : cStems)
+      {
+         FilePath includePath = installPath.completeChildPath(baseDir + "/" + cStem);
+         cIncludePaths.push_back(includePath.getAbsolutePath());
+      }
+
+      std::vector<std::string> cppStems = {
          "include/c++/8.3.0",
          "include/c++/8.3.0/" + triple,
          "include/c++/8.3.0/backward",
@@ -223,10 +251,10 @@ RToolsInfo::RToolsInfo(const std::string& name,
          triple + "/include"
       };
 
-      for (auto&& stem : stems)
+      for (auto&& cppStem : cppStems)
       {
-         FilePath includePath = installPath.completeChildPath(baseDir + "/" + stem);
-         clangArgs.push_back("-I" + includePath.getAbsolutePath());
+         FilePath includePath = installPath.completeChildPath(baseDir + "/" + cppStem);
+         cppIncludePaths.push_back(includePath.getAbsolutePath());
       }
    }
    else if (name == "4.2")
@@ -242,13 +270,30 @@ RToolsInfo::RToolsInfo(const std::string& name,
       std::replace(rtoolsPath.begin(), rtoolsPath.end(), '/', '\\');
       environmentVars.push_back({"RTOOLS42_HOME", rtoolsPath});
 
+      // undefine _MSC_VER, so that we can "pretend" to be gcc
+      // this is important for C++ libraries which might try to use
+      // MSVC-specific tools when _MSC_VER is defined (e.g. Eigen), which might
+      // not actually be defined or available in Rtools
+      clangArgs.push_back("-U_MSC_VER");
+
       // set GNUC levels
       // (required for _mingw.h, which otherwise tries to use incompatible MSVC defines)
-      clangArgs.push_back("-D__GNUC__=5");
-      clangArgs.push_back("-D__GNUC_MINOR__=0");
-      clangArgs.push_back("-D__GNUC_PATCHLEVEL__=2");
+      clangArgs.push_back("-D__GNUC__=10");
+      clangArgs.push_back("-D__GNUC_MINOR__=3");
+      clangArgs.push_back("-D__GNUC_PATCHLEVEL__=0");
 
-      auto stems = {
+      // get C headers paths
+      auto cStems = {
+         "x86_64-w64-mingw32.static.posix/lib/gcc/x86_64-w64-mingw32.static.posix/10.3.0/include",
+         "x86_64-w64-mingw32.static.posix/include",
+         "x86_64-w64-mingw32.static.posix/lib/gcc/x86_64-w64-mingw32.static.posix/10.3.0/include-fixed"
+      };
+
+      for (auto&& stem : cStems)
+         cIncludePaths.push_back(installPath.completeChildPath(stem).getAbsolutePath());
+
+      // get C++ headers
+      auto cppStems = {
          "x86_64-w64-mingw32.static.posix/lib/gcc/x86_64-w64-mingw32.static.posix/10.3.0/include/c++",
          "x86_64-w64-mingw32.static.posix/lib/gcc/x86_64-w64-mingw32.static.posix/10.3.0/include/c++/x86_64-w64-mingw32.static.posix",
          "x86_64-w64-mingw32.static.posix/lib/gcc/x86_64-w64-mingw32.static.posix/10.3.0/include/c++/backward",
@@ -257,12 +302,8 @@ RToolsInfo::RToolsInfo(const std::string& name,
          "x86_64-w64-mingw32.static.posix/lib/gcc/x86_64-w64-mingw32.static.posix/10.3.0/include-fixed",
       };
 
-      for (auto&& stem : stems)
-      {
-         FilePath includePath = installPath.completeChildPath(stem);
-         clangArgs.push_back("-I" + includePath.getAbsolutePath());
-      }
-
+      for (auto&& stem : cppStems)
+         cppIncludePaths.push_back(installPath.completeChildPath(stem).getAbsolutePath());
    }
    else
    {
@@ -276,11 +317,20 @@ RToolsInfo::RToolsInfo(const std::string& name,
       versionPredicate_ = boost::str(fmt % versionMin % versionMax);
 
       for (const std::string& relativePath : relativePathEntries)
-      {
          pathEntries_.push_back(installPath_.completeChildPath(relativePath));
-      }
 
-      clangArgs_ = clangArgs;
+      // assign C clang arguments
+      auto cClangArgs = clangArgs;
+      for (auto&& cIncludePath : cIncludePaths)
+         cClangArgs.push_back("-I" + cIncludePath);
+      cClangArgs_ = cClangArgs;
+
+      // assign C++ clang arguments
+      auto cppClangArgs = clangArgs;
+      for (auto&& cppIncludePath : cppIncludePaths)
+         cppClangArgs.push_back("-I" + cppIncludePath);
+      cppClangArgs_ = cppClangArgs;
+
       environmentVars_ = environmentVars;
    }
 }
@@ -291,8 +341,8 @@ std::string RToolsInfo::url(const std::string& repos) const
 
    if (name() == "4.2")
    {
-      // TODO: replace with CRAN URL once available
-      url = "https://rstudio.org/links/rtools42";
+      std::string suffix = "bin/windows/Rtools/rtools42/rtools.html";
+      url = core::http::URL::complete(repos, suffix);
    }
    else if (name() == "4.0")
    {

@@ -1,10 +1,10 @@
 /*
  * SessionOptions.hpp
  *
- * Copyright (C) 2022 by RStudio, PBC
+ * Copyright (C) 2022 by Posit Software, PBC
  *
- * Unless you have received this program directly from RStudio pursuant
- * to the terms of a commercial license agreement with RStudio, then
+ * Unless you have received this program directly from Posit Software pursuant
+ * to the terms of a commercial license agreement with Posit Software, then
  * this program is licensed to you under the terms of version 3 of the
  * GNU Affero General Public License. This program is distributed WITHOUT
  * ANY EXPRESS OR IMPLIED WARRANTY, INCLUDING THOSE OF NON-INFRINGEMENT,
@@ -173,10 +173,14 @@ public:
       return core::string_utils::LineEndingPosix;
    }
 
+   // Returns false if project sharing has been explicitly disabled for the session
    bool projectSharingEnabled() const
    {
       return projectSharingEnabled_;
    }
+
+   // Unlike projectSharingEnabled(), this only returns true for versions that support the project sharing feature (i.e. Workbench)
+   bool supportsProjectSharing() const;
 
    std::string monitorSharedSecret() const
    {
@@ -287,7 +291,7 @@ private:
    void resolveRsclangPath(const core::FilePath& resourcePath, std::string* pPath);
 
    void resolveOverlayOptions();
-   bool allowOverlay() const;
+   bool allowOverlay() const override;
 };
   
 } // namespace session

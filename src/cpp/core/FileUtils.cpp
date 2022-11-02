@@ -1,10 +1,10 @@
 /*
  * FileUtils.cpp
  *
- * Copyright (C) 2022 by RStudio, PBC
+ * Copyright (C) 2022 by Posit Software, PBC
  *
- * Unless you have received this program directly from RStudio pursuant
- * to the terms of a commercial license agreement with RStudio, then
+ * Unless you have received this program directly from Posit Software pursuant
+ * to the terms of a commercial license agreement with Posit Software, then
  * this program is licensed to you under the terms of version 3 of the
  * GNU Affero General Public License. This program is distributed WITHOUT
  * ANY EXPRESS OR IMPLIED WARRANTY, INCLUDING THOSE OF NON-INFRINGEMENT,
@@ -65,6 +65,29 @@ bool copySourceFile(const FilePath& sourceDir,
 
 } // anonymous namespace
 
+// NOTE: Assumes that the path string is UTF-8 encoded.
+std::string shortPathName(const std::string& path)
+{
+#ifdef _WIN32
+
+   std::wstring widePath = string_utils::utf8ToWide(path);
+   DWORD length = ::GetShortPathNameW(widePath.c_str(), nullptr, 0);
+   if (length == 0)
+      return path;
+
+   std::vector<WCHAR> buffer(length, 0);
+   DWORD result = ::GetShortPathNameW(widePath.c_str(), &buffer[0], length);
+   if (result == 0)
+      return path;
+
+   return string_utils::wideToUtf8(std::wstring(&buffer[0]));
+
+#else
+   return path;
+#endif
+
+}
+
 FilePath uniqueFilePath(const FilePath& parent, const std::string& prefix, const std::string& extension)
 {
    // try up to 100 times then fallback to a uuid
@@ -103,6 +126,22 @@ std::string readFile(const FilePath& filePath)
    }
    
    return content;
+}
+
+Error writeFile(const FilePath& filePath, const std::string& content)
+{
+   std::shared_ptr<std::ostream> stream;
+   Error error = filePath.openForWrite(stream);
+   if (error)
+   {
+      return error;
+   }
+   *stream << content;
+
+   stream->flush();
+   stream.reset(); 
+
+   return Success();
 }
 
 #ifdef _WIN32

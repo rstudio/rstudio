@@ -1,0 +1,47 @@
+---
+title: "Connecting"
+---
+
+::: {.callout-warning}
+This section is not complete until we have updated screenshots for publishing to Posit Connect.
+:::
+
+RStudio provides "Push button deployment" to Posit Connect, Shinyapps.io, and RPubs.com. [Posit Connect](https://www.posit.co/products/connect/) supports a spectrum of data products, static or dynamic, developed in R and Python: Dashboards, applications, APIs, reports, and so much more. Connect enables flexible permissions configurations and meets all enterprise security requirements. Shinyapps.io supports hosting of Shiny for R and Python, and RPubs.com supports hosting of static-content only.
+
+Full Documentation for:  
+
+- [Posit Connect User Guide](https://docs.posit.co/connect/user/connecting/)
+- [ShinyApps.io User Guide](https://docs.posit.co/shinyapps.io/)
+- [RPubs Getting Started](https://rpubs.com/about/getting-started)
+
+## Connecting Your Account
+
+Install the [rsconnect](https://rstudio.github.io/rsconnect/) R package, which is required for publishing:
+
+```r
+install.packages("rsconnect")
+# or the development version from GitHub
+# install.packages("devtools")
+# devtools::install_github("rstudio/rsconnect")
+```
+
+![Global options menu](images/connecting-1.png){fig-alt="Global options menu"}
+
+You'll need to connect RStudio to the remote hosting environment (e.g. Posit Connect, Shinyapps.io, RPubs.com) and authorize RStudio to use your account. To add a publishing account to RStudio, press **Tools** in the main menu, then **Global Options\...**.
+
+In the Options panel that appears, choose **Publishing** in the sidebar, and use the **Connect\...** button to add a new account.
+
+![](images/connecting-publishing.png){fig-alt="The Global options menu, highlighting the Publishing tab and the Connect... button"}
+
+
+Select the publishing destination, then follow the **Connect Account** wizard's instructions for that particular product.
+
+![Publishing account configuration](images/connect-account.png){fig-alt="Publishing account configuration"}
+
+Log in and click **Connect** to authorize the IDE to deploy on your behalf. Then return to the IDE and click the **Connect Account** button.
+
+Once you have successfully configured the connection within RStudio, you may now publish content to Posit Connect or Shinyapps.io.
+
+For more information on managing or deploying content to Posit Connect, see the [Posit Connect User Guide](https://docs.posit.co/connect/user/).
+
+If you are ready to publish content to RStudio Connect, continue to the [Publishing](https://docs.posit.co/connect/user/publishing/) chapter.

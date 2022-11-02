@@ -1,0 +1,207 @@
+---
+title: "Screen Reader"
+---
+
+This article aims to provide screen-reader users with some effective strategies for RStudio navigation.
+
+Some features discussed are specific to RStudio Desktop or RStudio Server: if RStudio is loaded in your web browser, then you are using RStudio Server; otherwise, you have RStudio Desktop.
+
+For the purposes of this discussion, "RStudio Server" encompasses both RStudio Server Open Source and Posit Workbench (previously RStudio Workbench or RStudio Server Pro).
+
+## Accessibility menu
+
+Several accessibility-related options are available under the Help / Accessibility menu:
+
+| Command                    | Description                                                                                                      |
+|----------------------------|------------------------------------------------------------------------------------------------------------------|
+| Screen Reader Support      | Toggles screen reader support mode on and off; requires RStudio to restart                                       |
+| Speak Text Editor Location | Announce details on current text editor cursor location (RStudio Server with screen reader only)                 |
+| Focus Console Output       | Move keyboard focus to the Console output region, primarily for screen reader users                              |
+| Focus Main Toolbar         | Move keyboard focus to the main toolbar                                                                          |
+| Tab Key Always Moves Focus | Toggles a mode where the Tab key will always move focus to the next element, even when in a text editing control |
+| Accessibility Options      | Display the Global Options dialog and automatically open the Accessibility pane                                  |
+| Accessibility Help         | Opens this web page                                                                                              |
+
+## RStudio Desktop
+
+-   Notes: Due to underlying accessibility issues introduced by components used to build RStudio Desktop, we cannot yet recommend its use via a screen reader except in an experimental fashion. We are actively working with the developer of these components to get these issues addressed, and will be releasing updates with these fixes as soon as we can.
+
+## Posit Workbench / RStudio Server
+
+### Basic concepts
+
+Posit Workbench (previously RStudio Server Pro/RStudio Workbench) and RStudio Server Open Source are web-based applications loaded in your preferred browser. Simply put, you can understand it as an online version of RStudio Desktop.
+
+Since the main menubar (File, Edit, and so on) is actually part of the web page, it requires slightly different shortcuts. Tapping Alt (on Windows), for example, puts focus on the Web Browser\'s main menu, not the RStudio menu.
+
+In most cases, screen reader users will have to keep turning off their virtual cursors (also known as browse mode and quick navigation mode) in order to better interact with the RStudio web application. We will revisit this concept in more detail later on after we configure some required screen reader settings.
+
+-   Notes: while any combinations of screen readers and browsers are supported technically, we have tested the following pairs for RStudio Workbench / RStudio Server.
+
+|                        |                     | Table 1: Tested combinations of screen readers and browsers. |
+|------------------------|---------------------|--------------------------------------------------------------|
+| Operating System       | Screen Reader       | Browser                                                      |
+| Microsoft Windows 10   | JAWS version 2020   | Google Chrome                                                |
+| Microsoft Windows 10   | NVDA version 2020.1 | Google Chrome                                                |
+| macOS 10.15 (Catalina) | VoiceOver           | Safari                                                       |
+
+### Screen reader settings
+
+When using Posit Workbench or RStudio Server or later with a screen reader, it is essential to enable screen reader support. Once set, this setting is persisted for future RStudio sessions. The option is available to toggle via the main menu at Help / Accessibility / Screen Reader Support, or via the Global Options dialog, under the Accessibility panel.
+
+The easiest way to enable the \"Screen Reader Support\" mode, however, is using its own keyboard shortcut by pressing \"Alt+Shift+/ (forward slash)\" on Windows or Linux; \"Ctrl+Option+/ (forward slash)\" on Mac.
+
+-   Notes for Mac Users: the default VoiceOver modifier (VO) key conflict with any RStudio\'s shortcuts using Ctrl+Opt key combinations like above. Please use the VoiceOver pass-through keys (Ctrl+Opt+Tab) each time before pressing any RStudio\'s shortcuts requiring Ctrl+Opt key combination. Or, you can change the VO modifier key into \"Caps Lock\" via VoiceOver Utility (VO+F8) / General / \"Keys to use as the VoiceOver modifier\" setting.
+
+Once the \"Screen Reader Support\" mode is toggled on, you will hear the following dialog message:
+
+> Are you sure you want to enable screen reader support? The application will reload to apply the change.
+
+You can press tab to find \"Yes\" button and press spacebar.
+
+You will then be asked the following question again:
+
+> Reload site? Changes you made may not be saved.
+
+After tabbing to find \"Reload\" button and pressing spacebar, your RStudio will be reloaded with the screen reader support enabled.
+
+Besides the basic screen reader support, you can adjust various accessibility settings at Help / Accessibility / Accessibility Options...
+
+To open this configuration, do the following:
+
+1.  Make sure your screen reader\'s browse mode (also known as virtual cursor or QuickNav mode) is off. If you are using NVDA, you can switch between browse and focus modes by pressing NVDA+Spacebar. JAWS users can do this by pressing JAWS+Z; VoiceOver users can toggle it by pressing left and right arrow keys at the same time.
+
+2.  Press Alt+Shift+H on Windows and Linux to put focus on the \"Help\" menu in the main menubar; press Ctrl+Opt+H on Mac.
+
+-   Notes for Mac Users: the default VoiceOver modifier (VO) key conflict with any RStudio\'s shortcuts using Ctrl+Opt key combinations like above. Please use the VoiceOver pass-through keys (Ctrl+Opt+Tab) each time before pressing any RStudio\'s shortcuts requiring Ctrl+Opt key combination. Or, you can change the VO modifier key into \"Caps Lock\" via VoiceOver Utility (VO+F8) / General / \"Keys to use as the VoiceOver modifier\" setting.
+
+3.  Hit down arrow key several times to find \"Accessibility\" menu and expand it via right arrow key.
+
+4.  Once the menu expanded, press down-arrow key for few times to find \"Accessibility Options...\" and enter on it.
+
+In the accessibility options, you can navigate each setting using tab and arrow keys. You need to keep the screen reader browse mode (also known as virtual cursor) off to better interact with this dialog box.
+
+The following includes some settings we recommend screen-reader users make sure to keep turning on.
+
+-    Screen reader support (requires restart)
+
+-    Entire page has application role (requires restart)
+
+-    Reduce user interface animations
+
+The first item, \"Screen Reader support,\" is the switch we have just enabled and you will never want to turn it off.
+
+The second one, \"Entire Page Has Application Role,\" allows screen readers to automatically recognize your RStudio as an application interface so that you don\'t have to manually turn off the browse mode/virtual cursor each time using the program.
+
+Our last recommendation, \"Reduce User Interface Animations,\" will simplify some visual aspects so that you can better understand the RStudio environment using screen readers.
+
+### Application layout
+
+As described in the [basic concept](#basic-concepts) above, Posit Workbench and RStudio Server are web-based applications loaded inside your browser.
+
+To provide screen-reader users with overview of the application layout, RStudio is annotated to divide it up into named landmarks (also known as regions in some screen readers). The regions in the default visual layout of RStudio are as follows:
+
+1.  Banner (the RStudio logo in the upper-left)
+
+2.  Navigation (the main menu and toolbar)
+
+3.  Main Workbench (the area below the main menu and toolbar, containing 4 quadrants)
+
+```{=html}
+<!-- -->
+```
+1.  TabSet1 (upper-right quadrant, containing various feature tabs including Environment and History)
+
+2.  TabSet2 (lower-right quadrant, containing various feature tabs including Files and Help)
+
+3.  Source (upper-left quadrant, contains files open in text editor)
+
+4.  Console (lower-left, contains Console and other optional tabs such as Terminal and Jobs)
+
+```{=html}
+<!-- -->
+```
+4.  Content Info Warning Bar (closable messagebar occasionally shown below the workbench)
+
+-   Notes: To move around the user interface landmarks, you have to turn on screen readers\' browse mode (also known as virtual cursor or QuickNav mode).
+
+### Menubar navigation
+
+Posit Workbench or RStudio Server adds customizable keyboard shortcuts to get focus to the main menu, at which point the arrow keys can be used to navigate around the menus in essentially the same manner as standard application menus.
+
+On Windows and Linux, each menu is access via \"Alt+Shift\" key combination; on Mac, it is \"Ctrl+Opt\" modifiers.
+
+A full list of shortcuts for accessing each menu is as follows:
+
+|              |                  | Table 2: Menubar shortcut keys. |
+|--------------|------------------|---------------------------------|
+| Description  | Windows & Linux  | Mac                             |
+| File Menu    | Alt+Shift+F      | Ctrl+Opt+F                      |
+| Edit Menu    | Alt+Shift+E      | Ctrl+Opt+I                      |
+| Code Menu    | Alt+Shift+C      | Ctrl+Opt+C                      |
+| View Menu    | Alt+Shift+V      | Ctrl+Opt+V                      |
+| Plots Menu   | Alt+Shift+P      | Ctrl+Opt+P                      |
+| Session Menu | Ctrl+Alt+Shift+S | Ctrl+Opt+Shift+S                |
+| Build Menu   | Alt+Shift+B      | Ctrl+Opt+B                      |
+| Debug Menu   | Alt+Shift+U      | Ctrl+Opt+U                      |
+| Profile Menu | Alt+Shift+I      | Ctrl+Opt+O                      |
+| Tools Menu   | Alt+Shift+S      | Ctrl+Opt+L                      |
+| Help Menu    | Alt+Shift+H      | Ctrl+Opt+H                      |
+
+-   Notes: Before accessing menubar, make sure your screen reader\'s browse mode (also known as virtual cursor or QuickNav mode) is off. If you are using NVDA, you can switch between browse and focus modes by pressing NVDA+Spacebar. JAWS users can do this by pressing JAWS+Z; VoiceOver users can toggle it by pressing left and right arrow keys at the same time.
+
+-   Notes for Mac Users: the default VoiceOver modifier (VO) key conflict with any RStudio\'s shortcuts using Ctrl+Opt key combinations like above. Please use the VoiceOver pass-through keys (Ctrl+Opt+Tab) each time before pressing any RStudio\'s shortcuts requiring Ctrl+Opt key combination. Or, you can change the VO modifier key into \"Caps Lock\" via VoiceOver Utility (VO+F8) / General / \"Keys to use as the VoiceOver modifier\" setting.
+
+### Keyboard shortcuts help
+
+RStudio has a list of keyboard shortcuts that you can refer to anytime. To bring up the keyboard help, press \"Alt+Shift+K\" on Windows or Linux; \"Opt+Shift+K\" on Mac.
+
+Each section has been marked up with proper headings (H2 tag) so that you can jump between different categories using screen readers\' quick navigation keys.
+
+Under the headings, shortcuts are organized in a simple table form in which you can utilize screen readers\' table navigation keys.
+
+Simply close the opened tab after you finish reading the content to go back to the RStudio main page.
+
+### Console navigation
+
+On the RStudio main page, you can move from anywhere to console by pressing \"Ctrl+2\" directly.
+
+As this is an input area, you need to make sure your screen reader\'s browse mode (also known as virtual cursor or QuickNav mode) is off. If you are using NVDA, you can switch between browse and focus modes by pressing NVDA+Spacebar. JAWS users can do this by pressing JAWS+Z; VoiceOver users can toggle it by pressing left and right arrow keys at the same time.
+
+You can use up/down-arrow key to cycle through your recent command history, and you can even edit any of the commands via standard methods (e.g., left/right arrow key to move around characters; backspace/delete keys to erase any of them).
+
+Everything you type in the console will be executed via current R session as soon as you press enter key, and screen readers will announce the corresponding output in real time.
+
+If you would like to review the executed output in more detail via arrow keys, you first need to put your cursor to the \"Console Output\" area by pressing \"Alt+Shift+2\" on Windows or Linux; \"Ctrl+Opt+2\" on Mac. Since the console output area requires browse mode (also known as virtual cursor or QuickNav mode), turn it on in case your arrow keys do not respond as you expected.
+
+An useful shortcut key to clear the entire console output is \"Ctrl+L\". You may want to press this key before executing a new command to secure a cleaner output buffer for screen readers.
+
+More useful keyboard shortcuts for source editor can be found under the \"Console\" and \"Editing (Console and Source)\" sections at Keyboard Shortcuts Help (\"Alt+Shift+K\" on Windows or Linux; \"Opt+Shift+K\" on Mac).
+
+-   Notes: You can minimize the efforts to switch between the screen readers\' browse modes by enabling \"Entire page has application role\" via Help / Accessibility / Accessibility Options...
+
+-   Notes for Mac Users: the default VoiceOver modifier (VO) key conflict with any RStudio\'s shortcuts using Ctrl+Opt key combinations like above. Please use the VoiceOver pass-through keys (Ctrl+Opt+Tab) each time before pressing any RStudio\'s shortcuts requiring Ctrl+Opt key combination. Or, you can change the VO modifier key into \"Caps Lock\" via VoiceOver Utility (VO+F8) / General / \"Keys to use as the VoiceOver modifier\" setting.
+
+-   Notes for Cursor Movement: In any event your screen readers do not read anything when using up/down-arrow keys in either console input area or source editor, please place your cursor at the end of current line by pressing \"End\" key, and then try again.
+
+### Source editor navigation
+
+On the RStudio main page, you can move from anywhere to source editor by pressing \"Ctrl+1\" directly.
+
+This is also an input area where you need to make sure your screen reader\'s browse mode (also known as virtual cursor or QuickNav mode) is off. If you are using NVDA, you can switch between browse and focus modes by pressing NVDA+Spacebar. JAWS users can do this by pressing JAWS+Z; VoiceOver users can toggle it by pressing left and right arrow keys at the same time.
+
+Technically, you can utilize all the standard navigation keys (e.g., Home, End, Arrows, PgUp/Down) with \"Ctrl\" and/or \"Shift\" key combinations to edit your source code text.
+
+An useful shortcut key to control the tab key behavior is \"Alt+Shift+\[ (left bracket)\" on Windows or Linux; \"Ctrl+Opt+\[ (left bracket)\" on Mac. This toggles a mode of whether or not the Tab key will always move focus to the next element , even when in a text editing control.
+
+More useful keyboard shortcuts for source editor can be found under the \"Source\" and \"Editing (Console and Source)\" sections at Keyboard Shortcuts Help (\"Alt+Shift+K\" on Windows or Linux; \"Opt+Shift+K\" on Mac).
+
+-   Notes for Cursor Movement: In any event your screen readers do not read anything when using up/down-arrow keys in either console input area or source editor, please place your cursor at the end of current line by pressing \"End\" key, and then try again.
+
+-   Notes: You can minimize the efforts to switch between the screen readers\' browse modes by enabling \"Entire page has application role\" via Help / Accessibility / Accessibility Options...
+
+## Contact
+
+This document will be kept updated reflecting the latest RStudio\'s accessibility improvements.
+
+We always very much welcome your feedback or questions on our product accessibility. Please email accessibility-related questions and comments anytime to [accessibility\@posit.co](mailto:accessibility@posit.co).

@@ -1,10 +1,10 @@
 /*
  * SessionProjectContext.cpp
  *
- * Copyright (C) 2022 by RStudio, PBC
+ * Copyright (C) 2022 by Posit Software, PBC
  *
- * Unless you have received this program directly from RStudio pursuant
- * to the terms of a commercial license agreement with RStudio, then
+ * Unless you have received this program directly from Posit Software pursuant
+ * to the terms of a commercial license agreement with Posit Software, then
  * this program is licensed to you under the terms of version 3 of the
  * GNU Affero General Public License. This program is distributed WITHOUT
  * ANY EXPRESS OR IMPLIED WARRANTY, INCLUDING THOSE OF NON-INFRINGEMENT,
@@ -514,7 +514,8 @@ std::vector<std::string> fileMonitorIgnoredComponents()
       "/.quarto",
 
       // ignore things within a .git folder
-      "/.git",
+      // ... but allow e.g. .github
+      "/.git/",
 
       // ignore some directories within the revdep folder
       "/revdep/checks",
@@ -767,24 +768,6 @@ void ProjectContext::updatePackageInfo()
    }
 }
 
-bool useNativePipeOption(int useNativePipeOperator)
-{
-   // allow project override
-   switch(useNativePipeOperator)
-   {
-      case r_util::YesValue:
-         return true;
-      case r_util::NoValue:
-         return false;
-      default:
-         // fall through
-         break;
-   }
-
-   // no project override
-   return prefs::userPrefs().insertNativePipeOperator();
-}
-
 json::Object ProjectContext::uiPrefs() const
 {
    using namespace r_util;
@@ -792,7 +775,11 @@ json::Object ProjectContext::uiPrefs() const
    json::Object uiPrefs;
    uiPrefs[kUseSpacesForTab] = config_.useSpacesForTab;
    uiPrefs[kNumSpacesForTab] = config_.numSpacesForTab;
-   uiPrefs[kInsertNativePipeOperator] = useNativePipeOption(config_.useNativePipeOperator);
+   // only set project value if explicitly set to Yes or No
+   if (config_.useNativePipeOperator == r_util::YesValue)
+      uiPrefs[kInsertNativePipeOperator] = true;
+   if (config_.useNativePipeOperator == r_util::NoValue)
+      uiPrefs[kInsertNativePipeOperator] = false;
    uiPrefs[kAutoAppendNewline] = config_.autoAppendNewline;
    uiPrefs[kStripTrailingWhitespace] = config_.stripTrailingWhitespace;
    uiPrefs[kDefaultEncoding] = defaultEncoding();

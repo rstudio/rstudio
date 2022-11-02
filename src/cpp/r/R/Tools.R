@@ -1,10 +1,10 @@
 #
 # Tools.R
 #
-# Copyright (C) 2022 by RStudio, PBC
+# Copyright (C) 2022 by Posit Software, PBC
 #
-# Unless you have received this program directly from RStudio pursuant
-# to the terms of a commercial license agreement with RStudio, then
+# Unless you have received this program directly from Posit Software pursuant
+# to the terms of a commercial license agreement with Posit Software, then
 # this program is licensed to you under the terms of version 3 of the
 # GNU Affero General Public License. This program is distributed WITHOUT
 # ANY EXPRESS OR IMPLIED WARRANTY, INCLUDING THOSE OF NON-INFRINGEMENT,
@@ -267,6 +267,10 @@ environment(.rs.Env[[".rs.addFunction"]]) <- .rs.Env
   # is the devtools path active?
   devToolsPath <- .rs.normalizePath(devToolsPath, winslash = "/", mustWork = FALSE)
   devToolsPath %in% .libPaths()
+})
+
+.rs.addFunction("isDevPackage", function(name) {
+   "pkgload" %in% loadedNamespaces() && pkgload::is_dev_package(name)
 })
 
 # load a package by name
@@ -748,19 +752,10 @@ environment(.rs.Env[[".rs.addFunction"]]) <- .rs.Env
    
 })
 
-.rs.addFunction( "defaultLibPathIsWriteable", function()
+.rs.addFunction("defaultLibPathIsWriteable", function()
 {
    .rs.isLibraryWriteable(.libPaths()[1L])
 })
-
-.rs.addFunction( "disableQuartz", function()
-{
-  .rs.registerReplaceHook("quartz", "grDevices", function(...) {
-    stop(paste("RStudio does not support the quartz device in R <= 2.11.1.",
-               "Please upgrade to a newer version of R to use quartz."))
-  })
-})
-
 
 # Support for implementing json-rpc methods directly in R:
 # 
@@ -1263,18 +1258,14 @@ environment(.rs.Env[[".rs.addFunction"]]) <- .rs.Env
 
 .rs.addFunction("attachConflicts", function(envirs)
 {
-   for (envir in envirs)
+   if ("conflicted" %in% loadedNamespaces())
    {
-      # read position
-      pos <- attr(envir, "pos", exact = TRUE)
-      attr(envir, "pos") <- NULL
-      
-      .rs.callSafely(attach, list(
-         what = envir,
-         name = ".conflicts",
-         pos = pos,
-         warn.conflicts = FALSE
-      ))
+      tryCatch(
+         conflicted:::conflicts_register(),
+         error = function(e) {
+            .rs.logErrorMessage(conditionMessage(e))
+         }
+      )
    }
 })
 
@@ -1285,14 +1276,13 @@ environment(.rs.Env[[".rs.addFunction"]]) <- .rs.Env
    if (length(pos) == 0)
       return(NULL)
    
-   # get references to each environment
+   # empty out the .conflicts environment
    envirs <- lapply(pos, as.environment)
-   for (i in seq_along(envirs))
-      attr(envirs[[i]], "pos") <- pos[[i]]
-   
-   # now detach those from the search path
-   for (i in rev(seq_along(pos)))
-      detach(pos = pos[[i]])
+   for (envir in envirs)
+   {
+      symbols <- ls(envir = envir, all.names = TRUE)
+      rm(list = symbols, envir = envir)
+   }
    
    # return the environments
    envirs
@@ -1316,7 +1306,7 @@ environment(.rs.Env[[".rs.addFunction"]]) <- .rs.Env
 {
    # collect information about the running version of R / RStudio
    rstudioInfo <- .rs.api.versionInfo()
-   rstudioVersion <- format(rstudioInfo$version)
+   rstudioVersion <- format(rstudioInfo$long_version)
    
    rstudioEdition <- sprintf(
       "%s [%s]",

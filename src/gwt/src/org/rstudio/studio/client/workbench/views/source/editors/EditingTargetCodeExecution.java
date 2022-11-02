@@ -1,10 +1,10 @@
 /*
  * EditingTargetCodeExecution.java
  *
- * Copyright (C) 2022 by RStudio, PBC
+ * Copyright (C) 2022 by Posit Software, PBC
  *
- * Unless you have received this program directly from RStudio pursuant
- * to the terms of a commercial license agreement with RStudio, then
+ * Unless you have received this program directly from Posit Software pursuant
+ * to the terms of a commercial license agreement with Posit Software, then
  * this program is licensed to you under the terms of version 3 of the
  * GNU Affero General Public License. This program is distributed WITHOUT
  * ANY EXPRESS OR IMPLIED WARRANTY, INCLUDING THOSE OF NON-INFRINGEMENT,
@@ -177,7 +177,7 @@ public class EditingTargetCodeExecution
             false);
    }
    
-   public void runSelectionAsJob(boolean useJobLauncher)
+   public void runSelectionAsJob(boolean isWorkbenchJob)
    {
       Range selectionRange = docDisplay_.getSelectionRange();
       boolean noSelection = selectionRange.isEmpty();
@@ -188,7 +188,7 @@ public class EditingTargetCodeExecution
       }
       String code = codeExtractor_.extractCode(docDisplay_, selectionRange);
       String targetPath = target_ == null ? null : target_.getPath();
-      if (useJobLauncher)
+      if (isWorkbenchJob)
          events_.fireEvent(new LauncherJobRunSelectionEvent(targetPath, code));
       else
          events_.fireEvent(new JobRunSelectionEvent(targetPath, code));

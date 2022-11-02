@@ -1,10 +1,10 @@
 /*
  * DesktopSessionLauncher.cpp
  *
- * Copyright (C) 2022 by RStudio, PBC
+ * Copyright (C) 2022 by Posit Software, PBC
  *
- * Unless you have received this program directly from RStudio pursuant
- * to the terms of a commercial license agreement with RStudio, then
+ * Unless you have received this program directly from Posit Software pursuant
+ * to the terms of a commercial license agreement with Posit Software, then
  * this program is licensed to you under the terms of version 3 of the
  * GNU Affero General Public License. This program is distributed WITHOUT
  * ANY EXPRESS OR IMPLIED WARRANTY, INCLUDING THOSE OF NON-INFRINGEMENT,
@@ -97,19 +97,27 @@ void launchProcess(const std::string& absPath,
 #ifdef Q_OS_DARWIN
    
    QProcessEnvironment environment = QProcessEnvironment::systemEnvironment();
-   
+
    // on macOS with the hardened runtime, we can no longer rely on dyld
    // to lazy-load symbols from libR.dylib; to resolve this, we use
-   // DYLD_INSERT_LIBRARIES to inject the library we wish to use on
-   // launch 
-   FilePath rHome = FilePath(core::system::getenv("R_HOME"));
-   FilePath rLib = rHome.completeChildPath("lib/libR.dylib");
-   if (rLib.exists())
+   // DYLD_INSERT_LIBRARIES to inject the library we wish to use.
+   //
+   // only do this if we're running rsession directly; if we're running through
+   // arch then it's arch's responsibility to forward DYLD_INSERT_LIBRARIES
+   //
+   // otherwise we risk inserting the library directly into /usr/bin/arch,
+   // and that could fail!
+   if (absPath != "/usr/bin/arch")
    {
-      environment.insert(
-               QStringLiteral("DYLD_INSERT_LIBRARIES"),
-               QString::fromStdString(rLib.getAbsolutePathNative()));
-      
+      FilePath rHome = FilePath(core::system::getenv("R_HOME"));
+      FilePath rLib = rHome.completeChildPath("lib/libR.dylib");
+      if (rLib.exists())
+      {
+         environment.insert(
+            QStringLiteral("DYLD_INSERT_LIBRARIES"),
+            QString::fromStdString(rLib.getAbsolutePathNative()));
+
+      }
    }
    
    // create fallback library path (use TMPDIR so it's user-specific)

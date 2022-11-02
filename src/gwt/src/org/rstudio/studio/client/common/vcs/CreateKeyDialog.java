@@ -1,10 +1,10 @@
 /*
  * CreateKeyDialog.java
  *
- * Copyright (C) 2022 by RStudio, PBC
+ * Copyright (C) 2022 by Posit Software, PBC
  *
- * Unless you have received this program directly from RStudio pursuant
- * to the terms of a commercial license agreement with RStudio, then
+ * Unless you have received this program directly from Posit Software pursuant
+ * to the terms of a commercial license agreement with Posit Software, then
  * this program is licensed to you under the terms of version 3 of the
  * GNU Affero General Public License. This program is distributed WITHOUT
  * ANY EXPRESS OR IMPLIED WARRANTY, INCLUDING THOSE OF NON-INFRINGEMENT,
@@ -107,6 +107,11 @@ public class CreateKeyDialog extends ModalDialog<CreateKeyOptions>
                               {
                                  // close the dialog
                                  indicator.onCompleted();
+
+                                 // set the value of rsa_key_path in computed user prefs layer to newly created file
+                                 UserPrefs uiPrefs = RStudioGinjector.INSTANCE.getUserPrefs();
+                                 uiPrefs.rsaKeyPath().setValue("computed", input.getPath());
+                                 uiPrefs.haveRsaKey().setValue("computed", true);
 
                                  // update the key path
                                  if (res.getExitStatus() == 0)

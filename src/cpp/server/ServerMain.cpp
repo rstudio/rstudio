@@ -1,10 +1,10 @@
 /*
  * ServerMain.cpp
  *
- * Copyright (C) 2022 by RStudio, PBC
+ * Copyright (C) 2022 by Posit Software, PBC
  *
- * Unless you have received this program directly from RStudio pursuant
- * to the terms of a commercial license agreement with RStudio, then
+ * Unless you have received this program directly from Posit Software pursuant
+ * to the terms of a commercial license agreement with Posit Software, then
  * this program is licensed to you under the terms of version 3 of the
  * GNU Affero General Public License. This program is distributed WITHOUT
  * ANY EXPRESS OR IMPLIED WARRANTY, INCLUDING THOSE OF NON-INFRINGEMENT,
@@ -54,10 +54,12 @@
 #include <server/ServerOptions.hpp>
 #include <server/ServerUriHandlers.hpp>
 #include <server/ServerScheduler.hpp>
-#include <server/ServerSessionProxy.hpp>
-#include <server/ServerSessionManager.hpp>
 #include <server/ServerProcessSupervisor.hpp>
 #include <server/ServerPaths.hpp>
+
+#include <server/session/ServerSessionProxy.hpp>
+#include <server/session/ServerSessionManager.hpp>
+#include <server/session/ServerSessionMetadataRpc.hpp>
 
 #include <shared_core/Error.hpp>
 #include <shared_core/system/User.hpp>
@@ -418,21 +420,46 @@ Error waitForSignals()
          // closing pam sessions
          //
 
+         // send SIGTERM signal to specific Workbench child processes
+         // this way user processes will not receive the signal until it traverses the tree
+         std::set<std::string> interruptProcs =  {"rsession",
+                                                   "rserver-launcher",
+                                                   "rstudio-launcher",
+                                                   "rworkspaces",
+                                                   "rserver-monitor"};
+
+         Error error = core::system::sendSignalToSpecifiedChildProcesses(interruptProcs, SIGTERM);
+         if (error)
+         {
+            std::string message = "Error occurred while notifying child processes of ";
+            message += strsignal(sig);
+            error.addProperty("description", message);
+            LOG_ERROR(error);
+         }
+         else
+         {
+            std::string message = "Successfully notified children of ";
+            message += strsignal(sig);
+            LOG_INFO_MESSAGE(message);
+         }
+
          // call overlay shutdown
          overlay::shutdown();
 
          // clear the signal mask
-         Error error = core::system::clearSignalMask();
-         if (error)
+         error = core::system::clearSignalMask();
+         if (error) {
             LOG_ERROR(error);
+         }
 
          // reset the signal to its default
          struct sigaction sa;
          ::memset(&sa, 0, sizeof sa);
          sa.sa_handler = SIG_DFL;
          int result = ::sigaction(sig, &sa, nullptr);
-         if (result != 0)
+         if (result != 0) {
             LOG_ERROR(systemError(result, ERROR_LOCATION));
+         }
 
          // re-raise the signal
          ::kill(::getpid(), sig);
@@ -443,7 +470,7 @@ Error waitForSignals()
       {
          reloadConfiguration();
 
-         // forward signal to specific RStudio child processes
+         // forward signal to specific child processes
          // this will allow them to also reload their configuration / logging if applicable
          // care is taken not to send errant SIGHUP signals to processes we don't control
          std::set<std::string> reloadableProcs =  {"rsession",
@@ -643,7 +670,8 @@ int main(int argc, char * const argv[])
 
             if (depth == 1 &&
                 (boost::ends_with(file.getFilename(), "-d") ||
-                 boost::ends_with(file.getFilename(), "-d.pid")))
+                 boost::ends_with(file.getFilename(), "-d.pid") ||
+                 boost::ends_with(file.getFilename(), "-d.ctx")))
                return false;
 
             return true;
@@ -793,6 +821,10 @@ int main(int argc, char * const argv[])
 
       // call overlay initialize
       error = overlay::initialize();
+      if (error)
+         return core::system::exitFailure(error, ERROR_LOCATION);
+
+      error = session_metadata::initialize();
       if (error)
          return core::system::exitFailure(error, ERROR_LOCATION);
 

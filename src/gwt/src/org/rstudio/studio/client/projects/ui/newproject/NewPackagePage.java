@@ -1,10 +1,10 @@
 /*
  * NewDirectoryPage.java
  *
- * Copyright (C) 2022 by RStudio, PBC
+ * Copyright (C) 2022 by Posit Software, PBC
  *
- * Unless you have received this program directly from RStudio pursuant
- * to the terms of a commercial license agreement with RStudio, then
+ * Unless you have received this program directly from Posit Software pursuant
+ * to the terms of a commercial license agreement with Posit Software, then
  * this program is licensed to you under the terms of version 3 of the
  * GNU Affero General Public License. This program is distributed WITHOUT
  * ANY EXPRESS OR IMPLIED WARRANTY, INCLUDING THOSE OF NON-INFRINGEMENT,
@@ -15,9 +15,7 @@
 package org.rstudio.studio.client.projects.ui.newproject;
 
 import com.google.gwt.core.client.GWT;
-import org.rstudio.core.client.Debug;
 import org.rstudio.core.client.ElementIds;
-import org.rstudio.core.client.files.FileSystemItem;
 import org.rstudio.core.client.js.JsUtil;
 import org.rstudio.core.client.resources.ImageResource2x;
 import org.rstudio.core.client.widget.MessageDialog;
@@ -29,12 +27,7 @@ import org.rstudio.studio.client.projects.StudioClientProjectConstants;
 import org.rstudio.studio.client.projects.model.NewPackageOptions;
 import org.rstudio.studio.client.projects.model.NewProjectInput;
 import org.rstudio.studio.client.projects.model.NewProjectResult;
-import org.rstudio.studio.client.server.ServerError;
-import org.rstudio.studio.client.server.ServerRequestCallback;
-import org.rstudio.studio.client.workbench.views.files.model.DirectoryListing;
-import org.rstudio.studio.client.workbench.views.files.model.FilesServerOperations;
 
-import com.google.gwt.core.client.JsArray;
 import com.google.gwt.core.client.Scheduler;
 import com.google.gwt.core.client.Scheduler.ScheduledCommand;
 import com.google.gwt.event.dom.client.ChangeEvent;
@@ -42,7 +35,6 @@ import com.google.gwt.event.dom.client.ChangeHandler;
 import com.google.gwt.event.dom.client.KeyDownEvent;
 import com.google.gwt.event.dom.client.KeyDownHandler;
 import com.google.gwt.user.client.ui.HorizontalPanel;
-import com.google.inject.Inject;
 
 
 public class NewPackagePage extends NewDirectoryPage
@@ -75,12 +67,6 @@ public class NewPackagePage extends NewDirectoryPage
          }
       });
       
-   }
-   
-   @Inject
-   private void initialize(FilesServerOperations server)
-   {
-      server_ = server;
    }
    
    protected boolean getOptionsSideBySide()
@@ -178,83 +164,8 @@ public class NewPackagePage extends NewDirectoryPage
          onValidated.execute(false);
          return;
       }
-      
-      final FileSystemItem projFile = FileSystemItem.createFile(input.getProjectFile());
-      final FileSystemItem projDir = projFile.getParentPath();
-      server_.stat(projDir.getPath(), new ServerRequestCallback<FileSystemItem>()
-      {
-         @Override
-         public void onResponseReceived(final FileSystemItem item)
-         {
-            // no file at this path -- safe for use
-            if (!item.exists())
-            {
-               onValidated.execute(true);
-               return;
-            }
-            
-            // if it was a file, bail
-            if (!item.isDirectory())
-            {
-               globalDisplay_.showMessage(
-                     MessageDialog.WARNING,
-                     constants_.errorCaption(),
-                     constants_.onResponseReceivedErrorMessage(item.getPath()));
-               onValidated.execute(false);
-               return;
-            }
-            
-            // check if this directory is empty
-            server_.listFiles(item, 
-                  false, // monitor
-                  false, // show hidden
-                  new ServerRequestCallback<DirectoryListing>()
-            {
-               @Override
-               public void onResponseReceived(DirectoryListing listing)
-               {
-                  boolean ok = true;
-                  JsArray<FileSystemItem> children = listing.getFiles();
-                  for (FileSystemItem child : JsUtil.asIterable(children))
-                  {
-                     boolean canIgnore =
-                           child.getExtension() == ".Rproj" ||
-                           child.getName().startsWith(".");
-                     
-                     if (canIgnore)
-                        continue;
-                     
-                     ok = false;
-                     break;
-                  }
-                  
-                  if (!ok)
-                  {
-                     globalDisplay_.showMessage(
-                          MessageDialog.WARNING,
-                          constants_.errorCaption(),
-                          constants_.directoryAlreadyExistsMessage(item.getPath()));
-                  }
-                  
-                  onValidated.execute(ok);
-               }
-               
-               @Override
-               public void onError(ServerError error)
-               {
-                  Debug.logError(error);
-                  onValidated.execute(true);
-               }
-            });
-         }
-         
-         @Override
-         public void onError(ServerError error)
-         {
-            Debug.logError(error);
-            onValidated.execute(true);
-         }
-      });
+
+      super.validateAsync(input, onValidated);
    }
 
    private SelectWidget listProjectType_;
@@ -262,6 +173,5 @@ public class NewPackagePage extends NewDirectoryPage
    private final NewProjectResources.Styles styles_;
    
    // Injected ----
-   private FilesServerOperations server_;
    private static final StudioClientProjectConstants constants_ = GWT.create(StudioClientProjectConstants.class);
 }

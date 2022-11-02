@@ -3,7 +3,9 @@
     "buttonOk": "OK",
     "buttonCancel": "Cancel",
     "buttonBrowse": "Browse...",
-    "unknownErrorOccurred": "An unknown error occurred."
+    "unknownErrorOccurred": "An unknown error occurred.",
+    "buttonYes": "Yes",
+    "buttonNo": "No"
   },
   "contextMenu": {
     "saveImageAsDots": "Save image as...",
@@ -83,8 +85,9 @@
     "devModeConfig": "Dev Mode Config",
     "confColon": "conf:",
     "notFoundDotLowercase": "not found.",
-    "errorFindingR": "Error Finding R",
-    "rstudioFailedToFindRInstalationsOnTheSystem": "RStudio failed to find any R installations on the system."
+    "errorFindingR": "R Not Installed",
+    "rstudioFailedToFindRInstalationsOnTheSystem": "R does not appear to be installed. Please install R before using RStudio.\n\nYou can download R from the official R Project website.\nWould you like to go there now?",
+    "newRstudioWindow": "New RStudio Window"
   },
   "detectRTs": {
     "rNotFound": "R not found",

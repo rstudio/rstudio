@@ -1,10 +1,10 @@
 /*
  * DesktopFrame.java
  *
- * Copyright (C) 2022 by RStudio, PBC
+ * Copyright (C) 2022 by Posit Software, PBC
  *
- * Unless you have received this program directly from RStudio pursuant
- * to the terms of a commercial license agreement with RStudio, then
+ * Unless you have received this program directly from Posit Software pursuant
+ * to the terms of a commercial license agreement with Posit Software, then
  * this program is licensed to you under the terms of version 3 of the
  * GNU Affero General Public License. This program is distributed WITHOUT
  * ANY EXPRESS OR IMPLIED WARRANTY, INCLUDING THOSE OF NON-INFRINGEMENT,
@@ -88,7 +88,6 @@ public interface DesktopFrame extends JavaScriptPassthrough
                                   int height, Command onPrepared);
    void prepareForNamedWindow(String name, boolean allowExternalNavigation,
          boolean showDesktopToolbar, Command onPrepared);
-   void closeNamedWindow(String name);
    
    void copyPageRegionToClipboard(int left, int top, int width, int height,
                                   Command onCopied);
@@ -148,11 +147,6 @@ public interface DesktopFrame extends JavaScriptPassthrough
    
    void openProjectInNewWindow(String projectFilePath);
    void openSessionInNewWindow(String workingDirectoryPath);
-   
-   void openTerminal(String terminalPath,
-                     String workingDirectory,
-                     String extraPathEntries,
-                     String shellType);
 
    void setFixedWidthFont(String font);
    void setZoomLevel(double zoomLevel);
@@ -201,9 +195,11 @@ public interface DesktopFrame extends JavaScriptPassthrough
    void reloadViewerZoomWindow(String url);
    void setPresentationUrl(String url);
    void setTutorialUrl(String url);
-   
+
    void setShinyDialogUrl(String url);
-   
+
+   void allowNavigation(String url, CommandWithArg<Boolean> callback);
+
    void setBusy(boolean busy);
    
    void setWindowTitle(String title);

@@ -3,10 +3,10 @@
 #
 # CMakeGlobals.txt
 #
-# Copyright (C) 2022 by RStudio, PBC
+# Copyright (C) 2022 by Posit Software, PBC
 #
-# Unless you have received this program directly from RStudio pursuant
-# to the terms of a commercial license agreement with RStudio, then
+# Unless you have received this program directly from Posit Software pursuant
+# to the terms of a commercial license agreement with Posit Software, then
 # this program is licensed to you under the terms of version 3 of the
 # GNU Affero General Public License. This program is distributed WITHOUT
 # ANY EXPRESS OR IMPLIED WARRANTY, INCLUDING THOSE OF NON-INFRINGEMENT,
@@ -231,16 +231,21 @@ if(NOT DEFINED RSTUDIO_VERIFY_R_VERSION)
 endif()
 
 # pandoc version
-set(PANDOC_VERSION "2.16.2" CACHE INTERNAL "Pandoc version")
+set(PANDOC_VERSION "2.18" CACHE INTERNAL "Pandoc version")
 
 # quarto support
-if(LINUX AND UNAME_M STREQUAL aarch64)
-   # disabled on linux aarch64
-   message(STATUS "quarto does not yet support aarch64 builds of Linux; disabling quarto")
-   set(QUARTO_ENABLED FALSE CACHE INTERNAL "")
-else()
-   # enable by default
-   set(QUARTO_ENABLED TRUE CACHE INTERNAL "")
+if(NOT DEFINED QUARTO_ENABLED)
+   if(LINUX AND UNAME_M STREQUAL aarch64)
+      # disabled on linux aarch64
+      message(STATUS "quarto does not yet support aarch64 builds of Linux; disabling quarto")
+      set(QUARTO_ENABLED FALSE CACHE INTERNAL "")
+   else()
+      # enable by default
+      set(QUARTO_ENABLED TRUE CACHE INTERNAL "")
+   endif()
+endif()
+
+if(QUARTO_ENABLED)
    add_definitions(-DQUARTO_ENABLED)
 endif()
 
@@ -265,6 +270,8 @@ set(CMAKE_MODULE_PATH "${ROOT_SRC_DIR}/cmake/modules/")
 # dependencies
 if(WIN32)
    set(RSTUDIO_WINDOWS_DEPENDENCIES_DIR "${ROOT_SRC_DIR}/dependencies/windows")
+   set(CPACK_DEPENDENCIES_DIR "${RSTUDIO_WINDOWS_DEPENDENCIES_DIR}")
+   set(CPACK_NSPROCESS_VERSION "1.6")
 else()
    # look for system-wide (global) dependencies folder
    if(EXISTS "/opt/rstudio-tools/dependencies")

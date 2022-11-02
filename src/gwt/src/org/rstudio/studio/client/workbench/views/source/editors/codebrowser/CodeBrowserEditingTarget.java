@@ -1,10 +1,10 @@
 /*
  * CodeBrowserEditingTarget.java
  *
- * Copyright (C) 2022 by RStudio, PBC
+ * Copyright (C) 2022 by Posit Software, PBC
  *
- * Unless you have received this program directly from RStudio pursuant
- * to the terms of a commercial license agreement with RStudio, then
+ * Unless you have received this program directly from Posit Software pursuant
+ * to the terms of a commercial license agreement with Posit Software, then
  * this program is licensed to you under the terms of version 3 of the
  * GNU Affero General Public License. This program is distributed WITHOUT
  * ANY EXPRESS OR IMPLIED WARRANTY, INCLUDING THOSE OF NON-INFRINGEMENT,
@@ -267,15 +267,15 @@ public class CodeBrowserEditingTarget implements EditingTarget
    }
 
    @Handler
-   void onRunSelectionAsJob()
+   void onRunSelectionAsBackgroundJob()
    {
-      codeExecution_.runSelectionAsJob(false /*useLauncher*/);
+      codeExecution_.runSelectionAsJob(false /*isWorkbenchJob*/);
    }
 
    @Handler
-   void onRunSelectionAsLauncherJob()
+   void onRunSelectionAsWorkbenchJob()
    {
-      codeExecution_.runSelectionAsJob(true /*useLauncher*/);
+      codeExecution_.runSelectionAsJob(true /*isWorkbenchJob*/);
    }
 
    @Handler
@@ -468,8 +468,8 @@ public class CodeBrowserEditingTarget implements EditingTarget
       commands.add(commands_.executeCode());
       commands.add(commands_.executeCodeWithoutFocus());
       commands.add(commands_.executeLastCode());
-      commands.add(commands_.runSelectionAsJob());
-      commands.add(commands_.runSelectionAsLauncherJob());
+      commands.add(commands_.runSelectionAsBackgroundJob());
+      commands.add(commands_.runSelectionAsWorkbenchJob());
       commands.add(commands_.sendToTerminal());
 
       if (SourceWindowManager.isMainSourceWindow())

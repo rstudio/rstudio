@@ -71,6 +71,7 @@ type: build
 date: $timestamp
 link: "$url"
 filename: "$filename"
+architecture: x86_64
 sha256: "$sha256"
 channel: "$channel"
 version: "$version"

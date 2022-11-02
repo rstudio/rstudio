@@ -1,10 +1,10 @@
 /*
  * SessionClang.cpp
  *
- * Copyright (C) 2022 by RStudio, PBC
+ * Copyright (C) 2022 by Posit Software, PBC
  *
- * Unless you have received this program directly from RStudio pursuant
- * to the terms of a commercial license agreement with RStudio, then
+ * Unless you have received this program directly from Posit Software pursuant
+ * to the terms of a commercial license agreement with Posit Software, then
  * this program is licensed to you under the terms of version 3 of the
  * GNU Affero General Public License. This program is distributed WITHOUT
  * ANY EXPRESS OR IMPLIED WARRANTY, INCLUDING THOSE OF NON-INFRINGEMENT,
@@ -63,28 +63,11 @@ std::string embeddedLibClangPath()
    return options().libclangPath().completeChildPath(libclang).getAbsolutePath();
 }
 
-LibraryVersion embeddedLibClangVersion()
-{
-   return LibraryVersion(Version(kEmbeddedLibClangVersion));
-}
-
 std::vector<std::string> embeddedLibClangCompileArgs(const LibraryVersion& version,
                                                      bool isCppFile)
 {
-   std::vector<std::string> compileArgs;
-
-   // headers path
-   FilePath headersPath = options().libclangHeadersPath();
-
-   // add compiler headers
-   std::string headersVersion = version.asString();
-   compileArgs.push_back("-I" + headersPath.completeChildPath(headersVersion).getAbsolutePath());
-
-   // add libc++ for embedded clang
-   if (isCppFile)
-      compileArgs.push_back("-I" + headersPath.completeChildPath("libc++/" + headersVersion).getAbsolutePath());
-
-   return compileArgs;
+   // we no longer include builtin libclang headers, so this is a no-op
+   return {};
 }
 
 EmbeddedLibrary embeddedLibClang()
@@ -186,9 +169,7 @@ SEXP rs_isLibClangAvailable()
    else
    {
       LibClang lib;
-      isAvailable = lib.load(embeddedLibClang(),
-                             embeddedLibClangVersion(),
-                             &diagnostics);
+      isAvailable = lib.load(embeddedLibClang(), &diagnostics);
    }
 
    // print diagnostics
@@ -237,7 +218,7 @@ Error initialize()
       return Success();
 
    // attempt to load libclang
-   if (!libclang::clang().load(embeddedLibClang(), embeddedLibClangVersion()))
+   if (!libclang::clang().load(embeddedLibClang()))
       return Success();
 
    // enable crash recovery

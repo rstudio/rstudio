@@ -1,10 +1,10 @@
 #
 #  compile-themes.R
 #
-# Copyright (C) 2022 by RStudio, PBC
+# Copyright (C) 2022 by Posit Software, PBC
 #
-# Unless you have received this program directly from RStudio pursuant
-# to the terms of a commercial license agreement with RStudio, then
+# Unless you have received this program directly from Posit Software pursuant
+# to the terms of a commercial license agreement with Posit Software, then
 # this program is licensed to you under the terms of version 3 of the
 # GNU Affero General Public License. This program is distributed WITHOUT
 # ANY EXPRESS OR IMPLIED WARRANTY, INCLUDING THOSE OF NON-INFRINGEMENT,
@@ -647,51 +647,85 @@
            background)
 })
 
-.rs.addFunction("create_xterm_color_rules", function(background, foreground, isDark) {
+.rs.addFunction("show_xterm16", function() {
+  names <- sprintf("%-8s ", c("black", "red", "green", "yellow", "blue", "magenta", "cyan", "white"))
+  colors <- glue::glue(
+    "{names}  ", 
+    "\033[{40 + 0:7}m     \033[49m \033[{30 + 0:7}mxtermColor{0:7}\033[39m", "    ",
+    "\033[{100 + 0:7}m     \033[49m \033[{90 + 0:7}mxtermColor{8 + 0:7}\033[39m", 
+  )
+  cat("name       standard             bright\n\n")
+  writeLines(colors)
+  cat("\n")
+})
+
+.rs.addFunction("create_xterm_color_rules", function(background, foreground, isDark, xterm16ColorMap = NULL) {
+
+   default_16_colors_light <- c(
+      "0"  = "#2e3436", 
+      "1"  = "#cc0000", 
+      "2"  = "#4e9a06", 
+      "3"  = "#c4a000", 
+      "4"  = "#3465a4", 
+      "5"  = "#75507b", 
+      "6"  = "#06989a", 
+      "7"  = "#d3d7cf", 
+      "8"  = "#555753", 
+      "9"  = "#ef2929", 
+      "10" = "#8ae234", 
+      "11" = "#fce94f", 
+      "12" = "#729fcf", 
+      "13" = "#ad7fa8", 
+      "14" = "#34e2e2", 
+      "15" = "#eeeeec"
+   )
+
+   # borrowed from "pastel on dark" theme
+   default_16_colors_dark <- c(
+      "0"  = "#4f4f4f", 
+      "1"  = "#ff6c60", 
+      "2"  = "#a8ff60", 
+      "3"  = "#ffffb6", 
+      "4"  = "#96cbfe", 
+      "5"  = "#ff73fd", 
+      "6"  = "#c6c5fe", 
+      "7"  = "#eeeeee", 
+      "8"  = "#7c7c7c", 
+      "9"  = "#ffb6b0", 
+      "10" = "#ceffac", 
+      "11" = "#ffffcc", 
+      "12" = "#b5dcff", 
+      "13" = "#ff9cfe", 
+      "14" = "#dfdffe", 
+      "15" = "#ffffff"
+   )
+
+   generate_16_colors <- function(xterm16ColorMap) {
+     if (is.null(xterm16ColorMap)) {
+       colors <- if (isDark) default_16_colors_dark else default_16_colors_light
+     } else {
+       colors <- xterm16ColorMap[order(as.numeric(names(xterm16ColorMap)))]
+     }
+
+     paste0(collapse = "\n",
+       sprintf(names(colors), colors, names(colors), colors,
+         fmt =
+".xtermColor%s { color: %s !important; }
+.xtermBgColor%s { background-color: %s; }")
+     )
+   }
+
    paste(sep = "\n",
          sprintf(".xtermInvertColor { color: %s; }", background),
          sprintf(".xtermInvertBgColor { background-color: %s; }", foreground),
          ".xtermBold { font-weight: bold; }",
          ".xtermBlur { filter: blur(1px); }", 
          ".xtermUnderline { text-decoration: underline; }",
-         ".xtermHyperlink { text-decoration: underline; cursor: pointer; text-decoration-style: dotted; color: #75507b; }",
-         ".xtermHyperlink:hover { text-decoration: underline; text-decoration-style: solid; }",
          ".xtermBlink { text-decoration: blink; }",
          ".xtermHidden { visibility: hidden; }",
          ".xtermItalic { font-style: italic; }",
          ".xtermStrike { text-decoration: line-through; }",
-         ".xtermColor0 { color: #2e3436 !important; }",
-         ".xtermBgColor0 { background-color: #2e3436; }",
-         ".xtermColor1 { color: #cc0000 !important; }",
-         ".xtermBgColor1 { background-color: #cc0000; }",
-         ".xtermColor2 { color: #4e9a06 !important; }",
-         ".xtermBgColor2 { background-color: #4e9a06; }",
-         ".xtermColor3 { color: #c4a000 !important; }",
-         ".xtermBgColor3 { background-color: #c4a000; }",
-         ".xtermColor4 { color: #3465a4 !important; }",
-         ".xtermBgColor4 { background-color: #3465a4; }",
-         ".xtermColor5 { color: #75507b !important; }",
-         ".xtermBgColor5 { background-color: #75507b; }",
-         ".xtermColor6 { color: #06989a !important; }",
-         ".xtermBgColor6 { background-color: #06989a; }",
-         ".xtermColor7 { color: #d3d7cf !important; }",
-         ".xtermBgColor7 { background-color: #d3d7cf; }",
-         ".xtermColor8 { color: #555753 !important; }",
-         ".xtermBgColor8 { background-color: #555753; }",
-         ".xtermColor9 { color: #ef2929 !important; }",
-         ".xtermBgColor9 { background-color: #ef2929; }",
-         ".xtermColor10 { color: #8ae234 !important; }",
-         ".xtermBgColor10 { background-color: #8ae234; }",
-         ".xtermColor11 { color: #fce94f !important; }",
-         ".xtermBgColor11 { background-color: #fce94f; }",
-         ".xtermColor12 { color: #729fcf !important; }",
-         ".xtermBgColor12 { background-color: #729fcf; }",
-         ".xtermColor13 { color: #ad7fa8 !important; }",
-         ".xtermBgColor13 { background-color: #ad7fa8; }",
-         ".xtermColor14 { color: #34e2e2 !important; }",
-         ".xtermBgColor14 { background-color: #34e2e2; }",
-         ".xtermColor15 { color: #eeeeec !important; }",
-         ".xtermBgColor15 { background-color: #eeeeec; }",
+         generate_16_colors(xterm16ColorMap),
          ".xtermColor16 { color: #000000 !important; }",
          ".xtermBgColor16 { background-color: #000000; }",
          ".xtermColor17 { color: #00005f !important; }",
@@ -1174,6 +1208,30 @@
          ".xtermBgColor255 { background-color: #eeeeee; }")
 })
 
+.rs.addFunction("themes_rainbow_indent_guides", function(colors = c("#ed90a4", "#d3a263", "#99b657", "#33c192", "#00bdce", "#94a9eb", "#dc91db")) {
+   n <- length(colors)
+
+   content <- "/* Rainbow indent lines */"
+   for (i in seq_len(n)) {
+      content <- c(content, 
+         paste0(".rstudio_rainbow_indent_guides .ace_line .ace_indent-guide:nth-child(", n ,"n+", i, "){" ), 
+         paste0("    background: linear-gradient(to left, ", colors[i], "bb 1px, transparent 1px, transparent);"),
+         "}"
+      )
+   }
+
+   content <- c(content, "/* Rainbow indent fills */")
+   for (i in seq_len(n)) {
+      content <- c(content, 
+         paste0(".rstudio_rainbow_indent_fills .ace_line .ace_indent-guide:nth-child(", n ,"n+", i, "){" ), 
+         paste0("    background: linear-gradient(to left, ", colors[i], "bb 1px, ", colors[i], "77 1px, ",colors[i],"77 );"),
+         "}"
+      )
+   }
+
+   content
+})
+
 .rs.addFunction("themes_static_rules", function(isDark) {
    content <- paste(".editor_dark.ace_editor_theme a {",
                     "   color: #FFF !important;",
@@ -1224,7 +1282,8 @@
    operatorOverrideMap = list(),
    keywordOverrideMap = list(),
    nodeSelectorOverrideMap = list(),
-   commentBgOverrideMap = list())
+   commentBgOverrideMap = list(), 
+   xterm16ColorMap = NULL)
 {
    ## Guess the theme name -- all rules should start with it.
    stripped <- sub(" .*", "", lines)
@@ -1387,12 +1446,17 @@
    
    # Add xterm-256 colors for colorized console output
    content <- c(content,
-                .rs.create_xterm_color_rules(background, foreground, isDark))
+                .rs.create_xterm_color_rules(background, foreground, isDark, xterm16ColorMap = xterm16ColorMap))
    
    # Theme rules
    content <- c(content,
                 .rs.themes_static_rules(isDark)) 
    
+   # rainbow indent guides
+   content <- c(content, 
+      .rs.themes_rainbow_indent_guides()
+   )
+
    # All done, return the lines.
    content
 })

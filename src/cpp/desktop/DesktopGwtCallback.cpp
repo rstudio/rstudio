@@ -1,10 +1,10 @@
 /*
  * DesktopGwtCallback.cpp
  *
- * Copyright (C) 2022 by RStudio, PBC
+ * Copyright (C) 2022 by Posit Software, PBC
  *
- * Unless you have received this program directly from RStudio pursuant
- * to the terms of a commercial license agreement with RStudio, then
+ * Unless you have received this program directly from Posit Software pursuant
+ * to the terms of a commercial license agreement with Posit Software, then
  * this program is licensed to you under the terms of version 3 of the
  * GNU Affero General Public License. This program is distributed WITHOUT
  * ANY EXPRESS OR IMPLIED WARRANTY, INCLUDING THOSE OF NON-INFRINGEMENT,
@@ -654,11 +654,6 @@ QString GwtCallback::chooseRVersion()
 #endif
 }
 
-double GwtCallback::devicePixelRatio()
-{
-   return desktop::devicePixelRatio(pMainWindow_);
-}
-
 void GwtCallback::openMinimalWindow(QString name,
                                     QString url,
                                     int width,
@@ -732,16 +727,6 @@ void GwtCallback::prepareForNamedWindow(QString name,
 {
    pOwner_->webPage()->prepareForWindow(
                 PendingWindow(name, allowExternalNavigate, showDesktopToolbar));
-}
-
-void GwtCallback::closeNamedWindow(QString name)
-{
-   // close the requested window
-   pOwner_->webPage()->closeWindow(name);
-
-   // bring the main window to the front (so we don't lose RStudio context
-   // entirely)
-   desktop::raiseAndActivateWindow(pMainWindow_);
 }
 
 void GwtCallback::activateSatelliteWindow(QString name)

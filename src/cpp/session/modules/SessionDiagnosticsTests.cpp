@@ -1,10 +1,10 @@
 /*
  * SessionDiagnosticsTests.cpp
  *
- * Copyright (C) 2022 by RStudio, PBC
+ * Copyright (C) 2022 by Posit Software, PBC
  *
- * Unless you have received this program directly from RStudio pursuant
- * to the terms of a commercial license agreement with RStudio, then
+ * Unless you have received this program directly from Posit Software pursuant
+ * to the terms of a commercial license agreement with Posit Software, then
  * this program is licensed to you under the terms of version 3 of the
  * GNU Affero General Public License. This program is distributed WITHOUT
  * ANY EXPRESS OR IMPLIED WARRANTY, INCLUDING THOSE OF NON-INFRINGEMENT,
@@ -106,6 +106,7 @@ void lintRFilesInSubdirectory(const FilePath& path)
          continue;
       
       FilePath filePath = core::toFilePath(info);
+      std::cerr << "Parsing: " << filePath << std::endl;
       ParseResults results = parse(filePath);
       
       if (results.lint().hasErrors())
@@ -294,9 +295,15 @@ test_context("Diagnostics")
       EXPECT_NO_LINT("x <- ( 1 + 1 )");
       EXPECT_NO_LINT("x <- {1}");
       EXPECT_NO_LINT("x <- (1)");
+      
+      EXPECT_NO_LINT("apples <- 42; glue(\"{apples} and {bananas}\", bananas = 24)");
+      EXPECT_NO_LINT("mtcars %>% stats::lm(mpg ~ cyl, data = .)");
    }
    
-   lintRStudioRFiles();
+   test_that("RStudio files can be successfully linted")
+   {
+      lintRStudioRFiles();
+   }
 }
 
 } // namespace linter

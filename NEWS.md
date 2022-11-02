@@ -1,72 +1,89 @@
 
-## RStudio 2022-06.0 "Spotted Wakerobin" Release Notes
+## RStudio 2022-12.0 "Elsbeth Geranium" Release Notes
 
 ### New
 
-- Linux: Support for Ubuntu 22.04, Fedora 35. (#10902, #9854)
-- Source marker `message` can contain ANSI SGR codes for setting style and color (#9010)
-- Linux/MacOS: Executing a code selection that encounters an error will stop execution of remaining code (#3014)
-- Added support for hyperlinks in the console and build pane (#1941)
-- Added support for blurred text (#11019)
-- "Clean and Rebuild" and "Install and Restart" have been merged into "Install Package", the "Project Options > Build" gains a "clean before install" option to toggle the --preclean flag. The Build toolbar changes to "Install | Test | Check | More v" (#4289)
-- The source button uses `cpp11::source_cpp()` on C++ files that have `[[cpp11::register]]` decorations (#10387)
-- New *Relative Line Numbers* preference for showing line numbers relative to the current line, rather than the first line (#1774)
-- Upgraded SOCI library dependency from version 4.0.0 to 4.0.3 (#10792)
-- (macOS only) RStudio now reads the PATH from the user's default shell on startup (#10551)
-- (experimental) Option to display the user interface in French (#10455)
-- Label commit timestamps as being in UTC (#2544)
-- The choice of pipe operator (`magrittr` or native R 4.1+) inserted with the "Insert Pipe Operator" keyboard shortcut can now be configured at the project level as well as the global level (#9409)
-- The Git/SVN pane now supports creating ED25519-encrypted SSH keys by default. Newly created RSA SSH keys will now be 4096 bits instead of 2048 to increase security (#8255)
-- Read only R and C++ files (marked by "do not edit by hand") are ignored by the fuzzy file finder (#10912)
-- Linux: For compatibility with newer versions of glibc (>= 2.34), the seccomp filter sandbox is disabled. See https://chromium.googlesource.com/chromium/src/+/0e94f26e8/docs/linux_sandboxing.md#the-sandbox-1 for more details.
-- Changed "Jobs" tab in IDE to "Local Jobs"
+- RStudio now displays a splash screen on startup, while the R session is being initialized. (#11604)
+- Updated RStudio Desktop installer on Windows to detect running RStudio by process name. (#10588)
 
-#### Find in Files
+### R
 
-- Fixed Find in Files whole-word replace option, so that when "Whole word" is checked, only file matches containing the whole word are replaced, as displayed in the preview (#9813)
-- Adds support for POSIX extended regular expressions with backreferences in Find in Files find and replace modes, so that special regex characters such as `+` and `?`, `|`, `(`, etc do not need to be escaped, and other ERE escape sequences such as `\b`, `\w`, and `\d` are now supported. This matches the behavior of R's own `grep()` function, but note that backslashes do not need to be escaped (as they typically are in R strings) (#9344)
-- The "Common R source files" option in Find in Files has been updated to "Common source files", with support for searching Markdown (of any type, including .Rmd), JS, and YAML files (#10526)
-- Updated support for searching paths and filenames with Unicode characters on Windows, including Chinese and non-Latin characters (#9881)
-- Add a refresh button to the Find in Files pane to enable manual refresh of Find in Files search results (#3240)
-
-#### R
-
-- Added support for the `_` placeholder as used by the R pipe-bind operator, to be introduced with R 4.2.0. (#10757)
-- Added support for using the AGG renderer (as provided by the ragg package) as a graphics backend for inline plot execution; also added support for using the backend graphics device requested by the knitr `dev` chunk option (#9931)
-- rstudioapi functions are now always evaluated in a clean environment, and will not be masked by objects in the global environment (#8031)
-- Removed support for versions of R earlier than R 3.3.0. (rstudio-pro#2887)
-
-#### Python
+- Whether pending console input is discarded on error can now be controlled via a preference in the Console pane. (#10391)
+- Improved handling of diagnostics within pipeline expressions. (#11780)
+- Improved handling of diagnostics within glue() expressions.
+- Completions within R Markdown documents now respect the `knitr` `root.dir` chunk option if set. (#12047)
+- RStudio now provides autocompletion results for packages used but not loaded within a project.
+- Improved handling of missing arguments for some functions in the diagnostics system.
+- Code editor can show previews of color in strings (R named colors e.g. "tomato3" or of the forms "#rgb", "#rrggbb", "#rrggbbaa") when `Options > Code > Display > [ ] enable preview of named and hexadecimal colors` is checked.
+- Fixes the bug introduced with `rlang` >= 1.03 where Rmd documents show the error message `object 'partition_yaml_front_matter' not found` upon project startup. (#11552)
+- Name autocompletion following a `$` now correctly quotes names that start with underscore followed by alphanumeric characters. (#11689)
+- Suspended sessions will now default to using the project directory, rather than the user home directory, if the prior working directory is no longer accessible. (#11960)
+- The fuzzy finder indexes C(++) macros. (#11981)
+- Improved handling for large amounts of `message()` output in the Console pane. (#12059)
+- Build output is now truncating when very large amounts of output are produced (e.g. from C++ compilation warnings).
+- Memory usage in the environment pane now works correctly on Linux when using cgroups v2. (#11894)
+- Fixed an issue where code execution could pause in RStudio Server after closing the browser tab even with active computations. (Pro #3943)
+- Chunk output calls `format()` method on vctrs-based classes stored in a dataframe. (#6878)
+  
+### Python
 
 - RStudio attempts to infer the appropriate version of Python when "Automatically activate project-local Python environments" is checked and the user has not requested a specific version of Python. This Python will be stored in the environment variable "RETICULATE_PYTHON_FALLBACK", available from the R console, the Python REPL, and the RStudio Terminal (#9990)
+- Shiny for Python apps now display a "Run App" button on the Source editor toolbar. (Requires `shiny` Python package v0.2.7 or later.)
 
-### Fixed
+### Quarto
 
-- Fixed logging of `HRESULT` error values by logging them as hexadecimal instead of decimal (#10310)
-- Fixed notebook execution handling of knitr `message=FALSE` chunk option to suppress messages if the option is set to FALSE (#9436)
-- Fixed plot export to PDF options (#9185)
-- `.rs.formatDataColumnDispatch()` iterates through classes of `x` (#10073)
-- `.rs.api.navigateToFile()` is now synchronous and returns document id (#8938)
-- The `Session > Load Workspace` menu option now explicitly namespaces `base::load` if the `load` function has been masked in the global environment (#10089)
-- The data viewer truncates large list cells to 50 characters by default, this can be changed with the command palette or `rstudioapi::writeRStudioPreference("data_viewer_max_cell_size", 10L)` (#5100)
-- The R version and logo displayed in the top left of the console will update to the current R version whenever the R session is restarted (#10458)
-- Fixed issue where `core::system::userBelongsToGroup` errors under specific sssd configurations (`ignore_group_members = true`) (#10829)
-- Fixed a security issue where shiny apps and vscode sessions remained active after signout (rstudio-pro#3287)
-- Fixed an intermittent hang when invoking `rstudio-server verify-installation` which caused stale `rserver` processes to exist (rstudio-pro#3041) 
-- (Windows only) Fixed an issue where multiple instances of RStudio launched at the same time could bind to the same session. (#10488)
-- Fixed unintended change of date/time formatting in the VCS commit history (#10810)
-- Fixed an issue where code of the form '1:2:3' was diagnosed incorrectly. (#10979)
-- Add back link to the title of sessions so that users can easily open sessions in new tabs and copy session links (rstudio-pro#3290)
-- (Linux Only) License-manager now works in a installer-less context (rstudio-pro#3150)
+- Support for v2 format of Quarto crossref index
+- Support for RHEL7 and CentOS7 and fixes missing Pandoc for RMarkdown (rstudio-pro#3804)
 
-### RStudio Workbench
+### Posit Workbench
 
-- Add a -G option to `rsandbox` to allow configuring the effective group of the process (#3214)
-- When resuming a suspended session with the Kubernetes Launcher Plugin, the container image that was previously being used will now be selected by default (#1520)
-- Upgrade the default version of `code-server` to 4.2.0 to resolve issue with the latest Python VS Code extension (Pro #3320)
+- Adds `-l` (long) option to `rserver-url`. When `/usr/lib/rstudio-server/bin/rserver-url -l <port number>` is executed within a VS Code or Jupyter session, the full URL where a user can view a server proxied at that port is displayed (rstudio-pro#3620)
+- Handles `SIGTERM` signals to shut down more gracefully, for better interaction with service managers like `systemd`.
+
+#### Posit Workbench VS Code Sessions
+
+- Install VS Code session support (code-server) with Posit Workbench instead of requiring a separate download (rstudio-pro#3643)
+- Enable VS Code sessions by default on initial Workbench install (rstudio-pro#3643)
+- Updated code-server to version 4.7.1 (VS Code version 1.71.2) (rstudio-pro#3643)
+- Sets the `UVICORN_ROOT_PATH` environment variable to the proxied port URL for port 8000 in VS Code and Jupyter sessions, allowing FastAPI applications to run without additional configuration. (rstudio-pro#2660)
+
+#### Posit Workbench VS Code Extension
+
+- Install VS Code Extension with Posit Workbench instead of requiring a separate download (rstudio-pro#3643)
+- Introduce Workbench Job management to VS Code Extension (rstudio/rstudio-pro#3784, rstudio/rstudio-pro#3565)
+- Added a pop-up notification when working with certain relevant filetypes that makes it easier to find the Workbench Extension. This notification is a one-time view per user. It can be re-enabled in the user settings (vscode-ext#96).
+- Rebranded the interface to match Posit Software, PBC's new branding terminology and iconography
+- Fixed extension servers appearing in Proxied Servers list (vscode-ext#116)
+- Added support for Flask, including a help dialog and the Posit Workbench Flask Interface code snippet, for proxying Flask applications (rstudio-pro#2660)
+- Added a FastAPI help dialog and the following code snippets for setting the root_path in FastAPI applications (rstudio/rstudio-pro#3698):
+    - Posit Workbench Uvicorn Root Path Snippet
+    - Posit Workbench FastAPI Uvicorn Root Path Snippet
+- Added a Warning notification that appears when a uvicorn process was started with a custom port, without the root-path argument. These processes will now appear in the Proxied Servers view with a warning icon (rstudio/rstudio-pro#3699)
+- Fixed mislabelling of Shiny app in Proxied Servers list (#117)
+
+#### Jupyter Extension
+
+- The Jupyter Notebook and JupyterLab extensions have been updated to match with the new Posit Software, PBC branding (rstudio-pro#3645)
 
 ### Deprecated / Removed
 
-- The minimum supported R version for the IDE has been increased from R 3.0.1 to R 3.3.0 (rstudio-pro#2887)
-- **BREAKING:** Block port proxy requests at `/proxy/<port>` for Jupyter sessions - previously only available if [Jupyter Server Proxy](https://github.com/jupyterhub/jupyter-server-proxy) was installed (Pro #3339)
-- No longer support Debian 9 ("stretch") for Desktop, Server, and Workbench (#10981)
+- Removed the Tools / Shell command (#11253)
+- Removed the "rstudio-server install-vs-code" admin command for downloading and configuring code-server; code-server is now installed with Workbench, use the "rstudio-server configure-vs-code" command for configuration (rstudio-pro#3643)
+
+### Experimental ARM64 and RedHat 9 support
+
+- Experimental (preview) support for Linux `aarch64` platforms, such as the Raspberry Pi and AWS Graviton
+- Experimental (preview) support for RedHat Enterprise Linux 9 and compatible platforms, such as Rocky Linux 9
+
+### Fixed
+
+- Fixed an issue where the console history scroll position was not preserved when switching focus to a separate application (#1638)
+- Fixed an issue where Find in Files could omit matches in some cases on Windows (#11736)
+- Fixed an issue where the Git History window inverted the display of merge diffs (#10150)
+- Fixed an issue where Find in Files could fail to find results with certain versions of git (#11822)
+- Fixed visual mode outline missing nested R code chunks (#11410)
+- Fixed an issue where chunks containing multibyte characters was not executed correctly (#10632)
+- Fixed bringing main window under active secondary window when executing background command (#11407)
+- Fix for schema version comparison that breaks db in downgrade -> upgrade scenarios (rstudio-pro#3572)
+- Fixed an issue in the Electron build of the IDE on Macs where users could not clone a git repository via password-protected SSH or HTTPS (#11693)
+- Fixed scroll speed sensitivity for Mac and Linux and added a preference to adjust it (#11578)

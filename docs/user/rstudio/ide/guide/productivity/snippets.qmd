@@ -1,0 +1,95 @@
+---
+title: "Code Snippets"
+engine: knitr
+---
+
+Code snippets are text macros that are used for quickly inserting common snippets of code. For example, the `fun` snippet inserts an R function definition:
+
+![](images/fun-snippet.png){fig-alt="A screenshot of the output from using the `fun` snippet to autocomplete to function definition."}
+
+Selecting the `fun` snippet from the completion list will insert a `function()` skeleton along with several text placeholders. The placeholders can be filled interactively and then click <kbd>tab</kbd> to advance to the next placeholder:
+
+![](images/fun-expanded.png){fig-alt="A screenshot of the output snippet highlighted on the first text placeholder."}
+
+Other useful snippets include:
+
+-   `lib` for the `library()` function
+
+-   `mat` for defining matrices
+
+-   `if`, `el`, and `ei` for conditional expressions
+
+-   `apply`, `lapply`, `sapply`, etc. for the apply family of functions
+
+-   `shinyapp` for defining a basic shiny app structure
+
+Snippets are a great way to automate inserting common/boilerplate code and are available for R, C/C++, Python, JavaScript, and several other languages.
+
+## Inserting snippets
+
+As illustrated above, code snippets show up alongside other code completion results and can be inserted by picking them from the completion list. By default the completion list will show up automatically when you pause typing for >= 250 milliseconds and can also be manually activated via the **Tab** key. In addition, if you have typed the character sequence for a snippet and want to insert it immediately (without going through the completion list) you can press **Shift+Tab**.
+
+### Markdown snippets
+
+For markdown snippets within R Markdown or Quarto documents using the <kbd>Shift+Tab</kbd> sequence is always required as there is no standard tab completion available within the markdown editing mode.
+
+For example, here is a snippet to insert a Callout Tip in a Quarto document. This snippet would require typing `callout` and then <kbd>Shift+Tab</kbd> to insert the callout snippet and begin interactively editing the title, then the body.
+
+```markdown
+snippet callout
+  :::{.callout-tip}
+  ## ${1:title}
+    
+  ${2:body}
+  :::
+```
+
+
+## Customizing snippets
+
+Users can edit the built-in snippet definitions and even add snippets of their own via the **Edit Snippets** button in **Global Options** -\> **Code**:
+
+![](images/edit-snippets.png){fig-alt="A screenshot of the Edit Snippets wizard, displaying the snippets for R."}
+
+Custom snippets are defined using the `snippet` keyword. The contents of the snippet should be indented below using the `<tab>` key (rather than with spaces). Variables can be defined using the form `{1:varname}`. For example, here's the definition of the `setMethod` snippet:
+
+```markdown
+snippet sm
+    setMethod("${1:gen}", ${2:"class"}, function(${3:obj}, ...) {
+        ${0}
+    })
+```
+
+Because `$` is used as a special character to denote where the cursor should jump after completing each section of a snippet, in order to insert a literal `$` it must be escaped as `\$`.
+
+### Including R code
+
+R code can also be executed in a custom snippet. Use `` `r ` `` anywhere in the snippet; the R code will be executed when the snippet is expanded, and the result inserted into the document.
+
+As an example, here is a variant of the `ts` snippet to insert a datetime into a code section:
+
+```{verbatim, lang="markdown"}
+snippet time
+    `r paste("#", Sys.time(), "------------------------------\n")`
+
+```
+
+## Saving and sharing snippets
+
+Customized snippets for a given language are written into the `~/.R/snippets` directory. For example, the customized versions of R and C/C++ snippets are written to:
+
+### RStudio 1.3 and later (Windows)
+
+``` bash
+%appdata%/Roaming/RStudio/snippets/r.snippets
+%appdata%/Roaming/RStudio/snippets/c_cpp.snippets
+```
+
+### RStudio 1.3 and later (macOS/Linux)
+
+``` bash
+~/.config/rstudio/snippets/r.snippets
+~/.config/rstudio/snippets/c_cpp.snippets
+```
+
+These files can be edited directly to customize snippet definitions or use the **Edit Snippets** dialog as described above. To move custom snippet definitions to another system then simply copy the files across to the same path.

@@ -1,32 +1,15 @@
 Configure Windows for RStudio Development
 =============================================================================
 
-These instructions are intended for a clean Windows-10 machine and may not
-produce a successful build environment if any dependencies are already 
-installed.
+These instructions are intended for a clean Windows-10 (or Windows-11)
+x64 (not ARM) machine and may not produce a successful build environment if any 
+dependencies are already installed.
 
 Bootstrap
 =============================================================================
 - Open an Administrator PowerShell and execute this command:
-    - `Set-ExecutionPolicy Bypass -Scope Process -Force; iex ((New-Object System.Net.WebClient).DownloadString('https://raw.githubusercontent.com/rstudio/rstudio/master/dependencies/windows/Install-RStudio-Prereqs.ps1'))`
+    - `Set-ExecutionPolicy Bypass -Scope Process -Force; iex ((New-Object System.Net.WebClient).DownloadString('https://raw.githubusercontent.com/rstudio/rstudio/main/dependencies/windows/Install-RStudio-Prereqs.ps1'))`
 - Wait for the script to complete
-
-Install Qt SDK
-=============================================================================
-Install Qt 5.12.8 SDK for Windows from https://qt.io, selecting 
-following components:
-
-- MSVC 2017 64-bit
-- QtWebEngine
-
-If this version isn't showing up when installing via the Qt online installer
-(recommended by Qt) click the "Archive" checkbox on the "Select Components"
-screen, then the Filter button. The list of available versions will expand
-to include older versions.
-
-Alternatively, the offline installer may be used:
-
-http://download.qt.io/official_releases/qt/5.12/5.12.8/qt-opensource-windows-x86-5.12.8.exe
 
 Clone the Repo and Run Batch File
 =============================================================================

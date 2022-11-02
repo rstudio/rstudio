@@ -1,10 +1,10 @@
 /*
  * window-utils.ts
  *
- * Copyright (C) 2022 by RStudio, PBC
+ * Copyright (C) 2022 by Posit Software, PBC
  *
- * Unless you have received this program directly from RStudio pursuant
- * to the terms of a commercial license agreement with RStudio, then
+ * Unless you have received this program directly from Posit Software pursuant
+ * to the terms of a commercial license agreement with Posit Software, then
  * this program is licensed to you under the terms of version 3 of the
  * GNU Affero General Public License. This program is distributed WITHOUT
  * ANY EXPRESS OR IMPLIED WARRANTY, INCLUDING THOSE OF NON-INFRINGEMENT,
@@ -13,7 +13,7 @@
  *
  */
 
-import { BrowserWindow, WebContents } from 'electron';
+import { BrowserWindow, webContents, WebContents } from 'electron';
 import { appState } from './app-state';
 import { PendingSatelliteWindow, PendingSecondaryWindow } from './pending-window';
 import { SatelliteWindow } from './satellite-window';
@@ -82,6 +82,7 @@ export function configureSecondaryWindow(
     pendingSecondary.allowExternalNavigate,
     newWindow,
   );
+  window.mainWindow = pendingSecondary.mainWindow;
 
   // TODO
   // allow for Ctrl + W to close window (NOTE: Ctrl means Meta on macOS)
@@ -105,4 +106,18 @@ export function activateWindow(name: string): void {
       return;
     }
   }
+}
+
+// The documentation for getFocusedWebContents() has:
+//
+// /**
+//  * The web contents that is focused in this application, otherwise returns `null`.
+//  */
+//
+//  static getFocusedWebContents(): WebContents;
+//
+// and so the documentation appears to state that the return value may be 'null',
+// but the type definition doesn't propagate that reality. Hence, this wrapper function.
+export function focusedWebContents(): Electron.WebContents | null {
+  return webContents.getFocusedWebContents();
 }

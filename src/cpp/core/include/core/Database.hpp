@@ -1,10 +1,10 @@
 /*
  * Database.hpp
  *
- * Copyright (C) 2022 by RStudio, PBC
+ * Copyright (C) 2022 by Posit Software, PBC
  *
- * Unless you have received this program directly from RStudio pursuant
- * to the terms of a commercial license agreement with RStudio, then
+ * Unless you have received this program directly from Posit Software pursuant
+ * to the terms of a commercial license agreement with Posit Software, then
  * this program is licensed to you under the terms of version 3 of the
  * GNU Affero General Public License. This program is distributed WITHOUT
  * ANY EXPRESS OR IMPLIED WARRANTY, INCLUDING THOSE OF NON-INFRINGEMENT,
@@ -99,12 +99,17 @@ public:
       statement_.exchange(soci::into(out));
       return *this;
    }
-
+   
    template <typename T>
    Query& withOutput(T& out, const std::string& varName)
    {
       statement_.exchange(soci::into(out, varName));
       return *this;
+   }
+
+   int getAffectedRows()
+   {
+      return statement_.get_affected_rows();
    }
 
 private:
@@ -123,7 +128,7 @@ class Rowset
 public:
    RowsetIterator begin();
    RowsetIterator end();
-   
+
    size_t columnCount() const;
 
 private:
@@ -243,7 +248,7 @@ private:
                                      boost::shared_ptr<ConnectionPool>* pPool);
 
    void returnConnection(const boost::shared_ptr<Connection>& connection);
-   void testAndReconnect(boost::shared_ptr<Connection>& connection);
+   bool testAndReconnect(boost::shared_ptr<Connection>& connection);
 
    thread::ThreadsafeQueue<boost::shared_ptr<Connection> > connections_;
    ConnectionOptions connectionOptions_;
@@ -355,6 +360,15 @@ Error connect(const ConnectionOptions& options,
 Error createConnectionPool(size_t poolSize,
                            const ConnectionOptions& options,
                            boost::shared_ptr<ConnectionPool>* pPool);
+
+// execute a provided query and pass each row to the rowHandler
+Error execAndProcessQuery(boost::shared_ptr<database::IConnection> pConnection,
+                          const std::string& sql,
+                          const boost::function<void(const database::Row&)>& rowHandler =
+                             boost::function<void(const database::Row&)>());
+
+// uses soci::indicator to safely parse a string value from a row
+std::string getRowStringValue(const Row& row, const std::string& column);
 
 } // namespace database
 } // namespace core

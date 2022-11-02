@@ -1,10 +1,10 @@
 /*
  * r_scope_tree.js
  *
- * Copyright (C) 2022 by RStudio, PBC
+ * Copyright (C) 2022 by Posit Software, PBC
  *
- * Unless you have received this program directly from RStudio pursuant
- * to the terms of a commercial license agreement with RStudio, then
+ * Unless you have received this program directly from Posit Software pursuant
+ * to the terms of a commercial license agreement with Posit Software, then
  * this program is licensed to you under the terms of version 3 of the
  * GNU Affero General Public License. This program is distributed WITHOUT
  * ANY EXPRESS OR IMPLIED WARRANTY, INCLUDING THOSE OF NON-INFRINGEMENT,
@@ -92,6 +92,7 @@ define('mode/r_scope_tree', ["require", "exports", "module"], function(require, 
       this.isChunk = function() { return this.scopeType == ScopeNode.TYPE_CHUNK; };
       this.isSection = function() { return this.scopeType == ScopeNode.TYPE_SECTION; };
       this.isFunction = function() { return this.isBrace() && !!this.attributes.args; };
+      this.isTest = function() { return this.isBrace() && this.attributes.type === "test"; };
 
       this.equals = function(node) {
          if (this.scopeType !== node.scopeType ||
@@ -494,7 +495,6 @@ define('mode/r_scope_tree', ["require", "exports", "module"], function(require, 
       };
 
       this.onFunctionScopeStart = function(label, functionStartPos, scopePos, name, args) {
-         
          debuglog("adding function brace-scope " + label);
          this.$root.addNode(
             new this.$ScopeNodeFactory(
@@ -504,13 +504,35 @@ define('mode/r_scope_tree', ["require", "exports", "module"], function(require, 
                ScopeNode.TYPE_BRACE,
                {
                   "name": name,
-                  "args": args
+                  "args": args, 
+                  "type": "function"
                }
             )
          );
          
          this.printScopeTree();
       };
+
+      this.onTestScopeStart = function(desc, startPos, scopePos) {
+         debuglog("adding test_that() brace-scope " + desc);
+         var label = "test_that(" + desc + ")";
+         var name = desc.replace(/^['"](.*)['"]/, "$1");
+         
+         this.$root.addNode(
+            new this.$ScopeNodeFactory(
+               label,
+               scopePos,
+               startPos,
+               ScopeNode.TYPE_BRACE,
+               {
+                  "name": name,
+                  "type": "test"
+               }
+            )
+         );
+         
+         this.printScopeTree();
+      }
 
       this.onNamedScopeStart = function(label, pos) {
          this.$root.addNode(new this.$ScopeNodeFactory(label, pos, null, ScopeNode.TYPE_BRACE));

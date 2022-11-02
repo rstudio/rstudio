@@ -1,10 +1,10 @@
 /*
  * CodeSearchSuggestion.java
  *
- * Copyright (C) 2022 by RStudio, PBC
+ * Copyright (C) 2022 by Posit Software, PBC
  *
- * Unless you have received this program directly from RStudio pursuant
- * to the terms of a commercial license agreement with RStudio, then
+ * Unless you have received this program directly from Posit Software pursuant
+ * to the terms of a commercial license agreement with Posit Software, then
  * this program is licensed to you under the terms of version 3 of the
  * GNU Affero General Public License. This program is distributed WITHOUT
  * ANY EXPRESS OR IMPLIED WARRANTY, INCLUDING THOSE OF NON-INFRINGEMENT,
@@ -99,6 +99,15 @@ class CodeSearchSuggestion implements Suggestion
       case SourceItem.SECTION:
          image = new ImageResource2x(CodeIcons.INSTANCE.section2x());
          break;
+      case SourceItem.TEST:
+         image = new ImageResource2x(CodeIcons.INSTANCE.test2x());
+         break;
+      case SourceItem.ROXYGEN:
+         image = new ImageResource2x(CodeIcons.INSTANCE.roxygen2x());
+         break;
+      case SourceItem.MACRO:
+         image = new ImageResource2x(CodeIcons.INSTANCE.macro2x());
+         break;
       case SourceItem.NONE:
       default:
          image = new ImageResource2x(CodeIcons.INSTANCE.keyword2x());
@@ -134,6 +143,11 @@ class CodeSearchSuggestion implements Suggestion
       
       // resolve name (include parent if there is one)
       String name = sourceItem.getName();
+
+      // remove "t " for test items that was artifically added by testThatCallIndexer()
+      if (sourceItem.getType() == SourceItem.TEST)
+         name = name.replaceFirst("t ", "");
+         
       if (!StringUtil.isNullOrEmpty(sourceItem.getParentName()))
          name = sourceItem.getParentName() + "::" + name;
       

@@ -3,10 +3,10 @@
 #
 # install-quarto
 #
-# Copyright (C) 2022 by RStudio, PBC
+# Copyright (C) 2022 by Posit Software, PBC
 #
-# Unless you have received this program directly from RStudio pursuant
-# to the terms of a commercial license agreement with RStudio, then
+# Unless you have received this program directly from Posit Software pursuant
+# to the terms of a commercial license agreement with Posit Software, then
 # this program is licensed to you under the terms of version 3 of the
 # GNU Affero General Public License. This program is distributed WITHOUT
 # ANY EXPRESS OR IMPLIED WARRANTY, INCLUDING THOSE OF NON-INFRINGEMENT,
@@ -26,9 +26,14 @@ if [ "$(arch)" = "aarch64" ]; then
 fi
 
 # variables that control download + installation process
-QUARTO_VERSION="0.9.230"
+# update to latest Quarto release 
+QUARTO_VERSION=`curl https://quarto.org/docs/download/_prerelease.json | jq ".version" | grep -oE '[0-9]+\.[0-9]+\.[0-9]+'`
+QUARTO_URL_BASE="https://github.com/quarto-dev/quarto-cli/releases/download/v${QUARTO_VERSION}"
+
+# specify a version to pin for releases
+#QUARTO_VERSION="0.9.230"
 QUARTO_SUBDIR="quarto"
-QUARTO_URL_BASE="https://s3.amazonaws.com/rstudio-buildtools/quarto/${QUARTO_VERSION}"
+#QUARTO_URL_BASE="https://s3.amazonaws.com/rstudio-buildtools/quarto/${QUARTO_VERSION}"
 
 # move to tools root
 sudo-if-necessary-for "${RSTUDIO_TOOLS_ROOT}" "$@"
@@ -62,9 +67,16 @@ case "${PLATFORM}" in
 
 "Linux-64")
   SUBDIR="linux"
-  FILES=(
-    "quarto-${QUARTO_VERSION}-linux-amd64.tar.gz"
-  )
+  if [ "$OS_DISTRO" == "centos7" ]; then
+    FILES=(
+      "quarto-${QUARTO_VERSION}-linux-rhel7-amd64.tar.gz"
+    )
+  else
+    FILES=(
+      "quarto-${QUARTO_VERSION}-linux-amd64.tar.gz"
+    )
+  fi
+
   ;;
 
 *)
@@ -87,3 +99,10 @@ for FILE in "${FILES[@]}"; do
      mv "${QUARTO_SUBDIR}-${QUARTO_VERSION}" "${QUARTO_SUBDIR}"
    fi
 done
+
+# ensure WASM files don't have the execute bit set; when they do, it causes
+# errors on Linux platforms where file(1) can't identify them
+if [ "$(uname)" = "Linux" ]; then
+   find "${QUARTO_SUBDIR}" -iname "*.wasm" | xargs chmod 644
+fi
+

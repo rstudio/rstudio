@@ -1,10 +1,10 @@
 /*
  * SessionQuartoJob.cpp
  *
- * Copyright (C) 2022 by RStudio, PBC
+ * Copyright (C) 2022 by Posit Software, PBC
  *
- * Unless you have received this program directly from RStudio pursuant
- * to the terms of a commercial license agreement with RStudio, then
+ * Unless you have received this program directly from Posit Software pursuant
+ * to the terms of a commercial license agreement with Posit Software, then
  * this program is licensed to you under the terms of version 3 of the
  * GNU Affero General Public License. This program is distributed WITHOUT
  * ANY EXPRESS OR IMPLIED WARRANTY, INCLUDING THOSE OF NON-INFRINGEMENT,
@@ -48,6 +48,7 @@ Error QuartoJob::start()
 #endif
    options.workingDir = workingDir();
    options.callbacksRequireMainThread = true;
+   options.allowParentSuspend = true;
 
    // set environment variables
    core::system::Options env;
@@ -55,6 +56,10 @@ Error QuartoJob::start()
    environment(&env);
    options.environment = env;
 
+   // this runs in the job pane as a child process of this process
+   core::system::setenv(&(options.environment.get()), "RSTUDIO_CHILD_PROCESS_PANE", "job");
+   core::system::setenv(&(options.environment.get()), "RSTUDIO_SESSION_PID", safe_convert::numberToString(::getpid()));
+   
    // callbacks
    core::system::ProcessCallbacks cb;
    cb.onStarted = boost::bind(&QuartoJob::onStarted, QuartoJob::shared_from_this(), _1);
@@ -67,10 +72,11 @@ Error QuartoJob::start()
    cb.onExit =  boost::bind(&QuartoJob::onCompleted,
                              QuartoJob::shared_from_this(), _1);
 
-   Error error = processSupervisor().runProgram(string_utils::utf8ToSystem(quartoBinary().getAbsolutePath()),
-                                  args(),
-                                  options,
-                                  cb);
+   Error error = processSupervisor().runProgram(
+            string_utils::utf8ToSystem(quartoExecutablePath()),
+            args(),
+            options,
+            cb);
 
    if (error)
       return error;
@@ -82,7 +88,18 @@ Error QuartoJob::start()
    // hit onCompleted (because our status won't be "running"). if we passed shared_from_this
    // then we'd be keeping this object around forever (because jobs are never discarded).
    jobActions.push_back(std::make_pair("stop", boost::bind(&QuartoJob::stop, this)));
-   pJob_ = addJob(name(), "", "", 0, false, JobRunning, JobTypeSession, false, R_NilValue, jobActions, true, {});
+   pJob_ = addJob(name(),
+                  "",
+                  "",
+                  0,
+                  false,
+                  JobRunning,
+                  JobTypeSession,
+                  false,
+                  R_NilValue,
+                  jobActions,
+                  true,
+                  {"quarto", kJobTagTransient});
    pJob_->addOutput("\n", true);
 
    // return success

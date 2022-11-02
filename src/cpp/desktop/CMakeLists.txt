@@ -1,10 +1,10 @@
 #
 # CMakeLists.txt
 #
-# Copyright (C) 2022 by RStudio, PBC
+# Copyright (C) 2022 by Posit Software, PBC
 #
-# Unless you have received this program directly from RStudio pursuant
-# to the terms of a commercial license agreement with RStudio, then
+# Unless you have received this program directly from Posit Software pursuant
+# to the terms of a commercial license agreement with Posit Software, then
 # this program is licensed to you under the terms of version 3 of the
 # GNU Affero General Public License. This program is distributed WITHOUT
 # ANY EXPRESS OR IMPLIED WARRANTY, INCLUDING THOSE OF NON-INFRINGEMENT,
@@ -466,6 +466,11 @@ if(NOT RSTUDIO_ELECTRON)
               DESTINATION ${RSTUDIO_INSTALL_SUPPORTING})
    else()
       install(TARGETS rstudio DESTINATION ${RSTUDIO_INSTALL_BIN})
+      if(WIN32 AND CMAKE_BUILD_TYPE STREQUAL Debug)
+         install(
+            FILES "$<TARGET_PDB_FILE:rstudio>"
+            DESTINATION "${RSTUDIO_INSTALL_BIN}")
+      endif()
    endif()
 
    # bundle qt dependencies if this is a package build
@@ -696,6 +701,5 @@ elseif(WIN32 AND NOT RSTUDIO_SESSION_WIN32)
       ${TESTS_INCLUDE_DIR}
    )
 
-   add_subdirectory(urlopener)
    add_subdirectory(synctex/rsinverse)
 endif()

@@ -1,10 +1,10 @@
 /*
  * Request.hpp
  *
- * Copyright (C) 2022 by RStudio, PBC
+ * Copyright (C) 2022 by Posit Software, PBC
  *
- * Unless you have received this program directly from RStudio pursuant
- * to the terms of a commercial license agreement with RStudio, then
+ * Unless you have received this program directly from Posit Software pursuant
+ * to the terms of a commercial license agreement with Posit Software, then
  * this program is licensed to you under the terms of version 3 of the
  * GNU Affero General Public License. This program is distributed WITHOUT
  * ANY EXPRESS OR IMPLIED WARRANTY, INCLUDING THOSE OF NON-INFRINGEMENT,
@@ -16,12 +16,12 @@
 #ifndef CORE_HTTP_REQUEST_HPP
 #define CORE_HTTP_REQUEST_HPP
 
+#include "HeaderCookieConstants.hpp"
 #include "Message.hpp"
 #include "Util.hpp"
 #include "Cookie.hpp"
 
 #define kRequestDefaultRootPath "/"
-#define kVirtualPathHeader "X-RStudio-Virtual-Path"
 
 namespace rstudio {
 namespace core {

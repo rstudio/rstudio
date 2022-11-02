@@ -1,10 +1,10 @@
 #
 # SessionPythonEnvironments.R
 #
-# Copyright (C) 2022 by RStudio, PBC
+# Copyright (C) 2022 by Posit Software, PBC
 #
-# Unless you have received this program directly from RStudio pursuant
-# to the terms of a commercial license agreement with RStudio, then
+# Unless you have received this program directly from Posit Software pursuant
+# to the terms of a commercial license agreement with Posit Software, then
 # this program is licensed to you under the terms of version 3 of the
 # GNU Affero General Public License. This program is distributed WITHOUT
 # ANY EXPRESS OR IMPLIED WARRANTY, INCLUDING THOSE OF NON-INFRINGEMENT,
@@ -102,7 +102,7 @@
    pythonPath <- .rs.tryCatch(
       system2(
          command = pythonCommand,
-         args    = c("-E"),
+         args    = c("-E", "-Xutf8"),
          input   = "import sys; print(sys.executable)",
          stdout  = TRUE,
          stderr  = TRUE
@@ -112,6 +112,7 @@
    if (inherits(pythonPath, "error"))
       return("")
 
+   Encoding(pythonPath) <- "UTF-8"
    pythonPath
 })
 
@@ -157,7 +158,7 @@
    {
      pythonPath <- .rs.python.findWindowsPython()
      if (file.exists(pythonPath))
-       return(pythonPath)
+        return(pythonPath)
    }
 
    # look for python + python3 on the PATH
@@ -165,7 +166,7 @@
    {
      python3 <- Sys.which("python3")
      if (nzchar(python3) && python3 != "/usr/bin/python3")
-       return(python3)
+        return(python3)
 
      python <- Sys.which("python")
      if (nzchar(python) && python != "/usr/bin/python")
@@ -173,7 +174,7 @@
        info <- .rs.python.interpreterInfo(python, NULL)
        version <- numeric_version(info$version, strict = FALSE)
        if (!is.na(version) && version >= "3.2")
-         return(python)
+          return(python)
      }
    }
 
@@ -185,7 +186,7 @@
      pythonPath <- if (.rs.platform.isWindows) "../python.exe" else "../bin/python"
      python <- file.path(dirname(conda), pythonPath)
      if (file.exists(python))
-       return(python)
+        return(python)
    }
 
    # fall back to versions of python in /usr/bin if available
@@ -193,7 +194,7 @@
    {
      python3 <- Sys.which("python3")
      if (nzchar(python3) && python3 == "/usr/bin/python3")
-       return(python3)
+        return(python3)
 
      python <- Sys.which("python")
      if (nzchar(python) && python == "/usr/bin/python")
@@ -201,7 +202,7 @@
        info <- .rs.python.interpreterInfo(python, NULL)
        version <- numeric_version(info$version, strict = FALSE)
        if (!is.na(version) && version >= "3.2")
-         return(python)
+          return(python)
      }
    }
 
