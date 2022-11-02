@@ -245,7 +245,7 @@ core::Error UserStateValues::setShowPublishUi(bool val)
 }
 
 /**
- * Whether to show UI for publishing content to RStudio Connect.
+ * Whether to show UI for publishing content to Posit Connect.
  */
 bool UserStateValues::enableRsconnectPublishUi()
 {
@@ -255,6 +255,19 @@ bool UserStateValues::enableRsconnectPublishUi()
 core::Error UserStateValues::setEnableRsconnectPublishUi(bool val)
 {
    return writePref("enable_rsconnect_publish_ui", val);
+}
+
+/**
+ * Whether to show UI for publishing content to Posit Cloud.
+ */
+bool UserStateValues::enableCloudPublishUi()
+{
+   return readPref<bool>("enable_cloud_publish_ui");
+}
+
+core::Error UserStateValues::setEnableCloudPublishUi(bool val)
+{
+   return writePref("enable_cloud_publish_ui", val);
 }
 
 /**
@@ -447,6 +460,7 @@ std::vector<std::string> UserStateValues::allKeys()
       kCompileRMarkdownNotebookPrefs,
       kShowPublishUi,
       kEnableRsconnectPublishUi,
+      kEnableCloudPublishUi,
       kPublishAccount,
       kDocumentOutlineWidth,
       kConnectVia,

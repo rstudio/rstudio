@@ -35,6 +35,7 @@ public class EnableRStudioConnectUIEvent
    public interface Handler extends EventHandler
    {
       void onEnableRStudioConnectUI(EnableRStudioConnectUIEvent event);
+      void onEnablePositCloudUI(EnableRStudioConnectUIEvent event);
    }
 
    public static final GwtEvent.Type<EnableRStudioConnectUIEvent.Handler> TYPE = new GwtEvent.Type<>();
@@ -53,6 +54,7 @@ public class EnableRStudioConnectUIEvent
    protected void dispatch(EnableRStudioConnectUIEvent.Handler handler)
    {
       handler.onEnableRStudioConnectUI(this);
+      handler.onEnablePositCloudUI(this);
    }
 
    @Override

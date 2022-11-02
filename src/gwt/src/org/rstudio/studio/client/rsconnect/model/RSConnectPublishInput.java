@@ -52,6 +52,11 @@ public class RSConnectPublishInput
       return isConnectUIEnabled_;
    }
 
+   public boolean isCloudUIEnabled()
+   {
+      return isCloudUIEnabled_;
+   }
+
    public boolean hasConnectAccount()
    {
       return hasConnectAccount_;
@@ -65,6 +70,11 @@ public class RSConnectPublishInput
    public void setConnectUIEnabled(boolean enabled)
    {
       isConnectUIEnabled_ = enabled;
+   }
+
+   public void setCloudUIEnabled(boolean enabled)
+   {
+      isCloudUIEnabled_ = enabled;
    }
 
    public boolean isExternalUIEnabled()
@@ -190,6 +200,7 @@ public class RSConnectPublishInput
    
    private boolean isShiny_;
    private boolean isConnectUIEnabled_;
+   private boolean isCloudUIEnabled_;
    private boolean isExternalUIEnabled_;
    private boolean isMultiRmd_;
    private boolean isSelfContained_;

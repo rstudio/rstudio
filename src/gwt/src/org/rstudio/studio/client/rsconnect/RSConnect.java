@@ -239,6 +239,8 @@ public class RSConnect implements SessionInitEvent.Handler,
       // session/prefs
       input.setConnectUIEnabled(
             pUserState_.get().enableRsconnectPublishUi().getGlobalValue());
+      input.setCloudUIEnabled(
+            pUserState_.get().enableCloudPublishUi().getGlobalValue());
       input.setExternalUIEnabled(
             session_.getSessionInfo().getAllowExternalPublish());
       input.setDescription(event.getDescription());
