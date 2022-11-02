@@ -7,7 +7,7 @@ Wants=network-online.target
 Type=forking
 PIDFile=/run/rstudio-server.pid
 ExecStart=${CMAKE_INSTALL_PREFIX}/bin/rserver
-ExecStop=/usr/bin/killall -TERM rserver
+ExecReload=kill -HUP $MAINPID
 Restart=on-failure
 
 [Install]
