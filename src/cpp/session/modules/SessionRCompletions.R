@@ -1317,6 +1317,7 @@ assign(x = ".rs.acCompletionTypes",
       return(NULL)
 
    completions <- .rs.emptyCompletions()
+   completions$fguess <- "[.data.table"
 
    # column names
    completions <- .rs.appendCompletions(completions, 
@@ -1330,19 +1331,22 @@ assign(x = ".rs.acCompletionTypes",
       (context == .rs.acContextTypes$SINGLE_BRACKET && numCommas == 1)       # implicit
    )
    {
-      specialCompletions <- .rs.selectFuzzyMatches(token = token, .rs.makeCompletions(
+      symbols <- c(".SD", ".BY", ".N", ".I", ".GRP", ".NGRP")
+      results <- symbols[.rs.fuzzyMatches(sub("^.", "", symbols), token)]
+
+      specialCompletions <- .rs.makeCompletions(
          token = token, 
-         results = c(".SD", ".BY", ".N", ".I", ".GRP", ".NGRP"), 
+         results = results, 
          quote = FALSE, 
          packages = "data.table",
          type = .rs.acCompletionTypes$DATATABLE_SPECIAL_SYMBOL
-      ))
+      )
       completions <- .rs.appendCompletions(completions, specialCompletions)
    }
    else if (context == .rs.acContextTypes$ARGUMENT && string %in% c("by", "keyby"))
    { 
-      # special case `by = .EACHI`
-      if (.rs.fuzzyMatches(".EACHI", token))
+      # special case `by|keyby = .EACHI`
+      if (.rs.fuzzyMatches("EACHI", token))
       {
          completions <- .rs.appendCompletions(completions, 
             .rs.makeCompletions(
