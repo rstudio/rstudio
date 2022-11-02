@@ -843,6 +843,12 @@ public class CompletionRequester
       public final ArrayList<QualifiedName> completions;
       public final String guessedFunctionName;
       public final boolean dontInsertParens;
+
+      // this should probably be set in the R side as a generic
+      // canAutoAccept (default TRUE)
+      public boolean canAutoAccept() {
+         return !StringUtil.equals(guessedFunctionName, "[.data.table");
+      }
    }
 
    public static class QualifiedName implements Comparable<QualifiedName>
