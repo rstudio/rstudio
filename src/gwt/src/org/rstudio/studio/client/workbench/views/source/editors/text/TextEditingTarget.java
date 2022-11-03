@@ -6683,8 +6683,13 @@ public class TextEditingTarget implements
          // resolve aliased path so that it can be understood in Windows terminal event
 
          path = server_.resolveAliasedPath(filePath);
-         if (!BrowseCap.isWindows())
+         if (BrowseCap.isWindows())
          {
+           // on Windows, double quote path to avoid issues with spaces
+           path = '"' + path + '"';
+         } else 
+         {
+            // escapeBashPath is POSIX only
             path = StringUtil.escapeBashPath(path, false);
          }
          events_.fireEvent(new SendToTerminalEvent("shiny run --reload --launch-browser --port=0 " + path + "\n", true));
