@@ -13,7 +13,7 @@
  *
  */
 
-import { app, BrowserWindow, dialog, Menu, screen, shell, WebContents } from 'electron';
+import { app, BrowserWindow, dialog, Menu, nativeTheme, screen, shell, WebContents } from 'electron';
 import i18next from 'i18next';
 import path from 'path';
 import { getenv, setenv } from '../core/environment';
@@ -267,6 +267,12 @@ export class Application implements AppState {
     const [confPath, sessionPath, scriptsPath] = findComponents();
     this.sessionPath = sessionPath;
     this.scriptsPath = scriptsPath;
+
+    // force light theme so menu bar matches title bar
+    // Electron 20+ will have support for matching
+    if (process.platform === 'win32') {
+      nativeTheme.themeSource = 'light';
+    }
 
     if (!app.isPackaged) {
       // sanity checking for dev config
