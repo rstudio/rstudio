@@ -17,25 +17,17 @@ import { describe } from 'mocha';
 import { assert } from 'chai';
 
 import { BrowserWindow } from 'electron';
-import { execSync, spawn } from 'child_process';
+import { createServer } from 'http';
 
 describe('BrowserWindow', () => {
 
   it('fires events in the expected order', async () => {
+    const server = createServer(function (_req, res) {
+      res.writeHead(200);
+      res.end('hello world');
+    });
 
-    const pythonVersion = execSync(
-      'python -c "import sys; print(sys.version_info[0])"',
-      { encoding: 'utf-8' }
-    );
-
-    let args : string[] = [];
-    if (pythonVersion.trim() === '2') {
-      args = ['-m', 'SimpleHTTPServer', '9876'];
-    } else {
-      args = ['-m', 'http.server', '9876'];
-    }
-
-    const server = spawn('python', args, {});
+    server.listen(9875);
 
     const win = new BrowserWindow({ show: false });
     const eventHistory: string[] = [];
@@ -54,12 +46,10 @@ describe('BrowserWindow', () => {
       });
     }
 
-    await win.loadURL('http://localhost:9876');
-    server.kill();
+    await win.loadURL('http://localhost:9875');
+    server.close();
 
     assert.deepEqual(eventHistory, events);
-
-
   });
 
 });
