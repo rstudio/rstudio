@@ -18,7 +18,6 @@ import java.util.ArrayList;
 
 import com.google.gwt.aria.client.Roles;
 import com.google.gwt.core.client.GWT;
-import com.google.inject.Provider;
 import org.rstudio.core.client.resources.ImageResource2x;
 import org.rstudio.core.client.widget.OperationWithInput;
 import org.rstudio.core.client.widget.ProgressOperationWithInput;
@@ -30,7 +29,6 @@ import org.rstudio.studio.client.rsconnect.RsconnectConstants;
 import org.rstudio.studio.client.rsconnect.model.NewRSConnectAccountInput;
 import org.rstudio.studio.client.rsconnect.model.NewRSConnectAccountResult;
 import org.rstudio.studio.client.rsconnect.model.RSConnectServerOperations;
-import org.rstudio.studio.client.workbench.prefs.model.UserState;
 
 public class RSConnectAccountWizard 
    extends Wizard<NewRSConnectAccountInput,NewRSConnectAccountResult>
