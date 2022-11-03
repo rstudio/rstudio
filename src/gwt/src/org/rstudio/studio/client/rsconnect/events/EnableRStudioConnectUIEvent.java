@@ -17,6 +17,7 @@ package org.rstudio.studio.client.rsconnect.events;
 import com.google.gwt.core.client.JavaScriptObject;
 import com.google.gwt.event.shared.EventHandler;
 import com.google.gwt.event.shared.GwtEvent;
+import org.rstudio.studio.client.rmarkdown.events.RmdRenderStartedEvent;
 
 public class EnableRStudioConnectUIEvent 
    extends GwtEvent<EnableRStudioConnectUIEvent.Handler>
@@ -28,11 +29,11 @@ public class EnableRStudioConnectUIEvent
       }
       
       public final native boolean getConnectEnable() /*-{
-         return this;
+         return this.connectEnabled;
       }-*/;
 
       public final native boolean getCloudEnable() /*-{
-          return this;
+          return this.cloudEnabled;
       }-*/;
    }
 
@@ -44,20 +45,19 @@ public class EnableRStudioConnectUIEvent
 
    public static final GwtEvent.Type<EnableRStudioConnectUIEvent.Handler> TYPE = new GwtEvent.Type<>();
    
-   public EnableRStudioConnectUIEvent(Data enable)
+   public EnableRStudioConnectUIEvent(Data data)
    {
-      connectEnabled_ = enable.getConnectEnable();
-      cloudEnabled_ = enable.getCloudEnable();
+      data_ = data;
    }
    
    public boolean getConnectEnable()
    {
-      return connectEnabled_;
+      return data_.getConnectEnable();
    }
 
    public boolean getCloudEnable()
    {
-      return cloudEnabled_;
+      return data_.getCloudEnable();
    }
    
    @Override
@@ -73,6 +73,5 @@ public class EnableRStudioConnectUIEvent
       return TYPE;
    }
    
-   private boolean connectEnabled_;
-   private boolean cloudEnabled_;
+   private final EnableRStudioConnectUIEvent.Data data_;;
 }
