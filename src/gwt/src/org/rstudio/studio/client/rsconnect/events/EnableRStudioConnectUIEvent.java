@@ -27,8 +27,12 @@ public class EnableRStudioConnectUIEvent
       {
       }
       
-      public final native boolean getEnable() /*-{
+      public final native boolean getConnectEnable() /*-{
          return this;
+      }-*/;
+
+      public final native boolean getCloudEnable() /*-{
+          return this;
       }-*/;
    }
 
@@ -42,12 +46,18 @@ public class EnableRStudioConnectUIEvent
    
    public EnableRStudioConnectUIEvent(Data enable)
    {
-      enable_ = enable.getEnable();
+      connectEnabled_ = enable.getConnectEnable();
+      cloudEnabled_ = enable.getCloudEnable();
    }
    
-   public boolean getEnable()
+   public boolean getConnectEnable()
    {
-      return enable_;
+      return connectEnabled_;
+   }
+
+   public boolean getCloudEnable()
+   {
+      return cloudEnabled_;
    }
    
    @Override
@@ -63,5 +73,6 @@ public class EnableRStudioConnectUIEvent
       return TYPE;
    }
    
-   private boolean enable_;
+   private boolean connectEnabled_;
+   private boolean cloudEnabled_;
 }

@@ -181,14 +181,14 @@ public class RSAccountConnector implements EnableRStudioConnectUIEvent.Handler
    @Override
    public void onEnableRStudioConnectUI(EnableRStudioConnectUIEvent event)
    {
-      pUserState_.get().enableRsconnectPublishUi().setGlobalValue(event.getEnable());
+      pUserState_.get().enableRsconnectPublishUi().setGlobalValue(event.getConnectEnable());
       pUserState_.get().writeState();
    }
 
    @Override
    public void onEnablePositCloudUI(EnableRStudioConnectUIEvent event)
    {
-      pUserState_.get().enableCloudPublishUi().setGlobalValue(event.getEnable());
+      pUserState_.get().enableCloudPublishUi().setGlobalValue(event.getCloudEnable());
       pUserState_.get().writeState();
    }
 
