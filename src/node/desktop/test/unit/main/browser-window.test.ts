@@ -17,12 +17,12 @@ import { describe } from 'mocha';
 import { assert } from 'chai';
 
 import { BrowserWindow } from 'electron';
-import * as http from 'http';
+import { createServer } from 'http';
 
 describe('BrowserWindow', () => {
 
   it('fires events in the expected order', async () => {
-    const server = http.createServer(function (_req, res) {
+    const server = createServer(function (_req, res) {
       res.writeHead(200);
       res.end('hello world');
     });
