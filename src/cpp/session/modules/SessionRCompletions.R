@@ -1386,34 +1386,6 @@ assign(x = ".rs.acCompletionTypes",
    grepl("^[.[:alpha:]][.[:alnum:]]*$", string)
 })
 
-.rs.addFunction("excludeEvaluationDataTable", function(token, string, envir, numCommas = 0)
-{
-   tryCatch({
-      # NOTE: We don't retrieve the name from the function call as this could
-      # be a complex parse tree (e.g. dt[, y := 1][, y]$x); it is substantially
-      # easier to strip the object name from the 'string' constituting the parsed object
-      bracketIdx <- c(regexpr("[", string, fixed = TRUE))
-      objectName <- if (bracketIdx == -1)
-         string
-      else
-         substring(string, 1L, bracketIdx - 1L)
-      
-      object <- .rs.getAnywhere(objectName, envir = envir)
-      if (!inherits(object, "data.table"))
-         return(NULL)
-
-      .rs.getDataTableColumnsCompletions(token, objectName, object)
-   }, error = function(e) NULL)
-})
-
-.rs.addFunction("excludeEvaluation", function(token, string, functionCall, envir, numCommas = 0)
-{
-   if (!is.null(result <- .rs.excludeEvaluationDataTable(token, string, envir = envir, numCommas = numCommas)))
-      return(result)
-   
-   NULL
-})
-
 ## NOTE: for '@' as well (set in the 'isAt' parameter)
 .rs.addFunction("getCompletionsDollar", function(token, string, functionCall, envir, isAt)
 {
