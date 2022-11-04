@@ -2568,6 +2568,22 @@ assign(x = ".rs.acCompletionTypes",
       }
    }
    
+   ## If the caller has supplied information about chain completions (e.g.
+   ## for completions from
+   ##
+   ##    x %>% foo() %>% bar()
+   ##
+   ## then retrieve those completions.
+   completions <- .rs.appendCompletions(
+      completions,
+      .rs.getRChainCompletions(token,
+                               chainObjectName,
+                               additionalArgs,
+                               excludeArgs,
+                               excludeArgsFromObject,
+                               envir)
+   )
+   
    # get completions from the search path for the 'generic' contexts
    if (token != "" &&
        context[[1]] %in% c(.rs.acContextTypes$UNKNOWN,
@@ -2611,22 +2627,6 @@ assign(x = ".rs.acCompletionTypes",
          completions,
          .rs.getCompletionsPackages(token, TRUE)
       )
-   
-   ## If the caller has supplied information about chain completions (e.g.
-   ## for completions from
-   ##
-   ##    x %>% foo() %>% bar()
-   ##
-   ## then retrieve those completions.
-   completions <- .rs.appendCompletions(
-      completions,
-      .rs.getRChainCompletions(token,
-                               chainObjectName,
-                               additionalArgs,
-                               excludeArgs,
-                               excludeArgsFromObject,
-                               envir)
-   )
    
    ## Override param insertion if the function was 'debug' or 'trace'
    for (i in seq_along(context))
