@@ -64,6 +64,10 @@ int main(int argc, char * const argv[])
 
       char* pServerPath = std::getenv("RS_SERVER_URL");
       std::string serverPath = pServerPath != NULL ? std::string(pServerPath) : std::string();
+      if (serverPath.back() == '/')
+      {
+         serverPath.pop_back();
+      }
 
       std::cout << serverPath + sessionPath + "p/" + transformedPort + "/" << std::endl;
    }
