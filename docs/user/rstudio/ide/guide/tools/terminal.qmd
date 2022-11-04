@@ -1,5 +1,6 @@
 ---
 title: "Terminal"
+date-meta: 2022-12-12
 ---
 
 The RStudio terminal provides access to the system shell from within the RStudio. It supports full-screen terminal applications such as vim, Emacs, and tmux as, well as regular command-line operations with line-editing and shell history.

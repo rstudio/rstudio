@@ -1,5 +1,6 @@
 ---
 title: "Get Started"
+date-meta: 2022-12-12
 ---
 
 The following documentation walks through an example of using the `ggplot2` R package and RStudio for basic data visualization. If you are new to R and want to learn more about using R for Data Science, also see the [R for Data Science](https://r4ds.hadley.nz/) textbook which is available in [print](https://www.oreilly.com/library/view/r-for-data/9781491910382/) or as a [freely available website](https://r4ds.hadley.nz/)
@@ -12,7 +13,7 @@ The following documentation walks through an example of using the `ggplot2` R pa
 
 RStudio is an integrated development environment (IDE) designed to help you be more productive in your daily data science work.
 
-After you have installed [R](https://cloud.r-project.org/) and [RStudio](https://www.rstudio.com/products/rstudio/download/), you are ready to begin this section!
+After you have installed [R](https://cloud.r-project.org/) and [RStudio](https://posit.co/downloads/), you are ready to begin this section!
 
 When you start RStudio, you'll see four key regions or "panes" in the interface: the Source pane, the Console pane, the Environment pane and the Output Pane.
 

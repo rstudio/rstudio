@@ -1,5 +1,6 @@
 ---
 title: "Project Templates"
+date-meta: 2022-12-12
 ---
 
 RStudio includes support for custom, user-defined project templates. Project templates can be used to create new projects with a pre-specified structure.

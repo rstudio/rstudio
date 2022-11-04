@@ -1,5 +1,6 @@
 ---
 title: "Version Control"
+date-meta: 2022-12-12
 ---
 
 Version control helps software teams manage changes to source code over time. Version control software keeps track of every modification to the code in a special kind of database. If a mistake is made, developers can turn back the clock and compare earlier versions of the code to help fix the mistake while minimizing disruption to all team members. Version control systems have been around for a long time but continue to increase in popularity with data science workflows.

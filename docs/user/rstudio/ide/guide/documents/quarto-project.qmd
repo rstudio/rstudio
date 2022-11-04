@@ -1,5 +1,6 @@
 ---
 title: "Quarto Integration"
+date-meta: 2022-12-12
 ---
 
 RStudio v2022.07.1 and later includes support for editing and preview of [Quarto documents](https://quarto.org/).

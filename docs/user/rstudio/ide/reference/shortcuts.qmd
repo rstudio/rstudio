@@ -1,5 +1,6 @@
 ---
 title: "Keyboard Shortcuts"
+date-meta: 2022-12-12
 ---
 
 Some shortcuts may differ if non-default keybindings are selected (e.g., Emacs, Vim, or Sublime Text).
@@ -22,7 +23,7 @@ All shortcuts can be accessed via the Command Palette:
 
 It's also available on the *Tools* menu (*Tools* -\> *Show Command Palette*).
 
-![](https://www.rstudio.com/blog/rstudio-v1-4-preview-command-palette/new-script.png)
+![](images/new-script.png)
 
 ## Accessibility
 

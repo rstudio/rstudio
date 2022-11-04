@@ -1,5 +1,6 @@
 ---
 title: "Local Data"
+date-meta: 2022-12-12
 ---
 
 R packages such as `readr`, `arrow`, `data.table`, `readxl`, and `haven` provide functions to read in various formats of datasets. RStudio also provides an **Import Dataset** wizard for common file types which can also output the requisite R code to reproduce.
