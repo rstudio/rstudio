@@ -1336,7 +1336,7 @@ assign(x = ".rs.acCompletionTypes",
                        fguess = "[.data.table")
 })
 
-.rs.addFunction("getDataTableUnnamedArgumentCompletions", function(token, name, object, functionCall, numCommas, envir)
+.rs.addFunction("getDataTableUnnamedArgumentCompletions", function(token, name, object, functionCall, numCommas, includeArguments = TRUE, envir)
 {
    # column names
    completions <- .rs.getDataTableColumnsCompletions(token, name, object)
@@ -1350,7 +1350,7 @@ assign(x = ".rs.acCompletionTypes",
       completions <- .rs.appendCompletions(completions, .rs.getDataTableByCompletions(token))
 
    # finally, offer the arguments of data.table:::`[.data.table` 
-   if (isNamespaceLoaded("data.table"))
+   if (isTRUE(includeArguments) && isNamespaceLoaded("data.table"))
    {
       argCompletions <- .rs.getCompletionsFunction(token, 
                                                    "[.data.table", 
@@ -1571,6 +1571,7 @@ assign(x = ".rs.acCompletionTypes",
                                                         string,
                                                         functionCall,
                                                         numCommas,
+                                                        index,
                                                         envir)
 {
    result <- .rs.emptyCompletions()
@@ -1592,6 +1593,7 @@ assign(x = ".rs.acCompletionTypes",
          object = object, 
          functionCall = functionCall, 
          numCommas = numCommas, 
+         includeArguments = (index == 1L),
          envir = envir
       ))
    }
@@ -2616,6 +2618,7 @@ assign(x = ".rs.acCompletionTypes",
          completions <- .rs.appendCompletions(
             completions,
             .rs.getRCompletions(token,
+                                i, 
                                 string[[i]],
                                 context[[i]],
                                 numCommas[[i]],
@@ -2896,6 +2899,7 @@ assign(x = ".rs.acCompletionTypes",
 })
 
 .rs.addFunction("getRCompletions", function(token,
+                                            index,
                                             string,
                                             context,
                                             numCommas,
@@ -2904,28 +2908,30 @@ assign(x = ".rs.acCompletionTypes",
                                             documentId,
                                             envir)
 {
-   # TODO: check that this really needs to happen for each call to getRCompletions
-   #       or only with the first context
-   libraryContextCompletions <- .rs.getCompletionsLibraryContext(token, string, context, numCommas, functionCall, discardFirst, documentId, envir)
-
    completions <- if (context == .rs.acContextTypes$FUNCTION)
          .rs.getCompletionsFunction(token, string, functionCall, numCommas, envir)
       else if (context == .rs.acContextTypes$ARGUMENT)
          .rs.getCompletionsArgument(token, string, functionCall, envir)
       else if (context == .rs.acContextTypes$SINGLE_BRACKET)
-         .rs.getCompletionsSingleBracket(token, string, functionCall, numCommas, envir)
+         .rs.getCompletionsSingleBracket(token, string, functionCall, numCommas, index, envir)
       else if (context == .rs.acContextTypes$DOUBLE_BRACKET)
          .rs.getCompletionsDoubleBracket(token, string, functionCall, envir)
       else
          .rs.emptyCompletions()
          
-   # prefer argument completions from libraryContextCompletions
-   # because it contains the package name too
-   if (any(libraryContextCompletions$type == .rs.acCompletionTypes$ARGUMENT)) 
+   if (index == 1L)
    {
-      completions <- .rs.subsetCompletions(completions, completions$type != .rs.acCompletionTypes$ARGUMENT)
+      libraryContextCompletions <- .rs.getCompletionsLibraryContext(token, string, context, numCommas, functionCall, discardFirst, documentId, envir)
+
+      # prefer argument completions from libraryContextCompletions
+      # because it contains the package name too
+      if (any(libraryContextCompletions$type == .rs.acCompletionTypes$ARGUMENT)) 
+      {
+         completions <- .rs.subsetCompletions(completions, completions$type != .rs.acCompletionTypes$ARGUMENT)
+      }
+      completions <- .rs.appendCompletions(libraryContextCompletions, completions)
    }
-   .rs.appendCompletions(libraryContextCompletions, completions)
+   completions
 })
 
 ## NOTE: This is a modified version of 'matchAvailableTopics'
