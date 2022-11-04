@@ -250,21 +250,6 @@ var RCodeModel = function(session, tokenizer,
       return true;
    }
 
-   // Move from the `[` call token to the end of object name
-   //
-   //     result  [a, b]
-   //          ^~~^
-   function moveFromSingleBracketTokenToEndOfObjectName(tokenCursor)
-   {
-      var clonedCursor = tokenCursor.cloneCursor();
-      if (!pIdentifier(clonedCursor.currentToken()))
-         return false;
-      
-      tokenCursor.$row = clonedCursor.$row;
-      tokenCursor.$offset = clonedCursor.$offset;
-      return true;
-   }
-
    this.getFunctionsInScope = function(pos) {
       this.$buildScopeTreeUpToRow(pos.row);
       return this.$scopes.getFunctionsInScope(pos);
@@ -681,28 +666,23 @@ var RCodeModel = function(session, tokenizer,
       //
       // we don't pick up 'func', 'x', and 'y' as potential completions
       // since they will not be valid in all contexts
+      // 
+      // same for these calls: 
+      // 
+      //     y <- data[ x = 1, y = 2, |
+      // 
+      // we don't pick up 'x', 'data', or 'y'
       while (moveOutOfArgList(tokenCursor))
       {
          var moved = false;
 
-         var clone = tokenCursor.cloneCursor();
-         clone.moveToNextToken();
-         var bracket = clone.currentToken().value;
-
-         if (bracket === '(')
+         if (pFunction(tokenCursor.currentToken()))
          {
-            if (pFunction(tokenCursor.currentToken()))
-            {
-               moved = moveFromFunctionTokenToEndOfFunctionName(tokenCursor); 
-            }
-            else 
-            {
-               moved = moveFromFunctionCallTokenToEndOfResultName(tokenCursor);
-            }
+            moved = moveFromFunctionTokenToEndOfFunctionName(tokenCursor); 
          }
-         else
+         else 
          {
-            moved = moveFromSingleBracketTokenToEndOfObjectName(tokenCursor);
+            moved = moveFromFunctionCallTokenToEndOfResultName(tokenCursor);
          }
          
          // previous statements will move the cursor as necessary
