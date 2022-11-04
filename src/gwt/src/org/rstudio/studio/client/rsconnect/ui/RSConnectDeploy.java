@@ -194,15 +194,18 @@ public class RSConnectDeploy extends Composite
 
       final boolean rsConnectEnabled = 
             userState_.enableRsconnectPublishUi().getGlobalValue();
+      final boolean positCloudEnabled =
+         userState_.enableCloudPublishUi().getGlobalValue();
       
-      // Invoke the "add account" wizard
+      // Invoke the "add account" wizard if either Shiny app or Connect enabled
       if (contentType == RSConnect.CONTENT_TYPE_APP || rsConnectEnabled)
       {
          addAccountAnchor_.setClickHandler(() ->
          {
             connector_.showAccountWizard(false,
                   contentType == RSConnect.CONTENT_TYPE_APP ||
-                  contentType == RSConnect.CONTENT_TYPE_APP_SINGLE,
+                  contentType == RSConnect.CONTENT_TYPE_APP_SINGLE ||
+                  positCloudEnabled,
                   successful ->
                   {
                      if (successful)
@@ -212,9 +215,23 @@ public class RSConnectDeploy extends Composite
                   });
          });
       }
-      else
+      else if (positCloudEnabled) // also invoke if Connect disabled but Cloud enabled
       {
-         // if not deploying a Shiny app and RSConnect UI is not enabled, then
+         addAccountAnchor_.setClickHandler(() ->
+         {
+            connector_.showAccountWizard(false,
+               true,
+               successful ->
+               {
+                  if (successful)
+                  {
+                     accountList_.refreshAccountList();
+                  }
+               });
+         });
+      }
+      {
+         // if not deploying a Shiny app and RSConnect UI/ Posit Cloud UI are not enabled, then
          // there's no account we can add suitable for this content
          addAccountAnchor_.setVisible(false);
       }
@@ -426,27 +443,12 @@ public class RSConnectDeploy extends Composite
       // for Plumber APIs and static Rmd docs, we want to allow for posit.cloud but not for shinyapps.io
       boolean isPositCloudContent = contentType == RSConnect.CONTENT_TYPE_PLUMBER_API ||
          contentType == RSConnect.CONTENT_TYPE_DOCUMENT || contentType == RSConnect.CONTENT_TYPE_PRES;
+      boolean positCloudEnabled =
+         userState_.enableCloudPublishUi().getGlobalValue() && isPositCloudContent;
 
-      if (isPositCloudContent)
+      if (positCloudEnabled != accountList_.getShowPositCloudAccounts())
       {
-         addAccountAnchor_.setClickHandler(() ->
-         {
-            connector_.showAccountWizard(false,
-               true,
-               successful ->
-               {
-                  if (successful)
-                  {
-                     accountList_.refreshAccountList();
-                  }
-               });
-         });
-      }
-
-
-      if (isPositCloudContent != accountList_.getShowPositCloudAccounts())
-      {
-         accountList_.setShowPositCloudAccounts(isPositCloudContent);
+         accountList_.setShowPositCloudAccounts(positCloudEnabled);
          accountList_.refreshAccountList();
       }
 

@@ -239,6 +239,8 @@ public class RSConnect implements SessionInitEvent.Handler,
       // session/prefs
       input.setConnectUIEnabled(
             pUserState_.get().enableRsconnectPublishUi().getGlobalValue());
+      input.setCloudUIEnabled(
+            pUserState_.get().enableCloudPublishUi().getGlobalValue());
       input.setExternalUIEnabled(
             session_.getSessionInfo().getAllowExternalPublish());
       input.setDescription(event.getDescription());
@@ -378,15 +380,15 @@ public class RSConnect implements SessionInitEvent.Handler,
           input.getContentType() == CONTENT_TYPE_HTML ||
           input.getContentType() == CONTENT_TYPE_PRES)
       {
-         if (!input.isConnectUIEnabled() && input.isExternalUIEnabled())
+         if (!input.isConnectUIEnabled() && !input.isCloudUIEnabled() && input.isExternalUIEnabled())
          {
             publishAsRPubs(event);
          }
-         else if (input.isConnectUIEnabled() && input.isExternalUIEnabled())
+         else if ((input.isConnectUIEnabled() || input.isCloudUIEnabled()) && input.isExternalUIEnabled())
          {
             publishWithWizard(input);
          }
-         else if (input.isConnectUIEnabled() && !input.isExternalUIEnabled())
+         else if (input.isConnectUIEnabled() || input.isCloudUIEnabled())
          {
             publishAsStatic(input);
          }
@@ -420,7 +422,7 @@ public class RSConnect implements SessionInitEvent.Handler,
          }
          else
          {
-            if (input.isConnectUIEnabled())
+            if (input.isConnectUIEnabled() || input.isCloudUIEnabled())
             {
                // need to disambiguate between code/output and/or
                // single/multi page
@@ -446,7 +448,7 @@ public class RSConnect implements SessionInitEvent.Handler,
       }
       else if (input.getContentType() == CONTENT_TYPE_PLUMBER_API)
       {
-         if (!input.isConnectUIEnabled())
+         if (!input.isConnectUIEnabled() && !input.isCloudUIEnabled())
          {
             display_.showErrorMessage(constants_.apiNotPublishable(),
                      constants_.apiNotPublishableMessage());

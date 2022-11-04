@@ -742,9 +742,10 @@ public class RSConnectPublishButton extends Composite
    // destinations
    private boolean recomputeMenuVisibility()
    {
-      if (pUserState_.get().enableRsconnectPublishUi().getGlobalValue())
+      if (pUserState_.get().enableRsconnectPublishUi().getGlobalValue() ||
+         pUserState_.get().enableCloudPublishUi().getGlobalValue())
       {
-         // always show the menu when RSConnect is enabled
+         // always show the menu when RSConnect or Posit Cloud is enabled
          return true;
       }
       else if (contentType_ == RSConnect.CONTENT_TYPE_DOCUMENT &&
@@ -773,7 +774,8 @@ public class RSConnectPublishButton extends Composite
       
       // if both internal and external publishing is disabled, hide ourselves
       if (!session_.getSessionInfo().getAllowExternalPublish() &&
-          !pUserState_.get().enableRsconnectPublishUi().getGlobalValue())
+          !pUserState_.get().enableRsconnectPublishUi().getGlobalValue() &&
+          !pUserState_.get().enableCloudPublishUi().getGlobalValue())
          return false;
       
       // if we're bound to a command's visibility/enabled state, check that
@@ -798,9 +800,10 @@ public class RSConnectPublishButton extends Composite
           StringUtil.isNullOrEmpty(contentPath_))
          return false;
 
-      // If publishing to Connect is disabled, then we can't publish APIs
+      // If publishing to Connect and Cloud are both disabled, then we can't publish APIs
       if (contentType_ == RSConnect.CONTENT_TYPE_PLUMBER_API &&
-          !pUserState_.get().enableRsconnectPublishUi().getGlobalValue())
+          !pUserState_.get().enableRsconnectPublishUi().getGlobalValue() &&
+          !pUserState_.get().enableCloudPublishUi().getGlobalValue())
       {
          return false;
       }

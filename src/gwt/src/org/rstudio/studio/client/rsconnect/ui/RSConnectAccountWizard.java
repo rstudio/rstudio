@@ -39,13 +39,15 @@ public class RSConnectAccountWizard
          GlobalDisplay display,
          boolean forFirstAccount,
          boolean showCloudPage,
+         boolean isConnectEnabled,
+         boolean isCloudEnabled,
          ProgressOperationWithInput<NewRSConnectAccountResult> operation)
    {
       super(constants_.connectAccount(), constants_.connectAccount(), Roles.getDialogRole(),
             new NewRSConnectAccountInput(server, display), 
             forFirstAccount ? 
-               createIntroPage(showCloudPage) : 
-               createSelectorPage(showCloudPage),
+               createIntroPage(showCloudPage, isConnectEnabled, isCloudEnabled) :
+               createSelectorPage(showCloudPage, isConnectEnabled, isCloudEnabled),
             operation);
       initAuthPage(getFirstPage());
    }
@@ -82,18 +84,22 @@ public class RSConnectAccountWizard
    
    protected static WizardPage<NewRSConnectAccountInput,
                                NewRSConnectAccountResult> createIntroPage(
-                                     boolean showCloudPage)
+                                     boolean showCloudPage,
+                                     boolean isConnectEnabled,
+                                     boolean isCloudEnabled)
    {
       return new NewRSConnectAccountPage(constants_.connectPublishingAccount(),
             constants_.pickAnAccount(), constants_.connectPublishingAccount(),
             new ImageResource2x(RSConnectResources.INSTANCE.publishIcon2x()),
             new ImageResource2x(RSConnectResources.INSTANCE.publishIconLarge2x()),
-            createSelectorPage(showCloudPage));
+            createSelectorPage(showCloudPage, isConnectEnabled, isCloudEnabled));
    }
    
    protected static WizardPage<NewRSConnectAccountInput,
                                NewRSConnectAccountResult> createSelectorPage(
-                                     boolean showCloudPage)
+                                     boolean showCloudPage,
+                                     boolean isConnectEnabled,
+                                     boolean isCloudEnabled)
    {
       if (showCloudPage)
       {
@@ -103,23 +109,26 @@ public class RSConnectAccountWizard
                   constants_.connectAccount(),
                   null, 
                   null, 
-                  createPages());
+                  createPages(isConnectEnabled, isCloudEnabled));
       }
       return new NewRSConnectLocalPage();
    }
    
-   protected static ArrayList<WizardPage<NewRSConnectAccountInput, 
-                                         NewRSConnectAccountResult>> createPages()
+   protected static ArrayList<WizardPage<NewRSConnectAccountInput,
+                                         NewRSConnectAccountResult>> createPages(
+                                            boolean isConnectEnabled, boolean isCloudEnabled)
    {
       ArrayList<WizardPage<NewRSConnectAccountInput, 
                            NewRSConnectAccountResult>> pages = new ArrayList<>();
 
       pages.add(new NewRSConnectCloudPage());
-      pages.add(new NewRSConnectLocalPage());
-      pages.add(new NewPositCloudPage());
+      if (isConnectEnabled)
+         pages.add(new NewRSConnectLocalPage());
+      if (isCloudEnabled)
+         pages.add(new NewPositCloudPage());
       return pages;
    }
-   
+
    public static final String SERVICE_NAME =  constants_.rStudioConnect();
    public static final String SERVICE_DESCRIPTION = constants_.rStudioConnectServiceDescription();
 }

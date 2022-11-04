@@ -100,7 +100,8 @@ public class RSAccountConnector implements EnableRStudioConnectUIEvent.Handler
          boolean withCloudOption,
          final OperationWithInput<Boolean> onCompleted)
    {
-      if (pUserState_.get().enableRsconnectPublishUi().getGlobalValue())
+      if (pUserState_.get().enableRsconnectPublishUi().getGlobalValue() ||
+         pUserState_.get().enableCloudPublishUi().getGlobalValue())
       {
          showAccountTypeWizard(forFirstAccount, withCloudOption, onCompleted);
       }
@@ -180,7 +181,14 @@ public class RSAccountConnector implements EnableRStudioConnectUIEvent.Handler
    @Override
    public void onEnableRStudioConnectUI(EnableRStudioConnectUIEvent event)
    {
-      pUserState_.get().enableRsconnectPublishUi().setGlobalValue(event.getEnable());
+      pUserState_.get().enableRsconnectPublishUi().setGlobalValue(event.getConnectEnable());
+      pUserState_.get().writeState();
+   }
+
+   @Override
+   public void onEnablePositCloudUI(EnableRStudioConnectUIEvent event)
+   {
+      pUserState_.get().enableCloudPublishUi().setGlobalValue(event.getCloudEnable());
       pUserState_.get().writeState();
    }
 
@@ -225,6 +233,8 @@ public class RSAccountConnector implements EnableRStudioConnectUIEvent.Handler
             forFirstAccount,
             withCloudOption &&
                SessionUtils.showExternalPublishUi(session_, pUserState_.get()),
+            pUserState_.get().enableRsconnectPublishUi().getGlobalValue(),
+            pUserState_.get().enableCloudPublishUi().getGlobalValue(),
             new ProgressOperationWithInput<NewRSConnectAccountResult>()
       {
          @Override

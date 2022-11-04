@@ -27,32 +27,43 @@ public class EnableRStudioConnectUIEvent
       {
       }
       
-      public final native boolean getEnable() /*-{
-         return this;
+      public final native boolean getConnectEnable() /*-{
+         return this.connectEnabled;
+      }-*/;
+
+      public final native boolean getCloudEnable() /*-{
+          return this.cloudEnabled;
       }-*/;
    }
 
    public interface Handler extends EventHandler
    {
       void onEnableRStudioConnectUI(EnableRStudioConnectUIEvent event);
+      void onEnablePositCloudUI(EnableRStudioConnectUIEvent event);
    }
 
    public static final GwtEvent.Type<EnableRStudioConnectUIEvent.Handler> TYPE = new GwtEvent.Type<>();
    
-   public EnableRStudioConnectUIEvent(Data enable)
+   public EnableRStudioConnectUIEvent(Data data)
    {
-      enable_ = enable.getEnable();
+      data_ = data;
    }
    
-   public boolean getEnable()
+   public boolean getConnectEnable()
    {
-      return enable_;
+      return data_.getConnectEnable();
+   }
+
+   public boolean getCloudEnable()
+   {
+      return data_.getCloudEnable();
    }
    
    @Override
    protected void dispatch(EnableRStudioConnectUIEvent.Handler handler)
    {
       handler.onEnableRStudioConnectUI(this);
+      handler.onEnablePositCloudUI(this);
    }
 
    @Override
@@ -61,5 +72,5 @@ public class EnableRStudioConnectUIEvent
       return TYPE;
    }
    
-   private boolean enable_;
+   private final EnableRStudioConnectUIEvent.Data data_;;
 }

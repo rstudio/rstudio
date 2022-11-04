@@ -84,8 +84,9 @@ public class PublishDocServicePage
       }
 
       pages.add(rpubsPage);
-      pages.add(connectPage);
-      if (cloudPage != null)
+      if (input.isConnectUIEnabled())
+         pages.add(connectPage);
+      if (input.isCloudUIEnabled() && cloudPage != null)
          pages.add(cloudPage);
       
       return pages;

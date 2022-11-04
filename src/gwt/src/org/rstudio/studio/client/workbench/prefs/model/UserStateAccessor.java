@@ -464,7 +464,7 @@ public class UserStateAccessor extends Prefs
    }
 
    /**
-    * Whether to show UI for publishing content to RStudio Connect.
+    * Whether to show UI for publishing content to Posit Connect.
     */
    public PrefValue<Boolean> enableRsconnectPublishUi()
    {
@@ -473,6 +473,18 @@ public class UserStateAccessor extends Prefs
          _constants.enableRsconnectPublishUiTitle(), 
          _constants.enableRsconnectPublishUiDescription(), 
          true);
+   }
+
+   /**
+    * Whether to show UI for publishing content to Posit Cloud.
+    */
+   public PrefValue<Boolean> enableCloudPublishUi()
+   {
+      return bool(
+         "enable_cloud_publish_ui",
+         _constants.enableCloudPublishUiTitle(),
+         _constants.enableCloudPublishUiDescription(),
+         false);
    }
 
    /**
