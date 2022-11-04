@@ -250,6 +250,20 @@ var RCodeModel = function(session, tokenizer,
       return true;
    }
 
+   // Move from the `[` call token to the end of object name
+   //
+   //     result  [a, b]
+   //          ^~~^
+   function moveFromSingleBracketTokenToEndOfObjectName(tokenCursor)
+   {
+      var clonedCursor = tokenCursor.cloneCursor();
+      if (!pIdentifier(clonedCursor.currentToken()))
+         return false;
+      
+      tokenCursor.$row = clonedCursor.$row;
+      tokenCursor.$offset = clonedCursor.$offset;
+      return true;
+   }
 
    this.getFunctionsInScope = function(pos) {
       this.$buildScopeTreeUpToRow(pos.row);
@@ -644,7 +658,7 @@ var RCodeModel = function(session, tokenizer,
    var moveOutOfArgList = function(tokenCursor)
    {
       var clone = tokenCursor.cloneCursor();
-      if (!clone.findOpeningBracket("(", true))
+      if (!clone.findOpeningBracket(["(", "["], true))
          return false;
 
       if (!clone.moveToPreviousToken())
@@ -667,16 +681,28 @@ var RCodeModel = function(session, tokenizer,
       //
       // we don't pick up 'func', 'x', and 'y' as potential completions
       // since they will not be valid in all contexts
-      if (moveOutOfArgList(tokenCursor))
+      while (moveOutOfArgList(tokenCursor))
       {
          var moved = false;
-         if (pFunction(tokenCursor.currentToken()))
+
+         var clone = tokenCursor.cloneCursor();
+         clone.moveToNextToken();
+         var bracket = clone.currentToken().value;
+
+         if (bracket === '(')
          {
-            moved = moveFromFunctionTokenToEndOfFunctionName(tokenCursor); 
+            if (pFunction(tokenCursor.currentToken()))
+            {
+               moved = moveFromFunctionTokenToEndOfFunctionName(tokenCursor); 
+            }
+            else 
+            {
+               moved = moveFromFunctionCallTokenToEndOfResultName(tokenCursor);
+            }
          }
-         else 
+         else
          {
-            moved = moveFromFunctionCallTokenToEndOfResultName(tokenCursor);
+            moved = moveFromSingleBracketTokenToEndOfObjectName(tokenCursor);
          }
          
          // previous statements will move the cursor as necessary
