@@ -646,6 +646,9 @@ assign(x = ".rs.acCompletionTypes",
    if (is.null(objectForDispatch))
       return(NULL)
    
+   # handle e.g. dplyr::mutate(): the generic is "mutate", not "dplyr::mutate"
+   functionName <- sub("^.*:{2,3}", "", functionName)
+
    # iterate over the known classes for the object, and see if we have
    # an appropriate S3 method that could be used for dispatch
    classes <- class(objectForDispatch)
