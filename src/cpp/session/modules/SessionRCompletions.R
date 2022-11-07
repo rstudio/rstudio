@@ -1381,190 +1381,194 @@ assign(x = ".rs.acCompletionTypes",
    completions
 })
 
-.rs.addFunction("isSymbolic", function(string)
+.rs.addFunction("isDataTableExtractCall", function(string, envir)
 {
-   grepl("^[.[:alpha:]][.[:alnum:]_]*$", string)
+   tryCatch({
+      # NOTE: We don't retrieve the name from the function call as this could
+      # be a complex parse tree (e.g. dt[, y := 1][, y]$x); it is substantially
+      # easier to strip the object name from the 'string' constituting the parsed object
+      bracketIdx <- regexpr("[", string, fixed = TRUE)
+      if (bracketIdx == -1)
+         return(FALSE)
+      
+      objectName <- substring(string, 1L, bracketIdx - 1L)
+      inherits(.rs.getAnywhere(objectName, envir = envir), "data.table")
+   }, error = function(e) FALSE)
+
 })
 
 ## NOTE: for '@' as well (set in the 'isAt' parameter)
 .rs.addFunction("getCompletionsDollar", function(token, string, functionCall, envir, isAt)
 {
-   result <- .rs.emptyCompletions(excludeOtherCompletions = TRUE)
-   
-   # bail if string is not symbolic, i.e. dt[<...>]$x
-   # because dt[<...>] might have side effect
-   if (!.rs.isSymbolic(string))
-      return(result)
-   
+   # bail if string would call [] on a data.table
+   # because this might side-effect modify the data table
+   if (.rs.isDataTableExtractCall(string, envir = envir))
+      return(.rs.emptyCompletions(excludeOtherCompletions = TRUE))
+
    object <- .rs.getAnywhere(string, envir)
+   if (is.null(object))
+      return(.rs.emptyCompletions(excludeOtherCompletions = TRUE))
+
+   allNames <- character()
+   names <- character()
+   type <- numeric()
+   helpHandler <- NULL
    
-   if (!is.null(object))
+   if (isAt)
    {
-      allNames <- character()
-      names <- character()
-      type <- numeric()
-      helpHandler <- NULL
-      
-      if (isAt)
+      if (isS4(object))
       {
-         if (isS4(object))
-         {
-            tryCatch({
-               allNames <- .slotNames(object)
-               names <- .rs.selectFuzzyMatches(allNames, token)
-               
-               # NOTE: Getting the types forces evaluation; we avoid that if
-               # there are too many names to evaluate.
-               if (length(names) > 2E2)
-                  type <- .rs.acCompletionTypes$UNKNOWN
-               else
+         tryCatch({
+            allNames <- .slotNames(object)
+            names <- .rs.selectFuzzyMatches(allNames, token)
+            
+            # NOTE: Getting the types forces evaluation; we avoid that if
+            # there are too many names to evaluate.
+            if (length(names) > 2E2)
+               type <- .rs.acCompletionTypes$UNKNOWN
+            else
+            {
+               type <- numeric(length(names))
+               for (i in seq_along(names))
                {
-                  type <- numeric(length(names))
-                  for (i in seq_along(names))
-                  {
-                     type[[i]] <- suppressWarnings(tryCatch(
-                        .rs.getCompletionType(eval(call("@", quote(object), names[[i]]))),
-                        error = function(e) .rs.acCompletionTypes$UNKNOWN
-                     ))
-                  }
+                  type[[i]] <- suppressWarnings(tryCatch(
+                     .rs.getCompletionType(eval(call("@", quote(object), names[[i]]))),
+                     error = function(e) .rs.acCompletionTypes$UNKNOWN
+                  ))
                }
-            }, error = function(e) NULL
-            )
-         }
+            }
+         }, error = function(e) NULL)
       }
+   }
+   else
+   {
+      # Check to see if an overloaded .DollarNames method has been provided,
+      # and use that to resolve names if possible.
+      dollarNamesMethod <- .rs.getDollarNamesMethod(object, TRUE, envir = envir)
+      if (is.function(dollarNamesMethod))
+      {
+         allNames <- dollarNamesMethod(object, "")
+         
+         # detect completion systems that append closing parentheses
+         # to the completion item, and assume those are functions
+         # rJava and Rcpp will do this for some objects
+         # for example:
+         # - rJava:::.DollarNames.jobjref
+         # - Rcpp:::.DollarNames.C++Object
+         types <- ifelse(
+            grepl("[()]\\s*$", allNames),
+            .rs.acCompletionTypes$FUNCTION,
+            .rs.acCompletionTypes$UNKNOWN
+         )
+         allNames <- gsub("[()]*\\s*$", "", allNames)
+         attr(allNames, "types") <- as.integer(types)
+         
+         # check for custom helpHandler
+         helpHandler <- attr(allNames, "helpHandler", exact = TRUE)
+      }
+      
+      # Reference class generators / objects
+      else if (inherits(object, "refObjectGenerator"))
+      {
+         allNames <- Reduce(union, list(
+            objects(object@generator@.xData, all.names = TRUE),
+            objects(object$def@refMethods, all.names = TRUE),
+            c("new", "help", "methods", "fields", "lock", "accessors")
+         ))
+      }
+      
+      # Reference class objects
+      else if (inherits(object, "refClass"))
+      {
+         suppressWarnings(tryCatch({
+            refClassDef <- object$.refClassDef
+            allNames <- c(
+               ls(refClassDef@fieldPrototypes, all.names = TRUE),
+               ls(refClassDef@refMethods, all.names = TRUE)
+            )
+            
+            # Place the 'less interesting' methods lower
+            baseMethods <- c("callSuper", "copy", "export", "field",
+                              "getClass", "getRefClass", "import", "initFields",
+                              "show", "trace", "untrace", "usingMethods")
+            
+            allNames <- c(
+               setdiff(allNames, baseMethods),
+               baseMethods
+            )
+         }, error = function(e) NULL))
+      }
+      
+      # Objects for which 'names' returns non-NULL. This branch is used
+      # to provide completions for S4 objects, essentially adhering to
+      # the `.DollarNames.default` behaviour. (It looks like if an S4
+      # object is able to supply names through the `names` method, then
+      # those names are also valid for `$` completions.)
+      else if (isS4(object) && length(names(object)))
+      {
+         allNames <- .rs.getNames(object)
+      }
+      
+      # Environments (note that some S4 objects 'are' environments;
+      # e.g. 'hash' objects from the 'hash' package)
+      else if (is.environment(object))
+      {
+         allNames <- .rs.getNames(object)
+      }
+      
+      # Other objects
       else
       {
-         # Check to see if an overloaded .DollarNames method has been provided,
-         # and use that to resolve names if possible.
-         dollarNamesMethod <- .rs.getDollarNamesMethod(object, TRUE, envir = envir)
-         if (is.function(dollarNamesMethod))
-         {
-            allNames <- dollarNamesMethod(object, "")
-            
-            # detect completion systems that append closing parentheses
-            # to the completion item, and assume those are functions
-            # rJava and Rcpp will do this for some objects
-            # for example:
-            # - rJava:::.DollarNames.jobjref
-            # - Rcpp:::.DollarNames.C++Object
-            types <- ifelse(
-               grepl("[()]\\s*$", allNames),
-               .rs.acCompletionTypes$FUNCTION,
-               .rs.acCompletionTypes$UNKNOWN
-            )
-            allNames <- gsub("[()]*\\s*$", "", allNames)
-            attr(allNames, "types") <- as.integer(types)
-            
-            # check for custom helpHandler
-            helpHandler <- attr(allNames, "helpHandler", exact = TRUE)
-         }
+         # '$' operator is invalid for atomic vectors
+         if (is.atomic(object))
+            return(.rs.emptyCompletions(excludeOtherCompletions = TRUE))
          
-         # Reference class generators / objects
-         else if (inherits(object, "refObjectGenerator"))
-         {
-            allNames <- Reduce(union, list(
-               objects(object@generator@.xData, all.names = TRUE),
-               objects(object$def@refMethods, all.names = TRUE),
-               c("new", "help", "methods", "fields", "lock", "accessors")
-            ))
-         }
-         
-         # Reference class objects
-         else if (inherits(object, "refClass"))
-         {
-            suppressWarnings(tryCatch({
-               refClassDef <- object$.refClassDef
-               allNames <- c(
-                  ls(refClassDef@fieldPrototypes, all.names = TRUE),
-                  ls(refClassDef@refMethods, all.names = TRUE)
-               )
-               
-               # Place the 'less interesting' methods lower
-               baseMethods <- c("callSuper", "copy", "export", "field",
-                                "getClass", "getRefClass", "import", "initFields",
-                                "show", "trace", "untrace", "usingMethods")
-               
-               allNames <- c(
-                  setdiff(allNames, baseMethods),
-                  baseMethods
-               )
-            }, error = function(e) NULL))
-         }
-         
-         # Objects for which 'names' returns non-NULL. This branch is used
-         # to provide completions for S4 objects, essentially adhering to
-         # the `.DollarNames.default` behaviour. (It looks like if an S4
-         # object is able to supply names through the `names` method, then
-         # those names are also valid for `$` completions.)
-         else if (isS4(object) && length(names(object)))
+         # Don't allow S4 objects for dollar name resolution
+         # They will need to have defined a .DollarNames method, which
+         # should have been resolved previously
+         if (!isS4(object))
          {
             allNames <- .rs.getNames(object)
-         }
-         
-         # Environments (note that some S4 objects 'are' environments;
-         # e.g. 'hash' objects from the 'hash' package)
-         else if (is.environment(object))
-         {
-            allNames <- .rs.getNames(object)
-         }
-         
-         # Other objects
-         else
-         {
-            # '$' operator is invalid for atomic vectors
-            if (is.atomic(object))
-               return(.rs.emptyCompletions(excludeOtherCompletions = TRUE))
-            
-            # Don't allow S4 objects for dollar name resolution
-            # They will need to have defined a .DollarNames method, which
-            # should have been resolved previously
-            if (!isS4(object))
-            {
-               allNames <- .rs.getNames(object)
-            }
-         }
-         
-         names <- .rs.selectFuzzyMatches(allNames, token)
-         
-         # See if types were provided
-         types <- attr(names, "types")
-         if (is.integer(types) && length(types) == length(names))
-            type <- types
-         
-         # NOTE: Getting the types forces evaluation; we avoid that if
-         # there are too many names to evaluate.
-         else if (length(names) > 2E2)
-            type <- .rs.acCompletionTypes$UNKNOWN
-         else
-         {
-            type <- numeric(length(names))
-            for (i in seq_along(names))
-            {
-               type[[i]] <- suppressWarnings(tryCatch(
-                  if (is.environment(object) && bindingIsActive(names[[i]], object))
-                     .rs.acCompletionTypes$UNKNOWN
-                  else
-                     .rs.getCompletionType(eval(call("$", quote(object), names[[i]]))),
-                  error = function(e) .rs.acCompletionTypes$UNKNOWN
-               ))
-            }
          }
       }
       
-      result <- .rs.makeCompletions(
-         token = token,
-         results = names,
-         packages = string,
-         quote = FALSE,
-         type = type,
-         excludeOtherCompletions = TRUE,
-         helpHandler = helpHandler, 
-         context = if (isAt) .rs.acContextTypes$AT else .rs.acContextTypes$DOLLAR
-      )
+      names <- .rs.selectFuzzyMatches(allNames, token)
+      
+      # See if types were provided
+      types <- attr(names, "types")
+      if (is.integer(types) && length(types) == length(names))
+         type <- types
+      
+      # NOTE: Getting the types forces evaluation; we avoid that if
+      # there are too many names to evaluate.
+      else if (length(names) > 2E2)
+         type <- .rs.acCompletionTypes$UNKNOWN
+      else
+      {
+         type <- numeric(length(names))
+         for (i in seq_along(names))
+         {
+            type[[i]] <- suppressWarnings(tryCatch(
+               if (is.environment(object) && bindingIsActive(names[[i]], object))
+                  .rs.acCompletionTypes$UNKNOWN
+               else
+                  .rs.getCompletionType(eval(call("$", quote(object), names[[i]]))),
+               error = function(e) .rs.acCompletionTypes$UNKNOWN
+            ))
+         }
+      }
    }
    
-   result
-   
+   .rs.makeCompletions(
+      token = token,
+      results = names,
+      packages = string,
+      quote = FALSE,
+      type = type,
+      excludeOtherCompletions = TRUE,
+      helpHandler = helpHandler, 
+      context = if (isAt) .rs.acContextTypes$AT else .rs.acContextTypes$DOLLAR
+   )
 })
 
 .rs.addFunction("getCompletionsSingleBracket", function(token,
@@ -1576,10 +1580,11 @@ assign(x = ".rs.acCompletionTypes",
 {
    result <- .rs.emptyCompletions()
    
-   # bail if string is not symbolic
-   if (!.rs.isSymbolic(string))
-      return(result)
-   
+   # bail if string would call [] on a data.table
+   # because this might side-effect modify the data table
+   if (.rs.isDataTableExtractCall(string, envir = envir))
+      return(.rs.emptyCompletions(excludeOtherCompletions = TRUE))
+
    object <- .rs.getAnywhere(string, envir)
    if (is.null(object))
       return(result)
@@ -1652,14 +1657,9 @@ assign(x = ".rs.acCompletionTypes",
 {
    result <- .rs.emptyCompletions()
    
-   # we need to avoid evaluating dt[<...>] when completing:  dt[<...>][[<TAB> 
-   # because it might have side effect, e.g. add a column
-   # 
-   # so if bail `string` is not symbolic. 
-   #
-   # should this be an option in .rs.getAnywhere() instead ?
-   # it already forbids '('
-   if (!.rs.isSymbolic(string))
+   # bail if string would call [] on a data.table
+   # because this might side-effect modify the data table
+   if (.rs.isDataTableExtractCall(string, envir = envir))
       return(result)
    
    object <- .rs.getAnywhere(string, envir)
