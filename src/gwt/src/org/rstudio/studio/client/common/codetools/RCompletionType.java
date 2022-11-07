@@ -45,6 +45,7 @@ public class RCompletionType
    public static final int YAML_VALUE  = 26;
    public static final int COLUMN      = 27;
    public static final int R6_OBJECT   = 28;
+   public static final int DATATABLE_SPECIAL_SYMBOL = 29;
    
    public static final int SNIPPET     = 98;
    public static final int CONTEXT     = 99;

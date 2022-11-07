@@ -181,31 +181,35 @@ public class CompletionRequester
          }
       }
 
-      newCompletions.sort(new Comparator<QualifiedName>()
+      boolean ordered = StringUtil.equals(cachedResult.guessedFunctionName, "[.data.table");
+      if (!ordered)
       {
-
-         @Override
-         public int compare(QualifiedName lhs, QualifiedName rhs)
+         newCompletions.sort(new Comparator<QualifiedName>()
          {
-            int lhsScore = RCompletionType.isFileType(lhs.type)
-                  ? CodeSearchOracle.scoreMatch(basename(lhs.name), tokenSub, true)
-                  : CodeSearchOracle.scoreMatch(lhs.name, token, false);
-            
-            int rhsScore = RCompletionType.isFileType(rhs.type)
-               ? CodeSearchOracle.scoreMatch(basename(rhs.name), tokenSub, true)
-               : CodeSearchOracle.scoreMatch(rhs.name, token, false);
+            @Override
+            public int compare(QualifiedName lhs, QualifiedName rhs)
+            {
+               int lhsScore = RCompletionType.isFileType(lhs.type)
+                     ? CodeSearchOracle.scoreMatch(basename(lhs.name), tokenSub, true)
+                     : CodeSearchOracle.scoreMatch(lhs.name, token, false);
+               
+               int rhsScore = RCompletionType.isFileType(rhs.type)
+                  ? CodeSearchOracle.scoreMatch(basename(rhs.name), tokenSub, true)
+                  : CodeSearchOracle.scoreMatch(rhs.name, token, false);
 
-            // Place arguments higher (give less penalty)
-            if (lhs.type == RCompletionType.ARGUMENT) lhsScore -= 3;
-            if (rhs.type == RCompletionType.ARGUMENT) rhsScore -= 3;
+               // Place arguments higher (give less penalty)
+               if (lhs.type == RCompletionType.ARGUMENT) lhsScore -= 3;
+               if (rhs.type == RCompletionType.ARGUMENT) rhsScore -= 3;
 
-            if (lhsScore == rhsScore)
-               return lhs.compareTo(rhs);
+               if (lhsScore == rhsScore)
+                  return lhs.compareTo(rhs);
 
-            return lhsScore < rhsScore ? -1 : 1;
-         }
-      });
+               return lhsScore < rhsScore ? -1 : 1;
+            }
+         });
 
+      }
+      
       CompletionResult result = new CompletionResult(
             token,
             newCompletions,
@@ -329,7 +333,7 @@ public class CompletionRequester
 
    }
 
-   private static final Pattern RE_EXTRACTION = Pattern.create("[$@:]", "");
+   private static final Pattern RE_EXTRACTION = Pattern.create("[$@:\\[]", "");
    private boolean isTopLevelCompletionRequest()
    {
       String line = docDisplay_.getCurrentLineUpToCursor();
@@ -397,10 +401,13 @@ public class CompletionRequester
             JsArrayString meta = response.getMeta();
             ArrayList<QualifiedName> newComp = new ArrayList<>();
 
-            // Get function completions from the server
-            for (int i = 0; i < comp.length(); i++)
+            // [.data.table special case: the completions are already in the right order
+            // i.e. we don't want arguments first
+            boolean ordered = StringUtil.equals(response.getGuessedFunctionName(), "[.data.table");
+            if (ordered) 
             {
-               if (comp.get(i).endsWith(" = "))
+               // Get all server completions at once
+               for (int i = 0; i < comp.length(); i++)
                {
                   newComp.add(new QualifiedName(
                      comp.get(i), 
@@ -415,6 +422,30 @@ public class CompletionRequester
                      response.getLanguage(), 
                      response.getContext().get(i)
                   ));
+               }
+            }
+            
+            // Get function completions from the server
+            if (!ordered)
+            {
+               for (int i = 0; i < comp.length(); i++)
+               {
+                  if (comp.get(i).endsWith(" = "))
+                  {
+                     newComp.add(new QualifiedName(
+                        comp.get(i), 
+                        display.get(i),
+                        pkgs.get(i), 
+                        quote.get(i), 
+                        type.get(i), 
+                        suggestOnAccept.get(i), 
+                        replaceToEnd.get(i),
+                        meta.get(i), 
+                        response.getHelpHandler(), 
+                        response.getLanguage(), 
+                        response.getContext().get(i)
+                     ));
+                  }
                }
             }
 
@@ -433,23 +464,26 @@ public class CompletionRequester
             }
 
             // Get other server completions
-            for (int i = 0; i < comp.length(); i++)
+            if (!ordered)
             {
-               if (!comp.get(i).endsWith(" = "))
+               for (int i = 0; i < comp.length(); i++)
                {
-                  newComp.add(new QualifiedName(
-                     comp.get(i), 
-                     display.get(i),
-                     pkgs.get(i), 
-                     quote.get(i), 
-                     type.get(i), 
-                     suggestOnAccept.get(i),
-                     replaceToEnd.get(i),
-                     meta.get(i), 
-                     response.getHelpHandler(), 
-                     response.getLanguage(), 
-                     response.getContext().get(i)
-                  ));
+                  if (!comp.get(i).endsWith(" = "))
+                  {
+                     newComp.add(new QualifiedName(
+                        comp.get(i), 
+                        display.get(i),
+                        pkgs.get(i), 
+                        quote.get(i), 
+                        type.get(i), 
+                        suggestOnAccept.get(i),
+                        replaceToEnd.get(i),
+                        meta.get(i), 
+                        response.getHelpHandler(), 
+                        response.getLanguage(), 
+                        response.getContext().get(i)
+                     ));
+                  }
                }
             }
             
@@ -809,6 +843,12 @@ public class CompletionRequester
       public final ArrayList<QualifiedName> completions;
       public final String guessedFunctionName;
       public final boolean dontInsertParens;
+
+      // this should probably be set in the R side as a generic
+      // canAutoAccept (default TRUE)
+      public boolean canAutoAccept() {
+         return !StringUtil.equals(guessedFunctionName, "[.data.table");
+      }
    }
 
    public static class QualifiedName implements Comparable<QualifiedName>
@@ -1077,6 +1117,8 @@ public class CompletionRequester
             return new ImageResource2x(ICONS.snippet2x());
          case RCompletionType.COLUMN:
             return new ImageResource2x(ICONS.column2x());
+         case RCompletionType.DATATABLE_SPECIAL_SYMBOL:
+            return new ImageResource2x(ICONS.datatableSpecialSymbol2x());
          default:
             return new ImageResource2x(ICONS.variable2x());
          }

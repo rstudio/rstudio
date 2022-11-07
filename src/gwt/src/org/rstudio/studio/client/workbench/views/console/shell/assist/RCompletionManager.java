@@ -1878,6 +1878,7 @@ public class RCompletionManager implements CompletionManager
 
          if (results.length == 1
                && canAutoAccept_
+               && completions.canAutoAccept()
                && results[0].type != RCompletionType.DIRECTORY)
          {
             onSelection(results[0]);
