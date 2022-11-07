@@ -1539,6 +1539,9 @@ assign(x = ".rs.acCompletionTypes",
       if (is.integer(types) && length(types) == length(names))
          type <- types
       
+      else if (inherits(object, "data.frame"))
+         type <- .rs.acCompletionTypes$COLUMN
+
       # NOTE: Getting the types forces evaluation; we avoid that if
       # there are too many names to evaluate.
       else if (length(names) > 2E2)
