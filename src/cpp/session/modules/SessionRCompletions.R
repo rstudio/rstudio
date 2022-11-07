@@ -1383,7 +1383,7 @@ assign(x = ".rs.acCompletionTypes",
 
 .rs.addFunction("isSymbolic", function(string)
 {
-   grepl("^[.[:alpha:]][.[:alnum:]]*$", string)
+   grepl("^[.[:alpha:]][.[:alnum:]_]*$", string)
 })
 
 ## NOTE: for '@' as well (set in the 'isAt' parameter)
