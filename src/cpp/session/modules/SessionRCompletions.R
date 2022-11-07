@@ -2855,7 +2855,7 @@ assign(x = ".rs.acCompletionTypes",
       if (length(object))
       {
          objectNames <- setdiff(.rs.getNames(object), additionalArgs)
-         if (length(objectNames))
+         if (inherits(objectNames, "character") && length(objectNames) > 0L)
          {
             completions <- .rs.selectFuzzyMatches(objectNames, token)
 
