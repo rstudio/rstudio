@@ -463,8 +463,6 @@ var RCodeModel = function(session, tokenizer,
                }
 
             }
-            
-
          }
          
       } while (cursor.moveToNextToken());
@@ -487,14 +485,14 @@ var RCodeModel = function(session, tokenizer,
             return false;
 
          // Move over '::' qualifiers
-         if (clone.currentValue() === ":")
+         if (clone.currentValue() === "::" || clone.currentValue() === ":::")
          {
-            while (clone.currentValue() === ":")
-               if (!clone.moveToPreviousToken())
-                  return false;
+            // Move of to pkg identifier
+            if (!clone.moveToPreviousToken())
+               return false;
 
             // Move off of identifier
-            if (!clone.moveToPreviousToken())
+            if (!pIdentifier(clone.currentToken()) || !clone.moveToPreviousToken())
                return false;
          }
 
@@ -582,11 +580,11 @@ var RCodeModel = function(session, tokenizer,
          }
 
          // Move over '::' qualifiers
-         if (clone.currentValue() === ":")
+         if (clone.currentValue() === "::" || clone.currentValue() === ":::")
          {
-            while (clone.currentValue() === ":")
-               if (!clone.moveToPreviousToken())
-                  return false;
+            // Move off of ::
+            if (!clone.moveToPreviousToken())
+               return false;
 
             // Move off of identifier
             if (!clone.moveToPreviousToken())
