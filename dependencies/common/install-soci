@@ -31,8 +31,20 @@ BOOST_DIR="$RSTUDIO_TOOLS_ROOT/boost/boost_$BOOST_VERSION"
 
 # install SOCI if it isn't already installed
 if [ -d "${SOCI_BIN_DIR}/lib" ]; then
-   echo "SOCI already installed at '${SOCI_DIR}'"
-   exit 0
+   SOCI_FOUND=true
+
+   # Detect macOS situation where soci was built without postgres and proceed to rebuild
+   # https://github.com/rstudio/rstudio/issues/12288
+   if [[ "$OSTYPE" = "darwin"* ]]; then
+      if [ ! -e "${SOCI_BIN_DIR}/lib/libsoci_postgresql.a" ]; then
+         SOCI_FOUND=false
+      fi
+   fi
+
+   if [[ $SOCI_FOUND = true ]]; then
+      echo "SOCI already installed at '${SOCI_DIR}'"
+      exit 0
+   fi
 fi
 
 sudo-if-necessary-for "${RSTUDIO_TOOLS_ROOT}" "$@"
@@ -72,6 +84,13 @@ then
    MAKEFLAGS="-w dupbuild=warn ${MAKEFLAGS}"
 else
    CMAKE_GENERATOR="Unix Makefiles"
+fi
+
+# Help cmake find the homebrew-installed postgresql libs on macOS
+# https://github.com/rstudio/rstudio/issues/12288
+if [[ "$OSTYPE" = "darwin"* ]]; then
+   HOMEBREW_PREFIX=$(brew --prefix)
+   export POSTGRESQL_ROOT="${HOMEBREW_PREFIX}/opt/libpq"
 fi
 
 "${CMAKE}" -G"${CMAKE_GENERATOR}"                      \
