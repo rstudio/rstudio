@@ -250,7 +250,6 @@ var RCodeModel = function(session, tokenizer,
       return true;
    }
 
-
    this.getFunctionsInScope = function(pos) {
       this.$buildScopeTreeUpToRow(pos.row);
       return this.$scopes.getFunctionsInScope(pos);
@@ -644,7 +643,7 @@ var RCodeModel = function(session, tokenizer,
    var moveOutOfArgList = function(tokenCursor)
    {
       var clone = tokenCursor.cloneCursor();
-      if (!clone.findOpeningBracket("(", true))
+      if (!clone.findOpeningBracket(["(", "["], true))
          return false;
 
       if (!clone.moveToPreviousToken())
@@ -667,9 +666,16 @@ var RCodeModel = function(session, tokenizer,
       //
       // we don't pick up 'func', 'x', and 'y' as potential completions
       // since they will not be valid in all contexts
-      if (moveOutOfArgList(tokenCursor))
+      // 
+      // same for these calls: 
+      // 
+      //     y <- data[ x = 1, y = 2, |
+      // 
+      // we don't pick up 'x', 'data', or 'y'
+      while (moveOutOfArgList(tokenCursor))
       {
          var moved = false;
+
          if (pFunction(tokenCursor.currentToken()))
          {
             moved = moveFromFunctionTokenToEndOfFunctionName(tokenCursor); 
