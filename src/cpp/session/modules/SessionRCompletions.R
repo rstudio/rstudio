@@ -2870,7 +2870,7 @@ assign(x = ".rs.acCompletionTypes",
             {
                # otherwise infer from the object
                types <- vapply(completions, FUN.VALUE = numeric(1), USE.NAMES = FALSE, function(i) {
-                  .rs.getCompletionType(object[[i]])
+                  tryCatch(.rs.getCompletionType(object[[i]]), error = function(e) .rs.acCompletionTypes$UNKNOWN)
                })
                packages <- paste("[", chainObjectName, "]", sep = "") 
             }
