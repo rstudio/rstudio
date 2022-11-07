@@ -326,6 +326,8 @@ options(help_type = "html")
       return(.rs.getHelpArgument(what, from, parent.frame()))
    else if (type == .rs.acCompletionTypes$PACKAGE)
       return(.rs.getHelpPackage(what))
+   else if (type == .rs.acCompletionTypes$DATATABLE_SPECIAL_SYMBOL)
+      return(.rs.getHelpDataTableSpecialSymbol(what))
    else if (length(from) && length(what))
       return(.rs.getHelp(what, from))
    else
@@ -484,6 +486,20 @@ options(help_type = "html")
          )
       }
    }
+   out
+})
+
+.rs.addFunction("getHelpDataTableSpecialSymbol", function(what)
+{
+   html <- strsplit(.rs.getHelp(what, "data.table", subset = FALSE)$html, "\n")[[1L]]
+   description <- grep(paste0("<p><code>", what, "</code>[^,]"), html, value = TRUE)
+   description <- sub("<li><p>", "", description)
+
+   out <- list(
+      html = paste0("<h2>data.table special symbol ", what, "</h2><h3>Description</h3><p>", description, "</p>"),
+      signature = NULL, 
+      pkgname = "data.table"
+   )
    out
 })
 
