@@ -982,15 +982,14 @@ void onDetectChanges(module_context::ChangeSource source)
          // clear working data for the object
          r::exec::RFunction(".rs.removeWorkingData", i->first).call();
    
-         if (Rf_inherits(sexp, "data.frame"))
+         if (sexp != nullptr && Rf_inherits(sexp, "data.frame"))
          {
             // create a new frame object to capture the new state of the frame
             CachedFrame newFrame(i->second.envName, i->second.objName, sexp);
 
-            // replace cached copy (if we have something to replace it with)
-            if (sexp != nullptr)
-               r::exec::RFunction(".rs.assignCachedData", 
-                     i->first, sexp, i->second.objName).call();
+            // replace cached copy
+            r::exec::RFunction(".rs.assignCachedData", 
+                  i->first, sexp, i->second.objName).call();
 
             // emit client event
             json::Object changed;
@@ -1014,23 +1013,27 @@ void onDetectChanges(module_context::ChangeSource source)
             ClientEvent event(client_events::kDataViewChanged, changed);
             module_context::enqueClientEvent(event);
 
-            // then View() it again
-            r::sexp::Protect protect;
-            SEXP env = getNamedEnvir(i->second.envName);
-            if (env != nullptr)
+            // then View() it again if there is something to View()
+            if (sexp != nullptr)
             {
-               protect.add(env);
-
-               SEXP symbol = Rf_install(i->second.objName.c_str());
-
-               Error error = r::exec::RFunction("View")
-                  .addParam(symbol)
-                  .call(env, true);
-               if (error)
+               SEXP env = getNamedEnvir(i->second.envName);
+               if (env != nullptr)
                {
-                  LOG_ERROR(error);
+                  r::sexp::Protect protect;
+                  protect.add(env);
+
+                  SEXP symbol = Rf_install(i->second.objName.c_str());
+
+                  Error error = r::exec::RFunction("View")
+                     .addParam(symbol)
+                     .call(env, true);
+                  if (error)
+                  {
+                     LOG_ERROR(error);
+                  }
                }
 
+               
             }
          }
       }
