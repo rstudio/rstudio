@@ -78,17 +78,19 @@ public class HelpInfoPopupPanel extends PopupPanel
       vpanel_.clear();
 
       Label lblSig;
-      if (StringUtil.isNullOrEmpty(help.getFunctionSignature()))
+      String signature = help.getFunctionSignature();
+      if (StringUtil.isNullOrEmpty(signature))
       {
          lblSig = new Label(help.getTitle());
          lblSig.setStylePrimaryName(consoleStyles_.packageName());
+         vpanel_.add(lblSig);
       }
-      else
+      else if (!StringUtil.equals(signature, "-"))
       {
-         lblSig = new Label(help.getFunctionSignature());
+         lblSig = new Label(signature);
          lblSig.setStylePrimaryName(consoleStyles_.functionInfoSignature());
+         vpanel_.add(lblSig);
       }
-      vpanel_.add(lblSig);
       
       Label lblTitle = new Label(help.getTitle());
       lblTitle.setStylePrimaryName(RES.styles().helpTitleText());
