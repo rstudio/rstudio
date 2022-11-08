@@ -328,6 +328,8 @@ options(help_type = "html")
       return(.rs.getHelpPackage(what))
    else if (type == .rs.acCompletionTypes$DATATABLE_SPECIAL_SYMBOL)
       return(.rs.getHelpDataTableSpecialSymbol(what))
+   else if (type == .rs.acCompletionTypes$COLUMN)
+      return(.rs.getHelpColumn(what, from, .rs.getActiveFrame()))
    else if (length(from) && length(what))
       return(.rs.getHelp(what, from))
    else
@@ -436,6 +438,21 @@ options(help_type = "html")
 .rs.addJsonRpcHandler("show_vignette", function(topic, package)
 {
    print(utils::vignette(topic, package))
+})
+
+.rs.addFunction("getHelpColumn", function(name, src, envir = parent.frame())
+{
+   column <- .rs.getAnywhere(paste0(src, "$", name), envir)
+   if (!is.null(data))
+   {
+      str <- if (isNamespaceLoaded("pillar")) function(x) pillar::glimpse(x, width = 80) else utils::str
+      text <- capture.output(str(column))
+      list(
+         html = paste0("<h2>", src, "$", name, "</h2><h3>Description</h3><p>", text, "</p>"),
+         signature = "-", 
+         pkgname = src
+      )
+   }
 })
 
 .rs.addFunction("getHelpFunction", function(name, src, envir = parent.frame())
