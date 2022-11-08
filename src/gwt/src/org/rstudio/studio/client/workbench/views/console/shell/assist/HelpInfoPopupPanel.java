@@ -100,8 +100,15 @@ public class HelpInfoPopupPanel extends PopupPanel
       htmlDesc.setStylePrimaryName(RES.styles().helpBodyText());
       vpanel_.add(htmlDesc);
       
+      String glimpse = help.getGlimpse();
+      if (glimpse != null)
+      {
+         HTML htmlGlimpse = new HTML(glimpse);
+         htmlGlimpse.setStylePrimaryName(RES.styles().helpGlimpseText());
+         vpanel_.add(htmlGlimpse);
+      }
+      
       doDisplay();
-
    }
    
    public void displayParameterHelp(String name, String description)

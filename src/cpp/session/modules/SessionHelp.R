@@ -317,6 +317,8 @@ options(help_type = "html")
       return()
    }
    
+   envir <- .rs.getActiveFrame()
+
    if (type %in% c(.rs.acCompletionTypes$FUNCTION,
                    .rs.acCompletionTypes$S4_GENERIC,
                    .rs.acCompletionTypes$S4_METHOD,
@@ -329,7 +331,9 @@ options(help_type = "html")
    else if (type == .rs.acCompletionTypes$DATATABLE_SPECIAL_SYMBOL)
       return(.rs.getHelpDataTableSpecialSymbol(what))
    else if (type == .rs.acCompletionTypes$COLUMN)
-      return(.rs.getHelpColumn(what, from, .rs.getActiveFrame()))
+      return(.rs.getHelpColumn(what, from, envir))
+   else if (type == .rs.acCompletionTypes$DATAFRAME)
+      return(.rs.getHelpDataFrame(what, from))
    else if (length(from) && length(what))
       return(.rs.getHelp(what, from))
    else
@@ -443,9 +447,9 @@ options(help_type = "html")
 .rs.addFunction("getHelpColumn", function(name, src, envir = parent.frame())
 {
    column <- .rs.getAnywhere(paste0(src, "$", name), envir)
-   if (!is.null(data))
+   if (!is.null(column))
    {
-      str <- if (isNamespaceLoaded("pillar")) function(x) pillar::glimpse(x, width = 80) else utils::str
+      str <- if (isNamespaceLoaded("pillar")) function(x) pillar::glimpse(x, width = 60) else utils::str
       text <- capture.output(str(column))
       list(
          html = paste0("<h2>", src, "$", name, "</h2><h3>Description</h3><p>", text, "</p>"),
@@ -453,6 +457,30 @@ options(help_type = "html")
          pkgname = src
       )
    }
+})
+
+.rs.addFunction("getHelpDataFrame", function(name, src)
+{
+   out <- .rs.getHelp(name, src)
+   
+   # If 'src' is the name of something on the searchpath, grad the data
+   data <- NULL
+   pos <- match(src, search(), nomatch = -1L)
+   if (pos >= 0)
+   {
+      data <- tryCatch(get(name, pos = pos), error = function(e) NULL)
+
+      str <- if (isNamespaceLoaded("pillar")) function(x) pillar::glimpse(x, width = 60) else utils::str
+      text <- paste(capture.output(str(data)), collapse = "<br/>")
+      
+      if (is.null(out)) 
+      {
+         out <- list(html = "", signature = "", pkgname = src)
+      }
+      out$glimpse <- text
+   }
+   
+   out
 })
 
 .rs.addFunction("getHelpFunction", function(name, src, envir = parent.frame())

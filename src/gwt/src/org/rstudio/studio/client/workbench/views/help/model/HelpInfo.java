@@ -109,6 +109,8 @@ public class HelpInfo extends JavaScriptObject
       String signature = getSignature();
       if (signature == null)
          signature = defaultSignature;
+
+      values.put("Glimpse", getGlimpse());
       return new ParsedInfo(getPackageName(), signature, values, args, slots);
    }
    
@@ -205,6 +207,10 @@ public class HelpInfo extends JavaScriptObject
    private final native String getPackageName() /*-{
       return this.pkgname ? this.pkgname[0] : null;
    }-*/;
+
+   private final native String getGlimpse() /*-{
+      return this.glimpse ? this.glimpse[0] : null;
+   }-*/;
    
    public static class Custom extends JavaScriptObject
    {
@@ -273,7 +279,7 @@ public class HelpInfo extends JavaScriptObject
       private HashMap<String, String> values;
       private HashMap<String, String> args;
       private HashMap<String, String> slots;
-
+      
       public ParsedInfo(String pkgName, String signature, HashMap<String, String> values,
             HashMap<String, String> args, HashMap<String, String> slots)
       {
@@ -313,6 +319,11 @@ public class HelpInfo extends JavaScriptObject
       public String getDetails()
       {
          return values.get("Details");
+      }
+
+      public String getGlimpse()
+      {
+         return values.get("Glimpse");
       }
 
       /**
