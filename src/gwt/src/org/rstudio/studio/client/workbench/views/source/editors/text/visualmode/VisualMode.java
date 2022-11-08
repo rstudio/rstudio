@@ -17,6 +17,7 @@ package org.rstudio.studio.client.workbench.views.source.editors.text.visualmode
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.TreeMap;
 
 
 import com.google.gwt.core.client.GWT;
@@ -1864,31 +1865,25 @@ public class VisualMode implements VisualModeEditorSync,
       {
          chunkScopes.add(chunk);
       }
-      
-      // Get all of the chunks from the outline emitted by visual mode
-      ArrayList<PanmirrorEditingOutlineLocationItem> chunkItems = new ArrayList<>();
-      PanmirrorEditingOutlineLocationItem lastChunkItem = null;
+
+      // Get all of the chunks from the outline emitted by visual mode. Indented chunks may
+      // be present more than once; we ensure that there is at most one chunk in each position
+      // by storing the chunks in a TreeSet indexed by position.
+      TreeMap<Integer, PanmirrorEditingOutlineLocationItem> chunkItemMap = new TreeMap<>();
       for (int j = 0; j < location.items.length; j++)
       {
-         PanmirrorEditingOutlineLocationItem nextChunkItem = location.items[j];
-         if (StringUtil.equals(nextChunkItem.type, PanmirrorOutlineItemType.RmdChunk))
+         PanmirrorEditingOutlineLocationItem chunkItem = location.items[j];
+         if (StringUtil.equals(chunkItem.type, PanmirrorOutlineItemType.RmdChunk))
          {
-            // It is possible for the visual editor to contain two representations of the
-            // same RmdChunk when the chunk is indented. Since the items are sorted by
-            // position, we discard consecutive chunks with identical positions; they
-            // represent the same underlying scope entry.
-            if (lastChunkItem != null && lastChunkItem.position == nextChunkItem.position)
-            {
-               continue;
-            }
-            lastChunkItem = nextChunkItem;
-            chunkItems.add(nextChunkItem);
+            chunkItemMap.put(chunkItem.position, chunkItem);
          }
       }
-      
+
       // Refuse to proceed if cardinality doesn't match (consider: does this
       // need to account for deeply nested chunks that might appear in one
       // outline but not the other?)
+      ArrayList<PanmirrorEditingOutlineLocationItem> chunkItems = new ArrayList<>();
+      chunkItems.addAll(chunkItemMap.values());
       if (chunkScopes.size() != chunkItems.size())
       {
          Debug.logWarning(chunkScopes.size() + " chunks in scope tree, but " + 
@@ -1898,7 +1893,7 @@ public class VisualMode implements VisualModeEditorSync,
 
       for (int k = 0; k < chunkItems.size(); k++)
       {
-         PanmirrorEditingOutlineLocationItem visualItem = 
+         PanmirrorEditingOutlineLocationItem visualItem =
                Js.uncheckedCast(chunkItems.get(k));
          VisualModeChunk chunk = visualModeChunks_.getChunkAtVisualPosition(
                visualItem.position);
