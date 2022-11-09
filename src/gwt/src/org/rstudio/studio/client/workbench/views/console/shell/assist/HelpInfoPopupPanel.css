@@ -26,11 +26,9 @@
    color: #000023 !important; 
 }
 
-.helpGlimpseText {
+.helpGlimpseText pre {
    font-family: fixedWidthFont;
-   font-size: 10px;
-   color: #777;
-   padding-left: 10px;
+   font-size: 12px;
 }
 
 .rstudio-themes-dark-menus .helpBodyText a {

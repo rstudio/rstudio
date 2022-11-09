@@ -111,7 +111,7 @@ public class HelpInfo extends JavaScriptObject
          signature = defaultSignature;
 
       values.put("Glimpse", getGlimpse());
-      return new ParsedInfo(getPackageName(), signature, values, args, slots);
+      return new ParsedInfo(getPackageName(), signature, values, args, slots, hasHelp());
    }
    
    private void parseDescriptionList(HashMap<String, String> args,
@@ -211,6 +211,10 @@ public class HelpInfo extends JavaScriptObject
    private final native String getGlimpse() /*-{
       return this.glimpse ? this.glimpse[0] : null;
    }-*/;
+
+   private final native boolean hasHelp() /*-{
+      return this.help ? this.help[0] : true;
+   }-*/;
    
    public static class Custom extends JavaScriptObject
    {
@@ -266,7 +270,8 @@ public class HelpInfo extends JavaScriptObject
                                getSignature(),
                                values,
                                args,
-                               null);
+                               null,
+                               true);
       }
       
    }
@@ -279,9 +284,10 @@ public class HelpInfo extends JavaScriptObject
       private HashMap<String, String> values;
       private HashMap<String, String> args;
       private HashMap<String, String> slots;
+      private boolean help;
       
       public ParsedInfo(String pkgName, String signature, HashMap<String, String> values,
-            HashMap<String, String> args, HashMap<String, String> slots)
+            HashMap<String, String> args, HashMap<String, String> slots, boolean help)
       {
          super();
          this.pkgName = pkgName;
@@ -289,6 +295,7 @@ public class HelpInfo extends JavaScriptObject
          this.values = values != null ? values : new HashMap<>();
          this.args = args;
          this.slots = slots;
+         this.help = help;
       }
       
       public String getPackageName()
@@ -324,6 +331,11 @@ public class HelpInfo extends JavaScriptObject
       public String getGlimpse()
       {
          return values.get("Glimpse");
+      }
+
+      public boolean hasHelp() 
+      {
+         return help;
       }
 
       /**

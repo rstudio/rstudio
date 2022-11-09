@@ -100,12 +100,14 @@ public class HelpStrategy
    private void showDefaultHelp(final QualifiedName selectedItem,
                                 final CompletionPopupDisplay display)
    {
+      /*
       ParsedInfo cachedHelp = cache_.get(selectedItem);
       if (cachedHelp != null)
       {
          display.displayHelp(cachedHelp);
          return;
       }
+      */
       
       if (selectedItem.helpHandler != null)
       {

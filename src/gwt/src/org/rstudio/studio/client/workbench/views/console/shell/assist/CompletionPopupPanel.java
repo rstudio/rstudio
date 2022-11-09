@@ -421,7 +421,6 @@ public class CompletionPopupPanel extends ThemedPopupPanel
       
       help_.displayParameterHelp(value, description, false);
       resolveHelpPosition(!StringUtil.isNullOrEmpty(description));
-      
    }
 
    public void clearHelp(boolean downloadOperationPending)

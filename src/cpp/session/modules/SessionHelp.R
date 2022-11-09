@@ -333,7 +333,7 @@ options(help_type = "html")
    else if (type == .rs.acCompletionTypes$COLUMN)
       return(.rs.getHelpColumn(what, from, envir))
    else if (type == .rs.acCompletionTypes$DATAFRAME)
-      return(.rs.getHelpDataFrame(what, from))
+      return(.rs.getHelpDataFrame(what, from, envir))
    else if (length(from) && length(what))
       return(.rs.getHelp(what, from))
    else
@@ -446,40 +446,55 @@ options(help_type = "html")
 
 .rs.addFunction("getHelpColumn", function(name, src, envir = parent.frame())
 {
-   column <- .rs.getAnywhere(paste0(src, "$", name), envir)
-   if (!is.null(column))
+   data <- .rs.getAnywhere(src, envir)
+   if (!is.null(data) && isNamespaceLoaded("pillar"))
    {
-      str <- if (isNamespaceLoaded("pillar")) function(x) pillar::glimpse(x, width = 60) else utils::str
-      text <- capture.output(str(column))
+      data <- data[, name, drop = FALSE]
+      text <- capture.output(pillar::glimpse(data, width = 50))
+      text <- sub("[$] [^ ]+ ", "", text[length(text)])
+
       list(
-         html = paste0("<h2>", src, "$", name, "</h2><h3>Description</h3><p>", text, "</p>"),
-         signature = "-", 
-         pkgname = src
+         html = paste0("<h2>", src, "$", name, "</h2><h3>Description</h3>"),
+         signature = paste0(src, "$", name), 
+         pkgname = src, 
+         glimpse = text, 
+         help = FALSE
       )
    }
 })
 
-.rs.addFunction("getHelpDataFrame", function(name, src)
+.rs.addFunction("getHelpDataFrame", function(name, src, envir = parent.frame())
 {
    out <- .rs.getHelp(name, src)
-   
-   # If 'src' is the name of something on the searchpath, grad the data
-   data <- NULL
-   pos <- match(src, search(), nomatch = -1L)
-   if (pos >= 0)
+   if (is.null(out) && isNamespaceLoaded("pillar"))
    {
-      data <- tryCatch(get(name, pos = pos), error = function(e) NULL)
-
-      str <- if (isNamespaceLoaded("pillar")) function(x) pillar::glimpse(x, width = 60) else utils::str
-      text <- paste(capture.output(str(data)), collapse = "<br/>")
-      
-      if (is.null(out)) 
+      # If 'src' is the name of something on the searchpath, grad the data
+      data <- NULL
+      title <- name
+      pos <- match(src, search(), nomatch = -1L)
+      if (pos >= 0)
       {
-         out <- list(html = "", signature = "", pkgname = src)
+         data <- tryCatch(get(name, pos = pos), error = function(e) NULL)
       }
-      out$glimpse <- text
+
+      if (is.null(data)) {
+         title <- paste0(src, "$", name)
+         data <- .rs.getAnywhere(title, envir)
+      }
+      
+      if (!is.null(data))
+      {
+         text <- paste(capture.output(pillar::glimpse(data, width = 50)), collapse = "\n")
+         out <- list(
+            html = paste0("<h2></h2><h3>Description</h3>"), 
+            signature = title, 
+            pkgname = src, 
+            glimpse = text, 
+            help = FALSE
+         )
+      }
    }
-   
+
    out
 })
 

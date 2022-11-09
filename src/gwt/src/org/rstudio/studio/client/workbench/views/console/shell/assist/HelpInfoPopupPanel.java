@@ -17,11 +17,14 @@ package org.rstudio.studio.client.workbench.views.console.shell.assist;
 import java.util.Map;
 
 import com.google.gwt.core.client.GWT;
+import com.google.gwt.dom.client.Element;
 import com.google.gwt.user.client.Timer;
 import com.google.gwt.user.client.ui.*;
 
 import org.rstudio.core.client.BrowseCap;
 import org.rstudio.core.client.StringUtil;
+import org.rstudio.core.client.VirtualConsole;
+import org.rstudio.studio.client.RStudioGinjector;
 import org.rstudio.studio.client.application.ui.RStudioThemes;
 import org.rstudio.studio.client.workbench.views.console.ConsoleConstants;
 import org.rstudio.studio.client.workbench.views.console.ConsoleResources;
@@ -92,23 +95,34 @@ public class HelpInfoPopupPanel extends PopupPanel
          vpanel_.add(lblSig);
       }
       
-      Label lblTitle = new Label(help.getTitle());
-      lblTitle.setStylePrimaryName(RES.styles().helpTitleText());
-      vpanel_.add(lblTitle);
-
-      HTML htmlDesc = new HTML(help.getDescription());
-      htmlDesc.setStylePrimaryName(RES.styles().helpBodyText());
-      vpanel_.add(htmlDesc);
-      
-      String glimpse = help.getGlimpse();
-      if (glimpse != null)
+      String title = help.getTitle();
+      if (!StringUtil.isNullOrEmpty(title))
       {
-         HTML htmlGlimpse = new HTML(glimpse);
-         htmlGlimpse.setStylePrimaryName(RES.styles().helpGlimpseText());
-         vpanel_.add(htmlGlimpse);
+         Label lblTitle = new Label();
+         lblTitle.setStylePrimaryName(RES.styles().helpTitleText());
+         vpanel_.add(lblTitle);
       }
       
-      doDisplay();
+      String description = help.getDescription();
+      if (!StringUtil.isNullOrEmpty(description))
+      {
+         HTML htmlDesc = new HTML(description);
+         htmlDesc.setStylePrimaryName(RES.styles().helpBodyText());
+         vpanel_.add(htmlDesc);
+      }
+      
+      String glimpse = help.getGlimpse();
+      if (!StringUtil.isNullOrEmpty(glimpse))
+      {
+         HTML htmlGlimpse = new HTML("<pre></pre>");
+         htmlGlimpse.setStylePrimaryName(RES.styles().helpGlimpseText());
+         
+         VirtualConsole vc = RStudioGinjector.INSTANCE.getVirtualConsoleFactory().create(htmlGlimpse.getElement().getFirstChildElement());
+         vc.submit(glimpse);
+         vpanel_.add(htmlGlimpse);
+      }
+
+      doDisplay(help.hasHelp());
    }
    
    public void displayParameterHelp(String name, String description)
