@@ -29,7 +29,7 @@ The following documentation helps a user understand the core workflows in RStudi
 
 ## Commercial Edition
 
-Posit Workbench has several features that differentiate it from the open-source [RStudio desktop](https://posit.co/products/open-source/rstudio/) and [RStudio Server](https://posit.co/products/open-source/rstudio-server/), which you can read about on the [Workbench comparison page](https://posit.co/products/enterprise/workbench/). The main advantages of using Posit Workbench are:
+Posit Workbench has several features that differentiate it from the open-source [RStudio desktop](https://posit.co/products/open-source/rstudio/) and [RStudio Server](https://posit.co/products/open-source/rstudio-server/), which you can read about on the [Posit Workbench comparison page](https://posit.co/products/enterprise/workbench/). The main advantages of using Posit Workbench are:
 
 - Enhanced security and authentication, including Single Sign On (SSO).  
 - Run multiple-concurrent sessions.  
@@ -56,7 +56,7 @@ Posit Workbench administrators can reference the [Posit Workbench Administrator 
 ### Commercial
 
 - [Posit Workbench](https://docs.rstudio.com/rsw/installation/) - administration guide for installation and configuration
-- [RStudio Desktop Pro](https://posit.co/downloads/) - available for Windows/Mac/Linux
+- [RStudio Desktop Pro](https://posit.co/download/rstudio-desktop-pro/) - available for Windows/Mac/Linux
 
 ::: {.callout-caution }
 
