@@ -199,6 +199,8 @@ UNIT_TEST_FAILURE=false
 if has-scope "core"; then
 
    section "Running 'core' tests"
+   echo "location of losf: $(which lsof)"
+
    # Run only the tests that don't require root
    runWatchdogProcess 5m false "@CMAKE_CURRENT_BINARY_DIR@/core/${RSTUDIO_CORETEST_BIN} '~[requiresRoot]'"
 
