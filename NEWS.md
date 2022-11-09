@@ -38,7 +38,6 @@
 ### Posit Workbench
 
 - Adds `-l` (long) option to `rserver-url`. When `/usr/lib/rstudio-server/bin/rserver-url -l <port number>` is executed within a VS Code or Jupyter session, the full URL where a user can view a server proxied at that port is displayed (rstudio-pro#3620)
-- Handles `SIGTERM` signals to shut down more gracefully, for better interaction with service managers like `systemd`.
 
 #### Posit Workbench VS Code Sessions
 
@@ -46,6 +45,7 @@
 - Enable VS Code sessions by default on initial Workbench install (rstudio-pro#3643)
 - Updated code-server to version 4.7.1 (VS Code version 1.71.2) (rstudio-pro#3643)
 - Sets the `UVICORN_ROOT_PATH` environment variable to the proxied port URL for port 8000 in VS Code and Jupyter sessions, allowing FastAPI applications to run without additional configuration. (rstudio-pro#2660)
+- Workbench now checks for the `code-server` binary in the `WORKBENCH_VSCODE_PATH` environment variable (if present) then the `vscode-exe` setting in `vscode.conf`, or falls back to the preinstalled version and finally the `PATH`. This allows more flexibility when launching sessions on Kubernetes or Slurm clusters. (rstudio/rstudio-pro#3942)
 
 #### Posit Workbench VS Code Extension
 
@@ -61,7 +61,12 @@
 - Added a Warning notification that appears when a uvicorn process was started with a custom port, without the root-path argument. These processes will now appear in the Proxied Servers view with a warning icon (rstudio/rstudio-pro#3699)
 - Fixed mislabelling of Shiny app in Proxied Servers list (#117)
 
-#### Jupyter Extension
+#### Posit Workbench Jupyter Sessions
+
+- Workbench now checks for the `jupyter` binary in the `WORKBENCH_JUPYTER_PATH` environment variable (if present), then the `jupyter-exe` setting in `jupyter.conf`, and finally the `PATH`. This is allows more flexibility when launching sessions on Kubernetes or Slurm clusters. (rstudio/rstudio-pro#3942)
+- Fixed an issue where Workbench would not install the `jupyter` extension automatically if the configured `jupyter` path was a symlink to the actual install location. We now follow the symlink. (rstudio/rstudio-pro#3942)
+
+#### Posit Workbench Jupyter Extension
 
 - The Jupyter Notebook and JupyterLab extensions have been updated to match with the new Posit Software, PBC branding (rstudio-pro#3645)
 
@@ -90,3 +95,5 @@
 - Fixed scroll speed sensitivity for Mac and Linux and added a preference to adjust it (#11578)
 - Fixed an issue in server environments where invoking `systemd` directly could lead to orphaned processes and undefined behavior. Processes are now cleaned up more consistently as a part of server or launcher shutdown. (rstudio/rstudio-pro#2585)
 - RStudio sessions now shut down and suspend properly when they receive a `SIGTERM` signal, as they have for `SIGUSR2` (rstudio/rstudio-pro#2585)
+- Fixed an issue where `ssl-hsts-include-subdomains=1` would render Workbench non-functional. The setting now works as expected. (rstudio/rstudio-pro#3010)
+- Fixed an issue where the `suspend-session`, `suspend-all`, and `kill-all` subcommands of `rstudio-server` did not work when using the Launcher. (rstudio/rstudio-pro#4007)
