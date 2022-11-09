@@ -2844,13 +2844,25 @@ assign(x = ".rs.acCompletionTypes",
                                                  excludeArgsFromObject,
                                                  envir)
 {
-   ## chainObjectName will be provided if the client detected
-   ## that we were performing completions within an e.g.
-   ## `%>%` chain -- use completions from the associated data object.
    result <- .rs.emptyCompletions()
+   
+   # chainObjectName will be provided if the client detected
+   # that we were performing completions within an e.g.
+   # `%>%` chain -- use completions from the associated data object.
    if (is.null(chainObjectName))
       return(result)
 
+   # prevent evaluation of data.table `[` calls, e.g.
+   # 
+   #     dt[, y := 2] %>% ... %>% filter()
+   if (.rs.isDataTableExtractCall(chainObjectName, envir = envir))
+      return(result)
+
+   object <- .rs.getAnywhere(chainObjectName, envir = envir)
+   
+   if (inherits(object, "python.builtin.object"))
+      return(result)
+   
    # additional completions from the client, e.g. rename(a = <...>)
    if (length(additionalArgs))
    {
@@ -2863,23 +2875,16 @@ assign(x = ".rs.acCompletionTypes",
       result <- .rs.appendCompletions(result, additionalArgsCompletions)
    }
    
-   if (!excludeArgsFromObject)
+   if (!excludeArgsFromObject && .rs.hasColumns(object))
    {
-      object <- .rs.getAnywhere(chainObjectName, envir = envir)
-      if (inherits(object, "python.builtin.object"))
-         return(.rs.emptyCompletions())
-      
-      if (.rs.hasColumns(object))
-      {
-         columnCompletions <- .rs.makeCompletions(
-            token = token,
-            results = .rs.selectFuzzyMatches(setdiff(.rs.getNames(object), additionalArgs), token),
-            packages = chainObjectName,
-            quote = FALSE,
-            type = .rs.acCompletionTypes$COLUMN
-         )
-         result <- .rs.appendCompletions(result, columnCompletions)
-      }
+      columnCompletions <- .rs.makeCompletions(
+         token = token,
+         results = .rs.selectFuzzyMatches(setdiff(.rs.getNames(object), additionalArgs), token),
+         packages = chainObjectName,
+         quote = FALSE,
+         type = .rs.acCompletionTypes$COLUMN
+      )
+      result <- .rs.appendCompletions(result, columnCompletions)
    }
    
    if (length(excludeArgs))
