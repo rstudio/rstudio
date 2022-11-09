@@ -69,6 +69,7 @@
 
 - Removed the Tools / Shell command (#11253)
 - Removed the "rstudio-server install-vs-code" admin command for downloading and configuring code-server; code-server is now installed with Workbench, use the "rstudio-server configure-vs-code" command for configuration (rstudio-pro#3643)
+- It is highly recommended that you disable session culling in Jupyter sessions by done by setting `session-cull-minutes=0` in `jupyter.conf` to prevent potential data loss (rstudio-pro#3054) 
 
 ### Experimental ARM64 and RedHat 9 support
 
