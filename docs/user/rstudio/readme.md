@@ -16,8 +16,8 @@ To locally test changes to the User Guide, you will need to do the following:
 
 1.  [Install Quarto](https://quarto.org/docs/getting-started/installation.html) or RStudio 2022.07.2 or later, which bundles Quarto.
 
--   Download RStudio from [posit.co/downloads/](https://posit.co/downloads/)
--   Download the CLI from [github.com/quarto-dev](https://github.com/quarto-dev/quarto-cli/releases/latest) for your operating system
+-   Quarto is bundled with RStudio. Download RStudio from [posit.co/downloads/](https://posit.co/downloads/)
+-   If not using RStudio, download the CLI directly from [github.com/quarto-dev](https://github.com/quarto-dev/quarto-cli/releases/latest) for your operating system
 -   Optionally install the Quarto R Package with `install.packages("quarto")`
 
 2.  Clone the [rstudio](https://github.com/rstudio/rstudio) repo
@@ -39,6 +39,13 @@ quarto preview
 
 ```r
 quarto::quarto_preview(file = "docs/user/rstudio/index.qmd")
+```
+
+Regardless of the method - you are likely to see the below error, because you don't have the environment variables set that we use in the build process. You can safely ignore these as they are resolved during our render/publish of the guide to docs.posit.co.
+
+```
+WARNING: Unknown var buildType specified in a var shortcode.
+WARNING: Unknown var version specified in a var shortcode.
 ```
 
 5. Once you have confirmed that the changes are technically accurate and that the rendered output is visually correct, you can either open a Pull Request with your changes or an Issue with the suggested fix.
