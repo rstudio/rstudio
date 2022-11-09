@@ -347,7 +347,7 @@ var RCodeModel = function(session, tokenizer,
    this.getDataFromInfixChain = function(tokenCursor)
    {
       var data = this.moveToDataObjectFromInfixChain(tokenCursor);
-      
+
       var additionalArgs = [];
       var excludeArgs = [];
       var name = "";
@@ -357,7 +357,18 @@ var RCodeModel = function(session, tokenizer,
          if (data.excludeArgsFromObject)
             excludeArgsFromObject = data.excludeArgsFromObject;
          
-         name = tokenCursor.currentValue();
+         var clone = tokenCursor.cloneCursor();
+         clone.findStartOfEvaluationContext();
+
+         name = this.$doc.getTextRange(new Range(
+            clone.currentPosition().row,
+            clone.currentPosition().column,
+
+            tokenCursor.currentPosition().row,
+            tokenCursor.currentPosition().column + tokenCursor.currentValue().length
+         ));
+         
+         // name = tokenCursor.currentValue();
          additionalArgs = data.additionalArgs;
          excludeArgs = data.excludeArgs;
 
