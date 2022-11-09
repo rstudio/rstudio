@@ -38,7 +38,6 @@
 ### Posit Workbench
 
 - Adds `-l` (long) option to `rserver-url`. When `/usr/lib/rstudio-server/bin/rserver-url -l <port number>` is executed within a VS Code or Jupyter session, the full URL where a user can view a server proxied at that port is displayed (rstudio-pro#3620)
-- Handles `SIGTERM` signals to shut down more gracefully, for better interaction with service managers like `systemd`. (rstudio/rstudio-pro#2585)
 
 #### Posit Workbench VS Code Sessions
 
@@ -46,7 +45,7 @@
 - Enable VS Code sessions by default on initial Workbench install (rstudio-pro#3643)
 - Updated code-server to version 4.7.1 (VS Code version 1.71.2) (rstudio-pro#3643)
 - Sets the `UVICORN_ROOT_PATH` environment variable to the proxied port URL for port 8000 in VS Code and Jupyter sessions, allowing FastAPI applications to run without additional configuration. (rstudio-pro#2660)
-- VS Code sessions are now configured dynamically to find `code-server` using the `WORKBENCH_VSCODE_PATH` environment variable, the configured `vscode-exe` in `vscode.conf`, the internally installed version, and the `PATH`. This is particularly helpful when using Kubernetes or Slurm. (rstudio/rstudio-pro#3942)
+- Workbench now checks for the `code-server` binary in the `WORKBENCH_VSCODE_PATH` environment variable (if present) then the `vscode-exe` setting in `vscode.conf`, or falls back to the preinstalled version and finally the `PATH`. This allows more flexibility when launching sessions on Kubernetes or Slurm clusters. (rstudio/rstudio-pro#3942)
 
 #### Posit Workbench VS Code Extension
 
@@ -64,12 +63,12 @@
 
 #### Posit Workbench Jupyter Sessions
 
-- Jupyter sessions are now configured dynamically to find `jupyter` using the `WORKBENCH_JUPYTER_PATH` environment variable, the configured `jupyter-exe` in `jupyter.conf` and the `PATH`. This is particularly helpful when using Kubernetes or Slurm. (rstudio/rstudio-pro#3942)
+- Workbench now checks for the `jupyter` binary in the `WORKBENCH_JUPYTER_PATH` environment variable (if present), then the `jupyter-exe` setting in `jupyter.conf`, and finally the `PATH`. This is allows more flexibility when launching sessions on Kubernetes or Slurm clusters. (rstudio/rstudio-pro#3942)
+- Fixed an issue where Workbench would not install the `jupyter` extension automatically if the configured `jupyter` path was a symlink to the actual install location. We now follow the symlink. (rstudio/rstudio-pro#3942)
 
 #### Posit Workbench Jupyter Extension
 
 - The Jupyter Notebook and JupyterLab extensions have been updated to match with the new Posit Software, PBC branding (rstudio-pro#3645)
-- Fix issue where Workbench could not install the `jupyter` extension automatically if the configured `jupyter` was a symlink to the actual install location, because `pip` could not be found. We now follow the symlink.  (rstudio/rstudio-pro#3942)
 
 ### Deprecated / Removed
 
@@ -95,5 +94,5 @@
 - Fixed scroll speed sensitivity for Mac and Linux and added a preference to adjust it (#11578)
 - Fixed an issue in server environments where invoking `systemd` directly could lead to orphaned processes and undefined behavior. Processes are now cleaned up more consistently as a part of server or launcher shutdown. (rstudio/rstudio-pro#2585)
 - RStudio sessions now shut down and suspend properly when they receive a `SIGTERM` signal, as they have for `SIGUSR2` (rstudio/rstudio-pro#2585)
-- Fix an issue where `ssl-hsts-include-subdomains=1` would cause an invalid internal config file. This config setting can now be used. (rstudio/rstudio-pro#3010)
-- Fix an issue where `suspend-session`, `suspend-all`, and `kill-all` targets for the `rstudio-server` script did not work for environments using the RStudio Launcher. These targets should now function as expected (rstudio/rstudio-pro#4007)
+- Fixed an issue where `ssl-hsts-include-subdomains=1` would render Workbench non-functional. The setting now works as expected. (rstudio/rstudio-pro#3010)
+- Fixed an issue where the `suspend-session`, `suspend-all`, and `kill-all` subcommands of `rstudio-server` did not work when using the Launcher. (rstudio/rstudio-pro#4007)
