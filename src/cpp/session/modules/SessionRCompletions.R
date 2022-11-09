@@ -2826,6 +2826,17 @@ assign(x = ".rs.acCompletionTypes",
    
 })
 
+.rs.addFunction("hasColumns", function(object)
+{
+   if (inherits(object, c("data.frame")))
+      return(TRUE)
+
+   if (isNamespaceLoaded("arrow") && inherits(object, c("ArrowTabular", "Dataset", "arrow_dplyr_query")))
+      return(TRUE)
+
+   FALSE
+})
+
 .rs.addFunction("getRChainCompletions", function(token,
                                                  chainObjectName,
                                                  additionalArgs,
@@ -2837,60 +2848,37 @@ assign(x = ".rs.acCompletionTypes",
    ## that we were performing completions within an e.g.
    ## `%>%` chain -- use completions from the associated data object.
    result <- .rs.emptyCompletions()
-   
+   if (is.null(chainObjectName))
+      return(result)
+
+   # additional completions from the client, e.g. rename(a = <...>)
    if (length(additionalArgs))
    {
-      argsToAdd <- .rs.selectFuzzyMatches(additionalArgs, token)
-      result <- .rs.appendCompletions(
-         result,
-         .rs.makeCompletions(
-            token = token,
-            results = argsToAdd,
-            packages = paste0(chainObjectName, " %>% ..."),
-            type = .rs.acCompletionTypes$COLUMN
-         )
+      additionalArgsCompletions <- .rs.makeCompletions(
+         token = token,
+         results = .rs.selectFuzzyMatches(additionalArgs, token),
+         packages = paste0(chainObjectName, " %>% ..."),
+         type = .rs.acCompletionTypes$COLUMN
       )
+      result <- .rs.appendCompletions(result, additionalArgsCompletions)
    }
    
-   if (!is.null(chainObjectName) && !excludeArgsFromObject)
+   if (!excludeArgsFromObject)
    {
       object <- .rs.getAnywhere(chainObjectName, envir = envir)
       if (inherits(object, "python.builtin.object"))
          return(.rs.emptyCompletions())
       
-      if (length(object))
+      if (.rs.hasColumns(object))
       {
-         objectNames <- setdiff(.rs.getNames(object), additionalArgs)
-         if (length(objectNames))
-         {
-            completions <- .rs.selectFuzzyMatches(objectNames, token)
-
-            if (inherits(object, c("data.frame")) || (isNamespaceLoaded("arrow") && inherits(object, c("ArrowTabular", "Dataset", "arrow_dplyr_query"))))
-            {
-               # when the chain object is a data frame, 
-               # set the completion type to COLUMN
-               types <- rep(.rs.acCompletionTypes$COLUMN, length(completions))
-               packages <- chainObjectName
-            }
-            else
-            {
-               # otherwise infer from the object
-               types <- vapply(completions, FUN.VALUE = numeric(1), USE.NAMES = FALSE, function(i) {
-                  .rs.getCompletionType(object[[i]])
-               })
-               packages <- paste("[", chainObjectName, "]", sep = "") 
-            }
-            
-            result <- .rs.appendCompletions(
-               result, .rs.makeCompletions(
-                  token = token,
-                  results = completions,
-                  packages = packages,
-                  quote = FALSE,
-                  type = types
-               )
-            )
-         }
+         columnCompletions <- .rs.makeCompletions(
+            token = token,
+            results = .rs.selectFuzzyMatches(setdiff(.rs.getNames(object), additionalArgs), token),
+            packages = chainObjectName,
+            quote = FALSE,
+            type = .rs.acCompletionTypes$COLUMN
+         )
+         result <- .rs.appendCompletions(result, columnCompletions)
       }
    }
    
