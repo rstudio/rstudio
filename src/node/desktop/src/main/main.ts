@@ -39,8 +39,8 @@ class RStudioMain {
       await this.startup();
     } catch (error: unknown) {
       const err = safeError(error);
-      await createStandaloneErrorDialog(i18next.t('mainTs.unhandledException'), err.message);
       console.error(err.message); // logging possibly not available this early in startup
+      await createStandaloneErrorDialog(i18next.t('mainTs.unhandledException'), err.message);
       if (logLevel() === 'debug') {
         console.error(err.stack);
       }

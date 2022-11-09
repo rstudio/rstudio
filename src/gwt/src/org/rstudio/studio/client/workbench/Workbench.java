@@ -217,6 +217,11 @@ public class Workbench implements BusyEvent.Handler,
             if (title != null)
                Desktop.getFrame().setWindowTitle(title);
          });
+
+      }
+      if (BrowseCap.isElectron())
+      {
+         Desktop.getFrame().setAutohideMenubar(pPrefs_.get().autohideMenubar().getValue());
       }
    }
 
