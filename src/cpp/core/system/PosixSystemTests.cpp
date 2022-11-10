@@ -326,6 +326,13 @@ test_context("PosixSystemTests")
 
    test_that("Current working directory determined correctly with lsof method")
    {
+      FilePath lsofPath;
+      Error error = findProgramOnPath("lsof", &lsofPath);
+      expect_false(error);
+      
+      std::string resolvedPath = lsofPath.getAbsolutePath();
+      expect_true(resolvedPath.find("lsof") != std::string::npos);
+
       FilePath emptyPath;
       FilePath startingDir = FilePath::safeCurrentPath(emptyPath);
       pid_t pid = fork();
