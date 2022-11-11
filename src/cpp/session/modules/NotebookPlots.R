@@ -76,6 +76,10 @@
    do.call(what = png, args = args)
 })
 
+# this seems like it is the only thing manipulated from NotebookPlots.cpp side
+# this is where pixelRation is introduced to the machinery
+# it likely originates in RClientMetrics.cpp where it is drawn from
+# "r.session.client_metrics.device-pixel-ratio"
 .rs.addFunction("setNotebookGraphicsOption", function(filename,
                                                       height,
                                                       width,
@@ -87,7 +91,9 @@
    {
       .rs.createNotebookGraphicsDevice(filename, height, width, units,  pixelRatio, extraArgs)
       dev.control(displaylist = "enable")
-      .rs.setNotebookMargins()
+      # this introduces margins that makes the figure different from the actual output
+      # as seen in the rendered document, so disable it
+      # .rs.setNotebookMargins()
    })
 })
 
@@ -96,6 +102,8 @@
    save(plot, file = filename)
 })
 
+# this should not be used in my opinion (it is never called with
+# the change of setNotebookGraphicsOption above)
 .rs.addFunction("setNotebookMargins", function() {
    #           bot  left top  right
    par(mar = c(5.1, 4.1, 2.1, 2.1))
