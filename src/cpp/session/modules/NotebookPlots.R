@@ -24,8 +24,8 @@
    # form the arguments to the graphics device creator
    args <- list(
       filename = filename,
-      width    = width * pixelRatio,
-      height   = height * pixelRatio, 
+      width    = width,
+      height   = height, 
       units    = units,
       res      = 96 * pixelRatio
    )
@@ -62,8 +62,8 @@
    {
       device <- ragg::agg_png(
          filename = filename,
-         width    = width * pixelRatio,
-         height   = height * pixelRatio,
+         width    = width,
+         height   = height,
          units    = units,
          res      = 96 * pixelRatio
       )
