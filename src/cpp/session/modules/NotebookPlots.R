@@ -21,6 +21,12 @@
                                                          pixelRatio,
                                                          extraArgs)
 {
+   if (units == "px") # px = automatic size behavior 
+   {
+    height <- height * pixelRatio
+    width <- width * pixelRatio
+   }
+
    # form the arguments to the graphics device creator
    args <- list(
       filename = filename,
@@ -77,7 +83,7 @@
 })
 
 # this seems like it is the only thing manipulated from NotebookPlots.cpp side
-# this is where pixelRation is introduced to the machinery
+# this is where pixelRatio is introduced to the machinery
 # it likely originates in RClientMetrics.cpp where it is drawn from
 # "r.session.client_metrics.device-pixel-ratio"
 .rs.addFunction("setNotebookGraphicsOption", function(filename,
