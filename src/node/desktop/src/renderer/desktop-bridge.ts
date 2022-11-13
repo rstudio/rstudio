@@ -440,6 +440,10 @@ export function getDesktopBridge() {
       ipcRenderer.send('desktop_set_enable_accessibility', enable);
     },
 
+    setDisableRendererAccessibility: (disable: boolean) => {
+      ipcRenderer.send('desktop_set_disable_renderer_accessibility', disable);
+    },
+
     getIgnoreGpuExclusionList: (callback: VoidCallback<boolean>) => {
       ipcRenderer
         .invoke('desktop_get_ignore_gpu_exclusion_list')

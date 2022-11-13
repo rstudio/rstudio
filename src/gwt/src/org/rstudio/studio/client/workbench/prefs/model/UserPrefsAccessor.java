@@ -2722,7 +2722,7 @@ public class UserPrefsAccessor extends Prefs
    }
 
    /**
-    * Support accessibility aids such as screen readers (RStudio Server).
+    * Support accessibility aids such as screen readers.
     */
    public PrefValue<Boolean> enableScreenReader()
    {
@@ -3403,7 +3403,7 @@ public class UserPrefsAccessor extends Prefs
    }
 
    /**
-    * A integer value, 1-200, to set the editor scroll multiplier. The higher the value, the faster the scrolling.
+    * An integer value, 1-200, to set the editor scroll multiplier. The higher the value, the faster the scrolling.
     */
    public PrefValue<Integer> editorScrollMultiplier()
    {
@@ -3432,6 +3432,18 @@ public class UserPrefsAccessor extends Prefs
 
    public final static String TEXT_RENDERING_AUTO = "auto";
    public final static String TEXT_RENDERING_GEOMETRICPRECISION = "geometricPrecision";
+
+   /**
+    * Disable Electron accessibility support.
+    */
+   public PrefValue<Boolean> disableRendererAccessibility()
+   {
+      return bool(
+         "disable_renderer_accessibility",
+         _constants.disableRendererAccessibilityTitle(), 
+         _constants.disableRendererAccessibilityDescription(), 
+         false);
+   }
 
    public void syncPrefs(String layer, JsObject source)
    {
@@ -3913,6 +3925,8 @@ public class UserPrefsAccessor extends Prefs
          editorScrollMultiplier().setValue(layer, source.getInteger("editor_scroll_multiplier"));
       if (source.hasKey("text_rendering"))
          textRendering().setValue(layer, source.getString("text_rendering"));
+      if (source.hasKey("disable_renderer_accessibility"))
+         disableRendererAccessibility().setValue(layer, source.getBool("disable_renderer_accessibility"));
    }
    public List<PrefValue<?>> allPrefs()
    {
@@ -4156,6 +4170,7 @@ public class UserPrefsAccessor extends Prefs
       prefs.add(discardPendingConsoleInputOnError());
       prefs.add(editorScrollMultiplier());
       prefs.add(textRendering());
+      prefs.add(disableRendererAccessibility());
       return prefs;
    }
    

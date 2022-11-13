@@ -1292,8 +1292,8 @@
         "enable_screen_reader": {
             "type": "boolean",
             "default": false,
-            "title": "Enable support for screen readers in RStudio Server",
-            "description": "Support accessibility aids such as screen readers (RStudio Server)."
+            "title": "Enable support for screen readers",
+            "description": "Support accessibility aids such as screen readers."
         },
         "typing_status_delay_ms": {
             "type": "integer",
@@ -1631,6 +1631,12 @@
             "type": "string",
             "enum": ["auto", "geometricPrecision"],
             "default": "auto"
+        },
+        "disable_renderer_accessibility": {
+            "type": "boolean",
+            "default": false,
+            "title": "Disable Electron accessibility support",
+            "description": "Disable Electron accessibility support."
         }
-    }
+     }
 }

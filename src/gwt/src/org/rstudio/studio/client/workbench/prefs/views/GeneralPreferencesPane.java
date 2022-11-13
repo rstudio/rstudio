@@ -344,6 +344,8 @@ public class GeneralPreferencesPane extends PreferencesPane
          {
             nativeFileDialogs_ = checkboxPref(prefs_.nativeFileDialogs());
             advanced.add(nativeFileDialogs_);
+            disableRendererAccessibility_ = checkboxPref(prefs_.disableRendererAccessibility());
+            advanced.add(disableRendererAccessibility_);
          }
       }
 
@@ -494,6 +496,7 @@ public class GeneralPreferencesPane extends PreferencesPane
 
       initialUiLanguage_ = prefs_.uiLanguage().getValue();
       initialNativeFileDialogs_ = prefs_.nativeFileDialogs().getValue();
+      initialDisableRendererAccessibility_ = prefs_.disableRendererAccessibility().getValue();
    }
 
    @Override
@@ -595,6 +598,15 @@ public class GeneralPreferencesPane extends PreferencesPane
          {
             restartRequirement.setUiReloadRequired(true);
          }
+
+         boolean disableRendererAccessibilityPrefValue = disableRendererAccessibility_.getValue();
+         if (disableRendererAccessibilityPrefValue != initialDisableRendererAccessibility_)
+         {
+            if (Desktop.hasDesktopFrame())
+               Desktop.getFrame().setDisableRendererAccessibility(disableRendererAccessibilityPrefValue);
+            restartRequirement.setDesktopRestartRequired(true);
+         }
+
 
          boolean useWebDialogsCookieValue = WebDialogCookie.getUseWebDialogs();
          boolean useWebDialogsPrefValue = !useNativeDialogsPrefValue;
@@ -706,6 +718,7 @@ public class GeneralPreferencesPane extends PreferencesPane
    private CheckBox clipboardMonitoring_ = null;
    private CheckBox fullPathInTitle_ = null;
    private CheckBox nativeFileDialogs_ = null;
+   private CheckBox disableRendererAccessibility_ = null;
    private CheckBox useGpuExclusions_ = null;
    private CheckBox useGpuDriverBugWorkarounds_ = null;
    private SelectWidget renderingEngineWidget_ = null;
@@ -729,4 +742,5 @@ public class GeneralPreferencesPane extends PreferencesPane
    private final Session session_;
    private String initialUiLanguage_;
    private boolean initialNativeFileDialogs_;
+   private boolean initialDisableRendererAccessibility_;
 }

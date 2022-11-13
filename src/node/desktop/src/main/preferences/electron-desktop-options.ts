@@ -31,6 +31,7 @@ const kFixedWidthFont = 'font.fixedWidthFont';
 const kZoomLevel = 'view.zoomLevel';
 const kWindowBounds = 'view.windowBounds';
 const kAccessibility = 'view.accessibility';
+const kDisableRendererAccessibility = 'view.disableRendererAccessibility';
 
 const kLastRemoteSessionUrl = 'session.lastRemoteSessionUrl';
 const kAuthCookies = 'session.authCookies';
@@ -213,6 +214,15 @@ export class DesktopOptionsImpl implements DesktopOptions {
   public accessibility(): boolean {
     return this.config.get(kAccessibility, properties.view.default.accessibility);
   }
+
+  public setDisableRendererAccessibility(accessibility: boolean): void {
+    this.config.set(kDisableRendererAccessibility, accessibility);
+  }
+
+  public disableRendererAccessibility(): boolean {
+    return this.config.get(kDisableRendererAccessibility, properties.view.default.accessibility);
+  }
+
 
   public setLastRemoteSessionUrl(lastRemoteSessionUrl: string): void {
     this.config.set(kLastRemoteSessionUrl, lastRemoteSessionUrl);
