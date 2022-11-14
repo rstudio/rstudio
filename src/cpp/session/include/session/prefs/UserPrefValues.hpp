@@ -415,6 +415,7 @@ namespace prefs {
 #define kTextRendering "text_rendering"
 #define kTextRenderingAuto "auto"
 #define kTextRenderingGeometricPrecision "geometricPrecision"
+#define kDisableRendererAccessibility "disable_renderer_accessibility"
 
 class UserPrefValues: public Preferences
 {
@@ -1555,7 +1556,7 @@ public:
    core::Error setDataViewerMaxCellSize(int val);
 
    /**
-    * Support accessibility aids such as screen readers (RStudio Server).
+    * Support accessibility aids such as screen readers.
     */
    bool enableScreenReader();
    core::Error setEnableScreenReader(bool val);
@@ -1843,7 +1844,7 @@ public:
    core::Error setDiscardPendingConsoleInputOnError(bool val);
 
    /**
-    * A integer value, 1-200, to set the editor scroll multiplier. The higher the value, the faster the scrolling.
+    * An integer value, 1-200, to set the editor scroll multiplier. The higher the value, the faster the scrolling.
     */
    int editorScrollMultiplier();
    core::Error setEditorScrollMultiplier(int val);
@@ -1853,6 +1854,12 @@ public:
     */
    std::string textRendering();
    core::Error setTextRendering(std::string val);
+
+   /**
+    * Disable Electron accessibility support.
+    */
+   bool disableRendererAccessibility();
+   core::Error setDisableRendererAccessibility(bool val);
 
 };
 

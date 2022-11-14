@@ -84,10 +84,11 @@ class RStudioMain {
   }
 
   private async initializeAccessibility() {
-    // disable chromium renderer accessibility by default (it can cause 
-    // slowdown when used in conjunction with some applications; see e.g. 
+    // there have been cases, historically, where Chromium accessibility
+    // would enable itself and introduce performance issues even though the
+    // user was not using an accessibility aid such as a screen reader, e.g.:
     // https://github.com/rstudio/rstudio/issues/1990) 
-    if (!ElectronDesktopOptions().accessibility()) {
+    if (ElectronDesktopOptions().disableRendererAccessibility()) {
       app.commandLine.appendSwitch('disable-renderer-accessibility');
     }
   }

@@ -2481,7 +2481,7 @@ core::Error UserPrefValues::setDataViewerMaxCellSize(int val)
 }
 
 /**
- * Support accessibility aids such as screen readers (RStudio Server).
+ * Support accessibility aids such as screen readers.
  */
 bool UserPrefValues::enableScreenReader()
 {
@@ -3105,7 +3105,7 @@ core::Error UserPrefValues::setDiscardPendingConsoleInputOnError(bool val)
 }
 
 /**
- * A integer value, 1-200, to set the editor scroll multiplier. The higher the value, the faster the scrolling.
+ * An integer value, 1-200, to set the editor scroll multiplier. The higher the value, the faster the scrolling.
  */
 int UserPrefValues::editorScrollMultiplier()
 {
@@ -3128,6 +3128,19 @@ std::string UserPrefValues::textRendering()
 core::Error UserPrefValues::setTextRendering(std::string val)
 {
    return writePref("text_rendering", val);
+}
+
+/**
+ * Disable Electron accessibility support.
+ */
+bool UserPrefValues::disableRendererAccessibility()
+{
+   return readPref<bool>("disable_renderer_accessibility");
+}
+
+core::Error UserPrefValues::setDisableRendererAccessibility(bool val)
+{
+   return writePref("disable_renderer_accessibility", val);
 }
 
 std::vector<std::string> UserPrefValues::allKeys()
@@ -3372,6 +3385,7 @@ std::vector<std::string> UserPrefValues::allKeys()
       kDiscardPendingConsoleInputOnError,
       kEditorScrollMultiplier,
       kTextRendering,
+      kDisableRendererAccessibility,
    });
 }
    

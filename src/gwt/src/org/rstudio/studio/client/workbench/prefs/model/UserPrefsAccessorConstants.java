@@ -1586,11 +1586,11 @@ public interface UserPrefsAccessorConstants extends Constants {
    String dataViewerMaxCellSizeDescription();
 
    /**
-    * Support accessibility aids such as screen readers (RStudio Server).
+    * Support accessibility aids such as screen readers.
     */
-   @DefaultStringValue("Enable support for screen readers in RStudio Server")
+   @DefaultStringValue("Enable support for screen readers")
    String enableScreenReaderTitle();
-   @DefaultStringValue("Support accessibility aids such as screen readers (RStudio Server).")
+   @DefaultStringValue("Support accessibility aids such as screen readers.")
    String enableScreenReaderDescription();
 
    /**
@@ -1976,11 +1976,11 @@ public interface UserPrefsAccessorConstants extends Constants {
    String discardPendingConsoleInputOnErrorDescription();
 
    /**
-    * A integer value, 1-200, to set the editor scroll multiplier. The higher the value, the faster the scrolling.
+    * An integer value, 1-200, to set the editor scroll multiplier. The higher the value, the faster the scrolling.
     */
    @DefaultStringValue("Editor scroll speed sensitivity")
    String editorScrollMultiplierTitle();
-   @DefaultStringValue("A integer value, 1-200, to set the editor scroll multiplier. The higher the value, the faster the scrolling.")
+   @DefaultStringValue("An integer value, 1-200, to set the editor scroll multiplier. The higher the value, the faster the scrolling.")
    String editorScrollMultiplierDescription();
 
    /**
@@ -1990,6 +1990,14 @@ public interface UserPrefsAccessorConstants extends Constants {
    String textRenderingTitle();
    @DefaultStringValue("Control how text is rendered within the IDE surface.")
    String textRenderingDescription();
+
+   /**
+    * Disable Electron accessibility support.
+    */
+   @DefaultStringValue("Disable Electron accessibility support")
+   String disableRendererAccessibilityTitle();
+   @DefaultStringValue("Disable Electron accessibility support.")
+   String disableRendererAccessibilityDescription();
 
 
 

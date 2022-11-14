@@ -58,12 +58,17 @@
                 "accessibility": {
                     "type": "boolean",
                     "description": "Screen reader support" 
+                },
+                "disableRendererAccessibility": {
+                    "type": "boolean",
+                    "description": "Disable Electron accessibility support"
                 }
-            },
+             },
             "default": {
                 "zoomLevel": 1.0,
                 "windowBounds": { "width": 1200, "height": 900, "x": 0, "y": 0 },
-                "accessibility": false
+                "accessibility": false,
+                "disableRendererAccessibility": false
             }
         },
         "remote_session": {

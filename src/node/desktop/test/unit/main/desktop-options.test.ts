@@ -94,6 +94,7 @@ describe('DesktopOptions', () => {
     const newZoom = 1.5;
     const newWindowBounds = { width: 123, height: 321, x: 0, y: 0 };
     const newAccessibility = !(properties.view.default.accessibility as boolean);
+    const newDisableRendererAccessibility = !(properties.view.default.disableRendererAccessibility as boolean);
     const newLastRemoteSessionUrl = 'testLastRemoteSessionUrl';
     const newAuthCookies = ['test', 'Autht', 'Cookies'];
     const newTempAuthCookies = ['test', 'Temp', 'Auth', 'Cookies'];
@@ -112,6 +113,7 @@ describe('DesktopOptions', () => {
     options.setZoomLevel(newZoom);
     options.saveWindowBounds(newWindowBounds);
     options.setAccessibility(newAccessibility);
+    options.setDisableRendererAccessibility(newDisableRendererAccessibility);
     options.setLastRemoteSessionUrl(newLastRemoteSessionUrl);
     options.setAuthCookies(newAuthCookies);
     options.setTempAuthCookies(newTempAuthCookies);
@@ -124,6 +126,7 @@ describe('DesktopOptions', () => {
     assert.equal(options.zoomLevel(), newZoom);
     assert.deepEqual(options.windowBounds(), newWindowBounds);
     assert.equal(options.accessibility(), newAccessibility);
+    assert.equal(options.disableRendererAccessibility(), newDisableRendererAccessibility);
     assert.equal(options.lastRemoteSessionUrl(), newLastRemoteSessionUrl);
     assert.deepEqual(options.authCookies(), newAuthCookies);
     assert.deepEqual(options.tempAuthCookies(), newTempAuthCookies);

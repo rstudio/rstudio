@@ -680,6 +680,10 @@ export class GwtCallback extends EventEmitter {
       ElectronDesktopOptions().setAccessibility(enable);
     });
 
+    ipcMain.on('desktop_set_disable_renderer_accessibility', (event, disable) => {
+      ElectronDesktopOptions().setDisableRendererAccessibility(disable);
+    });
+
     ipcMain.handle('desktop_get_ignore_gpu_exclusion_list', (event, ignore) => {
       return !ElectronDesktopOptions().useGpuExclusionList();
     });
