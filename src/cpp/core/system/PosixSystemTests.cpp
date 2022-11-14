@@ -346,7 +346,9 @@ test_context("PosixSystemTests")
       else
       {
          // we now have a subprocess
-         FilePath cwd = currentWorkingDirViaLsof(pid);
+         FilePath cwd;
+         error = currentWorkingDirViaLsof(pid, &cwd);
+         expect_false(error);
          expect_false(cwd.isEmpty());
          expect_true(cwd.exists());
          expect_true(startingDir == cwd);

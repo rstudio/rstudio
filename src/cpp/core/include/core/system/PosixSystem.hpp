@@ -262,6 +262,7 @@ FilePath currentWorkingDirMac(PidType pid);
 #ifndef __APPLE__
 // Determine current working directory of a given process by shelling out
 // to lsof; used on systems without procfs.
+core::Error currentWorkingDirViaLsof(PidType pid, FilePath* pPath);
 FilePath currentWorkingDirViaLsof(PidType pid);
 
 // Determine current working directory of a given process via procfs; returns
