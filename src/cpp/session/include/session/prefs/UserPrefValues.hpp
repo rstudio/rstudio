@@ -223,6 +223,7 @@ namespace prefs {
 #define kRmdViewerTypePane "pane"
 #define kRmdViewerTypeNone "none"
 #define kShowPublishDiagnostics "show_publish_diagnostics"
+#define kEnableCloudPublishUi "enable_cloud_publish_ui"
 #define kPublishCheckCertificates "publish_check_certificates"
 #define kUsePublishCaBundle "use_publish_ca_bundle"
 #define kPublishCaBundle "publish_ca_bundle"
@@ -1152,6 +1153,12 @@ public:
     */
    bool showPublishDiagnostics();
    core::Error setShowPublishDiagnostics(bool val);
+
+   /**
+    * Whether to show UI for publishing content to Posit Cloud.
+    */
+   bool enableCloudPublishUi();
+   core::Error setEnableCloudPublishUi(bool val);
 
    /**
     * Whether to check remote server SSL certificates when publishing content.

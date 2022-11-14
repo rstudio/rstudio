@@ -199,7 +199,7 @@ public class PublishingPreferencesPane extends PreferencesPane
       lessSpaced(rsconnectPanel);
 
       final CheckBox chkEnablePositCloud = checkboxPref(constants_.chkEnableCloudLabel(),
-         userState_.enableCloudPublishUi());
+         userPrefs_.enableCloudPublishUi());
 
       add(headerLabel(constants_.settingsHeaderLabel()));
       CheckBox chkEnablePublishing = checkboxPref(constants_.chkEnablePublishingLabel(),

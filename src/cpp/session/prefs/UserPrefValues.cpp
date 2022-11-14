@@ -1610,6 +1610,19 @@ core::Error UserPrefValues::setShowPublishDiagnostics(bool val)
 }
 
 /**
+ * Whether to show UI for publishing content to Posit Cloud.
+ */
+bool UserPrefValues::enableCloudPublishUi()
+{
+   return readPref<bool>("enable_cloud_publish_ui");
+}
+
+core::Error UserPrefValues::setEnableCloudPublishUi(bool val)
+{
+   return writePref("enable_cloud_publish_ui", val);
+}
+
+/**
  * Whether to check remote server SSL certificates when publishing content.
  */
 bool UserPrefValues::publishCheckCertificates()
@@ -3268,6 +3281,7 @@ std::vector<std::string> UserPrefValues::allKeys()
       kRmdPreferredTemplatePath,
       kRmdViewerType,
       kShowPublishDiagnostics,
+      kEnableCloudPublishUi,
       kPublishCheckCertificates,
       kUsePublishCaBundle,
       kPublishCaBundle,
