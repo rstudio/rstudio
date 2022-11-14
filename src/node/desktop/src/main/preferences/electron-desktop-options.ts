@@ -220,7 +220,7 @@ export class DesktopOptionsImpl implements DesktopOptions {
   }
 
   public disableRendererAccessibility(): boolean {
-    return this.config.get(kDisableRendererAccessibility, properties.view.default.accessibility);
+    return this.config.get(kDisableRendererAccessibility, properties.view.default.disableRendererAccessibility);
   }
 
 
