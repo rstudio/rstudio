@@ -283,7 +283,12 @@ private:
          execContext_->onExprComplete();
          
       ExecRange range;
-      std::string code = execUnit_->popExecRange(&range, mode, execContext_->engine());
+      std::string engine = std::string();
+      if (execContext_ != nullptr)
+         engine = execContext_->engine();
+
+      std::string code = execUnit_->popExecRange(&range, mode, engine);
+
       if (code.empty())
       {
          // no code to evaluate--skip this unit
@@ -297,7 +302,7 @@ private:
          std::string prefix;
 
          bool isPythonActive = module_context::isPythonReplActive();
-         if (isPythonActive && (execContext_ == nullptr || execContext_->engine() != "python"))
+         if (isPythonActive && engine != "python")
          {
             // switching from Python -> R: deactivate the Python REPL
             prefix = "quit\n";
@@ -305,7 +310,7 @@ private:
             // reverse out changes to the banner option
             r::options::setOption(kReplQuietOption, prevReticulateReplQuiet_);
          }
-         else if (!isPythonActive && execContext_ && execContext_->engine() == "python")
+         else if (!isPythonActive && engine == "python")
          {
             // switching from R -> Python: activate the Python REPL
             prefix = "reticulate::repl_python()\n";
