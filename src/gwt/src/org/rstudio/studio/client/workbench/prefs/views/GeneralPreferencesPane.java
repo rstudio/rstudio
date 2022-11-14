@@ -602,7 +602,7 @@ public class GeneralPreferencesPane extends PreferencesPane
          boolean disableRendererAccessibilityPrefValue = disableRendererAccessibility_.getValue();
          if (disableRendererAccessibilityPrefValue != initialDisableRendererAccessibility_)
          {
-            if (Desktop.hasDesktopFrame())
+            if (Desktop.hasDesktopFrame() && BrowseCap.isElectron())
                Desktop.getFrame().setDisableRendererAccessibility(disableRendererAccessibilityPrefValue);
             restartRequirement.setDesktopRestartRequired(true);
          }
