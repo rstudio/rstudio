@@ -110,7 +110,7 @@ RUN cd /tmp && \
     make install
 
 # cachebust for Quarto release
-ADD https://quarto.org/docs/download/_prerelease.json quarto_releases
+ADD https://quarto.org/docs/download/_download.json quarto_releases
 RUN cd /opt/rstudio-tools/dependencies/common && /bin/bash ./install-quarto
 
 # set github login from build argument if defined

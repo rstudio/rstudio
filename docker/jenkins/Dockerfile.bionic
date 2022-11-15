@@ -114,7 +114,7 @@ RUN export QT_VERSION=5.12.8 && \
     cd /tmp && /bin/bash ./install-qt-linux
 
 # cachebust for Quarto release
-ADD https://quarto.org/docs/download/_prerelease.json quarto_releases
+ADD https://quarto.org/docs/download/_download.json quarto_releases
 RUN cd /opt/rstudio-tools/dependencies/common && /bin/bash ./install-quarto
 
 # set github login from build argument if defined
