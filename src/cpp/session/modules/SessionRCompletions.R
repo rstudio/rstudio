@@ -691,14 +691,20 @@ assign(x = ".rs.acCompletionTypes",
 {
    ## NOTE: the ugliness here is necessary to handle missingness in calls
    ## e.g. `x <- call[[i]]` fails to assign to `x` if `call[[i]]` is missing
-   i <- 1
+   i <- 2
+   names <- names(call)
+   if (is.null(names)) 
+      names <- rep("", length(call))
    while (TRUE)
    {
       if (i > length(call))
          break
       
-      if (length(call[[i]]) == 1 && is.symbol(call[[i]]) && as.character(call[[i]]) == "...")
+      if (identical(call[[i]], quote(`...`)) || names[i] == "")
+      {
          call <- call[-i]
+         names <- names[-i]
+      }  
       else
          i <- i + 1
    }
