@@ -195,7 +195,7 @@ public class RSConnectDeploy extends Composite
       final boolean rsConnectEnabled = 
             userState_.enableRsconnectPublishUi().getGlobalValue();
       final boolean positCloudEnabled =
-         userState_.enableCloudPublishUi().getGlobalValue();
+         userPrefs_.enableCloudPublishUi().getGlobalValue();
       
       // Invoke the "add account" wizard if either Shiny app or Connect enabled
       if (contentType == RSConnect.CONTENT_TYPE_APP || rsConnectEnabled)
@@ -444,7 +444,7 @@ public class RSConnectDeploy extends Composite
       boolean isPositCloudContent = contentType == RSConnect.CONTENT_TYPE_PLUMBER_API ||
          contentType == RSConnect.CONTENT_TYPE_DOCUMENT || contentType == RSConnect.CONTENT_TYPE_PRES;
       boolean positCloudEnabled =
-         userState_.enableCloudPublishUi().getGlobalValue() && isPositCloudContent;
+         userPrefs_.enableCloudPublishUi().getGlobalValue() && isPositCloudContent;
 
       if (positCloudEnabled != accountList_.getShowPositCloudAccounts())
       {

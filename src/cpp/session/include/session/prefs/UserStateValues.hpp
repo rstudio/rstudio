@@ -81,7 +81,6 @@ namespace prefs {
 #define kCompileRMarkdownNotebookPrefsFormat "format"
 #define kShowPublishUi "show_publish_ui"
 #define kEnableRsconnectPublishUi "enable_rsconnect_publish_ui"
-#define kEnableCloudPublishUi "enable_cloud_publish_ui"
 #define kPublishAccount "publish_account"
 #define kPublishAccountName "name"
 #define kPublishAccountServer "server"
@@ -225,12 +224,6 @@ public:
     */
    bool enableRsconnectPublishUi();
    core::Error setEnableRsconnectPublishUi(bool val);
-
-   /**
-    * Whether to show UI for publishing content to Posit Cloud.
-    */
-   bool enableCloudPublishUi();
-   core::Error setEnableCloudPublishUi(bool val);
 
    /**
     * The default (last) account used for publishing

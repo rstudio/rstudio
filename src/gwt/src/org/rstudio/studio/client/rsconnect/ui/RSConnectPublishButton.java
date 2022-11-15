@@ -743,7 +743,7 @@ public class RSConnectPublishButton extends Composite
    private boolean recomputeMenuVisibility()
    {
       if (pUserState_.get().enableRsconnectPublishUi().getGlobalValue() ||
-         pUserState_.get().enableCloudPublishUi().getGlobalValue())
+         pUserPrefs_.get().enableCloudPublishUi().getGlobalValue())
       {
          // always show the menu when RSConnect or Posit Cloud is enabled
          return true;
@@ -775,7 +775,7 @@ public class RSConnectPublishButton extends Composite
       // if both internal and external publishing is disabled, hide ourselves
       if (!session_.getSessionInfo().getAllowExternalPublish() &&
           !pUserState_.get().enableRsconnectPublishUi().getGlobalValue() &&
-          !pUserState_.get().enableCloudPublishUi().getGlobalValue())
+          !pUserPrefs_.get().enableCloudPublishUi().getGlobalValue())
          return false;
       
       // if we're bound to a command's visibility/enabled state, check that
@@ -803,7 +803,7 @@ public class RSConnectPublishButton extends Composite
       // If publishing to Connect and Cloud are both disabled, then we can't publish APIs
       if (contentType_ == RSConnect.CONTENT_TYPE_PLUMBER_API &&
           !pUserState_.get().enableRsconnectPublishUi().getGlobalValue() &&
-          !pUserState_.get().enableCloudPublishUi().getGlobalValue())
+          !pUserPrefs_.get().enableCloudPublishUi().getGlobalValue())
       {
          return false;
       }

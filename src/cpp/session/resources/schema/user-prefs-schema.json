@@ -839,6 +839,11 @@
             "title": "Show diagnostic info when publishing",
             "description": "Whether to show verbose diagnostic information when publishing content."
         },
+        "enable_cloud_publish_ui": {
+            "type": "boolean",
+            "default": false,
+            "description": "Whether to show UI for publishing content to Posit Cloud."
+        },
         "publish_check_certificates": {
             "type": "boolean",
             "default": true,

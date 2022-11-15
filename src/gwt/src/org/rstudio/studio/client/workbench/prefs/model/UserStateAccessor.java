@@ -480,18 +480,6 @@ public class UserStateAccessor extends Prefs
    }
 
    /**
-    * Whether to show UI for publishing content to Posit Cloud.
-    */
-   public PrefValue<Boolean> enableCloudPublishUi()
-   {
-      return bool(
-         "enable_cloud_publish_ui",
-         _constants.enableCloudPublishUiTitle(), 
-         _constants.enableCloudPublishUiDescription(), 
-         false);
-   }
-
-   /**
     * The default (last) account used for publishing
     */
    public PrefValue<PublishAccount> publishAccount()
@@ -743,8 +731,6 @@ public class UserStateAccessor extends Prefs
          showPublishUi().setValue(layer, source.getBool("show_publish_ui"));
       if (source.hasKey("enable_rsconnect_publish_ui"))
          enableRsconnectPublishUi().setValue(layer, source.getBool("enable_rsconnect_publish_ui"));
-      if (source.hasKey("enable_cloud_publish_ui"))
-         enableCloudPublishUi().setValue(layer, source.getBool("enable_cloud_publish_ui"));
       if (source.hasKey("publish_account"))
          publishAccount().setValue(layer, source.getObject("publish_account"));
       if (source.hasKey("document_outline_width"))
@@ -793,7 +779,6 @@ public class UserStateAccessor extends Prefs
       prefs.add(compileRMarkdownNotebookPrefs());
       prefs.add(showPublishUi());
       prefs.add(enableRsconnectPublishUi());
-      prefs.add(enableCloudPublishUi());
       prefs.add(publishAccount());
       prefs.add(documentOutlineWidth());
       prefs.add(connectVia());

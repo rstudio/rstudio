@@ -167,14 +167,6 @@ public interface UserStateAccessorConstants extends Constants {
    String enableRsconnectPublishUiDescription();
 
    /**
-    * Whether to show UI for publishing content to Posit Cloud.
-    */
-   @DefaultStringValue("")
-   String enableCloudPublishUiTitle();
-   @DefaultStringValue("Whether to show UI for publishing content to Posit Cloud.")
-   String enableCloudPublishUiDescription();
-
-   /**
     * The default (last) account used for publishing
     */
    @DefaultStringValue("")

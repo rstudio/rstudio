@@ -1780,6 +1780,18 @@ public class UserPrefsAccessor extends Prefs
    }
 
    /**
+    * Whether to show UI for publishing content to Posit Cloud.
+    */
+   public PrefValue<Boolean> enableCloudPublishUi()
+   {
+      return bool(
+         "enable_cloud_publish_ui",
+         _constants.enableCloudPublishUiTitle(), 
+         _constants.enableCloudPublishUiDescription(), 
+         false);
+   }
+
+   /**
     * Whether to check remote server SSL certificates when publishing content.
     */
    public PrefValue<Boolean> publishCheckCertificates()
@@ -3691,6 +3703,8 @@ public class UserPrefsAccessor extends Prefs
          rmdViewerType().setValue(layer, source.getString("rmd_viewer_type"));
       if (source.hasKey("show_publish_diagnostics"))
          showPublishDiagnostics().setValue(layer, source.getBool("show_publish_diagnostics"));
+      if (source.hasKey("enable_cloud_publish_ui"))
+         enableCloudPublishUi().setValue(layer, source.getBool("enable_cloud_publish_ui"));
       if (source.hasKey("publish_check_certificates"))
          publishCheckCertificates().setValue(layer, source.getBool("publish_check_certificates"));
       if (source.hasKey("use_publish_ca_bundle"))
@@ -4053,6 +4067,7 @@ public class UserPrefsAccessor extends Prefs
       prefs.add(rmdPreferredTemplatePath());
       prefs.add(rmdViewerType());
       prefs.add(showPublishDiagnostics());
+      prefs.add(enableCloudPublishUi());
       prefs.add(publishCheckCertificates());
       prefs.add(usePublishCaBundle());
       prefs.add(publishCaBundle());

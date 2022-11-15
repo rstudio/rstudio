@@ -1040,6 +1040,14 @@ public interface UserPrefsAccessorConstants extends Constants {
    String showPublishDiagnosticsDescription();
 
    /**
+    * Whether to show UI for publishing content to Posit Cloud.
+    */
+   @DefaultStringValue("")
+   String enableCloudPublishUiTitle();
+   @DefaultStringValue("Whether to show UI for publishing content to Posit Cloud.")
+   String enableCloudPublishUiDescription();
+
+   /**
     * Whether to check remote server SSL certificates when publishing content.
     */
    @DefaultStringValue("Check SSL certificates when publishing")

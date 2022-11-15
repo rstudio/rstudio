@@ -258,19 +258,6 @@ core::Error UserStateValues::setEnableRsconnectPublishUi(bool val)
 }
 
 /**
- * Whether to show UI for publishing content to Posit Cloud.
- */
-bool UserStateValues::enableCloudPublishUi()
-{
-   return readPref<bool>("enable_cloud_publish_ui");
-}
-
-core::Error UserStateValues::setEnableCloudPublishUi(bool val)
-{
-   return writePref("enable_cloud_publish_ui", val);
-}
-
-/**
  * The default (last) account used for publishing
  */
 core::json::Object UserStateValues::publishAccount()
@@ -460,7 +447,6 @@ std::vector<std::string> UserStateValues::allKeys()
       kCompileRMarkdownNotebookPrefs,
       kShowPublishUi,
       kEnableRsconnectPublishUi,
-      kEnableCloudPublishUi,
       kPublishAccount,
       kDocumentOutlineWidth,
       kConnectVia,
