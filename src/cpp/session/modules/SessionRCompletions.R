@@ -687,25 +687,36 @@ assign(x = ".rs.acCompletionTypes",
    
 })
 
-.rs.addFunction("matchCall", function(func, call)
+.rs.addFunction("matchCall", function(func, call, numCommas = NULL)
 {
-   i <- 2
    names <- names(call)
    if (is.null(names)) 
       names <- rep("", length(call))
    
+   if (is.null(numCommas))
+      numCommas <- length(call)
+   
+   j <- 1L # used to track how many commas have been seen
+   i <- 2L # the current argument, relative to modified call
    while (TRUE)
    {
       if (i > length(call))
          break
       
-      if (identical(call[[i]], quote(`...`)) || names[i] == "")
+      if (identical(call[[i]], quote(`...`)) || (names[i] == "" && j > numCommas))
       {
+         # drop this argument from the call
          call <- call[-i]
          names <- names[-i]
       }  
       else
+      {
+         # keep this argument, and move on to the next one
          i <- i + 1
+      }  
+
+      # in any case, this has seen one more comma
+      j <- j + 1L
    }
    
    tryCatch(match.call(func, call), error = function(e) call)
@@ -824,7 +835,7 @@ assign(x = ".rs.acCompletionTypes",
       if (.rs.isR6NewMethod(object))
          object <- .rs.getR6ClassGeneratorMethod(object, "initialize")
       
-      matchedCall <- .rs.matchCall(object, functionCall)
+      matchedCall <- .rs.matchCall(object, functionCall, numCommas = numCommas)
       
       # Try to figure out what function arguments are
       # eligible for completion. Note that, on success,
