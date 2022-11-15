@@ -345,6 +345,8 @@ test_context("PosixSystemTests")
       }
       else
       {
+         ::sleep(1); // try to avoid intermittent errors with lsof returning 1
+
          // we now have a subprocess
          FilePath cwd;
          error = currentWorkingDirViaLsof(pid, &cwd);
