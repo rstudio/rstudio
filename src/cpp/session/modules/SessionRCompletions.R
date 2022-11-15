@@ -689,12 +689,11 @@ assign(x = ".rs.acCompletionTypes",
 
 .rs.addFunction("matchCall", function(func, call)
 {
-   ## NOTE: the ugliness here is necessary to handle missingness in calls
-   ## e.g. `x <- call[[i]]` fails to assign to `x` if `call[[i]]` is missing
    i <- 2
    names <- names(call)
    if (is.null(names)) 
       names <- rep("", length(call))
+   
    while (TRUE)
    {
       if (i > length(call))
