@@ -87,16 +87,20 @@
    <!-- ensure version matches RSTUDIO_NODE_VERSION -->
    <property name="node.version" value="16.14.0"/>
    <property name="node.dir" value="../../dependencies/common/node/${node.version}"/>
-   <condition property="yarn.bin" value="../../../${node.dir}/node_modules/yarn/bin/yarn">
+   <!-- use yarn from system but will prefer yarn from dependencies if available -->
+   <condition property="yarn.bin" value="yarn">
      <not>
         <os family="windows" />
      </not>
    </condition>
+   <available
+      property="yarn.bin"
+      value="${node.dir}/bin/yarn"
+      file="${node.dir}/bin/yarn"/>
    <condition property="yarn.bin" value="${node.dir}/node_modules/yarn/bin/yarn.cmd">
      <os family="windows" />
    </condition>
-<!-- "C:\Users\tmok\source\rstudio\dependencies\common\node\16.14.0\node_modules\yarn\bin\yarn.cmd" rstudio-build -->
-   <!-- use node from /opt/rstudio-tools if installed (typical for Docker) -->
+   <!-- use yarn from /opt/rstudio-tools if installed (typical for Docker) -->
    <available
       property="yarn.bin"
       value="/opt/rstudio-tools/dependencies/common/node/${node.version}/node_modules/yarn/bin/yarn"
@@ -107,7 +111,6 @@
 
    <target name="panmirror" description="Compile panmirror library">
       <mkdir dir="${panmirror.build.dir}"/>
-      <echo message="${yarn.bin}"/>
       <exec executable="${yarn.bin}" dir="${panmirror.dir}" resolveexecutable="true" failonerror="true">
          <arg value="install"/>
       </exec>
