@@ -31,6 +31,7 @@ info "QUARTO_DIR: ${QUARTO_DIR}"
 
 # clone quarto monorepo if not already cloned
 if ! test -e "$QUARTO_DIR"; then
+  echo "Cloning quarto repo"
   git clone https://github.com/quarto-dev/quarto.git "$QUARTO_DIR"
 else
   echo "quarto repo already cloned in '$QUARTO_DIR'"
