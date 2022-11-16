@@ -692,6 +692,8 @@ assign(x = ".rs.acCompletionTypes",
    names <- names(call)
    if (is.null(names)) 
       names <- rep("", length(call))
+   funFormals <- names(formals(func))
+   hasDots <- any(funFormals == "...")
    
    if (is.null(numCommas))
       numCommas <- length(call)
@@ -703,9 +705,12 @@ assign(x = ".rs.acCompletionTypes",
       if (i > length(call))
          break
       
-      if (identical(call[[i]], quote(`...`)) || (names[i] == "" && j > numCommas))
+      # dropping from the call:
+      # - explicit ...
+      # - unnamed arguments after the cursor
+      # - named arguments not in the formals of fun (unless fun has ...)
+      if (identical(call[[i]], quote(`...`)) || (names[i] == "" && j > numCommas) || (!hasDots && names[i] != "" && !any(names[i] == funFormals)))
       {
-         # drop this argument from the call
          call <- call[-i]
          names <- names[-i]
       }  
