@@ -1022,6 +1022,8 @@ assign(x = ".rs.acCompletionTypes",
             results = formals$formals[keep],
             packages = formals$methods[keep],
             type = .rs.acCompletionTypes$ARGUMENT,
+            excludeOtherCompletions = FALSE,
+            excludeOtherArgumentCompletions = TRUE,
             fguess = fguess,
             orderStartsWithAlnumFirst = FALSE
          )
@@ -1192,6 +1194,7 @@ assign(x = ".rs.acCompletionTypes",
                                             meta = character(),
                                             fguess = "",
                                             excludeOtherCompletions = FALSE,
+                                            excludeOtherArgumentCompletions = FALSE,
                                             overrideInsertParens = FALSE,
                                             orderStartsWithAlnumFirst = TRUE,
                                             cacheable = TRUE,
@@ -1251,6 +1254,7 @@ assign(x = ".rs.acCompletionTypes",
         meta = meta,
         fguess = fguess,
         excludeOtherCompletions = .rs.scalar(excludeOtherCompletions),
+        excludeOtherArgumentCompletions = .rs.scalar(excludeOtherArgumentCompletions),
         overrideInsertParens = .rs.scalar(overrideInsertParens),
         cacheable = .rs.scalar(cacheable),
         helpHandler = .rs.scalar(helpHandler),
@@ -1292,6 +1296,9 @@ assign(x = ".rs.acCompletionTypes",
    
    if (length(new$excludeOtherCompletions) && new$excludeOtherCompletions)
       old$excludeOtherCompletions <- new$excludeOtherCompletions
+
+   if (length(new$excludeOtherArgumentCompletions) && new$excludeOtherArgumentCompletions)
+      old$excludeOtherArgumentCompletions <- new$excludeOtherArgumentCompletions
    
    if (length(new$overrideInsertParens) && new$overrideInsertParens)
       old$overrideInsertParens <- new$overrideInsertParens
