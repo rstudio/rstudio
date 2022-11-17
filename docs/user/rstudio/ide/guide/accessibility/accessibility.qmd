@@ -1,5 +1,6 @@
 ---
 title: "Simplified Interface"
+date-meta: 2022-12-12
 ---
 
 RStudio has many features and options to help you work the way that best suits your needs.

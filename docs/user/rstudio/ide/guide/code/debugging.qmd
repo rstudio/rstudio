@@ -1,5 +1,6 @@
 ---
 title: "Debugging"
+date-meta: 2022-12-12
 ---
 
 Debugging in R is a broad topic. This documentation focuses specifically on the R debugging tools built into the RStudio. The [Advanced R - Debugging chapter](https://adv-r.hadley.nz/debugging.html) provides more general advice on debugging in R (such as philosophy and problem-solving strategies).

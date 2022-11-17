@@ -1,5 +1,6 @@
 ---
 title: "Jobs in action"
+date-meta: 2022-12-12
 ---
 
 As mentioned in [RStudio Jobs](jobs.html), RStudio has the ability to send long running R scripts to [local and remote background jobs](https://www.rstudio.com/blog/rstudio-1-2-jobs/). This functionality can dramatically improve the productivity of data scientists and analysts using R since they can continue working in RStudio while jobs are running in the background.

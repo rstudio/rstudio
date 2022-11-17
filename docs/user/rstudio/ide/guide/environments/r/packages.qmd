@@ -1,5 +1,6 @@
 ---
 title: "R Package Repositories"
+date-meta: 2022-12-12
 ---
 
 R packages allow the R community to extend the base functionality provided in R with a rich set of packages available in package repositories.

@@ -1,5 +1,6 @@
 ---
 title: "Python"
+date-meta: 2022-12-12
 ---
 
 This page explores how Python can be used together with R and RStudio.

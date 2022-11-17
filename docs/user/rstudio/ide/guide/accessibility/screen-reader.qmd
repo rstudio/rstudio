@@ -1,5 +1,6 @@
 ---
 title: "Screen Reader"
+date-meta: 2022-12-12
 ---
 
 This article aims to provide screen-reader users with some effective strategies for RStudio navigation.

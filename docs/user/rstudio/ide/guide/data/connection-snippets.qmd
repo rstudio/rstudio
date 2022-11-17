@@ -1,5 +1,6 @@
 ---
 title: "Connection Snippets"
+date-meta: 2022-12-12
 ---
 
 RStudio connections can be extended through two methods:
