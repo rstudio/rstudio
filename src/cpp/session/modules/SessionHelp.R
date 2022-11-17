@@ -466,34 +466,37 @@ options(help_type = "html")
 .rs.addFunction("getHelpDataFrame", function(name, src, envir = parent.frame())
 {
    out <- .rs.getHelp(name, src)
-   if (is.null(out) && isNamespaceLoaded("pillar"))
-   {
-      # If 'src' is the name of something on the searchpath, grad the data
-      data <- NULL
-      title <- name
-      pos <- match(src, search(), nomatch = -1L)
-      if (pos >= 0)
-      {
-         data <- tryCatch(get(name, pos = pos), error = function(e) NULL)
-      }
 
-      if (is.null(data)) {
-         title <- paste0(src, "$", name)
-         data <- .rs.getAnywhere(title, envir)
-      }
-      
-      if (!is.null(data))
-      {
-         text <- paste(capture.output(pillar::glimpse(data, width = 50)), collapse = "\n")
-         out <- list(
-            html = paste0("<h2></h2><h3>Description</h3>"), 
-            signature = title, 
-            pkgname = src, 
-            glimpse = text, 
-            help = FALSE
-         )
-      }
+   # If 'src' is the name of something on the searchpath, grad the data
+   data <- NULL
+   title <- name
+   pos <- match(src, search(), nomatch = -1L)
+   if (pos >= 0)
+   {
+      data <- tryCatch(get(name, pos = pos), error = function(e) NULL)
    }
+
+   if (is.null(data)) {
+      title <- paste0(src, "$", name)
+      data <- .rs.getAnywhere(title, envir)
+   }
+
+   if (is.null(data))
+      return(out)
+
+   if (is.null(out))
+   {
+      ncol <- ncol(data)
+      out <- list(
+         html = paste0("<h2>", name, "</h2><h3>Description</h3><p>", nrow(data), " obs. of ", ncol, " variable", if(ncol > 1) "s", "</p>"),
+         signature = "-", 
+         pkgname = src, 
+         help = FALSE   
+      )
+   }
+   
+   .rs.assignCachedData("completion_popup_dataframe", data, "")
+   out$view <- paste0("grid_resource/gridviewer.html?env=_rs_no_env&cache_key=completion_popup_dataframe&max_cols=50")
 
    out
 })
@@ -568,7 +571,7 @@ options(help_type = "html")
    if (is.null(src))
    {
       object <- .rs.getAnywhere(functionName, envir)
-      if (!is.null(object))
+         if (!is.null(object))
          return(.rs.getHelpFromObject(object, envir, functionName))
    }
    else

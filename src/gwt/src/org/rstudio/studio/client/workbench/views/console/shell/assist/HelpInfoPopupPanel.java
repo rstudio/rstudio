@@ -17,14 +17,12 @@ package org.rstudio.studio.client.workbench.views.console.shell.assist;
 import java.util.Map;
 
 import com.google.gwt.core.client.GWT;
-import com.google.gwt.dom.client.Element;
 import com.google.gwt.user.client.Timer;
 import com.google.gwt.user.client.ui.*;
 
 import org.rstudio.core.client.BrowseCap;
 import org.rstudio.core.client.StringUtil;
-import org.rstudio.core.client.VirtualConsole;
-import org.rstudio.studio.client.RStudioGinjector;
+import org.rstudio.core.client.widget.RStudioFrame;
 import org.rstudio.studio.client.application.ui.RStudioThemes;
 import org.rstudio.studio.client.workbench.views.console.ConsoleConstants;
 import org.rstudio.studio.client.workbench.views.console.ConsoleResources;
@@ -98,7 +96,7 @@ public class HelpInfoPopupPanel extends PopupPanel
       String title = help.getTitle();
       if (!StringUtil.isNullOrEmpty(title))
       {
-         Label lblTitle = new Label();
+         Label lblTitle = new Label(title);
          lblTitle.setStylePrimaryName(RES.styles().helpTitleText());
          vpanel_.add(lblTitle);
       }
@@ -110,16 +108,14 @@ public class HelpInfoPopupPanel extends PopupPanel
          htmlDesc.setStylePrimaryName(RES.styles().helpBodyText());
          vpanel_.add(htmlDesc);
       }
-      
-      String glimpse = help.getGlimpse();
-      if (!StringUtil.isNullOrEmpty(glimpse))
+   
+      String viewUrl = help.getViewUrl();
+      if (viewUrl != null)
       {
-         HTML htmlGlimpse = new HTML("<pre></pre>");
-         htmlGlimpse.setStylePrimaryName(RES.styles().helpGlimpseText());
-         
-         VirtualConsole vc = RStudioGinjector.INSTANCE.getVirtualConsoleFactory().create(htmlGlimpse.getElement().getFirstChildElement());
-         vc.submit(glimpse);
-         vpanel_.add(htmlGlimpse);
+         RStudioFrame frame = new RStudioFrame("title", viewUrl);
+         frame.setWidth("100%");
+         frame.getIFrame().setFrameBorder(0);
+         vpanel_.add(frame);
       }
 
       doDisplay(help.hasHelp());

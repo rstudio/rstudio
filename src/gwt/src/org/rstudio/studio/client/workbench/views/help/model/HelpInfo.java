@@ -111,6 +111,8 @@ public class HelpInfo extends JavaScriptObject
          signature = defaultSignature;
 
       values.put("Glimpse", getGlimpse());
+      values.put("View", getViewUrl());
+      
       return new ParsedInfo(getPackageName(), signature, values, args, slots, hasHelp());
    }
    
@@ -210,6 +212,10 @@ public class HelpInfo extends JavaScriptObject
 
    private final native String getGlimpse() /*-{
       return this.glimpse ? this.glimpse[0] : null;
+   }-*/;
+
+   private final native String getViewUrl() /*-{
+      return this.view ? this.view[0] : null;
    }-*/;
 
    private final native boolean hasHelp() /*-{
@@ -331,6 +337,11 @@ public class HelpInfo extends JavaScriptObject
       public String getGlimpse()
       {
          return values.get("Glimpse");
+      }
+
+      public String getViewUrl() 
+      {
+         return values.get("View");
       }
 
       public boolean hasHelp() 
