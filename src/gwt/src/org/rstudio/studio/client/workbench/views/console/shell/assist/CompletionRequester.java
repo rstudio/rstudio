@@ -450,9 +450,13 @@ public class CompletionRequester
             }
 
             // Try getting our own function argument completions
-            if (!response.getExcludeOtherCompletions())
+            if (!response.getExcludeOtherArgumentCompletions() && !response.getExcludeOtherCompletions())
             {
                addFunctionArgumentCompletions(token, newComp);
+            }
+
+            if (!response.getExcludeOtherCompletions())
+            {
                addScopedArgumentCompletions(token, newComp);
             }
 
@@ -581,7 +585,7 @@ public class CompletionRequester
          {
             RFunction scopedFunction = scopedFunctions.get(i);
             String functionName = scopedFunction.getFunctionName();
-
+            
             JsArrayString argNames = scopedFunction.getFunctionArgs();
             for (int j = 0; j < argNames.length(); j++)
             {
@@ -789,6 +793,7 @@ public class CompletionRequester
                   JsUtil.toJsArrayBoolean(new ArrayList<>(result.completions.length())),
                   JsUtil.toJsArrayString(new ArrayList<>(result.completions.length())),
                   "",
+                  true,
                   true,
                   false,
                   true,

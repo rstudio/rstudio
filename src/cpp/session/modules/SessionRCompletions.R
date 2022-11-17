@@ -687,20 +687,41 @@ assign(x = ".rs.acCompletionTypes",
    
 })
 
-.rs.addFunction("matchCall", function(func, call)
+.rs.addFunction("matchCall", function(func, call, numCommas = NULL)
 {
-   ## NOTE: the ugliness here is necessary to handle missingness in calls
-   ## e.g. `x <- call[[i]]` fails to assign to `x` if `call[[i]]` is missing
-   i <- 1
+   names <- names(call)
+   if (is.null(names)) 
+      names <- rep("", length(call))
+   funFormals <- names(formals(func))
+   hasDots <- any(funFormals == "...")
+   
+   if (is.null(numCommas))
+      numCommas <- length(call)
+   
+   j <- 1L # used to track how many commas have been seen
+   i <- 2L # the current argument, relative to modified call
    while (TRUE)
    {
       if (i > length(call))
          break
       
-      if (length(call[[i]]) == 1 && is.symbol(call[[i]]) && as.character(call[[i]]) == "...")
+      # dropping from the call:
+      # - explicit ...
+      # - unnamed arguments after the cursor
+      # - named arguments not in the formals of fun (unless fun has ...)
+      if (identical(call[[i]], quote(`...`)) || (names[i] == "" && j > numCommas) || (!hasDots && names[i] != "" && !any(names[i] == funFormals)))
+      {
          call <- call[-i]
+         names <- names[-i]
+      }  
       else
+      {
+         # keep this argument, and move on to the next one
          i <- i + 1
+      }  
+
+      # in any case, this has seen one more comma
+      j <- j + 1L
    }
    
    tryCatch(match.call(func, call), error = function(e) call)
@@ -819,7 +840,7 @@ assign(x = ".rs.acCompletionTypes",
       if (.rs.isR6NewMethod(object))
          object <- .rs.getR6ClassGeneratorMethod(object, "initialize")
       
-      matchedCall <- .rs.matchCall(object, functionCall)
+      matchedCall <- .rs.matchCall(object, functionCall, numCommas = numCommas)
       
       # Try to figure out what function arguments are
       # eligible for completion. Note that, on success,
@@ -1001,6 +1022,8 @@ assign(x = ".rs.acCompletionTypes",
             results = formals$formals[keep],
             packages = formals$methods[keep],
             type = .rs.acCompletionTypes$ARGUMENT,
+            excludeOtherCompletions = FALSE,
+            excludeOtherArgumentCompletions = TRUE,
             fguess = fguess,
             orderStartsWithAlnumFirst = FALSE
          )
@@ -1171,6 +1194,7 @@ assign(x = ".rs.acCompletionTypes",
                                             meta = character(),
                                             fguess = "",
                                             excludeOtherCompletions = FALSE,
+                                            excludeOtherArgumentCompletions = FALSE,
                                             overrideInsertParens = FALSE,
                                             orderStartsWithAlnumFirst = TRUE,
                                             cacheable = TRUE,
@@ -1230,6 +1254,7 @@ assign(x = ".rs.acCompletionTypes",
         meta = meta,
         fguess = fguess,
         excludeOtherCompletions = .rs.scalar(excludeOtherCompletions),
+        excludeOtherArgumentCompletions = .rs.scalar(excludeOtherArgumentCompletions),
         overrideInsertParens = .rs.scalar(overrideInsertParens),
         cacheable = .rs.scalar(cacheable),
         helpHandler = .rs.scalar(helpHandler),
@@ -1271,6 +1296,9 @@ assign(x = ".rs.acCompletionTypes",
    
    if (length(new$excludeOtherCompletions) && new$excludeOtherCompletions)
       old$excludeOtherCompletions <- new$excludeOtherCompletions
+
+   if (length(new$excludeOtherArgumentCompletions) && new$excludeOtherArgumentCompletions)
+      old$excludeOtherArgumentCompletions <- new$excludeOtherArgumentCompletions
    
    if (length(new$overrideInsertParens) && new$overrideInsertParens)
       old$overrideInsertParens <- new$overrideInsertParens

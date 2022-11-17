@@ -192,6 +192,7 @@ public class CompletionCache
             metaSorted.cast(),
             original.getGuessedFunctionName(),
             original.getExcludeOtherCompletions(),
+            original.getExcludeOtherArgumentCompletions(),
             original.getOverrideInsertParens(),
             original.isCacheable(),
             original.getHelpHandler(),
