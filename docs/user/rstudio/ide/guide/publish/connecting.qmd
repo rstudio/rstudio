@@ -8,7 +8,7 @@ RStudio provides "Push button deployment" to Posit Connect (formerly RStudio Con
 [Posit Connect](https://www.posit.co/products/connect/) supports a spectrum of data products, static or dynamic, developed in R and Python: Dashboards, applications, APIs, reports, and so much more. Connect enables flexible permissions configurations and meets all enterprise security requirements.
 
 
-[Posit Cloud](https://posit.cloud/)'s publishing features are currently a Beta Feature. The platform supports publishing of static content (Quarto and RMarkdown), apps (Shiny for R and Python, Dash, Streamlit) and APIs (Plumber, Flask, FastAPI).
+[Posit Cloud](https://posit.cloud/)'s publishing features are currently a Beta Feature. The platform supports publishing of static content (Quarto and R Markdown), apps (Shiny for R and Python, Dash, Streamlit) and APIs (Plumber, Flask, FastAPI).
 
 [Shinyapps.io](https://www.shinyapps.io/) supports hosting of Shiny for R and Python.
 
