@@ -977,13 +977,26 @@ assign(x = ".rs.acCompletionTypes",
          if (!is.null(.data))
          {
             .names <- .rs.getNames(.data)
-            if (length(matchedCall) >= 3)
-               .names <- setdiff(.names, as.character(matchedCall)[3:length(matchedCall)])
+
+            namesCall <- names(matchedCall)
             
+            # drop from .names:
+            # - the named argument, e.g. group_by(a = foo())
+            .drop <- setdiff(namesCall, c("", ".data", ".drop", ".keep"))
+            
+            # - the unnamed arguments that are symbols
+            unnamed <- as.list(matchedCall)[namesCall == ""][-1]
+            for (arg in unnamed)
+            {
+               if (is.symbol(arg))
+                  .drop <- c(.drop, as.character(arg))
+            }
+
             return(.rs.makeCompletions(token = token,
-                                       results = .names,
+                                       results = setdiff(.names, .drop),
                                        quote = FALSE,
-                                       type = .rs.acCompletionTypes$CONTEXT))
+                                       type = .rs.acCompletionTypes$COLUMN, 
+                                       package = as.character(matchedCall[[".data"]])))
          }
       }
       
@@ -2673,15 +2686,19 @@ assign(x = ".rs.acCompletionTypes",
    ##    x %>% foo() %>% bar()
    ##
    ## then retrieve those completions.
-   completions <- .rs.appendCompletions(
-      completions,
-      .rs.getRChainCompletions(token,
-                               chainObjectName,
-                               additionalArgs,
-                               excludeArgs,
-                               excludeArgsFromObject,
-                               envir)
-   )
+   ## unless it's a group_by() completion which has been dealt with already
+   if (!(context[[1]] == .rs.acContextTypes$FUNCTION && string[[1]] == "group_by"))
+   {
+      completions <- .rs.appendCompletions(
+         completions,
+         .rs.getRChainCompletions(token,
+                                 chainObjectName,
+                                 additionalArgs,
+                                 excludeArgs,
+                                 excludeArgsFromObject,
+                                 envir)
+      )
+   }
    
    # get completions from the search path for the 'generic' contexts
    if (token != "" &&
