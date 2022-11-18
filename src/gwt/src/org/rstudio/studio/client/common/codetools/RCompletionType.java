@@ -46,6 +46,7 @@ public class RCompletionType
    public static final int COLUMN      = 27;
    public static final int R6_OBJECT   = 28;
    public static final int DATATABLE_SPECIAL_SYMBOL = 29;
+   public static final int DATATABLE_ARGUMENT = 30;
    
    public static final int SNIPPET     = 98;
    public static final int CONTEXT     = 99;
@@ -63,4 +64,20 @@ public class RCompletionType
       return type == FILE ||
              type == DIRECTORY;
    }
+
+   public static int score(int type) 
+   {
+      // same logic as .rs.sortCompletions() on the server side
+      switch(type){
+         case ARGUMENT: return 1;
+         case COLUMN: return 2;
+         case DATATABLE_SPECIAL_SYMBOL: return 3;
+         case DATAFRAME: return 4;
+         case DATATABLE_ARGUMENT: return 5;
+         default: break;
+      }
+
+      return 10;
+   }
+
 }

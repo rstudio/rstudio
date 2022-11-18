@@ -68,6 +68,7 @@ assign(x = ".rs.acCompletionTypes",
           COLUMN      = 27,
           R6_OBJECT   = 28, 
           DATATABLE_SPECIAL_SYMBOL = 29,
+          DATATABLE_ARGUMENT       = 30,
 
           CONTEXT     = 99
        )
@@ -1330,23 +1331,30 @@ assign(x = ".rs.acCompletionTypes",
                                             token,
                                             shortestFirst = FALSE)
 {
-   scores <- .rs.scoreMatches(completions$results, token)
-   
-   # Put package completions at the end
-   idx <- completions$type == .rs.acCompletionTypes$PACKAGE
-   scores[idx] <- scores[idx] + 10
 
+   # type based scores
+   typeScores <- rep(NA, length(completions$results))
+   typeScores[completions$type == .rs.acCompletionTypes$ARGUMENT] <- 1
+   typeScores[completions$type == .rs.acCompletionTypes$COLUMN] <- 2
+   typeScores[completions$type == .rs.acCompletionTypes$DATATABLE_SPECIAL_SYMBOL] <- 3
+   typeScores[completions$type == .rs.acCompletionTypes$DATAFRAME] <- 4
+   typeScores[completions$type == .rs.acCompletionTypes$DATATABLE_ARGUMENT] <- 5
+   
+   # additional scores based on the result
+   scores <- if (nzchar(token)) 
+      .rs.scoreMatches(completions$results, token)
+   
    # Protect against NULL / otherwise invalid scores.
    # TODO: figure out what, upstream, might cause this
-   if (length(scores))
-   {
-      order <- if (shortestFirst)
-         order(scores, nchar(completions$results))
-      else
-         order(scores)
-      completions <- .rs.subsetCompletions(completions, order)
-   }
+   if (!length(scores))
+      scores <- rep(0L, length(completions$results))
    
+   order <- if (shortestFirst)
+      order(typeScores, scores, nchar(completions$results))
+   else
+      order(typeScores, scores)
+   completions <- .rs.subsetCompletions(completions, order)
+
    completions
 })
 
@@ -1402,6 +1410,7 @@ assign(x = ".rs.acCompletionTypes",
                                                    numCommas, 
                                                    envir = envir, 
                                                    object = data.table:::`[.data.table`)
+      argCompletions$types[argCompletions$types == .rs.acCompletionTypes$ARGUMENT] <- .rs.acCompletionTypes$DATATABLE_ARGUMENT
       
       completions <- .rs.appendCompletions(
          completions, 
@@ -2763,8 +2772,7 @@ assign(x = ".rs.acCompletionTypes",
       }
    }
    
-   if (nzchar(token))
-      completions <- .rs.sortCompletions(completions, token)
+   completions <- .rs.sortCompletions(completions, token)
    
    completions$token <- token
    completions
@@ -2970,7 +2978,7 @@ assign(x = ".rs.acCompletionTypes",
       {
          completions <- .rs.subsetCompletions(completions, completions$type != .rs.acCompletionTypes$ARGUMENT)
       }
-      completions <- .rs.appendCompletions(libraryContextCompletions, completions)
+      completions <- .rs.appendCompletions(completions, libraryContextCompletions)
    }
    completions
 })
