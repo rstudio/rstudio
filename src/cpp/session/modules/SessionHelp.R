@@ -322,7 +322,7 @@ options(help_type = "html")
                    .rs.acCompletionTypes$S4_METHOD,
                    .rs.acCompletionTypes$R5_METHOD))
       return(.rs.getHelpFunction(what, from))
-   else if (type == .rs.acCompletionTypes$ARGUMENT)
+   else if (type %in% c(.rs.acCompletionTypes$ARGUMENT, .rs.acCompletionTypes$DATATABLE_ARGUMENT))
       return(.rs.getHelpArgument(what, from, parent.frame()))
    else if (type == .rs.acCompletionTypes$PACKAGE)
       return(.rs.getHelpPackage(what))

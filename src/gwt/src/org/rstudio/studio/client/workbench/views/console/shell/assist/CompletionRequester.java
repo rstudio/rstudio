@@ -1064,7 +1064,7 @@ public class CompletionRequester
                   "[" + source + "]");
          }
 
-         if (type == RCompletionType.ARGUMENT) 
+         if (type == RCompletionType.ARGUMENT || type == RCompletionType.DATATABLE_ARGUMENT) 
          {
             SafeHtmlUtil.appendSpan(
                   sb,
@@ -1086,6 +1086,7 @@ public class CompletionRequester
          case RCompletionType.VECTOR:
             return new ImageResource2x(ICONS.variable2x());
          case RCompletionType.ARGUMENT:
+         case RCompletionType.DATATABLE_ARGUMENT:
             return new ImageResource2x(ICONS.variable2x());
          case RCompletionType.ARRAY:
          case RCompletionType.DATAFRAME:

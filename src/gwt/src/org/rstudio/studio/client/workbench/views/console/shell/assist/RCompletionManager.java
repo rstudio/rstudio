@@ -1942,6 +1942,7 @@ public class RCompletionManager implements CompletionManager
          if (type == RCompletionType.ROXYGEN ||
              type == RCompletionType.PACKAGE ||
              type == RCompletionType.ARGUMENT ||
+             type == RCompletionType.DATATABLE_ARGUMENT ||
              type == RCompletionType.OPTION ||
              type == RCompletionType.CONTEXT ||
              type == RCompletionType.KEYWORD)
