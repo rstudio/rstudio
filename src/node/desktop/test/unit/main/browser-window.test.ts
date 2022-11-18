@@ -17,26 +17,17 @@ import { describe } from 'mocha';
 import { assert } from 'chai';
 
 import { BrowserWindow } from 'electron';
-import { createServer } from 'http';
 
 describe('BrowserWindow', () => {
 
   it('fires events in the expected order', async () => {
-    const server = createServer(function (_req, res) {
-      res.writeHead(200);
-      res.end('hello world');
-    });
-
-    server.listen(9875);
-
     const win = new BrowserWindow({ show: false });
     const eventHistory: string[] = [];
 
     const events = [
       'did-start-loading',
       'did-start-navigation',
-      'did-frame-navigate',
-      'did-frame-finish-load',
+      'did-fail-load',
     ];
 
     for (const event of events) {
@@ -46,10 +37,11 @@ describe('BrowserWindow', () => {
       });
     }
 
-    await win.loadURL('http://localhost:9875');
-    server.close();
-
-    assert.deepEqual(eventHistory, events);
+    await win.loadURL('http://localhost:9875')
+      .then(() => assert.fail())
+      .catch(() => {
+        assert.deepEqual(eventHistory, events);
+      });
   });
 
 });
