@@ -1410,7 +1410,7 @@ assign(x = ".rs.acCompletionTypes",
                                                    numCommas, 
                                                    envir = envir, 
                                                    object = data.table:::`[.data.table`)
-      argCompletions$types[argCompletions$types == .rs.acCompletionTypes$ARGUMENT] <- .rs.acCompletionTypes$DATATABLE_ARGUMENT
+      argCompletions$type[argCompletions$type == .rs.acCompletionTypes$ARGUMENT] <- .rs.acCompletionTypes$DATATABLE_ARGUMENT
       
       completions <- .rs.appendCompletions(
          completions, 
