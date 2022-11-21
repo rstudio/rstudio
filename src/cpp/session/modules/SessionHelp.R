@@ -447,17 +447,13 @@ options(help_type = "html")
 .rs.addFunction("getHelpColumn", function(name, src, envir = parent.frame())
 {
    data <- .rs.getAnywhere(src, envir)
-   if (!is.null(data) && isNamespaceLoaded("pillar"))
+   if (!is.null(data))
    {
-      data <- data[, name, drop = FALSE]
-      text <- capture.output(pillar::glimpse(data, width = 50))
-      text <- sub("[$] [^ ]+ ", "", text[length(text)])
-
+      description <- .rs.describeObject(data, name)$description
       list(
-         html = paste0("<h2>", src, "$", name, "</h2><h3>Description</h3>"),
+         html = paste0("<h2></h2><h3>Description</h3><p>", description, "</p>"),
          signature = paste0(src, "$", name), 
-         pkgname = src, 
-         glimpse = text, 
+         pkgname = src,
          help = FALSE
       )
    }
