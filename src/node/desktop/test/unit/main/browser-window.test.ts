@@ -20,7 +20,9 @@ import { BrowserWindow } from 'electron';
 
 describe('BrowserWindow', () => {
 
-  it('fires events in the expected order', async () => {
+  // skip Windows because it fails in the build because of networking
+  // [3672:1119/035441.205:ERROR:network_change_notifier_win.cc(225)] WSALookupServiceBegin failed with: 0
+  (process.platform === 'win32' ? it.skip : it)('fires events in the expected order', async () => {
     const win = new BrowserWindow({ show: false });
     const eventHistory: string[] = [];
 
