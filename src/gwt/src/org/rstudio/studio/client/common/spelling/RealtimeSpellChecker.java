@@ -102,11 +102,6 @@ public class RealtimeSpellChecker
          }
       }
    }
-   
-   public boolean realtimeSpellcheckEnabled()
-   {
-      return userPrefs_.realTimeSpellchecking().getValue();
-   }
 
    public void addToUserDictionary(final String word)
    {

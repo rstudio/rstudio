@@ -194,10 +194,6 @@ public class VisualModeSpelling extends SpellingContext
       CharClassifier classifier = docDisplay_.getFileType().getCharPredicate();
       
       PanmirrorUISpelling uiSpelling = new PanmirrorUISpelling();
-      
-      uiSpelling.realtimeEnabled = () -> {
-         return spellChecker().realtimeSpellcheckEnabled();
-      };
 
       uiSpelling.checkWords = (words) -> {
          ArrayList<String> w = new ArrayList<>(Arrays.asList(words));

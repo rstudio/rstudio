@@ -28,7 +28,6 @@ import jsinterop.annotations.JsType;
 public class PanmirrorUISpelling {
    
    // realtime interface
-   public GetBool realtimeEnabled;
    public CheckWord checkWords;
    public SuggestionList suggestionList;
    
