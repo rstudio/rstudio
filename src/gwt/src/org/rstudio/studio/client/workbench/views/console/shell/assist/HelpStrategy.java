@@ -130,7 +130,7 @@ public class HelpStrategy
             {
                if (result != null)
                {
-                  HelpInfo.ParsedInfo help = result.toParsedInfo();
+                  HelpInfo.ParsedInfo help = result.toParsedInfo(selectedItem);
                   if (help.hasInfo())
                   {
                      cache_.put(selectedItem, help);
@@ -162,7 +162,7 @@ public class HelpStrategy
             {
                if (result != null)
                {
-                  HelpInfo.ParsedInfo help = result.parse(selectedItem.name);
+                  HelpInfo.ParsedInfo help = result.parse(selectedItem);
                   if (help.hasInfo())
                   {
                      cache_.put(selectedItem, help);
@@ -207,7 +207,7 @@ public class HelpStrategy
             {
                if (response != null)
                {
-                  HelpInfo.ParsedInfo info = response.toParsedInfo();
+                  HelpInfo.ParsedInfo info = response.toParsedInfo(selectedItem);
                   cache_.put(selectedItem, info);
                   doShowParameterHelp(info, name, display);
                }
@@ -236,7 +236,7 @@ public class HelpStrategy
             {
                if (response != null)
                {
-                  ParsedInfo info = response.parse(selectedItem.source);
+                  ParsedInfo info = response.parse(selectedItem);
                   cache_.put(selectedItem, info);
                   doShowParameterHelp(info, name, display);
                }
@@ -282,61 +282,6 @@ public class HelpStrategy
       }
    }
    
-   @SuppressWarnings("unused")
-   private void showDataHelp(final QualifiedName selectedItem,
-                             final CompletionPopupDisplay display)
-   {
-      ParsedInfo cachedHelp = cache_.get(selectedItem);
-      if (cachedHelp != null)
-      {
-         doShowDataHelp(cachedHelp, display);
-         return;
-      }
-      
-      server_.getHelp(
-            selectedItem.name,
-            selectedItem.source,
-            selectedItem.type,
-            new ServerRequestCallback<HelpInfo>() {
-         
-         @Override
-         public void onError(ServerError error)
-         {
-            display.clearHelp(false);
-         }
-
-         @Override
-         public void onResponseReceived(HelpInfo response)
-         {
-            if (response != null)
-            {
-               ParsedInfo info = response.parse(selectedItem.name);
-               cache_.put(selectedItem, info);
-               doShowDataHelp(info, display);
-            }
-            else
-            {
-               display.setHelpVisible(false);
-               display.clearHelp(false);
-            }
-         }
-      });
-   }
-   
-   private void doShowDataHelp(final ParsedInfo info,
-                               final CompletionPopupDisplay display)
-   {
-      if (info.hasInfo())
-      {
-         display.displayDataHelp(info);
-      }
-      else
-      {
-         display.setHelpVisible(false);
-         display.clearHelp(false);
-      }
-   }
-   
    private void showRoxygenHelp(QualifiedName item, 
                                 CompletionPopupDisplay display)
    {
@@ -371,7 +316,7 @@ public class HelpStrategy
          {
             if (response != null)
             {
-               ParsedInfo info = response.parse(packageName);
+               ParsedInfo info = response.parse(selectedItem);
                cache_.put(selectedItem, info);
                doShowPackageHelp(info, display);
             }

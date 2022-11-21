@@ -24,6 +24,7 @@ import org.rstudio.core.client.BrowseCap;
 import org.rstudio.core.client.StringUtil;
 import org.rstudio.core.client.widget.RStudioFrame;
 import org.rstudio.studio.client.application.ui.RStudioThemes;
+import org.rstudio.studio.client.common.codetools.RCompletionType;
 import org.rstudio.studio.client.workbench.views.console.ConsoleConstants;
 import org.rstudio.studio.client.workbench.views.console.ConsoleResources;
 import org.rstudio.studio.client.workbench.views.help.model.HelpInfo;
@@ -78,19 +79,22 @@ public class HelpInfoPopupPanel extends PopupPanel
       timer_.cancel();
       vpanel_.clear();
 
-      Label lblSig;
-      String signature = help.getFunctionSignature();
-      if (StringUtil.isNullOrEmpty(signature))
+      if (help.getCompletionItem().type != RCompletionType.DATAFRAME)
       {
-         lblSig = new Label(help.getTitle());
-         lblSig.setStylePrimaryName(consoleStyles_.packageName());
-         vpanel_.add(lblSig);
-      }
-      else if (!StringUtil.equals(signature, "-"))
-      {
-         lblSig = new Label(signature);
-         lblSig.setStylePrimaryName(consoleStyles_.functionInfoSignature());
-         vpanel_.add(lblSig);
+         Label lblSig;
+         String signature = help.getFunctionSignature();
+         if (StringUtil.isNullOrEmpty(signature))
+         {
+            lblSig = new Label(help.getTitle());
+            lblSig.setStylePrimaryName(consoleStyles_.packageName());
+            vpanel_.add(lblSig);
+         }
+         else if (!StringUtil.equals(signature, "-"))
+         {
+            lblSig = new Label(signature);
+            lblSig.setStylePrimaryName(consoleStyles_.functionInfoSignature());
+            vpanel_.add(lblSig);
+         }
       }
       
       String title = help.getTitle();

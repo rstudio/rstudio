@@ -376,12 +376,6 @@ public class CompletionPopupPanel extends ThemedPopupPanel
    }
 
    @Override
-   public void displayDataHelp(ParsedInfo help)
-   {
-      displayPackageHelp(help);
-   }
-
-   @Override
    public void displaySnippetHelp(String contents)
    {
       if (!completionListIsOnScreen())

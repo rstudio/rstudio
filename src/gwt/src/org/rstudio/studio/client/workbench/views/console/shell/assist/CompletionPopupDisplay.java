@@ -67,7 +67,6 @@ public interface CompletionPopupDisplay
    void displayHelp(HelpInfo.ParsedInfo help);
    void displayParameterHelp(Map<String, String> map, String parameter);
    void displayPackageHelp(HelpInfo.ParsedInfo helpInfo);
-   void displayDataHelp(HelpInfo.ParsedInfo helpInfo);
    void displaySnippetHelp(String contents);
    void displayRoxygenHelp(String title, String description, boolean hasVignette);
    void displayYAMLHelp(String value, String description);
