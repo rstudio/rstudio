@@ -74,10 +74,13 @@ public class RCompletionType
          case DATATABLE_SPECIAL_SYMBOL: return 3;
          case DATAFRAME: return 4;
          case SECUNDARY_ARGUMENT: return 5;
+
+         case PACKAGE: return 101;
+         case CONTEXT: return 102;
          default: break;
       }
 
-      return 10;
+      return 100;
    }
 
 }

@@ -1333,12 +1333,15 @@ assign(x = ".rs.acCompletionTypes",
 {
 
    # type based scores
-   typeScores <- rep(NA, length(completions$results))
+   typeScores <- rep(100, length(completions$results))
    typeScores[completions$type == .rs.acCompletionTypes$ARGUMENT] <- 1
    typeScores[completions$type == .rs.acCompletionTypes$COLUMN] <- 2
    typeScores[completions$type == .rs.acCompletionTypes$DATATABLE_SPECIAL_SYMBOL] <- 3
    typeScores[completions$type == .rs.acCompletionTypes$DATAFRAME] <- 4
    typeScores[completions$type == .rs.acCompletionTypes$SECUNDARY_ARGUMENT] <- 5
+
+   typeScores[completions$type == .rs.acCompletionTypes$PACKAGE] <- 101
+   typeScores[completions$type == .rs.acCompletionTypes$CONTEXT] <- 102
    
    # additional scores based on the result
    scores <- if (nzchar(token)) 
