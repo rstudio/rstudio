@@ -16,6 +16,7 @@
 
 package org.rstudio.studio.client.common.compile;
 
+import com.google.gwt.core.client.GWT;
 import org.rstudio.core.client.StringUtil;
 import org.rstudio.core.client.VirtualConsole;
 import org.rstudio.core.client.dom.DomUtils;
@@ -23,6 +24,7 @@ import org.rstudio.core.client.widget.BottomScrollPanel;
 import org.rstudio.core.client.widget.FontSizer;
 import org.rstudio.core.client.widget.PreWidget;
 import org.rstudio.studio.client.RStudioGinjector;
+import org.rstudio.studio.client.common.StudioClientCommonConstants;
 import org.rstudio.studio.client.workbench.views.console.ConsoleResources;
 import org.rstudio.studio.client.workbench.views.source.editors.text.themes.AceTheme;
 
@@ -137,7 +139,7 @@ public class CompileOutputBufferWithHighlight extends Composite
          if (totalSubmittedLines_ > MAX_LINES_OVERLOAD_BUFFER)
          {
             state_ = PanelState.OVERLOADED;
-            console_.submit("\n\n[Detected output overflow; buffering build output]\n\n", styles_.console());
+            console_.submit(constants_.consoleBufferedMessage(MAX_LINES_OVERLOAD_BUFFER), styles_.warning());
          }
 
          scrollPanel_.onContentSizeChanged();
@@ -152,6 +154,7 @@ public class CompileOutputBufferWithHighlight extends Composite
          if (numLinesSaved_ > MAX_LINES_OVERLOAD_BUFFER)
          {
             flushOverloadBuffer(className);
+            console_.submit(constants_.consoleBufferedMessage(MAX_LINES_OVERLOAD_BUFFER), styles_.warning());
          }
          return;
       }
@@ -178,4 +181,6 @@ public class CompileOutputBufferWithHighlight extends Composite
    
    private static final int MAX_LINES_DISPLAY = 500;
    private static final int MAX_LINES_OVERLOAD_BUFFER = 5000;
+
+   private static final StudioClientCommonConstants constants_ = GWT.create(StudioClientCommonConstants.class);
 }
