@@ -20,7 +20,6 @@ import java.util.ArrayList;
 
 import org.rstudio.core.client.CommandWithArg;
 import org.rstudio.core.client.DebouncedCommand;
-import org.rstudio.core.client.ExternalJavaScriptLoader;
 import org.rstudio.core.client.HandlerRegistrations;
 import org.rstudio.core.client.events.MouseDragHandler;
 import org.rstudio.core.client.jsinterop.JsVoidFunction;
@@ -86,9 +85,6 @@ import elemental2.core.JsObject;
 import elemental2.promise.Promise;
 import elemental2.promise.Promise.PromiseExecutorCallbackFn.RejectCallbackFn;
 import elemental2.promise.Promise.PromiseExecutorCallbackFn.ResolveCallbackFn;
-import jsinterop.annotations.JsOverlay;
-import jsinterop.annotations.JsPackage;
-import jsinterop.annotations.JsType;
 import jsinterop.base.Js;
 
 
@@ -614,17 +610,10 @@ public class PanmirrorWidget extends DockLayoutPanel implements
    }
    
    public void activateDevTools() 
-   { 
-      ProseMirrorDevTools.load(() -> {
-         editor_.enableDevTools(ProseMirrorDevTools.applyDevTools);
-      });
-   }
-   
-   public boolean devToolsLoaded()
    {
-      return ProseMirrorDevTools.isLoaded();
+      editor_.enableDevTools();
    }
-   
+
    @Override
    public HandlerRegistration addPanmirrorUpdatedHandler(PanmirrorUpdatedEvent.Handler handler)
    {
@@ -752,30 +741,6 @@ public class PanmirrorWidget extends DockLayoutPanel implements
    private final HandlerRegistrations registrations_ = new HandlerRegistrations();
    private final ArrayList<JsVoidFunction> editorEventUnsubscribe_ = new ArrayList<>();
 }
-
-
-@JsType(isNative = true, namespace = JsPackage.GLOBAL)
-class ProseMirrorDevTools
-{
-   @JsOverlay
-   public static void load(ExternalJavaScriptLoader.Callback onLoaded) 
-   {    
-      devtoolsLoader_.addCallback(onLoaded);
-   }
-   
-   @JsOverlay
-   public static boolean isLoaded() 
-   {
-      return devtoolsLoader_.isLoaded();
-   }
-   
-   public static JsObject applyDevTools;
- 
-   @JsOverlay
-   private static final ExternalJavaScriptLoader devtoolsLoader_ =
-     new ExternalJavaScriptLoader("js/panmirror/prosemirror-dev-tools.min.js");
-}
-
 
 
 

@@ -1438,7 +1438,7 @@ public class VisualMode implements VisualModeEditorSync,
    
    private void syncDevTools()
    {
-      if (panmirror_ != null && panmirror_.devToolsLoaded()) 
+      if (panmirror_ != null)
          panmirror_.activateDevTools();
    }
    
