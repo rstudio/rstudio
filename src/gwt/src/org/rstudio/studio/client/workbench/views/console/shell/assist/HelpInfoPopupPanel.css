@@ -26,9 +26,22 @@
    color: #000023 !important; 
 }
 
-.helpGlimpseText pre {
+.helpGlimpseText {
+   margin: 0;
+   padding: 0; 
+}
+
+.helpGlimpseText ul {
+   padding-inline-start: 0;
+}
+.helpGlimpseText ul li {
+   display: inline-block;
+   margin: 2px;  
+   padding: 2px;
+   border: 1px solid #cfd4d8;
+   background-color: #ffffff;
    font-family: fixedWidthFont;
-   font-size: 12px;
+   font-size: 10px;
 }
 
 .rstudio-themes-dark-menus .helpBodyText a {

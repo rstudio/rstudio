@@ -447,12 +447,34 @@ options(help_type = "html")
 .rs.addFunction("getHelpColumn", function(name, src, envir = parent.frame())
 {
    data <- .rs.getAnywhere(src, envir)
+   
    if (!is.null(data))
    {
-      description <- .rs.describeObject(data, name)$description
+      column <- data[[name]]
+      if (isNamespaceLoaded("pillar"))
+      {
+         formatted <- pillar::format_glimpse(column)
+         bits <- head(formatted, 6)
+         if (length(formatted) > 6)
+         {
+            bits <- c(bits, "...")
+         }
+
+         description <- paste("<ul>", paste(paste0("<li>", bits, "</li>"), collapse = " "), "</ul>")
+         type <- pillar:::get_pillar_type(column)
+         size <- length(formatted)
+      }
+      else 
+      {
+         described <- .rs.describeObject(data, name)
+         description <- described$description
+         type <- described$type
+         size <- described$length
+      }
+
       list(
          html = paste0("<h2></h2><h3>Description</h3><p>", description, "</p>"),
-         signature = paste0(src, "$", name), 
+         signature = paste0("<", type, "> [", size, "]"), 
          pkgname = src,
          help = FALSE
       )

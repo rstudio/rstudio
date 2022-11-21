@@ -78,8 +78,9 @@ public class HelpInfoPopupPanel extends PopupPanel
    {
       timer_.cancel();
       vpanel_.clear();
+      int type = help.getCompletionItem().type;
 
-      if (help.getCompletionItem().type != RCompletionType.DATAFRAME)
+      if (type != RCompletionType.DATAFRAME)
       {
          Label lblSig;
          String signature = help.getFunctionSignature();
@@ -109,7 +110,11 @@ public class HelpInfoPopupPanel extends PopupPanel
       if (!StringUtil.isNullOrEmpty(description))
       {
          HTML htmlDesc = new HTML(description);
-         htmlDesc.setStylePrimaryName(RES.styles().helpBodyText());
+         if (type == RCompletionType.COLUMN)
+            htmlDesc.setStylePrimaryName(RES.styles().helpGlimpseText());
+         else
+            htmlDesc.setStylePrimaryName(RES.styles().helpBodyText());
+
          vpanel_.add(htmlDesc);
       }
    
