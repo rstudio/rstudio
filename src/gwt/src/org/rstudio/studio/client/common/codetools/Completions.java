@@ -172,5 +172,4 @@ public class Completions extends JavaScriptObject
       return this.language;
    }-*/;
    
-   
 }
