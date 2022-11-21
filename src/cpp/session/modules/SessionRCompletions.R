@@ -977,27 +977,32 @@ assign(x = ".rs.acCompletionTypes",
          .data <- .rs.getAnywhere(matchedCall[[".data"]], envir = envir)
          if (!is.null(.data))
          {
-            .names <- .rs.getNames(.data)
+            # potential completions
+            .names <- .rs.selectFuzzyMatches(.rs.getNames(.data), token)
 
-            namesCall <- names(matchedCall)
-            
-            # drop from .names:
-            # - the named argument, e.g. group_by(a = foo())
-            .drop <- setdiff(namesCall, c("", ".data", ".drop", ".keep"))
-            
-            # - the unnamed arguments that are symbols
-            unnamed <- as.list(matchedCall)[namesCall == ""][-1]
-            for (arg in unnamed)
+            if (length(.names))
             {
-               if (is.symbol(arg))
-                  .drop <- c(.drop, as.character(arg))
-            }
+               namesCall <- names(matchedCall)
+               
+               # drop from .names:
+               # - the named argument, e.g. group_by(a = foo())
+               .drop <- setdiff(namesCall, c("", ".data", ".drop", ".keep"))
+               
+               # - the unnamed arguments that are symbols
+               unnamed <- as.list(matchedCall)[namesCall == ""][-1]
+               for (arg in unnamed)
+               {
+                  if (is.symbol(arg))
+                     .drop <- c(.drop, as.character(arg))
+               }
 
-            return(.rs.makeCompletions(token = token,
-                                       results = setdiff(.names, .drop),
-                                       quote = FALSE,
-                                       type = .rs.acCompletionTypes$COLUMN, 
-                                       package = as.character(matchedCall[[".data"]])))
+               groupByCompletions <- .rs.makeCompletions(token = token,
+                                                         results = setdiff(.names, .drop),
+                                                         quote = FALSE,
+                                                         type = .rs.acCompletionTypes$COLUMN, 
+                                                         package = as.character(matchedCall[[".data"]]))
+               return(groupByCompletions)
+            }
          }
       }
       
