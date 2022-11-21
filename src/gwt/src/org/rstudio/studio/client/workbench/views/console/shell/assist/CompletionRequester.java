@@ -333,7 +333,7 @@ public class CompletionRequester
 
    }
 
-   private static final Pattern RE_EXTRACTION = Pattern.create("[$@:\\[]", "");
+   private static final Pattern RE_EXTRACTION = Pattern.create("[$@:\\[\\(=]", "");
    private boolean isTopLevelCompletionRequest()
    {
       String line = docDisplay_.getCurrentLineUpToCursor();
@@ -401,13 +401,9 @@ public class CompletionRequester
             JsArrayString meta = response.getMeta();
             ArrayList<QualifiedName> newComp = new ArrayList<>();
 
-            // [.data.table special case: the completions are already in the right order
-            // i.e. we don't want arguments first
-            boolean ordered = StringUtil.equals(response.getGuessedFunctionName(), "[.data.table");
-            if (ordered) 
+            for (int i = 0; i < comp.length(); i++)
             {
-               // Get all server completions at once
-               for (int i = 0; i < comp.length(); i++)
+               if (comp.get(i).endsWith(" = "))
                {
                   newComp.add(new QualifiedName(
                      comp.get(i), 
@@ -425,30 +421,6 @@ public class CompletionRequester
                }
             }
             
-            // Get function completions from the server
-            if (!ordered)
-            {
-               for (int i = 0; i < comp.length(); i++)
-               {
-                  if (comp.get(i).endsWith(" = "))
-                  {
-                     newComp.add(new QualifiedName(
-                        comp.get(i), 
-                        display.get(i),
-                        pkgs.get(i), 
-                        quote.get(i), 
-                        type.get(i), 
-                        suggestOnAccept.get(i), 
-                        replaceToEnd.get(i),
-                        meta.get(i), 
-                        response.getHelpHandler(), 
-                        response.getLanguage(), 
-                        response.getContext().get(i)
-                     ));
-                  }
-               }
-            }
-
             // Try getting our own function argument completions
             if (!response.getExcludeOtherArgumentCompletions() && !response.getExcludeOtherCompletions())
             {
@@ -468,29 +440,26 @@ public class CompletionRequester
             }
 
             // Get other server completions
-            if (!ordered)
+            for (int i = 0; i < comp.length(); i++)
             {
-               for (int i = 0; i < comp.length(); i++)
+               if (!comp.get(i).endsWith(" = "))
                {
-                  if (!comp.get(i).endsWith(" = "))
-                  {
-                     newComp.add(new QualifiedName(
-                        comp.get(i), 
-                        display.get(i),
-                        pkgs.get(i), 
-                        quote.get(i), 
-                        type.get(i), 
-                        suggestOnAccept.get(i),
-                        replaceToEnd.get(i),
-                        meta.get(i), 
-                        response.getHelpHandler(), 
-                        response.getLanguage(), 
-                        response.getContext().get(i)
-                     ));
-                  }
+                  newComp.add(new QualifiedName(
+                     comp.get(i), 
+                     display.get(i),
+                     pkgs.get(i), 
+                     quote.get(i), 
+                     type.get(i), 
+                     suggestOnAccept.get(i),
+                     replaceToEnd.get(i),
+                     meta.get(i), 
+                     response.getHelpHandler(), 
+                     response.getLanguage(), 
+                     response.getContext().get(i)
+                  ));
                }
             }
-            
+         
             // Get snippet completions. Bail if this isn't a top-level
             // completion -- TODO is to add some more context that allows us
             // to properly ascertain this.
