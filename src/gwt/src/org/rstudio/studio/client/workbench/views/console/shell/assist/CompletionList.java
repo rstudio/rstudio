@@ -105,7 +105,7 @@ class CompletionList<TItem> extends Composite
       scrollPanel_ = new ScrollPanel();
       scrollPanel_.getElement().getStyle().setProperty("overflowX", "hidden");
       scrollPanel_.add(grid);
-      scrollPanel_.setHeight((visibleItems * 26) + "px");
+      scrollPanel_.setHeight((visibleItems * 22) + "px");
 
       initWidget(scrollPanel_);
       grid_ = grid;

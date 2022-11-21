@@ -232,7 +232,7 @@ public class HelpInfoPopupPanel extends PopupPanel
       f1prompt_.setVisible(showF1Prompt);
       scrollPanel_.setVisible(true);
       
-      String newHeight = Math.min(135, vpanel_.getOffsetHeight()) + "px";
+      String newHeight = Math.min(179, vpanel_.getOffsetHeight()) + "px";
       scrollPanel_.setHeight(newHeight);
    }
    

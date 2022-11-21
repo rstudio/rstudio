@@ -161,7 +161,7 @@ public class CompletionPopupPanel extends ThemedPopupPanel
    {
       registerIgnoredKeys();
       CompletionList<QualifiedName> list = new CompletionList<>(values,
-                                                                6,
+                                                                9,
                                                                 true,
                                                                 true);
 
