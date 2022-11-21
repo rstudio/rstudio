@@ -7,7 +7,7 @@ website:
   open-graph: true
   favicon: images/favicon.svg
   page-navigation: true
-  site-url: https://docs.rstudio.com/ide/user/
+  site-url: https://docs.posit.co/ide/user/
   repo-url: https://github.com/rstudio/rstudio/
   repo-subdir: "docs/user/rstudio/"
   repo-actions: [edit, source]
