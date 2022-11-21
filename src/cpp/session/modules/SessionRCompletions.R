@@ -68,7 +68,7 @@ assign(x = ".rs.acCompletionTypes",
           COLUMN      = 27,
           R6_OBJECT   = 28, 
           DATATABLE_SPECIAL_SYMBOL = 29,
-          DATATABLE_ARGUMENT       = 30,
+          SECUNDARY_ARGUMENT       = 30,
 
           CONTEXT     = 99
        )
@@ -1338,7 +1338,7 @@ assign(x = ".rs.acCompletionTypes",
    typeScores[completions$type == .rs.acCompletionTypes$COLUMN] <- 2
    typeScores[completions$type == .rs.acCompletionTypes$DATATABLE_SPECIAL_SYMBOL] <- 3
    typeScores[completions$type == .rs.acCompletionTypes$DATAFRAME] <- 4
-   typeScores[completions$type == .rs.acCompletionTypes$DATATABLE_ARGUMENT] <- 5
+   typeScores[completions$type == .rs.acCompletionTypes$SECUNDARY_ARGUMENT] <- 5
    
    # additional scores based on the result
    scores <- if (nzchar(token)) 
@@ -1410,7 +1410,7 @@ assign(x = ".rs.acCompletionTypes",
                                                    numCommas, 
                                                    envir = envir, 
                                                    object = data.table:::`[.data.table`)
-      argCompletions$type[argCompletions$type == .rs.acCompletionTypes$ARGUMENT] <- .rs.acCompletionTypes$DATATABLE_ARGUMENT
+      argCompletions$type[argCompletions$type == .rs.acCompletionTypes$ARGUMENT] <- .rs.acCompletionTypes$SECUNDARY_ARGUMENT
       
       completions <- .rs.appendCompletions(
          completions, 

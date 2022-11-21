@@ -78,7 +78,7 @@ public class HelpStrategy
             showRoxygenHelp(item, display);
             break;
          case RCompletionType.ARGUMENT:
-         case RCompletionType.DATATABLE_ARGUMENT:
+         case RCompletionType.SECUNDARY_ARGUMENT:
          case RCompletionType.OPTION:
             showParameterHelp(item, display);
             break;
