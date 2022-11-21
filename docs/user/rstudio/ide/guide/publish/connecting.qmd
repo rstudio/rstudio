@@ -8,7 +8,7 @@ RStudio provides "Push button deployment" to Posit Connect (formerly RStudio Con
 [Posit Connect](https://www.posit.co/products/connect/) supports a spectrum of data products, static or dynamic, developed in R and Python: Dashboards, applications, APIs, reports, and so much more. Connect enables flexible permissions configurations and meets all enterprise security requirements.
 
 
-[Posit Cloud](https://posit.cloud/)'s publishing features are currently a Beta Feature. The platform supports publishing of static content (Quarto and RMarkdown), apps (Shiny for R and Python, Dash, Streamlit) and APIs (Plumber, Flask, FastAPI).
+[Posit Cloud](https://posit.cloud/)'s publishing features are currently a Beta Feature. The platform supports publishing of static content (Quarto and R Markdown), apps (Shiny for R and Python, Dash, Streamlit) and APIs (Plumber, Flask, FastAPI).
 
 [Shinyapps.io](https://www.shinyapps.io/) supports hosting of Shiny for R and Python.
 
@@ -17,7 +17,7 @@ RStudio provides "Push button deployment" to Posit Connect (formerly RStudio Con
 Full Documentation for:
 
 -   [Posit Connect User Guide](https://docs.posit.co/connect/user/connecting/)
--   [Posit Cloud User Guide](https://posit.cloud/learn/guide#intro-publish-app)
+-   [Posit Cloud User Guide](https:///learn/guide#intro-publish-app)
 -   [RPubs - Getting Started](https://rpubs.com/about/getting-started)
 -   [ShinyApps.io User Guide](https://docs.posit.co/shinyapps.io/)
 
@@ -46,7 +46,7 @@ Select the publishing destination, then follow the **Connect Account** wizard's 
 
 Log in and click **Connect** to authorize the IDE to deploy on your behalf. Then return to the IDE and click the **Connect Account** button.
 
-Once you have successfully configured the connection within RStudio, you may now publish content to Posit Connect, Posit.Cloud, RPubs, or Shinyapps.io.
+Once you have successfully configured the connection within RStudio, you may now publish content to Posit Connect, Posit Cloud, RPubs, or Shinyapps.io.
 
 Full Documentation for:
 
