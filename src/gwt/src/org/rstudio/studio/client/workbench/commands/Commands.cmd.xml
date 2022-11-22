@@ -933,7 +933,7 @@ See `/src/gwt/tools/i18n-helpers/README.md`.
          <shortcut refid="showHelpMenu" value="Alt+Shift+H" if="!org.rstudio.core.client.BrowseCap.isMacintosh()"/>
       </shortcutgroup>
       <shortcutgroup name="Accessibility">
-         <shortcut refid="toggleScreenReaderSupport" value="Ctrl+Shift+Q" if="org.rstudio.core.client.BrowseCap.isMacintosh()"/>
+         <shortcut refid="toggleScreenReaderSupport" value="Ctrl+Shift+U" if="org.rstudio.core.client.BrowseCap.isMacintosh()"/>
          <shortcut refid="toggleScreenReaderSupport" value="Alt+Shift+/" if="!org.rstudio.core.client.BrowseCap.isMacintosh()"/>
          <shortcut refid="focusConsoleOutputEnd" value="Ctrl+Alt+2" if="org.rstudio.core.client.BrowseCap.isMacintosh()"/>
          <shortcut refid="focusConsoleOutputEnd" value="Alt+Shift+2" if="!org.rstudio.core.client.BrowseCap.isMacintosh()"/>

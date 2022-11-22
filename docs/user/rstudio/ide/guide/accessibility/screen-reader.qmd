@@ -50,7 +50,7 @@ In most cases, screen reader users will have to keep turning off their virtual c
 
 When using Posit Workbench, RStudio Server. or RStudio Desktop 2022.12 open-source (or later) with a screen reader, it is essential to enable screen reader support. Once set, this setting is persisted for future RStudio sessions. The option is available to toggle via the main menu at Help / Accessibility / Screen Reader Support, or via the Global Options dialog, under the Accessibility panel.
 
-The easiest way to enable the \"Screen Reader Support\" mode, however, is using its own keyboard shortcut by pressing \"Alt+Shift+/ (forward slash)\" on Windows or Linux; \"Ctrl+Shift+Q\" on Mac.
+The easiest way to enable the \"Screen Reader Support\" mode, however, is using its own keyboard shortcut by pressing \"Alt+Shift+/ (forward slash)\" on Windows or Linux; \"Ctrl+Shift+U\" on Mac.
 
 Once the \"Screen Reader Support\" mode is toggled on, you will hear the following dialog message:
 
