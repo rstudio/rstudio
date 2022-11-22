@@ -97,3 +97,4 @@
 - RStudio sessions now shut down and suspend properly when they receive a `SIGTERM` signal, as they have for `SIGUSR2` (rstudio/rstudio-pro#2585)
 - Fixed an issue where `ssl-hsts-include-subdomains=1` would render Workbench non-functional. The setting now works as expected. (rstudio/rstudio-pro#3010)
 - Fixed an issue where the `suspend-session`, `suspend-all`, and `kill-all` subcommands of `rstudio-server` did not work when using the Launcher. (rstudio/rstudio-pro#4007)
+- Fixed conflicting keyboard shortcut for toggling screen reader support on macOS (#12339)
