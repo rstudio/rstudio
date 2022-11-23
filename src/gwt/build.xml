@@ -106,7 +106,7 @@
       value="/opt/rstudio-tools/dependencies/common/node/${node.version}/node_modules/yarn/bin/yarn"
       file="/opt/rstudio-tools/dependencies/common/node/${node.version}/node_modules/yarn/bin/yarn"/>
 
-   <property name="panmirror.dir" value="./lib/quarto/packages/editor"/>
+   <property name="panmirror.dir" value="./lib/quarto/libs/panmirror"/>
    <property name="panmirror.build.dir" value="./www/js/panmirror"/>
 
    <target name="panmirror" description="Compile panmirror library">
@@ -116,9 +116,6 @@
       </exec>
       <exec executable="${yarn.bin}" dir="${panmirror.dir}" resolveexecutable="true" failonerror="true">
          <arg value="build"/>
-         <env key="PANMIRROR_TYPES" value="0"/>
-         <env key="PANMIRROR_SOURCEMAP" value="0"/>
-         <env key="PANMIRROR_FORMATS" value="umd"/>
          <env key="PANMIRROR_OUTDIR" value="dist-rstudio"/>
       </exec>
       <copy todir="${panmirror.build.dir}">
