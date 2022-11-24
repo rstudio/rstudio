@@ -73,6 +73,7 @@
 ### Deprecated / Removed
 
 - Removed the Tools / Shell command (#11253)
+- Deprecated the vscode.conf "min-ext-version" option for specifying the minimum version of the Posit Workbench VS Code extension as the extension is now bundled with Workbench and Session packages rather than being downloaded (rstudio-pro#3643)
 - Removed the "rstudio-server install-vs-code" admin command for downloading and configuring code-server; code-server is now installed with Workbench, use the "rstudio-server configure-vs-code" command for configuration (rstudio-pro#3643)
 - It is highly recommended that you disable session culling in Jupyter sessions by done by setting `session-cull-minutes=0` in `jupyter.conf` to prevent potential data loss (rstudio-pro#3054) 
 
