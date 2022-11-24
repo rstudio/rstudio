@@ -44,6 +44,10 @@
    font-size: 10px;
 }
 
+.helpGlimpseText ul li i{
+   color: #cfd4d8;
+}
+
 .rstudio-themes-dark-menus .helpBodyText a {
    color: #FFF;
 }

@@ -465,10 +465,23 @@ options(help_type = "html")
       if (isNamespaceLoaded("pillar"))
       {
          formatted <- pillar::format_glimpse(column)
-         bits <- head(formatted, 6)
-         if (length(formatted) > 6)
+
+         bits <- c()
+         nchars <- 55
+         i <- 1
+         while (nchars > 1 && i < length(column)) {
+            current <- formatted[i]
+            if (nchar(current) > nchars) {
+               current <- pillar:::str_trunc(current, nchars)
+            }
+            bits <- c(bits, current)
+            nchars <- nchars - nchar(current) - 2
+            i <- i + 1
+         }
+
+         if (length(bits) < length(column))
          {
-            bits <- c(bits, "...")
+            bits <- c(bits, paste0("<i>", pillar:::get_ellipsis(), "</i>"))
          }
 
          description <- paste("<ul>", paste(paste0("<li>", bits, "</li>"), collapse = " "), "</ul>")
