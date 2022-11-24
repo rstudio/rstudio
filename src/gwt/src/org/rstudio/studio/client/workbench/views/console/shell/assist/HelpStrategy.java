@@ -130,7 +130,7 @@ public class HelpStrategy
             {
                if (result != null)
                {
-                  HelpInfo.ParsedInfo help = result.toParsedInfo(selectedItem);
+                  HelpInfo.ParsedInfo help = result.toParsedInfo();
                   if (help.hasInfo())
                   {
                      cache_.put(selectedItem, help);
@@ -162,7 +162,7 @@ public class HelpStrategy
             {
                if (result != null)
                {
-                  HelpInfo.ParsedInfo help = result.parse(selectedItem);
+                  HelpInfo.ParsedInfo help = result.parse(selectedItem.name);
                   if (help.hasInfo())
                   {
                      cache_.put(selectedItem, help);
@@ -207,7 +207,7 @@ public class HelpStrategy
             {
                if (response != null)
                {
-                  HelpInfo.ParsedInfo info = response.toParsedInfo(selectedItem);
+                  HelpInfo.ParsedInfo info = response.toParsedInfo();
                   cache_.put(selectedItem, info);
                   doShowParameterHelp(info, name, display);
                }
@@ -236,7 +236,7 @@ public class HelpStrategy
             {
                if (response != null)
                {
-                  ParsedInfo info = response.parse(selectedItem);
+                  ParsedInfo info = response.parse(selectedItem.name);
                   cache_.put(selectedItem, info);
                   doShowParameterHelp(info, name, display);
                }
@@ -316,7 +316,7 @@ public class HelpStrategy
          {
             if (response != null)
             {
-               ParsedInfo info = response.parse(selectedItem);
+               ParsedInfo info = response.parse(selectedItem.name);
                cache_.put(selectedItem, info);
                doShowPackageHelp(info, display);
             }

@@ -21,7 +21,6 @@ import com.google.gwt.dom.client.*;
 import org.rstudio.core.client.StringUtil;
 import org.rstudio.core.client.dom.DomUtils;
 import org.rstudio.core.client.dom.DomUtils.NodePredicate;
-import org.rstudio.studio.client.workbench.views.console.shell.assist.CompletionRequester;
 
 import java.util.ArrayList;
 import java.util.HashMap;
@@ -33,9 +32,8 @@ public class HelpInfo extends JavaScriptObject
 
    }
 
-   public final ParsedInfo parse(CompletionRequester.QualifiedName completionItem)
+   public final ParsedInfo parse(String defaultSignature)
    {
-      String defaultSignature = completionItem.name;
       HashMap<String, String> values = new HashMap<>();
       HashMap<String, String> args = new HashMap<>();
       HashMap<String, String> slots = new HashMap<>();
@@ -114,7 +112,7 @@ public class HelpInfo extends JavaScriptObject
 
       values.put("View", getViewUrl());
       
-      return new ParsedInfo(getPackageName(), signature, values, args, slots, completionItem, hasHelp());
+      return new ParsedInfo(getPackageName(), signature, values, args, slots, hasHelp(), getType());
    }
    
    private void parseDescriptionList(HashMap<String, String> args,
@@ -218,6 +216,10 @@ public class HelpInfo extends JavaScriptObject
    private final native boolean hasHelp() /*-{
       return this.help ? this.help[0] : true;
    }-*/;
+
+   private final native int getType() /*-{
+      return this.type ? this.type[0] : 0;
+   }-*/;
    
    public static class Custom extends JavaScriptObject
    {
@@ -228,7 +230,6 @@ public class HelpInfo extends JavaScriptObject
       public final native String getPackageName() /*-{
          return this.package_name ? this.package_name[0] : "";
       }-*/;
-
    
       public final native String getTitle() /*-{
          return this.title ? this.title[0] : "";
@@ -249,8 +250,12 @@ public class HelpInfo extends JavaScriptObject
       public final native JsArrayString getArgDescriptions() /*-{
          return this.arg_descriptions;
       }-*/;
-      
-      public final ParsedInfo toParsedInfo(CompletionRequester.QualifiedName completionItem) 
+
+      public final native int getType() /*-{
+         return this.type ? this.type[0] : 0;
+      }-*/;
+
+      public final ParsedInfo toParsedInfo() 
       {
          // values
          HashMap<String,String> values = new HashMap<>();
@@ -274,8 +279,8 @@ public class HelpInfo extends JavaScriptObject
                                values,
                                args,
                                null,
-                               completionItem, 
-                               true);
+                               true, 
+                               getType());
       }
       
    }
@@ -289,11 +294,11 @@ public class HelpInfo extends JavaScriptObject
       private HashMap<String, String> args;
       private HashMap<String, String> slots;
       private boolean help;
-      private CompletionRequester.QualifiedName completionItem;
+      private int type;
       
       public ParsedInfo(String pkgName, String signature, HashMap<String, String> values,
-            HashMap<String, String> args, HashMap<String, String> slots, CompletionRequester.QualifiedName completionItem, 
-            boolean help)
+            HashMap<String, String> args, HashMap<String, String> slots,
+            boolean help, int type)
       {
          super();
          this.pkgName = pkgName;
@@ -302,7 +307,7 @@ public class HelpInfo extends JavaScriptObject
          this.args = args;
          this.slots = slots;
          this.help = help;
-         this.completionItem = completionItem;
+         this.type = type;
       }
       
       public String getPackageName()
@@ -345,9 +350,9 @@ public class HelpInfo extends JavaScriptObject
          return help;
       }
 
-      public CompletionRequester.QualifiedName getCompletionItem() 
+      public int getType()
       {
-         return completionItem;
+         return type;
       }
 
       /**

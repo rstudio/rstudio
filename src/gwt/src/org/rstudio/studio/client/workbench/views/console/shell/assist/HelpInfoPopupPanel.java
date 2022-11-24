@@ -78,8 +78,8 @@ public class HelpInfoPopupPanel extends PopupPanel
    {
       timer_.cancel();
       vpanel_.clear();
-      int type = help.getCompletionItem().type;
 
+      int type = help.getType();
       if (type != RCompletionType.DATAFRAME)
       {
          Label lblSig;
