@@ -234,7 +234,7 @@ public class HelpStrategy
             {
                if (response != null)
                {
-                  ParsedInfo info = response.parse(selectedItem.name);
+                  ParsedInfo info = response.parse(selectedItem.source);
                   cache_.put(selectedItem, info);
                   doShowParameterHelp(info, name, display);
                }
@@ -314,7 +314,7 @@ public class HelpStrategy
          {
             if (response != null)
             {
-               ParsedInfo info = response.parse(selectedItem.name);
+               ParsedInfo info = response.parse(packageName);
                cache_.put(selectedItem, info);
                doShowPackageHelp(info, display);
             }
