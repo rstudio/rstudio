@@ -1016,7 +1016,9 @@ public class CompletionRequester
          // isn't a package but rather some custom DollarNames scope)
          if ((RCompletionType.isFunctionType(type) ||
              type == RCompletionType.SNIPPET ||
-             type == RCompletionType.DATASET) &&
+             type == RCompletionType.DATASET ||
+             type == RCompletionType.DATAFRAME
+             ) &&
              helpHandler == null)
          {
             SafeHtmlUtil.appendSpan(

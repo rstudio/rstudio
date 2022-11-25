@@ -280,61 +280,6 @@ public class HelpStrategy
       }
    }
    
-   @SuppressWarnings("unused")
-   private void showDataHelp(final QualifiedName selectedItem,
-                             final CompletionPopupDisplay display)
-   {
-      ParsedInfo cachedHelp = cache_.get(selectedItem);
-      if (cachedHelp != null)
-      {
-         doShowDataHelp(cachedHelp, display);
-         return;
-      }
-      
-      server_.getHelp(
-            selectedItem.name,
-            selectedItem.source,
-            selectedItem.type,
-            new ServerRequestCallback<HelpInfo>() {
-         
-         @Override
-         public void onError(ServerError error)
-         {
-            display.clearHelp(false);
-         }
-
-         @Override
-         public void onResponseReceived(HelpInfo response)
-         {
-            if (response != null)
-            {
-               ParsedInfo info = response.parse(selectedItem.name);
-               cache_.put(selectedItem, info);
-               doShowDataHelp(info, display);
-            }
-            else
-            {
-               display.setHelpVisible(false);
-               display.clearHelp(false);
-            }
-         }
-      });
-   }
-   
-   private void doShowDataHelp(final ParsedInfo info,
-                               final CompletionPopupDisplay display)
-   {
-      if (info.hasInfo())
-      {
-         display.displayDataHelp(info);
-      }
-      else
-      {
-         display.setHelpVisible(false);
-         display.clearHelp(false);
-      }
-   }
-   
    private void showRoxygenHelp(QualifiedName item, 
                                 CompletionPopupDisplay display)
    {

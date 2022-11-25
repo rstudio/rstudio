@@ -1402,7 +1402,7 @@ public class RemoteServer implements Server
 
    public void getHelp(String topic,
                        String packageName,
-                       int options,
+                       int type,
                        ServerRequestCallback<HelpInfo> requestCallback)
    {
       JSONArray params = new JSONArray();
@@ -1411,7 +1411,7 @@ public class RemoteServer implements Server
          params.set(1, new JSONString(packageName));
       else
          params.set(1, JSONNull.getInstance());
-      params.set(2, new JSONNumber(options));
+      params.set(2, new JSONNumber(type));
 
       sendRequest(RPC_SCOPE, GET_HELP, params, requestCallback);
    }

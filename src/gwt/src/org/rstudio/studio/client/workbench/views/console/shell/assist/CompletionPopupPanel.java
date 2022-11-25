@@ -161,7 +161,7 @@ public class CompletionPopupPanel extends ThemedPopupPanel
    {
       registerIgnoredKeys();
       CompletionList<QualifiedName> list = new CompletionList<>(values,
-                                                                6,
+                                                                9,
                                                                 true,
                                                                 true);
 
@@ -376,12 +376,6 @@ public class CompletionPopupPanel extends ThemedPopupPanel
    }
 
    @Override
-   public void displayDataHelp(ParsedInfo help)
-   {
-      displayPackageHelp(help);
-   }
-
-   @Override
    public void displaySnippetHelp(String contents)
    {
       if (!completionListIsOnScreen())
@@ -421,7 +415,6 @@ public class CompletionPopupPanel extends ThemedPopupPanel
       
       help_.displayParameterHelp(value, description, false);
       resolveHelpPosition(!StringUtil.isNullOrEmpty(description));
-      
    }
 
    public void clearHelp(boolean downloadOperationPending)
