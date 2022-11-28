@@ -40,9 +40,9 @@ Click **Publish** after verifying the settings.
 
 ## Publishing documents
 
-You can publish R Markdown (`.Rmd`) and Quarto (`.qmd`) documents to Posit Connect, posit.cloud, or RPubs.com.
+You can publish R Markdown (`.Rmd`) and Quarto (`.qmd`) documents to Posit Connect, Posit Cloud, or RPubs.com.
 
-![Publish to RPubs or Connect](images/connecting-2.png){fig-alt="Publish to RPubs or Connect"}
+![Publish to RPubs, Posit Connect, or Posit Cloud](images/connecting-2.png){fig-alt="Publish to RPubs or Connect"}
 
 [RPubs](http://rpubs.com/) is a service for easily sharing public R Markdown documents. RPubs is not related to Posit Connect, and you should always choose "Posit Connect" if you wish to publish your content to Posit Connect.
 
