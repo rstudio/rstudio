@@ -68,6 +68,7 @@ assign(x = ".rs.acCompletionTypes",
           COLUMN      = 27,
           R6_OBJECT   = 28, 
           DATATABLE_SPECIAL_SYMBOL = 29,
+          SECUNDARY_ARGUMENT       = 30,
 
           CONTEXT     = 99
        )
@@ -976,14 +977,32 @@ assign(x = ".rs.acCompletionTypes",
          .data <- .rs.getAnywhere(matchedCall[[".data"]], envir = envir)
          if (!is.null(.data))
          {
-            .names <- .rs.getNames(.data)
-            if (length(matchedCall) >= 3)
-               .names <- setdiff(.names, as.character(matchedCall)[3:length(matchedCall)])
-            
-            return(.rs.makeCompletions(token = token,
-                                       results = .names,
-                                       quote = FALSE,
-                                       type = .rs.acCompletionTypes$CONTEXT))
+            # potential completions
+            .names <- .rs.selectFuzzyMatches(.rs.getNames(.data), token)
+
+            if (length(.names))
+            {
+               namesCall <- names(matchedCall)
+               
+               # drop from .names:
+               # - the named argument, e.g. group_by(a = foo())
+               .drop <- setdiff(namesCall, c("", ".data", ".drop", ".keep"))
+               
+               # - the unnamed arguments that are symbols
+               unnamed <- as.list(matchedCall)[namesCall == ""][-1]
+               for (arg in unnamed)
+               {
+                  if (is.symbol(arg))
+                     .drop <- c(.drop, as.character(arg))
+               }
+
+               groupByCompletions <- .rs.makeCompletions(token = token,
+                                                         results = setdiff(.names, .drop),
+                                                         quote = FALSE,
+                                                         type = .rs.acCompletionTypes$COLUMN, 
+                                                         package = as.character(matchedCall[[".data"]]))
+               return(groupByCompletions)
+            }
          }
       }
       
@@ -1317,23 +1336,33 @@ assign(x = ".rs.acCompletionTypes",
                                             token,
                                             shortestFirst = FALSE)
 {
-   scores <- .rs.scoreMatches(completions$results, token)
-   
-   # Put package completions at the end
-   idx <- completions$type == .rs.acCompletionTypes$PACKAGE
-   scores[idx] <- scores[idx] + 10
 
+   # type based scores
+   typeScores <- rep(100, length(completions$results))
+   typeScores[completions$type == .rs.acCompletionTypes$ARGUMENT] <- 1
+   typeScores[completions$type == .rs.acCompletionTypes$COLUMN] <- 2
+   typeScores[completions$type == .rs.acCompletionTypes$DATATABLE_SPECIAL_SYMBOL] <- 3
+   typeScores[completions$type == .rs.acCompletionTypes$DATAFRAME] <- 4
+   typeScores[completions$type == .rs.acCompletionTypes$SECUNDARY_ARGUMENT] <- 5
+
+   typeScores[completions$type == .rs.acCompletionTypes$PACKAGE] <- 101
+   typeScores[completions$type == .rs.acCompletionTypes$CONTEXT] <- 102
+   
+   # additional scores based on the result
+   scores <- if (nzchar(token)) 
+      .rs.scoreMatches(completions$results, token)
+   
    # Protect against NULL / otherwise invalid scores.
    # TODO: figure out what, upstream, might cause this
-   if (length(scores))
-   {
-      order <- if (shortestFirst)
-         order(scores, nchar(completions$results))
-      else
-         order(scores)
-      completions <- .rs.subsetCompletions(completions, order)
-   }
+   if (!length(scores))
+      scores <- rep(0L, length(completions$results))
    
+   order <- if (shortestFirst)
+      order(typeScores, scores, nchar(completions$results))
+   else
+      order(typeScores, scores)
+   completions <- .rs.subsetCompletions(completions, order)
+
    completions
 })
 
@@ -1389,6 +1418,7 @@ assign(x = ".rs.acCompletionTypes",
                                                    numCommas, 
                                                    envir = envir, 
                                                    object = data.table:::`[.data.table`)
+      argCompletions$type[argCompletions$type == .rs.acCompletionTypes$ARGUMENT] <- .rs.acCompletionTypes$SECUNDARY_ARGUMENT
       
       completions <- .rs.appendCompletions(
          completions, 
@@ -2275,8 +2305,8 @@ assign(x = ".rs.acCompletionTypes",
    
    ## For magrittr completions, we may see a pipe thrown in as part of the 'string'
    ## and 'functionCallString'. In such a case, we need to strip off everything before
-   ## a '%>%' and signal to drop the first argument for that function.
-   dropFirstArgument <- FALSE
+   ## a '%>%' and augment the numCommas
+   isPiped <- nzchar(chainObjectName)
    if (length(string))
    {
       pipes <- c("%>%", "%<>%", "%T>%", "%>>%", "\\|>")
@@ -2290,7 +2320,7 @@ assign(x = ".rs.acCompletionTypes",
       {
          n <- length(stringPipeMatches)
          idx <- stringPipeMatches[n] + attr(stringPipeMatches, "match.length")[n]
-         dropFirstArgument <- TRUE
+         isPiped <- TRUE
          string[[1]] <- gsub("^[\\s\\n]*", "", substring(string[[1]], idx), perl = TRUE)
          
          ## Figure out the 'parent object' of the call. We munge the
@@ -2315,6 +2345,7 @@ assign(x = ".rs.acCompletionTypes",
             functionCallString,
             fixed = TRUE
          )
+
       } else if (nzchar(chainObjectName)) {
          
          functionCallString <- sub(
@@ -2325,6 +2356,10 @@ assign(x = ".rs.acCompletionTypes",
          )
       }
    }
+
+   # the functionCallString was altered, so we need to bump the first numCommas
+   if (isPiped && context[[1L]] == .rs.acContextTypes$FUNCTION)
+      numCommas[[1L]] <- numCommas[[1L]] + 1L
    
    ## Try to parse the function call string
    functionCall <- tryCatch({
@@ -2443,7 +2478,6 @@ assign(x = ".rs.acCompletionTypes",
                                           context,
                                           numCommas,
                                           functionCall,
-                                          dropFirstArgument,
                                           documentId,
                                           envir)
       ))
@@ -2657,7 +2691,6 @@ assign(x = ".rs.acCompletionTypes",
                                 context[[i]],
                                 numCommas[[i]],
                                 functionCall,
-                                dropFirstArgument,
                                 documentId,
                                 envir)
          )
@@ -2670,15 +2703,19 @@ assign(x = ".rs.acCompletionTypes",
    ##    x %>% foo() %>% bar()
    ##
    ## then retrieve those completions.
-   completions <- .rs.appendCompletions(
-      completions,
-      .rs.getRChainCompletions(token,
-                               chainObjectName,
-                               additionalArgs,
-                               excludeArgs,
-                               excludeArgsFromObject,
-                               envir)
-   )
+   ## unless it's a group_by() completion which has been dealt with already
+   if (!(context[[1]] == .rs.acContextTypes$FUNCTION && string[[1]] == "group_by"))
+   {
+      completions <- .rs.appendCompletions(
+         completions,
+         .rs.getRChainCompletions(token,
+                                 chainObjectName,
+                                 additionalArgs,
+                                 excludeArgs,
+                                 excludeArgsFromObject,
+                                 envir)
+      )
+   }
    
    # get completions from the search path for the 'generic' contexts
    if (token != "" &&
@@ -2688,10 +2725,6 @@ assign(x = ".rs.acCompletionTypes",
                         .rs.acContextTypes$SINGLE_BRACKET,
                         .rs.acContextTypes$DOUBLE_BRACKET))
    {
-      discardFirst <-
-         (dropFirstArgument) ||
-         (context[[1]] == .rs.acContextTypes$FUNCTION && chainObjectName != "")
-      
       completions <- Reduce(.rs.appendCompletions, list(
          completions,
          .rs.getCompletionsSearchPath(token),
@@ -2702,7 +2735,6 @@ assign(x = ".rs.acCompletionTypes",
                                           context[[1]],
                                           numCommas[[1]],
                                           functionCall,
-                                          discardFirst,
                                           documentId,
                                           envir)
       ))
@@ -2748,8 +2780,7 @@ assign(x = ".rs.acCompletionTypes",
       }
    }
    
-   if (nzchar(token))
-      completions <- .rs.sortCompletions(completions, token)
+   completions <- .rs.sortCompletions(completions, token)
    
    completions$token <- token
    completions
@@ -2931,7 +2962,6 @@ assign(x = ".rs.acCompletionTypes",
                                             context,
                                             numCommas,
                                             functionCall,
-                                            discardFirst,
                                             documentId,
                                             envir)
 {
@@ -2948,7 +2978,7 @@ assign(x = ".rs.acCompletionTypes",
          
    if (index == 1L)
    {
-      libraryContextCompletions <- .rs.getCompletionsLibraryContext(token, string, context, numCommas, functionCall, discardFirst, documentId, envir)
+      libraryContextCompletions <- .rs.getCompletionsLibraryContext(token, string, context, numCommas, functionCall, documentId, envir)
 
       # prefer argument completions from libraryContextCompletions
       # because it contains the package name too
@@ -2956,7 +2986,7 @@ assign(x = ".rs.acCompletionTypes",
       {
          completions <- .rs.subsetCompletions(completions, completions$type != .rs.acCompletionTypes$ARGUMENT)
       }
-      completions <- .rs.appendCompletions(libraryContextCompletions, completions)
+      completions <- .rs.appendCompletions(completions, libraryContextCompletions)
    }
    completions
 })
@@ -3633,7 +3663,7 @@ assign(x = ".rs.acCompletionTypes",
 
 .rs.addFunction("getCompletionsLibraryContextArgumentNames", function(token,
                                                                       string,
-                                                                      discardFirst,
+                                                                      numCommas, 
                                                                       functionCall,
                                                                       completions)
 {
@@ -3664,7 +3694,7 @@ assign(x = ".rs.acCompletionTypes",
    if (is.null(dummyFunction))
       return(.rs.emptyCompletions())
    
-   matchedCall <- .rs.matchCall(dummyFunction, functionCall)
+   matchedCall <- .rs.matchCall(dummyFunction, functionCall, numCommas = numCommas)
    if (is.null(matchedCall))
       return(.rs.emptyCompletions())
    
@@ -3673,7 +3703,7 @@ assign(x = ".rs.acCompletionTypes",
                                  string[[1]],
                                  functionCall,
                                  matchedCall,
-                                 envir)
+                                 envir = environment())
    
    # Protect against failure
    if (is.null(formals))
@@ -3682,9 +3712,6 @@ assign(x = ".rs.acCompletionTypes",
    results <- .rs.selectFuzzyMatches(formals$formals, token)
    if (length(results))
       results <- paste(results, "= ")
-   
-   if (discardFirst && length(results))
-      results <- results[-1]
    
    .rs.makeCompletions(token = token,
                        results = results,
@@ -3698,7 +3725,6 @@ assign(x = ".rs.acCompletionTypes",
                                                          context,
                                                          numCommas,
                                                          functionCall,
-                                                         discardFirst,
                                                          documentId,
                                                          envir)
 {
@@ -3733,7 +3759,7 @@ assign(x = ".rs.acCompletionTypes",
          results,
          .rs.getCompletionsLibraryContextArgumentNames(token,
                                                        string,
-                                                       discardFirst,
+                                                       numCommas,
                                                        functionCall,
                                                        completions)
       )

@@ -181,35 +181,35 @@ public class CompletionRequester
          }
       }
 
-      boolean ordered = StringUtil.equals(cachedResult.guessedFunctionName, "[.data.table");
-      if (!ordered)
+      newCompletions.sort(new Comparator<QualifiedName>()
       {
-         newCompletions.sort(new Comparator<QualifiedName>()
+         @Override
+         public int compare(QualifiedName lhs, QualifiedName rhs)
          {
-            @Override
-            public int compare(QualifiedName lhs, QualifiedName rhs)
-            {
-               int lhsScore = RCompletionType.isFileType(lhs.type)
-                     ? CodeSearchOracle.scoreMatch(basename(lhs.name), tokenSub, true)
-                     : CodeSearchOracle.scoreMatch(lhs.name, token, false);
-               
-               int rhsScore = RCompletionType.isFileType(rhs.type)
-                  ? CodeSearchOracle.scoreMatch(basename(rhs.name), tokenSub, true)
-                  : CodeSearchOracle.scoreMatch(rhs.name, token, false);
+            // compare completion type first
+            int lhsTypeScore = RCompletionType.score(lhs.type);
+            int rhsTypeScore = RCompletionType.score(rhs.type);
+            if (lhsTypeScore < rhsTypeScore)
+               return -1;
+            else if (lhsTypeScore > rhsTypeScore)
+               return 1;
 
-               // Place arguments higher (give less penalty)
-               if (lhs.type == RCompletionType.ARGUMENT) lhsScore -= 3;
-               if (rhs.type == RCompletionType.ARGUMENT) rhsScore -= 3;
+            // when type score is equal: calculate score with scoreMatch()
+            int lhsScore = RCompletionType.isFileType(lhs.type)
+                  ? CodeSearchOracle.scoreMatch(basename(lhs.name), tokenSub, true)
+                  : CodeSearchOracle.scoreMatch(lhs.name, token, false);
+            
+            int rhsScore = RCompletionType.isFileType(rhs.type)
+               ? CodeSearchOracle.scoreMatch(basename(rhs.name), tokenSub, true)
+               : CodeSearchOracle.scoreMatch(rhs.name, token, false);
 
-               if (lhsScore == rhsScore)
-                  return lhs.compareTo(rhs);
+            if (lhsScore == rhsScore)
+               return lhs.compareTo(rhs);
 
-               return lhsScore < rhsScore ? -1 : 1;
-            }
-         });
+            return lhsScore < rhsScore ? -1 : 1;
+         }
+      });
 
-      }
-      
       CompletionResult result = new CompletionResult(
             token,
             newCompletions,
@@ -333,7 +333,7 @@ public class CompletionRequester
 
    }
 
-   private static final Pattern RE_EXTRACTION = Pattern.create("[$@:\\[]", "");
+   private static final Pattern RE_EXTRACTION = Pattern.create("[$@:\\[\\(=]", "");
    private boolean isTopLevelCompletionRequest()
    {
       String line = docDisplay_.getCurrentLineUpToCursor();
@@ -401,13 +401,9 @@ public class CompletionRequester
             JsArrayString meta = response.getMeta();
             ArrayList<QualifiedName> newComp = new ArrayList<>();
 
-            // [.data.table special case: the completions are already in the right order
-            // i.e. we don't want arguments first
-            boolean ordered = StringUtil.equals(response.getGuessedFunctionName(), "[.data.table");
-            if (ordered) 
+            for (int i = 0; i < comp.length(); i++)
             {
-               // Get all server completions at once
-               for (int i = 0; i < comp.length(); i++)
+               if (comp.get(i).endsWith(" = "))
                {
                   newComp.add(new QualifiedName(
                      comp.get(i), 
@@ -425,30 +421,6 @@ public class CompletionRequester
                }
             }
             
-            // Get function completions from the server
-            if (!ordered)
-            {
-               for (int i = 0; i < comp.length(); i++)
-               {
-                  if (comp.get(i).endsWith(" = "))
-                  {
-                     newComp.add(new QualifiedName(
-                        comp.get(i), 
-                        display.get(i),
-                        pkgs.get(i), 
-                        quote.get(i), 
-                        type.get(i), 
-                        suggestOnAccept.get(i), 
-                        replaceToEnd.get(i),
-                        meta.get(i), 
-                        response.getHelpHandler(), 
-                        response.getLanguage(), 
-                        response.getContext().get(i)
-                     ));
-                  }
-               }
-            }
-
             // Try getting our own function argument completions
             if (!response.getExcludeOtherArgumentCompletions() && !response.getExcludeOtherCompletions())
             {
@@ -468,29 +440,26 @@ public class CompletionRequester
             }
 
             // Get other server completions
-            if (!ordered)
+            for (int i = 0; i < comp.length(); i++)
             {
-               for (int i = 0; i < comp.length(); i++)
+               if (!comp.get(i).endsWith(" = "))
                {
-                  if (!comp.get(i).endsWith(" = "))
-                  {
-                     newComp.add(new QualifiedName(
-                        comp.get(i), 
-                        display.get(i),
-                        pkgs.get(i), 
-                        quote.get(i), 
-                        type.get(i), 
-                        suggestOnAccept.get(i),
-                        replaceToEnd.get(i),
-                        meta.get(i), 
-                        response.getHelpHandler(), 
-                        response.getLanguage(), 
-                        response.getContext().get(i)
-                     ));
-                  }
+                  newComp.add(new QualifiedName(
+                     comp.get(i), 
+                     display.get(i),
+                     pkgs.get(i), 
+                     quote.get(i), 
+                     type.get(i), 
+                     suggestOnAccept.get(i),
+                     replaceToEnd.get(i),
+                     meta.get(i), 
+                     response.getHelpHandler(), 
+                     response.getLanguage(), 
+                     response.getContext().get(i)
+                  ));
                }
             }
-            
+         
             // Get snippet completions. Bail if this isn't a top-level
             // completion -- TODO is to add some more context that allows us
             // to properly ascertain this.
@@ -1047,7 +1016,9 @@ public class CompletionRequester
          // isn't a package but rather some custom DollarNames scope)
          if ((RCompletionType.isFunctionType(type) ||
              type == RCompletionType.SNIPPET ||
-             type == RCompletionType.DATASET) &&
+             type == RCompletionType.DATASET ||
+             type == RCompletionType.DATAFRAME
+             ) &&
              helpHandler == null)
          {
             SafeHtmlUtil.appendSpan(
@@ -1064,7 +1035,7 @@ public class CompletionRequester
                   "[" + source + "]");
          }
 
-         if (type == RCompletionType.ARGUMENT) 
+         if (type == RCompletionType.ARGUMENT || type == RCompletionType.SECUNDARY_ARGUMENT) 
          {
             SafeHtmlUtil.appendSpan(
                   sb,
@@ -1086,6 +1057,7 @@ public class CompletionRequester
          case RCompletionType.VECTOR:
             return new ImageResource2x(ICONS.variable2x());
          case RCompletionType.ARGUMENT:
+         case RCompletionType.SECUNDARY_ARGUMENT:
             return new ImageResource2x(ICONS.variable2x());
          case RCompletionType.ARRAY:
          case RCompletionType.DATAFRAME:
