@@ -1945,7 +1945,8 @@ public class RCompletionManager implements CompletionManager
              type == RCompletionType.SECUNDARY_ARGUMENT ||
              type == RCompletionType.OPTION ||
              type == RCompletionType.CONTEXT ||
-             type == RCompletionType.KEYWORD)
+             type == RCompletionType.KEYWORD ||
+             type == RCompletionType.CODE)
          {
             return value;
          }
@@ -2082,6 +2083,12 @@ public class RCompletionManager implements CompletionManager
             
             snippets_.applySnippetContent(completionToken, snippet);
 
+            return;
+         }
+
+         if (qualifiedName.type == RCompletionType.CODE)
+         {
+            snippets_.applySnippetContent(completionToken, qualifiedName.display);
             return;
          }
          

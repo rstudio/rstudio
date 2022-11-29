@@ -69,7 +69,8 @@ assign(x = ".rs.acCompletionTypes",
           R6_OBJECT   = 28, 
           DATATABLE_SPECIAL_SYMBOL = 29,
           SECUNDARY_ARGUMENT       = 30,
-
+          CODE = 31,
+          
           CONTEXT     = 99
        )
 )
@@ -679,7 +680,7 @@ assign(x = ".rs.acCompletionTypes",
          length(formals)
       )
       
-      data <- list(formals = formals, methods = methods)
+      data <- list(formals = formals, methods = methods, object = method, class = class)
       return(data)
    }
    
@@ -942,6 +943,9 @@ assign(x = ".rs.acCompletionTypes",
             paste(deparse(as.name(fml), backtick = TRUE), "= ")
          }, FUN.VALUE = character(1))
       }
+
+      if (!is.null(formals$object)) 
+         object <- formals$object
       
       # If we're getting completions for the `base::c` function, just discard
       # the argument completions, since other context completions are more
@@ -1383,11 +1387,12 @@ assign(x = ".rs.acCompletionTypes",
 
    # type based scores
    typeScores <- rep(100, length(completions$results))
-   typeScores[completions$type == .rs.acCompletionTypes$ARGUMENT] <- 1
-   typeScores[completions$type == .rs.acCompletionTypes$COLUMN] <- 2
-   typeScores[completions$type == .rs.acCompletionTypes$DATATABLE_SPECIAL_SYMBOL] <- 3
-   typeScores[completions$type == .rs.acCompletionTypes$DATAFRAME] <- 4
-   typeScores[completions$type == .rs.acCompletionTypes$SECUNDARY_ARGUMENT] <- 5
+   typeScores[completions$type == .rs.acCompletionTypes$CODE] <- 1
+   typeScores[completions$type == .rs.acCompletionTypes$ARGUMENT] <- 2
+   typeScores[completions$type == .rs.acCompletionTypes$COLUMN] <- 3
+   typeScores[completions$type == .rs.acCompletionTypes$DATATABLE_SPECIAL_SYMBOL] <- 4
+   typeScores[completions$type == .rs.acCompletionTypes$DATAFRAME] <- 5
+   typeScores[completions$type == .rs.acCompletionTypes$SECUNDARY_ARGUMENT] <- 6
 
    typeScores[completions$type == .rs.acCompletionTypes$PACKAGE] <- 101
    typeScores[completions$type == .rs.acCompletionTypes$CONTEXT] <- 102
@@ -3009,6 +3014,7 @@ assign(x = ".rs.acCompletionTypes",
                                             documentId,
                                             envir)
 {
+
    completions <- if (context == .rs.acContextTypes$FUNCTION)
          .rs.getCompletionsFunction(token, string, functionCall, numCommas, envir)
       else if (context == .rs.acContextTypes$ARGUMENT)
@@ -3585,6 +3591,48 @@ assign(x = ".rs.acCompletionTypes",
    
    matchedCall <- if (!is.null(object))
       .rs.matchCall(object, functionCall)
+
+   if (!is.null(matchedCall) && !is.null(completer <- attr(object, "complete")))
+   {
+      # if the completer is generic, we resolve the argument from the 
+      # matched call, so that it can dispatch
+      customCompletions <- NULL
+      if (.rs.isS3Generic(completer)) 
+      {
+         on <- names(formals(completer))[1]
+         data <- .rs.getAnywhere(matchedCall[[on]])
+         if (!is.null(data)) {
+            customCompletions <- tryCatch(error = function(e) NULL,
+               completer(data, call = matchedCall, arg = activeArg, env = envir)
+            )
+         }
+      } else {
+         customCompletions <- tryCatch(error = function(e) NULL,
+            completer(call = matchedCall, arg = activeArg, env = envir)
+         )
+      }
+
+      if (!is.null(customCompletions))
+      {
+         completions <- .rs.emptyCompletions()
+
+         for (comp in customCompletions) {
+            completions <- .rs.appendCompletions(completions, 
+               .rs.makeCompletions(
+                  token = token, 
+                  results = comp$text, 
+                  type = switch(comp$type, code = .rs.acCompletionTypes$CODE, column = .rs.acCompletionTypes$COLUMN), 
+                  meta = .rs.markdownToHTML(comp$description)
+               )
+            )
+         }
+
+         keep <- .rs.fuzzyMatches(completions$results, token)
+         
+         completions <- .rs.subsetCompletions(completions, keep)
+         return(completions)
+      }
+   }
    
    # Get completions from a data object name if the active argument is 'formula'.
    # Useful for formula incantations in e.g.

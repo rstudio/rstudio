@@ -38,3 +38,7 @@
 .column {
    font-style: italic;
 }
+
+.snippet {
+   background: rgba(255, 197, 251, 0.53);
+}

@@ -14,12 +14,14 @@
  */
 package org.rstudio.studio.client.workbench.views.console.shell.assist;
 
+import com.google.gwt.core.client.GWT;
 import com.google.gwt.core.client.JsArray;
 import com.google.gwt.core.client.JsArrayBoolean;
 import com.google.gwt.core.client.JsArrayInteger;
 import com.google.gwt.core.client.JsArrayString;
 import com.google.gwt.resources.client.ImageResource;
 import com.google.gwt.safehtml.shared.SafeHtmlBuilder;
+import com.google.gwt.safehtml.shared.SafeHtmlUtils;
 import com.google.inject.Inject;
 
 import org.rstudio.core.client.resources.ImageResource2x;
@@ -401,9 +403,10 @@ public class CompletionRequester
             JsArrayString meta = response.getMeta();
             ArrayList<QualifiedName> newComp = new ArrayList<>();
 
+            // high priority completions from the server
             for (int i = 0; i < comp.length(); i++)
             {
-               if (comp.get(i).endsWith(" = "))
+               if (RCompletionType.score(type.get(i)) < 100)
                {
                   newComp.add(new QualifiedName(
                      comp.get(i), 
@@ -439,10 +442,10 @@ public class CompletionRequester
                addScopedCompletions(token, newComp, "function");
             }
 
-            // Get other server completions
+            // other (lower priority) server completions
             for (int i = 0; i < comp.length(); i++)
             {
-               if (!comp.get(i).endsWith(" = "))
+               if (RCompletionType.score(type.get(i)) >= 100)
                {
                   newComp.add(new QualifiedName(
                      comp.get(i), 
@@ -1003,7 +1006,19 @@ public class CompletionRequester
                style,
                display.replaceFirst("[ \\n].*", ""));
          }
-         else 
+         else if (type == RCompletionType.CODE)
+         {
+            String cleaned = SafeHtmlUtils.htmlEscape(display).replaceAll(
+               "\\$\\{\\d+:([^\\}]*)\\}", 
+               "<span class='" + RES.styles().snippet() + "'>$1</span>"
+            );
+
+            SafeHtmlUtil.appendSpan(
+               sb,
+               style,
+               SafeHtmlUtils.fromTrustedString(cleaned));
+         }
+         else
          {
             SafeHtmlUtil.appendSpan(
                sb,
@@ -1027,7 +1042,7 @@ public class CompletionRequester
                   "{" + source.replaceAll("package:", "") + "}");
          }
 
-         if (type == RCompletionType.COLUMN) 
+         if (type == RCompletionType.COLUMN && !StringUtil.isNullOrEmpty(source)) 
          {
             SafeHtmlUtil.appendSpan(
                   sb,

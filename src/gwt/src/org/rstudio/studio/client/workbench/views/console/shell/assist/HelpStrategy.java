@@ -86,6 +86,9 @@ public class HelpStrategy
          case RCompletionType.DIRECTORY:
          case RCompletionType.STRING:
             break;
+         case RCompletionType.CODE:
+            showCodeHelp(item, display);
+            break;
          default:
             showDefaultHelp(item, display);
             break;
@@ -284,6 +287,11 @@ public class HelpStrategy
                                 CompletionPopupDisplay display)
    {
       display.displayRoxygenHelp(item.display, item.meta, item.source != null);
+   }
+
+   private void showCodeHelp(QualifiedName item, CompletionPopupDisplay display)
+   {
+      display.displayCodeHelp(item.display, item.meta);
    }
    
    private void showPackageHelp(final QualifiedName selectedItem,

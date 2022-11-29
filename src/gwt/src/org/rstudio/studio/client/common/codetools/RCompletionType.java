@@ -47,6 +47,7 @@ public class RCompletionType
    public static final int R6_OBJECT   = 28;
    public static final int DATATABLE_SPECIAL_SYMBOL = 29;
    public static final int SECUNDARY_ARGUMENT = 30;
+   public static final int CODE = 31;
    
    public static final int SNIPPET     = 98;
    public static final int CONTEXT     = 99;
@@ -69,11 +70,12 @@ public class RCompletionType
    {
       // same logic as .rs.sortCompletions() on the server side
       switch(type){
-         case ARGUMENT: return 1;
-         case COLUMN: return 2;
-         case DATATABLE_SPECIAL_SYMBOL: return 3;
-         case DATAFRAME: return 4;
-         case SECUNDARY_ARGUMENT: return 5;
+         case CODE: return 1;
+         case ARGUMENT: return 2;
+         case COLUMN: return 3;
+         case DATATABLE_SPECIAL_SYMBOL: return 4;
+         case DATAFRAME: return 5;
+         case SECUNDARY_ARGUMENT: return 6;
 
          case PACKAGE: return 101;
          case CONTEXT: return 102;

@@ -394,6 +394,16 @@ public class CompletionPopupPanel extends ThemedPopupPanel
       help_.displayRoxygenHelp(title, description, hasVignette);
       resolveHelpPosition(true);
    }
+
+   @Override
+   public void displayCodeHelp(String title, String description) 
+   {
+      if (!completionListIsOnScreen())
+         return;
+      
+      help_.displayCodeHelp(title, description);
+      resolveHelpPosition(true);
+   }
    
    @Override
    public void displayYAMLHelp(String value, String description)

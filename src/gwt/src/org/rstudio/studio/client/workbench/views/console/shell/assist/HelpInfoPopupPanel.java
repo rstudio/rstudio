@@ -216,6 +216,22 @@ public class HelpInfoPopupPanel extends PopupPanel
       doDisplay(hasVignette);
    }
 
+   public void displayCodeHelp(String title, String description) 
+   {
+      timer_.cancel();
+      vpanel_.clear();
+      
+      Label label = new Label(title);
+      label.setStylePrimaryName(RES.styles().roxygenTitle());
+      vpanel_.add(label);
+      
+      HTML contents = new HTML(description);
+      contents.addStyleName(RES.styles().roxygenText());
+      vpanel_.add(contents);
+      
+      doDisplay(false);
+   }
+
    public void clearHelp(boolean downloadOperationPending)
    {
       f1prompt_.setVisible(false);

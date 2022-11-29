@@ -29,6 +29,7 @@ public interface CompletionRequesterResources extends ClientBundle
       String dataframe();
       String column();
       String argument();
+      String snippet();
    }
    
    @Source("CompletionRequester.css")
