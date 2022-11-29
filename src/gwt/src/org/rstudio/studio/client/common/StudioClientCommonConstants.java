@@ -2059,5 +2059,13 @@ public interface StudioClientCommonConstants extends com.google.gwt.i18n.client.
     @Key("progressRemoveIndicator")
     String progressRemoveIndicator();
 
+    /**
+     * Translated "[Detected output overflow; buffering the next {0} lines of output]".
+     *
+     * @return translated "[Detected output overflow; buffering the next {0} lines of output]"
+     */
+    @DefaultMessage("[Detected output overflow; buffering the next {0} lines of output]")
+    @Key("consoleBufferedMessage")
+    String consoleBufferedMessage(int bufferSize);
 
 }

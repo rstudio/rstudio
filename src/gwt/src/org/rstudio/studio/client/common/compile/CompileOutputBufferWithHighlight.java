@@ -16,6 +16,7 @@
 
 package org.rstudio.studio.client.common.compile;
 
+import com.google.gwt.core.client.GWT;
 import org.rstudio.core.client.StringUtil;
 import org.rstudio.core.client.VirtualConsole;
 import org.rstudio.core.client.dom.DomUtils;
@@ -23,6 +24,7 @@ import org.rstudio.core.client.widget.BottomScrollPanel;
 import org.rstudio.core.client.widget.FontSizer;
 import org.rstudio.core.client.widget.PreWidget;
 import org.rstudio.studio.client.RStudioGinjector;
+import org.rstudio.studio.client.common.StudioClientCommonConstants;
 import org.rstudio.studio.client.workbench.views.console.ConsoleResources;
 import org.rstudio.studio.client.workbench.views.source.editors.text.themes.AceTheme;
 
@@ -85,6 +87,8 @@ public class CompileOutputBufferWithHighlight extends Composite
       totalSubmittedLines_ = 0;
       numDisplayedLines_ = 0;
       output_.setText("");
+      savedOutput_ = "";
+      numLinesSaved_ = 0;
    }
    
    @Override
@@ -96,14 +100,24 @@ public class CompileOutputBufferWithHighlight extends Composite
       
       String outputClass = styles_.output();
       console_.submit("\n", outputClass);
-      
+
+      flushOverloadBuffer(outputClass);
+   }
+
+   private void flushOverloadBuffer(String outputClass) {
       String[] lines = savedOutput_.split("\n");
       int end = lines.length - 1;
       int start = Math.max(0, end - 100);
       for (int i = start; i < end; i++)
+      {
          console_.submit(lines[i] + "\n", outputClass);
+         totalSubmittedLines_++;
+      }
+
+      savedOutput_ = "";
+      numLinesSaved_ = 0;
    }
-   
+
    private void write(String output, OutputType outputType, String className)
    {
       switch (state_)
@@ -122,19 +136,26 @@ public class CompileOutputBufferWithHighlight extends Composite
             numDisplayedLines_ = MAX_LINES_DISPLAY;
          }
 
-         if (totalSubmittedLines_ > MAX_LINES_OVERLOAD)
+         if (totalSubmittedLines_ > MAX_LINES_OVERLOAD_BUFFER)
          {
             state_ = PanelState.OVERLOADED;
-            console_.submit("\n\n[Detected output overflow; truncating build output]\n\n", className);
+            console_.submit(constants_.consoleBufferedMessage(MAX_LINES_OVERLOAD_BUFFER), styles_.warning());
          }
 
          scrollPanel_.onContentSizeChanged();
          return;
       }
-         
+
       case OVERLOADED:
       {
+         numLinesSaved_++;
          savedOutput_ += output;
+
+         if (numLinesSaved_ > MAX_LINES_OVERLOAD_BUFFER)
+         {
+            flushOverloadBuffer(className);
+            console_.submit(constants_.consoleBufferedMessage(MAX_LINES_OVERLOAD_BUFFER), styles_.warning());
+         }
          return;
       }
       
@@ -154,9 +175,12 @@ public class CompileOutputBufferWithHighlight extends Composite
    private int numDisplayedLines_;
    private int totalSubmittedLines_;
    private String savedOutput_ = "";
+   private int numLinesSaved_ = 0;
    private BottomScrollPanel scrollPanel_;
    private ConsoleResources.ConsoleStyles styles_;
    
    private static final int MAX_LINES_DISPLAY = 500;
-   private static final int MAX_LINES_OVERLOAD = 5000;
+   private static final int MAX_LINES_OVERLOAD_BUFFER = 5000;
+
+   private static final StudioClientCommonConstants constants_ = GWT.create(StudioClientCommonConstants.class);
 }

@@ -11,7 +11,7 @@
 
 @eval THEME_DARK_SEARCHRESULT_BACKGROUND org.rstudio.core.client.theme.ThemeColors.darkSearchResultBackground;
 
-.console {
+.console, .warning {
    font-family: fixedWidthFont;
    padding-left: 6px;
    padding-bottom: 8px;
@@ -24,6 +24,10 @@
 }
 .console td {
    font-family: fixedWidthFont;
+}
+
+.warning {
+      font-style: italic;
 }
 
 .output {

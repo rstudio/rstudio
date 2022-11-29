@@ -1,5 +1,6 @@
 ---
 title: "Data Viewer"
+date-meta: 2022-12-12
 ---
 
 RStudio includes a Data Viewer that allows you to look inside data frames and other rectangular data structures. The viewer also allows includes some simple exploratory data analysis (EDA) features that can help you understand the data as you manipulate it with R or Python.

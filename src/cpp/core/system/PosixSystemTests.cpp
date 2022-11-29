@@ -340,13 +340,11 @@ test_context("PosixSystemTests")
 
       if (pid == 0)
       {
-         ::sleep(1);
+         ::sleep(2); // 1 sec was not enough time for lsof to run all the time in jenkins
          _exit(0);
       }
       else
       {
-         ::sleep(1); // try to avoid intermittent errors with lsof returning 1
-
          // we now have a subprocess
          FilePath cwd;
          error = currentWorkingDirViaLsof(pid, &cwd);

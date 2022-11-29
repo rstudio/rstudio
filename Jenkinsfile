@@ -442,7 +442,7 @@ try {
                                         bat 'cd package/win32/build/src/cpp && rstudio-tests.bat --scope core'
                                     }
                                     catch(err){
-                                        currentBuild.result = "UNSTABLE"
+                                        unstable("C++ tests failed on Windows")
                                     }
                                 }
                                 if (current_container.flavor == "electron") {
@@ -451,7 +451,7 @@ try {
                                             bat 'cd src/node/desktop && scripts\\run-unit-tests.cmd'
                                         }
                                         catch(err){
-                                            currentBuild.result = "UNSTABLE"
+                                            unstable("Electron tests failed on Windows")
                                         }
                                     }
                                 }
@@ -518,14 +518,16 @@ try {
                                         FOR /F %%G IN ('dir /s /b *.pdb') DO (..\\..\\..\\dependencies\\windows\\breakpad-tools-windows\\dump_syms %%G > %%G.sym)
                                         '''
 
-                                        // upload the breakpad symbols
-                                        withCredentials([string(credentialsId: 'ide-sentry-api-key', variable: 'SENTRY_API_KEY')]) {
-                                            try {
-                                                // attempt to run sentry uplaod
-                                                bat "cd package\\win32\\build\\src\\cpp && set SENTRY_HTTP_MAX_RETRIES=${sentryUploadRetryLimit} && ..\\..\\..\\..\\..\\dependencies\\windows\\sentry-cli.exe --auth-token %SENTRY_API_KEY% upload-dif --log-level=debug --org rstudio --project ide-backend -t breakpad ."
-                                            } catch(err) {
-                                                // mark build as unstable if it fails
-                                                currentBuild.result = "UNSTABLE"
+                                        retry(sentryUploadRetryLimit) {
+                                            // upload the breakpad symbols
+                                            withCredentials([string(credentialsId: 'ide-sentry-api-key', variable: 'SENTRY_API_KEY')]) {
+                                                try {
+                                                    // attempt to run sentry uplaod
+                                                    bat "cd package\\win32\\build\\src\\cpp && ..\\..\\..\\..\\..\\dependencies\\windows\\sentry-cli.exe --auth-token %SENTRY_API_KEY% upload-dif --log-level=debug --org rstudio --project ide-backend -t breakpad ."
+                                                } catch(err) {
+                                                    // mark build as unstable if it fails
+                                                    unstable("Sentry upload failed on Windows")
+                                                }
                                             }
                                         }
                                     }

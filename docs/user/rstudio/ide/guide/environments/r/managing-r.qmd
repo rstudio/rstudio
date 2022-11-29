@@ -1,5 +1,6 @@
 ---
 title: "R Startup"
+date-meta: 2022-12-12
 ---
 
 Upon startup, R and RStudio look for a few different files used to control the behavior of the R session, for example by setting options or environment variables. In the context of [Posit Team](https://docs.posit.co/posit-team/), these settings are often used to set Posit Workbench (previously RStudio Server Pro) to search for packages in an Posit Package Manager repository.

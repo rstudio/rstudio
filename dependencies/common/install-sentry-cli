@@ -28,7 +28,7 @@ if ! [ -w /usr/local/bin ]; then
 fi
 
 # specify a version
-export SENTRY_CLI_VERSION=2.8.0
+export SENTRY_CLI_VERSION=2.9.0
 
 curl -sL https://sentry.io/get-cli/ | bash || true
 

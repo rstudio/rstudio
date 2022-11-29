@@ -1,5 +1,6 @@
 ---
 title: "RStudio Addins"
+date-meta: 2022-12-12
 ---
 
 RStudio addins provide a mechanism for executing R functions interactively from within RStudio; either through keyboard shortcuts, through the **Command Palette** or through the **Addins** menu.

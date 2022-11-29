@@ -1,6 +1,7 @@
 ---
 title: "Code Snippets"
 engine: knitr
+date-meta: 2022-12-12
 ---
 
 Code snippets are text macros that are used for quickly inserting common snippets of code. For example, the `fun` snippet inserts an R function definition:

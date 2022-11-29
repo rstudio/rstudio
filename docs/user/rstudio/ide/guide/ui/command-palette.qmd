@@ -1,5 +1,6 @@
 ---
 title: "Command Palette"
+date-meta: 2022-12-12
 ---
 
 ## What's a Command Palette?

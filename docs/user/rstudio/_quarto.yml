@@ -10,7 +10,7 @@ website:
   site-url: https://docs.rstudio.com/ide/user/
   repo-url: https://github.com/rstudio/rstudio/
   repo-subdir: "docs/user/rstudio/"
-  repo-actions: [edit, issue]
+  repo-actions: [edit, source]
   
   navbar:
     title: "RStudio User Guide<br>{{< var buildType >}} {{< var version >}}"
@@ -113,7 +113,7 @@ website:
           
   page-footer:
     left: |
-      Copyright © 2022 Posit, PBC. All Rights Reserved.
+      Copyright © 2022 Posit Software, PBC formerly RStudio, PBC. All Rights Reserved.
     right:
       - icon: house-fill
         href: https://www.posit.co

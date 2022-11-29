@@ -1,5 +1,6 @@
 ---
 title: "Publishing"
+date-meta: 2022-12-12
 ---
 
 ::: {.callout-warning}
