@@ -1032,7 +1032,7 @@ assign(x = ".rs.acCompletionTypes",
       
       # arguments that are already used by the matched call
       used <- names(as.list(matchedCall)[-1]) 
-      keep <- !names(formals$formals) %in% used
+      keep <- !names(formals$formals) %in% c("...", used)
 
       result <- .rs.appendCompletions(
          argCompletions,
