@@ -1000,11 +1000,12 @@ assign(x = ".rs.acCompletionTypes",
                      .drop <- c(.drop, as.character(arg))
                }
 
-               groupByCompletions <- .rs.makeCompletions(token = token,
-                                                         results = setdiff(.names, .drop),
-                                                         quote = FALSE,
-                                                         type = .rs.acCompletionTypes$COLUMN, 
-                                                         package = as.character(matchedCall[[".data"]]))
+               groupByCompletions <- .rs.makeCompletions(
+                  token    = token,
+                  results  = setdiff(.names, .drop),
+                  quote    = FALSE,
+                  type     = .rs.acCompletionTypes$COLUMN, 
+                  packages = as.character(matchedCall[[".data"]]))
                return(groupByCompletions)
             }
          }
@@ -3600,7 +3601,7 @@ assign(x = ".rs.acCompletionTypes",
       if (.rs.isS3Generic(completer)) 
       {
          on <- names(formals(completer))[1]
-         data <- .rs.getAnywhere(matchedCall[[on]])
+         data <- .rs.getAnywhere(matchedCall[[on]], envir = envir)
          if (!is.null(data)) {
             customCompletions <- tryCatch(error = function(e) NULL,
                completer(data, call = matchedCall, arg = activeArg, env = envir)
@@ -3619,10 +3620,14 @@ assign(x = ".rs.acCompletionTypes",
          for (comp in customCompletions) {
             completions <- .rs.appendCompletions(completions, 
                .rs.makeCompletions(
-                  token = token, 
-                  results = comp$text, 
-                  type = switch(comp$type, code = .rs.acCompletionTypes$CODE, column = .rs.acCompletionTypes$COLUMN), 
-                  meta = .rs.markdownToHTML(comp$description)
+                  token    = token, 
+                  results  = comp$text, 
+                  type     = switch(comp$type, 
+                     code     = .rs.acCompletionTypes$CODE, 
+                     column   = .rs.acCompletionTypes$COLUMN
+                  ), 
+                  meta     = .rs.markdownToHTML(comp$description), 
+                  packages = as.character(comp$source)
                )
             )
          }
