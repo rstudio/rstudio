@@ -38,6 +38,7 @@
 ### Posit Workbench
 
 - Adds `-l` (long) option to `rserver-url`. When `/usr/lib/rstudio-server/bin/rserver-url -l <port number>` is executed within a VS Code or Jupyter session, the full URL where a user can view a server proxied at that port is displayed (rstudio-pro#3620)
+- Support `launcher-local-proxy` load balancing option to ensure that session requests are always proxied from the local workbench server in a cluster. Eliminates the need to open a range of ports in the firewall for sessions to be reached by other workbench servers (rstudio/rstudio-pro#3670)
 
 #### Posit Workbench VS Code Sessions
 
@@ -99,3 +100,5 @@
 - Fixed an issue where `ssl-hsts-include-subdomains=1` would render Workbench non-functional. The setting now works as expected. (rstudio/rstudio-pro#3010)
 - Fixed an issue where the `suspend-session`, `suspend-all`, and `kill-all` subcommands of `rstudio-server` did not work when using the Launcher. (rstudio/rstudio-pro#4007)
 - Fixed conflicting keyboard shortcut for toggling screen reader support on macOS (#12339)
+- Fixed issue with session-ssl that prevented resuming some sessions in a load-balanced environment (rstudio/rstudio-pro#3759)
+- Fixed intermittent problem where sessions in the Posit Workbench homepage would display incorrect status over NFS (rstudio/rstudio-pro#3979)
