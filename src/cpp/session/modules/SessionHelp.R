@@ -676,25 +676,12 @@ options(help_type = "html")
                                     subset = TRUE,
                                     getSignature = FALSE)
 {
-   if (is.null(package))
+   # Ensure topic and package are not zero-length
+   if (!length(package))
       package <- ""
    
-   # Completions from the search path might have the 'package:' prefix, so
-   # lets strip that out.
-   package <- sub("package:", "", package, fixed = TRUE)
-   
-   # Ensure topic is not zero-length
    if (!length(topic))
       topic <- ""
-   
-   # If the package is not provided, but we're getting help on e.g.
-   # 'stats::rnorm', then split up the topic into the appropriate pieces.
-   if (package == "" && any(grepl(":{2,3}", topic, perl = TRUE)))
-   {
-      splat <- strsplit(topic, ":{2,3}", perl = TRUE)[[1]]
-      topic <- splat[[2]]
-      package <- splat[[1]]
-   }
    
    # If 'package' is the name of something on the search path, then we
    # attempt to resolve the object and get its help.
@@ -708,6 +695,19 @@ options(help_type = "html")
             return(NULL)
          return(.rs.getHelpFromObject(object, envir, topic))
       }
+   }
+   
+   # Completions from the search path might have the 'package:' prefix, so
+   # lets strip that out.
+   package <- sub("package:", "", package, fixed = TRUE)
+   
+   # If the package is not provided, but we're getting help on e.g.
+   # 'stats::rnorm', then split up the topic into the appropriate pieces.
+   if (package == "" && any(grepl(":{2,3}", topic, perl = TRUE)))
+   {
+      splat <- strsplit(topic, ":{2,3}", perl = TRUE)[[1]]
+      topic <- splat[[2]]
+      package <- splat[[1]]
    }
    
    helpfiles <- NULL
