@@ -276,34 +276,48 @@ RToolsInfo::RToolsInfo(const std::string& name,
       // not actually be defined or available in Rtools
       clangArgs.push_back("-U_MSC_VER");
 
-      // set GNUC levels
-      // (required for _mingw.h, which otherwise tries to use incompatible MSVC defines)
-      clangArgs.push_back("-D__GNUC__=10");
-      clangArgs.push_back("-D__GNUC_MINOR__=3");
-      clangArgs.push_back("-D__GNUC_PATCHLEVEL__=0");
+      std::string toolDir = "x86_64-w64-mingw32.static.posix";
+      FilePath gccRootPath = installPath.completeChildPath(toolDir + "lib/gcc" + toolDir);
+      std::vector<FilePath> gccPaths;
+      Error error = gccRootPath.getChildren(gccPaths);
+      if (error)
+          LOG_ERROR(error);
+      for (const FilePath& gccPath : gccPaths)
+      {
+          std::string gccVersionStem = gccPath.getStem();
+          std::vector<std::string> gccVersionNums;
+          boost::split(gccVersionNums, gccVersionStem, boost::is_any_of("."));
+          if (gccVersionNums.size() != 3)
+              LOG_DEBUG_MESSAGE("Not able to detect gcc version from installed RTools");
+          // set GNUC levels
+          // (required for _mingw.h, which otherwise tries to use incompatible MSVC defines)
+          clangArgs.push_back("-D__GNUC__=" + gccVersionNums[0]);
+          clangArgs.push_back("-D_GNUC_MINOR__=" + gccVersionNums[1]);
+          clangArgs.push_back("-D_GNUC_PATCHLEVEL__=" + gccVersionNums[2]);
 
-      // get C headers paths
-      auto cStems = {
-         "x86_64-w64-mingw32.static.posix/lib/gcc/x86_64-w64-mingw32.static.posix/10.3.0/include",
-         "x86_64-w64-mingw32.static.posix/include",
-         "x86_64-w64-mingw32.static.posix/lib/gcc/x86_64-w64-mingw32.static.posix/10.3.0/include-fixed"
-      };
+          // get C headers paths
+          std::vector<FilePath> cStems = {
+             gccPath.completeChildPath("include"),
+             installPath.completeChildPath(toolDir + "/include"),
+             gccPath.completeChildPath("/include-fixed")
+          };
 
-      for (auto&& stem : cStems)
-         cIncludePaths.push_back(installPath.completeChildPath(stem).getAbsolutePath());
+          for (auto&& stem : cStems)
+          {
+             cIncludePaths.push_back(stem.getAbsolutePath());
+             cppIncludePaths.push_back(stem.getAbsolutePath());
+          }
 
-      // get C++ headers
-      auto cppStems = {
-         "x86_64-w64-mingw32.static.posix/lib/gcc/x86_64-w64-mingw32.static.posix/10.3.0/include/c++",
-         "x86_64-w64-mingw32.static.posix/lib/gcc/x86_64-w64-mingw32.static.posix/10.3.0/include/c++/x86_64-w64-mingw32.static.posix",
-         "x86_64-w64-mingw32.static.posix/lib/gcc/x86_64-w64-mingw32.static.posix/10.3.0/include/c++/backward",
-         "x86_64-w64-mingw32.static.posix/lib/gcc/x86_64-w64-mingw32.static.posix/10.3.0/include",
-         "x86_64-w64-mingw32.static.posix/include",
-         "x86_64-w64-mingw32.static.posix/lib/gcc/x86_64-w64-mingw32.static.posix/10.3.0/include-fixed",
-      };
+          // get C++ headers
+          std::vector<FilePath> cppStems = {
+             gccPath.completeChildPath("include/c++"),
+             gccPath.completeChildPath("include/c++/" + toolDir),
+             gccPath.completeChildPath("include/c++/backward")
+          };
 
-      for (auto&& stem : cppStems)
-         cppIncludePaths.push_back(installPath.completeChildPath(stem).getAbsolutePath());
+          for (auto&& stem : cppStems)
+             cppIncludePaths.push_back(stem.getAbsolutePath());
+      }
    }
    else
    {
