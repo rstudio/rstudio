@@ -683,20 +683,6 @@ options(help_type = "html")
    if (!length(topic))
       topic <- ""
    
-   # If 'package' is the name of something on the search path, then we
-   # attempt to resolve the object and get its help.
-   if (package != "")
-   {
-      pos <- match(package, search(), nomatch = -1L)
-      if (pos >= 0)
-      {
-         object <- tryCatch(get(topic, pos = pos), error = function(e) NULL)
-         if (is.null(object))
-            return(NULL)
-         return(.rs.getHelpFromObject(object, envir, topic))
-      }
-   }
-   
    # Completions from the search path might have the 'package:' prefix, so
    # lets strip that out.
    package <- sub("package:", "", package, fixed = TRUE)
