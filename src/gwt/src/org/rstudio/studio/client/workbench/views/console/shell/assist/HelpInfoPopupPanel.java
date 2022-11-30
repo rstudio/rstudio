@@ -21,6 +21,7 @@ import com.google.gwt.user.client.Timer;
 import com.google.gwt.user.client.ui.*;
 
 import org.rstudio.core.client.BrowseCap;
+import org.rstudio.core.client.SafeHtmlUtil;
 import org.rstudio.core.client.StringUtil;
 import org.rstudio.core.client.widget.RStudioFrame;
 import org.rstudio.studio.client.application.ui.RStudioThemes;
@@ -221,12 +222,12 @@ public class HelpInfoPopupPanel extends PopupPanel
       timer_.cancel();
       vpanel_.clear();
       
-      Label label = new Label(title);
-      label.setStylePrimaryName(RES.styles().roxygenTitle());
+      HTML label = new HTML(SafeHtmlUtil.highlightSnippet(title, CompletionRequesterResources.INSTANCE.styles().snippet()));
+      label.setStylePrimaryName(RES.styles().codeTitle());
       vpanel_.add(label);
       
       HTML contents = new HTML(description);
-      contents.addStyleName(RES.styles().roxygenText());
+      contents.addStyleName(RES.styles().codeDescription());
       vpanel_.add(contents);
       
       doDisplay(false);

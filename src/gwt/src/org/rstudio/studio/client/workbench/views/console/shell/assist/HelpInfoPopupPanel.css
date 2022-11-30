@@ -82,6 +82,20 @@
    margin-bottom: 4px;
 }
 
+.codeTitle {
+   font-family: fixedWidthFont;
+   margin-bottom: 2px;
+}
+
+.codeDescription {
+   white-space: pre-wrap;
+}
+
+.codeDescription code {
+   font-family: fixedWidthFont;
+   color: rgb(116, 116, 116);
+}
+
 .rstudio-themes-dark-menus .helpPopup {
    color: #eaeaea;
    background: #5e5e4e;

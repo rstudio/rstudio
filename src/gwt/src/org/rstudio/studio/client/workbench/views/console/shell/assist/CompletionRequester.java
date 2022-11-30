@@ -1008,15 +1008,10 @@ public class CompletionRequester
          }
          else if (type == RCompletionType.CODE)
          {
-            String cleaned = SafeHtmlUtils.htmlEscape(display).replaceAll(
-               "\\$\\{\\d+:([^\\}]*)\\}", 
-               "<span class='" + RES.styles().snippet() + "'>$1</span>"
-            );
-
             SafeHtmlUtil.appendSpan(
                sb,
                style,
-               SafeHtmlUtils.fromTrustedString(cleaned));
+               SafeHtmlUtil.highlightSnippet(display, RES.styles().snippet()));
          }
          else
          {
