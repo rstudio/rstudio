@@ -26,6 +26,28 @@
    color: #000023 !important; 
 }
 
+.helpGlimpseText {
+   margin: 0;
+   padding: 0; 
+}
+
+.helpGlimpseText ul {
+   padding-inline-start: 0;
+}
+.helpGlimpseText ul li {
+   display: inline-block;
+   margin: 2px;  
+   padding: 2px;
+   border: 1px solid #cfd4d8;
+   background-color: #ffffff;
+   font-family: fixedWidthFont;
+   font-size: 10px;
+}
+
+.helpGlimpseText ul li i{
+   color: #cfd4d8;
+}
+
 .rstudio-themes-dark-menus .helpBodyText a {
    color: #FFF;
 }
@@ -42,6 +64,22 @@
 .snippetText {
    font-family: fixedWidthFont;
    white-space: pre-wrap;
+}
+
+.roxygenText {
+   white-space: pre-wrap;
+}
+
+.roxygenText code {
+   font-family: fixedWidthFont;
+   color: rgb(116, 116, 116);
+}
+
+.roxygenTitle {
+   font-family: fixedWidthFont;
+   color: #2154bf;
+   font-weight: bold;
+   margin-bottom: 4px;
 }
 
 .rstudio-themes-dark-menus .helpPopup {

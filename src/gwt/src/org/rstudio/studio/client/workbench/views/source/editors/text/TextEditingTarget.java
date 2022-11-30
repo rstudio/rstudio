@@ -227,6 +227,7 @@ public class TextEditingTarget implements
 
    public static final String SOFT_WRAP_LINES = "softWrapLines";
    public static final String USE_RAINBOW_PARENS = "useRainbowParens";
+   public static final String USE_RAINBOW_FENCED_DIVS = "useRainbowFencedDivs";
    
    public static final String QUARTO_PREVIEW_FORMAT = "quartoPreviewFormat";
 
@@ -283,6 +284,7 @@ public class TextEditingTarget implements
       void toggleRmdVisualMode();
       void toggleSoftWrapMode();
       void toggleRainbowParens();
+      void toggleRainbowFencedDivs();
 
       void setNotebookUIVisible(boolean visible);
 
@@ -3589,6 +3591,12 @@ public class TextEditingTarget implements
    void onToggleRainbowParens()
    {
       view_.toggleRainbowParens();
+   }
+
+   @Handler
+   void onToggleRainbowFencedDivs()
+   {
+      view_.toggleRainbowFencedDivs();
    }
 
    @Handler

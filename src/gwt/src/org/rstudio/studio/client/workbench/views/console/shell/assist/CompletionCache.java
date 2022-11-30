@@ -137,15 +137,19 @@ public class CompletionCache
          {
             int lhsType = typeNarrow.get(lhs);
             int rhsType = typeNarrow.get(rhs);
-            
+
+            int lhsTypeScore = RCompletionType.score(lhsType);
+            int rhsTypeScore = RCompletionType.score(rhsType);
+            if (lhsTypeScore < rhsTypeScore)
+               return -1;
+            else if (lhsTypeScore > rhsTypeScore)
+               return 1;
+
             String lhsName = completionsNarrow.get(lhs);
             String rhsName = completionsNarrow.get(rhs);
             
             int lhsScore = CodeSearchOracle.scoreMatch(lhsName, token, false);
             int rhsScore = CodeSearchOracle.scoreMatch(rhsName, token, false);
-            
-            if (lhsType == RCompletionType.ARGUMENT) lhsType -= 3;
-            if (rhsType == RCompletionType.ARGUMENT) rhsType -= 3;
             
             if (lhsScore == rhsScore)
                return lhsName.compareTo(rhsName);
@@ -192,6 +196,7 @@ public class CompletionCache
             metaSorted.cast(),
             original.getGuessedFunctionName(),
             original.getExcludeOtherCompletions(),
+            original.getExcludeOtherArgumentCompletions(),
             original.getOverrideInsertParens(),
             original.isCacheable(),
             original.getHelpHandler(),

@@ -135,6 +135,11 @@ public class TextEditingTargetPrefsHelper
             {
                docDisplay.setRainbowParentheses(arg);
             }));
+      releaseOnDismiss.add(prefs.rainbowFencedDivs().bind(
+            (arg) ->
+            {
+               docDisplay.setRainbowFencedDivs(arg);
+            }));
       releaseOnDismiss.add(prefs.codeCompletionOther().bind(
             (arg) ->
             {

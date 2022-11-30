@@ -2456,6 +2456,17 @@ public class AceEditor implements DocDisplay,
       return _getRainbowParenthesesImpl();
    }
 
+   public void setRainbowFencedDivs(boolean rainbow)
+   {
+      _setRainbowFencedDivsImpl(rainbow);
+      widget_.getEditor().retokenizeDocument();
+   }
+
+   public boolean getRainbowFencedDivs()
+   {
+      return _getRainbowFencedDivsImpl();
+   }
+
    public void setBackgroundColor(String color) 
    {
       widget_.getEditor().getRenderer().setBackgroundColor(color);
@@ -2494,6 +2505,18 @@ public class AceEditor implements DocDisplay,
    /*-{
      var Mode = $wnd.require("mode/rainbow_paren_highlight_rules");
      return Mode.getRainbowParentheses();
+   }-*/;
+
+   private native final void _setRainbowFencedDivsImpl(boolean rainbow)
+   /*-{
+      var Mode = $wnd.require("mode/markdown_highlight_rules");
+      Mode.setRainbowFencedDivs(rainbow);
+   }-*/;
+
+   private native final boolean _getRainbowFencedDivsImpl()
+   /*-{
+     var Mode = $wnd.require("mode/markdown_highlight_rules");
+     return Mode.getRainbowFencedDivs();
    }-*/;
 
    public void enableSearchHighlight()

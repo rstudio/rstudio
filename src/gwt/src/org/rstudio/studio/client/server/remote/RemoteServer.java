@@ -1402,7 +1402,7 @@ public class RemoteServer implements Server
 
    public void getHelp(String topic,
                        String packageName,
-                       int options,
+                       int type,
                        ServerRequestCallback<HelpInfo> requestCallback)
    {
       JSONArray params = new JSONArray();
@@ -1411,7 +1411,7 @@ public class RemoteServer implements Server
          params.set(1, new JSONString(packageName));
       else
          params.set(1, JSONNull.getInstance());
-      params.set(2, new JSONNumber(options));
+      params.set(2, new JSONNumber(type));
 
       sendRequest(RPC_SCOPE, GET_HELP, params, requestCallback);
    }
@@ -6929,7 +6929,7 @@ public class RemoteServer implements Server
    private static final String STAN_RUN_DIAGNOSTICS = "stan_run_diagnostics";
 
    private static final String SQL_GET_COMPLETIONS = "sql_get_completions";
-
+   
    private static final String GET_CPP_CAPABILITIES = "get_cpp_capabilities";
    private static final String INSTALL_BUILD_TOOLS = "install_build_tools";
    private static final String START_BUILD = "start_build";

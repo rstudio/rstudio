@@ -139,6 +139,7 @@ public class YamlCompletionManager extends CompletionManagerBase
                true,
                true,
                true,
+               true,
                null,
                null, 
                JsUtil.toJsArrayInteger(new ArrayList<>(values.size())));         

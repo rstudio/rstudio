@@ -42,6 +42,7 @@ public class SourceItem extends JavaScriptObject
    public static final int TEST                 = 11;
    public static final int ROXYGEN              = 12;
    public static final int MACRO                = 13;
+   public static final int PACKAGE              = 14;
 
    public final native int getType() /*-{
       return this.type;

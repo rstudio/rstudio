@@ -1443,7 +1443,8 @@ public:
       Math       = 10,
       Test       = 11, 
       Roxygen    = 12, 
-      Macro      = 13
+      Macro      = 13, 
+      Package    = 14
    };
 
    SourceItem()
@@ -1518,32 +1519,20 @@ SourceItem fromRSourceItem(const r_util::RSourceItem& rSourceItem)
    case RSourceItem::Roxygen:
       type = SourceItem::Roxygen;
       break;
+   case RSourceItem::Package:
+      type = SourceItem::Package;
+      break;
    case RSourceItem::None:
    default:
       type = SourceItem::None;
       break;
    }
 
-   // calculate extra info
-   std::string extraInfo;
-   if (rSourceItem.signature().size() > 0)
-   {
-      extraInfo.append("{");
-      for (std::size_t i = 0; i < rSourceItem.signature().size(); i++)
-      {
-         if (i > 0)
-            extraInfo.append(", ");
-         extraInfo.append(rSourceItem.signature()[i].type());
-      }
-
-      extraInfo.append("}");
-   }
-
    // return source item
    return SourceItem(type,
                      rSourceItem.name(),
                      "",
-                     extraInfo,
+                     rSourceItem.extraInfo(),
                      rSourceItem.context(),
                      rSourceItem.line(),
                      rSourceItem.column(), 
