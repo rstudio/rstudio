@@ -676,6 +676,9 @@ options(help_type = "html")
                                     subset = TRUE,
                                     getSignature = FALSE)
 {
+   if (is.null(package))
+      package <- ""
+   
    # Completions from the search path might have the 'package:' prefix, so
    # lets strip that out.
    package <- sub("package:", "", package, fixed = TRUE)
@@ -684,9 +687,9 @@ options(help_type = "html")
    if (!length(topic))
       topic <- ""
    
-   # If the topic is not provided, but we're getting help on e.g.
+   # If the package is not provided, but we're getting help on e.g.
    # 'stats::rnorm', then split up the topic into the appropriate pieces.
-   if (!length(package) && any(grepl(":{2,3}", topic, perl = TRUE)))
+   if (package == "" && any(grepl(":{2,3}", topic, perl = TRUE)))
    {
       splat <- strsplit(topic, ":{2,3}", perl = TRUE)[[1]]
       topic <- splat[[2]]
@@ -695,7 +698,7 @@ options(help_type = "html")
    
    # If 'package' is the name of something on the search path, then we
    # attempt to resolve the object and get its help.
-   if (length(package))
+   if (package != "")
    {
       pos <- match(package, search(), nomatch = -1L)
       if (pos >= 0)
@@ -708,7 +711,7 @@ options(help_type = "html")
    }
    
    helpfiles <- NULL
-   if (!length(package) || package == "") {
+   if (package == "") {
       helpfiles <- utils::help(topic, help_type = "html")
    } else {
       helpfiles <- tryCatch(
@@ -741,7 +744,7 @@ options(help_type = "html")
    #    <libpath>/<package>/help/<...>
    #
    # so we look for the 'help' component and parse from there
-   if (!length(package) || package == "")
+   if (package == "")
    {
       parts <- strsplit(file, "/", fixed = TRUE)[[1L]]
       
@@ -760,7 +763,7 @@ options(help_type = "html")
    }
    
    # try to figure out the encoding for the provided HTML
-   if (length(package) && nzchar(package))
+   if (package != "")
    {
       packagePath <- system.file(package = package)
       if (nzchar(packagePath))
@@ -797,9 +800,7 @@ options(help_type = "html")
    if (is.null(sig) && getSignature)
    {
       object <- NULL
-      if (length(package) &&
-             package != "" &&
-             package %in% loadedNamespaces())
+      if (package %in% loadedNamespaces())
       {
          object <- tryCatch(
             get(topic, envir = asNamespace(package)),
