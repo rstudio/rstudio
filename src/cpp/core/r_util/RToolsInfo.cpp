@@ -277,18 +277,20 @@ RToolsInfo::RToolsInfo(const std::string& name,
       clangArgs.push_back("-U_MSC_VER");
 
       std::string toolDir = "x86_64-w64-mingw32.static.posix";
-      FilePath gccRootPath = installPath.completeChildPath(toolDir + "lib/gcc" + toolDir);
+      FilePath gccRootPath = installPath.completeChildPath(toolDir + "/lib/gcc/" + toolDir);
       std::vector<FilePath> gccPaths;
       Error error = gccRootPath.getChildren(gccPaths);
       if (error)
           LOG_ERROR(error);
       for (const FilePath& gccPath : gccPaths)
       {
-          std::string gccVersionStem = gccPath.getStem();
+          std::string gccVersionStr = gccPath.getFilename();
           std::vector<std::string> gccVersionNums;
-          boost::split(gccVersionNums, gccVersionStem, boost::is_any_of("."));
-          if (gccVersionNums.size() != 3)
+          boost::split(gccVersionNums, gccVersionStr, boost::is_any_of("."));
+          if (gccVersionNums.size() != 3) {
               LOG_DEBUG_MESSAGE("Not able to detect gcc version from installed RTools");
+              continue;
+          }
           // set GNUC levels
           // (required for _mingw.h, which otherwise tries to use incompatible MSVC defines)
           clangArgs.push_back("-D__GNUC__=" + gccVersionNums[0]);
@@ -299,7 +301,7 @@ RToolsInfo::RToolsInfo(const std::string& name,
           std::vector<FilePath> cStems = {
              gccPath.completeChildPath("include"),
              installPath.completeChildPath(toolDir + "/include"),
-             gccPath.completeChildPath("/include-fixed")
+             gccPath.completeChildPath("include-fixed")
           };
 
           for (auto&& stem : cStems)
