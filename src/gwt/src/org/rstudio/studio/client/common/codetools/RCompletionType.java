@@ -66,6 +66,11 @@ public class RCompletionType
              type == DIRECTORY;
    }
 
+   public static boolean isArgumentType(int type)
+   {
+      return type == ARGUMENT || type == SECUNDARY_ARGUMENT;
+   }
+
    public static int score(int type) 
    {
       // same logic as .rs.sortCompletions() on the server side
