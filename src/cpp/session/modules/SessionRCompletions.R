@@ -944,9 +944,6 @@ assign(x = ".rs.acCompletionTypes",
          }, FUN.VALUE = character(1))
       }
 
-      if (!is.null(formals$object)) 
-         object <- formals$object
-      
       # If we're getting completions for the `base::c` function, just discard
       # the argument completions, since other context completions are more
       # likely and more useful
@@ -1016,7 +1013,8 @@ assign(x = ".rs.acCompletionTypes",
          token = token,
          activeArg = activeArg,
          functionCall = functionCall,
-         envir = envir
+         envir = envir, 
+         object = object
       )
       
       # If the active argument was 'formula' and we were able
@@ -3557,7 +3555,8 @@ assign(x = ".rs.acCompletionTypes",
 .rs.addFunction("getCompletionsArgument", function(token,
                                                    activeArg,
                                                    functionCall = NULL,
-                                                   envir = NULL)
+                                                   envir = NULL, 
+                                                   object = .rs.resolveObjectFromFunctionCall(functionCall, envir))
 {
    completions <- .rs.emptyCompletions()
    
@@ -3572,14 +3571,14 @@ assign(x = ".rs.acCompletionTypes",
          name <- as.character(name)
 
          # and only consider data.table objects
-         object <- try(.rs.getAnywhere(name, envir = envir))
+         data <- try(.rs.getAnywhere(name, envir = envir))
 
-         if (inherits(object, "data.table")) 
+         if (inherits(data, "data.table")) 
          {
             return(.rs.getDataTableNamedArgumentCompletions(
                token, 
                name = name, 
-               object = object,
+               object = data,
                activeArg = activeArg, 
                functionCall = functionCall
             ))
@@ -3587,32 +3586,15 @@ assign(x = ".rs.acCompletionTypes",
       }
    }
 
-   object <- if (!is.null(functionCall))
-      .rs.resolveObjectFromFunctionCall(functionCall, envir)
-   
    matchedCall <- if (!is.null(object))
       .rs.matchCall(object, functionCall)
 
    if (!is.null(matchedCall) && !is.null(completer <- attr(object, "complete")))
    {
-      # if the completer is generic, we resolve the argument from the 
-      # matched call, so that it can dispatch
-      customCompletions <- NULL
-      if (.rs.isS3Generic(completer)) 
-      {
-         on <- names(formals(completer))[1]
-         data <- .rs.getAnywhere(matchedCall[[on]], envir = envir)
-         if (!is.null(data)) {
-            customCompletions <- tryCatch(error = function(e) NULL,
-               completer(data, call = matchedCall, arg = activeArg, env = envir)
-            )
-         }
-      } else {
-         customCompletions <- tryCatch(error = function(e) NULL,
-            completer(call = matchedCall, arg = activeArg, env = envir)
-         )
-      }
-
+      customCompletions <- tryCatch(error = function(e) NULL,
+         completer(call = matchedCall, arg = activeArg, env = envir)
+      )
+   
       if (!is.null(customCompletions))
       {
          completions <- .rs.emptyCompletions()
