@@ -1047,7 +1047,8 @@ assign(x = ".rs.acCompletionTypes",
             excludeOtherCompletions = FALSE,
             excludeOtherArgumentCompletions = TRUE,
             fguess = fguess,
-            orderStartsWithAlnumFirst = FALSE
+            orderStartsWithAlnumFirst = FALSE, 
+            suggestOnAccept = !is.null(attr(object, "complete"))
          )
       )
    }

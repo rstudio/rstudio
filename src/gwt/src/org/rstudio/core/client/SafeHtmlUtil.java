@@ -287,7 +287,7 @@ public class SafeHtmlUtil
    public static SafeHtml highlightSnippet(String text, String snippetClass) 
    {
       String replaced = SafeHtmlUtils.htmlEscape(text).replaceAll(
-         "\\$\\{\\d+:([^\\}]*)\\}", 
+         "\\$\\{\\d+:?([^\\}]*)\\}", 
          "<span class='" + snippetClass + "'>$1</span>"
       );
       return SafeHtmlUtils.fromTrustedString(replaced);
