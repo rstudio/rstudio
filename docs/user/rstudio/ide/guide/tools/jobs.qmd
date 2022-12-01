@@ -65,7 +65,7 @@ While background jobs are running, a progress bar will appear in the R console s
 
 ### Detailed progress
 
-The progress bar RStudio shows for your job represents the execution of each top-level statement in your R script. If you want a little more insight into which part of the script is currently running, you can use RStudio's [code sections](../code/code-navigation.html) feature. Add a section marker like this to your R script:
+The progress bar RStudio shows for your job represents the execution of each top-level statement in your R script. If you want a little more insight into which part of the script is currently running, you can use RStudio's [code sections](../code/code-sections.html) feature. Add a section marker like this to your R script:
 
 ```markdown
 # Apply the model ----
