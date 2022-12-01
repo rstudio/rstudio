@@ -1037,6 +1037,14 @@ public class CompletionRequester
                   "{" + source.replaceAll("package:", "") + "}");
          }
 
+         if (type == RCompletionType.CODE && !StringUtil.isNullOrEmpty(source))
+         {
+            SafeHtmlUtil.appendSpan(
+                  sb,
+                  RES.styles().argument(),
+                  source);
+         }
+
          if (type == RCompletionType.COLUMN && !StringUtil.isNullOrEmpty(source)) 
          {
             SafeHtmlUtil.appendSpan(
