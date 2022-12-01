@@ -107,3 +107,79 @@ test_that(".rs.matchCall() removes named arguments not in the formals", {
         quote(fun(aaa = a))
     )
 })
+
+test_that(".rs.makeCompletions() handle optional $suggestOnAccept", {
+    expect_null(
+        .rs.makeCompletions("", c("a", "b"))$suggestOnAccept
+    )
+    expect_equal(
+        .rs.makeCompletions("", c("a", "b"), suggestOnAccept = logical())$suggestOnAccept, 
+        c(FALSE, FALSE)
+    )
+    expect_equal(
+        .rs.makeCompletions("", c("a", "b"), suggestOnAccept = TRUE)$suggestOnAccept, 
+        c(TRUE, TRUE)
+    )
+    expect_equal(
+        .rs.makeCompletions("", c("a", "b"), suggestOnAccept = c(TRUE, FALSE))$suggestOnAccept, 
+        c(TRUE, FALSE)
+    )
+})
+
+test_that(".rs.appendCompletions() handle optional $suggestOnAccept", {
+    expect_null(
+        .rs.appendCompletions(
+            .rs.makeCompletions("", c("a", "b")), 
+            .rs.makeCompletions("", c("c", "d", "e"))
+        )$suggestOnAccept
+    )
+
+    expect_equal(
+        .rs.appendCompletions(
+            .rs.makeCompletions("", c("a", "b"), suggestOnAccept = c(TRUE, FALSE)), 
+            .rs.makeCompletions("", c("c", "d", "e"))
+        )$suggestOnAccept, 
+        c(TRUE, FALSE, FALSE, FALSE, FALSE)
+    )
+
+    expect_equal(
+        .rs.appendCompletions(
+            .rs.makeCompletions("", c("a", "b")), 
+            .rs.makeCompletions("", c("c", "d", "e"), suggestOnAccept = c(TRUE, FALSE, TRUE))
+        )$suggestOnAccept, 
+        c(FALSE, FALSE, TRUE, FALSE, TRUE)
+    )
+
+    expect_equal(
+        .rs.appendCompletions(
+            .rs.makeCompletions("", c("a", "b")     , suggestOnAccept = c(FALSE, TRUE)), 
+            .rs.makeCompletions("", c("c", "d", "e"), suggestOnAccept = c(TRUE, FALSE, TRUE))
+        )$suggestOnAccept, 
+        c(FALSE, TRUE, TRUE, FALSE, TRUE)
+    )
+})
+
+test_that(".rs.subsetCompletions() handle optional $suggestOnAccept", {
+    expect_equal(
+        .rs.subsetCompletions(
+            .rs.makeCompletions("", c("c", "d", "e"), suggestOnAccept = c(TRUE, FALSE, TRUE)), 
+            1
+        )$suggestOnAccept, 
+        TRUE
+    )
+
+    expect_equal(
+        .rs.subsetCompletions(
+            .rs.makeCompletions("", c("c", "d", "e"), suggestOnAccept = c(TRUE, FALSE, TRUE)), 
+            c(TRUE, TRUE, FALSE)
+        )$suggestOnAccept, 
+        c(TRUE, FALSE)
+    )
+    
+    expect_null(
+        .rs.subsetCompletions(
+            .rs.makeCompletions("", c("c", "d", "e")), 
+            1
+        )$suggestOnAccept
+    )
+})
