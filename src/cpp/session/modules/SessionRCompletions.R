@@ -1219,7 +1219,8 @@ assign(x = ".rs.acCompletionTypes",
                                             cacheable = TRUE,
                                             helpHandler = NULL,
                                             language = "R", 
-                                            context = numeric())
+                                            context = numeric(), 
+                                            suggestOnAccept = NULL)
 {
    if (is.null(results))
       results <- character()
@@ -1234,6 +1235,9 @@ assign(x = ".rs.acCompletionTypes",
    type     <- .rs.formCompletionVector(type, .rs.acCompletionTypes$UNKNOWN, n)
    meta     <- .rs.formCompletionVector(meta, "", n)
    context  <- .rs.formCompletionVector(context, .rs.acCompletionTypes$UNKNOWN, n)
+
+   if (!is.null(suggestOnAccept))
+      suggestOnAccept <- .rs.formCompletionVector(suggestOnAccept, FALSE, n)
    
    # Favor completions starting with a letter
    if (orderStartsWithAlnumFirst)
@@ -1249,6 +1253,9 @@ assign(x = ".rs.acCompletionTypes",
       quote    <- quote[order]
       type     <- type[order]
       meta     <- meta[order]
+
+      if (!is.null(suggestOnAccept))
+         suggestOnAccept <- suggestOnAccept[order]
    }
    
    # Avoid generating too many completions
@@ -1263,6 +1270,9 @@ assign(x = ".rs.acCompletionTypes",
       quote    <- quote[idx]
       type     <- type[idx]
       meta     <- meta[idx]
+
+      if (!is.null(suggestOnAccept))
+         suggestOnAccept <- suggestOnAccept[idx]
    }
    
    list(token = token,
@@ -1278,7 +1288,8 @@ assign(x = ".rs.acCompletionTypes",
         cacheable = .rs.scalar(cacheable),
         helpHandler = .rs.scalar(helpHandler),
         language = .rs.scalar(language), 
-        context = context)
+        context = context, 
+        suggestOnAccept = suggestOnAccept)
 })
 
 .rs.addFunction("subsetCompletions", function(completions, indices)
@@ -1286,14 +1297,43 @@ assign(x = ".rs.acCompletionTypes",
    for (name in c("results", "packages", "quote", "type"))
       completions[[name]] <- completions[[name]][indices]
    
+   if (!is.null(completions[["suggestOnAccept"]]))
+      completions[["suggestOnAccept"]] <- completions[["suggestOnAccept"]][indices]
+
    completions
+})
+
+.rs.addFunction("appendCompletionsOptionalElement", function(old, new, name, default) 
+{
+   oldHas <- !is.null(old[[name]])
+   newHas <- !is.null(new[[name]])
+
+   if (oldHas)
+   {
+      if (newHas) {
+         return(c(old[[name]], new[[name]]))
+      } else {
+         return(c(old[[name]], rep(default, length(new$results))))
+      }
+   }
+   else 
+   {
+      if (newHas) {
+         return(c(rep(default, length(old$results)), new[[name]]))
+      } else {
+         return(NULL)
+      }
+   }
+
 })
 
 .rs.addFunction("appendCompletions", function(old, new)
 {
+   old[["suggestOnAccept"]] <- .rs.appendCompletionsOptionalElement(old, new, "suggestOnAccept", FALSE)
+   
    for (name in c("results", "packages", "quote", "type", "meta"))
       old[[name]] <- c(old[[name]], new[[name]])
-   
+
    # resolve duplicates -- a completion is duplicated if its result
    # and package are identical (if 'type' or 'quote' differs, it's probably a bug?)
    drop <- intersect(
@@ -1305,6 +1345,10 @@ assign(x = ".rs.acCompletionTypes",
    {
       for (name in c("results", "packages", "quote", "type", "meta"))
          old[[name]] <- old[[name]][-c(drop)]
+
+      if (!is.null(old[["suggestOnAccept"]])) {
+         old[["suggestOnAccept"]] <- old[["suggestOnAccept"]][-c(drop)]
+      }
    }
    
    if (length(new$token) && new$token != "")
