@@ -1898,7 +1898,8 @@ assign(x = ".rs.acCompletionTypes",
 })
 
 .rs.addFunction("getCompletionsActiveFrame", function(token,
-                                                      envir)
+                                                      envir, 
+                                                      class = NULL)
 {
    currentEnv <- envir
    encounteredEnvs <- list()
@@ -1918,15 +1919,22 @@ assign(x = ".rs.acCompletionTypes",
       }
       
       objects <- objects(currentEnv, all.names = TRUE)
+      objects <- objects[.rs.fuzzyMatches(objects, token)]
       
       completions <- c(completions, objects)
       types <- c(
          types,
-         vapply(objects, USE.NAMES = FALSE, FUN.VALUE = numeric(1), function(object) {
-            tryCatch(
-               .rs.getCompletionType(get(object, envir = currentEnv, inherits = TRUE)),
-               error = function(e) .rs.acCompletionTypes$UNKNOWN
-            )
+         vapply(objects, USE.NAMES = FALSE, FUN.VALUE = numeric(1), function(name) {
+            tryCatch({
+               object <- get(name, envir = currentEnv, inherits = TRUE)
+               if (is.null(class) || inherits(object, class)) {
+                  type <- .rs.getCompletionType(object)
+               } else {
+                  type <- -1
+               }
+               type
+            },
+            error = function(e) .rs.acCompletionTypes$UNKNOWN)
          })
       )
       
@@ -1934,7 +1942,7 @@ assign(x = ".rs.acCompletionTypes",
       currentEnv <- parent.env(currentEnv)
    }
    
-   keep <- .rs.fuzzyMatches(completions, token)
+   keep <- types >= 0
    .rs.makeCompletions(token = token,
                        results = completions[keep],
                        type = types[keep])

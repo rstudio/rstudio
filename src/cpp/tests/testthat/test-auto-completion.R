@@ -183,3 +183,16 @@ test_that(".rs.subsetCompletions() handle optional $suggestOnAccept", {
         )$suggestOnAccept
     )
 })
+
+test_that(".rs.getCompletionsActiveFrame(class=) can filter objects", {
+    e <- new.env(parent = globalenv())
+    e[["a"]] <- data.frame()
+    e[["b"]] <- 1
+    e[["c"]] <- function(){}
+
+    expect_identical(.rs.getCompletionsActiveFrame("", e, "data.frame")$results, "a")
+    expect_identical(.rs.getCompletionsActiveFrame("", e, "numeric")$results   , "b")
+    expect_identical(.rs.getCompletionsActiveFrame("", e, "function")$results  , "c")
+
+    expect_identical(.rs.getCompletionsActiveFrame("", e)$results, c("a", "b", "c"))
+})
