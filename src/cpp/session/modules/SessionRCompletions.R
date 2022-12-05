@@ -3625,18 +3625,32 @@ assign(x = ".rs.acCompletionTypes",
          completions <- .rs.emptyCompletions()
 
          for (comp in customCompletions) {
-            completions <- .rs.appendCompletions(completions, 
-               .rs.makeCompletions(
-                  token    = token, 
-                  results  = comp$text, 
-                  type     = switch(comp$type, 
-                     code     = .rs.acCompletionTypes$CODE, 
-                     column   = .rs.acCompletionTypes$COLUMN
-                  ), 
-                  meta     = .rs.markdownToHTML(comp$description), 
-                  packages = as.character(comp$source)
+            if (inherits(comp, "objects_completion")) 
+            {
+               completions <- .rs.appendCompletions(completions, 
+                  .rs.getCompletionsActiveFrame(token, envir = envir, class = comp$class)
                )
-            )
+               completions <- .rs.appendCompletions(completions, 
+                  .rs.getCompletionsSearchPath(token, class = comp$class)
+               )
+            }
+            else 
+            {
+               completions <- .rs.appendCompletions(completions, 
+                  .rs.makeCompletions(
+                     token    = token, 
+                     results  = comp$text, 
+                     type     = switch(comp$type, 
+                        code     = .rs.acCompletionTypes$CODE, 
+                        column   = .rs.acCompletionTypes$COLUMN
+                     ), 
+                     meta     = .rs.markdownToHTML(comp$description), 
+                     packages = as.character(comp$source)
+                  )
+               )
+            } 
+
+            
          }
 
          keep <- .rs.fuzzyMatches(completions$results, token)
