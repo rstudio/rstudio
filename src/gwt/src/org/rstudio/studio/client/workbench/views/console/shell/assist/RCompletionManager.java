@@ -1979,10 +1979,9 @@ public class RCompletionManager implements CompletionManager
          {
             quote = true;
          }
-         
          // if this is already a syntactic identifier, no quote is required
          if (quote)
-            return "`" + value.replaceAll("`", "\\`") + "`";
+            return "`" + value.replaceAll("`", "\\\\`") + "`";
          
          return value;
       }
@@ -2131,7 +2130,7 @@ public class RCompletionManager implements CompletionManager
          {
             value = quoteIfNotSyntacticNameCompletion(qualifiedName);
          }
-
+         
          /* In some cases, applyValue can be called more than once
           * as part of the same completion instance--specifically,
           * if there's only one completion candidate and it is in
