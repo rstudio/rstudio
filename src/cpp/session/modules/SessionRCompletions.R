@@ -1978,7 +1978,8 @@ assign(x = ".rs.acCompletionTypes",
 })
 
 .rs.addFunction("getCompletionsSearchPath", function(token,
-                                                     overrideInsertParens = FALSE)
+                                                     overrideInsertParens = FALSE, 
+                                                     class = NULL)
 {
    objects <- if (.rs.startsWith(token, "."))
       .rs.objectsOnSearchPath(".")
@@ -2040,9 +2041,14 @@ assign(x = ".rs.acCompletionTypes",
       
       if (inherits(object, "error"))
          return(.rs.acCompletionTypes$UNKNOWN)
-      
-      type <- .rs.getCompletionType(object)
-      
+
+      # if we search for a given class (e.g. "data.frame")
+      # and object isn't: mark as -1 so that it can be dropped later
+      if (is.null(class) || inherits(object, class))
+         type <- .rs.getCompletionType(object)
+      else 
+         type <- -1L
+
       # fix up source package for S4 generics
       if (type %in% .rs.acCompletionTypes$S4_GENERIC) {
          package <- attr(object, "package", exact = TRUE)
@@ -2056,6 +2062,16 @@ assign(x = ".rs.acCompletionTypes",
    
    # Keywords are really from the base package
    packages[packages == "keywords"] <- "base"
+
+   if (!is.null(class))
+   {
+      drop <- c(-1, .rs.acCompletionTypes$KEYWORD, .rs.acCompletionTypes$UNKNOWN)
+      keep <- which(! type %in% drop)
+
+      results <- results[keep]
+      packages <- packages[keep]
+      type <- type[keep]
+   }
    
    .rs.makeCompletions(token = token,
                        results = results,
