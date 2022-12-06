@@ -32,6 +32,7 @@ public class Completions extends JavaScriptObject
                                                       JsArrayString meta,
                                                       String fguess,
                                                       boolean excludeOtherCompletions,
+                                                      boolean excludeOtherArgumentCompletions,
                                                       boolean overrideInsertParens,
                                                       boolean cacheable,
                                                       String helpHandler,
@@ -51,6 +52,7 @@ public class Completions extends JavaScriptObject
          meta: meta,
          fguess: fguess ? [fguess] : null,
          excludeOtherCompletions: excludeOtherCompletions,
+         excludeOtherArgumentCompletions: excludeOtherArgumentCompletions,
          overrideInsertParens: overrideInsertParens,
          cacheable: cacheable,
          helpHandler: helpHandler,
@@ -153,7 +155,11 @@ public class Completions extends JavaScriptObject
    public final native boolean getExcludeOtherCompletions() /*-{
       return this.excludeOtherCompletions;
    }-*/;
-   
+
+   public final native boolean getExcludeOtherArgumentCompletions() /*-{
+      return this.excludeOtherArgumentCompletions;
+   }-*/;
+
    public final native boolean getOverrideInsertParens() /*-{
       return this.overrideInsertParens;
    }-*/;
@@ -165,6 +171,5 @@ public class Completions extends JavaScriptObject
    public final native String getLanguage() /*-{
       return this.language;
    }-*/;
-   
    
 }

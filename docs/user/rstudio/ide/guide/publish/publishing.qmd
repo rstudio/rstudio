@@ -3,21 +3,18 @@ title: "Publishing"
 date-meta: 2022-12-12
 ---
 
-::: {.callout-warning}
-This section is not complete until we have updated screenshots for publishing to Posit Connect.
-:::
-
 The following documentation is an overview of "Push-button Deployment" in RStudio. 
 
 For full documentation on options for specific platforms:  
 
-- [Posit Connect User Guide](https://docs.posit.co/connect/user/connecting/)
-- [ShinyApps.io User Guide](https://docs.posit.co/shinyapps.io/)
-- [RPubs Getting Started](https://rpubs.com/about/getting-started)
+-   [Posit Connect User Guide](https://docs.posit.co/connect/user/connecting/)
+-   [Posit Cloud User Guide](https://posit.cloud/learn/guide#intro-publish-app)
+-   [RPubs - Getting Started](https://rpubs.com/about/getting-started)
+-   [ShinyApps.io User Guide](https://docs.posit.co/shinyapps.io/)
 
 ## Push-button deployment
 
-The blue **publishing icon** in RStudio indicates built-in support for publishing the currently selected type of content to Posit Connect, Shinyapps.io, or RPubs.com.
+The blue **publishing icon** in RStudio indicates built-in support for publishing the currently selected type of content to Posit Connect, Posit Cloud, Shinyapps.io, or RPubs.com.
 
 ![The RStudio publishing icon](images/publishIcon_2x.png){fig-alt="The RStudio publishing icon"}
 
@@ -43,20 +40,23 @@ Click **Publish** after verifying the settings.
 
 ## Publishing documents
 
-You can publish R Markdown (`.Rmd`) and Quarto (`.qmd`) documents to Posit Connect, posit.cloud, or RPubs.com.
+You can publish R Markdown (`.Rmd`) and Quarto (`.qmd`) documents to Posit Connect, Posit Cloud, or RPubs.com.
 
-![Publish to RPubs or Connect](images/connecting-2.png){fig-alt="Publish to RPubs or Connect"}
+![Publish to RPubs, Posit Connect, or Posit Cloud](images/connecting-2.png){fig-alt="Publish to RPubs or Connect"}
 
 [RPubs](http://rpubs.com/) is a service for easily sharing public R Markdown documents. RPubs is not related to Posit Connect, and you should always choose "Posit Connect" if you wish to publish your content to Posit Connect.
 
 ## Publishing Shiny apps
 
-You can publish Shiny apps to Posit Connect or shinyapps.io.
+You can publish Shiny apps to Posit Connect, Posit Cloud, or shinyapps.io.
+
+![](images/connect-account.png){fig-alt="Connect account in RStudio"}
 
 ## Additional content
 
 For additional details or other content types, refer to the product-specific documentation:
 
-- [Posit Connect User Guide](https://docs.posit.co/connect/user/connecting/)  
-- [ShinyApps.io User Guide](https://docs.posit.co/shinyapps.io/)  
-- [RPubs Getting Started](https://rpubs.com/about/getting-started)  
+-   [Posit Connect User Guide](https://docs.posit.co/connect/user/connecting/)
+-   [Posit Cloud User Guide](https://posit.cloud/learn/guide#intro-publish-app)
+-   [RPubs - Getting Started](https://rpubs.com/about/getting-started)
+-   [ShinyApps.io User Guide](https://docs.posit.co/shinyapps.io/)

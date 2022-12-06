@@ -610,7 +610,7 @@
 .rs.addFunction("getNames", function(object)
 {
    tryCatch({
-      if (is.environment(object))
+      if (is.environment(object) && !inherits(object, "R6"))
          ls(object, all.names = TRUE)
       else if (inherits(object, "tbl") && "dplyr" %in% loadedNamespaces())
          dplyr::tbl_vars(object)
@@ -1091,9 +1091,7 @@
       }
    }
 
-   # all else fails, just provide a dummy return value
-   .rs.scalar("(...)")
-
+   .rs.scalar("")
 })
 
 .rs.addFunction("getActiveArgument", function(object,

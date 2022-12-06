@@ -66,7 +66,8 @@ public class DataImportOptionsUiXls extends DataImportOptionsUi
          !naTextBox_.getValue().isEmpty() ? naTextBox_.getValue() : null,
          openDataViewerCheckBox_.getValue().booleanValue(),
          !maxTextBox_.getValue().isEmpty() ? Integer.parseInt(maxTextBox_.getValue()) : null,
-         !rangeTextBox_.getValue().isEmpty() ? rangeTextBox_.getValue() : null
+         !rangeTextBox_.getValue().isEmpty() ? rangeTextBox_.getValue() : null, 
+         lastSource_!= null && (lastSource_.equals(sheetListBox_) || lastSource_.equals(rangeTextBox_))
       );
    }
    
@@ -133,6 +134,7 @@ public class DataImportOptionsUiXls extends DataImportOptionsUi
          @Override
          public void onValueChange(ValueChangeEvent<String> arg0)
          {
+            lastSource_ = arg0.getSource();
             triggerChange();
          }
       };
@@ -143,6 +145,7 @@ public class DataImportOptionsUiXls extends DataImportOptionsUi
          @Override
          public void onChange(ChangeEvent arg0)
          {
+            lastSource_ = arg0.getSource();
             triggerChange();
          }
       };
@@ -153,6 +156,7 @@ public class DataImportOptionsUiXls extends DataImportOptionsUi
          @Override
          public void onValueChange(ValueChangeEvent<Boolean> arg0)
          {
+            lastSource_ = arg0.getSource();
             triggerChange();
          }
       };
@@ -163,6 +167,7 @@ public class DataImportOptionsUiXls extends DataImportOptionsUi
          @Override
          public void onValueChange(ValueChangeEvent<String> arg0)
          {
+            lastSource_ = arg0.getSource();
             maxTextBox_.setEnabled(rangeTextBox_.getValue().isEmpty());
             skipTextBox_.setEnabled(rangeTextBox_.getValue().isEmpty());
             triggerChange();
@@ -200,6 +205,8 @@ public class DataImportOptionsUiXls extends DataImportOptionsUi
    @UiField
    TextBox rangeTextBox_;
    
+   private Object lastSource_;
+
    private static native final String[] getSheetsFromResponse(DataImportPreviewResponse response) /*-{
       return response && response.options && response.options.sheets ? response.options.sheets : [];
    }-*/;

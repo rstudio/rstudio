@@ -201,7 +201,9 @@ public interface DocDisplay extends HasValueChangeHandlers<Void>,
    void setHighlightRFunctionCalls(boolean highlight);
    void setColorPreview(boolean show);
    void setRainbowParentheses(boolean rainbow);
+   void setRainbowFencedDivs(boolean rainbow);
    boolean getRainbowParentheses();
+   boolean getRainbowFencedDivs();
    void setBackgroundColor(String color);
 
    void setScrollLeft(int x);

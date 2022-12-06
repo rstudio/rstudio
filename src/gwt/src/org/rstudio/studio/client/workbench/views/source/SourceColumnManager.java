@@ -1044,6 +1044,7 @@ public class SourceColumnManager implements CommandPaletteEntrySource,
             @Override
             public void onResponseReceived(SourceDocument response)
             {
+               
                getActive().addTab(response, Source.OPEN_INTERACTIVE);
             }
          });

@@ -1002,6 +1002,9 @@ public class AceEditorWidget extends Composite
    // The 'anchor' is associated with the position of the warning icon
    // /!\; while the anchored range is associated with the underlying
    // '~~~~~'. The marker id is needed to detach the annotation later.
+   //
+   // DiagnosticBackgroundPopup.java displays a popup when the marker 
+   // is hovered
    private class AnchoredAceAnnotation
    {
       public AnchoredAceAnnotation(AceAnnotation annotation,
@@ -1087,13 +1090,13 @@ public class AceEditorWidget extends Composite
          else if (item.getType() == "style")
             clazz = lintStyles_.style();
          else if (item.getType() == "spelling")
-            clazz = lintStyles_.warning();
+            clazz = lintStyles_.spelling();
 
          int id = editor_.getSession().addMarker(range, clazz, "text", true);
-            annotations_.add(new AnchoredAceAnnotation(
-               annotations.get(i),
-               range,
-               id));
+         annotations_.add(new AnchoredAceAnnotation(
+            annotations.get(i),
+            range,
+            id));
       }
    }
 

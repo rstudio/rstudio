@@ -250,7 +250,6 @@ var RCodeModel = function(session, tokenizer,
       return true;
    }
 
-
    this.getFunctionsInScope = function(pos) {
       this.$buildScopeTreeUpToRow(pos.row);
       return this.$scopes.getFunctionsInScope(pos);
@@ -348,7 +347,7 @@ var RCodeModel = function(session, tokenizer,
    this.getDataFromInfixChain = function(tokenCursor)
    {
       var data = this.moveToDataObjectFromInfixChain(tokenCursor);
-      
+
       var additionalArgs = [];
       var excludeArgs = [];
       var name = "";
@@ -358,7 +357,18 @@ var RCodeModel = function(session, tokenizer,
          if (data.excludeArgsFromObject)
             excludeArgsFromObject = data.excludeArgsFromObject;
          
-         name = tokenCursor.currentValue();
+         var clone = tokenCursor.cloneCursor();
+         clone.findStartOfEvaluationContext();
+
+         name = this.$doc.getTextRange(new Range(
+            clone.currentPosition().row,
+            clone.currentPosition().column,
+
+            tokenCursor.currentPosition().row,
+            tokenCursor.currentPosition().column + tokenCursor.currentValue().length
+         ));
+         
+         // name = tokenCursor.currentValue();
          additionalArgs = data.additionalArgs;
          excludeArgs = data.excludeArgs;
 
@@ -464,8 +474,6 @@ var RCodeModel = function(session, tokenizer,
                }
 
             }
-            
-
          }
          
       } while (cursor.moveToNextToken());
@@ -488,14 +496,14 @@ var RCodeModel = function(session, tokenizer,
             return false;
 
          // Move over '::' qualifiers
-         if (clone.currentValue() === ":")
+         if (clone.currentValue() === "::" || clone.currentValue() === ":::")
          {
-            while (clone.currentValue() === ":")
-               if (!clone.moveToPreviousToken())
-                  return false;
+            // Move of to pkg identifier
+            if (!clone.moveToPreviousToken())
+               return false;
 
             // Move off of identifier
-            if (!clone.moveToPreviousToken())
+            if (!pIdentifier(clone.currentToken()) || !clone.moveToPreviousToken())
                return false;
          }
 
@@ -583,11 +591,11 @@ var RCodeModel = function(session, tokenizer,
          }
 
          // Move over '::' qualifiers
-         if (clone.currentValue() === ":")
+         if (clone.currentValue() === "::" || clone.currentValue() === ":::")
          {
-            while (clone.currentValue() === ":")
-               if (!clone.moveToPreviousToken())
-                  return false;
+            // Move off of ::
+            if (!clone.moveToPreviousToken())
+               return false;
 
             // Move off of identifier
             if (!clone.moveToPreviousToken())
@@ -644,7 +652,7 @@ var RCodeModel = function(session, tokenizer,
    var moveOutOfArgList = function(tokenCursor)
    {
       var clone = tokenCursor.cloneCursor();
-      if (!clone.findOpeningBracket("(", true))
+      if (!clone.findOpeningBracket(["(", "["], true))
          return false;
 
       if (!clone.moveToPreviousToken())
@@ -667,9 +675,16 @@ var RCodeModel = function(session, tokenizer,
       //
       // we don't pick up 'func', 'x', and 'y' as potential completions
       // since they will not be valid in all contexts
-      if (moveOutOfArgList(tokenCursor))
+      // 
+      // same for these calls: 
+      // 
+      //     y <- data[ x = 1, y = 2, |
+      // 
+      // we don't pick up 'x', 'data', or 'y'
+      while (moveOutOfArgList(tokenCursor))
       {
          var moved = false;
+
          if (pFunction(tokenCursor.currentToken()))
          {
             moved = moveFromFunctionTokenToEndOfFunctionName(tokenCursor); 

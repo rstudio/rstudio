@@ -122,5 +122,5 @@ public interface CodeToolsServerOperations extends HelpServerOperations,
          String connection,
          SqlCompletionParseContext context,
          ServerRequestCallback<Completions> requestCallback);
-   
+
 }

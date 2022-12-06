@@ -15,6 +15,7 @@
 package org.rstudio.studio.client.workbench.views.output.lint;
 
 import org.rstudio.core.client.Rectangle;
+import org.rstudio.core.client.StringUtil;
 import org.rstudio.studio.client.workbench.views.output.OutputConstants;
 import org.rstudio.studio.client.workbench.views.output.lint.model.AceAnnotation;
 import org.rstudio.studio.client.workbench.views.source.editors.text.AceEditor;
@@ -153,7 +154,6 @@ public class DiagnosticsBackgroundPopup
             if ((currentTime - lastCursorChangedTime) < 500)
                return completeExecution();
 
-            Markers markers = editor_.getSession().getMarkers(true);
             Position currentPos;
             if (movedMouseMostRecently_)
             {
@@ -166,7 +166,8 @@ public class DiagnosticsBackgroundPopup
             {
                currentPos = docDisplay_.getCursorPosition();
             }
-
+            
+            Markers markers = editor_.getSession().getMarkers(true);
             int keys[] = markers.getIds();
             for (int i = 0; i < keys.length; i++)
             {
@@ -178,6 +179,7 @@ public class DiagnosticsBackgroundPopup
                }
             }
 
+            hidePopup();
             return completeExecution();
          }
       }, 500);
@@ -185,6 +187,12 @@ public class DiagnosticsBackgroundPopup
 
    private void displayMarkerDiagnostics(Marker marker)
    {
+      if (StringUtil.equals(marker.getClazz(), LintResources.INSTANCE.styles().spelling()))
+      {
+         hidePopup();
+         return;
+      }
+
       JsArray<AceAnnotation> annotations = editor_.getAnnotations();
       for (int i = 0; i < annotations.length(); i++)
       {
