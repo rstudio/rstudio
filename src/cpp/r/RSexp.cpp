@@ -372,7 +372,6 @@ Error asPrimitiveEnvironment(SEXP envirSEXP,
 void listEnvironment(SEXP env, 
                      bool includeAll,
                      bool includeLastDotValue,
-                     Protect* pProtect,
                      std::vector<Variable>* pVariables)
 {
    if (!ASSERT_MAIN_THREAD())
@@ -415,7 +414,6 @@ void listEnvironment(SEXP env,
 
       if (varSEXP != R_UnboundValue) // should never be unbound
       {
-         pProtect->add(varSEXP);
          pVariables->push_back(std::make_pair(var, varSEXP));
       }
       else

@@ -61,10 +61,15 @@ SEXP forcePromise(SEXP objectSEXP);
    
 // variables within an environment
 typedef std::pair<std::string,SEXP> Variable;
+
+// fills pVariables with Variable from the environment
+// 
+// The caller must make sure that `env` is protected for 
+// as long as the SEXPs in pVariables are used, because 
+// they are not protected
 void listEnvironment(SEXP env, 
                      bool includeAll,
                      bool includeLastDotValue,
-                     Protect* pProtect,
                      std::vector<Variable>* pVariables);
       
 // object info
