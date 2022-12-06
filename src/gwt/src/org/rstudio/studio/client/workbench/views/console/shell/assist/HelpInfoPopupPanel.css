@@ -91,11 +91,17 @@
    font-family: fixedWidthFont;
    color: #2154bf;
    font-weight: bold;
-   margin-bottom: 4px;
+   padding-bottom: 4px;
+   width: 100%;
+   border-bottom: 1px solid rgba(255, 255, 255, 0.273);
 }
 
 .rstudio-themes-dark-menus .roxygenTitle {
    color: #e2eaff;
+}
+
+.roxygenSnippet {
+   background: rgba(255, 197, 251, 0.53);
 }
 
 @if user.agent safari {
