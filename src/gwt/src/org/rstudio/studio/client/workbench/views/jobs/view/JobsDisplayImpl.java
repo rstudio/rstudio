@@ -84,9 +84,13 @@ public class JobsDisplayImpl implements JobsDisplay
             if (widgets_.isCurrent(job.id))
             {
                widgets_.showProgress(job);
+               if (job.completed > 0)
+               {
+                  widgets_.getOutputPanel().output_.compileCompleted();
+               }
             }
             break;
-            
+
          default:
             Debug.logWarning("Unrecognized job update type " + updateType);
       }
@@ -111,7 +115,8 @@ public class JobsDisplayImpl implements JobsDisplay
                output.get(i).type(),
                output.get(i).output()), false /* scroll */);
       }
-      
+
+      widgets_.getOutputPanel().output_.compileCompleted();
       // scroll to show all output so far
       widgets_.getOutputPanel().scrollToBottom();
       
