@@ -283,5 +283,13 @@ public class SafeHtmlUtil
          sb.appendEscaped(haystack);
       }
    }
-}
 
+   public static SafeHtml highlightSnippet(String text, String snippetClass) 
+   {
+      String replaced = SafeHtmlUtils.htmlEscape(text).replaceAll(
+         "\\$\\{\\d+:?([^\\}]*)\\}", 
+         "<span class='" + snippetClass + "'>$1</span>"
+      );
+      return SafeHtmlUtils.fromTrustedString(replaced);
+   }
+}
