@@ -13,6 +13,14 @@
    box-shadow: 2px 2px 4px rgba(0, 0, 0, 0.2);
    -webkit-box-shadow: 2px 2px 4px rgba(0, 0, 0, 0.2);
    z-index: 9001;
+   margin-left: 6px;
+   margin-top: -3px;
+}
+
+.rstudio-themes-dark-menus .helpPopup {
+   color: #eaeaea;
+   background: #5e5e4e;
+   border: 1px solid #92968e;
 }
 
 .helpBodyText p {
@@ -75,6 +83,10 @@
    color: rgb(116, 116, 116);
 }
 
+.rstudio-themes-dark-menus .roxygenText code {
+   color: #fff4d4;
+}
+
 .roxygenTitle {
    font-family: fixedWidthFont;
    color: #2154bf;
@@ -82,15 +94,8 @@
    margin-bottom: 4px;
 }
 
-.rstudio-themes-dark-menus .helpPopup {
-   color: #eaeaea;
-   background: #5e5e4e;
-   border: 1px solid #92968e;
-}
-
-.helpPopup {
-   margin-left: 6px;
-   margin-top: -3px;
+.rstudio-themes-dark-menus .roxygenTitle {
+   color: #e2eaff;
 }
 
 @if user.agent safari {
