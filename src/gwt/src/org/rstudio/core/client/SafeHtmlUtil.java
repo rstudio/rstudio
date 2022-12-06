@@ -290,6 +290,6 @@ public class SafeHtmlUtil
          "\\$\\{\\d+:?([^\\}]*)\\}", 
          "<span class='" + snippetClass + "'>$1</span>"
       );
-      return SafeHtmlUtils.fromTrustedString(replaced);
+      return SafeHtmlUtils.fromTrustedString(replaced.replaceAll("\\n", "<br/>"));
    }
 }
