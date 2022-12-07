@@ -26,6 +26,10 @@ pipeline {
   stages {
 
     stage('dependencies') {
+      
+      script {
+        currentBuild.displayName = "${params.RSTUDIO_VERSION_MAJOR}.${params.RSTUDIO_VERSION_MINOR}.${params.RSTUDIO_VERSION_PATCH}${params.RSTUDIO_VERSION_SUFFIX}"
+      }
 
       environment {
         // boost won't compile without the brew version of openssl.
