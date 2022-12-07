@@ -199,14 +199,14 @@ if not exist pandoc\%PANDOC_VERSION% (
 
 
 REM wget %WGET_ARGS% https://s3.amazonaws.com/rstudio-buildtools/quarto/%QUARTO_VERSION%/%QUARTO_FILE%
-@REM wget %WGET_ARGS% https://github.com/quarto-dev/quarto-cli/releases/download/v%QUARTO_VERSION%/%QUARTO_FILE%
-@REM echo Unzipping Quarto %QUARTO_FILE%
-@REM rmdir /s /q quarto
-@REM mkdir quarto
-@REM cd quarto
-@REM unzip %UNZIP_ARGS% ..\%QUARTO_FILE%
-@REM cd ..
-@REM del %QUARTO_FILE%
+wget %WGET_ARGS% https://github.com/quarto-dev/quarto-cli/releases/download/v%QUARTO_VERSION%/%QUARTO_FILE%
+echo Unzipping Quarto %QUARTO_FILE%
+rmdir /s /q quarto
+mkdir quarto
+cd quarto
+unzip %UNZIP_ARGS% ..\%QUARTO_FILE%
+cd ..
+del %QUARTO_FILE%
 
 
 if not exist libclang\%LIBCLANG_VERSION% (
