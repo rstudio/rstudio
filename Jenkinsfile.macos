@@ -26,10 +26,6 @@ pipeline {
   stages {
 
     stage('dependencies') {
-      
-      script {
-        currentBuild.displayName = "${params.RSTUDIO_VERSION_MAJOR}.${params.RSTUDIO_VERSION_MINOR}.${params.RSTUDIO_VERSION_PATCH}${params.RSTUDIO_VERSION_SUFFIX}"
-      }
 
       environment {
         // boost won't compile without the brew version of openssl.
@@ -38,6 +34,9 @@ pipeline {
       }
 
       steps {
+        script {
+          currentBuild.displayName = "${params.RSTUDIO_VERSION_MAJOR}.${params.RSTUDIO_VERSION_MINOR}.${params.RSTUDIO_VERSION_PATCH}${params.RSTUDIO_VERSION_SUFFIX}"
+        }
         withCredentials([usernameColonPassword(credentialsId: 'github-rstudio-jenkins', variable: "GITHUB_LOGIN")]) {
           sh 'cd dependencies/osx && RSTUDIO_GITHUB_LOGIN=$GITHUB_LOGIN ./install-dependencies-osx && cd ../..'
         }
