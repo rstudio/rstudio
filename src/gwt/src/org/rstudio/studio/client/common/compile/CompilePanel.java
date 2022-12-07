@@ -195,6 +195,11 @@ public class CompilePanel extends Composite
          errorList_.focus();
    }
 
+   public void showBufferedOutput()
+   {
+      outputDisplay_.flushOutput();
+   }
+
    public HasClickHandlers stopButton()
    {
       return stopButton_;

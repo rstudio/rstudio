@@ -84,10 +84,6 @@ public class JobsDisplayImpl implements JobsDisplay
             if (widgets_.isCurrent(job.id))
             {
                widgets_.showProgress(job);
-               if (job.completed > 0)
-               {
-                  widgets_.getOutputPanel().output_.compileCompleted();
-               }
             }
             break;
 
@@ -116,7 +112,7 @@ public class JobsDisplayImpl implements JobsDisplay
                output.get(i).output()), false /* scroll */);
       }
 
-      widgets_.getOutputPanel().output_.compileCompleted();
+      widgets_.getOutputPanel().output_.showBufferedOutput();
       // scroll to show all output so far
       widgets_.getOutputPanel().scrollToBottom();
       

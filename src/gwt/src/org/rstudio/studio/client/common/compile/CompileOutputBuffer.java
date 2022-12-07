@@ -86,6 +86,11 @@ public class CompileOutputBuffer extends Composite
    public void onCompileCompleted()
    {
    }
+
+   @Override
+   public void flushOutput()
+   {
+   }
  
    private PreWidget output_;
    private VirtualConsole virtualConsole_;
