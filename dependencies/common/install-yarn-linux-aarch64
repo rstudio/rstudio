@@ -28,7 +28,3 @@ npm install -g yarn
 
 # update INSTALL_PATH
 INSTALL_PATH="${HOME}/.yarn/bin:${HOME}/.config/yarn/global/node_modules/.bin:${PATH}"
-
-popd
-
-
