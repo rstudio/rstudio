@@ -2,6 +2,7 @@
 ## RStudio 2023-03.0 "Cherry Blossom" Release Notes
 
 ### New
+Adopt panmirror (visual editor) migration to quarto-dev/quarto project #12316
 
 ### Fixed
 
