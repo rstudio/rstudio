@@ -300,7 +300,7 @@ try {
                             rstudioVersionSuffix = '+' + version[1]
 
                         // update slack message to include build version
-                        messagePrefix = "Jenkins ${env.JOB_NAME} build: <${env.BUILD_URL}display/redirect|${env.BUILD_DISPLAY_NAME}>, version: ${rstudioVersion}"
+                        messagePrefix = "Jenkins ${env.JOB_NAME} build: <${env.BUILD_URL}display/redirect|${rstudioVersion}>"
                     }
                 }
             }
