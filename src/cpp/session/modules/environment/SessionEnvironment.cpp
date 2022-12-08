@@ -275,20 +275,10 @@ bool hasExternalPtr(SEXP obj,      // environment to search for external pointer
 
 SEXP rs_hasExternalPointer(SEXP objSEXP, SEXP nullSEXP)
 {
-   bool nullPtr = r::sexp::asLogical(nullSEXP);
    r::sexp::Protect protect;
-   bool hasPtr = false;
-   if (r::sexp::isExternalPointer(objSEXP))
-   {
-      // object is an external pointer itself
-      hasPtr = r::sexp::isNullExternalPointer(objSEXP) == nullPtr;
-   }
-   else if (r::sexp::isPrimitiveEnvironment(objSEXP) || TYPEOF(objSEXP) == S4SXP)
-   {
-      // object is an environment; check it for external pointers
-      hasPtr = hasExternalPtr(objSEXP, nullPtr);
-   }
-   return r::sexp::create(hasPtr, &protect);
+   
+   bool nullPtr = r::sexp::asLogical(nullSEXP);
+   return r::sexp::create(hasExternalPtr(objSEXP, nullPtr), &protect);
 }
 
 // Does an object contain an ALTREP anywhere? ALTREP (alternative representation) objects often
