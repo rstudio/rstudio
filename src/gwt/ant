@@ -33,5 +33,5 @@ if [ -z "${JAVA_HOME}" ]; then
 fi
 
 echo "Using JAVA_HOME: ${JAVA_HOME}"
-JAVA_HOME="${JAVA_HOME}" ant "$@"
+JAVA_HOME="${JAVA_HOME}" command -p ant "$@"
 
