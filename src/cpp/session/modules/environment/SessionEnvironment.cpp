@@ -34,6 +34,7 @@
 #include <session/SessionSourceDatabase.hpp>
 #include <session/SessionPersistentState.hpp>
 #include <session/prefs/UserPrefs.hpp>
+#include <Rversion.h>
 
 #include "EnvironmentUtils.hpp"
 
@@ -117,6 +118,150 @@ bool handleRBrowseEnv(const core::FilePath& filePath)
    {
       return false;
    }
+}
+
+bool hasExternalPointer(SEXP obj, bool nullPtr, std::set<SEXP>& visited);
+
+bool pairlistHasExternalPointer(SEXP list, bool nullPtr, std::set<SEXP>& visited)
+{
+   for (; list != R_NilValue; list = CDR(list))
+   {
+      if (hasExternalPointer(CAR(list), nullPtr, visited))
+         return true;
+   }
+
+   return false;
+}
+
+bool attributesHasExternalPointer(SEXP obj, bool nullPtr, std::set<SEXP>& visited)
+{
+   return pairlistHasExternalPointer(ATTRIB(obj), nullPtr, visited);
+}
+
+bool listHasExternalPointer(SEXP obj, bool nullPtr, std::set<SEXP>& visited)
+{
+   R_xlen_t n = XLENGTH(obj);
+   for (R_xlen_t i = 0; i < n; i++)
+   {
+      if (hasExternalPointer(VECTOR_ELT(obj, i), nullPtr, visited))
+         return true;
+   }
+   return false;
+}
+
+bool frameHasExternalPointer(SEXP list, bool nullPtr, std::set<SEXP>& visited)
+{
+   SEXP b = list;
+   for (; b != R_NilValue; b = CDR(b))
+   {
+      if (!r::sexp::isActiveBinding(b) && hasExternalPointer(CAR(b), nullPtr, visited))
+         return true;
+   }
+
+   return false;
+}
+
+bool envHasExternalPointer(SEXP obj, bool nullPtr, std::set<SEXP>& visited)
+{
+   SEXP hash = HASHTAB(obj);
+   if (hash == R_NilValue)
+      return frameHasExternalPointer(obj, nullPtr, visited);
+   
+   R_xlen_t n = XLENGTH(hash);
+   for (R_xlen_t i = 0; i < n; i++)
+   {
+      if (frameHasExternalPointer(VECTOR_ELT(obj, i), nullPtr, visited))
+         return true;
+   }
+   return false;
+}
+
+bool hasExternalPointer(SEXP obj, bool nullPtr, std::set<SEXP>& visited)
+{
+   // if we've already visited this SEXP, bail
+   if (visited.count(obj))
+      return false;
+
+   // mark SEXP as visited
+   visited.insert(obj);
+
+   // check if this is an external pointer
+   if (r::sexp::isExternalPointer(obj)) 
+   {
+      // NOTE: this includes UserDefinedDatabase, aka 
+      //       external pointers to R_ObjectTable
+
+      // this is an external pointer, but nullPtr might give it a pass
+      if (r::sexp::getExternalPtrAddr(obj) != nullptr || !nullPtr)
+         return true;
+
+      if (hasExternalPointer(EXTPTR_PROT(obj), nullPtr, visited))
+         return true;
+
+      if (hasExternalPointer(EXTPTR_TAG(obj), nullPtr, visited))
+         return true;
+   }
+
+   // check attributes, this includes slots for S4 objects
+   if (attributesHasExternalPointer(obj, nullPtr, visited))
+      return true;
+
+   switch(TYPEOF(obj))
+   {
+      case ENVSXP: 
+      {
+         if (envHasExternalPointer(obj, nullPtr, visited))
+            return true;
+         break;
+      }
+      case VECSXP:
+      case EXPRSXP:
+      {
+         if (listHasExternalPointer(obj, nullPtr, visited))
+            return true;
+         break;
+      }
+         
+      case LISTSXP:
+      case LANGSXP:
+      {
+         if (pairlistHasExternalPointer(obj, nullPtr, visited))
+            return true;
+         break;
+      }
+         
+      case WEAKREFSXP:
+      {
+         SEXP key = VECTOR_ELT(obj, 0); // VECTOR_ELT(., 0) == WEAKREF_KEY (memory.c)
+         if (key != R_NilValue)
+         {
+            if (hasExternalPointer(key, nullPtr, visited))
+               return true;
+
+            // only consider the value if the key is not NULL
+            // VECTOR_ELT(., 0) == WEAKREF_VALUE (memory.c)
+            if (hasExternalPointer(VECTOR_ELT(obj, 1), nullPtr, visited))
+               return true;
+
+            // WEAKREF_FINALIZER ?
+         }
+      }
+      // case PROMSXP: 
+      default:
+         break;
+   }
+
+   // altrep objects might be implemented with external pointers
+   if (isAltrep(obj))
+   {
+      if (hasExternalPointer(CAR(obj), nullPtr, visited))
+         return true;
+
+      if (hasExternalPointer(CDR(obj), nullPtr, visited))
+         return true;
+   } 
+
+   return false;
 }
 
 bool hasExternalPtrImpl(SEXP obj, bool nullPtr, std::set<SEXP>& visited)

@@ -40,6 +40,7 @@
 #include <r/RExec.hpp>
 #include <r/RErrorCategory.hpp>
 #include <r/RUtil.hpp>
+#include <r/RSxpInfo.hpp>
 
 // clean out global definitions of TRUE and FALSE so we can
 // use the Rboolean variations of them
@@ -687,6 +688,17 @@ bool isNull(SEXP object)
 bool isPrimitiveEnvironment(SEXP object)
 {
    return TYPEOF(object) == ENVSXP;
+}
+
+bool isUserDefinedDatabase(SEXP object)
+{
+   return OBJECT(object) && Rf_inherits(object, "UserDefinedDatabase");
+}
+
+bool isActiveBinding(SEXP binding) 
+{
+   static unsigned int ACTIVE_BINDING_MASK = (1<<15);
+   return reinterpret_cast<r::sxpinfo*>(binding)->gp & ACTIVE_BINDING_MASK;
 }
 
 bool isNumeric(SEXP object)
