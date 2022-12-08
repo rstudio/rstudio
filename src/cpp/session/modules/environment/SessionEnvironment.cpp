@@ -248,8 +248,16 @@ bool hasExternalPointer(SEXP obj, bool nullPtr, std::set<SEXP>& visited)
 
             // WEAKREF_FINALIZER ?
          }
+         break;
       }
-      // case PROMSXP: 
+      case PROMSXP: 
+      {
+         SEXP value = PRVALUE(var);
+         if (value != R_UnboundValue && hasExternalPointer(value, nullPtr, visited))
+            return true;
+         
+         break;
+      }
       default:
          break;
    }
