@@ -179,6 +179,25 @@ bool envHasExternalPointer(SEXP obj, bool nullPtr, std::set<SEXP>& visited)
    return false;
 }
 
+bool weakrefHasExternalPointer(SEXP obj, bool nullPtr, std::set<SEXP>& visited)
+{
+   SEXP key = r::sexp::getWeakRefKey(obj);
+   if (key != R_NilValue)
+   {
+      if (hasExternalPointer(key, nullPtr, visited))
+         return true;
+
+      // only consider the value if the key is not NULL
+      SEXP value = r::sexp::getWeakRefValue(obj);
+
+      // VECTOR_ELT(., 0) == WEAKREF_VALUE (memory.c)
+      if (hasExternalPointer(value, nullPtr, visited))
+         return true;
+   }
+
+   return false;
+}
+
 bool hasExternalPointer(SEXP obj, bool nullPtr, std::set<SEXP>& visited)
 {
    if (obj == R_NilValue || visited.count(obj))
@@ -235,24 +254,14 @@ bool hasExternalPointer(SEXP obj, bool nullPtr, std::set<SEXP>& visited)
          
       case WEAKREFSXP:
       {
-         SEXP key = VECTOR_ELT(obj, 0); // VECTOR_ELT(., 0) == WEAKREF_KEY (memory.c)
-         if (key != R_NilValue)
-         {
-            if (hasExternalPointer(key, nullPtr, visited))
-               return true;
+         if (weakrefHasExternalPointer(obj, nullPtr, visited))
+            return true;
 
-            // only consider the value if the key is not NULL
-            // VECTOR_ELT(., 0) == WEAKREF_VALUE (memory.c)
-            if (hasExternalPointer(VECTOR_ELT(obj, 1), nullPtr, visited))
-               return true;
-
-            // WEAKREF_FINALIZER ?
-         }
          break;
       }
       case PROMSXP: 
       {
-         SEXP value = PRVALUE(var);
+         SEXP value = PRVALUE(obj);
          if (value != R_UnboundValue && hasExternalPointer(value, nullPtr, visited))
             return true;
          

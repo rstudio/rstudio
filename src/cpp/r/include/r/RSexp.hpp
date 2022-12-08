@@ -129,6 +129,8 @@ bool isExternalPointer(SEXP object);
 bool isNullExternalPointer(SEXP object);
 
 SEXP makeWeakRef(SEXP key, SEXP val, R_CFinalizer_t fun, Rboolean onexit);
+SEXP getWeakRefKey(SEXP ref);
+SEXP getWeakRefValue(SEXP ref);
 void registerFinalizer(SEXP s, R_CFinalizer_t fun);
 SEXP makeExternalPtr(void* ptr, R_CFinalizer_t fun, Protect* protect);
 void* getExternalPtrAddr(SEXP extptr);
