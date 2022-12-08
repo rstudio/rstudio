@@ -193,8 +193,9 @@ bool hasExternalPointer(SEXP obj, bool nullPtr, std::set<SEXP>& visited)
       // NOTE: this includes UserDefinedDatabase, aka 
       //       external pointers to R_ObjectTable
 
-      // this is an external pointer, but nullPtr might give it a pass
-      if (r::sexp::getExternalPtrAddr(obj) != nullptr || !nullPtr)
+      // when nullPtr is true, only return true for null pointer xp
+      // otherwise only return true for non null pointer xp
+      if (nullPtr == (r::sexp::getExternalPtrAddr(obj) == nullptr))
          return true;
 
       if (hasExternalPointer(EXTPTR_PROT(obj), nullPtr, visited))
