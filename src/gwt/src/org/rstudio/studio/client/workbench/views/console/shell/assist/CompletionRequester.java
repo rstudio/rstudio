@@ -1001,7 +1001,7 @@ public class CompletionRequester
             SafeHtmlUtil.appendSpan(
                sb,
                style,
-               display.replaceFirst("[ \\n].*", ""));
+               display.split("\n")[0].replaceFirst(" .*", ""));
          }
          else 
          {
