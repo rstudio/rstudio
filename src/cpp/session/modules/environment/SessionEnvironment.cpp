@@ -124,10 +124,12 @@ bool hasExternalPointer(SEXP obj, bool nullPtr, std::set<SEXP>& visited);
 
 bool pairlistHasExternalPointer(SEXP list, bool nullPtr, std::set<SEXP>& visited)
 {
-   for (; list != R_NilValue; list = CDR(list))
+   while(list != R_NilValue)
    {
       if (hasExternalPointer(CAR(list), nullPtr, visited))
          return true;
+      
+      list = CDR(list);
    }
 
    return false;
@@ -149,13 +151,14 @@ bool listHasExternalPointer(SEXP obj, bool nullPtr, std::set<SEXP>& visited)
    return false;
 }
 
-bool frameHasExternalPointer(SEXP list, bool nullPtr, std::set<SEXP>& visited)
+bool frameHasExternalPointer(SEXP frame, bool nullPtr, std::set<SEXP>& visited)
 {
-   SEXP b = list;
-   for (; b != R_NilValue; b = CDR(b))
+   while(frame != R_NilValue)
    {
-      if (!r::sexp::isActiveBinding(b) && hasExternalPointer(CAR(b), nullPtr, visited))
+      if (!r::sexp::isActiveBinding(frame) && hasExternalPointer(CAR(frame), nullPtr, visited))
          return true;
+
+      frame = CDR(frame);
    }
 
    return false;
@@ -170,7 +173,7 @@ bool envHasExternalPointer(SEXP obj, bool nullPtr, std::set<SEXP>& visited)
    R_xlen_t n = XLENGTH(hash);
    for (R_xlen_t i = 0; i < n; i++)
    {
-      if (frameHasExternalPointer(VECTOR_ELT(obj, i), nullPtr, visited))
+      if (frameHasExternalPointer(VECTOR_ELT(hash, i), nullPtr, visited))
          return true;
    }
    return false;
@@ -178,8 +181,7 @@ bool envHasExternalPointer(SEXP obj, bool nullPtr, std::set<SEXP>& visited)
 
 bool hasExternalPointer(SEXP obj, bool nullPtr, std::set<SEXP>& visited)
 {
-   // if we've already visited this SEXP, bail
-   if (visited.count(obj))
+   if (obj == R_NilValue || visited.count(obj))
       return false;
 
    // mark SEXP as visited
@@ -264,77 +266,11 @@ bool hasExternalPointer(SEXP obj, bool nullPtr, std::set<SEXP>& visited)
    return false;
 }
 
-bool hasExternalPtrImpl(SEXP obj, bool nullPtr, std::set<SEXP>& visited)
-{
-   // if we've already visited this SEXP, bail
-   if (visited.count(obj))
-      return false;
-
-   // mark SEXP as visited
-   visited.insert(obj);
-
-   // list the contents of this environment
-   std::vector<r::sexp::Variable> vars;
-   r::sexp::Protect rProtect;
-   if (TYPEOF(obj) == S4SXP)
-   {
-      // for S4 objects, list the attributes (which correspond to slots)
-      r::sexp::listNamedAttributes(obj, &rProtect, &vars);
-   }
-   else
-   {
-      // not S4, coerce to environment
-      SEXP envir = R_NilValue;
-      if (TYPEOF(obj) == ENVSXP)
-      {
-         // we were given a primitive environment (ENVSXP)
-         envir = obj;
-      }
-      else
-      {
-         // convert the passed environment into a primitive environment; this is required so that
-         // e.g. reference objects that subclass 'environment' can be introspected below
-         Error error = r::sexp::asPrimitiveEnvironment(obj, &envir, &rProtect);
-         if (error)
-         {
-            // can't search in here
-            return false;
-         }
-      }
-
-      r::sexp::listEnvironment(envir,
-                               true,  // include all values
-                               false, // don't include last dot
-                               &vars);
-   }
-
-   // check for external pointers
-   for (std::vector<r::sexp::Variable>::iterator it = vars.begin(); it != vars.end(); it++)
-   {
-      if (r::sexp::isExternalPointer(it->second) &&
-          r::sexp::isNullExternalPointer(it->second) == nullPtr)
-      {
-         return true;
-      }
-
-      if (r::sexp::isPrimitiveEnvironment(it->second) || TYPEOF(it->second) == S4SXP)
-      {
-         // if this object is itself an environment, check it recursively for external pointers.
-         // (we do this only if there's sufficient recursion depth remaining)
-         if (hasExternalPtrImpl(it->second, nullPtr, visited))
-            return true;
-      }
-   }
-
-   return false;
-}
-
-
 bool hasExternalPtr(SEXP obj,      // environment to search for external pointers
                     bool nullPtr)  // whether to look for NULL pointers
 {
    std::set<SEXP> visited;
-   return hasExternalPtrImpl(obj, nullPtr, visited);
+   return hasExternalPointer(obj, nullPtr, visited);
 }
 
 SEXP rs_hasExternalPointer(SEXP objSEXP, SEXP nullSEXP)
