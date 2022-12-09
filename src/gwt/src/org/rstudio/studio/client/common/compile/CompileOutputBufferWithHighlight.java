@@ -105,7 +105,8 @@ public class CompileOutputBufferWithHighlight extends Composite
    }
 
    @Override
-   public void flushOutput() {
+   public void flushOutput()
+   {
       String[] lines = savedOutput_.split("\n");
       int end = lines.length - 1;
       int start = Math.max(0, end - 100);
