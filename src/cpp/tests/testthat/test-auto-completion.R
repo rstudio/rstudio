@@ -98,6 +98,8 @@ test_that(".rs.matchCall() respects numCommas=", {
 })
 
 test_that(".rs.matchCall() removes named arguments not in the formals", {
+    fun <- function(aaa, bbb, ccc){}
+
     expect_identical(
         .rs.matchCall(fun, quote(fun(ddd = a))), 
         quote(fun())
