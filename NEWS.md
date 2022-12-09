@@ -2,6 +2,7 @@
 ## RStudio 2023-03.0 "Cherry Blossom" Release Notes
 
 ### New
+- Upgrade Electron to 22.0.0
 
 ### Fixed
 
