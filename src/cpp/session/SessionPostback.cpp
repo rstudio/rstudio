@@ -121,8 +121,7 @@ Error registerPostbackHandler(const std::string& name,
                                                     
    // compute the shell command required to invoke this handler and return it
    *pShellCommand = rPostbackScriptPath("rpostback-" + name).getAbsolutePath();
-   std::cerr << *pShellCommand << std::endl;
-   
+
    // return success
    return Success();
 }
