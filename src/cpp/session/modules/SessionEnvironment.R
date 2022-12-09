@@ -230,7 +230,7 @@
       return(.rs.valueDescription(expr))
    
    # we have a call; try to deparse it
-   sanitized <- .rs.sanitizeCall(call)
+   sanitized <- .rs.sanitizeCall(expr)
    .rs.deparse(sanitized)
 })
 
