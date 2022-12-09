@@ -208,7 +208,6 @@ void detectQuartoInstallation()
    bool prepend = std::get<2>(userInstalled);
 
    std::string sysPath = core::system::getenv("PATH");
-   r::exec::RFunction sysSetenv("Sys.setenv");
 
    // always use user installed if it's there but subject to version check
    if (!s_userInstalledPath.isEmpty())
@@ -216,15 +215,17 @@ void detectQuartoInstallation()
       if (s_quartoVersion >= kQuartoRecommendedVersion)
       {
          s_quartoPath = s_userInstalledPath;
-         const std::string quartoPath = string_utils::utf8ToSystem(s_quartoPath.getParent().getAbsolutePath());
+         const std::string quartoPath = string_utils::utf8ToSystem(
+                  s_quartoPath.getParent().getAbsolutePath());
 
          if (sysPath.find(quartoPath) != std::string::npos)
             return;
 
          // prepend to path only if RSTUDIO_QUARTO is defined
-         core::system::addToPath(&sysPath, quartoPath, prepend);
-         sysSetenv.addParam("PATH", sysPath);
-         Error error = sysSetenv.call();
+         Error error = prepend
+                  ? module_context::prependToPath(s_quartoPath.getParent())
+                  : module_context::appendToPath(s_quartoPath.getParent());
+
          if (error)
          {
             LOG_DEBUG_MESSAGE("Error setting PATH: " + sysPath);
@@ -241,25 +242,29 @@ void detectQuartoInstallation()
 #else
    std::string target = "quarto.exe";
 #endif
+
    FilePath embeddedQuartoPath = session::options().quartoPath()
       .completeChildPath("bin")
       .completeChildPath(target);
+
    if (embeddedQuartoPath.isEmpty())
       return;
+
    auto embeddedVersion = readQuartoVersion(embeddedQuartoPath);
    if (embeddedVersion >= kQuartoRequiredVersion)
    {
       s_quartoPath = embeddedQuartoPath;
       s_quartoVersion = embeddedVersion;
-      const std::string quartoPath = string_utils::utf8ToSystem(s_quartoPath.getParent().getAbsolutePath());
+      const std::string quartoPath = string_utils::utf8ToSystem(
+               s_quartoPath.getParent().getAbsolutePath());
 
       if (sysPath.find(quartoPath) != std::string::npos)
          return;
 
       // append to path
-      core::system::addToPath(&sysPath, quartoPath, false);
-      sysSetenv.addParam("PATH", sysPath);
-      Error error = sysSetenv.call();
+      Error error = prepend
+            ? module_context::prependToPath(s_quartoPath.getParent())
+            : module_context::appendToPath(s_quartoPath.getParent());
       if (error)
       {
          LOG_DEBUG_MESSAGE("Error setting PATH: " + sysPath);

@@ -3359,8 +3359,9 @@ core::Error initialize()
       core::system::setenv("SSH_ASKPASS", "rpostback-askpass");
 
    // add postback directory to PATH
-   FilePath postbackDir = module_context::rPostbackScriptsDir();
-   core::system::addToPath(postbackDir.getAbsolutePath());
+   error = module_context::appendToPath(module_context::rPostbackScriptsDir());
+   if (error)
+      LOG_ERROR(error);
 
    // add suspend/resume handler
    addSuspendHandler(SuspendHandler(boost::bind(onSuspend, _2), onResume));

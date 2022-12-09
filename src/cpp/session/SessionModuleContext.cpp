@@ -95,12 +95,64 @@
 
 #include "session-config.h"
 
+#ifdef _WIN32
+# define kPathSeparator ';'
+#else
+# define kPathSeparator ':'
+#endif
+
 using namespace rstudio::core;
 using namespace boost::placeholders;
 
 namespace rstudio {
 namespace session {   
 namespace module_context {
+
+namespace {
+
+Error modifyPath(const core::FilePath& path, bool append)
+{
+   Error error;
+
+   std::string currentPath;
+   error = r::exec::RFunction("base:::Sys.getenv")
+         .addParam("PATH")
+         .call(&currentPath);
+
+   if (error)
+      return error;
+
+   std::string pathString = string_utils::utf8ToSystem(path.getAbsolutePath());
+
+#ifdef _WIN32
+   std::replace(pathString.begin(), pathString.end(), '/', '\\');
+#endif
+
+   std::string newPath = append
+         ? fmt::format("{}{}{}", currentPath, kPathSeparator, pathString)
+         : fmt::format("{}{}{}", pathString, kPathSeparator, currentPath);
+
+   error = r::exec::RFunction("base:::Sys.setenv")
+         .addParam("PATH", newPath)
+         .call();
+
+   if (error)
+      return error;
+
+   return Success();
+}
+
+} // end anonymous namespace
+
+Error prependToPath(const core::FilePath& path)
+{
+   return modifyPath(path, false);
+}
+
+Error appendToPath(const core::FilePath& path)
+{
+   return modifyPath(path, true);
+}
 
 bool isSessionSslEnabled()
 {

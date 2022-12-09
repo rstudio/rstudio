@@ -104,6 +104,10 @@ core::FilePath safeCurrentPath();
 core::json::Object createFileSystemItem(const core::FileInfo& fileInfo);
 core::json::Object createFileSystemItem(const core::FilePath& filePath);
 
+// path helpers (needed for R on Windows)
+core::Error appendToPath(const core::FilePath& path);
+core::Error prependToPath(const core::FilePath& path);
+
 // postback helpers
 core::FilePath rPostbackPath();
 core::FilePath rPostbackScriptsDir();
