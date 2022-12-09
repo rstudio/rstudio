@@ -35,11 +35,14 @@ test_that("environment object listings are correct", {
    # active binding
    makeActiveBinding("obj4", env = globalenv(), local({
       count <- 0
-      function(){ count <<- count + 1; count}
+      function(){
+         count <<- count + 1
+         count
+      }
    }))
 
    # promise
-   delayedAssign("obj5", 1:10, globalenv(), globalenv())
+   delayedAssign("obj5", c(1, 2, 3), globalenv(), globalenv())
 
    # list the global environment
    .rs.invokeRpc("set_environment", "R_GlobalEnv")
@@ -63,6 +66,7 @@ test_that("environment object listings are correct", {
    obj5 <- contents[[5]]
    expect_equal(obj5[["name"]], "obj5")
    expect_equal(obj5[["type"]], "promise")
+   expect_equal(obj5[["value"]], "c(1, 2, 3)")
 })
 
 test_that("flag must be specified when removing objects", {
