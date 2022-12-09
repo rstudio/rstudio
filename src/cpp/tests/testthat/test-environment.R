@@ -32,12 +32,21 @@ test_that("environment object listings are correct", {
    assign("obj2", "two", envir = globalenv())
    assign("obj3", list(1, 2, 3), envir = globalenv())
 
+   # active binding
+   makeActiveBinding("obj4", env = globalenv(), local({
+      count <- 0
+      function(){ count <<- count + 1; count}
+   }))
+
+   # promise
+   delayedAssign("obj5", 1:10, globalenv(), globalenv())
+
    # list the global environment
    .rs.invokeRpc("set_environment", "R_GlobalEnv")
    contents <- .rs.invokeRpc("list_environment")
 
    # verify contents (newly added plus the initial runAllTests function)
-   expect_equal(length(contents), 4)
+   expect_equal(length(contents), 6)
    obj1 <- contents[[1]]
    expect_equal(obj1[["name"]], "obj1")
    expect_equal(obj1[["value"]], "1")
@@ -47,6 +56,13 @@ test_that("environment object listings are correct", {
    obj3 <- contents[[3]]
    expect_equal(obj3[["name"]], "obj3")
    expect_equal(obj3[["length"]], 3)
+   obj4 <- contents[[4]]
+   expect_equal(obj4[["name"]], "obj4")
+   expect_equal(obj4[["type"]], "active binding")
+   expect_equal(obj4[["value"]], "<Active binding>")
+   obj5 <- contents[[5]]
+   expect_equal(obj5[["name"]], "obj5")
+   expect_equal(obj5[["type"]], "promise")
 })
 
 test_that("flag must be specified when removing objects", {
