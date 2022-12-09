@@ -304,12 +304,6 @@ RToolsInfo::RToolsInfo(const std::string& name,
              gccPath.completeChildPath("include-fixed")
           };
 
-          for (auto&& stem : cStems)
-          {
-             cIncludePaths.push_back(stem.getAbsolutePath());
-             cppIncludePaths.push_back(stem.getAbsolutePath());
-          }
-
           // get C++ headers
           std::vector<FilePath> cppStems = {
              gccPath.completeChildPath("include/c++"),
@@ -317,8 +311,14 @@ RToolsInfo::RToolsInfo(const std::string& name,
              gccPath.completeChildPath("include/c++/backward")
           };
 
+          // Note: the order of these args matters. c++ headers should appear before c headers
           for (auto&& stem : cppStems)
              cppIncludePaths.push_back(stem.getAbsolutePath());
+          for (auto&& stem : cStems)
+          {
+             cIncludePaths.push_back(stem.getAbsolutePath());
+             cppIncludePaths.push_back(stem.getAbsolutePath());
+          }
       }
    }
    else
