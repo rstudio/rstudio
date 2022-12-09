@@ -42,7 +42,10 @@ test_that("environment object listings are correct", {
    }))
 
    # promise
-   delayedAssign("obj5", c(1, 2, 3), globalenv(), globalenv())
+   delayedAssign("obj5", local({
+      assign("obj6", 6, globalenv())
+      5
+   }), globalenv(), globalenv())
 
    # list the global environment
    .rs.invokeRpc("set_environment", "R_GlobalEnv")
@@ -66,7 +69,13 @@ test_that("environment object listings are correct", {
    obj5 <- contents[[5]]
    expect_equal(obj5[["name"]], "obj5")
    expect_equal(obj5[["type"]], "promise")
-   expect_equal(obj5[["value"]], "c(1, 2, 3)")
+   expect_equal(obj5[["value"]], "local({ <...>")
+
+   # check that active binding wasn't forced yet
+   expect_equal(get("obj4", globalenv()), 1)
+
+   # check that the promise wasn't evaluated yet
+   expect_true(!exists("obj6", globalenv()))
 })
 
 test_that("flag must be specified when removing objects", {
