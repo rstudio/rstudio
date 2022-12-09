@@ -45,20 +45,15 @@ if (RSTUDIO_SERVER)
     )
 endif()
 
-# configure postback scripts for development mode
+# configure postback scripts
 set(POSTBACK_SCRIPT_DIR ${CMAKE_CURRENT_BINARY_DIR}/postback)
 file(MAKE_DIRECTORY ${POSTBACK_SCRIPT_DIR})
-configure_file(rpostback-editfile ${POSTBACK_SCRIPT_DIR}/rpostback-editfile)
-configure_file(rpostback-pdfviewer ${POSTBACK_SCRIPT_DIR}/rpostback-pdfviewer)
-configure_file(rpostback-gitssh ${POSTBACK_SCRIPT_DIR}/rpostback-gitssh)
-configure_file(rpostback-askpass ${POSTBACK_SCRIPT_DIR}/rpostback-askpass)
 configure_file(askpass-passthrough ${POSTBACK_SCRIPT_DIR}/askpass-passthrough)
-configure_file(rpostback-browser ${POSTBACK_SCRIPT_DIR}/rpostback-browser)
-
-# put rpostback in a place where it can be found for dev config
-if(NOT RSTUDIO_PACKAGE_BUILD)
-   set_target_properties(rpostback PROPERTIES RUNTIME_OUTPUT_DIRECTORY ${POSTBACK_SCRIPT_DIR})
-endif()
+configure_file(rpostback-editfile  ${POSTBACK_SCRIPT_DIR}/rpostback-editfile)
+configure_file(rpostback-pdfviewer ${POSTBACK_SCRIPT_DIR}/rpostback-pdfviewer)
+configure_file(rpostback-gitssh    ${POSTBACK_SCRIPT_DIR}/rpostback-gitssh)
+configure_file(rpostback-askpass   ${POSTBACK_SCRIPT_DIR}/rpostback-askpass)
+configure_file(rpostback-browser   ${POSTBACK_SCRIPT_DIR}/rpostback-browser)
 
 # installation rules
 if(NOT RSTUDIO_SESSION_WIN32)

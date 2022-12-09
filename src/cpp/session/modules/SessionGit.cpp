@@ -127,7 +127,7 @@ core::system::ProcessOptions procOptions()
    // (note that we also do this on init, but we do this again for
    // child processes just to ensure any user-initiated PATH munging
    // doesn't break builtin utilities)
-   FilePath postbackDir = session::options().rpostbackPath().getParent();
+   FilePath postbackDir = module_context::rPostbackScriptsDir();
    core::system::addToPath(&childEnv, postbackDir.getAbsolutePath());
 
    options.workingDir = projects::projectContext().directory();
@@ -3354,21 +3354,12 @@ core::Error initialize()
       return error;
 
    // setup environment
-   BOOST_ASSERT(boost::algorithm::ends_with(sshAskCmd, "rpostback-askpass"));
    core::system::setenv("GIT_ASKPASS", "rpostback-askpass");
-
    if (interceptAskPass)
-   {
       core::system::setenv("SSH_ASKPASS", "rpostback-askpass");
-   }
 
    // add postback directory to PATH
-   FilePath postbackDir = session::options().rpostbackPath().getParent();
-   if (postbackDir.getAbsolutePath().find("session/postback") == std::string::npos) {
-      // for package builds only, postback/rpostback-askpass in same directory as rpostback itself
-      postbackDir = postbackDir.completeChildPath("postback");
-   }
-
+   FilePath postbackDir = module_context::rPostbackScriptsDir();
    core::system::addToPath(postbackDir.getAbsolutePath());
 
    // add suspend/resume handler

@@ -148,7 +148,7 @@
 #endif
 
 #define kDefaultQuartoPath         "bin/quarto"
-#define kDefaultPostbackPath       "bin/postback/rpostback"
+#define kDefaultPostbackPath       "bin/rpostback"
 #define kDefaultRsclangPath        "bin/rsclang"
 
 // json rpc methods we handle (the rest are delegated to the HttpServer)

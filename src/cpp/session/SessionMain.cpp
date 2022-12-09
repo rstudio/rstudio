@@ -2161,14 +2161,9 @@ int main(int argc, char * const argv[])
 
       // set the rpostback absolute path
       FilePath rpostback = options.rpostbackPath();
-   #ifndef __APPLE__
-      // package builds on Linux and Windows hoist the binary one level higher in the directory structure
-      if (rpostback.getAbsolutePath().find("session/postback") == std::string::npos) {
-         rpostback = rpostback.getParent().getParent();
-         rpostback = rpostback.completeChildPath("rpostback");
-      }
-   #endif
-
+      if (!rpostback.exists())
+         LOG_ERROR(fileNotFoundError(ERROR_LOCATION));
+      
       core::system::setenv(
             "RS_RPOSTBACK_PATH",
             string_utils::utf8ToSystem(rpostback.getAbsolutePath()));
