@@ -160,7 +160,7 @@ bool hasExternalPtrImpl(SEXP obj, bool nullPtr, std::set<SEXP>& visited)
       r::sexp::listEnvironment(envir,
                                true,  // include all values
                                false, // don't include last dot
-                               &rProtect, &vars);
+                               &vars);
    }
 
    // check for external pointers
@@ -409,7 +409,6 @@ json::Array environmentListAsJson()
        listEnvironment(env,
                        false,
                        prefs::userPrefs().showLastDotValue(),
-                       &rProtect,
                        &vars);
 
        // get object details and transform to json
