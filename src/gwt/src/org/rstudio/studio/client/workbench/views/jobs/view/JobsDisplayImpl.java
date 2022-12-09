@@ -86,7 +86,7 @@ public class JobsDisplayImpl implements JobsDisplay
                widgets_.showProgress(job);
             }
             break;
-            
+
          default:
             Debug.logWarning("Unrecognized job update type " + updateType);
       }
@@ -111,7 +111,8 @@ public class JobsDisplayImpl implements JobsDisplay
                output.get(i).type(),
                output.get(i).output()), false /* scroll */);
       }
-      
+
+      widgets_.getOutputPanel().output_.showBufferedOutput();
       // scroll to show all output so far
       widgets_.getOutputPanel().scrollToBottom();
       
