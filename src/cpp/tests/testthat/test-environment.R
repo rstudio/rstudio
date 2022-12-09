@@ -131,3 +131,91 @@ test_that("missing arguments can be described", {
    expect_identical(desc$name, .rs.scalar("x"))
    
 })
+
+test_that("hasExternalPointer finds external pointers", {
+   xp <- .rs.testExternalPointer(FALSE)
+   nullxp <- .rs.testExternalPointer(TRUE)
+
+   # NULL
+   expect_true(!.rs.hasExternalPointer(NULL))
+
+   # external pointers
+   expect_true(.rs.hasExternalPointer(xp))
+   expect_true(!.rs.hasExternalPointer(xp, nullPtr = TRUE))
+   expect_true(.rs.hasExternalPointer(nullxp, TRUE))
+   expect_true(!.rs.hasExternalPointer(nullxp, nullPtr = FALSE))
+
+   # lists
+   v <- list(1, "a", xp, nullxp)
+   expect_true(.rs.hasExternalPointer(v))
+   expect_true(.rs.hasExternalPointer(v, nullPtr = TRUE))
+
+   # attributes
+   x <- structure(1, foo = xp)
+   # expect_true(.rs.hasExternalPointer(x))
+   
+   x <- structure(1, bar = v)
+   # expect_true(.rs.hasExternalPointer(x))
+
+   x <- structure(1, foo = nullxp)
+   # expect_true(.rs.hasExternalPointer(x, nullPtr = TRUE))
+
+   x <- structure(1, bar = nullxp)
+   # expect_true(.rs.hasExternalPointer(x, nullPtr = TRUE))
+
+   # hashed environment
+   h <- new.env(hash = TRUE, parent = emptyenv())
+   h$a <- 1
+   h$b <- xp
+   expect_true(.rs.hasExternalPointer(h))
+
+   # non hashed environment
+   h <- new.env(hash = FALSE, parent = emptyenv())
+   h$a <- 1
+   h$b <- nullxp
+   expect_true(.rs.hasExternalPointer(h, nullPtr = TRUE))
+
+   # pairlist
+   expect_true(.rs.hasExternalPointer(pairlist(a = 1, b = xp)))
+   expect_true(.rs.hasExternalPointer(pairlist(a = 1, b = nullxp), nullPtr = TRUE))
+
+   # calls
+   expect_true(.rs.hasExternalPointer(call("foo", a = 1, b = xp)))
+   expect_true(.rs.hasExternalPointer(call("bar", a = 1, b = nullxp), nullPtr = TRUE))
+
+   # active bindings are not triggered
+   count <- 0
+   h <- new.env(hash = TRUE, parent = emptyenv())
+   makeActiveBinding("b", function() {
+      count <<- count + 1
+      42
+   }, h)
+   expect_true(!.rs.hasExternalPointer(h))
+   expect_true(count == 0)
+
+   # promises are not forced
+   h <- new.env(hash = TRUE, parent = emptyenv())
+   # NOTE: eval.env = globalenv() otherwise xp would be picked up 
+   #       as part of checking if PRENV(<promise>) has an external pointer 
+   delayedAssign("p", .rs.testExternalPointer(FALSE), assign.env = h, eval.env = globalenv())
+   expect_true(count == 0)
+   expect_true(!.rs.hasExternalPointer(h))
+   
+   # ... but if they are, the value is checked
+   force(h$p)
+   expect_true(.rs.hasExternalPointer(h))
+
+   # S4 
+   Env <- setClass("Env", contains = "environment")
+   hEnv <- Env(
+      new.env(hash = TRUE, parent = emptyenv())
+   )
+   hEnv$a <- xp
+   expect_true(.rs.hasExternalPointer(hEnv))
+
+   hEnv <- Env(
+      new.env(hash = FALSE, parent = emptyenv())
+   )
+   hEnv$a <- nullxp
+   expect_true(.rs.hasExternalPointer(hEnv, nullPtr = TRUE))
+})

@@ -795,6 +795,14 @@ bool isNullExternalPointer(SEXP object)
          R_ExternalPtrAddr(object) == nullptr;
 }
 
+SEXP makeTestExternalPointer(bool nullPtr) 
+{
+   // this creates an external pointer that is or is not null
+   // for test purposes, it does not need a finalizer
+   // R_EmptyEnv here is irrelevant, it just needs to be a pointer
+   return R_MakeExternalPtr(nullPtr ? nullptr : R_EmptyEnv, R_NilValue, R_NilValue);
+}
+
 SEXP makeWeakRef(SEXP key, SEXP val, R_CFinalizer_t fun, Rboolean onexit)
 {
    return R_MakeWeakRefC(key, val, fun, onexit);

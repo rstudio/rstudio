@@ -127,6 +127,7 @@ void listNamedAttributes(SEXP obj, Protect *pProtect, std::vector<Variable>* pVa
 // weak/external pointers and finalizers
 bool isExternalPointer(SEXP object);
 bool isNullExternalPointer(SEXP object);
+SEXP makeTestExternalPointer(bool nullPtr);
 
 SEXP makeWeakRef(SEXP key, SEXP val, R_CFinalizer_t fun, Rboolean onexit);
 SEXP getWeakRefKey(SEXP ref);

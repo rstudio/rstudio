@@ -624,6 +624,11 @@
       val1
 })
 
+.rs.addFunction("hasExternalPointer", function(object, nullPtr = FALSE)
+{
+   .Call("rs_hasExternalPointer", object, nullPtr, PACKAGE = "(embedding)")
+})
+
 .rs.addFunction("describeObject", function(env, objName, computeSize = TRUE)
 {
    obj <- get(objName, env)
@@ -647,7 +652,7 @@
    # opt-in to checking for null pointers if required.
    checkNullPtr <- .rs.readUiPref("check_null_external_pointers")
    hasNullPtr <- if (identical(checkNullPtr, TRUE))
-      .Call("rs_hasExternalPointer", obj, TRUE, PACKAGE = "(embedding)")
+      .rs.hasExternalPointer(obj, TRUE)
    else
       FALSE
    
@@ -894,6 +899,11 @@
 .rs.addFunction("hasAltrep", function(var)
 {
    .Call("rs_hasAltrep", var, PACKAGE = "(embedding)")
+})
+
+.rs.addFunction("testExternalPointer", function(null = FALSE)
+{
+   .Call("rs_newTestExternalPointer", null, PACKAGE = "(embedding)")
 })
 
 .rs.addFunction("resolveContextSourceRefs", function(callfun)

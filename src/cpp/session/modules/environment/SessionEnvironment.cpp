@@ -168,7 +168,7 @@ bool envHasExternalPointer(SEXP obj, bool nullPtr, std::set<SEXP>& visited)
 {
    SEXP hash = HASHTAB(obj);
    if (hash == R_NilValue)
-      return frameHasExternalPointer(obj, nullPtr, visited);
+      return frameHasExternalPointer(FRAME(obj), nullPtr, visited);
    
    R_xlen_t n = XLENGTH(hash);
    for (R_xlen_t i = 0; i < n; i++)
@@ -188,10 +188,7 @@ bool weakrefHasExternalPointer(SEXP obj, bool nullPtr, std::set<SEXP>& visited)
          return true;
 
       // only consider the value if the key is not NULL
-      SEXP value = r::sexp::getWeakRefValue(obj);
-
-      // VECTOR_ELT(., 0) == WEAKREF_VALUE (memory.c)
-      if (hasExternalPointer(value, nullPtr, visited))
+      if (hasExternalPointer(r::sexp::getWeakRefValue(obj), nullPtr, visited))
          return true;
    }
 
@@ -223,10 +220,6 @@ bool hasExternalPointer(SEXP obj, bool nullPtr, std::set<SEXP>& visited)
       if (hasExternalPointer(EXTPTR_TAG(obj), nullPtr, visited))
          return true;
    }
-
-   // check attributes, this includes slots for S4 objects
-   if (attributesHasExternalPointer(obj, nullPtr, visited))
-      return true;
 
    switch(TYPEOF(obj))
    {
@@ -262,14 +255,30 @@ bool hasExternalPointer(SEXP obj, bool nullPtr, std::set<SEXP>& visited)
       case PROMSXP: 
       {
          SEXP value = PRVALUE(obj);
-         if (value != R_UnboundValue && hasExternalPointer(value, nullPtr, visited))
-            return true;
-         
+         if (value != R_UnboundValue)
+         {
+            if (hasExternalPointer(value, nullPtr, visited))
+               return true;
+         }
+         else 
+         {
+            if (hasExternalPointer(PRCODE(obj), nullPtr, visited))
+               return true;
+
+            if (hasExternalPointer(PRENV(obj), nullPtr, visited))
+               return true;
+
+            return false;
+         }
          break;
       }
       default:
          break;
    }
+
+   // check attributes, this includes slots for S4 objects
+   if (attributesHasExternalPointer(obj, nullPtr, visited))
+      return true;
 
    // altrep objects might be implemented with external pointers
    if (isAltrep(obj))
@@ -312,6 +321,11 @@ SEXP rs_isAltrep(SEXP obj)
 {
    r::sexp::Protect protect;
    return r::sexp::create(isAltrep(obj), &protect);
+}
+
+SEXP rs_newTestExternalPointer(SEXP nullSEXP)
+{
+   return r::sexp::makeTestExternalPointer(r::sexp::asLogical(nullSEXP));
 }
 
 // Construct a simulated source reference from a context containing a
@@ -1368,6 +1382,7 @@ Error initialize()
    RS_REGISTER_CALL_METHOD(rs_hasAltrep);
    RS_REGISTER_CALL_METHOD(rs_isAltrep);
    RS_REGISTER_CALL_METHOD(rs_dumpContexts);
+   RS_REGISTER_CALL_METHOD(rs_newTestExternalPointer);
 
    // subscribe to events
    using boost::bind;
