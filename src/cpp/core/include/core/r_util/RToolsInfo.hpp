@@ -83,7 +83,6 @@ void prependToSystemPath(const RToolsInfo& toolsInfo, T* pTarget)
    }
 }
 
-
 } // namespace r_util
 } // namespace core 
 } // namespace rstudio

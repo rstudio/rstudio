@@ -21,11 +21,13 @@
 #include <boost/algorithm/string/replace.hpp>
 #include <boost/regex.hpp>
 
-#include <core/Algorithm.hpp>
-#include <shared_core/FilePath.hpp>
-#include <core/StringUtils.hpp>
 #include <shared_core/Error.hpp>
+#include <shared_core/FilePath.hpp>
+
+#include <core/Algorithm.hpp>
 #include <core/RegexUtils.hpp>
+#include <core/StringUtils.hpp>
+#include <core/system/Environment.hpp>
 
 #include <r/RExec.hpp>
 
@@ -33,6 +35,12 @@
 
 #ifndef CP_ACP
 # define CP_ACP 0
+#endif
+
+#ifdef _WIN32
+# define kPathSeparator ";"
+#else
+# define kPathSeparator ":"
 #endif
 
 #ifdef _WIN32
@@ -74,12 +82,19 @@ bool versionTest(const std::string& comparator, const std::string& version)
 
 void setenv(const std::string& key, const std::string& value)
 {
+   core::system::setenv(key, value);
+
+#ifdef _WIN32
+   // NOTE: Required on Windows as R links to a static copy
+   // of libc and libgcc, and so has a separate environment
+   // block from the rsession.exe executable itself.
    Error error = r::exec::RFunction("base:::Sys.setenv")
          .addParam(key, value)
          .call();
 
    if (error)
       LOG_ERROR(error);
+#endif
 }
 
 std::string getenv(const std::string& key)
@@ -93,6 +108,49 @@ std::string getenv(const std::string& key)
       LOG_ERROR(error);
 
    return value;
+}
+
+namespace {
+
+void modifySystemPath(const std::string& pathEntry, bool prepend)
+{
+   std::string oldPath = getenv("PATH");
+   std::string newPath = prepend
+         ? fmt::format("{}{}{}", pathEntry, kPathSeparator, oldPath)
+         : fmt::format("{}{}{}", oldPath, kPathSeparator, pathEntry);
+
+#ifdef _WIN32
+   std::replace(newPath.begin(), newPath.end(), '/', '\\');
+#endif
+
+   boost::regex reDuplicateSeparators(kPathSeparator "+");
+   boost::regex_replace(newPath, reDuplicateSeparators, kPathSeparator);
+
+   setenv("PATH", newPath);
+}
+
+} // end anonymous namespace
+
+void appendToSystemPath(const std::string& pathEntry)
+{
+   modifySystemPath(pathEntry, false);
+}
+
+void appendToSystemPath(const FilePath& pathEntry)
+{
+   std::string path = string_utils::utf8ToSystem(pathEntry.getAbsolutePath());
+   modifySystemPath(path, false);
+}
+
+void prependToSystemPath(const std::string& pathEntry)
+{
+   modifySystemPath(pathEntry, true);
+}
+
+void prependToSystemPath(const FilePath& pathEntry)
+{
+   std::string path = string_utils::utf8ToSystem(pathEntry.getAbsolutePath());
+   modifySystemPath(path, true);
 }
 
 std::string expandFileName(const std::string& name)

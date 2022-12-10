@@ -38,6 +38,7 @@
 #include <core/system/Process.hpp>
 
 #include <r/RExec.hpp>
+#include <r/RUtil.hpp>
 
 #include <session/SessionModuleContext.hpp>
 #include <session/SessionSourceDatabase.hpp>
@@ -222,16 +223,7 @@ void detectQuartoInstallation()
             return;
 
          // prepend to path only if RSTUDIO_QUARTO is defined
-         Error error = prepend
-                  ? module_context::prependToPath(s_quartoPath.getParent())
-                  : module_context::appendToPath(s_quartoPath.getParent());
-
-         if (error)
-         {
-            LOG_DEBUG_MESSAGE("Error setting PATH: " + sysPath);
-            LOG_ERROR(error);
-         }
-
+         r::util::addToSystemPath(s_quartoPath.getParent(), prepend);
          return;
       }
    }
@@ -262,14 +254,7 @@ void detectQuartoInstallation()
          return;
 
       // append to path
-      Error error = prepend
-            ? module_context::prependToPath(s_quartoPath.getParent())
-            : module_context::appendToPath(s_quartoPath.getParent());
-      if (error)
-      {
-         LOG_DEBUG_MESSAGE("Error setting PATH: " + sysPath);
-         LOG_ERROR(error);
-      }
+      r::util::addToSystemPath(s_quartoPath.getParent(), prepend);
    }
    else
    {
