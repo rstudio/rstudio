@@ -95,12 +95,6 @@
 
 #include "session-config.h"
 
-#ifdef _WIN32
-# define kPathSeparator ";"
-#else
-# define kPathSeparator ":"
-#endif
-
 using namespace rstudio::core;
 using namespace boost::placeholders;
 
