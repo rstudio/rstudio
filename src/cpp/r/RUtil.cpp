@@ -72,6 +72,29 @@ bool versionTest(const std::string& comparator, const std::string& version)
 
 } // anonymous namespace
 
+void setenv(const std::string& key, const std::string& value)
+{
+   Error error = r::exec::RFunction("base:::Sys.setenv")
+         .addParam(key, value)
+         .call();
+
+   if (error)
+      LOG_ERROR(error);
+}
+
+std::string getenv(const std::string& key)
+{
+   std::string value;
+   Error error = r::exec::RFunction("base:::Sys.getenv")
+         .addParam(key)
+         .call(&value);
+
+   if (error)
+      LOG_ERROR(error);
+
+   return value;
+}
+
 std::string expandFileName(const std::string& name)
 {
    return std::string(R_ExpandFileName(name.c_str()));

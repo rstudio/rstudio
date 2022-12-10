@@ -96,9 +96,9 @@
 #include "session-config.h"
 
 #ifdef _WIN32
-# define kPathSeparator ';'
+# define kPathSeparator ";"
 #else
-# define kPathSeparator ':'
+# define kPathSeparator ":"
 #endif
 
 using namespace rstudio::core;
@@ -131,6 +131,10 @@ Error modifyPath(const core::FilePath& path, bool append)
    std::string newPath = append
          ? fmt::format("{}{}{}", currentPath, kPathSeparator, pathString)
          : fmt::format("{}{}{}", pathString, kPathSeparator, currentPath);
+
+   // clean up duplicated path separators, if any
+   boost::regex reMultipleSeparators(kPathSeparator "+");
+   newPath = boost::regex_replace(newPath, reMultipleSeparators, kPathSeparator);
 
    error = r::exec::RFunction("base:::Sys.setenv")
          .addParam("PATH", newPath)

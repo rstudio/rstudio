@@ -3354,9 +3354,9 @@ core::Error initialize()
       return error;
 
    // setup environment
-   core::system::setenv("GIT_ASKPASS", "rpostback-askpass");
+   r::util::setenv("GIT_ASKPASS", "rpostback-askpass");
    if (interceptAskPass)
-      core::system::setenv("SSH_ASKPASS", "rpostback-askpass");
+      r::util::setenv("SSH_ASKPASS", "rpostback-askpass");
 
    // add postback directory to PATH
    error = module_context::appendToPath(module_context::rPostbackScriptsDir());

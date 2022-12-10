@@ -74,12 +74,11 @@ template <typename T>
 void prependToSystemPath(const RToolsInfo& toolsInfo, T* pTarget)
 {
    // prepend in reverse order
-   std::vector<FilePath>::const_reverse_iterator it
-                                          = toolsInfo.pathEntries().rbegin();
+   auto it = toolsInfo.pathEntries().rbegin();
    for ( ; it != toolsInfo.pathEntries().rend(); ++it)
    {
       std::string path = it->getAbsolutePath();
-      boost::algorithm::replace_all(path, "/", "\\");
+      std::replace(path.begin(), path.end(), '/', '\\');
       core::system::addToPath(pTarget, path, true);
    }
 }
