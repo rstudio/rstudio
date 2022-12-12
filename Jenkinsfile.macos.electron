@@ -18,6 +18,7 @@ pipeline {
       string(name: 'GIT_REVISION', defaultValue: 'main', description: 'Git revision to build')
       string(name: 'BRANCH_NAME', defaultValue: 'origin/main', description: 'Branch name to build')
       string(name: 'SLACK_CHANNEL', defaultValue: '#ide-builds', description: 'Slack channel to publish build message.')
+      booleanParam(name: 'PUBLISH', defaultValue: true, description: 'Runs publish stage if true')
   }
 
   environment {
@@ -93,6 +94,11 @@ pipeline {
 
     stage('notarize and upload') {
 
+      when {
+        expression {
+          return params.PUBLISH
+        }
+      }
       environment {
         PATH = "${env.HOME}/opt/bin:${env.PATH}"
       }

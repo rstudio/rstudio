@@ -491,7 +491,7 @@ try {
                                     }
 
                                 }
-                                    stage ('publish') {
+                                stage ('publish') {
                                     def packageVersion = "${rstudioVersionMajor}.${rstudioVersionMinor}.${rstudioVersionPatch}${rstudioVersionSuffix}"
                                     packageVersion = packageVersion.replace('+', '-')
 

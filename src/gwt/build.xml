@@ -109,7 +109,14 @@
    <property name="panmirror.dir" value="./lib/quarto/libs/panmirror"/>
    <property name="panmirror.build.dir" value="./www/js/panmirror"/>
 
+   <!-- use panmirror from /opt/rstudio-tools if available (typical for Docker) -->
+   <available
+      property="panmirror.dir"
+      value="/opt/rstudio-tools/src/gwt/lib/quarto/libs/panmirror"
+      file="/opt/rstudio-tools/src/gwt/lib/quarto/libs/panmirror"/>
+
    <target name="panmirror" description="Compile panmirror library">
+      <echo message="yarn location: ${yarn.bin}"/>
       <mkdir dir="${panmirror.build.dir}"/>
       <exec executable="${yarn.bin}" dir="${panmirror.dir}" resolveexecutable="true" failonerror="true">
          <arg value="install"/>
