@@ -194,17 +194,17 @@ test_that("hasExternalPointer finds external pointers", {
    expect_true(count == 0)
 
    # promises are not forced
-   h <- new.env(hash = TRUE, parent = emptyenv())
-   # NOTE: eval.env = globalenv() otherwise xp would be picked up 
-   #       as part of checking if PRENV(<promise>) has an external pointer 
-   delayedAssign("p", .rs.testExternalPointer(FALSE), assign.env = h, eval.env = globalenv())
-   expect_true(count == 0)
-   expect_true(!.rs.hasExternalPointer(h))
+   local({
+      h <- new.env(hash = TRUE, parent = emptyenv())
+      delayedAssign("p", .rs.testExternalPointer(FALSE), assign.env = h)
+      expect_true(count == 0)
+      expect_true(!.rs.hasExternalPointer(h))
+      
+      # ... but if they are, the value is checked
+      force(h$p)
+      expect_true(.rs.hasExternalPointer(h))
+   })
    
-   # ... but if they are, the value is checked
-   force(h$p)
-   expect_true(.rs.hasExternalPointer(h))
-
    # S4 
    Env <- setClass("Env", contains = "environment")
    hEnv <- Env(
