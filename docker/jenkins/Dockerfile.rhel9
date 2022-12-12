@@ -90,11 +90,6 @@ RUN bash /tmp/install-crashpad rhel8
 RUN mkdir -p /opt/rstudio-tools/dependencies/common
 COPY dependencies/common/ /opt/rstudio-tools/dependencies/common/
 
-# copy panmirror project setup (so install-common can install needed deps)
-RUN mkdir -p /opt/rstudio-tools/panmirror
-COPY src/gwt/panmirror/src/editor/yarn.lock /opt/rstudio-tools/panmirror/
-COPY src/gwt/panmirror/src/editor/package.json /opt/rstudio-tools/panmirror/
-
 # install common dependencies
 RUN cd /opt/rstudio-tools/dependencies/common && /bin/bash ./install-common rhel9
 
