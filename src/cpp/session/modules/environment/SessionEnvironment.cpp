@@ -34,7 +34,7 @@
 #include <session/SessionSourceDatabase.hpp>
 #include <session/SessionPersistentState.hpp>
 #include <session/prefs/UserPrefs.hpp>
-#include <Rversion.h>
+#include <r/RSxpInfo.hpp>
 
 #include "EnvironmentUtils.hpp"
 
@@ -151,11 +151,19 @@ bool listHasExternalPointer(SEXP obj, bool nullPtr, std::set<SEXP>& visited)
    return false;
 }
 
+namespace {
+bool frameBindingIsActive(SEXP binding) 
+{
+   static unsigned int ACTIVE_BINDING_MASK = (1<<15);
+   return reinterpret_cast<r::sxpinfo*>(binding)->gp & ACTIVE_BINDING_MASK;
+}
+}
+
 bool frameHasExternalPointer(SEXP frame, bool nullPtr, std::set<SEXP>& visited)
 {
    while(frame != R_NilValue)
    {
-      if (!r::sexp::isActiveBinding(frame) && hasExternalPointer(CAR(frame), nullPtr, visited))
+      if (!frameBindingIsActive(frame) && hasExternalPointer(CAR(frame), nullPtr, visited))
          return true;
 
       frame = CDR(frame);
