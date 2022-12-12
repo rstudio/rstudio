@@ -99,7 +99,7 @@
       dev.control(displaylist = "enable")
       # this introduces margins that makes the figure different from the actual output
       # as seen in the rendered document, so disable it
-      # .rs.setNotebookMargins()
+      # .rs.setNotebookMargins()
    })
 })
 
