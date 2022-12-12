@@ -1,0 +1,42 @@
+#!/usr/bin/env bash
+
+#
+# install-panmirror
+#
+# Copyright (C) 2022 by Posit Software, PBC
+#
+# Unless you have received this program directly from Posit Software pursuant
+# to the terms of a commercial license agreement with Posit Software, then
+# this program is licensed to you under the terms of version 3 of the
+# GNU Affero General Public License. This program is distributed WITHOUT
+# ANY EXPRESS OR IMPLIED WARRANTY, INCLUDING THOSE OF NON-INFRINGEMENT,
+# MERCHANTABILITY OR FITNESS FOR A PARTICULAR PURPOSE. Please refer to the
+# AGPL (http://www.gnu.org/licenses/agpl-3.0.txt) for more details.
+#
+#
+
+set -e
+
+source "$(dirname "${BASH_SOURCE[0]}")/../tools/rstudio-tools.sh"
+section "Installing panmirror (visual editor)"
+
+info "RSTUDIO_TOOLS_ROOT: ${RSTUDIO_TOOLS_ROOT}"
+GWT_ROOT_DIR="$(dirname "${BASH_SOURCE}")/../../src/gwt"
+QUARTO_DIR="${GWT_ROOT_DIR}/lib/quarto"
+PANMIRROR_DIR="${QUARTO_DIR}/packages/editor"
+PANMIRROR_WWW_DIR="${GWT_ROOT_DIR}/www/js/panmirror"
+
+info "GWT_ROOT_DIR: ${GWT_ROOT_DIR}"
+info "QUARTO_DIR: ${QUARTO_DIR}"
+
+# clone quarto monorepo if not already cloned
+if ! test -e "$QUARTO_DIR"; then
+  echo "Cloning quarto repo"
+  git clone https://github.com/quarto-dev/quarto.git "$QUARTO_DIR"
+else
+  echo "quarto repo already cloned in '$QUARTO_DIR'"
+
+  pushd $QUARTO_DIR
+  git pull
+  popd
+fi

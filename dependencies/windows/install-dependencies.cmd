@@ -231,11 +231,6 @@ if not exist %YARN_DIR%\yarn (
   call %NODE_SUBDIR%\npm install --global yarn
 )
 
-set PATH=%CD%\%NODE_SUBDIR%;%CD%\%YARN_DIR%;%PATH%
-pushd ..\..\src\gwt\panmirror\src\editor
-call yarn install
-popd
-
 if not defined JENKINS_URL (
   if exist C:\Windows\py.exe (
     pushd ..\..\src\gwt\tools\i18n-helpers\
@@ -244,6 +239,11 @@ if not defined JENKINS_URL (
     popd
   )
 )
+
+echo "Installing panmirror (visual editor)"
+pushd ..\windows\install-panmirror
+call clone-quarto-repo.cmd
+popd
 
 call install-packages.cmd
 

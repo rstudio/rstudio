@@ -44,24 +44,3 @@ else
   # update INSTALL_PATH
   INSTALL_PATH="${HOME}/.yarn/bin:${HOME}/.config/yarn/global/node_modules/.bin:${INSTALL_PATH}"
 fi
-
-if is-m1-mac; then
-  # GWT always builds with x64 node on M1 Mac, so no need to reinstall dependencies in an
-  # M1 context.
-  info "Skipping panmirror dependency install for M1 architecture"
-  exit 0
-fi
-
-# install panmirror dependencies
-if [ -d "/opt/rstudio-tools/panmirror" ]; then
-  # install dependencies from /opt/rstudio-tools if present
-  pushd /opt/rstudio-tools/panmirror
-else
-  # otherwise, use source tree
-  pushd ../../src/gwt/panmirror/src/editor
-fi
-
-PATH=${INSTALL_PATH} yarn config set ignore-engines true
-PATH=${INSTALL_PATH} yarn install
-
-popd

@@ -2,7 +2,8 @@
 ## RStudio 2023-03.0 "Cherry Blossom" Release Notes
 
 ### New
-- Upgrade Electron to 22.0.0
+- Adopt panmirror (visual editor) migration to quarto-dev/quarto project #12316
+- Upgrade Electron to 22.0.0 #11734
 
 ### Fixed
 

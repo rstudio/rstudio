@@ -43,12 +43,12 @@ public class PanmirrorDOIServer
    }
 
 
-   public Promise<JavaScriptObject> fetchCSL(String doi, int delayMs)
+   public Promise<JavaScriptObject> fetchCSL(String doi)
    {
       return new Promise<>((ResolveCallbackFn<JavaScriptObject> resolve, RejectCallbackFn reject) -> {
          server_.doiFetchCSL(
             doi,
-            new PromiseServerRequestCallback<>(resolve, reject, constants_.lookingUpDOIProgress(), delayMs)
+            new PromiseServerRequestCallback<>(resolve, reject)
          );
       });
    }

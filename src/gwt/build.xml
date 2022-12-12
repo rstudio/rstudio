@@ -87,31 +87,40 @@
    <!-- ensure version matches RSTUDIO_NODE_VERSION -->
    <property name="node.version" value="16.14.0"/>
    <property name="node.dir" value="../../dependencies/common/node/${node.version}"/>
-   <condition property="node.bin" value="../../../${node.dir}/bin/node">
+   <!-- use yarn from system but will prefer yarn from dependencies if available -->
+   <condition property="yarn.bin" value="yarn">
      <not>
         <os family="windows" />
      </not>
    </condition>
-   <condition property="node.bin" value="${node.dir}/node.exe">
+   <available
+      property="yarn.bin"
+      value="${node.dir}/bin/yarn"
+      file="${node.dir}/bin/yarn"/>
+   <condition property="yarn.bin" value="${node.dir}/node_modules/yarn/bin/yarn.cmd">
      <os family="windows" />
    </condition>
-
-   <!-- use node from /opt/rstudio-tools if installed (typical for Docker) -->
+   <!-- use yarn from /opt/rstudio-tools if installed (typical for Docker) -->
    <available
-      property="node.bin"
-      value="/opt/rstudio-tools/dependencies/common/node/${node.version}/bin/node"
-      file="/opt/rstudio-tools/dependencies/common/node/${node.version}/bin/node"/>
+      property="yarn.bin"
+      value="/opt/rstudio-tools/dependencies/common/node/${node.version}/node_modules/yarn/bin/yarn"
+      file="/opt/rstudio-tools/dependencies/common/node/${node.version}/node_modules/yarn/bin/yarn"/>
 
-   <property name="panmirror.dir" value="./panmirror/src/editor"/>
+   <property name="panmirror.dir" value="./lib/quarto/libs/panmirror"/>
    <property name="panmirror.build.dir" value="./www/js/panmirror"/>
 
    <target name="panmirror" description="Compile panmirror library">
       <mkdir dir="${panmirror.build.dir}"/>
-      <exec executable="${node.bin}" dir="${panmirror.dir}" spawn="${panmirror.spawn}">
-         <arg value="fuse"/>
-         <arg value="${panmirror.target}"/>
-         <env key="NODE_PATH" path="${env.NODE_PATH}:/opt/rstudio-tools/panmirror/node_modules"/>
+      <exec executable="${yarn.bin}" dir="${panmirror.dir}" resolveexecutable="true" failonerror="true">
+         <arg value="install"/>
       </exec>
+      <exec executable="${yarn.bin}" dir="${panmirror.dir}" resolveexecutable="true" failonerror="true">
+         <arg value="build"/>
+         <env key="PANMIRROR_OUTDIR" value="dist-rstudio"/>
+      </exec>
+      <copy todir="${panmirror.build.dir}">
+         <fileset dir="${panmirror.dir}/dist-rstudio"/>
+      </copy>
    </target>
 
    <target name="javac" description="Compile java source">
@@ -145,7 +154,6 @@
    <target name="gwtc" depends="ext,javac" description="GWT compile to JavaScript">
       <antcall target="panmirror">
          <param name="panmirror.target" value="ide-dist"/>
-         <param name="panmirror.spawn" value="false"/>
       </antcall>
       <java failonerror="true" fork="true" classname="com.google.gwt.dev.Compiler">
          <classpath>
@@ -217,7 +225,6 @@
    <target name="codeserver" depends="acesupport,javac" description="Run GWT devmode code server">
       <antcall target="panmirror">
          <param name="panmirror.target" value="${panmirror.target}"/>
-         <param name="panmirror.spawn" value="true"/>
       </antcall>
       <java failonerror="true" fork="true" classname="com.google.gwt.dev.DevMode">
          <classpath>
@@ -339,6 +346,8 @@
       <delete dir="${www.dir}/rstudio" failonerror="false" />
       <delete file="${ace.bin}/acesupport.js" failonerror="false" />
       <delete dir="${panmirror.build.dir}" failonerror="false"/>
+      <delete dir="${panmirror.dir}/dist-rstudio" failonerror="false"/>
+      <delete dir="${panmirror.dir}/node_modules" failonerror="false"/>
       <delete dir="gen" failonerror="false" />
       <delete dir="${extras.dir}" failonerror="false" />
    </target>

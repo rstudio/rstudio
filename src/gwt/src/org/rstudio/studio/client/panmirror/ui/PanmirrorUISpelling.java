@@ -28,7 +28,6 @@ import jsinterop.annotations.JsType;
 public class PanmirrorUISpelling {
    
    // realtime interface
-   public GetBool realtimeEnabled;
    public CheckWord checkWords;
    public SuggestionList suggestionList;
    
@@ -37,10 +36,6 @@ public class PanmirrorUISpelling {
    public DictionaryFunction ignoreWord;
    public DictionaryFunction unignoreWord;
    public DictionaryFunction addToDictionary;
-   
-   // word breaking
-   public BreakWords breakWords;
-   public ClassifyCharacter classifyCharacter;
    
    @JsFunction
    public interface GetBool
@@ -71,17 +66,4 @@ public class PanmirrorUISpelling {
    {
       void call(String word);
    }
-   
-   @JsFunction
-   public interface BreakWords
-   {
-      JsArray<PanmirrorWordRange> breakWords(String text);
-   }
-   
-   @JsFunction
-   public interface ClassifyCharacter
-   {
-      int classify(char ch);
-   }
-      
 }

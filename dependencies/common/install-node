@@ -57,3 +57,4 @@ rm -f "${NODE_ARCHIVE}"
 # rename to expected folder name
 mv "${NODE_FILE}" "${NODE_FOLDER}"
 
+popd

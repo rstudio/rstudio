@@ -28,6 +28,7 @@ set -e
 ./install-soci
 ./install-yaml-cpp
 ./install-crashpad
+./install-panmirror
 
 if [ -e install-overlay ]
 then

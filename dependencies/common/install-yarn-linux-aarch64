@@ -28,19 +28,3 @@ npm install -g yarn
 
 # update INSTALL_PATH
 INSTALL_PATH="${HOME}/.yarn/bin:${HOME}/.config/yarn/global/node_modules/.bin:${PATH}"
-
-# install panmirror dependencies
-if [ -d "/opt/rstudio-tools/panmirror" ]; then
-  # install dependencies from /opt/rstudio-tools if present
-  pushd /opt/rstudio-tools/panmirror
-else
-  # otherwise, use source tree
-  pushd ../../src/gwt/panmirror/src/editor
-fi
-
-PATH=${INSTALL_PATH} yarn config set ignore-engines true
-PATH=${INSTALL_PATH} yarn install
-
-popd
-
-
