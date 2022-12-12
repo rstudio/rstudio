@@ -185,11 +185,19 @@ public class CompilePanel extends Composite
 
    public void compileCompleted()
    {
-      stopButton_.setVisible(false);
       outputDisplay_.onCompileCompleted();
+      if (stopButton_ != null)
+      {
+         stopButton_.setVisible(false);
+      }
 
       if (isErrorPanelShowing())
          errorList_.focus();
+   }
+
+   public void showBufferedOutput()
+   {
+      outputDisplay_.flushOutput();
    }
 
    public HasClickHandlers stopButton()

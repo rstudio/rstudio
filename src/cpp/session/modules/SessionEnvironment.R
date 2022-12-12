@@ -230,8 +230,7 @@
       return(.rs.valueDescription(expr))
    
    # we have a call; try to deparse it
-   sanitized <- .rs.sanitizeCall(call)
-   .rs.deparse(sanitized)
+   .rs.describeCall(expr)
 })
 
 # used to create descriptions for language objects and symbols
@@ -604,6 +603,27 @@
    class(obj)[[1L]]
 })
 
+.rs.addFunction("describeCall", function(call)
+{
+   # defend against very large calls; e.g. those with R objects inlined
+   # as part of the call (can happen in do.call contexts)
+   #
+   # this is primarily used for the Environment pane, where we try to display
+   # a single-line summary of an R object -- so we can enforce that when
+   # deparsing calls here as well
+   #
+   # https://github.com/rstudio/rstudio/issues/5158
+   sanitized <- .rs.sanitizeCall(call)
+   val1 <- .rs.deparse(sanitized, nlines = 1L)
+   val2 <- .rs.deparse(sanitized, nlines = 2L)
+   
+   # indicate if there is more output
+   val <- if (!identical(val1, val2))
+      paste(val1, "<...>")
+   else
+      val1
+})
+
 .rs.addFunction("describeObject", function(env, objName, computeSize = TRUE)
 {
    obj <- get(objName, env)
@@ -660,24 +680,7 @@
    }
    else if (is.language(obj))
    {
-      # defend against very large calls; e.g. those with R objects inlined
-      # as part of the call (can happen in do.call contexts)
-      #
-      # this is primarily used for the Environment pane, where we try to display
-      # a single-line summary of an R object -- so we can enforce that when
-      # deparsing calls here as well
-      #
-      # https://github.com/rstudio/rstudio/issues/5158
-      sanitized <- .rs.sanitizeCall(obj)
-      val1 <- .rs.deparse(sanitized, nlines = 1L)
-      val2 <- .rs.deparse(sanitized, nlines = 2L)
-      
-      # indicate if there is more output
-      val <- if (!identical(val1, val2))
-         paste(val1, "<...>")
-      else
-         val1
-
+      .rs.describeCall(obj)  
    }
    else if (!hasNullPtr)
    {

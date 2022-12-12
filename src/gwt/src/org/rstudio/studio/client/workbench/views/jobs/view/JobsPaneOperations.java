@@ -33,6 +33,7 @@ public interface JobsPaneOperations
    boolean isCurrent(String id);
    void updateProgress(int timestamp);
    void showProgress(Job job);
+   void showBufferedOutput();
    void addJob(Job job);
    void setInitialJobs(List<Job> jobs);
    void insertJob(Job job);

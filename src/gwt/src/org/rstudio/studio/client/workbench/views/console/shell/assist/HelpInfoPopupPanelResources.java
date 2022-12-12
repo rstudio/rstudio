@@ -30,6 +30,7 @@ public interface HelpInfoPopupPanelResources extends ClientBundle
       String snippetText();
       String roxygenText();
       String roxygenTitle();
+      String roxygenSnippet();
    }
   
    @Source("HelpInfoPopupPanel.css")

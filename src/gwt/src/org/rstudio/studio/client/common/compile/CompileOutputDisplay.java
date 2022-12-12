@@ -27,7 +27,7 @@ public interface CompileOutputDisplay
    public void writeError(String error);
    
    public void onCompileCompleted();
-   
+   public void flushOutput();
    public void clear();
    public void scrollToBottom();
    

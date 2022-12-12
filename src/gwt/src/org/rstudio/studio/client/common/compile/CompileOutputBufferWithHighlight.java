@@ -101,16 +101,18 @@ public class CompileOutputBufferWithHighlight extends Composite
       String outputClass = styles_.output();
       console_.submit("\n", outputClass);
 
-      flushOverloadBuffer(outputClass);
+      flushOutput();
    }
 
-   private void flushOverloadBuffer(String outputClass) {
+   @Override
+   public void flushOutput()
+   {
       String[] lines = savedOutput_.split("\n");
       int end = lines.length - 1;
       int start = Math.max(0, end - 100);
       for (int i = start; i < end; i++)
       {
-         console_.submit(lines[i] + "\n", outputClass);
+         console_.submit(lines[i] + "\n", styles_.output());
          totalSubmittedLines_++;
       }
 
@@ -153,7 +155,7 @@ public class CompileOutputBufferWithHighlight extends Composite
 
          if (numLinesSaved_ > MAX_LINES_OVERLOAD_BUFFER)
          {
-            flushOverloadBuffer(className);
+            flushOutput();
             console_.submit(constants_.consoleBufferedMessage(MAX_LINES_OVERLOAD_BUFFER), styles_.warning());
          }
          return;

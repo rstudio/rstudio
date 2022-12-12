@@ -58,6 +58,7 @@ public class RStudioUnitTestSuite extends GWTTestSuite
       suite.addTestSuite(ElementIdsTests.class);
       suite.addTestSuite(ChunkContextUiTests.class);
       suite.addTestSuite(SafeHtmlUtilTests.class);
+      suite.addTestSuite(TestMocks.class);
 
       return suite;
    }

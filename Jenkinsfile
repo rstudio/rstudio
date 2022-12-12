@@ -280,6 +280,9 @@ try {
                           returnStdout: true
                         ).trim()
                         echo "RStudio build version: ${rstudioVersion}"
+                        script {
+                            currentBuild.displayName = "${rstudioVersion}"
+                        }
 
                         // Split on [-+] first to avoid having to worry about splitting out .pro<n>
                         def version = rstudioVersion.split('[-+]')
@@ -297,7 +300,7 @@ try {
                             rstudioVersionSuffix = '+' + version[1]
 
                         // update slack message to include build version
-                        messagePrefix = "Jenkins ${env.JOB_NAME} build: <${env.BUILD_URL}display/redirect|${env.BUILD_DISPLAY_NAME}>, version: ${rstudioVersion}"
+                        messagePrefix = "Jenkins ${env.JOB_NAME} build: <${env.BUILD_URL}display/redirect|${rstudioVersion}>"
                     }
                 }
             }

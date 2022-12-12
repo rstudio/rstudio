@@ -82,7 +82,12 @@ public class LauncherJobsPaneWidgets implements JobsPaneOperations
    public void showProgress(Job job)
    {
    }
-   
+
+   @Override
+   public void showBufferedOutput()
+   {
+   }
+
    @Override
    public void setInitialJobs(List<Job> jobs)
    {
