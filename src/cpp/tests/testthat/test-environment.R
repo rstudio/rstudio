@@ -16,7 +16,6 @@
 context("environment")
 
 test_that("environment object listings are correct", {
-
    # temporarily disable showing the .Last.value so we don't have to account for it in test results
    lastValue <- .rs.api.readRStudioPreference("show_last_dot_value")
    on.exit(.rs.api.writeRStudioPreference("show_last_dot_value", lastValue))
@@ -133,8 +132,8 @@ test_that("missing arguments can be described", {
 })
 
 test_that("hasExternalPointer finds external pointers", {
-   xp <- .rs.testExternalPointer(FALSE)
-   nullxp <- .rs.testExternalPointer(TRUE)
+   xp <- .Call("rs_newTestExternalPointer", FALSE, PACKAGE = "(embedding)")
+   nullxp <- .Call("rs_newTestExternalPointer", TRUE, PACKAGE = "(embedding)")
 
    # NULL
    expect_true(!.rs.hasExternalPointer(NULL))
@@ -196,7 +195,7 @@ test_that("hasExternalPointer finds external pointers", {
    # promises are not forced
    local({
       h <- new.env(hash = TRUE, parent = emptyenv())
-      delayedAssign("p", .rs.testExternalPointer(FALSE), assign.env = h)
+      delayedAssign("p", .Call("rs_newTestExternalPointer", FALSE, PACKAGE = "(embedding)"), assign.env = h)
       expect_true(count == 0)
       expect_true(!.rs.hasExternalPointer(h))
       
@@ -221,13 +220,14 @@ test_that("hasExternalPointer finds external pointers", {
 })
 
 test_that(".rs.hasExternalPointer() finds xp in functions", {
+   
    expect_false(.rs.hasExternalPointer(function(x = 2) x))
    
    # formals
    expect_true(
       .rs.hasExternalPointer(
          local({
-            `formals<-`(function(x = 42) x, value = pairlist(x = .rs.testExternalPointer(FALSE)))
+            `formals<-`(function(x = 42) x, value = pairlist(x = .Call("rs_newTestExternalPointer", FALSE, PACKAGE = "(embedding)")))
          })
       )
    )
@@ -235,7 +235,7 @@ test_that(".rs.hasExternalPointer() finds xp in functions", {
    # body
    expect_true(
       .rs.hasExternalPointer(
-         substitute(function() x, list(x = .rs.testExternalPointer(FALSE)))
+         substitute(function() x, list(x = .Call("rs_newTestExternalPointer", FALSE, PACKAGE = "(embedding)")))
       )
    )
 
@@ -243,7 +243,7 @@ test_that(".rs.hasExternalPointer() finds xp in functions", {
    expect_true(
       .rs.hasExternalPointer(
          local({
-            xp <- .rs.testExternalPointer(FALSE)
+            xp <- .Call("rs_newTestExternalPointer", FALSE, PACKAGE = "(embedding)")
             function(x = 2) x
          })
       )

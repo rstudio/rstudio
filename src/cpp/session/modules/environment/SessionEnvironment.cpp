@@ -344,7 +344,8 @@ SEXP rs_isAltrep(SEXP obj)
 
 SEXP rs_newTestExternalPointer(SEXP nullSEXP)
 {
-   return r::sexp::makeTestExternalPointer(r::sexp::asLogical(nullSEXP));
+   bool nullPtr = r::sexp::asLogical(nullSEXP);
+   return r::sexp::makeExternalPtr(nullPtr ? nullptr : R_EmptyEnv, R_NilValue, R_NilValue);
 }
 
 // Construct a simulated source reference from a context containing a

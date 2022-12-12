@@ -901,11 +901,6 @@
    .Call("rs_hasAltrep", var, PACKAGE = "(embedding)")
 })
 
-.rs.addFunction("testExternalPointer", function(null = FALSE)
-{
-   .Call("rs_newTestExternalPointer", null, PACKAGE = "(embedding)")
-})
-
 .rs.addFunction("resolveContextSourceRefs", function(callfun)
 {
    calls <- sys.calls()
