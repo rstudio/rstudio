@@ -219,3 +219,34 @@ test_that("hasExternalPointer finds external pointers", {
    hEnv$a <- nullxp
    expect_true(.rs.hasExternalPointer(hEnv, nullPtr = TRUE))
 })
+
+test_that(".rs.hasExternalPointer() finds xp in functions", {
+   expect_false(.rs.hasExternalPointer(function(x = 2) x))
+   
+   # formals
+   expect_true(
+      .rs.hasExternalPointer(
+         local({
+            `formals<-`(function(x = 42) x, value = pairlist(x = .rs.testExternalPointer(FALSE)))
+         })
+      )
+   )
+
+   # body
+   expect_true(
+      .rs.hasExternalPointer(
+         substitute(function() x, list(x = .rs.testExternalPointer(FALSE)))
+      )
+   )
+
+   # environment
+   expect_true(
+      .rs.hasExternalPointer(
+         local({
+            xp <- .rs.testExternalPointer(FALSE)
+            function(x = 2) x
+         })
+      )
+   )
+
+})

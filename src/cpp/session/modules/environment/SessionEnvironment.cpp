@@ -272,6 +272,17 @@ bool hasExternalPointer(SEXP obj, bool nullPtr, std::set<SEXP>& visited)
          }
          break;
       }
+      case CLOSXP:
+      {
+         if (hasExternalPointer(FORMALS(obj), nullPtr, visited))
+            return true;
+
+         if (hasExternalPointer(BODY(obj), nullPtr, visited))
+            return true;
+
+         if (hasExternalPointer(CLOENV(obj), nullPtr, visited))
+            return true;
+      }
       default:
          break;
    }
