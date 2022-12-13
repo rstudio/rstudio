@@ -40,3 +40,8 @@ else
   git pull
   popd
 fi
+
+if is-jenkins; then
+  # fix up permissions so bin dir will be writable by Jenkins
+  chmod -R 777 "$QUARTO_DIR"
+fi
