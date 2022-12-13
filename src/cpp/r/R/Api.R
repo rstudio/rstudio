@@ -244,9 +244,9 @@
          marker$file <- .rs.scalar(.rs.normalizePath(marker$file, mustWork = TRUE))
          marker$line <- .rs.scalar(as.numeric(marker$line))
          marker$column <- .rs.scalar(as.numeric(marker$column))
-         marker$message <- .rs.scalar(marker$message)
          marker$messageHTML <- .rs.scalar(inherits(marker$message, "html"))
-
+         marker$message <- .rs.scalar(marker$message)
+         
          marker
       })
    } else {
