@@ -104,6 +104,8 @@ COPY dependencies/common/ /opt/rstudio-tools/dependencies/common/
 
 # install common dependencies
 RUN cd /opt/rstudio-tools/dependencies/common && scl enable llvm-toolset-7 "/bin/bash ./install-common centos7"
+# panmirror needs to be able to build in this location
+RUN chmod -R 777 /opt/rstudio-tools/src
 
 # install Qt SDK
 COPY dependencies/common/install-qt.sh /tmp/

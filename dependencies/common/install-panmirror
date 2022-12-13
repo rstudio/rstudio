@@ -37,11 +37,6 @@ else
   echo "quarto repo already cloned in '$QUARTO_DIR'"
 
   pushd $QUARTO_DIR
-  git pull
+  git reset --hard && git clean -dfx
   popd
-fi
-
-if is-jenkins; then
-  # fix up permissions so bin dir will be writable by Jenkins
-  chmod -R 777 "$QUARTO_DIR"
 fi
