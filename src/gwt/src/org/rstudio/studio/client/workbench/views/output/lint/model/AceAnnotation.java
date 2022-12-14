@@ -35,5 +35,6 @@ public class AceAnnotation extends JavaScriptObject
    public final native int row() /*-{ return this.row; }-*/;
    public final native int column() /*-{ return this.column; }-*/;
    public final native String text() /*-{ return this.text; }-*/;
+   public final native String html() /*-{ return this.html; }-*/;
    public final native String type() /*-{ return this.type; }-*/;
 }
