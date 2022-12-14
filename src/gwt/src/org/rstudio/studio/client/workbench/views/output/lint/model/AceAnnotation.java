@@ -22,14 +22,21 @@ public class AceAnnotation extends JavaScriptObject
    
    public static native AceAnnotation create(int row,
                                              int column,
+                                             String html,
                                              String text,
                                              String type) /*-{
-      return {
+
+      var aceAnnotation = {
          row: row,
          column: column,
-         text: text,
          type: type
-      }
+      };
+      if (html) 
+         aceAnnotation.html = html;
+      else
+         aceAnnotation.text = text;
+
+      return aceAnnotation;
    }-*/;
    
    public final native int row() /*-{ return this.row; }-*/;

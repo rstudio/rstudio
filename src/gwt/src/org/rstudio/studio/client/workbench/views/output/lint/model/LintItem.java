@@ -97,6 +97,7 @@ public class LintItem extends JavaScriptObject
       return AceAnnotation.create(
             getStartRow(),
             getStartColumn(),
+            getHtml(),
             getText(),
             getType());
    }
