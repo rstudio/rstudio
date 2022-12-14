@@ -1,0 +1,112 @@
+os = 'jammy'
+arch = 'amd64'
+flavor = 'server'
+type = 'DEB'
+def utils
+
+pipeline {
+  agent {
+    label 'linux && amd64'
+  }
+
+  options {
+    timestamps()
+    disableConcurrentBuilds()
+    buildDiscarder(logRotator(numToKeepStr: '10'))
+  }
+
+  environment {
+        GITHUB_LOGIN = credentials('github-rstudio-jenkins')
+  }
+
+  stages {
+    stage('Load Utils') {
+      steps {
+        script {
+          sh 'printenv'
+          sh "echo 'Loading utils from ${env.WORKSPACE}/utils.groovy'"
+          utils = load "${env.WORKSPACE}/utils.groovy"
+          utils.addRemoteRef("${env.CHANGE_TARGET}")
+        }
+      }
+    }
+
+    stage('Build') {
+      when {
+        expression {
+          return utils.hasChangesIn('src') ||
+                 utils.hasChangesIn('package/linux') ||
+                 utils.hasChangesIn('docker/jenkins') ||
+                 utils.hasChangesIn('cmake')
+        }
+      }
+
+      stages {
+        stage('Prepare Build Container') {
+          steps {
+            pullBuildPush(
+              image_name: 'jenkins/ide',
+              image_tag: "${os}-${arch}-${env.CHANGE_TARGET.replaceAll('/', '-')}",
+              dockerfile: "docker/jenkins/Dockerfile.${os}",
+              build_arg_jenkins_uid: 'JENKINS_UID',
+              build_arg_jenkins_gid: 'JENKINS_GID',
+              builds_args: "--build-arg GITHUB_LOGIN=${GITHUB_LOGIN}",
+              push: false)
+          }
+        }
+
+        stage('Build Package and Test') {
+          agent {
+            docker {
+              image "jenkins/ide:${os}-${arch}-${env.CHANGE_TARGET.replaceAll('/', '-')}"
+              reuseNode true
+            }
+          }
+
+          stages {
+            stage('Build Package') {
+              steps {
+                script {
+                  // add OS that the package was built for
+                  def envVars = "PACKAGE_OS=\"${os}\""
+
+                  envVars = "${envVars} MAKEFLAGS=-j4"
+
+                  // perform the compilation
+                  sh "cd package/linux && ${envVars} ./make-${flavor}-package ${type} clean && cd ../.."
+                }
+              }
+            }
+
+            stage('Run GWT Unit Tests') {
+              steps {
+                script {
+                  try {
+                    // attempt to run ant (gwt) unit tests
+                    sh "cd package/linux/build-${flavor.capitalize()}-${type}/src/gwt && ./gwt-unit-tests.sh"
+                  } catch (err) {
+                    // mark build as unstable if it fails unit tests
+                    unstable("GWT unit tests failed (${flavor.capitalize()} ${type} on ${os})")
+                  }
+                }
+              }
+            }
+
+            stage('Run C++ Unit Tests') {
+              steps {
+                script {
+                  try {
+                    // attempt to run cpp unit tests
+                    sh "cd package/linux/build-${flavor.capitalize()}-${type}/src/cpp && ./rstudio-tests"
+                  } catch (err) {
+                    unstable("C++ unit tests failed (${flavor.capitalize()} ${type} on ${os})")
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    }
+  }
+}
