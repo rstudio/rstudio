@@ -36,7 +36,6 @@ public class LintItem extends JavaScriptObject
          "end.row": endRow,
          "end.column": endColumn,
          "text": text,
-         "raw": text,
          "type": type
       };
                                 
@@ -72,6 +71,14 @@ public class LintItem extends JavaScriptObject
 
    public final native void setText(String text) /*-{
       this["text"] = text;
+   }-*/;
+   
+   public final native String getHtml() /*-{
+      return this["html"];
+   }-*/;
+
+   public final native void setHtml(String html) /*-{
+      this["html"] = html;
    }-*/;
    
    public final native String getType() /*-{
@@ -112,11 +119,11 @@ public class LintItem extends JavaScriptObject
             column: item["start.column"],
             type: type
          };
-         var html = item["text"]
+         var html = item["html"]
          if (html)
             annotation.html = html;
          else 
-            annotation.text = item["raw"];
+            annotation.text = item["text"];
          
          aceAnnotations.push(annotation);
       }
