@@ -104,6 +104,7 @@ bool isNull(SEXP object);
 bool isEnvironment(SEXP object);
 bool isPrimitiveEnvironment(SEXP object);
 bool isNumeric(SEXP object);
+bool isUserDefinedDatabase(SEXP object);
 
 // type coercions
 std::string asString(SEXP object);
@@ -127,8 +128,11 @@ bool isExternalPointer(SEXP object);
 bool isNullExternalPointer(SEXP object);
 
 SEXP makeWeakRef(SEXP key, SEXP val, R_CFinalizer_t fun, Rboolean onexit);
+SEXP getWeakRefKey(SEXP ref);
+SEXP getWeakRefValue(SEXP ref);
 void registerFinalizer(SEXP s, R_CFinalizer_t fun);
 SEXP makeExternalPtr(void* ptr, R_CFinalizer_t fun, Protect* protect);
+SEXP makeExternalPtr(void* ptr, SEXP prot, SEXP tag);
 void* getExternalPtrAddr(SEXP extptr);
 void clearExternalPtr(SEXP extptr);
 

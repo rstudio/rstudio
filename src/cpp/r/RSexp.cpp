@@ -689,6 +689,11 @@ bool isPrimitiveEnvironment(SEXP object)
    return TYPEOF(object) == ENVSXP;
 }
 
+bool isUserDefinedDatabase(SEXP object)
+{
+   return OBJECT(object) && Rf_inherits(object, "UserDefinedDatabase");
+}
+
 bool isNumeric(SEXP object)
 {
    return Rf_isNumeric(object);
@@ -788,6 +793,16 @@ SEXP makeWeakRef(SEXP key, SEXP val, R_CFinalizer_t fun, Rboolean onexit)
    return R_MakeWeakRefC(key, val, fun, onexit);
 }
 
+SEXP getWeakRefKey(SEXP ref)
+{
+   return VECTOR_ELT(ref, 0);
+}
+
+SEXP getWeakRefValue(SEXP ref)
+{
+   return VECTOR_ELT(ref, 1);
+}
+
 void registerFinalizer(SEXP s, R_CFinalizer_t fun)
 {
    R_RegisterCFinalizer(s, fun);
@@ -800,6 +815,11 @@ SEXP makeExternalPtr(void* ptr, R_CFinalizer_t fun, Protect* pProtect)
       pProtect->add(s);
    registerFinalizer(s, fun);
    return s;
+}
+
+SEXP makeExternalPtr(void* ptr, SEXP prot, SEXP tag) 
+{
+   return R_MakeExternalPtr(ptr, prot, tag);
 }
 
 void* getExternalPtrAddr(SEXP extptr)

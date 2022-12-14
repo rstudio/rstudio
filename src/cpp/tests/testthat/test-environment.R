@@ -16,7 +16,6 @@
 context("environment")
 
 test_that("environment object listings are correct", {
-
    # temporarily disable showing the .Last.value so we don't have to account for it in test results
    lastValue <- .rs.api.readRStudioPreference("show_last_dot_value")
    on.exit(.rs.api.writeRStudioPreference("show_last_dot_value", lastValue))
@@ -130,4 +129,124 @@ test_that("missing arguments can be described", {
    desc <- .rs.describeObject(environment(), "x")
    expect_identical(desc$name, .rs.scalar("x"))
    
+})
+
+test_that("hasExternalPointer finds external pointers", {
+   xp <- .Call("rs_newTestExternalPointer", FALSE, PACKAGE = "(embedding)")
+   nullxp <- .Call("rs_newTestExternalPointer", TRUE, PACKAGE = "(embedding)")
+
+   # NULL
+   expect_true(!.rs.hasExternalPointer(NULL))
+
+   # external pointers
+   expect_true(.rs.hasExternalPointer(xp))
+   expect_true(!.rs.hasExternalPointer(xp, nullPtr = TRUE))
+   expect_true(.rs.hasExternalPointer(nullxp, TRUE))
+   expect_true(!.rs.hasExternalPointer(nullxp, nullPtr = FALSE))
+
+   # lists
+   v <- list(1, "a", xp, nullxp)
+   expect_true(.rs.hasExternalPointer(v))
+   expect_true(.rs.hasExternalPointer(v, nullPtr = TRUE))
+
+   # attributes
+   x <- structure(1, foo = xp)
+   # expect_true(.rs.hasExternalPointer(x))
+   
+   x <- structure(1, bar = v)
+   # expect_true(.rs.hasExternalPointer(x))
+
+   x <- structure(1, foo = nullxp)
+   # expect_true(.rs.hasExternalPointer(x, nullPtr = TRUE))
+
+   x <- structure(1, bar = nullxp)
+   # expect_true(.rs.hasExternalPointer(x, nullPtr = TRUE))
+
+   # hashed environment
+   h <- new.env(hash = TRUE, parent = emptyenv())
+   h$a <- 1
+   h$b <- xp
+   expect_true(.rs.hasExternalPointer(h))
+
+   # non hashed environment
+   h <- new.env(hash = FALSE, parent = emptyenv())
+   h$a <- 1
+   h$b <- nullxp
+   expect_true(.rs.hasExternalPointer(h, nullPtr = TRUE))
+
+   # pairlist
+   expect_true(.rs.hasExternalPointer(pairlist(a = 1, b = xp)))
+   expect_true(.rs.hasExternalPointer(pairlist(a = 1, b = nullxp), nullPtr = TRUE))
+
+   # calls
+   expect_true(.rs.hasExternalPointer(call("foo", a = 1, b = xp)))
+   expect_true(.rs.hasExternalPointer(call("bar", a = 1, b = nullxp), nullPtr = TRUE))
+
+   # active bindings are not triggered
+   count <- 0
+   h <- new.env(hash = TRUE, parent = emptyenv())
+   makeActiveBinding("b", function() {
+      count <<- count + 1
+      42
+   }, h)
+   expect_true(!.rs.hasExternalPointer(h))
+   expect_true(count == 0)
+
+   # promises are not forced
+   local({
+      h <- new.env(hash = TRUE, parent = emptyenv())
+      delayedAssign("p", .Call("rs_newTestExternalPointer", FALSE, PACKAGE = "(embedding)"), assign.env = h)
+      expect_true(count == 0)
+      expect_true(!.rs.hasExternalPointer(h))
+      
+      # ... but if they are, the value is checked
+      force(h$p)
+      expect_true(.rs.hasExternalPointer(h))
+   })
+   
+   # S4 
+   Env <- setClass("Env", contains = "environment")
+   hEnv <- Env(
+      new.env(hash = TRUE, parent = emptyenv())
+   )
+   hEnv$a <- xp
+   expect_true(.rs.hasExternalPointer(hEnv))
+
+   hEnv <- Env(
+      new.env(hash = FALSE, parent = emptyenv())
+   )
+   hEnv$a <- nullxp
+   expect_true(.rs.hasExternalPointer(hEnv, nullPtr = TRUE))
+})
+
+test_that(".rs.hasExternalPointer() finds xp in functions", {
+   
+   expect_false(.rs.hasExternalPointer(function(x = 2) x))
+   
+   # formals
+   expect_true(
+      .rs.hasExternalPointer(
+         local({
+            `formals<-`(function(x = 42) x, value = pairlist(x = .Call("rs_newTestExternalPointer", FALSE, PACKAGE = "(embedding)")))
+         })
+      )
+   )
+
+   # body
+   expect_true(
+      .rs.hasExternalPointer(
+         substitute(function() x, list(x = .Call("rs_newTestExternalPointer", FALSE, PACKAGE = "(embedding)")))
+      )
+   )
+
+   # environment
+   expect_true(
+      .rs.hasExternalPointer(
+         local({
+            xp <- .Call("rs_newTestExternalPointer", FALSE, PACKAGE = "(embedding)")
+            function(x = 2) x
+         })
+      )
+   )
+
 })
