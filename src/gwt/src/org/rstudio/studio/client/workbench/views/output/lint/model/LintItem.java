@@ -102,17 +102,23 @@ public class LintItem extends JavaScriptObject
       
       for (var key in items)
       {
-         var type = items[key]["type"];
+         var item = items[key];
+         var type = item["type"];
          if (type === "style" || type === "note")
             type = "info";
 
-         aceAnnotations.push({
-            row: items[key]["start.row"],
-            column: items[key]["start.column"],
-            html: items[key]["text"],
-            text: items[key]["raw"],
+         var annotation = {
+            row: item["start.row"],
+            column: item["start.column"],
             type: type
-         });
+         };
+         var html = item["text"]
+         if (html)
+            annotation.html = html;
+         else 
+            annotation.text = item["raw"];
+         
+         aceAnnotations.push(annotation);
       }
       
       return aceAnnotations;
