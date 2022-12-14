@@ -4,6 +4,7 @@
 ### New
 - Adopt panmirror (visual editor) migration to quarto-dev/quarto project #12316
 - Upgrade Electron to 22.0.0 #11734
+- Upgrade Node.js to 18.12.1 #12424
 
 ### Fixed
 
