@@ -2,8 +2,8 @@ FROM opensuse/leap:15.1
 
 ENV OPERATING_SYSTEM=opensus_leap15
 
-# needed to build RPMs
-RUN zypper --non-interactive addrepo http://download.opensuse.org/repositories/systemsmanagement:wbem:deps/openSUSE_Tumbleweed/systemsmanagement:wbem:deps.repo
+# needed to build RPMs; see https://build.opensuse.org/repositories/systemsmanagement:wbem
+RUN zypper --non-interactive addrepo https://download.opensuse.org/repositories/systemsmanagement:wbem/openSUSE_Tumbleweed/systemsmanagement:wbem.repo
 
 # refresh repos and install required packages
 RUN zypper --non-interactive --gpg-auto-import-keys refresh && \
