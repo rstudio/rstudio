@@ -38,5 +38,6 @@ else
 
   pushd $QUARTO_DIR
   git reset --hard && git clean -dfx
+  git pull
   popd
 fi
