@@ -90,6 +90,8 @@ RUN bash /tmp/install-crashpad rhel8
 RUN mkdir -p /opt/rstudio-tools/dependencies/common
 COPY dependencies/common/ /opt/rstudio-tools/dependencies/common/
 
+# break image layer cache if panmirror changes
+ADD https://api.github.com/repos/quarto-dev/quarto/git/refs/heads/main panmirror.version.json
 # install common dependencies
 RUN cd /opt/rstudio-tools/dependencies/common && /bin/bash ./install-common rhel9
 # panmirror needs to be able to build in this location
