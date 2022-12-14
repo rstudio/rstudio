@@ -6,7 +6,7 @@
 
   // Help Windows find node, npm
   "terminal.integrated.env.windows": {
-    "PATH": "${workspaceFolder}\\..\\..\\..\\dependencies\\common\\node\\16.14.0;${env:PATH}"
+    "PATH": "${workspaceFolder}\\..\\..\\..\\dependencies\\common\\node\\18.12.1;${env:PATH}"
   },
   "cmake.configureOnOpen": false
 }

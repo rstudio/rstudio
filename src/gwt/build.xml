@@ -85,7 +85,7 @@
 
    <!-- panmirror typescript library -->
    <!-- ensure version matches RSTUDIO_NODE_VERSION -->
-   <property name="node.version" value="16.14.0"/>
+   <property name="node.version" value="18.12.1"/>
    <property name="node.dir" value="../../dependencies/common/node/${node.version}"/>
    <!-- use yarn from system but will prefer yarn from dependencies if available -->
    <condition property="yarn.bin" value="yarn">
