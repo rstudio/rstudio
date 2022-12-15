@@ -124,7 +124,7 @@ void modifySystemPath(const std::string& pathEntry, bool prepend)
 #endif
 
    boost::regex reDuplicateSeparators(kPathSeparator "+");
-   boost::regex_replace(newPath, reDuplicateSeparators, kPathSeparator);
+   newPath = boost::regex_replace(newPath, reDuplicateSeparators, kPathSeparator);
 
    setenv("PATH", newPath);
 }
