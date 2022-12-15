@@ -113,6 +113,7 @@
 #include "SessionAddins.hpp"
 
 #include "SessionModuleContextInternal.hpp"
+#include <session/SessionModuleContext.hpp>
 
 #include "SessionClientEventQueue.hpp"
 #include "SessionClientInit.hpp"
@@ -2160,15 +2161,7 @@ int main(int argc, char * const argv[])
          core::thread::safeLaunchThread(detectParentTermination);
 
       // set the rpostback absolute path
-      FilePath rpostback = options.rpostbackPath();
-   #ifndef __APPLE__
-      // package builds on Linux and Windows hoist the binary one level higher in the directory structure
-      if (rpostback.getAbsolutePath().find("session/postback") == std::string::npos) {
-         rpostback = rpostback.getParent().getParent();
-         rpostback = rpostback.completeChildPath("rpostback");
-      }
-   #endif
-
+      FilePath rpostback = module_context::rPostbackPath();
       core::system::setenv(
             "RS_RPOSTBACK_PATH",
             string_utils::utf8ToSystem(rpostback.getAbsolutePath()));

@@ -88,6 +88,22 @@ void handlePostback(const PostbackHandlerFunction& handlerFunction,
    
 } // anonymous namespace
 
+FilePath rPostbackPath()
+{
+   return session::options().rpostbackPath();
+}
+
+FilePath rPostbackScriptsDir()
+{
+   // postback scripts should lie in a 'postback' directory,
+   // located in the same folder as the 'rpostback' binary
+   return rPostbackPath().getParent().completeChildPath("postback");
+}
+
+FilePath rPostbackScriptPath(const std::string& scriptName)
+{
+   return rPostbackScriptsDir().completeChildPath(scriptName);
+}
 
 Error registerPostbackHandler(const std::string& name,
                               const PostbackHandlerFunction& handlerFunction,
@@ -104,9 +120,8 @@ Error registerPostbackHandler(const std::string& name,
       return error;
                                                     
    // compute the shell command required to invoke this handler and return it
-   Options& options = session::options();
-   *pShellCommand = options.rpostbackPath().getAbsolutePath() + "-" + name;
-   
+   *pShellCommand = rPostbackScriptPath("rpostback-" + name).getAbsolutePath();
+
    // return success
    return Success();
 }
