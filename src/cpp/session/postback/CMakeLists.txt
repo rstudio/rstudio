@@ -55,6 +55,13 @@ configure_file(rpostback-editfile  ${POSTBACK_SCRIPT_DIR}/rpostback-editfile)
 configure_file(rpostback-gitssh    ${POSTBACK_SCRIPT_DIR}/rpostback-gitssh)
 configure_file(rpostback-pdfviewer ${POSTBACK_SCRIPT_DIR}/rpostback-pdfviewer)
 
+# set RPOSTBACK_EXECUTABLE_PATH for rdesktop-dev
+if(WIN32)
+    set(RPOSTBACK_EXECUTABLE_PATH "${CMAKE_CURRENT_BINARY_DIR}/rpostback.exe" CACHE INTERNAL "")
+else()
+    set(RPOSTBACK_EXECUTABLE_PATH "${CMAKE_CURRENT_BINARY_DIR}/rpostback" CACHE INTERNAL "")
+endif()
+
 # installation rules
 if(NOT RSTUDIO_SESSION_WIN32)
    install(TARGETS rpostback DESTINATION ${RSTUDIO_INSTALL_BIN})
