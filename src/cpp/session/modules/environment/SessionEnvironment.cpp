@@ -126,16 +126,16 @@ bool pairlistHasExternalPointer(SEXP list, bool nullPtr, std::set<SEXP>& visited
 {
    while(list != R_NilValue)
    {
+      // handle dotted pairs, e.g. CONS(x, y) where y is not another pairlist or NULL
+      // we need to check y for external pointers but stop there
+      if (TYPEOF(list) != LISTSXP && TYPEOF(list) != LANGSXP)
+         return hasExternalPointer(list, nullPtr, visited);
+         
       // here we have a pairlist, so we can CAR() and CDR()
       if (hasExternalPointer(CAR(list), nullPtr, visited))
          return true;
 
       list = CDR(list);
-
-      // handle dotted pairs, e.g. CONS(x, y) where y is not another pairlist or NULL
-      // we need to check y for external pointers but stop there
-      if (TYPEOF(list) != LISTSXP && TYPEOF(list) != LANGSXP)
-         return hasExternalPointer(list, nullPtr, visited);
    }
 
    return false;
