@@ -27,7 +27,7 @@ fi
 
 # variables that control download + installation process
 # specify a version to pin for releases
-QUARTO_VERSION="1.2.269"
+QUARTO_VERSION="1.2.280"
 
 # update to latest Quarto release
 # QUARTO_VERSION=`curl https://quarto.org/docs/download/_download.json | jq ".version" | grep -oE '[0-9]+\.[0-9]+\.[0-9]+'`

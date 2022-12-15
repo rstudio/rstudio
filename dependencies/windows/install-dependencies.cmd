@@ -44,7 +44,7 @@ set PANDOC_NAME=pandoc-%PANDOC_VERSION%
 set PANDOC_FILE=%PANDOC_NAME%-windows-x86_64.zip
 
 REM Pin to specific Quarto version for releases
-set QUARTO_VERSION=1.2.269
+set QUARTO_VERSION=1.2.280
 
 REM Get latest Quarto release version
 REM cd install-quarto
