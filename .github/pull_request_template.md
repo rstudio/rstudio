@@ -15,6 +15,9 @@
 
 > Add additional information for QA on how to validate the change, paying special attention to the level of risk, adjacent areas that could be affected by the change, and any important contextual information not present in the linked issues. 
 
+### Documentation
+> Specify which documentation has been added or modified and why (User Guide? Admin Guide?). If no documentation was added for a new feature, indicate why. 
+
 ### Checklist
 
 - [ ] If this PR adds a new feature, or fixes a bug in a previously released version, it includes an entry in `NEWS.md` 
