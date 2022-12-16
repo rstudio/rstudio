@@ -222,10 +222,6 @@
 
       # normalize paths
       markers$file <- .rs.normalizePath(markers$file, mustWork = TRUE)
-
-      # check for html
-      markers$messageHTML <- inherits(markers$message, "html")
-
    } else if (is.list(markers)) {
       markers <- lapply(markers, function(marker) {
          markerTypes <- c("error", "warning", "box", "info", "style", "usage")
@@ -244,7 +240,6 @@
          marker$file <- .rs.scalar(.rs.normalizePath(marker$file, mustWork = TRUE))
          marker$line <- .rs.scalar(as.numeric(marker$line))
          marker$column <- .rs.scalar(as.numeric(marker$column))
-         marker$messageHTML <- .rs.scalar(inherits(marker$message, "html"))
          marker$message <- .rs.scalar(marker$message)
          
          marker
