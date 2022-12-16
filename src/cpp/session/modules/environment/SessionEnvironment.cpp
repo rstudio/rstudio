@@ -126,18 +126,19 @@ bool pairlistHasExternalPointer(SEXP list, bool nullPtr, std::set<SEXP>& visited
 {
    while(list != R_NilValue)
    {
+      // handle dotted pairs, e.g. CONS(x, y) where y is not another pairlist or NULL
+      // we need to check y for external pointers but stop there
+      if (TYPEOF(list) != LISTSXP && TYPEOF(list) != LANGSXP)
+         return hasExternalPointer(list, nullPtr, visited);
+         
+      // here we have a pairlist, so we can CAR() and CDR()
       if (hasExternalPointer(CAR(list), nullPtr, visited))
          return true;
-      
+
       list = CDR(list);
    }
 
    return false;
-}
-
-bool attributesHasExternalPointer(SEXP obj, bool nullPtr, std::set<SEXP>& visited)
-{
-   return pairlistHasExternalPointer(ATTRIB(obj), nullPtr, visited);
 }
 
 bool listHasExternalPointer(SEXP obj, bool nullPtr, std::set<SEXP>& visited)
@@ -203,9 +204,20 @@ bool weakrefHasExternalPointer(SEXP obj, bool nullPtr, std::set<SEXP>& visited)
    return false;
 }
 
+bool altrepHasExternalPointer(SEXP obj, bool nullPtr, std::set<SEXP>& visited)
+{
+   if (hasExternalPointer(CAR(obj), nullPtr, visited))
+      return true;
+
+   if (hasExternalPointer(CDR(obj), nullPtr, visited))
+      return true;
+
+   return false;
+}
+
 bool hasExternalPointer(SEXP obj, bool nullPtr, std::set<SEXP>& visited)
 {
-   if (obj == R_NilValue || visited.count(obj))
+   if (obj == nullptr || obj == R_NilValue || visited.count(obj))
       return false;
 
    // mark SEXP as visited
@@ -294,20 +306,16 @@ bool hasExternalPointer(SEXP obj, bool nullPtr, std::set<SEXP>& visited)
       default:
          break;
    }
-
-   // check attributes, this includes slots for S4 objects
-   if (attributesHasExternalPointer(obj, nullPtr, visited))
-      return true;
-
-   // altrep objects might be implemented with external pointers
+   
+   // altrep objects use ATTRIB() to hold class info, so no need
+   // to check ATTRIB() on them, but altrepHasExternalPointer() 
+   // checks for their data1 and data2, aka CAR() and CDR()
    if (isAltrep(obj))
-   {
-      if (hasExternalPointer(CAR(obj), nullPtr, visited))
-         return true;
-
-      if (hasExternalPointer(CDR(obj), nullPtr, visited))
-         return true;
-   } 
+      return altrepHasExternalPointer(obj, nullPtr, visited);
+      
+   // check attributes, this includes slots for S4 objects
+   if (hasExternalPointer(ATTRIB(obj), nullPtr, visited))
+      return true;
 
    return false;
 }
