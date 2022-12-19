@@ -1178,10 +1178,17 @@ std::vector<std::string> RCompilationDatabase::baseCompilationArgs(bool isCpp) c
    args.push_back("-nostdinc");
 
    // add Rtools arguments
-   auto rtInfo = rToolsInfo();
-   auto rtArgs = rtInfo.clangArgs(isCpp);
-   args.insert(args.end(), rtArgs.begin(), rtArgs.end());
+   //auto rtInfo = rToolsInfo();
+   //auto rtArgs = rtInfo.clangArgs(isCpp);
+   //args.insert(args.end(), rtArgs.begin(), rtArgs.end());
 
+   // add system include headers as reported by compiler
+   std::vector<std::string> includes;
+   discoverSystemIncludePaths(&includes);
+   for (auto&& include : includes) {
+      FilePath includePath = FilePath(include);
+      args.push_back("-I" + includePath.getAbsolutePath());
+   }
    // re-generate compiler definitions
    generateCompilerDefinitions();
 
