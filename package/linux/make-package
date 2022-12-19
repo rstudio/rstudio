@@ -225,6 +225,20 @@ if [ -n "${JENKINS_URL}" ]; then
    printenv
 fi
 
+# if SCCACHE_ENABLED environment variable is set, use sccache
+if [ -n "$SCCACHE_ENABLED" ]; then
+    echo "Using sccache"
+   
+    if [ -n "$AWS_ACCESS_KEY_ID" ] || [ $(aws sts get-caller-identity --query "Account" --profile ${AWS_PROFILE:-sso}) -eq 14 ]; then
+        echo "AWS credentials valid, using S3 build cache"
+        export SCCACHE_BUCKET="rstudio-build-cache"
+    else
+        echo "No valid AWS SSO session, using only local build cache"
+        export SCCACHE_DIR=$(pwd)/object_file_cache
+        mkdir -p $SCCACHE_DIR
+    fi
+fi
+
 cmake -G"${CMAKE_GENERATOR}"                           \
       -DRSTUDIO_TARGET=$RSTUDIO_TARGET                 \
       -DCMAKE_BUILD_TYPE=$CMAKE_BUILD_TYPE             \
@@ -234,9 +248,14 @@ cmake -G"${CMAKE_GENERATOR}"                           \
       -DGWT_WWW_DIR="$BUILD_DIR/gwt/www"               \
       -DGWT_EXTRAS_DIR="$BUILD_DIR/gwt/extras"         \
       -DGWT_BUILD="$GWT_BUILD"                         \
+      -DSCCACHE_ENABLED=$SCCACHE_ENABLED               \
       $PKG_DIR/../..
 
 cmake --build . --target all -- ${MAKEFLAGS}
+
+if [ -n "$SCCACHE_ENABLED" ]; then
+   sccache --show-stats
+fi
 
 if [ "$PACKAGE_TARGET" != "DEB" ]
 then

@@ -2,6 +2,7 @@ os = 'jammy'
 arch = 'amd64'
 flavor = 'server'
 type = 'DEB'
+AWS_ACCOUNT_ID = '749683154838'
 def utils
 
 pipeline {
@@ -42,14 +43,17 @@ pipeline {
       stages {
         stage('Prepare Build Container') {
           steps {
-            pullBuildPush(
-              image_name: 'jenkins/ide',
-              image_tag: "${os}-${arch}-${env.CHANGE_TARGET.replaceAll('/', '-')}",
-              dockerfile: "docker/jenkins/Dockerfile.${os}",
-              build_arg_jenkins_uid: 'JENKINS_UID',
-              build_arg_jenkins_gid: 'JENKINS_GID',
-              builds_args: "--build-arg GITHUB_LOGIN=${GITHUB_LOGIN}",
-              push: false)
+            // AWS is here for the S3 bucket that we use for sccache
+            withAWS(role: 'build', roleAccount: AWS_ACCOUNT_ID) {
+              pullBuildPush(
+                image_name: 'jenkins/ide',
+                image_tag: "${os}-${arch}-${env.CHANGE_TARGET.replaceAll('/', '-')}",
+                dockerfile: "docker/jenkins/Dockerfile.${os}",
+                build_arg_jenkins_uid: 'JENKINS_UID',
+                build_arg_jenkins_gid: 'JENKINS_GID',
+                builds_args: "--build-arg GITHUB_LOGIN=${GITHUB_LOGIN}",
+                push: false)
+            }
           }
         }
 
@@ -65,8 +69,11 @@ pipeline {
             stage('Build Package') {
               steps {
                 dir ("package/linux") {
-                  // perform the compilation
-                  sh "PACKAGE_OS=${os} ./make-${flavor}-package ${type} clean"
+                  // AWS is here for the S3 bucket that we use for sccache
+                  withAWS(role: 'build', roleAccount: AWS_ACCOUNT_ID) {
+                    // perform the compilation
+                    sh "SCCACHE_ENABLED=1 PACKAGE_OS=${os} ./make-${flavor}-package ${type} clean"
+                  }
                 }
               }
             }
