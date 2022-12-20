@@ -1,0 +1,59 @@
+def utils
+rstudioVersion = ''
+rstudioVersionMajor  = 0
+rstudioVersionMinor  = 0
+rstudioVersionPatch  = 0
+rstudioVersionSuffix = 0
+
+/**
+  * Demo pipeline to show getting version information from utils.groovy
+  */
+
+pipeline {
+  agent {
+    label 'linux'
+  }
+
+  options {
+    timestamps()
+    disableConcurrentBuilds()
+    buildDiscarder(logRotator(numToKeepStr: '10'))
+  }
+
+  parameters {
+      string(name: 'RSTUDIO_VERSION_PATCH', defaultValue: '0', description: 'RStudio Patch Version')
+  }
+
+  environment {
+    GITHUB_LOGIN = credentials('github-rstudio-jenkins')
+  }
+
+  stages {
+    stage('Load Utils') {
+      steps {
+        script {
+          sh 'printenv'
+          sh "echo 'Loading utils from ${env.WORKSPACE}/utils.groovy'"
+          utils = load "${env.WORKSPACE}/utils.groovy"
+        }
+      }
+    }
+
+    stage('Versioning') {
+      steps {
+        script {
+          (rstudioVersion,
+            rstudioVersionMajor,
+            rstudioVersionMinor,
+            rstudioVersionPatch,
+            rstudioVersionSuffix) = utils.getVersion()
+          echo "rstudioVersion: ${rstudioVersion}"
+          echo "rstudioVersionMajor: ${rstudioVersionMajor}"
+          echo "rstudioVersionMinor: ${rstudioVersionMinor}"
+          echo "rstudioVersionPatch: ${rstudioVersionPatch}"
+          echo "rstudioVersionSuffix: ${rstudioVersionSuffix}"
+        }
+      }
+    }
+  }
+}

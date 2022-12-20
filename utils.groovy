@@ -25,4 +25,35 @@ void addRemoteRef(String branchName) {
   }
 }
 
+/**
+  * Get Version
+  */
+def getVersion() {
+  def rstudioVersion = sh(
+                          script: "docker/jenkins/rstudio-version.sh ${params.RSTUDIO_VERSION_PATCH}",
+                          returnStdout: true
+                        ).trim()
+  echo "RStudio build version: ${rstudioVersion}"
+  currentBuild.displayName = "${rstudioVersion}"
+
+  // Split on [-+] first to avoid having to worry about splitting out .pro<n>
+  def version = rstudioVersion.split('[-+]')
+
+  // extract major / minor /patch version
+  def majorComponents = version[0].split('\\.')
+  rstudioVersionMajor = majorComponents[0]
+  rstudioVersionMinor = majorComponents[1]
+  rstudioVersionPatch = majorComponents[2]
+
+  // Extract suffix
+  if (version.length > 2) {
+    rstudioVersionSuffix = '-' + version[1] + '+' + version[2]
+  }
+  else {
+    rstudioVersionSuffix = '+' + version[1]
+  }
+
+  return [rstudioVersion, rstudioVersionMajor, rstudioVersionMinor, rstudioVersionPatch, rstudioVersionSuffix]
+}
+
 return this
