@@ -309,9 +309,11 @@ function scanForRPosix(): Expected<string> {
 
 function queryRegistry(cmd: string, rInstallations: Set<string>): Set<string> {
   const [output, error] = executeCommand(cmd);
-  if (error)      
+  if (error) {
+    logger().logError(`Error querying the Windows registry: ${error}`);
     return rInstallations;
-
+  }      
+    
   // parse the actual path from the output
   const lines = output.split(EOL);
   for (const line of lines) {
@@ -342,7 +344,7 @@ export function findRInstallationsWin32(): string[] {
     const rBinaryNames = ['R', 'R64'];
 
     const regQueryCommands = keyNames.flatMap(key => rBinaryNames.map(
-      rBin => `reg query ${key}\\SOFTWARE\\R-Core\\${rBin} /s /v InstallPath ${view}`));  
+      rBin => `%SystemRoot%\\System32\\reg.exe query ${key}\\SOFTWARE\\R-Core\\${rBin} /s /v InstallPath ${view}`));  
     regQueryCommands.map(cmd => queryRegistry(cmd, rInstallations));
   }
 
@@ -393,7 +395,7 @@ function findDefaultInstallPathWin32(version: string): string {
 
     // query registry for R install path
     const keyName = `HKEY_LOCAL_MACHINE\\SOFTWARE\\R-core\\${version}`;
-    const regQueryCommand = `reg query ${keyName} /v InstallPath ${view}`;
+    const regQueryCommand = `%SystemRoot%\\System32\\reg.exe query ${keyName} /v InstallPath ${view}`;
     const [output, error] = executeCommand(regQueryCommand);
     if (error) {
       logger().logError(error);
