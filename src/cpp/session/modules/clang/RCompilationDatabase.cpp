@@ -1176,19 +1176,30 @@ std::vector<std::string> RCompilationDatabase::baseCompilationArgs(bool isCpp) c
    // an installation of Visual Studio (if available), and those headers
    // may not be compatible with the Rtools headers
    args.push_back("-nostdinc");
+   r_util::RVersionNumber version = r::version_info::currentRVersion();
 
-   // add Rtools arguments
-   //auto rtInfo = rToolsInfo();
-   //auto rtArgs = rtInfo.clangArgs(isCpp);
-   //args.insert(args.end(), rtArgs.begin(), rtArgs.end());
-
-   // add system include headers as reported by compiler
-   std::vector<std::string> includes;
-   discoverSystemIncludePaths(&includes);
-   for (auto&& include : includes) {
-      FilePath includePath = FilePath(include);
-      args.push_back("-I" + includePath.getAbsolutePath());
+   if (version.versionMajor() < 4)
+   {
+      auto clArgs = clang().compileArgs(isCpp);
+      args.insert(args.end(), clArgs.begin(), clArgs.end());
    }
+
+   if (version < r_util::RVersionNumber(4, 2, 0))
+   {
+      // add Rtools arguments
+      auto rtInfo = rToolsInfo();
+      auto rtArgs = rtInfo.clangArgs(isCpp);
+      args.insert(args.end(), rtArgs.begin(), rtArgs.end());
+   } else {
+      // add system include headers as reported by compiler
+      std::vector<std::string> includes;
+      discoverSystemIncludePaths(&includes);
+      for (auto&& include : includes) {
+         FilePath includePath = FilePath(include);
+         args.push_back("-I" + includePath.getAbsolutePath());
+      }
+   }
+
    // re-generate compiler definitions
    generateCompilerDefinitions();
 
