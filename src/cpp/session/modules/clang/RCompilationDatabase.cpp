@@ -1165,7 +1165,9 @@ std::vector<std::string> RCompilationDatabase::baseCompilationArgs(bool isCpp) c
 #ifdef _WIN32
    // add built-in clang compiler headers
    // built-in headers are not required with Rtools40 or newer
-   if (r::version_info::currentRVersion().versionMajor() < 4)
+   r_util::RVersionNumber version = r::version_info::currentRVersion();
+
+   if (version.versionMajor() < 4)
    {
       auto clArgs = clang().compileArgs(isCpp);
       args.insert(args.end(), clArgs.begin(), clArgs.end());
@@ -1176,13 +1178,6 @@ std::vector<std::string> RCompilationDatabase::baseCompilationArgs(bool isCpp) c
    // an installation of Visual Studio (if available), and those headers
    // may not be compatible with the Rtools headers
    args.push_back("-nostdinc");
-   r_util::RVersionNumber version = r::version_info::currentRVersion();
-
-   if (version.versionMajor() < 4)
-   {
-      auto clArgs = clang().compileArgs(isCpp);
-      args.insert(args.end(), clArgs.begin(), clArgs.end());
-   }
 
    if (version < r_util::RVersionNumber(4, 2, 0))
    {
