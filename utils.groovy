@@ -8,7 +8,7 @@ boolean hasChangesIn(String module) {
   return !env.CHANGE_TARGET ||
   sh(
     returnStatus: true,
-    script: "git diff --name-only --quiet origin/${env.CHANGE_TARGET}..origin/${env.BRANCH_NAME} -- ${module}") == 1
+    script: "git diff --name-only --quiet `git merge-base origin/${env.BRANCH_NAME} origin/${env.CHANGE_TARGET}`..origin/${env.BRANCH_NAME} -- ${module}") == 1
 }
 
 /**

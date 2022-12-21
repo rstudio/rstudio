@@ -83,12 +83,6 @@ pipeline {
                   sh "./gwt-unit-tests.sh"
                 }
               }
-              post {
-                failure {
-                  // mark build as unstable if it fails unit tests
-                  unstable("GWT unit tests failed (${flavor.capitalize()} ${type} on ${os})")
-                }
-              }
             }
 
             stage('Run C++ Unit Tests') {
@@ -96,11 +90,6 @@ pipeline {
                 dir ("package/linux/build-${flavor.capitalize()}-${type}/src/cpp") {
                   // attempt to run cpp unit tests
                   sh "./rstudio-tests"
-                }
-              }
-              post {
-                failure {
-                  unstable("C++ unit tests failed (${flavor.capitalize()} ${type} on ${os})")
                 }
               }
             }
