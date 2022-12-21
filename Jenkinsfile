@@ -1,13 +1,11 @@
 pipeline {
-  agent { none }
+  agent none
 
   stages {
     stage ("Define Variables") {
       steps {
-        step ("Set Commit Hash") {
-          script {
-            def commit_hash = sh git rev-parse HEAD
-          }
+        script {
+          def commit_hash = sh git rev-parse HEAD
         }
       }
     }
@@ -23,21 +21,17 @@ pipeline {
           }
 
           steps {
-            step ("Start doc build at commit") {
-              sh 'echo Would trigger doc builds at ${commit_hash}'
-            }
+            sh 'echo Would trigger doc builds at ${commit_hash}'
           }
         }
 
-        stage ("Trigger Base Builds") {
+        stage ("Trigger Binary Builds") {
           when {
             changeset comparator: 'REGEXP', pattern: '(?!docs/).*'
           }
 
           steps {
-            step ("Start binary build at commit") {
-              sh 'echo Would trigger binary builds at ${commit_hash}'
-            }
+            sh 'echo Would trigger binary builds at ${commit_hash}'
           }
 
         }
