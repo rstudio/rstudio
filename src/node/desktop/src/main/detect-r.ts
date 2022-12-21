@@ -92,7 +92,7 @@ export async function promptUserForR(platform = process.platform): Promise<Expec
     // discover available R installations
     const rInstalls = findRInstallationsWin32();
     if (rInstalls.length === 0) {
-      return err();
+      return err(Error('No R installations found via registry or common R install locations.'));
     }
 
     // ask the user what version of R they'd like to use
@@ -308,6 +308,7 @@ function scanForRPosix(): Expected<string> {
 }
 
 function queryRegistry(cmd: string, rInstallations: Set<string>): Set<string> {
+  logger().logDebug(`Querying registry for ${cmd}`);
   const [output, error] = executeCommand(cmd);
   if (error) {
     logger().logError(`Error querying the Windows registry: ${error}`);
@@ -357,7 +358,7 @@ export function findRInstallationsWin32(): string[] {
   ];
 
   for (const location of commonLocations) {
-
+    logger().logDebug(`Checking common R installation path: ${location}`)
     // nothing to do if it doesn't exist
     if (!existsSync(location)) {
       continue;
