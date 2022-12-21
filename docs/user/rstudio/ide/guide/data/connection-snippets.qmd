@@ -89,7 +89,7 @@ A package supporting connections defines the following components:
 
 -   **Snippet Files:** Snippet files are stored under `inst/rstudio/connections/`.
 
-As a quick start, the [Rstudio Connections Example](https://github.com/rstudio/rstudio-connections-example) GitHub repo contains a working example of this structure.
+As a quick start, the [RStudio Connections Example](https://github.com/rstudio/rstudio-connections-example) GitHub repo contains a working example of this structure.
 
 ### Connections contract
 
