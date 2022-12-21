@@ -1,11 +1,20 @@
+def commit_hash
+
 pipeline {
-  agent none
+  agent {
+    dockerfile {
+      filename 'Dockerfile.dispatcher'
+      label 'linux && amd64'
+    }
+  }
 
   stages {
     stage ("Define Variables") {
       steps {
         script {
-          def commit_hash = sh git rev-parse HEAD
+          sh 'echo Finding the commit.'
+          commit_hash = sh returnStdout: true, script: 'git rev-parse HEAD'
+          sh 'echo Commit = ${commit_hash}'
         }
       }
     }
