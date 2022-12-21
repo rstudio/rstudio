@@ -5,6 +5,7 @@
 - Adopt panmirror (visual editor) migration to quarto-dev/quarto project #12316
 - Upgrade Electron to 22.0.0 #11734
 - Session components no longer link to libpq or its dependencies (rstudio/rstudio-pro#2138)
+- Add section to theme generation that will use theme-specific color(s) to set colors of vim/emacs-mode cursor
 
 ### Fixed
 
