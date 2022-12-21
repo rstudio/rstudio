@@ -169,7 +169,7 @@ protected:
       "Specifies the path to a first project template which will be copied into new users' home directories and opened the first time they run a session. The template can optionally be configured with `DefaultOpenDocs` to cause documents to automatically be opened for the first project.")
       ("default-rsconnect-server",
       value<std::string>(&defaultRSConnectServer_)->default_value(std::string()),
-      "Specifies the default RStudio Connect server URL.")
+      "Specifies the default Posit Connect server URL.")
       (kTerminalPortOption,
       value<std::string>(&terminalPort_)->default_value(std::string()),
       "If specified, sets the port to bind the terminal server to. This should generally only be set for containerized Launcher sessions, where the port must be known.")
