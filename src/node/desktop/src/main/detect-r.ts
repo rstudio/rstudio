@@ -106,7 +106,7 @@ export async function promptUserForR(platform = process.platform): Promise<Expec
 
     // if path is null, the operation was cancelled
     if (data == null) {
-      return ok(null);
+      return err(Error('The user must select a valid R installation.'));
     }
 
     // save the stored version of R
@@ -311,7 +311,7 @@ function queryRegistry(cmd: string, rInstallations: Set<string>): Set<string> {
   logger().logDebug(`Querying registry for ${cmd}`);
   const [output, error] = executeCommand(cmd);
   if (error) {
-    logger().logError(`Error querying the Windows registry: ${error}`);
+    logger().logErrorMessage(`Error querying the Windows registry: ${error}`);
     return rInstallations;
   }      
     
