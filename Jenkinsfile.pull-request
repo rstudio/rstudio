@@ -37,7 +37,10 @@ pipeline {
           return utils.hasChangesIn('src') ||
                  utils.hasChangesIn('package/linux') ||
                  utils.hasChangesIn('docker/jenkins') ||
-                 utils.hasChangesIn('cmake')
+                 utils.hasChangesIn('cmake') ||
+                 utils.hasChangesIn('CMakeCompiler.txt') ||
+                 utils.hasChangesIn('CMakeLists.txt') ||
+                 utils.hasChangesIn('CMAkeGlobals.txt')
         }
       }
 
@@ -94,10 +97,10 @@ pipeline {
                   // attempt to run cpp unit tests
                   sh "./rstudio-tests"
                 }
-                post {
-                  failure {
-                    unstable("C++ unit tests failed (${flavor.capitalize()} ${type} on ${os})")
-                  }
+              }
+              post {
+                failure {
+                  unstable("C++ unit tests failed (${flavor.capitalize()} ${type} on ${os})")
                 }
               }
             }
