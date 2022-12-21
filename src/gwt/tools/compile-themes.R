@@ -304,6 +304,91 @@ for (themeFile in themeFiles) {
             replace = ""
          )
       }
+      
+      # Add vim and emacs cursor rules generated from fold colors
+      # Will fall back to the ace defaults (red) if fold
+      # colors aren't found
+     
+      defaultVimCursorBg <- "rgba(255, 0, 0, 0.5)"
+      defaultVimCursorBorder <- "rgb(255, 0, 0)" 
+      
+      if (!".ace_fold {" %in% content) {
+        cursor_background <- defaultVimCursorBg 
+        cursor_border <- defaultVimCursorBorder 
+      } else {
+        # Pull .ace_fold element
+        aceFoldLoc <- grep(".ace_fold {", content, perl = TRUE)
+        nextBraceLoc <- .rs.findNext("}", content, aceFoldLoc)
+        aceFold <- content[-c(1:aceFoldLoc, nextBraceLoc:length(content))] |>
+          gsub(pattern = ";", replacement = "", x = _)
+        # Get any background color set in .ace_fold element (strangely, chrome
+        # has this element, but it's empty)
+        if (length(grep("background-color", aceFold, perl = TRUE)) == 1) {
+          aceFoldBgLoc <- grep("background-color", aceFold, perl = TRUE)
+          aceFoldBgColor <- .rs.strip_color_from_field(aceFold[aceFoldBgLoc])
+          # Add transparency/alpha to cursor color so it doesn't completely
+          # obscure anything it's directly on top of
+          vimCursorBgColor <- .rs.getRgbColor(aceFoldBgColor) |>
+            .rs.format_css_color() |>
+            gsub("rgb", "rgba", x = _, perl = TRUE) |>
+            gsub("\\)", ", 0\\.7\\)", x = _, perl = TRUE)
+          cursor_background <- vimCursorBgColor
+        } else {
+          cursor_background <- defaultVimCursorBg 
+        }
+       
+        # Get any border-color set in .ace_fold 
+        if (length(grep("border-color", aceFold, perl = TRUE)) == 1) {
+          aceFoldBorderLoc <- grep("border-color", aceFold, perl = TRUE)
+          aceFoldBorderColor <- .rs.strip_color_from_field(aceFold[aceFoldBorderLoc]) 
+          cursor_border <- aceFoldBorderColor
+        } else {
+          # Probably makes more sense for inactive cursor border
+          # to just fall back to the same color as active cursor,
+          # rather than going all the way back to the default red
+          cursor_border <- defaultVimCursorBg 
+        } 
+      }
+     
+      # Add rule for vim normal-mode cursor 
+      content <- .rs.add_content(
+          content,
+          ".normal-mode .ace_cursor {",
+          "  background: %s;",
+          "}",
+          replace = cursor_background
+      )
+      
+      # Add rule for emacs-mode cursor
+      content <- .rs.add_content(
+        content,
+        ".emacs-mode .ace_cursor{",
+        paste("border: 1px", cursor_background,"solid!important;"),
+        "box-sizing: border-box!important;",
+        "background-color: %s;",
+        "opacity: 0.5;",
+        "}",
+        replace = cursor_background
+      )
+       
+      
+      # Add rule for vim cursor
+      # when focus is on another window 
+      content <- .rs.add_content(
+          content,
+          ".normal-mode .ace_hidden-cursors .ace_cursor{",  
+          "  background-color: transparent;",
+          "  border: 1px solid %s;",  
+          "}",
+          replace = cursor_border
+        )
+      
+     # The rules for the emacs-mode cursor in 
+     # the ace stylesheets don't seem to modify
+     # colors when not in focus, and the active
+     # rule already sets a border. So no need for
+     # an equivalent to the above rule for emacs
+  
       # Apply final custom fixups
       content <- applyFixups(content, fileName, parsed)
       
