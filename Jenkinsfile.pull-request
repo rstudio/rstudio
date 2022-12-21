@@ -66,39 +66,36 @@ pipeline {
           stages {
             stage('Build Package') {
               steps {
-                script {
-                  // add OS that the package was built for
-                  def envVars = "PACKAGE_OS=\"${os}\""
-
-                  envVars = "${envVars} MAKEFLAGS=-j4"
-
+                dir ("package/linux") {
                   // perform the compilation
-                  sh "cd package/linux && ${envVars} ./make-${flavor}-package ${type} clean && cd ../.."
+                  sh "PACKAGE_OS=${os} ./make-${flavor}-package ${type} clean"
                 }
               }
             }
 
             stage('Run GWT Unit Tests') {
               steps {
-                script {
-                  try {
-                    // attempt to run ant (gwt) unit tests
-                    sh "cd package/linux/build-${flavor.capitalize()}-${type}/src/gwt && ./gwt-unit-tests.sh"
-                  } catch (err) {
-                    // mark build as unstable if it fails unit tests
-                    unstable("GWT unit tests failed (${flavor.capitalize()} ${type} on ${os})")
-                  }
+                dir ("package/linux/build-${flavor.capitalize()}-${type}/src/gwt") {
+                  // attempt to run ant (gwt) unit tests
+                  sh "./gwt-unit-tests.sh"
+                }
+              }
+              post {
+                failure {
+                  // mark build as unstable if it fails unit tests
+                  unstable("GWT unit tests failed (${flavor.capitalize()} ${type} on ${os})")
                 }
               }
             }
 
             stage('Run C++ Unit Tests') {
               steps {
-                script {
-                  try {
-                    // attempt to run cpp unit tests
-                    sh "cd package/linux/build-${flavor.capitalize()}-${type}/src/cpp && ./rstudio-tests"
-                  } catch (err) {
+                dir ("package/linux/build-${flavor.capitalize()}-${type}/src/cpp") {
+                  // attempt to run cpp unit tests
+                  sh "./rstudio-tests"
+                }
+                post {
+                  failure {
                     unstable("C++ unit tests failed (${flavor.capitalize()} ${type} on ${os})")
                   }
                 }
