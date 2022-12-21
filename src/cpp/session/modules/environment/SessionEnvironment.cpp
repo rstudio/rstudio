@@ -152,19 +152,24 @@ bool listHasExternalPointer(SEXP obj, bool nullPtr, std::set<SEXP>& visited)
    return false;
 }
 
-namespace {
 bool frameBindingIsActive(SEXP binding) 
 {
    static unsigned int ACTIVE_BINDING_MASK = (1<<15);
    return reinterpret_cast<r::sxpinfo*>(binding)->gp & ACTIVE_BINDING_MASK;
 }
+
+bool frameBindingIsImmediate(SEXP binding)
+{
+   return reinterpret_cast<r::sxpinfo*>(binding)->extra;
 }
 
 bool frameHasExternalPointer(SEXP frame, bool nullPtr, std::set<SEXP>& visited)
 {
    while(frame != R_NilValue)
    {
-      if (!frameBindingIsActive(frame) && hasExternalPointer(CAR(frame), nullPtr, visited))
+      // - immediate bindings are scalars without attributes: they don't have external pointers
+      // - active bindings are ruled out to
+      if (!frameBindingIsImmediate(frame) && !frameBindingIsActive(frame) && hasExternalPointer(CAR(frame), nullPtr, visited))
          return true;
 
       frame = CDR(frame);
