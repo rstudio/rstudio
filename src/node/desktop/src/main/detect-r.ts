@@ -92,7 +92,7 @@ export async function promptUserForR(platform = process.platform): Promise<Expec
     // discover available R installations
     const rInstalls = findRInstallationsWin32();
     if (rInstalls.length === 0) {
-      return err(Error('No R installations found via registry or common R install locations.'));
+      return err(new Error('No R installations found via registry or common R install locations.'));
     }
 
     // ask the user what version of R they'd like to use
@@ -104,9 +104,10 @@ export async function promptUserForR(platform = process.platform): Promise<Expec
       return err(error);
     }
 
-    // if path is null, the operation was cancelled
+    // if path is null, the operation was cancelled by the user
+    // we should probably consider this to be an error
     if (data == null) {
-      return ok(null);
+      return err(new Error('User must select what version of R they would like to use.'));
     }
 
     // save the stored version of R
