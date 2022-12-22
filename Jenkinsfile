@@ -16,9 +16,9 @@ pipeline {
     stage ("Define Variables") {
       steps {
         script {
-          sh 'echo Finding the commit.'
+          echo "Finding the commit."
           COMMIT_HASH = sh returnStdout: true, script: 'git rev-parse HEAD'
-          sh 'echo Commit = ${COMMIT_HASH}'
+          echo "Commit = ${COMMIT_HASH}"
         }
       }
     }
@@ -26,25 +26,25 @@ pipeline {
     stage ("Trigger Builds") {
       stages {
         stage ("Trigger Docs") {
-          // when {
-          //   anyOf {
-          //     changeset 'docs/*'
-          //     changeset 'version/*'
-          //   }
-          // }
+          when {
+            anyOf {
+              changeset 'docs/*'
+              changeset 'version/*'
+            }
+          }
 
           steps {
-            sh 'echo Would trigger doc builds at ${COMMIT_HASH}'
+            echo "Would trigger doc builds at ${COMMIT_HASH}"
           }
         }
 
         stage ("Trigger Binary Builds") {
-          // when {
-          //   changeset comparator: 'REGEXP', pattern: '(?!docs/).*'
-          // }
+          when {
+            changeset comparator: 'REGEXP', pattern: '(?!docs/).*'
+          }
 
           steps {
-            sh 'echo Would trigger binary builds at ${COMMIT_HASH}'
+            echo "Would trigger binary builds at ${COMMIT_HASH}"
           }
 
         }
