@@ -41,7 +41,7 @@ pipeline {
 
         stage ("Trigger Binary Builds") {
           when {
-            changeset comparator: 'REGEXP', pattern: '(?!docs/).*'
+            changeset comparator: 'REGEXP', pattern: '(?!docs/).+'
           }
 
           steps {
