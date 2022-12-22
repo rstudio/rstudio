@@ -19,6 +19,7 @@ pipeline {
           echo "Finding the commit."
           COMMIT_HASH = sh returnStdout: true, script: 'git rev-parse HEAD'
           echo "Commit = ${COMMIT_HASH}"
+          echo "Current changesets:\n ${currentBuild.changeSets}"
         }
       }
     }
