@@ -50,7 +50,12 @@ pipeline {
 
         stage ("Trigger Binary Builds") {
           when {
-            changeset comparator: 'REGEXP', pattern: '(?!docs/).+'
+            allOf {
+              changeset comparator: 'REGEXP', pattern: '(?!docs/).+'
+              not {
+                changeset 'Jenkinsfile'
+              }
+            }
           }
 
           steps {
