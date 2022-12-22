@@ -311,7 +311,7 @@ function queryRegistry(cmd: string, rInstallations: Set<string>): Set<string> {
   logger().logDebug(`Querying registry for ${cmd}`);
   const [output, error] = executeCommand(cmd);
   if (error) {
-    logger().logError(`Error querying the Windows registry: ${error}`);
+    logger().logErrorMessage(`Error querying the Windows registry: ${error}`);
     return rInstallations;
   }      
     
