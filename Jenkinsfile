@@ -19,9 +19,20 @@ pipeline {
           echo "Finding the commit."
           COMMIT_HASH = sh returnStdout: true, script: 'git rev-parse HEAD'
           echo "Commit = ${COMMIT_HASH}"
+
+          echo "Changeset size: ${currentBuild.changeSets.size()}"
+          currentBuild.changeSets.each { cs ->
+            echo "Changeset with ${cs.getItems().size()} commits:"
+            cs.getItems().each { commit ->
+              commit.affectedFiles.each { file ->
+                echo "\t${file.path}"
+              }
+            }
+          }
         }
       }
     }
+  }
 
     stage ("Trigger Builds") {
       stages {
