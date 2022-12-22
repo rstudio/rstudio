@@ -38,8 +38,8 @@ pipeline {
         stage ("Trigger Docs") {
           when {
             anyOf {
-              changeset 'docs/*'
-              changeset 'version/*'
+              changeset comparator: 'REGEXP', pattern: 'docs/.*'
+              changeset comparator: 'REGEXP', pattern: 'version/.*'
             }
           }
 
