@@ -34,31 +34,30 @@ pipeline {
     }
   }
 
-    stage ("Trigger Builds") {
-      stages {
-        stage ("Trigger Docs") {
-          when {
-            anyOf {
-              changeset 'docs/*'
-              changeset 'version/*'
-            }
-          }
-
-          steps {
-            echo "Would trigger doc builds at ${COMMIT_HASH}"
+  stage ("Trigger Builds") {
+    stages {
+      stage ("Trigger Docs") {
+        when {
+          anyOf {
+            changeset 'docs/*'
+            changeset 'version/*'
           }
         }
 
-        stage ("Trigger Binary Builds") {
-          when {
-            changeset comparator: 'REGEXP', pattern: '(?!docs/).+'
-          }
-
-          steps {
-            echo "Would trigger binary builds at ${COMMIT_HASH}"
-          }
-
+        steps {
+          echo "Would trigger doc builds at ${COMMIT_HASH}"
         }
+      }
+
+      stage ("Trigger Binary Builds") {
+        when {
+          changeset comparator: 'REGEXP', pattern: '(?!docs/).+'
+        }
+
+        steps {
+          echo "Would trigger binary builds at ${COMMIT_HASH}"
+        }
+
       }
     }
   }
