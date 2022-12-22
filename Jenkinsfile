@@ -19,13 +19,6 @@ pipeline {
           echo "Finding the commit."
           COMMIT_HASH = sh returnStdout: true, script: 'git rev-parse HEAD'
           echo "Commit = ${COMMIT_HASH}"
-
-          currentBuild.changeSets.each { cs ->
-            echo "Changeset:"
-            cs.affectedFiles.each { file ->
-              echo "\t${path}"
-            }
-          }
         }
       }
     }
