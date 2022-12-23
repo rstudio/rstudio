@@ -34,13 +34,7 @@ pipeline {
     stage('Build') {
       when {
         expression {
-          return utils.hasChangesIn('src') ||
-                 utils.hasChangesIn('package/linux') ||
-                 utils.hasChangesIn('docker/jenkins') ||
-                 utils.hasChangesIn('cmake') ||
-                 utils.hasChangesIn('CMakeCompiler.txt') ||
-                 utils.hasChangesIn('CMakeLists.txt') ||
-                 utils.hasChangesIn('CMAkeGlobals.txt')
+          return utils.hasChangesIn('docs', true)
         }
       }
 
