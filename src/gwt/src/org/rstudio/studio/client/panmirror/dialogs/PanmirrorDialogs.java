@@ -74,7 +74,7 @@ public class PanmirrorDialogs {
       this.globalDisplay_ = globalDisplay;
    }
    
-   public Promise<Boolean> alert(String message, String title, int type) 
+   public Promise<Boolean> alert(String title, String message, int type)
    {
       return new Promise<>((ResolveCallbackFn<Boolean> resolve, RejectCallbackFn reject) -> {
          int alertType = MessageDisplay.MSG_INFO;
@@ -101,7 +101,7 @@ public class PanmirrorDialogs {
    }
    
    
-   public Promise<Boolean> yesNoMessage(String message, String title, int type, String yesLabel, String noLabel) 
+   public Promise<Boolean> yesNoMessage(String title, String message, int type, String yesLabel, String noLabel)
    {
       return new Promise<>((ResolveCallbackFn<Boolean> resolve, RejectCallbackFn reject) -> {
          int alertType = MessageDisplay.MSG_INFO;
