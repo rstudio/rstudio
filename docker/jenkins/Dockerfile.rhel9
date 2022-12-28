@@ -18,7 +18,7 @@ RUN dnf install -y \
     boost-devel \
     bzip2-devel \
     clang-devel \
-    curl \
+    curl-minimal \
     expect \
     fakeroot \
     fuse-libs \
