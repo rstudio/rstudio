@@ -1,0 +1,14 @@
+pipeline {
+  agent {
+    dockerfile {
+      filename 'Dockerfile.dispatcher'
+      label 'linux && amd64'
+    }
+  }
+
+  stages {
+    stage ("Define Variables") {
+      echo "Commit_hash value: ${env.COMMIT_HASH}"
+    }
+  }
+}
