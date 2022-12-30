@@ -7,10 +7,9 @@ pipeline {
   }
 
   parameters {
-    gitParameter
-    defaultValue: "${env.BRANCH_NAME}",
-    name: 'COMMIT_HASH',
-    type: 'PT_REVISION'
+    gitParameter defaultValue: "${env.BRANCH_NAME}",
+                 name: 'COMMIT_HASH',
+                 type: 'PT_REVISION'
   }
 
 
