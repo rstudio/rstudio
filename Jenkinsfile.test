@@ -8,7 +8,9 @@ pipeline {
 
   stages {
     stage ("Define Variables") {
-      echo "Commit_hash value: ${env.COMMIT_HASH}"
+      script {
+         echo "Commit_hash value: ${env.COMMIT_HASH}"
+      }
     }
   }
 }
