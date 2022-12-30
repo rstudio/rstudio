@@ -17,7 +17,7 @@ pipeline {
           echo "Finding the commit."
           COMMIT_HASH = sh returnStdout: true, script: 'git rev-parse HEAD'
           echo "Commit = ${COMMIT_HASH}"
-          build wait: false, job: 'IDE/experiments/downstream-job-test/${env.BRANCH}'
+          build wait: false, job: "IDE/experiments/downstream-job-test/${env.BRANCH_NAME.replace('/', '%2F')}"
         }
       }
     }
