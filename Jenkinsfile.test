@@ -5,11 +5,25 @@ pipeline {
       label 'linux && amd64'
     }
   }
+  
+  parameters {
+    gitParameter 
+    branch: '',
+    branchFilter: '.*',
+    defaultValue: "origin/${env.BRANCH_NAME}",
+    name: 'COMMIT_HASH',
+    quickFilterEnabled: false,
+    selectedValue: 'NONE',
+    sortMode: 'NONE',
+    tagFilter: '*',
+    type: 'PT_REVISION'
+  }
+
 
   stages {
     stage ("Define Variables") {
       steps {
-         echo "Commit_hash value: ${env.COMMIT_HASH}"
+        echo "Commit_hash value: ${COMMIT_HASH}"
       }
     }
   }
