@@ -32,7 +32,7 @@
     "@types/line-reader": "0.0.34",
     "@types/lodash.debounce": "4.0.7",
     "@types/mocha": "9.1.1",
-    "@types/node": "16.11.7",
+    "@types/node": "18.11.15",
     "@types/properties-reader": "2.1.1",
     "@types/sinon": "10.0.13",
     "@types/uuid": "8.3.4",
