@@ -1185,7 +1185,9 @@ std::vector<std::string> RCompilationDatabase::baseCompilationArgs(bool isCpp) c
       auto rtInfo = rToolsInfo();
       auto rtArgs = rtInfo.clangArgs(isCpp);
       args.insert(args.end(), rtArgs.begin(), rtArgs.end());
-   } else {
+   }
+   else
+   {
       // add system include headers as reported by compiler
       std::vector<std::string> includes;
       discoverSystemIncludePaths(&includes);
