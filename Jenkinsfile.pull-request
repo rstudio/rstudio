@@ -34,6 +34,7 @@ pipeline {
     stage('Build') {
       when {
         expression {
+          // Passing true makes this return true if there are any changes outside of 'docs'
           return utils.hasChangesIn('docs', true)
         }
       }
