@@ -94,7 +94,21 @@ core::system::ProcessOptions ConsoleProcess::createTerminalProcOptions(
 #else
    core::system::setHomeToUserProfile(&shellEnv);
 #endif
+   
+   // don't forward GIT_ASKPASS or SSH_ASKPASS if it's set to our rpostback
+   // handlers -- those aren't required in a terminal, as the user can be
+   // prompted for input via stdin, and it's likely that users will munge
+   // the PATH within a terminal a way that makes our utilities unavailable
+   //
+   // TODO: could we just set an absolute path to the rpostback-askpass util?
+   std::string gitAskpass = core::system::getenv("GIT_ASKPASS");
+   if (gitAskpass == "rpostback-askpass")
+      core::system::unsetenv(&shellEnv, "GIT_ASKPASS");
 
+   std::string sshAskpass = core::system::getenv("SSH_ASKPASS");
+   if (sshAskpass == "rpostback-askpass")
+      core::system::unsetenv(&shellEnv, "SSH_ASKPASS");
+   
    // amend shell paths as appropriate
    session::modules::workbench::ammendShellPaths(&shellEnv);
 

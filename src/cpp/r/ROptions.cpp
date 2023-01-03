@@ -26,6 +26,7 @@
 #include <core/system/Environment.hpp>
 
 #include <r/RExec.hpp>
+#include <r/RUtil.hpp>
 
 using namespace rstudio::core;
 
@@ -54,10 +55,11 @@ const int kDefaultWidth = 80;
    
 void setOptionWidth(int width)
 {
-   core::system::setenv("RSTUDIO_CONSOLE_WIDTH",
-                        core::safe_convert::numberToString(width));
+   r::util::setenv(
+            "RSTUDIO_CONSOLE_WIDTH",
+            core::safe_convert::numberToString(width));
 
-   boost::format fmt("options(width=%1%)");
+   boost::format fmt("options(width = %1%)");
    Error error = r::exec::executeString(boost::str(fmt % width));
    if (error)
       LOG_ERROR(error);

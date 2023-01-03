@@ -53,6 +53,11 @@ if(MSVC)
   # these warnings are being triggered in the MSVC-supplied headers and we aren't touching those
   set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} /wd4068")
 
+  # disable C4003 warning: not enough arguments for function-like macro invocation
+  # C99, C++11 and above allow you to call function-like macros which accept 1 argument
+  # without any parameters, since macro arguments are allowed to be empty
+  set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} /wd4003")
+
   # embed debug information into the generated objects
   # (otherwise we can run into annoying PDB errors during compilation)
   string(REGEX REPLACE "/Zi" "/Z7" CMAKE_C_FLAGS_DEBUG "${CMAKE_C_FLAGS_DEBUG}")

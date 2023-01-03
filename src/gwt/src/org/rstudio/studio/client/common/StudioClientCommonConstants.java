@@ -1337,11 +1337,11 @@ public interface StudioClientCommonConstants extends com.google.gwt.i18n.client.
     String wizardNavigationPageCaption();
 
     /**
-     * Translated "RStudio Connect is a server product from RStudio ".
+     * Translated "Posit Connect is a server product from Posit ".
      *
-     * @return translated "RStudio Connect is a server product from RStudio "
+     * @return translated "Posit Connect is a server product from Posit "
      */
-    @DefaultMessage("RStudio Connect is a server product from RStudio ")
+    @DefaultMessage("Posit Connect is a server product from Posit ")
     @Key("serviceDescription")
     String serviceDescription();
 
