@@ -25,9 +25,9 @@ def compile_package(os, type, flavor, variant) {
   // add OS that the package was built for
   envVars = "${envVars} PACKAGE_OS=\"${os}\""
 
-  // currently our nodes have access to 4 cores, so spread out the compile job
-  // a little (currently using up all 4 cores causes problems)
-  envVars = "${envVars} MAKEFLAGS=-j2"
+  // currently our nodes have access to 12 cores, so spread out the compile job
+  // a little (currently using up all 12 cores causes problems)
+  envVars = "${envVars} MAKEFLAGS=-j10"
 
   // perform the compilation
   sh "cd package/linux && ${envVars} ./make-${flavor}-package ${type} clean ${variant} && cd ../.."
