@@ -387,7 +387,7 @@ try {
                           def flower_name = readFile(file: 'version/RELEASE').replace_all(" ", "_").toLowerCase()
                           def image_tag = "${current_container.os}-${current_container.arch}-${flower_name}"
                           current_image = docker.image("jenkins/ide:" + image_tag)
-                          current_image.pull()
+                          current_image.pull() // this is necessary even though it's called by current_image.inside() to avoid using the locally cached image
                         }
                         current_image.inside("--privileged") {
                             timeout(time: 180, units: 'MINUTES', activity: false) {
