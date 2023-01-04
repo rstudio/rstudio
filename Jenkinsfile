@@ -243,26 +243,26 @@ try {
 
     timestamps {
         def containers = [
-          [os: 'opensuse15', arch: 'x86_64', flavor: 'electron', variant: '',  package_os: 'OpenSUSE 15'],
-          [os: 'opensuse15', arch: 'x86_64', flavor: 'server',   variant: '',  package_os: 'OpenSUSE 15'],
-          [os: 'centos7',    arch: 'x86_64', flavor: 'electron', variant: '',  package_os: 'CentOS 7'],
-          [os: 'centos7',    arch: 'x86_64', flavor: 'server',   variant: '',  package_os: 'CentOS 7'],
-          [os: 'bionic',     arch: 'amd64',  flavor: 'server',   variant: '',  package_os: 'Ubuntu Bionic'],
-          [os: 'bionic',     arch: 'arm64',  flavor: 'server',   variant: '',  package_os: 'Ubuntu Bionic'],
-          [os: 'bionic',     arch: 'amd64',  flavor: 'electron', variant: '',  package_os: 'Ubuntu Bionic'],
-          [os: 'bionic',     arch: 'arm64',  flavor: 'electron', variant: '',  package_os: 'Ubuntu Bionic'],
-          [os: 'jammy',      arch: 'amd64',  flavor: 'server',   variant: '',  package_os: 'Ubuntu Jammy'],
-          [os: 'jammy',      arch: 'arm64',  flavor: 'server',   variant: '',  package_os: 'Ubuntu Jammy'],
-          [os: 'jammy',      arch: 'amd64',  flavor: 'electron', variant: '',  package_os: 'Ubuntu Jammy'],
-          [os: 'jammy',      arch: 'arm64',  flavor: 'electron', variant: '',  package_os: 'Ubuntu Jammy'],
-          [os: 'rhel9',      arch: 'x86_64', flavor: 'server',   variant: '',  package_os: 'RHEL 9'],
-          [os: 'rhel9',      arch: 'arm64',  flavor: 'server',   variant: '',  package_os: 'RHEL 9'],
-          [os: 'rhel9',      arch: 'x86_64', flavor: 'electron', variant: '',  package_os: 'RHEL 9'],
-          [os: 'rhel9',      arch: 'arm64',  flavor: 'electron', variant: '',  package_os: 'RHEL 9'],
-          [os: 'rhel8',      arch: 'x86_64', flavor: 'server',   variant: '',  package_os: 'RHEL 8'],
-          [os: 'rhel8',      arch: 'arm64',  flavor: 'server',   variant: '',  package_os: 'RHEL 8'],
-          [os: 'rhel8',      arch: 'x86_64', flavor: 'electron', variant: '',  package_os: 'RHEL 8'],
-          [os: 'rhel8',      arch: 'arm64',  flavor: 'electron', variant: '',  package_os: 'RHEL 8']
+          [os: 'opensuse15', arch: 'x86_64', size: 'linux-4x',  flavor: 'electron', variant: '',  package_os: 'OpenSUSE 15'],
+          [os: 'opensuse15', arch: 'x86_64', size: 'linux-4x',  flavor: 'server',   variant: '',  package_os: 'OpenSUSE 15'],
+          [os: 'centos7',    arch: 'x86_64', size: 'linux-4x',  flavor: 'electron', variant: '',  package_os: 'CentOS 7'],
+          [os: 'centos7',    arch: 'x86_64', size: 'linux-4x',  flavor: 'server',   variant: '',  package_os: 'CentOS 7'],
+          [os: 'bionic',     arch: 'amd64',  size: 'linux-4x',  flavor: 'server',   variant: '',  package_os: 'Ubuntu Bionic'],
+          [os: 'bionic',     arch: 'arm64',  size: 'linux',     flavor: 'server',   variant: '',  package_os: 'Ubuntu Bionic'],
+          [os: 'bionic',     arch: 'amd64',  size: 'linux-4x',  flavor: 'electron', variant: '',  package_os: 'Ubuntu Bionic'],
+          [os: 'bionic',     arch: 'arm64',  size: 'linux',     flavor: 'electron', variant: '',  package_os: 'Ubuntu Bionic'],
+          [os: 'jammy',      arch: 'amd64',  size: 'linux-4x',  flavor: 'server',   variant: '',  package_os: 'Ubuntu Jammy'],
+          [os: 'jammy',      arch: 'arm64',  size: 'linux',     flavor: 'server',   variant: '',  package_os: 'Ubuntu Jammy'],
+          [os: 'jammy',      arch: 'amd64',  size: 'linux-4x',  flavor: 'electron', variant: '',  package_os: 'Ubuntu Jammy'],
+          [os: 'jammy',      arch: 'arm64',  size: 'linux',     flavor: 'electron', variant: '',  package_os: 'Ubuntu Jammy'],
+          [os: 'rhel9',      arch: 'x86_64', size: 'linux-4x',  flavor: 'server',   variant: '',  package_os: 'RHEL 9'],
+          [os: 'rhel9',      arch: 'arm64',  size: 'linux',     flavor: 'server',   variant: '',  package_os: 'RHEL 9'],
+          [os: 'rhel9',      arch: 'x86_64', size: 'linux-4x',  flavor: 'electron', variant: '',  package_os: 'RHEL 9'],
+          [os: 'rhel9',      arch: 'arm64',  size: 'linux',     flavor: 'electron', variant: '',  package_os: 'RHEL 9'],
+          [os: 'rhel8',      arch: 'x86_64', size: 'linux-4x',  flavor: 'server',   variant: '',  package_os: 'RHEL 8'],
+          [os: 'rhel8',      arch: 'arm64',  size: 'linux',     flavor: 'server',   variant: '',  package_os: 'RHEL 8'],
+          [os: 'rhel8',      arch: 'x86_64', size: 'linux-4x',  flavor: 'electron', variant: '',  package_os: 'RHEL 8'],
+          [os: 'rhel8',      arch: 'arm64',  size: 'linux',     flavor: 'electron', variant: '',  package_os: 'RHEL 8']
         ]
         containers = limit_builds(containers)
 
@@ -318,7 +318,7 @@ try {
             // on the same image)
             if (!parallel_images.keySet().contains(image_tag)) {
                 parallel_images[image_tag] = {
-                    node("${current_image.arch} && linux-4x") {
+                    node("${current_image.arch} && ${current_image.size}") {
                         stage('prepare Linux container') {
                             prepareWorkspace()
                             withCredentials([usernameColonPassword(credentialsId: 'github-rstudio-jenkins', variable: "github_login")]) {
