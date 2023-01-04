@@ -9,6 +9,8 @@ if not exist quarto (
   echo "quarto repo already cloned"
 
   pushd quarto
+  git reset --hard
+  git clean -dfx
   git pull
   popd
 )
