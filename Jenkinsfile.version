@@ -1,9 +1,4 @@
 def utils
-rstudioVersion = ''
-rstudioVersionMajor  = 0
-rstudioVersionMinor  = 0
-rstudioVersionPatch  = 0
-rstudioVersionSuffix = 0
 
 /**
   * Demo pipeline to show getting version information from utils.groovy
@@ -26,6 +21,11 @@ pipeline {
 
   environment {
     GITHUB_LOGIN = credentials('github-rstudio-jenkins')
+    RSTUDIO_VERSION = ""
+    RSTUDIO_VERSION_MAJOR = 0
+    RSTUDIO_VERSION_MINOR = 0
+    RSTUDIO_VERSION_PATCH = 0
+    RSTUDIO_VERSION_SUFFIX = 0
   }
 
   stages {
@@ -42,16 +42,16 @@ pipeline {
     stage('Versioning') {
       steps {
         script {
-          (rstudioVersion,
-            rstudioVersionMajor,
-            rstudioVersionMinor,
-            rstudioVersionPatch,
-            rstudioVersionSuffix) = utils.getVersion()
-          echo "rstudioVersion: ${rstudioVersion}"
-          echo "rstudioVersionMajor: ${rstudioVersionMajor}"
-          echo "rstudioVersionMinor: ${rstudioVersionMinor}"
-          echo "rstudioVersionPatch: ${rstudioVersionPatch}"
-          echo "rstudioVersionSuffix: ${rstudioVersionSuffix}"
+          (RSTUDIO_VERSION,
+            RSTUDIO_VERSION_MAJOR,
+            RSTUDIO_VERSION_MINOR,
+            RSTUDIO_VERSION_PATCH,
+            RSTUDIO_VERSION_SUFFIX) = utils.getVersion()
+          echo "RStudio Version: ${RSTUDIO_VERSION}"
+          echo "RStudio Version Major: ${RSTUDIO_VERSION_MAJOR}"
+          echo "RStudio Version Minor: ${RSTUDIO_VERSION_MINOR}"
+          echo "RStudio Version Patch: ${RSTUDIO_VERSION_PATCH}"
+          echo "RStudio Version Suffix: ${RSTUDIO_VERSION_SUFFIX}"
         }
       }
     }
