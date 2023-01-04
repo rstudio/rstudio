@@ -384,8 +384,10 @@ try {
                     docker.withRegistry('https://263245908434.dkr.ecr.us-east-1.amazonaws.com', 'ecr:us-east-1:jenkins-aws') {
                         stage('prepare ws/container') {
                           prepareWorkspace()
-                          def image_tag = "${current_container.os}-${current_container.arch}-${rstudioReleaseBranch}"
+                          def flower_name = readFile(file: 'version/RELEASE').replace_all(" ", "_").toLowerCase()
+                          def image_tag = "${current_container.os}-${current_container.arch}-${flower_name}"
                           current_image = docker.image("jenkins/ide:" + image_tag)
+                          current_image.pull()
                         }
                         current_image.inside("--privileged") {
                             timeout(time: 180, units: 'MINUTES', activity: false) {
