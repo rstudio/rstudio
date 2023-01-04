@@ -2919,9 +2919,16 @@ var Tokenizer = function(rules) {
                 } else if (type) {
                     if (token.type)
                         tokens.push(token);
+                    var matchIndex = match.index;
                     token = {type: null, value: ""};
-                    for (var i = 0; i < type.length; i++)
+                    for (var i = 0; i < type.length; i++) {
+                        if (type[i].column === undefined) {
+                            type[i].column = matchIndex;
+                        }
+                        matchIndex = matchIndex + type[i].value.length;
+                        
                         tokens.push(type[i]);
+                    }   
                 }
             }
 
