@@ -385,7 +385,9 @@ try {
                         stage('prepare ws/container') {
                           prepareWorkspace()
                           def flower_name = readFile(file: 'version/RELEASE').replace_all(" ", "_").toLowerCase()
+                          println ${flower_name}
                           def image_tag = "${current_container.os}-${current_container.arch}-${flower_name}"
+                          println ${image_tag}
                           current_image = docker.image("jenkins/ide:" + image_tag)
                           current_image.pull() // this is necessary even though it's called by current_image.inside() to avoid using the locally cached image
                         }
