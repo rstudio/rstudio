@@ -2,7 +2,7 @@
 
 REM Run this script with 'call envvars.bat' to update the PATH in your
 REM cmd.exe shell, so that the appropriate versions of node are found
-call :NormalizePath NODE_PATH "..\..\..\dependencies\common\node\18.12.1"
+call :NormalizePath NODE_PATH "..\..\..\dependencies\common\node\16.14.0"
 if not exist "%NODE_PATH%" (
     echo "Error: %NODE_PATH% does not exist"
     exit /b
