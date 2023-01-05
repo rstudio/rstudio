@@ -64,7 +64,7 @@ RUN mkdir -p 'C:\rstudio-tools\dependencies\tools'
 RUN mkdir -p 'C:\rstudio-tools\dependencies\common'
 RUN mkdir -p 'C:\rstudio-tools\dependencies\windows'
 
-COPY dependencies/rstudio-tools.cmd 'C:\rstudio-tools\dependencies\tools\rstudio-tools.cmd'
+COPY dependencies/tools/rstudio-tools.cmd 'C:\rstudio-tools\dependencies\tools\rstudio-tools.cmd'
 COPY dependencies/common 'C:\rstudio-tools\dependencies\common'
 COPY dependencies/windows 'C:\rstudio-tools\dependencies\windows'
 
