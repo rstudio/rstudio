@@ -1,3 +1,5 @@
+def BINARY_JOB_ROOT="IDE/OS-Builds/Nightly"
+
 pipeline {
   agent {
     dockerfile {
@@ -8,6 +10,7 @@ pipeline {
   
   environment {
     COMMIT_HASH=""
+    BUILD_BRANCH="${env.BRANCH_NAME.replace('/', '%2F')}"
   }
 
   stages {
@@ -18,28 +21,11 @@ pipeline {
           COMMIT_HASH = sh returnStdout: true, script: 'git rev-parse HEAD'
           echo "Commit = ${COMMIT_HASH}"
         }
-        
-        build wait: false,
-              job: "IDE/experiments/downstream-job-test/${env.BRANCH_NAME.replace('/', '%2F')}",
-              parameters: [gitParameter(name: "COMMIT_HASH", value: "${COMMIT_HASH}")]
       }
     }
 
     stage ("Trigger Builds") {
       stages {
-        stage ("Trigger Docs") {
-          when {
-            anyOf {
-              changeset comparator: 'REGEXP', pattern: 'docs/.*'
-              changeset comparator: 'REGEXP', pattern: 'version/.*'
-            }
-          }
-
-          steps {
-            echo "Would trigger doc builds at ${COMMIT_HASH}"
-          }
-        }
-
         stage ("Trigger Binary Builds") {
           when {
             allOf {
@@ -51,7 +37,19 @@ pipeline {
           }
 
           steps {
-            echo "Would trigger binary builds at ${COMMIT_HASH}"
+            echo "Would trigger binary builds at ${COMMIT_HASH} on branch ${env.BUILD_BRANCH}"
+
+            build wait: false,
+                  job: "${BINARY_JOB_ROOT}/Windows/${env.BUILD_BRANCH}",
+                  parameters: [gitParameter(name: "COMMIT_HASH", value: "${COMMIT_HASH}")]
+
+            build wait: false,
+                  job: "${BINARY_JOB_ROOT}/Linux/${env.BUILD_BRANCH}",
+                  parameters: [gitParameter(name: "COMMIT_HASH", value: "${COMMIT_HASH}")]
+
+            build wait: false,
+                  job: "${BINARY_JOB_ROOT}/MacOS/${env.BUILD_BRANCH}",
+                  parameters: [gitParameter(name: "COMMIT_HASH", value: "${COMMIT_HASH}")]
           }
 
         }
