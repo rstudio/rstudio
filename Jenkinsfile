@@ -218,6 +218,7 @@ rstudioVersionMinor  = 0
 rstudioVersionPatch  = 0
 rstudioVersionSuffix = 0
 rstudioBuildCommit   = ""
+rstudioVersionFlower = ""
 
 // compute release branch by parsing the job name (env.GIT_BRANCH should work here but doesn't appear to), e.g.
 // "IDE/pro-pipeline/v4.3" => "v4.3"
@@ -301,6 +302,8 @@ try {
 
                         // update slack message to include build version
                         messagePrefix = "Jenkins ${env.JOB_NAME} build: <${env.BUILD_URL}display/redirect|${rstudioVersion}>"
+
+                        rstudioVersionFlower = readFile(file: 'version/RELEASE').replaceAll(" ", "-").toLowerCase().trim()
                     }
                 }
             }
@@ -311,7 +314,7 @@ try {
         for (int i = 0; i < containers.size(); i++) {
             // derive the tag for this image
             def current_image = containers[i]
-            def image_tag = "${current_image.os}-${current_image.arch}-${rstudioReleaseBranch}"
+            def image_tag = "${current_image.os}-${current_image.arch}-${rstudioVersionFlower}"
 
             // ensure that this image tag has not already been built (since we
             // recycle tags for many platforms to e.g. build desktop and server
@@ -336,7 +339,7 @@ try {
         }
 
         def windows_containers = [
-          [os: 'windows', arch: 'x86_64', flavor: 'electron',  variant: '', package_os: 'Windows']
+          //[os: 'windows', arch: 'x86_64', flavor: 'electron',  variant: '', package_os: 'Windows']
         ]
  
         // prepare container for windows builder
@@ -384,10 +387,7 @@ try {
                     docker.withRegistry('https://263245908434.dkr.ecr.us-east-1.amazonaws.com', 'ecr:us-east-1:jenkins-aws') {
                         stage('prepare ws/container') {
                           prepareWorkspace()
-                          def flower_name = readFile(file: 'version/RELEASE').replace_all(" ", "_").toLowerCase()
-                          println ${flower_name}
-                          def image_tag = "${current_container.os}-${current_container.arch}-${flower_name}"
-                          println ${image_tag}
+                          def image_tag = "${current_container.os}-${current_container.arch}-${rstudioVersionFlower}"
                           current_image = docker.image("jenkins/ide:" + image_tag)
                           current_image.pull() // this is necessary even though it's called by current_image.inside() to avoid using the locally cached image
                         }
