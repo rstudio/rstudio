@@ -14,4 +14,4 @@
 :: AGPL (http://www.gnu.org/licenses/agpl-3.0.txt) for more details.
 
 
-set RSTUDIO_NODE_VERSION=18.12.1
+set RSTUDIO_NODE_VERSION=16.14.0
