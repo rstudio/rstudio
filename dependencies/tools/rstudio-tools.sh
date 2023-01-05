@@ -468,7 +468,7 @@ fi
 export RSTUDIO_TOOLS_ROOT
 
 # version of node.js used for building
-export RSTUDIO_NODE_VERSION="18.12.1"
+export RSTUDIO_NODE_VERSION="16.14.0"
 
 # create a copy of a file in the same folder with .original extension
 save-original-file () {

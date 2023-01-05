@@ -430,7 +430,7 @@ function scanForRWin32(): Expected<string> {
   }
 
   // look for a 64-bit version of R
-  if (process.arch !== 'ia32') {
+  if (process.arch !== 'x32') {
     const x64InstallPath = findDefaultInstallPathWin32('R64');
     if (x64InstallPath) {
       const x64BinaryPath = `${x64InstallPath}/bin/x64/R.exe`;
