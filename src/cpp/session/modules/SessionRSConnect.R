@@ -469,7 +469,7 @@
 
 .rs.addFunction("enableRStudioConnectUI", function(enable) {
   .rs.enqueClientEvent("enable_rstudio_connect", enable);
-  message("RStudio Connect UI ", if (enable) "enabled" else "disabled", ".")
+  message("Posit Connect UI ", if (enable) "enabled" else "disabled", ".")
   invisible(enable)
 })
 

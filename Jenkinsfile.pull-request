@@ -1,0 +1,103 @@
+os = 'jammy'
+arch = 'amd64'
+flavor = 'server'
+type = 'DEB'
+AWS_ACCOUNT_ID = '749683154838'
+def utils
+
+pipeline {
+  agent {
+    label 'linux && amd64'
+  }
+
+  options {
+    timestamps()
+    disableConcurrentBuilds()
+    buildDiscarder(logRotator(numToKeepStr: '10'))
+  }
+
+  environment {
+        GITHUB_LOGIN = credentials('github-rstudio-jenkins')
+  }
+
+  stages {
+    stage('Load Utils') {
+      steps {
+        script {
+          sh 'printenv'
+          sh "echo 'Loading utils from ${env.WORKSPACE}/utils.groovy'"
+          utils = load "${env.WORKSPACE}/utils.groovy"
+          utils.addRemoteRef("${env.CHANGE_TARGET}")
+        }
+      }
+    }
+
+    stage('Build') {
+      when {
+        expression {
+          // Passing true makes this return true if there are any changes outside of 'docs'
+          return utils.hasChangesIn('docs', true)
+        }
+      }
+
+      stages {
+        stage('Prepare Build Container') {
+          steps {
+            // AWS is here for the S3 bucket that we use for sccache
+            withAWS(role: 'build', roleAccount: AWS_ACCOUNT_ID) {
+              pullBuildPush(
+                image_name: 'jenkins/ide',
+                image_tag: "${os}-${arch}-${env.CHANGE_TARGET.replaceAll('/', '-')}",
+                dockerfile: "docker/jenkins/Dockerfile.${os}",
+                build_arg_jenkins_uid: 'JENKINS_UID',
+                build_arg_jenkins_gid: 'JENKINS_GID',
+                builds_args: "--build-arg GITHUB_LOGIN=${GITHUB_LOGIN}",
+                push: false)
+            }
+          }
+        }
+
+        stage('Build Package and Test') {
+          agent {
+            docker {
+              image "jenkins/ide:${os}-${arch}-${env.CHANGE_TARGET.replaceAll('/', '-')}"
+              reuseNode true
+            }
+          }
+
+          stages {
+            stage('Build Package') {
+              steps {
+                dir ("package/linux") {
+                  // AWS is here for the S3 bucket that we use for sccache
+                  withAWS(role: 'build', roleAccount: AWS_ACCOUNT_ID) {
+                    // perform the compilation
+                    sh "SCCACHE_ENABLED=1 PACKAGE_OS=${os} ./make-${flavor}-package ${type} clean"
+                  }
+                }
+              }
+            }
+
+            stage('Run GWT Unit Tests') {
+              steps {
+                dir ("package/linux/build-${flavor.capitalize()}-${type}/src/gwt") {
+                  // attempt to run ant (gwt) unit tests
+                  sh "./gwt-unit-tests.sh"
+                }
+              }
+            }
+
+            stage('Run C++ Unit Tests') {
+              steps {
+                dir ("package/linux/build-${flavor.capitalize()}-${type}/src/cpp") {
+                  // attempt to run cpp unit tests
+                  sh "./rstudio-tests"
+                }
+              }
+            }
+          }
+        }
+      }
+    }
+  }
+}

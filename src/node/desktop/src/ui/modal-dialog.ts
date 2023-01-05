@@ -31,6 +31,7 @@ export abstract class ModalDialog<T> extends BrowserWindow {
       height: 400,
       show: false,
       webPreferences: {
+        nodeIntegration: true,
         preload: preload,
       },
     };

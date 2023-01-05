@@ -436,7 +436,7 @@ public class RSConnect implements SessionInitEvent.Handler,
             }
             else
             {
-               // RStudio Connect is disabled, go straight to RPubs
+               // Posit Connect is disabled, go straight to RPubs
                publishAsRPubs(event);
             }
          }

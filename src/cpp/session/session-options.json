@@ -249,7 +249,7 @@
             "name": "default-rsconnect-server",
             "type": "string",
             "memberName": "defaultRSConnectServer_",
-            "description": "Specifies the default RStudio Connect server URL."
+            "description": "Specifies the default Posit Connect server URL."
          },
          {
             "name": {"constant": "kTerminalPortOption", "value": "terminal-port"},
