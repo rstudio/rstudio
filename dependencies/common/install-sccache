@@ -18,6 +18,11 @@
 set -e
 
 source "$(dirname "${BASH_SOURCE[0]}")/../tools/rstudio-tools.sh"
+
+if is-macos; then
+   exit 0
+fi
+
 section "Installing sccache"
 
 # install dir
