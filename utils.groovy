@@ -20,7 +20,9 @@ boolean hasChangesIn(String module, boolean invertMatch = false) {
   */
 void addRemoteRef(String branchName) {
   sh "git config --add remote.origin.fetch +refs/heads/${branchName}:refs/remotes/origin/${branchName}"
-  sh "git fetch --no-tags origin ${branchName}"
+  // Split GIT_URL after https://
+  urlParts = env.GIT_URL.split('https://')
+  sh 'git fetch --no-tags --force --progress -- https://${GITHUB_LOGIN}' + "@${urlParts[1]} refs/heads/${branchName}:refs/remotes/origin/${branchName}"
 }
 
 return this
