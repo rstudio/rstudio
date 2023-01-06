@@ -51,7 +51,6 @@ pipeline {
                   job: "${BINARY_JOB_ROOT}/MacOS/${env.BUILD_BRANCH}",
                   parameters: [gitParameter(name: "COMMIT_HASH", value: "${COMMIT_HASH}")]
           }
-
         }
       }
     }
