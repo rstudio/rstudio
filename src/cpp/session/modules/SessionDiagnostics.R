@@ -96,8 +96,7 @@
          file = file,
          line = x$start.row,
          column = x$start.column,
-         message = x$message,
-         messageHTML = FALSE
+         message = x$message
       )
    })
 })
