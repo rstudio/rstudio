@@ -56,7 +56,7 @@
 #    The pro suffix is generated in a similar manner to <build number> for the open source
 #    version, but it is based on the number of commits to the pro branch since open source
 #    was merged into the pro branch. In the local repository, the file upstream/VERSION
-#    contains the commit hash is used for this determination.
+#    contains the commit hash that is used for this determination.
 #
 # The script is typically used by the build script to bump the build versions,
 # but it can also be invoked manually. Pass "debug" as the last parameter to
