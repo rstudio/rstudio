@@ -26,7 +26,7 @@ pipeline {
 
     stage ("Trigger Builds") {
       stages {
-        stage ("Trigger Binary Builds") {
+        stage ("Trigger Open Source Builds") {
           when {
             allOf {
               changeset comparator: 'REGEXP', pattern: '(?!docs/).+'
