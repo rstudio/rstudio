@@ -346,7 +346,7 @@ try {
         for (int i = 0; i < windows_containers.size(); i++) {
           // derive the tag for this image
           def current_image = windows_containers[i]
-          def image_tag = "${current_image.os}-${rstudioReleaseBranch}"
+          def image_tag = "${current_image.os}-${rstudioVersionFlower}"
 
           // ensure that this image tag has not already been built (since we
           // recycle tags for many platforms to e.g. build desktop and electron
@@ -427,7 +427,7 @@ try {
                         stage('prepare container') {
                             checkout scm
                             docker.withRegistry('https://263245908434.dkr.ecr.us-east-1.amazonaws.com', 'ecr:us-east-1:jenkins-aws') {
-                                def image_tag = "${current_container.os}-${rstudioReleaseBranch}"
+                                def image_tag = "${current_container.os}-${rstudioVersionFlower}"
                                 windows_image = docker.image("jenkins/ide:" + image_tag)
                                 windows_image.pull()
                                 image_name = windows_image.imageName()
