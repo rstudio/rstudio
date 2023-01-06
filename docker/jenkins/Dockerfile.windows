@@ -68,6 +68,7 @@ COPY dependencies/tools/rstudio-tools.cmd 'C:\rstudio-tools\dependencies\tools\r
 COPY dependencies/common 'C:\rstudio-tools\dependencies\common'
 COPY dependencies/windows 'C:\rstudio-tools\dependencies\windows'
 
+WORKDIR C:/rstudio-tools/dependencies/windows
 RUN C:/rstudio-tools/dependencies/windows/install-dependencies.cmd
 
 #### this docker container will currently be used as a jenkins swarm slave, rather than instantiated on a swarm ####
