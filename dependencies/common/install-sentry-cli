@@ -30,7 +30,8 @@ fi
 # specify a version
 export SENTRY_CLI_VERSION=2.9.0
 
-curl -sL https://sentry.io/get-cli/ | bash || trueSENTRY_PATH="sentry-cli"
+curl -sL https://sentry.io/get-cli/ | bash || true
+SENTRY_PATH="sentry-cli"
 if [[ -n "${INSTALL_DIR}" ]]; then
 	SENTRY_PATH="${INSTALL_DIR}/${SENTRY_PATH}"
 fi
