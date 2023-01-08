@@ -366,7 +366,7 @@ TEST_CASE("ConsoleProcessInfo")
       CHECK((finishSecond.length() + secondChunk.length() == kOutputBufferSize));
       cpi.appendToOutputBuffer(finishSecond);
 
-      // try to read non-existent third chunk
+      // try to read nonexistent third chunk
       std::string thirdChunk = cpi.getSavedBufferChunk(3, &moreAvailable);
       CHECK_FALSE(moreAvailable);
       CHECK((thirdChunk.length() == 0));

@@ -84,7 +84,7 @@ typedef _synctex_scanner_t *  synctex_scanner_t;
  *  not 16 bits nor 32 bits.
  *  The last file extension is removed and replaced by the proper extension.
  *  Then the private method _synctex_scanner_new_with_contents_of_file is called.
- *  NULL is returned in case of an error or non existent file.
+ *  NULL is returned in case of an error or nonexistent file.
  *  Once you have a scanner, use the synctex_display_query and synctex_edit_query below.
  *	The new "build_directory" argument is available since version 1.5.
  *	It is the directory where all the auxiliary stuff is created.

@@ -201,7 +201,7 @@ describe('FilePath', () => {
       const f = new FilePath('/etc/foo/.hello');
       assert.strictEqual(f.getFilename(), '.hello');
     });
-    it('getLastWriteTimeSync should return zero for non-existent file', () => {
+    it('getLastWriteTimeSync should return zero for nonexistent file', () => {
       const f = new FilePath('/some/file/that/will/not/exist');
       assert.strictEqual(f.getLastWriteTimeSync(), 0);
     });
@@ -533,7 +533,7 @@ describe('FilePath', () => {
       process.chdir(cwd.getAbsolutePath());
       fs.rmdirSync(newFolder);
     });
-    it('makeCurrentPath with false autocreate flag should fail to change cwd to non-existent folder', () => {
+    it('makeCurrentPath with false autocreate flag should fail to change cwd to nonexistent folder', () => {
       const cwd = process.cwd();
       const newFolder = path.join(os.tmpdir(), randomString());
       const f1 = new FilePath(newFolder);
@@ -542,7 +542,7 @@ describe('FilePath', () => {
       assert(isFailure(result));
       assert.strictEqual(process.cwd(), cwd);
     });
-    it('makeCurrentPath with autocreate should create and change cwd to non-existent folder', () => {
+    it('makeCurrentPath with autocreate should create and change cwd to nonexistent folder', () => {
       const origCwd = process.cwd();
       const newFolder = path.join(os.tmpdir(), randomString());
       const f1 = new FilePath(newFolder);

@@ -119,7 +119,7 @@ core::Error Preferences::writeLayer(int layer, const core::json::Object& prefs)
 
    RECURSIVE_LOCK_MUTEX(mutex_)
    {
-      // We cannot write the base layer or a non-existent layer.
+      // We cannot write the base layer or a nonexistent layer.
       if (layer >= static_cast<int>(layers_.size()) || layer < 1)
          return systemError(boost::system::errc::invalid_argument, ERROR_LOCATION);
 

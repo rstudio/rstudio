@@ -379,7 +379,7 @@ void runEmbeddedR(const core::FilePath& rHome,
    // Set CharacterMode to LinkDLL during main loop setup. The mode can't be
    // RGui during setup_Rmainloop or calls to history functions (e.g. timestamp)
    // which occur during .Rprofile execution will crash when R attempts to
-   // interact with the (non-existent) R gui console data structures. Note that
+   // interact with the (nonexistent) R gui console data structures. Note that
    // there are no references to CharacterMode within setup_Rmainloop that we
    // can see so the only side effect of this should be the disabling of the
    // console history mechanism.

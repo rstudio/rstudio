@@ -157,7 +157,7 @@ public class AceCommandManager extends JavaScriptObject
       
       // The command can be null if it's an excluded command, or
       // the user has manually edited their keybinding file and
-      // selected the ID of a non-existent command.
+      // selected the ID of a nonexistent command.
       if (command == null)
          return;
       

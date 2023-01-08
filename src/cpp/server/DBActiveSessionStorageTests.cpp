@@ -111,7 +111,7 @@ void runTests(DBActiveSessionStorage storage)
 {
    GIVEN("An initialized database")
    {
-      THEN("Querying properties for non-existent session returns error, and blank data")
+      THEN("Querying properties for nonexistent session returns error, and blank data")
       {
          // Query All Properties
          std::map<std::string, std::string> nonexistentAllProps{};
@@ -172,7 +172,7 @@ void runTests(DBActiveSessionStorage storage)
 
             // Property that isn't a column
             std::string nonProp{};
-            REQUIRE(storage.readProperty("non-existent", &nonProp));
+            REQUIRE(storage.readProperty("nonexistent", &nonProp));
             REQUIRE(nonProp == "");
          }
       }

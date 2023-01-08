@@ -24,7 +24,7 @@ const envValue = 'Value used for testing environment variables';
 
 describe('Environment', () => {
   describe('Get global environment variable', () => {
-    it('Should return zero length string for non-existent variable', () => {
+    it('Should return zero length string for nonexistent variable', () => {
       const result = env.getenv(envVarName);
       assert.isEmpty(result);
     });

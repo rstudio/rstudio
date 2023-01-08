@@ -558,7 +558,7 @@ test_context("ProcessTests")
       };
 
       // run program
-      Error error = supervisor.runCommand("cat --non-existent-option", options, callbacks);
+      Error error = supervisor.runCommand("cat --nonexistent-option", options, callbacks);
       REQUIRE(!error);
 
       // wait for process to start

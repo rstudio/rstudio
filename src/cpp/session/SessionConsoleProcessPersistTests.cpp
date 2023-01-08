@@ -89,7 +89,7 @@ TEST_CASE("ConsoleProcess Persistence")
       CHECK((loaded.compare(orig) == 0));
    }
 
-   SECTION("Try to load a non-existent buffer")
+   SECTION("Try to load a nonexistent buffer")
    {
       std::string loaded = console_persist::getSavedBuffer(handle1, maxLines);
       CHECK(loaded.empty());
