@@ -47,7 +47,7 @@ Use **Copy jobs results** to **Global environment** option with caution! The obj
 
 :::
 
--   **Results object**: This places all the R objects your job creates into a new environment named with the the following pattern "yourscriptname" + "_results". For example, a script titled `training.R` executed as Background Job would be saved back into the global environment as an object titled `training_results`.
+-   **Results object**: This places all the R objects your job creates into a new environment named with the following pattern "yourscriptname" + "_results". For example, a script titled `training.R` executed as Background Job would be saved back into the global environment as an object titled `training_results`.
 
 An additional option is to include specific R code to save out the results to files on disk such as `saveRDS(object, "results.rds")`.
 

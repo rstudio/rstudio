@@ -71,7 +71,7 @@ var hist = function (ele, breaks, counts, start, end, update) {
       }
    };
 
-   // given an element, find the bin to which it corresponds, or null if the the bin could not be
+   // given an element, find the bin to which it corresponds, or null if the bin could not be
    // determined
    var findBin = function(ele) {
       var bin = ele.getAttribute("data-bin");

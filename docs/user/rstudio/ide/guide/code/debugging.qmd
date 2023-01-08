@@ -118,7 +118,7 @@ When diagnosing a specific error, RStudio can halt execution at the point where 
 
 ![](images/error-inspector.png){fig-alt="A screenshot of the Debug Menu in RStudio and selecting 'On Error > Error Inspector'" width="350"}
 
-To keep the the debugger from being invoked whenever any error anywhere happens, RStudio does not invoke the debugger if it looks like none of your own code is on the stack. If you find that this is excluding an error you want to catch, go to *Tools -\> Global Options* and uncheck "Use debug error handler only when my code contains errors".
+To keep the debugger from being invoked whenever any error anywhere happens, RStudio does not invoke the debugger if it looks like none of your own code is on the stack. If you find that this is excluding an error you want to catch, go to *Tools -\> Global Options* and uncheck "Use debug error handler only when my code contains errors".
 
 The following code will always invoke the debugger on every error:
 

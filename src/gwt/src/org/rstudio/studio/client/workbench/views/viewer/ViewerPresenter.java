@@ -295,7 +295,7 @@ public class ViewerPresenter extends BasePresenter
    @Override
    public void onShinyDisconnect()
    {
-      // when Shiny applications disconnect themselves, clear them out of the the Viewer
+      // when Shiny applications disconnect themselves, clear them out of the Viewer
       onViewerClear();
    }
 

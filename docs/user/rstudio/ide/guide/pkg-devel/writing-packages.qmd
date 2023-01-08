@@ -81,7 +81,7 @@ To enable RStudio's package development tools for an existing package do the fol
 
 2.  If the package `DESCRIPTION` file is located either in the project's root directory or at `pkg/DESCRIPTION`, then it will be automatically discovered.
 
-3.  Alternatively, navigate to **Tools** \> **Project Options** \> **Build Tools**, select "Package" as the project build tools type, and then specify the the subdirectory containing the package's `DESCRIPTION` file.
+3.  Alternatively, navigate to **Tools** \> **Project Options** \> **Build Tools**, select "Package" as the project build tools type, and then specify the subdirectory containing the package's `DESCRIPTION` file.
 
 ## Building a package
 
@@ -99,7 +99,7 @@ The **Clean and Install** command performs several steps in sequence to ensure a
 
 4.  Reloads the package in the new R session by executing the `library` function.
 
-You can also execute **Clean and Install** using the the Command Palette <kbd>Ctrl+Shift+P</kbd> (<kbd>Cmd+Shift+P</kbd> on Mac) or configure RStudio to automatically save open source files prior to rebuilding from the **Tools** > **Global Options** > **Packages** tab > **Development** tab > **Save all files prior to building packages** option. 
+You can also execute **Clean and Install** using the Command Palette <kbd>Ctrl+Shift+P</kbd> (<kbd>Cmd+Shift+P</kbd> on Mac) or configure RStudio to automatically save open source files prior to rebuilding from the **Tools** > **Global Options** > **Packages** tab > **Development** tab > **Save all files prior to building packages** option. 
 
 The **Build** pane also includes buttons for:  
 

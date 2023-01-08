@@ -162,7 +162,7 @@ public class Synctex implements CompilePdfStartedEvent.Handler,
    // avoid the complexity of tracking distinct viewer states. if we want
    // to do this we probably should do the following:
    //
-   //    - always keep the the synctex command available in all editors
+   //    - always keep the synctex command available in all editors
    //      so long as there is at least one preview window alive; OR
    //
    //    - for cases where we do know whether the window is still alive

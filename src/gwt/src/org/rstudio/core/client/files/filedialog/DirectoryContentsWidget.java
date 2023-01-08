@@ -126,7 +126,7 @@ public class DirectoryContentsWidget
             event.preventDefault();
             event.stopPropagation();
 
-            // IE10: focusing the the table element causes the scroll panel to
+            // IE10: focusing the table element causes the scroll panel to
             // snap it to the top, scrolling the event target offscreen. Set
             // and restore the position after focus.
             if (DomUtils.getActiveElement() != table_.getElement())

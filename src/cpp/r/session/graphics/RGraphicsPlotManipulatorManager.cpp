@@ -207,7 +207,7 @@ bool PlotManipulatorManager::hasActiveManipulator() const
 }
 
 // the "active" manipultor is either the currently pending manipulator
-// or if there is none pending then the the one associated with the
+// or if there is none pending then the one associated with the
 // currently active plot
 SEXP PlotManipulatorManager::activeManipulator() const
 {

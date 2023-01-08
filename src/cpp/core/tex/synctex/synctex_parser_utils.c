@@ -325,7 +325,7 @@ char * _synctex_merge_strings(const char * first,...) {
 
 /*  The purpose of _synctex_get_name is to find the name of the synctex file.
  *  There is a list of possible filenames from which we return the most recent one and try to remove all the others.
- *  With two runs of pdftex or xetex we are sure the the synctex file is really the most appropriate.
+ *  With two runs of pdftex or xetex we are sure the synctex file is really the most appropriate.
  */
 int _synctex_get_name(const char * output, const char * build_directory, char ** synctex_name_ref, synctex_io_mode_t * io_mode_ref)
 {

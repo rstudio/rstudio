@@ -720,7 +720,7 @@ void RCompilationDatabase::restorePackageCompilationConfig()
 
 void RCompilationDatabase::updateForSourceCpp(const core::FilePath& srcFile)
 {
-   // read the the source cpp hash for this file
+   // read the source cpp hash for this file
    SourceCppFileInfo info = sourceCppFileInfo(srcFile);
 
    // check if we already have the args for this hash value

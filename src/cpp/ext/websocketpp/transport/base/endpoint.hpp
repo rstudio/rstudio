@@ -55,7 +55,7 @@ namespace websocketpp {
  *  connect_handler handler)`\n
  * Initiate a connection to `location` using the given connection `tcon`. `tcon`
  * is a pointer to the transport connection component of the connection. When
- * complete, `handler` should be called with the the connection's
+ * complete, `handler` should be called with the connection's
  * `connection_hdl` and any error that occurred.
  *
  * **init_logging**

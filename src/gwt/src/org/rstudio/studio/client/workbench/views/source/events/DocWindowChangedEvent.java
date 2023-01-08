@@ -48,7 +48,7 @@ public class DocWindowChangedEvent
    }
    
    // this event is fired by the window on which the document was dropped; it
-   // is rebroadcast to the the window from which the drop originated to 
+   // is rebroadcast to the window from which the drop originated to 
    // negotiate its end of the transfer
    public DocWindowChangedEvent(String docId, String oldWindowId, 
          String newWindowId, DocTabDragParams params, 

@@ -743,7 +743,7 @@ public class EnvironmentPresenter extends BasePresenter
 
    // Private methods ---------------------------------------------------------
 
-   // sets a new context depth; returns true if the the new context depth
+   // sets a new context depth; returns true if the new context depth
    // transitions to debug mode
    private boolean setContextDepth(int contextDepth)
    {

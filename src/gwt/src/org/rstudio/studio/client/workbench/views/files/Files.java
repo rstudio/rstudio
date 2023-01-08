@@ -837,7 +837,7 @@ public class Files
 
             // only open available:
             // get the current number of remaining columns available
-            // all of the remaining files that cannot fit will be dumped into the the last-opened column
+            // all of the remaining files that cannot fit will be dumped into the last-opened column
             // there is a +1 here because the columnList includes the "non-additional" source pane
             final int columnsRemaining = PaneManager.MAX_COLUMN_COUNT - mgr.getColumnList().size() + 1; 
 
