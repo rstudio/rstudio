@@ -49,7 +49,7 @@ The snippet can also be tested by pressing the **Test** button in the **New Conn
 
 The path is configurable through the `connections-path` environment variable and multiple connection files can be specified.
 
-In order to parameterize this connection, one can create fields using using the `${Position:Label=Default}` syntax:
+In order to parameterize this connection, one can create fields using the `${Position:Label=Default}` syntax:
 
 -   **Position:** The row position starting at zero.
 
