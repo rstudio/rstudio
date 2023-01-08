@@ -184,7 +184,7 @@ export class SessionLauncher {
   // but that isn't a thing in TypeScript (at least not without some ugly workarounds)
   // so giving a different name.
   private launchFirst(): Err {
-    // build a new new launch context
+    // build a new launch context
     const launchContext = this.buildLaunchContext();
 
     // show help home on first run

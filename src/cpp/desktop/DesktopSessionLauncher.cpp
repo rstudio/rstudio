@@ -181,7 +181,7 @@ void SessionLauncher::launchFirstSession(const core::FilePath& installPath,
 
 Error SessionLauncher::launchFirstSession()
 {
-   // build a new new launch context
+   // build a new launch context
    QString host, port;
    QStringList argList;
    QUrl url;
