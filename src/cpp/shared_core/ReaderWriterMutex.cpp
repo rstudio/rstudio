@@ -38,7 +38,7 @@ struct ReaderWriterMutex::Impl
    bool IsWriting;
    unsigned int ReaderCount;
    boost::recursive_mutex Mutex;
-   // This mutex is used to allow re-entrant lock behaviour on write. On read it's basically already re-entrant.
+   // This mutex is used to allow reentrant lock behaviour on write. On read it's basically already reentrant.
    boost::recursive_mutex WriteMutex;
    boost::condition_variable_any Condition;
 };

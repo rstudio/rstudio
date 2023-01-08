@@ -211,7 +211,7 @@ public:
       }
 
       // deliver the chunks on the thread pool instead of directly from this method
-      // so that it is not a re-entrant method (beneficial for clients if they are holding locks, etc)
+      // so that it is not a reentrant method (beneficial for clients if they are holding locks, etc)
       boost::shared_ptr<AsyncClient<SocketService> > sharedThis =
             AsyncClient<SocketService>::shared_from_this();
 
