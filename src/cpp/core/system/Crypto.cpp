@@ -44,7 +44,7 @@
 
 #include <memory>
 
-// openssl calls on lion are are all marked as deprecated
+// openssl calls on lion are all marked as deprecated
 #ifdef __clang__
 #pragma clang diagnostic ignored "-Wdeprecated-declarations"
 #endif
