@@ -107,7 +107,7 @@ size_t FileActiveSessionsStorage::getSessionCount() const
    return listSessionIds().size();
 }
 
-// Returns a shared pointer to the session storage, or an empty session session storage pointer if it does not exist
+// Returns a shared pointer to the session storage, or an empty session storage pointer if it does not exist
 std::shared_ptr<IActiveSessionStorage> FileActiveSessionsStorage::getSessionStorage(const std::string& id) const
 {
    FilePath scratchPath = storagePath_.completeChildPath(kSessionDirPrefix + id);
