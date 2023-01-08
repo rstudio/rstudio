@@ -940,7 +940,7 @@ public class TextEditingTargetNotebook
       for (ChunkOutputUi output: outputs().values())
       {
          // throwing exceptions during resize breaks most of the UI and this
-         // invokes Javascript from a package downstream, so tolerate
+         // invokes JavaScript from a package downstream, so tolerate
          // (and log) exceptions
          try
          {

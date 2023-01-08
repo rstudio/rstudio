@@ -400,7 +400,7 @@
 		</dict>
 		<dict>
 			<key>name</key>
-			<string>Javascript Events</string>
+			<string>JavaScript Events</string>
 			<key>scope</key>
 			<string>support.function.event-handler.js</string>
 			<key>settings</key>
@@ -411,7 +411,7 @@
 		</dict>
 		<dict>
 			<key>name</key>
-			<string>Javascript Operators</string>
+			<string>JavaScript Operators</string>
 			<key>scope</key>
 			<string>keyword.operator.js</string>
 			<key>settings</key>
@@ -422,7 +422,7 @@
 		</dict>
 		<dict>
 			<key>name</key>
-			<string>Javascript Keywords</string>
+			<string>JavaScript Keywords</string>
 			<key>scope</key>
 			<string>keyword.control.js</string>
 			<key>settings</key>

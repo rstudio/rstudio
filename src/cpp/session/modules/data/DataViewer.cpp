@@ -865,7 +865,7 @@ Error getGridData(const http::Request& request,
    CATCH_UNEXPECTED_EXCEPTION
 
    // There are some unprintable ASCII control characters that are written
-   // verbatim by json::write, but that won't parse in most Javascript JSON
+   // verbatim by json::write, but that won't parse in most JavaScript JSON
    // parsing implementations, even if contained in a string literal. Scan the
    // output data for these characters and replace them with spaces. Escaping
    // is another option here for some character ranges but since (a) these are

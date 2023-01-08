@@ -242,7 +242,7 @@
          <key>CFBundleTypeIconFile</key>
          <string>JS.icns</string>
          <key>CFBundleTypeName</key>
-         <string>Javascript File</string>
+         <string>JavaScript File</string>
          <key>CFBundleTypeRole</key>
          <string>Editor</string>
       </dict>

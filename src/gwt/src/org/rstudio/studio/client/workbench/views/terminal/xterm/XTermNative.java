@@ -185,12 +185,12 @@ public class XTermNative extends JavaScriptObject
    }-*/;
 
    /**
-    * Factory to create a native Javascript terminal object.
+    * Factory to create a native JavaScript terminal object.
     *
     * @param container HTML element to attach to
     * @param options xterm.js settings
     *
-    * @return Native Javascript Terminal object wrapped in a <code>JavaScriptObject</code>.
+    * @return Native JavaScript Terminal object wrapped in a <code>JavaScriptObject</code>.
     */
    public static native XTermNative createTerminal(Element container,
                                                    XTermOptions options,

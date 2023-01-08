@@ -153,7 +153,7 @@ pipeline {
                 // create new release on Sentry
                 sh "sentry-cli --auth-token ${SENTRY_API_KEY} releases --org rstudio --project ide-backend new ${RSTUDIO_RELEASE}"
 
-                // upload Javascript source maps
+                // upload JavaScript source maps
                 sh "cd package/osx/build/gwt && sentry-cli --auth-token ${SENTRY_API_KEY} releases --org rstudio --project ide-backend files ${RSTUDIO_RELEASE} upload-sourcemaps --ext js --ext symbolMap --rewrite ."
 
                 // associate commits

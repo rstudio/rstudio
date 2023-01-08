@@ -4448,7 +4448,7 @@ dom.importCssString(".normal-mode .ace_cursor{\
         raw += ' <span style="color: #888">' + desc + '</span>';
       return raw;
     }
-    var searchPromptDesc = '(Javascript regexp)';
+    var searchPromptDesc = '(JavaScript regexp)';
     function showPrompt(cm, options) {
       var shortText = (options.prefix || '') + ' ' + (options.desc || '');
       var prompt = makePrompt(options.prefix, options.desc);
