@@ -129,7 +129,7 @@ public:
    void addOutput(const std::string& output, bool error);
    core::json::Array output(int position);
 
-   // whether the job pane should should be shown at start
+   // whether the job pane should be shown at start
    bool show() const;
    
    // whether the job should persist its output

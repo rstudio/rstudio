@@ -68,7 +68,7 @@ public class Job
    // the job's actions
    public JsArrayString actions;
 
-   // whether the job pane should should be shown at start
+   // whether the job pane should be shown at start
    public boolean show;
    
    // whether the job should persist its output
