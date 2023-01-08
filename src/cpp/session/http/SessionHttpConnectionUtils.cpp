@@ -168,7 +168,7 @@ bool checkForAbort(boost::shared_ptr<HttpConnection> ptrConnection,
 }
 
 // on windows we allow suspend_session to be handled on the foreground
-// thread since we don't have a way to ::kill on that that platform
+// thread since we don't have a way to ::kill on that platform
 #ifdef _WIN32
 
 bool checkForSuspend(boost::shared_ptr<HttpConnection> ptrConnection)

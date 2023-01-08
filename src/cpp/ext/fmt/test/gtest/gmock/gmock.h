@@ -6954,7 +6954,7 @@ inline PolymorphicMatcher<internal::IsNullMatcher > IsNull() {
 
 // Creates a polymorphic matcher that matches any non-NULL pointer.
 // This is convenient as Not(NULL) doesn't compile (the compiler
-// thinks that that expression is comparing a pointer with an integer).
+// thinks that expression is comparing a pointer with an integer).
 inline PolymorphicMatcher<internal::NotNullMatcher > NotNull() {
   return MakePolymorphicMatcher(internal::NotNullMatcher());
 }
