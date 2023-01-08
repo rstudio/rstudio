@@ -330,7 +330,7 @@ bool ProcessSupervisor::poll()
       if (!hasRunningChildren())
          return false;
 
-      // never allow re-entrancy (could occur if one of the output
+      // never allow reentrancy (could occur if one of the output
       // handlers called from poll executes a waitForMethod which
       // results in additional polling during idle/wait time)
       if (pImpl_->isPolling)

@@ -185,7 +185,7 @@ public class NewRSConnectAuthPage
             if (!waitingForAuth_.getValue())
                return false;
             
-            // avoid re-entrancy--if we're already running a check but it hasn't
+            // avoid reentrancy--if we're already running a check but it hasn't
             // returned for some reason, just wait for it to finish
             if (runningAuthCompleteCheck_)
                return true;

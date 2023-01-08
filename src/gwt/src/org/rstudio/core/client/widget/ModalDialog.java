@@ -129,7 +129,7 @@ public abstract class ModalDialog<T> extends ModalDialogBase
 
    protected void validateAndGo(T input, final Command executeOnSuccess)
    {
-      // prevent re-entrancy 
+      // prevent reentrancy 
       if (validating_)
          return; 
       

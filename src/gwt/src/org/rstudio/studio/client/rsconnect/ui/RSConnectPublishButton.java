@@ -962,7 +962,7 @@ public class RSConnectPublishButton extends Composite
    // fetch render output info if necessary and then fire deployment event
    private void fireDeployDocEvent(final RSConnectDeploymentRecord previous)
    {
-      // prevent re-entrancy
+      // prevent reentrancy
       if (rmdInfoPending_)
          return;
 

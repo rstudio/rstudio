@@ -322,7 +322,7 @@ void schedulePeriodicExecution(
 void FileLock::refreshPeriodically(boost::asio::io_service& service,
                                    boost::posix_time::seconds interval)
 {
-   // protect against re-entrancy
+   // protect against reentrancy
    static bool s_isRefreshing = false;
    if (s_isRefreshing)
       return;
