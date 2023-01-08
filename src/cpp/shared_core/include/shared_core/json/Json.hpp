@@ -967,7 +967,7 @@ public:
    ReverseIterator rbegin() const;
 
    /**
-    * @brief Gets an iterator before the first member of this object, which can be compared with an other
+    * @brief Gets an iterator before the first member of this object, which can be compared with another
     *        ReverseIterator to determine when reverse iteration has ended.
     *
     * @return An iterator before the first member of this object.
@@ -1396,7 +1396,7 @@ public:
    ReverseIterator rbegin() const;
 
    /**
-    * @brief Gets an iterator before the first member of this array, which can be compared with an other
+    * @brief Gets an iterator before the first member of this array, which can be compared with another
     *        ReverseIterator to determine when reverse iteration has ended.
     *
     * @return An iterator before the first member of this array.
