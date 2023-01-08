@@ -795,7 +795,7 @@ Error executeAlternateEngineChunk(const std::string& docId,
    else
    {
       // check to see if this is a known interpreter; if so, we'll
-      // use own own shim to run the engine. if not, we'll just call
+      // use our own shim to run the engine. if not, we'll just call
       // the engine as-is
       using namespace r::exec;
       using namespace r::sexp;
