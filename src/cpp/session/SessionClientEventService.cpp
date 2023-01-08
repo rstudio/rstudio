@@ -94,7 +94,7 @@ void ClientEventService::stop()
       {
          serviceThread_.interrupt();
 
-         // wait for for the service thread to stop
+         // wait for the service thread to stop
          if (!serviceThread_.timed_join(
                boost::posix_time::seconds(kLastChanceWaitSeconds + 1)))
          {

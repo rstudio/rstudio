@@ -634,7 +634,7 @@ void stop()
    {
       s_fileMonitorThread.interrupt();
 
-      // wait for for the thread to stop
+      // wait for the thread to stop
       if (!s_fileMonitorThread.timed_join(boost::posix_time::seconds(3)))
       {
          LOG_WARNING_MESSAGE("file monitor thread didn't stop on its own");
