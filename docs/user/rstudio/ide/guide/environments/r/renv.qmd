@@ -35,7 +35,7 @@ For full details, see the [`renv` package documentation](https://rstudio.github.
 
 ## New project, use renv with this project
 
-The general details on creating a new Project in RStudio are covered in [RStudio Projects](../../code/projects.html). Users can opt in to using `renv` when creating a new Project in RStudio.
+The general details on creating a new Project in RStudio are covered in [RStudio Projects](../../code/projects.html). Users can opt-in to using `renv` when creating a new Project in RStudio.
 
 ![](images/use-renv-with-project.png){fig-alt="The New Project wizard in RStudio, with the 'use renv with this project' option selected."}
 

@@ -29,7 +29,7 @@ if("${GWT_EXTRAS_DIR}" STREQUAL "")
    set(GWT_EXTRAS_DIR "extras")
 endif()
 
-# allow opt in / out of GWT build
+# allow opt-in / out of GWT build
 # mainly for faster iteration in builds
 if(NOT DEFINED GWT_BUILD)
    set(GWT_BUILD Yes)

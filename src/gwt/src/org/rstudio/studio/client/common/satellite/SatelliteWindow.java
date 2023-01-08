@@ -96,7 +96,7 @@ public abstract class SatelliteWindow extends Composite
    public void onThemeChanged(ThemeChangedEvent event)
    {
       // By default, we only apply the flat theme to match other dialogs, then
-      // specific satellites can opt in to full theming using `supportsThemes()`.
+      // specific satellites can opt-in to full theming using `supportsThemes()`.
       if (supportsThemes())
       {
          RStudioThemes.initializeThemes(
