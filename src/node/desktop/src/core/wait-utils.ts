@@ -35,7 +35,7 @@ export type WaitTimeoutFn = () => Promise<WaitResult>;
 /**
  * Helper routine
  * @param waitFunction Function invoked on each retry
- * @param initialWaitMs Delay first first try
+ * @param initialWaitMs Delay first try
  * @param incrementWaitMs Delay between subsequent tries
  * @param maxWaitSec Maximum time to keep trying
  * @returns
