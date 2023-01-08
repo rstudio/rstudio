@@ -77,7 +77,7 @@ void handleFileRequest(const FileRequestOptions& options,
    if (uri == options.baseUri)
       uri += kIndexFile;
    
-   // if this is main page and we have a filter then then give it a crack
+   // if this is main page and we have a filter then give it a crack
    // at the request
    std::string mainPage = options.baseUri + kIndexFile;
    if (uri == mainPage)

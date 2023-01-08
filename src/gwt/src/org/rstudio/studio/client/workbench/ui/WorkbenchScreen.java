@@ -248,7 +248,7 @@ public class WorkbenchScreen extends Composite
       int consoleWidth = paneManager_.getConsole().getCharacterWidth();
 
       // if the console is hidden then just use its last value. if there
-      // has never been a valid value then then lastMetrics_ console width
+      // has never been a valid value then lastMetrics_ console width
       // will be 0, which the server will know to ignore
       if (paneManager_.getConsole().getOffsetWidth() <= 0)
          consoleWidth = lastMetrics_.getConsoleWidth();
@@ -261,7 +261,7 @@ public class WorkbenchScreen extends Composite
                ConsoleResources.INSTANCE.consoleStyles().console());
 
       // if the build console is hidden then just use its last value. if there
-      // has never been a valid value then then lastMetrics_ build console width
+      // has never been a valid value then lastMetrics_ build console width
       // will be 0, which the server will know to ignore
       if (buildConsoleWidth <= 0)
          buildConsoleWidth = lastMetrics_.getBuildConsoleWidth();

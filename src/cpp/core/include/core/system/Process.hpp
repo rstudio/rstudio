@@ -400,7 +400,7 @@ public:
                      const ProcessCallbacks& callbacks);
 
    // Run a child asynchronously, invoking the completed callback when the
-   // process exits. Note that if input is provided then then the standard
+   // process exits. Note that if input is provided then the standard
    // input stream is closed (so EOF is sent) after the input is written.
    // Note also that the standard error handler (log and terminate) is also
    // used. If you want more customized behavior then you can use the more
