@@ -146,7 +146,7 @@ public class VisualModeChunk
          scope_ = parent_.getScopeAtPosition(pos);
          if (scope_ != null)
          {
-            // Move any pre-existing output from code view into visual mode
+            // Move any preexisting output from code view into visual mode
             output = target.getNotebook().migrateOutput(scope_, this);
          }
       }

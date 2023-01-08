@@ -114,7 +114,7 @@ public class AceBackgroundHighlighter
             if (isConsistentState)
                continue;
             
-            // clear a pre-existing marker if necessary
+            // clear a preexisting marker if necessary
             if (marker != 0)
             {
                session_.removeMarker(marker);

@@ -416,7 +416,7 @@ public class RoxygenHelper
       JsArrayString replacement = JsArray.createArray().cast();
       
       // Scan through the block to get the names of
-      // pre-existing parameters.
+      // preexisting parameters.
       JsArrayString params = listParametersInRoxygenBlock(
             block,
             pattern);

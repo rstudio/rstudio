@@ -1239,7 +1239,7 @@
    # remove a '.html' suffix if present
    code <- sub("[.]html$", "", code)
    
-   # check for pre-existing generated HTML
+   # check for preexisting generated HTML
    dir <- file.path(tempdir(), "reticulate-python-help")
    if (!.rs.ensureDirectory(dir)) {
       warning("Failed to create Python help directory", call. = FALSE)

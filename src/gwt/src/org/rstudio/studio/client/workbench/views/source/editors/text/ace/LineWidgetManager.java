@@ -23,7 +23,7 @@ public class LineWidgetManager extends JavaScriptObject
    
    public native final void addLineWidget(LineWidget widget) /*-{
       
-      // avoid duplicating a pre-existing line widget
+      // avoid duplicating a preexisting line widget
       var widgets = this.session.lineWidgets || {};
       if (widgets[widget.row] === widget)
          return;

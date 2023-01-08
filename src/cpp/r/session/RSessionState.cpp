@@ -104,7 +104,7 @@ Error saveRVersion(const FilePath& filePath)
 {
    Error error;
    
-   // remove pre-existing file
+   // remove preexisting file
    error = filePath.removeIfExists();
    if (error)
       return error;
