@@ -225,7 +225,7 @@ public class AceEditor implements DocDisplay,
          if (!userPrefs_.tabCompletion().getValue() || userPrefs_.tabKeyMoveFocus().getValue())
             return false;
 
-         // If the user opted in to multi-line tab completion, there is no case where we don't attempt auto-complete.
+         // If the user opted into multi-line tab completion, there is no case where we don't attempt auto-complete.
          if (userPrefs_.tabMultilineCompletion().getValue())
             return true;
 

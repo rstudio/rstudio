@@ -343,7 +343,7 @@ void detectChanges(module_context::ChangeSource source)
 }
 
 // allow console_input requests to come in when we aren't explicitly waiting
-// on them (i.e. waitForMethod("console_input")). place them into into a buffer
+// on them (i.e. waitForMethod("console_input")). place them into a buffer
 // which is then checked by rConsoleRead prior to it calling waitForMethod
 Error bufferConsoleInput(const core::json::JsonRpcRequest& request,
                          json::JsonRpcResponse* pResponse)
