@@ -455,7 +455,7 @@ Version | Level | Feature / Notes |
 0.29.0  |   4   | span::span( std::shared_ptr<T> const & p ) |
 &nbsp;  |&nbsp; | Use span( p.get(), p.get() ? 1 : 0 ) or equivalent |
 0.29.0  |   4   | span::span( std::unique_ptr<T> const & p ) |
-&nbsp;  |&nbsp; | Use Use span( p.get(), p.get() ? 1 : 0 ) or equivalent  |
+&nbsp;  |&nbsp; | Use span( p.get(), p.get() ? 1 : 0 ) or equivalent  |
 0.29.0  |   3   | span::length() |
 &nbsp;  |&nbsp; | Use span::size() |
 0.29.0  |   3   | span::length_bytes() |
