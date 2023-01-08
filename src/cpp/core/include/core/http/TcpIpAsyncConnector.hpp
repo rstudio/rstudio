@@ -144,7 +144,7 @@ private:
          {
             if (!ec)
             {
-               // work-around - in some rare instances, we've seen that Boost will still
+               // workaround - in some rare instances, we've seen that Boost will still
                // return us an empty endpoint_iterator, even when successful, which is
                // contrary to the documentation
                if (endpoint_iterator == boost::asio::ip::tcp::resolver::iterator())
