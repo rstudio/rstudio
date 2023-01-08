@@ -221,7 +221,7 @@ InputIterator extract_attributes(InputIterator begin, InputIterator end,
                 // advance past the ';'
                 ++cursor;
             } else {
-                // non-semicolon in this position indicates end end of the
+                // non-semicolon in this position indicates end of the
                 // attribute list, break and return.
                 break;
             }
