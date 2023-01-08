@@ -3588,7 +3588,7 @@
   `#555 <https://github.com/fmtlib/fmt/issues/555>`_).
   Thanks `@alabuzhev (Alex Alabuzhev) <https://github.com/alabuzhev>`_,
   `@virgiliofornazin (Virgilio Alexandre Fornazin)
-  <https://gihtub.com/virgiliofornazin>`_,
+  <https://github.com/virgiliofornazin>`_,
   `@alexanderbock (Alexander Bock) <https://github.com/alexanderbock>`_,
   `@yumetodo <https://github.com/yumetodo>`_,
   `@VaderY (Császár Mátyás) <https://github.com/VaderY>`_,

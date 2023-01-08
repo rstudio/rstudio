@@ -76,7 +76,7 @@ var escaped = function(ch) {
 };
 
 function github_embed(tag, prefix) {
-    return { // Github style block
+    return { // GitHub style block
         token : "support.function",
         regex : "^\\s*```(?:" + "\\{" + tag + "[^\\}]*\\}" + "|" + tag + ")\\s*$",
         push  : prefix + "start"
@@ -272,7 +272,7 @@ var MarkdownHighlightRules = function() {
         github_embed("sql", "sqlcode-"),
         github_embed("d3", "jscode-"),
         
-        { // Github style block
+        { // GitHub style block
             token : "support.function",
             regex : "^\\s*```\\s*\\S*(?:{.*?\\})?\\s*$",
             next  : "githubblock"
@@ -404,7 +404,7 @@ var MarkdownHighlightRules = function() {
             regex : "(\\$)((?:(?:\\\\.)|(?:[^\\$\\\\]))*?)(\\$)"
         }, {
             include : "basic", noEscape: true
-        }, { // Github style block
+        }, { // GitHub style block
             token : "support.function",
             regex : "^\\s*```\\s*[a-zA-Z]*(?:{.*?\\})?\\s*$",
             next  : "githubblock"

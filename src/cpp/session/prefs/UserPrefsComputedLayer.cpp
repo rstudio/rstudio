@@ -59,7 +59,7 @@ Error UserPrefsComputedLayer::readPrefs()
    // SSH key ----------------------------------------------------------------
    FilePath sshKeyDir = modules::source_control::defaultSshKeyDir();
 
-   // Github recommends using ed25519, so look for that first
+   // GitHub recommends using ed25519, so look for that first
    std::string keyFile("id_ed25519");
    FilePath rsaSshKeyPath = sshKeyDir.completeChildPath(keyFile);
    if (!rsaSshKeyPath.exists())

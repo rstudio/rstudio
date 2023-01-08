@@ -1,7 +1,7 @@
 
 ### Intent
 
-> Describe briefly what problem this pull request resolves, or what new feature it introduces. Include screenshots of any new or altered UI. Link to any Github issues that are related. 
+> Describe briefly what problem this pull request resolves, or what new feature it introduces. Include screenshots of any new or altered UI. Link to any GitHub issues that are related. 
 
 ### Approach
 

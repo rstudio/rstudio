@@ -20,7 +20,7 @@ if [ $# -eq 0 ]; then
     echo ""
     echo "--version The full build version. Example: 2025.09.0-daily+123"
     echo ""
-    echo "--pat     The Github Personal Access Token (PAT) to be used to authorize the commit."
+    echo "--pat     The GitHub Personal Access Token (PAT) to be used to authorize the commit."
     echo "          May be specified in the environment variable GITHUB_PAT instead."
     exit 0
 fi
@@ -113,7 +113,7 @@ fi
 
 if [ -z "$pat" ]; then
     if [ -z "$GITHUB_PAT" ]; then
-        echo "Github Personal Access Token (PAT) not set; specify a PAT with --pat or the GITHUB_PAT environment variable."
+        echo "GitHub Personal Access Token (PAT) not set; specify a PAT with --pat or the GITHUB_PAT environment variable."
         exit 1
     else
         # PAT supplied in environment variable; promote to local
@@ -177,7 +177,7 @@ else
 fi
 
 payload="{\"message\":\"Add $flower build $version in $build\",\"content\":\"$base64_contents\",\"sha\":\"$sha256\"}"
-echo "Sending to Github: $payload"
+echo "Sending to GitHub: $payload"
 
 curl \
   -X PUT \

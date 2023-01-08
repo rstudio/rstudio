@@ -21,7 +21,7 @@ below, please replace it with the address of your forked repo.
    in Named Container Volume".
 2. Enter the repository URL. For SSH, enter `git@github.com:rstudio/rstudio.git`. For HTTPS, enter
    `https://github.com/rstudio/rstudio.git`. If you need to choose a non-default branch, you need
-   to first select the "Github" option before entering the HTTPS URL.
+   to first select the "GitHub" option before entering the HTTPS URL.
 3. Wait for the clone and for the development container to start up. If the docker image needs to be built, this could
    take quite a while.
 4. Choose the GCC kit, optionally choose a target, and click the `Build` button
@@ -32,14 +32,14 @@ below, please replace it with the address of your forked repo.
 > if you need to pull the RStudio source code from a private repo that requires authentication.
 
 Are you going to clone over SSH or over HTTPS? If you prefer to use HTTPS,
-make sure you have a Github PAT (personal access token).
+make sure you have a GitHub PAT (personal access token).
 
 > Tip: If you want to clone and use a specific branch from the start, use HTTPS. If
 > you are ok with the default branch, you can use SSH or HTTPS.
 
 ### Using Git with HTTPS
 
-First, make sure the Github credential helper for OSX is installed. See
+First, make sure the GitHub credential helper for OSX is installed. See
 https://docs.github.com/en/github/getting-started-with-github/caching-your-github-credentials-in-git
 for more information for your operating system.
 
@@ -52,7 +52,7 @@ git config --global credential.helper osxkeychain
 Next, attempt a clone locally to populate the credentials in the helper:
 
 ```sh
-# Use your Github username and PAT (personal access token) as the password when prompted.
+# Use your GitHub username and PAT (personal access token) as the password when prompted.
 # It's fine to cancel this process after you see the clone is starting successfully.
 git clone https://github.com/rstudio/rstudio.git
 ```

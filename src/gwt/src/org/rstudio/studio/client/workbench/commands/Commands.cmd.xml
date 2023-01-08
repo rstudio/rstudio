@@ -1246,14 +1246,14 @@ See `/src/gwt/tools/i18n-helpers/README.md`.
    <cmd id="vcsViewOnGitHub"
         label="View file on GitHub"
         menuLabel="_View FILE on GitHub"
-        desc="View this file on Github"
+        desc="View this file on GitHub"
         context="vcs"
         rebindable="false"/>
 
    <cmd id="vcsBlameOnGitHub"
         label="View 'git blame' on GitHub"
         menuLabel="_Blame FILE on GitHub"
-        desc="Blame view for this file on Github"
+        desc="Blame view for this file on GitHub"
         context="vcs"
         rebindable="false"/>
 

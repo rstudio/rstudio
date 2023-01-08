@@ -5,7 +5,7 @@ date-meta: 2022-12-12
 
 Version control helps software teams manage changes to source code over time. Version control software keeps track of every modification to the code in a special kind of database. If a mistake is made, developers can turn back the clock and compare earlier versions of the code to help fix the mistake while minimizing disruption to all team members. Version control systems have been around for a long time but continue to increase in popularity with data science workflows.
 
-RStudio has integrated support for version control. If you are new to version control, see a deeper overview in: [Happy Git and Github for the useR](https://happygitwithr.com/)
+RStudio has integrated support for version control. If you are new to version control, see a deeper overview in: [Happy Git and GitHub for the useR](https://happygitwithr.com/)
 
 ## Requirements
 
@@ -17,7 +17,7 @@ RStudio supports the following open source version control systems:
 
 To use version control with RStudio, first ensure that Git and/or Subversion tools are installed on your workstation (details below).
 
-Version control is most useful when used with a remote repository. Remote repositories are typically managed by your company or are hosted in the cloud (e.g., [Github](https://github.com/) or [GitLab](https://about.gitlab.com/)). Make sure you have credentials to access these systems. If you only want to learn how to use version control, you can manage a standalone system on your workstation but you will not be able to share code with others.
+Version control is most useful when used with a remote repository. Remote repositories are typically managed by your company or are hosted in the cloud (e.g., [GitHub](https://github.com/) or [GitLab](https://about.gitlab.com/)). Make sure you have credentials to access these systems. If you only want to learn how to use version control, you can manage a standalone system on your workstation but you will not be able to share code with others.
 
 You should also become familiar with using [RStudio Projects](../code/projects.html) (which are required for version control features to be enabled).
 

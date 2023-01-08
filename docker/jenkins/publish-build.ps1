@@ -17,7 +17,7 @@ param(
     [Parameter(Mandatory)]
     [string]$version,
 
-    # The Github Personal Access PAT to use to publish the build
+    # The GitHub Personal Access PAT to use to publish the build
     [Parameter(Mandatory)]
     [string]$pat
 )
@@ -87,11 +87,11 @@ Write-Host $mdContents
 $bytes = [System.Text.Encoding]::UTF8.GetBytes($mdContents)
 $base64 = [System.Convert]::ToBase64String($bytes)
 
-# Prepare the payload for the Github API
+# Prepare the payload for the GitHub API
 $payload = @"
 { "message": "Add $flower build $version in $build", "content": "$base64" }
 "@
-Write-Host "Sending to Github: $payload"
+Write-Host "Sending to GitHub: $payload"
 
 # Prepare headers
 $headers = @{}
@@ -100,7 +100,7 @@ $headers.Add("Authorization", "token $pat")
 
 $url = "https://api.github.com/repos/rstudio/latest-builds/contents/content/rstudio/$flower/$build/$versionStem.md"
 
-# Send to Github! We have to use basic parsing here because this script runs on SKU of Windows that
+# Send to GitHub! We have to use basic parsing here because this script runs on SKU of Windows that
 # doesn't contain a working copy of IE (and, incredibly, without -UseBasicParsing, Invoke-WebRequest
 # has a dendency on the IE DOM engine).
 Invoke-WebRequest -Body $payload -Method 'PUT' -Headers $headers -Uri $url -UseBasicParsing

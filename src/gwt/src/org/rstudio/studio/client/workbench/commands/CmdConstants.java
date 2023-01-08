@@ -357,7 +357,7 @@ public interface CmdConstants extends Constants {
     String vcsViewOnGitHubLabel();
     @DefaultStringValue("_View FILE on GitHub") // $NON-NLS-1$
     String vcsViewOnGitHubMenuLabel();
-    @DefaultStringValue("View this file on Github") // $NON-NLS-1$
+    @DefaultStringValue("View this file on GitHub") // $NON-NLS-1$
     String vcsViewOnGitHubDesc();
     
     // vcsBlameOnGitHub
@@ -365,7 +365,7 @@ public interface CmdConstants extends Constants {
     String vcsBlameOnGitHubLabel();
     @DefaultStringValue("_Blame FILE on GitHub") // $NON-NLS-1$
     String vcsBlameOnGitHubMenuLabel();
-    @DefaultStringValue("Blame view for this file on Github") // $NON-NLS-1$
+    @DefaultStringValue("Blame view for this file on GitHub") // $NON-NLS-1$
     String vcsBlameOnGitHubDesc();
     
     // printSourceDoc
