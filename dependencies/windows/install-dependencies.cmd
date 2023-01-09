@@ -203,9 +203,9 @@ wget %WGET_ARGS% https://github.com/quarto-dev/quarto-cli/releases/download/v%QU
 echo Unzipping Quarto %QUARTO_FILE%
 rmdir /s /q quarto
 mkdir quarto
-cd quarto
+pushd quarto
 unzip %UNZIP_ARGS% ..\%QUARTO_FILE%
-cd ..
+popd
 del %QUARTO_FILE%
 
 
@@ -240,10 +240,12 @@ if not defined JENKINS_URL (
   )
 )
 
+cd
 echo "Installing panmirror (visual editor)"
 pushd ..\windows\install-panmirror
 call clone-quarto-repo.cmd
 popd
+cd
 
 call install-packages.cmd
 
