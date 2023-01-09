@@ -25,10 +25,10 @@ def compile_package(os, type, size, flavor, variant) {
   // add OS that the package was built for
   envVars = "${envVars} PACKAGE_OS=\"${os}\""
 
-  // currently our nodes have access to 12 or 4 cores, so spread out the compile job
-  // a little (currently using up all 12 or 4 cores causes problems)
+  // currently our nodes have access to 16 or 4 cores, so spread out the compile job
+  // a little (currently using up all 16 or 4 cores causes problems)
   if(size.equals("linux-4x"))
-    envVars = "${envVars} MAKEFLAGS=-j10"
+    envVars = "${envVars} MAKEFLAGS=-j14"
   else
     envVars = "${envVars} MAKEFLAGS=-j2"
 
