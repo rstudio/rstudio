@@ -29,6 +29,7 @@ set -e
 ./install-yaml-cpp
 ./install-crashpad
 ./install-panmirror
+./install-sccache
 
 if [ -e install-overlay ]
 then

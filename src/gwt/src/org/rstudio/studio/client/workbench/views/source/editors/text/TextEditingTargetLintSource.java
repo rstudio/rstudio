@@ -18,6 +18,8 @@ import com.google.gwt.core.client.JsArray;
 import com.google.gwt.dom.client.DivElement;
 import com.google.gwt.dom.client.Document;
 import com.google.gwt.user.client.Command;
+
+import org.rstudio.core.client.StringUtil;
 import org.rstudio.core.client.VirtualConsole;
 import org.rstudio.studio.client.RStudioGinjector;
 import org.rstudio.studio.client.common.filetypes.TextFileType;
@@ -98,14 +100,17 @@ public class TextEditingTargetLintSource implements LintSource
       {
          for (int i = 0; i < lint.length(); i++) {
             LintItem lintItem = lint.get(i);
-            DivElement element = Document.get().createDivElement();
-            VirtualConsole vc = RStudioGinjector.INSTANCE.getVirtualConsoleFactory().create(element);
 
-            vc.setPreserveHTML(true);
-            vc.submit(lintItem.getText());
-            String renderedText = element.getInnerHTML();
+            if (StringUtil.isNullOrEmpty(lintItem.getHtml()))
+            {
+               DivElement element = Document.get().createDivElement();
+               VirtualConsole vc = RStudioGinjector.INSTANCE.getVirtualConsoleFactory().create(element);
 
-            lintItem.setText(renderedText);
+               vc.setPreserveHTML(true);
+               vc.submit(lintItem.getText());
+               String renderedText = element.getInnerHTML();
+               lintItem.setHtml(renderedText);
+            }
          }
 
          target_.getDocDisplay().showLint(lint);
