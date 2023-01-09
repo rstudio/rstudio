@@ -1,4 +1,5 @@
 def BINARY_JOB_ROOT="IDE/OS-Builds/Nightly"
+def utils
 
 pipeline {
   agent {
@@ -9,18 +10,29 @@ pipeline {
   }
   
   environment {
+    RSTUDIO_VERSION = ""
+    RSTUDIO_VERSION_MAJOR = 0
+    RSTUDIO_VERSION_MINOR = 0
+    RSTUDIO_VERSION_PATCH = 0
+    RSTUDIO_VERSION_SUFFIX = 0
     COMMIT_HASH=""
     BUILD_BRANCH="${env.BRANCH_NAME.replace('/', '%2F')}"
   }
 
   stages {
-    stage ("Define Variables") {
-      steps {
-        script {
-          echo "Finding the commit."
-          COMMIT_HASH = sh returnStdout: true, script: 'git rev-parse HEAD'
-          echo "Commit = ${COMMIT_HASH}"
-        }
+    stage ("Set Version & Commit") {
+      script {
+        utils = load "${env.WORKSPACE}/utils.groovy"
+        
+        // Get the current commit
+        COMMIT_HASH = sh returnStdout: true, script: 'git rev-parse HEAD'
+
+        // Get the version
+        (RSTUDIO_VERSION,
+          RSTUDIO_VERSION_MAJOR,
+          RSTUDIO_VERSION_MINOR,
+          RSTUDIO_VERSION_PATCH,
+          RSTUDIO_VERSION_SUFFIX) = utils.getVersion()
       }
     }
 
