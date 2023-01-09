@@ -1,8 +1,3 @@
-os = 'jammy'
-arch = 'amd64'
-flavor = 'server'
-type = 'DEB'
-AWS_ACCOUNT_ID = '749683154838'
 def utils
 
 pipeline {
@@ -18,6 +13,12 @@ pipeline {
 
   environment {
         GITHUB_LOGIN = credentials('github-rstudio-jenkins')
+        OS = 'jammy'
+        ARCH = 'amd64'
+        FLAVOR = 'server'
+        TYPE = 'DEB'
+        AWS_ACCOUNT_ID = '749683154838'
+        RSTUDIO_VERSION_FLOWER = ''
   }
 
   stages {
@@ -28,6 +29,7 @@ pipeline {
           sh "echo 'Loading utils from ${env.WORKSPACE}/utils.groovy'"
           utils = load "${env.WORKSPACE}/utils.groovy"
           utils.addRemoteRef("${env.CHANGE_TARGET}")
+          RSTUDIO_VERSION_FLOWER = readFile(file: 'version/RELEASE').replaceAll(" ", "-").toLowerCase().trim()
         }
       }
     }
@@ -47,8 +49,8 @@ pipeline {
             withAWS(role: 'build', roleAccount: AWS_ACCOUNT_ID) {
               pullBuildPush(
                 image_name: 'jenkins/ide',
-                image_tag: "${os}-${arch}-${env.CHANGE_TARGET.replaceAll('/', '-')}",
-                dockerfile: "docker/jenkins/Dockerfile.${os}",
+                image_tag: "${OS}-${ARCH}-${RSTUDIO_VERSION_FLOWER}",
+                dockerfile: "docker/jenkins/Dockerfile.${OS}",
                 build_arg_jenkins_uid: 'JENKINS_UID',
                 build_arg_jenkins_gid: 'JENKINS_GID',
                 builds_args: "--build-arg GITHUB_LOGIN=${GITHUB_LOGIN}",
@@ -60,7 +62,7 @@ pipeline {
         stage('Build Package and Test') {
           agent {
             docker {
-              image "jenkins/ide:${os}-${arch}-${env.CHANGE_TARGET.replaceAll('/', '-')}"
+              image "jenkins/ide:${OS}-${ARCH}-${RSTUDIO_VERSION_FLOWER}"
               reuseNode true
             }
           }
@@ -72,7 +74,7 @@ pipeline {
                   // AWS is here for the S3 bucket that we use for sccache
                   withAWS(role: 'build', roleAccount: AWS_ACCOUNT_ID) {
                     // perform the compilation
-                    sh "SCCACHE_ENABLED=1 PACKAGE_OS=${os} ./make-${flavor}-package ${type} clean"
+                    sh "SCCACHE_ENABLED=1 PACKAGE_OS=${OS} ./make-${FLAVOR}-package ${type} clean"
                   }
                 }
               }
@@ -80,7 +82,7 @@ pipeline {
 
             stage('Run GWT Unit Tests') {
               steps {
-                dir ("package/linux/build-${flavor.capitalize()}-${type}/src/gwt") {
+                dir ("package/linux/build-${FLAVOR.capitalize()}-${TYPE}/src/gwt") {
                   // attempt to run ant (gwt) unit tests
                   sh "./gwt-unit-tests.sh"
                 }
@@ -89,7 +91,7 @@ pipeline {
 
             stage('Run C++ Unit Tests') {
               steps {
-                dir ("package/linux/build-${flavor.capitalize()}-${type}/src/cpp") {
+                dir ("package/linux/build-${FLAVOR.capitalize()}-${type}/src/cpp") {
                   // attempt to run cpp unit tests
                   sh "./rstudio-tests"
                 }
