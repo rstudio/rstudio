@@ -391,15 +391,13 @@ SEXP rs_sourceMarkers(SEXP nameSEXP,
             std::string path;
             double line, column;
             std::string message;
-            bool messageHTML;
             Error error = json::readObject(
                markerJson.getObject(),
                "type", type,
                "file", path,
                "line", line,
                "column", column,
-               "message", message,
-               "messageHTML", messageHTML);
+               "message", message);
             if (error)
             {
                LOG_ERROR(error);
@@ -411,7 +409,7 @@ SEXP rs_sourceMarkers(SEXP nameSEXP,
                 FilePath(path),
                 safe_convert::numberTo<double, int>(line, 1),
                 safe_convert::numberTo<double, int>(column, 1),
-                core::html_utils::HTML(message, messageHTML),
+                core::html_utils::HTML(message, false),
                 true,
                 true);
 
