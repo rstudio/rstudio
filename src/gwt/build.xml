@@ -127,6 +127,7 @@
 
    <target name="panmirror" description="Compile panmirror library">
       <echo message="yarn location: ${yarn.bin}"/>
+      <echo message="panmirror location: ${panmirror.dir}"/>
       <mkdir dir="${panmirror.build.dir}"/>
       <exec executable="${yarn.bin}" dir="${panmirror.dir}" resolveexecutable="true" failonerror="true">
          <arg value="install"/>
