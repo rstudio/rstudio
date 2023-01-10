@@ -1,8 +1,5 @@
 @REM @echo off
 
-@REM show current directory
-cd
-
 pushd ..\..\..\src\gwt\lib
 
 if not exist quarto (
@@ -12,9 +9,6 @@ if not exist quarto (
   echo "quarto repo already cloned"
 
   pushd quarto
-  @REM show current directory
-  cd
-
   git reset --hard
   git clean -dfx
   git pull
