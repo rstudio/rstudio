@@ -18,6 +18,5 @@ setlocal
 call envvars.bat
 echo Executing Electron unit tests
 set RSTUDIO_DOCKER_WINDOWS=1
-set PATH=c:\rstudio-tools\dependencies\node\${RSTUDIO_NODE_VERSION};%PATH%
 npm test
 endlocal
