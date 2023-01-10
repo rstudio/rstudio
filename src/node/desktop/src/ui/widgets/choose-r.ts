@@ -32,9 +32,12 @@ function checkValid(data: CallbackData) {
 
   // try to run it
   const [rEnvironment, err] = detectREnvironment(rBinaryPath);
+
   if (err) {
     // something went wrong; let the user know they can't use
     // this version of R with RStudio
+    logger().logError(err);
+
     dialog.showMessageBoxSync({
       type: 'error',
       title: t('chooseRDialog.rLaunchFailedTitle'),
