@@ -19,10 +19,10 @@ boolean hasChangesIn(String module, boolean invertMatch = false) {
   * Adds a remote reference to the specified branch.
   */
 void addRemoteRef(String branchName) {
-  sh "git config --add remote.origin.fetch +refs/heads/${branchName}:refs/remotes/origin/${branchName}"
-  // Split GIT_URL after https://
-  urlParts = env.GIT_URL.split('https://')
-  sh 'git fetch --no-tags --force --progress -- https://${GITHUB_LOGIN}' + "@${urlParts[1]} refs/heads/${branchName}:refs/remotes/origin/${branchName}"
+  withCredentials([gitUsernamePassword(credentialsId: 'github-rstudio-jenkins', gitToolName: 'Default')]) {
+    sh "git config --add remote.origin.fetch +refs/heads/${branchName}:refs/remotes/origin/${branchName}"
+    sh "git fetch --no-tags --force --progress ${GIT_URL} refs/heads/${branchName}:refs/remotes/origin/${branchName}"
+  }
 }
 
 return this
