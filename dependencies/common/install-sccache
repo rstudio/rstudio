@@ -19,10 +19,6 @@ set -e
 
 source "$(dirname "${BASH_SOURCE[0]}")/../tools/rstudio-tools.sh"
 
-if is-macos; then
-   exit 0
-fi
-
 section "Installing sccache"
 
 # install dir
@@ -33,22 +29,38 @@ fi
 
 VERSION=0.3.1
 
-# default architecture to amd64/x86_64
-ARCH=x86_64
-SCCACHE_PACKAGE_HASH="94ea33aac8dcb358753f8240cc87345963cf83cda7c6af0395dff31ffdc88df4"
-
-# override to aarch64 if running on arm
-if [ "$(arch)" = "aarch64" ] ; then
+if [ "$(arch)" = "aarch64" ] || [ "$(arch)"  = "arm64" ] ; then
     ARCH=aarch64
-    SCCACHE_PACKAGE_HASH="1bf58385dc27b66324bb9ee82084e65c4d2e60baa19e3d16d2ab4da6c1ae66b2"
+else
+    # Assume x86_64 if not aarch64
+    ARCH=x86_64
 fi
 
-URL=https://github.com/mozilla/sccache/releases/download/v${VERSION}/sccache-v${VERSION}-${ARCH}-unknown-linux-musl.tar.gz
+echo "${ARCH}"
 
-wget --progress=bar:force:noscroll ${URL} -O sccache.tar.gz \
-    && echo "${SCCACHE_PACKAGE_HASH}  sccache.tar.gz" | sha256sum -c -
+BASE_URL=https://github.com/mozilla/sccache/releases/download/v${VERSION}
 
-tar -zxvpf sccache.tar.gz
+if is-macos; then
+    URL=${BASE_URL}/sccache-v${VERSION}-${ARCH}-apple-darwin.tar.gz
+    if [ "${ARCH}" = "x86_64" ] ; then
+        SCCACHE_PACKAGE_HASH="d8ade8d98cef392e6b256d184690e1d722f263c9f0bd83938fdd524e839c9e58"
+    else
+        SCCACHE_PACKAGE_HASH="303d8e905c44eb5401adc55561a4c44b36906516f3c1c0de386c4844d38151bc"
+    fi
+else
+    # Assume Linux if not macOS
+    URL=${BASE_URL}/sccache-v${VERSION}-${ARCH}-unknown-linux-musl.tar.gz
+    if [ "${ARCH}" = "x86_64" ] ; then
+        SCCACHE_PACKAGE_HASH="94ea33aac8dcb358753f8240cc87345963cf83cda7c6af0395dff31ffdc88df4"
+    else
+        SCCACHE_PACKAGE_HASH="1bf58385dc27b66324bb9ee82084e65c4d2e60baa19e3d16d2ab4da6c1ae66b2"
+    fi
+fi
+
+download ${URL} sccache.tar.gz \
+    && echo "${SCCACHE_PACKAGE_HASH} sccache.tar.gz" | sha256sum -c -
+
+extract sccache.tar.gz
 mkdir -p ${INSTALL_DIR}
 if [ ! -f ${INSTALL_DIR}/sccache ]; then
   mv sccache-v${VERSION}-*/sccache ${INSTALL_DIR}/sccache
