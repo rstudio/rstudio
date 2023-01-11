@@ -15,7 +15,6 @@
 
 import { app } from 'electron';
 import winston, { format } from 'winston';
-import DailyRotateFile from 'winston-daily-rotate-file';
 import { Syslog } from 'winston-syslog';
 import { Console } from 'winston/lib/winston/transports';
 import LogOptions from '../main/log-options';
@@ -47,9 +46,11 @@ export class WinstonLogger implements Logger {
       defaultMeta: { service: 'rdesktop'}
     });
 
+    let consoleLogging = false;
     let logTransport;
-    if (logOptions.getLoggerType() === 'stderr' || !app.isPackaged) {
+    if (logOptions.getLoggerType() === 'stderr') {
       logTransport = new Console();
+      consoleLogging = true;
     }
 
     if (logOptions.getLoggerType() === 'syslog') {
@@ -65,12 +66,13 @@ export class WinstonLogger implements Logger {
       }
     }
 
-    this.logger.add(logTransport ?? new DailyRotateFile({
-      filename: `${logFile.getStem()}.%DATE%${logFile.getExtension()}`,
-      dirname: logFile.getParent().getAbsolutePath(),
-      datePattern: 'YYYY-MM-DD',
-      frequency: '1d',
-    }));
+    this.logger.add(logTransport ?? new winston.transports.File({ filename: logFile.getAbsolutePath() }));
+
+    // on dev builds, always log to console
+    if (!consoleLogging && !app.isPackaged) {
+      this.logger.add(new Console());
+      consoleLogging = true;
+    }
 
     if (optionError) {
       this.logErrorMessage(optionError);
