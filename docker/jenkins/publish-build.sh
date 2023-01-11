@@ -176,13 +176,56 @@ else
   base64_contents=$(echo "$md_contents" | base64 --wrap=0)
 fi
 
-payload="{\"message\":\"Add $flower build $version in $build\",\"content\":\"$base64_contents\",\"sha\":\"$sha256\"}"
+githubUrl="https://api.github.com/repos/rstudio/latest-builds/contents/content/rstudio/$flower/$build/$version_stem.md"
+
+# Sha is only required in the payload if it's an update, removing the sha field gives a clearer
+# error message
+payload="{\"message\":\"Add $flower build $version in $build\",\"content\":\"$base64_contents\"}"
 echo "Sending to Github: $payload"
 
-curl \
-  -X PUT \
-  -H "Accept: application/vnd.github.v3+json" \
-  -H "Authorization: token $pat" \
-  "https://api.github.com/repos/rstudio/latest-builds/contents/content/rstudio/$flower/$build/$version_stem.md" \
-  -d "$payload"
+response=$(curl \
+   -X PUT \
+   -H "Accept: application/vnd.github.v3+json" \
+   -H "Authorization: token $pat" \
+   $githubUrl \
+   -d "$payload")
 
+echo "Github's Response: "
+echo $response
+errorMessage=$(echo $response | jq -r .message)
+
+# We get a null from jq if the message field doesn't exist. This field appears when there's been a problem with
+# our upload. We'll assume it's because the sha field is missing and this is an update, however we've
+# printed the response in the event there's some other issue
+if [[ $errorMessage != "null" ]]; then
+
+   echo "We need up perform an update, so we get the existing file's info"
+   getShaResponse=$(curl \
+      -X GET \
+      -H "Accept: application/vnd.github.v3+json" \
+      -H "Authorization: token $pat" \
+      $githubUrl \
+      -d "$payload")
+   echo $getShaResponse
+
+   updateSha=$(echo $getShaResponse | jq -r .sha)
+
+   updatePayload="{\"message\":\"Add $flower build $version in $build\",\"content\":\"$base64_contents\",\"sha\":\"$updateSha\"}"
+   
+   updateResponse=$(curl \
+      -X PUT \
+      -H "Accept: application/vnd.github.v3+json" \
+      -H "Authorization: token $pat" \
+      $githubUrl \
+      -d "$updatePayload")
+
+   echo "Github's Update Response:"
+   echo $updateResponse
+
+   updateErrorMessage=$(echo $updateResponse | jq -r .message)
+
+   # If there's still an issue, give up, return non zero exit code
+   if [[ $updateMessage != "null" ]]; then
+      exit 1;
+   fi
+fi
