@@ -98,10 +98,34 @@ $headers = @{}
 $headers.Add("Accept", "application/vnd.github.v3+json")
 $headers.Add("Authorization", "token $pat")
 
-$url = "https://api.github.com/repos/rstudio/latest-builds/contents/content/rstudio/$flower/$build/$versionStem.md"
+$url = "https://api.github.com/repos/AndrewMcClain/test-release-repo/contents/content/rstudio/$flower/$build/$versionStem.md"
 
 # Send to Github! We have to use basic parsing here because this script runs on SKU of Windows that
 # doesn't contain a working copy of IE (and, incredibly, without -UseBasicParsing, Invoke-WebRequest
 # has a dendency on the IE DOM engine).
-Invoke-WebRequest -Body $payload -Method 'PUT' -Headers $headers -Uri $url -UseBasicParsing
+try
+{
+    $createResponse = Invoke-RestMethod -Body $payload -Method 'PUT' -Headers $headers -Uri $url -UseBasicParsing
+    Write-Host "Response :"
+    Write-Host $createResponse.Content
+} catch {
+    $StatusCode = $_.Exception.Response.StatusCode.value__
+    # Assume the file already exists and we need to do an update
+    if ($StatusCode = 422)
+    {
+        Write-Host "Received an error, assuming it's an issue updating. Getting existing file's SHA"
+        $getSha = Invoke-RestMethod -Method 'GET' -Headers $headers -Uri $url -UseBasicParsing
+        Write-Host "Github Response:"
+        Write-Host $getSha
+        $updateSha = $getSha.sha
+
+        # This looks messy but the whitespace is meaningful
+        $updatePayload = @"
+{ "message": "Add $flower build $version in $build", "content": "$base64", "sha": "$updateSha" }
+"@
+        Write-Host "Updating version file..."
+        $updateResponse = Invoke-RestMethod -Body $updatePayload -Method 'PUT' -Headers $headers -Uri $url -UseBasicParsing
+        Write-Host $updateResponse
+    }
+}
 
