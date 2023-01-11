@@ -147,6 +147,11 @@ export class SessionLauncher {
       this.showSplash = false;
     }
 
+    // don't show splash screen if started using --run-diagnostics
+    if (appState().runDiagnostics) {
+      this.showSplash = false;
+    }
+
     // must check showSplash before and after the timeout
     // before to determine if the timeout is required
     // after to determine if the main window is ready to show
