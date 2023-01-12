@@ -547,14 +547,14 @@ try {
         }
 
         // trigger macos build if we're in open-source repo
-        if (env.JOB_NAME.startsWith('IDE/open-source-pipeline')) {
+        if (env.JOB_NAME.contains('open-source-pipeline')) {
           trigger_external_build('IDE/macos-electron')
         }
 
         parallel parallel_containers
 
         // Ensure we don't build automation on the branches that don't exist
-        if (env.JOB_NAME.startsWith('IDE/open-source-pipeline') &&
+        if (env.JOB_NAME.contains('open-source-pipeline') &&
             ("${rstudioReleaseBranch}" != "release-ghost-orchid") &&
             ("${rstudioReleaseBranch}" != "v1.4-juliet-rose")) {
           trigger_external_build('IDE/qa-opensource-automation')
