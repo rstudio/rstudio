@@ -1,6 +1,6 @@
 #!/usr/bin/env bash
 
-# new_version.sh
+# new-version.sh
 #
 # A helper script to update and generate version files for RStudio. 
 # It should be run from the root directory of the repository.
@@ -28,8 +28,8 @@
 #
 # Running the script
 # ------------------
-# ./new_version.sh <release flower> <calendar version> [base commit sha]
-#     i.e., ./new_version.sh "Cherry Blossom" 2023.03 [base commit sha]
+# ./new-version.sh <release flower> <calendar version> [base commit sha]
+#     i.e., ./new-version.sh "Cherry Blossom" 2023.03 [base commit sha]
 #
 # The base commit sha is optional. If it is not provided, the script will use the current commit hash.
 #   A base commit sha SHOULD be provided if a release branch for the calendar version already exists, 
@@ -49,7 +49,7 @@
 set -e
 
 if [[ "$#" -lt 2 ]]; then
-    echo "Usage: new_version.sh <release flower> <calendar version> [base commit sha]"
+    echo "Usage: new-version.sh <release flower> <calendar version> [base commit sha]"
     echo "       <release flower>   - The name of the release flower (i.e., \"Cherry Blossom\")"
     echo "       <calendar version> - The calendar version (i.e., \"2023.03\")"
     echo "       [base commit sha]  - The base commit sha that should be used for the [flower].BASE_COMMIT file (optional)"
