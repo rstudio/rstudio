@@ -98,7 +98,7 @@ $headers = @{}
 $headers.Add("Accept", "application/vnd.github.v3+json")
 $headers.Add("Authorization", "token $pat")
 
-$url = "https://api.github.com/repos/AndrewMcClain/test-release-repo/contents/content/rstudio/$flower/$build/$versionStem.md"
+$url = "https://api.github.com/repos/rstudio/latest-builds/contents/content/rstudio/$flower/$build/$versionStem.md"
 
 # Send to Github! We have to use basic parsing here because this script runs on SKU of Windows that
 # doesn't contain a working copy of IE (and, incredibly, without -UseBasicParsing, Invoke-WebRequest
