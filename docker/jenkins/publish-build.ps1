@@ -121,7 +121,7 @@ try
 
         # This looks messy but the whitespace is meaningful
         $updatePayload = @"
-{ "message": "Add $flower build $version in $build", "content": "$base64", "sha": "$updateSha" }
+{ "message": "Update $flower build $version in $build", "content": "$base64", "sha": "$updateSha" }
 "@
         Write-Host "Updating version file..."
         $updateResponse = Invoke-RestMethod -Body $updatePayload -Method 'PUT' -Headers $headers -Uri $url -UseBasicParsing

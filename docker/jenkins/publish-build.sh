@@ -210,7 +210,7 @@ if [[ $errorMessage != "null" ]]; then
 
    updateSha=$(echo $getShaResponse | jq -r .sha)
 
-   updatePayload="{\"message\":\"Add $flower build $version in $build\",\"content\":\"$base64_contents\",\"sha\":\"$updateSha\"}"
+   updatePayload="{\"message\":\"Update $flower build $version in $build\",\"content\":\"$base64_contents\",\"sha\":\"$updateSha\"}"
    
    updateResponse=$(curl \
       -X PUT \
