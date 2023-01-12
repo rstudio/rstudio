@@ -120,7 +120,7 @@ function calver() {
 }
 
 function baseCommit() {
-    BASE_COMMIT_FILE="$RSTUDIO_ROOT_DIR/version/base_commit/$(calver).BASE_COMMIT"
+    BASE_COMMIT_FILE="$RSTUDIO_ROOT_DIR/version/base_commit/$(flower).BASE_COMMIT"
     if [ -e $BASE_COMMIT_FILE ]; then
         echo "$(cat "$BASE_COMMIT_FILE" | tr -d '[:space:]')"
     else
