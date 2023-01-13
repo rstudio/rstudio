@@ -30,6 +30,9 @@ const { combine, printf, timestamp, json } = winston.format;
 export class WinstonLogger implements Logger {
   logger: winston.Logger;
 
+  // track file transport so we can close it
+  fileTransport: winston.transports.FileTransportInstance | null = null;
+
   constructor(logOptions: LogOptions) {
     const level = this.readLogLevelOverride(logOptions.getLogLevel());
     const format = logOptions.getLogMessageFormat() === 'pretty' ? 
@@ -66,7 +69,17 @@ export class WinstonLogger implements Logger {
       }
     }
 
-    this.logger.add(logTransport ?? new winston.transports.File({ filename: logFile.getAbsolutePath() }));
+    if (!logTransport) {
+      logTransport = new winston.transports.File({
+        filename: logFile.getAbsolutePath(),
+        tailable: true,
+        maxsize: 2000000, // TODO: use max-size from logging.conf (convert from mb to bytes)
+        maxFiles: 100 }); // TODO: use max-rotation from logging.conf
+
+      this.fileTransport = logTransport;
+    }
+
+    this.logger.add(logTransport);
 
     // on dev builds, always log to console
     if (!consoleLogging && !app.isPackaged) {
@@ -142,6 +155,21 @@ export class WinstonLogger implements Logger {
       }
     }
   }
+
+  closeLogFile(): void {
+    if (this.fileTransport) {
+      this.logger.remove(this.fileTransport);
+      this.fileTransport = null;
+    }
+  }
+
+  ensureTransport(): void {
+    // Winston emits warnings if there is no transport
+    if (this.logger.transports.length === 0) {
+      this.logger.add(new Console());
+    }
+  }
+
 }
 
 // removes `timestamp` key from json since we add `time` to match Qt log format

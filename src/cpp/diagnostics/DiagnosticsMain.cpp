@@ -23,6 +23,7 @@
 #include <core/FileSerializer.hpp>
 #include <core/system/System.hpp>
 #include <core/system/Xdg.hpp>
+#include <core/system/Environment.hpp>
 
 #include <shared_core/Error.hpp>
 #include <shared_core/FilePath.hpp>
@@ -53,11 +54,11 @@ void writeFile(const std::string& description, const core::FilePath& path, std::
       Error error = core::readStringFromFile(path, &contents);
       if (error)
          LOG_ERROR(error);
-      if (contents.empty())
-         ostr << "(Empty)" << std::endl << std::endl;
-      else
-         ostr << contents << std::endl << std::endl;
-   }
+         if (contents.empty())
+            ostr << "(Empty)" << std::endl << std::endl;
+         else
+            ostr << contents << std::endl << std::endl;
+      }
    else
    {
       ostr << "(Not Found)" << std::endl << std::endl;
@@ -85,9 +86,8 @@ void writeUserPrefs(std::ostream& ostr)
 
 int main(int argc, char** argv)
 {
-   core::log::setProgramId("rstudio-diagnostics");
-   core::system::initializeStderrLog("rstudio-diagnostics",
-                                    core::log::LogLevel::WARN);
+   // We intentionally avoid initializing logging as we don't want logging output from this
+   // executable getting injected into the diagnostics report
 
    // ignore SIGPIPE
    Error error = core::system::ignoreSignal(core::system::SigPipe);
