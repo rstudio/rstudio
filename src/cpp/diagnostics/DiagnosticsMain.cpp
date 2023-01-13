@@ -54,11 +54,11 @@ void writeFile(const std::string& description, const core::FilePath& path, std::
       Error error = core::readStringFromFile(path, &contents);
       if (error)
          LOG_ERROR(error);
-         if (contents.empty())
-            ostr << "(Empty)" << std::endl << std::endl;
-         else
-            ostr << contents << std::endl << std::endl;
-      }
+      if (contents.empty())
+         ostr << "(Empty)" << std::endl << std::endl;
+      else
+         ostr << contents << std::endl << std::endl;
+   }
    else
    {
       ostr << "(Not Found)" << std::endl << std::endl;
