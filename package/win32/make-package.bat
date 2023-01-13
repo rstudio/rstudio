@@ -32,15 +32,19 @@ if "%1" == "-h" goto :showhelp
 if "%1" == "help" goto :showhelp
 if "%1" == "/?" goto :showhelp
 
+SETLOCAL ENABLEDELAYEDEXPANSION
 for %%A in (%*) do (
-      if /I "%%A" == "clean" set CLEANBUILD=1	  
-      if /I "%%A" == "debug" set DEBUG_BUILD=1
-      if /I "%%A" == "desktop" set RSTUDIO_TARGET=Desktop
-      if /I "%%A" == "electron" set RSTUDIO_TARGET=Electron
-      if /I "%%A" == "multiarch" set MULTIARCH=1
-      if /I "%%A" == "nogwt" set BUILD_GWT=0
-      if /I "%%A" == "nozip" set NOZIP=1
-      if /I "%%A" == "quick" set QUICK=1
+      set KNOWN_ARG=0
+      if /I "%%A" == "clean" set CLEANBUILD=1 && set KNOWN_ARG=1
+      if /I "%%A" == "debug" set DEBUG_BUILD=1 && set KNOWN_ARG=1
+      if /I "%%A" == "desktop" set RSTUDIO_TARGET=Desktop && set KNOWN_ARG=1
+      if /I "%%A" == "electron" set RSTUDIO_TARGET=Electron && set KNOWN_ARG=1
+      if /I "%%A" == "multiarch" set MULTIARCH=1 && set KNOWN_ARG=1
+      if /I "%%A" == "nogwt" set BUILD_GWT=0 && set KNOWN_ARG=1
+      if /I "%%A" == "nozip" set NOZIP=1 && set KNOWN_ARG=1
+      if /I "%%A" == "quick" set QUICK=1 && set KNOWN_ARG=1
+
+      if "!KNOWN_ARG!" == "0" goto :showhelp
 )
 
 REM check for debug build
