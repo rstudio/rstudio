@@ -248,6 +248,9 @@ bool hasExternalPointer(SEXP obj, bool nullPtr, std::set<SEXP>& visited)
 
    switch(TYPEOF(obj))
    {
+      case SYMSXP: 
+         return false;
+         
       case ENVSXP: 
       {
          if (envHasExternalPointer(obj, nullPtr, visited))
