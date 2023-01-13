@@ -105,6 +105,11 @@
       property="yarn.bin"
       value="/opt/rstudio-tools/dependencies/common/node/${node.version}/node_modules/yarn/bin/yarn"
       file="/opt/rstudio-tools/dependencies/common/node/${node.version}/node_modules/yarn/bin/yarn"/>
+   <!-- use yarn from c:/rstudio-tools if installed (typical for Docker on Windows) -->
+   <available
+      property="yarn.bin"
+      value="c:\rstudio-tools\dependencies\common\node\${node.version}\node_modules\yarn\bin\yarn.cmd"
+      file="c:\rstudio-tools\dependencies\common\node\${node.version}\node_modules\yarn\bin\yarn.cmd"/>
 
    <property name="panmirror.dir" value="./lib/quarto/apps/panmirror"/>
    <property name="panmirror.build.dir" value="./www/js/panmirror"/>
@@ -114,9 +119,15 @@
       property="panmirror.dir"
       value="/opt/rstudio-tools/src/gwt/lib/quarto/apps/panmirror"
       file="/opt/rstudio-tools/src/gwt/lib/quarto/apps/panmirror"/>
+   <!-- use yarn from c:/rstudio-tools if installed (typical for Docker on Windows) -->
+   <available
+      property="panmirror.dir"
+      value="c:\rstudio-tools\src\gwt\lib\quarto\apps\panmirror"
+      file="c:\rstudio-tools\src\gwt\lib\quarto\apps\panmirror"/>
 
    <target name="panmirror" description="Compile panmirror library">
       <echo message="yarn location: ${yarn.bin}"/>
+      <echo message="panmirror location: ${panmirror.dir}"/>
       <mkdir dir="${panmirror.build.dir}"/>
       <exec executable="${yarn.bin}" dir="${panmirror.dir}" resolveexecutable="true" failonerror="true">
          <arg value="install"/>

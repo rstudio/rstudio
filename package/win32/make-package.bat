@@ -4,7 +4,13 @@ setlocal
 set PACKAGE_DIR="%CD%"
 set ELECTRON_SOURCE_DIR=%PACKAGE_DIR%\..\..\src\node\desktop
 
-call %PACKAGE_DIR%\..\..\dependencies\tools\rstudio-tools.cmd
+if not exist c:\rstudio-tools\dependencies (
+      set RSTUDIO_DEPENDENCIES=%PACKAGE_DIR%\..\..\dependencies
+) else (
+      set RSTUDIO_DEPENDENCIES=c:\rstudio-tools\dependencies
+)
+
+call %RSTUDIO_DEPENDENCIES%\tools\rstudio-tools.cmd
 
 set BUILD_GWT=1
 set QUICK=
@@ -59,7 +65,7 @@ for %%F in (ant cmake) do (
 )
 
 REM find node
-set NODE_DIR=%PACKAGE_DIR%\..\..\dependencies\common\node\%RSTUDIO_NODE_VERSION%
+set NODE_DIR=%RSTUDIO_DEPENDENCIES%\common\node\%RSTUDIO_NODE_VERSION%
 set NODE=%NODE_DIR%\node.exe
 if not exist %NODE% (
       echo node.exe not found at %NODE_DIR%; exiting
@@ -89,7 +95,7 @@ echo Using npx: %NPX%
 REM Put node on the path
 set PATH=%NODE_DIR%;%PATH%
 
-set REZH=%PACKAGE_DIR%\..\..\dependencies\windows\resource-hacker\ResourceHacker.exe
+set REZH=%RSTUDIO_DEPENDENCIES%\windows\resource-hacker\ResourceHacker.exe
 if not exist %REZH% (
       echo ResourceHacker.exe not found; re-run install-dependencies.cmd and try again; exiting
       endlocal
