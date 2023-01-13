@@ -23,7 +23,6 @@
 #include <core/FileSerializer.hpp>
 #include <core/system/System.hpp>
 #include <core/system/Xdg.hpp>
-#include <core/system/Environment.hpp>
 
 #include <shared_core/Error.hpp>
 #include <shared_core/FilePath.hpp>
