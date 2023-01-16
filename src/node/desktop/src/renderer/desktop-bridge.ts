@@ -14,7 +14,6 @@
  */
 
 import { ipcRenderer, SaveDialogReturnValue, webContents } from 'electron';
-import { logger } from '../core/logger';
 import { normalizeSeparators } from '../ui/utils';
 
 interface VoidCallback<Type> {
@@ -27,7 +26,31 @@ interface CursorPosition {
 }
 
 function reportIpcError(name: string, error: Error) {
-  console.log(`${name}: ${error.message}`);
+  logString('err', `${name}: ${error.message}`);
+}
+
+/**
+ * Log a string in the main process (renderer process cannot directly use logger)
+ *
+ * @param level logging level (err|warn|info|debug)
+ * @param message  string to log
+ */
+export function logString(level: 'err'|'warn'|'info'|'debug', message: string): void {
+  ipcRenderer.send('desktop_log_message', level, message);
+}
+
+/**
+ * Log an Error in the main process (renderer process cannot directly use logger)
+ *
+ * @param error  Error to log
+ */
+export function logError(error: unknown): void {
+
+  if (error instanceof Error) {
+    logString('err', error.message);
+  } else {
+    logString('err', 'unknown error type in desktop bridge');
+  }
 }
 
 // eslint-disable-next-line @typescript-eslint/explicit-module-boundary-types
@@ -366,7 +389,7 @@ export function getDesktopBridge() {
         path = path.replaceAll('\\', '\\\\').replaceAll('"', '\\"').replaceAll('\n', '\\n');
         webcontents[0]
           .executeJavaScript(`window.desktopHooks.openFile("${path}")`)
-          .catch((error: unknown) => logger().logError(error));
+          .catch((error: unknown) => logError(error));
       }
     },
 
@@ -683,3 +706,4 @@ export function getDesktopBridge() {
     },
   };
 }
+

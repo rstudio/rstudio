@@ -904,8 +904,28 @@ export class GwtCallback extends EventEmitter {
     ipcMain.handle('desktop_startup_error_info', async (event, varName: string) => {
       return resolveTemplateVar(varName, this.errorPageData);
     });
-  }
 
+    ipcMain.on('desktop_log_message', (event, level: string, message: string) => {
+      level = level.toLowerCase();
+      switch (level) {
+        case 'err':
+        case 'error':
+          logger().logErrorMessage(message);
+          break;
+        case 'warn':
+        case 'warning':
+          logger().logWarning(message);
+          break;
+        case 'info':
+          logger().logInfo(message);
+          break;
+        case 'debug':
+          logger().logDebug(message);
+          break;
+      }
+    });
+  }
+ 
   setRemoteDesktop(isRemoteDesktop: boolean): void {
     this.isRemoteDesktop = isRemoteDesktop;
   }
