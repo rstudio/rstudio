@@ -150,20 +150,56 @@ bool frameBindingIsActive(SEXP binding)
    return reinterpret_cast<r::sxpinfo*>(binding)->gp & ACTIVE_BINDING_MASK;
 }
 
-bool frameBindingIsImmediate(SEXP binding)
+bool frameBindingHasExternalPointer(SEXP b, bool nullPtr, std::set<SEXP>& visited) 
 {
-   return reinterpret_cast<r::sxpinfo*>(binding)->extra;
+   if (frameBindingIsActive(b))
+      return false;
+
+   // ->extra is only used for immediate bindings: this needs special care
+   // before we call CAR() because it might error with "bad binding access": 
+   // from Rinlinedfuns.h : 
+   // 
+   //     INLINE_FUN SEXP CAR(SEXP e)
+   //     {
+   //        if (BNDCELL_TAG(e))
+   //        error("bad binding access");
+   //        return CAR0(e);
+   //     }
+   unsigned int typetag = reinterpret_cast<r::sxpinfo*>(b)->extra;
+   if (typetag)
+   {
+      // it should not be set on 32-bits: unset it
+      if (sizeof(size_t) < sizeof(double))
+      {
+         reinterpret_cast<r::sxpinfo*>(b)->extra = 0;
+      }
+      else 
+      {
+         switch(typetag) {
+            case INTSXP:
+            case REALSXP: 
+            case LGLSXP:
+               // this is an immediate binding, R_expand_binding_value() would expand to a scalar
+               return false;
+            
+            default:
+               // otherwise (not sure this even hapens), ->extra should not be set: unset it
+               reinterpret_cast<r::sxpinfo*>(b)->extra = 0;
+         }
+      }
+   }
+   
+   // now safe to test the value in CAR()
+   return hasExternalPointer(CAR(b), nullPtr, visited);
 }
 
 bool frameHasExternalPointer(SEXP frame, bool nullPtr, std::set<SEXP>& visited)
 {
    while(frame != R_NilValue)
    {
-      // - immediate bindings are scalars without attributes: they don't have external pointers
-      // - active bindings are ruled out to
-      if (!frameBindingIsImmediate(frame) && !frameBindingIsActive(frame) && hasExternalPointer(CAR(frame), nullPtr, visited))
+      if (frameBindingHasExternalPointer(frame, nullPtr, visited))
          return true;
-
+      
       frame = CDR(frame);
    }
 
