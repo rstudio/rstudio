@@ -39,5 +39,8 @@
 - Editor Selection widget in New Session dialog supports screen reader usage (rstudio-pro #4206)
 - Editor icons in New Session dialog are marked as cosmetic for screen readers (rstudio-pro #4207)
 - Homepage modal dialogs are now implemented correctly for keyboard and screen reader use (rstudio-pro #4208)
+- Posit logo on home page marked as cosmetic for screen readers (rstudio-pro #4209)
 - Focus and keyboard-focus styles have been improved on the homepage
 - Keyboard support has been added to the job summary drop-down in session list items on the homepage
+- Improved alt-text and updated link to posit.co on sign-in page logo (rstudio-pro #4096)
+
