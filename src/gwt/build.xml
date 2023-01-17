@@ -103,8 +103,8 @@
    <!-- use yarn from /opt/rstudio-tools if installed (typical for Docker) -->
    <available
       property="yarn.bin"
-      value="/opt/rstudio-tools/dependencies/common/node/${node.version}/node_modules/yarn/bin/yarn"
-      file="/opt/rstudio-tools/dependencies/common/node/${node.version}/node_modules/yarn/bin/yarn"/>
+      value="/opt/rstudio-tools/dependencies/common/node/${node.version}/bin/yarn"
+      file="/opt/rstudio-tools/dependencies/common/node/${node.version}/bin/yarn"/>
    <!-- use yarn from c:/rstudio-tools if installed (typical for Docker on Windows) -->
    <available
       property="yarn.bin"
