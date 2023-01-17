@@ -34,6 +34,8 @@ pipeline {
             RSTUDIO_VERSION_MINOR,
             RSTUDIO_VERSION_PATCH,
             RSTUDIO_VERSION_SUFFIX) = utils.getVersion()
+
+            currentBuild.displayName = "${RSTUDIO_VERSION}"
         }
       }
     }
