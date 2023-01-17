@@ -67,17 +67,17 @@ pipeline {
           }
         }
 
-        stage('Sentry Upload') {
-          /* environment {
+        /* stage('Sentry Upload') {
+          environment {
             SENTRY_API_KEY = credentials('ide-sentry-api-key')
             sentryUploadRetryLimit=5
-          } */
-          steps {
-            /* dir("package/linux/build-${flavor.capitalize()}-${type}/src/cpp") {
-                sh "../../../../../docker/jenkins/sentry-upload.sh ${SENTRY_API_KEY} ${sentryUploadRetryLimit}"
-            } */
           }
-        }
+          steps {
+            dir("package/linux/build-${flavor.capitalize()}-${type}/src/cpp") {
+                sh "../../../../../docker/jenkins/sentry-upload.sh ${SENTRY_API_KEY} ${sentryUploadRetryLimit}"
+            }
+          }
+        } */
 
         stage('Upload Artifacts') {
           environment {
