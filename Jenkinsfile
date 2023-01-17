@@ -3,7 +3,7 @@ def utils
 
 pipeline {
 
-  agent none
+  agent { label "docker" }
 
   options {
     timestamps()
