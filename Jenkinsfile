@@ -44,16 +44,6 @@ pipeline {
       }
     }
 
-    stage ("Checkout") {
-      steps {
-        echo "Commit_hash value: ${params.COMMIT_HASH}"
-          checkout([$class: 'GitSCM',
-            branches: [[name: "${params.COMMIT_HASH}"]],
-            extensions: [],
-            userRemoteConfigs: [[credentialsId: 'github-rstudio-jenkins', url: 'https://github.com/rstudio/rstudio']]])
-      }
-    }
-
     stage('Versioning') {
       steps {
         script {
@@ -116,6 +106,16 @@ pipeline {
             }
 
             stages { 
+              stage ("Checkout") {
+                steps {
+                  echo "Commit_hash value: ${params.COMMIT_HASH}"
+                    checkout([$class: 'GitSCM',
+                      branches: [[name: "${params.COMMIT_HASH}"]],
+                      extensions: [],
+                      userRemoteConfigs: [[credentialsId: 'github-rstudio-jenkins', url: 'https://github.com/rstudio/rstudio']]])
+                }
+              }
+
               stage('Build') {
 
                 environment {
@@ -221,16 +221,15 @@ pipeline {
                   stage ('Publish') {
                     steps {
                       script {
-                        def packageVersion = "${rstudioVersionMajor}.${rstudioVersionMinor}.${rstudioVersionPatch}${rstudioVersionSuffix}"
-                        packageVersion = packageVersion.replace('+', '-')
+                        packageVersion = "${RSTUDIO_RELEASE}".replace('+', '-')
 
                         def packageName = "RStudio-${packageVersion}"
                         withCredentials([usernamePassword(credentialsId: 'github-rstudio-jenkins', usernameVariable: 'GITHUB_USERNAME', passwordVariable: 'GITHUB_PAT')]) {
 
                           // derive product
-                          def product = "${current_container.flavor}"
+                          def product = "${FLAVOR}"
                             if (rstudioVersionSuffix.contains("pro")) {
-                              product = "${current_container.flavor}-pro"
+                              product = "${FLAVOR}-pro"
                             }
 
                           // publish the build (self installing exe)
@@ -257,7 +256,7 @@ pipeline {
   post {
     always {
       deleteDir()
-        sendNotifications slack_channel: SLACK_CHANNEL
+      // sendNotifications slack_channel: SLACK_CHANNEL
     }
   }
 
