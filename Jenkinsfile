@@ -1,4 +1,4 @@
-def BINARY_JOB_ROOT="IDE/OS-Builds/Nightly"
+def BINARY_JOB_ROOT="IDE/OS-Builds/Platforms"
 def utils
 
 pipeline {
