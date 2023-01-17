@@ -21,18 +21,20 @@ pipeline {
 
   stages {
     stage ("Set Version & Commit") {
-      script {
-        utils = load "${env.WORKSPACE}/utils.groovy"
-        
-        // Get the current commit
-        COMMIT_HASH = sh returnStdout: true, script: 'git rev-parse HEAD'
+      steps {
+        script {
+          utils = load "${env.WORKSPACE}/utils.groovy"
+          
+          // Get the current commit
+          COMMIT_HASH = sh returnStdout: true, script: 'git rev-parse HEAD'
 
-        // Get the version
-        (RSTUDIO_VERSION,
-          RSTUDIO_VERSION_MAJOR,
-          RSTUDIO_VERSION_MINOR,
-          RSTUDIO_VERSION_PATCH,
-          RSTUDIO_VERSION_SUFFIX) = utils.getVersion()
+          // Get the version
+          (RSTUDIO_VERSION,
+            RSTUDIO_VERSION_MAJOR,
+            RSTUDIO_VERSION_MINOR,
+            RSTUDIO_VERSION_PATCH,
+            RSTUDIO_VERSION_SUFFIX) = utils.getVersion()
+        }
       }
     }
 
