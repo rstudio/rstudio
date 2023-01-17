@@ -86,7 +86,6 @@ pipeline {
           steps {
             echo "Uploading debug artifacts to ${AWS_PATH}"
             sh "touch test-file.txt"
-            echo $(ls)
             sh "aws s3 cp ./test-file.txt ${AWS_PATH}"
 
             //TODO: figure out what to include. Should this only run if the Sentry Upload stage failed?
