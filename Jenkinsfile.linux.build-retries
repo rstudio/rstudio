@@ -1,25 +1,12 @@
-#!groovy
-@Library('pipeline-shared-libraries@feature/windows-pbp') _
-
-rstudioVersionMajor = 0
-rstudioVersionMinor = 0
-rstudioVersionPatch = 0
-rstudioVersionSuffix = ''
-versionWithoutPlus = ''
-
-def trigger_external_build(build_name) {
-  def branchName = env.BRANCH_NAME.replaceAll('/', '%252F')
-
-  build job: "${build_name}/${branchName}", wait: false, parameters: [
-    string(name: 'RSTUDIO_VERSION_MAJOR',  value: "${rstudioVersionMajor}"),
-    string(name: 'RSTUDIO_VERSION_MINOR',  value: "${rstudioVersionMinor}"),
-    string(name: 'RSTUDIO_VERSION_PATCH',  value: "${rstudioVersionPatch}"),
-    string(name: 'RSTUDIO_VERSION_SUFFIX', value: "${rstudioVersionSuffix}")
-  ]
-}
+flavor = 'server'
+os = 'jammy'
+arch = 'amd64'
+type = 'DEB'
 
 pipeline {
-  agent none
+  agent {
+    label 'linux && amd64'
+  }
 
   options {
     disableConcurrentBuilds()
@@ -31,315 +18,84 @@ pipeline {
         numToKeepStr: '100'))
   }
 
-  parameters {
+  /* parameters {
     string(name: 'RSTUDIO_VERSION_PATCH', defaultValue: '0', description: 'RStudio Patch Version')
     string(name: 'SLACK_CHANNEL', defaultValue: '#ide-builds', description: 'Slack channel to publish build message.')
     string(name: 'OS_FILTER', defaultValue: 'all', description: 'Pattern to limit builds by matching OS')
     string(name: 'ARCH_FILTER', defaultValue: 'all', description: 'Pattern to limit builds by matching ARCH')
     string(name: 'FLAVOR_FILTER', defaultValue: 'all', description: 'Pattern to limit builds by matching FLAVOR')
+  } */
+
+  environment {
+    GITHUB_LOGIN = credentials('github-rstudio-jenkins')
   }
 
   stages {
-    stage('Build Versioning Image') {
-      agent {
-        label 'linux && amd64'
-      }
 
+    stage('Prepare Container') {
       steps {
-        pullBuildPush(
+        echo 'Preparing Container...'
+        echo "image tag: ${os}-${arch}-${env.BRANCH_NAME.replaceAll('/', '-')}"
+        /* pullBuildPush(
           image_name: 'jenkins/ide',
-          image_tag: 'rstudio-versioning',
+          image_tag: "${os}-${arch}-${env.BRANCH_NAME.replaceAll('/', '-')}",
           latest_tag: false,
-          dockerfile: 'docker/jenkins/Dockerfile.versioning',
+          dockerfile: "docker/jenkins/Dockerfile.${os}",
           build_arg_jenkins_uid: 'JENKINS_UID',
           build_arg_jenkins_gid: 'JENKINS_GID',
+          builds_args: "--build-arg GITHUB_LOGIN=${GITHUB_LOGIN}",
           push: env.BRANCH_IS_PRIMARY
-        )
+        ) */
       }
     }
 
-    stage('GET Version (do not actually bump while testing)') {
-      agent {
+    stage('Build and Upload') {
+      /* agent {
         docker {
-          image 'jenkins/ide:rstudio-versioning'
-          registryCredentialsId 'ecr:us-east-1:aws-build-role'
-          registryUrl 'https://263245908434.dkr.ecr.us-east-1.amazonaws.com'
+          image "jenkins/ide:${os}-${arch}-${env.BRANCH_NAME.replaceAll('/', '-')}"
           reuseNode true
         }
-      }
-
-      steps {
-        script {
-          def rstudioVersion = sh (
-            script: "docker/jenkins/rstudio-version.sh get ${params.RSTUDIO_VERSION_PATCH}",
-            returnStdout: true
-          ).trim()
-          echo "RStudio build version: ${rstudioVersion}"
-          currentBuild.displayName = "${rstudioVersion}"
-
-          // Split on [-+] first to avoid having to worry about splitting out .pro<n>
-          def version = rstudioVersion.split('[-+]')
-
-          // extract major / minor /patch version
-          def majorComponents = version[0].split('\\.')
-          rstudioVersionMajor = majorComponents[0]
-          rstudioVersionMinor = majorComponents[1]
-          rstudioVersionPatch = majorComponents[2]
-          versionWithoutPlus = majorComponents
-
-          // Extract suffix
-          if (version.length > 2) {
-            rstudioVersionSuffix = '-' + version[1] + '+' + version[2]
-            versionWithoutPlus = '-' + version[1] + '-' + version[2]
-          }
-          else {
-            rstudioVersionSuffix = '+' + version[1]
-            versionWithoutPlus = '-' + version[1]
-          }
-
-          // update slack message to include build version
-          messagePrefix = "Jenkins ${env.JOB_NAME} build: <${env.BUILD_URL}display/redirect|${rstudioVersion}>"                    
-        }                
-      }
-    }
-
-    stage('Start External Jobs') {
-      agent any
-      /* agent {
-        label 'linux'
       } */
-      steps {
-          // Upload the version file for tests
-          //archiveArtifacts artifacts: 'version/RELEASE', followSymlinks: false
-
-          script {
-            // Start external build jobs
-            if (env.JOB_NAME.startsWith('IDE/open-source-pipeline')) {
-              //trigger_external_build('IDE/macos-pipeline-test')
-              echo 'External builds would be triggered here'
-            }
-          }
-      }
-    }
-
-    stage('Container Matrix') {
-      matrix {
-        agent any
-        /* agent {
-          //TODO: can probably remove agent_label since this Jenkinsfile deals with linux only?
-          label "${agent_label} && ${arch}"
-        } */
-        axes {
-          axis {
-            name 'agent_label'
-            values 'linux'
-          }
-          axis {
-            name 'os'
-            values 'bionic', 'jammy', 'centos7', 'rhel8', 'rhel9', 'opensuse15'
-          }
-          axis {
-            name 'arch'
-            values 'amd64', 'arm64'
-          }
-        }
-        excludes {
-          exclude {
-            axis {
-              name 'os'
-              values 'opensuse15', 'centos7'
-            }
-            axis {
-              name 'arch'
-              notValues 'arm64'
-            }
+      stages {
+        stage('Compile Package') {
+          steps {
+            echo 'Compiling Package...'
+            echo "Will run sh './make-${flavor}-package ${type} clean'"
+            /* dir('package/linux') {
+              sh "./make-${flavor}-package ${type} clean"
+            } */
           }
         }
 
-        /* when {
-          anyOf {
-            equals expected: params.OS_FILTER, actual: env.os;
-            equals expected: params.OS_FILTER, actual: 'all'
-          }
-        } */
-
-        stages {
-          stage('Prepare Container') {
-            /* environment {
-              GITHUB_LOGIN = credentials('github-rstudio-jenkins')
+        stage('Sentry Upload') {
+          /* environment {
+            SENTRY_API_KEY = credentials('ide-sentry-api-key')
+            sentryUploadRetryLimit=5
+          } */
+          steps {
+            /* dir("package/linux/build-${flavor.capitalize()}-${type}/src/cpp") {
+                sh "../../../../../docker/jenkins/sentry-upload.sh ${SENTRY_API_KEY} ${sentryUploadRetryLimit}"
             } */
-
-            steps {
-              /* pullBuildPush(
-                image_name: 'jenkins/ide',
-                image_tag: "${os}-${arch}-${env.BRANCH_NAME.replaceAll('/', '-')}",
-                latest_tag: false,
-                dockerfile: "docker/jenkins/Dockerfile.${os}-${arch}",
-                build_arg_jenkins_uid: 'JENKINS_UID',
-                build_arg_jenkins_gid: 'JENKINS_GID',
-                builds_args: "--build-arg GITHUB_LOGIN=${GITHUB_LOGIN}",
-                push: env.BRANCH_IS_PRIMARY
-              ) */
-              echo "Preparing Container for ${os}-${arch}"
-            }
-          }
-        }
-      }
-    }
-
-    stage('Build Matrix') {
-      matrix {
-        agent any
-        /* agent {
-          //TODO: can probably remove agent_label since this Jenkinsfile deals with linux only?
-          label "${agent_label} && ${arch}"
-        } */
-        axes {
-          axis {
-            name 'agent_label'
-            values 'linux'
-          }
-          axis {
-              name 'os'
-              values 'bionic', 'jammy', 'centos7', 'rhel8', 'rhel9', 'opensuse15'
-          }
-          axis {
-              name 'arch'
-              values 'amd64', 'arm64'
-          }
-          axis {
-              name 'flavor'
-              values 'server', 'electron'
-          }
-        }
-        excludes {
-          exclude {
-            axis {
-              name 'os'
-              values 'opensuse15', 'centos7'
-            }
-            axis {
-              name 'arch'
-              notValues 'arm64'
-            }
           }
         }
 
-        /* when {
-          anyOf {
-            equals expected: params.OS_FILTER, actual: env.os;
-            equals expected: params.OS_FILTER, actual: 'all'
+        stage('Upload Artifacts') {
+          environment {
+            AWS_PATH="s3://rstudio-ide-build/${flavor}/${os}/${arch}/"
           }
-        } */
+          steps {
+            echo "Uploading debug artifacts to ${AWS_PATH}"
+            sh "touch test-file.txt"
+            echo $(ls)
+            sh "aws s3 cp ./test-file.txt ${AWS_PATH}"
 
-        stages {
-          stage('Compile Package') {
-            agent any
-            /* agent {
-              docker {
-                image "jenkins/ide:${os}-${arch}-${env.BRANCH_NAME}"
-                registryCredentialsId 'ecr:us-east-1:aws-build-role'
-                registryUrl 'https://263245908434.dkr.ecr.us-east-1.amazonaws.com'
-                reuseNode true
-              }
+            //TODO: figure out what to include. Should this only run if the Sentry Upload stage failed?
+
+            // Upload debug files to s3
+            /* dir("package/linux/build-${flavor.capitalize()}-${type}/src/cpp") {
+              echo $(ls)
+              sh "aws s3 cp ${STUFF} ${AWS_PATH}"
             } */
-            /* environment {
-              CODESIGN_KEY = credentials('gpg-codesign-private-key')
-              CODESIGN_PASS = credentials('gpg-codesign-passphrase')
-              RSTUDIO_VERSION_MAJOR = '${rstudioVersionMajor}'
-              RSTUDIO_VERSION_MINOR = '${rstudioVersionMinor}'
-              RSTUDIO_VERSION_PATCH = '${rstudioVersionPatch}'
-              RSTUDIO_VERSION_SUFFIX = '${rstudioVersionSuffix}'
-            } */
-            steps {
-              /* dir('package/linux') {
-                sh "./make-${flavor}-package ${PACKAGE_TYPE} clean"
-                sh "../../docker/jenkins/sign-release.sh /build-${flavor.capitalize()}-${PACKAGE_TYPE}/rstudio-*.${PACKAGE_TYPE.toLowerCase()} ${CODESIGN_KEY} ${CODESIGN_PASS}"
-              } */
-              echo "Compiling Package for ${os}-${arch}-${flavor}"
-            }
-          }
-          stage('Run Tests') {
-            agent any
-            /* agent {
-              docker {
-                image "jenkins/ide:${os}-${arch}-${env.BRANCH_NAME}"
-                reuseNode true
-              }
-            } */
-            stages {
-              stage('Run Electron Tests') {
-                when { equals expected: 'electron', actual: "${flavor}" }
-                steps {
-                  /* dir() {
-                    try {
-                      sh './scripts/docker-run-unit-tests.sh'
-                    }
-                    catch(err){
-                      unstable("Electron tests failed (${flavor.capitalize()} ${PACKAGE_TYPE} on ${os})")
-                    }
-                  } */
-                  echo "Running Electron Tests for ${os}-${arch}-${flavor}."
-                }
-              }
-              stage('Run GWT Tests') {
-                steps {
-                  /* dir("package/linux/${flavor.capitalize()}-${PACKAGE_TYPE}/src/gwt") {
-                    try {
-                      sh './gwt-unit-tests.sh'
-                    } catch(err) {
-                      unstable("GWT unit tests failed (${flavor.capitalize()} ${PACKAGE_TYPE} on ${os})")
-                    }
-                  } */
-                  echo "Running GWT Tests for ${os}-${arch}-${flavor}."
-                }
-              }
-              stage('Run CPP Tests') {
-                steps {
-                  /* dir("package/linux/build-${flavor.capitalize()}-${type}/src/cpp") {
-                    try {
-                      sh './rstudio-tests'
-                    } catch(err) {
-                      unstable("C++ unit tests failed (${flavor.capitalize()} ${type} on ${os})")
-                    }
-                  } */
-                  echo "Running GWT Tests for ${os}-${arch}-${flavor}."
-                }
-              }
-            }
-          }
-          stage('Sentry Upload') {
-            agent any
-            /* environment {
-              SENTRY_API_KEY = credentials('ide-sentry-api-key')
-              sentryUploadRetryLimit=5
-            } */
-            steps {
-              /* dir("package/linux/build-${flavor.capitalize()}-${type}/src/cpp") {
-                  sh "../../../../../docker/jenkins/sentry-upload.sh ${SENTRY_API_KEY} ${sentryUploadRetryLimit}"
-              } */
-              echo 'Executing Sentry Upload'
-            }
-          }
-          stage('Upload Artifacts') {
-            agent any
-            /* agent {
-              docker {
-                image "jenkins/ide:${os}-${arch}-${env.BRANCH_NAME}"
-                reuseNode true
-              }
-            } */
-            environment {
-              SENTRY_API_KEY = credentials('ide-sentry-api-key')
-              GITHUB_LOGIN = credentials('github-rstudio-jenkins')
-              AWS_BUCKET="rstudio-ide-build"
-              AWS_PATH="${flavor}/${os}/${PACKAGE_ARCH}/"
-              PRODUCT="${flavor}"
-              RSTUDIO_VERSION=" ${rstudioVersionMajor}.${rstudioVersionMinor}.${rstudioVersionPatch}${rstudioVersionSuffix}"
-            }
-            steps {
-              echo "Uploading artifacts to ${AWS_PATH}"
-            }
           }
         }
       }
