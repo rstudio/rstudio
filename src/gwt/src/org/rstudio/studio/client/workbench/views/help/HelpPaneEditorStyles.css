@@ -7,7 +7,7 @@
 @external rstudio-themes-scrollbars;
 @external editor_dark;
 @external ace_editor_theme;
-@external sourceLine;
+@external sourceLine, sourceCode;
 @external odd;
 @external even;
 @external code-toolbar;
@@ -73,6 +73,11 @@ p + div[style="text-align: center;"]
 .rstudio-themes-dark.editor_dark.ace_editor_theme h3 + pre {
    color: #DEDEDE;
    background: none;
+}
+
+.rstudio-themes-dark.editor_dark.ace_editor_theme div.sourceCode {
+   background-color: CODE_BACKGROUND_COLOR;
+   border-radius: 3px;
 }
 
 .rstudio-themes-dark.editor_dark.ace_editor_theme pre,
