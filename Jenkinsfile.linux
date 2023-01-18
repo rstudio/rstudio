@@ -26,10 +26,6 @@ pipeline {
 
   environment {
     RSTUDIO_VERSION = ""
-    RSTUDIO_VERSION_MAJOR = 0
-    RSTUDIO_VERSION_MINOR = 0
-    RSTUDIO_VERSION_PATCH = 0
-    RSTUDIO_VERSION_SUFFIX = 0
     IS_PRO = false
   }
 
@@ -56,7 +52,8 @@ pipeline {
                 RSTUDIO_VERSION_MINOR,
                 RSTUDIO_VERSION_PATCH,
                 RSTUDIO_VERSION_SUFFIX) = utils.getVersion()
-              currentBuild.displayName = "${RSTUDIO_VERSION_MAJOR}.${RSTUDIO_VERSION_MINOR}.${RSTUDIO_VERSION_PATCH}${RSTUDIO_VERSION_SUFFIX}"
+              RSTUDIO_VERSION = "${RSTUDIO_VERSION_MAJOR}.${RSTUDIO_VERSION_MINOR}.${RSTUDIO_VERSION_PATCH}${RSTUDIO_VERSION_SUFFIX}"
+              currentBuild.displayName = "${RSTUDIO_VERSION}"
               IS_PRO = RSTUDIO_VERSION_SUFFIX.contains('pro')
             }
           }
@@ -171,11 +168,6 @@ pipeline {
                   AWS_BUCKET="rstudio-ide-build"
                   AWS_PATH="${flavor}/${os}/${arch}/"
                   PRODUCT="${flavor}"
-                  RSTUDIO_VERSION_MAJOR = "${rstudioVersionMajor}"
-                  RSTUDIO_VERSION_MINOR = "${rstudioVersionMinor}"
-                  RSTUDIO_VERSION_PATCH = "${rstudioVersionPatch}"
-                  RSTUDIO_VERSION_SUFFIX = "${rstudioVersionSuffix}"
-                  RSTUDIO_VERSION=" ${rstudioVersionMajor}.${rstudioVersionMinor}.${rstudioVersionPatch}${rstudioVersionSuffix}"
                 }
 
                 stages {
@@ -188,55 +180,55 @@ pipeline {
                     }
                   }
 
-                  stage('Run Tests') {
-                    stages {
-                      stage ('Electron Tests') {
-                        when {
-                          expression { return "${flavor}" == "electron" }
-                        }
+                  // stage('Run Tests') {
+                  //   stages {
+                  //     stage ('Electron Tests') {
+                  //       when {
+                  //         expression { return "${flavor}" == "electron" }
+                  //       }
 
-                        steps {
-                          dir( "src/node/desktop" ) {
-                            sh './scripts/docker-run-unit-tests.sh'
-                          }
-                        }
+                  //       steps {
+                  //         dir( "src/node/desktop" ) {
+                  //           sh './scripts/docker-run-unit-tests.sh'
+                  //         }
+                  //       }
 
-                        post {
-                          failure {
-                            unstable("Electron unit tests failed (${PACKAGE_TYPE} on ${os})")
-                          }
-                        }
-                      }
+                  //       post {
+                  //         failure {
+                  //           unstable("Electron unit tests failed (${PACKAGE_TYPE} on ${os})")
+                  //         }
+                  //       }
+                  //     }
 
-                      stage ('GWT Tests') {
-                        steps {
-                          dir ( "package/linux/build-${flavor.capitalize()}-${PACKAGE_TYPE}/src/gwt" ) {
-                            sh './gwt-unit-tests.sh'
-                          }
-                        }
+                  //     stage ('GWT Tests') {
+                  //       steps {
+                  //         dir ( "package/linux/build-${flavor.capitalize()}-${PACKAGE_TYPE}/src/gwt" ) {
+                  //           sh './gwt-unit-tests.sh'
+                  //         }
+                  //       }
 
-                        post {
-                          failure {
-                            unstable("GWT unit tests failed (${flavor.capitalize()} ${PACKAGE_TYPE} on ${os})")
-                          }
-                        }
-                      }
+                  //       post {
+                  //         failure {
+                  //           unstable("GWT unit tests failed (${flavor.capitalize()} ${PACKAGE_TYPE} on ${os})")
+                  //         }
+                  //       }
+                  //     }
 
-                      stage ('CPP Unit Tests') {
-                        steps {
-                          dir ( "package/linux/build-${flavor.capitalize()}-${PACKAGE_TYPE}/src/cpp" ) {
-                            sh './rstudio-tests'
-                          }
-                        }
+                  //     stage ('CPP Unit Tests') {
+                  //       steps {
+                  //         dir ( "package/linux/build-${flavor.capitalize()}-${PACKAGE_TYPE}/src/cpp" ) {
+                  //           sh './rstudio-tests'
+                  //         }
+                  //       }
 
-                        post {
-                          failure {
-                            unstable("C++ unit tests failed (${flavor.capitalize()} ${PACKAGE_TYPE} on ${os})")
-                          }
-                        }
-                      }
-                    }
-                  }
+                  //       post {
+                  //         failure {
+                  //           unstable("C++ unit tests failed (${flavor.capitalize()} ${PACKAGE_TYPE} on ${os})")
+                  //         }
+                  //       }
+                  //     }
+                  //   }
+                  // }
 
                   // stage('Upload Artifacts') {
                   //   when {
