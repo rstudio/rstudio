@@ -48,20 +48,6 @@ pipeline {
           }
         }
 
-        stage ("Checkout") {
-          steps {
-            script {
-              COMMIT_HASH = sh returnStdout: true, script: 'git rev-parse HEAD'
-            }
-            
-            echo "Commit_hash value: ${COMMIT_HASH}"
-            checkout([$class: 'GitSCM',
-                      branches: [[name: "${COMMIT_HASH}"]],
-                      extensions: [],
-                      userRemoteConfigs: [[credentialsId: 'github-rstudio-jenkins', url: 'https://github.com/rstudio/rstudio']]])
-          }
-        }
-
         stage('Versioning') {
           steps {
             script {
@@ -101,6 +87,20 @@ pipeline {
             }
 
             stages {
+              stage ("Checkout") {
+                steps {
+                  script {
+                    COMMIT_HASH = sh returnStdout: true, script: 'git rev-parse HEAD'
+                  }
+                  
+                  echo "Commit_hash value: ${COMMIT_HASH}"
+                  checkout([$class: 'GitSCM',
+                            branches: [[name: "${COMMIT_HASH}"]],
+                            extensions: [],
+                            userRemoteConfigs: [[credentialsId: 'github-rstudio-jenkins', url: 'https://github.com/rstudio/rstudio']]])
+                }
+              }
+
               stage('Prepare Container') {
                 environment {
                   GITHUB_LOGIN = credentials('github-rstudio-jenkins')
