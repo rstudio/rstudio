@@ -435,11 +435,6 @@ try {
                         }
                         docker.image(image_name).inside() {
                             timeout(time: 180, units: 'MINUTES', activity: false) {
-                                stage('dependencies') {
-                                    withCredentials([usernameColonPassword(credentialsId: 'github-rstudio-jenkins', variable: "GITHUB_LOGIN")]) {
-                                        bat 'cd dependencies/windows && set RSTUDIO_GITHUB_LOGIN=$GITHUB_LOGIN && set RSTUDIO_SKIP_QT=1 && install-dependencies.cmd && cd ../..'
-                                    }
-                                }
                                 stage('build'){
                                     def env = "set \"RSTUDIO_VERSION_MAJOR=${rstudioVersionMajor}\" && set \"RSTUDIO_VERSION_MINOR=${rstudioVersionMinor}\" && set \"RSTUDIO_VERSION_PATCH=${rstudioVersionPatch}\" && set \"RSTUDIO_VERSION_SUFFIX=${rstudioVersionSuffix}\""
                                     bat "cd package/win32 && ${env} && set \"PACKAGE_OS=Windows\" && make-package.bat clean ${current_container.flavor} && cd ../.."
