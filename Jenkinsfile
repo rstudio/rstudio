@@ -54,7 +54,7 @@ pipeline {
     }
 
     stage ("Trigger Builds") {
-      stages {
+      parallel {
         stage ("Open Source Builds") {
           when {
             allOf {
