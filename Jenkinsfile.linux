@@ -1,5 +1,3 @@
-def utils
-
 pipeline {
   agent none
 
@@ -327,3 +325,4 @@ pipeline {
   }
 }
 
+def utils
