@@ -9,6 +9,11 @@ pipeline {
     }
   }
   
+  parameters {
+    string defaultValue: '0', description: 'RStudio Patch Version', name: 'RSTUDIO_VERSION_PATCH', trim: true
+    string defaultValue: '#ide-builds', description: 'Slack channel to publish build message.', name: 'SLACK_CHANNEL', trim: true
+  }
+  
   environment {
     RSTUDIO_VERSION = ""
     RSTUDIO_VERSION_MAJOR = 0
@@ -66,19 +71,29 @@ pipeline {
           }
 
           steps {
-            echo "Would trigger binary builds at ${COMMIT_HASH} on branch ${env.BUILD_BRANCH}"
-
             build wait: false,
                   job: "${BINARY_JOB_ROOT}/Windows/${env.BUILD_BRANCH}",
-                  parameters: [gitParameter(name: "COMMIT_HASH", value: "${COMMIT_HASH}")]
+                  parameters: [
+                    gitParameter(name: "COMMIT_HASH", value: "${COMMIT_HASH}"),
+                    string(name: "RSTUDIO_VERSION_PATCH", value: "${RSTUDIO_VERSION_PATCH}"),
+                    string(name: "SLACK_CHANNEL", value: "${SLACK_CHANNEL}")
+                  ]
 
             build wait: false,
                   job: "${BINARY_JOB_ROOT}/Linux/${env.BUILD_BRANCH}",
-                  parameters: [gitParameter(name: "COMMIT_HASH", value: "${COMMIT_HASH}")]
+                  parameters: [
+                    gitParameter(name: "COMMIT_HASH", value: "${COMMIT_HASH}"),
+                    string(name: "RSTUDIO_VERSION_PATCH", value: "${RSTUDIO_VERSION_PATCH}"),
+                    string(name: "SLACK_CHANNEL", value: "${SLACK_CHANNEL}")
+                  ]
 
             build wait: false,
                   job: "${BINARY_JOB_ROOT}/MacOS/${env.BUILD_BRANCH}",
-                  parameters: [gitParameter(name: "COMMIT_HASH", value: "${COMMIT_HASH}")]
+                  parameters: [
+                    gitParameter(name: "COMMIT_HASH", value: "${COMMIT_HASH}"),
+                    string(name: "RSTUDIO_VERSION_PATCH", value: "${RSTUDIO_VERSION_PATCH}"),
+                    string(name: "SLACK_CHANNEL", value: "${SLACK_CHANNEL}")
+                  ]
           }
         }
       }
