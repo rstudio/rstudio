@@ -176,37 +176,32 @@ else
   base64_contents=$(echo "$md_contents" | base64 --wrap=0)
 fi
 
-githubUrl="https://api.github.com/repos/rstudio/test-release-repo/contents/content/rstudio/$flower/$build/$version_stem.md"
-curl_out_fname="curl.out"
+githubUrl="https://api.github.com/repos/rstudio/latest-builds/contents/content/rstudio/$flower/$build/$version_stem.md"
+curlOutFname="curl.out"
 
 # Sha is only required in the payload if it's an update, removing the sha field gives a clearer
 # error message
 payload="{\"message\":\"Add $flower build $version in $build\",\"content\":\"$base64_contents\"}"
 echo "Sending to Github: $payload"
-
-command="curl \
+httpCode=$(curl \
    -X PUT \
-   -w %{http_code}% \
-   -o $curl_out_fname \
-   -H \"Accept: application/vnd.github.v3+json\" \
-   -H \"Authorization: token $pat\" \
+   -w %{http_code} \
+   -o $curlOutFname \
+   -H "Accept: application/vnd.github.v3+json" \
+   -H "Authorization: token $pat" \
    $githubUrl \
-   -d \"$payload\""
-
-
-http_code=$($command)
-
+   -d "$payload")
 echo "Github's Response: "
-echo "Http Code : $http_code"
-cat $curl_out_fname
+echo "Http Code : $httpCode"
+cat $curlOutFname
 
-# We get a null from jq if the message field doesn't exist. This field appears when there's been a problem with
-# our upload. We'll assume it's because the sha field is missing and this is an update, however we've
-# printed the response in the event there's some other issue
-if [[ $http_code -eq 422 ]]; then
 
-   echo "We need up perform an update, so we get the existing file's info"
-   sha_http_code=$(curl \
+if [[ $httpCode -eq 422 ]]; then
+   # An http code of 422 indicates a problem, probably that the file already exists and this is an
+   # update not a create
+
+   echo "Received a 422 http code, assuming this is actually an update not a create, so we get the existing file's info"
+   getShaResponse=$(curl \
       -X GET \
       -H "Accept: application/vnd.github.v3+json" \
       -H "Authorization: token $pat" \
@@ -218,28 +213,39 @@ if [[ $http_code -eq 422 ]]; then
 
    updatePayload="{\"message\":\"Update $flower build $version in $build\",\"content\":\"$base64_contents\",\"sha\":\"$updateSha\"}"
    
-   updateResponse=$(curl \
+   httpCode=$(curl \
       -X PUT \
+      -w %{http_code} \
+      -o $curlOutFname \
       -H "Accept: application/vnd.github.v3+json" \
       -H "Authorization: token $pat" \
       $githubUrl \
       -d "$updatePayload")
 
    echo "Github's Update Response:"
-   echo $updateResponse
+   echo "Http Code : $httpCode"
+   cat $curlOutFname
+elif [[ $httpCode -eq 409 ]]; then
+   echo "Received a 409 error, assuming it's a commit interleaving error, we'll back off for 3 seconds and retry".
+   sleep 3
 
-   updateErrorMessage=$(echo $updateResponse | jq -r .message)
+   #retry the command
+   echo "Retrying the command"
+   httpCode=$(curl \
+   -X PUT \
+   -w %{http_code} \
+   -o $curlOutFname \
+   -H "Accept: application/vnd.github.v3+json" \
+   -H "Authorization: token $pat" \
+   $githubUrl \
+   -d "$payload")
 
-   # If there's still an issue, give up, return non zero exit code
-   if [[ $updateMessage != "null" ]]; then
-      exit 1;
-   fi
-elif [[$http_code -eq 409]]; then
-    echo "Received a 409 error, assuming it's a commit interleaving error, we'll back off for 3 seconds and retry".
-    sleep 3
+   echo "Github's Response"
+   echo "Http Code : $httpCode"
+   cat $curlOutFname
+fi
 
-    #retry the command
-    echo "Retrying the command"
-    retry_http_code=$($command)
-    cat $curl_out_fname
+if [[ $(($httpCode)) -ge 400 ]]; then
+   echo "An unrecoverable error has occured"
+   exit 1
 fi
