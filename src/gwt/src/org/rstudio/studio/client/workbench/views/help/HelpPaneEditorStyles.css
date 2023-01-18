@@ -1,9 +1,11 @@
 @charset "UTF-8";
 
 @def CODE_BACKGROUND_COLOR_DARK #1f1f1f;
+@def CODE_BACKGROUND_COLOR_LIGHT #f7f7f7;
+
 @def CODE_COLOR #f0f0f0;
 
-@external rstudio-themes-dark;
+@external rstudio-themes-dark, rstudio-themes-default;
 @external rstudio-themes-scrollbars;
 @external editor_dark;
 @external ace_editor_theme;
@@ -73,11 +75,6 @@ p + div[style="text-align: center;"]
 .rstudio-themes-dark.editor_dark.ace_editor_theme h3 + pre {
    color: #DEDEDE;
    background: none;
-}
-
-.rstudio-themes-dark.editor_dark.ace_editor_theme div.sourceCode {
-   background-color: CODE_BACKGROUND_COLOR_DARK;
-   border-radius: 3px;
 }
 
 .rstudio-themes-dark.editor_dark.ace_editor_theme pre,
@@ -188,5 +185,20 @@ p + div[style="text-align: center;"]
    color: inherit !important;
 }
 
+/**
+ * This styling ensures the sourceCode area has a solid, continuous
+ * background color, even if the view is narrowed and a scrollbar
+ * appears to allow for horizontal scrolling.
+ */
+ .ace_editor_theme div.sourceCode {
+   border-radius: 3px;
+}
 
+.rstudio-themes-default.ace_editor_theme div.sourceCode {
+   background-color: CODE_BACKGROUND_COLOR_LIGHT;
+}
+
+.rstudio-themes-dark.editor_dark.ace_editor_theme div.sourceCode {
+   background-color: CODE_BACKGROUND_COLOR_DARK;
+}
 
