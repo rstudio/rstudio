@@ -3,6 +3,7 @@ FROM --platform=linux/$ARCH ubuntu:bionic
 ARG ARCH
 
 ENV OPERATING_SYSTEM=ubuntu_bionic
+ENV PACKAGE_TYPE='DEB'
 
 ARG AWS_REGION=us-east-1
 

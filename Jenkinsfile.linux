@@ -19,8 +19,8 @@ pipeline {
     string(name: 'OS_FILTER', defaultValue: 'all', description: 'Pattern to limit builds by matching OS')
     string(name: 'ARCH_FILTER', defaultValue: 'all', description: 'Pattern to limit builds by matching ARCH')
     string(name: 'FLAVOR_FILTER', defaultValue: 'all', description: 'Pattern to limit builds by matching FLAVOR')
-    booleanParam(name: 'DAILY', defaultValue: false, description: 'Runs daily build if true')
-    booleanParam(name: 'PUBLISH', defaultValue: true, description: 'Runs publish stage if true')
+    booleanParam(name: 'DAILY', defaultValue: true, description: 'Runs daily build if true')
+    booleanParam(name: 'PUBLISH', defaultValue: false, description: 'Runs publish stage if true')
     gitParameter defaultValue: "${env.GIT_BRANCH}", name: 'COMMIT_HASH', type: 'PT_REVISION'
   }
 
@@ -160,7 +160,7 @@ pipeline {
               SENTRY_API_KEY = credentials('ide-sentry-api-key')
               GITHUB_LOGIN = credentials('github-rstudio-jenkins')
               AWS_BUCKET="rstudio-ide-build"
-              AWS_PATH="${flavor}/${os}/${PACKAGE_ARCH}/"
+              AWS_PATH="${flavor}/${os}/${arch}/"
               PRODUCT="${flavor}"
               RSTUDIO_VERSION_MAJOR = "${rstudioVersionMajor}"
               RSTUDIO_VERSION_MINOR = "${rstudioVersionMinor}"
@@ -170,7 +170,7 @@ pipeline {
             }
 
             stages {
-              stage('Compile Package') {
+              stage('Compile and Sign Package') {
                 steps {
                   dir('package/linux') {
                     sh "./make-${flavor}-package ${PACKAGE_TYPE} clean"
@@ -183,7 +183,7 @@ pipeline {
                 stages {
                   stage ('Electron Tests') {
                     when {
-                      expression { return current_container.flavor == "electron" }
+                      expression { return "${flavor}" == "electron" }
                     }
 
                     steps {
@@ -194,35 +194,35 @@ pipeline {
 
                     post {
                       failure {
-                        unstable("Electron unit tests failed (${type} on ${os})")
+                        unstable("Electron unit tests failed (${PACKAGE_TYPE} on ${os})")
                       }
                     }
                   }
 
                   stage ('GWT Tests') {
                     steps {
-                      dir ( "package/linux/build-${flavor.capitalize()}-${type}/src/gwt" ) {
+                      dir ( "package/linux/build-${flavor.capitalize()}-${PACKAGE_TYPE}/src/gwt" ) {
                         sh './gwt-unit-tests.sh'
                       }
                     }
 
                     post {
                       failure {
-                        unstable("GWT unit tests failed (${flavor.capitalize()} ${type} on ${os})")
+                        unstable("GWT unit tests failed (${flavor.capitalize()} ${PACKAGE_TYPE} on ${os})")
                       }
                     }
                   }
 
                   stage ('CPP Unit Tests') {
                     steps {
-                      dir ( "package/linux/build-${flavor.capitalize()}-${type}/src/cpp" ) {
+                      dir ( "package/linux/build-${flavor.capitalize()}-${PACKAGE_TYPE}/src/cpp" ) {
                         sh './rstudio-tests'
                       }
                     }
 
                     post {
                       failure {
-                        unstable("C++ unit tests failed (${flavor.capitalize()} ${type} on ${os})")
+                        unstable("C++ unit tests failed (${flavor.capitalize()} ${PACKAGE_TYPE} on ${os})")
                       }
                     }
                   }
@@ -235,6 +235,18 @@ pipeline {
                 }
 
                 stages {
+                  stage('Upload to Sentry') {
+                    steps {
+                      dir("package/linux/build-${flavor.capitalize()}-${os}/src/cpp") {
+                        retry 5 {
+                          timeout activity: true, time: 15 {
+                            sh "../../../../../docker/jenkins/sentry-upload.sh ${SENTRY_API_KEY}"
+                          }
+                        }
+                      }
+                    }
+                  }
+
                   stage ('Upload to AWS'){
                     steps {
                       script {
@@ -283,22 +295,10 @@ pipeline {
                     }
                   }
 
-                  stage('Upload to Sentry') {
-                    steps {
-                      dir('src/cpp') {
-                        retry 5 {
-                          timeout activity: true, time: 15 {
-                            sh "../../../../../docker/jenkins/sentry-upload.sh ${SENTRY_API_KEY}"
-                          }
-                        }
-                      }
-                    }
-                  }
-
                   stage ('Upload Packages to Dailies Page') {
                     steps {
                       dir('docker/jenkins') {
-                        sh "./publish-build.sh --build ${PRODUCT}/${os} --url https://s3.amazonaws.com/rstudio-ide-build/${flavor}/${os}/${PACKAGE_ARCH}/${packageFile} --pat ${GITHUB_LOGIN_PSW} --file ${packageDir}/${packageFile} --version ${RSTUDIO_VERSION}"
+                        sh "./publish-build.sh --build ${PRODUCT}/${os} --url https://s3.amazonaws.com/rstudio-ide-build/${flavor}/${os}/${arch}/${packageFile} --pat ${GITHUB_LOGIN_PSW} --file ${packageDir}/${packageFile} --version ${RSTUDIO_VERSION}"
                       }
                     }
                   }
@@ -312,7 +312,7 @@ pipeline {
                     }
                     steps {
                       dir ('docker/jenkins') {
-                        sh "./publish-build.sh --build ${PRODUCT}/${os} --url https://s3.amazonaws.com/rstudio-ide-build/${flavor}/${os}/${PACKAGE_ARCH}/${tarballFile} --pat ${GITHUB_LOGIN_PSW} --file ${packageDir}/${tarballDir}/${tarballFile} --version ${RSTUDIO_VERSION}"
+                        sh "./publish-build.sh --build ${PRODUCT}/${os} --url https://s3.amazonaws.com/rstudio-ide-build/${flavor}/${os}/${arch}/${tarballFile} --pat ${GITHUB_LOGIN_PSW} --file ${packageDir}/${tarballDir}/${tarballFile} --version ${RSTUDIO_VERSION}"
                       }
                     }
                   }
@@ -325,3 +325,4 @@ pipeline {
     }
   }
 }
+

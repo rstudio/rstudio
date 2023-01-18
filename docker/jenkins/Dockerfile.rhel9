@@ -3,6 +3,7 @@ FROM --platform=linux/$ARCH rockylinux:9
 ARG ARCH
 
 ENV OPERATING_SYSTEM=rockylinux_9
+ENV PACKAGE_TYPE='RPM'
 
 ARG AWS_REGION=us-east-1
 

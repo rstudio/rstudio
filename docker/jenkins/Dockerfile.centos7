@@ -3,6 +3,7 @@ FROM --platform=linux/$ARCH centos:7
 ARG ARCH
 
 ENV OPERATING_SYSTEM=centos_7
+ENV PACKAGE_TYPE='RPM'
 
 RUN set -x \
     && yum install epel-release -y

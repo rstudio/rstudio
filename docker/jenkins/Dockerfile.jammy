@@ -3,6 +3,7 @@ FROM --platform=linux/$ARCH ubuntu:jammy
 ARG ARCH
 
 ENV OPERATING_SYSTEM=ubuntu_jammy
+ENV PACKAGE_TYPE='DEB'
 
 ARG AWS_REGION=us-east-1
 
