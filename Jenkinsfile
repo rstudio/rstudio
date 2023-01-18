@@ -46,15 +46,22 @@ pipeline {
     }
 
     stage ("Create a Sentry Release") {
+      environment {
+        SENTRY_API_KEY = credentials('ide-sentry-api-key')
+      }
+
       steps { 
-        // create new release on Sentry
-        sh "sentry-cli --auth-token ${SENTRY_API_KEY} releases --org rstudio --project ide-backend new ${RSTUDIO_VERSION}"
+        echo "Creating a sentry release for version ${RSTUDIO_VERSION}"
 
-        // associate commits
-        sh "sentry-cli --auth-token ${SENTRY_API_KEY} releases --org rstudio --project ide-backend set-commits --auto ${RSTUDIO_VERSION}"
+        sh "which sentry-cli"
+        // // create new release on Sentry
+        // sh 'sentry-cli --auth-token ${SENTRY_API_KEY} releases --org rstudio --project ide-backend new ${RSTUDIO_VERSION}''
 
-        // finalize release
-        sh "sentry-cli --auth-token ${SENTRY_API_KEY} releases --org rstudio --project ide-backend finalize ${RSTUDIO_VERSION}"
+        // // associate commits
+        // sh 'sentry-cli --auth-token ${SENTRY_API_KEY} releases --org rstudio --project ide-backend set-commits --auto ${RSTUDIO_VERSION}'
+
+        // // finalize release
+        // sh 'sentry-cli --auth-token ${SENTRY_API_KEY} releases --org rstudio --project ide-backend finalize ${RSTUDIO_VERSION}'
       }
     }
 
