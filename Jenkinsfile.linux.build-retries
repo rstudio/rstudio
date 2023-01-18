@@ -1,8 +1,3 @@
-flavor = 'server'
-os = 'jammy'
-arch = 'amd64'
-type = 'DEB'
-
 pipeline {
   agent {
     label 'linux && amd64'
@@ -28,6 +23,11 @@ pipeline {
 
   environment {
     GITHUB_LOGIN = credentials('github-rstudio-jenkins')
+    OS = 'jammy'
+    ARCH = 'amd64'
+    FLAVOR = 'server'
+    TYPE = 'DEB'
+    AWS_ACCOUNT_ID = '749683154838'
   }
 
   stages {
@@ -87,7 +87,9 @@ pipeline {
           steps {
             echo "Uploading debug artifacts to ${AWS_PATH}"
             sh "touch test-file.txt"
-            sh "aws s3 cp ./test-file.txt ${AWS_PATH}"
+            withAWS(role: 'build', roleAccount: AWS_ACCOUNT_ID) {
+              sh "aws s3 cp ./test-file.txt ${AWS_PATH}"
+            }
           }
         }
       }
