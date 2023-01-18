@@ -23,7 +23,7 @@ pipeline {
     string(name: 'RSTUDIO_VERSION_PATCH',  defaultValue: '999', description: 'RStudio Patch Version')
     booleanParam(name: 'RSTUDIO_SKIP_QT', defaultValue: false, description: 'Skips installing and bulding for QT')
     booleanParam(name: 'DAILY', defaultValue: false, description: 'Runs daily build if true')
-    booleanParam(name: 'PUBLISH', defaultValue: true, description: 'Runs publish stage if true')
+    booleanParam(name: 'PUBLISH', defaultValue: false, description: 'Runs publish stage if true')
     gitParameter defaultValue: "${env.GIT_BRANCH}", name: 'COMMIT_HASH', type: 'PT_REVISION'
   }
 
@@ -61,17 +61,33 @@ pipeline {
     }
 
     stage('Prepare Windows Container') {
-      steps {
-        withAWS(role: 'build', roleAccount: AWS_ACCOUNT_ID) {
-          pullBuildPush(
-            image_name: 'jenkins/ide',
-            dockerfile: "docker/jenkins/Dockerfile.windows",
-            image_tag: "windows-${RSTUDIO_FLOWER}",
-            build_args: utils.jenkins_user_build_args(),
-            build_arg_jenkins_uid: null, // Ensure linux-only step is not run on windows (id -u jenkins)
-            build_arg_jenkins_gid: null, // Ensure linux-only step is not run on windows (id -g jenkins)
-            build_arg_docker_gid: null, // Ensure linux-only step is not run on windows (stat -c %g /var/run/docker.sock)
-            retry_image_pull: 5)
+      agent { label "windows" }
+      stages {
+        stage('Checkout') {
+          when { expression { return params.COMMIT_HASH } } // do not run step if commit hash is not present
+          steps {
+            echo "Commit_hash value: ${params.COMMIT_HASH}"
+            checkout([$class: 'GitSCM',
+               branches: [[name: "${params.COMMIT_HASH}"]],
+               extensions: [],
+               userRemoteConfigs: [[credentialsId: 'github-rstudio-jenkins', url: 'https://github.com/rstudio/rstudio']]])
+          }
+        }
+        stage('Pull-Build-Push') {
+          steps {
+            sh 'git config core.longpaths true'
+            withCredentials([usernameColonPassword(credentialsId: 'github-rstudio-jenkins', variable: "github_login")]) {
+              pullBuildPush(
+                image_name: 'jenkins/ide',
+                dockerfile: "docker/jenkins/Dockerfile.windows",
+                image_tag: "windows-${RSTUDIO_FLOWER}",
+                build_args: utils.jenkins_user_build_args(),
+                build_arg_jenkins_uid: null, // Ensure linux-only step is not run on windows (id -u jenkins)
+                build_arg_jenkins_gid: null, // Ensure linux-only step is not run on windows (id -g jenkins)
+                build_arg_docker_gid: null, // Ensure linux-only step is not run on windows (stat -c %g /var/run/docker.sock)
+                retry_image_pull: 5)
+            }
+          }
         }
       }
     }
@@ -98,7 +114,7 @@ pipeline {
           stage('Build Windows') {
             agent {
               docker {
-                image "jenkins/ide-docs:${env.BRANCH_NAME.replaceAll('/', '-')}"
+                image "jenkins/ide:windows-${RSTUDIO_FLOWER}"
                   registryUrl 'https://263245908434.dkr.ecr.us-east-1.amazonaws.com'
                   registryCredentialsId 'ecr:us-east-1:aws-build-role'
                   reuseNode true
@@ -106,15 +122,16 @@ pipeline {
             }
 
             stages { 
-              // stage ("Checkout") {
-              //   steps {
-              //     echo "Commit_hash value: ${params.COMMIT_HASH}"
-              //       checkout([$class: 'GitSCM',
-              //         branches: [[name: "${params.COMMIT_HASH}"]],
-              //         extensions: [],
-              //         userRemoteConfigs: [[credentialsId: 'github-rstudio-jenkins', url: 'https://github.com/rstudio/rstudio']]])
-              //   }
-              // }
+              stage ('Checkout') {
+                when { expression { return params.COMMIT_HASH } } // do not run step if commit hash is not present
+                steps {
+                  echo "Commit_hash value: ${params.COMMIT_HASH}"
+                    checkout([$class: 'GitSCM',
+                      branches: [[name: "${params.COMMIT_HASH}"]],
+                      extensions: [],
+                      userRemoteConfigs: [[credentialsId: 'github-rstudio-jenkins', url: 'https://github.com/rstudio/rstudio']]])
+                }
+              }
 
               stage('Build') {
 
