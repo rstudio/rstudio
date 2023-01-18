@@ -106,15 +106,15 @@ pipeline {
             }
 
             stages { 
-              stage ("Checkout") {
-                steps {
-                  echo "Commit_hash value: ${params.COMMIT_HASH}"
-                    checkout([$class: 'GitSCM',
-                      branches: [[name: "${params.COMMIT_HASH}"]],
-                      extensions: [],
-                      userRemoteConfigs: [[credentialsId: 'github-rstudio-jenkins', url: 'https://github.com/rstudio/rstudio']]])
-                }
-              }
+              // stage ("Checkout") {
+              //   steps {
+              //     echo "Commit_hash value: ${params.COMMIT_HASH}"
+              //       checkout([$class: 'GitSCM',
+              //         branches: [[name: "${params.COMMIT_HASH}"]],
+              //         extensions: [],
+              //         userRemoteConfigs: [[credentialsId: 'github-rstudio-jenkins', url: 'https://github.com/rstudio/rstudio']]])
+              //   }
+              // }
 
               stage('Build') {
 
