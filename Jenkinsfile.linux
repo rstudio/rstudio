@@ -35,7 +35,7 @@ pipeline {
 
   stages {
     stage ("Run in Linux Agent"){
-      agent { label "linux" }
+      agent { label "linux && amd64" }
 
       stages {
         stage('Load Utils') {
@@ -50,9 +50,13 @@ pipeline {
 
         stage ("Checkout") {
           steps {
-            echo "Commit_hash value: ${params.COMMIT_HASH}"
+            script {
+              COMMIT_HASH = sh returnStdout: true, script: 'git rev-parse HEAD'
+            }
+            
+            echo "Commit_hash value: ${COMMIT_HASH}"
             checkout([$class: 'GitSCM',
-                      branches: [[name: "${params.COMMIT_HASH}"]],
+                      branches: [[name: "${COMMIT_HASH}"]],
                       extensions: [],
                       userRemoteConfigs: [[credentialsId: 'github-rstudio-jenkins', url: 'https://github.com/rstudio/rstudio']]])
           }
