@@ -60,7 +60,7 @@ pipeline {
 
     stage ("Trigger Builds") {
       parallel {
-        stage ("Open Source Builds") {
+        stage ("Binary Builds") {
           when {
             allOf {
               changeset comparator: 'REGEXP', pattern: '(?!docs/).+'
