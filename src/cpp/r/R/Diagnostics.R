@@ -224,7 +224,7 @@ sensitive information before submitting your diagnostics report.
     # detect release configurations
     sysname <- Sys.info()[["sysname"]]
     if (identical(sysname, "Darwin"))
-      "../../MacOS/diagnostics"
+      "../bin/diagnostics"
     else if (identical(sysname, "Windows"))
       "../bin/diagnostics.exe"
     else

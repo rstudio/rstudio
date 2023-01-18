@@ -319,30 +319,33 @@ std::string onDetectQuartoSourceType(
           filePath.getExtensionLowerCase() == ".md")
       {
          // if we have a format: or knit: quarto render then it's a quarto document
+         // (exclude all documents with an 'output' yaml metadata key)
          std::string yamlHeader = yaml::extractYamlHeader(pDoc->contents());
          static const boost::regex reOutput("(^|\\n)output:\\s*");
          static const boost::regex reFormat("(^|\\n)format:\\s*");
          static const boost::regex reJupyter("(^|\\n)jupyter:\\s*");
          static const boost::regex reKnitQuarto("(^|\\n)knit:\\s*quarto\\s+render");
-         // format: without output:
-         if (regex_utils::search(yamlHeader.begin(), yamlHeader.end(), reFormat) &&
-             !regex_utils::search(yamlHeader.begin(), yamlHeader.end(), reOutput))
+         if (!regex_utils::search(yamlHeader.begin(), yamlHeader.end(), reOutput)) 
          {
-            return kQuartoXt;
-         }
-         // knit: quarto render
-         else if (regex_utils::search(yamlHeader.begin(), yamlHeader.end(), reKnitQuarto))
-         {
-            return kQuartoXt;
-         }
-         // project has quarto config in build target dir
-         else if (filePath.isWithin(projects::projectContext().directory()) && projectIsQuarto())
-         {
-            return kQuartoXt;
+             // format key
+            if (regex_utils::search(yamlHeader.begin(), yamlHeader.end(), reFormat))
+            {
+               return kQuartoXt;
+            }
+            // knit: quarto render
+            else if (regex_utils::search(yamlHeader.begin(), yamlHeader.end(), reKnitQuarto))
+            {
+               return kQuartoXt;
+            }
+            // project has quarto config in build target dir
+            else if (filePath.isWithin(projects::projectContext().directory()) && projectIsQuarto())
+            {
+               return kQuartoXt;
 
-         // file has a parent directory with a quarto config
-         } else if (quartoIsInstalled() && !quartoProjectConfigFile(filePath).isEmpty()) {
-            return kQuartoXt;
+            // file has a parent directory with a quarto config
+            } else if (quartoIsInstalled() && !quartoProjectConfigFile(filePath).isEmpty()) {
+               return kQuartoXt;
+            }
          }
       }
    }
