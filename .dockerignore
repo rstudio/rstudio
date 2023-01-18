@@ -5,6 +5,7 @@
 !dependencies/osx/install-*
 !dependencies/windows/*
 !dependencies/tools/rstudio-tools.sh
+!dependencies/tools/rstudio-tools.cmd
 !docker/jenkins
 !docker/docker-compile.sh
 !package/linux/install-dependencies

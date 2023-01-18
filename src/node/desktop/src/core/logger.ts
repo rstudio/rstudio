@@ -13,8 +13,6 @@
  *
  */
 
-import winston from 'winston';
-
 import { coreState } from './core-state';
 
 export interface Logger {
@@ -28,6 +26,8 @@ export interface Logger {
   logDebug(message: string): void;
   logDiagnostic(message: string): void;
   logDiagnosticEnvVar(name: string): void;
+  closeLogFile(): void;
+  ensureTransport(): void;
 }
 
 export interface LogOptions {
@@ -54,6 +54,8 @@ export class NullLogger implements Logger {
   logDebug(message: string): void {}
   logDiagnostic(message: string): void {}
   logDiagnosticEnvVar(name: string): void {}
+  closeLogFile(): void {}
+  ensureTransport(): void {}
 }
 
 /**

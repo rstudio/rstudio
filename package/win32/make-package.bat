@@ -4,7 +4,13 @@ setlocal
 set PACKAGE_DIR="%CD%"
 set ELECTRON_SOURCE_DIR=%PACKAGE_DIR%\..\..\src\node\desktop
 
-call %PACKAGE_DIR%\..\..\dependencies\tools\rstudio-tools.cmd
+if not exist c:\rstudio-tools\dependencies (
+      set RSTUDIO_DEPENDENCIES=%PACKAGE_DIR%\..\..\dependencies
+) else (
+      set RSTUDIO_DEPENDENCIES=c:\rstudio-tools\dependencies
+)
+
+call %RSTUDIO_DEPENDENCIES%\tools\rstudio-tools.cmd
 
 set BUILD_GWT=1
 set QUICK=
@@ -26,15 +32,19 @@ if "%1" == "-h" goto :showhelp
 if "%1" == "help" goto :showhelp
 if "%1" == "/?" goto :showhelp
 
+SETLOCAL ENABLEDELAYEDEXPANSION
 for %%A in (%*) do (
-      if /I "%%A" == "clean" set CLEANBUILD=1	  
-      if /I "%%A" == "debug" set DEBUG_BUILD=1
-      if /I "%%A" == "desktop" set RSTUDIO_TARGET=Desktop
-      if /I "%%A" == "electron" set RSTUDIO_TARGET=Electron
-      if /I "%%A" == "multiarch" set MULTIARCH=1
-      if /I "%%A" == "nogwt" set BUILD_GWT=0
-      if /I "%%A" == "nozip" set NOZIP=1
-      if /I "%%A" == "quick" set QUICK=1
+      set KNOWN_ARG=0
+      if /I "%%A" == "clean" set CLEANBUILD=1 && set KNOWN_ARG=1
+      if /I "%%A" == "debug" set DEBUG_BUILD=1 && set KNOWN_ARG=1
+      if /I "%%A" == "desktop" set RSTUDIO_TARGET=Desktop && set KNOWN_ARG=1
+      if /I "%%A" == "electron" set RSTUDIO_TARGET=Electron && set KNOWN_ARG=1
+      if /I "%%A" == "multiarch" set MULTIARCH=1 && set KNOWN_ARG=1
+      if /I "%%A" == "nogwt" set BUILD_GWT=0 && set KNOWN_ARG=1
+      if /I "%%A" == "nozip" set NOZIP=1 && set KNOWN_ARG=1
+      if /I "%%A" == "quick" set QUICK=1 && set KNOWN_ARG=1
+
+      if "!KNOWN_ARG!" == "0" goto :showhelp
 )
 
 REM check for debug build
@@ -59,7 +69,7 @@ for %%F in (ant cmake) do (
 )
 
 REM find node
-set NODE_DIR=%PACKAGE_DIR%\..\..\dependencies\common\node\%RSTUDIO_NODE_VERSION%
+set NODE_DIR=%RSTUDIO_DEPENDENCIES%\common\node\%RSTUDIO_NODE_VERSION%
 set NODE=%NODE_DIR%\node.exe
 if not exist %NODE% (
       echo node.exe not found at %NODE_DIR%; exiting
@@ -89,7 +99,7 @@ echo Using npx: %NPX%
 REM Put node on the path
 set PATH=%NODE_DIR%;%PATH%
 
-set REZH=%PACKAGE_DIR%\..\..\dependencies\windows\resource-hacker\ResourceHacker.exe
+set REZH=%RSTUDIO_DEPENDENCIES%\windows\resource-hacker\ResourceHacker.exe
 if not exist %REZH% (
       echo ResourceHacker.exe not found; re-run install-dependencies.cmd and try again; exiting
       endlocal
