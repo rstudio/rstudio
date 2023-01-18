@@ -1,6 +1,6 @@
 @charset "UTF-8";
 
-@def CODE_BACKGROUND_COLOR #1f1f1f;
+@def CODE_BACKGROUND_COLOR_DARK #1f1f1f;
 @def CODE_COLOR #f0f0f0;
 
 @external rstudio-themes-dark;
@@ -76,13 +76,13 @@ p + div[style="text-align: center;"]
 }
 
 .rstudio-themes-dark.editor_dark.ace_editor_theme div.sourceCode {
-   background-color: CODE_BACKGROUND_COLOR;
+   background-color: CODE_BACKGROUND_COLOR_DARK;
    border-radius: 3px;
 }
 
 .rstudio-themes-dark.editor_dark.ace_editor_theme pre,
 .rstudio-themes-dark.editor_dark.ace_editor_theme pre code {
-   background-color: CODE_BACKGROUND_COLOR;
+   background-color: CODE_BACKGROUND_COLOR_DARK;
    color: CODE_COLOR;
    filter: none !important;
 }
@@ -94,7 +94,7 @@ p + div[style="text-align: center;"]
 
 .rstudio-themes-dark.editor_dark.ace_editor_theme table thead,
 .rstudio-themes-dark.editor_dark.ace_editor_theme table tr.even {
-   background-color: CODE_BACKGROUND_COLOR !important;
+   background-color: CODE_BACKGROUND_COLOR_DARK !important;
    border-color: #999 !important;
 }
 
@@ -108,7 +108,7 @@ p + div[style="text-align: center;"]
 }
 
 .rstudio-themes-dark.editor_dark.ace_editor_theme blockquote {
-   background-color: CODE_BACKGROUND_COLOR !important;
+   background-color: CODE_BACKGROUND_COLOR_DARK !important;
    border-radius: 3px;
 }
 
@@ -118,8 +118,8 @@ p + div[style="text-align: center;"]
  */
 .rstudio-themes-dark.editor_dark.ace_editor_theme .code-toolbar
 {
-   background-color: CODE_BACKGROUND_COLOR;
-   border: 2px solid CODE_BACKGROUND_COLOR;
+   background-color: CODE_BACKGROUND_COLOR_DARK;
+   border: 2px solid CODE_BACKGROUND_COLOR_DARK;
    border-radius: 4px;
    padding: 2px 6px;
 }
@@ -145,7 +145,7 @@ p + div[style="text-align: center;"]
 /* Ugly hack, but we don't have a better way of targeting this element. */
 .rstudio-themes-dark.editor_dark.ace_editor_theme p + div[style="text-align: center;"]
 {
-   background-color: CODE_BACKGROUND_COLOR;
+   background-color: CODE_BACKGROUND_COLOR_DARK;
    padding: 8px 0;
 }
 
@@ -159,8 +159,8 @@ p + div[style="text-align: center;"]
 
 .rstudio-themes-dark.editor_dark.ace_editor_theme .source
 {
-   background-color: CODE_BACKGROUND_COLOR;
-   border: 1px solid CODE_BACKGROUND_COLOR;
+   background-color: CODE_BACKGROUND_COLOR_DARK;
+   border: 1px solid CODE_BACKGROUND_COLOR_DARK;
 }
 
 .rstudio-themes-dark.editor_dark.ace_editor_theme .output,
