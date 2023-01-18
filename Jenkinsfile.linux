@@ -16,7 +16,7 @@ pipeline {
   parameters {
     string(name: 'RSTUDIO_VERSION_PATCH', defaultValue: '0', description: 'RStudio Patch Version')
     string(name: 'SLACK_CHANNEL', defaultValue: '#ide-builds-dev', description: 'Slack channel to publish build message.')
-    string(name: 'OS_FILTER', defaultValue: 'jammy', description: 'Pattern to limit builds by matching OS')
+    string(name: 'OS_FILTER', defaultValue: 'all', description: 'Pattern to limit builds by matching OS')
     string(name: 'ARCH_FILTER', defaultValue: 'all', description: 'Pattern to limit builds by matching ARCH')
     string(name: 'FLAVOR_FILTER', defaultValue: 'all', description: 'Pattern to limit builds by matching FLAVOR')
     booleanParam(name: 'DAILY', defaultValue: true, description: 'Runs daily build if true')
@@ -73,54 +73,56 @@ pipeline {
           }
         }
 
-        // stage('Container Matrix') {
-        //   matrix {
-        //     agent any
+        stage('Container Matrix') {
+          matrix {
+            agent any
 
-        //     when {
-        //       anyOf {
-        //         equals expected: params.OS_FILTER, actual: env.os;
-        //         equals expected: params.OS_FILTER, actual: 'all'
-        //       }
-        //     }
+            when {
+              anyOf {
+                equals expected: params.OS_FILTER, actual: env.os;
+                equals expected: params.OS_FILTER, actual: 'all'
+              }
+            }
 
-        //     axes {
-        //       axis {
-        //         name 'os'
-        //         values 'bionic', 'jammy', 'centos7', 'rhel8', 'rhel9', 'opensuse15'
-        //       }
-        //       axis {
-        //         name 'arch'
-        //         values 'x86_64', 'arm64'
-        //       }
-        //     }
+            axes {
+              axis {
+                name 'os'
+                // values 'bionic', 'jammy', 'centos7', 'rhel8', 'rhel9', 'opensuse15'
+                values 'jammy'
+              }
+              axis {
+                name 'arch'
+                // values 'x86_64', 'arm64'
+                values 'x86_64'
+              }
+            }
 
-        //     stages {
-        //       stage ("Pull Build Push Image") {
-        //         agent {
-        //           label "linux && ${arch}"
-        //         }
+            stages {
+              stage ("Pull Build Push Image") {
+                agent {
+                  label "linux && ${arch}"
+                }
 
-        //         environment {
-        //           GITHUB_LOGIN = credentials('github-rstudio-jenkins')
-        //         }
+                environment {
+                  GITHUB_LOGIN = credentials('github-rstudio-jenkins')
+                }
 
-        //         steps {
-        //           pullBuildPush(
-        //             image_name: 'jenkins/ide',
-        //             image_tag: "${os}-${arch}-${env.BRANCH_NAME.replaceAll('/', '-')}",
-        //             latest_tag: false,
-        //             dockerfile: "docker/jenkins/Dockerfile.${os}",
-        //             build_arg_jenkins_uid: 'JENKINS_UID',
-        //             build_arg_jenkins_gid: 'JENKINS_GID',
-        //             build_args: "--build-arg ARCH=${arch} --build-arg GITHUB_LOGIN=${GITHUB_LOGIN}",
-        //             push: env.BRANCH_IS_PRIMARY
-        //           )
-        //         }
-        //       }
-        //     }
-        //   }
-        // }
+                steps {
+                  pullBuildPush(
+                    image_name: 'jenkins/ide',
+                    image_tag: "${os}-${arch}-${env.BRANCH_NAME.replaceAll('/', '-')}",
+                    latest_tag: false,
+                    dockerfile: "docker/jenkins/Dockerfile.${os}",
+                    build_arg_jenkins_uid: 'JENKINS_UID',
+                    build_arg_jenkins_gid: 'JENKINS_GID',
+                    build_args: "--build-arg ARCH=${arch} --build-arg GITHUB_LOGIN=${GITHUB_LOGIN}",
+                    push: env.BRANCH_IS_PRIMARY
+                  )
+                }
+              }
+            }
+          }
+        }
 
 
         stage('Build Matrix') {
@@ -137,11 +139,13 @@ pipeline {
             axes {
               axis {
                 name 'os'
-                values 'bionic', 'jammy', 'centos7', 'rhel8', 'rhel9', 'opensuse15'
+                // values 'bionic', 'jammy', 'centos7', 'rhel8', 'rhel9', 'opensuse15'
+                values 'jammy'
               }
               axis {
                 name 'arch'
-                values 'x86_64', 'arm64'
+                // values 'x86_64', 'arm64'
+                values 'x86_64'
               }
               axis {
                   name 'flavor'
