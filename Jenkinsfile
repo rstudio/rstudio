@@ -53,7 +53,7 @@ pipeline {
       steps { 
         echo "Creating a sentry release for version ${RSTUDIO_VERSION}"
 
-        sh "HOME=$(pwd) ./dependencies/common/install-sentry-cli"
+        sh "HOME=`pwd` ./dependencies/common/install-sentry-cli"
         sh "which sentry-cli"
         // // create new release on Sentry
         // sh 'sentry-cli --auth-token ${SENTRY_API_KEY} releases --org rstudio --project ide-backend new ${RSTUDIO_VERSION}''
