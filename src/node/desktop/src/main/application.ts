@@ -23,7 +23,7 @@ import { kRStudioInitialProject, kRStudioInitialWorkingDir } from '../core/r-use
 import { generateRandomPort } from '../core/system';
 import { getDesktopBridge } from '../renderer/desktop-bridge';
 import { DesktopActivation } from './activation-overlay';
-import { AppState } from './app-state';
+import { appState, AppState } from './app-state';
 import { ApplicationLaunch } from './application-launch';
 import { ArgsManager } from './args-manager';
 import { prepareEnvironment, promptUserForR } from './detect-r';
@@ -46,6 +46,7 @@ import {
 import { WindowTracker } from './window-tracker';
 import { configureSatelliteWindow, configureSecondaryWindow } from './window-utils';
 import { Client, Server } from 'net-ipc';
+import { LoggerCallback } from './logger-callback';
 
 /**
  * The RStudio application
@@ -58,6 +59,7 @@ export class Application implements AppState {
   port = generateRandomPort();
   windowTracker = new WindowTracker();
   gwtCallback?: GwtCallback;
+  loggerCallback?: LoggerCallback;
   sessionStartDelaySeconds = 0;
   sessionEarlyExitCode = 0;
   startupDelayMs = 0;
@@ -297,6 +299,9 @@ export class Application implements AppState {
     initializeLang();
 
     this.argsManager.handleAppReadyCommands(this);
+
+    // provide logging capabiity to renderer and preload
+    this.loggerCallback = new LoggerCallback();
 
     // on Windows, ask the user what version of R they'd like to use
     let rPath = '';
