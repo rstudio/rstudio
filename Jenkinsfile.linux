@@ -1,3 +1,5 @@
+def utils
+
 pipeline {
   agent none
 
@@ -71,54 +73,54 @@ pipeline {
           }
         }
 
-        stage('Container Matrix') {
-          matrix {
-            agent any
+        // stage('Container Matrix') {
+        //   matrix {
+        //     agent any
 
-            when {
-              anyOf {
-                equals expected: params.OS_FILTER, actual: env.os;
-                equals expected: params.OS_FILTER, actual: 'all'
-              }
-            }
+        //     when {
+        //       anyOf {
+        //         equals expected: params.OS_FILTER, actual: env.os;
+        //         equals expected: params.OS_FILTER, actual: 'all'
+        //       }
+        //     }
 
-            axes {
-              axis {
-                name 'os'
-                values 'bionic', 'jammy', 'centos7', 'rhel8', 'rhel9', 'opensuse15'
-              }
-              axis {
-                name 'arch'
-                values 'x86_64', 'arm64'
-              }
-            }
+        //     axes {
+        //       axis {
+        //         name 'os'
+        //         values 'bionic', 'jammy', 'centos7', 'rhel8', 'rhel9', 'opensuse15'
+        //       }
+        //       axis {
+        //         name 'arch'
+        //         values 'x86_64', 'arm64'
+        //       }
+        //     }
 
-            stages {
-              stage ("Pull Build Push Image") {
-                agent {
-                  label "linux && ${arch}"
-                }
+        //     stages {
+        //       stage ("Pull Build Push Image") {
+        //         agent {
+        //           label "linux && ${arch}"
+        //         }
 
-                environment {
-                  GITHUB_LOGIN = credentials('github-rstudio-jenkins')
-                }
+        //         environment {
+        //           GITHUB_LOGIN = credentials('github-rstudio-jenkins')
+        //         }
 
-                steps {
-                  pullBuildPush(
-                    image_name: 'jenkins/ide',
-                    image_tag: "${os}-${arch}-${env.BRANCH_NAME.replaceAll('/', '-')}",
-                    latest_tag: false,
-                    dockerfile: "docker/jenkins/Dockerfile.${os}",
-                    build_arg_jenkins_uid: 'JENKINS_UID',
-                    build_arg_jenkins_gid: 'JENKINS_GID',
-                    build_args: "--build-arg ARCH=${arch} --build-arg GITHUB_LOGIN=${GITHUB_LOGIN}",
-                    push: env.BRANCH_IS_PRIMARY
-                  )
-                }
-              }
-            }
-          }
-        }
+        //         steps {
+        //           pullBuildPush(
+        //             image_name: 'jenkins/ide',
+        //             image_tag: "${os}-${arch}-${env.BRANCH_NAME.replaceAll('/', '-')}",
+        //             latest_tag: false,
+        //             dockerfile: "docker/jenkins/Dockerfile.${os}",
+        //             build_arg_jenkins_uid: 'JENKINS_UID',
+        //             build_arg_jenkins_gid: 'JENKINS_GID',
+        //             build_args: "--build-arg ARCH=${arch} --build-arg GITHUB_LOGIN=${GITHUB_LOGIN}",
+        //             push: env.BRANCH_IS_PRIMARY
+        //           )
+        //         }
+        //       }
+        //     }
+        //   }
+        // }
 
 
         stage('Build Matrix') {
@@ -324,5 +326,3 @@ pipeline {
     }
   }
 }
-
-def utils
