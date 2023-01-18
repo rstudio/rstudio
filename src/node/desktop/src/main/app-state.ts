@@ -20,6 +20,7 @@ import { FilePath } from '../core/file-path';
 import { DesktopActivation } from './activation-overlay';
 import { Application } from './application';
 import { GwtCallback } from './gwt-callback';
+import { LoggerCallback } from './logger-callback';
 import { PendingWindow } from './pending-window';
 import { WindowTracker } from './window-tracker';
 
@@ -35,6 +36,7 @@ export interface AppState {
   generateNewPort(): void;
   windowTracker: WindowTracker;
   gwtCallback?: GwtCallback;
+  loggerCallback?: LoggerCallback;
   setScratchTempDir(path: FilePath): void;
   scratchTempDir(defaultPath: FilePath): FilePath;
   sessionStartDelaySeconds: number;
