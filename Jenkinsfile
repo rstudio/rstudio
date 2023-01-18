@@ -99,4 +99,10 @@ pipeline {
       }
     }
   }
+
+  post {
+    always {
+      sendNotifications slack_channel: SLACK_CHANNEL
+    }
+  }
 }
