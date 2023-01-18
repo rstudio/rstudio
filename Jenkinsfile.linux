@@ -161,8 +161,6 @@ pipeline {
                 }
 
                 environment {
-                  CODESIGN_KEY = credentials('gpg-codesign-private-key')
-                  CODESIGN_PASS = credentials('gpg-codesign-passphrase')
                   SENTRY_API_KEY = credentials('ide-sentry-api-key')
                   GITHUB_LOGIN = credentials('github-rstudio-jenkins')
                   AWS_BUCKET="rstudio-ide-build"
@@ -170,15 +168,15 @@ pipeline {
                   PRODUCT="${flavor}"
                 }
 
-                // stages {
-                //   stage('Compile and Sign Package') {
-                //     steps {
-                //       dir('package/linux') {
-                //         sh "./make-${flavor}-package ${PACKAGE_TYPE} clean"
-                //         sh "../../docker/jenkins/sign-release.sh /build-${flavor.capitalize()}-${PACKAGE_TYPE}/rstudio-*.${PACKAGE_TYPE.toLowerCase()} ${CODESIGN_KEY} ${CODESIGN_PASS}"
-                //       }
-                //     }
-                //   }
+                stages {
+                  stage('Compile and Sign Package') {
+                    steps {
+                      dir('package/linux') {
+                        sh "./make-${flavor}-package ${PACKAGE_TYPE} clean"
+                        // sh "../../docker/jenkins/sign-release.sh /build-${flavor.capitalize()}-${PACKAGE_TYPE}/rstudio-*.${PACKAGE_TYPE.toLowerCase()} ${CODESIGN_KEY} ${CODESIGN_PASS}"
+                      }
+                    }
+                  }
 
                   // stage('Run Tests') {
                   //   stages {
