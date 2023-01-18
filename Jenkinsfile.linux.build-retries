@@ -79,22 +79,15 @@ pipeline {
           }
         } */
 
-        stage('Upload Artifacts') {
+        stage('Sentry Upload') {
           environment {
-            AWS_PATH="s3://rstudio-ide-build/${flavor}/${os}/${arch}/"
+            AWS_PATH="s3://rstudio-sentry-upload/${flavor}/${os}/${arch}/"
           }
+          //TODO: upload to s3, and then 
           steps {
             echo "Uploading debug artifacts to ${AWS_PATH}"
             sh "touch test-file.txt"
             sh "aws s3 cp ./test-file.txt ${AWS_PATH}"
-
-            //TODO: figure out what to include. Should this only run if the Sentry Upload stage failed?
-
-            // Upload debug files to s3
-            /* dir("package/linux/build-${flavor.capitalize()}-${type}/src/cpp") {
-              echo $(ls)
-              sh "aws s3 cp ${STUFF} ${AWS_PATH}"
-            } */
           }
         }
       }
