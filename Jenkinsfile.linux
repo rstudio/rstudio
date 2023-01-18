@@ -115,8 +115,7 @@ pipeline {
                     dockerfile: "docker/jenkins/Dockerfile.${os}",
                     build_arg_jenkins_uid: 'JENKINS_UID',
                     build_arg_jenkins_gid: 'JENKINS_GID',
-                    build_args: "--build-arg ARCH=${arch} --build-arg GITHUB_LOGIN=${GITHUB_LOGIN}",
-                    push: env.BRANCH_IS_PRIMARY
+                    build_args: "--build-arg ARCH=${arch} --build-arg GITHUB_LOGIN=${GITHUB_LOGIN}"
                   )
                 }
               }
