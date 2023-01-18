@@ -170,15 +170,15 @@ pipeline {
                   PRODUCT="${flavor}"
                 }
 
-                stages {
-                  stage('Compile and Sign Package') {
-                    steps {
-                      dir('package/linux') {
-                        sh "./make-${flavor}-package ${PACKAGE_TYPE} clean"
-                        sh "../../docker/jenkins/sign-release.sh /build-${flavor.capitalize()}-${PACKAGE_TYPE}/rstudio-*.${PACKAGE_TYPE.toLowerCase()} ${CODESIGN_KEY} ${CODESIGN_PASS}"
-                      }
-                    }
-                  }
+                // stages {
+                //   stage('Compile and Sign Package') {
+                //     steps {
+                //       dir('package/linux') {
+                //         sh "./make-${flavor}-package ${PACKAGE_TYPE} clean"
+                //         sh "../../docker/jenkins/sign-release.sh /build-${flavor.capitalize()}-${PACKAGE_TYPE}/rstudio-*.${PACKAGE_TYPE.toLowerCase()} ${CODESIGN_KEY} ${CODESIGN_PASS}"
+                //       }
+                //     }
+                //   }
 
                   // stage('Run Tests') {
                   //   stages {
@@ -319,7 +319,7 @@ pipeline {
                   //     }
                   //   }
                   // }
-                }
+                // }
               }
             }
           }
