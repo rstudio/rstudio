@@ -62,11 +62,23 @@ pipeline {
           }
         }
 
+        stage ('Checkout') {
+          steps {
+            script {
+              COMMIT_HASH = sh returnStdout: true, script: 'git rev-parse HEAD'
+            }
+            
+            echo "Commit_hash value: ${COMMIT_HASH}"
+            checkout([$class: 'GitSCM',
+                      branches: [[name: "${COMMIT_HASH}"]],
+                      extensions: [],
+                      userRemoteConfigs: [[credentialsId: 'github-rstudio-jenkins', url: 'https://github.com/rstudio/rstudio']]])
+          }
+        }
+
         stage('Container Matrix') {
           matrix {
-            agent {
-              label "linux && ${arch}"
-            }
+            agent any
 
             when {
               anyOf {
@@ -87,21 +99,11 @@ pipeline {
             }
 
             stages {
-              stage ("Checkout") {
-                steps {
-                  script {
-                    COMMIT_HASH = sh returnStdout: true, script: 'git rev-parse HEAD'
-                  }
-                  
-                  echo "Commit_hash value: ${COMMIT_HASH}"
-                  checkout([$class: 'GitSCM',
-                            branches: [[name: "${COMMIT_HASH}"]],
-                            extensions: [],
-                            userRemoteConfigs: [[credentialsId: 'github-rstudio-jenkins', url: 'https://github.com/rstudio/rstudio']]])
+              stage ("Pull Build Push Image") {
+                agent {
+                  label "linux && ${arch}"
                 }
-              }
 
-              stage('Prepare Container') {
                 environment {
                   GITHUB_LOGIN = credentials('github-rstudio-jenkins')
                 }
@@ -114,7 +116,7 @@ pipeline {
                     dockerfile: "docker/jenkins/Dockerfile.${os}",
                     build_arg_jenkins_uid: 'JENKINS_UID',
                     build_arg_jenkins_gid: 'JENKINS_GID',
-                    build_args: "--build-arg GITHUB_LOGIN=${GITHUB_LOGIN} --build-arg ARCH=${arch}",
+                    build_args: "--build-arg ARCH=${arch} --build-arg GITHUB_LOGIN=${GITHUB_LOGIN}",
                     push: env.BRANCH_IS_PRIMARY
                   )
                 }
