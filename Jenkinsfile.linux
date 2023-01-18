@@ -111,10 +111,10 @@ pipeline {
                     image_name: 'jenkins/ide',
                     image_tag: "${os}-${arch}-${env.BRANCH_NAME.replaceAll('/', '-')}",
                     latest_tag: false,
-                    dockerfile: "docker/jenkins/Dockerfile.${os}-${arch}",
+                    dockerfile: "docker/jenkins/Dockerfile.${os}",
                     build_arg_jenkins_uid: 'JENKINS_UID',
                     build_arg_jenkins_gid: 'JENKINS_GID',
-                    builds_args: "--build-arg GITHUB_LOGIN=${GITHUB_LOGIN}",
+                    builds_args: "--build-arg GITHUB_LOGIN=${GITHUB_LOGIN} --build-arg ARCH=${arch}",
                     push: env.BRANCH_IS_PRIMARY
                   )
                 }
