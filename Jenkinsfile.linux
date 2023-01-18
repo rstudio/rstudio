@@ -34,295 +34,301 @@ pipeline {
   }
 
   stages {
-    stage('Load Utils') {
-      steps {
-        script {
-          sh 'printenv'
-          sh "echo 'Loading utils from ${env.WORKSPACE}/utils.groovy'"
-          utils = load "${env.WORKSPACE}/utils.groovy"
-        }
-      }
-    }
+    stage ("Run in Linux Agent"){
+      agent { label "linux" }
 
-    stage ("Checkout") {
-      steps {
-        echo "Commit_hash value: ${params.COMMIT_HASH}"
-        checkout([$class: 'GitSCM',
-                  branches: [[name: "${params.COMMIT_HASH}"]],
-                  extensions: [],
-                  userRemoteConfigs: [[credentialsId: 'github-rstudio-jenkins', url: 'https://github.com/rstudio/rstudio']]])
-      }
-    }
-
-    stage('Versioning') {
-      steps {
-        script {
-          (RSTUDIO_VERSION,
-            RSTUDIO_VERSION_MAJOR,
-            RSTUDIO_VERSION_MINOR,
-            RSTUDIO_VERSION_PATCH,
-            RSTUDIO_VERSION_SUFFIX) = utils.getVersion()
-          currentBuild.displayName = "${RSTUDIO_VERSION_MAJOR}.${RSTUDIO_VERSION_MINOR}.${RSTUDIO_VERSION_PATCH}${RSTUDIO_VERSION_SUFFIX}"
-          IS_PRO = RSTUDIO_VERSION_SUFFIX.contains('pro')
-        }
-      }
-    }
-
-    stage('Container Matrix') {
-      matrix {
-        agent {
-          label "linux && ${arch}"
-        }
-
-        when {
-          anyOf {
-            equals expected: params.OS_FILTER, actual: env.os;
-            equals expected: params.OS_FILTER, actual: 'all'
-          }
-        }
-
-        axes {
-          axis {
-            name 'os'
-            values 'bionic', 'jammy', 'centos7', 'rhel8', 'rhel9', 'opensuse15'
-          }
-          axis {
-            name 'arch'
-            values 'x86_64', 'arm64'
-          }
-        }
-
-        stages {
-          stage('Prepare Container') {
-            environment {
-              GITHUB_LOGIN = credentials('github-rstudio-jenkins')
-            }
-
-            steps {
-              pullBuildPush(
-                image_name: 'jenkins/ide',
-                image_tag: "${os}-${arch}-${env.BRANCH_NAME.replaceAll('/', '-')}",
-                latest_tag: false,
-                dockerfile: "docker/jenkins/Dockerfile.${os}-${arch}",
-                build_arg_jenkins_uid: 'JENKINS_UID',
-                build_arg_jenkins_gid: 'JENKINS_GID',
-                builds_args: "--build-arg GITHUB_LOGIN=${GITHUB_LOGIN}",
-                push: env.BRANCH_IS_PRIMARY
-              )
+      stages {
+        stage('Load Utils') {
+          steps {
+            script {
+              sh 'printenv'
+              sh "echo 'Loading utils from ${env.WORKSPACE}/utils.groovy'"
+              utils = load "${env.WORKSPACE}/utils.groovy"
             }
           }
         }
+
+        stage ("Checkout") {
+          steps {
+            echo "Commit_hash value: ${params.COMMIT_HASH}"
+            checkout([$class: 'GitSCM',
+                      branches: [[name: "${params.COMMIT_HASH}"]],
+                      extensions: [],
+                      userRemoteConfigs: [[credentialsId: 'github-rstudio-jenkins', url: 'https://github.com/rstudio/rstudio']]])
+          }
+        }
+
+        stage('Versioning') {
+          steps {
+            script {
+              (RSTUDIO_VERSION,
+                RSTUDIO_VERSION_MAJOR,
+                RSTUDIO_VERSION_MINOR,
+                RSTUDIO_VERSION_PATCH,
+                RSTUDIO_VERSION_SUFFIX) = utils.getVersion()
+              currentBuild.displayName = "${RSTUDIO_VERSION_MAJOR}.${RSTUDIO_VERSION_MINOR}.${RSTUDIO_VERSION_PATCH}${RSTUDIO_VERSION_SUFFIX}"
+              IS_PRO = RSTUDIO_VERSION_SUFFIX.contains('pro')
+            }
+          }
+        }
+
+        stage('Container Matrix') {
+          matrix {
+            agent {
+              label "linux && ${arch}"
+            }
+
+            when {
+              anyOf {
+                equals expected: params.OS_FILTER, actual: env.os;
+                equals expected: params.OS_FILTER, actual: 'all'
+              }
+            }
+
+            axes {
+              axis {
+                name 'os'
+                values 'bionic', 'jammy', 'centos7', 'rhel8', 'rhel9', 'opensuse15'
+              }
+              axis {
+                name 'arch'
+                values 'x86_64', 'arm64'
+              }
+            }
+
+            stages {
+              stage('Prepare Container') {
+                environment {
+                  GITHUB_LOGIN = credentials('github-rstudio-jenkins')
+                }
+
+                steps {
+                  pullBuildPush(
+                    image_name: 'jenkins/ide',
+                    image_tag: "${os}-${arch}-${env.BRANCH_NAME.replaceAll('/', '-')}",
+                    latest_tag: false,
+                    dockerfile: "docker/jenkins/Dockerfile.${os}-${arch}",
+                    build_arg_jenkins_uid: 'JENKINS_UID',
+                    build_arg_jenkins_gid: 'JENKINS_GID',
+                    builds_args: "--build-arg GITHUB_LOGIN=${GITHUB_LOGIN}",
+                    push: env.BRANCH_IS_PRIMARY
+                  )
+                }
+              }
+            }
+          }
+        }
+
+        // stage('Build Matrix') {
+        //   matrix {
+        //     agent {
+        //       label "linux && ${arch}"
+        //     }
+
+        //     when {
+        //       anyOf {
+        //         equals expected: params.OS_FILTER, actual: env.os;
+        //         equals expected: params.OS_FILTER, actual: 'all'
+        //       }
+        //     }
+
+        //     axes {
+        //       axis {
+        //         name 'os'
+        //         values 'bionic', 'jammy', 'centos7', 'rhel8', 'rhel9', 'opensuse15'
+        //       }
+        //       axis {
+        //         name 'arch'
+        //         values 'x86_64', 'arm64'
+        //       }
+        //       axis {
+        //           name 'flavor'
+        //           values 'desktop', 'server', 'electron'
+        //       }
+        //     }
+
+        //     stages {
+        //       stage ("Build"){
+        //         agent {
+        //           docker {
+        //             image "jenkins/ide:${os}-${arch}-${env.BRANCH_NAME.replaceAll('/', '-')}"
+        //             registryCredentialsId 'ecr:us-east-1:aws-build-role'
+        //             registryUrl 'https://263245908434.dkr.ecr.us-east-1.amazonaws.com'
+        //             reuseNode true
+        //           }
+        //         }
+
+        //         environment {
+        //           CODESIGN_KEY = credentials('gpg-codesign-private-key')
+        //           CODESIGN_PASS = credentials('gpg-codesign-passphrase')
+        //           SENTRY_API_KEY = credentials('ide-sentry-api-key')
+        //           GITHUB_LOGIN = credentials('github-rstudio-jenkins')
+        //           AWS_BUCKET="rstudio-ide-build"
+        //           AWS_PATH="${flavor}/${os}/${arch}/"
+        //           PRODUCT="${flavor}"
+        //           RSTUDIO_VERSION_MAJOR = "${rstudioVersionMajor}"
+        //           RSTUDIO_VERSION_MINOR = "${rstudioVersionMinor}"
+        //           RSTUDIO_VERSION_PATCH = "${rstudioVersionPatch}"
+        //           RSTUDIO_VERSION_SUFFIX = "${rstudioVersionSuffix}"
+        //           RSTUDIO_VERSION=" ${rstudioVersionMajor}.${rstudioVersionMinor}.${rstudioVersionPatch}${rstudioVersionSuffix}"
+        //         }
+
+        //         stages {
+        //           stage('Compile and Sign Package') {
+        //             steps {
+        //               dir('package/linux') {
+        //                 sh "./make-${flavor}-package ${PACKAGE_TYPE} clean"
+        //                 sh "../../docker/jenkins/sign-release.sh /build-${flavor.capitalize()}-${PACKAGE_TYPE}/rstudio-*.${PACKAGE_TYPE.toLowerCase()} ${CODESIGN_KEY} ${CODESIGN_PASS}"
+        //               }
+        //             }
+        //           }
+
+        //           stage('Run Tests') {
+        //             stages {
+        //               stage ('Electron Tests') {
+        //                 when {
+        //                   expression { return "${flavor}" == "electron" }
+        //                 }
+
+        //                 steps {
+        //                   dir( "src/node/desktop" ) {
+        //                     sh './scripts/docker-run-unit-tests.sh'
+        //                   }
+        //                 }
+
+        //                 post {
+        //                   failure {
+        //                     unstable("Electron unit tests failed (${PACKAGE_TYPE} on ${os})")
+        //                   }
+        //                 }
+        //               }
+
+        //               stage ('GWT Tests') {
+        //                 steps {
+        //                   dir ( "package/linux/build-${flavor.capitalize()}-${PACKAGE_TYPE}/src/gwt" ) {
+        //                     sh './gwt-unit-tests.sh'
+        //                   }
+        //                 }
+
+        //                 post {
+        //                   failure {
+        //                     unstable("GWT unit tests failed (${flavor.capitalize()} ${PACKAGE_TYPE} on ${os})")
+        //                   }
+        //                 }
+        //               }
+
+        //               stage ('CPP Unit Tests') {
+        //                 steps {
+        //                   dir ( "package/linux/build-${flavor.capitalize()}-${PACKAGE_TYPE}/src/cpp" ) {
+        //                     sh './rstudio-tests'
+        //                   }
+        //                 }
+
+        //                 post {
+        //                   failure {
+        //                     unstable("C++ unit tests failed (${flavor.capitalize()} ${PACKAGE_TYPE} on ${os})")
+        //                   }
+        //                 }
+        //               }
+        //             }
+        //           }
+
+        //           stage('Upload Artifacts') {
+        //             when {
+        //               expression { return params.PUBLISH }
+        //             }
+
+        //             stages {
+        //               stage('Upload to Sentry') {
+        //                 steps {
+        //                   dir("package/linux/build-${flavor.capitalize()}-${os}/src/cpp") {
+        //                     retry 5 {
+        //                       timeout activity: true, time: 15 {
+        //                         sh "../../../../../docker/jenkins/sentry-upload.sh ${SENTRY_API_KEY}"
+        //                       }
+        //                     }
+        //                   }
+        //                 }
+        //               }
+
+        //               stage ('Upload to AWS'){
+        //                 steps {
+        //                   script {
+        //                     if (rstudioVersionSuffix.contains("pro")) {
+        //                       if (env.PRODUCT == "desktop") {
+        //                         env.PRODUCT = "desktop-pro"
+        //                       } else if (env.PRODUCT == "electron") {
+        //                         env.PRODUCT = "electron-pro"
+        //                       } else if (env.PRODUCT == "server") {
+        //                         env.PRODUCT = "workbench"
+        //                       }
+        //                     }
+
+        //                     def packageDir = "package/linux/build-${flavor.capitalize()}-${PACKAGE_TYPE}/"
+        //                     def tarballDir = "_CPack_Packages/Linux/${PACKAGE_TYPE}"
+        //                     def packageFile = ''
+        //                     def tarballFile = ''
+        //                     dir(packageDir) {
+        //                       // Upload the pacakge to S3
+        //                       env.packageFile = findFiles glob: "rstudio-*.${PACKAGE_TYPE.toLowerCase()}"
+        //                       // Strip relwithdebinfo froem the filename
+        //                       def renamedFile = echo $packageFile | sed 's/-relwithdebinfo//'
+        //                       mv $packageFile $renamedFile
+        //                       packageFile=$renamedFile
+
+        //                       withAWS(credentials: 'ide-build') {
+        //                         s3Upload acl: 'BucketOwnerFullControl', bucket: "$AWS_BUCKET", file: "$packageFile", path: "$AWS_PATH"
+        //                       }
+
+        //                       // Also upload installer-less version for desktop builds
+        //                       if ((flavor == "desktop") || (flavor == "electron")) {
+        //                         dir(tarballDir) {
+        //                           tarballFile = findFiles glob: '*.tar.gz'
+        //                           // Strip relwithdebinfo from the filename
+        //                           def renamedTarball = echo $tarballFile | sed 's/-relwithdebinfo//'
+        //                           mv $tarballFile $renamedTarball
+        //                           tarballFile=$renamedTarball
+
+        //                           withAWS(credentials: 'ide-build') {
+        //                             s3Upload acl: 'BucketOwnerFullControl', bucket: "$AWS_BUCKET", file: "$tarballFile", path: "$AWS_PATH"
+        //                           }
+        //                         }
+        //                       }
+        //                     }
+        //                   }
+        //                 }
+        //               }
+
+        //               stage ('Upload Packages to Dailies Page') {
+        //                 steps {
+        //                   dir('docker/jenkins') {
+        //                     sh "./publish-build.sh --build ${PRODUCT}/${os} --url https://s3.amazonaws.com/rstudio-ide-build/${flavor}/${os}/${arch}/${packageFile} --pat ${GITHUB_LOGIN_PSW} --file ${packageDir}/${packageFile} --version ${RSTUDIO_VERSION}"
+        //                   }
+        //                 }
+        //               }
+
+        //               stage ('Upload Tarballs to Dailies Page') {
+        //                 when {
+        //                   anyOf {
+        //                     expression { return current_container.flavor == "desktop" }
+        //                     expression { return current_container.flavor == "electron" }
+        //                   }
+        //                 }
+        //                 steps {
+        //                   dir ('docker/jenkins') {
+        //                     sh "./publish-build.sh --build ${PRODUCT}/${os} --url https://s3.amazonaws.com/rstudio-ide-build/${flavor}/${os}/${arch}/${tarballFile} --pat ${GITHUB_LOGIN_PSW} --file ${packageDir}/${tarballDir}/${tarballFile} --version ${RSTUDIO_VERSION}"
+        //                   }
+        //                 }
+        //               }
+        //             }
+        //           }
+        //         }
+        //       }
+        //     }
+        //   }
+        // }
       }
     }
-
-    // stage('Build Matrix') {
-    //   matrix {
-    //     agent {
-    //       label "linux && ${arch}"
-    //     }
-
-    //     when {
-    //       anyOf {
-    //         equals expected: params.OS_FILTER, actual: env.os;
-    //         equals expected: params.OS_FILTER, actual: 'all'
-    //       }
-    //     }
-
-    //     axes {
-    //       axis {
-    //         name 'os'
-    //         values 'bionic', 'jammy', 'centos7', 'rhel8', 'rhel9', 'opensuse15'
-    //       }
-    //       axis {
-    //         name 'arch'
-    //         values 'x86_64', 'arm64'
-    //       }
-    //       axis {
-    //           name 'flavor'
-    //           values 'desktop', 'server', 'electron'
-    //       }
-    //     }
-
-    //     stages {
-    //       stage ("Build"){
-    //         agent {
-    //           docker {
-    //             image "jenkins/ide:${os}-${arch}-${env.BRANCH_NAME.replaceAll('/', '-')}"
-    //             registryCredentialsId 'ecr:us-east-1:aws-build-role'
-    //             registryUrl 'https://263245908434.dkr.ecr.us-east-1.amazonaws.com'
-    //             reuseNode true
-    //           }
-    //         }
-
-    //         environment {
-    //           CODESIGN_KEY = credentials('gpg-codesign-private-key')
-    //           CODESIGN_PASS = credentials('gpg-codesign-passphrase')
-    //           SENTRY_API_KEY = credentials('ide-sentry-api-key')
-    //           GITHUB_LOGIN = credentials('github-rstudio-jenkins')
-    //           AWS_BUCKET="rstudio-ide-build"
-    //           AWS_PATH="${flavor}/${os}/${arch}/"
-    //           PRODUCT="${flavor}"
-    //           RSTUDIO_VERSION_MAJOR = "${rstudioVersionMajor}"
-    //           RSTUDIO_VERSION_MINOR = "${rstudioVersionMinor}"
-    //           RSTUDIO_VERSION_PATCH = "${rstudioVersionPatch}"
-    //           RSTUDIO_VERSION_SUFFIX = "${rstudioVersionSuffix}"
-    //           RSTUDIO_VERSION=" ${rstudioVersionMajor}.${rstudioVersionMinor}.${rstudioVersionPatch}${rstudioVersionSuffix}"
-    //         }
-
-    //         stages {
-    //           stage('Compile and Sign Package') {
-    //             steps {
-    //               dir('package/linux') {
-    //                 sh "./make-${flavor}-package ${PACKAGE_TYPE} clean"
-    //                 sh "../../docker/jenkins/sign-release.sh /build-${flavor.capitalize()}-${PACKAGE_TYPE}/rstudio-*.${PACKAGE_TYPE.toLowerCase()} ${CODESIGN_KEY} ${CODESIGN_PASS}"
-    //               }
-    //             }
-    //           }
-
-    //           stage('Run Tests') {
-    //             stages {
-    //               stage ('Electron Tests') {
-    //                 when {
-    //                   expression { return "${flavor}" == "electron" }
-    //                 }
-
-    //                 steps {
-    //                   dir( "src/node/desktop" ) {
-    //                     sh './scripts/docker-run-unit-tests.sh'
-    //                   }
-    //                 }
-
-    //                 post {
-    //                   failure {
-    //                     unstable("Electron unit tests failed (${PACKAGE_TYPE} on ${os})")
-    //                   }
-    //                 }
-    //               }
-
-    //               stage ('GWT Tests') {
-    //                 steps {
-    //                   dir ( "package/linux/build-${flavor.capitalize()}-${PACKAGE_TYPE}/src/gwt" ) {
-    //                     sh './gwt-unit-tests.sh'
-    //                   }
-    //                 }
-
-    //                 post {
-    //                   failure {
-    //                     unstable("GWT unit tests failed (${flavor.capitalize()} ${PACKAGE_TYPE} on ${os})")
-    //                   }
-    //                 }
-    //               }
-
-    //               stage ('CPP Unit Tests') {
-    //                 steps {
-    //                   dir ( "package/linux/build-${flavor.capitalize()}-${PACKAGE_TYPE}/src/cpp" ) {
-    //                     sh './rstudio-tests'
-    //                   }
-    //                 }
-
-    //                 post {
-    //                   failure {
-    //                     unstable("C++ unit tests failed (${flavor.capitalize()} ${PACKAGE_TYPE} on ${os})")
-    //                   }
-    //                 }
-    //               }
-    //             }
-    //           }
-
-    //           stage('Upload Artifacts') {
-    //             when {
-    //               expression { return params.PUBLISH }
-    //             }
-
-    //             stages {
-    //               stage('Upload to Sentry') {
-    //                 steps {
-    //                   dir("package/linux/build-${flavor.capitalize()}-${os}/src/cpp") {
-    //                     retry 5 {
-    //                       timeout activity: true, time: 15 {
-    //                         sh "../../../../../docker/jenkins/sentry-upload.sh ${SENTRY_API_KEY}"
-    //                       }
-    //                     }
-    //                   }
-    //                 }
-    //               }
-
-    //               stage ('Upload to AWS'){
-    //                 steps {
-    //                   script {
-    //                     if (rstudioVersionSuffix.contains("pro")) {
-    //                       if (env.PRODUCT == "desktop") {
-    //                         env.PRODUCT = "desktop-pro"
-    //                       } else if (env.PRODUCT == "electron") {
-    //                         env.PRODUCT = "electron-pro"
-    //                       } else if (env.PRODUCT == "server") {
-    //                         env.PRODUCT = "workbench"
-    //                       }
-    //                     }
-
-    //                     def packageDir = "package/linux/build-${flavor.capitalize()}-${PACKAGE_TYPE}/"
-    //                     def tarballDir = "_CPack_Packages/Linux/${PACKAGE_TYPE}"
-    //                     def packageFile = ''
-    //                     def tarballFile = ''
-    //                     dir(packageDir) {
-    //                       // Upload the pacakge to S3
-    //                       env.packageFile = findFiles glob: "rstudio-*.${PACKAGE_TYPE.toLowerCase()}"
-    //                       // Strip relwithdebinfo froem the filename
-    //                       def renamedFile = echo $packageFile | sed 's/-relwithdebinfo//'
-    //                       mv $packageFile $renamedFile
-    //                       packageFile=$renamedFile
-
-    //                       withAWS(credentials: 'ide-build') {
-    //                         s3Upload acl: 'BucketOwnerFullControl', bucket: "$AWS_BUCKET", file: "$packageFile", path: "$AWS_PATH"
-    //                       }
-
-    //                       // Also upload installer-less version for desktop builds
-    //                       if ((flavor == "desktop") || (flavor == "electron")) {
-    //                         dir(tarballDir) {
-    //                           tarballFile = findFiles glob: '*.tar.gz'
-    //                           // Strip relwithdebinfo from the filename
-    //                           def renamedTarball = echo $tarballFile | sed 's/-relwithdebinfo//'
-    //                           mv $tarballFile $renamedTarball
-    //                           tarballFile=$renamedTarball
-
-    //                           withAWS(credentials: 'ide-build') {
-    //                             s3Upload acl: 'BucketOwnerFullControl', bucket: "$AWS_BUCKET", file: "$tarballFile", path: "$AWS_PATH"
-    //                           }
-    //                         }
-    //                       }
-    //                     }
-    //                   }
-    //                 }
-    //               }
-
-    //               stage ('Upload Packages to Dailies Page') {
-    //                 steps {
-    //                   dir('docker/jenkins') {
-    //                     sh "./publish-build.sh --build ${PRODUCT}/${os} --url https://s3.amazonaws.com/rstudio-ide-build/${flavor}/${os}/${arch}/${packageFile} --pat ${GITHUB_LOGIN_PSW} --file ${packageDir}/${packageFile} --version ${RSTUDIO_VERSION}"
-    //                   }
-    //                 }
-    //               }
-
-    //               stage ('Upload Tarballs to Dailies Page') {
-    //                 when {
-    //                   anyOf {
-    //                     expression { return current_container.flavor == "desktop" }
-    //                     expression { return current_container.flavor == "electron" }
-    //                   }
-    //                 }
-    //                 steps {
-    //                   dir ('docker/jenkins') {
-    //                     sh "./publish-build.sh --build ${PRODUCT}/${os} --url https://s3.amazonaws.com/rstudio-ide-build/${flavor}/${os}/${arch}/${tarballFile} --pat ${GITHUB_LOGIN_PSW} --file ${packageDir}/${tarballDir}/${tarballFile} --version ${RSTUDIO_VERSION}"
-    //                   }
-    //                 }
-    //               }
-    //             }
-    //           }
-    //         }
-    //       }
-    //     }
-    //   }
-    // }
   }
 }
 
