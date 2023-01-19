@@ -19,8 +19,10 @@ boolean hasChangesIn(String module, boolean invertMatch = false) {
   * Adds a remote reference to the specified branch.
   */
 void addRemoteRef(String branchName) {
-  sh "git config --add remote.origin.fetch +refs/heads/${branchName}:refs/remotes/origin/${branchName}"
-  sh "git fetch --no-tags origin ${branchName}"
+  withCredentials([gitUsernamePassword(credentialsId: 'github-rstudio-jenkins', gitToolName: 'Default')]) {
+    sh "git config --add remote.origin.fetch +refs/heads/${branchName}:refs/remotes/origin/${branchName}"
+    sh "git fetch --no-tags --force --progress ${GIT_URL} refs/heads/${branchName}:refs/remotes/origin/${branchName}"
+  }
 }
 
 /**
@@ -32,7 +34,6 @@ def getVersion() {
                           returnStdout: true
                         ).trim()
   echo "RStudio build version: ${rstudioVersion}"
-  currentBuild.displayName = "${rstudioVersion}"
 
   // Split on [-+] first to avoid having to worry about splitting out .pro<n>
   def version = rstudioVersion.split('[-+]')
