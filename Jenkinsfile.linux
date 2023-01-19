@@ -34,19 +34,13 @@ pipeline {
       agent { label "linux && amd64" }
 
       stages {
-        stage('Load Utils') {
+        stage('Initialize') {
           steps {
             script {
               sh 'printenv'
               sh "echo 'Loading utils from ${env.WORKSPACE}/utils.groovy'"
               utils = load "${env.WORKSPACE}/utils.groovy"
-            }
-          }
-        }
 
-        stage('Versioning') {
-          steps {
-            script {
               (RSTUDIO_VERSION,
                 RSTUDIO_VERSION_MAJOR,
                 RSTUDIO_VERSION_MINOR,
@@ -55,16 +49,11 @@ pipeline {
               RSTUDIO_VERSION = "${RSTUDIO_VERSION_MAJOR}.${RSTUDIO_VERSION_MINOR}.${RSTUDIO_VERSION_PATCH}${RSTUDIO_VERSION_SUFFIX}"
               currentBuild.displayName = "${RSTUDIO_VERSION}"
               IS_PRO = RSTUDIO_VERSION_SUFFIX.contains('pro')
-            }
-          }
-        }
 
-        stage ('Checkout') {
-          steps {
-            script {
               COMMIT_HASH = sh returnStdout: true, script: 'git rev-parse HEAD'
             }
-            
+            echo "Version is ${RSTUDIO_VERSION}"
+
             echo "Commit_hash value: ${COMMIT_HASH}"
             checkout([$class: 'GitSCM',
                       branches: [[name: "${COMMIT_HASH}"]],
