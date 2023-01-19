@@ -61,7 +61,7 @@ pipeline {
         sh "HOME=`pwd` ./dependencies/common/install-sentry-cli"
 
         // create new release on Sentry
-        sh 'sentry-cli --auth-token ${SENTRY_API_KEY} releases --org rstudio --project ide-backend new ${RSTUDIO_VERSION}''
+        sh 'sentry-cli --auth-token ${SENTRY_API_KEY} releases --org rstudio --project ide-backend new ${RSTUDIO_VERSION}'
 
         // associate commits
         sh 'sentry-cli --auth-token ${SENTRY_API_KEY} releases --org rstudio --project ide-backend set-commits --auto ${RSTUDIO_VERSION}'
