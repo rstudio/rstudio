@@ -50,12 +50,16 @@ pipeline {
         SENTRY_API_KEY = credentials('ide-sentry-api-key')
       }
 
+      when {
+        branch comparator: 'REGEXP', pattern: 'main|elsbeth-geranium|ghost-orchid|cherry-blossom|mountain-hydrangea'
+      }
+
       steps { 
         echo "Creating a sentry release for version ${RSTUDIO_VERSION}"
 
+        // Install sentry
         sh "HOME=`pwd` ./dependencies/common/install-sentry-cli"
-        sh "echo ${PATH}"
-        sh "which sentry-cli"
+
         // // create new release on Sentry
         // sh 'sentry-cli --auth-token ${SENTRY_API_KEY} releases --org rstudio --project ide-backend new ${RSTUDIO_VERSION}''
 
