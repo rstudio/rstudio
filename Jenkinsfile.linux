@@ -183,8 +183,8 @@ pipeline {
 
                 stages {
                   stage('Upload Artifacts') {
-                    // Upload Sentry
                     steps {
+                      // Upload Sentry
                       dir("package/linux/build-${flavor.capitalize()}-${os}/src/cpp") {
                         retry 5 {
                           timeout activity: true, time: 15 {
@@ -192,10 +192,8 @@ pipeline {
                           }
                         }
                       }
-                    }
 
-                    // Upload to AWS
-                    steps {
+                      // Upload to AWS
                       script {
                         if (rstudioVersionSuffix.contains("pro")) {
                           if (env.PRODUCT == "desktop") {
@@ -239,10 +237,8 @@ pipeline {
                           }
                         }
                       }
-                    }
-                    
-                    // Upload to Dailies
-                    steps {
+                      
+                      // Upload to Dailies
                       script {
                         dir('docker/jenkins') {
                           sh "./publish-build.sh --build ${PRODUCT}/${os} --url https://s3.amazonaws.com/rstudio-ide-build/${flavor}/${os}/${arch}/${packageFile} --pat ${GITHUB_LOGIN_PSW} --file ${packageDir}/${packageFile} --version ${RSTUDIO_VERSION}"
