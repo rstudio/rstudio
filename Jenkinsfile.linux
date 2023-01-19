@@ -1,5 +1,5 @@
 pipeline {
-  agent { label "linux && amd64" }
+  agent { label "linux && x86_64" }
 
   options {
     disableConcurrentBuilds()
