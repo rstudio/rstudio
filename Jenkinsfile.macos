@@ -15,7 +15,7 @@ pipeline {
   parameters {
       string(name: 'SLACK_CHANNEL', defaultValue: '#ide-builds', description: 'Slack channel to publish build message.')
       string(name: 'RSTUDIO_VERSION_PATCH',  defaultValue: '999', description: 'RStudio Patch Version')
-      booleanParam(name: 'DAILY', defaultValue: true, description: 'Runs daily build if true')
+      booleanParam(name: 'DAILY', defaultValue: false, description: 'Runs daily build if true')
       booleanParam(name: 'PUBLISH', defaultValue: true, description: 'Runs publish stage if true')
       gitParameter defaultValue: 'none', name: 'COMMIT_HASH', type: 'PT_REVISION'
   }
@@ -198,7 +198,8 @@ pipeline {
                   stage("Notarize") {
                     steps {
                       withCredentials([usernamePassword(credentialsId: 'ide-apple-notarizer', usernameVariable: 'APPLE_ID', passwordVariable: 'APPLE_ID_PASSWORD')]) {
-                        sh "docker/jenkins/notarize-release.sh package/osx/build/${PACKAGE_FILE}"
+                        echo 'Notarize'
+                        // sh "docker/jenkins/notarize-release.sh package/osx/build/${PACKAGE_FILE}"
                       }
                     }
                   }
@@ -208,7 +209,8 @@ pipeline {
                       // this job is going to run on a macOS slave, which cannot use an instance-profile
                       withAWS(role: 'ide-build') {
                         retry(5) {
-                          sh "aws s3 cp package/osx/build/${PACKAGE_FILE} ${BUILD_DEST}"
+                          echo 'Upload'
+                          // sh "aws s3 cp package/osx/build/${PACKAGE_FILE} ${BUILD_DEST}"
                         }
                       }
                     }
@@ -225,7 +227,8 @@ pipeline {
                     }
                     steps {
                       // upload daily build redirects
-                      sh 'docker/jenkins/publish-daily-binary.sh https://s3.amazonaws.com/rstudio-ide-build/${PRODUCT}/macos/${PACKAGE_FILE} ${RSTUDIO_ORG_PEM}'
+                      echo 'Redirects'
+                      // sh 'docker/jenkins/publish-daily-binary.sh https://s3.amazonaws.com/rstudio-ide-build/${PRODUCT}/macos/${PACKAGE_FILE} ${RSTUDIO_ORG_PEM}'
                     }
                   }
                   
@@ -243,11 +246,12 @@ pipeline {
                       retry(5) {
                         // timeout sentry in 15 minutes
                         timeout(activity: true, time: 15) {
+                          echo 'Sentry'
                           // upload Javascript source maps
-                          sh 'cd package/osx/build/gwt && sentry-cli --auth-token ${SENTRY_API_KEY} releases --org rstudio --project ide-backend files ${RSTUDIO_RELEASE} upload-sourcemaps --ext js --ext symbolMap --rewrite .'
+                          // sh 'cd package/osx/build/gwt && sentry-cli --auth-token ${SENTRY_API_KEY} releases --org rstudio --project ide-backend files ${RSTUDIO_RELEASE} upload-sourcemaps --ext js --ext symbolMap --rewrite .'
 
                           // upload C++ debug information
-                          sh 'cd package/osx/build/src/cpp && sentry-cli --auth-token ${SENTRY_API_KEY} upload-dif --org rstudio --project ide-backend -t dsym .'
+                          // sh 'cd package/osx/build/src/cpp && sentry-cli --auth-token ${SENTRY_API_KEY} upload-dif --org rstudio --project ide-backend -t dsym .'
                         }
                       }
                     }
@@ -258,8 +262,9 @@ pipeline {
                       GITHUB_LOGIN = credentials('github-rstudio-jenkins')
                     }
                     steps {
+                      echo 'Publish'
                       // publish build to dailies page
-                      sh 'docker/jenkins/publish-build.sh --build ${PRODUCT}/macos --url https://s3.amazonaws.com/rstudio-ide-build/${PRODUCT}/macos/${PACKAGE_FILE} --pat ${GITHUB_LOGIN_PSW} --file package/osx/build/${PACKAGE_FILE} --version ${RSTUDIO_RELEASE}'
+                      // sh 'docker/jenkins/publish-build.sh --build ${PRODUCT}/macos --url https://s3.amazonaws.com/rstudio-ide-build/${PRODUCT}/macos/${PACKAGE_FILE} --pat ${GITHUB_LOGIN_PSW} --file package/osx/build/${PACKAGE_FILE} --version ${RSTUDIO_RELEASE}'
                     }
                   }
                 }
