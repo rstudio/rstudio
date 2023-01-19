@@ -17,7 +17,7 @@ pipeline {
       string(name: 'RSTUDIO_VERSION_PATCH',  defaultValue: '999', description: 'RStudio Patch Version')
       booleanParam(name: 'DAILY', defaultValue: true, description: 'Runs daily build if true')
       booleanParam(name: 'PUBLISH', defaultValue: true, description: 'Runs publish stage if true')
-      gitParameter defaultValue: "${env.GIT_BRANCH}", name: 'COMMIT_HASH', type: 'PT_REVISION'
+      gitParameter defaultValue: 'none', name: 'COMMIT_HASH', type: 'PT_REVISION'
   }
 
   environment {
@@ -35,8 +35,6 @@ pipeline {
     stage('Load Utils') {
       steps {
         script {
-          sh 'printenv'
-          sh "echo 'Loading utils from ${env.WORKSPACE}/utils.groovy'"
           utils = load "${env.WORKSPACE}/utils.groovy"
         }
       }
@@ -44,7 +42,7 @@ pipeline {
 
     stage ("Checkout") {
       when {
-        expression { COMMIT_HASH != null}
+        expression { params.COMMIT_HASH != 'none'}
       }
       steps {
         echo "Commit_hash value: ${params.COMMIT_HASH}"
@@ -74,11 +72,10 @@ pipeline {
         // boost won't compile without the brew version of openssl.
         // only add it to the dep resolve step though, or the ide build will compile against the wrong openssl
         PATH = '/usr/local/opt/openssl/bin:/usr/local/opt/openssl/bin:/usr/local/bin:/usr/bin:/bin:/usr/sbin:/sbin'
+        GITHUB_LOGIN = credentials('github-rstudio-jenkins')
       }
       steps {
-        withCredentials([usernameColonPassword(credentialsId: 'github-rstudio-jenkins', variable: "GITHUB_LOGIN")]) {
-          sh 'cd dependencies/osx && RSTUDIO_GITHUB_LOGIN=$GITHUB_LOGIN ./install-dependencies-osx && cd ../..'
-        }
+        sh 'cd dependencies/osx && RSTUDIO_GITHUB_LOGIN=$GITHUB_LOGIN ./install-dependencies-osx && cd ../..'
       }
     }
 
@@ -209,7 +206,7 @@ pipeline {
                   stage("Upload") {
                     steps {
                       // this job is going to run on a macOS slave, which cannot use an instance-profile
-                      withCredentials([[$class: 'AmazonWebServicesCredentialsBinding', credentialsId: 'jenkins-aws']]) {
+                      withAWS(role: 'ide-build') {
                         retry(5) {
                           sh "aws s3 cp package/osx/build/${PACKAGE_FILE} ${BUILD_DEST}"
                         }
@@ -228,9 +225,7 @@ pipeline {
                     }
                     steps {
                       // upload daily build redirects
-                      withCredentials([file(credentialsId: 'www-rstudio-org-pem', variable: 'wwwRstudioOrgPem')]) {
-                        sh 'docker/jenkins/publish-daily-binary.sh https://s3.amazonaws.com/rstudio-ide-build/${PRODUCT}/macos/${PACKAGE_FILE} ${RSTUDIO_ORG_PEM}'
-                      }
+                      sh 'docker/jenkins/publish-daily-binary.sh https://s3.amazonaws.com/rstudio-ide-build/${PRODUCT}/macos/${PACKAGE_FILE} ${RSTUDIO_ORG_PEM}'
                     }
                   }
                   
@@ -238,22 +233,18 @@ pipeline {
                     environment {
                       SENTRY_API_KEY = credentials('ide-sentry-api-key')
                     }
+                    when {
+                      expression {
+                        return DAILY;
+                      }
+                    }
                     steps {
                       // upload debug symbols to Sentry
                       retry(5) {
                         // timeout sentry in 15 minutes
                         timeout(activity: true, time: 15) {
-                          // create new release on Sentry
-                          sh 'sentry-cli --auth-token ${SENTRY_API_KEY} releases --org rstudio --project ide-backend new ${RSTUDIO_RELEASE}'
-
                           // upload Javascript source maps
                           sh 'cd package/osx/build/gwt && sentry-cli --auth-token ${SENTRY_API_KEY} releases --org rstudio --project ide-backend files ${RSTUDIO_RELEASE} upload-sourcemaps --ext js --ext symbolMap --rewrite .'
-
-                          // associate commits
-                          sh 'sentry-cli --auth-token ${SENTRY_API_KEY} releases --org rstudio --project ide-backend set-commits --auto ${RSTUDIO_RELEASE}'
-
-                          // finalize release
-                          sh 'sentry-cli --auth-token ${SENTRY_API_KEY} releases --org rstudio --project ide-backend finalize ${RSTUDIO_RELEASE}'
 
                           // upload C++ debug information
                           sh 'cd package/osx/build/src/cpp && sentry-cli --auth-token ${SENTRY_API_KEY} upload-dif --org rstudio --project ide-backend -t dsym .'
@@ -263,12 +254,12 @@ pipeline {
                   }
                   
                   stage("Publish") {
-                    steps{
+                    environment {
+                      GITHUB_LOGIN = credentials('github-rstudio-jenkins')
+                    }
+                    steps {
                       // publish build to dailies page
-                      withCredentials([usernamePassword(credentialsId: 'github-rstudio-jenkins', usernameVariable: 'GITHUB_USERNAME', passwordVariable: 'GITHUB_PAT')]) {
-                        // publish the build
-                        sh "docker/jenkins/publish-build.sh --build ${PRODUCT}/macos --url https://s3.amazonaws.com/rstudio-ide-build/${PRODUCT}/macos/${PACKAGE_FILE} --pat ${GITHUB_PAT} --file package/osx/build/${PACKAGE_FILE} --version ${RSTUDIO_RELEASE}"
-                      }
+                      sh 'docker/jenkins/publish-build.sh --build ${PRODUCT}/macos --url https://s3.amazonaws.com/rstudio-ide-build/${PRODUCT}/macos/${PACKAGE_FILE} --pat ${GITHUB_LOGIN_PSW} --file package/osx/build/${PACKAGE_FILE} --version ${RSTUDIO_RELEASE}'
                     }
                   }
                 }
