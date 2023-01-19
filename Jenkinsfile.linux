@@ -50,7 +50,10 @@ pipeline {
             }
 
             steps {
-              def versionFlower = readFile(file: 'version/RELEASE').replaceAll(" ", "-").toLowerCase().trim()
+              script {
+                def versionFlower = readFile(file: 'version/RELEASE').replaceAll(" ", "-").toLowerCase().trim()
+              }
+              
               pullBuildPush(
                 image_name: 'jenkins/ide',
                 image_tag: "${os}-${arch}-${versionFlower}-linux-dev",
