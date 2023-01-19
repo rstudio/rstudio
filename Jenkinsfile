@@ -10,6 +10,7 @@ def buildJob(String platform) {
           string(name: "SLACK_CHANNEL", value: "${SLACK_CHANNEL}"),
           booleanParam(name: "DAILY", value: true),
           booleanParam(name: "PUBLISH", value: env.PUBLISH)
+        ]
 }
 
 pipeline {
@@ -103,6 +104,7 @@ pipeline {
             buildJob 'Windows'
             buildJob 'Linux'
             buildJob 'MacOS'
+          }
         }
       }
     }
