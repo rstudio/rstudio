@@ -58,7 +58,7 @@ pipeline {
                 build_arg_jenkins_uid: 'JENKINS_UID',
                 build_arg_jenkins_gid: 'JENKINS_GID',
                 build_args: "--build-arg ARCH=${arch} --build-arg GITHUB_LOGIN=${GITHUB_LOGIN}",
-                push: ${params.PUBLISH}
+                push: "${params.PUBLISH}"
               )
             }
           }
