@@ -1,6 +1,17 @@
 def BINARY_JOB_ROOT="IDE/OS-Builds/Platforms"
 def utils
 
+def buildJob(String platform) {
+  build wait: false,
+        job: "${BINARY_JOB_ROOT}/${platform}/${env.BUILD_BRANCH}",
+        parameters: [
+          gitParameter(name: "COMMIT_HASH", value: "${COMMIT_HASH}"),
+          string(name: "RSTUDIO_VERSION_PATCH", value: "${RSTUDIO_VERSION_PATCH}"),
+          string(name: "SLACK_CHANNEL", value: "${SLACK_CHANNEL}"),
+          booleanParam(name: "DAILY", value: true),
+          booleanParam(name: "PUBLISH", value: env.PUBLISH)
+}
+
 pipeline {
   agent {
     dockerfile {
@@ -21,6 +32,7 @@ pipeline {
     RSTUDIO_VERSION_PATCH = 0
     RSTUDIO_VERSION_SUFFIX = 0
     COMMIT_HASH=""
+    PUBLISH=false
     BUILD_BRANCH="${env.BRANCH_NAME.replace('/', '%2F')}"
   }
 
@@ -68,6 +80,10 @@ pipeline {
 
         // finalize release
         sh 'sentry-cli --auth-token ${SENTRY_API_KEY} releases --org rstudio --project ide-backend finalize ${RSTUDIO_VERSION}'
+
+        script {
+          PUBLISH=true
+        }
       }
     }
 
@@ -84,30 +100,9 @@ pipeline {
           }
 
           steps {
-            build wait: false,
-                  job: "${BINARY_JOB_ROOT}/Windows/${env.BUILD_BRANCH}",
-                  parameters: [
-                    gitParameter(name: "COMMIT_HASH", value: "${COMMIT_HASH}"),
-                    string(name: "RSTUDIO_VERSION_PATCH", value: "${RSTUDIO_VERSION_PATCH}"),
-                    string(name: "SLACK_CHANNEL", value: "${SLACK_CHANNEL}")
-                  ]
-
-            build wait: false,
-                  job: "${BINARY_JOB_ROOT}/Linux/${env.BUILD_BRANCH}",
-                  parameters: [
-                    gitParameter(name: "COMMIT_HASH", value: "${COMMIT_HASH}"),
-                    string(name: "RSTUDIO_VERSION_PATCH", value: "${RSTUDIO_VERSION_PATCH}"),
-                    string(name: "SLACK_CHANNEL", value: "${SLACK_CHANNEL}")
-                  ]
-
-            build wait: false,
-                  job: "${BINARY_JOB_ROOT}/MacOS/${env.BUILD_BRANCH}",
-                  parameters: [
-                    gitParameter(name: "COMMIT_HASH", value: "${COMMIT_HASH}"),
-                    string(name: "RSTUDIO_VERSION_PATCH", value: "${RSTUDIO_VERSION_PATCH}"),
-                    string(name: "SLACK_CHANNEL", value: "${SLACK_CHANNEL}")
-                  ]
-          }
+            buildJob 'Windows'
+            buildJob 'Linux'
+            buildJob 'MacOS'
         }
       }
     }
