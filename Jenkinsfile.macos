@@ -15,7 +15,7 @@ pipeline {
   parameters {
       string(name: 'SLACK_CHANNEL', defaultValue: '#ide-builds', description: 'Slack channel to publish build message.')
       string(name: 'RSTUDIO_VERSION_PATCH',  defaultValue: '999', description: 'RStudio Patch Version')
-      booleanParam(name: 'DAILY', defaultValue: true, description: 'Runs daily build if true')
+      booleanParam(name: 'DAILY', defaultValue: false, description: 'Runs daily build if true')
       booleanParam(name: 'PUBLISH', defaultValue: true, description: 'Runs publish stage if true')
       gitParameter defaultValue: 'none', name: 'COMMIT_HASH', type: 'PT_REVISION'
   }
