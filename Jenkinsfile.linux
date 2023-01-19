@@ -1,3 +1,5 @@
+def versionFlower = ""
+
 pipeline {
   agent { label "linux && x86_64" }
 
@@ -51,9 +53,11 @@ pipeline {
 
             steps {
               script {
-                def versionFlower = readFile(file: 'version/RELEASE').replaceAll(" ", "-").toLowerCase().trim()
+                versionFlower = readFile(file: 'version/RELEASE').replaceAll(" ", "-").toLowerCase().trim()
               }
-              
+
+              echo "Creating image jenkins/ide:${os}-${arch}-${versionFlower}-linux-dev"
+
               pullBuildPush(
                 image_name: 'jenkins/ide',
                 image_tag: "${os}-${arch}-${versionFlower}-linux-dev",
