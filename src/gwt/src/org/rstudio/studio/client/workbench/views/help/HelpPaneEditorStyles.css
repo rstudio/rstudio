@@ -5,7 +5,7 @@
 
 @def CODE_COLOR #f0f0f0;
 
-@external rstudio-themes-dark, rstudio-themes-default;
+@external rstudio-themes-dark, rstudio-themes-light-menus, rstudio-themes-dark-menus;
 @external rstudio-themes-scrollbars;
 @external editor_dark;
 @external ace_editor_theme;
@@ -194,11 +194,11 @@ p + div[style="text-align: center;"]
    border-radius: 3px;
 }
 
-.rstudio-themes-default.ace_editor_theme div.sourceCode {
+.rstudio-themes-light-menus.ace_editor_theme div.sourceCode {
    background-color: CODE_BACKGROUND_COLOR_LIGHT;
 }
 
-.rstudio-themes-dark.editor_dark.ace_editor_theme div.sourceCode {
+.rstudio-themes-dark-menus.ace_editor_theme div.sourceCode {
    background-color: CODE_BACKGROUND_COLOR_DARK;
 }
 
