@@ -67,6 +67,7 @@ pipeline {
         stage('Prepare Windows Container') {
           stages {
             stage('Checkout') {
+              when { expression { params.COMMIT_HASH !=  env.GIT_BRANCH } }
               steps {
                 echo "Commit_hash value: ${params.COMMIT_HASH}"
                 checkout([$class: 'GitSCM',
@@ -124,6 +125,7 @@ pipeline {
 
                 stages { 
                   stage ('Checkout') {
+                    when { expression { params.COMMIT_HASH !=  env.GIT_BRANCH } }
                     steps {
                       echo "Commit_hash value: ${params.COMMIT_HASH}"
                         checkout([$class: 'GitSCM',
@@ -169,19 +171,23 @@ pipeline {
                   stage('Sign, Upload, and Publish') {
                     when { expression { return params.PUBLISH } }
 
+                    environment {
+                      PACKAGE_VERSION = "${RSTUDIO_RELEASE}".replace('+', '-')
+                    }
+
                     stages {
                       stage('Sign') {
+                        environment {
+                          PFX_FILE = credentials('ide-windows-signing-pfx') 
+                          PFX_PASS = credentials('ide-pfx-passphrase')
+                        }
+
                         steps {
                           script {
-                            packageVersion = "${RSTUDIO_RELEASE}".replace('+', '-')
+                            def packageName = "RStudio-${PACKAGE_VERSION}-RelWithDebInfo"
 
-                            def packageName = "RStudio-${packageVersion}-RelWithDebInfo"
-
-                            withCredentials([file(credentialsId: 'ide-windows-signing-pfx', variable: 'pfx-file'), string(credentialsId: 'ide-pfx-passphrase', variable: 'pfx-passphrase')]) {
-                              bat "\"C:\\Program Files (x86)\\Windows Kits\\10\\bin\\10.0.19041.0\\x86\\signtool\" sign /f %pfx-file% /p %pfx-passphrase% /v /debug /n \"RStudio PBC\" /t http://timestamp.digicert.com  package\\win32\\build\\${packageName}.exe"
-
-                                bat "\"C:\\Program Files (x86)\\Windows Kits\\10\\bin\\10.0.19041.0\\x86\\signtool\" verify /v /pa package\\win32\\build\\${packageName}.exe"
-                            }
+                              bat "\"C:\\Program Files (x86)\\Windows Kits\\10\\bin\\10.0.19041.0\\x86\\signtool\" sign /f %pfx-file% /p %PFX_FILE% %PFX_PASS% /v /debug /n \"RStudio PBC\" /t http://timestamp.digicert.com  package\\win32\\build\\${packageName}.exe"
+                              bat "\"C:\\Program Files (x86)\\Windows Kits\\10\\bin\\10.0.19041.0\\x86\\signtool\" verify /v /pa package\\win32\\build\\${packageName}.exe"
                           }
                         }
                       }
@@ -189,10 +195,8 @@ pipeline {
                       stage('Upload') {
                         steps {
                           script {
-                            packageVersion = "${RSTUDIO_RELEASE}".replace('+', '-')
-
                             def buildDest = "s3://rstudio-ide-build/${current_container.flavor}/windows"
-                            def packageName = "RStudio-${packageVersion}"
+                            def packageName = "RStudio-${PACKAGE_VERSION}"
 
                             // strip unhelpful suffixes from filenames
                             bat "move package\\win32\\build\\${packageName}-RelWithDebInfo.exe package\\win32\\build\\${packageName}.exe"
@@ -223,38 +227,35 @@ pipeline {
                                 FOR /F %%G IN ('dir /s /b *.pdb') DO (..\\..\\..\\dependencies\\windows\\breakpad-tools-windows\\dump_syms %%G > %%G.sym)
                               '''
 
-                              // upload the breakpad symbols
-                              withCredentials([string(credentialsId: 'ide-sentry-api-key', variable: 'SENTRY_API_KEY')]) {
-                                // attempt to run sentry uplaod
-                                bat "cd package\\win32\\build\\src\\cpp && ..\\..\\..\\..\\..\\dependencies\\windows\\sentry-cli.exe --auth-token %SENTRY_API_KEY% upload-dif --log-level=debug --org rstudio --project ide-backend -t breakpad ."
-                              }
+                              // upload the breakpad symbols, attempt to run sentry uplaod
+                              bat "cd package\\win32\\build\\src\\cpp && ..\\..\\..\\..\\..\\dependencies\\windows\\sentry-cli.exe --auth-token %SENTRY_API_KEY% upload-dif --log-level=debug --org rstudio --project ide-backend -t breakpad ."
                             }
                           }
                         }
                       }
 
                       stage ('Publish') {
+                        environment {
+                          GITHUB_LOGIN = credentials('github-rstudio-jenkins')
+                        }
+
                         steps {
                           script {
-                            packageVersion = "${RSTUDIO_RELEASE}".replace('+', '-')
+                            def packageName = "RStudio-${PACKAGE_NAME}"
 
-                            def packageName = "RStudio-${packageVersion}"
-                            withCredentials([usernamePassword(credentialsId: 'github-rstudio-jenkins', usernameVariable: 'GITHUB_USERNAME', passwordVariable: 'GITHUB_PAT')]) {
+                            // derive product
+                            def product = "${FLAVOR}"
+                              if (IS_PRO) {
+                                product = "${FLAVOR}-pro"
+                              }
 
-                              // derive product
-                              def product = "${FLAVOR}"
-                                if (rstudioVersionSuffix.contains("pro")) {
-                                  product = "${FLAVOR}-pro"
-                                }
-
-                              // publish the build (self installing exe)
-                              def stdout = powershell(returnStdout: true, script: ".\\docker\\jenkins\\publish-build.ps1 -build ${product}/windows -url https://s3.amazonaws.com/rstudio-ide-build/${current_container.flavor}/windows/${packageName}.exe -pat ${GITHUB_PAT} -file package\\win32\\build\\${packageName}.exe -version ${rstudioVersionMajor}.${rstudioVersionMinor}.${rstudioVersionPatch}${rstudioVersionSuffix}")
-                                println stdout
-
-                              // publish the build (installer-less zip)
-                              stdout = powershell(returnStdout: true, script: ".\\docker\\jenkins\\publish-build.ps1 -build ${product}/windows-xcopy -url https://s3.amazonaws.com/rstudio-ide-build/${current_container.flavor}/windows/${packageName}.zip -pat ${GITHUB_PAT} -file package\\win32\\build\\${packageName}.zip -version ${rstudioVersionMajor}.${rstudioVersionMinor}.${rstudioVersionPatch}${rstudioVersionSuffix}")
+                            // publish the build (self installing exe)
+                            def stdout = powershell(returnStdout: true, script: ".\\docker\\jenkins\\publish-build.ps1 -build ${product}/windows -url https://s3.amazonaws.com/rstudio-ide-build/${current_container.flavor}/windows/${packageName}.exe -pat %GITHUB_LOGIN_PSW% -file package\\win32\\build\\${packageName}.exe -version ${rstudioVersionMajor}.${rstudioVersionMinor}.${rstudioVersionPatch}${rstudioVersionSuffix}")
                               println stdout
-                            }
+
+                            // publish the build (installer-less zip)
+                            stdout = powershell(returnStdout: true, script: ".\\docker\\jenkins\\publish-build.ps1 -build ${product}/windows-xcopy -url https://s3.amazonaws.com/rstudio-ide-build/${current_container.flavor}/windows/${packageName}.zip -pat %GITHUB_LOGIN_PSW% -file package\\win32\\build\\${packageName}.zip -version ${rstudioVersionMajor}.${rstudioVersionMinor}.${rstudioVersionPatch}${rstudioVersionSuffix}")
+                            println stdout
                           }
                         }
                       }
