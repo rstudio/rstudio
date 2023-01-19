@@ -1,9 +1,8 @@
-def BINARY_JOB_ROOT="IDE/OS-Builds/Platforms"
 def utils
 
-def buildJob(String platform) {
+def buildBinaryJob(String platform) {
   build wait: false,
-        job: "${BINARY_JOB_ROOT}/${platform}/${env.BUILD_BRANCH}",
+        job: "IDE/OS-Builds/Platforms/${platform}/${env.BUILD_BRANCH}",
         parameters: [
           gitParameter(name: "COMMIT_HASH", value: "${COMMIT_HASH}"),
           string(name: "RSTUDIO_VERSION_PATCH", value: "${RSTUDIO_VERSION_PATCH}"),
@@ -101,9 +100,9 @@ pipeline {
           }
 
           steps {
-            buildJob 'Windows'
-            buildJob 'Linux'
-            buildJob 'MacOS'
+            buildBinaryJob 'Windows'
+            buildBinaryJob 'Linux'
+            buildBinaryJob 'MacOS'
           }
         }
       }
