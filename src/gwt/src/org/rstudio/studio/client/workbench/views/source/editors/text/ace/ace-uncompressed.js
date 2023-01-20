@@ -2922,10 +2922,12 @@ var Tokenizer = function(rules) {
                     var matchIndex = match.index;
                     token = {type: null, value: ""};
                     for (var i = 0; i < type.length; i++) {
-                        if (type[i].column === undefined) {
-                            type[i].column = matchIndex;
+                        if (type[i].type) {
+                            if (type[i].column === undefined) {
+                                type[i].column = matchIndex;
+                            }
+                            matchIndex = matchIndex + type[i].value.length;
                         }
-                        matchIndex = matchIndex + type[i].value.length;
                         
                         tokens.push(type[i]);
                     }   
