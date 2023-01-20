@@ -41,6 +41,19 @@ pipeline {
           }
         }
 
+        excludes {
+          exclude {
+            axis {
+              name 'os'
+              notValues 'centos7'
+            }
+            axis {
+              name 'arch'
+              values 'arm64'
+            }
+          }
+        }
+
         stages {
           stage ("Pull Build Push Image") {
             agent {
