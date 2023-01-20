@@ -31,68 +31,63 @@ pipeline {
   }
 
   stages {
-
     stage('Prepare Container') {
       steps {
-        echo 'Preparing Container...'
-        echo "image tag: ${os}-${arch}-${env.BRANCH_NAME.replaceAll('/', '-')}"
-        /* pullBuildPush(
+        pullBuildPush(
           image_name: 'jenkins/ide',
-          image_tag: "${os}-${arch}-${env.BRANCH_NAME.replaceAll('/', '-')}",
+          image_tag: "${OS}-${ARCH}-${env.BRANCH_NAME.replaceAll('/', '-')}",
           latest_tag: false,
-          dockerfile: "docker/jenkins/Dockerfile.${os}",
+          dockerfile: "docker/jenkins/Dockerfile.${OS}",
           build_arg_jenkins_uid: 'JENKINS_UID',
           build_arg_jenkins_gid: 'JENKINS_GID',
           builds_args: "--build-arg GITHUB_LOGIN=${GITHUB_LOGIN}",
-          push: env.BRANCH_IS_PRIMARY
-        ) */
+          push: false
+        )
       }
     }
-
     stage('Build and Upload') {
-      /* agent {
+      agent {
         docker {
-          image "jenkins/ide:${os}-${arch}-${env.BRANCH_NAME.replaceAll('/', '-')}"
+          image "jenkins/ide:${OS}-${ARCH}-${env.BRANCH_NAME.replaceAll('/', '-')}"
           reuseNode true
         }
-      } */
+      }
       stages {
         stage('Compile Package') {
           steps {
-            echo 'Compiling Package...'
-            echo "Will run sh './make-${flavor}-package ${type} clean'"
-            /* dir('package/linux') {
-              sh "./make-${flavor}-package ${type} clean"
-            } */
-          }
-        }
-
-        /* stage('Sentry Upload') {
-          environment {
-            SENTRY_API_KEY = credentials('ide-sentry-api-key')
-            sentryUploadRetryLimit=5
-          }
-          steps {
-            dir("package/linux/build-${flavor.capitalize()}-${type}/src/cpp") {
-                sh "../../../../../docker/jenkins/sentry-upload.sh ${SENTRY_API_KEY} ${sentryUploadRetryLimit}"
+            dir('package/linux') {
+              sh "./make-${FLAVOR}-package ${TYPE} clean"
             }
           }
-        } */
-
-        stage('Sentry Upload') {
+        }
+        stage('Upload Build Archive') {
           environment {
-            AWS_PATH="s3://rstudio-sentry-upload/${flavor}/${os}/${arch}/"
+            AWS_PATH="s3://rstudio-sentry-upload/${FLAVOR}/${OS}/${ARCH}/"
           }
-          //TODO: upload to s3, and then 
           steps {
-            echo "Uploading debug artifacts to ${AWS_PATH}"
-            sh "touch test-file.txt"
-            withAWS(role: 'build', roleAccount: AWS_ACCOUNT_ID) {
-              sh "aws s3 cp ./test-file.txt ${AWS_PATH}"
+            dir("package/linux/build-${FLAVOR.capitalize()}-${TYPE}") {
+              sh "ls -la"
+              sh "zip -r build.zip ./*"
+              sh "ls -la"
+              echo "Uploading build archive to ${AWS_PATH}"
+              withAWS(role: 'build', roleAccount: AWS_ACCOUNT_ID) {
+                sh "aws s3 cp build.zip ${AWS_PATH}"
+              }
             }
           }
         }
       }
     }
+    /* stage('Sentry Upload') {
+      environment {
+        SENTRY_API_KEY = credentials('ide-sentry-api-key')
+        sentryUploadRetryLimit=5
+      }
+      steps {
+        dir("package/linux/build-${flavor.capitalize()}-${type}/src/cpp") {
+          sh "../../../../../docker/jenkins/sentry-upload.sh ${SENTRY_API_KEY} ${sentryUploadRetryLimit}"
+        }
+      }
+    } */
   }
 }
