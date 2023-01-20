@@ -3,8 +3,6 @@ FROM --platform=linux/$ARCH rockylinux:8
 ARG ARCH
 
 ENV OPERATING_SYSTEM=rockylinux_8
-ENV PACKAGE_TYPE='RPM'
-ENV PACKAGE_EXT = 'rpm'
 
 RUN set -x \
       && yum install epel-release -y \
