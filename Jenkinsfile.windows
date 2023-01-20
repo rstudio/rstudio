@@ -44,6 +44,17 @@ pipeline {
       }
     }
 
+    stage ('Checkout') { // checkout stage required here in order for versioning to work properly
+      when { expression { params.COMMIT_HASH != env.GIT_BRANCH } }
+      steps {
+        echo "Commit_hash value: ${params.COMMIT_HASH}"
+        checkout([$class: 'GitSCM',
+          branches: [[name: "${params.COMMIT_HASH}"]],
+          extensions: [],
+          userRemoteConfigs: [[credentialsId: 'github-rstudio-jenkins', url: GIT_URL]]])
+      }
+    }
+
     stage('Versioning') {
       steps {
         script {
@@ -53,7 +64,7 @@ pipeline {
             RSTUDIO_VERSION_PATCH,
             RSTUDIO_VERSION_SUFFIX) = utils.getVersion()
           RSTUDIO_RELEASE = "${RSTUDIO_VERSION_MAJOR}.${RSTUDIO_VERSION_MINOR}.${RSTUDIO_VERSION_PATCH}${RSTUDIO_VERSION_SUFFIX}"
-          RSTUDIO_FLOWER = readFile(file: 'version/RELEASE').replaceAll(" ", "-").toLowerCase().trim()
+          RSTUDIO_FLOWER = utils.getFlower() 
           currentBuild.displayName = "${RSTUDIO_RELEASE}"
           IS_PRO = RSTUDIO_VERSION_SUFFIX.contains('pro')
         }
@@ -64,35 +75,6 @@ pipeline {
       agent { label "windows" }
 
       stages {
-        stage('Prepare Windows Container') {
-          stages {
-            stage('Checkout') {
-              when { expression { params.COMMIT_HASH !=  env.GIT_BRANCH } }
-              steps {
-                echo "Commit_hash value: ${params.COMMIT_HASH}"
-                checkout([$class: 'GitSCM',
-                   branches: [[name: "${params.COMMIT_HASH}"]],
-                   extensions: [],
-                   userRemoteConfigs: [[credentialsId: 'github-rstudio-jenkins', url: 'https://github.com/rstudio/rstudio']]])
-              }
-            }
-            stage('Pull-Build-Push') {
-              steps {
-                withCredentials([usernameColonPassword(credentialsId: 'github-rstudio-jenkins', variable: "github_login")]) {
-                  pullBuildPush(
-                    image_name: 'jenkins/ide',
-                    dockerfile: "docker/jenkins/Dockerfile.windows",
-                    image_tag: "windows-${RSTUDIO_FLOWER}",
-                    build_args:  "--build-arg GITHUB_LOGIN=${github_login}",
-                    build_arg_jenkins_uid: null, // Ensure linux-only step is not run on windows (id -u jenkins)
-                    build_arg_jenkins_gid: null, // Ensure linux-only step is not run on windows (id -g jenkins)
-                    build_arg_docker_gid: null, // Ensure linux-only step is not run on windows (stat -c %g /var/run/docker.sock)
-                    retry_image_pull: 5)
-                }
-              }
-            }
-          }
-        }
 
         stage ('Build Matrix') {
 
@@ -125,13 +107,13 @@ pipeline {
 
                 stages { 
                   stage ('Checkout') {
-                    when { expression { params.COMMIT_HASH !=  env.GIT_BRANCH } }
+                    when { expression { params.COMMIT_HASH != env.GIT_BRANCH } }
                     steps {
                       echo "Commit_hash value: ${params.COMMIT_HASH}"
                         checkout([$class: 'GitSCM',
                           branches: [[name: "${params.COMMIT_HASH}"]],
                           extensions: [],
-                          userRemoteConfigs: [[credentialsId: 'github-rstudio-jenkins', url: 'https://github.com/rstudio/rstudio']]])
+                          userRemoteConfigs: [[credentialsId: 'github-rstudio-jenkins', url: GIT_URL]]])
                     }
                   }
 
@@ -172,7 +154,8 @@ pipeline {
                     when { expression { return params.PUBLISH } }
 
                     environment {
-                      PACKAGE_VERSION = "${RSTUDIO_RELEASE}".replace('+', '-')
+                      PACKAGE_VERSION = RSTUDIO_RELEASE.replace('+', '-')
+                      PACKAGE_NAME = "RStudio-${IS_PRO ? 'pro-' : ''}${PACKAGE_VERSION}"
                     }
 
                     stages {
@@ -184,9 +167,9 @@ pipeline {
 
                         steps {
                           script {
-                            def packageName = "RStudio-${PACKAGE_VERSION}-RelWithDebInfo"
+                            def packageName = "${PACKAGE_NAME}-RelWithDebInfo"
 
-                              bat "\"C:\\Program Files (x86)\\Windows Kits\\10\\bin\\10.0.19041.0\\x86\\signtool\" sign /f %pfx-file% /p %PFX_FILE% %PFX_PASS% /v /debug /n \"RStudio PBC\" /t http://timestamp.digicert.com  package\\win32\\build\\${packageName}.exe"
+                              bat '"C:\\Program Files (x86)\\Windows Kits\\10\\bin\\10.0.19041.0\\x86\\signtool" sign /f %pfx-file% /p %PFX_FILE% %PFX_PASS% /v /debug /n "RStudio PBC" /t http://timestamp.digicert.com  package\\win32\\build\\' + packageName + '.exe'
                               bat "\"C:\\Program Files (x86)\\Windows Kits\\10\\bin\\10.0.19041.0\\x86\\signtool\" verify /v /pa package\\win32\\build\\${packageName}.exe"
                           }
                         }
@@ -196,17 +179,16 @@ pipeline {
                         steps {
                           script {
                             def buildDest = "s3://rstudio-ide-build/${current_container.flavor}/windows"
-                            def packageName = "RStudio-${PACKAGE_VERSION}"
 
                             // strip unhelpful suffixes from filenames
-                            bat "move package\\win32\\build\\${packageName}-RelWithDebInfo.exe package\\win32\\build\\${packageName}.exe"
-                            bat "move package\\win32\\build\\${packageName}-RelWithDebInfo.zip package\\win32\\build\\${packageName}.zip"
+                            bat "move package\\win32\\build\\${PACKAGE_NAME}-RelWithDebInfo.exe package\\win32\\build\\${PACKAGE_NAME}.exe"
+                            bat "move package\\win32\\build\\${PACKAGE_NAME}-RelWithDebInfo.zip package\\win32\\build\\${PACKAGE_NAME}.zip"
 
                             // windows docker container cannot reach instance-metadata endpoint. supply credentials at upload.
                             withAWS(role: 'jenkins', roleAccount: AWS_ACCOUNT_ID) {
                               retry(5) {
-                                bat "aws s3 cp package\\win32\\build\\${packageName}.exe ${buildDest}/${packageName}.exe"
-                                bat "aws s3 cp package\\win32\\build\\${packageName}.zip ${buildDest}/${packageName}.zip"
+                                bat "aws s3 cp package\\win32\\build\\${PACKAGE_NAME}.exe ${buildDest}/${PACKAGE_NAME}.exe"
+                                bat "aws s3 cp package\\win32\\build\\${PACKAGE_NAME}.zip ${buildDest}/${PACKAGE_NAME}.zip"
                               }
                             }
                           }
@@ -228,7 +210,7 @@ pipeline {
                               '''
 
                               // upload the breakpad symbols, attempt to run sentry uplaod
-                              bat "cd package\\win32\\build\\src\\cpp && ..\\..\\..\\..\\..\\dependencies\\windows\\sentry-cli.exe --auth-token %SENTRY_API_KEY% upload-dif --log-level=debug --org rstudio --project ide-backend -t breakpad ."
+                              bat 'cd package\\win32\\build\\src\\cpp && ..\\..\\..\\..\\..\\dependencies\\windows\\sentry-cli.exe --auth-token %SENTRY_API_KEY% upload-dif --log-level=debug --org rstudio --project ide-backend -t breakpad .'
                             }
                           }
                         }
@@ -241,27 +223,39 @@ pipeline {
 
                         steps {
                           script {
-                            def packageName = "RStudio-${PACKAGE_NAME}"
-
                             // derive product
                             def product = "${FLAVOR}"
-                              if (IS_PRO) {
-                                product = "${FLAVOR}-pro"
-                              }
+
+                            if (IS_PRO) {
+                              product = "${FLAVOR}-pro"
+                            }
 
                             // publish the build (self installing exe)
-                            def stdout = powershell(returnStdout: true, script: ".\\docker\\jenkins\\publish-build.ps1 -build ${product}/windows -url https://s3.amazonaws.com/rstudio-ide-build/${current_container.flavor}/windows/${packageName}.exe -pat %GITHUB_LOGIN_PSW% -file package\\win32\\build\\${packageName}.exe -version ${rstudioVersionMajor}.${rstudioVersionMinor}.${rstudioVersionPatch}${rstudioVersionSuffix}")
-                              println stdout
+                            def stdout = powershell(returnStdout: true, script: '.\\docker\\jenkins\\publish-build.ps1 -build ' + product + '/windows -url https://s3.amazonaws.com/rstudio-ide-build/' + current_container.flavor + '/windows/' + PACKAGE_NAME + '.exe -pat %GITHUB_LOGIN_PSW% -file package\\win32\\build\\' + PACKAGE_NAME + '.exe -version %RSTUDIO_RELEASE%')
+                            println stdout
 
                             // publish the build (installer-less zip)
-                            stdout = powershell(returnStdout: true, script: ".\\docker\\jenkins\\publish-build.ps1 -build ${product}/windows-xcopy -url https://s3.amazonaws.com/rstudio-ide-build/${current_container.flavor}/windows/${packageName}.zip -pat %GITHUB_LOGIN_PSW% -file package\\win32\\build\\${packageName}.zip -version ${rstudioVersionMajor}.${rstudioVersionMinor}.${rstudioVersionPatch}${rstudioVersionSuffix}")
+                            stdout = powershell(returnStdout: true, script: '.\\docker\\jenkins\\publish-build.ps1 -build ' + product + '/windows-xcopy -url https://s3.amazonaws.com/rstudio-ide-build/' + current_container.flavor + '/windows/' + PACKAGE_NAME + '.zip -pat %GITHUB_LOGIN_PSW% -file package\\win32\\build\\' + PACKAGE_NAME + '.zip -version %RSTUDIO_RELEASE%')
                             println stdout
                           }
                         }
                       }
+
+                      stage ("Redirect something I'd think") {
+                        agent { label "docker" } // must be in docker agent in order use sh
+
+                        when { environment name: 'FLAVOR', value: 'Electron' }
+
+                        environment {
+                          RSTUDIO_PEM = credentials('www-rstudio-org-pem') 
+                        }
+
+                        steps {
+                          sh 'docker/jenkins/publish-daily-binary.sh https://s3.amazonaws.com/rstudio-ide-build/desktop/windows/' + PACKAGE_NAME + '.exe %RSTUDIO_PEM%'
+                        }
+                      }
                     }
                   }
-
                 }
               }
             }
@@ -274,8 +268,7 @@ pipeline {
   post {
     always {
       deleteDir()
-      // sendNotifications slack_channel: SLACK_CHANNEL
+      sendNotifications slack_channel: SLACK_CHANNEL
     }
   }
-
 }
