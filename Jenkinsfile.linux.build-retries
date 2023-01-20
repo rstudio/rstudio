@@ -70,12 +70,13 @@ pipeline {
             AWS_PATH="s3://rstudio-sentry-upload/${FLAVOR}/${OS}/${ARCH}/"
           }
           steps {
+            echo "Creating build archive"
             dir("package/linux/build-${FLAVOR.capitalize()}-${TYPE}") {
               sh "zip -r build.zip ./*"
-              echo "Uploading build archive to ${AWS_PATH}"
-              withAWS(role: 'build', roleAccount: AWS_ACCOUNT_ID) {
-                sh "aws s3 cp build.zip ${AWS_PATH}"
-              }
+            }
+            echo "Uploading build archive to ${AWS_PATH}"
+            withAWS(role: 'build', roleAccount: AWS_ACCOUNT_ID) {
+              sh "aws s3 cp package/linux/build-${FLAVOR.capitalize()}-${TYPE}/build.zip ${AWS_PATH}"
             }
           }
         }
