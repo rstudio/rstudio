@@ -45,7 +45,7 @@ pipeline {
           exclude {
             axis {
               name 'os'
-              notValues 'centos7'
+              values 'centos7'
             }
             axis {
               name 'arch'
@@ -67,6 +67,7 @@ pipeline {
             steps {
               script {
                 versionFlower = readFile(file: 'version/RELEASE').replaceAll(" ", "-").toLowerCase().trim()
+                currentBuild.displayName = "${versionFlower}"
               }
 
               echo "Creating image jenkins/ide:${os}-${arch}-${versionFlower}"
