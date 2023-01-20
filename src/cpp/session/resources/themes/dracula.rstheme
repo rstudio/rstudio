@@ -53,6 +53,9 @@
   border-color: #f8f8f2
 }
 .ace_keyword {
+  color: #bd93f9
+}
+.ace_keyword.ace_operator {
   color: #ff79c6
 }
 .ace_constant.ace_language {
@@ -71,7 +74,7 @@
   color: #bd93f9
 }
 .ace_support.ace_function {
-  color: #8be9fd
+  color: #50fa7b
 }
 .ace_support.ace_constant {
   color: #6be5fd
