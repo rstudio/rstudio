@@ -1,4 +1,5 @@
 def utils
+def versionFlower = ""
 
 pipeline {
   agent { label "linux && x86_64" }
@@ -45,6 +46,7 @@ pipeline {
           RSTUDIO_VERSION = "${RSTUDIO_VERSION_MAJOR}.${RSTUDIO_VERSION_MINOR}.${RSTUDIO_VERSION_PATCH}${RSTUDIO_VERSION_SUFFIX}"
           currentBuild.displayName = "${RSTUDIO_VERSION}"
           IS_PRO = RSTUDIO_VERSION_SUFFIX.contains('pro')
+          versionFlower = readFile(file: 'version/RELEASE').replaceAll(" ", "-").toLowerCase().trim()
 
           COMMIT_HASH = sh returnStdout: true, script: 'git rev-parse HEAD'
         }
@@ -81,8 +83,8 @@ pipeline {
               values 'desktop', 'server', 'electron'
           }
         }
+
         excludes {
-          // temporary excludes to match missing docker images
           exclude {
             axis {
               name 'os'
@@ -93,23 +95,13 @@ pipeline {
               values 'arm64'
             }
           }
-          exclude {
-            axis {
-              name 'os'
-              values 'rhel8'
-            }
-            axis {
-              name 'arch'
-              values 'x86_64'
-            }
-          }
         }
 
         stages {
           stage ("Pull Docker Image for Build"){
             agent {
               docker {
-                image "jenkins/ide:${os}-${arch}-${env.BRANCH_NAME.replaceAll('/', '-')}"
+                image "jenkins/ide:${os}-${arch}-${versionFlower}-linux-dev"
                 registryCredentialsId 'ecr:us-east-1:aws-build-role'
                 registryUrl 'https://263245908434.dkr.ecr.us-east-1.amazonaws.com'
                 reuseNode true
@@ -122,7 +114,7 @@ pipeline {
               SENTRY_API_KEY = credentials('ide-sentry-api-key')
               GITHUB_LOGIN = credentials('github-rstudio-jenkins')
               AWS_BUCKET="rstudio-ide-build"
-              AWS_PATH="${flavor}/${os}/${arch}/"
+              AWS_PATH="${flavor}/${os}/\$OS_X86_64_LABEL/"
               PRODUCT="${flavor}"
             }
 
@@ -241,10 +233,10 @@ pipeline {
                       // Upload to Dailies
                       script {
                         dir('docker/jenkins') {
-                          sh "./publish-build.sh --build ${PRODUCT}/${os} --url https://s3.amazonaws.com/rstudio-ide-build/${flavor}/${os}/${arch}/${packageFile} --pat ${GITHUB_LOGIN_PSW} --file ${packageDir}/${packageFile} --version ${RSTUDIO_VERSION}"
+                          sh "./publish-build.sh --build ${PRODUCT}/${os} --url https://s3.amazonaws.com/rstudio-ide-build/${flavor}/${os}/\$OS_X86_64_LABEL/${packageFile} --pat ${GITHUB_LOGIN_PSW} --file ${packageDir}/${packageFile} --version ${RSTUDIO_VERSION} --arch ${arch}"
                         
                           if (current_container.flavor == "desktop" || current_container.flavor == "electron") {
-                            sh "./publish-build.sh --build ${PRODUCT}/${os} --url https://s3.amazonaws.com/rstudio-ide-build/${flavor}/${os}/${arch}/${tarballFile} --pat ${GITHUB_LOGIN_PSW} --file ${packageDir}/${tarballDir}/${tarballFile} --version ${RSTUDIO_VERSION}"
+                            sh "./publish-build.sh --build ${PRODUCT}/${os} --url https://s3.amazonaws.com/rstudio-ide-build/${flavor}/${os}/\$OS_X86_64_LABEL/${tarballFile} --pat ${GITHUB_LOGIN_PSW} --file ${packageDir}/${tarballDir}/${tarballFile} --version ${RSTUDIO_VERSION} --arch ${arch}"
                           }
                         }
                       }
