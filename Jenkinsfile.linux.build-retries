@@ -33,16 +33,18 @@ pipeline {
   stages {
     stage('Prepare Container') {
       steps {
-        pullBuildPush(
-          image_name: 'jenkins/ide',
-          image_tag: "${OS}-${ARCH}-${env.BRANCH_NAME.replaceAll('/', '-')}",
-          latest_tag: false,
-          dockerfile: "docker/jenkins/Dockerfile.${OS}",
-          build_arg_jenkins_uid: 'JENKINS_UID',
-          build_arg_jenkins_gid: 'JENKINS_GID',
-          builds_args: "--build-arg GITHUB_LOGIN=${GITHUB_LOGIN}",
-          push: false
-        )
+        withAWS(role: 'build', roleAccount: AWS_ACCOUNT_ID) {
+          pullBuildPush(
+            image_name: 'jenkins/ide',
+            image_tag: "${OS}-${ARCH}-${env.BRANCH_NAME.replaceAll('/', '-')}",
+            latest_tag: false,
+            dockerfile: "docker/jenkins/Dockerfile.${OS}",
+            build_arg_jenkins_uid: 'JENKINS_UID',
+            build_arg_jenkins_gid: 'JENKINS_GID',
+            builds_args: "--build-arg GITHUB_LOGIN=${GITHUB_LOGIN}",
+            push: false
+          )
+        }
       }
     }
     stage('Build and Upload') {
@@ -56,7 +58,10 @@ pipeline {
         stage('Compile Package') {
           steps {
             dir('package/linux') {
-              sh "./make-${FLAVOR}-package ${TYPE} clean"
+              withAWS(role: 'build', roleAccount: AWS_ACCOUNT_ID) {
+                // perform the compilation
+                sh "SCCACHE_ENABLED=1 PACKAGE_OS=${OS} ./make-${FLAVOR}-package ${type} clean"
+              }
             }
           }
         }
@@ -66,9 +71,7 @@ pipeline {
           }
           steps {
             dir("package/linux/build-${FLAVOR.capitalize()}-${TYPE}") {
-              sh "ls -la"
               sh "zip -r build.zip ./*"
-              sh "ls -la"
               echo "Uploading build archive to ${AWS_PATH}"
               withAWS(role: 'build', roleAccount: AWS_ACCOUNT_ID) {
                 sh "aws s3 cp build.zip ${AWS_PATH}"
