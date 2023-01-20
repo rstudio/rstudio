@@ -56,4 +56,11 @@ def getVersion() {
   return [rstudioVersion, rstudioVersionMajor, rstudioVersionMinor, rstudioVersionPatch, rstudioVersionSuffix]
 }
 
+/**
+  * Get the branch flower name from the version/RELEASE file
+  */
+def getFlower() {
+  return readFile(file: 'version/RELEASE').replaceAll(" ", "-").toLowerCase().trim()
+}
+
 return this

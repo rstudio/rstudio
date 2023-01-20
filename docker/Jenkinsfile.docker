@@ -1,4 +1,4 @@
-def versionFlower = ""
+def utils
 
 pipeline {
   agent { label "linux && x86_64" }
@@ -65,8 +65,13 @@ pipeline {
             }
 
             steps {
+              def versionFlower = ""
               script {
-                versionFlower = readFile(file: 'version/RELEASE').replaceAll(" ", "-").toLowerCase().trim()
+                sh 'printenv'
+                sh "echo 'Loading utils from ${env.WORKSPACE}/utils.groovy'"
+                utils = load "${env.WORKSPACE}/utils.groovy"
+
+                versionFlower = utils.getFlower()
                 currentBuild.displayName = "${versionFlower}"
               }
 
