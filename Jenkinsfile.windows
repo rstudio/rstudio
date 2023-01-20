@@ -185,7 +185,7 @@ pipeline {
                             bat "move package\\win32\\build\\${PACKAGE_NAME}-RelWithDebInfo.zip package\\win32\\build\\${PACKAGE_NAME}.zip"
 
                             // windows docker container cannot reach instance-metadata endpoint. supply credentials at upload.
-                            withAWS(role: 'jenkins', roleAccount: AWS_ACCOUNT_ID) {
+                            withAWS(role: 'ide-build', roleAccount: AWS_ACCOUNT_ID) {
                               retry(5) {
                                 bat "aws s3 cp package\\win32\\build\\${PACKAGE_NAME}.exe ${buildDest}/${PACKAGE_NAME}.exe"
                                 bat "aws s3 cp package\\win32\\build\\${PACKAGE_NAME}.zip ${buildDest}/${PACKAGE_NAME}.zip"
