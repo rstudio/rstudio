@@ -1,0 +1,59 @@
+def utils
+
+pipeline {
+  agent {
+    label 'linux && x86_64'
+  }
+  
+  parameters {
+    string defaultValue: '0', description: 'RStudio Patch Version', name: 'RSTUDIO_VERSION_PATCH', trim: true
+    string defaultValue: '', description: 'Slack channel to publish build message.', name: 'SLACK_CHANNEL', trim: true
+  }
+  
+  environment {
+    RSTUDIO_VERSION = ""
+    RSTUDIO_VERSION_MAJOR = 0
+    RSTUDIO_VERSION_MINOR = 0
+    RSTUDIO_VERSION_PATCH = 0
+    RSTUDIO_VERSION_SUFFIX = 0
+    COMMIT_HASH=""
+    PUBLISH=false
+  }
+
+  stages {
+    stage ("Set Version & Commit") {
+      steps {
+        script {
+          utils = load "${env.WORKSPACE}/utils.groovy"
+          
+          // Get the current commit
+          COMMIT_HASH = sh returnStdout: true, script: 'git rev-parse HEAD'
+
+          // Get the version
+          (RSTUDIO_VERSION,
+            RSTUDIO_VERSION_MAJOR,
+            RSTUDIO_VERSION_MINOR,
+            RSTUDIO_VERSION_PATCH,
+            RSTUDIO_VERSION_SUFFIX) = utils.getVersion()
+        }
+
+        buildName "${RSTUDIO_VERSION}"
+      }
+    }
+
+    stage ("Binary Builds") {
+
+      steps {
+        build wait: false,
+              job: "IDE/experiments/macos-matrix",
+              parameters: [
+                gitParameter(name: "COMMIT_HASH", value: "${COMMIT_HASH}"),
+                string(name: "RSTUDIO_VERSION_PATCH", value: "${RSTUDIO_VERSION_PATCH}"),
+                string(name: "SLACK_CHANNEL", value: "${SLACK_CHANNEL}"),
+                booleanParam(name: "DAILY", value: true),
+                booleanParam(name: "PUBLISH", value: env.PUBLISH)
+              ]
+      }
+    }
+  }
+}
