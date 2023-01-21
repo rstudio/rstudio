@@ -96,8 +96,8 @@ pipeline {
                 image_name: 'jenkins/ide',
                 image_tag: "${os}-${arch}-${versionFlower}",
                 latest_tag: false,
-                build_arg_jenkins_uid: 'yes, please',
-                build_arg_jenkins_gid: 'yo tambien',
+                build_arg_jenkins_uid: 'JENKINS_UID',
+                build_arg_jenkins_gid: 'JENKINS_GID',
                 dockerfile: "docker/jenkins/Dockerfile.${os}",
                 build_args: "--build-arg ARCH=${arch} --build-arg GITHUB_LOGIN=${GITHUB_LOGIN}",
                 push: "${params.PUBLISH}"
