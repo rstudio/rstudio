@@ -79,7 +79,6 @@
     "properties-reader": "2.2.0",
     "uuid": "9.0.0",
     "winston": "3.8.2",
-    "winston-daily-rotate-file": "4.7.1",
     "winston-syslog": "2.7.0"
   }
 }

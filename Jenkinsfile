@@ -277,7 +277,7 @@ try {
                 container.inside() {
                     stage('bump version') {
                         def rstudioVersion = sh (
-                          script: "docker/jenkins/rstudio-version.sh bump ${params.RSTUDIO_VERSION_PATCH}",
+                          script: "docker/jenkins/rstudio-version.sh ${params.RSTUDIO_VERSION_PATCH}",
                           returnStdout: true
                         ).trim()
                         echo "RStudio build version: ${rstudioVersion}"
@@ -522,7 +522,7 @@ try {
                                         // convert the PDB symbols to breakpad format (PDB not supported by Sentry)
                                         bat '''
                                         cd package\\win32\\build
-                                        FOR /F %%G IN ('dir /s /b *.pdb') DO (..\\..\\..\\dependencies\\windows\\breakpad-tools-windows\\dump_syms %%G > %%G.sym)
+                                        FOR /F %%G IN ('dir /s /b *.pdb') DO (c:\\rstudio-tools\\dependencies\\windows\\breakpad-tools-windows\\dump_syms %%G > %%G.sym)
                                         '''
 
                                         retry(sentryUploadRetryLimit) {
@@ -530,7 +530,7 @@ try {
                                             withCredentials([string(credentialsId: 'ide-sentry-api-key', variable: 'SENTRY_API_KEY')]) {
                                                 try {
                                                     // attempt to run sentry uplaod
-                                                    bat "cd package\\win32\\build\\src\\cpp && ..\\..\\..\\..\\..\\dependencies\\windows\\sentry-cli.exe --auth-token %SENTRY_API_KEY% upload-dif --log-level=debug --org rstudio --project ide-backend -t breakpad ."
+                                                    bat "cd package\\win32\\build\\src\\cpp && c:\\rstudio-tools\\dependencies\\windows\\sentry-cli.exe --auth-token %SENTRY_API_KEY% upload-dif --log-level=debug --org rstudio --project ide-backend -t breakpad ."
                                                 } catch(err) {
                                                     // mark build as unstable if it fails
                                                     unstable("Sentry upload failed on Windows")

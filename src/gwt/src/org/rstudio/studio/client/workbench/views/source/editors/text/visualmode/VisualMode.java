@@ -732,9 +732,6 @@ public class VisualMode implements VisualModeEditorSync,
    
    public void manageCommands()
    {
-      // hookup devtools
-      syncDevTools();
-      
       // disable commands
       disableForVisualMode(
         // Disabled since we can't meaningfully select instances in several
@@ -1433,13 +1430,6 @@ public class VisualMode implements VisualModeEditorSync,
             }
             : null
       );
-   }
-   
-   
-   private void syncDevTools()
-   {
-      if (panmirror_ != null)
-         panmirror_.activateDevTools();
    }
    
    /**

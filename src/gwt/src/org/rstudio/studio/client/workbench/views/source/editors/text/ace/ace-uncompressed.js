@@ -7399,7 +7399,7 @@ var rgb256Token = exports.rgb256Token = function(value, state, stack, line) {
 };
 var colorToken = exports.colorToken = function(value, state, stack, line) {
     return [
-        { type: "constant.color", value: value, bg: value}
+        { type: "constant.color", value: value, bg: value.toLowerCase()}
     ];
 };
 
