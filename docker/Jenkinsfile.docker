@@ -91,7 +91,7 @@ pipeline {
             }
 
             steps {
-              echo "Creating image jenkins/ide:${os}-${arch}-${versionFlower}"
+              echo "Creating image jenkins/ide:${os}-${arch}-${versionFlower}-linux-dev"
               pullBuildPush(
                 image_name: 'jenkins/ide',
                 image_tag: "${os}-${arch}-${versionFlower}",
