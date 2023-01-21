@@ -19,6 +19,10 @@ pipeline {
       label 'linux && amd64'
     }
   }
+
+  triggers {
+    cron 'H H(20-23) * * *'
+  }
   
   parameters {
     string defaultValue: '0', description: 'RStudio Patch Version', name: 'RSTUDIO_VERSION_PATCH', trim: true
