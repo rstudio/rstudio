@@ -27,6 +27,7 @@ pipeline {
   }
 
   parameters {
+    gitParameter defaultValue: 'none', name: 'COMMIT_HASH', type: 'PT_REVISION'
     string(name: 'SLACK_CHANNEL', defaultValue: '#ide-builds-dev', description: 'Slack channel to publish build message.')
     string(name: 'OS_FILTER', defaultValue: 'all', description: 'Pattern to limit builds by matching OS')
     string(name: 'ARCH_FILTER', defaultValue: 'all', description: 'Pattern to limit builds by matching ARCH')
@@ -34,6 +35,20 @@ pipeline {
   }
 
   stages {
+    stage ('Checkout') {
+      when {
+        expression { return ${params.COMMIT_HASH} != 'none' }
+      }
+
+      steps {
+         echo "Commit_hash value: ${params.COMMIT_HASH}"
+         checkout([$class: 'GitSCM',
+                   branches: [[name: "${params.COMMIT_HASH}"]],
+                   extensions: [],
+                   userRemoteConfigs: [[credentialsId: 'github-rstudio-jenkins', url: "${GIT_URL}"]]])
+       }
+    }
+
     stage('Version') {
       steps {
         script {
