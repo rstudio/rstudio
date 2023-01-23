@@ -384,7 +384,7 @@ try {
                 def current_container = containers[index]
                 node("${current_container.arch} && linux") {
                     def current_image
-                    docker.withRegistry('https://263245908434.dkr.ecr.us-east-1.amazonaws.com', 'ecr:us-east-1:jenkins-aws') {
+                    docker.withRegistry('https://263245908434.dkr.ecr.us-east-1.amazonaws.com', 'ecr:us-east-1:aws-build-role') {
                         stage('prepare ws/container') {
                           prepareWorkspace()
                           def image_tag = "${current_container.os}-${current_container.arch}-${rstudioVersionFlower}"
@@ -426,7 +426,7 @@ try {
                     node('windows') {
                         stage('prepare container') {
                             checkout scm
-                            docker.withRegistry('https://263245908434.dkr.ecr.us-east-1.amazonaws.com', 'ecr:us-east-1:jenkins-aws') {
+                            docker.withRegistry('https://263245908434.dkr.ecr.us-east-1.amazonaws.com', 'ecr:us-east-1:aws-build-role') {
                                 def image_tag = "${current_container.os}-${rstudioVersionFlower}"
                                 windows_image = docker.image("jenkins/ide:" + image_tag)
                                 windows_image.pull()
@@ -482,7 +482,7 @@ try {
 
                                     // windows docker container cannot reach instance-metadata endpoint. supply credentials at upload.
 
-                                    withCredentials([[$class: 'AmazonWebServicesCredentialsBinding', credentialsId: 'jenkins-aws']]) {
+                                    withAWS(role: 'ide-build') {
                                         retry(5) {
                                             bat "aws s3 cp package\\win32\\build\\${packageName}.exe ${buildDest}/${packageName}.exe"
                                             bat "aws s3 cp package\\win32\\build\\${packageName}.zip ${buildDest}/${packageName}.zip"
