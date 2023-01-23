@@ -480,7 +480,7 @@ try {
                                     bat "move package\\win32\\build\\${packageName}-RelWithDebInfo.exe package\\win32\\build\\${packageName}.exe"
                                     bat "move package\\win32\\build\\${packageName}-RelWithDebInfo.zip package\\win32\\build\\${packageName}.zip"
 
-                                    // Explicitly assume the IDE alias of the main `build` account
+                                    // Explicitly assume the IDE alias of the main `build` role
                                     withAWS(role: 'ide-build') {
                                         retry(5) {
                                             bat "aws s3 cp package\\win32\\build\\${packageName}.exe ${buildDest}/${packageName}.exe"

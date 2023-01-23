@@ -128,7 +128,7 @@ pipeline {
             sh "docker/jenkins/notarize-release.sh package/osx/build/${packageFile}"
           }
 
-          // Explicitly assume the IDE alias of the main `build` account
+          // Explicitly assume the IDE alias of the main `build` role
           withAWS(role: 'ide-build') {
             retry(5) {
               sh "aws s3 cp package/osx/build/${packageFile} ${buildDest}"
