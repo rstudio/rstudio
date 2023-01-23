@@ -112,7 +112,7 @@ pipeline {
             sh "docker/jenkins/notarize-release.sh package/osx/build/${packageFile}"
           }
 
-          // this job is going to run on a macOS slave, which cannot use an instance-profile
+          // Explicitly assume the IDE alias of the main `build` account
           withAWS(role: 'ide-build') {
             retry(5) {
               sh "aws s3 cp package/osx/build/${packageFile} ${buildDest}"

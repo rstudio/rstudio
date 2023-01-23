@@ -480,8 +480,7 @@ try {
                                     bat "move package\\win32\\build\\${packageName}-RelWithDebInfo.exe package\\win32\\build\\${packageName}.exe"
                                     bat "move package\\win32\\build\\${packageName}-RelWithDebInfo.zip package\\win32\\build\\${packageName}.zip"
 
-                                    // windows docker container cannot reach instance-metadata endpoint. supply credentials at upload.
-
+                                    // Explicitly assume the IDE alias of the main `build` account
                                     withAWS(role: 'ide-build') {
                                         retry(5) {
                                             bat "aws s3 cp package\\win32\\build\\${packageName}.exe ${buildDest}/${packageName}.exe"
