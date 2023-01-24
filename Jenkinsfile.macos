@@ -109,8 +109,8 @@ pipeline {
             sh "docker/jenkins/notarize-release.sh package/osx/build/${packageFile}"
           }
 
-          // this job is going to run on a macOS slave, which cannot use an instance-profile
-          withCredentials([[$class: 'AmazonWebServicesCredentialsBinding', credentialsId: 'jenkins-aws']]) {
+          // Explicitly assume the ide-build role in the main AWS account
+          withAWS(role: 'ide-build') {
             sh "aws s3 cp package/osx/build/${packageFile} ${buildDest}"
           }
 
