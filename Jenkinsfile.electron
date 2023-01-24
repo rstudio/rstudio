@@ -106,8 +106,8 @@ pipeline {
 
           def buildDest =  "s3://rstudio-ide-build/electron/macos/"
 
-          // this job is going to run on a macOS slave, which cannot use an instance-profile
-          withCredentials([[$class: 'AmazonWebServicesCredentialsBinding', credentialsId: 'jenkins-aws']]) {
+          // Explicitly assume the ide-build role in the main AWS account
+          withAWS(role: 'ide-build') {
             retry(5) {
               sh "aws s3 cp src/node/desktop/out/make/${packageFile} ${buildDest}"
             }
