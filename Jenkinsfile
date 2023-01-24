@@ -364,7 +364,7 @@ try {
                 def current_container = containers[index]
                 node('ide') {
                     def current_image
-                    docker.withRegistry('https://263245908434.dkr.ecr.us-east-1.amazonaws.com', 'ecr:us-east-1:jenkins-aws') {
+                    docker.withRegistry('https://263245908434.dkr.ecr.us-east-1.amazonaws.com', 'ecr:us-east-1:aws-build-role') {
                         stage('prepare ws/container') {
                           prepareWorkspace()
                           def image_tag = "${current_container.os}-${current_container.arch}-${rstudioReleaseBranch}"
@@ -403,7 +403,7 @@ try {
               node('windows') {
                 stage('prepare container') {
                   checkout scm
-                  docker.withRegistry('https://263245908434.dkr.ecr.us-east-1.amazonaws.com', 'ecr:us-east-1:jenkins-aws') {
+                  docker.withRegistry('https://263245908434.dkr.ecr.us-east-1.amazonaws.com', 'ecr:us-east-1:aws-build-role') {
                     def image_tag = "${current_container.os}-${rstudioReleaseBranch}"
                     windows_image = docker.image("jenkins/ide:" + image_tag)
                       windows_image.pull()
@@ -461,9 +461,8 @@ try {
                     bat "move package\\win32\\build\\${packageName}-RelWithDebInfo.exe package\\win32\\build\\${packageName}.exe"
                     bat "move package\\win32\\build\\${packageName}-RelWithDebInfo.zip package\\win32\\build\\${packageName}.zip"
 
-                    // windows docker container cannot reach instance-metadata endpoint. supply credentials at upload.
-
-                    withCredentials([[$class: 'AmazonWebServicesCredentialsBinding', credentialsId: 'jenkins-aws']]) {
+                    // Explicitly assume the ide-build role in the main AWS account
+                    withAWS(role: 'ide-build') {
                       retry(5) {
                         bat "aws s3 cp package\\win32\\build\\${packageName}.exe ${buildDest}/${packageName}.exe"
                         bat "aws s3 cp package\\win32\\build\\${packageName}.zip ${buildDest}/${packageName}.zip"
