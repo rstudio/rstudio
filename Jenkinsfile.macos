@@ -132,7 +132,24 @@ pipeline {
                 }
               }
 
-              stage('Test') {
+              stage('Upload Build Archive') {
+                environment {
+                  AWS_ACCOUNT_ID = '749683154838'
+                  AWS_PATH="s3://rstudio-sentry-upload/${FLAVOR.toLowerCase()}/macos/"
+                }
+                steps {
+                  dir("package/osx/build") {
+                    sh "zip -r build-${FLAVOR.capitalize()}.zip ./*"
+                  }
+                  withAWS(role: 'ide-build') {
+                    retry(5) {
+                      sh "aws s3 cp package/osx/build/build-${FLAVOR.capitalize()}.zip ${AWS_PATH}"
+                    }
+                  }
+                }
+              }
+
+              /* stage('Test') {
                 environment {
                   PATH = "${env.HOME}/opt/bin:${env.PATH}"
                 }
@@ -263,7 +280,7 @@ pipeline {
                     }
                   }
                 }
-              }
+              } */
             }
           }
         }
@@ -274,7 +291,7 @@ pipeline {
   post {
     always {
       deleteDir()
-      sendNotifications slack_channel: SLACK_CHANNEL
+      /* sendNotifications slack_channel: SLACK_CHANNEL */
     }
   }
 
