@@ -27,7 +27,7 @@ pipeline {
   }
 
   parameters {
-    gitParameter defaultValue: 'none', name: 'COMMIT_HASH', type: 'PT_REVISION'
+    string(name: 'COMMIT_HASH', defaultValue: 'none', description: 'The commit hash to build')
     string(name: 'SLACK_CHANNEL', defaultValue: '#ide-builds-dev', description: 'Slack channel to publish build message.')
     string(name: 'OS_FILTER', defaultValue: 'all', description: 'Pattern to limit builds by matching OS')
     string(name: 'ARCH_FILTER', defaultValue: 'all', description: 'Pattern to limit builds by matching ARCH')
