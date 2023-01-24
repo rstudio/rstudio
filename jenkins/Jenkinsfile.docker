@@ -52,7 +52,6 @@ pipeline {
     stage('Version') {
       steps {
         script {
-          sh 'printenv'
           sh "echo 'Loading utils from ${env.WORKSPACE}/utils.groovy'"
           utils = load "${env.WORKSPACE}/utils.groovy"
 
