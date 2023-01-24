@@ -17,6 +17,10 @@
 #include <signal.h>
 #include <unordered_set>
 
+#ifndef _WIN32
+#include <sys/resource.h>
+#endif
+
 #include "SessionConsoleInput.hpp"
 
 #include <session/prefs/UserPrefs.hpp>
@@ -314,6 +318,29 @@ void setSuspendedFromTimeout(bool suspended)
    
 bool suspendSession(bool force, int status)
 {
+#ifndef _WIN32
+   // Attempt to lower this session's CPU priority to something below average.
+   // Suspension is never as important as ongoing work on the system, but large
+   // sessions can be CPU-intensive to serialize.
+   //
+   // We could also do this on Windows with SetPriorityClass(), but on that OS
+   // the likelihood of being a multi-user system is much lower.
+   //
+   // Note also that we'd love to throttle I/O here, too, but there is no Unix
+   // API to do so and at least on Linux this is only possible via cgroups.
+   if (setpriority(PRIO_PROCESS, 0, 10) < 0)
+   {
+      core::Error error = core::systemError(errno, ERROR_LOCATION);
+      error.addProperty("description",
+                        "Failed to lower CPU priority during suspend");
+      LOG_ERROR(error);
+   }
+   else
+   {
+      LOG_INFO_MESSAGE("Lowered CPU priority during suspend");
+   }
+#endif
+
    // need to make sure the global environment is loaded before we
    // attempt to save it!
    r::session::ensureDeserialized();

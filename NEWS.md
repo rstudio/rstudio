@@ -14,6 +14,7 @@
 - Support searching for roxygen specific information in fuzzy finder (Go to File/Function) #12190
 - "Rainbow" fenced divs, controled by Options > R Markdown > [v] Use rainbow fenced divs #12115
 - Disable argument tooltips in script editor for unknown functions #12160
+- Sessions now have lower CPU priority during suspension on macOS and Linux #12623
 
 ### Fixed
 
