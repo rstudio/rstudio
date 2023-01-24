@@ -234,10 +234,10 @@ bool hasExternalPointer(SEXP obj, bool nullPtr, std::set<SEXP>& visited)
       if (nullPtr == (r::sexp::getExternalPtrAddr(obj) == nullptr))
          return true;
 
-      if (hasExternalPointer(EXTPTR_PROT(obj), nullPtr, visited))
+      if (hasExternalPointer(r::sexp::getExternalPtrProtected(obj), nullPtr, visited))
          return true;
 
-      if (hasExternalPointer(EXTPTR_TAG(obj), nullPtr, visited))
+      if (hasExternalPointer(r::sexp::getExternalPtrTag(obj), nullPtr, visited))
          return true;
    }
 
