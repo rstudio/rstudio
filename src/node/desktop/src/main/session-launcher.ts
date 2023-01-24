@@ -147,6 +147,11 @@ export class SessionLauncher {
       this.showSplash = false;
     }
 
+    // don't show splash screen if started using --run-diagnostics
+    if (appState().runDiagnostics) {
+      this.showSplash = false;
+    }
+
     // must check showSplash before and after the timeout
     // before to determine if the timeout is required
     // after to determine if the main window is ready to show
@@ -236,6 +241,16 @@ export class SessionLauncher {
     //                       SLOT(onLicenseLost(QString)));
     // pMainWindow_->connect(&activation(), &DesktopActivation::updateLicenseWarningBar,
     //                       pMainWindow_, &MainWindow::onUpdateLicenseWarningBar);
+
+    // On Windows, we have to close the log file when running diagnostics or diagnostics.exe
+    // fails to inject the log contents into the diagnostics report due to access-denied due
+    // to file being in use by another process
+    if (process.platform === 'win32' && appState().runDiagnostics) {
+      logger().closeLogFile();
+
+      // winston logging package emits warnings if we don't have any registered transport
+      logger().ensureTransport();
+    }
 
     // show the window (but don't if we are doing a --run-diagnostics)
     if (!appState().runDiagnostics) {

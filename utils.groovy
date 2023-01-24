@@ -34,7 +34,6 @@ def getVersion() {
                           returnStdout: true
                         ).trim()
   echo "RStudio build version: ${rstudioVersion}"
-  currentBuild.displayName = "${rstudioVersion}"
 
   // Split on [-+] first to avoid having to worry about splitting out .pro<n>
   def version = rstudioVersion.split('[-+]')
@@ -54,6 +53,13 @@ def getVersion() {
   }
 
   return [rstudioVersion, rstudioVersionMajor, rstudioVersionMinor, rstudioVersionPatch, rstudioVersionSuffix]
+}
+
+/**
+  * Get the branch flower name from the version/RELEASE file
+  */
+def getFlower() {
+  return readFile(file: 'version/RELEASE').replaceAll(" ", "-").toLowerCase().trim()
 }
 
 return this

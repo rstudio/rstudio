@@ -1,0 +1,274 @@
+@Library('pipeline-shared-libraries@feature/windows-pbp') _
+def utils
+
+pipeline {
+
+  agent { label "docker" }
+
+  options {
+    timestamps()
+    disableConcurrentBuilds()
+    buildDiscarder(
+      logRotator(
+        artifactDaysToKeepStr: '',
+        artifactNumToKeepStr: '',
+        daysToKeepStr: '',
+        numToKeepStr: '100'
+      )
+    )
+  }
+
+  parameters {
+    string(name: 'SLACK_CHANNEL', defaultValue: '#ide-builds', description: 'Slack channel to publish build message.')
+    string(name: 'RSTUDIO_VERSION_PATCH',  defaultValue: '999', description: 'RStudio Patch Version')
+    booleanParam(name: 'RSTUDIO_SKIP_QT', defaultValue: false, description: 'Skips installing and bulding for QT')
+    booleanParam(name: 'DAILY', defaultValue: false, description: 'Runs daily build if true')
+    booleanParam(name: 'PUBLISH', defaultValue: true, description: 'Runs publish stage if true')
+    gitParameter defaultValue: "${env.GIT_BRANCH}", name: 'COMMIT_HASH', type: 'PT_REVISION'
+  }
+
+  environment {
+    PACKAGE_OS = 'Windows'
+    AWS_ACCOUNT_ID = '749683154838'
+  }
+
+  stages {
+
+    stage('Load Utils') {
+      steps {
+        script {
+          sh 'printenv'
+          sh "echo 'Loading utils from ${env.WORKSPACE}/utils.groovy'"
+          utils = load "${env.WORKSPACE}/utils.groovy"
+        }
+      }
+    }
+
+    stage ('Checkout') { // checkout stage required here in order for versioning to work properly
+      when { expression { params.COMMIT_HASH != env.GIT_BRANCH } }
+      steps {
+        echo "Commit_hash value: ${params.COMMIT_HASH}"
+        checkout([$class: 'GitSCM',
+          branches: [[name: "${params.COMMIT_HASH}"]],
+          extensions: [],
+          userRemoteConfigs: [[credentialsId: 'github-rstudio-jenkins', url: GIT_URL]]])
+      }
+    }
+
+    stage('Versioning') {
+      steps {
+        script {
+          (RSTUDIO_VERSION,
+            RSTUDIO_VERSION_MAJOR,
+            RSTUDIO_VERSION_MINOR,
+            RSTUDIO_VERSION_PATCH,
+            RSTUDIO_VERSION_SUFFIX) = utils.getVersion()
+          RSTUDIO_RELEASE = "${RSTUDIO_VERSION_MAJOR}.${RSTUDIO_VERSION_MINOR}.${RSTUDIO_VERSION_PATCH}${RSTUDIO_VERSION_SUFFIX}"
+          RSTUDIO_FLOWER = utils.getFlower() 
+          currentBuild.displayName = "${RSTUDIO_RELEASE}"
+          IS_PRO = RSTUDIO_VERSION_SUFFIX.contains('pro')
+        }
+      }
+    }
+
+    stage('Use Windows Agent') {
+      agent { label "windows" }
+
+      stages {
+
+        stage ('Build Matrix') {
+
+          matrix {
+
+            axes {
+              axis {
+                name 'FLAVOR'
+                  values 'Electron', 'Desktop' // desktop denotes a Qt build
+              }
+            }
+
+            when {
+              anyOf {
+                environment name: 'FLAVOR', value: 'Electron'
+                expression { return FLAVOR == 'Desktop' && IS_PRO == true } // Only build Qt on Pro
+              }
+            }
+
+            stages {
+              stage('Build Windows') {
+                agent {
+                  docker {
+                    image "jenkins/ide:windows-${RSTUDIO_FLOWER}"
+                      registryUrl 'https://263245908434.dkr.ecr.us-east-1.amazonaws.com'
+                      registryCredentialsId 'ecr:us-east-1:aws-build-role'
+                      reuseNode true
+                  }
+                }
+
+                stages { 
+                  stage ('Checkout') {
+                    when { expression { params.COMMIT_HASH != env.GIT_BRANCH } }
+                    steps {
+                      echo "Commit_hash value: ${params.COMMIT_HASH}"
+                        checkout([$class: 'GitSCM',
+                          branches: [[name: "${params.COMMIT_HASH}"]],
+                          extensions: [],
+                          userRemoteConfigs: [[credentialsId: 'github-rstudio-jenkins', url: GIT_URL]]])
+                    }
+                  }
+
+                  stage('Build') {
+
+                    environment {
+                      CODESIGN_KEY = credentials('ide-windows-signing-pfx')
+                      CODESIGN_PASS = credentials('ide-pfx-passphrase')
+                    }
+
+                    steps {
+                      // set requisite environment variables and build rstudio
+                      bat "cd package/win32 &&" +
+                        "set \"rstudio_version_major=${RSTUDIO_VERSION_MAJOR}\" &&" +
+                        "set \"rstudio_version_minor=${RSTUDIO_VERSION_MINOR}\" &&" +
+                        "set \"rstudio_version_patch=${RSTUDIO_VERSION_PATCH}\" &&" +
+                        "set \"rstudio_version_suffix=${RSTUDIO_VERSION_SUFFIX}\" &&" +
+                        "set \"package_os=windows\" &&" +
+                        "make-package.bat clean ${FLAVOR} &&" +
+                        "cd ../.."
+                    }
+                  }
+
+                  stage('Tests') {
+                    steps {
+                      bat 'cd package/win32/build/src/cpp && rstudio-tests.bat --scope core'
+                    }
+                  }
+
+                  stage('Electron Tests') {
+                    when { environment name: 'FLAVOR', value: 'Electron' }
+                    steps {
+                      bat 'cd src/node/desktop && scripts\\run-unit-tests.cmd'
+                    }
+                  }
+
+                  stage('Sign, Upload, and Publish') {
+                    when { expression { return params.PUBLISH } }
+
+                    environment {
+                      PACKAGE_VERSION = RSTUDIO_RELEASE.replace('+', '-')
+                      PACKAGE_NAME = "RStudio-${IS_PRO ? 'pro-' : ''}${PACKAGE_VERSION}"
+                    }
+
+                    stages {
+                      stage('Sign') {
+                        environment {
+                          PFX_FILE = credentials('ide-windows-signing-pfx') 
+                          PFX_PASS = credentials('ide-pfx-passphrase')
+                        }
+
+                        steps {
+                          script {
+                            def packageName = "${PACKAGE_NAME}-RelWithDebInfo"
+
+                              bat '"C:\\Program Files (x86)\\Windows Kits\\10\\bin\\10.0.19041.0\\x86\\signtool" sign /f %pfx-file% /p %PFX_FILE% %PFX_PASS% /v /debug /n "RStudio PBC" /t http://timestamp.digicert.com  package\\win32\\build\\' + packageName + '.exe'
+                              bat "\"C:\\Program Files (x86)\\Windows Kits\\10\\bin\\10.0.19041.0\\x86\\signtool\" verify /v /pa package\\win32\\build\\${packageName}.exe"
+                          }
+                        }
+                      }
+
+                      stage('Upload') {
+                        steps {
+                          script {
+                            def buildDest = "s3://rstudio-ide-build/${current_container.flavor}/windows"
+
+                            // strip unhelpful suffixes from filenames
+                            bat "move package\\win32\\build\\${PACKAGE_NAME}-RelWithDebInfo.exe package\\win32\\build\\${PACKAGE_NAME}.exe"
+                            bat "move package\\win32\\build\\${PACKAGE_NAME}-RelWithDebInfo.zip package\\win32\\build\\${PACKAGE_NAME}.zip"
+
+                            // windows docker container cannot reach instance-metadata endpoint. supply credentials at upload.
+                            withAWS(role: 'ide-build', roleAccount: AWS_ACCOUNT_ID) {
+                              retry(5) {
+                                bat "aws s3 cp package\\win32\\build\\${PACKAGE_NAME}.exe ${buildDest}/${PACKAGE_NAME}.exe"
+                                bat "aws s3 cp package\\win32\\build\\${PACKAGE_NAME}.zip ${buildDest}/${PACKAGE_NAME}.zip"
+                              }
+                            }
+                          }
+                        }
+                      }
+
+                      stage('Sentry Upload') {
+                        environment {
+                          SENTRY_API_KEY = credentials('ide-sentry-api-key')
+                        }
+
+                        steps {
+                          retry(5) {
+                            // convert the PDB symbols to breakpad format (PDB not supported by Sentry)
+                            timeout(activity: true, time: 15) {
+                              bat '''
+                                cd package\\win32\\build
+                                FOR /F %%G IN ('dir /s /b *.pdb') DO (..\\..\\..\\dependencies\\windows\\breakpad-tools-windows\\dump_syms %%G > %%G.sym)
+                              '''
+
+                              // upload the breakpad symbols, attempt to run sentry uplaod
+                              bat 'cd package\\win32\\build\\src\\cpp && ..\\..\\..\\..\\..\\dependencies\\windows\\sentry-cli.exe --auth-token %SENTRY_API_KEY% upload-dif --log-level=debug --org rstudio --project ide-backend -t breakpad .'
+                            }
+                          }
+                        }
+                      }
+
+                      stage ('Publish') {
+                        environment {
+                          GITHUB_LOGIN = credentials('github-rstudio-jenkins')
+                        }
+
+                        steps {
+                          script {
+                            // derive product
+                            def product = "${FLAVOR}"
+
+                            if (IS_PRO) {
+                              product = "${FLAVOR}-pro"
+                            }
+
+                            // publish the build (self installing exe)
+                            def stdout = powershell(returnStdout: true, script: '.\\docker\\jenkins\\publish-build.ps1 -build ' + product + '/windows -url https://s3.amazonaws.com/rstudio-ide-build/' + current_container.flavor + '/windows/' + PACKAGE_NAME + '.exe -pat %GITHUB_LOGIN_PSW% -file package\\win32\\build\\' + PACKAGE_NAME + '.exe -version %RSTUDIO_RELEASE%')
+                            println stdout
+
+                            // publish the build (installer-less zip)
+                            stdout = powershell(returnStdout: true, script: '.\\docker\\jenkins\\publish-build.ps1 -build ' + product + '/windows-xcopy -url https://s3.amazonaws.com/rstudio-ide-build/' + current_container.flavor + '/windows/' + PACKAGE_NAME + '.zip -pat %GITHUB_LOGIN_PSW% -file package\\win32\\build\\' + PACKAGE_NAME + '.zip -version %RSTUDIO_RELEASE%')
+                            println stdout
+                          }
+                        }
+                      }
+
+                      stage ("Redirect something I'd think") {
+                        agent { label "docker" } // must be in docker agent in order use sh
+
+                        when { environment name: 'FLAVOR', value: 'Electron' }
+
+                        environment {
+                          RSTUDIO_PEM = credentials('www-rstudio-org-pem') 
+                        }
+
+                        steps {
+                          sh 'docker/jenkins/publish-daily-binary.sh https://s3.amazonaws.com/rstudio-ide-build/desktop/windows/' + PACKAGE_NAME + '.exe %RSTUDIO_PEM%'
+                        }
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    }
+  }
+
+  post {
+    always {
+      deleteDir()
+      sendNotifications slack_channel: SLACK_CHANNEL
+    }
+  }
+}
