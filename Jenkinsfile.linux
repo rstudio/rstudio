@@ -39,9 +39,9 @@ pipeline {
       agent { label 'linux' }
 
       steps {
+        sh "echo 'Loading utils from ${env.WORKSPACE}/utils.groovy'"
+
         script {
-          sh 'printenv'
-          sh "echo 'Loading utils from ${env.WORKSPACE}/utils.groovy'"
           utils = load "${env.WORKSPACE}/utils.groovy"
 
           (RSTUDIO_VERSION,
@@ -62,7 +62,7 @@ pipeline {
         checkout([$class: 'GitSCM',
                   branches: [[name: "${COMMIT_HASH}"]],
                   extensions: [],
-                  userRemoteConfigs: [[credentialsId: 'github-rstudio-jenkins', url: 'https://github.com/rstudio/rstudio']]])
+                  userRemoteConfigs: [[credentialsId: 'github-rstudio-jenkins', url: GIT_URL]]])
       }
     }
 
