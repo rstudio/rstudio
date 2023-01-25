@@ -2,7 +2,7 @@ def utils
 def versionFlower = ""
 
 pipeline {
-  agent { label "linux && x86_64" }
+  agent { none }
 
   options {
     disableConcurrentBuilds()
@@ -36,6 +36,8 @@ pipeline {
 
   stages {
     stage('Initialize') {
+      agent { label 'linux' }
+
       steps {
         script {
           sh 'printenv'
@@ -104,6 +106,7 @@ pipeline {
         stages {
           stage ("Pull Docker Image for Build"){
             agent {
+              label 'linux && ${arch}'
               docker {
                 image "jenkins/ide:${os}-${arch}-${versionFlower}-linux-dev"
                 registryCredentialsId 'ecr:us-east-1:aws-build-role'
