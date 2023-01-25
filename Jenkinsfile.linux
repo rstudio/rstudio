@@ -232,14 +232,14 @@ pipeline {
                         }
                       }
                     }
-                  }
-                  
-                  // Upload to Dailies
-                  dir('docker/jenkins') {
-                    sh "./publish-build.sh --build ${PRODUCT}/${os} --url https://s3.amazonaws.com/rstudio-ide-build/${flavor}/${os}/\$OS_X86_64_LABEL/${packageFile} --pat ${GITHUB_LOGIN_PSW} --file ${packageDir}/${packageFile} --version ${RSTUDIO_VERSION} --arch ${arch}"
-                  
-                    if (flavor == "desktop" || flavor == "electron") {
-                      sh "./publish-build.sh --build ${PRODUCT}/${os} --url https://s3.amazonaws.com/rstudio-ide-build/${flavor}/${os}/\$OS_X86_64_LABEL/${tarballFile} --pat ${GITHUB_LOGIN_PSW} --file ${packageDir}/${tarballDir}/${tarballFile} --version ${RSTUDIO_VERSION} --arch ${arch}"
+                    
+                    // Upload to Dailies
+                    dir('docker/jenkins') {
+                      sh "./publish-build.sh --build ${PRODUCT}/${os} --url https://s3.amazonaws.com/rstudio-ide-build/${flavor}/${os}/\$OS_X86_64_LABEL/${packageFile} --pat ${GITHUB_LOGIN_PSW} --file ${packageDir}/${packageFile} --version ${RSTUDIO_VERSION} --arch ${arch}"
+                    
+                      if (flavor == "desktop" || flavor == "electron") {
+                        sh "./publish-build.sh --build ${PRODUCT}/${os} --url https://s3.amazonaws.com/rstudio-ide-build/${flavor}/${os}/\$OS_X86_64_LABEL/${tarballFile} --pat ${GITHUB_LOGIN_PSW} --file ${packageDir}/${tarballDir}/${tarballFile} --version ${RSTUDIO_VERSION} --arch ${arch}"
+                      }
                     }
                   }
                 }
