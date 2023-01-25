@@ -106,12 +106,12 @@ pipeline {
         stages {
           stage ("Pull Docker Image for Build"){
             agent {
-              label 'linux && ${arch}'
               docker {
                 image "jenkins/ide:${os}-${arch}-${versionFlower}-linux-dev"
                 registryCredentialsId 'ecr:us-east-1:aws-build-role'
                 registryUrl 'https://263245908434.dkr.ecr.us-east-1.amazonaws.com'
                 reuseNode true
+                label 'linux && ${arch}'
               }
             }
 
@@ -175,78 +175,71 @@ pipeline {
                 }
               }
 
-              stage('Check if Upload was Requested') {
+              stage('Upload Artifacts') {
                 when {
                   expression { return params.PUBLISH }
                 }
+                steps {
+                  // Upload Sentry
+                  dir("package/linux/build-${flavor.capitalize()}-${os}/src/cpp") {
+                    retry 5 {
+                      timeout activity: true, time: 15 {
+                        sh "../../../../../docker/jenkins/sentry-upload.sh ${SENTRY_API_KEY}"
+                      }
+                    }
+                  }
 
-                stages {
-                  stage('Upload Artifacts') {
-                    steps {
-                      // Upload Sentry
-                      dir("package/linux/build-${flavor.capitalize()}-${os}/src/cpp") {
-                        retry 5 {
-                          timeout activity: true, time: 15 {
-                            sh "../../../../../docker/jenkins/sentry-upload.sh ${SENTRY_API_KEY}"
-                          }
-                        }
+                  // Upload to AWS
+                  script {
+                    if (rstudioVersionSuffix.contains("pro")) {
+                      if (env.PRODUCT == "desktop") {
+                        env.PRODUCT = "desktop-pro"
+                      } else if (env.PRODUCT == "electron") {
+                        env.PRODUCT = "electron-pro"
+                      } else if (env.PRODUCT == "server") {
+                        env.PRODUCT = "workbench"
+                      }
+                    }
+
+                    def packageDir = "package/linux/build-${flavor.capitalize()}-\$PACKAGE_TYPE/"
+                    def tarballDir = "_CPack_Packages/Linux/\$PACKAGE_TYPE"
+                    def packageFile = ''
+                    def tarballFile = ''
+                    dir(packageDir) {
+                      // Upload the pacakge to S3
+                      env.packageFile = findFiles glob: "rstudio-*.\$PACKAGE_EXT"
+                      // Strip relwithdebinfo froem the filename
+                      def renamedFile = echo $packageFile | sed 's/-relwithdebinfo//'
+                      mv $packageFile $renamedFile
+                      packageFile=$renamedFile
+
+                      withAWS(credentials: 'ide-build') {
+                        s3Upload acl: 'BucketOwnerFullControl', bucket: "$AWS_BUCKET", file: "$packageFile", path: "$AWS_PATH"
                       }
 
-                      // Upload to AWS
-                      script {
-                        if (rstudioVersionSuffix.contains("pro")) {
-                          if (env.PRODUCT == "desktop") {
-                            env.PRODUCT = "desktop-pro"
-                          } else if (env.PRODUCT == "electron") {
-                            env.PRODUCT = "electron-pro"
-                          } else if (env.PRODUCT == "server") {
-                            env.PRODUCT = "workbench"
-                          }
-                        }
-
-                        def packageDir = "package/linux/build-${flavor.capitalize()}-\$PACKAGE_TYPE/"
-                        def tarballDir = "_CPack_Packages/Linux/\$PACKAGE_TYPE"
-                        def packageFile = ''
-                        def tarballFile = ''
-                        dir(packageDir) {
-                          // Upload the pacakge to S3
-                          env.packageFile = findFiles glob: "rstudio-*.\$PACKAGE_EXT"
-                          // Strip relwithdebinfo froem the filename
-                          def renamedFile = echo $packageFile | sed 's/-relwithdebinfo//'
-                          mv $packageFile $renamedFile
-                          packageFile=$renamedFile
+                      // Also upload installer-less version for desktop builds
+                      if ((flavor == "desktop") || (flavor == "electron")) {
+                        dir(tarballDir) {
+                          tarballFile = findFiles glob: '*.tar.gz'
+                          // Strip relwithdebinfo from the filename
+                          def renamedTarball = echo $tarballFile | sed 's/-relwithdebinfo//'
+                          mv $tarballFile $renamedTarball
+                          tarballFile=$renamedTarball
 
                           withAWS(credentials: 'ide-build') {
-                            s3Upload acl: 'BucketOwnerFullControl', bucket: "$AWS_BUCKET", file: "$packageFile", path: "$AWS_PATH"
-                          }
-
-                          // Also upload installer-less version for desktop builds
-                          if ((flavor == "desktop") || (flavor == "electron")) {
-                            dir(tarballDir) {
-                              tarballFile = findFiles glob: '*.tar.gz'
-                              // Strip relwithdebinfo from the filename
-                              def renamedTarball = echo $tarballFile | sed 's/-relwithdebinfo//'
-                              mv $tarballFile $renamedTarball
-                              tarballFile=$renamedTarball
-
-                              withAWS(credentials: 'ide-build') {
-                                s3Upload acl: 'BucketOwnerFullControl', bucket: "$AWS_BUCKET", file: "$tarballFile", path: "$AWS_PATH"
-                              }
-                            }
+                            s3Upload acl: 'BucketOwnerFullControl', bucket: "$AWS_BUCKET", file: "$tarballFile", path: "$AWS_PATH"
                           }
                         }
                       }
-                      
-                      // Upload to Dailies
-                      script {
-                        dir('docker/jenkins') {
-                          sh "./publish-build.sh --build ${PRODUCT}/${os} --url https://s3.amazonaws.com/rstudio-ide-build/${flavor}/${os}/\$OS_X86_64_LABEL/${packageFile} --pat ${GITHUB_LOGIN_PSW} --file ${packageDir}/${packageFile} --version ${RSTUDIO_VERSION} --arch ${arch}"
-                        
-                          if (current_container.flavor == "desktop" || current_container.flavor == "electron") {
-                            sh "./publish-build.sh --build ${PRODUCT}/${os} --url https://s3.amazonaws.com/rstudio-ide-build/${flavor}/${os}/\$OS_X86_64_LABEL/${tarballFile} --pat ${GITHUB_LOGIN_PSW} --file ${packageDir}/${tarballDir}/${tarballFile} --version ${RSTUDIO_VERSION} --arch ${arch}"
-                          }
-                        }
-                      }
+                    }
+                  }
+                  
+                  // Upload to Dailies
+                  dir('docker/jenkins') {
+                    sh "./publish-build.sh --build ${PRODUCT}/${os} --url https://s3.amazonaws.com/rstudio-ide-build/${flavor}/${os}/\$OS_X86_64_LABEL/${packageFile} --pat ${GITHUB_LOGIN_PSW} --file ${packageDir}/${packageFile} --version ${RSTUDIO_VERSION} --arch ${arch}"
+                  
+                    if (flavor == "desktop" || flavor == "electron") {
+                      sh "./publish-build.sh --build ${PRODUCT}/${os} --url https://s3.amazonaws.com/rstudio-ide-build/${flavor}/${os}/\$OS_X86_64_LABEL/${tarballFile} --pat ${GITHUB_LOGIN_PSW} --file ${packageDir}/${tarballDir}/${tarballFile} --version ${RSTUDIO_VERSION} --arch ${arch}"
                     }
                   }
                 }
