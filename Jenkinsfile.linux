@@ -147,12 +147,6 @@ pipeline {
                         sh './scripts/docker-run-unit-tests.sh'
                       }
                     }
-
-                    post {
-                      failure {
-                        unstable("Electron unit tests failed (on ${os})")
-                      }
-                    }
                   }
 
                   stage ('GWT and C++ Tests') {
