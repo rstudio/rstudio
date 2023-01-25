@@ -2,7 +2,7 @@ def utils
 def versionFlower = ""
 
 pipeline {
-  agent { none }
+  agent none
 
   options {
     disableConcurrentBuilds()
