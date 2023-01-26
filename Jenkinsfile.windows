@@ -137,6 +137,21 @@ pipeline {
                     }
                   }
 
+                  stage('Upload Build Archive') {
+                    environment {
+                      AWS_ACCOUNT_ID = '749683154838'
+                      AWS_PATH="s3://rstudio-sentry-upload/${FLAVOR.toLowerCase()}/windows/"
+                    }
+                    steps {
+                      bat "7z.exe a -tzip build-${FLAVOR.capitalize()}.zip package\\win32\\build"
+                      withAWS(role: 'ide-build') {
+                        retry(5) {
+                          bat "aws s3 cp build-${FLAVOR.capitalize()}.zip ${AWS_PATH}"
+                        }
+                      }
+                    }
+                  }
+
                   stage('Tests') {
                     steps {
                       bat 'cd package/win32/build/src/cpp && rstudio-tests.bat --scope core'
