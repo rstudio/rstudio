@@ -107,7 +107,7 @@ pipeline {
           stage ("Pull Docker Image for Build"){
             agent {
               docker {
-                image "jenkins/ide:${os}-${arch}-${versionFlower}-linux-dev"
+                image "jenkins/ide:${os}-${arch}-${versionFlower}-linux"
                 registryCredentialsId 'ecr:us-east-1:aws-build-role'
                 registryUrl 'https://263245908434.dkr.ecr.us-east-1.amazonaws.com'
                 reuseNode true
