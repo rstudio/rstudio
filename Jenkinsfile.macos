@@ -149,7 +149,7 @@ pipeline {
                 }
               }
 
-              /* stage('Test') {
+              stage('Test') {
                 environment {
                   PATH = "${env.HOME}/opt/bin:${env.PATH}"
                 }
@@ -280,7 +280,7 @@ pipeline {
                     }
                   }
                 }
-              } */
+              }
             }
           }
         }
@@ -291,7 +291,7 @@ pipeline {
   post {
     always {
       deleteDir()
-      /* sendNotifications slack_channel: SLACK_CHANNEL */
+      sendNotifications slack_channel: SLACK_CHANNEL
     }
   }
 
