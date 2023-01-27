@@ -67,6 +67,10 @@ pipeline {
     }
 
     stage('Build Matrix') {
+      environment {
+        ENV = "RSTUDIO_VERSION_MAJOR=${RSTUDIO_VERSION_MAJOR} RSTUDIO_VERSION_MINOR=${RSTUDIO_VERSION_MINOR} RSTUDIO_VERSION_PATCH=${RSTUDIO_VERSION_PATCH} RSTUDIO_VERSION_SUFFIX=${RSTUDIO_VERSION_SUFFIX}"
+      }
+
       matrix {
         when {
           anyOf {
@@ -138,8 +142,15 @@ pipeline {
             stages {
               stage('Compile and Sign Package') {
                 steps {
+                  script {
+                    // Set sccache enabled
+                    if (params.DAILY == false) {
+                      ENV = "${ENV} SCCACHE_ENABLED=1"
+                    }
+                  }
+
                   dir('package/linux') {
-                    sh './make-${flavor}-package ${PACKAGE_TYPE} clean'
+                    sh "${ENV} " + './make-package ${PACKAGE_TYPE} clean --rstudio-target=${flavor}'
                     sh '../../docker/jenkins/sign-release.sh /build-' + flavor.capitalize() + '-${PACKAGE_TYPE}/rstudio-*.${PACKAGE_EXT} ${CODESIGN_KEY} ${CODESIGN_PASS}'
                   }
                 }
