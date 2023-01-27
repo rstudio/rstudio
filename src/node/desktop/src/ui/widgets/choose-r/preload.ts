@@ -15,6 +15,7 @@
 import { contextBridge, ipcRenderer } from 'electron';
 import { existsSync } from 'fs';
 import path from 'path';
+import { getDesktopLoggerBridge } from '../../../renderer/logger-bridge';
 import { normalizeSeparatorsNative } from '../../utils';
 
 export interface CallbackData {
@@ -29,6 +30,9 @@ export interface Callbacks {
   browse(data: CallbackData): Promise<boolean>;
   cancel(): void;
 }
+
+// this needs to be done in the preload of any widget wanting to use logging
+contextBridge.exposeInMainWorld('desktopLogger', getDesktopLoggerBridge());
 
 ipcRenderer.on('css', (event, data) => {
   const styleEl = document.createElement('style');

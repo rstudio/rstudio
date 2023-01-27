@@ -65,18 +65,37 @@ set -e
 
 RSTUDIO_ROOT_DIR="$(readlink -f $(dirname "${BASH_SOURCE[0]}")/../..)"
 
-if [[ "$#" -lt 1 ]]; then
-    echo "Usage: rstudio-version.sh [patch] [debug]"
+function invalid_arg() {
+    echo "Invalid argument: $1" >&2
     exit 1
-fi
+}
 
-# read arguments
-PATCH=$1
-if [[ "$2" == "debug" ]]; then
-    DEBUG=true
-else
-    DEBUG=false
-fi
+function help() {
+    echo "Usage: rstudio-version.sh [--patch=<patch number>] [--build-type=<build type>] [--debug]"
+    echo "  -h, --help: Print this help message"
+    echo "  -p, --patch: Set the patch number (e.g., --patch=1)"
+    echo "  -b, --build-type: Set a custom build type (e.g., --build-type=hourly)"
+    echo "  -d, --debug: Print additional output"
+    exit 0
+}
+
+# Default values
+PATCH=0
+DEBUG=false
+CUSTOM_BUILD_TYPE=""
+HELP=false
+
+for arg in "$@"; do
+
+   case "$arg" in
+   -h | --help)             help;;
+   -p | --patch=*)          PATCH=${arg#*=} ;;
+   -b | --build-type=*)     CUSTOM_BUILD_TYPE=${arg#*=} ;;
+   -d | --debug)            DEBUG=true ;;
+   *)                       invalid_arg "$arg" ;;
+   esac
+
+done
 
 function log() {
     if [[ $DEBUG = true ]]; then
@@ -87,6 +106,9 @@ function log() {
 function buildType() {
     if [ -e "$RSTUDIO_ROOT_DIR/version/BUILDTYPE" ]; then
         BUILD_TYPE="$(cat "$RSTUDIO_ROOT_DIR/version/BUILDTYPE" | tr '[ ]' '-' | tr -d '[:space:]' | tr '[:upper:]' '[:lower:]')"
+        if [[ -n "$CUSTOM_BUILD_TYPE" ]]; then
+            BUILD_TYPE="$CUSTOM_BUILD_TYPE"
+        fi
         if [[ -n "$BUILD_TYPE" && "$BUILD_TYPE" != "release" ]]; then
             echo "-${BUILD_TYPE}"
         else

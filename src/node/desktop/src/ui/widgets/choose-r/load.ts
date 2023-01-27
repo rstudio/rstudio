@@ -20,8 +20,8 @@ import { Callbacks, CallbackData } from './preload';
 import { changeLanguage, initI18n, localize } from '../../../main/i18n-manager';
 
 import './styles.css';
-import { logger } from '../../../core/logger';
 import { checkForNewLanguage } from '../../utils';
+import { logString } from '../../renderer-logging';
 
 declare global {
   interface Window {
@@ -78,7 +78,7 @@ buttonBrowse.addEventListener('click', async () => {
       window.close();
     }
   } catch (err) {
-    logger().logDebug(`Error occurred when trying to browse for R: ${err}`);
+    logString('debug', `Error occurred when trying to browse for R: ${err}`);
   } finally {
     /** 
     * Without this timeout, the Choose R Modal will also be closed together with the Browse Dialog.

@@ -28,9 +28,13 @@ void addRemoteRef(String branchName) {
 /**
   * Get Version
   */
-def getVersion() {
+def getVersion(boolean isHourly = false) {
+  def buildType = ""
+  if(isHourly) {
+    buildType="--build-type=hourly"
+  }
   def rstudioVersion = sh(
-                          script: "docker/jenkins/rstudio-version.sh ${params.RSTUDIO_VERSION_PATCH}",
+                          script: "docker/jenkins/rstudio-version.sh --patch=${params.RSTUDIO_VERSION_PATCH} ${buildType}",
                           returnStdout: true
                         ).trim()
   echo "RStudio build version: ${rstudioVersion}"

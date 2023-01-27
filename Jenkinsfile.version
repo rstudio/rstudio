@@ -16,7 +16,8 @@ pipeline {
   }
 
   parameters {
-      string(name: 'RSTUDIO_VERSION_PATCH', defaultValue: '0', description: 'RStudio Patch Version')
+      string(name: 'RSTUDIO_VERSION_PATCH', defaultValue: '999', description: 'RStudio Patch Version')
+      booleanParam(name: 'DAILY', defaultValue: true, description: 'Runs daily build if true')
   }
 
   environment {
@@ -46,12 +47,13 @@ pipeline {
             RSTUDIO_VERSION_MAJOR,
             RSTUDIO_VERSION_MINOR,
             RSTUDIO_VERSION_PATCH,
-            RSTUDIO_VERSION_SUFFIX) = utils.getVersion()
+            RSTUDIO_VERSION_SUFFIX) = utils.getVersion(!DAILY)
           echo "RStudio Version: ${RSTUDIO_VERSION}"
           echo "RStudio Version Major: ${RSTUDIO_VERSION_MAJOR}"
           echo "RStudio Version Minor: ${RSTUDIO_VERSION_MINOR}"
           echo "RStudio Version Patch: ${RSTUDIO_VERSION_PATCH}"
           echo "RStudio Version Suffix: ${RSTUDIO_VERSION_SUFFIX}"
+          currentBuild.displayName = "${RSTUDIO_VERSION}"
         }
       }
     }
