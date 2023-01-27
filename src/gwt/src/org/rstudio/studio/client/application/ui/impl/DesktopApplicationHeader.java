@@ -452,8 +452,8 @@ public class DesktopApplicationHeader implements ApplicationHeader,
                globalDisplay_.showErrorMessage(constants_.errorCheckingUpdatesMessage(),
                constants_.errorOccurredCheckingUpdatesMessage()
                + error.getMessage()
-               // TODO: move string to constants, possibly make url into <a> and add i18n
-               + "\n\nPlease visit https://posit.co/download/rstudio-desktop/ to check if a new version is available.");
+               + "\n\n"
+               + constants_.visitWebsiteForNewVersionText());
             }
          }
       });
