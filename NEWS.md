@@ -33,6 +33,7 @@
 - Removed empty spell check tooltips #11306
 - Fixed package completion tooltips #12147
 - Fixed setting rsession log level using command-line argument or logging.conf #12557
+- Fixed "Check for updates" incorrectly reports that there are no updates (rstudio-pro #3388)
 
 ### Accessibility Improvements
 
