@@ -447,9 +447,14 @@ public class DesktopApplicationHeader implements ApplicationHeader,
          @Override
          public void onError(ServerError error)
          {
-            globalDisplay_.showErrorMessage(constants_.errorCheckingUpdatesMessage(),
-                  constants_.errorOccurredCheckingUpdatesMessage()
-                  + error.getMessage());
+            // Only show the error message when checking for updates manually
+            if (manual) {
+               globalDisplay_.showErrorMessage(constants_.errorCheckingUpdatesMessage(),
+               constants_.errorOccurredCheckingUpdatesMessage()
+               + error.getMessage()
+               // TODO: move string to constants, possibly make url into <a> and add i18n
+               + "\n\nPlease visit https://posit.co/download/rstudio-desktop/ to check if a new version is available.");
+            }
          }
       });
    }
