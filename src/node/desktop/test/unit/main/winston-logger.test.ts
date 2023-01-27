@@ -40,7 +40,7 @@ describe('WinstonLogger', () => {
     const logLevels: string[] = ['warn', 'error', 'info', 'http', 'verbose', 'debug', 'silly'];
 
     logLevels.forEach((logLevel) => {
-      const logOptions = new LogOptions({ config: `[*]\nlog-level=${logLevel}\nlog-dir=./tmp` });
+      const logOptions = new LogOptions(undefined, { config: `[*]\nlog-level=${logLevel}\nlog-dir=./tmp` });
       const logger = new WinstonLogger(logOptions);
       assert.equal(logger.logLevel(), logLevel, 'Logger log level should be ' + logLevel);
     });
@@ -50,7 +50,7 @@ describe('WinstonLogger', () => {
     const logLevels: string[] = ['warn', 'error', 'info', 'http', 'verbose', 'debug', 'silly'];
 
     logLevels.forEach((logLevel) => {
-      const logOptions = new LogOptions({ config: `[*]\nlog-level=${logLevel}\nlog-dir=./tmp` });
+      const logOptions = new LogOptions(undefined, { config: `[*]\nlog-level=${logLevel}\nlog-dir=./tmp` });
       const logger = new WinstonLogger(logOptions);
       logger.setLogLevel(logLevel);
 
@@ -76,7 +76,7 @@ describe('WinstonLogger', () => {
     `[*]\n\
     log-dir=${logDir}\
     `;
-    const logOptions = new LogOptions({ config: logConf });
+    const logOptions = new LogOptions(undefined, { config: logConf });
 
     const expected = (new FilePath(logDir)).completeChildPath('rdesktop.log');
     assert.equal(logOptions.getLogFile().getAbsolutePath(), expected.getAbsolutePath());
@@ -94,7 +94,7 @@ describe('WinstonLogger', () => {
 
     const fd = openSync(confPath, 'a');
     writeFileSync(fd, logConf);
-    const logOptions = new LogOptions({ file: confPath });
+    const logOptions = new LogOptions(undefined, { file: confPath });
 
     assert.equal(logOptions.getLogLevel(), 'debug');
   });
@@ -122,7 +122,7 @@ describe('WinstonLogger', () => {
     '[*]\n\
     log-message-format=json\
     ';
-    const logOptions = new LogOptions({ config: logConf });
+    const logOptions = new LogOptions(undefined, { config: logConf });
 
     assert.equal(logOptions.getLogMessageFormat(), 'json');
   });
@@ -134,9 +134,33 @@ describe('WinstonLogger', () => {
       `[*]\n\
       logger-type=${loggerType}\
       `;
-      const logOptions = new LogOptions({ config: logConf });
+      const logOptions = new LogOptions(undefined, { config: logConf });
 
       assert.equal(logOptions.getLoggerType(), loggerType);
     });
+  });
+
+  it('Can get log level for rsession', () => {
+    const logConf =
+    `[*]\n\
+    log-level=debug
+    [@rsession]
+    log-level=info
+    `;
+    const logOptions = new LogOptions('rsession', { config: logConf });
+
+    assert.equal(logOptions.getLogLevel(), 'info');
+  });
+
+  it('Can get global log level', () => {
+    const logConf =
+    `[*]\n\
+    log-level=debug
+    [@rsession]
+    log-level=info
+    `;
+    const logOptions = new LogOptions(undefined, { config: logConf });
+
+    assert.equal(logOptions.getLogLevel(), 'debug');
   });
 });
