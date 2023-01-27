@@ -56,7 +56,6 @@ pipeline {
           utils = load "${env.WORKSPACE}/utils.groovy"
 
           versionFlower = utils.getFlower()
-          currentBuild.displayName = "${versionFlower}"
         }
       }
     }
