@@ -129,8 +129,8 @@ pipeline {
               stage('Compile and Sign Package') {
                 steps {
                   dir('package/linux') {
-                    sh "./make-${flavor}-package \$PACKAGE_TYPE clean"
-                    sh "../../docker/jenkins/sign-release.sh /build-${flavor.capitalize()}-\$PACKAGE_TYPE/rstudio-*.\$PACKAGE_EXT ${CODESIGN_KEY} ${CODESIGN_PASS}"
+                    sh "./make-${flavor}-package ${PACKAGE_TYPE} clean"
+                    sh '../../docker/jenkins/sign-release.sh /build-' + flavor.capitalize() + '-${PACKAGE_TYPE}/rstudio-*.${PACKAGE_EXT} ${CODESIGN_KEY} ${CODESIGN_PASS}'
                   }
                 }
               }
@@ -139,7 +139,7 @@ pipeline {
                 stages {
                   stage ('Electron-Only Tests') {
                     when {
-                      expression { return "${flavor}" == "electron" }
+                      expression { return flavor == "electron" }
                     }
 
                     steps {
