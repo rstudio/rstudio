@@ -17,7 +17,7 @@ pipeline {
       string(name: 'RSTUDIO_VERSION_PATCH',  defaultValue: '999', description: 'RStudio Patch Version')
       booleanParam(name: 'DAILY', defaultValue: false, description: 'Runs daily build if true')
       booleanParam(name: 'PUBLISH', defaultValue: true, description: 'Runs publish stage if true')
-      gitParameter defaultValue: '${env.GIT_BRANCH}', name: 'COMMIT_HASH', type: 'PT_REVISION'
+      string(name: 'COMMIT_HASH', defaultValue: '')
   }
 
   environment {
@@ -41,7 +41,7 @@ pipeline {
     }
 
     stage ("Checkout") {
-      when { expression { params.COMMIT_HASH != env.GIT_BRANCH } }
+      when { expression { params.COMMIT_HASH != '' } }
 
       steps {
         echo "Commit_hash value: ${params.COMMIT_HASH}"
