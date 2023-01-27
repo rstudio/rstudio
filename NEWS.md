@@ -32,6 +32,7 @@
 - Fixed indentation of raw strings #12127
 - Removed empty spell check tooltips #11306
 - Fixed package completion tooltips #12147
+- Fixed setting rsession log level using command-line argument or logging.conf #12557
 
 ### Accessibility Improvements
 
