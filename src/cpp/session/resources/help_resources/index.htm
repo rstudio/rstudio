@@ -1,8 +1,8 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-<meta http-equiv="Content-Type" content="text/html; charset=utf-8"/>
-<title>Home</title>
+<meta http-equiv="Content-Type" content="text/html; charset=utf-8">
+<title>Help Home</title>
 
 <style>
    body {
@@ -13,30 +13,17 @@
       margin-top: 5px;
       padding-bottom: 25px;
    }
-   
-   td {
-      vertical-align: top;
-   }
-   
-   ul {
-      padding-left: 0px;
-      list-style: none;
-      margin-bottom: 0px;
-   }
-   
-   li {
-      margin-bottom: 6px;
-      color: rgb(39,117,216);
-   }
-   
+
    a {
       color: rgb(39,117,216);
+      display:block;
+      margin-bottom: 6px;
    }
-   
+
    a:link {
       text-decoration: none;
    }
-   
+
    h3 {
       white-space: nowrap;
       font-weight: normal;
@@ -45,113 +32,91 @@
       font-size: 1.3em;
 
    }
-   
+
    h3 img {
       vertical-align: text-bottom;
    }
-</style>
 
+   @media screen and (min-width: 30em) {
+      .twocol {
+         display: grid;
+         grid-template-columns: 1fr 1fr;
+      }
+
+      .threecol {
+         display: grid;
+         grid-template-columns: 1fr 1fr 1fr;
+      }
+   }
+
+   .padded {
+      padding: 1px;
+   }
+</style>
 </head>
 
 <body>
-   
-<table width="100%">
-   <tbody>
-      <tr>
-         <td width="50%">
-            <h3>
-               <img src="r-2x.png" width="25" height="25" alt>
-               R Resources
-            </h3>
-            <ul>
-               <li><a href="https://www.rstudio.org/links/r-online-learning">Learning R Online</a></li>
-               <li><a href="https://cran.rstudio.com/web/views/">CRAN Task Views</a></li>
-               <li><a href="https://stackoverflow.com/questions/tagged/r">R on StackOverflow</a></li>
-               <li><a href="https://www.rstudio.org/links/help-with-r">Getting Help with R</a></li>
-            </ul>
-         </td>
-          <td width="50%">
-            <h3>
-            <img src="rstudio-2x.png" width="25" height="25" alt>
-            RStudio
-            </h3>
-            <ul>
-               <li><a href="https://www.rstudio.org/links/rstudio-support">Posit Support</a></li>
-               <li><a href="https://www.rstudio.org/links/community-forum">RStudio Community Forum</a></li>
-               <li><a href="https://www.rstudio.org/links/cheat_sheets">RStudio Cheat Sheets</a></li>
-               <li><a href="https://twitter.com/rstudiotips">RStudio Tip of the Day</a></li>
-               <li><a href="https://www.rstudio.org/links/rstudio-r-packages">RStudio Packages</a></li>
-               <li><a href="https://www.rstudio.org/links/rstudio-products">Posit Products</a></li>
-            </ul>
-         </td>
-      </tr>
-   </tbody>
-</table>   
-   
-  
+
+<main>
+<div class="twocol">
+   <div class="padded">
+      <h3>
+         <img src="r-2x.png" width="25" height="25" alt>
+         R Resources
+      </h3>
+      <a href="https://www.rstudio.org/links/r-online-learning">Learning R Online</a>
+      <a href="https://cran.rstudio.com/web/views/">CRAN Task Views</a>
+      <a href="https://stackoverflow.com/questions/tagged/r">R on StackOverflow</a>
+      <a href="https://www.rstudio.org/links/help-with-r">Getting Help with R</a>
+   </div>
+   <div class="padded">
+      <h3>
+         <img src="rstudio-2x.png" width="25" height="25" alt>
+         RStudio
+      </h3>
+      <a href="https://www.rstudio.org/links/rstudio-support">Posit Support</a>
+      <a href="https://www.rstudio.org/links/community-forum">RStudio Community Forum</a>
+      <a href="https://www.rstudio.org/links/cheat_sheets">RStudio Cheat Sheets</a>
+      <a href="https://twitter.com/rstudiotips">RStudio Tip of the Day</a>
+      <a href="https://www.rstudio.org/links/rstudio-r-packages">RStudio Packages</a>
+      <a href="https://www.rstudio.org/links/rstudio-products">Posit Products</a>
+   </div>
+</div>
+
 <h3>Manuals</h3>
-
-<table cols="2" width="100%">
-   
-   
-  <tr>
-    <td width="50%">
-    <a href="../manual/R-intro.html">An Introduction to R</a>
-    </td>
-    <td width="50%">
-    <a href="../manual/R-lang.html">The R Language Definition</a>
-    </td>
-  </tr>
-  <tr>
-    <td width="50%">
-    <a href="../manual/R-exts.html">Writing R Extensions</a>
-    </td>
-    <td width="50%">
-    <a href="../manual/R-admin.html">R Installation and Administration</a>
-    </td>
-  </tr>  
-  <tr>
-    <td width="50%">
-    <a href="../manual/R-data.html">R Data Import/Export</a>
-    </td>
-    <td width="50%">
-    <a href="../manual/R-ints.html">R Internals</a>
-    </td>
-  </tr>
-</table>
-
+<div class="twocol padded">
+   <a href="../manual/R-intro.html">An Introduction to R</a>
+   <a href="../manual/R-lang.html">The R Language Definition</a>
+   <a href="../manual/R-exts.html">Writing R Extensions</a>
+   <a href="../manual/R-admin.html">R Installation and Administration</a>
+   <a href="../manual/R-data.html">R Data Import/Export</a>
+   <a href="../manual/R-ints.html">R Internals</a>
+</div>
 
 <h3>Reference</h3>
 
-<table cols="2" width="100%">
-<tr>
-<td width="50%"><a href="../html/packages.html">Packages</a></td>
-<td width="50%"><a href="../html/Search.html">Search Engine &amp; Keywords</a></td>
-</tr>
-</table>
+<div class="twocol padded">
+   <a href="../html/packages.html">Packages</a>
+   <a href="../html/Search.html">Search Engine &amp; Keywords</a>
+</div>
 
 <h3>Miscellaneous Material</h3>
 
-<table cols="3" width="100%">
-<tr>
-<td width="33%"><a href="../html/about.html">About R</a> </td>
-<td width="33%"><a href="../AUTHORS">Authors</a> </td>
-<td width="33%"><a href="../html/resources.html">Resources</a></td>
-</tr>
-<tr>
-<td width="33%"><a href="../COPYING">License</a></td>
-<td width="33%"><a href="../manual/R-FAQ.html">FAQ</a> </td>
-<td width="33%"><a href="../THANKS">Thanks</a> </td>
-</tr>
-<tr>
-<td width="33%"><a href="../html/NEWS.html">NEWS</a></td>
-<td width="33%"><a href="../html/UserManuals.html">User Manuals</a></td>
-<td width="33%"><a href="http://developer.R-project.org/TechDocs">Technical papers</a></td>
-</tr>
-</table>
+<div class="threecol padded">
+   <a href="../html/about.html">About R</a>
+   <a href="../AUTHORS">Authors</a>
+   <a href="../html/resources.html">Resources</a>
+   <a href="../COPYING">License</a>
+   <a href="../manual/R-FAQ.html">FAQ</a>
+   <a href="../THANKS">Thanks</a>
+   <a href="../html/NEWS.html">NEWS</a>
+   <a href="../html/UserManuals.html">User Manuals</a>
+   <a href="http://developer.R-project.org/TechDocs">Technical papers</a>
+</div>
 
 #!js_callbacks#
-   
+
+</main>
 </body>
 
 </html>
