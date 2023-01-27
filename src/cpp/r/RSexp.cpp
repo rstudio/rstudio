@@ -832,6 +832,16 @@ void clearExternalPtr(SEXP extptr)
    R_ClearExternalPtr(extptr);
 }
 
+SEXP getExternalPtrProtected(SEXP extptr)
+{
+   return R_ExternalPtrProtected(extptr);
+}
+
+SEXP getExternalPtrTag(SEXP extptr)
+{
+   return R_ExternalPtrTag(extptr);
+}
+
 core::Error getNamedListSEXP(SEXP listSEXP,
                              const std::string& name,
                              SEXP* pValueSEXP)

@@ -135,6 +135,8 @@ SEXP makeExternalPtr(void* ptr, R_CFinalizer_t fun, Protect* protect);
 SEXP makeExternalPtr(void* ptr, SEXP prot, SEXP tag);
 void* getExternalPtrAddr(SEXP extptr);
 void clearExternalPtr(SEXP extptr);
+SEXP getExternalPtrProtected(SEXP extptr);
+SEXP getExternalPtrTag(SEXP extptr);
 
 // extract c++ type from R SEXP
 core::Error extract(SEXP valueSEXP, int* pInt);
