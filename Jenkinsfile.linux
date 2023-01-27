@@ -101,6 +101,16 @@ pipeline {
               values 'arm64'
             }
           }
+          exclude {
+            axis {
+              name 'flavor'
+              values 'desktop'
+            }
+            axis {
+              name 'arch'
+              values 'arm64'
+            }
+          }
         }
 
         stages {
@@ -129,7 +139,7 @@ pipeline {
               stage('Compile and Sign Package') {
                 steps {
                   dir('package/linux') {
-                    sh "./make-${flavor}-package ${PACKAGE_TYPE} clean"
+                    sh './make-${flavor}-package ${PACKAGE_TYPE} clean'
                     sh '../../docker/jenkins/sign-release.sh /build-' + flavor.capitalize() + '-${PACKAGE_TYPE}/rstudio-*.${PACKAGE_EXT} ${CODESIGN_KEY} ${CODESIGN_PASS}'
                   }
                 }
