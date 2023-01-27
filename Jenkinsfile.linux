@@ -21,7 +21,7 @@ pipeline {
     string(name: 'FLAVOR_FILTER', defaultValue: 'all', description: 'Pattern to limit builds by matching FLAVOR')
     booleanParam(name: 'DAILY', defaultValue: true, description: 'Runs daily build if true')
     booleanParam(name: 'PUBLISH', defaultValue: false, description: 'Runs publish stage if true')
-    string(name: 'COMMIT_HASH' , defaultValue: env.GIT_BRANCH)
+    string(name: 'COMMIT_HASH' , defaultValue: "${env.GIT_BRANCH}")
   }
 
   environment {
