@@ -19,7 +19,7 @@ pipeline {
     string(name: 'OS_FILTER', defaultValue: 'all', description: 'Pattern to limit builds by matching OS')
     string(name: 'ARCH_FILTER', defaultValue: 'all', description: 'Pattern to limit builds by matching ARCH')
     string(name: 'FLAVOR_FILTER', defaultValue: 'all', description: 'Pattern to limit builds by matching FLAVOR')
-    booleanParam(name: 'DAILY', defaultValue: true, description: 'Runs daily build if true')
+    booleanParam(name: 'DAILY', defaultValue: false, description: 'Runs daily build if true')
     booleanParam(name: 'PUBLISH', defaultValue: false, description: 'Runs publish stage if true')
     string(name: 'COMMIT_HASH' , defaultValue: '')
   }
