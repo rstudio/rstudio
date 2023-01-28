@@ -164,7 +164,7 @@ pipeline {
                   }
 
                   dir('package/linux') {
-                    sh "${ENV} ./make-package \${PACKAGE_TYPE} clean --rstudio-target=${FLAVOR}"
+                    sh "${ENV} ./make-package ${FLAVOR} \${PACKAGE_TYPE} clean"
                     sh '../../docker/jenkins/sign-release.sh /build-${FLAVOR}-${PACKAGE_TYPE}/rstudio-*.${PACKAGE_EXT} ${CODESIGN_KEY} ${CODESIGN_PASS}'
                   }
                 }
