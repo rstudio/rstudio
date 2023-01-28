@@ -1,7 +1,7 @@
 def utils
 
 pipeline {
-  agent { label 'linux' }
+  agent none
 
   options {
     disableConcurrentBuilds()
@@ -36,39 +36,45 @@ pipeline {
 
   stages {
 
-    stage('Load Utils') {
-      steps {
-        script {
-          utils = load "${env.WORKSPACE}/utils.groovy"
-        }
-      }
-    }
+    stage('Initialize') {
+      agent { label 'linux' }
 
-    stage ("Checkout") {
-      when { expression { params.COMMIT_HASH != '' } }
-
-      steps {
-        echo "Commit_hash value: ${params.COMMIT_HASH}"
-        checkout([$class: 'GitSCM',
-                  branches: [[name: "${params.COMMIT_HASH}"]],
-                  extensions: [],
-                  userRemoteConfigs: [[credentialsId: 'github-rstudio-jenkins', url: "${GIT_URL}"]]])
-      }
-    }
-
-    stage('Versioning') {
-      steps {
-        script {
-          (RSTUDIO_VERSION,
-            RSTUDIO_VERSION_MAJOR,
-            RSTUDIO_VERSION_MINOR,
-            RSTUDIO_VERSION_PATCH,
-            RSTUDIO_VERSION_SUFFIX) = utils.getVersion()
-          RSTUDIO_VERSION_FLOWER = utils.getFlower()
-          IS_PRO = RSTUDIO_VERSION_SUFFIX.contains('pro')
+      stages {
+        stage('Load Utils') {
+          steps {
+            script {
+              utils = load "${env.WORKSPACE}/utils.groovy"
+            }
+          }
         }
 
-        buildName "${RSTUDIO_VERSION_MAJOR}.${RSTUDIO_VERSION_MINOR}.${RSTUDIO_VERSION_PATCH}${RSTUDIO_VERSION_SUFFIX}"
+        stage("Checkout") {
+          when { expression { params.COMMIT_HASH != '' } }
+
+          steps {
+            echo "Commit_hash value: ${params.COMMIT_HASH}"
+            checkout([$class: 'GitSCM',
+                      branches: [[name: "${params.COMMIT_HASH}"]],
+                      extensions: [],
+                      userRemoteConfigs: [[credentialsId: 'github-rstudio-jenkins', url: "${GIT_URL}"]]])
+          }
+        }
+
+        stage('Versioning') {
+          steps {
+            script {
+              (RSTUDIO_VERSION,
+                RSTUDIO_VERSION_MAJOR,
+                RSTUDIO_VERSION_MINOR,
+                RSTUDIO_VERSION_PATCH,
+                RSTUDIO_VERSION_SUFFIX) = utils.getVersion()
+              RSTUDIO_VERSION_FLOWER = utils.getFlower()
+              IS_PRO = RSTUDIO_VERSION_SUFFIX.contains('pro')
+            }
+
+            buildName "${RSTUDIO_VERSION_MAJOR}.${RSTUDIO_VERSION_MINOR}.${RSTUDIO_VERSION_PATCH}${RSTUDIO_VERSION_SUFFIX}"
+          }
+        }
       }
     }
 
