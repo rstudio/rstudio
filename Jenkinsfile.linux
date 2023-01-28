@@ -186,12 +186,9 @@ pipeline {
 
                   stage ('GWT and C++ Tests') {
                     steps {
-                      dir ( 'package/linux/build-${FLAVOR}-${PACKAGE_TYPE}/src/gwt' ) {
-                        sh './gwt-unit-tests.sh'
-                      }
-
-                      dir ( 'package/linux/build-${FLAVOR}-${PACKAGE_TYPE}/src/cpp' ) {
-                        sh './rstudio-tests'
+                      dir ( 'package/linux/' ) {
+                        sh 'cd build-${FLAVOR}-${PACKAGE_TYPE}/src/gwt && ./gwt-unit-tests.sh'
+                        sh 'cd build-${FLAVOR}-${PACKAGE_TYPE}/src/cpp && ./rstudio-tests'
                       }
                     }
                   }
