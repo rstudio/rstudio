@@ -39,6 +39,10 @@ pipeline {
     stage('Initialize') {
       agent { label 'linux' }
 
+      environment {
+        ENV = ""
+      }
+
       stages {
         stage('Load Utils') {
           steps {
@@ -70,6 +74,12 @@ pipeline {
                 RSTUDIO_VERSION_SUFFIX) = utils.getVersion()
               RSTUDIO_VERSION_FLOWER = utils.getFlower()
               IS_PRO = RSTUDIO_VERSION_SUFFIX.contains('pro')
+              
+              // Set up environment for builds. Set it once here to avoid duplicate SCCACHE_ENABLED settings.
+              ENV = "RSTUDIO_VERSION_MAJOR=${RSTUDIO_VERSION_MAJOR} RSTUDIO_VERSION_MINOR=${RSTUDIO_VERSION_MINOR} RSTUDIO_VERSION_PATCH=${RSTUDIO_VERSION_PATCH} RSTUDIO_VERSION_SUFFIX=${RSTUDIO_VERSION_SUFFIX}"
+              if (params.DAILY == false) {
+                ENV = "${ENV} SCCACHE_ENABLED=1"
+              }
             }
 
             buildName "${RSTUDIO_VERSION_MAJOR}.${RSTUDIO_VERSION_MINOR}.${RSTUDIO_VERSION_PATCH}${RSTUDIO_VERSION_SUFFIX}"
@@ -79,10 +89,6 @@ pipeline {
     }
 
     stage('Build Matrix') {
-
-      environment {
-        ENV = "RSTUDIO_VERSION_MAJOR=${RSTUDIO_VERSION_MAJOR} RSTUDIO_VERSION_MINOR=${RSTUDIO_VERSION_MINOR} RSTUDIO_VERSION_PATCH=${RSTUDIO_VERSION_PATCH} RSTUDIO_VERSION_SUFFIX=${RSTUDIO_VERSION_SUFFIX}"
-      }
 
       matrix {
         when {
@@ -156,15 +162,10 @@ pipeline {
                 }
 
                 steps {
-                  script {
-                    // Set sccache enabled
-                    if (params.DAILY == false) {
-                      ENV = "${ENV} SCCACHE_ENABLED=1"
-                    }
-                  }
-
                   dir('package/linux') {
-                    sh "${ENV} ./make-package ${FLAVOR} \${PACKAGE_TYPE} clean"
+                    withAWS(role: 'build', roleAccount: AWS_ACCOUNT_ID) {
+                      sh "${ENV} ./make-package ${FLAVOR} \${PACKAGE_TYPE} clean"
+                    }
                     sh '../../docker/jenkins/sign-release.sh build-${FLAVOR}-${PACKAGE_TYPE}/rstudio-*.${PACKAGE_EXT} ${CODESIGN_KEY} ${CODESIGN_PASS}'
                   }
                 }
