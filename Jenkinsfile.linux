@@ -31,17 +31,15 @@ pipeline {
     RSTUDIO_VERSION_PATCH = ""
     RSTUDIO_VERSION_SUFFIX = ""
     RSTUDIO_VERSION_FLOWER = ""
+    ENV = ""
     IS_PRO = false
+    AWS_ACCOUNT_ID = '749683154838'
   }
 
   stages {
 
     stage('Initialize') {
       agent { label 'linux' }
-
-      environment {
-        ENV = ""
-      }
 
       stages {
         stage('Load Utils') {
