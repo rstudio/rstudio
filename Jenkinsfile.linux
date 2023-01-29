@@ -301,8 +301,10 @@ pipeline {
 
   post {
     always {
-      deleteDir()
-      sendNotifications slack_channel: SLACK_CHANNEL
+      node('linux') {
+        deleteDir()
+        sendNotifications slack_channel: SLACK_CHANNEL
+      }
     }
   }
 }
