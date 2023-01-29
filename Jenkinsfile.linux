@@ -162,7 +162,7 @@ pipeline {
                 steps {
                   dir('package/linux') {
                     withAWS(role: 'build', roleAccount: AWS_ACCOUNT_ID) {
-                      sh "${ENV} ./make-${FLAVOR}-package \${PACKAGE_TYPE} clean"
+                      sh "${ENV} ./make-package ${FLAVOR} \${PACKAGE_TYPE} clean"
                     }
                     sh '../../docker/jenkins/sign-release.sh build-${FLAVOR}-${PACKAGE_TYPE}/rstudio-*.${PACKAGE_EXT} ${CODESIGN_KEY} ${CODESIGN_PASS}'
                   }
