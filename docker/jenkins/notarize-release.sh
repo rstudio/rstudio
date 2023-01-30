@@ -22,9 +22,9 @@
 #
 # Expects the following environment variables to be present:
 #  
-#    APPLE_ID: the ID of the Apple account under which to submit the
+#    APPLE_ID_USR: the ID of the Apple account under which to submit the
 #      notarization request
-#    APPLE_ID_PASSWORD: An app-specific password (NOT the primary password) for
+#    APPLE_ID_PSW: An app-specific password (NOT the primary password) for
 #      the Apple ID. See details here: https://support.apple.com/en-us/HT204397
 #  
 
@@ -34,22 +34,22 @@ if [[ "$#" -lt 1 ]]; then
 fi
 
 # Validate environment vars
-if [ -z "$APPLE_ID" ]; then
-    echo "Please set the environment variable APPLE_ID to the AppleID under which to submit the notarization request."
+if [ -z "$APPLE_ID_USR" ]; then
+    echo "Please set the environment variable APPLE_ID_USR to the AppleID under which to submit the notarization request."
     exit 1
 fi
-if [ -z "$APPLE_ID_PASSWORD" ]; then
-    echo "Please set the environment variable APPLE_ID_PASSWORD to the password to the account named in the APPLE_ID environment variable."
+if [ -z "$APPLE_ID_PSW" ]; then
+    echo "Please set the environment variable APPLE_ID_PSW to the password to the account named in the APPLE_ID_USR environment variable."
     exit 1
 fi
 
 # Submit the notarization request to Apple
-echo "Submitting notarization request using account $APPLE_ID..."
+echo "Submitting notarization request using account $APPLE_ID_USR..."
 XCRUN_RESULT="$(mktemp)"
 xcrun altool --notarize-app \
     --primary-bundle-id "org.rstudio.RStudio" \
-    --username $APPLE_ID \
-    --password "@env:APPLE_ID_PASSWORD" \
+    --username $APPLE_ID_USR \
+    --password "@env:APPLE_ID_PSW" \
     --file $1 \
     --output-format xml \
     -itc_provider RStudioInc > $XCRUN_RESULT
@@ -78,7 +78,7 @@ while true; do
     # Use xcrun to inquire about the status of the notarization request we just made
     ((QUERIES=QUERIES+1))
     echo "Checking notarization status (query $QUERIES)..."
-    xcrun altool --notarization-info $REQUEST_UUID --username $APPLE_ID --password "@env:APPLE_ID_PASSWORD" --output-format xml > $XCRUN_RESULT
+    xcrun altool --notarization-info $REQUEST_UUID --username $APPLE_ID_USR --password "@env:APPLE_ID_PSW" --output-format xml > $XCRUN_RESULT
 
     # Use PlistBuddy (ships with macOS) to parse the XML and extract the status
     NOTARIZATION_STATUS=$(/usr/libexec/PlistBuddy -c "Print :notarization-info:Status" $XCRUN_RESULT)

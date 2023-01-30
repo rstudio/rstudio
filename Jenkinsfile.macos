@@ -16,8 +16,8 @@ pipeline {
       string(name: 'SLACK_CHANNEL', defaultValue: '#ide-builds', description: 'Slack channel to publish build message.')
       string(name: 'RSTUDIO_VERSION_PATCH',  defaultValue: '999', description: 'RStudio Patch Version')
       booleanParam(name: 'DAILY', defaultValue: false, description: 'Runs daily build if true')
-      booleanParam(name: 'PUBLISH', defaultValue: true, description: 'Runs publish stage if true')
-      gitParameter defaultValue: 'none', name: 'COMMIT_HASH', type: 'PT_REVISION'
+      booleanParam(name: 'PUBLISH', defaultValue: false, description: 'Runs publish stage if true')
+      string(name: 'COMMIT_HASH', defaultValue: '')
   }
 
   environment {
@@ -41,9 +41,8 @@ pipeline {
     }
 
     stage ("Checkout") {
-      when {
-        expression { params.COMMIT_HASH != 'none'}
-      }
+      when { expression { params.COMMIT_HASH != '' } }
+
       steps {
         echo "Commit_hash value: ${params.COMMIT_HASH}"
         checkout([$class: 'GitSCM',
@@ -61,9 +60,10 @@ pipeline {
             RSTUDIO_VERSION_MINOR,
             RSTUDIO_VERSION_PATCH,
             RSTUDIO_VERSION_SUFFIX) = utils.getVersion()
-          currentBuild.displayName = "${RSTUDIO_VERSION_MAJOR}.${RSTUDIO_VERSION_MINOR}.${RSTUDIO_VERSION_PATCH}${RSTUDIO_VERSION_SUFFIX}"
           IS_PRO = RSTUDIO_VERSION_SUFFIX.contains('pro')
         }
+
+        buildName "${RSTUDIO_VERSION_MAJOR}.${RSTUDIO_VERSION_MINOR}.${RSTUDIO_VERSION_PATCH}${RSTUDIO_VERSION_SUFFIX}"
       }
     }
 
@@ -107,7 +107,7 @@ pipeline {
               lock('synchronous-matrix')
             }
             stages{
-              stage('Build') {
+              stage('Build and Sign') {
 
                 environment {
                   AWS_ACCOUNT_ID = '749683154838'
@@ -122,7 +122,7 @@ pipeline {
                     }
                   }
                   // unlock keychain to ensure build gets signed.
-                  sh 'security unlock-keychain -p $KEYCHAIN_PASSPHRASE && security set-keychain-settings' // turn off timeout
+                  sh 'security unlock-keychain -p ${KEYCHAIN_PASSPHRASE} && security set-keychain-settings' // turn off timeout
                   // build rstudio
                   dir ("package/osx") {
                     withAWS(role: 'build', roleAccount: AWS_ACCOUNT_ID) {
@@ -149,12 +149,6 @@ pipeline {
                     // }
                     }
                   }
-                  post {
-                    failure {
-                      // mark build as unstable if it fails unit tests
-                      unstable("rstudio-tests failed (${FLAVOR})")
-                    }
-                  }
                 }
 
               stage('Notarize and Upload') {
@@ -164,13 +158,12 @@ pipeline {
                     return params.PUBLISH
                   }
                 }
+                
                 environment {
                   PATH = "${env.HOME}/opt/bin:${env.PATH}"
                   PACKAGE_FILE = ""
                   BUILD_TYPE = ""
-                  BUILD_DEST = ""
                   PRODUCT = "${FLAVOR.toLowerCase()}"
-                  RSTUDIO_RELEASE = "${RSTUDIO_VERSION_MAJOR}.${RSTUDIO_VERSION_MINOR}.${RSTUDIO_VERSION_PATCH}${RSTUDIO_VERSION_SUFFIX}"
                 }
                 
                 stages {
@@ -190,25 +183,28 @@ pipeline {
                         if (IS_PRO) {
                           PRODUCT = PRODUCT + "-pro"
                         }
-                        BUILD_DEST =  "s3://rstudio-ide-build/${PRODUCT}/macos/"
                       }
                     }
                   }
 
                   stage("Notarize") {
+                    environment {
+                      APPLE_ID = credentials('ide-apple-notarizer')
+                    }
+
                     steps {
-                      withCredentials([usernamePassword(credentialsId: 'ide-apple-notarizer', usernameVariable: 'APPLE_ID', passwordVariable: 'APPLE_ID_PASSWORD')]) {
-                        sh "docker/jenkins/notarize-release.sh package/osx/build/${PACKAGE_FILE}"
-                      }
+                      sh "docker/jenkins/notarize-release.sh package/osx/build/${PACKAGE_FILE}"
                     }
                   }
 
-                  stage("Upload") {
+                  stage("Upload Package") {
                     steps {
-                      // this job is going to run on a macOS slave, which cannot use an instance-profile
+                      // this job is going to run on a macOS build agent, which cannot use an instance-profile
                       withAWS(role: 'ide-build') {
-                        retry(5) {
-                          sh "aws s3 cp package/osx/build/${PACKAGE_FILE} ${BUILD_DEST}"
+                        retry 5 {
+                          script {
+                            utils.uploadPackageToS3 "package/osx/build/${PACKAGE_FILE}" "${PRODUCT}/macos/"
+                          }
                         }
                       }
                     }
@@ -240,14 +236,22 @@ pipeline {
                     }
                     steps {
                       // upload debug symbols to Sentry
-                      retry(5) {
+                      retry 5 {
                         // timeout sentry in 15 minutes
-                        timeout(activity: true, time: 15) {
+                        timeout activity: true, time: 15 {
                           // upload Javascript source maps
-                          sh 'cd package/osx/build/gwt && sentry-cli --auth-token ${SENTRY_API_KEY} releases --org rstudio --project ide-backend files ${RSTUDIO_RELEASE} upload-sourcemaps --ext js --ext symbolMap --rewrite .'
+                          dir ('package/osx/build/gwt') {
+                            script {
+                              utils.sentryUploadSourceMaps
+                            }
+                          }
 
                           // upload C++ debug information
-                          sh 'cd package/osx/build/src/cpp && sentry-cli --auth-token ${SENTRY_API_KEY} upload-dif --org rstudio --project ide-backend -t dsym .'
+                          dir ('package/osx/build/src/cpp') {
+                            script {
+                              utils.sentryUpload 'dsym'
+                            }
+                          }
                         }
                       }
                     }
@@ -258,8 +262,10 @@ pipeline {
                       GITHUB_LOGIN = credentials('github-rstudio-jenkins')
                     }
                     steps {
-                      // publish build to dailies page
-                      sh 'docker/jenkins/publish-build.sh --build ${PRODUCT}/macos --url https://s3.amazonaws.com/rstudio-ide-build/${PRODUCT}/macos/${PACKAGE_FILE} --pat ${GITHUB_LOGIN_PSW} --file package/osx/build/${PACKAGE_FILE} --version ${RSTUDIO_RELEASE}'
+                      script {
+                        // publish build to dailies page
+                        utils.publishToDailiesSite PACKAGE_FILE "${PRODUCT}/macos"
+                      }
                     }
                   }
                 }

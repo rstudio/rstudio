@@ -66,4 +66,34 @@ def getFlower() {
   return readFile(file: 'version/RELEASE').replaceAll(" ", "-").toLowerCase().trim()
 }
 
+def uploadPackageToS3(String packageFile, String destinationPath) {
+  s3Upload acl: 'BucketOwnerFullControl', bucket: "rstudio-ide-build", file: "${packageFile}", path: "${destinationPath}"
+}
+
+def sentryUploadSourceMaps() {
+  def retryCount = 0
+  def ret = 1
+  while (retryCount < 5 && ret != 0) {
+    ret = sh 'sentry-cli --auth-token ${SENTRY_API_KEY} releases --org rstudio --ide-backend files ${RSTUDIO_RELEASE} upload-sourcemaps --ext js --ext symbolMap --rewrite .'
+    if (ret != 0 && retryCount < 5) {
+      sleep time: 30, unit: 'SECONDS'
+    }
+  }
+}
+
+def sentryUpload(String symbolType) {
+  def retryCount = 0
+  def ret = 1
+  while (retryCount < 5 && ret != 0) {
+    ret = sh 'sentry-cli --auth-token ${SENTRY_API_KEY} upload-dif --org rstudio --project ide-backend -t ${symbolType} .'
+    if (ret != 0 && retryCount < 5) {
+      sleep time: 30, unit: 'SECONDS'
+    }
+  }
+}
+
+def publishToDailiesSite(String packageFile, String destinationPath) {
+  sh 'docker/jenkins/publish-build.sh --build ${destinationPath} --url https://s3.amazonaws.com/rstudio-ide-build/${destinationPath}/${packageFile} --pat ${GITHUB_LOGIN_PSW} --file package/osx/build/${packageFile} --version ${RSTUDIO_VERSION}'
+}
+
 return this

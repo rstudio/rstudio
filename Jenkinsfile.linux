@@ -1,0 +1,309 @@
+def utils
+
+pipeline {
+  agent none
+
+  options {
+    disableConcurrentBuilds()
+    buildDiscarder(
+      logRotator(
+        artifactDaysToKeepStr: '',
+        artifactNumToKeepStr: '',
+        daysToKeepStr: '',
+        numToKeepStr: '100'))
+  }
+
+  parameters {
+    string(name: 'RSTUDIO_VERSION_PATCH', defaultValue: '0', description: 'RStudio Patch Version')
+    string(name: 'SLACK_CHANNEL', defaultValue: '#ide-builds-dev', description: 'Slack channel to publish build message.')
+    string(name: 'OS_FILTER', defaultValue: 'all', description: 'Pattern to limit builds by matching OS')
+    string(name: 'ARCH_FILTER', defaultValue: 'all', description: 'Pattern to limit builds by matching ARCH')
+    string(name: 'FLAVOR_FILTER', defaultValue: 'all', description: 'Pattern to limit builds by matching FLAVOR')
+    booleanParam(name: 'DAILY', defaultValue: false, description: 'Runs daily build if true')
+    booleanParam(name: 'PUBLISH', defaultValue: false, description: 'Runs publish stage if true')
+    string(name: 'COMMIT_HASH' , defaultValue: '')
+  }
+
+  environment {
+    RSTUDIO_VERSION = ""
+    RSTUDIO_VERSION_MAJOR = ""
+    RSTUDIO_VERSION_MINOR = ""
+    RSTUDIO_VERSION_PATCH = ""
+    RSTUDIO_VERSION_SUFFIX = ""
+    RSTUDIO_VERSION_FLOWER = ""
+    ENV = ""
+    IS_PRO = false
+    AWS_ACCOUNT_ID = '749683154838'
+  }
+
+  stages {
+
+    stage('Initialize') {
+      agent { label 'linux' }
+
+      stages {
+        stage('Load Utils') {
+          steps {
+            script {
+              utils = load "${env.WORKSPACE}/utils.groovy"
+            }
+          }
+        }
+
+        stage("Checkout") {
+          when { expression { params.COMMIT_HASH != '' } }
+
+          steps {
+            echo "Commit_hash value: ${params.COMMIT_HASH}"
+            checkout([$class: 'GitSCM',
+                      branches: [[name: "${params.COMMIT_HASH}"]],
+                      extensions: [],
+                      userRemoteConfigs: [[credentialsId: 'github-rstudio-jenkins', url: "${GIT_URL}"]]])
+          }
+        }
+
+        stage('Versioning') {
+          steps {
+            script {
+              (RSTUDIO_VERSION,
+                RSTUDIO_VERSION_MAJOR,
+                RSTUDIO_VERSION_MINOR,
+                RSTUDIO_VERSION_PATCH,
+                RSTUDIO_VERSION_SUFFIX) = utils.getVersion()
+              RSTUDIO_VERSION_FLOWER = utils.getFlower()
+              IS_PRO = RSTUDIO_VERSION_SUFFIX.contains('pro')
+              
+              // Set up environment for builds. Set it once here to avoid duplicate SCCACHE_ENABLED settings.
+              ENV = "RSTUDIO_VERSION_MAJOR=${RSTUDIO_VERSION_MAJOR} RSTUDIO_VERSION_MINOR=${RSTUDIO_VERSION_MINOR} RSTUDIO_VERSION_PATCH=${RSTUDIO_VERSION_PATCH} RSTUDIO_VERSION_SUFFIX=${RSTUDIO_VERSION_SUFFIX}"
+              if (params.DAILY == false) {
+                ENV = "${ENV} SCCACHE_ENABLED=1"
+              }
+            }
+
+            buildName "${RSTUDIO_VERSION_MAJOR}.${RSTUDIO_VERSION_MINOR}.${RSTUDIO_VERSION_PATCH}${RSTUDIO_VERSION_SUFFIX}"
+          }
+        }
+      }
+    }
+
+    stage('Build Matrix') {
+
+      matrix {
+        when {
+          anyOf {
+            equals expected: params.OS_FILTER, actual: env.OS;
+            equals expected: params.OS_FILTER, actual: 'all'
+          }
+        }
+
+        axes {
+          axis {
+            name 'OS'
+            values 'bionic', 'jammy', 'centos7', 'rhel8', 'rhel9', 'opensuse15'
+          }
+          axis {
+            name 'ARCH'
+            values 'x86_64', 'arm64'
+          }
+          axis {
+              name 'FLAVOR'
+              values 'Desktop', 'Server', 'Electron'
+          }
+        }
+
+        excludes {
+          exclude {
+            axis {
+              name 'OS'
+              values 'centos7'
+            }
+            axis {
+              name 'ARCH'
+              values 'arm64'
+            }
+          }
+          exclude {
+            axis {
+              name 'FLAVOR'
+              values 'Desktop'
+            }
+            axis {
+              name 'ARCH'
+              values 'arm64'
+            }
+          }
+        }
+
+        stages {
+          stage ('Build, Test and Upload'){
+            agent {
+              docker {
+                image "jenkins/ide:${OS}-${ARCH}-${RSTUDIO_VERSION_FLOWER}-dev"
+                registryCredentialsId 'ecr:us-east-1:aws-build-role'
+                registryUrl 'https://263245908434.dkr.ecr.us-east-1.amazonaws.com'
+                reuseNode true
+                label "linux && ${ARCH}"
+              }
+            }
+
+            environment {
+              GITHUB_LOGIN = credentials('github-rstudio-jenkins')
+              AWS_BUCKET="rstudio-ide-build"
+              PRODUCT="${FLAVOR.toLowerCase()}"
+            }
+
+            stages {
+              stage('Build and Sign') {
+                environment {
+                  CODESIGN_KEY = credentials('gpg-codesign-private-key')
+                  CODESIGN_PASS = credentials('gpg-codesign-passphrase')
+                }
+
+                steps {
+                  dir('package/linux') {
+                    withAWS(role: 'build', roleAccount: AWS_ACCOUNT_ID) {
+                      sh "${ENV} ./make-package ${FLAVOR} \${PACKAGE_TYPE} clean"
+                    }
+                    sh '../../docker/jenkins/sign-release.sh build-${FLAVOR}-${PACKAGE_TYPE}/rstudio-*.${PACKAGE_EXT} ${CODESIGN_KEY} ${CODESIGN_PASS}'
+                  }
+                }
+              }
+
+              stage('Test') {
+                stages {
+                  stage ('Electron-Only Tests') {
+                    when {
+                      expression { return FLAVOR == "Electron" }
+                    }
+
+                    steps {
+                      dir( "src/node/desktop" ) {
+                        sh './scripts/docker-run-unit-tests.sh'
+                      }
+                    }
+                  }
+
+                  stage ('GWT and C++ Tests') {
+                    steps {
+                      dir ( 'package/linux/' ) {
+                        sh 'cd build-${FLAVOR}-${PACKAGE_TYPE}/src/gwt && ./gwt-unit-tests.sh'
+                        sh 'cd build-${FLAVOR}-${PACKAGE_TYPE}/src/cpp && ./rstudio-tests'
+                      }
+                    }
+                  }
+                }
+              }
+
+              stage ('Upload') {
+
+                when { expression { return params.PUBLISH } }
+
+                environment {
+                  PACKAGE_DIR = "package/linux/build-${FLAVOR}-\${PACKAGE_TYPE}"
+                  PACKAGE_FILE = ""
+                  TAR_PACKAGE_DIR= ""
+                  TAR_PACKAGE_FILE = "_CPack_Packages/Linux/\${PACKAGE_TYPE}"
+                  BUILD_TYPE = ""
+                  AWS_PATH="${FLAVOR}/${OS}/\${OS_X86_64_LABEL}/"
+                  PRODUCT = "${FLAVOR.toLowerCase()}"
+                }
+
+                stages {
+                  stage("Set Release Variables") {
+                    steps {
+                      script {
+                        // extract name of package to publish
+                        PACKAGE_FILE = sh (
+                          script: "basename `ls ${PACKAGE_DIR}/rstudio-*.${PACKAGE_EXT}`",
+                          returnStdout: true
+                        ).trim()
+
+                        if ((FLAVOR == "Desktop") || (FLAVOR == "Electron")) {
+                          PACKAGE_FILE = sh (
+                            script: "basename `ls ${TAR_PACKAGE_DIR}/{TAR_PACKAGE_FILE}/-*.tar.gz`",
+                            returnStdout: true
+                          ).trim()
+                        }
+
+                        BUILD_TYPE= sh (
+                          script: "cat version/BUILDTYPE",
+                          returnStdout: true
+                        ).trim().toLowerCase()
+
+                        if (IS_PRO && env.PRODUCT != "server") {
+                          PRODUCT = PRODUCT + "-pro"
+                        } else if (IS_PRO) {
+                          PRODUCT = "workbench"
+                        }
+                      }
+                    }
+                  }
+
+                  stage("Upload Package") {
+                    steps {
+                      withAWS(role: 'ide-build') {
+                        retry(5) {
+                          script {
+                            utils.uploadPackageToS3 "${PACKAGE_DIR}/${PACKAGE_FILE}", "${AWS_PATH}/"
+                          }
+                        }
+
+                        script {
+                          if (TAR_PACKAGE_FILE != "") {
+                            retry(5) {
+                              script {
+                                utils.uploadPackageToS3 "${TAR_PACKAGE_DIR}/${TAR_PACKAGE_FILE}", "${AWS_PATH}/"
+                              }
+                            }
+                          }
+                        }
+                      }
+                    }
+                  }
+
+                  stage ("Sentry Upload") {
+                    environment {
+                      SENTRY_API_KEY = credentials('ide-sentry-api-key')
+                    }
+                    
+                    steps {
+                      // Upload Sentry
+                      dir("package/linux/build-${FLAVOR}-${OS}/src/cpp") {
+                        retry 5 {
+                          timeout activity: true, time: 15 {
+                            utils.sentryUpload 'elf'
+                          }
+                        }
+                      }
+                    }
+                  }
+                  
+                  stage("Publish") {
+                    environment {
+                      GITHUB_LOGIN = credentials('github-rstudio-jenkins')
+                    }
+                    steps {
+                      script {
+                        // publish build to dailies page
+                        utils.publishToDailiesSite PACKAGE_FILE, AWS_PATH
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    }
+  }
+
+  post {
+    always {
+      node('linux') {
+        deleteDir()
+        sendNotifications slack_channel: SLACK_CHANNEL
+      }
+    }
+  }
+}
