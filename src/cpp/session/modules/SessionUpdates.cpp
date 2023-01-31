@@ -134,10 +134,13 @@ void endRPCUpdateCheck(const json::JsonRpcFunctionContinuation& cont,
 {
    json::JsonRpcResponse response;
    response.setResult(jsonFromProcessResult(result));
-   if (result.stdErr.empty()) {
+   if (result.stdErr.empty())
+   {
       cont(Success(), &response);
-   } else {
-      Error error(json::errc::ConnectionError, "Could not check for updates. Please check the network connection." , ERROR_LOCATION);
+   }
+   else
+   {
+      Error error(json::errc::ConnectionError, "Could not check for updates. Please check the network connection.", ERROR_LOCATION);
       error.addProperty("r-error", result.stdErr);
       LOG_ERROR(error);
       cont(error, &response);

@@ -448,12 +448,13 @@ public class DesktopApplicationHeader implements ApplicationHeader,
          public void onError(ServerError error)
          {
             // Only show the error message when manually checking for updates 
-            if (manual) {
+            if (manual)
+            {
                globalDisplay_.showErrorMessage(constants_.errorCheckingUpdatesMessage(),
-                  constants_.errorOccurredCheckingUpdatesMessage()
-                  + error.getMessage()
-                  + "\n\n"
-                  + constants_.visitWebsiteForNewVersionText());
+                     constants_.errorOccurredCheckingUpdatesMessage()
+                     + error.getMessage()
+                     + "\n\n"
+                     + constants_.visitWebsiteForNewVersionText());
             }
          }
       });
