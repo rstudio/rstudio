@@ -24,7 +24,7 @@ pipeline {
     booleanParam(name: 'RSTUDIO_SKIP_QT', defaultValue: false, description: 'Skips installing and bulding for QT')
     booleanParam(name: 'DAILY', defaultValue: false, description: 'Runs daily build if true')
     booleanParam(name: 'PUBLISH', defaultValue: true, description: 'Runs publish stage if true')
-    gitParameter defaultValue: "${env.GIT_BRANCH}", name: 'COMMIT_HASH', type: 'PT_REVISION'
+    string(name: 'COMMIT_HASH' , defaultValue: '')
   }
 
   environment {
@@ -45,7 +45,7 @@ pipeline {
     }
 
     stage ('Checkout') { // checkout stage required here in order for versioning to work properly
-      when { expression { params.COMMIT_HASH != env.GIT_BRANCH } }
+      when { expression { params.COMMIT_HASH != '' } }
       steps {
         echo "Commit_hash value: ${params.COMMIT_HASH}"
         checkout([$class: 'GitSCM',
