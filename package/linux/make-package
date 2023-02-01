@@ -72,6 +72,8 @@ set-version () {
 
       # Set package.json info
       save-original-file package.json
+      echo "ensure node-gyp installed for node ${RSTUDIO_NODE_VERSION}"
+      ${NPX} node-gyp install ${RSTUDIO_NODE_VERSION}
       ${NPX} json -I -f package.json -e "this.version=\"$1\""
       ${NPX} json -I -f package.json -e "this.productName=\"$2\""
 
