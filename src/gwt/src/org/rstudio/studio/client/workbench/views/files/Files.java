@@ -503,14 +503,6 @@ public class Files
             if (targetFile == null)
                return;
 
-            if (targetFile.getPath() == "~")
-            {
-               globalDisplay_.showErrorMessage(
-                     constants_.invalidDestinationCaption(),
-                     constants_.invalidDestinationErrorMessage());
-               return;
-            }
-
             if (StringUtil.isNullOrEmpty(targetFile.getExtension()))
             {
                targetFile = FileSystemItem.createFile(
