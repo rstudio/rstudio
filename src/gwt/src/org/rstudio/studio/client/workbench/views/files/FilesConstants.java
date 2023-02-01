@@ -80,6 +80,24 @@ public interface FilesConstants extends com.google.gwt.i18n.client.Messages {
     String chooseFolderTitle();
 
     /**
+     * Translated "Invalid destination".
+     *
+     * @return translated "Invalid destination"
+     */
+    @DefaultMessage("Invalid Destination")
+    @Key("invalidDestinationCaption")
+    String invalidDestinationCaption();
+
+    /**
+     * Translated "File name must contain the new file or directory name".
+     *
+     * @return translated "File name must contain the new file or directory name"
+     */
+    @DefaultMessage("File name must contain the new file or directory name")
+    @Key("invalidDestinationErrorMessage")
+    String invalidDestinationErrorMessage();
+
+    /**
      * Translated "Invalid target folder".
      *
      * @return translated "Invalid target folder"
