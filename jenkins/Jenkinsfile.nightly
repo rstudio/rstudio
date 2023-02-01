@@ -69,7 +69,7 @@ pipeline {
           allOf {
             changeset comparator: 'REGEXP', pattern: '(?!docs/).+'
             not {
-              changeset 'Jenkinsfile.nightly'
+              changeset 'jenkins/Jenkinsfile.nightly'
             }
           }
         }
