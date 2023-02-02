@@ -332,16 +332,9 @@ export class DesktopBrowserWindow extends EventEmitter {
       // updates to use the new URL
       // https://github.com/rstudio/rstudio/issues/12256
       return true;
-    } else {
-      // open external browser only when not in test
-      if (process.env.NODE_ENV !== 'TEST') {
-        // when not allowing external navigation, open an external browser
-        // to view the URL
-        void shell.openExternal(url);
-      }
-      logger().logDebug('allowNavigation: no external navigation in IDE, unsafe host, open in browser');
-      return false;
     }
+
+    return false;
   }
 
   // eslint-disable-next-line @typescript-eslint/no-unused-vars
