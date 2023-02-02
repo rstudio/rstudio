@@ -59,6 +59,7 @@ RUN [System.Net.ServicePointManager]::SecurityProtocol = 3072 -bor 768 -bor 192 
 RUN if (Test-Path 'C:\ProgramData\chocolatey\bin\cpack.exe') { Remove-Item -Force 'C:\ProgramData\chocolatey\bin\cpack.exe' }
 
 RUN choco install -y git
+RUN git config --global core.longpaths true
 
 RUN mkdir -p 'C:\rstudio-tools\dependencies\tools'
 RUN mkdir -p 'C:\rstudio-tools\dependencies\common'
