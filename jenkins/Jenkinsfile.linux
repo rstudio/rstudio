@@ -58,7 +58,7 @@ pipeline {
             checkout([$class: 'GitSCM',
                       branches: [[name: "${params.COMMIT_HASH}"]],
                       extensions: [],
-                      userRemoteConfigs: [[credentialsId: 'github-rstudio-jenkins', url: "${GIT_URL}"]]])
+                      userRemoteConfigs: [[credentialsId: 'github-rstudio-jenkins', url: GIT_URL ]]])
           }
         }
 
@@ -160,6 +160,12 @@ pipeline {
                 }
 
                 steps {
+                  // We need to checkout he correct commit again here because the matrix builds run on different agents
+                  checkout([$class: 'GitSCM',
+                            branches: [[name: "${params.COMMIT_HASH}"]],
+                            extensions: [],
+                            userRemoteConfigs: [[credentialsId: 'github-rstudio-jenkins', url: GIT_URL ]]])
+
                   dir('package/linux') {
                     withAWS(role: 'build', roleAccount: AWS_ACCOUNT_ID) {
                       sh "${ENV} ./make-package ${FLAVOR} \${PACKAGE_TYPE} clean"
