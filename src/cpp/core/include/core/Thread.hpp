@@ -16,14 +16,17 @@
 #ifndef CORE_THREAD_HPP
 #define CORE_THREAD_HPP
 
+#include <map>
 #include <queue>
+#include <set>
 
 #include <boost/utility.hpp>
 #include <boost/function.hpp>
 
+#include <shared_core/Error.hpp>
+
 #include <core/BoostErrors.hpp>
 #include <core/BoostThread.hpp>
-#include <shared_core/Error.hpp>
 #include <core/Log.hpp>
 
 #define LOCK_MUTEX(m)                                                          \

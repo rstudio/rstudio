@@ -29,6 +29,7 @@ namespace core {
 namespace http {
   
 // encodings
+const char * const kBrotliEncoding = "br";
 const char * const kGzipEncoding = "gzip";
 const char * const kDeflateEncoding = "deflate";
 

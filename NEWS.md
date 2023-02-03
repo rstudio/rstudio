@@ -32,6 +32,7 @@
 - Fixed indentation of raw strings #12127
 - Removed empty spell check tooltips #11306
 - Fixed package completion tooltips #12147
+- Fixed setting rsession log level using command-line argument or logging.conf #12557
 - Fixed issue that allowed users to overwrite their home directory in server mode #12653
 
 ### Accessibility Improvements
@@ -44,4 +45,4 @@
 - Focus and keyboard-focus styles have been improved on the homepage
 - Keyboard support has been added to the job summary drop-down in session list items on the homepage
 - Improved alt-text and updated link to posit.co on sign-in page logo (rstudio-pro #4096)
-
+- Help pane home page switches to single-column display at narrow widths (#12643)
