@@ -66,6 +66,73 @@ pipeline {
         buildName "${RSTUDIO_VERSION}"
       }
     }
+      
+    stage('Rebuild Docker Images') {
+      matrix {
+        when {
+          allOf {
+            anyOf {
+              equals expected: params.OS_FILTER, actual: env.os;
+              equals expected: params.OS_FILTER, actual: 'all'
+            }
+            anyOf {
+              equals expected: params.ARCH_FILTER, actual: env.arch;
+              equals expected: params.ARCH_FILTER, actual: 'all'
+            }
+          }
+        }
+
+        axes {
+          axis {
+            name 'os'
+            values 'bionic', 'jammy', 'centos7', 'rhel8', 'rhel9', 'opensuse15', 'windows'
+          }
+          axis {
+            name 'arch'
+            values 'x86_64', 'arm64'
+          }
+        }
+
+        excludes {
+          exclude {
+            axis {
+              name 'os'
+              values 'centos7', 'windows'
+            }
+            axis {
+              name 'arch'
+              values 'arm64'
+            }
+          }
+        }
+
+        stages {
+          stage ("Pull Build Push") {
+            agent {
+              label "${labelForOS[os]} && ${arch}"
+            }
+
+            environment {
+              GITHUB_LOGIN = credentials('github-rstudio-jenkins')
+            }
+
+            steps {
+              echo "Creating image jenkins/ide:${os}-${arch}-${RSTUDIO_VERSION_FLOWER}-dev"
+              pullBuildPush(
+                image_name: 'jenkins/ide',
+                image_tag: "${os}-${arch}-${RSTUDIO_VERSION_FLOWER}-dev",
+                latest_tag: false,
+                build_arg_jenkins_uid: 'JENKINS_UID',
+                build_arg_jenkins_gid: 'JENKINS_GID',
+                dockerfile: "docker/jenkins/Dockerfile.${os}",
+                build_args: "--build-arg ARCH=${arch} --build-arg GITHUB_LOGIN=${GITHUB_LOGIN}",
+                push: "${params.PUBLISH}"
+              )
+            }
+          }
+        }
+      }
+    }
 
     stage ("Setup and Trigger Builds") {
       when {
@@ -81,73 +148,6 @@ pipeline {
       }
 
       stages {
-        stage('Rebuild Docker Images') {
-          matrix {
-            when {
-              allOf {
-                anyOf {
-                  equals expected: params.OS_FILTER, actual: env.os;
-                  equals expected: params.OS_FILTER, actual: 'all'
-                }
-                anyOf {
-                  equals expected: params.ARCH_FILTER, actual: env.arch;
-                  equals expected: params.ARCH_FILTER, actual: 'all'
-                }
-              }
-            }
-
-            axes {
-              axis {
-                name 'os'
-                values 'bionic', 'jammy', 'centos7', 'rhel8', 'rhel9', 'opensuse15', 'windows'
-              }
-              axis {
-                name 'arch'
-                values 'x86_64', 'arm64'
-              }
-            }
-
-            excludes {
-              exclude {
-                axis {
-                  name 'os'
-                  values 'centos7', 'windows'
-                }
-                axis {
-                  name 'arch'
-                  values 'arm64'
-                }
-              }
-            }
-
-            stages {
-              stage ("Pull Build Push") {
-                agent {
-                  label "${labelForOS[os]} && ${arch}"
-                }
-
-                environment {
-                  GITHUB_LOGIN = credentials('github-rstudio-jenkins')
-                }
-
-                steps {
-                  echo "Creating image jenkins/ide:${os}-${arch}-${RSTUDIO_VERSION_FLOWER}-dev"
-                  pullBuildPush(
-                    image_name: 'jenkins/ide',
-                    image_tag: "${os}-${arch}-${RSTUDIO_VERSION_FLOWER}-dev",
-                    latest_tag: false,
-                    build_arg_jenkins_uid: 'JENKINS_UID',
-                    build_arg_jenkins_gid: 'JENKINS_GID',
-                    dockerfile: "docker/jenkins/Dockerfile.${os}",
-                    build_args: "--build-arg ARCH=${arch} --build-arg GITHUB_LOGIN=${GITHUB_LOGIN}",
-                    push: "${params.PUBLISH}"
-                  )
-                }
-              }
-            }
-          }
-        }
-
         stage ("Create a Sentry Release") {
           environment {
             SENTRY_API_KEY = credentials('ide-sentry-api-key')
