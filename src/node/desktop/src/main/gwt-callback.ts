@@ -49,6 +49,7 @@ import {
   getAppPath, handleLocaleCookies, resolveAliasedPath
 } from './utils';
 import { activateWindow, focusedWebContents } from './window-utils';
+import os, { version } from 'os';
 
 export enum PendingQuit {
   PendingQuitNone,
@@ -902,8 +903,31 @@ export class GwtCallback extends EventEmitter {
     });
 
     ipcMain.handle('desktop_startup_error_info', async (event, varName: string) => {
+      if (varName == 'launch_failed') {
+        this.addMacOSVersionError();
+      }
       return resolveTemplateVar(varName, this.errorPageData);
     });
+  }
+
+  addMacOSVersionError(): void {
+    if (os.platform() === 'darwin') {
+      const release = os.release();
+      const release_major = parseInt(release.substring(0, release.indexOf('.')));
+
+      // macOS 11.0 uses darwin 20.0.0
+      if (release_major < 20) {
+        let versionError = 'You are using an unsupported Operating System.' +
+        ' RStudio requires macOS 11 or higher.';
+        if (this.errorPageData.get('process_error')) {
+          const launch_failed = this.errorPageData.get('process_error');
+          if (!launch_failed?.includes('No error available')) {
+            versionError += '\n\n' + launch_failed;
+          }
+        }
+        this.errorPageData.set('process_error', versionError);
+      }
+    }
   }
 
   setRemoteDesktop(isRemoteDesktop: boolean): void {
