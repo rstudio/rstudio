@@ -416,7 +416,7 @@ if [ -n "${build_arm64}" ]; then
    info "Done!"
 
    if [ -n "$SCCACHE_ENABLED" ]; then
-   sccache --show-stats
+      sccache --show-stats
    fi
 
 fi
