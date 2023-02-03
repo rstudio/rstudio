@@ -107,7 +107,7 @@ pipeline {
 
                 stages { 
                   stage ('Checkout') {
-                    when { expression { params.COMMIT_HASH != env.GIT_BRANCH } }
+                    when { expression { params.COMMIT_HASH != '' } }
                     steps {
                       echo "Commit_hash value: ${params.COMMIT_HASH}"
                         checkout([$class: 'GitSCM',
