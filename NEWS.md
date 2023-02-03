@@ -32,6 +32,7 @@
 - Fixed indentation of raw strings #12127
 - Removed empty spell check tooltips #11306
 - Fixed package completion tooltips #12147
+- Fixed issue that allowed users to overwrite their home directory in server mode #12653
 
 ### Accessibility Improvements
 
