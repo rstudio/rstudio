@@ -153,6 +153,17 @@ pipeline {
             }
 
             stages {
+              stage('Checkout') {
+                when { expression { params.COMMIT_HASH != '' } }
+                steps {
+                  // We need to checkout he correct commit again here because the matrix builds run on different agents
+                  checkout([$class: 'GitSCM',
+                            branches: [[name: "${params.COMMIT_HASH}"]],
+                            extensions: [],
+                            userRemoteConfigs: [[credentialsId: 'github-rstudio-jenkins', url: GIT_URL ]]])
+                }
+              }
+
               stage('Build and Sign') {
                 environment {
                   CODESIGN_KEY = credentials('gpg-codesign-private-key')
@@ -160,11 +171,6 @@ pipeline {
                 }
 
                 steps {
-                  // We need to checkout he correct commit again here because the matrix builds run on different agents
-                  checkout([$class: 'GitSCM',
-                            branches: [[name: "${params.COMMIT_HASH}"]],
-                            extensions: [],
-                            userRemoteConfigs: [[credentialsId: 'github-rstudio-jenkins', url: GIT_URL ]]])
 
                   dir('package/linux') {
                     withAWS(role: 'build', roleAccount: AWS_ACCOUNT_ID) {
