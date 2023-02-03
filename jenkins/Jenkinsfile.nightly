@@ -1,5 +1,16 @@
 def utils
 
+def labelForOS = [
+  'bionic':     'linux',
+  'jammy':      'linux',
+  'centos7':    'linux',
+  'rhel8':      'linux',
+  'rhel9':      'linux',
+  'opensuse15': 'linux',
+  'windows':    'windows'
+]
+
+
 def buildBinaryJob(String platform) {
   build wait: false,
         job: "IDE/OS-Builds/Platforms/${platform}-pipeline/${env.BUILD_BRANCH}",
