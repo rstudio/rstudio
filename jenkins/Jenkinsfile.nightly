@@ -44,7 +44,7 @@ pipeline {
       agent {
         dockerfile {
           filename 'Dockerfile.dispatcher'
-          label 'linux && amd64'
+          label 'linux'
         }
       }
       
@@ -149,6 +149,13 @@ pipeline {
 
       stages {
         stage ("Create a Sentry Release") {
+          agent {
+            dockerfile {
+              filename 'Dockerfile.dispatcher'
+              label 'linux'
+            }
+          }
+          
           environment {
             SENTRY_API_KEY = credentials('ide-sentry-api-key')
           }
