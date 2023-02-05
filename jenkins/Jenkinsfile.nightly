@@ -47,7 +47,7 @@ pipeline {
           label 'linux && amd64'
         }
       }
-
+      
       steps {
         script {
           utils = load "${env.WORKSPACE}/utils.groovy"
@@ -142,9 +142,7 @@ pipeline {
           expression { return params.FORCE_BUILD }
           allOf {
             changeset comparator: 'REGEXP', pattern: '(?!docs/).+'
-            not {
-              changeset 'jenkins/Jenkinsfile.nightly'
-            }
+            changeset comparator: 'REGEXP', pattern: '(?!jenkins/Jenkinsfile\\.nightly)'
           }
         }
       }
