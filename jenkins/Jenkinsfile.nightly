@@ -7,21 +7,9 @@ def labelForOS = [
   'rhel8':      'linux',
   'rhel9':      'linux',
   'opensuse15': 'linux',
-  'windows':    'windows'
+  'windows':    'windows',
+  'macos':      'macos'
 ]
-
-
-def buildBinaryJob(String platform) {
-  build wait: false,
-        job: "IDE/OS-Builds/Platforms/${platform}-pipeline/${env.BUILD_BRANCH}",
-        parameters: [
-          gitParameter(name: "COMMIT_HASH", value: "${COMMIT_HASH}"),
-          string(name: "RSTUDIO_VERSION_PATCH", value: "${RSTUDIO_VERSION_PATCH}"),
-          string(name: "SLACK_CHANNEL", value: "${SLACK_CHANNEL}"),
-          booleanParam(name: "DAILY", value: true),
-          booleanParam(name: "PUBLISH", value: params.PUBLISH)
-        ]
-}
 
 pipeline {
   agent {
@@ -42,6 +30,7 @@ pipeline {
     booleanParam defaultValue: false, description: 'Force build even if there are no changes.', name: 'FORCE_BUILD'
     string name: 'OS_FILTER', defaultValue: 'all', description: 'Pattern to limit builds by matching OS'
     string name: 'ARCH_FILTER', defaultValue: 'all', description: 'Pattern to limit builds by matching ARCH'
+    booleanParam name: 'DAILY', defaultValue: true, description: 'Builds daily/nightly builds if true; builds hourly builds if false.'
   }
   
   environment {
@@ -183,15 +172,68 @@ pipeline {
           }
         }
 
-        stage ("Trigger Builds") {
-          parallel {
-            stage ("Binary Builds") {
-              steps {
-                buildBinaryJob 'windows'
-                buildBinaryJob 'linux'
-                buildBinaryJob 'macos'
-              }
+        stage ("Build Windows") {
+          when {
+            anyOf {
+              equals expected: labelForOs[params.OS_FILTER], actual: 'windows';
+              equals expected: params.OS_FILTER, actual: 'all'
             }
+          }
+
+          steps {
+            build wait: false,
+                  job: "IDE/OS-Builds/Platforms/windows-pipeline/${env.BUILD_BRANCH}",
+                  parameters: [
+                    gitParameter(name: "COMMIT_HASH", value: "${COMMIT_HASH}"),
+                    string(name: "RSTUDIO_VERSION_PATCH", value: "${RSTUDIO_VERSION_PATCH}"),
+                    string(name: "SLACK_CHANNEL", value: "${SLACK_CHANNEL}"),
+                    booleanParam(name: "DAILY", value: params.DAILY),
+                    booleanParam(name: "PUBLISH", value: params.PUBLISH)
+                  ]
+          }
+        }
+
+        stage ("Build Linux") {
+          when {
+            anyOf {
+              equals expected: labelForOs[params.OS_FILTER], actual: 'linux';
+              equals expected: params.OS_FILTER, actual: 'all'
+            }
+          }
+
+          steps {
+            build wait: false,
+                  job: "IDE/OS-Builds/Platforms/linux-pipeline/${env.BUILD_BRANCH}",
+                  parameters: [
+                    gitParameter(name: "COMMIT_HASH", value: "${COMMIT_HASH}"),
+                    string(name: "RSTUDIO_VERSION_PATCH", value: "${RSTUDIO_VERSION_PATCH}"),
+                    string(name: "SLACK_CHANNEL", value: "${SLACK_CHANNEL}"),
+                    string(name: "OS_FILTER", value: params.OS_FILTER),
+                    string(name: "ARCH_FILTER", value: params.ARCH_FILTER),
+                    booleanParam(name: "DAILY", value: params.DAILY),
+                    booleanParam(name: "PUBLISH", value: params.PUBLISH)
+                  ]
+          }
+        }
+
+        stage ("Build MacOS") {
+          when {
+            anyOf {
+              equals expected: labelForOs[params.OS_FILTER], actual: 'macos';
+              equals expected: params.OS_FILTER, actual: 'all'
+            }
+          }
+
+          steps {
+            build wait: false,
+                  job: "IDE/OS-Builds/Platforms/macos-pipeline/${env.BUILD_BRANCH}",
+                  parameters: [
+                    gitParameter(name: "COMMIT_HASH", value: "${COMMIT_HASH}"),
+                    string(name: "RSTUDIO_VERSION_PATCH", value: "${RSTUDIO_VERSION_PATCH}"),
+                    string(name: "SLACK_CHANNEL", value: "${SLACK_CHANNEL}"),
+                    booleanParam(name: "DAILY", value: params.DAILY),
+                    booleanParam(name: "PUBLISH", value: params.PUBLISH)
+                  ]
           }
         }
       }
