@@ -12,12 +12,7 @@ def labelForOS = [
 ]
 
 pipeline {
-  agent {
-    dockerfile {
-      filename 'Dockerfile.dispatcher'
-      label 'linux && amd64'
-    }
-  }
+  agent none
 
   triggers {
     cron 'H H(20-23) * * *'
@@ -46,6 +41,13 @@ pipeline {
 
   stages {
     stage ("Set Version & Commit") {
+      agent {
+        dockerfile {
+          filename 'Dockerfile.dispatcher'
+          label 'linux && amd64'
+        }
+      }
+
       steps {
         script {
           utils = load "${env.WORKSPACE}/utils.groovy"
