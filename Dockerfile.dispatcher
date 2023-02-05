@@ -4,3 +4,10 @@ RUN apt-get update
 RUN apt-get install -y git curl python3
 
 ENV PATH=${PATH}:./opt/bin
+
+# create jenkins user, make sudo. try to keep this toward the bottom for less cache busting
+ARG JENKINS_GID=999
+ARG JENKINS_UID=999
+RUN groupadd -g $JENKINS_GID jenkins && \
+    useradd -m -d /var/lib/jenkins -u $JENKINS_UID -g jenkins jenkins && \
+    echo "jenkins ALL=(ALL) NOPASSWD: ALL" >> /etc/sudoers
