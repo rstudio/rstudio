@@ -903,7 +903,7 @@ export class GwtCallback extends EventEmitter {
     });
 
     ipcMain.handle('desktop_startup_error_info', async (event, varName: string) => {
-      if (varName == 'launch_failed') {
+      if (varName === 'launch_failed') {
         this.addMacOSVersionError();
       }
       return resolveTemplateVar(varName, this.errorPageData);
@@ -916,7 +916,7 @@ export class GwtCallback extends EventEmitter {
       // macOS 11.0 uses darwin 20.0.0
       if (release_major < 20) {
         let versionError = 'You are using an unsupported operating system.' +
-        ' RStudio requires macOS 11 or higher.';
+        ' RStudio requires macOS 11 (Big Sur) or higher.';
         if (this.errorPageData.get('process_error')) {
           const launch_failed = this.errorPageData.get('process_error');
           if (!launch_failed?.includes('No error available')) {
