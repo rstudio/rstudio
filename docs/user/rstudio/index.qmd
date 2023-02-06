@@ -7,7 +7,7 @@ date-format: iso
 
 RStudio is an integrated development environment (IDE) designed to support multiple languages, including both R and Python. It includes a console, syntax-highlighting editor that supports direct code execution, and a variety of robust tools for plotting, viewing history, debugging and managing your workspace. 
 
-RStudio is available in open source and commercial editions and runs on the desktop (Windows, Mac, and Linux) or in a browser connected to RStudio Server or Posit Workbench. Development of the open source and commercial RStudio IDE variants is supported by Posit Software, PBC (formerly named RStudio, PBC). Please review our [Blog post/FAQ](https://pos.it/rebrand-faq/) for additional information about the rebrand.
+RStudio is available in open source and commercial editions and runs on the desktop (Windows, macOS 11+, and Linux) or in a browser connected to RStudio Server or Posit Workbench. Development of the open source and commercial RStudio IDE variants is supported by Posit Software, PBC (formerly named RStudio, PBC). Please review our [Blog post/FAQ](https://pos.it/rebrand-faq/) for additional information about the rebrand.
 
 Please visit the individual product pages for additional information about the open source [RStudio IDE](https://posit.co/products/open-source/rstudio/) or RStudio within [Posit Workbench](https://posit.co/products/enterprise/workbench/). 
 
