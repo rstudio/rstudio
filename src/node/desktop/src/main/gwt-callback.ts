@@ -28,6 +28,7 @@ import {
 import { IpcMainEvent, MessageBoxOptions, OpenDialogOptions, SaveDialogOptions } from 'electron/main';
 import EventEmitter from 'events';
 import { existsSync, writeFileSync } from 'fs';
+import { platform, release } from 'os';
 import i18next from 'i18next';
 import { findFontsSync } from 'node-system-fonts';
 import path, { dirname } from 'path';
@@ -49,7 +50,6 @@ import {
   getAppPath, handleLocaleCookies, resolveAliasedPath
 } from './utils';
 import { activateWindow, focusedWebContents } from './window-utils';
-import os, { version } from 'os';
 
 export enum PendingQuit {
   PendingQuitNone,
@@ -911,10 +911,8 @@ export class GwtCallback extends EventEmitter {
   }
 
   addMacOSVersionError(): void {
-    if (os.platform() === 'darwin') {
-      const release = os.release();
-      const release_major = parseInt(release.substring(0, release.indexOf('.')));
-
+    if (platform() === 'darwin') {
+      const release_major = parseInt(release().substring(0, release().indexOf('.')));
       // macOS 11.0 uses darwin 20.0.0
       if (release_major < 20) {
         let versionError = 'You are using an unsupported operating system.' +
