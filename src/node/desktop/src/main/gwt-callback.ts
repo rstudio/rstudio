@@ -917,7 +917,7 @@ export class GwtCallback extends EventEmitter {
 
       // macOS 11.0 uses darwin 20.0.0
       if (release_major < 20) {
-        let versionError = 'You are using an unsupported Operating System.' +
+        let versionError = 'You are using an unsupported operating system.' +
         ' RStudio requires macOS 11 or higher.';
         if (this.errorPageData.get('process_error')) {
           const launch_failed = this.errorPageData.get('process_error');
