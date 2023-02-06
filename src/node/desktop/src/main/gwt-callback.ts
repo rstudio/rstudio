@@ -13,7 +13,7 @@
  *
  */
 
-import { exec } from 'child_process';
+import { exec, execSync } from 'child_process';
 import {
   app,
   BrowserWindow,
@@ -915,8 +915,14 @@ export class GwtCallback extends EventEmitter {
       const release_major = parseInt(release().substring(0, release().indexOf('.')));
       // macOS 11.0 uses darwin 20.0.0
       if (release_major < 20) {
-        let versionError = 'You are using an unsupported operating system.' +
-        ' RStudio requires macOS 11 (Big Sur) or higher.';
+        const versionProductName = execSync('sw_vers -productName').toString().trim();
+        const versionProductVersion = execSync('sw_vers -productVersion').toString().trim();
+        let versionError =
+          'You are using an unsupported operating system: ' +
+          versionProductName +
+          ' ' +
+          versionProductVersion +
+          '. RStudio requires macOS 11 (Big Sur) or higher.';
         if (this.errorPageData.get('process_error')) {
           const launch_failed = this.errorPageData.get('process_error');
           if (!launch_failed?.includes('No error available')) {
