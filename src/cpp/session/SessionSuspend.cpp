@@ -459,8 +459,18 @@ void checkForSuspend(const boost::function<bool()>& allowSuspend)
             "computations may have been interrupted.");
       }
 
+      // exit status
+      int status = EX_FORCE;
+      if (options().getBoolOverlayOption(kLauncherSessionOption))
+      {
+         // Avoid generating nonzero exit codes when running under Launcher.
+         // Error codes from normal behaviour like this are confusing for Slurm
+         // and Kubernetes administrators unfamiliar with our workloads.
+         status = EXIT_SUCCESS;
+      }
+
       // execute the forced suspend (does not return)
-      suspendSession(true, EX_FORCE);
+      suspendSession(true, status);
    }
 
    // cooperative suspend request
