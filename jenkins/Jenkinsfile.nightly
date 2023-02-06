@@ -140,10 +140,7 @@ pipeline {
       when {
         anyOf {
           expression { return params.FORCE_BUILD }
-          allOf {
-            changeset comparator: 'REGEXP', pattern: '(?!docs/).+'
-            changeset comparator: 'REGEXP', pattern: '(?!jenkins/Jenkinsfile\\.nightly)'
-          }
+            changeset comparator: 'REGEXP', pattern: '(?:(?!docs/).+|(?!jenkins/Jenkinsfile\\.nightly))'
         }
       }
 
