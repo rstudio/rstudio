@@ -499,7 +499,7 @@ public class Application implements ApplicationEventHandlers
       if (customDocsURL.length() > 0)
          globalDisplay_.openWindow(customDocsURL);
       else
-         globalDisplay_.openRStudioLink(constants_.helpUsingRStudioLinkName());
+         globalDisplay_.openWindow("https://docs.posit.co/");
    }
 
    @Handler
