@@ -12,6 +12,10 @@ SHELL ["powershell"]
 # Note: keep installed dependencies in-sync with Install-RStudio-Prereqs.ps1 for consistency
 # between dev machines and the build machine.
 
+# allow long filenames
+RUN New-ItemProperty -Path "HKLM:\\SYSTEM\\CurrentControlSet\\Control\\FileSystem" `
+   -Name "LongPathsEnabled" -Value 1 -PropertyType DWORD -Force
+
 # install chocolatey
 RUN $env:chocolateyUseWindowsCompression = 'true'; `
     [System.Net.ServicePointManager]::SecurityProtocol = 3072 -bor 768 -bor 192 -bor 48; `
