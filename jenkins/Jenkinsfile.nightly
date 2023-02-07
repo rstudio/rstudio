@@ -179,7 +179,7 @@ pipeline {
         stage ("Build Windows") {
           when {
             anyOf {
-              equals expected: labelForOs[params.OS_FILTER], actual: 'windows';
+              equals expected: labelForOS[params.OS_FILTER], actual: 'windows';
               equals expected: params.OS_FILTER, actual: 'all'
             }
           }
@@ -200,7 +200,7 @@ pipeline {
         stage ("Build Linux") {
           when {
             anyOf {
-              equals expected: labelForOs[params.OS_FILTER], actual: 'linux';
+              equals expected: labelForOS[params.OS_FILTER], actual: 'linux';
               equals expected: params.OS_FILTER, actual: 'all'
             }
           }
@@ -223,7 +223,7 @@ pipeline {
         stage ("Build MacOS") {
           when {
             anyOf {
-              equals expected: labelForOs[params.OS_FILTER], actual: 'macos';
+              equals expected: labelForOS[params.OS_FILTER], actual: 'macos';
               equals expected: params.OS_FILTER, actual: 'all'
             }
           }
