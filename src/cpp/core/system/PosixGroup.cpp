@@ -102,13 +102,13 @@ Error groupFromId(gid_t gid, Group* pGroup)
    return groupFrom<gid_t>(::getgrgid_r, gid, pGroup);
 }
 
-Error userGroups(const std::string& userName, std::vector<Group>* pGroups)
+/**
+ * @brief Get all user group Ids
+ * @param user user to get groups for
+ * @return vector containing the groupIds related to user
+ */
+std::vector<GidType> userGroupIds(const User& user) 
 {
-   User user;
-   Error error = User::getUserFromIdentifier(userName, user);
-   if (error)
-      return error;
-
    // define a different gid type if we are on Mac vs Linux
    // BSD expects int values, but Linux expects unsigned ints
 #ifndef __APPLE__
@@ -118,21 +118,42 @@ Error userGroups(const std::string& userName, std::vector<Group>* pGroups)
 #endif
 
    // get the groups for the user - we start with 100 groups which should be enough for most cases
-   // if it is not, resize the buffer with the correct amount of groups and try again
+   // if it is not, resize the vector with the correct amount of groups and try again
    int numGroups = 100;
-   boost::shared_ptr<GIDTYPE> pGids(new GIDTYPE[numGroups]);
-   while (getgrouplist(userName.c_str(), user.getGroupId(), pGids.get(), &numGroups) == -1)
+   std::vector<GIDTYPE> gids(numGroups);
+   while (getgrouplist(user.getUsername().c_str(), user.getGroupId(), gids.data(), &numGroups) == -1)
    {
-      pGids.reset(new GIDTYPE[numGroups]);
+      gids.resize(numGroups);
    }
 
+   std::vector<GidType> groupIds;
+   groupIds.reserve(numGroups);
+   for(int i = 0; i < numGroups; i++) {
+      groupIds.push_back(static_cast<GidType>(gids[i]));
+   }
+   
+   return groupIds;
+}
+
+Error userGroups(const std::string& userName, std::vector<Group>* pGroups)
+{
+   User user;
+   Error error = User::getUserFromIdentifier(userName, user);
+   if (error)
+   {
+      return error;
+   }
+   auto groupIds = userGroupIds(user);
+
    // create group objects for each returned group
-   for (int i = 0; i < numGroups; i++)
+   for (const auto& groupId : groupIds)
    {
       Group group;
-      Error error = groupFromId(*(pGids.get() + i), &group);
+      Error error = groupFromId(groupId, &group);
       if (error)
+      {
          return error;
+      }
 
       // move the group into the vector
       // (less expensive than regular copy as we do not have to copy the entire group member vector)
