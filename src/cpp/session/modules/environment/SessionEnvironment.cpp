@@ -124,19 +124,11 @@ bool hasExternalPointer(SEXP obj, bool nullPtr, std::set<SEXP>& visited);
 
 bool pairlistHasExternalPointer(SEXP list, bool nullPtr, std::set<SEXP>& visited)
 {
-   while(list != R_NilValue)
-   {
-      // handle dotted pairs, e.g. CONS(x, y) where y is not another pairlist or NULL
-      // we need to check y for external pointers but stop there
-      if (TYPEOF(list) != LISTSXP && TYPEOF(list) != LANGSXP)
-         return hasExternalPointer(list, nullPtr, visited);
-         
-      // here we have a pairlist, so we can CAR() and CDR()
-      if (hasExternalPointer(CAR(list), nullPtr, visited))
-         return true;
+   if (hasExternalPointer(CAR(list), nullPtr, visited))
+      return true;
 
-      list = CDR(list);
-   }
+   if (hasExternalPointer(CDR(list), nullPtr, visited))
+      return true;
 
    return false;
 }
@@ -152,21 +144,62 @@ bool listHasExternalPointer(SEXP obj, bool nullPtr, std::set<SEXP>& visited)
    return false;
 }
 
-namespace {
 bool frameBindingIsActive(SEXP binding) 
 {
    static unsigned int ACTIVE_BINDING_MASK = (1<<15);
    return reinterpret_cast<r::sxpinfo*>(binding)->gp & ACTIVE_BINDING_MASK;
 }
+
+bool frameBindingHasExternalPointer(SEXP b, bool nullPtr, std::set<SEXP>& visited) 
+{
+   if (frameBindingIsActive(b))
+      return false;
+
+   // ->extra is only used for immediate bindings: this needs special care
+   // before we call CAR() because it might error with "bad binding access": 
+   // from Rinlinedfuns.h : 
+   // 
+   //     INLINE_FUN SEXP CAR(SEXP e)
+   //     {
+   //        if (BNDCELL_TAG(e))
+   //        error("bad binding access");
+   //        return CAR0(e);
+   //     }
+   unsigned int typetag = reinterpret_cast<r::sxpinfo*>(b)->extra;
+   if (typetag)
+   {
+      // it should not be set on 32-bits: unset it
+      if (sizeof(size_t) < sizeof(double))
+      {
+         reinterpret_cast<r::sxpinfo*>(b)->extra = 0;
+      }
+      else 
+      {
+         switch(typetag) {
+            case INTSXP:
+            case REALSXP: 
+            case LGLSXP:
+               // this is an immediate binding, R_expand_binding_value() would expand to a scalar
+               return false;
+            
+            default:
+               // otherwise (not sure this even hapens), ->extra should not be set: unset it
+               reinterpret_cast<r::sxpinfo*>(b)->extra = 0;
+         }
+      }
+   }
+   
+   // now safe to test the value in CAR()
+   return hasExternalPointer(CAR(b), nullPtr, visited);
 }
 
 bool frameHasExternalPointer(SEXP frame, bool nullPtr, std::set<SEXP>& visited)
 {
    while(frame != R_NilValue)
    {
-      if (!frameBindingIsActive(frame) && hasExternalPointer(CAR(frame), nullPtr, visited))
+      if (frameBindingHasExternalPointer(frame, nullPtr, visited))
          return true;
-
+      
       frame = CDR(frame);
    }
 
@@ -243,6 +276,9 @@ bool hasExternalPointer(SEXP obj, bool nullPtr, std::set<SEXP>& visited)
 
    switch(TYPEOF(obj))
    {
+      case SYMSXP: 
+         return false;
+
       case ENVSXP: 
       {
          if (envHasExternalPointer(obj, nullPtr, visited))

@@ -14,6 +14,8 @@
 - Support searching for roxygen specific information in fuzzy finder (Go to File/Function) #12190
 - "Rainbow" fenced divs, controled by Options > R Markdown > [v] Use rainbow fenced divs #12115
 - Disable argument tooltips in script editor for unknown functions #12160
+- Sessions now have lower CPU priority during suspension on macOS and Linux #12623
+- Sessions run on Kubernetes or Slurm will no longer exit with nonzero codes under normal circumstances (rstudio/rstudio-pro#3375)
 
 ### Fixed
 
@@ -33,6 +35,7 @@
 - Removed empty spell check tooltips #11306
 - Fixed package completion tooltips #12147
 - Fixed setting rsession log level using command-line argument or logging.conf #12557
+- Fixed issue that allowed users to overwrite their home directory in server mode #12653
 - Fixed "Check for updates" incorrectly reports that there are no updates (rstudio-pro #3388)
 
 ### Accessibility Improvements
@@ -45,4 +48,4 @@
 - Focus and keyboard-focus styles have been improved on the homepage
 - Keyboard support has been added to the job summary drop-down in session list items on the homepage
 - Improved alt-text and updated link to posit.co on sign-in page logo (rstudio-pro #4096)
-
+- Help pane home page switches to single-column display at narrow widths (#12643)
