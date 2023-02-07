@@ -173,7 +173,12 @@ public class HelpInfo extends JavaScriptObject
                                Element heading)
    {
       Element table = findArgumentTable(heading);
-      assert table != null : "Unexpected help format, no argblock table found";
+      
+      // early exit, but just acts as if there are no arguments
+      // this usually happens with free form \section{Arguments}
+      // instead of \arguments{}
+      if (table == null) 
+         return;
       
       TableElement t = (TableElement) table;
       NodeList<TableRowElement> rows = t.getRows();
