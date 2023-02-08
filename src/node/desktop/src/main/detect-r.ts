@@ -93,6 +93,10 @@ export async function promptUserForR(platform = process.platform): Promise<Expec
     const rInstalls = findRInstallationsWin32();
     if (rInstalls.length === 0) {
       return err(new Error('No R installations found via registry or common R install locations.'));
+    } else {
+      for (const install in rInstalls) {
+        logger().logDebug(`R INSTALL ${install}`);
+      }
     }
 
     // ask the user what version of R they'd like to use
