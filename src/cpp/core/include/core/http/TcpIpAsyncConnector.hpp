@@ -75,6 +75,9 @@ public:
       connectedHandler_ = connectedHandler;
       errorHandler_ = errorHandler;
 
+      address_ = address;
+      port_ = port;
+
       if (!timeout.is_special())
       {
          // start a timer that will cancel any outstanding asynchronous operations
@@ -109,7 +112,7 @@ private:
             if (isConnected_ || hasFailed_)
                return;
 
-            LOG_DEBUG_MESSAGE("In onConnectionTimeout - cancelling socket connection");
+            LOG_DEBUG_MESSAGE("In onConnectionTimeout - cancelling socket connection to: " + address_ + ":" + port_);
 
             // timer has elapsed and the socket is still not connected
             // cancel any outstanding async operations
@@ -118,7 +121,7 @@ private:
             if (pSocket_->is_open())
                pSocket_->cancel();
             else
-               LOG_ERROR_MESSAGE("Socket is already closed in onConnectionTimeout");
+               LOG_ERROR_MESSAGE("Socket to: " + address_ + ":" + port_ + " is already closed in onConnectionTimeout");
 
             // invoke error handler since the connection has failed
             handleError(systemError(boost::system::errc::timed_out, ERROR_LOCATION));
@@ -256,6 +259,9 @@ private:
    boost::asio::ip::tcp::resolver resolver_;
    ConnectedHandler connectedHandler_;
    ErrorHandler errorHandler_;
+
+   std::string address_;
+   std::string port_;
 
    bool isConnected_;
    bool hasFailed_;
