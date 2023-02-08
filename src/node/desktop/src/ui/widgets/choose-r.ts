@@ -39,9 +39,9 @@ function checkValid(data: CallbackData) {
 
     dialog.showMessageBoxSync({
       type: 'error',
-      title: (window as any).i18next.t('chooseRDialog.rLaunchFailedTitle'),
-      message: (window as any).t('chooseRDialog.rLaunchFailedMessage'),
-      buttons: [ (window as any).t('common.buttonOk'), ],
+      title: 'Error Loading R',
+      message: 'An error occured while attempting to load the selected version of R.',
+      buttons: [ 'OK', ],
     });
 
     return false;
@@ -108,9 +108,9 @@ export class ChooseRModalWindow extends ModalDialog<CallbackData | null> {
 
       this.addIpcHandler('browse-r-exe', async (event, data: CallbackData) => {
         const response = dialog.showOpenDialogSync(this, {
-          title: (window as any).i18next.t('uiFolder.chooseRExecutable'),
+          title: 'Choose R Executable',
           properties: ['openFile'],
-          filters: [{ name: (window as any).i18next.t('uiFolder.rExecutable'), extensions: ['exe'] }],
+          filters: [{ name: 'R Executable', extensions: ['exe'] }],
         });
 
         if (response) {
