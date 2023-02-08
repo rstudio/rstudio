@@ -174,3 +174,7 @@ contextBridge.exposeInMainWorld('callbacks', callbacks);
 function isRVersionSelected(selectedVersion: string, versionToCompare: string) {
   return normalizeSeparatorsNative(selectedVersion) === normalizeSeparatorsNative(versionToCompare);
 }
+
+contextBridge.exposeInMainWorld('i18next', {
+  t: async (key: string) => ipcRenderer.invoke('t', key),
+});

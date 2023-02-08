@@ -19,7 +19,6 @@ import { logger } from '../../core/logger';
 import { ModalDialog } from '../modal-dialog';
 
 import { initI18n } from '../../main/i18n-manager';
-import i18next, { t } from 'i18next';
 import { CallbackData } from './choose-r/preload';
 import { ElectronDesktopOptions } from '../../main/preferences/electron-desktop-options';
 
@@ -40,9 +39,9 @@ function checkValid(data: CallbackData) {
 
     dialog.showMessageBoxSync({
       type: 'error',
-      title: t('chooseRDialog.rLaunchFailedTitle'),
-      message: t('chooseRDialog.rLaunchFailedMessage'),
-      buttons: [ t('common.buttonOk'), ],
+      title: (window as any).i18next.t('chooseRDialog.rLaunchFailedTitle'),
+      message: (window as any).t('chooseRDialog.rLaunchFailedMessage'),
+      buttons: [ (window as any).t('common.buttonOk'), ],
     });
 
     return false;
@@ -109,9 +108,9 @@ export class ChooseRModalWindow extends ModalDialog<CallbackData | null> {
 
       this.addIpcHandler('browse-r-exe', async (event, data: CallbackData) => {
         const response = dialog.showOpenDialogSync(this, {
-          title: i18next.t('uiFolder.chooseRExecutable'),
+          title: (window as any).i18next.t('uiFolder.chooseRExecutable'),
           properties: ['openFile'],
-          filters: [{ name: i18next.t('uiFolder.rExecutable'), extensions: ['exe'] }],
+          filters: [{ name: (window as any).i18next.t('uiFolder.rExecutable'), extensions: ['exe'] }],
         });
 
         if (response) {

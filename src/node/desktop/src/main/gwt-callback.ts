@@ -904,6 +904,10 @@ export class GwtCallback extends EventEmitter {
     ipcMain.handle('desktop_startup_error_info', async (event, varName: string) => {
       return resolveTemplateVar(varName, this.errorPageData);
     });
+
+    ipcMain.handle('t', async(event, key: string) => {
+      return i18next.t(key);
+    });
   }
 
   setRemoteDesktop(isRemoteDesktop: boolean): void {
