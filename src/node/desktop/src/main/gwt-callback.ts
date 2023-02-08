@@ -964,7 +964,6 @@ export class GwtCallback extends EventEmitter {
    * @param owner GwtWindow to register for GwtCallbacks
    */
   registerOwner(owner: GwtWindow): void {
-    console.log("registerOwner: url [ " + owner.getBaseUrl() + " ]\n\t webcontents id: " + owner.window.webContents.id)
     this.owners.add(owner);
   }
 
@@ -974,7 +973,6 @@ export class GwtCallback extends EventEmitter {
    * @param owner A GwtWindow that previously registered for GwtCallbacks
    */
   unregisterOwner(owner: GwtWindow): void {
-    console.log("unregisterOwner: url [ " + owner.getBaseUrl() + " ]\n\t webcontents id: " + owner.window.webContents.id)
     this.owners.delete(owner);
   }
 
@@ -987,13 +985,15 @@ export class GwtCallback extends EventEmitter {
     if (frame) {
       for (const win of this.owners) {
         try {
-          // It's possible for there to be owners in the set whose
-          // WebContents have since been destoyed. The owner should have
-          // been unregistered, but weren't for some reason. When we iterate
-          // through owners and hit one that has been destroyed, we get:
-          // "TypeError: Object has been destroyed" and we error out, causing
-          // a satellite window to have blank contents.
-          // Temp fix: catch the error and move on to check the next window.
+          // Some owners in this.owners may not have been unregistered, but have
+          // since been closed/destroyed. If that's the case for an owner, its
+          // WebContents (win.window.webContents) will have been destoyed.
+          // As a result, when we iterate through owners and hit one that has
+          // been destroyed, we get: "TypeError: Object has been destroyed".
+          // Then, we error out and cause a satellite window to have blank contents.
+          // See https://github.com/rstudio/rstudio/issues/12468 and
+          //     https://github.com/rstudio/rstudio/issues/12569
+          // To avoid failing, we catch the error and move on to check the next owner.
           if (win.window.webContents.mainFrame === frame) {
             return win;
           }
