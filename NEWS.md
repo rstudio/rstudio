@@ -37,6 +37,7 @@
 - Fixed setting rsession log level using command-line argument or logging.conf #12557
 - Fixed issue that allowed users to overwrite their home directory in server mode #12653
 - Fixed "Check for updates" incorrectly reports that there are no updates (rstudio-pro #3388)
+- Fixed default options for Choose R dialog on Windows (#12452)
 
 ### Accessibility Improvements
 
