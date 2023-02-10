@@ -139,13 +139,15 @@ export class MainWindow extends GwtWindow {
     // 1. Open the page externally,
     // 2. Re-direct the iframe back to the source URL (bleh).
     //
+    // Once https://github.com/electron/electron/pull/34418 is merged, we can leverage
+    // the 'will-frame-navigate' instead of intercepting the request.
     this.window.webContents.session.webRequest.onBeforeRequest((details, callback) => {
 
       logger().logDebug(`${details.method} ${details.url} [${details.resourceType}]`);
 
       if (details.resourceType === 'subFrame' && !this.allowNavigation(details.url)) {
         shell.openExternal(details.url).catch((error) => { logger().logError(error); });
-        callback({ cancel: false, redirectURL: details.frame?.url });
+        callback({ cancel: true, redirectURL: details.frame?.url });
       } else {
         callback({ cancel: false });
       }
