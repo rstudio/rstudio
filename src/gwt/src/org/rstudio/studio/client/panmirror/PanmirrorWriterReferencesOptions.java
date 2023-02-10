@@ -23,4 +23,5 @@ public class PanmirrorWriterReferencesOptions
 {    
    public String location;
    public String prefix;
+   public Boolean links;
 }
