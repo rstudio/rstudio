@@ -83,6 +83,7 @@ pipeline {
       matrix {
         when {
           allOf {
+            changeset comparator: 'REGEXP', pattern: '(docker|dependencies)/.+'
             anyOf {
               equals expected: params.OS_FILTER, actual: env.os;
               equals expected: params.OS_FILTER, actual: 'all'
