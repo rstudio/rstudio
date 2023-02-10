@@ -496,7 +496,8 @@ export class GwtCallback extends EventEmitter {
         this.mainWindow.window
           .capturePage(rect)
           .then((image) => {
-            clipboard.writeImage(image);
+            const buffer: Buffer = image.toJPEG(100);;
+            clipboard.writeBuffer('jpeg', buffer);
           })
           .catch((error) => {
             logger().logError(error);
