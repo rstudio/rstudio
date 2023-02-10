@@ -131,23 +131,16 @@ export class MainWindow extends GwtWindow {
 
     registerWebContentsDebugHandlers(this.window.webContents);
 
-    // Detect attempts to navigate externally within subframes, and prevent them.
-    // The implementation here is pretty sub-optimal, but it's the best we can do until
-    // we get 'will-frame-navigate' support. In effect, we detect attempts to navigate
-    // externally within an iframe, and instead:
-    //
-    // 1. Open the page externally,
-    // 2. Re-direct the iframe back to the source URL (bleh).
-    //
+    // Detect attempts to navigate externally within an iframe, and instead open the
+    // url in a browser.
     // Once https://github.com/electron/electron/pull/34418 is merged, we can leverage
     // the 'will-frame-navigate' instead of intercepting the request.
     this.window.webContents.session.webRequest.onBeforeRequest((details, callback) => {
-
       logger().logDebug(`${details.method} ${details.url} [${details.resourceType}]`);
 
       if (details.resourceType === 'subFrame' && !this.allowNavigation(details.url)) {
         shell.openExternal(details.url).catch((error) => { logger().logError(error); });
-        callback({ cancel: true, redirectURL: details.frame?.url });
+        callback({ cancel: true });
       } else {
         callback({ cancel: false });
       }
