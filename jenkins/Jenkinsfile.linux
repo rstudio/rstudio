@@ -226,7 +226,7 @@ pipeline {
                       script {
                         // extract name of package to publish
                         PACKAGE_FILE = sh (
-                          script: "basename `ls ${PACKAGE_DIR}/rstudio-*.${PACKAGE_EXT}`",
+                          script: "basename `ls ${PACKAGE_DIR}/rstudio-*.\${PACKAGE_EXT}`",
                           returnStdout: true
                         ).trim()
 
