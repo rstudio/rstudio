@@ -1,13 +1,12 @@
-@Library('pipeline-shared-libraries@feature/windows-pbp') _
 def utils
 
 pipeline {
 
-  agent { label "docker" }
+  agent { label "linux" }
 
   options {
-    timestamps()
     disableConcurrentBuilds()
+    skipDefaultCheckout()
     buildDiscarder(
       logRotator(
         artifactDaysToKeepStr: '',
@@ -30,9 +29,26 @@ pipeline {
   environment {
     PACKAGE_OS = 'Windows'
     AWS_ACCOUNT_ID = '749683154838'
+    TO_CHECKOUT = "${env.BRANCH_NAME}"
+    GIT_URL = "https://github.com/rstudio/rstudio"
   }
 
   stages {
+
+    stage ('Checkout') { // checkout stage required here in order for versioning to work properly
+      steps {
+        script {
+          if (params.COMMIT_HASH != '') {
+            TO_CHECKOUT = params.COMMIT_HASH
+          }
+        }
+
+        checkout([$class: 'GitSCM',
+          branches: [[name: TO_CHECKOUT]],
+          extensions: [],
+          userRemoteConfigs: [[credentialsId: 'github-rstudio-jenkins', url: GIT_URL]]])
+      }
+    }
 
     stage('Load Utils') {
       steps {
@@ -41,17 +57,6 @@ pipeline {
           sh "echo 'Loading utils from ${env.WORKSPACE}/utils.groovy'"
           utils = load "${env.WORKSPACE}/utils.groovy"
         }
-      }
-    }
-
-    stage ('Checkout') { // checkout stage required here in order for versioning to work properly
-      when { expression { params.COMMIT_HASH != '' } }
-      steps {
-        echo "Commit_hash value: ${params.COMMIT_HASH}"
-        checkout([$class: 'GitSCM',
-          branches: [[name: "${params.COMMIT_HASH}"]],
-          extensions: [],
-          userRemoteConfigs: [[credentialsId: 'github-rstudio-jenkins', url: GIT_URL]]])
       }
     }
 
@@ -109,11 +114,9 @@ pipeline {
                   stage ('Checkout') {
                     when { expression { params.COMMIT_HASH != '' } }
                     steps {
-                      echo "Commit_hash value: ${params.COMMIT_HASH}"
-                        checkout([$class: 'GitSCM',
-                          branches: [[name: "${params.COMMIT_HASH}"]],
-                          extensions: [],
-                          userRemoteConfigs: [[credentialsId: 'github-rstudio-jenkins', url: GIT_URL]]])
+                      timeout(time: 10, unit: 'MINUTES') {
+                        sh "git config core.sparsecehckout && git config --global core.longpaths true && git checkout -f ${TO_CHECKOUT}"
+                      }
                     }
                   }
 
@@ -242,7 +245,7 @@ pipeline {
                       }
 
                       stage ("Redirect something I'd think") {
-                        agent { label "docker" } // must be in docker agent in order use sh
+                        agent { label "docker" } // must be on a linux node to use a bash script
 
                         when { environment name: 'FLAVOR', value: 'Electron' }
 
