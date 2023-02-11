@@ -150,9 +150,23 @@ pipeline {
               GITHUB_LOGIN = credentials('github-rstudio-jenkins')
               AWS_BUCKET="rstudio-ide-build"
               PRODUCT="${FLAVOR.toLowerCase()}"
+              PACKAGE_TYPE=""
+              PACKAGE_EXT=""
+              ARCH_LABEL=""
             }
 
             stages {
+              stage('Extract Docker Env Vars') {
+                // For convienence, get the docker env vars out of the container so we don't have to keep escaping stuff
+                steps {
+                  script {
+                    PACKAGE_EXT=sh(script: 'echo ${PACKAGE_EXT}', returnStdout: true)
+                    PACKAGE_TYPE=sh(script: 'echo ${PACKAGE_TYPE}', returnStdout: true)
+                    ARCH_LABEL=sh(script: 'echo ${OS_X86_64_LABEL}', returnStdout: true)
+                  }
+                }
+              }
+
               stage('Checkout') {
                 when { expression { params.COMMIT_HASH != '' } }
                 steps {
@@ -174,7 +188,7 @@ pipeline {
 
                   dir('package/linux') {
                     withAWS(role: 'build', roleAccount: AWS_ACCOUNT_ID) {
-                      sh "${ENV} ./make-${FLAVOR.toLowerCase()}-package  \${PACKAGE_TYPE} clean"
+                      sh "${ENV} ./make-${FLAVOR.toLowerCase()}-package  ${PACKAGE_TYPE} clean"
                     }
                     sh '../../docker/jenkins/sign-release.sh build-${FLAVOR}-${PACKAGE_TYPE}/rstudio-*.${PACKAGE_EXT} ${CODESIGN_KEY} ${CODESIGN_PASS}'
                   }
@@ -211,12 +225,12 @@ pipeline {
                 when { expression { return params.PUBLISH } }
 
                 environment {
-                  PACKAGE_DIR = "package/linux/build-${FLAVOR}-\${PACKAGE_TYPE}"
+                  PACKAGE_DIR = "package/linux/build-${FLAVOR}-${PACKAGE_TYPE}"
                   PACKAGE_FILE = ""
-                  TAR_PACKAGE_DIR= ""
-                  TAR_PACKAGE_FILE = "_CPack_Packages/Linux/\${PACKAGE_TYPE}"
+                  TAR_PACKAGE_DIR= "_CPack_Packages/Linux/${PACKAGE_TYPE}"
+                  TAR_PACKAGE_FILE = ""
                   BUILD_TYPE = ""
-                  AWS_PATH="${FLAVOR}/${OS}/\${OS_X86_64_LABEL}/"
+                  AWS_PATH="${FLAVOR}/${OS}/${ARCH_LABEL}"
                   PRODUCT = "${FLAVOR.toLowerCase()}"
                 }
 
@@ -226,7 +240,7 @@ pipeline {
                       script {
                         // extract name of package to publish
                         PACKAGE_FILE = sh (
-                          script: "basename `ls ${PACKAGE_DIR}/rstudio-*.\${PACKAGE_EXT}`",
+                          script: "basename `ls ${PACKAGE_DIR}/rstudio-*.${PACKAGE_EXT}`",
                           returnStdout: true
                         ).trim()
 
@@ -281,7 +295,7 @@ pipeline {
                     steps {
                       // Upload Sentry
                       dir("package/linux/build-${FLAVOR}-${OS}/src/cpp") {
-                        retry 5 {
+                        retry(5) {
                           timeout activity: true, time: 15 {
                             utils.sentryUpload 'elf'
                           }
