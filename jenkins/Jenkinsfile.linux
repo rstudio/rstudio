@@ -150,12 +150,15 @@ pipeline {
               GITHUB_LOGIN = credentials('github-rstudio-jenkins')
               AWS_BUCKET="rstudio-ide-build"
               PRODUCT="${FLAVOR.toLowerCase()}"
-              PACKAGE_TYPE=""
-              PACKAGE_EXT=""
-              ARCH_LABEL=""
             }
 
             stages {
+              environment {
+                PACKAGE_TYPE=""
+                PACKAGE_EXT=""
+                ARCH_LABEL=""
+              }
+
               stage('Extract Docker Env Vars') {
                 // For convienence, get the docker env vars out of the container so we don't have to keep escaping stuff
                 steps {
