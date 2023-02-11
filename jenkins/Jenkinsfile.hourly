@@ -23,15 +23,18 @@ pipeline {
 
   stages {
     stage('Trigger Dispatcher') {
-      build wait: false,
-            job: "IDE/OS-Builds/nightly-pipeline/${env.BUILD_BRANCH}",
-            parameters: [
-              string(name: "RSTUDIO_VERSION_PATCH", value: "${RSTUDIO_VERSION_PATCH}"),
-              string(name: "SLACK_CHANNEL", value: "${SLACK_CHANNEL}"),
-              booleanParam(name: "DAILY", value: false),
-              booleanParam(name: "PUBLISH", value: params.PUBLISH),
-              string(name: "OS_FILTER", value: params.OS_FILTER),
-              string(name: "ARCH_FILTER", value: params.ARCH_FILTER)
+      steps {
+        build wait: false,
+              job: "IDE/OS-Builds/nightly-pipeline/${env.BUILD_BRANCH}",
+              parameters: [
+                string(name: "RSTUDIO_VERSION_PATCH", value: "${RSTUDIO_VERSION_PATCH}"),
+                string(name: "SLACK_CHANNEL", value: "${SLACK_CHANNEL}"),
+                booleanParam(name: "DAILY", value: false),
+                booleanParam(name: "PUBLISH", value: params.PUBLISH),
+                string(name: "OS_FILTER", value: params.OS_FILTER),
+                string(name: "ARCH_FILTER", value: params.ARCH_FILTER)
+              ]
+      }
     }
   }
 }
