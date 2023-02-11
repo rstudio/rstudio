@@ -43,6 +43,39 @@ namespace posix {
 
 namespace {
 
+bool s_privInited = false;
+std::string s_privUserName;
+uid_t s_privUid;
+gid_t s_privGid;
+
+
+// Cach the root uids/gids to keep restorePrivileges from having to call ::getpwuid. restorePriv is used by
+// rserver-pam's onAfterFork callback, where it can use a vendor api (e.g. centrify) that uses locking that
+// will fail in a process that has forked while holding a lock that then appears held in the child
+//
+// Must be called from a single-threaded context like process startup code.
+Error initSystemPriv(uid_t in_uid)
+{
+   if (s_privInited)
+   {
+       if (in_uid == s_privUid)
+          return Success();
+   }
+
+   struct passwd* pPrivPasswd = ::getpwuid(in_uid);
+   if (pPrivPasswd == nullptr)
+   {
+      return systemError(errno, ERROR_LOCATION);
+   }
+
+   s_privUid = in_uid;
+   s_privGid = pPrivPasswd->pw_gid;
+   s_privUserName = std::string(pPrivPasswd->pw_name);
+   s_privInited = true;
+
+   return Success();
+}
+
 Error restorePrivilegesImpl(uid_t in_uid)
 {
    // Reset error state.
@@ -55,20 +88,19 @@ Error restorePrivilegesImpl(uid_t in_uid)
    if (::geteuid() != 0)
       return systemError(EACCES, ERROR_LOCATION);
 
-   // Get user info to use in group calls
-   struct passwd* pPrivPasswd = ::getpwuid(in_uid);
-   if (pPrivPasswd == nullptr)
-      return systemError(errno, ERROR_LOCATION);
+   Error error = initSystemPriv(in_uid);
+   if (error)
+      return error;
 
    // Supplemental groups
-   if (::initgroups(pPrivPasswd->pw_name, pPrivPasswd->pw_gid) < 0)
+   if (::initgroups(s_privUserName.c_str(), s_privGid) < 0)
       return systemError(errno, ERROR_LOCATION);
 
    // Set effective group
-   if (::setegid(pPrivPasswd->pw_gid) < 0)
+   if (::setegid(s_privGid) < 0)
       return systemError(errno, ERROR_LOCATION);
    // Verify
-   if (::getegid() != pPrivPasswd->pw_gid)
+   if (::getegid() != s_privGid)
       return systemError(EACCES, ERROR_LOCATION);
 
    return Success();
@@ -183,13 +215,12 @@ Error restorePrivileges()
    if (::geteuid() != suid)
       return systemError(EACCES, ERROR_LOCATION);
 
-   // get saved user info to use in group calls
-   struct passwd* pPrivPasswd = ::getpwuid(suid);
-   if (pPrivPasswd == nullptr)
-      return systemError(errno, ERROR_LOCATION);
+   Error error = initSystemPriv(suid);
+   if (error)
+      return error;
 
    // supplemental groups
-   if (::initgroups(pPrivPasswd->pw_name, pPrivPasswd->pw_gid) < 0)
+   if (::initgroups(s_privUserName.c_str(), s_privGid) < 0)
       return systemError(errno, ERROR_LOCATION);
 
    // set group
@@ -210,6 +241,13 @@ Error temporarilyDropPrivileges(const User& in_user, const boost::optional<GidTy
 {
    // clear error state
    errno = 0;
+
+   // the starting uid
+   uid_t privUid = ::geteuid();
+
+   Error error = initSystemPriv(privUid);
+   if (error)
+      return error;
 
    GidType targetGID = in_group.or_else(in_user.getGroupId());
 
@@ -242,10 +280,6 @@ Error temporarilyDropPrivileges(const User& in_user, const boost::optional<GidTy
 
 // privilege manipulation for systems that don't support setresuid/getresuid
 #else
-
-namespace {
-   uid_t s_privUid;
-}
 
 Error restorePrivileges()
 {
@@ -303,8 +337,8 @@ Error temporarilyDropPrivileges(const User& in_user, const boost::optional<GidTy
    if (::geteuid() != in_user.getUserId())
       return systemError(EACCES, ERROR_LOCATION);
 
-   // save privileged user id
-   s_privUid = oldEUID;
+   // save privileged user id and gid info
+   initSystemPriv(s_privUid);
 
    // success
    return Success();
