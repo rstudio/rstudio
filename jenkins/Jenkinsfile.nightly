@@ -168,7 +168,7 @@ pipeline {
             SENTRY_API_KEY = credentials('ide-sentry-api-key')
           }
 
-          when { expression { return params.PUBLISH } }
+          when { expression { return params.PUBLISH && params.DAILY } }
 
           steps { 
             echo "Creating a sentry release for version ${RSTUDIO_VERSION}"
