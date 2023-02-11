@@ -39,6 +39,7 @@
 - Fixed "Check for updates" incorrectly reports that there are no updates (rstudio-pro #3388)
 - Fixed data viewer's "Show in new window" results in empty window #12468
 - Fixed uncaught Shiny error breaks RStudio's "Run in Window" feature #12569
+- Fixed intermittent hanging logins in Workbench using ActiveDirectory (rstudio-pro #4285)
 
 ### Accessibility Improvements
 
