@@ -201,9 +201,9 @@ pipeline {
                     steps {
                       // this job is going to run on a macOS build agent, which cannot use an instance-profile
                       withAWS(role: 'ide-build') {
-                        retry 5 {
+                        retry(5) {
                           script {
-                            utils.uploadPackageToS3 "package/osx/build/${PACKAGE_FILE}" "${PRODUCT}/macos/"
+                            utils.uploadPackageToS3 "package/osx/build/${PACKAGE_FILE}", "${PRODUCT}/macos/"
                           }
                         }
                       }
@@ -236,7 +236,7 @@ pipeline {
                     }
                     steps {
                       // upload debug symbols to Sentry
-                      retry 5 {
+                      retry(5) {
                         // timeout sentry in 15 minutes
                         timeout activity: true, time: 15 {
                           // upload Javascript source maps
