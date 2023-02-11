@@ -25,7 +25,7 @@ pipeline {
     stage('Trigger Dispatcher') {
       steps {
         build wait: false,
-              job: "IDE/OS-Builds/nightly-pipeline/${env.BUILD_BRANCH}",
+              job: "IDE/OS-Builds/nightly-pipeline/${env.BRANCH_NAME.replace('/', '%2F')}",
               parameters: [
                 string(name: "RSTUDIO_VERSION_PATCH", value: "${RSTUDIO_VERSION_PATCH}"),
                 string(name: "SLACK_CHANNEL", value: "${SLACK_CHANNEL}"),
