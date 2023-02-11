@@ -77,7 +77,14 @@ pipeline {
     }
 
     stage('Use Windows Agent') {
-      agent { label "windows" }
+      agent { 
+        label {
+          label "windows"
+          // Set a customer workspace relative to the workspace root (C:\Users\jenikns) to ensure file names
+          // won't be too long
+          customWorkspace "workspace/ide-os-windows/${env.BRANCH_NAME.replace('/', '-')}"
+        }
+      }
 
       stages {
 
@@ -114,9 +121,10 @@ pipeline {
                   stage ('Checkout') {
                     when { expression { params.COMMIT_HASH != '' } }
                     steps {
-                      timeout(time: 10, unit: 'MINUTES') {
-                        sh "git config core.sparsecehckout && git config --global core.longpaths true && git checkout -f ${TO_CHECKOUT}"
-                      }
+                      checkout([$class: 'GitSCM',
+                        branches: [[name: TO_CHECKOUT]],
+                        extensions: [],
+                        userRemoteConfigs: [[credentialsId: 'github-rstudio-jenkins', url: GIT_URL]]])
                     }
                   }
 
