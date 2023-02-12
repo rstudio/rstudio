@@ -96,7 +96,7 @@ def publishToDailiesSite(String packageFile, String destinationPath) {
   sh 'docker/jenkins/publish-build.sh --build ${destinationPath} --url https://s3.amazonaws.com/rstudio-ide-build/${destinationPath}/${packageFile} --pat ${GITHUB_LOGIN_PSW} --file package/osx/build/${packageFile} --version ${RSTUDIO_VERSION}'
 }
 
-def getArchForOs(String os, Strin arch) {
+def getArchForOs(String os, String arch) {
   if ((arch == "amd64") && ((os == "bionic") || (os == "jammy"))) {
     return "x86_64"
   }
