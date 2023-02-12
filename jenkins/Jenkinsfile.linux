@@ -263,7 +263,7 @@ pipeline {
 
                   stage("Upload Package") {
                     steps {
-                      withAWS(role: 'ide-build') {
+                      withAWS(role: 'ide-build', region: 'us-east-1') {
                         retry(5) {
                           script {
                             utils.uploadPackageToS3 "${PACKAGE_DIR}/${PACKAGE_FILE}", "${AWS_PATH}/"

@@ -200,7 +200,7 @@ pipeline {
                   stage("Upload Package") {
                     steps {
                       // this job is going to run on a macOS build agent, which cannot use an instance-profile
-                      withAWS(role: 'ide-build') {
+                      withAWS(role: 'ide-build', region: 'us-east-1') {
                         retry(5) {
                           script {
                             utils.uploadPackageToS3 "package/osx/build/${PACKAGE_FILE}", "${PRODUCT}/macos/"
