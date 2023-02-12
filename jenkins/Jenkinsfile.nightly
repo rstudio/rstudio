@@ -83,7 +83,10 @@ pipeline {
       matrix {
         when {
           allOf {
-            changeset comparator: 'REGEXP', pattern: '(docker|dependencies)/.+'
+            anyOf {
+              expression { return params.FORCE_BUILD }
+              changeset comparator: 'REGEXP', pattern: '(docker|dependencies)/.+'
+            }
             anyOf {
               equals expected: params.OS_FILTER, actual: env.os;
               equals expected: params.OS_FILTER, actual: 'all'
@@ -151,7 +154,7 @@ pipeline {
       when {
         anyOf {
           expression { return params.FORCE_BUILD }
-            changeset comparator: 'REGEXP', pattern: '(?:(?!docs/).+|(?!jenkins/Jenkinsfile\\.nightly))'
+          changeset comparator: 'REGEXP', pattern: '(?:(?!docs/).+|(?!jenkins/Jenkinsfile\\.nightly))'
         }
       }
 
