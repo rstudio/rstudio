@@ -207,6 +207,8 @@ pipeline {
                       }
 
                       stage('Sentry Upload') {
+                        when { expression { return params.DAILY } }
+
                         environment {
                           SENTRY_API_KEY = credentials('ide-sentry-api-key')
                         }

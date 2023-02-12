@@ -152,12 +152,7 @@ pipeline {
                 }
 
               stage('Notarize and Upload') {
-
-                when {
-                  expression {
-                    return params.PUBLISH
-                  }
-                }
+                when { expression { return params.PUBLISH } }
                 
                 environment {
                   PATH = "${env.HOME}/opt/bin:${env.PATH}"
@@ -226,6 +221,8 @@ pipeline {
                   }
                   
                   stage("Sentry Upload") {
+                    when { expression { return params.DAILY } }
+
                     environment {
                       SENTRY_API_KEY = credentials('ide-sentry-api-key')
                     }
