@@ -186,7 +186,7 @@ pipeline {
                     withAWS(role: 'build', roleAccount: AWS_ACCOUNT_ID) {
                       sh "${ENV} ./make-${FLAVOR.toLowerCase()}-package ${ext_map[env.OS].toUpperCase()} clean"
                     }
-                    sh '../../docker/jenkins/sign-release.sh build-${FLAVOR}-${ext_map[env.OS].toUpperCase()}/rstudio-*.${ext_map[env.OS]} ${CODESIGN_KEY} ${CODESIGN_PASS}'
+                    sh '../../docker/jenkins/sign-release.sh build-${FLAVOR}-' + ext_map[env.OS].toUpperCase() + '/rstudio-*.' + ext_map[env.OS] + ' ${CODESIGN_KEY} ${CODESIGN_PASS}'
                   }
                 }
               }
@@ -208,8 +208,8 @@ pipeline {
                   stage ('GWT and C++ Tests') {
                     steps {
                       dir ( 'package/linux/' ) {
-                        sh 'cd build-${FLAVOR}-${ext_map[env.OS].toUpperCase()}/src/gwt && ./gwt-unit-tests.sh'
-                        sh 'cd build-${FLAVOR}-${ext_map[env.OS].toUpperCase()}/src/cpp && ./rstudio-tests'
+                        sh "cd build-${FLAVOR}-${ext_map[env.OS].toUpperCase()}/src/gwt && ./gwt-unit-tests.sh"
+                        sh "cd build-${FLAVOR}-${ext_map[env.OS].toUpperCase()}/src/cpp && ./rstudio-tests"
                       }
                     }
                   }
@@ -226,7 +226,7 @@ pipeline {
                   TAR_PACKAGE_DIR= "_CPack_Packages/Linux/${ext_map[env.OS].toUpperCase()}"
                   TAR_PACKAGE_FILE = ""
                   BUILD_TYPE = ""
-                  AWS_PATH="${FLAVOR}/${OS}/${utils.getArchForOs(env.OS, env.ARCH)}"
+                  AWS_PATH= "${FLAVOR}/${OS}/${utils.getArchForOs(env.OS, env.ARCH)}"
                   PRODUCT = "${FLAVOR.toLowerCase()}"
                 }
 
