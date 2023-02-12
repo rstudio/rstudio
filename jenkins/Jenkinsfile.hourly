@@ -29,6 +29,7 @@ pipeline {
               parameters: [
                 string(name: "RSTUDIO_VERSION_PATCH", value: "${RSTUDIO_VERSION_PATCH}"),
                 string(name: "SLACK_CHANNEL", value: "${SLACK_CHANNEL}"),
+                booleanParam(name: "FORCE_BUILD", value: false),
                 booleanParam(name: "DAILY", value: false),
                 booleanParam(name: "PUBLISH", value: params.PUBLISH),
                 string(name: "OS_FILTER", value: params.OS_FILTER),

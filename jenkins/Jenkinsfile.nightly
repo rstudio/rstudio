@@ -32,7 +32,7 @@ pipeline {
     string defaultValue: '0', description: 'RStudio Patch Version', name: 'RSTUDIO_VERSION_PATCH', trim: true
     string defaultValue: '#ide-builds', description: 'Slack channel to publish build message.', name: 'SLACK_CHANNEL', trim: true
     booleanParam defaultValue: true, description: 'Publish the build to S3 and sentry.', name: 'PUBLISH'
-    booleanParam defaultValue: false, description: 'Force build even if there are no changes.', name: 'FORCE_BUILD'
+    booleanParam defaultValue: true, description: 'Force build even if there are no changes.', name: 'FORCE_BUILD'
     string name: 'OS_FILTER', defaultValue: 'all', description: 'Pattern to limit builds by matching OS'
     string name: 'ARCH_FILTER', defaultValue: 'all', description: 'Pattern to limit builds by matching ARCH'
     booleanParam name: 'DAILY', defaultValue: true, description: 'Builds daily/nightly builds if true; builds hourly builds if false.'
