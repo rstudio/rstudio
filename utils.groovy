@@ -97,7 +97,7 @@ def publishToDailiesSite(String packageFile, String destinationPath) {
 }
 
 def getArchForOs(String os, String arch) {
-  if ((arch == "amd64") && ((os == "bionic") || (os == "jammy"))) {
+  if ((arch == "amd64") && (os != "bionic") && (os != "jammy")) {
     return "x86_64"
   }
 
