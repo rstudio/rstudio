@@ -3,9 +3,6 @@ FROM --platform=linux/$ARCH opensuse/leap:15.1
 ARG ARCH
 
 ENV OPERATING_SYSTEM=opensus_leap15
-ENV PACKAGE_TYPE=RPM
-ENV PACKAGE_EXT=rpm
-ENV OS_X86_64_LABEL=x86_64
 
 # needed to build RPMs; see https://build.opensuse.org/repositories/systemsmanagement:wbem
 RUN zypper --non-interactive addrepo https://download.opensuse.org/repositories/systemsmanagement:wbem/openSUSE_Tumbleweed/systemsmanagement:wbem.repo

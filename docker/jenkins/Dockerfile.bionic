@@ -3,9 +3,6 @@ FROM --platform=linux/$ARCH ubuntu:bionic
 ARG ARCH
 
 ENV OPERATING_SYSTEM=ubuntu_bionic
-ENV PACKAGE_TYPE=DEB
-ENV PACKAGE_EXT=deb
-ENV OS_X86_64_LABEL=amd64
 
 ARG AWS_REGION=us-east-1
 

@@ -1,5 +1,15 @@
 def utils
 
+def ext_map = 
+[
+  'bionic':     'deb',
+  'jammy':      'deb',
+  'centos7':    'rpm',
+  'rhel8':      'rpm',
+  'rhel9':      'rpm',
+  'opensuse15': 'rpm'
+]
+
 pipeline {
   agent none
 
@@ -153,23 +163,6 @@ pipeline {
             }
 
             stages {
-              environment {
-                PACKAGE_TYPE=""
-                PACKAGE_EXT=""
-                ARCH_LABEL=""
-              }
-
-              stage('Extract Docker Env Vars') {
-                // For convienence, get the docker env vars out of the container so we don't have to keep escaping stuff
-                steps {
-                  script {
-                    PACKAGE_EXT=sh(script: 'echo ${PACKAGE_EXT}', returnStdout: true)
-                    PACKAGE_TYPE=sh(script: 'echo ${PACKAGE_TYPE}', returnStdout: true)
-                    ARCH_LABEL=sh(script: 'echo ${OS_X86_64_LABEL}', returnStdout: true)
-                  }
-                }
-              }
-
               stage('Checkout') {
                 when { expression { params.COMMIT_HASH != '' } }
                 steps {
@@ -191,9 +184,9 @@ pipeline {
 
                   dir('package/linux') {
                     withAWS(role: 'build', roleAccount: AWS_ACCOUNT_ID) {
-                      sh "${ENV} ./make-${FLAVOR.toLowerCase()}-package  ${PACKAGE_TYPE} clean"
+                      sh "${ENV} ./make-${FLAVOR.toLowerCase()}-package ${ext_map[env.OS].toUpperCase()} clean"
                     }
-                    sh '../../docker/jenkins/sign-release.sh build-${FLAVOR}-${PACKAGE_TYPE}/rstudio-*.${PACKAGE_EXT} ${CODESIGN_KEY} ${CODESIGN_PASS}'
+                    sh '../../docker/jenkins/sign-release.sh build-${FLAVOR}-${ext_map[env.OS].toUpperCase()}/rstudio-*.${ext_map[env.OS]} ${CODESIGN_KEY} ${CODESIGN_PASS}'
                   }
                 }
               }
@@ -215,8 +208,8 @@ pipeline {
                   stage ('GWT and C++ Tests') {
                     steps {
                       dir ( 'package/linux/' ) {
-                        sh 'cd build-${FLAVOR}-${PACKAGE_TYPE}/src/gwt && ./gwt-unit-tests.sh'
-                        sh 'cd build-${FLAVOR}-${PACKAGE_TYPE}/src/cpp && ./rstudio-tests'
+                        sh 'cd build-${FLAVOR}-${ext_map[env.OS].toUpperCase()}/src/gwt && ./gwt-unit-tests.sh'
+                        sh 'cd build-${FLAVOR}-${ext_map[env.OS].toUpperCase()}/src/cpp && ./rstudio-tests'
                       }
                     }
                   }
@@ -228,12 +221,12 @@ pipeline {
                 when { expression { return params.PUBLISH } }
 
                 environment {
-                  PACKAGE_DIR = "package/linux/build-${FLAVOR}-${PACKAGE_TYPE}"
+                  PACKAGE_DIR = "package/linux/build-${FLAVOR}-${ext_map[env.OS].toUpperCase()}"
                   PACKAGE_FILE = ""
-                  TAR_PACKAGE_DIR= "_CPack_Packages/Linux/${PACKAGE_TYPE}"
+                  TAR_PACKAGE_DIR= "_CPack_Packages/Linux/${ext_map[env.OS].toUpperCase()}"
                   TAR_PACKAGE_FILE = ""
                   BUILD_TYPE = ""
-                  AWS_PATH="${FLAVOR}/${OS}/${ARCH_LABEL}"
+                  AWS_PATH="${FLAVOR}/${OS}/${utils.getArchForOs(env.OS, env.ARCH)}"
                   PRODUCT = "${FLAVOR.toLowerCase()}"
                 }
 
@@ -243,7 +236,7 @@ pipeline {
                       script {
                         // extract name of package to publish
                         PACKAGE_FILE = sh (
-                          script: "basename `ls ${PACKAGE_DIR}/rstudio-*.${PACKAGE_EXT}`",
+                          script: "basename `ls ${PACKAGE_DIR}/rstudio-*.${ext_map[env.OS]}`",
                           returnStdout: true
                         ).trim()
 
