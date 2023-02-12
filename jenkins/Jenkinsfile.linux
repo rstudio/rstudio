@@ -184,7 +184,7 @@ pipeline {
 
                   dir('package/linux') {
                     withAWS(role: 'build', roleAccount: AWS_ACCOUNT_ID) {
-                      sh "${ENV} ./make-${FLAVOR.toLowerCase()}-package ${ext_map[env.OS].toUpperCase()} clean"
+                      sh "${ENV} ./make-${FLAVOR.toLowerCase()}-package ${ext_map[env.OS].toUpperCase()}"
                     }
                     sh '../../docker/jenkins/sign-release.sh build-${FLAVOR}-' + ext_map[env.OS].toUpperCase() + '/rstudio-*.' + ext_map[env.OS] + ' ${CODESIGN_KEY} ${CODESIGN_PASS}'
                   }

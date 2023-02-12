@@ -143,7 +143,7 @@ pipeline {
                         "set \"rstudio_version_patch=${RSTUDIO_VERSION_PATCH}\" &&" +
                         "set \"rstudio_version_suffix=${RSTUDIO_VERSION_SUFFIX}\" &&" +
                         "set \"package_os=windows\" &&" +
-                        "make-package.bat clean ${FLAVOR} &&" +
+                        "make-package.bat ${FLAVOR} &&" +
                         "cd ../.."
                     }
                   }

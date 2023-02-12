@@ -126,7 +126,7 @@ pipeline {
                   // build rstudio
                   dir ("package/osx") {
                     withAWS(role: 'build', roleAccount: AWS_ACCOUNT_ID) {
-                      sh "${ENV} ./make-package --clean --rstudio-target=${FLAVOR}"
+                      sh "${ENV} ./make-package --rstudio-target=${FLAVOR}"
                     }
                   }
                 }
