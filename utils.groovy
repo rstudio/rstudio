@@ -28,7 +28,7 @@ void addRemoteRef(String branchName) {
 /**
   * Get Version
   */
-def getVersion(boolean isHourly = false) {
+def getVersion(boolean isHourly) {
   def buildType = ""
   if(isHourly) {
     buildType="--build-type=hourly"

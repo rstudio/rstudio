@@ -59,7 +59,7 @@ pipeline {
             RSTUDIO_VERSION_MAJOR,
             RSTUDIO_VERSION_MINOR,
             RSTUDIO_VERSION_PATCH,
-            RSTUDIO_VERSION_SUFFIX) = utils.getVersion()
+            RSTUDIO_VERSION_SUFFIX) = utils.getVersion(!params.DAILY)
           IS_PRO = RSTUDIO_VERSION_SUFFIX.contains('pro')
         }
 
