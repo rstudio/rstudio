@@ -242,7 +242,7 @@ pipeline {
 
                         if ((FLAVOR == "Desktop") || (FLAVOR == "Electron")) {
                           PACKAGE_FILE = sh (
-                            script: "basename `ls ${TAR_PACKAGE_DIR}/-*.tar.gz`",
+                            script: "basename `ls ${TAR_PACKAGE_DIR}/*.tar.gz`",
                             returnStdout: true
                           ).trim()
                         }
