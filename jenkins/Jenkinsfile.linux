@@ -156,6 +156,14 @@ pipeline {
               }
             }
 
+            when {
+              anyOf {
+                environment name: 'FLAVOR', value: 'Electron'
+                environment name: 'FLAVOR', value: 'Server'
+                expression { return FLAVOR == 'Desktop' && IS_PRO == true } // Only build Qt on Pro
+              }
+            }
+
             environment {
               GITHUB_LOGIN = credentials('github-rstudio-jenkins')
               AWS_BUCKET="rstudio-ide-build"
