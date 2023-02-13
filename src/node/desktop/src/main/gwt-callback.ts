@@ -13,7 +13,7 @@
  *
  */
 
-import { exec } from 'child_process';
+import { exec, execSync } from 'child_process';
 import {
   app,
   BrowserWindow,
@@ -28,6 +28,7 @@ import {
 import { IpcMainEvent, MessageBoxOptions, OpenDialogOptions, SaveDialogOptions } from 'electron/main';
 import EventEmitter from 'events';
 import { existsSync, writeFileSync } from 'fs';
+import { platform, release } from 'os';
 import i18next from 'i18next';
 import { findFontsSync } from 'node-system-fonts';
 import path, { dirname } from 'path';
@@ -902,12 +903,39 @@ export class GwtCallback extends EventEmitter {
     });
 
     ipcMain.handle('desktop_startup_error_info', async (event, varName: string) => {
+      if (varName === 'launch_failed') {
+        this.addMacOSVersionError();
+      }
       return resolveTemplateVar(varName, this.errorPageData);
     });
 
     ipcMain.handle('t', async(event, key: string) => {
       return i18next.t(key);
     });
+  }
+
+  addMacOSVersionError(): void {
+    if (platform() === 'darwin') {
+      const release_major = parseInt(release().substring(0, release().indexOf('.')));
+      // macOS 11.0 uses darwin 20.0.0
+      if (release_major < 20) {
+        const versionProductName = execSync('sw_vers -productName').toString().trim();
+        const versionProductVersion = execSync('sw_vers -productVersion').toString().trim();
+        let versionError =
+          'You are using an unsupported operating system: ' +
+          versionProductName +
+          ' ' +
+          versionProductVersion +
+          '. RStudio requires macOS 11 (Big Sur) or higher.';
+        if (this.errorPageData.get('process_error')) {
+          const launch_failed = this.errorPageData.get('process_error');
+          if (!launch_failed?.includes('No error available')) {
+            versionError += '\n\n' + launch_failed;
+          }
+        }
+        this.errorPageData.set('process_error', versionError);
+      }
+    }
   }
 
   setRemoteDesktop(isRemoteDesktop: boolean): void {
@@ -988,8 +1016,21 @@ export class GwtCallback extends EventEmitter {
     const frame = webFrameMain.fromId(processId, frameId);
     if (frame) {
       for (const win of this.owners) {
-        if (win.window.webContents.mainFrame === frame) {
-          return win;
+        try {
+          // Some owners in this.owners may not have been unregistered, but have
+          // since been closed/destroyed. If that's the case for an owner, its
+          // WebContents (win.window.webContents) will have been destoyed.
+          // As a result, when we iterate through owners and hit one that has
+          // been destroyed, we get: "TypeError: Object has been destroyed".
+          // Then, we error out and cause a satellite window to have blank contents.
+          // See https://github.com/rstudio/rstudio/issues/12468 and
+          //     https://github.com/rstudio/rstudio/issues/12569
+          // To avoid failing, we catch the error and move on to check the next owner.
+          if (win.window.webContents.mainFrame === frame) {
+            return win;
+          }
+        } catch (error) {
+          logger().logDebug("Window WebContents has been destroyed. Skipping this window.");
         }
       }
     }

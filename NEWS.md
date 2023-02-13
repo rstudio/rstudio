@@ -37,6 +37,10 @@
 - Fixed setting rsession log level using command-line argument or logging.conf #12557
 - Fixed issue that allowed users to overwrite their home directory in server mode #12653
 - Fixed "Check for updates" incorrectly reports that there are no updates (rstudio-pro #3388)
+- Fixed default options for Choose R dialog on Windows (#12452)
+- Fixed data viewer's "Show in new window" results in empty window #12468
+- Fixed uncaught Shiny error breaks RStudio's "Run in Window" feature #12569
+- Fixed intermittent hanging logins in Workbench using ActiveDirectory (rstudio-pro #4285)
 
 ### Accessibility Improvements
 
