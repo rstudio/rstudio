@@ -6,7 +6,6 @@ pipeline {
 
   options {
     disableConcurrentBuilds()
-    skipDefaultCheckout()
     buildDiscarder(
       logRotator(
         artifactDaysToKeepStr: '',
@@ -29,22 +28,16 @@ pipeline {
   environment {
     PACKAGE_OS = 'Windows'
     AWS_ACCOUNT_ID = '749683154838'
-    TO_CHECKOUT = "${env.BRANCH_NAME}"
     GIT_URL = "https://github.com/rstudio/rstudio"
   }
 
   stages {
 
     stage ('Checkout') { // checkout stage required here in order for versioning to work properly
+      when { expression { params.COMMIT_HASH != '' } }
       steps {
-        script {
-          if (params.COMMIT_HASH != '') {
-            TO_CHECKOUT = params.COMMIT_HASH
-          }
-        }
-
         checkout([$class: 'GitSCM',
-          branches: [[name: TO_CHECKOUT]],
+          branches: [[name: params.COMMIT_HASH]],
           extensions: [],
           userRemoteConfigs: [[credentialsId: 'github-rstudio-jenkins', url: GIT_URL]]])
       }
@@ -80,7 +73,7 @@ pipeline {
       agent { 
         label {
           label "windows"
-          // Set a customer workspace relative to the workspace root (C:\Users\jenikns) to ensure file names
+          // Set a custom workspace relative to the workspace root (C:\Users\jenikns) to ensure file names
           // won't be too long
           customWorkspace "workspace/ide-os-windows/${env.BRANCH_NAME.replace('/', '-')}"
         }
@@ -122,7 +115,7 @@ pipeline {
                     when { expression { params.COMMIT_HASH != '' } }
                     steps {
                       checkout([$class: 'GitSCM',
-                        branches: [[name: TO_CHECKOUT]],
+                        branches: [[name: params.COMMIT_HASH]],
                         extensions: [],
                         userRemoteConfigs: [[credentialsId: 'github-rstudio-jenkins', url: GIT_URL]]])
                     }
