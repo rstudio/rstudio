@@ -36,6 +36,7 @@ function checkValid(data: CallbackData) {
   if (err) {
     // something went wrong; let the user know they can't use
     // this version of R with RStudio
+    logger().logErrorMessage(`Selected R path: ${rBinaryPath ?? 'no path chosen'}`);
     logger().logError(err);
 
     dialog.showMessageBoxSync({

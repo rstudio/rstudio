@@ -34,7 +34,7 @@ export interface Callbacks {
 // this needs to be done in the preload of any widget wanting to use logging
 contextBridge.exposeInMainWorld('desktopLogger', getDesktopLoggerBridge());
 
-ipcRenderer.on('css', (event, data) => {
+ipcRenderer.on('css', (_event, data) => {
   const styleEl = document.createElement('style');
   styleEl.setAttribute('language', 'text/css');
   styleEl.innerText = data;
@@ -42,16 +42,21 @@ ipcRenderer.on('css', (event, data) => {
 });
 
 // initialize select input
-ipcRenderer.on('initialize', (event, data) => {
+ipcRenderer.on('initialize', (_event, data) => {
+  const use32 = document.getElementById('use-default-32') as HTMLInputElement;
+  const use64 = document.getElementById('use-default-64') as HTMLInputElement;
+  const useCustomEl = document.getElementById('use-custom') as HTMLInputElement;
+  const selectCustom = document.getElementById('select') as HTMLSelectElement;
+  const buttonOk = document.getElementById('button-ok') as HTMLButtonElement;
+
   // if we have a default 32-bit R installation, enable it
   const default32Bit = data.default32bitPath as string;
   let isDefault32Selected = false;
   if (default32Bit) {
-    const el = document.getElementById('use-default-32') as any;
-    el?.removeAttribute('disabled');
+    use32?.removeAttribute('disabled');
 
     if (isRVersionSelected('' + data.selectedRVersion, default32Bit + '/bin/i386/R.exe')) {
-      el.checked = true;
+      use32.checked = true;
       isDefault32Selected = true;
     }
   }
@@ -60,11 +65,10 @@ ipcRenderer.on('initialize', (event, data) => {
   const default64Bit = data.default64bitPath as string;
   let isDefault64Selected = false;
   if (default64Bit) {
-    const el = document.getElementById('use-default-64') as any;
-    el?.removeAttribute('disabled');
+    use64?.removeAttribute('disabled');
 
     if (isRVersionSelected('' + data.selectedRVersion, default64Bit + '/bin/x64/R.exe')) {
-      el.checked = true;
+      use64.checked = true;
       isDefault64Selected = true;
     }
   }
@@ -90,7 +94,7 @@ ipcRenderer.on('initialize', (event, data) => {
   });
 
   const selectWidget = document.getElementById('select') as HTMLSelectElement;
-  selectWidget.disabled = true;
+  selectWidget.disabled = !(rInstalls.length > 0 && useCustomEl.checked);
 
   rInstalls.forEach((rInstall) => {
     // normalize separators, etc
@@ -140,6 +144,11 @@ ipcRenderer.on('initialize', (event, data) => {
       }
     }
   });
+
+  useCustomEl.checked = !default32Bit && !default64Bit && (rInstalls.length > 0);
+  selectWidget.disabled = !useCustomEl.checked;
+
+  buttonOk.disabled = !((useCustomEl.checked && selectCustom.value) || use32.checked || use64.checked) ;
 });
 
 // export callbacks

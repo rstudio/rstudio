@@ -40,6 +40,8 @@ const updateLabels = () => {
 // radio button is checked
 const selectWidget = document.getElementById('select') as HTMLSelectElement;
 const radioChooseCustom = document.getElementById('use-custom') as HTMLInputElement;
+const radioChoose32 = document.getElementById('use-default-32') as HTMLInputElement;
+const radioChoose64 = document.getElementById('use-default-64') as HTMLInputElement;
 const radioButtons = document.querySelectorAll('input[type="radio"]');
 
 radioButtons.forEach((radioButton) => {
@@ -65,6 +67,10 @@ function callbackData(binaryPath?: string): CallbackData {
 }
 
 buttonOk.addEventListener('click', accept);
+radioChoose32.addEventListener('input', validate);
+radioChoose64.addEventListener('input', validate);
+radioChooseCustom.addEventListener('input', validate);
+selectWidget.addEventListener('input', validate);
 
 buttonCancel.addEventListener('click', closeWindow);
 
@@ -125,6 +131,12 @@ window.addEventListener('load', () => {
 function closeWindow() {
   window.callbacks.cancel();
   window.close();
+}
+
+async function validate() {
+  buttonOk.disabled = !((selectWidget.value)
+    || radioChoose32.checked
+    || radioChoose64.checked);
 }
 
 async function accept() {
