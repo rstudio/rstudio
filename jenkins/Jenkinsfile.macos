@@ -250,11 +250,12 @@ pipeline {
                     environment {
                       GITHUB_LOGIN = credentials('github-rstudio-jenkins')
                     }
+
                     steps {
                       dir("${PACKAGE_DIR}") {
                         script {
                           // publish build to dailies page
-                          utils.publishToDailiesSite PACKAGE_FILE, AWS_PATH
+                          utils.publishToDailiesSite "${env.PACKAGE_FILE}", "${env.PRODUCT}/macos"
                         }
                       }
                     }
