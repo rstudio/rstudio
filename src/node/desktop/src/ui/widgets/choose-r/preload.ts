@@ -13,8 +13,6 @@
  *
  */
 import { contextBridge, ipcRenderer } from 'electron';
-import { existsSync } from 'fs';
-import path from 'path';
 import { getDesktopLoggerBridge } from '../../../renderer/logger-bridge';
 import { normalizeSeparatorsNative } from '../../utils';
 
@@ -96,9 +94,10 @@ ipcRenderer.on('initialize', (_event, data) => {
   const selectWidget = document.getElementById('select') as HTMLSelectElement;
   selectWidget.disabled = !(rInstalls.length > 0 && useCustomEl.checked);
 
-  rInstalls.forEach((rInstall) => {
+  rInstalls.forEach(async (rInstall) => {
     // normalize separators, etc
-    rInstall = normalizeSeparatorsNative(path.normalize(rInstall));
+    const normalRInstall: string = await ipcRenderer.invoke('path_normalize', rInstall);
+    rInstall = normalizeSeparatorsNative(normalRInstall);
 
     // skip if we've already seen this
     if (visitedInstallations[rInstall]) {
@@ -108,7 +107,8 @@ ipcRenderer.on('initialize', (_event, data) => {
 
     // check for 64 bit executable
     const r64 = `${rInstall}/bin/x64/R.exe`;
-    if (existsSync(r64)) {
+    const r64Exists: boolean = await ipcRenderer.invoke('fs_existsSync', r64);
+    if (r64Exists) {
       const optionEl = window.document.createElement('option');
       optionEl.value = r64;
       optionEl.innerText = `[64-bit] ${rInstall}`;
@@ -127,7 +127,8 @@ ipcRenderer.on('initialize', (_event, data) => {
 
     // check for 32 bit executable
     const r32 = `${rInstall}/bin/i386/R.exe`;
-    if (existsSync(r32)) {
+    const r32Exists: boolean = await ipcRenderer.invoke('fs_existsSync', r32);
+    if (r32Exists) {
       const optionEl = window.document.createElement('option');
       optionEl.value = r32;
       optionEl.innerText = `[32-bit] ${rInstall}`;
