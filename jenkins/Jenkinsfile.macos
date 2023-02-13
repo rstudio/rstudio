@@ -156,8 +156,14 @@ pipeline {
                 
                 environment {
                   PATH = "${env.HOME}/opt/bin:${env.PATH}"
-                  PACKAGE_FILE = ""
-                  BUILD_TYPE = ""
+                  PACKAGE_FILE = """${sh (
+                    script: "basename `ls package/osx/build/RStudio-*.dmg`",
+                    returnStdout: true
+                  ).trim()}"""
+                  BUILD_TYPE = """${sh (
+                    script: "cat version/BUILDTYPE",
+                    returnStdout: true
+                  ).trim().toLowerCase()}"""
                   PRODUCT = "${FLAVOR.toLowerCase()}"
                 }
                 
@@ -165,16 +171,6 @@ pipeline {
                   stage("Set Release Variables") {
                     steps {
                       script {
-                        // extract name of package to publish
-                        PACKAGE_FILE = sh (
-                          script: "basename `ls package/osx/build/RStudio-*.dmg`",
-                          returnStdout: true
-                        ).trim()
-
-                        BUILD_TYPE= sh (
-                          script: "cat version/BUILDTYPE",
-                          returnStdout: true
-                        ).trim().toLowerCase()
                         if (IS_PRO) {
                           PRODUCT = PRODUCT + "-pro"
                         }
