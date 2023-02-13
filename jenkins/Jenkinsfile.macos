@@ -226,11 +226,7 @@ pipeline {
                     environment {
                       SENTRY_API_KEY = credentials('ide-sentry-api-key')
                     }
-                    when {
-                      expression {
-                        return DAILY;
-                      }
-                    }
+                    
                     steps {
                       // upload debug symbols to Sentry
                       retry(5) {
