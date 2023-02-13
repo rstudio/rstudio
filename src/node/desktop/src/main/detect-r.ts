@@ -105,9 +105,8 @@ export async function promptUserForR(platform = process.platform): Promise<Expec
     }
 
     // if path is null, the operation was cancelled by the user
-    // we should probably consider this to be an error
     if (data == null) {
-      return err(new Error('User must select what version of R they would like to use.'));
+      return ok(null);
     }
 
     // save the stored version of R
@@ -348,6 +347,8 @@ export function findRInstallationsWin32(): string[] {
     const regQueryCommands = keyNames.flatMap(key => rBinaryNames.map(
       rBin => `%SystemRoot%\\System32\\reg.exe query ${key}\\SOFTWARE\\R-Core\\${rBin} /s /v InstallPath ${view}`));  
     regQueryCommands.map(cmd => queryRegistry(cmd, rInstallations));
+
+    logger().logInfo(`Found ${rInstallations.size} in the registry.`);
   }
 
   // look for R installations in some common locations
@@ -394,27 +395,39 @@ export function isValidBinary(rExePath: string): boolean {
 function findDefaultInstallPathWin32(version: string): string {
 
   for (const view of ['/reg:32', '/reg:64']) {
+    // list all installed versions from registry
+    const keyNames = [
+      'HKEY_LOCAL_MACHINE',
+      'HKEY_CURRENT_USER',
+    ];
+
+    const regQueryCommands = keyNames.flatMap(key => 
+      `%SystemRoot%\\System32\\reg.exe query ${key}\\SOFTWARE\\R-Core\\${version} /v InstallPath ${view}`
+    );
 
     // query registry for R install path
-    const keyName = `HKEY_LOCAL_MACHINE\\SOFTWARE\\R-core\\${version}`;
-    const regQueryCommand = `%SystemRoot%\\System32\\reg.exe query ${keyName} /v InstallPath ${view}`;
-    const [output, error] = executeCommand(regQueryCommand);
-    if (error) {
-      logger().logError(error);
-      continue;
-    }
+    for (const regQueryCommand of regQueryCommands) {
+      const [output, error] = executeCommand(regQueryCommand);
+      if (error) {
+        logger().logError(error);
+        continue;
+      }
 
-    // parse the actual path from the output
-    const lines = output.split(EOL);
-    for (const line of lines) {
-      const match = /^\s*InstallPath\s*REG_SZ\s*(.*)$/.exec(line);
-      if (match != null) {
-        const rLocation = match[1];
-        return rLocation;
+      // parse the actual path from the output
+      const lines = output.split(EOL);
+      for (const line of lines) {
+        const match = /^\s*InstallPath\s*REG_SZ\s*(.*)$/.exec(line);
+        if (match != null) {
+          const rLocation = match[1];
+          logger().logInfo(`Found R installation: ${rLocation}`);
+          return rLocation;
+        }
       }
     }
 
   }
+
+  logger().logWarning('No default R installations found. R may have been installed without writing registry entries.');
 
   return '';
 
