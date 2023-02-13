@@ -178,7 +178,7 @@ export class Application implements AppState {
 
   // create a new local socket to co-ordinate and become the primary instance
   private createMessageServer() {
-    const path = Xdg.userDataDir('rstudio.socket');
+    const path = Xdg.userDataDir().completeChildPath('rstudio.socket');
     path.getParent().ensureDirectorySync();
     const options = { path: path.getAbsolutePath() };
     this.server = new Server(options);
