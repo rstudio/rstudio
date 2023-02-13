@@ -128,8 +128,7 @@ pipeline {
                     }
                   }
 
-                  stage('Build') {withAWS
-
+                  stage('Build') {
                     environment {
                       CODESIGN_KEY = credentials('ide-windows-signing-pfx')
                       CODESIGN_PASS = credentials('ide-pfx-passphrase')
