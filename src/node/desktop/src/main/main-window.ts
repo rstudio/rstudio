@@ -135,12 +135,18 @@ export class MainWindow extends GwtWindow {
     // url in a browser.
     // Once https://github.com/electron/electron/pull/34418 is merged, we can leverage
     // the 'will-frame-navigate' instead of intercepting the request.
+
+    // this intercepts every request from an iframe, but we only want to intercept
+    // when a navigation request to an external URL occurs in an iframe, not in cases
+    // where the src of the iframe
+
+    // Basically, onBeforeRequest is too broad
     this.window.webContents.session.webRequest.onBeforeRequest((details, callback) => {
       logger().logDebug(`${details.method} ${details.url} [${details.resourceType}]`);
 
       if (details.resourceType === 'subFrame' && !this.allowNavigation(details.url)) {
         shell.openExternal(details.url).catch((error) => { logger().logError(error); });
-        callback({ cancel: true });
+        callback({ cancel: false, redirectURL: details.frame?.url });
       } else {
         callback({ cancel: false });
       }
