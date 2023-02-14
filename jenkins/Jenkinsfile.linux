@@ -83,14 +83,11 @@ pipeline {
               RSTUDIO_VERSION_FLOWER = utils.getFlower()
               IS_PRO = RSTUDIO_VERSION_SUFFIX.contains('pro')
               
-              // Set up environment for builds. Set it once here to avoid duplicate SCCACHE_ENABLED settings.
-              ENV = "RSTUDIO_VERSION_MAJOR=${RSTUDIO_VERSION_MAJOR} RSTUDIO_VERSION_MINOR=${RSTUDIO_VERSION_MINOR} RSTUDIO_VERSION_PATCH=${RSTUDIO_VERSION_PATCH} RSTUDIO_VERSION_SUFFIX=${RSTUDIO_VERSION_SUFFIX}"
-              if (params.DAILY == false) {
-                ENV = "${ENV} SCCACHE_ENABLED=1"
-              }
+              // Set up environment for builds.
+              ENV = utils.getBuildEnv()
             }
 
-            buildName "${RSTUDIO_VERSION_MAJOR}.${RSTUDIO_VERSION_MINOR}.${RSTUDIO_VERSION_PATCH}${RSTUDIO_VERSION_SUFFIX}"
+            buildName "${RSTUDIO_VERSION}"
           }
         }
       }
@@ -247,8 +244,8 @@ pipeline {
                   TAR_PACKAGE_DIR= "${PACKAGE_DIR}/_CPack_Packages/Linux/${ext_map[env.OS].toUpperCase()}"
                   TAR_PACKAGE_FILE = ""
                   BUILD_TYPE = ""
-                  AWS_PATH= "${FLAVOR}/${OS}/${utils.getArchForOs(env.OS, env.ARCH)}"
                   PRODUCT = "${FLAVOR.toLowerCase()}"
+                  AWS_PATH= "${PRODUCT}/${OS}/${utils.getArchForOs(env.OS, env.ARCH)}"
                 }
 
                 stages {
@@ -264,7 +261,7 @@ pipeline {
                           ).trim()
                         }
 
-                        BUILD_TYPE= sh (
+                        BUILD_TYPE = sh(
                           script: "cat version/BUILDTYPE",
                           returnStdout: true
                         ).trim().toLowerCase()
@@ -329,9 +326,6 @@ pipeline {
                     steps {
                       dir("${PACKAGE_DIR}") {
                         script {
-                          echo "Package file: ${PACKAGE_FILE}"
-                          echo "AWS_PATH: ${AWS_PATH}"
-
                           // publish build to dailies page
                           utils.publishToDailiesSite PACKAGE_FILE, AWS_PATH
                         }

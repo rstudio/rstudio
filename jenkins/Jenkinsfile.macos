@@ -82,7 +82,7 @@ pipeline {
     stage("Build Matrix") {
 
       environment {
-        ENV = "RSTUDIO_VERSION_MAJOR=${RSTUDIO_VERSION_MAJOR} RSTUDIO_VERSION_MINOR=${RSTUDIO_VERSION_MINOR} RSTUDIO_VERSION_PATCH=${RSTUDIO_VERSION_PATCH} RSTUDIO_VERSION_SUFFIX=${RSTUDIO_VERSION_SUFFIX}"
+        ENV = ""
       }
 
       matrix {
@@ -116,10 +116,7 @@ pipeline {
 
                 steps {
                   script {
-                    // Set sccache enabled
-                    if (params.DAILY == false) {
-                      ENV = "${ENV} SCCACHE_ENABLED=1"
-                    }
+                    ENV = utils.getBuildEnv()
                   }
                   // unlock keychain to ensure build gets signed.
                   sh 'security unlock-keychain -p ${KEYCHAIN_PASSPHRASE} && security set-keychain-settings' // turn off timeout

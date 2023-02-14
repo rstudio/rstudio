@@ -116,4 +116,13 @@ def getArchForOs(String os, String arch) {
   return arch
 }
 
+def getBuildEnv() {
+  def env = "RSTUDIO_VERSION_MAJOR=${RSTUDIO_VERSION_MAJOR} RSTUDIO_VERSION_MINOR=${RSTUDIO_VERSION_MINOR} RSTUDIO_VERSION_PATCH=${RSTUDIO_VERSION_PATCH} RSTUDIO_VERSION_SUFFIX=${RSTUDIO_VERSION_SUFFIX}"
+  if (DAILY == false) {
+    env = "${env} SCCACHE_ENABLED=1"
+  }
+
+  return env
+}
+
 return this
