@@ -300,7 +300,7 @@ pipeline {
                     }
                   }
 
-                  stage ("Sentry Upload") {
+                  stage("Sentry Upload") {
                     when { expression { return params.DAILY } }
 
                     environment {
@@ -325,9 +325,13 @@ pipeline {
                     environment {
                       GITHUB_LOGIN = credentials('github-rstudio-jenkins')
                     }
+
                     steps {
                       dir("${PACKAGE_DIR}") {
                         script {
+                          echo "Package file: ${PACKAGE_FILE}"
+                          echo "AWS_PATH: ${AWS_PATH}"
+
                           // publish build to dailies page
                           utils.publishToDailiesSite PACKAGE_FILE, AWS_PATH
                         }
