@@ -93,7 +93,7 @@ def sentryUpload(String symbolType) {
 }
 
 def publishToDailiesSite(String packageFile, String destinationPath) {
-  sh 'docker/jenkins/publish-build.sh --build ' +
+  sh '${WORKSPACE}/docker/jenkins/publish-build.sh --build ' +
     destinationPath +
     ' --url https://s3.amazonaws.com/rstudio-ide-build/' +
     destinationPath +
