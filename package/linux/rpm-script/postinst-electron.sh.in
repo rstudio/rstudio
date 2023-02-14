@@ -22,6 +22,7 @@ then
   # verify if release version number is greater than 25
   if compare_versions $version_number 25
   then
+    mkdir -p ${CMAKE_INSTALL_PREFIX}/bin
     ln -s -f /$architecture_dir/libssl.so.10 ${CMAKE_INSTALL_PREFIX}/bin/libssl.so.1.0.0
     ln -s -f /$architecture_dir/libcrypto.so.10 ${CMAKE_INSTALL_PREFIX}/bin/libcrypto.so.1.0.0
   fi
