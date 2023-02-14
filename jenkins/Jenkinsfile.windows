@@ -247,7 +247,7 @@ pipeline {
                       }
 
                       stage ("Fix Redirect Links") {
-                        agent { label "docker" } // must be on a linux node to use a bash script
+                        agent { label "linux" } // must be on a linux node to use a bash script
 
                         when { environment name: 'FLAVOR', value: 'Electron' }
 
@@ -256,7 +256,7 @@ pipeline {
                         }
 
                         steps {
-                          sh 'docker/jenkins/publish-daily-binary.sh https://s3.amazonaws.com/rstudio-ide-build/desktop/windows/' + PACKAGE_NAME + '.exe %RSTUDIO_PEM%'
+                          sh 'docker/jenkins/publish-daily-binary.sh https://s3.amazonaws.com/rstudio-ide-build/desktop/windows/' + PACKAGE_NAME + '.exe ${RSTUDIO_PEM}'
                         }
                       }
                     }
