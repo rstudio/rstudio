@@ -100,9 +100,19 @@ pipeline {
 
       matrix {
         when {
-          anyOf {
-            equals expected: params.OS_FILTER, actual: env.OS;
-            equals expected: params.OS_FILTER, actual: 'all'
+          allOf {
+            anyOf {
+              equals expected: params.OS_FILTER, actual: env.OS;
+              equals expected: params.OS_FILTER, actual: 'all'
+            }
+            anyOf {
+              equals expected: params.ARCH_FILTER, actual: env.ARCH;
+              equals expected: params.ARCH_FILTER, actual: 'all'
+            }
+            anyOf {
+              equals expected: params.FLAVOR_FILTER, actual: env.FLAVOR;
+              equals expected: params.FLAVOR_FILTER, actual: 'all'
+            }
           }
         }
 
