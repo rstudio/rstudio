@@ -10,6 +10,13 @@ def ext_map =
   'opensuse15': 'rpm'
 ]
 
+// Use a function to keep the pipeline length down.
+def matrixFilter() {
+  return ((params.OS_FILTER == env.OS ||  params.OS_FILTER == 'all') &&
+    (params.ARCH_FILTER == env.ARCH ||  params.ARCH_FILTER == 'all') &&
+    (params.FLAVOR_FILTER == env.FLAVOR ||  params.FLAVOR_FILTER == 'all'))
+}
+
 pipeline {
   agent none
 
@@ -96,22 +103,7 @@ pipeline {
     stage('Build Matrix') {
 
       matrix {
-        when {
-          allOf {
-            anyOf {
-              equals expected: params.OS_FILTER, actual: env.OS;
-              equals expected: params.OS_FILTER, actual: 'all'
-            }
-            anyOf {
-              equals expected: params.ARCH_FILTER, actual: env.ARCH;
-              equals expected: params.ARCH_FILTER, actual: 'all'
-            }
-            anyOf {
-              equals expected: params.FLAVOR_FILTER, actual: env.FLAVOR;
-              equals expected: params.FLAVOR_FILTER, actual: 'all'
-            }
-          }
-        }
+        when { expression { return matrixFilter() } }
 
         axes {
           axis {
@@ -196,7 +188,6 @@ pipeline {
                 }
 
                 steps {
-
                   dir('package/linux') {
                     withAWS(role: 'build', roleAccount: AWS_ACCOUNT_ID) {
                       sh "${ENV} ./make-${FLAVOR.toLowerCase()}-package ${ext_map[env.OS].toUpperCase()}"
@@ -244,7 +235,6 @@ pipeline {
                   TAR_PACKAGE_DIR= "${PACKAGE_DIR}/_CPack_Packages/Linux/${ext_map[env.OS].toUpperCase()}"
                   TAR_PACKAGE_FILE = ""
                   BUILD_TYPE = ""
-                  PRODUCT = "${FLAVOR.toLowerCase()}"
                   AWS_PATH= "${PRODUCT}/${OS}/${utils.getArchForOs(env.OS, env.ARCH)}"
                 }
 
