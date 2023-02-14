@@ -234,7 +234,7 @@ pipeline {
                           script: "basename `ls ${PACKAGE_DIR}/rstudio-*.${ext_map[env.OS]}`",
                           returnStdout: true
                         ).trim()}"""
-                  TAR_PACKAGE_DIR= "_CPack_Packages/Linux/${ext_map[env.OS].toUpperCase()}"
+                  TAR_PACKAGE_DIR= "${PACKAGE_DIR}/_CPack_Packages/Linux/${ext_map[env.OS].toUpperCase()}"
                   TAR_PACKAGE_FILE = ""
                   BUILD_TYPE = ""
                   AWS_PATH= "${FLAVOR}/${OS}/${utils.getArchForOs(env.OS, env.ARCH)}"
