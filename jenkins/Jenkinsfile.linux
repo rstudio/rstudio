@@ -278,7 +278,7 @@ pipeline {
                         }
 
                         script {
-                          if ("${env.TAR_PACKAGE_FILE}" != "") {
+                          if ((FLAVOR == "Desktop") || (FLAVOR == "Electron")) {
                             retry(5) {
                               script {
                                 utils.uploadPackageToS3 "${TAR_PACKAGE_DIR}/${TAR_PACKAGE_FILE}", "${AWS_PATH}/"
