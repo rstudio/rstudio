@@ -252,7 +252,7 @@ pipeline {
                     }
 
                     steps {
-                      dir("${PACKAGE_DIR}") {
+                      dir("package/osx/build") {
                         script {
                           // publish build to dailies page
                           utils.publishToDailiesSite "${env.PACKAGE_FILE}", "${env.PRODUCT}/macos"
