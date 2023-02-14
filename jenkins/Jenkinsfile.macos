@@ -6,7 +6,7 @@ pipeline {
 
   options {
     // timeout regardless of activity
-    timeout(activity: false, time: 120)
+    timeout(activity: false, time: 180)
     timestamps()
     disableConcurrentBuilds()
     buildDiscarder(logRotator(numToKeepStr: '100'))
@@ -227,7 +227,7 @@ pipeline {
                       // upload debug symbols to Sentry
                       retry(5) {
                         // timeout sentry in 15 minutes
-                        timeout activity: true, time: 15 {
+                        timeout(activity: true, time: 15) {
                           // upload Javascript source maps
                           dir ('package/osx/build/gwt') {
                             script {

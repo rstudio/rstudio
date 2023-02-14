@@ -301,7 +301,7 @@ pipeline {
                       // Upload Sentry
                       dir("package/linux/build-${FLAVOR}-${OS}/src/cpp") {
                         retry(5) {
-                          timeout activity: true, time: 15 {
+                          timeout(activity: true, time: 15) {
                             utils.sentryUpload 'elf'
                           }
                         }
