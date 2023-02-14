@@ -19,8 +19,12 @@ import { logger } from '../../core/logger';
 import { ModalDialog } from '../modal-dialog';
 
 import { initI18n } from '../../main/i18n-manager';
+import i18next, { t } from 'i18next';
 import { CallbackData } from './choose-r/preload';
 import { ElectronDesktopOptions } from '../../main/preferences/electron-desktop-options';
+
+import { existsSync } from 'fs';
+import { normalize } from 'path';
 
 declare const CHOOSE_R_WEBPACK_ENTRY: string;
 declare const CHOOSE_R_PRELOAD_WEBPACK_ENTRY: string;
@@ -40,9 +44,9 @@ function checkValid(data: CallbackData) {
 
     dialog.showMessageBoxSync({
       type: 'error',
-      title: 'Error Loading R',
-      message: 'An error occured while attempting to load the selected version of R.',
-      buttons: [ 'OK', ],
+      title: t('chooseRDialog.rLaunchFailedTitle'),
+      message: t('chooseRDialog.rLaunchFailedMessage'),
+      buttons: [ t('common.buttonOk'), ],
     });
 
     return false;
@@ -88,6 +92,14 @@ export class ChooseRModalWindow extends ModalDialog<CallbackData | null> {
 
     // listen for messages from the window
     return new Promise((resolve) => {
+      this.addIpcHandler('path_normalize', async (event, data) => {
+        return normalize(data);
+      });
+
+      this.addIpcHandler('fs_existsSync', async (event, data) => {
+        return existsSync(data);
+      });
+
       this.addIpcHandler('use-default-32bit', async (event, data: CallbackData) => {
         const installPath = initData.default32bitPath;
         data.binaryPath = `${installPath}/bin/i386/R.exe`;
@@ -109,9 +121,9 @@ export class ChooseRModalWindow extends ModalDialog<CallbackData | null> {
 
       this.addIpcHandler('browse-r-exe', async (event, data: CallbackData) => {
         const response = dialog.showOpenDialogSync(this, {
-          title: 'Choose R Executable',
+          title: i18next.t('uiFolder.chooseRExecutable'),
           properties: ['openFile'],
-          filters: [{ name: 'R Executable', extensions: ['exe'] }],
+          filters: [{ name: i18next.t('uiFolder.rExecutable'), extensions: ['exe'] }],
         });
 
         if (response) {

@@ -856,14 +856,6 @@ export class GwtCallback extends EventEmitter {
       return false;
     });
 
-    ipcMain.handle('fs_existsSync', (event, path: string) => {
-      return existsSync(path);
-    });
-
-    ipcMain.handle('path_normalize', (event, p: string) => {
-      return path.normalize(p);
-    });
-
     ipcMain.on('desktop_connect_to_launcher_server', () => {
       GwtCallback.unimpl('desktop_connect_to_launcher_server');
     });
@@ -915,10 +907,6 @@ export class GwtCallback extends EventEmitter {
         this.addMacOSVersionError();
       }
       return resolveTemplateVar(varName, this.errorPageData);
-    });
-
-    ipcMain.handle('t', async(event, key: string) => {
-      return i18next.t(key);
     });
   }
 

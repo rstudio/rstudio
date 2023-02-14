@@ -96,8 +96,7 @@ ipcRenderer.on('initialize', (_event, data) => {
 
   rInstalls.forEach(async (rInstall) => {
     // normalize separators, etc
-    const normalRInstall: string = await ipcRenderer.invoke('path_normalize', rInstall);
-    rInstall = normalizeSeparatorsNative(normalRInstall);
+    rInstall = normalizeSeparatorsNative(await ipcRenderer.invoke('path_normalize', rInstall));
 
     // skip if we've already seen this
     if (visitedInstallations[rInstall]) {
@@ -107,8 +106,7 @@ ipcRenderer.on('initialize', (_event, data) => {
 
     // check for 64 bit executable
     const r64 = `${rInstall}/bin/x64/R.exe`;
-    const r64Exists: boolean = await ipcRenderer.invoke('fs_existsSync', r64);
-    if (r64Exists) {
+    if (await ipcRenderer.invoke('fs_existsSync', r64)) {
       const optionEl = window.document.createElement('option');
       optionEl.value = r64;
       optionEl.innerText = `[64-bit] ${rInstall}`;
@@ -127,8 +125,7 @@ ipcRenderer.on('initialize', (_event, data) => {
 
     // check for 32 bit executable
     const r32 = `${rInstall}/bin/i386/R.exe`;
-    const r32Exists: boolean = await ipcRenderer.invoke('fs_existsSync', r32);
-    if (r32Exists) {
+    if (await ipcRenderer.invoke('fs_existsSync', r32)) {
       const optionEl = window.document.createElement('option');
       optionEl.value = r32;
       optionEl.innerText = `[32-bit] ${rInstall}`;
@@ -184,7 +181,3 @@ contextBridge.exposeInMainWorld('callbacks', callbacks);
 function isRVersionSelected(selectedVersion: string, versionToCompare: string) {
   return normalizeSeparatorsNative(selectedVersion) === normalizeSeparatorsNative(versionToCompare);
 }
-
-contextBridge.exposeInMainWorld('i18next', {
-  t: async (key: string) => ipcRenderer.invoke('t', key),
-});
