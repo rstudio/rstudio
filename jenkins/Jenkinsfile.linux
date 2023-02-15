@@ -17,6 +17,32 @@ def matrixFilter() {
     (params.FLAVOR_FILTER == env.FLAVOR ||  params.FLAVOR_FILTER == 'all'))
 }
 
+def renameFile(String dir, String match) {
+  def file = sh(script: "basename `ls ${dir}/${match}`", returnStdout: true).trim()
+  def renamedFile = packageFile.replace('-relwithdebinfo', '')
+  sh "mv ${dir}/${file} ${dir}/${renamedFile}"
+  return renamedFile
+}
+
+def renameTarFile() {
+  if ((FLAVOR == "Desktop") || (FLAVOR == "Electron")) {
+    return renameFile("${TAR_PACKAGE_DIR}", "*.tar.gz")
+  }
+
+  return ""
+}
+
+def getProductName() {
+  def productName = FLAVOR.toLowerCase()
+  if (IS_PRO && productName != "server") {
+    productName = productName + "-pro"
+  } else if (IS_PRO) {
+    productName = "workbench"
+  }
+
+  return productName
+}
+
 pipeline {
   agent none
 
@@ -166,7 +192,7 @@ pipeline {
             environment {
               GITHUB_LOGIN = credentials('github-rstudio-jenkins')
               AWS_BUCKET="rstudio-ide-build"
-              PRODUCT="${FLAVOR.toLowerCase()}"
+              PRODUCT="${getProductName()}"
             }
 
             stages {
@@ -228,43 +254,14 @@ pipeline {
 
                 environment {
                   PACKAGE_DIR = "package/linux/build-${FLAVOR}-${ext_map[env.OS].toUpperCase()}"
-                  PACKAGE_FILE = """${sh(
-                          script: "basename `ls ${PACKAGE_DIR}/rstudio-*.${ext_map[env.OS]}`",
-                          returnStdout: true
-                        ).trim()}"""
+                  PACKAGE_FILE = "${renameFile(\"${PACKAGE_DIR}\", \"rstudio-*.${ext_map[env.OS]}\")}"
                   TAR_PACKAGE_DIR= "${PACKAGE_DIR}/_CPack_Packages/Linux/${ext_map[env.OS].toUpperCase()}"
-                  TAR_PACKAGE_FILE = ""
-                  BUILD_TYPE = ""
+                  TAR_PACKAGE_FILE = "${renameTarFile()}"
+                  BUILD_TYPE = "sh(script: 'cat version/BUILDTYPE', returnStdout: true).trim().toLowerCase()"
                   AWS_PATH= "${PRODUCT}/${OS}/${utils.getArchForOs(env.OS, env.ARCH)}"
                 }
 
                 stages {
-                  stage("Set Release Variables") {
-                    steps {
-                      script {
-                        if ((FLAVOR == "Desktop") || (FLAVOR == "Electron")) {
-                          sh "ls ${TAR_PACKAGE_DIR}"
-
-                          TAR_PACKAGE_FILE = sh(
-                            script: "basename `ls ${TAR_PACKAGE_DIR}/*.tar.gz`",
-                            returnStdout: true
-                          ).trim()
-                        }
-
-                        BUILD_TYPE = sh(
-                          script: "cat version/BUILDTYPE",
-                          returnStdout: true
-                        ).trim().toLowerCase()
-
-                        if (IS_PRO && env.PRODUCT != "server") {
-                          PRODUCT = PRODUCT + "-pro"
-                        } else if (IS_PRO) {
-                          PRODUCT = "workbench"
-                        }
-                      }
-                    }
-                  }
-
                   stage("Upload Package") {
                     steps {
                       withAWS(role: 'ide-build', region: 'us-east-1') {
