@@ -4,6 +4,7 @@
 ### New
 - Adopt panmirror (visual editor) migration to quarto-dev/quarto project #12316
 - Upgrade Electron to 22.0.0 #11734
+- Upgrade Quarto to 1.2.335 #12697
 - Session components no longer link to libpq or its dependencies (rstudio/rstudio-pro#2138)
 - roxygen2 completions show description and complete as a snippet #11957
 - data frame and data frame columns completions show more information #12308
