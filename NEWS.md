@@ -37,6 +37,8 @@
 - Fixed setting rsession log level using command-line argument or logging.conf #12557
 - Fixed issue that allowed users to overwrite their home directory in server mode #12653
 - Fixed "Check for updates" incorrectly reports that there are no updates (rstudio-pro #3388)
+- Fixed previewing rendered html_document causes URLs to open in browser #12494
+- Fixed link opens in browser after Render with qml file when hypothes.is comments are turned on in `_quarto.yml` #12413
 
 ### Accessibility Improvements
 
