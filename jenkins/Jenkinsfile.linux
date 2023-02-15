@@ -19,7 +19,7 @@ def matrixFilter() {
 
 def renameFile(String dir, String match) {
   def file = sh(script: "basename `ls ${dir}/${match}`", returnStdout: true).trim()
-  def renamedFile = packageFile.replace('-relwithdebinfo', '')
+  def renamedFile = file.replace('-relwithdebinfo', '')
   sh "mv ${dir}/${file} ${dir}/${renamedFile}"
   return renamedFile
 }
