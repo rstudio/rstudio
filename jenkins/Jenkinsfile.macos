@@ -216,10 +216,12 @@ pipeline {
                       retry(5) {
                         // timeout sentry in 15 minutes
                         timeout(activity: true, time: 15) {
-                          // upload Javascript source maps
+                          // upload Javascript source maps, but only once
                           dir ('package/osx/build/gwt') {
                             script {
-                              utils.sentryUploadSourceMaps
+                              if (FLAVOR == 'Electron') {
+                                utils.sentryUploadSourceMaps()
+                              }
                             }
                           }
 
