@@ -254,7 +254,7 @@ pipeline {
 
                 environment {
                   PACKAGE_DIR = "package/linux/build-${FLAVOR}-${ext_map[env.OS].toUpperCase()}"
-                  PACKAGE_FILE = "${renameFile(\"${PACKAGE_DIR}\", \"rstudio-*.${ext_map[env.OS]}\")}"
+                  PACKAGE_FILE = "${renameFile(PACKAGE_DIR, 'rstudio-*.' + ext_map[env.OS])}"
                   TAR_PACKAGE_DIR= "${PACKAGE_DIR}/_CPack_Packages/Linux/${ext_map[env.OS].toUpperCase()}"
                   TAR_PACKAGE_FILE = "${renameTarFile()}"
                   BUILD_TYPE = "sh(script: 'cat version/BUILDTYPE', returnStdout: true).trim().toLowerCase()"
