@@ -93,15 +93,14 @@ def sentryUpload(String symbolType) {
 }
 
 def publishToDailiesSite(String packageFile, String destinationPath) {
-  sh '${WORKSPACE}/docker/jenkins/publish-build.sh --build ' +
+  sh '${WORKSPACE}/docker/jenkins/publish-build.sh  --version ${RSTUDIO_VERSION} --pat ${GITHUB_LOGIN_PSW} --build ' +
     destinationPath +
     ' --url https://s3.amazonaws.com/rstudio-ide-build/' +
     destinationPath +
     '/' +
     packageFile +
-    ' --pat ${GITHUB_LOGIN_PSW} --file ' +
+    ' --file ' +
     packageFile
-    + ' --version ${RSTUDIO_VERSION}'
 }
 
 def getArchForOs(String os, String arch) {
