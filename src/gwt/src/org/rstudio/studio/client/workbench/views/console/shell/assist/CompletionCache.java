@@ -88,25 +88,26 @@ public class CompletionCache
       String token = original.getToken() + line.substring(substring.length());
       
       // Extract the vector elements of the completion string
-      JsArrayString completions = original.getCompletions();
-      JsArrayString display     = original.getCompletionsDisplay();
-      JsArrayString packages    = original.getPackages();
-      JsArrayBoolean quote      = original.getQuote();
-      JsArrayInteger type       = original.getType();
-      JsArrayInteger context    = original.getContext();
+      JsArrayString completions      = original.getCompletions();
+      JsArrayString display          = original.getCompletionsDisplay();
+      JsArrayString packages         = original.getPackages();
+      JsArrayBoolean quote           = original.getQuote();
+      JsArrayInteger type            = original.getType();
+      JsArrayInteger context         = original.getContext();
       JsArrayBoolean suggestOnAccept = original.getSuggestOnAccept();
-      JsArrayBoolean replaceToEnd = original.getReplaceToEnd();
-      JsArrayString meta        = original.getMeta();
+      JsArrayBoolean replaceToEnd    = original.getReplaceToEnd();
+      JsArrayString meta             = original.getMeta();
       
       // Now, generate narrowed versions of the above
-      final JsVectorString completionsNarrow = JsVectorString.createVector().cast();
-      final JsVectorString displayNarrow     = JsVectorString.createVector().cast();
-      final JsVectorString packagesNarrow    = JsVectorString.createVector().cast();
-      final JsVectorBoolean quoteNarrow      = JsVectorBoolean.createVector().cast();
-      final JsVectorInteger typeNarrow       = JsVectorInteger.createVector().cast();
+      final JsVectorString completionsNarrow     = JsVectorString.createVector().cast();
+      final JsVectorString displayNarrow         = JsVectorString.createVector().cast();
+      final JsVectorString packagesNarrow        = JsVectorString.createVector().cast();
+      final JsVectorBoolean quoteNarrow          = JsVectorBoolean.createVector().cast();
+      final JsVectorInteger typeNarrow           = JsVectorInteger.createVector().cast();
       final JsArrayBoolean suggestOnAcceptNarrow = JsVectorBoolean.createVector().cast();
-      final JsArrayBoolean replaceToEndNarrow = JsVectorBoolean.createVector().cast();
-      final JsVectorString metaNarrow        = JsVectorString.createVector().cast();
+      final JsArrayBoolean replaceToEndNarrow    = JsVectorBoolean.createVector().cast();
+      final JsVectorString metaNarrow            = JsVectorString.createVector().cast();
+      final JsVectorInteger contextNarrow        = JsVectorInteger.createVector().cast();
       
       for (int i = 0, n = completions.length(); i < n; i++)
       {
@@ -121,6 +122,7 @@ public class CompletionCache
             suggestOnAcceptNarrow.push(suggestOnAccept.get(i));
             replaceToEndNarrow.push(replaceToEnd.get(i));
             metaNarrow.push(meta.get(i));
+            contextNarrow.push(context.get(i));
          }
       }
       
@@ -135,11 +137,14 @@ public class CompletionCache
          @Override
          public int compare(Integer lhs, Integer rhs)
          {
+            int lhsContext = contextNarrow.get(lhs);
+            int rhsContext = contextNarrow.get(rhs);
+
             int lhsType = typeNarrow.get(lhs);
             int rhsType = typeNarrow.get(rhs);
 
-            int lhsTypeScore = RCompletionType.score(lhsType);
-            int rhsTypeScore = RCompletionType.score(rhsType);
+            int lhsTypeScore = RCompletionType.score(lhsType, lhsContext);
+            int rhsTypeScore = RCompletionType.score(rhsType, rhsContext);
             if (lhsTypeScore < rhsTypeScore)
                return -1;
             else if (lhsTypeScore > rhsTypeScore)

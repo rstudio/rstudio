@@ -1012,8 +1012,21 @@ export class GwtCallback extends EventEmitter {
     const frame = webFrameMain.fromId(processId, frameId);
     if (frame) {
       for (const win of this.owners) {
-        if (win.window.webContents.mainFrame === frame) {
-          return win;
+        try {
+          // Some owners in this.owners may not have been unregistered, but have
+          // since been closed/destroyed. If that's the case for an owner, its
+          // WebContents (win.window.webContents) will have been destoyed.
+          // As a result, when we iterate through owners and hit one that has
+          // been destroyed, we get: "TypeError: Object has been destroyed".
+          // Then, we error out and cause a satellite window to have blank contents.
+          // See https://github.com/rstudio/rstudio/issues/12468 and
+          //     https://github.com/rstudio/rstudio/issues/12569
+          // To avoid failing, we catch the error and move on to check the next owner.
+          if (win.window.webContents.mainFrame === frame) {
+            return win;
+          }
+        } catch (error) {
+          logger().logDebug("Window WebContents has been destroyed. Skipping this window.");
         }
       }
     }

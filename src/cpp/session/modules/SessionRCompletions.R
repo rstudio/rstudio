@@ -1383,7 +1383,13 @@ assign(x = ".rs.acCompletionTypes",
    typeScores[completions$type == .rs.acCompletionTypes$ARGUMENT] <- 1
    typeScores[completions$type == .rs.acCompletionTypes$COLUMN] <- 2
    typeScores[completions$type == .rs.acCompletionTypes$DATATABLE_SPECIAL_SYMBOL] <- 3
-   typeScores[completions$type == .rs.acCompletionTypes$DATAFRAME] <- 4
+
+   # data has high priority, unless it's requested from a :: or ::: context
+   # rationale: https://github.com/rstudio/rstudio/issues/12678)
+   typeScores[
+      completions$type == .rs.acCompletionTypes$DATAFRAME & 
+      ! completions$context %in% c(.rs.acContextTypes$NAMESPACE_EXPORTED, .rs.acContextTypes$NAMESPACE_ALL)
+      ] <- 4
    typeScores[completions$type == .rs.acCompletionTypes$SECUNDARY_ARGUMENT] <- 5
 
    typeScores[completions$type == .rs.acCompletionTypes$PACKAGE] <- 101

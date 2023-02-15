@@ -47,6 +47,7 @@ import { WindowTracker } from './window-tracker';
 import { configureSatelliteWindow, configureSecondaryWindow } from './window-utils';
 import { Client, Server } from 'net-ipc';
 import { LoggerCallback } from './logger-callback';
+import { Xdg } from '../core/xdg';
 
 /**
  * The RStudio application
@@ -177,9 +178,11 @@ export class Application implements AppState {
 
   // create a new local socket to co-ordinate and become the primary instance
   private createMessageServer() {
-    const options = { path: 'rstudio' };
+    const path = Xdg.userDataDir().completeChildPath('rstudio.socket');
+    path.getParent().ensureDirectorySync();
+    const options = { path: path.getAbsolutePath() };
     this.server = new Server(options);
-    logger().logDebug('net-ipc: creating new message server');
+    logger().logDebug(`net-ipc: creating new message server; socket=${path.getAbsolutePath()}`);
     this.server.start()
       .then(() => {
         this.client = undefined;
@@ -315,7 +318,7 @@ export class Application implements AppState {
           message: i18next.t('applicationTs.rstudioFailedToFindRInstalationsOnTheSystem'),
           buttons: [ i18next.t('common.buttonYes'), i18next.t('common.buttonNo') ],
         }).then(result => {
-          
+
           logger().logDebug(`You clicked ${result.response == 0 ? 'Yes' : 'No'}`);
           if (result.response == 0) {
             const rProjectUrl = 'https://www.rstudio.org/links/r-project';
@@ -323,7 +326,7 @@ export class Application implements AppState {
           }
         })
           .catch((error: unknown) => logger().logError(error));
-        
+
         return exitFailure();
       }
 
