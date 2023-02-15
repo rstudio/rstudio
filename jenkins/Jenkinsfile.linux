@@ -31,18 +31,6 @@ def renameTarFile() {
 
   return ""
 }
-
-def getProductName() {
-  def productName = FLAVOR.toLowerCase()
-  if (IS_PRO && productName != "server") {
-    productName = productName + "-pro"
-  } else if (IS_PRO) {
-    productName = "workbench"
-  }
-
-  return productName
-}
-
 pipeline {
   agent none
 
@@ -192,7 +180,7 @@ pipeline {
             environment {
               GITHUB_LOGIN = credentials('github-rstudio-jenkins')
               AWS_BUCKET="rstudio-ide-build"
-              PRODUCT="${getProductName()}"
+              PRODUCT="${utils.getProductName()}"
             }
 
             stages {

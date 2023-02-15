@@ -224,23 +224,18 @@ pipeline {
                       stage ('Publish') {
                         environment {
                           GITHUB_LOGIN = credentials('github-rstudio-jenkins')
+                          PRODUCT = "${utils.getProductName()}"
                         }
 
                         steps {
                           script {
-                            // derive product
-                            def product = "${FLAVOR}"
-
-                            if (IS_PRO) {
-                              product = "${FLAVOR}-pro"
-                            }
 
                             // publish the build (self installing exe)
-                            def stdout = powershell(returnStdout: true, script: '.\\docker\\jenkins\\publish-build.ps1 -build ' + product + '/windows -url https://s3.amazonaws.com/rstudio-ide-build/' + FLAVOR + '/windows/' + PACKAGE_NAME + '.exe -pat %GITHUB_LOGIN_PSW% -file package\\win32\\build\\' + PACKAGE_NAME + '.exe -version %RSTUDIO_RELEASE%')
+                            def stdout = powershell(returnStdout: true, script: '.\\docker\\jenkins\\publish-build.ps1 -build ' + PRODUCT + '/windows -url https://s3.amazonaws.com/rstudio-ide-build/' + PRODUCT + '/windows/' + PACKAGE_NAME + '.exe -pat %GITHUB_LOGIN_PSW% -file package\\win32\\build\\' + PACKAGE_NAME + '.exe -version %RSTUDIO_RELEASE%')
                             println stdout
 
                             // publish the build (installer-less zip)
-                            stdout = powershell(returnStdout: true, script: '.\\docker\\jenkins\\publish-build.ps1 -build ' + product + '/windows-xcopy -url https://s3.amazonaws.com/rstudio-ide-build/' + FLAVOR + '/windows/' + PACKAGE_NAME + '.zip -pat %GITHUB_LOGIN_PSW% -file package\\win32\\build\\' + PACKAGE_NAME + '.zip -version %RSTUDIO_RELEASE%')
+                            stdout = powershell(returnStdout: true, script: '.\\docker\\jenkins\\publish-build.ps1 -build ' + PRODUCT + '/windows-xcopy -url https://s3.amazonaws.com/rstudio-ide-build/' + PRODUCT + '/windows/' + PACKAGE_NAME + '.zip -pat %GITHUB_LOGIN_PSW% -file package\\win32\\build\\' + PACKAGE_NAME + '.zip -version %RSTUDIO_RELEASE%')
                             println stdout
                           }
                         }

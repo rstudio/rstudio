@@ -124,4 +124,15 @@ def getBuildEnv() {
   return env
 }
 
+def getProductName() {
+  def name = FLAVOR.toLowerCase()
+  if (IS_PRO && productName != "server") {
+    productName = productName + "-pro"
+  } else if (IS_PRO) {
+    productName = "workbench"
+  }
+
+  return productName
+}
+
 return this

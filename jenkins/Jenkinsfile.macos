@@ -161,19 +161,10 @@ pipeline {
                     script: "cat version/BUILDTYPE",
                     returnStdout: true
                   ).trim().toLowerCase()}"""
-                  PRODUCT = "${FLAVOR.toLowerCase()}"
+                  PRODUCT = "${utils.getProductName()}"
                 }
                 
                 stages {
-                  stage("Set Release Variables") {
-                    steps {
-                      script {
-                        if (IS_PRO) {
-                          PRODUCT = PRODUCT + "-pro"
-                        }
-                      }
-                    }
-                  }
 
                   stage("Notarize") {
                     environment {
