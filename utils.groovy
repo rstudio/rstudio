@@ -85,7 +85,7 @@ def sentryUpload(String symbolType) {
   def retryCount = 0
   def ret = 1
   while (retryCount < 5 && ret != 0) {
-    ret = sh 'sentry-cli --auth-token ${SENTRY_API_KEY} upload-dif --org rstudio --project ide-backend -t ${symbolType} .'
+    ret = sh 'sentry-cli --auth-token ${SENTRY_API_KEY} upload-dif --org rstudio --project ide-backend -t ' + symbolType + ' .'
     if (ret != 0 && retryCount < 5) {
       sleep time: 30, unit: 'SECONDS'
     }
