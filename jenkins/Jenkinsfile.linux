@@ -115,7 +115,6 @@ pipeline {
     }
 
     stage('Build Matrix') {
-
       matrix {
         when { expression { return matrixFilter() } }
 
