@@ -74,7 +74,7 @@ def sentryUploadSourceMaps() {
   def retryCount = 0
   def ret = 1
   while (retryCount < 5 && ret != 0) {
-    ret = sh 'sentry-cli --auth-token ${SENTRY_API_KEY} releases --org rstudio --ide-backend files ${RSTUDIO_RELEASE} upload-sourcemaps --ext js --ext symbolMap --rewrite .'
+    ret = sh 'sentry-cli --auth-token ${SENTRY_API_KEY} releases --org rstudio --project ide-backend files ${RSTUDIO_VERSION} upload-sourcemaps --ext js --ext symbolMap --rewrite .'
     if (ret != 0 && retryCount < 5) {
       sleep time: 30, unit: 'SECONDS'
     }
