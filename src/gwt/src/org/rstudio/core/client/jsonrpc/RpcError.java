@@ -69,6 +69,9 @@ public class RpcError extends JavaScriptObject
      
    // transmission error (application state indeterminate)
    public final static int TRANSMISSION_ERROR = 200;
+
+   // Unimplemented redirection request
+   public final static int REDIRECTION_ERROR = 300;
    
    public final native int getCode() /*-{
       return this.code;

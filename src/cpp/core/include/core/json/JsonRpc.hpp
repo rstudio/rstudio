@@ -70,7 +70,11 @@ enum errc_t {
    // Transmission errors -- These errors leave the application in an unknown
    // state (it is not known whether the method finished all, some, or none
    // of its work).
-   TransmissionError = 200
+   TransmissionError = 200,
+
+   // JSON RPC Request responded with a redirect,
+   // however that is not yet implemented
+   RedirectNotImplementedError = 300
 };
 
 } // namespace errc

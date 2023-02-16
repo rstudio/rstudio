@@ -56,12 +56,27 @@ void constructRequest(const std::string& endpoint,
    pRequest->setBody(payload.write());
 }
 
+bool isRedirect(int statusCode)
+{
+   return statusCode == http::status::MovedPermanently ||
+          statusCode == http::status::MovedTemporarily ||
+          statusCode == http::status::TemporaryRedirect ||
+          statusCode == http::status::PermanentRedirect;
+}
+
 Error handleResponse(const std::string& endpoint,
                      const http::Response& response,
                      json::Value* pResult)
 {
-   if (response.statusCode() != http::status::Ok)
+   if (isRedirect(response.statusCode()))
    {
+      // redirect response
+      std::string location = response.headerValue("Location");
+      return Error(json::errc::RedirectNotImplementedError, location, ERROR_LOCATION);
+   }
+   else if (response.statusCode() != http::status::Ok)
+   {
+      // error response
       LOG_WARNING_MESSAGE("Server RPC failed: " + endpoint + " " +
                           safe_convert::numberToString(response.statusCode()) +
                           " " + response.statusMessage() + "\n" +
@@ -77,6 +92,7 @@ Error handleResponse(const std::string& endpoint,
    }
    else if (pResult->parse(response.body()))
    {
+      // unparseable response
       LOG_WARNING_MESSAGE("Received unparseable result from rserver RPC:\n" +
             endpoint + "\n" +
             response.body());
