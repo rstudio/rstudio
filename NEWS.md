@@ -4,6 +4,7 @@
 ### New
 - Adopt panmirror (visual editor) migration to quarto-dev/quarto project #12316
 - Upgrade Electron to 22.0.0 #11734
+- Upgrade Quarto to 1.2.335 #12697
 - Session components no longer link to libpq or its dependencies (rstudio/rstudio-pro#2138)
 - roxygen2 completions show description and complete as a snippet #11957
 - data frame and data frame columns completions show more information #12308
@@ -36,6 +37,13 @@
 - Fixed package completion tooltips #12147
 - Fixed setting rsession log level using command-line argument or logging.conf #12557
 - Fixed issue that allowed users to overwrite their home directory in server mode #12653
+- Fixed "Check for updates" incorrectly reports that there are no updates (rstudio-pro #3388)
+- Fixed default options for Choose R dialog on Windows (#12452)
+- Fixed data viewer's "Show in new window" results in empty window #12468
+- Fixed uncaught Shiny error breaks RStudio's "Run in Window" feature #12569
+- Fixed intermittent hanging logins in Workbench using ActiveDirectory (rstudio-pro #4285)
+- Fixed previewing rendered html_document causes URLs to open in browser #12494
+- Fixed link opens in browser after Render with qml file when hypothes.is comments are turned on in `_quarto.yml` #12413
 
 ### Accessibility Improvements
 

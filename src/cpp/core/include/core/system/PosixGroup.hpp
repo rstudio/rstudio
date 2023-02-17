@@ -41,6 +41,7 @@ struct Group
 
 Error groupFromName(const std::string& name, Group* pGroup);
 Error groupFromId(gid_t gid, Group* pGroup);
+std::vector<GidType> userGroupIds(const User& user);
 Error userGroups(const std::string& userName, std::vector<Group>* pGroups);
 
 } // namespace group
