@@ -462,6 +462,9 @@ std::string JsonRpcErrorCategory::message( int ev ) const
       case errc::LimitSessionsReached:
          return "The maximum amount of concurrent session allowed for the user profile has been reached";
 
+      case errc::RedirectNotImplementedError:
+         return "Unsupported redirection requested";
+
       default:
          BOOST_ASSERT(false);
          return "Unknown error type";
