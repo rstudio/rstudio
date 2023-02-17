@@ -91,6 +91,9 @@ public interface DesktopFrame extends JavaScriptPassthrough
    
    void copyPageRegionToClipboard(int left, int top, int width, int height,
                                   Command onCopied);
+
+   void copyImageAtXYToClipboard(int absoluteLeft, int absoluteTop,
+                                 Command completed);
    
    void exportPageRegionToFile(String targetPath, 
                                String format, 

@@ -492,11 +492,26 @@ export class GwtCallback extends EventEmitter {
     ipcMain.handle(
       'desktop_copy_page_region_to_clipboard',
       (_event, x: number, y: number, width: number, height: number) => {
+        const rect: Rectangle = { x, y, width, height };
+        this.mainWindow.window
+          .capturePage(rect)
+          .then((image) => {
+            clipboard.writeImage(image);
+          })
+          .catch((error) => {
+            logger().logError(error);
+          });
+      },
+    );
+
+    ipcMain.handle(
+      'desktop_copy_image_at_xy_to_clipboard',
+      (_event, x: number, y: number) => {
         const focusedWindow = BrowserWindow.getFocusedWindow();
         if (focusedWindow?.webContents) {
-          focusedWindow.webContents.copyImageAt(x + width, y + height);
+          focusedWindow.webContents.copyImageAt(x, y);
         } else {
-          logger().logError("Failed to copy page region to clipboard");
+          logger().logError(`Failed to copy image at x: ${x}, y: ${y} to clipboard`);
         }
       },
     );
