@@ -99,9 +99,41 @@ $headers.Add("Accept", "application/vnd.github.v3+json")
 $headers.Add("Authorization", "token $pat")
 
 $url = "https://api.github.com/repos/rstudio/latest-builds/contents/content/rstudio/$flower/$build/$versionStem.md"
-
 # Send to Github! We have to use basic parsing here because this script runs on SKU of Windows that
 # doesn't contain a working copy of IE (and, incredibly, without -UseBasicParsing, Invoke-WebRequest
 # has a dendency on the IE DOM engine).
-Invoke-WebRequest -Body $payload -Method 'PUT' -Headers $headers -Uri $url -UseBasicParsing
+try
+{
+    $createResponse = Invoke-RestMethod -Body $payload -Method 'PUT' -Headers $headers -Uri $url -UseBasicParsing
+    Write-Host "Response :"
+    Write-Host $createResponse.Content
+} catch {
+    $StatusCode = $_.Exception.Response.StatusCode.value__
+    
+    if ($StatusCode -eq 422) # Assume the file already exists and we need to do an update
+    {
+        Write-Host "Received a 422 error, assuming it's an issue updating. Getting existing file's SHA"
+        $getSha = Invoke-RestMethod -Method 'GET' -Headers $headers -Uri $url -UseBasicParsing
+        Write-Host "Github Response:"
+        Write-Host $getSha
+        $updateSha = $getSha.sha
 
+        # This looks messy but the whitespace is meaningful
+        $updatePayload = @"
+{ "message": "Update $flower build $version in $build", "content": "$base64", "sha": "$updateSha" }
+"@
+        Write-Host "Updating version file..."
+        $updateResponse = Invoke-RestMethod -Body $updatePayload -Method 'PUT' -Headers $headers -Uri $url -UseBasicParsing
+        Write-Host $updateResponse
+
+    } elseif ($StatusCode -eq 409) { # Assume the repo has been updated backoff and try again.
+        Write-Host "Received a 409, assuming it's a commit interleaving error, waiting 3 seconds and retrying".
+        Start-Sleep -Seconds 3
+
+        # Identical call to the original above
+        Write-Host "Retrying..."
+        $retryCreateResponse = Invoke-RestMethod -Body $payload -Method 'PUT' -Headers $headers -Uri $url -UseBasicParsing
+        Write-Host "Response :"
+        Write-Host $retryCreateResponse.Content
+    }
+}
