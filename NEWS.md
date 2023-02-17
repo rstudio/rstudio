@@ -44,7 +44,6 @@
 - Fixed intermittent hanging logins in Workbench using ActiveDirectory (rstudio-pro #4285)
 - Fixed previewing rendered html_document causes URLs to open in browser #12494
 - Fixed link opens in browser after Render with qml file when hypothes.is comments are turned on in `_quarto.yml` #12413
-- Fixed copy Plot to Clipboard - pasting bitfile option not working correctly in latest build #12466
 
 ### Accessibility Improvements
 
