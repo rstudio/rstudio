@@ -231,11 +231,11 @@ pipeline {
                           script {
 
                             // publish the build (self installing exe)
-                            def stdout = powershell(returnStdout: true, script: '.\\docker\\jenkins\\publish-build.ps1 -build ' + PRODUCT + '/windows -url https://s3.amazonaws.com/rstudio-ide-build/' + PRODUCT + '/windows/' + PACKAGE_NAME + '.exe -pat %GITHUB_LOGIN_PSW% -file package\\win32\\build\\' + PACKAGE_NAME + '.exe -version %RSTUDIO_RELEASE%')
+                            def stdout = powershell(returnStdout: true, script: '.\\docker\\jenkins\\publish-build.ps1 -build ' + PRODUCT + '/windows -url https://s3.amazonaws.com/rstudio-ide-build/' + PRODUCT + '/windows/' + PACKAGE_NAME + '.exe -pat %GITHUB_LOGIN_PSW% -file package\\win32\\build\\' + PACKAGE_NAME + '.exe -version %RSTUDIO_VERSION%')
                             println stdout
 
                             // publish the build (installer-less zip)
-                            stdout = powershell(returnStdout: true, script: '.\\docker\\jenkins\\publish-build.ps1 -build ' + PRODUCT + '/windows-xcopy -url https://s3.amazonaws.com/rstudio-ide-build/' + PRODUCT + '/windows/' + PACKAGE_NAME + '.zip -pat %GITHUB_LOGIN_PSW% -file package\\win32\\build\\' + PACKAGE_NAME + '.zip -version %RSTUDIO_RELEASE%')
+                            stdout = powershell(returnStdout: true, script: '.\\docker\\jenkins\\publish-build.ps1 -build ' + PRODUCT + '/windows-xcopy -url https://s3.amazonaws.com/rstudio-ide-build/' + PRODUCT + '/windows/' + PACKAGE_NAME + '.zip -pat %GITHUB_LOGIN_PSW% -file package\\win32\\build\\' + PACKAGE_NAME + '.zip -version %RSTUDIO_VERSION%')
                             println stdout
                           }
                         }
