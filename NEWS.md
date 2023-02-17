@@ -17,6 +17,7 @@
 - Disable argument tooltips in script editor for unknown functions #12160
 - Sessions now have lower CPU priority during suspension on macOS and Linux #12623
 - Sessions run on Kubernetes or Slurm will no longer exit with nonzero codes under normal circumstances (rstudio/rstudio-pro#3375)
+- Add RTools 4.3 support
 
 ### Fixed
 
