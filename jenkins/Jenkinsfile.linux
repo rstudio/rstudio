@@ -245,7 +245,7 @@ pipeline {
                   TAR_PACKAGE_DIR= "${PACKAGE_DIR}/_CPack_Packages/Linux/${ext_map[env.OS].toUpperCase()}"
                   TAR_PACKAGE_FILE = "${renameTarFile(TAR_PACKAGE_DIR)}"
                   BUILD_TYPE = "sh(script: 'cat version/BUILDTYPE', returnStdout: true).trim().toLowerCase()"
-                  AWS_PATH= "${PRODUCT}/${OS}/${utils.getArchForOs(env.OS, env.ARCH)}"
+                  AWS_PATH = "${PRODUCT}/${OS}/${utils.getArchForOs(env.OS, env.ARCH)}"
                 }
 
                 stages {
@@ -295,13 +295,14 @@ pipeline {
                   stage("Publish") {
                     environment {
                       GITHUB_LOGIN = credentials('github-rstudio-jenkins')
+                      DAILIES_PATH = "${PRODUCT}/${OS}-${utils.getArchForOs(env.OS, env.ARCH)}"
                     }
 
                     steps {
                       dir("${PACKAGE_DIR}") {
                         script {
                           // publish build to dailies page
-                          utils.publishToDailiesSite PACKAGE_FILE, AWS_PATH
+                          utils.publishToDailiesSite PACKAGE_FILE, DAILIES_PATH
                         }
                       }
                     }
