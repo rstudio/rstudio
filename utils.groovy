@@ -66,6 +66,10 @@ def getFlower() {
   return readFile(file: 'version/RELEASE').replaceAll(" ", "-").toLowerCase().trim()
 }
 
+/**
+ * Upload the package specified by packageFile to the location of destinationPath in the rstudio-ide-build S3 bucket.
+ * Sets the correct ACLs.
+ */
 def uploadPackageToS3(String packageFile, String destinationPath) {
   s3Upload acl: 'BucketOwnerFullControl', bucket: "rstudio-ide-build", file: "${packageFile}", path: "${destinationPath}"
 }
@@ -74,7 +78,8 @@ def sentryUploadSourceMaps() {
   def retryCount = 0
   def ret = 1
   while (retryCount < 5 && ret != 0) {
-    ret = sh 'sentry-cli --auth-token ${SENTRY_API_KEY} releases --org rstudio --project ide-backend files ' + RSTUDIO_VERSION + ' upload-sourcemaps --ext js --ext symbolMap --rewrite .; echo $?'
+    ret = sh returnStatus: true, script: 'sentry-cli --auth-token ${SENTRY_API_KEY} releases --org rstudio --project ide-backend files ' + RSTUDIO_VERSION + ' upload-sourcemaps --ext js --ext symbolMap --rewrite .'
+    echo "Return code: ${ret}"
     if (ret != 0 && retryCount < 5) {
       sleep time: 30, unit: 'SECONDS'
       retryCount = retryCount + 1
@@ -86,9 +91,11 @@ def sentryUpload(String symbolType) {
   def retryCount = 0
   def ret = 1
   while (retryCount < 5 && ret != 0) {
-    ret = sh 'sentry-cli --auth-token ${SENTRY_API_KEY} upload-dif --org rstudio --project ide-backend -t ' + symbolType + ' .'
+    ret = sh returnStatus: true, script: 'sentry-cli --auth-token ${SENTRY_API_KEY} upload-dif --org rstudio --project ide-backend -t ' + symbolType + ' .'
+    echo "Return code: ${ret}"
     if (ret != 0 && retryCount < 5) {
       sleep time: 30, unit: 'SECONDS'
+      retryCount = retryCount + 1
     }
   }
 }
