@@ -11,10 +11,27 @@ def ext_map =
 ]
 
 // Use a function to keep the pipeline length down.
-def matrixFilter() {
-  return ((params.OS_FILTER == env.OS ||  params.OS_FILTER == 'all') &&
+def shouldBuild() {
+  def matchesFilter = ((params.OS_FILTER == env.OS ||  params.OS_FILTER == 'all') &&
     (params.ARCH_FILTER == env.ARCH ||  params.ARCH_FILTER == 'all') &&
     (params.FLAVOR_FILTER == env.FLAVOR ||  params.FLAVOR_FILTER == 'all'))
+
+  // Filter hourlies based on https://github.com/rstudio/rstudio-pro/issues/4143#issuecomment-1362142399
+  def inHourlySubset = true
+  if (!params.DAILY) {
+    if (env.IS_PRO) {
+      // build an x86_64 rhel8 WB and an arm64 jammy RDP
+      inHourlySubset = ((env.OS == 'rhel8' && env.ARCH == 'x86_64' && env.FLAVOR == 'Server') ||
+        (env.OS == 'jammy' && env.ARCH == 'arm64' && env.FLAVOR == 'Desktop'))
+    } else {
+      // build an x86_64 rhel9 Desktop and an x86_64 bionic Server
+      inHourlySubset = ((env.OS == 'rhel9' && env.ARCH == 'x86_64' && env.FLAVOR == 'Electron') ||
+        (env.OS == 'bionic' && env.ARCH == 'x86_64' && env.FLAVOR == 'Server'))
+
+    }
+  }
+
+  return matchesFilter && inHourlySubset;
 }
 
 def renameFile(String dir, String match) {
@@ -116,7 +133,7 @@ pipeline {
 
     stage('Build Matrix') {
       matrix {
-        when { expression { return matrixFilter() } }
+        when { expression { return shouldBuild() } }
 
         axes {
           axis {
