@@ -193,14 +193,17 @@ pipeline {
                     environment {
                       RSTUDIO_ORG_PEM = credentials('www-rstudio-org-pem')
                     }
-                    when { // See https://github.com/rstudio/rstudio-pro/commit/0590beeba8ff898b6c9ed8f524ca734bb830f930
-                      expression {
-                        return IS_PRO != true && FLAVOR == 'Electron';
+
+                    when {
+                      allOf {
+                        environment name: 'FLAVOR', value: 'Electron' 
+                        environment name: 'IS_PRO', value: false
                       }
                     }
+
                     steps {
                       // upload daily build redirects
-                      sh 'docker/jenkins/publish-daily-binary.sh https://s3.amazonaws.com/rstudio-ide-build/${PRODUCT}/macos/${PACKAGE_FILE} ${RSTUDIO_ORG_PEM}'
+                      utils.uploadDailyRedirects "${PRODUCT}/macos/${PACKAGE_FILE}"
                     }
                   }
                   

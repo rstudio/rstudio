@@ -239,17 +239,22 @@ pipeline {
                         }
                       }
 
-                      stage ("Fix Redirect Links") {
+                      stage ("Upload Daily Build Redirects") {
                         agent { label "linux" } // must be on a linux node to use a bash script
 
-                        when { environment name: 'FLAVOR', value: 'Electron' }
+                        when {
+                          allOf {
+                            environment name: 'FLAVOR', value: 'Electron' 
+                            environment name: 'IS_PRO', value: false
+                          }
+                        }
 
                         environment {
                           RSTUDIO_PEM = credentials('www-rstudio-org-pem') 
                         }
 
                         steps {
-                          sh 'docker/jenkins/publish-daily-binary.sh https://s3.amazonaws.com/rstudio-ide-build/desktop/windows/' + PACKAGE_NAME + '.exe ${RSTUDIO_PEM}'
+                          utils.uploadDailyRedirects "desktop/windows/${PACKAGE_NAME}.exe"
                         }
                       }
                     }

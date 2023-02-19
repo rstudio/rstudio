@@ -145,4 +145,8 @@ def getProductName() {
   return name
 }
 
+def uploadDailyRedirects(String path) {
+  sh 'docker/jenkins/publish-daily-binary.sh https://s3.amazonaws.com/rstudio-ide-build/' + path + ' ${RSTUDIO_ORG_PEM}'
+}
+
 return this
