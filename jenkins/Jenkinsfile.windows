@@ -75,7 +75,7 @@ pipeline {
           label "windows"
           // Set a custom workspace relative to the workspace root (C:\Users\jenikns) to ensure file names
           // won't be too long
-          customWorkspace "workspace/ide-os-windows/${env.BRANCH_NAME.replace('/', '-')}"
+          customWorkspace "workspace/ide-${IS_PRO ? 'pro' : 'os'}-windows/${env.BRANCH_NAME.replace('/', '-')}"
         }
       }
 
