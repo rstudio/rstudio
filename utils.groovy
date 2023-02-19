@@ -26,7 +26,8 @@ void addRemoteRef(String branchName) {
 }
 
 /**
-  * Get Version
+  * Get Version.
+  * Does not work on windows.
   */
 def getVersion(boolean isHourly) {
   def buildType = ""
@@ -67,13 +68,17 @@ def getFlower() {
 }
 
 /**
- * Upload the package specified by packageFile to the location of destinationPath in the rstudio-ide-build S3 bucket.
- * Sets the correct ACLs.
- */
+  * Upload the package specified by packageFile to the location of destinationPath in the rstudio-ide-build S3 bucket.
+  * Sets the correct ACLs.
+  */
 def uploadPackageToS3(String packageFile, String destinationPath) {
   s3Upload acl: 'BucketOwnerFullControl', bucket: "rstudio-ide-build", file: "${packageFile}", path: "${destinationPath}"
 }
 
+/**
+  * Upload javascript source maps to Sentry.
+  * Does not work on windows.
+  */
 def sentryUploadSourceMaps() {
   def retryCount = 0
   def ret = 1
@@ -87,6 +92,10 @@ def sentryUploadSourceMaps() {
   }
 }
 
+/** 
+  * Upload debug symbols to sentry. Symbol type should be dsym or elf. 
+  * Does not work on windows.
+  */
 def sentryUpload(String symbolType) {
   def retryCount = 0
   def ret = 1
@@ -100,6 +109,10 @@ def sentryUpload(String symbolType) {
   }
 }
 
+/** 
+  * Publish a build to the dailies site.
+  * Does not work on windows.
+  */
 def publishToDailiesSite(String packageFile, String destinationPath) {
   sh '${WORKSPACE}/docker/jenkins/publish-build.sh --pat ${GITHUB_LOGIN_PSW} --version ' +
     RSTUDIO_VERSION +
@@ -113,6 +126,10 @@ def publishToDailiesSite(String packageFile, String destinationPath) {
     packageFile
 }
 
+/** 
+  * Convert an architecture to the operating specific version of that arch.
+  * x86_64 -> amd64 on Debian
+  */
 def getArchForOs(String os, String arch) {
   if ((arch == "amd64") && (os != "bionic") && (os != "jammy")) {
     return "x86_64"
@@ -125,6 +142,10 @@ def getArchForOs(String os, String arch) {
   return arch
 }
 
+/**
+  * Gets environment variasbles needed for running the build on Linux and Mac.
+  * Does not work on windows.
+  */
 def getBuildEnv() {
   def env = "RSTUDIO_VERSION_MAJOR=${RSTUDIO_VERSION_MAJOR} RSTUDIO_VERSION_MINOR=${RSTUDIO_VERSION_MINOR} RSTUDIO_VERSION_PATCH=${RSTUDIO_VERSION_PATCH} RSTUDIO_VERSION_SUFFIX=${RSTUDIO_VERSION_SUFFIX}"
   if (DAILY == false) {
@@ -134,6 +155,9 @@ def getBuildEnv() {
   return env
 }
 
+/** 
+  * Get the name of the product based on the type of build
+  */
 def getProductName() {
   def name = FLAVOR.toLowerCase()
   if (IS_PRO && name != "server") {
@@ -145,6 +169,10 @@ def getProductName() {
   return name
 }
 
+/**
+  * Upload dailiy redirects.
+  * Does not work on windows.
+  */
 def uploadDailyRedirects(String path) {
   sh 'docker/jenkins/publish-daily-binary.sh https://s3.amazonaws.com/rstudio-ide-build/' + path + ' ${RSTUDIO_ORG_PEM}'
 }
