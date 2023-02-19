@@ -123,6 +123,8 @@ public class PanmirrorCommands
    public static final String RcppCodeChunk = "6BD2810B-6B20-4358-8AA4-74BBFFC92AC3";
    public static final String SQLCodeChunk = "41D61FD2-B56B-48A7-99BC-2F60BC0D9F78";
    public static final String StanCodeChunk = "65D33344-CBE9-438C-B337-A538F8D7FCE5";
+   public static final String MermaidCodeChunk = "FCA99491-2FCA-44BC-8349-A9AE2AE940DE";
+   public static final String GraphVizCodeChunk = "29970A38-2921-4F32-8363-F78CFE3FEBB4";
    public static final String ExpandAllChunks = "B217913B-67C9-457F-B766-7FCCB502F611";
    public static final String CollapseAllChunks = "9907A864-D707-4410-93A4-07871A8C43A6";
    public static final String ExpandChunk = "0226518C-559A-4BFC-A5BD-244BEE8175AA";
