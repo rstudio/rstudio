@@ -19,15 +19,15 @@ def shouldBuild() {
   // Filter hourlies based on https://github.com/rstudio/rstudio-pro/issues/4143#issuecomment-1362142399
   def inHourlySubset = true
   if (!params.DAILY) {
+    echo "Is Pro: ${env.IS_PRO}"
     if (env.IS_PRO) {
       // build an x86_64 rhel8 WB and an arm64 jammy RDP
       inHourlySubset = ((env.OS == 'rhel8' && env.ARCH == 'x86_64' && env.FLAVOR == 'Server') ||
         (env.OS == 'jammy' && env.ARCH == 'arm64' && env.FLAVOR == 'Desktop'))
     } else {
-      // build an x86_64 rhel9 Desktop and an x86_64 bionic Server
+      // build an x86_64 rhel9 Desktop and an arm64 bionic Server
       inHourlySubset = ((env.OS == 'rhel9' && env.ARCH == 'x86_64' && env.FLAVOR == 'Electron') ||
-        (env.OS == 'bionic' && env.ARCH == 'x86_64' && env.FLAVOR == 'Server'))
-
+        (env.OS == 'bionic' && env.ARCH == 'arm64' && env.FLAVOR == 'Server'))
     }
   }
 
