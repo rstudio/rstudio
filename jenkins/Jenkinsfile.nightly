@@ -200,7 +200,7 @@ pipeline {
 
           steps {
             build wait: false,
-                  job: "IDE/OS-Builds/Platforms/windows-pipeline/${env.BUILD_BRANCH}",
+                  job: "IDE/${IS_PRO ? 'Pro' : 'OS'}-Builds/Platforms/windows-pipeline/${env.BUILD_BRANCH}",
                   parameters: [
                     gitParameter(name: "COMMIT_HASH", value: "${COMMIT_HASH}"),
                     string(name: "RSTUDIO_VERSION_PATCH", value: "${RSTUDIO_VERSION_PATCH}"),
@@ -221,7 +221,7 @@ pipeline {
 
           steps {
             build wait: false,
-                  job: "IDE/OS-Builds/Platforms/linux-pipeline/${env.BUILD_BRANCH}",
+                  job: "IDE/${IS_PRO ? 'Pro' : 'OS'}-Builds/Platforms/linux-pipeline/${env.BUILD_BRANCH}",
                   parameters: [
                     gitParameter(name: "COMMIT_HASH", value: "${COMMIT_HASH}"),
                     string(name: "RSTUDIO_VERSION_PATCH", value: "${RSTUDIO_VERSION_PATCH}"),
@@ -244,7 +244,7 @@ pipeline {
 
           steps {
             build wait: false,
-                  job: "IDE/OS-Builds/Platforms/macos-pipeline/${env.BUILD_BRANCH}",
+                  job: "IDE/${IS_PRO ? 'Pro' : 'OS'}-Builds/Platforms/macos-pipeline/${env.BUILD_BRANCH}",
                   parameters: [
                     gitParameter(name: "COMMIT_HASH", value: "${COMMIT_HASH}"),
                     string(name: "RSTUDIO_VERSION_PATCH", value: "${RSTUDIO_VERSION_PATCH}"),
