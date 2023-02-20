@@ -327,7 +327,7 @@ pipeline {
 
                   stage ("Upload Daily Build Redirects") {
                     environment {
-                      RSTUDIO_PEM = credentials('www-rstudio-org-pem') 
+                      RSTUDIO_ORG_PEM = credentials('www-rstudio-org-pem') 
                     }
 
                     steps {
