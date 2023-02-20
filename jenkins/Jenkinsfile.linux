@@ -331,7 +331,9 @@ pipeline {
                     }
 
                     steps {
-                      utils.uploadDailyRedirects "${AWS_PATH}/${PACKAGE_FILE}"
+                      script {
+                        utils.uploadDailyRedirects "${AWS_PATH}/${PACKAGE_FILE}"
+                      }
                     }
                   }
                 }

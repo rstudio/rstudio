@@ -254,7 +254,9 @@ pipeline {
                         }
 
                         steps {
-                          utils.uploadDailyRedirects "desktop/windows/${PACKAGE_NAME}.exe"
+                          script{
+                            utils.uploadDailyRedirects "desktop/windows/${PACKAGE_NAME}.exe"
+                          }
                         }
                       }
                     }
