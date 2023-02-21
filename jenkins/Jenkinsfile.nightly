@@ -46,6 +46,7 @@ pipeline {
     RSTUDIO_VERSION_SUFFIX = 0
     RSTUDIO_VERSION_FLOWER = ""
     COMMIT_HASH=""
+    IS_PRO = false
     BUILD_BRANCH="${env.BRANCH_NAME.replace('/', '%2F')}"
   }
 
@@ -73,6 +74,7 @@ pipeline {
             RSTUDIO_VERSION_SUFFIX) = utils.getVersion(!params.DAILY)
 
           RSTUDIO_VERSION_FLOWER = utils.getFlower()
+          IS_PRO = RSTUDIO_VERSION_SUFFIX.contains('pro')
         }
 
         buildName "${RSTUDIO_VERSION}"
