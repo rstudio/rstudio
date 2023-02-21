@@ -31,7 +31,7 @@ def shouldBuild() {
     }
   }
 
-  return matchesFilter && inHourlySubset;
+  return matchesFilter && inHourlySubset
 }
 
 def renameFile(String dir, String match) {
