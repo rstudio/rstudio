@@ -1800,7 +1800,7 @@ public class UserPrefsAccessor extends Prefs
          "enable_cloud_publish_ui",
          _constants.enableCloudPublishUiTitle(), 
          _constants.enableCloudPublishUiDescription(), 
-         false);
+         true);
    }
 
    /**

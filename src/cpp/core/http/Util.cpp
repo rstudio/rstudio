@@ -490,6 +490,28 @@ void fileRequestHandler(const std::string& wwwLocalPath,
       return;
    }
 
+#ifndef _WIN32
+   // To avoid the runtime CPU cost of compression, also check if there is a
+   // precompressed version of the file available and substitute it in if so.
+   // This is akin to the (gzip|brotli)_static directive for NGINX.
+   FilePath precompressed = FilePath(filePath.getAbsolutePath() + ".br");
+   if (request.acceptsEncoding(kBrotliEncoding) && precompressed.exists())
+   {
+      pResponse->setContentType(filePath.getMimeContentType());
+      pResponse->setContentEncoding(kBrotliEncoding);
+      pResponse->setCacheableFile(precompressed, request);
+      return;
+   }
+   precompressed = FilePath(filePath.getAbsolutePath() + ".gz");
+   if (request.acceptsEncoding(kGzipEncoding) && precompressed.exists())
+   {
+      pResponse->setContentType(filePath.getMimeContentType());
+      pResponse->setContentEncoding(kGzipEncoding);
+      pResponse->setCacheableFile(precompressed, request);
+      return;
+   }
+#endif
+
    // return requested file
    pResponse->setCacheableFile(filePath, request);
 }

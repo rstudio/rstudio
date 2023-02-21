@@ -1291,7 +1291,7 @@ assign(x = ".rs.acCompletionTypes",
 
 .rs.addFunction("subsetCompletions", function(completions, indices)
 {
-   for (name in c("results", "packages", "quote", "type"))
+   for (name in c("results", "packages", "quote", "type", "context"))
       completions[[name]] <- completions[[name]][indices]
    
    if (!is.null(completions[["suggestOnAccept"]]))
@@ -1328,7 +1328,7 @@ assign(x = ".rs.acCompletionTypes",
 {
    old[["suggestOnAccept"]] <- .rs.appendCompletionsOptionalElement(old, new, "suggestOnAccept", FALSE)
    
-   for (name in c("results", "packages", "quote", "type", "meta"))
+   for (name in c("results", "packages", "quote", "type", "meta", "context"))
       old[[name]] <- c(old[[name]], new[[name]])
 
    # resolve duplicates -- a completion is duplicated if its result
@@ -1340,7 +1340,7 @@ assign(x = ".rs.acCompletionTypes",
    
    if (length(drop))
    {
-      for (name in c("results", "packages", "quote", "type", "meta"))
+      for (name in c("results", "packages", "quote", "type", "meta", "context"))
          old[[name]] <- old[[name]][-c(drop)]
 
       if (!is.null(old[["suggestOnAccept"]])) {
@@ -1383,7 +1383,13 @@ assign(x = ".rs.acCompletionTypes",
    typeScores[completions$type == .rs.acCompletionTypes$ARGUMENT] <- 1
    typeScores[completions$type == .rs.acCompletionTypes$COLUMN] <- 2
    typeScores[completions$type == .rs.acCompletionTypes$DATATABLE_SPECIAL_SYMBOL] <- 3
-   typeScores[completions$type == .rs.acCompletionTypes$DATAFRAME] <- 4
+
+   # data has high priority, unless it's requested from a :: or ::: context
+   # rationale: https://github.com/rstudio/rstudio/issues/12678)
+   typeScores[
+      completions$type == .rs.acCompletionTypes$DATAFRAME & 
+      ! completions$context %in% c(.rs.acContextTypes$NAMESPACE_EXPORTED, .rs.acContextTypes$NAMESPACE_ALL)
+      ] <- 4
    typeScores[completions$type == .rs.acCompletionTypes$SECUNDARY_ARGUMENT] <- 5
 
    typeScores[completions$type == .rs.acCompletionTypes$PACKAGE] <- 101

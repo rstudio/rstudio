@@ -1955,6 +1955,11 @@ Error processInfo(const std::string& process, std::vector<ProcessInfo>* pInfo, b
 
    return Success();
 }
+
+Error ProcessInfo::creationTime(boost::posix_time::ptime* pCreationTime) const
+{
+   return systemError(boost::system::errc::not_supported, ERROR_LOCATION);
+}
 #endif
 
 std::ostream& operator<<(std::ostream& os, const ProcessInfo& info)

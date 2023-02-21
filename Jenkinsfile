@@ -218,6 +218,7 @@ rstudioVersionMinor  = 0
 rstudioVersionPatch  = 0
 rstudioVersionSuffix = 0
 rstudioBuildCommit   = ""
+rstudioVersionFlower = ""
 
 // compute release branch by parsing the job name (env.GIT_BRANCH should work here but doesn't appear to), e.g.
 // "IDE/pro-pipeline/v4.3" => "v4.3"
@@ -276,7 +277,7 @@ try {
                 container.inside() {
                     stage('bump version') {
                         def rstudioVersion = sh (
-                          script: "docker/jenkins/rstudio-version.sh bump ${params.RSTUDIO_VERSION_PATCH}",
+                          script: "docker/jenkins/rstudio-version.sh ${params.RSTUDIO_VERSION_PATCH}",
                           returnStdout: true
                         ).trim()
                         echo "RStudio build version: ${rstudioVersion}"
@@ -301,6 +302,8 @@ try {
 
                         // update slack message to include build version
                         messagePrefix = "Jenkins ${env.JOB_NAME} build: <${env.BUILD_URL}display/redirect|${rstudioVersion}>"
+
+                        rstudioVersionFlower = readFile(file: 'version/RELEASE').replaceAll(" ", "-").toLowerCase().trim()
                     }
                 }
             }
@@ -311,7 +314,7 @@ try {
         for (int i = 0; i < containers.size(); i++) {
             // derive the tag for this image
             def current_image = containers[i]
-            def image_tag = "${current_image.os}-${current_image.arch}-${rstudioReleaseBranch}"
+            def image_tag = "${current_image.os}-${current_image.arch}-${rstudioVersionFlower}"
 
             // ensure that this image tag has not already been built (since we
             // recycle tags for many platforms to e.g. build desktop and server
@@ -343,7 +346,7 @@ try {
         for (int i = 0; i < windows_containers.size(); i++) {
           // derive the tag for this image
           def current_image = windows_containers[i]
-          def image_tag = "${current_image.os}-${rstudioReleaseBranch}"
+          def image_tag = "${current_image.os}-${rstudioVersionFlower}"
 
           // ensure that this image tag has not already been built (since we
           // recycle tags for many platforms to e.g. build desktop and electron
@@ -381,11 +384,12 @@ try {
                 def current_container = containers[index]
                 node("${current_container.arch} && linux") {
                     def current_image
-                    docker.withRegistry('https://263245908434.dkr.ecr.us-east-1.amazonaws.com', 'ecr:us-east-1:jenkins-aws') {
+                    docker.withRegistry('https://263245908434.dkr.ecr.us-east-1.amazonaws.com', 'ecr:us-east-1:aws-build-role') {
                         stage('prepare ws/container') {
                           prepareWorkspace()
-                          def image_tag = "${current_container.os}-${current_container.arch}-${rstudioReleaseBranch}"
+                          def image_tag = "${current_container.os}-${current_container.arch}-${rstudioVersionFlower}"
                           current_image = docker.image("jenkins/ide:" + image_tag)
+                          current_image.pull() // this is necessary even though it's called by current_image.inside() to avoid using the locally cached image
                         }
                         current_image.inside("--privileged") {
                             timeout(time: 180, units: 'MINUTES', activity: false) {
@@ -422,8 +426,8 @@ try {
                     node('windows') {
                         stage('prepare container') {
                             checkout scm
-                            docker.withRegistry('https://263245908434.dkr.ecr.us-east-1.amazonaws.com', 'ecr:us-east-1:jenkins-aws') {
-                                def image_tag = "${current_container.os}-${rstudioReleaseBranch}"
+                            docker.withRegistry('https://263245908434.dkr.ecr.us-east-1.amazonaws.com', 'ecr:us-east-1:aws-build-role') {
+                                def image_tag = "${current_container.os}-${rstudioVersionFlower}"
                                 windows_image = docker.image("jenkins/ide:" + image_tag)
                                 windows_image.pull()
                                 image_name = windows_image.imageName()
@@ -431,11 +435,6 @@ try {
                         }
                         docker.image(image_name).inside() {
                             timeout(time: 180, units: 'MINUTES', activity: false) {
-                                stage('dependencies') {
-                                    withCredentials([usernameColonPassword(credentialsId: 'github-rstudio-jenkins', variable: "GITHUB_LOGIN")]) {
-                                        bat 'cd dependencies/windows && set RSTUDIO_GITHUB_LOGIN=$GITHUB_LOGIN && set RSTUDIO_SKIP_QT=1 && install-dependencies.cmd && cd ../..'
-                                    }
-                                }
                                 stage('build'){
                                     def env = "set \"RSTUDIO_VERSION_MAJOR=${rstudioVersionMajor}\" && set \"RSTUDIO_VERSION_MINOR=${rstudioVersionMinor}\" && set \"RSTUDIO_VERSION_PATCH=${rstudioVersionPatch}\" && set \"RSTUDIO_VERSION_SUFFIX=${rstudioVersionSuffix}\""
                                     bat "cd package/win32 && ${env} && set \"PACKAGE_OS=Windows\" && make-package.bat clean ${current_container.flavor} && cd ../.."
@@ -481,9 +480,8 @@ try {
                                     bat "move package\\win32\\build\\${packageName}-RelWithDebInfo.exe package\\win32\\build\\${packageName}.exe"
                                     bat "move package\\win32\\build\\${packageName}-RelWithDebInfo.zip package\\win32\\build\\${packageName}.zip"
 
-                                    // windows docker container cannot reach instance-metadata endpoint. supply credentials at upload.
-
-                                    withCredentials([[$class: 'AmazonWebServicesCredentialsBinding', credentialsId: 'jenkins-aws']]) {
+                                    // Explicitly assume the ide-build role in the main AWS account
+                                    withAWS(role: 'ide-build') {
                                         retry(5) {
                                             bat "aws s3 cp package\\win32\\build\\${packageName}.exe ${buildDest}/${packageName}.exe"
                                             bat "aws s3 cp package\\win32\\build\\${packageName}.zip ${buildDest}/${packageName}.zip"
@@ -518,7 +516,7 @@ try {
                                         // convert the PDB symbols to breakpad format (PDB not supported by Sentry)
                                         bat '''
                                         cd package\\win32\\build
-                                        FOR /F %%G IN ('dir /s /b *.pdb') DO (..\\..\\..\\dependencies\\windows\\breakpad-tools-windows\\dump_syms %%G > %%G.sym)
+                                        FOR /F %%G IN ('dir /s /b *.pdb') DO (c:\\rstudio-tools\\dependencies\\windows\\breakpad-tools-windows\\dump_syms %%G > %%G.sym)
                                         '''
 
                                         retry(sentryUploadRetryLimit) {
@@ -526,7 +524,7 @@ try {
                                             withCredentials([string(credentialsId: 'ide-sentry-api-key', variable: 'SENTRY_API_KEY')]) {
                                                 try {
                                                     // attempt to run sentry uplaod
-                                                    bat "cd package\\win32\\build\\src\\cpp && ..\\..\\..\\..\\..\\dependencies\\windows\\sentry-cli.exe --auth-token %SENTRY_API_KEY% upload-dif --log-level=debug --org rstudio --project ide-backend -t breakpad ."
+                                                    bat "cd package\\win32\\build\\src\\cpp && c:\\rstudio-tools\\dependencies\\windows\\sentry-cli.exe --auth-token %SENTRY_API_KEY% upload-dif --log-level=debug --org rstudio --project ide-backend -t breakpad ."
                                                 } catch(err) {
                                                     // mark build as unstable if it fails
                                                     unstable("Sentry upload failed on Windows")
@@ -543,14 +541,14 @@ try {
         }
 
         // trigger macos build if we're in open-source repo
-        if (env.JOB_NAME.startsWith('IDE/open-source-pipeline')) {
+        if (env.JOB_NAME.startsWith('IDE/OS-Builds/open-source-pipeline')) {
           trigger_external_build('IDE/macos-electron')
         }
 
         parallel parallel_containers
 
         // Ensure we don't build automation on the branches that don't exist
-        if (env.JOB_NAME.startsWith('IDE/open-source-pipeline') &&
+        if (env.JOB_NAME.startsWith('IDE/OS-Builds/open-source-pipeline') &&
             ("${rstudioReleaseBranch}" != "release-ghost-orchid") &&
             ("${rstudioReleaseBranch}" != "v1.4-juliet-rose")) {
           trigger_external_build('IDE/qa-opensource-automation')

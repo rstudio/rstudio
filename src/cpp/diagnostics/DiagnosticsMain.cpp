@@ -85,9 +85,8 @@ void writeUserPrefs(std::ostream& ostr)
 
 int main(int argc, char** argv)
 {
-   core::log::setProgramId("rstudio-diagnostics");
-   core::system::initializeStderrLog("rstudio-diagnostics",
-                                    core::log::LogLevel::WARN);
+   // We intentionally avoid initializing logging as we don't want logging output from this
+   // executable getting injected into the diagnostics report
 
    // ignore SIGPIPE
    Error error = core::system::ignoreSignal(core::system::SigPipe);

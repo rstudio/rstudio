@@ -44,7 +44,7 @@ set PANDOC_NAME=pandoc-%PANDOC_VERSION%
 set PANDOC_FILE=%PANDOC_NAME%-windows-x86_64.zip
 
 REM Pin to specific Quarto version for releases
-set QUARTO_VERSION=1.2.280
+set QUARTO_VERSION=1.2.335
 
 REM Get latest Quarto release version
 REM cd install-quarto
@@ -203,9 +203,9 @@ wget %WGET_ARGS% https://github.com/quarto-dev/quarto-cli/releases/download/v%QU
 echo Unzipping Quarto %QUARTO_FILE%
 rmdir /s /q quarto
 mkdir quarto
-cd quarto
+pushd quarto
 unzip %UNZIP_ARGS% ..\%QUARTO_FILE%
-cd ..
+popd
 del %QUARTO_FILE%
 
 
@@ -240,10 +240,12 @@ if not defined JENKINS_URL (
   )
 )
 
+cd
 echo "Installing panmirror (visual editor)"
 pushd ..\windows\install-panmirror
 call clone-quarto-repo.cmd
 popd
+cd
 
 call install-packages.cmd
 

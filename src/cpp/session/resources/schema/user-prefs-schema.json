@@ -847,7 +847,7 @@
         },
         "enable_cloud_publish_ui": {
             "type": "boolean",
-            "default": false,
+            "default": true,
             "description": "Whether to show UI for publishing content to Posit Cloud."
         },
         "publish_check_certificates": {

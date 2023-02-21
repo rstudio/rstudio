@@ -44,6 +44,7 @@ else()
       NAMES node
       NO_DEFAULT_PATH PATH_SUFFIXES "bin"
       PATHS "/opt/rstudio-tools/dependencies/common/node/${RSTUDIO_NODE_VERSION}"
+      "c:/rstudio-tools/dependencies/common/node/${RSTUDIO_NODE_VERSION}"
       "${CMAKE_CURRENT_LIST_DIR}/../../dependencies/common/node/${RSTUDIO_NODE_VERSION}")
 
    find_program(NPM
@@ -51,6 +52,7 @@ else()
       PATH_SUFFIXES "bin"
       NO_DEFAULT_PATH 
       PATHS "/opt/rstudio-tools/dependencies/common/node/${RSTUDIO_NODE_VERSION}"
+      "c:/rstudio-tools/dependencies/common/node/${RSTUDIO_NODE_VERSION}"
       "${CMAKE_CURRENT_LIST_DIR}/../../dependencies/common/node/${RSTUDIO_NODE_VERSION}")
 
    find_program(NPX
@@ -58,6 +60,7 @@ else()
       PATH_SUFFIXES "bin"
       NO_DEFAULT_PATH 
       PATHS "/opt/rstudio-tools/dependencies/common/node/${RSTUDIO_NODE_VERSION}"
+      "c:/rstudio-tools/dependencies/common/node/${RSTUDIO_NODE_VERSION}"
       "${CMAKE_CURRENT_LIST_DIR}/../../dependencies/common/node/${RSTUDIO_NODE_VERSION}")
 
 endif()

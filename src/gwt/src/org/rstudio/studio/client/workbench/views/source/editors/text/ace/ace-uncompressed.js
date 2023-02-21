@@ -2922,10 +2922,12 @@ var Tokenizer = function(rules) {
                     var matchIndex = match.index;
                     token = {type: null, value: ""};
                     for (var i = 0; i < type.length; i++) {
-                        if (type[i].column === undefined) {
-                            type[i].column = matchIndex;
+                        if (type[i].type) {
+                            if (type[i].column === undefined) {
+                                type[i].column = matchIndex;
+                            }
+                            matchIndex = matchIndex + type[i].value.length;
                         }
-                        matchIndex = matchIndex + type[i].value.length;
                         
                         tokens.push(type[i]);
                     }   
@@ -7399,7 +7401,7 @@ var rgb256Token = exports.rgb256Token = function(value, state, stack, line) {
 };
 var colorToken = exports.colorToken = function(value, state, stack, line) {
     return [
-        { type: "constant.color", value: value, bg: value}
+        { type: "constant.color", value: value, bg: value.toLowerCase()}
     ];
 };
 

@@ -15,7 +15,6 @@
 
 import { app } from 'electron';
 import winston, { format } from 'winston';
-import DailyRotateFile from 'winston-daily-rotate-file';
 import { Syslog } from 'winston-syslog';
 import { Console } from 'winston/lib/winston/transports';
 import LogOptions from '../main/log-options';
@@ -30,6 +29,9 @@ const { combine, printf, timestamp, json } = winston.format;
  */
 export class WinstonLogger implements Logger {
   logger: winston.Logger;
+
+  // track file transport so we can close it
+  fileTransport: winston.transports.FileTransportInstance | null = null;
 
   constructor(logOptions: LogOptions) {
     const level = this.readLogLevelOverride(logOptions.getLogLevel());
@@ -47,9 +49,11 @@ export class WinstonLogger implements Logger {
       defaultMeta: { service: 'rdesktop'}
     });
 
+    let consoleLogging = false;
     let logTransport;
-    if (logOptions.getLoggerType() === 'stderr' || !app.isPackaged) {
+    if (logOptions.getLoggerType() === 'stderr') {
       logTransport = new Console();
+      consoleLogging = true;
     }
 
     if (logOptions.getLoggerType() === 'syslog') {
@@ -65,12 +69,23 @@ export class WinstonLogger implements Logger {
       }
     }
 
-    this.logger.add(logTransport ?? new DailyRotateFile({
-      filename: `${logFile.getStem()}.%DATE%${logFile.getExtension()}`,
-      dirname: logFile.getParent().getAbsolutePath(),
-      datePattern: 'YYYY-MM-DD',
-      frequency: '1d',
-    }));
+    if (!logTransport) {
+      logTransport = new winston.transports.File({
+        filename: logFile.getAbsolutePath(),
+        tailable: true,
+        maxsize: 2000000, // TODO: use max-size from logging.conf (convert from mb to bytes)
+        maxFiles: 100 }); // TODO: use max-rotation from logging.conf
+
+      this.fileTransport = logTransport;
+    }
+
+    this.logger.add(logTransport);
+
+    // on dev builds, always log to console
+    if (!consoleLogging && !app.isPackaged) {
+      this.logger.add(new Console());
+      consoleLogging = true;
+    }
 
     if (optionError) {
       this.logErrorMessage(optionError);
@@ -140,6 +155,21 @@ export class WinstonLogger implements Logger {
       }
     }
   }
+
+  closeLogFile(): void {
+    if (this.fileTransport) {
+      this.logger.remove(this.fileTransport);
+      this.fileTransport = null;
+    }
+  }
+
+  ensureTransport(): void {
+    // Winston emits warnings if there is no transport
+    if (this.logger.transports.length === 0) {
+      this.logger.add(new Console());
+    }
+  }
+
 }
 
 // removes `timestamp` key from json since we add `time` to match Qt log format

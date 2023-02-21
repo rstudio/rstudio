@@ -304,6 +304,20 @@ MAKEFLAGS="${MAKEFLAGS} -j$(sysctl -n hw.ncpu)"
 # set up JAVA_HOME if necessary
 find-java-home
 
+# if SCCACHE_ENABLED environment variable is set, use sccache
+if [ -n "$SCCACHE_ENABLED" ]; then
+    echo "Using sccache"
+   
+    if [ -n "$AWS_ACCESS_KEY_ID" ] || [ $(aws sts get-caller-identity --query "Account" --profile ${AWS_PROFILE:-sso}) -eq 14 ]; then
+        echo "AWS credentials valid, using S3 build cache"
+        export SCCACHE_BUCKET="rstudio-build-cache"
+    else
+        echo "No valid AWS SSO session, using only local build cache"
+        export SCCACHE_DIR=$(pwd)/object_file_cache
+        mkdir -p $SCCACHE_DIR
+    fi
+fi
+
 # perform an x86_64 build
 if [ -n "${build_x86_64}" ]; then
 
@@ -339,6 +353,7 @@ if [ -n "${build_x86_64}" ]; then
       -DGWT_BIN_DIR="${BUILD_DIR_X86_64}/gwt/bin"            \
       -DGWT_WWW_DIR="${BUILD_DIR_X86_64}/gwt/www"            \
       -DGWT_EXTRAS_DIR="${BUILD_DIR_X86_64}/gwt/extras"      \
+      -DSCCACHE_ENABLED=$SCCACHE_ENABLED                     \
       "${PKG_DIR}/../.."
    info "Done!"
 
@@ -351,6 +366,9 @@ if [ -n "${build_x86_64}" ]; then
    unset npm_config_target_arch
    info "Done!"
 
+   if [ -n "$SCCACHE_ENABLED" ]; then
+   sccache --show-stats
+   fi
 fi
 
 # perform an arm64 build
@@ -385,6 +403,7 @@ if [ -n "${build_arm64}" ]; then
       -DRSTUDIO_TOOLS_ROOT="${RSTUDIO_TOOLS_ROOT}/../arm64" \
       -DGWT_BUILD=0                                         \
       -DGWT_COPY=0                                          \
+      -DSCCACHE_ENABLED=$SCCACHE_ENABLED                    \
       "${PKG_DIR}/../.."
    info "Done!"
 
@@ -395,6 +414,10 @@ if [ -n "${build_arm64}" ]; then
    unset npm_config_arch
    unset npm_config_target_arch
    info "Done!"
+
+   if [ -n "$SCCACHE_ENABLED" ]; then
+   sccache --show-stats
+   fi
 
 fi
 

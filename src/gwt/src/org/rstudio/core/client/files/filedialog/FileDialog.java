@@ -82,6 +82,13 @@ public abstract class FileDialog extends FileSystemDialog
       if (filename.length() == 0)
          return false;
       
+      if (filename == "~")
+      {
+         browser_.setFilename("");
+         cd(filename);
+         return false;
+      }
+ 
       // Make sure the browser's notion of the filename is in sync.
       browser_.setFilename(filename);
 

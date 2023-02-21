@@ -187,8 +187,8 @@ public class CompletionRequester
          public int compare(QualifiedName lhs, QualifiedName rhs)
          {
             // compare completion type first
-            int lhsTypeScore = RCompletionType.score(lhs.type);
-            int rhsTypeScore = RCompletionType.score(rhs.type);
+            int lhsTypeScore = RCompletionType.score(lhs.type, lhs.context);
+            int rhsTypeScore = RCompletionType.score(rhs.type, rhs.context);
             if (lhsTypeScore < rhsTypeScore)
                return -1;
             else if (lhsTypeScore > rhsTypeScore)

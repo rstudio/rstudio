@@ -328,7 +328,7 @@ struct ProcessInfo
    std::string state;
    std::vector<std::string> arguments;
 
-#if !defined _WIN32 && !defined __APPLE__
+#ifndef _WIN32
    core::Error creationTime(boost::posix_time::ptime* pCreationTime) const;
 #endif
 };
