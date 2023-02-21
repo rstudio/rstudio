@@ -11,30 +11,25 @@ def ext_map =
 ]
 
 // Use a function to keep the pipeline length down.
-def shouldBuild() {
-  echo "Checking whether to build ${env.FLAVOR} on ${env.ARCH} ${env.OS}"
+def shouldBuild(boolean isDaily, boolean isPro) {
   def matchesFilter = ((params.OS_FILTER == env.OS ||  params.OS_FILTER == 'all') &&
     (params.ARCH_FILTER == env.ARCH ||  params.ARCH_FILTER == 'all') &&
     (params.FLAVOR_FILTER == env.FLAVOR ||  params.FLAVOR_FILTER == 'all'))
 
   // Filter hourlies based on https://github.com/rstudio/rstudio-pro/issues/4143#issuecomment-1362142399
   def inHourlySubset = true
-  if (!params.DAILY) {
-    if (env.IS_PRO) {
-      echo "Building a Pro Build."
+  if (!isDaily) {
+    if (isPro) {
       // build an x86_64 rhel8 WB and an arm64 jammy RDP
       inHourlySubset = ((env.OS == 'rhel8' && env.ARCH == 'x86_64' && env.FLAVOR == 'Server') ||
         (env.OS == 'jammy' && env.ARCH == 'arm64' && env.FLAVOR == 'Desktop'))
     } else {
-      echo "Building an OS Build."
       // build an x86_64 rhel9 Desktop and an arm64 bionic Server
       inHourlySubset = ((env.OS == 'rhel9' && env.ARCH == 'x86_64' && env.FLAVOR == 'Electron') ||
         (env.OS == 'bionic' && env.ARCH == 'arm64' && env.FLAVOR == 'Server'))
     }
   }
 
-  echo "Matches the fitler?: ${matchesFilter}"
-  echo "In the Hourly Subset?: ${inHourlySubset}"
   return matchesFilter && inHourlySubset
 }
 
@@ -137,7 +132,7 @@ pipeline {
 
     stage('Build Matrix') {
       matrix {
-        when { expression { return shouldBuild() } }
+        when { expression { return shouldBuild(params.DAILY, IS_PRO) } }
 
         axes {
           axis {
