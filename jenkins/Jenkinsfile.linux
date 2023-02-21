@@ -11,7 +11,7 @@ def ext_map =
 ]
 
 // Use a function to keep the pipeline length down.
-def shouldBuildboolean() {
+def shouldBuild() {
   echo "Checking whether to build ${env.FLAVOR} on ${env.ARCH} ${env.OS}"
   def matchesFilter = ((params.OS_FILTER == env.OS ||  params.OS_FILTER == 'all') &&
     (params.ARCH_FILTER == env.ARCH ||  params.ARCH_FILTER == 'all') &&
