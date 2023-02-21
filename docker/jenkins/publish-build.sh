@@ -22,6 +22,8 @@ if [ $# -eq 0 ]; then
     echo ""
     echo "--pat     The Github Personal Access Token (PAT) to be used to authorize the commit."
     echo "          May be specified in the environment variable GITHUB_PAT instead."
+    echo ""
+    echo "--channel (optional) The Channel type for the build. One of Hourly, Daily, Preview, Release"
     exit 0
 fi
 
@@ -36,6 +38,7 @@ ARGUMENT_LIST=(
     "file"
     "version"
     "pat"
+    "channel"
 )
 
 # Parse arguments with getopt
@@ -76,6 +79,11 @@ while [[ $# -gt 0 ]]; do
 
         --pat)
             pat=$2
+            shift 2
+            ;;
+
+        --channel)
+            channel=$2
             shift 2
             ;;
 
@@ -136,7 +144,9 @@ timestamp=$(date +"%Y-%m-%dT%H:%M:%S%z")
 
 # Determine release channel (build type) and flower
 RSTUDIO_ROOT_DIR="$( cd -- "$( dirname -- "${BASH_SOURCE[0]}" )" &> /dev/null && cd ../.. && pwd )"
-channel="$(cat "$RSTUDIO_ROOT_DIR/version/BUILDTYPE" | tr '[ ]' '-' | tr -d '[:space:]')"
+if [ -z "$channel" ]; then
+    channel="$(cat "$RSTUDIO_ROOT_DIR/version/BUILDTYPE" | tr '[ ]' '-' | tr -d '[:space:]')"
+fi
 flower="$(cat "$RSTUDIO_ROOT_DIR/version/RELEASE" | tr '[ ]' '-' | tr -d '[:space:]' | tr '[:upper:]' '[:lower:]')"
 
 # Determine commit (use local hash)

@@ -114,7 +114,14 @@ def sentryUpload(String symbolType) {
   * Does not work on windows.
   */
 def publishToDailiesSite(String packageFile, String destinationPath) {
-  sh '${WORKSPACE}/docker/jenkins/publish-build.sh --pat ${GITHUB_LOGIN_PSW} --version ' +
+  def channel = ''
+  if (!params.DAILY) {
+    channel = ' --channel Hourly'
+  }
+
+  sh '${WORKSPACE}/docker/jenkins/publish-build.sh --pat ${GITHUB_LOGIN_PSW} ' +
+    channel +
+    ' --version ' +
     RSTUDIO_VERSION +
     ' --build ' +
     destinationPath +
@@ -123,7 +130,7 @@ def publishToDailiesSite(String packageFile, String destinationPath) {
     '/' +
     packageFile +
     ' --file ' +
-    packageFile
+    packageFile 
 }
 
 /** 
