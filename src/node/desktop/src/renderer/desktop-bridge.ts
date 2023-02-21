@@ -295,7 +295,7 @@ export function getDesktopBridge() {
 
     copyImageAtXYToClipboard: (x: number, y: number, callback: () => void) => {
       ipcRenderer
-        .invoke('desktop_copy_image_at_xy_to_clipboard', x, y, width, height)
+        .invoke('desktop_copy_image_at_xy_to_clipboard', x, y)
         .then(() => callback())
         .catch((error) => reportIpcError('desktop_copy_image_at_xy_to_clipboard', error));
     },
