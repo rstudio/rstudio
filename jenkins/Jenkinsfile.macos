@@ -116,7 +116,7 @@ pipeline {
 
                 steps {
                   script {
-                    ENV = utils.getBuildEnv()
+                    ENV = utils.getBuildEnv(DAILY)
                   }
                   // unlock keychain to ensure build gets signed.
                   sh 'security unlock-keychain -p ${KEYCHAIN_PASSPHRASE} && security set-keychain-settings' // turn off timeout

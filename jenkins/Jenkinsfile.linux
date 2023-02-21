@@ -122,7 +122,7 @@ pipeline {
               IS_PRO = RSTUDIO_VERSION_SUFFIX.contains('pro')
               
               // Set up environment for builds.
-              ENV = utils.getBuildEnv()
+              ENV = utils.getBuildEnv(DAILY)
             }
 
             buildName "${RSTUDIO_VERSION}"
