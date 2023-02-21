@@ -62,7 +62,7 @@ pipeline {
         stage('Build Package and Test') {
           agent {
             docker {
-              image "jenkins/ide:${OS}-${ARCH}-${RSTUDIO_VERSION_FLOWER}"
+              image "jenkins/ide:${IS_PRO? 'pro-' : '' }${OS}-${ARCH}-${RSTUDIO_VERSION_FLOWER}"
               reuseNode true
             }
           }
