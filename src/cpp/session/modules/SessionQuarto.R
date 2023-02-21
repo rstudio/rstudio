@@ -49,6 +49,9 @@
          if (!is.null(editor$markdown$references$prefix)) {
             editor$markdown$references$prefix <- scalarChar(editor$markdown$references$prefix)
          }
+         if (!is.null(editor$markdown$references$links)) {
+            editor$markdown$references$links <- .rs.scalar(as.logical(editor$markdown$references$links))
+         }
       }
    }
 
