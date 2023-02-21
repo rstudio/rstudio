@@ -46,6 +46,7 @@ pipeline {
     RSTUDIO_VERSION_SUFFIX = 0
     RSTUDIO_VERSION_FLOWER = ""
     COMMIT_HASH=""
+    IS_PRO = false
     BUILD_BRANCH="${env.BRANCH_NAME.replace('/', '%2F')}"
   }
 
@@ -73,6 +74,7 @@ pipeline {
             RSTUDIO_VERSION_SUFFIX) = utils.getVersion(!params.DAILY)
 
           RSTUDIO_VERSION_FLOWER = utils.getFlower()
+          IS_PRO = RSTUDIO_VERSION_SUFFIX.contains('pro')
         }
 
         buildName "${RSTUDIO_VERSION}"
@@ -113,7 +115,7 @@ pipeline {
           exclude {
             axis {
               name 'os'
-              values 'centos7', 'windows'
+              values 'centos7', 'windows', 'opensuse15'
             }
             axis {
               name 'arch'
@@ -158,6 +160,10 @@ pipeline {
         }
       }
 
+      environment {
+        JOB_ROOT = "IDE/${IS_PRO ? 'Pro' : 'OS'}-Builds/Platforms"
+      }
+
       stages {
         stage ("Create a Sentry Release") {
           agent {
@@ -200,7 +206,7 @@ pipeline {
 
           steps {
             build wait: false,
-                  job: "IDE/OS-Builds/Platforms/windows-pipeline/${env.BUILD_BRANCH}",
+                  job: "${JOB_ROOT}/windows-pipeline/${env.BUILD_BRANCH}",
                   parameters: [
                     gitParameter(name: "COMMIT_HASH", value: "${COMMIT_HASH}"),
                     string(name: "RSTUDIO_VERSION_PATCH", value: "${RSTUDIO_VERSION_PATCH}"),
@@ -221,7 +227,7 @@ pipeline {
 
           steps {
             build wait: false,
-                  job: "IDE/OS-Builds/Platforms/linux-pipeline/${env.BUILD_BRANCH}",
+                  job: "${JOB_ROOT}/linux-pipeline/${env.BUILD_BRANCH}",
                   parameters: [
                     gitParameter(name: "COMMIT_HASH", value: "${COMMIT_HASH}"),
                     string(name: "RSTUDIO_VERSION_PATCH", value: "${RSTUDIO_VERSION_PATCH}"),
@@ -244,7 +250,7 @@ pipeline {
 
           steps {
             build wait: false,
-                  job: "IDE/OS-Builds/Platforms/macos-pipeline/${env.BUILD_BRANCH}",
+                  job: "${JOB_ROOT}/Platforms/macos-pipeline/${env.BUILD_BRANCH}",
                   parameters: [
                     gitParameter(name: "COMMIT_HASH", value: "${COMMIT_HASH}"),
                     string(name: "RSTUDIO_VERSION_PATCH", value: "${RSTUDIO_VERSION_PATCH}"),

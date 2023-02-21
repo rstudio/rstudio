@@ -196,8 +196,8 @@ pipeline {
 
                     when {
                       allOf {
-                        environment name: 'FLAVOR', value: 'Electron' 
-                        environment name: 'IS_PRO', value: false
+                        environment name: 'FLAVOR', value: 'Electron'
+                        expression { return !env.IS_PRO }
                       }
                     }
 

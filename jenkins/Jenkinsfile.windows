@@ -245,7 +245,7 @@ pipeline {
                         when {
                           allOf {
                             environment name: 'FLAVOR', value: 'Electron' 
-                            environment name: 'IS_PRO', value: false
+                            expression { return !env.IS_PRO }
                           }
                         }
 
@@ -254,7 +254,9 @@ pipeline {
                         }
 
                         steps {
-                          utils.uploadDailyRedirects "desktop/windows/${PACKAGE_NAME}.exe"
+                          script{
+                            utils.uploadDailyRedirects "desktop/windows/${PACKAGE_NAME}.exe"
+                          }
                         }
                       }
                     }
