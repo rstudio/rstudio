@@ -305,16 +305,7 @@ void zoteroGetActiveCollectionSpecs(const json::JsonRpcRequest& request,
 
    // get the specs
    getCollectionSpecs(collections, [cont, collections](core::Error error, ZoteroCollectionSpecs specs) {
-      json::JsonRpcResponse response;
-      if (error)
-      {
-         json::setErrorResponse(error, &response);
-         cont(Success(), &response);
-      }
-      else
-      {
-         handleGetCollectionSpecs(Success(), specs, cont);
-      }
+      handleGetCollectionSpecs(error, specs, cont);
    });
 
 }
