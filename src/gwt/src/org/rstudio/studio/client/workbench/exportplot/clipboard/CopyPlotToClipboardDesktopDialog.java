@@ -91,9 +91,14 @@ public class CopyPlotToClipboardDesktopDialog
                DesktopFrame frame = Desktop.getFrame();
                
                if (BrowseCap.isElectron()) {
+                  // The x and y calculations here will give us the approximate (x,y)
+                  // point in the middle of the img. The top-left corner is not used
+                  // because it doesn't consistently mark the top-left of the img element.
+                  int imgX = (img.getClientWidth() / 2) + ElementEx.getClientLeft(img);
+                  int imgY = (img.getClientHeight() / 2) + ElementEx.getClientTop(img);
                   frame.copyImageAtXYToClipboard(
-                        img.getAbsoluteLeft(),
-                        img.getAbsoluteTop(),
+                        imgX,
+                        imgY,
                         completed);
                } else {
                   // NOTE: we use a one-pixel fudge factor here to avoid copying
