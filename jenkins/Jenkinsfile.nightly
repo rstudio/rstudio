@@ -135,10 +135,10 @@ pipeline {
             }
 
             steps {
-              echo "Creating image jenkins/ide:${os}-${arch}-${RSTUDIO_VERSION_FLOWER}-dev"
+              echo "Creating image jenkins/ide:${IS_PRO? 'pro-' : '' }${os}-${arch}-${RSTUDIO_VERSION_FLOWER}-dev"
               pullBuildPush(
                 image_name: 'jenkins/ide',
-                image_tag: "${os}-${arch}-${RSTUDIO_VERSION_FLOWER}-dev",
+                image_tag: "${IS_PRO? 'pro-' : '' }${os}-${arch}-${RSTUDIO_VERSION_FLOWER}-dev",
                 latest_tag: false,
                 build_arg_jenkins_uid: 'JENKINS_UID',
                 build_arg_jenkins_gid: 'JENKINS_GID',
