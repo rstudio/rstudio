@@ -188,24 +188,6 @@ pipeline {
                       }
                     }
                   }
-
-                  stage("Upload Daily Build Redirects") {
-                    environment {
-                      RSTUDIO_ORG_PEM = credentials('www-rstudio-org-pem')
-                    }
-
-                    when {
-                      allOf {
-                        environment name: 'FLAVOR', value: 'Electron'
-                        expression { return !env.IS_PRO }
-                      }
-                    }
-
-                    steps {
-                      // upload daily build redirects
-                      utils.uploadDailyRedirects "${PRODUCT}/macos/${PACKAGE_FILE}"
-                    }
-                  }
                   
                   stage("Sentry Upload") {
                     when { expression { return params.DAILY } }
@@ -250,6 +232,26 @@ pipeline {
                           // publish build to dailies page
                           utils.publishToDailiesSite "${env.PACKAGE_FILE}", "${env.PRODUCT}/macos"
                         }
+                      }
+                    }
+                  }
+
+                  stage("Upload Daily Build Redirects") {
+                    environment {
+                      RSTUDIO_ORG_PEM = credentials('www-rstudio-org-pem')
+                    }
+
+                    when {
+                      allOf {
+                        environment name: 'FLAVOR', value: 'Electron'
+                        expression { return !env.IS_PRO }
+                      }
+                    }
+
+                    steps {
+                      script {
+                        // upload daily build redirects
+                        utils.uploadDailyRedirects "${PRODUCT}/macos/${PACKAGE_FILE}"
                       }
                     }
                   }
