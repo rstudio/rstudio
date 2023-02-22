@@ -8,18 +8,16 @@
 ## Install Hooks
 The script will copy the hooks to [.git/hooks](/.git/hooks/) and make the hooks executable.
 
-⚠️ Note that this will replace any existing hooks with the same name! ⚠️
+⚠️ Note that this will replace any existing hooks with the same name in your local project! ⚠️
 
-### Linux/Mac
-Run [set-up-git-hooks](./set-up-git-hooks) from this directory (`git_hooks`).
+💡 Windows: run the commands from a `Git Bash` terminal.
+
+From this directory (`git_hooks`), use the commands below to make the script executable and then run [set-up-git-hooks](./set-up-git-hooks).
 
 ```sh
 chmod +x ./set-up-git-hooks
 ./set-up-git-hooks
 ```
-
-### Windows
-TODO
 
 ## Uninstall Hooks
 
@@ -28,6 +26,6 @@ Go to [.git/hooks](/.git/hooks/) and delete the file for the hook you want to un
 
 > If you are using VSCode and don't see the `.git` folder in your file explorer, go to VSCode settings and search for "exclude". You may need to remove `.git` from the exclude list for the file explorer.
 
-## Skipping Hooks
+## Skip Hooks
 Hooks can be skipped by appending `--no-verify` to the git command you want to run without its corresponding hook.
 - eg. To skip the pre-commit hook, you'd use `git commit --no-verify`.
