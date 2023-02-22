@@ -55,6 +55,7 @@
     "fork-ts-checker-webpack-plugin": "7.3.0",
     "json": "11.0.0",
     "json-schema-to-typescript": "11.0.2",
+    "lint-staged": "13.1.2",
     "mocha": "9.2.2",
     "node-loader": "2.0.0",
     "nyc": "15.1.0",
