@@ -44,6 +44,8 @@
 - Fixed intermittent hanging logins in Workbench using ActiveDirectory (rstudio-pro #4285)
 - Fixed previewing rendered html_document causes URLs to open in browser #12494
 - Fixed link opens in browser after Render with qml file when hypothes.is comments are turned on in `_quarto.yml` #12413
+- Fixed incorrect icons displayed in the sessions drop-down menu in RStudio Pro (rstudio-pro #4257)
+- Fixed Copy Plot to Clipboard - pasting bitfile option not working correctly in latest build #12466
 
 ### Accessibility Improvements
 
@@ -56,3 +58,4 @@
 - Keyboard support has been added to the job summary drop-down in session list items on the homepage
 - Improved alt-text and updated link to posit.co on sign-in page logo (rstudio-pro #4096)
 - Help pane home page switches to single-column display at narrow widths (#12643)
+- RStudio Pro sessions drop-down panel icons marked with role="presentation" (rstudio-pro #4257)
