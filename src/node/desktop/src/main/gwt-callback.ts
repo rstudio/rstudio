@@ -504,6 +504,18 @@ export class GwtCallback extends EventEmitter {
       },
     );
 
+    ipcMain.handle(
+      'desktop_copy_image_at_xy_to_clipboard',
+      (_event, x: number, y: number) => {
+        const focusedWindow = BrowserWindow.getFocusedWindow();
+        if (focusedWindow?.webContents) {
+          focusedWindow.webContents.copyImageAt(x, y);
+        } else {
+          logger().logError(`Failed to copy image at x: ${x}, y: ${y} to clipboard`);
+        }
+      },
+    );
+
     ipcMain.on('desktop_export_page_region_to_file', 
       (event, targetPath, format, left, top, width, height) => {
         const rect: Rectangle = { x: left, y: top, width, height };
