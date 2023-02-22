@@ -47,6 +47,15 @@ def renameTarFile(String dir) {
 
   return ""
 }
+
+def getAgentLabel(String arch) {
+  if (arch == 'amd64') {
+    return 'linux && amd64 && 4x'
+  }
+
+  return 'linux-4x && x86_64'
+}
+
 pipeline {
   agent none
 
@@ -180,7 +189,7 @@ pipeline {
                 registryCredentialsId 'ecr:us-east-1:aws-build-role'
                 registryUrl 'https://263245908434.dkr.ecr.us-east-1.amazonaws.com'
                 reuseNode true
-                label "linux && ${ARCH}"
+                label "${getAgentLabel(ARCH)}"
               }
             }
 
