@@ -156,7 +156,7 @@ pipeline {
                     when { expression { return params.PUBLISH } }
 
                     environment {
-                      PACKAGE_VERSION = RSTUDIO_RELEASE.replace('+', '-')
+                      PACKAGE_VERSION = RSTUDIO_VERSION.replace('+', '-')
                       PACKAGE_NAME = "RStudio-${IS_PRO ? 'pro-' : ''}${PACKAGE_VERSION}"
                     }
 
@@ -224,7 +224,7 @@ pipeline {
                         environment {
                           GITHUB_LOGIN = credentials('github-rstudio-jenkins')
                           PRODUCT = "${utils.getProductName()}"
-                          RSTUDIO_RELEASE = "${RSTUDIO_VERSION}"
+                          RSTUDIO_RELEASE = RSTUDIO_VERSION
                         }
 
                         steps {
