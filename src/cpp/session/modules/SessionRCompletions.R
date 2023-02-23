@@ -69,6 +69,7 @@ assign(x = ".rs.acCompletionTypes",
           R6_OBJECT   = 28, 
           DATATABLE_SPECIAL_SYMBOL = 29,
           SECUNDARY_ARGUMENT       = 30,
+          ACTIVE_BINDING = 31,
 
           CONTEXT     = 99
        )
@@ -2023,8 +2024,14 @@ assign(x = ".rs.acCompletionTypes",
       if (packages[[i]] == "")
          return(.rs.acCompletionTypes$UNKNOWN)
       
+      name <- results[[i]]
+      env <- as.environment(packages[[i]])
+
+      if (bindingIsActive(name, env))
+         return(.rs.acCompletionTypes$ACTIVE_BINDING)
+
       object <- tryCatch(
-         get(results[[i]], packages[[i]]),
+         get(name, envir = env),
          error = identity
       )
       
