@@ -10,6 +10,16 @@ def ext_map =
   'opensuse15': 'rpm'
 ]
 
+def package_os =
+[
+  'bionic':     'Ubuntu Bionic',
+  'jammy':      'Ubuntu Jammy',
+  'centos7':    'CentOS 7',
+  'rhel8':      'RHEL 8',
+  'rhel9':      'RHEL 9',
+  'opensuse15': 'OpenSUSE 15'
+]
+
 // Use a function to keep the pipeline length down.
 def shouldBuild(boolean isDaily, boolean isPro) {
   def matchesFilter = ((params.OS_FILTER == env.OS ||  params.OS_FILTER == 'all') &&
@@ -228,7 +238,7 @@ pipeline {
                 steps {
                   dir('package/linux') {
                     withAWS(role: 'build', roleAccount: AWS_ACCOUNT_ID) {
-                      sh "${ENV} ./make-${FLAVOR.toLowerCase()}-package ${ext_map[env.OS].toUpperCase()}"
+                      sh "PACKAGE_OS='${package_os[env.OS]}' ${ENV} ./make-${FLAVOR.toLowerCase()}-package ${ext_map[env.OS].toUpperCase()}"
                     }
                     sh '../../docker/jenkins/sign-release.sh build-${FLAVOR}-' + ext_map[env.OS].toUpperCase() + '/rstudio-*.' + ext_map[env.OS] + ' ${CODESIGN_KEY} ${CODESIGN_PASS}'
                   }
