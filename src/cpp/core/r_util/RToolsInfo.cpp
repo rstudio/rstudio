@@ -281,29 +281,6 @@ RToolsInfo::RToolsInfo(const std::string& name,
       clangArgs.push_back("-D__GNUC__=10");
       clangArgs.push_back("-D__GNUC_MINOR__=3");
       clangArgs.push_back("-D__GNUC_PATCHLEVEL__=0");
-
-      // get C headers paths
-      auto cStems = {
-         "x86_64-w64-mingw32.static.posix/lib/gcc/x86_64-w64-mingw32.static.posix/10.3.0/include",
-         "x86_64-w64-mingw32.static.posix/include",
-         "x86_64-w64-mingw32.static.posix/lib/gcc/x86_64-w64-mingw32.static.posix/10.3.0/include-fixed"
-      };
-
-      for (auto&& stem : cStems)
-         cIncludePaths.push_back(installPath.completeChildPath(stem).getAbsolutePath());
-
-      // get C++ headers
-      auto cppStems = {
-         "x86_64-w64-mingw32.static.posix/lib/gcc/x86_64-w64-mingw32.static.posix/10.3.0/include/c++",
-         "x86_64-w64-mingw32.static.posix/lib/gcc/x86_64-w64-mingw32.static.posix/10.3.0/include/c++/x86_64-w64-mingw32.static.posix",
-         "x86_64-w64-mingw32.static.posix/lib/gcc/x86_64-w64-mingw32.static.posix/10.3.0/include/c++/backward",
-         "x86_64-w64-mingw32.static.posix/lib/gcc/x86_64-w64-mingw32.static.posix/10.3.0/include",
-         "x86_64-w64-mingw32.static.posix/include",
-         "x86_64-w64-mingw32.static.posix/lib/gcc/x86_64-w64-mingw32.static.posix/10.3.0/include-fixed",
-      };
-
-      for (auto&& stem : cppStems)
-         cppIncludePaths.push_back(installPath.completeChildPath(stem).getAbsolutePath());
    }
    else if (name == "4.3")
    {
@@ -329,29 +306,6 @@ RToolsInfo::RToolsInfo(const std::string& name,
       clangArgs.push_back("-D__GNUC__=12");
       clangArgs.push_back("-D__GNUC_MINOR__=2");
       clangArgs.push_back("-D__GNUC_PATCHLEVEL__=0");
-
-      // get C headers paths
-      auto cStems = {
-         "x86_64-w64-mingw32.static.posix/lib/gcc/x86_64-w64-mingw32.static.posix/12.2.0/include",
-         "x86_64-w64-mingw32.static.posix/include",
-         "x86_64-w64-mingw32.static.posix/lib/gcc/x86_64-w64-mingw32.static.posix/12.2.0/include-fixed"
-      };
-
-      for (auto&& stem : cStems)
-         cIncludePaths.push_back(installPath.completeChildPath(stem).getAbsolutePath());
-
-      // get C++ headers
-      auto cppStems = {
-         "x86_64-w64-mingw32.static.posix/lib/gcc/x86_64-w64-mingw32.static.posix/12.2.0/include/c++",
-         "x86_64-w64-mingw32.static.posix/lib/gcc/x86_64-w64-mingw32.static.posix/12.2.0/include/c++/x86_64-w64-mingw32.static.posix",
-         "x86_64-w64-mingw32.static.posix/lib/gcc/x86_64-w64-mingw32.static.posix/12.2.0/include/c++/backward",
-         "x86_64-w64-mingw32.static.posix/lib/gcc/x86_64-w64-mingw32.static.posix/12.2.0/include",
-         "x86_64-w64-mingw32.static.posix/include",
-         "x86_64-w64-mingw32.static.posix/lib/gcc/x86_64-w64-mingw32.static.posix/12.2.0/include-fixed",
-      };
-
-      for (auto&& stem : cppStems)
-         cppIncludePaths.push_back(installPath.completeChildPath(stem).getAbsolutePath());
    }
    else
    {
