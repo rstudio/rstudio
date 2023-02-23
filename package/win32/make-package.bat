@@ -29,15 +29,38 @@ if "%1" == "/?" goto :showhelp
 SETLOCAL ENABLEDELAYEDEXPANSION
 for %%A in (%*) do (
       set KNOWN_ARG=0
-      if /I "%%A" == "clean" set CLEANBUILD=1 && set KNOWN_ARG=1
-      if /I "%%A" == "debug" set DEBUG_BUILD=1 && set KNOWN_ARG=1
-      if /I "%%A" == "desktop" set RSTUDIO_TARGET=Desktop && set KNOWN_ARG=1
-      if /I "%%A" == "electron" set RSTUDIO_TARGET=Electron && set KNOWN_ARG=1
-      if /I "%%A" == "multiarch" set MULTIARCH=1 && set KNOWN_ARG=1
-      if /I "%%A" == "nogwt" set BUILD_GWT=0 && set KNOWN_ARG=1
-      if /I "%%A" == "nozip" set NOZIP=1 && set KNOWN_ARG=1
-      if /I "%%A" == "quick" set QUICK=1 && set KNOWN_ARG=1
-
+      if /I "%%A" == "clean" (
+            set CLEANBUILD=1
+            set KNOWN_ARG=1
+      )
+      if /I "%%A" == "debug" (
+            set DEBUG_BUILD=1
+            set KNOWN_ARG=1
+      )
+      if /I "%%A" == "desktop" (
+            set RSTUDIO_TARGET=Desktop
+            set KNOWN_ARG=1
+      )
+      if /I "%%A" == "electron" (
+            set RSTUDIO_TARGET=Electron
+            set KNOWN_ARG=1
+      )
+      if /I "%%A" == "multiarch" (
+            set MULTIARCH=1
+            set KNOWN_ARG=1
+      )
+      if /I "%%A" == "nogwt" (
+            set BUILD_GWT=0
+            set KNOWN_ARG=1
+      )
+      if /I "%%A" == "nozip" (
+            set NOZIP=1
+            set KNOWN_ARG=1
+      )
+      if /I "%%A" == "quick" (
+            set QUICK=1
+            set KNOWN_ARG=1
+      )
       if "!KNOWN_ARG!" == "0" goto :showhelp
 )
 
@@ -221,6 +244,16 @@ echo     multiarch:  produce both 32-bit and 64-bit rsession executables
 echo     nogwt:      skip GWT build (use previous GWT build)
 echo     nozip:      skip creation of ZIP file
 echo     quick:      skip creation of setup package
+echo.
+echo     Environment variables specify the product's build version (default is 99.9.9).
+echo.
+echo     Example:
+echo.
+echo     set RSTUDIO_VERSION_MAJOR=2023
+echo     set RSTUDIO_VERSION_MINOR=8
+echo     set RSTUDIO_VERSION_PATCH=1
+echo     set RSTUDIO_VERSION_SUFFIX=-daily+321
+echo     make-package clean electron
 echo.
 exit /b 0
 
