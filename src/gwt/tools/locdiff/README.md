@@ -19,6 +19,7 @@ Some useful commit hashes:
 - 34ea3031 - Spotted Wakerobin release (2022.07.0+548)
 - 7872775e - Spotted Wakerobin patch 1 (2022.07.1+554)
 - e7373ef8 - Spotted Wakerobin patch 2 (2022.07.2+576)
+- 7d165dcf - Elsbeth Geranium release (2022.12.0+353)
 
 ## Usage
 
@@ -37,7 +38,7 @@ cd ../new
 git checkout main
 cd ..
 npm i
-node start
+npm start
 ```
 
 Results are written to `locdiff.csv`, which can be loaded into Excel, etc.
