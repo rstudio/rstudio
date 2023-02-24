@@ -47,6 +47,7 @@
 - Fixed link opens in browser after Render with qml file when hypothes.is comments are turned on in `_quarto.yml` #12413
 - Fixed incorrect icons displayed in the sessions drop-down menu in RStudio Pro (rstudio-pro #4257)
 - Fixed Copy Plot to Clipboard - pasting bitfile option not working correctly in latest build #12466
+- Fixed display problems with Choose R dialog when UI language is French #12717
 
 ### Accessibility Improvements
 
