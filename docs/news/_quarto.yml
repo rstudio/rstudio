@@ -15,13 +15,13 @@ website:
       - text: "Guides"
         menu:
           - text: "Workbench Install Guide"
-            url: 'https://docs.rstudio.com/rsw/installation/'
+            url: 'https://docs.posit.co/rsw/installation/'
           - text: "Workbench User Guide"
-            url: 'https://docs.rstudio.com/ide/server-pro/user/'
+            url: 'https://docs.posit.co/ide/server-pro/user/'
           - text: "RStudio Open Source User Guide"
-            url: 'https://docs.rstudio.com/ide/user/'
+            url: 'https://docs.posit.co/ide/user/'
       - icon: house
-        url: https://docs.rstudio.com/
+        url: https://docs.posit.co/
         aria-label: Posit Documentation website
       - icon: question-circle
         url: https://support.rstudio.com/
