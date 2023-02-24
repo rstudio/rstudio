@@ -1,23 +1,11 @@
-.Rproj.user
-.Rhistory
-.RData
 .DS_Store
 kindlegen*
-_book
 rsconnect
 CMake*
 !CMakeLists.txt
 Makefile
-_bookdown.yml
-cover.tex
-build-book.sh
 cmake_install.cmake
-rstudio-server-pro-*-admin-guide.*
-_main.html
-*.zip
 
-index_files/**
-_variables.yml
 _site/
 _publish.yml
 /.quarto/
