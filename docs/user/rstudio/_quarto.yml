@@ -32,7 +32,7 @@ website:
           - text: "Posit Workbench User Guide"
             url: 'https://docs.posit.co/ide/server-pro/user/'
       - text: "Release Notes"
-        url: "https://docs.posit.co/ide/news"      
+        url: "https://docs.posit.co/ide/news/"      
       - icon: house
         url: https://docs.posit.co/
         aria-label: Posit Documentation website
