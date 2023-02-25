@@ -32,6 +32,7 @@
 
 #include <string>
 #include <vector>
+#include <cstdint>
 
 namespace rstudio {
 namespace core {
