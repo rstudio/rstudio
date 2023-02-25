@@ -17,6 +17,7 @@
 #define CORE_THREAD_HPP
 
 #include <queue>
+#include <set>
 
 #include <boost/utility.hpp>
 #include <boost/function.hpp>
