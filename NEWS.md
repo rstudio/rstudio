@@ -4,6 +4,7 @@
 -
 
 ### Fixed
+- Fixed display problems with Choose R dialog when UI language is French #12717
 -
 
 ### Accessibility Improvements
