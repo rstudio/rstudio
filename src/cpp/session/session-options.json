@@ -561,7 +561,7 @@
             "name": "r-compatible-graphics-engine-version",
             "type": "int",
             "memberName": "rCompatibleGraphicsEngineVersion_",
-            "defaultValue": 15,
+            "defaultValue": 16,
             "description": "Specifies the maximum graphics engine version that this version of RStudio is compatible with."
          },
          {
