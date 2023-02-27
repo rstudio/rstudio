@@ -167,7 +167,6 @@ sys.source('{}', envir = as.environment('tools:rstudio'));
             importRdata,
             exportRdata);
    
-   std::cerr << command << std::endl;
    core::system::Options environment;
    environment.push_back(std::make_pair("RSTUDIO_CHILD_PROCESS_PANE", "job"));
 

@@ -91,7 +91,6 @@
       # export any created values
       .rs.emitProgress("section", "Exporting environment", con)
       vars <- ls(envir = globalenv(), all.names = TRUE)
-      vars <- setdiff(vars, "..rstudio..")
       
       save(list = vars,
            file = exportRdata, 
