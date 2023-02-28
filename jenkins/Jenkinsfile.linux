@@ -172,7 +172,7 @@ pipeline {
           exclude {
             axis {
               name 'OS'
-              values 'centos7', 'opensuse15'
+              values 'bionic', 'centos7', 'rhel8', 'opensuse15'
             }
             axis {
               name 'ARCH'
@@ -198,7 +198,6 @@ pipeline {
                 image "jenkins/ide:${IS_PRO? 'pro-' : '' }${OS}-${ARCH}-${RSTUDIO_VERSION_FLOWER}"
                 registryCredentialsId 'ecr:us-east-1:aws-build-role'
                 registryUrl 'https://263245908434.dkr.ecr.us-east-1.amazonaws.com'
-                reuseNode true
                 label "${getAgentLabel(ARCH)}"
               }
             }
@@ -355,6 +354,11 @@ pipeline {
                     }
                   }
                 }
+              }
+            }
+            post {
+              always {
+                deleteDir()
               }
             }
           }
