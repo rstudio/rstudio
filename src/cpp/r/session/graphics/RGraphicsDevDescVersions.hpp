@@ -896,6 +896,7 @@ struct DevDescVersion16
 
     SEXP (*capabilities)(SEXP cap);
 
+    // below added in version 16 (R 4.3.0)
     void (*glyph)(int n, int *glyphs, double *x, double *y, 
                   SEXP font, double size,
                   int colour, double rot, pDevDesc dd);
