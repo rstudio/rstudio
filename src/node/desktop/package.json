@@ -17,7 +17,7 @@
     "test": "electron-mocha --no-sandbox --full-trace --config ./test/unit/mocharc.json",
     "testcover": "nyc electron-mocha -c --config ./test/unit/mocharc.json",
     "testwip": "electron-mocha -c -g WIP --config ./test/unit/mocharc.json",
-    "format": "./scripts/create-prettier-ignore-file.sh && npx prettier --write . --ignore-path .prettier_and_git_ignores",
+    "format": "npx prettier --write . --ignore-path .gitignore",
     "postinstall": "npx electron-rebuild && ts-node scripts/generate.ts",
     "generate": "ts-node scripts/generate.ts"
   },
@@ -55,6 +55,7 @@
     "fork-ts-checker-webpack-plugin": "7.3.0",
     "json": "11.0.0",
     "json-schema-to-typescript": "11.0.2",
+    "lint-staged": "13.1.2",
     "mocha": "9.2.2",
     "node-loader": "2.0.0",
     "nyc": "15.1.0",
