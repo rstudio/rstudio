@@ -298,6 +298,7 @@ pDevDesc allocate(const RSDevDesc& devDesc)
       pDD->fillStroke = devDesc.fillStroke;
       pDD->capabilities = devDesc.capabilities;
 
+pDD->glyph = devDesc.glyph;
       return (pDevDesc) pDD;
    }
       
