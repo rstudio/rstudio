@@ -61,15 +61,16 @@ pipeline {
             RSTUDIO_VERSION_MINOR,
             RSTUDIO_VERSION_PATCH,
             RSTUDIO_VERSION_SUFFIX) = utils.getVersion(!params.DAILY)
-          RSTUDIO_FLOWER = utils.getFlower() 
+          RSTUDIO_FLOWER = utils.getFlower()
           currentBuild.displayName = "${RSTUDIO_VERSION}"
           IS_PRO = RSTUDIO_VERSION_SUFFIX.contains('pro')
+          PACKAGE_NAME = "RStudio-${IS_PRO ? 'pro-' : ''}${RSTUDIO_VERSION.replace('+', '-')}"
         }
       }
     }
 
     stage('Use Windows Agent') {
-      agent { 
+      agent {
         label {
           label "windows"
           // Set a custom workspace relative to the workspace root (C:\Users\jenikns) to ensure file names
@@ -109,7 +110,7 @@ pipeline {
                   }
                 }
 
-                stages { 
+                stages {
                   stage ('Checkout') {
                     when { expression { params.COMMIT_HASH != '' } }
                     steps {
@@ -155,14 +156,10 @@ pipeline {
                   stage('Sign, Upload, and Publish') {
                     when { expression { return params.PUBLISH } }
 
-                    environment {
-                      PACKAGE_NAME = "RStudio-${IS_PRO ? 'pro-' : ''}${RSTUDIO_VERSION.replace('+', '-')}"
-                    }
-
                     stages {
                       stage('Sign') {
                         environment {
-                          PFX_FILE = credentials('ide-windows-signing-pfx') 
+                          PFX_FILE = credentials('ide-windows-signing-pfx')
                           PFX_PASS = credentials('ide-pfx-passphrase')
                         }
 
@@ -228,42 +225,41 @@ pipeline {
                         environment {
                           GITHUB_LOGIN = credentials('github-rstudio-jenkins')
                           PRODUCT = "${utils.getProductName()}"
-                          RSTUDIO_RELEASE = "${RSTUDIO_VERSION}"
                         }
 
                         steps {
                           script {
 
                             // publish the build (self installing exe)
-                            powershell '.\\docker\\jenkins\\publish-build.ps1 -build ${env:PRODUCT}/windows -url https://s3.amazonaws.com/rstudio-ide-build/${env:PRODUCT}/windows/${env:PACKAGE_NAME}.exe -pat ${env:GITHUB_LOGIN_PSW} -file package\\win32\\build\\${env:PACKAGE_NAME}.exe -version ${env:RSTUDIO_RELEASE}'
+                            powershell '.\\docker\\jenkins\\publish-build.ps1 -build ${env:PRODUCT}/windows -url https://s3.amazonaws.com/rstudio-ide-build/${env:PRODUCT}/windows/${env:PACKAGE_NAME}.exe -pat ${env:GITHUB_LOGIN_PSW} -file package\\win32\\build\\${env:PACKAGE_NAME}.exe -version ${env:RSTUDIO_VERSION}'
 
                             // publish the build (installer-less zip)
-                            powershell '.\\docker\\jenkins\\publish-build.ps1 -build ${env:PRODUCT}/windows-xcopy -url https://s3.amazonaws.com/rstudio-ide-build/${env:PRODUCT}/windows/${env:PACKAGE_NAME}.zip -pat ${env:GITHUB_LOGIN_PSW} -file package\\win32\\build\\${env:PACKAGE_NAME}.zip -version ${env:RSTUDIO_RELEASE}'
-                          }
-                        }
-                      }
-
-                      stage ("Upload Daily Build Redirects") {
-                        agent { label "linux" } // must be on a linux node to use a bash script
-
-                        when {
-                          allOf {
-                            environment name: 'FLAVOR', value: 'Electron' 
-                            expression { return !env.IS_PRO }
-                          }
-                        }
-
-                        environment {
-                          RSTUDIO_PEM = credentials('www-rstudio-org-pem') 
-                        }
-
-                        steps {
-                          script{
-                            utils.uploadDailyRedirects "desktop/windows/${PACKAGE_NAME}.exe"
+                            powershell '.\\docker\\jenkins\\publish-build.ps1 -build ${env:PRODUCT}/windows-xcopy -url https://s3.amazonaws.com/rstudio-ide-build/${env:PRODUCT}/windows/${env:PACKAGE_NAME}.zip -pat ${env:GITHUB_LOGIN_PSW} -file package\\win32\\build\\${env:PACKAGE_NAME}.zip -version ${env:RSTUDIO_VERSION}'
                           }
                         }
                       }
                     }
+                  }
+                }
+              } // Build Windows
+
+              stage ("Upload Daily Build Redirects") {
+                agent { label "linux" } // must be on a linux node to use a bash script
+
+                when {
+                  allOf {
+                    environment name: 'FLAVOR', value: 'Electron'
+                    expression { return !env.IS_PRO }
+                  }
+                }
+
+                environment {
+                  RSTUDIO_PEM = credentials('www-rstudio-org-pem')
+                }
+
+                steps {
+                  script {
+                    utils.uploadDailyRedirects "desktop/windows/${PACKAGE_NAME}.exe"
                   }
                 }
               }
