@@ -60,7 +60,7 @@ def renameTarFile(String dir) {
 
 def getAgentLabel(String arch) {
   if (arch == 'amd64') {
-    return 'linux && amd64 && 4x'
+    return 'linux && amd64'
   }
 
   return 'linux-4x && x86_64'
