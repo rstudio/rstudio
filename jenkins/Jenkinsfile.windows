@@ -228,18 +228,18 @@ pipeline {
                       GITHUB_LOGIN = credentials('github-rstudio-jenkins')
                       PRODUCT = "${utils.getProductName()}"
                       // This is being done to make the variables visible to the powershell call
-                      VERSION = RSTUDIO_VERSION
-                      PACKAGE = PACKAGE_NAME
+                      VERSION = "${RSTUDIO_VERSION}"
+                      PACKAGE = "${PACKAGE_NAME}"
                     }
 
                     steps {
                       script {
 
                         // publish the build (self installing exe)
-                        powershell '.\\docker\\jenkins\\publish-build.ps1 -build ${env:PRODUCT}/windows -url https://s3.amazonaws.com/rstudio-ide-build/${env:PRODUCT}/windows/${env:PACKAGE_NAME}.exe -pat ${env:GITHUB_LOGIN_PSW} -file package\\win32\\build\\${env:PACKAGE_NAME}.exe -version ${env:RSTUDIO_VERSION}'
+                        powershell '.\\docker\\jenkins\\publish-build.ps1 -build ${env:PRODUCT}/windows -url https://s3.amazonaws.com/rstudio-ide-build/${env:PRODUCT}/windows/${env:PACKAGE}.exe -pat ${env:GITHUB_LOGIN_PSW} -file package\\win32\\build\\${env:PACKAGE}.exe -version ${env:VERSION}'
 
                         // publish the build (installer-less zip)
-                        powershell '.\\docker\\jenkins\\publish-build.ps1 -build ${env:PRODUCT}/windows-xcopy -url https://s3.amazonaws.com/rstudio-ide-build/${env:PRODUCT}/windows/${env:PACKAGE_NAME}.zip -pat ${env:GITHUB_LOGIN_PSW} -file package\\win32\\build\\${env:PACKAGE_NAME}.zip -version ${env:RSTUDIO_VERSION}'
+                        powershell '.\\docker\\jenkins\\publish-build.ps1 -build ${env:PRODUCT}/windows-xcopy -url https://s3.amazonaws.com/rstudio-ide-build/${env:PRODUCT}/windows/${env:PACKAGE}.zip -pat ${env:GITHUB_LOGIN_PSW} -file package\\win32\\build\\${env:PACKAGE}.zip -version ${env:VERSION}'
                       }
                     }
                   }
