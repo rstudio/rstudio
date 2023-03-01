@@ -285,11 +285,10 @@ pipeline {
         }
       }
     }
-
-    post {
-      always {
-        sendNotifications slack_channel: SLACK_CHANNEL
-      }
+  }
+  post {
+    always {
+      sendNotifications slack_channel: SLACK_CHANNEL
     }
   }
 }
