@@ -246,50 +246,50 @@ pipeline {
                 }
               }
             }
-          } // Build Windows
-        }
-      }
-      post {
-        always {
-          deleteDir()
+            post {
+              always {
+                deleteDir()
+              }
+            }
+          } // Build Windows Stage
+
+          // Run on linux agent
+          stage ("Upload Daily Build Redirects") {
+            agent { label "linux" } 
+
+            when {
+              allOf {
+                expression { return !env.IS_PRO }
+                expression { return params.PUBLISH }
+              }
+            }
+
+            environment {
+              RSTUDIO_PEM = credentials('www-rstudio-org-pem')
+            }
+
+            steps {
+              // the uploadDailyRedirects uses a bash script, so much be run on linux
+              // Also depends on flavor, so must be in the matrix
+              script {
+                utils.uploadDailyRedirects "desktop/windows/${PACKAGE_NAME}.exe"
+              }
+            }
+
+            post {
+              always {
+                deleteDir()
+              }
+            }
+          }
         }
       }
     }
 
-    // Run on linux agent
-    stage ("Upload Daily Build Redirects") {
-      agent { label "linux" } 
-
-      when {
-        allOf {
-          environment name: 'FLAVOR', value: 'Electron'
-          expression { return !env.IS_PRO }
-          expression { return params.PUBLISH }
-        }
+    post {
+      always {
+        sendNotifications slack_channel: SLACK_CHANNEL
       }
-
-      environment {
-        RSTUDIO_PEM = credentials('www-rstudio-org-pem')
-      }
-
-      steps {
-        // the uploadDailyRedirects uses a bash script, so much be run on linux
-        script {
-          utils.uploadDailyRedirects "desktop/windows/${PACKAGE_NAME}.exe"
-        }
-      }
-
-      post {
-        always {
-          deleteDir()
-        }
-      }
-    }
-  }
-
-  post {
-    always {
-      sendNotifications slack_channel: SLACK_CHANNEL
     }
   }
 }
