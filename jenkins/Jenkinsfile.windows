@@ -246,11 +246,6 @@ pipeline {
                 }
               }
             }
-            post {
-              always {
-                deleteDir()
-              }
-            }
           } // Build Windows Stage
 
           // Run on linux agent
@@ -261,6 +256,7 @@ pipeline {
               allOf {
                 expression { return !env.IS_PRO }
                 expression { return params.PUBLISH }
+                environment name: 'FLAVOR', value: 'Electron'
               }
             }
 
