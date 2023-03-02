@@ -44,12 +44,12 @@ set PANDOC_NAME=pandoc-%PANDOC_VERSION%
 set PANDOC_FILE=%PANDOC_NAME%-windows-x86_64.zip
 
 REM Pin to specific Quarto version for releases
-set QUARTO_VERSION=1.2.335
+REM set QUARTO_VERSION=1.2.335
 
 REM Get latest Quarto release version
-REM cd install-quarto
-REM for /F "delims=" %%L in ('powershell.exe -File get-quarto-version.ps1') do (set "QUARTO_VERSION=%%L")
-REM cd ..
+cd install-quarto
+for /F "delims=" %%L in ('powershell.exe -File get-quarto-version.ps1') do (set "QUARTO_VERSION=%%L")
+cd ..
 
 set QUARTO_FILE=quarto-%QUARTO_VERSION%-win.zip
 
