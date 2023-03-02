@@ -19,7 +19,7 @@ param(
 
     # The Github Personal Access PAT to use to publish the build
     [Parameter(Mandatory)]
-    [string]$pat
+    [string]$pat,
 
     # The release channel of the build, Hourly, Daily, Preview or Release
     # Default value if it's not supplied is the contents of the version/BUILDTYPE file
