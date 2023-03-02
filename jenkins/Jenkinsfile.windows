@@ -230,16 +230,33 @@ pipeline {
                       // This is being done to make the variables visible to the powershell call
                       VERSION = "${RSTUDIO_VERSION}"
                       PACKAGE = "${PACKAGE_NAME}"
+                      // Channel to prevent hourlies from ending up on the Dailies page
+                      CHANNEL = "${DAILY ? 'Daily' : 'Hourly'}"
                     }
 
-                    steps {
-                      script {
+                    stages {
+                      stage("Publish Exe") {
+                        steps {
+                          script {
+                            // publish the build (self installing exe)
+                            powershell '.\\docker\\jenkins\\publish-build.ps1 -build ${env:PRODUCT}/windows -url https://s3.amazonaws.com/rstudio-ide-build/${env:PRODUCT}/windows/${env:PACKAGE}.exe -pat ${env:GITHUB_LOGIN_PSW} -file package\\win32\\build\\${env:PACKAGE}.exe -version ${env:VERSION} -channel ${env:CHANNEL}'
+                          }
+                        }
+                      }
 
-                        // publish the build (self installing exe)
-                        powershell '.\\docker\\jenkins\\publish-build.ps1 -build ${env:PRODUCT}/windows -url https://s3.amazonaws.com/rstudio-ide-build/${env:PRODUCT}/windows/${env:PACKAGE}.exe -pat ${env:GITHUB_LOGIN_PSW} -file package\\win32\\build\\${env:PACKAGE}.exe -version ${env:VERSION}'
-
-                        // publish the build (installer-less zip)
-                        powershell '.\\docker\\jenkins\\publish-build.ps1 -build ${env:PRODUCT}/windows-xcopy -url https://s3.amazonaws.com/rstudio-ide-build/${env:PRODUCT}/windows/${env:PACKAGE}.zip -pat ${env:GITHUB_LOGIN_PSW} -file package\\win32\\build\\${env:PACKAGE}.zip -version ${env:VERSION}'
+                      // Only publish the zip for dailies, hourlies don't need it
+                      stage("Publish Zip") {
+                        when {
+                          allOf {
+                            expression { return params.DAILY }
+                          }
+                        }
+                        steps {
+                          script {
+                            // publish the build (installer-less zip)
+                            powershell '.\\docker\\jenkins\\publish-build.ps1 -build ${env:PRODUCT}/windows-xcopy -url https://s3.amazonaws.com/rstudio-ide-build/${env:PRODUCT}/windows/${env:PACKAGE}.zip -pat ${env:GITHUB_LOGIN_PSW} -file package\\win32\\build\\${env:PACKAGE}.zip -version ${env:VERSION} -channel ${env:CHANNEL}'
+                          }
+                        }
                       }
                     }
                   }
@@ -256,6 +273,7 @@ pipeline {
               allOf {
                 expression { return !env.IS_PRO }
                 expression { return params.PUBLISH }
+                expression { return params.DAILY}
                 environment name: 'FLAVOR', value: 'Electron'
               }
             }
