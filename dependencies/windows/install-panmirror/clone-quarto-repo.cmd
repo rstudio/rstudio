@@ -10,6 +10,7 @@ if not exist quarto (
   echo "quarto repo already cloned"
 
   pushd quarto
+  git fetch
   git reset --hard
   git clean -dfx
   git checkout main
