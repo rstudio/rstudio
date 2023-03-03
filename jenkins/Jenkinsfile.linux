@@ -348,6 +348,14 @@ pipeline {
                       RSTUDIO_ORG_PEM = credentials('www-rstudio-org-pem') 
                     }
 
+                    when { 
+                      allOf {
+                        expression { return params.PUBLISH }
+                        expression { return params.DAILY}
+                        expression { return !env.IS_PRO } 
+                      }
+                    }
+
                     steps {
                       script {
                         utils.uploadDailyRedirects "${AWS_PATH}/${PACKAGE_FILE}"
