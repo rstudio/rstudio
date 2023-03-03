@@ -114,6 +114,9 @@ $url = "https://api.github.com/repos/rstudio/latest-builds/contents/content/$pro
 # Send to Github! We have to use basic parsing here because this script runs on SKU of Windows that
 # doesn't contain a working copy of IE (and, incredibly, without -UseBasicParsing, Invoke-WebRequest
 # has a dendency on the IE DOM engine).
+
+Write-Host "Writing content to $url"
+
 try
 {
     $createResponse = Invoke-RestMethod -Body $payload -Method 'PUT' -Headers $headers -Uri $url -UseBasicParsing
