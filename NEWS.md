@@ -1,6 +1,7 @@
 ## RStudio 2023.05.0 "Mountain Hydrangea" Release Notes
 
 ### New
+- Updated to Electron 23.1.2 #12785
 -
 
 ### Fixed
