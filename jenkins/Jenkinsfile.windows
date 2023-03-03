@@ -101,7 +101,7 @@ pipeline {
           stage('Build Windows') {
             agent {
               docker {
-                image "jenkins/ide:${IS_PRO? 'pro-' : '' }windows-x86_64-${RSTUDIO_FLOWER}-dev"
+                image "jenkins/ide:${IS_PRO? 'pro-' : '' }windows-x86_64-${RSTUDIO_FLOWER}"
                   registryUrl 'https://263245908434.dkr.ecr.us-east-1.amazonaws.com'
                   registryCredentialsId 'ecr:us-east-1:aws-build-role'
                   reuseNode true
@@ -178,7 +178,7 @@ pipeline {
                   stage('Upload') {
                     steps {
                       script {
-                        def buildDest = "s3://rstudio-ide-build/${FLAVOR}/windows"
+                        def buildDest = "s3://rstudio-ide-build/${FLAVOR.toLowerCase()}/windows"
 
                         // strip unhelpful suffixes from filenames
                         bat "move package\\win32\\build\\${PACKAGE_NAME}-RelWithDebInfo.exe package\\win32\\build\\${PACKAGE_NAME}.exe"
@@ -231,12 +231,17 @@ pipeline {
                       VERSION = "${RSTUDIO_VERSION}"
                       PACKAGE = "${PACKAGE_NAME}"
                       // Channel to prevent hourlies from ending up on the Dailies page
-                      CHANNEL = "${DAILY ? 'Daily' : 'Hourly'}"
+                      CHANNEL = "${ params.DAILY ? 'Daily' : 'Hourly'}"
                     }
 
                     stages {
                       stage("Publish Exe") {
                         steps {
+                          echo "Publishing the following .exe build:"
+                          echo "Product : ${PRODUCT}"
+                          echo "Version : ${VERSION}"
+                          echo "Package : ${PACKAGE}"
+                          echo "Channel : ${CHANNEL}"
                           script {
                             // publish the build (self installing exe)
                             powershell '.\\docker\\jenkins\\publish-build.ps1 -build ${env:PRODUCT}/windows -url https://s3.amazonaws.com/rstudio-ide-build/${env:PRODUCT}/windows/${env:PACKAGE}.exe -pat ${env:GITHUB_LOGIN_PSW} -file package\\win32\\build\\${env:PACKAGE}.exe -version ${env:VERSION} -channel ${env:CHANNEL}'
@@ -252,6 +257,11 @@ pipeline {
                           }
                         }
                         steps {
+                          echo "Publishing the following .zip build:"
+                          echo "Product : ${PRODUCT}"
+                          echo "Version : ${VERSION}"
+                          echo "Package : ${PACKAGE}"
+                          echo "Channel : ${CHANNEL}"
                           script {
                             // publish the build (installer-less zip)
                             powershell '.\\docker\\jenkins\\publish-build.ps1 -build ${env:PRODUCT}/windows-xcopy -url https://s3.amazonaws.com/rstudio-ide-build/${env:PRODUCT}/windows/${env:PACKAGE}.zip -pat ${env:GITHUB_LOGIN_PSW} -file package\\win32\\build\\${env:PACKAGE}.zip -version ${env:VERSION} -channel ${env:CHANNEL}'
@@ -273,8 +283,8 @@ pipeline {
               allOf {
                 expression { return !env.IS_PRO }
                 expression { return params.PUBLISH }
-                expression { return params.DAILY}
-                environment name: 'FLAVOR', value: 'Electron'
+                expression { return params.DAILY }
+                environment name: 'FLAVOR', value: 'Desktop'
               }
             }
 
@@ -295,11 +305,11 @@ pipeline {
                 deleteDir()
               }
             }
-          }
-        }
-      }
-    }
-  }
+          } // stage ("Upload Daily Build Redirects")
+        } // Matrix Stages
+      } // Matrix
+    } // stage ("Build Matrix")
+  } // Root Stages
   post {
     always {
       sendNotifications slack_channel: SLACK_CHANNEL
