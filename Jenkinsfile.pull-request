@@ -2,7 +2,7 @@ def utils
 
 pipeline {
   agent {
-    label 'linux && amd64'
+    label 'linux && x86_64'
   }
 
   options {
@@ -14,7 +14,7 @@ pipeline {
   environment {
         GITHUB_LOGIN = credentials('github-rstudio-jenkins')
         OS = 'jammy'
-        ARCH = 'amd64'
+        ARCH = 'x86_64'
         FLAVOR = 'server'
         TYPE = 'DEB'
         AWS_ACCOUNT_ID = '749683154838'
