@@ -40,8 +40,8 @@ for %%A in (%*) do (
       echo DEBUG: Parsing %%A
       if /I "%%A" == "clean" set CLEANBUILD=1 && set KNOWN_ARG=1
       if /I "%%A" == "debug" set DEBUG_BUILD=1 && set KNOWN_ARG=1
-      if /I "%%A" == "desktop" set RSTUDIO_TARGET=Desktop && set KNOWN_ARG=1
-      if /I "%%A" == "electron" set RSTUDIO_TARGET=Electron && set KNOWN_ARG=1
+      if /I "%%A" == "desktop" set "RSTUDIO_TARGET=Desktop" && set KNOWN_ARG=1
+      if /I "%%A" == "electron" set "RSTUDIO_TARGET=Electron" && set KNOWN_ARG=1
       if /I "%%A" == "multiarch" set MULTIARCH=1 && set KNOWN_ARG=1
       if /I "%%A" == "nogwt" set BUILD_GWT=0 && set KNOWN_ARG=1
       if /I "%%A" == "nozip" set NOZIP=1 && set KNOWN_ARG=1
