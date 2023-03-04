@@ -236,7 +236,7 @@ pipeline {
                     }
                   }
 
-                  stage("Upload Daily Build Redirects") {
+                  stage("Update Daily Build Redirects") {
                     environment {
                       RSTUDIO_ORG_PEM = credentials('www-rstudio-org-pem')
                     }
@@ -251,7 +251,7 @@ pipeline {
                     steps {
                       script {
                         // upload daily build redirects
-                        utils.uploadDailyRedirects "${PRODUCT}/macos/${PACKAGE_FILE}"
+                        utils.updateDailyRedirects "${PRODUCT}/macos/${PACKAGE_FILE}"
                       }
                     }
                   }

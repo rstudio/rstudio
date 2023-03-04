@@ -276,7 +276,7 @@ pipeline {
           } // Build Windows Stage
 
           // Run on linux agent
-          stage ("Upload Daily Build Redirects") {
+          stage ("Update Daily Build Redirects") {
             agent { label "linux" } 
 
             when {
@@ -293,10 +293,10 @@ pipeline {
             }
 
             steps {
-              // the uploadDailyRedirects uses a bash script, so much be run on linux
+              // the updateDailyRedirects uses a bash script, so much be run on linux
               // Also depends on flavor, so must be in the matrix
               script {
-                utils.uploadDailyRedirects "desktop/windows/${PACKAGE_NAME}.exe"
+                utils.updateDailyRedirects "desktop/windows/${PACKAGE_NAME}.exe"
               }
             }
 

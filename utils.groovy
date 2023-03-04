@@ -180,7 +180,7 @@ def getProductName() {
   * Upload dailiy redirects.
   * Does not work on windows.
   */
-def uploadDailyRedirects(String path) {
+def updateDailyRedirects(String path) {
   sh 'docker/jenkins/publish-daily-binary.sh https://s3.amazonaws.com/rstudio-ide-build/' + path + ' ${RSTUDIO_ORG_PEM}'
 }
 
