@@ -158,6 +158,10 @@ pipeline {
               stage('Sign, Upload, and Publish') {
                 when { expression { return params.PUBLISH } }
 
+                environment {
+                  LONG_PACKAGE_NAME = "${PACKAGE_NAME}-RelWithDebInfo"
+                }
+
                 stages {
                   stage('Sign') {
                     environment {
@@ -166,30 +170,26 @@ pipeline {
                     }
 
                     steps {
-                      script {
-                        def packageName = "${PACKAGE_NAME}-RelWithDebInfo"
-
-                        bat '"C:\\Program Files (x86)\\Windows Kits\\10\\bin\\10.0.19041.0\\x86\\signtool" sign /f %PFX_FILE% /p %PFX_PASS% /v /debug /n "RStudio PBC" /t http://timestamp.digicert.com  package\\win32\\build\\' + packageName + '.exe'
-                        bat "\"C:\\Program Files (x86)\\Windows Kits\\10\\bin\\10.0.19041.0\\x86\\signtool\" verify /v /pa package\\win32\\build\\${packageName}.exe"
-                      }
+                      bat '"C:\\Program Files (x86)\\Windows Kits\\10\\bin\\10.0.19041.0\\x86\\signtool" sign /f %PFX_FILE% /p %PFX_PASS% /v /debug /n "RStudio PBC" /t http://timestamp.digicert.com  package\\win32\\build\\' + LONG_PACKAGE_NAME + '.exe'
+                      bat "\"C:\\Program Files (x86)\\Windows Kits\\10\\bin\\10.0.19041.0\\x86\\signtool\" verify /v /pa package\\win32\\build\\${LONG_PACKAGE_NAME}.exe"
                     }
                   }
 
                   stage('Upload') {
+                    environment {
+                      BUILD_DEST = "s3://rstudio-ide-build/${FLAVOR.toLowerCase()}/windows"
+                    }
+
                     steps {
-                      script {
-                        def buildDest = "s3://rstudio-ide-build/${FLAVOR.toLowerCase()}/windows"
+                      // strip unhelpful suffixes from filenames
+                      bat "move package\\win32\\build\\${LONG_PACKAGE_NAME}.exe package\\win32\\build\\${PACKAGE_NAME}.exe"
+                      bat "move package\\win32\\build\\${LONG_PACKAGE_NAME}.zip package\\win32\\build\\${PACKAGE_NAME}.zip"
 
-                        // strip unhelpful suffixes from filenames
-                        bat "move package\\win32\\build\\${PACKAGE_NAME}-RelWithDebInfo.exe package\\win32\\build\\${PACKAGE_NAME}.exe"
-                        bat "move package\\win32\\build\\${PACKAGE_NAME}-RelWithDebInfo.zip package\\win32\\build\\${PACKAGE_NAME}.zip"
-
-                        // windows docker container cannot reach instance-metadata endpoint. supply credentials at upload.
-                        withAWS(role: 'ide-build', region: 'us-east-1') {
-                          retry(5) {
-                            bat "aws s3 cp package\\win32\\build\\${PACKAGE_NAME}.exe ${buildDest}/${PACKAGE_NAME}.exe"
-                            bat "aws s3 cp package\\win32\\build\\${PACKAGE_NAME}.zip ${buildDest}/${PACKAGE_NAME}.zip"
-                          }
+                      // windows docker container cannot reach instance-metadata endpoint. supply credentials at upload.
+                      withAWS(role: 'ide-build', region: 'us-east-1') {
+                        retry(5) {
+                          bat "aws s3 cp package\\win32\\build\\${PACKAGE_NAME}.exe ${BUILD_DEST}/${PACKAGE_NAME}.exe"
+                          bat "aws s3 cp package\\win32\\build\\${PACKAGE_NAME}.zip ${BUILD_DEST}/${PACKAGE_NAME}.zip"
                         }
                       }
                     }
