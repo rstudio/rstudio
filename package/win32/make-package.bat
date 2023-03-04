@@ -239,8 +239,9 @@ REM desired build version and product name, and the build-info.ts source file
 REM gets modified with details on the build (date, git-commit, etc). We try to 
 REM put these back to their original state at the end of the package build.
 :set-version
-echo DEBUG: In set-version function, RSTUDIO_TARGET= %RSTUDIO_TARGET%
+echo DEBUG: In set-version function, RSTUDIO_TARGET=(%RSTUDIO_TARGET%)
 if "%RSTUDIO_TARGET%" == "Electron" (
+      echo DEBUG: In if in set-version function
       pushd %ELECTRON_SOURCE_DIR%
 
       echo ensure msvs_version=2019
