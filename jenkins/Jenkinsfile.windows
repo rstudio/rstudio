@@ -284,7 +284,7 @@ pipeline {
                 expression { return !env.IS_PRO }
                 expression { return params.PUBLISH }
                 expression { return params.DAILY }
-                environment name: 'FLAVOR', value: 'Desktop'
+                environment name: 'FLAVOR', value: 'Electron'
               }
             }
 
