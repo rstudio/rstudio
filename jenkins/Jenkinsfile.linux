@@ -232,6 +232,8 @@ pipeline {
                 environment {
                   CODESIGN_KEY = credentials('gpg-codesign-private-key')
                   CODESIGN_PASS = credentials('gpg-codesign-passphrase')
+                  BUILD_DIR = "build-${FLAVOR}-${ext_map[env.OS].toUpperCase()}"
+                  PKG_EXTENSION = "${ext_map[env.OS]}"
                 }
 
                 steps {
@@ -239,7 +241,8 @@ pipeline {
                     withAWS(role: 'build', roleAccount: AWS_ACCOUNT_ID) {
                       sh "PACKAGE_OS='${package_os[env.OS]}' ${ENV} ./make-${FLAVOR.toLowerCase()}-package clean ${ext_map[env.OS].toUpperCase()}"
                     }
-                    sh '../../docker/jenkins/sign-release.sh build-${FLAVOR}-' + ext_map[env.OS].toUpperCase() + '/rstudio-*.' + ext_map[env.OS] + ' ${CODESIGN_KEY} ${CODESIGN_PASS}'
+                    sh 'echo "Build: ${BUILD_DIR}/rstudio-*.${PKG_EXTENSION}'
+                    sh '../../docker/jenkins/sign-release.sh ${BUILD_DIR}/rstudio-*.${PKG_EXTENSION} ${CODESIGN_KEY} ${CODESIGN_PASS}'
                   }
                 }
               }
