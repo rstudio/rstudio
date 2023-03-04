@@ -32,9 +32,12 @@ if "%1" == "-h" goto :showhelp
 if "%1" == "help" goto :showhelp
 if "%1" == "/?" goto :showhelp
 
+echo DEBUG: Parsing arguments
+
 SETLOCAL ENABLEDELAYEDEXPANSION
 for %%A in (%*) do (
       set KNOWN_ARG=0
+      echo DEBUG: Parsing %%A
       if /I "%%A" == "clean" set CLEANBUILD=1 && set KNOWN_ARG=1
       if /I "%%A" == "debug" set DEBUG_BUILD=1 && set KNOWN_ARG=1
       if /I "%%A" == "desktop" set RSTUDIO_TARGET=Desktop && set KNOWN_ARG=1
@@ -125,6 +128,7 @@ if not defined RSTUDIO_VERSION_SUFFIX set RSTUDIO_VERSION_SUFFIX=-dev+999
 set RSTUDIO_VERSION_FULL=%RSTUDIO_VERSION_MAJOR%.%RSTUDIO_VERSION_MINOR%.%RSTUDIO_VERSION_PATCH%%RSTUDIO_VERSION_SUFFIX%
 
 REM put version and product name into package.json
+echo DEBUG: Calling set-version function
 call :set-version %RSTUDIO_VERSION_FULL% RStudio
 
 REM Establish build dir
@@ -235,6 +239,7 @@ REM desired build version and product name, and the build-info.ts source file
 REM gets modified with details on the build (date, git-commit, etc). We try to 
 REM put these back to their original state at the end of the package build.
 :set-version
+echo DEBUG: In set-version function, RSTUDIO_TARGET= %RSTUDIO_TARGET%
 if "%RSTUDIO_TARGET%" == "Electron" (
       pushd %ELECTRON_SOURCE_DIR%
 
