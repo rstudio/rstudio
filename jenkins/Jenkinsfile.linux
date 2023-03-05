@@ -239,7 +239,7 @@ pipeline {
                 steps {
                   dir('package/linux') {
                     withAWS(role: 'build', roleAccount: AWS_ACCOUNT_ID) {
-                      sh "PACKAGE_OS='${package_os[env.OS]}' ${ENV} ./make-${FLAVOR.toLowerCase()}-package clean ${ext_map[env.OS].toUpperCase()}"
+                      sh "PACKAGE_OS='${package_os[env.OS]}' ${ENV} ./make-${FLAVOR.toLowerCase()}-package ${ext_map[env.OS].toUpperCase()} clean"
                     }
                     sh 'echo "Build: ${BUILD_DIR}/rstudio-*.${PKG_EXTENSION}'
                     sh '../../docker/jenkins/sign-release.sh ${BUILD_DIR}/rstudio-*.${PKG_EXTENSION} ${CODESIGN_KEY} ${CODESIGN_PASS}'
