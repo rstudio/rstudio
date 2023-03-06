@@ -231,11 +231,11 @@ pipeline {
                         timeout(activity: true, time: 15) {
                           bat '''
                             cd package\\win32\\build
-                            FOR /F %%G IN ('dir /s /b *.pdb') DO (..\\..\\..\\dependencies\\windows\\breakpad-tools-windows\\dump_syms.exe %%G > %%G.sym)
+                            FOR /F %%G IN ('dir /s /b *.pdb') DO (c:\\rstudio-tools\\dependencies\\windows\\breakpad-tools-windows\\dump_syms.exe %%G > %%G.sym)
                           '''
 
                           // upload the breakpad symbols, attempt to run sentry uplaod
-                          bat 'cd package\\win32\\build\\src\\cpp && ..\\..\\..\\..\\..\\dependencies\\windows\\sentry-cli.exe --auth-token %SENTRY_API_KEY% upload-dif --log-level=debug --org rstudio --project ide-backend -t breakpad .'
+                          bat 'cd package\\win32\\build\\src\\cpp && c:\\rstudio-tools\\dependencies\\windows\\sentry-cli.exe --auth-token %SENTRY_API_KEY% upload-dif --log-level=debug --org rstudio --project ide-backend -t breakpad .'
                         }
                       }
                     }
