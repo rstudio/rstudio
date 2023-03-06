@@ -376,6 +376,35 @@ pipeline {
         }
       }
     }
+
+    stage('Trigger Automation Testing') {
+      agent { label 'linux' }
+
+      // Skip for hourly builds, non-published builds, and branches that don't 
+      // have corresponding automation branches
+      when {
+        allOf {
+          expression { return params.DAILY }
+          expression { return params.PUBLISH }
+          expression { return env.BRANCH_NAME != "release-ghost-orchid" }
+          expression { return env.BRANCH_NAME != "v1.4-juliet-rose" }
+        }
+      }
+
+      steps {
+        build wait: false,
+          job: "IDE/qa-opensource-automation",
+          parameters: [
+            string(name: 'RSTUDIO_VERSION_MAJOR', value: "${RSTUDIO_VERSION_MAJOR}")
+            string(name: 'RSTUDIO_VERSION_MINOR', value: "${RSTUDIO_VERSION_MINOR}")
+            string(name: 'RSTUDIO_VERSION_PATCH', value: "${RSTUDIO_VERSION_PATCH}")
+            string(name: 'RSTUDIO_VERSION_SUFFIX', value: "${RSTUDIO_VERSION_SUFFIX}")
+            string(name: 'SLACK_CHANNEL', value: "${params.SLACK_CHANNEL}")
+            string(name: 'GIT_REVISION', value: "${params.COMMIT_HASH}")
+            string(name: 'BRANCH_NAME', value: "${env.BRANCH_NAME}")
+          ]
+      }
+    }
   }
 
   post {
