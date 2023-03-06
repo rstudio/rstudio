@@ -30,9 +30,10 @@ def shouldBuild(boolean isDaily, boolean isPro) {
   def inHourlySubset = true
   if (!isDaily) {
     if (isPro) {
-      // build an x86_64 rhel8 WB and an arm64 jammy RDP
+      // build an x86_64 rhel8 WB, x86_64 rhel9 QT RDP, and an arm64 jammy Electron RDP 
       inHourlySubset = ((env.OS == 'rhel8' && env.ARCH == 'x86_64' && env.FLAVOR == 'Server') ||
-        (env.OS == 'jammy' && env.ARCH == 'arm64' && env.FLAVOR == 'Desktop'))
+        (env.OS == 'centos7' && env.ARCH == 'x86_64' && env.FLAVOR == 'Desktop') || 
+        (env.OS == 'jammy' && env.ARCH == 'arm64' && env.FLAVOR == 'Electron'))
     } else {
       // build an arm64 rhel9 Desktop and an x86_64 bionic Server
       inHourlySubset = ((env.OS == 'rhel9' && env.ARCH == 'arm64' && env.FLAVOR == 'Electron') ||
