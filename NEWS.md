@@ -4,7 +4,7 @@
 ### New
 
 #### RStudio IDE
-- 
+- Updated to Electron 23.1.2 #12785
 
 #### Posit Workbench
 - 
