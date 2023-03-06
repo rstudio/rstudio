@@ -214,6 +214,7 @@ pipeline {
               GITHUB_LOGIN = credentials('github-rstudio-jenkins')
               AWS_BUCKET="rstudio-ide-build"
               PRODUCT="${utils.getProductName()}"
+              BUILD_LOCATION = "build-${FLAVOR}-${ext_map[env.OS].toUpperCase()}" // Don't use BUILD_DIR because it impacts the make-package script
             }
 
             stages {
@@ -232,7 +233,6 @@ pipeline {
                 environment {
                   CODESIGN_KEY = credentials('gpg-codesign-private-key')
                   CODESIGN_PASS = credentials('gpg-codesign-passphrase')
-                  BUILD_DIR = "build-${FLAVOR}-${ext_map[env.OS].toUpperCase()}"
                   PKG_EXTENSION = "${ext_map[env.OS]}"
                 }
 
@@ -241,8 +241,7 @@ pipeline {
                     withAWS(role: 'build', roleAccount: AWS_ACCOUNT_ID) {
                       sh "PACKAGE_OS='${package_os[env.OS]}' ${ENV} ./make-${FLAVOR.toLowerCase()}-package ${ext_map[env.OS].toUpperCase()} clean"
                     }
-                    sh 'echo "Build: ${BUILD_DIR}/rstudio-*.${PKG_EXTENSION}"'
-                    sh '../../docker/jenkins/sign-release.sh ${BUILD_DIR}/rstudio-*.${PKG_EXTENSION} ${CODESIGN_KEY} ${CODESIGN_PASS}'
+                    sh '../../docker/jenkins/sign-release.sh ${BUILD_LOCATION}/rstudio-*.${PKG_EXTENSION} ${CODESIGN_KEY} ${CODESIGN_PASS}'
                   }
                 }
               }
@@ -264,8 +263,8 @@ pipeline {
                   stage ('GWT and C++ Tests') {
                     steps {
                       dir ( 'package/linux/' ) {
-                        sh "cd build-${FLAVOR}-${ext_map[env.OS].toUpperCase()}/src/gwt && ./gwt-unit-tests.sh"
-                        sh "cd build-${FLAVOR}-${ext_map[env.OS].toUpperCase()}/src/cpp && ./rstudio-tests"
+                        sh "cd ${BUILD_LOCATION}/src/gwt && ./gwt-unit-tests.sh"
+                        sh "cd ${BUILD_LOCATION}/src/cpp && ./rstudio-tests"
                       }
                     }
                   }
@@ -277,7 +276,7 @@ pipeline {
                 when { expression { return params.PUBLISH } }
 
                 environment {
-                  PACKAGE_DIR = "package/linux/build-${FLAVOR}-${ext_map[env.OS].toUpperCase()}"
+                  PACKAGE_DIR = "package/linux/${BUILD_LOCATION}"
                   PACKAGE_FILE = "${renameFile(PACKAGE_DIR, 'rstudio-*.' + ext_map[env.OS])}"
                   TAR_PACKAGE_DIR= "${PACKAGE_DIR}/_CPack_Packages/Linux/${ext_map[env.OS].toUpperCase()}"
                   TAR_PACKAGE_FILE = "${renameTarFile(TAR_PACKAGE_DIR)}"
@@ -317,7 +316,7 @@ pipeline {
                     
                     steps {
                       // Upload Sentry
-                      dir("package/linux/build-${FLAVOR}-${OS}/src/cpp") {
+                      dir("package/linux/${BUILD_LOCATION}/src/cpp") {
                         retry(5) {
                           timeout(activity: true, time: 15) {
                             script {
