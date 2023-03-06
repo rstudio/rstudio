@@ -1475,8 +1475,6 @@ core::Error runGrepOperation(const GrepOptions& grepOptions, const ReplaceOption
       cmd << "-c" << "grep.patternType=default";
       cmd << "-c" << "grep.extendedRegexp=true";
       cmd << "-c" << "grep.fullName=false";
-      cmd << "-C";
-      cmd << dirPath.getAbsolutePath();
       cmd << "grep";
       cmd << "-I"; // ignore binaries
       cmd << "--untracked"; // include files not tracked by git...
