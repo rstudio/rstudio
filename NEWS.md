@@ -17,4 +17,4 @@
 - Fixed initial focus placement in Help Pane [Accessibility] #10600
 
 #### Posit Workbench
--
+- Remove redundant mouse-only New Session widget from accessibility tree [Accessibility] (rstudio/rstudio-pro#4338)
