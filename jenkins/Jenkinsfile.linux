@@ -393,7 +393,7 @@ pipeline {
 
       steps {
         build wait: false,
-          job: "IDE/qa-opensource-automation",
+          job: "IDE/qa-${IS_PRO ? '' : 'opensource-'}automation",
           parameters: [
             string(name: 'RSTUDIO_VERSION_MAJOR', value: "${RSTUDIO_VERSION_MAJOR}")
             string(name: 'RSTUDIO_VERSION_MINOR', value: "${RSTUDIO_VERSION_MINOR}")
