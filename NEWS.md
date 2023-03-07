@@ -17,5 +17,6 @@
 - Fixed initial focus placement in Help Pane [Accessibility] #10600
 
 #### Posit Workbench
+- Fixed unlabeled buttons for screen reader users when page is narrow [Accessibility] (rstudio/rstudio-pro#4340)
 - Remove redundant mouse-only New Session widget from accessibility tree [Accessibility] (rstudio/rstudio-pro#4338)
  
