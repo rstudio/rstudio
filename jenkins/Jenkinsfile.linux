@@ -282,7 +282,7 @@ pipeline {
                   TAR_PACKAGE_DIR= "${PACKAGE_DIR}/_CPack_Packages/Linux/${ext_map[env.OS].toUpperCase()}"
                   TAR_PACKAGE_FILE = "${renameTarFile(TAR_PACKAGE_DIR)}"
                   BUILD_TYPE = "sh(script: 'cat version/BUILDTYPE', returnStdout: true).trim().toLowerCase()"
-                  AWS_PATH = "${PRODUCT}/${OS}/${utils.getArchForOs(env.OS, env.ARCH)}"
+                  AWS_PATH = "${PRODUCT}/${OS}/${utils.getArchForOs(OS, ARCH)}"
                 }
 
                 stages {
@@ -332,14 +332,14 @@ pipeline {
                   stage("Publish") {
                     environment {
                       GITHUB_LOGIN = credentials('github-rstudio-jenkins')
-                      DAILIES_PATH = "${PRODUCT}/${OS}-${utils.getArchForOs(env.OS, env.ARCH)}"
+                      DAILIES_PATH = "${PRODUCT}/${OS}-${utils.getArchForOs(OS, ARCH)}"
                     }
 
                     steps {
                       dir("${PACKAGE_DIR}") {
                         script {
                           // publish build to dailies page
-                          utils.publishToDailiesSite PACKAGE_FILE, DAILIES_PATH
+                          utils.publishToDailiesSite PACKAGE_FILE, DAILIES_PATH, AWS_PATH
                         }
                       }
                     }
@@ -374,6 +374,35 @@ pipeline {
             }
           }
         }
+      }
+    }
+
+    stage('Trigger Automation Testing') {
+      agent { label 'linux' }
+
+      // Skip for hourly builds, non-published builds, and branches that don't 
+      // have corresponding automation branches
+      when {
+        allOf {
+          expression { return params.DAILY }
+          expression { return params.PUBLISH }
+          expression { return env.BRANCH_NAME != "release-ghost-orchid" }
+          expression { return env.BRANCH_NAME != "v1.4-juliet-rose" }
+        }
+      }
+
+      steps {
+        build wait: false,
+          job: "IDE/qa-${IS_PRO ? '' : 'opensource-'}automation",
+          parameters: [
+            string(name: 'RSTUDIO_VERSION_MAJOR', value: "${RSTUDIO_VERSION_MAJOR}"),
+            string(name: 'RSTUDIO_VERSION_MINOR', value: "${RSTUDIO_VERSION_MINOR}"),
+            string(name: 'RSTUDIO_VERSION_PATCH', value: "${RSTUDIO_VERSION_PATCH}"),
+            string(name: 'RSTUDIO_VERSION_SUFFIX', value: "${RSTUDIO_VERSION_SUFFIX}"),
+            string(name: 'SLACK_CHANNEL', value: "${params.SLACK_CHANNEL}"),
+            string(name: 'GIT_REVISION', value: "${params.COMMIT_HASH}"),
+            string(name: 'BRANCH_NAME', value: "${env.BRANCH_NAME}")
+          ]
       }
     }
   }

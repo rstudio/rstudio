@@ -113,10 +113,14 @@ def sentryUpload(String symbolType) {
   * Publish a build to the dailies site.
   * Does not work on windows.
   */
-def publishToDailiesSite(String packageFile, String destinationPath) {
+def publishToDailiesSite(String packageFile, String destinationPath, String urlPath = '') {
   def channel = ''
   if (!params.DAILY) {
     channel = ' --channel Hourly'
+  }
+  if (urlPath == '')
+  {
+    urlPath = destinationPath
   }
 
   sh '${WORKSPACE}/docker/jenkins/publish-build.sh --pat ${GITHUB_LOGIN_PSW} ' +
@@ -126,7 +130,7 @@ def publishToDailiesSite(String packageFile, String destinationPath) {
     ' --build ' +
     destinationPath +
     ' --url https://s3.amazonaws.com/rstudio-ide-build/' +
-    destinationPath +
+    urlPath +
     '/' +
     packageFile +
     ' --file ' +
@@ -135,11 +139,16 @@ def publishToDailiesSite(String packageFile, String destinationPath) {
 
 /** 
   * Convert an architecture to the operating specific version of that arch.
-  * x86_64 -> amd64 on Debian
+  * amd64  -> x86_64 on non-Debian
+  * x86_64 -> amd64  on Debian
   */
 def getArchForOs(String os, String arch) {
   if ((arch == "amd64") && (os != "bionic") && (os != "jammy")) {
     return "x86_64"
+  }
+
+  if ((arch == "x86_64") && ((os == "bionic") || (os == "jammy"))) {
+    return "amd64"
   }
 
   if (arch == "aarch64") {
