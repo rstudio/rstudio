@@ -224,6 +224,7 @@ void AsyncRProcess::start(const char* rCommand,
 
 void AsyncRProcess::onStarted(core::system::ProcessOperations& operations)
 {
+   pid_ = operations.getPid();
    if (!input_.empty())
    {
       core::Error error = operations.writeToStdin(input_, true);

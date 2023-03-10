@@ -91,6 +91,7 @@ protected:
    virtual void onStdout(const std::string& output);
    virtual void onStderr(const std::string& output);
    virtual void onCompleted(int exitStatus) = 0;
+   PidType pid_;
 
 private:
    void onProcessCompleted(int exitStatus);

@@ -798,6 +798,25 @@ private:
 
       markCompleted();
 
+      // on windows we need to be more aggressive when terminating quarto jobs as we've seen cases where 'stop' doesn't work properly with deno
+      using namespace core::shell_utils;
+      if (isQuarto_ && pid_ > 0)
+      {
+         ShellCommand cmd("taskkill");
+         cmd << "/F" << "/T" << "/PID" << core::safe_convert::numberToString(pid_);
+         core::system::ProcessOptions options;
+         core::system::ProcessResult result;
+         core::Error error = core::system::runCommand(cmd, options, &result);
+         if (error)
+         {
+            LOG_ERROR(error);
+         }
+         else if (result.exitStatus != EXIT_SUCCESS)
+         {
+            LOG_ERROR_MESSAGE("Error killing quarto job: " + result.stdErr);
+         }
+      }
+
       // if a quiet terminate was requested, don't queue any client events
       if (terminateType_ == renderTerminateQuiet)
          return;
