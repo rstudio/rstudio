@@ -194,6 +194,13 @@ pipeline {
 
         stages {
           stage ('Build, Test and Upload'){
+
+            // If nothing appears in logs for 30 minutes then we should timeout
+            // Placing timeout here so only this OS/ARCH/FLAVOR build will timeout
+            options {
+              timeout(time: 30, unit: 'MINUTES', activity: true)
+            }
+
             agent {
               docker {
                 image "jenkins/ide:${IS_PRO? 'pro-' : '' }${OS}-${ARCH}-${RSTUDIO_VERSION_FLOWER}"

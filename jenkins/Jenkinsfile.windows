@@ -14,6 +14,8 @@ pipeline {
         numToKeepStr: '100'
       )
     )
+    // If nothing appears in logs for 30 minutes then we should timeout
+    timeout(time: 30, unit: 'MINUTES', activity: true)
   }
 
   parameters {
