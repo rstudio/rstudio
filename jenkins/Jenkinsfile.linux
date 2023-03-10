@@ -194,6 +194,13 @@ pipeline {
 
         stages {
           stage ('Build, Test and Upload'){
+
+            // Timeout after no activity in the logs
+            // Placing timeout here so only this OS/ARCH/FLAVOR build will timeout
+            options {
+              timeout(time: 2, unit: 'HOURS', activity: true)
+            }
+
             agent {
               docker {
                 image "jenkins/ide:${IS_PRO? 'pro-' : '' }${OS}-${ARCH}-${RSTUDIO_VERSION_FLOWER}"

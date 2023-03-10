@@ -2,6 +2,11 @@ def utils
 
 pipeline {
 
+  // Timeout after no activity in the logs
+  options {
+    timeout(time: 2, unit: 'HOURS', activity: true)
+  }
+
   agent { label 'macos-v1.4-arm64' }
 
   options {

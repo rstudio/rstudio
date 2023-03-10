@@ -14,6 +14,8 @@ pipeline {
         numToKeepStr: '100'
       )
     )
+    // Timeout after no activity in the logs
+    timeout(time: 2, unit: 'HOURS', activity: true)
   }
 
   parameters {
