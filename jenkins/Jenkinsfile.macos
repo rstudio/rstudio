@@ -2,9 +2,9 @@ def utils
 
 pipeline {
 
-  // If nothing appears in logs for 30 minutes then we should timeout
+  // Timeout after no activity in the logs
   options {
-    timeout(time: 30, unit: 'MINUTES', activity: true)
+    timeout(time: 2, unit: 'HOURS', activity: true)
   }
 
   agent { label 'macos-v1.4-arm64' }

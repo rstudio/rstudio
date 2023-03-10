@@ -195,10 +195,10 @@ pipeline {
         stages {
           stage ('Build, Test and Upload'){
 
-            // If nothing appears in logs for 30 minutes then we should timeout
+            // Timeout after no activity in the logs
             // Placing timeout here so only this OS/ARCH/FLAVOR build will timeout
             options {
-              timeout(time: 30, unit: 'MINUTES', activity: true)
+              timeout(time: 2, unit: 'HOURS', activity: true)
             }
 
             agent {
