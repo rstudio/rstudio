@@ -74,7 +74,6 @@ public class ConsolePane extends WorkbenchPane
       progressProvider_ = progressProvider;
       commands_ = commands;
       session_ = session;
-      ariaLive_ = ariaLive;
 
       // the secondary toolbar can have several possible states that obscure
       // each other; we keep track of the stack here
@@ -153,6 +152,7 @@ public class ConsolePane extends WorkbenchPane
    public void onSuspendedBlockedEvent(SessionSuspendBlockedEvent event) {
       consoleSuspendBlockedIcon_.setVisible(event.isBlocked());
       consoleSuspendBlockedIcon_.setTitle(event.getMsg());
+      consoleSuspendBlockedIcon_.setAltText(event.getMsg());
    }
 
    public int getCharacterWidth()
@@ -186,11 +186,11 @@ public class ConsolePane extends WorkbenchPane
       profilerInterruptButton_ = ConsoleInterruptProfilerButton.CreateProfilerButton();
       profilerInterruptButton_.setVisible(false);
 
-      boolean announce = !ariaLive_.isDisabled(AriaLiveService.SESSION_SUSPENDED);
-      consoleSuspendBlockedIcon_ = new ConsoleSuspendBlockedIcon(announce).getSuspendBlocked();
+      consoleSuspendBlockedIcon_ = new ConsoleSuspendBlockedIcon().getSuspendBlocked();
       consoleSuspendBlockedIcon_.setVisible(false);
-      consoleSuspendedIcon_ = new ConsoleSuspendBlockedIcon(announce).getSuspended();
+      consoleSuspendedIcon_ = new ConsoleSuspendBlockedIcon().getSuspended();
       consoleSuspendedIcon_.setTitle(constants_.sessionSuspendedTitle());
+      consoleSuspendedIcon_.setAltText(constants_.sessionSuspendedTitle());
       consoleSuspendedIcon_.setVisible(false);
 
       toolbar.addRightWidget(consoleSuspendedIcon_);
@@ -394,7 +394,6 @@ public class ConsolePane extends WorkbenchPane
    private final Commands commands_;
    private Shell shell_;
    private Session session_;
-   private AriaLiveService ariaLive_;
    private Label workingDir_;
    private ToolbarButton consoleInterruptButton_;
    private ToolbarButton consoleClearButton_;
