@@ -6,6 +6,7 @@
 #### RStudio IDE
 - Updated to Electron 23.1.2 (#12785)
 - Moved Help panel font size setting to Appearance tab in Global Options (#12816)
+- Update openssl to 1.1.1t for Windows (rstudio/rstudio-pro#3675)
 
 #### Posit Workbench
 - 
