@@ -55,4 +55,18 @@ def getVersion() {
   return [rstudioVersion, rstudioVersionMajor, rstudioVersionMinor, rstudioVersionPatch, rstudioVersionSuffix]
 }
 
+/**
+  * Get Flower
+  */
+def getFlower() {
+  versionFlower = readFile(file: 'version/RELEASE').replaceAll(" ", "-").toLowerCase().trim()
+  return versionFlower
+}
+
+def jenkins_user_build_args() {
+  def jenkins_uid = sh (script: 'id -u jenkins', returnStdout: true).trim()
+  def jenkins_gid = sh (script: 'id -g jenkins', returnStdout: true).trim()
+  return " --build-arg JENKINS_UID=${jenkins_uid} --build-arg JENKINS_GID=${jenkins_gid}"
+}
+
 return this

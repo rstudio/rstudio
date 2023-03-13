@@ -1,0 +1,16 @@
+#!/bin/sh
+
+hooks_dir="hooks"
+git_hooks_dir="../.git/hooks"
+
+echo "Setting up git hooks..."
+
+for hook in "$hooks_dir"/*
+do
+    file_name=$(basename "$hook")
+    echo "\tCopying $file_name hook to $git_hooks_dir and making it executable"
+    cp "$hook" "$git_hooks_dir"
+    chmod +x "$git_hooks_dir"/"$file_name"
+done
+
+echo "Finished setting up git hooks!"

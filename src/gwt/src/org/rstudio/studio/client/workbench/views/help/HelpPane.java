@@ -223,13 +223,15 @@ public class HelpPane extends WorkbenchPane
          return;
 
       windowEl.setScrollPosition(scrollPos_);
-      setFocus();
    }
 
+   /**
+    * Invoked when switching panes via F6 / Shift+F6
+    */
    @Override
    public void setFocus()
    {
-      focusSearchHelp();
+      focus();
    }
 
    @Override
