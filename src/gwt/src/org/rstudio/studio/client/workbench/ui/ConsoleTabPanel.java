@@ -373,11 +373,22 @@ public class ConsoleTabPanel extends WorkbenchTabPanel
                             !dataTabVisible_ &&
                             !backgroundJobsTabVisible_ &&
                             !workbenchJobsTabVisible_;
-      
+
+      consolePane_.setIsTabPanel(!consoleOnly);;
       if (consoleOnly)
+      {
          owner_.addStyleName(ThemeResources.INSTANCE.themeStyles().consoleOnlyWindowFrame());
+         owner_.getTitleWidget().getElement().removeAttribute("aria-hidden");
+         owner_.getSubtitleWidget().getElement().removeAttribute("aria-hidden");
+         goToWorkingDirButton_.getElement().removeAttribute("aria-hidden");
+      }
       else
+      {
          owner_.removeStyleName(ThemeResources.INSTANCE.themeStyles().consoleOnlyWindowFrame());
+         owner_.getTitleWidget().getElement().setAttribute("aria-hidden", "true");
+         owner_.getSubtitleWidget().getElement().setAttribute("aria-hidden", "true");
+         goToWorkingDirButton_.getElement().setAttribute("aria-hidden", "true");
+      }
       
       if (!consoleOnly)
       {

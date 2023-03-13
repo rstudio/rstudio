@@ -116,7 +116,8 @@ public class ConsoleInterpreterVersion
       html.getElement().getStyle().setDisplay(Display.INLINE_BLOCK);
       
       Element svg = html.getElement().getFirstChildElement();
-      
+      svg.setAttribute("role", "presentation");
+
       // NOTE: GWT chokes when modifying the className
       // attribute of an SVG element so we do it "by hand" here
       addClassName(svg, RES.styles().icon());
