@@ -81,11 +81,7 @@ public class ConsolePane extends WorkbenchPane
 
       ElementIds.assignElementId(this, ElementIds.WORKBENCH_PANEL + "_console");
 
-      // technically this is only playing aria-tabpanel role when the console pane
-      // has tabs (e.g. at least one other pane is being shown, such as Terminal), but
-      // having it always marked with that role is fine
-      Roles.getTabpanelRole().set(this.getElement());
-      Roles.getTabpanelRole().setAriaLabelProperty(this.getElement(), constants_.consoleLabel());
+      setIsTabPanel(false);
 
       // console is interacted with immediately so we make sure it
       // is always created during startup
@@ -107,6 +103,22 @@ public class ConsolePane extends WorkbenchPane
    public void focus()
    {
       shell_.getDisplay().focus();
+   }
+
+   public void setIsTabPanel(boolean isTabPanel)
+   {
+      // only playing aria-tabpanel role when the console pane
+      // has tabs (e.g. at least one other pane is being shown, such as Terminal)
+      if (isTabPanel)
+      {
+         Roles.getTabpanelRole().set(this.getElement());
+         Roles.getTabpanelRole().setAriaLabelProperty(this.getElement(), constants_.consoleLabel());
+      }
+      else
+      {
+         this.getElement().removeAttribute("role");
+         this.getElement().removeAttribute("aria-label");
+      }
    }
 
    @Override
@@ -168,7 +180,7 @@ public class ConsolePane extends WorkbenchPane
       consoleInterpreterVersion_ = new ConsoleInterpreterVersion(true);
       toolbar.addLeftWidget(consoleInterpreterVersion_);
       
-      HTML separator = new HTML("&centerdot;");
+      HTML separator = new HTML("<span aria-hidden=\"true\">&centerdot;</span>");
       separator.addStyleName(ThemeStyles.INSTANCE.toolbarDotSeparator());
       toolbar.addLeftWidget(separator);
       
