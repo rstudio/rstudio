@@ -799,6 +799,7 @@ private:
       markCompleted();
 
       // on windows we need to be more aggressive when terminating quarto jobs as we've seen cases where 'stop' doesn't work properly with deno
+#ifdef _WIN32
       using namespace core::shell_utils;
       if (isQuarto_ && pid_ > 0)
       {
@@ -816,6 +817,7 @@ private:
             LOG_ERROR_MESSAGE("Error killing quarto job: " + result.stdErr);
          }
       }
+#endif
 
       // if a quiet terminate was requested, don't queue any client events
       if (terminateType_ == renderTerminateQuiet)
