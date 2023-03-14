@@ -2,16 +2,11 @@ def utils
 
 pipeline {
 
-  // Timeout after no activity in the logs
-  options {
-    timeout(time: 2, unit: 'HOURS', activity: true)
-  }
-
   agent { label 'macos-v1.4-arm64' }
 
   options {
-    // timeout regardless of activity
-    timeout(activity: false, time: 180)
+    // Timeout after no activity in the logs
+    timeout(time: 2, unit: 'HOURS', activity: true)
     timestamps()
     disableConcurrentBuilds()
     buildDiscarder(logRotator(numToKeepStr: '100'))
