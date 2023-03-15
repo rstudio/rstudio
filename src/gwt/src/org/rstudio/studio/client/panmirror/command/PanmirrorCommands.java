@@ -120,6 +120,8 @@ public class PanmirrorCommands
    public static final String BashCodeChunk = "5FBB7283-E8AB-450C-9359-A4658CBCD136";
    public static final String D3CodeChunk = "C73CA46C-B56F-40B6-AEFA-DDBB30CA8C08";
    public static final String PythonCodeChunk = "42A7A138-421A-4DCF-8A88-FE2F8EC5B8F6";
+
+   public static final String JuliaCodeChunk = "84386434-EE31-4F0D-BBE9-55F5199FAF04";
    public static final String RcppCodeChunk = "6BD2810B-6B20-4358-8AA4-74BBFFC92AC3";
    public static final String SQLCodeChunk = "41D61FD2-B56B-48A7-99BC-2F60BC0D9F78";
    public static final String StanCodeChunk = "65D33344-CBE9-438C-B337-A538F8D7FCE5";
