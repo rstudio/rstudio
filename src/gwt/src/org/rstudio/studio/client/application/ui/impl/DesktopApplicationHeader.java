@@ -53,6 +53,7 @@ import org.rstudio.studio.client.server.ServerError;
 import org.rstudio.studio.client.server.ServerRequestCallback;
 import org.rstudio.studio.client.workbench.codesearch.CodeSearch;
 import org.rstudio.studio.client.workbench.commands.Commands;
+import org.rstudio.studio.client.workbench.events.PushClientStateEvent;
 import org.rstudio.studio.client.workbench.events.SessionInitEvent;
 import org.rstudio.studio.client.workbench.model.ClientInitState;
 import org.rstudio.studio.client.workbench.model.ClientState;
@@ -541,6 +542,8 @@ public class DesktopApplicationHeader implements ApplicationHeader,
                public void execute()
                {
                   ignoredUpdatesState_.addIgnoredUpdate(result.getUpdateVersion());
+                  // Trigger an update to the persistent updates state file
+                  eventBus_.fireEvent(new PushClientStateEvent(true));
                }
             });
          }
