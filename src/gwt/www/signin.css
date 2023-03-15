@@ -195,12 +195,12 @@ div.signinhidden {
 }
 
 :focus {
-  outline: none !important;
-  box-shadow: none !important;
+  outline: none;
+  box-shadow: none;
 }
 
 :focus-visible {
   outline-offset: 0;
   outline: 2px solid var(--primary) !important;
-  box-shadow: inset 0 0 0 2px var(--primary-fg) !important;
+  box-shadow: inset 0 0 0 2px var(--primary-fg);
 }
