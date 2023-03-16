@@ -182,7 +182,7 @@ pipeline {
                       withAWS(role: 'ide-build', region: 'us-east-1') {
                         retry(5) {
                           script {
-                            utils.uploadPackageToS3 "package/osx/build/${PACKAGE_FILE}", "${PRODUCT}/macos/"
+                            utils.uploadPackageToS3 "package/osx/build/${PACKAGE_FILE}", "${FLAVOR.toLowerCase()}/macos/"
                           }
                         }
                       }

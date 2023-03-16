@@ -234,6 +234,7 @@ pipeline {
                       PACKAGE = "${PACKAGE_NAME}"
                       // Channel to prevent hourlies from ending up on the Dailies page
                       CHANNEL = "${ params.DAILY ? 'Daily' : 'Hourly'}"
+                      AWS_PATH= "https://s3.amazonaws.com/rstudio-ide-build/${FLAVOR.toLowerCase()}/windows"
                     }
 
                     stages {
@@ -246,7 +247,7 @@ pipeline {
                           echo "Channel : ${CHANNEL}"
                           script {
                             // publish the build (self installing exe)
-                            powershell '.\\docker\\jenkins\\publish-build.ps1 -build ${env:PRODUCT}/windows -url https://s3.amazonaws.com/rstudio-ide-build/${env:PRODUCT}/windows/${env:PACKAGE}.exe -pat ${env:GITHUB_LOGIN_PSW} -file package\\win32\\build\\${env:PACKAGE}.exe -version ${env:VERSION} -channel ${env:CHANNEL}'
+                            powershell '.\\docker\\jenkins\\publish-build.ps1 -build ${env:PRODUCT}/windows -url ${env:AWS_PATH}/${env:PACKAGE}.exe -pat ${env:GITHUB_LOGIN_PSW} -file package\\win32\\build\\${env:PACKAGE}.exe -version ${env:VERSION} -channel ${env:CHANNEL}'
                           }
                         }
                       }
@@ -266,7 +267,7 @@ pipeline {
                           echo "Channel : ${CHANNEL}"
                           script {
                             // publish the build (installer-less zip)
-                            powershell '.\\docker\\jenkins\\publish-build.ps1 -build ${env:PRODUCT}/windows-xcopy -url https://s3.amazonaws.com/rstudio-ide-build/${env:PRODUCT}/windows/${env:PACKAGE}.zip -pat ${env:GITHUB_LOGIN_PSW} -file package\\win32\\build\\${env:PACKAGE}.zip -version ${env:VERSION} -channel ${env:CHANNEL}'
+                            powershell '.\\docker\\jenkins\\publish-build.ps1 -build ${env:PRODUCT}/windows-xcopy -url ${env:AWS_PATH}/${env:PACKAGE}.zip -pat ${env:GITHUB_LOGIN_PSW} -file package\\win32\\build\\${env:PACKAGE}.zip -version ${env:VERSION} -channel ${env:CHANNEL}'
                           }
                         }
                       }

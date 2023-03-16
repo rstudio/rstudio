@@ -289,7 +289,7 @@ pipeline {
                   TAR_PACKAGE_DIR= "${PACKAGE_DIR}/_CPack_Packages/Linux/${ext_map[env.OS].toUpperCase()}"
                   TAR_PACKAGE_FILE = "${renameTarFile(TAR_PACKAGE_DIR)}"
                   BUILD_TYPE = "sh(script: 'cat version/BUILDTYPE', returnStdout: true).trim().toLowerCase()"
-                  AWS_PATH = "${PRODUCT}/${OS}/${utils.getArchForOs(OS, ARCH)}"
+                  AWS_PATH = "${FLAVOR.toLowerCase()}/${OS}/${utils.getArchForOs(OS, ARCH)}"
                 }
 
                 stages {
