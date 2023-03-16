@@ -3,9 +3,9 @@ project:
 
 website:
   title: "RStudio User Guide"
+  favicon: "images/favicon.svg"
   twitter-card: true
   open-graph: true
-  favicon: images/favicon.svg
   page-navigation: true
   site-url: https://docs.posit.co/ide/user/
   repo-url: https://github.com/rstudio/rstudio/
