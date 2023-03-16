@@ -57,7 +57,7 @@ This page provides the release notes associated with each release of RStudio and
 - Fixed rendering of custom source markers (#12425)
 - Fixed handling of backticks in data frame columns in auto-completion (#8675)
 - Fixed group_by() specific completions (#12356)
-- Fixed auto completions when named arguments already in use (#12326)
+- Fixed auto-completions when named arguments already in use (#12326)
 - Fixed column name completions when package name is specified (#9786)
 - Fixed Excel import preview (#3955)
 - Fixed indentation of raw strings (#12127)
