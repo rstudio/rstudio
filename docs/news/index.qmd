@@ -9,6 +9,90 @@ format:
 
 This page provides the release notes associated with each release of RStudio and Posit Workbench. Please contact customer support (<a href="mailto:support@posit.co">support@posit.co</a>) for questions about the described changes.
 
+## RStudio 2023.03.0
+
+**"Cherry Blossom"**
+
+>Date: 2023-03-16
+
+### New
+
+#### RStudio IDE
+- Adopt panmirror (visual editor) migration to quarto-dev/quarto project (#12316)
+- Upgrade Electron to 22.0.0 (#11734)
+- Upgrade Quarto to 1.2.335 (#12697)
+- roxygen2 completions show description and complete as a snippet (#11957)
+- data frame and data frame columns completions show more information (#12308)
+- Support more "complex" start of pipe chains in completions (#9612), #10538
+- Revisit order of completions, i.e. columns before search path secundary completions (#12292)
+- Improved `[` and data.table related completions (#12289), 11202
+- Support column completions for arrow objects (#11629)
+- Support searching for roxygen specific information in fuzzy finder (Go to File/Function) (#12190)
+- "Rainbow" fenced divs, controled by Options > R Markdown > [v] Use rainbow fenced divs (#12115)
+- Disable argument tooltips in script editor for unknown functions (#12160)
+- Add RTools 4.3 support (#12528) 
+- Add support for R 4.3 (#12751)
+
+#### Posit Workbench
+- Session components no longer link to libpq or its dependencies (rstudio/rstudio-pro#2138)
+- Sessions now have lower CPU priority during suspension on macOS and Linux (#12623)
+- Sessions run on Kubernetes or Slurm will no longer exit with nonzero codes under normal circumstances (rstudio/rstudio-pro#3375)
+- Updated code-server to version 4.9.1 (VS Code version 1.73.1) (rstudio/rstudio-pro#4150)
+- Preview support for setting per-user AWS credentials in RStudio Pro sessions (rstudio/rstudio-pro#4246)
+- Sessions run on Kubernetes or Slurm can now greatly simplify the task of assigning CPU, memory, or GPU resources by using named Resource Profiles (rstudio/rstudio-pro#4249)
+- Kubernetes Job and Service resources created by Workbench now set the `app.kubernetes.io/managed-by` label to `launcher` (rstudio/launcher#379)
+- When the Job Launcher is enabled, the Local plugin can now be configured to use "external" load balancing, which removes the need for the `scratch-path` to be on shared storage (rstudio/launcher#42, rstudio/rstudio-pro#3770)
+- A new `allowed-partitions` setting in the `launcher.slurm.profiles.conf` file can be used to limit visibility of Slurm partitions to specific users or groups (rstudio/launcher#309)
+- All Job Launcher plugins now support fractional values for the `job-expiry-hours` setting (i.e. `0.5` for 30 minutes) (rstudio/launcher#372)
+
+### Fixed
+
+#### RStudio IDE
+- Fixed an issue where Git / SVN actions requiring user input could fail in some situations. (#12390)
+- Fixed an issue where the plots displayed in the inline preview were incorrectly scaled on devices with high DPI (#4521, #2098, #10825, #7028, #4913).
+- Fixed background jobs not showing the entire output (#12389)
+- Fixed mixed-case CSS colors (#12562)
+- Fixed indentation of coloured text (#12489)
+- Fixed (and speedup) identification of presence of external pointers (#12328)
+- Fixed rendering of custom source markers (#12425)
+- Fixed handling of backticks in data frame columns in auto completion (#8675)
+- Fixed group_by() specific completions (#12356)
+- Fixed auto completions when named arguments already in use (#12326)
+- Fixed column name completions when package name is specified (#9786)
+- Fixed Excel import preview (#3955)
+- Fixed indentation of raw strings (#12127)
+- Removed empty spell check tooltips (#11306)
+- Fixed package completion tooltips (#12147)
+- Fixed setting rsession log level using command-line argument or logging.conf (#12557)
+- Fixed issue that allowed users to overwrite their home directory in server mode (#12653)
+- Fixed "Check for updates" incorrectly reports that there are no updates (rstudio/rstudio-pro#3388)
+- Fixed default options for Choose R dialog on Windows (#12452)
+- Fixed data viewer's "Show in new window" results in empty window (#12468)
+- Fixed uncaught Shiny error breaks RStudio's "Run in Window" feature (#12569)
+- Fixed previewing rendered html_document causes URLs to open in browser (#12494)
+- Fixed link opens in browser after Render with qml file when hypothes.is comments are turned on in `_quarto.yml` (#12413)
+- Fixed Copy Plot to Clipboard - pasting bitfile option not working correctly in latest build (#12466)
+- Fixed Find in Files with git projects and older version of git (#11822)
+
+#### Posit Workbench
+- Fixed intermittent hanging logins in Workbench using ActiveDirectory (rstudio/rstudio-pro#4285)
+- Fixed incorrect icons displayed in the sessions drop-down menu in RStudio Pro (rstudio/rstudio-pro#4257) 
+- Editor Selection widget in New Session dialog is now usable via keyboard [Accessibility] (rstudio/rstudio-pro#4205)
+- Editor Selection widget in New Session dialog supports screen reader usage [Accessibility] (rstudio/rstudio-pro#4206)
+- Editor icons in New Session dialog are marked as cosmetic for screen readers [Accessibility] (rstudio/rstudio-pro#4207)
+- Homepage modal dialogs are now implemented correctly for keyboard and screen reader use [Accessibility] (rstudio/rstudio-pro#4208)
+- Posit logo on home page marked as cosmetic for screen readers [Accessibility] (rstudio/rstudio-pro#4209)
+- Focus and keyboard-focus styles have been improved on the homepage [Accessibility]
+- Keyboard support has been added to the job summary drop-down in session list items on the homepage [Accessibility]
+- Improved alt-text and updated link to posit.co on sign-in page logo [Accessibility] (rstudio/rstudio-pro#4096)
+- Help pane home page switches to single-column display at narrow widths [Accessibility] (#12643)
+- RStudio Pro sessions drop-down panel icons marked with role="presentation" [Accessibility] (rstudio/rstudio-pro#4257)
+- Workbench will no longer write an unrelated `rserver-http.pid` file to the `server-data-dir` directory (rstudio/rstudio-pro#4279)
+- Fixed the frequent `No such file or directory` errors logged by `rserver-monitor` when on a system with cgroups v2 (#10914, rstudio/rstudio-pro#2683)
+- Support Kubernetes v1.24 (rstudio/rstudio-pro#4064)
+- Security fix: User ID is now set by the server when running Workbench Jobs created by VS Code (rstudio/rstudio-pro#4255)
+- Fixed connection issues with SSL-enabled sessions running on Slurm in a load-balanced cluster or after a Launcher restart (rstudio/rstudio-pro#4098)
+
 ## RStudio 2022.12.0+353
 
 **"Elsbeth Geranium"**
