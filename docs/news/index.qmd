@@ -29,7 +29,7 @@ This page provides the release notes associated with each release of RStudio and
 - Support column completions for arrow objects (#11629)
 - Support searching for roxygen specific information in fuzzy finder (Go to File/Function) (#12190)
 - "Rainbow" fenced divs, controlled by Options > R Markdown > [v] Use rainbow fenced divs (#12115)
-- Disable argument tooltips in script editor for unknown functions (#12160)
+- Disable argument tooltips in the script editor for unknown functions (#12160)
 - Add RTools 4.3 support (#12528) 
 - Add support for R 4.3 (#12751)
 
