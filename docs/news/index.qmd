@@ -43,7 +43,7 @@ This page provides the release notes associated with each release of RStudio and
 - Kubernetes Job and Service resources created by Workbench now set the `app.kubernetes.io/managed-by` label to `launcher` (rstudio/launcher#379)
 - When the Job Launcher is enabled, the Local plugin can now be configured to use "external" load balancing, which removes the need for the `scratch-path` to be on shared storage (rstudio/launcher#42, rstudio/rstudio-pro#3770)
 - A new `allowed-partitions` setting in the `launcher.slurm.profiles.conf` file can be used to limit visibility of Slurm partitions to specific users or groups (rstudio/launcher#309)
-- All Job Launcher plugins now support fractional values for the `job-expiry-hours` setting (i.e. `0.5` for 30 minutes) (rstudio/launcher#372)
+- All Job Launcher plugins now support fractional values for the `job-expiry-hours` setting (i.e., `0.5` for 30 minutes) (rstudio/launcher#372)
 
 ### Fixed
 
