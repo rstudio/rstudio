@@ -53,7 +53,7 @@ This page provides the release notes associated with each release of RStudio and
 - Fixed background jobs not showing the entire output (#12389)
 - Fixed mixed-case CSS colors (#12562)
 - Fixed indentation of colored text (#12489)
-- Fixed (and speedup) identification of presence of external pointers (#12328)
+- Fixed (and speedup) identification of the presence of external pointers (#12328)
 - Fixed rendering of custom source markers (#12425)
 - Fixed handling of backticks in data frame columns in auto completion (#8675)
 - Fixed group_by() specific completions (#12356)
