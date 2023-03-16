@@ -52,7 +52,7 @@ This page provides the release notes associated with each release of RStudio and
 - Fixed an issue where the plots displayed in the inline preview were incorrectly scaled on devices with high DPI (#4521, #2098, #10825, #7028, #4913).
 - Fixed background jobs not showing the entire output (#12389)
 - Fixed mixed-case CSS colors (#12562)
-- Fixed indentation of coloured text (#12489)
+- Fixed indentation of colored text (#12489)
 - Fixed (and speedup) identification of presence of external pointers (#12328)
 - Fixed rendering of custom source markers (#12425)
 - Fixed handling of backticks in data frame columns in auto completion (#8675)
