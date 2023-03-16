@@ -260,7 +260,7 @@ RToolsInfo::RToolsInfo(const std::string& name,
    else if (name == "4.2")
    {
       versionMin = "4.2.0";
-      versionMax = "5.0.0";
+      versionMax = "4.2.99";
 
       // PATH for utilities
       relativePathEntries.push_back("usr/bin");
@@ -281,29 +281,31 @@ RToolsInfo::RToolsInfo(const std::string& name,
       clangArgs.push_back("-D__GNUC__=10");
       clangArgs.push_back("-D__GNUC_MINOR__=3");
       clangArgs.push_back("-D__GNUC_PATCHLEVEL__=0");
+   }
+   else if (name == "4.3")
+   {
+      versionMin = "4.3.0";
+      versionMax = "5.0.0";
 
-      // get C headers paths
-      auto cStems = {
-         "x86_64-w64-mingw32.static.posix/lib/gcc/x86_64-w64-mingw32.static.posix/10.3.0/include",
-         "x86_64-w64-mingw32.static.posix/include",
-         "x86_64-w64-mingw32.static.posix/lib/gcc/x86_64-w64-mingw32.static.posix/10.3.0/include-fixed"
-      };
+      // PATH for utilities
+      relativePathEntries.push_back("usr/bin");
 
-      for (auto&& stem : cStems)
-         cIncludePaths.push_back(installPath.completeChildPath(stem).getAbsolutePath());
+      // set RTOOLS43_HOME
+      std::string rtoolsPath = installPath.getAbsolutePath();
+      std::replace(rtoolsPath.begin(), rtoolsPath.end(), '/', '\\');
+      environmentVars.push_back({"RTOOLS43_HOME", rtoolsPath});
 
-      // get C++ headers
-      auto cppStems = {
-         "x86_64-w64-mingw32.static.posix/lib/gcc/x86_64-w64-mingw32.static.posix/10.3.0/include/c++",
-         "x86_64-w64-mingw32.static.posix/lib/gcc/x86_64-w64-mingw32.static.posix/10.3.0/include/c++/x86_64-w64-mingw32.static.posix",
-         "x86_64-w64-mingw32.static.posix/lib/gcc/x86_64-w64-mingw32.static.posix/10.3.0/include/c++/backward",
-         "x86_64-w64-mingw32.static.posix/lib/gcc/x86_64-w64-mingw32.static.posix/10.3.0/include",
-         "x86_64-w64-mingw32.static.posix/include",
-         "x86_64-w64-mingw32.static.posix/lib/gcc/x86_64-w64-mingw32.static.posix/10.3.0/include-fixed",
-      };
+      // undefine _MSC_VER, so that we can "pretend" to be gcc
+      // this is important for C++ libraries which might try to use
+      // MSVC-specific tools when _MSC_VER is defined (e.g. Eigen), which might
+      // not actually be defined or available in Rtools
+      clangArgs.push_back("-U_MSC_VER");
 
-      for (auto&& stem : cppStems)
-         cppIncludePaths.push_back(installPath.completeChildPath(stem).getAbsolutePath());
+      // set GNUC levels
+      // (required for _mingw.h, which otherwise tries to use incompatible MSVC defines)
+      clangArgs.push_back("-D__GNUC__=12");
+      clangArgs.push_back("-D__GNUC_MINOR__=2");
+      clangArgs.push_back("-D__GNUC_PATCHLEVEL__=0");
    }
    else
    {
@@ -339,7 +341,12 @@ std::string RToolsInfo::url(const std::string& repos) const
 {
    std::string url;
 
-   if (name() == "4.2")
+   if (name() == "4.3")
+   {
+      std::string suffix = "bin/windows/Rtools/rtools43/rtools.html";
+      url = core::http::URL::complete(repos, suffix);
+   }
+   else if (name() == "4.2")
    {
       std::string suffix = "bin/windows/Rtools/rtools42/rtools.html";
       url = core::http::URL::complete(repos, suffix);
@@ -427,10 +434,15 @@ Error scanEnvironmentForRTools(const std::string& rVersion,
       // use RTOOLS40_HOME
       useRtools("4.0", "RTOOLS40_HOME", "C:/rtools40", pRTools);
    }
-   else if (version < Version("5.0.0"))
+   else if (version < Version("4.3.0"))
    {
       // use RTOOLS42_HOME
       useRtools("4.2", "RTOOLS42_HOME", "C:/rtools42", pRTools);
+   }
+   else if (version < Version("5.0.0"))
+   {
+      // use RTOOLS43_HOME
+      useRtools("4.3", "RTOOLS43_HOME", "C:/rtools43", pRTools);
    }
 
    return Success();
@@ -530,7 +542,10 @@ void scanFoldersForRTools(bool usingMingwGcc49, std::vector<RToolsInfo>* pRTools
    {
       RToolsInfo toolsInfo(buildDir.getFilename(), buildDir, usingMingwGcc49);
       if (toolsInfo.isRecognized())
+      {
          pRTools->push_back(toolsInfo);
+         LOG_DEBUG_MESSAGE("Found Rtools: " + toolsInfo.installPath().getAbsolutePath());
+      }
       else
          LOG_WARNING_MESSAGE("Unknown Rtools version: " + buildDir.getFilename());
    }
@@ -555,7 +570,7 @@ void scanForRTools(bool usingMingwGcc49,
    {
       if (knownPaths.count(info.installPath()))
          continue;
-
+      LOG_DEBUG_MESSAGE(info.installPath().getAbsolutePath());
       knownPaths.insert(info.installPath());
       pRTools->push_back(info);
    }
