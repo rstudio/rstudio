@@ -24,7 +24,7 @@ This page provides the release notes associated with each release of RStudio and
 - roxygen2 completions show description and complete as a snippet (#11957)
 - data frame and data frame columns completions show more information (#12308)
 - Support more "complex" start of pipe chains in completions (#9612), #10538
-- Revisit order of completions, i.e. columns before search path secundary completions (#12292)
+- Revisit the order of completions, i.e., columns before search path secondary completions (#12292)
 - Improved `[` and data.table related completions (#12289), 11202
 - Support column completions for arrow objects (#11629)
 - Support searching for roxygen specific information in fuzzy finder (Go to File/Function) (#12190)
