@@ -14,7 +14,7 @@ pipeline {
 
   parameters {
       string(name: 'SLACK_CHANNEL', defaultValue: '#ide-builds', description: 'Slack channel to publish build message.')
-      string(name: 'RSTUDIO_VERSION_PATCH',  defaultValue: '0', description: 'RStudio Patch Version')
+      string(name: 'RSTUDIO_VERSION_PATCH',  defaultValue: '1', description: 'RStudio Patch Version')
       booleanParam(name: 'DAILY', defaultValue: false, description: 'Runs daily build if true')
       booleanParam(name: 'PUBLISH', defaultValue: false, description: 'Runs publish stage if true')
       string(name: 'COMMIT_HASH', defaultValue: '')
@@ -24,10 +24,10 @@ pipeline {
     PATH = "$HOME/opt/bin:/usr/local/bin:/usr/bin:/bin:/usr/sbin:/sbin"
     PACKAGE_OS = 'macOS'
     RSTUDIO_VERSION = ""
-    RSTUDIO_VERSION_MAJOR = 0
-    RSTUDIO_VERSION_MINOR = 0
-    RSTUDIO_VERSION_PATCH = 0
-    RSTUDIO_VERSION_SUFFIX = 0
+    RSTUDIO_VERSION_MAJOR = ""
+    RSTUDIO_VERSION_MINOR = ""
+    RSTUDIO_VERSION_PATCH = ""
+    RSTUDIO_VERSION_SUFFIX = ""
     IS_PRO = false
   }
   stages {
