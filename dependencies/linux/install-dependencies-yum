@@ -21,7 +21,6 @@ set -e
 sudo yum install -y make
 sudo yum install -y gcc
 sudo yum install -y gcc-c++
-sudo yum install -y cmake
 sudo yum install -y rpmdevtools
 sudo yum install -y wget
 sudo yum install -y jq

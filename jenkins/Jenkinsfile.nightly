@@ -1,0 +1,272 @@
+def utils
+
+def labelForOS = [
+  'bionic':     'linux',
+  'jammy':      'linux',
+  'centos7':    'linux',
+  'rhel8':      'linux',
+  'rhel9':      'linux',
+  'opensuse15': 'linux',
+  'windows':    'windows',
+  'macos':      'macos'
+]
+
+pipeline {
+  agent none
+
+  options {
+    disableConcurrentBuilds()
+    buildDiscarder(
+      logRotator(
+        artifactDaysToKeepStr: '',
+        artifactNumToKeepStr: '',
+        daysToKeepStr: '',
+        numToKeepStr: '100'))
+  }
+
+  triggers {
+    cron 'H H(20-23) * * *'
+  }
+  
+  parameters {
+    string defaultValue: '1', description: 'RStudio Patch Version', name: 'RSTUDIO_VERSION_PATCH', trim: true
+    string defaultValue: '#ide-builds', description: 'Slack channel to publish build message.', name: 'SLACK_CHANNEL', trim: true
+    booleanParam defaultValue: true, description: 'Publish the build to S3 and sentry.', name: 'PUBLISH'
+    booleanParam defaultValue: true, description: 'Force build even if there are no changes.', name: 'FORCE_BUILD'
+    string name: 'OS_FILTER', defaultValue: 'all', description: 'Pattern to limit builds by matching OS'
+    string name: 'ARCH_FILTER', defaultValue: 'all', description: 'Pattern to limit builds by matching ARCH'
+    booleanParam name: 'DAILY', defaultValue: true, description: 'Builds daily/nightly builds if true; builds hourly builds if false.'
+  }
+  
+  environment {
+    RSTUDIO_VERSION = ""
+    RSTUDIO_VERSION_MAJOR = ""
+    RSTUDIO_VERSION_MINOR = ""
+    RSTUDIO_VERSION_PATCH = ""
+    RSTUDIO_VERSION_SUFFIX = ""
+    RSTUDIO_VERSION_FLOWER = ""
+    COMMIT_HASH=""
+    IS_PRO = false
+    BUILD_BRANCH="${env.BRANCH_NAME.replace('/', '%2F')}"
+  }
+
+  stages {
+    stage ("Set Version & Commit") {
+      agent {
+        dockerfile {
+          filename 'Dockerfile.dispatcher'
+          label 'linux'
+        }
+      }
+      
+      steps {
+        script {
+          utils = load "${env.WORKSPACE}/utils.groovy"
+          
+          // Get the current commit
+          COMMIT_HASH = sh returnStdout: true, script: 'git rev-parse HEAD'
+
+          // Get the version
+          (RSTUDIO_VERSION,
+            RSTUDIO_VERSION_MAJOR,
+            RSTUDIO_VERSION_MINOR,
+            RSTUDIO_VERSION_PATCH,
+            RSTUDIO_VERSION_SUFFIX) = utils.getVersion(!params.DAILY)
+
+          RSTUDIO_VERSION_FLOWER = utils.getFlower()
+          IS_PRO = RSTUDIO_VERSION_SUFFIX.contains('pro')
+        }
+
+        buildName "${RSTUDIO_VERSION}"
+      }
+    }
+      
+    stage('Rebuild Docker Images') {
+      matrix {
+        when {
+          allOf {
+            anyOf {
+              expression { return params.FORCE_BUILD }
+              changeset comparator: 'REGEXP', pattern: '(docker|dependencies)/.+'
+            }
+            anyOf {
+              equals expected: params.OS_FILTER, actual: env.os;
+              equals expected: params.OS_FILTER, actual: 'all'
+            }
+            anyOf {
+              equals expected: params.ARCH_FILTER, actual: env.arch;
+              equals expected: params.ARCH_FILTER, actual: 'all'
+            }
+          }
+        }
+
+        axes {
+          axis {
+            name 'os'
+            values 'bionic', 'jammy', 'centos7', 'rhel8', 'rhel9', 'opensuse15', 'windows'
+          }
+          axis {
+            name 'arch'
+            values 'x86_64', 'arm64'
+          }
+        }
+
+        excludes {
+          exclude {
+            axis {
+              name 'os'
+              values 'bionic', 'centos7', 'rhel8', 'windows', 'opensuse15'
+            }
+            axis {
+              name 'arch'
+              values 'arm64'
+            }
+          }
+        }
+
+        stages {
+          stage ("Pull Build Push") {
+            agent {
+              label "${labelForOS[os]} && ${arch}"
+            }
+
+            environment {
+              GITHUB_LOGIN = credentials('github-rstudio-jenkins')
+            }
+
+            steps {
+              echo "Creating image jenkins/ide:${IS_PRO? 'pro-' : '' }${os}-${arch}-${RSTUDIO_VERSION_FLOWER}"
+              pullBuildPush(
+                image_name: 'jenkins/ide',
+                image_tag: "${IS_PRO? 'pro-' : '' }${os}-${arch}-${RSTUDIO_VERSION_FLOWER}",
+                latest_tag: false,
+                build_arg_jenkins_uid: 'JENKINS_UID',
+                build_arg_jenkins_gid: 'JENKINS_GID',
+                dockerfile: "docker/jenkins/Dockerfile.${os}",
+                build_args: "--build-arg ARCH=${arch} --build-arg GITHUB_LOGIN=${GITHUB_LOGIN}",
+                push: "${params.PUBLISH}"
+              )
+            }
+          }
+        }
+      }
+    }
+
+    stage ("Setup and Trigger Builds") {
+      when {
+        anyOf {
+          expression { return params.FORCE_BUILD }
+          changeset comparator: 'REGEXP', pattern: '(?:(?!docs/).+|(?!jenkins/Jenkinsfile\\.nightly))'
+        }
+      }
+
+      environment {
+        JOB_ROOT = "IDE/${IS_PRO ? 'Pro' : 'OS'}-Builds/Platforms"
+      }
+
+      stages {
+        stage ("Create a Sentry Release") {
+          agent {
+            dockerfile {
+              filename 'Dockerfile.dispatcher'
+              label 'linux'
+            }
+          }
+          
+          environment {
+            SENTRY_API_KEY = credentials('ide-sentry-api-key')
+          }
+
+          when { expression { return params.PUBLISH && params.DAILY } }
+
+          steps { 
+            echo "Creating a sentry release for version ${RSTUDIO_VERSION}"
+
+            // Install sentry
+            sh "HOME=`pwd` ./dependencies/common/install-sentry-cli"
+
+            // create new release on Sentry
+            sh 'sentry-cli --auth-token ${SENTRY_API_KEY} releases --org rstudio --project ide-backend new ' + RSTUDIO_VERSION
+
+            // associate commits
+            sh 'sentry-cli --auth-token ${SENTRY_API_KEY} releases --org rstudio --project ide-backend set-commits --auto ' + RSTUDIO_VERSION
+
+            // finalize release
+            sh 'sentry-cli --auth-token ${SENTRY_API_KEY} releases --org rstudio --project ide-backend finalize ' + RSTUDIO_VERSION
+          }
+        }
+
+        stage ("Build Windows") {
+          when {
+            anyOf {
+              equals expected: labelForOS[params.OS_FILTER], actual: 'windows';
+              equals expected: params.OS_FILTER, actual: 'all'
+            }
+          }
+
+          steps {
+            build wait: false,
+                  job: "${JOB_ROOT}/windows-pipeline/${env.BUILD_BRANCH}",
+                  parameters: [
+                    gitParameter(name: "COMMIT_HASH", value: "${COMMIT_HASH}"),
+                    string(name: "RSTUDIO_VERSION_PATCH", value: "${RSTUDIO_VERSION_PATCH}"),
+                    string(name: "SLACK_CHANNEL", value: "${SLACK_CHANNEL}"),
+                    booleanParam(name: "DAILY", value: params.DAILY),
+                    booleanParam(name: "PUBLISH", value: params.PUBLISH)
+                  ]
+          }
+        }
+
+        stage ("Build Linux") {
+          when {
+            anyOf {
+              equals expected: labelForOS[params.OS_FILTER], actual: 'linux';
+              equals expected: params.OS_FILTER, actual: 'all'
+            }
+          }
+
+          steps {
+            build wait: false,
+                  job: "${JOB_ROOT}/linux-pipeline/${env.BUILD_BRANCH}",
+                  parameters: [
+                    gitParameter(name: "COMMIT_HASH", value: "${COMMIT_HASH}"),
+                    string(name: "RSTUDIO_VERSION_PATCH", value: "${RSTUDIO_VERSION_PATCH}"),
+                    string(name: "SLACK_CHANNEL", value: "${SLACK_CHANNEL}"),
+                    string(name: "OS_FILTER", value: params.OS_FILTER),
+                    string(name: "ARCH_FILTER", value: params.ARCH_FILTER),
+                    booleanParam(name: "DAILY", value: params.DAILY),
+                    booleanParam(name: "PUBLISH", value: params.PUBLISH)
+                  ]
+          }
+        }
+
+        stage ("Build MacOS") {
+          when {
+            anyOf {
+              equals expected: labelForOS[params.OS_FILTER], actual: 'macos';
+              equals expected: params.OS_FILTER, actual: 'all'
+            }
+          }
+
+          steps {
+            build wait: false,
+                  job: "${JOB_ROOT}/macos-pipeline/${env.BUILD_BRANCH}",
+                  parameters: [
+                    gitParameter(name: "COMMIT_HASH", value: "${COMMIT_HASH}"),
+                    string(name: "RSTUDIO_VERSION_PATCH", value: "${RSTUDIO_VERSION_PATCH}"),
+                    string(name: "SLACK_CHANNEL", value: "${SLACK_CHANNEL}"),
+                    booleanParam(name: "DAILY", value: params.DAILY),
+                    booleanParam(name: "PUBLISH", value: params.PUBLISH)
+                  ]
+          }
+        }
+      }
+    }
+  }
+
+  post {
+    always {
+      sendNotifications slack_channel: SLACK_CHANNEL
+    }
+  }
+}

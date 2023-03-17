@@ -12,6 +12,10 @@ SHELL ["powershell"]
 # Note: keep installed dependencies in-sync with Install-RStudio-Prereqs.ps1 for consistency
 # between dev machines and the build machine.
 
+# allow long filenames
+RUN New-ItemProperty -Path "HKLM:\\SYSTEM\\CurrentControlSet\\Control\\FileSystem" `
+   -Name "LongPathsEnabled" -Value 1 -PropertyType DWORD -Force
+
 # install chocolatey
 RUN $env:chocolateyUseWindowsCompression = 'true'; `
     [System.Net.ServicePointManager]::SecurityProtocol = 3072 -bor 768 -bor 192 -bor 48; `
@@ -59,6 +63,7 @@ RUN [System.Net.ServicePointManager]::SecurityProtocol = 3072 -bor 768 -bor 192 
 RUN if (Test-Path 'C:\ProgramData\chocolatey\bin\cpack.exe') { Remove-Item -Force 'C:\ProgramData\chocolatey\bin\cpack.exe' }
 
 RUN choco install -y git
+RUN git config --global core.longpaths true
 
 RUN mkdir -p 'C:\rstudio-tools\dependencies\tools'
 RUN mkdir -p 'C:\rstudio-tools\dependencies\common'
