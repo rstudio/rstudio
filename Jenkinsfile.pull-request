@@ -31,7 +31,7 @@ pipeline {
           utils = load "${env.WORKSPACE}/utils.groovy"
           utils.addRemoteRef("${env.CHANGE_TARGET}")
           RSTUDIO_VERSION_FLOWER = readFile(file: 'version/RELEASE').replaceAll(" ", "-").toLowerCase().trim()
-          IS_PRO = RSTUDIO_VERSION_SUFFIX.contains('pro')
+          IS_PRO = JOB_URL.contains('Pro')
         }
       }
     }
