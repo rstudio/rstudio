@@ -29,3 +29,4 @@
 - Fixed launcher error details not showing on the homepage when clicking "Error Details" (rstudio/rstudio-pro#4333)
 - Fixed theme button's semantics so it is meaningful to screen reader [Accessibility] (rstudio/rstudio-pro#4337)
 - Fixed screen reader accessibility for the homepage theme dropdown menu [Accessibility] (rstudio/rstudio-pro#4339)
+- Fixed hidden controls on Session Info dialog remaining active [Accessibility] (rstudio/rstudio-pro#4341)
