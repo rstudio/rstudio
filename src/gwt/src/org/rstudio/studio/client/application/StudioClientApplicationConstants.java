@@ -1429,4 +1429,13 @@ public interface StudioClientApplicationConstants extends com.google.gwt.i18n.cl
     @DefaultMessage("Please visit https://posit.co/download/rstudio-desktop/ to check if a new version is available.")
     @Key("visitWebsiteForNewVersion")
     String visitWebsiteForNewVersionText();
+
+    /**
+     * Translated "Automatic update notifications were disabled for {0}.".
+     *
+     * @return translated "Automatic update notifications were disabled for {0}."
+     */
+    @DefaultMessage("Automatic update notifications were disabled for {0}.")
+    @Key("updateDisabledForVersionText")
+    String updateDisabledForVersionText(String version);
 }

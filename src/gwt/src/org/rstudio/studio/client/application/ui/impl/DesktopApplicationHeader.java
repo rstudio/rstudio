@@ -464,19 +464,25 @@ public class DesktopApplicationHeader implements ApplicationHeader,
                                      boolean manual)
    {
       boolean ignoredUpdate = false;
-      if (result.getUpdateVersion().length() > 0)
+      String updateVersion = result.getUpdateVersion();
+      boolean updateAvailable = updateVersion.length() > 0;
+      if (updateAvailable)
       {
          JsArrayString ignoredUpdates = ignoredUpdates_.getIgnoredUpdates();
          for (int i = 0; i < ignoredUpdates.length(); i++)
          {
-            if (ignoredUpdates.get(i) == result.getUpdateVersion())
+            if (ignoredUpdates.get(i) == updateVersion)
             {
                ignoredUpdate = true;
             }
          }
       }
-      if (result.getUpdateVersion().length() > 0 &&
-          !ignoredUpdate)
+      // Show dialog if there's an update available and either:
+      // 1) The user is manually checking for this update (whether the update
+      //    was previously ignored doesn't matter); or
+      // 2) This is an automatic update check and the version wasn't previously
+      //    ignored
+      if (updateAvailable && (manual || !ignoredUpdate))
       {
          ArrayList<String> buttonLabels = new ArrayList<>();
          ArrayList<String> elementIds = new ArrayList<>();
@@ -526,9 +532,13 @@ public class DesktopApplicationHeader implements ApplicationHeader,
             });
          }
 
+         String updateMessage = (manual && ignoredUpdate)
+               ? result.getUpdateMessage() + "\n\n" + constants_.updateDisabledForVersionText(updateVersion)
+               : result.getUpdateMessage();
+
          globalDisplay_.showGenericDialog(GlobalDisplay.MSG_QUESTION,
                constants_.updateAvailableCaption(),
-               result.getUpdateMessage(),
+               updateMessage,
                buttonLabels,
                elementIds,
                buttonOperations, 0);
