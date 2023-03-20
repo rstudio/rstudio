@@ -198,7 +198,7 @@ public class DesktopApplicationHeader implements ApplicationHeader,
                ClientState.PERSISTENT,
                clientState,
                false);
-         ignoredUpdates_ = IgnoredUpdates.create();
+         finishInit(clientState);
       }
 
       @Override
