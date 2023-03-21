@@ -23,6 +23,7 @@
 - Fixed display problems with Choose R dialog when UI language is French #12717
 - Background script jobs are now run using the global environment. This fixes the behaviour of `source()` in backgrounds jobs. (#11866)
 - Fixed Update Available can show after user selects to Ignore Update (rstudio/rstudio-pro#4179)
+- Fixed Can't update to latest version if version was previously ignored (#12874)
 
 #### Posit Workbench
 - Fixed unlabeled buttons for screen reader users when page is narrow [Accessibility] (rstudio/rstudio-pro#4340)
