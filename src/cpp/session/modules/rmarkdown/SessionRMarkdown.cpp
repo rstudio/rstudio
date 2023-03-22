@@ -798,10 +798,14 @@ private:
 
       markCompleted();
 
+
+      std::string quartoOutput = isQuarto_ ? "TRUE" : "FALSE";
+      LOG_INFO_MESSAGE("terminate pid: >" + std::to_string(pid_) + "< isQuarto_ >" + quartoOutput + "<");
       // on windows we need to be more aggressive when terminating quarto jobs as we've seen cases where 'stop' doesn't work properly with deno
       using namespace core::shell_utils;
-      if (isQuarto_ && pid_ > 0)
+      if (pid_ > 0)
       {
+         LOG_INFO_MESSAGE("MANUALLY KILLING PROCESS: " + std::to_string(pid_));
          ShellCommand cmd("taskkill");
          cmd << "/F" << "/T" << "/PID" << core::safe_convert::numberToString(pid_);
          core::system::ProcessOptions options;
