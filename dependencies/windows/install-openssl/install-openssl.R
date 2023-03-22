@@ -1,5 +1,5 @@
 OWD <- getwd()
-URL <- "https://www.openssl.org/source/openssl-1.1.1i.tar.gz"
+URL <- "https://www.openssl.org/source/openssl-1.1.1t.tar.gz"
 NAME <- sub(".tar.gz$", "", basename(URL))
 
 source("../tools.R")

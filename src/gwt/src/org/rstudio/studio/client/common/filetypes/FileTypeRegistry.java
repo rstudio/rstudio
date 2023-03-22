@@ -411,6 +411,7 @@ public class FileTypeRegistry
       register("*.cpp", CPP, new ImageResource2x(icons.iconCpp2x()));
       register("*.cc", CPP, new ImageResource2x(icons.iconCpp2x()));
       register("*.h", H, new ImageResource2x(icons.iconH2x()));
+      register("*.hh", HPP, new ImageResource2x(icons.iconHpp2x()));
       register("*.hpp", HPP, new ImageResource2x(icons.iconHpp2x()));
       register("*.f", TEXT, new ImageResource2x(icons.iconText2x()));
       register("*.Rout.save", TEXT, new ImageResource2x(icons.iconText2x()));

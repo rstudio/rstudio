@@ -193,4 +193,10 @@ def updateDailyRedirects(String path) {
   sh 'docker/jenkins/publish-daily-binary.sh https://s3.amazonaws.com/rstudio-ide-build/' + path + ' ${RSTUDIO_ORG_PEM}'
 }
 
+def jenkins_user_build_args() {
+  def jenkins_uid = sh (script: 'id -u jenkins', returnStdout: true).trim()
+  def jenkins_gid = sh (script: 'id -g jenkins', returnStdout: true).trim()
+  return " --build-arg JENKINS_UID=${jenkins_uid} --build-arg JENKINS_GID=${jenkins_gid}"
+}
+
 return this

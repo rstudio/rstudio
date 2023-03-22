@@ -23,7 +23,6 @@
 
   <link rel="stylesheet" href="rstudio.css" type="text/css" />
   <link rel="stylesheet" href="signin.css" type="text/css" />
-  <link rel="stylesheet" href="css/focus-visible.css" type="text/css" />
 
   <style type="text/css">
     #errorpanel {
@@ -36,7 +35,6 @@
 
 </head>
 <body>
-  <div id="skipnav"><a href="#username">Skip navigation</a></div>
   <header id="banner" role="banner">
     <div id="logo">#!logoHtml#</div>
   </header>
@@ -70,6 +68,7 @@
                 value=""
                 id="username"
                 size="45"
+                aria-required="true"
               /><br />
             </p>
             <p>
@@ -84,6 +83,7 @@
                 value=""
                 id="password"
                 size="45"
+                aria-required="true"
               /><br />
             </p>
             <div style="display: #staySignedInDisplay#">
@@ -173,6 +173,5 @@
 
     <div id="login-html">#!loginPageHtml#</div>
   </main>
-  <script type="text/javascript" src="js/focus-visible.min.js"></script>
 </body>
 </html>

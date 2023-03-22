@@ -83,6 +83,7 @@ public class PanmirrorToolbarCommands implements CommandPaletteEntryProvider
       add(PanmirrorCommands.BashCodeChunk, "Bash");
       add(PanmirrorCommands.D3CodeChunk, "D3");
       add(PanmirrorCommands.PythonCodeChunk, "Python");
+      add(PanmirrorCommands.JuliaCodeChunk, "Julia");
       add(PanmirrorCommands.RcppCodeChunk, "Rcpp");
       add(PanmirrorCommands.SQLCodeChunk, "SQL");
       add(PanmirrorCommands.StanCodeChunk, "Stan");

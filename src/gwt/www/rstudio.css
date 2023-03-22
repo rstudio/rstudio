@@ -154,35 +154,6 @@ a img {
   padding: 8px;
 }
 
-#skipnav a {
-  position: absolute;
-  clip: rect(0 0 0 0);
-  border: 0;
-  height: 1px;
-  margin: -1px;
-  overflow: hidden;
-  padding: 0;
-  width: 1px;
-  white-space: nowrap;
-}
-
-#skipnav a:focus {
-  clip: auto;
-  left: 0;
-  top: 0;
-  width: 100%;
-  height: auto;
-  margin: 0;
-  padding: 10px 0;
-  background: #fdf6e7;
-  border: 2px solid #990000;
-  border-left: none;
-  border-right: none;
-  text-align: center;
-  font-weight: bold;
-  color: #990000;
-}
-
 .visuallyhidden {
   position: absolute;
   clip: rect(0 0 0 0);
