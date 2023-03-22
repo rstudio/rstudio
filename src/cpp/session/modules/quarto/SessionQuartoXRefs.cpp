@@ -163,6 +163,7 @@ json::Array indexSourceFile(const std::string& contents, const std::string& file
 {
    QuartoConfig config = quartoConfig();
    FilePath resourcesPath(config.resources_path);
+   FilePath filtersPath = resourcesPath.completePath("filters");
 
    static FilePath xrefIndexingDir;
    if (xrefIndexingDir.isEmpty())
@@ -178,7 +179,6 @@ json::Array indexSourceFile(const std::string& contents, const std::string& file
 
       // write defaults file with filters
       FilePath defaultsFile = xrefIndexingDir.completePath("defaults.yml");
-      FilePath filtersPath = resourcesPath.completePath("filters");
       boost::format fmt("filters:\n  - %1%\n  - %2%\n");
       std::string defaults = boost::str(fmt %
          string_utils::utf8ToSystem(filtersPath.completePath("quarto-init/quarto-init.lua").getAbsolutePath()) %
@@ -210,8 +210,15 @@ json::Array indexSourceFile(const std::string& contents, const std::string& file
    core::system::setenv(&env, "QUARTO_SHARE_PATH", resourcesPath.getAbsolutePath());
    options.environment = env;
    std::vector<std::string> args;
+
+   // use qmd-reader.lua for --from if available
    args.push_back("--from");
-   args.push_back("markdown");
+   auto qmdReaderPath = filtersPath.completePath("qmd-reader.lua");
+   if (qmdReaderPath.exists()) {
+      args.push_back(string_utils::utf8ToSystem(qmdReaderPath.getAbsolutePath()));
+   } else {
+      args.push_back("markdown");
+   }
    args.push_back("--to");
    args.push_back("native");
    args.push_back("--defaults");
