@@ -53,7 +53,9 @@ import org.rstudio.studio.client.server.ServerError;
 import org.rstudio.studio.client.server.ServerRequestCallback;
 import org.rstudio.studio.client.workbench.codesearch.CodeSearch;
 import org.rstudio.studio.client.workbench.commands.Commands;
+import org.rstudio.studio.client.workbench.events.PushClientStateEvent;
 import org.rstudio.studio.client.workbench.events.SessionInitEvent;
+import org.rstudio.studio.client.workbench.model.ClientInitState;
 import org.rstudio.studio.client.workbench.model.ClientState;
 import org.rstudio.studio.client.workbench.model.Session;
 import org.rstudio.studio.client.workbench.model.SessionInfo;
@@ -102,7 +104,6 @@ public class DesktopApplicationHeader implements ApplicationHeader,
       eventBus_= events;
       pUIPrefs_ = pUIPrefs;
       globalDisplay_ = globalDisplay;
-      ignoredUpdates_ = IgnoredUpdates.create();
       server_ = server;
       appQuit_ = appQuit;
       binder_.bind(commands, this);
@@ -154,33 +155,7 @@ public class DesktopApplicationHeader implements ApplicationHeader,
             addQuitSessionButton(commands);
          }
 
-         new JSObjectStateValue(
-               "updates",
-               "ignoredUpdates",
-               ClientState.PERSISTENT,
-               session_.getSessionInfo().getClientState(),
-               false)
-         {
-            @Override
-            protected void onInit(JsObject value)
-            {
-               if (value != null)
-                  ignoredUpdates_ = value.cast();
-            }
-
-            @Override
-            protected JsObject getValue()
-            {
-               ignoredUpdatesDirty_ = false;
-               return ignoredUpdates_.cast();
-            }
-
-            @Override
-            protected boolean hasChanged()
-            {
-               return ignoredUpdatesDirty_;
-            }
-         };
+         ignoredUpdatesState_ = new IgnoredUpdatesStateValue(sessionInfo.getClientState());
 
          Scheduler.get().scheduleFinally(new ScheduledCommand()
          {
@@ -212,6 +187,52 @@ public class DesktopApplicationHeader implements ApplicationHeader,
       toolbar_ = new GlobalToolbar(commands, pCodeSearch);
       ThemeStyles styles = ThemeResources.INSTANCE.themeStyles();
       toolbar_.getWrapper().addStyleName(styles.desktopGlobalToolbarWrapper());
+   }
+
+   private class IgnoredUpdatesStateValue extends JSObjectStateValue
+   {
+      public IgnoredUpdatesStateValue(ClientInitState clientState)
+      {
+         super("updates",
+               "ignoredUpdates",
+               ClientState.PERSISTENT,
+               clientState,
+               false);
+         finishInit(clientState);
+      }
+
+      @Override
+      protected void onInit(JsObject value)
+      {
+         if (value != null)
+            ignoredUpdates_ = value.cast();
+      }
+
+      @Override
+      protected JsObject getValue()
+      {
+         ignoredUpdatesDirty_ = false;
+         return ignoredUpdates_.cast();
+      }
+
+      @Override
+      protected boolean hasChanged()
+      {
+         return ignoredUpdatesDirty_;
+      }
+
+      public JsArrayString getIgnoredUpdates()
+      {
+         return ignoredUpdates_.getIgnoredUpdates();
+      }
+
+      public void addIgnoredUpdate(String update) {
+         ignoredUpdates_.addIgnoredUpdate(update);
+         ignoredUpdatesDirty_ = true;
+      }
+
+      private IgnoredUpdates ignoredUpdates_;
+      private boolean ignoredUpdatesDirty_ = false;
    }
 
    @Override
@@ -464,19 +485,25 @@ public class DesktopApplicationHeader implements ApplicationHeader,
                                      boolean manual)
    {
       boolean ignoredUpdate = false;
-      if (result.getUpdateVersion().length() > 0)
+      String updateVersion = result.getUpdateVersion();
+      boolean updateAvailable = updateVersion.length() > 0;
+      if (updateAvailable)
       {
-         JsArrayString ignoredUpdates = ignoredUpdates_.getIgnoredUpdates();
+         JsArrayString ignoredUpdates = ignoredUpdatesState_.getIgnoredUpdates();
          for (int i = 0; i < ignoredUpdates.length(); i++)
          {
-            if (ignoredUpdates.get(i) == result.getUpdateVersion())
+            if (ignoredUpdates.get(i) == updateVersion)
             {
                ignoredUpdate = true;
             }
          }
       }
-      if (result.getUpdateVersion().length() > 0 &&
-          !ignoredUpdate)
+      // Show dialog if there's an update available and either:
+      // 1) The user is manually checking for this update (whether the update
+      //    was previously ignored doesn't matter); or
+      // 2) This is an automatic update check and the version wasn't previously
+      //    ignored
+      if (updateAvailable && (manual || !ignoredUpdate))
       {
          ArrayList<String> buttonLabels = new ArrayList<>();
          ArrayList<String> elementIds = new ArrayList<>();
@@ -520,15 +547,20 @@ public class DesktopApplicationHeader implements ApplicationHeader,
                @Override
                public void execute()
                {
-                  ignoredUpdates_.addIgnoredUpdate(result.getUpdateVersion());
-                  ignoredUpdatesDirty_ = true;
+                  ignoredUpdatesState_.addIgnoredUpdate(result.getUpdateVersion());
+                  // Trigger an update to the persistent updates state file
+                  eventBus_.fireEvent(new PushClientStateEvent(true));
                }
             });
          }
 
+         String updateMessage = (manual && ignoredUpdate)
+               ? result.getUpdateMessage() + "\n\n" + constants_.updateDisabledForVersionText(updateVersion)
+               : result.getUpdateMessage();
+
          globalDisplay_.showGenericDialog(GlobalDisplay.MSG_QUESTION,
                constants_.updateAvailableCaption(),
-               result.getUpdateMessage(),
+               updateMessage,
                buttonLabels,
                elementIds,
                buttonOperations, 0);
@@ -686,8 +718,7 @@ public class DesktopApplicationHeader implements ApplicationHeader,
    private GlobalDisplay globalDisplay_;
    Provider<UserPrefs> pUIPrefs_;
    private ApplicationServerOperations server_;
-   private IgnoredUpdates ignoredUpdates_;
-   private boolean ignoredUpdatesDirty_ = false;
+   private IgnoredUpdatesStateValue ignoredUpdatesState_;
    private ApplicationQuit appQuit_;
    private WebApplicationHeaderOverlay overlay_;
    private static final StudioClientApplicationConstants constants_ = GWT.create(StudioClientApplicationConstants.class);

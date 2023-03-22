@@ -18,6 +18,8 @@
 
 #include <shared_core/FilePath.hpp>
 
+#include <r/session/RClientState.hpp>
+
 namespace rstudio {
 namespace r {
 namespace session {

@@ -22,11 +22,11 @@
 #include <r/session/RGraphics.hpp>
 #include <r/session/RSession.hpp>
 #include <r/session/RSessionState.hpp>
+#include <r/session/RSuspend.hpp>
 
 #include "REmbedded.hpp"
 #include "RRestartContext.hpp"
 #include "RStdCallbacks.hpp"
-#include "RSuspend.hpp"
 
 using namespace rstudio::core;
 
