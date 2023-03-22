@@ -15,6 +15,12 @@ URL=$1
 IDENTITY=$2
 FILENAME="${URL##*/}"
 
+# Don't publish redirects for hourly builds
+if [[ "$FILENAME" =~ "hourly" ]]; then
+    echo "Skipping publishing of hourly build"
+    exit 0
+fi
+
 # parse the URL into components; save/restore IFS (field separator)
 OLDIFS="$IFS"
 IFS='/'
