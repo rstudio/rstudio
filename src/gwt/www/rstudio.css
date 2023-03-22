@@ -74,10 +74,17 @@ td {
   display: flex;
   align-items: center;
   position: relative;
+  justify-content:flex-end;
+  flex-wrap: wrap;
 }
 
 #banner picture {
+  margin-right: auto;
   height: 27px;
+}
+
+#logo {
+  margin-right: auto;
 }
 
 #logo, #logo > a {
@@ -85,8 +92,7 @@ td {
 }
 
 #licensed-to {
-  position: absolute;
-  right: 1em;
+  margin-left: 2px;
   text-align: right;
 }
 
