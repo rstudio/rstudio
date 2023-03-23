@@ -57,7 +57,7 @@ function executeCommand(command: string): Expected<string> {
 }
 
 export async function promptUserForR(platform = process.platform): Promise<Expected<string | null>> {
-  
+
   if (platform === 'win32') {
 
     const desktop = await import('../native/desktop.node');
@@ -187,15 +187,16 @@ function prepareEnvironmentImpl(rPath?: string): Err {
 export function detectREnvironment(rPath?: string): Expected<REnvironment> {
 
   // scan for R
+  logger().logDebug(`Executing detectREnvironent(${rPath})`);
   const [R, scanError] = rPath ? ok(rPath) : scanForR();
   if (scanError) {
+    logger().logDebug(`Error scanning for R: ${scanError}`);
     showRNotFoundError();
     return err(scanError);
   }
 
   // resolve path to binary if we were given a directory
   let rExecutable = new FilePath(R);
-  
   if (rExecutable.isDirectory()) {
     rExecutable = rExecutable.completeChildPath(process.platform === 'win32' ? 'R.exe' : 'R');
   }
@@ -212,15 +213,21 @@ export function detectREnvironment(rPath?: string): Expected<REnvironment> {
   Sys.getenv("${kLdLibraryPathVariable}")
 ))`;
 
+  logger().logDebug(`Querying information about R executable at path: ${rExecutable}`);
   const [result, error] = expect(() => {
     return spawnSync(rExecutable.getAbsolutePath(), ['--vanilla', '-s'], {
       encoding: 'utf-8',
       input: rQueryScript,
-      env: {}
     });
   });
 
+  logger().logDebug(`stdout: ${result.stdout}`);
+  logger().logDebug(`stderr: ${result.stderr}`);
+  logger().logDebug(`status: ${result.status}`);
+  logger().logDebug(`error:  ${result.error ?? '[no error occurred]'}`);
+
   if (error) {
+    logger().logDebug(`Error querying information about R: ${error}`);
     return err(error);
   }
 
@@ -229,6 +236,7 @@ export function detectREnvironment(rPath?: string): Expected<REnvironment> {
   // For that reason, we need to check for a non-zero exit code
   // rather than just a non-null error.
   if (result.status !== 0) {
+    logger().logDebug(`Error querying information about R: ${error} [status code ${result.status}]`);
     return err(result.error ?? new Error(t('common.unknownErrorOccurred')));
   }
 
@@ -294,7 +302,7 @@ function scanForRPosix(): Expected<string> {
     if (!error && rLocation) {
       logger().logDebug(`Using ${rLocation} (found by /usr/bin/which/R)`);
       return ok(rLocation);
-    } 
+    }
   }
 
   for (const location of defaultLocations) {
@@ -313,8 +321,8 @@ function queryRegistry(cmd: string, rInstallations: Set<string>): Set<string> {
   if (error) {
     logger().logErrorMessage(`Error querying the Windows registry: ${error}`);
     return rInstallations;
-  }      
-    
+  }
+
   // parse the actual path from the output
   const lines = output.split(EOL);
   for (const line of lines) {
@@ -345,7 +353,7 @@ export function findRInstallationsWin32(): string[] {
     const rBinaryNames = ['R', 'R64'];
 
     const regQueryCommands = keyNames.flatMap(key => rBinaryNames.map(
-      rBin => `%SystemRoot%\\System32\\reg.exe query ${key}\\SOFTWARE\\R-Core\\${rBin} /s /v InstallPath ${view}`));  
+      rBin => `%SystemRoot%\\System32\\reg.exe query ${key}\\SOFTWARE\\R-Core\\${rBin} /s /v InstallPath ${view}`));
     regQueryCommands.map(cmd => queryRegistry(cmd, rInstallations));
 
     logger().logInfo(`Found ${rInstallations.size} in the registry.`);
@@ -401,7 +409,7 @@ function findDefaultInstallPathWin32(version: string): string {
       'HKEY_CURRENT_USER',
     ];
 
-    const regQueryCommands = keyNames.flatMap(key => 
+    const regQueryCommands = keyNames.flatMap(key =>
       `%SystemRoot%\\System32\\reg.exe query ${key}\\SOFTWARE\\R-Core\\${version} /v InstallPath ${view}`
     );
 
