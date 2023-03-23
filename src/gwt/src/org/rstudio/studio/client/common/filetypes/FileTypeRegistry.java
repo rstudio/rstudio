@@ -447,6 +447,7 @@ public class FileTypeRegistry
       register("*.haxe", HAXE, new ImageResource2x(icons.iconHaxe2x()));
       register("*.java", JAVA, new ImageResource2x(icons.iconJava2x()));
       register("*.julia", JULIA, new ImageResource2x(icons.iconJulia2x()));
+      register("*.jl", JULIA, new ImageResource2x(icons.iconJulia2x()));
       register("*.lisp", LISP, new ImageResource2x(icons.iconLisp2x()));
       register(".emacs", LISP, new ImageResource2x(icons.iconLisp2x()));
       register("*.el", LISP, new ImageResource2x(icons.iconLisp2x()));
