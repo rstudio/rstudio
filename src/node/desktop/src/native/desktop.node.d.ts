@@ -24,15 +24,24 @@ export declare function isCtrlKeyDown(): boolean;
 export declare function currentCSIDLPersonalHomePath(): string;
 
 /**
-* (Windows only)
-*
-* Return the path for the default My Documents directory and force creation if needed.
-*/
+ * (Windows only)
+ *
+ * Return the path for the default My Documents directory and force creation if needed.
+ */
 export declare function defaultCSIDLPersonalHomePath(): string;
 
 /**
-* (Windows only)
-*
-* Finds R installations on the system by enumerating the registry.
-*/
+ * (Windows only)
+ *
+ * Finds R installations on the system by enumerating the registry.
+ */
 export declare function searchRegistryForInstallationsOfR(): string[];
+
+/**
+ * (Windows only)
+ *
+ * Find the default version of R.
+ *
+ * @param registryVersionKey The registry version key -- typically 'R' or 'R64'.
+ */
+export declare function searchRegistryForDefaultInstallationOfR(registryVersionKey: string): string;
