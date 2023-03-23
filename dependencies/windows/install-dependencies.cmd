@@ -7,7 +7,7 @@ call ..\tools\rstudio-tools.cmd
 set PATH=%CD%\tools;%PATH%
 
 REM Check for required tools on the PATH.
-for %%X in (R.exe 7z.exe cmake.exe) do (
+for %%X in (R.exe 7z.exe cmake.exe wget.exe) do (
   where /q %%X
   if ERRORLEVEL 1 (
     echo ERROR: %%X is not available on the PATH; cannot proceed.
@@ -50,6 +50,14 @@ REM Get latest Quarto release version
 cd install-quarto
 for /F "delims=" %%L in ('powershell.exe -File get-quarto-version.ps1') do (set "QUARTO_VERSION=%%L")
 cd ..
+
+REM Check for errors.
+if not "%QUARTO_VERSION%" == "%QUARTO_VERSION:ERROR=%" (
+	echo ERROR: Failed to determine Quarto version; cannot proceed.
+	echo Did you set the Powershell execution policy?
+	echo Try running 'Set-ExecutionPolicy Unrestricted'.
+	exit /b
+)
 
 set QUARTO_FILE=quarto-%QUARTO_VERSION%-win.zip
 
