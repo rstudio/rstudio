@@ -79,11 +79,12 @@ export async function promptUserForR(platform = process.platform): Promise<Expec
       const rBinDir = ElectronDesktopOptions().rBinDir();
       if (rBinDir) {
         const rPath = `${rBinDir}/R.exe`;
+        logger().logDebug(`Trying version of R stored in RStudio Desktop options: ${rPath}`);
         if (isValidBinary(rPath)) {
-          logger().logDebug(`Using R from preferences: ${rPath}`);
+          logger().logDebug(`Validation succeeded; using R: ${rPath}`);
           return ok(rPath);
         } else {
-          logger().logDebug(`rBinDir (${rPath}) does not exist; ignoring`);
+          logger().logDebug(`Validation failed; skipping R: ${rPath}`);
         }
       }
 
@@ -322,28 +323,6 @@ function scanForRPosix(): Expected<string> {
   }
   // nothing found
   return err();
-}
-
-function queryRegistry(cmd: string, rInstallations: Set<string>): Set<string> {
-  logger().logDebug(`Querying registry for ${cmd}`);
-  const [output, error] = executeCommand(cmd);
-  if (error) {
-    logger().logErrorMessage(`Error querying the Windows registry: ${error}`);
-    return rInstallations;
-  }
-
-  // parse the actual path from the output
-  const lines = output.split(EOL);
-  for (const line of lines) {
-    const match = /^\s*InstallPath\s*REG_SZ\s*(.*)$/.exec(line);
-    if (match != null) {
-      const rInstallation = match[1];
-      if (existsSync(rInstallation)) {
-        rInstallations.add(rInstallation);
-      }
-    }
-  }
-  return rInstallations;
 }
 
 export function findRInstallationsWin32(): string[] {
