@@ -401,6 +401,7 @@ function findDefaultInstallPathWin32(registryVersionKey: string): string {
   const rLocation = desktop.searchRegistryForDefaultInstallationOfR(registryVersionKey);
   if (rLocation.length === 0) {
     logger().logWarning('No default R installation was found in the registry.');
+    return '';
   }
 
   if (!existsSync(rLocation)) {
