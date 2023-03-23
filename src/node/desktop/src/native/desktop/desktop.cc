@@ -41,6 +41,185 @@
     Napi::Function::New(env, __FUNCTION__)         \
   )
 
+
+#ifdef _WIN32
+
+namespace rstudio {
+namespace core {
+namespace system {
+
+bool expandEnvironmentVariables(std::string value, std::string* pResult)
+{
+   if (value.empty())
+   {
+      *pResult = value;
+      return true;
+   }
+
+   DWORD sizeRequired = ::ExpandEnvironmentStrings(value.c_str(), nullptr, 0);
+   if (!sizeRequired)
+      return false;
+
+   std::vector<char> buffer(sizeRequired);
+   auto result = ::ExpandEnvironmentStrings(
+       value.c_str(),
+       &buffer[0],
+       static_cast<DWORD>(buffer.capacity()));
+
+   if (!result || result > buffer.capacity())
+      return false;
+
+   *pResult = std::string(&buffer[0]);
+   return true;
+}
+
+class RegistryKey {
+public:
+
+   RegistryKey()
+      : hKey_(nullptr)
+   {
+   }
+
+   ~RegistryKey()
+   {
+      ::RegCloseKey(hKey_);
+      hKey_ = nullptr;
+   }
+
+   bool open(HKEY hKey, std::string subKey, REGSAM samDesired)
+   {
+      hKey_ = nullptr;
+      LONG error = ::RegOpenKeyEx(hKey, subKey.c_str(), 0, samDesired, &hKey_);
+      if (error != ERROR_SUCCESS)
+      {
+         hKey_ = nullptr;
+         return false;
+      }
+
+      return true;
+   }
+
+   bool isOpen()
+   {
+      return hKey_ != nullptr;
+   }
+
+   HKEY handle()
+   {
+      return hKey_;
+   }
+
+   std::string getStringValue(const std::string& name,
+                              const std::string& defaultValue)
+   {
+      std::string value;
+      bool ok = getStringValue(name, &value);
+      if (ok)
+         return value;
+      return defaultValue;
+   }
+
+   bool getStringValue(const std::string& name,
+                       std::string* pValue)
+   {
+      std::vector<char> buffer(256);
+      while (true)
+      {
+         DWORD type;
+         DWORD size = static_cast<DWORD>(buffer.capacity());
+
+         LONG result = ::RegQueryValueEx(
+             hKey_,
+             name.c_str(),
+             nullptr,
+             &type,
+             (LPBYTE)(&buffer[0]),
+             &size);
+
+         switch (result)
+         {
+         case ERROR_SUCCESS:
+            {
+               if (type != REG_SZ && type != REG_EXPAND_SZ)
+                  return false;
+
+               *pValue = std::string(&buffer[0], buffer.capacity());
+
+               // REG_SZ and friends may or may not be null-terminated.
+               // So trim the string at the first null, if any.
+               size_t idxNull = pValue->find('\0');
+               if (idxNull != std::string::npos)
+                  pValue->resize(idxNull);
+
+               if (type == REG_EXPAND_SZ)
+               {
+                  bool ok = expandEnvironmentVariables(*pValue, pValue);
+                  if (!ok)
+                     return false;
+               }
+
+               return true;
+            }
+
+         case ERROR_MORE_DATA:
+            buffer.reserve(size);
+            continue;
+
+         default:
+            return false;
+         }
+      }
+   }
+
+   std::vector<std::string> keyNames()
+   {
+      LONG result;
+
+      DWORD subKeys, maxLen;
+      result = ::RegQueryInfoKey(hKey_, nullptr, nullptr, nullptr, &subKeys, &maxLen,
+                                 nullptr, nullptr, nullptr, nullptr, nullptr, nullptr);
+
+
+      std::vector<char> nameBuffer(maxLen+2);
+      std::vector<std::string> results;
+      results.reserve(subKeys);
+
+      for (DWORD i = 0; ; i++)
+      {
+         DWORD size = static_cast<DWORD>(nameBuffer.capacity());
+         LONG result = ::RegEnumKeyEx(hKey_,
+                                      i,
+                                      &nameBuffer[0],
+                                      &size,
+                                      nullptr, nullptr, nullptr, nullptr);
+         switch (result)
+         {
+         case ERROR_SUCCESS:
+            results.push_back(std::string(&nameBuffer[0], size));
+            break;
+         case ERROR_NO_MORE_ITEMS:
+            return results;
+         default:
+            break;
+         }
+
+      }
+
+      return std::vector<std::string>();
+   }
+
+private:
+   HKEY hKey_;
+
+};
+
+} // namespace system
+} // namespace core
+} // namespace rstudio
+
+#endif
+
 namespace rstudio {
 namespace desktop {
 
@@ -273,6 +452,60 @@ Napi::Value defaultCSIDLPersonalHomePath(const Napi::CallbackInfo& info)
    return Napi::String::New(info.Env(), u8str);
 }
 
+namespace {
+
+std::vector<std::string> searchRegistryForInstallationsOfRImpl(const Napi::CallbackInfo& info)
+{
+   std::vector<std::string> result;
+
+#ifdef _WIN32
+   using namespace rstudio::core::system;
+
+   // search both 32-bit and 64-bit registry keys, just in case
+   for (int flags : { KEY_WOW64_32KEY, KEY_WOW64_64KEY })
+   {
+      for (HKEY key : { HKEY_LOCAL_MACHINE, HKEY_CURRENT_USER })
+      {
+         // open registry key
+         RegistryKey rootKey;
+         bool ok = rootKey.open(key, "Software\\R-core\\R", KEY_READ | flags);
+         if (!ok)
+            continue;
+
+         // get the sub-key names (these are specific versions of R)
+         auto keyNames = rootKey.keyNames();
+         for (auto&& keyName : keyNames)
+         {
+            RegistryKey versionKey;
+            bool ok = versionKey.open(rootKey.handle(), keyName, KEY_READ | flags);
+            if (!ok)
+               continue;
+
+            // read the installation path
+            std::string installPath;
+            if (!versionKey.getStringValue("InstallPath", &installPath))
+               continue;
+
+         }
+      }
+   }
+#endif
+
+   return result;
+}
+
+} // end anonymous namespace
+
+Napi::Value searchRegistryForInstallationsOfR(const Napi::CallbackInfo& info)
+{
+   auto installPaths = searchRegistryForInstallationsOfRImpl(info);
+
+   auto result = Napi::Array::New(info.Env(), installPaths.size());
+   for (int i = 0, n = installPaths.size(); i < n; i++)
+      result.Set(i, Napi::String::From(info.Env(), installPaths[i]));
+   return result;
+}
+
 } // end namespace desktop
 } // end namespace rstudio
 
@@ -282,6 +515,7 @@ Napi::Object Init(Napi::Env env, Napi::Object exports) {
   RS_EXPORT_FUNCTION("isCtrlKeyDown", rstudio::desktop::isCtrlKeyDown);
   RS_EXPORT_FUNCTION("currentCSIDLPersonalHomePath", rstudio::desktop::currentCSIDLPersonalHomePath);
   RS_EXPORT_FUNCTION("defaultCSIDLPersonalHomePath", rstudio::desktop::defaultCSIDLPersonalHomePath);
+  RS_EXPORT_FUNCTION("searchRegistryForInstallationsOfR", rstudio::desktop::searchRegistryForInstallationsOfR);
 
   return exports;
 

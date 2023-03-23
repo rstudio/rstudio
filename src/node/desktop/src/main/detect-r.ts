@@ -31,6 +31,8 @@ import { ElectronDesktopOptions } from './preferences/electron-desktop-options';
 import { FilePath } from '../core/file-path';
 import { dialog } from 'electron';
 
+import desktop from '../native/desktop.node';
+
 let kLdLibraryPathVariable: string;
 if (process.platform === 'darwin') {
   kLdLibraryPathVariable = 'DYLD_FALLBACK_LIBRARY_PATH';
@@ -59,8 +61,6 @@ function executeCommand(command: string): Expected<string> {
 export async function promptUserForR(platform = process.platform): Promise<Expected<string | null>> {
 
   if (platform === 'win32') {
-
-    const desktop = await import('../native/desktop.node');
 
     const showUi =
       getenv('RSTUDIO_DESKTOP_PROMPT_FOR_R').length !== 0 ||
@@ -187,7 +187,7 @@ function prepareEnvironmentImpl(rPath?: string): Err {
 export function detectREnvironment(rPath?: string): Expected<REnvironment> {
 
   // scan for R
-  logger().logDebug(`Executing detectREnvironent(${rPath})`);
+  logger().logDebug(`Executing detectREnvironent with path: ${rPath}`);
   const [R, scanError] = rPath ? ok(rPath) : scanForR();
   if (scanError) {
     logger().logDebug(`Error scanning for R: ${scanError}`);
@@ -339,25 +339,7 @@ function queryRegistry(cmd: string, rInstallations: Set<string>): Set<string> {
 
 export function findRInstallationsWin32(): string[] {
 
-  const rInstallations = new Set<string>();
-
-  for (const view of ['/reg:32', '/reg:64']) {
-
-    // list all installed versions from registry
-    const keyNames = [
-      'HKEY_LOCAL_MACHINE',
-      'HKEY_CURRENT_USER',
-    ];
-
-    // look specifically for R or R64, ignore Rtools directory
-    const rBinaryNames = ['R', 'R64'];
-
-    const regQueryCommands = keyNames.flatMap(key => rBinaryNames.map(
-      rBin => `%SystemRoot%\\System32\\reg.exe query ${key}\\SOFTWARE\\R-Core\\${rBin} /s /v InstallPath ${view}`));
-    regQueryCommands.map(cmd => queryRegistry(cmd, rInstallations));
-
-    logger().logInfo(`Found ${rInstallations.size} in the registry.`);
-  }
+  const rInstallations = desktop.searchRegistryForInstallationsOfR();
 
   // look for R installations in some common locations
   const commonLocations = [
@@ -368,8 +350,9 @@ export function findRInstallationsWin32(): string[] {
   ];
 
   for (const location of commonLocations) {
-    logger().logDebug(`Checking common R installation path: ${location}`)
+
     // nothing to do if it doesn't exist
+    logger().logDebug(`Checking common R installation path: ${location}`);
     if (!existsSync(location)) {
       continue;
     }
@@ -379,13 +362,14 @@ export function findRInstallationsWin32(): string[] {
     for (const rDir of rDirs) {
       const path = join(location, rDir);
       if (existsSync(path)) {
-        rInstallations.add(path);
+        rInstallations.push(path);
       }
     }
 
   }
 
-  return Array.from(rInstallations.values());
+  logger().logDebug(`Found R installations:\n- A${rInstallations.join('\n- ')}`);
+  return rInstallations;
 
 }
 

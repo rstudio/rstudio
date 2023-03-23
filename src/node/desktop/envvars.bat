@@ -2,7 +2,10 @@
 
 REM Run this script with 'call envvars.bat' to update the PATH in your
 REM cmd.exe shell, so that the appropriate versions of node are found
-set node_paths="..\..\..\dependencies\common\node\16.14.0" "c:\rstudio-tools\dependencies\common\node\16.14.0"
+set NODE_PATHS=^
+	..\..\..\dependencies\common\node\16.14.0^
+	c:\rstudio-tools\dependencies\common\node\16.14.0
+
 call :SetNodePath
 if not exist "%NODE_PATH%" (
     echo "ERROR: node installation not found"
@@ -28,11 +31,11 @@ exit /b
     exit /b
 
 :SetNodePath
-    for %%a in (%node_paths%) do (
-        call :NormalizePath %%a %%a
-        if exist "%%a" (
-            echo Found node: %%a
-            set NODE_PATH="%%a"
+    for %%a in (%NODE_PATHS%) do (
+		if exist %%a (
+			set NODE_PATH=%%a
+			call :NormalizePath NODE_PATH %NODE_PATH%
+            echo Found node: %NODE_PATH%
         )
     )
 

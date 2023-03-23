@@ -16,12 +16,13 @@
 import os from 'os';
 
 import { getenv } from './environment';
-import desktop from '../native/desktop.node';
 import { FilePath } from './file-path';
+
+import desktop from '../native/desktop.node';
 
 export function userHomePath(): FilePath {
   const user = getenv('R_USER');
-  if (checkPath(user)) 
+  if (checkPath(user))
     return new FilePath(user);
   const home = getenv('HOME');
   if (checkPath(home))
