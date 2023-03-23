@@ -508,6 +508,7 @@ public class DesktopApplicationHeader implements ApplicationHeader,
          ArrayList<String> buttonLabels = new ArrayList<>();
          ArrayList<String> elementIds = new ArrayList<>();
          ArrayList<Operation> buttonOperations = new ArrayList<>();
+         boolean isManualAndIgnored = manual && ignoredUpdate;
 
          buttonLabels.add(constants_.quitDownloadButtonLabel());
          elementIds.add(ElementIds.DIALOG_YES_BUTTON);
@@ -527,16 +528,21 @@ public class DesktopApplicationHeader implements ApplicationHeader,
             }
          });
 
-         buttonLabels.add(constants_.remindLaterButtonLabel());
-         elementIds.add(ElementIds.DIALOG_NO_BUTTON);
-         buttonOperations.add(new Operation() {
-            @Override
-            public void execute()
-            {
-               // Don't do anything here; the prompt will re-appear the next
-               // time we do an update check
-            }
-         });
+         // Only show "Remind Later" if the user isn't manually checking for an
+         // update, which happens to be an ignored version. Essentially, it's not
+         // possible for a user to un-ignore a version.
+         if (!isManualAndIgnored) {
+            buttonLabels.add(constants_.remindLaterButtonLabel());
+            elementIds.add(ElementIds.DIALOG_NO_BUTTON);
+            buttonOperations.add(new Operation() {
+               @Override
+               public void execute()
+               {
+                  // Don't do anything here; the prompt will re-appear the next
+                  // time we do an update check
+               }
+            });
+         }
 
          // Only provide the option to ignore the update if it's not urgent.
          if (result.getUpdateUrgency() == 0)
@@ -554,7 +560,7 @@ public class DesktopApplicationHeader implements ApplicationHeader,
             });
          }
 
-         String updateMessage = (manual && ignoredUpdate)
+         String updateMessage = isManualAndIgnored
                ? result.getUpdateMessage() + "\n\n" + constants_.updateDisabledForVersionText(updateVersion)
                : result.getUpdateMessage();
 
