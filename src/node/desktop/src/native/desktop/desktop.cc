@@ -53,10 +53,10 @@ std::string timestamp()
 
 void logDebug(const std::string& message)
 {
-   if (s_loggingEnabled)
+   if (s_loggingEnabled && message.length())
    {
       std::cerr << timestamp() << " DEBUG " << message;
-      if (message.length() && message[message.length() - 1] != '\n')
+      if (message[message.length() - 1] != '\n')
          std::cerr << std::endl;
    }
 }
@@ -544,7 +544,7 @@ std::vector<std::string> searchRegistryForInstallationsOfRImpl(const Napi::Callb
    // search both 32-bit and 64-bit registry keys, just in case
    for (int flags : { KEY_WOW64_64KEY, KEY_WOW64_32KEY })
    {
-      for (HKEY key : { HKEY_LOCAL_MACHINE, HKEY_CURRENT_USER })
+      for (HKEY key : { HKEY_CURRENT_USER, HKEY_LOCAL_MACHINE })
       {
          // open registry key
          RegistryKey rootKey;
@@ -601,7 +601,7 @@ std::string searchRegistryForDefaultInstallationOfRImpl(const std::string& versi
    // search both 32-bit and 64-bit registry keys, just in case
    for (int flags : { KEY_WOW64_64KEY, KEY_WOW64_32KEY })
    {
-      for (HKEY key : { HKEY_LOCAL_MACHINE, HKEY_CURRENT_USER })
+      for (HKEY key : { HKEY_CURRENT_USER, HKEY_LOCAL_MACHINE })
       {
          // open registry key
          RegistryKey registryKey;
