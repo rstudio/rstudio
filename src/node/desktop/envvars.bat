@@ -12,6 +12,7 @@ if not exist "%NODE_PATH%" (
     exit /b
 )
 
+echo Using node: %NODE_PATH%
 set PATH=%NODE_PATH%;%PATH%
 
 call :SetVar NODE_VERSION node --version
@@ -22,10 +23,6 @@ echo npm: %NPM_VERSION%
 
 exit /b
 
-:NormalizePath
-    set "%1=%~f2"
-    exit /b
-
 :SetVar
     for /f "tokens=* delims=" %%A in ('%2 %3 %4 %5 %6') do set "%1=%%A"
     exit /b
@@ -33,9 +30,7 @@ exit /b
 :SetNodePath
     for %%a in (%NODE_PATHS%) do (
 		if exist %%a (
-			set NODE_PATH=%%a
-			call :NormalizePath NODE_PATH %NODE_PATH%
-            echo Found node: %NODE_PATH%
+			set NODE_PATH=%%~fa
         )
     )
 
