@@ -247,7 +247,7 @@ public class FileTypeRegistry
                false, false, false, false, false, false, false, false);
 
    public static final TextFileType JULIA =
-         new TextFileType("julia", "Julia", EditorLanguage.LANG_JULIA, ".julia", new ImageResource2x(ICONS.iconJulia2x()),
+         new TextFileType("julia", "Julia", EditorLanguage.LANG_JULIA, ".jl", new ImageResource2x(ICONS.iconJulia2x()),
                false, false, false, false, false,
                false, false, false, false, false, false, false, false);
 
