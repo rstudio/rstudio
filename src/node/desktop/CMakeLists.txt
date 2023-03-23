@@ -93,6 +93,11 @@ if(RSTUDIO_INSTALL_FREEDESKTOP)
          DESTINATION /usr/share/icons/hicolor/256x256/mimetypes)
 endif()
 
+if(APPLE)
+   file(GLOB MAC_FILE_TYPE_ICONS ${CMAKE_CURRENT_SOURCE_DIR}/resources/icons/*.icns)
+   install(FILES ${MAC_FILE_TYPE_ICONS} DESTINATION ${RSTUDIO_INSTALL_BIN}/../..)
+endif()
+
 # Configure into the source directory during builds. This will
 # leave a modified file in the source tree. This is OK in our
 # build environment since we start with a clean repo for each
