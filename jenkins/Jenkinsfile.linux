@@ -145,6 +145,7 @@ pipeline {
             }
 
             buildName "${RSTUDIO_VERSION}"
+            archiveArtifacts artifacts: 'version/RELEASE', followSymlinks: false
           }
         }
       }
