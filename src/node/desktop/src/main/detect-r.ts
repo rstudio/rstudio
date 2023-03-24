@@ -31,6 +31,7 @@ import { FilePath } from '../core/file-path';
 import { dialog } from 'electron';
 
 import desktop from '../native/desktop.node';
+import { EOL } from 'os';
 
 let kLdLibraryPathVariable: string;
 if (process.platform === 'darwin') {
@@ -217,7 +218,7 @@ writeLines(sep = "\x1F", c(
   });
 
   let stdout = result.stdout || '';
-  logger().logDebug(`stdout: ${stdout.replaceAll('\x1E', '\n').replaceAll('\x1F', ';') || '[no stdout produced]'}`);
+  logger().logDebug(`stdout: ${stdout.replaceAll('\x1E', EOL).replaceAll('\x1F', ';') || '[no stdout produced]'}`);
   logger().logDebug(`stderr: ${result.stderr || '[no stderr produced]'}`);
   logger().logDebug(`status: ${result.status} [${result.status === 0 ? 'success' : 'failure'}]`);
   if (result.error) {
