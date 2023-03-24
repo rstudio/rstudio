@@ -216,16 +216,8 @@ writeLines(sep = "\x1F", c(
     });
   });
 
-  // parse stdout
-  let output = null;
-  if (result.stdout) {
-    const index = result.stdout.indexOf('\x1E');
-    if (index >= 0) {
-      output = result.stdout.substring(index + 1);
-    }
-  }
-
-  logger().logDebug(`stdout: ${output?.replaceAll('\x1F', ';') || '[no stdout produced]'}`);
+  let stdout = result.stdout || '';
+  logger().logDebug(`stdout: ${stdout.replaceAll('\x1E', '\n').replaceAll('\x1F', ';') || '[no stdout produced]'}`);
   logger().logDebug(`stderr: ${result.stderr || '[no stderr produced]'}`);
   logger().logDebug(`status: ${result.status} [${result.status === 0 ? 'success' : 'failure'}]`);
   if (result.error) {
@@ -249,17 +241,20 @@ writeLines(sep = "\x1F", c(
   //
   // Also, contrary to the declared type signatures, the values in 'result' can
   // be null, so check those in a 'null'-y way.
-  if (result.status && result.status !== 0) {
-    logger().logDebug(`Error querying information about R: ${error} [status code ${result.status}]`);
-    if (result.stdout && result.stdout.length === 0) {
-      return err(result.error ?? new Error(t('common.unknownErrorOccurred')));
-    }
-  }
-
-  if (output == null) {
+  if (!stdout) {
     logger().logDebug('Error querying information about R: no output available');
     return err(new Error(t('common.unknownErrorOccurred')));
   }
+
+  // find marker character for our output
+  const index = stdout.indexOf('\x1E');
+  if (index === -1) {
+    logger().logError('internal error: missing output marker in R output');
+    return err(new Error(t('common.unknownErrorOccurred')));
+  }
+
+  // trim off marker
+  stdout = stdout.substring(index + 1);
 
   // unwrap query results
   const [
@@ -271,7 +266,7 @@ writeLines(sep = "\x1F", c(
     rRuntime,
     rArch,
     rLdLibraryPath
-  ] = output.split('\x1F');
+  ] = stdout.split('\x1F');
 
   // put it all together
   return ok({
