@@ -248,9 +248,12 @@ export function detectREnvironment(rPath?: string): Expected<REnvironment> {
   // something on 'stdout', try and use that to activate this version
   // of R. Maybe the process exited abnormally for an unknown reason,
   // even though it started and gave us the necessary information?
-  if (result.status !== 0) {
+  //
+  // Also, contrary to the declared type signatures, the values in 'result' can
+  // be null, so check those in a 'null'-y way.
+  if (result.status && result.status !== 0) {
     logger().logDebug(`Error querying information about R: ${error} [status code ${result.status}]`);
-    if (result.stdout.length === 0) {
+    if (result.stdout && result.stdout.length === 0) {
       return err(result.error ?? new Error(t('common.unknownErrorOccurred')));
     }
   }
