@@ -637,8 +637,13 @@ Napi::Value searchRegistryForDefaultInstallationOfR(const Napi::CallbackInfo& in
 Napi::Object Init(Napi::Env env, Napi::Object exports) {
 
    // debug logging
-   std::string logLevel = ::getenv("RS_LOG_LEVEL");
-   s_loggingEnabled = logLevel == "debug" || logLevel == "DEBUG";
+   const char* logLevel = ::getenv("RS_LOG_LEVEL");
+   if (logLevel)
+   {
+      s_loggingEnabled =
+         strcmp(logLevel, "debug") == 0 ||
+         strcmp(logLevel, "DEBUG") == 0;
+   }
 
    RS_EXPORT_FUNCTION("cleanClipboard", rstudio::desktop::cleanClipboard);
    RS_EXPORT_FUNCTION("isCtrlKeyDown", rstudio::desktop::isCtrlKeyDown);
