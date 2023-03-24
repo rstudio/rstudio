@@ -47,7 +47,7 @@ interface REnvironment {
   ldLibraryPath: string;
 }
 
-function showRNotFoundError(error?: Error): void {
+export function showRNotFoundError(error?: Error): void {
   const message = error?.message ?? t('detectRTs.couldNotLocateAnRInstallationOnTheSystem') ?? '';
   void createStandaloneErrorDialog(t('detectRTs.rNotFound'), message);
 }
@@ -147,7 +147,7 @@ export async function promptUserForR(platform = process.platform): Promise<Expec
  * // (for example, R_HOME) and other platform-specific work required
  * for R to launch.
  */
-export function prepareEnvironment(rPath?: string): Err {
+export function prepareEnvironment(rPath: string): Err {
   try {
     return prepareEnvironmentImpl(rPath);
   } catch (error: unknown) {
@@ -156,7 +156,7 @@ export function prepareEnvironment(rPath?: string): Err {
   }
 }
 
-function prepareEnvironmentImpl(rPath?: string): Err {
+function prepareEnvironmentImpl(rPath: string): Err {
 
   // attempt to detect R environment
   const [rEnvironment, error] = detectREnvironment(rPath);
@@ -203,7 +203,7 @@ export function detectREnvironment(rPath?: string): Expected<REnvironment> {
   }
 
   // generate small script for querying information about R
-  const rQueryScript = String.raw`writeLines(sep = ";", c(
+  const rQueryScript = String.raw`writeLines(sep = "\x1F", c(
   format(getRversion()),
   R.home(),
   R.home("doc"),
@@ -222,7 +222,12 @@ export function detectREnvironment(rPath?: string): Expected<REnvironment> {
     });
   });
 
-  logger().logDebug(`stdout: ${result.stdout || '[no stdout produced]'}`);
+  let stdout = null;
+  if (result.stdout) {
+    stdout = result.stdout.replaceAll('\x1F', ';');
+  }
+
+  logger().logDebug(`stdout: ${stdout || '[no stdout produced]'}`);
   logger().logDebug(`stderr: ${result.stderr || '[no stderr produced]'}`);
   logger().logDebug(`status: ${result.status} [${result.status === 0 ? 'success' : 'failure'}]`);
   if (result.error) {
@@ -260,7 +265,7 @@ export function detectREnvironment(rPath?: string): Expected<REnvironment> {
     rRuntime,
     rArch,
     rLdLibraryPath
-  ] = result.stdout.split(';');
+  ] = result.stdout.split('\x1F');
 
   // put it all together
   return ok({
@@ -279,7 +284,7 @@ export function detectREnvironment(rPath?: string): Expected<REnvironment> {
 
 }
 
-function scanForR(): Expected<string> {
+export function scanForR(): Expected<string> {
   // if the RSTUDIO_WHICH_R environment variable is set, use that
   // note that this does not pick up variables set in a user's bash profile, for example
   const rstudioWhichR = getenv('RSTUDIO_WHICH_R');
@@ -371,8 +376,14 @@ export function isValidInstallation(rInstallPath: string): boolean {
 }
 
 export function isValidBinary(rExePath: string): boolean {
+
+  if (!existsSync(rExePath)) {
+    return false;
+  }
+
   const [_, error] = detectREnvironment(rExePath);
   return error == null;
+
 }
 
 function findDefaultInstallPathWin32(registryVersionKey: string): string {
