@@ -203,7 +203,11 @@ export function detectREnvironment(rPath?: string): Expected<REnvironment> {
   }
 
   // generate small script for querying information about R
-  const rQueryScript = String.raw`writeLines(sep = "\x1F", c(
+  // we write the marker character '\x1E' just in case the R installation
+  // prints some output on startup, so we can find and trim that out
+  const rQueryScript = String.raw`
+cat("\x1E", sep = "")
+writeLines(sep = "\x1F", c(
   format(getRversion()),
   R.home(),
   R.home("doc"),
@@ -259,6 +263,8 @@ export function detectREnvironment(rPath?: string): Expected<REnvironment> {
   }
 
   // unwrap query results
+  const output = result.stdout.substring(result.stdout.indexOf('\x1E') + 1);
+
   const [
     rVersion,
     rHome,
@@ -268,7 +274,7 @@ export function detectREnvironment(rPath?: string): Expected<REnvironment> {
     rRuntime,
     rArch,
     rLdLibraryPath
-  ] = result.stdout.split('\x1F');
+  ] = output.split('\x1F');
 
   // put it all together
   return ok({
