@@ -13,12 +13,13 @@
  *
  */
 
-import { describe } from 'mocha';
 import { assert } from 'chai';
+import { clipboard } from 'electron';
+import { describe } from 'mocha';
+
+import os from 'os';
 
 import desktop from '../../../src/native/desktop.node';
-import { clipboard } from 'electron';
-import os from 'os';
 
 describe('Desktop Native Code', () => {
   it('cleanClipboard with plain text', () => {

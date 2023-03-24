@@ -31,13 +31,18 @@ declare const CHOOSE_R_PRELOAD_WEBPACK_ENTRY: string;
 
 function checkValid(data: CallbackData) {
 
+  const binaryPath = data.binaryPath;
+  if (!binaryPath) {
+    logger().logErrorMessage('internal error: binaryPath was unexpectedly null');
+    return false;
+  }
   // try to run it
-  const [rEnvironment, err] = detectREnvironment(data.binaryPath);
+  const [rEnvironment, err] = detectREnvironment(binaryPath);
 
   if (err) {
     // something went wrong; let the user know they can't use
     // this version of R with RStudio
-    logger().logErrorMessage(`Selected R path: ${data.binaryPath ?? 'no path chosen'}`);
+    logger().logErrorMessage(`Selected R path: ${data.binaryPath}`);
     logger().logError(err);
 
     dialog.showMessageBoxSync({

@@ -26,7 +26,7 @@ import { DesktopActivation } from './activation-overlay';
 import { appState, AppState } from './app-state';
 import { ApplicationLaunch } from './application-launch';
 import { ArgsManager } from './args-manager';
-import { prepareEnvironment, promptUserForR } from './detect-r';
+import { prepareEnvironment, promptUserForR, scanForR, showRNotFoundError } from './detect-r';
 import { GwtCallback } from './gwt-callback';
 import { PendingWindow } from './pending-window';
 import { exitFailure, exitSuccess, ProgramStatus, run } from './program-status';
@@ -307,7 +307,7 @@ export class Application implements AppState {
     this.loggerCallback = new LoggerCallback();
 
     // on Windows, ask the user what version of R they'd like to use
-    let rPath = '';
+    let rPath;
     if (process.platform === 'win32') {
       const [path, preflightError] = await promptUserForR();
       if (preflightError) {
@@ -334,7 +334,21 @@ export class Application implements AppState {
       if (path == null) {
         return exitFailure();
       }
+
+      // a path was selected
       rPath = path;
+    }
+
+    // if we don't have an R path at this point, try scanning for R
+    if (!rPath) {
+      const [scannedPath, error] = scanForR();
+      if (error) {
+        logger().logDebug(`Error scanning for R: ${error}`);
+        showRNotFoundError();
+        return exitFailure();
+      }
+
+      rPath = scannedPath;
     }
 
     // prepare the R environment
