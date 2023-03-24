@@ -8,6 +8,7 @@
 - Moved Help panel font size setting to Appearance tab in Global Options (#12816)
 - Update openssl to 1.1.1t for Windows (rstudio/rstudio-pro#3675)
 - Improve visibility of focus rectangles on Server / Workbench Sign In page [Accessibility] (#12846)
+- Fixed file-type icons not displaying in Finder on Mac (#12252)
 
 #### Posit Workbench
 - 
