@@ -17,7 +17,6 @@ import path, { join } from 'path';
 
 import { execSync, spawnSync } from 'child_process';
 import { existsSync, readdirSync } from 'fs';
-import { EOL } from 'os';
 
 import { Environment, getenv, setenv, setVars } from '../core/environment';
 import { Expected, ok, err, expect } from '../core/expected';
@@ -106,7 +105,7 @@ export async function promptUserForR(platform = process.platform): Promise<Expec
     }
 
     // if path is null, the operation was cancelled by the user
-    if (data == null) {
+    if (data == null || data.binaryPath == null) {
       return ok(null);
     }
 
@@ -185,19 +184,10 @@ function prepareEnvironmentImpl(rPath: string): Err {
 
 }
 
-export function detectREnvironment(rPath?: string): Expected<REnvironment> {
-
-  // scan for R
-  logger().logDebug(`Executing detectREnvironent with path: ${rPath}`);
-  const [R, scanError] = rPath ? ok(rPath) : scanForR();
-  if (scanError) {
-    logger().logDebug(`Error scanning for R: ${scanError}`);
-    showRNotFoundError();
-    return err(scanError);
-  }
+export function detectREnvironment(rPath: string): Expected<REnvironment> {
 
   // resolve path to binary if we were given a directory
-  let rExecutable = new FilePath(R);
+  let rExecutable = new FilePath(rPath);
   if (rExecutable.isDirectory()) {
     rExecutable = rExecutable.completeChildPath(process.platform === 'win32' ? 'R.exe' : 'R');
   }
@@ -226,12 +216,16 @@ writeLines(sep = "\x1F", c(
     });
   });
 
-  let stdout = null;
+  // parse stdout
+  let output = null;
   if (result.stdout) {
-    stdout = result.stdout.replaceAll('\x1F', ';');
+    const index = result.stdout.indexOf('\x1E');
+    if (index >= 0) {
+      output = result.stdout.substring(index + 1);
+    }
   }
 
-  logger().logDebug(`stdout: ${stdout || '[no stdout produced]'}`);
+  logger().logDebug(`stdout: ${output?.replaceAll('\x1F', ';') || '[no stdout produced]'}`);
   logger().logDebug(`stderr: ${result.stderr || '[no stderr produced]'}`);
   logger().logDebug(`status: ${result.status} [${result.status === 0 ? 'success' : 'failure'}]`);
   if (result.error) {
@@ -262,9 +256,12 @@ writeLines(sep = "\x1F", c(
     }
   }
 
-  // unwrap query results
-  const output = result.stdout.substring(result.stdout.indexOf('\x1E') + 1);
+  if (output == null) {
+    logger().logDebug('Error querying information about R: no output available');
+    return err(new Error(t('common.unknownErrorOccurred')));
+  }
 
+  // unwrap query results
   const [
     rVersion,
     rHome,
@@ -278,7 +275,7 @@ writeLines(sep = "\x1F", c(
 
   // put it all together
   return ok({
-    rScriptPath: R,
+    rScriptPath: rPath,
     version: rVersion,
     envVars: {
       R_HOME: rHome,
@@ -304,6 +301,7 @@ export function scanForR(): Expected<string> {
   }
 
   // otherwise, use platform-specific lookup strategies
+  logger().logDebug('Scanning system for R installations');
   if (process.platform === 'win32') {
     return scanForRWin32();
   } else {
@@ -390,6 +388,7 @@ export function isValidBinary(rExePath: string): boolean {
     return false;
   }
 
+  logger().logDebug(`Validating R installation at path: ${rExePath}`);
   const [_, error] = detectREnvironment(rExePath);
   return error == null;
 
