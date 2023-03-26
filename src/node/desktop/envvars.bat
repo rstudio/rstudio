@@ -31,6 +31,7 @@ exit /b
     for %%a in (%NODE_PATHS%) do (
 		if exist %%a (
 			set NODE_PATH=%%~fa
+		)
     )
 
     exit /b
