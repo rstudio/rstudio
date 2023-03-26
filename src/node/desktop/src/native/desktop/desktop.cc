@@ -40,6 +40,8 @@
 
 bool s_loggingEnabled = false;
 
+namespace {
+
 std::string timestamp()
 {
   auto now = std::chrono::system_clock::now();
@@ -60,6 +62,38 @@ void logDebug(const std::string& message)
          std::cerr << std::endl;
    }
 }
+
+std::string registryKeyToString(HKEY hKey)
+{
+   if (hKey == HKEY_CLASSES_ROOT)
+   {
+      return "HKEY_CLASSES_ROOT";
+   }
+   else if (hKey == HKEY_CURRENT_USER)
+   {
+      return "HKEY_CURRENT_USER";
+   }
+   else if (hKey == HKEY_LOCAL_MACHINE)
+   {
+      return "HKEY_LOCAL_MACHINE";
+   }
+   else if (hKey == HKEY_USERS)
+   {
+      return "HKEY_USERS";
+   }
+   else if (hKey == HKEY_CURRENT_CONFIG)
+   {
+      return "HKEY_CURRENT_CONFIG";
+   }
+   else
+   {
+      std::stringstream ss;
+      ss << "<" << hKey << ">";
+      return ss.str();
+   }
+}
+
+} // end anonymous namespace
 
 #define DLOG(__X__)            \
    do                          \
@@ -83,15 +117,13 @@ void logDebug(const std::string& message)
 
 namespace {
 
-std::string getLastErrorMessage()
+std::string getErrorMessage(DWORD error)
 {
-   auto lastErr = ::GetLastError();
-
    LPVOID lpMsgBuf;
    DWORD length = ::FormatMessage(
       FORMAT_MESSAGE_ALLOCATE_BUFFER | FORMAT_MESSAGE_FROM_SYSTEM | FORMAT_MESSAGE_IGNORE_INSERTS,
       nullptr,
-      lastErr,
+      error,
       MAKELANGID(LANG_NEUTRAL, SUBLANG_DEFAULT),
       (LPTSTR) &lpMsgBuf,
       0,
@@ -136,7 +168,8 @@ bool expandEnvironmentVariables(const std::string& value,
 
    if (!result || result > buffer.capacity())
    {
-      std::string message = getLastErrorMessage();
+      DWORD error = ::GetLastError();
+      std::string message = getErrorMessage(error);
       DLOG("Error " << result << " expanding environment strings: " << message);
       return false;
    }
@@ -167,8 +200,9 @@ public:
       LONG error = ::RegOpenKeyEx(hKey, subKey.c_str(), 0, samDesired, &hKey_);
       if (error != ERROR_SUCCESS)
       {
-         std::string message = getLastErrorMessage();
-         DLOG("Error " << error << " opening registry key '" << subKey << "': " << message);
+         std::string message = getErrorMessage(error);
+         std::string fullKey = registryKeyToString(hKey) + "\\" + subKey;
+         DLOG("Error " << error << " opening registry key '" << fullKey << "': " << message);
          hKey_ = nullptr;
          return false;
       }
@@ -539,6 +573,9 @@ std::vector<std::string> searchRegistryForInstallationsOfRImpl(const Napi::Callb
 #ifdef _WIN32
    using namespace rstudio::core::system;
 
+   // TODO: Should we check "SOFTWARE\\R-core\\R64" as well?
+   // When using the most recent R installer (for R 4.2.3), it seems
+   // like registry entries were populated for both R and R64.
    std::string rRootKeyName = "SOFTWARE\\R-core\\R";
 
    // search both 32-bit and 64-bit registry keys, just in case
