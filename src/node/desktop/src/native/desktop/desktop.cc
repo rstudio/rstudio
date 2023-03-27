@@ -63,6 +63,31 @@ void logDebug(const std::string& message)
    }
 }
 
+
+} // end anonymous namespace
+
+#define DLOG(__X__)            \
+   do                          \
+   {                           \
+      if (s_loggingEnabled)    \
+      {                        \
+         std::stringstream ss; \
+         ss << __X__;          \
+         logDebug(ss.str());   \
+      }                        \
+   } while (0)
+
+#define RS_EXPORT_FUNCTION(__NAME__, __FUNCTION__) \
+  exports.Set(                                     \
+    Napi::String::New(env, __NAME__),              \
+    Napi::Function::New(env, __FUNCTION__)         \
+  )
+
+
+#ifdef _WIN32
+
+namespace {
+
 std::string registryKeyToString(HKEY hKey)
 {
    if (hKey == HKEY_CLASSES_ROOT)
@@ -92,30 +117,6 @@ std::string registryKeyToString(HKEY hKey)
       return ss.str();
    }
 }
-
-} // end anonymous namespace
-
-#define DLOG(__X__)            \
-   do                          \
-   {                           \
-      if (s_loggingEnabled)    \
-      {                        \
-         std::stringstream ss; \
-         ss << __X__;          \
-         logDebug(ss.str());   \
-      }                        \
-   } while (0)
-
-#define RS_EXPORT_FUNCTION(__NAME__, __FUNCTION__) \
-  exports.Set(                                     \
-    Napi::String::New(env, __NAME__),              \
-    Napi::Function::New(env, __FUNCTION__)         \
-  )
-
-
-#ifdef _WIN32
-
-namespace {
 
 std::string getErrorMessage(DWORD error)
 {
