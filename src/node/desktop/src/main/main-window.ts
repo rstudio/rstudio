@@ -366,7 +366,12 @@ export class MainWindow extends GwtWindow {
 
     if (!this.geometrySaved) {
       const bounds = this.window.getBounds();
-      ElectronDesktopOptions().saveWindowBounds(bounds);
+      ElectronDesktopOptions().saveWindowBounds({
+        width: bounds.width,
+        height: bounds.height,
+        x: bounds.x,
+        y: bounds.y,
+        maximized: this.window.isMaximized() });
       this.geometrySaved = true;
     }
 

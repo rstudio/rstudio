@@ -75,6 +75,17 @@ export function clearOptionsSingleton(): void {
 }
 
 /**
+ * Window geometry
+ */
+export interface WindowBounds {
+  height: number;
+  width: number;
+  x: number;
+  y: number;
+  maximized: boolean;
+}
+
+/**
  * Check if one rectangle is inside (shared border inclusive) the other.
  *
  * @param inner The rectangle assumed to be the smaller, inner rectangle
@@ -157,11 +168,11 @@ export class DesktopOptionsImpl implements DesktopOptions {
     return zoomLevel;
   }
 
-  public saveWindowBounds(bounds: Rectangle): void {
+  public saveWindowBounds(bounds: WindowBounds): void {
     this.config.set(kWindowBounds, bounds);
   }
 
-  public windowBounds(): Rectangle {
+  public windowBounds(): WindowBounds {
     return this.config.get(kWindowBounds, properties.view.default.windowBounds);
   }
 
@@ -205,6 +216,10 @@ export class DesktopOptionsImpl implements DesktopOptions {
     // ensure a minimum size for the window on restore
     const currSize = mainWindow.getSize();
     mainWindow.setSize(Math.max(300, currSize[0]), Math.max(200, currSize[1]));
+
+    if (savedBounds.maximized) {
+      mainWindow.maximize();
+    }
   }
 
   public setAccessibility(accessibility: boolean): void {

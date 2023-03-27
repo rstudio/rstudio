@@ -92,7 +92,7 @@ describe('DesktopOptions', () => {
     const newProportionalFont = 'testProportionalFont';
     const newFixWidthFont = 'testFixWidthFont';
     const newZoom = 1.5;
-    const newWindowBounds = { width: 123, height: 321, x: 0, y: 0 };
+    const newWindowBounds = { width: 123, height: 321, x: 0, y: 0, maximized: false };
     const newAccessibility = !(properties.view.default.accessibility as boolean);
     const newDisableRendererAccessibility = !(properties.view.default.disableRendererAccessibility as boolean);
     const newLastRemoteSessionUrl = 'testLastRemoteSessionUrl';
@@ -157,7 +157,7 @@ describe('DesktopOptions', () => {
       { workArea: { width: 2000, height: 2000, x: 0, y: 0 } },
       { workArea: { width: 2000, height: 2000, x: 2000, y: 0 } },
     ];
-    const savedWinBounds = { width: 500, height: 500, x: 2100, y: 100 };
+    const savedWinBounds = { width: 500, height: 500, x: 2100, y: 100, maximized: false };
 
     // Save bounds onto a secondary display on the right
     ElectronDesktopOptions().saveWindowBounds(savedWinBounds);
@@ -178,7 +178,7 @@ describe('DesktopOptions', () => {
   });
   it('restores window bounds to default when saved display no longer present', () => {
     const defaultDisplay = { bounds: { width: 2000, height: 2000, x: 0, y: 0 } };
-    const savedWinBounds = { width: 500, height: 500, x: 0, y: 0 };
+    const savedWinBounds = { width: 500, height: 500, x: 0, y: 0, maximized: false };
     const defaultWinWidth = properties.view.default.windowBounds.width;
     const defaultWinHeight = properties.view.default.windowBounds.height;
 
