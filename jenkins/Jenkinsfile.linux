@@ -260,8 +260,8 @@ pipeline {
                   stage ('Electron-Only Tests') {
                     when {
                       expression { return FLAVOR == "Electron" }
-                        // Disable bionic tests until builds are removed completely
-                        expression { return OS != "bionic"}
+                      // Disable bionic tests until builds are removed completely
+                      expression { return OS != "bionic"}
                     }
 
                     steps {
