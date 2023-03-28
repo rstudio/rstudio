@@ -14,7 +14,7 @@
  */
 
 import { ChildProcess } from 'child_process';
-import { BrowserWindow, dialog, Menu, session, shell } from 'electron';
+import { BrowserWindow, dialog, Menu, Rectangle, session, shell } from 'electron';
 
 import { Err } from '../core/err';
 import { logger } from '../core/logger';
@@ -32,7 +32,7 @@ import { RCommandEvaluator } from './r-command-evaluator';
 import { RemoteDesktopSessionLauncher } from './remote-desktop-session-launcher-overlay';
 import { SessionLauncher } from './session-launcher';
 import { CloseServerSessions } from './session-servers-overlay';
-import { isLocalUrl, waitForUrlWithTimeout } from './url-utils';
+import { waitForUrlWithTimeout } from './url-utils';
 import { registerWebContentsDebugHandlers } from './utils';
 
 export function closeAllSatellites(mainWindow: BrowserWindow): void {
@@ -365,7 +365,14 @@ export class MainWindow extends GwtWindow {
     //                      false);
 
     if (!this.geometrySaved) {
-      const bounds = this.window.getBounds();
+
+      let bounds: Rectangle;
+
+      if (this.window.isMaximized()) {
+        bounds = this.window.getNormalBounds();
+      } else {
+        bounds = this.window.getBounds();
+      }
       ElectronDesktopOptions().saveWindowBounds({
         width: bounds.width,
         height: bounds.height,
