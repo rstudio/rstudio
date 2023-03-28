@@ -16,11 +16,12 @@
 #ifndef R_R_SEXP_HPP
 #define R_R_SEXP_HPP
 
-#include <string>
-#include <vector>
 #include <deque>
 #include <map>
 #include <set>
+#include <string>
+#include <unordered_set>
+#include <vector>
 
 #include <yaml-cpp/yaml.h>
 
@@ -146,6 +147,7 @@ core::Error extract(SEXP valueSEXP, std::vector<int>* pVector);
 core::Error extract(SEXP valueSEXP, std::string* pString, bool asUtf8 = false);
 core::Error extract(SEXP valueSEXP, std::vector<std::string>* pVector, bool asUtf8 = false);
 core::Error extract(SEXP valueSEXP, std::set<std::string>* pSet, bool asUtf8 = false);
+core::Error extract(SEXP valueSEXP, std::unordered_set<std::string>* pSet, bool asUtf8 = false);
 core::Error extract(SEXP valueSEXP, std::map<std::string, std::set<std::string>>* pMap, bool asUtf8 = false);
 core::Error extract(SEXP valueSEXP, core::json::Value* pJson);
 core::Error extract(SEXP valueSEXP, core::FilePath* pFilePath);
@@ -408,7 +410,7 @@ core::Error objects(SEXP environment,
 core::Error getNamespaceExports(SEXP ns,
                                 std::vector<std::string>* pNames);
 
-const std::set<std::string>& nsePrimitives();
+const std::unordered_set<std::string>& nsePrimitives();
 
 // NOTE: Primarily to be used with boost::bind, to add functions that are then
 // called on each node within the call. Functions can return true to signal the

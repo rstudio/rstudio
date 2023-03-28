@@ -16,13 +16,13 @@
 #include <core/system/Environment.hpp>
 
 #include <algorithm>
+
+#include <boost/bind/bind.hpp>
 #include <boost/regex.hpp>
 
 #include <core/Algorithm.hpp>
-
 #include <core/Log.hpp>
 
-#include <boost/bind/bind.hpp>
 
 #ifdef _WIN32
 #define kPathSeparator ";"

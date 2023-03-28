@@ -17,6 +17,7 @@
 #include "EnvironmentMonitor.hpp"
 
 #include <algorithm>
+#include <unordered_set>
 
 #include <core/Exec.hpp>
 #include <core/RecursionGuard.hpp>
@@ -120,9 +121,9 @@ bool handleRBrowseEnv(const core::FilePath& filePath)
    }
 }
 
-bool hasExternalPointer(SEXP obj, bool nullPtr, std::set<SEXP>& visited);
+bool hasExternalPointer(SEXP obj, bool nullPtr, std::unordered_set<SEXP>& visited);
 
-bool pairlistHasExternalPointer(SEXP list, bool nullPtr, std::set<SEXP>& visited)
+bool pairlistHasExternalPointer(SEXP list, bool nullPtr, std::unordered_set<SEXP>& visited)
 {
    if (hasExternalPointer(CAR(list), nullPtr, visited))
       return true;
@@ -133,7 +134,7 @@ bool pairlistHasExternalPointer(SEXP list, bool nullPtr, std::set<SEXP>& visited
    return false;
 }
 
-bool listHasExternalPointer(SEXP obj, bool nullPtr, std::set<SEXP>& visited)
+bool listHasExternalPointer(SEXP obj, bool nullPtr, std::unordered_set<SEXP>& visited)
 {
    R_xlen_t n = XLENGTH(obj);
    for (R_xlen_t i = 0; i < n; i++)
@@ -150,7 +151,7 @@ bool frameBindingIsActive(SEXP binding)
    return reinterpret_cast<r::sxpinfo*>(binding)->gp & ACTIVE_BINDING_MASK;
 }
 
-bool frameBindingHasExternalPointer(SEXP b, bool nullPtr, std::set<SEXP>& visited) 
+bool frameBindingHasExternalPointer(SEXP b, bool nullPtr, std::unordered_set<SEXP>& visited) 
 {
    if (frameBindingIsActive(b))
       return false;
@@ -193,7 +194,7 @@ bool frameBindingHasExternalPointer(SEXP b, bool nullPtr, std::set<SEXP>& visite
    return hasExternalPointer(CAR(b), nullPtr, visited);
 }
 
-bool frameHasExternalPointer(SEXP frame, bool nullPtr, std::set<SEXP>& visited)
+bool frameHasExternalPointer(SEXP frame, bool nullPtr, std::unordered_set<SEXP>& visited)
 {
    while(frame != R_NilValue)
    {
@@ -206,7 +207,7 @@ bool frameHasExternalPointer(SEXP frame, bool nullPtr, std::set<SEXP>& visited)
    return false;
 }
 
-bool envHasExternalPointer(SEXP obj, bool nullPtr, std::set<SEXP>& visited)
+bool envHasExternalPointer(SEXP obj, bool nullPtr, std::unordered_set<SEXP>& visited)
 {
    SEXP hash = HASHTAB(obj);
    if (hash == R_NilValue)
@@ -221,7 +222,7 @@ bool envHasExternalPointer(SEXP obj, bool nullPtr, std::set<SEXP>& visited)
    return false;
 }
 
-bool weakrefHasExternalPointer(SEXP obj, bool nullPtr, std::set<SEXP>& visited)
+bool weakrefHasExternalPointer(SEXP obj, bool nullPtr, std::unordered_set<SEXP>& visited)
 {
    SEXP key = r::sexp::getWeakRefKey(obj);
    if (key != R_NilValue)
@@ -237,7 +238,7 @@ bool weakrefHasExternalPointer(SEXP obj, bool nullPtr, std::set<SEXP>& visited)
    return false;
 }
 
-bool altrepHasExternalPointer(SEXP obj, bool nullPtr, std::set<SEXP>& visited)
+bool altrepHasExternalPointer(SEXP obj, bool nullPtr, std::unordered_set<SEXP>& visited)
 {
    if (hasExternalPointer(CAR(obj), nullPtr, visited))
       return true;
@@ -248,7 +249,7 @@ bool altrepHasExternalPointer(SEXP obj, bool nullPtr, std::set<SEXP>& visited)
    return false;
 }
 
-bool hasExternalPointer(SEXP obj, bool nullPtr, std::set<SEXP>& visited)
+bool hasExternalPointer(SEXP obj, bool nullPtr, std::unordered_set<SEXP>& visited)
 {
    if (obj == nullptr || obj == R_NilValue || visited.count(obj))
       return false;
@@ -359,7 +360,7 @@ bool hasExternalPointer(SEXP obj, bool nullPtr, std::set<SEXP>& visited)
 bool hasExternalPtr(SEXP obj,      // environment to search for external pointers
                     bool nullPtr)  // whether to look for NULL pointers
 {
-   std::set<SEXP> visited;
+   std::unordered_set<SEXP> visited;
    return hasExternalPointer(obj, nullPtr, visited);
 }
 

@@ -15,6 +15,8 @@
 
 #include "EnvironmentUtils.hpp"
 
+#include <unordered_set>
+
 #include <r/RCntxt.hpp>
 #include <r/RCntxtUtils.hpp>
 #include <r/RExec.hpp>
@@ -96,7 +98,7 @@ bool isAltrep(SEXP var)
    return isAltrepImpl(var);
 }
 
-bool hasAltrepImpl(SEXP var, std::set<SEXP>& visited, unsigned maxDepth)
+bool hasAltrepImpl(SEXP var, std::unordered_set<SEXP>& visited, unsigned maxDepth)
 {
    // ignore if already visited
    if (visited.find(var) != visited.end())
@@ -136,7 +138,7 @@ bool hasAltrep(SEXP var)
       return false;
 
    // recursively scan for ALTREP objects
-   std::set<SEXP> visited;
+   std::unordered_set<SEXP> visited;
    return hasAltrepImpl(var, visited, MAX_ALTREP_DEPTH);
 }
 

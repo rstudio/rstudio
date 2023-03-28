@@ -18,6 +18,7 @@
 // #define RSTUDIO_ENABLE_DEBUG_MACROS
 
 #include <cctype>
+#include <unordered_set>
 
 #include <gsl/gsl>
 
@@ -71,7 +72,7 @@ struct LexicalComparator
 // A simple wrapper set class that is primarily used as a means
 // to re-use R's internal string cache, while providing lexical
 // comparator for efficient lookup.
-class StringSet : public std::set<const char*, LexicalComparator>
+class StringSet : public std::unordered_set<const char*>
 {
 public:
    bool contains(const char* value)
@@ -223,7 +224,7 @@ bool fillVectorString(SEXP object, std::vector<std::string>* pVector)
    return true;
 }
 
-bool fillSetString(SEXP object, std::set<std::string>* pSet)
+bool fillSetString(SEXP object, std::unordered_set<std::string>* pSet)
 {
    if (TYPEOF(object) != STRSXP)
       return false;
@@ -461,7 +462,7 @@ namespace {
 
 bool hasActiveBindingImpl(const std::string& name,
                           SEXP envirSEXP,
-                          std::set<SEXP>* pVisitedObjects)
+                          std::unordered_set<SEXP>* pVisitedObjects)
 {
    Error error;
    Protect protect;
@@ -522,7 +523,7 @@ bool hasActiveBindingImpl(const std::string& name,
 bool hasActiveBinding(const std::string& name, const SEXP envirSEXP)
 {
    // avoid cycles when searching recursively
-   std::set<SEXP> visitedObjects;
+   std::unordered_set<SEXP> visitedObjects;
    return hasActiveBindingImpl(name, envirSEXP, &visitedObjects);
 }
 
@@ -953,7 +954,19 @@ Error extract(SEXP valueSEXP, std::set<std::string>* pSet, bool asUtf8)
    return Success();
 }
 
-Error extract(SEXP valueSEXP, std::map<std::string, std::set<std::string>>* pMap, bool asUtf8)
+Error extract(SEXP valueSEXP, std::unordered_set<std::string>* pSet, bool asUtf8)
+{
+   if (TYPEOF(valueSEXP) != STRSXP)
+      return Error(errc::UnexpectedDataTypeError, ERROR_LOCATION);
+   
+   pSet->clear();
+   for (int i = 0; i < Rf_length(valueSEXP); i++)
+      pSet->insert(translate(STRING_ELT(valueSEXP, i), asUtf8));
+   
+   return Success();
+}
+
+Error extract(SEXP valueSEXP, std::map<std::string, std::unordered_set<std::string>>* pMap, bool asUtf8)
 {
    if (TYPEOF(valueSEXP) != VECSXP)
       return Error(errc::UnexpectedDataTypeError, ERROR_LOCATION);
@@ -968,7 +981,7 @@ Error extract(SEXP valueSEXP, std::map<std::string, std::set<std::string>>* pMap
    for (int i = 0; i < Rf_length(valueSEXP); ++i)
    {
       SEXP el = VECTOR_ELT(valueSEXP, i);
-      std::set<std::string> contents;
+      std::unordered_set<std::string> contents;
       for (int j = 0; j < Rf_length(el); ++j)
          contents.insert(translate(STRING_ELT(el, j), asUtf8));
       
@@ -1478,13 +1491,13 @@ SEXP create(const std::vector<std::pair<std::string,std::string> >& value,
    return charSEXP;
 }
 
-SEXP create(const std::set<std::string> &value, Protect *pProtect)
+SEXP create(const std::unordered_set<std::string> &value, Protect *pProtect)
 {
    SEXP charSEXP;
    pProtect->add(charSEXP = Rf_allocVector(STRSXP, value.size()));
    
    int index = 0;
-   for (std::set<std::string>::const_iterator it = value.begin();
+   for (std::unordered_set<std::string>::const_iterator it = value.begin();
         it != value.end();
         ++it)
    {
@@ -1690,9 +1703,9 @@ bool inherits(SEXP object, const char* S3Class)
    return Rf_inherits(object, S3Class);
 }
 
-std::set<std::string> makeNsePrimitives()
+std::unordered_set<std::string> makeNsePrimitives()
 {
-   std::set<std::string> nsePrimitives;
+   std::unordered_set<std::string> nsePrimitives;
    nsePrimitives.insert("quote");
    nsePrimitives.insert("substitute");
    nsePrimitives.insert("match.call");
@@ -1714,15 +1727,15 @@ std::set<std::string> makeNsePrimitives()
    return nsePrimitives;
 }
 
-const std::set<std::string>& nsePrimitives()
+const std::unordered_set<std::string>& nsePrimitives()
 {
-   static const std::set<std::string> set = makeNsePrimitives();
-   return set;
+   static const std::unordered_set<std::string> instance = makeNsePrimitives();
+   return instance;
 }
 
 bool isNSEPrimitiveSymbolOrString(
       SEXP objectSEXP,
-      const std::set<std::string>& nsePrimitives)
+      const std::unordered_set<std::string>& nsePrimitives)
 {
    if (TYPEOF(objectSEXP) == SYMSXP)
       return nsePrimitives.count(CHAR(PRINTNAME(objectSEXP)));
@@ -1733,7 +1746,7 @@ bool isNSEPrimitiveSymbolOrString(
 }
 
 bool isCallToNSEFunction(SEXP nodeSEXP,
-                         const std::set<std::string>& nsePrimitives,
+                         const std::unordered_set<std::string>& nsePrimitives,
                          bool* pResult)
 {
    if (nodeSEXP == nullptr)
@@ -1767,7 +1780,7 @@ bool isCallToNSEFunction(SEXP nodeSEXP,
 
 // Attempts to find calls to functions which perform NSE.
 bool maybePerformsNSEImpl(SEXP node,
-                          const std::set<std::string>& nsePrimitives)
+                          const std::unordered_set<std::string>& nsePrimitives)
 {
    r::sexp::CallRecurser recurser(node);
    bool result = false;
@@ -1778,9 +1791,9 @@ bool maybePerformsNSEImpl(SEXP node,
    return result;
 }
 
-std::set<SEXP> makeKnownNSEFunctions()
+std::unordered_set<SEXP> makeKnownNSEFunctions()
 {
-   std::set<SEXP> set;
+   std::unordered_set<SEXP> set;
 
    // .Internal performs lookup of functions in a way
    // not readily exposed (nor available in the evaluation env)
@@ -1802,7 +1815,7 @@ std::set<SEXP> makeKnownNSEFunctions()
 
 bool isKnownNseFunction(SEXP functionSEXP)
 {
-   static const std::set<SEXP> knownNseFunctions = makeKnownNSEFunctions();
+   static const std::unordered_set<SEXP> knownNseFunctions = makeKnownNSEFunctions();
    return core::algorithm::contains(knownNseFunctions, functionSEXP);
 }
 

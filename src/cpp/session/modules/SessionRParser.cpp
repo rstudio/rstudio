@@ -295,10 +295,10 @@ SEXP resolveFunctionAssociatedWithCall(RTokenCursor cursor,
    return resolveObjectAssociatedWithCall(cursor, pProtect, true, pCacheable);
 }
 
-std::set<std::wstring> makeWideNsePrimitives()
+std::unordered_set<std::wstring> makeWideNsePrimitives()
 {
-   std::set<std::wstring> wide;
-   const std::set<std::string>& nsePrimitives = r::sexp::nsePrimitives();
+   std::unordered_set<std::wstring> wide;
+   const std::unordered_set<std::string>& nsePrimitives = r::sexp::nsePrimitives();
    
    for (const std::string& primitive : nsePrimitives)
    {
@@ -308,9 +308,9 @@ std::set<std::wstring> makeWideNsePrimitives()
    return wide;
 }
 
-const std::set<std::wstring>& wideNsePrimitives()
+const std::unordered_set<std::wstring>& wideNsePrimitives()
 {
-   static std::set<std::wstring> wideNsePrimitives = makeWideNsePrimitives();
+   static std::unordered_set<std::wstring> wideNsePrimitives = makeWideNsePrimitives();
    return wideNsePrimitives;
 }
 
@@ -326,7 +326,7 @@ bool maybePerformsNSE(RTokenCursor cursor)
    if (!endCursor.fwdToMatchingToken())
       return false;
    
-   const std::set<std::wstring>& nsePrimitives = wideNsePrimitives();
+   const std::unordered_set<std::wstring>& nsePrimitives = wideNsePrimitives();
    
    const RTokens& rTokens = cursor.tokens();
    std::size_t offset = cursor.offset();
@@ -1757,7 +1757,7 @@ void addExtraScopedSymbolsForCall(RTokenCursor startCursor,
       if (!endCursor.fwdToMatchingToken())
          return;
       
-      std::set<std::string> symbols;
+      std::unordered_set<std::string> symbols;
       r::exec::RFunction getSetRefClassCall(".rs.getSetRefClassSymbols");
       getSetRefClassCall.addParam(
                string_utils::wideToUtf8(
@@ -1785,7 +1785,7 @@ void addExtraScopedSymbolsForCall(RTokenCursor startCursor,
       if (!endCursor.fwdToMatchingToken())
          return;
       
-      std::set<std::string> symbols;
+      std::unordered_set<std::string> symbols;
       r::exec::RFunction getR6ClassSymbols(".rs.getR6ClassSymbols");
       getR6ClassSymbols.addParam(
                string_utils::wideToUtf8(std::wstring(startCursor.begin(), endCursor.end())));
