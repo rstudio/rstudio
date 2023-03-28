@@ -39,7 +39,7 @@ progressResult <- function(path) {
    on.exit(file.remove(p), add = TRUE)
    con <- file(p, open = "at")
 
-   sourceWithProgress(script = path, con = con)
+   .rs.sourceWithProgress(script = path, con = con)
    close(con)
 
    processOutput(readLines(p))
@@ -75,7 +75,7 @@ test_that("environment import/export works", {
    on.exit(file.remove(outputRdata), add = TRUE)
 
    # source the script; it simply adds x and y to make z
-   sourceWithProgress(script = "resources/source-progress/assignment.R",
+   .rs.sourceWithProgress(script = "resources/source-progress/assignment.R",
                       con = NULL,
                       importRdata = inputRdata,
                       exportRdata = outputRdata)
