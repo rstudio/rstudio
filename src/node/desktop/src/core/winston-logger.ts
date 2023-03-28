@@ -35,18 +35,19 @@ export class WinstonLogger implements Logger {
 
   constructor(logOptions: LogOptions) {
     const level = this.readLogLevelOverride(logOptions.getLogLevel());
-    const format = logOptions.getLogMessageFormat() === 'pretty' ? 
-      printf((info) => `${info.timestamp} ${info.level.toUpperCase()} ${info.message}`)
-      : combine(removeTimestamp(), json());
+    const format =
+      logOptions.getLogMessageFormat() === 'pretty'
+        ? printf((info) => `${info.timestamp} ${info.level.toUpperCase()} ${info.message}`)
+        : combine(removeTimestamp(), json());
 
-    const messageFormat = combine(timestamp({alias: 'time'}), format);
+    const messageFormat = combine(timestamp({ alias: 'time' }), format);
     const logFile = logOptions.getLogFile();
     let optionError;
 
     this.logger = winston.createLogger({
       level: level,
       format: messageFormat,
-      defaultMeta: { service: 'rdesktop'}
+      defaultMeta: { service: 'rdesktop' },
     });
 
     let consoleLogging = false;
@@ -74,7 +75,8 @@ export class WinstonLogger implements Logger {
         filename: logFile.getAbsolutePath(),
         tailable: true,
         maxsize: 2000000, // TODO: use max-size from logging.conf (convert from mb to bytes)
-        maxFiles: 100 }); // TODO: use max-rotation from logging.conf
+        maxFiles: 100,
+      }); // TODO: use max-rotation from logging.conf
 
       this.fileTransport = logTransport;
     }
@@ -169,7 +171,6 @@ export class WinstonLogger implements Logger {
       this.logger.add(new Console());
     }
   }
-
 }
 
 // removes `timestamp` key from json since we add `time` to match Qt log format
