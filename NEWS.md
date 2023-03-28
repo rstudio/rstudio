@@ -27,6 +27,7 @@
 - RStudio no longer uses `reg.exe` when attempting to enumerate R versions in the Windows registry (#12599)
 - Fixed file-type icons not displaying in Finder on Mac (#12252)
 - Fixed saving and restoring window location when maximized or partially offscreen (#12463)
+- Fixed display of macOS message dialogs (#12928)
 
 #### Posit Workbench
 - Fixed unlabeled buttons for screen reader users when page is narrow [Accessibility] (rstudio/rstudio-pro#4340)
