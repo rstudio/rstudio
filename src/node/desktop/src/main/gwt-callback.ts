@@ -412,7 +412,7 @@ export class GwtCallback extends EventEmitter {
 
     ipcMain.on(
       'desktop_open_minimal_window',
-      (event: IpcMainEvent, name: string, url: string, width: number, height: number) => {
+      async (event: IpcMainEvent, name: string, url: string, width: number, height: number) => {
         // handle some internal chrome urls specially
         if (url === 'chrome://gpu' || url === 'chrome://accessibility') {
           const window = new BrowserWindow({
@@ -1025,7 +1025,7 @@ export class GwtCallback extends EventEmitter {
           if (win.window.webContents.mainFrame === frame) {
             return win;
           }
-        } catch (error) {
+        } catch (error: unknown) {
           logger().logDebug('Window WebContents has been destroyed. Skipping this window.');
         }
       }

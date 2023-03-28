@@ -147,6 +147,9 @@ export class MainWindow extends GwtWindow {
           logger().logError(error);
         });
         // Re-direct the iframe back to the source URL (bleh)
+        // eslint thinks there's "Unnecessary optional chain on a non-nullish value", but
+        // that seems like a false positive. Disabling the rule to avoid hitting the lint error.
+        // eslint-disable-next-line @typescript-eslint/no-unnecessary-condition
         callback({ cancel: false, redirectURL: details.frame?.url });
       } else {
         callback({ cancel: false });

@@ -335,7 +335,9 @@ export class DesktopBrowserWindow extends EventEmitter {
       return true;
     } else {
       logger().logDebug(
-        'allowNavigation: external navigation within IDE is not allowed and URL host is unsafe. URL must be explicitly opened in the browser.',
+        'allowNavigation:' +
+          ' external navigation within IDE is not allowed and URL host is unsafe.' +
+          ' URL must be explicitly opened in the browser.',
       );
       return false;
     }
