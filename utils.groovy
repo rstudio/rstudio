@@ -12,7 +12,7 @@ boolean hasChangesIn(String module, boolean invertMatch = false) {
   return !env.CHANGE_TARGET ||
   sh(
     returnStatus: true,
-    script: "git diff --name-only --quiet ${mergeBase}..origin/${env.BRANCH_NAME} | grep ${grepArgs} \"${module}\"") == 1
+    script: "git diff --name-only ${mergeBase}..origin/${env.BRANCH_NAME} | grep ${grepArgs} \"${module}\"") == 0
 }
 
 /**
