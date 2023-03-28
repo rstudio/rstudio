@@ -15,7 +15,7 @@
 
 /* eslint-disable @typescript-eslint/no-explicit-any */
 
-export function logString(level: 'err'|'warn'|'info'|'debug', message: string): void {
+export function logString(level: 'err' | 'warn' | 'info' | 'debug', message: string): void {
   (window as any).desktopLogger.logString(level, message);
 }
 

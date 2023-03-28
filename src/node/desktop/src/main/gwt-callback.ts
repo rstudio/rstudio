@@ -14,17 +14,7 @@
  */
 
 import { exec, execSync } from 'child_process';
-import {
-  app,
-  BrowserWindow,
-  clipboard,
-  dialog,
-  ipcMain,
-  Rectangle,
-  screen,
-  shell,
-  webFrameMain
-} from 'electron';
+import { app, BrowserWindow, clipboard, dialog, ipcMain, Rectangle, screen, shell, webFrameMain } from 'electron';
 import { IpcMainEvent, MessageBoxOptions, OpenDialogOptions, SaveDialogOptions } from 'electron/main';
 import EventEmitter from 'events';
 import { existsSync, writeFileSync } from 'fs';
@@ -46,8 +36,11 @@ import { MainWindow } from './main-window';
 import { openMinimalWindow } from './minimal-window';
 import { defaultFonts, ElectronDesktopOptions } from './preferences/electron-desktop-options';
 import {
-  filterFromQFileDialogFilter, findRepoRoot,
-  getAppPath, handleLocaleCookies, resolveAliasedPath
+  filterFromQFileDialogFilter,
+  findRepoRoot,
+  getAppPath,
+  handleLocaleCookies,
+  resolveAliasedPath,
 } from './utils';
 import { activateWindow, focusedWebContents } from './window-utils';
 
@@ -174,7 +167,7 @@ export class GwtCallback extends EventEmitter {
         if (defaultExtension) {
           saveDialogOptions['filters'] = [{ name: '', extensions: [defaultExtension.replace('.', '')] }];
         }
-        
+
         let focusedWindow = BrowserWindow.getFocusedWindow();
         if (focusOwner) {
           focusedWindow = this.getSender('desktop_open_minimal_window', event.processId, event.frameId).window;
@@ -504,38 +497,33 @@ export class GwtCallback extends EventEmitter {
       },
     );
 
-    ipcMain.handle(
-      'desktop_copy_image_at_xy_to_clipboard',
-      (_event, x: number, y: number) => {
-        const focusedWindow = BrowserWindow.getFocusedWindow();
-        if (focusedWindow?.webContents) {
-          focusedWindow.webContents.copyImageAt(x, y);
-        } else {
-          logger().logError(`Failed to copy image at x: ${x}, y: ${y} to clipboard`);
-        }
-      },
-    );
+    ipcMain.handle('desktop_copy_image_at_xy_to_clipboard', (_event, x: number, y: number) => {
+      const focusedWindow = BrowserWindow.getFocusedWindow();
+      if (focusedWindow?.webContents) {
+        focusedWindow.webContents.copyImageAt(x, y);
+      } else {
+        logger().logError(`Failed to copy image at x: ${x}, y: ${y} to clipboard`);
+      }
+    });
 
-    ipcMain.on('desktop_export_page_region_to_file', 
-      (event, targetPath, format, left, top, width, height) => {
-        const rect: Rectangle = { x: left, y: top, width, height };
-        targetPath = resolveAliasedPath(targetPath);
-        this.mainWindow.window
-          .capturePage(rect)
-          .then((image) => {
-            let buffer: Buffer;
-            if (format == 'jpeg') {
-              buffer = image.toJPEG(100);
-            } else {
-              buffer = image.toPNG();
-            }
-            writeFileSync(targetPath, buffer);
-          })
-          .catch((error) => {
-            logger().logError(error);
-          });
-      },
-    );
+    ipcMain.on('desktop_export_page_region_to_file', (event, targetPath, format, left, top, width, height) => {
+      const rect: Rectangle = { x: left, y: top, width, height };
+      targetPath = resolveAliasedPath(targetPath);
+      this.mainWindow.window
+        .capturePage(rect)
+        .then((image) => {
+          let buffer: Buffer;
+          if (format == 'jpeg') {
+            buffer = image.toJPEG(100);
+          } else {
+            buffer = image.toPNG();
+          }
+          writeFileSync(targetPath, buffer);
+        })
+        .catch((error) => {
+          logger().logError(error);
+        });
+    });
 
     ipcMain.handle('desktop_supports_clipboard_metafile', () => {
       return process.platform === 'win32';
@@ -1038,7 +1026,7 @@ export class GwtCallback extends EventEmitter {
             return win;
           }
         } catch (error) {
-          logger().logDebug("Window WebContents has been destroyed. Skipping this window.");
+          logger().logDebug('Window WebContents has been destroyed. Skipping this window.');
         }
       }
     }

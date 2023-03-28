@@ -561,7 +561,8 @@ export function getDesktopBridge() {
     },
 
     allowNavigation: (url: string, callback: VoidCallback<boolean>) => {
-      ipcRenderer.invoke('desktop_allow_navigation', url)
+      ipcRenderer
+        .invoke('desktop_allow_navigation', url)
         .then((isSafe) => callback(isSafe))
         .catch((error) => reportIpcError('desktop_allow_navigation', error));
     },

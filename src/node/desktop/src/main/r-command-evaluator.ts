@@ -30,9 +30,8 @@ export class RCommandEvaluator {
     }
 
     rCmd = jsLiteralEscape(rCmd);
-    this.window?.executeJavaScript(`window.desktopHooks.evaluateRCmd("${rCmd}")`)
-      .catch((error) => {
-        logger().logError(error);
-      });
+    this.window?.executeJavaScript(`window.desktopHooks.evaluateRCmd("${rCmd}")`).catch((error) => {
+      logger().logError(error);
+    });
   }
 }

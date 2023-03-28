@@ -87,7 +87,7 @@ class RStudioMain {
     // there have been cases, historically, where Chromium accessibility
     // would enable itself and introduce performance issues even though the
     // user was not using an accessibility aid such as a screen reader, e.g.:
-    // https://github.com/rstudio/rstudio/issues/1990) 
+    // https://github.com/rstudio/rstudio/issues/1990)
     if (ElectronDesktopOptions().disableRendererAccessibility()) {
       app.commandLine.appendSwitch('disable-renderer-accessibility');
     }

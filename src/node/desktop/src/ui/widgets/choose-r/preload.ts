@@ -143,10 +143,10 @@ ipcRenderer.on('initialize', (_event, data) => {
     }
   });
 
-  useCustomEl.checked = !default32Bit && !default64Bit && (rInstalls.length > 0);
+  useCustomEl.checked = !default32Bit && !default64Bit && rInstalls.length > 0;
   selectWidget.disabled = !useCustomEl.checked;
 
-  buttonOk.disabled = !((useCustomEl.checked && selectCustom.value) || use32.checked || use64.checked) ;
+  buttonOk.disabled = !((useCustomEl.checked && selectCustom.value) || use32.checked || use64.checked);
 });
 
 // export callbacks

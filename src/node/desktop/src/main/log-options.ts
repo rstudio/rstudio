@@ -24,8 +24,8 @@ import { userLogPath } from './utils';
 const logConfFile = 'logging.conf';
 
 interface LogConfig {
-  config?: string, // can be contents of logging.conf
-  file?: string, // path to conf file to use instead of logging.conf
+  config?: string; // can be contents of logging.conf
+  file?: string; // path to conf file to use instead of logging.conf
 }
 
 class LogOptions {
@@ -46,13 +46,13 @@ class LogOptions {
       if (!location.existsSync()) {
         // userConfigDir
         location = Xdg.userConfigDir().completeChildPath(logConfFile);
-  
+
         if (!location.existsSync()) {
           // systemConfigDir
           location = Xdg.systemConfigFile(logConfFile);
         }
       }
-  
+
       if (location.existsSync()) {
         this.logConfContent = PropertiesReader(location.getAbsolutePathNative());
       } else {
@@ -98,8 +98,10 @@ class LogOptions {
     if (value) {
       return value;
     } else {
-      return this.logConfContent.get(`@${this.executableName}.${option.arg}`)?.toString() ??
-      this.logConfContent.get(`*.${option.arg}`)?.toString();
+      return (
+        this.logConfContent.get(`@${this.executableName}.${option.arg}`)?.toString() ??
+        this.logConfContent.get(`*.${option.arg}`)?.toString()
+      );
     }
   }
 }

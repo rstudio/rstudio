@@ -41,7 +41,7 @@ const homePathLeafAlias = '~';
  *
  * @param {string} path
  * @param {string} [separator='/']
- * @return {*} 
+ * @return {*}
  */
 function normalizeSeparators(path: string, separator = '/') {
   return path.replace(/[\\/]/g, separator);
@@ -52,7 +52,7 @@ function normalizeSeparators(path: string, separator = '/') {
  *
  * @export
  * @param {string} path
- * @return {*} 
+ * @return {*}
  */
 export function normalizeSeparatorsNative(path: string) {
   return normalizeSeparators(path, sep);

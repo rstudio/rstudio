@@ -223,7 +223,6 @@ export class DesktopOptionsImpl implements DesktopOptions {
     return this.config.get(kDisableRendererAccessibility, properties.view.default.disableRendererAccessibility);
   }
 
-
   public setLastRemoteSessionUrl(lastRemoteSessionUrl: string): void {
     this.config.set(kLastRemoteSessionUrl, lastRemoteSessionUrl);
   }
@@ -314,8 +313,10 @@ export class DesktopOptionsImpl implements DesktopOptions {
       return '';
     }
 
-    const rExecutablePath: string = this.config.get(kRExecutablePath,
-      properties.platform.default.windows.rExecutablePath);
+    const rExecutablePath: string = this.config.get(
+      kRExecutablePath,
+      properties.platform.default.windows.rExecutablePath,
+    );
 
     if (!rExecutablePath) {
       return '';

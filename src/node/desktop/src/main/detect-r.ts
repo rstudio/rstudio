@@ -59,15 +59,10 @@ function executeCommand(command: string): Expected<string> {
 }
 
 export async function promptUserForR(platform = process.platform): Promise<Expected<string | null>> {
-
   if (platform === 'win32') {
-
-    const showUi =
-      getenv('RSTUDIO_DESKTOP_PROMPT_FOR_R').length !== 0 ||
-      desktop.isCtrlKeyDown();
+    const showUi = getenv('RSTUDIO_DESKTOP_PROMPT_FOR_R').length !== 0 || desktop.isCtrlKeyDown();
 
     if (!showUi) {
-
       // nothing to do if RSTUDIO_WHICH_R is set
       const rstudioWhichR = getenv('RSTUDIO_WHICH_R');
       if (rstudioWhichR) {
@@ -87,7 +82,6 @@ export async function promptUserForR(platform = process.platform): Promise<Expec
           logger().logDebug(`Validation failed; skipping R: ${rPath}`);
         }
       }
-
     }
 
     // discover available R installations
@@ -157,7 +151,6 @@ export function prepareEnvironment(rPath: string): Err {
 }
 
 function prepareEnvironmentImpl(rPath: string): Err {
-
   // attempt to detect R environment
   const [rEnvironment, error] = detectREnvironment(rPath);
   if (error) {
@@ -182,11 +175,9 @@ function prepareEnvironmentImpl(rPath: string): Err {
   }
 
   return success();
-
 }
 
 export function detectREnvironment(rPath: string): Expected<REnvironment> {
-
   // resolve path to binary if we were given a directory
   let rExecutable = new FilePath(rPath);
   if (rExecutable.isDirectory()) {
@@ -258,16 +249,7 @@ writeLines(sep = "\x1F", c(
   stdout = stdout.substring(index + 1);
 
   // unwrap query results
-  const [
-    rVersion,
-    rHome,
-    rDocDir,
-    rIncludeDir,
-    rShareDir,
-    rRuntime,
-    rArch,
-    rLdLibraryPath
-  ] = stdout.split('\x1F');
+  const [rVersion, rHome, rDocDir, rIncludeDir, rShareDir, rRuntime, rArch, rLdLibraryPath] = stdout.split('\x1F');
 
   // put it all together
   return ok({
@@ -283,7 +265,6 @@ writeLines(sep = "\x1F", c(
     },
     ldLibraryPath: rLdLibraryPath,
   });
-
 }
 
 export function scanForR(): Expected<string> {
@@ -334,7 +315,6 @@ function scanForRPosix(): Expected<string> {
 }
 
 export function findRInstallationsWin32(): string[] {
-
   const rInstallations = desktop.searchRegistryForInstallationsOfR();
   logger().logDebug(`Found the following R installations in the registry: ${JSON.stringify(rInstallations, null, 2)}`);
 
@@ -343,11 +323,10 @@ export function findRInstallationsWin32(): string[] {
     'C:/R',
     `${getenv('ProgramFiles')}/R`,
     `${getenv('ProgramFiles(x86)')}/R`,
-    `${getenv('LOCALAPPDATA')}/Programs/R`
+    `${getenv('LOCALAPPDATA')}/Programs/R`,
   ];
 
   for (const location of commonLocations) {
-
     // nothing to do if it doesn't exist
     if (!existsSync(location)) {
       continue;
@@ -362,14 +341,12 @@ export function findRInstallationsWin32(): string[] {
         rInstallations.push(path);
       }
     }
-
   }
 
   // Remove duplicates
   const uniqueInstallations = Array.from(new Set(rInstallations));
   logger().logDebug(`Found the following R installations: ${JSON.stringify(uniqueInstallations, null, 2)}`);
   return uniqueInstallations;
-
 }
 
 export function isValidInstallation(rInstallPath: string): boolean {
@@ -379,7 +356,6 @@ export function isValidInstallation(rInstallPath: string): boolean {
 }
 
 export function isValidBinary(rExePath: string): boolean {
-
   if (!existsSync(rExePath)) {
     return false;
   }
@@ -387,11 +363,9 @@ export function isValidBinary(rExePath: string): boolean {
   logger().logDebug(`Validating R installation at path: ${rExePath}`);
   const [_, error] = detectREnvironment(rExePath);
   return error == null;
-
 }
 
 function findDefaultInstallPathWin32(registryVersionKey: string): string {
-
   const rLocation = desktop.searchRegistryForDefaultInstallationOfR(registryVersionKey);
   if (rLocation.length === 0) {
     logger().logWarning('No default R installation was found in the registry.');
@@ -404,11 +378,9 @@ function findDefaultInstallPathWin32(registryVersionKey: string): string {
   }
 
   return rLocation;
-
 }
 
 function scanForRWin32(): Expected<string> {
-
   // if the RSTUDIO_WHICH_R environment variable is set, use that
   const rstudioWhichR = getenv('RSTUDIO_WHICH_R');
   if (rstudioWhichR) {
@@ -441,7 +413,6 @@ function scanForRWin32(): Expected<string> {
   // nothing found; return empty filepath
   logger().logDebug('Failed to discover R');
   return err();
-
 }
 
 export function findDefault32Bit(): string {

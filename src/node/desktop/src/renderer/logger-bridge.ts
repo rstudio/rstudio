@@ -18,7 +18,7 @@ import { ipcRenderer } from 'electron';
 // eslint-disable-next-line @typescript-eslint/explicit-module-boundary-types
 export function getDesktopLoggerBridge() {
   return {
-    logString: (level: 'err'|'warn'|'info'|'debug', message: string) => {
+    logString: (level: 'err' | 'warn' | 'info' | 'debug', message: string) => {
       logString(level, message);
     },
 
@@ -34,7 +34,7 @@ export function getDesktopLoggerBridge() {
  * @param level logging level (err|warn|info|debug)
  * @param message  string to log
  */
-export function logString(level: 'err'|'warn'|'info'|'debug', message: string): void {
+export function logString(level: 'err' | 'warn' | 'info' | 'debug', message: string): void {
   ipcRenderer.send('desktop_log_message', level, message);
 }
 
@@ -44,7 +44,6 @@ export function logString(level: 'err'|'warn'|'info'|'debug', message: string): 
  * @param error  Error to log
  */
 export function logError(error: unknown): void {
-
   if (error instanceof Error) {
     logString('err', error.message);
   } else {

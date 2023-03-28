@@ -43,10 +43,7 @@ export const checkForNewLanguage = async () => {
         if (localeLastTimeData.isSet) {
           const localeData = isLocalStorageItemSet(localeStorageItemKey);
 
-          if (
-            localeData.isSet &&
-            firstRunTime <= parseInt('' + localeLastTimeData.value, 10) + 3000
-          ) {
+          if (localeData.isSet && firstRunTime <= parseInt('' + localeLastTimeData.value, 10) + 3000) {
             clearInterval(isThereNewLanguageInterval);
 
             resolve('' + localeData.value);
@@ -62,7 +59,7 @@ export const checkForNewLanguage = async () => {
  *
  * @param {string} path
  * @param {string} [separator='/']
- * @return {*} 
+ * @return {*}
  */
 export function normalizeSeparators(path: string, separator = '/') {
   return path.replace(/[\\/]+/g, separator);
@@ -73,7 +70,7 @@ export function normalizeSeparators(path: string, separator = '/') {
  *
  * @export
  * @param {string} path
- * @return {*} 
+ * @return {*}
  */
 export function normalizeSeparatorsNative(path: string) {
   /* using conditional to set the separator based on platform as `path` is not available here */

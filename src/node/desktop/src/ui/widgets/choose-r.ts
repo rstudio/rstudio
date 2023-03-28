@@ -30,7 +30,6 @@ declare const CHOOSE_R_WEBPACK_ENTRY: string;
 declare const CHOOSE_R_PRELOAD_WEBPACK_ENTRY: string;
 
 function checkValid(data: CallbackData) {
-
   const binaryPath = data.binaryPath;
   if (!binaryPath) {
     logger().logErrorMessage('internal error: binaryPath was unexpectedly null');
@@ -49,7 +48,7 @@ function checkValid(data: CallbackData) {
       type: 'error',
       title: t('chooseRDialog.rLaunchFailedTitle'),
       message: t('chooseRDialog.rLaunchFailedMessage'),
-      buttons: [ t('common.buttonOk'), ],
+      buttons: [t('common.buttonOk')],
     });
 
     return false;
