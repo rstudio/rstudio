@@ -532,12 +532,23 @@ export class GwtCallback extends EventEmitter {
     ipcMain.handle(
       'desktop_show_message_box',
       async (event, type, caption, message, buttons, defaultButton, cancelButton) => {
-        const openDialogOptions: MessageBoxOptions = {
-          type: this.convertMessageBoxType(type),
-          title: caption,
-          message: message,
-          buttons: this.convertButtons(buttons),
-        };
+
+        let openDialogOptions: MessageBoxOptions;
+        if (process.platform === 'darwin') {
+          openDialogOptions = {
+            type: this.convertMessageBoxType(type),
+            message: caption,
+            detail: message,
+            buttons: this.convertButtons(buttons),
+          };
+        } else {
+          openDialogOptions = {
+            type: this.convertMessageBoxType(type),
+            title: caption,
+            message: message,
+            buttons: this.convertButtons(buttons),
+          };
+        }
 
         const focusedWindow = BrowserWindow.getFocusedWindow();
         if (focusedWindow) {
