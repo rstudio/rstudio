@@ -25,8 +25,10 @@
 #include <boost/regex.hpp>
 
 #include <core/Log.hpp>
+#include <core/RegexUtils.hpp>
 #include <core/Settings.hpp>
 #include <core/system/Environment.hpp>
+#include <core/system/Process.hpp>
 #include <core/system/System.hpp>
 #include <core/system/Xdg.hpp>
 
@@ -67,6 +69,7 @@ constexpr const char* kDatabaseMigrationsPathEnvVar = "RS_DB_MIGRATIONS_PATH";
 // misc constants
 constexpr const size_t kDefaultMinPoolSize = 4;
 constexpr const size_t kDefaultMaxPoolSize = 20;
+constexpr const int kMinimumSupportedPostgreSqlMajorVersion = 11;
 
 boost::shared_ptr<ConnectionPool> s_connectionPool;
 
@@ -95,6 +98,64 @@ struct ConnectionPoolSizeVisitor : boost::static_visitor<int>
       return options.poolSize;
    }
 };
+
+/**
+ * @brief Validates that the PostgreSQL version is at least the minimum supported version.
+ * Prints a warning if the version is not supported.
+*/
+void validateMinimumPostgreSqlVersion()
+{
+
+   if(!s_connectionPool)
+   {
+      return;
+   }
+
+   const auto connection = s_connectionPool->getConnection();
+   if(!connection)
+   {
+      LOG_WARNING_MESSAGE("Failed to get connection from connection pool to determine PostgreSQL version.");
+      return;
+   }
+   const std::string queryStatement = "SHOW server_version;";
+   std::string versionStr;
+   database::Query versionQuery = connection->query(queryStatement).withOutput(versionStr);
+   const Error error = connection->execute(versionQuery);
+   if (error)
+   {
+      LOG_WARNING_MESSAGE("Failed to run query \"" + queryStatement +
+                          "\" to determine PostgreSQL version. error: " +
+                          error.getMessage());
+      return;
+   }
+
+   boost::smatch matches;
+   /* PostgreSQL's versioning policy changed between 9.6 and 10, versions below
+    * 10 will be in the format of X.X.X, whereas versions >= 10 will be in the
+    * format of X.X, so make the last version number match optional */
+   boost::regex versionRegex("([\\d]+)\\.([\\d]+)\\.?([\\d]+)?");
+   if (regex_utils::search(
+           versionStr, matches, versionRegex))
+   {
+      /* First match is the whole matching string, so the second match should be the major version number */
+      const int versionMajor = safe_convert::stringTo(matches[1], 0);
+
+      if (versionMajor < kMinimumSupportedPostgreSqlMajorVersion)
+      {
+         LOG_WARNING_MESSAGE("PostgreSQL version " + versionStr +
+                             " is not supported. "
+                             "Please upgrade to version " +
+                             safe_convert::numberToString(
+                                 kMinimumSupportedPostgreSqlMajorVersion) +
+                             " or later.");
+      } else {
+         LOG_INFO_MESSAGE("Using PostgreSQL version " + versionStr);
+      }
+   }
+   else {
+      LOG_WARNING_MESSAGE("Failed to parse PostgreSQL version: " + versionStr);
+   }
+}
 
 Error readOptions(const std::string& databaseConfigFile,
                   const boost::optional<system::User>& databaseFileUser,
@@ -340,6 +401,11 @@ Error initialize(const std::string& databaseConfigFile,
    error = createConnectionPool(poolSize, options, &s_connectionPool);
    if (error)
       return error;
+   
+   if(getConfiguredDriver() == Driver::Postgresql)
+   {
+      validateMinimumPostgreSqlVersion();
+   }
 
    if (updateSchema)
    {
