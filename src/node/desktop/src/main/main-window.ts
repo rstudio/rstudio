@@ -365,20 +365,8 @@ export class MainWindow extends GwtWindow {
     //                      false);
 
     if (!this.geometrySaved) {
-
-      let bounds: Rectangle;
-
-      if (this.window.isMaximized()) {
-        bounds = this.window.getNormalBounds();
-      } else {
-        bounds = this.window.getBounds();
-      }
-      ElectronDesktopOptions().saveWindowBounds({
-        width: bounds.width,
-        height: bounds.height,
-        x: bounds.x,
-        y: bounds.y,
-        maximized: this.window.isMaximized() });
+      const bounds = this.window.getNormalBounds();
+      ElectronDesktopOptions().saveWindowBounds({ ...bounds, maximized: this.window.isMaximized() });
       this.geometrySaved = true;
     }
 
