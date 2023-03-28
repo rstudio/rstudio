@@ -25,7 +25,7 @@ import {
   clearOptionsSingleton,
   DesktopOptionsImpl,
   ElectronDesktopOptions,
-  firstIsInsideSecond,
+  intersects,
 } from '../../../src/main/preferences/electron-desktop-options';
 import { createSinonStubInstanceForSandbox, tempDirectory } from '../unit-utils';
 
@@ -92,7 +92,7 @@ describe('DesktopOptions', () => {
     const newProportionalFont = 'testProportionalFont';
     const newFixWidthFont = 'testFixWidthFont';
     const newZoom = 1.5;
-    const newWindowBounds = { width: 123, height: 321, x: 0, y: 0 };
+    const newWindowBounds = { width: 123, height: 321, x: 0, y: 0, maximized: false };
     const newAccessibility = !(properties.view.default.accessibility as boolean);
     const newDisableRendererAccessibility = !(properties.view.default.disableRendererAccessibility as boolean);
     const newLastRemoteSessionUrl = 'testLastRemoteSessionUrl';
@@ -157,7 +157,7 @@ describe('DesktopOptions', () => {
       { workArea: { width: 2000, height: 2000, x: 0, y: 0 } },
       { workArea: { width: 2000, height: 2000, x: 2000, y: 0 } },
     ];
-    const savedWinBounds = { width: 500, height: 500, x: 2100, y: 100 };
+    const savedWinBounds = { width: 500, height: 500, x: 2100, y: 100, maximized: false };
 
     // Save bounds onto a secondary display on the right
     ElectronDesktopOptions().saveWindowBounds(savedWinBounds);
@@ -178,7 +178,7 @@ describe('DesktopOptions', () => {
   });
   it('restores window bounds to default when saved display no longer present', () => {
     const defaultDisplay = { bounds: { width: 2000, height: 2000, x: 0, y: 0 } };
-    const savedWinBounds = { width: 500, height: 500, x: 0, y: 0 };
+    const savedWinBounds = { width: 500, height: 500, x: 0, y: 0, maximized: false };
     const defaultWinWidth = properties.view.default.windowBounds.width;
     const defaultWinHeight = properties.view.default.windowBounds.height;
 
@@ -213,16 +213,16 @@ describe('DesktopOptions', () => {
  * external display to the right of primary display could be (primary.width, 0) ex. (1920, 0)
  * external display to the left of primary display could be (-secondary.width, 0) ex. (-1200, 0)
  */
-describe('FirstIsInsideSecond', () => {
-  const INNER_WIDTH = 10;
-  const INNER_HEIGHT = 10;
-  const INNER_X = 0;
-  const INNER_Y = 0;
+describe('intersects', () => {
+  const FIRST_WIDTH = 10;
+  const FIRST_HEIGHT = 10;
+  const FIRST_X = 0;
+  const FIRST_Y = 0;
 
-  const OUTER_WIDTH = 20;
-  const OUTER_HEIGHT = 20;
-  const OUTER_X = 0;
-  const OUTER_Y = 0;
+  const SECOND_WIDTH = 20;
+  const SECOND_HEIGHT = 20;
+  const SECOND_X = 0;
+  const SECOND_Y = 0;
 
   const X_FAR_OUT_WEST = -100;
   const X_FAR_BACK_EAST = 100;
@@ -231,75 +231,74 @@ describe('FirstIsInsideSecond', () => {
 
   it('basic case', () => {
     assert.isTrue(
-      firstIsInsideSecond(
-        rec(INNER_WIDTH, INNER_HEIGHT, INNER_X + 1, INNER_Y + 1),
-        rec(OUTER_WIDTH, OUTER_HEIGHT, OUTER_X, OUTER_Y),
+      intersects(
+        rec(FIRST_HEIGHT, FIRST_WIDTH, SECOND_X + 1, SECOND_Y + 1),
+        rec(SECOND_HEIGHT, SECOND_WIDTH, SECOND_X, SECOND_Y),
       ),
     ); // entirely inside
 
     // top and left boarders shared
-    assert.isTrue(firstIsInsideSecond(rec(), rec(OUTER_WIDTH, OUTER_HEIGHT, OUTER_X, OUTER_Y)));
+    assert.isTrue(intersects(rec(), rec(SECOND_WIDTH, SECOND_HEIGHT, SECOND_X, SECOND_Y)));
 
     // same size rectangles is valid
-    assert.isTrue(firstIsInsideSecond(rec(), rec()));
+    assert.isTrue(intersects(rec(), rec()));
   });
   it('backwards case', () => {
-    assert.isFalse(firstIsInsideSecond(rec(OUTER_WIDTH, OUTER_HEIGHT, OUTER_X, OUTER_Y), rec()));
+    assert.isTrue(intersects(rec(SECOND_HEIGHT, SECOND_WIDTH, SECOND_X, SECOND_Y), rec()));
   });
   it('partially outside', () => {
-    assert.isFalse(
-      firstIsInsideSecond(
-        rec(INNER_WIDTH, INNER_HEIGHT, INNER_X + 11, INNER_Y),
-        rec(OUTER_WIDTH, OUTER_HEIGHT, OUTER_X, OUTER_Y),
+    assert.isTrue(
+      intersects(
+        rec(FIRST_HEIGHT, FIRST_WIDTH, FIRST_X + 11, FIRST_Y),
+        rec(SECOND_HEIGHT, SECOND_WIDTH, SECOND_X, SECOND_Y),
       ),
     );
-    assert.isFalse(
-      firstIsInsideSecond(
-        rec(INNER_WIDTH, INNER_HEIGHT, INNER_X, INNER_Y + 11),
-        rec(OUTER_WIDTH, OUTER_HEIGHT, OUTER_X, OUTER_Y),
+    assert.isTrue(
+      intersects(
+        rec(FIRST_HEIGHT, FIRST_WIDTH, FIRST_X, FIRST_Y + 11),
+        rec(SECOND_HEIGHT, SECOND_WIDTH, SECOND_X, SECOND_Y),
       ),
     );
-    assert.isFalse(
-      firstIsInsideSecond(
-        rec(INNER_WIDTH, INNER_HEIGHT, INNER_X - 1, INNER_Y),
-        rec(OUTER_WIDTH, OUTER_HEIGHT, OUTER_X, OUTER_Y),
+    assert.isTrue(
+      intersects(
+        rec(FIRST_HEIGHT, FIRST_WIDTH, FIRST_X - 1, FIRST_Y),
+        rec(SECOND_HEIGHT, SECOND_WIDTH, SECOND_X, SECOND_Y),
       ),
     );
-    assert.isFalse(
-      firstIsInsideSecond(
-        rec(INNER_WIDTH, INNER_HEIGHT, INNER_X, INNER_Y - 1),
-        rec(OUTER_WIDTH, OUTER_HEIGHT, OUTER_X, OUTER_Y),
+    assert.isTrue(
+      intersects(
+        rec(FIRST_HEIGHT, FIRST_WIDTH, FIRST_X, FIRST_Y - 1),
+        rec(SECOND_HEIGHT, SECOND_WIDTH, SECOND_X, SECOND_Y),
       ),
     );
   });
   it('entirely outside', () => {
     assert.isFalse(
-      firstIsInsideSecond(
-        rec(INNER_WIDTH, INNER_HEIGHT, X_FAR_BACK_EAST, Y_FAR_DOWN_SOUTH),
-        rec(OUTER_WIDTH, OUTER_HEIGHT, OUTER_X, OUTER_Y),
+      intersects(
+        rec(FIRST_HEIGHT, FIRST_WIDTH, X_FAR_BACK_EAST, Y_FAR_DOWN_SOUTH),
+        rec(SECOND_HEIGHT, SECOND_WIDTH, SECOND_X, SECOND_Y),
       ),
     );
     assert.isFalse(
-      firstIsInsideSecond(
-        rec(INNER_WIDTH, INNER_HEIGHT, X_FAR_OUT_WEST, Y_FAR_DOWN_SOUTH),
-        rec(OUTER_WIDTH, OUTER_HEIGHT, OUTER_X, OUTER_Y),
+      intersects(
+        rec(FIRST_HEIGHT, FIRST_WIDTH, X_FAR_OUT_WEST, Y_FAR_DOWN_SOUTH),
+        rec(SECOND_HEIGHT, SECOND_WIDTH, SECOND_X, SECOND_Y),
       ),
     );
     assert.isFalse(
-      firstIsInsideSecond(
-        rec(INNER_WIDTH, INNER_HEIGHT, X_FAR_BACK_EAST, Y_FAR_UP_NORTH),
-        rec(OUTER_WIDTH, OUTER_HEIGHT, OUTER_X, OUTER_Y),
+      intersects(
+        rec(FIRST_HEIGHT, FIRST_WIDTH, X_FAR_BACK_EAST, Y_FAR_UP_NORTH),
+        rec(SECOND_HEIGHT, SECOND_WIDTH, SECOND_X, SECOND_Y),
       ),
     );
     assert.isFalse(
-      firstIsInsideSecond(
-        rec(INNER_WIDTH, INNER_HEIGHT, X_FAR_OUT_WEST, Y_FAR_UP_NORTH),
-        rec(OUTER_WIDTH, OUTER_HEIGHT, OUTER_X, OUTER_Y),
+      intersects(
+        rec(FIRST_HEIGHT, FIRST_WIDTH, X_FAR_OUT_WEST, Y_FAR_UP_NORTH),
+        rec(SECOND_HEIGHT, SECOND_WIDTH, SECOND_X, SECOND_Y),
       ),
     );
   });
 });
-
 describe('Font tests', () => {
   afterEach(() => {
     assert(isSuccessful(deleteTestingDesktopOptions()));
