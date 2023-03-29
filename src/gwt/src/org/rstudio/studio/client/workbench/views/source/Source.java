@@ -342,6 +342,7 @@ public class Source implements InsertSourceEvent.Handler,
       events_.addHandler(ScrollToPositionEvent.TYPE, this);
       events_.addHandler(NewDocumentWithCodeEvent.TYPE, this);
       events_.addHandler(XRefNavigationEvent.TYPE, this);
+      
       if (Desktop.hasDesktopFrame())
          events_.addHandler(MouseNavigateEvent.TYPE, this);
 

@@ -42,6 +42,7 @@ import org.rstudio.studio.client.application.DesktopInfo;
 import org.rstudio.studio.client.application.IgnoredUpdates;
 import org.rstudio.studio.client.application.events.EventBus;
 import org.rstudio.studio.client.application.events.LogoutRequestedEvent;
+import org.rstudio.studio.client.application.events.MouseNavigateEvent;
 import org.rstudio.studio.client.application.model.ApplicationServerOperations;
 import org.rstudio.studio.client.application.model.UpdateCheckResult;
 import org.rstudio.studio.client.application.ui.ApplicationHeader;
@@ -71,6 +72,7 @@ import com.google.gwt.core.client.JsArrayString;
 import com.google.gwt.core.client.Scheduler;
 import com.google.gwt.core.client.Scheduler.ScheduledCommand;
 import com.google.gwt.dom.client.Element;
+import com.google.gwt.dom.client.NativeEvent;
 import com.google.gwt.user.client.Timer;
 import com.google.gwt.user.client.Window;
 import com.google.gwt.user.client.ui.Widget;
@@ -678,14 +680,14 @@ public class DesktopApplicationHeader implements ApplicationHeader,
       return null;
    }
    
-   private void onMouseBack()
+   private void onMouseForward(NativeEvent event)
    {
-      commands_.sourceNavigateBack().execute();
+      eventBus_.fireEvent(new MouseNavigateEvent(true, event.getClientX(), event.getClientY()));
    }
    
-   private void onMouseForward()
+   private void onMouseBack(NativeEvent event)
    {
-      commands_.sourceNavigateForward().execute();
+      eventBus_.fireEvent(new MouseNavigateEvent(false, event.getClientX(), event.getClientY()));
    }
    
    private final native void addBackForwardMouseDownHandlers()
@@ -699,13 +701,13 @@ public class DesktopApplicationHeader implements ApplicationHeader,
          {
             event.stopPropagation();
             event.preventDefault();
-            self.@org.rstudio.studio.client.application.ui.impl.DesktopApplicationHeader::onMouseBack()();
+            self.@org.rstudio.studio.client.application.ui.impl.DesktopApplicationHeader::onMouseBack(*)(event);
          }
          else if (button === 4)
          {
             event.stopPropagation();
             event.preventDefault();
-            self.@org.rstudio.studio.client.application.ui.impl.DesktopApplicationHeader::onMouseForward()();
+            self.@org.rstudio.studio.client.application.ui.impl.DesktopApplicationHeader::onMouseForward(*)(event);
          }
          
       }), true);
