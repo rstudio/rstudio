@@ -42,7 +42,7 @@ import org.rstudio.studio.client.application.DesktopInfo;
 import org.rstudio.studio.client.application.IgnoredUpdates;
 import org.rstudio.studio.client.application.events.EventBus;
 import org.rstudio.studio.client.application.events.LogoutRequestedEvent;
-import org.rstudio.studio.client.application.events.MouseNavigateEvent;
+import org.rstudio.studio.client.application.events.DesktopMouseNavigateEvent;
 import org.rstudio.studio.client.application.model.ApplicationServerOperations;
 import org.rstudio.studio.client.application.model.UpdateCheckResult;
 import org.rstudio.studio.client.application.ui.ApplicationHeader;
@@ -682,12 +682,12 @@ public class DesktopApplicationHeader implements ApplicationHeader,
    
    private void onMouseForward(NativeEvent event)
    {
-      eventBus_.fireEvent(new MouseNavigateEvent(true, event.getClientX(), event.getClientY()));
+      eventBus_.fireEvent(new DesktopMouseNavigateEvent(true, event.getClientX(), event.getClientY()));
    }
    
    private void onMouseBack(NativeEvent event)
    {
-      eventBus_.fireEvent(new MouseNavigateEvent(false, event.getClientX(), event.getClientY()));
+      eventBus_.fireEvent(new DesktopMouseNavigateEvent(false, event.getClientX(), event.getClientY()));
    }
    
    private final native void addBackForwardMouseDownHandlers()
