@@ -176,19 +176,6 @@ public class HelpPane extends WorkbenchPane
 
       prefs_.helpFontSizePoints().bind((Double value) -> refresh());
       
-      events_.addHandler(MouseNavigateEvent.TYPE, (MouseNavigateEvent event) ->
-      {
-         // check to see if we're targeting the Help pane
-         Element el = DomUtils.elementFromPoint(event.getMouseX(), event.getMouseY());
-         if (StringUtil.equals(el.getId(), ElementIds.getElementId(ElementIds.HELP_FRAME)))
-         {
-            if (event.getForward())
-               forward();
-            else
-               back();
-         }
-      });
-
       ensureWidget();
    }
 
@@ -387,6 +374,11 @@ public class HelpPane extends WorkbenchPane
    
    private void handleMouseDown(NativeEvent event)
    {
+      // Not required on Electron; back / forward navigation is handled
+      // natively within the iframe.
+      if (BrowseCap.isElectron())
+         return;
+      
       int button = EventProperty.button(event);
       if (button == EventProperty.MOUSE_BACKWARD)
       {

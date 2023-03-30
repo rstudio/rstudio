@@ -694,7 +694,24 @@ public class DesktopApplicationHeader implements ApplicationHeader,
    /*-{
       
       var self = this;
+      
+      // Suppress 'mousedown' clicks from the back / forward mouse buttons.
+      // Otherwise, they might send focus just before attempting navigation,
+      // which is annoying if the mouse is within an editable text field
+      // (e.g. an editor in the Source pane).
       $doc.body.addEventListener("mousedown", $entry(function(event) {
+         
+         var button = event.button;
+         if (button === 3 || button == 4)
+         {
+            event.stopPropagation();
+            event.preventDefault();
+         }
+         
+      }), true);
+      
+      // Handle navigation attempts in 'mouseup'.
+      $doc.body.addEventListener("mouseup", $entry(function(event) {
          
          var button = event.button;
          if (button === 3)
@@ -711,6 +728,7 @@ public class DesktopApplicationHeader implements ApplicationHeader,
          }
          
       }), true);
+      
    }-*/;
    
    public interface Binder
