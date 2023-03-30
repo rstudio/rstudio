@@ -694,6 +694,7 @@ public class DesktopApplicationHeader implements ApplicationHeader,
    /*-{
       
       var self = this;
+      var eventTarget = null;
       
       // Suppress 'mousedown' clicks from the back / forward mouse buttons.
       // Otherwise, they might send focus just before attempting navigation,
@@ -704,6 +705,11 @@ public class DesktopApplicationHeader implements ApplicationHeader,
          var button = event.button;
          if (button === 3 || button == 4)
          {
+            // Save the event target, so we can detect if 'mousedown' and 'mouseup'
+            // happened over the same click target.
+            eventTarget = event.target;
+            
+            // Suppress events otherwise.
             event.stopPropagation();
             event.preventDefault();
          }
@@ -713,18 +719,35 @@ public class DesktopApplicationHeader implements ApplicationHeader,
       // Handle navigation attempts in 'mouseup'.
       $doc.body.addEventListener("mouseup", $entry(function(event) {
          
+         // Get the event targets.
+         var oldEventTarget = eventTarget;
+         var newEventTarget = event.target;
+         
+         // Clear the cached event target.
+         eventTarget = null;
+         
+         // If the event target changed, nothing to do.
+         var eventsMatch = oldEventTarget === newEventTarget;
+         
+         // Check and handle mouse back / forward buttons.
          var button = event.button;
          if (button === 3)
          {
             event.stopPropagation();
             event.preventDefault();
-            self.@org.rstudio.studio.client.application.ui.impl.DesktopApplicationHeader::onMouseBack(*)(event);
+            if (eventsMatch)
+            {
+               self.@org.rstudio.studio.client.application.ui.impl.DesktopApplicationHeader::onMouseBack(*)(event);
+            }
          }
          else if (button === 4)
          {
             event.stopPropagation();
             event.preventDefault();
-            self.@org.rstudio.studio.client.application.ui.impl.DesktopApplicationHeader::onMouseForward(*)(event);
+            if (eventsMatch)
+            {
+               self.@org.rstudio.studio.client.application.ui.impl.DesktopApplicationHeader::onMouseForward(*)(event);
+            }
          }
          
       }), true);
