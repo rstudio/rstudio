@@ -375,7 +375,8 @@ public class HelpPane extends WorkbenchPane
    private void handleMouseDown(NativeEvent event)
    {
       // Not required on Electron; back / forward navigation is handled
-      // natively within the iframe.
+      // via a top-level Javascript event handler. See DesktopApplicationHeader.java
+      // for more details.
       if (BrowseCap.isElectron())
          return;
       
