@@ -11,3 +11,6 @@ _publish.yml
 /.quarto/
 .bash_history
 .cache/*
+
+# copy of primary NEWS.md
+docs/NEWS.md
