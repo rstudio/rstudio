@@ -26,6 +26,8 @@ import LogOptions from './log-options';
 import { exitSuccess, ProgramStatus, run } from './program-status';
 import { getComponentVersions } from './utils';
 import { activateWindow } from './window-utils';
+import { resolveProjectFile } from './application-launch';
+import { existsSync } from 'fs';
 
 // RStudio command-line switches
 export const kRunDiagnosticsOption = '--run-diagnostics';
@@ -142,11 +144,11 @@ export class ArgsManager {
   handleAfterSessionLaunchCommands() {
     if (this.unswitchedArgs.length) {
       this.unswitchedArgs.forEach((arg) => {
-        if (FilePath.existsSync(arg)) {
+        if (FilePath.existsSync(arg) && !new FilePath(arg).isDirectory()) {
           app
             .whenReady()
             .then(() => {
-              getDesktopBridge().openFile(arg);
+              getDesktopBridge().openFile(path.resolve(arg));
               const name = webContents.getAllWebContents()[0].mainFrame.name;
               activateWindow(name);
             })
@@ -184,15 +186,26 @@ export class ArgsManager {
     if (this.unswitchedArgs.length) {
       this.unswitchedArgs = this.unswitchedArgs.filter((arg) => {
         if (FilePath.existsSync(arg)) {
-          const ext = path.extname(arg).toLowerCase();
+          const absolutePath = path.resolve(arg);
+          const ext = path.extname(absolutePath).toLowerCase();
 
-          if (ext === '.rproj') {
-            setenv(kRStudioInitialProject, arg);
-            return false;
+          let workingDir;
+          let projectFile = '';
+          if (new FilePath(absolutePath).isDirectory()) {
+            workingDir = absolutePath;
+            // find project file in working dir, if any
+            projectFile = resolveProjectFile(workingDir);
           } else {
-            const workingDir = path.dirname(arg);
-            setenv(kRStudioInitialWorkingDir, workingDir);
+            workingDir = path.dirname(absolutePath);
+            if (ext === '.rproj') {
+              projectFile = absolutePath;
+            }
           }
+          if (existsSync(projectFile)) {
+            setenv(kRStudioInitialProject, projectFile);
+            return false;
+          }
+          setenv(kRStudioInitialWorkingDir, workingDir);
         }
         logger().logDebug(`RS_INITIAL_WD: ${getenv(kRStudioInitialWorkingDir)}`);
         return true;
