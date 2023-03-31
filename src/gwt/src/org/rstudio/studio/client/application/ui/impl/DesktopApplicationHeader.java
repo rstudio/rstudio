@@ -42,6 +42,7 @@ import org.rstudio.studio.client.application.DesktopInfo;
 import org.rstudio.studio.client.application.IgnoredUpdates;
 import org.rstudio.studio.client.application.events.EventBus;
 import org.rstudio.studio.client.application.events.LogoutRequestedEvent;
+import org.rstudio.studio.client.application.events.DesktopMouseNavigateEvent;
 import org.rstudio.studio.client.application.model.ApplicationServerOperations;
 import org.rstudio.studio.client.application.model.UpdateCheckResult;
 import org.rstudio.studio.client.application.ui.ApplicationHeader;
@@ -71,6 +72,7 @@ import com.google.gwt.core.client.JsArrayString;
 import com.google.gwt.core.client.Scheduler;
 import com.google.gwt.core.client.Scheduler.ScheduledCommand;
 import com.google.gwt.dom.client.Element;
+import com.google.gwt.dom.client.NativeEvent;
 import com.google.gwt.user.client.Timer;
 import com.google.gwt.user.client.Window;
 import com.google.gwt.user.client.ui.Widget;
@@ -678,37 +680,78 @@ public class DesktopApplicationHeader implements ApplicationHeader,
       return null;
    }
    
-   private void onMouseBack()
+   private void onMouseForward(NativeEvent event)
    {
-      commands_.sourceNavigateBack().execute();
+      eventBus_.fireEvent(new DesktopMouseNavigateEvent(true, event.getClientX(), event.getClientY()));
    }
    
-   private void onMouseForward()
+   private void onMouseBack(NativeEvent event)
    {
-      commands_.sourceNavigateForward().execute();
+      eventBus_.fireEvent(new DesktopMouseNavigateEvent(false, event.getClientX(), event.getClientY()));
    }
    
    private final native void addBackForwardMouseDownHandlers()
    /*-{
       
       var self = this;
+      var eventTarget = null;
+      
+      // Suppress 'mousedown' clicks from the back / forward mouse buttons.
+      // Otherwise, they might send focus just before attempting navigation,
+      // which is annoying if the mouse is within an editable text field
+      // (e.g. an editor in the Source pane).
       $doc.body.addEventListener("mousedown", $entry(function(event) {
          
+         var button = event.button;
+         if (button === 3 || button == 4)
+         {
+            // Save the event target, so we can detect if 'mousedown' and 'mouseup'
+            // happened over the same click target.
+            eventTarget = event.target;
+            
+            // Suppress events otherwise.
+            event.stopPropagation();
+            event.preventDefault();
+         }
+         
+      }), true);
+      
+      // Handle navigation attempts in 'mouseup'.
+      $doc.body.addEventListener("mouseup", $entry(function(event) {
+         
+         // Get the event targets.
+         var oldEventTarget = eventTarget;
+         var newEventTarget = event.target;
+         
+         // Clear the cached event target.
+         eventTarget = null;
+         
+         // If the event target changed, nothing to do.
+         var eventsMatch = oldEventTarget === newEventTarget;
+         
+         // Check and handle mouse back / forward buttons.
          var button = event.button;
          if (button === 3)
          {
             event.stopPropagation();
             event.preventDefault();
-            self.@org.rstudio.studio.client.application.ui.impl.DesktopApplicationHeader::onMouseBack()();
+            if (eventsMatch)
+            {
+               self.@org.rstudio.studio.client.application.ui.impl.DesktopApplicationHeader::onMouseBack(*)(event);
+            }
          }
          else if (button === 4)
          {
             event.stopPropagation();
             event.preventDefault();
-            self.@org.rstudio.studio.client.application.ui.impl.DesktopApplicationHeader::onMouseForward()();
+            if (eventsMatch)
+            {
+               self.@org.rstudio.studio.client.application.ui.impl.DesktopApplicationHeader::onMouseForward(*)(event);
+            }
          }
          
       }), true);
+      
    }-*/;
    
    public interface Binder

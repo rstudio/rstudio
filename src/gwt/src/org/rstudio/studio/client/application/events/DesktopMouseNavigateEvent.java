@@ -22,10 +22,14 @@ import com.google.gwt.event.shared.GwtEvent;
 // associated WebEngine view, and so we are instead forced to synthesize
 // a synthetic navigation event that gets handled specially on the GWT side.
 //
+// We still make use of this in Electron, to handle a couple of cases where
+// we need to explicitly control mouse navigation. See the event handlers
+// registered in DesktopApplicationHeader.java.
+//
 // https://github.com/rstudio/rstudio/pull/7272
-public class MouseNavigateEvent extends GwtEvent<MouseNavigateEvent.Handler>
+public class DesktopMouseNavigateEvent extends GwtEvent<DesktopMouseNavigateEvent.Handler>
 {
-   public MouseNavigateEvent(boolean forward, int mouseX, int mouseY)
+   public DesktopMouseNavigateEvent(boolean forward, int mouseX, int mouseY)
    {
       forward_ = forward;
       mouseX_ = mouseX;
@@ -34,7 +38,7 @@ public class MouseNavigateEvent extends GwtEvent<MouseNavigateEvent.Handler>
 
    public interface Handler extends EventHandler
    {
-      void onMouseNavigate(MouseNavigateEvent event);
+      void onDesktopMouseNavigate(DesktopMouseNavigateEvent event);
    }
 
    @Override
@@ -46,7 +50,7 @@ public class MouseNavigateEvent extends GwtEvent<MouseNavigateEvent.Handler>
    @Override
    protected void dispatch(Handler handler)
    {
-      handler.onMouseNavigate(this);
+      handler.onDesktopMouseNavigate(this);
    }
 
    public boolean getForward()

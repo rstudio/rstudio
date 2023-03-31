@@ -34,7 +34,7 @@ import org.rstudio.core.client.widget.MessageDialog;
 import org.rstudio.core.client.widget.Operation;
 import org.rstudio.studio.client.application.events.EventBus;
 import org.rstudio.studio.client.application.events.LauncherServerEvent;
-import org.rstudio.studio.client.application.events.MouseNavigateEvent;
+import org.rstudio.studio.client.application.events.DesktopMouseNavigateEvent;
 import org.rstudio.studio.client.application.events.SaveActionChangedEvent;
 import org.rstudio.studio.client.application.events.SuicideEvent;
 import org.rstudio.studio.client.application.model.ProductEditionInfo;
@@ -257,7 +257,7 @@ public class DesktopHooks
 
    void mouseNavigateButtonClick(boolean forward, int x, int y)
    {
-      events_.fireEvent(new MouseNavigateEvent(forward, x, y));
+      events_.fireEvent(new DesktopMouseNavigateEvent(forward, x, y));
    }
    
    void onDragStart()

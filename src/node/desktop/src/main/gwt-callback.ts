@@ -14,7 +14,7 @@
  */
 
 import { exec, execSync } from 'child_process';
-import { app, BrowserWindow, clipboard, dialog, ipcMain, Rectangle, screen, shell, webFrameMain } from 'electron';
+import { app, nativeTheme, BrowserWindow, clipboard, dialog, ipcMain, Rectangle, screen, shell, webFrameMain } from 'electron';
 import { IpcMainEvent, MessageBoxOptions, OpenDialogOptions, SaveDialogOptions } from 'electron/main';
 import EventEmitter from 'events';
 import { existsSync, writeFileSync } from 'fs';
@@ -683,7 +683,9 @@ export class GwtCallback extends EventEmitter {
 
     ipcMain.on('desktop_change_title_bar_color', (event, red, green, blue) => {});
 
-    ipcMain.on('desktop_sync_to_editor_theme', (event, isDark) => {});
+    ipcMain.on('desktop_sync_to_editor_theme', (event, isDark: boolean) => {
+      nativeTheme.themeSource = isDark ? 'dark' : 'light';
+    });
 
     ipcMain.handle('desktop_get_enable_accessibility', () => {
       return ElectronDesktopOptions().accessibility();
