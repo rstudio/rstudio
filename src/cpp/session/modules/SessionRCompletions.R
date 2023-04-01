@@ -2405,7 +2405,7 @@ assign(x = ".rs.acCompletionTypes",
    }
 
    # the functionCallString was altered, so we need to bump the first numCommas
-   if (isPiped && context[[1L]] == .rs.acContextTypes$FUNCTION)
+   if (isPiped && length(context) && context[[1L]] == .rs.acContextTypes$FUNCTION)
       numCommas[[1L]] <- numCommas[[1L]] + 1L
    
    ## Try to parse the function call string
