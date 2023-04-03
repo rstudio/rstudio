@@ -22,6 +22,10 @@ if [ $# -eq 0 ]; then
     echo ""
     echo "--pat     The Github Personal Access Token (PAT) to be used to authorize the commit."
     echo "          May be specified in the environment variable GITHUB_PAT instead."
+    echo ""
+    echo "--channel (optional) The Channel type for the build. One of Hourly, Daily, Preview, Release."
+    echo "          Required for setting to Hourly. If not set, the channel will be determined from"
+    echo "          the value in the file: version/BUILDTYPE. Channel names are case sensitive."
     exit 0
 fi
 
@@ -36,6 +40,7 @@ ARGUMENT_LIST=(
     "file"
     "version"
     "pat"
+    "channel"
 )
 
 # Parse arguments with getopt
@@ -76,6 +81,11 @@ while [[ $# -gt 0 ]]; do
 
         --pat)
             pat=$2
+            shift 2
+            ;;
+
+        --channel)
+            channel=$2
             shift 2
             ;;
 
@@ -121,6 +131,15 @@ if [ -z "$pat" ]; then
     fi
 fi
 
+# if channel is undefined, we'll just use version/BUILDTYPE. If it is provided,
+# we make sure there's no typos in the channel name
+if [ ! -z $channel ]; then
+    if [[ ! "$channel" =~ ^(Hourly|Daily|Preview|Release)$ ]]; then 
+        echo "Channel should be one of Hourly, Daily, Preview, or Release (case sensitive)"
+        exit 1
+    fi
+fi
+
 # Determine file size
 size=$(wc -c $file | awk '{print $1}')
 
@@ -136,7 +155,9 @@ timestamp=$(date +"%Y-%m-%dT%H:%M:%S%z")
 
 # Determine release channel (build type) and flower
 RSTUDIO_ROOT_DIR="$( cd -- "$( dirname -- "${BASH_SOURCE[0]}" )" &> /dev/null && cd ../.. && pwd )"
-channel="$(cat "$RSTUDIO_ROOT_DIR/version/BUILDTYPE" | tr '[ ]' '-' | tr -d '[:space:]')"
+if [ -z "$channel" ]; then
+    channel="$(cat "$RSTUDIO_ROOT_DIR/version/BUILDTYPE" | tr '[ ]' '-' | tr -d '[:space:]')"
+fi
 flower="$(cat "$RSTUDIO_ROOT_DIR/version/RELEASE" | tr '[ ]' '-' | tr -d '[:space:]' | tr '[:upper:]' '[:lower:]')"
 
 # Determine commit (use local hash)
@@ -176,12 +197,18 @@ else
   base64_contents=$(echo "$md_contents" | base64 --wrap=0)
 fi
 
-githubUrl="https://api.github.com/repos/rstudio/latest-builds/contents/content/rstudio/$flower/$build/$version_stem.md"
+# The hourly builds upload to a different "product" directory in the dailies page
+if [ $channel == "Hourly" ]; then
+  product="rstudio-hourly"
+else
+  product="rstudio"
+fi
+
+githubUrl="https://api.github.com/repos/rstudio/latest-builds/contents/content/$product/$flower/$build/$version_stem.md"
 curlOutFname="curl.out"
 
-# Sha is only required in the payload if it's an update, removing the sha field gives a clearer
-# error message
-payload="{\"message\":\"Add $flower build $version in $build\",\"content\":\"$base64_contents\"}"
+payload="{\"message\":\"Add $flower build $version in $build\",\"content\":\"$base64_contents\",\"sha\":\"$sha256\"}"
+
 echo "Sending to Github: $payload"
 httpCode=$(curl \
    -X PUT \
@@ -194,7 +221,6 @@ httpCode=$(curl \
 echo "Github's Response: "
 echo "Http Code : $httpCode"
 cat $curlOutFname
-
 
 if [[ $httpCode -eq 422 ]]; then
    # An http code of 422 indicates a problem, probably that the file already exists and this is an

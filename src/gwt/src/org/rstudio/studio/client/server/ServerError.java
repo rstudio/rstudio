@@ -42,6 +42,9 @@ public interface ServerError
    
    // errors indicating the license usage limit has been reached
    public static final int LICENSE_USAGE_LIMIT = 7;
+
+   // errors indicating the license usage limit has been reached
+   public static final int REDIRECT_ERROR = 300;
  
    // error type
    int getCode();

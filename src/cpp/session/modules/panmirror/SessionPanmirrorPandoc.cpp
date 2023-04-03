@@ -152,6 +152,8 @@ void endMarkdownToAst(std::string markdown,
          // got ast, now extract heading ids
 
          // disable auto identifiers so we can discover *only* explicit ids
+         format = boost::replace_all_copy(format, "+auto_identifiers", "");
+         format = boost::replace_all_copy(format, "+gfm_auto_identifiers", "");
          format += "-auto_identifiers-gfm_auto_identifiers";
 
          // path to lua filter

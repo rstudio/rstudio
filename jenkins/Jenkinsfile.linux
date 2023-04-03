@@ -1,0 +1,438 @@
+def utils
+
+def ext_map = 
+[
+  'bionic':     'deb',
+  'jammy':      'deb',
+  'centos7':    'rpm',
+  'rhel8':      'rpm',
+  'rhel9':      'rpm',
+  'opensuse15': 'rpm'
+]
+
+def package_os =
+[
+  'bionic':     'Ubuntu Bionic',
+  'jammy':      'Ubuntu Jammy',
+  'centos7':    'CentOS 7',
+  'rhel8':      'RHEL 8',
+  'rhel9':      'RHEL 9',
+  'opensuse15': 'OpenSUSE 15'
+]
+
+// Use a function to keep the pipeline length down.
+def shouldBuild(boolean isDaily, boolean isPro) {
+  def matchesFilter = ((params.OS_FILTER == env.OS ||  params.OS_FILTER == 'all') &&
+    (params.ARCH_FILTER == env.ARCH ||  params.ARCH_FILTER == 'all') &&
+    (params.FLAVOR_FILTER == env.FLAVOR ||  params.FLAVOR_FILTER == 'all'))
+
+  // Filter hourlies based on https://github.com/rstudio/rstudio-pro/issues/4143#issuecomment-1362142399
+  def inHourlySubset = true
+  if (!isDaily) {
+    if (isPro) {
+      // build an x86_64 rhel8 WB, x86_64 rhel9 QT RDP, and an arm64 jammy Electron RDP 
+      inHourlySubset = ((env.OS == 'rhel8' && env.ARCH == 'x86_64' && env.FLAVOR == 'Server') ||
+        (env.OS == 'centos7' && env.ARCH == 'x86_64' && env.FLAVOR == 'Desktop') || 
+        (env.OS == 'jammy' && env.ARCH == 'arm64' && env.FLAVOR == 'Electron'))
+    } else {
+      // build an arm64 rhel9 Desktop and an x86_64 bionic Server
+      inHourlySubset = ((env.OS == 'rhel9' && env.ARCH == 'arm64' && env.FLAVOR == 'Electron') ||
+        (env.OS == 'bionic' && env.ARCH == 'x86_64' && env.FLAVOR == 'Server'))
+    }
+  }
+
+  return matchesFilter && inHourlySubset
+}
+
+def renameFile(String dir, String match) {
+  def file = sh(script: "basename `ls ${dir}/${match}`", returnStdout: true).trim()
+  def renamedFile = file.replace('-relwithdebinfo', '')
+  sh "mv ${dir}/${file} ${dir}/${renamedFile}"
+  return renamedFile
+}
+
+def renameTarFile(String dir) {
+  if ((FLAVOR == "Desktop") || (FLAVOR == "Electron")) {
+    return renameFile(dir, "*.tar.gz")
+  }
+
+  return ""
+}
+
+def getAgentLabel(String arch) {
+  if (arch == 'arm64') {
+    return 'linux && arm64 && 4x'
+  }
+
+  return 'linux-4x && x86_64'
+}
+
+pipeline {
+  agent none
+
+  options {
+    disableConcurrentBuilds()
+    buildDiscarder(
+      logRotator(
+        artifactDaysToKeepStr: '',
+        artifactNumToKeepStr: '',
+        daysToKeepStr: '',
+        numToKeepStr: '100'))
+  }
+
+  parameters {
+    string(name: 'RSTUDIO_VERSION_PATCH', description: 'RStudio Patch Version')
+    string(name: 'SLACK_CHANNEL', defaultValue: '#ide-builds', description: 'Slack channel to publish build message.')
+    string(name: 'OS_FILTER', defaultValue: 'all', description: 'Pattern to limit builds by matching OS')
+    string(name: 'ARCH_FILTER', defaultValue: 'all', description: 'Pattern to limit builds by matching ARCH')
+    string(name: 'FLAVOR_FILTER', defaultValue: 'all', description: 'Pattern to limit builds by matching FLAVOR')
+    booleanParam(name: 'DAILY', defaultValue: false, description: 'Runs daily build if true')
+    booleanParam(name: 'PUBLISH', defaultValue: false, description: 'Runs publish stage if true')
+    string(name: 'COMMIT_HASH' , defaultValue: '')
+  }
+
+  environment {
+    RSTUDIO_VERSION = ""
+    RSTUDIO_VERSION_MAJOR = ""
+    RSTUDIO_VERSION_MINOR = ""
+    RSTUDIO_VERSION_PATCH = ""
+    RSTUDIO_VERSION_SUFFIX = ""
+    RSTUDIO_VERSION_FLOWER = ""
+    ENV = ""
+    IS_PRO = false
+    AWS_ACCOUNT_ID = '749683154838'
+  }
+
+  stages {
+
+    stage('Initialize') {
+      agent { label 'linux' }
+
+      stages {
+        stage('Load Utils') {
+          steps {
+            script {
+              utils = load "${env.WORKSPACE}/utils.groovy"
+            }
+          }
+        }
+
+        stage("Checkout") {
+          when { expression { params.COMMIT_HASH != '' } }
+
+          steps {
+            echo "Commit_hash value: ${params.COMMIT_HASH}"
+            checkout([$class: 'GitSCM',
+                      branches: [[name: "${params.COMMIT_HASH}"]],
+                      extensions: [],
+                      userRemoteConfigs: [[credentialsId: 'github-rstudio-jenkins', url: GIT_URL ]]])
+          }
+        }
+
+        stage('Versioning') {
+          steps {
+            script {
+              (RSTUDIO_VERSION,
+                RSTUDIO_VERSION_MAJOR,
+                RSTUDIO_VERSION_MINOR,
+                RSTUDIO_VERSION_PATCH,
+                RSTUDIO_VERSION_SUFFIX) = utils.getVersion(!params.DAILY)
+              RSTUDIO_VERSION_FLOWER = utils.getFlower()
+              IS_PRO = RSTUDIO_VERSION_SUFFIX.contains('pro')
+              
+              // Set up environment for builds.
+              ENV = utils.getBuildEnv(!params.DAILY)
+            }
+
+            buildName "${RSTUDIO_VERSION}"
+            archiveArtifacts artifacts: 'version/RELEASE', followSymlinks: false
+          }
+        }
+      }
+    }
+
+    stage('Build Matrix') {
+      matrix {
+        when { expression { return shouldBuild(params.DAILY, IS_PRO) } }
+
+        axes {
+          axis {
+            name 'OS'
+            values 'bionic', 'jammy', 'centos7', 'rhel8', 'rhel9', 'opensuse15'
+          }
+          axis {
+            name 'ARCH'
+            values 'x86_64', 'arm64'
+          }
+          axis {
+              name 'FLAVOR'
+              values 'Desktop', 'Server', 'Electron'
+          }
+        }
+
+        excludes {
+          exclude {
+            axis {
+              name 'OS'
+              values 'bionic', 'centos7', 'rhel8', 'opensuse15'
+            }
+            axis {
+              name 'ARCH'
+              values 'arm64'
+            }
+          }
+          exclude {
+            axis {
+              name 'FLAVOR'
+              values 'Desktop'
+            }
+            axis {
+              name 'ARCH'
+              values 'arm64'
+            }
+          }
+        }
+
+        stages {
+          stage ('Build, Test and Upload'){
+
+            // Timeout after no activity in the logs
+            // Placing timeout here so only this OS/ARCH/FLAVOR build will timeout
+            options {
+              timeout(time: 2, unit: 'HOURS', activity: true)
+            }
+
+            agent {
+              docker {
+                image "jenkins/ide:${IS_PRO? 'pro-' : '' }${OS}-${ARCH}-${RSTUDIO_VERSION_FLOWER}"
+                registryCredentialsId 'ecr:us-east-1:aws-build-role'
+                registryUrl 'https://263245908434.dkr.ecr.us-east-1.amazonaws.com'
+                label "${getAgentLabel(ARCH)}"
+              }
+            }
+
+            when {
+              anyOf {
+                environment name: 'FLAVOR', value: 'Electron'
+                environment name: 'FLAVOR', value: 'Server'
+                expression { return FLAVOR == 'Desktop' && IS_PRO == true } // Only build Qt on Pro
+              }
+            }
+
+            environment {
+              GITHUB_LOGIN = credentials('github-rstudio-jenkins')
+              AWS_BUCKET="rstudio-ide-build"
+              PRODUCT="${utils.getProductName()}"
+              BUILD_LOCATION = "build-${FLAVOR}-${ext_map[env.OS].toUpperCase()}" // Don't use BUILD_DIR because it impacts the make-package script
+            }
+
+            stages {
+              stage('Checkout') {
+                when { expression { params.COMMIT_HASH != '' } }
+                steps {
+                  // We need to checkout he correct commit again here because the matrix builds run on different agents
+                  checkout([$class: 'GitSCM',
+                            branches: [[name: "${params.COMMIT_HASH}"]],
+                            extensions: [],
+                            userRemoteConfigs: [[credentialsId: 'github-rstudio-jenkins', url: GIT_URL ]]])
+                }
+              }
+
+              stage('Build and Sign') {
+                environment {
+                  CODESIGN_KEY = credentials('gpg-codesign-private-key')
+                  CODESIGN_PASS = credentials('gpg-codesign-passphrase')
+                  PKG_EXTENSION = "${ext_map[env.OS]}"
+                }
+
+                steps {
+                  dir('package/linux') {
+                    withAWS(role: 'build', roleAccount: AWS_ACCOUNT_ID) {
+                      sh "PACKAGE_OS='${package_os[env.OS]}' ${ENV} ./make-${FLAVOR.toLowerCase()}-package ${ext_map[env.OS].toUpperCase()} clean"
+                    }
+                    sh '../../docker/jenkins/sign-release.sh ${BUILD_LOCATION}/rstudio-*.${PKG_EXTENSION} ${CODESIGN_KEY} ${CODESIGN_PASS}'
+                  }
+                }
+              }
+
+              stage('Test') {
+                stages {
+                  stage ('Electron-Only Tests') {
+                    when {
+                      allOf {
+                        expression { return FLAVOR == "Electron" }
+                        // Disable bionic tests until builds are removed completely
+                        expression { return OS != "bionic"}
+                      }
+                    }
+
+                    steps {
+                      dir( "src/node/desktop" ) {
+                        sh './scripts/docker-run-unit-tests.sh'
+                      }
+                    }
+                  }
+
+                  stage ('GWT and C++ Tests') {
+                    when {
+                      allOf {
+                        // Disable bionic tests until builds are removed completely
+                        expression { return OS != "bionic" }
+                        // Disable opensuse15 while investigating R test failure
+                        expression { return OS != "opensuse15" }
+                      }
+                    }
+
+                    steps {
+                      dir ( 'package/linux/' ) {
+                        sh "cd ${BUILD_LOCATION}/src/gwt && ./gwt-unit-tests.sh"
+                        sh "cd ${BUILD_LOCATION}/src/cpp && ./rstudio-tests"
+                      }
+                    }
+                  }
+                }
+              }
+
+              stage ('Upload') {
+
+                when { expression { return params.PUBLISH } }
+
+                environment {
+                  PACKAGE_DIR = "package/linux/${BUILD_LOCATION}"
+                  PACKAGE_FILE = "${renameFile(PACKAGE_DIR, 'rstudio-*.' + ext_map[env.OS])}"
+                  TAR_PACKAGE_DIR= "${PACKAGE_DIR}/_CPack_Packages/Linux/${ext_map[env.OS].toUpperCase()}"
+                  TAR_PACKAGE_FILE = "${renameTarFile(TAR_PACKAGE_DIR)}"
+                  BUILD_TYPE = "sh(script: 'cat version/BUILDTYPE', returnStdout: true).trim().toLowerCase()"
+                  AWS_PATH = "${FLAVOR.toLowerCase()}/${OS}/${utils.getArchForOs(OS, ARCH)}"
+                }
+
+                stages {
+                  stage("Upload Package") {
+                    steps {
+                      withAWS(role: 'ide-build', region: 'us-east-1') {
+                        retry(5) {
+                          script {
+                            utils.uploadPackageToS3 "${PACKAGE_DIR}/${PACKAGE_FILE}", "${AWS_PATH}/"
+                          }
+                        }
+
+                        script {
+                          if ((FLAVOR == "Desktop") || (FLAVOR == "Electron")) {
+                            retry(5) {
+                              script {
+                                utils.uploadPackageToS3 "${TAR_PACKAGE_DIR}/${TAR_PACKAGE_FILE}", "${AWS_PATH}/"
+                              }
+                            }
+                          }
+                        }
+                      }
+                    }
+                  }
+
+                  stage("Sentry Upload") {
+                    when { expression { return params.DAILY } }
+
+                    environment {
+                      SENTRY_API_KEY = credentials('ide-sentry-api-key')
+                    }
+                    
+                    steps {
+                      // Upload Sentry
+                      dir("package/linux/${BUILD_LOCATION}/src/cpp") {
+                        retry(5) {
+                          timeout(activity: true, time: 15) {
+                            script {
+                              utils.sentryUpload 'elf'
+                            }
+                          }
+                        }
+                      }
+                    }
+                  }
+                  
+                  stage("Publish") {
+                    environment {
+                      GITHUB_LOGIN = credentials('github-rstudio-jenkins')
+                      DAILIES_PATH = "${PRODUCT}/${OS}-${utils.getArchForOs(OS, ARCH)}"
+                    }
+
+                    steps {
+                      dir("${PACKAGE_DIR}") {
+                        script {
+                          // publish build to dailies page
+                          utils.publishToDailiesSite PACKAGE_FILE, DAILIES_PATH, AWS_PATH
+                        }
+                      }
+                    }
+                  }
+
+                  stage ("Update Daily Build Redirects") {
+                    environment {
+                      RSTUDIO_ORG_PEM = credentials('www-rstudio-org-pem') 
+                    }
+
+                    when { 
+                      allOf {
+                        expression { return params.PUBLISH }
+                        expression { return params.DAILY}
+                        expression { return !env.IS_PRO } 
+                      }
+                    }
+
+                    steps {
+                      script {
+                        utils.updateDailyRedirects "${AWS_PATH}/${PACKAGE_FILE}"
+                      }
+                    }
+                  }
+                }
+              }
+            }
+            post {
+              always {
+                deleteDir()
+              }
+            }
+          }
+        }
+      }
+    }
+
+    stage('Trigger Automation Testing') {
+      agent { label 'linux' }
+
+      // Skip for hourly builds, non-published builds, and branches that don't 
+      // have corresponding automation branches
+      when {
+        allOf {
+          expression { return params.DAILY }
+          expression { return params.PUBLISH }
+          expression { return env.BRANCH_NAME != "release-ghost-orchid" }
+          expression { return env.BRANCH_NAME != "v1.4-juliet-rose" }
+        }
+      }
+
+      steps {
+        build wait: false,
+          job: "IDE/qa-${IS_PRO ? '' : 'opensource-'}automation",
+          parameters: [
+            string(name: 'RSTUDIO_VERSION_MAJOR', value: "${RSTUDIO_VERSION_MAJOR}"),
+            string(name: 'RSTUDIO_VERSION_MINOR', value: "${RSTUDIO_VERSION_MINOR}"),
+            string(name: 'RSTUDIO_VERSION_PATCH', value: "${RSTUDIO_VERSION_PATCH}"),
+            string(name: 'RSTUDIO_VERSION_SUFFIX', value: "${RSTUDIO_VERSION_SUFFIX}"),
+            string(name: 'SLACK_CHANNEL', value: "${params.SLACK_CHANNEL}"),
+            string(name: 'BRANCH_NAME', value: "${env.BRANCH_NAME}")
+          ]
+      }
+    }
+  }
+
+  post {
+    always {
+      node('linux') {
+        deleteDir()
+        sendNotifications slack_channel: SLACK_CHANNEL
+      }
+    }
+  }
+}

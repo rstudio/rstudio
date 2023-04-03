@@ -39,6 +39,7 @@ input[type=text], input[type=password] {
   border: 1px solid #cdcecf;
   font-size: 14px;
   padding: 8px;
+  margin-top: 1px;
 }
 
 @media (prefers-color-scheme: dark) {
@@ -191,4 +192,15 @@ div.signinhidden {
 
 .signin-hidden {
   display: none;
+}
+
+:focus {
+  outline: none;
+  box-shadow: none;
+}
+
+:focus-visible {
+  outline-offset: 0;
+  outline: 2px solid var(--primary) !important;
+  box-shadow: inset 0 0 0 2px var(--primary-fg);
 }

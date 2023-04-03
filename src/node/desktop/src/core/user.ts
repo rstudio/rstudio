@@ -16,23 +16,20 @@
 import os from 'os';
 
 import { getenv } from './environment';
-import desktop from '../native/desktop.node';
 import { FilePath } from './file-path';
+
+import desktop from '../native/desktop.node';
 
 export function userHomePath(): FilePath {
   const user = getenv('R_USER');
-  if (checkPath(user)) 
-    return new FilePath(user);
+  if (checkPath(user)) return new FilePath(user);
   const home = getenv('HOME');
-  if (checkPath(home))
-    return new FilePath(home);
+  if (checkPath(home)) return new FilePath(home);
   if (process.platform === 'win32') {
     const currentHome = desktop.currentCSIDLPersonalHomePath();
-    if (checkPath(currentHome))
-      return new FilePath(currentHome);
+    if (checkPath(currentHome)) return new FilePath(currentHome);
     const defaultHome = desktop.defaultCSIDLPersonalHomePath();
-    if (checkPath(defaultHome))
-      return new FilePath(defaultHome);
+    if (checkPath(defaultHome)) return new FilePath(defaultHome);
   }
   return new FilePath(os.homedir());
 }
@@ -46,8 +43,7 @@ export function username(): string {
 }
 
 function checkPath(path: string): boolean {
-  if (path === '')
-    return false;
+  if (path === '') return false;
   const fp = new FilePath(path);
   return fp.existsSync();
 }

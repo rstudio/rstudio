@@ -25,13 +25,13 @@ export abstract class ModalDialog<T> extends BrowserWindow {
 
   constructor(url: string, preload: string, parentWindow: BrowserWindow | null = null) {
     let options: BrowserWindowConstructorOptions = {
-      minWidth: 400,
+      minWidth: 450,
       minHeight: 400,
-      width: 400,
+      width: 450,
       height: 400,
       show: false,
       webPreferences: {
-        nodeIntegration: true,
+        nodeIntegration: false,
         preload: preload,
       },
     };

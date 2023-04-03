@@ -457,6 +457,14 @@ options(help_type = "html")
 
 .rs.addFunction("getHelpColumn", function(name, src, envir = parent.frame())
 {
+   tryCatch(
+      .rs.getHelpColumnImpl(name, src, envir),
+      error = function(e) NULL
+   )
+})
+
+.rs.addFunction("getHelpColumnImpl", function(name, src, envir = parent.frame())
+{
    data <- .rs.getAnywhere(src, envir)
    
    if (!is.null(data))

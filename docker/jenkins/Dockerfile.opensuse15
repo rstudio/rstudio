@@ -1,17 +1,13 @@
 ARG ARCH=amd64
-FROM --platform=linux/$ARCH opensuse/leap:15.1
+FROM --platform=linux/$ARCH opensuse/leap:15.3
 ARG ARCH
 
-ENV OPERATING_SYSTEM=opensus_leap15
-
-# needed to build RPMs; see https://build.opensuse.org/repositories/systemsmanagement:wbem
-RUN zypper --non-interactive addrepo https://download.opensuse.org/repositories/systemsmanagement:wbem/openSUSE_Tumbleweed/systemsmanagement:wbem.repo
+ENV OPERATING_SYSTEM=opensuse_leap15
 
 # refresh repos and install required packages
 RUN zypper --non-interactive --gpg-auto-import-keys refresh && \
     zypper --non-interactive install -y \
     ant \
-    boost-devel \
     clang \
     curl \
     expect \
@@ -30,6 +26,7 @@ RUN zypper --non-interactive --gpg-auto-import-keys refresh && \
     libcups2 \
     libcurl-devel \
     libgtk-3-0 \
+    libopenssl-devel \
     libuser-devel \
     libuuid-devel \
     libxml2-devel \
@@ -38,8 +35,7 @@ RUN zypper --non-interactive --gpg-auto-import-keys refresh && \
     lsof \
     make \
     ninja \
-    openssl-devel \
-    p7zip \
+    p7zip-full \
     pam-devel \
     pango-devel \
     postgresql-devel \
@@ -48,7 +44,7 @@ RUN zypper --non-interactive --gpg-auto-import-keys refresh && \
     python3 \
     R \
     rpm-build \
-    sqlite-devel \
+    sqlite3-devel \
     sudo \
     tar \
     unzip \
@@ -85,8 +81,10 @@ RUN update-alternatives --set java /usr/lib64/jvm/jre-1.8.0-openjdk/bin/java
 RUN mkdir -p /opt/rstudio-tools/dependencies/common
 COPY dependencies/common/ /opt/rstudio-tools/dependencies/common/
 
-# break image layer cache if panmirror changes
-ADD https://api.github.com/repos/quarto-dev/quarto/git/refs/heads/main panmirror.version.json
+# panmirror check for changes
+# ADD https://api.github.com/repos/quarto-dev/quarto/git/refs/heads/main panmirror.version.json
+ADD https://api.github.com/repos/quarto-dev/quarto/git/refs/heads/release/rstudio-cherry-blossom panmirror.version.json
+
 # install common dependencies
 RUN cd /opt/rstudio-tools/dependencies/common && /bin/bash ./install-common opensuse15
 # panmirror needs to be able to build in this location

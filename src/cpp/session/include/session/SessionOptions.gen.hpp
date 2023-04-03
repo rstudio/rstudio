@@ -301,7 +301,7 @@ protected:
       value<bool>(&autoReloadSource_)->default_value(false),
       "Indicates whether or not to automatically reload R source if it changes during the session.")
       ("r-compatible-graphics-engine-version",
-      value<int>(&rCompatibleGraphicsEngineVersion_)->default_value(15),
+      value<int>(&rCompatibleGraphicsEngineVersion_)->default_value(16),
       "Specifies the maximum graphics engine version that this version of RStudio is compatible with.")
       ("r-resources-path",
       value<std::string>(&rResourcesPath_)->default_value("resources"),

@@ -1,58 +1,43 @@
 
-## RStudio 2023-03.0 "Cherry Blossom" Release Notes
+## RStudio 2023.05.0 "Mountain Hydrangea" Release Notes
 
 ### New
-- Adopt panmirror (visual editor) migration to quarto-dev/quarto project #12316
-- Upgrade Electron to 22.0.0 #11734
-- Upgrade Quarto to 1.2.335 #12697
-- Session components no longer link to libpq or its dependencies (rstudio/rstudio-pro#2138)
-- roxygen2 completions show description and complete as a snippet #11957
-- data frame and data frame columns completions show more information #12308
-- Support more "complex" start of pipe chains in completions #9612, #10538
-- Revisit order of completions, i.e. columns before search path secundary completions #12292
-- Improved `[` and data.table related completions #12289, 11202
-- Support column completions for arrow objects #11629
-- Support searching for roxygen specific information in fuzzy finder (Go to File/Function) #12190
-- "Rainbow" fenced divs, controled by Options > R Markdown > [v] Use rainbow fenced divs #12115
-- Disable argument tooltips in script editor for unknown functions #12160
-- Sessions now have lower CPU priority during suspension on macOS and Linux #12623
-- Sessions run on Kubernetes or Slurm will no longer exit with nonzero codes under normal circumstances (rstudio/rstudio-pro#3375)
+
+#### RStudio IDE
+- Updated to Electron 23.1.2 (#12785)
+- Moved Help panel font size setting to Appearance tab in Global Options (#12816)
+- Update openssl to 1.1.1t for Windows (rstudio/rstudio-pro#3675)
+- Improve visibility of focus rectangles on Server / Workbench Sign In page [Accessibility] (#12846)
+
+#### Posit Workbench
+- 
 
 ### Fixed
 
-- Fixed an issue where Git / SVN actions requiring user input could fail in some situations. (#12390)
-- Fixed an issue where the plots displayed in the inline preview were incorrectly scaled on devices with high DPI (#4521, #2098, #10825, #7028, #4913).
-- Fixed background jobs not showing the entire output #12389
-- Fixed mixed-case CSS colors #12562
-- Fixed indentation of coloured text #12489
-- Fixed (and speedup) identification of presence of external pointers #12328
-- Fixed rendering of custom source markers #12425
-- Fixed handling of backticks in data frame columns in auto completion #8675
-- Fixed group_by() specific completions #12356
-- Fixed auto completions when named arguments already in use #12326
-- Fixed column name completions when package name is specified #9786
-- Fixed Excel import preview #3955
-- Fixed indentation of raw strings #12127
-- Removed empty spell check tooltips #11306
-- Fixed package completion tooltips #12147
-- Fixed setting rsession log level using command-line argument or logging.conf #12557
-- Fixed issue that allowed users to overwrite their home directory in server mode #12653
-- Fixed "Check for updates" incorrectly reports that there are no updates (rstudio-pro #3388)
-- Fixed default options for Choose R dialog on Windows (#12452)
-- Fixed data viewer's "Show in new window" results in empty window #12468
-- Fixed uncaught Shiny error breaks RStudio's "Run in Window" feature #12569
-- Fixed intermittent hanging logins in Workbench using ActiveDirectory (rstudio-pro #4285)
-- Fixed previewing rendered html_document causes URLs to open in browser #12494
-- Fixed link opens in browser after Render with qml file when hypothes.is comments are turned on in `_quarto.yml` #12413
+#### RStudio IDE
+- Fixed display problems with Choose R dialog when UI language is French (#12717)
+- Fixed focus switching to Help Pane search box after executing ? in the console [Accessibility] (#12741)
+- Fixed initial focus placement in Help Pane [Accessibility] (#10600)
+- Fixed invalid element role on session-suspended icon [Accessibility] (#12449)
+- Improve screen-reader support for Console pane toolbar [Accessibility] (#12825)
+- Background script jobs are now run using the global environment. This fixes the behaviour of `source()` in backgrounds jobs. (#11866)
+- Fixed bug that caused Update Available dialog to show after the user selected to Ignore Update (rstudio/rstudio-pro#4179)
+- Fixed bug that prevented updating to the latest release if version was previously ignored (#12874)
+- RStudio no longer uses `reg.exe` when attempting to enumerate R versions in the Windows registry (#12599)
+- Fixed file-type icons not displaying in Finder on Mac (#12252)
+- Fixed saving and restoring window location when maximized or partially offscreen (#12463)
+- Fixed display of macOS message dialogs (#12928)
+- Set theme of menu bar, title bar, and dialogs (dark vs. light) based on RStudio theme (#12247)
+- Fixed issues with mouse back / forward navigation in Source pane, Help pane (#12932)
+- Fixed opening files from command-line with relative paths (#12495, #12563)
 
-### Accessibility Improvements
-
-- Editor Selection widget in New Session dialog is now usable via keyboard (rstudio-pro #4205)
-- Editor Selection widget in New Session dialog supports screen reader usage (rstudio-pro #4206)
-- Editor icons in New Session dialog are marked as cosmetic for screen readers (rstudio-pro #4207)
-- Homepage modal dialogs are now implemented correctly for keyboard and screen reader use (rstudio-pro #4208)
-- Posit logo on home page marked as cosmetic for screen readers (rstudio-pro #4209)
-- Focus and keyboard-focus styles have been improved on the homepage
-- Keyboard support has been added to the job summary drop-down in session list items on the homepage
-- Improved alt-text and updated link to posit.co on sign-in page logo (rstudio-pro #4096)
-- Help pane home page switches to single-column display at narrow widths (#12643)
+#### Posit Workbench
+- Fixed unlabeled buttons for screen reader users when page is narrow [Accessibility] (rstudio/rstudio-pro#4340)
+- Removed redundant mouse-only New Session widget from accessibility tree [Accessibility] (rstudio/rstudio-pro#4338)
+- Fixed launcher error details not showing on the homepage when clicking "Error Details" (rstudio/rstudio-pro#4333)
+- Fixed theme button's semantics so it is meaningful to screen reader [Accessibility] (rstudio/rstudio-pro#4337)
+- Fixed screen reader accessibility for the homepage theme dropdown menu [Accessibility] (rstudio/rstudio-pro#4339)
+- Fixed hidden controls on Session Info dialog remaining active [Accessibility] (rstudio/rstudio-pro#4341)
+- Add keyboard support to the "Show list" control in New Session dialog [Accessibility] (rstudio/rstudio-pro#4461)
+- Fixed job details to be hidden from screen reader when visibly hidden [Accessibility] (rstudio/rstudio-pro#4466)
+- Fixed sign-in pages to be more mobile and zoom friendly [Accessibility] (rstudio/rstudio-pro#4472)

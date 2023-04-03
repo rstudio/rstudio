@@ -179,9 +179,12 @@ public:
             return error;
 
          // enable WAL mode to improve read/write concurrency
-         error = pConnection->executeStr("PRAGMA journal_mode = WAL;");
-         if (error)
-            return error;
+         if (!options.readonly)
+         {
+            error = pConnection->executeStr("PRAGMA journal_mode = WAL;");
+            if (error)
+               return error;
+         }
 
          *pPtrConnection_ = pConnection;
          return Success();

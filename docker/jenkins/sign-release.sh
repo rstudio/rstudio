@@ -20,7 +20,7 @@
 # abort on error
 set -e
 
-if [[ "$#" -lt 2 ]]; then
+if [[ "$#" -ne 3 ]]; then
     echo "Usage: sign-release.sh [installer-file] [key-file] [passphrase-file]"
     exit 1
 fi

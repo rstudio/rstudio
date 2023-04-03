@@ -293,6 +293,13 @@ export function getDesktopBridge() {
         .catch((error) => reportIpcError('desktop_copy_page_region_to_clipboard', error));
     },
 
+    copyImageAtXYToClipboard: (x: number, y: number, callback: () => void) => {
+      ipcRenderer
+        .invoke('desktop_copy_image_at_xy_to_clipboard', x, y)
+        .then(() => callback())
+        .catch((error) => reportIpcError('desktop_copy_image_at_xy_to_clipboard', error));
+    },
+
     exportPageRegionToFile: (
       targetPath: string,
       format: string,
@@ -554,7 +561,8 @@ export function getDesktopBridge() {
     },
 
     allowNavigation: (url: string, callback: VoidCallback<boolean>) => {
-      ipcRenderer.invoke('desktop_allow_navigation', url)
+      ipcRenderer
+        .invoke('desktop_allow_navigation', url)
         .then((isSafe) => callback(isSafe))
         .catch((error) => reportIpcError('desktop_allow_navigation', error));
     },

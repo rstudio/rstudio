@@ -1,0 +1,13 @@
+.DS_Store
+kindlegen*
+rsconnect
+CMake*
+!CMakeLists.txt
+Makefile
+cmake_install.cmake
+
+_site/
+_publish.yml
+/.quarto/
+.bash_history
+.cache/*

@@ -96,6 +96,7 @@ public class VisualModeMarkdownWriter
       Integer wrapAtColumnPref = null;
       String referencesLocationPref= null;
       String referencesPrefixPref = null;
+      Boolean referencesLinksPref = null;
       if (VisualModeUtil.isDocInProject(workbenchContext_, docUpdateSentinel_))
       {
          // allow any prefs defined in quarto yaml to take precedence
@@ -121,6 +122,7 @@ public class VisualModeMarkdownWriter
                {
                   referencesLocationPref = quarto.project_editor.markdown.references.location;
                   referencesPrefixPref = quarto.project_editor.markdown.references.prefix;
+                  referencesLinksPref = quarto.project_editor.markdown.references.links;
                }
             }
          }
@@ -169,7 +171,12 @@ public class VisualModeMarkdownWriter
       
       if (formatConfig.references_location != null)
          options.references.location = formatConfig.references_location;
-      
+
+      if (formatConfig.references_links != null)
+         options.references.links = formatConfig.references_links;
+      else if (referencesLinksPref != null)
+         options.references.links = referencesLinksPref.booleanValue();
+
       // references prefix
       if ("none".equals(formatConfig.references_prefix))
       {

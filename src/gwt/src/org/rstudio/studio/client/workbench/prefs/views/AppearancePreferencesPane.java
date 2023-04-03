@@ -227,6 +227,14 @@ public class AppearancePreferencesPane extends PreferencesPane
          }
       });
       
+      helpFontSize_ = new SelectWidget(constants_.helpFontSizeLabel(),
+                                       labels,
+                                       values,
+                                       false); /* Multi select */
+      helpFontSize_.getListBox().setWidth("95%");
+      if (!helpFontSize_.setValue(userPrefs.helpFontSizePoints().getValue() + ""))
+         helpFontSize_.getListBox().setSelectedIndex(3);
+
       textRendering_ = new SelectWidget(
             constants_.textRenderingLabel(),
             new String[] {
@@ -317,6 +325,7 @@ public class AppearancePreferencesPane extends PreferencesPane
 
       leftPanel.add(textRendering_);
       leftPanel.add(fontSize_);
+      leftPanel.add(helpFontSize_);
       leftPanel.add(theme_);
       leftPanel.add(buttonPanel);
 
@@ -634,6 +643,11 @@ public class AppearancePreferencesPane extends PreferencesPane
    public RestartRequirement onApply(UserPrefs rPrefs)
    {
       RestartRequirement restartRequirement = super.onApply(rPrefs);
+
+      {
+         double helpFontSize = Double.parseDouble(helpFontSize_.getValue());
+         userPrefs_.helpFontSizePoints().setGlobalValue(helpFontSize);
+      }
 
       if (relaunchRequired_)
          restartRequirement.setUiReloadRequired(true);

@@ -33,7 +33,7 @@ import {
   isChromeGpuUrl,
   isLocalUrl,
   isSafeHost,
-  makeAbsoluteUrl
+  makeAbsoluteUrl,
 } from './url-utils';
 import { executeJavaScript, handleLocaleCookies } from './utils';
 
@@ -282,7 +282,7 @@ export class DesktopBrowserWindow extends EventEmitter {
       logger().logDebug(`allowNavigation: disallowed protocol ${url}`);
       return false;
     }
-    
+
     // determine if this is a local request (handle internally only if local)
     const isLocal = isLocalUrl(targetUrl);
 
@@ -293,15 +293,14 @@ export class DesktopBrowserWindow extends EventEmitter {
     // workaround in GWT by calling DesktopFrame::allowNavigation to determine setting frame url
 
     const base = this.options.baseUrl ?? this.mainWindow?.options.baseUrl;
-    if ((!base && isLocal)) {
+    if (!base && isLocal) {
       return true;
     }
 
     if (base) {
       const baseUrl = new URL(base);
 
-      if (targetUrl.protocol === baseUrl.protocol &&
-          targetUrl.host === baseUrl.host) {
+      if (targetUrl.protocol === baseUrl.protocol && targetUrl.host === baseUrl.host) {
         return true;
       }
     }
@@ -313,9 +312,11 @@ export class DesktopBrowserWindow extends EventEmitter {
 
     // the client is responsible for ensuring that non-local viewer/presentation/tutorial
     // urls are appropriately sandboxed
-    if (viewer && url.startsWith(viewer)
-        || presentation && url.startsWith(presentation)
-        || tutorial && url.startsWith(tutorial)) {
+    if (
+      (viewer && url.startsWith(viewer)) ||
+      (presentation && url.startsWith(presentation)) ||
+      (tutorial && url.startsWith(tutorial))
+    ) {
       return true;
     }
 
@@ -333,7 +334,11 @@ export class DesktopBrowserWindow extends EventEmitter {
       // https://github.com/rstudio/rstudio/issues/12256
       return true;
     } else {
-      logger().logDebug('allowNavigation: external navigation within IDE is not allowed and URL host is unsafe. URL must be explicitly opened in the browser.');
+      logger().logDebug(
+        'allowNavigation:' +
+          ' external navigation within IDE is not allowed and URL host is unsafe.' +
+          ' URL must be explicitly opened in the browser.',
+      );
       return false;
     }
   }

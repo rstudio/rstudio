@@ -2,7 +2,7 @@ def utils
 
 pipeline {
   agent {
-    label 'linux && amd64'
+    label 'linux && x86_64'
   }
 
   options {
@@ -14,11 +14,12 @@ pipeline {
   environment {
         GITHUB_LOGIN = credentials('github-rstudio-jenkins')
         OS = 'jammy'
-        ARCH = 'amd64'
+        ARCH = 'x86_64'
         FLAVOR = 'server'
         TYPE = 'DEB'
         AWS_ACCOUNT_ID = '749683154838'
         RSTUDIO_VERSION_FLOWER = ''
+        IS_PRO = false
   }
 
   stages {
@@ -30,6 +31,7 @@ pipeline {
           utils = load "${env.WORKSPACE}/utils.groovy"
           utils.addRemoteRef("${env.CHANGE_TARGET}")
           RSTUDIO_VERSION_FLOWER = readFile(file: 'version/RELEASE').replaceAll(" ", "-").toLowerCase().trim()
+          IS_PRO = JOB_URL.contains('Pro')
         }
       }
     }
@@ -49,7 +51,7 @@ pipeline {
             withAWS(role: 'build', roleAccount: AWS_ACCOUNT_ID) {
               pullBuildPush(
                 image_name: 'jenkins/ide',
-                image_tag: "${OS}-${ARCH}-${RSTUDIO_VERSION_FLOWER}",
+                image_tag: "${IS_PRO ? 'pro-' : ''}${OS}-${ARCH}-${RSTUDIO_VERSION_FLOWER}",
                 dockerfile: "docker/jenkins/Dockerfile.${OS}",
                 build_arg_jenkins_uid: 'JENKINS_UID',
                 build_arg_jenkins_gid: 'JENKINS_GID',
@@ -62,7 +64,7 @@ pipeline {
         stage('Build Package and Test') {
           agent {
             docker {
-              image "jenkins/ide:${OS}-${ARCH}-${RSTUDIO_VERSION_FLOWER}"
+              image "jenkins/ide:${IS_PRO? 'pro-' : '' }${OS}-${ARCH}-${RSTUDIO_VERSION_FLOWER}"
               reuseNode true
             }
           }

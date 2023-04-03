@@ -64,6 +64,8 @@ enum Code {
    MovedTemporarily = 302,
    SeeOther = 303,
    NotModified = 304,
+   TemporaryRedirect = 307,
+   PermanentRedirect = 308,
    TooManyRedirects = 310,
    BadRequest = 400,
    Unauthorized = 401,

@@ -75,21 +75,41 @@ export function clearOptionsSingleton(): void {
 }
 
 /**
- * Check if one rectangle is inside (shared border inclusive) the other.
- *
- * @param inner The rectangle assumed to be the smaller, inner rectangle
- * @param outer The rectangle assumed to be the larger, outer rectangle
- *
- * @returns True if the inner rectangle is inside (shared border inclusive)
- * the outer rectangle, false otherwise
+ * Window geometry
  */
-export function firstIsInsideSecond(inner: Rectangle, outer: Rectangle): boolean {
-  return (
-    inner.x >= outer.x &&
-    inner.y >= outer.y &&
-    inner.x + inner.width <= outer.x + outer.width &&
-    inner.y + inner.height <= outer.y + outer.height
-  );
+export interface WindowBounds {
+  height: number;
+  width: number;
+  x: number;
+  y: number;
+  maximized: boolean;
+}
+
+/**
+ * Check if two Rectangles intersect.
+ * 
+ * @param one First rectangle
+ * @param two Second rectangle
+ * 
+ * @returns True if at least one pixel is within both rectangles.
+ */
+export function intersects(first: Rectangle, second: Rectangle): boolean {
+  const firstRight = first.x + first.width;
+  const firstBottom = first.y + first.height;
+  const secondRight = second.x + second.width;
+  const secondBottom = second.y + second.height;
+
+  if (first.x >= secondRight || firstRight <= second.x) {
+    // Don't overlap horizontally
+    return false;
+  }
+
+  if (first.y >= secondBottom || firstBottom <= second.y) {
+    // Don't overlap vertically
+    return false;
+  }
+
+  return true;
 }
 
 /**
@@ -157,11 +177,11 @@ export class DesktopOptionsImpl implements DesktopOptions {
     return zoomLevel;
   }
 
-  public saveWindowBounds(bounds: Rectangle): void {
+  public saveWindowBounds(bounds: WindowBounds): void {
     this.config.set(kWindowBounds, bounds);
   }
 
-  public windowBounds(): Rectangle {
+  public windowBounds(): WindowBounds {
     return this.config.get(kWindowBounds, properties.view.default.windowBounds);
   }
 
@@ -177,9 +197,20 @@ export class DesktopOptionsImpl implements DesktopOptions {
   private restoreMainWindowBoundsImpl(mainWindow: BrowserWindow): void {
     const savedBounds = this.windowBounds();
 
-    // Check if saved bounds is still in one of the available displays
+    // Check if saved bounds is still partially in one of the available displays.
+
+    // Shrink the window rectangle a bit just to capture cases like RStudio
+    // too close to edge of window and hardly showing at all.
+    const checkRect = {
+      height: savedBounds.height - 5,
+      width: savedBounds.width - 5,
+      x: savedBounds.x + 5,
+      y: savedBounds.y + 5
+    };
+
+    // check for intersection
     const goodDisplays = screen.getAllDisplays().find((display) => {
-      return firstIsInsideSecond(savedBounds, display.workArea);
+      return intersects(checkRect, display.workArea);
     });
 
     // Restore it to previous location if possible, or center of primary display otherwise
@@ -205,6 +236,10 @@ export class DesktopOptionsImpl implements DesktopOptions {
     // ensure a minimum size for the window on restore
     const currSize = mainWindow.getSize();
     mainWindow.setSize(Math.max(300, currSize[0]), Math.max(200, currSize[1]));
+
+    if (savedBounds.maximized) {
+      mainWindow.maximize();
+    }
   }
 
   public setAccessibility(accessibility: boolean): void {
@@ -222,7 +257,6 @@ export class DesktopOptionsImpl implements DesktopOptions {
   public disableRendererAccessibility(): boolean {
     return this.config.get(kDisableRendererAccessibility, properties.view.default.disableRendererAccessibility);
   }
-
 
   public setLastRemoteSessionUrl(lastRemoteSessionUrl: string): void {
     this.config.set(kLastRemoteSessionUrl, lastRemoteSessionUrl);
@@ -314,8 +348,10 @@ export class DesktopOptionsImpl implements DesktopOptions {
       return '';
     }
 
-    const rExecutablePath: string = this.config.get(kRExecutablePath,
-      properties.platform.default.windows.rExecutablePath);
+    const rExecutablePath: string = this.config.get(
+      kRExecutablePath,
+      properties.platform.default.windows.rExecutablePath,
+    );
 
     if (!rExecutablePath) {
       return '';

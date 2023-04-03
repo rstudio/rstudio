@@ -17,7 +17,6 @@ import path, { join } from 'path';
 
 import { execSync, spawnSync } from 'child_process';
 import { existsSync, readdirSync } from 'fs';
-import { EOL } from 'os';
 
 import { Environment, getenv, setenv, setVars } from '../core/environment';
 import { Expected, ok, err, expect } from '../core/expected';
@@ -30,6 +29,9 @@ import { t } from 'i18next';
 import { ElectronDesktopOptions } from './preferences/electron-desktop-options';
 import { FilePath } from '../core/file-path';
 import { dialog } from 'electron';
+
+import desktop from '../native/desktop.node';
+import { EOL } from 'os';
 
 let kLdLibraryPathVariable: string;
 if (process.platform === 'darwin') {
@@ -45,7 +47,7 @@ interface REnvironment {
   ldLibraryPath: string;
 }
 
-function showRNotFoundError(error?: Error): void {
+export function showRNotFoundError(error?: Error): void {
   const message = error?.message ?? t('detectRTs.couldNotLocateAnRInstallationOnTheSystem') ?? '';
   void createStandaloneErrorDialog(t('detectRTs.rNotFound'), message);
 }
@@ -57,17 +59,10 @@ function executeCommand(command: string): Expected<string> {
 }
 
 export async function promptUserForR(platform = process.platform): Promise<Expected<string | null>> {
-  
   if (platform === 'win32') {
-
-    const desktop = await import('../native/desktop.node');
-
-    const showUi =
-      getenv('RSTUDIO_DESKTOP_PROMPT_FOR_R').length !== 0 ||
-      desktop.isCtrlKeyDown();
+    const showUi = getenv('RSTUDIO_DESKTOP_PROMPT_FOR_R').length !== 0 || desktop.isCtrlKeyDown();
 
     if (!showUi) {
-
       // nothing to do if RSTUDIO_WHICH_R is set
       const rstudioWhichR = getenv('RSTUDIO_WHICH_R');
       if (rstudioWhichR) {
@@ -79,14 +74,14 @@ export async function promptUserForR(platform = process.platform): Promise<Expec
       const rBinDir = ElectronDesktopOptions().rBinDir();
       if (rBinDir) {
         const rPath = `${rBinDir}/R.exe`;
+        logger().logDebug(`Trying version of R stored in RStudio Desktop options: ${rPath}`);
         if (isValidBinary(rPath)) {
-          logger().logDebug(`Using R from preferences: ${rPath}`);
+          logger().logDebug(`Validation succeeded; using R: ${rPath}`);
           return ok(rPath);
         } else {
-          logger().logDebug(`rBinDir (${rPath}) does not exist; ignoring`);
+          logger().logDebug(`Validation failed; skipping R: ${rPath}`);
         }
       }
-
     }
 
     // discover available R installations
@@ -105,7 +100,7 @@ export async function promptUserForR(platform = process.platform): Promise<Expec
     }
 
     // if path is null, the operation was cancelled by the user
-    if (data == null) {
+    if (data == null || data.binaryPath == null) {
       return ok(null);
     }
 
@@ -146,7 +141,7 @@ export async function promptUserForR(platform = process.platform): Promise<Expec
  * // (for example, R_HOME) and other platform-specific work required
  * for R to launch.
  */
-export function prepareEnvironment(rPath?: string): Err {
+export function prepareEnvironment(rPath: string): Err {
   try {
     return prepareEnvironmentImpl(rPath);
   } catch (error: unknown) {
@@ -155,8 +150,7 @@ export function prepareEnvironment(rPath?: string): Err {
   }
 }
 
-function prepareEnvironmentImpl(rPath?: string): Err {
-
+function prepareEnvironmentImpl(rPath: string): Err {
   // attempt to detect R environment
   const [rEnvironment, error] = detectREnvironment(rPath);
   if (error) {
@@ -181,27 +175,21 @@ function prepareEnvironmentImpl(rPath?: string): Err {
   }
 
   return success();
-
 }
 
-export function detectREnvironment(rPath?: string): Expected<REnvironment> {
-
-  // scan for R
-  const [R, scanError] = rPath ? ok(rPath) : scanForR();
-  if (scanError) {
-    showRNotFoundError();
-    return err(scanError);
-  }
-
+export function detectREnvironment(rPath: string): Expected<REnvironment> {
   // resolve path to binary if we were given a directory
-  let rExecutable = new FilePath(R);
-  
+  let rExecutable = new FilePath(rPath);
   if (rExecutable.isDirectory()) {
     rExecutable = rExecutable.completeChildPath(process.platform === 'win32' ? 'R.exe' : 'R');
   }
 
   // generate small script for querying information about R
-  const rQueryScript = String.raw`writeLines(c(
+  // we write the marker character '\x1E' just in case the R installation
+  // prints some output on startup, so we can find and trim that out
+  const rQueryScript = String.raw`
+cat("\x1E", sep = "")
+writeLines(sep = "\x1F", c(
   format(getRversion()),
   R.home(),
   R.home("doc"),
@@ -212,15 +200,24 @@ export function detectREnvironment(rPath?: string): Expected<REnvironment> {
   Sys.getenv("${kLdLibraryPathVariable}")
 ))`;
 
+  logger().logDebug(`Querying information about R executable at path: ${rExecutable}`);
   const [result, error] = expect(() => {
     return spawnSync(rExecutable.getAbsolutePath(), ['--vanilla', '-s'], {
       encoding: 'utf-8',
       input: rQueryScript,
-      env: {}
     });
   });
 
+  let stdout = result.stdout || '';
+  logger().logDebug(`stdout: ${stdout.replaceAll('\x1E', EOL).replaceAll('\x1F', ';') || '[no stdout produced]'}`);
+  logger().logDebug(`stderr: ${result.stderr || '[no stderr produced]'}`);
+  logger().logDebug(`status: ${result.status} [${result.status === 0 ? 'success' : 'failure'}]`);
+  if (result.error) {
+    logger().logDebug(`error:  ${result.error}`);
+  }
+
   if (error) {
+    logger().logDebug(`Error querying information about R: ${error}`);
     return err(error);
   }
 
@@ -228,25 +225,35 @@ export function detectREnvironment(rPath?: string): Expected<REnvironment> {
   // and so exit with a non-zero status code, but without an error.
   // For that reason, we need to check for a non-zero exit code
   // rather than just a non-null error.
-  if (result.status !== 0) {
-    return err(result.error ?? new Error(t('common.unknownErrorOccurred')));
+  //
+  // As an added safe-guard, if an error occurs, but we still have
+  // something on 'stdout', try and use that to activate this version
+  // of R. Maybe the process exited abnormally for an unknown reason,
+  // even though it started and gave us the necessary information?
+  //
+  // Also, contrary to the declared type signatures, the values in 'result' can
+  // be null, so check those in a 'null'-y way.
+  if (!stdout) {
+    logger().logDebug('Error querying information about R: no output available');
+    return err(new Error(t('common.unknownErrorOccurred')));
   }
 
+  // find marker character for our output
+  const index = stdout.indexOf('\x1E');
+  if (index === -1) {
+    logger().logError('internal error: missing output marker in R output');
+    return err(new Error(t('common.unknownErrorOccurred')));
+  }
+
+  // trim off marker
+  stdout = stdout.substring(index + 1);
+
   // unwrap query results
-  const [
-    rVersion,
-    rHome,
-    rDocDir,
-    rIncludeDir,
-    rShareDir,
-    rRuntime,
-    rArch,
-    rLdLibraryPath
-  ] = result.stdout.split(EOL);
+  const [rVersion, rHome, rDocDir, rIncludeDir, rShareDir, rRuntime, rArch, rLdLibraryPath] = stdout.split('\x1F');
 
   // put it all together
   return ok({
-    rScriptPath: R,
+    rScriptPath: rPath,
     version: rVersion,
     envVars: {
       R_HOME: rHome,
@@ -258,10 +265,9 @@ export function detectREnvironment(rPath?: string): Expected<REnvironment> {
     },
     ldLibraryPath: rLdLibraryPath,
   });
-
 }
 
-function scanForR(): Expected<string> {
+export function scanForR(): Expected<string> {
   // if the RSTUDIO_WHICH_R environment variable is set, use that
   // note that this does not pick up variables set in a user's bash profile, for example
   const rstudioWhichR = getenv('RSTUDIO_WHICH_R');
@@ -272,6 +278,7 @@ function scanForR(): Expected<string> {
   }
 
   // otherwise, use platform-specific lookup strategies
+  logger().logDebug('Scanning system for R installations');
   if (process.platform === 'win32') {
     return scanForRWin32();
   } else {
@@ -294,7 +301,7 @@ function scanForRPosix(): Expected<string> {
     if (!error && rLocation) {
       logger().logDebug(`Using ${rLocation} (found by /usr/bin/which/R)`);
       return ok(rLocation);
-    } 
+    }
   }
 
   for (const location of defaultLocations) {
@@ -307,60 +314,19 @@ function scanForRPosix(): Expected<string> {
   return err();
 }
 
-function queryRegistry(cmd: string, rInstallations: Set<string>): Set<string> {
-  logger().logDebug(`Querying registry for ${cmd}`);
-  const [output, error] = executeCommand(cmd);
-  if (error) {
-    logger().logErrorMessage(`Error querying the Windows registry: ${error}`);
-    return rInstallations;
-  }      
-    
-  // parse the actual path from the output
-  const lines = output.split(EOL);
-  for (const line of lines) {
-    const match = /^\s*InstallPath\s*REG_SZ\s*(.*)$/.exec(line);
-    if (match != null) {
-      const rInstallation = match[1];
-      if (existsSync(rInstallation)) {
-        rInstallations.add(rInstallation);
-      }
-    }
-  }
-  return rInstallations;
-}
-
 export function findRInstallationsWin32(): string[] {
-
-  const rInstallations = new Set<string>();
-
-  for (const view of ['/reg:32', '/reg:64']) {
-
-    // list all installed versions from registry
-    const keyNames = [
-      'HKEY_LOCAL_MACHINE',
-      'HKEY_CURRENT_USER',
-    ];
-
-    // look specifically for R or R64, ignore Rtools directory
-    const rBinaryNames = ['R', 'R64'];
-
-    const regQueryCommands = keyNames.flatMap(key => rBinaryNames.map(
-      rBin => `%SystemRoot%\\System32\\reg.exe query ${key}\\SOFTWARE\\R-Core\\${rBin} /s /v InstallPath ${view}`));  
-    regQueryCommands.map(cmd => queryRegistry(cmd, rInstallations));
-
-    logger().logInfo(`Found ${rInstallations.size} in the registry.`);
-  }
+  const rInstallations = desktop.searchRegistryForInstallationsOfR();
+  logger().logDebug(`Found the following R installations in the registry: ${JSON.stringify(rInstallations, null, 2)}`);
 
   // look for R installations in some common locations
   const commonLocations = [
     'C:/R',
     `${getenv('ProgramFiles')}/R`,
     `${getenv('ProgramFiles(x86)')}/R`,
-    `${getenv('LOCALAPPDATA')}/Programs/R`
+    `${getenv('LOCALAPPDATA')}/Programs/R`,
   ];
 
   for (const location of commonLocations) {
-    logger().logDebug(`Checking common R installation path: ${location}`)
     // nothing to do if it doesn't exist
     if (!existsSync(location)) {
       continue;
@@ -371,14 +337,16 @@ export function findRInstallationsWin32(): string[] {
     for (const rDir of rDirs) {
       const path = join(location, rDir);
       if (existsSync(path)) {
-        rInstallations.add(path);
+        logger().logDebug(`Found R installation at path: ${path}`);
+        rInstallations.push(path);
       }
     }
-
   }
 
-  return Array.from(rInstallations.values());
-
+  // Remove duplicates
+  const uniqueInstallations = Array.from(new Set(rInstallations));
+  logger().logDebug(`Found the following R installations: ${JSON.stringify(uniqueInstallations, null, 2)}`);
+  return uniqueInstallations;
 }
 
 export function isValidInstallation(rInstallPath: string): boolean {
@@ -388,53 +356,31 @@ export function isValidInstallation(rInstallPath: string): boolean {
 }
 
 export function isValidBinary(rExePath: string): boolean {
+  if (!existsSync(rExePath)) {
+    return false;
+  }
+
+  logger().logDebug(`Validating R installation at path: ${rExePath}`);
   const [_, error] = detectREnvironment(rExePath);
   return error == null;
 }
 
-function findDefaultInstallPathWin32(version: string): string {
-
-  for (const view of ['/reg:32', '/reg:64']) {
-    // list all installed versions from registry
-    const keyNames = [
-      'HKEY_LOCAL_MACHINE',
-      'HKEY_CURRENT_USER',
-    ];
-
-    const regQueryCommands = keyNames.flatMap(key => 
-      `%SystemRoot%\\System32\\reg.exe query ${key}\\SOFTWARE\\R-Core\\${version} /v InstallPath ${view}`
-    );
-
-    // query registry for R install path
-    for (const regQueryCommand of regQueryCommands) {
-      const [output, error] = executeCommand(regQueryCommand);
-      if (error) {
-        logger().logError(error);
-        continue;
-      }
-
-      // parse the actual path from the output
-      const lines = output.split(EOL);
-      for (const line of lines) {
-        const match = /^\s*InstallPath\s*REG_SZ\s*(.*)$/.exec(line);
-        if (match != null) {
-          const rLocation = match[1];
-          logger().logInfo(`Found R installation: ${rLocation}`);
-          return rLocation;
-        }
-      }
-    }
-
+function findDefaultInstallPathWin32(registryVersionKey: string): string {
+  const rLocation = desktop.searchRegistryForDefaultInstallationOfR(registryVersionKey);
+  if (rLocation.length === 0) {
+    logger().logWarning('No default R installation was found in the registry.');
+    return '';
   }
 
-  logger().logWarning('No default R installations found. R may have been installed without writing registry entries.');
+  if (!existsSync(rLocation)) {
+    logger().logWarning(`Default version of R recorded in registry ${rLocation} does not exist.`);
+    return '';
+  }
 
-  return '';
-
+  return rLocation;
 }
 
 function scanForRWin32(): Expected<string> {
-
   // if the RSTUDIO_WHICH_R environment variable is set, use that
   const rstudioWhichR = getenv('RSTUDIO_WHICH_R');
   if (rstudioWhichR) {
@@ -467,7 +413,6 @@ function scanForRWin32(): Expected<string> {
   // nothing found; return empty filepath
   logger().logDebug('Failed to discover R');
   return err();
-
 }
 
 export function findDefault32Bit(): string {

@@ -13,13 +13,11 @@
  *
  */
 import { contextBridge, ipcRenderer } from 'electron';
-import { existsSync } from 'fs';
-import path from 'path';
 import { getDesktopLoggerBridge } from '../../../renderer/logger-bridge';
 import { normalizeSeparatorsNative } from '../../utils';
 
 export interface CallbackData {
-  binaryPath?: string | unknown;
+  binaryPath?: string;
   renderingEngine?: string;
 }
 
@@ -53,6 +51,7 @@ ipcRenderer.on('initialize', (_event, data) => {
   const default32Bit = data.default32bitPath as string;
   let isDefault32Selected = false;
   if (default32Bit) {
+    // eslint-disable-next-line @typescript-eslint/no-unnecessary-condition
     use32?.removeAttribute('disabled');
 
     if (isRVersionSelected('' + data.selectedRVersion, default32Bit + '/bin/i386/R.exe')) {
@@ -65,6 +64,7 @@ ipcRenderer.on('initialize', (_event, data) => {
   const default64Bit = data.default64bitPath as string;
   let isDefault64Selected = false;
   if (default64Bit) {
+    // eslint-disable-next-line @typescript-eslint/no-unnecessary-condition
     use64?.removeAttribute('disabled');
 
     if (isRVersionSelected('' + data.selectedRVersion, default64Bit + '/bin/x64/R.exe')) {
@@ -96,9 +96,9 @@ ipcRenderer.on('initialize', (_event, data) => {
   const selectWidget = document.getElementById('select') as HTMLSelectElement;
   selectWidget.disabled = !(rInstalls.length > 0 && useCustomEl.checked);
 
-  rInstalls.forEach((rInstall) => {
+  rInstalls.forEach(async (rInstall) => {
     // normalize separators, etc
-    rInstall = normalizeSeparatorsNative(path.normalize(rInstall));
+    rInstall = normalizeSeparatorsNative(await ipcRenderer.invoke('path_normalize', rInstall));
 
     // skip if we've already seen this
     if (visitedInstallations[rInstall]) {
@@ -108,7 +108,8 @@ ipcRenderer.on('initialize', (_event, data) => {
 
     // check for 64 bit executable
     const r64 = `${rInstall}/bin/x64/R.exe`;
-    if (existsSync(r64)) {
+    // eslint-disable-next-line @typescript-eslint/strict-boolean-expressions
+    if (await ipcRenderer.invoke('fs_existsSync', r64)) {
       const optionEl = window.document.createElement('option');
       optionEl.value = r64;
       optionEl.innerText = `[64-bit] ${rInstall}`;
@@ -127,7 +128,8 @@ ipcRenderer.on('initialize', (_event, data) => {
 
     // check for 32 bit executable
     const r32 = `${rInstall}/bin/i386/R.exe`;
-    if (existsSync(r32)) {
+    // eslint-disable-next-line @typescript-eslint/strict-boolean-expressions
+    if (await ipcRenderer.invoke('fs_existsSync', r32)) {
       const optionEl = window.document.createElement('option');
       optionEl.value = r32;
       optionEl.innerText = `[32-bit] ${rInstall}`;
@@ -145,10 +147,10 @@ ipcRenderer.on('initialize', (_event, data) => {
     }
   });
 
-  useCustomEl.checked = !default32Bit && !default64Bit && (rInstalls.length > 0);
+  useCustomEl.checked = !default32Bit && !default64Bit && rInstalls.length > 0;
   selectWidget.disabled = !useCustomEl.checked;
 
-  buttonOk.disabled = !((useCustomEl.checked && selectCustom.value) || use32.checked || use64.checked) ;
+  buttonOk.disabled = !((useCustomEl.checked && selectCustom.value) || use32.checked || use64.checked);
 });
 
 // export callbacks
