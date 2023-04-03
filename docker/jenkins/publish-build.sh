@@ -204,13 +204,74 @@ else
   product="rstudio"
 fi
 
+githubUrl="https://api.github.com/repos/rstudio/latest-builds/contents/content/$product/$flower/$build/$version_stem.md"
+curlOutFname="curl.out"
+
 payload="{\"message\":\"Add $flower build $version in $build\",\"content\":\"$base64_contents\",\"sha\":\"$sha256\"}"
+
 echo "Sending to Github: $payload"
+httpCode=$(curl \
+   -X PUT \
+   -w %{http_code} \
+   -o $curlOutFname \
+   -H "Accept: application/vnd.github.v3+json" \
+   -H "Authorization: token $pat" \
+   $githubUrl \
+   -d "$payload")
+echo "Github's Response: "
+echo "Http Code : $httpCode"
+cat $curlOutFname
 
-curl \
-  -X PUT \
-  -H "Accept: application/vnd.github.v3+json" \
-  -H "Authorization: token $pat" \
-  "https://api.github.com/repos/rstudio/latest-builds/contents/content/$product/$flower/$build/$version_stem.md" \
-  -d "$payload"
+if [[ $httpCode -eq 422 ]]; then
+   # An http code of 422 indicates a problem, probably that the file already exists and this is an
+   # update not a create
 
+   echo "Received a 422 http code, assuming this is actually an update not a create, so we get the existing file's info"
+   getShaResponse=$(curl \
+      -X GET \
+      -H "Accept: application/vnd.github.v3+json" \
+      -H "Authorization: token $pat" \
+      $githubUrl \
+      -d "$payload")
+   echo $getShaResponse
+
+   updateSha=$(echo $getShaResponse | jq -r .sha)
+
+   updatePayload="{\"message\":\"Update $flower build $version in $build\",\"content\":\"$base64_contents\",\"sha\":\"$updateSha\"}"
+   
+   httpCode=$(curl \
+      -X PUT \
+      -w %{http_code} \
+      -o $curlOutFname \
+      -H "Accept: application/vnd.github.v3+json" \
+      -H "Authorization: token $pat" \
+      $githubUrl \
+      -d "$updatePayload")
+
+   echo "Github's Update Response:"
+   echo "Http Code : $httpCode"
+   cat $curlOutFname
+elif [[ $httpCode -eq 409 ]]; then
+   echo "Received a 409 error, assuming it's a commit interleaving error, we'll back off for 3 seconds and retry".
+   sleep 3
+
+   #retry the command
+   echo "Retrying the command"
+   httpCode=$(curl \
+   -X PUT \
+   -w %{http_code} \
+   -o $curlOutFname \
+   -H "Accept: application/vnd.github.v3+json" \
+   -H "Authorization: token $pat" \
+   $githubUrl \
+   -d "$payload")
+
+   echo "Github's Response"
+   echo "Http Code : $httpCode"
+   cat $curlOutFname
+fi
+
+if [[ $(($httpCode)) -ge 400 ]]; then
+   echo "An unrecoverable error has occured"
+   exit 1
+fi
