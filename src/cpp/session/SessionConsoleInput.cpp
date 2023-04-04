@@ -31,6 +31,7 @@
 #include "modules/jobs/SessionJobs.hpp"
 #include "modules/overlay/SessionOverlay.hpp"
 
+#include <session/prefs/UserPrefs.hpp>
 #include <session/SessionModuleContext.hpp>
 #include <session/SessionSuspend.hpp>
 
@@ -103,11 +104,13 @@ bool canSuspend(const std::string& prompt)
    bool suspendIsBlocked = false;
    suspendIsBlocked |= session::suspend::checkBlockingOp(main_process::haveDurableChildren(), suspend::kChildProcess);
    suspendIsBlocked |= session::suspend::checkBlockingOp(!modules::connections::isSuspendable(), suspend::kConnection);
-   suspendIsBlocked |= session::suspend::checkBlockingOp(!modules::environment::isSuspendable(), suspend::kExternalPointer);
    suspendIsBlocked |= session::suspend::checkBlockingOp(!modules::jobs::isSuspendable(), suspend::kActiveJob);
    suspendIsBlocked |= session::suspend::checkBlockingOp(!rstudio::r::session::isSuspendable(prompt), suspend::kCommandPrompt);
    suspendIsBlocked |= !modules::overlay::isSuspendable();
 
+   if (prefs::userPrefs().checkNullExternalPointers())
+      suspendIsBlocked |= session::suspend::checkBlockingOp(!modules::environment::isSuspendable(), suspend::kExternalPointer);
+   
    return !suspendIsBlocked;
 }
 
