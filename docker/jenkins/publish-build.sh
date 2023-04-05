@@ -207,7 +207,7 @@ fi
 githubUrl="https://api.github.com/repos/rstudio/latest-builds/contents/content/$product/$flower/$build/$version_stem.md"
 curlOutFname="curl.out"
 
-payload="{\"message\":\"Add $flower build $version in $build\",\"content\":\"$base64_contents\",\"sha\":\"$sha256\"}"
+payload="{\"message\":\"Add $flower build $version in $build\",\"content\":\"$base64_contents\"}"
 
 echo "Sending to Github: $payload"
 httpCode=$(curl \
