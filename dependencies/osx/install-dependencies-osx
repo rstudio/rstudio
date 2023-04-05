@@ -92,7 +92,7 @@ fi
 # put some necessary utilities on the PATH
 if is-jenkins; then
    mkdir -p "${HOME}/opt/bin"
-   for PROGRAM in aws gtimeout ninja R; do
+   for PROGRAM in aws gtimeout jq ninja R; do
       ln -nfs "${HOME}/homebrew/arm64/bin/${PROGRAM}" "${HOME}/opt/bin/${PROGRAM}"
    done
 fi
