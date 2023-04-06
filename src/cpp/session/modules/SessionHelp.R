@@ -466,51 +466,62 @@ options(help_type = "html")
 .rs.addFunction("getHelpColumnImpl", function(name, src, envir = parent.frame())
 {
    data <- .rs.getAnywhere(src, envir)
+   if (is.null(data))
+      return(NULL)
    
-   if (!is.null(data))
+   column <- data[[name]]
+   
+   canUsePillar <- FALSE
+   if ("pillar" %in% loadedNamespaces())
    {
-      column <- data[[name]]
-      if (isNamespaceLoaded("pillar"))
-      {
-         formatted <- pillar::format_glimpse(column)
-
-         bits <- c()
-         nchars <- 55
-         i <- 1
-         while (nchars > 1 && i < length(column)) {
-            current <- formatted[i]
-            if (nchar(current) > nchars) {
-               current <- pillar:::str_trunc(current, nchars)
-            }
-            bits <- c(bits, current)
-            nchars <- nchars - nchar(current) - 2
-            i <- i + 1
-         }
-
-         if (length(bits) < length(column))
-         {
-            bits <- c(bits, paste0("<i>", pillar:::get_ellipsis(), "</i>"))
-         }
-
-         description <- paste("<ul>", paste(paste0("<li>", bits, "</li>"), collapse = " "), "</ul>")
-         type <- pillar:::get_pillar_type(column)
-         size <- length(formatted)
-      }
-      else 
-      {
-         described <- .rs.describeObject(data, name)
-         description <- described$description
-         type <- described$type
-         size <- described$length
-      }
-
-      list(
-         html = paste0("<h2></h2><h3>Description</h3><p>", description, "</p>"),
-         signature = paste0("<", type, "> [", size, "]"), 
-         pkgname = src,
-         help = FALSE
-      )
+      pillar <- asNamespace("pillar")
+      canUsePillar <-
+         is.function(pillar$format_glimpse) &&
+         is.function(pillar$str_trunc) &&
+         is.function(pillar$get_pillar_type)
    }
+   
+   if (canUsePillar)
+   {
+      formatted <- pillar$format_glimpse(column)
+      
+      bits <- c()
+      nchars <- 55
+      i <- 1
+      while (nchars > 1 && i < length(column)) {
+         current <- formatted[i]
+         if (nchar(current) > nchars) {
+            current <- pillar$str_trunc(current, nchars)
+         }
+         bits <- c(bits, current)
+         nchars <- nchars - nchar(current) - 2
+         i <- i + 1
+      }
+      
+      if (length(bits) < length(column))
+      {
+         bits <- c(bits, paste0("<i>", pillar:::get_ellipsis(), "</i>"))
+      }
+      
+      description <- paste("<ul>", paste(paste0("<li>", bits, "</li>"), collapse = " "), "</ul>")
+      type <- pillar$get_pillar_type(column)
+      size <- length(formatted)
+   }
+   else 
+   {
+      described <- .rs.describeObject(data, name)
+      description <- described$description
+      type <- described$type
+      size <- described$length
+   }
+   
+   list(
+      html = paste0("<h2></h2><h3>Description</h3><p>", description, "</p>"),
+      signature = paste0("<", type, "> [", size, "]"),
+      pkgname = src,
+      help = FALSE
+   )
+   
 })
 
 .rs.addFunction("getHelpDataFrame", function(name, src, envir = parent.frame())
