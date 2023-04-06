@@ -57,7 +57,8 @@ fi
 sudo-if-necessary-for "${RSTUDIO_TOOLS_ROOT}" "$@"
 
 # move to tempdir for build
-cd "$(mktemp -d)"
+TEMP_DIR="$(mktemp -d)"
+cd "${TEMP_DIR}"
 
 # download boost
 BOOST_URL="https://s3.amazonaws.com/rstudio-buildtools/Boost/${BOOST_TAR}"
@@ -143,9 +144,10 @@ for file in libboost*.so; do
    ln -nfs "$file.$BOOST_VERSION_NUMBER" "$file"
 done
 
-# go back to the original install dir and remove build dir
+# go back to the original install dir and remove build and tmp dirs
 cd "${INSTALL_DIR}"
 rm -rf "${BOOST_BUILD_DIR}"
+rm -rf "${TEMP_DIR}"
 
 info "Boost ${BOOST_VERSION} installed to '${BOOST_DIR}'"
 

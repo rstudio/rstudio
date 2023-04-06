@@ -58,7 +58,8 @@ RUN apt-get update && \
     valgrind \
     wget \
     xvfb \
-    zlib1g-dev
+    zlib1g-dev \
+    && rm -rf /var/lib/apt/lists/*
 
 # ensure we use the java 11 compiler
 RUN update-alternatives --set java /usr/lib/jvm/java-11-openjdk-$(dpkg --print-architecture)/bin/java
