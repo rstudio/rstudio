@@ -119,7 +119,6 @@ ipcRenderer.on('initialize', (_event, data) => {
         const useCustomRadioInput = document.getElementById('use-custom') as any;
         useCustomRadioInput.checked = true;
 
-        selectEl.value = r64;
 
         selectWidget.disabled = false;
         selectWidget.focus();
@@ -141,7 +140,6 @@ ipcRenderer.on('initialize', (_event, data) => {
 
         selectWidget.disabled = false;
 
-        selectEl.value = r32;
         selectWidget.focus();
       }
     }
