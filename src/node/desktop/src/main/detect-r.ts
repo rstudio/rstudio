@@ -201,10 +201,21 @@ writeLines(sep = "\x1F", c(
 ))`;
 
   logger().logDebug(`Querying information about R executable at path: ${rExecutable}`);
+
+  // remove R-related environment variables before invoking R
+  const envCopy = Object.assign({}, process.env);
+  delete envCopy['R_HOME'];
+  delete envCopy['R_ARCH'];
+  delete envCopy['R_DOC_DIR'];
+  delete envCopy['R_INCLUDE_DIR'];
+  delete envCopy['R_RUNTIME'];
+  delete envCopy['R_SHARE_DIR'];
+
   const [result, error] = expect(() => {
     return spawnSync(rExecutable.getAbsolutePath(), ['--vanilla', '-s'], {
       encoding: 'utf-8',
       input: rQueryScript,
+      env: envCopy,
     });
   });
 
