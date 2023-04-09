@@ -16,7 +16,8 @@
 
 import { BrowserWindow, Rectangle, screen } from 'electron';
 import Store from 'electron-store';
-import { dirname } from 'path';
+import { existsSync, lstatSync } from 'fs';
+import { basename, dirname, join } from 'path';
 import { properties } from '../../../../../cpp/session/resources/schema/user-state-schema.json';
 import { normalizeSeparatorsNative } from '../../core/file-path';
 import { logger } from '../../core/logger';
@@ -357,7 +358,14 @@ export class DesktopOptionsImpl implements DesktopOptions {
       return '';
     }
 
-    return rExecutablePath;
+    // 2022.12 and 2023.03 allowed the user to select bin\R.exe, which will cause sessions
+    // to fail to load. We prevent that now, but fix it up if we encounter it.
+    const fixedPath = fixWindowsRExecutablePath(rExecutablePath);
+    if (fixedPath !== rExecutablePath) {
+      this.setRExecutablePath(fixedPath);
+    }
+
+    return fixedPath;
   }
 
   // Windows-only option
@@ -384,4 +392,37 @@ if (process.platform === 'darwin') {
   defaultFonts = ['Lucida Console', 'Consolas'];
 } else {
   defaultFonts = ['Ubuntu Mono', 'Droid Sans Mono', 'DejaVu Sans Mono', 'Monospace'];
+}
+
+/**
+ * If user manually chooses bin\R.exe, sessions won't load, so insert the 
+ * architecture folder (i386 if they are on a 32-bit machine, otherwise x64).
+ *
+ * If they want to use 32-bit R on a 64-bit machine they will need to
+ * choose it directly from the i386 folder.
+ * 
+ * Also correct the case where they selected something other than R.exe, such 
+ * as RScript.exe.
+ * 
+ * @param rExePath Full path to R.exe
+ * @returns Full path to R.exe including arch folder
+ */
+export function fixWindowsRExecutablePath(rExePath: string): string {
+  if (process.platform !== 'win32' ||
+      !existsSync(rExePath) || 
+      lstatSync(rExePath).isDirectory()) {
+
+    // unexpected situation: just leave it as-is
+    return rExePath;
+  }
+
+  const selectedDir = basename(dirname(rExePath)).toLowerCase();
+  if (selectedDir === 'bin') {
+    // User picked bin\*.exe; insert the subfolder matching the machine's architecture.
+    const origPath = rExePath;
+    const archDir = process.arch === 'x32' ? 'i386' : 'x64';
+    rExePath = join(dirname(rExePath), archDir, 'R.exe');
+    logger().logDebug(`User selected ${origPath}, replacing with ${rExePath}`);
+  }
+  return rExePath;
 }
