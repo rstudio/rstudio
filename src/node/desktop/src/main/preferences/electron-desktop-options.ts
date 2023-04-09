@@ -323,7 +323,14 @@ export class DesktopOptionsImpl implements DesktopOptions {
       return '';
     }
 
-    return rExecutablePath;
+    // 2022.12 and 2023.03 allowed the user to select bin\R.exe, which will cause sessions
+    // to fail to load. We prevent that now, but fix it up if we encounter it.
+    const fixedPath = fixWindowsRExecutablePath(rExecutablePath);
+    if (fixedPath !== rExecutablePath) {
+      this.setRExecutablePath(fixedPath);
+    }
+
+    return fixedPath;
   }
 
   // Windows-only option
@@ -359,11 +366,11 @@ if (process.platform === 'darwin') {
  * If they want to use 32-bit R on a 64-bit machine they will need to
  * choose it directly from the i386 folder.
  * 
- * Use Rterm.exe instead of R.exe (or anything else the user might have
- * chosen; we can't prevent them from choosing arbitrary files).
+ * Also correct the case where they selected something other than R.exe, such 
+ * as RScript.exe.
  * 
- * @param rExePath Full path to Rterm.exe
- * @returns Full path to Rterm.exe including arch folder
+ * @param rExePath Full path to R.exe
+ * @returns Full path to R.exe including arch folder
  */
 export function fixWindowsRExecutablePath(rExePath: string): string {
   if (process.platform !== 'win32' ||
@@ -379,13 +386,13 @@ export function fixWindowsRExecutablePath(rExePath: string): string {
   if (selectedDir === 'bin') {
     // User picked bin\*.exe; insert the subfolder matching the machine's architecture.
     const archDir = process.arch === 'x32' ? 'i386' : 'x64';
-    rExePath = join(dirname(rExePath), archDir, kWindowsRExe);
+    rExePath = join(dirname(rExePath), archDir, 'R.exe');
     logger().logDebug(`User selected ${origPath}, replacing with ${rExePath}`);
   } else {
-    // Even if they chose the right folder, make sure they picked Rterm.exe
+    // Even if they chose the right folder, make sure they picked R.exe
     const exe = basename(rExePath).toLowerCase();
-    if (exe !== kWindowsRExe.toLowerCase()) {
-      rExePath = join(dirname(rExePath), kWindowsRExe);
+    if (exe !== 'r.exe') {
+      rExePath = join(dirname(rExePath), 'R.exe');
       logger().logDebug(`User selected ${origPath}, replacing with ${rExePath}`);
     }
   }

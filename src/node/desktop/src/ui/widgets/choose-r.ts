@@ -21,7 +21,7 @@ import { ModalDialog } from '../modal-dialog';
 import { initI18n } from '../../main/i18n-manager';
 import i18next, { t } from 'i18next';
 import { CallbackData } from './choose-r/preload';
-import { ElectronDesktopOptions } from '../../main/preferences/electron-desktop-options';
+import { ElectronDesktopOptions, fixWindowsRExecutablePath } from '../../main/preferences/electron-desktop-options';
 
 import { existsSync } from 'fs';
 import { normalize } from 'path';
@@ -70,6 +70,9 @@ export class ChooseRModalWindow extends ModalDialog<CallbackData | null> {
   }
 
   async maybeResolve(resolve: (data: CallbackData) => void, data: CallbackData) {
+    if (data.binaryPath) {
+      data.binaryPath = fixWindowsRExecutablePath(data.binaryPath);
+    }
     if (checkValid(data)) {
       resolve(data);
       return true;
@@ -124,7 +127,7 @@ export class ChooseRModalWindow extends ModalDialog<CallbackData | null> {
         const response = dialog.showOpenDialogSync(this, {
           title: i18next.t('uiFolder.chooseRExecutable'),
           properties: ['openFile'],
-          defaultPath: kWindowsRExe,
+          defaultPath: 'R.exe',
           filters: [{ name: i18next.t('uiFolder.rExecutable'), extensions: ['exe'] }],
         });
 
