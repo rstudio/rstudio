@@ -34,7 +34,11 @@ class FilePreferences extends DesktopOptions {
     const desktopIni = userConfigDir.completePath(INI_FILE).getAbsolutePath().replace('rstudio', 'RStudio');
 
     if (FilePath.existsSync(desktopIni)) {
-      this.properties = PropertiesReader(desktopIni);
+      try {
+        this.properties = PropertiesReader(desktopIni);
+      } catch (err: unknown) {
+        console.error(err.message); // too early in startup for logging
+      }
     }
   }
 
