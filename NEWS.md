@@ -32,6 +32,7 @@
 - Fixed opening files from command-line with relative paths (#12495, #12563)
 - Fixed issue with column preview with older versions of the 'pillar' package. (#12863)
 - Fixed bug where the OK button was disabled in Choose R dialog when only one version of R installed (#12916)
+- Improved robustness when chosing custom R version in Windows desktop (#12969)
 
 #### Posit Workbench
 - Fixed unlabeled buttons for screen reader users when page is narrow [Accessibility] (rstudio/rstudio-pro#4340)
