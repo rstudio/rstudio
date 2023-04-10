@@ -78,6 +78,8 @@ export class MenuCallback extends EventEmitter {
 
   isMenuSet = false;
 
+  savedMenu: Menu|null = null;
+
   debounceUpdateMenuLong: any = debounce(() => this.updateMenus(), 5000);
   debounceUpdateMenuMedium: any = debounce(() => this.updateMenus(), 250);
   debounceUpdateMenuShort: any = debounce(() => this.updateMenus(), 10);
@@ -135,8 +137,20 @@ export class MenuCallback extends EventEmitter {
       this.setCommandChecked(commandId, checked);
     });
 
-    ipcMain.on('menu_set_main_menu_enabled', () => {
-      /* do nothing */
+    ipcMain.on('menu_set_main_menu_enabled', (_event, enabled: boolean) => {
+      if (this.savedMenu) {
+        if (enabled) {
+          // previously replaced main menu with stub; now put back the real thing
+          Menu.setApplicationMenu(this.savedMenu);
+          this.savedMenu = null;
+        }
+        return;
+      }
+
+      if (!enabled) {
+        this.savedMenu = Menu.getApplicationMenu();
+        showPlaceholderMenu();
+      }
     });
 
     ipcMain.on('menu_set_command_label', (_event, commandId: string, label: string) => {
