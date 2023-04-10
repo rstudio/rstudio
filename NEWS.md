@@ -33,6 +33,7 @@
 - Fixed issue with column preview with older versions of the 'pillar' package. (#12863)
 - Fixed bug where the OK button was disabled in Choose R dialog when only one version of R installed (#12916)
 - Improved robustness when chosing custom R version in Windows desktop (#12969)
+- Fixed bug that prevented RStudio Desktop from starting on Linux if desktop.ini was unreadable (#12963)
 
 #### Posit Workbench
 - Fixed unlabeled buttons for screen reader users when page is narrow [Accessibility] (rstudio/rstudio-pro#4340)
