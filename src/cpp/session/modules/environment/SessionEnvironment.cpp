@@ -1416,8 +1416,15 @@ SEXP rs_dumpContexts()
 
 bool isSuspendable()
 {
-   // suppress suspension if any object has a live external pointer; these can't be restored
-   return !hasExternalPtr(R_GlobalEnv, false);
+   bool suspendable = false;
+   
+   Error error =
+         r::exec::RFunction(".rs.environment.isSuspendable")
+         .call(&suspendable);
+   if (error)
+      LOG_ERROR(error);
+   
+   return suspendable;
 }
 
 Error initialize()
