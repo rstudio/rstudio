@@ -930,12 +930,12 @@
 .rs.addFunction("environment.isSuspendableImpl", function(value, depth)
 {
    # Avoid overly-deep recursions.
-   if (depth >= 8)
+   if (depth >= 8L)
       return(TRUE)
    
    # Skip overly-large objects.
    n <- length(value)
-   if (n >= 10000)
+   if (n >= 10000L)
       return(TRUE)
    
    # Python objects are connected to the underlying session, and so
