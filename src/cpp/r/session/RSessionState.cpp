@@ -443,7 +443,7 @@ bool save(const FilePath& statePath,
    saveWorkingContext(statePath, &settings, &saved);
 
    // save search path (disable save compression if requested)
-   if (disableSaveCompression)
+   if (saveGlobalEnvironment && disableSaveCompression)
    {
       error = r::exec::RFunction(".rs.disableSaveCompression").call();
       if (error)
