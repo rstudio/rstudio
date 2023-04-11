@@ -102,14 +102,18 @@ void consolePrompt(const std::string& prompt, bool addToHistory)
 bool canSuspend(const std::string& prompt)
 {
    bool suspendIsBlocked = false;
+   
    suspendIsBlocked |= session::suspend::checkBlockingOp(main_process::haveDurableChildren(), suspend::kChildProcess);
-   suspendIsBlocked |= session::suspend::checkBlockingOp(!modules::connections::isSuspendable(), suspend::kConnection);
    suspendIsBlocked |= session::suspend::checkBlockingOp(!modules::jobs::isSuspendable(), suspend::kActiveJob);
    suspendIsBlocked |= session::suspend::checkBlockingOp(!rstudio::r::session::isSuspendable(prompt), suspend::kCommandPrompt);
-   suspendIsBlocked |= !modules::overlay::isSuspendable();
 
-   if (prefs::userPrefs().checkNullExternalPointers())
+   if (session::options().sessionConnectionsBlockSuspend())
+      suspendIsBlocked |= session::suspend::checkBlockingOp(!modules::connections::isSuspendable(), suspend::kConnection);
+   
+   if (session::options().sessionExternalPointersBlockSuspend())
       suspendIsBlocked |= session::suspend::checkBlockingOp(!modules::environment::isSuspendable(), suspend::kExternalPointer);
+   
+   suspendIsBlocked |= !modules::overlay::isSuspendable();
    
    return !suspendIsBlocked;
 }

@@ -142,6 +142,17 @@
       ],
       "session": [
          {
+            "name": "session-connections-block-suspend",
+            "type": "bool",
+            "memberName": "sessionConnectionsBlockSuspend_",
+            "description": "Whether or not an active database connection should block attempts to suspend the session after timeout."
+         },
+         {
+            "name": "session-external-pointers-block-suspend",
+            "type": "bool",
+            "description": "Whether or not R objects containing external pointers should block attempts to suspend the session after timeout."
+         },
+         {
             "name": {"constant": "kTimeoutSessionOption", "value": "session-timeout-minutes"},
             "type": "int",
             "memberName": "timeoutMinutes_",
