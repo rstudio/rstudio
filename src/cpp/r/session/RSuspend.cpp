@@ -13,9 +13,11 @@
  *
  */
 
+#include <Rembedded.h>
+
 #include <shared_core/FilePath.hpp>
 
-#include <Rembedded.h>
+#include <core/system/Environment.hpp>
 
 #include <r/RExec.hpp>
 #include <r/session/RClientState.hpp>
@@ -56,12 +58,20 @@ bool saveSessionState(const RSuspendOptions& options,
    // suppress interrupts which occur during saving
    r::exec::IgnoreInterruptsScope ignoreInterrupts;
    
+   // check for save workspace
+   bool saveWorkspace = options.saveWorkspace;
+   
+   // allow env override
+   std::string envOverride = core::system::getenv("RSTUDIO_SUSPEND_SAVE_WORKSPACE");
+   if (!envOverride.empty())
+      saveWorkspace = string_utils::isTruthy(envOverride);
+   
    // save 
    if (options.saveMinimal)
    {
       // save minimal
       return r::session::state::saveMinimal(suspendedSessionPath,
-                                            options.saveWorkspace);
+                                            saveWorkspace);
 
    }
    else
@@ -70,6 +80,7 @@ bool saveSessionState(const RSuspendOptions& options,
                                      utils::isServerMode(),
                                      options.excludePackages,
                                      disableSaveCompression,
+                                     saveWorkspace,
                                      options.ephemeralEnvVars);
    }
 }
