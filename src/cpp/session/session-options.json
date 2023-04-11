@@ -144,7 +144,6 @@
          {
             "name": "session-connections-block-suspend",
             "type": "bool",
-            "memberName": "sessionConnectionsBlockSuspend_",
             "description": "Whether or not an active database connection should block attempts to suspend the session after timeout."
          },
          {

@@ -10,7 +10,8 @@
 - Improve visibility of focus rectangles on Server / Workbench Sign In page [Accessibility] (#12846)
 
 #### Posit Workbench
-- 
+- Added the `session-connections-block-suspend` session option, controlling whether active connections can block suspension of an R session.
+- Added the `session-external-pointers-block-suspend` session option, controlling whether R objects containing external pointers can block suspension of an R session.
 
 ### Fixed
 
