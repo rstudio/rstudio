@@ -951,6 +951,10 @@
    if (inherits(value, "ArrowObject"))
       return(FALSE)
    
+   # Objects containing external pointers cannot be serialized.
+   if (typeof(value) %in% c("externalptr", "weakref"))
+      return(FALSE)
+   
    # Assume that data.frame objects won't contain external pointers.
    if (is.data.frame(value))
       return(TRUE)
