@@ -211,6 +211,20 @@ writeLines(sep = "\x1F", c(
   delete envCopy['R_RUNTIME'];
   delete envCopy['R_SHARE_DIR'];
 
+  // On Windows, unset temporary directory environment variables: the R docs state that 
+  // when using R from command-line on Windows:
+  //
+  //   https://cran.r-project.org/doc/manuals/R-intro.html
+  //
+  //   "You need to ensure that either the environment variables TMPDIR, TMP, and TEMP
+  //    are either unset or one of them points to a valid place to create temporary
+  //    files and directories."
+  if (process.platform === 'win32') {
+    delete envCopy['TMP'];
+    delete envCopy['TMPDIR'];
+    delete envCopy['TEMP'];
+  }
+
   const [result, error] = expect(() => {
     return spawnSync(rExecutable.getAbsolutePath(), ['--vanilla', '-s'], {
       encoding: 'utf-8',
