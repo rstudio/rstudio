@@ -16,6 +16,7 @@
 import { BrowserWindow, BrowserWindowConstructorOptions, ipcMain } from 'electron';
 import { err, Expected, ok } from '../core/expected';
 import { safeError } from '../core/err';
+import { getenv } from '../core/environment';
 
 export abstract class ModalDialog<T> extends BrowserWindow {
   abstract onShowModal(): Promise<T>;
@@ -83,6 +84,11 @@ export abstract class ModalDialog<T> extends BrowserWindow {
 
     // show the window after loading everything
     this.show();
+
+    const showDevTools = getenv('RSTUDIO_DESKTOP_MODAL_DEVTOOLS').length !== 0;
+    if (showDevTools) {
+      this.webContents.openDevTools();
+    }
 
     // invoke derived class's callback and return the response
     return this.onShowModal();

@@ -86,3 +86,6 @@ export function normalizeSeparatorsNative(path: string) {
   const separator = process.platform === 'win32' ? '\\' : '/';
   return normalizeSeparators(path, separator);
 }
+
+// executable to use on Windows when spawning R to query path information
+export const kWindowsRExe = 'Rterm.exe';

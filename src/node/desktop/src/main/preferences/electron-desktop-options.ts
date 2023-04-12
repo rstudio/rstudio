@@ -24,6 +24,7 @@ import { RStudioUserState } from '../../types/user-state-schema';
 
 import { generateSchema, legacyPreferenceManager } from './../preferences/preferences';
 import DesktopOptions from './desktop-options';
+import { kWindowsRExe } from '../../ui/utils';
 
 const kProportionalFont = 'font.proportionalFont';
 const kFixedWidthFont = 'font.fixedWidthFont';
@@ -348,4 +349,44 @@ if (process.platform === 'darwin') {
   defaultFonts = ['Lucida Console', 'Consolas'];
 } else {
   defaultFonts = ['Ubuntu Mono', 'Droid Sans Mono', 'DejaVu Sans Mono', 'Monospace'];
+}
+
+/**
+ * If user manually chooses bin\R.exe, sessions won't load, so insert the 
+ * architecture folder (i386 if they are on a 32-bit machine, otherwise x64).
+ *
+ * If they want to use 32-bit R on a 64-bit machine they will need to
+ * choose it directly from the i386 folder.
+ * 
+ * Use Rterm.exe instead of R.exe (or anything else the user might have
+ * chosen; we can't prevent them from choosing arbitrary files).
+ * 
+ * @param rExePath Full path to Rterm.exe
+ * @returns Full path to Rterm.exe including arch folder
+ */
+export function fixWindowsRExecutablePath(rExePath: string): string {
+  if (process.platform !== 'win32' ||
+      !existsSync(rExePath) || 
+      lstatSync(rExePath).isDirectory()) {
+
+    // unexpected situation: just leave it as-is
+    return rExePath;
+  }
+
+  const selectedDir = basename(dirname(rExePath)).toLowerCase();
+  const origPath = rExePath;
+  if (selectedDir === 'bin') {
+    // User picked bin\*.exe; insert the subfolder matching the machine's architecture.
+    const archDir = process.arch === 'x32' ? 'i386' : 'x64';
+    rExePath = join(dirname(rExePath), archDir, kWindowsRExe);
+    logger().logDebug(`User selected ${origPath}, replacing with ${rExePath}`);
+  } else {
+    // Even if they chose the right folder, make sure they picked Rterm.exe
+    const exe = basename(rExePath).toLowerCase();
+    if (exe !== kWindowsRExe.toLowerCase()) {
+      rExePath = join(dirname(rExePath), kWindowsRExe);
+      logger().logDebug(`User selected ${origPath}, replacing with ${rExePath}`);
+    }
+  }
+  return rExePath;
 }

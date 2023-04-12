@@ -25,6 +25,7 @@ import { ElectronDesktopOptions } from '../../main/preferences/electron-desktop-
 
 import { existsSync } from 'fs';
 import { normalize } from 'path';
+import { kWindowsRExe } from '../utils';
 
 declare const CHOOSE_R_WEBPACK_ENTRY: string;
 declare const CHOOSE_R_PRELOAD_WEBPACK_ENTRY: string;
@@ -81,8 +82,8 @@ export class ChooseRModalWindow extends ModalDialog<CallbackData | null> {
     const r32 = findDefault32Bit();
     const r64 = findDefault64Bit();
     const initData = {
-      default32bitPath: isValidInstallation(r32) ? r32 : '',
-      default64bitPath: isValidInstallation(r64) ? r64 : '',
+      default32bitPath: isValidInstallation(r32, 'i386') ? r32 : '',
+      default64bitPath: isValidInstallation(r64, 'x64') ? r64 : '',
       rInstalls: this.rInstalls,
       renderingEngine: ElectronDesktopOptions().renderingEngine(),
       selectedRVersion: ElectronDesktopOptions().rExecutablePath(),
@@ -102,14 +103,14 @@ export class ChooseRModalWindow extends ModalDialog<CallbackData | null> {
 
       this.addIpcHandler('use-default-32bit', async (event, data: CallbackData) => {
         const installPath = initData.default32bitPath;
-        data.binaryPath = `${installPath}/bin/i386/R.exe`;
+        data.binaryPath = `${installPath}/bin/i386/${kWindowsRExe}`;
         logger().logDebug(`Using default 32-bit version of R (${data.binaryPath})`);
         return this.maybeResolve(resolve, data);
       });
 
       this.addIpcHandler('use-default-64bit', async (event, data: CallbackData) => {
         const installPath = initData.default64bitPath;
-        data.binaryPath = `${installPath}/bin/x64/R.exe`;
+        data.binaryPath = `${installPath}/bin/x64/${kWindowsRExe}`;
         logger().logDebug(`Using default 64-bit version of R (${data.binaryPath})`);
         return this.maybeResolve(resolve, data);
       });
@@ -123,6 +124,7 @@ export class ChooseRModalWindow extends ModalDialog<CallbackData | null> {
         const response = dialog.showOpenDialogSync(this, {
           title: i18next.t('uiFolder.chooseRExecutable'),
           properties: ['openFile'],
+          defaultPath: kWindowsRExe,
           filters: [{ name: i18next.t('uiFolder.rExecutable'), extensions: ['exe'] }],
         });
 
