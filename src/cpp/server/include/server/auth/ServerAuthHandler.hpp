@@ -189,7 +189,7 @@ void signOut(const core::http::Request& request,
 // used to prevent inordinate generation of expired tokens
 bool isUserSignInThrottled(const std::string& user);
 
-void insertRevokedCookie(const RevokedCookie& cookie);
+bool insertRevokedCookie(const RevokedCookie& cookie);
 void applyRemoteRevokedCookie(const std::string& cookie);
 
 // refreshes the auth cookie silently (without user intervention)

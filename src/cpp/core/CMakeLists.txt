@@ -121,6 +121,7 @@ set(CORE_SOURCE_FILES
    system/Process.cpp
    system/ShellUtils.cpp
    system/System.cpp
+   system/User.cpp
    system/Xdg.cpp
    system/file_monitor/FileMonitor.cpp
    terminal/PrivateCommand.cpp
