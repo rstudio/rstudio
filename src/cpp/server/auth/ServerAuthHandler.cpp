@@ -376,8 +376,6 @@ bool isCookieRevoked(const std::string& cookie)
 
    boost::posix_time::ptime now = boost::posix_time::second_clock::universal_time();
 
-   std::vector<RevokedCookie> expiredCookies;
-
    bool removeStaleCookies;
    bool expireCookies = false;
 
