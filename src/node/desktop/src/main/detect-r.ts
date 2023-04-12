@@ -26,12 +26,13 @@ import { ChooseRModalWindow } from '..//ui/widgets/choose-r';
 import { createStandaloneErrorDialog, handleLocaleCookies } from './utils';
 import { t } from 'i18next';
 
-import { ElectronDesktopOptions } from './preferences/electron-desktop-options';
+import { ElectronDesktopOptions, fixWindowsRExecutablePath } from './preferences/electron-desktop-options';
 import { FilePath } from '../core/file-path';
 import { dialog } from 'electron';
 
 import desktop from '../native/desktop.node';
 import { EOL } from 'os';
+import { kWindowsRExe } from '../ui/utils';
 
 let kLdLibraryPathVariable: string;
 if (process.platform === 'darwin') {
@@ -73,7 +74,7 @@ export async function promptUserForR(platform = process.platform): Promise<Expec
       // if the user selected a version of R previously, then use it
       const rBinDir = ElectronDesktopOptions().rBinDir();
       if (rBinDir) {
-        const rPath = `${rBinDir}/R.exe`;
+        const rPath = fixWindowsRExecutablePath(`${rBinDir}/${kWindowsRExe}`);
         logger().logDebug(`Trying version of R stored in RStudio Desktop options: ${rPath}`);
         if (isValidBinary(rPath)) {
           logger().logDebug(`Validation succeeded; using R: ${rPath}`);
@@ -181,7 +182,7 @@ export function detectREnvironment(rPath: string): Expected<REnvironment> {
   // resolve path to binary if we were given a directory
   let rExecutable = new FilePath(rPath);
   if (rExecutable.isDirectory()) {
-    rExecutable = rExecutable.completeChildPath(process.platform === 'win32' ? 'R.exe' : 'R');
+    rExecutable = rExecutable.completeChildPath(process.platform === 'win32' ? kWindowsRExe : 'R');
   }
 
   // generate small script for querying information about R
@@ -210,6 +211,20 @@ writeLines(sep = "\x1F", c(
   delete envCopy['R_INCLUDE_DIR'];
   delete envCopy['R_RUNTIME'];
   delete envCopy['R_SHARE_DIR'];
+
+  // On Windows, unset temporary directory environment variables: the R docs state that 
+  // when using R from command-line on Windows:
+  //
+  //   https://cran.r-project.org/doc/manuals/R-intro.html
+  //
+  //   "You need to ensure that either the environment variables TMPDIR, TMP, and TEMP
+  //    are either unset or one of them points to a valid place to create temporary
+  //    files and directories."
+  if (process.platform === 'win32') {
+    delete envCopy['TMP'];
+    delete envCopy['TMPDIR'];
+    delete envCopy['TEMP'];
+  }
 
   const [result, error] = expect(() => {
     return spawnSync(rExecutable.getAbsolutePath(), ['--vanilla', '-s'], {
@@ -360,9 +375,13 @@ export function findRInstallationsWin32(): string[] {
   return uniqueInstallations;
 }
 
-export function isValidInstallation(rInstallPath: string): boolean {
-  const rExeName = process.platform === 'win32' ? 'R.exe' : 'R';
-  const rExePath = path.normalize(`${rInstallPath}/bin/${rExeName}`);
+export function isValidInstallation(rInstallPath: string, archDir: string): boolean {
+  if (process.platform !== 'win32') {
+    logger().logErrorMessage('Windows-only API invoked on non-Windows codepath (isValidInstallation)');
+    return true;
+  }
+
+  const rExePath = path.normalize(`${rInstallPath}/bin/${archDir}/${kWindowsRExe}`);
   return isValidBinary(rExePath);
 }
 
@@ -403,7 +422,7 @@ function scanForRWin32(): Expected<string> {
   if (process.arch !== 'x32') {
     const x64InstallPath = findDefaultInstallPathWin32('R64');
     if (x64InstallPath) {
-      const x64BinaryPath = `${x64InstallPath}/bin/x64/R.exe`;
+      const x64BinaryPath = `${x64InstallPath}/bin/x64/${kWindowsRExe}`;
       if (isValidBinary(x64BinaryPath)) {
         logger().logDebug(`Using R ${x64BinaryPath} (found via registry)`);
         return ok(x64BinaryPath);
@@ -414,7 +433,7 @@ function scanForRWin32(): Expected<string> {
   // look for a 32-bit version of R
   const i386InstallPath = findDefaultInstallPathWin32('R');
   if (i386InstallPath) {
-    const i386BinaryPath = `${i386InstallPath}/bin/i386/R.exe`;
+    const i386BinaryPath = `${i386InstallPath}/bin/i386/${kWindowsRExe}`;
     if (isValidBinary(i386BinaryPath)) {
       logger().logDebug(`Using R ${i386BinaryPath} (found via registry)`);
       return ok(i386BinaryPath);
