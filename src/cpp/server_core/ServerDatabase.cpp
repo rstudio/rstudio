@@ -406,7 +406,7 @@ Error initialize(const std::string& databaseConfigFile,
    if (error)
       return error;
    
-   if(getConfiguredDriver(options) == Driver::Postgresql)
+   if (getConfiguredDriver(options) == Driver::Postgresql)
    {
       validateMinimumPostgreSqlVersion();
    }
