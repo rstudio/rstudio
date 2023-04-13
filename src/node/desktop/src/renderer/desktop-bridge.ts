@@ -473,10 +473,6 @@ export function getDesktopBridge() {
       ipcRenderer.send('desktop_set_disable_gpu_driver_bug_workarounds', disable);
     },
 
-    showLicenseDialog: () => {
-      ipcRenderer.send('desktop_show_license_dialog');
-    },
-
     showSessionServerOptionsDialog: () => {
       ipcRenderer.send('desktop_show_session_server_options_dialog');
     },
@@ -486,20 +482,6 @@ export function getDesktopBridge() {
         .invoke('desktop_get_init_messages')
         .then((messages) => callback(messages))
         .catch((error) => reportIpcError('getInitMessages', error));
-    },
-
-    getLicenseStatusMessage: (callback: VoidCallback<string>) => {
-      ipcRenderer
-        .invoke('desktop_get_license_status_message')
-        .then((message) => callback(message))
-        .catch((error) => reportIpcError('getLicenseStatusMessage', error));
-    },
-
-    allowProductUsage: (callback: VoidCallback<boolean>) => {
-      ipcRenderer
-        .invoke('desktop_allow_product_usage')
-        .then((allow) => callback(allow))
-        .catch((error) => reportIpcError('allowProductUsage', error));
     },
 
     getDesktopSynctexViewer: (callback: VoidCallback<string>) => {
@@ -689,5 +671,9 @@ export function getDesktopBridge() {
         .then((info) => callback(info))
         .catch((error) => reportIpcError('getStartupErrorInfo', error));
     },
+
+    // pro-only start
+
+    // pro-only end
   };
 }

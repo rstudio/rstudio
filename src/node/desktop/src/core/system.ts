@@ -58,3 +58,15 @@ export function isCentOS(): boolean {
   }
   return false;
 }
+
+export function fixupExecutablePath(exePath: FilePath): FilePath {
+  if (process.platform !== 'win32') {
+    return exePath; // do nothing on posix
+  }
+
+  if (exePath.getExtension().length === 0) {
+    return exePath.getParent().completePath(exePath.getFilename() + '.exe');
+  } else {
+    return exePath;
+  }
+}

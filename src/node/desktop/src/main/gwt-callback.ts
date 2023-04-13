@@ -14,7 +14,18 @@
  */
 
 import { exec, execSync } from 'child_process';
-import { app, nativeTheme, BrowserWindow, clipboard, dialog, ipcMain, Rectangle, screen, shell, webFrameMain } from 'electron';
+import {
+  app,
+  nativeTheme,
+  BrowserWindow,
+  clipboard,
+  dialog,
+  ipcMain,
+  Rectangle,
+  screen,
+  shell,
+  webFrameMain,
+} from 'electron';
 import { IpcMainEvent, MessageBoxOptions, OpenDialogOptions, SaveDialogOptions } from 'electron/main';
 import EventEmitter from 'events';
 import { existsSync, writeFileSync } from 'fs';
@@ -532,7 +543,6 @@ export class GwtCallback extends EventEmitter {
     ipcMain.handle(
       'desktop_show_message_box',
       async (event, type, caption, message, buttons, defaultButton, cancelButton) => {
-
         let openDialogOptions: MessageBoxOptions;
         if (process.platform === 'darwin') {
           openDialogOptions = {
@@ -715,26 +725,12 @@ export class GwtCallback extends EventEmitter {
       ElectronDesktopOptions().setUseGpuDriverBugWorkarounds(!disable);
     });
 
-    ipcMain.on('desktop_show_license_dialog', () => {
-      GwtCallback.unimpl('desktop_show_license_dialog');
-    });
-
     ipcMain.on('desktop_show_session_server_options_dialog', () => {
       GwtCallback.unimpl('desktop_show_session_server_options_dialog');
     });
 
     ipcMain.handle('desktop_get_init_messages', () => {
       return '';
-    });
-
-    ipcMain.handle('desktop_get_license_status_message', () => {
-      GwtCallback.unimpl('desktop_get_license_status_messages');
-      return '';
-    });
-
-    ipcMain.handle('desktop_allow_product_usage', () => {
-      GwtCallback.unimpl('desktop_allow_product_usage');
-      return true;
     });
 
     ipcMain.handle('desktop_get_desktop_synctex_viewer', () => {
@@ -921,6 +917,10 @@ export class GwtCallback extends EventEmitter {
       }
       return resolveTemplateVar(varName, this.errorPageData);
     });
+
+    // pro-only license start
+
+    // pro-only license end
   }
 
   addMacOSVersionError(): void {

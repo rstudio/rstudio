@@ -89,10 +89,10 @@ export interface WindowBounds {
 
 /**
  * Check if two Rectangles intersect.
- * 
+ *
  * @param one First rectangle
  * @param two Second rectangle
- * 
+ *
  * @returns True if at least one pixel is within both rectangles.
  */
 export function intersects(first: Rectangle, second: Rectangle): boolean {
@@ -207,7 +207,7 @@ export class DesktopOptionsImpl implements DesktopOptions {
       height: savedBounds.height - 5,
       width: savedBounds.width - 5,
       x: savedBounds.x + 5,
-      y: savedBounds.y + 5
+      y: savedBounds.y + 5,
     };
 
     // check for intersection
@@ -396,23 +396,20 @@ if (process.platform === 'darwin') {
 }
 
 /**
- * If user manually chooses bin\R.exe, sessions won't load, so insert the 
+ * If user manually chooses bin\R.exe, sessions won't load, so insert the
  * architecture folder (i386 if they are on a 32-bit machine, otherwise x64).
  *
  * If they want to use 32-bit R on a 64-bit machine they will need to
  * choose it directly from the i386 folder.
- * 
+ *
  * Use Rterm.exe instead of R.exe (or anything else the user might have
  * chosen; we can't prevent them from choosing arbitrary files).
- * 
+ *
  * @param rExePath Full path to Rterm.exe
  * @returns Full path to Rterm.exe including arch folder
  */
 export function fixWindowsRExecutablePath(rExePath: string): string {
-  if (process.platform !== 'win32' ||
-      !existsSync(rExePath) || 
-      lstatSync(rExePath).isDirectory()) {
-
+  if (process.platform !== 'win32' || !existsSync(rExePath) || lstatSync(rExePath).isDirectory()) {
     // unexpected situation: just leave it as-is
     return rExePath;
   }
