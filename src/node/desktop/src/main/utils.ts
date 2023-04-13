@@ -234,9 +234,9 @@ function rsessionNotFoundError(): Error {
 }
 
 /**
- * @returns Paths to config file, rsession, and desktop scripts.
+ * @returns Paths for install path, config file, rsession, and desktop scripts.
  */
-export function findComponents(): [FilePath, FilePath, FilePath] {
+export function findComponents(): [FilePath, FilePath, FilePath, FilePath] {
   // determine paths to config file, rsession, and desktop scripts
   let confPath: FilePath = new FilePath();
   let sessionPath: FilePath = new FilePath();
@@ -245,7 +245,7 @@ export function findComponents(): [FilePath, FilePath, FilePath] {
   if (app.isPackaged) {
     // confPath is intentionally left empty for a package build
     sessionPath = binRoot.completePath(`bin/${rsessionExeName()}`);
-    return [confPath, sessionPath, new FilePath(getAppPath())];
+    return [binRoot, confPath, sessionPath, new FilePath(getAppPath())];
   }
 
   // developer builds -- first, check for environment variable
@@ -274,7 +274,7 @@ export function findComponents(): [FilePath, FilePath, FilePath] {
     const sessionPath = buildRootPath.completePath(`${subdir}/session/${rsessionExeName()}`);
     if (sessionPath.existsSync()) {
       confPath = buildRootPath.completePath(`${subdir}/conf/rdesktop-dev.conf`);
-      return [confPath, sessionPath, new FilePath(getAppPath())];
+      return [new FilePath(buildRoot), confPath, sessionPath, new FilePath(getAppPath())];
     }
   }
 

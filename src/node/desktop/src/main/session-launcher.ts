@@ -182,12 +182,12 @@ export class SessionLauncher {
     }
   }
 
-  launchFirstSession(): void {
+  launchFirstSession(installPath: FilePath, devMode: boolean): void {
     appState().activation().on(DesktopActivation.LAUNCH_FIRST_SESSION, this.onLaunchFirstSession.bind(this));
     appState().activation().on(DesktopActivation.LAUNCH_ERROR, this.onLaunchError.bind(this));
 
     // This will ultimately trigger one of the above events to continue with startup (or failure).
-    appState().activation().getInitialLicense();
+    appState().activation().getInitialLicense(installPath, devMode);
   }
 
   // Porting note: In the C++ code this was an overload of launchFirstSession(), but

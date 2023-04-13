@@ -273,7 +273,7 @@ export class Application implements AppState {
     this.appLaunch = ApplicationLaunch.init();
 
     // determine paths to config file, rsession, and desktop scripts
-    const [confPath, sessionPath, scriptsPath] = findComponents();
+    const [installPath, confPath, sessionPath, scriptsPath] = findComponents();
     this.sessionPath = sessionPath;
     this.scriptsPath = scriptsPath;
 
@@ -365,7 +365,7 @@ export class Application implements AppState {
 
     // launch a local session
     this.sessionLauncher = new SessionLauncher(this.sessionPath, confPath, new FilePath(), this.appLaunch);
-    this.sessionLauncher.launchFirstSession();
+    this.sessionLauncher.launchFirstSession(installPath, !app.isPackaged);
 
     this.gwtCallback?.once(GwtCallback.WORKBENCH_INITIALIZED, () => {
       this.argsManager.handleAfterSessionLaunchCommands();

@@ -5,7 +5,8 @@
     "buttonBrowse": "Browse...",
     "unknownErrorOccurred": "An unknown error occurred.",
     "buttonYes": "Yes",
-    "buttonNo": "No"
+    "buttonNo": "No",
+    "buttonQuit": "Quit"
   },
   "contextMenu": {
     "saveImageAsDots": "Save image as...",
@@ -112,5 +113,7 @@
   },
   "i18nManager": {
     "errorLocalizingDocument": "Error localizing document:"
+  },
+  "licenseDialog": {
   }
 }
