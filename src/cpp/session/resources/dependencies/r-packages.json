@@ -499,7 +499,7 @@
         "import_mongo": {
             "description": "Mongo DB Import",
             "packages": [
-                "mogolite",
+                "mongolite",
                 "jsonlite"
             ]
         },
