@@ -122,6 +122,12 @@ protected:
       "Whether or not to reuse last used bound ports when restarting a Launcher session.");
 
    pSession->add_options()
+      ("session-connections-block-suspend",
+      value<bool>(&sessionConnectionsBlockSuspend_)->default_value(true),
+      "Whether or not an active database connection should block attempts to suspend the session after timeout.")
+      ("session-external-pointers-block-suspend",
+      value<bool>(&sessionExternalPointersBlockSuspend_)->default_value(true),
+      "Whether or not R objects containing external pointers should block attempts to suspend the session after timeout.")
       (kTimeoutSessionOption,
       value<int>(&timeoutMinutes_)->default_value(120),
       "The amount of minutes before a session times out, at which point the session will either suspend or exit.")
@@ -422,6 +428,8 @@ public:
    bool standalone() const { return standalone_; }
    bool verifySignatures() const { return verifySignatures_; }
    bool wwwReusePorts() const { return wwwReusePorts_; }
+   bool sessionConnectionsBlockSuspend() const { return sessionConnectionsBlockSuspend_; }
+   bool sessionExternalPointersBlockSuspend() const { return sessionExternalPointersBlockSuspend_; }
    int timeoutMinutes() const { return timeoutMinutes_; }
    bool timeoutSuspend() const { return timeoutSuspend_; }
    int disconnectedTimeoutMinutes() const { return disconnectedTimeoutMinutes_; }
@@ -525,6 +533,8 @@ protected:
    bool standalone_;
    bool verifySignatures_;
    bool wwwReusePorts_;
+   bool sessionConnectionsBlockSuspend_;
+   bool sessionExternalPointersBlockSuspend_;
    int timeoutMinutes_;
    bool timeoutSuspend_;
    int disconnectedTimeoutMinutes_;
