@@ -14,8 +14,9 @@
  */
 
 import { ipcRenderer, SaveDialogReturnValue, webContents } from 'electron';
-import { logger } from '../core/logger';
+import { logString } from './logger-bridge';
 import { normalizeSeparators } from '../ui/utils';
+import { safeError } from '../core/err';
 
 interface VoidCallback<Type> {
   (result: Type): void;
@@ -27,7 +28,7 @@ interface CursorPosition {
 }
 
 function reportIpcError(name: string, error: Error) {
-  console.log(`${name}: ${error.message}`);
+  logString('err', `IpcError: ${name}: ${error.message}`);
 }
 
 // eslint-disable-next-line @typescript-eslint/explicit-module-boundary-types
@@ -373,7 +374,7 @@ export function getDesktopBridge() {
         path = path.replaceAll('\\', '\\\\').replaceAll('"', '\\"').replaceAll('\n', '\\n');
         webcontents[0]
           .executeJavaScript(`window.desktopHooks.openFile("${path}")`)
-          .catch((error: unknown) => logger().logError(error));
+          .catch((error: unknown) => logString('err', safeError(error).message));
       }
     },
 
