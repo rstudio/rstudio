@@ -35,6 +35,7 @@
 - Improved robustness when chosing custom R version in Windows desktop (#12969)
 - Fixed bug that prevented RStudio Desktop from starting on Linux if desktop.ini was unreadable (#12963)
 - Improved RStudio Desktop startup behavior when user state folder inaccessible (#12988)
+- Fixed saving files to UNC paths on Windows (#12935)
 
 #### Posit Workbench
 - Fixed unlabeled buttons for screen reader users when page is narrow [Accessibility] (rstudio/rstudio-pro#4340)
