@@ -574,8 +574,15 @@ inline std::string getSymbolName(const RToken& rToken)
    if (rToken.isType(RToken::STRING) ||
        (rToken.isType(RToken::ID) && *rToken.begin() == L'`'))
    {
-       return string_utils::wideToUtf8(
-          std::wstring(rToken.begin() + 1, rToken.end() - 1));
+      if (rToken.length() < 2)
+      {
+         return std::string();
+      }
+      else
+      {
+         return string_utils::wideToUtf8(
+                  std::wstring(rToken.begin() + 1, rToken.end() - 1));
+      }
    }
    
    return rToken.contentAsUtf8();
