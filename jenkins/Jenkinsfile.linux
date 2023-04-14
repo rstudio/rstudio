@@ -361,6 +361,10 @@ pipeline {
                         script {
                           // publish build to dailies page
                           utils.publishToDailiesSite PACKAGE_FILE, DAILIES_PATH, AWS_PATH
+
+                          if (FLAVOR == "Electron") {
+                            utils.publishToDailiesSite TAR_PACKAGE_FILE, DAILIES_PATH, AWS_PATH
+                          }
                         }
                       }
                     }
