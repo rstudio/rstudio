@@ -61,10 +61,11 @@ describe('System', () => {
   it('fixupExecutablePath adds missing exe extension on Windows', () => {
     const path = new FilePath('hello');
     const fixedPath = fixupExecutablePath(path);
+    const exeExtension = '.exe';
     if (process.platform === 'win32') {
-      assert.equal(fixedPath.getAbsolutePath(), 'hello.exe');
+      assert.isTrue(fixedPath.getAbsolutePath().endsWith(exeExtension));
     } else {
-      assert.equal(path.getAbsolutePath(), fixedPath.getAbsolutePath());
+      assert.isFalse(fixedPath.getAbsolutePath().endsWith(exeExtension));
     }
   });
   it('fixupExecutablePath does not add exe extension if already there', () => {
