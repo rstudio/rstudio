@@ -169,50 +169,48 @@ export function intersects(first: Rectangle, second: Rectangle): boolean {
  * @param defaultWidth width to use if width must be changed
  * @param defaultHeight height to use if height must be changed
  */
-// export function positionAndEnsureVisible(
-//   window: BrowserWindow,
-//   requestedBounds: WindowBounds,
-//   defaultWidth: number,
-//   defaultHeight: number) {
+export function positionAndEnsureVisible(
+  window: BrowserWindow,
+  requestedBounds: Rectangle,
+  defaultWidth: number,
+  defaultHeight: number) {
 
-//   // Check if saved bounds is still partially in one of the available displays.
+  // Shrink the window rectangle a bit just to capture cases like RStudio
+  // too close to edge of window and hardly showing at all.
+  const checkRect = {
+    height: requestedBounds.height - 5,
+    width: requestedBounds.width - 5,
+    x: requestedBounds.x + 5,
+    y: requestedBounds.y + 5,
+  };
 
-//   // Shrink the window rectangle a bit just to capture cases like RStudio
-//   // too close to edge of window and hardly showing at all.
-//   const checkRect = {
-//     height: requestedBounds.height - 5,
-//     width: requestedBounds.width - 5,
-//     x: requestedBounds.x + 5,
-//     y: requestedBounds.y + 5,
-//   };
+  // check for intersection
+  const goodDisplays = screen.getAllDisplays().find((display) => {
+    return intersects(checkRect, display.workArea);
+  });
 
-//   // check for intersection
-//   const goodDisplays = screen.getAllDisplays().find((display) => {
-//     return intersects(checkRect, display.workArea);
-//   });
+  // Restore it to requested location if possible, or center of primary display otherwise
+  if (goodDisplays) {
+    window.setBounds(requestedBounds);
+  } else {
+    const primaryBounds = screen.getPrimaryDisplay().bounds;
+    const newSize = {
+      width: Math.min(defaultWidth, primaryBounds.width),
+      height: Math.min(defaultHeight, primaryBounds.height),
+    };
 
-//   // Restore it to previous location if possible, or center of primary display otherwise
-//   if (goodDisplays) {
-//     mainWindow.setBounds(savedBounds);
-//   } else {
-//     const primaryBounds = screen.getPrimaryDisplay().bounds;
-//     const newSize = {
-//       width: Math.min(defaultWidth, primaryBounds.width),
-//       height: Math.min(defaultHeight, primaryBounds.height),
-//     };
+    window.setSize(newSize.width, newSize.height);
 
-//     mainWindow.setSize(newSize.width, newSize.height);
+    // window.center() doesn't consistently pick the primary display,
+    // so manually calculating the center of the primary display
+    window.setPosition(
+      primaryBounds.x + (primaryBounds.width - newSize.width) / 2,
+      primaryBounds.y + (primaryBounds.height - newSize.height) / 2,
+      false
+    );
+  }
 
-//     // window.center() doesn't consistently pick the primary display,
-//     // so manually calculating the center of the primary display
-//     mainWindow.setPosition(
-//       primaryBounds.x + (primaryBounds.width - newSize.width) / 2,
-//       primaryBounds.y + (primaryBounds.height - newSize.height) / 2,
-//       );
-//     }
-
-//     // ensure a minimum size for the window on restore
-//     const currSize = mainWindow.getSize();
-//     mainWindow.setSize(Math.max(300, currSize[0]), Math.max(200, currSize[1]));
-
-// }
+  // ensure a minimum size for the window on restore
+  const currSize = window.getSize();
+  window.setSize(Math.max(300, currSize[0]), Math.max(200, currSize[1]));
+}
