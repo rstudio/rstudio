@@ -175,6 +175,9 @@ export function positionAndEnsureVisible(
   defaultWidth: number,
   defaultHeight: number) {
 
+  const minWidth = 300;
+  const minHeight = 200;
+
   // Shrink the window rectangle a bit just to capture cases like RStudio
   // too close to edge of window and hardly showing at all.
   const checkRect = {
@@ -212,5 +215,5 @@ export function positionAndEnsureVisible(
 
   // ensure a minimum size for the window on restore
   const currSize = window.getSize();
-  window.setSize(Math.max(300, currSize[0]), Math.max(200, currSize[1]));
+  window.setSize(Math.max(minWidth, currSize[0]), Math.max(minHeight, currSize[1]));
 }
