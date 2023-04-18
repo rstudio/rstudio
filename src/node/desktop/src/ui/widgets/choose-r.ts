@@ -72,13 +72,19 @@ export class ChooseRModalWindow extends ModalDialog<CallbackData | null> {
   }
 
   async maybeResolve(resolve: (data: CallbackData) => void, data: CallbackData) {
-    if (data.binaryPath) {
-      data.binaryPath = fixWindowsRExecutablePath(data.binaryPath);
-    }
-    if (checkValid(data)) {
-      resolve(data);
-      return true;
-    } else {
+    try {
+      logger().logDebug(`maybeResolve binaryPath: ${data.binaryPath ?? 'null binary path'}`);
+      if (data.binaryPath) {
+        data.binaryPath = fixWindowsRExecutablePath(data.binaryPath);
+      }
+      if (checkValid(data)) {
+        resolve(data);
+        return true;
+      } else {
+        return false;
+      }
+    } catch (error: unknown) {
+      logger().logError(error);
       return false;
     }
   }
@@ -135,7 +141,7 @@ export class ChooseRModalWindow extends ModalDialog<CallbackData | null> {
 
         if (response) {
           data.binaryPath = response[0];
-          logger().logDebug(`Using user-selected version of R (${data.binaryPath})`);
+          logger().logDebug(`Using user-browsed version of R (${data.binaryPath})`);
           return this.maybeResolve(resolve, data);
         }
 
