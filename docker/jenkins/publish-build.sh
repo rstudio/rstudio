@@ -141,7 +141,11 @@ if [ ! -z $channel ]; then
 fi
 
 # Determine file size
-size=$(wc -c $file | awk '{print $1}')
+if [[ -f $file  ]]; then
+    size=$(wc -c $file | awk '{print $1}')
+else
+    size=0
+fi
 
 # Determine file SHA256 sum
 if [[ "$OSTYPE" == "darwin"* ]]; then
