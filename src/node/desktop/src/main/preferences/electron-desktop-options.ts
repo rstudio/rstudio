@@ -14,7 +14,7 @@
  *
  */
 
-import { BrowserWindow, Rectangle, screen } from 'electron';
+import { BrowserWindow, screen } from 'electron';
 import Store from 'electron-store';
 import { existsSync, lstatSync } from 'fs';
 import { basename, dirname, join } from 'path';
@@ -26,7 +26,7 @@ import { RStudioUserState } from '../../types/user-state-schema';
 import { generateSchema, legacyPreferenceManager } from './../preferences/preferences';
 import DesktopOptions from './desktop-options';
 import { kWindowsRExe } from '../../ui/utils';
-import { WindowBounds } from '../window-utils';
+import { WindowBounds, intersects } from '../window-utils';
 
 const kProportionalFont = 'font.proportionalFont';
 const kFixedWidthFont = 'font.fixedWidthFont';
@@ -75,33 +75,6 @@ export function ElectronDesktopOptions(directory = '', legacyOptions?: DesktopOp
  */
 export function clearOptionsSingleton(): void {
   options = null;
-}
-
-/**
- * Check if two Rectangles intersect.
- *
- * @param one First rectangle
- * @param two Second rectangle
- *
- * @returns True if at least one pixel is within both rectangles.
- */
-export function intersects(first: Rectangle, second: Rectangle): boolean {
-  const firstRight = first.x + first.width;
-  const firstBottom = first.y + first.height;
-  const secondRight = second.x + second.width;
-  const secondBottom = second.y + second.height;
-
-  if (first.x >= secondRight || firstRight <= second.x) {
-    // Don't overlap horizontally
-    return false;
-  }
-
-  if (first.y >= secondBottom || firstBottom <= second.y) {
-    // Don't overlap vertically
-    return false;
-  }
-
-  return true;
 }
 
 /**
