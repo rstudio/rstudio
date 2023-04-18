@@ -119,7 +119,6 @@ ipcRenderer.on('initialize', (_event, data) => {
         const useCustomRadioInput = document.getElementById('use-custom') as any;
         useCustomRadioInput.checked = true;
 
-
         selectWidget.disabled = false;
         selectWidget.focus();
       }

@@ -39,7 +39,7 @@ class FilePreferences extends DesktopOptions {
         this.properties = PropertiesReader(desktopIni);
       } catch (err: unknown) {
         // too early in startup to use logging
-        console.error(`Unable to migrate legacy desktop preferences: ${safeError(err).message}`); 
+        console.error(`Unable to migrate legacy desktop preferences: ${safeError(err).message}`);
       }
     }
   }

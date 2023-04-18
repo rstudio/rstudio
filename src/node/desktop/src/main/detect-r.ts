@@ -212,7 +212,7 @@ writeLines(sep = "\x1F", c(
   delete envCopy['R_RUNTIME'];
   delete envCopy['R_SHARE_DIR'];
 
-  // On Windows, unset temporary directory environment variables: the R docs state that 
+  // On Windows, unset temporary directory environment variables: the R docs state that
   // when using R from command-line on Windows:
   //
   //   https://cran.r-project.org/doc/manuals/R-intro.html
