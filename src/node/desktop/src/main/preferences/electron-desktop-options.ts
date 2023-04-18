@@ -26,6 +26,7 @@ import { RStudioUserState } from '../../types/user-state-schema';
 import { generateSchema, legacyPreferenceManager } from './../preferences/preferences';
 import DesktopOptions from './desktop-options';
 import { kWindowsRExe } from '../../ui/utils';
+import { WindowBounds } from '../window-utils';
 
 const kProportionalFont = 'font.proportionalFont';
 const kFixedWidthFont = 'font.fixedWidthFont';
@@ -74,17 +75,6 @@ export function ElectronDesktopOptions(directory = '', legacyOptions?: DesktopOp
  */
 export function clearOptionsSingleton(): void {
   options = null;
-}
-
-/**
- * Window geometry
- */
-export interface WindowBounds {
-  height: number;
-  width: number;
-  x: number;
-  y: number;
-  maximized: boolean;
 }
 
 /**

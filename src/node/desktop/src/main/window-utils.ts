@@ -121,3 +121,67 @@ export function activateWindow(name: string): void {
 export function focusedWebContents(): Electron.WebContents | null {
   return webContents.getFocusedWebContents();
 }
+
+/**
+ * Window geometry
+ */
+export interface WindowBounds {
+  height: number;
+  width: number;
+  x: number;
+  y: number;
+  maximized: boolean;
+}
+
+/**
+ * Resize and reposition a window to requested location, and ensure it is visible and not too
+ * small (e.g. if monitor configuration has changed).
+ * 
+ * @param window window to 
+ * @param defaultWidth width to use if width must be changed
+ * @param defaultHeight height to use if height must be changed
+ */
+// export function positionAndEnsureVisible(window: BrowserWindow, defaultWidth: number, defaultHeight: number) {
+//   const savedBounds = this.windowBounds();
+  
+//   // Check if saved bounds is still partially in one of the available displays.
+  
+//   // Shrink the window rectangle a bit just to capture cases like RStudio
+//   // too close to edge of window and hardly showing at all.
+//   const checkRect = {
+//     height: savedBounds.height - 5,
+//     width: savedBounds.width - 5,
+//     x: savedBounds.x + 5,
+//     y: savedBounds.y + 5,
+//   };
+  
+//   // check for intersection
+//   const goodDisplays = screen.getAllDisplays().find((display) => {
+//     return intersects(checkRect, display.workArea);
+//   });
+  
+//   // Restore it to previous location if possible, or center of primary display otherwise
+//   if (goodDisplays) {
+//     mainWindow.setBounds(savedBounds);
+//   } else {
+//     const primaryBounds = screen.getPrimaryDisplay().bounds;
+//     const newSize = {
+//       width: Math.min(defaultWidth, primaryBounds.width),
+//       height: Math.min(defaultHeight, primaryBounds.height),
+//     };
+    
+//     mainWindow.setSize(newSize.width, newSize.height);
+    
+//     // window.center() doesn't consistently pick the primary display,
+//     // so manually calculating the center of the primary display
+//     mainWindow.setPosition(
+//       primaryBounds.x + (primaryBounds.width - newSize.width) / 2,
+//       primaryBounds.y + (primaryBounds.height - newSize.height) / 2,
+//       );
+//     }
+    
+//     // ensure a minimum size for the window on restore
+//     const currSize = mainWindow.getSize();
+//     mainWindow.setSize(Math.max(300, currSize[0]), Math.max(200, currSize[1]));
+    
+// }
