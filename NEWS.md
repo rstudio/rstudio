@@ -37,6 +37,7 @@
 - Fixed bug that prevented RStudio Desktop from starting on Linux if desktop.ini was unreadable (#12963)
 - Improved RStudio Desktop startup behavior when user state folder inaccessible (#12988)
 - Fixed saving files to UNC paths on Windows (#12652, #12935)
+- Fixed window disappearing when restoring from maximized on macOS (#13010)
 
 #### Posit Workbench
 - Fixed unlabeled buttons for screen reader users when page is narrow [Accessibility] (rstudio/rstudio-pro#4340)
