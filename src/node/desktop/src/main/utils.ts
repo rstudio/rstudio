@@ -190,16 +190,11 @@ function findBuildRootImpl(rootDir: string): string {
   const buildDirParents = [
     `${rootDir}`,
     `${rootDir}/src`,
-    `${rootDir}/src/cpp`
+    `${rootDir}/src/cpp`,
+    `${rootDir}/package/linux`,
+    `${rootDir}/package/osx`,
+    `${rootDir}/package/win32`,
   ];
-
-  if (app.isPackaged) {
-    buildDirParents.push(
-      `${rootDir}/package/linux`,
-      `${rootDir}/package/osx`,
-      `${rootDir}/package/win32`
-    );
-  }
 
   // list all files + directories in root folder
   for (const buildDirParent of buildDirParents) {
