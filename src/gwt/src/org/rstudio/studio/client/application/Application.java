@@ -409,6 +409,17 @@ public class Application implements ApplicationEventHandlers
       }
    }
 
+   @Handler
+   void onCrashDesktopApplication()
+   {
+      globalDisplay_.showYesNoMessage(
+            GlobalDisplay.MSG_WARNING,
+            constants_.reallyCrashCaption(),
+            constants_.reallyCrashMessage(),
+            () -> Desktop.getFrame().crashDesktopApplication(),
+            false);
+   }
+
    @Override
    public void onUnauthorized(UnauthorizedEvent event)
    {
@@ -1019,6 +1030,11 @@ public class Application implements ApplicationEventHandlers
          StringUtil.isNullOrEmpty(sessionInfo.getUserHomePageUrl()))
       {
          commands_.loadServerHome().remove();
+      }
+
+      if (!BrowseCap.isElectron())
+      {
+         commands_.crashDesktopApplication().remove();
       }
 
       if (!sessionInfo.getWorkbenchJobsEnabled())

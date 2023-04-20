@@ -734,4 +734,5 @@ public abstract class
    // Internal
    public abstract AppCommand showDomElements();
    public abstract AppCommand showShortcutCommand();
+   public abstract AppCommand crashDesktopApplication();
 }

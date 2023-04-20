@@ -847,6 +847,10 @@ export class GwtCallback extends EventEmitter {
       this.emit(GwtCallback.SESSION_QUIT);
     });
 
+    ipcMain.on('desktop_stop_main_thread', () => {
+      process.crash();
+    });
+
     ipcMain.handle('desktop_get_session_server', () => {
       GwtCallback.unimpl('desktop_get_session_server');
       return {};

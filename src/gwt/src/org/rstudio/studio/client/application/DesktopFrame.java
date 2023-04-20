@@ -212,6 +212,8 @@ public interface DesktopFrame extends JavaScriptPassthrough
 
    void onSessionQuit();
 
+   void crashDesktopApplication();
+
    void getSessionServer(CommandWithArg<SessionServer> callback);
    void getSessionServers(CommandWithArg<JsArray<SessionServer>> callback);
    void reconnectToSessionServer(SessionServer server);
