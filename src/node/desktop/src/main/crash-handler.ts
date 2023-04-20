@@ -26,7 +26,7 @@ import path from 'path';
  * If Electron/RStudio crashes, the results will be found under:
  * 
  *     Windows: %appdata%\RStudio\Crashpad
- *     Mac:     ~/.config/rstudio/Crashpad
+ *     Mac:     ~/Library/Application Support/RStudio/Crashpad
  *     Linux:   ~/.config/rstudio/Crashpad
  */
 export function initCrashHandler() {
