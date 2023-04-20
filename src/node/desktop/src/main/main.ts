@@ -23,6 +23,7 @@ import { initI18n } from './i18n-manager';
 import { ElectronDesktopOptions } from './preferences/electron-desktop-options';
 import { parseStatus } from './program-status';
 import { createStandaloneErrorDialog } from './utils';
+import { initCrashHandler } from './crash-handler';
 
 // Handle creating/removing shortcuts on Windows when installing/uninstalling.
 // eslint-disable-next-line @typescript-eslint/no-var-requires
@@ -128,6 +129,7 @@ class RStudioMain {
 }
 
 // Startup
+initCrashHandler();
 initI18n();
 
 const main = new RStudioMain();
