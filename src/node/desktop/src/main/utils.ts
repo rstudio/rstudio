@@ -170,19 +170,19 @@ export function findRepoRoot(): string {
 }
 
 // used to help find built C++ sources in developer configurations
-function findBuildRoots(): string[] {
+function findBuildRoot(): string {
   // look for the project root directory. note that the current
   // working directory may differ depending on how we are launched
   // (e.g. unit tests will have their parent folder as the working directory)
   const dir = findRepoRoot();
   if (dir.length > 0) {
-    return findBuildRootsImpl(dir);
+    return findBuildRootImpl(dir);
   }
 
   throw rsessionNotFoundError();
 }
 
-function findBuildRootsImpl(rootDir: string): string[] {
+function findBuildRootImpl(rootDir: string): string {
   // array of discovered build directories
   const buildDirs = [];
 
@@ -212,7 +212,7 @@ function findBuildRootsImpl(rootDir: string): string[] {
 
   // if we didn't find anything, bail here
   if (buildDirs.length === 0) {
-    return [];
+    return '';
   }
 
   // sort build directories by last modified time
@@ -220,7 +220,10 @@ function findBuildRootsImpl(rootDir: string): string[] {
     return rhs.stat.mtime.getTime() - lhs.stat.mtime.getTime();
   });
 
-  return buildDirs.map((dir) => dir.path);
+  // return the newest one
+  const buildRoot = buildDirs[0].path;
+  logger().logDebug(`Using build root: ${buildRoot}`);
+  return buildRoot;
 }
 
 function rsessionNotFoundError(): Error {
@@ -231,15 +234,15 @@ function rsessionNotFoundError(): Error {
 }
 
 /**
- * @returns Determine paths for install path, config file, rsession, and desktop scripts.
+ * @returns Paths for install path, config file, rsession, and desktop scripts.
  */
 export function findComponents(): [FilePath, FilePath, FilePath, FilePath] {
   // determine paths to config file, rsession, and desktop scripts
   let confPath: FilePath = new FilePath();
   let sessionPath: FilePath = new FilePath();
 
+  const binRoot = new FilePath(getAppPath());
   if (app.isPackaged) {
-    const binRoot = new FilePath(getAppPath());
     // confPath is intentionally left empty for a package build
     sessionPath = binRoot.completePath(`bin/${rsessionExeName()}`);
     return [binRoot, confPath, sessionPath, new FilePath(getAppPath())];
@@ -256,21 +259,26 @@ export function findComponents(): [FilePath, FilePath, FilePath, FilePath] {
 
   // if we couldn't resolve the build root from RSTUDIO_CPP_BUILD_OUTPUT,
   // then fall back to lookup heuristics
-  const buildRootCandidates = !buildRoot ? findBuildRoots() : [buildRoot];
-  // check each build root candidate for rsession
-  for (const dir of buildRootCandidates) {
-    const buildRootPath = new FilePath(dir);
-    for (const subDir of ['.', 'src/cpp']) {
-      sessionPath = buildRootPath.completePath(`${subDir}/session/${rsessionExeName()}`);
-      if (sessionPath.existsSync()) {
-        logger().logDebug(`Using build root: ${dir}`);
-        confPath = buildRootPath.completePath(`${subDir}/conf/rdesktop-dev.conf`);
-        return [new FilePath(buildRoot), confPath, sessionPath, new FilePath(getAppPath())];
-      }
+  if (!buildRoot) {
+    buildRoot = findBuildRoot();
+  }
+
+  // if we still don't have a root, bail
+  if (!buildRoot) {
+    throw rsessionNotFoundError();
+  }
+
+  // try to find rsession in build root
+  const buildRootPath = new FilePath(buildRoot);
+  for (const subdir of ['.', 'src/cpp']) {
+    const sessionPath = buildRootPath.completePath(`${subdir}/session/${rsessionExeName()}`);
+    if (sessionPath.existsSync()) {
+      confPath = buildRootPath.completePath(`${subdir}/conf/rdesktop-dev.conf`);
+      return [new FilePath(buildRoot), confPath, sessionPath, new FilePath(getAppPath())];
     }
   }
 
-  // we didn't find a build root with rsession -- throw an error
+  // we found a build root, but not rsession -- throw an error
   throw rsessionNotFoundError();
 }
 
