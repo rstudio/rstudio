@@ -1267,6 +1267,7 @@ assign(x = ".rs.acCompletionTypes",
       quote    <- quote[idx]
       type     <- type[idx]
       meta     <- meta[idx]
+      context  <- context[idx]
 
       if (!is.null(suggestOnAccept))
          suggestOnAccept <- suggestOnAccept[idx]
