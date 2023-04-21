@@ -104,7 +104,7 @@ export class DesktopBrowserWindow extends EventEmitter {
 
   // debouncing due to https://github.com/rstudio/rstudio/issues/13027
   positionAndEnsureVisibleDebounced= debounce((window, requestedBounds, defaultWidth, defaultHeight) => 
-    positionAndEnsureVisible(window, requestedBounds, defaultWidth, defaultHeight) , 75);
+    positionAndEnsureVisible(window, requestedBounds, defaultWidth, defaultHeight), 75);
 
   // if loading fails and emits `did-fail-load` it will be followed by a
   // 'did-finish-load'; use this bool to differentiate
