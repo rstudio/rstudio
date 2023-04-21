@@ -8,6 +8,7 @@
 - Moved Help panel font size setting to Appearance tab in Global Options (#12816)
 - Update openssl to 1.1.1t for Windows (rstudio/rstudio-pro#3675)
 - Improve visibility of focus rectangles on Server / Workbench Sign In page [Accessibility] (#12846)
+- Added ability to enable minidump generation for Electron crashes (#13025)
 
 #### Posit Workbench
 - Added the `session-connections-block-suspend` session option, controlling whether active connections can block suspension of an R session.

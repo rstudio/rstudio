@@ -587,6 +587,10 @@ export function getDesktopBridge() {
       ipcRenderer.send('desktop_on_session_quit');
     },
 
+    crashDesktopApplication: () => {
+      ipcRenderer.send('desktop_stop_main_thread');
+    },
+
     getSessionServer: (callback: VoidCallback<Record<string, unknown>>) => {
       ipcRenderer
         .invoke('desktop_get_session_server')
