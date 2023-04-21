@@ -43,7 +43,7 @@
     "chai": "4.3.6",
     "copy-webpack-plugin": "11.0.0",
     "css-loader": "6.7.3",
-    "electron": "23.1.2",
+    "electron": "23.2.4",
     "electron-mocha": "11.0.2",
     "eslint": "8.35.0",
     "eslint-config-prettier": "8.6.0",
