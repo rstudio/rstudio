@@ -137,7 +137,10 @@ protected:
       "Specifies an additional origin that requests are allowed from, even if it does not match the host domain. Used if origin checking is enabled. May be specified multiple times for multiple origins.")
       ("session-use-file-storage",
       value<bool>(&sessionUseFileStorage_)->default_value(true),
-      "Whether to use the file system to store metadata about the session storage or the internal database. Setting this to false may require special network configuration. See [Session Storage](../server_management/session_storage.html) for more information.");
+      "Whether to use the file system to store metadata about the session storage or the internal database. Setting this to false may require special network configuration. See [Session Storage](../server_management/session_storage.html) for more information.")
+      ("www-stats-monitor-seconds",
+      value<int>(&statsMonitorSeconds_)->default_value(0),
+      "The time interval in seconds to log info/debug messages with stats on server performance. Set to 0 to disable.");
 
    pRsession->add_options()
       ("rsession-which-r",
@@ -260,6 +263,7 @@ public:
    bool wwwEnableOriginCheck() const { return wwwEnableOriginCheck_; }
    std::vector<boost::regex> wwwAllowedOrigins() const { return wwwAllowedOrigins_; }
    bool sessionUseFileStorage() const { return sessionUseFileStorage_; }
+   int statsMonitorSeconds() const { return statsMonitorSeconds_; }
    std::string rsessionWhichR() const { return rsessionWhichR_; }
    std::string rsessionPath() const { return rsessionPath_; }
    std::string rldpathPath() const { return rldpathPath_; }
@@ -311,6 +315,7 @@ protected:
    bool wwwEnableOriginCheck_;
    std::vector<boost::regex> wwwAllowedOrigins_;
    bool sessionUseFileStorage_;
+   int statsMonitorSeconds_;
    std::string rsessionWhichR_;
    std::string rsessionPath_;
    std::string rldpathPath_;

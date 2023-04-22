@@ -181,6 +181,8 @@ Error httpServerInit()
 
    s_pHttpServer.reset(server::httpServerCreate(additionalHeaders));
 
+   s_pHttpServer->addStreamingUriPrefix("/events/get_events");
+
    // set server options
    s_pHttpServer->setAbortOnResourceError(true);
    s_pHttpServer->setScheduledCommandInterval(

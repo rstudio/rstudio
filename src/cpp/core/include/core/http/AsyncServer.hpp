@@ -81,6 +81,8 @@ public:
 
    virtual void setNotFoundHandler(const NotFoundHandler& handler) = 0;
 
+   virtual void addStreamingUriPrefix(const std::string& uriPrefix) = 0;
+
 };
 
 } // namespace http

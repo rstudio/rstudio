@@ -204,6 +204,13 @@
             "type": "bool",
             "defaultValue": true,
             "description": "Whether to use the file system to store metadata about the session storage or the internal database. Setting this to false may require special network configuration. See [Session Storage](../server_management/session_storage.html) for more information."
+         },
+         {
+            "name": "www-stats-monitor-seconds",
+            "memberName": "statsMonitorSeconds_",
+            "type": "int",
+            "defaultValue": 0,
+            "description": "The time interval in seconds to log info/debug messages with stats on server performance. Set to 0 to disable."
          }
       ],
       "rsession": [
