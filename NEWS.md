@@ -13,6 +13,7 @@
 #### Posit Workbench
 - Added the `session-connections-block-suspend` session option, controlling whether active connections can block suspension of an R session.
 - Added the `session-external-pointers-block-suspend` session option, controlling whether R objects containing external pointers can block suspension of an R session.
+- Added http server request processing statistics for the rserver, logged as info/debug messages, controlled by the option `www-stats-monitor-seconds` in rserver.conf (rstudio/rstudio-pro#4554).
 
 ### Fixed
 
@@ -50,3 +51,7 @@
 - Add keyboard support to the "Show list" control in New Session dialog [Accessibility] (rstudio/rstudio-pro#4461)
 - Fixed job details to be hidden from screen reader when visibly hidden [Accessibility] (rstudio/rstudio-pro#4466)
 - Fixed sign-in pages to be more mobile and zoom friendly [Accessibility] (rstudio/rstudio-pro#4472)
+- Cache results for user and group lookups (rstudio/rstudio-pro#4451)
+- Increase timeout for stale messages error (rstudio/rstudio-pro#4325)
+- Reduce database queries and remove locking around DB calls (rstudio/rstudio-pro#4492)
+- Eliminate assertion failed error when reloading config with load balancing enabled (rstudio/rstudio-pro#4504)

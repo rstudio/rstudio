@@ -859,7 +859,7 @@ std::string formatDouble(const double d, const int precision)
 {
    std::stringstream out;
    out.precision(precision);
-   out << d;
+   out << std::fixed << d;
    return out.str();
 }
 
