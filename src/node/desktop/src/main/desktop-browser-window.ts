@@ -17,6 +17,7 @@ import { BrowserWindow, shell, WebContents } from 'electron';
 import { IpcMainEvent } from 'electron/main';
 
 import path from 'path';
+import debounce from 'lodash/debounce';
 
 import { EventEmitter } from 'stream';
 import { URL } from 'url';
@@ -100,6 +101,10 @@ export class DesktopBrowserWindow extends EventEmitter {
   presentationUrl: string | undefined;
   shinyDialogUrl: string | undefined;
   mainWindow?: MainWindow;
+
+  // debouncing due to https://github.com/rstudio/rstudio/issues/13027
+  positionAndEnsureVisibleDebounced= debounce((window, requestedBounds, defaultWidth, defaultHeight) => 
+    positionAndEnsureVisible(window, requestedBounds, defaultWidth, defaultHeight), 75);
 
   // if loading fails and emits `did-fail-load` it will be followed by a
   // 'did-finish-load'; use this bool to differentiate
@@ -265,7 +270,7 @@ export class DesktopBrowserWindow extends EventEmitter {
     this.window.on('unmaximize', () => {
       // guard against restoring offscreen or too small
       // https://github.com/rstudio/rstudio/issues/12992
-      positionAndEnsureVisible(
+      this.positionAndEnsureVisibleDebounced(
         this.window, this.window.getBounds(),
         properties.view.default.windowBounds.width, properties.view.default.windowBounds.height);
     });
