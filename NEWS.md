@@ -40,6 +40,7 @@
 - Improved RStudio Desktop startup behavior when user state folder inaccessible (#12988)
 - Fixed saving files to UNC paths on Windows (#12652, #12935)
 - Fixed window disappearing when restoring from maximized on macOS (#13010)
+- Fixed Project Build Tools preferences pane showing &mdash text in French UI (#11134)
 
 #### Posit Workbench
 - Fixed unlabeled buttons for screen reader users when page is narrow [Accessibility] (rstudio/rstudio-pro#4340)
