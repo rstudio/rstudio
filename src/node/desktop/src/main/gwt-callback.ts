@@ -54,6 +54,8 @@ import {
   resolveAliasedPath,
 } from './utils';
 import { activateWindow, focusedWebContents } from './window-utils';
+import { getenv } from '../core/environment';
+import { safeError } from '../core/err';
 
 export enum PendingQuit {
   PendingQuitNone,
@@ -92,23 +94,35 @@ export class GwtCallback extends EventEmitter {
   // Info used by the "session failed to load" error page (error.html)
   errorPageData = new Map<string, string>();
 
-  // https://github.com/foliojs/font-manager/issues/15
-  // the fork did not correct usage of Fontconfig
-  // getAvailableFontsSync() incorrectly sets the monospace property
-  monospaceFonts = [
-    ...new Set<string>(
-      findFontsSync({ monospace: true }).map((fd) => {
-        return process.platform === 'darwin' ? fd.postscriptName : fd.family;
-      }),
-    ),
-  ].sort((a, b) => a.localeCompare(b));
-  proportionalFonts = [...new Set<string>(findFontsSync({ monospace: false }).map((fd) => fd.family))].sort((a, b) =>
-    a.localeCompare(b),
-  );
+  monospaceFonts: string[] = [];
+  proportionalFonts: string[] = [];
 
   constructor(public mainWindow: MainWindow, public isRemoteDesktop: boolean) {
     super();
     this.owners.add(mainWindow);
+
+    // https://github.com/foliojs/font-manager/issues/15
+    // the fork did not correct usage of Fontconfig
+    // getAvailableFontsSync() incorrectly sets the monospace property
+    try {
+      const queryFonts = getenv('RSTUDIO_QUERY_FONTS');
+      if (queryFonts !== '0' && queryFonts.toLowerCase() !== 'false') {
+        this.monospaceFonts = [
+          ...new Set<string>(
+            findFontsSync({ monospace: true }).map((fd) => {
+              return process.platform === 'darwin' ? fd.postscriptName : fd.family;
+            }),
+          ),
+        ].sort((a, b) => a.localeCompare(b));
+        this.proportionalFonts = [
+          ...new Set<string>(
+            findFontsSync({ monospace: false }).map((fd) => 
+              fd.family))].sort((a, b) => a.localeCompare(b),
+        );
+      }
+    } catch (err: unknown) {
+      logger().logError(safeError(err));
+    }
 
     ipcMain.on('desktop_browse_url', (event, url: string) => {
       // TODO: review if we need additional validation of URL
