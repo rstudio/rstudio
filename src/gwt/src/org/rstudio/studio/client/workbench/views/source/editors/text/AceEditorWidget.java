@@ -17,6 +17,7 @@ package org.rstudio.studio.client.workbench.views.source.editors.text;
 import java.util.ArrayList;
 import java.util.List;
 
+import com.google.gwt.core.client.JavaScriptObject;
 import com.google.gwt.core.client.JsArray;
 import com.google.gwt.core.client.Scheduler;
 import com.google.gwt.core.client.Scheduler.RepeatingCommand;
@@ -285,10 +286,10 @@ public class AceEditorWidget extends Composite
                aceEventHandlers_.add(AceEditorNative.addEventListener(
                      editor_.getRenderer(),
                      "afterRender",
-                     new CommandWithArg<Void>()
+                     new CommandWithArg<JavaScriptObject>()
                      {
                         @Override
-                        public void execute(Void event)
+                        public void execute(JavaScriptObject event)
                         {
                            fireEvent(new RenderFinishedEvent());
                            isRendered_ = true;

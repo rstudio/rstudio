@@ -310,11 +310,26 @@ public class AceEditorNative extends JavaScriptObject
    private static native <T> JavaScriptObject addEventListenerInternal(
          JavaScriptObject target,
          String eventName,
-         CommandWithArg<T> command) /*-{
-      var callback = $entry(function(arg) {
-         if (arg && arg.text)
-            arg = arg.text;
-         command.@org.rstudio.core.client.CommandWithArg::execute(Ljava/lang/Object;)(arg);
+         CommandWithArg<T> command)
+   /*-{
+      
+      var callback = $entry(function(data) {
+         
+         // GWT barfs if we try to pass a 'native' integer here; since
+         // we don't try to use these right now just wrap it into something
+         // that GWT won't complain about.
+         if (typeof data === "number") {
+            data = { type: "number", value: data };
+         }
+         
+         // Some Ace events provide something like a 'boxed' string with
+         // the relevant payload in 'data.text'; if it exists, grab it.
+         if (data && data.text) {
+            data = data.text;
+         }
+         
+         command.@org.rstudio.core.client.CommandWithArg::execute(*)(data);
+         
       });
 
       target.addEventListener(eventName, callback);
