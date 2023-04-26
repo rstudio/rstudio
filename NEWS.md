@@ -15,6 +15,7 @@
 - Added the `session-external-pointers-block-suspend` session option, controlling whether R objects containing external pointers can block suspension of an R session.
 - Added http server request processing statistics for the rserver, logged as info/debug messages, controlled by the option `www-stats-monitor-seconds` in rserver.conf (rstudio/rstudio-pro#4554).
 - Updated code server to 4.12.0 to address security vulnerabilities
+- Updated nginx to supported version 1.23.4 (rstudio/rstudio-pro#4532)
 
 ### Fixed
 
