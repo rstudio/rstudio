@@ -44,6 +44,7 @@
 - Fixed window disappearing when restoring from maximized on macOS (#13010)
 - Fixed Project Build Tools preferences pane showing &mdash text in French UI (#11134)
 - Fixed inserting cross references in a Quarto document showing no references (#12882)
+- Fixed keyboard shortcut help not displaying in Emacs or Sublime Text mode (#11376)
 
 #### Posit Workbench
 - Fixed unlabeled buttons for screen reader users when page is narrow [Accessibility] (rstudio/rstudio-pro#4340)
