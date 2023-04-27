@@ -38,7 +38,7 @@ else
   echo "quarto repo already cloned in '$QUARTO_DIR'"
 
   pushd $QUARTO_DIR
-  # git fetch
+  git fetch
   git reset --hard && git clean -dfx
   # git checkout main
   git checkout release/rstudio-mountain-hydrangea
