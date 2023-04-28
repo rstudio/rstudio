@@ -14,16 +14,76 @@
  */
 package org.rstudio.studio.client.workbench.views.source.model;
 
+import org.rstudio.studio.client.workbench.views.source.editors.text.ace.Range;
+
 import com.google.gwt.core.client.JavaScriptObject;
+import com.google.gwt.core.client.JsArray;
+import com.google.gwt.core.client.JsArrayString;
 
 public class CopilotCompletionResult extends JavaScriptObject
 {
+   public static class CopilotPosition extends JavaScriptObject
+   {
+      protected CopilotPosition()
+      {
+      }
+      
+      public final native int getLine()
+      /*-{
+         return this["line"];
+      }-*/;
+      
+      public final native int getCharacter()
+      /*-{
+         return this["character"];
+      }-*/;
+   }
+   
+   public static class CopilotRange extends JavaScriptObject
+   {
+      protected CopilotRange()
+      {
+      }
+      
+      public final native CopilotPosition getStart()
+      /*-{
+         return this["start"];
+      }-*/;
+      
+      public final native CopilotPosition getEnd()
+      /*-{
+         return this["end"];
+      }-*/;
+   }
+   
+   public static class CopilotCompletion extends JavaScriptObject
+   {
+      protected CopilotCompletion()
+      {
+      }
+      
+      public final native String getText()
+      /*-{
+         return this["text"];
+      }-*/;
+      
+      public final native CopilotRange getRange()
+      /*-{
+         return this["range"];
+      }-*/;
+      
+      public final native CopilotPosition getPosition()
+      /*-{
+         return this["position"];
+      }-*/;
+   }
+   
    protected CopilotCompletionResult()
    {
    }
    
-   public final native String getText()
+   public final native JsArray<CopilotCompletion> getCompletions()
    /*-{
-      return this.result.completions[0].text;
+      return this.result.completions || [];
    }-*/;
 }

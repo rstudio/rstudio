@@ -22,7 +22,7 @@
    
    # get document properties
    properties <- .Call("rs_documentProperties", id, TRUE)
-   uri <- path.expand(properties$path)
+   uri <- sprintf("in-memory://%s", id)
    text <- properties$contents
    
    # send document contents to copilot
@@ -39,13 +39,12 @@
    response <- .rs.copilot.sendRequest("getCompletionsCycling", list(
       doc = list(
          position = list(line = row, character = column),
-         path = path.expand(.rs.api.documentPath()),
-         uri = path.expand(.rs.api.documentPath()),
+         uri = uri,
          version = 1L
       )
    ))
    
-   response
+   .rs.scalarListFromList(response)
    
 })
 
@@ -126,7 +125,7 @@
    data$params <- params
    
    # build JSON payload
-   json <- jsonlite::toJSON(data, auto_unbox = TRUE)
+   json <- .rs.toJSON(data, unbox = TRUE)
    
    # include content length header
    header <- paste("Content-Length:", nchar(json, type = "bytes"))
@@ -143,7 +142,7 @@
    while (TRUE) {
       
       line <- readLines(.rs.copilot.state$stdout, n = 1L, warn = FALSE)
-      response <- tryCatch(jsonlite::fromJSON(line), error = identity)
+      response <- tryCatch(.rs.fromJSON(line), error = identity)
       if (inherits(response, "error") || is.null(response$id))
          next
       

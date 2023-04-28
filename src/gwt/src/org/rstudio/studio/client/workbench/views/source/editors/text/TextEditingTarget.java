@@ -189,6 +189,7 @@ import org.rstudio.studio.client.workbench.views.source.events.RecordNavigationP
 import org.rstudio.studio.client.workbench.views.source.events.SourceFileSavedEvent;
 import org.rstudio.studio.client.workbench.views.source.events.SourceNavigationEvent;
 import org.rstudio.studio.client.workbench.views.source.model.*;
+import org.rstudio.studio.client.workbench.views.source.model.CopilotCompletionResult.CopilotCompletion;
 import org.rstudio.studio.client.workbench.views.terminal.events.SendToTerminalEvent;
 import org.rstudio.studio.client.workbench.views.vcs.common.ConsoleProgressDialog;
 import org.rstudio.studio.client.workbench.views.vcs.common.events.ShowVcsDiffEvent;
@@ -6433,8 +6434,22 @@ public class TextEditingTarget implements
                      @Override
                      public void onResponseReceived(CopilotCompletionResult response)
                      {
-                        String text = response.getText();
-                        editor.insertCode(text);
+                        JsArray<CopilotCompletion> completions = response.getCompletions();
+                        for (int i = 0, n = completions.length(); i < n; i++)
+                        {
+                           CopilotCompletion completion = completions.get(i);
+                           String text = completion.getText();
+                           if (!StringUtil.isNullOrEmpty(text))
+                           {
+                              Range insertRange = Range.create(
+                                    completion.getRange().getStart().getLine(),
+                                    completion.getRange().getStart().getCharacter(),
+                                    completion.getRange().getEnd().getLine(),
+                                    completion.getRange().getEnd().getCharacter());
+                              editor.replaceRange(insertRange, text);
+                              break;
+                           }
+                        }
                      }
 
                      @Override
