@@ -6415,7 +6415,38 @@ public class TextEditingTarget implements
          disp.codeCompletion();
       });
    }
+   
+   @Handler
+   void onCopilotCodeCompletion()
+   {
+      // TODO: Visual mode?
+      docUpdateSentinel_.withSavedDoc(() ->
+      {
+         withActiveEditor((editor) ->
+         {
+            server_.copilotCodeCompletion(
+                  getId(),
+                  editor.getCursorRow(),
+                  editor.getCursorColumn(),
+                  new ServerRequestCallback<CopilotCompletionResult>()
+                  {
+                     @Override
+                     public void onResponseReceived(CopilotCompletionResult response)
+                     {
+                        String text = response.getText();
+                        editor.insertCode(text);
+                     }
 
+                     @Override
+                     public void onError(ServerError error)
+                     {
+                        Debug.logError(error);
+                     }
+                  });
+         });
+      });
+   }
+   
    @Handler
    void onGoToHelp()
    {

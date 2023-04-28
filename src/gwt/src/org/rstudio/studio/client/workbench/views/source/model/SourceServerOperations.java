@@ -277,4 +277,10 @@ public interface SourceServerOperations extends FilesServerOperations,
    
    public void rstudioApiResponse(JavaScriptObject response,
                                   ServerRequestCallback<Void> requestCallback);
+   
+   public void copilotCodeCompletion(String documentPath,
+                                            int cursorRow,
+                                            int cursorColumn,
+                                            ServerRequestCallback<CopilotCompletionResult> requestCallback);
+   
 }

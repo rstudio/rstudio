@@ -185,6 +185,7 @@ public abstract class
    public abstract AppCommand reflowComment();
    public abstract AppCommand setWorkingDirToActiveDoc();
    public abstract AppCommand codeCompletion();
+   public abstract AppCommand copilotCodeCompletion();
    public abstract AppCommand findUsages();
    public abstract AppCommand editRmdFormatOptions();
    public abstract AppCommand knitWithParameters();

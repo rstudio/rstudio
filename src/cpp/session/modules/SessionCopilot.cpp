@@ -18,6 +18,7 @@
 #include <shared_core/Error.hpp>
 
 #include <core/Exec.hpp>
+#include <core/json/JsonRpc.hpp>
 
 #include <session/SessionModuleContext.hpp>
 

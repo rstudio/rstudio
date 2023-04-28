@@ -199,6 +199,7 @@ import org.rstudio.studio.client.workbench.views.source.editors.text.rmd.ChunkDe
 import org.rstudio.studio.client.workbench.views.source.editors.text.themes.AceTheme;
 import org.rstudio.studio.client.workbench.views.source.events.AvailablePackagesReadyEvent;
 import org.rstudio.studio.client.workbench.views.source.model.CheckForExternalEditResult;
+import org.rstudio.studio.client.workbench.views.source.model.CopilotCompletionResult;
 import org.rstudio.studio.client.workbench.views.source.model.CppCapabilities;
 import org.rstudio.studio.client.workbench.views.source.model.CppCompletionResult;
 import org.rstudio.studio.client.workbench.views.source.model.CppDiagnostic;
@@ -563,6 +564,21 @@ public class RemoteServer implements Server
                                   ServerRequestCallback<Void> requestCallback)
    {
       sendRequest(RPC_SCOPE, RSTUDIOAPI_RESPONSE, response, requestCallback);
+   }
+   
+   @Override
+   public void copilotCodeCompletion(String documentId,
+                                     int cursorRow,
+                                     int cursorColumn,
+                                     ServerRequestCallback<CopilotCompletionResult> requestCallback)
+   {
+      JSONArray params = new JSONArrayBuilder()
+            .add(documentId)
+            .add(cursorRow)
+            .add(cursorColumn)
+            .get();
+      
+      sendRequest(RPC_SCOPE, "copilot_code_completion", params, requestCallback);
    }
 
    @Override

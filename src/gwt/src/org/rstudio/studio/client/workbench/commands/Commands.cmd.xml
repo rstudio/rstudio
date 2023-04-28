@@ -2027,6 +2027,12 @@ See `/src/gwt/tools/i18n-helpers/README.md`.
         desc="Show code completions at the current cursor location"
         context="editor"/>
 
+   <cmd id="copilotCodeCompletion"
+        label="Retrieve Copilot Completions"
+        menuLabel="Copilot Code Completion"
+        desc="Show copilot code completions at the current cursor location"
+        context="editor"/>
+        
    <cmd id="sourceNavigateBack"
         menuLabel="Bac_k"
         desc="Go back to the previous source location"/>

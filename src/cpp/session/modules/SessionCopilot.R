@@ -15,15 +15,43 @@
 
 .rs.setVar("copilot.state", new.env(parent = emptyenv()))
 
-.rs.addFunction("copilot.isRunning", function()
+.rs.addJsonRpcHandler("copilot_code_completion", function(id, row, column)
 {
-   # TODO: Check if .rs.copilot.state refers to a live process.
+   # make sure copilot is running
+   .rs.copilot.ensureRunning()
+   
+   # get document properties
+   properties <- .Call("rs_documentProperties", id, TRUE)
+   uri <- path.expand(properties$path)
+   text <- properties$contents
+   
+   # send document contents to copilot
+   .rs.copilot.sendNotification("textDocument/didOpen", list(
+      textDocument = list(
+         uri = uri,
+         languageId = "r",
+         version = 1L,
+         text = text
+      )
+   ))
+   
+   # now, request completions at the cursor position
+   response <- .rs.copilot.sendRequest("getCompletionsCycling", list(
+      doc = list(
+         position = list(line = row, character = column),
+         path = path.expand(.rs.api.documentPath()),
+         uri = path.expand(.rs.api.documentPath()),
+         version = 1L
+      )
+   ))
+   
+   response
+   
 })
 
-.rs.addFunction("copilot.ensureRunning", function()
+.rs.addFunction("copilot.startRunning", function()
 {
    # TODO: We'll want to bundle these.
-   stop("wtf?")
    nodePath <- Sys.which("node")
    agentPath <- path.expand("~/projects/copilot.vim/copilot/dist/agent.uglify.js")
    
@@ -55,8 +83,33 @@
    )
    
    list2env(state, envir = .rs.copilot.state)
+   
+   .rs.copilot.sendRequest("initialize", list(
+      processId = Sys.getpid(),
+      clientInfo = list(
+         name = "RStudio",
+         version = "1.0.0"
+      ),
+      capabilities = list()
+   ))
+   
    state
    
+})
+
+.rs.addFunction("copilot.isRunning", function()
+{
+   for (conn in list(.rs.copilot.state$stdin, .rs.copilot.state$stdout))
+      if (is.null(conn) || !isOpen(conn))
+         return(FALSE)
+   
+   TRUE
+})
+
+.rs.addFunction("copilot.ensureRunning", function()
+{
+   if (!.rs.copilot.isRunning())
+      .rs.copilot.startRunning()
 })
 
 .rs.addFunction("copilot.sendRequestImpl", function(method, id, params)
@@ -91,7 +144,7 @@
       
       line <- readLines(.rs.copilot.state$stdout, n = 1L, warn = FALSE)
       response <- tryCatch(jsonlite::fromJSON(line), error = identity)
-      if (inherits(response, "error"))
+      if (inherits(response, "error") || is.null(response$id))
          next
       
       if (!identical(response$id, id)) {
@@ -100,6 +153,7 @@
          next
       }
 
+      str(response)
       return(response)
       
    }
@@ -119,48 +173,3 @@
 {
    .rs.copilot.sendRequestImpl(method, uuid::UUIDgenerate(), params)
 })
-
-if (FALSE) {
-   
-   .rs.copilot.ensureRunning()
-   currentFile <- path.expand(.rs.api.documentPath())
-   contents <- .rs.readFile(currentFile)
-   
-   # Send editor information to initialize service
-   .rs.copilot.sendRequest("initialize", list(
-      processId = Sys.getpid(),
-      clientInfo = list(
-         name = "RStudio",
-         version = "1.0.0"
-      ),
-      capabilities = list()
-   ))
-   
-   # TODO: Need to implement sign-in flow.
-   .rs.copilot.sendRequest("checkStatus")
-   
-   # Let Copilot know about the current document contents
-   .rs.copilot.sendNotification("textDocument/didOpen", list(
-      textDocument = list(
-         uri = path.expand(.rs.api.documentPath()),
-         languageId = "r",
-         version = 4L,
-         text = .rs.api.documentContents()
-      )
-   ))
-   
-   .rs.copilot.sendRequest("getCompletionsCycling", list(
-      doc = list(
-         position = list(
-            line = 176L,
-            character = 1L
-         ),
-         path = path.expand(.rs.api.documentPath()),
-         uri = path.expand(.rs.api.documentPath()),
-         version = 4L
-      )
-   ))
-   
-}
-
-# Compute the factorial of a number

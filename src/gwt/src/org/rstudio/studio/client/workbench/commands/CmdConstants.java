@@ -1330,6 +1330,14 @@ public interface CmdConstants extends Constants {
     @DefaultStringValue("Show code completions at the current cursor location") // $NON-NLS-1$
     String codeCompletionDesc();
     
+    // copilotCodeCompletion
+    @DefaultStringValue("Retrieve Copilot Completions") // $NON-NLS-1$
+    String copilotCodeCompletionLabel();
+    @DefaultStringValue("Copilot Code Completion") // $NON-NLS-1$
+    String copilotCodeCompletionMenuLabel();
+    @DefaultStringValue("Show copilot code completions at the current cursor location") // $NON-NLS-1$
+    String copilotCodeCompletionDesc();
+    
     // sourceNavigateBack
     @DefaultStringValue("Bac_k") // $NON-NLS-1$
     String sourceNavigateBackMenuLabel();
