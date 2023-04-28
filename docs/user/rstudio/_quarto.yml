@@ -17,7 +17,7 @@ website:
     collapse: false
     pinned: true
     search: true
-    logo: images/posit-logo-fullcolor-TM.svg
+    logo: images/posit-icon-fullcolor.svg
     right:
       - text: Version
         menu:

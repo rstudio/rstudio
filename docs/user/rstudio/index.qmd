@@ -1,11 +1,13 @@
 ---
-title: "RStudio"
-subtitle: "RStudio is an integrated development environment (IDE) designed to support multiple languages, including both R and Python. It includes a console, syntax-highlighting editor that supports direct code execution, and a variety of robust tools for plotting, viewing history, debugging and managing your workspace. "
+title: "RStudio IDE User Guide"
+subtitle: "RStudio is an integrated development environment (IDE) designed to support multiple languages, including both R and Python."
 date: today
 date-format: iso
 ---
 
 RStudio is available in open source and commercial editions and runs on the desktop (Windows 10+, macOS 11+, and Linux) or in a browser connected to RStudio Server or Posit Workbench. Development of the open source and commercial RStudio IDE variants is supported by Posit Software, PBC (formerly named RStudio, PBC). Please review our [Blog post/FAQ](https://pos.it/rebrand-faq/) for additional information about the rebrand.
+
+RStudio includes a console, syntax-highlighting editor that supports direct code execution, and a variety of robust tools for plotting, viewing history, debugging and managing your workspace. 
 
 Please visit the individual product pages for additional information about the open source [RStudio IDE](https://posit.co/products/open-source/rstudio/) or RStudio within [Posit Workbench](https://posit.co/products/enterprise/workbench/). 
 
@@ -23,7 +25,22 @@ Some of the functionality that RStudio provides is:
 -   Extensive package development tools.  
 -   Easily publish apps and reports.  
 
+## About this guide
+
 The following documentation helps a user understand the core workflows in RStudio. It provides information for navigating the user interface and appearance, managing R and R packages, working with Python, authoring code or text editing, debugging and diagnostics, using the Visual Editor for Quarto and RMarkdown, reading in data from local and remote sources, and integrations with version control systems and the terminal.
+
+### Intended audience
+
+This guide is intended for RStudio IDE users (e.g., data scientists).
+
+:::{.callout-note}
+This guide is intended for RStudio IDE users.
+
+Posit Workbench users (e.g., data scientists) can reference the [Posit Workbench User Guide](https://docs.rstudio.com/ide/server-pro/user/).
+
+Posit Workbench administrators can reference the [Posit Workbench Administrator Guide](https://docs.rstudio.com/ide/server-pro/).
+
+:::
 
 ## Commercial Edition
 
@@ -39,10 +56,6 @@ Posit Workbench has several features that differentiate it from the open-source 
 - The ability to fine-tune the performance of the user experience.  
 - The ability to monitor the performance of sessions/users.  
 - A commercial license to remove the restrictions of the AGPL license.  
-
-Posit Workbench users (e.g., data scientists) can reference the [Posit Workbench User Guide](https://docs.rstudio.com/ide/server-pro/user/).
-
-Posit Workbench administrators can reference the [Posit Workbench Administrator Guide](https://docs.rstudio.com/ide/server-pro/).
 
 ## Install Links
 
