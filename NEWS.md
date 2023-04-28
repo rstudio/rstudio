@@ -45,6 +45,7 @@
 - Fixed Project Build Tools preferences pane showing &mdash text in French UI (#11134)
 - Fixed inserting cross references in a Quarto document showing no references (#12882)
 - Fixed keyboard shortcut help not displaying in Emacs or Sublime Text mode (#11376)
+- Fixed issue with rendering development documentation with R 4.3.0 (#12945)
 
 #### Posit Workbench
 - Fixed unlabeled buttons for screen reader users when page is narrow [Accessibility] (rstudio/rstudio-pro#4340)

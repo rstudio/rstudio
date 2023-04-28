@@ -950,12 +950,13 @@ options(help_type = "html")
 
 .rs.addFunction("RdLoadMacros", function(file)
 {
+   # first, load package macros
    dir <- dirname(dirname(file))
    macros <- suppressWarnings(tools::loadPkgRdMacros(dir))
-   tools::loadPkgRdMacros(
-      file.path(R.home("share"), "Rd", "macros", "system.Rd"),
-      macros = macros
-   )
+   
+   # then, load R's internal macros
+   rMacroPath <- file.path(R.home("share"), "Rd/macros/system.Rd")
+   tools::loadRdMacros(rMacroPath, macros = macros)
 })
 
 .rs.addFunction("Rd2HTML", function(file, package = "")
