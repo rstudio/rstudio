@@ -374,8 +374,8 @@ json::Array resolvedXRefIndex(const FilePath& renderedIndexPath, const FilePath&
       srcXrefs = indexSourceFile(unsaved.get(), filename);
    }
    // otherwise, check to see if the src file is more recent than the renderedIndexPath
-   else if ((srcPath.getLastWriteTime() > renderedIndexPath.getLastWriteTime()) ||
-            !renderedIndexPath.exists())
+   else if (!renderedIndexPath.exists() || renderedIndexPath.getSize() == 0 ||
+            (srcPath.getLastWriteTime() > renderedIndexPath.getLastWriteTime()))
    {
       srcXrefs = indexSourceFile(srcPath, filename);
    }
