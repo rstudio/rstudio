@@ -69,7 +69,7 @@
     "vue-template-compiler": "2.7.14"
   },
   "dependencies": {
-    "@vueuse/core": "9.13.0",
+    "@vueuse/core": "10.1.0",
     "crc": "4.3.2",
     "electron-squirrel-startup": "1.0.0",
     "electron-store": "8.1.0",
