@@ -20,6 +20,8 @@
 #include <core/Exec.hpp>
 #include <core/json/JsonRpc.hpp>
 
+#include <r/RExec.hpp>
+
 #include <session/SessionModuleContext.hpp>
 
 using namespace rstudio::core;
@@ -29,10 +31,54 @@ namespace session {
 namespace modules {
 namespace copilot {
 
+namespace {
+
+void onDocAdded(const std::string& id)
+{
+   Error error = r::exec::RFunction(".rs.copilot.onDocAdded")
+         .addParam(id)
+         .call();
+
+   if (error)
+      LOG_ERROR(error);
+}
+
+void onDocUpdated(boost::shared_ptr<source_database::SourceDocument> pDoc)
+{
+   Error error = r::exec::RFunction(".rs.copilot.onDocUpdated")
+         .addParam(pDoc->id())
+         .addParam(pDoc->contents())
+         .call();
+
+   if (error)
+      LOG_ERROR(error);
+}
+
+void onDocRemoved(const std::string& id, const std::string& path)
+{
+   Error error = r::exec::RFunction(".rs.copilot.onDocRemoved")
+         .addParam(id)
+         .call();
+
+   if (error)
+      LOG_ERROR(error);
+}
+
+void onDeferredInit(bool newSession)
+{
+   source_database::events().onDocAdded.connect(onDocAdded);
+   source_database::events().onDocUpdated.connect(onDocUpdated);
+   source_database::events().onDocRemoved.connect(onDocRemoved);
+}
+
+} // end anonymous namespace
+
 Error initialize()
 {
    using boost::bind;
    using namespace module_context;
+
+   events().onDeferredInit.connect(onDeferredInit);
 
    ExecBlock initBlock;
    initBlock.addFunctions()

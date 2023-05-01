@@ -18,25 +18,14 @@
 .rs.addJsonRpcHandler("copilot_code_completion", function(id, row, column)
 {
    # make sure copilot is running
-   .rs.copilot.ensureRunning()
+   .rs.copilot.ensureAgentRunning()
    
    # get document properties
-   properties <- .Call("rs_documentProperties", id, TRUE)
-   uri <- sprintf("in-memory://%s", id)
-   text <- properties$contents
+   uri <- .rs.copilot.uriFromDocumentId(id)
+   text <- .rs.api.documentContents(id)
    
-   # send document contents to copilot
-   .rs.copilot.sendNotification("textDocument/didOpen", list(
-      textDocument = list(
-         uri = uri,
-         languageId = "r",
-         version = 1L,
-         text = text
-      )
-   ))
-   
-   # now, request completions at the cursor position
-   response <- .rs.copilot.sendRequest("getCompletionsCycling", list(
+   # request completions at cursor position
+   response <- .rs.copilot.sendRequest("getCompletions", list(
       doc = list(
          position = list(line = row, character = column),
          uri = uri,
@@ -48,7 +37,68 @@
    
 })
 
-.rs.addFunction("copilot.startRunning", function()
+.rs.addFunction("copilot.tracingEnabled", function()
+{
+   getOption("rstudio.githubCopilot.tracingEnabled", default = FALSE)
+})
+
+.rs.addFunction("copilot.trace", function(fmt, ...)
+{
+   if (.rs.copilot.tracingEnabled())
+   {
+     payload <- sprintf(fmt, ...)
+     writeLines(paste("[copilot]", payload))
+   }
+})
+
+.rs.addFunction("copilot.uriFromDocumentId", function(id)
+{
+   sprintf("rstudio-document://%s", id)
+})
+
+.rs.addFunction("copilot.onDocAdded", function(id)
+{
+   .rs.copilot.trace("[%s] onDocAdded", id)
+   .rs.copilot.ensureAgentRunning()
+   .rs.copilot.sendNotification("textDocument/didOpen", list(
+      textDocument = list(
+         uri = .rs.copilot.uriFromDocumentId(id),
+         languageId = "r",
+         version = 1L,
+         text = ""
+      )
+   ))
+})
+
+.rs.addFunction("copilot.onDocUpdated", function(id, contents)
+{
+   .rs.copilot.trace("[%s] onDocUpdated", id)
+   .rs.copilot.ensureAgentRunning()
+   
+   # TODO: Consider using 'textDocument/didChange' with deltas so we can
+   # avoid needing to push the whole document into Copilot on each change.
+   .rs.copilot.sendNotification("textDocument/didOpen", list(
+      textDocument = list(
+         uri = .rs.copilot.uriFromDocumentId(id),
+         languageId = "r",
+         version = 1L,
+         text = contents
+      )
+   ))
+})
+
+.rs.addFunction("copilot.onDocRemoved", function(id)
+{
+   .rs.copilot.trace("[%s] onDocRemoved", id)
+   .rs.copilot.ensureAgentRunning()
+   .rs.copilot.sendNotification("textDocument/didClose", list(
+      textDocument = list(
+         uri = .rs.copilot.uriFromDocumentId(id)
+      )
+   ))
+})
+
+.rs.addFunction("copilot.startAgent", function()
 {
    # TODO: We'll want to bundle these.
    nodePath <- Sys.which("node")
@@ -96,7 +146,18 @@
    
 })
 
-.rs.addFunction("copilot.isRunning", function()
+.rs.addFunction("copilot.restartAgent", function()
+{
+   # Shut down the existing agent.
+   pid <- .rs.copilot.state$pid
+   if (!is.null(pid))
+      tools:::pskill(as.integer(pid), signal = tools:::SIGTERM)
+   
+   # Start a new agent.
+   .rs.copilot.startAgent()
+})
+
+.rs.addFunction("copilot.isAgentRunning", function()
 {
    for (conn in list(.rs.copilot.state$stdin, .rs.copilot.state$stdout))
       if (is.null(conn) || !isOpen(conn))
@@ -105,10 +166,10 @@
    TRUE
 })
 
-.rs.addFunction("copilot.ensureRunning", function()
+.rs.addFunction("copilot.ensureAgentRunning", function()
 {
-   if (!.rs.copilot.isRunning())
-      .rs.copilot.startRunning()
+   if (!.rs.copilot.isAgentRunning())
+      .rs.copilot.startAgent()
 })
 
 .rs.addFunction("copilot.sendRequestImpl", function(method, id, params)
@@ -132,7 +193,15 @@
    message <- paste(c(header, "", json), collapse = "\r\n")
    
    # send the request
-   writeBin(charToRaw(message), .rs.copilot.state$stdin)
+   result <- tryCatch(
+      writeBin(charToRaw(message), .rs.copilot.state$stdin),
+      condition = identity
+   )
+   
+   if (inherits(result, "condition")) {
+      warning(result)
+      .rs.copilot.restartAgent()
+   }
    
    # if this is a notification (that is, no id) then return early
    if (is.null(id))
@@ -171,4 +240,56 @@
                                                 callback = NULL)
 {
    .rs.copilot.sendRequestImpl(method, uuid::UUIDgenerate(), params)
+})
+
+.rs.addFunction("copilot.signInInitiate", function()
+{
+   .rs.copilot.ensureAgentRunning()
+   
+   response <- .rs.copilot.sendRequest("signInInitiate")
+   if (identical(response$result$status, "AlreadySignedIn"))
+   {
+      msg <- sprintf("[copilot] Already signed in as user '%s'.", response$result$user)
+      writeLines(msg)
+   }
+   else if (identical(response$result$status, "PromptUserDeviceFlow"))
+   {
+      writeLines(paste("Navigating to", response$result$verificationUri), "...")
+      writeLines(paste("Verification code:", response$result$userCode))
+      Sys.sleep(3)
+      browseURL(response$result$verificationUri)
+      
+      readline("Press enter after you have finished verification.")
+      
+      response <- .rs.copilot.sendRequest("checkStatus")
+      status <- response$result$status
+      if (!identical(status, "OK"))
+         stop(sprintf("Error during authentication: %s", status))
+      
+      writeLines(sprintf("Logged in as user '%s'.", response$result$user))
+   }
+   
+   TRUE
+   
+})
+
+.rs.addFunction("copilot.signOut", function()
+{
+   .rs.copilot.ensureAgentRunning()
+   
+   response <- .rs.copilot.sendRequest("checkStatus")
+   if (identical(response$result$status, "NotSignedIn"))
+   {
+      writeLines("[copilot] No user is currently signed in; nothing to do.")
+   }
+   else if (identical(response$result$status, "NotSignedIn"))
+   {
+      writeLines("[copilot] Successfully signed out.")
+   }
+})
+
+.rs.addFunction("copilot.checkStatus", function()
+{
+   .rs.copilot.ensureAgentRunning()
+   .rs.copilot.sendRequest("checkStatus")
 })
