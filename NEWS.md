@@ -4,7 +4,7 @@
 ### New
 
 #### RStudio IDE
-- Updated to Electron 23.2.4 (#13030)
+- Updated to Electron 23.3.0 (#13030)
 - Moved Help panel font size setting to Appearance tab in Global Options (#12816)
 - Update openssl to 1.1.1t for Windows (rstudio/rstudio-pro#3675)
 - Improve visibility of focus rectangles on Server / Workbench Sign In page [Accessibility] (#12846)
