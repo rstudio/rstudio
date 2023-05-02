@@ -31,16 +31,18 @@ declare const CHOOSE_R_WEBPACK_ENTRY: string;
 declare const CHOOSE_R_PRELOAD_WEBPACK_ENTRY: string;
 
 function checkValid(data: CallbackData) {
-  // get path to R
-  const rBinaryPath = data.binaryPath as string;
-
+  const binaryPath = data.binaryPath;
+  if (!binaryPath) {
+    logger().logErrorMessage('internal error: binaryPath was unexpectedly null');
+    return false;
+  }
   // try to run it
-  const [rEnvironment, err] = detectREnvironment(rBinaryPath);
+  const [rEnvironment, err] = detectREnvironment(binaryPath);
 
   if (err) {
     // something went wrong; let the user know they can't use
     // this version of R with RStudio
-    logger().logErrorMessage(`Selected R path: ${rBinaryPath ?? 'no path chosen'}`);
+    logger().logErrorMessage(`Selected R path: ${data.binaryPath}`);
     logger().logError(err);
 
     dialog.showMessageBoxSync({
@@ -70,13 +72,19 @@ export class ChooseRModalWindow extends ModalDialog<CallbackData | null> {
   }
 
   async maybeResolve(resolve: (data: CallbackData) => void, data: CallbackData) {
-    if (data.binaryPath) {
-      data.binaryPath = fixWindowsRExecutablePath(data.binaryPath);
-    }
-    if (checkValid(data)) {
-      resolve(data);
-      return true;
-    } else {
+    try {
+      logger().logDebug(`maybeResolve binaryPath: ${data.binaryPath ?? 'null binary path'}`);
+      if (data.binaryPath) {
+        data.binaryPath = fixWindowsRExecutablePath(data.binaryPath);
+      }
+      if (checkValid(data)) {
+        resolve(data);
+        return true;
+      } else {
+        return false;
+      }
+    } catch (error: unknown) {
+      logger().logError(error);
       return false;
     }
   }
@@ -133,7 +141,7 @@ export class ChooseRModalWindow extends ModalDialog<CallbackData | null> {
 
         if (response) {
           data.binaryPath = response[0];
-          logger().logDebug(`Using user-selected version of R (${data.binaryPath})`);
+          logger().logDebug(`Using user-browsed version of R (${data.binaryPath})`);
           return this.maybeResolve(resolve, data);
         }
 

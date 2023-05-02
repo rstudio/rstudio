@@ -17,7 +17,7 @@ import { getDesktopLoggerBridge } from '../../../renderer/logger-bridge';
 import { normalizeSeparatorsNative, kWindowsRExe } from '../../utils';
 
 export interface CallbackData {
-  binaryPath?: string | unknown;
+  binaryPath?: string;
   renderingEngine?: string;
 }
 
