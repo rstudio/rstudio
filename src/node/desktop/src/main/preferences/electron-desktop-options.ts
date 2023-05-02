@@ -16,7 +16,8 @@
 
 import { BrowserWindow, Rectangle, screen } from 'electron';
 import Store from 'electron-store';
-import { dirname } from 'path';
+import { existsSync, lstatSync } from 'fs';
+import { basename, dirname, join } from 'path';
 import { properties } from '../../../../../cpp/session/resources/schema/user-state-schema.json';
 import { normalizeSeparatorsNative } from '../../core/file-path';
 import { logger } from '../../core/logger';

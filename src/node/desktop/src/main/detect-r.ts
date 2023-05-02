@@ -31,7 +31,6 @@ import { ElectronDesktopOptions, fixWindowsRExecutablePath } from './preferences
 import { FilePath } from '../core/file-path';
 import { dialog } from 'electron';
 
-import { EOL } from 'os';
 import { kWindowsRExe } from '../ui/utils';
 
 let kLdLibraryPathVariable: string;
