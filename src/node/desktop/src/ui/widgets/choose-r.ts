@@ -135,7 +135,7 @@ export class ChooseRModalWindow extends ModalDialog<CallbackData | null> {
         const response = dialog.showOpenDialogSync(this, {
           title: i18next.t('uiFolder.chooseRExecutable'),
           properties: ['openFile'],
-          defaultPath: 'R.exe',
+          defaultPath: kWindowsRExe,
           filters: [{ name: i18next.t('uiFolder.rExecutable'), extensions: ['exe'] }],
         });
 
