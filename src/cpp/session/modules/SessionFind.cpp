@@ -1598,16 +1598,6 @@ core::Error runGrepOperation(const GrepOptions& grepOptions, const ReplaceOption
    return Success();
 }
 
-std::string escapeForRegex(const std::string& query)
-{
-   std::string specialChars("([.|*?+(){}^$\\[\\]])");
-   // Note that we need four backslashes in order to add a backslash before each special character to turn into a literal
-   // \\1 is a backreference that refers to the original symbol we want to escape
-   boost::regex_constants::syntax_option_type flags = 0;
-   std::string updatedQuery = boost::regex_replace(query, boost::regex(specialChars, flags), "\\\\\\1");
-   return updatedQuery;
-}
-
 core::Error beginFind(const json::JsonRpcRequest& request,
                       json::JsonRpcResponse* pResponse)
 {
@@ -1624,9 +1614,9 @@ core::Error beginFind(const json::JsonRpcRequest& request,
                                   &ignoreCase,
                                   &directory,
                                   &includeFilePatterns,
+                                  &excludeFilePatterns,
                                   &useGitGrep,
-                                  &excludeGitIgnore,
-                                  &excludeFilePatterns);
+                                  &excludeGitIgnore);
    if (error)
       return error;
 
@@ -1685,9 +1675,9 @@ core::Error previewReplace(const json::JsonRpcRequest& request,
                                   &ignoreCase,
                                   &directory,
                                   &includeFilePatterns,
+                                  &excludeFilePatterns,
                                   &useGitGrep,
                                   &excludeGitIgnore,
-                                  &excludeFilePatterns,
                                   &replacePattern);
    if (error)
       return error;

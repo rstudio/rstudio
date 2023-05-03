@@ -230,9 +230,9 @@ public class FindOutputPresenter extends BasePresenter
                                    !dialogState_.isCaseSensitive(),
                                    searchPath,
                                    includeFilePatterns,
+                                   excludeFilePatterns,
                                    dialogState_.getUseGitGrep(),
                                    dialogState_.getExcludeGitIgnore(),
-                                   excludeFilePatterns,
                                    view_.getReplaceText(),
                                    new SimpleRequestCallback<String>()
                                    {
@@ -315,14 +315,14 @@ public class FindOutputPresenter extends BasePresenter
                         String serverQuery = dialogState_.getQuery();
 
                         server_.completeReplace(serverQuery,
-                                                dialogState_.isRegex() || dialogState_.isWholeWord(),
+                                                dialogState_.isRegex(),
                                                 dialogState_.isWholeWord(),
                                                 !dialogState_.isCaseSensitive(),
                                                 searchPath,
                                                 includeFilePatterns,
+                                                excludeFilePatterns,
                                                 dialogState_.getUseGitGrep(),
                                                 dialogState_.getExcludeGitIgnore(),
-                                                excludeFilePatterns,
                                                 dialogState_.getResultsCount(),
                                                 view_.getReplaceText(),
                                                 new SimpleRequestCallback<String>()
@@ -504,15 +504,16 @@ public class FindOutputPresenter extends BasePresenter
 
       String serverQuery = dialogState_.getQuery();
 
-      server_.beginFind(serverQuery,
-         dialogState_.isRegex() || dialogState_.isWholeWord(),
+      server_.beginFind(
+         serverQuery,
+         dialogState_.isRegex(),
          dialogState_.isWholeWord(),
          !dialogState_.isCaseSensitive(),
          searchPath,
          includeFilePatterns,
+         excludeFilePatterns,
          dialogState_.getUseGitGrep(),
          dialogState_.getExcludeGitIgnore(),
-         excludeFilePatterns,
          new SimpleRequestCallback<String>()
          {
             @Override

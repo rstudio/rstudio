@@ -4530,9 +4530,9 @@ public class RemoteServer implements Server
                          boolean ignoreCase,
                          FileSystemItem directory,
                          JsArrayString includeFilePatterns,
+                         JsArrayString excludeFilePatterns,
                          boolean useGitGrep, 
                          boolean excludeGitIgnore,
-                         JsArrayString excludeFilePatterns,
                          ServerRequestCallback<String> requestCallback)
    {
       JSONArray params = new JSONArray();
@@ -4543,9 +4543,9 @@ public class RemoteServer implements Server
       params.set(4, new JSONString(directory == null ? ""
                                                      : directory.getPath()));
       params.set(5, new JSONArray(includeFilePatterns));
-      params.set(6, JSONBoolean.getInstance(useGitGrep));
-      params.set(7, JSONBoolean.getInstance(excludeGitIgnore));
-      params.set(8, new JSONArray(excludeFilePatterns));
+      params.set(6, new JSONArray(excludeFilePatterns));
+      params.set(7, JSONBoolean.getInstance(useGitGrep));
+      params.set(8, JSONBoolean.getInstance(excludeGitIgnore));
       sendRequest(RPC_SCOPE, BEGIN_FIND, params, requestCallback);
    }
 
@@ -4569,9 +4569,9 @@ public class RemoteServer implements Server
                               boolean searchIgnoreCase,
                               FileSystemItem directory,
                               JsArrayString includeFilePatterns,
+                              JsArrayString excludeFilePatterns,
                               boolean useGitGrep,
                               boolean excludeGitIgnore,
-                              JsArrayString excludeFilePatterns,
                               String replaceString,
                               ServerRequestCallback<String> requestCallback)
    {
@@ -4583,9 +4583,9 @@ public class RemoteServer implements Server
       params.set(4, new JSONString(directory == null ? ""
                                                      : directory.getPath()));
       params.set(5, new JSONArray(includeFilePatterns));
-      params.set(6, JSONBoolean.getInstance(useGitGrep));
-      params.set(7, JSONBoolean.getInstance(excludeGitIgnore));
-      params.set(8, new JSONArray(excludeFilePatterns));
+      params.set(6, new JSONArray(excludeFilePatterns));
+      params.set(7, JSONBoolean.getInstance(useGitGrep));
+      params.set(8, JSONBoolean.getInstance(excludeGitIgnore));
       params.set(9, new JSONString(replaceString));
 
       sendRequest(RPC_SCOPE, PREVIEW_REPLACE, params, requestCallback);
@@ -4598,9 +4598,9 @@ public class RemoteServer implements Server
                                boolean searchIgnoreCase,
                                FileSystemItem directory,
                                JsArrayString includeFilePatterns,
+                               JsArrayString excludeFilePatterns,
                                boolean useGitGrep,
                                boolean excludeGitIgnore,
-                               JsArrayString excludeFilePatterns,
                                int searchResults,
                                String replaceString,
                                ServerRequestCallback<String> requestCallback)
