@@ -4565,6 +4565,7 @@ public class RemoteServer implements Server
    @Override
    public void previewReplace(String searchString,
                               boolean regex,
+                              boolean isWholeWord,
                               boolean searchIgnoreCase,
                               FileSystemItem directory,
                               JsArrayString includeFilePatterns,
@@ -4577,14 +4578,15 @@ public class RemoteServer implements Server
       JSONArray params = new JSONArray();
       params.set(0, new JSONString(searchString));
       params.set(1, JSONBoolean.getInstance(regex));
-      params.set(2, JSONBoolean.getInstance(searchIgnoreCase));
-      params.set(3, new JSONString(directory == null ? ""
+      params.set(2, JSONBoolean.getInstance(isWholeWord));
+      params.set(3, JSONBoolean.getInstance(searchIgnoreCase));
+      params.set(4, new JSONString(directory == null ? ""
                                                      : directory.getPath()));
-      params.set(4, new JSONArray(includeFilePatterns));
-      params.set(5, JSONBoolean.getInstance(useGitGrep));
-      params.set(6, JSONBoolean.getInstance(excludeGitIgnore));
-      params.set(7, new JSONArray(excludeFilePatterns));
-      params.set(8, new JSONString(replaceString));
+      params.set(5, new JSONArray(includeFilePatterns));
+      params.set(6, JSONBoolean.getInstance(useGitGrep));
+      params.set(7, JSONBoolean.getInstance(excludeGitIgnore));
+      params.set(8, new JSONArray(excludeFilePatterns));
+      params.set(9, new JSONString(replaceString));
 
       sendRequest(RPC_SCOPE, PREVIEW_REPLACE, params, requestCallback);
    }

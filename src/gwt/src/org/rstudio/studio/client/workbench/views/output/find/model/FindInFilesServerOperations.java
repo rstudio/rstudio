@@ -39,6 +39,7 @@ public interface FindInFilesServerOperations
 
    void previewReplace(String searchString,
                        boolean regex,
+                       boolean isWholeWord,
                        boolean searchIgnoreCase,
                        FileSystemItem dictionary,
                        JsArrayString includeFilePatterns,
