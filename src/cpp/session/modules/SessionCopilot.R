@@ -208,12 +208,14 @@
       return(NULL)
    
    # otherwise, read lines from stdout until we get a response
-   while (TRUE) {
+   repeat {
       
       line <- readLines(.rs.copilot.state$stdout, n = 1L, warn = FALSE)
       response <- tryCatch(.rs.fromJSON(line), error = identity)
-      if (inherits(response, "error") || is.null(response$id))
+      if (inherits(response, "error") || is.null(response$id)) {
+         str(response)
          next
+      }
       
       if (!identical(response$id, id)) {
          fmt <- "dropping response with unknown id '%s'"
