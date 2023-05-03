@@ -162,7 +162,7 @@ pipeline {
                     returnStdout: true
                   ).trim().toLowerCase()}"""
                   PRODUCT = "${utils.getProductName()}"
-                  AWS_PATH = "${PRODUCT}/macos"
+                  AWS_PATH = "${FLAVOR.toLowerCase()}/macos"
                 }
                 
                 stages {
@@ -225,13 +225,14 @@ pipeline {
                   stage("Publish") {
                     environment {
                       GITHUB_LOGIN = credentials('github-rstudio-jenkins')
+                      DAILIES_PATH = "${PRODUCT}/macos"
                     }
 
                     steps {
                       dir("package/osx/build") {
                         script {
                           // publish build to dailies page
-                          utils.publishToDailiesSite "${PACKAGE_FILE}", "${AWS_PATH}"
+                          utils.publishToDailiesSite PACKAGE_FILE, DAILIES_PATH, AWS_PATH
                         }
                       }
                     }
