@@ -121,10 +121,10 @@ void parseStringImpl(void* data)
 
 } // end anonymous namespace
 
-Error parseString(const std::string& str, SEXP* pSEXP, sexp::Protect* pProtect)
+Error parseString(const std::string& code, SEXP* pSEXP, sexp::Protect* pProtect)
 {
    // string to parse
-   SEXP codeSEXP = sexp::create(str, pProtect);
+   SEXP codeSEXP = sexp::create(code, pProtect);
 
    // NOTE: R_ParseVector can emit an R parse error, so we need
    // to defend againts such longjmps here
@@ -135,13 +135,20 @@ Error parseString(const std::string& str, SEXP* pSEXP, sexp::Protect* pProtect)
    parseData.parseStatus = PARSE_NULL;
 
    // perform the parse
-   R_ToplevelExec(parseStringImpl, (void*) &parseData);
+   Rboolean success = R_ToplevelExec(parseStringImpl, (void*) &parseData);
+   if (!success)
+   {
+      Error error(errc::ExpressionParsingError, ERROR_LOCATION);
+      error.addProperty("code", code);
+      error.addProperty("reason", getErrorMessage());
+      return error;
+   }
 
-   // check error/success
+   // check for other parse failures
    if (parseData.parseStatus != PARSE_OK)
    {
       Error error(errc::ExpressionParsingError, ERROR_LOCATION);
-      error.addProperty("code", str);
+      error.addProperty("code", code);
       return error;
    }
 
