@@ -1058,9 +1058,9 @@ void AsyncChildProcess::poll()
          options().ignoredSubprocs,
          options().trackCwd ? core::system::currentWorkingDir : nullptr));
 
+      pAsyncImpl_->calledOnStarted_ = true;
       if (callbacks_.onStarted)
          callbacks_.onStarted(*this);
-      pAsyncImpl_->calledOnStarted_ = true;
    }
    
    // call onContinue

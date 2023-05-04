@@ -13,8 +13,6 @@
 #
 #
 
-.rs.setVar("copilot.state", new.env(parent = emptyenv()))
-
 .rs.addJsonRpcHandler("copilot_code_completion", function(id, row, column)
 {
    # make sure copilot is running
@@ -46,9 +44,14 @@
 {
    if (.rs.copilot.tracingEnabled())
    {
-     payload <- sprintf(fmt, ...)
-     writeLines(paste("[copilot]", payload))
+      payload <- sprintf(fmt, ...)
+      writeLines(paste("[copilot]", payload))
    }
+})
+
+.rs.addFunction("copilot.agentPid", function()
+{
+   .Call("rs_copilotAgentPid", PACKAGE = "(embedding)")
 })
 
 .rs.addFunction("copilot.uriFromDocumentId", function(id)
@@ -56,178 +59,34 @@
    sprintf("rstudio-document://%s", id)
 })
 
-.rs.addFunction("copilot.onDocAdded", function(id)
-{
-   .rs.copilot.trace("[%s] onDocAdded", id)
-   .rs.copilot.ensureAgentRunning()
-   .rs.copilot.sendNotification("textDocument/didOpen", list(
-      textDocument = list(
-         uri = .rs.copilot.uriFromDocumentId(id),
-         languageId = "r",
-         version = 1L,
-         text = ""
-      )
-   ))
-})
-
-.rs.addFunction("copilot.onDocUpdated", function(id, contents)
-{
-   .rs.copilot.trace("[%s] onDocUpdated", id)
-   .rs.copilot.ensureAgentRunning()
-   
-   # TODO: Consider using 'textDocument/didChange' with deltas so we can
-   # avoid needing to push the whole document into Copilot on each change.
-   .rs.copilot.sendNotification("textDocument/didOpen", list(
-      textDocument = list(
-         uri = .rs.copilot.uriFromDocumentId(id),
-         languageId = "r",
-         version = 1L,
-         text = contents
-      )
-   ))
-})
-
-.rs.addFunction("copilot.onDocRemoved", function(id)
-{
-   .rs.copilot.trace("[%s] onDocRemoved", id)
-   .rs.copilot.ensureAgentRunning()
-   .rs.copilot.sendNotification("textDocument/didClose", list(
-      textDocument = list(
-         uri = .rs.copilot.uriFromDocumentId(id)
-      )
-   ))
-})
-
 .rs.addFunction("copilot.startAgent", function()
 {
-   # TODO: We'll want to bundle these.
-   nodePath <- Sys.which("node")
-   agentPath <- path.expand("~/projects/copilot.vim/copilot/dist/agent.uglify.js")
-   
-   # TODO: Windows?
-   inputFile <- tempfile("copilot-input-")
-   inputPipe <- fifo(inputFile, open = "w+b", blocking = FALSE)
-   
-   outputFile <- tempfile("copilot-output-")
-   system(paste("mkfifo", outputFile))
-   outputPipe <- fifo(outputFile, open = "r+b", blocking = FALSE)
-   
-   # TODO: Use our own tooling so we can more easily find the process PID.
-   args <- c(agentPath, "<", inputFile, ">", outputFile)
-   status <- system2(
-      command = nodePath,
-      args    = agentPath,
-      stdin   = inputFile,
-      stdout  = outputFile,
-      wait = FALSE
-   )
-   
-   # TODO: barf
-   pid <- system("pgrep -nx sh", intern = TRUE)
-   
-   state <- list(
-      pid    = pid,
-      stdin  = inputPipe,
-      stdout = outputPipe
-   )
-   
-   list2env(state, envir = .rs.copilot.state)
-   
-   .rs.copilot.sendRequest("initialize", list(
-      processId = Sys.getpid(),
-      clientInfo = list(
-         name = "RStudio",
-         version = "1.0.0"
-      ),
-      capabilities = list()
-   ))
-   
-   state
-   
+   .Call("rs_copilotStartAgent", PACKAGE = "(embedding)")
 })
 
 .rs.addFunction("copilot.restartAgent", function()
 {
-   # Shut down the existing agent.
-   pid <- .rs.copilot.state$pid
-   if (!is.null(pid))
-      tools:::pskill(as.integer(pid), signal = tools:::SIGTERM)
-   
-   # Start a new agent.
-   .rs.copilot.startAgent()
+   .Call("rs_copilotStartAgent", PACKAGE = "(embedding)")
 })
 
 .rs.addFunction("copilot.isAgentRunning", function()
 {
-   for (conn in list(.rs.copilot.state$stdin, .rs.copilot.state$stdout))
-      if (is.null(conn) || !isOpen(conn))
-         return(FALSE)
-   
-   TRUE
+   .Call("rs_copilotAgentRunning", PACKAGE = "(embedding)")
 })
 
 .rs.addFunction("copilot.ensureAgentRunning", function()
 {
-   if (!.rs.copilot.isAgentRunning())
+   if (.rs.copilot.isAgentRunning())
+      .rs.copilot.agentPid()
+   else
       .rs.copilot.startAgent()
 })
 
 .rs.addFunction("copilot.sendRequestImpl", function(method, id, params)
 {
-   # ensure params are named, even for empty case
-   if (is.null(names(params)))
-      names(params) <- rep.int("", length(params))
-   
-   # construct data
-   data <- list()
-   data$jsonrpc <- "2.0"
-   data$id <- id
-   data$method <- method
-   data$params <- params
-   
-   # build JSON payload
-   json <- .rs.toJSON(data, unbox = TRUE)
-   
-   # include content length header
-   header <- paste("Content-Length:", nchar(json, type = "bytes"))
-   message <- paste(c(header, "", json), collapse = "\r\n")
-   
-   # send the request
-   result <- tryCatch(
-      writeBin(charToRaw(message), .rs.copilot.state$stdin),
-      condition = identity
-   )
-   
-   if (inherits(result, "condition")) {
-      warning(result)
-      .rs.copilot.restartAgent()
-   }
-   
-   # if this is a notification (that is, no id) then return early
-   if (is.null(id))
-      return(NULL)
-   
-   # otherwise, read lines from stdout until we get a response
-   repeat {
-      
-      line <- readLines(.rs.copilot.state$stdout, n = 1L, warn = FALSE)
-      response <- tryCatch(.rs.fromJSON(line), error = identity)
-      if (inherits(response, "error") || is.null(response$id)) {
-         str(response)
-         next
-      }
-      
-      if (!identical(response$id, id)) {
-         fmt <- "dropping response with unknown id '%s'"
-         warning(sprintf(fmt, response$id))
-         next
-      }
-
-      str(response)
-      return(response)
-      
-   }
-   
+   # NOTE: We convert 'params' to JSON here so we can control unboxing.
+   params <- .rs.toJSON(params, unbox = TRUE)
+   .Call("rs_copilotSendRequest", method, id, params, PACKAGE = "(embedding)")
 })
 
 .rs.addFunction("copilot.sendNotification", function(method,
@@ -295,3 +154,5 @@
    .rs.copilot.ensureAgentRunning()
    .rs.copilot.sendRequest("checkStatus")
 })
+
+
