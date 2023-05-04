@@ -418,6 +418,7 @@ namespace prefs {
 #define kTextRenderingAuto "auto"
 #define kTextRenderingGeometricPrecision "geometricPrecision"
 #define kDisableRendererAccessibility "disable_renderer_accessibility"
+#define kCopilotEnabled "copilot_enabled"
 
 class UserPrefValues: public Preferences
 {
@@ -1874,6 +1875,12 @@ public:
     */
    bool disableRendererAccessibility();
    core::Error setDisableRendererAccessibility(bool val);
+
+   /**
+    * When enabled, RStudio will use GitHub Copilot to provide code suggestions.
+    */
+   bool copilotEnabled();
+   core::Error setCopilotEnabled(bool val);
 
 };
 

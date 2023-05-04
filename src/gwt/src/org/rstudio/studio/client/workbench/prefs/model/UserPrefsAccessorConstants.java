@@ -2015,6 +2015,14 @@ public interface UserPrefsAccessorConstants extends Constants {
    @DefaultStringValue("Disable Electron accessibility support.")
    String disableRendererAccessibilityDescription();
 
+   /**
+    * When enabled, RStudio will use GitHub Copilot to provide code suggestions.
+    */
+   @DefaultStringValue("Enable GitHub Copilot")
+   String copilotEnabledTitle();
+   @DefaultStringValue("When enabled, RStudio will use GitHub Copilot to provide code suggestions.")
+   String copilotEnabledDescription();
+
 
 
 }

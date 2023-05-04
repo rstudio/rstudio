@@ -3169,6 +3169,19 @@ core::Error UserPrefValues::setDisableRendererAccessibility(bool val)
    return writePref("disable_renderer_accessibility", val);
 }
 
+/**
+ * When enabled, RStudio will use GitHub Copilot to provide code suggestions.
+ */
+bool UserPrefValues::copilotEnabled()
+{
+   return readPref<bool>("copilot_enabled");
+}
+
+core::Error UserPrefValues::setCopilotEnabled(bool val)
+{
+   return writePref("copilot_enabled", val);
+}
+
 std::vector<std::string> UserPrefValues::allKeys()
 {
    return std::vector<std::string>({
@@ -3414,6 +3427,7 @@ std::vector<std::string> UserPrefValues::allKeys()
       kEditorScrollMultiplier,
       kTextRendering,
       kDisableRendererAccessibility,
+      kCopilotEnabled,
    });
 }
    

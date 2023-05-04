@@ -3469,6 +3469,18 @@ public class UserPrefsAccessor extends Prefs
          false);
    }
 
+   /**
+    * When enabled, RStudio will use GitHub Copilot to provide code suggestions.
+    */
+   public PrefValue<Boolean> copilotEnabled()
+   {
+      return bool(
+         "copilot_enabled",
+         _constants.copilotEnabledTitle(), 
+         _constants.copilotEnabledDescription(), 
+         false);
+   }
+
    public void syncPrefs(String layer, JsObject source)
    {
       if (source.hasKey("run_rprofile_on_resume"))
@@ -3955,6 +3967,8 @@ public class UserPrefsAccessor extends Prefs
          textRendering().setValue(layer, source.getString("text_rendering"));
       if (source.hasKey("disable_renderer_accessibility"))
          disableRendererAccessibility().setValue(layer, source.getBool("disable_renderer_accessibility"));
+      if (source.hasKey("copilot_enabled"))
+         copilotEnabled().setValue(layer, source.getBool("copilot_enabled"));
    }
    public List<PrefValue<?>> allPrefs()
    {
@@ -4201,6 +4215,7 @@ public class UserPrefsAccessor extends Prefs
       prefs.add(editorScrollMultiplier());
       prefs.add(textRendering());
       prefs.add(disableRendererAccessibility());
+      prefs.add(copilotEnabled());
       return prefs;
    }
    
