@@ -950,13 +950,22 @@ options(help_type = "html")
 
 .rs.addFunction("RdLoadMacros", function(file)
 {
-   # first, load package macros
-   dir <- dirname(dirname(file))
-   macros <- suppressWarnings(tools::loadPkgRdMacros(dir))
-   
-   # then, load R's internal macros
-   rMacroPath <- file.path(R.home("share"), "Rd/macros/system.Rd")
-   tools::loadRdMacros(rMacroPath, macros = macros)
+   maybePackageDir <- dirname(dirname(file))
+   if (file.exists(file.path(maybePackageDir, "DESCRIPTION")) ||
+       file.exists(file.path(maybePackageDir, "DESCRIPTION.in")))
+   {
+      # NOTE: ?loadPkgRdMacros has:
+      #
+      #   loadPkgRdMacros loads the system Rd macros by default
+      #
+      # so it shouldn't be necessary to load system macros ourselves here
+      tools::loadPkgRdMacros(maybePackageDir)
+   }
+   else
+   {
+      rMacroPath <- file.path(R.home("share"), "Rd/macros/system.Rd")
+      tools::loadRdMacros(rMacroPath)
+   }
 })
 
 .rs.addFunction("Rd2HTML", function(file, package = "")
