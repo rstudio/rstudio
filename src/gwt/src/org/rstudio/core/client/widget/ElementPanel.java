@@ -1,5 +1,5 @@
 /*
- * Timers.java
+ * ElementPanel.java
  *
  * Copyright (C) 2022 by Posit Software, PBC
  *
@@ -12,30 +12,18 @@
  * AGPL (http://www.gnu.org/licenses/agpl-3.0.txt) for more details.
  *
  */
-package org.rstudio.studio.client.common;
+package org.rstudio.core.client.widget;
 
-import com.google.gwt.user.client.Command;
-import com.google.gwt.user.client.Timer;
+import com.google.gwt.dom.client.Element;
+import com.google.gwt.user.client.ui.Composite;
+import com.google.gwt.user.client.ui.FlowPanel;
 
-public class Timers
+public class ElementPanel extends Composite
 {
-   public static final Timer singleShot(int delayMs, final Command command)
+   public ElementPanel(Element element)
    {
-      Timer timer = new Timer()
-      {
-         @Override
-         public void run()
-         {
-            command.execute();
-         }
-      };
-      
-      timer.schedule(delayMs);
-      return timer;
-   }
-   
-   public static final Timer singleShot(final Command command)
-   {
-      return singleShot(0, command);
+      FlowPanel panel = new FlowPanel();
+      panel.getElement().appendChild(element);
+      initWidget(panel);
    }
 }

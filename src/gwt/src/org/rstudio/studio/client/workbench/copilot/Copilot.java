@@ -25,8 +25,10 @@ import org.rstudio.studio.client.workbench.commands.Commands;
 import org.rstudio.studio.client.workbench.copilot.model.CopilotResponse.CopilotInstallAgentResponse;
 import org.rstudio.studio.client.workbench.copilot.model.CopilotResponse.CopilotVerifyInstalledResponse;
 import org.rstudio.studio.client.workbench.copilot.server.CopilotServerOperations;
+import org.rstudio.studio.client.workbench.copilot.ui.CopilotInstallDialog;
 
 import com.google.gwt.core.client.GWT;
+import com.google.gwt.event.dom.client.ClickHandler;
 import com.google.inject.Inject;
 import com.google.inject.Singleton;
 
@@ -70,22 +72,12 @@ public class Copilot
    
    private void installAgentWithPrompt(CommandWithArg<Boolean> callback)
    {
-      String[] messageLines = {
-            "GitHub Copilot is not installed. Would you like to install it?",
-            "",
-            "Your use of GitHub Copilot is governed by the GitHub Copilot terms of service.",
-            "<a href=\"https://docs.github.com/en/site-policy/github-terms/github-terms-for-additional-products-and-features#github-copilot\">Click Here</a> for more details."
+      ClickHandler handler = (event) -> {
+         
       };
       
-      String message = StringUtil.join(messageLines, "\n");
-      display_.showYesNoMessage(
-            MessageDisplay.MSG_INFO,
-            "Install Copilot",
-            message,
-            false,
-            () -> installAgent(callback),
-            () -> callback.execute(false),
-            true);
+      CopilotInstallDialog dialog = new CopilotInstallDialog(handler);
+      dialog.showModal();
    }
    
    private void installAgent(CommandWithArg<Boolean> callback)
