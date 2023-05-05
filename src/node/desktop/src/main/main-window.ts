@@ -105,8 +105,11 @@ export class MainWindow extends GwtWindow {
 
     showPlaceholderMenu();
 
-    this.menuCallback.on(MenuCallback.MENUBAR_COMPLETED, (menu: Menu) => {
-      Menu.setApplicationMenu(menu);
+    this.menuCallback.on(MenuCallback.MENUBAR_COMPLETED, (/*menu: Menu*/) => {
+      // We used to do `Menu.setApplicationMenu(menu);` here but that was causing crashes in
+      // Electron when holding down the Alt key (https://github.com/rstudio/rstudio/issues/12983).
+      // It seems some sort of clash between setting this here and the subsequent set
+      // that happens in MenuCallback.updateMenus().
     });
     this.menuCallback.on(MenuCallback.COMMAND_INVOKED, (commandId) => {
       this.invokeCommand(commandId);
