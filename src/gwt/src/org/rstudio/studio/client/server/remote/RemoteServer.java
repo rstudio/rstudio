@@ -142,8 +142,9 @@ import org.rstudio.studio.client.workbench.addins.Addins.RAddins;
 import org.rstudio.studio.client.workbench.codesearch.model.CodeSearchResults;
 import org.rstudio.studio.client.workbench.codesearch.model.ObjectDefinition;
 import org.rstudio.studio.client.workbench.codesearch.model.SearchPathFunctionDefinition;
-import org.rstudio.studio.client.workbench.copilot.model.CopilotCompletionResult;
-import org.rstudio.studio.client.workbench.copilot.model.CopilotVerifyResult;
+import org.rstudio.studio.client.workbench.copilot.model.CopilotResponse.CopilotCodeCompletionResponse;
+import org.rstudio.studio.client.workbench.copilot.model.CopilotResponse.CopilotInstallAgentResponse;
+import org.rstudio.studio.client.workbench.copilot.model.CopilotResponse.CopilotVerifyInstalledResponse;
 import org.rstudio.studio.client.workbench.events.SessionInitEvent;
 import org.rstudio.studio.client.workbench.exportplot.model.SavePlotAsImageContext;
 import org.rstudio.studio.client.workbench.model.HTMLCapabilities;
@@ -568,13 +569,13 @@ public class RemoteServer implements Server
    }
    
    @Override
-   public void copilotVerifyInstalled(ServerRequestCallback<CopilotVerifyResult> requestCallback)
+   public void copilotVerifyInstalled(ServerRequestCallback<CopilotVerifyInstalledResponse> requestCallback)
    {
       sendRequest(RPC_SCOPE, "copilot_verify_installed", requestCallback);
    }
 
    @Override
-   public void copilotInstallAgent(ServerRequestCallback<CopilotVerifyResult> requestCallback)
+   public void copilotInstallAgent(ServerRequestCallback<CopilotInstallAgentResponse> requestCallback)
    {
       sendRequest(RPC_SCOPE, "copilot_install_agent", requestCallback);
    }
@@ -583,7 +584,7 @@ public class RemoteServer implements Server
    public void copilotCodeCompletion(String documentId,
                                      int cursorRow,
                                      int cursorColumn,
-                                     ServerRequestCallback<CopilotCompletionResult> requestCallback)
+                                     ServerRequestCallback<CopilotCodeCompletionResponse> requestCallback)
    {
       JSONArray params = new JSONArrayBuilder()
             .add(documentId)

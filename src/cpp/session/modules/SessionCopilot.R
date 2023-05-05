@@ -107,7 +107,11 @@
 .rs.addFunction("copilot.sendRequestImpl", function(method, id, params)
 {
    # NOTE: We convert 'params' to JSON here so we can control unboxing.
-   params <- .rs.toJSON(params, unbox = TRUE)
+   params <- if (length(params) == 0L)
+      "{}"
+   else
+      .rs.toJSON(params, unbox = TRUE)
+   
    .Call("rs_copilotSendRequest", method, id, params, PACKAGE = "(embedding)")
 })
 

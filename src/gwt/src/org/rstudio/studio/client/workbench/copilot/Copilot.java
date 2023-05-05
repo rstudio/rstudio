@@ -22,7 +22,8 @@ import org.rstudio.core.client.command.Handler;
 import org.rstudio.studio.client.common.DelayedProgressRequestCallback;
 import org.rstudio.studio.client.common.GlobalDisplay;
 import org.rstudio.studio.client.workbench.commands.Commands;
-import org.rstudio.studio.client.workbench.copilot.model.CopilotVerifyResult;
+import org.rstudio.studio.client.workbench.copilot.model.CopilotResponse.CopilotInstallAgentResponse;
+import org.rstudio.studio.client.workbench.copilot.model.CopilotResponse.CopilotVerifyInstalledResponse;
 import org.rstudio.studio.client.workbench.copilot.server.CopilotServerOperations;
 
 import com.google.gwt.core.client.GWT;
@@ -35,23 +36,25 @@ public class Copilot
    @Inject
    public Copilot(GlobalDisplay display,
                   Commands commands,
+                  CopilotCommandBinder binder,
                   CopilotServerOperations server)
    {
       display_ = display;
       commands_ = commands;
       server_ = server;
       
-      // COMMANDS.bind(commands, this);
+      binder.bind(commands, this);
+      commands.copilotInstall().setEnabled(true, true);
    }
    
    public void ensureAgentInstalled(CommandWithArg<Boolean> callback)
    {
       String progressLabel = "Verifying copilot installation...";
       server_.copilotVerifyInstalled(
-            new DelayedProgressRequestCallback<CopilotVerifyResult>(progressLabel)
+            new DelayedProgressRequestCallback<CopilotVerifyInstalledResponse>(progressLabel)
       {
          @Override
-         protected void onSuccess(CopilotVerifyResult response)
+         protected void onSuccess(CopilotVerifyInstalledResponse response)
          {
             if (response.installed)
             {
@@ -89,10 +92,10 @@ public class Copilot
    {
       String progressLabel = "Installing copilot agent...";
       server_.copilotInstallAgent(
-            new DelayedProgressRequestCallback<CopilotVerifyResult>(progressLabel)
+            new DelayedProgressRequestCallback<CopilotInstallAgentResponse>(progressLabel)
             {
                @Override
-               protected void onSuccess(CopilotVerifyResult response)
+               protected void onSuccess(CopilotInstallAgentResponse response)
                {
                   if (response.installed)
                   {
@@ -122,6 +125,11 @@ public class Copilot
             // nothing to do
          }
       });
+   }
+ 
+   interface CopilotCommandBinder
+         extends CommandBinder<Commands, Copilot>
+   {
    }
    
    private final GlobalDisplay display_;

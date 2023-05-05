@@ -35,6 +35,8 @@
 #include <session/prefs/UserPrefs.hpp>
 #include <session/SessionModuleContext.hpp>
 
+#define DBG if (true)
+
 using namespace rstudio::core;
 using namespace rstudio::core::system;
 
@@ -174,7 +176,18 @@ json::Value sendRequest(const std::string& method,
          continue;
       }
 
-      // Check the response id.
+      // Check if this is a 'LogMessage' response. Should we log these in verbose mode?
+      json::Value methodJson = object["method"];
+      if (methodJson.isString())
+      {
+         std::string method = methodJson.getString();
+         if (method == "LogMessage")
+            continue;
+      }
+
+      // Check the response id. This will be missing for notifications; we may receive
+      // a flurry of progress notifications when requesting completions from Copilot.
+      // We might want to handle these somehow.
       json::Value idJson = object["id"];
       if (!idJson.isString())
       {
@@ -213,6 +226,16 @@ bool onContinue(ProcessOperations& operations)
    {
       std::string request = s_pendingRequests.front();
       s_pendingRequests.pop();
+
+      DBG
+      {
+         std::cerr << "----------------" << std::endl;
+         std::cerr << "Sending request:" << std::endl;
+         std::cerr << request << std::endl;
+         std::cerr << "----------------" << std::endl;
+         std::cerr << std::endl;
+      }
+
       operations.writeToStdin(request, false);
    }
 
@@ -262,6 +285,15 @@ void onStdout(ProcessOperations& operations, const std::string& stdOut)
       auto bodyEnd = bodyStart + safe_convert::stringTo<int>(contentLength, 0);
       std::string bodyText = string_utils::substring(stdOut, bodyStart, bodyEnd);
       s_pendingResponses.push(bodyText);
+
+      DBG
+      {
+         std::cerr << "------------------" << std::endl;
+         std::cerr << "Received response:" << std::endl;
+         std::cerr << bodyText << std::endl;
+         std::cerr << "------------------" << std::endl;
+         std::cerr << std::endl;
+      }
 
       // Update the start index.
       startIndex = bodyEnd;
@@ -483,6 +515,7 @@ SEXP rs_copilotSendRequest(SEXP methodSEXP,
    Error error = paramsJson.parse(paramsText);
    if (error)
    {
+      error.addProperty("params", paramsText);
       LOG_ERROR(error);
       return R_NilValue;
    }

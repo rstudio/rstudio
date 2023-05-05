@@ -15,17 +15,18 @@
 package org.rstudio.studio.client.workbench.copilot.server;
 
 import org.rstudio.studio.client.server.ServerRequestCallback;
-import org.rstudio.studio.client.workbench.copilot.model.CopilotCompletionResult;
-import org.rstudio.studio.client.workbench.copilot.model.CopilotVerifyResult;
+import org.rstudio.studio.client.workbench.copilot.model.CopilotResponse.CopilotVerifyInstalledResponse;
+import org.rstudio.studio.client.workbench.copilot.model.CopilotResponse.CopilotCodeCompletionResponse;
+import org.rstudio.studio.client.workbench.copilot.model.CopilotResponse.CopilotInstallAgentResponse;
 
 public interface CopilotServerOperations
 {
-   public void copilotVerifyInstalled(ServerRequestCallback<CopilotVerifyResult> requestCallback);
+   public void copilotVerifyInstalled(ServerRequestCallback<CopilotVerifyInstalledResponse> requestCallback);
    
-   public void copilotInstallAgent(ServerRequestCallback<CopilotVerifyResult> requestCallback);
+   public void copilotInstallAgent(ServerRequestCallback<CopilotInstallAgentResponse> requestCallback);
    
    public void copilotCodeCompletion(String documentPath,
                                      int cursorRow,
                                      int cursorColumn,
-                                     ServerRequestCallback<CopilotCompletionResult> requestCallback);
+                                     ServerRequestCallback<CopilotCodeCompletionResponse> requestCallback);
 }

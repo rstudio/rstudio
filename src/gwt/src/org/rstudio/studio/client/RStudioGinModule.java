@@ -134,6 +134,7 @@ import org.rstudio.studio.client.workbench.codesearch.CodeSearch;
 import org.rstudio.studio.client.workbench.codesearch.model.CodeSearchServerOperations;
 import org.rstudio.studio.client.workbench.codesearch.ui.CodeSearchWidget;
 import org.rstudio.studio.client.workbench.commands.Commands;
+import org.rstudio.studio.client.workbench.copilot.Copilot;
 import org.rstudio.studio.client.workbench.copilot.server.CopilotServerOperations;
 import org.rstudio.studio.client.workbench.model.MetaServerOperations;
 import org.rstudio.studio.client.workbench.model.Session;
@@ -512,6 +513,7 @@ public class RStudioGinModule extends AbstractGinModule
       bind(ChunkSatelliteView.class).to(ChunkSatelliteWindow.class);
       bind(RStudioAPI.class).asEagerSingleton();
       bind(RStudioAPIServerOperations.class).to(RemoteServer.class);
+      bind(Copilot.class).asEagerSingleton();
 
       bind(AskSecretManager.class).in(Singleton.class);
       bind(VirtualConsole.Preferences.class).to(PreferencesImpl.class);

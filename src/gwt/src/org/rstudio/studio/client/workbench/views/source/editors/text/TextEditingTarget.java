@@ -42,6 +42,8 @@ import com.google.gwt.user.client.ui.Widget;
 import com.google.inject.Inject;
 import com.google.inject.Provider;
 
+import jsinterop.base.JsArrayLike;
+
 import org.rstudio.core.client.*;
 import org.rstudio.core.client.command.AppCommand;
 import org.rstudio.core.client.command.CommandBinder;
@@ -130,8 +132,8 @@ import org.rstudio.studio.client.shiny.model.ShinyApplicationParams;
 import org.rstudio.studio.client.shiny.model.ShinyTestResults;
 import org.rstudio.studio.client.workbench.WorkbenchContext;
 import org.rstudio.studio.client.workbench.commands.Commands;
-import org.rstudio.studio.client.workbench.copilot.model.CopilotCompletionResult;
-import org.rstudio.studio.client.workbench.copilot.model.CopilotCompletionResult.CopilotCompletion;
+import org.rstudio.studio.client.workbench.copilot.model.CopilotResponse.CopilotCodeCompletionResponse;
+import org.rstudio.studio.client.workbench.copilot.model.CopilotTypes.CopilotCompletion;
 import org.rstudio.studio.client.workbench.model.Session;
 import org.rstudio.studio.client.workbench.model.SessionInfo;
 import org.rstudio.studio.client.workbench.prefs.model.UserPrefs;
@@ -6430,27 +6432,26 @@ public class TextEditingTarget implements
                   getId(),
                   editor.getCursorRow(),
                   editor.getCursorColumn(),
-                  new ServerRequestCallback<CopilotCompletionResult>()
+                  new ServerRequestCallback<CopilotCodeCompletionResponse>()
                   {
                      @Override
-                     public void onResponseReceived(CopilotCompletionResult response)
+                     public void onResponseReceived(CopilotCodeCompletionResponse response)
                      {
-                        JsArray<CopilotCompletion> completions = response.getCompletions();
-                        for (int i = 0, n = completions.length(); i < n; i++)
+                        JsArrayLike<CopilotCompletion> completions = response.result.completions;
+                        for (CopilotCompletion completion : completions.asList())
                         {
-                           CopilotCompletion completion = completions.get(i);
-                           String text = completion.getText();
+                           String text = completion.text;
                            if (!StringUtil.isNullOrEmpty(text))
                            {
                               Range insertRange = Range.create(
-                                    completion.getRange().getStart().getLine(),
-                                    completion.getRange().getStart().getCharacter(),
-                                    completion.getRange().getEnd().getLine(),
-                                    completion.getRange().getEnd().getCharacter());
+                                    completion.range.start.line,
+                                    completion.range.start.character,
+                                    completion.range.end.line,
+                                    completion.range.end.character);
                               editor.replaceRange(insertRange, text);
                               break;
                            }
-                        }
+                       }
                      }
 
                      @Override
