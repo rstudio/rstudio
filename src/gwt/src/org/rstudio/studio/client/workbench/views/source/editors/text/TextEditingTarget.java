@@ -130,6 +130,8 @@ import org.rstudio.studio.client.shiny.model.ShinyApplicationParams;
 import org.rstudio.studio.client.shiny.model.ShinyTestResults;
 import org.rstudio.studio.client.workbench.WorkbenchContext;
 import org.rstudio.studio.client.workbench.commands.Commands;
+import org.rstudio.studio.client.workbench.copilot.model.CopilotCompletionResult;
+import org.rstudio.studio.client.workbench.copilot.model.CopilotCompletionResult.CopilotCompletion;
 import org.rstudio.studio.client.workbench.model.Session;
 import org.rstudio.studio.client.workbench.model.SessionInfo;
 import org.rstudio.studio.client.workbench.prefs.model.UserPrefs;
@@ -189,7 +191,6 @@ import org.rstudio.studio.client.workbench.views.source.events.RecordNavigationP
 import org.rstudio.studio.client.workbench.views.source.events.SourceFileSavedEvent;
 import org.rstudio.studio.client.workbench.views.source.events.SourceNavigationEvent;
 import org.rstudio.studio.client.workbench.views.source.model.*;
-import org.rstudio.studio.client.workbench.views.source.model.CopilotCompletionResult.CopilotCompletion;
 import org.rstudio.studio.client.workbench.views.terminal.events.SendToTerminalEvent;
 import org.rstudio.studio.client.workbench.views.vcs.common.ConsoleProgressDialog;
 import org.rstudio.studio.client.workbench.views.vcs.common.events.ShowVcsDiffEvent;

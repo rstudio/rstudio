@@ -23,6 +23,7 @@
 #include <core/json/JsonRpc.hpp>
 #include <core/system/Process.hpp>
 #include <core/system/System.hpp>
+#include <core/system/Xdg.hpp>
 #include <core/Thread.hpp>
 
 #include <r/RExec.hpp>
@@ -31,6 +32,7 @@
 #include <r/RSexp.hpp>
 #include <r/session/REventLoop.hpp>
 
+#include <session/prefs/UserPrefs.hpp>
 #include <session/SessionModuleContext.hpp>
 
 using namespace rstudio::core;
@@ -43,6 +45,9 @@ namespace copilot {
 
 namespace {
 
+// Whether Copilot is enabled.
+bool s_copilotEnabled = false;
+
 // The PID of the active Copilot agent process.
 PidType s_agentPid = -1;
 
@@ -51,6 +56,7 @@ std::queue<std::string> s_pendingRequests;
 
 // A queue of pending responses, sent via the agent's stdout.
 std::queue<std::string> s_pendingResponses;
+
 
 std::string uriFromDocumentId(const std::string& documentId)
 {
@@ -80,6 +86,34 @@ bool waitFor(F&& callback,
    return false;
 }
 
+FilePath copilotAgentDirectory()
+{
+   return core::system::xdg::userCacheDir().completeChildPath("copilot/dist");
+}
+
+FilePath copilotAgentPath()
+{
+   return copilotAgentDirectory().completeChildPath("agent.js");
+}
+
+bool isCopilotAgentInstalled()
+{
+   return copilotAgentPath().exists();
+}
+
+bool installCopilotAgent()
+{
+   bool didInstall = false;
+   Error error = r::exec::RFunction(".rs.copilot.installCopilotAgent")
+         .addParam(copilotAgentDirectory().getAbsolutePath())
+         .call(&didInstall);
+
+   if (error)
+      LOG_ERROR(error);
+
+   return didInstall;
+}
+
 std::string createRequest(const std::string& method,
                           const std::string& id,
                           const json::Value& paramsJson)
@@ -96,9 +130,6 @@ std::string createRequest(const std::string& method,
 
    // Convert to a JSON string
    std::string request = requestJson.write();
-
-   std::cerr << "Sending request:" << std::endl;
-   std::cerr << requestJson.writeFormatted() << std::endl;
 
    // Convert into HTTP request with JSON payload in body
    return fmt::format("Content-Length: {}\r\n\r\n{}", request.size(), request);
@@ -139,7 +170,6 @@ json::Value sendRequest(const std::string& method,
       Error error = object.parse(response);
       if (error)
       {
-         std::cerr << response << std::endl;
          LOG_ERROR(error);
          continue;
       }
@@ -191,9 +221,6 @@ bool onContinue(ProcessOperations& operations)
 
 void onStdout(ProcessOperations& operations, const std::string& stdOut)
 {
-   std::cerr << "Received stdout:" << std::endl;
-   std::cerr << stdOut << std::endl;
-
    // Copilot responses will have the format
    //
    //    Content-Length: xyz
@@ -216,8 +243,6 @@ void onStdout(ProcessOperations& operations, const std::string& stdOut)
 
       // Extract the header text.
       std::string headerText = string_utils::substring(stdOut, startIndex, splitIndex + 4);
-      std::cerr << "Headers: " << std::endl;
-      std::cerr << headerText << std::endl;
 
       // Parse the headers.
       core::http::Headers headers;
@@ -237,9 +262,6 @@ void onStdout(ProcessOperations& operations, const std::string& stdOut)
       auto bodyEnd = bodyStart + safe_convert::stringTo<int>(contentLength, 0);
       std::string bodyText = string_utils::substring(stdOut, bodyStart, bodyEnd);
       s_pendingResponses.push(bodyText);
-
-      std::cerr << "Body:" << std::endl;
-      std::cerr << bodyText << std::endl;
 
       // Update the start index.
       startIndex = bodyEnd;
@@ -290,7 +312,9 @@ bool startAgent()
    }
 
    // TODO: Prompt user to download agent, and then use that path.
-   std::string agentPath = "/Users/kevin/projects/copilot.vim/copilot/dist/agent.uglify.js";
+   FilePath agentPath = copilotAgentPath();
+   if (!agentPath.exists())
+      return false;
 
    // Set up process callbacks
    core::system::ProcessCallbacks callbacks;
@@ -303,7 +327,7 @@ bool startAgent()
    core::system::ProcessOptions options;
    error = module_context::processSupervisor().runProgram(
             nodePath.getAbsolutePath(),
-            { agentPath },
+            { agentPath.getAbsolutePath() },
             options,
             callbacks);
 
@@ -343,6 +367,9 @@ void ensureAgentRunning()
 
 void onDocAdded(const std::string& id)
 {
+   if (!s_copilotEnabled)
+      return;
+
    ensureAgentRunning();
 
    json::Object textDocumentJson;
@@ -359,6 +386,9 @@ void onDocAdded(const std::string& id)
 
 void onDocUpdated(boost::shared_ptr<source_database::SourceDocument> pDoc)
 {
+   if (!s_copilotEnabled)
+      return;
+
    ensureAgentRunning();
 
    json::Object textDocumentJson;
@@ -375,6 +405,9 @@ void onDocUpdated(boost::shared_ptr<source_database::SourceDocument> pDoc)
 
 void onDocRemoved(const std::string& id, const std::string& path)
 {
+   if (!s_copilotEnabled)
+      return;
+
    ensureAgentRunning();
 
    json::Object textDocumentJson;
@@ -384,6 +417,28 @@ void onDocRemoved(const std::string& id, const std::string& path)
    paramsJson["textDocument"] = textDocumentJson;
 
    sendNotification("textDocument/didClose", paramsJson);
+}
+
+void onPreferencesSaved()
+{
+   // Check for preference change
+   bool oldEnabled = s_copilotEnabled;
+   bool newEnabled = prefs::userPrefs().copilotEnabled();
+   if (oldEnabled == newEnabled)
+      return;
+
+   // Update our preference
+   s_copilotEnabled = newEnabled;
+
+   // Start or stop the agent as appropriate
+   if (s_copilotEnabled)
+   {
+      startAgent();
+   }
+   else
+   {
+      stopAgent();
+   }
 }
 
 void onDeferredInit(bool newSession)
@@ -451,6 +506,24 @@ SEXP rs_copilotAgentPid()
    return r::sexp::create(s_agentPid, &protect);
 }
 
+Error copilotVerifyInstalled(const json::JsonRpcRequest& request,
+                             json::JsonRpcResponse* pResponse)
+{
+   json::Object responseJson;
+   responseJson["installed"] = isCopilotAgentInstalled();
+   pResponse->setResult(responseJson);
+   return Success();
+}
+
+Error copilotInstallAgent(const json::JsonRpcRequest& request,
+                          json::JsonRpcResponse* pResponse)
+{
+   json::Object responseJson;
+   responseJson["installed"] = installCopilotAgent();
+   pResponse->setResult(responseJson);
+   return Success();
+}
+
 } // end anonymous namespace
 
 Error initialize()
@@ -458,6 +531,9 @@ Error initialize()
    using boost::bind;
    using namespace module_context;
 
+   s_copilotEnabled = prefs::userPrefs().copilotEnabled();
+
+   events().onPreferencesSaved.connect(onPreferencesSaved);
    events().onDeferredInit.connect(onDeferredInit);
 
    RS_REGISTER_CALL_METHOD(rs_copilotStartAgent);
@@ -467,7 +543,10 @@ Error initialize()
 
    ExecBlock initBlock;
    initBlock.addFunctions()
-         (bind(sourceModuleRFile, "SessionCopilot.R"));
+         (bind(sourceModuleRFile, "SessionCopilot.R"))
+         (bind(registerRpcMethod, "copilot_verify_installed", copilotVerifyInstalled))
+         (bind(registerRpcMethod, "copilot_install_agent", copilotInstallAgent))
+         ;
    return initBlock.execute();
 
 }

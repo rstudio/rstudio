@@ -12,13 +12,10 @@
  * AGPL (http://www.gnu.org/licenses/agpl-3.0.txt) for more details.
  *
  */
-package org.rstudio.studio.client.workbench.views.source.model;
-
-import org.rstudio.studio.client.workbench.views.source.editors.text.ace.Range;
+package org.rstudio.studio.client.workbench.copilot.model;
 
 import com.google.gwt.core.client.JavaScriptObject;
 import com.google.gwt.core.client.JsArray;
-import com.google.gwt.core.client.JsArrayString;
 
 public class CopilotCompletionResult extends JavaScriptObject
 {

@@ -30,6 +30,7 @@ import org.rstudio.studio.client.rsconnect.model.RSConnectServerOperations;
 import org.rstudio.studio.client.server.ServerRequestCallback;
 import org.rstudio.studio.client.server.Void;
 import org.rstudio.studio.client.workbench.codesearch.model.CodeSearchServerOperations;
+import org.rstudio.studio.client.workbench.copilot.server.CopilotServerOperations;
 import org.rstudio.studio.client.workbench.views.buildtools.model.BuildServerOperations;
 import org.rstudio.studio.client.workbench.views.files.model.FilesServerOperations;
 import org.rstudio.studio.client.workbench.views.output.lint.model.LintServerOperations;
@@ -61,7 +62,8 @@ public interface SourceServerOperations extends FilesServerOperations,
                                                 ObjectExplorerServerOperations,
                                                 TestServerOperations,
                                                 QuartoServerOperations,
-                                                CryptoServerOperations
+                                                CryptoServerOperations,
+                                                CopilotServerOperations
 {
    /**
     * Create a new, empty document, without a path but with a unique ID, and
@@ -277,10 +279,5 @@ public interface SourceServerOperations extends FilesServerOperations,
    
    public void rstudioApiResponse(JavaScriptObject response,
                                   ServerRequestCallback<Void> requestCallback);
-   
-   public void copilotCodeCompletion(String documentPath,
-                                            int cursorRow,
-                                            int cursorColumn,
-                                            ServerRequestCallback<CopilotCompletionResult> requestCallback);
    
 }

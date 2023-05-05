@@ -49,6 +49,28 @@
    }
 })
 
+.rs.addFunction("copilot.installCopilotAgent", function(targetDirectory)
+{
+   # Get path to copilot payload
+   defaultCopilotUrl <- "https://rstudio-buildtools.s3.amazonaws.com/copilot/copilot.tar.gz"
+   copilotUrl <- getOption("rstudio.copilot.agentUrl", default = defaultCopilotUrl)
+   
+   # Download to temporary directory
+   destfile <- tempfile("rstudio-copilot-", fileext = ".tar.gz")
+   download.file(
+      url = copilotUrl,
+      destfile = destfile,
+      mode = "wb"
+   )
+   
+   # Extract to target directory
+   .rs.ensureDirectory(targetDirectory)
+   untar(destfile, exdir = targetDirectory)
+   
+   # Confirm the agent runtime exists
+   file.exists(file.path(targetDirectory, "agent.js"))
+})
+
 .rs.addFunction("copilot.agentPid", function()
 {
    .Call("rs_copilotAgentPid", PACKAGE = "(embedding)")

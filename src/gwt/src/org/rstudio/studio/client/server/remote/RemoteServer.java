@@ -142,6 +142,8 @@ import org.rstudio.studio.client.workbench.addins.Addins.RAddins;
 import org.rstudio.studio.client.workbench.codesearch.model.CodeSearchResults;
 import org.rstudio.studio.client.workbench.codesearch.model.ObjectDefinition;
 import org.rstudio.studio.client.workbench.codesearch.model.SearchPathFunctionDefinition;
+import org.rstudio.studio.client.workbench.copilot.model.CopilotCompletionResult;
+import org.rstudio.studio.client.workbench.copilot.model.CopilotVerifyResult;
 import org.rstudio.studio.client.workbench.events.SessionInitEvent;
 import org.rstudio.studio.client.workbench.exportplot.model.SavePlotAsImageContext;
 import org.rstudio.studio.client.workbench.model.HTMLCapabilities;
@@ -199,7 +201,6 @@ import org.rstudio.studio.client.workbench.views.source.editors.text.rmd.ChunkDe
 import org.rstudio.studio.client.workbench.views.source.editors.text.themes.AceTheme;
 import org.rstudio.studio.client.workbench.views.source.events.AvailablePackagesReadyEvent;
 import org.rstudio.studio.client.workbench.views.source.model.CheckForExternalEditResult;
-import org.rstudio.studio.client.workbench.views.source.model.CopilotCompletionResult;
 import org.rstudio.studio.client.workbench.views.source.model.CppCapabilities;
 import org.rstudio.studio.client.workbench.views.source.model.CppCompletionResult;
 import org.rstudio.studio.client.workbench.views.source.model.CppDiagnostic;
@@ -567,6 +568,18 @@ public class RemoteServer implements Server
    }
    
    @Override
+   public void copilotVerifyInstalled(ServerRequestCallback<CopilotVerifyResult> requestCallback)
+   {
+      sendRequest(RPC_SCOPE, "copilot_verify_installed", requestCallback);
+   }
+
+   @Override
+   public void copilotInstallAgent(ServerRequestCallback<CopilotVerifyResult> requestCallback)
+   {
+      sendRequest(RPC_SCOPE, "copilot_install_agent", requestCallback);
+   }
+   
+   @Override
    public void copilotCodeCompletion(String documentId,
                                      int cursorRow,
                                      int cursorColumn,
@@ -580,7 +593,7 @@ public class RemoteServer implements Server
       
       sendRequest(RPC_SCOPE, "copilot_code_completion", params, requestCallback);
    }
-
+   
    @Override
    public void getTerminalOptions(
                      ServerRequestCallback<TerminalOptions> requestCallback)

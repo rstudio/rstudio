@@ -29,7 +29,9 @@ import com.google.gwt.user.client.ui.Label;
 import com.google.gwt.user.client.ui.VerticalPanel;
 import com.google.inject.Inject;
 
+import org.rstudio.core.client.CommandWithArg;
 import org.rstudio.core.client.ElementIds;
+import org.rstudio.core.client.MessageDisplay;
 import org.rstudio.core.client.StringUtil;
 import org.rstudio.core.client.command.KeyboardShortcut;
 import org.rstudio.core.client.command.ShortcutManager;
@@ -41,14 +43,17 @@ import org.rstudio.core.client.theme.VerticalTabPanel;
 import org.rstudio.core.client.widget.HelpButton;
 import org.rstudio.core.client.widget.ModifyKeyboardShortcutsWidget;
 import org.rstudio.core.client.widget.NumericValueWidget;
+import org.rstudio.core.client.widget.Operation;
 import org.rstudio.core.client.widget.OperationWithInput;
 import org.rstudio.core.client.widget.SelectWidget;
 import org.rstudio.core.client.widget.SmallButton;
 import org.rstudio.core.client.widget.TextBoxWithButton;
 import org.rstudio.studio.client.common.DiagnosticsHelpLink;
+import org.rstudio.studio.client.common.GlobalDisplay;
 import org.rstudio.studio.client.common.HelpLink;
 import org.rstudio.studio.client.common.SimpleRequestCallback;
 import org.rstudio.studio.client.workbench.commands.Commands;
+import org.rstudio.studio.client.workbench.copilot.Copilot;
 import org.rstudio.studio.client.workbench.model.Session;
 import org.rstudio.studio.client.workbench.prefs.PrefsConstants;
 import org.rstudio.studio.client.workbench.prefs.model.Prefs;
@@ -61,15 +66,19 @@ import org.rstudio.studio.client.workbench.views.source.model.SourceServerOperat
 public class EditingPreferencesPane extends PreferencesPane
 {
    @Inject
-   public EditingPreferencesPane(UserPrefs prefs,
+   public EditingPreferencesPane(GlobalDisplay display,
+                                 UserPrefs prefs,
                                  SourceServerOperations server,
                                  PreferencesDialogResources res,
                                  Commands commands,
-                                 Session session)
+                                 Session session,
+                                 Copilot copilot)
    {
+      display_ = display;
       prefs_ = prefs;
       server_ = server;
       commands_ = commands;
+      copilot_ = copilot;
 
       boolean hasProject = session.getSessionInfo().getActiveProjectFile() != null;
 
@@ -391,6 +400,39 @@ public class EditingPreferencesPane extends PreferencesPane
       completionPanel.add(checkboxPref(
             constants_.completionTabMultilineCompletionLabel(),
             prefs_.tabMultilineCompletion()));
+      
+      Label githubCopilotLabel = headerLabel("GitHub Copilot");
+      githubCopilotLabel.getElement().getStyle().setMarginTop(8, Unit.PX);
+      completionPanel.add(githubCopilotLabel);
+      
+      useCopilot_ = checkboxPref(
+            "Use GitHub Copilot for code completions",
+            prefs_.copilotEnabled());
+      
+      useCopilot_.addValueChangeHandler(new ValueChangeHandler<Boolean>()
+      {
+         @Override
+         public void onValueChange(ValueChangeEvent<Boolean> event)
+         {
+            boolean enabled = event.getValue();
+            if (enabled)
+            {
+               copilot_.ensureAgentInstalled(new CommandWithArg<Boolean>()
+               {
+                  @Override
+                  public void execute(Boolean isInstalled)
+                  {
+                     if (!isInstalled)
+                     {
+                        useCopilot_.setValue(false);
+                     }
+                  }
+               });
+            }
+         }
+      });
+      
+      completionPanel.add(useCopilot_);
 
       Label otherLabel = headerLabel(constants_.editingDiagOtherLabel());
       otherLabel.getElement().getStyle().setMarginTop(8, Unit.PX);
@@ -523,6 +565,7 @@ public class EditingPreferencesPane extends PreferencesPane
    {
       lineEndings_.setValue(prefs.lineEndingConversion().getValue());
       useNativePipe_.setValue(prefs.insertNativePipeOperator().getGlobalValue());
+      useCopilot_.setValue(prefs.copilotEnabled().getGlobalValue());
       showCompletions_.setValue(prefs_.codeCompletion().getValue());
       showCompletionsOther_.setValue(prefs_.codeCompletionOther().getValue());
       editorMode_.setValue(prefs_.editorKeybindings().getValue());
@@ -549,8 +592,8 @@ public class EditingPreferencesPane extends PreferencesPane
       // editing prefs
       prefs_.lineEndingConversion().setGlobalValue(lineEndings_.getValue());
       prefs_.insertNativePipeOperator().setGlobalValue(useNativePipe_.getValue());
+      prefs_.copilotEnabled().setGlobalValue(useCopilot_.getValue());
       prefs_.defaultEncoding().setGlobalValue(encodingValue_);
-
       prefs_.codeCompletion().setGlobalValue(showCompletions_.getValue());
       prefs_.codeCompletionOther().setGlobalValue(showCompletionsOther_.getValue());
 
@@ -612,9 +655,12 @@ public class EditingPreferencesPane extends PreferencesPane
          encoding_.setText(encoding);
    }
 
+   private final GlobalDisplay display_;
    private final UserPrefs prefs_;
    private final SourceServerOperations server_;
    private final Commands commands_;
+   private final Copilot copilot_;
+   
    private final NumericValueWidget editorScrollMultiplier_;
    private final NumericValueWidget tabWidth_;
    private final NumericValueWidget marginCol_;
@@ -625,6 +671,7 @@ public class EditingPreferencesPane extends PreferencesPane
    private final CheckBox spacesForTab_;
    private final CheckBox showMargin_;
    private final CheckBox useNativePipe_;
+   private final CheckBox useCopilot_;
    private final SelectWidget showCompletions_;
    private final SelectWidget showCompletionsOther_;
    private final SelectWidget editorMode_;
