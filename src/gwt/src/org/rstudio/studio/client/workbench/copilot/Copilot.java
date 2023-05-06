@@ -15,22 +15,37 @@
 package org.rstudio.studio.client.workbench.copilot;
 
 import org.rstudio.core.client.CommandWithArg;
+import org.rstudio.core.client.Debug;
 import org.rstudio.core.client.MessageDisplay;
 import org.rstudio.core.client.StringUtil;
 import org.rstudio.core.client.command.CommandBinder;
 import org.rstudio.core.client.command.Handler;
+import org.rstudio.core.client.widget.ProgressIndicator;
 import org.rstudio.studio.client.common.DelayedProgressRequestCallback;
 import org.rstudio.studio.client.common.GlobalDisplay;
+import org.rstudio.studio.client.common.Timers;
+import org.rstudio.studio.client.server.ServerError;
+import org.rstudio.studio.client.server.ServerRequestCallback;
 import org.rstudio.studio.client.workbench.commands.Commands;
+import org.rstudio.studio.client.workbench.copilot.model.CopilotResponse.CopilotCodeCompletionResponse;
 import org.rstudio.studio.client.workbench.copilot.model.CopilotResponse.CopilotInstallAgentResponse;
 import org.rstudio.studio.client.workbench.copilot.model.CopilotResponse.CopilotVerifyInstalledResponse;
+import org.rstudio.studio.client.workbench.copilot.model.CopilotTypes.CopilotCompletion;
 import org.rstudio.studio.client.workbench.copilot.server.CopilotServerOperations;
 import org.rstudio.studio.client.workbench.copilot.ui.CopilotInstallDialog;
+import org.rstudio.studio.client.workbench.views.source.SourceColumn;
+import org.rstudio.studio.client.workbench.views.source.SourceColumnManager;
+import org.rstudio.studio.client.workbench.views.source.editors.EditingTarget;
+import org.rstudio.studio.client.workbench.views.source.editors.text.TextEditingTarget;
+import org.rstudio.studio.client.workbench.views.source.editors.text.ace.Range;
 
-import com.google.gwt.core.client.GWT;
 import com.google.gwt.event.dom.client.ClickHandler;
+import com.google.gwt.user.client.Timer;
 import com.google.inject.Inject;
+import com.google.inject.Provider;
 import com.google.inject.Singleton;
+
+import jsinterop.base.JsArrayLike;
 
 @Singleton
 public class Copilot
@@ -38,11 +53,15 @@ public class Copilot
    @Inject
    public Copilot(GlobalDisplay display,
                   Commands commands,
+                  Provider<SourceColumnManager> sourceColumnManager,
+                  GlobalDisplay globalDisplay,
                   CopilotCommandBinder binder,
                   CopilotServerOperations server)
    {
       display_ = display;
       commands_ = commands;
+      sourceColumnManager_ = sourceColumnManager;
+      globalDisplay_ = globalDisplay;
       server_ = server;
       
       binder.bind(commands, this);
@@ -72,8 +91,9 @@ public class Copilot
    
    private void installAgentWithPrompt(CommandWithArg<Boolean> callback)
    {
-      ClickHandler handler = (event) -> {
-         
+      ClickHandler handler = (event) ->
+      {
+         installAgent(callback);
       };
       
       CopilotInstallDialog dialog = new CopilotInstallDialog(handler);
@@ -109,15 +129,79 @@ public class Copilot
    @Handler
    public void onCopilotInstall()
    {
-      installAgentWithPrompt(new CommandWithArg<Boolean>()
+      installAgentWithPrompt(installed -> {});
+   }
+   
+   @Handler
+   void onCopilotCodeCompletion()
+   {
+      SourceColumn column = sourceColumnManager_.get().getActive();
+      if (column == null)
+         return;
+      
+      EditingTarget target = column.getActiveEditor();
+      if (target == null)
+         return;
+      
+      if (!(target instanceof TextEditingTarget))
+         return;
+      
+      TextEditingTarget textTarget = (TextEditingTarget) target;
+      textTarget.withSavedDoc(() ->
       {
-         @Override
-         public void execute(Boolean isInstalled)
+         textTarget.withActiveEditor((editor) ->
          {
-            // nothing to do
-         }
+            ProgressIndicator indicator =
+                  globalDisplay_.getProgressIndicator("Error requesting code suggestions");
+            
+            final Timer indicatorTimer = Timers.singleShot(1000, () -> 
+            {
+               indicator.onProgress("Waiting for Copilot...");
+            });
+            
+            server_.copilotCodeCompletion(
+                  textTarget.getId(),
+                  editor.getCursorRow(),
+                  editor.getCursorColumn(),
+                  new ServerRequestCallback<CopilotCodeCompletionResponse>()
+                  {
+                     @Override
+                     public void onResponseReceived(CopilotCodeCompletionResponse response)
+                     {
+                        indicatorTimer.cancel();
+                        indicator.onCompleted();
+                        
+                        JsArrayLike<CopilotCompletion> completions = response.result.completions;
+                        for (CopilotCompletion completion : completions.asList())
+                        {
+                           String text = completion.text;
+                           if (!StringUtil.isNullOrEmpty(text))
+                           {
+                              Range insertRange = Range.create(
+                                    completion.range.start.line,
+                                    completion.range.start.character,
+                                    completion.range.end.line,
+                                    completion.range.end.character);
+                              editor.replaceRange(insertRange, text);
+                              break;
+                           }
+                       }
+                     }
+                     
+                     @Override
+                     public void onError(ServerError error)
+                     {
+                        indicatorTimer.cancel();
+                        indicator.onError(error.getMessage());
+                        Debug.logError(error);
+                     }
+                     
+                  });
+         });
       });
    }
+   
+   
  
    interface CopilotCommandBinder
          extends CommandBinder<Commands, Copilot>
@@ -126,5 +210,7 @@ public class Copilot
    
    private final GlobalDisplay display_;
    private final Commands commands_;
+   private final Provider<SourceColumnManager> sourceColumnManager_;
+   private final GlobalDisplay globalDisplay_;
    private final CopilotServerOperations server_;
 }

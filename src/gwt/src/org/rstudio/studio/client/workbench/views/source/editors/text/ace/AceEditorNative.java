@@ -14,18 +14,18 @@
  */
 package org.rstudio.studio.client.workbench.views.source.editors.text.ace;
 
-import com.google.gwt.core.client.JavaScriptObject;
-import com.google.gwt.dom.client.Element;
-import com.google.gwt.event.shared.HandlerRegistration;
-import com.google.gwt.event.shared.HasHandlers;
-import com.google.gwt.user.client.Command;
+import java.util.LinkedList;
 
 import org.rstudio.core.client.CommandWithArg;
 import org.rstudio.core.client.js.JsMap;
 import org.rstudio.core.client.widget.CanSetControlId;
 import org.rstudio.studio.client.workbench.prefs.model.UserPrefs;
 
-import java.util.LinkedList;
+import com.google.gwt.core.client.JavaScriptObject;
+import com.google.gwt.dom.client.Element;
+import com.google.gwt.event.shared.HandlerRegistration;
+import com.google.gwt.event.shared.HasHandlers;
+import com.google.gwt.user.client.Command;
 
 public class AceEditorNative extends JavaScriptObject
                              implements CanSetControlId
@@ -696,6 +696,17 @@ public class AceEditorNative extends JavaScriptObject
       }
    }-*/;
    
+   public final native void setGhostText(String text) /*-{
+      this.setGhostText(text);
+   }-*/;
+   
+   public final native boolean hasGhostText() /*-{
+      return this.renderer.$ghostText != null;
+   }-*/;
+   
+   public final native void removeGhostText() /*-{
+      this.removeGhostText();
+   }-*/;
 
    private static final native void initialize()
    /*-{

@@ -69,7 +69,6 @@ import org.rstudio.studio.client.common.FilePathUtils;
 import org.rstudio.studio.client.common.GlobalDisplay;
 import org.rstudio.studio.client.common.ReadOnlyValue;
 import org.rstudio.studio.client.common.SimpleRequestCallback;
-import org.rstudio.studio.client.common.Timers;
 import org.rstudio.studio.client.common.Value;
 import org.rstudio.studio.client.common.console.ConsoleProcess;
 import org.rstudio.studio.client.common.console.ProcessExitEvent;
@@ -136,8 +135,6 @@ import org.rstudio.studio.client.shiny.model.ShinyApplicationParams;
 import org.rstudio.studio.client.shiny.model.ShinyTestResults;
 import org.rstudio.studio.client.workbench.WorkbenchContext;
 import org.rstudio.studio.client.workbench.commands.Commands;
-import org.rstudio.studio.client.workbench.copilot.model.CopilotResponse.CopilotCodeCompletionResponse;
-import org.rstudio.studio.client.workbench.copilot.model.CopilotTypes.CopilotCompletion;
 import org.rstudio.studio.client.workbench.model.Session;
 import org.rstudio.studio.client.workbench.model.SessionInfo;
 import org.rstudio.studio.client.workbench.prefs.model.UserPrefs;
@@ -263,8 +260,6 @@ import com.google.gwt.user.client.ui.UIObject;
 import com.google.gwt.user.client.ui.Widget;
 import com.google.inject.Inject;
 import com.google.inject.Provider;
-
-import jsinterop.base.JsArrayLike;
 
 public class TextEditingTarget implements
                                   EditingTarget,
@@ -607,6 +602,8 @@ public class TextEditingTarget implements
                                          events_,
                                          this);
 
+      copilotHelper_ = new TextEditingTargetCopilotHelper(this);
+      
       EditingTarget target = this;
       docDisplay_.addKeyDownHandler(new KeyDownHandler()
       {
@@ -6478,64 +6475,6 @@ public class TextEditingTarget implements
    }
    
    @Handler
-   void onCopilotCodeCompletion()
-   {
-      // TODO: Visual mode?
-      docUpdateSentinel_.withSavedDoc(() ->
-      {
-         withActiveEditor((editor) ->
-         {
-            ProgressIndicator indicator =
-                  globalDisplay_.getProgressIndicator("Error requesting code suggestions");
-            
-            final Timer indicatorTimer = Timers.singleShot(1000, () -> 
-            {
-               indicator.onProgress("Waiting for Copilot...");
-            });
-            
-            server_.copilotCodeCompletion(
-                  getId(),
-                  editor.getCursorRow(),
-                  editor.getCursorColumn(),
-                  new ServerRequestCallback<CopilotCodeCompletionResponse>()
-                  {
-                     @Override
-                     public void onResponseReceived(CopilotCodeCompletionResponse response)
-                     {
-                        indicatorTimer.cancel();
-                        indicator.onCompleted();
-                        
-                        JsArrayLike<CopilotCompletion> completions = response.result.completions;
-                        for (CopilotCompletion completion : completions.asList())
-                        {
-                           String text = completion.text;
-                           if (!StringUtil.isNullOrEmpty(text))
-                           {
-                              Range insertRange = Range.create(
-                                    completion.range.start.line,
-                                    completion.range.start.character,
-                                    completion.range.end.line,
-                                    completion.range.end.character);
-                              editor.replaceRange(insertRange, text);
-                              break;
-                           }
-                       }
-                     }
-                     
-                     @Override
-                     public void onError(ServerError error)
-                     {
-                        indicatorTimer.cancel();
-                        indicator.onError(error.getMessage());
-                        Debug.logError(error);
-                     }
-                     
-                  });
-         });
-      });
-   }
-   
-   @Handler
    void onGoToHelp()
    {
       withActiveEditor((disp) ->
@@ -9035,7 +8974,7 @@ public class TextEditingTarget implements
     *
     * @param cmd The command to execute.
     */
-   private void withActiveEditor(CommandWithArg<DocDisplay> cmd)
+   public void withActiveEditor(CommandWithArg<DocDisplay> cmd)
    {
       if (isVisualEditorActive())
       {
@@ -9166,6 +9105,7 @@ public class TextEditingTarget implements
    private boolean ignoreDeletes_;
    private boolean forceSaveCommandActive_ = false;
    private final TextEditingTargetScopeHelper scopeHelper_;
+   private final TextEditingTargetCopilotHelper copilotHelper_;
    private TextEditingTargetPackageDependencyHelper packageDependencyHelper_;
    private TextEditingTargetSpelling spelling_;
    private TextEditingTargetNotebook notebook_;

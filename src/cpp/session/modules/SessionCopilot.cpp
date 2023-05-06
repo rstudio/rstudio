@@ -229,11 +229,11 @@ bool onContinue(ProcessOperations& operations)
 
       DBG
       {
+         std::cerr << "REQUEST" << std::endl;
          std::cerr << "----------------" << std::endl;
-         std::cerr << "Sending request:" << std::endl;
          std::cerr << request << std::endl;
          std::cerr << "----------------" << std::endl;
-         std::cerr << std::endl;
+         std::cerr << std::endl << std::endl;
       }
 
       operations.writeToStdin(request, false);
@@ -288,11 +288,11 @@ void onStdout(ProcessOperations& operations, const std::string& stdOut)
 
       DBG
       {
+         std::cerr << "RESPONSE:" << std::endl;
          std::cerr << "------------------" << std::endl;
-         std::cerr << "Received response:" << std::endl;
          std::cerr << bodyText << std::endl;
          std::cerr << "------------------" << std::endl;
-         std::cerr << std::endl;
+         std::cerr << std::endl << std::endl;
       }
 
       // Update the start index.
@@ -356,7 +356,13 @@ bool startAgent()
    callbacks.onStderr = &agent::onStderr;
    callbacks.onExit = &agent::onExit;
 
+   // Set up process options
    core::system::ProcessOptions options;
+   options.allowParentSuspend = true;
+   options.exitWithParent = true;
+   options.callbacksRequireMainThread = true; // TODO: It'd be nice to drop this requirement!
+   options.workingDir = agentPath.getParent();
+
    error = module_context::processSupervisor().runProgram(
             nodePath.getAbsolutePath(),
             { agentPath.getAbsolutePath() },
