@@ -468,6 +468,8 @@ var SnippetManager = function () {
     };
     this.insertSnippet = function (editor, snippetText, replaceRange) {
         var self = this;
+        if (replaceRange && !(replaceRange instanceof Range))
+            replaceRange = Range.fromPoints(replaceRange.start, replaceRange.end);
         if (editor.inVirtualSelectionMode)
             return self.insertSnippetForSelection(editor, snippetText, replaceRange);
         editor.forEachSelection(function () {
