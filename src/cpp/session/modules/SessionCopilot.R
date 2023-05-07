@@ -86,14 +86,19 @@
    .Call("rs_copilotStartAgent", PACKAGE = "(embedding)")
 })
 
+.rs.addFunction("copilot.isAgentRunning", function()
+{
+   .Call("rs_copilotAgentRunning", PACKAGE = "(embedding)")
+})
+
 .rs.addFunction("copilot.restartAgent", function()
 {
    .Call("rs_copilotStartAgent", PACKAGE = "(embedding)")
 })
 
-.rs.addFunction("copilot.isAgentRunning", function()
+.rs.addFunction("copilot.stopAgent", function()
 {
-   .Call("rs_copilotAgentRunning", PACKAGE = "(embedding)")
+   .Call("rs_copilotStopAgent", PACKAGE = "(embedding)")
 })
 
 .rs.addFunction("copilot.ensureAgentRunning", function()

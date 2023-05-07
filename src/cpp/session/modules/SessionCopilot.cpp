@@ -244,6 +244,11 @@ bool onContinue(ProcessOperations& operations)
 
 void onStdout(ProcessOperations& operations, const std::string& stdOut)
 {
+   // Discard empty lines.
+   static const boost::regex reWhitespace("^\\s*$");
+   if (regex_utils::match(stdOut, reWhitespace))
+      return;
+
    // Copilot responses will have the format
    //
    //    Content-Length: xyz
@@ -252,6 +257,9 @@ void onStdout(ProcessOperations& operations, const std::string& stdOut)
    //
    // Importantly, there is no character separating the body from the
    // next response, so we're forced to parse headers here.
+   //
+   // TODO: Does this need to be a state machine? Is it possible that we
+   // receive some incomplete requests here?
    std::size_t startIndex = 0;
 
    while (startIndex < stdOut.length())
@@ -496,11 +504,15 @@ SEXP rs_copilotStartAgent()
    if (!ready)
       Rf_error("[copilot] agent failed to start");
 
-   // Wait for a PID to be known
-   waitFor([]() { return s_agentPid != -1; });
-
    r::sexp::Protect protect;
    return r::sexp::create(s_agentPid, &protect);
+}
+
+SEXP rs_copilotStopAgent()
+{
+   stopAgent();
+   r::sexp::Protect protect;
+   return r::sexp::create(true, &protect);
 }
 
 SEXP rs_copilotAgentRunning()
@@ -577,6 +589,7 @@ Error initialize()
 
    RS_REGISTER_CALL_METHOD(rs_copilotStartAgent);
    RS_REGISTER_CALL_METHOD(rs_copilotAgentRunning);
+   RS_REGISTER_CALL_METHOD(rs_copilotStopAgent);
    RS_REGISTER_CALL_METHOD(rs_copilotSendRequest);
    RS_REGISTER_CALL_METHOD(rs_copilotAgentPid);
 
