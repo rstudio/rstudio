@@ -149,11 +149,11 @@ def publishToDailiesSite(String packageFile, String destinationPath, String urlP
   * x86_64 -> amd64  on Debian
   */
 def getArchForOs(String os, String arch) {
-  if ((arch == "amd64") && (os != "bionic") && (os != "jammy")) {
+  if ((arch == "amd64") && (os != "focal") && (os != "jammy")) {
     return "x86_64"
   }
 
-  if ((arch == "x86_64") && ((os == "bionic") || (os == "jammy"))) {
+  if ((arch == "x86_64") && ((os == "focal") || (os == "jammy"))) {
     return "amd64"
   }
 
