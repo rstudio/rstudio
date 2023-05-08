@@ -1,7 +1,7 @@
 def utils
 
 def labelForOS = [
-  'bionic':     'linux',
+  'focal':     'linux',
   'jammy':      'linux',
   'centos7':    'linux',
   'rhel8':      'linux',
@@ -103,7 +103,7 @@ pipeline {
         axes {
           axis {
             name 'os'
-            values 'bionic', 'jammy', 'centos7', 'rhel8', 'rhel9', 'opensuse15', 'windows'
+            values 'focal', 'jammy', 'centos7', 'rhel8', 'rhel9', 'opensuse15', 'windows'
           }
           axis {
             name 'arch'
@@ -115,7 +115,7 @@ pipeline {
           exclude {
             axis {
               name 'os'
-              values 'bionic', 'centos7', 'rhel8', 'windows', 'opensuse15'
+              values 'focal', 'centos7', 'rhel8', 'windows', 'opensuse15'
             }
             axis {
               name 'arch'
