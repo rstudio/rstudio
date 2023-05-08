@@ -327,14 +327,12 @@ void onExit(int status)
 
 void stopAgent()
 {
-   if (s_agentPid != -1)
-   {
-      Error error = core::system::terminateProcess(s_agentPid);
-      if (error)
-         LOG_ERROR(error);
+   if (s_agentPid == -1)
+      return;
 
-      s_agentPid = -1;
-   }
+   Error error = core::system::terminateProcess(s_agentPid);
+   if (error)
+      LOG_ERROR(error);
 }
 
 bool startAgent()
@@ -405,10 +403,13 @@ bool startAgent()
 
 void ensureAgentRunning()
 {
-   if (s_agentPid == -1)
-   {
-      startAgent();
-   }
+   if (!s_copilotEnabled)
+      return;
+
+   if (s_agentPid != -1)
+      return;
+
+   startAgent();
 }
 
 void onDocAdded(const std::string& id)
@@ -492,6 +493,12 @@ void onDeferredInit(bool newSession)
    source_database::events().onDocAdded.connect(onDocAdded);
    source_database::events().onDocUpdated.connect(onDocUpdated);
    source_database::events().onDocRemoved.connect(onDocRemoved);
+}
+
+SEXP rs_copilotEnabled()
+{
+   r::sexp::Protect protect;
+   return r::sexp::create(s_copilotEnabled, &protect);
 }
 
 SEXP rs_copilotStartAgent()
@@ -587,6 +594,7 @@ Error initialize()
    events().onPreferencesSaved.connect(onPreferencesSaved);
    events().onDeferredInit.connect(onDeferredInit);
 
+   RS_REGISTER_CALL_METHOD(rs_copilotEnabled);
    RS_REGISTER_CALL_METHOD(rs_copilotStartAgent);
    RS_REGISTER_CALL_METHOD(rs_copilotAgentRunning);
    RS_REGISTER_CALL_METHOD(rs_copilotStopAgent);

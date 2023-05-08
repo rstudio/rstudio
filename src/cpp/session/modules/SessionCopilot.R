@@ -16,7 +16,8 @@
 .rs.addJsonRpcHandler("copilot_code_completion", function(id, row, column)
 {
    # make sure copilot is running
-   .rs.copilot.ensureAgentRunning()
+   if (!.rs.copilot.ensureAgentRunning())
+      return()
    
    # get document properties
    uri <- .rs.copilot.uriFromDocumentId(id)
@@ -81,6 +82,11 @@
    sprintf("rstudio-document://%s", id)
 })
 
+.rs.addFunction("copilot.isEnabled", function()
+{
+   .Call("rs_copilotEnabled", PACKAGE = "(embedding)")
+})
+
 .rs.addFunction("copilot.startAgent", function()
 {
    .Call("rs_copilotStartAgent", PACKAGE = "(embedding)")
@@ -105,8 +111,10 @@
 {
    if (.rs.copilot.isAgentRunning())
       .rs.copilot.agentPid()
-   else
+   else if (.rs.copilot.isEnabled())
       .rs.copilot.startAgent()
+   else
+      FALSE
 })
 
 .rs.addFunction("copilot.sendRequestImpl", function(method, id, params)
@@ -136,7 +144,8 @@
 
 .rs.addFunction("copilot.signInInitiate", function()
 {
-   .rs.copilot.ensureAgentRunning()
+   if (!.rs.copilot.ensureAgentRunning())
+      return()
    
    response <- .rs.copilot.sendRequest("signInInitiate")
    if (identical(response$result$status, "AlreadySignedIn"))
@@ -167,7 +176,8 @@
 
 .rs.addFunction("copilot.signOut", function()
 {
-   .rs.copilot.ensureAgentRunning()
+   if (!.rs.copilot.ensureAgentRunning())
+      return()
    
    response <- .rs.copilot.sendRequest("checkStatus")
    if (identical(response$result$status, "NotSignedIn"))
@@ -182,7 +192,9 @@
 
 .rs.addFunction("copilot.checkStatus", function()
 {
-   .rs.copilot.ensureAgentRunning()
+   if (!.rs.copilot.ensureAgentRunning())
+      return()
+   
    .rs.copilot.sendRequest("checkStatus")
 })
 
