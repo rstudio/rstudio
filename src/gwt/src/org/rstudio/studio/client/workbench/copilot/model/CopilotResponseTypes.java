@@ -45,6 +45,24 @@ public class CopilotResponseTypes
    }
    
    @JsType(isNative = true, namespace = JsPackage.GLOBAL, name = "Object")
+   public static class CopilotSignInResponse
+   {
+      // TODO
+   }
+   
+   @JsType(isNative = true, namespace = JsPackage.GLOBAL, name = "Object")
+   public static class CopilotSignOutResponse
+   {
+      // TODO
+   }
+   
+   @JsType(isNative = true, namespace = JsPackage.GLOBAL, name = "Object")
+   public static class CopilotStatusResponse
+   {
+      // TODO
+   }
+   
+   @JsType(isNative = true, namespace = JsPackage.GLOBAL, name = "Object")
    public static class CopilotCodeCompletionResponseResult
    {
       public JsArrayLike<CopilotCompletion> completions;

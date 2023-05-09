@@ -615,6 +615,42 @@ Error copilotGenerateCompletions(const json::JsonRpcRequest& request,
    return Success();
 }
 
+Error copilotSignIn(const json::JsonRpcRequest& request,
+                    const json::JsonRpcFunctionContinuation& continuation)
+{
+   // Register our continuation handler
+   std::string requestId = core::system::generateUuid();
+   s_pendingContinuations[requestId] = continuation;
+
+   // Send sign in request
+   sendRequest("signInInitiate", requestId, json::Object());
+   return Success();
+}
+
+Error copilotSignOut(const json::JsonRpcRequest& request,
+                     const json::JsonRpcFunctionContinuation& continuation)
+{
+   // Register our continuation handler
+   std::string requestId = core::system::generateUuid();
+   s_pendingContinuations[requestId] = continuation;
+
+   // Send sign out request
+   sendRequest("signOut", requestId, json::Object());
+   return Success();
+}
+
+Error copilotStatus(const json::JsonRpcRequest& request,
+                    const json::JsonRpcFunctionContinuation& continuation)
+{
+   // Register our continuation handler
+   std::string requestId = core::system::generateUuid();
+   s_pendingContinuations[requestId] = continuation;
+
+   // Send sign out request
+   sendRequest("checkStatus", requestId, json::Object());
+   return Success();
+}
+
 Error copilotVerifyInstalled(const json::JsonRpcRequest& request,
                              json::JsonRpcResponse* pResponse)
 {
@@ -657,6 +693,9 @@ Error initialize()
    ExecBlock initBlock;
    initBlock.addFunctions()
          (bind(registerAsyncRpcMethod, "copilot_generate_completions", copilotGenerateCompletions))
+         (bind(registerAsyncRpcMethod, "copilot_sign_in", copilotSignIn))
+         (bind(registerAsyncRpcMethod, "copilot_sign_out", copilotSignOut))
+         (bind(registerAsyncRpcMethod, "copilot_status", copilotStatus))
          (bind(sourceModuleRFile, "SessionCopilot.R"))
          (bind(registerRpcMethod, "copilot_verify_installed", copilotVerifyInstalled))
          (bind(registerRpcMethod, "copilot_install_agent", copilotInstallAgent))

@@ -13,43 +13,6 @@
 #
 #
 
-.rs.addJsonRpcHandler("copilot_code_completion", function(id, row, column)
-{
-   # make sure copilot is running
-   if (!.rs.copilot.ensureAgentRunning())
-      return()
-   
-   # get document properties
-   uri <- .rs.copilot.uriFromDocumentId(id)
-   text <- .rs.api.documentContents(id)
-   
-   # request completions at cursor position
-   response <- .rs.copilot.sendRequest("getCompletions", list(
-      doc = list(
-         position = list(line = row, character = column),
-         uri = uri,
-         version = 1L
-      )
-   ))
-   
-   .rs.scalarListFromList(response)
-   
-})
-
-.rs.addFunction("copilot.tracingEnabled", function()
-{
-   getOption("rstudio.githubCopilot.tracingEnabled", default = FALSE)
-})
-
-.rs.addFunction("copilot.trace", function(fmt, ...)
-{
-   if (.rs.copilot.tracingEnabled())
-   {
-      payload <- sprintf(fmt, ...)
-      writeLines(paste("[copilot]", payload))
-   }
-})
-
 .rs.addFunction("copilot.installCopilotAgent", function(targetDirectory)
 {
    # Get path to copilot payload
@@ -75,11 +38,6 @@
 .rs.addFunction("copilot.agentPid", function()
 {
    .Call("rs_copilotAgentPid", PACKAGE = "(embedding)")
-})
-
-.rs.addFunction("copilot.uriFromDocumentId", function(id)
-{
-   sprintf("rstudio-document://%s", id)
 })
 
 .rs.addFunction("copilot.isEnabled", function()

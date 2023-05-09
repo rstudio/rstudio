@@ -155,9 +155,11 @@ import org.rstudio.studio.client.workbench.addins.Addins.RAddins;
 import org.rstudio.studio.client.workbench.codesearch.model.CodeSearchResults;
 import org.rstudio.studio.client.workbench.codesearch.model.ObjectDefinition;
 import org.rstudio.studio.client.workbench.codesearch.model.SearchPathFunctionDefinition;
-import org.rstudio.studio.client.workbench.copilot.model.CopilotResponseTypes.CopilotCodeCompletionResponse;
 import org.rstudio.studio.client.workbench.copilot.model.CopilotResponseTypes.CopilotGenerateCompletionsResponse;
 import org.rstudio.studio.client.workbench.copilot.model.CopilotResponseTypes.CopilotInstallAgentResponse;
+import org.rstudio.studio.client.workbench.copilot.model.CopilotResponseTypes.CopilotSignInResponse;
+import org.rstudio.studio.client.workbench.copilot.model.CopilotResponseTypes.CopilotSignOutResponse;
+import org.rstudio.studio.client.workbench.copilot.model.CopilotResponseTypes.CopilotStatusResponse;
 import org.rstudio.studio.client.workbench.copilot.model.CopilotResponseTypes.CopilotVerifyInstalledResponse;
 import org.rstudio.studio.client.workbench.events.SessionInitEvent;
 import org.rstudio.studio.client.workbench.exportplot.model.SavePlotAsImageContext;
@@ -601,6 +603,24 @@ public class RemoteServer implements Server
    }
    
    @Override
+   public void copilotSignIn(ServerRequestCallback<CopilotSignInResponse> requestCallback)
+   {
+      sendRequest(RPC_SCOPE, "copilot_sign_in", requestCallback);
+   }
+   
+   @Override
+   public void copilotSignOut(ServerRequestCallback<CopilotSignOutResponse> requestCallback)
+   {
+      sendRequest(RPC_SCOPE, "copilot_sign_out", requestCallback);
+   }
+   
+   @Override
+   public void copilotStatus(ServerRequestCallback<CopilotStatusResponse> requestCallback)
+   {
+      sendRequest(RPC_SCOPE, "copilot_status", requestCallback);
+   }
+   
+   @Override
    public void copilotGenerateCompletions(String documentId,
                                           int cursorRow,
                                           int cursorColumn,
@@ -613,21 +633,6 @@ public class RemoteServer implements Server
             .get();
       
       sendRequest(RPC_SCOPE, "copilot_generate_completions", params, requestCallback);
-   }
-   
-   @Override
-   public void copilotCodeCompletion(String documentId,
-                                     int cursorRow,
-                                     int cursorColumn,
-                                     ServerRequestCallback<CopilotCodeCompletionResponse> requestCallback)
-   {
-      JSONArray params = new JSONArrayBuilder()
-            .add(documentId)
-            .add(cursorRow)
-            .add(cursorColumn)
-            .get();
-      
-      sendRequest(RPC_SCOPE, "copilot_code_completion", params, requestCallback);
    }
    
    @Override

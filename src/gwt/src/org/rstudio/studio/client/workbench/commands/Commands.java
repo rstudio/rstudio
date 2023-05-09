@@ -732,8 +732,10 @@ public abstract class
    public abstract AppCommand showAccessibilityHelp();
    
    // Copilot
-   public abstract AppCommand copilotCodeCompletion();
-   public abstract AppCommand copilotInstall();
+   public abstract AppCommand copilotInstallAgent();
+   public abstract AppCommand copilotSignIn();
+   public abstract AppCommand copilotSignOut();
+   public abstract AppCommand copilotStatus();
 
    // Internal
    public abstract AppCommand showDomElements();
