@@ -15,12 +15,14 @@
 package org.rstudio.studio.client.workbench.views.source.editors.text;
 
 import org.rstudio.core.client.Debug;
+import org.rstudio.core.client.HandlerRegistrations;
 import org.rstudio.studio.client.RStudioGinjector;
+import org.rstudio.studio.client.application.events.EventBus;
 import org.rstudio.studio.client.common.Timers;
 import org.rstudio.studio.client.server.ServerError;
 import org.rstudio.studio.client.server.ServerRequestCallback;
 import org.rstudio.studio.client.workbench.copilot.Copilot;
-import org.rstudio.studio.client.workbench.copilot.model.CopilotResponse.CopilotCodeCompletionResponse;
+import org.rstudio.studio.client.workbench.copilot.model.CopilotResponseTypes.CopilotGenerateCompletionsResponse;
 import org.rstudio.studio.client.workbench.copilot.model.CopilotTypes.CopilotCompletion;
 import org.rstudio.studio.client.workbench.copilot.server.CopilotServerOperations;
 import org.rstudio.studio.client.workbench.views.source.editors.text.ace.Position;
@@ -33,6 +35,7 @@ import com.google.gwt.event.dom.client.KeyDownHandler;
 import com.google.gwt.user.client.Timer;
 import com.google.inject.Inject;
 
+import jsinterop.base.Js;
 import jsinterop.base.JsArrayLike;
 
 public class TextEditingTargetCopilotHelper
@@ -44,127 +47,140 @@ public class TextEditingTargetCopilotHelper
       target_ = target;
       display_ = target.getDocDisplay();
       
-      // TODO: The handlers below need their HandlerRegistrations recorded
-      // and cleaned up when the widget is removed.
-      
-      // Listen for document change events, and use that to trigger
-      // the display of ghost text in the editor.
-      docChangedTimer_ = new Timer()
+      completionTimer_ = new Timer()
       {
          @Override
          public void run()
          {
-            requestCompletions();
+            target_.withSavedDoc(() ->
+            {
+               requestId_ += 1;
+               final int requestId = requestId_;
+               final Position savedCursorPosition = display_.getCursorPosition();
+               
+               // TODO: Include document ID as well here. We might need to see if
+               // some special handling is required for R Markdown documents.
+               server_.copilotGenerateCompletions(
+                     target_.getId(),
+                     display_.getCursorRow(),
+                     display_.getCursorColumn(),
+                     new ServerRequestCallback<CopilotGenerateCompletionsResponse>()
+                     {
+                        @Override
+                        public void onResponseReceived(CopilotGenerateCompletionsResponse response)
+                        {
+                           // Check for invalidated request.
+                           if (requestId_ != requestId)
+                              return;
+                           
+                           // Check for alternate cursor position.
+                           Position currentCursorPosition = display_.getCursorPosition();
+                           if (!currentCursorPosition.isEqualTo(savedCursorPosition))
+                              return;
+                           
+                           // Otherwise, handle the response.
+                           JsArrayLike<CopilotCompletion> completions =
+                                 Js.cast(response.result.asPropertyMap().get("completions"));
+                           
+                           for (int i = 0, n = completions.getLength(); i < n; i++)
+                           {
+                              CopilotCompletion completion = completions.getAt(i);
+                              
+                              // Copilot includes trailing '```' for some reason in some cases,
+                              // remove those if we're inserting in an R document.
+                              if (completion.text.endsWith("\n```"))
+                                 completion.text = completion.text.substring(0, completion.text.length() - 3);
+
+                              if (completion.displayText.endsWith("\n```"))
+                                 completion.displayText = completion.displayText.substring(0, completion.displayText.length() - 3);
+
+                              activeCompletion_ = completion;
+                              display_.setGhostText(activeCompletion_.displayText);
+                           }
+                        }
+
+                        @Override
+                        public void onError(ServerError error)
+                        {
+                           Debug.logError(error);
+                        }
+                     });
+            });
          }
       };
       
-      display_.addCursorChangedHandler((event) ->
-      {
-         // Delay handler so we can handle a Tab keypress
-         Timers.singleShot(0, () -> {
-            activeCompletion_ = null;
-            display_.removeGhostText();
-         });
-      });
+      registrations_ = new HandlerRegistrations(
       
-      display_.addDocumentChangedHandler((event) ->
-      {
-         // TODO: Make configurable?
-         // TODO: Request completions eagerly, but display them less eagerly?
-         docChangedTimer_.schedule(700);
-      });
-      
-      display_.addCapturingKeyDownHandler(new KeyDownHandler()
-      {
-         @Override
-         public void onKeyDown(KeyDownEvent keyEvent)
-         {
-            // If ghost text is being displayed, accept it on a Tab key press.
-            if (activeCompletion_ == null)
-               return;
-            
-            // TODO: Let user choose keybinding for accepting ghost text?
-            NativeEvent event = keyEvent.getNativeEvent();
-            if (event.getKeyCode() == KeyCodes.KEY_TAB)
+            display_.addCursorChangedHandler((event) ->
             {
-               event.stopPropagation();
-               event.preventDefault();
+               // Request completions on cursor navigation.
+               completionTimer_.schedule(300);
                
-               Range aceRange = Range.create(
-                     activeCompletion_.range.start.line,
-                     activeCompletion_.range.start.character,
-                     activeCompletion_.range.end.line,
-                     activeCompletion_.range.end.character);
-               display_.replaceRange(aceRange, activeCompletion_.text);
-               
-               activeCompletion_ = null;
-            }
-         }
-      });
-      
-   }
-   
-   private void requestCompletions()
-   {
-      final Position oldPosition = display_.getCursorPosition();
-      target_.withSavedDoc(() ->
-      {
-         server_.copilotCodeCompletion(
-               target_.getId(),
-               display_.getCursorRow(),
-               display_.getCursorColumn(),
-               new ServerRequestCallback<CopilotCodeCompletionResponse>()
-               {
-                  @Override
-                  public void onResponseReceived(CopilotCodeCompletionResponse response)
-                  {
-                     Position newPosition = display_.getCursorPosition();
-                     if (!oldPosition.isEqualTo(newPosition))
-                        return;
-                     
-                     JsArrayLike<CopilotCompletion> completions = response.result.completions;
-                     if (completions.getLength() == 0)
-                        return;
-
-                     CopilotCompletion completion = completions.getAt(0);
-                     
-                     // Copilot includes trailing '```' for some reason in some cases,
-                     // remove those if we're inserting in an R document.
-                     if (completion.text.endsWith("\n```"))
-                        completion.text = completion.text.substring(0, completion.text.length() - 3);
-                     
-                     if (completion.displayText.endsWith("\n```"))
-                        completion.text = completion.text.substring(0, completion.text.length() - 3);
-                     
-                     activeCompletion_ = completion;
-                     display_.setGhostText(activeCompletion_.displayText);
-                  }
-
-                  @Override
-                  public void onError(ServerError error)
-                  {
-                     Debug.logError(error);
-                  }
+               // Delay handler so we can handle a Tab keypress
+               Timers.singleShot(0, () -> {
+                  activeCompletion_ = null;
+                  display_.removeGhostText();
                });
-      });
+            }),
+      
+            display_.addCapturingKeyDownHandler(new KeyDownHandler()
+            {
+               @Override
+               public void onKeyDown(KeyDownEvent keyEvent)
+               {
+                  // If ghost text is being displayed, accept it on a Tab key press.
+                  // TODO: Let user choose keybinding for accepting ghost text?
+                  if (activeCompletion_ == null)
+                     return;
+                  
+                  // TODO: If we have a completion popup, should that take precedence?
+                  if (display_.isPopupVisible())
+                     return;
+                  
+                  NativeEvent event = keyEvent.getNativeEvent();
+                  if (event.getKeyCode() == KeyCodes.KEY_TAB)
+                  {
+                     event.stopPropagation();
+                     event.preventDefault();
+                     
+                     Range aceRange = Range.create(
+                           activeCompletion_.range.start.line,
+                           activeCompletion_.range.start.character,
+                           activeCompletion_.range.end.line,
+                           activeCompletion_.range.end.character);
+                     display_.replaceRange(aceRange, activeCompletion_.text);
+                     
+                     activeCompletion_ = null;
+                  }
+               }
+            })
+            
+      );
+      
    }
    
    @Inject
    private void initialize(Copilot copilot,
+                           EventBus events,
                            CopilotServerOperations server)
    {
       copilot_ = copilot;
+      events_ = events;
       server_ = server;
    }
    
    private final TextEditingTarget target_;
    private final DocDisplay display_;
-   private final Timer docChangedTimer_;
+   private final Timer completionTimer_;
+   private final HandlerRegistrations registrations_;
+   
+   private int requestId_;
    
    private CopilotCompletion activeCompletion_;
    
    
    // Injected ----
    private Copilot copilot_;
+   private EventBus events_;
    private CopilotServerOperations server_;
 }

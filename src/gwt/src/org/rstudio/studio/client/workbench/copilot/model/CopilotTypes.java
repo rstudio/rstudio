@@ -16,6 +16,7 @@ package org.rstudio.studio.client.workbench.copilot.model;
 
 import jsinterop.annotations.JsPackage;
 import jsinterop.annotations.JsType;
+import jsinterop.base.Any;
 
 // The set of types returned by the GitHub Copilot agent.
 // There is some overlap with LSP types here.
@@ -47,11 +48,12 @@ public class CopilotTypes
    }
    
    @JsType(isNative = true, namespace = JsPackage.GLOBAL, name = "Object")
-   public static class CopilotResponse<T>
+   public static class CopilotResponse
    {
       public String jsonrpc;
       public String id;
-      public T result;
+      public Any result;
    }
+      
    
 }

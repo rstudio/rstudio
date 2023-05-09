@@ -14,22 +14,24 @@
  */
 package org.rstudio.studio.client.workbench.copilot.model;
 
-import java.util.List;
-
 import org.rstudio.studio.client.workbench.copilot.model.CopilotTypes.CopilotCompletion;
-
-import com.google.gwt.core.client.JsArray;
+import org.rstudio.studio.client.workbench.copilot.model.CopilotTypes.CopilotResponse;
 
 import jsinterop.annotations.JsPackage;
 import jsinterop.annotations.JsType;
 import jsinterop.base.JsArrayLike;
-import jsinterop.base.JsPropertyMap;
 
 // These are the classes used as RPC result types (our own, not Copilot's!)
 //
 // Class names should match method names from CopilotServerOperations.java.
-public class CopilotResponse
+public class CopilotResponseTypes
 {
+   @JsType(isNative = true, namespace = JsPackage.GLOBAL, name = "Object")
+   public static class CopilotResponseMetadata
+   {
+      String method;
+   }
+   
    @JsType(isNative = true, namespace = JsPackage.GLOBAL, name = "Object")
    public static class CopilotVerifyInstalledResponse
    {
@@ -55,5 +57,10 @@ public class CopilotResponse
       public String jsonrpc;
       public String id;
       public CopilotCodeCompletionResponseResult result;
+   }
+   
+   @JsType(isNative = true, namespace = JsPackage.GLOBAL, name = "Object")
+   public static class CopilotGenerateCompletionsResponse extends CopilotResponse
+   {
    }
 }

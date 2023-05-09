@@ -56,9 +56,12 @@ PidType s_agentPid = -1;
 // A queue of pending requests, to be sent via the agent's stdin.
 std::queue<std::string> s_pendingRequests;
 
+// Metadata related to pending requests. Mainly used to map
+// responses to their expected result types.
+std::map<std::string, json::JsonRpcFunctionContinuation> s_pendingContinuations;
+
 // A queue of pending responses, sent via the agent's stdout.
 std::queue<std::string> s_pendingResponses;
-
 
 std::string uriFromDocumentId(const std::string& documentId)
 {
@@ -144,71 +147,13 @@ void sendNotification(const std::string& method,
    s_pendingRequests.push(request);
 }
 
-json::Value sendRequest(const std::string& method,
-                        const std::string& requestId,
-                        const json::Value& paramsJson)
+void sendRequest(const std::string& method,
+                 const std::string& requestId,
+                 const json::Value& paramsJson)
 {
    // Create and enqueue the request.
    std::string request = createRequest(method, requestId, paramsJson);
    s_pendingRequests.push(request);
-
-   // Start waiting until we get a response.
-   while (true)
-   {
-      bool ready = waitFor([] () { return !s_pendingResponses.empty();  });
-      if (!ready)
-      {
-         ELOGF("[copilot] no response received for request with id '{}'", requestId);
-         break;
-      }
-
-      // Try to parse this as JSON, and see if we received the response we expect.
-      // The agent might be chatty inbetween a request and a response, so we can
-      // drop any output not specifically for us.
-      std::string response = s_pendingResponses.front();
-      s_pendingResponses.pop();
-
-      json::Object object;
-      Error error = object.parse(response);
-      if (error)
-      {
-         LOG_ERROR(error);
-         continue;
-      }
-
-      // Check if this is a 'LogMessage' response. Should we log these in verbose mode?
-      json::Value methodJson = object["method"];
-      if (methodJson.isString())
-      {
-         std::string method = methodJson.getString();
-         if (method == "LogMessage")
-            continue;
-      }
-
-      // Check the response id. This will be missing for notifications; we may receive
-      // a flurry of progress notifications when requesting completions from Copilot.
-      // We might want to handle these somehow.
-      json::Value idJson = object["id"];
-      if (!idJson.isString())
-      {
-         ELOGF("[copilot] ignoring response with missing id");
-         continue;
-      }
-
-      std::string responseId = idJson.getString();
-      if (requestId != responseId)
-      {
-         ELOGF("[copilot] ignoring unexpected response with id '{}'", responseId);
-         continue;
-      }
-
-      // We got our response; return it
-      return object;
-   }
-
-   ELOGF("[copilot] unexpected error while waiting for response from request with id '{}'", requestId);
-   return json::Value();
-
 }
 
 namespace agent {
@@ -438,6 +383,7 @@ void onDocUpdated(boost::shared_ptr<source_database::SourceDocument> pDoc)
 
    ensureAgentRunning();
 
+   // Synchronize document contents with Copilot
    json::Object textDocumentJson;
    textDocumentJson["uri"] = uriFromDocumentId(pDoc->id());
    textDocumentJson["languageId"] = "r";
@@ -448,6 +394,8 @@ void onDocUpdated(boost::shared_ptr<source_database::SourceDocument> pDoc)
    paramsJson["textDocument"] = textDocumentJson;
 
    sendNotification("textDocument/didOpen", paramsJson);
+
+   // Request completions at the
 }
 
 void onDocRemoved(const std::string& id, const std::string& path)
@@ -464,6 +412,57 @@ void onDocRemoved(const std::string& id, const std::string& path)
    paramsJson["textDocument"] = textDocumentJson;
 
    sendNotification("textDocument/didClose", paramsJson);
+}
+
+void onBackgroundProcessing(bool isIdle)
+{
+   while (!s_pendingResponses.empty())
+   {
+      // Try to parse this as JSON, and see if we received the response we expect.
+      // The agent might be chatty inbetween a request and a response, so we can
+      // drop any output not specifically for us.
+      std::string response = s_pendingResponses.front();
+      s_pendingResponses.pop();
+
+      json::Object responseJson;
+      Error error = responseJson.parse(response);
+      if (error)
+      {
+         LOG_ERROR(error);
+         continue;
+      }
+
+      // Check if this is a 'LogMessage' response. Should we log these in verbose mode?
+      json::Value methodJson = responseJson["method"];
+      if (methodJson.isString())
+      {
+         std::string method = methodJson.getString();
+         if (method == "LogMessage")
+            continue;
+      }
+
+      // Check the response id. This will be missing for notifications; we may receive
+      // a flurry of progress notifications when requesting completions from Copilot.
+      // We might want to handle these somehow.
+      json::Value requestIdJson = responseJson["id"];
+      if (!requestIdJson.isString())
+      {
+         ELOGF("[copilot] ignoring response with missing id");
+         continue;
+      }
+
+      // Check for a continuation handler, and invoke it if available.
+      std::string requestId = requestIdJson.getString();
+      if (s_pendingContinuations.count(requestId))
+      {
+         auto continuation = s_pendingContinuations[requestId];
+         s_pendingContinuations.erase(requestId);
+
+         json::JsonRpcResponse response;
+         response.setResult(responseJson);
+         continuation(Success(), &response);
+      }
+   }
 }
 
 void onPreferencesSaved()
@@ -552,16 +551,54 @@ SEXP rs_copilotSendRequest(SEXP methodSEXP,
    }
 
    std::string requestId = core::system::generateUuid();
-   json::Value responseJson = sendRequest(method, id, paramsJson);
+   sendRequest(method, id, paramsJson);
 
    r::sexp::Protect protect;
-   return r::sexp::create(responseJson, &protect);
+   return r::sexp::create(id, &protect);
 }
 
 SEXP rs_copilotAgentPid()
 {
    r::sexp::Protect protect;
    return r::sexp::create(s_agentPid, &protect);
+}
+
+Error copilotGenerateCompletions(const json::JsonRpcRequest& request,
+                                 const json::JsonRpcFunctionContinuation& continuation)
+{
+   // Read params
+   std::string documentId;
+   int cursorRow, cursorColumn;
+
+   Error error = core::json::readParams(request.params, &documentId, &cursorRow, &cursorColumn);
+   if (error)
+   {
+      LOG_ERROR(error);
+      return error;
+   }
+
+
+   // Register our continuation handler
+   std::string requestId = core::system::generateUuid();
+   s_pendingContinuations[requestId] = continuation;
+
+   // Build completion request
+   json::Object positionJson;
+   positionJson["line"] = cursorRow;
+   positionJson["character"] = cursorColumn;
+
+   json::Object docJson;
+   docJson["position"] = positionJson;
+   docJson["uri"] = uriFromDocumentId(documentId);
+   docJson["version"] = 1;
+
+   json::Object paramsJson;
+   paramsJson["doc"] = docJson;
+
+   // Send the request
+   sendRequest("getCompletions", requestId, paramsJson);
+
+   return Success();
 }
 
 Error copilotVerifyInstalled(const json::JsonRpcRequest& request,
@@ -591,6 +628,7 @@ Error initialize()
 
    s_copilotEnabled = prefs::userPrefs().copilotEnabled();
 
+   events().onBackgroundProcessing.connect(onBackgroundProcessing);
    events().onPreferencesSaved.connect(onPreferencesSaved);
    events().onDeferredInit.connect(onDeferredInit);
 
@@ -603,6 +641,7 @@ Error initialize()
 
    ExecBlock initBlock;
    initBlock.addFunctions()
+         (bind(registerAsyncRpcMethod, "copilot_generate_completions", copilotGenerateCompletions))
          (bind(sourceModuleRFile, "SessionCopilot.R"))
          (bind(registerRpcMethod, "copilot_verify_installed", copilotVerifyInstalled))
          (bind(registerRpcMethod, "copilot_install_agent", copilotInstallAgent))
