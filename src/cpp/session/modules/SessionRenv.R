@@ -117,9 +117,19 @@
 
 .rs.addFunction("renv.readLockfilePackages", function(project)
 {
+   renv <- asNamespace("renv")
+   
+   # read lockfile
    lockpath <- file.path(project, "renv.lock")
-   lockfile <- renv:::renv_lockfile_read(lockpath)
-   packages <- renv:::renv_records(lockfile)
+   lockfile <- renv$renv_lockfile_read(lockpath)
+   
+   # grab lockfile records
+   # renv internal APIs changed in a recent update, so look for the right
+   # accessor method here
+   method <- .rs.nullCoalesce(renv$renv_lockfile_records, renv$renv_records)
+   packages <- method(lockfile)
+   
+   # keep only the pieces we need
    filtered <- lapply(packages, `[`, c("Package", "Version", "Source"))
    df <- .rs.rbindList(filtered)
    rownames(df) <- NULL
