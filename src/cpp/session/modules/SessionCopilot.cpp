@@ -68,24 +68,25 @@ std::string uriFromDocumentId(const std::string& documentId)
    return fmt::format("rstudio-document://{}", documentId);
 }
 
-template <typename F>
-bool waitFor(F&& callback,
-             int growthFactor = 2,
-             int initialWaitMs = 10,
-             int maxTries = 100)
+std::string languageIdFromDocument(boost::shared_ptr<source_database::SourceDocument> pDoc)
 {
-   int waitMs = initialWaitMs;
+   if (pDoc->isRMarkdownDocument() || pDoc->isRFile())
+      return "r";
 
-   for (int i = 0; i < maxTries; i++)
+   return boost::algorithm::to_lower_copy(pDoc->type());
+}
+
+template <typename F>
+bool waitFor(F&& callback)
+{
+   for (int i = 0; i < 100; i++)
    {
       bool ready = callback();
       if (ready)
          return true;
 
       r::session::event_loop::processEvents();
-      ::usleep(waitMs * 1000);
-
-      waitMs = waitMs * growthFactor;
+      boost::this_thread::sleep_for(boost::chrono::milliseconds(10));
    }
 
    return false;
@@ -284,6 +285,13 @@ bool startAgent()
 {
    Error error;
 
+   FilePath agentPath = copilotAgentPath();
+   if (!agentPath.exists())
+   {
+      ELOGF("[copilot] copilot agent not installed; cannot start agent");
+      return false;
+   }
+
    // TODO: Bundle node? Ask user to provide path to node executable?
    // With desktop builds, we could consider using ELECTRON_RUN_AS_NODE=1 <RStudio>
    FilePath nodePath;
@@ -293,11 +301,6 @@ bool startAgent()
       LOG_ERROR(error);
       return false;
    }
-
-   // TODO: Prompt user to download agent, and then use that path.
-   FilePath agentPath = copilotAgentPath();
-   if (!agentPath.exists())
-      return false;
 
    // Set up process callbacks
    core::system::ProcessCallbacks callbacks;
@@ -328,6 +331,11 @@ bool startAgent()
 
    // Wait for the process to start.
    waitFor([]() { return s_agentPid != -1; });
+   if (s_agentPid == -1)
+   {
+      ELOGF("[copilot] copilot agent failed to start");
+      return false;
+   }
 
    // Send an initialize request to the agent.
    json::Object clientInfoJson;
@@ -357,7 +365,7 @@ void ensureAgentRunning()
    startAgent();
 }
 
-void onDocAdded(const std::string& id)
+void onDocAdded(boost::shared_ptr<source_database::SourceDocument> pDoc)
 {
    if (!s_copilotEnabled)
       return;
@@ -365,8 +373,8 @@ void onDocAdded(const std::string& id)
    ensureAgentRunning();
 
    json::Object textDocumentJson;
-   textDocumentJson["uri"] = uriFromDocumentId(id);
-   textDocumentJson["languageId"] = "r";
+   textDocumentJson["uri"] = uriFromDocumentId(pDoc->id());
+   textDocumentJson["languageId"] = languageIdFromDocument(pDoc);
    textDocumentJson["version"] = 1;
    textDocumentJson["text"] = "";
 
@@ -492,6 +500,12 @@ void onDeferredInit(bool newSession)
    source_database::events().onDocAdded.connect(onDocAdded);
    source_database::events().onDocUpdated.connect(onDocUpdated);
    source_database::events().onDocRemoved.connect(onDocRemoved);
+}
+
+void onShutdown(bool)
+{
+   stopAgent();
+   s_agentPid = -1;
 }
 
 SEXP rs_copilotEnabled()
@@ -631,6 +645,7 @@ Error initialize()
    events().onBackgroundProcessing.connect(onBackgroundProcessing);
    events().onPreferencesSaved.connect(onPreferencesSaved);
    events().onDeferredInit.connect(onDeferredInit);
+   events().onShutdown.connect(onShutdown);
 
    RS_REGISTER_CALL_METHOD(rs_copilotEnabled);
    RS_REGISTER_CALL_METHOD(rs_copilotStartAgent);
