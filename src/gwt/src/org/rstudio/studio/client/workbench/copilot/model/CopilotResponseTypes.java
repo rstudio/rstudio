@@ -45,21 +45,48 @@ public class CopilotResponseTypes
    }
    
    @JsType(isNative = true, namespace = JsPackage.GLOBAL, name = "Object")
-   public static class CopilotSignInResponse
+   public static class CopilotSignInResponseResult
    {
-      // TODO
+      public int expiresIn;
+      public int interval;
+      public String status;
+      public String user;
+      public String userCode;
+      public String verificationUri;
+   }
+   
+   @JsType(isNative = true, namespace = JsPackage.GLOBAL, name = "Object")
+   public static class CopilotSignInResponse extends CopilotResponse
+   {
+   }
+   
+   @JsType(isNative = true, namespace = JsPackage.GLOBAL, name = "Object")
+   public static class CopilotSignOutResponseResult
+   {
+      public String status;
    }
    
    @JsType(isNative = true, namespace = JsPackage.GLOBAL, name = "Object")
    public static class CopilotSignOutResponse
    {
-      // TODO
+      public String jsonrpc;
+      public String id;
+      public CopilotSignOutResponseResult result;
+   }
+   
+   @JsType(isNative = true, namespace = JsPackage.GLOBAL, name = "Object")
+   public static class CopilotStatusResponseResult
+   {
+      public String status;
+      public String user;
    }
    
    @JsType(isNative = true, namespace = JsPackage.GLOBAL, name = "Object")
    public static class CopilotStatusResponse
    {
-      // TODO
+      public String jsonrpc;
+      public String id;
+      public CopilotStatusResponseResult result;
    }
    
    @JsType(isNative = true, namespace = JsPackage.GLOBAL, name = "Object")

@@ -34,8 +34,8 @@ public class CopilotInstallDialog extends ModalDialogBase
       super(Roles.getDialogRole());
       ui_ = uiBinder.createAndBindUi(this);
       
-      setTitle("Install GitHub Copilot");
-      setText("Install GitHub Copilot");
+      setTitle("GitHub Copilot: Install Agent");
+      setText("GitHub Copilot: Install Agent");
       setWidth("400px");
       
       ThemedButton okButton = new ThemedButton("Install", handler);

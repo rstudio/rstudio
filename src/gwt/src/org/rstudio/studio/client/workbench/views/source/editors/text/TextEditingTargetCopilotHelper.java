@@ -35,6 +35,7 @@ import com.google.gwt.event.dom.client.KeyDownHandler;
 import com.google.gwt.user.client.Timer;
 import com.google.inject.Inject;
 
+import jsinterop.base.Any;
 import jsinterop.base.Js;
 import jsinterop.base.JsArrayLike;
 
@@ -78,9 +79,15 @@ public class TextEditingTargetCopilotHelper
                            if (!currentCursorPosition.isEqualTo(savedCursorPosition))
                               return;
                            
+                           // Check for null result. This might occur if the completion request
+                           // was cancelled by the copilot agent.
+                           Any result = response.result;
+                           if (result == null)
+                              return;
+                           
                            // Otherwise, handle the response.
                            JsArrayLike<CopilotCompletion> completions =
-                                 Js.cast(response.result.asPropertyMap().get("completions"));
+                                 Js.cast(result.asPropertyMap().get("completions"));
                            
                            for (int i = 0, n = completions.getLength(); i < n; i++)
                            {

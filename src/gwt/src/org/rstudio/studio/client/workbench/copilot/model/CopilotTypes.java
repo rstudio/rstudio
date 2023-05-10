@@ -53,6 +53,8 @@ public class CopilotTypes
       public String jsonrpc;
       public String id;
       public Any result;
+      public Any error;
+      public boolean cancelled;
    }
       
    

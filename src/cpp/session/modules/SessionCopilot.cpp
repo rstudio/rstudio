@@ -15,6 +15,9 @@
 
 #include "SessionCopilot.hpp"
 
+#include <boost/range/adaptors.hpp>
+#include <boost/range/algorithm/copy.hpp>
+
 #include <shared_core/Error.hpp>
 #include <shared_core/json/Json.hpp>
 
@@ -47,6 +50,52 @@ namespace copilot {
 
 namespace {
 
+class CopilotContinuation
+{
+public:
+
+   // default ctor needed for compatibility with map
+   CopilotContinuation()
+   {
+   }
+
+   CopilotContinuation(json::JsonRpcFunctionContinuation continuation)
+      : continuation_(continuation),
+        time_(boost::posix_time::second_clock::local_time())
+   {
+   }
+
+   void invoke(json::Object resultJson)
+   {
+      resultJson["cancelled"] = false;
+
+      json::JsonRpcResponse response;
+      response.setResult(resultJson);
+
+      continuation_(Success(), &response);
+   }
+
+   void cancel()
+   {
+      json::Object resultJson;
+      resultJson["cancelled"] = true;
+
+      json::JsonRpcResponse response;
+      response.setResult(resultJson);
+
+      continuation_(Success(), &response);
+   }
+
+   boost::posix_time::ptime time()
+   {
+      return time_;
+   }
+
+private:
+   json::JsonRpcFunctionContinuation continuation_;
+   boost::posix_time::ptime time_;
+};
+
 // Whether Copilot is enabled.
 bool s_copilotEnabled = false;
 
@@ -58,7 +107,7 @@ std::queue<std::string> s_pendingRequests;
 
 // Metadata related to pending requests. Mainly used to map
 // responses to their expected result types.
-std::map<std::string, json::JsonRpcFunctionContinuation> s_pendingContinuations;
+std::map<std::string, CopilotContinuation> s_pendingContinuations;
 
 // A queue of pending responses, sent via the agent's stdout.
 std::queue<std::string> s_pendingResponses;
@@ -354,23 +403,23 @@ bool startAgent()
    return true;
 }
 
-void ensureAgentRunning()
+bool ensureAgentRunning()
 {
    if (!s_copilotEnabled)
-      return;
+      return false;
 
+   // TODO: Should we further validate the PID is actually associated
+   // with a running Copilot process, or just handle that separately?
    if (s_agentPid != -1)
-      return;
+      return true;
 
-   startAgent();
+   return startAgent();
 }
 
 void onDocAdded(boost::shared_ptr<source_database::SourceDocument> pDoc)
 {
-   if (!s_copilotEnabled)
+   if (!ensureAgentRunning())
       return;
-
-   ensureAgentRunning();
 
    json::Object textDocumentJson;
    textDocumentJson["uri"] = uriFromDocumentId(pDoc->id());
@@ -386,10 +435,8 @@ void onDocAdded(boost::shared_ptr<source_database::SourceDocument> pDoc)
 
 void onDocUpdated(boost::shared_ptr<source_database::SourceDocument> pDoc)
 {
-   if (!s_copilotEnabled)
+   if (!ensureAgentRunning())
       return;
-
-   ensureAgentRunning();
 
    // Synchronize document contents with Copilot
    json::Object textDocumentJson;
@@ -408,10 +455,8 @@ void onDocUpdated(boost::shared_ptr<source_database::SourceDocument> pDoc)
 
 void onDocRemoved(const std::string& id, const std::string& path)
 {
-   if (!s_copilotEnabled)
+   if (!ensureAgentRunning())
       return;
-
-   ensureAgentRunning();
 
    json::Object textDocumentJson;
    textDocumentJson["uri"] = uriFromDocumentId(id);
@@ -424,6 +469,29 @@ void onDocRemoved(const std::string& id, const std::string& path)
 
 void onBackgroundProcessing(bool isIdle)
 {
+   // extract requests that appear to have been dropped
+   if (isIdle)
+   {
+      auto currentTime = boost::posix_time::second_clock::local_time();
+
+      std::vector<std::string> keys;
+      boost::copy(
+               s_pendingContinuations | boost::adaptors::map_keys,
+               std::back_inserter(keys));
+
+      for (auto&& key : keys)
+      {
+         auto&& continuation = s_pendingContinuations[key];
+         auto elapsedTime = currentTime - continuation.time();
+         if (elapsedTime.seconds() > 10)
+         {
+            continuation.cancel();
+            s_pendingContinuations.erase(key);
+         }
+      }
+   }
+
+   // process any pending requests
    while (!s_pendingResponses.empty())
    {
       // Try to parse this as JSON, and see if we received the response we expect.
@@ -463,12 +531,8 @@ void onBackgroundProcessing(bool isIdle)
       std::string requestId = requestIdJson.getString();
       if (s_pendingContinuations.count(requestId))
       {
-         auto continuation = s_pendingContinuations[requestId];
+         s_pendingContinuations[requestId].invoke(responseJson);
          s_pendingContinuations.erase(requestId);
-
-         json::JsonRpcResponse response;
-         response.setResult(responseJson);
-         continuation(Success(), &response);
       }
    }
 }
@@ -580,6 +644,14 @@ SEXP rs_copilotAgentPid()
 Error copilotGenerateCompletions(const json::JsonRpcRequest& request,
                                  const json::JsonRpcFunctionContinuation& continuation)
 {
+   // Make sure copilot is running
+   if (!ensureAgentRunning())
+   {
+      json::JsonRpcResponse response;
+      continuation(Success(), &response);
+      return Success();
+   }
+
    // Read params
    std::string documentId;
    int cursorRow, cursorColumn;
@@ -590,7 +662,6 @@ Error copilotGenerateCompletions(const json::JsonRpcRequest& request,
       LOG_ERROR(error);
       return error;
    }
-
 
    // Register our continuation handler
    std::string requestId = core::system::generateUuid();
@@ -618,6 +689,14 @@ Error copilotGenerateCompletions(const json::JsonRpcRequest& request,
 Error copilotSignIn(const json::JsonRpcRequest& request,
                     const json::JsonRpcFunctionContinuation& continuation)
 {
+   // Make sure copilot is running
+   if (!ensureAgentRunning())
+   {
+      json::JsonRpcResponse response;
+      continuation(Success(), &response);
+      return Success();
+   }
+
    // Register our continuation handler
    std::string requestId = core::system::generateUuid();
    s_pendingContinuations[requestId] = continuation;
@@ -630,6 +709,14 @@ Error copilotSignIn(const json::JsonRpcRequest& request,
 Error copilotSignOut(const json::JsonRpcRequest& request,
                      const json::JsonRpcFunctionContinuation& continuation)
 {
+   // Make sure copilot is running
+   if (!ensureAgentRunning())
+   {
+      json::JsonRpcResponse response;
+      continuation(Success(), &response);
+      return Success();
+   }
+
    // Register our continuation handler
    std::string requestId = core::system::generateUuid();
    s_pendingContinuations[requestId] = continuation;
@@ -642,6 +729,14 @@ Error copilotSignOut(const json::JsonRpcRequest& request,
 Error copilotStatus(const json::JsonRpcRequest& request,
                     const json::JsonRpcFunctionContinuation& continuation)
 {
+   // Make sure copilot is running
+   if (!ensureAgentRunning())
+   {
+      json::JsonRpcResponse response;
+      continuation(Success(), &response);
+      return Success();
+   }
+
    // Register our continuation handler
    std::string requestId = core::system::generateUuid();
    s_pendingContinuations[requestId] = continuation;
