@@ -341,14 +341,31 @@ bool startAgent()
       return false;
    }
 
-   // TODO: Bundle node? Ask user to provide path to node executable?
-   // With desktop builds, we could consider using ELECTRON_RUN_AS_NODE=1 <RStudio>
+   // Create environment for agent process
+   core::system::Options environment;
+   core::system::environment(&environment);
+
+   // For Desktop builds of RStudio, use the version of node embedded in Electron.
    FilePath nodePath;
-   error = core::system::findProgramOnPath("node", &nodePath);
-   if (error)
+   if (session::options().programMode() == kSessionProgramModeDesktop)
    {
-      LOG_ERROR(error);
-      return false;
+       std::string exePath = core::system::getenv("RSTUDIO_DESKTOP_EXE");
+       if (!exePath.empty() && FilePath(exePath).exists())
+       {
+          nodePath = FilePath(exePath);
+          environment.push_back(std::make_pair("ELECTRON_RUN_AS_NODE", "1"));
+       }
+   }
+
+   // Otherwise, use node from the PATH
+   if (!nodePath.exists())
+   {
+      error = core::system::findProgramOnPath("node", &nodePath);
+      if (error)
+      {
+         LOG_ERROR(error);
+         return false;
+      }
    }
 
    // Set up process callbacks
@@ -361,6 +378,7 @@ bool startAgent()
 
    // Set up process options
    core::system::ProcessOptions options;
+   options.environment = environment;
    options.allowParentSuspend = true;
    options.exitWithParent = true;
    options.callbacksRequireMainThread = true; // TODO: It'd be nice to drop this requirement!
@@ -405,6 +423,7 @@ bool startAgent()
 
 bool ensureAgentRunning()
 {
+   // bail if we haven't enabled copilot
    if (!s_copilotEnabled)
       return false;
 

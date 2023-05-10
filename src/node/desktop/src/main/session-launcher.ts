@@ -701,6 +701,9 @@ export class SessionLauncher {
     argList.push('--www-port', portStr);
     argList.push('--launcher-token', SessionLauncher.launcherToken);
 
+    // make sure the session knows where to find the desktop exectuable
+    setenv('RSTUDIO_DESKTOP_EXE', app.getPath('exe'));
+
     // recalculate the local peer and set RS_LOCAL_PEER so that
     // rsession and it's children can use it
     if (process.platform === 'win32') {
