@@ -1595,8 +1595,6 @@ def _rstudio_html_generator_():
       return(result)
    }
 
-   builtins <- reticulate::import_builtins(convert = TRUE)
-
    # is this object 'data'? consider non-callable, non-module objects as data
    isData <- !(
       grepl("^__.*__$", name) ||
