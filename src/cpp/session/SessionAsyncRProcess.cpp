@@ -34,7 +34,8 @@ namespace async_r {
 
 AsyncRProcess::AsyncRProcess():
    isRunning_(false),
-   terminationRequested_(false)
+   terminationRequested_(false),
+   pid_(0)
 {
 }
 
@@ -304,6 +305,31 @@ bool AsyncRProcess::isRunning()
 void AsyncRProcess::terminate()
 {
    terminationRequested_ = true;
+
+   // on windows we need to be a bit more aggressive (as we've seen cases where
+   // the 'stop' doesn't actually work esp. when deno is running a web server
+#ifdef _WIN32
+      std::string quartoOutput = isQuarto_ ? "TRUE" : "FALSE";
+      LOG_INFO_MESSAGE("terminate pid: >" + std::to_string(pid_) + "< isQuarto_ >" + quartoOutput + "<");
+
+      using namespace core::shell_utils;
+      if (pid_ > 0)
+      {
+         ShellCommand cmd("taskkill");
+         cmd << "/F" << "/T" << "/PID" << core::safe_convert::numberToString(pid_);
+         core::system::ProcessOptions options;
+         core::system::ProcessResult result;
+         core::Error error = core::system::runCommand(cmd, options, &result);
+         if (error)
+         {
+            LOG_ERROR(error);
+         }
+         else if (result.exitStatus != EXIT_SUCCESS)
+         {
+            LOG_ERROR_MESSAGE("Error killing quarto job (terminate R process): " + result.stdErr);
+         }
+      }
+#endif
 }
 
 void AsyncRProcess::markCompleted() 
