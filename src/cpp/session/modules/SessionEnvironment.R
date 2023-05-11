@@ -919,3 +919,62 @@
    
 })
 
+.rs.addFunction("environment.isSuspendable", function()
+{
+   tryCatch(
+      .rs.environment.isSuspendableImpl(globalenv(), 1L),
+      error = function(e) TRUE
+   )
+})
+
+.rs.addFunction("environment.isSuspendableImpl", function(value, depth)
+{
+   # Avoid overly-deep recursions.
+   if (depth >= 8L)
+      return(TRUE)
+   
+   # Skip overly-large objects.
+   n <- length(value)
+   if (n >= 10000L)
+      return(TRUE)
+   
+   # Python objects are connected to the underlying session, and so
+   # cannot be restored after a suspend.
+   if (is.environment(value) && inherits(value, "python.builtin.object"))
+      return(FALSE)
+   
+   # Database connections cannot be serialized and restored.
+   if (inherits(value, "DBIConnection"))
+      return(FALSE)
+   
+   # Arrow objects cannot be serialized and restored.
+   if (inherits(value, "ArrowObject"))
+      return(FALSE)
+   
+   # Objects containing external pointers cannot be serialized.
+   if (typeof(value) %in% c("externalptr", "weakref"))
+      return(FALSE)
+   
+   # Assume that data.frame objects won't contain external pointers.
+   if (is.data.frame(value))
+      return(TRUE)
+   
+   # Iterate through other recursive objects.
+   if (is.environment(value)) {
+      keys <- ls(envir = value, all.names = TRUE)
+      for (key in keys) {
+         if (!.rs.environment.isSuspendableImpl(value[[key]], depth + 1L)) {
+            return(FALSE)
+         }
+      }
+   } else if (is.recursive(value)) {
+      for (i in seq_along(value)) {
+         if (!.rs.environment.isSuspendableImpl(value[[i]], depth + 1L)) {
+            return(FALSE)
+         }
+      }
+   }
+      
+   # Assume that other kinds of objects can be restored.
+   TRUE
+})

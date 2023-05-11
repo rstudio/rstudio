@@ -74,10 +74,17 @@ td {
   display: flex;
   align-items: center;
   position: relative;
+  justify-content:flex-end;
+  flex-wrap: wrap;
 }
 
 #banner picture {
+  margin-right: auto;
   height: 27px;
+}
+
+#logo {
+  margin-right: auto;
 }
 
 #logo, #logo > a {
@@ -85,8 +92,7 @@ td {
 }
 
 #licensed-to {
-  position: absolute;
-  right: 1em;
+  margin-left: 2px;
   text-align: right;
 }
 
@@ -152,35 +158,6 @@ a img {
 #login-html {
   margin: 30px 20px 70px 20px;
   padding: 8px;
-}
-
-#skipnav a {
-  position: absolute;
-  clip: rect(0 0 0 0);
-  border: 0;
-  height: 1px;
-  margin: -1px;
-  overflow: hidden;
-  padding: 0;
-  width: 1px;
-  white-space: nowrap;
-}
-
-#skipnav a:focus {
-  clip: auto;
-  left: 0;
-  top: 0;
-  width: 100%;
-  height: auto;
-  margin: 0;
-  padding: 10px 0;
-  background: #fdf6e7;
-  border: 2px solid #990000;
-  border-left: none;
-  border-right: none;
-  text-align: center;
-  font-weight: bold;
-  color: #990000;
 }
 
 .visuallyhidden {

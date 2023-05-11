@@ -79,7 +79,7 @@ import org.rstudio.core.client.widget.ToolbarButton;
 import org.rstudio.studio.client.RStudioGinjector;
 import org.rstudio.studio.client.application.Desktop;
 import org.rstudio.studio.client.application.events.EventBus;
-import org.rstudio.studio.client.application.events.MouseNavigateEvent;
+import org.rstudio.studio.client.application.events.DesktopMouseNavigateEvent;
 import org.rstudio.studio.client.common.AutoGlassPanel;
 import org.rstudio.studio.client.common.GlobalDisplay;
 import org.rstudio.studio.client.common.SimpleRequestCallback;
@@ -176,19 +176,6 @@ public class HelpPane extends WorkbenchPane
 
       prefs_.helpFontSizePoints().bind((Double value) -> refresh());
       
-      events_.addHandler(MouseNavigateEvent.TYPE, (MouseNavigateEvent event) ->
-      {
-         // check to see if we're targeting the Help pane
-         Element el = DomUtils.elementFromPoint(event.getMouseX(), event.getMouseY());
-         if (StringUtil.equals(el.getId(), ElementIds.getElementId(ElementIds.HELP_FRAME)))
-         {
-            if (event.getForward())
-               forward();
-            else
-               back();
-         }
-      });
-
       ensureWidget();
    }
 
@@ -387,6 +374,12 @@ public class HelpPane extends WorkbenchPane
    
    private void handleMouseDown(NativeEvent event)
    {
+      // Not required on Electron; back / forward navigation is handled
+      // via a top-level Javascript event handler. See DesktopApplicationHeader.java
+      // for more details.
+      if (BrowseCap.isElectron())
+         return;
+      
       int button = EventProperty.button(event);
       if (button == EventProperty.MOUSE_BACKWARD)
       {

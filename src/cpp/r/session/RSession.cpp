@@ -46,6 +46,7 @@
 #include <r/session/RClientState.hpp>
 #include <r/session/RConsoleHistory.hpp>
 #include <r/session/RDiscovery.hpp>
+#include <r/session/RSuspend.hpp>
 
 #include "RClientMetrics.hpp"
 #include "REmbedded.hpp"
@@ -54,7 +55,6 @@
 #include "RRestartContext.hpp"
 #include "RStdCallbacks.hpp"
 #include "RScriptCallbacks.hpp"
-#include "RSuspend.hpp"
 
 #include "graphics/RGraphicsDevDesc.hpp"
 #include "graphics/RGraphicsUtils.hpp"

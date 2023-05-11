@@ -68,6 +68,9 @@ PACKAGE_VERSION_SET=0
 set-version () {
    if [ "$RSTUDIO_TARGET" = "Electron" ]; then
       pushd ${ELECTRON_SOURCE_DIR}
+      echo "ensure node-gyp installed for node ${RSTUDIO_NODE_VERSION}"
+      ${NPX} node-gyp install ${RSTUDIO_NODE_VERSION}
+      
       install-npm-packages
 
       # Set package.json info

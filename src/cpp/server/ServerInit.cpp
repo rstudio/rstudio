@@ -28,11 +28,13 @@ namespace server {
 
 http::AsyncServer* httpServerCreate(const http::Headers& additionalHeaders)
 {
-   return new http::TcpIpAsyncServer("RStudio",
+   http::TcpIpAsyncServer* server = new http::TcpIpAsyncServer("RStudio",
                                      std::string(),
                                      !options().wwwEnableOriginCheck(),
                                      options().wwwAllowedOrigins(),
-                                     additionalHeaders);
+                                     additionalHeaders,
+                                     options().statsMonitorSeconds());
+   return server;
 }
 
 Error httpServerInit(http::AsyncServer* pAsyncServer)

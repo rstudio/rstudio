@@ -1,8 +1,8 @@
 ARG ARCH=amd64
-FROM --platform=linux/$ARCH ubuntu:bionic
+FROM --platform=linux/$ARCH ubuntu:focal
 ARG ARCH
 
-ENV OPERATING_SYSTEM=ubuntu_bionic
+ENV OPERATING_SYSTEM=ubuntu_focal
 
 ARG AWS_REGION=us-east-1
 
@@ -11,11 +11,6 @@ RUN set -x \
     && sed -i "s/archive.ubuntu.com/$AWS_REGION.ec2.archive.ubuntu.com/" /etc/apt/sources.list \
     && export DEBIAN_FRONTEND=noninteractive \
     && apt-get update 
-
-# add ppa repository so we can install java 8 (not in any official repo for bionic)
-RUN apt-get update \
-  && apt-get install -y software-properties-common \
-  && add-apt-repository ppa:openjdk-r/ppa
 
 RUN apt-get update && \
     export DEBIAN_FRONTEND=noninteractive && \
@@ -104,7 +99,7 @@ COPY dependencies/common/ /opt/rstudio-tools/dependencies/common/
 ADD https://api.github.com/repos/quarto-dev/quarto/git/refs/heads/release/rstudio-cherry-blossom panmirror.version.json
 
 # install common dependencies
-RUN cd /opt/rstudio-tools/dependencies/common && /bin/bash ./install-common bionic
+RUN cd /opt/rstudio-tools/dependencies/common && /bin/bash ./install-common focal
 # panmirror needs to be able to build in this location
 RUN chmod -R 777 /opt/rstudio-tools/src
 

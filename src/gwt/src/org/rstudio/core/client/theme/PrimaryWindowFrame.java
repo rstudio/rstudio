@@ -75,7 +75,7 @@ public class PrimaryWindowFrame extends WindowFrame
          }
       });
       
-      separator_ = new HTML("&centerdot;");
+      separator_ = new HTML("<span aria-hidden=\"true\">&centerdot;</span>");
       separator_.addStyleName(ThemeStyles.INSTANCE.toolbarDotSeparator());
 
       subtitle_ = new Label();
@@ -97,9 +97,19 @@ public class PrimaryWindowFrame extends WindowFrame
       panel_.insert(title_, 0);
    }
 
+   public Widget getTitleWidget()
+   {
+      return title_;
+   }
+
    public void setSubtitle(String subtitle)
    {
       subtitle_.setText(subtitle);
+   }
+
+   public Widget getSubtitleWidget()
+   {
+      return subtitle_;
    }
 
    public void addLeftWidget(Widget widget)

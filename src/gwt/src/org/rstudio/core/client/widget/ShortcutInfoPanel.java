@@ -103,6 +103,7 @@ public class ShortcutInfoPanel extends Composite
             sb.appendHtmlConstant("</h2><table>");
             for (ShortcutInfo info : shortcuts) {
                if (info.getDescription() == null ||
+                       info.getShortcuts() == null ||
                        info.getShortcuts().isEmpty() ||
                        !info.getGroupName().equals(groupNames[i][j])) {
                   continue;

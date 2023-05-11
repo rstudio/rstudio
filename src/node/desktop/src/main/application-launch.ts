@@ -80,11 +80,10 @@ export class ApplicationLaunch {
     }
 
     // run it
-    const childProcess = spawn(process.execPath, argv,
-      {
-        detached: true,
-        stdio: 'ignore', // don't reuse the stdio from parent
-      });
+    const childProcess = spawn(process.execPath, argv, {
+      detached: true,
+      stdio: 'ignore', // don't reuse the stdio from parent
+    });
     childProcess.unref();
 
     // restore environment variables

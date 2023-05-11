@@ -43,10 +43,7 @@ export const checkForNewLanguage = async () => {
         if (localeLastTimeData.isSet) {
           const localeData = isLocalStorageItemSet(localeStorageItemKey);
 
-          if (
-            localeData.isSet &&
-            firstRunTime <= parseInt('' + localeLastTimeData.value, 10) + 3000
-          ) {
+          if (localeData.isSet && firstRunTime <= parseInt('' + localeLastTimeData.value, 10) + 3000) {
             clearInterval(isThereNewLanguageInterval);
 
             resolve('' + localeData.value);
@@ -62,10 +59,16 @@ export const checkForNewLanguage = async () => {
  *
  * @param {string} path
  * @param {string} [separator='/']
- * @return {*} 
+ * @return {*}
  */
 export function normalizeSeparators(path: string, separator = '/') {
-  return path.replace(/[\\/]+/g, separator);
+  // don't mess with leading '\\' on a UNC path
+  let prefix = '';
+  if (path.startsWith('\\\\')) {
+    prefix = `${separator}${separator}`;
+    path = path.substring(2);
+  }
+  return `${prefix}${path.replace(/[\\/]+/g, separator)}`;
 }
 
 /**
@@ -73,10 +76,13 @@ export function normalizeSeparators(path: string, separator = '/') {
  *
  * @export
  * @param {string} path
- * @return {*} 
+ * @return {*}
  */
 export function normalizeSeparatorsNative(path: string) {
   /* using conditional to set the separator based on platform as `path` is not available here */
   const separator = process.platform === 'win32' ? '\\' : '/';
   return normalizeSeparators(path, separator);
 }
+
+// executable to use on Windows when spawning R to query path information
+export const kWindowsRExe = 'Rterm.exe';

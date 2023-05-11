@@ -94,7 +94,7 @@ describe('Utils', () => {
   });
   it('findComponents returns session and scripts paths', () => {
     process.env.RSTUDIO_CPP_BUILD_OUTPUT = '/somewhere/interesting/';
-    const [, session, scripts] = Utils.findComponents();
+    const [, , session, scripts] = Utils.findComponents();
     assert.isNotEmpty(session.getAbsolutePath());
     assert.isNotEmpty(scripts.getAbsolutePath());
   });

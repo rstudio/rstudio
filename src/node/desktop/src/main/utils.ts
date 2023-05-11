@@ -85,7 +85,6 @@ export function augmentCommandLineArguments(): void {
 
   const pieces = user.split(' ');
   pieces.forEach((piece) => {
-
     // if this piece doesn't start with '-', treat it as a plain argument
     if (!piece.startsWith('-')) {
       app.commandLine.appendArgument(piece);
@@ -112,7 +111,6 @@ export function augmentCommandLineArguments(): void {
 
     app.commandLine.appendSwitch(lhs, rhs);
   });
-
 }
 
 /**
@@ -195,7 +193,7 @@ function findBuildRootImpl(rootDir: string): string {
     `${rootDir}/src/cpp`,
     `${rootDir}/package/linux`,
     `${rootDir}/package/osx`,
-    `${rootDir}/package/win32`
+    `${rootDir}/package/win32`,
   ];
 
   // list all files + directories in root folder
@@ -236,9 +234,9 @@ function rsessionNotFoundError(): Error {
 }
 
 /**
- * @returns Paths to config file, rsession, and desktop scripts.
+ * @returns Paths for install path, config file, rsession, and desktop scripts.
  */
-export function findComponents(): [FilePath, FilePath, FilePath] {
+export function findComponents(): [FilePath, FilePath, FilePath, FilePath] {
   // determine paths to config file, rsession, and desktop scripts
   let confPath: FilePath = new FilePath();
   let sessionPath: FilePath = new FilePath();
@@ -247,7 +245,7 @@ export function findComponents(): [FilePath, FilePath, FilePath] {
   if (app.isPackaged) {
     // confPath is intentionally left empty for a package build
     sessionPath = binRoot.completePath(`bin/${rsessionExeName()}`);
-    return [confPath, sessionPath, new FilePath(getAppPath())];
+    return [binRoot, confPath, sessionPath, new FilePath(getAppPath())];
   }
 
   // developer builds -- first, check for environment variable
@@ -276,7 +274,7 @@ export function findComponents(): [FilePath, FilePath, FilePath] {
     const sessionPath = buildRootPath.completePath(`${subdir}/session/${rsessionExeName()}`);
     if (sessionPath.existsSync()) {
       confPath = buildRootPath.completePath(`${subdir}/conf/rdesktop-dev.conf`);
-      return [confPath, sessionPath, new FilePath(getAppPath())];
+      return [new FilePath(buildRoot), confPath, sessionPath, new FilePath(getAppPath())];
     }
   }
 
@@ -371,7 +369,6 @@ export function getDpiZoomScaling(): number {
 
 // this code follows in the footsteps of R.app
 function initializeLangDarwin(): string {
-
   {
     // if 'force.LANG' is set, that takes precedencec
     const args = ['read', 'org.R-project.R', 'force.LANG'];
@@ -398,7 +395,6 @@ function initializeLangDarwin(): string {
 
   // otherwise, just use UTF-8 locale
   return 'en_US.UTF-8';
-
 }
 
 export function initializeLang(): void {
@@ -495,7 +491,6 @@ export const handleLocaleCookies = async (window: BrowserWindow, isMainWindow = 
 };
 
 export function registerWebContentsDebugHandlers(webContents: WebContents) {
-
   // add debug handlers for all of the various navigation and load events
   const events = [
     'before-input-event',
@@ -565,16 +560,12 @@ export function registerWebContentsDebugHandlers(webContents: WebContents) {
       logger().logDebug(`Error adding debug handler for event '${event}': ${error}`);
     }
   }
-
 }
 
 function registerWebContentsDebugHandlerImpl(webContents: WebContents, event: string) {
-
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   webContents.on(event as any, (...args) => {
-
     const json = args.map((arg) => {
-
       // check for an Electron Event and handle it specially here
       // eslint-disable-next-line @typescript-eslint/no-explicit-any
       const electronEvent = arg as any;
@@ -595,7 +586,5 @@ function registerWebContentsDebugHandlerImpl(webContents: WebContents, event: st
     });
 
     logger().logDebug(`'${event}': [${json.join(', ')}]`);
-
   });
-
 }

@@ -14,7 +14,7 @@
  */
 
 import { ChildProcess } from 'child_process';
-import { BrowserWindow, dialog, Menu, session, shell } from 'electron';
+import { BrowserWindow, dialog, Menu, Rectangle, session, shell } from 'electron';
 
 import { Err } from '../core/err';
 import { logger } from '../core/logger';
@@ -32,7 +32,7 @@ import { RCommandEvaluator } from './r-command-evaluator';
 import { RemoteDesktopSessionLauncher } from './remote-desktop-session-launcher-overlay';
 import { SessionLauncher } from './session-launcher';
 import { CloseServerSessions } from './session-servers-overlay';
-import { isLocalUrl, waitForUrlWithTimeout } from './url-utils';
+import { waitForUrlWithTimeout } from './url-utils';
 import { registerWebContentsDebugHandlers } from './utils';
 
 export function closeAllSatellites(mainWindow: BrowserWindow): void {
@@ -105,8 +105,11 @@ export class MainWindow extends GwtWindow {
 
     showPlaceholderMenu();
 
-    this.menuCallback.on(MenuCallback.MENUBAR_COMPLETED, (menu: Menu) => {
-      Menu.setApplicationMenu(menu);
+    this.menuCallback.on(MenuCallback.MENUBAR_COMPLETED, (/*menu: Menu*/) => {
+      // We used to do `Menu.setApplicationMenu(menu);` here but that was causing crashes in
+      // Electron when holding down the Alt key (https://github.com/rstudio/rstudio/issues/12983).
+      // It seems some sort of clash between setting this here and the subsequent set
+      // that happens in MenuCallback.updateMenus().
     });
     this.menuCallback.on(MenuCallback.COMMAND_INVOKED, (commandId) => {
       this.invokeCommand(commandId);
@@ -136,16 +139,20 @@ export class MainWindow extends GwtWindow {
     // Once https://github.com/electron/electron/pull/34418 is merged, we can leverage
     // the 'will-frame-navigate' event instead of intercepting the request.
     this.window.webContents.session.webRequest.onBeforeRequest((details, callback) => {
-
       logger().logDebug(`${details.method} ${details.url} [${details.resourceType}]`);
 
       // If `details.frame.url` is defined, navigation is being triggered in the iframe
       // (e.g. clicking on an anchor tag within an iframe) as opposed to a request to load
-      // the url from the iframe src 
+      // the url from the iframe src
       if (details.resourceType === 'subFrame' && details.frame?.url && !this.allowNavigation(details.url)) {
         // Open the page externally
-        shell.openExternal(details.url).catch((error) => { logger().logError(error); });
+        shell.openExternal(details.url).catch((error) => {
+          logger().logError(error);
+        });
         // Re-direct the iframe back to the source URL (bleh)
+        // eslint thinks there's "Unnecessary optional chain on a non-nullish value", but
+        // that seems like a false positive. Disabling the rule to avoid hitting the lint error.
+        // eslint-disable-next-line @typescript-eslint/no-unnecessary-condition
         callback({ cancel: false, redirectURL: details.frame?.url });
       } else {
         callback({ cancel: false });
@@ -365,8 +372,8 @@ export class MainWindow extends GwtWindow {
     //                      false);
 
     if (!this.geometrySaved) {
-      const bounds = this.window.getBounds();
-      ElectronDesktopOptions().saveWindowBounds(bounds);
+      const bounds = this.window.getNormalBounds();
+      ElectronDesktopOptions().saveWindowBounds({ ...bounds, maximized: this.window.isMaximized() });
       this.geometrySaved = true;
     }
 

@@ -3,9 +3,9 @@ project:
 
 website:
   title: "RStudio User Guide"
+  favicon: "images/favicon.svg"
   twitter-card: true
   open-graph: true
-  favicon: images/favicon.svg
   page-navigation: true
   site-url: https://docs.posit.co/ide/user/
   repo-url: https://github.com/rstudio/rstudio/
@@ -17,7 +17,7 @@ website:
     collapse: false
     pinned: true
     search: true
-    logo: images/posit-logo-fullcolor-TM.svg
+    logo: images/posit-icon-fullcolor.svg
     right:
       - text: Version
         menu:
@@ -136,7 +136,8 @@ format:
     theme:
       - cosmo
       - styles/styles.scss
-    include-in-header: google_analytics.html
+    include-in-header: _ga-header-tag.html
+    include-before-body: _ga-body-tag.html
     toc: true
     code-overflow: scroll
 

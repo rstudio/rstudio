@@ -31,7 +31,6 @@ sudo apt-get -y install \
   ant \
   build-essential \
   clang \
-  cmake \
   curl \
   debsigs \
   dpkg-sig \

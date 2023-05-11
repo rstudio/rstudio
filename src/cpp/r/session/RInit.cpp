@@ -24,10 +24,10 @@
 #include <r/session/RConsoleHistory.hpp>
 #include <r/session/RSession.hpp>
 #include <r/session/RSessionState.hpp>
+#include <r/session/RSuspend.hpp>
 
 #include "REmbedded.hpp"
 #include "RInit.hpp"
-#include "RSuspend.hpp"
 #include "RStdCallbacks.hpp"
 #include "RRestartContext.hpp"
 

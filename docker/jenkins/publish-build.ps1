@@ -19,7 +19,14 @@ param(
 
     # The Github Personal Access PAT to use to publish the build
     [Parameter(Mandatory)]
-    [string]$pat
+    [string]$pat,
+
+    # The release channel of the build, Hourly, Daily, Preview or Release
+    # Default value if it's not supplied is the contents of the version/BUILDTYPE file
+    # Otherwise we validate input and use that
+    [Parameter(Mandatory=$false)]
+	[ValidateSet("Hourly", "Daily", "Preview", "Release", IgnoreCase=$false)]
+    [string]$channel = (Get-Content (Join-Path -Path "version" -ChildPath "BUILDTYPE") | Out-String).Trim()
 )
 
 # Function to urlize a string
@@ -55,8 +62,6 @@ $versionMeta = Join-Path -Path $root -ChildPath "version"
 # Extract build metadata
 $flower = Get-Content (Join-Path -Path $versionMeta -ChildPath "RELEASE") | Out-String
 $flower = URLize -string $flower
-$channel = Get-Content (Join-Path -Path $versionMeta -ChildPath "BUILDTYPE") | Out-String
-$channel = $channel.Trim()
 $commit = git rev-parse HEAD
 
 $versionStem = URLize -string $version
@@ -98,10 +103,20 @@ $headers = @{}
 $headers.Add("Accept", "application/vnd.github.v3+json")
 $headers.Add("Authorization", "token $pat")
 
-$url = "https://api.github.com/repos/rstudio/latest-builds/contents/content/rstudio/$flower/$build/$versionStem.md"
+# Prepare the product name, redirects hourly builds to a different page
+$product = "rstudio"
+if ($channel -eq "Hourly")
+{
+    $product = $product + "-hourly"
+}
+
+$url = "https://api.github.com/repos/rstudio/latest-builds/contents/content/$product/$flower/$build/$versionStem.md"
 # Send to Github! We have to use basic parsing here because this script runs on SKU of Windows that
 # doesn't contain a working copy of IE (and, incredibly, without -UseBasicParsing, Invoke-WebRequest
 # has a dendency on the IE DOM engine).
+
+Write-Host "Writing content to $url"
+
 try
 {
     $createResponse = Invoke-RestMethod -Body $payload -Method 'PUT' -Headers $headers -Uri $url -UseBasicParsing

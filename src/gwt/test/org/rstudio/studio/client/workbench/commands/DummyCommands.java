@@ -3120,4 +3120,8 @@ public class DummyCommands extends Commands {
         return null;
     }
 
+    @Override
+    public AppCommand crashDesktopApplication() {
+        return null;
+    }
 }
