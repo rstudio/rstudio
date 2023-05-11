@@ -162,6 +162,7 @@ pipeline {
                     returnStdout: true
                   ).trim().toLowerCase()}"""
                   PRODUCT = "${utils.getProductName()}"
+                  AWS_PATH = "${FLAVOR.toLowerCase()}/macos"
                 }
                 
                 stages {
@@ -182,7 +183,7 @@ pipeline {
                       withAWS(role: 'ide-build', region: 'us-east-1') {
                         retry(5) {
                           script {
-                            utils.uploadPackageToS3 "package/osx/build/${PACKAGE_FILE}", "${FLAVOR.toLowerCase()}/macos/"
+                            utils.uploadPackageToS3 "package/osx/build/${PACKAGE_FILE}", "${AWS_PATH}/"
                           }
                         }
                       }
@@ -224,13 +225,14 @@ pipeline {
                   stage("Publish") {
                     environment {
                       GITHUB_LOGIN = credentials('github-rstudio-jenkins')
+                      DAILIES_PATH = "${PRODUCT}/macos"
                     }
 
                     steps {
                       dir("package/osx/build") {
                         script {
                           // publish build to dailies page
-                          utils.publishToDailiesSite "${env.PACKAGE_FILE}", "${env.PRODUCT}/macos"
+                          utils.publishToDailiesSite PACKAGE_FILE, DAILIES_PATH, AWS_PATH
                         }
                       }
                     }
@@ -251,7 +253,7 @@ pipeline {
                     steps {
                       script {
                         // upload daily build redirects
-                        utils.updateDailyRedirects "${PRODUCT}/macos/${PACKAGE_FILE}"
+                        utils.updateDailyRedirects "${AWS_PATH}/${PACKAGE_FILE}"
                       }
                     }
                   }
