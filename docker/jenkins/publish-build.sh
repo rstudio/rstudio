@@ -10,6 +10,8 @@ if [ $# -eq 0 ]; then
     echo "--build   What kind of build is being added, as a path. Example: "
     echo "          desktop-pro/windows"
     echo ""
+    echo "--arch    The CPU architecture supported by the build. Example: arm64"
+    echo ""
     echo "--url     A URL to a location where the build can be downloaded. Example:"
     echo "          https://s3.amazonaws.com/rstudio-ide-build/desktop/windows/RStudio-pro.exe"
     echo ""
@@ -20,6 +22,10 @@ if [ $# -eq 0 ]; then
     echo ""
     echo "--pat     The Github Personal Access Token (PAT) to be used to authorize the commit."
     echo "          May be specified in the environment variable GITHUB_PAT instead."
+    echo ""
+    echo "--channel (optional) The Channel type for the build. One of Hourly, Daily, Preview, Release."
+    echo "          Required for setting to Hourly. If not set, the channel will be determined from"
+    echo "          the value in the file: version/BUILDTYPE. Channel names are case sensitive."
     exit 0
 fi
 
@@ -34,6 +40,7 @@ ARGUMENT_LIST=(
     "file"
     "version"
     "pat"
+    "channel"
 )
 
 # Parse arguments with getopt
@@ -47,6 +54,11 @@ opts=$(getopt \
 # Apply to variables
 while [[ $# -gt 0 ]]; do
     case "$1" in
+        --arch)
+            arch=$2
+            shift 2
+            ;;
+
         --build)
             build=$2
             shift 2
@@ -72,6 +84,11 @@ while [[ $# -gt 0 ]]; do
             shift 2
             ;;
 
+        --channel)
+            channel=$2
+            shift 2
+            ;;
+
         *)
             break
             ;;
@@ -82,6 +99,11 @@ done
 if [ -z "$build" ]; then
     echo "Build not set; specify a build with --build. Example: --build desktop/windows"
     exit 1
+fi
+
+if [ -z "$arch" ]; then
+    # No architecture set? No problem, just ask uname
+    arch=$(uname -m)
 fi
 
 if [ -z "$url" ]; then
@@ -109,8 +131,21 @@ if [ -z "$pat" ]; then
     fi
 fi
 
+# if channel is undefined, we'll just use version/BUILDTYPE. If it is provided,
+# we make sure there's no typos in the channel name
+if [ ! -z $channel ]; then
+    if [[ ! "$channel" =~ ^(Hourly|Daily|Preview|Release)$ ]]; then 
+        echo "Channel should be one of Hourly, Daily, Preview, or Release (case sensitive)"
+        exit 1
+    fi
+fi
+
 # Determine file size
-size=$(wc -c $file | awk '{print $1}')
+if [[ -f $file  ]]; then
+    size=$(wc -c $file | awk '{print $1}')
+else
+    size=0
+fi
 
 # Determine file SHA256 sum
 if [[ "$OSTYPE" == "darwin"* ]]; then
@@ -124,7 +159,9 @@ timestamp=$(date +"%Y-%m-%dT%H:%M:%S%z")
 
 # Determine release channel (build type) and flower
 RSTUDIO_ROOT_DIR="$( cd -- "$( dirname -- "${BASH_SOURCE[0]}" )" &> /dev/null && cd ../.. && pwd )"
-channel="$(cat "$RSTUDIO_ROOT_DIR/version/BUILDTYPE" | tr '[ ]' '-' | tr -d '[:space:]')"
+if [ -z "$channel" ]; then
+    channel="$(cat "$RSTUDIO_ROOT_DIR/version/BUILDTYPE" | tr '[ ]' '-' | tr -d '[:space:]')"
+fi
 flower="$(cat "$RSTUDIO_ROOT_DIR/version/RELEASE" | tr '[ ]' '-' | tr -d '[:space:]' | tr '[:upper:]' '[:lower:]')"
 
 # Determine commit (use local hash)
@@ -147,6 +184,7 @@ type: build
 date: $timestamp
 link: \"$url\"
 filename: \"$filename\"
+architecture: \"$arch\"
 sha256: \"$sha256\"
 channel: \"$channel\"
 version: \"$version\"
@@ -163,13 +201,81 @@ else
   base64_contents=$(echo "$md_contents" | base64 --wrap=0)
 fi
 
+# The hourly builds upload to a different "product" directory in the dailies page
+if [ $channel == "Hourly" ]; then
+  product="rstudio-hourly"
+else
+  product="rstudio"
+fi
+
+githubUrl="https://api.github.com/repos/rstudio/latest-builds/contents/content/$product/$flower/$build/$version_stem.md"
+curlOutFname="curl.out"
+
 payload="{\"message\":\"Add $flower build $version in $build\",\"content\":\"$base64_contents\"}"
+
 echo "Sending to Github: $payload"
+httpCode=$(curl \
+   -X PUT \
+   -w %{http_code} \
+   -o $curlOutFname \
+   -H "Accept: application/vnd.github.v3+json" \
+   -H "Authorization: token $pat" \
+   $githubUrl \
+   -d "$payload")
+echo "Github's Response: "
+echo "Http Code : $httpCode"
+cat $curlOutFname
 
-curl \
-  -X PUT \
-  -H "Accept: application/vnd.github.v3+json" \
-  -H "Authorization: token $pat" \
-  "https://api.github.com/repos/rstudio/latest-builds/contents/content/rstudio/$flower/$build/$version_stem.md" \
-  -d "$payload"
+if [[ $httpCode -eq 422 ]]; then
+   # An http code of 422 indicates a problem, probably that the file already exists and this is an
+   # update not a create
 
+   echo "Received a 422 http code, assuming this is actually an update not a create, so we get the existing file's info"
+   getShaResponse=$(curl \
+      -X GET \
+      -H "Accept: application/vnd.github.v3+json" \
+      -H "Authorization: token $pat" \
+      $githubUrl \
+      -d "$payload")
+   echo $getShaResponse
+
+   updateSha=$(echo $getShaResponse | jq -r .sha)
+
+   updatePayload="{\"message\":\"Update $flower build $version in $build\",\"content\":\"$base64_contents\",\"sha\":\"$updateSha\"}"
+   
+   httpCode=$(curl \
+      -X PUT \
+      -w %{http_code} \
+      -o $curlOutFname \
+      -H "Accept: application/vnd.github.v3+json" \
+      -H "Authorization: token $pat" \
+      $githubUrl \
+      -d "$updatePayload")
+
+   echo "Github's Update Response:"
+   echo "Http Code : $httpCode"
+   cat $curlOutFname
+elif [[ $httpCode -eq 409 ]]; then
+   echo "Received a 409 error, assuming it's a commit interleaving error, we'll back off for 3 seconds and retry".
+   sleep 3
+
+   #retry the command
+   echo "Retrying the command"
+   httpCode=$(curl \
+   -X PUT \
+   -w %{http_code} \
+   -o $curlOutFname \
+   -H "Accept: application/vnd.github.v3+json" \
+   -H "Authorization: token $pat" \
+   $githubUrl \
+   -d "$payload")
+
+   echo "Github's Response"
+   echo "Http Code : $httpCode"
+   cat $curlOutFname
+fi
+
+if [[ $(($httpCode)) -ge 400 ]]; then
+   echo "An unrecoverable error has occured"
+   exit 1
+fi

@@ -1,10 +1,10 @@
 /*
  * RSuspend.cpp
  *
- * Copyright (C) 2022 by RStudio, PBC
+ * Copyright (C) 2022 by Posit Software, PBC
  *
- * Unless you have received this program directly from RStudio pursuant
- * to the terms of a commercial license agreement with RStudio, then
+ * Unless you have received this program directly from Posit Software pursuant
+ * to the terms of a commercial license agreement with Posit Software, then
  * this program is licensed to you under the terms of version 3 of the
  * GNU Affero General Public License. This program is distributed WITHOUT
  * ANY EXPRESS OR IMPLIED WARRANTY, INCLUDING THOSE OF NON-INFRINGEMENT,
@@ -13,20 +13,22 @@
  *
  */
 
+#include <Rembedded.h>
+
 #include <shared_core/FilePath.hpp>
 
-#include <Rembedded.h>
+#include <core/system/Environment.hpp>
 
 #include <r/RExec.hpp>
 #include <r/session/RClientState.hpp>
 #include <r/session/RGraphics.hpp>
 #include <r/session/RSession.hpp>
 #include <r/session/RSessionState.hpp>
+#include <r/session/RSuspend.hpp>
 
 #include "REmbedded.hpp"
 #include "RRestartContext.hpp"
 #include "RStdCallbacks.hpp"
-#include "RSuspend.hpp"
 
 using namespace rstudio::core;
 
@@ -56,20 +58,36 @@ bool saveSessionState(const RSuspendOptions& options,
    // suppress interrupts which occur during saving
    r::exec::IgnoreInterruptsScope ignoreInterrupts;
    
+   // check for save workspace override
+   std::string saveWorkspaceOverride =
+         core::system::getenv("RSTUDIO_SUSPEND_SAVE_WORKSPACE");
+   
    // save 
    if (options.saveMinimal)
    {
+      bool saveWorkspace = string_utils::isTruthy(
+               saveWorkspaceOverride,
+               options.saveWorkspace);
+      
       // save minimal
       return r::session::state::saveMinimal(suspendedSessionPath,
-                                            options.saveWorkspace);
+                                            saveWorkspace);
 
    }
    else
    {
+      // NOTE: Just to preserve prior behavior, we always choose
+      // to save the workspace here, even if options.saveWorkspace
+      // is set to false. We still allow the environment override.
+      bool saveWorkspace = string_utils::isTruthy(
+               saveWorkspaceOverride,
+               true);
+      
       return r::session::state::save(suspendedSessionPath,
                                      utils::isServerMode(),
                                      options.excludePackages,
                                      disableSaveCompression,
+                                     saveWorkspace,
                                      options.ephemeralEnvVars);
    }
 }
@@ -173,10 +191,13 @@ SerializationCallbackScope::SerializationCallbackScope(int action,
 
 SerializationCallbackScope::~SerializationCallbackScope()
 {
-   try {
-      rCallbacks().serialization(kSerializationActionCompleted,
-                                 FilePath());
-   } catch(...) {}
+   try
+   {
+      rCallbacks().serialization(kSerializationActionCompleted, FilePath());
+   }
+   catch(...)
+   {
+   }
 }
 
 bool suspended()

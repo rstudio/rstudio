@@ -1,10 +1,10 @@
 /*
  * FindInFilesServerOperations.java
  *
- * Copyright (C) 2022 by RStudio, PBC
+ * Copyright (C) 2022 by Posit Software, PBC
  *
- * Unless you have received this program directly from RStudio pursuant
- * to the terms of a commercial license agreement with RStudio, then
+ * Unless you have received this program directly from Posit Software pursuant
+ * to the terms of a commercial license agreement with Posit Software, then
  * this program is licensed to you under the terms of version 3 of the
  * GNU Affero General Public License. This program is distributed WITHOUT
  * ANY EXPRESS OR IMPLIED WARRANTY, INCLUDING THOSE OF NON-INFRINGEMENT,
@@ -23,12 +23,13 @@ public interface FindInFilesServerOperations
 {
    void beginFind(String searchString,
                   boolean regex,
+                  boolean isWholeWord,
                   boolean ignoreCase,
                   FileSystemItem directory,
                   JsArrayString includeFilePatterns,
+                  JsArrayString excludeFilePatterns,
                   boolean useGitGrep, 
                   boolean excludeGitIgnore,
-                  JsArrayString excludeFilePatterns,
                   ServerRequestCallback<String> requestCallback);
 
    void stopFind(String findOperationHandle,
@@ -38,23 +39,25 @@ public interface FindInFilesServerOperations
 
    void previewReplace(String searchString,
                        boolean regex,
+                       boolean isWholeWord,
                        boolean searchIgnoreCase,
                        FileSystemItem dictionary,
                        JsArrayString includeFilePatterns,
+                       JsArrayString excludeFilePatterns,
                        boolean useGitGrep,
                        boolean excludeGitIgnore,
-                       JsArrayString excludeFilePatterns,
                        String replaceString,
                        ServerRequestCallback<String> requestCallback);
 
    void completeReplace(String searchString,
                         boolean regex,
+                        boolean isWholeWord,
                         boolean searchIgnoreCase,
                         FileSystemItem dictionary,
                         JsArrayString includeFilePatterns,
+                        JsArrayString excludeFilePatterns,
                         boolean useGitGrep,
                         boolean excludeGitIgnore,
-                        JsArrayString excludeFilePatterns,
                         int searchResults,
                         String replaceString,
                         ServerRequestCallback<String> requestCallback);

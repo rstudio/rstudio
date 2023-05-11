@@ -1,10 +1,10 @@
 /*
  * SessionRMarkdown.cpp
  *
- * Copyright (C) 2022 by RStudio, PBC
+ * Copyright (C) 2022 by Posit Software, PBC
  *
- * Unless you have received this program directly from RStudio pursuant
- * to the terms of a commercial license agreement with RStudio, then
+ * Unless you have received this program directly from Posit Software pursuant
+ * to the terms of a commercial license agreement with Posit Software, then
  * this program is licensed to you under the terms of version 3 of the
  * GNU Affero General Public License. This program is distributed WITHOUT
  * ANY EXPRESS OR IMPLIED WARRANTY, INCLUDING THOSE OF NON-INFRINGEMENT,
@@ -202,7 +202,8 @@ void initWebsiteOutputDir()
 namespace module_context {
 
 FilePath extractOutputFileCreated(const FilePath& inputDir,
-                                  const std::string& output)
+                                  const std::string& output,
+                                  bool ignoreHugo)
 {
    // check each line of the emitted output; if it starts with a token
    // indicating rendering is complete, store the remainder of the emitted
@@ -233,6 +234,7 @@ FilePath extractOutputFileCreated(const FilePath& inputDir,
             // if it's a plain .md file and we are in a Hugo project then
             // don't preview it (as the user is likely running a Hugo preview)
             if (outputFile.getExtensionLowerCase() == ".md" &&
+                ignoreHugo &&
                 session::modules::rmarkdown::blogdown::isHugoProject())
             {
                return FilePath();
@@ -514,7 +516,7 @@ private:
 
       // if we are using a quarto command to render, we must be a quarto doc. read
       // all of the input file lines to be used in error navigation
-      if (renderFunc == "quarto serve" || renderFunc == "quarto render")
+      if (renderFunc == "quarto serve")
       {
           isQuarto_ = true;
           Error error = core::readLinesFromFile(targetFile_, &targetFileLines_);
@@ -580,16 +582,6 @@ private:
       if (renderFunc != kStandardRenderFunc && renderFunc != kShinyRenderFunc)
       {
          std::string extraArgs;
-         if (isQuarto_ && !isShiny_)
-         {
-            std::string to = format;
-            if (to.empty())
-            {
-               to = session::quarto::quartoDefaultFormat(targetFile_);
-            }
-            if (!to.empty())
-               extraArgs = "--to " + to;
-         }
          r::sexp::Protect rProtect;
          SEXP renderFuncSEXP;
          error = r::exec::evaluateString(renderFunc, &renderFuncSEXP, &rProtect);
@@ -770,10 +762,6 @@ private:
       {
          // record output file
          outputFile_ = outputFile;
-
-         // see if the quarto module wants to handle the preview
-         if (quarto::handleQuartoPreview(targetFile_, outputFile_, allOutput_, true))
-            viewerType_ = kRmdViewerTypeNone;
       }
 
 

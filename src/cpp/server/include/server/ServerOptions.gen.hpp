@@ -1,10 +1,10 @@
 /*
  * ServerOptions.gen.hpp
  *
- * Copyright (C) 2022 by RStudio, PBC
+ * Copyright (C) 2022 by Posit Software, PBC
  *
- * Unless you have received this program directly from RStudio pursuant
- * to the terms of a commercial license agreement with RStudio, then
+ * Unless you have received this program directly from Posit Software pursuant
+ * to the terms of a commercial license agreement with Posit Software, then
  * this program is licensed to you under the terms of version 3 of the
  * GNU Affero General Public License. This program is distributed WITHOUT
  * ANY EXPRESS OR IMPLIED WARRANTY, INCLUDING THOSE OF NON-INFRINGEMENT,
@@ -125,10 +125,10 @@ protected:
       "Indicates whether or not to verify connecting browser user agents to ensure they are compatible with RStudio Server.")
       ("www-same-site",
       value<std::string>(wwwSameSite)->default_value(""),
-      "The value of the 'SameSite' attribute on the cookies issued by RStudio Server. Accepted values are 'none' or 'lax'. The value 'none' should be used only when RStudio is hosted into an iFrame. For compatibility with some browsers (i.e. Safari 12), duplicate cookies will be issued by RStudio Server when 'none' is used.")
+      "The value of the 'SameSite' attribute on the cookies issued by RStudio Server. Accepted values are 'none' or 'lax'. The value 'none' should be used only when RStudio is hosted into an iframe. For compatibility with some browsers (i.e. Safari 12), duplicate cookies will be issued by RStudio Server when 'none' is used.")
       ("www-frame-origin",
       value<std::string>(&wwwFrameOrigin_)->default_value("none"),
-      "Specifies the allowed origin for the iFrame hosting RStudio if iFrame embedding is enabled.")
+      "Specifies the allowed origin for the iframe hosting RStudio if iframe embedding is enabled.")
       ("www-enable-origin-check",
       value<bool>(&wwwEnableOriginCheck_)->default_value(false),
       "If enabled, cause RStudio to enforce that incoming request origins are from the host domain. This can be added for additional security. See https://cheatsheetseries.owasp.org/cheatsheets/Cross-Site_Request_Forgery_Prevention_Cheat_Sheet.html#verifying-origin-with-standard-headers")
@@ -137,7 +137,10 @@ protected:
       "Specifies an additional origin that requests are allowed from, even if it does not match the host domain. Used if origin checking is enabled. May be specified multiple times for multiple origins.")
       ("session-use-file-storage",
       value<bool>(&sessionUseFileStorage_)->default_value(true),
-      "Whether to use the file system to store metadata about the session storage or the internal database. Setting this to false may require special network configuration. See [Session Storage](../server_management/session_storage.html) for more information.");
+      "Whether to use the file system to store metadata about the session storage or the internal database. Setting this to false may require special network configuration. See [Session Storage](../server_management/session_storage.html) for more information.")
+      ("www-stats-monitor-seconds",
+      value<int>(&statsMonitorSeconds_)->default_value(0),
+      "The time interval in seconds to log info/debug messages with stats on server performance. Set to 0 to disable.");
 
    pRsession->add_options()
       ("rsession-which-r",
@@ -174,7 +177,10 @@ protected:
       "If set, overrides the path to the /etc/rstudio/database.conf configuration file.")
       ("db-command",
       value<std::string>(&dbCommand_)->default_value(std::string()),
-      "Executes the shell command specified injecting the current database configuration in the command.");
+      "Executes the shell command specified injecting the current database configuration in the command.")
+      ("db-connection-timeout",
+      value<int>(&dbConnectionTimeout_)->default_value(15),
+      "Specifies the number of seconds to wait for making a new db connection");
 
    pAuth->add_options()
       ("auth-none",
@@ -221,7 +227,7 @@ protected:
       "If set, overrides the path to the directory which contains the revocation list to be used for storing expired tokens. As of RStudio Server 1.4, this has been moved to database storage, and so this setting is deprecated, but will be used to port over any existing file-based expired tokens.")
       ("auth-cookies-force-secure",
       value<bool>(&authCookiesForceSecure_)->default_value(false),
-      "Indicates whether or not auth cookies should be forcefully marked as secure. This should be enabled if running an SSL terminator infront of RStudio Server. Otherwise, cookies will be marked secure if SSL is configured.");
+      "Indicates whether or not auth cookies should be forcefully marked as secure. This should be enabled if running an SSL terminator in front of RStudio Server. Otherwise, cookies will be marked secure if SSL is configured.");
 
    pMonitor->add_options()
       (kMonitorIntervalSeconds,
@@ -257,6 +263,7 @@ public:
    bool wwwEnableOriginCheck() const { return wwwEnableOriginCheck_; }
    std::vector<boost::regex> wwwAllowedOrigins() const { return wwwAllowedOrigins_; }
    bool sessionUseFileStorage() const { return sessionUseFileStorage_; }
+   int statsMonitorSeconds() const { return statsMonitorSeconds_; }
    std::string rsessionWhichR() const { return rsessionWhichR_; }
    std::string rsessionPath() const { return rsessionPath_; }
    std::string rldpathPath() const { return rldpathPath_; }
@@ -265,6 +272,7 @@ public:
    int rsessionProxyMaxWaitSeconds() const { return rsessionProxyMaxWaitSeconds_; }
    std::string databaseConfigFile() const { return databaseConfigFile_; }
    std::string dbCommand() const { return dbCommand_; }
+   int dbConnectionTimeout() const { return dbConnectionTimeout_; }
    bool authNone() const { return authNone_; }
    bool authValidateUsers() const { return authValidateUsers_; }
    int authStaySignedInDays() const { return authStaySignedInDays_; }
@@ -307,6 +315,7 @@ protected:
    bool wwwEnableOriginCheck_;
    std::vector<boost::regex> wwwAllowedOrigins_;
    bool sessionUseFileStorage_;
+   int statsMonitorSeconds_;
    std::string rsessionWhichR_;
    std::string rsessionPath_;
    std::string rldpathPath_;
@@ -318,6 +327,7 @@ protected:
    int deprecatedUserProcessLimit_;
    std::string databaseConfigFile_;
    std::string dbCommand_;
+   int dbConnectionTimeout_;
    bool authNone_;
    bool authValidateUsers_;
    int authStaySignedInDays_;

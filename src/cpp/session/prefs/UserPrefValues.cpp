@@ -1,9 +1,9 @@
 /* UserPrefValues.cpp
  *
- * Copyright (C) 2022 by RStudio, PBC
+ * Copyright (C) 2022 by Posit Software, PBC
  *
- * Unless you have received this program directly from RStudio pursuant
- * to the terms of a commercial license agreement with RStudio, then
+ * Unless you have received this program directly from Posit Software pursuant
+ * to the terms of a commercial license agreement with Posit Software, then
  * this program is licensed to you under the terms of version 3 of the
  * GNU Affero General Public License. This program is distributed WITHOUT
  * ANY EXPRESS OR IMPLIED WARRANTY, INCLUDING THOSE OF NON-INFRINGEMENT,
@@ -1025,6 +1025,19 @@ core::Error UserPrefValues::setRainbowParentheses(bool val)
 }
 
 /**
+ * Whether to highlight fenced divs in a variety of colors.
+ */
+bool UserPrefValues::rainbowFencedDivs()
+{
+   return readPref<bool>("rainbow_fenced_divs");
+}
+
+core::Error UserPrefValues::setRainbowFencedDivs(bool val)
+{
+   return writePref("rainbow_fenced_divs", val);
+}
+
+/**
  * The maximum number of characters to display in a single line in the R console.
  */
 int UserPrefValues::consoleLineLengthLimit()
@@ -1607,6 +1620,19 @@ bool UserPrefValues::showPublishDiagnostics()
 core::Error UserPrefValues::setShowPublishDiagnostics(bool val)
 {
    return writePref("show_publish_diagnostics", val);
+}
+
+/**
+ * Whether to show UI for publishing content to Posit Cloud.
+ */
+bool UserPrefValues::enableCloudPublishUi()
+{
+   return readPref<bool>("enable_cloud_publish_ui");
+}
+
+core::Error UserPrefValues::setEnableCloudPublishUi(bool val)
+{
+   return writePref("enable_cloud_publish_ui", val);
 }
 
 /**
@@ -2481,7 +2507,7 @@ core::Error UserPrefValues::setDataViewerMaxCellSize(int val)
 }
 
 /**
- * Support accessibility aids such as screen readers (RStudio Server).
+ * Support accessibility aids such as screen readers.
  */
 bool UserPrefValues::enableScreenReader()
 {
@@ -3091,6 +3117,58 @@ core::Error UserPrefValues::setNativeFileDialogs(bool val)
    return writePref("native_file_dialogs", val);
 }
 
+/**
+ * When enabled, any pending console input will be discarded when an (uncaught) R error occurs.
+ */
+bool UserPrefValues::discardPendingConsoleInputOnError()
+{
+   return readPref<bool>("discard_pending_console_input_on_error");
+}
+
+core::Error UserPrefValues::setDiscardPendingConsoleInputOnError(bool val)
+{
+   return writePref("discard_pending_console_input_on_error", val);
+}
+
+/**
+ * An integer value, 1-200, to set the editor scroll multiplier. The higher the value, the faster the scrolling.
+ */
+int UserPrefValues::editorScrollMultiplier()
+{
+   return readPref<int>("editor_scroll_multiplier");
+}
+
+core::Error UserPrefValues::setEditorScrollMultiplier(int val)
+{
+   return writePref("editor_scroll_multiplier", val);
+}
+
+/**
+ * Control how text is rendered within the IDE surface.
+ */
+std::string UserPrefValues::textRendering()
+{
+   return readPref<std::string>("text_rendering");
+}
+
+core::Error UserPrefValues::setTextRendering(std::string val)
+{
+   return writePref("text_rendering", val);
+}
+
+/**
+ * Disable Electron accessibility support.
+ */
+bool UserPrefValues::disableRendererAccessibility()
+{
+   return readPref<bool>("disable_renderer_accessibility");
+}
+
+core::Error UserPrefValues::setDisableRendererAccessibility(bool val)
+{
+   return writePref("disable_renderer_accessibility", val);
+}
+
 std::vector<std::string> UserPrefValues::allKeys()
 {
    return std::vector<std::string>({
@@ -3171,6 +3249,7 @@ std::vector<std::string> UserPrefValues::allKeys()
       kHighlightRFunctionCalls,
       kColorPreview,
       kRainbowParentheses,
+      kRainbowFencedDivs,
       kConsoleLineLengthLimit,
       kConsoleMaxLines,
       kAnsiConsoleMode,
@@ -3216,6 +3295,7 @@ std::vector<std::string> UserPrefValues::allKeys()
       kRmdPreferredTemplatePath,
       kRmdViewerType,
       kShowPublishDiagnostics,
+      kEnableCloudPublishUi,
       kPublishCheckCertificates,
       kUsePublishCaBundle,
       kPublishCaBundle,
@@ -3330,6 +3410,10 @@ std::vector<std::string> UserPrefValues::allKeys()
       kCheckNullExternalPointers,
       kUiLanguage,
       kNativeFileDialogs,
+      kDiscardPendingConsoleInputOnError,
+      kEditorScrollMultiplier,
+      kTextRendering,
+      kDisableRendererAccessibility,
    });
 }
    

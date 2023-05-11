@@ -1,10 +1,10 @@
 #
 # SessionObjectExplorer.R
 #
-# Copyright (C) 2022 by RStudio, PBC
+# Copyright (C) 2022 by Posit Software, PBC
 #
-# Unless you have received this program directly from RStudio pursuant
-# to the terms of a commercial license agreement with RStudio, then
+# Unless you have received this program directly from Posit Software pursuant
+# to the terms of a commercial license agreement with Posit Software, then
 # this program is licensed to you under the terms of version 3 of the
 # GNU Affero General Public License. This program is distributed WITHOUT
 # ANY EXPRESS OR IMPLIED WARRANTY, INCLUDING THOSE OF NON-INFRINGEMENT,
@@ -17,7 +17,8 @@
 .rs.setVar("explorer.types", list(
    NEW        = "new",
    OPEN_NODE  = "open_node",
-   CLOSE_NODE = "close_node"
+   CLOSE_NODE = "close_node", 
+   REFRESH    = "refresh"
 ))
 
 .rs.setVar("explorer.tags", list(
@@ -406,6 +407,30 @@
       title    = .rs.scalar(title),
       language = .rs.scalar(language)
    )
+})
+
+.rs.addFunction("explorer.refresh", function(id, entry)
+{
+   handle <- list(
+      id       = .rs.scalar(id),
+      name     = .rs.scalar(entry$name),
+      title    = .rs.scalar(entry$title),
+      language = .rs.scalar(entry$language)
+   )
+
+   .rs.explorer.fireEvent(.rs.explorer.types$REFRESH, handle)
+})
+
+.rs.addFunction("explorer.close", function(id, entry)
+{
+   handle <- list(
+      id       = .rs.scalar(id),
+      name     = .rs.scalar(entry$name),
+      title    = .rs.scalar(entry$title),
+      language = .rs.scalar(entry$language)
+   )
+
+   .rs.explorer.fireEvent(.rs.explorer.types$CLOSE_NODE, handle)
 })
 
 # NOTE: synchronize the structure of this object with

@@ -1,10 +1,10 @@
 /*
  * Util.cpp
  *
- * Copyright (C) 2022 by RStudio, PBC
+ * Copyright (C) 2022 by Posit Software, PBC
  *
- * Unless you have received this program directly from RStudio pursuant
- * to the terms of a commercial license agreement with RStudio, then
+ * Unless you have received this program directly from Posit Software pursuant
+ * to the terms of a commercial license agreement with Posit Software, then
  * this program is licensed to you under the terms of version 3 of the
  * GNU Affero General Public License. This program is distributed WITHOUT
  * ANY EXPRESS OR IMPLIED WARRANTY, INCLUDING THOSE OF NON-INFRINGEMENT,
@@ -307,21 +307,25 @@ boost::posix_time::time_facet s_httpDateFacet(kHttpDateFormat,
                                               boost::posix_time::time_facet::special_values_formatter_type(),
                                               boost::posix_time::time_facet::date_gen_formatter_type(),
                                               1);
-   
+
+boost::posix_time::time_input_facet s_httpDateInputFacet(kHttpDateFormat, 1);
+
 boost::posix_time::ptime parseDate(const std::string& date, const char* format)
 {
    using namespace boost::posix_time;
    
+   // Warning - creating the time_input_facet is fairly expensive so avoiding it for http date
    // facet for date (construct w/ a_ref == 1 so we manage memory)
    time_input_facet dateFacet(1);
    dateFacet.format(format);
-   
+
    // parse from string
    std::stringstream dateStream;
    dateStream.str(date);
    dateStream.imbue(std::locale(dateStream.getloc(), &dateFacet));
    ptime posixDate(not_a_date_time);
    dateStream >> posixDate;
+
    return posixDate;
 }   
 
@@ -335,7 +339,16 @@ boost::posix_time::ptime parseAtomDate(const std::string& date)
 
 boost::posix_time::ptime parseHttpDate(const std::string& date)
 {
-   return parseDate(date, kHttpDateFormat);
+   using namespace boost::posix_time;
+
+   // parse from string
+   std::stringstream dateStream;
+   dateStream.str(date);
+   dateStream.imbue(std::locale(dateStream.getloc(), &s_httpDateInputFacet));
+   ptime posixDate(not_a_date_time);
+   dateStream >> posixDate;
+
+   return posixDate;
 }
    
 std::string httpDate(const boost::posix_time::ptime& datetime)
@@ -490,6 +503,28 @@ void fileRequestHandler(const std::string& wwwLocalPath,
       return;
    }
 
+#ifndef _WIN32
+   // To avoid the runtime CPU cost of compression, also check if there is a
+   // precompressed version of the file available and substitute it in if so.
+   // This is akin to the (gzip|brotli)_static directive for NGINX.
+   FilePath precompressed = FilePath(filePath.getAbsolutePath() + ".br");
+   if (request.acceptsEncoding(kBrotliEncoding) && precompressed.exists())
+   {
+      pResponse->setContentType(filePath.getMimeContentType());
+      pResponse->setContentEncoding(kBrotliEncoding);
+      pResponse->setCacheableFile(precompressed, request);
+      return;
+   }
+   precompressed = FilePath(filePath.getAbsolutePath() + ".gz");
+   if (request.acceptsEncoding(kGzipEncoding) && precompressed.exists())
+   {
+      pResponse->setContentType(filePath.getMimeContentType());
+      pResponse->setContentEncoding(kGzipEncoding);
+      pResponse->setCacheableFile(precompressed, request);
+      return;
+   }
+#endif
+
    // return requested file
    pResponse->setCacheableFile(filePath, request);
 }
@@ -550,6 +585,17 @@ bool isSslShutdownError(const boost::system::error_code& ec)
 {
    return ec == boost::asio::ssl::error::stream_truncated;
 }
+#endif
+
+#ifndef _WIN32
+
+bool isSslCertificateVerifyFailedError(const core::Error& error)
+{
+   return error.getName() == boost::asio::error::get_ssl_category().name() &&
+              ERR_GET_LIB(error.getCode()) == ERR_LIB_SSL &&
+              ERR_GET_REASON(error.getCode()) == SSL_R_CERTIFICATE_VERIFY_FAILED;
+}
+
 #endif
 
 std::string addQueryParam(const std::string& uri,

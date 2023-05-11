@@ -1,10 +1,10 @@
 #
 # SessionEnvironment.R
 #
-# Copyright (C) 2022 by RStudio, PBC
+# Copyright (C) 2022 by Posit Software, PBC
 #
-# Unless you have received this program directly from RStudio pursuant
-# to the terms of a commercial license agreement with RStudio, then
+# Unless you have received this program directly from Posit Software pursuant
+# to the terms of a commercial license agreement with Posit Software, then
 # this program is licensed to you under the terms of version 3 of the
 # GNU Affero General Public License. This program is distributed WITHOUT
 # ANY EXPRESS OR IMPLIED WARRANTY, INCLUDING THOSE OF NON-INFRINGEMENT,
@@ -230,8 +230,7 @@
       return(.rs.valueDescription(expr))
    
    # we have a call; try to deparse it
-   sanitized <- .rs.sanitizeCall(call)
-   .rs.deparse(sanitized)
+   .rs.describeCall(expr)
 })
 
 # used to create descriptions for language objects and symbols
@@ -604,6 +603,32 @@
    class(obj)[[1L]]
 })
 
+.rs.addFunction("describeCall", function(call)
+{
+   # defend against very large calls; e.g. those with R objects inlined
+   # as part of the call (can happen in do.call contexts)
+   #
+   # this is primarily used for the Environment pane, where we try to display
+   # a single-line summary of an R object -- so we can enforce that when
+   # deparsing calls here as well
+   #
+   # https://github.com/rstudio/rstudio/issues/5158
+   sanitized <- .rs.sanitizeCall(call)
+   val1 <- .rs.deparse(sanitized, nlines = 1L)
+   val2 <- .rs.deparse(sanitized, nlines = 2L)
+   
+   # indicate if there is more output
+   val <- if (!identical(val1, val2))
+      paste(val1, "<...>")
+   else
+      val1
+})
+
+.rs.addFunction("hasExternalPointer", function(object, nullPtr = FALSE)
+{
+   .Call("rs_hasExternalPointer", object, nullPtr, PACKAGE = "(embedding)")
+})
+
 .rs.addFunction("describeObject", function(env, objName, computeSize = TRUE)
 {
    obj <- get(objName, env)
@@ -627,7 +652,7 @@
    # opt-in to checking for null pointers if required.
    checkNullPtr <- .rs.readUiPref("check_null_external_pointers")
    hasNullPtr <- if (identical(checkNullPtr, TRUE))
-      .Call("rs_hasExternalPointer", obj, TRUE, PACKAGE = "(embedding)")
+      .rs.hasExternalPointer(obj, TRUE)
    else
       FALSE
    
@@ -660,24 +685,7 @@
    }
    else if (is.language(obj))
    {
-      # defend against very large calls; e.g. those with R objects inlined
-      # as part of the call (can happen in do.call contexts)
-      #
-      # this is primarily used for the Environment pane, where we try to display
-      # a single-line summary of an R object -- so we can enforce that when
-      # deparsing calls here as well
-      #
-      # https://github.com/rstudio/rstudio/issues/5158
-      sanitized <- .rs.sanitizeCall(obj)
-      val1 <- .rs.deparse(sanitized, nlines = 1L)
-      val2 <- .rs.deparse(sanitized, nlines = 2L)
-      
-      # indicate if there is more output
-      val <- if (!identical(val1, val2))
-         paste(val1, "<...>")
-      else
-         val1
-
+      .rs.describeCall(obj)  
    }
    else if (!hasNullPtr)
    {
@@ -911,3 +919,62 @@
    
 })
 
+.rs.addFunction("environment.isSuspendable", function()
+{
+   tryCatch(
+      .rs.environment.isSuspendableImpl(globalenv(), 1L),
+      error = function(e) TRUE
+   )
+})
+
+.rs.addFunction("environment.isSuspendableImpl", function(value, depth)
+{
+   # Avoid overly-deep recursions.
+   if (depth >= 8L)
+      return(TRUE)
+   
+   # Skip overly-large objects.
+   n <- length(value)
+   if (n >= 10000L)
+      return(TRUE)
+   
+   # Python objects are connected to the underlying session, and so
+   # cannot be restored after a suspend.
+   if (is.environment(value) && inherits(value, "python.builtin.object"))
+      return(FALSE)
+   
+   # Database connections cannot be serialized and restored.
+   if (inherits(value, "DBIConnection"))
+      return(FALSE)
+   
+   # Arrow objects cannot be serialized and restored.
+   if (inherits(value, "ArrowObject"))
+      return(FALSE)
+   
+   # Objects containing external pointers cannot be serialized.
+   if (typeof(value) %in% c("externalptr", "weakref"))
+      return(FALSE)
+   
+   # Assume that data.frame objects won't contain external pointers.
+   if (is.data.frame(value))
+      return(TRUE)
+   
+   # Iterate through other recursive objects.
+   if (is.environment(value)) {
+      keys <- ls(envir = value, all.names = TRUE)
+      for (key in keys) {
+         if (!.rs.environment.isSuspendableImpl(value[[key]], depth + 1L)) {
+            return(FALSE)
+         }
+      }
+   } else if (is.recursive(value)) {
+      for (i in seq_along(value)) {
+         if (!.rs.environment.isSuspendableImpl(value[[i]], depth + 1L)) {
+            return(FALSE)
+         }
+      }
+   }
+      
+   # Assume that other kinds of objects can be restored.
+   TRUE
+})

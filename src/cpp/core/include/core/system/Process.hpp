@@ -1,10 +1,10 @@
 /*
  * Process.hpp
  *
- * Copyright (C) 2022 by RStudio, PBC
+ * Copyright (C) 2022 by Posit Software, PBC
  *
- * Unless you have received this program directly from RStudio pursuant
- * to the terms of a commercial license agreement with RStudio, then
+ * Unless you have received this program directly from Posit Software pursuant
+ * to the terms of a commercial license agreement with Posit Software, then
  * this program is licensed to you under the terms of version 3 of the
  * GNU Affero General Public License. This program is distributed WITHOUT
  * ANY EXPRESS OR IMPLIED WARRANTY, INCLUDING THOSE OF NON-INFRINGEMENT,
@@ -105,7 +105,8 @@ struct ProcessOptions
         redirectStdErrToStdOut(false),
         reportHasSubprocs(false),
         trackCwd(false),
-        callbacksRequireMainThread(true)
+        callbacksRequireMainThread(true),
+        allowParentSuspend(false)
 #else
       : terminateChildren(false),
         exitWithParent(false),
@@ -117,7 +118,8 @@ struct ProcessOptions
         reportHasSubprocs(false),
         trackCwd(false),
         threadSafe(false),
-        callbacksRequireMainThread(true)
+        callbacksRequireMainThread(true),
+        allowParentSuspend(false)
 #endif
    {
    }
@@ -215,6 +217,10 @@ struct ProcessOptions
    // user to run the process as - optional
    // if non is specified, the launching user is used
    std::string runAsUser;
+
+   // If this process is a child, this option indicates whether this process
+   // should be considered when determining if a parent process should be suspended
+   bool allowParentSuspend;
 };
 
 // Struct for returning output and exit status from a process
@@ -424,9 +430,10 @@ public:
    // Check whether any children are currently running
    bool hasRunningChildren();
 
-   // Check whether any children consider themselves active; non-active
-   // processes may be terminated without warning.
-   bool hasActiveChildren();
+   // Check whether any children consider themselves active and do not allow
+   // parent suspension; non-active processes or processes that allow parent
+   // suspension may be terminated without warning.
+   bool hasDurableChildren();
 
    // Poll for child (output and exit) events. returns true if there
    // are still children being supervised after the poll

@@ -1,10 +1,10 @@
 /*
  * Completions.java
  *
- * Copyright (C) 2022 by RStudio, PBC
+ * Copyright (C) 2022 by Posit Software, PBC
  *
- * Unless you have received this program directly from RStudio pursuant
- * to the terms of a commercial license agreement with RStudio, then
+ * Unless you have received this program directly from Posit Software pursuant
+ * to the terms of a commercial license agreement with Posit Software, then
  * this program is licensed to you under the terms of version 3 of the
  * GNU Affero General Public License. This program is distributed WITHOUT
  * ANY EXPRESS OR IMPLIED WARRANTY, INCLUDING THOSE OF NON-INFRINGEMENT,
@@ -32,10 +32,12 @@ public class Completions extends JavaScriptObject
                                                       JsArrayString meta,
                                                       String fguess,
                                                       boolean excludeOtherCompletions,
+                                                      boolean excludeOtherArgumentCompletions,
                                                       boolean overrideInsertParens,
                                                       boolean cacheable,
                                                       String helpHandler,
-                                                      String language)
+                                                      String language, 
+                                                      JsArrayInteger context)
    /*-{
       return {
          token: [token],
@@ -44,11 +46,13 @@ public class Completions extends JavaScriptObject
          packages: packages,
          quote: quote,
          type: type,
+         context: context,
          suggestOnAccept: suggestOnAccept,
          replaceToEnd: replaceToEnd,
          meta: meta,
          fguess: fguess ? [fguess] : null,
          excludeOtherCompletions: excludeOtherCompletions,
+         excludeOtherArgumentCompletions: excludeOtherArgumentCompletions,
          overrideInsertParens: overrideInsertParens,
          cacheable: cacheable,
          helpHandler: helpHandler,
@@ -118,6 +122,10 @@ public class Completions extends JavaScriptObject
       return this.meta;
    }-*/;
 
+   public final native JsArrayInteger getContext() /*-{
+      return this.context;
+   }-*/;
+
    // provide suggestOnAccept if it isn't present (server completions will 
    // generally not yield this)
    public final native JsArrayBoolean getSuggestOnAccept() /*-{
@@ -147,7 +155,11 @@ public class Completions extends JavaScriptObject
    public final native boolean getExcludeOtherCompletions() /*-{
       return this.excludeOtherCompletions;
    }-*/;
-   
+
+   public final native boolean getExcludeOtherArgumentCompletions() /*-{
+      return this.excludeOtherArgumentCompletions;
+   }-*/;
+
    public final native boolean getOverrideInsertParens() /*-{
       return this.overrideInsertParens;
    }-*/;
@@ -159,6 +171,5 @@ public class Completions extends JavaScriptObject
    public final native String getLanguage() /*-{
       return this.language;
    }-*/;
-   
    
 }

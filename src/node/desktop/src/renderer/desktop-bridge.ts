@@ -1,10 +1,10 @@
 /*
  * desktop-bridge.ts
  *
- * Copyright (C) 2022 by RStudio, PBC
+ * Copyright (C) 2022 by Posit Software, PBC
  *
- * Unless you have received this program directly from RStudio pursuant
- * to the terms of a commercial license agreement with RStudio, then
+ * Unless you have received this program directly from Posit Software pursuant
+ * to the terms of a commercial license agreement with Posit Software, then
  * this program is licensed to you under the terms of version 3 of the
  * GNU Affero General Public License. This program is distributed WITHOUT
  * ANY EXPRESS OR IMPLIED WARRANTY, INCLUDING THOSE OF NON-INFRINGEMENT,
@@ -14,8 +14,9 @@
  */
 
 import { ipcRenderer, SaveDialogReturnValue, webContents } from 'electron';
-import { logger } from '../core/logger';
+import { logString } from './logger-bridge';
 import { normalizeSeparators } from '../ui/utils';
+import { safeError } from '../core/err';
 
 interface VoidCallback<Type> {
   (result: Type): void;
@@ -27,7 +28,7 @@ interface CursorPosition {
 }
 
 function reportIpcError(name: string, error: Error) {
-  console.log(`${name}: ${error.message}`);
+  logString('err', `IpcError: ${name}: ${error.message}`);
 }
 
 // eslint-disable-next-line @typescript-eslint/explicit-module-boundary-types
@@ -293,6 +294,13 @@ export function getDesktopBridge() {
         .catch((error) => reportIpcError('desktop_copy_page_region_to_clipboard', error));
     },
 
+    copyImageAtXYToClipboard: (x: number, y: number, callback: () => void) => {
+      ipcRenderer
+        .invoke('desktop_copy_image_at_xy_to_clipboard', x, y)
+        .then(() => callback())
+        .catch((error) => reportIpcError('desktop_copy_image_at_xy_to_clipboard', error));
+    },
+
     exportPageRegionToFile: (
       targetPath: string,
       format: string,
@@ -366,7 +374,7 @@ export function getDesktopBridge() {
         path = path.replaceAll('\\', '\\\\').replaceAll('"', '\\"').replaceAll('\n', '\\n');
         webcontents[0]
           .executeJavaScript(`window.desktopHooks.openFile("${path}")`)
-          .catch((error: unknown) => logger().logError(error));
+          .catch((error: unknown) => logString('err', safeError(error).message));
       }
     },
 
@@ -440,6 +448,10 @@ export function getDesktopBridge() {
       ipcRenderer.send('desktop_set_enable_accessibility', enable);
     },
 
+    setDisableRendererAccessibility: (disable: boolean) => {
+      ipcRenderer.send('desktop_set_disable_renderer_accessibility', disable);
+    },
+
     getIgnoreGpuExclusionList: (callback: VoidCallback<boolean>) => {
       ipcRenderer
         .invoke('desktop_get_ignore_gpu_exclusion_list')
@@ -462,10 +474,6 @@ export function getDesktopBridge() {
       ipcRenderer.send('desktop_set_disable_gpu_driver_bug_workarounds', disable);
     },
 
-    showLicenseDialog: () => {
-      ipcRenderer.send('desktop_show_license_dialog');
-    },
-
     showSessionServerOptionsDialog: () => {
       ipcRenderer.send('desktop_show_session_server_options_dialog');
     },
@@ -475,20 +483,6 @@ export function getDesktopBridge() {
         .invoke('desktop_get_init_messages')
         .then((messages) => callback(messages))
         .catch((error) => reportIpcError('getInitMessages', error));
-    },
-
-    getLicenseStatusMessage: (callback: VoidCallback<string>) => {
-      ipcRenderer
-        .invoke('desktop_get_license_status_message')
-        .then((message) => callback(message))
-        .catch((error) => reportIpcError('getLicenseStatusMessage', error));
-    },
-
-    allowProductUsage: (callback: VoidCallback<boolean>) => {
-      ipcRenderer
-        .invoke('desktop_allow_product_usage')
-        .then((allow) => callback(allow))
-        .catch((error) => reportIpcError('allowProductUsage', error));
     },
 
     getDesktopSynctexViewer: (callback: VoidCallback<string>) => {
@@ -537,12 +531,23 @@ export function getDesktopBridge() {
       ipcRenderer.send('desktop_set_viewer_url', url);
     },
 
+    setPresentationUrl: (url: string) => {
+      ipcRenderer.send('desktop_set_presentation_url', url);
+    },
+
     reloadViewerZoomWindow: (url: string) => {
       ipcRenderer.send('desktop_reload_viewer_zoom_window', url);
     },
 
     setShinyDialogUrl: (url: string) => {
       ipcRenderer.send('desktop_set_shiny_dialog_url', url);
+    },
+
+    allowNavigation: (url: string, callback: VoidCallback<boolean>) => {
+      ipcRenderer
+        .invoke('desktop_allow_navigation', url)
+        .then((isSafe) => callback(isSafe))
+        .catch((error) => reportIpcError('desktop_allow_navigation', error));
     },
 
     isMacOS: (callback: VoidCallback<boolean>) => {
@@ -580,6 +585,10 @@ export function getDesktopBridge() {
 
     onSessionQuit: () => {
       ipcRenderer.send('desktop_on_session_quit');
+    },
+
+    crashDesktopApplication: () => {
+      ipcRenderer.send('desktop_stop_main_thread');
     },
 
     getSessionServer: (callback: VoidCallback<Record<string, unknown>>) => {
@@ -667,5 +676,9 @@ export function getDesktopBridge() {
         .then((info) => callback(info))
         .catch((error) => reportIpcError('getStartupErrorInfo', error));
     },
+
+    // pro-only start
+
+    // pro-only end
   };
 }

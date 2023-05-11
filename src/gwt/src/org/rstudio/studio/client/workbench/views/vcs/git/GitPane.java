@@ -1,10 +1,10 @@
 /*
  * GitPane.java
  *
- * Copyright (C) 2022 by RStudio, PBC
+ * Copyright (C) 2022 by Posit Software, PBC
  *
- * Unless you have received this program directly from RStudio pursuant
- * to the terms of a commercial license agreement with RStudio, then
+ * Unless you have received this program directly from Posit Software pursuant
+ * to the terms of a commercial license agreement with Posit Software, then
  * this program is licensed to you under the terms of version 3 of the
  * GNU Affero General Public License. This program is distributed WITHOUT
  * ANY EXPRESS OR IMPLIED WARRANTY, INCLUDING THOSE OF NON-INFRINGEMENT,
@@ -48,11 +48,12 @@ import org.rstudio.studio.client.workbench.ui.WorkbenchPane;
 import org.rstudio.studio.client.workbench.views.vcs.CheckoutBranchToolbarButton;
 import org.rstudio.studio.client.workbench.views.vcs.CreateBranchToolbarButton;
 import org.rstudio.studio.client.workbench.views.vcs.ViewVcsConstants;
+import org.rstudio.studio.client.workbench.views.vcs.common.events.BranchCaptionChangedEvent;
 import org.rstudio.studio.client.workbench.views.vcs.git.GitPresenter.Display;
 
 import java.util.ArrayList;
 
-public class GitPane extends WorkbenchPane implements Display
+public class GitPane extends WorkbenchPane implements Display, BranchCaptionChangedEvent.Handler
 {
    @Inject
    public GitPane(GitChangelistTablePresenter changelistTablePresenter,
@@ -72,6 +73,7 @@ public class GitPane extends WorkbenchPane implements Display
       prefs_ = prefs;
 
       switchBranchToolbarButton_ = switchBranchToolbarButton;
+      switchBranchToolbarButton.addBranchCaptionChangedHandler(this);
       createBranchToolbarButton_ = createBranchToolbarButton;
 
       table_ = changelistTablePresenter.getView();
@@ -128,9 +130,9 @@ public class GitPane extends WorkbenchPane implements Display
       pullMoreMenu.addItem(commands_.vcsPullRebase().createMenuItem(false));
 
       Toolbar toolbar = new Toolbar(constants_.gitTabCapitalized());
-      toolbar.addLeftWidget(commands_.vcsDiff().createToolbarButton());
+      toolbar.addLeftWidget(diffButton_ = commands_.vcsDiff().createToolbarButton());
       toolbar.addLeftSeparator();
-      toolbar.addLeftWidget(commands_.vcsCommit().createToolbarButton());
+      toolbar.addLeftWidget(commitButton_ = commands_.vcsCommit().createToolbarButton());
       toolbar.addLeftSeparator();
       toolbar.addLeftWidget(pullButton_ = commands_.vcsPull().createToolbarButton());
       toolbar.addLeftWidget(new ToolbarMenuButton(ToolbarButton.NoText, constants_.pullOptions(), pullMoreMenu, true));
@@ -205,12 +207,17 @@ public class GitPane extends WorkbenchPane implements Display
    }
 
    @Override
+   public void onBranchCaptionChanged(BranchCaptionChangedEvent event) 
+   {
+      manageToolbarSizes();
+   }
+
+   @Override
    public void onResize()
    {
       super.onResize();
 
       manageToolbarSizes();
-
    }
 
    private void manageToolbarSizes()
@@ -220,11 +227,15 @@ public class GitPane extends WorkbenchPane implements Display
       if (width == 0)
          return;
 
-      pullButton_.setText(width > 600, constants_.pullCapitalized());
-      pushButton_.setText(width > 600, constants_.pushCapitalized());
-      historyButton_.setText(width > 680, constants_.historyCapitalized());
-      moreButton_.setText(width > 680, constants_.moreCapitalized());
-      createBranchToolbarButton_.setText(width > 730, constants_.newBranchCapitalized());
+      width = width - switchBranchToolbarButton_.getOffsetWidth() ;
+      
+      diffButton_.setText(width > 360, constants_.diffCapitalized());
+      commitButton_.setText(width > 360, constants_.commitCapitalized());
+      pullButton_.setText(width > 400, constants_.pullCapitalized());
+      pushButton_.setText(width > 440, constants_.pushCapitalized());
+      historyButton_.setText(width > 470, constants_.historyCapitalized());
+      moreButton_.setText(width > 500, constants_.moreCapitalized());
+      createBranchToolbarButton_.setText(width > 580, constants_.newBranchCapitalized());
    }
 
    @Override
@@ -290,6 +301,8 @@ public class GitPane extends WorkbenchPane implements Display
       menu.showRelativeTo(clientX, clientY, ElementIds.GIT_TAB_CONTEXT);
    }
 
+   private ToolbarButton diffButton_;
+   private ToolbarButton commitButton_;
    private ToolbarButton historyButton_;
    private ToolbarMenuButton moreButton_;
    private ToolbarButton pullButton_;

@@ -1,10 +1,10 @@
 /*
  * SessionOptions.gen.hpp
  *
- * Copyright (C) 2022 by RStudio, PBC
+ * Copyright (C) 2022 by Posit Software, PBC
  *
- * Unless you have received this program directly from RStudio pursuant
- * to the terms of a commercial license agreement with RStudio, then
+ * Unless you have received this program directly from Posit Software pursuant
+ * to the terms of a commercial license agreement with Posit Software, then
  * this program is licensed to you under the terms of version 3 of the
  * GNU Affero General Public License. This program is distributed WITHOUT
  * ANY EXPRESS OR IMPLIED WARRANTY, INCLUDING THOSE OF NON-INFRINGEMENT,
@@ -122,6 +122,12 @@ protected:
       "Whether or not to reuse last used bound ports when restarting a Launcher session.");
 
    pSession->add_options()
+      ("session-connections-block-suspend",
+      value<bool>(&sessionConnectionsBlockSuspend_)->default_value(true),
+      "Whether or not an active database connection should block attempts to suspend the session after timeout.")
+      ("session-external-pointers-block-suspend",
+      value<bool>(&sessionExternalPointersBlockSuspend_)->default_value(true),
+      "Whether or not R objects containing external pointers should block attempts to suspend the session after timeout.")
       (kTimeoutSessionOption,
       value<int>(&timeoutMinutes_)->default_value(120),
       "The amount of minutes before a session times out, at which point the session will either suspend or exit.")
@@ -169,7 +175,7 @@ protected:
       "Specifies the path to a first project template which will be copied into new users' home directories and opened the first time they run a session. The template can optionally be configured with `DefaultOpenDocs` to cause documents to automatically be opened for the first project.")
       ("default-rsconnect-server",
       value<std::string>(&defaultRSConnectServer_)->default_value(std::string()),
-      "Specifies the default RStudio Connect server URL.")
+      "Specifies the default Posit Connect server URL.")
       (kTerminalPortOption,
       value<std::string>(&terminalPort_)->default_value(std::string()),
       "If specified, sets the port to bind the terminal server to. This should generally only be set for containerized Launcher sessions, where the port must be known.")
@@ -301,7 +307,7 @@ protected:
       value<bool>(&autoReloadSource_)->default_value(false),
       "Indicates whether or not to automatically reload R source if it changes during the session.")
       ("r-compatible-graphics-engine-version",
-      value<int>(&rCompatibleGraphicsEngineVersion_)->default_value(15),
+      value<int>(&rCompatibleGraphicsEngineVersion_)->default_value(16),
       "Specifies the maximum graphics engine version that this version of RStudio is compatible with.")
       ("r-resources-path",
       value<std::string>(&rResourcesPath_)->default_value("resources"),
@@ -422,6 +428,8 @@ public:
    bool standalone() const { return standalone_; }
    bool verifySignatures() const { return verifySignatures_; }
    bool wwwReusePorts() const { return wwwReusePorts_; }
+   bool sessionConnectionsBlockSuspend() const { return sessionConnectionsBlockSuspend_; }
+   bool sessionExternalPointersBlockSuspend() const { return sessionExternalPointersBlockSuspend_; }
    int timeoutMinutes() const { return timeoutMinutes_; }
    bool timeoutSuspend() const { return timeoutSuspend_; }
    int disconnectedTimeoutMinutes() const { return disconnectedTimeoutMinutes_; }
@@ -525,6 +533,8 @@ protected:
    bool standalone_;
    bool verifySignatures_;
    bool wwwReusePorts_;
+   bool sessionConnectionsBlockSuspend_;
+   bool sessionExternalPointersBlockSuspend_;
    int timeoutMinutes_;
    bool timeoutSuspend_;
    int disconnectedTimeoutMinutes_;

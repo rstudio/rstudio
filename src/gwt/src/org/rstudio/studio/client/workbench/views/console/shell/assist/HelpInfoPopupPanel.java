@@ -1,10 +1,10 @@
 /*
- * HelpInfoPane.java
+ * HelpInfoPanel.java
  *
- * Copyright (C) 2022 by RStudio, PBC
+ * Copyright (C) 2022 by Posit Software, PBC
  *
- * Unless you have received this program directly from RStudio pursuant
- * to the terms of a commercial license agreement with RStudio, then
+ * Unless you have received this program directly from Posit Software pursuant
+ * to the terms of a commercial license agreement with Posit Software, then
  * this program is licensed to you under the terms of version 3 of the
  * GNU Affero General Public License. This program is distributed WITHOUT
  * ANY EXPRESS OR IMPLIED WARRANTY, INCLUDING THOSE OF NON-INFRINGEMENT,
@@ -21,8 +21,11 @@ import com.google.gwt.user.client.Timer;
 import com.google.gwt.user.client.ui.*;
 
 import org.rstudio.core.client.BrowseCap;
+import org.rstudio.core.client.SafeHtmlUtil;
 import org.rstudio.core.client.StringUtil;
+import org.rstudio.core.client.widget.RStudioFrame;
 import org.rstudio.studio.client.application.ui.RStudioThemes;
+import org.rstudio.studio.client.common.codetools.RCompletionType;
 import org.rstudio.studio.client.workbench.views.console.ConsoleConstants;
 import org.rstudio.studio.client.workbench.views.console.ConsoleResources;
 import org.rstudio.studio.client.workbench.views.help.model.HelpInfo;
@@ -77,29 +80,55 @@ public class HelpInfoPopupPanel extends PopupPanel
       timer_.cancel();
       vpanel_.clear();
 
-      Label lblSig;
-      if (StringUtil.isNullOrEmpty(help.getFunctionSignature()))
+      int type = help.getType();
+      if (type != RCompletionType.DATAFRAME)
       {
-         lblSig = new Label(help.getTitle());
-         lblSig.setStylePrimaryName(consoleStyles_.packageName());
+         Label lblSig;
+         String signature = help.getFunctionSignature();
+         if (StringUtil.isNullOrEmpty(signature))
+         {
+            lblSig = new Label(help.getTitle());
+            lblSig.setStylePrimaryName(consoleStyles_.packageName());
+            vpanel_.add(lblSig);
+         }
+         else if (!StringUtil.equals(signature, "-"))
+         {
+            lblSig = new Label(signature);
+            lblSig.setStylePrimaryName(consoleStyles_.functionInfoSignature());
+            vpanel_.add(lblSig);
+         }
       }
-      else
+      
+      String title = help.getTitle();
+      if (!StringUtil.isNullOrEmpty(title))
       {
-         lblSig = new Label(help.getFunctionSignature());
-         lblSig.setStylePrimaryName(consoleStyles_.functionInfoSignature());
+         Label lblTitle = new Label(title);
+         lblTitle.setStylePrimaryName(RES.styles().helpTitleText());
+         vpanel_.add(lblTitle);
       }
-      vpanel_.add(lblSig);
       
-      Label lblTitle = new Label(help.getTitle());
-      lblTitle.setStylePrimaryName(RES.styles().helpTitleText());
-      vpanel_.add(lblTitle);
+      String description = help.getDescription();
+      if (!StringUtil.isNullOrEmpty(description))
+      {
+         HTML htmlDesc = new HTML(description);
+         if (type == RCompletionType.COLUMN)
+            htmlDesc.setStylePrimaryName(RES.styles().helpGlimpseText());
+         else
+            htmlDesc.setStylePrimaryName(RES.styles().helpBodyText());
 
-      HTML htmlDesc = new HTML(help.getDescription());
-      htmlDesc.setStylePrimaryName(RES.styles().helpBodyText());
-      vpanel_.add(htmlDesc);
-      
-      doDisplay();
+         vpanel_.add(htmlDesc);
+      }
+   
+      String viewUrl = help.getViewUrl();
+      if (viewUrl != null)
+      {
+         RStudioFrame frame = new RStudioFrame("title", viewUrl);
+         frame.setWidth("100%");
+         frame.getIFrame().setFrameBorder(0);
+         vpanel_.add(frame);
+      }
 
+      doDisplay(help.hasHelp());
    }
    
    public void displayParameterHelp(String name, String description)
@@ -111,7 +140,6 @@ public class HelpInfoPopupPanel extends PopupPanel
    {
       timer_.cancel();
       vpanel_.clear();
-
       
       if (name != null)
       {
@@ -173,6 +201,24 @@ public class HelpInfoPopupPanel extends PopupPanel
       doDisplay(false);
    }
 
+   public void displayRoxygenHelp(String title, String description, boolean hasVignette)
+   {
+      timer_.cancel();
+      vpanel_.clear();
+      
+      HTML label = new HTML(
+         SafeHtmlUtil.highlightSnippet(title, RES.styles().roxygenSnippet())
+      );
+      label.setStylePrimaryName(RES.styles().roxygenTitle());
+      vpanel_.add(label);
+      
+      HTML contents = new HTML(description);
+      contents.addStyleName(RES.styles().roxygenText());
+      vpanel_.add(contents);
+      
+      doDisplay(hasVignette);
+   }
+
    public void clearHelp(boolean downloadOperationPending)
    {
       f1prompt_.setVisible(false);
@@ -194,7 +240,7 @@ public class HelpInfoPopupPanel extends PopupPanel
       f1prompt_.setVisible(showF1Prompt);
       scrollPanel_.setVisible(true);
       
-      String newHeight = Math.min(135, vpanel_.getOffsetHeight()) + "px";
+      String newHeight = Math.min(179, vpanel_.getOffsetHeight()) + "px";
       scrollPanel_.setHeight(newHeight);
    }
    

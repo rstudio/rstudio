@@ -1,10 +1,10 @@
 /*
  * CmdConstants.java
  *
- * Copyright (C) 2022 by RStudio, PBC
+ * Copyright (C) 2022 by Posit Software, PBC
  *
- * Unless you have received this program directly from RStudio pursuant
- * to the terms of a commercial license agreement with RStudio, then
+ * Unless you have received this program directly from Posit Software pursuant
+ * to the terms of a commercial license agreement with Posit Software, then
  * this program is licensed to you under the terms of version 3 of the
  * GNU Affero General Public License. This program is distributed WITHOUT
  * ANY EXPRESS OR IMPLIED WARRANTY, INCLUDING THOSE OF NON-INFRINGEMENT,
@@ -3185,7 +3185,7 @@ public interface CmdConstants extends Constants {
     String rstudioCommunityForumMenuLabel();
     
     // rstudioSupport
-    @DefaultStringValue("RStudio _Support") // $NON-NLS-1$
+    @DefaultStringValue("Posit _Support") // $NON-NLS-1$
     String rstudioSupportMenuLabel();
     
     // rstudioLicense
@@ -3336,6 +3336,10 @@ public interface CmdConstants extends Constants {
     @DefaultStringValue("Pa_ste with Indent") // $NON-NLS-1$
     String pasteWithIndentDummyMenuLabel();
     
+    // selectAllDummy
+    @DefaultStringValue("Select _All") // $NON-NLS-1$
+    String selectAllDummyMenuLabel();
+    
     // yankBeforeCursor
     @DefaultStringValue("Yank Before Cursor") // $NON-NLS-1$
     String yankBeforeCursorLabel();
@@ -3375,6 +3379,12 @@ public interface CmdConstants extends Constants {
     String toggleRainbowParensLabel();
     @DefaultStringValue("Rain_bow Parentheses") // $NON-NLS-1$
     String toggleRainbowParensMenuLabel();
+    
+    // toggleRainbowFencedDivs
+    @DefaultStringValue("Toggle Rainbow Fenced Divs Mode") // $NON-NLS-1$
+    String toggleRainbowFencedDivsLabel();
+    @DefaultStringValue("Rainb_ow Fenced Divs") // $NON-NLS-1$
+    String toggleRainbowFencedDivsMenuLabel();
     
     // maximizeConsole
     @DefaultStringValue("Maximize Console") // $NON-NLS-1$
@@ -3887,7 +3897,7 @@ public interface CmdConstants extends Constants {
     // loadServerHome
     @DefaultStringValue("") // $NON-NLS-1$
     String loadServerHomeButtonLabel();
-    @DefaultStringValue("RStudio Server _Home") // $NON-NLS-1$
+    @DefaultStringValue("Posit Workbench _Home") // $NON-NLS-1$
     String loadServerHomeMenuLabel();
     
     // speakEditorLocation
@@ -3913,6 +3923,10 @@ public interface CmdConstants extends Constants {
     // showShortcutCommand
     @DefaultStringValue("Show _Keyboard Shortcut Commands") // $NON-NLS-1$
     String showShortcutCommandMenuLabel();
+    
+    // crashDesktopApplication
+    @DefaultStringValue("Crash RStudio Desktop (DA_NGER)") // $NON-NLS-1$
+    String crashDesktopApplicationMenuLabel();
     
     // showCommandPalette
     @DefaultStringValue("Show Command Palette") // $NON-NLS-1$

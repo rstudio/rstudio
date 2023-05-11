@@ -1,10 +1,10 @@
 /*
  * Database.cpp
  *
- * Copyright (C) 2022 by RStudio, PBC
+ * Copyright (C) 2022 by Posit Software, PBC
  *
- * Unless you have received this program directly from RStudio pursuant
- * to the terms of a commercial license agreement with RStudio, then
+ * Unless you have received this program directly from Posit Software pursuant
+ * to the terms of a commercial license agreement with Posit Software, then
  * this program is licensed to you under the terms of version 3 of the
  * GNU Affero General Public License. This program is distributed WITHOUT
  * ANY EXPRESS OR IMPLIED WARRANTY, INCLUDING THOSE OF NON-INFRINGEMENT,
@@ -132,7 +132,15 @@ std::string DatabaseErrorCategory::message(int ev) const
    }
 }
 
-#define DatabaseError(sociError) Error(sociError.get_error_category(), sociError.get_error_message(), ERROR_LOCATION);
+#define DatabaseError(sociError) getDatabaseError(sociError, ERROR_LOCATION);
+
+Error getDatabaseError(const soci::soci_error& sociError, const ErrorLocation& in_location)
+{
+   // The value() for the connection_error enum is 0 which looks like Success if used in Error
+   if (sociError.get_error_category() == soci::soci_error::connection_error)
+      return Error(boost::system::errc::not_connected, sociError.get_error_message(), in_location);
+   return Error(sociError.get_error_category(), sociError.get_error_message(), in_location);
+}
 
 // Database errors =================================================================================================
 
@@ -153,7 +161,7 @@ public:
    Error operator()(const SqliteConnectionOptions& options) const
    {
       std::string readonly = options.readonly ? " readonly=true" : "";
-      std::string connectionStr = "shared_cache=true" + readonly + " dbname=\"" + options.file + "\"";
+      std::string connectionStr = "shared_cache=true timeout=5" + readonly + " dbname=\"" + options.file + "\"";
       if (pConnectionStr_)
          *pConnectionStr_ = connectionStr;
 
@@ -169,6 +177,14 @@ public:
          Error error = pConnection->executeStr("PRAGMA foreign_keys = ON;");
          if (error)
             return error;
+
+         // enable WAL mode to improve read/write concurrency
+         if (!options.readonly)
+         {
+            error = pConnection->executeStr("PRAGMA journal_mode = WAL;");
+            if (error)
+               return error;
+         }
 
          *pPtrConnection_ = pConnection;
          return Success();
@@ -617,23 +633,22 @@ ConnectionPool::ConnectionPool(const ConnectionOptions& options) :
 {
 }
 
-void ConnectionPool::testAndReconnect(boost::shared_ptr<Connection>& connection)
+bool ConnectionPool::testAndReconnect(boost::shared_ptr<Connection>& connection)
 {
    // do not test Sqlite connections - there is no backend system to connect to in this case
    // so any errors on the file handle itself we do not want to gracefully recover from, as they would
    // indicate a very serious programming error
    if (connection->driver() == Driver::Sqlite)
-      return;
+      return true;
 
    // it is possible for connections to go stale (such as if the upstream connection is closed)
    // which will prevent it from being usable - we test for this by running a very efficient query
    // and checking to make sure that no error has occurred
    Error error = connection->executeStr("SELECT 1");
    if (!error)
-      return;
+      return true;
 
-   error.addProperty("description", "Connection check query failed when getting connection from the pool");
-   LOG_ERROR(error);
+   LOG_DEBUG_MESSAGE("Replacing stale db connection in pool - check query returned: " + error.asString() + ")");
 
    // a connection error has occurred - attempt to reopen the connection by throwing this one away
    // and replacing it with a new one
@@ -645,10 +660,12 @@ void ConnectionPool::testAndReconnect(boost::shared_ptr<Connection>& connection)
       // future attempts to use this connection will be responsible for further attempts
       error.addProperty("description", "Could not re-establish database connection");
       LOG_ERROR(error);
-      return;
+      return false;
    }
 
    connection = boost::static_pointer_cast<Connection>(newConnection);
+
+   return true;
 }
 
 boost::shared_ptr<IConnection> ConnectionPool::getConnection()
@@ -663,7 +680,8 @@ boost::shared_ptr<IConnection> ConnectionPool::getConnection()
       if (connections_.deque(&connection, boost::posix_time::seconds(30)))
       {
          // test connection to ensure it is still alive
-         testAndReconnect(connection);
+         if (!testAndReconnect(connection))
+            LOG_WARNING_MESSAGE("DB get connection - returning invalid connection");
 
          // create wrapper PooledConnection around retrieved Connection
          return boost::shared_ptr<IConnection>(new PooledConnection(shared_from_this(), connection));
@@ -681,13 +699,22 @@ bool ConnectionPool::getConnection(const boost::posix_time::time_duration& maxWa
 {
    boost::shared_ptr<Connection> connection;
    if (!connections_.deque(&connection, maxWait))
+   {
+      LOG_DEBUG_MESSAGE("In DB getConnection - timed out in trying to find a connection");
       return false;
+   }
 
+   bool validConnection;
    // test connection to ensure it is still alive
-   testAndReconnect(connection);
-
+   if (testAndReconnect(connection))
+      validConnection = true;
+   else
+   {
+      LOG_WARNING_MESSAGE("Unable to get valid DB connection for operation");
+      validConnection = false;
+   }
    pConnection->reset(new PooledConnection(shared_from_this(), connection));
-   return true;
+   return validConnection;
 }
 
 void ConnectionPool::returnConnection(const boost::shared_ptr<Connection>& connection)
@@ -771,8 +798,8 @@ bool SchemaVersion::operator<(const SchemaVersion& other) const
       return false;
 
    const auto& versions = versionMap();
-   int thisFlowerIndex = (versions.find(Flower) != versions.end()) ? versions.at(Flower) : -1;
-   int otherFlowerIndex = (versions.find(other.Flower) != versions.end()) ? versions.at(other.Flower) : -1;
+   int thisFlowerIndex = (versions.find(Flower) != versions.end()) ? versions.at(Flower) : versions.size();
+   int otherFlowerIndex = (versions.find(other.Flower) != versions.end()) ? versions.at(other.Flower) : versions.size();
 
    if (thisFlowerIndex < otherFlowerIndex)
       return true;

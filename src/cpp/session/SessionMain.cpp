@@ -1,10 +1,10 @@
 /*
  * SessionMain.cpp
  *
- * Copyright (C) 2022 by RStudio, PBC
+ * Copyright (C) 2022 by Posit Software, PBC
  *
- * Unless you have received this program directly from RStudio pursuant
- * to the terms of a commercial license agreement with RStudio, then
+ * Unless you have received this program directly from Posit Software pursuant
+ * to the terms of a commercial license agreement with Posit Software, then
  * this program is licensed to you under the terms of version 3 of the
  * GNU Affero General Public License. This program is distributed WITHOUT
  * ANY EXPRESS OR IMPLIED WARRANTY, INCLUDING THOSE OF NON-INFRINGEMENT,
@@ -113,6 +113,7 @@
 #include "SessionAddins.hpp"
 
 #include "SessionModuleContextInternal.hpp"
+#include <session/SessionModuleContext.hpp>
 
 #include "SessionClientEventQueue.hpp"
 #include "SessionClientInit.hpp"
@@ -191,6 +192,7 @@
 #include "modules/rmarkdown/SessionBookdown.hpp"
 #include "modules/quarto/SessionQuarto.hpp"
 #include "modules/shiny/SessionShiny.hpp"
+#include "modules/shiny/SessionPyShiny.hpp"
 #include "modules/sql/SessionSql.hpp"
 #include "modules/stan/SessionStan.hpp"
 #include "modules/viewer/SessionViewer.hpp"
@@ -410,12 +412,13 @@ Error registerSignalHandlers()
    registerBlock.addFunctions()
          (bind(handleSignal, SigInt, handleINT));
 
-   // USR1 and USR2: perform suspend in server mode
+   // USR1, USR2, and TERM: perform suspend in server mode
    if (rsession::options().programMode() == kSessionProgramModeServer)
    {
       registerBlock.addFunctions()
          (bind(handleSignal, SigUsr1, suspend::handleUSR1))
-         (bind(handleSignal, SigUsr2, suspend::handleUSR2));
+         (bind(handleSignal, SigUsr2, suspend::handleUSR2))
+         (bind(handleSignal, SigTerm, suspend::handleUSR2));
    }
    // USR1 and USR2: ignore in desktop mode
    else
@@ -600,6 +603,7 @@ Error rInit(const rstudio::r::session::RInitInfo& rInitInfo)
       (modules::rmarkdown::templates::initialize)
       (modules::rmarkdown::bookdown::initialize)
       (modules::rpubs::initialize)
+      (modules::pyshiny::initialize)
       (modules::shiny::initialize)
       (modules::sql::initialize)
       (modules::stan::initialize)
@@ -779,7 +783,7 @@ Error rInit(const rstudio::r::session::RInitInfo& rInitInfo)
    // begin session
    using namespace module_context;
    activeSession().beginSession(rVersion(), rHomeDir(), rVersionLabel());
-   LOG_DEBUG_MESSAGE("Beginning session: " + activeSession().id() + " with activityState: " + activeSession().activityState());
+   LOG_DEBUG_MESSAGE("Beginning session: " + activeSession().id() + " with activityState: " + activeSession().activityState() + " for username: " + core::system::username() + " effective uid: " + std::to_string(core::system::effectiveUserId()));
 
    // setup fork handlers
    main_process::setupForkHandlers();
@@ -980,7 +984,8 @@ void rConsoleHistoryReset()
 
 void rConsoleReset()
 {
-   rsession::console_input::clearConsoleInputBuffer();
+   if (prefs::userPrefs().discardPendingConsoleInputOnError())
+      rsession::console_input::clearConsoleInputBuffer();
 }
 
 bool rLocator(double* x, double* y)
@@ -1983,6 +1988,8 @@ int main(int argc, char * const argv[])
 
       // Initialize rpc to rserver before options. Rpc validates session scope with db session storage
       error = socket_rpc::initialize();
+      if (error)
+         return sessionExitFailure(error, ERROR_LOCATION);
 
       // read program options
       std::ostringstream osWarnings;
@@ -2064,9 +2071,6 @@ int main(int argc, char * const argv[])
                                         true); // force log dir to be under user's home directory
          }
       }
-
-      if (error)
-         return sessionExitFailure(error, ERROR_LOCATION);
 
       error = rpc::initialize();
       if (error)
@@ -2157,9 +2161,7 @@ int main(int argc, char * const argv[])
          core::thread::safeLaunchThread(detectParentTermination);
 
       // set the rpostback absolute path
-      FilePath rpostback = options.rpostbackPath()
-                                  .getParent().getParent()
-                                  .completeChildPath("rpostback");
+      FilePath rpostback = module_context::rPostbackPath();
       core::system::setenv(
             "RS_RPOSTBACK_PATH",
             string_utils::utf8ToSystem(rpostback.getAbsolutePath()));
@@ -2298,6 +2300,7 @@ int main(int argc, char * const argv[])
 
       // r options
       rstudio::r::session::ROptions rOptions;
+      rOptions.projectPath = projects::projectContext().hasProject() ? projects::projectContext().directory() : FilePath();
       rOptions.userHomePath = options.userHomePath();
       rOptions.userScratchPath = options.userScratchPath();
       rOptions.scopedScratchPath = module_context::scopedScratchPath();

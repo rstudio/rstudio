@@ -1,10 +1,10 @@
 /*
  * RSConnectAccountList.java
  *
- * Copyright (C) 2022 by RStudio, PBC
+ * Copyright (C) 2022 by Posit Software, PBC
  *
- * Unless you have received this program directly from RStudio pursuant
- * to the terms of a commercial license agreement with RStudio, then
+ * Unless you have received this program directly from Posit Software pursuant
+ * to the terms of a commercial license agreement with Posit Software, then
  * this program is licensed to you under the terms of version 3 of the
  * GNU Affero General Public License. This program is distributed WITHOUT
  * ANY EXPRESS OR IMPLIED WARRANTY, INCLUDING THOSE OF NON-INFRINGEMENT,
@@ -42,11 +42,13 @@ public class RSConnectAccountList extends Composite implements CanSetControlId
          GlobalDisplay display,
          boolean refreshImmediately,
          boolean showCloudAccounts,
+         boolean showPositCloudAccounts,
          String ariaLabel)
    {
       server_ = server;
       display_ = display;
       showCloudAccounts_ = showCloudAccounts;
+      showPositCloudAccounts_ = showPositCloudAccounts;
       accountList_ = new WidgetListBox<>();
       accountList_.setEmptyText(constants_.noAccountsConnected());
       if (refreshImmediately)
@@ -86,10 +88,23 @@ public class RSConnectAccountList extends Composite implements CanSetControlId
       accountList_.clearItems();
       for (int i = 0; i < accounts.length(); i++)
       {
-         if (showCloudAccounts_ || !accounts.get(i).isCloudAccount())
+         RSConnectAccount account = accounts.get(i);
+         // hide ShinyApps and Posit.cloud accounts from the list if non-cloud supported content type
+         if (account.isShinyAppsAccount() && showCloudAccounts_)
          {
-            accounts_.add(accounts.get(i));
-            accountList_.addItem(new RSConnectAccountEntry(accounts.get(i)));
+            accounts_.add(account);
+            accountList_.addItem(new RSConnectAccountEntry(account));
+         }
+         else if (account.isCloudAccount() && (showCloudAccounts_ || showPositCloudAccounts_))
+         {
+            accounts_.add(account);
+            accountList_.addItem(new RSConnectAccountEntry(account));
+         }
+         // Connect accounts support all content types
+         else if (!account.isShinyAppsAccount() && !account.isCloudAccount())
+         {
+            accounts_.add(account);
+            accountList_.addItem(new RSConnectAccountEntry(account));
          }
       }
       if (onRefreshCompleted_ != null)
@@ -164,12 +179,23 @@ public class RSConnectAccountList extends Composite implements CanSetControlId
    {
       return showCloudAccounts_;
    }
+
+   public void setShowPositCloudAccounts(boolean show)
+   {
+      showPositCloudAccounts_ = show;
+   }
+
+   public boolean getShowPositCloudAccounts()
+   {
+      return showPositCloudAccounts_;
+   }
    
    private final WidgetListBox<RSConnectAccountEntry> accountList_;
    private final RSConnectServerOperations server_; 
    private final GlobalDisplay display_;
    
    private boolean showCloudAccounts_;
+   private boolean showPositCloudAccounts_;
    
    private ArrayList<RSConnectAccount> accounts_ = new ArrayList<>();
    private Operation onRefreshCompleted_ = null;

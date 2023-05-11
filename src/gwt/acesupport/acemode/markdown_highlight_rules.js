@@ -1,15 +1,15 @@
 /*
  * markdown_highlight_rules.js
  *
- * Copyright (C) 2022 by RStudio, PBC
+ * Copyright (C) 2022 by Posit Software, PBC
  *
  * The Initial Developer of the Original Code is
  * Ajax.org B.V.
  * Portions created by the Initial Developer are Copyright (C) 2010
  * the Initial Developer. All Rights Reserved.
  *
- * Unless you have received this program directly from RStudio pursuant
- * to the terms of a commercial license agreement with RStudio, then
+ * Unless you have received this program directly from Posit Software pursuant
+ * to the terms of a commercial license agreement with Posit Software, then
  * this program is licensed to you under the terms of version 3 of the
  * GNU Affero General Public License. This program is distributed WITHOUT
  * ANY EXPRESS OR IMPLIED WARRANTY, INCLUDING THOSE OF NON-INFRINGEMENT,
@@ -57,6 +57,9 @@ var JavaScriptHighlightRules = require("ace/mode/javascript_highlight_rules").Ja
 var XmlHighlightRules = require("ace/mode/xml_highlight_rules").XmlHighlightRules;
 var HtmlHighlightRules = require("ace/mode/html_highlight_rules").HtmlHighlightRules;
 var CssHighlightRules = require("ace/mode/css_highlight_rules").CssHighlightRules;
+var ScssHighlightRules = require("ace/mode/scss_highlight_rules").ScssHighlightRules;
+var SassHighlightRules = require("ace/mode/sass_highlight_rules").SassHighlightRules;
+var LessHighlightRules = require("ace/mode/less_highlight_rules").LessHighlightRules;
 var PerlHighlightRules = require("ace/mode/perl_highlight_rules").PerlHighlightRules;
 var PythonHighlightRules = require("mode/python_highlight_rules").PythonHighlightRules;
 var RubyHighlightRules = require("ace/mode/ruby_highlight_rules").RubyHighlightRules;
@@ -79,6 +82,19 @@ function github_embed(tag, prefix) {
         push  : prefix + "start"
     };
 }
+
+var $rainbowFencedDivs = true;
+var $numFencedDivsColors = 7;
+
+exports.setRainbowFencedDivs = function(value) {
+    $rainbowFencedDivs = value;
+};
+exports.getRainbowFencedDivs = function() {
+    return $rainbowFencedDivs;
+};
+exports.setNumFencedDivsColors = function(value) {
+    $numFencedDivsColors = value;
+};
 
 var MarkdownHighlightRules = function() {
 
@@ -193,17 +209,57 @@ var MarkdownHighlightRules = function() {
             token: "markup.heading.2",
             regex: "^\\-{3,}(?=\\s*$)"
         }, {
+            // opening fenced div
+            token: "fenced_open", 
+            regex: "^[:]{3,}\\s*.*$", 
+            onMatch: function(val, state, stack) {
+                if (!$rainbowFencedDivs) {
+                    return "keyword.operator";
+                }
+
+                stack = stack || [];
+                stack[0] = state;
+                stack[16] = stack[16] || 0;  // next open color
+                stack[17] = stack[17] || []; // stack
+
+                var close = /^[:]{3,}\s*$/.test(val);
+
+                if (close) 
+                {
+                    var color = stack[17].pop() || 0;
+                    return "fenced_div_" + color;
+                }
+                else 
+                {
+                    var color = stack[16];
+                    stack[17].push(color);
+                    stack[16] = (color + 1 ) % $numFencedDivsColors;
+
+                    // separating the fence (:::) from the follow up text
+                    // in case we want to style them differently
+                    var rx = /^([:]{3,})(.*)$/;
+                    return [
+                        { type: "fenced_div_"  + color, value: val.replace(rx, '$1')}, 
+                        { type: "fenced_div_text_" + color, value: val.replace(rx, '$2')}, 
+                    ];
+                }
+            },
+            next: "start"
+        }, {
             token : function(value) {
                 return "markup.heading." + value.length;
             },
             regex : /^#{1,6}(?=\s*[^ #]|\s+#.)/,
             next : "header"
         },
-                                     
+                         
         github_embed("(?:javascript|js)", "jscode-"),
         github_embed("xml", "xmlcode-"),
         github_embed("html", "htmlcode-"),
         github_embed("css", "csscode-"),
+        github_embed("scss", "scsscode-"),
+        github_embed("sass", "sasscode-"),
+        github_embed("less", "lesscode-"),
         github_embed("mermaid", "mermaidcode-"),
         github_embed("dot", "dotcode-"),
         github_embed("perl", "perlcode-"),
@@ -462,6 +518,24 @@ var MarkdownHighlightRules = function() {
     }]);
 
     this.embedRules(CssHighlightRules, "csscode-", [{
+        token : "support.function",
+        regex : "^\\s*```",
+        next  : "pop"
+    }]);
+
+    this.embedRules(ScssHighlightRules, "scsscode-", [{
+        token : "support.function",
+        regex : "^\\s*```",
+        next  : "pop"
+    }]);
+
+    this.embedRules(SassHighlightRules, "sasscode-", [{
+        token : "support.function",
+        regex : "^\\s*```",
+        next  : "pop"
+    }]);
+
+    this.embedRules(LessHighlightRules, "lesscode-", [{
         token : "support.function",
         regex : "^\\s*```",
         next  : "pop"

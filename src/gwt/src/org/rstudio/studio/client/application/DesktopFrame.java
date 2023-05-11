@@ -1,10 +1,10 @@
 /*
  * DesktopFrame.java
  *
- * Copyright (C) 2022 by RStudio, PBC
+ * Copyright (C) 2022 by Posit Software, PBC
  *
- * Unless you have received this program directly from RStudio pursuant
- * to the terms of a commercial license agreement with RStudio, then
+ * Unless you have received this program directly from Posit Software pursuant
+ * to the terms of a commercial license agreement with Posit Software, then
  * this program is licensed to you under the terms of version 3 of the
  * GNU Affero General Public License. This program is distributed WITHOUT
  * ANY EXPRESS OR IMPLIED WARRANTY, INCLUDING THOSE OF NON-INFRINGEMENT,
@@ -91,6 +91,9 @@ public interface DesktopFrame extends JavaScriptPassthrough
    
    void copyPageRegionToClipboard(int left, int top, int width, int height,
                                   Command onCopied);
+
+   void copyImageAtXYToClipboard(int absoluteLeft, int absoluteTop,
+                                 Command completed);
    
    void exportPageRegionToFile(String targetPath, 
                                String format, 
@@ -162,7 +165,8 @@ public interface DesktopFrame extends JavaScriptPassthrough
    
    void getEnableAccessibility(CommandWithArg<Boolean> callback);
    void setEnableAccessibility(boolean enable);
-   
+   void setDisableRendererAccessibility(boolean disable);
+
    void getClipboardMonitoring(CommandWithArg<Boolean> callback);
    void setClipboardMonitoring(boolean monitoring);
    
@@ -193,9 +197,11 @@ public interface DesktopFrame extends JavaScriptPassthrough
    void reloadViewerZoomWindow(String url);
    void setPresentationUrl(String url);
    void setTutorialUrl(String url);
-   
+
    void setShinyDialogUrl(String url);
-   
+
+   void allowNavigation(String url, CommandWithArg<Boolean> callback);
+
    void setBusy(boolean busy);
    
    void setWindowTitle(String title);
@@ -205,6 +211,8 @@ public interface DesktopFrame extends JavaScriptPassthrough
    void showSessionServerOptionsDialog();
 
    void onSessionQuit();
+
+   void crashDesktopApplication();
 
    void getSessionServer(CommandWithArg<SessionServer> callback);
    void getSessionServers(CommandWithArg<JsArray<SessionServer>> callback);

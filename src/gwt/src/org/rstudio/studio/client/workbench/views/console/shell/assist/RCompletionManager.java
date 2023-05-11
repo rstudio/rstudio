@@ -1,10 +1,10 @@
 /*
  * RCompletionManager.java
  *
- * Copyright (C) 2022 by RStudio, PBC
+ * Copyright (C) 2022 by Posit Software, PBC
  *
- * Unless you have received this program directly from RStudio pursuant
- * to the terms of a commercial license agreement with RStudio, then
+ * Unless you have received this program directly from Posit Software pursuant
+ * to the terms of a commercial license agreement with Posit Software, then
  * this program is licensed to you under the terms of version 3 of the
  * GNU Affero General Public License. This program is distributed WITHOUT
  * ANY EXPRESS OR IMPLIED WARRANTY, INCLUDING THOSE OF NON-INFRINGEMENT,
@@ -422,11 +422,12 @@ public class RCompletionManager implements CompletionManager
          {
             if (initFilter_ == null || initFilter_.shouldComplete(event))
             {
+               String currentLine = docDisplay_.getCurrentLineUpToCursor();
+
                // If we're in markdown mode, only autocomplete in '```{r',
                // '[](', or '`r |' contexts
                if (DocumentMode.isCursorInMarkdownMode(docDisplay_))
                {
-                  String currentLine = docDisplay_.getCurrentLineUpToCursor();
                   if (!(Pattern.create("^```{[rR]").test(currentLine) ||
                       Pattern.create(".*\\[.*\\]\\(").test(currentLine) ||
                       (Pattern.create(".*`r").test(currentLine) &&
@@ -437,10 +438,10 @@ public class RCompletionManager implements CompletionManager
                // If we're in tex mode, only provide completions in chunks
                if (DocumentMode.isCursorInTexMode(docDisplay_))
                {
-                  String currentLine = docDisplay_.getCurrentLineUpToCursor();
                   if (!Pattern.create("^<<").test(currentLine))
                      return false;
                }
+
                return beginSuggest(true, false, true);
             }
          }
@@ -918,7 +919,7 @@ public class RCompletionManager implements CompletionManager
    // 2. The associated function call (if any -- for arguments),
    // 3. The associated data for a `[` call (if any -- completions from data object),
    // 4. The associated data for a `[[` call (if any -- completions from data object)
-   class AutocompletionContext {
+   public class AutocompletionContext {
       
       // Be sure to sync these with 'SessionRCompletions.R'!
       public static final int TYPE_UNKNOWN = 0;
@@ -1073,8 +1074,7 @@ public class RCompletionManager implements CompletionManager
    
    private boolean isLineInRoxygenComment(String line)
    {
-      Pattern pattern = Pattern.create("^\\s*#+'");
-      return pattern.test(line);
+      return DocumentMode.PATTERN_ROXYGEN_LINE.test(line);
    }
 
    private boolean isLineInPlumberComment(String line)
@@ -1122,6 +1122,43 @@ public class RCompletionManager implements CompletionManager
             !isLineInPlumberComment(firstLine))
          return false;
       
+      AceEditor editor = (AceEditor) docDisplay_;
+      
+      if (isLineInRoxygenComment(firstLine)) 
+      {
+         if (!DocumentMode.PATTERN_ROXYGEN_CAN_COMPLETE.test(firstLine))
+         {
+            // when below @examples, handle <TAB> here and take into account
+            // the tab size, where the code begins (i.e. after |#' | ) and 
+            // where the cursor currently is
+            if (DocumentMode.isCursorInRoxygenExamples(docDisplay_) && !implicit) 
+            {
+               if (editor != null) 
+               {
+                  int tabSize = editor.getTabSize();
+                  int cursor = editor.getCursorColumn();
+                  
+                  int commentSize = DocumentMode.PATTERN_ROXYGEN_LINE.match(firstLine, 0).getValue().length() + 1;
+                  // if just after the ': add one space
+                  String spaces = " ";
+                  if (cursor >= commentSize)
+                  {
+                     // othewise add a tab or the remainder spaces to the next one
+                     int remainder = (cursor - commentSize) % tabSize;
+                     spaces = StringUtil.repeat(" ", remainder == 0 ? tabSize : remainder);
+                  }
+                  editor.insertCode(spaces);
+               }
+               return true;
+            }
+            else 
+            {
+               // otherwise let ace handle <TAB>
+               return false;
+            }
+         }
+      }
+
       // don't autocomplete if the cursor lies within the text of a
       // multi-line string. the logic here isn't perfect (ideally, we'd detect
       // whether we're in the 'qstring' or 'qqstring' state), but this will catch
@@ -1170,7 +1207,6 @@ public class RCompletionManager implements CompletionManager
             canAutoInsert);
       
       RInfixData infixData = RInfixData.create();
-      AceEditor editor = (AceEditor) docDisplay_;
       if (editor != null)
       {
          CodeModel codeModel = editor.getSession().getMode().getRCodeModel();
@@ -1717,7 +1753,7 @@ public class RCompletionManager implements CompletionManager
       popup.displaySnippetHelp(
             snippets_.getSnippetContents(item.name));
    }
-   
+
    /**
     * It's important that we create a new instance of this each time.
     * It maintains state that is associated with a completion request.
@@ -1750,7 +1786,6 @@ public class RCompletionManager implements CompletionManager
          // TODO: Show help should navigate to snippet file?
          if (selectedItem.type != RCompletionType.SNIPPET)
             helpStrategy_.showHelpTopic(selectedItem);
-            
       }
 
       @Override
@@ -1843,6 +1878,7 @@ public class RCompletionManager implements CompletionManager
 
          if (results.length == 1
                && canAutoAccept_
+               && completions.canAutoAccept()
                && results[0].type != RCompletionType.DIRECTORY)
          {
             onSelection(results[0]);
@@ -1906,6 +1942,7 @@ public class RCompletionManager implements CompletionManager
          if (type == RCompletionType.ROXYGEN ||
              type == RCompletionType.PACKAGE ||
              type == RCompletionType.ARGUMENT ||
+             type == RCompletionType.SECUNDARY_ARGUMENT ||
              type == RCompletionType.OPTION ||
              type == RCompletionType.CONTEXT ||
              type == RCompletionType.KEYWORD)
@@ -1922,12 +1959,31 @@ public class RCompletionManager implements CompletionManager
          if (isSpecialSource)
             return value;
          
+         // quote if: 
+         // - keywords, but just in a ::, :::, $, or @ contexts
+         // - non syntactic
+         boolean quote = false;
+
+         int context = name.context;
+         if (isKeyword(value)) 
+         {
+            if (context == AutocompletionContext.TYPE_AT ||
+                context == AutocompletionContext.TYPE_DOLLAR ||
+                context == AutocompletionContext.TYPE_NAMESPACE_EXPORTED ||
+                context == AutocompletionContext.TYPE_NAMESPACE_ALL)
+            {
+               quote = true;
+            }
+         }
+         else if (!RegexUtil.isSyntacticRIdentifier(value))
+         {
+            quote = true;
+         }
          // if this is already a syntactic identifier, no quote is required
-         if (RegexUtil.isSyntacticRIdentifier(value) && !isKeyword(value))
-            return value;
+         if (quote)
+            return "`" + value.replaceAll("`", "\\\\`") + "`";
          
-         // otherwise, quote
-         return "`" + value.replaceAll("`", "\\`") + "`";
+         return value;
       }
 
       private boolean isKeyword(String value)
@@ -2012,6 +2068,21 @@ public class RCompletionManager implements CompletionManager
             snippets_.applySnippet(completionToken, qualifiedName.name);
             return;
          }
+
+         if (qualifiedName.type == RCompletionType.ROXYGEN)
+         {
+            String snippet = qualifiedName.display;
+            if (snippet.contains("\n"))
+            {
+               // inject the #' prefix
+               String prefix = docDisplay_.getCurrentLine().replaceFirst("@.*", "");
+               snippet = snippet.replace("\n", "\n" + prefix);
+            }
+            
+            snippets_.applySnippetContent(completionToken, snippet);
+
+            return;
+         }
          
          boolean insertParen =
                userPrefs_.insertParensAfterFunctionCompletion().getValue() &&
@@ -2059,7 +2130,7 @@ public class RCompletionManager implements CompletionManager
          {
             value = quoteIfNotSyntacticNameCompletion(qualifiedName);
          }
-
+         
          /* In some cases, applyValue can be called more than once
           * as part of the same completion instance--specifically,
           * if there's only one completion candidate and it is in

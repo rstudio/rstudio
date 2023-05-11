@@ -1,10 +1,10 @@
 /*
  * ServerValidateUser.cpp
  *
- * Copyright (C) 2022 by RStudio, PBC
+ * Copyright (C) 2022 by Posit Software, PBC
  *
- * Unless you have received this program directly from RStudio pursuant
- * to the terms of a commercial license agreement with RStudio, then
+ * Unless you have received this program directly from Posit Software pursuant
+ * to the terms of a commercial license agreement with Posit Software, then
  * this program is licensed to you under the terms of version 3 of the
  * GNU Affero General Public License. This program is distributed WITHOUT
  * ANY EXPRESS OR IMPLIED WARRANTY, INCLUDING THOSE OF NON-INFRINGEMENT,
@@ -24,6 +24,7 @@
 
 #include <core/system/PosixSystem.hpp>
 #include <core/system/PosixUser.hpp>
+#include <core/system/User.hpp>
 
 #include <server/ServerOptions.hpp>
 
@@ -44,7 +45,7 @@ bool validateUser(const std::string& username,
    
    // get the user
    core::system::User user;
-   Error error = core::system::User::getUserFromIdentifier(username, user);
+   Error error = core::system::getUserFromUsername(username, user);
    if (error)
    {
       // log the error only if it is unexpected
@@ -59,25 +60,25 @@ bool validateUser(const std::string& username,
    // return the same username but if it doesn't, there is another user with
    // same uid and we bail to prevent unexpected behaviors down the road
    core::system::User tmpUser;
-   error = core::system::User::getUserFromIdentifier(user.getUserId(), tmpUser);
+   error = core::system::getUserFromUserId(user.getUserId(), tmpUser);
    if (error)
    {
-       // log the error only if it is unexpected
-       if (!core::system::isUserNotFoundError(error))
-           LOG_ERROR(error);
+      // log the error only if it is unexpected
+      if (!core::system::isUserNotFoundError(error))
+         LOG_ERROR(error);
 
-       // not found either due to non-existence or an unexpected error
-       return false;
+      // not found either due to non-existence or an unexpected error
+      return false;
    }
    if (user.getUsername() != tmpUser.getUsername())
    {
-       boost::format fmt(
-               "User '%1%' could not be authenticated "
-               "because another user with the same UID %2% exists. "
-               "The conflicting user is '%3%'.");
-       std::string msg = boost::str(fmt % user.getUsername() % user.getUserId() % tmpUser.getUsername());
-       LOG_ERROR_MESSAGE(msg);
-       return false;
+      boost::format fmt(
+            "User '%1%' could not be authenticated "
+            "because another user with the same UID %2% exists. "
+            "The conflicting user is '%3%'.");
+      std::string msg = boost::str(fmt % user.getUsername() % user.getUserId() % tmpUser.getUsername());
+      LOG_ERROR_MESSAGE(msg);
+      return false;
    }
 
    // validate minimum user id

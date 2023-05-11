@@ -1,10 +1,10 @@
 #
 # SessionHelp.R
 #
-# Copyright (C) 2022 by RStudio, PBC
+# Copyright (C) 2022 by Posit Software, PBC
 #
-# Unless you have received this program directly from RStudio pursuant
-# to the terms of a commercial license agreement with RStudio, then
+# Unless you have received this program directly from Posit Software pursuant
+# to the terms of a commercial license agreement with Posit Software, then
 # this program is licensed to you under the terms of version 3 of the
 # GNU Affero General Public License. This program is distributed WITHOUT
 # ANY EXPRESS OR IMPLIED WARRANTY, INCLUDING THOSE OF NON-INFRINGEMENT,
@@ -284,52 +284,70 @@ options(help_type = "html")
    if (!length(type))
       return()
    
-   # If we've encoded the package and function in 'what', pull it out
-   if (grepl("|||", what, fixed = TRUE))
+   envir <- .rs.getActiveFrame()
+
+   impl <- function()
    {
-      splat <- strsplit(what, "|||", fixed = TRUE)[[1]]
-      from <- splat[[1]]
-      what <- splat[[2]]
+      # If we've encoded the package and function in 'what', pull it out
+      if (grepl("::.", what))
+      {
+         splat <- strsplit(what, "::", fixed = TRUE)[[1]]
+         from <- splat[[1]]
+         what <- splat[[2]]
+      }
+      
+      # Avoid install.packages hook
+      if (what == "install.packages" &&
+         type == .rs.acCompletionTypes$ARGUMENT &&
+         is.null(from))
+         return(.rs.getHelp("install.packages", "utils"))
+      
+      # Help for options
+      if (type == .rs.acCompletionTypes$OPTION)
+         return(.rs.getHelp("options", "base", subset = FALSE))
+      
+      if (type %in% c(.rs.acCompletionTypes$S4_GENERIC,
+                     .rs.acCompletionTypes$S4_METHOD))
+      {
+         # Try getting methods for the method from the associated package
+         if (!is.null(help <- .rs.getHelp(paste(what, "methods", sep = "-"), from)))
+            return(help)
+         
+         # Try getting help from anywhere
+         if (!is.null(help <- .rs.getHelp(what, from)))
+            return(help)
+         
+         # Give up
+         return()
+      }
+      
+      if (type %in% c(.rs.acCompletionTypes$FUNCTION,
+                     .rs.acCompletionTypes$S4_GENERIC,
+                     .rs.acCompletionTypes$S4_METHOD,
+                     .rs.acCompletionTypes$R5_METHOD))
+         return(.rs.getHelpFunction(what, from))
+      else if (type %in% c(.rs.acCompletionTypes$ARGUMENT, .rs.acCompletionTypes$SECUNDARY_ARGUMENT))
+         return(.rs.getHelpArgument(what, from, parent.frame()))
+      else if (type == .rs.acCompletionTypes$PACKAGE)
+         return(.rs.getHelpPackage(what))
+      else if (type == .rs.acCompletionTypes$DATATABLE_SPECIAL_SYMBOL)
+         return(.rs.getHelpDataTableSpecialSymbol(what))
+      else if (type == .rs.acCompletionTypes$COLUMN)
+         return(.rs.getHelpColumn(what, from, envir))
+      else if (type == .rs.acCompletionTypes$DATAFRAME)
+         return(.rs.getHelpDataFrame(what, from, envir))
+      else if (length(from) && length(what))
+         return(.rs.getHelp(what, from))
+      else
+         return()
    }
    
-   # Avoid install.packages hook
-   if (what == "install.packages" &&
-       type == .rs.acCompletionTypes$ARGUMENT &&
-       is.null(from))
-      return(.rs.getHelp("install.packages", "utils"))
-   
-   # Help for options
-   if (type == .rs.acCompletionTypes$OPTION)
-      return(.rs.getHelp("options", "base", subset = FALSE))
-   
-   if (type %in% c(.rs.acCompletionTypes$S4_GENERIC,
-                   .rs.acCompletionTypes$S4_METHOD))
-   {
-      # Try getting methods for the method from the associated package
-      if (!is.null(help <- .rs.getHelp(paste(what, "methods", sep = "-"), from)))
-         return(help)
-      
-      # Try getting help from anywhere
-      if (!is.null(help <- .rs.getHelp(what, from)))
-         return(help)
-      
-      # Give up
+   out <- impl()
+   if (is.null(out))
       return()
-   }
    
-   if (type %in% c(.rs.acCompletionTypes$FUNCTION,
-                   .rs.acCompletionTypes$S4_GENERIC,
-                   .rs.acCompletionTypes$S4_METHOD,
-                   .rs.acCompletionTypes$R5_METHOD))
-      return(.rs.getHelpFunction(what, from))
-   else if (type == .rs.acCompletionTypes$ARGUMENT)
-      return(.rs.getHelpArgument(what, from, parent.frame()))
-   else if (type == .rs.acCompletionTypes$PACKAGE)
-      return(.rs.getHelpPackage(what))
-   else if (length(from) && length(what))
-      return(.rs.getHelp(what, from))
-   else
-      return()
+   out$type <- type
+   out
 })
 
 .rs.addJsonRpcHandler("get_custom_help", function(helpHandler,
@@ -347,8 +365,9 @@ options(help_type = "html")
       return()
    
    results <- helpHandlerFunc("completion", topic, source)
-   if (!is.null(results))
+   if (!is.null(results)) {
       results$description <- .rs.markdownToHTML(results$description)
+   }
      
    results 
 })
@@ -368,8 +387,8 @@ options(help_type = "html")
    
    results <- helpHandlerFunc("parameter", NULL, source)
    if (!is.null(results)) {
-      results$arg_descriptions <- sapply(results$arg_descriptions, 
-                                         .rs.markdownToHTML)
+      results$type <- .rs.acCompletionTypes$ARGUMENT
+      results$arg_descriptions <- sapply(results$arg_descriptions, .rs.markdownToHTML)
    }
    
    results
@@ -436,6 +455,113 @@ options(help_type = "html")
    print(utils::vignette(topic, package))
 })
 
+.rs.addFunction("getHelpColumn", function(name, src, envir = parent.frame())
+{
+   tryCatch(
+      .rs.getHelpColumnImpl(name, src, envir),
+      error = function(e) NULL
+   )
+})
+
+.rs.addFunction("getHelpColumnImpl", function(name, src, envir = parent.frame())
+{
+   data <- .rs.getAnywhere(src, envir)
+   if (is.null(data))
+      return(NULL)
+   
+   column <- data[[name]]
+   
+   canUsePillar <- FALSE
+   if ("pillar" %in% loadedNamespaces())
+   {
+      pillar <- asNamespace("pillar")
+      canUsePillar <-
+         is.function(pillar$format_glimpse) &&
+         is.function(pillar$str_trunc) &&
+         is.function(pillar$get_pillar_type)
+   }
+   
+   if (canUsePillar)
+   {
+      formatted <- pillar$format_glimpse(column)
+      
+      bits <- c()
+      nchars <- 55
+      i <- 1
+      while (nchars > 1 && i < length(column)) {
+         current <- formatted[i]
+         if (nchar(current) > nchars) {
+            current <- pillar$str_trunc(current, nchars)
+         }
+         bits <- c(bits, current)
+         nchars <- nchars - nchar(current) - 2
+         i <- i + 1
+      }
+      
+      if (length(bits) < length(column))
+      {
+         bits <- c(bits, paste0("<i>", pillar:::get_ellipsis(), "</i>"))
+      }
+      
+      description <- paste("<ul>", paste(paste0("<li>", bits, "</li>"), collapse = " "), "</ul>")
+      type <- pillar$get_pillar_type(column)
+      size <- length(formatted)
+   }
+   else 
+   {
+      described <- .rs.describeObject(data, name)
+      description <- described$description
+      type <- described$type
+      size <- described$length
+   }
+   
+   list(
+      html = paste0("<h2></h2><h3>Description</h3><p>", description, "</p>"),
+      signature = paste0("<", type, "> [", size, "]"),
+      pkgname = src,
+      help = FALSE
+   )
+   
+})
+
+.rs.addFunction("getHelpDataFrame", function(name, src, envir = parent.frame())
+{
+   out <- .rs.getHelp(name, src)
+
+   # If 'src' is the name of something on the searchpath, grad the data
+   data <- NULL
+   title <- name
+   pos <- match(src, search(), nomatch = -1L)
+   if (pos >= 0)
+   {
+      data <- tryCatch(get(name, pos = pos), error = function(e) NULL)
+   }
+
+   if (is.null(data)) {
+      title <- paste0(src, "$", name)
+      data <- .rs.getAnywhere(title, envir)
+   }
+
+   if (is.null(data))
+      return(out)
+
+   if (is.null(out))
+   {
+      ncol <- ncol(data)
+      out <- list(
+         html = paste0("<h2>", name, "</h2><h3>Description</h3><p>", nrow(data), " obs. of ", ncol, " variable", if(ncol > 1) "s", "</p>"),
+         signature = "-", 
+         pkgname = src, 
+         help = FALSE   
+      )
+   }
+   
+   .rs.assignCachedData("completion_popup_dataframe", data, "")
+   out$view <- paste0("grid_resource/gridviewer.html?env=_rs_no_env&cache_key=completion_popup_dataframe&max_cols=50")
+
+   out
+})
+
 .rs.addFunction("getHelpFunction", function(name, src, envir = parent.frame())
 {
    # If 'src' is the name of something on the searchpath, get that object
@@ -467,7 +593,38 @@ options(help_type = "html")
    # We might be getting the completion with colons appended, so strip those out.
    pkgName <- sub(":*$", "", pkgName, perl = TRUE)
    topic <- paste(pkgName, "-package", sep = "")
-   .rs.getHelp(topic, pkgName)
+   out <- .rs.getHelp(topic, pkgName)
+   if (is.null(out))
+   {
+      pkgDescription <- suppressWarnings(utils::packageDescription(pkgName))
+      if (!identical(pkgDescription, NA)) 
+      {
+         title <- .rs.htmlEscape(pkgDescription$Title)
+         description <- .rs.htmlEscape(pkgDescription$Description)
+         
+         # Format like what HelpInfo.parse() expects
+         out <- list(
+            html = paste0("<h2>", title, "</h2><h3>Description</h3><p>", description, "</p>"),
+            signature = NULL, 
+            pkgname = pkgName
+         )
+      }
+   }
+   out
+})
+
+.rs.addFunction("getHelpDataTableSpecialSymbol", function(what)
+{
+   html <- strsplit(.rs.getHelp(what, "data.table", subset = FALSE)$html, "\n")[[1L]]
+   description <- grep(paste0("<p><code>", what, "</code>[^,]"), html, value = TRUE)
+   description <- sub("<li><p>", "", description)
+
+   out <- list(
+      html = paste0("<h2>data.table special symbol ", what, "</h2><h3>Description</h3><p>", description, "</p>"),
+      signature = NULL, 
+      pkgname = "data.table"
+   )
+   out
 })
 
 .rs.addFunction("getHelpArgument", function(functionName, src, envir)
@@ -475,7 +632,7 @@ options(help_type = "html")
    if (is.null(src))
    {
       object <- .rs.getAnywhere(functionName, envir)
-      if (!is.null(object))
+         if (!is.null(object))
          return(.rs.getHelpFromObject(object, envir, functionName))
    }
    else
@@ -538,39 +695,28 @@ options(help_type = "html")
                                     subset = TRUE,
                                     getSignature = FALSE)
 {
+   # Ensure topic and package are not zero-length
+   if (!length(package))
+      package <- ""
+   
+   if (!length(topic))
+      topic <- ""
+   
    # Completions from the search path might have the 'package:' prefix, so
    # lets strip that out.
    package <- sub("package:", "", package, fixed = TRUE)
    
-   # Ensure topic is not zero-length
-   if (!length(topic))
-      topic <- ""
-   
-   # If the topic is not provided, but we're getting help on e.g.
+   # If the package is not provided, but we're getting help on e.g.
    # 'stats::rnorm', then split up the topic into the appropriate pieces.
-   if (!length(package) && any(grepl(":{2,3}", topic, perl = TRUE)))
+   if (package == "" && any(grepl(":{2,3}", topic, perl = TRUE)))
    {
       splat <- strsplit(topic, ":{2,3}", perl = TRUE)[[1]]
       topic <- splat[[2]]
       package <- splat[[1]]
    }
    
-   # If 'package' is the name of something on the search path, then we
-   # attempt to resolve the object and get its help.
-   if (length(package))
-   {
-      pos <- match(package, search(), nomatch = -1L)
-      if (pos >= 0)
-      {
-         object <- tryCatch(get(topic, pos = pos), error = function(e) NULL)
-         if (is.null(object))
-            return(NULL)
-         return(.rs.getHelpFromObject(object, envir, topic))
-      }
-   }
-   
    helpfiles <- NULL
-   if (!length(package) || package == "") {
+   if (package == "") {
       helpfiles <- utils::help(topic, help_type = "html")
    } else {
       helpfiles <- tryCatch(
@@ -603,7 +749,7 @@ options(help_type = "html")
    #    <libpath>/<package>/help/<...>
    #
    # so we look for the 'help' component and parse from there
-   if (!length(package) || package == "")
+   if (package == "")
    {
       parts <- strsplit(file, "/", fixed = TRUE)[[1L]]
       
@@ -622,7 +768,7 @@ options(help_type = "html")
    }
    
    # try to figure out the encoding for the provided HTML
-   if (length(package) && nzchar(package))
+   if (package != "")
    {
       packagePath <- system.file(package = package)
       if (nzchar(packagePath))
@@ -659,9 +805,7 @@ options(help_type = "html")
    if (is.null(sig) && getSignature)
    {
       object <- NULL
-      if (length(package) &&
-             package != "" &&
-             package %in% loadedNamespaces())
+      if (package %in% loadedNamespaces())
       {
          object <- tryCatch(
             get(topic, envir = asNamespace(package)),
@@ -737,7 +881,11 @@ options(help_type = "html")
    pkgName <- sub(":*$", "", pkgName)
    topic <- paste(pkgName, "-package", sep = "")
    call <- .rs.makeHelpCall(topic, pkgName)
-   print(eval(call, envir = parent.frame()))
+   helpfile <- eval(call, envir = parent.frame())
+   if (length(helpfile) == 0)
+      browseURL(paste0("http://127.0.0.1:", .rs.httpdPort(), "/library/", pkgName, "/html/00Index.html"))
+   else 
+      print(helpfile)
 })
 
 .rs.addFunction("showHelpTopic", function(topic, package)
@@ -772,7 +920,7 @@ options(help_type = "html")
       
       # check if topic.Rd exist 
       if (!length(file) && linksToTopics) {
-         helppath <- system.file("help", package = package)
+         helppath <- system.file("help", package = pkg)
          if (nzchar(helppath)) {
             contents <- readRDS(sub("/help$", "/Meta/Rd.rds", helppath, fixed = FALSE))
             helpfiles <- sub("\\.[Rr]d$", "", contents$File)
@@ -800,10 +948,30 @@ options(help_type = "html")
    .rs.followHelpTopic(pkg = pkg, topic = topic)
 })
 
-.rs.addFunction("Rd2HTML", function(file, package = "", Rdmacros = "")
+.rs.addFunction("RdLoadMacros", function(file)
+{
+   maybePackageDir <- dirname(dirname(file))
+   if (file.exists(file.path(maybePackageDir, "DESCRIPTION")) ||
+       file.exists(file.path(maybePackageDir, "DESCRIPTION.in")))
+   {
+      # NOTE: ?loadPkgRdMacros has:
+      #
+      #   loadPkgRdMacros loads the system Rd macros by default
+      #
+      # so it shouldn't be necessary to load system macros ourselves here
+      tools::loadPkgRdMacros(maybePackageDir)
+   }
+   else
+   {
+      rMacroPath <- file.path(R.home("share"), "Rd/macros/system.Rd")
+      tools::loadRdMacros(rMacroPath)
+   }
+})
+
+.rs.addFunction("Rd2HTML", function(file, package = "")
 {
    tf <- tempfile(); on.exit(unlink(tf))
-   macros <- suppressWarnings(tools:::initialRdMacros(Rdmacros))
+   macros <- .rs.RdLoadMacros(file)
    tools::Rd2HTML(file, out = tf, package = package, macros = macros, dynamic = TRUE)
    lines <- readLines(tf, warn = FALSE)
    lines <- sub("R Documentation</td></tr></table>", "(preview) R Documentation</td></tr></table>", lines)

@@ -1,10 +1,10 @@
 #
 # CMakeLists.txt
 #
-# Copyright (C) 2022 by RStudio, PBC
+# Copyright (C) 2022 by Posit Software, PBC
 #
-# Unless you have received this program directly from RStudio pursuant
-# to the terms of a commercial license agreement with RStudio, then
+# Unless you have received this program directly from Posit Software pursuant
+# to the terms of a commercial license agreement with Posit Software, then
 # this program is licensed to you under the terms of version 3 of the
 # GNU Affero General Public License. This program is distributed WITHOUT
 # ANY EXPRESS OR IMPLIED WARRANTY, INCLUDING THOSE OF NON-INFRINGEMENT,
@@ -225,11 +225,17 @@ else()
    find_package(yaml-cpp REQUIRED)
 endif()
 
-if(NOT EXISTS "${YAML_CPP_INCLUDE_DIR}")
+if(yaml-cpp_FOUND AND NOT YAML_CPP_LIBRARIES)
+   set(YAML_CPP_LIBRARIES yaml-cpp)
+endif()
+
+if(NOT RSTUDIO_USE_SYSTEM_YAML_CPP AND NOT EXISTS "${YAML_CPP_INCLUDE_DIR}")
    message(FATAL_ERROR "yaml-cpp not found (re-run dependencies script to install)")
 endif()
 
-include_directories(SYSTEM "${YAML_CPP_INCLUDE_DIR}")
+if(YAML_CPP_INCLUDE_DIR)
+   include_directories(SYSTEM "${YAML_CPP_INCLUDE_DIR}")
+endif()
 
 # determine whether we should statically link boost. we always do this
 # unless we are building a non-packaged build on linux (in which case
@@ -456,6 +462,7 @@ endif()
 if(APPLE)
    include_directories(BEFORE SYSTEM "${HOMEBREW_PREFIX}/opt/postgresql/include")
    include_directories(BEFORE SYSTEM "${HOMEBREW_PREFIX}/opt/postgresql/include/libpq")
+   include_directories(BEFORE SYSTEM "${HOMEBREW_PREFIX}/opt/libpq/include")
 elseif(UNIX)
    include_directories(SYSTEM "/usr/include/postgresql")
    include_directories(SYSTEM "/usr/include/pgsql")
@@ -466,13 +473,19 @@ endif()
 
 # find SOCI libraries
 if(UNIX)
-   set(SOCI_LIBRARY_DIR "${RSTUDIO_TOOLS_SOCI}/build/lib")
    if(NOT APPLE AND RSTUDIO_USE_SYSTEM_SOCI)
-      set(SOCI_LIBRARY_DIR "/usr/lib")
+      find_library(SOCI_CORE_LIB NAMES "libsoci_core.a" "soci_core")
+      find_library(SOCI_SQLITE_LIB NAMES "libsoci_sqlite3.a" "soci_sqlite3")
+      find_library(SOCI_POSTGRESQL_LIB NAMES "libsoci_postgresql.a" "soci_postgresql")
+      if(NOT SOCI_CORE_LIB OR NOT SOCI_SQLITE_LIB OR NOT SOCI_POSTGRESQL_LIB)
+         message(FATAL_ERROR "Some or all SOCI libraries were not found. Ensure the SOCI dependency is installed and try again.")
+      endif()
+   else()
+      set(SOCI_LIBRARY_DIR "${RSTUDIO_TOOLS_SOCI}/build/lib")
+      find_library(SOCI_CORE_LIB NAMES "libsoci_core.a" "soci_core" PATHS "${SOCI_LIBRARY_DIR}" NO_DEFAULT_PATH)
+      find_library(SOCI_SQLITE_LIB NAMES "libsoci_sqlite3.a" "soci_sqlite3" PATHS "${SOCI_LIBRARY_DIR}" NO_DEFAULT_PATH)
+      find_library(SOCI_POSTGRESQL_LIB NAMES "libsoci_postgresql.a" "soci_postgresql" PATHS "${SOCI_LIBRARY_DIR}" NO_DEFAULT_PATH)
    endif()
-   find_library(SOCI_CORE_LIB NAMES "libsoci_core.a" "soci_core" PATHS "${SOCI_LIBRARY_DIR}" NO_DEFAULT_PATH)
-   find_library(SOCI_SQLITE_LIB NAMES "libsoci_sqlite3.a" "soci_sqlite3" PATHS "${SOCI_LIBRARY_DIR}" NO_DEFAULT_PATH)
-   find_library(SOCI_POSTGRESQL_LIB NAMES "libsoci_postgresql.a" "soci_postgresql" PATHS "${SOCI_LIBRARY_DIR}" NO_DEFAULT_PATH)
    find_library(DL_LIB "dl")
    find_library(SQLITE_LIB "sqlite3")
    get_filename_component(SQLITE_LIB "${SQLITE_LIB}" REALPATH)
@@ -550,7 +563,7 @@ if(WIN32)
         set(OPENSSL_BITNESS "64")
      endif()
 
-     set(OPENSSL_NAME "openssl-1.1.1i")
+     set(OPENSSL_NAME "openssl-1.1.1t")
      set(OPENSSL_ROOT_DIR "${RSTUDIO_WINDOWS_DEPENDENCIES_DIR}/${OPENSSL_NAME}/${OPENSSL_NAME}-${OPENSSL_BUILD_TYPE}-${OPENSSL_BITNESS}")
      set(OPENSSL_INCLUDE_DIR "${OPENSSL_ROOT_DIR}/include")
      set(OPENSSL_LIBRARY_DIR "${OPENSSL_ROOT_DIR}/lib")
@@ -706,6 +719,7 @@ else()
       # add server subprojects if we aren't building in desktop only mode
       if(RSTUDIO_SERVER)
          add_subdirectory(server)
+         add_subdirectory(server/url-ports)
          configure_file(rserver-dev.in ${CMAKE_CURRENT_BINARY_DIR}/rserver-dev)
          configure_file(conf/rserver-dev.conf ${CMAKE_CURRENT_BINARY_DIR}/conf/rserver-dev.conf)
          configure_file(conf/rsession-dev.conf ${CMAKE_CURRENT_BINARY_DIR}/conf/rsession-dev.conf)

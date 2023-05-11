@@ -1,10 +1,10 @@
 /*
  * CopyPlotToClipboardDesktopDialog.java
  *
- * Copyright (C) 2022 by RStudio, PBC
+ * Copyright (C) 2022 by Posit Software, PBC
  *
- * Unless you have received this program directly from RStudio pursuant
- * to the terms of a commercial license agreement with RStudio, then
+ * Unless you have received this program directly from Posit Software pursuant
+ * to the terms of a commercial license agreement with Posit Software, then
  * this program is licensed to you under the terms of version 3 of the
  * GNU Affero General Public License. This program is distributed WITHOUT
  * ANY EXPRESS OR IMPLIED WARRANTY, INCLUDING THOSE OF NON-INFRINGEMENT,
@@ -90,14 +90,26 @@ public class CopyPlotToClipboardDesktopDialog
                Element img = images.getItem(0);
                DesktopFrame frame = Desktop.getFrame();
                
-               // NOTE: we use a one-pixel fudge factor here to avoid copying
-               // bits of the border; see https://github.com/rstudio/rstudio/issues/4864
-               frame.copyPageRegionToClipboard(
-                     ElementEx.getClientLeft(img) + 1,
-                     ElementEx.getClientTop(img) + 1,
-                     img.getClientWidth(),
-                     img.getClientHeight(),
-                     completed);
+               if (BrowseCap.isElectron()) {
+                  // The x and y calculations here will give us the approximate (x,y)
+                  // point in the middle of the img. The top-left corner is not used
+                  // because it doesn't consistently mark the top-left of the img element.
+                  int imgX = (img.getClientWidth() / 2) + ElementEx.getClientLeft(img);
+                  int imgY = (img.getClientHeight() / 2) + ElementEx.getClientTop(img);
+                  frame.copyImageAtXYToClipboard(
+                        imgX,
+                        imgY,
+                        completed);
+               } else {
+                  // NOTE: we use a one-pixel fudge factor here to avoid copying
+                  // bits of the border; see https://github.com/rstudio/rstudio/issues/4864
+                  frame.copyPageRegionToClipboard(
+                        ElementEx.getClientLeft(img) + 1,
+                        ElementEx.getClientTop(img) + 1,
+                        img.getClientWidth(),
+                        img.getClientHeight(),
+                        completed);
+               }
             }
             else
             {

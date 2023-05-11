@@ -2,10 +2,10 @@
 #
 # RStudio Sentry Upload script (sentry-upload.sh)
 # 
-# Copyright (C) 2022 by RStudio, PBC
+# Copyright (C) 2022 by Posit Software, PBC
 #
-# Unless you have received this program directly from RStudio pursuant
-# to the terms of a commercial license agreement with RStudio, then
+# Unless you have received this program directly from Posit Software pursuant
+# to the terms of a commercial license agreement with Posit Software, then
 # this program is licensed to you under the terms of version 3 of the
 # GNU Affero General Public License. This program is distributed WITHOUT
 # ANY EXPRESS OR IMPLIED WARRANTY, INCLUDING THOSE OF NON-INFRINGEMENT,
@@ -17,17 +17,17 @@
 #
 # Usage: 
 #
-#    sentry-upload.sh API_KEY
+#    sentry-upload.sh API_KEY RETRY_LIMIT
 #
-# where API_KEY is the Sentry API key.
-
+# where API_KEY is the Sentry API key
+# and RETRY_LIMIT is the number of retries to upload
 
 # Count retries
 RETRIES=0
 
 # Loop until we succeed in uploading or exceed max retries
 while true; do 
-    
+
     # Increment retry counter
     ((RETRIES=RETRIES+1))
     echo "Attempting Sentry upload (attempt $RETRIES)"
@@ -41,8 +41,7 @@ while true; do
         break
     fi
 
-    # Retry and timeout are now done in Jenkinsfile
-    if [ $RETRIES -gt 0 ]; then
+    if [ $RETRIES -ge $2 ]; then
         echo "Giving up upload after $RETRIES attempts"
         exit 1
     fi
@@ -52,5 +51,3 @@ while true; do
     sleep 30
 
 done
-
-

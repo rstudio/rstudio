@@ -1,10 +1,10 @@
 /*
  * ObjectExplorerEditingTarget.java
  *
- * Copyright (C) 2022 by RStudio, PBC
+ * Copyright (C) 2022 by Posit Software, PBC
  *
- * Unless you have received this program directly from RStudio pursuant
- * to the terms of a commercial license agreement with RStudio, then
+ * Unless you have received this program directly from Posit Software pursuant
+ * to the terms of a commercial license agreement with Posit Software, then
  * this program is licensed to you under the terms of version 3 of the
  * GNU Affero General Public License. This program is distributed WITHOUT
  * ANY EXPRESS OR IMPLIED WARRANTY, INCLUDING THOSE OF NON-INFRINGEMENT,
@@ -14,18 +14,25 @@
  */
 package org.rstudio.studio.client.workbench.views.source.editors.explorer;
 
+import java.util.HashMap;
+
 import com.google.gwt.aria.client.Roles;
 import com.google.gwt.core.client.GWT;
 import com.google.gwt.user.client.ui.Widget;
 import com.google.inject.Inject;
 
+
 import org.rstudio.core.client.StringUtil;
 import org.rstudio.core.client.widget.SimplePanelWithProgress;
 import org.rstudio.studio.client.application.events.EventBus;
 import org.rstudio.studio.client.common.GlobalDisplay;
+import org.rstudio.studio.client.common.SimpleRequestCallback;
 import org.rstudio.studio.client.common.filetypes.FileIcon;
 import org.rstudio.studio.client.common.filetypes.FileType;
 import org.rstudio.studio.client.common.filetypes.FileTypeRegistry;
+import org.rstudio.studio.client.server.Void;
+import org.rstudio.studio.client.server.ErrorLoggingServerRequestCallback;
+import org.rstudio.studio.client.server.ServerError;
 import org.rstudio.studio.client.workbench.commands.Commands;
 import org.rstudio.studio.client.workbench.views.source.ViewsSourceConstants;
 import org.rstudio.studio.client.workbench.views.source.editors.explorer.model.ObjectExplorerHandle;
@@ -46,7 +53,6 @@ public class ObjectExplorerEditingTarget
       super(server, commands, globalDisplay, events);
       fileType_ = FileTypeRegistry.OBJECT_EXPLORER;
       events_ = events;
-      isActive_ = false;
    }
 
    // Implementation ----
@@ -83,7 +89,6 @@ public class ObjectExplorerEditingTarget
    {
       super.onActivate();
       view_.onActivate();
-      isActive_ = true;
    }
 
    @Override
@@ -91,7 +96,6 @@ public class ObjectExplorerEditingTarget
    {
       super.onDeactivate();
       view_.onDeactivate();
-      isActive_ = false;
    }
 
    @Override
@@ -142,16 +146,46 @@ public class ObjectExplorerEditingTarget
       return fileType_;
    }
 
+   private void clearDisplay()
+   {
+      progressPanel_.showProgress(1);
+   }
+
    // Public methods ----
 
-   public void update(ObjectExplorerHandle handle)
+   public void update(ObjectExplorerHandle handle, boolean remove)
    {
-      if (isActive_)
-      {
-         reloadDisplay();
-      }
+      final Widget originalWidget = progressPanel_.getWidget();
 
-      view_.refresh();
+      clearDisplay();
+      final String oldHandleId = getHandle().getId();
+      
+      HashMap<String, String> props = new HashMap<>();
+      handle.fillProperties(props);
+
+      server_.modifyDocumentProperties(
+         doc_.getId(),
+         props,
+         new SimpleRequestCallback<Void>(constants_.errorCapitalized())
+         {
+            @Override
+            public void onResponseReceived(Void response)
+            {
+               // The id does not change when this
+               if (remove)
+                  server_.explorerEndInspect(oldHandleId, new ErrorLoggingServerRequestCallback<>());
+               
+               handle.fillProperties(doc_.getProperties());
+               reloadDisplay();
+            }
+
+            @Override
+            public void onError(ServerError error)
+            {
+               super.onError(error);
+               progressPanel_.setWidget(originalWidget);
+            }
+         });
    }
 
    @Override
@@ -187,6 +221,5 @@ public class ObjectExplorerEditingTarget
    private ObjectExplorerEditingTargetWidget view_;
    private final EventBus events_;
    private final FileType fileType_;
-   private boolean isActive_;
    private static final ViewsSourceConstants constants_ = GWT.create(ViewsSourceConstants.class);
 }

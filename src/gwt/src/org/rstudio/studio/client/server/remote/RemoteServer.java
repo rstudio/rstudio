@@ -1,10 +1,10 @@
 /*
  * RemoteServer.java
  *
- * Copyright (C) 2022 by RStudio, PBC
+ * Copyright (C) 2022 by Posit Software, PBC
  *
- * Unless you have received this program directly from RStudio pursuant
- * to the terms of a commercial license agreement with RStudio, then
+ * Unless you have received this program directly from Posit Software pursuant
+ * to the terms of a commercial license agreement with Posit Software, then
  * this program is licensed to you under the terms of version 3 of the
  * GNU Affero General Public License. This program is distributed WITHOUT
  * ANY EXPRESS OR IMPLIED WARRANTY, INCLUDING THOSE OF NON-INFRINGEMENT,
@@ -1402,7 +1402,7 @@ public class RemoteServer implements Server
 
    public void getHelp(String topic,
                        String packageName,
-                       int options,
+                       int type,
                        ServerRequestCallback<HelpInfo> requestCallback)
    {
       JSONArray params = new JSONArray();
@@ -1411,7 +1411,7 @@ public class RemoteServer implements Server
          params.set(1, new JSONString(packageName));
       else
          params.set(1, JSONNull.getInstance());
-      params.set(2, new JSONNumber(options));
+      params.set(2, new JSONNumber(type));
 
       sendRequest(RPC_SCOPE, GET_HELP, params, requestCallback);
    }
@@ -1762,6 +1762,14 @@ public class RemoteServer implements Server
       params.set(0, new JSONString(path));
       params.set(1, JSONBoolean.getInstance(logErrorIfNotFound));
       sendRequest(RPC_SCOPE, "read_config_json", params, requestCallback);
+   }
+
+   public void getIssueUrl(String id, 
+                           ServerRequestCallback<String> requestCallback)
+   {
+      JSONArray params = new JSONArray();
+      params.set(0, new JSONString(id));
+      sendRequest(RPC_SCOPE, GET_ISSUE_URL, params, requestCallback);
    }
 
    public String getFileExportUrl(String name,
@@ -2499,6 +2507,14 @@ public class RemoteServer implements Server
       JSONArray params = new JSONArray();
       params.set(0, new JSONString(path));
       sendRequest(RPC_SCOPE, ENSURE_FILE_EXISTS, params, requestCallback);
+   }
+
+   public void createAliasedPath(String path,
+                                 ServerRequestCallback<String> requestCallback)
+   {
+      JSONArray params = new JSONArray();
+      params.set(0, new JSONString(path));
+      sendRequest(RPC_SCOPE, CREATE_ALIASED_PATH, params, requestCallback);
    }
 
    public void detectFreeVars(String code,
@@ -4510,24 +4526,26 @@ public class RemoteServer implements Server
    @Override
    public void beginFind(String searchString,
                          boolean regex,
+                         boolean isWholeWord,
                          boolean ignoreCase,
                          FileSystemItem directory,
                          JsArrayString includeFilePatterns,
+                         JsArrayString excludeFilePatterns,
                          boolean useGitGrep, 
                          boolean excludeGitIgnore,
-                         JsArrayString excludeFilePatterns,
                          ServerRequestCallback<String> requestCallback)
    {
       JSONArray params = new JSONArray();
       params.set(0, new JSONString(searchString));
       params.set(1, JSONBoolean.getInstance(regex));
-      params.set(2, JSONBoolean.getInstance(ignoreCase));
-      params.set(3, new JSONString(directory == null ? ""
+      params.set(2, JSONBoolean.getInstance(isWholeWord));
+      params.set(3, JSONBoolean.getInstance(ignoreCase));
+      params.set(4, new JSONString(directory == null ? ""
                                                      : directory.getPath()));
-      params.set(4, new JSONArray(includeFilePatterns));
-      params.set(5, JSONBoolean.getInstance(useGitGrep));
-      params.set(6, JSONBoolean.getInstance(excludeGitIgnore));
-      params.set(7, new JSONArray(excludeFilePatterns));
+      params.set(5, new JSONArray(includeFilePatterns));
+      params.set(6, new JSONArray(excludeFilePatterns));
+      params.set(7, JSONBoolean.getInstance(useGitGrep));
+      params.set(8, JSONBoolean.getInstance(excludeGitIgnore));
       sendRequest(RPC_SCOPE, BEGIN_FIND, params, requestCallback);
    }
 
@@ -4547,26 +4565,28 @@ public class RemoteServer implements Server
    @Override
    public void previewReplace(String searchString,
                               boolean regex,
+                              boolean isWholeWord,
                               boolean searchIgnoreCase,
                               FileSystemItem directory,
                               JsArrayString includeFilePatterns,
+                              JsArrayString excludeFilePatterns,
                               boolean useGitGrep,
                               boolean excludeGitIgnore,
-                              JsArrayString excludeFilePatterns,
                               String replaceString,
                               ServerRequestCallback<String> requestCallback)
    {
       JSONArray params = new JSONArray();
       params.set(0, new JSONString(searchString));
       params.set(1, JSONBoolean.getInstance(regex));
-      params.set(2, JSONBoolean.getInstance(searchIgnoreCase));
-      params.set(3, new JSONString(directory == null ? ""
+      params.set(2, JSONBoolean.getInstance(isWholeWord));
+      params.set(3, JSONBoolean.getInstance(searchIgnoreCase));
+      params.set(4, new JSONString(directory == null ? ""
                                                      : directory.getPath()));
-      params.set(4, new JSONArray(includeFilePatterns));
-      params.set(5, JSONBoolean.getInstance(useGitGrep));
-      params.set(6, JSONBoolean.getInstance(excludeGitIgnore));
-      params.set(7, new JSONArray(excludeFilePatterns));
-      params.set(8, new JSONString(replaceString));
+      params.set(5, new JSONArray(includeFilePatterns));
+      params.set(6, new JSONArray(excludeFilePatterns));
+      params.set(7, JSONBoolean.getInstance(useGitGrep));
+      params.set(8, JSONBoolean.getInstance(excludeGitIgnore));
+      params.set(9, new JSONString(replaceString));
 
       sendRequest(RPC_SCOPE, PREVIEW_REPLACE, params, requestCallback);
    }
@@ -4574,12 +4594,13 @@ public class RemoteServer implements Server
    @Override
    public void completeReplace(String searchString,
                                boolean regex,
+                               boolean isWholeWord,
                                boolean searchIgnoreCase,
                                FileSystemItem directory,
                                JsArrayString includeFilePatterns,
+                               JsArrayString excludeFilePatterns,
                                boolean useGitGrep,
                                boolean excludeGitIgnore,
-                               JsArrayString excludeFilePatterns,
                                int searchResults,
                                String replaceString,
                                ServerRequestCallback<String> requestCallback)
@@ -4587,15 +4608,16 @@ public class RemoteServer implements Server
       JSONArray params = new JSONArray();
       params.set(0, new JSONString(searchString));
       params.set(1, JSONBoolean.getInstance(regex));
-      params.set(2, JSONBoolean.getInstance(searchIgnoreCase));
-      params.set(3, new JSONString(directory == null ? ""
+      params.set(2, JSONBoolean.getInstance(isWholeWord));
+      params.set(3, JSONBoolean.getInstance(searchIgnoreCase));
+      params.set(4, new JSONString(directory == null ? ""
                                                      : directory.getPath()));
-      params.set(4, new JSONArray(includeFilePatterns));
-      params.set(5, JSONBoolean.getInstance(useGitGrep));
-      params.set(6, JSONBoolean.getInstance(excludeGitIgnore));
-      params.set(7, new JSONArray(excludeFilePatterns));
-      params.set(8, new JSONNumber(searchResults));
-      params.set(9, new JSONString(replaceString));
+      params.set(5, new JSONArray(includeFilePatterns));
+      params.set(6, JSONBoolean.getInstance(useGitGrep));
+      params.set(7, JSONBoolean.getInstance(excludeGitIgnore));
+      params.set(8, new JSONArray(excludeFilePatterns));
+      params.set(9, new JSONNumber(searchResults));
+      params.set(10, new JSONString(replaceString));
 
       sendRequest(RPC_SCOPE, COMPLETE_REPLACE, params, requestCallback);
    }
@@ -6528,28 +6550,10 @@ public class RemoteServer implements Server
    {
       JSONArray params = new JSONArray();
       params.set(0, new JSONString(file));
-      params.set(1,  new JSONString(format));
+      params.set(1, new JSONString(StringUtil.notNull(format)));
       params.set(2,  editorState != null ? new JSONObject(editorState) : JSONNull.getInstance());
       sendRequest(RPC_SCOPE, QUARTO_PREVIEW, params, requestCallback);
    }
-   
-   @Override
-   public void quartoServe(String format, boolean render, ServerRequestCallback<Void> callback)
-   {
-      JSONArray params = new JSONArray();
-      params.set(0, new JSONString(StringUtil.isNullOrEmpty(format) ? "default" : format));
-      params.set(1,  JSONBoolean.getInstance(render));
-      sendRequest(RPC_SCOPE, QUARTO_SERVE, params, callback);
-   }
-   
-   @Override
-   public void quartoServeRender(String file, ServerRequestCallback<Boolean> callback)
-   {
-      JSONArray params = new JSONArray();
-      params.set(0, new JSONString(file));
-      sendRequest(RPC_SCOPE, QUARTO_SERVE_RENDER, params, callback);
-   }
-   
    
    @Override
    public void quartoCreateProject(String projectFile, 
@@ -6719,6 +6723,7 @@ public class RemoteServer implements Server
    private static final String RENAME_FILE = "rename_file";
    private static final String TOUCH_FILE = "touch_file";
    private static final String COMPLETE_UPLOAD = "complete_upload";
+   private static final String GET_ISSUE_URL = "get_issue_url";
 
    private static final String GET_PLOT_TEMPDIR = "get_plot_tempdir";
    private static final String NEXT_PLOT = "next_plot";
@@ -6779,6 +6784,7 @@ public class RemoteServer implements Server
    private static final String SET_DOC_ORDER = "set_doc_order";
    private static final String REMOVE_CACHED_DATA = "remove_cached_data";
    private static final String ENSURE_FILE_EXISTS = "ensure_file_exists";
+   private static final String CREATE_ALIASED_PATH = "create_aliased_path";
    private static final String GET_SOURCE_DOCUMENT = "get_source_document";
 
    private static final String EXPLORER_INSPECT_OBJECT = "explorer_inspect_object";
@@ -6925,7 +6931,7 @@ public class RemoteServer implements Server
    private static final String STAN_RUN_DIAGNOSTICS = "stan_run_diagnostics";
 
    private static final String SQL_GET_COMPLETIONS = "sql_get_completions";
-
+   
    private static final String GET_CPP_CAPABILITIES = "get_cpp_capabilities";
    private static final String INSTALL_BUILD_TOOLS = "install_build_tools";
    private static final String START_BUILD = "start_build";

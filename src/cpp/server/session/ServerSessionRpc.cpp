@@ -1,10 +1,10 @@
 /*
  * ServerSessionRpc.cpp
  *
- * Copyright (C) 2022 by RStudio, PBC
+ * Copyright (C) 2022 by Posit Software, PBC
  *
- * Unless you have received this program directly from RStudio pursuant
- * to the terms of a commercial license agreement with RStudio, then
+ * Unless you have received this program directly from Posit Software pursuant
+ * to the terms of a commercial license agreement with Posit Software, then
  * this program is licensed to you under the terms of version 3 of the
  * GNU Affero General Public License. This program is distributed WITHOUT
  * ANY EXPRESS OR IMPLIED WARRANTY, INCLUDING THOSE OF NON-INFRINGEMENT,
@@ -125,6 +125,7 @@ void validationHandler(
    {
       if (!validateSecureCookie(pConnection, &username, fallbackAllowed))
       {
+         LOG_DEBUG_MESSAGE("validateSecure cookie failed for: " + pConnection->request().uri());
          unauthorizedResponseFunction(pConnection);
          return;
       }
@@ -139,6 +140,7 @@ void validationHandler(
             LOG_WARNING_MESSAGE("Session attempted to invoke server RPC with invalid "
                                 "secret " + secret);
          }
+         LOG_DEBUG_MESSAGE("invalid shared secret - auth failed for: " + pConnection->request().uri());
          unauthorizedResponseFunction(pConnection);
          return;
       }
@@ -160,6 +162,9 @@ void validationHandler(
          username = user.getUsername();
       }
    }
+   pConnection->setUsername(username);
+
+   LOG_DEBUG_MESSAGE("Handling session rpc: " + pConnection->request().debugInfo());
 
    // invoke the wrapped async URI handler
    handler(username, pConnection);

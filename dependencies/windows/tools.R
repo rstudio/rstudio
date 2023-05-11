@@ -113,7 +113,7 @@ exec <- function(command,
          logmsg <- paste0(logmsg, paste(readLines(output), collapse = "\n"), "\n")
          msg <- paste(msg, logmsg, sep = "\n")
       }
-      fatal(msg)
+      fatal("%s\n", msg)
    }
    
    invisible(TRUE)

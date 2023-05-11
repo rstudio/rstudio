@@ -1,10 +1,10 @@
 /*
  * BuildPane.java
  *
- * Copyright (C) 2022 by RStudio, PBC
+ * Copyright (C) 2022 by Posit Software, PBC
  *
- * Unless you have received this program directly from RStudio pursuant
- * to the terms of a commercial license agreement with RStudio, then
+ * Unless you have received this program directly from Posit Software pursuant
+ * to the terms of a commercial license agreement with Posit Software, then
  * this program is licensed to you under the terms of version 3 of the
  * GNU Affero General Public License. This program is distributed WITHOUT
  * ANY EXPRESS OR IMPLIED WARRANTY, INCLUDING THOSE OF NON-INFRINGEMENT,
@@ -18,14 +18,11 @@ import com.google.gwt.core.client.GWT;
 import com.google.gwt.core.client.JsArray;
 import com.google.gwt.core.client.JsArrayString;
 import com.google.gwt.event.dom.client.HasClickHandlers;
-import com.google.gwt.event.logical.shared.ValueChangeEvent;
-import com.google.gwt.event.logical.shared.ValueChangeHandler;
 import com.google.gwt.event.shared.GwtEvent;
 import com.google.gwt.event.shared.HandlerManager;
 import com.google.gwt.event.shared.HandlerRegistration;
 import com.google.gwt.resources.client.ImageResource;
 import com.google.gwt.user.client.Command;
-import com.google.gwt.user.client.ui.CheckBox;
 import com.google.gwt.user.client.ui.MenuItem;
 import com.google.gwt.user.client.ui.Widget;
 import com.google.inject.Inject;
@@ -56,9 +53,6 @@ import org.rstudio.studio.client.projects.model.RProjectConfig;
 import org.rstudio.studio.client.projects.model.RProjectOptions;
 import org.rstudio.studio.client.quarto.QuartoHelper;
 import org.rstudio.studio.client.quarto.model.QuartoConfig;
-import org.rstudio.studio.client.server.ServerError;
-import org.rstudio.studio.client.server.ServerRequestCallback;
-import org.rstudio.studio.client.server.VoidServerRequestCallback;
 import org.rstudio.studio.client.workbench.commands.Commands;
 import org.rstudio.studio.client.workbench.model.Session;
 import org.rstudio.studio.client.workbench.model.SessionInfo;
@@ -189,29 +183,7 @@ public class BuildPane extends WorkbenchPane
       // sync build all button caption
       syncBuildAllUI();
       toolbar.addLeftSeparator();
-     
-      if (quarto)
-      {
-         // quarto book gets a menu
-         if (QuartoHelper.isQuartoBookConfig(quartoConfig) && quartoConfig.project_formats.length > 1)
-         {
-            ToolbarPopupMenu bookServeMenu = new QuartoBookServePopupMenu();
-            ToolbarMenuButton menuButton =  new ToolbarMenuButton(
-                  constants_.serveBookText(),
-                  constants_.serveBookText(),
-                  commands_.serveQuartoSite().getImageResource(), 
-                  bookServeMenu
-            );
-            toolbar.addLeftWidget(menuButton);
-            toolbar.addLeftSeparator();
-         }
-         // quarto website gets generic serve site
-         else if (QuartoHelper.isQuartoWebsiteConfig(quartoConfig))
-         {
-            toolbar.addLeftWidget(commands_.serveQuartoSite().createToolbarButton());
-            toolbar.addLeftSeparator();
-         }
-      }
+ 
       
       // packages get check package
       if (pkg)

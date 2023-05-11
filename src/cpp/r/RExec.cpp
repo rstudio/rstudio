@@ -1,10 +1,10 @@
 /*
  * RExec.cpp
  *
- * Copyright (C) 2022 by RStudio, PBC
+ * Copyright (C) 2022 by Posit Software, PBC
  *
- * Unless you have received this program directly from RStudio pursuant
- * to the terms of a commercial license agreement with RStudio, then
+ * Unless you have received this program directly from Posit Software pursuant
+ * to the terms of a commercial license agreement with Posit Software, then
  * this program is licensed to you under the terms of version 3 of the
  * GNU Affero General Public License. This program is distributed WITHOUT
  * ANY EXPRESS OR IMPLIED WARRANTY, INCLUDING THOSE OF NON-INFRINGEMENT,
@@ -98,25 +98,55 @@ private:
    r::sexp::PreservedSEXP preservedSEXP_;
 };
 
+namespace {
+
+struct ParseStringData
+{
+   SEXP codeSEXP;
+   SEXP resultSEXP;
+   r::sexp::Protect* pProtect;
+   ParseStatus parseStatus;
+};
+
+void parseStringImpl(void* data)
+{
+   ParseStringData* parseData = (ParseStringData*) data;
+   parseData->resultSEXP = R_ParseVector(
+            parseData->codeSEXP,
+            -1,
+            &parseData->parseStatus,
+            R_NilValue);
+   parseData->pProtect->add(parseData->resultSEXP);
+}
+
+} // end anonymous namespace
 
 Error parseString(const std::string& str, SEXP* pSEXP, sexp::Protect* pProtect)
 {
    // string to parse
-   SEXP strSEXP = sexp::create(str, pProtect);
+   SEXP codeSEXP = sexp::create(str, pProtect);
 
-   // do the parse and protect the result
-   ParseStatus ps;
-   *pSEXP = R_ParseVector(strSEXP, 1, &ps, R_NilValue);
-   pProtect->add(*pSEXP);
+   // NOTE: R_ParseVector can emit an R parse error, so we need
+   // to defend againts such longjmps here
+   ParseStringData parseData;
+   parseData.codeSEXP = codeSEXP;
+   parseData.resultSEXP = R_NilValue;
+   parseData.pProtect = pProtect;
+   parseData.parseStatus = PARSE_NULL;
+
+   // perform the parse
+   R_ToplevelExec(parseStringImpl, (void*) &parseData);
 
    // check error/success
-   if (ps != PARSE_OK)
+   if (parseData.parseStatus != PARSE_OK)
    {
       Error error(errc::ExpressionParsingError, ERROR_LOCATION);
       error.addProperty("code", str);
       return error;
    }
-   
+
+   // set parse result
+   *pSEXP = parseData.resultSEXP;
    return Success();
 }
 

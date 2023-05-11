@@ -3,7 +3,7 @@
 #
 # expired.htm
 #
-# Copyright (C) 2022 by RStudio, PBC
+# Copyright (C) 2022 by Posit Software, PBC
 #
 # This program is licensed to you under the terms of version 3 of the
 # GNU Affero General Public License. This program is distributed WITHOUT
@@ -14,79 +14,75 @@
 -->
 
 <html lang="en">
-
 <head>
-<meta charset="utf-8">
-<title>RStudio Server Expired</title>
-<link rel="shortcut icon" href="images/favicon.ico" />
+  <meta charset="utf-8" />
+  <title>RStudio Server Expired</title>
+  <link rel="stylesheet" href="rstudio.css" type="text/css" />
+  <link rel="shortcut icon" href="images/Posit-Product_rst-server-favicon.svg"/>
 
-<style>
+  <style>
+    body,
+    td {
+      font-family: Lucida Grande, Lucida Sans Unicode, Helvetica, sans-serif;
+      font-size: 11pt;
+    }
 
-body {
-  background-color: #fff;
-}
-body, td {
-  font-family: Lucida Grande, Lucida Sans Unicode, Helvetica, sans-serif;
-  font-size: 11pt;
-}
+    #border {
+      border: 4px solid var(--lt-grey);
+      padding: 8px;
+      -moz-border-radius: 10px;
+      -webkit-border-radius: 10px;
+      margin: 0 auto;
+    }
 
+    #image {
+      filter: drop-shadow(0 1px 0 var(--lt-grey))
+        drop-shadow(1px 0 0 var(--lt-grey))
+        drop-shadow(0 -1px 0 var(--lt-grey))
+        drop-shadow(-1px 0 0 var(--lt-grey));
+    }
 
-
-#banner {
-  background-color: #e0e2e5;
-  margin: 30px 20px 70px 20px;
-  padding: 8px;
-  -moz-border-radius: 5px;
-  -webkit-border-radius: 5px;
-}
-#border {
-  width: 300px;
-  border: 4px solid #e0e2e5;
-  padding: 8px;
-  -moz-border-radius: 10px;
-  -webkit-border-radius: 10px;
-  margin: 0 auto;
-}
-#image {
-  margin-right: 30px;
-}
-
-#caption {
-  text-align: left;
-  border-bottom: 4px solid #e0e2e5;
-  padding-bottom: 8px;
-  margin-bottom: 8px;
-  margin-right: 10px;
-  font-size: 16px;
-  font-weight: normal;
-  width: 300px;
-}
-
-#detail {
-  color: #555;
-  margin-top: 8px;
-  margin-right: 10px;
-}
-
-</style>
-
+    @media (prefers-color-scheme: dark) {
+      #image {
+        filter: invert(1) hue-rotate(180deg)
+          drop-shadow(0 1px 0 var(--lt-grey))
+          drop-shadow(1px 0 0 var(--lt-grey))
+          drop-shadow(0 -1px 0 var(--lt-grey))
+          drop-shadow(-1px 0 0 var(--lt-grey));
+      }
+    }
+  </style>
 </head>
 <body>
-<header role="banner">
-<h1 id="banner"><a href="http://www.rstudio.com"><img src="images/rstudio.png" width="78" height="27" alt="RStudio (links to external site)"/></a></h1>
-</header>
-<main role="main">
-<table id="border">
-  <tr>
-    <td><img id="image" alt src="images/expired.png"/></td>
-    <td>
-      <h2 id="caption">RStudio Server License Expired</h2>
-      <div id="detail">This version of RStudio Server has expired. Please <a href="http://www.rstudio.com">contact us</a> to obtain an up to date license.</div>
-    </td>
-  </tr>
-</table>
-</main>
-
+  <header role="banner">
+    <div id="banner">
+      <picture>
+        <source
+          srcset="images/Posit-ProductLogo_rst-server-reverse.svg"
+          media="(prefers-color-scheme: dark)"
+        />
+        <img
+          src="images/Posit-ProductLogo_rst-server-full-color.svg"
+          height="27"
+          alt="RStudio Logo"
+        />
+      </picture>
+    </div>
+  </header>
+  <main role="main">
+    <div id="border">
+      <div id="image-container">
+        <img id="image" alt src="images/expired.png" />
+      </div>
+      <div>
+        <h2 id="caption">RStudio Server License Expired</h2>
+        <div id="detail">
+          This version of RStudio Server has expired. Please
+          <a href="http://www.rstudio.com">contact us</a> to obtain an up to
+          date license.
+        </div>
+      </div>
+    </div>
+  </main>
 </body>
-
 </html>

@@ -1,10 +1,10 @@
 /*
  * SessionMarkers.cpp
  *
- * Copyright (C) 2022 by RStudio, PBC
+ * Copyright (C) 2022 by Posit Software, PBC
  *
- * Unless you have received this program directly from RStudio pursuant
- * to the terms of a commercial license agreement with RStudio, then
+ * Unless you have received this program directly from Posit Software pursuant
+ * to the terms of a commercial license agreement with Posit Software, then
  * this program is licensed to you under the terms of version 3 of the
  * GNU Affero General Public License. This program is distributed WITHOUT
  * ANY EXPRESS OR IMPLIED WARRANTY, INCLUDING THOSE OF NON-INFRINGEMENT,
@@ -391,15 +391,13 @@ SEXP rs_sourceMarkers(SEXP nameSEXP,
             std::string path;
             double line, column;
             std::string message;
-            bool messageHTML;
             Error error = json::readObject(
                markerJson.getObject(),
                "type", type,
                "file", path,
                "line", line,
                "column", column,
-               "message", message,
-               "messageHTML", messageHTML);
+               "message", message);
             if (error)
             {
                LOG_ERROR(error);
@@ -411,7 +409,7 @@ SEXP rs_sourceMarkers(SEXP nameSEXP,
                 FilePath(path),
                 safe_convert::numberTo<double, int>(line, 1),
                 safe_convert::numberTo<double, int>(column, 1),
-                core::html_utils::HTML(message, messageHTML),
+                core::html_utils::HTML(message, false),
                 true,
                 true);
 

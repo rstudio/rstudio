@@ -1,10 +1,10 @@
 /*
  * CompletionRequester.java
  *
- * Copyright (C) 2022 by RStudio, PBC
+ * Copyright (C) 2022 by Posit Software, PBC
  *
- * Unless you have received this program directly from RStudio pursuant
- * to the terms of a commercial license agreement with RStudio, then
+ * Unless you have received this program directly from Posit Software pursuant
+ * to the terms of a commercial license agreement with Posit Software, then
  * this program is licensed to you under the terms of version 3 of the
  * GNU Affero General Public License. This program is distributed WITHOUT
  * ANY EXPRESS OR IMPLIED WARRANTY, INCLUDING THOSE OF NON-INFRINGEMENT,
@@ -183,10 +183,18 @@ public class CompletionRequester
 
       newCompletions.sort(new Comparator<QualifiedName>()
       {
-
          @Override
          public int compare(QualifiedName lhs, QualifiedName rhs)
          {
+            // compare completion type first
+            int lhsTypeScore = RCompletionType.score(lhs.type, lhs.context);
+            int rhsTypeScore = RCompletionType.score(rhs.type, rhs.context);
+            if (lhsTypeScore < rhsTypeScore)
+               return -1;
+            else if (lhsTypeScore > rhsTypeScore)
+               return 1;
+
+            // when type score is equal: calculate score with scoreMatch()
             int lhsScore = RCompletionType.isFileType(lhs.type)
                   ? CodeSearchOracle.scoreMatch(basename(lhs.name), tokenSub, true)
                   : CodeSearchOracle.scoreMatch(lhs.name, token, false);
@@ -194,10 +202,6 @@ public class CompletionRequester
             int rhsScore = RCompletionType.isFileType(rhs.type)
                ? CodeSearchOracle.scoreMatch(basename(rhs.name), tokenSub, true)
                : CodeSearchOracle.scoreMatch(rhs.name, token, false);
-
-            // Place arguments higher (give less penalty)
-            if (lhs.type == RCompletionType.ARGUMENT) lhsScore -= 3;
-            if (rhs.type == RCompletionType.ARGUMENT) rhsScore -= 3;
 
             if (lhsScore == rhsScore)
                return lhs.compareTo(rhs);
@@ -307,7 +311,9 @@ public class CompletionRequester
             replaceToEnd.get(i),
             meta.get(i), 
             response.getHelpHandler(), 
-            response.getLanguage())
+            response.getLanguage(),
+            response.getContext().get(i)
+            )
          );
       }
 
@@ -327,7 +333,7 @@ public class CompletionRequester
 
    }
 
-   private static final Pattern RE_EXTRACTION = Pattern.create("[$@:]", "");
+   private static final Pattern RE_EXTRACTION = Pattern.create("[$@:\\[\\(=]", "");
    private boolean isTopLevelCompletionRequest()
    {
       String line = docDisplay_.getCurrentLineUpToCursor();
@@ -395,7 +401,6 @@ public class CompletionRequester
             JsArrayString meta = response.getMeta();
             ArrayList<QualifiedName> newComp = new ArrayList<>();
 
-            // Get function completions from the server
             for (int i = 0; i < comp.length(); i++)
             {
                if (comp.get(i).endsWith(" = "))
@@ -410,15 +415,20 @@ public class CompletionRequester
                      replaceToEnd.get(i),
                      meta.get(i), 
                      response.getHelpHandler(), 
-                     response.getLanguage()
+                     response.getLanguage(), 
+                     response.getContext().get(i)
                   ));
                }
             }
-
+            
             // Try getting our own function argument completions
-            if (!response.getExcludeOtherCompletions())
+            if (!response.getExcludeOtherArgumentCompletions() && !response.getExcludeOtherCompletions())
             {
                addFunctionArgumentCompletions(token, newComp);
+            }
+
+            if (!response.getExcludeOtherCompletions())
+            {
                addScopedArgumentCompletions(token, newComp);
             }
 
@@ -444,11 +454,12 @@ public class CompletionRequester
                      replaceToEnd.get(i),
                      meta.get(i), 
                      response.getHelpHandler(), 
-                     response.getLanguage()
+                     response.getLanguage(), 
+                     response.getContext().get(i)
                   ));
                }
             }
-            
+         
             // Get snippet completions. Bail if this isn't a top-level
             // completion -- TODO is to add some more context that allows us
             // to properly ascertain this.
@@ -543,7 +554,7 @@ public class CompletionRequester
          {
             RFunction scopedFunction = scopedFunctions.get(i);
             String functionName = scopedFunction.getFunctionName();
-
+            
             JsArrayString argNames = scopedFunction.getFunctionArgs();
             for (int j = 0; j < argNames.length(); j++)
             {
@@ -752,10 +763,12 @@ public class CompletionRequester
                   JsUtil.toJsArrayString(new ArrayList<>(result.completions.length())),
                   "",
                   true,
+                  true,
                   false,
                   true,
                   null,
-                  null);
+                  null, 
+                  JsUtil.toJsArrayInteger(new ArrayList<>(result.completions.length())));
 
             // Unlike other completion types, Sweave completions are not
             // guaranteed to narrow the candidate list (in particular
@@ -804,6 +817,12 @@ public class CompletionRequester
       public final ArrayList<QualifiedName> completions;
       public final String guessedFunctionName;
       public final boolean dontInsertParens;
+
+      // this should probably be set in the R side as a generic
+      // canAutoAccept (default TRUE)
+      public boolean canAutoAccept() {
+         return !StringUtil.equals(guessedFunctionName, "[.data.table");
+      }
    }
 
    public static class QualifiedName implements Comparable<QualifiedName>
@@ -822,13 +841,13 @@ public class CompletionRequester
                            int type,
                            boolean suggestOnAccept)
       {
-         this(name, name, source, shouldQuote, type, suggestOnAccept, false, "", null, "R");
+         this(name, name, source, shouldQuote, type, suggestOnAccept, false, "", null, "R", RCompletionManager.AutocompletionContext.TYPE_UNKNOWN);
       }
 
       public QualifiedName(String name,
                            String source)
       {
-         this(name, name, source, false, RCompletionType.UNKNOWN, false, false, "", null, "R");
+         this(name, name, source, false, RCompletionType.UNKNOWN, false, false, "", null, "R", RCompletionManager.AutocompletionContext.TYPE_UNKNOWN);
       }
       
       public QualifiedName(String name,
@@ -840,7 +859,8 @@ public class CompletionRequester
                            boolean replaceToEnd,
                            String meta,
                            String helpHandler,
-                           String language)
+                           String language, 
+                           int context)
       {
          this.name = name;
          this.display = display;
@@ -852,6 +872,7 @@ public class CompletionRequester
          this.meta = meta;
          this.helpHandler = helpHandler;
          this.language = language;
+         this.context = context;
       }
 
       public static QualifiedName createSnippet(String name)
@@ -866,7 +887,8 @@ public class CompletionRequester
                false,
                "",
                null,
-               "R");
+               "R", 
+               RCompletionManager.AutocompletionContext.TYPE_UNKNOWN);
       }
       
       public QualifiedName withSuggestOnAccept()
@@ -881,7 +903,8 @@ public class CompletionRequester
             this.replaceToEnd,
             this.meta,
             this.helpHandler,
-            this.language  
+            this.language, 
+            this.context
          );
       }
       
@@ -965,24 +988,59 @@ public class CompletionRequester
 
       private void doAddDisplayNameGeneric(SafeHtmlBuilder sb)
       {
-         // Get the name for the completion
-         SafeHtmlUtil.appendSpan(
-               sb,
-               RES.styles().completion(),
-               display);
+         String style = RES.styles().completion();
+         if (type == RCompletionType.COLUMN) 
+         {
+            style = style + " " + RES.styles().column();
+         }
 
+         // Get the name for the completion
+         if (type == RCompletionType.ROXYGEN)
+         {
+            // remove the snippet part
+            SafeHtmlUtil.appendSpan(
+               sb,
+               style,
+               display.split("\n")[0].replaceFirst(" .*", ""));
+         }
+         else 
+         {
+            SafeHtmlUtil.appendSpan(
+               sb,
+               style,
+               display);
+         }
+         
          // Display the source for functions and snippets (unless there
          // is a custom helpHandler provided, indicating that the "source"
          // isn't a package but rather some custom DollarNames scope)
          if ((RCompletionType.isFunctionType(type) ||
              type == RCompletionType.SNIPPET ||
-             type == RCompletionType.DATASET) &&
+             type == RCompletionType.DATASET ||
+             type == RCompletionType.DATAFRAME
+             ) &&
              helpHandler == null)
          {
             SafeHtmlUtil.appendSpan(
                   sb,
                   RES.styles().packageName(),
                   "{" + source.replaceAll("package:", "") + "}");
+         }
+
+         if (type == RCompletionType.COLUMN) 
+         {
+            SafeHtmlUtil.appendSpan(
+                  sb,
+                  RES.styles().dataframe(),
+                  "[" + source + "]");
+         }
+
+         if (type == RCompletionType.ARGUMENT || type == RCompletionType.SECUNDARY_ARGUMENT) 
+         {
+            SafeHtmlUtil.appendSpan(
+                  sb,
+                  RES.styles().argument(),
+                  source + "()");
          }
       }
 
@@ -999,6 +1057,7 @@ public class CompletionRequester
          case RCompletionType.VECTOR:
             return new ImageResource2x(ICONS.variable2x());
          case RCompletionType.ARGUMENT:
+         case RCompletionType.SECUNDARY_ARGUMENT:
             return new ImageResource2x(ICONS.variable2x());
          case RCompletionType.ARRAY:
          case RCompletionType.DATAFRAME:
@@ -1011,6 +1070,7 @@ public class CompletionRequester
          case RCompletionType.S4_OBJECT:
          case RCompletionType.R5_CLASS:
          case RCompletionType.R5_OBJECT:
+         case RCompletionType.R6_OBJECT:
             return new ImageResource2x(ICONS.clazz2x());
          case RCompletionType.FILE:
             return getIconForFilename(name);
@@ -1018,7 +1078,7 @@ public class CompletionRequester
             return new ImageResource2x(ICONS.folder2x());
          case RCompletionType.CHUNK:
          case RCompletionType.ROXYGEN:
-            return new ImageResource2x(ICONS.keyword2x());
+            return new ImageResource2x(ICONS.roxygen2x());
          case RCompletionType.HELP:
             return new ImageResource2x(ICONS.help2x());
          case RCompletionType.STRING:
@@ -1032,6 +1092,10 @@ public class CompletionRequester
             return new ImageResource2x(ICONS.context2x());
          case RCompletionType.SNIPPET:
             return new ImageResource2x(ICONS.snippet2x());
+         case RCompletionType.COLUMN:
+            return new ImageResource2x(ICONS.column2x());
+         case RCompletionType.DATATABLE_SPECIAL_SYMBOL:
+            return new ImageResource2x(ICONS.datatableSpecialSymbol2x());
          default:
             return new ImageResource2x(ICONS.variable2x());
          }
@@ -1098,6 +1162,7 @@ public class CompletionRequester
       public final String source;
       public final boolean shouldQuote;
       public final int type;
+      public final int context;
       public final boolean suggestOnAccept;
       public final boolean replaceToEnd;
       public final String meta;

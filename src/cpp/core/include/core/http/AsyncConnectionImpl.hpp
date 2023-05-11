@@ -1,10 +1,10 @@
 /*
  * AsyncConnectionImpl.hpp
  *
- * Copyright (C) 2022 by RStudio, PBC
+ * Copyright (C) 2022 by Posit Software, PBC
  *
- * Unless you have received this program directly from RStudio pursuant
- * to the terms of a commercial license agreement with RStudio, then
+ * Unless you have received this program directly from Posit Software pursuant
+ * to the terms of a commercial license agreement with Posit Software, then
  * this program is licensed to you under the terms of version 3 of the
  * GNU Affero General Public License. This program is distributed WITHOUT
  * ANY EXPRESS OR IMPLIED WARRANTY, INCLUDING THOSE OF NON-INFRINGEMENT,
@@ -21,6 +21,7 @@
 #include <boost/shared_ptr.hpp>
 #include <boost/function.hpp>
 #include <boost/enable_shared_from_this.hpp>
+#include <boost/date_time/posix_time/ptime.hpp>
 
 #include <boost/asio/write.hpp>
 #include <boost/asio/io_service.hpp>
@@ -106,7 +107,7 @@ public:
          http::Request*)> Handler;
 
     typedef boost::function<void(
-         boost::weak_ptr<AsyncConnectionImpl<SocketType>>)> ClosedHandler;
+         boost::weak_ptr<AsyncConnectionImpl<SocketType>>, bool)> ClosedHandler;
 
    typedef boost::function<bool(
          boost::shared_ptr<AsyncConnectionImpl<SocketType> >,
@@ -115,6 +116,7 @@ public:
 public:
    AsyncConnectionImpl(boost::asio::io_service& ioService,
                        boost::shared_ptr<boost::asio::ssl::context> sslContext,
+                       long requestSequence,
                        const HeadersParsedHandler& onHeadersParsed,
                        const Handler& onRequestParsed,
                        const ClosedHandler& onClosed,
@@ -127,6 +129,7 @@ public:
         requestFilter_(requestFilter),
         responseFilter_(responseFilter),
         closed_(false),
+        requestSequence_(requestSequence),
         bytesTransferred_(0)
         
    {
@@ -145,13 +148,14 @@ public:
          socket_.reset(new SocketType(ioService));
          socketOperations_.reset(new SocketOperations<SocketType>(socket_));
       }
+      request_.setRequestSequence(requestSequence);
    }
 
    virtual ~AsyncConnectionImpl()
    {
       try
       {
-         close();
+         close(true);
       }
       catch(...)
       {
@@ -165,6 +169,9 @@ public:
 
    void startReading()
    {
+      startTime_ = boost::posix_time::microsec_clock::universal_time();
+      request_.setStartTime(startTime_);
+
       if (sslStream_)
       {
          // begin ssl handshake
@@ -194,8 +201,10 @@ public:
       return response_;
    }
 
-   virtual void writeResponse(bool close = true)
+   virtual void writeResponse(bool close = true, Socket::Handler handler = Socket::NullHandler)
    {
+      sendingResponse_ = true;
+
       // add extra response headers
       if (!response_.containsHeader("Date"))
          response_.setHeader("Date", util::httpDate());
@@ -214,9 +223,13 @@ public:
                      socket(), // using socket(), not *socket in case of SSL connection
                      response_,
                      boost::bind(&AsyncConnectionImpl<SocketType>::onStreamComplete,
-                                 AsyncConnectionImpl<SocketType>::shared_from_this()),
+                                 AsyncConnectionImpl<SocketType>::shared_from_this(),
+                                 close,
+                                 handler),
                      boost::bind(&AsyncConnectionImpl<SocketType>::handleStreamError,
                                  AsyncConnectionImpl<SocketType>::shared_from_this(),
+                                 close,
+                                 handler,
                                  _1)));
 
          pWriter->write();
@@ -235,23 +248,32 @@ public:
              response_.setContentLength(0);
          }
 
+         // After asyncWrite completes, we want to first do our cleanup
+         // (this->handleWrite()) and then call the caller's handler
+         Socket::Handler handlers = boost::bind(
+            &Socket::joinHandlers,
+            static_cast<Socket::Handler>(boost::bind(
+               &AsyncConnectionImpl<SocketType>::handleWrite,
+               AsyncConnectionImpl<SocketType>::shared_from_this(),
+               boost::asio::placeholders::error,
+               close)),
+            handler,
+            _1,
+            _2
+         );
+
          // write
-         socketOperations_->asyncWrite(
-             response_.toBuffers(),
-             boost::bind(
-                  &AsyncConnectionImpl<SocketType>::handleWrite,
-                  AsyncConnectionImpl<SocketType>::shared_from_this(),
-                  boost::asio::placeholders::error,
-                  close));
+         socketOperations_->asyncWrite(response_.toBuffers(), handlers);
       }
    }
 
    virtual void writeResponse(const http::Response& response,
                               bool close = true,
-                              const Headers& additionalHeaders = Headers())
+                              const Headers& additionalHeaders = Headers(),
+                              Socket::Handler handler = Socket::NullHandler)
    {
       response_.assign(response, additionalHeaders);
-      writeResponse(close);
+      writeResponse(close, handler);
    }
 
    virtual void writeResponseHeaders(Socket::Handler handler)
@@ -296,6 +318,14 @@ public:
 
    virtual void close()
    {
+      close(false);
+   }
+
+   virtual void close(bool fromDestructor)
+   {
+      if (fromDestructor && !closed_)
+         LOG_DEBUG_MESSAGE("Closing connection without an explicit response for URI: " + request().uri());
+
       // ensure the socket is only closed once - boost considers
       // multiple closes an error, and this can lead to a segfault
       ClosedHandler closedHandler;
@@ -319,7 +349,7 @@ public:
       // notify that we have closed the connection
       // we do this after giving up the mutex to prevent potential deadlock
       if (closedHandler)
-         closedHandler(AsyncConnectionImpl<SocketType>::weak_from_this());
+         closedHandler(AsyncConnectionImpl<SocketType>::weak_from_this(), fromDestructor);
    }
 
    void setUploadHandler(const AsyncUriUploadHandlerFunction& handler)
@@ -361,6 +391,41 @@ public:
       END_LOCK_MUTEX
 
       return boost::any();
+   }
+
+   bool closed() const
+   {
+      return closed_;
+   }
+
+   bool requestParsed() const
+   {
+      return requestParsed_;
+   }
+
+   bool sendingResponse() const
+   {
+      return sendingResponse_;
+   }
+
+   boost::posix_time::ptime startTime() const
+   {
+      return startTime_;
+   }
+
+   long requestSequence() const
+   {
+      return requestSequence_;
+   }
+
+   void setUsername(const std::string& username)
+   {
+      request_.setUsername(username);
+   }
+
+   const std::string& username() const
+   {
+      return request().username();
    }
    
 private:
@@ -510,6 +575,7 @@ private:
 
    void callHandler()
    {
+      requestParsed_ = true;
       onRequestParsed_(AsyncConnectionImpl<SocketType>::shared_from_this(),
                        &request_);
    }
@@ -529,8 +595,8 @@ private:
             }
          }
          
-         // close the socket
-         if (closeSocket)
+         // close the socket, if requested or if error
+         if (e || closeSocket)
          {
             close();
          }
@@ -567,17 +633,26 @@ private:
       readSome();
    }
 
-   void onStreamComplete()
+   void onStreamComplete(bool close, Socket::Handler handler)
    {
-      close();
+      if (close)
+         this->close();
+      // -1 isn't the correct number of bytes written, but we don't have access
+      // to that information at this point.
+      handler(boost::system::error_code(), -1);
    }
 
-   void handleStreamError(const Error& error)
+   void handleStreamError(bool close, Socket::Handler handler, const Error& error)
    {
       if (!core::http::isConnectionTerminatedError(error))
          LOG_ERROR(error);
-
-      close();
+      if (close)
+         this->close();
+      // jcheng: boost::system::generic_category() isn't correct, but I don't
+      // know how to get an error_code category out of an Error object.
+      // -1 isn't the correct number of bytes written, but we don't have access
+      // to that information at this point.
+      handler(boost::system::error_code(error.getCode(), boost::system::generic_category()), -1);
    }
 
 private:
@@ -608,6 +683,10 @@ private:
 
    boost::recursive_mutex mutex_;
    bool closed_ = false;
+   bool requestParsed_ = false;
+   bool sendingResponse_ = false;
+   boost::posix_time::ptime startTime_;
+   int requestSequence_;
 
    size_t bytesTransferred_;
 

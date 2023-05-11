@@ -1,10 +1,10 @@
 /*
  * VisualMode.java
  *
- * Copyright (C) 2022 by RStudio, PBC
+ * Copyright (C) 2022 by Posit Software, PBC
  *
- * Unless you have received this program directly from RStudio pursuant
- * to the terms of a commercial license agreement with RStudio, then
+ * Unless you have received this program directly from Posit Software pursuant
+ * to the terms of a commercial license agreement with Posit Software, then
  * this program is licensed to you under the terms of version 3 of the
  * GNU Affero General Public License. This program is distributed WITHOUT
  * ANY EXPRESS OR IMPLIED WARRANTY, INCLUDING THOSE OF NON-INFRINGEMENT,
@@ -17,6 +17,7 @@ package org.rstudio.studio.client.workbench.views.source.editors.text.visualmode
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.TreeMap;
 
 
 import com.google.gwt.core.client.GWT;
@@ -354,7 +355,15 @@ public class VisualMode implements VisualModeEditorSync,
                             alignScopeTreeAfterUpdate(markdown.location);
                         }
                         
-                        // apply diffs unless the wrap column changed (too expensive)
+                        // we used to apply diffs here unless the wrapChanged (which was too expensive
+                        // for the diff-match-patch algorithem), now we *never* apply diffs b/c
+                        // we had some reports of source editor corruption. when investigating
+                        // this, also noted that we turned off diff changes already for the cannonical
+                        // source transform b/c we actually did find another case that confused the
+                        // algorithm enough to cause data corrupt there. if there is one case there
+                        // are certainly others, so we are going to turn this off entirely unless/until
+                        // we understand its limitations better
+                        /*
                         if (!writerOptions.wrapChanged) 
                         {
                            TextEditorContainer.Changes changes = toEditorChanges(markdown);
@@ -364,6 +373,10 @@ public class VisualMode implements VisualModeEditorSync,
                         {
                            getSourceEditor().setCode(markdown.code);
                         }
+                        */
+                        
+                        // always set all of the code (no diffs, see comment above)
+                        getSourceEditor().setCode(markdown.code);
                         
                         // if the format comment has changed then show the reload prompt
                         if ((panmirrorFormatConfig_ != null) && panmirrorFormatConfig_.requiresReload())
@@ -382,6 +395,10 @@ public class VisualMode implements VisualModeEditorSync,
                         {
                            // if syncing for execution, force a rebuild of the scope tree 
                            alignScopeOutline(markdown.location);
+                        }
+                        else
+                        {
+                           syncSourceOutlineLocation();
                         }
    
                         // invoke ready callback if supplied
@@ -715,9 +732,6 @@ public class VisualMode implements VisualModeEditorSync,
    
    public void manageCommands()
    {
-      // hookup devtools
-      syncDevTools();
-      
       // disable commands
       disableForVisualMode(
         // Disabled since we can't meaningfully select instances in several
@@ -1386,6 +1400,7 @@ public class VisualMode implements VisualModeEditorSync,
             new VoidServerRequestCallback());
    }
    
+   @SuppressWarnings("unused")
    private TextEditorContainer.Changes toEditorChanges(PanmirrorCode panmirrorCode)
    {
       // code to diff
@@ -1415,13 +1430,6 @@ public class VisualMode implements VisualModeEditorSync,
             }
             : null
       );
-   }
-   
-   
-   private void syncDevTools()
-   {
-      if (panmirror_ != null && panmirror_.devToolsLoaded()) 
-         panmirror_.activateDevTools();
    }
    
    /**
@@ -1847,20 +1855,25 @@ public class VisualMode implements VisualModeEditorSync,
       {
          chunkScopes.add(chunk);
       }
-      
-      // Get all of the chunks from the outline emitted by visual mode
-      ArrayList<PanmirrorEditingOutlineLocationItem> chunkItems = new ArrayList<>();
+
+      // Get all of the chunks from the outline emitted by visual mode. Indented chunks may
+      // be present more than once; we ensure that there is at most one chunk in each position
+      // by storing the chunks in a TreeSet indexed by position.
+      TreeMap<Integer, PanmirrorEditingOutlineLocationItem> chunkItemMap = new TreeMap<>();
       for (int j = 0; j < location.items.length; j++)
       {
-         if (StringUtil.equals(location.items[j].type, PanmirrorOutlineItemType.RmdChunk))
+         PanmirrorEditingOutlineLocationItem chunkItem = location.items[j];
+         if (StringUtil.equals(chunkItem.type, PanmirrorOutlineItemType.RmdChunk))
          {
-            chunkItems.add(location.items[j]);
+            chunkItemMap.put(chunkItem.position, chunkItem);
          }
       }
-      
+
       // Refuse to proceed if cardinality doesn't match (consider: does this
       // need to account for deeply nested chunks that might appear in one
       // outline but not the other?)
+      ArrayList<PanmirrorEditingOutlineLocationItem> chunkItems = new ArrayList<>();
+      chunkItems.addAll(chunkItemMap.values());
       if (chunkScopes.size() != chunkItems.size())
       {
          Debug.logWarning(chunkScopes.size() + " chunks in scope tree, but " + 
@@ -1870,7 +1883,7 @@ public class VisualMode implements VisualModeEditorSync,
 
       for (int k = 0; k < chunkItems.size(); k++)
       {
-         PanmirrorEditingOutlineLocationItem visualItem = 
+         PanmirrorEditingOutlineLocationItem visualItem =
                Js.uncheckedCast(chunkItems.get(k));
          VisualModeChunk chunk = visualModeChunks_.getChunkAtVisualPosition(
                visualItem.position);

@@ -1,10 +1,10 @@
 /*
  * LintItem.java
  *
- * Copyright (C) 2022 by RStudio, PBC
+ * Copyright (C) 2022 by Posit Software, PBC
  *
- * Unless you have received this program directly from RStudio pursuant
- * to the terms of a commercial license agreement with RStudio, then
+ * Unless you have received this program directly from Posit Software pursuant
+ * to the terms of a commercial license agreement with Posit Software, then
  * this program is licensed to you under the terms of version 3 of the
  * GNU Affero General Public License. This program is distributed WITHOUT
  * ANY EXPRESS OR IMPLIED WARRANTY, INCLUDING THOSE OF NON-INFRINGEMENT,
@@ -73,6 +73,14 @@ public class LintItem extends JavaScriptObject
       this["text"] = text;
    }-*/;
    
+   public final native String getHtml() /*-{
+      return this["html"];
+   }-*/;
+
+   public final native void setHtml(String html) /*-{
+      this["html"] = html;
+   }-*/;
+   
    public final native String getType() /*-{
       return this["type"];
    }-*/;
@@ -89,6 +97,7 @@ public class LintItem extends JavaScriptObject
       return AceAnnotation.create(
             getStartRow(),
             getStartColumn(),
+            getHtml(),
             getText(),
             getType());
    }
@@ -101,17 +110,23 @@ public class LintItem extends JavaScriptObject
       
       for (var key in items)
       {
-         var type = items[key]["type"];
+         var item = items[key];
+         var type = item["type"];
          if (type === "style" || type === "note")
             type = "info";
 
-         aceAnnotations.push({
-            row: items[key]["start.row"],
-            column: items[key]["start.column"],
-            html: items[key]["text"],
-            text: items[key]["raw"],
+         var annotation = {
+            row: item["start.row"],
+            column: item["start.column"],
             type: type
-         });
+         };
+         var html = item["html"]
+         if (html)
+            annotation.html = html;
+         else 
+            annotation.text = item["text"];
+         
+         aceAnnotations.push(annotation);
       }
       
       return aceAnnotations;

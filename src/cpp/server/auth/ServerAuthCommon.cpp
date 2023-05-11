@@ -1,10 +1,10 @@
 /*
  * ServerAuthCommon.cpp
  *
- * Copyright (C) 2022 by RStudio, PBC
+ * Copyright (C) 2022 by Posit Software, PBC
  *
- * Unless you have received this program directly from RStudio pursuant
- * to the terms of a commercial license agreement with RStudio, then
+ * Unless you have received this program directly from Posit Software pursuant
+ * to the terms of a commercial license agreement with Posit Software, then
  * this program is licensed to you under the terms of version 3 of the
  * GNU Affero General Public License. This program is distributed WITHOUT
  * ANY EXPRESS OR IMPLIED WARRANTY, INCLUDING THOSE OF NON-INFRINGEMENT,
@@ -22,6 +22,8 @@
 #include <core/http/URL.hpp>
 #include <core/http/Cookie.hpp>
 #include <core/http/CSRFToken.hpp>
+
+#include <core/system/User.hpp>
 
 #include <server_core/http/SecureCookie.hpp>
 
@@ -462,7 +464,7 @@ std::string userIdentifierToLocalUsername(const std::string& userIdentifier)
       // here. See case 5413 for details.
       core::system::User user;
       // This call getpwnam - that will return the passwd line that matches this user identifier
-      Error error = core::system::User::getUserFromIdentifier(userIdentifier, user);
+      Error error = core::system::getUserFromUsername(userIdentifier, user);
       if (error)
       {
          // log the error and return the original user identifier as a fallback
@@ -473,7 +475,7 @@ std::string userIdentifierToLocalUsername(const std::string& userIdentifier)
       {
          // This gets the passwd entry for the user-id - this is what the session will do so
          // when a uid is aliased, we need to go back to the uid for the real username
-         error = core::system::User::getUserFromIdentifier(user.getUserId(), user);
+         error = core::system::getUserFromUserId(user.getUserId(), user);
          if (error)
          {
             // log the error and return the original user identifier as a fallback
@@ -488,6 +490,8 @@ std::string userIdentifierToLocalUsername(const std::string& userIdentifier)
                LOG_DEBUG_MESSAGE("Auth handler mapped incoming user identifier: " + userIdentifier + " to system username: " + username);
          }
       }
+
+      LOG_DEBUG_MESSAGE("Caching auth userIdentifier: " + userIdentifier + " for system username: " + username);
 
       // cache the username -- we do this even if the lookup fails since
       // otherwise we're likely to keep hitting (and logging) the error on

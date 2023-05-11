@@ -1,10 +1,10 @@
 /*
  * Hyperlink.java
  *
- * Copyright (C) 2022 by RStudio, PBC
+ * Copyright (C) 2022 by Posit Software, PBC
  *
- * Unless you have received this program directly from RStudio pursuant
- * to the terms of a commercial license agreement with RStudio, then
+ * Unless you have received this program directly from Posit Software pursuant
+ * to the terms of a commercial license agreement with Posit Software, then
  * this program is licensed to you under the terms of version 3 of the
  * GNU Affero General Public License. This program is distributed WITHOUT
  * ANY EXPRESS OR IMPLIED WARRANTY, INCLUDING THOSE OF NON-INFRINGEMENT,
@@ -22,6 +22,7 @@ import com.google.gwt.dom.client.Document;
 import com.google.gwt.dom.client.Element;
 import com.google.gwt.user.client.Event;
 import com.google.gwt.user.client.ui.Widget;
+import com.google.gwt.user.client.Timer;
 
 import org.rstudio.core.client.CommandWithArg;
 import org.rstudio.core.client.Rectangle;
@@ -38,35 +39,79 @@ public abstract class Hyperlink implements HelpPageShower
         anchor_ = Document.get().createAnchorElement();
         styles_ = RES.hyperlinkStyles();
         popup_ = new HyperlinkPopupPanel(this);
-    }
 
-    public Element getElement()
-    {
         anchor_.setInnerText(text);
         anchor_.setClassName(getAnchorClass());
+        
         if (clazz != null)
             anchor_.addClassName(clazz);
         
+        cancelPopup_ = false;
+        timer_ = new Timer()
+        {
+            @Override
+            public void run()
+            {
+                getPopupContent((content) -> {
+                    if (!cancelPopup_)
+                    {
+                        popup_.setContent(content);
+
+                        Rectangle bounds = new Rectangle(anchor_.getAbsoluteLeft(), anchor_.getAbsoluteBottom(), anchor_.getClientWidth(), anchor_.getClientHeight());
+                        HyperlinkPopupPositioner positioner = new HyperlinkPopupPositioner(bounds, popup_);
+                        popup_.setPopupPositionAndShow(positioner);
+                    }
+                    
+                });
+            }
+        };
+
         Event.sinkEvents(anchor_, Event.ONMOUSEOVER | Event.ONMOUSEOUT | Event.ONCLICK);
         Event.setEventListener(anchor_, event ->
         {
             if (event.getTypeInt() == Event.ONMOUSEOVER)
             {   
-                getPopupContent((content) -> {
-                    popup_.setContent(content);
+                // cancel previous timer
+                timer_.cancel();
 
-                    Rectangle bounds = new Rectangle(anchor_.getAbsoluteLeft(), anchor_.getAbsoluteBottom(), anchor_.getClientWidth(), anchor_.getClientHeight());
-                    HyperlinkPopupPositioner positioner = new HyperlinkPopupPositioner(bounds, popup_);
-                    popup_.setPopupPositionAndShow(positioner);
-                });
+                // the link was just hovered: setting cancelPopup_ to false
+                // to signal that the popup should be shown
+                cancelPopup_ = false;
+
+                // but with some delay
+                timer_.schedule(400);
             } 
             else if (event.getTypeInt() == Event.ONCLICK) 
             {
+                // link was clicked. Various cleanup before calling onClick():
+
+                // - cancel the timer if possible so that the popup is not shown
+                timer_.cancel();
+
+                // - also set cancelPopup_ to true in case the timer has finished
+                //   but the getPopupContent() call has not
+                cancelPopup_ = true;
+
+                // - if the popup was visible: hide it
                 popup_.hide();
+
                 onClick();
             }
-        });
+            else if (event.getTypeInt() == Event.ONMOUSEOUT)
+            {
+                // hide the popup if it is visible, or 
+                // attempt to prevent it from showing
+                timer_.cancel();
+                cancelPopup_ = true;
 
+                popup_.hide();
+            }
+        });
+    
+    }
+
+    public Element getElement()
+    {
         return anchor_;
     }
 
@@ -112,6 +157,10 @@ public abstract class Hyperlink implements HelpPageShower
         {
             return new VignetteHyperlink(url, params, text, clazz);
         }
+        else if (LibraryHyperlink.handles(url))
+        {
+            return new LibraryHyperlink(url, params, text, clazz);
+        }
         else if (RunHyperlink.handles(url))
         {
             return new RunHyperlink(url, params, text, clazz);
@@ -127,6 +176,8 @@ public abstract class Hyperlink implements HelpPageShower
     public String clazz;
     public Map<String, String> params;
     protected AnchorElement anchor_;
+    private Timer timer_;
+    private boolean cancelPopup_;
     
     protected final HyperlinkResources.HyperlinkStyles styles_;
     private final HyperlinkPopupPanel popup_;

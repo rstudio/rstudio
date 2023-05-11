@@ -3,6 +3,7 @@ boost*win*/
 boost-*
 gnudiff/
 gnugrep/
+nsprocess/
 msys_ssh/
 msys-ssh*/
 hunspell/
@@ -13,6 +14,7 @@ winpty*/
 openssl*/
 crashpad*/
 yaml-cpp-*/
+resource-hacker/
 *.zip
 breakpad-tools-windows/
 

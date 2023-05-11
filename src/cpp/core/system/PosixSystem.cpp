@@ -1,10 +1,10 @@
 /*
  * PosixSystem.cpp
  *
- * Copyright (C) 2022 by RStudio, PBC
+ * Copyright (C) 2022 by Posit Software, PBC
  *
- * Unless you have received this program directly from RStudio pursuant
- * to the terms of a commercial license agreement with RStudio, then
+ * Unless you have received this program directly from Posit Software pursuant
+ * to the terms of a commercial license agreement with Posit Software, then
  * this program is licensed to you under the terms of version 3 of the
  * GNU Affero General Public License. This program is distributed WITHOUT
  * ANY EXPRESS OR IMPLIED WARRANTY, INCLUDING THOSE OF NON-INFRINGEMENT,
@@ -1295,8 +1295,10 @@ FilePath currentWorkingDirMac(PidType pid)
 #ifndef __APPLE__
 
 // NOTE: disabled on macOS; prefer using 'currentWorkingDirMac()'
-FilePath currentWorkingDirViaLsof(PidType pid)
+Error currentWorkingDirViaLsof(PidType pid, FilePath *pPath)
 {
+   *pPath = FilePath();
+
    // lsof -a -p PID -d cwd -Fn
    //
    shell_utils::ShellCommand cmd("lsof");
@@ -1310,12 +1312,13 @@ FilePath currentWorkingDirViaLsof(PidType pid)
    core::system::ProcessResult result;
    Error error = runCommand(cmd, options, &result);
    if (error)
-   {
-      LOG_ERROR(error);
-      return FilePath();
-   }
+      return error;
+
    if (result.exitStatus != 0)
-      return FilePath();
+      return unknownError(
+         "Failed to run lsof - exited with code " + std::to_string(result.exitStatus) + 
+            (result.stdErr.empty() ? "" : " (" + result.stdErr + ")"),
+         ERROR_LOCATION);
 
    // lsof outputs multiple lines, which varies by platform. We want the one
    // starting with lowercase 'n', after that is the current working directory.
@@ -1327,9 +1330,15 @@ FilePath currentWorkingDirViaLsof(PidType pid)
          pos++;
          size_t finalPos = result.stdOut.find_first_of('\n', pos);
          if (finalPos != std::string::npos)
-            return FilePath(result.stdOut.substr(pos, finalPos - pos));
+         {
+            *pPath = FilePath(result.stdOut.substr(pos, finalPos - pos));
+            return Success();
+         }
          else
-            return FilePath(result.stdOut.substr(pos));
+         {
+            *pPath = FilePath(result.stdOut.substr(pos));
+            return Success();
+         }
       }
 
       // next line
@@ -1337,7 +1346,20 @@ FilePath currentWorkingDirViaLsof(PidType pid)
       pos++;
    }
 
-   return FilePath();
+   return Success();
+}
+
+
+// NOTE: disabled on macOS; prefer using 'currentWorkingDirMac()'
+FilePath currentWorkingDirViaLsof(PidType pid)
+{
+   FilePath path;
+   Error error = currentWorkingDirViaLsof(pid, &path);
+
+   if (error)
+      LOG_ERROR(error);
+
+   return path;
 }
 
 FilePath currentWorkingDirViaProcFs(PidType pid)
@@ -1932,6 +1954,11 @@ Error processInfo(const std::string& process, std::vector<ProcessInfo>* pInfo, b
    }
 
    return Success();
+}
+
+Error ProcessInfo::creationTime(boost::posix_time::ptime* pCreationTime) const
+{
+   return systemError(boost::system::errc::not_supported, ERROR_LOCATION);
 }
 #endif
 

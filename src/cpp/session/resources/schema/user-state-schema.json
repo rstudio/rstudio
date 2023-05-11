@@ -52,18 +52,24 @@
                         "width": { "type": "number" },
                         "height": { "type": "number" },
                         "x": { "type": "number" },
-                        "y": { "type": "number" }
+                        "y": { "type": "number" },
+                        "maximized": { "type": "boolean" }
                     }
                 },
                 "accessibility": {
                     "type": "boolean",
                     "description": "Screen reader support" 
+                },
+                "disableRendererAccessibility": {
+                    "type": "boolean",
+                    "description": "Disable Electron accessibility support"
                 }
-            },
+             },
             "default": {
                 "zoomLevel": 1.0,
-                "windowBounds": { "width": 1200, "height": 900, "x": 0, "y": 0 },
-                "accessibility": false
+                "windowBounds": { "width": 1200, "height": 900, "x": 0, "y": 0, "maximized": false },
+                "accessibility": false,
+                "disableRendererAccessibility": false
             }
         },
         "remote_session": {
@@ -287,7 +293,7 @@
         "enable_rsconnect_publish_ui": {
             "type": "boolean",
             "default": true,
-            "description": "Whether to show UI for publishing content to RStudio Connect."
+            "description": "Whether to show UI for publishing content to Posit Connect."
         },
         "publish_account": {
             "type": "object",

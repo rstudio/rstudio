@@ -1,10 +1,10 @@
 #
 # SessionBreakpoints.R
 #
-# Copyright (C) 2022 by RStudio, PBC
+# Copyright (C) 2022 by Posit Software, PBC
 #
-# Unless you have received this program directly from RStudio pursuant
-# to the terms of a commercial license agreement with RStudio, then
+# Unless you have received this program directly from Posit Software pursuant
+# to the terms of a commercial license agreement with Posit Software, then
 # this program is licensed to you under the terms of version 3 of the
 # GNU Affero General Public License. This program is distributed WITHOUT
 # ANY EXPRESS OR IMPLIED WARRANTY, INCLUDING THOSE OF NON-INFRINGEMENT,
@@ -272,7 +272,7 @@
    steps)
 {
    functionName <- .rs.unquote(functionName)
-   if (length(steps) == 0 || nchar(steps) == 0)
+   if (length(steps) == 0 || all(nchar(steps) == 0))
    {
       # Restore the function to its original state. Note that trace/untrace
       # emit messages when they act on a function in a package environment; hide

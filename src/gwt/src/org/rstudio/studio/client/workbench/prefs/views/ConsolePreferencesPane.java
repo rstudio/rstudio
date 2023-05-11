@@ -1,10 +1,10 @@
 /*
  * ConsolePreferencesPane.java
  *
- * Copyright (C) 2022 by RStudio, PBC
+ * Copyright (C) 2022 by Posit Software, PBC
  *
- * Unless you have received this program directly from RStudio pursuant
- * to the terms of a commercial license agreement with RStudio, then
+ * Unless you have received this program directly from Posit Software pursuant
+ * to the terms of a commercial license agreement with Posit Software, then
  * this program is licensed to you under the terms of version 3 of the
  * GNU Affero General Public License. This program is distributed WITHOUT
  * ANY EXPRESS OR IMPLIED WARRANTY, INCLUDING THOSE OF NON-INFRINGEMENT,
@@ -37,7 +37,8 @@ public class ConsolePreferencesPane extends PreferencesPane
       prefs_ = prefs;
       res_ = res;
 
-      add(headerLabel(constants_.consoleDisplayLabel()));
+      Label displayLabel = headerLabel(constants_.consoleDisplayLabel());
+      add(displayLabel);
       add(checkboxPref(constants_.consoleSyntaxHighlightingLabel(), prefs_.syntaxColorConsole()));
       add(checkboxPref(constants_.consoleDifferentColorLabel(), prefs_.highlightConsoleErrors()));
       add(checkboxPref(constants_.consoleLimitVariableLabel(), prefs_.limitVisibleConsole()));
@@ -62,8 +63,12 @@ public class ConsolePreferencesPane extends PreferencesPane
          false);
       add(consoleColorMode_);
 
+      Label executionLabel = headerLabel(constants_.consoleExecutionLabel());
+      add(spacedBefore(executionLabel));
+      add(checkboxPref(constants_.consoleDiscardPendingConsoleInputOnErrorLabel(), prefs_.discardPendingConsoleInputOnError()));
+      
       Label debuggingLabel = headerLabel(constants_.debuggingHeaderLabel());
-      spacedBefore(debuggingLabel);
+      add(spacedBefore(debuggingLabel));
       add(debuggingLabel);
       add(spaced(checkboxPref(
          constants_.debuggingExpandTracebacksLabel(),
@@ -71,8 +76,7 @@ public class ConsolePreferencesPane extends PreferencesPane
          true /*defaultSpaced*/)));
 
       Label otherLabel = headerLabel(constants_.otherHeaderCaption());
-      spacedBefore(otherLabel);
-      add(otherLabel);
+      add(spacedBefore(otherLabel));
       add(spaced(checkboxPref(constants_.otherDoubleClickLabel(), prefs_.consoleDoubleClickSelect())));
       add(spaced(checkboxPref(constants_.warnAutoSuspendPausedLabel(), prefs_.consoleSuspendBlockedNotice())));
       add(indent(numericPref(constants_.numSecondsToDelayWarningLabel(), prefs_.consoleSuspendBlockedNoticeDelay())));

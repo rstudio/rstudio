@@ -1,10 +1,10 @@
 /*
  * SessionQuartoXRefs.cpp
  *
- * Copyright (C) 2022 by RStudio, PBC
+ * Copyright (C) 2022 by Posit Software, PBC
  *
- * Unless you have received this program directly from RStudio pursuant
- * to the terms of a commercial license agreement with RStudio, then
+ * Unless you have received this program directly from Posit Software pursuant
+ * to the terms of a commercial license agreement with Posit Software, then
  * this program is licensed to you under the terms of version 3 of the
  * GNU Affero General Public License. This program is distributed WITHOUT
  * ANY EXPRESS OR IMPLIED WARRANTY, INCLUDING THOSE OF NON-INFRINGEMENT,
@@ -21,6 +21,7 @@
 #include <shared_core/json/Json.hpp>
 #include <core/Exec.hpp>
 #include <core/Base64.hpp>
+#include <core/Version.hpp>
 #include <core/FileSerializer.hpp>
 #include <core/PerformanceTimer.hpp>
 #include <core/system/FileScanner.hpp>
@@ -58,15 +59,21 @@ const char * const kFigType = "fig";
 const char * const kTblType = "tbl";
 
 
-FilePath quartoCrossrefDir(const FilePath& projectDir)
+FilePath quartoCrossrefDirV1(const FilePath& projectDir)
 {
    return projectDir
        .completeChildPath(".quarto")
        .completeChildPath("crossref");
 }
 
+FilePath quartoCrossrefDirV2(const FilePath& projectDir)
+{
+   return projectDir
+      .completeChildPath(".quarto")
+      .completeChildPath("xref");
+}
 
-json::Array readXRefIndex(const FilePath& indexPath, const std::string& filename, bool* pExists = nullptr)
+json::Array readXRefIndex(const FilePath& indexPath, const std::string& filename, bool fileCache = false, bool* pExists = nullptr)
 {
    // default to not exists
    if (pExists)
@@ -90,35 +97,61 @@ json::Array readXRefIndex(const FilePath& indexPath, const std::string& filename
 
    // parse json w/ validation
    json::Object quartoIndexJson;
-   error = quartoIndexJson.parseAndValidate(
-      index,
-      resourceFileAsString("schema/quarto-xref.json")
-   );
+
+   if (fileCache)
+   {
+      error = quartoIndexJson.parse(index);
+   } else
+   {
+      error = quartoIndexJson.parseAndValidate(
+          index,
+          resourceFileAsString("schema/quarto-xref.json")
+      );
+   }
+
    if (error)
    {
       LOG_ERROR(error);
       return json::Array();
    }
 
-   // read xrefs (already validated so don't need to dance around types/existence)
    json::Array xrefs;
-   boost::regex keyRegex("^(\\w+)-(.*?)(-\\d+)?$");
-   json::Array entries = quartoIndexJson["entries"].getArray();
-   for (const json::Value& entry : entries)
+
+   if (fileCache)
    {
-      json::Object valObject = entry.getObject();
-      std::string key, caption;
-      json::readObject(valObject, "key", key, "caption", caption);
-      boost::smatch match;
-      if (boost::regex_search(key, match, keyRegex))
+      json::Array entries = quartoIndexJson["entries"].getArray();
+      for (const json::Value& entry : entries)
       {
-         json::Object xref;
-         xref[kFile] = filename;
-         xref[kType] = match[1].str();
-         xref[kId] = match[2].str();
-         xref[kSuffix] = (match.length() > 3) ? match[3].str() : "";
-         xref[kTitle] = caption;
-         xrefs.push_back(xref);
+         std::string filename, type, id;
+         json::Object valObject = entry.getObject();
+         json::readObject(valObject, "file", filename, "type", type, "id", id);
+         if (!filename.empty() && !type.empty() && !id.empty())
+         {
+           xrefs.push_back(entry);
+         }
+      }
+   }
+   else
+   {
+      // read xrefs (already validated so don't need to dance around types/existence)
+      boost::regex keyRegex("^(\\w+)-(.*?)(-\\d+)?$");
+      json::Array entries = quartoIndexJson["entries"].getArray();
+      for (const json::Value& entry : entries)
+      {
+          json::Object valObject = entry.getObject();
+          std::string key, caption;
+          json::readObject(valObject, "key", key, "caption", caption);
+          boost::smatch match;
+          if (boost::regex_search(key, match, keyRegex))
+          {
+            json::Object xref;
+            xref[kFile] = filename;
+            xref[kType] = match[1].str();
+            xref[kId] = match[2].str();
+            xref[kSuffix] = (match.length() > 3) ? match[3].str() : "";
+            xref[kTitle] = caption;
+            xrefs.push_back(xref);
+          }
       }
    }
 
@@ -154,6 +187,8 @@ FilePath quartoPandocPath(const QuartoConfig& config)
 json::Array indexSourceFile(const std::string& contents, const std::string& filename)
 {
    QuartoConfig config = quartoConfig();
+   FilePath resourcesPath(config.resources_path);
+   FilePath filtersPath = resourcesPath.completePath("filters");
 
    static FilePath xrefIndexingDir;
    if (xrefIndexingDir.isEmpty())
@@ -169,11 +204,9 @@ json::Array indexSourceFile(const std::string& contents, const std::string& file
 
       // write defaults file with filters
       FilePath defaultsFile = xrefIndexingDir.completePath("defaults.yml");
-      FilePath resourcesPath(config.resources_path);
-      FilePath filtersPath = resourcesPath.completePath("filters");
       boost::format fmt("filters:\n  - %1%\n  - %2%\n");
       std::string defaults = boost::str(fmt %
-         string_utils::utf8ToSystem(filtersPath.completePath("init/init.lua").getAbsolutePath()) %
+         string_utils::utf8ToSystem(filtersPath.completePath("quarto-init/quarto-init.lua").getAbsolutePath()) %
          string_utils::utf8ToSystem(filtersPath.completePath("crossref/crossref.lua").getAbsolutePath())
       );
       error = core::writeStringToFile(defaultsFile, defaults);
@@ -199,14 +232,28 @@ json::Array indexSourceFile(const std::string& contents, const std::string& file
    core::system::Options env;
    core::system::environment(&env);
    core::system::setenv(&env, "QUARTO_FILTER_PARAMS", filterParams);
+   core::system::setenv(&env, "QUARTO_SHARE_PATH", resourcesPath.getAbsolutePath());
    options.environment = env;
    std::vector<std::string> args;
+
+   // use qmd-reader.lua for --from if available
    args.push_back("--from");
-   args.push_back("markdown");
+   auto qmdReaderPath = filtersPath.completePath("qmd-reader.lua");
+   if (qmdReaderPath.exists()) {
+      args.push_back(string_utils::utf8ToSystem(qmdReaderPath.getAbsolutePath()));
+   } else {
+      args.push_back("markdown");
+   }
    args.push_back("--to");
    args.push_back("native");
    args.push_back("--defaults");
    args.push_back("defaults.yml");
+
+   // add data-dir
+   FilePath dataDirPath = resourcesPath.completePath("pandoc/datadir");
+   args.push_back(("--data-dir"));
+   args.push_back(core::string_utils::utf8ToSystem(dataDirPath.getAbsolutePath()));
+
    core::system::ProcessResult result;
 
    error = module_context::runPandoc(
@@ -248,7 +295,7 @@ json::Array indexSourceFile(const FilePath& srcFile, const std::string& filename
       if (srcFileIndex.getLastWriteTime() > srcFile.getLastWriteTime())
       {
          bool exists = false;
-         json::Array xrefs = readXRefIndex(srcFileIndex, filename, &exists);
+         json::Array xrefs = readXRefIndex(srcFileIndex, filename, true, &exists);
          if (exists)
             return xrefs;
       }
@@ -327,8 +374,8 @@ json::Array resolvedXRefIndex(const FilePath& renderedIndexPath, const FilePath&
       srcXrefs = indexSourceFile(unsaved.get(), filename);
    }
    // otherwise, check to see if the src file is more recent than the renderedIndexPath
-   else if ((srcPath.getLastWriteTime() > renderedIndexPath.getLastWriteTime()) ||
-            !renderedIndexPath.exists())
+   else if (!renderedIndexPath.exists() || renderedIndexPath.getSize() == 0 ||
+            (srcPath.getLastWriteTime() > renderedIndexPath.getLastWriteTime()))
    {
       srcXrefs = indexSourceFile(srcPath, filename);
    }
@@ -409,10 +456,10 @@ json::Array readProjectXRefIndex(const FilePath& indexPath, const FilePath& srcP
    }
 }
 
-json::Array readProjectXRefIndex(const FilePath& projectDir, const FilePath& srcFile)
+json::Array readProjectXRefIndexV1(const FilePath& projectDir, const FilePath& srcFile)
 {
    std::string projRelative = srcFile.getRelativePath(projectDir);
-   FilePath indexPath = quartoCrossrefDir(projectDir).completeChildPath(projRelative);
+   FilePath indexPath = quartoCrossrefDirV1(projectDir).completeChildPath(projRelative);
    return readProjectXRefIndex(indexPath, srcFile, projRelative);
 
 }
@@ -434,9 +481,9 @@ bool projectXRefIndexFilter(const FilePath& projectDir,
    }
 }
 
-json::Array readAllProjectXRefIndexes(const core::FilePath& projectDir)
+json::Array readAllProjectXRefIndexesV1(const core::FilePath& projectDir)
 {
-   FilePath crossrefDir = quartoCrossrefDir(projectDir);
+   FilePath crossrefDir = quartoCrossrefDirV1(projectDir);
    if (!crossrefDir.exists())
       return json::Array();
 
@@ -466,6 +513,124 @@ json::Array readAllProjectXRefIndexes(const core::FilePath& projectDir)
    }
 
    return projectXRefs;
+}
+
+
+bool useXRefIndexV2()
+{
+   QuartoConfig config = quarto::quartoConfig();
+   return Version(config.version) >= Version("1.1.62");
+}
+
+std::map<std::string,FilePath> readProjectXRrefMainIndex(const FilePath& projectDir)
+{
+   std::map<std::string,FilePath>  mainIndex;
+   FilePath xrefDir = quartoCrossrefDirV2(projectDir);
+   if (xrefDir.exists())
+   {
+      FilePath mainIndexFile = xrefDir.completeChildPath("INDEX");
+      if (mainIndexFile.exists())
+      {
+         std::string mainIndexSrc;
+         Error error = core::readStringFromFile(mainIndexFile, &mainIndexSrc);
+         if (error)
+         {
+            LOG_ERROR(error);
+            return mainIndex;
+         }
+         json::Object mainIndexJson;
+         error = mainIndexJson.parse(mainIndexSrc);
+         if (error)
+         {
+           LOG_ERROR(error);
+           return mainIndex;
+         }
+         // iterate over input files
+         for (auto member : mainIndexJson)
+         {
+            // ensure the input maps to an existing source file
+            std::string input = member.getName();
+            FilePath inputFilePath = projectDir.completeChildPath(input);
+            if (inputFilePath.exists())
+            {
+               // pick the most recently written output
+               for (auto outputMember : member.getValue().getObject())
+               {
+                  FilePath jsonPath = xrefDir.completeChildPath(outputMember.getValue().getString());
+                  if (jsonPath.exists())
+                  {
+                     // if there is already an entry, compare the file last write time
+                     auto it = mainIndex.find(input);
+                     if (it != mainIndex.end())
+                     {
+                        if (jsonPath.getLastWriteTime() > it->second.getLastWriteTime())
+                        {
+                           it->second = jsonPath;
+                        }
+                     }
+                     // if there is no entry just use this output
+                     else
+                     {
+                        mainIndex[input] = jsonPath;
+                     }
+                  }
+
+               }
+            }
+         }
+      }
+   }
+
+   return mainIndex;
+}
+
+json::Array readProjectXRefIndexV2(const FilePath& projectDir, const FilePath& srcFile)
+{
+   auto mainIndex = readProjectXRrefMainIndex(projectDir);
+   std::string projRelative = srcFile.getRelativePath(projectDir);
+   boost::algorithm::replace_all(projRelative, "\\", "/");
+   auto it = mainIndex.find(projRelative);
+   if (it != mainIndex.end())
+   {
+      return resolvedXRefIndex(it->second, srcFile, projRelative);
+   }
+   else
+   {
+      return resolvedXRefIndex(FilePath(), srcFile, projRelative);
+   }
+}
+
+json::Array readAllProjectXRefIndexesV2(const core::FilePath& projectDir)
+{
+   json::Array projectXRefs;
+   auto mainIndex = readProjectXRrefMainIndex(projectDir);
+   for (auto member : mainIndex)
+   {
+      std::string projRelative = member.first;
+      FilePath indexPath = member.second;
+      json::Array xrefs = resolvedXRefIndex(indexPath,
+                                            projectDir.completeChildPath(projRelative),
+                                            projRelative);
+      std::copy(xrefs.begin(), xrefs.end(), std::back_inserter(projectXRefs));
+   }
+   return projectXRefs;
+}
+
+
+json::Array readProjectXRefIndex(const FilePath& projectDir, const FilePath& srcFile)
+{
+   if (useXRefIndexV2())
+      return readProjectXRefIndexV2(projectDir, srcFile);
+   else
+      return readProjectXRefIndexV1(projectDir, srcFile);
+}
+
+json::Array readAllProjectXRefIndexes(const core::FilePath& projectDir)
+{
+   if (useXRefIndexV2())
+      return readAllProjectXRefIndexesV2(projectDir);
+   else
+      return readAllProjectXRefIndexesV1(projectDir);
 }
 
 } // anonymous namespace

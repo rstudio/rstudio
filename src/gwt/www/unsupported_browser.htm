@@ -1,50 +1,63 @@
 <!DOCTYPE html>
 <html lang="en">
-
 <head>
-<meta charset="utf-8">
-<title>RStudio: Browser Not Supported</title>
+  <meta charset="utf-8" />
+  <title>RStudio: Browser Not Supported</title>
 
-<link rel="stylesheet" href="rstudio.css" type="text/css"/>
-<link rel="shortcut icon" href="images/favicon.ico" />
+  <link rel="stylesheet" href="rstudio.css" type="text/css" />
+  <link rel="shortcut icon" href="images/Posit-Product_rst-server-favicon.svg" />
 
-<style>
+  <style>
+    #banner {
+      margin-bottom: 0;
+    }
 
-#banner {
-  margin-bottom: 0;
-}
+    p {
+      margin: 20px 40px 10px 40px;
+    }
 
-p {
-  margin: 20px 20px 10px 20px;
-}
-</style>
-
+    ul {
+      margin-left: 40px;
+    }
+  </style>
 </head>
 
 <body>
+  <header role="banner">
+    <div id="banner">
+      <picture>
+        <source
+          srcset="images/Posit-ProductLogo_rst-server-reverse.svg"
+          media="(prefers-color-scheme: dark)"
+        />
+        <img
+          src="images/Posit-ProductLogo_rst-server-full-color.svg"
+          height="27"
+          alt="RStudio Logo"
+        />
+      </picture>
+    </div>
+  </header>
 
-<h3 id="banner">
-    <picture>
-       <source srcset="images/rstudio-dark.png" media="(prefers-color-scheme: dark)">
-       <img src="images/rstudio.png" width="78" height="27" alt="RStudio Logo">
-    </picture>
-</h3>
+  <p>Your web browser is not supported by RStudio.</p>
 
-<p>Your web browser is not supported by RStudio.</p> 
+  <p>RStudio requires one of the following browser versions (or higher): </p>
 
-<p>RStudio requires one of the following browser versions (or higher):</p>
+  <ul>
+    <li><a href="https://www.getfirefox.com/">Firefox 68</a></li>
+    <li><a href="https://www.apple.com/safari/">Safari 12.1</a></li>
+    <li><a href="https://www.google.com/chrome/">Google Chrome 71</a></li>
+    <li>
+      <a href="https://www.microsoft.com/en-us/edge/">Microsoft Edge 79</a>
+    </li>
+  </ul>
 
-<ul>
-
-<li><a href="https://www.getfirefox.com/">Firefox 68</a></li>
-<li><a href="https://www.apple.com/safari/">Safari 12.1</a></li>
-<li><a href="https://www.google.com/chrome/">Google Chrome 71</a></li>
-<li><a href="https://www.microsoft.com/en-us/edge/">Microsoft Edge 79</a></li>
-
-</ul>
-
-<p>See the <a href="https://rstudio.com/about/platform-support/">RStudio Platform Support</a> page for more information about browser support in RStudio products.</p>
-
+  <p>
+    See the
+    <a href="https://rstudio.com/about/platform-support/"
+      >RStudio Platform Support</a
+    >
+    page for more information about browser support in Posit products.
+  </p>
 </body>
-
 </html>

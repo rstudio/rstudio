@@ -1,10 +1,10 @@
 /*
  * HelpPane.java
  *
- * Copyright (C) 2022 by RStudio, PBC
+ * Copyright (C) 2022 by Posit Software, PBC
  *
- * Unless you have received this program directly from RStudio pursuant
- * to the terms of a commercial license agreement with RStudio, then
+ * Unless you have received this program directly from Posit Software pursuant
+ * to the terms of a commercial license agreement with Posit Software, then
  * this program is licensed to you under the terms of version 3 of the
  * GNU Affero General Public License. This program is distributed WITHOUT
  * ANY EXPRESS OR IMPLIED WARRANTY, INCLUDING THOSE OF NON-INFRINGEMENT,
@@ -79,7 +79,7 @@ import org.rstudio.core.client.widget.ToolbarButton;
 import org.rstudio.studio.client.RStudioGinjector;
 import org.rstudio.studio.client.application.Desktop;
 import org.rstudio.studio.client.application.events.EventBus;
-import org.rstudio.studio.client.application.events.MouseNavigateEvent;
+import org.rstudio.studio.client.application.events.DesktopMouseNavigateEvent;
 import org.rstudio.studio.client.common.AutoGlassPanel;
 import org.rstudio.studio.client.common.GlobalDisplay;
 import org.rstudio.studio.client.common.SimpleRequestCallback;
@@ -110,6 +110,14 @@ public class HelpPane extends WorkbenchPane
       globalDisplay_ = globalDisplay;
       commands_ = commands;
       server_ = RStudioGinjector.INSTANCE.getServer();
+
+      // init with a no-op timer
+      popupTimer_ = new Timer()
+      {
+         @Override
+         public void run() {}
+      };
+      popupCancelled_ = false;
 
       prefs_ = prefs;
 
@@ -168,19 +176,6 @@ public class HelpPane extends WorkbenchPane
 
       prefs_.helpFontSizePoints().bind((Double value) -> refresh());
       
-      events_.addHandler(MouseNavigateEvent.TYPE, (MouseNavigateEvent event) ->
-      {
-         // check to see if we're targeting the Help pane
-         Element el = DomUtils.elementFromPoint(event.getMouseX(), event.getMouseY());
-         if (StringUtil.equals(el.getId(), ElementIds.getElementId(ElementIds.HELP_FRAME)))
-         {
-            if (event.getForward())
-               forward();
-            else
-               back();
-         }
-      });
-
       ensureWidget();
    }
 
@@ -215,13 +210,15 @@ public class HelpPane extends WorkbenchPane
          return;
 
       windowEl.setScrollPosition(scrollPos_);
-      setFocus();
    }
 
+   /**
+    * Invoked when switching panes via F6 / Shift+F6
+    */
    @Override
    public void setFocus()
    {
-      focusSearchHelp();
+      focus();
    }
 
    @Override
@@ -303,6 +300,10 @@ public class HelpPane extends WorkbenchPane
          thiz.@org.rstudio.studio.client.workbench.views.help.HelpPane::handleMouseOver(*)(e);
       }
 
+      $wnd.helpMouseout = function(e) {
+         thiz.@org.rstudio.studio.client.workbench.views.help.HelpPane::handleMouseOut(*)(e);
+      }
+
       $wnd.helpClick = function(e) {
          thiz.@org.rstudio.studio.client.workbench.views.help.HelpPane::handleClick(*)(e);
       }
@@ -373,6 +374,12 @@ public class HelpPane extends WorkbenchPane
    
    private void handleMouseDown(NativeEvent event)
    {
+      // Not required on Electron; back / forward navigation is handled
+      // via a top-level Javascript event handler. See DesktopApplicationHeader.java
+      // for more details.
+      if (BrowseCap.isElectron())
+         return;
+      
       int button = EventProperty.button(event);
       if (button == EventProperty.MOUSE_BACKWARD)
       {
@@ -398,49 +405,83 @@ public class HelpPane extends WorkbenchPane
          Match match = HELP_PATTERN.match(url, 0);
          if (match != null) 
          {
-            String topic = decodeURIComponent(match.getGroup(2));
-            
+            // cancel previous timer
+            popupTimer_.cancel();
+
+            // hide previous popup immediately
             if (popup_ != null)
                popup_.hide();
-            popup_ = new HyperlinkPopupPanel(new HelpPageShower() {
-
+            
+            // and schedule a new one
+            popupTimer_ = new Timer()
+            {
                @Override
-               public void showHelp() {
-                  HelpPane.this.showHelp(url);
-               }
-               
-            });
-
-            // pkg might not be the actual package
-            // so we need to do the same as what the internal help system would:
-            server_.followHelpTopic(url, new SimpleRequestCallback<JsArrayString>(){
-
-               @Override
-               public void onResponseReceived(JsArrayString files)
+               public void run()
                {
-                  if (files.length() == 1)
-                  {
-                     String pkg = files.get(0).replaceFirst("/help/.*$", "").replaceFirst("^.*/", "");
+                  String topic = decodeURIComponent(match.getGroup(2));
+                  
+                  popup_ = new HyperlinkPopupPanel(new HelpPageShower() {
+
+                     @Override
+                     public void showHelp() {
+                        HelpPane.this.showHelp(url);
+                     }
                      
-                     final VerticalPanel panel = new VerticalPanel();
-                     panel.add(new HelpHyperlinkPopupHeader(topic, pkg));
-                     panel.add(new HelpPreview(topic, pkg, () -> 
+                  });
+
+                  // pkg might not be the actual package
+                  // so we need to do the same as what the internal help system would:
+                  server_.followHelpTopic(url, new SimpleRequestCallback<JsArrayString>(){
+
+                     @Override
+                     public void onResponseReceived(JsArrayString files)
                      {
-                        popup_.setContent(panel);
+                        if (files.length() == 1)
+                        {
+                           String pkg = files.get(0).replaceFirst("/help/.*$", "").replaceFirst("^.*/", "");
+                        
+                           final VerticalPanel panel = new VerticalPanel();
+                           panel.add(new HelpHyperlinkPopupHeader(topic, pkg));
+                           panel.add(new HelpPreview(topic, pkg, () -> 
+                           {
+                              popup_.setContent(panel);
 
-                        Rectangle bounds = new Rectangle(event.getClientX() + getIFrameEx().getAbsoluteLeft(), 
-                                                         event.getClientY() + getIFrameEx().getAbsoluteTop(), 
-                                                         anchor.getClientWidth(), 
-                                                         anchor.getClientHeight());
-                        HyperlinkPopupPositioner positioner = new HyperlinkPopupPositioner(bounds, popup_);
-                        popup_.setPopupPositionAndShow(positioner);
-                     }));
-                  }
+                              Rectangle bounds = new Rectangle(event.getClientX() + getIFrameEx().getAbsoluteLeft(), 
+                                                               event.getClientY() + getIFrameEx().getAbsoluteTop(), 
+                                                               anchor.getClientWidth(), 
+                                                               anchor.getClientWidth());
+                              HyperlinkPopupPositioner positioner = new HyperlinkPopupPositioner(bounds, popup_);
+                                 
+                              if (!popupCancelled_) 
+                                 popup_.setPopupPositionAndShow(positioner);
+                           }));
+                        }
+                     }
+                  });
+
                }
-            });
-
+            };
+            popupCancelled_ = false;
+            popupTimer_.schedule(400);
          }
+      }
+   }
+
+   private void handleMouseOut(NativeEvent event) {
+      EventTarget target = event.getEventTarget();
+      if (AnchorElement.is(target)) 
+      {
+         // mark the popup as cancelled. This handles the case when the 
+         // timer has finished but the popup has not been 
+         // calculated yet, i.e. server_.followHelpTopic() has not returned
+         popupCancelled_ = true;
+
+         // cancel a popup that is scheduled for later
+         popupTimer_.cancel();
          
+         // then hide popup if necessary
+         if (popup_ != null)
+            popup_.hide();
       }
    }
 
@@ -452,7 +493,6 @@ public class HelpPane extends WorkbenchPane
    {
       if (popup_ != null)
          popup_.hide();
-      popup_ = null;
    }
 
    private void helpNavigated(Document doc)
@@ -1008,6 +1048,8 @@ public class HelpPane extends WorkbenchPane
    private static final HelpConstants constants_ = GWT.create(HelpConstants.class);
    private Server server_;
    HyperlinkPopupPanel popup_;
+   Timer popupTimer_;
+   boolean popupCancelled_;
 
    private static final Pattern HELP_PATTERN = Pattern.create("^.*/help/library/([^/]*)/help/(.*)$", "");
 }

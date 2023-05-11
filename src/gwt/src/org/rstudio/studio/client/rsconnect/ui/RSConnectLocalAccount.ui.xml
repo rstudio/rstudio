@@ -35,7 +35,7 @@
     <g:HTMLPanel>
         <g:VerticalPanel>
          <rsw:FormLabel for="{ElementIds.getRscServerUrl}"
-                        text="Enter the public URL of the RStudio Connect server:">
+                        text="Enter the public URL of the Posit Connect server:">
              <ui:attribute name="text" key="enterPublicURLText"/>
          </rsw:FormLabel>
          <rsw:TextBoxWithCue styleName="{style.textControl}"
@@ -44,10 +44,10 @@
                              elementId="{ElementIds.getRscServerUrl}" 
                              ui:field="serverUrl_"/>
          <g:Label styleName="{style.spaced} {style.explanatoryText}"
-             text="Contact your RStudio Connect server administrator if you need its URL.">
+             text="Contact your Posit Connect server administrator if you need its URL.">
              <ui:attribute name="text" key="contactAdminText"/>
          </g:Label>
-         <rsc:HelpLink caption="About RStudio Connect" 
+         <rsc:HelpLink caption="About Posit Connect" 
                        link="rstudio_connect"
                        withVersionInfo="false"
                        styleName="{style.connectHelpLink}"

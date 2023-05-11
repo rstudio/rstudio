@@ -1,10 +1,10 @@
 #
 # SessionRenv.R
 #
-# Copyright (C) 2022 by RStudio, PBC
+# Copyright (C) 2022 by Posit Software, PBC
 #
-# Unless you have received this program directly from RStudio pursuant
-# to the terms of a commercial license agreement with RStudio, then
+# Unless you have received this program directly from Posit Software pursuant
+# to the terms of a commercial license agreement with Posit Software, then
 # this program is licensed to you under the terms of version 3 of the
 # GNU Affero General Public License. This program is distributed WITHOUT
 # ANY EXPRESS OR IMPLIED WARRANTY, INCLUDING THOSE OF NON-INFRINGEMENT,
@@ -117,9 +117,19 @@
 
 .rs.addFunction("renv.readLockfilePackages", function(project)
 {
+   renv <- asNamespace("renv")
+   
+   # read lockfile
    lockpath <- file.path(project, "renv.lock")
-   lockfile <- renv:::renv_lockfile_read(lockpath)
-   packages <- renv:::renv_records(lockfile)
+   lockfile <- renv$renv_lockfile_read(lockpath)
+   
+   # grab lockfile records
+   # renv internal APIs changed in a recent update, so look for the right
+   # accessor method here
+   method <- .rs.nullCoalesce(renv$renv_lockfile_records, renv$renv_records)
+   packages <- method(lockfile)
+   
+   # keep only the pieces we need
    filtered <- lapply(packages, `[`, c("Package", "Version", "Source"))
    df <- .rs.rbindList(filtered)
    rownames(df) <- NULL

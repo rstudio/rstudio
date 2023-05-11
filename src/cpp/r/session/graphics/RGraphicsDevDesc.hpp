@@ -1,10 +1,10 @@
 /*
  * RGraphicsDevDesc.hpp
  *
- * Copyright (C) 2022 by RStudio, PBC
+ * Copyright (C) 2022 by Posit Software, PBC
  *
- * Unless you have received this program directly from RStudio pursuant
- * to the terms of a commercial license agreement with RStudio, then
+ * Unless you have received this program directly from Posit Software pursuant
+ * to the terms of a commercial license agreement with Posit Software, then
  * this program is licensed to you under the terms of version 3 of the
  * GNU Affero General Public License. This program is distributed WITHOUT
  * ANY EXPRESS OR IMPLIED WARRANTY, INCLUDING THOSE OF NON-INFRINGEMENT,
@@ -26,7 +26,7 @@
 
 #include "RGraphicsDevDescVersions.hpp"
 
-typedef DevDescVersion15 RSDevDesc;
+typedef DevDescVersion16 RSDevDesc;
 
 namespace rstudio {
 namespace r {
@@ -92,6 +92,10 @@ void fill(SEXP path, int rule, const pGEcontext gc, pDevDesc dd);
 void fillStroke(SEXP path, int rule, const pGEcontext gc, pDevDesc dd);
 
 SEXP capabilities(SEXP cap);
+
+void glyph(int n, int *glyphs, double *x, double *y, 
+              SEXP font, double size,
+              int colour, double rot, pDevDesc dd);
 
 } // namespace dev_desc
 } // namespace handler

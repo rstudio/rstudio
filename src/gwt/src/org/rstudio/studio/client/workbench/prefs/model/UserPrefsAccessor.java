@@ -1,9 +1,9 @@
 /* UserPrefsAccessor.java
  *
- * Copyright (C) 2022 by RStudio, PBC
+ * Copyright (C) 2022 by Posit Software, PBC
  *
- * Unless you have received this program directly from RStudio pursuant
- * to the terms of a commercial license agreement with RStudio, then
+ * Unless you have received this program directly from Posit Software pursuant
+ * to the terms of a commercial license agreement with Posit Software, then
  * this program is licensed to you under the terms of version 3 of the
  * GNU Affero General Public License. This program is distributed WITHOUT
  * ANY EXPRESS OR IMPLIED WARRANTY, INCLUDING THOSE OF NON-INFRINGEMENT,
@@ -1183,6 +1183,18 @@ public class UserPrefsAccessor extends Prefs
    }
 
    /**
+    * Whether to highlight fenced divs in a variety of colors.
+    */
+   public PrefValue<Boolean> rainbowFencedDivs()
+   {
+      return bool(
+         "rainbow_fenced_divs",
+         _constants.rainbowFencedDivsTitle(), 
+         _constants.rainbowFencedDivsDescription(), 
+         true);
+   }
+
+   /**
     * The maximum number of characters to display in a single line in the R console.
     */
    public PrefValue<Integer> consoleLineLengthLimit()
@@ -1780,6 +1792,18 @@ public class UserPrefsAccessor extends Prefs
    }
 
    /**
+    * Whether to show UI for publishing content to Posit Cloud.
+    */
+   public PrefValue<Boolean> enableCloudPublishUi()
+   {
+      return bool(
+         "enable_cloud_publish_ui",
+         _constants.enableCloudPublishUiTitle(), 
+         _constants.enableCloudPublishUiDescription(), 
+         true);
+   }
+
+   /**
     * Whether to check remote server SSL certificates when publishing content.
     */
    public PrefValue<Boolean> publishCheckCertificates()
@@ -2065,7 +2089,7 @@ public class UserPrefsAccessor extends Prefs
          "always_shown_extensions",
          _constants.alwaysShownExtensionsTitle(), 
          _constants.alwaysShownExtensionsDescription(), 
-         JsArrayUtil.createStringArray(".circleci", ".gitattributes", ".github", ".gitignore", ".httr-oauth", ".lintr", ".r", ".rbuildignore", ".rdata", ".renvignore", ".renviron", ".rhistory", ".rprofile", ".ruserdata"));
+         JsArrayUtil.createStringArray(".circleci", ".gitattributes", ".github", ".gitignore", ".httr-oauth", ".lintr", ".quartoignore", ".r", ".rbuildignore", ".rdata", ".renvignore", ".renviron", ".rhistory", ".rprofile", ".ruserdata"));
    }
 
    /**
@@ -2722,7 +2746,7 @@ public class UserPrefsAccessor extends Prefs
    }
 
    /**
-    * Support accessibility aids such as screen readers (RStudio Server).
+    * Support accessibility aids such as screen readers.
     */
    public PrefValue<Boolean> enableScreenReader()
    {
@@ -3390,6 +3414,61 @@ public class UserPrefsAccessor extends Prefs
          true);
    }
 
+   /**
+    * When enabled, any pending console input will be discarded when an (uncaught) R error occurs.
+    */
+   public PrefValue<Boolean> discardPendingConsoleInputOnError()
+   {
+      return bool(
+         "discard_pending_console_input_on_error",
+         _constants.discardPendingConsoleInputOnErrorTitle(), 
+         _constants.discardPendingConsoleInputOnErrorDescription(), 
+         true);
+   }
+
+   /**
+    * An integer value, 1-200, to set the editor scroll multiplier. The higher the value, the faster the scrolling.
+    */
+   public PrefValue<Integer> editorScrollMultiplier()
+   {
+      return integer(
+         "editor_scroll_multiplier",
+         _constants.editorScrollMultiplierTitle(), 
+         _constants.editorScrollMultiplierDescription(), 
+         100);
+   }
+
+   /**
+    * Control how text is rendered within the IDE surface.
+    */
+   public PrefValue<String> textRendering()
+   {
+      return enumeration(
+         "text_rendering",
+         _constants.textRenderingTitle(), 
+         _constants.textRenderingDescription(), 
+         new String[] {
+            TEXT_RENDERING_AUTO,
+            TEXT_RENDERING_GEOMETRICPRECISION
+         },
+         "auto");
+   }
+
+   public final static String TEXT_RENDERING_AUTO = "auto";
+   public final static String TEXT_RENDERING_GEOMETRICPRECISION = "geometricPrecision";
+
+   /**
+    * Disable Electron accessibility support.
+    */
+   public PrefValue<Boolean> disableRendererAccessibility()
+   {
+      return bool(
+         "disable_renderer_accessibility",
+         _constants.disableRendererAccessibilityTitle(), 
+         _constants.disableRendererAccessibilityDescription(), 
+         false);
+   }
+
    public void syncPrefs(String layer, JsObject source)
    {
       if (source.hasKey("run_rprofile_on_resume"))
@@ -3546,6 +3625,8 @@ public class UserPrefsAccessor extends Prefs
          colorPreview().setValue(layer, source.getBool("color_preview"));
       if (source.hasKey("rainbow_parentheses"))
          rainbowParentheses().setValue(layer, source.getBool("rainbow_parentheses"));
+      if (source.hasKey("rainbow_fenced_divs"))
+         rainbowFencedDivs().setValue(layer, source.getBool("rainbow_fenced_divs"));
       if (source.hasKey("console_line_length_limit"))
          consoleLineLengthLimit().setValue(layer, source.getInteger("console_line_length_limit"));
       if (source.hasKey("console_max_lines"))
@@ -3636,6 +3717,8 @@ public class UserPrefsAccessor extends Prefs
          rmdViewerType().setValue(layer, source.getString("rmd_viewer_type"));
       if (source.hasKey("show_publish_diagnostics"))
          showPublishDiagnostics().setValue(layer, source.getBool("show_publish_diagnostics"));
+      if (source.hasKey("enable_cloud_publish_ui"))
+         enableCloudPublishUi().setValue(layer, source.getBool("enable_cloud_publish_ui"));
       if (source.hasKey("publish_check_certificates"))
          publishCheckCertificates().setValue(layer, source.getBool("publish_check_certificates"));
       if (source.hasKey("use_publish_ca_bundle"))
@@ -3864,6 +3947,14 @@ public class UserPrefsAccessor extends Prefs
          uiLanguage().setValue(layer, source.getString("ui_language"));
       if (source.hasKey("native_file_dialogs"))
          nativeFileDialogs().setValue(layer, source.getBool("native_file_dialogs"));
+      if (source.hasKey("discard_pending_console_input_on_error"))
+         discardPendingConsoleInputOnError().setValue(layer, source.getBool("discard_pending_console_input_on_error"));
+      if (source.hasKey("editor_scroll_multiplier"))
+         editorScrollMultiplier().setValue(layer, source.getInteger("editor_scroll_multiplier"));
+      if (source.hasKey("text_rendering"))
+         textRendering().setValue(layer, source.getString("text_rendering"));
+      if (source.hasKey("disable_renderer_accessibility"))
+         disableRendererAccessibility().setValue(layer, source.getBool("disable_renderer_accessibility"));
    }
    public List<PrefValue<?>> allPrefs()
    {
@@ -3945,6 +4036,7 @@ public class UserPrefsAccessor extends Prefs
       prefs.add(highlightRFunctionCalls());
       prefs.add(colorPreview());
       prefs.add(rainbowParentheses());
+      prefs.add(rainbowFencedDivs());
       prefs.add(consoleLineLengthLimit());
       prefs.add(consoleMaxLines());
       prefs.add(ansiConsoleMode());
@@ -3990,6 +4082,7 @@ public class UserPrefsAccessor extends Prefs
       prefs.add(rmdPreferredTemplatePath());
       prefs.add(rmdViewerType());
       prefs.add(showPublishDiagnostics());
+      prefs.add(enableCloudPublishUi());
       prefs.add(publishCheckCertificates());
       prefs.add(usePublishCaBundle());
       prefs.add(publishCaBundle());
@@ -4104,6 +4197,10 @@ public class UserPrefsAccessor extends Prefs
       prefs.add(checkNullExternalPointers());
       prefs.add(uiLanguage());
       prefs.add(nativeFileDialogs());
+      prefs.add(discardPendingConsoleInputOnError());
+      prefs.add(editorScrollMultiplier());
+      prefs.add(textRendering());
+      prefs.add(disableRendererAccessibility());
       return prefs;
    }
    

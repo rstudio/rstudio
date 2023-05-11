@@ -1,10 +1,10 @@
 /*
  * RClientState.hpp
  *
- * Copyright (C) 2022 by RStudio, PBC
+ * Copyright (C) 2022 by Posit Software, PBC
  *
- * Unless you have received this program directly from RStudio pursuant
- * to the terms of a commercial license agreement with RStudio, then
+ * Unless you have received this program directly from Posit Software pursuant
+ * to the terms of a commercial license agreement with Posit Software, then
  * this program is licensed to you under the terms of version 3 of the
  * GNU Affero General Public License. This program is distributed WITHOUT
  * ANY EXPRESS OR IMPLIED WARRANTY, INCLUDING THOSE OF NON-INFRINGEMENT,
@@ -64,14 +64,17 @@ public:
                       const core::json::Value& value);
    
    void putPersistent(const core::json::Object& persistentState);
+   
+   core::json::Value getPersistent(const std::string& scope,
+                                   const std::string& name);
 
    void putProjectPersistent(const std::string& scope,
                              const std::string& name,
                              const core::json::Value& value);
 
    void putProjectPersistent(const core::json::Object& projectPersistentState);
-   core::json::Value getProjectPersistent(std::string scope,
-                                          std::string name);
+   core::json::Value getProjectPersistent(const std::string& scope,
+                                          const std::string& name);
 
    core::Error commit(ClientStateCommitType commitType,
                       const core::FilePath& stateDir,

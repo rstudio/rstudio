@@ -1,10 +1,10 @@
 /*
  * PanmirrorDialogs.java
  *
- * Copyright (C) 2022 by RStudio, PBC
+ * Copyright (C) 2022 by Posit Software, PBC
  *
- * Unless you have received this program directly from RStudio pursuant
- * to the terms of a commercial license agreement with RStudio, then
+ * Unless you have received this program directly from Posit Software pursuant
+ * to the terms of a commercial license agreement with Posit Software, then
  * this program is licensed to you under the terms of version 3 of the
  * GNU Affero General Public License. This program is distributed WITHOUT
  * ANY EXPRESS OR IMPLIED WARRANTY, INCLUDING THOSE OF NON-INFRINGEMENT,
@@ -74,7 +74,7 @@ public class PanmirrorDialogs {
       this.globalDisplay_ = globalDisplay;
    }
    
-   public Promise<Boolean> alert(String message, String title, int type) 
+   public Promise<Boolean> alert(String title, String message, int type)
    {
       return new Promise<>((ResolveCallbackFn<Boolean> resolve, RejectCallbackFn reject) -> {
          int alertType = MessageDisplay.MSG_INFO;
@@ -101,7 +101,7 @@ public class PanmirrorDialogs {
    }
    
    
-   public Promise<Boolean> yesNoMessage(String message, String title, int type, String yesLabel, String noLabel) 
+   public Promise<Boolean> yesNoMessage(String title, String message, int type, String yesLabel, String noLabel)
    {
       return new Promise<>((ResolveCallbackFn<Boolean> resolve, RejectCallbackFn reject) -> {
          int alertType = MessageDisplay.MSG_INFO;

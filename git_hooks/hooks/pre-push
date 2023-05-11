@@ -1,0 +1,19 @@
+#!/bin/sh
+
+# A pre-push hook script to check if the remote branch being pushed to is the
+# main branch and exits with a non-zero status if it is.
+#
+# The purpose of this hook is the protect the main branch from accidental pushes.
+
+main_branch="refs/heads/main"
+
+while read local_ref local_oid remote_ref remote_oid
+do
+    if [[ "$remote_ref" = "$main_branch" ]]
+    then
+        echo >&2 "*** Oops! Did you mean to push to the main branch? If so, use \`git push --no-verify\` to push."
+        exit 1
+    fi
+done
+
+exit 0

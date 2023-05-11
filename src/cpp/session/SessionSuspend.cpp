@@ -1,10 +1,10 @@
 /*
  * SessionSuspend.cpp
  *
- * Copyright (C) 2022 by RStudio, PBC
+ * Copyright (C) 2022 by Posit Software, PBC
  *
- * Unless you have received this program directly from RStudio pursuant
- * to the terms of a commercial license agreement with RStudio, then
+ * Unless you have received this program directly from Posit Software pursuant
+ * to the terms of a commercial license agreement with Posit Software, then
  * this program is licensed to you under the terms of version 3 of the
  * GNU Affero General Public License. This program is distributed WITHOUT
  * ANY EXPRESS OR IMPLIED WARRANTY, INCLUDING THOSE OF NON-INFRINGEMENT,
@@ -16,6 +16,10 @@
 #include <cstdlib>
 #include <signal.h>
 #include <unordered_set>
+
+#ifndef _WIN32
+#include <sys/resource.h>
+#endif
 
 #include "SessionConsoleInput.hpp"
 
@@ -314,8 +318,31 @@ void setSuspendedFromTimeout(bool suspended)
    
 bool suspendSession(bool force, int status)
 {
+#ifndef _WIN32
+   // Attempt to lower this session's CPU priority to something below average.
+   // Suspension is never as important as ongoing work on the system, but large
+   // sessions can be CPU-intensive to serialize.
+   //
+   // We could also do this on Windows with SetPriorityClass(), but on that OS
+   // the likelihood of being a multi-user system is much lower.
+   //
+   // Note also that we'd love to throttle I/O here, too, but there is no Unix
+   // API to do so and at least on Linux this is only possible via cgroups.
+   if (setpriority(PRIO_PROCESS, 0, 10) < 0)
+   {
+      core::Error error = core::systemError(errno, ERROR_LOCATION);
+      error.addProperty("description",
+                        "Failed to lower CPU priority during suspend");
+      LOG_ERROR(error);
+   }
+   else
+   {
+      LOG_INFO_MESSAGE("Lowered CPU priority during suspend");
+   }
+#endif
+
    // need to make sure the global environment is loaded before we
-   // attemmpt to save it!
+   // attempt to save it!
    r::session::ensureDeserialized();
 
    // If we're suspending then clear list of blocking ops
@@ -432,8 +459,18 @@ void checkForSuspend(const boost::function<bool()>& allowSuspend)
             "computations may have been interrupted.");
       }
 
+      // exit status
+      int status = EX_FORCE;
+      if (options().getBoolOverlayOption(kLauncherSessionOption))
+      {
+         // Avoid generating nonzero exit codes when running under Launcher.
+         // Error codes from normal behaviour like this are confusing for Slurm
+         // and Kubernetes administrators unfamiliar with our workloads.
+         status = EXIT_SUCCESS;
+      }
+
       // execute the forced suspend (does not return)
-      suspendSession(true, EX_FORCE);
+      suspendSession(true, status);
    }
 
    // cooperative suspend request

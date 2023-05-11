@@ -1,10 +1,10 @@
 /*
  * SessionInstallRtools.cpp
  *
- * Copyright (C) 2022 by RStudio, PBC
+ * Copyright (C) 2022 by Posit Software, PBC
  *
- * Unless you have received this program directly from RStudio pursuant
- * to the terms of a commercial license agreement with RStudio, then
+ * Unless you have received this program directly from Posit Software pursuant
+ * to the terms of a commercial license agreement with Posit Software, then
  * this program is licensed to you under the terms of version 3 of the
  * GNU Affero General Public License. This program is distributed WITHOUT
  * ANY EXPRESS OR IMPLIED WARRANTY, INCLUDING THOSE OF NON-INFRINGEMENT,
@@ -39,7 +39,7 @@ namespace session {
 namespace modules {
 namespace build {
 
-std::string kFallbackUrl = "https://rstudio.org/links/rtools42";
+std::string kFallbackUrl = "https://rstudio.org/links/rtools43";
 
 Error installRtools()
 {
@@ -47,6 +47,7 @@ Error installRtools()
    bool gcc49 = module_context::usingMingwGcc49();
    FilePath installPath("C:\\Rtools");
    std::vector<r_util::RToolsInfo> availableRtools;
+   availableRtools.push_back(r_util::RToolsInfo("4.3", installPath, gcc49));
    availableRtools.push_back(r_util::RToolsInfo("4.2", installPath, gcc49));
    availableRtools.push_back(r_util::RToolsInfo("4.0", installPath, gcc49));
    availableRtools.push_back(r_util::RToolsInfo("3.5", installPath, gcc49));
@@ -96,9 +97,9 @@ Error installRtools()
    if (error)
       return error;
 
-   if (version == "4.2")
+   if (version == "4.3")
    {
-     Error error = r::exec::RFunction(".rs.findRtools42Installer")
+     Error error = r::exec::RFunction(".rs.findRtoolsInstaller")
             .addParam("url", url)
             .addParam("fallbackUrl", kFallbackUrl)
             .call(&url);

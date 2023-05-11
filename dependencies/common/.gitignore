@@ -1,6 +1,7 @@
 *.tar.bz
 *.tar.bz2
 *.tar.gz
+index.html
 CEF/
 dictionaries/
 libclang/

@@ -1,10 +1,10 @@
 /*
  * ClientEventDispatcher.java
  *
- * Copyright (C) 2022 by RStudio, PBC
+ * Copyright (C) 2022 by Posit Software, PBC
  *
- * Unless you have received this program directly from RStudio pursuant
- * to the terms of a commercial license agreement with RStudio, then
+ * Unless you have received this program directly from Posit Software pursuant
+ * to the terms of a commercial license agreement with Posit Software, then
  * this program is licensed to you under the terms of version 3 of the
  * GNU Affero General Public License. This program is distributed WITHOUT
  * ANY EXPRESS OR IMPLIED WARRANTY, INCLUDING THOSE OF NON-INFRINGEMENT,
@@ -233,7 +233,6 @@ public class ClientEventDispatcher
          {
             public boolean execute()
             {
-               final int MAX_EVENTS_AT_ONCE = 200;
                for (int i = 0;
                     i < MAX_EVENTS_AT_ONCE && pendingEvents_.size() > 0;
                     i++)
@@ -1144,5 +1143,6 @@ public class ClientEventDispatcher
 
    private final ArrayList<ClientEvent> pendingEvents_ = new ArrayList<>();
 
+   private static final int MAX_EVENTS_AT_ONCE = 200;
 
 }

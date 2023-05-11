@@ -1,10 +1,10 @@
 /*
  * Files.java
  *
- * Copyright (C) 2022 by RStudio, PBC
+ * Copyright (C) 2022 by Posit Software, PBC
  *
- * Unless you have received this program directly from RStudio pursuant
- * to the terms of a commercial license agreement with RStudio, then
+ * Unless you have received this program directly from Posit Software pursuant
+ * to the terms of a commercial license agreement with Posit Software, then
  * this program is licensed to you under the terms of version 3 of the
  * GNU Affero General Public License. This program is distributed WITHOUT
  * ANY EXPRESS OR IMPLIED WARRANTY, INCLUDING THOSE OF NON-INFRINGEMENT,
@@ -32,7 +32,6 @@ import org.rstudio.core.client.cellview.ColumnSortInfo;
 import org.rstudio.core.client.command.CommandBinder;
 import org.rstudio.core.client.command.Handler;
 import org.rstudio.core.client.dom.Clipboard;
-import org.rstudio.core.client.dom.DomUtils;
 import org.rstudio.core.client.files.FileSystemItem;
 import org.rstudio.core.client.js.JsObject;
 import org.rstudio.core.client.widget.*;
@@ -915,7 +914,9 @@ public class Files
    @Handler
    void onShowFolder()
    {
-      eventBus_.fireEvent(new ShowFolderEvent(currentPath_));
+      String path = server_.resolveAliasedPath(currentPath_);
+      FileSystemItem resolvedCurrentDir = FileSystemItem.createDir(path);
+      eventBus_.fireEvent(new ShowFolderEvent(resolvedCurrentDir));
    }
 
    public void onFileChange(FileChangeEvent event)

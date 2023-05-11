@@ -1,10 +1,10 @@
    /*
  * SessionQuartoPreview.cpp
  *
- * Copyright (C) 2022 by RStudio, PBC
+ * Copyright (C) 2022 by Posit Software, PBC
  *
- * Unless you have received this program directly from RStudio pursuant
- * to the terms of a commercial license agreement with RStudio, then
+ * Unless you have received this program directly from Posit Software pursuant
+ * to the terms of a commercial license agreement with Posit Software, then
  * this program is licensed to you under the terms of version 3 of the
  * GNU Affero General Public License. This program is distributed WITHOUT
  * ANY EXPRESS OR IMPLIED WARRANTY, INCLUDING THOSE OF NON-INFRINGEMENT,
@@ -18,6 +18,7 @@
 #include <string>
 
 #include <shared_core/Error.hpp>
+#include <shared_core/FilePath.hpp>
 #include <core/Exec.hpp>
 #include <core/RegexUtils.hpp>
 #include <core/FileSerializer.hpp>
@@ -65,9 +66,9 @@ public:
    {
    }
 
-   FilePath previewFile()
+   FilePath previewTarget()
    {
-      return previewFile_;
+      return previewTarget_;
    }
 
    std::string format()
@@ -85,22 +86,17 @@ public:
       return slideLevel_;
    }
 
-   bool hasModifiedProject()
-   {
-      if (!projectFile_.empty())
-      {
-         return FilePath(projectFile_.absolutePath()).getLastWriteTime() >
-                projectFile_.lastWriteTime();
-      }
-      else
-      {
-         return false;
-      }
-   }
-
    int port()
    {
       return port_;
+   }
+
+   int controlPort()
+   {
+      if (controlPort_ > 0)
+         return controlPort_;
+      else
+         return port();
    }
 
    std::string jobId()
@@ -113,9 +109,10 @@ public:
       return viewerType_;
    }
 
-   Error render(const json::Value& editorState)
+   bool render(const core::FilePath& previewfile,  std::string format, const json::Value& editorState)
    {
       // reset state
+      previewTarget_ = previewfile;
       slideLevel_= -1;
       editorState_ = editorState;
       outputFile_ = FilePath();
@@ -124,40 +121,63 @@ public:
       // re-read input file
       readInputFileLines();
 
+      // provide format default
+      if (format.empty())
+         format = "default";
+
       // render
-      return r::exec::RFunction(".rs.quarto.renderPreview",
-                                safe_convert::numberToString(port())).call();
+      SEXP result;
+      r::sexp::Protect rProtect;
+      Error error = r::exec::RFunction(".rs.quarto.renderPreview",
+         safe_convert::numberToString(controlPort()),
+         renderToken_,
+         previewTarget().getAbsolutePath(),
+         format).call(&result, &rProtect);
+      if (error || r::sexp::inherits(result, "error"))
+      {
+         return false;
+      }
+      else
+      {
+         return true;
+      }
    }
 
 protected:
    explicit QuartoPreview(const FilePath& previewFile, const std::string& format, const json::Value& editorState)
-      : QuartoJob(), previewFile_(previewFile), format_(format), editorState_(editorState), slideLevel_(-1), port_(0), viewerType_(prefs::userPrefs().rmdViewerType())
+      : QuartoJob(), previewTarget_(previewFile), format_(format), editorState_(editorState),
+                     slideLevel_(-1), port_(0), controlPort_(0), viewerType_(prefs::userPrefs().rmdViewerType())
    {
-     readInputFileLines();
+     renderToken_ = core::system::generateUuid();
 
-     FilePath projectFile = quartoProjectConfigFile(previewFile_);
-     if (!projectFile.isEmpty())
-        projectFile_ = FileInfo(projectFile);
+     readInputFileLines();
    }
 
    virtual std::string name()
    {
-      return "Preview: " + previewFile_.getFilename();
+      return "Preview: " + previewTarget_.getFilename();
    }
 
    virtual std::vector<std::string> args()
    {
       // preview target file
       std::vector<std::string> args({"preview"});
-      args.push_back(string_utils::utf8ToSystem(previewFile_.getFilename()));
+      if (!previewTarget_.isDirectory())
+      {
+         args.push_back(string_utils::utf8ToSystem(previewTarget_.getFilename()));
+
+         args.push_back("--to");
+         args.push_back(!format_.empty() ? format_ : "default");
+      }
+      else
+      {
+         args.push_back("--render");
+         args.push_back(!format_.empty() ? format_ : "default");
+      }
 
       // presentation mode if this is reveal
       if (formatIsRevealJs())
          args.push_back("--presentation");
-
-      // format (or default if none specified)
-      args.push_back("--to");
-      args.push_back(!format_.empty() ? format_ : "default");
 
       // no watching inputs and no browser
       args.push_back("--no-watch-inputs");
@@ -168,12 +188,15 @@ protected:
 
    virtual void environment(core::system::Options* pEnv)
    {
+      // set render token
+      core::system::setenv(pEnv, "QUARTO_RENDER_TOKEN", renderToken_);
+
       // if this file isn't in a project then add the QUARTO_CROSSREF_INDEX_PATH
-      if (!isFileInSessionQuartoProject(previewFile_))
+      if (!isFileInSessionQuartoProject(previewTarget_))
       {
          FilePath indexPath;
          Error error = module_context::perFilePathStorage(
-            kQuartoCrossrefScope, previewFile_, false, &indexPath
+            kQuartoCrossrefScope, previewTarget_, false, &indexPath
          );
          if (error)
          {
@@ -182,32 +205,57 @@ protected:
          }
          core::system::setenv(pEnv, "QUARTO_CROSSREF_INDEX_PATH", indexPath.getAbsolutePath());
       }
+
    }
 
    virtual core::FilePath workingDir()
    {
-      return previewFile_.getParent();
+      return previewDir();
    }
-
 
 private:
 
+   core::FilePath previewDir()
+   {
+     return previewTarget_.isDirectory() ? previewTarget_ :  previewTarget_.getParent();
+   }
+
    virtual void onStdErr(const std::string& output)
    {
+      bool isServer =  session::options().programMode() == kSessionProgramModeServer;
+
       // accumulate output (used for error scanning)
       allOutput_ += output;
 
       // always be looking for an output file
       FilePath outputFile =
-         module_context::extractOutputFileCreated(previewFile_.getParent(), output);
+         module_context::extractOutputFileCreated(previewDir(), output, false);
       if (!outputFile.isEmpty())
+      {
+         // capture output file
          outputFile_ = outputFile;
+
+         // if we are running on rstudio server and there is a control port then
+         // refresh the viewer manually (as whatever livereload scheme is in use
+         // won't work via direct port connection)
+         if (isServer && (controlPort_ > 0))
+         {
+           refreshViewer();
+         }
+      }
 
       // always be looking for slide-level
       int slideLevel = quartoSlideLevelFromOutput(output);
       if (slideLevel != -1)
       {
          slideLevel_ = slideLevel;
+      }
+
+      // always be looking for the control port
+      int cPort = quartoControlPortFromOutput(output);
+      if (cPort != -1)
+      {
+         controlPort_ = cPort;
       }
 
       // detect browse directive
@@ -229,7 +277,7 @@ private:
             activateConsole();
 
             // emit filtered output if we are on rstudio server and using the viewer
-            if (session::options().programMode() == kSessionProgramModeServer)
+            if (isServer)
             {
                QuartoJob::onStdErr(location.filteredOutput);
                QuartoJob::onStdErr("Browse at: " +
@@ -254,7 +302,7 @@ private:
          if (viewerType_ == kRmdViewerTypePane)
          {
             if (!formatIsRevealJs() &&
-                 boost::algorithm::starts_with(module_context::viewerCurrentUrl(false), viewerUrl()))
+                boost::algorithm::starts_with(module_context::viewerCurrentUrl(false), viewerUrl()))
             {
                module_context::activatePane("viewer");
             }
@@ -266,7 +314,8 @@ private:
       }
 
       // look for an error and do source navigation as necessary
-      navigateToRenderPreviewError(previewFile_, previewFileLines_, output, allOutput_);
+      if (!previewTarget_.isDirectory())
+         navigateToRenderPreviewError(previewTarget_, previewFileLines_, output, allOutput_);
 
       // standard output forwarding
       QuartoJob::onStdErr(output);
@@ -287,6 +336,10 @@ private:
    {
       if (viewerType_ == kRmdViewerTypePane)
       {
+         // get proj dir
+         QuartoConfig config = quartoConfig();
+         FilePath projDir = module_context::resolveAliasedPath(config.project_dir);
+
          // format info
          bool isReveal = formatIsRevealJs();
          bool isSlidy = boost::algorithm::starts_with(format_, "slidy");
@@ -303,17 +356,25 @@ private:
              minHeight = 500;
          }
 
-         std::string sourceFile = module_context::createAliasedPath(previewFile_);
          std::string outputFile;
          if (!outputFile_.isEmpty())
             outputFile = module_context::createAliasedPath(outputFile_);
-         QuartoNavigate quartoNav = QuartoNavigate::navDoc(sourceFile, outputFile, jobId());
+         QuartoNavigate quartoNav;
+         if ((previewTarget()) == projDir || isFileInSessionQuartoProject((previewTarget())))
+         {
+            quartoNav = module_context::QuartoNavigate::navWebsite(pJob_->id());
+         }
+         else if (!this->previewTarget_.isDirectory())
+         {
+           std::string sourceFile = module_context::createAliasedPath(previewTarget_);
+           quartoNav = QuartoNavigate::navDoc(sourceFile, outputFile, jobId());
+         }
 
          // route to either viewer or presentation pane (for reveal)
          if (isReveal)
          {
             std::string url = url_ports::mapUrlPorts(viewerUrl());
-            if (isFileInSessionQuartoProject(previewFile_))
+            if (isFileInSessionQuartoProject(previewTarget_))
             {
                url = url + urlPathForQuartoProjectOutputFile(outputFile_);
             }
@@ -332,8 +393,19 @@ private:
 
             if (outputFile_.getExtensionLowerCase() != ".pdf")
             {
-               if (isFileInSessionQuartoProject(previewFile_))
+               if (isFileInSessionQuartoProject(previewTarget_))
                   url = url + urlPathForQuartoProjectOutputFile(outputFile_);
+            }
+
+            // if we are dealing with a binary output file then make sure nav is for the file
+            // not the project (as would occur for epub, docx in book output)
+            if (quartoNav.website &&
+                (outputFile_.getExtensionLowerCase() == ".docx" ||
+                 outputFile_.getExtensionLowerCase() == ".epub"))
+            {
+               std::string sourceFile = module_context::createAliasedPath(previewDir()
+                   .completeChildPath("index.qmd"));
+               quartoNav = QuartoNavigate::navDoc(sourceFile, outputFile, jobId());
             }
 
             module_context::viewer(url,  minHeight, quartoNav);
@@ -347,10 +419,24 @@ private:
       }
    }
 
+   void refreshViewer()
+   {
+      module_context::scheduleDelayedWork(
+         boost::posix_time::milliseconds(1000),
+            []() {
+               json::Object data;
+               data["command"] = "viewerRefresh";
+               data["quiet"] = false;
+               ClientEvent event(client_events::kExecuteAppCommand, data);
+               module_context::enqueClientEvent(event);
+            },
+         false);
+   }
+
    std::string rstudioServerPreviewWindowUrl()
    {
       std::string url = url_ports::mapUrlPorts(viewerUrl());
-      if (isFileInSessionQuartoProject(previewFile_))
+      if (isFileInSessionQuartoProject(previewTarget_))
       {
          url = url + urlPathForQuartoProjectOutputFile(outputFile_);
       }
@@ -364,9 +450,12 @@ private:
 
    void readInputFileLines()
    {
-      Error error = core::readLinesFromFile(previewFile_, &previewFileLines_);
-      if (error)
-         LOG_ERROR(error);
+      if (!previewTarget_.isDirectory())
+      {
+         Error error = core::readLinesFromFile(previewTarget_, &previewFileLines_);
+         if (error)
+            LOG_ERROR(error);
+      }
    }
 
    int quartoSlideLevelFromOutput(const std::string& output)
@@ -383,16 +472,31 @@ private:
       }
    }
 
+   int quartoControlPortFromOutput(const std::string& output)
+   {
+      boost::regex controlPortRe("Preview service running \\((\\d+)\\)");
+      boost::smatch match;
+      if (regex_utils::search(output, match, controlPortRe))
+      {
+         return safe_convert::stringTo<int>(match[1], -1);
+      }
+      else
+      {
+         return -1;
+      }
+   }
+
 private:
-   FilePath previewFile_;
-   FileInfo projectFile_;
+   FilePath previewTarget_;
    std::vector<std::string> previewFileLines_;
    FilePath outputFile_;
    std::string allOutput_;
    std::string format_;
+   std::string renderToken_;
    json::Value editorState_;
    int slideLevel_;
    int port_;
+   int controlPort_;
    std::string path_;
    std::string viewerType_;
 };
@@ -401,16 +505,31 @@ private:
 boost::shared_ptr<QuartoPreview> s_pPreview;
 
 // stop any running preview
-void stopPreview()
+bool stopPreview()
 {
    if (s_pPreview)
    {
       // stop the job if it's running
       if (s_pPreview->isRunning())
+      {
+         // cooperative termination
+         SEXP result;
+         r::sexp::Protect rProtect;
+         r::exec::RFunction(".rs.quarto.terminatePreview",
+            safe_convert::numberToString(s_pPreview->controlPort())).call(&result, &rProtect);
+
+         // job manager termination
          s_pPreview->stop();
+      }
 
       // remove the job (will be replaced by a new quarto serve)
       s_pPreview->remove();
+
+      return true;
+   }
+   else
+   {
+      return false;
    }
 }
 
@@ -438,51 +557,50 @@ Error quartoPreviewRpc(const json::JsonRpcRequest& request,
       return error;
    FilePath previewFilePath = module_context::resolveAliasedPath(previewFile);
 
-   // first check to see if this file is in a book project (if so then fail and fall
-   // back on normal render)
-   bool canPreview = true;
-   FilePath quartoConfig = session::quarto::quartoProjectConfigFile(previewFilePath);
-   if (!quartoConfig.isEmpty())
+   // we can always preview
+   pResponse->setResult(true);
+
+   // if this is a full project render then do that
+   if (previewFilePath.isDirectory())
    {
-      std::string type;
-      readQuartoProjectConfig(quartoConfig, &type);
-      canPreview = type != session::quarto::kQuartoProjectBook;
+      return createPreview(previewFilePath, format, editorState);
    }
-
-   // set result
-   pResponse->setResult(canPreview);
-
-   if (canPreview)
+   else
    {
+      // see if there is a running preview w/ the same viewer type we can target
       if (s_pPreview && s_pPreview->isRunning() && (s_pPreview->port() > 0) &&
-          (s_pPreview->previewFile() == previewFilePath) &&
-          (s_pPreview->format() == format && !s_pPreview->hasModifiedProject()) &&
           (s_pPreview->viewerType() == prefs::userPrefs().rmdViewerType()))
       {
          json::Object eventJson;
          eventJson["id"] = s_pPreview->jobId();
          module_context::enqueClientEvent(ClientEvent(client_events::kJobsActivate, eventJson));
-         return s_pPreview->render(editorState);
+         // can we render in-place?
+         if  (s_pPreview->render(previewFilePath, format, editorState))
+         {
+           return Success();
+         }
+         // create a new preview
+         else
+         {
+           return createPreview(previewFilePath, format, editorState);
+         }
       }
+      // create a new preview
       else
       {
          return createPreview(previewFilePath, format, editorState);
       }
    }
-   else
-   {
-      return Success();
-   }
 }
 
-void onSourceDocRemoved(const std::string& id, const std::string& path)
+void onSourceDocRemoved(const std::string&, const std::string& path)
 {
    // resolve source database path
    FilePath resolvedPath = module_context::resolveAliasedPath(path);
 
    // if this is our active preview then terminate it
    if (s_pPreview && s_pPreview->isRunning() &&
-       (s_pPreview->previewFile() == resolvedPath))
+       (s_pPreview->previewTarget() == resolvedPath))
    {
       stopPreview();
    }

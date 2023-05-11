@@ -1,10 +1,10 @@
 /*
  * SessionCodeSearch.cpp
  *
- * Copyright (C) 2022 by RStudio, PBC
+ * Copyright (C) 2022 by Posit Software, PBC
  *
- * Unless you have received this program directly from RStudio pursuant
- * to the terms of a commercial license agreement with RStudio, then
+ * Unless you have received this program directly from Posit Software pursuant
+ * to the terms of a commercial license agreement with Posit Software, then
  * this program is licensed to you under the terms of version 3 of the
  * GNU Affero General Public License. This program is distributed WITHOUT
  * ANY EXPRESS OR IMPLIED WARRANTY, INCLUDING THOSE OF NON-INFRINGEMENT,
@@ -1430,18 +1430,21 @@ class SourceItem
 public:
    enum Type
    {
-      None      = 0,
-      Function  = 1,
-      Method    = 2,
-      Class     = 3,
-      Enum      = 4,
-      EnumValue = 5,
-      Namespace = 6,
-      Section   = 7,
-      Figure    = 8,
-      Table     = 9,
-      Math      = 10,
-      Test      = 11
+      None       = 0,
+      Function   = 1,
+      Method     = 2,
+      Class      = 3,
+      Enum       = 4,
+      EnumValue  = 5,
+      Namespace  = 6,
+      Section    = 7,
+      Figure     = 8,
+      Table      = 9,
+      Math       = 10,
+      Test       = 11, 
+      Roxygen    = 12, 
+      Macro      = 13, 
+      Package    = 14
    };
 
    SourceItem()
@@ -1513,32 +1516,23 @@ SourceItem fromRSourceItem(const r_util::RSourceItem& rSourceItem)
    case RSourceItem::Test:
       type = SourceItem::Test;
       break;
+   case RSourceItem::Roxygen:
+      type = SourceItem::Roxygen;
+      break;
+   case RSourceItem::Package:
+      type = SourceItem::Package;
+      break;
    case RSourceItem::None:
    default:
       type = SourceItem::None;
       break;
    }
 
-   // calculate extra info
-   std::string extraInfo;
-   if (rSourceItem.signature().size() > 0)
-   {
-      extraInfo.append("{");
-      for (std::size_t i = 0; i < rSourceItem.signature().size(); i++)
-      {
-         if (i > 0)
-            extraInfo.append(", ");
-         extraInfo.append(rSourceItem.signature()[i].type());
-      }
-
-      extraInfo.append("}");
-   }
-
    // return source item
    return SourceItem(type,
                      rSourceItem.name(),
                      "",
-                     extraInfo,
+                     rSourceItem.extraInfo(),
                      rSourceItem.context(),
                      rSourceItem.line(),
                      rSourceItem.column(), 
@@ -1574,6 +1568,9 @@ SourceItem fromCppDefinition(const clang::CppDefinition& cppDefinition)
       break;
    case CppMemberFunctionDefinition:
       type = SourceItem::Method;
+      break;
+   case CppMacroDefinition:
+      type = SourceItem::Macro;
       break;
    default:
       type = SourceItem::None;

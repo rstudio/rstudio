@@ -1,10 +1,10 @@
 /*
  * RSConnectPublishWizard.java
  *
- * Copyright (C) 2022 by RStudio, PBC
+ * Copyright (C) 2022 by Posit Software, PBC
  *
- * Unless you have received this program directly from RStudio pursuant
- * to the terms of a commercial license agreement with RStudio, then
+ * Unless you have received this program directly from Posit Software pursuant
+ * to the terms of a commercial license agreement with Posit Software, then
  * this program is licensed to you under the terms of version 3 of the
  * GNU Affero General Public License. This program is distributed WITHOUT
  * ANY EXPRESS OR IMPLIED WARRANTY, INCLUDING THOSE OF NON-INFRINGEMENT,
@@ -46,7 +46,8 @@ public class RSConnectPublishWizard
       {
          // a single doc, but it can't go to RPubs because RPubs is disabled,
          // or because the doc is not self-contained, or is a website
-         return new PublishReportSourcePage(constants_.publish(), constants_.publish(), null, input,
+         return new PublishReportSourcePage(constants_.publish(), constants_.publish(),
+               constants_.publishToRstudioConnect(),null, input,
                false);
       }
       else

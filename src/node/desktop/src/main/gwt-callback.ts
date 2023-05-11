@@ -1,10 +1,10 @@
 /*
  * gwt-callback.ts
  *
- * Copyright (C) 2022 by RStudio, PBC
+ * Copyright (C) 2022 by Posit Software, PBC
  *
- * Unless you have received this program directly from RStudio pursuant
- * to the terms of a commercial license agreement with RStudio, then
+ * Unless you have received this program directly from Posit Software pursuant
+ * to the terms of a commercial license agreement with Posit Software, then
  * this program is licensed to you under the terms of version 3 of the
  * GNU Affero General Public License. This program is distributed WITHOUT
  * ANY EXPRESS OR IMPLIED WARRANTY, INCLUDING THOSE OF NON-INFRINGEMENT,
@@ -13,9 +13,10 @@
  *
  */
 
-import { exec } from 'child_process';
+import { exec, execSync } from 'child_process';
 import {
   app,
+  nativeTheme,
   BrowserWindow,
   clipboard,
   dialog,
@@ -23,16 +24,17 @@ import {
   Rectangle,
   screen,
   shell,
-  webFrameMain
+  webFrameMain,
 } from 'electron';
 import { IpcMainEvent, MessageBoxOptions, OpenDialogOptions, SaveDialogOptions } from 'electron/main';
 import EventEmitter from 'events';
-import { existsSync, mkdtempSync, writeFileSync } from 'fs';
+import { existsSync, writeFileSync } from 'fs';
+import { platform, release } from 'os';
 import i18next from 'i18next';
 import { findFontsSync } from 'node-system-fonts';
 import path, { dirname } from 'path';
 import { pathToFileURL } from 'url';
-import { FilePath, normalizeSeparatorsNative } from '../core/file-path';
+import { FilePath, normalizeSeparatorsNative, tempFilename } from '../core/file-path';
 import { logger } from '../core/logger';
 import { isCentOS } from '../core/system';
 import { resolveTemplateVar } from '../core/template-filter';
@@ -45,10 +47,15 @@ import { MainWindow } from './main-window';
 import { openMinimalWindow } from './minimal-window';
 import { defaultFonts, ElectronDesktopOptions } from './preferences/electron-desktop-options';
 import {
-  filterFromQFileDialogFilter, findRepoRoot,
-  getAppPath, handleLocaleCookies, resolveAliasedPath
+  filterFromQFileDialogFilter,
+  findRepoRoot,
+  getAppPath,
+  handleLocaleCookies,
+  resolveAliasedPath,
 } from './utils';
 import { activateWindow, focusedWebContents } from './window-utils';
+import { getenv } from '../core/environment';
+import { safeError } from '../core/err';
 
 export enum PendingQuit {
   PendingQuitNone,
@@ -87,23 +94,35 @@ export class GwtCallback extends EventEmitter {
   // Info used by the "session failed to load" error page (error.html)
   errorPageData = new Map<string, string>();
 
-  // https://github.com/foliojs/font-manager/issues/15
-  // the fork did not correct usage of Fontconfig
-  // getAvailableFontsSync() incorrectly sets the monospace property
-  monospaceFonts = [
-    ...new Set<string>(
-      findFontsSync({ monospace: true }).map((fd) => {
-        return process.platform === 'darwin' ? fd.postscriptName : fd.family;
-      }),
-    ),
-  ].sort((a, b) => a.localeCompare(b));
-  proportionalFonts = [...new Set<string>(findFontsSync({ monospace: false }).map((fd) => fd.family))].sort((a, b) =>
-    a.localeCompare(b),
-  );
+  monospaceFonts: string[] = [];
+  proportionalFonts: string[] = [];
 
   constructor(public mainWindow: MainWindow, public isRemoteDesktop: boolean) {
     super();
     this.owners.add(mainWindow);
+
+    // https://github.com/foliojs/font-manager/issues/15
+    // the fork did not correct usage of Fontconfig
+    // getAvailableFontsSync() incorrectly sets the monospace property
+    try {
+      const queryFonts = getenv('RSTUDIO_QUERY_FONTS');
+      if (queryFonts !== '0' && queryFonts.toLowerCase() !== 'false') {
+        this.monospaceFonts = [
+          ...new Set<string>(
+            findFontsSync({ monospace: true }).map((fd) => {
+              return process.platform === 'darwin' ? fd.postscriptName : fd.family;
+            }),
+          ),
+        ].sort((a, b) => a.localeCompare(b));
+        this.proportionalFonts = [
+          ...new Set<string>(
+            findFontsSync({ monospace: false }).map((fd) => 
+              fd.family))].sort((a, b) => a.localeCompare(b),
+        );
+      }
+    } catch (err: unknown) {
+      logger().logError(safeError(err));
+    }
 
     ipcMain.on('desktop_browse_url', (event, url: string) => {
       // TODO: review if we need additional validation of URL
@@ -124,7 +143,7 @@ export class GwtCallback extends EventEmitter {
         console.log('desktop_get_open_file_name');
         const openDialogOptions: OpenDialogOptions = {
           title: caption,
-          defaultPath: resolveAliasedPath(dir),
+          defaultPath: normalizeSeparatorsNative(resolveAliasedPath(dir)),
           buttonLabel: label,
         };
         openDialogOptions.properties = ['openFile'];
@@ -163,12 +182,12 @@ export class GwtCallback extends EventEmitter {
         forceDefaultExtension: boolean,
         focusOwner: boolean,
       ) => {
-        console.log('desktop_get_save_file_name');
         const saveDialogOptions: SaveDialogOptions = {
           title: caption,
-          defaultPath: resolveAliasedPath(dir),
+          defaultPath: normalizeSeparatorsNative(resolveAliasedPath(dir)),
           buttonLabel: label,
         };
+        logger().logDebug(`Using path: ${saveDialogOptions.defaultPath}`);
 
         if (defaultExtension) {
           saveDialogOptions['filters'] = [{ name: '', extensions: [defaultExtension.replace('.', '')] }];
@@ -189,10 +208,9 @@ export class GwtCallback extends EventEmitter {
     ipcMain.handle(
       'desktop_get_existing_directory',
       async (event, caption: string, label: string, dir: string, focusOwner: boolean) => {
-        console.log('desktop_get_existing_directory');
         const openDialogOptions: OpenDialogOptions = {
           title: caption,
-          defaultPath: resolveAliasedPath(dir),
+          defaultPath: normalizeSeparatorsNative(resolveAliasedPath(dir)),
           buttonLabel: label,
           properties: ['openDirectory', 'createDirectory', 'promptToCreate'],
         };
@@ -273,7 +291,7 @@ export class GwtCallback extends EventEmitter {
     // return the path to that file.
     ipcMain.handle('desktop_get_clipboard_image', () => {
       // if we don't have any image, bail
-      if (!clipboard.has('image/png')) {
+      if (!clipboard.availableFormats().includes('image/png')) {
         return '';
       }
 
@@ -281,11 +299,15 @@ export class GwtCallback extends EventEmitter {
       const image = clipboard.readImage('clipboard');
       const pngData = image.toPNG();
 
-      // write to file
       const scratchDir = appState().scratchTempDir(new FilePath('/tmp'));
-      const prefix = path.join(scratchDir.getAbsolutePath(), 'rstudio-clipboard', 'image-');
-      const tempdir = mkdtempSync(prefix);
-      const pngPath = path.join(tempdir, 'image.png');
+      const tempPathName = path.join(scratchDir.getAbsolutePath(), 'rstudio-clipboard');
+
+      const tempPath = new FilePath(tempPathName);
+      tempPath.ensureDirectorySync();
+
+      const pngPath = path.join(tempPathName, tempFilename('png', 'image').getFilename());
+
+      // write image to file
       writeFileSync(pngPath, pngData);
 
       // return file path
@@ -343,7 +365,7 @@ export class GwtCallback extends EventEmitter {
         console.log('error:', value);
         logger().logErrorMessage(value);
       });
-    };
+    }
 
     ipcMain.on('desktop_show_file', (event, file: string) => {
       showFileInSystemViewer(file);
@@ -382,6 +404,7 @@ export class GwtCallback extends EventEmitter {
       // discover available R installations
       const rInstalls = findRInstallationsWin32();
       if (rInstalls.length === 0) {
+        logger().logErrorMessage('No R installations found via registry or common R install locations.');
         return '';
       }
 
@@ -414,7 +437,7 @@ export class GwtCallback extends EventEmitter {
 
     ipcMain.on(
       'desktop_open_minimal_window',
-      (event: IpcMainEvent, name: string, url: string, width: number, height: number) => {
+      async (event: IpcMainEvent, name: string, url: string, width: number, height: number) => {
         // handle some internal chrome urls specially
         if (url === 'chrome://gpu' || url === 'chrome://accessibility') {
           const window = new BrowserWindow({
@@ -479,6 +502,7 @@ export class GwtCallback extends EventEmitter {
           name: name,
           allowExternalNavigate: allowExternalNavigate,
           showToolbar: showToolbar,
+          mainWindow: this.mainWindow,
         });
       },
     );
@@ -498,8 +522,32 @@ export class GwtCallback extends EventEmitter {
       },
     );
 
+    ipcMain.handle('desktop_copy_image_at_xy_to_clipboard', (_event, x: number, y: number) => {
+      const focusedWindow = BrowserWindow.getFocusedWindow();
+      if (focusedWindow?.webContents) {
+        focusedWindow.webContents.copyImageAt(x, y);
+      } else {
+        logger().logError(`Failed to copy image at x: ${x}, y: ${y} to clipboard`);
+      }
+    });
+
     ipcMain.on('desktop_export_page_region_to_file', (event, targetPath, format, left, top, width, height) => {
-      GwtCallback.unimpl('desktop_export_page_region_to_file');
+      const rect: Rectangle = { x: left, y: top, width, height };
+      targetPath = resolveAliasedPath(targetPath);
+      this.mainWindow.window
+        .capturePage(rect)
+        .then((image) => {
+          let buffer: Buffer;
+          if (format == 'jpeg') {
+            buffer = image.toJPEG(100);
+          } else {
+            buffer = image.toPNG();
+          }
+          writeFileSync(targetPath, buffer);
+        })
+        .catch((error) => {
+          logger().logError(error);
+        });
     });
 
     ipcMain.handle('desktop_supports_clipboard_metafile', () => {
@@ -509,12 +557,22 @@ export class GwtCallback extends EventEmitter {
     ipcMain.handle(
       'desktop_show_message_box',
       async (event, type, caption, message, buttons, defaultButton, cancelButton) => {
-        const openDialogOptions: MessageBoxOptions = {
-          type: this.convertMessageBoxType(type),
-          title: caption,
-          message: message,
-          buttons: this.convertButtons(buttons),
-        };
+        let openDialogOptions: MessageBoxOptions;
+        if (process.platform === 'darwin') {
+          openDialogOptions = {
+            type: this.convertMessageBoxType(type),
+            message: caption,
+            detail: message,
+            buttons: this.convertButtons(buttons),
+          };
+        } else {
+          openDialogOptions = {
+            type: this.convertMessageBoxType(type),
+            title: caption,
+            message: message,
+            buttons: this.convertButtons(buttons),
+          };
+        }
 
         const focusedWindow = BrowserWindow.getFocusedWindow();
         if (focusedWindow) {
@@ -649,7 +707,9 @@ export class GwtCallback extends EventEmitter {
 
     ipcMain.on('desktop_change_title_bar_color', (event, red, green, blue) => {});
 
-    ipcMain.on('desktop_sync_to_editor_theme', (event, isDark) => {});
+    ipcMain.on('desktop_sync_to_editor_theme', (event, isDark: boolean) => {
+      nativeTheme.themeSource = isDark ? 'dark' : 'light';
+    });
 
     ipcMain.handle('desktop_get_enable_accessibility', () => {
       return ElectronDesktopOptions().accessibility();
@@ -657,6 +717,10 @@ export class GwtCallback extends EventEmitter {
 
     ipcMain.on('desktop_set_enable_accessibility', (event, enable) => {
       ElectronDesktopOptions().setAccessibility(enable);
+    });
+
+    ipcMain.on('desktop_set_disable_renderer_accessibility', (event, disable) => {
+      ElectronDesktopOptions().setDisableRendererAccessibility(disable);
     });
 
     ipcMain.handle('desktop_get_ignore_gpu_exclusion_list', (event, ignore) => {
@@ -675,26 +739,12 @@ export class GwtCallback extends EventEmitter {
       ElectronDesktopOptions().setUseGpuDriverBugWorkarounds(!disable);
     });
 
-    ipcMain.on('desktop_show_license_dialog', () => {
-      GwtCallback.unimpl('desktop_show_license_dialog');
-    });
-
     ipcMain.on('desktop_show_session_server_options_dialog', () => {
       GwtCallback.unimpl('desktop_show_session_server_options_dialog');
     });
 
     ipcMain.handle('desktop_get_init_messages', () => {
       return '';
-    });
-
-    ipcMain.handle('desktop_get_license_status_message', () => {
-      GwtCallback.unimpl('desktop_get_license_status_messages');
-      return '';
-    });
-
-    ipcMain.handle('desktop_allow_product_usage', () => {
-      GwtCallback.unimpl('desktop_allow_product_usage');
-      return true;
     });
 
     ipcMain.handle('desktop_get_desktop_synctex_viewer', () => {
@@ -745,14 +795,18 @@ export class GwtCallback extends EventEmitter {
     });
 
     ipcMain.on('desktop_set_tutorial_url', (event, url) => {
-      GwtCallback.unimpl('desktop_set_tutorial_url');
+      this.getSender('desktop_set_tutorial_url', event.processId, event.frameId).setTutorialUrl(url);
     });
 
     ipcMain.on('desktop_set_viewer_url', (event, url) => {
       this.getSender('desktop_set_viewer_url', event.processId, event.frameId).setViewerUrl(url);
     });
 
-    ipcMain.on('desktop_reload_viewer_zoom_window', (event, url) => {
+    ipcMain.on('desktop_set_presentation_url', (event, url) => {
+      this.getSender('desktop_set_presentation_url', event.processId, event.frameId).setPresentationUrl(url);
+    });
+
+    ipcMain.on('desktop_reload_viewer_zoom_window', (_event, url) => {
       const browser = appState().windowTracker.getWindow('_rstudio_viewer_zoom');
       if (browser) {
         void browser.window.webContents.loadURL(url);
@@ -760,7 +814,11 @@ export class GwtCallback extends EventEmitter {
     });
 
     ipcMain.on('desktop_set_shiny_dialog_url', (event, url) => {
-      GwtCallback.unimpl('desktop_set_shiny_dialog_url');
+      this.getSender('desktop_set_shiny_dialog_url', event.processId, event.frameId).setShinyDialogUrl(url);
+    });
+
+    ipcMain.handle('desktop_allow_navigation', (event, url) => {
+      return this.getSender('desktop_allow_navigation', event.processId, event.frameId).allowNavigation(url);
     });
 
     ipcMain.handle('desktop_is_macos', () => {
@@ -801,6 +859,10 @@ export class GwtCallback extends EventEmitter {
 
     ipcMain.on('desktop_on_session_quit', () => {
       this.emit(GwtCallback.SESSION_QUIT);
+    });
+
+    ipcMain.on('desktop_stop_main_thread', () => {
+      process.crash();
     });
 
     ipcMain.handle('desktop_get_session_server', () => {
@@ -868,8 +930,39 @@ export class GwtCallback extends EventEmitter {
     });
 
     ipcMain.handle('desktop_startup_error_info', async (event, varName: string) => {
+      if (varName === 'launch_failed') {
+        this.addMacOSVersionError();
+      }
       return resolveTemplateVar(varName, this.errorPageData);
     });
+
+    // pro-only license start
+
+    // pro-only license end
+  }
+
+  addMacOSVersionError(): void {
+    if (platform() === 'darwin') {
+      const release_major = parseInt(release().substring(0, release().indexOf('.')));
+      // macOS 11.0 uses darwin 20.0.0
+      if (release_major < 20) {
+        const versionProductName = execSync('sw_vers -productName').toString().trim();
+        const versionProductVersion = execSync('sw_vers -productVersion').toString().trim();
+        let versionError =
+          'You are using an unsupported operating system: ' +
+          versionProductName +
+          ' ' +
+          versionProductVersion +
+          '. RStudio requires macOS 11 (Big Sur) or higher.';
+        if (this.errorPageData.get('process_error')) {
+          const launch_failed = this.errorPageData.get('process_error');
+          if (!launch_failed?.includes('No error available')) {
+            versionError += '\n\n' + launch_failed;
+          }
+        }
+        this.errorPageData.set('process_error', versionError);
+      }
+    }
   }
 
   setRemoteDesktop(isRemoteDesktop: boolean): void {
@@ -950,8 +1043,21 @@ export class GwtCallback extends EventEmitter {
     const frame = webFrameMain.fromId(processId, frameId);
     if (frame) {
       for (const win of this.owners) {
-        if (win.window.webContents.mainFrame === frame) {
-          return win;
+        try {
+          // Some owners in this.owners may not have been unregistered, but have
+          // since been closed/destroyed. If that's the case for an owner, its
+          // WebContents (win.window.webContents) will have been destoyed.
+          // As a result, when we iterate through owners and hit one that has
+          // been destroyed, we get: "TypeError: Object has been destroyed".
+          // Then, we error out and cause a satellite window to have blank contents.
+          // See https://github.com/rstudio/rstudio/issues/12468 and
+          //     https://github.com/rstudio/rstudio/issues/12569
+          // To avoid failing, we catch the error and move on to check the next owner.
+          if (win.window.webContents.mainFrame === frame) {
+            return win;
+          }
+        } catch (error: unknown) {
+          logger().logDebug('Window WebContents has been destroyed. Skipping this window.');
         }
       }
     }

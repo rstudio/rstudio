@@ -1,10 +1,10 @@
 /*
  * SessionBuildEnvironment.cpp
  *
- * Copyright (C) 2022 by RStudio, PBC
+ * Copyright (C) 2022 by Posit Software, PBC
  *
- * Unless you have received this program directly from RStudio pursuant
- * to the terms of a commercial license agreement with RStudio, then
+ * Unless you have received this program directly from Posit Software pursuant
+ * to the terms of a commercial license agreement with Posit Software, then
  * this program is licensed to you under the terms of version 3 of the
  * GNU Affero General Public License. This program is distributed WITHOUT
  * ANY EXPRESS OR IMPLIED WARRANTY, INCLUDING THOSE OF NON-INFRINGEMENT,
@@ -29,6 +29,7 @@
 
 #include <r/RExec.hpp>
 #include <r/RVersionInfo.hpp>
+#include <r/RUtil.hpp>
 
 #include <session/SessionModuleContext.hpp>
 
@@ -144,8 +145,7 @@ bool doAddRtoolsToPathIfNecessary(T* pTarget,
 
     // enumerate them to see if we have a compatible version
     // (go in reverse order for most recent first)
-    std::vector<r_util::RToolsInfo>::const_reverse_iterator it = rTools.rbegin();
-    for ( ; it != rTools.rend(); ++it)
+    for (auto it = rTools.rbegin(); it != rTools.rend(); ++it)
     {
        if (module_context::isRtoolsCompatible(*it))
        {
@@ -214,7 +214,7 @@ bool addRtoolsToPathIfNecessary(std::string* pPath,
    {
       for (const core::system::Option& var : environmentVars)
       {
-         core::system::setenv(var.first, var.second);
+         r::util::setenv(var.first, var.second);
       }
       return true;
    }

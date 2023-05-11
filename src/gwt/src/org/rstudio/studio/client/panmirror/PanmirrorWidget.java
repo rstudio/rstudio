@@ -1,10 +1,10 @@
 /*
  * PanmirrorEditorWidget.java
  *
- * Copyright (C) 2022 by RStudio, PBC
+ * Copyright (C) 2022 by Posit Software, PBC
  *
- * Unless you have received this program directly from RStudio pursuant
- * to the terms of a commercial license agreement with RStudio, then
+ * Unless you have received this program directly from Posit Software pursuant
+ * to the terms of a commercial license agreement with Posit Software, then
  * this program is licensed to you under the terms of version 3 of the
  * GNU Affero General Public License. This program is distributed WITHOUT
  * ANY EXPRESS OR IMPLIED WARRANTY, INCLUDING THOSE OF NON-INFRINGEMENT,
@@ -20,7 +20,6 @@ import java.util.ArrayList;
 
 import org.rstudio.core.client.CommandWithArg;
 import org.rstudio.core.client.DebouncedCommand;
-import org.rstudio.core.client.ExternalJavaScriptLoader;
 import org.rstudio.core.client.HandlerRegistrations;
 import org.rstudio.core.client.events.MouseDragHandler;
 import org.rstudio.core.client.jsinterop.JsVoidFunction;
@@ -86,9 +85,6 @@ import elemental2.core.JsObject;
 import elemental2.promise.Promise;
 import elemental2.promise.Promise.PromiseExecutorCallbackFn.RejectCallbackFn;
 import elemental2.promise.Promise.PromiseExecutorCallbackFn.ResolveCallbackFn;
-import jsinterop.annotations.JsOverlay;
-import jsinterop.annotations.JsPackage;
-import jsinterop.annotations.JsType;
 import jsinterop.base.Js;
 
 
@@ -614,17 +610,10 @@ public class PanmirrorWidget extends DockLayoutPanel implements
    }
    
    public void activateDevTools() 
-   { 
-      ProseMirrorDevTools.load(() -> {
-         editor_.enableDevTools(ProseMirrorDevTools.applyDevTools);
-      });
-   }
-   
-   public boolean devToolsLoaded()
    {
-      return ProseMirrorDevTools.isLoaded();
+      editor_.enableDevTools();
    }
-   
+
    @Override
    public HandlerRegistration addPanmirrorUpdatedHandler(PanmirrorUpdatedEvent.Handler handler)
    {
@@ -752,30 +741,6 @@ public class PanmirrorWidget extends DockLayoutPanel implements
    private final HandlerRegistrations registrations_ = new HandlerRegistrations();
    private final ArrayList<JsVoidFunction> editorEventUnsubscribe_ = new ArrayList<>();
 }
-
-
-@JsType(isNative = true, namespace = JsPackage.GLOBAL)
-class ProseMirrorDevTools
-{
-   @JsOverlay
-   public static void load(ExternalJavaScriptLoader.Callback onLoaded) 
-   {    
-      devtoolsLoader_.addCallback(onLoaded);
-   }
-   
-   @JsOverlay
-   public static boolean isLoaded() 
-   {
-      return devtoolsLoader_.isLoaded();
-   }
-   
-   public static JsObject applyDevTools;
- 
-   @JsOverlay
-   private static final ExternalJavaScriptLoader devtoolsLoader_ =
-     new ExternalJavaScriptLoader("js/panmirror/prosemirror-dev-tools.min.js");
-}
-
 
 
 

@@ -142,6 +142,18 @@
       ],
       "session": [
          {
+            "name": "session-connections-block-suspend",
+            "memberName": "sessionConnectionsBlockSuspend_",
+            "type": "bool",
+            "description": "Whether or not an active database connection should block attempts to suspend the session after timeout."
+         },
+         {
+            "name": "session-external-pointers-block-suspend",
+            "memberName": "sessionExternalPointersBlockSuspend_",
+            "type": "bool",
+            "description": "Whether or not R objects containing external pointers should block attempts to suspend the session after timeout."
+         },
+         {
             "name": {"constant": "kTimeoutSessionOption", "value": "session-timeout-minutes"},
             "type": "int",
             "memberName": "timeoutMinutes_",
@@ -249,7 +261,7 @@
             "name": "default-rsconnect-server",
             "type": "string",
             "memberName": "defaultRSConnectServer_",
-            "description": "Specifies the default RStudio Connect server URL."
+            "description": "Specifies the default Posit Connect server URL."
          },
          {
             "name": {"constant": "kTerminalPortOption", "value": "terminal-port"},
@@ -561,7 +573,7 @@
             "name": "r-compatible-graphics-engine-version",
             "type": "int",
             "memberName": "rCompatibleGraphicsEngineVersion_",
-            "defaultValue": 15,
+            "defaultValue": 16,
             "description": "Specifies the maximum graphics engine version that this version of RStudio is compatible with."
          },
          {

@@ -1,10 +1,10 @@
 /*
  * DefinitionIndex.cpp
  *
- * Copyright (C) 2022 by RStudio, PBC
+ * Copyright (C) 2022 by Posit Software, PBC
  *
- * Unless you have received this program directly from RStudio pursuant
- * to the terms of a commercial license agreement with RStudio, then
+ * Unless you have received this program directly from Posit Software pursuant
+ * to the terms of a commercial license agreement with Posit Software, then
  * this program is licensed to you under the terms of version 3 of the
  * GNU Affero General Public License. This program is distributed WITHOUT
  * ANY EXPRESS OR IMPLIED WARRANTY, INCLUDING THOSE OF NON-INFRINGEMENT,
@@ -54,6 +54,12 @@ struct CppDefinitions
    std::deque<CppDefinition> definitions;
 };
 
+bool isHeaderGuard(const std::string& name)
+{
+   static boost::regex kHeaderGuardRegex("_h(pp)?_*$", boost::regex::icase);
+   return boost::regex_search(name, kHeaderGuardRegex);
+}
+
 // store definitions by file
 typedef std::map<std::string,CppDefinitions> DefinitionsByFile;
 DefinitionsByFile s_definitionsByFile;
@@ -66,7 +72,12 @@ bool insertDefinition(const CppDefinition& definition,
    return true;
 }
 
-typedef std::pair<bool, boost::function<bool(const CppDefinition&)>> DefinitionVisitor;
+struct DefinitionVisitor
+{
+   bool hidden;
+   int index;
+   boost::function<bool(const CppDefinition&)> visit;
+};
 
 CXChildVisitResult cursorVisitor(CXCursor cxCursor,
                                  CXCursor,
@@ -83,7 +94,8 @@ CXChildVisitResult cursorVisitor(CXCursor cxCursor,
 
    // ensure it's a definition with linkage or a typedef
    if ((!cursor.isDefinition() || !cursor.hasLinkage()) &&
-       cursorKind != CXCursor_TypedefDecl)
+       cursorKind != CXCursor_TypedefDecl &&
+       cursorKind != CXCursor_MacroDefinition)
    {
       return CXChildVisit_Continue;
    }
@@ -118,6 +130,9 @@ CXChildVisitResult cursorVisitor(CXCursor cxCursor,
       case CXCursor_TypedefDecl:
          kind = CppTypedefDefinition;
          break;
+      case CXCursor_MacroDefinition:
+         kind = CppMacroDefinition;
+         break;
       default:
          kind = CppInvalidDefinition;
          break;
@@ -130,6 +145,15 @@ CXChildVisitResult cursorVisitor(CXCursor cxCursor,
    // build name (strip trailing parens)
    std::string name = cursor.displayName();
    boost::algorithm::replace_last(name, "()", "");
+
+   DefinitionVisitor& visitor = *((DefinitionVisitor*)clientData);
+
+   // skip the first macro if it looks like an header guard
+   if (kind == CppMacroDefinition && visitor.index == 0 && isHeaderGuard(name))
+   {
+      visitor.index++;
+      return CXChildVisit_Continue;
+   }
 
    // empty display name for a namespace === anonymous
    if ((kind == CppNamespaceDefinition) && name.empty())
@@ -145,20 +169,19 @@ CXChildVisitResult cursorVisitor(CXCursor cxCursor,
       parentName = parent.displayName();
    }
 
-   DefinitionVisitor& visitor = *((DefinitionVisitor*)clientData);
-
    // create the definition
    CppDefinition definition(cursor.getUSR(),
                             kind,
                             parentName,
                             name,
-                            visitor.first,
+                            visitor.hidden,
                             cursor.getSourceLocation().getSpellingLocation());
+   visitor.index++;
 
    // yield the definition if it's not a namespace (break if requested)
    if (kind != CppNamespaceDefinition)
    {
-      if (!visitor.second(definition))
+      if (!visitor.visit(definition))
          return CXChildVisit_Break;
    }
 
@@ -232,8 +255,7 @@ void fileChangeHandler(const core::system::FileChangeEvent& event)
                                argsArray.args(),
                                gsl::narrow_cast<int>(argsArray.argCount()),
                                nullptr, 0, // no unsaved files
-                               CXTranslationUnit_None |
-                               CXTranslationUnit_Incomplete);
+                               parseTranslationUnitOptions());
 
 
          // create definitions and wire visitor to it
@@ -243,10 +265,11 @@ void fileChangeHandler(const core::system::FileChangeEvent& event)
          definitions.hidden = isGeneratedFile(FilePath(definitions.file));
          s_definitionsByFile[file] = definitions;
 
-         DefinitionVisitor visitor = std::make_pair(
+         DefinitionVisitor visitor = {
             definitions.hidden,
+            0,
             boost::bind(insertDefinition, _1, &s_definitionsByFile[file])
-         );
+         };
          libclang::clang().visitChildren(
               libclang::clang().getTranslationUnitCursor(tu),
               cursorVisitor,
@@ -291,6 +314,9 @@ std::ostream& operator<<(std::ostream& os, const CppDefinition& definition)
          break;
       case CppTypedefDefinition:
          kindStr = "T";
+         break;
+      case CppMacroDefinition:
+         kindStr = "#";
          break;
       default:
          kindStr = " ";
@@ -355,13 +381,13 @@ FileLocation findDefinitionLocation(const FileLocation& location)
       {
          // search for the definition
          CppDefinition def;
-         DefinitionVisitor visitor = std::make_pair(
+         DefinitionVisitor visitor = {
             // hidden: does not matter. This CppDefinition is only used for location
             //         can consider that the definition is not hidden
             false, 
+            0,
             boost::bind(findUSR, USR, _1, &def)
-         );
-
+         };
          // visit the cursors
          libclang::clang().visitChildren(
               libclang::clang().getTranslationUnitCursor(
@@ -614,10 +640,11 @@ void searchDefinitions(const std::string& term,
       bool hidden = isGeneratedFile(FilePath(filename));
       
       // search for matching definitions
-      DefinitionVisitor visitor = std::make_pair(
+      DefinitionVisitor visitor = {
          hidden, 
+         0,
          boost::bind(insertMatching, term, pattern, _1, pDefinitions)
-      );
+      };
 
       // visit the cursors
       libclang::clang().visitChildren(

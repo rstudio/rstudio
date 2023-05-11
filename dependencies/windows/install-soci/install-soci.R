@@ -41,6 +41,7 @@ postgresql_zip <- file.path(owd, "win-postgresql.zip")
 postgresql_zip_url <- "https://rstudio-buildtools.s3.amazonaws.com/win-postgresql.zip"
 
 downloadAndUnzip <- function(outputFile, extractDir, url) {
+   
    # download zip if we don't already have it
    if (!file.exists(outputFile)) {
       section("Downloading '%s' from '%s'", outputFile, url)
@@ -55,8 +56,9 @@ downloadAndUnzip <- function(outputFile, extractDir, url) {
 }
 
 if (!file.exists(normalizePath(file.path(soci_build_dir, "x64\\lib\\Release\\libsoci_core_4_0.lib"), winslash = "\\", mustWork = FALSE))) {
+   
    # download and install sqlite source
-   dir.create(sqlite_dir)
+   dir.create(sqlite_dir, recursive = TRUE, showWarnings = FALSE)
    downloadAndUnzip(sqlite_header_zip, sqlite_dir, sqlite_header_zip_url)
 
    # build SQLite static library
@@ -69,17 +71,17 @@ if (!file.exists(normalizePath(file.path(soci_build_dir, "x64\\lib\\Release\\lib
    if (!file.exists(soci_base_name)) {
       section("Downloading SOCI sources")
       download(soci_url, destfile = soci_archive)
-	  section("Unzipping SOCI sources")
-	  exec("7z.exe", "-aoa", "e", soci_archive)
-	  exec("7z.exe", "-aoa", "x", soci_tar)
+      section("Unzipping SOCI sources")
+      exec("7z.exe", "-aoa", "e", soci_archive)
+      exec("7z.exe", "-aoa", "x", soci_tar)
    }
 
    # create build directories
    setwd(soci_dir)
-   dir.create("build")
+   dir.create("build", showWarnings = FALSE, recursive = TRUE)
    setwd("build")
-   dir.create("x86")
-   dir.create("x64")
+   dir.create("x86", showWarnings = FALSE)
+   dir.create("x64", showWarnings = FALSE)
 
    # run CMAKE for each platform (x86, x64) and each configuration (Debug, Release)
    setwd("x86")
@@ -98,14 +100,24 @@ if (!file.exists(normalizePath(file.path(soci_build_dir, "x64\\lib\\Release\\lib
                         "-DPOSTGRESQL_INCLUDE_DIR=\"", file.path(postgresql_dir, "include"), "\" ",
                         "-DPOSTGRESQL_LIBRARY=\"", file.path(postgresql_dir, "lib/x86/Debug/libpq.lib"), "\" ",
                         "..\\..")
+   
+   # remove rtools from path, as otherwise CMake may find and try to use the
+   # standard library headers from the Rtools installation and barf
+   path <- strsplit(Sys.getenv("PATH"), ";")[[1]]
+   path <- grep("rtools", path, invert = TRUE, value = TRUE)
+   Sys.setenv(PATH = paste(path, collapse = ";"))
+   
+   # x86 debug build
    exec("cmake", cmake_args)
    exec("cmake", "--build . --config Debug")
 
+   # x86 release build
    cmake_args <- gsub("sqlite3-debug-x86.lib", "sqlite3-release-x86.lib", cmake_args)
    cmake_args <- gsub("lib/x86/Debug/libpq.lib", "lib/x86/Release/libpq.lib", cmake_args)
    exec("cmake", cmake_args)
    exec("cmake", "--build . --config Release")
 
+   # x64 debug build
    setwd(normalizePath("..\\x64", winslash = "\\"))
    cmake_args <- gsub("-A Win32", "-A x64", cmake_args)
    cmake_args <- gsub("sqlite3-release-x86.lib", "sqlite3-debug-x64.lib", cmake_args)
@@ -113,10 +125,12 @@ if (!file.exists(normalizePath(file.path(soci_build_dir, "x64\\lib\\Release\\lib
    exec("cmake", cmake_args)
    exec("cmake", "--build . --config Debug")
 
+   # x64 release build
    cmake_args <- gsub("sqlite3-debug-x64.lib", "sqlite3-release-x64.lib", cmake_args)
    cmake_args <- gsub("lib/x64/Debug/libpq.lib", "lib/x64/Release/libpq.lib", cmake_args)
    exec("cmake", cmake_args)
    exec("cmake", "--build . --config Release")
+   
 }
 
 progress("SOCI installed successfully!")

@@ -1,10 +1,10 @@
 /*
  * RSAccountConnector.java
  *
- * Copyright (C) 2022 by RStudio, PBC
+ * Copyright (C) 2022 by Posit Software, PBC
  *
- * Unless you have received this program directly from RStudio pursuant
- * to the terms of a commercial license agreement with RStudio, then
+ * Unless you have received this program directly from Posit Software pursuant
+ * to the terms of a commercial license agreement with Posit Software, then
  * this program is licensed to you under the terms of version 3 of the
  * GNU Affero General Public License. This program is distributed WITHOUT
  * ANY EXPRESS OR IMPLIED WARRANTY, INCLUDING THOSE OF NON-INFRINGEMENT,
@@ -100,7 +100,8 @@ public class RSAccountConnector implements EnableRStudioConnectUIEvent.Handler
          boolean withCloudOption,
          final OperationWithInput<Boolean> onCompleted)
    {
-      if (pUserState_.get().enableRsconnectPublishUi().getGlobalValue())
+      if (pUserState_.get().enableRsconnectPublishUi().getGlobalValue() ||
+         pUserPrefs_.get().enableCloudPublishUi().getGlobalValue())
       {
          showAccountTypeWizard(forFirstAccount, withCloudOption, onCompleted);
       }
@@ -180,8 +181,15 @@ public class RSAccountConnector implements EnableRStudioConnectUIEvent.Handler
    @Override
    public void onEnableRStudioConnectUI(EnableRStudioConnectUIEvent event)
    {
-      pUserState_.get().enableRsconnectPublishUi().setGlobalValue(event.getEnable());
+      pUserState_.get().enableRsconnectPublishUi().setGlobalValue(event.getConnectEnable());
       pUserState_.get().writeState();
+   }
+
+   @Override
+   public void onEnablePositCloudUI(EnableRStudioConnectUIEvent event)
+   {
+      pUserPrefs_.get().enableCloudPublishUi().setGlobalValue(event.getCloudEnable());
+      pUserPrefs_.get().writeUserPrefs();
    }
 
    // Private methods --------------------------------------------------------
@@ -225,6 +233,8 @@ public class RSAccountConnector implements EnableRStudioConnectUIEvent.Handler
             forFirstAccount,
             withCloudOption &&
                SessionUtils.showExternalPublishUi(session_, pUserState_.get()),
+            pUserState_.get().enableRsconnectPublishUi().getGlobalValue(),
+            pUserPrefs_.get().enableCloudPublishUi().getGlobalValue(),
             new ProgressOperationWithInput<NewRSConnectAccountResult>()
       {
          @Override

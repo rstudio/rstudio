@@ -1,10 +1,10 @@
 /*
  * TextEditingTargetLintSource.java
  *
- * Copyright (C) 2022 by RStudio, PBC
+ * Copyright (C) 2022 by Posit Software, PBC
  *
- * Unless you have received this program directly from RStudio pursuant
- * to the terms of a commercial license agreement with RStudio, then
+ * Unless you have received this program directly from Posit Software pursuant
+ * to the terms of a commercial license agreement with Posit Software, then
  * this program is licensed to you under the terms of version 3 of the
  * GNU Affero General Public License. This program is distributed WITHOUT
  * ANY EXPRESS OR IMPLIED WARRANTY, INCLUDING THOSE OF NON-INFRINGEMENT,
@@ -18,6 +18,8 @@ import com.google.gwt.core.client.JsArray;
 import com.google.gwt.dom.client.DivElement;
 import com.google.gwt.dom.client.Document;
 import com.google.gwt.user.client.Command;
+
+import org.rstudio.core.client.StringUtil;
 import org.rstudio.core.client.VirtualConsole;
 import org.rstudio.studio.client.RStudioGinjector;
 import org.rstudio.studio.client.common.filetypes.TextFileType;
@@ -98,14 +100,17 @@ public class TextEditingTargetLintSource implements LintSource
       {
          for (int i = 0; i < lint.length(); i++) {
             LintItem lintItem = lint.get(i);
-            DivElement element = Document.get().createDivElement();
-            VirtualConsole vc = RStudioGinjector.INSTANCE.getVirtualConsoleFactory().create(element);
 
-            vc.setPreserveHTML(true);
-            vc.submit(lintItem.getText());
-            String renderedText = element.getInnerHTML();
+            if (StringUtil.isNullOrEmpty(lintItem.getHtml()))
+            {
+               DivElement element = Document.get().createDivElement();
+               VirtualConsole vc = RStudioGinjector.INSTANCE.getVirtualConsoleFactory().create(element);
 
-            lintItem.setText(renderedText);
+               vc.setPreserveHTML(true);
+               vc.submit(lintItem.getText());
+               String renderedText = element.getInnerHTML();
+               lintItem.setHtml(renderedText);
+            }
          }
 
          target_.getDocDisplay().showLint(lint);

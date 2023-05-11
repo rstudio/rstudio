@@ -1,10 +1,10 @@
 /*
  * Xdg.hpp
  *
- * Copyright (C) 2022 by RStudio, PBC
+ * Copyright (C) 2022 by Posit Software, PBC
  *
- * Unless you have received this program directly from RStudio pursuant
- * to the terms of a commercial license agreement with RStudio, then
+ * Unless you have received this program directly from Posit Software pursuant
+ * to the terms of a commercial license agreement with Posit Software, then
  * this program is licensed to you under the terms of version 3 of the
  * GNU Affero General Public License. This program is distributed WITHOUT
  * ANY EXPRESS OR IMPLIED WARRANTY, INCLUDING THOSE OF NON-INFRINGEMENT,
@@ -66,6 +66,13 @@ FilePath userDataDir(const boost::optional<std::string>& user = boost::none,
 // Returns the user-specific logging directory underneath the userDataDir
 FilePath userLogDir();
                      
+// Returns the RStudio XDG user cache directory.
+//
+// On Unix-alikes, this is ~/.cache, or XDG_CACHE_HOME.
+// On Windows, this is 'FOLDERID_InternetCache' (typically 'AppData/Local/Microsoft/Windows/Temporary Files')
+FilePath userCacheDir(const boost::optional<std::string>& user = boost::none,
+                      const boost::optional<FilePath>& homeDir = boost::none);
+
 // This function verifies that the userConfigDir() and userDataDir() exist and are owned by the running user.
 // 
 // It should be invoked once. Any issues with these directories will be emitted to the session log.

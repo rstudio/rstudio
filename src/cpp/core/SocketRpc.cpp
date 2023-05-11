@@ -1,10 +1,10 @@
 /*
  * SocketRpc.cpp
  *
- * Copyright (C) 2022 by RStudio, PBC
+ * Copyright (C) 2022 by Posit Software, PBC
  *
- * Unless you have received this program directly from RStudio pursuant
- * to the terms of a commercial license agreement with RStudio, then
+ * Unless you have received this program directly from Posit Software pursuant
+ * to the terms of a commercial license agreement with Posit Software, then
  * this program is licensed to you under the terms of version 3 of the
  * GNU Affero General Public License. This program is distributed WITHOUT
  * ANY EXPRESS OR IMPLIED WARRANTY, INCLUDING THOSE OF NON-INFRINGEMENT,
@@ -56,12 +56,27 @@ void constructRequest(const std::string& endpoint,
    pRequest->setBody(payload.write());
 }
 
+bool isRedirect(int statusCode)
+{
+   return statusCode == http::status::MovedPermanently ||
+          statusCode == http::status::MovedTemporarily ||
+          statusCode == http::status::TemporaryRedirect ||
+          statusCode == http::status::PermanentRedirect;
+}
+
 Error handleResponse(const std::string& endpoint,
                      const http::Response& response,
                      json::Value* pResult)
 {
-   if (response.statusCode() != http::status::Ok)
+   if (isRedirect(response.statusCode()))
    {
+      // redirect response
+      std::string location = response.headerValue("Location");
+      return Error(json::errc::RedirectNotImplementedError, location, ERROR_LOCATION);
+   }
+   else if (response.statusCode() != http::status::Ok)
+   {
+      // error response
       LOG_WARNING_MESSAGE("Server RPC failed: " + endpoint + " " +
                           safe_convert::numberToString(response.statusCode()) +
                           " " + response.statusMessage() + "\n" +
@@ -77,6 +92,7 @@ Error handleResponse(const std::string& endpoint,
    }
    else if (pResult->parse(response.body()))
    {
+      // unparseable response
       LOG_WARNING_MESSAGE("Received unparseable result from rserver RPC:\n" +
             endpoint + "\n" +
             response.body());

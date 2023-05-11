@@ -1,47 +1,52 @@
 <!DOCTYPE html>
 <html lang="en">
-
 <head>
-<meta charset="utf-8">
-<title>RStudio: Project Not Found</title>
+  <meta charset="utf-8" />
+  <title>RStudio: Project Not Found</title>
 
-<link rel="stylesheet" href="rstudio.css" type="text/css"/>
-<link rel="shortcut icon" href="images/favicon.ico" />
+  <link rel="stylesheet" href="rstudio.css" type="text/css" />
+  <link rel="shortcut icon" href="images/Posit-Product_rst-server-favicon.svg" />
 
-<style>
+  <style>
+    #banner {
+      margin-bottom: 0;
+    }
 
-#banner {
-  margin-bottom: 0;
-}
+    p {
+      margin: 20px 40px 10px 40px;
+    }
 
-p {
-  margin: 20px 20px 10px 20px;
-}
-</style>
-
+    ul {
+      margin-left: 40px;
+    }
+  </style>
 </head>
 
 <body>
+  <header role="banner">
+    <div id="banner">
+      <picture>
+        <source
+          srcset="images/Posit-ProductLogo_rst-server-reverse.svg"
+          media="(prefers-color-scheme: dark)"
+        />
+        <img src="images/Posit-ProductLogo_rst-server-full-color.svg" height="27" alt="RStudio Logo" />
+      </picture>
+    </div>
+  </header>
 
-<h3 id="banner">
-    <picture>
-       <source srcset="images/rstudio-dark.png" media="(prefers-color-scheme: dark)">
-       <img src="images/rstudio.png" width="78" height="27" alt="RStudio Logo">
-    </picture>
-</h3>
+  <p>
+    RStudio could not open the requested project for one of the following reasons:
+  </p>
 
-<p>RStudio could not open the requested project for one of the following 
-    reasons:</p>
-
-<ul>
+  <ul>
     <li>The project has been removed or does not exist.</li>
     <li>The project is not shared with you.</li>
     <li>The project URL is invalid.</li>
-</ul>
+  </ul>
 
-<p>Ensure the project URL is correct; if it is, contact the project owner to 
-    request access.</p>
-
+  <p>
+    Ensure the project URL is correct; if it is, contact the project owner to request access.
+  </p>
 </body>
-
 </html>

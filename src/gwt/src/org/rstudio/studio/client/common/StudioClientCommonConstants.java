@@ -1,10 +1,10 @@
 /*
  * StudioClientCommonConstants.java
  *
- * Copyright (C) 2022 by RStudio, PBC
+ * Copyright (C) 2022 by Posit Software, PBC
  *
- * Unless you have received this program directly from RStudio pursuant
- * to the terms of a commercial license agreement with RStudio, then
+ * Unless you have received this program directly from Posit Software pursuant
+ * to the terms of a commercial license agreement with Posit Software, then
  * this program is licensed to you under the terms of version 3 of the
  * GNU Affero General Public License. This program is distributed WITHOUT
  * ANY EXPRESS OR IMPLIED WARRANTY, INCLUDING THOSE OF NON-INFRINGEMENT,
@@ -1093,20 +1093,29 @@ public interface StudioClientCommonConstants extends com.google.gwt.i18n.client.
     String withRSConnectLabel();
 
     /**
-     * Translated "Enable publishing to RStudio Connect".
+     * Translated "Enable publishing to Posit Connect".
      *
-     * @return translated "Enable publishing to RStudio Connect"
+     * @return translated "Enable publishing to Posit Connect"
      */
-    @DefaultMessage("Enable publishing to RStudio Connect")
+    @DefaultMessage("Enable publishing to Posit Connect")
     @Key("chkEnableRSConnectLabel")
     String chkEnableRSConnectLabel();
 
     /**
-     * Translated "Information about RStudio Connect".
+     * Translated "Enable publishing to Posit Cloud".
      *
-     * @return translated "Information about RStudio Connect"
+     * @return translated "Enable publishing to Posit Cloud"
      */
-    @DefaultMessage("Information about RStudio Connect")
+    @DefaultMessage("Enable publishing to Posit Cloud")
+    @Key("chkEnableCloudLabel")
+    String chkEnableCloudLabel();
+
+    /**
+     * Translated "Information about Posit Connect".
+     *
+     * @return translated "Information about Posit Connect"
+     */
+    @DefaultMessage("Information about Posit Connect")
     @Key("checkBoxWithHelpTitle")
     String checkBoxWithHelpTitle();
 
@@ -1328,11 +1337,11 @@ public interface StudioClientCommonConstants extends com.google.gwt.i18n.client.
     String wizardNavigationPageCaption();
 
     /**
-     * Translated "RStudio Connect is a server product from RStudio ".
+     * Translated "Posit Connect is a server product from Posit ".
      *
-     * @return translated "RStudio Connect is a server product from RStudio "
+     * @return translated "Posit Connect is a server product from Posit "
      */
-    @DefaultMessage("RStudio Connect is a server product from RStudio ")
+    @DefaultMessage("Posit Connect is a server product from Posit ")
     @Key("serviceDescription")
     String serviceDescription();
 
@@ -1362,6 +1371,24 @@ public interface StudioClientCommonConstants extends com.google.gwt.i18n.client.
     @DefaultMessage("and interactive documents to the Internet.")
     @Key("newRSConnectCloudPageSub")
     String newRSConnectCloudPageSub();
+
+    /**
+     * Translated "Connect Posit Cloud account".
+     *
+     * @return translated "Connect Posit Cloud account"
+     */
+    @DefaultMessage("Connect Posit Cloud account")
+    @Key("newPositCloudPageCaption")
+    String newPositCloudPageCaption();
+
+    /**
+     * Translated "Our online service that lets you do, share, teach and learn data science in your web browser.".
+     *
+     * @return translated "Our online service that lets you do, share, teach and learn data science in your web browser."
+     */
+    @DefaultMessage("Our online service that lets you do, share, teach and learn data science in your web browser.")
+    @Key("newPositCloudPageSubTitle")
+    String newPositCloudPageSubTitle();
 
     /**
      * Translated "Connect ShinyApps.io Account".
@@ -2032,5 +2059,13 @@ public interface StudioClientCommonConstants extends com.google.gwt.i18n.client.
     @Key("progressRemoveIndicator")
     String progressRemoveIndicator();
 
+    /**
+     * Translated "[Detected output overflow; buffering the next {0} lines of output]".
+     *
+     * @return translated "[Detected output overflow; buffering the next {0} lines of output]"
+     */
+    @DefaultMessage("[Detected output overflow; buffering the next {0} lines of output]")
+    @Key("consoleBufferedMessage")
+    String consoleBufferedMessage(int bufferSize);
 
 }

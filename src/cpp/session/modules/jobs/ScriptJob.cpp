@@ -1,10 +1,10 @@
 /*
  * ScriptJob.cpp
  *
- * Copyright (C) 2022 by RStudio, PBC
+ * Copyright (C) 2022 by Posit Software, PBC
  *
- * Unless you have received this program directly from RStudio pursuant
- * to the terms of a commercial license agreement with RStudio, then
+ * Unless you have received this program directly from Posit Software pursuant
+ * to the terms of a commercial license agreement with Posit Software, then
  * this program is licensed to you under the terms of version 3 of the
  * GNU Affero General Public License. This program is distributed WITHOUT
  * ANY EXPRESS OR IMPLIED WARRANTY, INCLUDING THOSE OF NON-INFRINGEMENT,
@@ -142,28 +142,41 @@ void ScriptJob::start()
        encoding = spec_.encoding();
    
    // form the command to send to R
-   std::string cmd = "source('" +
-                     string_utils::utf8ToSystem(
-         string_utils::singleQuotedStrEscape(
-            session::options().modulesRSourcePath()
-                              .completePath("SourceWithProgress.R").getAbsolutePath())) +
-                     "'); sourceWithProgress(script = '" +
-            string_utils::singleQuotedStrEscape(path) + "', "
-      "encoding = '" + encoding + "', "
-      "con = stdout(), "
-      "importRdata = " + importRdata + ", "
-      "exportRdata = " + exportRdata + ");";
-     
+   std::string fmt = R"EOF(
+attach(NULL, name = 'tools:rstudio');
+sys.source('{}', envir = as.environment('tools:rstudio'));
+.rs.sourceWithProgress(
+   script = '{}',
+   encoding = '{}',
+   con = stdout(),
+   importRdata = {},
+   exportRdata = {}
+)
+)EOF";
+   
+   std::string modulePath =  session::options()
+         .modulesRSourcePath()
+         .completePath("SourceWithProgress.R")
+         .getAbsolutePath();
+   
+   std::string command = fmt::format(
+            fmt,
+            string_utils::utf8ToSystem(string_utils::singleQuotedStrEscape(modulePath)),
+            string_utils::singleQuotedStrEscape(path),
+            encoding,
+            importRdata,
+            exportRdata);
+   
    core::system::Options environment;
    environment.push_back(std::make_pair("RSTUDIO_CHILD_PROCESS_PANE", "job"));
 
-   // build options for async R process; default to no rdata unless we have other options (most
-   // common is a vanilla R process)
-   async_r::AsyncRProcessOptions options = 
-      spec_.procOptions() ? *spec_.procOptions() : async_r::R_PROCESS_NO_RDATA;
+   // build options for async R process; default to no rdata unless we have other options
+   // (most common is a vanilla R process)
+   async_r::AsyncRProcessOptions options =  spec_.procOptions()
+         ? *spec_.procOptions()
+         : async_r::R_PROCESS_NO_RDATA;
 
-   async_r::AsyncRProcess::start(cmd.c_str(), environment, spec_.workingDir(),
-                                 options);
+   async_r::AsyncRProcess::start(command.c_str(), environment, spec_.workingDir(), options);
 }
 
 core::Error ScriptJob::replay()

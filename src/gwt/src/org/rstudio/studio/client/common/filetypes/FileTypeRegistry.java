@@ -1,10 +1,10 @@
 /*
  * FileTypeRegistry.java
  *
- * Copyright (C) 2022 by RStudio, PBC
+ * Copyright (C) 2022 by Posit Software, PBC
  *
- * Unless you have received this program directly from RStudio pursuant
- * to the terms of a commercial license agreement with RStudio, then
+ * Unless you have received this program directly from Posit Software pursuant
+ * to the terms of a commercial license agreement with Posit Software, then
  * this program is licensed to you under the terms of version 3 of the
  * GNU Affero General Public License. This program is distributed WITHOUT
  * ANY EXPRESS OR IMPLIED WARRANTY, INCLUDING THOSE OF NON-INFRINGEMENT,
@@ -20,7 +20,6 @@ import com.google.gwt.core.client.GWT;
 import org.rstudio.core.client.FilePosition;
 import org.rstudio.core.client.files.FileSystemItem;
 import org.rstudio.core.client.resources.ImageResource2x;
-import org.rstudio.studio.client.application.Desktop;
 import org.rstudio.studio.client.application.events.EventBus;
 import org.rstudio.studio.client.common.GlobalDisplay;
 import org.rstudio.studio.client.common.StudioClientCommonConstants;
@@ -144,7 +143,13 @@ public class FileTypeRegistry
                           new ImageResource2x(ICONS.iconScss2x()),
                           true,
                           false, false, false, false, false, false, false, false, false, false, false, false);
-
+   
+   public static final TextFileType LESS =
+         new TextFileType("less", "LESS", EditorLanguage.LANG_LESS, ".less",
+                          new ImageResource2x(ICONS.iconLess2x()),
+                          true,
+                          false, false, false, false, false, false, false, false, false, false, false, false);
+                 
    public static final TextFileType JS =
          new TextFileType("js", "JavaScript", EditorLanguage.LANG_JAVASCRIPT, ".js",
                           new ImageResource2x(ICONS.iconJavascript2x()),
@@ -242,7 +247,7 @@ public class FileTypeRegistry
                false, false, false, false, false, false, false, false);
 
    public static final TextFileType JULIA =
-         new TextFileType("julia", "Julia", EditorLanguage.LANG_JULIA, ".julia", new ImageResource2x(ICONS.iconJulia2x()),
+         new TextFileType("julia", "Julia", EditorLanguage.LANG_JULIA, ".jl", new ImageResource2x(ICONS.iconJulia2x()),
                false, false, false, false, false,
                false, false, false, false, false, false, false, false);
 
@@ -388,6 +393,7 @@ public class FileTypeRegistry
       register("*.css", CSS, new ImageResource2x(icons.iconCss2x()));
       register("*.sass", SASS, new ImageResource2x(icons.iconScss2x()));
       register("*.scss", SCSS, new ImageResource2x(icons.iconScss2x()));
+      register("*.less", LESS, new ImageResource2x(icons.iconLess2x()));
       register("*.js", JS, new ImageResource2x(icons.iconJavascript2x()));
       register("*.ts", JS, new ImageResource2x(icons.iconJavascript2x()));
       register("*.ojs", JS, new ImageResource2x(icons.iconJavascript2x()));
@@ -405,6 +411,7 @@ public class FileTypeRegistry
       register("*.cpp", CPP, new ImageResource2x(icons.iconCpp2x()));
       register("*.cc", CPP, new ImageResource2x(icons.iconCpp2x()));
       register("*.h", H, new ImageResource2x(icons.iconH2x()));
+      register("*.hh", HPP, new ImageResource2x(icons.iconHpp2x()));
       register("*.hpp", HPP, new ImageResource2x(icons.iconHpp2x()));
       register("*.f", TEXT, new ImageResource2x(icons.iconText2x()));
       register("*.Rout.save", TEXT, new ImageResource2x(icons.iconText2x()));
@@ -440,11 +447,13 @@ public class FileTypeRegistry
       register("*.haxe", HAXE, new ImageResource2x(icons.iconHaxe2x()));
       register("*.java", JAVA, new ImageResource2x(icons.iconJava2x()));
       register("*.julia", JULIA, new ImageResource2x(icons.iconJulia2x()));
+      register("*.jl", JULIA, new ImageResource2x(icons.iconJulia2x()));
       register("*.lisp", LISP, new ImageResource2x(icons.iconLisp2x()));
       register(".emacs", LISP, new ImageResource2x(icons.iconLisp2x()));
       register("*.el", LISP, new ImageResource2x(icons.iconLisp2x()));
       register("*.lua", LUA, new ImageResource2x(icons.iconLua2x()));
       register("*.m", MATLAB, new ImageResource2x(icons.iconMatlab2x()));
+      register("*.nf", GROOVY, new ImageResource2x(icons.iconGroovy2x()));
       register("*.pl", PERL, new ImageResource2x(icons.iconPerl2x()));
       register("*.rb", RUBY, new ImageResource2x(icons.iconRuby2x()));
       register("*.rs", RUST, new ImageResource2x(icons.iconRust2x()));

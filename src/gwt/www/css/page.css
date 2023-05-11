@@ -1,6 +1,5 @@
 body
 {
-    background-color: #e5e6ea;
     font-family: "Lucida Sans", "DejaVu Sans", "Lucida Grande", "Segoe UI", Verdana, Helvetica, sans-serif;
     font-size: 12px;
 }
@@ -152,14 +151,10 @@ body .container
 
 .username
 {
-    float: right;
     font-size: 1.1em;
-    margin: 10px;
-    margin-top: 13px;
 }
 
 .username input
 {
     vertical-align: top;
-    margin-top: -1px;
 }

@@ -1,10 +1,10 @@
 /*
  * PanmirrorPandocFormatConfig.java
  *
- * Copyright (C) 2022 by RStudio, PBC
+ * Copyright (C) 2022 by Posit Software, PBC
  *
- * Unless you have received this program directly from RStudio pursuant
- * to the terms of a commercial license agreement with RStudio, then
+ * Unless you have received this program directly from Posit Software pursuant
+ * to the terms of a commercial license agreement with Posit Software, then
  * this program is licensed to you under the terms of version 3 of the
  * GNU Affero General Public License. This program is distributed WITHOUT
  * ANY EXPRESS OR IMPLIED WARRANTY, INCLUDING THOSE OF NON-INFRINGEMENT,
@@ -34,6 +34,7 @@ public class PanmirrorPandocFormatConfig
    public String wrap;
    public String references_location;
    public String references_prefix;
+   public Boolean references_links;
    public boolean canonical;
    
  
@@ -61,7 +62,8 @@ public class PanmirrorPandocFormatConfig
    {
       return StringUtil.equals(a.wrap, b.wrap) &&
              a.references_location == b.references_location &&
-             a.references_prefix == b.references_prefix;         
+             a.references_prefix == b.references_prefix &&
+              a.references_links == b.references_links;
    }
 }
 

@@ -1,10 +1,10 @@
 /*
  * RSConnectDeploy.java
  *
- * Copyright (C) 2022 by RStudio, PBC
+ * Copyright (C) 2022 by Posit Software, PBC
  *
- * Unless you have received this program directly from RStudio pursuant
- * to the terms of a commercial license agreement with RStudio, then
+ * Unless you have received this program directly from Posit Software pursuant
+ * to the terms of a commercial license agreement with Posit Software, then
  * this program is licensed to you under the terms of version 3 of the
  * GNU Affero General Public License. This program is distributed WITHOUT
  * ANY EXPRESS OR IMPLIED WARRANTY, INCLUDING THOSE OF NON-INFRINGEMENT,
@@ -194,15 +194,18 @@ public class RSConnectDeploy extends Composite
 
       final boolean rsConnectEnabled = 
             userState_.enableRsconnectPublishUi().getGlobalValue();
+      final boolean positCloudEnabled =
+         userPrefs_.enableCloudPublishUi().getGlobalValue();
       
-      // Invoke the "add account" wizard
-      if (contentType == RSConnect.CONTENT_TYPE_APP || rsConnectEnabled)
+      // Invoke the "add account" wizard if either Shiny app or Connect enabled
+      if (contentType == RSConnect.CONTENT_TYPE_APP || rsConnectEnabled || positCloudEnabled)
       {
          addAccountAnchor_.setClickHandler(() ->
          {
             connector_.showAccountWizard(false,
                   contentType == RSConnect.CONTENT_TYPE_APP ||
-                  contentType == RSConnect.CONTENT_TYPE_APP_SINGLE,
+                  contentType == RSConnect.CONTENT_TYPE_APP_SINGLE ||
+                  positCloudEnabled,
                   successful ->
                   {
                      if (successful)
@@ -212,9 +215,23 @@ public class RSConnectDeploy extends Composite
                   });
          });
       }
-      else
+      else if (positCloudEnabled) // also invoke if Connect disabled but Cloud enabled
       {
-         // if not deploying a Shiny app and RSConnect UI is not enabled, then
+         addAccountAnchor_.setClickHandler(() ->
+         {
+            connector_.showAccountWizard(false,
+               true,
+               successful ->
+               {
+                  if (successful)
+                  {
+                     accountList_.refreshAccountList();
+                  }
+               });
+         });
+      }
+      else {
+         // if not deploying a Shiny app and RSConnect UI/ Posit Cloud UI are not enabled, then
          // there's no account we can add suitable for this content
          addAccountAnchor_.setVisible(false);
       }
@@ -286,7 +303,7 @@ public class RSConnectDeploy extends Composite
       userPrefs_ = prefs;
       userState_ = state;
       accountList_ = new RSConnectAccountList(server_, display_, false, 
-            !asStatic_, constants_.publishFromAccount());
+            !asStatic_, !asStatic_, constants_.publishFromAccount());
       appName_ = new AppNameTextbox(this);
       
       // when the account list finishes populating, select the account from the
@@ -422,7 +439,19 @@ public class RSConnectDeploy extends Composite
       source_ = source;
       contentType_ = contentType;
       asMultipleRmd_ = asMultipleRmd;
-      
+
+      // for Plumber APIs and static Rmd docs, we want to allow for posit.cloud but not for shinyapps.io
+      boolean isPositCloudContent = contentType == RSConnect.CONTENT_TYPE_PLUMBER_API ||
+         contentType == RSConnect.CONTENT_TYPE_DOCUMENT || contentType == RSConnect.CONTENT_TYPE_PRES;
+      boolean positCloudEnabled =
+         userPrefs_.enableCloudPublishUi().getGlobalValue() && isPositCloudContent;
+
+      if (positCloudEnabled != accountList_.getShowPositCloudAccounts())
+      {
+         accountList_.setShowPositCloudAccounts(positCloudEnabled);
+         accountList_.refreshAccountList();
+      }
+
       // we want to show cloud accounts only for non-static content
       if (source.isShiny() != accountList_.getShowCloudAccounts())
       {
@@ -531,7 +560,7 @@ public class RSConnectDeploy extends Composite
       if (getSelectedAccount() == null)
          return true;
       else
-         return !getSelectedAccount().isCloudAccount();
+         return !getSelectedAccount().isShinyAppsAccount();
    }
 
    @Override
@@ -777,7 +806,7 @@ public class RSConnectDeploy extends Composite
       if (numAccounts == 0 && !isRetry)
       {
          connector_.showAccountWizard(accounts.length() == 0, 
-               source_.isShiny(),
+               source_.isShiny() || userPrefs_.enableCloudPublishUi().getGlobalValue(),
                new OperationWithInput<Boolean>() 
          {
             @Override

@@ -1,10 +1,10 @@
 /*
  * ProcessTests.cpp
  *
- * Copyright (C) 2022 by RStudio, PBC
+ * Copyright (C) 2022 by Posit Software, PBC
  *
- * Unless you have received this program directly from RStudio pursuant
- * to the terms of a commercial license agreement with RStudio, then
+ * Unless you have received this program directly from Posit Software pursuant
+ * to the terms of a commercial license agreement with Posit Software, then
  * this program is licensed to you under the terms of version 3 of the
  * GNU Affero General Public License. This program is distributed WITHOUT
  * ANY EXPRESS OR IMPLIED WARRANTY, INCLUDING THOSE OF NON-INFRINGEMENT,
@@ -439,7 +439,7 @@ test_context("ProcessTests")
       REQUIRE(!error);
 
       // wait for processes to exit
-      bool success = supervisor.wait(boost::posix_time::seconds(10));
+      bool success = supervisor.wait(boost::posix_time::seconds(15));
       CHECK(success);
 
       // check to make sure all processes really exited

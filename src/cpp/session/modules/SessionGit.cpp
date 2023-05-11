@@ -1,10 +1,10 @@
 /*
  * SessionGit.cpp
  *
- * Copyright (C) 2022 by RStudio, PBC
+ * Copyright (C) 2022 by Posit Software, PBC
  *
- * Unless you have received this program directly from RStudio pursuant
- * to the terms of a commercial license agreement with RStudio, then
+ * Unless you have received this program directly from Posit Software pursuant
+ * to the terms of a commercial license agreement with Posit Software, then
  * this program is licensed to you under the terms of version 3 of the
  * GNU Affero General Public License. This program is distributed WITHOUT
  * ANY EXPRESS OR IMPLIED WARRANTY, INCLUDING THOSE OF NON-INFRINGEMENT,
@@ -127,7 +127,7 @@ core::system::ProcessOptions procOptions()
    // (note that we also do this on init, but we do this again for
    // child processes just to ensure any user-initiated PATH munging
    // doesn't break builtin utilities)
-   FilePath postbackDir = session::options().rpostbackPath().getParent();
+   FilePath postbackDir = module_context::rPostbackScriptsDir();
    core::system::addToPath(&childEnv, postbackDir.getAbsolutePath());
 
    options.workingDir = projects::projectContext().directory();
@@ -1396,13 +1396,17 @@ public:
                currentCommit.description.append("\n");
             currentCommit.description.append(it->substr(4));
          }
+         else if (it->length() == 1 && it->at(0) == ' ')
+         {
+            // ignore spaces
+         }
          else if (it->length() == 0)
          {
             // ignore empty lines
          }
          else
          {
-            LOG_ERROR_MESSAGE("Unexpected git-log output");
+            LOG_WARNING_MESSAGE("Unexpected git-log output");
          }
       }
 
@@ -1430,7 +1434,9 @@ public:
       ShellArgs args = gitArgs()
             << "-c" << "core.quotepath=false"
             << "diff"
-            << (revision + "^!");
+            << (revision + "^")
+            << revision;
+
 
       return runGit(args, pOutput);
    }
@@ -3348,17 +3354,12 @@ core::Error initialize()
       return error;
 
    // setup environment
-   BOOST_ASSERT(boost::algorithm::ends_with(sshAskCmd, "rpostback-askpass"));
-   core::system::setenv("GIT_ASKPASS", "rpostback-askpass");
-
+   r::util::setenv("GIT_ASKPASS", "rpostback-askpass");
    if (interceptAskPass)
-   {
-      core::system::setenv("SSH_ASKPASS", "rpostback-askpass");
-   }
+      r::util::setenv("SSH_ASKPASS", "rpostback-askpass");
 
    // add postback directory to PATH
-   FilePath postbackDir = session::options().rpostbackPath().getParent();
-   core::system::addToPath(postbackDir.getAbsolutePath());
+   r::util::appendToSystemPath(module_context::rPostbackScriptsDir());
 
    // add suspend/resume handler
    addSuspendHandler(SuspendHandler(boost::bind(onSuspend, _2), onResume));

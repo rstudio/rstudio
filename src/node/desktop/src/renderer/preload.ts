@@ -1,10 +1,10 @@
 /*
  * preload.ts
  *
- * Copyright (C) 2022 by RStudio, PBC
+ * Copyright (C) 2022 by Posit Software, PBC
  *
- * Unless you have received this program directly from RStudio pursuant
- * to the terms of a commercial license agreement with RStudio, then
+ * Unless you have received this program directly from Posit Software pursuant
+ * to the terms of a commercial license agreement with Posit Software, then
  * this program is licensed to you under the terms of version 3 of the
  * GNU Affero General Public License. This program is distributed WITHOUT
  * ANY EXPRESS OR IMPLIED WARRANTY, INCLUDING THOSE OF NON-INFRINGEMENT,
@@ -20,6 +20,7 @@ import { getDesktopInfoBridge } from './desktop-info-bridge';
 import { getMenuBridge } from './menu-bridge';
 import { getDesktopBridge } from './desktop-bridge';
 import { firstStartingWith } from '../core/array-utils';
+import { getDesktopLoggerBridge, logString } from './logger-bridge';
 
 /**
  * The preload script is run in the renderer before our GWT code and enables
@@ -35,22 +36,27 @@ import { firstStartingWith } from '../core/array-utils';
  * Actual implementation happens in the main process, reached via ipcRenderer.
  */
 
+contextBridge.exposeInMainWorld('desktopLogger', getDesktopLoggerBridge());
+
 const apiKeys = removeDups(firstStartingWith(process.argv, '--api-keys=').split('|'));
 for (const apiKey of apiKeys) {
   switch (apiKey) {
     case 'desktop':
+      logString('debug', '[preload] connecting desktop hooks');
       contextBridge.exposeInMainWorld(apiKey, getDesktopBridge());
       break;
     case 'desktopInfo':
+      logString('debug', '[preload] connecting desktopInfo hooks');
       contextBridge.exposeInMainWorld(apiKey, getDesktopInfoBridge());
       break;
     case 'desktopMenuCallback':
+      logString('debug', '[preload] connecting desktopMenuCallback hooks');
       contextBridge.exposeInMainWorld(apiKey, getMenuBridge());
       break;
     // case 'remoteDesktop':
     //   // TODO: RDP-only
     //   break;
     default:
-      console.error(`Preload ignoring unsupported apiKey: '${apiKey}'`);
+      logString('debug', `[preload] ignoring unsupported apiKey: '${apiKey}'`);
   }
 }

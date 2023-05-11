@@ -1,10 +1,10 @@
 /*
  * RCompilationDatabase.cpp
  *
- * Copyright (C) 2022 by RStudio, PBC
+ * Copyright (C) 2022 by Posit Software, PBC
  *
- * Unless you have received this program directly from RStudio pursuant
- * to the terms of a commercial license agreement with RStudio, then
+ * Unless you have received this program directly from Posit Software pursuant
+ * to the terms of a commercial license agreement with Posit Software, then
  * this program is licensed to you under the terms of version 3 of the
  * GNU Affero General Public License. This program is distributed WITHOUT
  * ANY EXPRESS OR IMPLIED WARRANTY, INCLUDING THOSE OF NON-INFRINGEMENT,
@@ -50,7 +50,12 @@ using namespace rstudio::core;
 using namespace rstudio::core::libclang;
 using namespace boost::placeholders;
 
-#define kCompilationDatabaseVersion 1
+// The compilation database version.
+//
+// Bump this version if you'd like newer versions of RStudio
+// to be forced to rebuild the compilation database, e.g. because
+// the methodology used to infer compilation flags has changed.
+#define kCompilationDatabaseVersion 4
 
 namespace rstudio {
 namespace session {
@@ -436,32 +441,37 @@ std::string packagePCH(const std::string& linkingTo)
 
 bool packageIsCpp(const std::string& linkingTo, const FilePath& srcDir)
 {
+   // check first for LinkingTo with C++ package
    if (boost::algorithm::contains(linkingTo, "Rcpp") || boost::algorithm::contains(linkingTo, "cpp11"))
-   {
       return true;
-   }
-   else
-   {
-      if (!srcDir.exists())
-         return false;
+   
+   // otherwise, check the src directory for C++ files
+   if (!srcDir.exists())
+      return false;
       
-      std::vector<FilePath> allSrcFiles;
-      Error error = srcDir.getChildren(allSrcFiles);
-      if (error)
-      {
-         LOG_ERROR(error);
-         return false;
-      }
-
-      for (const FilePath& srcFile : allSrcFiles)
-      {
-         std::string ext = srcFile.getExtensionLowerCase();
-         if (ext == ".cpp" || ext == ".cc")
-            return true;
-      }
-
+   std::vector<FilePath> allSrcFiles;
+   Error error = srcDir.getChildren(allSrcFiles);
+   if (error)
+   {
+      LOG_ERROR(error);
       return false;
    }
+
+   for (const FilePath& srcFile : allSrcFiles)
+   {
+      // some projects that are otherwise pure C might depend on some
+      // C++ extensions from rlang; ignore those if they exist
+      std::string name = srcFile.getFilename();
+      if (name == "rlang-rcc.cpp")
+         continue;
+      
+      // otherwise, check for a file containing a C++ extension
+      std::string ext = srcFile.getExtensionLowerCase();
+      if (ext == ".cpp" || ext == ".cc")
+         return true;
+   }
+
+   return false;
 }
 
 std::vector<std::string> includesForLinkingTo(const std::string& linkingTo)
@@ -516,6 +526,11 @@ void RCompilationDatabase::updateForCurrentPackage()
 
    if (isCurrent && !s_rebuildCompilationDatabase)
       return;
+   
+   if (verbose(2))
+   {
+      std::cerr << "[!] The compilation database is out-of-date and will be rebuilt." << std::endl << std::endl;
+   }
 
    // we're about to rebuild the database, so unset flag now
    s_rebuildCompilationDatabase = false;
@@ -550,67 +565,47 @@ std::vector<std::string> RCompilationDatabase::compileArgsForPackage(
       const FilePath& srcDir,
       bool isCpp)
 {
-   // create a temp dir to call R CMD SHLIB within
-   FilePath tempDir = module_context::tempFile(kCompilationDbPrefix, "dir");
-   Error error = tempDir.ensureDirectory();
+   // find an appropriate source file to use as the target for compilation
+   auto isCompatibleSrcFile = [=](const FilePath& filePath)
+   {
+      if (isCpp)
+      {
+         return filePath.hasExtension(".cpp") || filePath.hasExtension(".cc");
+      }
+      else
+      {
+         return filePath.hasExtension(".c");
+      }
+   };
+   
+   std::vector<FilePath> srcFiles;
+   Error error = srcDir.getChildren(srcFiles);
    if (error)
    {
       LOG_ERROR(error);
       return {};
    }
-
-   // copy Makevars to tempdir if it exists
-   FilePath makevarsPath = srcDir.completeChildPath("Makevars");
-   if (makevarsPath.exists())
+   
+   FilePath targetSrcFile;
+   for (auto&& srcFile : srcFiles)
    {
-      Error error = makevarsPath.copy(tempDir.completeChildPath("Makevars"));
-      if (error)
+      if (isCompatibleSrcFile(srcFile))
       {
-         LOG_ERROR(error);
-         return {};
-      }
-   }
-
-   FilePath makevarsWinPath = srcDir.completeChildPath("Makevars.win");
-   if (makevarsWinPath.exists())
-   {
-      Error error = makevarsWinPath.copy(tempDir.completeChildPath("Makevars.win"));
-      if (error)
-      {
-         LOG_ERROR(error);
-         return {};
-      }
-   }
-
-   // try to generate an appropriate name for the C++ source file.
-   // if we have Makevars / Makevars.site, they may define OBJECT
-   // targets; if we pick a file name not matching any OBJECT target
-   // then R CMD SHLIB will fail. (technically this implies that we
-   // need OBJECT-specific compilation configs but in practice one
-   // often just enumerates each OBJECT explicitly and re-uses the
-   // same compilation config for each file)
-   std::string ext = isCpp ? ".cpp" : ".c";
-   std::string filename = kCompilationDbPrefix + core::system::generateUuid() + ext;
-
-   std::vector<FilePath> children;
-   srcDir.getChildren(children);
-   for (const FilePath& child : children)
-   {
-      if (child.getExtension() == ext)
-      {
-         filename = child.getFilename();
+         targetSrcFile = srcFile;
          break;
       }
    }
-
-   // call R CMD SHLIB on a temp file to capture the compilation args
-   FilePath tempSrcFile = tempDir.completeChildPath(filename);
-   std::vector<std::string> compileArgs = argsForRCmdSHLIB(env, tempSrcFile);
-
-   // remove the tempDir
-   error = tempDir.remove();
-   if (error)
-      LOG_ERROR(error);
+   
+   // if we couldn't find a source file for some reason, just try to rebuild
+   // the compilation database again next time
+   if (!targetSrcFile.exists())
+   {
+      s_rebuildCompilationDatabase = true;
+      return {};
+   }
+   
+   // call R CMD shlib on that file
+   std::vector<std::string> compileArgs = argsForRCmdSHLIB(env, targetSrcFile);
 
    // diagnostics
    if (verbose(3))
@@ -851,12 +846,21 @@ core::Error RCompilationDatabase::executeRCmdSHLIB(
    Error error = module_context::rBinDir(&rBinDir);
    if (error)
       return error;
-
+   
    // compile the file as dry-run
    module_context::RCommand rCmd(rBinDir);
    rCmd << "SHLIB";
    rCmd << "--dry-run";
    rCmd << srcPath.getFilename();
+   
+   // a dirty trick to inject '--always-make' into the make invocation
+   rCmd << "\"' --always-make IGNORED='\"";
+   
+   if (verbose(3))
+   {
+      std::cerr << "EXECUTING R CMD SHLIB ----" << std::endl;
+      std::cerr << rCmd.commandString() << std::endl;
+   }
 
    // set options and run
    core::system::ProcessOptions options;
@@ -866,6 +870,13 @@ core::Error RCompilationDatabase::executeRCmdSHLIB(
             rCmd.shellCommand(),
             options,
             pResult);
+   
+   if (verbose(3))
+   {
+      std::cerr << "stdout: " << pResult->stdOut << std::endl;
+      std::cerr << "stderr: " << pResult->stdErr << std::endl;
+   }
+   
    return result;
 }
 
@@ -1111,24 +1122,12 @@ RCompilationDatabase::CompilationConfig
 }
 
 std::vector<std::string> RCompilationDatabase::argsForRCmdSHLIB(
-                                          core::system::Options env,
-                                          FilePath tempSrcFile)
+      core::system::Options env,
+      FilePath srcFile)
 {
-   Error error = core::writeStringToFile(tempSrcFile, "void foo() {}\n");
-   if (error)
-   {
-      LOG_ERROR(error);
-      return {};
-   }
-
    // execute R CMD SHLIB
    core::system::ProcessResult result;
-   error = executeRCmdSHLIB(env, tempSrcFile, &result);
-
-   // remove the temporary source file
-   Error removeError = tempSrcFile.remove();
-   if (removeError)
-      LOG_ERROR(removeError);
+   Error error = executeRCmdSHLIB(env, srcFile, &result);
 
    // process results of R CMD SHLIB
    if (error)
@@ -1166,7 +1165,9 @@ std::vector<std::string> RCompilationDatabase::baseCompilationArgs(bool isCpp) c
 #ifdef _WIN32
    // add built-in clang compiler headers
    // built-in headers are not required with Rtools40 or newer
-   if (r::version_info::currentRVersion().versionMajor() < 4)
+   r_util::RVersionNumber version = r::version_info::currentRVersion();
+
+   if (version.versionMajor() < 4)
    {
       auto clArgs = clang().compileArgs(isCpp);
       args.insert(args.end(), clArgs.begin(), clArgs.end());
@@ -1178,10 +1179,23 @@ std::vector<std::string> RCompilationDatabase::baseCompilationArgs(bool isCpp) c
    // may not be compatible with the Rtools headers
    args.push_back("-nostdinc");
 
-   // add Rtools arguments
-   auto rtInfo = rToolsInfo();
-   auto rtArgs = rtInfo.clangArgs();
-   args.insert(args.end(), rtArgs.begin(), rtArgs.end());
+   if (version < r_util::RVersionNumber(4, 2, 0))
+   {
+      // add Rtools arguments
+      auto rtInfo = rToolsInfo();
+      auto rtArgs = rtInfo.clangArgs(isCpp);
+      args.insert(args.end(), rtArgs.begin(), rtArgs.end());
+   }
+   else
+   {
+      // add system include headers as reported by compiler
+      std::vector<std::string> includes;
+      discoverSystemIncludePaths(&includes);
+      for (auto&& include : includes) {
+         FilePath includePath = FilePath(include);
+         args.push_back("-I" + includePath.getAbsolutePath());
+      }
+   }
 
    // re-generate compiler definitions
    generateCompilerDefinitions();
@@ -1221,9 +1235,6 @@ std::vector<std::string> RCompilationDatabase::packageCompilationArgs(
       core::r_util::RPackageInfo* pPkgInfo,
       bool* pIsCpp)
 {
-   // start with base args
-   std::vector<std::string> args = baseCompilationArgs(true);
-
    // read the package description file
    using namespace projects;
    FilePath pkgPath = projectContext().buildTargetPath();
@@ -1234,6 +1245,13 @@ std::vector<std::string> RCompilationDatabase::packageCompilationArgs(
       LOG_ERROR(error);
       return {};
    }
+
+   // determine if package is cpp
+   FilePath srcDir = pkgPath.completeChildPath("src");
+   bool isCpp = packageIsCpp(pkgInfo.linkingTo(), srcDir);
+
+   // start with base args
+   std::vector<std::string> args = baseCompilationArgs(isCpp);
 
    // Discover all of the LinkingTo relationships and add -I
    // arguments for them
@@ -1267,8 +1285,6 @@ std::vector<std::string> RCompilationDatabase::packageCompilationArgs(
    }
 
    // Run R CMD SHLIB
-   FilePath srcDir = pkgPath.completeChildPath("src");
-   bool isCpp = packageIsCpp(pkgInfo.linkingTo(), srcDir);
    std::vector<std::string> compileArgs = compileArgsForPackage(env, srcDir, isCpp);
 
    // perform path substitution

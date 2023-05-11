@@ -1,10 +1,10 @@
 /*
  * PanmirrorToolbarCommands.java
  *
- * Copyright (C) 2022 by RStudio, PBC
+ * Copyright (C) 2022 by Posit Software, PBC
  *
- * Unless you have received this program directly from RStudio pursuant
- * to the terms of a commercial license agreement with RStudio, then
+ * Unless you have received this program directly from Posit Software pursuant
+ * to the terms of a commercial license agreement with Posit Software, then
  * this program is licensed to you under the terms of version 3 of the
  * GNU Affero General Public License. This program is distributed WITHOUT
  * ANY EXPRESS OR IMPLIED WARRANTY, INCLUDING THOSE OF NON-INFRINGEMENT,
@@ -83,9 +83,12 @@ public class PanmirrorToolbarCommands implements CommandPaletteEntryProvider
       add(PanmirrorCommands.BashCodeChunk, "Bash");
       add(PanmirrorCommands.D3CodeChunk, "D3");
       add(PanmirrorCommands.PythonCodeChunk, "Python");
+      add(PanmirrorCommands.JuliaCodeChunk, "Julia");
       add(PanmirrorCommands.RcppCodeChunk, "Rcpp");
       add(PanmirrorCommands.SQLCodeChunk, "SQL");
       add(PanmirrorCommands.StanCodeChunk, "Stan");
+      add(PanmirrorCommands.MermaidCodeChunk, "Mermaid");
+      add(PanmirrorCommands.GraphVizCodeChunk, "GraphViz");
       add(PanmirrorCommands.ExpandChunk, constants_.expandChunkMenuText(), false);
       add(PanmirrorCommands.CollapseChunk, constants_.collapseChunkMenuText(), false);
       add(PanmirrorCommands.ExpandAllChunks, constants_.expandAllChunksMenuText(), false);

@@ -14,7 +14,7 @@ chmod 0644 tmp_deb/DEBIAN/md5sums
 
 # repackage to original file
 echo Repackaging $1...
-fakeroot dpkg -b tmp_deb $1
+fakeroot dpkg-deb -b -Zxz tmp_deb $1
 
 # clean up
 rm -rf tmp_deb

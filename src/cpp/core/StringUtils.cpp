@@ -1,10 +1,10 @@
 /*
  * StringUtils.cpp
  *
- * Copyright (C) 2022 by RStudio, PBC
+ * Copyright (C) 2022 by Posit Software, PBC
  *
- * Unless you have received this program directly from RStudio pursuant
- * to the terms of a commercial license agreement with RStudio, then
+ * Unless you have received this program directly from Posit Software pursuant
+ * to the terms of a commercial license agreement with Posit Software, then
  * this program is licensed to you under the terms of version 3 of the
  * GNU Affero General Public License. This program is distributed WITHOUT
  * ANY EXPRESS OR IMPLIED WARRANTY, INCLUDING THOSE OF NON-INFRINGEMENT,
@@ -859,7 +859,7 @@ std::string formatDouble(const double d, const int precision)
 {
    std::stringstream out;
    out.precision(precision);
-   out << d;
+   out << std::fixed << d;
    return out.str();
 }
 
@@ -899,6 +899,45 @@ std::string sprintf(const char* fmt, ...)
    
    // return as string
    return std::string(&buffer[0], n);
+}
+
+// return all of stdin as a string
+std::string consumeStdin(StdinLines kind, unsigned maxChars)
+{
+   std::string input;
+   int ch;
+   for (unsigned i = 0; i < maxChars; i++)
+   {
+      ch = ::fgetc(stdin);
+      if (feof(stdin))
+      {
+         // reached end of standard input
+         break;
+      }
+      if (kind == StdinSingleLine && ch == '\n')
+      {
+         // reached end of single line and that's all we wanted
+         break;
+      }
+      if (ferror(stdin))
+      {
+         // something bad happened
+         LOG_WARNING_MESSAGE("Error reading from stdin stream!");
+         break;
+      }
+
+      // all is well, add the character and advance
+      input.push_back(ch);
+
+      // warn if we are about to truncate
+      if (i == (maxChars - 1))
+      {
+         LOG_WARNING_MESSAGE("Gave up reading stdin after consuming " +
+            safe_convert::numberToString(maxChars) + " characters");
+      }
+   }
+
+   return input;
 }
 
 } // namespace string_utils

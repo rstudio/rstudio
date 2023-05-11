@@ -1,10 +1,10 @@
 /*
  * RunHyperlink.java
  *
- * Copyright (C) 2022 by RStudio, PBC
+ * Copyright (C) 2022 by Posit Software, PBC
  *
- * Unless you have received this program directly from RStudio pursuant
- * to the terms of a commercial license agreement with RStudio, then
+ * Unless you have received this program directly from Posit Software pursuant
+ * to the terms of a commercial license agreement with Posit Software, then
  * this program is licensed to you under the terms of version 3 of the
  * GNU Affero General Public License. This program is distributed WITHOUT
  * ANY EXPRESS OR IMPLIED WARRANTY, INCLUDING THOSE OF NON-INFRINGEMENT,
@@ -36,10 +36,10 @@ public class RunHyperlink extends Hyperlink
     {
         super(url, params, text, clazz);
         
-        Match match = HYPERLINK_PATTERN.match(url, 0);
+        Match match = HYPERLINK_RUN_PATTERN.match(url, 0);
         package_ = match.getGroup(2);
         fun_ = match.getGroup(3);
-        code_ = url.replaceFirst("^(ide|rstudio):run:", "");
+        code_ = url.replaceFirst("^(x-r-|ide:|rstudio:)run:", "");
         
         server_ = RStudioGinjector.INSTANCE.getServer();
     }
@@ -72,18 +72,19 @@ public class RunHyperlink extends Hyperlink
 
     public static boolean handles(String url)
     {
-        Match match = HYPERLINK_PATTERN.match(url, 0);
+        Match match = HYPERLINK_RUN_PATTERN.match(url, 0);
         if (match == null) 
             return false;
 
         String pkg = match.getGroup(2);
-        if (StringUtil.equals(pkg, "base") || StringUtil.equals(pkg, "utils") || StringUtil.equals(pkg, "stats"))
+        if (StringUtil.isOneOf(pkg, "base", "utils", "stats"))
             return false;
         
         return true;
     }
 
-    public void showHelp(){
+    public void showHelp()
+    {
         server_.showHelpTopic(fun_, package_, RCompletionType.FUNCTION);
     }
 
@@ -94,5 +95,5 @@ public class RunHyperlink extends Hyperlink
     private Server server_;
 
     // allow code of the form pkg::fn(<args>) where args does not have ;()
-    private static final Pattern HYPERLINK_PATTERN = Pattern.create("^(rstudio|ide):run:(\\w+)::(\\w+)[(][^();]*[)]$", "");
+    private static final Pattern HYPERLINK_RUN_PATTERN = Pattern.create("^(x-r-|rstudio:|ide:)run:(\\w+)::(\\w+)[(][^();]*[)]$", "");
 }

@@ -1,10 +1,10 @@
 /*
  * Response.hpp
  *
- * Copyright (C) 2022 by RStudio, PBC
+ * Copyright (C) 2022 by Posit Software, PBC
  *
- * Unless you have received this program directly from RStudio pursuant
- * to the terms of a commercial license agreement with RStudio, then
+ * Unless you have received this program directly from Posit Software pursuant
+ * to the terms of a commercial license agreement with Posit Software, then
  * this program is licensed to you under the terms of version 3 of the
  * GNU Affero General Public License. This program is distributed WITHOUT
  * ANY EXPRESS OR IMPLIED WARRANTY, INCLUDING THOSE OF NON-INFRINGEMENT,
@@ -23,6 +23,7 @@
 #include <boost/optional.hpp>
 #include <boost/type_traits/is_same.hpp>
 #include <boost/make_shared.hpp>
+#include <boost/algorithm/string/predicate.hpp>
 #include <boost/iostreams/copy.hpp>
 #include <boost/iostreams/concepts.hpp>
 #include <boost/iostreams/filtering_stream.hpp>
@@ -63,6 +64,8 @@ enum Code {
    MovedTemporarily = 302,
    SeeOther = 303,
    NotModified = 304,
+   TemporaryRedirect = 307,
+   PermanentRedirect = 308,
    TooManyRedirects = 310,
    BadRequest = 400,
    Unauthorized = 401,
@@ -209,7 +212,8 @@ public:
    Error setBody(std::istream& is, 
                  const Filter& filter, 
                  std::streamsize buffSize = 128,
-                 bool padding = false)
+                 bool padding = false,
+                 bool enableRuntimeCompression = true)
    {
       try
       {
@@ -224,7 +228,7 @@ public:
             filteringStream.push(filter, buffSize);
 
          // handle gzip
-         if (contentEncoding() == kGzipEncoding)
+         if (contentEncoding() == kGzipEncoding && enableRuntimeCompression)
 #ifdef _WIN32
             // never gzip on win32
             removeHeader("Content-Encoding");
@@ -287,7 +291,8 @@ public:
       // send the file from its stream
       try
       {
-         return setBody(*pIfs, filter, buffSize, padding);
+         bool precompressed = boost::algorithm::ends_with(filePath.getAbsolutePath(), ".gz");
+         return setBody(*pIfs, filter, buffSize, padding, !precompressed);
       }
       catch(const std::exception& e)
       {
@@ -320,10 +325,13 @@ public:
       }
       
       // set content type
-      setContentType(filePath.getMimeContentType());
+      if (contentType().empty())
+      {
+         setContentType(filePath.getMimeContentType());
+      }
       
       // gzip if possible
-      if (request.acceptsEncoding(kGzipEncoding))
+      if (contentEncoding().empty() && request.acceptsEncoding(kGzipEncoding))
          setContentEncoding(kGzipEncoding);
 
       Error error = setBody(filePath, filter, 128, usePadding(request, filePath));

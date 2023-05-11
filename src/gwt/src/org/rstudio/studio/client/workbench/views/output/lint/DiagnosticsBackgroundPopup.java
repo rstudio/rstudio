@@ -1,10 +1,10 @@
 /*
  * DiagnosticsBackgroundPopup.java
  *
- * Copyright (C) 2022 by RStudio, PBC
+ * Copyright (C) 2022 by Posit Software, PBC
  *
- * Unless you have received this program directly from RStudio pursuant
- * to the terms of a commercial license agreement with RStudio, then
+ * Unless you have received this program directly from Posit Software pursuant
+ * to the terms of a commercial license agreement with Posit Software, then
  * this program is licensed to you under the terms of version 3 of the
  * GNU Affero General Public License. This program is distributed WITHOUT
  * ANY EXPRESS OR IMPLIED WARRANTY, INCLUDING THOSE OF NON-INFRINGEMENT,
@@ -15,6 +15,7 @@
 package org.rstudio.studio.client.workbench.views.output.lint;
 
 import org.rstudio.core.client.Rectangle;
+import org.rstudio.core.client.StringUtil;
 import org.rstudio.studio.client.workbench.views.output.OutputConstants;
 import org.rstudio.studio.client.workbench.views.output.lint.model.AceAnnotation;
 import org.rstudio.studio.client.workbench.views.source.editors.text.AceEditor;
@@ -41,7 +42,7 @@ import com.google.gwt.resources.client.CssResource;
 import com.google.gwt.user.client.Event;
 import com.google.gwt.user.client.Event.NativePreviewEvent;
 import com.google.gwt.user.client.Event.NativePreviewHandler;
-import com.google.gwt.user.client.ui.Label;
+import com.google.gwt.user.client.ui.HTML;
 import com.google.gwt.user.client.ui.PopupPanel;
 import com.google.gwt.user.client.ui.PopupPanel.PositionCallback;
 
@@ -153,7 +154,6 @@ public class DiagnosticsBackgroundPopup
             if ((currentTime - lastCursorChangedTime) < 500)
                return completeExecution();
 
-            Markers markers = editor_.getSession().getMarkers(true);
             Position currentPos;
             if (movedMouseMostRecently_)
             {
@@ -166,7 +166,8 @@ public class DiagnosticsBackgroundPopup
             {
                currentPos = docDisplay_.getCursorPosition();
             }
-
+            
+            Markers markers = editor_.getSession().getMarkers(true);
             int keys[] = markers.getIds();
             for (int i = 0; i < keys.length; i++)
             {
@@ -178,6 +179,7 @@ public class DiagnosticsBackgroundPopup
                }
             }
 
+            hidePopup();
             return completeExecution();
          }
       }, 500);
@@ -185,6 +187,12 @@ public class DiagnosticsBackgroundPopup
 
    private void displayMarkerDiagnostics(Marker marker)
    {
+      if (StringUtil.equals(marker.getClazz(), LintResources.INSTANCE.styles().spelling()))
+      {
+         hidePopup();
+         return;
+      }
+
       JsArray<AceAnnotation> annotations = editor_.getAnnotations();
       for (int i = 0; i < annotations.length(); i++)
       {
@@ -194,7 +202,11 @@ public class DiagnosticsBackgroundPopup
              marker.getRange().getEnd().getRow() >= row)
          {
             activeMarker_ = marker;
-            showPopup(annotation.text(), marker.getRange());
+            String text = annotation.html();
+            if (StringUtil.isNullOrEmpty(text))
+               text = annotation.text();
+            showPopup(text, marker.getRange());
+
             return;
          }
       }
@@ -218,7 +230,7 @@ public class DiagnosticsBackgroundPopup
             }
          });
          addStyleName(RES.styles().popup());
-         setWidget(new Label(text));
+         setWidget(new HTML(text));
       }
 
       private final Range range_;

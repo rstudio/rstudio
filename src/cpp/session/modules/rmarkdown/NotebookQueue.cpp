@@ -1,10 +1,10 @@
 /*
  * NotebookQueue.cpp
  *
- * Copyright (C) 2022 by RStudio, PBC
+ * Copyright (C) 2022 by Posit Software, PBC
  *
- * Unless you have received this program directly from RStudio pursuant
- * to the terms of a commercial license agreement with RStudio, then
+ * Unless you have received this program directly from Posit Software pursuant
+ * to the terms of a commercial license agreement with Posit Software, then
  * this program is licensed to you under the terms of version 3 of the
  * GNU Affero General Public License. This program is distributed WITHOUT
  * ANY EXPRESS OR IMPLIED WARRANTY, INCLUDING THOSE OF NON-INFRINGEMENT,
@@ -283,7 +283,12 @@ private:
          execContext_->onExprComplete();
          
       ExecRange range;
-      std::string code = execUnit_->popExecRange(&range, mode);
+      std::string engine = std::string();
+      if (execContext_ != nullptr)
+         engine = execContext_->engine();
+
+      std::string code = execUnit_->popExecRange(&range, mode, engine);
+
       if (code.empty())
       {
          // no code to evaluate--skip this unit
@@ -297,7 +302,7 @@ private:
          std::string prefix;
 
          bool isPythonActive = module_context::isPythonReplActive();
-         if (isPythonActive && (execContext_ == nullptr || execContext_->engine() != "python"))
+         if (isPythonActive && engine != "python")
          {
             // switching from Python -> R: deactivate the Python REPL
             prefix = "quit\n";
@@ -305,7 +310,7 @@ private:
             // reverse out changes to the banner option
             r::options::setOption(kReplQuietOption, prevReticulateReplQuiet_);
          }
-         else if (!isPythonActive && execContext_ && execContext_->engine() == "python")
+         else if (!isPythonActive && engine == "python")
          {
             // switching from R -> Python: activate the Python REPL
             prefix = "reticulate::repl_python()\n";

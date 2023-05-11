@@ -1,10 +1,10 @@
 /*
  * SessionRParser.cpp
  *
- * Copyright (C) 2022 by RStudio, PBC
+ * Copyright (C) 2022 by Posit Software, PBC
  *
- * Unless you have received this program directly from RStudio pursuant
- * to the terms of a commercial license agreement with RStudio, then
+ * Unless you have received this program directly from Posit Software pursuant
+ * to the terms of a commercial license agreement with Posit Software, then
  * this program is licensed to you under the terms of version 3 of the
  * GNU Affero General Public License. This program is distributed WITHOUT
  * ANY EXPRESS OR IMPLIED WARRANTY, INCLUDING THOSE OF NON-INFRINGEMENT,
@@ -871,7 +871,17 @@ public:
       // Figure out if this function call is being made as part of a magrittr
       // chain. If so, then we implicitly set the first argument as that object.
       RToken prevToken = cursor.previousSignificantToken();
-
+      if (token_utils::isNamespaceExtractionOperator(prevToken))
+      {
+         RTokenCursor clone = cursor.clone();
+         if (clone.moveToPreviousSignificantToken() &&
+             clone.moveToPreviousSignificantToken() &&
+             clone.moveToPreviousSignificantToken())
+         {
+            prevToken = clone.currentToken();
+         }
+      }
+      
       if (isPipeOperator(prevToken))
       {
          // For a magrittr style pipe, if magrittr sees a '.' at the top level (ie: used standalone as

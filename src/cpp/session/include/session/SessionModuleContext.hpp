@@ -1,11 +1,11 @@
 /*
  * SessionModuleContext.hpp
  *
- * Copyright (C) 2022 by RStudio, PBC
+ * Copyright (C) 2022 by Posit Software, PBC
  *
  *
- * Unless you have received this program directly from RStudio pursuant
- * to the terms of a commercial license agreement with RStudio, then
+ * Unless you have received this program directly from Posit Software pursuant
+ * to the terms of a commercial license agreement with Posit Software, then
  * this program is licensed to you under the terms of version 3 of the
  * GNU Affero General Public License. This program is distributed WITHOUT
  * ANY EXPRESS OR IMPLIED WARRANTY, INCLUDING THOSE OF NON-INFRINGEMENT,
@@ -26,6 +26,7 @@
 #include <core/BoostSignals.hpp>
 #include <core/HtmlUtils.hpp>
 #include <core/Version.hpp>
+#include <core/system/Environment.hpp>
 #include <core/system/System.hpp>
 #include <core/system/ShellUtils.hpp>
 #include <core/system/FileChangeEvent.hpp>
@@ -102,6 +103,11 @@ core::FilePath safeCurrentPath();
 
 core::json::Object createFileSystemItem(const core::FileInfo& fileInfo);
 core::json::Object createFileSystemItem(const core::FilePath& filePath);
+
+// postback helpers
+core::FilePath rPostbackPath();
+core::FilePath rPostbackScriptsDir();
+core::FilePath rPostbackScriptsPath(const std::string& scriptName);
    
 // r session info
 std::string rVersion();
@@ -970,7 +976,8 @@ core::json::Value bookdownXRefIndex();
 core::FilePath bookdownCSL();
 
 core::FilePath extractOutputFileCreated(const core::FilePath& inputDir,
-                                        const std::string& output);
+                                        const std::string& output,
+                                        bool ignoreHugo = true);
 
 bool isPathViewAllowed(const core::FilePath& path);
 

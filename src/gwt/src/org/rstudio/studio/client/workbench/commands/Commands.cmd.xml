@@ -182,6 +182,7 @@ See `/src/gwt/tools/i18n-helpers/README.md`.
          <cmd refid="copyDummy"/>
          <cmd refid="pasteDummy"/>
          <cmd refid="pasteWithIndentDummy"/>
+         <cmd refid="selectAllDummy"/>
          <separator/>
          <menu label="_Folding">
             <cmd refid="fold"/>
@@ -225,6 +226,7 @@ See `/src/gwt/tools/i18n-helpers/README.md`.
          <cmd refid="toggleDocumentOutline"/>
          <cmd refid="toggleSoftWrapMode"/>
          <cmd refid="toggleRainbowParens"/>
+         <cmd refid="toggleRainbowFencedDivs"/>
          <separator/>
          <cmd refid="showDiagnosticsActiveDocument"/>
          <cmd refid="showDiagnosticsProject"/>
@@ -607,6 +609,7 @@ See `/src/gwt/tools/i18n-helpers/README.md`.
             <separator/>
             <cmd refid="showDomElements"/>
             <cmd refid="showShortcutCommand"/>
+            <cmd refid="crashDesktopApplication"/>
             <separator/>
             <cmd refid="enableProsemirrorDevTools"/>
          </menu>
@@ -932,7 +935,7 @@ See `/src/gwt/tools/i18n-helpers/README.md`.
          <shortcut refid="showHelpMenu" value="Alt+Shift+H" if="!org.rstudio.core.client.BrowseCap.isMacintosh()"/>
       </shortcutgroup>
       <shortcutgroup name="Accessibility">
-         <shortcut refid="toggleScreenReaderSupport" value="Ctrl+Alt+/" if="org.rstudio.core.client.BrowseCap.isMacintosh()"/>
+         <shortcut refid="toggleScreenReaderSupport" value="Ctrl+Shift+U" if="org.rstudio.core.client.BrowseCap.isMacintosh()"/>
          <shortcut refid="toggleScreenReaderSupport" value="Alt+Shift+/" if="!org.rstudio.core.client.BrowseCap.isMacintosh()"/>
          <shortcut refid="focusConsoleOutputEnd" value="Ctrl+Alt+2" if="org.rstudio.core.client.BrowseCap.isMacintosh()"/>
          <shortcut refid="focusConsoleOutputEnd" value="Alt+Shift+2" if="!org.rstudio.core.client.BrowseCap.isMacintosh()"/>
@@ -3569,7 +3572,7 @@ See `/src/gwt/tools/i18n-helpers/README.md`.
         windowMode="main"/>
 
    <cmd id="rstudioSupport"
-        menuLabel="RStudio _Support"
+        menuLabel="Posit _Support"
         rebindable="false"
         windowMode="main"/>
 
@@ -3700,6 +3703,10 @@ See `/src/gwt/tools/i18n-helpers/README.md`.
         menuLabel="Pa_ste with Indent"
         rebindable="false"/>
 
+   <cmd id="selectAllDummy"
+        menuLabel="Select _All"
+        rebindable="false"/>
+
    <cmd id="yankBeforeCursor"
         label="Yank Before Cursor"
         context="editor"/>
@@ -3735,6 +3742,12 @@ See `/src/gwt/tools/i18n-helpers/README.md`.
    <cmd id="toggleRainbowParens"
         label="Toggle Rainbow Parentheses Mode"
         menuLabel="Rain_bow Parentheses"
+        checkable="true"
+        context="editor"/>
+
+   <cmd id="toggleRainbowFencedDivs"
+        label="Toggle Rainbow Fenced Divs Mode"
+        menuLabel="Rainb_ow Fenced Divs"
         checkable="true"
         context="editor"/>
 
@@ -4164,7 +4177,7 @@ See `/src/gwt/tools/i18n-helpers/README.md`.
 
    <cmd id="loadServerHome"
         buttonLabel=""
-        menuLabel="RStudio Server _Home"
+        menuLabel="Posit Workbench _Home"
         windowMode="main"/>
 
    <cmd id="speakEditorLocation"
@@ -4189,6 +4202,10 @@ See `/src/gwt/tools/i18n-helpers/README.md`.
 
    <cmd id="showShortcutCommand"
         menuLabel="Show _Keyboard Shortcut Commands"
+        rebindable="false"/>
+
+   <cmd id="crashDesktopApplication"
+        menuLabel="Crash RStudio Desktop (DA_NGER)"
         rebindable="false"/>
 
    <cmd id="showCommandPalette"

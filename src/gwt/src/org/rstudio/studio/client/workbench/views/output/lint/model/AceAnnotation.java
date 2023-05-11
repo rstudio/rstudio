@@ -1,10 +1,10 @@
 /*
  * AceAnnotation.java
  *
- * Copyright (C) 2022 by RStudio, PBC
+ * Copyright (C) 2022 by Posit Software, PBC
  *
- * Unless you have received this program directly from RStudio pursuant
- * to the terms of a commercial license agreement with RStudio, then
+ * Unless you have received this program directly from Posit Software pursuant
+ * to the terms of a commercial license agreement with Posit Software, then
  * this program is licensed to you under the terms of version 3 of the
  * GNU Affero General Public License. This program is distributed WITHOUT
  * ANY EXPRESS OR IMPLIED WARRANTY, INCLUDING THOSE OF NON-INFRINGEMENT,
@@ -22,18 +22,26 @@ public class AceAnnotation extends JavaScriptObject
    
    public static native AceAnnotation create(int row,
                                              int column,
+                                             String html,
                                              String text,
                                              String type) /*-{
-      return {
+
+      var aceAnnotation = {
          row: row,
          column: column,
-         text: text,
          type: type
-      }
+      };
+      if (html) 
+         aceAnnotation.html = html;
+      else
+         aceAnnotation.text = text;
+
+      return aceAnnotation;
    }-*/;
    
    public final native int row() /*-{ return this.row; }-*/;
    public final native int column() /*-{ return this.column; }-*/;
    public final native String text() /*-{ return this.text; }-*/;
+   public final native String html() /*-{ return this.html; }-*/;
    public final native String type() /*-{ return this.type; }-*/;
 }

@@ -1,10 +1,10 @@
 /*
  * AceEditorBackgroundLinkHighlighter.java
  *
- * Copyright (C) 2022 by RStudio, PBC
+ * Copyright (C) 2022 by Posit Software, PBC
  *
- * Unless you have received this program directly from RStudio pursuant
- * to the terms of a commercial license agreement with RStudio, then
+ * Unless you have received this program directly from Posit Software pursuant
+ * to the terms of a commercial license agreement with Posit Software, then
  * this program is licensed to you under the terms of version 3 of the
  * GNU Affero General Public License. This program is distributed WITHOUT
  * ANY EXPRESS OR IMPLIED WARRANTY, INCLUDING THOSE OF NON-INFRINGEMENT,
@@ -24,17 +24,15 @@ import org.rstudio.core.client.MapUtil;
 import org.rstudio.core.client.MapUtil.ForEachCommand;
 import org.rstudio.core.client.StringUtil;
 import org.rstudio.core.client.ListUtil.FilterPredicate;
-import org.rstudio.core.client.MouseTracker;
-import org.rstudio.core.client.CommandWithArg;
 import org.rstudio.core.client.command.KeyboardShortcut;
 import org.rstudio.core.client.container.SafeMap;
-import org.rstudio.core.client.dom.DomUtils;
 import org.rstudio.core.client.files.FileSystemItem;
 import org.rstudio.core.client.regex.Match;
 import org.rstudio.core.client.regex.Pattern;
 import org.rstudio.studio.client.RStudioGinjector;
 import org.rstudio.studio.client.application.events.EventBus;
 import org.rstudio.studio.client.common.GlobalDisplay;
+import org.rstudio.studio.client.common.SimpleRequestCallback;
 import org.rstudio.studio.client.common.filetypes.EditableFileType;
 import org.rstudio.studio.client.common.filetypes.FileType;
 import org.rstudio.studio.client.common.filetypes.FileTypeRegistry;
@@ -55,12 +53,8 @@ import com.google.gwt.core.client.GWT;
 import com.google.gwt.core.client.JavaScriptObject;
 import com.google.gwt.core.client.Scheduler;
 import com.google.gwt.core.client.Scheduler.ScheduledCommand;
-import com.google.gwt.dom.client.Element;
-import com.google.gwt.dom.client.NativeEvent;
 import com.google.gwt.event.dom.client.MouseMoveEvent;
 import com.google.gwt.event.dom.client.MouseMoveHandler;
-import com.google.gwt.event.dom.client.MouseUpEvent;
-import com.google.gwt.event.dom.client.MouseUpHandler;
 import com.google.gwt.event.logical.shared.AttachEvent;
 import com.google.gwt.event.shared.HandlerRegistration;
 import com.google.gwt.resources.client.ClientBundle;
@@ -70,21 +64,18 @@ import com.google.gwt.user.client.Timer;
 import com.google.gwt.user.client.Event.NativePreviewEvent;
 import com.google.gwt.user.client.Event.NativePreviewHandler;
 import com.google.inject.Inject;
-import com.google.inject.Provider;
 
 public class AceEditorBackgroundLinkHighlighter
       implements
-            AceClickEvent.Handler,
             AttachEvent.Handler,
             CommandClickEvent.Handler,
             DocumentChangedEvent.Handler,
             EditorModeChangedEvent.Handler,
-            MouseMoveHandler,
-            MouseUpHandler
+            MouseMoveHandler
 {
    interface Highlighter
    {
-      void highlight(AceEditor editor, String line, int row);
+      void highlight(String line, int row);
    }
 
    @Inject
@@ -92,15 +83,13 @@ public class AceEditorBackgroundLinkHighlighter
                            FileTypeRegistry fileTypeRegistry,
                            EventBus events,
                            FilesServerOperations server,
-                           MouseTracker mouseTracker,
-                           Provider<UserPrefs> pUserPrefs)
+                           UserPrefs userPrefs)
    {
       globalDisplay_ = globalDisplay;
       fileTypeRegistry_ = fileTypeRegistry;
       events_ = events;
       server_ = server;
-      mouseTracker_ = mouseTracker;
-      pUserPrefs_ = pUserPrefs;
+      userPrefs_ = userPrefs;
    }
 
    public AceEditorBackgroundLinkHighlighter(AceEditor editor)
@@ -131,14 +120,19 @@ public class AceEditorBackgroundLinkHighlighter
 
 
       highlighters_ = new ArrayList<>();
-
+      
       handlers_ = new ArrayList<>();
-      handlers_.add(editor_.addAceClickHandler(this));
       handlers_.add(editor_.addAttachHandler(this));
       handlers_.add(editor_.addDocumentChangedHandler(this));
       handlers_.add(editor_.addEditorModeChangedHandler(this));
       handlers_.add(editor_.addMouseMoveHandler(this));
-      handlers_.add(editor_.addMouseUpHandler(this));
+      handlers_.add(editor_.addCommandClickHandler(this));
+      
+      userPrefs_.highlightWebLink().bind((Boolean enabled) ->
+      {
+         if (editor_ != null)
+            refreshHighlighters(editor_.getModeId());
+      });
 
       refreshHighlighters(editor_.getModeId());
    }
@@ -146,6 +140,7 @@ public class AceEditorBackgroundLinkHighlighter
    private void refreshHighlighters(String mode)
    {
       clearAllMarkers();
+      
       Scheduler.get().scheduleDeferred(new ScheduledCommand()
       {
          @Override
@@ -153,33 +148,32 @@ public class AceEditorBackgroundLinkHighlighter
          {
             TextFileType fileType = editor_.getFileType();
             highlighters_.clear();
-            pUserPrefs_.get().highlightWebLink().bind(new CommandWithArg<Boolean>() {
-               public void execute(Boolean arg) {
-                  if (arg)
-                  {
-                     highlighters_.add(webLinkHighlighter());
-                  }
-                  else
-                  {
-                     highlighters_.remove(webLinkHighlighter());
-                  }
-            }});
-            if (fileType != null && (fileType.isMarkdown() || fileType.isRmd()))
+            
+            if (userPrefs_.highlightWebLink().getGlobalValue())
+               highlighters_.add(webLinkHighlighter());
+            
+            if (fileType != null && fileType.isR())
+               highlighters_.add(issueHighlighter());
+            if (fileType != null && (fileType.isMarkdown() || fileType.isRmd())) 
+            {
+               highlighters_.add(issueHighlighter());
                highlighters_.add(markdownLinkHighlighter());
+            }
+            
             nextHighlightStart_ = 0;
-            timer_.schedule(700);
+            timer_.schedule(100);
          }
       });
    }
 
    private void highlightRow(int row)
    {
+      String line = editor_.getLine(row);
       for (Highlighter highlighter : highlighters_)
-         highlighter.highlight(editor_, editor_.getLine(row), row);
+         highlighter.highlight(line, row);
    }
 
    private void registerActiveMarker(int row,
-                                     String id,
                                      int markerId,
                                      final AnchoredRange range)
    {
@@ -203,7 +197,7 @@ public class AceEditorBackgroundLinkHighlighter
       });
 
       // add our new marker
-      filtered.add(new MarkerRegistration(id, markerId, range));
+      filtered.add(new MarkerRegistration(markerId, range));
       activeMarkers_.put(row, filtered);
    }
 
@@ -214,77 +208,17 @@ public class AceEditorBackgroundLinkHighlighter
             : modifier == KeyboardShortcut.SHIFT;
    }
 
-   private boolean isRequiredClickModifier(NativeEvent event)
+   private void beginDetectClickTarget(int modifier)
    {
-      return isRequiredClickModifier(KeyboardShortcut.getModifierValue(event));
-   }
-
-   private MarkerRegistration getTargetedMarker(NativeEvent event)
-   {
-      int pageX = event.getClientX();
-      int pageY = event.getClientY();
-      return getTargetedMarker(pageX, pageY);
-   }
-
-   private MarkerRegistration getTargetedMarker(int pageX, int pageY)
-   {
-      Position position = editor_.screenCoordinatesToDocumentPosition(pageX, pageY);
-      int row = position.getRow();
-      if (!activeMarkers_.containsKey(row))
-         return null;
-
-      List<MarkerRegistration> markers = activeMarkers_.get(row);
-      for (MarkerRegistration marker : markers)
-         if (marker.getRange().contains(position))
-            return marker;
-
-      return null;
-   }
-
-   private void beginDetectClickTarget(int pageX, int pageY, int modifier)
-   {
-      if (!isRequiredClickModifier(modifier))
-         return;
-
-      MarkerRegistration activeMarker = getTargetedMarker(pageX, pageY);
-      if (activeMarker == null)
-         return;
-
-      Element el = DomUtils.elementFromPoint(pageX, pageY);
-      if (el == null)
-         return;
-
-      // the element might itself be the marker we want to update, or
-      // it may be the editor instance. handle each case
-      String id = activeMarker.getId();
-      Element markerEl = el.hasClassName(id)
-            ? el
-            : DomUtils.getFirstElementWithClassName(el, id);
-      if (markerEl == null)
-         return;
-
-      if (activeHighlightMarkerEl_ != null && activeHighlightMarkerEl_ != markerEl)
-      {
-         activeHighlightMarkerEl_.addClassName(RES.styles().highlight());
-         activeHighlightMarkerEl_.removeClassName(RES.styles().hover());
-      }
-
-      markerEl.removeClassName(RES.styles().highlight());
-      markerEl.addClassName(RES.styles().hover());
-      activeHighlightMarkerEl_ = markerEl;
+      if (isRequiredClickModifier(modifier))
+         editor_.getWidget().getElement().addClassName(RES.styles().modified()); 
+      else 
+         endDetectClickTarget();
    }
 
    private void endDetectClickTarget()
    {
-      if (activeHighlightMarkerEl_ == null)
-         return;
-
-      // restore highlight styles
-      activeHighlightMarkerEl_.addClassName(RES.styles().highlight());
-      activeHighlightMarkerEl_.removeClassName(RES.styles().hover());
-
-      // unset active el
-      activeHighlightMarkerEl_ = null;
+      editor_.getWidget().getElement().removeClassName(RES.styles().modified()); 
    }
 
    private void clearAllMarkers()
@@ -351,8 +285,55 @@ public class AceEditorBackgroundLinkHighlighter
       if (reSrcRef.test(url))
          return;
 
-      // treat other URLs as paths to files on the server
       final String finalUrl = url;
+      
+      // issue:
+      // 
+      // - #123 
+      //
+      // - tidyverse/dplyr#123
+      // - github::tidyverse/dplyr#123
+      // 
+      // - gitlab::jimhester/covr#214
+      Match match = ISSUE_LINK_PATTERN.match(url, 0);
+      if (match != null)
+      {
+         String remote = match.getGroup(1);
+         String orgRepo = match.getGroup(2);
+         String issue = match.getGroup(3);
+
+         // special case when simple issue: #123
+         // because this needs to query BugReports
+         if (remote == null && orgRepo == null)
+         {
+            server_.getIssueUrl(url, new SimpleRequestCallback<String>()
+            {
+               @Override
+               public void onResponseReceived(String response)
+               {
+                  if (response.length() > 0)
+                     globalDisplay_.openWindow(response); 
+                  else 
+                     RStudioGinjector.INSTANCE.getGlobalDisplay().showErrorMessage(
+                        constants_.couldNotResolveIssue(finalUrl));
+               }
+            });
+            return;
+         }
+
+         if (remote == null || StringUtil.equals(remote, "github::"))
+         {
+            globalDisplay_.openWindow("https://www.github.com/" + orgRepo + "/issues/" + issue);
+         } 
+         else if (StringUtil.equals(remote, "gitlab::"))
+         {
+            globalDisplay_.openWindow("https://www.gitlab.com/" + orgRepo + "/issues/" + issue);
+         }
+         
+         return;
+      }
+
+      // treat other URLs as paths to files on the server
       server_.stat(finalUrl, new ServerRequestCallback<FileSystemItem>()
       {
          @Override
@@ -388,11 +369,7 @@ public class AceEditorBackgroundLinkHighlighter
       });
    }
 
-
-   // Highlighter Implementations ----
-
-   private void highlight(final AceEditor editor,
-                          int row,
+   private void highlight(int row,
                           int startColumn,
                           int endColumn)
    {
@@ -411,33 +388,34 @@ public class AceEditorBackgroundLinkHighlighter
       }
 
       // create an anchored range and add a marker for it
-      final String id = "ace_marker-" + StringUtil.makeRandomId(16);
-      final String styles = RES.styles().highlight() + " ace_marker " + id;
-      AnchoredRange anchoredRange = editor.getSession().createAnchoredRange(start, end, true);
+      final String styles = RES.styles().highlight() + " ace_marker ";
+      AnchoredRange anchoredRange = editor_.getSession().createAnchoredRange(start, end, true);
 
       final String title = BrowseCap.isMacintosh()
             ? constants_.openLinkMacCommand()
             : constants_.openLinkNotMacCommand();
       MarkerRenderer renderer =
-            MarkerRenderer.create(editor.getWidget().getEditor(), styles, title);
+             MarkerRenderer.create(editor_.getWidget().getEditor(), styles, title);
+      int markerId = editor_.getSession().addMarker(anchoredRange, styles, renderer, false);
 
-      int markerId = editor.getSession().addMarker(anchoredRange, styles, renderer, true);
-      registerActiveMarker(row, id, markerId, anchoredRange);
+      registerActiveMarker(row, markerId, anchoredRange);
    }
+
+   // Highlighter Implementations ----
 
    private Highlighter webLinkHighlighter()
    {
       return new Highlighter()
       {
          @Override
-         public void highlight(AceEditor editor, String line, int row)
+         public void highlight(String line, int row)
          {
-            onWebLinkHighlight(editor, line, row);
+            onWebLinkHighlight(line, row);
          }
       };
    }
 
-   private void onWebLinkHighlight(AceEditor editor, String line, int row)
+   private void onWebLinkHighlight(String line, int row)
    {
       // use a regex that captures all non-space characters within
       // a web link, and then fix up the captured link by removing
@@ -450,11 +428,6 @@ public class AceEditorBackgroundLinkHighlighter
          // compute start, end index for discovered URL
          int startIdx = match.getIndex();
          int endIdx   = match.getIndex() + match.getValue().length();
-
-         // ensure that the discovered url is not within a string
-         Token token = editor_.getTokenAt(Position.create(row, startIdx));
-         if (token.hasType("string"))
-            continue;
 
          String url = match.getValue();
 
@@ -473,7 +446,7 @@ public class AceEditorBackgroundLinkHighlighter
          url = trimmed;
 
          // perform highlighting
-         highlight(editor, row, startIdx, endIdx);
+         highlight(row, startIdx, endIdx);
       }
    }
 
@@ -496,20 +469,61 @@ public class AceEditorBackgroundLinkHighlighter
       return Pattern.create(rePattern);
    }
 
+   private Highlighter issueHighlighter()
+   {
+      return new Highlighter()
+      {
+         @Override
+         public void highlight(String line, int row)
+         {
+            onIssueHighlight(line, row);
+         }
+      };
+   }
+
+   private void onIssueHighlight(String line, int row)
+   {
+      for (Match match = ISSUE_LINK_PATTERN.match(line, 0);
+           match != null;
+           match = match.nextMatch())
+      {
+         int startIdx = match.getIndex();
+         int endIdx   = match.getIndex() + match.getValue().length();
+         
+         // Bail if the issue number is immediately followed by a letter
+         if (line.length() > endIdx) {
+            char c = line.charAt(endIdx);
+            if ((c >= 'a' && c <= 'z') || (c >= 'A' && c <= 'Z'))
+               continue;
+         }
+         
+         if (startIdx > 0 && endIdx < line.length())
+         {
+            char before = line.charAt(startIdx - 1);
+            char after  = line.charAt(endIdx);
+         
+            // bail if the match is surrounded by quotes
+            // because this may be an hex color
+            if ( (before == '\'' || before == '"') && after == before)
+               continue;
+         }
+         highlight(row, startIdx, endIdx);
+      }
+   }
+
    private Highlighter markdownLinkHighlighter()
    {
       return new Highlighter()
       {
          @Override
-         public void highlight(AceEditor editor, String line, int row)
+         public void highlight(String line, int row)
          {
-            onMarkdownLinkHighlight(editor, line, row);
+            onMarkdownLinkHighlight(line, row);
          }
       };
    }
 
-   private void onMarkdownLinkHighlight(AceEditor editor,
-                                        String line,
+   private void onMarkdownLinkHighlight(String line,
                                         int row)
    {
       Pattern reMarkdownLink = Pattern.create("(\\[[^\\]]+\\])(\\([^\\)]+\\))");
@@ -519,7 +533,7 @@ public class AceEditorBackgroundLinkHighlighter
       {
          int startIdx = match.getIndex() + match.getGroup(1).length() + 1;
          int endIdx   = match.getIndex() + match.getValue().length() - 1;
-         highlight(editor, row, startIdx, endIdx);
+         highlight(row, startIdx, endIdx);
       }
    }
 
@@ -529,14 +543,14 @@ public class AceEditorBackgroundLinkHighlighter
       return new Highlighter()
       {
          @Override
-         public void highlight(AceEditor editor, String line, int row)
+         public void highlight(String line, int row)
          {
-            onTestthatErrorHighlight(editor, line, row);
+            onTestthatErrorHighlight(line, row);
          }
       };
    }
 
-   private void onTestthatErrorHighlight(AceEditor editor, String line, int row)
+   private void onTestthatErrorHighlight(String line, int row)
    {
       Pattern reTestthatError = Pattern.create("\\(@[^#]+#\\d+\\)");
       for (Match match = reTestthatError.match(line, 0);
@@ -545,7 +559,7 @@ public class AceEditorBackgroundLinkHighlighter
       {
          int startIdx = match.getIndex() + 1;
          int endIdx   = match.getIndex() + match.getValue().length() - 1;
-         highlight(editor, row, startIdx, endIdx);
+         highlight(row, startIdx, endIdx);
       }
    }
 
@@ -565,7 +579,7 @@ public class AceEditorBackgroundLinkHighlighter
                if (type == Event.ONKEYDOWN)
                {
                   int modifier = KeyboardShortcut.getModifierValue(preview.getNativeEvent());
-                  beginDetectClickTarget(mouseTracker_.getLastMouseX(), mouseTracker_.getLastMouseY(), modifier);
+                  beginDetectClickTarget(modifier);
                }
                else if (type == Event.ONKEYUP)
                {
@@ -653,66 +667,10 @@ public class AceEditorBackgroundLinkHighlighter
    }
 
    @Override
-   public void onAceClick(AceClickEvent clickEvent)
-   {
-      NativeEvent event = clickEvent.getNativeEvent();
-      if (!isRequiredClickModifier(event))
-         return;
-
-      MarkerRegistration marker = getTargetedMarker(event);
-      if (marker == null)
-         return;
-
-      clickEvent.stopPropagation();
-      clickEvent.preventDefault();
-
-      // on OS X, we immediately open the popup as otherwise the link
-      // will be opened in the background
-      if (BrowseCap.isMacintosh() && !BrowseCap.isMacintoshDesktop())
-      {
-         endDetectClickTarget();
-         String url = editor_.getTextForRange(marker.getRange());
-         navigateToUrl(url);
-      }
-   }
-
-   @Override
-   public void onMouseUp(MouseUpEvent mouseUpEvent)
-   {
-      // clicks handled in 'onAceClick' for OS X web mode
-      if (BrowseCap.isMacintosh() && !BrowseCap.isMacintoshDesktop())
-         return;
-
-      NativeEvent event = mouseUpEvent.getNativeEvent();
-      if (!isRequiredClickModifier(event))
-         return;
-
-      MarkerRegistration marker = getTargetedMarker(event);
-      if (marker == null)
-         return;
-
-      boolean hasMouseMoved =
-            Math.abs(event.getClientX() - mouseTracker_.getLastMouseX()) >= 2 ||
-            Math.abs(event.getClientY() - mouseTracker_.getLastMouseY()) >= 2;
-
-      if (hasMouseMoved)
-         return;
-
-      event.stopPropagation();
-      event.preventDefault();
-
-      endDetectClickTarget();
-      String url = editor_.getTextForRange(marker.getRange());
-      navigateToUrl(url);
-   }
-
-   @Override
    public void onMouseMove(MouseMoveEvent event)
    {
-      beginDetectClickTarget(
-            event.getClientX(),
-            event.getClientY(),
-            KeyboardShortcut.getModifierValue(event.getNativeEvent()));
+      int modifier = KeyboardShortcut.getModifierValue(event.getNativeEvent());
+      beginDetectClickTarget(modifier);
    }
 
    // Resources ----
@@ -726,7 +684,7 @@ public class AceEditorBackgroundLinkHighlighter
    interface Styles extends CssResource
    {
       String highlight();
-      String hover();
+      String modified();
    }
 
    public static Resources RES = GWT.create(Resources.class);
@@ -741,34 +699,32 @@ public class AceEditorBackgroundLinkHighlighter
       protected MarkerRenderer() {}
 
       public static final native MarkerRenderer create(final AceEditorNative editor,
-                                                       final String clazz,
-                                                       final String title)
+                                                      final String clazz,
+                                                      final String title)
       /*-{
          var markerBack = editor.renderer.$markerBack;
          return $entry(function(html, range, left, top, config) {
-            // HACK: we take advantage of an implementation detail of
-            // Ace's 'drawTextMarker' implementation. Ace constructs
-            // HTML for the generated markers with code of the form:
-            //
-            //    html = "<div style='..." + extraStyle + "'>"
-            //
-            // We take advantage of this, and inject our 'extraStyle'
-            // to close the style attribute we were intended to be
-            // locked in, and instead inject a 'title' attribute instead.
-            var extra = "' title='" + title;
-            if (range.isMultiLine())
-               return markerBack.drawTextMarker(html, range, clazz, config, extra);
-            else
-               return markerBack.drawSingleLineMarker(html, range, clazz, config, 0, extra);
+            markerBack.drawSingleLineMarker(html, range, clazz, config, 0);
+            
+            // HACK: after the marker is drawn, retrieve it based on markerBack.i
+            //       and squeeze in a title attribute
+            var x;
+            var i = markerBack.i;
+            var markers = markerBack.element.childNodes;
+            if (i == -1) {
+               x = markers[markers.length - 1];
+            } else {
+               x = markers[i - 1];
+            }
+
+            x.setAttribute("title", title);
          });
       }-*/;
    }
-
    private class MarkerRegistration
    {
-      public MarkerRegistration(String id, int markerId, AnchoredRange range)
+      public MarkerRegistration(int markerId, AnchoredRange range)
       {
-         id_ = id;
          markerId_ = markerId;
          range_ = range;
       }
@@ -777,11 +733,6 @@ public class AceEditorBackgroundLinkHighlighter
       {
          editor_.getSession().removeMarker(getMarkerId());
          range_.detach();
-      }
-
-      public String getId()
-      {
-         return id_;
       }
 
       public int getMarkerId()
@@ -794,7 +745,6 @@ public class AceEditorBackgroundLinkHighlighter
          return range_;
       }
 
-      private final String id_;
       private final int markerId_;
       private final AnchoredRange range_;
    }
@@ -809,14 +759,15 @@ public class AceEditorBackgroundLinkHighlighter
    private static final int N_HIGHLIGHT_ROWS = 200;
 
    private HandlerRegistration previewHandler_;
-   private Element activeHighlightMarkerEl_;
-
+   
    // Injected ----
    private GlobalDisplay globalDisplay_;
    private FileTypeRegistry fileTypeRegistry_;
    private EventBus events_;
    private FilesServerOperations server_;
-   private MouseTracker mouseTracker_;
-   private Provider<UserPrefs> pUserPrefs_;
+   private UserPrefs userPrefs_;
    private static final ViewsSourceConstants constants_ = GWT.create(ViewsSourceConstants.class);
+
+   // constants
+   private static final Pattern ISSUE_LINK_PATTERN = Pattern.create("((?:github|gitlab)::)?([-a-zA-Z0-9.]+/[-a-zA-Z0-9.]+)?#([0-9]+)");
 }

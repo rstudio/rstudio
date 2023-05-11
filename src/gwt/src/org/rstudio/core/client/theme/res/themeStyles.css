@@ -131,6 +131,22 @@
         ace_paren_color_5,
         ace_paren_color_6;
 
+@external ace_fenced_div_0,
+          ace_fenced_div_1,
+          ace_fenced_div_2,
+          ace_fenced_div_3,
+          ace_fenced_div_4,
+          ace_fenced_div_5,
+          ace_fenced_div_6;
+
+@external ace_fenced_div_text_0,
+          ace_fenced_div_text_1,
+          ace_fenced_div_text_2,
+          ace_fenced_div_text_3,
+          ace_fenced_div_text_4,
+          ace_fenced_div_text_5,
+          ace_fenced_div_text_6;
+
 @url DIALOGTOP dialogTop;
 @url DIALOGBOTTOM dialogBottom;
 @url HORIZONTALHANDLE horizontalHandle;
@@ -2724,6 +2740,22 @@ body .rstudio-themes-alternate {
 .editor_dark .ace_paren_color_4 {color: #00bdce;}
 .editor_dark .ace_paren_color_5 {color: #94a9ec;}
 .editor_dark .ace_paren_color_6 {color: #dc91db;}
+
+.ace_fenced_div_0 {color: #ed90a4;}
+.ace_fenced_div_1 {color: #d3a263;}
+.ace_fenced_div_2 {color: #99b657;}
+.ace_fenced_div_3 {color: #33c192;}
+.ace_fenced_div_4 {color: #00bdce;}
+.ace_fenced_div_5 {color: #94a9ec;}
+.ace_fenced_div_6 {color: #dc91db;}
+
+.ace_fenced_div_text_0 {color: #ed90a4;}
+.ace_fenced_div_text_1 {color: #d3a263;}
+.ace_fenced_div_text_2 {color: #99b657;}
+.ace_fenced_div_text_3 {color: #33c192;}
+.ace_fenced_div_text_4 {color: #00bdce;}
+.ace_fenced_div_text_5 {color: #94a9ec;}
+.ace_fenced_div_text_6 {color: #dc91db;}
 
 /* jump to Latest button for virtualized console */
 .jump-to-latest-console {

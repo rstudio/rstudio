@@ -1,7 +1,7 @@
 /*
  * c_cpp_highlight_rules.js
  *
- * Copyright (C) 2022 by RStudio, PBC
+ * Copyright (C) 2022 by Posit Software, PBC
  *
  * The Original Code is Ajax.org Code Editor (ACE).
  *
@@ -16,8 +16,8 @@
  *
  * Based on Bespin's C/C++ Syntax Plugin by Marc McIntyre.
  *
- * Unless you have received this program directly from RStudio pursuant
- * to the terms of a commercial license agreement with RStudio, then
+ * Unless you have received this program directly from Posit Software pursuant
+ * to the terms of a commercial license agreement with Posit Software, then
  * this program is licensed to you under the terms of version 3 of the
  * GNU Affero General Public License. This program is distributed WITHOUT
  * ANY EXPRESS OR IMPLIED WARRANTY, INCLUDING THOSE OF NON-INFRINGEMENT,
@@ -116,7 +116,7 @@ var c_cppHighlightRules = function() {
             // Roxygen
             token : "comment",
             regex : "\\/\\/'",
-            next : "rd-start"
+            next : "rdoc-start"
          }, {
             // Standard comment
             token : "comment",
@@ -253,21 +253,21 @@ var c_cppHighlightRules = function() {
       rdRules["start"][i].token += ".virtual-comment";
    }
 
-   this.addRules(rdRules, "rd-");
-   this.$rules["rd-start"].unshift({
+   this.addRules(rdRules, "rdoc-");
+   this.$rules["rdoc-start"].unshift({
       token: "text",
       regex: "^",
       next: "start"
    });
-   this.$rules["rd-start"].unshift({
+   this.$rules["rdoc-start"].unshift({
       token : "keyword",
       regex : "@(?!@)[^ ]*"
    });
-   this.$rules["rd-start"].unshift({
+   this.$rules["rdoc-start"].unshift({
       token : "comment",
       regex : "@@"
    });
-   this.$rules["rd-start"].push({
+   this.$rules["rdoc-start"].push({
       token : "comment",
       regex : "[^%\\\\[({\\])}]+"
    });

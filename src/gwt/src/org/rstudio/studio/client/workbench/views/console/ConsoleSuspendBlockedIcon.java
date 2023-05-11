@@ -1,10 +1,10 @@
 /*
  * ConsoleSuspendBlockedIcon.java
  *
- * Copyright (C) 2022 by RStudio, PBC
+ * Copyright (C) 2022 by Posit Software, PBC
  *
- * Unless you have received this program directly from RStudio pursuant
- * to the terms of a commercial license agreement with RStudio, then
+ * Unless you have received this program directly from Posit Software pursuant
+ * to the terms of a commercial license agreement with Posit Software, then
  * this program is licensed to you under the terms of version 3 of the
  * GNU Affero General Public License. This program is distributed WITHOUT
  * ANY EXPRESS OR IMPLIED WARRANTY, INCLUDING THOSE OF NON-INFRINGEMENT,
@@ -14,7 +14,6 @@
  */
 package org.rstudio.studio.client.workbench.views.console;
 
-import com.google.gwt.aria.client.Roles;
 import com.google.gwt.dom.client.Style;
 import com.google.gwt.user.client.ui.Composite;
 import com.google.gwt.user.client.ui.Image;
@@ -27,7 +26,7 @@ public class ConsoleSuspendBlockedIcon
    extends Composite
 
 {
-   public ConsoleSuspendBlockedIcon(boolean announce)
+   public ConsoleSuspendBlockedIcon()
    {
       ImageResource sus = new ImageResource2x(ThemeResources.INSTANCE.suspended());
       ImageResource blocked = new ImageResource2x(ThemeResources.INSTANCE.suspendBlocked());
@@ -38,12 +37,6 @@ public class ConsoleSuspendBlockedIcon
       suspended_.getElement().setId(ElementIds.CONSOLE_SESSION_SUSPENDED);
       suspendBlocked_ = new Image(blocked);
       suspendBlocked_.getElement().setId(ElementIds.CONSOLE_SESSION_SUSPEND_BLOCKED);
-
-      if (announce)
-      {
-         Roles.getAlertRole().set(suspended_.getElement());
-         Roles.getAlertRole().set(suspendBlocked_.getElement());
-      }
    }
 
    public Image getSuspendBlocked()

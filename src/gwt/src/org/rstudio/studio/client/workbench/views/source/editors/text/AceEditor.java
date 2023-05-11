@@ -1,10 +1,10 @@
 /*
  * AceEditor.java
  *
- * Copyright (C) 2022 by RStudio, PBC
+ * Copyright (C) 2022 by Posit Software, PBC
  *
- * Unless you have received this program directly from RStudio pursuant
- * to the terms of a commercial license agreement with RStudio, then
+ * Unless you have received this program directly from Posit Software pursuant
+ * to the terms of a commercial license agreement with Posit Software, then
  * this program is licensed to you under the terms of version 3 of the
  * GNU Affero General Public License. This program is distributed WITHOUT
  * ANY EXPRESS OR IMPLIED WARRANTY, INCLUDING THOSE OF NON-INFRINGEMENT,
@@ -2441,7 +2441,7 @@ public class AceEditor implements DocDisplay,
 
    public void setColorPreview(boolean show)
    {
-      _setColorPreviewImpl(show);
+      widget_.getEditor().getRenderer().setColorPreview(show);
       widget_.getEditor().retokenizeDocument();
    }
 
@@ -2454,6 +2454,23 @@ public class AceEditor implements DocDisplay,
    public boolean getRainbowParentheses()
    {
       return _getRainbowParenthesesImpl();
+   }
+
+   public void setRainbowFencedDivs(boolean rainbow)
+   {
+      _setRainbowFencedDivsImpl(rainbow);
+      widget_.getEditor().retokenizeDocument();
+   }
+
+   public boolean getRainbowFencedDivs()
+   {
+      return _getRainbowFencedDivsImpl();
+   }
+
+   public void setBackgroundColor(String color) 
+   {
+      widget_.getEditor().getRenderer().setBackgroundColor(color);
+      widget_.getEditor().retokenizeDocument();
    }
 
    public void setScrollLeft(int x)
@@ -2478,12 +2495,6 @@ public class AceEditor implements DocDisplay,
       Mode.setHighlightRFunctionCalls(highlight);
    }-*/;
 
-   private native final void _setColorPreviewImpl(boolean show)
-   /*-{
-      var Mode = $wnd.require("mode/r_highlight_rules");
-      Mode.setColorPreview(show);
-   }-*/;
-
    private native final void _setRainbowParenthesesImpl(boolean rainbow)
    /*-{
       var Mode = $wnd.require("mode/rainbow_paren_highlight_rules");
@@ -2494,6 +2505,18 @@ public class AceEditor implements DocDisplay,
    /*-{
      var Mode = $wnd.require("mode/rainbow_paren_highlight_rules");
      return Mode.getRainbowParentheses();
+   }-*/;
+
+   private native final void _setRainbowFencedDivsImpl(boolean rainbow)
+   /*-{
+      var Mode = $wnd.require("mode/markdown_highlight_rules");
+      Mode.setRainbowFencedDivs(rainbow);
+   }-*/;
+
+   private native final boolean _getRainbowFencedDivsImpl()
+   /*-{
+     var Mode = $wnd.require("mode/markdown_highlight_rules");
+     return Mode.getRainbowFencedDivs();
    }-*/;
 
    public void enableSearchHighlight()

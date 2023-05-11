@@ -1,10 +1,10 @@
 /*
  * HelpInfo.java
  *
- * Copyright (C) 2022 by RStudio, PBC
+ * Copyright (C) 2022 by Posit Software, PBC
  *
- * Unless you have received this program directly from RStudio pursuant
- * to the terms of a commercial license agreement with RStudio, then
+ * Unless you have received this program directly from Posit Software pursuant
+ * to the terms of a commercial license agreement with Posit Software, then
  * this program is licensed to you under the terms of version 3 of the
  * GNU Affero General Public License. This program is distributed WITHOUT
  * ANY EXPRESS OR IMPLIED WARRANTY, INCLUDING THOSE OF NON-INFRINGEMENT,
@@ -109,7 +109,10 @@ public class HelpInfo extends JavaScriptObject
       String signature = getSignature();
       if (signature == null)
          signature = defaultSignature;
-      return new ParsedInfo(getPackageName(), signature, values, args, slots);
+
+      values.put("View", getViewUrl());
+      
+      return new ParsedInfo(getPackageName(), signature, values, args, slots, hasHelp(), getType());
    }
    
    private void parseDescriptionList(HashMap<String, String> args,
@@ -156,7 +159,7 @@ public class HelpInfo extends JavaScriptObject
    {
       for (Node node = (Node) heading; node != null; node = node.getNextSibling())
       {
-         if (node.getNodeType() != node.ELEMENT_NODE)
+         if (node.getNodeType() != Node.ELEMENT_NODE)
             continue;
          
          if (StringUtil.equals(node.getNodeName(), "TABLE"))
@@ -170,7 +173,12 @@ public class HelpInfo extends JavaScriptObject
                                Element heading)
    {
       Element table = findArgumentTable(heading);
-      assert table != null : "Unexpected help format, no argblock table found";
+      
+      // early exit, but just acts as if there are no arguments
+      // this usually happens with free form \section{Arguments}
+      // instead of \arguments{}
+      if (table == null) 
+         return;
       
       TableElement t = (TableElement) table;
       NodeList<TableRowElement> rows = t.getRows();
@@ -205,6 +213,18 @@ public class HelpInfo extends JavaScriptObject
    private final native String getPackageName() /*-{
       return this.pkgname ? this.pkgname[0] : null;
    }-*/;
+
+   private final native String getViewUrl() /*-{
+      return this.view ? this.view[0] : null;
+   }-*/;
+
+   private final native boolean hasHelp() /*-{
+      return this.help ? this.help[0] : true;
+   }-*/;
+
+   private final native int getType() /*-{
+      return this.type ? this.type[0] : 0;
+   }-*/;
    
    public static class Custom extends JavaScriptObject
    {
@@ -215,7 +235,6 @@ public class HelpInfo extends JavaScriptObject
       public final native String getPackageName() /*-{
          return this.package_name ? this.package_name[0] : "";
       }-*/;
-
    
       public final native String getTitle() /*-{
          return this.title ? this.title[0] : "";
@@ -236,7 +255,11 @@ public class HelpInfo extends JavaScriptObject
       public final native JsArrayString getArgDescriptions() /*-{
          return this.arg_descriptions;
       }-*/;
-      
+
+      public final native int getType() /*-{
+         return this.type ? this.type[0] : 0;
+      }-*/;
+
       public final ParsedInfo toParsedInfo() 
       {
          // values
@@ -260,7 +283,9 @@ public class HelpInfo extends JavaScriptObject
                                getSignature(),
                                values,
                                args,
-                               null);
+                               null,
+                               true, 
+                               getType());
       }
       
    }
@@ -273,9 +298,12 @@ public class HelpInfo extends JavaScriptObject
       private HashMap<String, String> values;
       private HashMap<String, String> args;
       private HashMap<String, String> slots;
-
+      private boolean help;
+      private int type;
+      
       public ParsedInfo(String pkgName, String signature, HashMap<String, String> values,
-            HashMap<String, String> args, HashMap<String, String> slots)
+            HashMap<String, String> args, HashMap<String, String> slots,
+            boolean help, int type)
       {
          super();
          this.pkgName = pkgName;
@@ -283,6 +311,8 @@ public class HelpInfo extends JavaScriptObject
          this.values = values != null ? values : new HashMap<>();
          this.args = args;
          this.slots = slots;
+         this.help = help;
+         this.type = type;
       }
       
       public String getPackageName()
@@ -313,6 +343,21 @@ public class HelpInfo extends JavaScriptObject
       public String getDetails()
       {
          return values.get("Details");
+      }
+
+      public String getViewUrl() 
+      {
+         return values.get("View");
+      }
+
+      public boolean hasHelp() 
+      {
+         return help;
+      }
+
+      public int getType()
+      {
+         return type;
       }
 
       /**

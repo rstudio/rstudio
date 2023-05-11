@@ -1,10 +1,10 @@
 /*
  * RSessionState.cpp
  *
- * Copyright (C) 2022 by RStudio, PBC
+ * Copyright (C) 2022 by Posit Software, PBC
  *
- * Unless you have received this program directly from RStudio pursuant
- * to the terms of a commercial license agreement with RStudio, then
+ * Unless you have received this program directly from Posit Software pursuant
+ * to the terms of a commercial license agreement with Posit Software, then
  * this program is licensed to you under the terms of version 3 of the
  * GNU Affero General Public License. This program is distributed WITHOUT
  * ANY EXPRESS OR IMPLIED WARRANTY, INCLUDING THOSE OF NON-INFRINGEMENT,
@@ -221,18 +221,21 @@ Error restoreEnvironmentVars(const FilePath& envFile)
    return Success();
 }
    
-Error restoreWorkingDirectory(const FilePath& userHomePath, 
-                              const std::string& workingDirectory)
+Error restoreWorkingDirectory(const std::string& workingDirectory,
+                              const FilePath& projectPath,
+                              const FilePath& userHomePath)
 {
    // resolve working dir
-   FilePath workingDirPath = FilePath::resolveAliasedPath(workingDirectory,
-                                                          userHomePath);
-
-   // restore working path if it exists (else revert to home)
+   FilePath workingDirPath = FilePath::resolveAliasedPath(workingDirectory, userHomePath);
    if (workingDirPath.exists())
       return workingDirPath.makeCurrentPath();
-   else
-      return utils::userHomePath().makeCurrentPath();
+   
+   // if that didn't work, use project directory
+   if (projectPath.isDirectory())
+      return projectPath.makeCurrentPath();
+   
+   // otehrwise, use home directory
+   return utils::userHomePath().makeCurrentPath();
 }
 
 const char * const kSaving = "saving";
@@ -363,6 +366,7 @@ bool save(const FilePath& statePath,
           bool serverMode,
           bool excludePackages,
           bool disableSaveCompression,
+          bool saveGlobalEnvironment,
           const std::string& ephemeralEnvVars)
 {
    // initialize context
@@ -439,14 +443,14 @@ bool save(const FilePath& statePath,
    saveWorkingContext(statePath, &settings, &saved);
 
    // save search path (disable save compression if requested)
-   if (disableSaveCompression)
+   if (saveGlobalEnvironment && disableSaveCompression)
    {
       error = r::exec::RFunction(".rs.disableSaveCompression").call();
       if (error)
          LOG_ERROR(error);
    }
 
-   if (!excludePackages)
+   if (saveGlobalEnvironment && !excludePackages)
    {
       error = search_path::save(statePath);
       if (error)
@@ -455,7 +459,7 @@ bool save(const FilePath& statePath,
          saved = false;
       }
    }
-   else
+   else if (saveGlobalEnvironment)
    {
       error = search_path::saveGlobalEnvironment(statePath);
       if (error)
@@ -632,8 +636,11 @@ bool restore(const FilePath& statePath,
       
    // restore working directory
    std::string workingDir = settings.get(kWorkingDirectory);
-   error = restoreWorkingDirectory(r::session::utils::userHomePath(), 
-                                   workingDir);
+   error = restoreWorkingDirectory(
+            workingDir,
+            r::session::utils::projectPath(),
+            r::session::utils::userHomePath());
+   
    if (error)
       reportError(kRestoring, kWorkingDirectory, error, ERROR_LOCATION, er);
    

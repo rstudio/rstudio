@@ -1,10 +1,10 @@
 /*
  * CodeCompletion.cpp
  *
- * Copyright (C) 2022 by RStudio, PBC
+ * Copyright (C) 2022 by Posit Software, PBC
  *
- * Unless you have received this program directly from RStudio pursuant
- * to the terms of a commercial license agreement with RStudio, then
+ * Unless you have received this program directly from Posit Software pursuant
+ * to the terms of a commercial license agreement with Posit Software, then
  * this program is licensed to you under the terms of version 3 of the
  * GNU Affero General Public License. This program is distributed WITHOUT
  * ANY EXPRESS OR IMPLIED WARRANTY, INCLUDING THOSE OF NON-INFRINGEMENT,
@@ -222,14 +222,15 @@ void discoverSystemIncludePaths(std::vector<std::string>* pIncludePaths)
 
 #ifdef _WIN32
    {
-      core::system::ProcessResult result;
-      Error error = core::system::runCommand("where.exe gcc.exe", processOptions, &result);
+      Error error = r::exec::RFunction("base:::Sys.which")
+            .addParam("gcc.exe")
+            .call(&compilerPath);
+      
       if (error)
+      {
          LOG_ERROR(error);
-      else if (result.exitStatus != EXIT_SUCCESS)
-         LOG_ERROR_MESSAGE("Error querying CXX compiler: " + result.stdOut);
-      else
-         compilerPath = string_utils::trimWhitespace(result.stdOut);
+         return;
+      }
    }
 #else
    {

@@ -26,16 +26,12 @@ case "$1" in
 
     stop)
         launchctl stop com.rstudio.launchd.rserver
-        killall -USR2 $2 $3 $4 $5 $6 $7 $8 $9  rsession 2>/dev/null
-        killall -USR2 $2 $3 $4 $5 $6 $7 $8 $9  rworkspaces 2>/dev/null
         ;;
 
     restart)
         testConfig || exit $?
         launchctl stop com.rstudio.launchd.rserver
         launchctl start com.rstudio.launchd.rserver
-        killall -USR2 $2 $3 $4 $5 $6 $7 $8 $9  rsession 2>/dev/null
-        killall -USR2 $2 $3 $4 $5 $6 $7 $8 $9  rworkspaces 2>/dev/null
         ;;
 
     test-config)
@@ -102,8 +98,6 @@ case "$1" in
         touch /var/lib/rstudio-server/offline
         launchctl stop com.rstudio.launchd.rserver
         launchctl start com.rstudio.launchd.rserver
-        killall -USR2 $2 $3 $4 $5 $6 $7 $8 $9  rsession 2>/dev/null
-        killall -USR2 $2 $3 $4 $5 $6 $7 $8 $9  rworkspaces 2>/dev/null
         ;;
 
     online)

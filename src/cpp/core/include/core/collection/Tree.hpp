@@ -1,11 +1,11 @@
 /*
  * Tree.hpp
  *
- * Copyright (C) 2022 by RStudio, PBC
+ * Copyright (C) 2022 by Posit Software, PBC
  * Copyright (C) 2001-2011 Kasper Peeters <kasper@phi-sci.com>
  *
- * Unless you have received this program directly from RStudio pursuant
- * to the terms of a commercial license agreement with RStudio, then
+ * Unless you have received this program directly from Posit Software pursuant
+ * to the terms of a commercial license agreement with Posit Software, then
  * this program is licensed to you under the terms of version 3 of the
  * GNU Affero General Public License. This program is distributed WITHOUT
  * ANY EXPRESS OR IMPLIED WARRANTY, INCLUDING THOSE OF NON-INFRINGEMENT,
@@ -24,7 +24,7 @@
 // version 2 applies. Special permission to use tree.hh under
 // the LGPL for other projects can be requested from the author.
 //
-// If you have received this program directly from RStudio pursuant
+// If you have received this program directly from Posit Software pursuant
 // to the terms of a commercial license then tree.hh is covered 
 // under this same commercial license.
 //

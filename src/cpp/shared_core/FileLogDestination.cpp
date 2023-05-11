@@ -1,10 +1,10 @@
 /*
  * FileLogDestination.cpp
  * 
- * Copyright (C) 2022 by RStudio, PBC
+ * Copyright (C) 2022 by Posit Software, PBC
  *
- * Unless you have received this program directly from RStudio pursuant to the terms of a commercial license agreement
- * with RStudio, then this program is licensed to you under the following terms:
+ * Unless you have received this program directly from Posit Software pursuant to the terms of a commercial license agreement
+ * with Posit, then this program is licensed to you under the following terms:
  *
  * Permission is hereby granted, free of charge, to any person obtaining a copy of this software and associated
  * documentation files (the "Software"), to deal in the Software without restriction, including without limitation the
@@ -350,7 +350,9 @@ struct FileLogDestination::Impl
       {
          // Check to see if the logfile is stale
          // If so, we will delete it instead of rotating it
-         std::time_t lastWrite = logFile.getLastWriteTime();
+         // note: we swallow any potential error here and simply do not delete the file
+         std::time_t lastWrite = 0;
+         logFile.getLastWriteTime(lastWrite);
          boost::posix_time::ptime lastWriteTime = lastWrite != 0 ? core::date_time::timeFromStdTime(lastWrite) :
                                                                    boost::posix_time::microsec_clock::universal_time();
          boost::posix_time::ptime now = boost::posix_time::microsec_clock::universal_time();

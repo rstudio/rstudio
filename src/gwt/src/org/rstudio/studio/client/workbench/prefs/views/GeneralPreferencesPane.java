@@ -1,10 +1,10 @@
 /*
  * GeneralPreferencesPane.java
  *
- * Copyright (C) 2022 by RStudio, PBC
+ * Copyright (C) 2022 by Posit Software, PBC
  *
- * Unless you have received this program directly from RStudio pursuant
- * to the terms of a commercial license agreement with RStudio, then
+ * Unless you have received this program directly from Posit Software pursuant
+ * to the terms of a commercial license agreement with Posit Software, then
  * this program is licensed to you under the terms of version 3 of the
  * GNU Affero General Public License. This program is distributed WITHOUT
  * ANY EXPRESS OR IMPLIED WARRANTY, INCLUDING THOSE OF NON-INFRINGEMENT,
@@ -344,6 +344,8 @@ public class GeneralPreferencesPane extends PreferencesPane
          {
             nativeFileDialogs_ = checkboxPref(prefs_.nativeFileDialogs());
             advanced.add(nativeFileDialogs_);
+            disableRendererAccessibility_ = checkboxPref(prefs_.disableRendererAccessibility());
+            advanced.add(disableRendererAccessibility_);
          }
       }
 
@@ -359,16 +361,6 @@ public class GeneralPreferencesPane extends PreferencesPane
       String[] values = new String[labels.length];
       for (int i = 0; i < labels.length; i++)
          values[i] = Double.parseDouble(labels[i]) + "";
-
-      helpFontSize_ = new SelectWidget(constants_.helpFontSizeLabel(),
-                                       labels,
-                                       values,
-                                       false, /* Multi select */
-                                       true, /* Horizontal label */
-                                       false /* List on left */);
-      if (!helpFontSize_.setValue(prefs_.helpFontSizePoints().getValue() + ""))
-         helpFontSize_.getListBox().setSelectedIndex(3);
-      advanced.add(helpFontSize_);
 
       Label experimentalLabel = headerLabel(constants_.experimentalLabel());
       spacedBefore(experimentalLabel);
@@ -494,6 +486,7 @@ public class GeneralPreferencesPane extends PreferencesPane
 
       initialUiLanguage_ = prefs_.uiLanguage().getValue();
       initialNativeFileDialogs_ = prefs_.nativeFileDialogs().getValue();
+      initialDisableRendererAccessibility_ = prefs_.disableRendererAccessibility().getValue();
    }
 
    @Override
@@ -506,11 +499,6 @@ public class GeneralPreferencesPane extends PreferencesPane
    public RestartRequirement onApply(UserPrefs prefs)
    {
       RestartRequirement restartRequirement = super.onApply(prefs);
-
-      {
-         double helpFontSize = Double.parseDouble(helpFontSize_.getValue());
-         prefs.helpFontSizePoints().setGlobalValue(helpFontSize);
-      }
 
       if (clipboardMonitoring_ != null &&
           desktopMonitoring_ != clipboardMonitoring_.getValue())
@@ -596,11 +584,22 @@ public class GeneralPreferencesPane extends PreferencesPane
             restartRequirement.setUiReloadRequired(true);
          }
 
-         // The uiLanguage preference is mirrored in a cookie telling GWT which language to display.
-         // Ensure consistency here and force a page reload if necessary.
-         if (WebDialogCookie.getUseWebDialogs() != useNativeDialogsPrefValue)
+         boolean disableRendererAccessibilityPrefValue = disableRendererAccessibility_.getValue();
+         if (disableRendererAccessibilityPrefValue != initialDisableRendererAccessibility_)
          {
-            WebDialogCookie.setUseWebDialogs(useNativeDialogsPrefValue);
+            if (Desktop.hasDesktopFrame() && BrowseCap.isElectron())
+               Desktop.getFrame().setDisableRendererAccessibility(disableRendererAccessibilityPrefValue);
+            restartRequirement.setDesktopRestartRequired(true);
+         }
+
+
+         boolean useWebDialogsCookieValue = WebDialogCookie.getUseWebDialogs();
+         boolean useWebDialogsPrefValue = !useNativeDialogsPrefValue;
+         // The choice of native versus web dialogs is mirrored in a cookie telling GWT which dialogs to use
+         // Ensure consistency here and force a page reload if necessary.
+         if (useWebDialogsCookieValue != useWebDialogsPrefValue)
+         {
+            WebDialogCookie.setUseWebDialogs(useWebDialogsPrefValue);
             restartRequirement.setUiReloadRequired(true);
          }
       }
@@ -699,11 +698,11 @@ public class GeneralPreferencesPane extends PreferencesPane
    private RVersionSelectWidget rServerRVersion_ = null;
    private CheckBox rememberRVersionForProjects_ = null;
    private CheckBox reuseSessionsForProjectLinks_ = null;
-   private SelectWidget helpFontSize_;
    private SelectWidget uiLanguage_;
    private CheckBox clipboardMonitoring_ = null;
    private CheckBox fullPathInTitle_ = null;
    private CheckBox nativeFileDialogs_ = null;
+   private CheckBox disableRendererAccessibility_ = null;
    private CheckBox useGpuExclusions_ = null;
    private CheckBox useGpuDriverBugWorkarounds_ = null;
    private SelectWidget renderingEngineWidget_ = null;
@@ -727,4 +726,5 @@ public class GeneralPreferencesPane extends PreferencesPane
    private final Session session_;
    private String initialUiLanguage_;
    private boolean initialNativeFileDialogs_;
+   private boolean initialDisableRendererAccessibility_;
 }

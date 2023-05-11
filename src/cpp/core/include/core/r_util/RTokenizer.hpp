@@ -1,10 +1,10 @@
 /*
  * RTokenizer.hpp
  *
- * Copyright (C) 2022 by RStudio, PBC
+ * Copyright (C) 2022 by Posit Software, PBC
  *
- * Unless you have received this program directly from RStudio pursuant
- * to the terms of a commercial license agreement with RStudio, then
+ * Unless you have received this program directly from Posit Software pursuant
+ * to the terms of a commercial license agreement with Posit Software, then
  * this program is licensed to you under the terms of version 3 of the
  * GNU Affero General Public License. This program is distributed WITHOUT
  * ANY EXPRESS OR IMPLIED WARRANTY, INCLUDING THOSE OF NON-INFRINGEMENT,
@@ -442,6 +442,28 @@ inline bool isWhitespaceOrComment(const RToken& rToken)
           rToken.isType(RToken::COMMENT);
 }
 
+inline bool isRoxygenComment(const RToken& rToken)
+{
+   if (!rToken.isType(RToken::COMMENT))
+      return false;
+
+   std::string content = rToken.contentAsUtf8();
+   size_t n = content.size();
+   char c;
+   for (size_t i = 0; i < n; i++) 
+   {
+      c = content.at(i);
+      if (c == '#')
+         continue;
+
+      if (c == '\'')
+         return true;
+
+      break;
+   }
+   return false;
+}
+
 inline bool isValidAsIdentifier(const RToken& rToken)
 {
    return rToken.isType(RToken::ID) ||
@@ -552,8 +574,15 @@ inline std::string getSymbolName(const RToken& rToken)
    if (rToken.isType(RToken::STRING) ||
        (rToken.isType(RToken::ID) && *rToken.begin() == L'`'))
    {
-       return string_utils::wideToUtf8(
-          std::wstring(rToken.begin() + 1, rToken.end() - 1));
+      if (rToken.length() < 2)
+      {
+         return std::string();
+      }
+      else
+      {
+         return string_utils::wideToUtf8(
+                  std::wstring(rToken.begin() + 1, rToken.end() - 1));
+      }
    }
    
    return rToken.contentAsUtf8();

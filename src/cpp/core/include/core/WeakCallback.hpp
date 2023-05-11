@@ -1,10 +1,10 @@
 /*
  * WeakCallback.hpp
  *
- * Copyright (C) 2022 by RStudio, PBC
+ * Copyright (C) 2022 by Posit Software, PBC
  *
- * Unless you have received this program directly from RStudio pursuant
- * to the terms of a commercial license agreement with RStudio, then
+ * Unless you have received this program directly from Posit Software pursuant
+ * to the terms of a commercial license agreement with Posit Software, then
  * this program is licensed to you under the terms of version 3 of the
  * GNU Affero General Public License. This program is distributed WITHOUT
  * ANY EXPRESS OR IMPLIED WARRANTY, INCLUDING THOSE OF NON-INFRINGEMENT,
@@ -16,8 +16,8 @@
 #ifndef CORE_WEAK_CALLBACK_HPP
 #define CORE_WEAK_CALLBACK_HPP
 
-// these macros currently only work with GCC
-#if !defined(_WIN32) && !defined(__APPLE__)
+// these macros currently only work with GCC and Clang
+#if !defined(_WIN32)
 // macros to make the declaration and definition of weak callbacks much easier
 // usage: for a callback that would normally take a shared pointer that should only
 // capture a weak pointer, add WEAK_CALLBACK_DECL(instance type, return type, method name, arg 1 type, arg 1, ...);

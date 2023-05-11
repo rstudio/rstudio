@@ -1,10 +1,10 @@
 #
 # CMakeLists.txt
 #
-# Copyright (C) 2022 by RStudio, PBC
+# Copyright (C) 2022 by Posit Software, PBC
 #
-# Unless you have received this program directly from RStudio pursuant
-# to the terms of a commercial license agreement with RStudio, then
+# Unless you have received this program directly from Posit Software pursuant
+# to the terms of a commercial license agreement with Posit Software, then
 # this program is licensed to you under the terms of version 3 of the
 # GNU Affero General Public License. This program is distributed WITHOUT
 # ANY EXPRESS OR IMPLIED WARRANTY, INCLUDING THOSE OF NON-INFRINGEMENT,
@@ -45,18 +45,21 @@ if (RSTUDIO_SERVER)
     )
 endif()
 
-# configure postback scripts for development mode
+# configure postback scripts
 set(POSTBACK_SCRIPT_DIR ${CMAKE_CURRENT_BINARY_DIR}/postback)
 file(MAKE_DIRECTORY ${POSTBACK_SCRIPT_DIR})
-configure_file(rpostback-editfile ${POSTBACK_SCRIPT_DIR}/rpostback-editfile)
-configure_file(rpostback-pdfviewer ${POSTBACK_SCRIPT_DIR}/rpostback-pdfviewer)
-configure_file(rpostback-gitssh ${POSTBACK_SCRIPT_DIR}/rpostback-gitssh)
-configure_file(rpostback-askpass ${POSTBACK_SCRIPT_DIR}/rpostback-askpass)
 configure_file(askpass-passthrough ${POSTBACK_SCRIPT_DIR}/askpass-passthrough)
+configure_file(rpostback-askpass   ${POSTBACK_SCRIPT_DIR}/rpostback-askpass)
+configure_file(rpostback-browser   ${POSTBACK_SCRIPT_DIR}/rpostback-browser)
+configure_file(rpostback-editfile  ${POSTBACK_SCRIPT_DIR}/rpostback-editfile)
+configure_file(rpostback-gitssh    ${POSTBACK_SCRIPT_DIR}/rpostback-gitssh)
+configure_file(rpostback-pdfviewer ${POSTBACK_SCRIPT_DIR}/rpostback-pdfviewer)
 
-# put rpostback in a place where it can be found for dev config
-if(NOT RSTUDIO_PACKAGE_BUILD)
-   set_target_properties(rpostback PROPERTIES RUNTIME_OUTPUT_DIRECTORY ${POSTBACK_SCRIPT_DIR})
+# set RPOSTBACK_EXECUTABLE_PATH for rdesktop-dev
+if(WIN32)
+    set(RPOSTBACK_EXECUTABLE_PATH "${CMAKE_CURRENT_BINARY_DIR}/rpostback.exe" CACHE INTERNAL "")
+else()
+    set(RPOSTBACK_EXECUTABLE_PATH "${CMAKE_CURRENT_BINARY_DIR}/rpostback" CACHE INTERNAL "")
 endif()
 
 # installation rules

@@ -1,10 +1,10 @@
 #
 # CMakeCompiler.txt
 #
-# Copyright (C) 2022 by RStudio, PBC
+# Copyright (C) 2022 by Posit Software, PBC
 #
-# Unless you have received this program directly from RStudio pursuant
-# to the terms of a commercial license agreement with RStudio, then
+# Unless you have received this program directly from Posit Software pursuant
+# to the terms of a commercial license agreement with Posit Software, then
 # this program is licensed to you under the terms of version 3 of the
 # GNU Affero General Public License. This program is distributed WITHOUT
 # ANY EXPRESS OR IMPLIED WARRANTY, INCLUDING THOSE OF NON-INFRINGEMENT,
@@ -52,6 +52,11 @@ if(MSVC)
   # disable C4068 warning: unknown pragma
   # these warnings are being triggered in the MSVC-supplied headers and we aren't touching those
   set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} /wd4068")
+
+  # disable C4003 warning: not enough arguments for function-like macro invocation
+  # C99, C++11 and above allow you to call function-like macros which accept 1 argument
+  # without any parameters, since macro arguments are allowed to be empty
+  set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} /wd4003")
 
   # embed debug information into the generated objects
   # (otherwise we can run into annoying PDB errors during compilation)

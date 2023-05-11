@@ -1,10 +1,10 @@
 /*
  * NewQuartoDocumentDialog.java
  *
- * Copyright (C) 2022 by RStudio, PBC
+ * Copyright (C) 2022 by Posit Software, PBC
  *
- * Unless you have received this program directly from RStudio pursuant
- * to the terms of a commercial license agreement with RStudio, then
+ * Unless you have received this program directly from Posit Software pursuant
+ * to the terms of a commercial license agreement with Posit Software, then
  * this program is licensed to you under the terms of version 3 of the
  * GNU Affero General Public License. This program is distributed WITHOUT
  * ANY EXPRESS OR IMPLIED WARRANTY, INCLUDING THOSE OF NON-INFRINGEMENT,
@@ -188,7 +188,8 @@ public class NewQuartoDocumentDialog extends ModalDialog<NewQuartoDocumentDialog
       setListBoxValue(engineSelect_, lastResult_.getEngine());
             
       Label kernelLabel = createLabel(constants_.kernelLabelCaption());
-      JsArray<QuartoJupyterKernel> kernels = caps.jupyterKernels();
+      JsArray<QuartoJupyterKernel> kernels = caps == null ?
+              JsArray.createArray().cast() : caps.jupyterKernels();
       
       String[] kernelNames = new String[kernels.length()];
       String[] kernelDisplayNames = new String[kernels.length()];
@@ -237,7 +238,7 @@ public class NewQuartoDocumentDialog extends ModalDialog<NewQuartoDocumentDialog
                                     "https://quarto.org");
       quartoPresentationsHelpLink_ = addHelpLink(
          constants_.learnMorePresentationsLinkCaption(),
-         "https:/quarto.org/docs/presentations/");
+         "https://quarto.org/docs/presentations/");
       quartoInteractiveHelpLink_ = addHelpLink(
          constants_.learnMoreInteractiveDocsLinkCaption(),
          "https://quarto.org/docs/interactive/");
@@ -293,7 +294,7 @@ public class NewQuartoDocumentDialog extends ModalDialog<NewQuartoDocumentDialog
       {
          language = "r";
       }
-      else
+      else if (caps_ != null)
       {
          JsArray<QuartoJupyterKernel> kernels = caps_.jupyterKernels();
          for (int i=0; i<kernels.length(); i++)

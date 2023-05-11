@@ -3,8 +3,8 @@
  *
  * Copyright (C) 2022 by RStudio, Inc.
  *
- * Unless you have received this program directly from RStudio pursuant
- * to the terms of a commercial license agreement with RStudio, then
+ * Unless you have received this program directly from Posit Software pursuant
+ * to the terms of a commercial license agreement with Posit Software, then
  * this program is licensed to you under the terms of version 3 of the
  * GNU Affero General Public License. This program is distributed WITHOUT
  * ANY EXPRESS OR IMPLIED WARRANTY, INCLUDING THOSE OF NON-INFRINGEMENT,
@@ -152,6 +152,8 @@ void endMarkdownToAst(std::string markdown,
          // got ast, now extract heading ids
 
          // disable auto identifiers so we can discover *only* explicit ids
+         format = boost::replace_all_copy(format, "+auto_identifiers", "");
+         format = boost::replace_all_copy(format, "+gfm_auto_identifiers", "");
          format += "-auto_identifiers-gfm_auto_identifiers";
 
          // path to lua filter

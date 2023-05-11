@@ -1,10 +1,10 @@
 #
 # SessionRUtil.R
 #
-# Copyright (C) 2022 by RStudio, PBC
+# Copyright (C) 2022 by Posit Software, PBC
 #
-# Unless you have received this program directly from RStudio pursuant
-# to the terms of a commercial license agreement with RStudio, then
+# Unless you have received this program directly from Posit Software pursuant
+# to the terms of a commercial license agreement with Posit Software, then
 # this program is licensed to you under the terms of version 3 of the
 # GNU Affero General Public License. This program is distributed WITHOUT
 # ANY EXPRESS OR IMPLIED WARRANTY, INCLUDING THOSE OF NON-INFRINGEMENT,
@@ -133,6 +133,9 @@
    # define runner script (will load data and execute user-defined callback)
    script <- quote({
       
+      # save the original working directory
+      originalWorkingDir <- getwd()
+      
       # read side-car data file
       bundle <- readRDS("bundle.rds")
       
@@ -149,8 +152,12 @@
       data     <- bundle[["data"]]
       
       # execute callback
-      rval <- do.call(callback, data)
-      saveRDS(object = rval, file = "output.rds")
+      result <- do.call(callback, data)
+      
+      # return to original directory
+      setwd(originalWorkingDir)
+      saveRDS(object = result, file = "output.rds")
+      
    })
    
    # write bundle to file
@@ -169,8 +176,10 @@
    
    # run the script
    system2(r, args, ...)
+   
    # read in the serialized return value of the callback and return it
-   readRDS("output.rds")
+   if (file.exists("output.rds"))
+      readRDS("output.rds")
 })
 
 # NOTE: this uses a bundled YAML library in the IDE as opposed to the R
@@ -181,4 +190,14 @@
 {
    yamlCode <- paste(yamlCode, collapse = "\n")
    .Call("rs_fromYAML", yamlCode, PACKAGE = "(embedding)")
+})
+
+.rs.addFunction("systemToUtf8", function(text)
+{
+   .Call("rs_systemToUtf8", as.character(text), PACKAGE = "(embedding)")
+})
+
+.rs.addFunction("utf8ToSystem", function(text)
+{
+   .Call("rs_utf8ToSystem", as.character(text), PACKAGE = "(embedding)")
 })

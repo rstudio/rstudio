@@ -1,10 +1,10 @@
 /*
  * UserPrefsAccessorConstants.java
  *
- * Copyright (C) 2022 by RStudio, PBC
+ * Copyright (C) 2022 by Posit Software, PBC
  *
- * Unless you have received this program directly from RStudio pursuant
- * to the terms of a commercial license agreement with RStudio, then
+ * Unless you have received this program directly from Posit Software pursuant
+ * to the terms of a commercial license agreement with Posit Software, then
  * this program is licensed to you under the terms of version 3 of the
  * GNU Affero General Public License. This program is distributed WITHOUT
  * ANY EXPRESS OR IMPLIED WARRANTY, INCLUDING THOSE OF NON-INFRINGEMENT,
@@ -680,6 +680,14 @@ public interface UserPrefsAccessorConstants extends Constants {
    String rainbowParenthesesDescription();
 
    /**
+    * Whether to highlight fenced divs in a variety of colors.
+    */
+   @DefaultStringValue("Use rainbow fenced divs")
+   String rainbowFencedDivsTitle();
+   @DefaultStringValue("Whether to highlight fenced divs in a variety of colors.")
+   String rainbowFencedDivsDescription();
+
+   /**
     * The maximum number of characters to display in a single line in the R console.
     */
    @DefaultStringValue("Maximum characters per line in R console")
@@ -1038,6 +1046,14 @@ public interface UserPrefsAccessorConstants extends Constants {
    String showPublishDiagnosticsTitle();
    @DefaultStringValue("Whether to show verbose diagnostic information when publishing content.")
    String showPublishDiagnosticsDescription();
+
+   /**
+    * Whether to show UI for publishing content to Posit Cloud.
+    */
+   @DefaultStringValue("")
+   String enableCloudPublishUiTitle();
+   @DefaultStringValue("Whether to show UI for publishing content to Posit Cloud.")
+   String enableCloudPublishUiDescription();
 
    /**
     * Whether to check remote server SSL certificates when publishing content.
@@ -1586,11 +1602,11 @@ public interface UserPrefsAccessorConstants extends Constants {
    String dataViewerMaxCellSizeDescription();
 
    /**
-    * Support accessibility aids such as screen readers (RStudio Server).
+    * Support accessibility aids such as screen readers.
     */
-   @DefaultStringValue("Enable support for screen readers in RStudio Server")
+   @DefaultStringValue("Enable support for screen readers")
    String enableScreenReaderTitle();
-   @DefaultStringValue("Support accessibility aids such as screen readers (RStudio Server).")
+   @DefaultStringValue("Support accessibility aids such as screen readers.")
    String enableScreenReaderDescription();
 
    /**
@@ -1966,6 +1982,38 @@ public interface UserPrefsAccessorConstants extends Constants {
    String nativeFileDialogsTitle();
    @DefaultStringValue("Whether RStudio Desktop will use the operating system's native File and Message dialog boxes.")
    String nativeFileDialogsDescription();
+
+   /**
+    * When enabled, any pending console input will be discarded when an (uncaught) R error occurs.
+    */
+   @DefaultStringValue("Discard pending console input on error")
+   String discardPendingConsoleInputOnErrorTitle();
+   @DefaultStringValue("When enabled, any pending console input will be discarded when an (uncaught) R error occurs.")
+   String discardPendingConsoleInputOnErrorDescription();
+
+   /**
+    * An integer value, 1-200, to set the editor scroll multiplier. The higher the value, the faster the scrolling.
+    */
+   @DefaultStringValue("Editor scroll speed sensitivity")
+   String editorScrollMultiplierTitle();
+   @DefaultStringValue("An integer value, 1-200, to set the editor scroll multiplier. The higher the value, the faster the scrolling.")
+   String editorScrollMultiplierDescription();
+
+   /**
+    * Control how text is rendered within the IDE surface.
+    */
+   @DefaultStringValue("Text rendering")
+   String textRenderingTitle();
+   @DefaultStringValue("Control how text is rendered within the IDE surface.")
+   String textRenderingDescription();
+
+   /**
+    * Disable Electron accessibility support.
+    */
+   @DefaultStringValue("Disable Electron accessibility support")
+   String disableRendererAccessibilityTitle();
+   @DefaultStringValue("Disable Electron accessibility support.")
+   String disableRendererAccessibilityDescription();
 
 
 

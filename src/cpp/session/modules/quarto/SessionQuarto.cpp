@@ -1,10 +1,10 @@
 /*
  * SessionQuarto.cpp
  *
- * Copyright (C) 2022 by RStudio, PBC
+ * Copyright (C) 2022 by Posit Software, PBC
  *
- * Unless you have received this program directly from RStudio pursuant
- * to the terms of a commercial license agreement with RStudio, then
+ * Unless you have received this program directly from Posit Software pursuant
+ * to the terms of a commercial license agreement with Posit Software, then
  * this program is licensed to you under the terms of version 3 of the
  * GNU Affero General Public License. This program is distributed WITHOUT
  * ANY EXPRESS OR IMPLIED WARRANTY, INCLUDING THOSE OF NON-INFRINGEMENT,
@@ -38,6 +38,7 @@
 #include <core/system/Process.hpp>
 
 #include <r/RExec.hpp>
+#include <r/RUtil.hpp>
 
 #include <session/SessionModuleContext.hpp>
 #include <session/SessionSourceDatabase.hpp>
@@ -49,7 +50,6 @@
 #include <session/SessionQuarto.hpp>
 
 #include "SessionQuartoPreview.hpp"
-#include "SessionQuartoServe.hpp"
 #include "SessionQuartoXRefs.hpp"
 #include "SessionQuartoResources.hpp"
 
@@ -192,10 +192,10 @@ void detectQuartoInstallation()
 {
 #ifdef QUARTO_ENABLED
    // required quarto version (quarto features don't work w/o it)
-   const Version kQuartoRequiredVersion("0.9.230");
+   const Version kQuartoRequiredVersion("1.1.251");
 
    // recommended quarto version (a bit more pestery than required)
-   const Version kQuartoRecommendedVersion("0.9.230");
+   const Version kQuartoRecommendedVersion("1.1.251");
 
    // reset
    s_userInstalledPath = FilePath();
@@ -209,7 +209,6 @@ void detectQuartoInstallation()
    bool prepend = std::get<2>(userInstalled);
 
    std::string sysPath = core::system::getenv("PATH");
-   r::exec::RFunction sysSetenv("Sys.setenv");
 
    // always use user installed if it's there but subject to version check
    if (!s_userInstalledPath.isEmpty())
@@ -217,56 +216,45 @@ void detectQuartoInstallation()
       if (s_quartoVersion >= kQuartoRecommendedVersion)
       {
          s_quartoPath = s_userInstalledPath;
-         const std::string quartoPath = string_utils::utf8ToSystem(s_quartoPath.getParent().getAbsolutePath());
+         const std::string quartoPath = string_utils::utf8ToSystem(
+                  s_quartoPath.getParent().getAbsolutePath());
 
          if (sysPath.find(quartoPath) != std::string::npos)
             return;
 
          // prepend to path only if RSTUDIO_QUARTO is defined
-         core::system::addToPath(&sysPath, quartoPath, prepend);
-         sysSetenv.addParam("PATH", sysPath);
-         Error error = sysSetenv.call();
-         if (error)
-         {
-            LOG_DEBUG_MESSAGE("Error setting PATH: " + sysPath);
-            LOG_ERROR(error);
-         }
+         r::util::addToSystemPath(s_quartoPath.getParent(), prepend);
+         return;
       }
-      else
-      {
-         showQuartoVersionWarning(s_quartoVersion, kQuartoRecommendedVersion);
-      }
-      return;
    }
 
    // embedded version of quarto (subject to required version)
 #ifndef WIN32
    std::string target = "quarto";
 #else
-   std::string target = "quarto.cmd";
+   std::string target = "quarto.exe";
 #endif
+
    FilePath embeddedQuartoPath = session::options().quartoPath()
       .completeChildPath("bin")
       .completeChildPath(target);
+
+   if (embeddedQuartoPath.isEmpty())
+      return;
+
    auto embeddedVersion = readQuartoVersion(embeddedQuartoPath);
    if (embeddedVersion >= kQuartoRequiredVersion)
    {
       s_quartoPath = embeddedQuartoPath;
       s_quartoVersion = embeddedVersion;
-      const std::string quartoPath = string_utils::utf8ToSystem(s_quartoPath.getParent().getAbsolutePath());
+      const std::string quartoPath = string_utils::utf8ToSystem(
+               s_quartoPath.getParent().getAbsolutePath());
 
       if (sysPath.find(quartoPath) != std::string::npos)
          return;
 
       // append to path
-      core::system::addToPath(&sysPath, quartoPath, false);
-      sysSetenv.addParam("PATH", sysPath);
-      Error error = sysSetenv.call();
-      if (error)
-      {
-         LOG_DEBUG_MESSAGE("Error setting PATH: " + sysPath);
-         LOG_ERROR(error);
-      }
+      r::util::addToSystemPath(s_quartoPath.getParent(), prepend);
    }
    else
    {
@@ -331,30 +319,33 @@ std::string onDetectQuartoSourceType(
           filePath.getExtensionLowerCase() == ".md")
       {
          // if we have a format: or knit: quarto render then it's a quarto document
+         // (exclude all documents with an 'output' yaml metadata key)
          std::string yamlHeader = yaml::extractYamlHeader(pDoc->contents());
          static const boost::regex reOutput("(^|\\n)output:\\s*");
          static const boost::regex reFormat("(^|\\n)format:\\s*");
          static const boost::regex reJupyter("(^|\\n)jupyter:\\s*");
          static const boost::regex reKnitQuarto("(^|\\n)knit:\\s*quarto\\s+render");
-         // format: without output:
-         if (regex_utils::search(yamlHeader.begin(), yamlHeader.end(), reFormat) &&
-             !regex_utils::search(yamlHeader.begin(), yamlHeader.end(), reOutput))
+         if (!regex_utils::search(yamlHeader.begin(), yamlHeader.end(), reOutput)) 
          {
-            return kQuartoXt;
-         }
-         // knit: quarto render
-         else if (regex_utils::search(yamlHeader.begin(), yamlHeader.end(), reKnitQuarto))
-         {
-            return kQuartoXt;
-         }
-         // project has quarto config in build target dir
-         else if (filePath.isWithin(projects::projectContext().directory()) && projectIsQuarto())
-         {
-            return kQuartoXt;
+             // format key
+            if (regex_utils::search(yamlHeader.begin(), yamlHeader.end(), reFormat))
+            {
+               return kQuartoXt;
+            }
+            // knit: quarto render
+            else if (regex_utils::search(yamlHeader.begin(), yamlHeader.end(), reKnitQuarto))
+            {
+               return kQuartoXt;
+            }
+            // project has quarto config in build target dir
+            else if (filePath.isWithin(projects::projectContext().directory()) && projectIsQuarto())
+            {
+               return kQuartoXt;
 
-         // file has a parent directory with a quarto config
-         } else if (quartoIsInstalled() && !quartoProjectConfigFile(filePath).isEmpty()) {
-            return kQuartoXt;
+            // file has a parent directory with a quarto config
+            } else if (quartoIsInstalled() && !quartoProjectConfigFile(filePath).isEmpty()) {
+               return kQuartoXt;
+            }
          }
       }
    }
@@ -384,7 +375,7 @@ Error runQuarto(const std::vector<std::string>& args,
       options.workingDir = workingDir;
 
    return core::system::runProgram(
-      string_utils::utf8ToSystem(s_quartoPath.getAbsolutePath()),
+      string_utils::utf8ToSystem(quartoExecutablePath()),
       args,
       "",
       options,
@@ -659,6 +650,20 @@ SEXP rs_quartoFileProject(SEXP basenameSEXP, SEXP dirnameSEXP)
          {
             project.push_back(proj.getString());
          }
+         // Schema changed in Quarto v1.2
+         else if (proj.isObject())
+         {
+            json::Value dir = proj.getObject()["dir"];
+            if (dir.isString())
+            {
+               FilePath inspectedFileDir(dirname);
+               FilePath projectDir(dir.getString());
+               std::string projectDirRelative = projectDir.getRelativePath(inspectedFileDir);
+               if (projectDirRelative == ".")
+                  projectDirRelative = "";
+               project.push_back(projectDirRelative);
+            }
+         }
 
          jsonInspect["resources"].getArray().toVectorString(resources);   
       }
@@ -790,7 +795,7 @@ Error quartoCreateProject(const json::JsonRpcRequest& request,
          boost::make_shared<ConsoleProcessInfo>("Creating project...",
                                                 console_process::InteractionNever);
    boost::shared_ptr<console_process::ConsoleProcess> pCP = ConsoleProcess::create(
-     string_utils::utf8ToSystem(s_quartoPath.getAbsolutePath()),
+     string_utils::utf8ToSystem(quartoExecutablePath()),
       args,
       options,
       pCPI);
@@ -798,6 +803,86 @@ Error quartoCreateProject(const json::JsonRpcRequest& request,
    pResponse->setResult(pCP->toJson(console_process::ClientSerialization));
    return Success();
 }
+
+static QuartoConfig s_quartoConfig;
+
+void readQuartoConfig()
+{
+   // detect installation
+   detectQuartoInstallation();
+   s_quartoConfig = QuartoConfig();
+   s_quartoConfig.userInstalled = s_userInstalledPath;
+   s_quartoConfig.enabled = quartoIsInstalled();
+   s_quartoConfig.version = s_quartoVersion;
+
+   // if it's installed then detect bin and resources directories
+   if (s_quartoConfig.enabled)
+   {
+      core::system::ProcessResult result;
+      Error error = quartoExec({ "--paths" }, &result);
+      if (error)
+      {
+         LOG_ERROR(error);
+         s_quartoConfig = QuartoConfig();
+         return;
+      }
+      string_utils::convertLineEndings(&result.stdOut, string_utils::LineEndingPosix);
+      std::vector<std::string> paths;
+      boost::algorithm::split(paths, result.stdOut, boost::algorithm::is_any_of("\n"));
+      if (paths.size() >= 2)
+      {
+         s_quartoConfig.bin_path = string_utils::systemToUtf8(paths[0]);
+         s_quartoConfig.resources_path = string_utils::systemToUtf8(paths[1]);
+      }
+      else
+      {
+         LOG_ERROR_MESSAGE("Unexpected output from quarto --paths: " + result.stdOut);
+         s_quartoConfig = QuartoConfig();
+         return;
+      }
+   }
+
+   using namespace session::projects;
+   const ProjectContext& context = projectContext();
+   if (context.hasProject())
+   {
+      // look for a config file in the project directory
+      FilePath configFile = quartoConfigFilePath(context.directory());
+
+      // if we don't find one, then chase up the directory hierarchy until we find one
+      if (!configFile.exists())
+         configFile = quartoProjectConfigFile(context.directory());
+
+      if (configFile.exists())
+      {
+         // confirm that it's a project
+         s_quartoConfig.is_project = true;
+
+         // record the project directory as an aliased path
+         s_quartoConfig.project_dir = module_context::createAliasedPath(configFile.getParent());
+
+         // read additional config from yaml
+         readQuartoProjectConfig(configFile,
+                                 &s_quartoConfig.project_type,
+                                 &s_quartoConfig.project_output_dir,
+                                 &s_quartoConfig.project_execute_dir,
+                                 &s_quartoConfig.project_formats,
+                                 &s_quartoConfig.project_bibliographies,
+                                 &s_quartoConfig.project_editor);
+
+         // provide default output dirs
+         if (s_quartoConfig.project_output_dir.length() == 0)
+         {
+            if (s_quartoConfig.project_type == kQuartoProjectWebsite)
+               s_quartoConfig.project_output_dir = "_site";
+            else if (s_quartoConfig.project_type == kQuartoProjectBook)
+               s_quartoConfig.project_output_dir = "_book";
+         }
+      }
+   }
+}
+
+
 
 } // anonymous namespace
 
@@ -852,69 +937,6 @@ Error quartoInspect(const std::string& path,
    return pResultObject->parse(result.stdOut);
 }
 
-bool handleQuartoPreview(const core::FilePath& sourceFile,
-                         const core::FilePath& outputFile,
-                         const std::string& renderOutput,
-                         bool validateExtendedType)
-{
-   // don't do anything if user prefs are set to no preview
-   if (prefs::userPrefs().rmdViewerType() == kRmdViewerTypeNone)
-      return false;
-
-   // don't do anything if there is no quarto
-   if (!quartoIsInstalled())
-      return false;
-
-   // don't do anything if this isn't a quarto doc
-   if (validateExtendedType)
-   {
-      std::string extendedType;
-      Error error = source_database::detectExtendedType(sourceFile, &extendedType);
-      if (error)
-         return false;
-      if (extendedType != kQuartoXt)
-         return false;
-   }
-
-   // if the current project is a site or book and this file is within it,
-   // then initiate a preview (one might be already running)
-   auto config = quartoConfig();
-   if ((config.project_type == kQuartoProjectWebsite ||
-        config.project_type == kQuartoProjectBook) &&
-       sourceFile.isWithin(module_context::resolveAliasedPath(config.project_dir)))
-   {
-      if (outputFile.hasExtensionLowerCase(".html") || outputFile.hasExtensionLowerCase(".pdf"))
-      {
-         // preview the doc (but schedule it for later so we can get out of the onCompleted
-         // handler this was called from -- launching a new process in the supervisor when
-         // an old one is in the middle of executing onCompleted doesn't work
-         module_context::scheduleDelayedWork(boost::posix_time::milliseconds(10),
-                                             boost::bind(modules::quarto::serve::previewDocPath,
-                                                         renderOutput, outputFile),
-                                             false);
-         return true;
-      }
-      else
-      {
-         return false;
-      }
-   }
-
-   // if this file is within another quarto site or book project then no preview at all
-   // (as it will more than likely be broken)
-   FilePath configFile = quartoProjectConfigFile(sourceFile);
-   if (!configFile.isEmpty())
-   {
-      std::string type;
-      readQuartoProjectConfig(configFile, &type);
-      if (type == kQuartoProjectWebsite || type == kQuartoProjectBook)
-         return true;
-   }
-
-   // continue with preview
-   return false;
-}
-
 const char* const kQuartoCrossrefScope = "quarto-crossref";
 const char* const kQuartoProjectDefault = "default";
 const char* const kQuartoProjectWebsite = "website";
@@ -925,85 +947,8 @@ const char* const kQuartoProjectBook = "book";
 const char* const kQuartoExecuteDirProject = "project";
 const char* const kQuartoExecuteDirFile = "file";
 
-QuartoConfig quartoConfig(bool refresh)
+QuartoConfig quartoConfig()
 {
-   static QuartoConfig s_quartoConfig;
-
-   if (refresh)
-   {
-      // detect installation
-      detectQuartoInstallation();
-      s_quartoConfig = QuartoConfig();
-      s_quartoConfig.userInstalled = s_userInstalledPath;
-      s_quartoConfig.enabled = quartoIsInstalled();
-      s_quartoConfig.version = s_quartoVersion;
-
-      // if it's installed then detect bin and resources directories
-      if (s_quartoConfig.enabled)
-      {
-         core::system::ProcessResult result;
-         Error error = quartoExec({ "--paths" }, &result);
-         if (error)
-         {
-            LOG_ERROR(error);
-            s_quartoConfig = QuartoConfig();
-            return s_quartoConfig;
-         }
-         string_utils::convertLineEndings(&result.stdOut, string_utils::LineEndingPosix);
-         std::vector<std::string> paths;
-         boost::algorithm::split(paths, result.stdOut, boost::algorithm::is_any_of("\n"));
-         if (paths.size() >= 2)
-         {
-            s_quartoConfig.bin_path = string_utils::systemToUtf8(paths[0]);
-            s_quartoConfig.resources_path = string_utils::systemToUtf8(paths[1]);
-         }
-         else
-         {
-            LOG_ERROR_MESSAGE("Unexpected output from quarto --paths: " + result.stdOut);
-            s_quartoConfig = QuartoConfig();
-            return s_quartoConfig;
-         }
-      }
-
-      using namespace session::projects;
-      const ProjectContext& context = projectContext();
-      if (context.hasProject())
-      {
-         // look for a config file in the project directory
-         FilePath configFile = quartoConfigFilePath(context.directory());
-
-         // if we don't find one, then chase up the directory hierarchy until we find one
-         if (!configFile.exists())
-            configFile = quartoProjectConfigFile(context.directory());
-
-         if (configFile.exists())
-         {
-            // confirm that it's a project
-            s_quartoConfig.is_project = true;
-
-            // record the project directory as an aliased path
-            s_quartoConfig.project_dir = module_context::createAliasedPath(configFile.getParent());
-
-            // read additional config from yaml
-            readQuartoProjectConfig(configFile,
-                                    &s_quartoConfig.project_type,
-                                    &s_quartoConfig.project_output_dir,
-                                    &s_quartoConfig.project_execute_dir,
-                                    &s_quartoConfig.project_formats,
-                                    &s_quartoConfig.project_bibliographies,
-                                    &s_quartoConfig.project_editor);
-
-            // provide default output dirs
-            if (s_quartoConfig.project_output_dir.length() == 0)
-            {
-               if (s_quartoConfig.project_type == kQuartoProjectWebsite)
-                  s_quartoConfig.project_output_dir = "_site";
-               else if (s_quartoConfig.project_type == kQuartoProjectBook)
-                  s_quartoConfig.project_output_dir = "_book";
-            }
-         }
-      }
-   }
    return s_quartoConfig;
 }
 
@@ -1044,9 +989,9 @@ std::string urlPathForQuartoProjectOutputFile(const core::FilePath& outputFile)
    }
 }
 
-json::Object quartoConfigJSON(bool refresh)
+json::Object quartoConfigJSON()
 {
-   QuartoConfig config = quartoConfig(refresh);
+   QuartoConfig config = quartoConfig();
    json::Object quartoConfigJSON;
    if (!config.userInstalled.isEmpty())
       quartoConfigJSON["user_installed"] = module_context::createAliasedPath(config.userInstalled);
@@ -1066,7 +1011,12 @@ json::Object quartoConfigJSON(bool refresh)
 
 FilePath quartoBinary()
 {
-    return s_quartoPath;
+   return s_quartoPath;
+}
+
+std::string quartoExecutablePath()
+{
+   return file_utils::shortPathName(s_quartoPath.getAbsolutePath());
 }
 
 bool projectIsQuarto()
@@ -1114,7 +1064,9 @@ FilePath quartoProjectConfigFile(const core::FilePath& filePath)
       anchorPaths.push_back(anchorPath);
 
    // scan through parents
-   for (FilePath targetPath = filePath.getParent(); targetPath.exists(); targetPath = targetPath.getParent())
+   for (FilePath targetPath = filePath.isDirectory() ? filePath : filePath.getParent();
+        targetPath.exists();
+        targetPath = targetPath.getParent())
    {
       // bail if we've hit our anchor
       for (const FilePath& anchorPath : anchorPaths)
@@ -1132,6 +1084,7 @@ FilePath quartoProjectConfigFile(const core::FilePath& filePath)
    return FilePath();
 }
 
+
 void readQuartoProjectConfig(const FilePath& configFile,
                              std::string* pType,
                              std::string* pOutputDir,
@@ -1140,6 +1093,37 @@ void readQuartoProjectConfig(const FilePath& configFile,
                              std::vector<std::string>* pBibliographies,
                              json::Object* pEditor)
 {
+   // determine type based on quarto inspect (allows us to treat custom project
+   // types as the correct base type). use cache of previously read project types
+   static std::map<std::string,std::string> s_projectTypes;
+   std::string projType;
+   std::map<std::string,std::string>::iterator it = s_projectTypes.find(configFile.getAbsolutePath());
+   if (it != s_projectTypes.end()) {
+      projType = it->second;
+   } else {
+      // Ask Quarto to get the metadata for the file
+      json::Object inspect;
+      Error error = quartoInspect(configFile.getParent().getAbsolutePath(), &inspect);
+      if (!error)
+      {
+         try
+         {
+            auto project = inspect["config"].getObject()["project"].getObject();
+            auto type = project.find("type");
+            if (type != project.end())
+            {
+               projType = (*type).getValue().getString();
+               s_projectTypes.insert({configFile.getAbsolutePath(), projType});
+            }
+         }
+         CATCH_UNEXPECTED_EXCEPTION
+      }
+      else
+      {
+         LOG_ERROR(error);
+      }
+   }
+
    // read the config
    std::string configText;
    Error error = core::readStringFromFile(configFile, &configText);
@@ -1169,9 +1153,15 @@ void readQuartoProjectConfig(const FilePath& configFile,
                         // migrate 'site' to 'website'
                         if (projValue == kQuartoProjectSite)
                            projValue = kQuartoProjectWebsite;
-                        
+
+                        // use type from inspect if we can
                         if (pType != nullptr)
-                           *pType = projValue;
+                        {
+                           if (!projType.empty())
+                              *pType = projType;
+                           else
+                              *pType = projValue;
+                        }
                      }
                      else if (projKey == "output-dir" && pOutputDir != nullptr) {
                         *pOutputDir = projValue;
@@ -1387,7 +1377,7 @@ Error initialize()
       return error;
 
    // initialize config at startup
-   quartoConfig(true);
+   readQuartoConfig();
 
    module_context::events().onDetectSourceExtendedType
                                         .connect(onDetectQuartoSourceType);
@@ -1399,7 +1389,6 @@ Error initialize()
      (boost::bind(module_context::registerRpcMethod, "get_qmd_publish_details", getQmdPublishDetails))
      (boost::bind(module_context::registerRpcMethod, "quarto_create_project", quartoCreateProject))
      (boost::bind(quarto::preview::initialize))
-     (boost::bind(quarto::serve::initialize))
      (boost::bind(quarto::xrefs::initialize))
      (boost::bind(quarto::resources::initialize))
    ;

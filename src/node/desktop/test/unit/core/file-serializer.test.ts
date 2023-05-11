@@ -1,10 +1,10 @@
 /*
  * file-serializer.test.ts
  *
- * Copyright (C) 2022 by RStudio, PBC
+ * Copyright (C) 2022 by Posit Software, PBC
  *
- * Unless you have received this program directly from RStudio pursuant
- * to the terms of a commercial license agreement with RStudio, then
+ * Unless you have received this program directly from Posit Software pursuant
+ * to the terms of a commercial license agreement with Posit Software, then
  * this program is licensed to you under the terms of version 3 of the
  * GNU Affero General Public License. This program is distributed WITHOUT
  * ANY EXPRESS OR IMPLIED WARRANTY, INCLUDING THOSE OF NON-INFRINGEMENT,
@@ -13,16 +13,15 @@
  *
  */
 
-import { describe } from 'mocha';
 import { assert } from 'chai';
-import path from 'path';
-import os from 'os';
 import fs from 'fs';
+import { describe } from 'mocha';
+import os from 'os';
+import path from 'path';
 
-import { randomString } from '../unit-utils';
-
-import { readStringArrayFromFile } from '../../../src/core/file-serializer';
 import { FilePath } from '../../../src/core/file-path';
+import { readStringArrayFromFile } from '../../../src/core/file-serializer';
+import { randomString } from '../../../src/main/utils';
 
 function writeTestFile(lineCount: number, includeBlanks: boolean): FilePath {
   const file = new FilePath(path.join(os.tmpdir(), 'rstudio-temp-test-file-' + randomString()));

@@ -1,10 +1,10 @@
 /*
  * RSexp.cpp
  *
- * Copyright (C) 2022 by RStudio, PBC
+ * Copyright (C) 2022 by Posit Software, PBC
  *
- * Unless you have received this program directly from RStudio pursuant
- * to the terms of a commercial license agreement with RStudio, then
+ * Unless you have received this program directly from Posit Software pursuant
+ * to the terms of a commercial license agreement with Posit Software, then
  * this program is licensed to you under the terms of version 3 of the
  * GNU Affero General Public License. This program is distributed WITHOUT
  * ANY EXPRESS OR IMPLIED WARRANTY, INCLUDING THOSE OF NON-INFRINGEMENT,
@@ -372,7 +372,6 @@ Error asPrimitiveEnvironment(SEXP envirSEXP,
 void listEnvironment(SEXP env, 
                      bool includeAll,
                      bool includeLastDotValue,
-                     Protect* pProtect,
                      std::vector<Variable>* pVariables)
 {
    if (!ASSERT_MAIN_THREAD())
@@ -415,7 +414,6 @@ void listEnvironment(SEXP env,
 
       if (varSEXP != R_UnboundValue) // should never be unbound
       {
-         pProtect->add(varSEXP);
          pVariables->push_back(std::make_pair(var, varSEXP));
       }
       else
@@ -691,6 +689,11 @@ bool isPrimitiveEnvironment(SEXP object)
    return TYPEOF(object) == ENVSXP;
 }
 
+bool isUserDefinedDatabase(SEXP object)
+{
+   return OBJECT(object) && Rf_inherits(object, "UserDefinedDatabase");
+}
+
 bool isNumeric(SEXP object)
 {
    return Rf_isNumeric(object);
@@ -790,6 +793,16 @@ SEXP makeWeakRef(SEXP key, SEXP val, R_CFinalizer_t fun, Rboolean onexit)
    return R_MakeWeakRefC(key, val, fun, onexit);
 }
 
+SEXP getWeakRefKey(SEXP ref)
+{
+   return VECTOR_ELT(ref, 0);
+}
+
+SEXP getWeakRefValue(SEXP ref)
+{
+   return VECTOR_ELT(ref, 1);
+}
+
 void registerFinalizer(SEXP s, R_CFinalizer_t fun)
 {
    R_RegisterCFinalizer(s, fun);
@@ -804,6 +817,11 @@ SEXP makeExternalPtr(void* ptr, R_CFinalizer_t fun, Protect* pProtect)
    return s;
 }
 
+SEXP makeExternalPtr(void* ptr, SEXP prot, SEXP tag) 
+{
+   return R_MakeExternalPtr(ptr, prot, tag);
+}
+
 void* getExternalPtrAddr(SEXP extptr)
 {
    return R_ExternalPtrAddr(extptr);
@@ -812,6 +830,16 @@ void* getExternalPtrAddr(SEXP extptr)
 void clearExternalPtr(SEXP extptr)
 {
    R_ClearExternalPtr(extptr);
+}
+
+SEXP getExternalPtrProtected(SEXP extptr)
+{
+   return R_ExternalPtrProtected(extptr);
+}
+
+SEXP getExternalPtrTag(SEXP extptr)
+{
+   return R_ExternalPtrTag(extptr);
 }
 
 core::Error getNamedListSEXP(SEXP listSEXP,

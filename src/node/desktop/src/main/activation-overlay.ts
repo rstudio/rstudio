@@ -1,10 +1,10 @@
 /*
  * activation-overlay.ts
  *
- * Copyright (C) 2022 by RStudio, PBC
+ * Copyright (C) 2022 by Posit Software, PBC
  *
- * Unless you have received this program directly from RStudio pursuant
- * to the terms of a commercial license agreement with RStudio, then
+ * Unless you have received this program directly from Posit Software pursuant
+ * to the terms of a commercial license agreement with Posit Software, then
  * this program is licensed to you under the terms of version 3 of the
  * GNU Affero General Public License. This program is distributed WITHOUT
  * ANY EXPRESS OR IMPLIED WARRANTY, INCLUDING THOSE OF NON-INFRINGEMENT,
@@ -15,34 +15,18 @@
 
 import { BrowserWindow } from 'electron';
 import { EventEmitter } from 'events';
+import { FilePath } from '../core/file-path';
 
 export class DesktopActivation extends EventEmitter {
   static LAUNCH_FIRST_SESSION = 'desktop-activation-launch_first_session';
   static LAUNCH_ERROR = 'desktop-activation-launch_error';
 
-  getInitialLicense(): void {
+  // pro-only start
+  // pro-only end
+
+  // eslint-disable-next-line @typescript-eslint/no-unused-vars
+  getInitialLicense(installPath: FilePath, devMode: boolean): void {
     this.emitLaunchFirstSession();
-  }
-
-  allowProductUsage(): boolean {
-    return true;
-  }
-
-  /**
-   * @returns License state description if expired or within certain time window before
-   * expiring, otherwise empty string.
-   */
-  currentLicenseStateMessage(): string {
-    // TODO - reimplement
-    return '';
-  }
-
-  /**
-   * @returns Description of license state
-   */
-  licenseStatus(): string {
-    // TODO - reimplement
-    return '';
   }
 
   /**
@@ -59,17 +43,6 @@ export class DesktopActivation extends EventEmitter {
   }
 
   /**
-   * license has been lost while using the program
-   */
-  emitLicenseLostSignal(): void {}
-
-  /**
-   * no longer need to show a license warning bar
-   */
-  // eslint-disable-next-line @typescript-eslint/no-unused-vars
-  emitUpdateLicenseWarningBarSignal(message: string): void {}
-
-  /**
    * start a session after validating initial license
    */
   emitLaunchFirstSession(): void {
@@ -84,8 +57,5 @@ export class DesktopActivation extends EventEmitter {
     this.emit(DesktopActivation.LAUNCH_ERROR, message);
   }
 
-  /**
-   * detect (or re-detect) license status
-   */
-  emitDetectLicense(): void {}
+  // pro-only below
 }

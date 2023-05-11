@@ -1,10 +1,10 @@
 /*
  * TextEditingTargetThemeHelper.java
  *
- * Copyright (C) 2022 by RStudio, PBC
+ * Copyright (C) 2022 by Posit Software, PBC
  *
- * Unless you have received this program directly from RStudio pursuant
- * to the terms of a commercial license agreement with RStudio, then
+ * Unless you have received this program directly from Posit Software pursuant
+ * to the terms of a commercial license agreement with Posit Software, then
  * this program is licensed to you under the terms of version 3 of the
  * GNU Affero General Public License. This program is distributed WITHOUT
  * ANY EXPRESS OR IMPLIED WARRANTY, INCLUDING THOSE OF NON-INFRINGEMENT,
@@ -16,9 +16,9 @@ package org.rstudio.studio.client.workbench.views.source.editors.text;
 
 import java.util.ArrayList;
 
+import org.rstudio.core.client.ColorUtil;
 import org.rstudio.core.client.dom.DomUtils;
 import org.rstudio.studio.client.application.events.EventBus;
-import org.rstudio.studio.client.common.Timers;
 import org.rstudio.studio.client.workbench.views.source.editors.text.events.EditorThemeChangedEvent;
 import org.rstudio.studio.client.workbench.views.source.editors.text.events.EditorThemeStyleChangedEvent;
 
@@ -26,6 +26,7 @@ import com.google.gwt.dom.client.Element;
 import com.google.gwt.dom.client.Style;
 import com.google.gwt.event.shared.HandlerManager;
 import com.google.gwt.event.shared.HandlerRegistration;
+import com.google.gwt.user.client.Timer;
 import com.google.gwt.user.client.ui.Widget;
 
 public class TextEditingTargetThemeHelper
@@ -34,20 +35,26 @@ public class TextEditingTargetThemeHelper
                                        final EventBus eventBus,
                                        final ArrayList<HandlerRegistration> releaseOnDismiss)
    {
+      timer_ = new Timer()
+      {
+         @Override
+         public void run()
+         {
+            syncToEditorTheme(editingTarget);
+         }
+      };
+      
+      // register for notification on subsequent changes
+      releaseOnDismiss.add(
+         eventBus.addHandler(
+               EditorThemeChangedEvent.TYPE,
+               (EditorThemeChangedEvent e) -> {
+                  timer_.schedule(50);
+               }));
+
       // do an initial sync after 100ms (to allow initial render)
-      Timers.singleShot(100, () -> {
+      timer_.schedule(100);
 
-         // do the sync
-         syncToEditorTheme(editingTarget);
-
-         // register for notification on subsequent changes
-         releaseOnDismiss.add(
-               eventBus.addHandler(
-                     EditorThemeChangedEvent.TYPE,
-                     (EditorThemeChangedEvent e) -> {
-                        syncToEditorTheme(editingTarget);
-                     }));
-      });
    }
    
    public HandlerRegistration addEditorThemeStyleChangedHandler(
@@ -66,7 +73,6 @@ public class TextEditingTargetThemeHelper
       return handlers_.addHandler(EditorThemeStyleChangedEvent.TYPE, handler);
    }
   
- 
    private void syncToEditorTheme(TextEditingTarget editingTarget)
    {
       // ensure we're passed a real widget
@@ -74,10 +80,11 @@ public class TextEditingTargetThemeHelper
       if (editingWidget == null)
          return;
       
+      // get the element containing the editor
       Element editorContainer = editingWidget.getElement();
       Element[] aceContentElements =
             DomUtils.getElementsByClassName(editorContainer, "ace_scroller");
-      
+
       int n = aceContentElements.length;
       if (editingTarget.isVisualModeActivated())
       {
@@ -98,6 +105,9 @@ public class TextEditingTargetThemeHelper
       currentStyle_ = DomUtils.getComputedStyles(content);
       currentContent_ = content;
       
+      String bg = ColorUtil.RGBColor.fromCss(currentStyle_.getBackgroundColor()).asHex();
+      editingTarget.getDocDisplay().setBackgroundColor(bg);
+
       // call all registered handlers
       handlers_.fireEvent(new EditorThemeStyleChangedEvent(content, currentStyle_));
    }
@@ -106,4 +116,5 @@ public class TextEditingTargetThemeHelper
    
    private Style currentStyle_;
    private Element currentContent_;
+   private Timer timer_;
 }

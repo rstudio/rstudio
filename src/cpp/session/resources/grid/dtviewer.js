@@ -3,10 +3,10 @@
 /*
  * dtviewer.js
  *
- * Copyright (C) 2022 by RStudio, PBC
+ * Copyright (C) 2022 by Posit Software, PBC
  *
- * Unless you have received this program directly from RStudio pursuant
- * to the terms of a commercial license agreement with RStudio, then
+ * Unless you have received this program directly from Posit Software pursuant
+ * to the terms of a commercial license agreement with Posit Software, then
  * this program is licensed to you under the terms of version 3 of the
  * GNU Affero General Public License. This program is distributed WITHOUT
  * ANY EXPRESS OR IMPLIED WARRANTY, INCLUDING THOSE OF NON-INFRINGEMENT,
@@ -1096,8 +1096,12 @@
     var env = parsedLocation.env,
       obj = parsedLocation.obj,
       cacheKey = parsedLocation.cacheKey;
-    maxColumns = defaultMaxColumns = parsedLocation.maxCols;
-
+    maxColumns = parsedLocation.maxCols;
+    if (maxColumns == -1) 
+    {
+      maxColumns = cols.length;
+    }
+    
     // keep track of column types for later render
     var typeIndices = {
       numeric: [],

@@ -35,7 +35,7 @@
 
 .smallCodeItem {
    position: relative;
-   margin-right: 7px;
+   margin-right: 10px;
    top: 3px;
 }
 
@@ -43,6 +43,7 @@
    position: relative;
    top: 3px;
    color: #888;
+   font-size: smaller;
 }
 
 .codeImage {
@@ -73,8 +74,10 @@
 
 .itemContext {
    position: relative;
-   top: -1px;
-   color: #888;
+   margin-right: 7px;
+   top: 3px;
+   color: #666;
+   font-size: smaller;
 }
 
 .codeSearchDialogMainWidget {

@@ -1,10 +1,10 @@
 /*
  * modal-dialog.ts
  *
- * Copyright (C) 2022 by RStudio, PBC
+ * Copyright (C) 2022 by Posit Software, PBC
  *
- * Unless you have received this program directly from RStudio pursuant
- * to the terms of a commercial license agreement with RStudio, then
+ * Unless you have received this program directly from Posit Software pursuant
+ * to the terms of a commercial license agreement with Posit Software, then
  * this program is licensed to you under the terms of version 3 of the
  * GNU Affero General Public License. This program is distributed WITHOUT
  * ANY EXPRESS OR IMPLIED WARRANTY, INCLUDING THOSE OF NON-INFRINGEMENT,
@@ -16,6 +16,7 @@
 import { BrowserWindow, BrowserWindowConstructorOptions, ipcMain } from 'electron';
 import { err, Expected, ok } from '../core/expected';
 import { safeError } from '../core/err';
+import { getenv } from '../core/environment';
 
 export abstract class ModalDialog<T> extends BrowserWindow {
   abstract onShowModal(): Promise<T>;
@@ -25,12 +26,13 @@ export abstract class ModalDialog<T> extends BrowserWindow {
 
   constructor(url: string, preload: string, parentWindow: BrowserWindow | null = null) {
     let options: BrowserWindowConstructorOptions = {
-      minWidth: 400,
+      minWidth: 450,
       minHeight: 400,
-      width: 400,
+      width: 450,
       height: 400,
       show: false,
       webPreferences: {
+        nodeIntegration: false,
         preload: preload,
       },
     };
@@ -82,6 +84,11 @@ export abstract class ModalDialog<T> extends BrowserWindow {
 
     // show the window after loading everything
     this.show();
+
+    const showDevTools = getenv('RSTUDIO_DESKTOP_MODAL_DEVTOOLS').length !== 0;
+    if (showDevTools) {
+      this.webContents.openDevTools();
+    }
 
     // invoke derived class's callback and return the response
     return this.onShowModal();

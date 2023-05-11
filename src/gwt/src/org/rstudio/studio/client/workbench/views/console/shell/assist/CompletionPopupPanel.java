@@ -1,10 +1,10 @@
 /*
  * CompletionPopupPanel.java
  *
- * Copyright (C) 2022 by RStudio, PBC
+ * Copyright (C) 2022 by Posit Software, PBC
  *
- * Unless you have received this program directly from RStudio pursuant
- * to the terms of a commercial license agreement with RStudio, then
+ * Unless you have received this program directly from Posit Software pursuant
+ * to the terms of a commercial license agreement with Posit Software, then
  * this program is licensed to you under the terms of version 3 of the
  * GNU Affero General Public License. This program is distributed WITHOUT
  * ANY EXPRESS OR IMPLIED WARRANTY, INCLUDING THOSE OF NON-INFRINGEMENT,
@@ -161,7 +161,7 @@ public class CompletionPopupPanel extends ThemedPopupPanel
    {
       registerIgnoredKeys();
       CompletionList<QualifiedName> list = new CompletionList<>(values,
-                                                                6,
+                                                                9,
                                                                 true,
                                                                 true);
 
@@ -338,7 +338,7 @@ public class CompletionPopupPanel extends ThemedPopupPanel
       int top = getAbsoluteTop();
       int left = getAbsoluteLeft();
       int bottom = top + getOffsetHeight() + 9;
-      int width = getOffsetWidth();
+      int width = getWidget().getOffsetWidth();
 
       if (!help_.isShowing())
          help_.show();
@@ -376,12 +376,6 @@ public class CompletionPopupPanel extends ThemedPopupPanel
    }
 
    @Override
-   public void displayDataHelp(ParsedInfo help)
-   {
-      displayPackageHelp(help);
-   }
-
-   @Override
    public void displaySnippetHelp(String contents)
    {
       if (!completionListIsOnScreen())
@@ -389,7 +383,16 @@ public class CompletionPopupPanel extends ThemedPopupPanel
 
       help_.displaySnippetHelp(contents);
       resolveHelpPosition(!StringUtil.isNullOrEmpty(contents));
+   }
 
+   @Override
+   public void displayRoxygenHelp(String title, String description, boolean hasVignette)
+   {
+      if (!completionListIsOnScreen())
+         return;
+      
+      help_.displayRoxygenHelp(title, description, hasVignette);
+      resolveHelpPosition(true);
    }
    
    @Override
@@ -412,7 +415,6 @@ public class CompletionPopupPanel extends ThemedPopupPanel
       
       help_.displayParameterHelp(value, description, false);
       resolveHelpPosition(!StringUtil.isNullOrEmpty(description));
-      
    }
 
    public void clearHelp(boolean downloadOperationPending)

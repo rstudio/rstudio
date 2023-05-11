@@ -1,10 +1,10 @@
 /*
  * NotebookQueueUnit.cpp
  *
- * Copyright (C) 2022 by RStudio, PBC
+ * Copyright (C) 2022 by Posit Software, PBC
  *
- * Unless you have received this program directly from RStudio pursuant
- * to the terms of a commercial license agreement with RStudio, then
+ * Unless you have received this program directly from Posit Software pursuant
+ * to the terms of a commercial license agreement with Posit Software, then
  * this program is licensed to you under the terms of version 3 of the
  * GNU Affero General Public License. This program is distributed WITHOUT
  * ANY EXPRESS OR IMPLIED WARRANTY, INCLUDING THOSE OF NON-INFRINGEMENT,
@@ -240,7 +240,8 @@ json::Object NotebookQueueUnit::toJson() const
 }
 
 std::string NotebookQueueUnit::popExecRange(ExecRange* pRange, 
-                                            ExpressionMode mode)
+                                            ExpressionMode mode,
+                                            const std::string& engine)
 {
    // do we have any unevaluated code in this execution unit?
    if (pending_.empty())
@@ -258,9 +259,16 @@ std::string NotebookQueueUnit::popExecRange(ExecRange* pRange,
    int start = range.start;
    int stop = range.stop;
 
-   // use the first line of the range if it's multi-line
+   // for python chunks, use the entire range, even when it's multi-line
+   // otherwise, use the first line of the range if it's multi-line
    size_t idx = code_.find('\n', start + 1);
-   if (idx != std::string::npos && gsl::narrow_cast<int>(idx) < (stop - 1))
+   if (engine == "python")
+   {
+      code_ = code_ + "\n"; // add a newline to terminate the multiline chunk
+      stop = stop + 1;
+      pending_.pop_front();
+   }
+   else if (idx != std::string::npos && gsl::narrow_cast<int>(idx) < (stop - 1))
    {
       stop = gsl::narrow_cast<int>(idx);
 

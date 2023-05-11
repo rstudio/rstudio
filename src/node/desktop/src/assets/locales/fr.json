@@ -3,7 +3,9 @@
     "buttonOk": "OK",
     "buttonCancel": "Annuler",
     "buttonBrowse": "Parcourir...",
-    "unknownErrorOccurred": "Une erreur inconnue s'est produite."
+    "unknownErrorOccurred": "Une erreur inconnue s'est produite.",
+    "buttonYes": "Oui",
+    "buttonNo": "Non"
   },
   "contextMenu": {
     "saveImageAsDots": "Enregistrer l'image sous...",
@@ -84,7 +86,7 @@
     "confColon": "conf :",
     "notFoundDotLowercase": "non trouvé.",
     "errorFindingR": "Erreur de recherche de R",
-    "rstudioFailedToFindRInstalationsOnTheSystem": "RStudio n'a pas réussi à trouver d'installations R sur le système.",
+    "rstudioFailedToFindRInstalationsOnTheSystem": "RStudio n'a pas réussi à trouver d'installation R sur le système. Merci d'installer R avant d'utiliser RStudio.\n\nVous pouvez télécharger R sur le site officiel du projet R. \nVoulez-vous y aller maintenant ?",
     "newRstudioWindow": "Nouvelle fenêtre RStudio"
   },
   "detectRTs": {

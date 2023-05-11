@@ -1,10 +1,10 @@
 /*
  * SessionPostback.cpp
  *
- * Copyright (C) 2022 by RStudio, PBC
+ * Copyright (C) 2022 by Posit Software, PBC
  *
- * Unless you have received this program directly from RStudio pursuant
- * to the terms of a commercial license agreement with RStudio, then
+ * Unless you have received this program directly from Posit Software pursuant
+ * to the terms of a commercial license agreement with Posit Software, then
  * this program is licensed to you under the terms of version 3 of the
  * GNU Affero General Public License. This program is distributed WITHOUT
  * ANY EXPRESS OR IMPLIED WARRANTY, INCLUDING THOSE OF NON-INFRINGEMENT,
@@ -88,6 +88,22 @@ void handlePostback(const PostbackHandlerFunction& handlerFunction,
    
 } // anonymous namespace
 
+FilePath rPostbackPath()
+{
+   return session::options().rpostbackPath();
+}
+
+FilePath rPostbackScriptsDir()
+{
+   // postback scripts should lie in a 'postback' directory,
+   // located in the same folder as the 'rpostback' binary
+   return rPostbackPath().getParent().completeChildPath("postback");
+}
+
+FilePath rPostbackScriptPath(const std::string& scriptName)
+{
+   return rPostbackScriptsDir().completeChildPath(scriptName);
+}
 
 Error registerPostbackHandler(const std::string& name,
                               const PostbackHandlerFunction& handlerFunction,
@@ -104,9 +120,8 @@ Error registerPostbackHandler(const std::string& name,
       return error;
                                                     
    // compute the shell command required to invoke this handler and return it
-   Options& options = session::options();
-   *pShellCommand = options.rpostbackPath().getAbsolutePath() + "-" + name;
-   
+   *pShellCommand = rPostbackScriptPath("rpostback-" + name).getAbsolutePath();
+
    // return success
    return Success();
 }

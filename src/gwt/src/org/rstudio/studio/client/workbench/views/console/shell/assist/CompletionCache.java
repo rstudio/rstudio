@@ -1,10 +1,10 @@
 /*
  * CompletionCache.java
  *
- * Copyright (C) 2022 by RStudio, PBC
+ * Copyright (C) 2022 by Posit Software, PBC
  *
- * Unless you have received this program directly from RStudio pursuant
- * to the terms of a commercial license agreement with RStudio, then
+ * Unless you have received this program directly from Posit Software pursuant
+ * to the terms of a commercial license agreement with Posit Software, then
  * this program is licensed to you under the terms of version 3 of the
  * GNU Affero General Public License. This program is distributed WITHOUT
  * ANY EXPRESS OR IMPLIED WARRANTY, INCLUDING THOSE OF NON-INFRINGEMENT,
@@ -88,24 +88,26 @@ public class CompletionCache
       String token = original.getToken() + line.substring(substring.length());
       
       // Extract the vector elements of the completion string
-      JsArrayString completions = original.getCompletions();
-      JsArrayString display     = original.getCompletionsDisplay();
-      JsArrayString packages    = original.getPackages();
-      JsArrayBoolean quote      = original.getQuote();
-      JsArrayInteger type       = original.getType();
+      JsArrayString completions      = original.getCompletions();
+      JsArrayString display          = original.getCompletionsDisplay();
+      JsArrayString packages         = original.getPackages();
+      JsArrayBoolean quote           = original.getQuote();
+      JsArrayInteger type            = original.getType();
+      JsArrayInteger context         = original.getContext();
       JsArrayBoolean suggestOnAccept = original.getSuggestOnAccept();
-      JsArrayBoolean replaceToEnd = original.getReplaceToEnd();
-      JsArrayString meta        = original.getMeta();
+      JsArrayBoolean replaceToEnd    = original.getReplaceToEnd();
+      JsArrayString meta             = original.getMeta();
       
       // Now, generate narrowed versions of the above
-      final JsVectorString completionsNarrow = JsVectorString.createVector().cast();
-      final JsVectorString displayNarrow     = JsVectorString.createVector().cast();
-      final JsVectorString packagesNarrow    = JsVectorString.createVector().cast();
-      final JsVectorBoolean quoteNarrow      = JsVectorBoolean.createVector().cast();
-      final JsVectorInteger typeNarrow       = JsVectorInteger.createVector().cast();
+      final JsVectorString completionsNarrow     = JsVectorString.createVector().cast();
+      final JsVectorString displayNarrow         = JsVectorString.createVector().cast();
+      final JsVectorString packagesNarrow        = JsVectorString.createVector().cast();
+      final JsVectorBoolean quoteNarrow          = JsVectorBoolean.createVector().cast();
+      final JsVectorInteger typeNarrow           = JsVectorInteger.createVector().cast();
       final JsArrayBoolean suggestOnAcceptNarrow = JsVectorBoolean.createVector().cast();
-      final JsArrayBoolean replaceToEndNarrow = JsVectorBoolean.createVector().cast();
-      final JsVectorString metaNarrow        = JsVectorString.createVector().cast();
+      final JsArrayBoolean replaceToEndNarrow    = JsVectorBoolean.createVector().cast();
+      final JsVectorString metaNarrow            = JsVectorString.createVector().cast();
+      final JsVectorInteger contextNarrow        = JsVectorInteger.createVector().cast();
       
       for (int i = 0, n = completions.length(); i < n; i++)
       {
@@ -120,6 +122,7 @@ public class CompletionCache
             suggestOnAcceptNarrow.push(suggestOnAccept.get(i));
             replaceToEndNarrow.push(replaceToEnd.get(i));
             metaNarrow.push(meta.get(i));
+            contextNarrow.push(context.get(i));
          }
       }
       
@@ -134,17 +137,24 @@ public class CompletionCache
          @Override
          public int compare(Integer lhs, Integer rhs)
          {
+            int lhsContext = contextNarrow.get(lhs);
+            int rhsContext = contextNarrow.get(rhs);
+
             int lhsType = typeNarrow.get(lhs);
             int rhsType = typeNarrow.get(rhs);
-            
+
+            int lhsTypeScore = RCompletionType.score(lhsType, lhsContext);
+            int rhsTypeScore = RCompletionType.score(rhsType, rhsContext);
+            if (lhsTypeScore < rhsTypeScore)
+               return -1;
+            else if (lhsTypeScore > rhsTypeScore)
+               return 1;
+
             String lhsName = completionsNarrow.get(lhs);
             String rhsName = completionsNarrow.get(rhs);
             
             int lhsScore = CodeSearchOracle.scoreMatch(lhsName, token, false);
             int rhsScore = CodeSearchOracle.scoreMatch(rhsName, token, false);
-            
-            if (lhsType == RCompletionType.ARGUMENT) lhsType -= 3;
-            if (rhsType == RCompletionType.ARGUMENT) rhsType -= 3;
             
             if (lhsScore == rhsScore)
                return lhsName.compareTo(rhsName);
@@ -159,6 +169,7 @@ public class CompletionCache
       final JsVectorString packagesSorted    = JsVectorString.createVector().cast();
       final JsVectorBoolean quoteSorted      = JsVectorBoolean.createVector().cast();
       final JsVectorInteger typeSorted       = JsVectorInteger.createVector().cast();
+      final JsVectorInteger contextSorted    = JsVectorInteger.createVector().cast();
       final JsVectorBoolean suggestOnAcceptSorted = JsVectorBoolean.createVector().cast();
       final JsVectorBoolean replaceToEndSorted = JsVectorBoolean.createVector().cast();
       final JsVectorString metaSorted        = JsVectorString.createVector().cast();
@@ -171,6 +182,7 @@ public class CompletionCache
          packagesSorted.push(packagesNarrow.get(index));
          quoteSorted.push(quoteNarrow.get(index));
          typeSorted.push(typeNarrow.get(index));
+         contextSorted.push(context.get(index));
          suggestOnAcceptSorted.push(suggestOnAcceptNarrow.get(index));
          replaceToEndSorted.push(replaceToEndNarrow.get(index));
          metaSorted.push(metaNarrow.get(index));
@@ -189,10 +201,13 @@ public class CompletionCache
             metaSorted.cast(),
             original.getGuessedFunctionName(),
             original.getExcludeOtherCompletions(),
+            original.getExcludeOtherArgumentCompletions(),
             original.getOverrideInsertParens(),
             original.isCacheable(),
             original.getHelpHandler(),
-            original.getLanguage());
+            original.getLanguage(), 
+            contextSorted.cast()
+            );
    }
    
    private final SafeMap<String, Completions> cache_;

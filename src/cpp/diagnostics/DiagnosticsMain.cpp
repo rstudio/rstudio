@@ -1,10 +1,10 @@
 /*
  * DiagnosticsMain.cpp
  *
- * Copyright (C) 2022 by RStudio, PBC
+ * Copyright (C) 2022 by Posit Software, PBC
  *
- * Unless you have received this program directly from RStudio pursuant
- * to the terms of a commercial license agreement with RStudio, then
+ * Unless you have received this program directly from Posit Software pursuant
+ * to the terms of a commercial license agreement with Posit Software, then
  * this program is licensed to you under the terms of version 3 of the
  * GNU Affero General Public License. This program is distributed WITHOUT
  * ANY EXPRESS OR IMPLIED WARRANTY, INCLUDING THOSE OF NON-INFRINGEMENT,
@@ -85,9 +85,8 @@ void writeUserPrefs(std::ostream& ostr)
 
 int main(int argc, char** argv)
 {
-   core::log::setProgramId("rstudio-diagnostics");
-   core::system::initializeStderrLog("rstudio-diagnostics",
-                                    core::log::LogLevel::WARN);
+   // We intentionally avoid initializing logging as we don't want logging output from this
+   // executable getting injected into the diagnostics report
 
    // ignore SIGPIPE
    Error error = core::system::ignoreSignal(core::system::SigPipe);

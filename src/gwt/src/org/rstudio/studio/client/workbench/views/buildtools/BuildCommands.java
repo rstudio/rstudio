@@ -1,10 +1,10 @@
 /*
  * BuildCommands.java
  *
- * Copyright (C) 2022 by RStudio, PBC
+ * Copyright (C) 2022 by Posit Software, PBC
  *
- * Unless you have received this program directly from RStudio pursuant
- * to the terms of a commercial license agreement with RStudio, then
+ * Unless you have received this program directly from Posit Software pursuant
+ * to the terms of a commercial license agreement with Posit Software, then
  * this program is licensed to you under the terms of version 3 of the
  * GNU Affero General Public License. This program is distributed WITHOUT
  * ANY EXPRESS OR IMPLIED WARRANTY, INCLUDING THOSE OF NON-INFRINGEMENT,
@@ -57,10 +57,11 @@ public class BuildCommands
          commands.cleanAll().remove();
       }
       
-      if (type != SessionInfo.BUILD_TOOLS_QUARTO)
-      {
-         commands.serveQuartoSite().remove();
-      }
+      
+      // dead/deprecated command that we couldn't remove b/c this gwt build failure happended when we tried:
+      //  [exec] /bin/sh: 1: /home/jjallaire/rstudio/src/gwt/tools/i18n-helpers/VENV/bin/python: not found
+      commands.serveQuartoSite().remove();
+      
       
       if (type == SessionInfo.BUILD_TOOLS_QUARTO)
       {
@@ -80,8 +81,6 @@ public class BuildCommands
          commands.buildAll().setButtonLabel(constants_.renderLabel() + projType);
          commands.buildAll().setDesc(constants_.renderLabel() + projType.toLowerCase());
          commands.buildAll().setImageResource(commands.quartoRenderDocument().getImageResource());
-         commands.serveQuartoSite().setMenuLabel("_" + constants_.serveLabel() + " " + projType);
-         commands.serveQuartoSite().setButtonLabel(constants_.serveLabel() + " " + projType);
       }
       
       // remove all other commands if there are no build tools

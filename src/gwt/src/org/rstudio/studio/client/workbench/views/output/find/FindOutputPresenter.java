@@ -1,10 +1,10 @@
 /*
  * FindOutputPresenter.java
  *
- * Copyright (C) 2022 by RStudio, PBC
+ * Copyright (C) 2022 by Posit Software, PBC
  *
- * Unless you have received this program directly from RStudio pursuant
- * to the terms of a commercial license agreement with RStudio, then
+ * Unless you have received this program directly from Posit Software pursuant
+ * to the terms of a commercial license agreement with Posit Software, then
  * this program is licensed to you under the terms of version 3 of the
  * GNU Affero General Public License. This program is distributed WITHOUT
  * ANY EXPRESS OR IMPLIED WARRANTY, INCLUDING THOSE OF NON-INFRINGEMENT,
@@ -224,16 +224,15 @@ public class FindOutputPresenter extends BasePresenter
             for (String pattern : dialogState_.getExcludeFilePatterns())
                excludeFilePatterns.push(pattern);
 
-            // this event is only ever triggered when dialogState_.isRegex() is true
-            // so we don't need to check for and handle dialogState_.isWholeWord() here
             server_.previewReplace(dialogState_.getQuery(),
                                    dialogState_.isRegex(),
+                                   dialogState_.isWholeWord(),
                                    !dialogState_.isCaseSensitive(),
                                    searchPath,
                                    includeFilePatterns,
+                                   excludeFilePatterns,
                                    dialogState_.getUseGitGrep(),
                                    dialogState_.getExcludeGitIgnore(),
-                                   excludeFilePatterns,
                                    view_.getReplaceText(),
                                    new SimpleRequestCallback<String>()
                                    {
@@ -314,17 +313,16 @@ public class FindOutputPresenter extends BasePresenter
                            excludeFilePatterns.push(pattern);
 
                         String serverQuery = dialogState_.getQuery();
-                        if (dialogState_.isWholeWord())
-                           serverQuery = "\\b" + serverQuery + "\\b";
 
                         server_.completeReplace(serverQuery,
-                                                dialogState_.isRegex() || dialogState_.isWholeWord(),
+                                                dialogState_.isRegex(),
+                                                dialogState_.isWholeWord(),
                                                 !dialogState_.isCaseSensitive(),
                                                 searchPath,
                                                 includeFilePatterns,
+                                                excludeFilePatterns,
                                                 dialogState_.getUseGitGrep(),
                                                 dialogState_.getExcludeGitIgnore(),
-                                                excludeFilePatterns,
                                                 dialogState_.getResultsCount(),
                                                 view_.getReplaceText(),
                                                 new SimpleRequestCallback<String>()
@@ -505,17 +503,17 @@ public class FindOutputPresenter extends BasePresenter
       view_.disableReplace();
 
       String serverQuery = dialogState_.getQuery();
-      if (dialogState_.isWholeWord())
-         serverQuery = "\\b" + serverQuery + "\\b";
 
-      server_.beginFind(serverQuery,
-         dialogState_.isRegex() || dialogState_.isWholeWord(),
+      server_.beginFind(
+         serverQuery,
+         dialogState_.isRegex(),
+         dialogState_.isWholeWord(),
          !dialogState_.isCaseSensitive(),
          searchPath,
          includeFilePatterns,
+         excludeFilePatterns,
          dialogState_.getUseGitGrep(),
          dialogState_.getExcludeGitIgnore(),
-         excludeFilePatterns,
          new SimpleRequestCallback<String>()
          {
             @Override
@@ -530,6 +528,12 @@ public class FindOutputPresenter extends BasePresenter
                super.onResponseReceived(handle);
                view_.ensureVisible(true);
                view_.setStopSearchButtonVisible(true);
+            }
+            @Override
+            public void onError(ServerError error)
+            {
+              Debug.logError(error);
+              stopAndClear();
             }
          });
    }
