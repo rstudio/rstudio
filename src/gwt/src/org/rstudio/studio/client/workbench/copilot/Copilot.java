@@ -132,6 +132,17 @@ public class Copilot
    @Handler
    public void onCopilotSignIn()
    {
+      onCopilotSignIn((response) ->
+      {
+         globalDisplay_.showMessage(
+               MessageDisplay.MSG_INFO,
+               "GitHub Copilot: Sign in",
+               "You are now signed in as '" + response.result.user + "'.");
+      });
+   }
+   
+   public void onCopilotSignIn(CommandWithArg<CopilotStatusResponse> callback)
+   {
       server_.copilotSignIn(new DelayedProgressRequestCallback<CopilotSignInResponse>("Signing in...")
       {
          private ModalDialogBase signInDialog_;
@@ -161,11 +172,7 @@ public class Copilot
                            if (response.result.status == CopilotConstants.STATUS_OK)
                            {
                               signInDialog_.closeDialog();
-                              
-                              globalDisplay_.showMessage(
-                                    MessageDisplay.MSG_INFO,
-                                    "GitHub Copilot: Sign in",
-                                    "You are now signed in as '" + response.result.user + "'.");
+                              callback.execute(response);
                            }
                            else
                            {
@@ -209,25 +216,33 @@ public class Copilot
    @Handler
    public void onCopilotSignOut()
    {
+      onCopilotSignOut((response) ->
+      {
+         String status = response.result.status;
+         if (StringUtil.equals(status, CopilotConstants.STATUS_NOT_SIGNED_IN))
+         {
+            display_.showMessage(
+                  MessageDisplay.MSG_INFO,
+                  "GitHub Copilot: Sign out",
+                  "You have successfully signed out from GitHub Copilot.");
+         }
+         else
+         {
+            showGenericResponseMessage(
+                  "GitHub Copilot: Sign out",
+                  response.result);
+         }
+      });
+   }
+   
+   public void onCopilotSignOut(CommandWithArg<CopilotSignOutResponse> callback)
+   {
       server_.copilotSignOut(new DelayedProgressRequestCallback<CopilotSignOutResponse>("Signing out...")
       {
          @Override
          protected void onSuccess(CopilotSignOutResponse response)
          {
-            String status = response.result.status;
-            if (StringUtil.equals(status, CopilotConstants.STATUS_NOT_SIGNED_IN))
-            {
-               display_.showMessage(
-                     MessageDisplay.MSG_INFO,
-                     "GitHub Copilot: Sign out",
-                     "You have successfully signed out from GitHub Copilot.");
-            }
-            else
-            {
-               showGenericResponseMessage(
-                     "GitHub Copilot: Sign out",
-                     response.result);
-            }
+            callback.execute(response);
          }
       });
    }
