@@ -81,7 +81,7 @@ public:
               const std::string& input = std::string());
 
    bool isRunning();
-   void terminate();
+   void terminate(bool isQuarto);
    void markCompleted();
    bool terminationRequested();
 
