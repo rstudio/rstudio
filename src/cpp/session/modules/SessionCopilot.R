@@ -16,11 +16,12 @@
 .rs.addFunction("copilot.installCopilotAgent", function(targetDirectory)
 {
    # Get path to copilot payload
+   # TODO: Upload and use a versioned copy of the copilot agent.
    defaultCopilotUrl <- "https://rstudio-buildtools.s3.amazonaws.com/copilot/copilot.tar.gz"
    copilotUrl <- getOption("rstudio.copilot.agentUrl", default = defaultCopilotUrl)
    
    # Download to temporary directory
-   destfile <- tempfile("rstudio-copilot-", fileext = ".tar.gz")
+   destfile <- tempfile("copilot-", fileext = ".tar.gz")
    download.file(
       url = copilotUrl,
       destfile = destfile,

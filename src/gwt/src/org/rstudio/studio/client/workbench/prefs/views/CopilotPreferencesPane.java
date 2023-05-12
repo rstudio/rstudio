@@ -69,15 +69,15 @@ public class CopilotPreferencesPane extends PreferencesPane
       add(headerLabel("GitHub Copilot"));
       add(cbCopilotEnabled_);
       
-      add(spacedBefore(headerLabel("Agent Status")));
+      add(headerLabel("Copilot Agent Status"));
       
       HorizontalPanel statusPanel = new HorizontalPanel();
       statusPanel.add(lbCopilotStatus_);
       statusPanel.add(btnSignIn_);
       statusPanel.add(btnSignOut_);
-      add(statusPanel);
+      add(spaced(statusPanel));
       
-      add(spacedBefore(headerLabel("Copilot Completions")));
+      add(headerLabel("Copilot Completions"));
       add(nudgeRight(new CheckBox("Option A")));
       add(nudgeRight(new CheckBox("Option B")));
       add(nudgeRight(new CheckBox("Option C")));
@@ -91,6 +91,7 @@ public class CopilotPreferencesPane extends PreferencesPane
          public void onValueChange(ValueChangeEvent<Boolean> event)
          {
             boolean enabled = event.getValue();
+            
             if (enabled)
             {
                copilot_.ensureAgentInstalled(new CommandWithArg<Boolean>()
@@ -98,11 +99,33 @@ public class CopilotPreferencesPane extends PreferencesPane
                   @Override
                   public void execute(Boolean isInstalled)
                   {
-                     if (!isInstalled)
+                     if (isInstalled)
                      {
+                        // Eagerly change the preference here, so that we can
+                        // respond to changes in the agent status.
+                        prefs_.copilotEnabled().setGlobalValue(true);
+                        prefs_.writeUserPrefs((completed) ->
+                        {
+                           refresh();
+                        });
+                     }
+                     else
+                     {
+                        // Installation of the Copilot agent failed;
+                        // revert the checkbox state.
                         cbCopilotEnabled_.setValue(false);
                      }
                   }
+               });
+            }
+            else
+            {
+               // Eagerly change the preference here, so that we can
+               // respond to changes in the agent status.
+               prefs_.copilotEnabled().setGlobalValue(false);
+               prefs_.writeUserPrefs((completed) ->
+               {
+                  refresh();
                });
             }
          }

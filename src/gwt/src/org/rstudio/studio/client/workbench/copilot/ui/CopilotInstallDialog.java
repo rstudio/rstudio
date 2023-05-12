@@ -14,6 +14,7 @@ import com.google.gwt.aria.client.Roles;
 import com.google.gwt.core.client.GWT;
 import com.google.gwt.dom.client.Element;
 import com.google.gwt.event.dom.client.ClickHandler;
+import com.google.gwt.event.shared.HandlerRegistration;
 import com.google.gwt.uibinder.client.UiBinder;
 import com.google.gwt.user.client.ui.HorizontalPanel;
 import com.google.gwt.user.client.ui.Image;
@@ -29,7 +30,7 @@ public class CopilotInstallDialog extends ModalDialogBase
    {
    }
 
-   public CopilotInstallDialog(ClickHandler handler)
+   public CopilotInstallDialog()
    {
       super(Roles.getDialogRole());
       ui_ = uiBinder.createAndBindUi(this);
@@ -38,14 +39,14 @@ public class CopilotInstallDialog extends ModalDialogBase
       setText("GitHub Copilot: Install Agent");
       setWidth("400px");
       
-      ThemedButton okButton = new ThemedButton("Install", handler);
-      addOkButton(okButton);
+      okButton_ = new ThemedButton("Install");
+      addOkButton(okButton_);
       
-      ThemedButton cancelButton = new ThemedButton("Cancel");
-      cancelButton.addClickHandler((event) -> {
+      cancelButton_ = new ThemedButton("Cancel");
+      cancelButton_.addClickHandler((event) -> {
          CopilotInstallDialog.this.closeDialog();
       });
-      addCancelButton(cancelButton);
+      addCancelButton(cancelButton_);
       
       HelpLink tosLink = new HelpLink(
             "Terms of Service",
@@ -53,6 +54,11 @@ public class CopilotInstallDialog extends ModalDialogBase
             false,
             false);
       addLeftWidget(tosLink);
+   }
+   
+   public HandlerRegistration addClickHandler(ClickHandler handler)
+   {
+      return okButton_.addClickHandler(handler);
    }
 
    @Override
@@ -65,6 +71,8 @@ public class CopilotInstallDialog extends ModalDialogBase
    }
    
    private final Element ui_;
+   private final ThemedButton okButton_;
+   private final ThemedButton cancelButton_;
    
    private static final String GITHUB_TOS_LINK =
          "https://docs.github.com/en/site-policy/github-terms/github-terms-for-additional-products-and-features#github-copilot";

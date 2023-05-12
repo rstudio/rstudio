@@ -39,6 +39,7 @@ import org.rstudio.studio.client.workbench.copilot.ui.CopilotInstallDialog;
 import org.rstudio.studio.client.workbench.copilot.ui.CopilotSignInDialog;
 import org.rstudio.studio.client.workbench.views.source.SourceColumnManager;
 
+import com.google.gwt.event.dom.client.ClickEvent;
 import com.google.gwt.event.dom.client.ClickHandler;
 import com.google.gwt.user.client.Timer;
 import com.google.inject.Inject;
@@ -88,12 +89,23 @@ public class Copilot
    
    private void installAgentWithPrompt(CommandWithArg<Boolean> callback)
    {
-      ClickHandler handler = (event) ->
-      {
-         installAgent(callback);
-      };
+      CopilotInstallDialog dialog = new CopilotInstallDialog();
       
-      CopilotInstallDialog dialog = new CopilotInstallDialog(handler);
+      dialog.addClickHandler(new ClickHandler()
+      {
+         @Override
+         public void onClick(ClickEvent event)
+         {
+            CommandWithArg<Boolean> wrappedCallback = (result) ->
+            {
+               dialog.closeDialog();
+               callback.execute(result);
+            };
+            
+            installAgent(wrappedCallback);
+         }
+      });
+      
       dialog.showModal();
    }
    

@@ -578,6 +578,18 @@ void onPreferencesSaved()
    }
 }
 
+void onUserPrefsChanged(const std::string& layer,
+                        const std::string& name)
+{
+   if (name == "copilot_enabled")
+   {
+      onPreferencesSaved();
+   }
+}
+
+// TODO: Does this need to be deferred? We might miss out
+// on some open documents if events are fired before
+// deferred init has finished.
 void onDeferredInit(bool newSession)
 {
    source_database::events().onDocAdded.connect(onDocAdded);
@@ -796,6 +808,11 @@ Error initialize()
    events().onPreferencesSaved.connect(onPreferencesSaved);
    events().onDeferredInit.connect(onDeferredInit);
    events().onShutdown.connect(onShutdown);
+
+   // TODO: Do we need this _and_ the preferences saved callback?
+   // This one seems required so that we see preference changes while
+   // editting preferences within the Copilot prefs dialog, anyhow.
+   prefs::userPrefs().onChanged.connect(onUserPrefsChanged);
 
    RS_REGISTER_CALL_METHOD(rs_copilotEnabled);
    RS_REGISTER_CALL_METHOD(rs_copilotStartAgent);
