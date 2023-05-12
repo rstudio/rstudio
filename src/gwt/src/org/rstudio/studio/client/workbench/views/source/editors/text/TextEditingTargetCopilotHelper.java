@@ -121,6 +121,7 @@ public class TextEditingTargetCopilotHelper
             display_.addCursorChangedHandler((event) ->
             {
                // Request completions on cursor navigation.
+               // TODO: Make this a preference!
                completionTimer_.schedule(300);
                
                // Delay handler so we can handle a Tab keypress
