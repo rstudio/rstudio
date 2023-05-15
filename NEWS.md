@@ -49,6 +49,7 @@
 - Fixed issue with use of "Whole word" with Find in Files search (#13017)
 - Fixed issue with diagnostics freezing session with documents containing pipebind operator (#13091)
 - Fixed issue with stopping a Quarto Shiny doc render on Windows (#12546)
+- Fixed issue causing sessions to fail to start if repos contained NA value (#12946)
 
 #### Posit Workbench
 - Fixed unlabeled buttons for screen reader users when page is narrow [Accessibility] (rstudio/rstudio-pro#4340)
