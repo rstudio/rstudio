@@ -488,7 +488,7 @@ options(help_type = "html")
       bits <- c()
       nchars <- 55
       i <- 1
-      while (nchars > 1 && i < length(column)) {
+      while (nchars > 1 && i <= length(column)) {
          current <- formatted[i]
          currentNChars <- nchar(current, keepNA = FALSE)
          if (currentNChars > nchars) {
