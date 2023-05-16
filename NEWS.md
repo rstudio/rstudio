@@ -48,6 +48,7 @@
 - Fixed issue with rendering development documentation with R 4.3.0 (#12945)
 - Fixed issue with use of "Whole word" with Find in Files search (#13017)
 - Fixed issue with diagnostics freezing session with documents containing pipebind operator (#13091)
+- Fixed hang when restarting R or closing IDE after rendering a Quarto document (#12836)
 
 #### Posit Workbench
 - Fixed unlabeled buttons for screen reader users when page is narrow [Accessibility] (rstudio/rstudio-pro#4340)
