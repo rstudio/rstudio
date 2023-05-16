@@ -295,6 +295,7 @@ pipeline {
 
             environment {
               RSTUDIO_ORG_PEM = credentials('www-rstudio-org-pem')
+              AWS_PATH= "https://s3.amazonaws.com/rstudio-ide-build/${FLAVOR.toLowerCase()}/windows"
             }
 
             steps {
