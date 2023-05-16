@@ -1607,6 +1607,12 @@ void onShutdown(bool terminatedNormally)
                                                s_renderOutputs);
    if (error)
       LOG_ERROR(error);
+
+   // Windows has issues with the Quarto background process running when the session shuts down
+   // It requires that the Quarto process is terminated first
+#ifdef _WIN32
+   s_pCurrentRender_->terminateProcess(renderTerminateQuiet);
+#endif
 }
  
 void onSuspend(const r::session::RSuspendOptions&, core::Settings*)
