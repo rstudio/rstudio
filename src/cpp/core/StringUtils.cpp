@@ -86,10 +86,9 @@ bool isTruthy(const std::string& string,
    // allow user-configurable behavior for empty strings
    if (string.empty())
       return valueIfEmpty;
-   
-   // check for special 'falsy' values
-   std::string lower = toLower(string);
-   if (lower == "0" || lower == "false")
+
+   // check for 'falsy' values
+   if (hasFalsyValue(string))
       return false;
    
    // assume all other values are 'truthy'

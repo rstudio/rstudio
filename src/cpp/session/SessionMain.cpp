@@ -1883,6 +1883,19 @@ void logStartingEnv()
 #endif
 }
 
+#ifdef _WIN32
+
+void win32InvalidParameterHandler(const wchar_t* expression,
+                                  const wchar_t* function,
+                                  const wchar_t* file,
+                                  unsigned int line,
+                                  uintptr_t pReserved)
+{
+   // This page intentionally left blank.
+}
+
+#endif
+
 } // anonymous namespace
 
 // run session
@@ -1900,6 +1913,17 @@ int main(int argc, char * const argv[])
       // the desktop frontend, it will still be closed if the frontend is closed
 #ifdef _WIN32
       core::system::initHook();
+#endif
+
+      // set an invalid parameter handler -- we do this to match the behavior of
+      // standalone builds of R, which use the MinGW runtime and so normally just
+      // ignore invalid parameters (or quietly log them if configured to do so)
+      //
+      // https://github.com/mirror/mingw-w64/blob/eff726c461e09f35eeaed125a3570fa5f807f02b/mingw-w64-crt/crt/crtexe.c#L98-L108
+#ifdef _WIN32
+      std::string enabled = core::system::getenv("RSTUDIO_WIN32_ENABLE_INVALID_PARAMETER_HANDLER");
+      if (core::string_utils::isTruthy(enabled, true))
+         _set_invalid_parameter_handler(win32InvalidParameterHandler);
 #endif
 
       // save fallback library path
