@@ -22,6 +22,8 @@ import org.rstudio.studio.client.common.Timers;
 import org.rstudio.studio.client.server.ServerError;
 import org.rstudio.studio.client.server.ServerRequestCallback;
 import org.rstudio.studio.client.workbench.copilot.Copilot;
+import org.rstudio.studio.client.workbench.copilot.model.CopilotEvent;
+import org.rstudio.studio.client.workbench.copilot.model.CopilotEvent.CopilotEventType;
 import org.rstudio.studio.client.workbench.copilot.model.CopilotResponseTypes.CopilotGenerateCompletionsResponse;
 import org.rstudio.studio.client.workbench.copilot.model.CopilotTypes.CopilotCompletion;
 import org.rstudio.studio.client.workbench.copilot.server.CopilotServerOperations;
@@ -59,6 +61,9 @@ public class TextEditingTargetCopilotHelper
                final int requestId = requestId_;
                final Position savedCursorPosition = display_.getCursorPosition();
                
+               events_.fireEvent(
+                     new CopilotEvent(CopilotEventType.COMPLETION_REQUESTED));
+               
                // TODO: Include document ID as well here. We might need to see if
                // some special handling is required for R Markdown documents.
                server_.copilotGenerateCompletions(
@@ -83,7 +88,14 @@ public class TextEditingTargetCopilotHelper
                            // was cancelled by the copilot agent.
                            Any result = response.result;
                            if (result == null)
+                           {
+                              events_.fireEvent(
+                                    new CopilotEvent(CopilotEventType.COMPLETION_CANCELLED));
                               return;
+                           }
+                           
+                           events_.fireEvent(
+                                 new CopilotEvent(CopilotEventType.COMPLETION_RECEIVED));
                            
                            // Otherwise, handle the response.
                            JsArrayLike<CopilotCompletion> completions =

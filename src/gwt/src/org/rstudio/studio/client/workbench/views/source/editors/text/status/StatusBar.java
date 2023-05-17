@@ -46,7 +46,9 @@ public interface StatusBar
    void setScopeType(int type);
 
    void showMessage(String message);
+   void showMessage(String message, boolean hideScopeWidget);
    void showMessage(String message, int timeMs);
+   void showMessage(String message, boolean hideScopeWidget, int timeMs);
    void showMessage(String message, HideMessageHandler handler);
    void hideMessage();
 

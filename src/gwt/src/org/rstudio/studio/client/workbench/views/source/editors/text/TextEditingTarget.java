@@ -135,6 +135,7 @@ import org.rstudio.studio.client.shiny.model.ShinyApplicationParams;
 import org.rstudio.studio.client.shiny.model.ShinyTestResults;
 import org.rstudio.studio.client.workbench.WorkbenchContext;
 import org.rstudio.studio.client.workbench.commands.Commands;
+import org.rstudio.studio.client.workbench.copilot.model.CopilotEvent;
 import org.rstudio.studio.client.workbench.model.Session;
 import org.rstudio.studio.client.workbench.model.SessionInfo;
 import org.rstudio.studio.client.workbench.prefs.model.UserPrefs;
@@ -1035,6 +1036,28 @@ public class TextEditingTarget implements
                               getIncrementalSearchMessage(),
                               2000);
                      }
+                  }
+               }
+            });
+      
+      events_.addHandler(
+            CopilotEvent.TYPE,
+            new CopilotEvent.Handler()
+            {
+               @Override
+               public void onCopilot(CopilotEvent event)
+               {
+                  switch (event.getType())
+                  {
+                  case COMPLETION_REQUESTED:
+                     view_.getStatusBar().showMessage("Copilot: Waiting for completions...", false);
+                     break;
+                  case COMPLETION_CANCELLED:
+                     view_.getStatusBar().showMessage("Copilot: Completion request cancelled.", false);
+                     break;
+                  case COMPLETION_RECEIVED:
+                     view_.getStatusBar().showMessage("Copilot: Completion response received.", false);
+                     break;
                   }
                }
             });
