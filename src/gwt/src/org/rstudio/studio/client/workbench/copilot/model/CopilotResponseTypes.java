@@ -41,7 +41,7 @@ public class CopilotResponseTypes
    @JsType(isNative = true, namespace = JsPackage.GLOBAL, name = "Object")
    public static class CopilotInstallAgentResponse
    {
-      public boolean installed;
+      public String error;
    }
    
    @JsType(isNative = true, namespace = JsPackage.GLOBAL, name = "Object")

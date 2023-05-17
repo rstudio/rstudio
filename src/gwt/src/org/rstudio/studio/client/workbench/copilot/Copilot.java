@@ -22,6 +22,7 @@ import org.rstudio.core.client.StringUtil;
 import org.rstudio.core.client.command.CommandBinder;
 import org.rstudio.core.client.command.Handler;
 import org.rstudio.core.client.widget.ModalDialogBase;
+import org.rstudio.core.client.widget.ProgressIndicator;
 import org.rstudio.studio.client.common.DelayedProgressRequestCallback;
 import org.rstudio.studio.client.common.GlobalDisplay;
 import org.rstudio.studio.client.server.ServerError;
@@ -102,35 +103,61 @@ public class Copilot
                callback.execute(result);
             };
             
-            installAgent(wrappedCallback);
+            installAgent(
+                  dialog.getProgressIndicator(),
+                  wrappedCallback);
+         }
+      });
+      
+      dialog.addCancelHandler(new ClickHandler()
+      {
+         @Override
+         public void onClick(ClickEvent event)
+         {
+            dialog.closeDialog();
+            callback.execute(false);
          }
       });
       
       dialog.showModal();
    }
    
-   private void installAgent(CommandWithArg<Boolean> callback)
+   private void installAgent(ProgressIndicator indicator,
+                             CommandWithArg<Boolean> callback)
    {
-      String progressLabel = "Installing...";
+      indicator.onProgress("Installing...");
       server_.copilotInstallAgent(
-            new DelayedProgressRequestCallback<CopilotInstallAgentResponse>(progressLabel)
+            new ServerRequestCallback<CopilotInstallAgentResponse>()
             {
                @Override
-               protected void onSuccess(CopilotInstallAgentResponse response)
+               public void onResponseReceived(CopilotInstallAgentResponse response)
                {
-                  if (response.installed)
+                  indicator.onCompleted();
+                  
+                  String error = response.error;
+                  if (error != null)
+                  {
+                     display_.showErrorMessage(
+                           "An error occurred while installing GitHub Copilot.\n\n" +
+                           error);
+                  callback.execute(false);
+                  }
+                  else
                   {
                      display_.showMessage(
                            MessageDisplay.MSG_INFO,
                            "GitHub Copilot: Install Agent",
                            "GitHub Copilot agent successfully installed.");
-                  }
-                  else
-                  {
-                     display_.showErrorMessage("An error occurred while installing GitHub Copilot.");
+                  callback.execute(true);
                   }
                   
-                  callback.execute(response.installed);
+               }
+
+               @Override
+               public void onError(ServerError error)
+               {
+                  indicator.onError(error.getUserMessage());
+                  Debug.logError(error);
                }
             });
    }

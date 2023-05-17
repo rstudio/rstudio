@@ -6,6 +6,7 @@ package org.rstudio.studio.client.workbench.copilot.ui;
 import org.rstudio.core.client.resources.ImageResource2x;
 import org.rstudio.core.client.widget.ElementPanel;
 import org.rstudio.core.client.widget.ModalDialogBase;
+import org.rstudio.core.client.widget.ProgressIndicator;
 import org.rstudio.core.client.widget.ThemedButton;
 import org.rstudio.core.client.widget.images.MessageDialogImages;
 import org.rstudio.studio.client.common.HelpLink;
@@ -34,6 +35,7 @@ public class CopilotInstallDialog extends ModalDialogBase
    {
       super(Roles.getDialogRole());
       ui_ = uiBinder.createAndBindUi(this);
+      progress_ = addProgressIndicator();
       
       setTitle("GitHub Copilot: Install Agent");
       setText("GitHub Copilot: Install Agent");
@@ -43,9 +45,6 @@ public class CopilotInstallDialog extends ModalDialogBase
       addOkButton(okButton_);
       
       cancelButton_ = new ThemedButton("Cancel");
-      cancelButton_.addClickHandler((event) -> {
-         CopilotInstallDialog.this.closeDialog();
-      });
       addCancelButton(cancelButton_);
       
       HelpLink tosLink = new HelpLink(
@@ -56,11 +55,21 @@ public class CopilotInstallDialog extends ModalDialogBase
       addLeftWidget(tosLink);
    }
    
+   public ProgressIndicator getProgressIndicator()
+   {
+      return progress_;
+   }
+   
    public HandlerRegistration addClickHandler(ClickHandler handler)
    {
       return okButton_.addClickHandler(handler);
    }
-
+   
+   public HandlerRegistration addCancelHandler(ClickHandler handler)
+   {
+      return cancelButton_.addClickHandler(handler);
+   }
+   
    @Override
    protected Widget createMainWidget()
    {
@@ -71,6 +80,7 @@ public class CopilotInstallDialog extends ModalDialogBase
    }
    
    private final Element ui_;
+   private final ProgressIndicator progress_;
    private final ThemedButton okButton_;
    private final ThemedButton cancelButton_;
    

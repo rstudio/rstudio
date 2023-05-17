@@ -156,17 +156,11 @@ bool isCopilotAgentInstalled()
    return copilotAgentPath().exists();
 }
 
-bool installCopilotAgent()
+Error installCopilotAgent()
 {
-   bool didInstall = false;
-   Error error = r::exec::RFunction(".rs.copilot.installCopilotAgent")
+   return r::exec::RFunction(".rs.copilot.installCopilotAgent")
          .addParam(copilotAgentDirectory().getAbsolutePath())
-         .call(&didInstall);
-
-   if (error)
-      LOG_ERROR(error);
-
-   return didInstall;
+         .call();
 }
 
 std::string createRequest(const std::string& method,
@@ -793,8 +787,11 @@ Error copilotVerifyInstalled(const json::JsonRpcRequest& request,
 Error copilotInstallAgent(const json::JsonRpcRequest& request,
                           json::JsonRpcResponse* pResponse)
 {
+   Error installError = installCopilotAgent();
+
    json::Object responseJson;
-   responseJson["installed"] = installCopilotAgent();
+   if (installError)
+      responseJson["error"] = installError.asString();
    pResponse->setResult(responseJson);
    return Success();
 }

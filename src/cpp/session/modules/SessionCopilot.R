@@ -13,27 +13,57 @@
 #
 #
 
+# TODO: What's the right way to allow the Copilot Agent version to change?
+# How should we handle updates?
 .rs.addFunction("copilot.installCopilotAgent", function(targetDirectory)
 {
-   # Get path to copilot payload
-   # TODO: Upload and use a versioned copy of the copilot agent.
-   defaultCopilotUrl <- "https://rstudio-buildtools.s3.amazonaws.com/copilot/copilot.tar.gz"
-   copilotUrl <- getOption("rstudio.copilot.agentUrl", default = defaultCopilotUrl)
+   # NOTE: Copilot 1.8.4 release.
+   copilotRef <- "1358e8e45ecedc53daf971924a0541ddf6224faf"
    
-   # Download to temporary directory
-   destfile <- tempfile("copilot-", fileext = ".tar.gz")
-   download.file(
-      url = copilotUrl,
-      destfile = destfile,
-      mode = "wb"
+   # Get path to copilot payload
+   defaultCopilotUrl <- file.path(
+      "https://api.github.com/repos/github/copilot.vim/tarball",
+      copilotRef
    )
    
-   # Extract to target directory
+   # Check for override.
+   copilotUrl <- getOption("rstudio.copilot.repositoryUrl", default = defaultCopilotUrl)
+   
+   # Create a temporary directory to host the download.
+   # Download to temporary directory
+   downloadDir <- tempfile("copilot-")
+   .rs.ensureDirectory(downloadDir)
+   on.exit(unlink(downloadDir, recursive = TRUE), add = TRUE)
+   
+   # Download the tarball.
+   destfile <- file.path(downloadDir, "copilot.tar.gz")
+   download.file(copilotUrl, destfile = destfile, mode = "wb")
+   
+   # Extract the tarball. Make sure things get unpacked into the download dir.
+   local({
+      owd <- setwd(downloadDir)
+      on.exit(setwd(owd), add = TRUE)
+      untar(destfile)
+   })
+   
+   # Find the unpacked directory.
+   copilotFolder <- setdiff(list.files(downloadDir), "copilot.tar.gz")
+   copilotAgentPath <- file.path(downloadDir, copilotFolder, "copilot/dist")
+   copilotAgentFiles <- list.files(copilotAgentPath, all.files = TRUE, full.names = TRUE)
+   
+   # Copy those files to our target directory.
    .rs.ensureDirectory(targetDirectory)
-   untar(destfile, exdir = targetDirectory)
+   file.copy(copilotAgentFiles, targetDirectory)
    
    # Confirm the agent runtime exists
-   file.exists(file.path(targetDirectory, "agent.js"))
+   agentPath <- file.path(targetDirectory, "agent.js")
+   if (!file.exists(agentPath)) {
+      fmt <- "Copilot Agent installation failed: '%s' does not exist."
+      msg <- sprintf(fmt, agentPath)
+      stop(msg, call. = FALSE)
+   }
+   
+   TRUE
 })
 
 .rs.addFunction("copilot.agentPid", function()
