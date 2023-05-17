@@ -407,7 +407,7 @@ public:
    void terminateProcess(RenderTerminateType terminateType)
    {
       terminateType_ = terminateType;
-      async_r::AsyncRProcess::terminate();
+      async_r::AsyncRProcess::terminate(isQuarto_);
    }
 
    FilePath outputFile()

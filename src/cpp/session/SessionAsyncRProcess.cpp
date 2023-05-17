@@ -34,7 +34,8 @@ namespace async_r {
 
 AsyncRProcess::AsyncRProcess():
    isRunning_(false),
-   terminationRequested_(false)
+   terminationRequested_(false),
+   pid_(0)
 {
 }
 
@@ -224,6 +225,7 @@ void AsyncRProcess::start(const char* rCommand,
 
 void AsyncRProcess::onStarted(core::system::ProcessOperations& operations)
 {
+   pid_ = operations.getPid();
    if (!input_.empty())
    {
       core::Error error = operations.writeToStdin(input_, true);
@@ -300,9 +302,36 @@ bool AsyncRProcess::isRunning()
    return isRunning_;
 }
 
-void AsyncRProcess::terminate()
+void AsyncRProcess::terminate(bool isQuarto)
 {
    terminationRequested_ = true;
+
+   // on windows we need to be a bit more aggressive (as we've seen cases where
+   // the 'stop' doesn't actually work. In this case, stopping a quarto doc containing
+   // an interactive shiny app doesn't seem to work on windows without terminating
+   // aggressively.
+#ifdef _WIN32
+   if (isQuarto) {
+      LOG_INFO_MESSAGE("terminate quarto pid: >" + std::to_string(pid_));
+      using namespace core::shell_utils;
+      if (pid_ > 0)
+      {
+         ShellCommand cmd("taskkill");
+         cmd << "/F" << "/T" << "/PID" << core::safe_convert::numberToString(pid_);
+         core::system::ProcessOptions options;
+         core::system::ProcessResult result;
+         core::Error error = core::system::runCommand(cmd, options, &result);
+         if (error)
+         {
+            LOG_ERROR(error);
+         }
+         else if (result.exitStatus != EXIT_SUCCESS)
+         {
+            LOG_ERROR_MESSAGE("Error killing quarto job (terminate R process): " + result.stdErr);
+         }
+      }
+   }
+#endif
 }
 
 void AsyncRProcess::markCompleted() 

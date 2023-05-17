@@ -283,24 +283,26 @@ pipeline {
           stage ("Update Daily Build Redirects") {
             agent { label "linux" } 
 
-            when {
-              allOf {
-                expression { return !env.IS_PRO }
-                expression { return params.PUBLISH }
-                expression { return params.DAILY }
-                environment name: 'FLAVOR', value: 'Electron'
+            // for pro, update with Qt
+            // for open source, update with Electron
+            when { 
+              anyOf {
+                expression { return params.PUBLISH && params.DAILY && IS_PRO == true && FLAVOR == "Desktop" }
+                expression { return params.PUBLISH && params.DAILY && IS_PRO == false && FLAVOR == "Electron" }
+                expression { return params.PUBLISH && params.DAILY && FLAVOR == "Server" }
               }
             }
 
             environment {
               RSTUDIO_ORG_PEM = credentials('www-rstudio-org-pem')
+              AWS_PATH= "https://s3.amazonaws.com/rstudio-ide-build/${FLAVOR.toLowerCase()}/windows"
             }
 
             steps {
               // the updateDailyRedirects uses a bash script, so much be run on linux
               // Also depends on flavor, so must be in the matrix
               script {
-                utils.updateDailyRedirects "desktop/windows/${PACKAGE_NAME}.exe"
+                utils.updateDailyRedirects "${AWS_PATH}/${PACKAGE_NAME}.exe"
               }
             }
 

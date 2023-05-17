@@ -49,6 +49,7 @@ public class RCompletionType
    public static final int R6_OBJECT   = 28;
    public static final int DATATABLE_SPECIAL_SYMBOL = 29;
    public static final int SECUNDARY_ARGUMENT = 30;
+   public static final int ACTIVE_BINDING = 31;
    
    public static final int SNIPPET     = 98;
    public static final int CONTEXT     = 99;

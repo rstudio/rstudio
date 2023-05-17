@@ -488,13 +488,14 @@ options(help_type = "html")
       bits <- c()
       nchars <- 55
       i <- 1
-      while (nchars > 1 && i < length(column)) {
+      while (nchars > 1 && i <= length(column)) {
          current <- formatted[i]
-         if (nchar(current) > nchars) {
+         currentNChars <- nchar(current, keepNA = FALSE)
+         if (currentNChars > nchars) {
             current <- pillar$str_trunc(current, nchars)
          }
          bits <- c(bits, current)
-         nchars <- nchars - nchar(current) - 2
+         nchars <- nchars - currentNChars - 2
          i <- i + 1
       }
       

@@ -9,6 +9,7 @@
 - Update openssl to 1.1.1t for Windows (rstudio/rstudio-pro#3675)
 - Improve visibility of focus rectangles on Server / Workbench Sign In page [Accessibility] (#12846)
 - Added ability to enable minidump generation for Electron crashes (#13025)
+- Added Quarto for Linux arm64 (#12411)
 
 #### Posit Workbench
 - Added the `session-connections-block-suspend` session option, controlling whether active connections can block suspension of an R session.
@@ -48,6 +49,9 @@
 - Fixed issue with rendering development documentation with R 4.3.0 (#12945)
 - Fixed issue with use of "Whole word" with Find in Files search (#13017)
 - Fixed issue with diagnostics freezing session with documents containing pipebind operator (#13091)
+- Fixed issue with stopping a Quarto Shiny doc render on Windows (#12546)
+- Fixed issue causing sessions to fail to start if repos contained NA value (#12946)
+- Fixed "Error Retrieving Help" bug when data preview column contains `NA` values (#12918)
 - Fixed hang when restarting R or closing IDE after rendering a Quarto document (#12836)
 
 #### Posit Workbench
