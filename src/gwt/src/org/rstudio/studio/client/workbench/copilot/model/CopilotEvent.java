@@ -21,9 +21,12 @@ public class CopilotEvent extends GwtEvent<CopilotEvent.Handler>
 {
    public static enum CopilotEventType
    {
+      COPILOT_DISABLED,
       COMPLETION_REQUESTED,
-      COMPLETION_RECEIVED,
-      COMPLETION_CANCELLED
+      COMPLETION_RECEIVED_SOME,
+      COMPLETION_RECEIVED_NONE,
+      COMPLETION_CANCELLED,
+      COMPLETION_ERROR,
    }
    
    public CopilotEvent(CopilotEventType type, Object data)

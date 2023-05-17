@@ -14,7 +14,9 @@
  */
 package org.rstudio.studio.client.workbench.views.source.editors.text.status;
 
+import org.rstudio.core.client.resources.CoreResources;
 import org.rstudio.core.client.resources.ImageResource2x;
+import org.rstudio.core.client.theme.res.ThemeResources;
 import org.rstudio.core.client.widget.IsWidgetWithHeight;
 import org.rstudio.studio.client.common.icons.StandardIcons;
 import org.rstudio.studio.client.common.icons.code.CodeIcons;
@@ -202,7 +204,9 @@ public class StatusBarWidget extends Composite
       }
    }
 
-   private void initMessage(String message, boolean hideScopeWidget)
+   private void initMessage(String message,
+                            boolean hideScopeWidget,
+                            ImageResource icon)
    {
       if (hideScopeWidget)
       {
@@ -211,9 +215,15 @@ public class StatusBarWidget extends Composite
       }
 
       message_.setValue(message);
+      message_.setIcon(icon);
       show(message_);
    }
 
+   private void initMessage(String message, boolean hideScopeWidget)
+   {
+      initMessage(message, hideScopeWidget, null);
+   }
+   
    private void endMessage()
    {
       show(scope_);
@@ -221,6 +231,40 @@ public class StatusBarWidget extends Composite
       hide(message_);
 
       setScopeType(scopeType_);
+   }
+   
+   @Override
+   public void showStatus(StatusBarIconType type, String message)
+   {
+      ImageResource resource = null;
+      
+      switch (type)
+      {
+      case TYPE_OK:
+         // TODO: Better icon?
+         resource = new ImageResource2x(ThemeResources.INSTANCE.infoSmall2x());
+         break;
+      case TYPE_LOADING:
+         resource = new ImageResource2x(CoreResources.INSTANCE.progress());
+         break;
+      case TYPE_INFO:
+         resource = new ImageResource2x(ThemeResources.INSTANCE.infoSmall2x());
+         break;
+      case TYPE_WARNING:
+         resource = new ImageResource2x(ThemeResources.INSTANCE.warningSmall2x());
+         break;
+      case TYPE_ERROR:
+         resource = new ImageResource2x(ThemeResources.INSTANCE.errorSmall2x());
+         break;
+      }
+      
+      initMessage(message, false, resource);
+   };
+   
+   @Override
+   public void hideStatus()
+   {
+      hideMessage();
    }
 
    @Override

@@ -186,6 +186,7 @@ import org.rstudio.studio.client.workbench.views.source.editors.text.rmd.TextEdi
 import org.rstudio.studio.client.workbench.views.source.editors.text.rmd.events.InterruptChunkEvent;
 import org.rstudio.studio.client.workbench.views.source.editors.text.status.StatusBar;
 import org.rstudio.studio.client.workbench.views.source.editors.text.status.StatusBar.HideMessageHandler;
+import org.rstudio.studio.client.workbench.views.source.editors.text.status.StatusBar.StatusBarIconType;
 import org.rstudio.studio.client.workbench.views.source.editors.text.status.StatusBarPopupMenu;
 import org.rstudio.studio.client.workbench.views.source.editors.text.status.StatusBarPopupRequest;
 import org.rstudio.studio.client.workbench.views.source.editors.text.ui.ChooseEncodingDialog;
@@ -1049,15 +1050,42 @@ public class TextEditingTarget implements
                {
                   switch (event.getType())
                   {
+                  
+                  case COPILOT_DISABLED:
+                     view_.getStatusBar().hideStatus();
+                     break;
+                     
                   case COMPLETION_REQUESTED:
-                     view_.getStatusBar().showMessage("Copilot: Waiting for completions...", false);
+                     view_.getStatusBar().showStatus(
+                           StatusBarIconType.TYPE_INFO,
+                           "Copilot: Waiting for completions...");
                      break;
+                     
                   case COMPLETION_CANCELLED:
-                     view_.getStatusBar().showMessage("Copilot: Completion request cancelled.", false);
+                     view_.getStatusBar().showStatus(
+                           StatusBarIconType.TYPE_INFO,
+                           "Copilot: No completions available.");
                      break;
-                  case COMPLETION_RECEIVED:
-                     view_.getStatusBar().showMessage("Copilot: Completion response received.", false);
+                     
+                  case COMPLETION_RECEIVED_SOME:
+                     view_.getStatusBar().showStatus(
+                           StatusBarIconType.TYPE_OK,
+                           "Copilot: Completion response received.");
                      break;
+                     
+                  case COMPLETION_RECEIVED_NONE:
+                     view_.getStatusBar().showStatus(
+                           StatusBarIconType.TYPE_INFO,
+                           "Copilot: No completions available.");
+                     break;
+                     
+                  case COMPLETION_ERROR:
+                     String message = (String) event.getData();
+                     view_.getStatusBar().showStatus(
+                           StatusBarIconType.TYPE_ERROR,
+                           "Copilot: " + message);
+                     break;
+                     
                   }
                }
             });

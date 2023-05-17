@@ -26,10 +26,13 @@ import org.rstudio.studio.client.workbench.copilot.model.CopilotEvent;
 import org.rstudio.studio.client.workbench.copilot.model.CopilotEvent.CopilotEventType;
 import org.rstudio.studio.client.workbench.copilot.model.CopilotResponseTypes.CopilotGenerateCompletionsResponse;
 import org.rstudio.studio.client.workbench.copilot.model.CopilotTypes.CopilotCompletion;
+import org.rstudio.studio.client.workbench.copilot.model.CopilotTypes.CopilotError;
 import org.rstudio.studio.client.workbench.copilot.server.CopilotServerOperations;
+import org.rstudio.studio.client.workbench.prefs.model.UserPrefs;
 import org.rstudio.studio.client.workbench.views.source.editors.text.ace.Position;
 import org.rstudio.studio.client.workbench.views.source.editors.text.ace.Range;
 
+import com.google.gwt.core.client.Scheduler;
 import com.google.gwt.dom.client.NativeEvent;
 import com.google.gwt.event.dom.client.KeyCodes;
 import com.google.gwt.event.dom.client.KeyDownEvent;
@@ -50,6 +53,8 @@ public class TextEditingTargetCopilotHelper
       target_ = target;
       display_ = target.getDocDisplay();
       
+      registrations_ = new HandlerRegistrations();
+      
       completionTimer_ = new Timer()
       {
          @Override
@@ -64,8 +69,6 @@ public class TextEditingTargetCopilotHelper
                events_.fireEvent(
                      new CopilotEvent(CopilotEventType.COMPLETION_REQUESTED));
                
-               // TODO: Include document ID as well here. We might need to see if
-               // some special handling is required for R Markdown documents.
                server_.copilotGenerateCompletions(
                      target_.getId(),
                      display_.getCursorRow(),
@@ -84,6 +87,17 @@ public class TextEditingTargetCopilotHelper
                            if (!currentCursorPosition.isEqualTo(savedCursorPosition))
                               return;
                            
+                           // Check for error.
+                           CopilotError error = response.error;
+                           if (error != null)
+                           {
+                              events_.fireEvent(
+                                    new CopilotEvent(
+                                          CopilotEventType.COMPLETION_ERROR,
+                                          error.message));
+                              return;
+                           }
+                           
                            // Check for null result. This might occur if the completion request
                            // was cancelled by the copilot agent.
                            Any result = response.result;
@@ -94,12 +108,24 @@ public class TextEditingTargetCopilotHelper
                               return;
                            }
                            
-                           events_.fireEvent(
-                                 new CopilotEvent(CopilotEventType.COMPLETION_RECEIVED));
+                           // Check for a cancellation reason.
+                           Object reason = result.asPropertyMap().get("cancellationReason");
+                           if (reason != null)
+                           {
+                              events_.fireEvent(
+                                    new CopilotEvent(CopilotEventType.COMPLETION_CANCELLED));
+                              return;
+                           }
                            
                            // Otherwise, handle the response.
                            JsArrayLike<CopilotCompletion> completions =
                                  Js.cast(result.asPropertyMap().get("completions"));
+                           
+                           
+                           events_.fireEvent(new CopilotEvent(
+                                 completions.getLength() == 0
+                                    ? CopilotEventType.COMPLETION_RECEIVED_NONE
+                                    : CopilotEventType.COMPLETION_RECEIVED_SOME));
                            
                            for (int i = 0, n = completions.getLength(); i < n; i++)
                            {
@@ -128,64 +154,91 @@ public class TextEditingTargetCopilotHelper
          }
       };
       
-      registrations_ = new HandlerRegistrations(
+      prefs_.copilotEnabled().addValueChangeHandler((event) ->
+      {
+         manageHandlers(event.getValue());
+      });
       
-            display_.addCursorChangedHandler((event) ->
-            {
-               // Request completions on cursor navigation.
-               // TODO: Make this a preference!
-               completionTimer_.schedule(300);
-               
-               // Delay handler so we can handle a Tab keypress
-               Timers.singleShot(0, () -> {
-                  activeCompletion_ = null;
-                  display_.removeGhostText();
-               });
-            }),
+      Scheduler.get().scheduleDeferred(() ->
+      {
+         manageHandlers(prefs_.copilotEnabled().getValue());
+      });
       
-            display_.addCapturingKeyDownHandler(new KeyDownHandler()
-            {
-               @Override
-               public void onKeyDown(KeyDownEvent keyEvent)
+   }
+   
+   private void manageHandlers(boolean enabled)
+   {
+      if (!enabled)
+      {
+         registrations_.removeHandler();
+         requestId_ = 0;
+         completionTimer_.cancel();
+         events_.fireEvent(new CopilotEvent(CopilotEventType.COPILOT_DISABLED));
+      }
+      else
+      {
+         registrations_.addAll(
+
+               display_.addCursorChangedHandler((event) ->
                {
-                  // If ghost text is being displayed, accept it on a Tab key press.
-                  // TODO: Let user choose keybinding for accepting ghost text?
-                  if (activeCompletion_ == null)
-                     return;
-                  
-                  // TODO: If we have a completion popup, should that take precedence?
-                  if (display_.isPopupVisible())
-                     return;
-                  
-                  NativeEvent event = keyEvent.getNativeEvent();
-                  if (event.getKeyCode() == KeyCodes.KEY_TAB)
-                  {
-                     event.stopPropagation();
-                     event.preventDefault();
-                     
-                     Range aceRange = Range.create(
-                           activeCompletion_.range.start.line,
-                           activeCompletion_.range.start.character,
-                           activeCompletion_.range.end.line,
-                           activeCompletion_.range.end.character);
-                     display_.replaceRange(aceRange, activeCompletion_.text);
-                     
+                  // Request completions on cursor navigation.
+                  // TODO: Make this a preference!
+                  completionTimer_.schedule(300);
+
+                  // Delay handler so we can handle a Tab keypress
+                  Timers.singleShot(0, () -> {
                      activeCompletion_ = null;
+                     display_.removeGhostText();
+                  });
+               }),
+
+               display_.addCapturingKeyDownHandler(new KeyDownHandler()
+               {
+                  @Override
+                  public void onKeyDown(KeyDownEvent keyEvent)
+                  {
+                     // If ghost text is being displayed, accept it on a Tab key press.
+                     // TODO: Let user choose keybinding for accepting ghost text?
+                     if (activeCompletion_ == null)
+                        return;
+
+                     // TODO: If we have a completion popup, should that take precedence?
+                     if (display_.isPopupVisible())
+                        return;
+
+                     NativeEvent event = keyEvent.getNativeEvent();
+                     if (event.getKeyCode() == KeyCodes.KEY_TAB)
+                     {
+                        event.stopPropagation();
+                        event.preventDefault();
+
+                        Range aceRange = Range.create(
+                              activeCompletion_.range.start.line,
+                              activeCompletion_.range.start.character,
+                              activeCompletion_.range.end.line,
+                              activeCompletion_.range.end.character);
+                        display_.replaceRange(aceRange, activeCompletion_.text);
+
+                        activeCompletion_ = null;
+                     }
                   }
-               }
-            })
-            
-      );
+               })
+
+               );
+
+      }
       
    }
    
    @Inject
    private void initialize(Copilot copilot,
                            EventBus events,
+                           UserPrefs prefs,
                            CopilotServerOperations server)
    {
       copilot_ = copilot;
       events_ = events;
+      prefs_ = prefs;
       server_ = server;
    }
    
@@ -202,5 +255,6 @@ public class TextEditingTargetCopilotHelper
    // Injected ----
    private Copilot copilot_;
    private EventBus events_;
+   private UserPrefs prefs_;
    private CopilotServerOperations server_;
 }

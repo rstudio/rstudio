@@ -21,6 +21,15 @@ import com.google.gwt.user.client.Event.NativePreviewEvent;
 
 public interface StatusBar
 {
+   public static enum StatusBarIconType
+   {
+      TYPE_OK,
+      TYPE_LOADING,
+      TYPE_INFO,
+      TYPE_WARNING,
+      TYPE_ERROR,
+   }
+   
    interface HideMessageHandler
    {
       // return 'true' to indicate message should be hidden
@@ -44,6 +53,10 @@ public interface StatusBar
    void setPositionVisible(boolean visible);
    void setScopeVisible(boolean visible);
    void setScopeType(int type);
+   
+   // NOTE: Uses the same widget as the 'showMessage()' APIs.
+   void showStatus(StatusBarIconType type, String message);
+   void hideStatus();
 
    void showMessage(String message);
    void showMessage(String message, boolean hideScopeWidget);

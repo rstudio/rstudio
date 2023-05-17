@@ -48,12 +48,19 @@ public class CopilotTypes
    }
    
    @JsType(isNative = true, namespace = JsPackage.GLOBAL, name = "Object")
+   public static class CopilotError
+   {
+      public int code;
+      public String message;
+   }
+   
+   @JsType(isNative = true, namespace = JsPackage.GLOBAL, name = "Object")
    public static class CopilotResponse
    {
       public String jsonrpc;
       public String id;
       public Any result;
-      public Any error;
+      public CopilotError error;
       public boolean cancelled;
    }
       

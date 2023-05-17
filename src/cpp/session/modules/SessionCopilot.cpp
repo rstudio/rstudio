@@ -425,12 +425,18 @@ bool ensureAgentRunning()
 {
    // bail if we haven't enabled copilot
    if (!s_copilotEnabled)
+   {
+      DLOGF("[copilot] Copilot is not enabled; not starting agent.");
       return false;
+   }
 
    // TODO: Should we further validate the PID is actually associated
    // with a running Copilot process, or just handle that separately?
    if (s_agentPid != -1)
+   {
+      DLOGF("[copilot] Copilot is already running; nothing to do.");
       return true;
+   }
 
    return startAgent();
 }
@@ -468,8 +474,6 @@ void onDocUpdated(boost::shared_ptr<source_database::SourceDocument> pDoc)
    paramsJson["textDocument"] = textDocumentJson;
 
    sendNotification("textDocument/didOpen", paramsJson);
-
-   // Request completions at the
 }
 
 void onDocRemoved(const std::string& id, const std::string& path)
