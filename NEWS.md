@@ -52,6 +52,7 @@
 - Fixed issue with stopping a Quarto Shiny doc render on Windows (#12546)
 - Fixed issue causing sessions to fail to start if repos contained NA value (#12946)
 - Fixed "Error Retrieving Help" bug when data preview column contains `NA` values (#12918)
+- Fixed hang when restarting R or closing IDE after rendering a Quarto document (#12836)
 
 #### Posit Workbench
 - Fixed unlabeled buttons for screen reader users when page is narrow [Accessibility] (rstudio/rstudio-pro#4340)
