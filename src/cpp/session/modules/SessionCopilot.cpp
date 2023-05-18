@@ -15,6 +15,7 @@
 
 #include "SessionCopilot.hpp"
 
+#include <boost/current_function.hpp>
 #include <boost/range/adaptors.hpp>
 #include <boost/range/algorithm/copy.hpp>
 
@@ -44,7 +45,7 @@
    {                                                                           \
       std::string message = fmt::format(__FMT__, ##__VA_ARGS__);               \
       std::string formatted =                                                  \
-          fmt::format("[copilot] <{}> {}", __func__, message);                 \
+          fmt::format("[{}]: {}", BOOST_CURRENT_FUNCTION, message);            \
       __LOGGER__(formatted);                                                   \
       if (copilotLogLevel() > 0)                                               \
          std::cerr << formatted << std::endl;                                  \
@@ -110,6 +111,9 @@ private:
    boost::posix_time::ptime time_;
 };
 
+// The log level for Copilot-specific logs.
+int s_copilotLogLevel = 3;
+
 // Whether Copilot is enabled.
 bool s_copilotEnabled = false;
 
@@ -158,7 +162,7 @@ bool waitFor(F&& callback)
 
 int copilotLogLevel()
 {
-   return r::options::getOption<int>("rstudio.copilot.logLevel", 3);
+   return s_copilotLogLevel;
 }
 
 // TODO: Make this configurable by the user?
@@ -241,6 +245,7 @@ bool onContinue(ProcessOperations& operations)
 
       if (copilotLogLevel() > 2)
       {
+         std::cerr << std::endl;
          std::cerr << "REQUEST" << std::endl;
          std::cerr << "----------------" << std::endl;
          std::cerr << request << std::endl;
@@ -308,7 +313,8 @@ void onStdout(ProcessOperations& operations, const std::string& stdOut)
 
       if (copilotLogLevel() > 2)
       {
-         std::cerr << "RESPONSE:" << std::endl;
+         std::cerr << std::endl;
+         std::cerr << "RESPONSE" << std::endl;
          std::cerr << "------------------" << std::endl;
          std::cerr << bodyText << std::endl;
          std::cerr << "------------------" << std::endl;
@@ -535,7 +541,7 @@ void onBackgroundProcessing(bool isIdle)
          auto elapsedTime = currentTime - continuation.time();
          if (elapsedTime.seconds() > 10)
          {
-            DLOG("Cancelling old contiuation with id {}.", key);
+            DLOG("Cancelling old contiuation with id '{}'.", key);
             continuation.cancel();
             s_pendingContinuations.erase(key);
          }
@@ -574,7 +580,7 @@ void onBackgroundProcessing(bool isIdle)
       json::Value requestIdJson = responseJson["id"];
       if (!requestIdJson.isString())
       {
-         ELOG("Ignoring response with missing id.");
+         DLOG("Ignoring response with missing id.");
          continue;
       }
 
@@ -582,7 +588,7 @@ void onBackgroundProcessing(bool isIdle)
       std::string requestId = requestIdJson.getString();
       if (s_pendingContinuations.count(requestId))
       {
-         DLOG("Invoking continuation with id {}", requestId);
+         DLOG("Invoking continuation with id '{}'.", requestId);
          s_pendingContinuations[requestId].invoke(responseJson);
          s_pendingContinuations.erase(requestId);
       }
@@ -634,6 +640,13 @@ void onShutdown(bool)
 {
    stopAgent();
    s_agentPid = -1;
+}
+
+SEXP rs_copilotSetLogLevel(SEXP logLevelSEXP)
+{
+   int logLevel = r::sexp::asInteger(logLevelSEXP);
+   s_copilotLogLevel = logLevel;
+   return logLevelSEXP;
 }
 
 SEXP rs_copilotEnabled()
@@ -850,6 +863,7 @@ Error initialize()
    // editting preferences within the Copilot prefs dialog, anyhow.
    prefs::userPrefs().onChanged.connect(onUserPrefsChanged);
 
+   RS_REGISTER_CALL_METHOD(rs_copilotSetLogLevel);
    RS_REGISTER_CALL_METHOD(rs_copilotEnabled);
    RS_REGISTER_CALL_METHOD(rs_copilotStartAgent);
    RS_REGISTER_CALL_METHOD(rs_copilotAgentRunning);

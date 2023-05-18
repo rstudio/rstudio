@@ -16,6 +16,7 @@ package org.rstudio.studio.client.workbench.views.source.editors.text;
 
 import org.rstudio.core.client.Debug;
 import org.rstudio.core.client.HandlerRegistrations;
+import org.rstudio.core.client.MathUtil;
 import org.rstudio.studio.client.RStudioGinjector;
 import org.rstudio.studio.client.application.events.EventBus;
 import org.rstudio.studio.client.common.Timers;
@@ -182,9 +183,16 @@ public class TextEditingTargetCopilotHelper
 
                display_.addCursorChangedHandler((event) ->
                {
+                  // Don't do anything if we have a selection.
+                  if (display_.hasSelection())
+                  {
+                     completionTimer_.cancel();
+                     return;
+                  }
+                  
                   // Request completions on cursor navigation.
-                  // TODO: Make this a preference!
-                  completionTimer_.schedule(300);
+                  int delayMs = MathUtil.clamp(prefs_.copilotCompletionsDelay().getValue(), 10, 2000);
+                  completionTimer_.schedule(delayMs);
 
                   // Delay handler so we can handle a Tab keypress
                   Timers.singleShot(0, () -> {

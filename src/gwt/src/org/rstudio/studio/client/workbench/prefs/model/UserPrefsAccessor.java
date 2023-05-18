@@ -2089,7 +2089,7 @@ public class UserPrefsAccessor extends Prefs
          "always_shown_extensions",
          _constants.alwaysShownExtensionsTitle(), 
          _constants.alwaysShownExtensionsDescription(), 
-         JsArrayUtil.createStringArray(".circleci", ".gitattributes", ".github", ".gitignore", ".httr-oauth", ".lintr", ".quartoignore", ".r", ".rbuildignore", ".rdata", ".renvignore", ".renviron", ".rhistory", ".rprofile", ".ruserdata", ".rinstignore"));
+         JsArrayUtil.createStringArray(".circleci", ".gitattributes", ".github", ".gitignore", ".httr-oauth", ".lintr", ".quartoignore", ".r", ".rbuildignore", ".rdata", ".renvignore", ".renviron", ".rhistory", ".rprofile", ".ruserdata"));
    }
 
    /**
@@ -3481,6 +3481,18 @@ public class UserPrefsAccessor extends Prefs
          false);
    }
 
+   /**
+    * The delay (in milliseconds) before GitHub Copilot completions are requested after the cursor position has changed.
+    */
+   public PrefValue<Integer> copilotCompletionsDelay()
+   {
+      return integer(
+         "copilot_completions_delay",
+         _constants.copilotCompletionsDelayTitle(), 
+         _constants.copilotCompletionsDelayDescription(), 
+         300);
+   }
+
    public void syncPrefs(String layer, JsObject source)
    {
       if (source.hasKey("run_rprofile_on_resume"))
@@ -3969,6 +3981,8 @@ public class UserPrefsAccessor extends Prefs
          disableRendererAccessibility().setValue(layer, source.getBool("disable_renderer_accessibility"));
       if (source.hasKey("copilot_enabled"))
          copilotEnabled().setValue(layer, source.getBool("copilot_enabled"));
+      if (source.hasKey("copilot_completions_delay"))
+         copilotCompletionsDelay().setValue(layer, source.getInteger("copilot_completions_delay"));
    }
    public List<PrefValue<?>> allPrefs()
    {
@@ -4216,6 +4230,7 @@ public class UserPrefsAccessor extends Prefs
       prefs.add(textRendering());
       prefs.add(disableRendererAccessibility());
       prefs.add(copilotEnabled());
+      prefs.add(copilotCompletionsDelay());
       return prefs;
    }
    

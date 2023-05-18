@@ -1654,6 +1654,12 @@
             "default": false,
             "title": "Enable GitHub Copilot",
             "description": "When enabled, RStudio will use GitHub Copilot to provide code suggestions."
+        },
+        "copilot_completions_delay": {
+            "type": "integer",
+            "default": 300,
+            "title": "GitHub Copilot completions delay",
+            "description": "The delay (in milliseconds) before GitHub Copilot completions are requested after the cursor position has changed."
         }
      }
 }

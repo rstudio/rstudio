@@ -3182,6 +3182,19 @@ core::Error UserPrefValues::setCopilotEnabled(bool val)
    return writePref("copilot_enabled", val);
 }
 
+/**
+ * The delay (in milliseconds) before GitHub Copilot completions are requested after the cursor position has changed.
+ */
+int UserPrefValues::copilotCompletionsDelay()
+{
+   return readPref<int>("copilot_completions_delay");
+}
+
+core::Error UserPrefValues::setCopilotCompletionsDelay(int val)
+{
+   return writePref("copilot_completions_delay", val);
+}
+
 std::vector<std::string> UserPrefValues::allKeys()
 {
    return std::vector<std::string>({
@@ -3428,6 +3441,7 @@ std::vector<std::string> UserPrefValues::allKeys()
       kTextRendering,
       kDisableRendererAccessibility,
       kCopilotEnabled,
+      kCopilotCompletionsDelay,
    });
 }
    

@@ -78,9 +78,7 @@ public class CopilotPreferencesPane extends PreferencesPane
       add(spaced(statusPanel));
       
       add(headerLabel("Copilot Completions"));
-      add(nudgeRight(new CheckBox("Option A")));
-      add(nudgeRight(new CheckBox("Option B")));
-      add(nudgeRight(new CheckBox("Option C")));
+      add(numericPref("Show code suggestions afer keyboard idle (ms):", 10, 2000, prefs_.copilotCompletionsDelay()));
    }
    
    private void initModel()

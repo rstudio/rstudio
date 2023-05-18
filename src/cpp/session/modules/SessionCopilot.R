@@ -13,6 +13,11 @@
 #
 #
 
+.rs.addFunction("copilot.setLogLevel", function(level = 0L)
+{
+   .Call("rs_copilotSetLogLevel", as.integer(level))
+})
+
 # TODO: What's the right way to allow the Copilot Agent version to change?
 # How should we handle updates?
 .rs.addFunction("copilot.installCopilotAgent", function(targetDirectory)
@@ -39,12 +44,20 @@
    destfile <- file.path(downloadDir, "copilot.tar.gz")
    download.file(copilotUrl, destfile = destfile, mode = "wb")
    
+   # Confirm the tarball exists.
+   if (!file.exists(destfile)) {
+      fmt <- "Copilot Agent installation failed: '%s' does not exist."
+      msg <- sprintf(fmt, destfile)
+      stop(msg, call. = FALSE)
+   }
+   
    # Extract the tarball. Make sure things get unpacked into the download dir.
    local({
       owd <- setwd(downloadDir)
       on.exit(setwd(owd), add = TRUE)
       untar(destfile)
    })
+   
    
    # Find the unpacked directory.
    copilotFolder <- setdiff(list.files(downloadDir), "copilot.tar.gz")
@@ -57,7 +70,8 @@
    
    # Confirm the agent runtime exists
    agentPath <- file.path(targetDirectory, "agent.js")
-   if (!file.exists(agentPath)) {
+   if (!file.exists(agentPath))
+   {
       fmt <- "Copilot Agent installation failed: '%s' does not exist."
       msg <- sprintf(fmt, agentPath)
       stop(msg, call. = FALSE)
