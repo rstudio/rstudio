@@ -1853,10 +1853,8 @@ void afterResume()
 
 std::string getenvForLog(const std::string& envVar)
 {
-   std::string envVal = core::system::getenv("LD_LIBRARY_PATH");
-   if (envVal.empty())
-     return "(empty)";
-   return envVal;
+   std::string envVal = core::system::getenv(envVar);
+   return envVal.empty() ? "(empty)" : envVal;
 }
 
 void logStartingEnv()
