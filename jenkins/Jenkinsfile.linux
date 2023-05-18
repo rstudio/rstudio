@@ -2,7 +2,7 @@ def utils
 
 def ext_map = 
 [
-  'focal':     'deb',
+  'focal':      'deb',
   'jammy':      'deb',
   'centos7':    'rpm',
   'rhel8':      'rpm',
@@ -12,7 +12,7 @@ def ext_map =
 
 def package_os =
 [
-  'focal':     'Ubuntu Focal',
+  'focal':      'Ubuntu Focal',
   'jammy':      'Ubuntu Jammy',
   'centos7':    'CentOS 7',
   'rhel8':      'RHEL 8',
@@ -174,7 +174,7 @@ pipeline {
           exclude {
             axis {
               name 'OS'
-              values 'focal', 'centos7', 'rhel8', 'opensuse15'
+              values 'centos7', 'rhel8', 'opensuse15'
             }
             axis {
               name 'ARCH'
