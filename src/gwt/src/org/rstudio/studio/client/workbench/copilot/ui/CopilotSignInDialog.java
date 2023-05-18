@@ -3,6 +3,7 @@ package org.rstudio.studio.client.workbench.copilot.ui;
 import org.rstudio.core.client.resources.ImageResource2x;
 import org.rstudio.core.client.widget.ElementPanel;
 import org.rstudio.core.client.widget.ModalDialogBase;
+import org.rstudio.core.client.widget.ProgressIndicator;
 import org.rstudio.core.client.widget.images.MessageDialogImages;
 
 import com.google.gwt.aria.client.Roles;
@@ -12,6 +13,7 @@ import com.google.gwt.dom.client.DivElement;
 import com.google.gwt.dom.client.SpanElement;
 import com.google.gwt.uibinder.client.UiBinder;
 import com.google.gwt.uibinder.client.UiField;
+import com.google.gwt.user.client.Event;
 import com.google.gwt.user.client.ui.HorizontalPanel;
 import com.google.gwt.user.client.ui.Image;
 import com.google.gwt.user.client.ui.Widget;
@@ -33,10 +35,19 @@ public class CopilotSignInDialog extends ModalDialogBase
       setText("GitHub Copilot: Sign in");
       
       ui_ = uiBinder.createAndBindUi(this);
+      progress_ = addProgressIndicator();
       verificationUri_.setInnerText(verificationUri);
       verificationUri_.setHref(verificationUri);
       verificationCode_.setInnerText(verificationCode);
       verificationCode_.getStyle().setProperty("userSelect", "all");
+      
+      Event.sinkEvents(verificationUri_, Event.ONCLICK);
+      Event.sinkEvents(verificationUri_, Event.ONMOUSEUP);
+      Event.setEventListener(verificationUri_, (event) ->
+      {
+         progress_.onProgress("Authenticating...");
+      });
+      
       addCancelButton();
       
    }
@@ -54,5 +65,6 @@ public class CopilotSignInDialog extends ModalDialogBase
    @UiField SpanElement verificationCode_;
    
    private final DivElement ui_;
+   private final ProgressIndicator progress_;
 
 }

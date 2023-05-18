@@ -91,10 +91,11 @@ public class TextEditingTargetCopilotHelper
                            CopilotError error = response.error;
                            if (error != null)
                            {
+                              String message = copilot_.messageForError(error);
                               events_.fireEvent(
                                     new CopilotEvent(
                                           CopilotEventType.COMPLETION_ERROR,
-                                          error.message));
+                                          message));
                               return;
                            }
                            

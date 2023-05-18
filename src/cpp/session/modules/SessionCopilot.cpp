@@ -31,6 +31,7 @@
 
 #include <r/RExec.hpp>
 #include <r/RJson.hpp>
+#include <r/ROptions.hpp>
 #include <r/RRoutines.hpp>
 #include <r/RSexp.hpp>
 #include <r/session/REventLoop.hpp>
@@ -38,7 +39,20 @@
 #include <session/prefs/UserPrefs.hpp>
 #include <session/SessionModuleContext.hpp>
 
-#define DBG if (true)
+#define COPILOT_LOG_IMPL(__LOGGER__, __FMT__, ...)                             \
+   do                                                                          \
+   {                                                                           \
+      std::string message = fmt::format(__FMT__, ##__VA_ARGS__);               \
+      std::string formatted =                                                  \
+          fmt::format("[copilot] <{}> {}", __func__, message);                 \
+      __LOGGER__(formatted);                                                   \
+      if (copilotLogLevel() > 0)                                               \
+         std::cerr << formatted << std::endl;                                  \
+   } while (0)
+
+#define DLOG(__FMT__, ...) COPILOT_LOG_IMPL(LOG_DEBUG_MESSAGE,   __FMT__, ##__VA_ARGS__)
+#define ELOG(__FMT__, ...) COPILOT_LOG_IMPL(LOG_ERROR_MESSAGE,   __FMT__, ##__VA_ARGS__)
+#define WLOG(__FMT__, ...) COPILOT_LOG_IMPL(LOG_WARNING_MESSAGE, __FMT__, ##__VA_ARGS__)
 
 using namespace rstudio::core;
 using namespace rstudio::core::system;
@@ -134,13 +148,20 @@ bool waitFor(F&& callback)
       if (ready)
          return true;
 
+      module_context::onBackgroundProcessing(false);
       r::session::event_loop::processEvents();
-      boost::this_thread::sleep_for(boost::chrono::milliseconds(10));
+      boost::this_thread::sleep_for(boost::chrono::milliseconds(100));
    }
 
    return false;
 }
 
+int copilotLogLevel()
+{
+   return r::options::getOption<int>("rstudio.copilot.logLevel", 3);
+}
+
+// TODO: Make this configurable by the user?
 FilePath copilotAgentDirectory()
 {
    return core::system::xdg::userCacheDir().completeChildPath("copilot/dist");
@@ -173,7 +194,8 @@ std::string createRequest(const std::string& method,
    requestJson["method"] = method;
    requestJson["params"] = paramsJson;
 
-   // Set id if available. (Requests without an id are 'notifications')
+   // Set id if available.
+   // Requests without an id are 'notifications', and never receive a response.
    if (!id.empty())
       requestJson["id"] = id;
 
@@ -205,6 +227,7 @@ namespace agent {
 void onStarted(ProcessOperations& operations)
 {
    // Record the PID of the agent.
+   DLOG("Copilot agent has started [PID = {}]", operations.getPid());
    s_agentPid = operations.getPid();
 }
 
@@ -216,7 +239,7 @@ bool onContinue(ProcessOperations& operations)
       std::string request = s_pendingRequests.front();
       s_pendingRequests.pop();
 
-      DBG
+      if (copilotLogLevel() > 2)
       {
          std::cerr << "REQUEST" << std::endl;
          std::cerr << "----------------" << std::endl;
@@ -257,7 +280,7 @@ void onStdout(ProcessOperations& operations, const std::string& stdOut)
       auto splitIndex = stdOut.find("\r\n\r\n", startIndex);
       if (splitIndex == std::string::npos)
       {
-         ELOGF("[copilot] internal error: parsing response failed");
+         ELOG("Internal error: parsing response failed.");
          break;
       }
 
@@ -273,7 +296,7 @@ void onStdout(ProcessOperations& operations, const std::string& stdOut)
       std::string contentLength = core::http::headerValue(headers, "Content-Length");
       if (contentLength.empty())
       {
-         ELOGF("[copilot] internal error: response contains no Content-Length header");
+         ELOG("Internal error: response contains no Content-Length header.");
          break;
       }
 
@@ -283,7 +306,7 @@ void onStdout(ProcessOperations& operations, const std::string& stdOut)
       std::string bodyText = string_utils::substring(stdOut, bodyStart, bodyEnd);
       s_pendingResponses.push(bodyText);
 
-      DBG
+      if (copilotLogLevel() > 2)
       {
          std::cerr << "RESPONSE:" << std::endl;
          std::cerr << "------------------" << std::endl;
@@ -308,7 +331,7 @@ void onExit(int status)
 
    if (status != 0)
    {
-      ELOGF("[copilot] agent exited with status {}", status);
+      ELOG("Agent exited with status {}.", status);
    }
 }
 
@@ -317,7 +340,10 @@ void onExit(int status)
 void stopAgent()
 {
    if (s_agentPid == -1)
+   {
+      DLOG("No agent running; nothing to do.");
       return;
+   }
 
    Error error = core::system::terminateProcess(s_agentPid);
    if (error)
@@ -331,7 +357,7 @@ bool startAgent()
    FilePath agentPath = copilotAgentPath();
    if (!agentPath.exists())
    {
-      ELOGF("[copilot] copilot agent not installed; cannot start agent");
+      ELOG("Copilot agent not installed; cannot start agent.");
       return false;
    }
 
@@ -391,10 +417,17 @@ bool startAgent()
    }
 
    // Wait for the process to start.
+   //
+   // TODO: This is kind of a hack. We should probably instead use something like a
+   // status flag that tracks if the agent is stopped, starting, or already running.
+   //
+   // We include this because all requests will fail if we haven't yet called
+   // initialized, so maybe the right approach is to have some sort of 'ensureInitialized'
+   // method?
    waitFor([]() { return s_agentPid != -1; });
    if (s_agentPid == -1)
    {
-      ELOGF("[copilot] copilot agent failed to start");
+      ELOG("Copilot agent failed to start.");
       return false;
    }
 
@@ -420,7 +453,7 @@ bool ensureAgentRunning()
    // bail if we haven't enabled copilot
    if (!s_copilotEnabled)
    {
-      DLOGF("[copilot] Copilot is not enabled; not starting agent.");
+      DLOG("Copilot is not enabled; not starting agent.");
       return false;
    }
 
@@ -428,7 +461,7 @@ bool ensureAgentRunning()
    // with a running Copilot process, or just handle that separately?
    if (s_agentPid != -1)
    {
-      DLOGF("[copilot] Copilot is already running; nothing to do.");
+      DLOG("Copilot is already running; nothing to do.");
       return true;
    }
 
@@ -502,6 +535,7 @@ void onBackgroundProcessing(bool isIdle)
          auto elapsedTime = currentTime - continuation.time();
          if (elapsedTime.seconds() > 10)
          {
+            DLOG("Cancelling old contiuation with id {}.", key);
             continuation.cancel();
             s_pendingContinuations.erase(key);
          }
@@ -536,11 +570,11 @@ void onBackgroundProcessing(bool isIdle)
 
       // Check the response id. This will be missing for notifications; we may receive
       // a flurry of progress notifications when requesting completions from Copilot.
-      // We might want to handle these somehow.
+      // We might want to handle these somehow. Perhaps hook them up to some status widget?
       json::Value requestIdJson = responseJson["id"];
       if (!requestIdJson.isString())
       {
-         ELOGF("[copilot] ignoring response with missing id");
+         ELOG("Ignoring response with missing id.");
          continue;
       }
 
@@ -548,6 +582,7 @@ void onBackgroundProcessing(bool isIdle)
       std::string requestId = requestIdJson.getString();
       if (s_pendingContinuations.count(requestId))
       {
+         DLOG("Invoking continuation with id {}", requestId);
          s_pendingContinuations[requestId].invoke(responseJson);
          s_pendingContinuations.erase(requestId);
       }

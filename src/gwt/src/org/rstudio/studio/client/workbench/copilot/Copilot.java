@@ -35,6 +35,7 @@ import org.rstudio.studio.client.workbench.copilot.model.CopilotResponseTypes.Co
 import org.rstudio.studio.client.workbench.copilot.model.CopilotResponseTypes.CopilotSignOutResponse;
 import org.rstudio.studio.client.workbench.copilot.model.CopilotResponseTypes.CopilotStatusResponse;
 import org.rstudio.studio.client.workbench.copilot.model.CopilotResponseTypes.CopilotVerifyInstalledResponse;
+import org.rstudio.studio.client.workbench.copilot.model.CopilotTypes.CopilotError;
 import org.rstudio.studio.client.workbench.copilot.server.CopilotServerOperations;
 import org.rstudio.studio.client.workbench.copilot.ui.CopilotInstallDialog;
 import org.rstudio.studio.client.workbench.copilot.ui.CopilotSignInDialog;
@@ -318,6 +319,20 @@ public class Copilot
             Debug.logObject(response);
          }
       });
+   }
+   
+   public String messageForError(CopilotError error)
+   {
+      Integer code = error.code;
+      
+      if (code == 1000)
+      {
+         return "Not signed in.";
+      }
+      else
+      {
+         return error.message;
+      }
    }
    
    private void showGenericResponseMessage(String title, Object object)
