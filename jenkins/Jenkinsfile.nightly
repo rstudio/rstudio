@@ -132,17 +132,18 @@ pipeline {
 
             environment {
               GITHUB_LOGIN = credentials('github-rstudio-jenkins')
+              DOCKER_OS_NAME = utils.getDockerBuildOs("${os}")
             }
 
             steps {
-              echo "Creating image jenkins/ide:${IS_PRO? 'pro-' : '' }${os}-${arch}-${RSTUDIO_VERSION_FLOWER}"
+              echo "Creating image jenkins/ide:${IS_PRO? 'pro-' : '' }${DOCKER_OS_NAME}-${arch}-${RSTUDIO_VERSION_FLOWER}"
               pullBuildPush(
                 image_name: 'jenkins/ide',
-                image_tag: "${IS_PRO? 'pro-' : '' }${os}-${arch}-${RSTUDIO_VERSION_FLOWER}",
+                image_tag: "${IS_PRO? 'pro-' : '' }${DOCKER_OS_NAME}-${arch}-${RSTUDIO_VERSION_FLOWER}",
                 latest_tag: false,
                 build_arg_jenkins_uid: 'JENKINS_UID',
                 build_arg_jenkins_gid: 'JENKINS_GID',
-                dockerfile: "docker/jenkins/Dockerfile.${os}",
+                dockerfile: "docker/jenkins/Dockerfile.${DOCKER_OS_NAME}",
                 build_args: "--build-arg ARCH=${arch} --build-arg GITHUB_LOGIN=${GITHUB_LOGIN}",
                 push: "${params.PUBLISH}"
               )
