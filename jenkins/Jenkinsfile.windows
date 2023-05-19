@@ -158,160 +158,160 @@ pipeline {
               //   }
               // }
 
-              stage('Sign, Upload, and Publish') {
-                when { expression { return params.PUBLISH } }
+              // stage('Sign, Upload, and Publish') {
+              //   when { expression { return params.PUBLISH } }
 
-                environment {
-                  LONG_PACKAGE_NAME = "${PACKAGE_NAME}-RelWithDebInfo"
-                }
+              //   environment {
+              //     LONG_PACKAGE_NAME = "${PACKAGE_NAME}-RelWithDebInfo"
+              //   }
 
-                stages {
-                  stage('Sign') {
-                    environment {
-                      PFX_FILE = credentials('ide-windows-signing-pfx')
-                      PFX_PASS = credentials('ide-pfx-passphrase')
-                    }
+              //   stages {
+              //     stage('Sign') {
+              //       environment {
+              //         PFX_FILE = credentials('ide-windows-signing-pfx')
+              //         PFX_PASS = credentials('ide-pfx-passphrase')
+              //       }
 
-                    steps {
-                      bat '"C:\\Program Files (x86)\\Windows Kits\\10\\bin\\10.0.19041.0\\x86\\signtool" sign /f %PFX_FILE% /p %PFX_PASS% /v /debug /n "RStudio PBC" /t http://timestamp.digicert.com  package\\win32\\build\\' + LONG_PACKAGE_NAME + '.exe'
-                      bat "\"C:\\Program Files (x86)\\Windows Kits\\10\\bin\\10.0.19041.0\\x86\\signtool\" verify /v /pa package\\win32\\build\\${LONG_PACKAGE_NAME}.exe"
-                    }
-                  }
+              //       steps {
+              //         bat '"C:\\Program Files (x86)\\Windows Kits\\10\\bin\\10.0.19041.0\\x86\\signtool" sign /f %PFX_FILE% /p %PFX_PASS% /v /debug /n "RStudio PBC" /t http://timestamp.digicert.com  package\\win32\\build\\' + LONG_PACKAGE_NAME + '.exe'
+              //         bat "\"C:\\Program Files (x86)\\Windows Kits\\10\\bin\\10.0.19041.0\\x86\\signtool\" verify /v /pa package\\win32\\build\\${LONG_PACKAGE_NAME}.exe"
+              //       }
+              //     }
 
-                  stage('Upload') {
-                    environment {
-                      BUILD_DEST = "s3://rstudio-ide-build/${FLAVOR.toLowerCase()}/windows"
-                    }
+              //     stage('Upload') {
+              //       environment {
+              //         BUILD_DEST = "s3://rstudio-ide-build/${FLAVOR.toLowerCase()}/windows"
+              //       }
 
-                    steps {
-                      // strip unhelpful suffixes from filenames
-                      bat "move package\\win32\\build\\${LONG_PACKAGE_NAME}.exe package\\win32\\build\\${PACKAGE_NAME}.exe"
-                      bat "move package\\win32\\build\\${LONG_PACKAGE_NAME}.zip package\\win32\\build\\${PACKAGE_NAME}.zip"
+              //       steps {
+              //         // strip unhelpful suffixes from filenames
+              //         bat "move package\\win32\\build\\${LONG_PACKAGE_NAME}.exe package\\win32\\build\\${PACKAGE_NAME}.exe"
+              //         bat "move package\\win32\\build\\${LONG_PACKAGE_NAME}.zip package\\win32\\build\\${PACKAGE_NAME}.zip"
 
-                      // windows docker container cannot reach instance-metadata endpoint. supply credentials at upload.
-                      withAWS(role: 'ide-build', region: 'us-east-1') {
-                        retry(5) {
-                          bat "aws s3 cp package\\win32\\build\\${PACKAGE_NAME}.exe ${BUILD_DEST}/${PACKAGE_NAME}.exe"
-                          bat "aws s3 cp package\\win32\\build\\${PACKAGE_NAME}.zip ${BUILD_DEST}/${PACKAGE_NAME}.zip"
-                        }
-                      }
-                    }
-                  }
+              //         // windows docker container cannot reach instance-metadata endpoint. supply credentials at upload.
+              //         withAWS(role: 'ide-build', region: 'us-east-1') {
+              //           retry(5) {
+              //             bat "aws s3 cp package\\win32\\build\\${PACKAGE_NAME}.exe ${BUILD_DEST}/${PACKAGE_NAME}.exe"
+              //             bat "aws s3 cp package\\win32\\build\\${PACKAGE_NAME}.zip ${BUILD_DEST}/${PACKAGE_NAME}.zip"
+              //           }
+              //         }
+              //       }
+              //     }
 
-                  stage('Sentry Upload') {
-                    when {
-                      allOf {
-                        expression { return params.DAILY }
-                        environment name: 'FLAVOR', value: 'Desktop'
-                      }
-                    }
+              //     stage('Sentry Upload') {
+              //       when {
+              //         allOf {
+              //           expression { return params.DAILY }
+              //           environment name: 'FLAVOR', value: 'Desktop'
+              //         }
+              //       }
 
-                    environment {
-                      SENTRY_API_KEY = credentials('ide-sentry-api-key')
-                    }
+              //       environment {
+              //         SENTRY_API_KEY = credentials('ide-sentry-api-key')
+              //       }
 
-                    steps {
-                      retry(5) {
-                        // convert the PDB symbols to breakpad format (PDB not supported by Sentry)
-                        timeout(activity: true, time: 15) {
-                          bat '''
-                            cd package\\win32\\build
-                            FOR /F %%G IN ('dir /s /b *.pdb') DO (c:\\rstudio-tools\\dependencies\\windows\\breakpad-tools-windows\\dump_syms.exe %%G > %%G.sym)
-                          '''
+              //       steps {
+              //         retry(5) {
+              //           // convert the PDB symbols to breakpad format (PDB not supported by Sentry)
+              //           timeout(activity: true, time: 15) {
+              //             bat '''
+              //               cd package\\win32\\build
+              //               FOR /F %%G IN ('dir /s /b *.pdb') DO (c:\\rstudio-tools\\dependencies\\windows\\breakpad-tools-windows\\dump_syms.exe %%G > %%G.sym)
+              //             '''
 
-                          // upload the breakpad symbols, attempt to run sentry uplaod
-                          bat 'cd package\\win32\\build\\src\\cpp && c:\\rstudio-tools\\dependencies\\windows\\sentry-cli.exe --auth-token %SENTRY_API_KEY% upload-dif --log-level=debug --org rstudio --project ide-backend -t breakpad .'
-                        }
-                      }
-                    }
-                  }
+              //             // upload the breakpad symbols, attempt to run sentry uplaod
+              //             bat 'cd package\\win32\\build\\src\\cpp && c:\\rstudio-tools\\dependencies\\windows\\sentry-cli.exe --auth-token %SENTRY_API_KEY% upload-dif --log-level=debug --org rstudio --project ide-backend -t breakpad .'
+              //           }
+              //         }
+              //       }
+              //     }
 
-                  stage ('Publish') {
-                    environment {
-                      GITHUB_LOGIN = credentials('github-rstudio-jenkins')
-                      PRODUCT = "${utils.getProductName()}"
-                      // This is being done to make the variables visible to the powershell call
-                      VERSION = "${RSTUDIO_VERSION}"
-                      PACKAGE = "${PACKAGE_NAME}"
-                      // Channel to prevent hourlies from ending up on the Dailies page
-                      CHANNEL = "${ params.DAILY ? 'Daily' : 'Hourly'}"
-                      AWS_PATH= "https://s3.amazonaws.com/rstudio-ide-build/${FLAVOR.toLowerCase()}/windows"
-                    }
+              //     stage ('Publish') {
+              //       environment {
+              //         GITHUB_LOGIN = credentials('github-rstudio-jenkins')
+              //         PRODUCT = "${utils.getProductName()}"
+              //         // This is being done to make the variables visible to the powershell call
+              //         VERSION = "${RSTUDIO_VERSION}"
+              //         PACKAGE = "${PACKAGE_NAME}"
+              //         // Channel to prevent hourlies from ending up on the Dailies page
+              //         CHANNEL = "${ params.DAILY ? 'Daily' : 'Hourly'}"
+              //         AWS_PATH= "https://s3.amazonaws.com/rstudio-ide-build/${FLAVOR.toLowerCase()}/windows"
+              //       }
 
-                    stages {
-                      stage("Publish Exe") {
-                        steps {
-                          echo "Publishing the following .exe build:"
-                          echo "Product : ${PRODUCT}"
-                          echo "Version : ${VERSION}"
-                          echo "Package : ${PACKAGE}"
-                          echo "Channel : ${CHANNEL}"
-                          script {
-                            // publish the build (self installing exe)
-                            powershell '.\\docker\\jenkins\\publish-build.ps1 -build ${env:PRODUCT}/windows -url ${env:AWS_PATH}/${env:PACKAGE}.exe -pat ${env:GITHUB_LOGIN_PSW} -file package\\win32\\build\\${env:PACKAGE}.exe -version ${env:VERSION} -channel ${env:CHANNEL}'
-                          }
-                        }
-                      }
+              //       stages {
+              //         stage("Publish Exe") {
+              //           steps {
+              //             echo "Publishing the following .exe build:"
+              //             echo "Product : ${PRODUCT}"
+              //             echo "Version : ${VERSION}"
+              //             echo "Package : ${PACKAGE}"
+              //             echo "Channel : ${CHANNEL}"
+              //             script {
+              //               // publish the build (self installing exe)
+              //               powershell '.\\docker\\jenkins\\publish-build.ps1 -build ${env:PRODUCT}/windows -url ${env:AWS_PATH}/${env:PACKAGE}.exe -pat ${env:GITHUB_LOGIN_PSW} -file package\\win32\\build\\${env:PACKAGE}.exe -version ${env:VERSION} -channel ${env:CHANNEL}'
+              //             }
+              //           }
+              //         }
 
-                      // Only publish the zip for dailies, hourlies don't need it
-                      stage("Publish Zip") {
-                        when {
-                          allOf {
-                            expression { return params.DAILY }
-                          }
-                        }
-                        steps {
-                          echo "Publishing the following .zip build:"
-                          echo "Product : ${PRODUCT}"
-                          echo "Version : ${VERSION}"
-                          echo "Package : ${PACKAGE}"
-                          echo "Channel : ${CHANNEL}"
-                          script {
-                            // publish the build (installer-less zip)
-                            powershell '.\\docker\\jenkins\\publish-build.ps1 -build ${env:PRODUCT}/windows-xcopy -url ${env:AWS_PATH}/${env:PACKAGE}.zip -pat ${env:GITHUB_LOGIN_PSW} -file package\\win32\\build\\${env:PACKAGE}.zip -version ${env:VERSION} -channel ${env:CHANNEL}'
-                          }
-                        }
-                      }
-                    }
-                  }
-                }
-              }
+              //         // Only publish the zip for dailies, hourlies don't need it
+              //         stage("Publish Zip") {
+              //           when {
+              //             allOf {
+              //               expression { return params.DAILY }
+              //             }
+              //           }
+              //           steps {
+              //             echo "Publishing the following .zip build:"
+              //             echo "Product : ${PRODUCT}"
+              //             echo "Version : ${VERSION}"
+              //             echo "Package : ${PACKAGE}"
+              //             echo "Channel : ${CHANNEL}"
+              //             script {
+              //               // publish the build (installer-less zip)
+              //               powershell '.\\docker\\jenkins\\publish-build.ps1 -build ${env:PRODUCT}/windows-xcopy -url ${env:AWS_PATH}/${env:PACKAGE}.zip -pat ${env:GITHUB_LOGIN_PSW} -file package\\win32\\build\\${env:PACKAGE}.zip -version ${env:VERSION} -channel ${env:CHANNEL}'
+              //             }
+              //           }
+              //         }
+              //       }
+              //     }
+                // }
+              // }
             }
           } // Build Windows Stage
 
           // Run on linux agent
-          stage ("Update Daily Build Redirects") {
-            agent { label "linux" } 
+          // stage ("Update Daily Build Redirects") {
+          //   agent { label "linux" } 
 
-            // for pro, update with Qt
-            // for open source, update with Electron
-            when { 
-              anyOf {
-                expression { return params.PUBLISH && params.DAILY && IS_PRO == true && FLAVOR == "Desktop" }
-                expression { return params.PUBLISH && params.DAILY && IS_PRO == false && FLAVOR == "Electron" }
-                expression { return params.PUBLISH && params.DAILY && FLAVOR == "Server" }
-              }
-            }
+          //   // for pro, update with Qt
+          //   // for open source, update with Electron
+          //   when { 
+          //     anyOf {
+          //       expression { return params.PUBLISH && params.DAILY && IS_PRO == true && FLAVOR == "Desktop" }
+          //       expression { return params.PUBLISH && params.DAILY && IS_PRO == false && FLAVOR == "Electron" }
+          //       expression { return params.PUBLISH && params.DAILY && FLAVOR == "Server" }
+          //     }
+          //   }
 
-            environment {
-              RSTUDIO_ORG_PEM = credentials('www-rstudio-org-pem')
-              AWS_PATH= "https://s3.amazonaws.com/rstudio-ide-build/${FLAVOR.toLowerCase()}/windows"
-            }
+          //   environment {
+          //     RSTUDIO_ORG_PEM = credentials('www-rstudio-org-pem')
+          //     AWS_PATH= "https://s3.amazonaws.com/rstudio-ide-build/${FLAVOR.toLowerCase()}/windows"
+          //   }
 
-            steps {
-              // the updateDailyRedirects uses a bash script, so much be run on linux
-              // Also depends on flavor, so must be in the matrix
-              script {
-                utils.updateDailyRedirects "${AWS_PATH}/${PACKAGE_NAME}.exe"
-              }
-            }
+          //   steps {
+          //     // the updateDailyRedirects uses a bash script, so much be run on linux
+          //     // Also depends on flavor, so must be in the matrix
+          //     script {
+          //       utils.updateDailyRedirects "${AWS_PATH}/${PACKAGE_NAME}.exe"
+          //     }
+          //   }
 
-            post {
-              always {
-                deleteDir()
-              }
-            }
-          } // stage ("Upload Daily Build Redirects")
+          //   post {
+          //     always {
+          //       deleteDir()
+          //     }
+          //   }
+          // } // stage ("Upload Daily Build Redirects")
         } // Matrix Stages
       } // Matrix
     } // stage ("Build Matrix")
