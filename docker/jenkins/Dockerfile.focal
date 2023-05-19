@@ -1,8 +1,9 @@
 ARG ARCH=amd64
-FROM --platform=linux/$ARCH ubuntu:focal
+FROM --platform=linux/$ARCH debian:10
 ARG ARCH
 
-ENV OPERATING_SYSTEM=ubuntu_focal
+ENV OPERATING_SYSTEM=debian_10
+ENV DEBIAN_FRONTEND=noninteractive
 
 ARG AWS_REGION=us-east-1
 
@@ -11,6 +12,13 @@ RUN set -x \
     && sed -i "s/archive.ubuntu.com/$AWS_REGION.ec2.archive.ubuntu.com/" /etc/apt/sources.list \
     && export DEBIAN_FRONTEND=noninteractive \
     && apt-get update 
+
+# add ppa repository so we can install java 8 (not in any official repo for bionic)
+RUN apt-get update \
+  && apt-get install -y software-properties-common wget apt-transport-https gnupg
+
+RUN wget -O - https://packages.adoptium.net/artifactory/api/gpg/key/public | apt-key add - \
+    && echo "deb https://packages.adoptium.net/artifactory/deb $(awk -F= '/^VERSION_CODENAME/{print$2}' /etc/os-release) main" | tee /etc/apt/sources.list.d/adoptium.list
 
 RUN apt-get update && \
     export DEBIAN_FRONTEND=noninteractive && \
@@ -45,7 +53,7 @@ RUN apt-get update && \
     libxslt1-dev \
     lsof \
     ninja-build \
-    openjdk-8-jdk \
+    temurin-8-jdk \
     p7zip-full \
     pkg-config \
     python \
@@ -59,7 +67,7 @@ RUN apt-get update && \
     zlib1g-dev
 
 # ensure we use the java 8 compiler
-RUN update-alternatives --set java /usr/lib/jvm/java-8-openjdk-$(dpkg --print-architecture)/jre/bin/java
+RUN update-alternatives --set java /usr/lib/jvm/temurin-8-jdk-$(dpkg --print-architecture)/bin/java
 
 ## build patchelf
 RUN cd /tmp \
@@ -99,7 +107,7 @@ COPY dependencies/common/ /opt/rstudio-tools/dependencies/common/
 ADD https://api.github.com/repos/quarto-dev/quarto/git/refs/heads/release/rstudio-cherry-blossom panmirror.version.json
 
 # install common dependencies
-RUN cd /opt/rstudio-tools/dependencies/common && /bin/bash ./install-common focal
+RUN cd /opt/rstudio-tools/dependencies/common && /bin/bash ./install-common debian
 # panmirror needs to be able to build in this location
 RUN chmod -R 777 /opt/rstudio-tools/src
 
