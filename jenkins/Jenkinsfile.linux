@@ -203,7 +203,7 @@ pipeline {
             }
 
             environment {
-              DOCKER_OS_NAME = utils.getBionicFocalOsName("${OS}")
+              DOCKER_OS_NAME = utils.getDockerBuildOs("${OS}")
             }
 
             agent {

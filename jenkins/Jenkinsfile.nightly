@@ -132,7 +132,7 @@ pipeline {
 
             environment {
               GITHUB_LOGIN = credentials('github-rstudio-jenkins')
-              DOCKER_OS_NAME = utils.getBionicFocalOsName("${os}")
+              DOCKER_OS_NAME = utils.getDockerBuildOs("${os}")
             }
 
             steps {

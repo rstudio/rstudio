@@ -199,7 +199,13 @@ def updateDailyRedirects(String path) {
   sh 'docker/jenkins/publish-daily-binary.sh https://s3.amazonaws.com/rstudio-ide-build/' + path + ' ${RSTUDIO_ORG_PEM}'
 }
 
-def getBionicFocalOsName(String osName) {
+/**
+  * This method exists to quickly reenable our builds with 
+  * a bionic docker image, however our builds still need to
+  * be labeled focal. This is to support Debian 10 and
+  * should be retired once Debian 10 falls out of support
+  */
+def getDockerBuildOs(String osName) {
   if(osName == "focal"){
     return "bionic"
   } else {
