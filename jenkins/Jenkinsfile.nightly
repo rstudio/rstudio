@@ -117,6 +117,12 @@ pipeline {
               equals expected: params.ARCH_FILTER, actual: env.arch;
               equals expected: params.ARCH_FILTER, actual: 'all'
             }
+            not {
+              allOf {
+                equals expected: 'monitor', actual: env.os;
+                expression { return env.IS_PRO }  
+              }
+            }
           }
         }
 
