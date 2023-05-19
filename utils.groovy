@@ -199,4 +199,12 @@ def updateDailyRedirects(String path) {
   sh 'docker/jenkins/publish-daily-binary.sh https://s3.amazonaws.com/rstudio-ide-build/' + path + ' ${RSTUDIO_ORG_PEM}'
 }
 
+def getBionicFocalOsName(String osName) {
+  if(osName == "focal"){
+    return "bionic"
+  } else {
+    return osName
+  }
+}
+
 return this
