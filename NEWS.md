@@ -68,3 +68,4 @@
 - Increase timeout for stale messages error (rstudio/rstudio-pro#4325)
 - Reduce database queries and remove locking around DB calls (rstudio/rstudio-pro#4492)
 - Eliminate assertion failed error when reloading config with load balancing enabled (rstudio/rstudio-pro#4504)
+- Fix verify-installation failure when jupyter sessions were enabled but jupyter was not installed (rstudio/rstudio-pro#4390)
