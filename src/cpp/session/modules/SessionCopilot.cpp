@@ -499,7 +499,7 @@ void onDocUpdated(boost::shared_ptr<source_database::SourceDocument> pDoc)
    // Synchronize document contents with Copilot
    json::Object textDocumentJson;
    textDocumentJson["uri"] = uriFromDocumentId(pDoc->id());
-   textDocumentJson["languageId"] = "r";
+   textDocumentJson["languageId"] = languageIdFromDocument(pDoc);
    textDocumentJson["version"] = 1;
    textDocumentJson["text"] = pDoc->contents();
 
