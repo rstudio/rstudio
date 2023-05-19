@@ -26,9 +26,9 @@ def getImagePrefix() {
 
 def dockerFile() {
   if (env.imageType == 'monitor')
-    return "monitor/docker/Dockerfile.${env.os}"
+    return "monitor/docker/Dockerfile.${utils.getDockerBuildOs(env.os)}"
 
-  return "docker/jenkins/Dockerfile.${env.os}"
+  return "docker/jenkins/Dockerfile.${utils.getDockerBuildOs(env.os)}"
 }
 
 pipeline {
