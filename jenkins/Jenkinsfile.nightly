@@ -12,7 +12,7 @@ def labelForOS = [
 ]
 
 def dockerTag() {
-  return "${OS}-${ARCH}-${RSTUDIO_VERSION_FLOWER}"
+  return "${utils.getDockerBuildOs(env.os)}-${env.arch}-${RSTUDIO_VERSION_FLOWER}"
 }
 
 def getImagePrefix() {
