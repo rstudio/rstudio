@@ -45,7 +45,7 @@
    {                                                                           \
       std::string message = fmt::format(__FMT__, ##__VA_ARGS__);               \
       std::string formatted =                                                  \
-          fmt::format("[{}]: {}", BOOST_CURRENT_FUNCTION, message);            \
+          fmt::format("[{}]: {}", __func__, message);                          \
       __LOGGER__(formatted);                                                   \
       if (copilotLogLevel() > 0)                                               \
          std::cerr << formatted << std::endl;                                  \
