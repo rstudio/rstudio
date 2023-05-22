@@ -10,6 +10,7 @@
 - Improve visibility of focus rectangles on Server / Workbench Sign In page [Accessibility] (#12846)
 - Added ability to enable minidump generation for Electron crashes (#13025)
 - Added Quarto for Linux arm64 (#12411)
+- Updated zlib to 1.2.13 (rstudio/rstudio-pro#4531)
 
 #### Posit Workbench
 - Added the `session-connections-block-suspend` session option, controlling whether active connections can block suspension of an R session.
