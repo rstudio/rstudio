@@ -14,18 +14,6 @@
  */
 package org.rstudio.studio.client.workbench.prefs.views;
 
-import com.google.gwt.core.client.GWT;
-import com.google.gwt.dom.client.Style.Unit;
-import com.google.gwt.resources.client.ImageResource;
-import com.google.gwt.user.client.Command;
-import com.google.gwt.user.client.ui.CheckBox;
-import com.google.gwt.user.client.ui.Label;
-import com.google.gwt.user.client.ui.VerticalPanel;
-import com.google.inject.Inject;
-
-import elemental2.core.JsObject;
-import jsinterop.base.Js;
-
 import org.rstudio.core.client.Debug;
 import org.rstudio.core.client.ElementIds;
 import org.rstudio.core.client.MessageDisplay;
@@ -55,6 +43,18 @@ import org.rstudio.studio.client.workbench.prefs.model.UserStateAccessor;
 import org.rstudio.studio.client.workbench.prefs.views.zotero.ZoteroApiKeyWidget;
 import org.rstudio.studio.client.workbench.prefs.views.zotero.ZoteroConnectionWidget;
 import org.rstudio.studio.client.workbench.prefs.views.zotero.ZoteroLibrariesWidget;
+
+import com.google.gwt.core.client.GWT;
+import com.google.gwt.dom.client.Style.Unit;
+import com.google.gwt.resources.client.ImageResource;
+import com.google.gwt.user.client.Command;
+import com.google.gwt.user.client.ui.CheckBox;
+import com.google.gwt.user.client.ui.Label;
+import com.google.gwt.user.client.ui.VerticalPanel;
+import com.google.inject.Inject;
+
+import elemental2.core.JsObject;
+import jsinterop.base.Js;
 
 public class RMarkdownPreferencesPane extends PreferencesPane
 {
@@ -484,7 +484,7 @@ public class RMarkdownPreferencesPane extends PreferencesPane
       
    
       DialogTabLayoutPanel tabPanel = new DialogTabLayoutPanel(constants_.tabPanelTitle());
-      tabPanel.setSize("435px", "533px");
+      setTabPanelSize(tabPanel);
       tabPanel.add(basic, constants_.tabPanelBasic(), basic.getBasePanelId());
       tabPanel.add(advanced, constants_.tabPanelAdvanced(), advanced.getBasePanelId());
       tabPanel.add(visualMode, constants_.tabPanelVisual(), visualMode.getBasePanelId());

@@ -73,7 +73,6 @@ public class TerminalPreferencesPane extends PreferencesPane
       VerticalTabPanel closing = new VerticalTabPanel(ElementIds.TERMINAL_CLOSING_PREFS);
 
       Label shellLabel = headerLabel(constants_.shellHeaderLabel());
-      shellLabel.getElement().getStyle().setMarginTop(8, Unit.PX);
       general.add(shellLabel);
 
       initialDirectory_ = new SelectWidget(
@@ -194,7 +193,6 @@ public class TerminalPreferencesPane extends PreferencesPane
       general.add(helpLink);
 
       Label miscLabel = headerLabel(constants_.miscLabel());
-      miscLabel.getElement().getStyle().setMarginTop(8, Unit.PX);
       closing.add(miscLabel);
       miscLabel.setVisible(true);
 
@@ -246,7 +244,7 @@ public class TerminalPreferencesPane extends PreferencesPane
       }
 
       DialogTabLayoutPanel tabPanel = new DialogTabLayoutPanel(constants_.terminalPaneLabel());
-      tabPanel.setSize("435px", "533px");
+      setTabPanelSize(tabPanel);
       tabPanel.add(general, constants_.tabGeneralPanelLabel(), general.getBasePanelId());
       tabPanel.add(closing, constants_.tabClosingPanelLabel(), closing.getBasePanelId());
       tabPanel.selectTab(0);

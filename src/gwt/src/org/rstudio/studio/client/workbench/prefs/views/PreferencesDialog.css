@@ -1,14 +1,17 @@
 
 @external gwt-CheckBox gwt-Label;
 
+@def PANEL_CONTAINER_WIDTH 610px;
+@def PANEL_CONTAINER_HEIGHT 570px;
+
 .panelContainer {
-   width: 570px;
-   height: 535px;
+   width: PANEL_CONTAINER_WIDTH;
+   height: PANEL_CONTAINER_HEIGHT;
 }
 
 .panelContainerNoChooser {
-   width: 448px;
-   height: 535px;
+   width: 468px;
+   height: PANEL_CONTAINER_HEIGHT;
 }
 
 .sshKeyWidget {

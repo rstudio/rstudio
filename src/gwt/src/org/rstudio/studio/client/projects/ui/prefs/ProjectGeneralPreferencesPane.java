@@ -14,7 +14,6 @@
  */
 package org.rstudio.studio.client.projects.ui.prefs;
 
-import com.google.gwt.core.client.GWT;
 import org.rstudio.core.client.prefs.PreferencesDialogBaseResources;
 import org.rstudio.core.client.prefs.RestartRequirement;
 import org.rstudio.core.client.resources.ImageResource2x;
@@ -28,9 +27,11 @@ import org.rstudio.studio.client.projects.model.RProjectRVersion;
 import org.rstudio.studio.client.workbench.model.Session;
 import org.rstudio.studio.client.workbench.model.SessionInfo;
 
+import com.google.gwt.core.client.GWT;
 import com.google.gwt.resources.client.ImageResource;
 import com.google.gwt.user.client.ui.CheckBox;
 import com.google.gwt.user.client.ui.Label;
+import com.google.gwt.user.client.ui.VerticalPanel;
 import com.google.inject.Inject;
 
 public class ProjectGeneralPreferencesPane extends ProjectPreferencesPane
@@ -39,37 +40,48 @@ public class ProjectGeneralPreferencesPane extends ProjectPreferencesPane
    public ProjectGeneralPreferencesPane(Session session)
    {
       sessionInfo_ = session.getSessionInfo();
+      
+      VerticalPanel container = new VerticalPanel();
+      
+      container.add(headerLabel("Workspace"));
 
-      LayoutGrid grid = new LayoutGrid(6, 2);
-      grid.addStyleName(RESOURCES.styles().workspaceGrid());
-      grid.setCellSpacing(8);
-
+      // use default label
       Label infoLabel = new Label(constants_.projectGeneralInfoLabel());
       infoLabel.addStyleName(PreferencesDialogBaseResources.INSTANCE.styles().infoLabel());
-      grid.setWidget(0, 0, infoLabel);
+      container.add(lessSpaced(nudgeRightPlus(infoLabel)));
+
+      // store workspace prefs in grid for nice alignment
+      LayoutGrid grid = new LayoutGrid(3, 2);
+      grid.addStyleName(RESOURCES.styles().workspaceGrid());
 
       // restore workspace
       restoreWorkspace_ = new YesNoAskDefault(false);
-      grid.setWidget(1, 0, new FormLabel(constants_.restoreWorkspaceText(), restoreWorkspace_));
-      grid.setWidget(1, 1, restoreWorkspace_);
+      grid.setWidget(0, 0, new FormLabel(constants_.restoreWorkspaceText(), restoreWorkspace_));
+      grid.setWidget(0, 1, restoreWorkspace_);
 
       // save workspace
       saveWorkspace_ = new YesNoAskDefault(true);
-      grid.setWidget(2, 0, new FormLabel(constants_.saveWorkspaceText(), saveWorkspace_));
-      grid.setWidget(2, 1, saveWorkspace_);
+      grid.setWidget(1, 0, new FormLabel(constants_.saveWorkspaceText(), saveWorkspace_));
+      grid.setWidget(1, 1, saveWorkspace_);
 
       // always save history
       alwaysSaveHistory_ = new YesNoAskDefault(false);
-      grid.setWidget(3, 0, new FormLabel(constants_.alwaysSaveHistoryText(), alwaysSaveHistory_));
-      grid.setWidget(3, 1, alwaysSaveHistory_);
+      grid.setWidget(2, 0, new FormLabel(constants_.alwaysSaveHistoryText(), alwaysSaveHistory_));
+      grid.setWidget(2, 1, alwaysSaveHistory_);
+      
+      container.add(grid);
+      
+      container.add(headerLabel("Miscellaneous"));
 
       // disable execute .Rprofile
-      grid.setWidget(4, 0, disableExecuteRprofile_ = new CheckBox(constants_.disableExecuteRprofileText()));
+      disableExecuteRprofile_ = new CheckBox(constants_.disableExecuteRprofileText());
+      container.add(nudgeRight(disableExecuteRprofile_));
 
       // quit child processes
-      grid.setWidget(5, 0, quitChildProcessesOnExit_ = new CheckBox(constants_.quitChildProcessesOnExitText()));
+      quitChildProcessesOnExit_ = new CheckBox(constants_.quitChildProcessesOnExitText());
+      container.add(nudgeRight(quitChildProcessesOnExit_));
 
-      add(grid);
+      add(container);
    }
 
    @Override

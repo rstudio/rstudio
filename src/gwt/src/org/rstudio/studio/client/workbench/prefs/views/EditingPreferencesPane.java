@@ -85,6 +85,7 @@ public class EditingPreferencesPane extends PreferencesPane
       if (!hasProject)
          editingPanel.add(headerLabel(constants_.generalHeaderLabel()));
 
+      editingPanel.add(headerLabel("Editing"));
       editingPanel.add(tight(spacesForTab_ = checkboxPref(prefs_.useSpacesForTab(),false /*defaultSpace*/)));
       editingPanel.add(indent(tabWidth_ = numericPref(constants_.editingTabWidthLabel(), 1, UserPrefs.MAX_TAB_WIDTH,
             prefs_.numSpacesForTab())));
@@ -148,7 +149,8 @@ public class EditingPreferencesPane extends PreferencesPane
       projectPrefsPanel.add(projectOverride);
 
       SmallButton editProjectSettings = new SmallButton(constants_.editProjectPreferencesButtonLabel());
-      editProjectSettings.getElement().getStyle().setMarginLeft(5, Unit.PX);
+      editProjectSettings.getElement().getStyle().setMarginLeft(8, Unit.PX);
+      editProjectSettings.getElement().getStyle().setMarginTop(-2, Unit.PX);
       editProjectSettings.addClickHandler(new ClickHandler() {
          @Override
          public void onClick(ClickEvent event)
@@ -476,7 +478,7 @@ public class EditingPreferencesPane extends PreferencesPane
 
 
       DialogTabLayoutPanel tabPanel = new DialogTabLayoutPanel(constants_.editingTabPanel());
-      tabPanel.setSize("435px", "533px");
+      setTabPanelSize(tabPanel);
       tabPanel.add(editingPanel, constants_.editingTabPanel(), editingPanel.getBasePanelId());
       tabPanel.add(displayPanel, constants_.editingTabPanelDisplayPanel(), displayPanel.getBasePanelId());
       tabPanel.add(savePanel, constants_.editingTabPanelSavePanel(), savePanel.getBasePanelId());

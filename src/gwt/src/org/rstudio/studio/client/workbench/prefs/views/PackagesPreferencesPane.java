@@ -15,15 +15,6 @@
 
 package org.rstudio.studio.client.workbench.prefs.views;
 
-import com.google.gwt.core.client.GWT;
-import com.google.gwt.dom.client.Style.Unit;
-import com.google.gwt.core.client.JsArray;
-import com.google.gwt.event.dom.client.ClickHandler;
-import com.google.gwt.resources.client.ImageResource;
-import com.google.gwt.user.client.ui.CheckBox;
-import com.google.gwt.user.client.ui.HorizontalPanel;
-import com.google.inject.Inject;
-
 import java.util.ArrayList;
 
 import org.rstudio.core.client.BrowseCap;
@@ -53,6 +44,15 @@ import org.rstudio.studio.client.workbench.model.Session;
 import org.rstudio.studio.client.workbench.prefs.PrefsConstants;
 import org.rstudio.studio.client.workbench.prefs.model.UserPrefs;
 import org.rstudio.studio.client.workbench.projects.RenvContext;
+
+import com.google.gwt.core.client.GWT;
+import com.google.gwt.core.client.JsArray;
+import com.google.gwt.dom.client.Style.Unit;
+import com.google.gwt.event.dom.client.ClickHandler;
+import com.google.gwt.resources.client.ImageResource;
+import com.google.gwt.user.client.ui.CheckBox;
+import com.google.gwt.user.client.ui.HorizontalPanel;
+import com.google.inject.Inject;
 
 public class PackagesPreferencesPane extends PreferencesPane
 {
@@ -228,7 +228,7 @@ public class PackagesPreferencesPane extends PreferencesPane
       hideObjectFiles_.setEnabled(false);
       
       DialogTabLayoutPanel tabPanel = new DialogTabLayoutPanel(constants_.tabPackagesPanelTitle());
-      tabPanel.setSize("435px", "533px");
+      setTabPanelSize(tabPanel);
       tabPanel.add(management, constants_.managementPanelTitle(), management.getBasePanelId());
       tabPanel.add(development, constants_.developmentManagementPanelTitle(), development.getBasePanelId());
       tabPanel.add(cpp, constants_.cppPanelTitle(), cpp.getBasePanelId());

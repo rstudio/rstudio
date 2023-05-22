@@ -14,13 +14,10 @@
  */
 package org.rstudio.studio.client.projects.ui.prefs;
 
-import com.google.gwt.core.client.GWT;
-import com.google.gwt.user.client.ui.Label;
 import org.rstudio.core.client.ElementIds;
 import org.rstudio.core.client.prefs.PreferencesDialogBaseResources;
 import org.rstudio.core.client.prefs.RestartRequirement;
 import org.rstudio.core.client.resources.ImageResource2x;
-
 import org.rstudio.core.client.widget.FormLabel;
 import org.rstudio.core.client.widget.LayoutGrid;
 import org.rstudio.core.client.widget.NumericValueWidget;
@@ -37,10 +34,12 @@ import org.rstudio.studio.client.workbench.views.source.editors.text.IconvListRe
 import org.rstudio.studio.client.workbench.views.source.editors.text.ui.ChooseEncodingDialog;
 import org.rstudio.studio.client.workbench.views.source.model.SourceServerOperations;
 
+import com.google.gwt.core.client.GWT;
 import com.google.gwt.event.dom.client.ClickEvent;
 import com.google.gwt.event.dom.client.ClickHandler;
 import com.google.gwt.resources.client.ImageResource;
 import com.google.gwt.user.client.ui.CheckBox;
+import com.google.gwt.user.client.ui.Label;
 import com.google.inject.Inject;
 
 public class ProjectEditingPreferencesPane extends ProjectPreferencesPane
@@ -48,17 +47,14 @@ public class ProjectEditingPreferencesPane extends ProjectPreferencesPane
    @Inject
    public ProjectEditingPreferencesPane(final SourceServerOperations server)
    {
+      add(headerLabel("Editing"));
+
       Label infoLabel = new Label(constants_.projectGeneralInfoLabel());
       infoLabel.addStyleName(PreferencesDialogBaseResources.INSTANCE.styles().infoLabel());
       infoLabel.addStyleName(PreferencesDialogBaseResources.INSTANCE.styles().nudgeRightPlus());
       infoLabel.addStyleName(PreferencesDialogBaseResources.INSTANCE.styles().spaced());
       add(infoLabel);
-
-      // source editing options
-      enableCodeIndexing_ = new CheckBox(constants_.enableCodeIndexingLabel(), false);
-      enableCodeIndexing_.addStyleName(RESOURCES.styles().enableCodeIndexing());
-      add(enableCodeIndexing_);
-
+      
       chkSpacesForTab_ = new CheckBox(constants_.chkSpacesForTabLabel(), false);
       chkSpacesForTab_.addStyleName(RESOURCES.styles().useSpacesForTab());
       add(chkSpacesForTab_);
@@ -73,8 +69,17 @@ public class ProjectEditingPreferencesPane extends ProjectPreferencesPane
       useNativePipeLabeled.setWidget(0, 0, new FormLabel(constants_.useNativePipeOperatorLabel(), useNativePipeOperator_));
       useNativePipeLabeled.setWidget(0, 1, useNativePipeOperator_);
       useNativePipeLabeled.addStyleName(RESOURCES.styles().useNativePipeOperator());
-      add(useNativePipeLabeled);
+      add(spaced(useNativePipeLabeled));
 
+      add(headerLabel("Indexing"));
+      
+      // source editing options
+      enableCodeIndexing_ = new CheckBox(constants_.enableCodeIndexingLabel(), false);
+      enableCodeIndexing_.addStyleName(RESOURCES.styles().enableCodeIndexing());
+      add(enableCodeIndexing_);
+      
+      add(spacedBefore(headerLabel("Saving")));
+      
       chkAutoAppendNewline_ = new CheckBox(constants_.chkAutoAppendNewlineLabel());
       chkAutoAppendNewline_.addStyleName(RESOURCES.styles().editingOption());
       add(chkAutoAppendNewline_);
