@@ -115,7 +115,7 @@ pipeline {
           exclude {
             axis {
               name 'os'
-              values 'focal', 'centos7', 'rhel8', 'windows', 'opensuse15'
+              values 'centos7', 'rhel8', 'windows', 'opensuse15'
             }
             axis {
               name 'arch'
