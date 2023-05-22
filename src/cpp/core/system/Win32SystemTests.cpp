@@ -254,13 +254,13 @@ TEST_CASE("Win32SystemTests")
 
    SECTION("We can find programs on the PATH")
    {
-      FilePath calcPath;
+      FilePath cmdPath;
       Error error;
 
-      error = core::system::findProgramOnPath("calc", &calcPath);
+      error = core::system::findProgramOnPath("cmd", &cmdPath);
       CHECK(error == Success());
 
-      error = core::system::findProgramOnPath("calc.exe", &calcPath);
+      error = core::system::findProgramOnPath("cmd.exe", &cmdPath);
       CHECK(error == Success());
    }
 }
