@@ -41,7 +41,10 @@ def shouldBuild(boolean isDaily, boolean isPro) {
     }
   }
 
-  return matchesFilter && inHourlySubset
+  // The focal builds are being build on bionic, hence the name confusion here
+  def bionicProArm = (env.OS == 'focal' && env.ARCH == 'arm64' && isPro)
+
+  return matchesFilter && inHourlySubset && !bionicProArm
 }
 
 def renameFile(String dir, String match) {
@@ -174,7 +177,7 @@ pipeline {
           exclude {
             axis {
               name 'OS'
-              values 'focal', 'centos7', 'rhel8', 'opensuse15'
+              values 'centos7', 'rhel8', 'opensuse15'
             }
             axis {
               name 'ARCH'
@@ -189,6 +192,16 @@ pipeline {
             axis {
               name 'ARCH'
               values 'arm64'
+            }
+          }
+          exclude {
+            axis {
+              name 'ARCH'
+              values 'arm64'
+            }
+            axis {
+              name 'OS'
+              values 'focal'
             }
           }
         }
