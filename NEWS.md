@@ -18,6 +18,7 @@
 - Added http server request processing statistics for the rserver, logged as info/debug messages, controlled by the option `www-stats-monitor-seconds` in rserver.conf (rstudio/rstudio-pro#4554).
 - Updated code server to 4.12.0 to address security vulnerabilities
 - Updated nginx to supported version 1.24.0 (rstudio/rstudio-pro#4532)
+- Updated PCRE to PCRE2, version 10.42 (rstudio/rstudio-pro#4530)
 
 ### Fixed
 
