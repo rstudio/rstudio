@@ -194,16 +194,6 @@ pipeline {
               values 'arm64'
             }
           }
-          exclude {
-            axis {
-              name 'ARCH'
-              values 'arm64'
-            }
-            axis {
-              name 'OS'
-              values 'focal'
-            }
-          }
         }
 
         stages {
