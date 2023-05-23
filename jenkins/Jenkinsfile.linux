@@ -281,11 +281,56 @@ pipeline {
                         expression { return OS != "opensuse15" }
                       }
                     }
-
-                    steps {
-                      dir ( 'package/linux/' ) {
-                        sh "cd ${BUILD_LOCATION}/src/gwt && ./gwt-unit-tests.sh"
-                        sh "cd ${BUILD_LOCATION}/src/cpp && ./rstudio-tests"
+                    stages {
+                      stage("GWT Tests") {
+                        steps {
+                          dir ( 'package/linux/' ) {
+                            sh "cd ${BUILD_LOCATION}/src/gwt && ./gwt-unit-tests.sh"
+                          }
+                        }
+                      }
+                      stage("core Tests") {
+                        steps {
+                          dir ( 'package/linux/' ) {
+                            sh "cd ${BUILD_LOCATION}/src/cpp && ./rstudio-tests --scope core"
+                          }
+                        }
+                      }
+                      stage("rsession Tests") {
+                        when {
+                          allOf {
+                            expression { return !(OS == "focal" &&  FLAVOR == "Electron" && IS_PRO == false) } // See https://github.com/rstudio/rstudio-pro/issues/4681  
+                          }
+                        }
+                        steps {
+                          dir ( 'package/linux/' ) {
+                            sh "cd ${BUILD_LOCATION}/src/cpp && ./rstudio-tests --scope rsession"
+                          }
+                        }
+                      }
+                      stage("rserver Tests") {
+                        when {
+                          allOf {
+                            expression { return !(OS == "focal" &&  FLAVOR == "Electron" && IS_PRO == false) } // See https://github.com/rstudio/rstudio-pro/issues/4681  
+                          }
+                        }
+                        steps {
+                          dir ( 'package/linux/' ) {
+                            sh "cd ${BUILD_LOCATION}/src/cpp && ./rstudio-tests --scope rserver"
+                          }
+                        }
+                      }
+                      stage("r Tests") {
+                        when {
+                          allOf {
+                            expression { return OS != "focal"} // See https://github.com/rstudio/rstudio-pro/issues/4681  
+                          }
+                        }
+                        steps {
+                          dir ( 'package/linux/' ) {
+                            sh "cd ${BUILD_LOCATION}/src/cpp && ./rstudio-tests --scope r"
+                          }
+                        }
                       }
                     }
                   }
