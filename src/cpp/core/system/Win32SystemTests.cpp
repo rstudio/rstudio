@@ -252,6 +252,7 @@ TEST_CASE("Win32SystemTests")
       CloseHandle(pi.hThread);
    }
 
+   // Disabling for now, tracked here: https://github.com/rstudio/rstudio/issues/13165
    // SECTION("We can find programs on the PATH")
    // {
    //    FilePath cmdPath;
