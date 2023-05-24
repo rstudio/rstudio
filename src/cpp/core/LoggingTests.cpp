@@ -772,17 +772,6 @@ test_context("Logging")
    //    std::string logFileContents;
    //    REQUIRE_FALSE(core::readStringFromFile(logFile, &logFileContents));
 
-<<<<<<< Updated upstream
-      REQUIRE(logFileContents.find("Message 1") != std::string::npos);
-      REQUIRE(logFileContents.find("prop1: 1") != std::string::npos);
-      REQUIRE(logFileContents.find("prop2: 2") != std::string::npos);
-      REQUIRE(logFileContents.find("prop3: 3.14") != std::string::npos);
-      REQUIRE(logFileContents.find(", prop4: " + obj.write()) != std::string::npos);
-      REQUIRE(logFileContents.find(", prop5: " + arr.write()) != std::string::npos);
-      REQUIRE(logFileContents.find("Couldn't find file") != std::string::npos);
-      REQUIRE(logFileContents.find("No such file or directory") != std::string::npos);
-      REQUIRE(logFileContents.find("LoggingTests.cpp") != std::string::npos);
-=======
    //    REQUIRE(logFileContents.find("Message 1") != std::string::npos);
    //    REQUIRE(logFileContents.find("prop1: 1") != std::string::npos);
    //    REQUIRE(logFileContents.find("prop2: 2") != std::string::npos);
@@ -793,7 +782,6 @@ test_context("Logging")
    //    REQUIRE(((logFileContents.find("No such file or directory") != std::string::npos) || 
    //            (logFileContents.find("The system cannot find the file specified") != std::string::npos)));
    //    REQUIRE(logFileContents.find("LoggingTests.cpp") != std::string::npos);
->>>>>>> Stashed changes
 
    //    boost::replace_all(confFileContents, "pretty", "json");
    //    REQUIRE_FALSE(core::writeStringToFile(tmpConfPath, confFileContents));

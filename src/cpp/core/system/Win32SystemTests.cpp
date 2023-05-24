@@ -252,19 +252,6 @@ TEST_CASE("Win32SystemTests")
       CloseHandle(pi.hThread);
    }
 
-<<<<<<< Updated upstream
-   SECTION("We can find programs on the PATH")
-   {
-      FilePath calcPath;
-      Error error;
-
-      error = core::system::findProgramOnPath("calc", &calcPath);
-      CHECK(error == Success());
-
-      error = core::system::findProgramOnPath("calc.exe", &calcPath);
-      CHECK(error == Success());
-   }
-=======
    // SECTION("We can find programs on the PATH")
    // {
    //    FilePath cmdPath;
@@ -276,7 +263,6 @@ TEST_CASE("Win32SystemTests")
    //    error = core::system::findProgramOnPath("cmd.exe", &cmdPath);
    //    CHECK(error == Success());
    // }
->>>>>>> Stashed changes
 }
 
 } // end namespace tests
