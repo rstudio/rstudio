@@ -384,6 +384,9 @@ bool startAgent()
    }
 
    // Otherwise, use node from the PATH
+   // TODO: We'll need to bundle a version of node with RStudio Server.
+   // Quarto 1.4 will ship with 'deno', which will be able to run regular 'node' applications,
+   // so maybe we can use that?
    if (!nodePath.exists())
    {
       error = core::system::findProgramOnPath("node", &nodePath);

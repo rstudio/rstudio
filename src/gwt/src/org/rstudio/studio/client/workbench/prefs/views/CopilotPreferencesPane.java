@@ -69,6 +69,7 @@ public class CopilotPreferencesPane extends PreferencesPane
       add(headerLabel("GitHub Copilot"));
       add(cbCopilotEnabled_);
       
+      // TODO: Axe this
       add(headerLabel("Copilot Agent Status"));
       
       HorizontalPanel statusPanel = new HorizontalPanel();
