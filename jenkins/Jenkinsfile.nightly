@@ -120,7 +120,7 @@ pipeline {
             not {
               allOf {
                 equals expected: 'monitor', actual: env.imageType;
-                expression { return env.IS_PRO }  
+                expression { return !env.IS_PRO }  
               }
             }
           }
