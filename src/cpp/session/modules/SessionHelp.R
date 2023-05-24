@@ -567,7 +567,8 @@ options(help_type = "html")
          sep = ""
       )
       
-      html <- sprintf(fmt, name, nrow(data), ncol(data), if (ncol(data) == 1) "variable" else "")
+      vbls <- if (ncol(data) == 1) "variable" else "variables"
+      html <- sprintf(fmt, name, nrow(data), ncol(data), vbls)
       
       out <- list(
          html = html,
