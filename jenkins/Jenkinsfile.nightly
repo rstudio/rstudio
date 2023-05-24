@@ -11,6 +11,26 @@ def labelForOS = [
   'macos':      'macos'
 ]
 
+def dockerTag() {
+  return "${utils.getDockerBuildOs(env.os)}-${env.arch}-${RSTUDIO_VERSION_FLOWER}"
+}
+
+def getImagePrefix() {
+  if (env.imageType == 'monitor')
+    return 'monitor-'
+  else if (env.IS_PRO) 
+    return 'pro-'
+
+  return ''
+}
+
+def dockerFile() {
+  if (env.imageType == 'monitor')
+    return "monitor/docker/Dockerfile.${utils.getDockerBuildOs(env.os)}"
+
+  return "docker/jenkins/Dockerfile.${utils.getDockerBuildOs(env.os)}"
+}
+
 pipeline {
   agent none
 
@@ -97,6 +117,12 @@ pipeline {
               equals expected: params.ARCH_FILTER, actual: env.arch;
               equals expected: params.ARCH_FILTER, actual: 'all'
             }
+            not {
+              allOf {
+                equals expected: 'monitor', actual: env.imageType;
+                expression { return !env.IS_PRO }  
+              }
+            }
           }
         }
 
@@ -108,6 +134,10 @@ pipeline {
           axis {
             name 'arch'
             values 'x86_64', 'arm64'
+          }
+          axis {
+            name 'imageType'
+            values 'default', 'monitor'
           }
         }
 
@@ -132,24 +162,46 @@ pipeline {
 
             environment {
               GITHUB_LOGIN = credentials('github-rstudio-jenkins')
-              DOCKER_OS_NAME = utils.getDockerBuildOs("${os}")
+              DOCKER_TAG = dockerTag()
             }
 
             steps {
-              echo "Creating image jenkins/ide:${IS_PRO? 'pro-' : '' }${DOCKER_OS_NAME}-${arch}-${RSTUDIO_VERSION_FLOWER}"
+              echo "Creating image jenkins/ide:${getImagePrefix()}${DOCKER_TAG}"
               pullBuildPush(
                 image_name: 'jenkins/ide',
-                image_tag: "${IS_PRO? 'pro-' : '' }${DOCKER_OS_NAME}-${arch}-${RSTUDIO_VERSION_FLOWER}",
+                image_tag: "${getImagePrefix()}${DOCKER_TAG}",
                 latest_tag: false,
                 build_arg_jenkins_uid: 'JENKINS_UID',
                 build_arg_jenkins_gid: 'JENKINS_GID',
-                dockerfile: "docker/jenkins/Dockerfile.${DOCKER_OS_NAME}",
+                dockerfile: "${dockerFile()}",
                 build_args: "--build-arg ARCH=${arch} --build-arg GITHUB_LOGIN=${GITHUB_LOGIN}",
                 push: "${params.PUBLISH}"
               )
             }
           }
         }
+      }
+    }
+
+    stage ("Documentation Builds") {
+      when {
+        anyOf {
+            expression { return params.FORCE_BUILD }
+            changeset comparator: 'REGEXP', pattern: 'docs/.*'
+            changeset comparator: 'REGEXP', pattern: 'version/.*'
+        }
+      }
+
+      steps {
+        echo "Would trigger doc builds at ${COMMIT_HASH} on branch ${env.BUILD_BRANCH}"
+
+        build wait: false,
+              job: "IDE/docs-pipeline/${env.BUILD_BRANCH}",
+              parameters: [
+                string(name: "COMMIT_HASH", value: "${COMMIT_HASH}"),
+                string(name: "RSTUDIO_VERSION", value: "${RSTUDIO_VERSION_MAJOR}.${RSTUDIO_VERSION_MINOR}.${RSTUDIO_VERSION_PATCH}"),
+                booleanParam(name: "PUBLISH", value: params.PUBLISH),
+                booleanParam(name: "FORCE_BUILD", value: params.FORCE_BUILD)]
       }
     }
 
@@ -235,6 +287,26 @@ pipeline {
                     string(name: "SLACK_CHANNEL", value: "${SLACK_CHANNEL}"),
                     string(name: "OS_FILTER", value: params.OS_FILTER),
                     string(name: "ARCH_FILTER", value: params.ARCH_FILTER),
+                    booleanParam(name: "DAILY", value: params.DAILY),
+                    booleanParam(name: "PUBLISH", value: params.PUBLISH)
+                  ]
+
+            build wait: false,
+                  job: "${JOB_ROOT}/session-pipeline/${env.BUILD_BRANCH}",
+                  parameters: [
+                    gitParameter(name: "COMMIT_HASH", value: "${COMMIT_HASH}"),
+                    string(name: "RSTUDIO_VERSION_PATCH", value: "${RSTUDIO_VERSION_PATCH}"),
+                    string(name: "SLACK_CHANNEL", value: "${SLACK_CHANNEL}"),
+                    booleanParam(name: "DAILY", value: params.DAILY),
+                    booleanParam(name: "PUBLISH", value: params.PUBLISH)
+                  ]
+
+            build wait: false,
+                  job: "${JOB_ROOT}/monitor-pipeline/${env.BUILD_BRANCH}",
+                  parameters: [
+                    gitParameter(name: "COMMIT_HASH", value: "${COMMIT_HASH}"),
+                    string(name: "RSTUDIO_VERSION_PATCH", value: "${RSTUDIO_VERSION_PATCH}"),
+                    string(name: "SLACK_CHANNEL", value: "${SLACK_CHANNEL}"),
                     booleanParam(name: "DAILY", value: params.DAILY),
                     booleanParam(name: "PUBLISH", value: params.PUBLISH)
                   ]
