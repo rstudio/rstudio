@@ -162,7 +162,7 @@
   var defaultMaxColumns = 50;
   var maxColumns = defaultMaxColumns;
 
-  // maximum number of rows to draw
+  // maximum number of rows to draw; -1 implies all rows
   var maxRows = -1;
 
   // boolean for whether bootstrapping is occurring, used to
@@ -1158,8 +1158,8 @@
           d.cache_key = cacheKey;
           d.show = "data";
           d.column_offset = columnOffset;
+          d.max_columns = maxColumns;
           d.max_rows = maxRows;
-          d.max_cols = maxColumns;
         },
         error: function (jqXHR) {
           if (jqXHR.responseText[0] !== "{") showError(jqXHR.responseText);

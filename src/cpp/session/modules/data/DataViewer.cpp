@@ -821,6 +821,7 @@ Error getGridData(const http::Request& request,
       // find the data frame we're going to be pulling data from
       http::Fields fields;
       http::util::parseForm(request.body(), &fields);
+
       std::string envName = http::util::urlDecode(
             http::util::fieldValue<std::string>(fields, "env", ""));
 
