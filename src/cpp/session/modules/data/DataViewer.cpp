@@ -464,13 +464,21 @@ void handleGridResReq(const http::Request& request,
    pResponse->setCacheableFile(gridResource, request);
 }
 
-json::Value getCols(SEXP dataSEXP)
+json::Value getCols(SEXP dataSEXP,
+                    int maxRows,
+                    int maxCols)
 {
    SEXP colsSEXP = R_NilValue;
    r::sexp::Protect protect;
    json::Value result;
-   Error error = r::exec::RFunction(".rs.describeCols", dataSEXP, MAX_FACTORS)
-      .call(&colsSEXP, &protect);
+
+   Error error = r::exec::RFunction(".rs.describeCols")
+         .addParam(dataSEXP)
+         .addParam(maxRows)
+         .addParam(maxCols)
+         .addParam(MAX_FACTORS)
+         .call(&colsSEXP, &protect);
+
    if (error || colsSEXP == R_NilValue) 
    {
       json::Object err;
@@ -497,17 +505,39 @@ json::Value getCols(SEXP dataSEXP)
 // NB: may throw exceptions! these are expected to be handled by the handlers
 // in getGridData, where they will be marshaled to JSON and displayed on the
 // client.
-json::Value getData(SEXP dataSEXP, const http::Fields& fields)
+json::Value getData(SEXP dataSEXP,
+                    int maxRows,
+                    int maxCols,
+                    const http::Fields& fields)
 {
    Error error;
    r::sexp::Protect protect;
+
+   // subset dataset if necessary
+   SEXP subsettedDataSEXP = R_NilValue;
+   error = r::exec::RFunction(".rs.subsetData")
+         .addParam(dataSEXP)
+         .addParam(maxRows)
+         .addParam(maxCols)
+         .call(&subsettedDataSEXP, &protect);
+
+   if (error)
+   {
+      LOG_ERROR(error);
+   }
+   else
+   {
+      dataSEXP = subsettedDataSEXP;
+   }
 
    // read draw parameters from DataTables
    int draw = http::util::fieldValue<int>(fields, "draw", 0);
    int start = http::util::fieldValue<int>(fields, "start", 0);
    int length = http::util::fieldValue<int>(fields, "length", 0);
+
    std::string search = http::util::urlDecode(
          http::util::fieldValue<std::string>(fields, "search[value]", ""));
+
    std::string cacheKey = http::util::urlDecode(
          http::util::fieldValue<std::string>(fields, "cache_key", ""));
 
@@ -793,12 +823,25 @@ Error getGridData(const http::Request& request,
       http::util::parseForm(request.body(), &fields);
       std::string envName = http::util::urlDecode(
             http::util::fieldValue<std::string>(fields, "env", ""));
+
       std::string objName = http::util::urlDecode(
             http::util::fieldValue<std::string>(fields, "obj", ""));
+
       std::string cacheKey = http::util::urlDecode(
             http::util::fieldValue<std::string>(fields, "cache_key", ""));
+
+      std::string maxRowsField = http::util::urlDecode(
+               http::util::fieldValue<std::string>(fields, "max_rows", ""));
+
+      std::string maxColsField = http::util::urlDecode(
+               http::util::fieldValue<std::string>(fields, "max_cols", ""));
+
       std::string show = http::util::fieldValue<std::string>(
-            fields, "show", "data");
+               fields, "show", "data");
+
+      int maxRows = safe_convert::stringTo<int>(maxRowsField, -1);
+      int maxCols = safe_convert::stringTo<int>(maxColsField, -1);
+
       if (objName.empty() && cacheKey.empty()) 
       {
          return Success();
@@ -845,11 +888,11 @@ Error getGridData(const http::Request& request,
          }
          if (show == "cols")
          {
-            result = getCols(dataSEXP);
+            result = getCols(dataSEXP, maxRows, maxCols);
          }
          else if (show == "data")
          {
-            result = getData(dataSEXP, fields);
+            result = getData(dataSEXP, maxRows, maxCols, fields);
          }
       }
    }
