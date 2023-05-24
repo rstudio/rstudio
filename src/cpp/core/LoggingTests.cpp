@@ -721,7 +721,7 @@ test_context("Logging")
 #ifndef _WIN32
       REQUIRE(message == "No such file or directory");
 #else
-      REQUIRE(message == "The system cannot find the file specified")
+      REQUIRE(message == "The system cannot find the file specified");
 #endif
       REQUIRE(type == "system");
 
