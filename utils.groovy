@@ -213,6 +213,11 @@ def getDockerBuildOs(String osName) {
   }
 }
 
+/**
+  * Don't try to change RSTUDIO_VERSION_FLOWER to env.RSTUDIO_VERSION_FLOWER
+  * in order for it to match, because for some reason that causes it to
+  * resolve to "null". I don't know why.
+  */
 def getDockerTag() {
   return "${env.IS_PRO ? 'pro-' : ''}${getDockerBuildOs(env.OS)}-${env.ARCH}-${RSTUDIO_VERSION_FLOWER}"
 }
