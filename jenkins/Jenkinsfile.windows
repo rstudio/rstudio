@@ -69,7 +69,7 @@ pipeline {
                 RSTUDIO_VERSION_MINOR,
                 RSTUDIO_VERSION_PATCH,
                 RSTUDIO_VERSION_SUFFIX) = utils.getVersion(!params.DAILY)
-              RSTUDIO_FLOWER = utils.getFlower()
+              RSTUDIO_VERSION_FLOWER = utils.getFlower()
               currentBuild.displayName = "${RSTUDIO_VERSION}"
               IS_PRO = RSTUDIO_VERSION_SUFFIX.contains('pro')
               PACKAGE_NAME = "RStudio-${IS_PRO ? 'pro-' : ''}${RSTUDIO_VERSION.replace('+', '-')}"
