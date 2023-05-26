@@ -16,18 +16,13 @@ def dockerTag() {
 }
 
 def getImagePrefix() {
-  if (env.imageType == 'monitor')
-    return 'monitor-'
-  else if (env.IS_PRO) 
+  if (env.IS_PRO) 
     return 'pro-'
 
   return ''
 }
 
 def dockerFile() {
-  if (env.imageType == 'monitor')
-    return "monitor/docker/Dockerfile.${utils.getDockerBuildOs(env.os)}"
-
   return "docker/jenkins/Dockerfile.${utils.getDockerBuildOs(env.os)}"
 }
 
@@ -134,10 +129,6 @@ pipeline {
           axis {
             name 'arch'
             values 'x86_64', 'arm64'
-          }
-          axis {
-            name 'imageType'
-            values 'default', 'monitor'
           }
         }
 
