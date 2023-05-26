@@ -214,7 +214,7 @@ def getDockerBuildOs(String osName) {
 }
 
 def getDockerTag() {
-  return "${env.IS_PRO ? 'pro-' : ''}${getDockerBuildOs(env.OS)}-${env.ARCH}-${env.RSTUDIO_VERSION_FLOWER}"
+  return "${env.IS_PRO ? 'pro-' : ''}${getDockerBuildOs(env.OS)}-${env.ARCH}-${getFlower()}"
 }
 
 return this
