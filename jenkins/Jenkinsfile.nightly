@@ -174,28 +174,6 @@ pipeline {
       }
     }
 
-    stage ("Documentation Builds") {
-      when {
-        anyOf {
-            expression { return params.FORCE_BUILD }
-            changeset comparator: 'REGEXP', pattern: 'docs/.*'
-            changeset comparator: 'REGEXP', pattern: 'version/.*'
-        }
-      }
-
-      steps {
-        echo "Would trigger doc builds at ${COMMIT_HASH} on branch ${env.BUILD_BRANCH}"
-
-        build wait: false,
-              job: "IDE/docs-pipeline/${env.BUILD_BRANCH}",
-              parameters: [
-                string(name: "COMMIT_HASH", value: "${COMMIT_HASH}"),
-                string(name: "RSTUDIO_VERSION", value: "${RSTUDIO_VERSION_MAJOR}.${RSTUDIO_VERSION_MINOR}.${RSTUDIO_VERSION_PATCH}"),
-                booleanParam(name: "PUBLISH", value: params.PUBLISH),
-                booleanParam(name: "FORCE_BUILD", value: params.FORCE_BUILD)]
-      }
-    }
-
     stage ("Setup and Trigger Builds") {
       when {
         anyOf {
@@ -278,26 +256,6 @@ pipeline {
                     string(name: "SLACK_CHANNEL", value: "${SLACK_CHANNEL}"),
                     string(name: "OS_FILTER", value: params.OS_FILTER),
                     string(name: "ARCH_FILTER", value: params.ARCH_FILTER),
-                    booleanParam(name: "DAILY", value: params.DAILY),
-                    booleanParam(name: "PUBLISH", value: params.PUBLISH)
-                  ]
-
-            build wait: false,
-                  job: "${JOB_ROOT}/session-pipeline/${env.BUILD_BRANCH}",
-                  parameters: [
-                    gitParameter(name: "COMMIT_HASH", value: "${COMMIT_HASH}"),
-                    string(name: "RSTUDIO_VERSION_PATCH", value: "${RSTUDIO_VERSION_PATCH}"),
-                    string(name: "SLACK_CHANNEL", value: "${SLACK_CHANNEL}"),
-                    booleanParam(name: "DAILY", value: params.DAILY),
-                    booleanParam(name: "PUBLISH", value: params.PUBLISH)
-                  ]
-
-            build wait: false,
-                  job: "${JOB_ROOT}/monitor-pipeline/${env.BUILD_BRANCH}",
-                  parameters: [
-                    gitParameter(name: "COMMIT_HASH", value: "${COMMIT_HASH}"),
-                    string(name: "RSTUDIO_VERSION_PATCH", value: "${RSTUDIO_VERSION_PATCH}"),
-                    string(name: "SLACK_CHANNEL", value: "${SLACK_CHANNEL}"),
                     booleanParam(name: "DAILY", value: params.DAILY),
                     booleanParam(name: "PUBLISH", value: params.PUBLISH)
                   ]
