@@ -11,17 +11,6 @@ def labelForOS = [
   'macos':      'macos'
 ]
 
-def dockerTag() {
-  return "${utils.getDockerBuildOs(env.os)}-${env.arch}-${RSTUDIO_VERSION_FLOWER}"
-}
-
-def getImagePrefix() {
-  if (env.IS_PRO) 
-    return 'pro-'
-
-  return ''
-}
-
 def dockerFile() {
   return "docker/jenkins/Dockerfile.${utils.getDockerBuildOs(env.os)}"
 }
@@ -160,7 +149,7 @@ pipeline {
               echo "Creating image jenkins/ide:${getImagePrefix()}${DOCKER_TAG}"
               pullBuildPush(
                 image_name: 'jenkins/ide',
-                image_tag: "${getImagePrefix()}${DOCKER_TAG}",
+                image_tag: "${utils.getDockerTag()}",
                 latest_tag: false,
                 build_arg_jenkins_uid: 'JENKINS_UID',
                 build_arg_jenkins_gid: 'JENKINS_GID',

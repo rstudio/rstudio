@@ -207,7 +207,7 @@ pipeline {
 
             agent {
               docker {
-                image "jenkins/ide:${IS_PRO? 'pro-' : '' }${utils.getDockerBuildOs(OS)}-${ARCH}-${RSTUDIO_VERSION_FLOWER}"
+                image "jenkins/ide:${utils.getDockerTag()}"
                 registryCredentialsId 'ecr:us-east-1:aws-build-role'
                 registryUrl 'https://263245908434.dkr.ecr.us-east-1.amazonaws.com'
                 label "${getAgentLabel(ARCH)}"
