@@ -28,6 +28,8 @@ pipeline {
   }
 
   environment {
+    OS = "windows"
+    ARCH = "x86_64"
     PACKAGE_OS = 'Windows'
     AWS_ACCOUNT_ID = '749683154838'
     GIT_URL = "https://github.com/rstudio/rstudio"
@@ -103,7 +105,7 @@ pipeline {
           stage('Build Windows') {
             agent {
               docker {
-                image "jenkins/ide:${IS_PRO? 'pro-' : '' }windows-x86_64-${RSTUDIO_FLOWER}"
+                image "jenkins/ide:${utils.getDockerTag()}"
                   registryUrl 'https://263245908434.dkr.ecr.us-east-1.amazonaws.com'
                   registryCredentialsId 'ecr:us-east-1:aws-build-role'
                   reuseNode true
