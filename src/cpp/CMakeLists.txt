@@ -225,11 +225,17 @@ else()
    find_package(yaml-cpp REQUIRED)
 endif()
 
-if(NOT EXISTS "${YAML_CPP_INCLUDE_DIR}")
+if(yaml-cpp_FOUND AND NOT YAML_CPP_LIBRARIES)
+   set(YAML_CPP_LIBRARIES yaml-cpp)
+endif()
+
+if(NOT RSTUDIO_USE_SYSTEM_YAML_CPP AND NOT EXISTS "${YAML_CPP_INCLUDE_DIR}")
    message(FATAL_ERROR "yaml-cpp not found (re-run dependencies script to install)")
 endif()
 
-include_directories(SYSTEM "${YAML_CPP_INCLUDE_DIR}")
+if(YAML_CPP_INCLUDE_DIR)
+   include_directories(SYSTEM "${YAML_CPP_INCLUDE_DIR}")
+endif()
 
 # determine whether we should statically link boost. we always do this
 # unless we are building a non-packaged build on linux (in which case

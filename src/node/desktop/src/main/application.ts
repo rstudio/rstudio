@@ -273,7 +273,7 @@ export class Application implements AppState {
     this.appLaunch = ApplicationLaunch.init();
 
     // determine paths to config file, rsession, and desktop scripts
-    const [confPath, sessionPath, scriptsPath] = findComponents();
+    const [installPath, confPath, sessionPath, scriptsPath] = findComponents();
     this.sessionPath = sessionPath;
     this.scriptsPath = scriptsPath;
 
@@ -309,6 +309,7 @@ export class Application implements AppState {
     if (process.platform === 'win32') {
       const [path, preflightError] = await promptUserForR();
       if (preflightError) {
+        logger().logError(preflightError);
         await dialog
           .showMessageBox({
             type: 'warning',
@@ -330,15 +331,18 @@ export class Application implements AppState {
 
       // if no path was selected, bail (implies dialog was canceled)
       if (path == null) {
+        logger().logDebug('Did not get a path, app will exit');
         return exitFailure();
       }
 
       // a path was selected
+      logger().logDebug(`Path selected was: "${path}"`);
       rPath = path;
     }
 
     // if we don't have an R path at this point, try scanning for R
     if (!rPath) {
+      logger().logDebug('No rPath found, scanning for R');
       const [scannedPath, error] = scanForR();
       if (error) {
         logger().logDebug(`Error scanning for R: ${error}`);
@@ -348,6 +352,8 @@ export class Application implements AppState {
 
       rPath = scannedPath;
     }
+
+    logger().logDebug('Done choosing R');
 
     // prepare the R environment
     logger().logDebug(`Preparing environment using R: ${rPath}`);
@@ -365,7 +371,7 @@ export class Application implements AppState {
 
     // launch a local session
     this.sessionLauncher = new SessionLauncher(this.sessionPath, confPath, new FilePath(), this.appLaunch);
-    this.sessionLauncher.launchFirstSession();
+    this.sessionLauncher.launchFirstSession(installPath, !app.isPackaged);
 
     this.gwtCallback?.once(GwtCallback.WORKBENCH_INITIALIZED, () => {
       this.argsManager.handleAfterSessionLaunchCommands();

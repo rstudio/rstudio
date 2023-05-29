@@ -366,6 +366,7 @@ bool save(const FilePath& statePath,
           bool serverMode,
           bool excludePackages,
           bool disableSaveCompression,
+          bool saveGlobalEnvironment,
           const std::string& ephemeralEnvVars)
 {
    // initialize context
@@ -442,14 +443,14 @@ bool save(const FilePath& statePath,
    saveWorkingContext(statePath, &settings, &saved);
 
    // save search path (disable save compression if requested)
-   if (disableSaveCompression)
+   if (saveGlobalEnvironment && disableSaveCompression)
    {
       error = r::exec::RFunction(".rs.disableSaveCompression").call();
       if (error)
          LOG_ERROR(error);
    }
 
-   if (!excludePackages)
+   if (saveGlobalEnvironment && !excludePackages)
    {
       error = search_path::save(statePath);
       if (error)
@@ -458,7 +459,7 @@ bool save(const FilePath& statePath,
          saved = false;
       }
    }
-   else
+   else if (saveGlobalEnvironment)
    {
       error = search_path::saveGlobalEnvironment(statePath);
       if (error)

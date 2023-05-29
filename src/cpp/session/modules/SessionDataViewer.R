@@ -21,6 +21,17 @@
 # data without recomputing on the original object every time
 .rs.setVar("WorkingDataEnv", new.env(parent = emptyenv()))
 
+.rs.addFunction("subsetData", function(data, maxRows = -1, maxCols = -1)
+{
+   if (maxRows != -1 && nrow(data) > maxRows)
+      data <- head(data, n = maxRows)
+   
+   if (maxCols != -1 && ncol(data) > maxCols)
+      data <- data[1:maxCols]
+   
+   data
+})
+
 .rs.addFunction("formatDataColumn", function(x, start, len, ...)
 {
    # extract the visible part of the column
@@ -107,18 +118,21 @@
    as.character(col)
 })
 
-.rs.addFunction("describeCols", function(x, maxFactors) 
+.rs.addFunction("describeCols", function(x,
+                                         maxRows = -1,
+                                         maxCols = -1,
+                                         maxFactors = 64)
 {
-   colNames <- names(x)
+   # subset the data if requested
+   x <- .rs.subsetData(x, maxRows, maxCols)
    
    # get the variable labels, if any--labels may be provided either by this 
    # global attribute or by a 'label' attribute on an individual column (as in
    # e.g. Hmisc), which takes precedence if both are present
+   colNames <- names(x)
    colLabels <- attr(x, "variable.labels", exact = TRUE)
    if (!is.character(colLabels)) 
-   {
       colLabels <- character()
-   }
    
    # the first column is always the row names
    rowNameCol <- list(
@@ -570,7 +584,7 @@
       }
    }
    
-   # if the object exists in the cache environment, return it. Objects
+   # if the object exists in the cache environment, return it. objects
    # in the cache environment have already been coerced to data frames.
    if (exists(cacheKey, where = .rs.CachedDataEnv, inherits = FALSE))
       return(get(cacheKey, envir = .rs.CachedDataEnv, inherits = FALSE))

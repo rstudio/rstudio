@@ -149,11 +149,11 @@ def publishToDailiesSite(String packageFile, String destinationPath, String urlP
   * x86_64 -> amd64  on Debian
   */
 def getArchForOs(String os, String arch) {
-  if ((arch == "amd64") && (os != "bionic") && (os != "jammy")) {
+  if ((arch == "amd64") && (os != "focal") && (os != "jammy")) {
     return "x86_64"
   }
 
-  if ((arch == "x86_64") && ((os == "bionic") || (os == "jammy"))) {
+  if ((arch == "x86_64") && ((os == "focal") || (os == "jammy"))) {
     return "amd64"
   }
 
@@ -197,6 +197,29 @@ def getProductName() {
   */
 def updateDailyRedirects(String path) {
   sh 'docker/jenkins/publish-daily-binary.sh https://s3.amazonaws.com/rstudio-ide-build/' + path + ' ${RSTUDIO_ORG_PEM}'
+}
+
+/**
+  * This method exists to quickly reenable our builds with 
+  * a bionic docker image, however our builds still need to
+  * be labeled focal. This is to support Debian 10 and
+  * should be retired once Debian 10 falls out of support
+  */
+def getDockerBuildOs(String osName) {
+  if(osName == "focal"){
+    return "bionic"
+  } else {
+    return osName
+  }
+}
+
+/**
+  * Don't try to change RSTUDIO_VERSION_FLOWER to env.RSTUDIO_VERSION_FLOWER
+  * in order for it to match, because for some reason that causes it to
+  * resolve to "null". I don't know why.
+  */
+def getDockerTag() {
+  return "${env.IS_PRO ? 'pro-' : ''}${getDockerBuildOs(env.OS)}-${env.ARCH}-${RSTUDIO_VERSION_FLOWER}"
 }
 
 return this

@@ -2,7 +2,7 @@ def utils
 
 def ext_map = 
 [
-  'bionic':     'deb',
+  'focal':      'deb',
   'jammy':      'deb',
   'centos7':    'rpm',
   'rhel8':      'rpm',
@@ -12,7 +12,7 @@ def ext_map =
 
 def package_os =
 [
-  'bionic':     'Ubuntu Bionic',
+  'focal':      'Ubuntu Focal',
   'jammy':      'Ubuntu Jammy',
   'centos7':    'CentOS 7',
   'rhel8':      'RHEL 8',
@@ -35,13 +35,16 @@ def shouldBuild(boolean isDaily, boolean isPro) {
         (env.OS == 'centos7' && env.ARCH == 'x86_64' && env.FLAVOR == 'Desktop') || 
         (env.OS == 'jammy' && env.ARCH == 'arm64' && env.FLAVOR == 'Electron'))
     } else {
-      // build an arm64 rhel9 Desktop and an x86_64 bionic Server
+      // build an arm64 rhel9 Desktop and an x86_64 focal Server
       inHourlySubset = ((env.OS == 'rhel9' && env.ARCH == 'arm64' && env.FLAVOR == 'Electron') ||
-        (env.OS == 'bionic' && env.ARCH == 'x86_64' && env.FLAVOR == 'Server'))
+        (env.OS == 'focal' && env.ARCH == 'x86_64' && env.FLAVOR == 'Server'))
     }
   }
 
-  return matchesFilter && inHourlySubset
+  // The focal builds are being build on bionic, hence the name confusion here
+  def bionicProArm = (env.OS == 'focal' && env.ARCH == 'arm64' && isPro)
+
+  return matchesFilter && inHourlySubset && !bionicProArm
 }
 
 def renameFile(String dir, String match) {
@@ -158,7 +161,7 @@ pipeline {
         axes {
           axis {
             name 'OS'
-            values 'bionic', 'jammy', 'centos7', 'rhel8', 'rhel9', 'opensuse15'
+            values 'focal', 'jammy', 'centos7', 'rhel8', 'rhel9', 'opensuse15'
           }
           axis {
             name 'ARCH'
@@ -174,7 +177,7 @@ pipeline {
           exclude {
             axis {
               name 'OS'
-              values 'bionic', 'centos7', 'rhel8', 'opensuse15'
+              values 'centos7', 'rhel8', 'opensuse15'
             }
             axis {
               name 'ARCH'
@@ -204,7 +207,7 @@ pipeline {
 
             agent {
               docker {
-                image "jenkins/ide:${IS_PRO? 'pro-' : '' }${OS}-${ARCH}-${RSTUDIO_VERSION_FLOWER}"
+                image "jenkins/ide:${utils.getDockerTag()}"
                 registryCredentialsId 'ecr:us-east-1:aws-build-role'
                 registryUrl 'https://263245908434.dkr.ecr.us-east-1.amazonaws.com'
                 label "${getAgentLabel(ARCH)}"
@@ -261,8 +264,6 @@ pipeline {
                     when {
                       allOf {
                         expression { return FLAVOR == "Electron" }
-                        // Disable bionic tests until builds are removed completely
-                        expression { return OS != "bionic"}
                       }
                     }
 
@@ -276,17 +277,60 @@ pipeline {
                   stage ('GWT and C++ Tests') {
                     when {
                       allOf {
-                        // Disable bionic tests until builds are removed completely
-                        expression { return OS != "bionic" }
                         // Disable opensuse15 while investigating R test failure
                         expression { return OS != "opensuse15" }
                       }
                     }
-
-                    steps {
-                      dir ( 'package/linux/' ) {
-                        sh "cd ${BUILD_LOCATION}/src/gwt && ./gwt-unit-tests.sh"
-                        sh "cd ${BUILD_LOCATION}/src/cpp && ./rstudio-tests"
+                    stages {
+                      stage("GWT Tests") {
+                        steps {
+                          dir ( 'package/linux/' ) {
+                            sh "cd ${BUILD_LOCATION}/src/gwt && ./gwt-unit-tests.sh"
+                          }
+                        }
+                      }
+                      stage("core Tests") {
+                        steps {
+                          dir ( 'package/linux/' ) {
+                            sh "cd ${BUILD_LOCATION}/src/cpp && ./rstudio-tests --scope core"
+                          }
+                        }
+                      }
+                      stage("rsession Tests") {
+                        when {
+                          allOf {
+                            expression { return !(OS == "focal" &&  FLAVOR == "Electron" && IS_PRO == false) } // See https://github.com/rstudio/rstudio-pro/issues/4681  
+                          }
+                        }
+                        steps {
+                          dir ( 'package/linux/' ) {
+                            sh "cd ${BUILD_LOCATION}/src/cpp && ./rstudio-tests --scope rsession"
+                          }
+                        }
+                      }
+                      stage("rserver Tests") {
+                        when {
+                          allOf {
+                            expression { return !(OS == "focal" &&  FLAVOR == "Electron" && IS_PRO == false) } // See https://github.com/rstudio/rstudio-pro/issues/4681  
+                          }
+                        }
+                        steps {
+                          dir ( 'package/linux/' ) {
+                            sh "cd ${BUILD_LOCATION}/src/cpp && ./rstudio-tests --scope rserver"
+                          }
+                        }
+                      }
+                      stage("r Tests") {
+                        when {
+                          allOf {
+                            expression { return OS != "focal"} // See https://github.com/rstudio/rstudio-pro/issues/4681  
+                          }
+                        }
+                        steps {
+                          dir ( 'package/linux/' ) {
+                            sh "cd ${BUILD_LOCATION}/src/cpp && ./rstudio-tests --scope r"
+                          }
+                        }
                       }
                     }
                   }
@@ -363,6 +407,14 @@ pipeline {
                           utils.publishToDailiesSite PACKAGE_FILE, DAILIES_PATH, AWS_PATH
                         }
                       }
+
+                      dir("${TAR_PACKAGE_DIR}") {
+                        script {
+                          if (FLAVOR == "Electron") {
+                            utils.publishToDailiesSite TAR_PACKAGE_FILE, "${DAILIES_PATH}-xcopy", AWS_PATH
+                          }
+                        }
+                      }
                     }
                   }
 
@@ -371,11 +423,13 @@ pipeline {
                       RSTUDIO_ORG_PEM = credentials('www-rstudio-org-pem') 
                     }
 
+                    // for pro, update with Qt
+                    // for open source, update with Electron
                     when { 
-                      allOf {
-                        expression { return params.PUBLISH }
-                        expression { return params.DAILY}
-                        expression { return !env.IS_PRO } 
+                      anyOf {
+                        expression { return params.PUBLISH && params.DAILY && IS_PRO == true && FLAVOR == "Desktop" }
+                        expression { return params.PUBLISH && params.DAILY && IS_PRO == false && FLAVOR == "Electron" }
+                        expression { return params.PUBLISH && params.DAILY && FLAVOR == "Server" }
                       }
                     }
 

@@ -14,7 +14,18 @@
  */
 
 import { exec, execSync } from 'child_process';
-import { app, nativeTheme, BrowserWindow, clipboard, dialog, ipcMain, Rectangle, screen, shell, webFrameMain } from 'electron';
+import {
+  app,
+  nativeTheme,
+  BrowserWindow,
+  clipboard,
+  dialog,
+  ipcMain,
+  Rectangle,
+  screen,
+  shell,
+  webFrameMain,
+} from 'electron';
 import { IpcMainEvent, MessageBoxOptions, OpenDialogOptions, SaveDialogOptions } from 'electron/main';
 import EventEmitter from 'events';
 import { existsSync, writeFileSync } from 'fs';
@@ -43,6 +54,8 @@ import {
   resolveAliasedPath,
 } from './utils';
 import { activateWindow, focusedWebContents } from './window-utils';
+import { getenv } from '../core/environment';
+import { safeError } from '../core/err';
 
 export enum PendingQuit {
   PendingQuitNone,
@@ -81,23 +94,35 @@ export class GwtCallback extends EventEmitter {
   // Info used by the "session failed to load" error page (error.html)
   errorPageData = new Map<string, string>();
 
-  // https://github.com/foliojs/font-manager/issues/15
-  // the fork did not correct usage of Fontconfig
-  // getAvailableFontsSync() incorrectly sets the monospace property
-  monospaceFonts = [
-    ...new Set<string>(
-      findFontsSync({ monospace: true }).map((fd) => {
-        return process.platform === 'darwin' ? fd.postscriptName : fd.family;
-      }),
-    ),
-  ].sort((a, b) => a.localeCompare(b));
-  proportionalFonts = [...new Set<string>(findFontsSync({ monospace: false }).map((fd) => fd.family))].sort((a, b) =>
-    a.localeCompare(b),
-  );
+  monospaceFonts: string[] = [];
+  proportionalFonts: string[] = [];
 
   constructor(public mainWindow: MainWindow, public isRemoteDesktop: boolean) {
     super();
     this.owners.add(mainWindow);
+
+    // https://github.com/foliojs/font-manager/issues/15
+    // the fork did not correct usage of Fontconfig
+    // getAvailableFontsSync() incorrectly sets the monospace property
+    try {
+      const queryFonts = getenv('RSTUDIO_QUERY_FONTS');
+      if (queryFonts !== '0' && queryFonts.toLowerCase() !== 'false') {
+        this.monospaceFonts = [
+          ...new Set<string>(
+            findFontsSync({ monospace: true }).map((fd) => {
+              return process.platform === 'darwin' ? fd.postscriptName : fd.family;
+            }),
+          ),
+        ].sort((a, b) => a.localeCompare(b));
+        this.proportionalFonts = [
+          ...new Set<string>(
+            findFontsSync({ monospace: false }).map((fd) => 
+              fd.family))].sort((a, b) => a.localeCompare(b),
+        );
+      }
+    } catch (err: unknown) {
+      logger().logError(safeError(err));
+    }
 
     ipcMain.on('desktop_browse_url', (event, url: string) => {
       // TODO: review if we need additional validation of URL
@@ -532,7 +557,6 @@ export class GwtCallback extends EventEmitter {
     ipcMain.handle(
       'desktop_show_message_box',
       async (event, type, caption, message, buttons, defaultButton, cancelButton) => {
-
         let openDialogOptions: MessageBoxOptions;
         if (process.platform === 'darwin') {
           openDialogOptions = {
@@ -715,26 +739,12 @@ export class GwtCallback extends EventEmitter {
       ElectronDesktopOptions().setUseGpuDriverBugWorkarounds(!disable);
     });
 
-    ipcMain.on('desktop_show_license_dialog', () => {
-      GwtCallback.unimpl('desktop_show_license_dialog');
-    });
-
     ipcMain.on('desktop_show_session_server_options_dialog', () => {
       GwtCallback.unimpl('desktop_show_session_server_options_dialog');
     });
 
     ipcMain.handle('desktop_get_init_messages', () => {
       return '';
-    });
-
-    ipcMain.handle('desktop_get_license_status_message', () => {
-      GwtCallback.unimpl('desktop_get_license_status_messages');
-      return '';
-    });
-
-    ipcMain.handle('desktop_allow_product_usage', () => {
-      GwtCallback.unimpl('desktop_allow_product_usage');
-      return true;
     });
 
     ipcMain.handle('desktop_get_desktop_synctex_viewer', () => {
@@ -851,6 +861,10 @@ export class GwtCallback extends EventEmitter {
       this.emit(GwtCallback.SESSION_QUIT);
     });
 
+    ipcMain.on('desktop_stop_main_thread', () => {
+      process.crash();
+    });
+
     ipcMain.handle('desktop_get_session_server', () => {
       GwtCallback.unimpl('desktop_get_session_server');
       return {};
@@ -921,6 +935,10 @@ export class GwtCallback extends EventEmitter {
       }
       return resolveTemplateVar(varName, this.errorPageData);
     });
+
+    // pro-only license start
+
+    // pro-only license end
   }
 
   addMacOSVersionError(): void {

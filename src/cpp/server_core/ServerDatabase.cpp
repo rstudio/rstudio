@@ -341,6 +341,11 @@ Error migrationsDir(FilePath* pMigrationsDir)
    return Success();
 }
 
+core::database::Driver getConfiguredDriver(ConnectionOptions options) {
+   ConfiguredDriverVisitor visitor;
+   return boost::apply_visitor(visitor, options);
+}
+
 } // anonymous namespace
 
 core::database::Driver getConfiguredDriver(const std::string& databaseConfigFile)
@@ -353,8 +358,7 @@ core::database::Driver getConfiguredDriver(const std::string& databaseConfigFile
       return core::database::Driver::Unknown;
    }
 
-   ConfiguredDriverVisitor visitor;
-   return boost::apply_visitor(visitor, options);
+   return getConfiguredDriver(options);
 }
 
 Error initialize(const std::string& databaseConfigFile,
@@ -402,7 +406,7 @@ Error initialize(const std::string& databaseConfigFile,
    if (error)
       return error;
    
-   if(getConfiguredDriver() == Driver::Postgresql)
+   if (getConfiguredDriver(options) == Driver::Postgresql)
    {
       validateMinimumPostgreSqlVersion();
    }

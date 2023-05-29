@@ -181,6 +181,8 @@ Error httpServerInit()
 
    s_pHttpServer.reset(server::httpServerCreate(additionalHeaders));
 
+   s_pHttpServer->addStreamingUriPrefix("/events/get_events");
+
    // set server options
    s_pHttpServer->setAbortOnResourceError(true);
    s_pHttpServer->setScheduledCommandInterval(
@@ -415,6 +417,7 @@ Error waitForSignals()
       // SIGINT, SIGQUIT, SIGTERM
       else if (sig == SIGINT || sig == SIGQUIT || sig == SIGTERM)
       {
+         LOG_DEBUG_MESSAGE("Received termination signal: " + std::to_string(sig));
          //
          // Here is where we can perform server cleanup e.g.
          // closing pam sessions
@@ -644,7 +647,7 @@ int main(int argc, char * const argv[])
       {
          Error error = setResourceLimit(core::system::FilesLimit, 4096);
          if (error)
-            return core::system::exitFailure(error, ERROR_LOCATION);
+            LOG_WARNING_MESSAGE("Unable to increase open files limit to 4096: " + error.asString());
       }
 
       // set working directory

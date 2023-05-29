@@ -4,13 +4,21 @@
 ### New
 
 #### RStudio IDE
-- Updated to Electron 23.1.2 (#12785)
+- Updated to Electron 23.3.0 (#13030)
 - Moved Help panel font size setting to Appearance tab in Global Options (#12816)
 - Update openssl to 1.1.1t for Windows (rstudio/rstudio-pro#3675)
 - Improve visibility of focus rectangles on Server / Workbench Sign In page [Accessibility] (#12846)
+- Added ability to enable minidump generation for Electron crashes (#13025)
+- Added Quarto for Linux arm64 (#12411)
+- Updated zlib to 1.2.13 (rstudio/rstudio-pro#4531)
 
 #### Posit Workbench
-- 
+- Added the `session-connections-block-suspend` session option, controlling whether active connections can block suspension of an R session.
+- Added the `session-external-pointers-block-suspend` session option, controlling whether R objects containing external pointers can block suspension of an R session.
+- Added http server request processing statistics for the rserver, logged as info/debug messages, controlled by the option `www-stats-monitor-seconds` in rserver.conf (rstudio/rstudio-pro#4554).
+- Updated code server to 4.12.0 to address security vulnerabilities
+- Updated nginx to supported version 1.24.0 (rstudio/rstudio-pro#4532)
+- Updated PCRE to PCRE2, version 10.42 (rstudio/rstudio-pro#4530)
 
 ### Fixed
 
@@ -34,6 +42,20 @@
 - Fixed bug where the OK button was disabled in Choose R dialog when only one version of R installed (#12916)
 - Improved robustness when chosing custom R version in Windows desktop (#12969)
 - Fixed bug that prevented RStudio Desktop from starting on Linux if desktop.ini was unreadable (#12963)
+- Improved RStudio Desktop startup behavior when user state folder inaccessible (#12988)
+- Fixed saving files to UNC paths on Windows (#12652, #12935)
+- Fixed window disappearing when restoring from maximized on macOS (#13010)
+- Fixed Project Build Tools preferences pane showing &mdash text in French UI (#11134)
+- Fixed inserting cross references in a Quarto document showing no references (#12882)
+- Fixed keyboard shortcut help not displaying in Emacs or Sublime Text mode (#11376)
+- Fixed issue with rendering development documentation with R 4.3.0 (#12945)
+- Fixed issue with use of "Whole word" with Find in Files search (#13017)
+- Fixed issue with diagnostics freezing session with documents containing pipebind operator (#13091)
+- Fixed issue with stopping a Quarto Shiny doc render on Windows (#12546)
+- Fixed issue causing sessions to fail to start if repos contained NA value (#12946)
+- Fixed "Error Retrieving Help" bug when data preview column contains `NA` values (#12918)
+- Fixed hang when restarting R or closing IDE after rendering a Quarto document (#12836)
+- Fixed an issue where large R objects could adversely affect the performance of the IDE (#13103)
 
 #### Posit Workbench
 - Fixed unlabeled buttons for screen reader users when page is narrow [Accessibility] (rstudio/rstudio-pro#4340)
@@ -45,3 +67,8 @@
 - Add keyboard support to the "Show list" control in New Session dialog [Accessibility] (rstudio/rstudio-pro#4461)
 - Fixed job details to be hidden from screen reader when visibly hidden [Accessibility] (rstudio/rstudio-pro#4466)
 - Fixed sign-in pages to be more mobile and zoom friendly [Accessibility] (rstudio/rstudio-pro#4472)
+- Cache results for user and group lookups (rstudio/rstudio-pro#4451)
+- Increase timeout for stale messages error (rstudio/rstudio-pro#4325)
+- Reduce database queries and remove locking around DB calls (rstudio/rstudio-pro#4492)
+- Eliminate assertion failed error when reloading config with load balancing enabled (rstudio/rstudio-pro#4504)
+- Fix verify-installation failure when jupyter sessions were enabled but jupyter was not installed (rstudio/rstudio-pro#4390)

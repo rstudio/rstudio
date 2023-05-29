@@ -28,6 +28,8 @@ pipeline {
   }
 
   environment {
+    OS = "windows"
+    ARCH = "x86_64"
     PACKAGE_OS = 'Windows'
     AWS_ACCOUNT_ID = '749683154838'
     GIT_URL = "https://github.com/rstudio/rstudio"
@@ -67,7 +69,7 @@ pipeline {
                 RSTUDIO_VERSION_MINOR,
                 RSTUDIO_VERSION_PATCH,
                 RSTUDIO_VERSION_SUFFIX) = utils.getVersion(!params.DAILY)
-              RSTUDIO_FLOWER = utils.getFlower()
+              RSTUDIO_VERSION_FLOWER = utils.getFlower()
               currentBuild.displayName = "${RSTUDIO_VERSION}"
               IS_PRO = RSTUDIO_VERSION_SUFFIX.contains('pro')
               PACKAGE_NAME = "RStudio-${IS_PRO ? 'pro-' : ''}${RSTUDIO_VERSION.replace('+', '-')}"
@@ -103,7 +105,7 @@ pipeline {
           stage('Build Windows') {
             agent {
               docker {
-                image "jenkins/ide:${IS_PRO? 'pro-' : '' }windows-x86_64-${RSTUDIO_FLOWER}"
+                image "jenkins/ide:${utils.getDockerTag()}"
                   registryUrl 'https://263245908434.dkr.ecr.us-east-1.amazonaws.com'
                   registryCredentialsId 'ecr:us-east-1:aws-build-role'
                   reuseNode true
@@ -283,24 +285,26 @@ pipeline {
           stage ("Update Daily Build Redirects") {
             agent { label "linux" } 
 
-            when {
-              allOf {
-                expression { return !env.IS_PRO }
-                expression { return params.PUBLISH }
-                expression { return params.DAILY }
-                environment name: 'FLAVOR', value: 'Electron'
+            // for pro, update with Qt
+            // for open source, update with Electron
+            when { 
+              anyOf {
+                expression { return params.PUBLISH && params.DAILY && IS_PRO == true && FLAVOR == "Desktop" }
+                expression { return params.PUBLISH && params.DAILY && IS_PRO == false && FLAVOR == "Electron" }
+                expression { return params.PUBLISH && params.DAILY && FLAVOR == "Server" }
               }
             }
 
             environment {
               RSTUDIO_ORG_PEM = credentials('www-rstudio-org-pem')
+              AWS_PATH= "https://s3.amazonaws.com/rstudio-ide-build/${FLAVOR.toLowerCase()}/windows"
             }
 
             steps {
               // the updateDailyRedirects uses a bash script, so much be run on linux
               // Also depends on flavor, so must be in the matrix
               script {
-                utils.updateDailyRedirects "desktop/windows/${PACKAGE_NAME}.exe"
+                utils.updateDailyRedirects "${AWS_PATH}/${PACKAGE_NAME}.exe"
               }
             }
 

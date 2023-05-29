@@ -199,6 +199,8 @@ private:
          username_ = handler::userIdentifierToLocalUsername(userIdentifier_);
       }
 
+      pConnection->setUsername(username_);
+
       if (refreshAuthCookies_)
          handler::refreshAuthCookies(userIdentifier_, pConnection->request(), &pConnection->response());
 

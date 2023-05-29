@@ -162,6 +162,9 @@
   var defaultMaxColumns = 50;
   var maxColumns = defaultMaxColumns;
 
+  // maximum number of rows to draw; -1 implies all rows
+  var maxRows = -1;
+
   // boolean for whether bootstrapping is occurring, used to
   // rate limit certain events
   var bootstrapping = false;
@@ -1030,6 +1033,8 @@
         parsedLocation.id = queryVar[1];
       } else if (queryVar[0] == "max_cols") {
         parsedLocation.maxCols = parseInt(queryVar[1], 10);
+      } else if (queryVar[0] == "max_rows") {
+        parsedLocation.maxRows = parseInt(queryVar[1], 10);
       }
     }
 
@@ -1096,10 +1101,16 @@
     var env = parsedLocation.env,
       obj = parsedLocation.obj,
       cacheKey = parsedLocation.cacheKey;
+
     maxColumns = parsedLocation.maxCols;
     if (maxColumns == -1) 
     {
       maxColumns = cols.length;
+    }
+
+    if (parsedLocation.maxRows)
+    {
+      maxRows = parsedLocation.maxRows;
     }
     
     // keep track of column types for later render
@@ -1148,6 +1159,7 @@
           d.show = "data";
           d.column_offset = columnOffset;
           d.max_columns = maxColumns;
+          d.max_rows = maxRows;
         },
         error: function (jqXHR) {
           if (jqXHR.responseText[0] !== "{") showError(jqXHR.responseText);

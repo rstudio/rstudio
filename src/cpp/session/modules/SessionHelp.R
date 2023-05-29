@@ -488,13 +488,14 @@ options(help_type = "html")
       bits <- c()
       nchars <- 55
       i <- 1
-      while (nchars > 1 && i < length(column)) {
+      while (nchars > 1 && i <= length(column)) {
          current <- formatted[i]
-         if (nchar(current) > nchars) {
+         currentNChars <- nchar(current, keepNA = FALSE)
+         if (currentNChars > nchars) {
             current <- pillar$str_trunc(current, nchars)
          }
          bits <- c(bits, current)
-         nchars <- nchars - nchar(current) - 2
+         nchars <- nchars - currentNChars - 2
          i <- i + 1
       }
       
@@ -526,45 +527,84 @@ options(help_type = "html")
 
 .rs.addFunction("getHelpDataFrame", function(name, src, envir = parent.frame())
 {
+   # try and retrieve the help documentation
    out <- .rs.getHelp(name, src)
+   
+   # Return help page as-is if requested by user
+   showDataPreview <- getOption("rstudio.help.showDataPreview", default = TRUE)
+   if (!showDataPreview)
+      return(out)
 
-   # If 'src' is the name of something on the searchpath, grad the data
+   # try and figure out the data + title
    data <- NULL
    title <- name
+   
+   # If 'src' is the name of something on the search path, grab the data
    pos <- match(src, search(), nomatch = -1L)
    if (pos >= 0)
    {
       data <- tryCatch(get(name, pos = pos), error = function(e) NULL)
    }
 
-   if (is.null(data)) {
+   # if that failed, try to look it up anywhere
+   if (is.null(data))
+   {
       title <- paste0(src, "$", name)
       data <- .rs.getAnywhere(title, envir)
    }
 
+   # if we still couldn't find any data, just use the help document
    if (is.null(data))
       return(out)
 
+   # Generate the help pre-amble
    if (is.null(out))
    {
-      ncol <- ncol(data)
+      fmt <- paste(
+         "<h2>%s</h2>",
+         "<h3>Description</h3>",
+         "<p>%i obs. of %i %s</p>",
+         sep = ""
+      )
+      
+      vbls <- if (ncol(data) == 1) "variable" else "variables"
+      html <- sprintf(fmt, name, nrow(data), ncol(data), vbls)
+      
       out <- list(
-         html = paste0("<h2>", name, "</h2><h3>Description</h3><p>", nrow(data), " obs. of ", ncol, " variable", if(ncol > 1) "s", "</p>"),
+         html = html,
          signature = "-", 
          pkgname = src, 
          help = FALSE   
       )
    }
    
-   .rs.assignCachedData("completion_popup_dataframe", data, "")
-   out$view <- paste0("grid_resource/gridviewer.html?env=_rs_no_env&cache_key=completion_popup_dataframe&max_cols=50")
-
+   # NOTE: We previously tried assigning and using cached data, but this is
+   # not safe since help documents are cached after they are first created.
+   #
+   # Instead, we need to make sure the data viewer references the actual
+   # object in the place it's defined.
+   
+   # build a uri
+   attrs <- c(
+      env       = src,
+      obj       = name,
+      max_rows  = 1000,
+      max_cols  = 100
+   )
+   
+   uri <- paste(
+      "grid_resource/gridviewer.html",
+      paste(names(attrs), attrs, sep = "=", collapse = "&"),
+      sep = "?"
+   )
+   
+   out$view <- uri
    out
 })
 
 .rs.addFunction("getHelpFunction", function(name, src, envir = parent.frame())
 {
-   # If 'src' is the name of something on the searchpath, get that object
+   # If 'src' is the name of something on the search path, get that object
    # from the search path, then attempt to get help based on that object
    pos <- match(src, search(), nomatch = -1L)
    if (pos >= 0)
@@ -950,12 +990,22 @@ options(help_type = "html")
 
 .rs.addFunction("RdLoadMacros", function(file)
 {
-   dir <- dirname(dirname(file))
-   macros <- suppressWarnings(tools::loadPkgRdMacros(dir))
-   tools::loadPkgRdMacros(
-      file.path(R.home("share"), "Rd", "macros", "system.Rd"),
-      macros = macros
-   )
+   maybePackageDir <- dirname(dirname(file))
+   if (file.exists(file.path(maybePackageDir, "DESCRIPTION")) ||
+       file.exists(file.path(maybePackageDir, "DESCRIPTION.in")))
+   {
+      # NOTE: ?loadPkgRdMacros has:
+      #
+      #   loadPkgRdMacros loads the system Rd macros by default
+      #
+      # so it shouldn't be necessary to load system macros ourselves here
+      tools::loadPkgRdMacros(maybePackageDir)
+   }
+   else
+   {
+      rMacroPath <- file.path(R.home("share"), "Rd/macros/system.Rd")
+      tools::loadRdMacros(rMacroPath)
+   }
 })
 
 .rs.addFunction("Rd2HTML", function(file, package = "")

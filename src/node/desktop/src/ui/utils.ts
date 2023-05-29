@@ -62,7 +62,13 @@ export const checkForNewLanguage = async () => {
  * @return {*}
  */
 export function normalizeSeparators(path: string, separator = '/') {
-  return path.replace(/[\\/]+/g, separator);
+  // don't mess with leading '\\' on a UNC path
+  let prefix = '';
+  if (path.startsWith('\\\\')) {
+    prefix = `${separator}${separator}`;
+    path = path.substring(2);
+  }
+  return `${prefix}${path.replace(/[\\/]+/g, separator)}`;
 }
 
 /**
@@ -77,3 +83,6 @@ export function normalizeSeparatorsNative(path: string) {
   const separator = process.platform === 'win32' ? '\\' : '/';
   return normalizeSeparators(path, separator);
 }
+
+// executable to use on Windows when spawning R to query path information
+export const kWindowsRExe = 'Rterm.exe';

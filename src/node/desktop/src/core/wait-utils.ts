@@ -1,7 +1,7 @@
 /*
  * wait-utils.ts
  *
- * Copyright (C) 2022 by Posit Software, PBC
+ * Copyright (C) 2023 by Posit Software, PBC
  *
  * Unless you have received this program directly from Posit Software pursuant
  * to the terms of a commercial license agreement with Posit Software, then
@@ -15,6 +15,7 @@
 
 import { Err, success } from './err';
 import util from 'util';
+import { clearInterval } from 'timers';
 
 export const setTimeoutPromise = util.promisify(setTimeout);
 
@@ -75,4 +76,60 @@ export async function waitWithTimeout(
   }
 
   return Error('Exceeded timeout');
+}
+
+/**
+ * Creates a Promise that sets a timeout for the specified number
+ * of seconds and resolves once the timeout is complete. `await` this
+ * promise to effectively "sleep" for the specified seconds.
+ * @param seconds Number of seconds to wait.
+ * @returns a Promise that resolves when the timeout is complete.
+ */
+export async function sleepPromise(seconds: number): Promise<void> {
+  return new Promise((resolve) => setTimeout(resolve, secondsToMs(seconds)));
+}
+
+/**
+ * Converts seconds to milliseconds.
+ * @param seconds Number of seconds to convert to milliseconds.
+ * @returns seconds converted to milliseconds.
+ */
+export function secondsToMs(seconds: number): number {
+  return seconds * 1000;
+}
+
+export class FunctionInterval {
+  // eslint-disable-next-line @typescript-eslint/ban-types
+  func: Function;
+  milliseconds: number;
+  intervalId: number | null = null;
+
+  /**
+   * Allows a function to be executed on an interval that can be started
+   * and stopped as needed.
+   * @param func Function to execute on an interval.
+   *             WARNING: this accepts anything that "looks" like a function which can be unsafe.
+   *             See https://typescript-eslint.io/rules/ban-types/ for more information.
+   * @param milliseconds Number of milliseconds to wait before executing the function.
+   */
+  // eslint-disable-next-line @typescript-eslint/ban-types
+  constructor(func: Function, milliseconds: number) {
+    this.func = func;
+    this.milliseconds = milliseconds;
+  }
+
+  /**
+   * Starts the interval only if the interval has not already been set.
+   */
+  start() {
+    if (!this.intervalId) this.intervalId = setInterval(this.func, this.milliseconds);
+  }
+
+  /**
+   * Stops the interval if it was set.
+   */
+  stop() {
+    if (this.intervalId) clearInterval(this.intervalId);
+    this.intervalId = null;
+  }
 }

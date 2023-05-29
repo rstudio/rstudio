@@ -33,6 +33,8 @@
 #include <core/BoostErrors.hpp>
 #include <core/Log.hpp>
 #include <core/ScheduledCommand.hpp>
+#include <core/PeriodicCommand.hpp>
+#include <core/StringUtils.hpp>
 #include <core/system/System.hpp>
 
 #include <core/http/Request.hpp>
@@ -46,6 +48,7 @@
 #include <core/http/SocketUtils.hpp>
 #include <core/http/SocketAcceptorService.hpp>
 
+using namespace boost::placeholders;
 
 namespace rstudio {
 namespace core {
@@ -75,7 +78,8 @@ public:
                    const std::string& baseUri = std::string(),
                    bool disableOriginCheck = true,
                    const std::vector<boost::regex>& allowedOrigins = std::vector<boost::regex>(),
-                   const Headers& additionalResponseHeaders = Headers())
+                   const Headers& additionalResponseHeaders = Headers(),
+                   const int statsMonitorSeconds = 0)
       : acceptorService_(),
         abortOnResourceError_(false),
         serverName_(serverName),
@@ -85,7 +89,11 @@ public:
         additionalResponseHeaders_(additionalResponseHeaders),
         scheduledCommandInterval_(boost::posix_time::seconds(3)),
         scheduledCommandTimer_(acceptorService_.ioService()),
-        running_(false)
+        running_(false),
+        totalTime_(boost::posix_time::seconds(0)),
+        minTime_(boost::posix_time::seconds(0)),
+        maxTime_(boost::posix_time::seconds(0)),
+        statsMonitorSeconds_(statsMonitorSeconds)
    {
    }
    
@@ -192,17 +200,138 @@ public:
       return Success();
    }
 
+   bool logStatsMonitor()
+   {
+      struct ConnInfo {
+         bool closed, requestParsed, sendingResponse;
+         std::string requestUri, username;
+         boost::posix_time::ptime startTime;
+         int requestSequence;
+      };
+
+      struct ServerInfo {
+         long numRequests;
+         long numStreaming;
+         boost::posix_time::time_duration minTime;
+         boost::posix_time::time_duration maxTime;
+         std::string maxUrl;
+         boost::posix_time::time_duration totalTime;
+
+      };
+      std::vector<ConnInfo> connInfoList;
+      ServerInfo serverInfo;
+      long requestSequence;
+
+      RECURSIVE_LOCK_MUTEX(mutex_)
+      {
+         ConnInfo connInfo;
+         for (boost::weak_ptr<AsyncConnectionImpl<typename ProtocolType::socket>> connectionPtr : connections_)
+         {
+            auto connection = connectionPtr.lock();
+            connInfo.closed = connection->closed();
+            connInfo.requestParsed = connection->requestParsed();
+            connInfo.sendingResponse = connection->sendingResponse();
+            connInfo.requestUri = connection->request().uri();
+            connInfo.username = connection->request().username();
+            connInfo.startTime = connection->startTime();
+            connInfo.requestSequence = connection->requestSequence();
+
+            connInfoList.push_back(connInfo);
+         }
+
+         serverInfo.numRequests = numRequests_;
+         serverInfo.numStreaming = numStreaming_;
+         serverInfo.minTime = minTime_;
+         serverInfo.maxTime = maxTime_;
+         serverInfo.maxUrl = maxUrl_;
+         serverInfo.totalTime = totalTime_;
+
+         numRequests_ = 0;
+         numStreaming_ = 0;
+         minTime_ = boost::posix_time::seconds(0);
+         maxTime_ = boost::posix_time::seconds(0);
+         maxUrl_ = "";
+         totalTime_ = boost::posix_time::seconds(0);
+         requestSequence = requestSequence_;
+      }
+      END_LOCK_MUTEX
+
+      if (serverInfo.numRequests > 0)
+      {
+         long totalMillis = serverInfo.totalTime.total_milliseconds();
+         // A requests/second metric but only considering the wall-clock time it took to deliver the load
+         double responseRate = totalMillis != 0 ?
+                           serverInfo.numRequests / (totalMillis / 1000.0) :
+                           0.0;
+         double requestsPerSec = (serverInfo.numRequests + serverInfo.numStreaming) / (double) statsMonitorSeconds_;
+
+         LOG_INFO_MESSAGE(serverName_ + " status - num requests: " + std::to_string(serverInfo.numRequests) +
+                           ", requests/sec: " + core::string_utils::formatDouble(requestsPerSec, 3) +
+                           ", rate/sec: " + core::string_utils::formatDouble(responseRate, 3) +
+                           ", min: " + std::to_string(serverInfo.minTime.total_milliseconds()) +
+                           "ms, max: " + std::to_string(serverInfo.maxTime.total_milliseconds()) +
+                           "ms (url " + serverInfo.maxUrl + "), num active: " + std::to_string(connInfoList.size()) +
+                           ", num streaming: " + std::to_string(serverInfo.numStreaming) + ", next seq: " + std::to_string(requestSequence));
+         idleIntervalCount_ = 0;
+      }
+      else if (serverInfo.numStreaming > 0 || connInfoList.size() > 0)
+      {
+         LOG_INFO_MESSAGE(serverName_ + " status - num requests: 0, " + " num streaming: " + std::to_string(serverInfo.numStreaming) + ", num active: " + std::to_string(connInfoList.size()));
+      }
+      else
+      {
+         idleIntervalCount_++;
+         if (logIdleIntervals_ != 0 && (idleIntervalCount_ % logIdleIntervals_) == 0)
+            LOG_INFO_MESSAGE(serverName_ + " status - no requests for: " +
+                             std::to_string(((idleIntervalCount_ * statsMonitorSeconds_)/60)) + " minutes");
+      }
+
+      boost::posix_time::ptime now = boost::posix_time::microsec_clock::universal_time();
+      for (const ConnInfo& connInfo : connInfoList)
+      {
+         std::string state;
+         if (connInfo.closed)
+            state = "closed"; // should never happen
+         else if (connInfo.sendingResponse)
+            state = "responding";
+         else if (connInfo.requestParsed)
+            state = "processing";
+         else
+            state = "reading"; // really this is 'accepted' now but likely to spend more time in reading stage
+         boost::posix_time::time_duration requestTime = now - connInfo.startTime;
+         LOG_DEBUG_MESSAGE(" " + serverName_ + ": active uri: " + connInfo.requestUri + " (" +
+                           connInfo.username + ":" + std::to_string(connInfo.requestSequence) + "): " +
+                           state + " " + std::to_string(requestTime.total_seconds()) + "." +
+                           std::to_string(requestTime.total_milliseconds() % 1000) + "s");
+      }
+      return true;
+   }
+
+   void initStatsMonitor()
+   {
+      if (!statsInited_ && statsMonitorSeconds_ != 0)
+      {
+         statsInited_ = true;
+         LOG_INFO_MESSAGE("Server: " + serverName_ + " - stats monitor reporting interval: " + std::to_string(statsMonitorSeconds_) + "s");
+         addScheduledCommand(boost::shared_ptr<ScheduledCommand>(new PeriodicCommand(
+                             boost::posix_time::seconds(statsMonitorSeconds_),
+                             boost::bind(&AsyncServerImpl<ProtocolType>::logStatsMonitor, this), false)));
+      }
+   }
+
    virtual Error run(std::size_t threadPoolSize = 1)
    {
       if (running_)
          return Success();
+
+      initStatsMonitor();
 
       try
       {
          // update state
          running_ = true;
 
-         // get ready for next connection
+         // get ready for first connection
          acceptNextConnection();
 
          // initialize scheduled command timer
@@ -238,6 +367,7 @@ public:
    
    virtual void stop()
    {
+      LOG_DEBUG_MESSAGE("Stopping server: " + serverName_);
       // close acceptor so we free up the main port immediately
       boost::system::error_code closeEc;
       acceptorService_.closeAcceptor(closeEc);
@@ -283,6 +413,8 @@ public:
       // if we do not specifically close it here, it will attempt to close itself when no shared_ptr to
       // it is held by this server object, causing a bad_weak_ptr exception to be thrown
       ptrNextConnection_->close();
+
+      LOG_DEBUG_MESSAGE("Server stopped: " + serverName_);
    }
    
    virtual void waitUntilStopped()
@@ -333,13 +465,61 @@ private:
       END_LOCK_MUTEX
    }
 
-   void onConnectionClosed(const boost::weak_ptr<AsyncConnectionImpl<typename ProtocolType::socket>>& connection)
+   bool isStreamingUri(const std::string& uri)
    {
+      for (auto it = streamUris_.begin(); it != streamUris_.end(); it++)
+      {
+         if (uri.rfind(*it, 0) == 0)
+            return true;
+      }
+      return false;
+   }
+
+   void onConnectionClosed(const boost::weak_ptr<AsyncConnectionImpl<typename ProtocolType::socket>>& connectionPtr, bool fromDestructor)
+   {
+      boost::posix_time::ptime now = boost::posix_time::microsec_clock::universal_time();
+
+      std::string debugMsg;
+
       RECURSIVE_LOCK_MUTEX(mutex_)
       {
-         connections_.erase(connection);
+         if (!fromDestructor)
+         {
+            auto connection = connectionPtr.lock();
+            boost::posix_time::ptime startTime = connection->startTime();
+            if (!startTime.is_not_a_date_time())
+            {
+               if (now > startTime)
+               {
+                  if (!isStreamingUri(connection->request().uri()))
+                  {
+                     boost::posix_time::time_duration requestTime = now - startTime;
+                     numRequests_++;
+                     totalTime_ += requestTime;
+                     if (minTime_ == boost::posix_time::seconds(0) || minTime_ > requestTime)
+                        minTime_ = requestTime;
+                     if (maxTime_ < requestTime)
+                     {
+                        maxTime_ = requestTime;
+                        maxUrl_ = connection->request().uri();
+                     }
+                  }
+                  else
+                     numStreaming_++;
+               }
+               else
+                  debugMsg = "Request start time is before current time?";
+            }
+            else
+               debugMsg = "Closing connection that never started";
+         }
+
+         connections_.erase(connectionPtr);
       }
       END_LOCK_MUTEX
+
+      if (!debugMsg.empty())
+         LOG_DEBUG_MESSAGE(debugMsg);
    }
 
    void acceptNextConnection()
@@ -353,6 +533,8 @@ private:
          // optional ssl context - only used for SSL connections
          sslContext_,
 
+         requestSequence_++,
+
          // headers parsed handler
          boost::bind(&AsyncServerImpl<ProtocolType>::onHeadersParsed,
                      this, _1, _2),
@@ -363,7 +545,7 @@ private:
 
          // close handler
          boost::bind(&AsyncServerImpl<ProtocolType>::onConnectionClosed,
-                     this, _1),
+                     this, _1, _2),
 
          // request filter
          boost::bind(&AsyncServerImpl<ProtocolType>::connectionRequestFilter,
@@ -388,6 +570,9 @@ private:
       if (ec == boost::asio::error::operation_aborted)
          return;
 
+      // Warning about performance: until the acceptNextConnection is performed, the server is not accepting
+      // new connections and so it's important no long-running or I/O ops are performed in this next section
+      // or we could lose out on processing opportunities on the server (i.e. a bottleneck)
       try
       {
          if (!ec) 
@@ -731,6 +916,11 @@ private:
       pConnection->response().setStatusCode(http::status::NotFound);
    }
 
+   void addStreamingUriPrefix(const std::string& uri)
+   {
+      streamUris_.insert(uri);
+   }
+
 private:
    boost::recursive_mutex mutex_;
    SocketAcceptorService<ProtocolType> acceptorService_;
@@ -753,6 +943,21 @@ private:
    ResponseFilter responseFilter_;
    NotFoundHandler notFoundHandler_;
    bool running_;
+
+   bool statsInited_ = false;
+   long numRequests_ = 0;
+   long numStreaming_ = 0;
+   long requestSequence_ = 0;
+   long idleIntervalCount_ = 0;
+   boost::posix_time::time_duration totalTime_;
+   boost::posix_time::time_duration minTime_;
+   boost::posix_time::time_duration maxTime_;
+   std::string maxUrl_;
+   // The prefix of URLs to record stats using streaming
+   std::set<std::string> streamUris_;
+   int statsMonitorSeconds_;
+   // Number of stats monitor intervals to wait before logging idle server info messages (0 to disable)
+   int logIdleIntervals_ = 60;
 };
 
 } // namespace http

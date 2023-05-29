@@ -14,7 +14,7 @@
  *
  */
 
-import { BrowserWindow, Rectangle, screen } from 'electron';
+import { BrowserWindow } from 'electron';
 import Store from 'electron-store';
 import { existsSync, lstatSync } from 'fs';
 import { basename, dirname, join } from 'path';
@@ -25,6 +25,8 @@ import { RStudioUserState } from '../../types/user-state-schema';
 
 import { generateSchema, legacyPreferenceManager } from './../preferences/preferences';
 import DesktopOptions from './desktop-options';
+import { kWindowsRExe } from '../../ui/utils';
+import { WindowBounds, positionAndEnsureVisible } from '../window-utils';
 
 const kProportionalFont = 'font.proportionalFont';
 const kFixedWidthFont = 'font.fixedWidthFont';
@@ -73,44 +75,6 @@ export function ElectronDesktopOptions(directory = '', legacyOptions?: DesktopOp
  */
 export function clearOptionsSingleton(): void {
   options = null;
-}
-
-/**
- * Window geometry
- */
-export interface WindowBounds {
-  height: number;
-  width: number;
-  x: number;
-  y: number;
-  maximized: boolean;
-}
-
-/**
- * Check if two Rectangles intersect.
- * 
- * @param one First rectangle
- * @param two Second rectangle
- * 
- * @returns True if at least one pixel is within both rectangles.
- */
-export function intersects(first: Rectangle, second: Rectangle): boolean {
-  const firstRight = first.x + first.width;
-  const firstBottom = first.y + first.height;
-  const secondRight = second.x + second.width;
-  const secondBottom = second.y + second.height;
-
-  if (first.x >= secondRight || firstRight <= second.x) {
-    // Don't overlap horizontally
-    return false;
-  }
-
-  if (first.y >= secondBottom || firstBottom <= second.y) {
-    // Don't overlap vertically
-    return false;
-  }
-
-  return true;
 }
 
 /**
@@ -198,45 +162,9 @@ export class DesktopOptionsImpl implements DesktopOptions {
   private restoreMainWindowBoundsImpl(mainWindow: BrowserWindow): void {
     const savedBounds = this.windowBounds();
 
-    // Check if saved bounds is still partially in one of the available displays.
-
-    // Shrink the window rectangle a bit just to capture cases like RStudio
-    // too close to edge of window and hardly showing at all.
-    const checkRect = {
-      height: savedBounds.height - 5,
-      width: savedBounds.width - 5,
-      x: savedBounds.x + 5,
-      y: savedBounds.y + 5
-    };
-
-    // check for intersection
-    const goodDisplays = screen.getAllDisplays().find((display) => {
-      return intersects(checkRect, display.workArea);
-    });
-
-    // Restore it to previous location if possible, or center of primary display otherwise
-    if (goodDisplays) {
-      mainWindow.setBounds(savedBounds);
-    } else {
-      const primaryBounds = screen.getPrimaryDisplay().bounds;
-      const newSize = {
-        width: Math.min(properties.view.default.windowBounds.width, primaryBounds.width),
-        height: Math.min(properties.view.default.windowBounds.height, primaryBounds.height),
-      };
-
-      mainWindow.setSize(newSize.width, newSize.height);
-
-      // window.center() doesn't consistently pick the primary display,
-      // so manually calculating the center of the primary display
-      mainWindow.setPosition(
-        primaryBounds.x + (primaryBounds.width - newSize.width) / 2,
-        primaryBounds.y + (primaryBounds.height - newSize.height) / 2,
-      );
-    }
-
-    // ensure a minimum size for the window on restore
-    const currSize = mainWindow.getSize();
-    mainWindow.setSize(Math.max(300, currSize[0]), Math.max(200, currSize[1]));
+    positionAndEnsureVisible(
+      mainWindow, savedBounds,
+      properties.view.default.windowBounds.width, properties.view.default.windowBounds.height);
 
     if (savedBounds.maximized) {
       mainWindow.maximize();
@@ -395,23 +323,20 @@ if (process.platform === 'darwin') {
 }
 
 /**
- * If user manually chooses bin\R.exe, sessions won't load, so insert the 
+ * If user manually chooses bin\R.exe, sessions won't load, so insert the
  * architecture folder (i386 if they are on a 32-bit machine, otherwise x64).
  *
  * If they want to use 32-bit R on a 64-bit machine they will need to
  * choose it directly from the i386 folder.
- * 
- * Also correct the case where they selected something other than R.exe, such 
- * as RScript.exe.
- * 
- * @param rExePath Full path to R.exe
- * @returns Full path to R.exe including arch folder
+ *
+ * Use Rterm.exe instead of R.exe (or anything else the user might have
+ * chosen; we can't prevent them from choosing arbitrary files).
+ *
+ * @param rExePath Full path to Rterm.exe
+ * @returns Full path to Rterm.exe including arch folder
  */
 export function fixWindowsRExecutablePath(rExePath: string): string {
-  if (process.platform !== 'win32' ||
-      !existsSync(rExePath) || 
-      lstatSync(rExePath).isDirectory()) {
-
+  if (process.platform !== 'win32' || !existsSync(rExePath) || lstatSync(rExePath).isDirectory()) {
     // unexpected situation: just leave it as-is
     return rExePath;
   }
@@ -421,13 +346,13 @@ export function fixWindowsRExecutablePath(rExePath: string): string {
   if (selectedDir === 'bin') {
     // User picked bin\*.exe; insert the subfolder matching the machine's architecture.
     const archDir = process.arch === 'x32' ? 'i386' : 'x64';
-    rExePath = join(dirname(rExePath), archDir, 'R.exe');
+    rExePath = join(dirname(rExePath), archDir, kWindowsRExe);
     logger().logDebug(`User selected ${origPath}, replacing with ${rExePath}`);
   } else {
-    // Even if they chose the right folder, make sure they picked R.exe
+    // Even if they chose the right folder, make sure they picked Rterm.exe
     const exe = basename(rExePath).toLowerCase();
-    if (exe !== 'r.exe') {
-      rExePath = join(dirname(rExePath), 'R.exe');
+    if (exe !== kWindowsRExe.toLowerCase()) {
+      rExePath = join(dirname(rExePath), kWindowsRExe);
       logger().logDebug(`User selected ${origPath}, replacing with ${rExePath}`);
     }
   }

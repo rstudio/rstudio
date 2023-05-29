@@ -27,9 +27,9 @@ public interface FindInFilesServerOperations
                   boolean ignoreCase,
                   FileSystemItem directory,
                   JsArrayString includeFilePatterns,
+                  JsArrayString excludeFilePatterns,
                   boolean useGitGrep, 
                   boolean excludeGitIgnore,
-                  JsArrayString excludeFilePatterns,
                   ServerRequestCallback<String> requestCallback);
 
    void stopFind(String findOperationHandle,
@@ -39,12 +39,13 @@ public interface FindInFilesServerOperations
 
    void previewReplace(String searchString,
                        boolean regex,
+                       boolean isWholeWord,
                        boolean searchIgnoreCase,
                        FileSystemItem dictionary,
                        JsArrayString includeFilePatterns,
+                       JsArrayString excludeFilePatterns,
                        boolean useGitGrep,
                        boolean excludeGitIgnore,
-                       JsArrayString excludeFilePatterns,
                        String replaceString,
                        ServerRequestCallback<String> requestCallback);
 
@@ -54,9 +55,9 @@ public interface FindInFilesServerOperations
                         boolean searchIgnoreCase,
                         FileSystemItem dictionary,
                         JsArrayString includeFilePatterns,
+                        JsArrayString excludeFilePatterns,
                         boolean useGitGrep,
                         boolean excludeGitIgnore,
-                        JsArrayString excludeFilePatterns,
                         int searchResults,
                         String replaceString,
                         ServerRequestCallback<String> requestCallback);

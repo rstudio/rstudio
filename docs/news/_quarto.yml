@@ -52,6 +52,8 @@ format:
     theme:
       - cosmo
       - styles/styles.scss
+    include-in-header: _ga-header-tag.html
+    include-before-body: _ga-body-tag.html
     toc: true
     code-overflow: scroll
 

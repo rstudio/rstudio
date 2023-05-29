@@ -28,6 +28,7 @@ import { getComponentVersions } from './utils';
 import { activateWindow } from './window-utils';
 import { resolveProjectFile } from './application-launch';
 import { existsSync } from 'fs';
+import { safeError } from '../core/err';
 
 // RStudio command-line switches
 export const kRunDiagnosticsOption = '--run-diagnostics';
@@ -215,7 +216,10 @@ export class ArgsManager {
 
   handleLogLevel() {
     const logOptions = new LogOptions();
-
-    setLogger(new WinstonLogger(logOptions));
+    try {
+      setLogger(new WinstonLogger(logOptions));
+    } catch (error: unknown) {
+      console.error(safeError(error));
+    }
   }
 }

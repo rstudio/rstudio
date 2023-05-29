@@ -30,7 +30,8 @@ describe('Desktop Native Code', () => {
 
   // HTML stripping only available on Mac to handle pasteboard types
   it('cleanClipboard with strip HTML', () => {
-    const htmlText = '<div class="body">\
+    const htmlText =
+      '<div class="body">\
     <div class="pm-content">\
     <h1 data-pm-pandoc-attr="1" class=" pm-heading">Summary</h1>\
     <p>Nullam augue</p>\
@@ -40,24 +41,25 @@ describe('Desktop Native Code', () => {
 
     clipboard.write({
       text: plainText,
-      html: htmlText
+      html: htmlText,
     });
     desktop.cleanClipboard(true);
     assert.equal(clipboard.readHTML('clipboard'), expected);
   });
 
   it('cleanClipboard with HTML', () => {
-    const htmlText = '<div class="body">\
+    const htmlText =
+      '<div class="body">\
     <div class="pm-content">\
     <h1 data-pm-pandoc-attr="1" class=" pm-heading">Summary</h1>\
     <p>Nullam augue</p>\
     </div></div>';
     const plainText = 'Summary\nNullam augue';
-    const expected = process.platform === 'darwin' ?  `<meta charset='utf-8'>${htmlText}` : htmlText;
+    const expected = process.platform === 'darwin' ? `<meta charset='utf-8'>${htmlText}` : htmlText;
 
     clipboard.write({
       text: plainText,
-      html: htmlText
+      html: htmlText,
     });
     desktop.cleanClipboard(false);
     assert.equal(clipboard.readHTML('clipboard'), expected);

@@ -66,7 +66,9 @@ public:
                              bool &launched,
                              const core::http::ResponseHandler& onLaunch = core::http::ResponseHandler(),
                              const core::http::ErrorHandler& onError = core::http::ErrorHandler());
-   void removePendingLaunch(const core::r_util::SessionContext& context);
+   void removePendingLaunch(const core::r_util::SessionContext& context, const bool success = true, const std::string& errorMsg = std::string());
+
+   void removePendingSessionLaunch(const std::string& username, const std::string& sessionId, const bool success = true, const std::string& errorMsg = std::string());
 
    // set a custom session launcher
    typedef boost::function<core::Error(
@@ -97,7 +99,7 @@ private:
                         boost::asio::io_service&,
                         const core::r_util::SessionLaunchProfile& profile);
 
-   void cleanStalePendingLaunches();
+   int cleanStalePendingLaunches();
 
 private:
    // pending launches

@@ -16,7 +16,14 @@
 import { describe } from 'mocha';
 import { assert } from 'chai';
 
-import { generateRandomPort, generateShortenedUuid, generateUuid, isCentOS } from '../../../src/core/system';
+import { FilePath } from '../../../src/core/file-path';
+import {
+  fixupExecutablePath,
+  generateRandomPort,
+  generateShortenedUuid,
+  generateUuid,
+  isCentOS,
+} from '../../../src/core/system';
 
 describe('System', () => {
   it('generateUuid returns uuid string with dashes', () => {
@@ -50,5 +57,20 @@ describe('System', () => {
     if (process.platform !== 'linux') {
       assert.isFalse(centOS);
     }
+  });
+  it('fixupExecutablePath adds missing exe extension on Windows', () => {
+    const path = new FilePath('hello');
+    const fixedPath = fixupExecutablePath(path);
+    const exeExtension = '.exe';
+    if (process.platform === 'win32') {
+      assert.isTrue(fixedPath.getAbsolutePath().endsWith(exeExtension));
+    } else {
+      assert.isFalse(fixedPath.getAbsolutePath().endsWith(exeExtension));
+    }
+  });
+  it('fixupExecutablePath does not add exe extension if already there', () => {
+    const path = new FilePath('helloworld.exe');
+    const fixedPath = fixupExecutablePath(path);
+    assert.equal(path.getAbsolutePath(), fixedPath.getAbsolutePath());
   });
 });

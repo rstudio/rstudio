@@ -609,6 +609,7 @@ See `/src/gwt/tools/i18n-helpers/README.md`.
             <separator/>
             <cmd refid="showDomElements"/>
             <cmd refid="showShortcutCommand"/>
+            <cmd refid="crashDesktopApplication"/>
             <separator/>
             <cmd refid="enableProsemirrorDevTools"/>
          </menu>
@@ -4201,6 +4202,10 @@ See `/src/gwt/tools/i18n-helpers/README.md`.
 
    <cmd id="showShortcutCommand"
         menuLabel="Show _Keyboard Shortcut Commands"
+        rebindable="false"/>
+
+   <cmd id="crashDesktopApplication"
+        menuLabel="Crash RStudio Desktop (DA_NGER)"
         rebindable="false"/>
 
    <cmd id="showCommandPalette"

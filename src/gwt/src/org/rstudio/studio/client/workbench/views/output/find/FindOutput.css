@@ -33,7 +33,7 @@
 .lineValue {
    font-family: fixedWidthFont;
    padding-right: 2px;
-   white-space: nowrap;
+   white-space: pre;
    overflow-x: hidden;
    text-overflow: ellipsis;
 }

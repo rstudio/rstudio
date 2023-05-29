@@ -121,7 +121,7 @@ private:
             if (pSocket_->is_open())
                pSocket_->cancel();
             else
-               LOG_ERROR_MESSAGE("Socket to: " + address_ + ":" + port_ + " is already closed in onConnectionTimeout");
+               LOG_DEBUG_MESSAGE("Socket to: " + address_ + ":" + port_ + " is already closed in onConnectionTimeout");
 
             // invoke error handler since the connection has failed
             handleError(systemError(boost::system::errc::timed_out, ERROR_LOCATION));

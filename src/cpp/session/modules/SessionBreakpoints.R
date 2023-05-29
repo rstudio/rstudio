@@ -272,7 +272,7 @@
    steps)
 {
    functionName <- .rs.unquote(functionName)
-   if (length(steps) == 0 || nchar(steps) == 0)
+   if (length(steps) == 0 || all(nchar(steps) == 0))
    {
       # Restore the function to its original state. Note that trace/untrace
       # emit messages when they act on a function in a package environment; hide

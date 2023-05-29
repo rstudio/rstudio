@@ -125,6 +125,7 @@ void validationHandler(
    {
       if (!validateSecureCookie(pConnection, &username, fallbackAllowed))
       {
+         LOG_DEBUG_MESSAGE("validateSecure cookie failed for: " + pConnection->request().uri());
          unauthorizedResponseFunction(pConnection);
          return;
       }
@@ -139,6 +140,7 @@ void validationHandler(
             LOG_WARNING_MESSAGE("Session attempted to invoke server RPC with invalid "
                                 "secret " + secret);
          }
+         LOG_DEBUG_MESSAGE("invalid shared secret - auth failed for: " + pConnection->request().uri());
          unauthorizedResponseFunction(pConnection);
          return;
       }
@@ -160,6 +162,9 @@ void validationHandler(
          username = user.getUsername();
       }
    }
+   pConnection->setUsername(username);
+
+   LOG_DEBUG_MESSAGE("Handling session rpc: " + pConnection->request().debugInfo());
 
    // invoke the wrapped async URI handler
    handler(username, pConnection);

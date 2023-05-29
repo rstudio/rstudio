@@ -14,7 +14,7 @@
  */
 import { contextBridge, ipcRenderer } from 'electron';
 import { getDesktopLoggerBridge } from '../../../renderer/logger-bridge';
-import { normalizeSeparatorsNative } from '../../utils';
+import { normalizeSeparatorsNative, kWindowsRExe } from '../../utils';
 
 export interface CallbackData {
   binaryPath?: string;
@@ -54,7 +54,7 @@ ipcRenderer.on('initialize', (_event, data) => {
     // eslint-disable-next-line @typescript-eslint/no-unnecessary-condition
     use32?.removeAttribute('disabled');
 
-    if (isRVersionSelected('' + data.selectedRVersion, default32Bit + '/bin/i386/R.exe')) {
+    if (isRVersionSelected('' + data.selectedRVersion, default32Bit + `/bin/i386/${kWindowsRExe}`)) {
       use32.checked = true;
       isDefault32Selected = true;
     }
@@ -67,7 +67,7 @@ ipcRenderer.on('initialize', (_event, data) => {
     // eslint-disable-next-line @typescript-eslint/no-unnecessary-condition
     use64?.removeAttribute('disabled');
 
-    if (isRVersionSelected('' + data.selectedRVersion, default64Bit + '/bin/x64/R.exe')) {
+    if (isRVersionSelected('' + data.selectedRVersion, default64Bit + `/bin/x64/${kWindowsRExe}`)) {
       use64.checked = true;
       isDefault64Selected = true;
     }
@@ -107,7 +107,7 @@ ipcRenderer.on('initialize', (_event, data) => {
     visitedInstallations[rInstall] = true;
 
     // check for 64 bit executable
-    const r64 = `${rInstall}/bin/x64/R.exe`;
+    const r64 = `${rInstall}/bin/x64/${kWindowsRExe}`;
     // eslint-disable-next-line @typescript-eslint/strict-boolean-expressions
     if (await ipcRenderer.invoke('fs_existsSync', r64)) {
       const optionEl = window.document.createElement('option');
@@ -119,14 +119,13 @@ ipcRenderer.on('initialize', (_event, data) => {
         const useCustomRadioInput = document.getElementById('use-custom') as any;
         useCustomRadioInput.checked = true;
 
-
         selectWidget.disabled = false;
         selectWidget.focus();
       }
     }
 
     // check for 32 bit executable
-    const r32 = `${rInstall}/bin/i386/R.exe`;
+    const r32 = `${rInstall}/bin/i386/${kWindowsRExe}`;
     // eslint-disable-next-line @typescript-eslint/strict-boolean-expressions
     if (await ipcRenderer.invoke('fs_existsSync', r32)) {
       const optionEl = window.document.createElement('option');

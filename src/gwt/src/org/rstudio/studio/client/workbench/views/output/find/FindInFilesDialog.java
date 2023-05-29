@@ -185,19 +185,6 @@ public class FindInFilesDialog extends ModalDialog<FindInFilesDialog.State>
       setExampleIdAndAriaProperties(spanPatternExample_, txtFilePattern_);
       setExampleIdAndAriaProperties(spanExcludePatternExample_, txtExcludeFilePattern_);
 
-      checkboxRegex_.addValueChangeHandler(event ->
-      {
-         // Disable "Whole Word" checkbox when regex is selected
-         if (event.getValue())
-            checkboxWholeWord_.setValue(false);
-      });
-
-      checkboxWholeWord_.addValueChangeHandler(event ->
-      {
-         if (event.getValue())
-            checkboxRegex_.setValue(false);
-      });
-
       listPresetFilePatterns_.addChangeHandler(event ->
       {
          manageFilePattern();

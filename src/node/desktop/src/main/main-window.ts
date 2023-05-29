@@ -1,7 +1,7 @@
 /*
  * main-window.ts
  *
- * Copyright (C) 2022 by Posit Software, PBC
+ * Copyright (C) 2023 by Posit Software, PBC
  *
  * Unless you have received this program directly from Posit Software pursuant
  * to the terms of a commercial license agreement with Posit Software, then
@@ -105,8 +105,11 @@ export class MainWindow extends GwtWindow {
 
     showPlaceholderMenu();
 
-    this.menuCallback.on(MenuCallback.MENUBAR_COMPLETED, (menu: Menu) => {
-      Menu.setApplicationMenu(menu);
+    this.menuCallback.on(MenuCallback.MENUBAR_COMPLETED, (/*menu: Menu*/) => {
+      // We used to do `Menu.setApplicationMenu(menu);` here but that was causing crashes in
+      // Electron when holding down the Alt key (https://github.com/rstudio/rstudio/issues/12983).
+      // It seems some sort of clash between setting this here and the subsequent set
+      // that happens in MenuCallback.updateMenus().
     });
     this.menuCallback.on(MenuCallback.COMMAND_INVOKED, (commandId) => {
       this.invokeCommand(commandId);
@@ -321,12 +324,14 @@ export class MainWindow extends GwtWindow {
   }
 
   onSessionQuit(): void {
+    let doQuit = true;
     if (this.isRemoteDesktop) {
       const pendingQuit = this.collectPendingQuitRequest();
-      if (pendingQuit === PendingQuit.PendingQuitAndExit || this.quitConfirmed) {
-        closeAllSatellites(this.window);
-        this.quit();
-      }
+      doQuit = pendingQuit === PendingQuit.PendingQuitAndExit || this.quitConfirmed;
+    }
+    if (doQuit) {
+      closeAllSatellites(this.window);
+      this.quit();
     }
   }
 

@@ -3924,6 +3924,10 @@ public interface CmdConstants extends Constants {
     @DefaultStringValue("Show _Keyboard Shortcut Commands") // $NON-NLS-1$
     String showShortcutCommandMenuLabel();
     
+    // crashDesktopApplication
+    @DefaultStringValue("Crash RStudio Desktop (DA_NGER)") // $NON-NLS-1$
+    String crashDesktopApplicationMenuLabel();
+    
     // showCommandPalette
     @DefaultStringValue("Show Command Palette") // $NON-NLS-1$
     String showCommandPaletteLabel();

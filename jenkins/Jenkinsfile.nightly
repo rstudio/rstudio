@@ -1,7 +1,7 @@
 def utils
 
 def labelForOS = [
-  'bionic':     'linux',
+  'focal':     'linux',
   'jammy':      'linux',
   'centos7':    'linux',
   'rhel8':      'linux',
@@ -97,13 +97,19 @@ pipeline {
               equals expected: params.ARCH_FILTER, actual: env.arch;
               equals expected: params.ARCH_FILTER, actual: 'all'
             }
+            not {
+              allOf {
+                equals expected: 'monitor', actual: env.imageType;
+                expression { return !env.IS_PRO }  
+              }
+            }
           }
         }
 
         axes {
           axis {
             name 'os'
-            values 'bionic', 'jammy', 'centos7', 'rhel8', 'rhel9', 'opensuse15', 'windows'
+            values 'focal', 'jammy', 'centos7', 'rhel8', 'rhel9', 'opensuse15', 'windows'
           }
           axis {
             name 'arch'
@@ -115,7 +121,7 @@ pipeline {
           exclude {
             axis {
               name 'os'
-              values 'bionic', 'centos7', 'rhel8', 'windows', 'opensuse15'
+              values 'centos7', 'rhel8', 'windows', 'opensuse15'
             }
             axis {
               name 'arch'
@@ -135,14 +141,19 @@ pipeline {
             }
 
             steps {
-              echo "Creating image jenkins/ide:${IS_PRO? 'pro-' : '' }${os}-${arch}-${RSTUDIO_VERSION_FLOWER}"
+              script {
+                utils = load "${env.WORKSPACE}/utils.groovy"
+                DOCKER_TAG = utils.getDockerTag()
+                DOCKER_FILE = "docker/jenkins/Dockerfile.${utils.getDockerBuildOs(env.os)}"
+              }
+              echo "Creating image jenkins/ide:${DOCKER_TAG}"
               pullBuildPush(
                 image_name: 'jenkins/ide',
-                image_tag: "${IS_PRO? 'pro-' : '' }${os}-${arch}-${RSTUDIO_VERSION_FLOWER}",
+                image_tag: "${DOCKER_TAG}",
                 latest_tag: false,
                 build_arg_jenkins_uid: 'JENKINS_UID',
                 build_arg_jenkins_gid: 'JENKINS_GID',
-                dockerfile: "docker/jenkins/Dockerfile.${os}",
+                dockerfile: "${DOCKER_FILE}",
                 build_args: "--build-arg ARCH=${arch} --build-arg GITHUB_LOGIN=${GITHUB_LOGIN}",
                 push: "${params.PUBLISH}"
               )
