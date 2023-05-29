@@ -11,10 +11,6 @@ def labelForOS = [
   'macos':      'macos'
 ]
 
-def dockerFile() {
-  return "docker/jenkins/Dockerfile.${utils.getDockerBuildOs(env.os)}"
-}
-
 pipeline {
   agent none
 
@@ -142,18 +138,22 @@ pipeline {
 
             environment {
               GITHUB_LOGIN = credentials('github-rstudio-jenkins')
-              DOCKER_TAG = dockerTag()
             }
 
             steps {
-              echo "Creating image jenkins/ide:${getImagePrefix()}${DOCKER_TAG}"
+              script {
+                utils = load "${env.WORKSPACE}/utils.groovy"
+                DOCKER_TAG = utils.getDockerTag()
+                DOCKER_FILE = "docker/jenkins/Dockerfile.${utils.getDockerBuildOs(env.os)}"
+              }
+              echo "Creating image jenkins/ide:${DOCKER_TAG}"
               pullBuildPush(
                 image_name: 'jenkins/ide',
-                image_tag: "${utils.getDockerTag()}",
+                image_tag: "${DOCKER_TAG}",
                 latest_tag: false,
                 build_arg_jenkins_uid: 'JENKINS_UID',
                 build_arg_jenkins_gid: 'JENKINS_GID',
-                dockerfile: "${dockerFile()}",
+                dockerfile: "${DOCKER_FILE}",
                 build_args: "--build-arg ARCH=${arch} --build-arg GITHUB_LOGIN=${GITHUB_LOGIN}",
                 push: "${params.PUBLISH}"
               )
