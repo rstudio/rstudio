@@ -6,6 +6,9 @@ if not exist quarto (
   echo "Cloning quarto repo"
   REM git clone https://github.com/quarto-dev/quarto.git ..\..\..\src\gwt\lib\quarto
   git clone --branch release/rstudio-mountain-hydrangea https://github.com/quarto-dev/quarto.git ..\..\..\src\gwt\lib\quarto
+  pushd ..\..\..\src\gwt\lib\quarto
+  git rev-parse HEAD
+  popd
 ) else (
   echo "quarto repo already cloned"
 
@@ -16,6 +19,7 @@ if not exist quarto (
   REM git checkout main
   git checkout release/rstudio-mountain-hydrangea
   git pull
+  git rev-parse HEAD
   popd
 )
 
