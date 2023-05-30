@@ -241,6 +241,26 @@ public class DesktopHooks
             (Operation) () -> commands_.forceQuitSession().execute());
    }
    
+   void promptToManageLicense(String licenseMessage)
+   {
+      String message = constants_.unableToFindActiveLicenseMessage();
+      if (!StringUtil.isNullOrEmpty(licenseMessage))
+      {
+         message = message + "\n\n" + constants_.detailsMessage();
+         message = message + licenseMessage;
+      }
+      globalDisplay_.showYesNoMessage(MessageDialog.QUESTION,
+            constants_.activeRStudioLicenseNotFound(),
+            message,
+            false,
+            (Operation) () -> editionInfo_.showLicense(),
+            (Operation) () -> commands_.forceQuitSession().execute(),
+            (Operation) () -> {},
+            constants_.selectLicense(),
+            constants_.quitRStudio(),
+            true);
+   }
+
    void updateLicenseWarningBar(String licenseMessage)
    {
       if (StringUtil.isNullOrEmpty(licenseMessage))
