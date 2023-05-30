@@ -26,7 +26,7 @@ import { ApplicationLaunch, LaunchRStudioOptions } from './application-launch';
 import { DesktopBrowserWindow } from './desktop-browser-window';
 import { GwtCallback, PendingQuit } from './gwt-callback';
 import { GwtWindow } from './gwt-window';
-import { MenuCallback, showPlaceholderMenu } from './menu-callback';
+import { MenuCallback } from './menu-callback';
 import { ElectronDesktopOptions } from './preferences/electron-desktop-options';
 import { RCommandEvaluator } from './r-command-evaluator';
 import { RemoteDesktopSessionLauncher } from './remote-desktop-session-launcher-overlay';
@@ -103,7 +103,7 @@ export class MainWindow extends GwtWindow {
       // channel->registerObject(QStringLiteral("remoteDesktop"), &gwtCallback_);
     }
 
-    showPlaceholderMenu();
+    this.menuCallback.showPlaceholderMenu();
 
     this.menuCallback.on(MenuCallback.MENUBAR_COMPLETED, (/*menu: Menu*/) => {
       // We used to do `Menu.setApplicationMenu(menu);` here but that was causing crashes in

@@ -19,36 +19,6 @@ import EventEmitter from 'events';
 import debounce from 'lodash/debounce';
 import { ElectronDesktopOptions } from './preferences/electron-desktop-options';
 
-/**
- * Show dummy menu bar to deal with the fact that the real menu bar isn't ready until well
- * after startup.
- */
-export function showPlaceholderMenu(): void {
-  const addPlaceholderMenuItem = function (mainMenu: Menu, label: string): void {
-    mainMenu.append(new MenuItem({ submenu: new Menu(), label: label }));
-  };
-
-  const mainMenuStub = new Menu();
-  if (process.platform === 'darwin') {
-    mainMenuStub.append(new MenuItem({ role: 'appMenu' }));
-  }
-  addPlaceholderMenuItem(mainMenuStub, 'File');
-  addPlaceholderMenuItem(mainMenuStub, 'Edit');
-  addPlaceholderMenuItem(mainMenuStub, 'Code');
-  addPlaceholderMenuItem(mainMenuStub, 'View');
-  addPlaceholderMenuItem(mainMenuStub, 'Plots');
-  addPlaceholderMenuItem(mainMenuStub, 'Session');
-  addPlaceholderMenuItem(mainMenuStub, 'Build');
-  addPlaceholderMenuItem(mainMenuStub, 'Debug');
-  addPlaceholderMenuItem(mainMenuStub, 'Profile');
-  addPlaceholderMenuItem(mainMenuStub, 'Tools');
-  if (process.platform === 'darwin') {
-    addPlaceholderMenuItem(mainMenuStub, 'Window');
-  }
-  addPlaceholderMenuItem(mainMenuStub, 'Help');
-  Menu.setApplicationMenu(mainMenuStub);
-}
-
 function menuIdFromLabel(label: string): string {
   return label.replace('&', '');
 }
@@ -78,7 +48,8 @@ export class MenuCallback extends EventEmitter {
 
   isMenuSet = false;
 
-  savedMenu: Menu|null = null;
+  savedMenu: Menu | null = null;
+  isPlaceholderMenu = false;
 
   debounceUpdateMenuLong: any = debounce(() => this.updateMenus(), 5000);
   debounceUpdateMenuMedium: any = debounce(() => this.updateMenus(), 250);
@@ -138,18 +109,19 @@ export class MenuCallback extends EventEmitter {
     });
 
     ipcMain.on('menu_set_main_menu_enabled', (_event, enabled: boolean) => {
-      if (this.savedMenu) {
-        if (enabled) {
-          // previously replaced main menu with stub; now put back the real thing
-          Menu.setApplicationMenu(this.savedMenu);
-          this.savedMenu = null;
-        }
-        return;
+      // restore the saved menu bar
+      if (enabled && this.savedMenu) {
+        // previously replaced main menu with placeholder; now put back the real thing
+        this.setApplicationMenu(this.savedMenu);
+        this.savedMenu = null;
       }
 
-      if (!enabled) {
+      // stub the menu bar if it hasn't already been stubbed
+      if (!enabled && !this.isPlaceholderMenu) {
+        // we haven't already replaced main menu with stub; save a copy of the real thing
+        // and replace the main menu with placeholder
         this.savedMenu = Menu.getApplicationMenu();
-        showPlaceholderMenu();
+        this.showPlaceholderMenu();
       }
     });
 
@@ -415,7 +387,7 @@ export class MenuCallback extends EventEmitter {
     const newMainMenuTemplate = recursiveCopy(this.mainMenuTemplate);
     this.mainMenu = Menu.buildFromTemplate(newMainMenuTemplate);
 
-    Menu.setApplicationMenu(this.mainMenu);
+    this.setApplicationMenu(this.mainMenu);
 
     this.isMenuSet = true;
   }
@@ -519,5 +491,40 @@ export class MenuCallback extends EventEmitter {
         }
       })
       .join('+');
+  }
+
+  /**
+   * Show dummy menu bar to deal with the fact that the real menu bar isn't ready until well
+   * after startup.
+   */
+  showPlaceholderMenu(): void {
+    const addPlaceholderMenuItem = function (mainMenu: Menu, label: string): void {
+      mainMenu.append(new MenuItem({ submenu: new Menu(), label: label }));
+    };
+
+    const mainMenuStub = new Menu();
+    if (process.platform === 'darwin') {
+      mainMenuStub.append(new MenuItem({ role: 'appMenu' }));
+    }
+    addPlaceholderMenuItem(mainMenuStub, 'File');
+    addPlaceholderMenuItem(mainMenuStub, 'Edit');
+    addPlaceholderMenuItem(mainMenuStub, 'Code');
+    addPlaceholderMenuItem(mainMenuStub, 'View');
+    addPlaceholderMenuItem(mainMenuStub, 'Plots');
+    addPlaceholderMenuItem(mainMenuStub, 'Session');
+    addPlaceholderMenuItem(mainMenuStub, 'Build');
+    addPlaceholderMenuItem(mainMenuStub, 'Debug');
+    addPlaceholderMenuItem(mainMenuStub, 'Profile');
+    addPlaceholderMenuItem(mainMenuStub, 'Tools');
+    if (process.platform === 'darwin') {
+      addPlaceholderMenuItem(mainMenuStub, 'Window');
+    }
+    addPlaceholderMenuItem(mainMenuStub, 'Help');
+    this.setApplicationMenu(mainMenuStub, true);
+  }
+
+  setApplicationMenu(menu: Menu | null, isPlaceholderMenu = false) {
+    Menu.setApplicationMenu(menu);
+    this.isPlaceholderMenu = isPlaceholderMenu;
   }
 }
