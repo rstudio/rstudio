@@ -279,6 +279,15 @@ public interface StudioClientApplicationConstants extends com.google.gwt.i18n.cl
     String applicationQuitMessage(String message);
 
     /**
+     * Translated "Quit RStudio".
+     *
+     * @return translated "Quit RStudio"
+     */
+    @DefaultMessage("Quit RStudio")
+    @Key("quitRStudio")
+    String quitRStudio();
+
+    /**
      * Translated "Are you sure you want to quit the R session?".
      *
      * @return translated "Are you sure you want to quit the R session?"
@@ -574,6 +583,33 @@ public interface StudioClientApplicationConstants extends com.google.gwt.i18n.cl
     @DefaultMessage("Unable to obtain a license. Please restart RStudio to try again.")
     @Key("licenseLostMessage")
     String licenseLostMessage();
+
+    /**
+     * Translated "Unable to find an active license. Please select a license file or restart RStudio to try again.".
+     *
+     * @return translated "Unable to find an active license. Please select a license file or restart RStudio to try again."
+     */
+    @DefaultMessage("Unable to find an active license. Please select a license file or restart RStudio to try again.")
+    @Key("unableToFindActiveLicenseMessage")
+    String unableToFindActiveLicenseMessage();
+
+    /**
+     * Translated "Active RStudio License Not Found".
+     *
+     * @return translated "Active RStudio License Not Found"
+     */
+    @DefaultMessage("Active RStudio License Not Found")
+    @Key("activeRStudioLicenseNotFound")
+    String activeRStudioLicenseNotFound();
+
+    /**
+     * Translated "Select License...".
+     *
+     * @return translated "Select License..."
+     */
+    @DefaultMessage("Select License...")
+    @Key("selectLicense")
+    String selectLicense();
 
     /**
      * Translated "Details: ".
