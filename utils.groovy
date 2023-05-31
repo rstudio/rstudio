@@ -219,7 +219,7 @@ def getDockerBuildOs(String osName) {
   * resolve to "null". I don't know why.
   */
 def getDockerTag() {
-  return "${env.IS_PRO ? 'pro-' : ''}${getDockerBuildOs(env.OS)}-${env.ARCH}-${RSTUDIO_VERSION_FLOWER}"
+  return "${IS_PRO ? 'pro-' : ''}${getDockerBuildOs(env.OS)}-${env.ARCH}-${RSTUDIO_VERSION_FLOWER}"
 }
 
 return this
