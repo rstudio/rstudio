@@ -768,12 +768,14 @@ void handleConnection(boost::shared_ptr<HttpConnection> ptrConnection,
 
             // exit status
             int status = switchToProject.empty() ? EXIT_SUCCESS : EX_CONTINUE;
-            if (options().getBoolOverlayOption(kLauncherSessionOption))
+            if (options().getBoolOverlayOption(kLauncherSessionOption) && (core::system::getenv("RSTUDIO_FORCE_NON_ZERO_EXIT_CODE") == "1"))
             {
                // Avoid generating nonzero exit codes when running under
                // Launcher. Error codes from normal behaviour like this are
                // confusing for Slurm and Kubernetes administrators unfamiliar
                // with our workloads.
+               // However, non-zero exit codes are needed by Sagemaker, so we allow
+               // them when requested by setting env var RSTUDIO_FORCE_NON_ZERO_EXIT_CODE=1.
                status = EXIT_SUCCESS;
             }
 
