@@ -23,7 +23,7 @@
 .rs.addFunction("copilot.installCopilotAgent", function(targetDirectory)
 {
    # NOTE: Copilot 1.8.4 release.
-   copilotRef <- "1358e8e45ecedc53daf971924a0541ddf6224faf"
+   defaultCopilotRef <- "1358e8e45ecedc53daf971924a0541ddf6224faf"
    
    # Get path to copilot payload
    defaultCopilotUrl <- file.path(
@@ -31,11 +31,11 @@
       copilotRef
    )
    
-   # Check for override.
+   # Check for overrides.
+   copilotRef <- getOption("rstudio.copilot.repositoryRef", default = defaultCopilotRef)
    copilotUrl <- getOption("rstudio.copilot.repositoryUrl", default = defaultCopilotUrl)
    
-   # Create a temporary directory to host the download.
-   # Download to temporary directory
+   # Create and use a temporary directory to host the download.
    downloadDir <- tempfile("copilot-")
    .rs.ensureDirectory(downloadDir)
    on.exit(unlink(downloadDir, recursive = TRUE), add = TRUE)
