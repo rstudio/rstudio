@@ -768,7 +768,7 @@ void handleConnection(boost::shared_ptr<HttpConnection> ptrConnection,
 
             // exit status
             int status = switchToProject.empty() ? EXIT_SUCCESS : EX_CONTINUE;
-            if (options().getBoolOverlayOption(kLauncherSessionOption) && (core::system::getenv("RSTUDIO_FORCE_NON_ZERO_EXIT_CODE") == "1"))
+            if (options().getBoolOverlayOption(kLauncherSessionOption) && (core::system::getenv("RSTUDIO_FORCE_NON_ZERO_EXIT_CODE") != "1"))
             {
                // Avoid generating nonzero exit codes when running under
                // Launcher. Error codes from normal behaviour like this are
