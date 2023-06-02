@@ -588,3 +588,12 @@ function registerWebContentsDebugHandlerImpl(webContents: WebContents, event: st
     logger().logDebug(`'${event}': [${json.join(', ')}]`);
   });
 }
+
+export function getNumericEnvVar(envVarName: string): number | undefined {
+  const envVar = getenv(envVarName).trim();
+  if (envVar) {
+    const maybeNum = Number(envVar);
+    return !isNaN(maybeNum) ? maybeNum : undefined;
+  }
+  return undefined;
+}
