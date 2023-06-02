@@ -15,7 +15,7 @@
 
 .rs.addFunction("copilot.setLogLevel", function(level = 0L)
 {
-   .Call("rs_copilotSetLogLevel", as.integer(level))
+   .Call("rs_copilotSetLogLevel", as.integer(level), PACKAGE = "(embedding)")
 })
 
 # TODO: What's the right way to allow the Copilot Agent version to change?
@@ -23,15 +23,11 @@
 .rs.addFunction("copilot.installCopilotAgent", function(targetDirectory)
 {
    # NOTE: Copilot 1.8.4 release.
-   copilotRef <- getOption(
-      "rstudio.copilot.repositoryRef",
-      default = "1358e8e45ecedc53daf971924a0541ddf6224faf"
-   )
+   defaultCopilotRef <- "1358e8e45ecedc53daf971924a0541ddf6224faf"
+   copilotRef <- getOption("rstudio.copilot.repositoryRef", defaultCopilotRef)
    
-   copilotBaseUrl <- getOption(
-      "rstudio.copilot.repositoryUrl",
-      default = "https://rstudio.org/link/github-copilot"
-   )
+   defaultCopilotBaseUrl <- "https://rstudio.org/link/github-copilot"
+   copilotBaseUrl <- getOption("rstudio.copilot.repositoryUrl", defaultCopilotBaseUrl)
    
    # Get path to copilot payload
    copilotUrl <- paste(c(copilotBaseUrl, copilotRef), collapse = "/")

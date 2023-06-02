@@ -705,8 +705,10 @@ void onDeferredInit(bool newSession)
 
 void onShutdown(bool)
 {
-   // Shut down the agent.
+   // Note that we're about to shut down.
    s_isSessionShuttingDown = true;
+
+   // Shut down the agent.
    stopAgent();
 
    // Unset the agent PID. It should already be shutting down,
