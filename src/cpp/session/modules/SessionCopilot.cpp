@@ -136,6 +136,9 @@ std::map<std::string, CopilotContinuation> s_pendingContinuations;
 // A queue of pending responses, sent via the agent's stdout.
 std::queue<std::string> s_pendingResponses;
 
+// Whether we're about to shut down.
+bool s_isSessionShuttingDown = false;
+
 std::string uriFromDocumentId(const std::string& documentId)
 {
    return fmt::format("rstudio-document://{}", documentId);
@@ -396,6 +399,9 @@ void onStderr(ProcessOperations& operations, const std::string& stdErr)
 void onExit(int status)
 {
    s_agentPid = -1;
+
+   if (s_isSessionShuttingDown)
+      return;
 
    if (status != 0)
    {
@@ -691,6 +697,7 @@ void onDeferredInit(bool newSession)
 
 void onShutdown(bool)
 {
+   s_isSessionShuttingDown = true;
    stopAgent();
    s_agentPid = -1;
 }
