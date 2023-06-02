@@ -522,6 +522,13 @@ bool ensureAgentRunning()
       return false;
    }
 
+   // bail if copilot is not allowed
+   if (!session::options().allowCopilot())
+   {
+      DLOG("Copilot has been disabled by the administrator; not starting agent.");
+      return false;
+   }
+
    // bail if we're shutting down
    if (s_isSessionShuttingDown)
    {

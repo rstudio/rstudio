@@ -501,6 +501,13 @@
             "memberName": "allowLauncherJobs_",
             "defaultValue": true,
             "description": "Indicates whether or not to allow running jobs via the Launcher."
+         },
+         {
+            "name": "allow-copilot",
+            "type": "bool",
+            "memberName": "allowCopilot_",
+            "defaultValue": true,
+            "description": "Indicates whether or not GitHub Copilot integration can be enabled."
          }
       ],
       "r": [

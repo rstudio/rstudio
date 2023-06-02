@@ -276,7 +276,10 @@ protected:
       "Indicates whether or not to allow full standalone UI mode.")
       ("allow-launcher-jobs",
       value<bool>(&allowLauncherJobs_)->default_value(true),
-      "Indicates whether or not to allow running jobs via the Launcher.");
+      "Indicates whether or not to allow running jobs via the Launcher.")
+      ("allow-copilot",
+      value<bool>(&allowCopilot_)->default_value(true),
+      "Indicates whether or not GitHub Copilot integration can be enabled.");
 
    pR->add_options()
       ("r-core-source",
@@ -485,6 +488,7 @@ public:
    bool allowPresentationCommands() const { return allowPresentationCommands_ || allowOverlay(); }
    bool allowFullUI() const { return allowFullUI_ || allowOverlay(); }
    bool allowLauncherJobs() const { return allowLauncherJobs_ || allowOverlay(); }
+   bool allowCopilot() const { return allowCopilot_ || allowOverlay(); }
    core::FilePath coreRSourcePath() const { return core::FilePath(coreRSourcePath_); }
    core::FilePath modulesRSourcePath() const { return core::FilePath(modulesRSourcePath_); }
    core::FilePath sessionLibraryPath() const { return core::FilePath(sessionLibraryPath_); }
@@ -592,6 +596,7 @@ protected:
    bool allowPresentationCommands_;
    bool allowFullUI_;
    bool allowLauncherJobs_;
+   bool allowCopilot_;
    std::string coreRSourcePath_;
    std::string modulesRSourcePath_;
    std::string sessionLibraryPath_;
