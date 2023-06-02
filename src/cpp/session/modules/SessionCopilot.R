@@ -34,7 +34,7 @@
    )
    
    # Get path to copilot payload
-   copilotUrl <- file.path(copilotBaseUrl, copilotRef)
+   copilotUrl <- paste(c(copilotBaseUrl, copilotRef), collapse = "/")
    
    # Create and use a temporary directory to host the download.
    downloadDir <- tempfile("copilot-")
