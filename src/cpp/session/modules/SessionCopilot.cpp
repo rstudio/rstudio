@@ -282,7 +282,10 @@ void onStdout(ProcessOperations& operations, const std::string& stdOut)
    while (startIndex < stdOut.length())
    {
       // Find the split.
-      auto splitIndex = stdOut.find("\r\n\r\n", startIndex);
+      const char* splitText = "\r\n\r\n";
+      const int splitSize = 4;
+
+      auto splitIndex = stdOut.find(splitText, startIndex);
       if (splitIndex == std::string::npos)
       {
          ELOG("Internal error: parsing response failed.");
@@ -290,7 +293,7 @@ void onStdout(ProcessOperations& operations, const std::string& stdOut)
       }
 
       // Extract the header text.
-      std::string headerText = string_utils::substring(stdOut, startIndex, splitIndex + 4);
+      std::string headerText = string_utils::substring(stdOut, startIndex, splitIndex + splitSize);
 
       // Parse the headers.
       core::http::Headers headers;
@@ -306,7 +309,7 @@ void onStdout(ProcessOperations& operations, const std::string& stdOut)
       }
 
       // Consume that text.
-      auto bodyStart = splitIndex + 4;
+      auto bodyStart = splitIndex + splitSize;
       auto bodyEnd = bodyStart + safe_convert::stringTo<int>(contentLength, 0);
       std::string bodyText = string_utils::substring(stdOut, bodyStart, bodyEnd);
       s_pendingResponses.push(bodyText);
