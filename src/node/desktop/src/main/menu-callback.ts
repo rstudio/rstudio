@@ -49,7 +49,6 @@ export class MenuCallback extends EventEmitter {
   isMenuSet = false;
 
   savedMenu: Menu | null = null;
-  isPlaceholderMenu = false;
 
   debounceUpdateMenuLong: any = debounce(() => this.updateMenus(), 5000);
   debounceUpdateMenuMedium: any = debounce(() => this.updateMenus(), 250);
@@ -374,7 +373,7 @@ export class MenuCallback extends EventEmitter {
     const newMainMenuTemplate = recursiveCopy(this.mainMenuTemplate);
     this.mainMenu = Menu.buildFromTemplate(newMainMenuTemplate);
 
-    this.setApplicationMenu(this.mainMenu);
+    Menu.setApplicationMenu(this.mainMenu);
 
     this.isMenuSet = true;
   }
@@ -488,7 +487,7 @@ export class MenuCallback extends EventEmitter {
     // restore the saved menu bar
     if (enabled && this.savedMenu) {
       // previously replaced main menu with placeholder; now put back the real thing
-      this.setApplicationMenu(this.savedMenu);
+      Menu.setApplicationMenu(this.savedMenu);
       this.savedMenu = null;
       return;
     }
@@ -529,11 +528,6 @@ export class MenuCallback extends EventEmitter {
       addPlaceholderMenuItem(mainMenuStub, 'Window');
     }
     addPlaceholderMenuItem(mainMenuStub, 'Help');
-    this.setApplicationMenu(mainMenuStub, true);
-  }
-
-  setApplicationMenu(menu: Menu | null, isPlaceholderMenu = false) {
-    Menu.setApplicationMenu(menu);
-    this.isPlaceholderMenu = isPlaceholderMenu;
+    Menu.setApplicationMenu(mainMenuStub);
   }
 }
