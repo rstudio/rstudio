@@ -43,13 +43,24 @@ namespace posix {
 
 namespace {
 
+// Apple uses int for gid_t whereas unix uses uint32
+#ifndef __APPLE__
+   typedef gid_t GIDTYPE;
+#else
+   typedef int GIDTYPE;
+#endif
+
+// Does root ever have more than one group?
+static const int MAX_PRIV_GROUPS = 16;
+
 bool s_privInited = false;
 std::string s_privUserName;
 uid_t s_privUid;
 gid_t s_privGid;
+gid_t s_privGids[MAX_PRIV_GROUPS];
+int s_privNumGroups;
 
-
-// Cach the root uids/gids to keep restorePrivileges from having to call ::getpwuid. restorePriv is used by
+// Cache the root uids/gids to keep restorePrivileges from having to call ::getpwuid and ::initgroups. restorePriv is used by
 // rserver-pam's onAfterFork callback, where it can use a vendor api (e.g. centrify) that uses locking that
 // will fail in a process that has forked while holding a lock that then appears held in the child
 //
@@ -71,6 +82,35 @@ Error initSystemPriv(uid_t in_uid)
    s_privUid = in_uid;
    s_privGid = pPrivPasswd->pw_gid;
    s_privUserName = std::string(pPrivPasswd->pw_name);
+   s_privNumGroups = MAX_PRIV_GROUPS;
+   // avoids ::initgroups call in onAfterFork callback that can use mutexes and hang!
+#ifndef __APPLE__
+   if (::getgrouplist(s_privUserName.c_str(), s_privGid, s_privGids, &s_privNumGroups) == -1)
+   {
+     if (s_privNumGroups == MAX_PRIV_GROUPS)
+     {
+        s_privNumGroups = 1;
+        s_privGids[0] = 0;
+     }
+   }
+#else
+   int tmpGids[MAX_PRIV_GROUPS];
+   if (::getgrouplist(s_privUserName.c_str(), s_privGid, tmpGids, &s_privNumGroups) == -1)
+   {
+     if (s_privNumGroups == MAX_PRIV_GROUPS)
+     {
+        s_privNumGroups = 1;
+        tmpGids[0] = 0;
+     }
+   }
+
+   // On apple, need to convert from int to unsigned int to keep type system happy
+   for (int i = 0; i < s_privNumGroups; i++)
+      s_privGids[i] = (gid_t) tmpGids[i];
+#endif
+
+   if (s_privNumGroups > MAX_PRIV_GROUPS) // should never happen, but if it does we hopefully only need the first few for pam login etc.
+     s_privNumGroups = MAX_PRIV_GROUPS;
    s_privInited = true;
 
    return Success();
@@ -92,8 +132,8 @@ Error restorePrivilegesImpl(uid_t in_uid)
    if (error)
       return error;
 
-   // Supplemental groups
-   if (::initgroups(s_privUserName.c_str(), s_privGid) < 0)
+   // Supplemental groups from cache
+   if (::setgroups(s_privNumGroups, s_privGids) < 0)
       return systemError(errno, ERROR_LOCATION);
 
    // Set effective group
@@ -219,8 +259,8 @@ Error restorePrivileges()
    if (error)
       return error;
 
-   // supplemental groups
-   if (::initgroups(s_privUserName.c_str(), s_privGid) < 0)
+   // Supplemental groups from cache
+   if (::setgroups(s_privNumGroups, s_privGids) < 0)
       return systemError(errno, ERROR_LOCATION);
 
    // set group
