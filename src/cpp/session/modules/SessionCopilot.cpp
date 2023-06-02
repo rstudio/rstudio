@@ -111,7 +111,7 @@ private:
    boost::posix_time::ptime time_;
 };
 
-// The log level for Copilot-specific logs.
+// The log level for Copilot-specific logs. Primarily for developer use.
 int s_copilotLogLevel = 3;
 
 // Whether Copilot is enabled.
@@ -652,75 +652,6 @@ SEXP rs_copilotSetLogLevel(SEXP logLevelSEXP)
    return logLevelSEXP;
 }
 
-SEXP rs_copilotEnabled()
-{
-   r::sexp::Protect protect;
-   return r::sexp::create(s_copilotEnabled, &protect);
-}
-
-SEXP rs_copilotStartAgent()
-{
-   // If we have a running agent, try to stop it now.
-   stopAgent();
-
-   // Start the agent.
-   bool ready = startAgent();
-   if (!ready)
-      Rf_error("[copilot] agent failed to start");
-
-   r::sexp::Protect protect;
-   return r::sexp::create(s_agentPid, &protect);
-}
-
-SEXP rs_copilotStopAgent()
-{
-   stopAgent();
-   r::sexp::Protect protect;
-   return r::sexp::create(true, &protect);
-}
-
-SEXP rs_copilotAgentRunning()
-{
-   r::sexp::Protect protect;
-   return r::sexp::create(s_agentPid != -1, &protect);
-}
-
-SEXP rs_copilotSendRequest(SEXP methodSEXP,
-                           SEXP idSEXP,
-                           SEXP paramsSEXP)
-{
-   std::string method = r::sexp::asString(methodSEXP);
-   std::string id = r::sexp::asString(idSEXP);
-   std::string paramsText = r::sexp::asString(paramsSEXP);
-
-   json::Object paramsJson;
-   Error error = paramsJson.parse(paramsText);
-   if (error)
-   {
-      error.addProperty("params", paramsText);
-      LOG_ERROR(error);
-      return R_NilValue;
-   }
-
-   if (id.empty())
-   {
-      sendNotification(method, paramsJson);
-      return R_NilValue;
-   }
-
-   std::string requestId = core::system::generateUuid();
-   sendRequest(method, id, paramsJson);
-
-   r::sexp::Protect protect;
-   return r::sexp::create(id, &protect);
-}
-
-SEXP rs_copilotAgentPid()
-{
-   r::sexp::Protect protect;
-   return r::sexp::create(s_agentPid, &protect);
-}
-
 Error copilotGenerateCompletions(const json::JsonRpcRequest& request,
                                  const json::JsonRpcFunctionContinuation& continuation)
 {
@@ -867,12 +798,6 @@ Error initialize()
    prefs::userPrefs().onChanged.connect(onUserPrefsChanged);
 
    RS_REGISTER_CALL_METHOD(rs_copilotSetLogLevel);
-   RS_REGISTER_CALL_METHOD(rs_copilotEnabled);
-   RS_REGISTER_CALL_METHOD(rs_copilotStartAgent);
-   RS_REGISTER_CALL_METHOD(rs_copilotAgentRunning);
-   RS_REGISTER_CALL_METHOD(rs_copilotStopAgent);
-   RS_REGISTER_CALL_METHOD(rs_copilotSendRequest);
-   RS_REGISTER_CALL_METHOD(rs_copilotAgentPid);
 
    ExecBlock initBlock;
    initBlock.addFunctions()
