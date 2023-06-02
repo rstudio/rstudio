@@ -55,6 +55,12 @@
 #define ELOG(__FMT__, ...) COPILOT_LOG_IMPL(LOG_ERROR_MESSAGE,   __FMT__, ##__VA_ARGS__)
 #define WLOG(__FMT__, ...) COPILOT_LOG_IMPL(LOG_WARNING_MESSAGE, __FMT__, ##__VA_ARGS__)
 
+#ifndef _WIN32
+# define kNodeExe "node"
+#else
+# define kNodeExe "node.exe"
+#endif
+
 using namespace rstudio::core;
 using namespace rstudio::core::system;
 
@@ -160,20 +166,73 @@ bool waitFor(F&& callback)
    return false;
 }
 
+Error findNode(FilePath* pNodePath,
+               core::system::Options* pOptions)
+{
+   // Check for an admin-configured node path.
+   FilePath nodePath = session::options().nodePath();
+   if (!nodePath.isEmpty())
+   {
+      // Allow both directories containing a 'node' binary, and the path
+      // to a 'node' binary directly.
+      if (nodePath.isDirectory())
+      {
+         FilePath nodeExePath = nodePath.completeChildPath(kNodeExe);
+         if (nodeExePath.exists())
+         {
+            *pNodePath = nodeExePath;
+            return Success();
+         }
+         else
+         {
+            return Error(fileNotFoundError(nodeExePath, ERROR_LOCATION));
+         }
+      }
+      else if (nodePath.isRegularFile())
+      {
+         *pNodePath = nodePath;
+         return Success();
+      }
+      else
+      {
+         return Error(fileNotFoundError(nodePath, ERROR_LOCATION));
+      }
+   }
+
+   // In Desktop builds of RStudio, we can re-use the version of node
+   // bundled with Electron.
+   if (session::options().programMode() == kSessionProgramModeDesktop)
+   {
+      std::string desktopExePath = core::system::getenv("RSTUDIO_DESKTOP_EXE");
+      if (!desktopExePath.empty() && FilePath(desktopExePath).exists())
+      {
+         *pNodePath = FilePath(desktopExePath);
+         pOptions->push_back(std::make_pair("ELECTRON_RUN_AS_NODE", "1"));
+         return Success();
+      }
+   }
+
+   // Otherwise, use node from the PATH
+   // TODO: We'll need to bundle a version of node with RStudio Server.
+   // Quarto 1.4 will ship with 'deno', which will be able to run regular 'node' applications,
+   // so maybe we can use that?
+   return core::system::findProgramOnPath(kNodeExe, pNodePath);
+}
+
 int copilotLogLevel()
 {
    return s_copilotLogLevel;
 }
 
-// TODO: Make this configurable by the user?
-FilePath copilotAgentDirectory()
-{
-   return core::system::xdg::userCacheDir().completeChildPath("copilot/dist");
-}
-
 FilePath copilotAgentPath()
 {
-   return copilotAgentDirectory().completeChildPath("agent.js");
+   // Check for configured copilot path.
+   FilePath copilotPath = session::options().copilotPath();
+   if (copilotPath.exists())
+      return copilotPath.getParent();
+
+   // Otherwise, use a default user location.
+   return core::system::xdg::userCacheDir().completeChildPath("copilot/dist/agent.js");
 }
 
 bool isCopilotAgentInstalled()
@@ -184,7 +243,7 @@ bool isCopilotAgentInstalled()
 Error installCopilotAgent()
 {
    return r::exec::RFunction(".rs.copilot.installCopilotAgent")
-         .addParam(copilotAgentDirectory().getAbsolutePath())
+         .addParam(copilotAgentPath().getParent().getAbsolutePath())
          .call();
 }
 
@@ -376,28 +435,16 @@ bool startAgent()
 
    // For Desktop builds of RStudio, use the version of node embedded in Electron.
    FilePath nodePath;
-   if (session::options().programMode() == kSessionProgramModeDesktop)
+   error = findNode(&nodePath, &environment);
+   if (error)
    {
-       std::string exePath = core::system::getenv("RSTUDIO_DESKTOP_EXE");
-       if (!exePath.empty() && FilePath(exePath).exists())
-       {
-          nodePath = FilePath(exePath);
-          environment.push_back(std::make_pair("ELECTRON_RUN_AS_NODE", "1"));
-       }
+      LOG_ERROR(error);
+      return false;
    }
-
-   // Otherwise, use node from the PATH
-   // TODO: We'll need to bundle a version of node with RStudio Server.
-   // Quarto 1.4 will ship with 'deno', which will be able to run regular 'node' applications,
-   // so maybe we can use that?
-   if (!nodePath.exists())
+   else if (!nodePath.exists())
    {
-      error = core::system::findProgramOnPath("node", &nodePath);
-      if (error)
-      {
-         LOG_ERROR(error);
-         return false;
-      }
+      LOG_ERROR(fileNotFoundError(ERROR_LOCATION));
+      return false;
    }
 
    // Set up process callbacks
