@@ -15,15 +15,12 @@
 package org.rstudio.core.client.widget;
 
 import com.google.gwt.dom.client.Element;
-import com.google.gwt.user.client.ui.Composite;
-import com.google.gwt.user.client.ui.FlowPanel;
+import com.google.gwt.user.client.ui.SimplePanel;
 
-public class ElementPanel extends Composite
+public class ElementPanel extends SimplePanel
 {
    public ElementPanel(Element element)
    {
-      FlowPanel panel = new FlowPanel();
-      panel.getElement().appendChild(element);
-      initWidget(panel);
+      super(element);
    }
 }
