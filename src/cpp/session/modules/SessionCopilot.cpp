@@ -658,6 +658,10 @@ void onBackgroundProcessing(bool isIdle)
          s_pendingContinuations[requestId].invoke(responseJson);
          s_pendingContinuations.erase(requestId);
       }
+      else
+      {
+         WLOG("Received response with id '{}', but no continuation is registered for that response.");
+      }
    }
 }
 
