@@ -49,9 +49,7 @@ public class CopilotInstallDialog extends ModalDialogBase
       
       HelpLink tosLink = new HelpLink(
             "Terms of Service",
-            GITHUB_TOS_LINK,
-            false,
-            false);
+            "github-copilot-terms-of-service");
       addLeftWidget(tosLink);
    }
    
@@ -83,7 +81,4 @@ public class CopilotInstallDialog extends ModalDialogBase
    private final ProgressIndicator progress_;
    private final ThemedButton okButton_;
    private final ThemedButton cancelButton_;
-   
-   private static final String GITHUB_TOS_LINK =
-         "https://docs.github.com/en/site-policy/github-terms/github-terms-for-additional-products-and-features#github-copilot";
 }
