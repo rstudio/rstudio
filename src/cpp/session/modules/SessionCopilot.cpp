@@ -607,7 +607,7 @@ void onBackgroundProcessing(bool isIdle)
          auto elapsedTime = currentTime - continuation.time();
          if (elapsedTime.seconds() > 10)
          {
-            DLOG("Cancelling old contiuation with id '{}'.", key);
+            DLOG("Cancelling old continuation with id '{}'.", key);
             continuation.cancel();
             s_pendingContinuations.erase(key);
          }
