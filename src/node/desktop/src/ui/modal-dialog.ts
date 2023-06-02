@@ -17,6 +17,7 @@ import { BrowserWindow, BrowserWindowConstructorOptions, ipcMain } from 'electro
 import { err, Expected, ok } from '../core/expected';
 import { safeError } from '../core/err';
 import { getenv } from '../core/environment';
+import { appState } from '../main/app-state';
 
 export abstract class ModalDialog<T> extends BrowserWindow {
   abstract onShowModal(): Promise<T>;
@@ -48,10 +49,15 @@ export abstract class ModalDialog<T> extends BrowserWindow {
     this._ipcMainChannels = [];
 
     // remove any registered ipc handlers on close
-    this.on('closed', () => {
+    this.on('closed', async () => {
+      await appState().modalTracker.removeModal(this);
       for (const channel of this._ipcMainChannels) {
         ipcMain.removeHandler(channel);
       }
+    });
+
+    this.on('show', async () => {
+      await appState().modalTracker.addModal(this);
     });
 
     // make this look and behave like a modal

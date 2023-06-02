@@ -109,20 +109,7 @@ export class MenuCallback extends EventEmitter {
     });
 
     ipcMain.on('menu_set_main_menu_enabled', (_event, enabled: boolean) => {
-      // restore the saved menu bar
-      if (enabled && this.savedMenu) {
-        // previously replaced main menu with placeholder; now put back the real thing
-        this.setApplicationMenu(this.savedMenu);
-        this.savedMenu = null;
-      }
-
-      // stub the menu bar if it hasn't already been stubbed
-      if (!enabled && !this.isPlaceholderMenu) {
-        // we haven't already replaced main menu with stub; save a copy of the real thing
-        // and replace the main menu with placeholder
-        this.savedMenu = Menu.getApplicationMenu();
-        this.showPlaceholderMenu();
-      }
+      this.setMainMenuEnabled(enabled);
     });
 
     ipcMain.on('menu_set_command_label', (_event, commandId: string, label: string) => {
@@ -494,10 +481,32 @@ export class MenuCallback extends EventEmitter {
   }
 
   /**
+   * Stubs the main menu bar with a placeholder menu or restores the main menu bar to the saved menu.
+   * @param enabled Whether the main menu bar should be enabled or disabled (replaced with a placeholder).
+   */
+  setMainMenuEnabled(enabled: boolean) {
+    // restore the saved menu bar
+    if (enabled && this.savedMenu) {
+      // previously replaced main menu with placeholder; now put back the real thing
+      this.setApplicationMenu(this.savedMenu);
+      this.savedMenu = null;
+      return;
+    }
+    // stub the menu bar if it hasn't already been stubbed
+    if (!enabled && !this.savedMenu) {
+      // we haven't already replaced main menu with stub; save a copy of the real thing
+      // and replace the main menu with placeholder
+      this.savedMenu = Menu.getApplicationMenu();
+      this.showPlaceholderMenu();
+      return;
+    }
+  }
+
+  /**
    * Show dummy menu bar to deal with the fact that the real menu bar isn't ready until well
    * after startup.
    */
-  showPlaceholderMenu(): void {
+  showPlaceholderMenu() {
     const addPlaceholderMenuItem = function (mainMenu: Menu, label: string): void {
       mainMenu.append(new MenuItem({ submenu: new Menu(), label: label }));
     };

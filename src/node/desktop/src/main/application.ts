@@ -48,6 +48,7 @@ import { configureSatelliteWindow, configureSecondaryWindow } from './window-uti
 import { Client, Server } from 'net-ipc';
 import { LoggerCallback } from './logger-callback';
 import { Xdg } from '../core/xdg';
+import { ModalDialogTracker } from './modal-dialog-tracker';
 
 /**
  * The RStudio application
@@ -59,6 +60,7 @@ export class Application implements AppState {
   supportPath?: FilePath;
   port = generateRandomPort();
   windowTracker = new WindowTracker();
+  modalTracker = new ModalDialogTracker();
   gwtCallback?: GwtCallback;
   loggerCallback?: LoggerCallback;
   sessionStartDelaySeconds = 0;
