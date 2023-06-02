@@ -696,9 +696,6 @@ void onUserPrefsChanged(const std::string& layer,
    }
 }
 
-// TODO: Does this need to be deferred? We might miss out
-// on some open documents if events are fired before
-// deferred init has finished.
 void onDeferredInit(bool newSession)
 {
    source_database::events().onDocAdded.connect(onDocAdded);
