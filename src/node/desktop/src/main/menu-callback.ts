@@ -480,25 +480,24 @@ export class MenuCallback extends EventEmitter {
   }
 
   /**
-   * Stubs the main menu bar with a placeholder menu or restores the main menu bar to the saved menu.
+   * If applicable, stubs the menu bar with a placeholder or restores the saved menu bar.
    * @param enabled Whether the main menu bar should be enabled or disabled (replaced with a placeholder).
    */
   setMainMenuEnabled(enabled: boolean) {
-    // restore the saved menu bar
-    if (enabled && this.savedMenu) {
-      // previously replaced main menu with placeholder; now put back the real thing
-      Menu.setApplicationMenu(this.savedMenu);
-      this.savedMenu = null;
-      return;
-    }
-    // stub the menu bar if it hasn't already been stubbed
-    if (!enabled && !this.savedMenu) {
-      // we haven't already replaced main menu with stub; save a copy of the real thing
-      // and replace the main menu with placeholder
+    const stubWithPlaceholder = !enabled && !this.savedMenu;
+    if (stubWithPlaceholder) {
+      // Save a copy of the current menu bar so we can restore it later
       this.savedMenu = Menu.getApplicationMenu();
       this.showPlaceholderMenu();
       return;
     }
+    const restoreSavedMenu = enabled && !!this.savedMenu;
+    if (restoreSavedMenu) {
+      Menu.setApplicationMenu(this.savedMenu);
+      this.savedMenu = null;
+      return;
+    }
+    // Otherwise, the main menu bar is already in the desired state
   }
 
   /**
