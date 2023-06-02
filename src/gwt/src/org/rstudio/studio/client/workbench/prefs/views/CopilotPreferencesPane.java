@@ -20,6 +20,7 @@ import org.rstudio.core.client.JSON;
 import org.rstudio.core.client.resources.ImageResource2x;
 import org.rstudio.core.client.widget.SmallButton;
 import org.rstudio.studio.client.application.AriaLiveService;
+import org.rstudio.studio.client.common.HelpLink;
 import org.rstudio.studio.client.server.ServerError;
 import org.rstudio.studio.client.server.ServerRequestCallback;
 import org.rstudio.studio.client.workbench.copilot.Copilot;
@@ -29,6 +30,8 @@ import org.rstudio.studio.client.workbench.copilot.server.CopilotServerOperation
 import org.rstudio.studio.client.workbench.prefs.model.UserPrefs;
 
 import com.google.gwt.core.client.GWT;
+import com.google.gwt.dom.client.Style.Position;
+import com.google.gwt.dom.client.Style.Unit;
 import com.google.gwt.event.dom.client.ClickEvent;
 import com.google.gwt.event.dom.client.ClickHandler;
 import com.google.gwt.event.logical.shared.ValueChangeEvent;
@@ -39,6 +42,7 @@ import com.google.gwt.resources.client.ImageResource;
 import com.google.gwt.user.client.ui.CheckBox;
 import com.google.gwt.user.client.ui.HorizontalPanel;
 import com.google.gwt.user.client.ui.Label;
+import com.google.gwt.user.client.ui.VerticalPanel;
 import com.google.inject.Inject;
 
 
@@ -55,13 +59,23 @@ public class CopilotPreferencesPane extends PreferencesPane
       server_ = server;
       
       cbCopilotEnabled_ = checkboxPref(prefs_.copilotEnabled(), true);
-      lbCopilotStatus_ = new Label("(Loading...)");
+      lblCopilotStatus_ = new Label("(Loading...)");
       
       btnSignIn_ = new SmallButton("Sign In");
       btnSignIn_.addStyleName(RES.styles().button());
       
       btnSignOut_ = new SmallButton("Sign Out");
       btnSignOut_.addStyleName(RES.styles().button());
+      
+      linkCopilotTos_ = new HelpLink(
+            "GitHub Copilot: Terms of Service",
+            "https://docs.github.com/en/site-policy/github-terms/github-terms-for-additional-products-and-features#github-copilot",
+            false,
+            false);
+      
+      lblCopilotTos_ = new Label(
+            "By using GitHub Copilot, you agree to abide by the terms of service.");
+      lblCopilotTos_.addStyleName(RES.styles().copilotTosLabel());
    }
    
    private void initDisplay()
@@ -69,11 +83,8 @@ public class CopilotPreferencesPane extends PreferencesPane
       add(headerLabel("GitHub Copilot"));
       add(cbCopilotEnabled_);
       
-      // TODO: Axe this
-      add(headerLabel("Copilot Agent Status"));
-      
       HorizontalPanel statusPanel = new HorizontalPanel();
-      statusPanel.add(lbCopilotStatus_);
+      statusPanel.add(lblCopilotStatus_);
       statusPanel.add(btnSignIn_);
       statusPanel.add(btnSignOut_);
       add(spaced(statusPanel));
@@ -81,7 +92,12 @@ public class CopilotPreferencesPane extends PreferencesPane
       add(headerLabel("Copilot Completions"));
       add(numericPref("Show code suggestions after keyboard idle (ms):", 10, 2000, prefs_.copilotCompletionsDelay()));
       
-      // TODO: Add legalize + link to GitHub TOS at bottom.
+      VerticalPanel bottomPanel = new VerticalPanel();
+      bottomPanel.getElement().getStyle().setBottom(0, Unit.PX);
+      bottomPanel.getElement().getStyle().setPosition(Position.ABSOLUTE);
+      bottomPanel.add(spaced(lblCopilotTos_));
+      bottomPanel.add(spaced(linkCopilotTos_));
+      add(bottomPanel);
    }
    
    private void initModel()
@@ -163,25 +179,32 @@ public class CopilotPreferencesPane extends PreferencesPane
          {
             if (response == null)
             {
-               lbCopilotStatus_.setText("The GitHub Copilot agent is not currently running.");
+               if (prefs_.copilotEnabled().getValue())
+               {
+                  lblCopilotStatus_.setText("The GitHub Copilot agent is not currently running.");
+               }
+               else
+               {
+                  lblCopilotStatus_.setText("The GitHub Copilot agent has not been enabled.");
+               }
             }
             else if (response.result.status == CopilotConstants.STATUS_OK ||
                      response.result.status == CopilotConstants.STATUS_ALREADY_SIGNED_IN)
             {
                btnSignOut_.setEnabled(true);
                btnSignOut_.setVisible(true);
-               lbCopilotStatus_.setText("You are currently signed in as '" + response.result.user + "'.");
+               lblCopilotStatus_.setText("You are currently signed in as: " + response.result.user);
             }
             else if (response.result.status == CopilotConstants.STATUS_NOT_SIGNED_IN)
             {
                btnSignIn_.setEnabled(true);
                btnSignIn_.setVisible(true);
-               lbCopilotStatus_.setText("You are not currently signed in.");
+               lblCopilotStatus_.setText("You are not currently signed in.");
             }
             else
             {
                // TODO
-               lbCopilotStatus_.setText(JSON.stringify(response));
+               lblCopilotStatus_.setText(JSON.stringify(response));
             }
          }
          
@@ -225,6 +248,7 @@ public class CopilotPreferencesPane extends PreferencesPane
    public interface Styles extends CssResource
    {
       String button();
+      String copilotTosLabel();
    }
 
    public interface Resources extends ClientBundle
@@ -250,9 +274,11 @@ public class CopilotPreferencesPane extends PreferencesPane
    private final Copilot copilot_;
    private final CopilotServerOperations server_;
    private final CheckBox cbCopilotEnabled_;
-   private final Label lbCopilotStatus_;
+   private final Label lblCopilotStatus_;
    private final SmallButton btnSignIn_;
    private final SmallButton btnSignOut_;
+   private final HelpLink linkCopilotTos_;
+   private final Label lblCopilotTos_;
 
    
 }

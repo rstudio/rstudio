@@ -307,7 +307,7 @@ public class Copilot
                display_.showMessage(
                      MessageDisplay.MSG_INFO,
                      "GitHub Copilot: Status",
-                     "You are currently signed in as user '" + response.result.user + "'.");
+                     "You are currently signed in as: " + response.result.user);
             }
             else
             {
