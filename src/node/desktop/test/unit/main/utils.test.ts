@@ -138,4 +138,22 @@ describe('Utils', () => {
     const result = Utils.filterFromQFileDialogFilter(input);
     assert.deepEqual(expected, result);
   });
+  it('getNumericEnvVar returns number for numeric values', () => {
+    const numValues = [0, 1, -1, 1.1];
+    const envVarName = 'NUMERIC_ENV_VAR_VALUE';
+    numValues.forEach((val, index) => {
+      setenv(envVarName, `${val}`);
+      const envVar = Utils.getNumericEnvVar(envVarName);
+      assert.equal(envVar, numValues[index]);
+    });
+  });
+  it('getNumericEnvVar returns undefined for non-numeric values', () => {
+    const nonNumValues = [NaN, undefined, null, 'hi', '', 'H3LL0'];
+    const envVarName = 'NON_NUMERIC_ENV_VAR_VALUE';
+    nonNumValues.forEach((val) => {
+      setenv(envVarName, `${val}`);
+      const envVar = Utils.getNumericEnvVar(envVarName);
+      assert.equal(envVar, undefined);
+    });
+  });
 });
