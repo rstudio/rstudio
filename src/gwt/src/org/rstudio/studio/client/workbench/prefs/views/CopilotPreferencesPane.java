@@ -27,6 +27,7 @@ import org.rstudio.studio.client.workbench.copilot.Copilot;
 import org.rstudio.studio.client.workbench.copilot.model.CopilotConstants;
 import org.rstudio.studio.client.workbench.copilot.model.CopilotResponseTypes.CopilotStatusResponse;
 import org.rstudio.studio.client.workbench.copilot.server.CopilotServerOperations;
+import org.rstudio.studio.client.workbench.model.Session;
 import org.rstudio.studio.client.workbench.prefs.model.UserPrefs;
 
 import com.google.gwt.core.client.GWT;
@@ -49,11 +50,13 @@ import com.google.inject.Inject;
 public class CopilotPreferencesPane extends PreferencesPane
 {
    @Inject
-   public CopilotPreferencesPane(UserPrefs prefs,
+   public CopilotPreferencesPane(Session session,
+                                 UserPrefs prefs,
                                  AriaLiveService ariaLive,
                                  Copilot copilot,
                                  CopilotServerOperations server)
    {
+      session_ = session;
       prefs_ = prefs;
       copilot_ = copilot;
       server_ = server;
@@ -79,6 +82,13 @@ public class CopilotPreferencesPane extends PreferencesPane
    
    private void initDisplay()
    {
+      if (!session_.getSessionInfo().getAllowCopilot())
+      {
+         add(headerLabel("GitHub Copilot"));
+         add(new Label("GitHub Copilot integration has been disabled by the administrator."));
+         return;
+      }
+      
       add(headerLabel("GitHub Copilot"));
       add(cbCopilotEnabled_);
       
@@ -269,6 +279,7 @@ public class CopilotPreferencesPane extends PreferencesPane
       RES.styles().ensureInjected();
    }
    
+   private final Session session_;
    private final UserPrefs prefs_;
    private final Copilot copilot_;
    private final CopilotServerOperations server_;
