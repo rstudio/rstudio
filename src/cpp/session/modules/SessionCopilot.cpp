@@ -522,6 +522,13 @@ bool ensureAgentRunning()
       return false;
    }
 
+   // bail if we're shutting down
+   if (s_isSessionShuttingDown)
+   {
+      DLOG("Session is shutting down; not starting agent.");
+      return false;
+   }
+
    // TODO: Should we further validate the PID is actually associated
    // with a running Copilot process, or just handle that separately?
    if (s_agentPid != -1)
@@ -697,8 +704,13 @@ void onDeferredInit(bool newSession)
 
 void onShutdown(bool)
 {
+   // Shut down the agent.
    s_isSessionShuttingDown = true;
    stopAgent();
+
+   // Unset the agent PID. It should already be shutting down,
+   // but this will make sure we don't try to make any more
+   // requests while we're shutting down.
    s_agentPid = -1;
 }
 
