@@ -69,7 +69,8 @@ public class CopilotPreferencesPane extends PreferencesPane
       
       linkCopilotTos_ = new HelpLink(
             "GitHub Copilot: Terms of Service",
-            "github-copilot-terms-of-service");
+            "github-copilot-terms-of-service",
+            false);
       
       lblCopilotTos_ = new Label(
             "By using GitHub Copilot, you agree to abide by the terms of service.");

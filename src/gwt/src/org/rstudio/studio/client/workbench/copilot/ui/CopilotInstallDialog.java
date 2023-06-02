@@ -49,7 +49,8 @@ public class CopilotInstallDialog extends ModalDialogBase
       
       HelpLink tosLink = new HelpLink(
             "Terms of Service",
-            "github-copilot-terms-of-service");
+            "github-copilot-terms-of-service",
+            false);
       addLeftWidget(tosLink);
    }
    
