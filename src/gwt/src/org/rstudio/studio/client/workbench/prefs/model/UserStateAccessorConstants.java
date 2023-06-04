@@ -1,4 +1,5 @@
-/* UserStateAccessorConstants.java
+/*
+ * UserStateAccessorConstants.java
  *
  * Copyright (C) 2022 by Posit Software, PBC
  *
