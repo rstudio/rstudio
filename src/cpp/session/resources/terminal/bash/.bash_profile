@@ -5,12 +5,15 @@ _FAKEHOME="${HOME}"
 HOME="${_REALHOME}"
 
 # source the user startup file, if any
+STARTUP_FILE="/etc/profile.d/*.sh"
 if [ -f ~/.bash_profile ]; then
 	source ~/.bash_profile
 elif [ -f ~/.bash_login ]; then
 	source ~/.bash_login
 elif [ -f ~/.profile ]; then
 	source ~/.profile
+elif ls $STARTUP_FILE 1> /dev/null 2>&1; then
+	source $STARTUP_FILE
 fi
 
 # set HISTFILE if necessary
