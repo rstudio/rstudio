@@ -80,7 +80,7 @@ public:
    {
    }
 
-   CopilotContinuation(json::JsonRpcFunctionContinuation continuation)
+   explicit CopilotContinuation(const json::JsonRpcFunctionContinuation& continuation)
       : continuation_(continuation),
         time_(boost::posix_time::second_clock::local_time())
    {
@@ -93,7 +93,8 @@ public:
       json::JsonRpcResponse response;
       response.setResult(resultJson);
 
-      continuation_(Success(), &response);
+      if (continuation_)
+         continuation_(Success(), &response);
    }
 
    void cancel()
@@ -104,7 +105,8 @@ public:
       json::JsonRpcResponse response;
       response.setResult(resultJson);
 
-      continuation_(Success(), &response);
+      if (continuation_)
+         continuation_(Success(), &response);
    }
 
    boost::posix_time::ptime time()
@@ -281,8 +283,12 @@ void sendNotification(const std::string& method,
 
 void sendRequest(const std::string& method,
                  const std::string& requestId,
-                 const json::Value& paramsJson)
+                 const json::Value& paramsJson,
+                 const CopilotContinuation& continuation)
 {
+   // Add the continuation, which is executed in response to the request.
+   s_pendingContinuations[requestId] = continuation;
+
    // Create and enqueue the request.
    std::string request = createRequest(method, requestId, paramsJson);
    s_pendingRequests.push(request);
@@ -507,7 +513,7 @@ bool startAgent()
    paramsJson["capabilities"] = json::Object();
 
    std::string requestId = core::system::generateUuid();
-   sendRequest("initialize", requestId, paramsJson);
+   sendRequest("initialize", requestId, paramsJson, CopilotContinuation());
 
    // Okay, we're ready to go.
    return true;
@@ -667,7 +673,7 @@ void onBackgroundProcessing(bool isIdle)
       }
       else
       {
-         WLOG("Received response with id '{}', but no continuation is registered for that response.");
+         WLOG("Received response with id '{}', but no continuation is registered for that response.", requestId);
       }
    }
 }
@@ -753,10 +759,6 @@ Error copilotGenerateCompletions(const json::JsonRpcRequest& request,
       return error;
    }
 
-   // Register our continuation handler
-   std::string requestId = core::system::generateUuid();
-   s_pendingContinuations[requestId] = continuation;
-
    // Build completion request
    json::Object positionJson;
    positionJson["line"] = cursorRow;
@@ -771,7 +773,8 @@ Error copilotGenerateCompletions(const json::JsonRpcRequest& request,
    paramsJson["doc"] = docJson;
 
    // Send the request
-   sendRequest("getCompletions", requestId, paramsJson);
+   std::string requestId = core::system::generateUuid();
+   sendRequest("getCompletions", requestId, paramsJson, CopilotContinuation(continuation));
 
    return Success();
 }
@@ -787,12 +790,10 @@ Error copilotSignIn(const json::JsonRpcRequest& request,
       return Success();
    }
 
-   // Register our continuation handler
-   std::string requestId = core::system::generateUuid();
-   s_pendingContinuations[requestId] = continuation;
-
    // Send sign in request
-   sendRequest("signInInitiate", requestId, json::Object());
+   std::string requestId = core::system::generateUuid();
+   sendRequest("signInInitiate", requestId, json::Object(), CopilotContinuation(continuation));
+
    return Success();
 }
 
@@ -807,12 +808,9 @@ Error copilotSignOut(const json::JsonRpcRequest& request,
       return Success();
    }
 
-   // Register our continuation handler
-   std::string requestId = core::system::generateUuid();
-   s_pendingContinuations[requestId] = continuation;
-
    // Send sign out request
-   sendRequest("signOut", requestId, json::Object());
+   std::string requestId = core::system::generateUuid();
+   sendRequest("signOut", requestId, json::Object(), CopilotContinuation(continuation));
    return Success();
 }
 
@@ -827,12 +825,9 @@ Error copilotStatus(const json::JsonRpcRequest& request,
       return Success();
    }
 
-   // Register our continuation handler
-   std::string requestId = core::system::generateUuid();
-   s_pendingContinuations[requestId] = continuation;
-
    // Send sign out request
-   sendRequest("checkStatus", requestId, json::Object());
+   std::string requestId = core::system::generateUuid();
+   sendRequest("checkStatus", requestId, json::Object(), CopilotContinuation(continuation));
    return Success();
 }
 
