@@ -18,6 +18,7 @@ import EventEmitter from 'events';
 
 import debounce from 'lodash/debounce';
 import { ElectronDesktopOptions } from './preferences/electron-desktop-options';
+import { appState } from './app-state';
 
 function menuIdFromLabel(label: string): string {
   return label.replace('&', '');
@@ -491,7 +492,7 @@ export class MenuCallback extends EventEmitter {
       this.showPlaceholderMenu();
       return;
     }
-    const restoreSavedMenu = enabled && !!this.savedMenu;
+    const restoreSavedMenu = enabled && !!this.savedMenu && appState().modalTracker.numModalsShowing() === 0;
     if (restoreSavedMenu) {
       Menu.setApplicationMenu(this.savedMenu);
       this.savedMenu = null;

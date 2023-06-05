@@ -22,6 +22,7 @@ import { appState } from './app-state';
  */
 export class ModalDialogTracker {
   private modals: ModalDialog<any>[] = [];
+  private gwtModalsShowing = 0;
 
   public async addModal(modal: ModalDialog<any>) {
     this.modals.push(modal);
@@ -36,6 +37,10 @@ export class ModalDialogTracker {
   }
 
   public numModalsShowing(): number {
-    return this.modals.length;
+    return this.modals.length + this.gwtModalsShowing;
+  }
+
+  public setNumGwtModalsShowing(gwtModalsShowing: number) {
+    this.gwtModalsShowing = gwtModalsShowing;
   }
 }

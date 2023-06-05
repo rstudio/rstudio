@@ -114,10 +114,8 @@ export class GwtCallback extends EventEmitter {
             }),
           ),
         ].sort((a, b) => a.localeCompare(b));
-        this.proportionalFonts = [
-          ...new Set<string>(
-            findFontsSync({ monospace: false }).map((fd) => 
-              fd.family))].sort((a, b) => a.localeCompare(b),
+        this.proportionalFonts = [...new Set<string>(findFontsSync({ monospace: false }).map((fd) => fd.family))].sort(
+          (a, b) => a.localeCompare(b),
         );
       }
     } catch (err: unknown) {
@@ -506,6 +504,10 @@ export class GwtCallback extends EventEmitter {
         });
       },
     );
+
+    ipcMain.on('desktop_set_gwt_num_modals_showing', (_event, gwtModalsShowing: number) => {
+      appState().modalTracker.setNumGwtModalsShowing(gwtModalsShowing);
+    });
 
     ipcMain.handle(
       'desktop_copy_page_region_to_clipboard',

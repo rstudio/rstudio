@@ -17,6 +17,7 @@ package org.rstudio.core.client.widget;
 import com.google.gwt.dom.client.Element;
 import com.google.gwt.user.client.DOM;
 import com.google.gwt.user.client.ui.PopupPanel;
+import org.rstudio.core.client.BrowseCap;
 import org.rstudio.core.client.ElementIds;
 import org.rstudio.core.client.a11y.A11y;
 import org.rstudio.core.client.command.impl.DesktopMenuCallback;
@@ -30,8 +31,11 @@ public class ModalDialogTracker
    public static void onShow(PopupPanel panel)
    {
       dialogStack_.add(panel);
-      if (Desktop.hasDesktopFrame())
+      if (Desktop.hasDesktopFrame()) {
+         if (BrowseCap.isElectron())
+            Desktop.getFrame().setNumGwtModalsShowing(numModalsShowing());
          DesktopMenuCallback.setMainMenuEnabled(false);
+      }
       updateInert(true);
    }
 
@@ -44,8 +48,14 @@ public class ModalDialogTracker
    public static void onHide(PopupPanel panel)
    {
       dialogStack_.removeIf(panel::equals);
-      if (Desktop.hasDesktopFrame() && numModalsShowing() == 0)
-         DesktopMenuCallback.setMainMenuEnabled(true);
+      
+      if (Desktop.hasDesktopFrame()) {
+         int numModals = numModalsShowing();
+         if (BrowseCap.isElectron())
+            Desktop.getFrame().setNumGwtModalsShowing(numModals);
+         if (numModals == 0)
+            DesktopMenuCallback.setMainMenuEnabled(true);
+      }
       updateInert(false);
    }
 
