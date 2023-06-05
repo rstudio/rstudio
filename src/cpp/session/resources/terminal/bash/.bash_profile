@@ -6,7 +6,7 @@ HOME="${_REALHOME}"
 
 # source the user startup file, if any
 for PROFILE in /etc/profile.d/*.sh; do
-  if [ -e "${PROFILE}" ]; then
+  if [ -f "${PROFILE}" ]; then
     source "${PROFILE}"
   fi
 done
