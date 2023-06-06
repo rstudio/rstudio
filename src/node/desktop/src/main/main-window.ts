@@ -14,7 +14,7 @@
  */
 
 import { ChildProcess } from 'child_process';
-import { BrowserWindow, dialog, Menu, Rectangle, session, shell } from 'electron';
+import { BrowserWindow, dialog, session, shell } from 'electron';
 
 import { Err } from '../core/err';
 import { logger } from '../core/logger';
@@ -34,6 +34,7 @@ import { SessionLauncher } from './session-launcher';
 import { CloseServerSessions } from './session-servers-overlay';
 import { waitForUrlWithTimeout } from './url-utils';
 import { registerWebContentsDebugHandlers } from './utils';
+import { Dialog } from './modal-dialog-utils';
 
 export function closeAllSatellites(mainWindow: BrowserWindow): void {
   const topLevels = BrowserWindow.getAllWindows();
@@ -214,11 +215,13 @@ export class MainWindow extends GwtWindow {
     if (error) {
       logger().logError(error);
 
-      dialog.showMessageBoxSync(this.window, {
-        message: i18next.t('mainWindowTs.rSessionFailedToStart'),
-        type: 'error',
-        title: appState().activation().editionName(),
-      });
+      Dialog.showDialogSync(() =>
+        dialog.showMessageBoxSync(this.window, {
+          message: i18next.t('mainWindowTs.rSessionFailedToStart'),
+          type: 'error',
+          title: appState().activation().editionName(),
+        }),
+      );
       this.quit();
     }
   }

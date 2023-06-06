@@ -22,6 +22,7 @@ import { appState } from './app-state';
  */
 export class ModalDialogTracker {
   private modals: ModalDialog<any>[] = [];
+  private electronModalsShowing = 0;
   private gwtModalsShowing = 0;
 
   public async addModal(modal: ModalDialog<any>) {
@@ -31,16 +32,30 @@ export class ModalDialogTracker {
 
   public async removeModal(modal: ModalDialog<any>) {
     this.modals = this.modals.filter((m) => m !== modal);
+    this.maybeReenableMainMenu();
+  }
+
+  public numModalsShowing(): number {
+    return this.modals.length + this.gwtModalsShowing + this.electronModalsShowing;
+  }
+
+  public maybeReenableMainMenu() {
     if (this.numModalsShowing() === 0) {
       appState().gwtCallback?.mainWindow.menuCallback.setMainMenuEnabled(true);
     }
   }
 
-  public numModalsShowing(): number {
-    return this.modals.length + this.gwtModalsShowing;
-  }
-
   public setNumGwtModalsShowing(gwtModalsShowing: number) {
     this.gwtModalsShowing = gwtModalsShowing;
+  }
+
+  public addElectronModal() {
+    this.electronModalsShowing++;
+    appState().gwtCallback?.mainWindow.menuCallback.setMainMenuEnabled(false);
+  }
+
+  public removeElectronModal() {
+    if (this.electronModalsShowing > 0) this.electronModalsShowing--;
+    this.maybeReenableMainMenu();
   }
 }

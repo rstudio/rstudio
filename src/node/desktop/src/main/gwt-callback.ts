@@ -19,12 +19,12 @@ import {
   nativeTheme,
   BrowserWindow,
   clipboard,
-  dialog,
   ipcMain,
   Rectangle,
   screen,
   shell,
   webFrameMain,
+  dialog,
 } from 'electron';
 import { IpcMainEvent, MessageBoxOptions, OpenDialogOptions, SaveDialogOptions } from 'electron/main';
 import EventEmitter from 'events';
@@ -56,6 +56,7 @@ import {
 import { activateWindow, focusedWebContents } from './window-utils';
 import { getenv } from '../core/environment';
 import { safeError } from '../core/err';
+import { Dialog } from './modal-dialog-utils';
 
 export enum PendingQuit {
   PendingQuitNone,
@@ -162,9 +163,9 @@ export class GwtCallback extends EventEmitter {
           focusedWindow = this.getSender('desktop_open_minimal_window', event.processId, event.frameId).window;
         }
         if (focusedWindow) {
-          return dialog.showOpenDialog(focusedWindow, openDialogOptions);
+          return Dialog.showDialogAsync(async () => dialog.showOpenDialog(focusedWindow!, openDialogOptions));
         } else {
-          return dialog.showOpenDialog(openDialogOptions);
+          return Dialog.showDialogAsync(async () => dialog.showOpenDialog(openDialogOptions));
         }
       },
     );
@@ -196,9 +197,9 @@ export class GwtCallback extends EventEmitter {
           focusedWindow = this.getSender('desktop_open_minimal_window', event.processId, event.frameId).window;
         }
         if (focusedWindow) {
-          return dialog.showSaveDialog(focusedWindow, saveDialogOptions);
+          return Dialog.showDialogAsync(async () => dialog.showSaveDialog(focusedWindow!, saveDialogOptions));
         } else {
-          return dialog.showSaveDialog(saveDialogOptions);
+          return Dialog.showDialogAsync(async () => dialog.showSaveDialog(saveDialogOptions));
         }
       },
     );
@@ -219,9 +220,9 @@ export class GwtCallback extends EventEmitter {
         }
 
         if (focusedWindow) {
-          return dialog.showOpenDialog(focusedWindow, openDialogOptions);
+          return Dialog.showDialogAsync(async () => dialog.showOpenDialog(focusedWindow!, openDialogOptions));
         } else {
-          return dialog.showOpenDialog(openDialogOptions);
+          return Dialog.showDialogAsync(async () => dialog.showOpenDialog(openDialogOptions));
         }
       },
     );
@@ -578,9 +579,9 @@ export class GwtCallback extends EventEmitter {
 
         const focusedWindow = BrowserWindow.getFocusedWindow();
         if (focusedWindow) {
-          return dialog.showMessageBox(focusedWindow, openDialogOptions);
+          return Dialog.showDialogAsync(async () => dialog.showMessageBox(focusedWindow, openDialogOptions));
         } else {
-          return dialog.showMessageBox(openDialogOptions);
+          return Dialog.showDialogAsync(async () => dialog.showMessageBox(openDialogOptions));
         }
       },
     );
@@ -984,9 +985,9 @@ export class GwtCallback extends EventEmitter {
     };
 
     if (focusedWindow) {
-      void dialog.showMessageBox(focusedWindow, dialogOptions);
+      void Dialog.showDialogAsync(async () => dialog.showMessageBox(focusedWindow, dialogOptions));
     } else {
-      void dialog.showMessageBox(dialogOptions);
+      void Dialog.showDialogAsync(async () => dialog.showMessageBox(dialogOptions));
     }
   }
 

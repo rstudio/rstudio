@@ -49,6 +49,7 @@ import { Client, Server } from 'net-ipc';
 import { LoggerCallback } from './logger-callback';
 import { Xdg } from '../core/xdg';
 import { ModalDialogTracker } from './modal-dialog-tracker';
+import { Dialog } from './modal-dialog-utils';
 
 /**
  * The RStudio application
@@ -312,13 +313,14 @@ export class Application implements AppState {
       const [path, preflightError] = await promptUserForR();
       if (preflightError) {
         logger().logError(preflightError);
-        await dialog
-          .showMessageBox({
+        await Dialog.showDialogAsync(async () =>
+          dialog.showMessageBox({
             type: 'warning',
             title: i18next.t('applicationTs.errorFindingR'),
             message: i18next.t('applicationTs.rstudioFailedToFindRInstalationsOnTheSystem'),
             buttons: [i18next.t('common.buttonYes'), i18next.t('common.buttonNo')],
-          })
+          }),
+        )
           .then((result) => {
             logger().logDebug(`You clicked ${result.response == 0 ? 'Yes' : 'No'}`);
             if (result.response == 0) {

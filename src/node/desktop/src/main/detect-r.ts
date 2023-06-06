@@ -28,11 +28,12 @@ import { t } from 'i18next';
 
 import { ElectronDesktopOptions, fixWindowsRExecutablePath } from './preferences/electron-desktop-options';
 import { FilePath } from '../core/file-path';
-import { dialog } from 'electron';
 
 import desktop from '../native/desktop.node';
 import { EOL } from 'os';
 import { kWindowsRExe } from '../ui/utils';
+import { Dialog } from './modal-dialog-utils';
+import { dialog } from 'electron';
 
 let kLdLibraryPathVariable: string;
 if (process.platform === 'darwin') {
@@ -116,11 +117,13 @@ export async function promptUserForR(platform = process.platform): Promise<Expec
     const engineValue = data.renderingEngine || 'auto';
     if (enginePref !== engineValue) {
       ElectronDesktopOptions().setRenderingEngine(engineValue);
-      dialog.showMessageBoxSync({
-        title: t('chooseRDialog.renderingEngineChangedTitle'),
-        message: t('chooseRDialog.renderingEngineChangedMessage'),
-        type: 'info',
-      });
+      Dialog.showDialogSync(() =>
+        dialog.showMessageBoxSync({
+          title: t('chooseRDialog.renderingEngineChangedTitle'),
+          message: t('chooseRDialog.renderingEngineChangedMessage'),
+          type: 'info',
+        }),
+      );
 
       // TODO: It'd be nice if we could use app.relaunch(), but that doesn't
       // seem to do what we want it to?
