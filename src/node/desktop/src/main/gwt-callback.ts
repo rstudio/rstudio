@@ -935,10 +935,6 @@ export class GwtCallback extends EventEmitter {
       }
       return resolveTemplateVar(varName, this.errorPageData);
     });
-
-    // pro-only license start
-
-    // pro-only license end
   }
 
   addMacOSVersionError(): void {
