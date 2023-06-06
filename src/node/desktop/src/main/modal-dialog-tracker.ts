@@ -17,7 +17,11 @@ import { ModalDialog } from '../ui/modal-dialog';
 import { appState } from './app-state';
 
 /**
- * Track modals that extend ModalDialog (src/node/desktop/src/ui/modal-dialog.ts)
+ * Tracks modals that should enable/disable the main menu, including:
+ * - ModalDialog (src/node/desktop/src/ui/modal-dialog.ts) - eg. Choose R
+ * - GWT modals - eg. Global Options
+ * - Electron.dialog (native modals) - eg. dialog.showMessageBox(...)
+ *
  * Based on src/gwt/src/org/rstudio/core/client/widget/ModalDialogTracker.java
  */
 export class ModalDialogTracker {
@@ -25,35 +29,68 @@ export class ModalDialogTracker {
   private electronModalsShowing = 0;
   private gwtModalsShowing = 0;
 
-  public async addModal(modal: ModalDialog<any>) {
-    this.modals.push(modal);
-    appState().gwtCallback?.mainWindow.menuCallback.setMainMenuEnabled(false);
-  }
-
-  public async removeModal(modal: ModalDialog<any>) {
-    this.modals = this.modals.filter((m) => m !== modal);
-    this.maybeReenableMainMenu();
-  }
-
+  /**
+   * Returns the number of modals showing across all modal types
+   * @returns Number of modals showing across all modal types
+   */
   public numModalsShowing(): number {
     return this.modals.length + this.gwtModalsShowing + this.electronModalsShowing;
   }
 
+  /**
+   * Re-enables the main menu if there are no modals showing
+   */
   public maybeReenableMainMenu() {
     if (this.numModalsShowing() === 0) {
       appState().gwtCallback?.mainWindow.menuCallback.setMainMenuEnabled(true);
     }
   }
 
+  /**
+   * Adds a ModalDialog to tracking and disables the main menu
+   * @param modal ModalDialog to add to tracking
+   */
+  public async addModalDialog(modal: ModalDialog<any>) {
+    this.modals.push(modal);
+    appState().gwtCallback?.mainWindow.menuCallback.setMainMenuEnabled(false);
+  }
+
+  /**
+   * Removes a ModalDialog from tracking and re-enables the main menu if applicable
+   * @param modal ModalDialog to remove from tracking
+   */
+  public async removeModalDialog(modal: ModalDialog<any>) {
+    this.modals = this.modals.filter((m) => m !== modal);
+    this.maybeReenableMainMenu();
+  }
+
+  /**
+   * Sets the number of GWT modals showing
+   * @param gwtModalsShowing Number of GWT modals showing
+   */
   public setNumGwtModalsShowing(gwtModalsShowing: number) {
     this.gwtModalsShowing = gwtModalsShowing;
   }
 
+  /**
+   * Tracks a modal dialog that is shown by Electron.dialog (async) to ensure that the
+   * main menu is disabled while the dialog is open and re-enabled when the
+   * dialog is closed.
+   * @param func async Electron.dialog function to call
+   * @returns Promise that resolves to the return value of func
+   */
   public async trackElectronModalAsync<T>(func: () => Promise<T>): Promise<T> {
     this.addElectronModal();
     return func().finally(() => this.removeElectronModal());
   }
 
+  /**
+   * Tracks a modal dialog that is shown by Electron.dialog (sync) to ensure that the
+   * main menu is disabled while the dialog is open and re-enabled when the
+   * dialog is closed.
+   * @param func Electron.dialog function to call
+   * @returns Return value of func
+   */
   public trackElectronModalSync<T>(func: () => T): T {
     this.addElectronModal();
     const retVal = func();
@@ -61,11 +98,17 @@ export class ModalDialogTracker {
     return retVal;
   }
 
+  /**
+   * Increments the number of Electron modals showing and disables the main menu
+   */
   private addElectronModal() {
     this.electronModalsShowing++;
     appState().gwtCallback?.mainWindow.menuCallback.setMainMenuEnabled(false);
   }
 
+  /**
+   * Decrements the number of Electron modals showing and re-enables the main menu
+   */
   private removeElectronModal() {
     if (this.electronModalsShowing > 0) this.electronModalsShowing--;
     this.maybeReenableMainMenu();

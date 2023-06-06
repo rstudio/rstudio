@@ -50,14 +50,14 @@ export abstract class ModalDialog<T> extends BrowserWindow {
 
     // remove any registered ipc handlers on close
     this.on('closed', async () => {
-      await appState().modalTracker.removeModal(this);
+      await appState().modalTracker.removeModalDialog(this);
       for (const channel of this._ipcMainChannels) {
         ipcMain.removeHandler(channel);
       }
     });
 
     this.on('show', async () => {
-      await appState().modalTracker.addModal(this);
+      await appState().modalTracker.addModalDialog(this);
     });
 
     // make this look and behave like a modal
