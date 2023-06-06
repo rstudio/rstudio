@@ -487,7 +487,7 @@ export const handleLocaleCookies = async (window: BrowserWindow, isMainWindow = 
         await updateLocaleFromCookie(cookie, window);
       });
     }
-  });
+  }).catch((err) => logger().logError(err));
 };
 
 export function registerWebContentsDebugHandlers(webContents: WebContents) {
