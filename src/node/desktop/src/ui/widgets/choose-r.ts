@@ -26,7 +26,7 @@ import { ElectronDesktopOptions, fixWindowsRExecutablePath } from '../../main/pr
 import { existsSync } from 'fs';
 import { normalize } from 'path';
 import { kWindowsRExe } from '../utils';
-import { Dialog } from '../../main/modal-dialog-utils';
+import { appState } from '../../main/app-state';
 
 declare const CHOOSE_R_WEBPACK_ENTRY: string;
 declare const CHOOSE_R_PRELOAD_WEBPACK_ENTRY: string;
@@ -46,7 +46,7 @@ function checkValid(data: CallbackData) {
     logger().logErrorMessage(`Selected R path: ${data.binaryPath}`);
     logger().logError(err);
 
-    Dialog.showDialogSync(() =>
+    appState().modalTracker.trackElectronModalSync(() =>
       dialog.showMessageBoxSync({
         type: 'error',
         title: t('chooseRDialog.rLaunchFailedTitle'),
@@ -135,7 +135,7 @@ export class ChooseRModalWindow extends ModalDialog<CallbackData | null> {
       });
 
       this.addIpcHandler('browse-r-exe', async (event, data: CallbackData) => {
-        const response = Dialog.showDialogSync(() =>
+        const response = appState().modalTracker.trackElectronModalSync(() =>
           dialog.showOpenDialogSync(this, {
             title: i18next.t('uiFolder.chooseRExecutable'),
             properties: ['openFile'],

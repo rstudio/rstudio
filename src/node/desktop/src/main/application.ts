@@ -23,7 +23,7 @@ import { kRStudioInitialProject, kRStudioInitialWorkingDir } from '../core/r-use
 import { generateRandomPort } from '../core/system';
 import { getDesktopBridge } from '../renderer/desktop-bridge';
 import { DesktopActivation } from './activation-overlay';
-import { AppState } from './app-state';
+import { appState, AppState } from './app-state';
 import { ApplicationLaunch } from './application-launch';
 import { ArgsManager } from './args-manager';
 import { prepareEnvironment, promptUserForR, scanForR, showRNotFoundError } from './detect-r';
@@ -49,7 +49,6 @@ import { Client, Server } from 'net-ipc';
 import { LoggerCallback } from './logger-callback';
 import { Xdg } from '../core/xdg';
 import { ModalDialogTracker } from './modal-dialog-tracker';
-import { Dialog } from './modal-dialog-utils';
 
 /**
  * The RStudio application
@@ -313,14 +312,15 @@ export class Application implements AppState {
       const [path, preflightError] = await promptUserForR();
       if (preflightError) {
         logger().logError(preflightError);
-        await Dialog.showDialogAsync(async () =>
-          dialog.showMessageBox({
-            type: 'warning',
-            title: i18next.t('applicationTs.errorFindingR'),
-            message: i18next.t('applicationTs.rstudioFailedToFindRInstalationsOnTheSystem'),
-            buttons: [i18next.t('common.buttonYes'), i18next.t('common.buttonNo')],
-          }),
-        )
+        await appState()
+          .modalTracker.trackElectronModalAsync(async () =>
+            dialog.showMessageBox({
+              type: 'warning',
+              title: i18next.t('applicationTs.errorFindingR'),
+              message: i18next.t('applicationTs.rstudioFailedToFindRInstalationsOnTheSystem'),
+              buttons: [i18next.t('common.buttonYes'), i18next.t('common.buttonNo')],
+            }),
+          )
           .then((result) => {
             logger().logDebug(`You clicked ${result.response == 0 ? 'Yes' : 'No'}`);
             if (result.response == 0) {

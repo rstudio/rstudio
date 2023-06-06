@@ -32,8 +32,8 @@ import { FilePath } from '../core/file-path';
 import desktop from '../native/desktop.node';
 import { EOL } from 'os';
 import { kWindowsRExe } from '../ui/utils';
-import { Dialog } from './modal-dialog-utils';
 import { dialog } from 'electron';
+import { appState } from './app-state';
 
 let kLdLibraryPathVariable: string;
 if (process.platform === 'darwin') {
@@ -117,7 +117,7 @@ export async function promptUserForR(platform = process.platform): Promise<Expec
     const engineValue = data.renderingEngine || 'auto';
     if (enginePref !== engineValue) {
       ElectronDesktopOptions().setRenderingEngine(engineValue);
-      Dialog.showDialogSync(() =>
+      appState().modalTracker.trackElectronModalSync(() =>
         dialog.showMessageBoxSync({
           title: t('chooseRDialog.renderingEngineChangedTitle'),
           message: t('chooseRDialog.renderingEngineChangedMessage'),

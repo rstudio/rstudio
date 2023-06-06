@@ -56,7 +56,6 @@ import {
 import { activateWindow, focusedWebContents } from './window-utils';
 import { getenv } from '../core/environment';
 import { safeError } from '../core/err';
-import { Dialog } from './modal-dialog-utils';
 
 export enum PendingQuit {
   PendingQuitNone,
@@ -163,9 +162,11 @@ export class GwtCallback extends EventEmitter {
           focusedWindow = this.getSender('desktop_open_minimal_window', event.processId, event.frameId).window;
         }
         if (focusedWindow) {
-          return Dialog.showDialogAsync(async () => dialog.showOpenDialog(focusedWindow!, openDialogOptions));
+          return appState().modalTracker.trackElectronModalAsync(async () =>
+            dialog.showOpenDialog(focusedWindow!, openDialogOptions),
+          );
         } else {
-          return Dialog.showDialogAsync(async () => dialog.showOpenDialog(openDialogOptions));
+          return appState().modalTracker.trackElectronModalAsync(async () => dialog.showOpenDialog(openDialogOptions));
         }
       },
     );
@@ -197,9 +198,11 @@ export class GwtCallback extends EventEmitter {
           focusedWindow = this.getSender('desktop_open_minimal_window', event.processId, event.frameId).window;
         }
         if (focusedWindow) {
-          return Dialog.showDialogAsync(async () => dialog.showSaveDialog(focusedWindow!, saveDialogOptions));
+          return appState().modalTracker.trackElectronModalAsync(async () =>
+            dialog.showSaveDialog(focusedWindow!, saveDialogOptions),
+          );
         } else {
-          return Dialog.showDialogAsync(async () => dialog.showSaveDialog(saveDialogOptions));
+          return appState().modalTracker.trackElectronModalAsync(async () => dialog.showSaveDialog(saveDialogOptions));
         }
       },
     );
@@ -220,9 +223,11 @@ export class GwtCallback extends EventEmitter {
         }
 
         if (focusedWindow) {
-          return Dialog.showDialogAsync(async () => dialog.showOpenDialog(focusedWindow!, openDialogOptions));
+          return appState().modalTracker.trackElectronModalAsync(async () =>
+            dialog.showOpenDialog(focusedWindow!, openDialogOptions),
+          );
         } else {
-          return Dialog.showDialogAsync(async () => dialog.showOpenDialog(openDialogOptions));
+          return appState().modalTracker.trackElectronModalAsync(async () => dialog.showOpenDialog(openDialogOptions));
         }
       },
     );
@@ -579,9 +584,11 @@ export class GwtCallback extends EventEmitter {
 
         const focusedWindow = BrowserWindow.getFocusedWindow();
         if (focusedWindow) {
-          return Dialog.showDialogAsync(async () => dialog.showMessageBox(focusedWindow, openDialogOptions));
+          return appState().modalTracker.trackElectronModalAsync(async () =>
+            dialog.showMessageBox(focusedWindow, openDialogOptions),
+          );
         } else {
-          return Dialog.showDialogAsync(async () => dialog.showMessageBox(openDialogOptions));
+          return appState().modalTracker.trackElectronModalAsync(async () => dialog.showMessageBox(openDialogOptions));
         }
       },
     );
@@ -985,9 +992,11 @@ export class GwtCallback extends EventEmitter {
     };
 
     if (focusedWindow) {
-      void Dialog.showDialogAsync(async () => dialog.showMessageBox(focusedWindow, dialogOptions));
+      void appState().modalTracker.trackElectronModalAsync(async () =>
+        dialog.showMessageBox(focusedWindow, dialogOptions),
+      );
     } else {
-      void Dialog.showDialogAsync(async () => dialog.showMessageBox(dialogOptions));
+      void appState().modalTracker.trackElectronModalAsync(async () => dialog.showMessageBox(dialogOptions));
     }
   }
 

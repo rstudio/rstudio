@@ -16,7 +16,7 @@
 import { BrowserWindow, clipboard, dialog, Menu } from 'electron';
 import path from 'path';
 import i18next from 'i18next';
-import { Dialog } from './modal-dialog-utils';
+import { appState } from './app-state';
 
 type ContextMenuItem = Electron.MenuItem | Electron.MenuItemConstructorOptions;
 
@@ -55,7 +55,7 @@ const createContextMenuImageTemplate = (
         // user cancels that dialog
         const webContents = event.sender;
         const window = BrowserWindow.fromWebContents(webContents) as BrowserWindow;
-        const downloadPath = Dialog.showDialogSync(() =>
+        const downloadPath = appState().modalTracker.trackElectronModalSync(() =>
           dialog.showSaveDialogSync(window, {
             title: i18next.t('contextMenu.saveImageAs'),
             defaultPath: path.basename(params.srcURL),
@@ -77,7 +77,7 @@ const createContextMenuImageTemplate = (
           item.once('done', (event, state) => {
             switch (state) {
               case 'cancelled': {
-                Dialog.showDialogSync(() =>
+                appState().modalTracker.trackElectronModalSync(() =>
                   dialog.showErrorBox(
                     i18next.t('contextMenu.errorDownloadingImage'),
                     i18next.t('contextMenu.downloadCancelledMessage'),
@@ -87,7 +87,7 @@ const createContextMenuImageTemplate = (
               }
 
               case 'interrupted': {
-                Dialog.showDialogSync(() =>
+                appState().modalTracker.trackElectronModalSync(() =>
                   dialog.showErrorBox(
                     i18next.t('contextMenu.errorDownloadingImage'),
                     i18next.t('contextMenu.downloadInterruptedMessage'),

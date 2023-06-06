@@ -49,12 +49,24 @@ export class ModalDialogTracker {
     this.gwtModalsShowing = gwtModalsShowing;
   }
 
-  public addElectronModal() {
+  public async trackElectronModalAsync<T>(func: () => Promise<T>): Promise<T> {
+    this.addElectronModal();
+    return func().finally(() => this.removeElectronModal());
+  }
+
+  public trackElectronModalSync<T>(func: () => T): T {
+    this.addElectronModal();
+    const retVal = func();
+    this.removeElectronModal();
+    return retVal;
+  }
+
+  private addElectronModal() {
     this.electronModalsShowing++;
     appState().gwtCallback?.mainWindow.menuCallback.setMainMenuEnabled(false);
   }
 
-  public removeElectronModal() {
+  private removeElectronModal() {
     if (this.electronModalsShowing > 0) this.electronModalsShowing--;
     this.maybeReenableMainMenu();
   }
