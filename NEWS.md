@@ -4,7 +4,7 @@
 -
 
 ### Fixed
--
+- Fixed issue where Electron menubar commands are not disabled when modals are displayed (#12972)
 
 ### Accessibility Improvements
 -

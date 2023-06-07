@@ -14,7 +14,7 @@
  */
 
 import { ChildProcess } from 'child_process';
-import { BrowserWindow, dialog, Menu, Rectangle, session, shell } from 'electron';
+import { BrowserWindow, dialog, session, shell } from 'electron';
 
 import { Err } from '../core/err';
 import { logger } from '../core/logger';
@@ -26,7 +26,7 @@ import { ApplicationLaunch, LaunchRStudioOptions } from './application-launch';
 import { DesktopBrowserWindow } from './desktop-browser-window';
 import { GwtCallback, PendingQuit } from './gwt-callback';
 import { GwtWindow } from './gwt-window';
-import { MenuCallback, showPlaceholderMenu } from './menu-callback';
+import { MenuCallback } from './menu-callback';
 import { ElectronDesktopOptions } from './preferences/electron-desktop-options';
 import { RCommandEvaluator } from './r-command-evaluator';
 import { RemoteDesktopSessionLauncher } from './remote-desktop-session-launcher-overlay';
@@ -103,7 +103,7 @@ export class MainWindow extends GwtWindow {
       // channel->registerObject(QStringLiteral("remoteDesktop"), &gwtCallback_);
     }
 
-    showPlaceholderMenu();
+    this.menuCallback.showPlaceholderMenu();
 
     this.menuCallback.on(MenuCallback.MENUBAR_COMPLETED, (/*menu: Menu*/) => {
       // We used to do `Menu.setApplicationMenu(menu);` here but that was causing crashes in
@@ -214,11 +214,13 @@ export class MainWindow extends GwtWindow {
     if (error) {
       logger().logError(error);
 
-      dialog.showMessageBoxSync(this.window, {
-        message: i18next.t('mainWindowTs.rSessionFailedToStart'),
-        type: 'error',
-        title: appState().activation().editionName(),
-      });
+      appState().modalTracker.trackElectronModalSync(() =>
+        dialog.showMessageBoxSync(this.window, {
+          message: i18next.t('mainWindowTs.rSessionFailedToStart'),
+          type: 'error',
+          title: appState().activation().editionName(),
+        }),
+      );
       this.quit();
     }
   }
