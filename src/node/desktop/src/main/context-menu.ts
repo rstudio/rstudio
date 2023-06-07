@@ -16,6 +16,7 @@
 import { BrowserWindow, clipboard, dialog, Menu } from 'electron';
 import path from 'path';
 import i18next from 'i18next';
+import { appState } from './app-state';
 
 type ContextMenuItem = Electron.MenuItem | Electron.MenuItemConstructorOptions;
 
@@ -54,12 +55,14 @@ const createContextMenuImageTemplate = (
         // user cancels that dialog
         const webContents = event.sender;
         const window = BrowserWindow.fromWebContents(webContents) as BrowserWindow;
-        const downloadPath = dialog.showSaveDialogSync(window, {
-          title: i18next.t('contextMenu.saveImageAs'),
-          defaultPath: path.basename(params.srcURL),
-          buttonLabel: i18next.t('contextMenu.save'),
-          properties: ['createDirectory'],
-        });
+        const downloadPath = appState().modalTracker.trackElectronModalSync(() =>
+          dialog.showSaveDialogSync(window, {
+            title: i18next.t('contextMenu.saveImageAs'),
+            defaultPath: path.basename(params.srcURL),
+            buttonLabel: i18next.t('contextMenu.save'),
+            properties: ['createDirectory'],
+          }),
+        );
 
         if (downloadPath == null) {
           return;
@@ -74,17 +77,21 @@ const createContextMenuImageTemplate = (
           item.once('done', (event, state) => {
             switch (state) {
               case 'cancelled': {
-                dialog.showErrorBox(
-                  i18next.t('contextMenu.errorDownloadingImage'),
-                  i18next.t('contextMenu.downloadCancelledMessage'),
+                appState().modalTracker.trackElectronModalSync(() =>
+                  dialog.showErrorBox(
+                    i18next.t('contextMenu.errorDownloadingImage'),
+                    i18next.t('contextMenu.downloadCancelledMessage'),
+                  ),
                 );
                 break;
               }
 
               case 'interrupted': {
-                dialog.showErrorBox(
-                  i18next.t('contextMenu.errorDownloadingImage'),
-                  i18next.t('contextMenu.downloadInterruptedMessage'),
+                appState().modalTracker.trackElectronModalSync(() =>
+                  dialog.showErrorBox(
+                    i18next.t('contextMenu.errorDownloadingImage'),
+                    i18next.t('contextMenu.downloadInterruptedMessage'),
+                  ),
                 );
                 break;
               }

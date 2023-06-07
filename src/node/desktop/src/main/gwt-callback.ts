@@ -19,12 +19,12 @@ import {
   nativeTheme,
   BrowserWindow,
   clipboard,
-  dialog,
   ipcMain,
   Rectangle,
   screen,
   shell,
   webFrameMain,
+  dialog,
 } from 'electron';
 import { IpcMainEvent, MessageBoxOptions, OpenDialogOptions, SaveDialogOptions } from 'electron/main';
 import EventEmitter from 'events';
@@ -163,9 +163,11 @@ export class GwtCallback extends EventEmitter {
           focusedWindow = this.getSender('desktop_open_minimal_window', event.processId, event.frameId).window;
         }
         if (focusedWindow) {
-          return dialog.showOpenDialog(focusedWindow, openDialogOptions);
+          return appState().modalTracker.trackElectronModalAsync(async () =>
+            dialog.showOpenDialog(focusedWindow!, openDialogOptions),
+          );
         } else {
-          return dialog.showOpenDialog(openDialogOptions);
+          return appState().modalTracker.trackElectronModalAsync(async () => dialog.showOpenDialog(openDialogOptions));
         }
       },
     );
@@ -197,9 +199,11 @@ export class GwtCallback extends EventEmitter {
           focusedWindow = this.getSender('desktop_open_minimal_window', event.processId, event.frameId).window;
         }
         if (focusedWindow) {
-          return dialog.showSaveDialog(focusedWindow, saveDialogOptions);
+          return appState().modalTracker.trackElectronModalAsync(async () =>
+            dialog.showSaveDialog(focusedWindow!, saveDialogOptions),
+          );
         } else {
-          return dialog.showSaveDialog(saveDialogOptions);
+          return appState().modalTracker.trackElectronModalAsync(async () => dialog.showSaveDialog(saveDialogOptions));
         }
       },
     );
@@ -220,9 +224,11 @@ export class GwtCallback extends EventEmitter {
         }
 
         if (focusedWindow) {
-          return dialog.showOpenDialog(focusedWindow, openDialogOptions);
+          return appState().modalTracker.trackElectronModalAsync(async () =>
+            dialog.showOpenDialog(focusedWindow!, openDialogOptions),
+          );
         } else {
-          return dialog.showOpenDialog(openDialogOptions);
+          return appState().modalTracker.trackElectronModalAsync(async () => dialog.showOpenDialog(openDialogOptions));
         }
       },
     );
@@ -510,6 +516,10 @@ export class GwtCallback extends EventEmitter {
       },
     );
 
+    ipcMain.on('desktop_set_gwt_num_modals_showing', (_event, gwtModalsShowing: number) => {
+      appState().modalTracker.setNumGwtModalsShowing(gwtModalsShowing);
+    });
+
     ipcMain.handle(
       'desktop_copy_page_region_to_clipboard',
       (_event, x: number, y: number, width: number, height: number) => {
@@ -579,9 +589,11 @@ export class GwtCallback extends EventEmitter {
 
         const focusedWindow = BrowserWindow.getFocusedWindow();
         if (focusedWindow) {
-          return dialog.showMessageBox(focusedWindow, openDialogOptions);
+          return appState().modalTracker.trackElectronModalAsync(async () =>
+            dialog.showMessageBox(focusedWindow, openDialogOptions),
+          );
         } else {
-          return dialog.showMessageBox(openDialogOptions);
+          return appState().modalTracker.trackElectronModalAsync(async () => dialog.showMessageBox(openDialogOptions));
         }
       },
     );
@@ -981,9 +993,11 @@ export class GwtCallback extends EventEmitter {
     };
 
     if (focusedWindow) {
-      void dialog.showMessageBox(focusedWindow, dialogOptions);
+      void appState().modalTracker.trackElectronModalAsync(async () =>
+        dialog.showMessageBox(focusedWindow, dialogOptions),
+      );
     } else {
-      void dialog.showMessageBox(dialogOptions);
+      void appState().modalTracker.trackElectronModalAsync(async () => dialog.showMessageBox(dialogOptions));
     }
   }
 
