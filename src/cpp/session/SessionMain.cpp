@@ -23,6 +23,7 @@
 #ifndef _WIN32
 #include <sys/types.h>
 #include <unistd.h>
+#include <netdb.h>
 #endif
 
 #include <string>
@@ -1894,11 +1895,30 @@ void win32InvalidParameterHandler(const wchar_t* expression,
 
 #endif
 
+// When the nscd service is enabled, the first call to getaddrinfo calls getenv("LOCALDOMAIN")
+// that will intermittently crash if done on a background thread as getenv is not thread-safe.
+// Making this call on the main thread first prevents that from happening. See rstudio-pro#4628
+void mainThreadWorkaround()
+{
+#ifdef __linux__
+   struct addrinfo hints, *addrInfoResult;
+   int addrInfoErrorCode;
+
+   memset (&hints, 0, sizeof (hints));
+
+   addrInfoErrorCode = ::getaddrinfo ("localhost", NULL, &hints, &addrInfoResult);
+   if (addrInfoErrorCode == 0)
+      ::freeaddrinfo(addrInfoResult);
+#endif
+}
+
 } // anonymous namespace
 
 // run session
 int main(int argc, char * const argv[])
 {
+   mainThreadWorkaround();
+
    try
    {
       // create and use a job object -- this is necessary on Electron as node
