@@ -2426,23 +2426,27 @@ bool isUserNotFoundError(const Error& error)
    return error == systemError(boost::system::errc::permission_denied, ErrorLocation());
 }
 
-Error userBelongsToGroupViaGroupList(const User& user,
-                                     const std::string& groupName,
-                                     bool* pBelongs)
+Error userBelongsToGroupViaGroupIds(const User& user,
+                                    const std::string& groupName,
+                                    bool* pBelongs)
 {
    *pBelongs = false; // default to not found
 
-   // get a list of the user's groups
-   std::vector<group::Group> groups;
-   Error error = group::userGroups(user.getUsername(), &groups);
-   if (error)
-      return error;
+   group::Group toFind;
 
-   // scan the user's groups to see if they are a member of the target group
-   *pBelongs = std::find_if(groups.begin(),
-                            groups.end(),
-                            [&](const group::Group& group)
-                            { return group.name == groupName; }) != groups.end();
+   Error err = group::groupFromName(groupName, &toFind);
+   if (err)
+      return err;
+
+   std::vector<GidType> groupIds = group::userGroupIds(user);
+   for (GidType groupId : groupIds)
+   {
+      if (groupId == toFind.groupId)
+      {
+         *pBelongs = true;
+         break;
+      }
+   }
 
    return Success();
 }
@@ -2495,8 +2499,9 @@ Error userBelongsToGroup(const User& user,
    *pBelongs = false; // default to not found
 
    // first we try to use the getgrouplist(3) implementation to determine
-   // if the user is a member of the target groupName.
-   Error groupListError = userBelongsToGroupViaGroupList(user, groupName, pBelongs);
+   // if the user is a member of the target groupName. We used to compare by names
+   // but now compare by ids.
+   Error groupListError = userBelongsToGroupViaGroupIds(user, groupName, pBelongs);
 
    // if there was no error, then we can return early.
    // otherwise, we fallback to the legacy implementation
