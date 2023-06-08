@@ -189,9 +189,16 @@ std::vector<GidType> updateUserGroupCache(const User& user, const std::string& o
    // if it is not, resize the vector with the correct amount of groups and try again
    int numGroups = 100;
    std::vector<GIDTYPE> gids(numGroups);
+   int lastNumGroups = numGroups;
    while (getgrouplist(username.c_str(), user.getGroupId(), gids.data(), &numGroups) == -1)
    {
+      if (numGroups == lastNumGroups)
+      {
+         LOG_ERROR_MESSAGE("Error retrieving groups for: " + username + " errno: " + std::to_string(errno));
+         break; // Continuing on with no groups for this user - should this return an error to the caller?
+      }
       gids.resize(numGroups);
+      lastNumGroups = numGroups;
    }
 
    std::vector<GidType> groupIds;
@@ -362,22 +369,38 @@ Error userGroups(const std::string& userName, std::vector<Group>* pGroups)
    {
       return error;
    }
+
    auto groupIds = userGroupIds(user);
+
+   int numGroupErrors = 0;
+   Error lastError;
+   std::string lastGidStr;
 
    // create group objects for each returned group
    for (const auto& groupId : groupIds)
    {
       Group group;
-      Error error = groupFromId(groupId, &group);
-      if (error)
+      lastError = groupFromId(groupId, &group);
+
+      // It's possible there's one group where this api to get the name/members is not available so rather than fail
+      // the entire request, create an empty group with a dummy name. This preserves the privs for the user, if not
+      // the names, and we do not use the members field of the groups returned by userGroups.
+      if (lastError)
       {
-         return error;
+         lastGidStr = std::to_string(groupId);
+         group.groupId = groupId;
+         group.name = "_pwb_group_" + lastGidStr;
+         numGroupErrors++;
       }
 
       // move the group into the vector
       // (less expensive than regular copy as we do not have to copy the entire group member vector)
       pGroups->emplace_back(std::move(group));
    }
+
+   if (numGroupErrors > 0)
+      LOG_DEBUG_MESSAGE("Using placeholder names and missing members for: " + std::to_string(numGroupErrors) + " groups for user: " + userName + ". Last group id: " + lastGidStr +
+                        " last error: " + lastError.asString());
 
    return Success();
 }
