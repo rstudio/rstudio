@@ -26,7 +26,7 @@
    defaultCopilotRef <- "1358e8e45ecedc53daf971924a0541ddf6224faf"
    copilotRef <- getOption("rstudio.copilot.repositoryRef", defaultCopilotRef)
    
-   defaultCopilotBaseUrl <- "https://rstudio.org/link/github-copilot"
+   defaultCopilotBaseUrl <- "https://rstudio.org/links/github-copilot"
    copilotBaseUrl <- getOption("rstudio.copilot.repositoryUrl", defaultCopilotBaseUrl)
    
    # Get path to copilot payload
