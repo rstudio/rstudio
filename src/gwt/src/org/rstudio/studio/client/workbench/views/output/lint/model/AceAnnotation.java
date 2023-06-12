@@ -31,6 +31,7 @@ public class AceAnnotation extends JavaScriptObject
          column: column,
          type: type
       };
+      
       if (html) 
          aceAnnotation.html = html;
       else

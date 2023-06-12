@@ -141,6 +141,7 @@
 #include "modules/SessionCodeSearch.hpp"
 #include "modules/SessionConfigFile.hpp"
 #include "modules/SessionConsole.hpp"
+#include "modules/SessionCopilot.hpp"
 #include "modules/SessionCRANMirrors.hpp"
 #include "modules/SessionCrypto.hpp"
 #include "modules/SessionErrors.hpp"
@@ -654,6 +655,7 @@ Error rInit(const rstudio::r::session::RInitInfo& rInitInfo)
       (modules::graphics::initialize)
       (modules::fonts::initialize)
       (modules::system_resources::initialize)
+      (modules::copilot::initialize)
 
       // workers
       (workers::web_request::initialize)

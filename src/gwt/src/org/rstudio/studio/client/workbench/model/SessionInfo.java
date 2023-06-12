@@ -14,7 +14,6 @@
  */
 package org.rstudio.studio.client.workbench.model;
 
-import com.google.gwt.core.client.GWT;
 import org.rstudio.core.client.StringUtil;
 import org.rstudio.core.client.files.FileSystemItem;
 import org.rstudio.core.client.js.JsObject;
@@ -44,6 +43,7 @@ import org.rstudio.studio.client.workbench.views.packages.model.PackageProvidedE
 import org.rstudio.studio.client.workbench.views.presentation.model.PresentationState;
 import org.rstudio.studio.client.workbench.views.source.model.SourceDocument;
 
+import com.google.gwt.core.client.GWT;
 import com.google.gwt.core.client.JavaScriptObject;
 import com.google.gwt.core.client.JsArray;
 import com.google.gwt.core.client.JsArrayString;
@@ -423,6 +423,10 @@ public class SessionInfo extends JavaScriptObject
 
    public final native boolean getAllowFullUI() /*-{
       return this.allow_full_ui;
+   }-*/;
+   
+   public final native boolean getAllowCopilot() /*-{
+      return this.allow_copilot || false;
    }-*/;
 
    public final native int getWebSocketPingInterval() /*-{

@@ -14,16 +14,25 @@
  */
 package org.rstudio.core.client;
 
-import com.google.gwt.event.shared.HandlerRegistration;
-
 import java.util.ArrayList;
+import java.util.List;
+
+import com.google.gwt.event.shared.HandlerRegistration;
 
 public class HandlerRegistrations implements HandlerRegistration
 {
    public HandlerRegistrations(HandlerRegistration... registrations)
    {
-      for (HandlerRegistration reg : registrations)
-         add(reg);
+      registrations_ = new ArrayList<HandlerRegistration>();
+      addAll(registrations);
+   }
+   
+   public void addAll(HandlerRegistration... registrations)
+   {
+      for (HandlerRegistration registration : registrations)
+      {
+         add(registration);
+      }
    }
 
    public void add(HandlerRegistration reg)
@@ -37,5 +46,5 @@ public class HandlerRegistrations implements HandlerRegistration
          registrations_.remove(0).removeHandler();
    }
 
-   private final ArrayList<HandlerRegistration> registrations_ = new ArrayList<>();
+   private final List<HandlerRegistration> registrations_;
 }

@@ -3169,6 +3169,32 @@ core::Error UserPrefValues::setDisableRendererAccessibility(bool val)
    return writePref("disable_renderer_accessibility", val);
 }
 
+/**
+ * When enabled, RStudio will use GitHub Copilot to provide code suggestions.
+ */
+bool UserPrefValues::copilotEnabled()
+{
+   return readPref<bool>("copilot_enabled");
+}
+
+core::Error UserPrefValues::setCopilotEnabled(bool val)
+{
+   return writePref("copilot_enabled", val);
+}
+
+/**
+ * The delay (in milliseconds) before GitHub Copilot completions are requested after the cursor position has changed.
+ */
+int UserPrefValues::copilotCompletionsDelay()
+{
+   return readPref<int>("copilot_completions_delay");
+}
+
+core::Error UserPrefValues::setCopilotCompletionsDelay(int val)
+{
+   return writePref("copilot_completions_delay", val);
+}
+
 std::vector<std::string> UserPrefValues::allKeys()
 {
    return std::vector<std::string>({
@@ -3414,6 +3440,8 @@ std::vector<std::string> UserPrefValues::allKeys()
       kEditorScrollMultiplier,
       kTextRendering,
       kDisableRendererAccessibility,
+      kCopilotEnabled,
+      kCopilotCompletionsDelay,
    });
 }
    

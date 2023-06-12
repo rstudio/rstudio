@@ -23,12 +23,18 @@ import org.rstudio.studio.client.server.ServerRequestCallback;
 public abstract class DelayedProgressRequestCallback<T> 
                                  extends ServerRequestCallback<T>
 {
-   public DelayedProgressRequestCallback(String progressMessage)
+   public DelayedProgressRequestCallback(String progressMessage,
+                                         int delayMs)
    {
       this(new GlobalProgressDelayer(
          RStudioGinjector.INSTANCE.getGlobalDisplay(),  
-         500, 
+         delayMs, 
          progressMessage).getIndicator());
+   }
+   
+   public DelayedProgressRequestCallback(String progressMessage)
+   {
+      this(progressMessage, 500);
    }
    
    public DelayedProgressRequestCallback(ProgressIndicator indicator)

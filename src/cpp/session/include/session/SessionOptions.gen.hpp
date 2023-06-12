@@ -276,7 +276,10 @@ protected:
       "Indicates whether or not to allow full standalone UI mode.")
       ("allow-launcher-jobs",
       value<bool>(&allowLauncherJobs_)->default_value(true),
-      "Indicates whether or not to allow running jobs via the Launcher.");
+      "Indicates whether or not to allow running jobs via the Launcher.")
+      ("allow-copilot",
+      value<bool>(&allowCopilot_)->default_value(true),
+      "Indicates whether or not GitHub Copilot integration can be enabled.");
 
    pR->add_options()
       ("r-core-source",
@@ -381,7 +384,13 @@ protected:
       "Specifies the path to the libclang builtin headers.")
       ("external-winpty-path",
       value<std::string>(&winptyPath_)->default_value("bin"),
-      "Specifies the path to winpty binaries.");
+      "Specifies the path to winpty binaries.")
+      ("external-node-path",
+      value<std::string>(&nodePath_)->default_value(std::string()),
+      "Specifies the path to node binaries.")
+      ("external-copilot-path",
+      value<std::string>(&copilotPath_)->default_value(std::string()),
+      "Specifies the path to the GitHub Copilot agent.");
 
    pGit->add_options()
       ("git-commit-large-file-size",
@@ -479,6 +488,7 @@ public:
    bool allowPresentationCommands() const { return allowPresentationCommands_ || allowOverlay(); }
    bool allowFullUI() const { return allowFullUI_ || allowOverlay(); }
    bool allowLauncherJobs() const { return allowLauncherJobs_ || allowOverlay(); }
+   bool allowCopilot() const { return allowCopilot_ || allowOverlay(); }
    core::FilePath coreRSourcePath() const { return core::FilePath(coreRSourcePath_); }
    core::FilePath modulesRSourcePath() const { return core::FilePath(modulesRSourcePath_); }
    core::FilePath sessionLibraryPath() const { return core::FilePath(sessionLibraryPath_); }
@@ -512,6 +522,8 @@ public:
    core::FilePath libclangPath() const { return core::FilePath(libclangPath_); }
    core::FilePath libclangHeadersPath() const { return core::FilePath(libclangHeadersPath_); }
    core::FilePath winptyPath() const { return core::FilePath(winptyPath_); }
+   core::FilePath nodePath() const { return core::FilePath(nodePath_); }
+   core::FilePath copilotPath() const { return core::FilePath(copilotPath_); }
    int gitCommitLargeFileSize() const { return gitCommitLargeFileSize_; }
    std::string userIdentity() const { return userIdentity_; }
    bool showUserIdentity() const { return showUserIdentity_; }
@@ -584,6 +596,7 @@ protected:
    bool allowPresentationCommands_;
    bool allowFullUI_;
    bool allowLauncherJobs_;
+   bool allowCopilot_;
    std::string coreRSourcePath_;
    std::string modulesRSourcePath_;
    std::string sessionLibraryPath_;
@@ -617,6 +630,8 @@ protected:
    std::string libclangPath_;
    std::string libclangHeadersPath_;
    std::string winptyPath_;
+   std::string nodePath_;
+   std::string copilotPath_;
    int gitCommitLargeFileSize_;
    std::string userIdentity_;
    bool showUserIdentity_;

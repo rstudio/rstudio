@@ -1,0 +1,31 @@
+<ui:UiBinder xmlns:ui='urn:ui:com.google.gwt.uibinder'
+             xmlns:g='urn:import:com.google.gwt.user.client.ui'
+             xmlns:rw='urn:import:org.rstudio.core.client.widget'>
+             
+	<ui:style>
+	
+	.container {
+		margin-left: 6px;
+	}
+	
+	.container p {
+		margin-top: 0;
+		margin-bottom: 16px;
+	}
+	
+	</ui:style>
+	
+	<div class="{style.container}">
+		
+		<p>
+			The GitHub Copilot agent is not currently installed. Would you like to install it?
+		</p>
+		
+		<p>
+			Your use of GitHub Copilot is governed by the GitHub Copilot terms of service.
+			By using this software, you agree to abide by the GitHub Copilot terms of service.
+		</p>
+		
+	</div>
+	
+</ui:UiBinder>

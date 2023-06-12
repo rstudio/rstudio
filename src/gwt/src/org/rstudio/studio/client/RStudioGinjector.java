@@ -14,10 +14,6 @@
  */
 package org.rstudio.studio.client;
 
-import com.google.gwt.core.client.GWT;
-import com.google.gwt.inject.client.GinModules;
-import com.google.gwt.inject.client.Ginjector;
-
 import org.rstudio.core.client.HtmlMessageListener;
 import org.rstudio.core.client.VirtualConsole;
 import org.rstudio.core.client.VirtualConsoleFactory;
@@ -102,8 +98,8 @@ import org.rstudio.studio.client.server.Server;
 import org.rstudio.studio.client.shiny.ShinyApplication;
 import org.rstudio.studio.client.shiny.ShinyApplicationSatellite;
 import org.rstudio.studio.client.shiny.ui.ShinyGadgetDialog;
-import org.rstudio.studio.client.shiny.ui.ShinyViewerTypePopupMenu;
 import org.rstudio.studio.client.shiny.ui.ShinyTestPopupMenu;
+import org.rstudio.studio.client.shiny.ui.ShinyViewerTypePopupMenu;
 import org.rstudio.studio.client.vcs.VCSApplication;
 import org.rstudio.studio.client.workbench.BrowseAddinsDialog;
 import org.rstudio.studio.client.workbench.addins.Addins.AddinExecutor;
@@ -136,6 +132,12 @@ import org.rstudio.studio.client.workbench.views.console.shell.assist.Completion
 import org.rstudio.studio.client.workbench.views.console.shell.assist.HelpStrategy;
 import org.rstudio.studio.client.workbench.views.console.shell.assist.PythonCompletionManager;
 import org.rstudio.studio.client.workbench.views.console.shell.assist.RCompletionManager;
+import org.rstudio.studio.client.workbench.views.environment.ClearAllDialog;
+import org.rstudio.studio.client.workbench.views.environment.dataimport.DataImport;
+import org.rstudio.studio.client.workbench.views.environment.dataimport.DataImportDialog;
+import org.rstudio.studio.client.workbench.views.environment.dataimport.DataImportFileChooser;
+import org.rstudio.studio.client.workbench.views.environment.dataimport.DataImportOptionsUiCsv;
+import org.rstudio.studio.client.workbench.views.environment.dataimport.DataImportOptionsUiCsvLocale;
 import org.rstudio.studio.client.workbench.views.jobs.events.JobsPresenterEventHandlersImpl;
 import org.rstudio.studio.client.workbench.views.jobs.model.JobManager;
 import org.rstudio.studio.client.workbench.views.jobs.view.JobItemFactory;
@@ -158,52 +160,51 @@ import org.rstudio.studio.client.workbench.views.source.editors.explorer.view.Ob
 import org.rstudio.studio.client.workbench.views.source.editors.text.AceEditor;
 import org.rstudio.studio.client.workbench.views.source.editors.text.AceEditorIdleCommands;
 import org.rstudio.studio.client.workbench.views.source.editors.text.AceEditorMixins;
-import org.rstudio.studio.client.workbench.views.source.editors.text.TextEditingTargetCommentHeaderHelper;
-import org.rstudio.studio.client.workbench.views.source.editors.text.TextEditingTargetIdleMonitor;
-import org.rstudio.studio.client.workbench.views.source.editors.text.TextEditingTargetJSHelper;
-import org.rstudio.studio.client.workbench.views.source.editors.text.TextEditingTargetRHelper;
-import org.rstudio.studio.client.workbench.views.source.editors.text.TextEditingTargetPackageDependencyHelper;
-import org.rstudio.studio.client.workbench.views.source.editors.text.TextEditingTargetSqlHelper;
 import org.rstudio.studio.client.workbench.views.source.editors.text.AceEditorWidget;
 import org.rstudio.studio.client.workbench.views.source.editors.text.ChunkSatellite;
 import org.rstudio.studio.client.workbench.views.source.editors.text.ChunkWindowManager;
 import org.rstudio.studio.client.workbench.views.source.editors.text.ScopeTreeManager;
 import org.rstudio.studio.client.workbench.views.source.editors.text.TextEditingTargetChunks;
+import org.rstudio.studio.client.workbench.views.source.editors.text.TextEditingTargetCommentHeaderHelper;
 import org.rstudio.studio.client.workbench.views.source.editors.text.TextEditingTargetCompilePdfHelper;
+import org.rstudio.studio.client.workbench.views.source.editors.text.TextEditingTargetCopilotHelper;
 import org.rstudio.studio.client.workbench.views.source.editors.text.TextEditingTargetCppHelper;
+import org.rstudio.studio.client.workbench.views.source.editors.text.TextEditingTargetIdleMonitor;
+import org.rstudio.studio.client.workbench.views.source.editors.text.TextEditingTargetJSHelper;
+import org.rstudio.studio.client.workbench.views.source.editors.text.TextEditingTargetPackageDependencyHelper;
 import org.rstudio.studio.client.workbench.views.source.editors.text.TextEditingTargetPresentationHelper;
 import org.rstudio.studio.client.workbench.views.source.editors.text.TextEditingTargetQuartoHelper;
+import org.rstudio.studio.client.workbench.views.source.editors.text.TextEditingTargetRHelper;
 import org.rstudio.studio.client.workbench.views.source.editors.text.TextEditingTargetRMarkdownHelper;
+import org.rstudio.studio.client.workbench.views.source.editors.text.TextEditingTargetSqlHelper;
 import org.rstudio.studio.client.workbench.views.source.editors.text.ace.AceBackgroundHighlighter;
 import org.rstudio.studio.client.workbench.views.source.editors.text.ace.AceEditorBackgroundLinkHighlighter;
 import org.rstudio.studio.client.workbench.views.source.editors.text.cpp.CppCompletionManager;
 import org.rstudio.studio.client.workbench.views.source.editors.text.cpp.CppCompletionRequest;
-import org.rstudio.studio.client.workbench.views.source.model.CppCompletion;
-import org.rstudio.studio.client.workbench.views.terminal.TerminalInfoDialog;
-import org.rstudio.studio.client.workbench.views.terminal.TerminalList;
-import org.rstudio.studio.client.workbench.views.terminal.TerminalPopupMenu;
-import org.rstudio.studio.client.workbench.views.terminal.TerminalSession;
 import org.rstudio.studio.client.workbench.views.source.editors.text.r.SignatureToolTipManager;
 import org.rstudio.studio.client.workbench.views.source.editors.text.rmd.TextEditingTargetNotebook;
 import org.rstudio.studio.client.workbench.views.source.editors.text.rmd.display.ChunkOptionsPopupPanel;
 import org.rstudio.studio.client.workbench.views.source.editors.text.rmd.display.SetupChunkOptionsPopupPanel;
 import org.rstudio.studio.client.workbench.views.source.editors.text.themes.AceThemes;
 import org.rstudio.studio.client.workbench.views.source.editors.text.visualmode.VisualMode;
-import org.rstudio.studio.client.workbench.views.source.editors.text.visualmode.VisualModePanmirrorContext;
 import org.rstudio.studio.client.workbench.views.source.editors.text.visualmode.VisualModeConfirm;
+import org.rstudio.studio.client.workbench.views.source.editors.text.visualmode.VisualModeMarkdownWriter;
+import org.rstudio.studio.client.workbench.views.source.editors.text.visualmode.VisualModeNavigation;
+import org.rstudio.studio.client.workbench.views.source.editors.text.visualmode.VisualModePanmirrorContext;
 import org.rstudio.studio.client.workbench.views.source.editors.text.visualmode.VisualModePanmirrorFormat;
 import org.rstudio.studio.client.workbench.views.source.editors.text.visualmode.VisualModeSpelling;
 import org.rstudio.studio.client.workbench.views.source.editors.text.yaml.YamlEditorToolsProviderQuarto;
-import org.rstudio.studio.client.workbench.views.source.editors.text.visualmode.VisualModeMarkdownWriter;
-import org.rstudio.studio.client.workbench.views.source.editors.text.visualmode.VisualModeNavigation;
+import org.rstudio.studio.client.workbench.views.source.model.CppCompletion;
+import org.rstudio.studio.client.workbench.views.terminal.TerminalInfoDialog;
+import org.rstudio.studio.client.workbench.views.terminal.TerminalList;
+import org.rstudio.studio.client.workbench.views.terminal.TerminalPopupMenu;
+import org.rstudio.studio.client.workbench.views.terminal.TerminalSession;
 import org.rstudio.studio.client.workbench.views.vcs.svn.SVNCommandHandler;
 import org.rstudio.studio.client.workbench.views.viewer.quarto.QuartoConnection;
-import org.rstudio.studio.client.workbench.views.environment.ClearAllDialog;
-import org.rstudio.studio.client.workbench.views.environment.dataimport.DataImport;
-import org.rstudio.studio.client.workbench.views.environment.dataimport.DataImportDialog;
-import org.rstudio.studio.client.workbench.views.environment.dataimport.DataImportFileChooser;
-import org.rstudio.studio.client.workbench.views.environment.dataimport.DataImportOptionsUiCsv;
-import org.rstudio.studio.client.workbench.views.environment.dataimport.DataImportOptionsUiCsvLocale;
+
+import com.google.gwt.core.client.GWT;
+import com.google.gwt.inject.client.GinModules;
+import com.google.gwt.inject.client.Ginjector;
 
 @GinModules(RStudioGinModuleOverlay.class)
 public interface RStudioGinjector extends Ginjector
@@ -352,6 +353,7 @@ public interface RStudioGinjector extends Ginjector
    void injectMembers(NewQuartoProjectPage newProjectPage);
    void injectMembers(QuartoConnection quartoMessageBus);
    void injectMembers(YamlEditorToolsProviderQuarto yamlCompletionSourceQuarto);
+   void injectMembers(TextEditingTargetCopilotHelper copilotHelper);
 
 
    public static final RStudioGinjector INSTANCE = GWT.create(RStudioGinjector.class);

@@ -2027,6 +2027,26 @@ See `/src/gwt/tools/i18n-helpers/README.md`.
         desc="Show code completions at the current cursor location"
         context="editor"/>
 
+   <cmd id="copilotInstallAgent"
+        label="Copilot: Install Agent"
+        menuLabel="Install Copilot Agent"
+        desc="Install the GitHub Copilot agent."/>
+        
+   <cmd id="copilotSignIn"
+        label="Copilot: Sign In"
+        menuLabel="Sign In"
+        desc="Sign in to the GitHub Copilot service."/>
+        
+   <cmd id="copilotSignOut"
+        label="Copilot: Sign Out"
+        menuLabel="Sign Out"
+        desc="Sign out from the GitHub Copilot service."/>
+        
+   <cmd id="copilotStatus"
+        label="Copilot: Check Status"
+        menuLabel="Status"
+        desc="Check the status of the GitHub Copilot agent."/>
+   
    <cmd id="sourceNavigateBack"
         menuLabel="Bac_k"
         desc="Go back to the previous source location"/>

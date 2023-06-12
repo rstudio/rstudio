@@ -14,9 +14,6 @@
  */
 package org.rstudio.studio.client.workbench.prefs.views;
 
-import com.google.gwt.core.client.GWT;
-import com.google.inject.Inject;
-
 import java.util.ArrayList;
 import java.util.List;
 
@@ -34,10 +31,13 @@ import org.rstudio.studio.client.server.ServerError;
 import org.rstudio.studio.client.server.Void;
 import org.rstudio.studio.client.workbench.model.Session;
 import org.rstudio.studio.client.workbench.model.WorkbenchServerOperations;
+import org.rstudio.studio.client.workbench.prefs.PrefsConstants;
 import org.rstudio.studio.client.workbench.prefs.events.UserPrefsChangedEvent;
 import org.rstudio.studio.client.workbench.prefs.model.UserPrefs;
 import org.rstudio.studio.client.workbench.prefs.model.UserState;
-import org.rstudio.studio.client.workbench.prefs.PrefsConstants;
+
+import com.google.gwt.core.client.GWT;
+import com.google.inject.Inject;
 
 public class PreferencesDialog extends PreferencesDialogBase<UserPrefs>
 {
@@ -64,6 +64,7 @@ public class PreferencesDialog extends PreferencesDialogBase<UserPrefs>
                             TerminalPreferencesPane terminal,
                             AccessibilityPreferencesPane accessibility,
                             PythonPreferencesPane python,
+                            CopilotPreferencesPane copilot,
                             ApplicationQuit quit,
                             GlobalDisplay globalDisplay,
                             UserPrefs userPrefs,
@@ -88,7 +89,8 @@ public class PreferencesDialog extends PreferencesDialogBase<UserPrefs>
                   sourceControl,
                   publishing,
                   terminal,
-                  accessibility));
+                  accessibility,
+                  copilot));
       
       session_ = session;
       server_ = server;

@@ -418,6 +418,8 @@ namespace prefs {
 #define kTextRenderingAuto "auto"
 #define kTextRenderingGeometricPrecision "geometricPrecision"
 #define kDisableRendererAccessibility "disable_renderer_accessibility"
+#define kCopilotEnabled "copilot_enabled"
+#define kCopilotCompletionsDelay "copilot_completions_delay"
 
 class UserPrefValues: public Preferences
 {
@@ -1874,6 +1876,18 @@ public:
     */
    bool disableRendererAccessibility();
    core::Error setDisableRendererAccessibility(bool val);
+
+   /**
+    * When enabled, RStudio will use GitHub Copilot to provide code suggestions.
+    */
+   bool copilotEnabled();
+   core::Error setCopilotEnabled(bool val);
+
+   /**
+    * The delay (in milliseconds) before GitHub Copilot completions are requested after the cursor position has changed.
+    */
+   int copilotCompletionsDelay();
+   core::Error setCopilotCompletionsDelay(int val);
 
 };
 

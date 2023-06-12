@@ -14,14 +14,9 @@
  */
 package org.rstudio.studio.client.workbench.views.console.shell.assist;
 
-import com.google.gwt.core.client.GWT;
-import com.google.gwt.core.client.JsArray;
-import com.google.gwt.core.client.Scheduler;
-import com.google.gwt.dom.client.NativeEvent;
-import com.google.gwt.event.dom.client.*;
-import com.google.gwt.event.logical.shared.AttachEvent;
-import com.google.gwt.user.client.Timer;
-import com.google.inject.Inject;
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.List;
 
 import org.rstudio.core.client.HandlerRegistrations;
 import org.rstudio.core.client.Invalidation;
@@ -60,11 +55,11 @@ import org.rstudio.studio.client.workbench.views.console.shell.editor.InputEdito
 import org.rstudio.studio.client.workbench.views.console.shell.editor.InputEditorSelection;
 import org.rstudio.studio.client.workbench.views.console.shell.editor.InputEditorUtil;
 import org.rstudio.studio.client.workbench.views.source.editors.text.AceEditor;
+import org.rstudio.studio.client.workbench.views.source.editors.text.AceEditor.EditorBehavior;
+import org.rstudio.studio.client.workbench.views.source.editors.text.CompletionContext;
 import org.rstudio.studio.client.workbench.views.source.editors.text.DocDisplay;
 import org.rstudio.studio.client.workbench.views.source.editors.text.NavigableSourceEditor;
-import org.rstudio.studio.client.workbench.views.source.editors.text.CompletionContext;
 import org.rstudio.studio.client.workbench.views.source.editors.text.ScopeFunction;
-import org.rstudio.studio.client.workbench.views.source.editors.text.AceEditor.EditorBehavior;
 import org.rstudio.studio.client.workbench.views.source.editors.text.ace.AceEditorCommandEvent;
 import org.rstudio.studio.client.workbench.views.source.editors.text.ace.CodeModel;
 import org.rstudio.studio.client.workbench.views.source.editors.text.ace.DplyrJoinContext;
@@ -80,9 +75,14 @@ import org.rstudio.studio.client.workbench.views.source.events.CodeBrowserNaviga
 import org.rstudio.studio.client.workbench.views.source.model.RnwCompletionContext;
 import org.rstudio.studio.client.workbench.views.source.model.SourcePosition;
 
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.List;
+import com.google.gwt.core.client.GWT;
+import com.google.gwt.core.client.JsArray;
+import com.google.gwt.core.client.Scheduler;
+import com.google.gwt.dom.client.NativeEvent;
+import com.google.gwt.event.dom.client.KeyCodes;
+import com.google.gwt.event.logical.shared.AttachEvent;
+import com.google.gwt.user.client.Timer;
+import com.google.inject.Inject;
 
 public class RCompletionManager implements CompletionManager
 {  
@@ -418,12 +418,20 @@ public class RCompletionManager implements CompletionManager
          if (docDisplay_.isEmacsModeOn() && event.getKeyCode() == KeyCodes.KEY_SPACE)
             return false;
          
+         // Don't handle Tab when ghost text is displayed
+         if (keycode == KeyCodes.KEY_TAB &&
+             modifier == 0 &&
+             docDisplay_.hasGhostText())
+         {
+            return false;
+         }
+         
          if (CompletionUtils.isCompletionRequest(event, modifier))
          {
             if (initFilter_ == null || initFilter_.shouldComplete(event))
             {
                String currentLine = docDisplay_.getCurrentLineUpToCursor();
-
+               
                // If we're in markdown mode, only autocomplete in '```{r',
                // '[](', or '`r |' contexts
                if (DocumentMode.isCursorInMarkdownMode(docDisplay_))
@@ -757,8 +765,9 @@ public class RCompletionManager implements CompletionManager
          
          // Perform an auto-popup if a set number of R identifier characters
          // have been inserted (but only if the user has allowed it in prefs)
-         boolean autoPopupEnabled = userPrefs_.codeCompletion().getValue() ==
-               UserPrefs.CODE_COMPLETION_ALWAYS;
+         boolean autoPopupEnabled =
+               userPrefs_.codeCompletion().getValue() == UserPrefs.CODE_COMPLETION_ALWAYS &&
+               userPrefs_.copilotEnabled().getValue() == false;
 
          if (!autoPopupEnabled)
             return false;

@@ -46,6 +46,17 @@
 #undef TRUE
 #undef FALSE
 
+#ifdef _WIN32
+# define RS_IMPORT __declspec(dllimport)
+#else
+# define RS_IMPORT
+#endif
+
+extern "C" {
+extern RS_IMPORT SEXP R_TrueValue;
+extern RS_IMPORT SEXP R_FalseValue;
+} // extern "C"
+
 using namespace rstudio::core;
 using namespace boost::placeholders;
 
@@ -1276,10 +1287,7 @@ SEXP create(double value, Protect* pProtect)
 
 SEXP create(bool value, Protect* pProtect)
 {
-   SEXP valueSEXP;
-   pProtect->add(valueSEXP = Rf_allocVector(LGLSXP, 1));
-   LOGICAL(valueSEXP)[0] = value;
-   return valueSEXP;
+   return value ? R_TrueValue : R_FalseValue;
 }
 
 SEXP create(const core::json::Array& value, Protect* pProtect)

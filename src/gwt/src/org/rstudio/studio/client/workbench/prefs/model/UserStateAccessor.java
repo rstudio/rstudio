@@ -112,7 +112,7 @@ public class UserStateAccessor extends Prefs
       }-*/;
 
       public final native JavaScriptObject getWindowBounds() /*-{
-         return this && this.windowBounds || {"width":1200,"height":900,"x":0,"y":0};
+         return this && this.windowBounds || {"width":1200,"height":900,"x":0,"y":0,"maximized":false};
       }-*/;
 
       public final native boolean getAccessibility() /*-{

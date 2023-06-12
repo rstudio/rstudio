@@ -20,7 +20,6 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
-import com.google.gwt.json.client.*;
 import org.rstudio.core.client.BrowseCap;
 import org.rstudio.core.client.Debug;
 import org.rstudio.core.client.StringUtil;
@@ -40,8 +39,22 @@ import org.rstudio.core.client.jsonrpc.RpcResponse;
 import org.rstudio.core.client.jsonrpc.RpcResponseHandler;
 import org.rstudio.studio.client.application.ApplicationTutorialEvent;
 import org.rstudio.studio.client.application.Desktop;
-import org.rstudio.studio.client.application.events.*;
-import org.rstudio.studio.client.application.model.*;
+import org.rstudio.studio.client.application.events.ClientDisconnectedEvent;
+import org.rstudio.studio.client.application.events.EventBus;
+import org.rstudio.studio.client.application.events.InvalidClientVersionEvent;
+import org.rstudio.studio.client.application.events.InvalidSessionEvent;
+import org.rstudio.studio.client.application.events.ServerOfflineEvent;
+import org.rstudio.studio.client.application.events.SessionRelaunchEvent;
+import org.rstudio.studio.client.application.events.UnauthorizedEvent;
+import org.rstudio.studio.client.application.model.ActiveSession;
+import org.rstudio.studio.client.application.model.InvalidSessionInfo;
+import org.rstudio.studio.client.application.model.ProductInfo;
+import org.rstudio.studio.client.application.model.ProductNotice;
+import org.rstudio.studio.client.application.model.RVersionSpec;
+import org.rstudio.studio.client.application.model.SessionInitOptions;
+import org.rstudio.studio.client.application.model.SuspendOptions;
+import org.rstudio.studio.client.application.model.TutorialApiCallContext;
+import org.rstudio.studio.client.application.model.UpdateCheckResult;
 import org.rstudio.studio.client.common.JSONArrayBuilder;
 import org.rstudio.studio.client.common.JSONUtils;
 import org.rstudio.studio.client.common.codetools.Completions;
@@ -142,6 +155,12 @@ import org.rstudio.studio.client.workbench.addins.Addins.RAddins;
 import org.rstudio.studio.client.workbench.codesearch.model.CodeSearchResults;
 import org.rstudio.studio.client.workbench.codesearch.model.ObjectDefinition;
 import org.rstudio.studio.client.workbench.codesearch.model.SearchPathFunctionDefinition;
+import org.rstudio.studio.client.workbench.copilot.model.CopilotResponseTypes.CopilotGenerateCompletionsResponse;
+import org.rstudio.studio.client.workbench.copilot.model.CopilotResponseTypes.CopilotInstallAgentResponse;
+import org.rstudio.studio.client.workbench.copilot.model.CopilotResponseTypes.CopilotSignInResponse;
+import org.rstudio.studio.client.workbench.copilot.model.CopilotResponseTypes.CopilotSignOutResponse;
+import org.rstudio.studio.client.workbench.copilot.model.CopilotResponseTypes.CopilotStatusResponse;
+import org.rstudio.studio.client.workbench.copilot.model.CopilotResponseTypes.CopilotVerifyInstalledResponse;
 import org.rstudio.studio.client.workbench.events.SessionInitEvent;
 import org.rstudio.studio.client.workbench.exportplot.model.SavePlotAsImageContext;
 import org.rstudio.studio.client.workbench.model.HTMLCapabilities;
@@ -218,6 +237,12 @@ import com.google.gwt.core.client.JsArrayInteger;
 import com.google.gwt.core.client.JsArrayNumber;
 import com.google.gwt.core.client.JsArrayString;
 import com.google.gwt.http.client.URL;
+import com.google.gwt.json.client.JSONArray;
+import com.google.gwt.json.client.JSONBoolean;
+import com.google.gwt.json.client.JSONNull;
+import com.google.gwt.json.client.JSONNumber;
+import com.google.gwt.json.client.JSONObject;
+import com.google.gwt.json.client.JSONString;
 import com.google.gwt.user.client.Random;
 import com.google.inject.Inject;
 import com.google.inject.Provider;
@@ -564,7 +589,52 @@ public class RemoteServer implements Server
    {
       sendRequest(RPC_SCOPE, RSTUDIOAPI_RESPONSE, response, requestCallback);
    }
+   
+   @Override
+   public void copilotVerifyInstalled(ServerRequestCallback<CopilotVerifyInstalledResponse> requestCallback)
+   {
+      sendRequest(RPC_SCOPE, "copilot_verify_installed", requestCallback);
+   }
 
+   @Override
+   public void copilotInstallAgent(ServerRequestCallback<CopilotInstallAgentResponse> requestCallback)
+   {
+      sendRequest(RPC_SCOPE, "copilot_install_agent", requestCallback);
+   }
+   
+   @Override
+   public void copilotSignIn(ServerRequestCallback<CopilotSignInResponse> requestCallback)
+   {
+      sendRequest(RPC_SCOPE, "copilot_sign_in", requestCallback);
+   }
+   
+   @Override
+   public void copilotSignOut(ServerRequestCallback<CopilotSignOutResponse> requestCallback)
+   {
+      sendRequest(RPC_SCOPE, "copilot_sign_out", requestCallback);
+   }
+   
+   @Override
+   public void copilotStatus(ServerRequestCallback<CopilotStatusResponse> requestCallback)
+   {
+      sendRequest(RPC_SCOPE, "copilot_status", requestCallback);
+   }
+   
+   @Override
+   public void copilotGenerateCompletions(String documentId,
+                                          int cursorRow,
+                                          int cursorColumn,
+                                          ServerRequestCallback<CopilotGenerateCompletionsResponse> requestCallback)
+   {
+      JSONArray params = new JSONArrayBuilder()
+            .add(documentId)
+            .add(cursorRow)
+            .add(cursorColumn)
+            .get();
+      
+      sendRequest(RPC_SCOPE, "copilot_generate_completions", params, requestCallback);
+   }
+   
    @Override
    public void getTerminalOptions(
                      ServerRequestCallback<TerminalOptions> requestCallback)
