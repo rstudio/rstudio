@@ -100,6 +100,19 @@ This page provides the release notes associated with each release of RStudio and
 - Fixed a memory leak and various crashes in the Kubernetes plugin (rstudio/launcher#584, rstudio/launcher#645, rstudio/launcher#660)
 - The Kubernetes plugin now interprets the default number of AMD GPUs correctly (rstudio/launcher#688)
 
+## RStudio 2023.03.2
+
+**"Cherry Blossom"**
+
+>Date: 2023-06-12
+
+### Fixed
+
+#### RStudio IDE
+
+#### Posit Workbench
+- Added option to allow launcher sessions to return a non-zero exit code (rstudio/rstudio-pro#4719)
+
 ## RStudio 2023.03.1
 
 **"Cherry Blossom"**
