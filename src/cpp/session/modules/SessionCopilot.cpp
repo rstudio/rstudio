@@ -47,13 +47,13 @@
       std::string formatted =                                                  \
           fmt::format("[{}]: {}", __func__, message);                          \
       __LOGGER__(formatted);                                                   \
-      if (copilotLogLevel() > 0)                                               \
+      if (copilotLogLevel() >= 3)                                              \
          std::cerr << formatted << std::endl;                                  \
    } while (0)
 
 #define DLOG(__FMT__, ...) COPILOT_LOG_IMPL(LOG_DEBUG_MESSAGE,   __FMT__, ##__VA_ARGS__)
-#define ELOG(__FMT__, ...) COPILOT_LOG_IMPL(LOG_ERROR_MESSAGE,   __FMT__, ##__VA_ARGS__)
 #define WLOG(__FMT__, ...) COPILOT_LOG_IMPL(LOG_WARNING_MESSAGE, __FMT__, ##__VA_ARGS__)
+#define ELOG(__FMT__, ...) COPILOT_LOG_IMPL(LOG_ERROR_MESSAGE,   __FMT__, ##__VA_ARGS__)
 
 #ifndef _WIN32
 # define kNodeExe "node"
@@ -120,7 +120,7 @@ private:
 };
 
 // The log level for Copilot-specific logs. Primarily for developer use.
-int s_copilotLogLevel = 3;
+int s_copilotLogLevel = 0;
 
 // Whether Copilot is enabled.
 bool s_copilotEnabled = false;
