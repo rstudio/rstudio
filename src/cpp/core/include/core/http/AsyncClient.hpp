@@ -101,6 +101,8 @@ public:
         closed_(false),
         requestWritten_(false)
    {
+      // Make sure we read at least 8192 bytes from the socket at a time. The default ends up as 512.
+      responseBuffer_.prepare(8192);
    }
 
    virtual ~AsyncClient()
