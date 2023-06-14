@@ -584,7 +584,7 @@
       }
    }
    
-   if (!.rs.isZeroLength(cacheKey)) {
+   if (.rs.isNonEmptyScalarString(cacheKey)) {
       # if the object exists in the cache environment, return it. objects
       # in the cache environment have already been coerced to data frames.
       if (exists(cacheKey, where = .rs.CachedDataEnv, inherits = FALSE))
@@ -753,7 +753,7 @@
    # save a copy into the cached environment
    cacheKey <- .rs.addCachedData(force(x), name)
    
-   if (.rs.isZeroLength(cacheKey))
+   if (!.rs.isNonEmptyScalarString(cacheKey))
       return(invisible(NULL))
 
    # call viewData 
@@ -786,7 +786,7 @@
 
 .rs.addFunction("viewDataFrame", function(x, title, preview) {
    cacheKey <- .rs.addCachedData(force(x), "")
-   if (!.rs.isZeroLength(cacheKey))
+   if (.rs.isNonEmptyScalarString(cacheKey))
       invisible(.Call("rs_viewData", x, "", title, "", emptyenv(), cacheKey, preview))
 })
 
@@ -813,7 +813,7 @@
    # coerce to data frame before assigning, and don't assign if we can't coerce
    frame <- .rs.toDataFrame(obj, objName, TRUE)
    if (!is.null(frame) &&
-       !.rs.isZeroLength(cacheKey))
+       .rs.isNonEmptyScalarString(cacheKey))
       assign(cacheKey, frame, .rs.CachedDataEnv)
 })
 
@@ -823,7 +823,7 @@
    if (Encoding(cacheDir) == "unknown")
       Encoding(cacheDir) <- "UTF-8"
    
-   if (!.rs.isZeroLength(cacheKey)) {
+   if (.rs.isNonEmptyScalarString(cacheKey)) {
       # remove data from the cache environment
       if (exists(".rs.CachedDataEnv") &&
          exists(cacheKey, where = .rs.CachedDataEnv, inherits = FALSE))
@@ -852,7 +852,7 @@
    
    # save each active cache file from the cache environment
    lapply(ls(.rs.CachedDataEnv), function(cacheKey) {
-      if (!.rs.isZeroLength(cacheKey))
+      if (.rs.isNonEmptyScalarString(cacheKey))
          save(list = cacheKey, 
             file = file.path(cacheDir, paste(cacheKey, "Rdata", sep = ".")),
             envir = .rs.CachedDataEnv)
@@ -868,7 +868,7 @@
 
 .rs.addFunction("findWorkingData", function(cacheKey)
 {
-   if (!.rs.isZeroLength(cacheKey) &&
+   if (.rs.isNonEmptyScalarString(cacheKey) &&
        exists(".rs.WorkingDataEnv") &&
        exists(cacheKey, where = .rs.WorkingDataEnv, inherits = FALSE))
       get(cacheKey, envir = .rs.WorkingDataEnv, inherits = FALSE)
@@ -878,7 +878,7 @@
 
 .rs.addFunction("removeWorkingData", function(cacheKey)
 {
-   if (!.rs.isZeroLength(cacheKey) &&
+   if (.rs.isNonEmptyScalarString(cacheKey) &&
        exists(".rs.WorkingDataEnv") &&
        exists(cacheKey, where = .rs.WorkingDataEnv, inherits = FALSE))
       rm(list = cacheKey, envir = .rs.WorkingDataEnv, inherits = FALSE)
@@ -887,7 +887,7 @@
 
 .rs.addFunction("assignWorkingData", function(cacheKey, obj)
 {
-   if (!.rs.isZeroLength(cacheKey))
+   if (.rs.isNonEmptyScalarString(cacheKey))
       assign(cacheKey, obj, .rs.WorkingDataEnv)
 })
 
@@ -901,8 +901,8 @@
    invisible("")
 })
 
-.rs.addFunction("isZeroLength", function(x)
+.rs.addFunction("isNonEmptyScalarString", function(x)
 {
-   (x == "") || is.null(x) || is.na(x)
+   is.character(x) && length(x) == 1 && nzchar(x)
 })
 
