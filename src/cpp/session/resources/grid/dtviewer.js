@@ -159,8 +159,8 @@
 
   // maximum number of columns to draw
   // the default is maintained separately for view element considerations
-  var defaultMaxColumns = 50;
-  var maxColumns = defaultMaxColumns;
+  const defaultMaxDisplayColumns = 50;
+  var maxDisplayColumns = defaultMaxDisplayColumns;
 
   // maximum number of rows to draw; -1 implies all rows
   var maxRows = -1;
@@ -1015,7 +1015,7 @@
     var parsedLocation = {};
 
     parsedLocation.env = parsedLocation.obj = parsedLocation.cacheKey = parsedLocation.id = "";
-    parsedLocation.maxCols = defaultMaxColumns;
+    parsedLocation.maxDisplayColumns = defaultMaxDisplayColumns;
 
     var query = window.location.search.substring(1);
     var queryVars = query.split("&");
@@ -1031,6 +1031,8 @@
         parsedLocation.dataSource = queryVar[1];
       } else if (queryVar[0] == "id") {
         parsedLocation.id = queryVar[1];
+      } else if (queryVar[0] == "max_display_columns") {
+        parsedLocation.maxDisplayColumns = parseInt(queryVar[1], 10);
       } else if (queryVar[0] == "max_cols") {
         parsedLocation.maxCols = parseInt(queryVar[1], 10);
       } else if (queryVar[0] == "max_rows") {
@@ -1102,16 +1104,16 @@
       obj = parsedLocation.obj,
       cacheKey = parsedLocation.cacheKey;
 
-    maxColumns = parsedLocation.maxCols;
-    if (maxColumns == -1) 
-    {
-      maxColumns = cols.length;
+    if (parsedLocation.maxCols) {
+      maxDisplayColumns = parsedLocation.maxCols === -1 || parsedLocation.maxCols > cols.length
+        ? cols.length
+        : parsedLocation.maxCols;
+    } else {
+      maxDisplayColumns = parsedLocation.maxDisplayColumns
+        ? parsedLocation.maxDisplayColumns
+        : defaultMaxDisplayColumns;
     }
-
-    if (parsedLocation.maxRows)
-    {
-      maxRows = parsedLocation.maxRows;
-    }
+    maxRows = parsedLocation.maxRows ?? maxRows;
     
     // keep track of column types for later render
     var typeIndices = {
@@ -1121,9 +1123,9 @@
       text: [],
     };
 
-    // add each column, offset this and only add as many as current maxColumns
+    // add each column, offset this and only add as many as current maxDisplayColumns
     var thead = document.getElementById("data_cols");
-    for (j = 0; j < cols.length && j <= maxColumns + columnOffset; j++) {
+    for (j = 0; j < cols.length && j <= maxDisplayColumns + columnOffset; j++) {
       // create table header
       thead.appendChild(createHeader(j <= 0 ? j : j + columnOffset, cols[j]));
       var colType = cols[j].col_type;
@@ -1158,7 +1160,7 @@
           d.cache_key = cacheKey;
           d.show = "data";
           d.column_offset = columnOffset;
-          d.max_columns = maxColumns;
+          d.max_cols = maxDisplayColumns;
           d.max_rows = maxRows;
         },
         error: function (jqXHR) {
@@ -1267,7 +1269,7 @@
     initDataTableLoad();
 
     // update the GWT column widget
-    window.columnFrameCallback(columnOffset, maxColumns);
+    window.columnFrameCallback(columnOffset, maxDisplayColumns);
   };
 
   var debouncedSearch = debounce(function (text) {
@@ -1668,7 +1670,7 @@
 
     var newOffset = Math.max(
       0,
-      Math.min(cols.length - 1 - maxColumns, columnOffset + maxColumns)
+      Math.min(cols.length - 1 - maxDisplayColumns, columnOffset + maxDisplayColumns)
     );
     if (columnOffset != newOffset) {
       columnOffset = newOffset;
@@ -1683,7 +1685,7 @@
 
     var newOffset = Math.max(
       0,
-      Math.min(cols.length - 1 - maxColumns, columnOffset - maxColumns)
+      Math.min(cols.length - 1 - maxDisplayColumns, columnOffset - maxDisplayColumns)
     );
     if (columnOffset != newOffset) {
       columnOffset = newOffset;
@@ -1707,8 +1709,8 @@
       return;
     }
 
-    if (columnOffset != cols.length - 1 - maxColumns) {
-      columnOffset = cols.length - 1 - maxColumns;
+    if (columnOffset != cols.length - 1 - maxDisplayColumns) {
+      columnOffset = cols.length - 1 - maxDisplayColumns;
       bootstrap();
     }
   };
@@ -1726,14 +1728,14 @@
     }
     if (newMax > 0) {
       newMax = Math.min(cols.length - 1 - newOffset, newMax);
-      maxColumns = newMax;
+      maxDisplayColumns = newMax;
     }
     bootstrap();
   };
 
   // return whether to show the column frame UI elements
   window.isLimitedColumnFrame = function () {
-    return cols.length > defaultMaxColumns;
+    return cols.length > defaultMaxDisplayColumns;
   };
 
   var parsedLocation = parseLocationUrl();

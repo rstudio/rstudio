@@ -62,9 +62,6 @@
 // special cell values
 #define SPECIAL_CELL_NA 0
 
-// default max value for columns to return unless client requests more
-#define MAX_COLUMNS 50
-
 using namespace rstudio::core;
 using namespace boost::placeholders;
 
@@ -374,7 +371,7 @@ json::Value makeDataItem(SEXP dataSEXP,
    dataItem["contentUrl"] = kGridResource "/gridviewer.html?env=" +
       http::util::urlEncode(envName, true) + "&obj=" + 
       http::util::urlEncode(objName, true) + "&cache_key=" +
-      http::util::urlEncode(cacheKey, true) + "&max_cols=" + 
+      http::util::urlEncode(cacheKey, true) + "&max_display_columns=" + 
       safe_convert::numberToString(prefs::userPrefs().dataViewerMaxColumns());
    dataItem["preview"] = preview;
 
@@ -563,10 +560,6 @@ json::Value getData(SEXP dataSEXP,
       orderIdx++;
    } while (ordercol > 0);
 
-   // Parameters from the client to delimit the column slice to return
-   int columnOffset = http::util::fieldValue<int>(fields, "column_offset", 0);
-   int maxColumns = http::util::fieldValue<int>(fields, "max_columns", MAX_COLUMNS);
-
    int nrow = safeDim(dataSEXP, DIM_ROWS);
    int ncol = safeDim(dataSEXP, DIM_COLS);
 
@@ -575,15 +568,6 @@ json::Value getData(SEXP dataSEXP,
    // extract filters
    std::vector<std::string> filters;
    bool hasFilter = false;
-
-   // fill the initial filters outside of the visible frame
-   // unfortunately the code that consumes these filters assumes
-   // it's purely index based and needs to be padded out
-   for (int i = 0; i < columnOffset; i++)
-   {
-      std::string emptyStr = "";
-      filters.push_back(emptyStr);
-   }
    
    for (int i = 1; i <= ncol; i++)
    {
@@ -682,12 +666,11 @@ json::Value getData(SEXP dataSEXP,
    start++;
 
    // extract the portion of the column vector requested by the client
-   int numFormattedColumns = ncol - columnOffset < maxColumns ? ncol - columnOffset : maxColumns;
+   int numFormattedColumns = maxCols > ncol || maxCols == -1 ? ncol : maxCols;
    SEXP formattedDataSEXP = Rf_allocVector(VECSXP, numFormattedColumns);
    protect.add(formattedDataSEXP);
 
-   int initialIndex = 0 + columnOffset;
-   for (int i = initialIndex; i < initialIndex + numFormattedColumns; i++)
+   for (int i = 0; i < numFormattedColumns; i++)
    {
       if (i >= r::sexp::length(dataSEXP))
       {
@@ -714,7 +697,7 @@ json::Value getData(SEXP dataSEXP,
       if (error)
          throw r::exec::RErrorException(error.getSummary());
       
-      SET_VECTOR_ELT(formattedDataSEXP, i - initialIndex, formattedColumnSEXP);
+      SET_VECTOR_ELT(formattedDataSEXP, i, formattedColumnSEXP);
    }
 
    // format the row names
