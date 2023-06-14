@@ -584,7 +584,8 @@
       }
    }
    
-   if (.rs.isNonEmptyScalarString(cacheKey)) {
+   if (.rs.isNonEmptyScalarString(cacheKey))
+   {
       # if the object exists in the cache environment, return it. objects
       # in the cache environment have already been coerced to data frames.
       if (exists(cacheKey, where = .rs.CachedDataEnv, inherits = FALSE))
@@ -603,6 +604,7 @@
             return(get(cacheKey, envir = .rs.CachedDataEnv, inherits = FALSE))
       }
    }
+
    # failure
    return(NULL)
 })
@@ -823,7 +825,8 @@
    if (Encoding(cacheDir) == "unknown")
       Encoding(cacheDir) <- "UTF-8"
    
-   if (.rs.isNonEmptyScalarString(cacheKey)) {
+   if (.rs.isNonEmptyScalarString(cacheKey))
+   {
       # remove data from the cache environment
       if (exists(".rs.CachedDataEnv") &&
          exists(cacheKey, where = .rs.CachedDataEnv, inherits = FALSE))
