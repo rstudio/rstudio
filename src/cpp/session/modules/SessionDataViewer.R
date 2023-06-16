@@ -264,9 +264,19 @@
 })
 
 .rs.addFunction("describeColSlice", function(x,
-                                              sliceStart = 1,
-                                              sliceEnd = 1)
+                                             sliceStart = 1,
+                                             sliceEnd = 1)
 {
+   colCount <- ncol(x)
+
+   if (colCount == 0)
+      return(NULL)
+  
+   if (sliceEnd > colCount || sliceEnd < 1)
+      sliceEnd <- colCount
+   if (sliceStart > colCount || sliceStart < 1 || sliceStart > sliceEnd)
+      sliceStart <- 1
+   
    colSlice <- x[sliceStart:sliceEnd]
    .rs.describeCols(colSlice, -1, -1, 64)
 })
