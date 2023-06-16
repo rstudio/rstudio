@@ -1096,12 +1096,6 @@
     // save reference to column data
     cols = resCols;
 
-    // due to the jquery magic done in dataTables with rewriting variables and
-    // the amount of window parameters we're already using this is a sane fit
-    // for setting constants from dtviewer to dataTables
-    window.dataTableMaxColumns = Math.max(0, cols.length - 1);
-    window.dataTableColumnOffset = columnOffset;
-
     // look up the query parameters
     var parsedLocation = parseLocationUrl();
     var env = parsedLocation.env,
@@ -1125,7 +1119,15 @@
     }
 
     maxRows = parsedLocation.maxRows ?? maxRows;
-    totalColumns = parsedLocation.totalColumns ?? cols.length;
+
+    // totalColumns is the total number of columns in the data set
+    // cols.length includes the row names column so we subtract 1
+    totalColumns = parsedLocation.totalColumns ?? cols.length - 1;
+
+    // due to the jquery magic done in dataTables with rewriting variables and
+    // the amount of window parameters we're already using this is a sane fit
+    // for setting constants from dtviewer to dataTables
+    window.dataTableMaxColumns = totalColumns;
 
     // colLimits.forEach(x => console.log(x));
     console.log("maxDisplayColumns = ", maxDisplayColumns);
