@@ -79,7 +79,8 @@ public:
                    bool disableOriginCheck = true,
                    const std::vector<boost::regex>& allowedOrigins = std::vector<boost::regex>(),
                    const Headers& additionalResponseHeaders = Headers(),
-                   const int statsMonitorSeconds = 0)
+                   const int statsMonitorSeconds = 0,
+                   const boost::shared_ptr<AsyncServerStatsProvider> statsProvider = boost::shared_ptr<AsyncServerStatsProvider>())
       : acceptorService_(),
         abortOnResourceError_(false),
         serverName_(serverName),
@@ -93,7 +94,8 @@ public:
         totalTime_(boost::posix_time::seconds(0)),
         minTime_(boost::posix_time::seconds(0)),
         maxTime_(boost::posix_time::seconds(0)),
-        statsMonitorSeconds_(statsMonitorSeconds)
+        statsMonitorSeconds_(statsMonitorSeconds),
+        statsProvider_(statsProvider)
    {
    }
    
@@ -439,6 +441,17 @@ public:
       return acceptorService_.acceptor().local_endpoint();
    }
    
+   virtual int getActiveConnectionCount()
+   {
+      int res;
+      RECURSIVE_LOCK_MUTEX(mutex_)
+      {
+         res = connections_.size();
+      }
+      END_LOCK_MUTEX
+      return res;
+   }
+
 private:
 
    void runServiceThread()
@@ -475,7 +488,7 @@ private:
       return false;
    }
 
-   void onConnectionClosed(const boost::weak_ptr<AsyncConnectionImpl<typename ProtocolType::socket>>& connectionPtr, bool fromDestructor)
+   void onConnectionClosed(const boost::weak_ptr<AsyncConnectionImpl<typename ProtocolType::socket>>& connectionPtr, bool fromDestructor, bool requestParsed)
    {
       boost::posix_time::ptime now = boost::posix_time::microsec_clock::universal_time();
 
@@ -487,11 +500,23 @@ private:
          {
             auto connection = connectionPtr.lock();
             boost::posix_time::ptime startTime = connection->startTime();
+
+            bool isStreaming = isStreamingUri(connection->request().uri());
+            if (statsProvider_ && requestParsed)
+            {
+               if (connections_.find(connection) != connections_.end())
+                  statsProvider_->httpEnd(connection->request(), connection->response(), isStreaming);
+               else
+               {
+                  LOG_DEBUG_MESSAGE("Closing connection not found in the list: " + connection->request().debugInfo());
+               }
+            }
+
             if (!startTime.is_not_a_date_time())
             {
                if (now > startTime)
                {
-                  if (!isStreamingUri(connection->request().uri()))
+                  if (!isStreaming)
                   {
                      boost::posix_time::time_duration requestTime = now - startTime;
                      numRequests_++;
@@ -514,7 +539,8 @@ private:
                debugMsg = "Closing connection that never started";
          }
 
-         connections_.erase(connectionPtr);
+         if (connections_.erase(connectionPtr) == 1 && fromDestructor && statsProvider_ && requestParsed)
+            statsProvider_->httpNoResponse();
       }
       END_LOCK_MUTEX
 
@@ -545,7 +571,7 @@ private:
 
          // close handler
          boost::bind(&AsyncServerImpl<ProtocolType>::onConnectionClosed,
-                     this, _1, _2),
+                     this, _1, _2, _3),
 
          // request filter
          boost::bind(&AsyncServerImpl<ProtocolType>::connectionRequestFilter,
@@ -633,6 +659,8 @@ private:
          std::string uri = pRequest->uri();
          AsyncUriHandler handler = uriHandlers_.handlerFor(uri);
          boost::optional<AsyncUriHandlerFunctionVariant> handlerFunc = handler.function();
+
+         pConnection->setHandlerPrefix(handler.prefix());
 
          if (!handler.isProxyHandler())
          {
@@ -740,10 +768,16 @@ private:
          if (!handlerFunc && defaultHandler_)
             handlerFunc = defaultHandler_;
 
+         if (statsProvider_)
+            statsProvider_->httpStart(*pAsyncConnection);
+
          // call handler if we have one
          if (handlerFunc)
          {
             visitHandler(handlerFunc.get(), pAsyncConnection);
+
+            if (statsProvider_)
+               statsProvider_->httpEndHandler(*pAsyncConnection);
          }
          else
          {
@@ -958,6 +992,7 @@ private:
    int statsMonitorSeconds_;
    // Number of stats monitor intervals to wait before logging idle server info messages (0 to disable)
    int logIdleIntervals_ = 60;
+   boost::shared_ptr<AsyncServerStatsProvider> statsProvider_;
 };
 
 } // namespace http

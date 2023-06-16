@@ -167,6 +167,9 @@ public:
    const std::string& username() const { return username_; }
    void setUsername(const std::string& username) { username_ = username; }
 
+   const std::string& handlerPrefix() const { return handlerPrefix_; }
+   void setHandlerPrefix(const std::string& handlerPrefix) { handlerPrefix_ = handlerPrefix; }
+
    long requestSequence() const { return requestSequence_; }
    void setRequestSequence(long seq) { requestSequence_ = seq; }
 
@@ -214,6 +217,7 @@ private:
    std::string uri_;
    int remoteUid_;
    std::string username_;
+   std::string handlerPrefix_;
    long requestSequence_;
    boost::posix_time::ptime startTime_;
    
