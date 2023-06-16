@@ -21,6 +21,8 @@
 
 #include <server/ServerOptions.hpp>
 
+#include "ServerMetrics.hpp"
+
 using namespace rstudio::core;
 
 namespace rstudio {
@@ -33,7 +35,8 @@ http::AsyncServer* httpServerCreate(const http::Headers& additionalHeaders)
                                      !options().wwwEnableOriginCheck(),
                                      options().wwwAllowedOrigins(),
                                      additionalHeaders,
-                                     options().statsMonitorSeconds());
+                                     options().statsMonitorSeconds(),
+                                     metrics::statsProvider());
    return server;
 }
 

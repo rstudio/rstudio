@@ -34,6 +34,7 @@ set(SERVER_SOURCE_FILES
    ServerLogVars.cpp
    ServerMainOverlay.cpp
    ServerMeta.cpp
+   ServerMetrics.cpp
    ServerOffline.cpp
    ServerOptions.cpp
    ServerOptionsOverlay.cpp

@@ -107,7 +107,7 @@ public:
          http::Request*)> Handler;
 
     typedef boost::function<void(
-         boost::weak_ptr<AsyncConnectionImpl<SocketType>>, bool)> ClosedHandler;
+         boost::weak_ptr<AsyncConnectionImpl<SocketType>>, bool, bool)> ClosedHandler;
 
    typedef boost::function<bool(
          boost::shared_ptr<AsyncConnectionImpl<SocketType> >,
@@ -324,7 +324,9 @@ public:
    virtual void close(bool fromDestructor)
    {
       if (fromDestructor && !closed_)
-         LOG_DEBUG_MESSAGE("Closing connection without an explicit response for URI: " + request().uri());
+      {
+         LOG_DEBUG_MESSAGE("Closing connection without an explicit response for URI: " + request().debugInfo());
+      }
 
       // ensure the socket is only closed once - boost considers
       // multiple closes an error, and this can lead to a segfault
@@ -349,7 +351,7 @@ public:
       // notify that we have closed the connection
       // we do this after giving up the mutex to prevent potential deadlock
       if (closedHandler)
-         closedHandler(AsyncConnectionImpl<SocketType>::weak_from_this(), fromDestructor);
+         closedHandler(AsyncConnectionImpl<SocketType>::weak_from_this(), fromDestructor, requestParsed_);
    }
 
    void setUploadHandler(const AsyncUriUploadHandlerFunction& handler)
@@ -426,6 +428,16 @@ public:
    const std::string& username() const
    {
       return request().username();
+   }
+
+   void setHandlerPrefix(const std::string& handlerPrefix)
+   {
+      request_.setHandlerPrefix(handlerPrefix);
+   }
+
+   const std::string& handlerPrefix() const
+   {
+      return request().handlerPrefix();
    }
    
 private:
