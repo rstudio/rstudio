@@ -21,6 +21,9 @@
   // the column definitions from the server
   var cols;
 
+  // the total number of columns for the data table (may be larger than cols.length)
+  let totalColumns;
+
   // the column currently being resized
   var resizingColIdx = null;
 
@@ -159,8 +162,8 @@
 
   // maximum number of columns to draw
   // the default is maintained separately for view element considerations
-  const defaultMaxDisplayColumns = 50;
-  var maxDisplayColumns = defaultMaxDisplayColumns;
+  const unsetMaxDisplayColumns = -1;
+  var maxDisplayColumns = unsetMaxDisplayColumns;
 
   // maximum number of rows to draw; -1 implies all rows
   var maxRows = -1;
@@ -1015,7 +1018,7 @@
     var parsedLocation = {};
 
     parsedLocation.env = parsedLocation.obj = parsedLocation.cacheKey = parsedLocation.id = "";
-    parsedLocation.maxDisplayColumns = defaultMaxDisplayColumns;
+    parsedLocation.maxDisplayColumns = unsetMaxDisplayColumns;
 
     var query = window.location.search.substring(1);
     var queryVars = query.split("&");
@@ -1032,11 +1035,13 @@
       } else if (queryVar[0] == "id") {
         parsedLocation.id = queryVar[1];
       } else if (queryVar[0] == "max_display_columns") {
-        parsedLocation.maxDisplayColumns = parseInt(queryVar[1], 10);
+        parsedLocation.maxDisplayColumns = parseInt(queryVar[1], 10); 
       } else if (queryVar[0] == "max_cols") {
         parsedLocation.maxCols = parseInt(queryVar[1], 10);
       } else if (queryVar[0] == "max_rows") {
         parsedLocation.maxRows = parseInt(queryVar[1], 10);
+      } else if (queryVar[0] == "total_columns") {
+        parsedLocation.totalColumns = parseInt(queryVar[1], 10);
       }
     }
 
@@ -1088,7 +1093,6 @@
         }
       }
     }
-
     // save reference to column data
     cols = resCols;
 
@@ -1104,16 +1108,30 @@
       obj = parsedLocation.obj,
       cacheKey = parsedLocation.cacheKey;
 
-    if (parsedLocation.maxCols) {
-      maxDisplayColumns = parsedLocation.maxCols === -1 || parsedLocation.maxCols > cols.length
-        ? cols.length
-        : parsedLocation.maxCols;
-    } else {
-      maxDisplayColumns = parsedLocation.maxDisplayColumns
-        ? parsedLocation.maxDisplayColumns
-        : defaultMaxDisplayColumns;
+    console.log("parsedLocation", JSON.stringify(parsedLocation))
+
+    // maxCols overrides maxDisplayColumns if it's specified
+    if (parsedLocation.maxCols)
+    {
+      maxDisplayColumns = parsedLocation.maxCols > 0 ? parsedLocation.maxCols : cols.length;
     }
+    else if (parsedLocation.maxDisplayColumns && parsedLocation.maxDisplayColumns > 0)
+    {
+      maxDisplayColumns = parsedLocation.maxDisplayColumns;
+    }
+    else
+    {
+      maxDisplayColumns = cols.length;
+    }
+
     maxRows = parsedLocation.maxRows ?? maxRows;
+    totalColumns = parsedLocation.totalColumns ?? cols.length;
+
+    // colLimits.forEach(x => console.log(x));
+    console.log("maxDisplayColumns = ", maxDisplayColumns);
+    console.log("maxRows = ", maxRows);
+    console.log("totalColumns = ", totalColumns);
+    console.log("columnOffset = ", columnOffset);
     
     // keep track of column types for later render
     var typeIndices = {
@@ -1125,23 +1143,21 @@
 
     // add each column, offset this and only add as many as current maxDisplayColumns
     var thead = document.getElementById("data_cols");
-    for (j = 0; j < cols.length && j <= maxDisplayColumns + columnOffset; j++) {
+    for (j = 0; j < cols.length && j <= maxDisplayColumns; j++) {
       // create table header
-      thead.appendChild(createHeader(j <= 0 ? j : j + columnOffset, cols[j]));
+      thead.appendChild(createHeader(j, cols[j]));
       var colType = cols[j].col_type;
       if (colType === "numeric" || colType === "data.frame" || colType === "list") {
         typeIndices[colType].push(j);
       } else {
         typeIndices["text"].push(j);
       }
-
-      // start at 0 for the dummy column but then one time increment by initialIndex
-      if (j <= 0) {
-        j = columnOffset;
-      }
     }
+    console.log('just created table header -- j: ' + j)
     addResizeHandlers(thead);
+    console.log('just added resize handlers')
     addGlobalResizeHandlers();
+    console.log('just added global resize handlers')
 
     var scrollHeight = window.innerHeight - (thead.clientHeight + 2);
 
@@ -1151,6 +1167,12 @@
     var dataTableColumns = null;
 
     if (!data) {
+      console.log(`show=data` +
+       `\n\ttotal_columns=${totalColumns}` +
+       `\n\tcolumn_offset=${columnOffset}` +
+       `\n\tmax_display_columns=${maxDisplayColumns}` +
+       `\n\tmax_rows=${maxRows}`);
+
       dataTableAjax = {
         url: "../grid_data",
         type: "POST",
@@ -1159,8 +1181,9 @@
           d.obj = obj;
           d.cache_key = cacheKey;
           d.show = "data";
+          d.total_columns = totalColumns;
           d.column_offset = columnOffset;
-          d.max_cols = maxDisplayColumns;
+          d.max_display_columns = maxDisplayColumns;
           d.max_rows = maxRows;
         },
         error: function (jqXHR) {
@@ -1237,6 +1260,13 @@
           : [{}];
     }
 
+    console.log('about to activate the data table')
+    // !!!!!! some index is off here
+    // we are getting the right data, so the columns are okay?
+    console.log('dataTableAjax: ' + JSON.stringify(dataTableAjax))
+    console.log('dataTableData: ' + JSON.stringify(dataTableData))
+    console.log('dataTableColumns: ' + JSON.stringify(dataTableColumns))
+    console.log('dataTableColumnDefs: ' + JSON.stringify(dataTableColumnDefs))
     // activate the data table
     $("#rsGridData").dataTable({
       processing: true,
@@ -1266,10 +1296,13 @@
       ordering: ordering,
     });
 
+    console.log('just activated data table')
     initDataTableLoad();
+    console.log('just initialized data table load')
 
     // update the GWT column widget
     window.columnFrameCallback(columnOffset, maxDisplayColumns);
+    console.log('just updated GWT column widget')
   };
 
   var debouncedSearch = debounce(function (text) {
@@ -1280,9 +1313,10 @@
 
   var loadDataFromUrl = function (callback) {
     // call the server to get data shape
+    console.log("show=cols&" + window.location.search.substring(1) + `&column_offset=${columnOffset}`)
     $.ajax({
       url: "../grid_data",
-      data: "show=cols&" + window.location.search.substring(1),
+      data: "show=cols&" + window.location.search.substring(1) + `&column_offset=${columnOffset}`,
       type: "POST",
     })
       .done(function (result) {
@@ -1491,6 +1525,7 @@
     addResizeHandlers(newEle);
 
     if (!data) {
+      console.log('bootstrap - !data')
       loadDataFromUrl(function (result) {
         $(document).ready(function () {
           document.body.appendChild(newEle);
@@ -1670,7 +1705,7 @@
 
     var newOffset = Math.max(
       0,
-      Math.min(cols.length - 1 - maxDisplayColumns, columnOffset + maxDisplayColumns)
+      Math.min(totalColumns - maxDisplayColumns, columnOffset + maxDisplayColumns)
     );
     if (columnOffset != newOffset) {
       columnOffset = newOffset;
@@ -1685,7 +1720,7 @@
 
     var newOffset = Math.max(
       0,
-      Math.min(cols.length - 1 - maxDisplayColumns, columnOffset - maxDisplayColumns)
+      Math.min(totalColumns - maxDisplayColumns, columnOffset - maxDisplayColumns)
     );
     if (columnOffset != newOffset) {
       columnOffset = newOffset;
@@ -1709,8 +1744,8 @@
       return;
     }
 
-    if (columnOffset != cols.length - 1 - maxDisplayColumns) {
-      columnOffset = cols.length - 1 - maxDisplayColumns;
+    if (columnOffset != totalColumns - maxDisplayColumns) {
+      columnOffset = totalColumns - maxDisplayColumns;
       bootstrap();
     }
   };
@@ -1719,7 +1754,7 @@
     if (bootstrapping) {
       return;
     }
-    if (newOffset >= cols.length) {
+    if (newOffset >= totalColumns) {
       return;
     }
 
@@ -1727,7 +1762,7 @@
       columnOffset = newOffset;
     }
     if (newMax > 0) {
-      newMax = Math.min(cols.length - 1 - newOffset, newMax);
+      newMax = Math.min(totalColumns - newOffset, newMax);
       maxDisplayColumns = newMax;
     }
     bootstrap();
@@ -1735,7 +1770,7 @@
 
   // return whether to show the column frame UI elements
   window.isLimitedColumnFrame = function () {
-    return cols.length > defaultMaxDisplayColumns;
+    return columnOffset < totalColumns;
   };
 
   var parsedLocation = parseLocationUrl();

@@ -263,6 +263,14 @@
    c(list(rowNameCol), colAttrs)
 })
 
+.rs.addFunction("describeColSlice", function(x,
+                                              sliceStart = 1,
+                                              sliceEnd = 1)
+{
+   colSlice <- x[sliceStart:sliceEnd]
+   .rs.describeCols(colSlice, -1, -1, 64)
+})
+
 .rs.addFunction("formatRowNames", function(x, start, len) 
 {
    # detect whether this is a data.frame that contains
