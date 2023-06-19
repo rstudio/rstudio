@@ -16502,6 +16502,7 @@ void ConsoleReporter::sectionStarting(SectionInfo const& _sectionInfo) {
     m_tablePrinter->close();
     m_headerPrinted = false;
     StreamingReporterBase::sectionStarting(_sectionInfo);
+    lazyPrint();
 }
 void ConsoleReporter::sectionEnded(SectionStats const& _sectionStats) {
     m_tablePrinter->close();
