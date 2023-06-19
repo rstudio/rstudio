@@ -851,11 +851,10 @@ Error getGridData(const http::Request& request,
       r::sexp::Protect protect;
 
       // begin observing if we aren't already
-      if (envName != kNoBoundEnv) 
+      if (!cacheKey.empty() && envName != kNoBoundEnv)
       {
          SEXP objSEXP = findInNamedEnvir(envName, objName);
-         std::map<std::string, CachedFrame>::iterator it = 
-            s_cachedFrames.find(cacheKey);
+         auto it = s_cachedFrames.find(cacheKey);
          if (it == s_cachedFrames.end())
             s_cachedFrames[cacheKey] = CachedFrame(envName, objName, objSEXP);
       }
@@ -962,10 +961,9 @@ Error removeRCachedData(const std::string& cacheKey)
 Error removeCacheKey(const std::string& cacheKey)
 {
    // remove from watchlist
-   std::map<std::string, CachedFrame>::iterator pos = 
-      s_cachedFrames.find(cacheKey);
-   if (pos != s_cachedFrames.end())
-      s_cachedFrames.erase(pos);
+   auto it = s_cachedFrames.find(cacheKey);
+   if (it != s_cachedFrames.end())
+      s_cachedFrames.erase(it);
    
     return removeRCachedData(cacheKey);
 }
@@ -1016,9 +1014,7 @@ void onDetectChanges(module_context::ChangeSource source)
       return;
 
    r::sexp::Protect protect;
-   for (std::map<std::string, CachedFrame>::iterator i = s_cachedFrames.begin();
-        i != s_cachedFrames.end();
-        i++) 
+   for (auto i = s_cachedFrames.begin(); i != s_cachedFrames.end(); i++)
    {
       SEXP sexp = findInNamedEnvir(i->second.envName, i->second.objName);
       if (sexp != i->second.observedSEXP) 
@@ -1076,8 +1072,6 @@ void onDetectChanges(module_context::ChangeSource source)
                      LOG_ERROR(error);
                   }
                }
-
-               
             }
          }
       }
