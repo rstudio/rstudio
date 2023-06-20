@@ -14,6 +14,8 @@
  */
 #include <core/system/Process.hpp>
 
+#include <boost/filesystem.hpp>
+
 #include <session/SessionConsoleProcessInfo.hpp>
 
 #include <boost/lexical_cast.hpp>
@@ -248,6 +250,30 @@ TEST_CASE("ConsoleProcessInfo")
             ConsoleProcessInfo::fromJson(origJson);
       CHECK(pCpiRestored);
       CHECK(sameCpi(cpiOrig, *pCpiRestored));
+   }
+
+   SECTION("Restore with cwd symlink")
+   {
+      core::FilePath tempLink("/tmp/symlink");
+      tempLink.remove();
+      boost::filesystem::create_directory_symlink("/tmp/link_target", "/tmp/symlink");
+      ConsoleProcessInfo cpiOrig(caption, title, handle1, sequence, shellType,
+                             altActive, tempLink, cols, rows, zombie, trackEnv);
+
+      // blow away anything that might have been left over from a previous
+      // failed run
+      cpiOrig.deleteLogFile();
+
+      CHECK(cpiOrig.getCwd().getAbsolutePath() == "/tmp/symlink");
+
+      core::json::Object origJson = cpiOrig.toJson(PersistentSerialization);
+      boost::shared_ptr<ConsoleProcessInfo> pCpiRestored =
+            ConsoleProcessInfo::fromJson(origJson);
+      CHECK(pCpiRestored);
+
+      // restored cwd should be the symlink target
+      CHECK(pCpiRestored->getCwd().getAbsolutePath() == cpiOrig.getCwd().resolveSymlink().getAbsolutePath());
+      tempLink.remove();
    }
 
    SECTION("Persist and restore for non-terminals")
