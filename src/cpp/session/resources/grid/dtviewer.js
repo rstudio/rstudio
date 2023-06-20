@@ -1129,7 +1129,6 @@
     // for setting constants from dtviewer to dataTables
     window.dataTableMaxColumns = totalColumns;
 
-    // colLimits.forEach(x => console.log(x));
     console.log("maxDisplayColumns = ", maxDisplayColumns);
     console.log("maxRows = ", maxRows);
     console.log("totalColumns = ", totalColumns);
@@ -1155,11 +1154,8 @@
         typeIndices["text"].push(j);
       }
     }
-    console.log('just created table header -- j: ' + j)
     addResizeHandlers(thead);
-    console.log('just added resize handlers')
     addGlobalResizeHandlers();
-    console.log('just added global resize handlers')
 
     var scrollHeight = window.innerHeight - (thead.clientHeight + 2);
 
@@ -1262,13 +1258,6 @@
           : [{}];
     }
 
-    console.log('about to activate the data table')
-    // !!!!!! some index is off here
-    // we are getting the right data, so the columns are okay?
-    console.log('dataTableAjax: ' + JSON.stringify(dataTableAjax))
-    console.log('dataTableData: ' + JSON.stringify(dataTableData))
-    console.log('dataTableColumns: ' + JSON.stringify(dataTableColumns))
-    console.log('dataTableColumnDefs: ' + JSON.stringify(dataTableColumnDefs))
     // activate the data table
     $("#rsGridData").dataTable({
       processing: true,
@@ -1298,13 +1287,10 @@
       ordering: ordering,
     });
 
-    console.log('just activated data table')
     initDataTableLoad();
-    console.log('just initialized data table load')
 
     // update the GWT column widget
     window.columnFrameCallback(columnOffset, maxDisplayColumns);
-    console.log('just updated GWT column widget')
   };
 
   var debouncedSearch = debounce(function (text) {
@@ -1527,7 +1513,6 @@
     addResizeHandlers(newEle);
 
     if (!data) {
-      console.log('bootstrap - !data')
       loadDataFromUrl(function (result) {
         $(document).ready(function () {
           document.body.appendChild(newEle);
