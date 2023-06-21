@@ -1743,7 +1743,7 @@
 
   // return whether to show the column frame UI elements
   window.isLimitedColumnFrame = function () {
-    return columnOffset < totalCols;
+    return totalCols > maxDisplayColumns;
   };
 
   var parsedLocation = parseLocationUrl();
