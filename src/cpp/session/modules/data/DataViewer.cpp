@@ -500,16 +500,10 @@ json::Value getColSlice(SEXP dataSEXP,
    r::sexp::Protect protect;
    json::Value result;
 
-   LOG_ERROR_MESSAGE("getColSlice: columnOffset=" + std::to_string(columnOffset) + ", maxDisplayColumns=" + std::to_string(maxDisplayColumns));
-
-   // DataTables uses 0-based indexing, but R uses 1-based indexing
-   int sliceStart = columnOffset + 1; // 0 + 1 = 1
-   int maybeEnd = columnOffset + maxDisplayColumns; // 1 + 20 = 21
-   int totalColumns = safeDim(dataSEXP, DIM_COLS); // 60
-   //                  21  < 60           ? 21       : 60 + 1 for 1-indexing
-   int sliceEnd = maybeEnd < totalColumns ? maybeEnd : totalColumns;
-
-   LOG_ERROR_MESSAGE("getColSlice: sliceStart=" + std::to_string(sliceStart) + ", sliceEnd=" + std::to_string(sliceEnd) + ", totalColumns=" + std::to_string(totalColumns));
+   // DataTables use 0-based indexing, but R uses 1-based indexing, so add 1 to the columnOffset
+   int sliceStart = columnOffset + 1;
+   int totalColumns = safeDim(dataSEXP, DIM_COLS);
+   int sliceEnd = columnOffset + maxDisplayColumns < totalColumns ? columnOffset + maxDisplayColumns : totalColumns;
 
    Error error = r::exec::RFunction(".rs.describeColSlice")
          .addParam(dataSEXP)
@@ -608,9 +602,6 @@ json::Value getData(SEXP dataSEXP,
    int nrow = safeDim(dataSEXP, DIM_ROWS);
    int ncol = safeDim(dataSEXP, DIM_COLS);
 
-   // LOG_ERROR_MESSAGE("getData: columnOffset=" + std::to_string(columnOffset) + ", maxDisplayColumns=" + std::to_string(maxDisplayColumns));
-   // LOG_ERROR_MESSAGE("getData: maxRows=" + std::to_string(maxRows) + ", maxCols=" + std::to_string(maxCols));
-   // LOG_ERROR_MESSAGE("getData: nrow=" + std::to_string(nrow) + ", ncol=" + std::to_string(ncol));
    int filteredNRow = 0;
 
    // extract filters
@@ -726,9 +717,6 @@ json::Value getData(SEXP dataSEXP,
    int numFormattedColumns = ncol - columnOffset < maxDisplayColumns ? ncol - columnOffset : maxDisplayColumns;
    SEXP formattedDataSEXP = Rf_allocVector(VECSXP, numFormattedColumns);
    protect.add(formattedDataSEXP);
-
-   LOG_ERROR_MESSAGE("getData: columnOffset=" + std::to_string(columnOffset) + ", maxDisplayColumns=" + std::to_string(maxDisplayColumns));
-   LOG_ERROR_MESSAGE("getData: numFormattedColumns=" + std::to_string(numFormattedColumns) + ", ncol - columnOffset=" + std::to_string(ncol - columnOffset));
 
    int initialIndex = 0 + columnOffset;
    for (int i = initialIndex; i < initialIndex + numFormattedColumns; i++)
