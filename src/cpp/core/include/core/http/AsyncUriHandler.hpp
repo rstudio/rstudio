@@ -129,6 +129,11 @@ public:
       return isProxyHandler_;
    }
 
+   const std::string& prefix() const
+   {
+      return prefix_;
+   }
+
 private:
    std::string prefix_;
    boost::optional<AsyncUriHandlerFunctionVariant> function_;

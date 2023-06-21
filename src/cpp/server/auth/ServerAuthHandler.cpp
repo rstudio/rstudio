@@ -44,6 +44,8 @@
 
 #include <session/SessionScopes.hpp>
 
+#include "../ServerMetrics.hpp"
+
 using namespace rstudio::core;
 using namespace rstudio::core::database;
 
@@ -259,6 +261,7 @@ bool invalidateExpiredSessions()
 {
    int expiredSessions = 0;
    int preservedSessions = 0;
+   int activeSessions = 0;
 
    RECURSIVE_LOCK_MUTEX(s_mutex)
    {
@@ -295,6 +298,7 @@ bool invalidateExpiredSessions()
             ++it;
          }
       }
+      activeSessions = s_userSessions.size();
    }
    END_LOCK_MUTEX
 
@@ -302,6 +306,8 @@ bool invalidateExpiredSessions()
       LOG_DEBUG_MESSAGE("Expired " + std::to_string(expiredSessions) + " sessions");
    if (preservedSessions > 0)
       LOG_DEBUG_MESSAGE("Preserved " + std::to_string(preservedSessions) + " expired sessions with open streaming connections");
+
+   metrics::setActiveUserSessionCount(activeSessions);
 
    return true;
 }
@@ -964,6 +970,7 @@ void ensureDatabaseUser(const std::string& username)
 boost::shared_ptr<UserSession> UserSession::createUserSession(const std::string& username)
 {
    boost::shared_ptr<UserSession> pUserSession;
+   int activeSessions;
    RECURSIVE_LOCK_MUTEX(s_mutex)
    {
       pUserSession = UserSession::lookupUserSession(username);
@@ -981,11 +988,14 @@ boost::shared_ptr<UserSession> UserSession::createUserSession(const std::string&
 
          LOG_DEBUG_MESSAGE("Created new UserSession for: " + username + " (total: " + std::to_string(s_userSessions.size()) + ")");
       }
+      activeSessions = s_userSessions.size();
    }
    END_LOCK_MUTEX
 
    // Make sure there's a database record for the user when creating the session
    ensureDatabaseUser(username);
+
+   metrics::setActiveUserSessionCount(activeSessions);
 
    return pUserSession;
 }
@@ -1065,11 +1075,15 @@ boost::shared_ptr<UserSession> UserSession::getOrCreateUserSession(const std::st
 
 void UserSession::removeUserSession(const std::string& username)
 {
+   int activeSessions;
    RECURSIVE_LOCK_MUTEX(s_mutex)
    {
       s_userSessions.erase(username);
+      activeSessions = s_userSessions.size();
    }
    END_LOCK_MUTEX
+
+   metrics::setActiveUserSessionCount(activeSessions);
 
    // Remove the user from the username and uid caches so we revalidate from scratch next time
    core::system::removeUserFromCache(username);

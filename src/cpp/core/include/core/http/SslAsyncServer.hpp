@@ -36,8 +36,9 @@ public:
                   bool disableOriginCheck = true,
                   const std::vector<boost::regex>& allowedOrigins = std::vector<boost::regex>(),
                   const Headers& additionalHeaders = Headers(),
-                  int statsMonitorSeconds = 0)
-      : AsyncServerImpl(serverName, baseUri, disableOriginCheck, allowedOrigins, additionalHeaders, statsMonitorSeconds)
+                  int statsMonitorSeconds = 0,
+                  const boost::shared_ptr<AsyncServerStatsProvider> statsProvider = boost::shared_ptr<AsyncServerStatsProvider>())
+      : AsyncServerImpl(serverName, baseUri, disableOriginCheck, allowedOrigins, additionalHeaders, statsMonitorSeconds, statsProvider)
    {
    }
    

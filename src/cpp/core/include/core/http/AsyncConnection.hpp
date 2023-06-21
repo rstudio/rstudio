@@ -86,6 +86,10 @@ public:
    virtual const std::string& username() const = 0;
 
    virtual void setUsername(const std::string& username) = 0;
+
+   virtual const std::string& handlerPrefix() const = 0;
+
+   virtual void setHandlerPrefix(const std::string& prefix) = 0;
 };
 
 } // namespace http

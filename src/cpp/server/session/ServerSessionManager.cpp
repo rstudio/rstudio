@@ -36,6 +36,7 @@
 #include <server/auth/ServerValidateUser.hpp>
 
 #include "../ServerREnvironment.hpp"
+#include "../ServerMetrics.hpp"
 #include "server-config.h"
 
 
@@ -416,9 +417,14 @@ void SessionManager::removePendingLaunch(const r_util::SessionContext& context, 
       boost::posix_time::time_duration startDuration = boost::posix_time::microsec_clock::universal_time() - startTime;
       std::string progName = context.scope.isWorkspaces() ? "Homepage (rworkspaces)" : context.scope.workbench() + " session(" + context.scope.id() + ")";
       if (success)
+      {
+         if (!context.scope.isWorkspaces())
+            metrics::sessionStartConnect(context.scope.workbench(), context.username, startDuration);
+
          LOG_DEBUG_MESSAGE(progName + " started and connection made by: " + context.username +
                            " in " + std::to_string(startDuration.total_seconds()) + "." +
                                     std::to_string(startDuration.total_milliseconds() % 1000) + "s");
+      }
       else
          LOG_ERROR_MESSAGE(context.scope.workbench() + " session start failed for: " + context.username + ":" + context.scope.id() +
                            " in " + std::to_string(startDuration.total_seconds()) + "." +

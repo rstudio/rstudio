@@ -1547,7 +1547,10 @@ struct AsioAsyncChildProcess::Impl : public boost::enable_shared_from_this<AsioA
 
             cleanup();
 
-            exitCode_ = -1;
+            // send the process SIGKILL in an effort to avoid it hanging around
+            // as a zombie or in a broken state forever
+            ::kill(parent_->pImpl_->pid, SIGKILL);
+            exitCode_ = 137;
          }
       }
       END_LOCK_MUTEX
