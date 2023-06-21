@@ -1120,9 +1120,12 @@
 
     maxRows = parsedLocation.maxRows ?? maxRows;
 
-    // totalColumns is the total number of columns in the data set
-    // cols.length includes the row names column so we subtract 1
-    totalColumns = parsedLocation.totalColumns ?? cols.length - 1;
+    // total_cols is returned in the rownames column data (first column) and is
+    // the total number of columns in the dataframe, not including the row names column
+    // if total_cols is not returned, then we use the number of columns in the
+    // data frame, which includes the row names column, so we subtract 1
+    const totalColumnsCount = cols[0].total_cols;
+    totalColumns = totalColumnsCount > 0 ? totalColumnsCount : cols.length - 1;
 
     // due to the jquery magic done in dataTables with rewriting variables and
     // the amount of window parameters we're already using this is a sane fit

@@ -371,8 +371,7 @@ json::Value makeDataItem(SEXP dataSEXP,
    dataItem["contentUrl"] = kGridResource "/gridviewer.html?env=" +
       http::util::urlEncode(envName, true) + "&obj=" + 
       http::util::urlEncode(objName, true) + "&cache_key=" +
-      http::util::urlEncode(cacheKey, true) + "&total_columns=" +
-      safe_convert::numberToString(ncol) + "&max_display_columns=" + 
+      http::util::urlEncode(cacheKey, true) + "&max_display_columns=" + 
       safe_convert::numberToString(prefs::userPrefs().dataViewerMaxColumns());
    dataItem["preview"] = preview;
 
@@ -495,22 +494,22 @@ json::Value getCols(SEXP dataSEXP,
 
 json::Value getColSlice(SEXP dataSEXP,
                          int columnOffset,
-                         int maxDisplayColumns,
-                         int totalColumns)
+                         int maxDisplayColumns)
 {
    SEXP colsSEXP = R_NilValue;
    r::sexp::Protect protect;
    json::Value result;
 
-   LOG_ERROR_MESSAGE("getColSlice: columnOffset=" + std::to_string(columnOffset) + ", maxDisplayColumns=" + std::to_string(maxDisplayColumns) + ", totalColumns=" + std::to_string(totalColumns));
+   LOG_ERROR_MESSAGE("getColSlice: columnOffset=" + std::to_string(columnOffset) + ", maxDisplayColumns=" + std::to_string(maxDisplayColumns));
 
    // DataTables uses 0-based indexing, but R uses 1-based indexing
    int sliceStart = columnOffset + 1; // 0 + 1 = 1
    int maybeEnd = columnOffset + maxDisplayColumns; // 1 + 20 = 21
+   int totalColumns = safeDim(dataSEXP, DIM_COLS); // 60
    //                  21  < 60           ? 21       : 60 + 1 for 1-indexing
    int sliceEnd = maybeEnd < totalColumns ? maybeEnd : totalColumns;
 
-   LOG_ERROR_MESSAGE("getColSlice: sliceStart=" + std::to_string(sliceStart) + ", sliceEnd=" + std::to_string(sliceEnd));
+   LOG_ERROR_MESSAGE("getColSlice: sliceStart=" + std::to_string(sliceStart) + ", sliceEnd=" + std::to_string(sliceEnd) + ", totalColumns=" + std::to_string(totalColumns));
 
    Error error = r::exec::RFunction(".rs.describeColSlice")
          .addParam(dataSEXP)
@@ -885,9 +884,6 @@ Error getGridData(const http::Request& request,
       std::string maxDisplayColumnsField = http::util::urlDecode(
                http::util::fieldValue<std::string>(fields, "max_display_columns", ""));
 
-      std::string totalColumnsField = http::util::urlDecode(
-               http::util::fieldValue<std::string>(fields, "total_columns", ""));
-
       std::string columnOffsetField = http::util::urlDecode(
                http::util::fieldValue<std::string>(fields, "column_offset", ""));
 
@@ -897,7 +893,6 @@ Error getGridData(const http::Request& request,
       int maxRows = safe_convert::stringTo<int>(maxRowsField, -1);
       int maxCols = safe_convert::stringTo<int>(maxColsField, -1);
       int maxDisplayColumns = safe_convert::stringTo<int>(maxDisplayColumnsField, -1);
-      int totalColumns = safe_convert::stringTo<int>(totalColumnsField, 0);
       int columnOffset = safe_convert::stringTo<int>(columnOffsetField, 0);
 
       if (objName.empty() && cacheKey.empty()) 
@@ -946,9 +941,9 @@ Error getGridData(const http::Request& request,
          }
          if (show == "cols")
          {
-            if (columnOffset >= 0 && totalColumns > 0 && maxDisplayColumns > 0)
+            if (columnOffset >= 0 && maxDisplayColumns > 0)
             {
-               result = getColSlice(dataSEXP, columnOffset, maxDisplayColumns, totalColumns);
+               result = getColSlice(dataSEXP, columnOffset, maxDisplayColumns);
             }
             else
             {

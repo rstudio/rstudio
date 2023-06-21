@@ -121,7 +121,8 @@
 .rs.addFunction("describeCols", function(x,
                                          maxRows = -1,
                                          maxCols = -1,
-                                         maxFactors = 64)
+                                         maxFactors = 64,
+                                         totalCols = -1)
 {
    # subset the data if requested
    x <- .rs.subsetData(x, maxRows, maxCols)
@@ -134,6 +135,8 @@
    if (!is.character(colLabels)) 
       colLabels <- character()
    
+   totalCols <- if (totalCols < 0) ncol(x) else totalCols
+
    # the first column is always the row names
    rowNameCol <- list(
       col_name        = .rs.scalar(""),
@@ -143,7 +146,8 @@
       col_search_type = .rs.scalar("none"),
       col_label       = .rs.scalar(""),
       col_vals        = "",
-      col_type_r      = .rs.scalar(""))
+      col_type_r      = .rs.scalar(""),
+      total_cols      = .rs.scalar(totalCols))
    
    # if there are no columns, bail out
    if (length(colNames) == 0) {
@@ -278,7 +282,7 @@
       sliceStart <- 1
    
    colSlice <- x[sliceStart:sliceEnd]
-   .rs.describeCols(colSlice, -1, -1, 64)
+   .rs.describeCols(colSlice, -1, -1, 64, colCount)
 })
 
 .rs.addFunction("formatRowNames", function(x, start, len) 
