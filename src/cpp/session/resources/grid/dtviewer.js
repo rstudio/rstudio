@@ -22,7 +22,7 @@
   var cols;
 
   // the total number of columns for the data table (may be larger than cols.length)
-  let totalColumns;
+  let totalCols;
 
   // the column currently being resized
   var resizingColIdx = null;
@@ -1040,8 +1040,6 @@
         parsedLocation.maxCols = parseInt(queryVar[1], 10);
       } else if (queryVar[0] == "max_rows") {
         parsedLocation.maxRows = parseInt(queryVar[1], 10);
-      } else if (queryVar[0] == "total_columns") {
-        parsedLocation.totalColumns = parseInt(queryVar[1], 10);
       }
     }
 
@@ -1119,16 +1117,16 @@
     maxRows = parsedLocation.maxRows ?? maxRows;
 
     // total_cols is returned in the rownames column data (first column) and is
-    // the total number of columns in the dataframe, not including the row names column
+    // the total number of columns in the dataframe
     // if total_cols is not returned, then we use the number of columns in the
     // data frame, which includes the row names column, so we subtract 1
-    const totalColumnsCount = cols[0].total_cols;
-    totalColumns = totalColumnsCount > 0 ? totalColumnsCount : cols.length - 1;
+    const resTotalCols = cols[0].total_cols;
+    totalCols = resTotalCols > 0 ? resTotalCols : cols.length - 1;
 
     // due to the jquery magic done in dataTables with rewriting variables and
     // the amount of window parameters we're already using this is a sane fit
     // for setting constants from dtviewer to dataTables
-    window.dataTableMaxColumns = totalColumns;
+    window.dataTableMaxColumns = totalCols;
     
     // keep track of column types for later render
     var typeIndices = {
@@ -1680,7 +1678,7 @@
 
     var newOffset = Math.max(
       0,
-      Math.min(totalColumns - maxDisplayColumns, columnOffset + maxDisplayColumns)
+      Math.min(totalCols - maxDisplayColumns, columnOffset + maxDisplayColumns)
     );
     if (columnOffset != newOffset) {
       columnOffset = newOffset;
@@ -1695,7 +1693,7 @@
 
     var newOffset = Math.max(
       0,
-      Math.min(totalColumns - maxDisplayColumns, columnOffset - maxDisplayColumns)
+      Math.min(totalCols - maxDisplayColumns, columnOffset - maxDisplayColumns)
     );
     if (columnOffset != newOffset) {
       columnOffset = newOffset;
@@ -1719,8 +1717,8 @@
       return;
     }
 
-    if (columnOffset != totalColumns - maxDisplayColumns) {
-      columnOffset = totalColumns - maxDisplayColumns;
+    if (columnOffset != totalCols - maxDisplayColumns) {
+      columnOffset = totalCols - maxDisplayColumns;
       bootstrap();
     }
   };
@@ -1729,7 +1727,7 @@
     if (bootstrapping) {
       return;
     }
-    if (newOffset >= totalColumns) {
+    if (newOffset >= totalCols) {
       return;
     }
 
@@ -1737,7 +1735,7 @@
       columnOffset = newOffset;
     }
     if (newMax > 0) {
-      newMax = Math.min(totalColumns - newOffset, newMax);
+      newMax = Math.min(totalCols - newOffset, newMax);
       maxDisplayColumns = newMax;
     }
     bootstrap();
@@ -1745,7 +1743,7 @@
 
   // return whether to show the column frame UI elements
   window.isLimitedColumnFrame = function () {
-    return columnOffset < totalColumns;
+    return columnOffset < totalCols;
   };
 
   var parsedLocation = parseLocationUrl();

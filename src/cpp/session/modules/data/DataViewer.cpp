@@ -502,8 +502,8 @@ json::Value getColSlice(SEXP dataSEXP,
 
    // DataTables use 0-based indexing, but R uses 1-based indexing, so add 1 to the columnOffset
    int sliceStart = columnOffset + 1;
-   int totalColumns = safeDim(dataSEXP, DIM_COLS);
-   int sliceEnd = columnOffset + maxDisplayColumns < totalColumns ? columnOffset + maxDisplayColumns : totalColumns;
+   int totalCols = safeDim(dataSEXP, DIM_COLS);
+   int sliceEnd = columnOffset + maxDisplayColumns < totalCols ? columnOffset + maxDisplayColumns : totalCols;
 
    Error error = r::exec::RFunction(".rs.describeColSlice")
          .addParam(dataSEXP)
