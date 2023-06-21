@@ -1169,7 +1169,6 @@
           d.obj = obj;
           d.cache_key = cacheKey;
           d.show = "data";
-          d.total_columns = totalColumns;
           d.column_offset = columnOffset;
           d.max_display_columns = maxDisplayColumns;
           d.max_rows = maxRows;

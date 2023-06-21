@@ -510,7 +510,7 @@ json::Value getColSlice(SEXP dataSEXP,
          .addParam(sliceStart)
          .addParam(sliceEnd)
          .call(&colsSEXP, &protect);
-   // this appears to be slicing data correctly
+
    if (error || colsSEXP == R_NilValue) 
    {
       json::Object err;

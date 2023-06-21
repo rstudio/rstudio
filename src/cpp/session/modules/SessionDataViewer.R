@@ -135,7 +135,9 @@
    if (!is.character(colLabels)) 
       colLabels <- character()
    
-   totalCols <- if (totalCols < 0) ncol(x) else totalCols
+   # we pass totalCols in the rownames col so we can pass this information
+   # along when we retrieve column data, without changing the response format
+   totalCols <- if (totalCols > 0) totalCols else ncol(x)
 
    # the first column is always the row names
    rowNameCol <- list(
@@ -271,18 +273,18 @@
                                              sliceStart = 1,
                                              sliceEnd = 1)
 {
-   colCount <- ncol(x)
+   totalCols <- ncol(x)
 
-   if (colCount == 0)
+   if (totalCols == 0)
       return(NULL)
   
-   if (sliceEnd > colCount || sliceEnd < 1)
-      sliceEnd <- colCount
-   if (sliceStart > colCount || sliceStart < 1 || sliceStart > sliceEnd)
+   if (sliceEnd > totalCols || sliceEnd < 1)
+      sliceEnd <- totalCols
+   if (sliceStart > totalCols || sliceStart < 1 || sliceStart > sliceEnd)
       sliceStart <- 1
    
    colSlice <- x[sliceStart:sliceEnd]
-   .rs.describeCols(colSlice, -1, -1, 64, colCount)
+   .rs.describeCols(colSlice, -1, -1, 64, totalCols)
 })
 
 .rs.addFunction("formatRowNames", function(x, start, len) 
