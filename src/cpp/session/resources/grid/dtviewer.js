@@ -1102,8 +1102,6 @@
       obj = parsedLocation.obj,
       cacheKey = parsedLocation.cacheKey;
 
-    console.log("parsedLocation", JSON.stringify(parsedLocation))
-
     // maxCols overrides maxDisplayColumns if it's specified
     if (parsedLocation.maxCols)
     {
@@ -1131,11 +1129,6 @@
     // the amount of window parameters we're already using this is a sane fit
     // for setting constants from dtviewer to dataTables
     window.dataTableMaxColumns = totalColumns;
-
-    console.log("maxDisplayColumns = ", maxDisplayColumns);
-    console.log("maxRows = ", maxRows);
-    console.log("totalColumns = ", totalColumns);
-    console.log("columnOffset = ", columnOffset);
     
     // keep track of column types for later render
     var typeIndices = {
@@ -1168,12 +1161,6 @@
     var dataTableColumns = null;
 
     if (!data) {
-      console.log(`show=data` +
-       `\n\ttotal_columns=${totalColumns}` +
-       `\n\tcolumn_offset=${columnOffset}` +
-       `\n\tmax_display_columns=${maxDisplayColumns}` +
-       `\n\tmax_rows=${maxRows}`);
-
       dataTableAjax = {
         url: "../grid_data",
         type: "POST",
@@ -1304,7 +1291,6 @@
 
   var loadDataFromUrl = function (callback) {
     // call the server to get data shape
-    console.log("show=cols&" + window.location.search.substring(1) + `&column_offset=${columnOffset}`)
     $.ajax({
       url: "../grid_data",
       data: "show=cols&" + window.location.search.substring(1) + `&column_offset=${columnOffset}`,
