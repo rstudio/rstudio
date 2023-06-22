@@ -61,7 +61,7 @@ export abstract class ModalDialog<T> extends BrowserWindow {
     });
 
     // make this look and behave like a modal
-    this.setMenu(null);
+    this.setMenuBarVisibility(false);
     this.setMinimizable(false);
     this.setMaximizable(false);
     this.setFullScreenable(false);
