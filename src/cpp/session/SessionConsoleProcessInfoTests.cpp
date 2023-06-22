@@ -47,9 +47,11 @@ const bool altActive = false;
 #ifdef _WIN32
 const core::FilePath cwd("C:\\windows\\temp");
 const core::FilePath altCwd("C:\\windows\\system32");
+const core::FilePath cwdLink("C:\\windows\\temp\\cwd");
 #else
 const core::FilePath cwd("/usr/local");
 const core::FilePath altCwd("/usr/stuff");
+const core::FilePath cwdLink("/tmp/cwd");
 #endif
 
 const int cols = core::system::kDefaultCols;
@@ -254,17 +256,17 @@ TEST_CASE("ConsoleProcessInfo")
 
    SECTION("Restore with cwd symlink")
    {
-      core::FilePath tempLink("/tmp/symlink");
-      tempLink.remove();
-      boost::filesystem::create_directory_symlink("/tmp/link_target", "/tmp/symlink");
+      // ensure file does not exist so symlink can be created
+      cwdLink.remove();
+      boost::filesystem::create_directory_symlink(cwd.getAbsolutePath(), cwdLink.getAbsolutePath());
       ConsoleProcessInfo cpiOrig(caption, title, handle1, sequence, shellType,
-                             altActive, tempLink, cols, rows, zombie, trackEnv);
+                             altActive, cwdLink, cols, rows, zombie, trackEnv);
 
       // blow away anything that might have been left over from a previous
       // failed run
       cpiOrig.deleteLogFile();
 
-      CHECK(cpiOrig.getCwd().getAbsolutePath() == "/tmp/symlink");
+      CHECK(cpiOrig.getCwd().getAbsolutePath() == cwdLink.getAbsolutePath());
 
       core::json::Object origJson = cpiOrig.toJson(PersistentSerialization);
       boost::shared_ptr<ConsoleProcessInfo> pCpiRestored =
@@ -273,7 +275,7 @@ TEST_CASE("ConsoleProcessInfo")
 
       // restored cwd should be the symlink target
       CHECK(pCpiRestored->getCwd().getAbsolutePath() == cpiOrig.getCwd().resolveSymlink().getAbsolutePath());
-      tempLink.remove();
+      cwdLink.remove();
    }
 
    SECTION("Persist and restore for non-terminals")
