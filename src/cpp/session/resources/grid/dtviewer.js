@@ -1127,6 +1127,13 @@
     // the amount of window parameters we're already using this is a sane fit
     // for setting constants from dtviewer to dataTables
     window.dataTableMaxColumns = totalCols;
+
+    // we were previously loading the entire data set and using the column offset
+    // in the jquery dataTables magic; however, we now only load the visible data.
+    // to avoid refactoring the dataTables jquery, we hardcode `dataTableColumnOffset`
+    // to 0 so the existing jquery code continues to work and we can avoid refactoring
+    // it for the time being.
+    window.dataTableColumnOffset = 0;
     
     // keep track of column types for later render
     var typeIndices = {
