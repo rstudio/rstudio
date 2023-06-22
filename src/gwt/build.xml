@@ -131,6 +131,8 @@
       <mkdir dir="${panmirror.build.dir}"/>
       <exec executable="${yarn.bin}" dir="${panmirror.dir}" resolveexecutable="true" failonerror="true">
          <arg value="install"/>
+         <arg value="--network-timeout"/>
+         <arg value="240000"/>
       </exec>
       <exec executable="${yarn.bin}" dir="${panmirror.dir}" resolveexecutable="true" failonerror="true">
          <arg value="build"/>

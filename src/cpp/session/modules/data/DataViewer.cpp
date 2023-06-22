@@ -62,9 +62,6 @@
 // special cell values
 #define SPECIAL_CELL_NA 0
 
-// default max value for columns to return unless client requests more
-#define MAX_COLUMNS 50
-
 using namespace rstudio::core;
 using namespace boost::placeholders;
 
@@ -374,7 +371,7 @@ json::Value makeDataItem(SEXP dataSEXP,
    dataItem["contentUrl"] = kGridResource "/gridviewer.html?env=" +
       http::util::urlEncode(envName, true) + "&obj=" + 
       http::util::urlEncode(objName, true) + "&cache_key=" +
-      http::util::urlEncode(cacheKey, true) + "&max_cols=" + 
+      http::util::urlEncode(cacheKey, true) + "&max_display_columns=" + 
       safe_convert::numberToString(prefs::userPrefs().dataViewerMaxColumns());
    dataItem["preview"] = preview;
 
@@ -495,6 +492,41 @@ json::Value getCols(SEXP dataSEXP,
    return result;
 }
 
+json::Value getColSlice(SEXP dataSEXP,
+                         int columnOffset,
+                         int maxDisplayColumns)
+{
+   SEXP colsSEXP = R_NilValue;
+   r::sexp::Protect protect;
+   json::Value result;
+
+   // DataTables use 0-based indexing, but R uses 1-based indexing, so add 1 to the columnOffset
+   int sliceStart = columnOffset + 1;
+   int totalCols = safeDim(dataSEXP, DIM_COLS);
+   int sliceEnd = columnOffset + maxDisplayColumns < totalCols ? columnOffset + maxDisplayColumns : totalCols;
+
+   Error error = r::exec::RFunction(".rs.describeColSlice")
+         .addParam(dataSEXP)
+         .addParam(sliceStart)
+         .addParam(sliceEnd)
+         .call(&colsSEXP, &protect);
+
+   if (error || colsSEXP == R_NilValue) 
+   {
+      json::Object err;
+      if (error) 
+         err["error"] = error.getSummary();
+      else
+         err["error"] = "Failed to retrieve column definitions for the data slice.";
+      result = err;
+   }
+   else 
+   {
+      r::json::jsonValueFromList(colsSEXP, &result);
+   }
+   return result;
+}
+
 // given an object from which to return data, and a description of the data to
 // return via URL-encoded parameters supplied by the DataTables API, returns the
 // data requested by the parameters. 
@@ -565,7 +597,7 @@ json::Value getData(SEXP dataSEXP,
 
    // Parameters from the client to delimit the column slice to return
    int columnOffset = http::util::fieldValue<int>(fields, "column_offset", 0);
-   int maxColumns = http::util::fieldValue<int>(fields, "max_columns", MAX_COLUMNS);
+   int maxDisplayColumns = http::util::fieldValue<int>(fields, "max_display_columns", 0);
 
    int nrow = safeDim(dataSEXP, DIM_ROWS);
    int ncol = safeDim(dataSEXP, DIM_COLS);
@@ -682,7 +714,7 @@ json::Value getData(SEXP dataSEXP,
    start++;
 
    // extract the portion of the column vector requested by the client
-   int numFormattedColumns = ncol - columnOffset < maxColumns ? ncol - columnOffset : maxColumns;
+   int numFormattedColumns = ncol - columnOffset < maxDisplayColumns ? ncol - columnOffset : maxDisplayColumns;
    SEXP formattedDataSEXP = Rf_allocVector(VECSXP, numFormattedColumns);
    protect.add(formattedDataSEXP);
 
@@ -837,11 +869,19 @@ Error getGridData(const http::Request& request,
       std::string maxColsField = http::util::urlDecode(
                http::util::fieldValue<std::string>(fields, "max_cols", ""));
 
+      std::string maxDisplayColumnsField = http::util::urlDecode(
+               http::util::fieldValue<std::string>(fields, "max_display_columns", ""));
+
+      std::string columnOffsetField = http::util::urlDecode(
+               http::util::fieldValue<std::string>(fields, "column_offset", ""));
+
       std::string show = http::util::fieldValue<std::string>(
                fields, "show", "data");
 
       int maxRows = safe_convert::stringTo<int>(maxRowsField, -1);
       int maxCols = safe_convert::stringTo<int>(maxColsField, -1);
+      int maxDisplayColumns = safe_convert::stringTo<int>(maxDisplayColumnsField, -1);
+      int columnOffset = safe_convert::stringTo<int>(columnOffsetField, 0);
 
       if (objName.empty() && cacheKey.empty()) 
       {
@@ -888,7 +928,14 @@ Error getGridData(const http::Request& request,
          }
          if (show == "cols")
          {
-            result = getCols(dataSEXP, maxRows, maxCols);
+            if (columnOffset >= 0 && maxDisplayColumns > 0)
+            {
+               result = getColSlice(dataSEXP, columnOffset, maxDisplayColumns);
+            }
+            else
+            {
+               result = getCols(dataSEXP, maxRows, maxCols);
+            }
          }
          else if (show == "data")
          {
