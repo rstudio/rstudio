@@ -930,6 +930,6 @@
 
 .rs.addFunction("isNonEmptyScalarString", function(x)
 {
-   !is.language(x) && is.character(x) && length(x) == 1 && nzchar(x)
+   is.character(x) && length(x) == 1 && nzchar(x)
 })
 
