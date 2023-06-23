@@ -584,12 +584,18 @@ options(help_type = "html")
    # Instead, we need to make sure the data viewer references the actual
    # object in the place it's defined.
    
+   # Limit the number of columns to the first `maxDisplayColumns`
+   # number of columns. E.g. if data_viewer_max_columns=50, then
+   # we'll only load and show the first 50 columns of the data frame
+   # in the help preview.
+   maxDisplayColumns <- .rs.readUiPref("data_viewer_max_columns")
+
    # build a uri
    attrs <- c(
       env       = src,
       obj       = name,
       max_rows  = 1000,
-      max_cols  = 100
+      max_cols  = maxDisplayColumns
    )
    
    uri <- paste(

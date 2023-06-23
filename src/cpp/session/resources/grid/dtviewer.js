@@ -21,6 +21,9 @@
   // the column definitions from the server
   var cols;
 
+  // the total number of columns for the data table (may be larger than cols.length)
+  let totalCols;
+
   // the column currently being resized
   var resizingColIdx = null;
 
@@ -159,8 +162,8 @@
 
   // maximum number of columns to draw
   // the default is maintained separately for view element considerations
-  var defaultMaxColumns = 50;
-  var maxColumns = defaultMaxColumns;
+  const unsetMaxDisplayColumns = -1;
+  var maxDisplayColumns = unsetMaxDisplayColumns;
 
   // maximum number of rows to draw; -1 implies all rows
   var maxRows = -1;
@@ -1015,7 +1018,7 @@
     var parsedLocation = {};
 
     parsedLocation.env = parsedLocation.obj = parsedLocation.cacheKey = parsedLocation.id = "";
-    parsedLocation.maxCols = defaultMaxColumns;
+    parsedLocation.maxDisplayColumns = unsetMaxDisplayColumns;
 
     var query = window.location.search.substring(1);
     var queryVars = query.split("&");
@@ -1031,6 +1034,8 @@
         parsedLocation.dataSource = queryVar[1];
       } else if (queryVar[0] == "id") {
         parsedLocation.id = queryVar[1];
+      } else if (queryVar[0] == "max_display_columns") {
+        parsedLocation.maxDisplayColumns = parseInt(queryVar[1], 10); 
       } else if (queryVar[0] == "max_cols") {
         parsedLocation.maxCols = parseInt(queryVar[1], 10);
       } else if (queryVar[0] == "max_rows") {
@@ -1086,15 +1091,8 @@
         }
       }
     }
-
     // save reference to column data
     cols = resCols;
-
-    // due to the jquery magic done in dataTables with rewriting variables and
-    // the amount of window parameters we're already using this is a sane fit
-    // for setting constants from dtviewer to dataTables
-    window.dataTableMaxColumns = Math.max(0, cols.length - 1);
-    window.dataTableColumnOffset = columnOffset;
 
     // look up the query parameters
     var parsedLocation = parseLocationUrl();
@@ -1102,16 +1100,40 @@
       obj = parsedLocation.obj,
       cacheKey = parsedLocation.cacheKey;
 
-    maxColumns = parsedLocation.maxCols;
-    if (maxColumns == -1) 
+    // maxCols overrides maxDisplayColumns if it's specified
+    if (parsedLocation.maxCols)
     {
-      maxColumns = cols.length;
+      maxDisplayColumns = parsedLocation.maxCols > 0 ? parsedLocation.maxCols : cols.length;
+    }
+    else if (parsedLocation.maxDisplayColumns && parsedLocation.maxDisplayColumns > 0)
+    {
+      maxDisplayColumns = parsedLocation.maxDisplayColumns;
+    }
+    else
+    {
+      maxDisplayColumns = cols.length;
     }
 
-    if (parsedLocation.maxRows)
-    {
-      maxRows = parsedLocation.maxRows;
-    }
+    maxRows = parsedLocation.maxRows ?? maxRows;
+
+    // total_cols is returned in the rownames column data (first column) and is
+    // the total number of columns in the dataframe
+    // if total_cols is not returned, then we use the number of columns in the
+    // data frame, which includes the row names column, so we subtract 1
+    const resTotalCols = cols[0].total_cols;
+    totalCols = resTotalCols > 0 ? resTotalCols : cols.length - 1;
+
+    // due to the jquery magic done in dataTables with rewriting variables and
+    // the amount of window parameters we're already using this is a sane fit
+    // for setting constants from dtviewer to dataTables
+    window.dataTableMaxColumns = totalCols;
+
+    // we were previously loading the entire data set and using the column offset
+    // in the jquery dataTables magic; however, we now only load the visible data.
+    // to avoid refactoring the dataTables jquery, we hardcode `dataTableColumnOffset`
+    // to 0 so the existing jquery code continues to work and we can avoid refactoring
+    // it for the time being.
+    window.dataTableColumnOffset = 0;
     
     // keep track of column types for later render
     var typeIndices = {
@@ -1121,21 +1143,16 @@
       text: [],
     };
 
-    // add each column, offset this and only add as many as current maxColumns
+    // add each column, offset this and only add as many as current maxDisplayColumns
     var thead = document.getElementById("data_cols");
-    for (j = 0; j < cols.length && j <= maxColumns + columnOffset; j++) {
+    for (j = 0; j < cols.length && j <= maxDisplayColumns; j++) {
       // create table header
-      thead.appendChild(createHeader(j <= 0 ? j : j + columnOffset, cols[j]));
+      thead.appendChild(createHeader(j, cols[j]));
       var colType = cols[j].col_type;
       if (colType === "numeric" || colType === "data.frame" || colType === "list") {
         typeIndices[colType].push(j);
       } else {
         typeIndices["text"].push(j);
-      }
-
-      // start at 0 for the dummy column but then one time increment by initialIndex
-      if (j <= 0) {
-        j = columnOffset;
       }
     }
     addResizeHandlers(thead);
@@ -1158,7 +1175,7 @@
           d.cache_key = cacheKey;
           d.show = "data";
           d.column_offset = columnOffset;
-          d.max_columns = maxColumns;
+          d.max_display_columns = maxDisplayColumns;
           d.max_rows = maxRows;
         },
         error: function (jqXHR) {
@@ -1267,7 +1284,7 @@
     initDataTableLoad();
 
     // update the GWT column widget
-    window.columnFrameCallback(columnOffset, maxColumns);
+    window.columnFrameCallback(columnOffset, maxDisplayColumns);
   };
 
   var debouncedSearch = debounce(function (text) {
@@ -1280,7 +1297,7 @@
     // call the server to get data shape
     $.ajax({
       url: "../grid_data",
-      data: "show=cols&" + window.location.search.substring(1),
+      data: "show=cols&" + window.location.search.substring(1) + `&column_offset=${columnOffset}`,
       type: "POST",
     })
       .done(function (result) {
@@ -1668,7 +1685,7 @@
 
     var newOffset = Math.max(
       0,
-      Math.min(cols.length - 1 - maxColumns, columnOffset + maxColumns)
+      Math.min(totalCols - maxDisplayColumns, columnOffset + maxDisplayColumns)
     );
     if (columnOffset != newOffset) {
       columnOffset = newOffset;
@@ -1683,7 +1700,7 @@
 
     var newOffset = Math.max(
       0,
-      Math.min(cols.length - 1 - maxColumns, columnOffset - maxColumns)
+      Math.min(totalCols - maxDisplayColumns, columnOffset - maxDisplayColumns)
     );
     if (columnOffset != newOffset) {
       columnOffset = newOffset;
@@ -1707,8 +1724,8 @@
       return;
     }
 
-    if (columnOffset != cols.length - 1 - maxColumns) {
-      columnOffset = cols.length - 1 - maxColumns;
+    if (columnOffset != totalCols - maxDisplayColumns) {
+      columnOffset = totalCols - maxDisplayColumns;
       bootstrap();
     }
   };
@@ -1717,7 +1734,7 @@
     if (bootstrapping) {
       return;
     }
-    if (newOffset >= cols.length) {
+    if (newOffset >= totalCols) {
       return;
     }
 
@@ -1725,15 +1742,15 @@
       columnOffset = newOffset;
     }
     if (newMax > 0) {
-      newMax = Math.min(cols.length - 1 - newOffset, newMax);
-      maxColumns = newMax;
+      newMax = Math.min(totalCols - newOffset, newMax);
+      maxDisplayColumns = newMax;
     }
     bootstrap();
   };
 
   // return whether to show the column frame UI elements
   window.isLimitedColumnFrame = function () {
-    return cols.length > defaultMaxColumns;
+    return totalCols > maxDisplayColumns;
   };
 
   var parsedLocation = parseLocationUrl();
