@@ -23,10 +23,10 @@
 
 .rs.addFunction("subsetData", function(data, maxRows = -1, maxCols = -1)
 {
-   if (maxRows != -1 && nrow(data) > maxRows)
+   if (!is.na(maxRows) && maxRows != -1 && nrow(data) > maxRows)
       data <- head(data, n = maxRows)
    
-   if (maxCols != -1 && ncol(data) > maxCols)
+   if (!is.na(maxCols) && maxCols != -1 && ncol(data) > maxCols)
       data <- data[1:maxCols]
    
    data
