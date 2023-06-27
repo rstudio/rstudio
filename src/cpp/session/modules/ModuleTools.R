@@ -13,8 +13,6 @@
 #
 #
 
-gctorture(TRUE)
-
 .rs.addFunction("enqueClientEvent", function(type, data = NULL)
 {
    .Call("rs_enqueClientEvent", type, data, PACKAGE = "(embedding)")
