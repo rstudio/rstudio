@@ -690,14 +690,11 @@ SEXP callHandler(const std::string& path,
    pProtect->add(argsSEXP = Rf_list4(pathSEXP, queryStringSEXP, requestBodySEXP, headersSEXP));
 
    // form the call expression
-   SEXP trueSEXP;
-   pProtect->add(trueSEXP = Rf_ScalarLogical(TRUE));
-   
    SEXP argSEXP;
    pProtect->add(argSEXP = Rf_lcons( (handlerSource(path)), argsSEXP));
    
    SEXP innerCallSEXP;
-   pProtect->add(innerCallSEXP = Rf_lang3(Rf_install("try"), argSEXP, trueSEXP));
+   pProtect->add(innerCallSEXP = Rf_lang3(Rf_install("try"), argSEXP, R_TrueValue));
    SET_TAG(CDDR(innerCallSEXP), Rf_install("silent"));
    
    // suppress warnings

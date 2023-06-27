@@ -353,13 +353,13 @@ Error evaluateString(const std::string& str,
       rCode = "base::suppressMessages(" + rCode + ")";
 
    // parse expression
-   SEXP parseStatusSEXP = R_NilValue;
-   Error parseError = parseString(rCode, &parseStatusSEXP, pProtect);
+   SEXP parsedSEXP = R_NilValue;
+   Error parseError = parseString(rCode, &parsedSEXP, pProtect);
    if (parseError)
       return parseError;
 
    // evaluate the expression
-   Error evalError = evaluateExpressions(parseStatusSEXP, pSEXP, pProtect);
+   Error evalError = evaluateExpressions(parsedSEXP, pSEXP, pProtect);
    if (evalError)
    {
       evalError.addProperty("code", str);
