@@ -86,11 +86,9 @@ void listEnvironment(SEXP env,
                      std::vector<Variable>* pVariables);
  
 // find variables in environments and namespaces
-SEXP findVar(const std::string& name,
-             const std::string& ns = std::string());
-
-SEXP findVar(const std::string& name,
-             const SEXP env);
+SEXP findVar(SEXP nameSEXP, SEXP envSEXP);
+SEXP findVar(const std::string& name, SEXP envSEXP);
+SEXP findVar(const std::string& name, const std::string& ns = std::string());
 
 SEXP findFunction(const std::string& name,
                   const std::string& ns = std::string());
@@ -104,8 +102,8 @@ SEXP getNames(SEXP sexp);
 bool setNames(SEXP sexp, const std::vector<std::string>& names);
 
 core::Error getNames(SEXP sexp, std::vector<std::string>* pNames);
-bool hasActiveBinding(const std::string&, const SEXP);
-bool isActiveBinding(const std::string&, const SEXP);
+bool hasActiveBinding(const std::string&, SEXP);
+bool isActiveBinding(const std::string&, SEXP);
 
 // function introspection
 SEXP functionBody(SEXP functionSEXP);

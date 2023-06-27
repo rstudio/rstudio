@@ -675,6 +675,9 @@ SEXP callHandler(const std::string& path,
                  const HandlerSource& handlerSource,
                  r::sexp::Protect* pProtect)
 {
+   // use local protection for intermediate values
+   r::sexp::Protect protect;
+   
    // uri decode the path
    std::string decodedPath = http::util::urlDecode(path);
 
@@ -684,32 +687,35 @@ SEXP callHandler(const std::string& path,
    SEXP headersSEXP = headersBuffer(request, pProtect);
    
    SEXP pathSEXP;
-   pProtect->add(pathSEXP = Rf_mkString(path.c_str()));
+   protect.add(pathSEXP = Rf_mkString(path.c_str()));
 
    SEXP argsSEXP;
-   pProtect->add(argsSEXP = Rf_list4(pathSEXP, queryStringSEXP, requestBodySEXP, headersSEXP));
+   protect.add(argsSEXP = Rf_list4(pathSEXP, queryStringSEXP, requestBodySEXP, headersSEXP));
 
    // form the call expression
+   SEXP handlerSourceSEXP;
+   protect.add(handlerSourceSEXP = handlerSource(path));
+   
    SEXP argSEXP;
-   pProtect->add(argSEXP = Rf_lcons( (handlerSource(path)), argsSEXP));
+   protect.add(argSEXP = Rf_lcons(handlerSourceSEXP, argsSEXP));
    
    SEXP innerCallSEXP;
-   pProtect->add(innerCallSEXP = Rf_lang3(Rf_install("try"), argSEXP, R_TrueValue));
+   protect.add(innerCallSEXP = Rf_lang3(Rf_install("try"), argSEXP, R_TrueValue));
    SET_TAG(CDDR(innerCallSEXP), Rf_install("silent"));
    
    // suppress warnings
    SEXP suppressWarningsSEXP;
-   pProtect->add(suppressWarningsSEXP = r::sexp::findFunction("suppressWarnings", "base"));
+   protect.add(suppressWarningsSEXP = r::sexp::findFunction("suppressWarnings", "base"));
    
    SEXP callSEXP;
-   pProtect->add(callSEXP = Rf_lang2(suppressWarningsSEXP, innerCallSEXP));
+   protect.add(callSEXP = Rf_lang2(suppressWarningsSEXP, innerCallSEXP));
 
    // get reference to tools namespace
    SEXP toolsSEXP;
-   pProtect->add(toolsSEXP = r::sexp::findNamespace("tools"));
+   protect.add(toolsSEXP = r::sexp::findNamespace("tools"));
    
    SEXP namespaceSEXP;
-   pProtect->add(namespaceSEXP = R_FindNamespace(toolsSEXP));
+   protect.add(namespaceSEXP = R_FindNamespace(toolsSEXP));
    
    // execute and return
    SEXP resultSEXP;
