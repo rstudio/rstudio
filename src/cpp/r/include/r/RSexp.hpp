@@ -84,14 +84,18 @@ void listEnvironment(SEXP env,
                      bool includeAll,
                      bool includeLastDotValue,
                      std::vector<Variable>* pVariables);
-      
-// object info
+ 
+// find variables in environments and namespaces
 SEXP findVar(const std::string& name,
              const std::string& ns = std::string());
+
 SEXP findVar(const std::string& name,
              const SEXP env);
+
 SEXP findFunction(const std::string& name,
                   const std::string& ns = std::string());
+
+// object info
 std::string typeAsString(SEXP object);
 std::string classOf(SEXP objectSEXP);
 int length(SEXP object);
