@@ -714,12 +714,9 @@ SEXP callHandler(const std::string& path,
    SEXP toolsSEXP;
    protect.add(toolsSEXP = r::sexp::findNamespace("tools"));
    
-   SEXP namespaceSEXP;
-   protect.add(namespaceSEXP = R_FindNamespace(toolsSEXP));
-   
    // execute and return
    SEXP resultSEXP;
-   pProtect->add(resultSEXP = Rf_eval(callSEXP, namespaceSEXP));
+   pProtect->add(resultSEXP = Rf_eval(callSEXP, toolsSEXP));
    
    return resultSEXP;
 }
