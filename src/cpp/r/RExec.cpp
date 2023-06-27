@@ -262,18 +262,6 @@ void topLevelExec(void *data)
    pFunction->operator()();
 }
    
-struct SEXPTopLevelExecContext
-{
-   boost::function<SEXP()> function;
-   SEXP* pReturnSEXP;
-};
-   
-void SEXPTopLevelExec(void *data)
-{
-   SEXPTopLevelExecContext* pContext = (SEXPTopLevelExecContext*)data;
-   *(pContext->pReturnSEXP) = pContext->function();
-}
-   
 } // anonymous namespace
    
 Error executeSafely(boost::function<void()> function)
@@ -300,26 +288,6 @@ Error executeSafely(boost::function<void()> function)
    }
 }
    
-core::Error executeSafely(boost::function<SEXP()> function, SEXP* pSEXP)
-{
-   // disable custom error handlers while we execute code
-   DisableErrorHandlerScope disableErrorHandler;
-   DisableDebugScope disableStepInto(R_GlobalEnv);
-
-   SEXPTopLevelExecContext context;
-   context.function = function;
-   context.pReturnSEXP = pSEXP;
-   Rboolean success = R_ToplevelExec(SEXPTopLevelExec, (void*)&context);
-   if (!success)
-   {
-      return rCodeExecutionError(getErrorMessage(), ERROR_LOCATION);
-   }
-   else
-   {
-      return Success();
-   }
-}
-
 Error executeCallUnsafe(SEXP callSEXP,
                         SEXP envirSEXP,
                         SEXP *pResultSEXP,
@@ -385,13 +353,13 @@ Error evaluateString(const std::string& str,
       rCode = "base::suppressMessages(" + rCode + ")";
 
    // parse expression
-   SEXP ps;
-   Error parseError = parseString(rCode, &ps, pProtect);
+   SEXP parseStatusSEXP = R_NilValue;
+   Error parseError = parseString(rCode, &parseStatusSEXP, pProtect);
    if (parseError)
       return parseError;
 
    // evaluate the expression
-   Error evalError = evaluateExpressions(ps, pSEXP, pProtect);
+   Error evalError = evaluateExpressions(parseStatusSEXP, pSEXP, pProtect);
    if (evalError)
    {
       evalError.addProperty("code", str);

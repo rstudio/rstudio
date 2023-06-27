@@ -16,6 +16,8 @@
 #ifndef R_R_SEXP_HPP
 #define R_R_SEXP_HPP
 
+#define R_INTERNAL_FUNCTIONS
+
 #include <string>
 #include <vector>
 #include <deque>
@@ -30,17 +32,28 @@
 #include <boost/utility.hpp>
 #include <boost/date_time/posix_time/posix_time.hpp>
 
+#include <shared_core/Error.hpp>
+#include <shared_core/json/Json.hpp>
+
 #include <core/Log.hpp>
 #include <core/r_util/RFunctionInformation.hpp>
 
 #include <r/RErrorCategory.hpp>
 #include <r/RInternal.hpp>
 
-#include <shared_core/Error.hpp>
-#include <shared_core/json/Json.hpp>
-
 // IMPORTANT NOTE: all code in r::sexp must provide "no jump" guarantee.
 // See comment in RInternal.hpp for more info on this
+
+#ifdef _WIN32
+# define RS_IMPORT __declspec(dllimport)
+#else
+# define RS_IMPORT
+#endif
+
+extern "C" {
+extern RS_IMPORT SEXP R_TrueValue;
+extern RS_IMPORT SEXP R_FalseValue;
+} // extern "C"
 
 
 namespace rstudio {
@@ -268,27 +281,28 @@ core::Error getNamedAttrib(SEXP object, const std::string& name, T* pValue)
    return extract(attrib, pValue);
 }
 
-// protect R expressions
+// protect R expressions -- this uses a stack-based protection mechanism,
+// so this object should never be stored on the heap! 
 class Protect : boost::noncopyable
 {
 public:
    Protect()
-   : protectCount_(0)
+      : protectCount_(0)
    {
    }
    
-   explicit Protect(SEXP sexp)
-   : protectCount_(0)
+   ~Protect()
    {
-      add(sexp);
+      UNPROTECT(protectCount_);
    }
-   
-   virtual ~Protect();
    
    // COPYING: boost::noncopyable
    
-   void add(SEXP sexp);
-   void unprotectAll();
+   void add(SEXP sexp)
+   {
+      PROTECT(sexp);
+      protectCount_++;
+   }
    
 private:
    int protectCount_;

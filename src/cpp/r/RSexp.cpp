@@ -46,17 +46,6 @@
 #undef TRUE
 #undef FALSE
 
-#ifdef _WIN32
-# define RS_IMPORT __declspec(dllimport)
-#else
-# define RS_IMPORT
-#endif
-
-extern "C" {
-extern RS_IMPORT SEXP R_TrueValue;
-extern RS_IMPORT SEXP R_FalseValue;
-} // extern "C"
-
 using namespace rstudio::core;
 using namespace boost::placeholders;
 
@@ -341,8 +330,7 @@ SEXP findNamespace(const std::string& name)
    // R_FindNamespace will throw if it fails to find a particular name.
    // Instead, we manually search the namespace registry.
    SEXP nameSEXP = Rf_install(name.c_str());
-   SEXP ns = Rf_findVarInFrame(R_NamespaceRegistry, nameSEXP);
-   return ns;
+   return Rf_findVarInFrame(R_NamespaceRegistry, nameSEXP);
 }
    
 Error asPrimitiveEnvironment(SEXP envirSEXP,
@@ -392,9 +380,10 @@ void listEnvironment(SEXP env,
    pVariables->clear();
    
    // get the list of environment vars (protect locally because we 
-   // we don't actually return this list to the caller
+   // we don't actually return this list to the caller)
+   Protect protect;
    SEXP envVarsSEXP;
-   Protect rProtect(envVarsSEXP = R_lsInternal(env, includeAll ? TRUE : FALSE));
+   protect.add(envVarsSEXP = R_lsInternal(env, includeAll ? TRUE : FALSE));
 
    // get variables
    std::vector<std::string> vars;
@@ -1603,31 +1592,6 @@ SEXP createList(const std::vector<std::string>& names, Protect* pProtect)
    return listSEXP;
 }
    
-Protect::~Protect()
-{
-   try
-   {
-      unprotectAll();
-   }
-   catch(...)
-   {
-   }
-}
-
-void Protect::add(SEXP sexp)
-{
-   PROTECT(sexp);
-   protectCount_++;
-}   
-
-void Protect::unprotectAll()
-{
-   if (protectCount_ > 0)
-      UNPROTECT(protectCount_);
-   protectCount_ = 0;
-}
-
-
 PreservedSEXP::PreservedSEXP()
    : sexp_(R_NilValue)
 {

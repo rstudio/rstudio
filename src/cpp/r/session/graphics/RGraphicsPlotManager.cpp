@@ -793,9 +793,11 @@ void PlotManager::onDeviceNewPage(SEXP previousPageSnapshot)
    {
       if (previousPageSnapshot != R_NilValue)
       {
-         r::sexp::Protect protectSnapshot(previousPageSnapshot);
-         Error error = activePlot().renderFromDisplaySnapshot(
-                                                         previousPageSnapshot);
+         // TODO: Is this necessary? Shouldn't this be protected by the caller?
+         r::sexp::Protect protect;
+         protect.add(previousPageSnapshot);
+         
+         Error error = activePlot().renderFromDisplaySnapshot(previousPageSnapshot);
          if (error)
             logAndReportError(error, ERROR_LOCATION);
       }
