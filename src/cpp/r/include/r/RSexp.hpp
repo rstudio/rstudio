@@ -283,7 +283,7 @@ core::Error getNamedAttrib(SEXP object, const std::string& name, T* pValue)
    return extract(attrib, pValue);
 }
 
-// protect R expressions -- this uses a stack-based protection mechanism,
+// protect R objects -- this uses a stack-based protection mechanism,
 // so this object should never be stored on the heap! 
 class Protect : boost::noncopyable
 {
