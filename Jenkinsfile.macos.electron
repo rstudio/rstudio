@@ -34,7 +34,7 @@ pipeline {
       }
 
       steps {
-        withCredentials([usernameColonPassword(credentialsId: 'github-rstudio-jenkins', variable: "GITHUB_LOGIN")]) {
+        withCredentials([usernameColonPassword(credentialsId: 'posit-jenkins', variable: "GITHUB_LOGIN")]) {
           sh 'cd dependencies/osx && RSTUDIO_GITHUB_LOGIN=$GITHUB_LOGIN ./install-dependencies-osx && cd ../..'
         }
       }
@@ -162,7 +162,7 @@ pipeline {
           */
 
           // publish build to dailies page
-          withCredentials([usernamePassword(credentialsId: 'github-rstudio-jenkins', usernameVariable: 'GITHUB_USERNAME', passwordVariable: 'GITHUB_PAT')]) {
+          withCredentials([usernamePassword(credentialsId: 'posit-jenkins', usernameVariable: 'GITHUB_USERNAME', passwordVariable: 'GITHUB_PAT')]) {
 
             // publish the build
             sh "docker/jenkins/publish-build.sh --build ${product}/macos --url https://s3.amazonaws.com/rstudio-ide-build/${product}/macos/${packageFile} --pat ${GITHUB_PAT} --file package/osx/build/${packageFile} --version ${params.RSTUDIO_VERSION_MAJOR}.${params.RSTUDIO_VERSION_MINOR}.${params.RSTUDIO_VERSION_PATCH}${params.RSTUDIO_VERSION_SUFFIX}"
