@@ -8,7 +8,7 @@ properties([
                               artifactNumToKeepStr: '',
                               daysToKeepStr: '',
                               numToKeepStr: '100')),
-    parameters([string(name: 'RSTUDIO_VERSION_PATCH', defaultValue: '1', description: 'RStudio Patch Version'),
+    parameters([string(name: 'RSTUDIO_VERSION_PATCH', defaultValue: '3', description: 'RStudio Patch Version'),
                 string(name: 'SLACK_CHANNEL', defaultValue: '#ide-builds', description: 'Slack channel to publish build message.'),
                 string(name: 'OS_FILTER', defaultValue: '', description: 'Pattern to limit builds by matching OS'),
                 string(name: 'ARCH_FILTER', defaultValue: '', description: 'Pattern to limit builds by matching ARCH'),
@@ -129,7 +129,7 @@ def s3_upload(type, flavor, os, arch) {
   }
 
   // publish build to dailies page
-  withCredentials([usernamePassword(credentialsId: 'github-rstudio-jenkins', usernameVariable: 'GITHUB_USERNAME', passwordVariable: 'GITHUB_PAT')]) {
+  withCredentials([usernamePassword(credentialsId: 'posit-jenkins', usernameVariable: 'GITHUB_USERNAME', passwordVariable: 'GITHUB_PAT')]) {
 
     // derive product
     def product="${flavor}"
@@ -318,7 +318,7 @@ try {
                     node("${current_image.arch} && linux") {
                         stage('prepare Linux container') {
                             prepareWorkspace()
-                            withCredentials([usernameColonPassword(credentialsId: 'github-rstudio-jenkins', variable: "github_login")]) {
+                            withCredentials([usernameColonPassword(credentialsId: 'posit-jenkins', variable: "github_login")]) {
                               def github_args = "--build-arg GITHUB_LOGIN=${github_login}"
                               pullBuildPush(image_name: 'jenkins/ide',
                                 dockerfile: "docker/jenkins/Dockerfile.${current_image.os}",
@@ -331,7 +331,6 @@ try {
                 }
             }
         }
-
         def windows_containers = [
           [os: 'windows', arch: 'x86_64', flavor: 'electron',  variant: '', package_os: 'Windows']
         ]
@@ -350,7 +349,7 @@ try {
               node('windows') {
                 stage('prepare Windows container') {
                   checkout scm
-                  withCredentials([usernameColonPassword(credentialsId: 'github-rstudio-jenkins', variable: "github_login")]) {
+                  withCredentials([usernameColonPassword(credentialsId: 'posit-jenkins', variable: "github_login")]) {
                     def github_args = "--build-arg GITHUB_LOGIN=${github_login}"
                     pullBuildPush(image_name: 'jenkins/ide',
                     dockerfile: "docker/jenkins/Dockerfile.windows",
@@ -429,7 +428,7 @@ try {
                         docker.image(image_name).inside() {
                             timeout(time: 180, units: 'MINUTES', activity: false) {
                                 stage('dependencies') {
-                                    withCredentials([usernameColonPassword(credentialsId: 'github-rstudio-jenkins', variable: "GITHUB_LOGIN")]) {
+                                    withCredentials([usernameColonPassword(credentialsId: 'posit-jenkins', variable: "GITHUB_LOGIN")]) {
                                         bat 'cd dependencies/windows && set RSTUDIO_GITHUB_LOGIN=$GITHUB_LOGIN && set RSTUDIO_SKIP_QT=1 && install-dependencies.cmd && cd ../..'
                                     }
                                 }
@@ -492,7 +491,7 @@ try {
                                     packageVersion = packageVersion.replace('+', '-')
 
                                     def packageName = "RStudio-${packageVersion}"
-                                    withCredentials([usernamePassword(credentialsId: 'github-rstudio-jenkins', usernameVariable: 'GITHUB_USERNAME', passwordVariable: 'GITHUB_PAT')]) {
+                                    withCredentials([usernamePassword(credentialsId: 'posit-jenkins', usernameVariable: 'GITHUB_USERNAME', passwordVariable: 'GITHUB_PAT')]) {
 
                                         // derive product
                                         def product = "${current_container.flavor}"

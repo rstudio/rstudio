@@ -5,13 +5,14 @@
 # tools (awscli) installed, and configured with a valid AWS account.
 
 # Modify to set the Quarto version to upload
-QUARTO_VERSION=0.9.230
+QUARTO_VERSION=1.1.251
 
 BASEURL="https://github.com/quarto-dev/quarto-cli/releases/download/"
 AWS_BUCKET="s3://rstudio-buildtools"
 
 PLATFORMS=(
     linux-amd64.tar.gz
+    linux-rhel7-amd64.tar.gz
     macos.tar.gz
     win.zip
 )
