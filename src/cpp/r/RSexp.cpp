@@ -553,9 +553,20 @@ SEXP functionBody(SEXP functionSEXP)
    return bodySEXP;
 }
 
-SEXP findVar(const std::string &name, const SEXP env)
+SEXP findVar(SEXP nameSEXP, SEXP envSEXP)
 {
-   return Rf_findVar(Rf_install(name.c_str()), env);
+#ifndef RSTUDIO_PACKAGE_BUILD
+   if (R_BindingIsActive(nameSEXP, envSEXP))
+      ELOGF("binding '{}' is an active binding", CHAR(PRINTNAME(nameSEXP)));
+#endif
+      
+   return Rf_findVar(nameSEXP, envSEXP);
+}
+
+SEXP findVar(const std::string& name, const SEXP envSEXP)
+{
+   SEXP nameSEXP = Rf_install(name.c_str());
+   return findVar(nameSEXP, envSEXP);
 }
 
 SEXP findVar(const std::string& name, const std::string& ns)
@@ -567,9 +578,8 @@ SEXP findVar(const std::string& name, const std::string& ns)
       if (!ensureNamespaceLoaded(ns))
          return R_UnboundValue;
    
-   SEXP env = ns.empty() ? R_GlobalEnv : findNamespace(ns);
-   
-   return findVar(name, env);
+   SEXP envSEXP = ns.empty() ? R_GlobalEnv : findNamespace(ns);
+   return findVar(name, envSEXP);
 }
 
 
@@ -601,7 +611,7 @@ SEXP findFunction(const std::string& name, const std::string& ns)
       // of R's own internal global cache.
       if (env == R_GlobalEnv)
       {
-         SEXP resultSEXP = Rf_findVar(nameSEXP, R_GlobalEnv);
+         SEXP resultSEXP = findVar(nameSEXP, R_GlobalEnv);
          if (Rf_isFunction(resultSEXP))
             return resultSEXP;
          else if (TYPEOF(resultSEXP) == PROMSXP)
