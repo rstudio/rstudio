@@ -54,7 +54,7 @@ export function username(): string {
  * @returns A FilePath with trailing slashes removed if the path exists, otherwise undefined
  */
 function verifiedPath(path: string): FilePath | undefined {
-  const trimmedPath = removeTrailingSlashes(path);
+  const trimmedPath = removeTrailingSlashes(path, true);
   if (trimmedPath.length > 0) {
     const fp = new FilePath(trimmedPath);
     if (fp.existsSync()) return fp;
