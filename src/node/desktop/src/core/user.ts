@@ -34,6 +34,10 @@ export function userHomePath(): FilePath {
   return new FilePath(os.homedir());
 }
 
+export function userHomePathString(): string {
+  return userHomePath().getAbsolutePath();
+}
+
 export function username(): string {
   try {
     return os.userInfo().username;
@@ -44,6 +48,19 @@ export function username(): string {
 
 function checkPath(path: string): boolean {
   if (path === '') return false;
-  const fp = new FilePath(path);
+  const fp = new FilePath(removeTrailingSlashes(path));
   return fp.existsSync();
+}
+
+// This seems to be a false positive from eslint ¯\_(ツ)_/¯
+// eslint-disable-next-line no-useless-escape
+const TRAILING_SLASH_REGEX = /[\\\/]+$/;
+
+function removeTrailingSlashes(pathString: string): string {
+  const trailingSlashes = pathString.match(TRAILING_SLASH_REGEX);
+  if (trailingSlashes && trailingSlashes.length > 0) {
+    const slashStartIndex = pathString.lastIndexOf(trailingSlashes[0]);
+    return pathString.substring(0, slashStartIndex);
+  }
+  return pathString;
 }
