@@ -125,7 +125,7 @@ pipeline {
             checkout([$class: 'GitSCM',
                       branches: [[name: "${params.COMMIT_HASH}"]],
                       extensions: [],
-                      userRemoteConfigs: [[credentialsId: 'github-rstudio-jenkins', url: GIT_URL ]]])
+                      userRemoteConfigs: [[credentialsId: 'posit-jenkins', url: GIT_URL ]]])
           }
         }
 
@@ -220,7 +220,7 @@ pipeline {
             }
 
             environment {
-              GITHUB_LOGIN = credentials('github-rstudio-jenkins')
+              GITHUB_LOGIN = credentials('posit-jenkins')
               AWS_BUCKET="rstudio-ide-build"
               PRODUCT="${utils.getProductName()}"
               BUILD_LOCATION = "build-${FLAVOR}-${ext_map[env.OS].toUpperCase()}" // Don't use BUILD_DIR because it impacts the make-package script
@@ -234,7 +234,7 @@ pipeline {
                   checkout([$class: 'GitSCM',
                             branches: [[name: "${params.COMMIT_HASH}"]],
                             extensions: [],
-                            userRemoteConfigs: [[credentialsId: 'github-rstudio-jenkins', url: GIT_URL ]]])
+                            userRemoteConfigs: [[credentialsId: 'posit-jenkins', url: GIT_URL ]]])
                 }
               }
 
@@ -346,7 +346,7 @@ pipeline {
                   
                   stage("Publish") {
                     environment {
-                      GITHUB_LOGIN = credentials('github-rstudio-jenkins')
+                      GITHUB_LOGIN = credentials('posit-jenkins')
                       DAILIES_PATH = "${PRODUCT}/${OS}-${utils.getArchForOs(OS, ARCH)}"
                     }
 

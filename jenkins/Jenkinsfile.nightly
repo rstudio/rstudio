@@ -131,7 +131,7 @@ pipeline {
             }
 
             environment {
-              GITHUB_LOGIN = credentials('github-rstudio-jenkins')
+              GITHUB_LOGIN = credentials('posit-jenkins')
             }
 
             steps {
