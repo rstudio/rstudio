@@ -104,19 +104,14 @@ struct ParseStringData
 {
    SEXP codeSEXP;
    SEXP resultSEXP;
-   r::sexp::Protect* pProtect;
    ParseStatus parseStatus;
 };
 
 void parseStringImpl(void* data)
 {
    ParseStringData* parseData = (ParseStringData*) data;
-   parseData->resultSEXP = R_ParseVector(
-            parseData->codeSEXP,
-            -1,
-            &parseData->parseStatus,
-            R_NilValue);
-   parseData->pProtect->add(parseData->resultSEXP);
+   parseData->resultSEXP =
+      R_ParseVector(parseData->codeSEXP, -1, &parseData->parseStatus, R_NilValue);
 }
 
 } // end anonymous namespace
@@ -131,7 +126,6 @@ Error parseString(const std::string& code, SEXP* pSEXP, sexp::Protect* pProtect)
    ParseStringData parseData;
    parseData.codeSEXP = codeSEXP;
    parseData.resultSEXP = R_NilValue;
-   parseData.pProtect = pProtect;
    parseData.parseStatus = PARSE_NULL;
 
    // perform the parse
@@ -154,6 +148,8 @@ Error parseString(const std::string& code, SEXP* pSEXP, sexp::Protect* pProtect)
 
    // set parse result
    *pSEXP = parseData.resultSEXP;
+   pProtect->add(*pSEXP);
+
    return Success();
 }
 
