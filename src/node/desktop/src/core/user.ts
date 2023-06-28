@@ -19,17 +19,19 @@ import { getenv } from './environment';
 import { FilePath } from './file-path';
 
 import desktop from '../native/desktop.node';
+import { removeTrailingSlashes } from '../main/utils';
 
 export function userHomePath(): FilePath {
-  const user = getenv('R_USER');
-  if (checkPath(user)) return new FilePath(user);
-  const home = getenv('HOME');
-  if (checkPath(home)) return new FilePath(home);
+  const pathsToCheck = [() => getenv('R_USER'), () => getenv('HOME')];
   if (process.platform === 'win32') {
-    const currentHome = desktop.currentCSIDLPersonalHomePath();
-    if (checkPath(currentHome)) return new FilePath(currentHome);
-    const defaultHome = desktop.defaultCSIDLPersonalHomePath();
-    if (checkPath(defaultHome)) return new FilePath(defaultHome);
+    pathsToCheck.push(
+      () => desktop.currentCSIDLPersonalHomePath(),
+      () => desktop.defaultCSIDLPersonalHomePath(),
+    );
+  }
+  for (const pathToCheck of pathsToCheck) {
+    const path = verifiedPath(pathToCheck());
+    if (path) return path;
   }
   return new FilePath(os.homedir());
 }
@@ -46,21 +48,16 @@ export function username(): string {
   }
 }
 
-function checkPath(path: string): boolean {
-  if (path === '') return false;
-  const fp = new FilePath(removeTrailingSlashes(path));
-  return fp.existsSync();
-}
-
-// This seems to be a false positive from eslint ¯\_(ツ)_/¯
-// eslint-disable-next-line no-useless-escape
-const TRAILING_SLASH_REGEX = /[\\\/]+$/;
-
-function removeTrailingSlashes(pathString: string): string {
-  const trailingSlashes = pathString.match(TRAILING_SLASH_REGEX);
-  if (trailingSlashes && trailingSlashes.length > 0) {
-    const slashStartIndex = pathString.lastIndexOf(trailingSlashes[0]);
-    return pathString.substring(0, slashStartIndex);
+/**
+ * Removes trailing slashes from a path string and verifies that the path exists
+ * @param path The path to verify
+ * @returns A FilePath with trailing slashes removed if the path exists, otherwise undefined
+ */
+function verifiedPath(path: string): FilePath | undefined {
+  const trimmedPath = removeTrailingSlashes(path);
+  if (trimmedPath.length > 0) {
+    const fp = new FilePath(trimmedPath);
+    if (fp.existsSync()) return fp;
   }
-  return pathString;
+  return undefined;
 }

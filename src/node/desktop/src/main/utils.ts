@@ -482,15 +482,18 @@ export const handleLocaleCookies = async (window: BrowserWindow, isMainWindow = 
     });
   }
 
-  await window.webContents.session.cookies.get({}).then(async (cookies) => {
-    if (cookies.length === 0) {
-      await updateLocaleFromCookie({ name: 'LOCALE', value: 'en' } as any, window);
-    } else {
-      cookies.forEach(async (cookie) => {
-        await updateLocaleFromCookie(cookie, window);
-      });
-    }
-  }).catch((err) => logger().logError(err));
+  await window.webContents.session.cookies
+    .get({})
+    .then(async (cookies) => {
+      if (cookies.length === 0) {
+        await updateLocaleFromCookie({ name: 'LOCALE', value: 'en' } as any, window);
+      } else {
+        cookies.forEach(async (cookie) => {
+          await updateLocaleFromCookie(cookie, window);
+        });
+      }
+    })
+    .catch((err) => logger().logError(err));
 };
 
 export function registerWebContentsDebugHandlers(webContents: WebContents) {
@@ -599,4 +602,17 @@ export function getNumericEnvVar(envVarName: string): number | undefined {
     return !isNaN(maybeNum) ? maybeNum : undefined;
   }
   return undefined;
+}
+
+// This seems to be a false positive from eslint ¯\_(ツ)_/¯
+// eslint-disable-next-line no-useless-escape
+const TRAILING_SLASH_REGEX = /[\\\/]+$/;
+
+export function removeTrailingSlashes(pathString: string): string {
+  const trailingSlashes = pathString.match(TRAILING_SLASH_REGEX);
+  if (trailingSlashes && trailingSlashes.length > 0) {
+    const slashStartIndex = pathString.lastIndexOf(trailingSlashes[0]);
+    return pathString.substring(0, slashStartIndex);
+  }
+  return pathString;
 }
