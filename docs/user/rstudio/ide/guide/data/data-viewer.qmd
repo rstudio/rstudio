@@ -33,7 +33,9 @@ To remove sorting and show the data in the original order, click the empty colum
 
 ## Scrolling
 
-If you have more than 50 columns in your dataset, the data viewer only displays up to 50 columns. To view additional columns, click the single Cols **>** arrow to scroll right (columns are displayed in groups of 50). If you want to jump to the end of your dataset, click the double Cols **>>** arrows.
+If you have more than 50 columns in your dataset, the data viewer only displays up to 50 columns. To view additional columns, click the single Cols **>** arrow to scroll right (columns display in groups of 50). If you want to jump to the end of your dataset, click the double Cols **>>** arrows.
+
+![](images/mpg_df-cols.png){fig-alt="A dataset in the Data Viewer displaying 50 columns. The Cols arrows, located at the top of the Data Viewer, are highlighted"}
 
 ## Filtering
 
