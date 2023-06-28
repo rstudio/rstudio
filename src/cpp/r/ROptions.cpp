@@ -121,9 +121,12 @@ SEXP setErrorOption(SEXP value)
       if (CDR(option) == R_NilValue && value != R_NilValue)
       {
          // no error option exists at all; add it so we can set the value
-         SETCDR(option, Rf_allocList(1));
+         SEXP listSEXP = Rf_allocList(1);
+         PROTECT(listSEXP);
+         SETCDR(option, listSEXP);
          SETCAR(CDR(option), value);
          SET_TAG(CDR(option), errorTag);
+         UNPROTECT(1);
          break;
       }
 
