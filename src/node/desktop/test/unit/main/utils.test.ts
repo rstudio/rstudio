@@ -170,6 +170,8 @@ describe('Utils', () => {
       { input: '/a/b/c//', expected: '/a/b/c' },
       { input: '/a/b/c\\\\', expected: '/a/b/c' },
       { input: '/a/b/c\\/', expected: '/a/b/c' },
+      { input: 'C:\\', expected: 'C:' },
+      { input: '~/', expected: '~' },
     ];
     testCases.forEach((testCase) => {
       const result = Utils.removeTrailingSlashes(testCase.input);
@@ -182,7 +184,7 @@ describe('Utils', () => {
       { input: '/', expected: '/' },
       { input: '\\', expected: '\\' },
       { input: '//', expected: '/' },
-      { input: '\\\\', expected: '\\' },
+      { input: '\\\\', expected: '\\\\' },
       { input: '\\/\\', expected: '\\' },
       { input: 'a', expected: 'a' },
       { input: '/a/b/c', expected: '/a/b/c' },
@@ -190,6 +192,8 @@ describe('Utils', () => {
       { input: '/a/b/c//', expected: '/a/b/c' },
       { input: '/a/b/c\\\\', expected: '/a/b/c' },
       { input: '/a/b/c\\/', expected: '/a/b/c' },
+      { input: 'C:\\', expected: 'C:' },
+      { input: '~/', expected: '~' },
     ];
     testCases.forEach((testCase) => {
       const result = Utils.removeTrailingSlashes(testCase.input, true);

@@ -604,12 +604,11 @@ export function getNumericEnvVar(envVarName: string): number | undefined {
   return undefined;
 }
 
-// This seems to be a false positive from eslint ¯\_(ツ)_/¯
-// eslint-disable-next-line no-useless-escape
-const TRAILING_SLASH_REGEX = /[\\\/]+$/;
+const TRAILING_SLASH_REGEX = /[\\/]+$/;
 
 /**
- * Removes trailing slashes from a string, optionally keeping the starting slash if it exists
+ * Removes trailing slashes from a string, optionally keeping the starting slash
+ * or double-slash for UNC paths.
  * @param str The string to remove trailing slashes from
  * @param keepStartSlash Whether to keep the starting slash if it exists
  * @returns The string with trailing slashes removed
@@ -622,8 +621,10 @@ export function removeTrailingSlashes(str: string, keepStartSlash = false): stri
 
     // If the string only contains slashes, then the trailing slashes start at the first character
     if (trailingSlashStartIndex === 0 && keepStartSlash) {
-      if (str.length === 1) {
-        // The string is only a slash, so we can just return it
+      const isSingleSlash = str.length === 1;
+      const isUNCPath = str === '\\\\';
+      if (isSingleSlash || isUNCPath) {
+        // The string is only a slash or is the UNC double slash, so we can just return it
         return str;
       } else {
         // The string starts with a slash, so the trailing slashes start at the second character
