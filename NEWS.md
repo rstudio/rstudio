@@ -9,6 +9,7 @@
 - Fixed bug preventing dataframe column navigation past the default number of display columns (#13220)
 - Fixed intermittent rsession crash when the linux nscd service was enabled (rstudio-pro:#4648)
 - Fixed bug when resuming session not restoring current working directory for Terminal pane (rstudio-pro:#4027)
+- Fixed bug preventing files from being saved when user `HOME` path includes trailing slashes on Windows (#13105)
 
 ### Performance
 - Improved performance of group membership tests (rstudio-pro:#4643)
