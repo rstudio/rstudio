@@ -22,9 +22,10 @@ import desktop from '../native/desktop.node';
 import { removeTrailingSlashes } from '../main/utils';
 
 export function userHomePath(): FilePath {
-  const pathsToCheck = [() => getenv('R_USER'), () => getenv('HOME')];
+  const pathsToCheck = [() => getenv('HOME')];
   if (process.platform === 'win32') {
     pathsToCheck.push(
+      () => getenv('R_USER'),
       () => desktop.currentCSIDLPersonalHomePath(),
       () => desktop.defaultCSIDLPersonalHomePath(),
     );
