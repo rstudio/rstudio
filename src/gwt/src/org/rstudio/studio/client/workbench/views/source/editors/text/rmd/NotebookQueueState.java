@@ -57,6 +57,7 @@ import org.rstudio.studio.client.workbench.views.source.events.ChunkChangeEvent;
 import org.rstudio.studio.client.workbench.views.source.model.DocUpdateSentinel;
 
 import com.google.gwt.core.client.JsArray;
+import com.google.gwt.core.client.JsArrayInteger;
 import com.google.gwt.user.client.Command;
 
 public class NotebookQueueState implements NotebookRangeExecutedEvent.Handler,
