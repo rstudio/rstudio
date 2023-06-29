@@ -94,7 +94,7 @@ runWatchdogProcess() {
 
    local PRELOAD
    if [ "$(uname)" = "Darwin" ]; then
-      PRELOAD="DYLD_INSERT_LIBRARIES=${DYLD_INSERT_LIBRARIES}"
+      PRELOAD="DYLD_INSERT_LIBRARIES=${R_LIB_DIR}/libR.dylib"
    else
       PRELOAD="LD_PRELOAD=${RSESSION_DIAGNOSTICS_LIBSEGFAULT}"
    fi
@@ -186,11 +186,6 @@ export R_LIB_DIR=$(R --vanilla -s -e "cat(paste(R.home('lib'), sep=':'))")
 # test failures; create the folder if missing
 if [ ! -e "${R_DOC_DIR}" ]; then
    sudo mkdir "${R_DOC_DIR}"
-fi
-
-# On macOS, we need to tell the rsession executable where to look for libR.dylib
-if [ "$(uname)" = "Darwin" ]; then
-   export DYLD_INSERT_LIBRARIES="${R_LIB_DIR}/libR.dylib"
 fi
 
 UNIT_TEST_FAILURE=false

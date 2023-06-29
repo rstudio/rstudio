@@ -218,10 +218,12 @@ SEXP resolveObjectAssociatedWithCall(RTokenCursor cursor,
       if (!cursor.moveToPreviousSignificantToken())
          return R_UnboundValue;
    
+   if (pCacheable)
+      *pCacheable = true;
+   
    // Attempt to resolve (potentially evaluate) the symbol, or statement,
    // forming the function call.
    SEXP symbolSEXP = R_UnboundValue;
-   if (pCacheable) *pCacheable = true;
    
    if (cursor.isAssignmentCall())
    {
@@ -284,6 +286,10 @@ SEXP resolveObjectAssociatedWithCall(RTokenCursor cursor,
       if (functionsOnly && !Rf_isFunction(symbolSEXP))
          return R_UnboundValue;
    }
+   
+   // protect the discovered symbol here, just in case it was produced
+   // by an active binding
+   pProtect->add(symbolSEXP);
    
    return symbolSEXP;
 }
