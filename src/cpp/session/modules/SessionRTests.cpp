@@ -37,6 +37,52 @@ test_context("R")
       expect_true(result != nullptr);
       expect_true(result == R_NilValue);
    }
+   
+   test_that("we can detect R active bindings")
+   {
+      // create an active binding
+      Error error = r::exec::executeString(R"EOF({
+         make_counter <- function() {
+           count <- 0L
+           function() {
+             count <<- count + 1L
+             count
+           }
+         }
+         makeActiveBinding("counter", make_counter(), env = globalenv())
+      })EOF");
+      
+      if (error)
+      {
+         LOG_ERROR(error);
+         expect_true(false);
+      }
+      
+      // check that it behaves the way we expect
+      int v1 = 0;
+      error = r::exec::evaluateString("counter", &v1);
+      expect_equal(v1, 1);
+      
+      int v2 = 0;
+      error = r::exec::evaluateString("counter", &v2);
+      expect_equal(v2, 2);
+      
+      // check that regular bindings are not considered active
+      expect_false(r::sexp::isActiveBinding("data.frame", R_GlobalEnv));
+      
+      // check that we can detect it
+      expect_true(r::sexp::isActiveBinding("counter", R_GlobalEnv));
+     
+      // check that undefined variables aren't an error
+      expect_false(r::sexp::isActiveBinding("noBindingWithThisNameExists", R_GlobalEnv));
+      
+      // remove it when we're done
+      error = r::exec::executeString(R"EOF(
+         rm(counter, make_counter)
+      )EOF");
+      expect_true(error == Success());
+     
+   }
 }
 
 } // namespace tests

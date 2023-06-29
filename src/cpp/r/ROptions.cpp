@@ -87,6 +87,7 @@ SEXP getOption(const std::string& name)
       return R_NilValue;
    }
 
+   // NOTE: Values returned from Rf_GetOption() are protected implicitly by R
    return Rf_GetOption(Rf_install(name.c_str()), R_BaseEnv);
 }
 
