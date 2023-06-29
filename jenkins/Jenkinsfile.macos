@@ -48,7 +48,7 @@ pipeline {
         checkout([$class: 'GitSCM',
                   branches: [[name: "${params.COMMIT_HASH}"]],
                   extensions: [],
-                  userRemoteConfigs: [[credentialsId: 'github-rstudio-jenkins', url: "${GIT_URL}"]]])
+                  userRemoteConfigs: [[credentialsId: 'posit-jenkins', url: "${GIT_URL}"]]])
       }
     }
 
@@ -72,7 +72,7 @@ pipeline {
         // boost won't compile without the brew version of openssl.
         // only add it to the dep resolve step though, or the ide build will compile against the wrong openssl
         PATH = '/usr/local/opt/openssl/bin:/usr/local/opt/openssl/bin:/usr/local/bin:/usr/bin:/bin:/usr/sbin:/sbin'
-        GITHUB_LOGIN = credentials('github-rstudio-jenkins')
+        GITHUB_LOGIN = credentials('posit-jenkins')
       }
       steps {
         sh 'cd dependencies/osx && RSTUDIO_GITHUB_LOGIN=$GITHUB_LOGIN ./install-dependencies-osx && cd ../..'
@@ -224,7 +224,7 @@ pipeline {
                   
                   stage("Publish") {
                     environment {
-                      GITHUB_LOGIN = credentials('github-rstudio-jenkins')
+                      GITHUB_LOGIN = credentials('posit-jenkins')
                       DAILIES_PATH = "${PRODUCT}/macos"
                     }
 

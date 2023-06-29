@@ -88,7 +88,6 @@ public abstract class FileDialog extends FileSystemDialog
          cd(filename);
          return false;
       }
- 
       // Make sure the browser's notion of the filename is in sync.
       browser_.setFilename(filename);
 
