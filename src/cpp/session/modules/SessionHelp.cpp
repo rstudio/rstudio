@@ -711,8 +711,7 @@ SEXP callHandler(const std::string& path,
    protect.add(callSEXP = Rf_lang2(suppressWarningsSEXP, innerCallSEXP));
 
    // get reference to tools namespace
-   SEXP toolsSEXP;
-   protect.add(toolsSEXP = r::sexp::findNamespace("tools"));
+   SEXP toolsSEXP = r::sexp::findNamespace("tools");
    
    // execute and return
    SEXP resultSEXP;
@@ -1000,7 +999,6 @@ SEXP lookupCustomHandler(const std::string& uri)
       // load .httpd.handlers.env
       if (!s_customHandlersEnv)
       {
-         r::sexp::Protect protect;
          SEXP toolsSEXP = r::sexp::findNamespace("tools");
          s_customHandlersEnv = Rf_eval(Rf_install(".httpd.handlers.env"), toolsSEXP);
       }

@@ -645,7 +645,7 @@ SEXP findFunction(const std::string& name, const std::string& ns)
    while (env != R_EmptyEnv)
    {
       // If we're searching the global environment, then
-      // try using 'Rf_findVar', as this will attempt a search
+      // try using 'findVar', as this will attempt a search
       // of R's own internal global cache.
       if (env == R_GlobalEnv)
       {

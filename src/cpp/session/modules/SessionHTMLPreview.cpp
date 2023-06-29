@@ -311,9 +311,7 @@ private:
    {
       // lookup the custom renderer function and calculate
       // whether we are going to use it
-      r::sexp::Protect protect;
-      SEXP renderMarkdownSEXP;
-      protect.add(renderMarkdownSEXP = r::options::getOption("rstudio.markdownToHTML"));
+      SEXP renderMarkdownSEXP = r::options::getOption("rstudio.markdownToHTML");
       bool usingCustomMarkdownRenderer =
                         isMarkdown() && !isNotebook() &&
                         !r::sexp::isNull(renderMarkdownSEXP);
