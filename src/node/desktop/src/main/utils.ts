@@ -604,35 +604,22 @@ export function getNumericEnvVar(envVarName: string): number | undefined {
   return undefined;
 }
 
-const TRAILING_SLASH_REGEX = /[\\/]+$/;
+const TRAILING_SLASHES_REGEX = /[\\/]+$/;
+const ONLY_SLASHES_REGEX = /^[\\/]+$/;
 
 /**
- * Removes trailing slashes from a string, optionally keeping the starting slash
- * or double-slash for UNC paths.
+ * Removes trailing slashes from a path string. Paths that contain only
+ * slashes will be returned as-is.
  * @param str The string to remove trailing slashes from
- * @param keepStartSlash Whether to keep the starting slash if it exists
  * @returns The string with trailing slashes removed
  */
-export function removeTrailingSlashes(str: string, keepStartSlash = false): string {
-  const trailingSlashes = str.match(TRAILING_SLASH_REGEX);
-  if (trailingSlashes && trailingSlashes.length > 0) {
-    // trailingSlashes.length should always be 1, so we can just use trailingSlashes[0]
-    let trailingSlashStartIndex = str.lastIndexOf(trailingSlashes[0]);
-
-    // If the string only contains slashes, then the trailing slashes start at the first character
-    if (trailingSlashStartIndex === 0 && keepStartSlash) {
-      const isSingleSlash = str.length === 1;
-      const isUNCPath = str === '\\\\';
-      if (isSingleSlash || isUNCPath) {
-        // The string is only a slash or is the UNC double slash, so we can just return it
-        return str;
-      } else {
-        // The string starts with a slash, so the trailing slashes start at the second character
-        trailingSlashStartIndex = 1;
-      }
-    }
-
-    return str.substring(0, trailingSlashStartIndex);
+export function removeTrailingSlashes(str: string): string {
+  if (str.length === 0 || ONLY_SLASHES_REGEX.test(str)) {
+    return str;
+  }
+  const trailingSlashesIndex = str.search(TRAILING_SLASHES_REGEX);
+  if (trailingSlashesIndex > 0) {
+    return str.substring(0, trailingSlashesIndex);
   }
   return str;
 }
