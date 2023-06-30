@@ -482,15 +482,18 @@ export const handleLocaleCookies = async (window: BrowserWindow, isMainWindow = 
     });
   }
 
-  await window.webContents.session.cookies.get({}).then(async (cookies) => {
-    if (cookies.length === 0) {
-      await updateLocaleFromCookie({ name: 'LOCALE', value: 'en' } as any, window);
-    } else {
-      cookies.forEach(async (cookie) => {
-        await updateLocaleFromCookie(cookie, window);
-      });
-    }
-  }).catch((err) => logger().logError(err));
+  await window.webContents.session.cookies
+    .get({})
+    .then(async (cookies) => {
+      if (cookies.length === 0) {
+        await updateLocaleFromCookie({ name: 'LOCALE', value: 'en' } as any, window);
+      } else {
+        cookies.forEach(async (cookie) => {
+          await updateLocaleFromCookie(cookie, window);
+        });
+      }
+    })
+    .catch((err) => logger().logError(err));
 };
 
 export function registerWebContentsDebugHandlers(webContents: WebContents) {
@@ -599,4 +602,24 @@ export function getNumericEnvVar(envVarName: string): number | undefined {
     return !isNaN(maybeNum) ? maybeNum : undefined;
   }
   return undefined;
+}
+
+const TRAILING_SLASHES_REGEX = /[\\/]+$/;
+const ONLY_SLASHES_REGEX = /^[\\/]+$/;
+
+/**
+ * Removes trailing slashes from a path string. Paths that contain only
+ * slashes will be returned as-is.
+ * @param str The string to remove trailing slashes from
+ * @returns The string with trailing slashes removed
+ */
+export function removeTrailingSlashes(str: string): string {
+  if (str.length === 0 || ONLY_SLASHES_REGEX.test(str)) {
+    return str;
+  }
+  const trailingSlashesIndex = str.search(TRAILING_SLASHES_REGEX);
+  if (trailingSlashesIndex > 0) {
+    return str.substring(0, trailingSlashesIndex);
+  }
+  return str;
 }

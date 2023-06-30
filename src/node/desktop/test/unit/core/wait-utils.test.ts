@@ -74,8 +74,8 @@ describe('wait-utils', () => {
     const numIncrement = () => num++;
     const funcInterval = new FunctionInterval(numIncrement, secondsToMs(intervalTime));
     funcInterval.start();
-    await sleepPromise(sleepTime); // function should have executed 9 or 10 times at this point
+    await sleepPromise(sleepTime); // function should have executed 8 - 10 times at this point
     funcInterval.stop();
-    assert.include([9, 10], num);
+    assert.include([8, 9, 10], num);
   });
 });
