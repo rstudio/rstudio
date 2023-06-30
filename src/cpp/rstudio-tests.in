@@ -54,6 +54,7 @@ findLibSegFault() {
    CANDIDATES=(
       /lib/x86_64-linux-gnu/libSegFault.so
       /lib/i386-linux-gnu/libSegFault.so
+      /lib/aarch64-linux-gnu/libSegFault.so
       /lib64/libSegFault.so
       /lib/libSegFault.so
    )
