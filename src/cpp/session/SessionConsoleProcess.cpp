@@ -895,11 +895,10 @@ void useTerminalHooks(ConsoleProcessPtr cp)
       core::FilePath bashDotDir =
             session::options().rResourcesPath().completeChildPath("terminal/bash");
 
-      // store the 'real' home so we can restore it after
-      cp->setenv("_REALHOME", core::system::getenv("HOME"));
+      core::FilePath bashProfile = bashDotDir.completeChildPath(".bash_profile");
 
-      // set HOME so our dotfiles can be sourced on startup
-      cp->setenv("HOME", bashDotDir.getAbsolutePath());
+      // set ENV so that our terminal hooks are run
+      cp->setenv("ENV", bashProfile.getAbsolutePath());
    }
 
    // enable terminal hooks for zsh
@@ -944,22 +943,20 @@ void useTerminalHooks(ConsoleProcessPtr cp)
    }
 
    // set RSTUDIO_TERMINAL_HOOKS (to be sourced on startup by supported shells)
-   FilePath hooksPath =
-         session::options().rResourcesPath().completeChildPath("terminal/hooks");
+   if (prefs::userPrefs().terminalPythonIntegration())
+   {
+      FilePath hooksPath =
+            session::options().rResourcesPath().completeChildPath("terminal/hooks");
 
-   cp->setenv("RSTUDIO_TERMINAL_HOOKS", hooksPath.getAbsolutePath());
-   
+      cp->setenv("RSTUDIO_TERMINAL_HOOKS", hooksPath.getAbsolutePath());
+   }
 }
    
 void augmentTerminalProcess(ConsoleProcessPtr cp)
 {
-   // check whether terminal hooks are required
-   // (currently, only done if we want to place python on PATH)
-   bool needsTerminalHooks = augmentTerminalProcessPython(cp);
-   if (needsTerminalHooks)
-      useTerminalHooks(cp);
+   augmentTerminalProcessPython(cp);
+   useTerminalHooks(cp);
 }
-   
 
 } // end anonymous namespace
 

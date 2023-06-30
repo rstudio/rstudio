@@ -94,6 +94,8 @@ if [ -f "${RETICULATE_PYTHON}" ] || [ -f "${RETICULATE_PYTHON_FALLBACK}" ]; then
 	fi
 
 	# ensure that our python was placed on the PATH
+	# TODO: Perhaps we should symlink the Python utilities we care about
+	# into a temporary directory, and put that directory on the PATH?
 	if [ "$(echo "${PATH}" | cut -d":" -f"1")" != "${_RS_PYTHON_BIN}" ]; then
 		PATH="${_RS_PYTHON_BIN}:${PATH}"
 	fi

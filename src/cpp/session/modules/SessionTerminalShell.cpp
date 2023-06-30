@@ -330,7 +330,8 @@ bool AvailableTerminalShells::getSystemShell(TerminalShell* pShellInfo)
    pShellInfo->type = TerminalShell::ShellType::PosixBash;
    pShellInfo->path = core::FilePath("/usr/bin/env");
    pShellInfo->args.emplace_back("bash");
-   pShellInfo->args.emplace_back("-l");  // act like a login shell
+   pShellInfo->args.emplace_back("--login");  // act like a login shell
+   pShellInfo->args.emplace_back("--posix");  // so we can control execution of init scripts
    
 #endif
    
