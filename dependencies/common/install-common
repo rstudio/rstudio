@@ -22,7 +22,7 @@ set -e
 ./install-boost
 ./install-pandoc
 ./install-quarto
-./install-packages
+./install-packages "$1"
 ./install-sentry-cli
 ./install-npm-dependencies
 ./install-soci
@@ -33,5 +33,5 @@ set -e
 
 if [ -e install-overlay ]
 then
-   ./install-overlay $1
+   ./install-overlay "$1"
 fi

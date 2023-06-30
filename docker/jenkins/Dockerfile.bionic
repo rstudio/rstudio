@@ -113,6 +113,7 @@ ADD https://api.github.com/repos/quarto-dev/quarto/git/refs/heads/release/rstudi
 
 # install common dependencies
 RUN cd /opt/rstudio-tools/dependencies/common && /bin/bash ./install-common bionic
+
 # panmirror needs to be able to build in this location
 RUN chmod -R 777 /opt/rstudio-tools/src
 

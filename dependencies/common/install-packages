@@ -20,23 +20,15 @@ set -e
 source "$(dirname "${BASH_SOURCE[0]}")/../tools/rstudio-tools.sh"
 section "Installing R Packages"
 
-# path to an renv lockfile, if any
-lockfile=
-
-# R repositories to be used
-repos=https://cran.rstudio.com
-
-# read command line arguments
-for arg in "$@"; do
-   case "${arg}" in
-   --lockfile=*)       lockfile=${arg#*=} ;;
-   --repos=*)          repos=${arg#*=} ;;
-   *)                  echo "Unrecognized argument '${arg}'" ;;
-   esac
-done
-
 # install dir
 INSTALL_DIR=`pwd`
+
+# read lockfile if provided
+platform="$1"
+lockfile="$(dirname "${BASH_SOURCE[0]}")/lockfiles/${platform}/renv.lock"
+if ! [ -e "${lockfile}" ]; then
+  unset lockfile
+fi
 
 # utility function; used when bundling development versions of packages
 install () {
@@ -114,10 +106,11 @@ cat <<- EOF | R -s
 dir.create(Sys.getenv("R_LIBS_USER"), recursive = TRUE, showWarnings = FALSE)
 
 # set up repositories
-options(repos = c(CRAN = "${repos:="https://cran.rstudio.com"}"))
+options(repos = c(CRAN = "https://cran.rstudio.com"))
 
 # install renv
-if (!requireNamespace("renv", quietly = TRUE)) {
+installed <- tryCatch(packageVersion("renv") >= "0.17.3", error = function(e) FALSE)
+if (!installed) {
   install.packages("renv")
 }
 
