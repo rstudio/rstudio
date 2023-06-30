@@ -58,6 +58,15 @@ RUN apt-get update && \
     xvfb \
     zlib1g-dev
 
+# If ARCH=amd64, install gcc-multilib
+RUN if [ "$ARCH" = "amd64" ]; then \
+    apt-get update && \
+    export DEBIAN_FRONTEND=noninteractive && \
+    apt-get install -y \
+    gcc-multilib \
+    ; fi
+
+
 # ensure we use the java 8 compiler
 RUN update-alternatives --set java /usr/lib/jvm/java-8-openjdk-$(dpkg --print-architecture)/jre/bin/java
 
@@ -116,6 +125,14 @@ RUN cd /opt/rstudio-tools/dependencies/common && /bin/bash ./install-quarto
 # set github login from build argument if defined
 ARG GITHUB_LOGIN
 ENV RSTUDIO_GITHUB_LOGIN=$GITHUB_LOGIN
+
+# Set Rust environment variables
+ENV PATH="/opt/rstudio-tools/dependencies/common/overlay/rust/bin:${PATH}"
+ENV CARGO_HOME="/opt/rstudio-tools/dependencies/common/overlay/rust"
+ENV RUSTUP_HOME="/opt/rstudio-tools/dependencies/common/overlay/rust"
+RUN if [ -d "/opt/rstudio-tools/dependencies/common/overlay/rust" ]; then \
+    chmod -R 777 /opt/rstudio-tools/dependencies/common/overlay/rust \
+    ; fi
 
 # create jenkins user, make sudo. try to keep this toward the bottom for less cache busting
 ARG JENKINS_GID=999

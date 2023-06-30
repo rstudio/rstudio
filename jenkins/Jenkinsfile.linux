@@ -332,6 +332,16 @@ pipeline {
                           }
                         }
                       }
+                      stage('Run Rust Unit Tests') {
+                        when { expression { return IS_PRO } }
+                        steps {
+                          dir ( "package/linux/${BUILD_LOCATION}" ) {
+                            // Just run the nss_pwb tests for now to keep it simple
+                            // We may want to consider adding a rust workspace in the future if we add more rust targets
+                            sh "ninja nss_pwb-test"
+                          }
+                        }
+                      }
                     }
                   }
                 }

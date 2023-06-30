@@ -114,6 +114,14 @@ RUN cd /opt/rstudio-tools/dependencies/common && /bin/bash ./install-quarto
 ARG GITHUB_LOGIN
 ENV RSTUDIO_GITHUB_LOGIN=$GITHUB_LOGIN
 
+# Set Rust environment variables
+ENV PATH="/opt/rstudio-tools/dependencies/common/overlay/rust/bin:${PATH}"
+ENV CARGO_HOME="/opt/rstudio-tools/dependencies/common/overlay/rust"
+ENV RUSTUP_HOME="/opt/rstudio-tools/dependencies/common/overlay/rust"
+RUN if [ -d "/opt/rstudio-tools/dependencies/common/overlay/rust" ]; then \
+    chmod -R 777 /opt/rstudio-tools/dependencies/common/overlay/rust \
+    ; fi
+
 # create nobody user and group, used by unit tests
 RUN groupadd -g 65534 nobody && \
     useradd -m -d /var/lib/nobody -u 65534 -g nobody nobody

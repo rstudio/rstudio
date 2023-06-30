@@ -79,6 +79,11 @@ sudo apt-get update
 sudo apt-get -y install openjdk-11-jdk
 sudo update-alternatives --set java /usr/lib/jvm/java-11-openjdk-${arch}/bin/java
 
+# If on amd64 system, install gcc-multilib
+if [ $arch = "amd64" ] ; then
+  sudo apt-get -y install gcc-multilib
+fi
+
 # R
 if ! [ -x "$(command -v R)" ]; then
   sudo apt-get -y  install apt-transport-https software-properties-common
