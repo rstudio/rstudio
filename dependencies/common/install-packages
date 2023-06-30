@@ -20,41 +20,57 @@ set -e
 source "$(dirname "${BASH_SOURCE[0]}")/../tools/rstudio-tools.sh"
 section "Installing R Packages"
 
+# path to an renv lockfile, if any
+lockfile=
+
+# R repositories to be used
+repos=https://cran.rstudio.com
+
+# read command line arguments
+for arg in "$@"; do
+   case "${arg}" in
+   --lockfile=*)       lockfile=${arg#*=} ;;
+   --repos=*)          repos=${arg#*=} ;;
+   *)                  echo "Unrecognized argument '${arg}'" ;;
+   esac
+done
+
 # install dir
 INSTALL_DIR=`pwd`
 
-install()
-{
-PACKAGE=$1
-PACKAGE_DIR=$PACKAGE
-PACKAGE_VERSION=$2
-PACKAGE_GITHUB_ROOT=$3
-PACKAGE_BUILD_OPTIONS=$4
+# utility function; used when bundling development versions of packages
+install () {
 
-# git clone if necessary
-if [ ! -d "$PACKAGE_DIR" ]
-then
-  if [[ -z "$RSTUDIO_GITHUB_LOGIN" ]]; then
+  PACKAGE=$1
+  PACKAGE_DIR=$PACKAGE
+  PACKAGE_VERSION=$2
+  PACKAGE_GITHUB_ROOT=$3
+  PACKAGE_BUILD_OPTIONS=$4
+
+  # git clone if necessary
+  if [ ! -d "$PACKAGE_DIR" ]
+  then
+    if [[ -z "$RSTUDIO_GITHUB_LOGIN" ]]; then
       # no supplied credentials, clone directly
       git clone "https://github.com/$PACKAGE_GITHUB_ROOT/$PACKAGE.git"
-  else
+    else
       # credentials supplied, use them
       git clone "https://$RSTUDIO_GITHUB_LOGIN@github.com/$PACKAGE_GITHUB_ROOT/$PACKAGE.git"
+    fi
   fi
-fi
 
-# clean and checkout target branch
-cd $PACKAGE_DIR
-git checkout .
-git clean -df .
-git pull
-git checkout $PACKAGE_VERSION
+  # clean and checkout target branch
+  cd $PACKAGE_DIR
+  git checkout .
+  git clean -df .
+  git pull
+  git checkout $PACKAGE_VERSION
 
-# append GitHub fields to DESCRIPTION
-# NOTE: older-style Github prefix required by Packrat 0.5.0;
-#       newer-style Remote prefix required by renv.
-PACKAGE_SHA1=`git rev-parse $PACKAGE_VERSION`
-cat <<EOF >> DESCRIPTION
+  # append GitHub fields to DESCRIPTION
+  # NOTE: older-style Github prefix required by Packrat 0.5.0;
+  #       newer-style Remote prefix required by renv.
+  PACKAGE_SHA1=`git rev-parse $PACKAGE_VERSION`
+  cat <<EOF >> DESCRIPTION
 GithubRepo: $PACKAGE
 GithubUsername: rstudio
 GithubRef: $PACKAGE_VERSION
@@ -68,19 +84,19 @@ RemoteSha: $PACKAGE_SHA1
 Origin: RStudioIDE
 EOF
 
-# create source package (remove previous first)
-cd ..
-PACKAGE_ARCHIVE_PATTERN="$PACKAGE*.tar.gz"
-rm -f $PACKAGE_ARCHIVE_PATTERN
+  # create source package (remove previous first)
+  cd ..
+  PACKAGE_ARCHIVE_PATTERN="$PACKAGE*.tar.gz"
+  rm -f $PACKAGE_ARCHIVE_PATTERN
 
-# build package without vignettes, since vignettes may need e.g. knitr to build
-R CMD build --no-build-vignettes $PACKAGE_BUILD_OPTIONS "$PACKAGE"
+  # build package without vignettes, since vignettes may need e.g. knitr to build
+  R CMD build --no-build-vignettes $PACKAGE_BUILD_OPTIONS "$PACKAGE"
 
-# modify filename to include SHA1
-PACKAGE_ARCHIVE=`ls $PACKAGE_ARCHIVE_PATTERN`
-PACKAGE_ARCHIVE_STEM=${PACKAGE_ARCHIVE%.tar.gz}
-PACKAGE_ARCHIVE_SHA1=${PACKAGE_ARCHIVE_STEM}_${PACKAGE_SHA1}.tar.gz
-mv $PACKAGE_ARCHIVE $PACKAGE_ARCHIVE_SHA1
+  # modify filename to include SHA1
+  PACKAGE_ARCHIVE=`ls $PACKAGE_ARCHIVE_PATTERN`
+  PACKAGE_ARCHIVE_STEM=${PACKAGE_ARCHIVE%.tar.gz}
+  PACKAGE_ARCHIVE_SHA1=${PACKAGE_ARCHIVE_STEM}_${PACKAGE_SHA1}.tar.gz
+  mv $PACKAGE_ARCHIVE $PACKAGE_ARCHIVE_SHA1
 
 }
 
@@ -92,25 +108,30 @@ mv $PACKAGE_ARCHIVE $PACKAGE_ARCHIVE_SHA1
 # install rmarkdown main rstudio
 # install rsconnect main rstudio
 # install renv master rstudio
+cat <<- EOF | R -s
 
-# ascertain the site library. this is somewhat tricky since this script must
-# run on a variety of Linux distributions early in the Docker build process.
-# the lookup order is as follows:
-# 1. the first .Library.site, if defined; otherwise
-# 2. the last element of .libPaths()
-RPKGLIB=$(Rscript -e 'cat(if(length(.Library.site) > 0) { .Library.site[[1]] } else { tail(.libPaths(), n = 1) })')
-if [[ ! -w $RPKGLIB ]]; then
-  echo "$RPKGLIB is not writable. Creating user R library directory."
-  RPKGLIB=$(Rscript -e 'cat(path.expand(Sys.getenv("R_LIBS_USER")))')
-  mkdir -p "$RPKGLIB"
-fi
+# make sure user library exists
+dir.create(Sys.getenv("R_LIBS_USER"), recursive = TRUE, showWarnings = FALSE)
 
-# install packages needed to run tests
-for RPKG in purrr rmarkdown renv testthat xml2 yaml; do
-    RINSTALLCMD="if("'!'"require($RPKG, quietly = TRUE)) { install.packages('$RPKG', lib='$RPKGLIB', repos='https://cran.rstudio.com/') }"
-    echo "> $RINSTALLCMD"
-    Rscript -e "$RINSTALLCMD"
-done
+# set up repositories
+options(repos = c(CRAN = "${repos:="https://cran.rstudio.com"}"))
+
+# install renv
+if (!requireNamespace("renv", quietly = TRUE)) {
+  install.packages("renv")
+}
+
+lockfile <- "${lockfile:=}"
+if (nzchar(lockfile)) {
+  # if we were provided a lockfile, use it
+  writeLines(paste("Using lockfile:", lockfile))
+  renv::restore(lockfile = lockfile)
+} else {
+  # otherwise, install preset list of packages from CRAN
+  renv::install("devtools", "rmarkdown", "renv", "testthat", "xml2", "yaml")
+}
+
+EOF
 
 # back to install-dir
 cd "$INSTALL_DIR"
