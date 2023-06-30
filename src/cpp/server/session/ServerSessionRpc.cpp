@@ -19,6 +19,7 @@
 
 #include <core/SocketRpc.hpp>
 #include <core/http/LocalStreamAsyncServer.hpp>
+#include <core/system/User.hpp>
 
 #include <server_core/http/SecureCookie.hpp>
 #include <server_core/SecureKeyFile.hpp>
@@ -150,7 +151,7 @@ void validationHandler(
       if (uid != -1)
       {
          core::system::User user;
-         Error error = core::system::User::getUserFromIdentifier(uid, user);
+         Error error = system::getUserFromUserId(uid, user);
          if (error)
          {
             LOG_WARNING_MESSAGE("Couldn't determine user for Server RPC request");

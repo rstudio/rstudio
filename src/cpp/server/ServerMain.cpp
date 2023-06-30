@@ -30,6 +30,7 @@
 #include <core/system/PosixChildProcess.hpp>
 #include <core/system/PosixSystem.hpp>
 #include <core/system/Crypto.hpp>
+#include <core/system/User.hpp>
 
 #include <core/http/URL.hpp>
 #include <core/http/AsyncUriHandler.hpp>
@@ -681,7 +682,7 @@ int main(int argc, char * const argv[])
          };
 
          system::User serverUserObj;
-         error = system::User::getUserFromIdentifier(options.serverUser(), serverUserObj);
+         error = system::getUserFromUsername(options.serverUser(), serverUserObj);
          if (error)
             return core::system::exitFailure(error, ERROR_LOCATION);
 

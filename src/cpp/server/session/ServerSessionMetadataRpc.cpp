@@ -29,6 +29,7 @@
 #include <core/r_util/RActiveSessions.hpp>
 #include <core/r_util/RActiveSessionsStorage.hpp>
 #include <core/system/Xdg.hpp>
+#include <core/system/User.hpp>
 
 #include <server/ServerOptions.hpp>
 #include <server/auth/ServerAuthHandler.hpp>
@@ -222,14 +223,14 @@ Error authorizeRequest(
 {
    using namespace rstudio::core::system;
 
-   Error error = User::getUserFromIdentifier(requester, *pRequesterUser);
+   Error error = system::getUserFromUsername(requester, *pRequesterUser);
    if (error)
       return error;
 
    if (sessionOwner)
    {
       User sessionUser;
-      error = User::getUserFromIdentifier(sessionOwner.get(), sessionUser);
+      error = system::getUserFromUserId(sessionOwner.get(), sessionUser);
       if (error)
          return error;
 

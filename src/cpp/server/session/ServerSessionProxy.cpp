@@ -52,6 +52,7 @@
 #include <core/system/PosixSystem.hpp>
 #include <core/system/PosixGroup.hpp>
 #include <core/system/PosixUser.hpp>
+#include <core/system/User.hpp>
 #include <core/r_util/RSessionContext.hpp>
 
 #include <core/json/JsonRpc.hpp>
@@ -720,7 +721,7 @@ Error userIdForUsername(const std::string& username, UidType* pUID)
    else
    {
       core::system::User user;
-      Error error = core::system::User::getUserFromIdentifier(username, user);
+      Error error = system::getUserFromUsername(username, user);
       if (error)
          return error;
 

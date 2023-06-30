@@ -83,11 +83,12 @@
 #include <core/system/PosixGroup.hpp>
 #include <core/system/Process.hpp>
 #include <core/system/ShellUtils.hpp>
-
+#include <core/system/User.hpp>
 
 #include <shared_core/Error.hpp>
 #include <shared_core/FilePath.hpp>
 #include <shared_core/system/User.hpp>
+
 
 #include "config.h"
 
@@ -1736,7 +1737,7 @@ Error processInfo(pid_t pid, ProcessInfo* pInfo)
 
    // get the username
    core::system::User user;
-   error = User::getUserFromIdentifier(st.st_uid, user);
+   error = getUserFromUserId(st.st_uid, user);
    if (error)
       return error;
 
@@ -2544,7 +2545,7 @@ Error temporarilyDropPriv(const std::string& newUsername,
 {
    // get user info
    User user;
-   Error error = User::getUserFromIdentifier(newUsername, user);
+   Error error = getUserFromUsername(newUsername, user);
    if (error)
       return error;
 
@@ -2596,7 +2597,7 @@ Error permanentlyDropPriv(const std::string& newUsername, const std::string& new
 {
    // get user info
    User user;
-   Error error = User::getUserFromIdentifier(newUsername, user);
+   Error error = getUserFromUsername(newUsername, user);
    if (error)
       return error;
 
@@ -2679,7 +2680,7 @@ Error permanentlyDropPriv(const std::string& newUsername, const std::string& new
 
    // get user info
    User user;
-   Error error = User::getUserFromIdentifier(newUsername, user);
+   Error error = getUserFromUsername(newUsername, user);
    if (error)
       return error;
 
