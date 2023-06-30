@@ -41,7 +41,7 @@ std::string editFileCommand();
 core::Error initialize();
 
 template <typename T>
-void ammendShellPaths(T* pTarget)
+void amendShellPaths(T* pTarget)
 {
    // non-path git bin dir
    std::string gitBinDir = git::nonPathGitBinDir();

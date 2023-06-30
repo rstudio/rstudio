@@ -110,7 +110,7 @@ core::system::ProcessOptions ConsoleProcess::createTerminalProcOptions(
       core::system::unsetenv(&shellEnv, "SSH_ASKPASS");
    
    // amend shell paths as appropriate
-   session::modules::workbench::ammendShellPaths(&shellEnv);
+   session::modules::workbench::amendShellPaths(&shellEnv);
 
    // set options
    core::system::ProcessOptions options;
