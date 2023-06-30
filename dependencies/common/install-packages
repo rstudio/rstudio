@@ -100,10 +100,17 @@ EOF
 # install rmarkdown main rstudio
 # install rsconnect main rstudio
 # install renv master rstudio
+
+# first, make sure the user library is available
 cat <<- EOF | R -s
 
 # make sure user library exists
 dir.create(Sys.getenv("R_LIBS_USER"), recursive = TRUE, showWarnings = FALSE)
+
+EOF
+
+# next, install packages
+cat <<- EOF | R -s
 
 # set up repositories
 options(repos = c(CRAN = "https://cran.rstudio.com"))
