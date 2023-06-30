@@ -24,8 +24,12 @@ import { removeTrailingSlashes } from '../main/utils';
 export function userHomePath(): FilePath {
   const pathsToCheck = [() => getenv('HOME')];
   if (process.platform === 'win32') {
+    // On Windows, check the R_USER environment variable first, then the
+    // HOME environment variable, to match the behaviour of R itself.
+    // See R_ExpandFileName in src/gnuwin32/sys-win32.c in R source code.
+    pathsToCheck.unshift(() => getenv('R_USER'));
+
     pathsToCheck.push(
-      () => getenv('R_USER'),
       () => desktop.currentCSIDLPersonalHomePath(),
       () => desktop.defaultCSIDLPersonalHomePath(),
     );
