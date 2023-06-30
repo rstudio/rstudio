@@ -156,4 +156,26 @@ describe('Utils', () => {
       assert.equal(envVar, undefined);
     });
   });
+  it('removeTrailingSlashes removes trailing slashes from path strings', () => {
+    const testCases = [
+      { input: '', expected: '' },
+      { input: '/', expected: '/' },
+      { input: '\\', expected: '\\' },
+      { input: '//', expected: '//' },
+      { input: '\\\\', expected: '\\\\' },
+      { input: '\\/\\', expected: '\\/\\' },
+      { input: 'a', expected: 'a' },
+      { input: '/a/b/c', expected: '/a/b/c' },
+      { input: 'a/b/c/', expected: 'a/b/c' },
+      { input: '/a/b/c//', expected: '/a/b/c' },
+      { input: '/a/b/c\\\\', expected: '/a/b/c' },
+      { input: '/a/b/c\\/', expected: '/a/b/c' },
+      { input: 'C:\\', expected: 'C:' },
+      { input: '~/', expected: '~' },
+    ];
+    testCases.forEach((testCase) => {
+      const result = Utils.removeTrailingSlashes(testCase.input);
+      assert.equal(result, testCase.expected);
+    });
+  });
 });
