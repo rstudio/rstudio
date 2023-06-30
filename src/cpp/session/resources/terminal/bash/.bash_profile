@@ -3,6 +3,16 @@
 # turn off posix mode
 set +o posix
 
+# reset the ENV environment variable
+if [ "${_REALENV}" = "<unset>" ]; then
+	unset ENV
+else
+	ENV="${_REALENV}"
+fi
+
+# unset the _REALENV variable
+unset _REALENV
+
 # source the system profile
 if [ -f /etc/profile ]; then
 	source /etc/profile

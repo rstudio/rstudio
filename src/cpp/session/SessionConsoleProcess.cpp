@@ -898,6 +898,8 @@ void useTerminalHooks(ConsoleProcessPtr cp)
       core::FilePath bashProfile = bashDotDir.completeChildPath(".bash_profile");
 
       // set ENV so that our terminal hooks are run
+      const char* env = ::getenv("ENV");
+      cp->setenv("_REALENV", env ? env : "<unset>");
       cp->setenv("ENV", bashProfile.getAbsolutePath());
    }
 

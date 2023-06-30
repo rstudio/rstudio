@@ -320,9 +320,11 @@ core::FilePath getGitBashShell()
 bool AvailableTerminalShells::getSystemShell(TerminalShell* pShellInfo)
 {
 #ifdef _WIN32
+   
    pShellInfo->path = core::system::expandComSpec();
    pShellInfo->type = TerminalShell::ShellType::Cmd64;
    pShellInfo->name = "Command Prompt";
+   
 #else
    
    // use default bash shell
@@ -331,7 +333,7 @@ bool AvailableTerminalShells::getSystemShell(TerminalShell* pShellInfo)
    pShellInfo->path = core::FilePath("/usr/bin/env");
    pShellInfo->args.emplace_back("bash");
    pShellInfo->args.emplace_back("--login");  // act like a login shell
-   pShellInfo->args.emplace_back("--posix");  // so we can control execution of init scripts
+   pShellInfo->args.emplace_back("--posix");  // start in POSIX mode, so we can control startup init scripts
    
 #endif
    
@@ -340,10 +342,12 @@ bool AvailableTerminalShells::getSystemShell(TerminalShell* pShellInfo)
 
 bool AvailableTerminalShells::getCustomShell(TerminalShell* pShellInfo)
 {
+   core::FilePath customShellPath =
+         module_context::resolveAliasedPath(prefs::userPrefs().customShellCommand());
+   
    pShellInfo->name = "Custom";
    pShellInfo->type = TerminalShell::ShellType::CustomShell;
-   pShellInfo->path = module_context::resolveAliasedPath(
-         prefs::userPrefs().customShellCommand());
+   pShellInfo->path = customShellPath;
 
    // arguments are space separated, currently no way to represent a literal space
    std::vector<std::string> args;
@@ -351,6 +355,15 @@ bool AvailableTerminalShells::getCustomShell(TerminalShell* pShellInfo)
    {
       args = core::algorithm::split(prefs::userPrefs().customShellOptions(), " ");
    }
+   
+   // if this appears to be a bash shell, make sure we launch it as a POSIX shell
+   if (customShellPath.getFilename() == "bash" || customShellPath.getFilename() == "bash.exe")
+   {
+      bool hasPosixFlag = core::algorithm::contains(args, "--posix");
+      if (!hasPosixFlag)
+         args.insert(args.begin(), "--posix");
+   }
+   
    pShellInfo->args = args;
    return true;
 }
