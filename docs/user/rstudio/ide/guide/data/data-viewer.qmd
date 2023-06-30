@@ -31,6 +31,12 @@ You can sort by any column by clicking on the column label. Click on a column th
 
 To remove sorting and show the data in the original order, click the empty column label cell in the upper left.
 
+## Scrolling
+
+If you have more than 50 columns in your dataset, the data viewer only displays up to 50 columns. To view additional columns, click the single Cols **>** arrow to scroll right (columns display in groups of 50). If you want to jump to the end of your dataset, click the double Cols **>>** arrows.
+
+![](images/mpg_df-cols.png){fig-alt="A dataset in the Data Viewer displaying 50 columns. The Cols arrows, located at the top of the Data Viewer, are highlighted"}
+
 ## Filtering
 
 To apply filters, click the **Filter** icon in the toolbar. Any field that can be filtered will have a white box labeled **All**. Click this box to change which field values you want to see. For instance, to filter out cars with a highway fuel efficiency between 10 and 25 miles/gallon:
@@ -104,7 +110,7 @@ Both the `label` attribute on individual columns and the `variable.labels` attri
 
 The number of rows the viewer can display is effectively unbounded, and large numbers of rows won't slow down the interface. It uses the [DataTables](http://www.datatables.net/) JavaScript library to virtualize scrolling, so only a few hundred rows are actually loaded at a time.
 
-While rows are unbounded, columns are capped at 100. It's not currently possible to virtualize columns in the same way as rows, and large numbers of columns cause the interface to slow significantly.
+While rows and columns are unbounded, large numbers of columns may cause the interface to slow significantly.
 
 Finally, while we've made every effort to keep things speedy, very large amounts of data may cause sluggishness, especially when a sort or filter is applied, as this requires R to fully scan the frame. If you're working with large frames, try applying filters to reduce it to the subset you're interested in to improve performance.
 
