@@ -4,7 +4,7 @@
     "Repositories": [
       {
         "Name": "PPM",
-        "URL": "https://packagemanager.posit.co/cran/__linux__/bionic/2020-05-01"
+        "URL": "https://packagemanager.posit.co/cran/2020-05-01"
       }
     ]
   },
