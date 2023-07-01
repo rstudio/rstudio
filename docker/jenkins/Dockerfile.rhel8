@@ -17,6 +17,7 @@ RUN yum install -y \
     clang-devel \
     expect \
     fakeroot \
+    freetype-devel \
     fuse-libs \
     gcc \
     gcc-c++ \
@@ -37,7 +38,6 @@ RUN yum install -y \
     libuuid-devel \
     libxml2-devel \
     llvm-devel \
-    freetype-devel \
     libjpeg-turbo-devel \ 
     libpng-devel \
     libtiff-devel \
