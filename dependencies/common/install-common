@@ -17,12 +17,12 @@
 
 set -e
 
+./install-packages "$1"
 ./install-dictionaries
 ./install-mathjax
 ./install-boost
 ./install-pandoc
 ./install-quarto
-./install-packages "$1"
 ./install-sentry-cli
 ./install-npm-dependencies
 ./install-soci

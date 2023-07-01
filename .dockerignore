@@ -1,6 +1,7 @@
 # ignore everything except items that are specifically denoted
 *
 !dependencies/common/install-*
+!dependencies/common/lockfiles
 !dependencies/linux/install-*
 !dependencies/osx/install-*
 !dependencies/windows/*

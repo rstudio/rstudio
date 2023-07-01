@@ -25,8 +25,12 @@ INSTALL_DIR=`pwd`
 
 # read lockfile if provided
 platform="$1"
+
 lockfile="$(dirname "${BASH_SOURCE[0]}")/lockfiles/${platform}/renv.lock"
-if ! [ -e "${lockfile}" ]; then
+if [ -e "${lockfile}" ]; then
+  info "Using lockfile ${lockfile} for package installation."
+else
+  info "Lockfile ${lockfile} doesn't exist; using latest versions of packages."
   unset lockfile
 fi
 
@@ -121,7 +125,7 @@ if (!installed) {
   install.packages("renv")
 }
 
-lockfile <- "${lockfile:=}"
+lockfile <- "${lockfile}"
 if (nzchar(lockfile)) {
   # if we were provided a lockfile, use it
   writeLines(paste("Using lockfile:", lockfile))
