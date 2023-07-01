@@ -26,17 +26,21 @@ RUN yum install -y \
     java-1.8.0-openjdk \
     java-1.8.0-openjdk-devel \
     jq \
-    libcurl-devel \
+    libXScrnSaver-devel \
+    libXcursor-devel \
+    libXrandr-devel \
     libacl-devel \
     libcap-devel \ 
+    libcurl-devel \
     libpq-devel \
     libuser \
     libuuid-devel \
     libxml2-devel \
-    libXcursor-devel \
-    libXrandr-devel \
-    libXScrnSaver-devel \
     llvm-devel \
+    freetype-devel \
+    libjpeg-turbo-devel \ 
+    libpng-devel \
+    libtiff-devel \
     lsof \
     make \
     ninja-build \
