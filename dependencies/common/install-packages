@@ -120,9 +120,9 @@ cat <<- EOF | R -s
 options(repos = c(CRAN = "https://cran.rstudio.com"))
 
 # install renv
-installed <- tryCatch(packageVersion("renv") >= "0.17.3", error = function(e) FALSE)
+installed <- tryCatch(packageVersion("renv") > "0.17.3", error = function(e) FALSE)
 if (!installed) {
-  install.packages("renv")
+  install.packages("renv", repos = "https://rstudio.r-universe.dev")
 }
 
 lockfile <- "${lockfile}"
