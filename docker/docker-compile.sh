@@ -61,7 +61,7 @@ if [ -z "$IMAGE" ] || [ -z "$FLAVOR" ]; then
     echo -e "Compiles RStudio inside a Docker container."
     echo -e "Usage: docker-compile.sh image-name flavor-name [version] [variant]\n"
     echo -e "Valid images:\n"
-    ls -f docker/jenkins/Dockerfile.* | sed -e 's/.*Dockerfile.//'
+    find docker/jenkins -name 'Dockerfile.*' | sed -e 's/.*Dockerfile.//'
     echo -e "\nValid flavors:\n"
     echo -e "desktop"
     echo -e "electron"
@@ -93,18 +93,22 @@ else
 fi
 
 # add architecture to build arguments
-BUILD_ARGS="--build-arg ARCH=${CONTAINER_ARCH}"
+BUILD_ARGS=(--build-arg ARCH="${CONTAINER_ARCH}")
 
 # get build arg env vars, if any
-if [ ! -z "${DOCKER_GITHUB_LOGIN}" ]; then
-   BUILD_ARGS="${BUILD_ARGS} --build-arg GITHUB_LOGIN=${DOCKER_GITHUB_LOGIN}"
+if [ -n "${DOCKER_GITHUB_LOGIN}" ]; then
+  BUILD_ARGS+=(--build-arg GITHUB_LOGIN="${DOCKER_GITHUB_LOGIN}")
+fi
+
+if [ -n "${DOCKER_MEMORY_LIMIT}" ]; then
+  BUILD_ARGS+=(--memory "${DOCKER_MEMORY_LIMIT}")
 fi
 
 # rebuild the image if necessary
 docker build                                \
   --tag "$REPO:$IMAGE_TAG"                  \
   --file "docker/jenkins/Dockerfile.$IMAGE" \
-  $BUILD_ARGS                               \
+  "${BUILD_ARGS[@]}"                        \
   .
 
 # infer the package extension from the image name
