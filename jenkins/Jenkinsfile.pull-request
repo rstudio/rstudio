@@ -76,7 +76,7 @@ pipeline {
                   // AWS is here for the S3 bucket that we use for sccache
                   withAWS(role: 'build', roleAccount: AWS_ACCOUNT_ID) {
                     // perform the compilation
-                    sh "SCCACHE_ENABLED=1 PACKAGE_OS=${OS} ./make-${FLAVOR}-package ${type} clean"
+                    sh "PACKAGE_OS=${OS} ./make-${FLAVOR}-package ${type} clean"
                   }
                 }
               }

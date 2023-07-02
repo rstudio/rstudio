@@ -170,10 +170,6 @@ def getArchForOs(String os, String arch) {
   */
 def getBuildEnv(boolean isHourly) {
   def env = "RSTUDIO_VERSION_MAJOR=${RSTUDIO_VERSION_MAJOR} RSTUDIO_VERSION_MINOR=${RSTUDIO_VERSION_MINOR} RSTUDIO_VERSION_PATCH=${RSTUDIO_VERSION_PATCH} RSTUDIO_VERSION_SUFFIX=${RSTUDIO_VERSION_SUFFIX}"
-  if (isHourly) {
-    env = "${env} SCCACHE_ENABLED=1"
-  }
-
   return env
 }
 
