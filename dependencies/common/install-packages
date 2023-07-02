@@ -132,7 +132,7 @@ if (nzchar(lockfile)) {
   renv::restore(lockfile = lockfile)
 } else {
   # otherwise, install preset list of packages from CRAN
-  renv::install("devtools", "rmarkdown", "renv", "testthat", "xml2", "yaml")
+  renv::install("digest@0.6.31", "devtools", "rmarkdown", "renv", "testthat", "xml2", "yaml")
 }
 
 EOF
