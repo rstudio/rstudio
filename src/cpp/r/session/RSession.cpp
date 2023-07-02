@@ -406,6 +406,7 @@ Error run(const ROptions& options, const RCallbacks& callbacks)
    else
    {
       // headless script execution: read/write from script and output to stdout
+      std::cerr << "Using script: " << options.runScript << std::endl;
       setRunScript(options.runScript);
       cb.readConsole = RReadScript;
       cb.writeConsoleEx = RWriteStdout;
