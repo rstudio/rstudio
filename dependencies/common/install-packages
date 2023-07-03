@@ -15,23 +15,31 @@
 #
 #
 
-set -e
-
 source "$(dirname "${BASH_SOURCE[0]}")/../tools/rstudio-tools.sh"
 section "Installing R Packages"
 
+# the default packages we install, when no lockfile is provided
+PACKAGES=(
+  digest@0.6.31  # work around arm64 build failures with digest 0.6.32
+  purrr
+  rmarkdown
+  testthat
+  xml2
+  yaml
+)
+
 # install dir
-INSTALL_DIR=`pwd`
+INSTALL_DIR="$(pwd)"
 
 # read lockfile if provided
-platform="$1"
+PLATFORM="$1"
+LOCKFILE="$(dirname "${BASH_SOURCE[0]}")/lockfiles/${PLATFORM}/renv.lock"
 
-lockfile="$(dirname "${BASH_SOURCE[0]}")/lockfiles/${platform}/renv.lock"
-if [ -e "${lockfile}" ]; then
-  info "Using lockfile ${lockfile} for package installation."
+if [ -e "${LOCKFILE}" ]; then
+  info "Using lockfile ${LOCKFILE} for package installation."
 else
-  info "Lockfile ${lockfile} doesn't exist; using latest versions of packages."
-  unset lockfile
+  info "Lockfile ${LOCKFILE} doesn't exist; using latest versions of packages."
+  unset LOCKFILE
 fi
 
 # utility function; used when bundling development versions of packages
@@ -147,17 +155,20 @@ if (!installed) {
   install.packages("renv", repos = "https://rstudio.r-universe.dev")
 }
 
-lockfile <- "${lockfile}"
+lockfile <- "${LOCKFILE}"
 if (nzchar(lockfile)) {
   # if we were provided a lockfile, use it
   writeLines(paste("Using lockfile:", lockfile))
   renv::restore(lockfile = lockfile)
 } else {
   # otherwise, install preset list of packages from CRAN
-  renv::install("digest@0.6.31", "rmarkdown", "testthat", "xml2", "yaml")
+  packages <- scan(text = "${PACKAGES[@]}", what = character())
+  writeLines(paste("Installing packages:", paste(packages, collapse = ", ")))
+  renv::install(packages)
 }
 
 EOF
 
 # back to install-dir
 cd "$INSTALL_DIR"
+
