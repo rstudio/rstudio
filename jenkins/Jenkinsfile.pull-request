@@ -101,7 +101,7 @@ pipeline {
             }
 
             stage('Run Rust Unit Tests') {
-              when { expression { return IS_PRO } }
+              when { expression { return FLAVOR == 'Server' && IS_PRO } } 
               steps {
                 dir ("package/linux/build-${FLAVOR.capitalize()}-${type}") {
                   // Just run the nss_pwb tests for now to keep it simple
