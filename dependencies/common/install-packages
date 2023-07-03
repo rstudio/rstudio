@@ -105,7 +105,7 @@ EOF
 # install rsconnect main rstudio
 # install renv master rstudio
 
-# first, make sure the user library is available
+# first, make sure the user library is available, for dev configurations
 cat <<- EOF | R -s
 
 # make sure user library exists
@@ -116,12 +116,34 @@ EOF
 # next, install packages
 cat <<- EOF | R -s
 
+# print R information
+writeLines("# R version ----")
+print(R.version)
+writeLines("")
+
 # set up repositories
 options(repos = c(CRAN = "https://cran.rstudio.com"))
+
+# print out system information
+writeLines("# System information ----")
+info <- as.list(Sys.info())
+str(info)
+writeLines("")
+
+# for root / jenkins, use site library
+if (info[["user"]] %in% c("root", "jenkins") && length(.Library.site)) {
+   .libPaths(.Library.site)
+}
+
+# notify user
+writeLines("# Library paths ----")
+writeLines(paste("-", .libPaths(), collapse = "\n"))
+writeLines("")
 
 # install renv
 installed <- tryCatch(packageVersion("renv") > "0.17.3", error = function(e) FALSE)
 if (!installed) {
+  writeLines("Installing latest version of renv ...")
   install.packages("renv", repos = "https://rstudio.r-universe.dev")
 }
 
@@ -132,7 +154,7 @@ if (nzchar(lockfile)) {
   renv::restore(lockfile = lockfile)
 } else {
   # otherwise, install preset list of packages from CRAN
-  renv::install("digest@0.6.31", "devtools", "rmarkdown", "renv", "testthat", "xml2", "yaml")
+  renv::install("digest@0.6.31", "rmarkdown", "testthat", "xml2", "yaml")
 }
 
 EOF

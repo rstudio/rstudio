@@ -1,5 +1,6 @@
 #!/usr/bin/env bash
 
+set -x
 # RStudio Docker Compilation Helper
 #
 # The purpose of this script is to make it easy to compile under Docker on 
@@ -100,8 +101,8 @@ if [ -n "${DOCKER_GITHUB_LOGIN}" ]; then
   BUILD_ARGS+=(--build-arg GITHUB_LOGIN="${DOCKER_GITHUB_LOGIN}")
 fi
 
-if [ -n "${DOCKER_MEMORY_LIMIT}" ]; then
-  BUILD_ARGS+=(--memory "${DOCKER_MEMORY_LIMIT}")
+if [ "$(uname -s)" = "Darwin" ]; then
+  BUILD_ARGS+=(--memory 16gb)
 fi
 
 # rebuild the image if necessary
