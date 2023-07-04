@@ -223,9 +223,17 @@ else
 fi
 
 # show build environment when building in CI
-if [ -n "${JENKINS_URL}" ]; then 
-   echo "Build environment: "
-   printenv
+if [ -n "${JENKINS_URL}" ]; then
+
+   echo "Build environment:"
+   printenv | sort
+   echo
+
+   echo "R version:"
+   R -s -e 'sessionInfo()' || true
+   R -s -e 'renv::diagnostics()' || true
+   echo
+
 fi
 
 # if SCCACHE_ENABLED environment variable is set, use sccache

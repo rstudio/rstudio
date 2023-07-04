@@ -66,6 +66,7 @@ int RReadScript (const char *pmt,
    Error error = r::exec::executeSafely<Error>(initialize, &initError);
    if (error)
       LOG_ERROR(error);
+
    if (initError)
       LOG_ERROR(initError);
 

@@ -52,8 +52,11 @@ findLibSegFault() {
 
    # look in common locations
    CANDIDATES=(
+      /usr/lib/x86_64-linux-gnu/libSegFault.so
       /lib/x86_64-linux-gnu/libSegFault.so
+      /usr/lib/i386-linux-gnu/libSegFault.so
       /lib/i386-linux-gnu/libSegFault.so
+      /usr/lib/aarch64-linux-gnu/libSegFault.so
       /lib/aarch64-linux-gnu/libSegFault.so
       /lib64/libSegFault.so
       /lib/libSegFault.so
