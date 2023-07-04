@@ -29,7 +29,7 @@ RUN zypper --non-interactive --gpg-auto-import-keys refresh && \
     libcups2 \
     libcurl-devel \
     libgtk-3-0 \
-    libjpeg-turbo \
+    libjpeg-devel \
     libopenssl-devel \
     libpng-devel  \
     libtiff-devel  \
