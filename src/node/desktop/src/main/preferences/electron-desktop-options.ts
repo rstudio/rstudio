@@ -345,7 +345,7 @@ export function fixWindowsRExecutablePath(rExePath: string): string {
   const origPath = rExePath;
   if (selectedDir === 'bin') {
     // User picked bin\*.exe; insert the subfolder matching the machine's architecture.
-    const archDir = process.arch === 'x32' ? 'i386' : 'x64';
+    const archDir = process.arch === 'x64' ? 'x64' : 'i386';
     rExePath = join(dirname(rExePath), archDir, kWindowsRExe);
     logger().logDebug(`User selected ${origPath}, replacing with ${rExePath}`);
   } else {

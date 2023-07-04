@@ -50,7 +50,7 @@ interface REnvironment {
 }
 
 export function showRNotFoundError(error?: Error): void {
-  const message = error?.message ?? t('detectRTs.couldNotLocateAnRInstallationOnTheSystem') ?? '';
+  const message = error?.message ?? t('detectRTs.couldNotLocateAnRInstallationOnTheSystem');
   void createStandaloneErrorDialog(t('detectRTs.rNotFound'), message);
 }
 
@@ -408,7 +408,7 @@ function scanForRWin32(): Expected<string> {
   }
 
   // look for a 64-bit version of R
-  if (process.arch !== 'x32') {
+  if (process.arch === 'x64') {
     const x64InstallPath = findDefaultInstallPathWin32('R64');
     if (x64InstallPath) {
       const x64BinaryPath = `${x64InstallPath}/bin/x64/${kWindowsRExe}`;

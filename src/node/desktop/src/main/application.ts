@@ -13,7 +13,7 @@
  *
  */
 
-import { app, BrowserWindow, dialog, Menu, screen, shell, WebContents } from 'electron';
+import { app, BrowserWindow, dialog, Event, Menu, screen, shell, WebContents } from 'electron';
 import i18next from 'i18next';
 import path from 'path';
 import { getenv, setenv } from '../core/environment';

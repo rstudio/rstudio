@@ -1011,7 +1011,7 @@ export class GwtCallback extends EventEmitter {
     }
   }
 
-  convertMessageBoxType(type: number): string {
+  convertMessageBoxType(type: number): 'info' | 'warning' | 'error' | 'question' {
     // map QMessageBox types to Electron values
     switch (type) {
       case 1:
