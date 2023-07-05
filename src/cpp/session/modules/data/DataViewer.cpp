@@ -909,6 +909,17 @@ Error getGridData(const http::Request& request,
          LOG_ERROR(error);
       }
 
+      // can we find it _anywhere_ ?!
+      if (dataSEXP == nullptr || dataSEXP == R_UnboundValue || 
+          Rf_isNull(dataSEXP) || TYPEOF(dataSEXP) == NILSXP)
+      {
+         error = r::exec::RFunction(".rs.getAnywhere", objName).call(&dataSEXP, &protect);
+         if (error) 
+         {
+            LOG_ERROR(error);
+         }
+      }
+
       // couldn't find the original object
       if (dataSEXP == nullptr || dataSEXP == R_UnboundValue || 
           Rf_isNull(dataSEXP) || TYPEOF(dataSEXP) == NILSXP)
