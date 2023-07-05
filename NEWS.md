@@ -2,6 +2,7 @@
 
 ### New
 - Prometheus metrics are available in Posit Workbench (rstudio-pro:#3273)
+- Update to Electron 25.2.0 (#13322)
 
 ### Fixed
 - Fixed issue where Electron menubar commands are not disabled when modals are displayed (#12972)
