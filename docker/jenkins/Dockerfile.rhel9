@@ -21,6 +21,7 @@ RUN dnf install -y \
     curl-minimal \
     expect \
     fakeroot \
+    freetype-devel \
     fuse-libs \
     gcc \
     gcc-c++ \
@@ -37,6 +38,9 @@ RUN dnf install -y \
     libcap-devel \ 
     libcurl-devel \
     libffi \
+    libjpeg-turbo-devel \
+    libpng-devel \
+    libtiff-devel \
     libuser-devel \
     libuuid-devel \
     llvm-devel \
