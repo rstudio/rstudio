@@ -18,10 +18,8 @@ This page provides the release notes associated with each release of RStudio and
 ### New
 
 #### RStudio IDE
-- 
 
 #### Posit Workbench
-- 
 
 ### Fixed
 
@@ -30,7 +28,6 @@ This page provides the release notes associated with each release of RStudio and
 - Fixed bug preventing dataframe column navigation past the default number of display columns (#13220)
 
 #### Posit Workbench
-- 
 
 ## RStudio 2023.06.0
 
