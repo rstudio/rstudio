@@ -25,22 +25,27 @@ RUN apt-get update && \
     expect \
     fakeroot \
     git-core \
+    glibc-tools \
     jq \
-    libattr1-dev \
     libacl1-dev \
+    libattr1-dev \
     libbz2-dev \
     libcap-dev \
     libcurl4-openssl-dev \
-    libfuse2 \
-    libgtk-3-0 \
-    libgl1-mesa-dev \
     libegl1-mesa \
+    libfreetype6-dev\
+    libfuse2 \
+    libgl1-mesa-dev \
+    libgtk-3-0 \
+    libjpeg-dev \ 
     libpam-dev \
     libpango1.0-dev \
+    libpng-dev\
     libpq-dev \
     libsqlite3-dev \
-    libuser1-dev \
     libssl-dev \
+    libtiff5-dev\
+    libuser1-dev \
     libxml2-dev \
     libxslt1-dev \
     lsof \
