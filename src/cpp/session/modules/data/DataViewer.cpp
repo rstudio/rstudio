@@ -572,6 +572,10 @@ json::Value getData(SEXP dataSEXP,
 
    std::string cacheKey = http::util::urlDecode(
          http::util::fieldValue<std::string>(fields, "cache_key", ""));
+   
+   // Parameters from the client to delimit the column slice to return
+   int columnOffset = http::util::fieldValue<int>(fields, "column_offset", 0);
+   int maxDisplayColumns = http::util::fieldValue<int>(fields, "max_display_columns", 0);
 
    // loop through sort columns
    std::vector<int> ordercols;
@@ -588,16 +592,12 @@ json::Value getData(SEXP dataSEXP,
 
       if (ordercol > 0)
       {
-         ordercols.push_back(ordercol);
+         ordercols.push_back(ordercol + columnOffset);
          orderdirs.push_back(orderdir);
       }
 
       orderIdx++;
    } while (ordercol > 0);
-
-   // Parameters from the client to delimit the column slice to return
-   int columnOffset = http::util::fieldValue<int>(fields, "column_offset", 0);
-   int maxDisplayColumns = http::util::fieldValue<int>(fields, "max_display_columns", 0);
 
    int nrow = safeDim(dataSEXP, DIM_ROWS);
    int ncol = safeDim(dataSEXP, DIM_COLS);
