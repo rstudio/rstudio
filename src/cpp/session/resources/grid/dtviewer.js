@@ -978,7 +978,7 @@
     if (col.col_type === "rownames") {
       th.title = "row names";
     } else {
-      th.title = "column " + (idx - columnOffset) + ": " + col.col_type;
+      th.title = "column " + (idx + columnOffset) + ": " + col.col_type;
     }
     if (col.col_type === "numeric") {
       th.title +=
