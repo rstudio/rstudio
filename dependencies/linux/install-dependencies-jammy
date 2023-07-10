@@ -71,6 +71,7 @@ sudo apt-get -y install \
   unzip \
   uuid-dev \
   wget \
+  whois \
   zlib1g-dev
 
 # overlay

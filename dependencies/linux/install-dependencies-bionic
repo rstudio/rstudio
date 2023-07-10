@@ -69,6 +69,7 @@ sudo apt-get -y install \
   unzip \
   uuid-dev \
   wget \
+  whois \
   zlib1g-dev
 
 # Java 8 (not in official repo for bionic)
