@@ -809,6 +809,15 @@ public interface RsconnectConstants extends com.google.gwt.i18n.client.Messages{
     String publishReportSourcePageSubTitle(String scheduledReportNumber, String descriptor);
 
     /**
+     * Translated "Choose this option if you want to rebuild your {0} on the server.".
+     *
+     * @return translated "Choose this option if you want to rebuild your {0} on the server."
+     */
+    @DefaultMessage("Choose this option if you want to rebuild your {0} on the server.")
+    @Key("publishReportNoScheduledSourcePageSubtitle")
+    String publishReportNoScheduledSourcePageSubtitle(String descriptor);
+
+    /**
      * Translated "scheduled reports".
      *
      * @return translated "scheduled reports"

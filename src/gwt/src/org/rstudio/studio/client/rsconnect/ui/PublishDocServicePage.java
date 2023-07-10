@@ -65,7 +65,7 @@ public class PublishDocServicePage
             connectPage = new PublishReportSourcePage(rscTitle, rscDesc,
                   constants_.publishToRstudioConnect(),
                   new ImageResource2x(RSConnectResources.INSTANCE.localAccountIcon2x()), input, 
-                  false);
+                  false, true);
          }
       }
       WizardPage<RSConnectPublishInput, RSConnectPublishResult> rpubsPage  =
@@ -78,9 +78,20 @@ public class PublishDocServicePage
       // Posit Cloud now supports basic Rmarkdown document publishing including the source code
       if (input.getContentType() == RSConnect.CONTENT_TYPE_DOCUMENT || input.getContentType() == RSConnect.CONTENT_TYPE_PRES)
       {
-         cloudPage = new PublishFilesPage(cloudTitle, cloudSubtitle,
-            new ImageResource2x(RSConnectResources.INSTANCE.positCloudAccountIcon2x()),
-               input, false, false);
+         if (input.isStaticDocInput())
+         {
+            // static input implies static output
+            cloudPage = new PublishFilesPage(cloudTitle, cloudSubtitle,
+               new ImageResource2x(RSConnectResources.INSTANCE.positCloudAccountIcon2x()), input,
+               false, true);
+         }
+         else
+         {
+            cloudPage = new PublishReportSourcePage(cloudTitle, cloudSubtitle,
+               constants_.publishToPositCloud(),
+               new ImageResource2x(RSConnectResources.INSTANCE.positCloudAccountIcon2x()), input,
+               false, false);
+         }
       }
 
       pages.add(rpubsPage);
