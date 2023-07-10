@@ -48,7 +48,7 @@ public class RSConnectPublishWizard
          // or because the doc is not self-contained, or is a website
          return new PublishReportSourcePage(constants_.publish(), constants_.publish(),
                constants_.publishToRstudioConnect(),null, input,
-               false);
+               false, true);
       }
       else
       {

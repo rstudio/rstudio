@@ -441,11 +441,8 @@ public class RSConnectDeploy extends Composite
       contentType_ = contentType;
       asMultipleRmd_ = asMultipleRmd;
 
-      // for Plumber APIs and static Rmd docs, we want to allow for posit.cloud but not for shinyapps.io
-      boolean isPositCloudContent = contentType == RSConnect.CONTENT_TYPE_PLUMBER_API ||
-         contentType == RSConnect.CONTENT_TYPE_DOCUMENT || contentType == RSConnect.CONTENT_TYPE_PRES;
       boolean positCloudEnabled =
-         userPrefs_.enableCloudPublishUi().getGlobalValue() && isPositCloudContent;
+         userPrefs_.enableCloudPublishUi().getGlobalValue();
 
       if (positCloudEnabled != accountList_.getShowPositCloudAccounts())
       {

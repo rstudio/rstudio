@@ -48,7 +48,7 @@ public class PublishFilesPage
                               input.getOriginatingEvent().getFromPreview(),
                               input.getWebsiteDir(),
                               input.isSelfContained(),
-                              asStatic,
+                              true,
                               input.isShiny(),
                               input.getDescription());
             }
