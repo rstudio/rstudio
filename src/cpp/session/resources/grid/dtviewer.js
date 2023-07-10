@@ -842,12 +842,9 @@
   };
 
   var createFilterUI = function (idx, col) {
-    // the index coming into this function is for absolute data purposes
-    // since this is a visual-centric function we operate based on the visible index
-    var visualIndex = idx - columnOffset;
 
     // don't filter rownames column
-    if (visualIndex < 1) {
+    if (idx < 1) {
       return;
     }
 
@@ -866,7 +863,7 @@
     };
 
     var onDismiss = function () {
-      if (table.columns(visualIndex).search()[0].length === 0) {
+      if (table.columns(idx).search()[0].length === 0) {
         setUnfiltered();
       }
     };
@@ -877,7 +874,7 @@
     clear.style.display = "none";
     clear.addEventListener("click", function (evt) {
       if (dismissActivePopup) dismissActivePopup(true);
-      table.columns(visualIndex).search("").draw();
+      table.columns(idx).search("").draw();
       setUnfiltered();
       evt.preventDefault();
       evt.stopPropagation();
@@ -888,13 +885,13 @@
     val.textContent = "All";
     val.addEventListener("click", function (evt) {
       if (col.col_search_type === "numeric") {
-        ui = createNumericFilterUI(visualIndex, col, onDismiss);
+        ui = createNumericFilterUI(idx, col, onDismiss);
       } else if (col.col_search_type === "factor") {
-        ui = createFactorFilterUI(visualIndex, col, onDismiss);
+        ui = createFactorFilterUI(idx, col, onDismiss);
       } else if (col.col_search_type === "character") {
-        ui = createTextFilterUI(visualIndex, col, onDismiss);
+        ui = createTextFilterUI(idx, col, onDismiss);
       } else if (col.col_search_type === "boolean") {
-        ui = createBooleanFilterUI(visualIndex, col, onDismiss);
+        ui = createBooleanFilterUI(idx, col, onDismiss);
       }
       if (ui) {
         ui.className += " filterValue";
@@ -981,7 +978,7 @@
     if (col.col_type === "rownames") {
       th.title = "row names";
     } else {
-      th.title = "column " + (idx - columnOffset) + ": " + col.col_type;
+      th.title = "column " + (idx + columnOffset) + ": " + col.col_type;
     }
     if (col.col_type === "numeric") {
       th.title +=
@@ -1559,7 +1556,7 @@
       if (dismissActivePopup) dismissActivePopup(true);
     }
     for (var i = 0; i < thead.children.length; i++) {
-      var colIdx = i + (rowNumbers ? 0 : 1) + columnOffset;
+      var colIdx = i + (rowNumbers ? 0 : 1);
       var col = cols[colIdx];
       var th = thead.children[i];
       if (visible) {
