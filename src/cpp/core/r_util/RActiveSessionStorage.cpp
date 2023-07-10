@@ -46,9 +46,11 @@ Error createError(const std::string& errorName, const std::string& preamble,
 FileActiveSessionStorage::FileActiveSessionStorage(const FilePath& scratchPath) :
    scratchPath_ (scratchPath)
 {
-   Error error = scratchPath_.ensureDirectory();
-   if(error)
-      LOG_ERROR(error);
+   // Do not create the directory here or else any attempt to look for a session ends up creating it. The API is designed
+   // to return an empty object if it does not exist.
+   //Error error = scratchPath_.ensureDirectory();
+   //if(error)
+   //   LOG_ERROR(error);
 }
 
 const std::map<std::string, std::string> FileActiveSessionStorage::fileNames =
@@ -112,7 +114,9 @@ Error FileActiveSessionStorage::readProperties(std::map<std::string, std::string
    std::vector<FilePath> files{};
    std::vector<FilePath> failedFiles{};
    pValues->clear();
-   propertyDir.getChildren(files);
+   Error error = propertyDir.getChildren(files);
+   if (isNotFoundError(error))
+      return Success();
 
    for(FilePath file : files) {
       std::string value = "";
@@ -144,9 +148,18 @@ Error FileActiveSessionStorage::writeProperties(const std::map<std::string, std:
    for (auto&& prop : properties)
    {
       FilePath writePath = getPropertyFile(prop.first);
-      Error error = core::writeStringToFile(writePath, prop.second);
+      Error error = core::writeStringToFile(writePath, prop.second, string_utils::LineEndingPassthrough, true, 0, false);
+
       if (error)
-         failedFiles.push_back(writePath);
+      {
+         if (error.getCode() == boost::system::errc::no_such_file_or_directory)
+         {
+            ensurePropertyDir();
+            error = core::writeStringToFile(writePath, prop.second);
+         }
+         if (error)
+            failedFiles.push_back(writePath);
+      }
    }
    
    if (failedFiles.empty())
@@ -170,8 +183,16 @@ Error FileActiveSessionStorage::isValid(bool* pValue)
 FilePath FileActiveSessionStorage::getPropertyDir() const
 {
    FilePath propertiesDir = scratchPath_.completeChildPath(propertiesDirName_);
-   propertiesDir.ensureDirectory();
    return propertiesDir;
+}
+
+Error FileActiveSessionStorage::ensurePropertyDir() const
+{
+   Error error = scratchPath_.ensureDirectory();
+   if (error)
+      LOG_ERROR(error);
+   FilePath propertiesDir = getPropertyDir();
+   return propertiesDir.ensureDirectory();
 }
 
 FilePath FileActiveSessionStorage::getPropertyFile(const std::string& name) const

@@ -49,6 +49,7 @@ bool isFileLockedError(const Error& error)
 Error openFileForWritingWithRetry(const FilePath& filePath,
                                   bool truncate,
                                   int maxOpenRetrySeconds,
+                                  bool logError,
                                   std::shared_ptr<std::ostream>* pOfs)
 {
    using namespace boost::posix_time;
@@ -69,7 +70,7 @@ Error openFileForWritingWithRetry(const FilePath& filePath,
       // if the error is a non file lock error, then we should just return it
       if (!isFileLockedError(lastError))
       {
-         if (lastError)
+         if (lastError && logError)
             LOG_ERROR(lastError);
 
          return lastError;
@@ -88,7 +89,7 @@ Error openFileForWritingWithRetry(const FilePath& filePath,
       boost::this_thread::sleep(milliseconds(500));
    }
 
-   if (lastError)
+   if (lastError && logError)
       LOG_ERROR(lastError);
 
    return lastError;
@@ -186,13 +187,14 @@ Error writeStringToFile(const FilePath& filePath,
                         const std::string& str,
                         string_utils::LineEnding lineEnding,
                         bool truncate,
-                        int maxOpenRetrySeconds)
+                        int maxOpenRetrySeconds,
+                        bool logError)
 {
    using namespace boost::system::errc;
    
    // open file
    std::shared_ptr<std::ostream> pOfs;
-   Error error = openFileForWritingWithRetry(filePath, truncate, maxOpenRetrySeconds, &pOfs);
+   Error error = openFileForWritingWithRetry(filePath, truncate, maxOpenRetrySeconds, logError, &pOfs);
    if (error)
       return error;
 
