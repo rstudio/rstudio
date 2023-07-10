@@ -166,8 +166,9 @@ export class DesktopBrowserWindow extends EventEmitter {
     }
 
     // register context menu (right click) handler
-    this.window.webContents.on('context-menu', (event, params) => {
-      showContextMenu(event as IpcMainEvent, params);
+    this.window.webContents.on('context-menu', (_event, params) => {
+      const wc = this.window.webContents;
+      showContextMenu(wc, params);
     });
 
     this.window.webContents.on('before-input-event', (event, input) => {
