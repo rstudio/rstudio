@@ -1196,11 +1196,11 @@ public interface RsconnectConstants extends com.google.gwt.i18n.client.Messages{
     String couldNotDetermineListToDeployReRender();
 
     /**
-     * Translated "To publish finished document to Posit Connect, you must first render it. Dismiss this message, click Knit to render the document, then try publishing again.".
+     * Translated "To publish finished document, you must first render it. Dismiss this message, click Knit to render the document, then try publishing again.".
      *
-     * @return translated "To publish finished document to Posit Connect, you must first render it. Dismiss this message, click Knit to render the document, then try publishing again."
+     * @return translated "To publish finished document, you must first render it. Dismiss this message, click Knit to render the document, then try publishing again."
      */
-    @DefaultMessage("To publish finished document to Posit Connect, you must first render it. Dismiss this message, click Knit to render the document, then try publishing again.")
+    @DefaultMessage("To publish finished document, you must first render it. Dismiss this message, click Knit to render the document, then try publishing again.")
     @Key("finishedDocumentNotFoundMessage")
     String finishedDocumentNotFoundMessage();
 
