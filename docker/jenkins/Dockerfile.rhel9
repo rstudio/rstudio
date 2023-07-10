@@ -63,6 +63,7 @@ RUN dnf install -y \
     sudo \
     valgrind \
     wget \
+    whois \
     xml-commons-apis \
     xorg-x11-server-Xvfb \
     zlib-devel

@@ -61,6 +61,7 @@ RUN yum install -y \
     sudo \
     valgrind \
     wget \
+    whois \
     xorg-x11-server-Xvfb \
     zlib-devel
 

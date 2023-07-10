@@ -2,7 +2,7 @@ def utils
 
 pipeline {
   agent {
-    label 'linux && x86_64'
+    label 'linux-4x && x86_64'
   }
 
   options {
