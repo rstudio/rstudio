@@ -201,6 +201,12 @@ export class DesktopBrowserWindow extends EventEmitter {
       }
     });
 
+    // any redirects should be handled by the default browser
+    this.window.webContents.on('will-redirect', (event, url) => {
+      event.preventDefault();
+      void shell.openExternal(url);
+    });
+
     this.window.webContents.on('page-title-updated', (event, title, explicitSet) => {
       this.adjustWindowTitle(title, explicitSet);
     });

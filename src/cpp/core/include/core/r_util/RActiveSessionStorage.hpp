@@ -65,7 +65,10 @@ private:
    FilePath scratchPath_;
    const std::string propertiesDirName_ = "properites";
 
+   Error ensurePropertyDir() const;
+
    FilePath getPropertyDir() const;
+
    FilePath getPropertyFile(const std::string& name) const;
    
    static const std::map<std::string, std::string> fileNames;

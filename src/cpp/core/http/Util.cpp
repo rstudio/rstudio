@@ -558,13 +558,21 @@ bool isNetworkAddress(const std::string& str)
    return (!ec && iter != boost::asio::ip::tcp::resolver::iterator());
 }
 
+namespace {
+
+// look for the Upgrade token in the Connection request header; in most cases it will be the
+// exact value of the the header, but some browsers (Firefox) include other tokens. (RFC 6455)
+boost::regex s_webSocketUpgradePattern("\\<Upgrade\\>", boost::regex::icase);
+
+}
+
+
 bool isWSUpgradeRequest(const Request& request)
 {
-   // look for the Upgrade token in the Connection request header; in most cases it will be the
-   // exact value of the the header, but some browsers (Firefox) include other tokens. (RFC 6455)
-   boost::regex upgrade("\\<Upgrade\\>", boost::regex::icase);
    std::string connection = request.headerValue("Connection");
-   return boost::regex_search(connection, upgrade);
+   if (connection.empty())
+      return false;
+   return boost::regex_search(connection, s_webSocketUpgradePattern);
 }
 
 #ifndef _WIN32
