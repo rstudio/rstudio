@@ -912,7 +912,6 @@ void useTerminalHooks(ConsoleProcessPtr cp)
 
       // make sure terminals see R temporary directory
       // (older versions of R didn't set R_SESSION_TMPDIR; newer ones do)
-      // TODO: Make sure the Terminal doesn't restore an old / stale version of this.
       cp->setenv("R_SESSION_TMPDIR", module_context::tempDir().getAbsolutePath());
       
       // set ENV so that our terminal hooks are run
