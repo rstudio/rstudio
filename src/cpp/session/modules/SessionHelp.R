@@ -546,16 +546,21 @@ options(help_type = "html")
       data <- tryCatch(get(name, pos = pos), error = function(e) NULL)
    }
 
+   dataFoundAnywhere <- FALSE
    # if that failed, try to look it up anywhere
    if (is.null(data))
    {
       title <- paste0(src, "$", name)
       data <- .rs.getAnywhere(title, envir)
-   }
 
-   # if we still couldn't find any data, just use the help document
-   if (is.null(data))
-      return(out)
+      # if we still couldn't find any data, just use the help document
+      if (is.null(data))
+      {
+         return(out)
+      }
+   
+      dataFoundAnywhere <- TRUE
+   }
 
    # Generate the help pre-amble
    if (is.null(out))
@@ -592,11 +597,16 @@ options(help_type = "html")
 
    # build a uri
    attrs <- c(
-      env       = src,
-      obj       = name,
+      obj       = title,
       max_rows  = 1000,
       max_cols  = maxDisplayColumns
    )
+   
+   # only include env if we didn't find the data from "anywhere"
+   if (!dataFoundAnywhere)
+   {
+      attrs <- c(attrs, env = src)
+   }
    
    uri <- paste(
       "grid_resource/gridviewer.html",
