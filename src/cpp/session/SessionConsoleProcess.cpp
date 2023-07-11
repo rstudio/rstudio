@@ -43,6 +43,16 @@ ConsoleProcessSocket s_terminalSocket;
 // Posix-only, use is gated via getTrackEnv() always being false on Win32.
 const std::string kEnvCommand = "/usr/bin/env";
 
+// environment variables which should be ignored, e.g. because they represent
+// session state that won't be valid after a restart
+bool isIgnoredEnvironmentVariable(const std::string& name)
+{
+   return
+         name == "_" ||
+         boost::algorithm::starts_with(name, "R_") ||
+         boost::algorithm::starts_with(name, "RSTUDIO_SESSION_");
+}
+
 } // anonymous namespace
 
 void ConsoleProcess::setenv(const std::string& name,
@@ -59,15 +69,18 @@ core::system::ProcessOptions ConsoleProcess::createTerminalProcOptions(
       const ConsoleProcessInfo& procInfo,
       TerminalShell::ShellType* pSelectedShellType)
 {
-   // configure environment for shell
+   // configure environment for shell, inheriting system environment
+   //
+   // note that we do this even if the process has a saved environment to be
+   // used, as some environment variables might be tied to session state and so
+   // need to be re-generated so that the correct value is reflected in the
+   // terminal process
    core::system::Options shellEnv;
+   core::system::environment(&shellEnv);
+ 
+   // overlay saved environment variables
    if (procInfo.getTrackEnv() && !procInfo.getHandle().empty())
-   {
       loadEnvironment(procInfo.getHandle(), &shellEnv);
-   }
-
-   if (shellEnv.empty())
-      core::system::environment(&shellEnv);
 
 #ifdef __APPLE__
    // suppress macOS Catalina warning suggesting switching to zsh
@@ -1140,18 +1153,16 @@ void ConsoleProcess::saveEnvironment(const std::string& env)
          return;
       }
 
-      std::string varName = line.substr(0, equalSign);
-      if (varName == "_")
+      std::string name = line.substr(0, equalSign);
+      if (isIgnoredEnvironmentVariable(name))
          continue;
-
-      core::system::setenv(&environment,
-                           line.substr(0, equalSign),
-                           line.substr(equalSign + 1));
+      
+      std::string value = line.substr(equalSign + 1);
+      core::system::setenv(&environment, name, value);
    }
+   
    if (environment.empty())
-   {
       return;
-   }
 
    procInfo_->saveConsoleEnvironment(environment);
 }

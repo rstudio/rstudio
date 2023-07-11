@@ -200,6 +200,10 @@ void setEnvVar(const std::string& name, const std::string& value)
 
    if (name == "RSTUDIO_PANDOC" && !FilePath(value).exists())
       return;
+   
+   // each R session gets a unique temporary directory (set by R itself)
+   if (name == "R_SESSION_TMPDIR" && !core::system::getenv(name).empty())
+      return;
 
    core::system::setenv(name, value);
 }
