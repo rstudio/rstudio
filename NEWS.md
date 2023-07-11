@@ -13,6 +13,7 @@
 - Fixed bug preventing files from being saved when user `HOME` path includes trailing slashes on Windows (#13105)
 - Fixed broken Help pane after navigating to code demo (#13263)
 - Fixed bug preventing Update Available from displaying (#13347)
+- Fixed bug causing dataframe help preview to fail for nested objects (#13291)
 
 ### Performance
 - Improved performance of group membership tests (rstudio-pro:#4643)
