@@ -146,7 +146,8 @@ public class DesktopApplicationHeader implements ApplicationHeader,
          if (Desktop.isRemoteDesktop())
             addSignoutToolbar();
 
-         overlay_.addConnectionStatusToolbar(DesktopApplicationHeader.this);
+         if (!BrowseCap.isElectron())
+            overlay_.addConnectionStatusToolbar(DesktopApplicationHeader.this);
 
          toolbar_.completeInitialization(sessionInfo);
 
