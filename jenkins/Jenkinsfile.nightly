@@ -138,14 +138,11 @@ pipeline {
 
             environment {
               GITHUB_LOGIN = credentials('posit-jenkins')
+              DOCKER_TAG = utils.getDockerTag()
+              DOCKER_FILE = "docker/jenkins/Dockerfile.${utils.getDockerBuildOs(env.os)}"
             }
 
             steps {
-              script {
-                utils = load "${env.WORKSPACE}/utils.groovy"
-                DOCKER_TAG = utils.getDockerTag()
-                DOCKER_FILE = "docker/jenkins/Dockerfile.${utils.getDockerBuildOs(env.os)}"
-              }
               echo "Creating image jenkins/ide:${DOCKER_TAG}"
               pullBuildPush(
                 image_name: 'jenkins/ide',
