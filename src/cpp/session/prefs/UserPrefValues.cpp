@@ -1805,7 +1805,7 @@ core::Error UserPrefValues::setTerminalTrackEnvironment(bool val)
 }
 
 /**
- * Environment variables which should be ignored when tracking changed to environment variables within a Terminal.
+ * Environment variables which should be ignored when tracking changed to environment variables within a Terminal. Environment variables in this list will not be saved when a Terminal instance is saved and restored.
  */
 core::json::Array UserPrefValues::terminalIgnoredEnvironmentVariables()
 {

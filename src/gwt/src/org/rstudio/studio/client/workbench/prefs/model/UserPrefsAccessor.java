@@ -1983,7 +1983,7 @@ public class UserPrefsAccessor extends Prefs
    }
 
    /**
-    * Environment variables which should be ignored when tracking changed to environment variables within a Terminal.
+    * Environment variables which should be ignored when tracking changed to environment variables within a Terminal. Environment variables in this list will not be saved when a Terminal instance is saved and restored.
     */
    public PrefValue<JsArrayString> terminalIgnoredEnvironmentVariables()
    {
