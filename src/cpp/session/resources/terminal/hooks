@@ -1,6 +1,5 @@
 #!/usr/bin/env sh
 
-echo hi from temrinal hoks
 # if we have a conda prefix, ensure it's still used
 if [ -n "${_RS_CONDA_PREFIX}" ]; then
 

@@ -1,6 +1,15 @@
 
 # revert back to 'regular' zsh mode
-emulate zsh
+emulate -R zsh
+
+# manually load the bundled zsh modules normally present in a 'regular' zsh instance
+zmodload zsh/terminfo
+zmodload zsh/zle
+
+# on macOS, we need to load the 'watch' module to avoid issues with their /zshrc
+if [ "$(uname)" = "Darwin" ]; then
+	zmodload zsh/watch
+fi
 
 # reset the ENV environment variable
 if [ "${_REALENV}" = "<unset>" ]; then
@@ -35,7 +44,7 @@ elif [ -f /etc/zprofile ]; then
 	source /etc/zprofile
 fi
 
-if [ -f ~/.zprofile]; then
+if [ -f ~/.zprofile ]; then
 	source ~/.zprofile
 fi
 
