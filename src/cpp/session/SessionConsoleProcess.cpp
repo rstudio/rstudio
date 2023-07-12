@@ -43,7 +43,7 @@ ConsoleProcessSocket s_terminalSocket;
 // Posix-only, use is gated via getTrackEnv() always being false on Win32.
 const std::string kEnvCommand = "/usr/bin/env";
 
-// Ignored environment variables
+// Environment variables that shouldn't be saved / restored when serializing a Terminal session.
 std::set<std::string> s_ignoredEnvironmentVariables;
 
 void initializeIgnoredEnvironmentVariables()

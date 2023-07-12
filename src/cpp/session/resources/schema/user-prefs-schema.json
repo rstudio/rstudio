@@ -933,9 +933,8 @@
         },
         "terminal_ignored_environment_variables": {
             "type": "array",
-            "items": {
-                "type": "string"
-            },
+            "items": { "type": "string" },
+            "default": [],
             "title": "Ignored environment variables",
             "description": "Environment variables which should be ignored when tracking changed to environment variables within a Terminal."
         },
