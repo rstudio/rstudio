@@ -98,7 +98,8 @@ public class PublishDocServicePage
          }
       }
 
-      pages.add(rpubsPage);
+      if (input.isExternalUIEnabled() && !input.isWebsiteRmd())
+         pages.add(rpubsPage);
       if (input.isConnectUIEnabled())
          pages.add(connectPage);
       if (input.isCloudUIEnabled() && cloudPage != null)
