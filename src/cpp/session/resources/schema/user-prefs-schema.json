@@ -931,6 +931,14 @@
             "title": "Save and restore system environment in Terminal tab",
             "description": "Whether to track and save changes to system environment variables in the Terminal."
         },
+        "terminal_ignored_environment_variables": {
+            "type": "array",
+            "items": {
+                "type": "string"
+            },
+            "title": "Ignored environment variables",
+            "description": "Environment variables which should be ignored when tracking changed to environment variables within a Terminal."
+        },
         "terminal_bell_style": {
             "type": "string",
             "enum": ["none", "sound"],

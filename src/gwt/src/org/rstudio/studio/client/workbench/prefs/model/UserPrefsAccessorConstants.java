@@ -1166,6 +1166,14 @@ public interface UserPrefsAccessorConstants extends Constants {
    String terminalTrackEnvironmentDescription();
 
    /**
+    * Environment variables which should be ignored when tracking changed to environment variables within a Terminal.
+    */
+   @DefaultStringValue("Ignored environment variables")
+   String terminalIgnoredEnvironmentVariablesTitle();
+   @DefaultStringValue("Environment variables which should be ignored when tracking changed to environment variables within a Terminal.")
+   String terminalIgnoredEnvironmentVariablesDescription();
+
+   /**
     * Terminal bell style
     */
    @DefaultStringValue("Terminal bell style")

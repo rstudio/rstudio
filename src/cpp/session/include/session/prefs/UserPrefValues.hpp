@@ -244,6 +244,7 @@ namespace prefs {
 #define kTerminalCloseBehaviorClean "clean"
 #define kTerminalCloseBehaviorNever "never"
 #define kTerminalTrackEnvironment "terminal_track_environment"
+#define kTerminalIgnoredEnvironmentVariables "terminal_ignored_environment_variables"
 #define kTerminalBellStyle "terminal_bell_style"
 #define kTerminalBellStyleNone "none"
 #define kTerminalBellStyleSound "sound"
@@ -1246,6 +1247,12 @@ public:
     */
    bool terminalTrackEnvironment();
    core::Error setTerminalTrackEnvironment(bool val);
+
+   /**
+    * Environment variables which should be ignored when tracking changed to environment variables within a Terminal.
+    */
+   core::json::Array terminalIgnoredEnvironmentVariables();
+   core::Error setTerminalIgnoredEnvironmentVariables(core::json::Array val);
 
    /**
     * Terminal bell style

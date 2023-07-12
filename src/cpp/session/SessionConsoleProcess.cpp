@@ -43,6 +43,21 @@ ConsoleProcessSocket s_terminalSocket;
 // Posix-only, use is gated via getTrackEnv() always being false on Win32.
 const std::string kEnvCommand = "/usr/bin/env";
 
+// Ignored environment variables
+std::set<std::string> s_ignoredEnvironmentVariables;
+
+void initializeIgnoredEnvironmentVariables()
+{
+   s_ignoredEnvironmentVariables.clear();
+   prefs::userPrefs().terminalIgnoredEnvironmentVariables().toSetString(s_ignoredEnvironmentVariables);
+}
+
+void onUserPrefsChanged(const std::string& layerName, const std::string& prefName)
+{
+   if (prefName == kTerminalIgnoredEnvironmentVariables)
+      initializeIgnoredEnvironmentVariables();
+}
+
 // environment variables which should be ignored, e.g. because they represent
 // session state that won't be valid after a restart
 bool isIgnoredEnvironmentVariable(const std::string& name)
@@ -50,7 +65,8 @@ bool isIgnoredEnvironmentVariable(const std::string& name)
    return
          name == "_" ||
          boost::algorithm::starts_with(name, "R_") ||
-         boost::algorithm::starts_with(name, "RSTUDIO_SESSION_");
+         boost::algorithm::starts_with(name, "RSTUDIO_SESSION_") ||
+         s_ignoredEnvironmentVariables.count(name);
 }
 
 } // anonymous namespace
@@ -1148,9 +1164,7 @@ void ConsoleProcess::saveEnvironment(const std::string& env)
    {
       size_t equalSign = line.find_first_of('=');
       if (equalSign == std::string::npos)
-      {
          return;
-      }
 
       std::string name = line.substr(0, equalSign);
       if (isIgnoredEnvironmentVariable(name))
@@ -1194,6 +1208,8 @@ core::json::Array processesAsJson(SerializationMode serialMode)
 
 Error initialize()
 {
+   initializeIgnoredEnvironmentVariables();
+   prefs::userPrefs().onChanged.connect(onUserPrefsChanged);
    return internalInitialize();
 }
 

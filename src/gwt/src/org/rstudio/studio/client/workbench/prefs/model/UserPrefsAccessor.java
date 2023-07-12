@@ -1983,6 +1983,18 @@ public class UserPrefsAccessor extends Prefs
    }
 
    /**
+    * Environment variables which should be ignored when tracking changed to environment variables within a Terminal.
+    */
+   public PrefValue<JsArrayString> terminalIgnoredEnvironmentVariables()
+   {
+      return object(
+         "terminal_ignored_environment_variables",
+         _constants.terminalIgnoredEnvironmentVariablesTitle(), 
+         _constants.terminalIgnoredEnvironmentVariablesDescription(), 
+         JsArrayUtil.createStringArray());
+   }
+
+   /**
     * Terminal bell style
     */
    public PrefValue<String> terminalBellStyle()
@@ -3769,6 +3781,8 @@ public class UserPrefsAccessor extends Prefs
          terminalCloseBehavior().setValue(layer, source.getString("terminal_close_behavior"));
       if (source.hasKey("terminal_track_environment"))
          terminalTrackEnvironment().setValue(layer, source.getBool("terminal_track_environment"));
+      if (source.hasKey("terminal_ignored_environment_variables"))
+         terminalIgnoredEnvironmentVariables().setValue(layer, source.getObject("terminal_ignored_environment_variables"));
       if (source.hasKey("terminal_bell_style"))
          terminalBellStyle().setValue(layer, source.getString("terminal_bell_style"));
       if (source.hasKey("terminal_renderer"))
@@ -4124,6 +4138,7 @@ public class UserPrefsAccessor extends Prefs
       prefs.add(terminalWebsockets());
       prefs.add(terminalCloseBehavior());
       prefs.add(terminalTrackEnvironment());
+      prefs.add(terminalIgnoredEnvironmentVariables());
       prefs.add(terminalBellStyle());
       prefs.add(terminalRenderer());
       prefs.add(terminalWeblinks());

@@ -1805,6 +1805,19 @@ core::Error UserPrefValues::setTerminalTrackEnvironment(bool val)
 }
 
 /**
+ * Environment variables which should be ignored when tracking changed to environment variables within a Terminal.
+ */
+core::json::Array UserPrefValues::terminalIgnoredEnvironmentVariables()
+{
+   return readPref<core::json::Array>("terminal_ignored_environment_variables");
+}
+
+core::Error UserPrefValues::setTerminalIgnoredEnvironmentVariables(core::json::Array val)
+{
+   return writePref("terminal_ignored_environment_variables", val);
+}
+
+/**
  * Terminal bell style
  */
 std::string UserPrefValues::terminalBellStyle()
@@ -3335,6 +3348,7 @@ std::vector<std::string> UserPrefValues::allKeys()
       kTerminalWebsockets,
       kTerminalCloseBehavior,
       kTerminalTrackEnvironment,
+      kTerminalIgnoredEnvironmentVariables,
       kTerminalBellStyle,
       kTerminalRenderer,
       kTerminalWeblinks,
