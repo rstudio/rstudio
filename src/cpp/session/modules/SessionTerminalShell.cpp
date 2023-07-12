@@ -65,8 +65,16 @@ void scanPosixShells(std::vector<TerminalShell>* pShells)
          {
             foundZsh = true;
             std::vector<std::string> args;
-            args.emplace_back("-l"); // act like a login shell
-            args.emplace_back("-g"); // don't add commands with leading space to history
+            
+            if (prefs::userPrefs().terminalHooks())
+            {
+               args = { "--emulate", "sh", "--login", "--histignorespace" };
+            }
+            else
+            {
+               args = { "--login", "--histignorespace" };
+            }
+            
             addShell(core::FilePath(trimmedLine), TerminalShell::ShellType::PosixZsh,
                      "Zsh", args, pShells);
          }
@@ -333,7 +341,10 @@ bool AvailableTerminalShells::getSystemShell(TerminalShell* pShellInfo)
    pShellInfo->path = core::FilePath("/usr/bin/env");
    pShellInfo->args.emplace_back("bash");
    pShellInfo->args.emplace_back("--login");  // act like a login shell
-   pShellInfo->args.emplace_back("--posix");  // start in POSIX mode, so we can control startup init scripts
+   
+   // if terminal hooks are enabled, start in POSIX mode, so we can control startup init scripts 
+   if (prefs::userPrefs().terminalHooks())
+      pShellInfo->args.emplace_back("--posix");
    
 #endif
    
@@ -356,12 +367,41 @@ bool AvailableTerminalShells::getCustomShell(TerminalShell* pShellInfo)
       args = core::algorithm::split(prefs::userPrefs().customShellOptions(), " ");
    }
    
-   // if this appears to be a bash shell, make sure we launch it as a POSIX shell
-   if (customShellPath.getFilename() == "bash" || customShellPath.getFilename() == "bash.exe")
+   if (prefs::userPrefs().terminalHooks())
    {
-      bool hasPosixFlag = core::algorithm::contains(args, "--posix");
-      if (!hasPosixFlag)
-         args.insert(args.begin(), "--posix");
+      // build the extra args
+      std::vector<std::string> extraArgs;
+      
+      // if this appears to be a bash shell, make sure we launch it as a POSIX shell
+      if (customShellPath.getFilename() == "bash" || customShellPath.getFilename() == "bash.exe")
+      {
+         bool hasPosixFlag = core::algorithm::contains(args, "--posix");
+         if (!hasPosixFlag)
+            extraArgs.push_back("--posix");
+      }
+      
+      // if this is a zsh shell, then emulate 'sh'
+      else if (customShellPath.getFilename() == "zsh" || customShellPath.getFilename() == "zsh.exe")
+      {
+         bool hasEmulateFlag = core::algorithm::contains(args, "--emulate");
+         if (!hasEmulateFlag)
+         {
+            extraArgs.push_back("--emulate");
+            extraArgs.push_back("sh");
+         }
+      }
+      
+      // make it behave like a login shell
+      bool hasLoginFlag =
+            core::algorithm::contains(args, "--login") ||
+            core::algorithm::contains(args, "-l");
+      
+      if (!hasLoginFlag)
+         extraArgs.push_back("--login");
+      
+      // insert the arguments at the front
+      args.insert(args.begin(), extraArgs.begin(), extraArgs.end());
+            
    }
    
    pShellInfo->args = args;

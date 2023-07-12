@@ -1818,6 +1818,19 @@ core::Error UserPrefValues::setTerminalIgnoredEnvironmentVariables(core::json::A
 }
 
 /**
+ * Enabled Terminal hooks? Required for Python terminal integration, which places the active version of Python on the PATH in new Terminal sessions.
+ */
+bool UserPrefValues::terminalHooks()
+{
+   return readPref<bool>("terminal_hooks");
+}
+
+core::Error UserPrefValues::setTerminalHooks(bool val)
+{
+   return writePref("terminal_hooks", val);
+}
+
+/**
  * Terminal bell style
  */
 std::string UserPrefValues::terminalBellStyle()
@@ -3349,6 +3362,7 @@ std::vector<std::string> UserPrefValues::allKeys()
       kTerminalCloseBehavior,
       kTerminalTrackEnvironment,
       kTerminalIgnoredEnvironmentVariables,
+      kTerminalHooks,
       kTerminalBellStyle,
       kTerminalRenderer,
       kTerminalWeblinks,

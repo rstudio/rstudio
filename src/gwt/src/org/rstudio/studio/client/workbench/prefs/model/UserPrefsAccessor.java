@@ -1995,6 +1995,18 @@ public class UserPrefsAccessor extends Prefs
    }
 
    /**
+    * Enabled Terminal hooks? Required for Python terminal integration, which places the active version of Python on the PATH in new Terminal sessions.
+    */
+   public PrefValue<Boolean> terminalHooks()
+   {
+      return bool(
+         "terminal_hooks",
+         _constants.terminalHooksTitle(), 
+         _constants.terminalHooksDescription(), 
+         true);
+   }
+
+   /**
     * Terminal bell style
     */
    public PrefValue<String> terminalBellStyle()
@@ -3783,6 +3795,8 @@ public class UserPrefsAccessor extends Prefs
          terminalTrackEnvironment().setValue(layer, source.getBool("terminal_track_environment"));
       if (source.hasKey("terminal_ignored_environment_variables"))
          terminalIgnoredEnvironmentVariables().setValue(layer, source.getObject("terminal_ignored_environment_variables"));
+      if (source.hasKey("terminal_hooks"))
+         terminalHooks().setValue(layer, source.getBool("terminal_hooks"));
       if (source.hasKey("terminal_bell_style"))
          terminalBellStyle().setValue(layer, source.getString("terminal_bell_style"));
       if (source.hasKey("terminal_renderer"))
@@ -4139,6 +4153,7 @@ public class UserPrefsAccessor extends Prefs
       prefs.add(terminalCloseBehavior());
       prefs.add(terminalTrackEnvironment());
       prefs.add(terminalIgnoredEnvironmentVariables());
+      prefs.add(terminalHooks());
       prefs.add(terminalBellStyle());
       prefs.add(terminalRenderer());
       prefs.add(terminalWeblinks());

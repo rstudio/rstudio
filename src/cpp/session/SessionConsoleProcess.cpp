@@ -855,10 +855,6 @@ namespace {
 
 bool augmentTerminalProcessPython(ConsoleProcessPtr cp)
 {
-   // disabled if user pref requests so
-   if (!prefs::userPrefs().terminalPythonIntegration())
-      return false;
-   
    // forward RETICULATE_PYTHON_FALLBACK if set
    std::string reticulatePythonFallback = modules::reticulate::reticulatePython();
 
@@ -919,17 +915,9 @@ void useTerminalHooks(ConsoleProcessPtr cp)
 
    if (isBashShell())
    {
-      // set the HOME directory for the new shell to our bundled bash utility
-      // folder, so that the shell reads those first
-      core::FilePath bashDotDir =
-            session::options().rResourcesPath().completeChildPath("terminal/bash");
-
+      core::FilePath bashDotDir = session::options().rResourcesPath().completeChildPath("terminal/bash");
       core::FilePath bashProfile = bashDotDir.completeChildPath(".bash_profile");
 
-      // make sure terminals see R temporary directory
-      // (older versions of R didn't set R_SESSION_TMPDIR; newer ones do)
-      cp->setenv("R_SESSION_TMPDIR", module_context::tempDir().getAbsolutePath());
-      
       // set ENV so that our terminal hooks are run
       const char* env = ::getenv("ENV");
       cp->setenv("_REALENV", env ? env : "<unset>");
@@ -971,26 +959,33 @@ void useTerminalHooks(ConsoleProcessPtr cp)
 
    if (isZshShell())
    {
-      FilePath zDotDir =
-            session::options().rResourcesPath().completeChildPath("terminal/zsh");
+      core::FilePath zshDotDir = session::options().rResourcesPath().completeChildPath("terminal/zsh");
+      core::FilePath zshProfile = zshDotDir.completeChildPath(".zprofile");
 
-      cp->setenv("ZDOTDIR", zDotDir.getAbsolutePath());
+      // set ENV so that our terminal hooks are run
+      const char* env = ::getenv("ENV");
+      cp->setenv("_REALENV", env ? env : "<unset>");
+      cp->setenv("ENV", zshProfile.getAbsolutePath());
    }
+   
+   // make sure terminals see R temporary directory
+   // (older versions of R didn't set R_SESSION_TMPDIR; newer ones do)
+   cp->setenv("R_SESSION_TMPDIR", module_context::tempDir().getAbsolutePath());
 
    // set RSTUDIO_TERMINAL_HOOKS (to be sourced on startup by supported shells)
-   if (prefs::userPrefs().terminalPythonIntegration())
-   {
-      FilePath hooksPath =
-            session::options().rResourcesPath().completeChildPath("terminal/hooks");
-
-      cp->setenv("RSTUDIO_TERMINAL_HOOKS", hooksPath.getAbsolutePath());
-   }
+   FilePath hooksPath = session::options().rResourcesPath().completeChildPath("terminal/hooks");
+   cp->setenv("RSTUDIO_TERMINAL_HOOKS", hooksPath.getAbsolutePath());
 }
    
 void augmentTerminalProcess(ConsoleProcessPtr cp)
 {
-   augmentTerminalProcessPython(cp);
-   useTerminalHooks(cp);
+   if (prefs::userPrefs().terminalHooks())
+   {
+      if (!prefs::userPrefs().terminalPythonIntegration())
+         augmentTerminalProcessPython(cp);
+      
+      useTerminalHooks(cp);
+   }
 }
 
 } // end anonymous namespace

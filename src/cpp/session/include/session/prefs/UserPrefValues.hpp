@@ -245,6 +245,7 @@ namespace prefs {
 #define kTerminalCloseBehaviorNever "never"
 #define kTerminalTrackEnvironment "terminal_track_environment"
 #define kTerminalIgnoredEnvironmentVariables "terminal_ignored_environment_variables"
+#define kTerminalHooks "terminal_hooks"
 #define kTerminalBellStyle "terminal_bell_style"
 #define kTerminalBellStyleNone "none"
 #define kTerminalBellStyleSound "sound"
@@ -1253,6 +1254,12 @@ public:
     */
    core::json::Array terminalIgnoredEnvironmentVariables();
    core::Error setTerminalIgnoredEnvironmentVariables(core::json::Array val);
+
+   /**
+    * Enabled Terminal hooks? Required for Python terminal integration, which places the active version of Python on the PATH in new Terminal sessions.
+    */
+   bool terminalHooks();
+   core::Error setTerminalHooks(bool val);
 
    /**
     * Terminal bell style

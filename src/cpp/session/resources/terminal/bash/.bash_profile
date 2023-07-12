@@ -30,5 +30,6 @@ fi
 # run RStudio terminal hooks
 if [ -f "${RSTUDIO_TERMINAL_HOOKS}" ]; then
 	source "${RSTUDIO_TERMINAL_HOOKS}"
+	unset RSTUDIO_TERMINAL_HOOKS
 fi
 
