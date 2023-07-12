@@ -6,6 +6,10 @@ emulate -R zsh
 zmodload zsh/terminfo
 zmodload zsh/zle
 
+# set up relevant options
+setopt login
+setopt histignorespace
+
 # on macOS, we need to load the 'watch' module to avoid issues with their /zshrc
 if [ "$(uname)" = "Darwin" ]; then
 	zmodload zsh/watch
