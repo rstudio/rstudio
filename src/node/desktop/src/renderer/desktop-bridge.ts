@@ -296,6 +296,10 @@ export function getDesktopBridge() {
         .catch((error) => reportIpcError('prepareForNamedWindow', error));
     },
 
+    setNumGwtModalsShowing: (gwtModalsShowing: number) => {
+      ipcRenderer.send('desktop_set_gwt_num_modals_showing', gwtModalsShowing);
+    },
+
     copyPageRegionToClipboard: (x: number, y: number, width: number, height: number, callback: () => void) => {
       ipcRenderer
         .invoke('desktop_copy_page_region_to_clipboard', x, y, width, height)

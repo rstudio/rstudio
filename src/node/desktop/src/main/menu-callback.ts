@@ -18,36 +18,7 @@ import EventEmitter from 'events';
 
 import debounce from 'lodash/debounce';
 import { ElectronDesktopOptions } from './preferences/electron-desktop-options';
-
-/**
- * Show dummy menu bar to deal with the fact that the real menu bar isn't ready until well
- * after startup.
- */
-export function showPlaceholderMenu(): void {
-  const addPlaceholderMenuItem = function (mainMenu: Menu, label: string): void {
-    mainMenu.append(new MenuItem({ submenu: new Menu(), label: label }));
-  };
-
-  const mainMenuStub = new Menu();
-  if (process.platform === 'darwin') {
-    mainMenuStub.append(new MenuItem({ role: 'appMenu' }));
-  }
-  addPlaceholderMenuItem(mainMenuStub, 'File');
-  addPlaceholderMenuItem(mainMenuStub, 'Edit');
-  addPlaceholderMenuItem(mainMenuStub, 'Code');
-  addPlaceholderMenuItem(mainMenuStub, 'View');
-  addPlaceholderMenuItem(mainMenuStub, 'Plots');
-  addPlaceholderMenuItem(mainMenuStub, 'Session');
-  addPlaceholderMenuItem(mainMenuStub, 'Build');
-  addPlaceholderMenuItem(mainMenuStub, 'Debug');
-  addPlaceholderMenuItem(mainMenuStub, 'Profile');
-  addPlaceholderMenuItem(mainMenuStub, 'Tools');
-  if (process.platform === 'darwin') {
-    addPlaceholderMenuItem(mainMenuStub, 'Window');
-  }
-  addPlaceholderMenuItem(mainMenuStub, 'Help');
-  Menu.setApplicationMenu(mainMenuStub);
-}
+import { appState } from './app-state';
 
 function menuIdFromLabel(label: string): string {
   return label.replace('&', '');
@@ -77,6 +48,8 @@ export class MenuCallback extends EventEmitter {
   lastWasDiagnostics = false;
 
   isMenuSet = false;
+
+  savedMenu: Menu | null = null;
 
   debounceUpdateMenuLong: any = debounce(() => this.updateMenus(), 5000);
   debounceUpdateMenuMedium: any = debounce(() => this.updateMenus(), 250);
@@ -135,8 +108,8 @@ export class MenuCallback extends EventEmitter {
       this.setCommandChecked(commandId, checked);
     });
 
-    ipcMain.on('menu_set_main_menu_enabled', () => {
-      /* do nothing */
+    ipcMain.on('menu_set_main_menu_enabled', (_event, enabled: boolean) => {
+      this.setMainMenuEnabled(enabled);
     });
 
     ipcMain.on('menu_set_command_label', (_event, commandId: string, label: string) => {
@@ -505,5 +478,56 @@ export class MenuCallback extends EventEmitter {
         }
       })
       .join('+');
+  }
+
+  /**
+   * If applicable, stubs the menu bar with a placeholder or restores the saved menu bar.
+   * @param enabled Whether the main menu bar should be enabled or disabled (replaced with a placeholder).
+   */
+  setMainMenuEnabled(enabled: boolean) {
+    const stubWithPlaceholder = !enabled && !this.savedMenu;
+    if (stubWithPlaceholder) {
+      // Save a copy of the current menu bar so we can restore it later
+      this.savedMenu = Menu.getApplicationMenu();
+      this.showPlaceholderMenu();
+      return;
+    }
+    const restoreSavedMenu = enabled && !!this.savedMenu && appState().modalTracker.numModalsShowing() === 0;
+    if (restoreSavedMenu) {
+      Menu.setApplicationMenu(this.savedMenu);
+      this.savedMenu = null;
+      return;
+    }
+    // Otherwise, the main menu bar is already in the desired state
+  }
+
+  /**
+   * Show dummy menu bar to deal with the fact that the real menu bar isn't ready until well
+   * after startup.
+   */
+  showPlaceholderMenu() {
+    const addPlaceholderMenuItem = function (mainMenu: Menu, label: string): void {
+      mainMenu.append(new MenuItem({ submenu: new Menu(), label: label }));
+    };
+
+    const mainMenuStub = new Menu();
+    if (process.platform === 'darwin') {
+      mainMenuStub.append(new MenuItem({ role: 'appMenu' }));
+    }
+    addPlaceholderMenuItem(mainMenuStub, 'File');
+    addPlaceholderMenuItem(mainMenuStub, 'Edit');
+    addPlaceholderMenuItem(mainMenuStub, 'Code');
+    addPlaceholderMenuItem(mainMenuStub, 'View');
+    addPlaceholderMenuItem(mainMenuStub, 'Plots');
+    addPlaceholderMenuItem(mainMenuStub, 'Session');
+    addPlaceholderMenuItem(mainMenuStub, 'Build');
+    addPlaceholderMenuItem(mainMenuStub, 'Debug');
+    addPlaceholderMenuItem(mainMenuStub, 'Profile');
+    addPlaceholderMenuItem(mainMenuStub, 'Tools');
+    if (process.platform === 'darwin') {
+      addPlaceholderMenuItem(mainMenuStub, 'Window');
+    }
+    addPlaceholderMenuItem(mainMenuStub, 'Help');
+    Menu.setApplicationMenu(mainMenuStub);
   }
 }

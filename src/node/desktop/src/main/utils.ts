@@ -30,6 +30,7 @@ import i18next from 'i18next';
 import { spawnSync } from 'child_process';
 import { changeLanguage } from './i18n-manager';
 import { randomUUID } from 'crypto';
+import { appState } from './app-state';
 
 // work around Electron resolving the application path to 'app.asar'
 const appPath = path.join(path.dirname(app.getAppPath()), 'app');
@@ -444,7 +445,9 @@ export async function createStandaloneErrorDialog(
     dialogContent[process.platform === 'win32' ? 'title' : 'message'] = title;
     dialogContent[process.platform === 'win32' ? 'message' : 'detail'] = message;
 
-    await dialog.showMessageBox(options.window, dialogContent);
+    await appState().modalTracker.trackElectronModalAsync(async () =>
+      dialog.showMessageBox(options.window, dialogContent),
+    );
 
     if (options.shouldCloseWindow) window.close();
     // eslint-disable-next-line @typescript-eslint/no-implicit-any-catch
