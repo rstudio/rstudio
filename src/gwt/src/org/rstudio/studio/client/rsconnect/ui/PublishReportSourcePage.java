@@ -36,15 +36,16 @@ public class PublishReportSourcePage
          String pageCaption,
          ImageResource icon,
          RSConnectPublishInput input,
-         boolean asMultiple)
+         boolean asMultiple,
+         boolean allowScheduling)
    {
       super(title, subTitle, pageCaption, icon, null,
-            createPages(input, asMultiple));
+            createPages(input, asMultiple, allowScheduling));
    }
 
    private static ArrayList<WizardPage<RSConnectPublishInput, 
                                        RSConnectPublishResult>> 
-           createPages(RSConnectPublishInput input, boolean asMultiple)
+           createPages(RSConnectPublishInput input, boolean asMultiple, boolean allowScheduling)
    {
       ArrayList<WizardPage<RSConnectPublishInput, 
                            RSConnectPublishResult>> pages = new ArrayList<>();
@@ -54,11 +55,18 @@ public class PublishReportSourcePage
          descriptor = constants_.documentsLowercasePlural();
       if (input.isWebsiteRmd())
          descriptor = constants_.websiteLowercase();
+
+      String publishSourceSubtitle;
+      if (allowScheduling) {
+         publishSourceSubtitle = constants_.publishReportSourcePageSubTitle(
+            asMultiple ? constants_.scheduledReportsPlural() : constants_.scheduledReportsSingular()
+            , descriptor);
+      } else {
+         publishSourceSubtitle = constants_.publishReportNoScheduledSourcePageSubtitle(descriptor);
+      }
       
       pages.add(new PublishFilesPage(constants_.publishFilesPageTitle(descriptor),
-            constants_.publishReportSourcePageSubTitle(
-                    asMultiple ? constants_.scheduledReportsPlural() : constants_.scheduledReportsSingular()
-                    ,descriptor),
+            publishSourceSubtitle,
             new ImageResource2x(RSConnectResources.INSTANCE.publishDocWithSource2x()), 
             input, asMultiple, false));
       String staticTitle = constants_.publishReportSourcePageStaticTitle(descriptor);

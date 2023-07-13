@@ -302,8 +302,9 @@ public class RSConnectDeploy extends Composite
       display_ = display;
       userPrefs_ = prefs;
       userState_ = state;
+      // posit.cloud should be enabled for static and non-static content
       accountList_ = new RSConnectAccountList(server_, display_, false, 
-            !asStatic_, !asStatic_, constants_.publishFromAccount());
+            !asStatic_, true, constants_.publishFromAccount());
       appName_ = new AppNameTextbox(this);
       
       // when the account list finishes populating, select the account from the
@@ -440,11 +441,8 @@ public class RSConnectDeploy extends Composite
       contentType_ = contentType;
       asMultipleRmd_ = asMultipleRmd;
 
-      // for Plumber APIs and static Rmd docs, we want to allow for posit.cloud but not for shinyapps.io
-      boolean isPositCloudContent = contentType == RSConnect.CONTENT_TYPE_PLUMBER_API ||
-         contentType == RSConnect.CONTENT_TYPE_DOCUMENT || contentType == RSConnect.CONTENT_TYPE_PRES;
       boolean positCloudEnabled =
-         userPrefs_.enableCloudPublishUi().getGlobalValue() && isPositCloudContent;
+         userPrefs_.enableCloudPublishUi().getGlobalValue();
 
       if (positCloudEnabled != accountList_.getShowPositCloudAccounts())
       {

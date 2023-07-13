@@ -48,7 +48,7 @@ public class PublishFilesPage
                               input.getOriginatingEvent().getFromPreview(),
                               input.getWebsiteDir(),
                               input.isSelfContained(),
-                              asStatic,
+                              true,
                               input.isShiny(),
                               input.getDescription());
             }
@@ -60,7 +60,7 @@ public class PublishFilesPage
                               input.getWebsiteDir(),
                               input.getWebsiteOutputDir(),
                               input.isSelfContained(),
-                              asStatic,
+                              true,
                               input.isShiny(),
                               input.isQuarto(),
                               input.getDescription(),
@@ -78,7 +78,7 @@ public class PublishFilesPage
                      input.getSourceRmd().getPath(),
                   input.getWebsiteDir(),
                   input.isSelfContained(),
-                  asStatic,
+                  false,
                   input.isShiny(),
                   input.isQuarto(),
                   input.getDescription(),

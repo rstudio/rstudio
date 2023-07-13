@@ -809,6 +809,15 @@ public interface RsconnectConstants extends com.google.gwt.i18n.client.Messages{
     String publishReportSourcePageSubTitle(String scheduledReportNumber, String descriptor);
 
     /**
+     * Translated "Choose this option if you want to create or rebuild your {0} on the server.".
+     *
+     * @return translated "Choose this option if you want to create or rebuild your {0} on the server."
+     */
+    @DefaultMessage("Choose this option if you want to create or rebuild your {0} on the server.")
+    @Key("publishReportNoScheduledSourcePageSubtitle")
+    String publishReportNoScheduledSourcePageSubtitle(String descriptor);
+
+    /**
      * Translated "scheduled reports".
      *
      * @return translated "scheduled reports"
@@ -1196,11 +1205,11 @@ public interface RsconnectConstants extends com.google.gwt.i18n.client.Messages{
     String couldNotDetermineListToDeployReRender();
 
     /**
-     * Translated "To publish finished document to Posit Connect, you must first render it. Dismiss this message, click Knit to render the document, then try publishing again.".
+     * Translated "To publish finished document, you must first render it. Dismiss this message, click Knit to render the document, then try publishing again.".
      *
-     * @return translated "To publish finished document to Posit Connect, you must first render it. Dismiss this message, click Knit to render the document, then try publishing again."
+     * @return translated "To publish finished document, you must first render it. Dismiss this message, click Knit to render the document, then try publishing again."
      */
-    @DefaultMessage("To publish finished document to Posit Connect, you must first render it. Dismiss this message, click Knit to render the document, then try publishing again.")
+    @DefaultMessage("To publish finished document, you must first render it. Dismiss this message, click Knit to render the document, then try publishing again.")
     @Key("finishedDocumentNotFoundMessage")
     String finishedDocumentNotFoundMessage();
 
