@@ -200,7 +200,7 @@ public class RSConnectDeploy extends Composite
       }
 
       final boolean rsConnectEnabled = 
-            userState_.enableRsconnectPublishUi().getGlobalValue();
+         userState_.enableRsconnectPublishUi().getGlobalValue();
       final boolean positCloudEnabled =
          userPrefs_.enableCloudPublishUi().getGlobalValue();
       
@@ -295,7 +295,7 @@ public class RSConnectDeploy extends Composite
       userState_ = state;
       // posit.cloud should be enabled for static and non-static content
       accountList_ = new RSConnectAccountList(server_, display_, false, 
-            !asStatic_, true, constants_.publishFromAccount());
+            !asStatic_, true, true, constants_.publishFromAccount());
       appName_ = new AppNameTextbox(this);
       
       // when the account list finishes populating, select the account from the
@@ -429,30 +429,38 @@ public class RSConnectDeploy extends Composite
                                 int contentType, boolean asMultipleRmd, boolean asStatic,
                                 ServerType serverType)
    {
+      Debug.logToConsole("serverType: " + serverType);
       source_ = source;
       contentType_ = contentType;
       asMultipleRmd_ = asMultipleRmd;
 
+      // In order to display Posit.cloud accounts, it needs to be enabled in Prefs AND
+      // the server type needs to be Posit.cloud, or null (which means the user hasn't specified)
       boolean positCloudEnabled =
-         userPrefs_.enableCloudPublishUi().getGlobalValue();
+         userPrefs_.enableCloudPublishUi().getGlobalValue() &&
+            (serverType == ServerType.POSITCLOUD || serverType == null);
+      Debug.logToConsole("positCloudEnabled: " + positCloudEnabled);
+
+      boolean rsConnectEnabled =
+         userState_.enableRsconnectPublishUi().getGlobalValue() &&
+            (serverType == ServerType.RSCONNECT || serverType == null);
 
       if (positCloudEnabled != accountList_.getShowPositCloudAccounts())
       {
-         if (positCloudEnabled && (serverType == ServerType.POSITCLOUD || serverType == null))
-         {
-            accountList_.setShowPositCloudAccounts(true);
-         }
-         else if (!positCloudEnabled && serverType != ServerType.POSITCLOUD && serverType != null)
-         {
-            accountList_.setShowPositCloudAccounts(false);
-         }
+         accountList_.setShowPositCloudAccounts(positCloudEnabled);
          accountList_.refreshAccountList();
       }
 
-      // we want to show cloud accounts only for non-static content
-      if (source.isShiny() != accountList_.getShowCloudAccounts())
+      if (rsConnectEnabled != accountList_.getShowConnectAccounts())
       {
-         accountList_.setShowCloudAccounts(source.isShiny());
+         accountList_.setShowConnectAccounts(rsConnectEnabled);
+         accountList_.refreshAccountList();
+      }
+
+      // we want to show ShinyApps.io accounts only for Shiny content
+      if (source.isShiny() != accountList_.getShowShinyAppsAccounts())
+      {
+         accountList_.setShowShinyAppsAccounts(source.isShiny());
          accountList_.refreshAccountList();
       }
       
