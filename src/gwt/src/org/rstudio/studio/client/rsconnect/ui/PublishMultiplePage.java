@@ -23,6 +23,7 @@ import org.rstudio.core.client.widget.WizardPage;
 import org.rstudio.studio.client.rsconnect.RsconnectConstants;
 import org.rstudio.studio.client.rsconnect.model.RSConnectPublishInput;
 import org.rstudio.studio.client.rsconnect.model.RSConnectPublishResult;
+import org.rstudio.studio.client.rsconnect.ui.RSConnectDeploy.ServerType;
 
 import com.google.gwt.resources.client.ImageResource;
 
@@ -30,15 +31,15 @@ public class PublishMultiplePage
    extends WizardNavigationPage<RSConnectPublishInput, RSConnectPublishResult>
 {
    public PublishMultiplePage(String title, String subTitle, ImageResource icon,
-         RSConnectPublishInput input)
+         RSConnectPublishInput input, ServerType serverType)
    {
       super(title, subTitle, constants_.publishMultiplePageCaption(),
-            icon, null, createPages(input));
+            icon, null, createPages(input, serverType));
    }
    
    private static ArrayList<WizardPage<RSConnectPublishInput, 
                                        RSConnectPublishResult>> 
-           createPages(RSConnectPublishInput input)
+           createPages(RSConnectPublishInput input, ServerType serverType)
    {
       ArrayList<WizardPage<RSConnectPublishInput, 
                            RSConnectPublishResult>> pages = new ArrayList<>();
@@ -50,30 +51,32 @@ public class PublishMultiplePage
       {
          pages.add(new PublishFilesPage(singleTitle, singleSubtitle, 
                new ImageResource2x(RSConnectResources.INSTANCE.publishSingleRmd2x()), 
-               input, false, false));
+               input, false, false, serverType));
          pages.add(new PublishFilesPage(multipleTitle, multipleSubtitle,
                new ImageResource2x(RSConnectResources.INSTANCE.publishMultipleRmd2x()), 
-               input, true, false));
+               input, true, false, serverType));
       }
       else if (input.isStaticDocInput())
       {
          pages.add(new PublishFilesPage(singleTitle, singleSubtitle, 
                new ImageResource2x(RSConnectResources.INSTANCE.publishSingleRmd2x()), 
-               input, false, true));
+               input, false, true, serverType));
          pages.add(new PublishFilesPage(multipleTitle, multipleSubtitle,
                new ImageResource2x(RSConnectResources.INSTANCE.publishMultipleRmd2x()), 
-               input, true, true));
+               input, true, true, serverType));
       }
       else
       {
          pages.add(new PublishReportSourcePage(singleTitle, singleSubtitle,
                constants_.publishToRstudioConnect(),
                new ImageResource2x(
-                  RSConnectResources.INSTANCE.publishSingleRmd2x()), input, false, true));
+                  RSConnectResources.INSTANCE.publishSingleRmd2x()), input, false, true,
+               ServerType.RSCONNECT));
          pages.add(new PublishReportSourcePage(multipleTitle, multipleSubtitle,
                constants_.publishToRstudioConnect(),
                new ImageResource2x(
-                  RSConnectResources.INSTANCE.publishMultipleRmd2x()), input, true, true));
+                  RSConnectResources.INSTANCE.publishMultipleRmd2x()), input, true, true,
+               ServerType.RSCONNECT));
       }
       return pages;
    }

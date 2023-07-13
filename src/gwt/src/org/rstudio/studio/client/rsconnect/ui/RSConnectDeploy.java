@@ -146,6 +146,13 @@ public class RSConnectDeploy extends Composite
    }
    
    public static DeployResources RESOURCES = GWT.create(DeployResources.class);
+
+   public enum ServerType {
+      RSCONNECT,
+      RSPUBS,
+      POSITCLOUD,
+      SHINYAPPS
+   }
    
    public RSConnectDeploy(RSConnectPublishSource source,
                           final int contentType,
@@ -214,23 +221,7 @@ public class RSConnectDeploy extends Composite
                      }
                   });
          });
-      }
-      else if (positCloudEnabled) // also invoke if Connect disabled but Cloud enabled
-      {
-         addAccountAnchor_.setClickHandler(() ->
-         {
-            connector_.showAccountWizard(false,
-               true,
-               successful ->
-               {
-                  if (successful)
-                  {
-                     accountList_.refreshAccountList();
-                  }
-               });
-         });
-      }
-      else {
+      } else {
          // if not deploying a Shiny app and RSConnect UI/ Posit Cloud UI are not enabled, then
          // there's no account we can add suitable for this content
          addAccountAnchor_.setVisible(false);
@@ -434,8 +425,9 @@ public class RSConnectDeploy extends Composite
       populateDeploymentFiles(indicator);
    }
    
-   public void setPublishSource(RSConnectPublishSource source, 
-         int contentType, boolean asMultipleRmd, boolean asStatic)
+   public void setPublishSource(RSConnectPublishSource source,
+                                int contentType, boolean asMultipleRmd, boolean asStatic,
+                                ServerType serverType)
    {
       source_ = source;
       contentType_ = contentType;
@@ -446,7 +438,14 @@ public class RSConnectDeploy extends Composite
 
       if (positCloudEnabled != accountList_.getShowPositCloudAccounts())
       {
-         accountList_.setShowPositCloudAccounts(positCloudEnabled);
+         if (positCloudEnabled && (serverType == ServerType.POSITCLOUD || serverType == null))
+         {
+            accountList_.setShowPositCloudAccounts(true);
+         }
+         else if (!positCloudEnabled && serverType != ServerType.POSITCLOUD && serverType != null)
+         {
+            accountList_.setShowPositCloudAccounts(false);
+         }
          accountList_.refreshAccountList();
       }
 
