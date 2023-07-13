@@ -429,7 +429,6 @@ public class RSConnectDeploy extends Composite
                                 int contentType, boolean asMultipleRmd, boolean asStatic,
                                 ServerType serverType)
    {
-      Debug.logToConsole("serverType: " + serverType);
       source_ = source;
       contentType_ = contentType;
       asMultipleRmd_ = asMultipleRmd;
@@ -439,7 +438,6 @@ public class RSConnectDeploy extends Composite
       boolean positCloudEnabled =
          userPrefs_.enableCloudPublishUi().getGlobalValue() &&
             (serverType == ServerType.POSITCLOUD || serverType == null);
-      Debug.logToConsole("positCloudEnabled: " + positCloudEnabled);
 
       boolean rsConnectEnabled =
          userState_.enableRsconnectPublishUi().getGlobalValue() &&
