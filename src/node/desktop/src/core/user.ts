@@ -19,19 +19,30 @@ import { getenv } from './environment';
 import { FilePath } from './file-path';
 
 import desktop from '../native/desktop.node';
+import { removeTrailingSlashes } from '../main/utils';
 
 export function userHomePath(): FilePath {
-  const user = getenv('R_USER');
-  if (checkPath(user)) return new FilePath(user);
-  const home = getenv('HOME');
-  if (checkPath(home)) return new FilePath(home);
+  const pathsToCheck = [() => getenv('HOME')];
   if (process.platform === 'win32') {
-    const currentHome = desktop.currentCSIDLPersonalHomePath();
-    if (checkPath(currentHome)) return new FilePath(currentHome);
-    const defaultHome = desktop.defaultCSIDLPersonalHomePath();
-    if (checkPath(defaultHome)) return new FilePath(defaultHome);
+    // On Windows, check the R_USER environment variable first, then the
+    // HOME environment variable, to match the behaviour of R itself.
+    // See R_ExpandFileName in src/gnuwin32/sys-win32.c in R source code.
+    pathsToCheck.unshift(() => getenv('R_USER'));
+
+    pathsToCheck.push(
+      () => desktop.currentCSIDLPersonalHomePath(),
+      () => desktop.defaultCSIDLPersonalHomePath(),
+    );
+  }
+  for (const pathToCheck of pathsToCheck) {
+    const path = verifiedPath(pathToCheck());
+    if (path) return path;
   }
   return new FilePath(os.homedir());
+}
+
+export function userHomePathString(): string {
+  return userHomePath().getAbsolutePath();
 }
 
 export function username(): string {
@@ -42,8 +53,16 @@ export function username(): string {
   }
 }
 
-function checkPath(path: string): boolean {
-  if (path === '') return false;
-  const fp = new FilePath(path);
-  return fp.existsSync();
+/**
+ * Removes trailing slashes from a path string and verifies that the path exists
+ * @param path The path to verify
+ * @returns A FilePath with trailing slashes removed if the path exists, otherwise undefined
+ */
+function verifiedPath(path: string): FilePath | undefined {
+  const trimmedPath = removeTrailingSlashes(path);
+  if (trimmedPath.length > 0) {
+    const fp = new FilePath(trimmedPath);
+    if (fp.existsSync()) return fp;
+  }
+  return undefined;
 }

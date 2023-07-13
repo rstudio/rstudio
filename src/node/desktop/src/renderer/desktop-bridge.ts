@@ -94,17 +94,19 @@ export function getDesktopBridge() {
             filePath = normalizeSeparators(filePath, '/');
           }
 
-          const expandedHomePath = normalizeSeparators(process.env.HOME ?? '', '/');
-          const homePath = '~';
+          ipcRenderer.invoke('desktop_get_user_home_path').then((userHomePath: string) => {
+            const expandedHomePath = normalizeSeparators(userHomePath.length > 0 ? userHomePath : '', '/');
+            const homePath = '~';
 
-          /* this makes sure the file path and HOME path
-          only contains forward slashes as separators for correct comparison */
-          if (expandedHomePath.length && filePath.startsWith(expandedHomePath)) {
-            filePath = homePath + filePath.substring(expandedHomePath.length);
-          }
+            /* this makes sure the file path and HOME path
+              only contains forward slashes as separators for correct comparison */
+            if (expandedHomePath.length && filePath.startsWith(expandedHomePath)) {
+              filePath = homePath + filePath.substring(expandedHomePath.length);
+            }
 
-          // invoke callback
-          return callback(filePath);
+            // invoke callback
+            return callback(filePath);
+          });
         })
         .catch((error) => reportIpcError('getSaveFileName', error));
     },
@@ -126,6 +128,13 @@ export function getDesktopBridge() {
           }
         })
         .catch((error) => reportIpcError('getExistingDirectory', error));
+    },
+
+    getUserHomePath: (callback: VoidCallback<string>) => {
+      ipcRenderer
+        .invoke('desktop_get_user_home_path')
+        .then((path) => callback(path))
+        .catch((error) => reportIpcError('getUserHomePath', error));
     },
 
     onClipboardSelectionChanged: () => {

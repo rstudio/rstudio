@@ -56,6 +56,7 @@ import {
 import { activateWindow, focusedWebContents } from './window-utils';
 import { getenv } from '../core/environment';
 import { safeError } from '../core/err';
+import { userHomePathString } from '../core/user';
 
 export enum PendingQuit {
   PendingQuitNone,
@@ -114,10 +115,8 @@ export class GwtCallback extends EventEmitter {
             }),
           ),
         ].sort((a, b) => a.localeCompare(b));
-        this.proportionalFonts = [
-          ...new Set<string>(
-            findFontsSync({ monospace: false }).map((fd) => 
-              fd.family))].sort((a, b) => a.localeCompare(b),
+        this.proportionalFonts = [...new Set<string>(findFontsSync({ monospace: false }).map((fd) => fd.family))].sort(
+          (a, b) => a.localeCompare(b),
         );
       }
     } catch (err: unknown) {
@@ -227,6 +226,10 @@ export class GwtCallback extends EventEmitter {
         }
       },
     );
+
+    ipcMain.handle('desktop_get_user_home_path', () => {
+      return userHomePathString();
+    });
 
     ipcMain.on('desktop_on_clipboard_selection_changed', () => {
       // This was previously used for Ace-specific workarounds on Qt
