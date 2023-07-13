@@ -726,13 +726,14 @@ void ConsoleProcess::onHasSubprocs(bool hasNonIgnoredSubprocs, bool hasIgnoredSu
 
 void ConsoleProcess::reportCwd(const core::FilePath& cwd)
 {
-   if (procInfo_->getCwd() != cwd)
+   if (procInfo_->getCwd() != cwd && cwd.exists())
    {
-      procInfo_->setCwd(cwd);
+      FilePath resolvedCwd = cwd.resolveSymlink();
+      procInfo_->setCwd(resolvedCwd);
 
       json::Object termCwd;
       termCwd["handle"] = handle();
-      termCwd["cwd"] = module_context::createAliasedPath(cwd);
+      termCwd["cwd"] = module_context::createAliasedPath(resolvedCwd);
       module_context::enqueClientEvent(
             ClientEvent(client_events::kTerminalCwd, termCwd));
       childProcsSent_ = true;
