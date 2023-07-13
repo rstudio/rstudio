@@ -71,11 +71,11 @@ void scanPosixShells(std::vector<TerminalShell>* pShells)
             // we set the 'login' option after the shell is launched.
             if (prefs::userPrefs().terminalHooks())
             {
-               args = { "--emulate", "sh", "-g" };
+               args = { "--emulate", "sh" };
             }
             else
             {
-               args = { "-g" };
+               args = { "--histignorespace" };
             }
             
             addShell(core::FilePath(trimmedLine), TerminalShell::ShellType::PosixZsh,

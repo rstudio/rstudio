@@ -93,27 +93,60 @@ if [ -f "${RETICULATE_PYTHON}" ] || [ -f "${RETICULATE_PYTHON_FALLBACK}" ]; then
 		. "${_RS_PYTHON_BIN}/activate"
 	fi
 
-	# link commonly-used utilities into a temporary directory,
-	# and then place that directory on the PATH
-	if [ -d "${R_SESSION_TMPDIR}" ]; then
+	case "${_RS_PYTHON_BIN}" in
 
-		# create our custom terminal PATH location
-		_RS_TERMINAL_PATH="${R_SESSION_TMPDIR}/rstudio/terminal"
-		mkdir -p "${_RS_TERMINAL_PATH}"
-		PATH="${_RS_TERMINAL_PATH}:${PATH}"
+	# if Python is located within a 'system' directory, copy the commonly-used
+	# tools to a separate temporary directory, and place that on the PATH
+	"/usr/bin"|"/usr/local/bin")
+		if [ -d "${R_SESSION_TMPDIR}" ]; then
 
-		# put common utilities on the PATH
-		for _RS_PYTHON_TOOL in conda python python3 ipython ipython3 pip pip3 jupyter jupyter-run; do
-			if [ -e "${_RS_PYTHON_BIN}/${_RS_PYTHON_TOOL}" ]; then
-				ln -nfs "${_RS_PYTHON_BIN}/${_RS_PYTHON_TOOL}" "${_RS_TERMINAL_PATH}/${_RS_PYTHON_TOOL}"
-			fi
-		done
+			# create our custom terminal PATH location
+			_RS_TERMINAL_PATH="${R_SESSION_TMPDIR}/rstudio/terminal"
+			mkdir -p "${_RS_TERMINAL_PATH}"
+			PATH="${_RS_TERMINAL_PATH}:${PATH}"
 
-		# clean up when done
-		unset _RS_PYTHON_TOOL
-		unset _RS_TERMINAL_PATH
+			# put common utilities on the PATH
+			_RS_OWD="$(pwd)"
+			cd "${_RS_PYTHON_BIN}"
+			for _RS_PYTHON_TOOL in python python3 ipython ipython3 pip pip3 jupyter jupyter-*; do
+				if [ -e "${_RS_PYTHON_TOOL}" ]; then
+					ln -nfs "${_RS_PYTHON_BIN}/${_RS_PYTHON_TOOL}" "${_RS_TERMINAL_PATH}/${_RS_PYTHON_TOOL}"
+				fi
+			done
 
-	fi
+			# if only version-suffixed versions of tools are available, then
+			# also create a symlink so that the user can still invoke python
+			# with a plain 'python' call. note that we also create an alias
+			# as it looks like python can be sensitive to how it was invoked;
+			# e.g. it expects the binary to have a specific name.
+			#
+			# perhaps sort of like how a shell will run in a Bourne-shell
+			# compatibility mode if it's placed at /bin/sh, I guess?
+			cd "${_RS_TERMINAL_PATH}"
+			for _RS_PYTHON_TOOL in ipython python pip; do
+				if ! [ -e "${_RS_PYTHON_TOOL}" ]; then
+					if [ -e "${_RS_PYTHON_TOOL}3" ]; then
+						eval "alias ${_RS_PYTHON_TOOL}=${_RS_PYTHON_TOOL}3"
+						ln -nfs "${_RS_PYTHON_TOOL}3" "${_RS_PYTHON_TOOL}"
+					fi
+				fi
+			done
+
+			# clean up when done
+			cd "${_RS_OWD}"
+			unset _RS_OWD
+			unset _RS_PYTHON_TOOL
+			unset _RS_TERMINAL_PATH
+
+		fi
+	;;
+
+	# otherwise, use the directory as-is
+	*)
+		PATH="${_RS_PYTHON_BIN}:${PATH}"
+	;;
+
+	esac
 
 	unset _RS_PYTHON_BIN
 
