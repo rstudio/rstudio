@@ -65,7 +65,7 @@ public class PublishDocServicePage
             connectPage = new PublishReportSourcePage(rscTitle, rscDesc,
                   constants_.publishToRstudioConnect(),
                   new ImageResource2x(RSConnectResources.INSTANCE.localAccountIcon2x()), input, 
-                  false);
+                  false, true);
          }
       }
       WizardPage<RSConnectPublishInput, RSConnectPublishResult> rpubsPage  =
@@ -75,15 +75,31 @@ public class PublishDocServicePage
       String cloudSubtitle = constants_.cloudSubtitle();
 
       WizardPage<RSConnectPublishInput, RSConnectPublishResult> cloudPage = null;
-      // Posit Cloud now supports basic Rmarkdown document publishing including the source code
-      if (input.getContentType() == RSConnect.CONTENT_TYPE_DOCUMENT || input.getContentType() == RSConnect.CONTENT_TYPE_PRES)
+
+      if (input.isMultiRmd() && !input.isWebsiteRmd())
       {
-         cloudPage = new PublishFilesPage(cloudTitle, cloudSubtitle,
-            new ImageResource2x(RSConnectResources.INSTANCE.positCloudAccountIcon2x()),
-               input, false, false);
+         cloudPage = new PublishMultiplePage(cloudTitle, cloudSubtitle,
+            new ImageResource2x(RSConnectResources.INSTANCE.positCloudAccountIcon2x()), input);
+      } else
+      {
+         if (input.isStaticDocInput())
+         {
+            // static input implies static output
+            cloudPage = new PublishFilesPage(cloudTitle, cloudSubtitle,
+               new ImageResource2x(RSConnectResources.INSTANCE.positCloudAccountIcon2x()), input,
+               false, true);
+         }
+         else
+         {
+            cloudPage = new PublishReportSourcePage(cloudTitle, cloudSubtitle,
+               constants_.publishToPositCloud(),
+               new ImageResource2x(RSConnectResources.INSTANCE.positCloudAccountIcon2x()), input,
+               false, false);
+         }
       }
 
-      pages.add(rpubsPage);
+      if (input.isExternalUIEnabled() && !input.isWebsiteRmd())
+         pages.add(rpubsPage);
       if (input.isConnectUIEnabled())
          pages.add(connectPage);
       if (input.isCloudUIEnabled() && cloudPage != null)
