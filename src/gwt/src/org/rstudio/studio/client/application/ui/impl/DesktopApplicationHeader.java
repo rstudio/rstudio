@@ -234,7 +234,7 @@ public class DesktopApplicationHeader implements ApplicationHeader,
          ignoredUpdatesDirty_ = true;
       }
 
-      private IgnoredUpdates ignoredUpdates_;
+      private IgnoredUpdates ignoredUpdates_ = IgnoredUpdates.create();
       private boolean ignoredUpdatesDirty_ = false;
    }
 
@@ -550,15 +550,22 @@ public class DesktopApplicationHeader implements ApplicationHeader,
          // Only provide the option to ignore the update if it's not urgent.
          if (result.getUpdateUrgency() == 0)
          {
+            // We need to use a final variable here because we're using it in an
+            // anonymous inner class
+            final boolean finalIgnoredUpdate = ignoredUpdate;
             buttonLabels.add(constants_.ignoreUpdateButtonLabel());
             elementIds.add(ElementIds.DIALOG_CANCEL_BUTTON);
             buttonOperations.add(new Operation() {
                @Override
                public void execute()
                {
-                  ignoredUpdatesState_.addIgnoredUpdate(result.getUpdateVersion());
-                  // Trigger an update to the persistent updates state file
-                  eventBus_.fireEvent(new PushClientStateEvent(true));
+                  // only run the following code if we didn't already ignore the update
+                  if (!finalIgnoredUpdate)
+                  {
+                     ignoredUpdatesState_.addIgnoredUpdate(result.getUpdateVersion());
+                     // Trigger an update to the persistent updates state file
+                     eventBus_.fireEvent(new PushClientStateEvent(true));
+                  }
                }
             });
          }
