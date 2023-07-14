@@ -425,7 +425,7 @@ void SessionManager::removePendingLaunch(const r_util::SessionContext& context, 
                            " in " + std::to_string(startDuration.total_seconds()) + "." +
                                     std::to_string(startDuration.total_milliseconds() % 1000) + "s");
       }
-      else
+      else if (!errorMsg.empty())
          LOG_ERROR_MESSAGE(context.scope.workbench() + " session start failed for: " + context.username + ":" + context.scope.id() +
                            " in " + std::to_string(startDuration.total_seconds()) + "." +
                                     std::to_string(startDuration.total_milliseconds() % 1000) + "s error: " + errorMsg);
