@@ -519,7 +519,7 @@ void handleContentError(
       const Error& error)
 {   
    // if there was a launch pending then remove it
-   sessionManager().removePendingLaunch(context, false, "content error: " + error.asString());
+   sessionManager().removePendingLaunch(context, false, std::string());
 
 
    // check for authentication error
@@ -606,7 +606,7 @@ void handleRpcError(
       const Error& error)
 {
    // if there was a launch pending then remove it
-   sessionManager().removePendingLaunch(context, false, "rpc error: " + error.asString());
+   sessionManager().removePendingLaunch(context, false, std::string());
 
    // check for authentication error
    if (server::isAuthenticationError(error))
