@@ -1941,9 +1941,7 @@ int main(int argc, char * const argv[])
       //
       // https://github.com/mirror/mingw-w64/blob/eff726c461e09f35eeaed125a3570fa5f807f02b/mingw-w64-crt/crt/crtexe.c#L98-L108
 #ifdef _WIN32
-      std::string enabled = core::system::getenv("RSTUDIO_WIN32_ENABLE_INVALID_PARAMETER_HANDLER");
-      if (core::string_utils::isTruthy(enabled, true))
-         _set_invalid_parameter_handler(win32InvalidParameterHandler);
+      _set_invalid_parameter_handler(win32InvalidParameterHandler);
 #endif
 
       // save fallback library path
