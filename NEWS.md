@@ -15,6 +15,7 @@
 - Fixed broken Help pane after navigating to code demo (#13263)
 - Fixed bug preventing Update Available from displaying (#13347)
 - Fixed bug causing dataframe help preview to fail for nested objects (#13291)
+- Fixed issue where changes to binary files were not presented in Git History view (#13126)
 - Fixed bug where clicking "Ignore Update" would fail to ignore the update (#13379)
 
 ### Performance
