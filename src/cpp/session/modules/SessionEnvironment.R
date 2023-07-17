@@ -20,7 +20,7 @@
       .rs.isFunctionMasked(functionName, packageName),
       error = function(e) FALSE
    )
-   
+
    .rs.scalar(result)
 })
 
@@ -32,13 +32,13 @@
       envir = globalenv(),
       mode = "function"
    )
-   
+
    packageValue <- get(
       x = functionName,
       envir = asNamespace(packageName),
       mode = "function"
    )
-   
+
    !identical(globalValue, packageValue)
 })
 
@@ -47,7 +47,7 @@
    .rs.withTimeLimit(1, fail = "<truncated>", {
       capture.output(try(str(val), silent = TRUE))
    })
-   
+
 })
 
 .rs.addFunction("valueAsString", function(val)
@@ -89,7 +89,7 @@
             quote = "\"",
             na.encode = FALSE
          )
-         
+
          fmt <- "chr [1:%i] %s"
          txt <- sprintf(fmt, n, paste(encoded, collapse = " "))
          .rs.truncate(txt)
@@ -161,11 +161,11 @@
    {
       # for Oracle R frames, show the query if it exists
       query <- attr(val, "dataQry", exact = TRUE)
-      
+
       # no query, show empty
       if (is.null(query))
-         return("NO_VALUE") 
-      
+         return("NO_VALUE")
+
       # query, display it
       attributes(query) <- NULL
       paste("   Query:", query)
@@ -178,9 +178,9 @@
    else
    {
       output <- .rs.valueFromStr(val)
-      
+
       n <- length(output)
-      
+
       # only return the first 150 lines of detail (generally columns)--any more
       # won't be very presentable in the environment pane. the first line
       # generally contains descriptive text, so don't return that.
@@ -194,7 +194,7 @@
       {
         output <- output[-1]
       }
-      
+
       output
    }
 })
@@ -210,7 +210,7 @@
    # NOTE: substitute() returns the expression associated with a promise,
    # without forcing it to be evaluated
    expr <- substitute(obj)
-   
+
    # if this appears to be a call to 'lazyLoadDBfetch()', that implies
    # this is lazy-loaded data (typically associated with an R package).
    # handle those up front
@@ -218,17 +218,17 @@
       is.call(expr) &&
       is.name(expr[[1L]]) &&
       identical(expr[[1L]], as.name("lazyLoadDBfetch"))
-   
+
    if (isLazyLoad)
       return("<Promise>")
-   
+
    # for some calls, e.g. those formed manually or those evaluated via
    # do.call(), the 'expression' here might just be an already-evaluated
    # R object. in such a case, we want to avoid deparsing the object as
    # it could be expensive (especially for large objects).
    if (!is.call(expr))
       return(.rs.valueDescription(expr))
-   
+
    # we have a call; try to deparse it
    .rs.describeCall(expr)
 })
@@ -277,33 +277,33 @@
 
   # To proceed, we need the function to look in, and either the raw call
   # object (which we will deparse later) or the text to look for.
-  if (is.null(fun) || 
+  if (is.null(fun) ||
       (is.null(call) && is.null(calltext)) )
      return(c(0L, 0L, 0L, 0L, 0L, 0L))
 
   lines <- .rs.deparseFunction(fun, FALSE, FALSE)
 
   # Remember the indentation level on each line (added by deparse), and remove
-  # it along with any other leading or trailing whitespace. 
+  # it along with any other leading or trailing whitespace.
   indents <- nchar(sub("\\S.*", "", lines))
   slines <- sub("\\s+$", "", sub("^\\s+", "", lines))
 
   # Compute the character position of the start of each line, and collapse the
-  # lines to a character vector of length 1. 
+  # lines to a character vector of length 1.
   nchars <- 0
   offsets <- integer(length(slines))
   for (i in 1:length(slines)) {
     nchars <- nchars + nchar(slines[i]) + 1
     offsets[i] <- nchars
   }
-  
+
   singleline <- paste(slines, collapse = " ")
-  
+
   if (is.null(calltext))
   {
      # No call text specified; deparse into a list of lines
      # limit length of deparsed output to avoid issues with very large calls
-     # 
+     #
      # this implies that we might be unable to highlight calls larger than
      # the below number of lines, but in practice such a large highlight
      # would be unlikely to be useful
@@ -327,13 +327,13 @@
 
   # NULL is output by R when it doesn't have an expression to output; don't
   # try to match it to code
-  if (identical(calltext, "NULL")) 
+  if (identical(calltext, "NULL"))
      return(c(0L, 0L, 0L, 0L, 0L, 0L))
 
   pos <- gregexpr(calltext, singleline, fixed = TRUE)[[1]]
   if (length(pos) > 1)
   {
-     # There is more than one instance of the call text in the function; try 
+     # There is more than one instance of the call text in the function; try
      # to pick the first match past the preferred line.
      best <- which(pos > offsets[linepref])
      if (length(best) == 0)
@@ -361,14 +361,14 @@
   if (is.na(lastline))
      lastline <- length(offsets)
 
-  # Compute the starting and ending character positions within the line, 
-  # taking into account the indents we removed earlier. 
+  # Compute the starting and ending character positions within the line,
+  # taking into account the indents we removed earlier.
   firstchar <- pos - (if (firstline == 1) 0 else offsets[firstline - 1])
   firstchar <- firstchar + indents[firstline]
 
-  # If the match is a block ({ ... }) and contains more than a few lines, 
+  # If the match is a block ({ ... }) and contains more than a few lines,
   # match the first line instead of the whole block; having the entire contents
-  # of the code browser highlighted is not useful. 
+  # of the code browser highlighted is not useful.
   if (substr(calltext, 1, 1) == "{" &&
       substr(calltext, nchar(calltext), nchar(calltext)) == "}" &&
       lastline - firstline > 5)
@@ -394,13 +394,13 @@
       attr(val, "_rs_call", exact = TRUE),
       val
    )
-   
+
    if (is.function(call[[1]]))
       return("[Anonymous function]")
-   
+
    if (is.name(call[[1L]]))
       return(as.character(call[[1L]]))
-   
+
    .rs.deparse(call[[1L]])
 })
 
@@ -418,10 +418,10 @@
       long <-
          is.name(callee) &&
          length(object) > 20
-      
+
       if (long)
          return(as.call(list(callee, quote(...))))
-      
+
       # sanitize each call entry separately
       for (i in seq_along(object))
       {
@@ -431,7 +431,7 @@
          if (!missing(sanitized) && !is.null(sanitized))
             object[[i]] <- sanitized
       }
-      
+
       # return object
       object
    }
@@ -470,7 +470,7 @@
       attr(val, "_rs_call", exact = TRUE),
       val
    )
-   
+
    # some calls might be very large when deparsed, especially when
    # they include R objects which have already been evaluated. this
    # happens most often with calls like:
@@ -481,10 +481,10 @@
    # issues by replacing such objects with a short identifier of their
    # type / class
    call <- .rs.sanitizeCall(call)
-   
+
    # deparse call
    .rs.deparse(call)
-   
+
 })
 
 .rs.addFunction("valueDescription", function(obj)
@@ -509,7 +509,7 @@
    {
       sqlTable <- attr(obj, "sqlTable", exact = TRUE)
       if (is.null(sqlTable))
-         return("Oracle R frame") 
+         return("Oracle R frame")
       else
          return(paste("Oracle R frame:", sqlTable))
    }
@@ -549,7 +549,7 @@
    else if (is.matrix(obj)
             || is.numeric(obj)
             || is.factor(obj)
-            || is.raw(obj) 
+            || is.raw(obj)
             || is.character(obj)
             || is.logical(obj))
    {
@@ -567,29 +567,29 @@
    # 'utils::file.edit()', so just edit the requested file
    if (missing(name) || is.null(name))
       return(.Call("rs_editFile", file, PACKAGE = "(embedding)"))
-   
+
    # otherwise, we're more likely being invoked by 'edit()', which
    # requires the parsed file to be valid R code -- so handle that
-   
+
    # if no file has been supplied, generate one for the user
    if (is.null(file) || !nzchar(file)) {
       file <- tempfile("rstudio-scratch-", fileext = ".R")
       on.exit(unlink(file), add = TRUE)
    }
-   
+
    # write deparsed R object to file
    deparsed <- if (is.function(name))
       .rs.deparseFunction(name, useSource = TRUE, asString = FALSE)
    else
       deparse(name)
    writeLines(deparsed, con = file)
-   
+
    # invoke edit
    .Call("rs_editFile", file, PACKAGE = "(embedding)")
-   
+
    # attempt to parse-eval the generated content
    eval(parse(file), envir = globalenv())
-   
+
 })
 
 .rs.addFunction("registerFunctionEditor", function()
@@ -616,7 +616,7 @@
    sanitized <- .rs.sanitizeCall(call)
    val1 <- .rs.deparse(sanitized, nlines = 1L)
    val2 <- .rs.deparse(sanitized, nlines = 2L)
-   
+
    # indicate if there is more output
    val <- if (!identical(val1, val2))
       paste(val1, "<...>")
@@ -632,14 +632,14 @@
 .rs.addFunction("describeObject", function(env, objName, computeSize = TRUE)
 {
    obj <- get(objName, env)
-   
+
    # https://github.com/rstudio/rstudio/issues/9328
    if (missing(obj))
       obj <- as.name("Missing argument")
-   
+
    if (inherits(obj, "python.builtin.object"))
       return(.rs.reticulate.describeObject(objName, env))
-   
+
    # NOTE (kevin): we previously screened R objects for null pointers here,
    # as we had seen in the distant past that attempting to introspect such
    # objects would cause an R session crash. that no longer appears to be
@@ -655,15 +655,15 @@
       .rs.hasExternalPointer(obj, TRUE)
    else
       FALSE
-   
-   if (hasNullPtr) 
+
+   if (hasNullPtr)
    {
       val <- "<Object with null pointer>"
       desc <- "An R object containing a null external pointer"
       size <- 0
       len <- 0
    }
-   else 
+   else
    {
       val <- "(unknown)"
       desc <- ""
@@ -673,11 +673,11 @@
       size <- if (computeSize) object.size(obj) else 0
       len <- length(obj)
    }
-   
+
    class <- .rs.getSingleClass(obj)
    contents <- list()
    contents_deferred <- FALSE
-   
+
    # for language objects, don't evaluate, just show the expression
    if (is.symbol(obj))
    {
@@ -685,7 +685,7 @@
    }
    else if (is.language(obj))
    {
-      .rs.describeCall(obj)  
+      .rs.describeCall(obj)
    }
    else if (!hasNullPtr)
    {
@@ -702,7 +702,7 @@
          {
             ""
          }
-         
+
          # data frames are likely to be large, but a summary is still helpful
          if (is.data.frame(obj))
          {
@@ -721,7 +721,7 @@
          val <- .rs.valueAsString(obj)
          desc <- .rs.valueDescription(obj)
 
-         # expandable object--supply contents 
+         # expandable object--supply contents
          if (is.list(obj) ||  is.data.frame(obj) || isS4(obj) ||
              inherits(obj, c("data.table", "ore.frame", "cast_df", "xts", "DataFrame")))
          {
@@ -739,7 +739,7 @@
          }
       }
    }
-   
+
    list(
       name              = .rs.scalar(objName),
       type              = .rs.scalar(class),
@@ -752,7 +752,7 @@
       contents          = contents,
       contents_deferred = .rs.scalar(contents_deferred)
    )
-   
+
 })
 
 # returns the name and frame number of an environment from a call frame
@@ -765,7 +765,7 @@
       if (identical(sys.frame(i), env))
       {
          calldesc <- paste(deparse(sys.call(i)[[1]]), "()", sep="")
-         result <- list(name = .rs.scalar(calldesc), 
+         result <- list(name = .rs.scalar(calldesc),
                         frame = .rs.scalar(i),
                         local = .rs.scalar(TRUE))
          break
@@ -781,12 +781,12 @@
 # global environment in the search path)
 .rs.addFunction("environmentIsLocal", function(env)
 {
-   while (!identical(env, emptyenv())) 
+   while (!identical(env, emptyenv()))
    {
       # if one of this environment's parents is the global environment, it's
       # local
       env = parent.env(env)
-      if (identical(env, globalenv())) 
+      if (identical(env, globalenv()))
          return(TRUE)
    }
    return(FALSE)
@@ -794,7 +794,7 @@
 
 .rs.addFunction("environmentName", function(env)
 {
-   # global environment 
+   # global environment
    if (identical(env, globalenv()))
      return(".GlobalEnv")
 
@@ -803,16 +803,16 @@
      return("package:base")
 
    # look for the environment's given name; if it doesn't have a name, check
-   # the callstack to see if it matches the environment in one of the call 
+   # the callstack to see if it matches the environment in one of the call
    # frames.
    result <- environmentName(env)
-   
+
    if (nchar(result) == 0)
       .rs.environmentCallFrameName(env)$name
    else
    {
       # resolve namespaces
-      if ((result %in% loadedNamespaces()) && 
+      if ((result %in% loadedNamespaces()) &&
           identical(asNamespace(result), env))
          paste("namespace:", result, sep = "")
       else
@@ -851,9 +851,9 @@
    # through the rest of the search path.
    while (!identical(env, emptyenv()))
    {
-      # mark all environments as local until we reach the global 
+      # mark all environments as local until we reach the global
       # environment
-      if (identical(env, globalenv())) 
+      if (identical(env, globalenv()))
          local <- FALSE
 
       envName <- environmentName(env)
@@ -904,7 +904,7 @@
 .rs.addFunction("resolveContextSourceRefs", function(callfun)
 {
    calls <- sys.calls()
-   
+
    for (i in seq_along(calls))
    {
       fn <- sys.function(i)
@@ -914,9 +914,9 @@
          return(srcref)
       }
    }
-   
+
    NULL
-   
+
 })
 
 .rs.addFunction("environment.isSuspendable", function()
@@ -932,33 +932,34 @@
    # Avoid overly-deep recursions.
    if (depth >= 8L)
       return(TRUE)
-   
+
    # Skip overly-large objects.
    n <- length(value)
    if (n >= 10000L)
       return(TRUE)
-   
+
    # Python objects are connected to the underlying session, and so
    # cannot be restored after a suspend.
-   if (is.environment(value) && inherits(value, "python.builtin.object"))
+   if ((is.environment(value) || is.function(value)) &&
+       inherits(value, "python.builtin.object"))
       return(FALSE)
-   
+
    # Database connections cannot be serialized and restored.
    if (inherits(value, "DBIConnection"))
       return(FALSE)
-   
+
    # Arrow objects cannot be serialized and restored.
    if (inherits(value, "ArrowObject"))
       return(FALSE)
-   
+
    # Objects containing external pointers cannot be serialized.
    if (typeof(value) %in% c("externalptr", "weakref"))
       return(FALSE)
-   
+
    # Assume that data.frame objects won't contain external pointers.
    if (is.data.frame(value))
       return(TRUE)
-   
+
    # Iterate through other recursive objects.
    if (is.environment(value)) {
       keys <- ls(envir = value, all.names = TRUE)
@@ -974,7 +975,7 @@
          }
       }
    }
-      
+
    # Assume that other kinds of objects can be restored.
    TRUE
 })
