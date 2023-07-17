@@ -39,7 +39,10 @@ public class ApplicationUtils
    }
    
    /**
-    * Compares two version strings of the format "MAJOR.MINOR.PATCH" or "YEAR.MONTH.PATCH+COMMITS".
+    * Compares two version strings, which may be in these formats:
+    *   * MAJOR.MINOR.PATCH - e.g. 3.6.0
+    *   * YEAR.MONTH.PATCH+COMMITS - e.g. 2023.06.0+421
+    *   * MAJOR.MINOR.PATCH-NUM - e.g. 1.4.1743-4
     * @example compareVersions("2023.06.0+421", "2023.06.1+524") returns -1
     *          compareVersions("2023.06.1+524", "2023.06.1+524") returns 0
     *          compareVersions("2023.06.2+999", "2023.06.1+524") returns 1
@@ -51,7 +54,7 @@ public class ApplicationUtils
     */
    public static int compareVersions(String version1, String version2)
    {
-      String versionRegex = "\\.|\\+";
+      String versionRegex = "\\.|\\+|\\-";
       String[] v1parts = version1.split(versionRegex); // example: ["2023", "06", "0", "421"]
       String[] v2parts = version2.split(versionRegex); // example: ["2023", "06", "1", "524"]
       int numParts = Math.min(v1parts.length, v2parts.length);
