@@ -43,9 +43,9 @@ public class ApplicationUtils
     *   * MAJOR.MINOR.PATCH - e.g. 3.6.0
     *   * YEAR.MONTH.PATCH+COMMITS - e.g. 2023.06.0+421
     *   * MAJOR.MINOR.PATCH-NUM - e.g. 1.4.1743-4
-    * @example compareVersions("2023.06.0+421", "2023.06.1+524") returns -1
+    * @example compareVersions("2023.06.0+421", "2023.06.1+524") returns < 0
     *          compareVersions("2023.06.1+524", "2023.06.1+524") returns 0
-    *          compareVersions("2023.06.2+999", "2023.06.1+524") returns 1
+    *          compareVersions("2023.06.2+999", "2023.06.1+524") returns > 0
     * @param version1 The first version string to compare
     * @param version2 The second version string to compare
     * @return < 0 if version1 is earlier than version 2
