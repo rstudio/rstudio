@@ -23,6 +23,7 @@ import org.rstudio.core.client.widget.WizardPage;
 import org.rstudio.studio.client.rsconnect.RsconnectConstants;
 import org.rstudio.studio.client.rsconnect.model.RSConnectPublishInput;
 import org.rstudio.studio.client.rsconnect.model.RSConnectPublishResult;
+import org.rstudio.studio.client.rsconnect.ui.RSConnectDeploy.ServerType;
 
 public class RSConnectPublishWizard 
    extends Wizard<RSConnectPublishInput, RSConnectPublishResult>
@@ -38,17 +39,21 @@ public class RSConnectPublishWizard
    {
       if (!input.hasDocOutput() && input.isMultiRmd() && !input.isWebsiteRmd())
       {
-         // multiple docs -- see if we should send them all up
-         return new PublishMultiplePage(constants_.publish(), constants_.publish(), null, input);
+         // multiple docs -- ask user if we should send them all up
+         // can be published to Connect or Posit Cloud if user has accounts configured
+         return new PublishMultiplePage(constants_.publish(), constants_.publish(), null, input, null);
       }
-      else if (input.isWebsiteRmd() || !input.isMultiRmd() && 
-               (!input.isExternalUIEnabled() || input.isWebsiteRmd()))
+      else if (!input.isCloudUIEnabled() &&
+               (input.isWebsiteRmd() ||
+               (!input.isMultiRmd() && !input.isExternalUIEnabled())))
       {
-         // a single doc, but it can't go to RPubs because RPubs is disabled,
-         // or because the doc is not self-contained, or is a website
+         // a single doc, but it can't go to RPubs because
+         // the doc is a website or RPubs is disabled,
+         // and it can't go to Cloud because Cloud is disabled
+         // so it has to go to Connect -- don't prompt the user for a destination
          return new PublishReportSourcePage(constants_.publish(), constants_.publish(),
                constants_.publishToRstudioConnect(),null, input,
-               false);
+               false, true, ServerType.RSCONNECT);
       }
       else
       {

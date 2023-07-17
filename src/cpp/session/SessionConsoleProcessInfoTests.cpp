@@ -254,6 +254,7 @@ TEST_CASE("ConsoleProcessInfo")
       CHECK(sameCpi(cpiOrig, *pCpiRestored));
    }
 
+#ifdef __linux__
    SECTION("Restore with cwd symlink")
    {
       // ensure file does not exist so symlink can be created
@@ -277,6 +278,7 @@ TEST_CASE("ConsoleProcessInfo")
       CHECK(pCpiRestored->getCwd().getAbsolutePath() == cpiOrig.getCwd().resolveSymlink().getAbsolutePath());
       cwdLink.remove();
    }
+#endif
 
    SECTION("Persist and restore for non-terminals")
    {
