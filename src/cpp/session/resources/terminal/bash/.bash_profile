@@ -8,6 +8,7 @@ if [ "${_REALENV}" = "<unset>" ]; then
 	unset ENV
 else
 	ENV="${_REALENV}"
+	export ENV
 fi
 
 # unset the _REALENV variable

@@ -66,16 +66,16 @@ void scanPosixShells(std::vector<TerminalShell>* pShells)
             foundZsh = true;
             std::vector<std::string> args;
             
-            // NOTE: We don't launch zsh as a login shell here, as zsh will source
-            // /etc/profile when emulating 'sh', which we want to avoid. Instead,
-            // we set the 'login' option after the shell is launched.
             if (prefs::userPrefs().terminalHooks())
             {
+               // NOTE: We don't launch zsh as a login shell here, as zsh will source
+               // /etc/profile when emulating 'sh', which we want to avoid. Instead,
+               // we set the 'login' option after the shell is launched.
                args = { "--emulate", "sh" };
             }
             else
             {
-               args = { "--histignorespace" };
+               args = { "--login", "--histignorespace" };
             }
             
             addShell(core::FilePath(trimmedLine), TerminalShell::ShellType::PosixZsh,
