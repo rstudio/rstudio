@@ -982,7 +982,7 @@ void augmentTerminalProcess(ConsoleProcessPtr cp)
 {
    if (prefs::userPrefs().terminalHooks())
    {
-      if (!prefs::userPrefs().terminalPythonIntegration())
+      if (prefs::userPrefs().terminalPythonIntegration())
          augmentTerminalProcessPython(cp);
       
       useTerminalHooks(cp);
