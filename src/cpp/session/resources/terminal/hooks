@@ -97,7 +97,8 @@ if [ -f "${RETICULATE_PYTHON}" ] || [ -f "${RETICULATE_PYTHON_FALLBACK}" ]; then
 
 	# if Python is located within a 'system' directory, copy the commonly-used
 	# tools to a separate temporary directory, and place that on the PATH
-	"/usr/bin"|"/usr/local/bin")
+	/usr/bin|/usr/local/bin|/opt/local/bin|/opt/homebrew/bin|/Library/Frameworks/*)
+
 		if [ -d "${R_SESSION_TMPDIR}" ]; then
 
 			# create our custom terminal PATH location
@@ -139,6 +140,7 @@ if [ -f "${RETICULATE_PYTHON}" ] || [ -f "${RETICULATE_PYTHON_FALLBACK}" ]; then
 			unset _RS_TERMINAL_PATH
 
 		fi
+
 	;;
 
 	# otherwise, use the directory as-is
