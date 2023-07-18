@@ -1377,7 +1377,7 @@ FilePath currentWorkingDirViaProcFs(PidType pid)
 
    // /proc/PID/cwd is a symbolic link to the process' current working directory
    FilePath pidPath = procFsPath.completePath(procId).completePath("cwd");
-   if (pidPath.isSymlink())
+   if (pidPath.isSymlink() && pidPath.exists())
       return pidPath.resolveSymlink();
    else
       return FilePath();
