@@ -3,6 +3,7 @@
 ### New
 - Prometheus metrics are available in Posit Workbench (rstudio-pro:#3273)
 - Update to Electron 25.2.0 (#13322)
+- Additional support for publishing new content types to Posit Cloud (rstudio-pro#4541)
 
 ### Fixed
 - Fixed issue where Electron menubar commands are not disabled when modals are displayed (#12972)
@@ -14,6 +15,8 @@
 - Fixed broken Help pane after navigating to code demo (#13263)
 - Fixed bug preventing Update Available from displaying (#13347)
 - Fixed bug causing dataframe help preview to fail for nested objects (#13291)
+- Fixed issue where changes to binary files were not presented in Git History view (#13126)
+- Fixed bug where clicking "Ignore Update" would fail to ignore the update (#13379)
 
 ### Performance
 - Improved performance of group membership tests (rstudio-pro:#4643)

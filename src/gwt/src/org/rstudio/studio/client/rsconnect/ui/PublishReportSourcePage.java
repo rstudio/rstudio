@@ -23,8 +23,10 @@ import org.rstudio.core.client.widget.WizardPage;
 import org.rstudio.studio.client.rsconnect.RsconnectConstants;
 import org.rstudio.studio.client.rsconnect.model.RSConnectPublishInput;
 import org.rstudio.studio.client.rsconnect.model.RSConnectPublishResult;
+import org.rstudio.studio.client.rsconnect.ui.RSConnectDeploy.ServerType;
 
 import com.google.gwt.resources.client.ImageResource;
+
 
 public class PublishReportSourcePage 
    extends WizardNavigationPage<RSConnectPublishInput, RSConnectPublishResult>
@@ -37,15 +39,17 @@ public class PublishReportSourcePage
          ImageResource icon,
          RSConnectPublishInput input,
          boolean asMultiple,
-         boolean allowScheduling)
+         boolean allowScheduling,
+         ServerType serverType)
    {
       super(title, subTitle, pageCaption, icon, null,
-            createPages(input, asMultiple, allowScheduling));
+            createPages(input, asMultiple, allowScheduling, serverType));
    }
 
    private static ArrayList<WizardPage<RSConnectPublishInput, 
                                        RSConnectPublishResult>> 
-           createPages(RSConnectPublishInput input, boolean asMultiple, boolean allowScheduling)
+           createPages(RSConnectPublishInput input, boolean asMultiple, boolean allowScheduling,
+                       ServerType serverType)
    {
       ArrayList<WizardPage<RSConnectPublishInput, 
                            RSConnectPublishResult>> pages = new ArrayList<>();
@@ -68,12 +72,12 @@ public class PublishReportSourcePage
       pages.add(new PublishFilesPage(constants_.publishFilesPageTitle(descriptor),
             publishSourceSubtitle,
             new ImageResource2x(RSConnectResources.INSTANCE.publishDocWithSource2x()), 
-            input, asMultiple, false));
+            input, asMultiple, false, serverType));
       String staticTitle = constants_.publishReportSourcePageStaticTitle(descriptor);
       String staticSubtitle = constants_.publishReportSourcePageStaticSubtitle();
       pages.add(new PublishFilesPage(staticTitle, staticSubtitle, 
             new ImageResource2x(RSConnectResources.INSTANCE.publishDocWithoutSource2x()), 
-            input, asMultiple, true));
+            input, asMultiple, true, serverType));
       return pages;
    }
    private static final RsconnectConstants constants_ = GWT.create(RsconnectConstants.class);

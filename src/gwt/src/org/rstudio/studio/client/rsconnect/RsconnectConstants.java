@@ -710,11 +710,11 @@ public interface RsconnectConstants extends com.google.gwt.i18n.client.Messages{
     String rPubsSubtitle();
 
     /**
-     * Translated "Posit Cloud is our online service that lets you do, share, teach and learn data science in your web browser.".
+     * Translated "Posit Cloud lets you create shareable data projects, host applications, and publish data-driven documents online. Create your free account today.".
      *
-     * @return translated "Posit Cloud is our online service that lets you do, share, teach and learn data science in your web browser."
+     * @return translated "Posit Cloud lets you create shareable data projects, host applications, and publish data-driven documents online. Create your free account today."
      */
-    @DefaultMessage("Posit Cloud is our online service that lets you do, share, teach and learn data science in your web browser.")
+    @DefaultMessage("Posit Cloud lets you create shareable data projects, host applications, and publish data-driven documents online. Create your free account today.")
     @Key("cloudSubtitle")
     String cloudSubtitle();
 
@@ -809,11 +809,11 @@ public interface RsconnectConstants extends com.google.gwt.i18n.client.Messages{
     String publishReportSourcePageSubTitle(String scheduledReportNumber, String descriptor);
 
     /**
-     * Translated "Choose this option if you want to create or rebuild your {0} on the server.".
+     * Translated "Choose this option if you want to be able to rebuild your {0} on the server.".
      *
-     * @return translated "Choose this option if you want to create or rebuild your {0} on the server."
+     * @return translated "Choose this option if you want to be able to rebuild your {0} on the server."
      */
-    @DefaultMessage("Choose this option if you want to create or rebuild your {0} on the server.")
+    @DefaultMessage("Choose this option if you want to be able to rebuild your {0} on the server.")
     @Key("publishReportNoScheduledSourcePageSubtitle")
     String publishReportNoScheduledSourcePageSubtitle(String descriptor);
 
