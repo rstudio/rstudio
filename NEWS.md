@@ -17,6 +17,7 @@
 - Fixed bug causing dataframe help preview to fail for nested objects (#13291)
 - Fixed issue where changes to binary files were not presented in Git History view (#13126)
 - Fixed bug where clicking "Ignore Update" would fail to ignore the update (#13379)
+- Fixed bug preventing `HOME` from being modified in system init scripts (rstudio-pro:#4584)
 
 ### Performance
 - Improved performance of group membership tests (rstudio-pro:#4643)
