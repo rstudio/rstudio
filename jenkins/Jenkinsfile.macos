@@ -23,11 +23,11 @@ pipeline {
   environment {
     PATH = "$HOME/opt/bin:/usr/local/bin:/usr/bin:/bin:/usr/sbin:/sbin"
     PACKAGE_OS = 'macOS'
-    RSTUDIO_VERSION = ""
-    RSTUDIO_VERSION_MAJOR = ""
-    RSTUDIO_VERSION_MINOR = ""
-    RSTUDIO_VERSION_PATCH = ""
-    RSTUDIO_VERSION_SUFFIX = ""
+    RSTUDIO_VERSION = "2023.07.999"
+    RSTUDIO_VERSION_MAJOR = "2023"
+    RSTUDIO_VERSION_MINOR = "07"
+    RSTUDIO_VERSION_PATCH = "999"
+    RSTUDIO_VERSION_SUFFIX = "999"
     IS_PRO = false
   }
   stages {
@@ -149,7 +149,7 @@ pipeline {
                 }
 
               stage('Notarize and Upload') {
-                when { expression { return params.PUBLISH } }
+                // when { expression { return params.PUBLISH } }
                 
                 environment {
                   PATH = "${env.HOME}/opt/bin:${env.PATH}"
@@ -177,89 +177,89 @@ pipeline {
                     }
                   }
 
-                  stage("Upload Package") {
-                    steps {
-                      // this job is going to run on a macOS build agent, which cannot use an instance-profile
-                      withAWS(role: 'ide-build', region: 'us-east-1') {
-                        retry(5) {
-                          script {
-                            utils.uploadPackageToS3 "package/osx/build/${PACKAGE_FILE}", "${AWS_PATH}/"
-                          }
-                        }
-                      }
-                    }
-                  }
+                  // stage("Upload Package") {
+                  //   steps {
+                  //     // this job is going to run on a macOS build agent, which cannot use an instance-profile
+                  //     withAWS(role: 'ide-build', region: 'us-east-1') {
+                  //       retry(5) {
+                  //         script {
+                  //           utils.uploadPackageToS3 "package/osx/build/${PACKAGE_FILE}", "${AWS_PATH}/"
+                  //         }
+                  //       }
+                  //     }
+                  //   }
+                  // }
                   
-                  stage("Sentry Upload") {
-                    when { expression { return params.DAILY } }
+                  // stage("Sentry Upload") {
+                  //   when { expression { return params.DAILY } }
 
-                    environment {
-                      SENTRY_API_KEY = credentials('ide-sentry-api-key')
-                    }
+                  //   environment {
+                  //     SENTRY_API_KEY = credentials('ide-sentry-api-key')
+                  //   }
                     
-                    steps {
-                      // upload debug symbols to Sentry
-                      retry(5) {
-                        // timeout sentry in 15 minutes
-                        timeout(activity: true, time: 15) {
-                          // upload Javascript source maps, but only once
-                          dir ('package/osx/build/gwt') {
-                            script {
-                              if (FLAVOR == 'Electron') {
-                                utils.sentryUploadSourceMaps()
-                              }
-                            }
-                          }
+                  //   steps {
+                  //     // upload debug symbols to Sentry
+                  //     retry(5) {
+                  //       // timeout sentry in 15 minutes
+                  //       timeout(activity: true, time: 15) {
+                  //         // upload Javascript source maps, but only once
+                  //         dir ('package/osx/build/gwt') {
+                  //           script {
+                  //             if (FLAVOR == 'Electron') {
+                  //               utils.sentryUploadSourceMaps()
+                  //             }
+                  //           }
+                  //         }
 
-                          // upload C++ debug information
-                          dir ('package/osx/build/src/cpp') {
-                            script {
-                              utils.sentryUpload 'dsym'
-                            }
-                          }
-                        }
-                      }
-                    }
-                  }
+                  //         // upload C++ debug information
+                  //         dir ('package/osx/build/src/cpp') {
+                  //           script {
+                  //             utils.sentryUpload 'dsym'
+                  //           }
+                  //         }
+                  //       }
+                  //     }
+                  //   }
+                  // }
                   
-                  stage("Publish") {
-                    environment {
-                      GITHUB_LOGIN = credentials('posit-jenkins')
-                      DAILIES_PATH = "${PRODUCT}/macos"
-                    }
+                  // stage("Publish") {
+                  //   environment {
+                  //     GITHUB_LOGIN = credentials('posit-jenkins')
+                  //     DAILIES_PATH = "${PRODUCT}/macos"
+                  //   }
 
-                    steps {
-                      dir("package/osx/build") {
-                        script {
-                          // publish build to dailies page
-                          utils.publishToDailiesSite PACKAGE_FILE, DAILIES_PATH, AWS_PATH
-                        }
-                      }
-                    }
-                  }
+                  //   steps {
+                  //     dir("package/osx/build") {
+                  //       script {
+                  //         // publish build to dailies page
+                  //         utils.publishToDailiesSite PACKAGE_FILE, DAILIES_PATH, AWS_PATH
+                  //       }
+                  //     }
+                  //   }
+                  // }
 
-                  stage("Update Daily Build Redirects") {
-                    environment {
-                      RSTUDIO_ORG_PEM = credentials('www-rstudio-org-pem')
-                    }
+                  // stage("Update Daily Build Redirects") {
+                  //   environment {
+                  //     RSTUDIO_ORG_PEM = credentials('www-rstudio-org-pem')
+                  //   }
 
-                    // for pro, update with Qt
-                    // for open source, update with Electron
-                    when { 
-                      anyOf {
-                        expression { return params.PUBLISH && params.DAILY && IS_PRO == true && FLAVOR == "Desktop" }
-                        expression { return params.PUBLISH && params.DAILY && IS_PRO == false && FLAVOR == "Electron" }
-                        expression { return params.PUBLISH && params.DAILY && FLAVOR == "Server" }
-                      }
-                    }
+                  //   // for pro, update with Qt
+                  //   // for open source, update with Electron
+                  //   when { 
+                  //     anyOf {
+                  //       expression { return params.PUBLISH && params.DAILY && IS_PRO == true && FLAVOR == "Desktop" }
+                  //       expression { return params.PUBLISH && params.DAILY && IS_PRO == false && FLAVOR == "Electron" }
+                  //       expression { return params.PUBLISH && params.DAILY && FLAVOR == "Server" }
+                  //     }
+                  //   }
 
-                    steps {
-                      script {
-                        // upload daily build redirects
-                        utils.updateDailyRedirects "${AWS_PATH}/${PACKAGE_FILE}"
-                      }
-                    }
-                  }
+                  //   steps {
+                  //     script {
+                  //       // upload daily build redirects
+                  //       utils.updateDailyRedirects "${AWS_PATH}/${PACKAGE_FILE}"
+                  //     }
+                  //   }
+                  // }
                 }
               }
             }
@@ -272,7 +272,7 @@ pipeline {
   post {
     always {
       deleteDir()
-      sendNotifications slack_channel: SLACK_CHANNEL
+      // sendNotifications slack_channel: SLACK_CHANNEL
     }
   }
 
