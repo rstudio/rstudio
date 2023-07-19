@@ -1,5 +1,13 @@
 #!/usr/bin/env sh
 
+# bail if python integration isn't enabled here
+if [ "${_RS_TERMINAL_PYTHON_INTEGRATION_ENABLED_}" != "TRUE" ]; then
+	unset _RS_TERMINAL_PYTHON_INTEGRATION_ENABLED_
+	return 0
+fi
+
+unset _RS_TERMINAL_PYTHON_INTEGRATION_ENABLED_
+
 # if we have a conda prefix, ensure it's still used
 if [ -n "${_RS_CONDA_PREFIX}" ]; then
 

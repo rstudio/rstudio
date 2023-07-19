@@ -969,6 +969,11 @@ void useTerminalHooks(ConsoleProcessPtr cp)
       cp->setenv("ENV", zshProfile.getAbsolutePath());
    }
    
+   // let terminals know if python integration is enabled
+   cp->setenv(
+            "_RS_TERMINAL_PYTHON_INTEGRATION_ENABLED_",
+            prefs::userPrefs().terminalPythonIntegration() ? "TRUE" : "FALSE");
+   
    // make sure terminals see R temporary directory
    // (older versions of R didn't set R_SESSION_TMPDIR; newer ones do)
    cp->setenv("R_SESSION_TMPDIR", module_context::tempDir().getAbsolutePath());
