@@ -1805,6 +1805,32 @@ core::Error UserPrefValues::setTerminalTrackEnvironment(bool val)
 }
 
 /**
+ * Environment variables which should be ignored when tracking changed to environment variables within a Terminal. Environment variables in this list will not be saved when a Terminal instance is saved and restored.
+ */
+core::json::Array UserPrefValues::terminalIgnoredEnvironmentVariables()
+{
+   return readPref<core::json::Array>("terminal_ignored_environment_variables");
+}
+
+core::Error UserPrefValues::setTerminalIgnoredEnvironmentVariables(core::json::Array val)
+{
+   return writePref("terminal_ignored_environment_variables", val);
+}
+
+/**
+ * Enabled Terminal hooks? Required for Python terminal integration, which places the active version of Python on the PATH in new Terminal sessions.
+ */
+bool UserPrefValues::terminalHooks()
+{
+   return readPref<bool>("terminal_hooks");
+}
+
+core::Error UserPrefValues::setTerminalHooks(bool val)
+{
+   return writePref("terminal_hooks", val);
+}
+
+/**
  * Terminal bell style
  */
 std::string UserPrefValues::terminalBellStyle()
@@ -3335,6 +3361,8 @@ std::vector<std::string> UserPrefValues::allKeys()
       kTerminalWebsockets,
       kTerminalCloseBehavior,
       kTerminalTrackEnvironment,
+      kTerminalIgnoredEnvironmentVariables,
+      kTerminalHooks,
       kTerminalBellStyle,
       kTerminalRenderer,
       kTerminalWeblinks,

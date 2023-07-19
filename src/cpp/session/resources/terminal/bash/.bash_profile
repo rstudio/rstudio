@@ -1,15 +1,25 @@
 #!/usr/bin/env bash
 
-# set HOME directory
-_FAKEHOME="${HOME}"
-HOME="${_REALHOME}"
+# turn off posix mode
+set +o posix
 
-# source the user startup file, if any
-for PROFILE in /etc/profile.d/*.sh; do
-  if [ -f "${PROFILE}" ]; then
-    source "${PROFILE}"
-  fi
-done
+# reset the ENV environment variable
+if [ "${_REALENV}" = "<unset>" ]; then
+	unset ENV
+else
+	ENV="${_REALENV}"
+	export ENV
+fi
+
+# unset the _REALENV variable
+unset _REALENV
+
+# source the system profile
+if [ -f /etc/profile ]; then
+	source /etc/profile
+fi
+
+# source the user startup profile, if any
 if [ -f ~/.bash_profile ]; then
 	source ~/.bash_profile
 elif [ -f ~/.bash_login ]; then
@@ -18,16 +28,9 @@ elif [ -f ~/.profile ]; then
 	source ~/.profile
 fi
 
-# set HISTFILE if necessary
-if [ "${HISTFILE}" = "${_FAKEHOME}/.bash_history" ]; then
-	HISTFILE=~/.bash_history
-fi
-
 # run RStudio terminal hooks
 if [ -f "${RSTUDIO_TERMINAL_HOOKS}" ]; then
 	source "${RSTUDIO_TERMINAL_HOOKS}"
+	unset RSTUDIO_TERMINAL_HOOKS
 fi
-
-# clean up our variables
-unset _FAKEHOME
 
