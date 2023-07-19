@@ -426,7 +426,7 @@ public:
       // file used for preview)
       if (sourceNavigation_)
       {
-         rmarkdown::presentation::ammendResults(
+         rmarkdown::presentation::amendResults(
                   outputFormat_["format_name"].getString(),
                   targetFile_,
                   sourceLine,

@@ -109,7 +109,7 @@ public:
    void destroyLayers();
 
    // Signal emitted when preferences change; includes the layer name and value name
-   RSTUDIO_BOOST_SIGNAL<void(const std::string&, const std::string&)> onChanged;
+   RSTUDIO_BOOST_SIGNAL<void(const std::string& layerName, const std::string& prefName)> onChanged;
 
 protected:
    virtual void onPrefLayerChanged(const std::string& layerName, const std::string& prefName);

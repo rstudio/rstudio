@@ -244,6 +244,8 @@ namespace prefs {
 #define kTerminalCloseBehaviorClean "clean"
 #define kTerminalCloseBehaviorNever "never"
 #define kTerminalTrackEnvironment "terminal_track_environment"
+#define kTerminalIgnoredEnvironmentVariables "terminal_ignored_environment_variables"
+#define kTerminalHooks "terminal_hooks"
 #define kTerminalBellStyle "terminal_bell_style"
 #define kTerminalBellStyleNone "none"
 #define kTerminalBellStyleSound "sound"
@@ -1244,6 +1246,18 @@ public:
     */
    bool terminalTrackEnvironment();
    core::Error setTerminalTrackEnvironment(bool val);
+
+   /**
+    * Environment variables which should be ignored when tracking changed to environment variables within a Terminal. Environment variables in this list will not be saved when a Terminal instance is saved and restored.
+    */
+   core::json::Array terminalIgnoredEnvironmentVariables();
+   core::Error setTerminalIgnoredEnvironmentVariables(core::json::Array val);
+
+   /**
+    * Enabled Terminal hooks? Required for Python terminal integration, which places the active version of Python on the PATH in new Terminal sessions.
+    */
+   bool terminalHooks();
+   core::Error setTerminalHooks(bool val);
 
    /**
     * Terminal bell style

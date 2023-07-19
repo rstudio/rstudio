@@ -65,8 +65,19 @@ void scanPosixShells(std::vector<TerminalShell>* pShells)
          {
             foundZsh = true;
             std::vector<std::string> args;
-            args.emplace_back("-l"); // act like a login shell
-            args.emplace_back("-g"); // don't add commands with leading space to history
+            
+            if (prefs::userPrefs().terminalHooks())
+            {
+               // NOTE: We don't launch zsh as a login shell here, as zsh will source
+               // /etc/profile when emulating 'sh', which we want to avoid. Instead,
+               // we set the 'login' option after the shell is launched.
+               args = { "--emulate", "sh" };
+            }
+            else
+            {
+               args = { "--login", "--histignorespace" };
+            }
+            
             addShell(core::FilePath(trimmedLine), TerminalShell::ShellType::PosixZsh,
                      "Zsh", args, pShells);
          }
@@ -320,9 +331,11 @@ core::FilePath getGitBashShell()
 bool AvailableTerminalShells::getSystemShell(TerminalShell* pShellInfo)
 {
 #ifdef _WIN32
+   
    pShellInfo->path = core::system::expandComSpec();
    pShellInfo->type = TerminalShell::ShellType::Cmd64;
    pShellInfo->name = "Command Prompt";
+   
 #else
    
    // use default bash shell
@@ -330,7 +343,11 @@ bool AvailableTerminalShells::getSystemShell(TerminalShell* pShellInfo)
    pShellInfo->type = TerminalShell::ShellType::PosixBash;
    pShellInfo->path = core::FilePath("/usr/bin/env");
    pShellInfo->args.emplace_back("bash");
-   pShellInfo->args.emplace_back("-l");  // act like a login shell
+   pShellInfo->args.emplace_back("--login");  // act like a login shell
+   
+   // if terminal hooks are enabled, start in POSIX mode, so we can control startup init scripts 
+   if (prefs::userPrefs().terminalHooks())
+      pShellInfo->args.emplace_back("--posix");
    
 #endif
    
@@ -339,10 +356,12 @@ bool AvailableTerminalShells::getSystemShell(TerminalShell* pShellInfo)
 
 bool AvailableTerminalShells::getCustomShell(TerminalShell* pShellInfo)
 {
+   core::FilePath customShellPath =
+         module_context::resolveAliasedPath(prefs::userPrefs().customShellCommand());
+   
    pShellInfo->name = "Custom";
    pShellInfo->type = TerminalShell::ShellType::CustomShell;
-   pShellInfo->path = module_context::resolveAliasedPath(
-         prefs::userPrefs().customShellCommand());
+   pShellInfo->path = customShellPath;
 
    // arguments are space separated, currently no way to represent a literal space
    std::vector<std::string> args;
@@ -350,6 +369,36 @@ bool AvailableTerminalShells::getCustomShell(TerminalShell* pShellInfo)
    {
       args = core::algorithm::split(prefs::userPrefs().customShellOptions(), " ");
    }
+   
+   if (prefs::userPrefs().terminalHooks())
+   {
+      // build the extra args
+      std::vector<std::string> extraArgs;
+      
+      // if this appears to be a bash shell, make sure we launch it as a POSIX shell
+      if (customShellPath.getFilename() == "bash" || customShellPath.getFilename() == "bash.exe")
+      {
+         bool hasPosixFlag = core::algorithm::contains(args, "--posix");
+         if (!hasPosixFlag)
+            extraArgs.push_back("--posix");
+      }
+      
+      // if this is a zsh shell, then emulate 'sh'
+      else if (customShellPath.getFilename() == "zsh" || customShellPath.getFilename() == "zsh.exe")
+      {
+         bool hasEmulateFlag = core::algorithm::contains(args, "--emulate");
+         if (!hasEmulateFlag)
+         {
+            extraArgs.push_back("--emulate");
+            extraArgs.push_back("sh");
+         }
+      }
+      
+      // insert the arguments at the front
+      args.insert(args.begin(), extraArgs.begin(), extraArgs.end());
+            
+   }
+   
    pShellInfo->args = args;
    return true;
 }

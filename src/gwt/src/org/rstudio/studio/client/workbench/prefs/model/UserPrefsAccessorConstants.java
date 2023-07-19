@@ -1166,6 +1166,22 @@ public interface UserPrefsAccessorConstants extends Constants {
    String terminalTrackEnvironmentDescription();
 
    /**
+    * Environment variables which should be ignored when tracking changed to environment variables within a Terminal. Environment variables in this list will not be saved when a Terminal instance is saved and restored.
+    */
+   @DefaultStringValue("Ignored environment variables")
+   String terminalIgnoredEnvironmentVariablesTitle();
+   @DefaultStringValue("Environment variables which should be ignored when tracking changed to environment variables within a Terminal. Environment variables in this list will not be saved when a Terminal instance is saved and restored.")
+   String terminalIgnoredEnvironmentVariablesDescription();
+
+   /**
+    * Enabled Terminal hooks? Required for Python terminal integration, which places the active version of Python on the PATH in new Terminal sessions.
+    */
+   @DefaultStringValue("Enable Terminal hooks")
+   String terminalHooksTitle();
+   @DefaultStringValue("Enabled Terminal hooks? Required for Python terminal integration, which places the active version of Python on the PATH in new Terminal sessions.")
+   String terminalHooksDescription();
+
+   /**
     * Terminal bell style
     */
    @DefaultStringValue("Terminal bell style")

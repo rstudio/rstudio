@@ -43,6 +43,32 @@ ConsoleProcessSocket s_terminalSocket;
 // Posix-only, use is gated via getTrackEnv() always being false on Win32.
 const std::string kEnvCommand = "/usr/bin/env";
 
+// Environment variables that shouldn't be saved / restored when serializing a Terminal session.
+std::set<std::string> s_ignoredEnvironmentVariables;
+
+void initializeIgnoredEnvironmentVariables()
+{
+   s_ignoredEnvironmentVariables.clear();
+   prefs::userPrefs().terminalIgnoredEnvironmentVariables().toSetString(s_ignoredEnvironmentVariables);
+}
+
+void onUserPrefsChanged(const std::string& layerName, const std::string& prefName)
+{
+   if (prefName == kTerminalIgnoredEnvironmentVariables)
+      initializeIgnoredEnvironmentVariables();
+}
+
+// environment variables which should be ignored, e.g. because they represent
+// session state that won't be valid after a restart
+bool isIgnoredEnvironmentVariable(const std::string& name)
+{
+   return
+         name == "_" ||
+         boost::algorithm::starts_with(name, "R_") ||
+         boost::algorithm::starts_with(name, "RSTUDIO_SESSION_") ||
+         s_ignoredEnvironmentVariables.count(name);
+}
+
 } // anonymous namespace
 
 void ConsoleProcess::setenv(const std::string& name,
@@ -59,15 +85,18 @@ core::system::ProcessOptions ConsoleProcess::createTerminalProcOptions(
       const ConsoleProcessInfo& procInfo,
       TerminalShell::ShellType* pSelectedShellType)
 {
-   // configure environment for shell
+   // configure environment for shell, inheriting system environment
+   //
+   // note that we do this even if the process has a saved environment to be
+   // used, as some environment variables might be tied to session state and so
+   // need to be re-generated so that the correct value is reflected in the
+   // terminal process
    core::system::Options shellEnv;
+   core::system::environment(&shellEnv);
+ 
+   // overlay saved environment variables
    if (procInfo.getTrackEnv() && !procInfo.getHandle().empty())
-   {
       loadEnvironment(procInfo.getHandle(), &shellEnv);
-   }
-
-   if (shellEnv.empty())
-      core::system::environment(&shellEnv);
 
 #ifdef __APPLE__
    // suppress macOS Catalina warning suggesting switching to zsh
@@ -110,7 +139,7 @@ core::system::ProcessOptions ConsoleProcess::createTerminalProcOptions(
       core::system::unsetenv(&shellEnv, "SSH_ASKPASS");
    
    // amend shell paths as appropriate
-   session::modules::workbench::ammendShellPaths(&shellEnv);
+   session::modules::workbench::amendShellPaths(&shellEnv);
 
    // set options
    core::system::ProcessOptions options;
@@ -827,10 +856,6 @@ namespace {
 
 bool augmentTerminalProcessPython(ConsoleProcessPtr cp)
 {
-   // disabled if user pref requests so
-   if (!prefs::userPrefs().terminalPythonIntegration())
-      return false;
-   
    // forward RETICULATE_PYTHON_FALLBACK if set
    std::string reticulatePythonFallback = modules::reticulate::reticulatePython();
 
@@ -891,16 +916,13 @@ void useTerminalHooks(ConsoleProcessPtr cp)
 
    if (isBashShell())
    {
-      // set the HOME directory for the new shell to our bundled bash utility
-      // folder, so that the shell reads those first
-      core::FilePath bashDotDir =
-            session::options().rResourcesPath().completeChildPath("terminal/bash");
+      core::FilePath bashDotDir = session::options().rResourcesPath().completeChildPath("terminal/bash");
+      core::FilePath bashProfile = bashDotDir.completeChildPath(".bash_profile");
 
-      // store the 'real' home so we can restore it after
-      cp->setenv("_REALHOME", core::system::getenv("HOME"));
-
-      // set HOME so our dotfiles can be sourced on startup
-      cp->setenv("HOME", bashDotDir.getAbsolutePath());
+      // set ENV so that our terminal hooks are run
+      const char* env = ::getenv("ENV");
+      cp->setenv("_REALENV", env ? env : "<unset>");
+      cp->setenv("ENV", bashProfile.getAbsolutePath());
    }
 
    // enable terminal hooks for zsh
@@ -938,29 +960,39 @@ void useTerminalHooks(ConsoleProcessPtr cp)
 
    if (isZshShell())
    {
-      FilePath zDotDir =
-            session::options().rResourcesPath().completeChildPath("terminal/zsh");
+      core::FilePath zshDotDir = session::options().rResourcesPath().completeChildPath("terminal/zsh");
+      core::FilePath zshProfile = zshDotDir.completeChildPath(".zprofile");
 
-      cp->setenv("ZDOTDIR", zDotDir.getAbsolutePath());
+      // set ENV so that our terminal hooks are run
+      const char* env = ::getenv("ENV");
+      cp->setenv("_REALENV", env ? env : "<unset>");
+      cp->setenv("ENV", zshProfile.getAbsolutePath());
    }
+   
+   // let terminals know if python integration is enabled
+   cp->setenv(
+            "_RS_TERMINAL_PYTHON_INTEGRATION_ENABLED_",
+            prefs::userPrefs().terminalPythonIntegration() ? "TRUE" : "FALSE");
+   
+   // make sure terminals see R temporary directory
+   // (older versions of R didn't set R_SESSION_TMPDIR; newer ones do)
+   cp->setenv("R_SESSION_TMPDIR", module_context::tempDir().getAbsolutePath());
 
    // set RSTUDIO_TERMINAL_HOOKS (to be sourced on startup by supported shells)
-   FilePath hooksPath =
-         session::options().rResourcesPath().completeChildPath("terminal/hooks");
-
+   FilePath hooksPath = session::options().rResourcesPath().completeChildPath("terminal/hooks");
    cp->setenv("RSTUDIO_TERMINAL_HOOKS", hooksPath.getAbsolutePath());
-   
 }
    
 void augmentTerminalProcess(ConsoleProcessPtr cp)
 {
-   // check whether terminal hooks are required
-   // (currently, only done if we want to place python on PATH)
-   bool needsTerminalHooks = augmentTerminalProcessPython(cp);
-   if (needsTerminalHooks)
+   if (prefs::userPrefs().terminalHooks())
+   {
+      if (prefs::userPrefs().terminalPythonIntegration())
+         augmentTerminalProcessPython(cp);
+      
       useTerminalHooks(cp);
+   }
 }
-   
 
 } // end anonymous namespace
 
@@ -1133,22 +1165,18 @@ void ConsoleProcess::saveEnvironment(const std::string& env)
    {
       size_t equalSign = line.find_first_of('=');
       if (equalSign == std::string::npos)
-      {
          return;
-      }
 
-      std::string varName = line.substr(0, equalSign);
-      if (varName == "_")
+      std::string name = line.substr(0, equalSign);
+      if (isIgnoredEnvironmentVariable(name))
          continue;
-
-      core::system::setenv(&environment,
-                           line.substr(0, equalSign),
-                           line.substr(equalSign + 1));
+      
+      std::string value = line.substr(equalSign + 1);
+      core::system::setenv(&environment, name, value);
    }
+   
    if (environment.empty())
-   {
       return;
-   }
 
    procInfo_->saveConsoleEnvironment(environment);
 }
@@ -1181,6 +1209,8 @@ core::json::Array processesAsJson(SerializationMode serialMode)
 
 Error initialize()
 {
+   initializeIgnoredEnvironmentVariables();
+   prefs::userPrefs().onChanged.connect(onUserPrefsChanged);
    return internalInitialize();
 }
 

@@ -558,7 +558,7 @@ Error getCppCompletions(const core::json::JsonRpcRequest& request,
 
             std::string typedText = result.getTypedText();
 
-            // if we have the same typed text then just ammend previous result
+            // if we have the same typed text then just amend previous result
             if ((typedText == lastTypedText) && !completionsJson.isEmpty())
             {
                json::Object res = completionsJson.getBack().getObject();
