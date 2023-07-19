@@ -232,8 +232,8 @@ void runEmbeddedR(const core::FilePath& rHome,
    // in any other way; e.g. the default translation domain is set within
    //
    // https://github.com/rstudio/rstudio/issues/10308
-   static const int rargc = 2;
-   static const char* rargv[] = { "R.exe", "--vanilla" };
+   static const int rargc = 1;
+   static const char* rargv[] = { "R.exe" };
    ::cmdlineoptions(rargc, (char**) rargv);
 
    // setup params structure
