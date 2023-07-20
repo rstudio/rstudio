@@ -45,6 +45,8 @@ fi
 
 # Submit the notarization request to Apple
 echo "Submitting notarization request using account $APPLE_ID_USR..."
+
+# The team-id uniquely identifies the organization with Apple. It does not need to be generated again and is found in the Apple developer account.
 xcrun notarytool submit --wait \
     --apple-id $APPLE_ID_USR \
     --password $APPLE_ID_PSW \
