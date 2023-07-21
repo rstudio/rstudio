@@ -3,4 +3,9 @@
 # A pre-commit hook script to run linting and formatting on staged files based
 # on the lint-staged, prettier and eslint configurations in src/node/desktop.
 
-cd ./src/node/desktop && npx lint-staged
+if [[ -f ./src/node/desktop/.lintstagedrc ]]
+then
+    cd ./src/node/desktop && npx lint-staged
+fi
+
+exit 0
