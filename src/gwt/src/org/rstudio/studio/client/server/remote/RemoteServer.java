@@ -2857,12 +2857,14 @@ public class RemoteServer implements Server
    public void gitCommit(String message,
                          boolean amend,
                          boolean signOff,
+                         boolean gpgSign,
                          ServerRequestCallback<ConsoleProcess> requestCallback)
    {
       JSONArray params = new JSONArray();
       params.set(0, new JSONString(message));
       params.set(1, JSONBoolean.getInstance(amend));
       params.set(2, JSONBoolean.getInstance(signOff));
+      params.set(3, JSONBoolean.getInstance(gpgSign));
       sendRequest(RPC_SCOPE, GIT_COMMIT, params,
                   new ConsoleProcessCallbackAdapter(requestCallback));
    }

@@ -2104,6 +2104,19 @@ core::Error UserPrefValues::setGitDiffIgnoreWhitespace(bool val)
 }
 
 /**
+ * Whether to sign git commits.
+ */
+bool UserPrefValues::gitSignedCommits()
+{
+   return readPref<bool>("git_signed_commits");
+}
+
+core::Error UserPrefValues::setGitSignedCommits(bool val)
+{
+   return writePref("git_signed_commits", val);
+}
+
+/**
  * Whether double-clicking should select a word in the Console pane.
  */
 bool UserPrefValues::consoleDoubleClickSelect()
@@ -3384,6 +3397,7 @@ std::vector<std::string> UserPrefValues::allKeys()
       kWrapTabNavigation,
       kGlobalTheme,
       kGitDiffIgnoreWhitespace,
+      kGitSignedCommits,
       kConsoleDoubleClickSelect,
       kConsoleSuspendBlockedNotice,
       kConsoleSuspendBlockedNoticeDelay,

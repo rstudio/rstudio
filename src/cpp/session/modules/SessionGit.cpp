@@ -869,6 +869,7 @@ public:
    core::Error commit(std::string message,
                       bool amend,
                       bool signOff,
+                      bool gpgSign,
                       boost::shared_ptr<ConsoleProcess>* ppCP)
    {
       using namespace string_utils;
@@ -943,6 +944,8 @@ public:
          args << "--amend";
       if (signOff)
          args << "--signoff";
+      if (gpgSign)
+        args << "--gpg-sign";
 
       return createConsoleProc(args,
                                "Git Commit",
@@ -1855,13 +1858,13 @@ Error vcsCommit(const json::JsonRpcRequest& request,
                 json::JsonRpcResponse* pResponse)
 {
    std::string commitMsg;
-   bool amend, signOff;
-   Error error = json::readParams(request.params, &commitMsg, &amend, &signOff);
+   bool amend, signOff, gpgSign;
+   Error error = json::readParams(request.params, &commitMsg, &amend, &signOff, &gpgSign);
    if (error)
       return error;
 
    boost::shared_ptr<ConsoleProcess> pCP;
-   error = s_git_.commit(commitMsg, amend, signOff, &pCP);
+   error = s_git_.commit(commitMsg, amend, signOff, gpgSign, &pCP);
    if (error)
    {
       if (error == systemError(boost::system::errc::illegal_byte_sequence, ErrorLocation()))
