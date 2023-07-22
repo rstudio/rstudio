@@ -66,17 +66,12 @@ void scanPosixShells(std::vector<TerminalShell>* pShells)
             foundZsh = true;
             std::vector<std::string> args;
             
-            if (prefs::userPrefs().terminalHooks())
-            {
-               // NOTE: We don't launch zsh as a login shell here, as zsh will source
-               // /etc/profile when emulating 'sh', which we want to avoid. Instead,
-               // we set the 'login' option after the shell is launched.
-               args = { "--emulate", "sh" };
-            }
-            else
-            {
-               args = { "--login", "--histignorespace" };
-            }
+            // TODO: Re-enable terminal hooks for zsh. We previously tried an
+            // approach using '--emulate sh', but this does enough sh-specific
+            // stuff that cannot easily be undone just by later using 'emulate zsh'
+            //
+            // https://github.com/zsh-users/zsh/blob/c4ec7442f1138f2c525f98febb0db6def0fbe142/Src/params.c#L415-L431
+            args = { "--login", "--histignorespace" };
             
             addShell(core::FilePath(trimmedLine), TerminalShell::ShellType::PosixZsh,
                      "Zsh", args, pShells);
@@ -383,6 +378,8 @@ bool AvailableTerminalShells::getCustomShell(TerminalShell* pShellInfo)
             extraArgs.push_back("--posix");
       }
       
+      /*
+      
       // if this is a zsh shell, then emulate 'sh'
       else if (customShellPath.getFilename() == "zsh" || customShellPath.getFilename() == "zsh.exe")
       {
@@ -393,6 +390,8 @@ bool AvailableTerminalShells::getCustomShell(TerminalShell* pShellInfo)
             extraArgs.push_back("sh");
          }
       }
+      
+      */
       
       // insert the arguments at the front
       args.insert(args.begin(), extraArgs.begin(), extraArgs.end());
