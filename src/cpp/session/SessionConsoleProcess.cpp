@@ -924,6 +924,8 @@ void useTerminalHooks(ConsoleProcessPtr cp)
       cp->setenv("_REALENV", env ? env : "<unset>");
       cp->setenv("ENV", bashProfile.getAbsolutePath());
    }
+   
+   /*
 
    // enable terminal hooks for zsh
    auto isZshShell = [&]()
@@ -968,6 +970,8 @@ void useTerminalHooks(ConsoleProcessPtr cp)
       cp->setenv("_REALENV", env ? env : "<unset>");
       cp->setenv("ENV", zshProfile.getAbsolutePath());
    }
+   
+   */
    
    // let terminals know if python integration is enabled
    cp->setenv(
