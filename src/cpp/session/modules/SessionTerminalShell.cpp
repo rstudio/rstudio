@@ -378,16 +378,20 @@ bool AvailableTerminalShells::getCustomShell(TerminalShell* pShellInfo)
             extraArgs.push_back("--posix");
       }
       
-      // // if this is a zsh shell, then emulate 'sh'
-      // else if (customShellPath.getFilename() == "zsh" || customShellPath.getFilename() == "zsh.exe")
-      // {
-      //    bool hasEmulateFlag = core::algorithm::contains(args, "--emulate");
-      //    if (!hasEmulateFlag)
-      //    {
-      //       extraArgs.push_back("--emulate");
-      //       extraArgs.push_back("sh");
-      //    }
-      // }
+      /*
+      
+      // if this is a zsh shell, then emulate 'sh'
+      else if (customShellPath.getFilename() == "zsh" || customShellPath.getFilename() == "zsh.exe")
+      {
+         bool hasEmulateFlag = core::algorithm::contains(args, "--emulate");
+         if (!hasEmulateFlag)
+         {
+            extraArgs.push_back("--emulate");
+            extraArgs.push_back("sh");
+         }
+      }
+      
+      */
       
       // insert the arguments at the front
       args.insert(args.begin(), extraArgs.begin(), extraArgs.end());
