@@ -9,8 +9,10 @@ import org.rstudio.core.client.widget.images.MessageDialogImages;
 import com.google.gwt.aria.client.Roles;
 import com.google.gwt.core.client.GWT;
 import com.google.gwt.dom.client.AnchorElement;
+import com.google.gwt.dom.client.BrowserEvents;
 import com.google.gwt.dom.client.DivElement;
 import com.google.gwt.dom.client.SpanElement;
+import com.google.gwt.event.dom.client.KeyCodes;
 import com.google.gwt.uibinder.client.UiBinder;
 import com.google.gwt.uibinder.client.UiField;
 import com.google.gwt.user.client.Event;
@@ -33,7 +35,7 @@ public class CopilotSignInDialog extends ModalDialogBase
    {
       super(Roles.getDialogRole());
       setText("GitHub Copilot: Sign in");
-      
+
       ui_ = uiBinder.createAndBindUi(this);
       progress_ = addProgressIndicator();
       verificationUri_.setInnerText(verificationUri);
@@ -41,15 +43,15 @@ public class CopilotSignInDialog extends ModalDialogBase
       verificationCode_.setInnerText(verificationCode);
       verificationCode_.getStyle().setProperty("userSelect", "all");
       
-      Event.sinkEvents(verificationUri_, Event.ONCLICK);
-      Event.sinkEvents(verificationUri_, Event.ONMOUSEUP);
+      Event.sinkEvents(verificationUri_, Event.ONCLICK | Event.ONMOUSEUP | Event.ONKEYDOWN);
       Event.setEventListener(verificationUri_, (event) ->
       {
-         progress_.onProgress("Authenticating...");
+         if (BrowserEvents.KEYDOWN.equals(event.getType()) && event.getKeyCode() != KeyCodes.KEY_ENTER)
+            return;
+         progress_.onProgress("Authenticating...", () -> progress_.clearProgress());
       });
-      
+
       addCancelButton();
-      
    }
    
    @Override
