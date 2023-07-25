@@ -4,6 +4,7 @@ import org.rstudio.core.client.resources.ImageResource2x;
 import org.rstudio.core.client.widget.ElementPanel;
 import org.rstudio.core.client.widget.ModalDialogBase;
 import org.rstudio.core.client.widget.ProgressIndicator;
+import org.rstudio.core.client.widget.ThemedButton;
 import org.rstudio.core.client.widget.images.MessageDialogImages;
 
 import com.google.gwt.aria.client.Roles;
@@ -45,11 +46,10 @@ public class CopilotSignInDialog extends ModalDialogBase
       Event.sinkEvents(verificationUri_, Event.ONMOUSEUP);
       Event.setEventListener(verificationUri_, (event) ->
       {
-         progress_.onProgress("Authenticating...");
+         progress_.onProgress("Authenticating...", () -> progress_.clearProgress());
       });
-      
+
       addCancelButton();
-      
    }
    
    @Override
