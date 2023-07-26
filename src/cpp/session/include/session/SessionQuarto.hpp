@@ -37,6 +37,7 @@ extern const char* const kQuartoProjectDefault;
 extern const char* const kQuartoProjectWebsite;
 extern const char* const kQuartoProjectSite;
 extern const char* const kQuartoProjectBook;
+extern const char* const kQuartoProjectManuscript;
 extern const char* const kQuartoExecuteDirProject;
 extern const char* const kQuartoExecuteDirFile;
 

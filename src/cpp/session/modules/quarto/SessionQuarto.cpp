@@ -546,7 +546,7 @@ Error getQmdPublishDetails(const json::JsonRpcRequest& request,
       {
           std::string type, outputDir;
           readQuartoProjectConfig(quartoConfig, &type, &outputDir);
-          if (type == kQuartoProjectBook || type == kQuartoProjectWebsite)
+          if (type == kQuartoProjectBook || type == kQuartoProjectWebsite || type == kQuartoProjectManuscript)
           {
              FilePath configPath = quartoConfig.getParent();
              websiteDir = configPath.getAbsolutePath();
@@ -556,6 +556,10 @@ Error getQmdPublishDetails(const json::JsonRpcRequest& request,
                  if (type == kQuartoProjectBook)
                  {
                      outputDir = "_book";
+                 }
+                 else if (type == kQuartoProjectManuscript)
+                 {
+                     outputDir = "_manuscript";
                  }
                  else
                  {
@@ -718,7 +722,8 @@ Error quartoCreateProject(const json::JsonRpcRequest& request,
    using namespace module_context;
    std::vector<std::string> projFiles;
    if (boost::algorithm::starts_with(type, kQuartoProjectWebsite) ||
-       boost::algorithm::starts_with(type, kQuartoProjectBook))
+       boost::algorithm::starts_with(type, kQuartoProjectBook) ||
+       boost::algorithm::starts_with(type, kQuartoProjectManuscript))
    {
       projFiles.push_back("index.qmd");
       projFiles.push_back("_quarto.yml");
@@ -877,6 +882,8 @@ void readQuartoConfig()
                s_quartoConfig.project_output_dir = "_site";
             else if (s_quartoConfig.project_type == kQuartoProjectBook)
                s_quartoConfig.project_output_dir = "_book";
+             else if (s_quartoConfig.project_type == kQuartoProjectManuscript)
+               s_quartoConfig.project_output_dir = "_manuscript";
          }
       }
    }
@@ -942,6 +949,7 @@ const char* const kQuartoProjectDefault = "default";
 const char* const kQuartoProjectWebsite = "website";
 const char* const kQuartoProjectSite = "site"; // 'website' used to be 'site'
 const char* const kQuartoProjectBook = "book";
+const char* const kQuartoProjectManuscript = "manuscript";
 
 // possible values for the execute-dir project option
 const char* const kQuartoExecuteDirProject = "project";
