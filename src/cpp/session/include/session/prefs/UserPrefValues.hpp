@@ -290,6 +290,7 @@ namespace prefs {
 #define kGlobalThemeDefault "default"
 #define kGlobalThemeAlternate "alternate"
 #define kGitDiffIgnoreWhitespace "git_diff_ignore_whitespace"
+#define kGitSignedCommits "git_signed_commits"
 #define kConsoleDoubleClickSelect "console_double_click_select"
 #define kConsoleSuspendBlockedNotice "console_suspend_blocked_notice"
 #define kConsoleSuspendBlockedNoticeDelay "console_suspend_blocked_notice_delay"
@@ -1386,6 +1387,12 @@ public:
     */
    bool gitDiffIgnoreWhitespace();
    core::Error setGitDiffIgnoreWhitespace(bool val);
+
+  /**
+   * Whether to sign git commits.
+   */
+  bool gitSignedCommits();
+  core::Error setGitSignedCommits(bool val);
 
    /**
     * Whether double-clicking should select a word in the Console pane.

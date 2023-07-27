@@ -78,6 +78,10 @@
                                   text="Ignore Whitespace"
                                   checked="false"
                                   styleName="{res.styles.ignoreWhitespace}"><ui:attribute name="text" key="ignoreWhitespaceText"/></g:CheckBox>
+                      <g:CheckBox ui:field="signedCommitsCheckbox_"
+                                  text="Signed Commits"
+                                  checked="false"
+                                  styleName="{res.styles.signedCommits}"><ui:attribute name="text" key="signedCommitsText"/></g:CheckBox>
                   </g:FlowPanel>
                   <rs_widget:Toolbar ui:field="diffToolbar_"/>
                </g:HorizontalPanel>

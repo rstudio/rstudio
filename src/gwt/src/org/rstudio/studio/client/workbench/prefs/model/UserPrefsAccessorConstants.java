@@ -1350,6 +1350,15 @@ public interface UserPrefsAccessorConstants extends Constants {
    String gitDiffIgnoreWhitespaceDescription();
 
    /**
+    * Whether to sign commits.
+    */
+   @DefaultStringValue("Sign commits")
+   String gitSignedCommitsTitle();
+
+   @DefaultStringValue("Whether to sign commits.")
+   String gitSignedCommitsDescription();
+
+   /**
     * Whether double-clicking should select a word in the Console pane.
     */
    @DefaultStringValue("Double click to select in the Console")
