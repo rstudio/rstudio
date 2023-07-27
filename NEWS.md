@@ -4,6 +4,7 @@
 - Prometheus metrics are available in Posit Workbench (rstudio-pro:#3273)
 - Update to Electron 25.2.0 (#13322)
 - Additional support for publishing new content types to Posit Cloud (rstudio-pro#4541)
+- Added option to sign Git commits (#1865)
 
 ### Fixed
 - Fixed issue where Electron menubar commands are not disabled when modals are displayed (#12972)
