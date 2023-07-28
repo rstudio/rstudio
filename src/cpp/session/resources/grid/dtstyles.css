@@ -327,6 +327,11 @@ th:focus {
     table-layout: fixed;
 }
 
+.headerCell {
+    white-space: nowrap;
+    text-overflow: ellipsis:
+}
+
 .cell, .headerCell {
     position: relative;
 }

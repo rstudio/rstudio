@@ -400,55 +400,65 @@
    which(vapply(x, fun, TRUE))
 })
 
-.rs.addFunction("flattenFrame", function(x) {
-  multicols <- .rs.multiCols(x)
-  while (length(multicols) > 0) {
-    multicol <- multicols[1]
-    newcols <- ncol(x[[multicol]])
-    if (identical(newcols, 0)) 
-    {
-      # remove columns consisting of empty frames
-      x[[multicol]] <- NULL
-    }
-    else
-    {
-      cols <- x[[multicol]]
+# given a 'data.frame' containing columns which themselves have
+# multiple columns (e.g. matrices, data.frames), expand those columns
+# such that we have a 'data.frame' with the nested columns e
+.rs.addFunction("flattenFrame", function(x)
+{
+   # split into separate data.frames
+   stack <- .rs.stack()
+   .rs.enumerate(x, .rs.dataViewer.flatten, stack = stack)
+   parts <- stack$data()
+   
+   # pull out pieces we need
+   keys <- vapply(parts, `[[`, "name", FUN.VALUE = "character")
+   vals <- lapply(parts, `[[`, "value")
+   
+   # turn it into a data.frame
+   names(vals) <- keys
+   attr(vals, "row.names") <- .set_row_names(length(vals[[1L]]))
+   class(vals) <- "data.frame"
+   
+   # all done
+   vals
+})
 
-      # recurse because x[[multicol]] might also need flattening
-      if (length(.rs.multiCols(cols)) > 0L) {
-        cols <- x[[multicol]] <- .rs.flattenFrame(cols)
-        
-        # readjust indices
-        newcols <- ncol(cols)
-      }
-      
-      # apply column names
-      prefix <- names(multicol)[[1]]
-      if (is.matrix(cols)) {
-        colnames <- colnames(cols)
-        if (is.null(colnames)) {
-          colnames(cols) <- paste0(prefix, '[,', 1:ncol(cols), ']')
-        } else {
-          colnames(cols) <- paste0(prefix, '[,"', colnames, '"]')
-        }
+.rs.addFunction("dataViewer.flatten", function(name, value, stack)
+{
+   if (is.matrix(value)) {
+      .rs.dataViewer.flattenMatrix(name, value, stack)
+   } else if (is.data.frame(value)) {
+      .rs.dataViewer.flattenDataFrame(name, value, stack)
+   } else {
+      stack$push(list(name = name, value = value))
+   }
+})
 
-      } else if (is.data.frame(cols)) {
-        names(cols) <- paste(prefix, names(cols), sep = "$")
-      }
-      
-      # replace other columns in place
-      if (multicol >= ncol(x))  {
-        x <- cbind(x[0:(multicol-1)], cols)
-      } else {
-        x <- cbind(x[0:(multicol-1)], cols, x[(multicol+1):ncol(x)])
-      }
-    }
-    
-    # pop this frame off the list and adjust the other indices to account for
-    # the columns we just added, if any
-    multicols <- multicols[-1] + (max(newcols, 1) - 1) 
-  }
-  x
+.rs.addFunction("dataViewer.flattenMatrix", function(name, value, stack)
+{
+   colNames <- if (is.null(colnames(value)))
+      as.character(seq_len(ncol(value)))
+   else
+      shQuote(colnames(value))
+   
+   for (i in seq_len(ncol(value))) {
+      .rs.dataViewer.flatten(
+         name  = sprintf("%s[, %s]", name, colNames[[i]]),
+         value = value[, i, drop = TRUE],
+         stack = stack
+      )
+   }
+})
+
+.rs.addFunction("dataViewer.flattenDataFrame", function(name, value, stack)
+{
+   for (i in seq_along(value)) {
+      .rs.dataViewer.flatten(
+         name  = paste(name, names(value)[[i]], sep = "$"),
+         value = value[[i]],
+         stack = stack
+      )
+   }
 })
 
 .rs.addFunction("applyTransform", function(x, filtered, search, cols, dirs)
