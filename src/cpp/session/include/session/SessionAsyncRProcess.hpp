@@ -59,8 +59,7 @@ public:
    void start(const char* rCommand,
               const core::FilePath& workingDir,
               AsyncRProcessOptions rOptions,
-              std::vector<core::FilePath> rSourceFiles = 
-                 std::vector<core::FilePath>(),
+              std::vector<core::FilePath> rSourceFiles = {},
               const std::string &input = std::string())
    {
       start(
@@ -76,8 +75,7 @@ public:
               core::system::Options environment,
               const core::FilePath& workingDir,
               AsyncRProcessOptions rOptions,
-              std::vector<core::FilePath> rSourceFiles = 
-                 std::vector<core::FilePath>(),
+              std::vector<core::FilePath> rSourceFiles = {},
               const std::string& input = std::string());
 
    bool isRunning();

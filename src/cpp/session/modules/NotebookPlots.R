@@ -121,6 +121,16 @@
    
    require(grDevices, quietly = TRUE)
    
+   loadedPackages <- strsplit(
+      Sys.getenv("RS_LOADED_PACKAGES", unset = ""),
+      split = ",",
+      fixed = TRUE
+   )
+   
+   # https://github.com/rstudio/rstudio/issues/4330
+   if ("ggrepel" %in% loadedPackages)
+      require(ggrepel, quietly = TRUE)
+   
    snapshots <- readLines(stdin, warn = FALSE)
    lapply(snapshots, function(snapshot) {
       

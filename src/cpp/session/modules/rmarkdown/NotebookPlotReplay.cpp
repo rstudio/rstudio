@@ -93,6 +93,19 @@ public:
                       (persistOutput ? "FALSE" : "TRUE") +
                       ", " +
                       "'" + extraParams + "')");
+      
+      // set up environment
+      core::system::Options environment;
+      core::system::environment(&environment);
+      
+      // pass along loaded packages
+      std::vector<std::string> loadedPackages;
+      Error error = r::exec::RFunction("base:::loadedNamespaces")
+            .call(&loadedPackages);
+      if (error)
+         LOG_ERROR(error);
+      
+      environment.push_back({ "RS_LOADED_PACKAGES", core::algorithm::join(loadedPackages, ",") });
 
       // invoke the asynchronous process
       boost::shared_ptr<ReplayPlots> pReplayer(new ReplayPlots());
@@ -100,7 +113,9 @@ public:
       pReplayer->replayId_ = replayId;
       pReplayer->width_ = width;
       pReplayer->persistOutput_ = persistOutput;
-      pReplayer->start(cmd.c_str(), FilePath(),
+      pReplayer->start(cmd.c_str(),
+                       environment,
+                       FilePath(),
                        async_r::R_PROCESS_VANILLA,
                        sources,
                        input);
