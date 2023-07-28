@@ -461,9 +461,14 @@
 
 .rs.addFunction("dataViewer.flattenDataFrame", function(name, value, stack)
 {
+   # a data.frame should almost always have names, but check just in case
+   colNames <- names(value)
+   if (is.null(colNames))
+      colNames <- sprintf("<%i>", seq_along(value))
+   
    for (i in seq_along(value)) {
       .rs.dataViewer.flatten(
-         name  = paste(name, names(value)[[i]], sep = "$"),
+         name  = paste(name, colNames[[i]], sep = "$"),
          value = value[[i]],
          stack = stack
       )
