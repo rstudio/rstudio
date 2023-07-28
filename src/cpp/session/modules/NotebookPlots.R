@@ -128,6 +128,9 @@
    )
    
    # https://github.com/rstudio/rstudio/issues/4330
+   if ("ggplot2" %in% loadedPackages)
+      require(ggplot2, quietly = TRUE)
+   
    if ("ggrepel" %in% loadedPackages)
       require(ggrepel, quietly = TRUE)
    
