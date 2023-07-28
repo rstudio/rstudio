@@ -1101,6 +1101,12 @@
             "title": "Ignore whitespace in VCS diffs",
             "description": "Whether to ignore whitespace when generating diffs of version controlled files."
         },
+        "git_signed_commits": {
+            "type": "boolean",
+            "default": false,
+            "title": "Sign git commits",
+            "description": "Whether to sign git commits."
+        },
         "console_double_click_select": {
             "type": "boolean",
             "default": false,

@@ -2332,6 +2332,17 @@ public class UserPrefsAccessor extends Prefs
    }
 
    /**
+    * Whether to sign commits.
+    */
+   public PrefValue<Boolean> gitSignedCommits() {
+     return bool(
+         "git_signed_commits",
+         _constants.gitSignedCommitsTitle(),
+         _constants.gitSignedCommitsDescription(),
+         false);
+   }
+
+   /**
     * Whether double-clicking should select a word in the Console pane.
     */
    public PrefValue<Boolean> consoleDoubleClickSelect()
@@ -3839,6 +3850,8 @@ public class UserPrefsAccessor extends Prefs
          globalTheme().setValue(layer, source.getString("global_theme"));
       if (source.hasKey("git_diff_ignore_whitespace"))
          gitDiffIgnoreWhitespace().setValue(layer, source.getBool("git_diff_ignore_whitespace"));
+      if (source.hasKey("git_signed_commits"))
+         gitSignedCommits().setValue(layer, source.getBool("git_signed_commits"));
       if (source.hasKey("console_double_click_select"))
          consoleDoubleClickSelect().setValue(layer, source.getBool("console_double_click_select"));
       if (source.hasKey("console_suspend_blocked_notice"))
@@ -4175,6 +4188,7 @@ public class UserPrefsAccessor extends Prefs
       prefs.add(wrapTabNavigation());
       prefs.add(globalTheme());
       prefs.add(gitDiffIgnoreWhitespace());
+      prefs.add(gitSignedCommits());
       prefs.add(consoleDoubleClickSelect());
       prefs.add(consoleSuspendBlockedNotice());
       prefs.add(consoleSuspendBlockedNoticeDelay());
