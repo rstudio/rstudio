@@ -388,9 +388,9 @@
       if (is.null(names(x)))
          names(x) <- paste("V", seq_along(x), sep = "")
       
-      if (flatten) {
+      if (flatten)
          x <- .rs.flattenFrame(x)
-      } 
+      
       return(x)
    }
 })
@@ -405,6 +405,15 @@
 # such that we have a 'data.frame' with the nested columns e
 .rs.addFunction("flattenFrame", function(x)
 {
+   # skip if we don't have any rectangular columns;
+   # in this case, we can return the data as-is
+   isRectangular <- vapply(x, function(column) {
+      is.data.frame(column) || is.matrix(column)
+   }, FUN.VALUE = logical(1))
+   
+   if (!any(isRectangular))
+      return(x)
+   
    # split into separate data.frames
    stack <- .rs.stack()
    .rs.enumerate(x, .rs.dataViewer.flatten, stack = stack)
