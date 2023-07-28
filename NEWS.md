@@ -7,6 +7,7 @@
 - Added option to sign Git commits (#1865)
 
 ### Fixed
+- Fixed issue where whitespace in error messages was not properly preserved (#13239)
 - Fixed issue where error messages were not properly translated on Windows in some cases (#10308)
 - Fixed issue where Electron menubar commands are not disabled when modals are displayed (#12972)
 - Fixed bug causing invalid/empty `cacheKey` error when accessing a dataframe variable (#13188)
