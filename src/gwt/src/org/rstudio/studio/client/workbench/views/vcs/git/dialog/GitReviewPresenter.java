@@ -93,6 +93,9 @@ public class GitReviewPresenter implements ReviewPresenter
       HasValue<Boolean> getStagedCheckBox();
       HasValue<Boolean> getUnstagedCheckBox();
       HasValue<Boolean> getIgnoreWhitespaceCheckBox();
+
+      HasValue<Boolean> getSignedCommitsCheckBox();
+
       LineTablePresenter.Display getLineTableDisplay();
       ChangelistTable getChangelistTable();
       HasValue<Integer> getContextLines();
@@ -509,6 +512,22 @@ public class GitReviewPresenter implements ReviewPresenter
                }
             });
 
+      view_.getSignedCommitsCheckBox().setValue(
+            uiPrefs_.gitSignedCommits().getGlobalValue());
+
+      view_.getSignedCommitsCheckBox().addValueChangeHandler(
+            new ValueChangeHandler<Boolean>()
+            {
+               @Override
+               public void onValueChange(ValueChangeEvent<Boolean> event)
+               {
+                  boolean value = event.getValue();
+                  uiPrefs_.gitSignedCommits().setGlobalValue(value);
+                  uiPrefs_.writeUserPrefs();
+                  updateDiff(false);
+               }
+            });
+
       view_.getLineTableDisplay().addDiffChunkActionHandler(new ApplyPatchHandler());
       view_.getLineTableDisplay().addDiffLineActionHandler(new ApplyPatchHandler());
 
@@ -640,6 +659,7 @@ public class GitReviewPresenter implements ReviewPresenter
                   view_.getCommitMessage().getText(),
                   view_.getCommitIsAmend().getValue(),
                   false,
+                  view_.getSignedCommitsCheckBox().getValue(),
                   new SimpleRequestCallback<ConsoleProcess>()
                   {
                      @Override
