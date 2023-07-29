@@ -30,6 +30,7 @@ public class QuartoCommandConstants
    public final static String PROJECT_DEFAULT = "default";
    public final static String PROJECT_WEBSITE = "website";
    public final static String PROJECT_BOOK = "book";
+   public final static String PROJECT_MANUSCRIPT = "manuscript";
    
    public final static String PROJECT_WEBSITE_BLOG = "website:blog";
    
