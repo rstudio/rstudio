@@ -225,11 +225,17 @@ else()
    find_package(yaml-cpp REQUIRED)
 endif()
 
-if(NOT EXISTS "${YAML_CPP_INCLUDE_DIR}")
+if(yaml-cpp_FOUND AND NOT YAML_CPP_LIBRARIES)
+   set(YAML_CPP_LIBRARIES yaml-cpp)
+endif()
+
+if(NOT RSTUDIO_USE_SYSTEM_YAML_CPP AND NOT EXISTS "${YAML_CPP_INCLUDE_DIR}")
    message(FATAL_ERROR "yaml-cpp not found (re-run dependencies script to install)")
 endif()
 
-include_directories(SYSTEM "${YAML_CPP_INCLUDE_DIR}")
+if(YAML_CPP_INCLUDE_DIR)
+   include_directories(SYSTEM "${YAML_CPP_INCLUDE_DIR}")
+endif()
 
 # determine whether we should statically link boost. we always do this
 # unless we are building a non-packaged build on linux (in which case
@@ -274,7 +280,7 @@ if(UNIX)
       # find headers
       set(Boost_USE_STATIC_LIBS ON)
       set(BOOST_INCLUDEDIR  ${RSTUDIO_TOOLS_BOOST}/include)
-      find_package(Boost ${RSTUDIO_BOOST_REQUESTED_VERSION} EXACT REQUIRED)
+      find_package(Boost ${RSTUDIO_BOOST_REQUESTED_VERSION} HINTS "${RSTUDIO_TOOLS_BOOST}" EXACT REQUIRED)
       if(NOT Boost_VERSION LESS 106900)
          list(REMOVE_ITEM BOOST_LIBS signals)
       endif()
@@ -557,7 +563,7 @@ if(WIN32)
         set(OPENSSL_BITNESS "64")
      endif()
 
-     set(OPENSSL_NAME "openssl-1.1.1i")
+     set(OPENSSL_NAME "openssl-1.1.1t")
      set(OPENSSL_ROOT_DIR "${RSTUDIO_WINDOWS_DEPENDENCIES_DIR}/${OPENSSL_NAME}/${OPENSSL_NAME}-${OPENSSL_BUILD_TYPE}-${OPENSSL_BITNESS}")
      set(OPENSSL_INCLUDE_DIR "${OPENSSL_ROOT_DIR}/include")
      set(OPENSSL_LIBRARY_DIR "${OPENSSL_ROOT_DIR}/lib")

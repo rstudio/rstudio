@@ -730,8 +730,15 @@ public abstract class
    public abstract AppCommand focusNextPane();
    public abstract AppCommand focusPreviousPane();
    public abstract AppCommand showAccessibilityHelp();
+   
+   // Copilot
+   public abstract AppCommand copilotInstallAgent();
+   public abstract AppCommand copilotSignIn();
+   public abstract AppCommand copilotSignOut();
+   public abstract AppCommand copilotStatus();
 
    // Internal
    public abstract AppCommand showDomElements();
    public abstract AppCommand showShortcutCommand();
+   public abstract AppCommand crashDesktopApplication();
 }

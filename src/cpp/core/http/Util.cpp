@@ -307,21 +307,25 @@ boost::posix_time::time_facet s_httpDateFacet(kHttpDateFormat,
                                               boost::posix_time::time_facet::special_values_formatter_type(),
                                               boost::posix_time::time_facet::date_gen_formatter_type(),
                                               1);
-   
+
+boost::posix_time::time_input_facet s_httpDateInputFacet(kHttpDateFormat, 1);
+
 boost::posix_time::ptime parseDate(const std::string& date, const char* format)
 {
    using namespace boost::posix_time;
    
+   // Warning - creating the time_input_facet is fairly expensive so avoiding it for http date
    // facet for date (construct w/ a_ref == 1 so we manage memory)
    time_input_facet dateFacet(1);
    dateFacet.format(format);
-   
+
    // parse from string
    std::stringstream dateStream;
    dateStream.str(date);
    dateStream.imbue(std::locale(dateStream.getloc(), &dateFacet));
    ptime posixDate(not_a_date_time);
    dateStream >> posixDate;
+
    return posixDate;
 }   
 
@@ -335,7 +339,16 @@ boost::posix_time::ptime parseAtomDate(const std::string& date)
 
 boost::posix_time::ptime parseHttpDate(const std::string& date)
 {
-   return parseDate(date, kHttpDateFormat);
+   using namespace boost::posix_time;
+
+   // parse from string
+   std::stringstream dateStream;
+   dateStream.str(date);
+   dateStream.imbue(std::locale(dateStream.getloc(), &s_httpDateInputFacet));
+   ptime posixDate(not_a_date_time);
+   dateStream >> posixDate;
+
+   return posixDate;
 }
    
 std::string httpDate(const boost::posix_time::ptime& datetime)
@@ -490,6 +503,28 @@ void fileRequestHandler(const std::string& wwwLocalPath,
       return;
    }
 
+#ifndef _WIN32
+   // To avoid the runtime CPU cost of compression, also check if there is a
+   // precompressed version of the file available and substitute it in if so.
+   // This is akin to the (gzip|brotli)_static directive for NGINX.
+   FilePath precompressed = FilePath(filePath.getAbsolutePath() + ".br");
+   if (request.acceptsEncoding(kBrotliEncoding) && precompressed.exists())
+   {
+      pResponse->setContentType(filePath.getMimeContentType());
+      pResponse->setContentEncoding(kBrotliEncoding);
+      pResponse->setCacheableFile(precompressed, request);
+      return;
+   }
+   precompressed = FilePath(filePath.getAbsolutePath() + ".gz");
+   if (request.acceptsEncoding(kGzipEncoding) && precompressed.exists())
+   {
+      pResponse->setContentType(filePath.getMimeContentType());
+      pResponse->setContentEncoding(kGzipEncoding);
+      pResponse->setCacheableFile(precompressed, request);
+      return;
+   }
+#endif
+
    // return requested file
    pResponse->setCacheableFile(filePath, request);
 }
@@ -523,13 +558,21 @@ bool isNetworkAddress(const std::string& str)
    return (!ec && iter != boost::asio::ip::tcp::resolver::iterator());
 }
 
+namespace {
+
+// look for the Upgrade token in the Connection request header; in most cases it will be the
+// exact value of the the header, but some browsers (Firefox) include other tokens. (RFC 6455)
+boost::regex s_webSocketUpgradePattern("\\<Upgrade\\>", boost::regex::icase);
+
+}
+
+
 bool isWSUpgradeRequest(const Request& request)
 {
-   // look for the Upgrade token in the Connection request header; in most cases it will be the
-   // exact value of the the header, but some browsers (Firefox) include other tokens. (RFC 6455)
-   boost::regex upgrade("\\<Upgrade\\>", boost::regex::icase);
    std::string connection = request.headerValue("Connection");
-   return boost::regex_search(connection, upgrade);
+   if (connection.empty())
+      return false;
+   return boost::regex_search(connection, s_webSocketUpgradePattern);
 }
 
 #ifndef _WIN32

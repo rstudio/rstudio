@@ -146,6 +146,13 @@ public class RSConnectDeploy extends Composite
    }
    
    public static DeployResources RESOURCES = GWT.create(DeployResources.class);
+
+   public enum ServerType {
+      RSCONNECT,
+      RSPUBS,
+      POSITCLOUD,
+      SHINYAPPS
+   }
    
    public RSConnectDeploy(RSConnectPublishSource source,
                           final int contentType,
@@ -193,7 +200,7 @@ public class RSConnectDeploy extends Composite
       }
 
       final boolean rsConnectEnabled = 
-            userState_.enableRsconnectPublishUi().getGlobalValue();
+         userState_.enableRsconnectPublishUi().getGlobalValue();
       final boolean positCloudEnabled =
          userPrefs_.enableCloudPublishUi().getGlobalValue();
       
@@ -214,23 +221,7 @@ public class RSConnectDeploy extends Composite
                      }
                   });
          });
-      }
-      else if (positCloudEnabled) // also invoke if Connect disabled but Cloud enabled
-      {
-         addAccountAnchor_.setClickHandler(() ->
-         {
-            connector_.showAccountWizard(false,
-               true,
-               successful ->
-               {
-                  if (successful)
-                  {
-                     accountList_.refreshAccountList();
-                  }
-               });
-         });
-      }
-      else {
+      } else {
          // if not deploying a Shiny app and RSConnect UI/ Posit Cloud UI are not enabled, then
          // there's no account we can add suitable for this content
          addAccountAnchor_.setVisible(false);
@@ -302,8 +293,9 @@ public class RSConnectDeploy extends Composite
       display_ = display;
       userPrefs_ = prefs;
       userState_ = state;
+      // posit.cloud should be enabled for static and non-static content
       accountList_ = new RSConnectAccountList(server_, display_, false, 
-            !asStatic_, !asStatic_, constants_.publishFromAccount());
+            !asStatic_, true, true, constants_.publishFromAccount());
       appName_ = new AppNameTextbox(this);
       
       // when the account list finishes populating, select the account from the
@@ -433,18 +425,23 @@ public class RSConnectDeploy extends Composite
       populateDeploymentFiles(indicator);
    }
    
-   public void setPublishSource(RSConnectPublishSource source, 
-         int contentType, boolean asMultipleRmd, boolean asStatic)
+   public void setPublishSource(RSConnectPublishSource source,
+                                int contentType, boolean asMultipleRmd, boolean asStatic,
+                                ServerType serverType)
    {
       source_ = source;
       contentType_ = contentType;
       asMultipleRmd_ = asMultipleRmd;
 
-      // for Plumber APIs and static Rmd docs, we want to allow for posit.cloud but not for shinyapps.io
-      boolean isPositCloudContent = contentType == RSConnect.CONTENT_TYPE_PLUMBER_API ||
-         contentType == RSConnect.CONTENT_TYPE_DOCUMENT || contentType == RSConnect.CONTENT_TYPE_PRES;
+      // In order to display Posit.cloud accounts, it needs to be enabled in Prefs AND
+      // the server type needs to be Posit.cloud, or null (which means the user hasn't specified)
       boolean positCloudEnabled =
-         userPrefs_.enableCloudPublishUi().getGlobalValue() && isPositCloudContent;
+         userPrefs_.enableCloudPublishUi().getGlobalValue() &&
+            (serverType == ServerType.POSITCLOUD || serverType == null);
+
+      boolean rsConnectEnabled =
+         userState_.enableRsconnectPublishUi().getGlobalValue() &&
+            (serverType == ServerType.RSCONNECT || serverType == null);
 
       if (positCloudEnabled != accountList_.getShowPositCloudAccounts())
       {
@@ -452,10 +449,16 @@ public class RSConnectDeploy extends Composite
          accountList_.refreshAccountList();
       }
 
-      // we want to show cloud accounts only for non-static content
-      if (source.isShiny() != accountList_.getShowCloudAccounts())
+      if (rsConnectEnabled != accountList_.getShowConnectAccounts())
       {
-         accountList_.setShowCloudAccounts(source.isShiny());
+         accountList_.setShowConnectAccounts(rsConnectEnabled);
+         accountList_.refreshAccountList();
+      }
+
+      // we want to show ShinyApps.io accounts only for Shiny content
+      if (source.isShiny() != accountList_.getShowShinyAppsAccounts())
+      {
+         accountList_.setShowShinyAppsAccounts(source.isShiny());
          accountList_.refreshAccountList();
       }
       

@@ -14,6 +14,7 @@ RUN yum install -y \
     curl \
     expect \
     fakeroot \
+    freetype-devel \
     fuse-libs \
     gcc \
     gcc-c++ \
@@ -24,16 +25,19 @@ RUN yum install -y \
     java-1.8.0-openjdk \
     java-1.8.0-openjdk-devel \
     jq \
-    libcurl-devel \
+    libXScrnSaver-devel \
+    libXcursor-devel \
+    libXrandr-devel \
     libacl-devel \
     libcap-devel \ 
+    libcurl-devel \
     libffi \
+    libjpeg-turbo-devel \
+    libpng-devel \
+    libtiff-devel \
     libuser-devel \
     libuuid-devel \
     libxml2-devel \
-    libXcursor-devel \
-    libXrandr-devel \
-    libXScrnSaver-devel \
     lsof \
     make \
     mariadb-libs \
@@ -52,6 +56,7 @@ RUN yum install -y \
     sqlite-devel \
     sudo \
     wget \
+    whois \
     xml-commons-apis \
     xorg-x11-server-Xvfb \
     zlib-devel
@@ -102,8 +107,10 @@ RUN scl enable llvm-toolset-7 "/bin/bash /tmp/install-crashpad centos7"
 RUN mkdir -p /opt/rstudio-tools/dependencies/common
 COPY dependencies/common/ /opt/rstudio-tools/dependencies/common/
 
-# break image layer cache if panmirror changes
-ADD https://api.github.com/repos/quarto-dev/quarto/git/refs/heads/main panmirror.version.json
+# panmirror check for changes
+# ADD https://api.github.com/repos/quarto-dev/quarto/git/refs/heads/main panmirror.version.json
+ADD https://api.github.com/repos/quarto-dev/quarto/git/refs/heads/release/rstudio-mountain-hydrangea panmirror.version.json
+
 # install common dependencies
 RUN cd /opt/rstudio-tools/dependencies/common && scl enable llvm-toolset-7 "/bin/bash ./install-common centos7"
 # panmirror needs to be able to build in this location
@@ -122,6 +129,14 @@ RUN cd /opt/rstudio-tools/dependencies/common && scl enable llvm-toolset-7 "/bin
 # set github login from build argument if defined
 ARG GITHUB_LOGIN
 ENV RSTUDIO_GITHUB_LOGIN=$GITHUB_LOGIN
+
+# Set Rust environment variables
+ENV PATH="/opt/rstudio-tools/dependencies/common/overlay/rust/bin:${PATH}"
+ENV CARGO_HOME="/opt/rstudio-tools/dependencies/common/overlay/rust"
+ENV RUSTUP_HOME="/opt/rstudio-tools/dependencies/common/overlay/rust"
+RUN if [ -d "/opt/rstudio-tools/dependencies/common/overlay/rust" ]; then \
+    chmod -R 777 /opt/rstudio-tools/dependencies/common/overlay/rust \
+    ; fi
 
 # remove any previous users with conflicting IDs
 ARG JENKINS_GID=999

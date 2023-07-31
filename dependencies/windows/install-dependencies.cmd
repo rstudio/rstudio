@@ -7,7 +7,7 @@ call ..\tools\rstudio-tools.cmd
 set PATH=%CD%\tools;%PATH%
 
 REM Check for required tools on the PATH.
-for %%X in (R.exe 7z.exe cmake.exe) do (
+for %%X in (R.exe 7z.exe cmake.exe wget.exe) do (
   where /q %%X
   if ERRORLEVEL 1 (
     echo ERROR: %%X is not available on the PATH; cannot proceed.
@@ -31,7 +31,7 @@ set MSYS_SSH_FILE=msys-ssh-1000-18.zip
 set SUMATRA_PDF_FILE=SumatraPDF-3.1.2-64.zip
 set WINUTILS_FILE=winutils-1.0.zip
 set WINPTY_FILES=winpty-0.4.3-msys2-2.7.0.zip
-set OPENSSL_FILES=openssl-1.1.1i.zip
+set OPENSSL_FILES=openssl-1.1.1t.zip
 set BOOST_FILES=boost-1.78.0-win-msvc142.zip
 set YAML_CPP_FILES=yaml-cpp-0.6.3.zip
 set RESOURCE_HACKER=resource_hacker.zip
@@ -44,12 +44,20 @@ set PANDOC_NAME=pandoc-%PANDOC_VERSION%
 set PANDOC_FILE=%PANDOC_NAME%-windows-x86_64.zip
 
 REM Pin to specific Quarto version for releases
-set QUARTO_VERSION=1.2.280
+set QUARTO_VERSION=1.3.433
 
 REM Get latest Quarto release version
 REM cd install-quarto
 REM for /F "delims=" %%L in ('powershell.exe -File get-quarto-version.ps1') do (set "QUARTO_VERSION=%%L")
 REM cd ..
+
+REM Check for errors.
+if not "%QUARTO_VERSION%" == "%QUARTO_VERSION:ERROR=%" (
+	echo ERROR: Failed to determine Quarto version; cannot proceed.
+	echo Did you set the Powershell execution policy?
+	echo Try running 'Set-ExecutionPolicy Unrestricted'.
+	exit /b
+)
 
 set QUARTO_FILE=quarto-%QUARTO_VERSION%-win.zip
 
@@ -198,14 +206,14 @@ if not exist pandoc\%PANDOC_VERSION% (
 
 
 
-REM wget %WGET_ARGS% https://s3.amazonaws.com/rstudio-buildtools/quarto/%QUARTO_VERSION%/%QUARTO_FILE%
-wget %WGET_ARGS% https://github.com/quarto-dev/quarto-cli/releases/download/v%QUARTO_VERSION%/%QUARTO_FILE%
+wget %WGET_ARGS% https://s3.amazonaws.com/rstudio-buildtools/quarto/%QUARTO_VERSION%/%QUARTO_FILE%
+REM wget %WGET_ARGS% https://github.com/quarto-dev/quarto-cli/releases/download/v%QUARTO_VERSION%/%QUARTO_FILE%
 echo Unzipping Quarto %QUARTO_FILE%
 rmdir /s /q quarto
 mkdir quarto
-cd quarto
+pushd quarto
 unzip %UNZIP_ARGS% ..\%QUARTO_FILE%
-cd ..
+popd
 del %QUARTO_FILE%
 
 
@@ -240,10 +248,12 @@ if not defined JENKINS_URL (
   )
 )
 
+cd
 echo "Installing panmirror (visual editor)"
 pushd ..\windows\install-panmirror
 call clone-quarto-repo.cmd
 popd
+cd
 
 call install-packages.cmd
 

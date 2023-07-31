@@ -49,4 +49,3 @@ export function ok<T>(value: T): Expected<T> {
 export function err<T>(error?: Error): Expected<T> {
   return [null as unknown as T, error ?? new Error(error)];
 }
-

@@ -236,6 +236,7 @@ if (UNIX)
       system/PosixGroup.cpp
       system/PosixChildProcess.cpp
       system/PosixProcess.cpp
+      system/User.cpp
    )
 
    if(APPLE)

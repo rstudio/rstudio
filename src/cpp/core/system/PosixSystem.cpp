@@ -83,11 +83,12 @@
 #include <core/system/PosixGroup.hpp>
 #include <core/system/Process.hpp>
 #include <core/system/ShellUtils.hpp>
-
+#include <core/system/User.hpp>
 
 #include <shared_core/Error.hpp>
 #include <shared_core/FilePath.hpp>
 #include <shared_core/system/User.hpp>
+
 
 #include "config.h"
 
@@ -1376,7 +1377,7 @@ FilePath currentWorkingDirViaProcFs(PidType pid)
 
    // /proc/PID/cwd is a symbolic link to the process' current working directory
    FilePath pidPath = procFsPath.completePath(procId).completePath("cwd");
-   if (pidPath.isSymlink())
+   if (pidPath.isSymlink() && pidPath.exists())
       return pidPath.resolveSymlink();
    else
       return FilePath();
@@ -1736,7 +1737,7 @@ Error processInfo(pid_t pid, ProcessInfo* pInfo)
 
    // get the username
    core::system::User user;
-   error = User::getUserFromIdentifier(st.st_uid, user);
+   error = getUserFromUserId(st.st_uid, user);
    if (error)
       return error;
 
@@ -1954,6 +1955,11 @@ Error processInfo(const std::string& process, std::vector<ProcessInfo>* pInfo, b
    }
 
    return Success();
+}
+
+Error ProcessInfo::creationTime(boost::posix_time::ptime* pCreationTime) const
+{
+   return systemError(boost::system::errc::not_supported, ERROR_LOCATION);
 }
 #endif
 
@@ -2420,23 +2426,27 @@ bool isUserNotFoundError(const Error& error)
    return error == systemError(boost::system::errc::permission_denied, ErrorLocation());
 }
 
-Error userBelongsToGroupViaGroupList(const User& user,
-                                     const std::string& groupName,
-                                     bool* pBelongs)
+Error userBelongsToGroupViaGroupIds(const User& user,
+                                    const std::string& groupName,
+                                    bool* pBelongs)
 {
    *pBelongs = false; // default to not found
 
-   // get a list of the user's groups
-   std::vector<group::Group> groups;
-   Error error = group::userGroups(user.getUsername(), &groups);
-   if (error)
-      return error;
+   group::Group toFind;
 
-   // scan the user's groups to see if they are a member of the target group
-   *pBelongs = std::find_if(groups.begin(),
-                            groups.end(),
-                            [&](const group::Group& group)
-                            { return group.name == groupName; }) != groups.end();
+   Error err = group::groupFromName(groupName, &toFind);
+   if (err)
+      return err;
+
+   std::vector<GidType> groupIds = group::userGroupIds(user);
+   for (GidType groupId : groupIds)
+   {
+      if (groupId == toFind.groupId)
+      {
+         *pBelongs = true;
+         break;
+      }
+   }
 
    return Success();
 }
@@ -2489,8 +2499,9 @@ Error userBelongsToGroup(const User& user,
    *pBelongs = false; // default to not found
 
    // first we try to use the getgrouplist(3) implementation to determine
-   // if the user is a member of the target groupName.
-   Error groupListError = userBelongsToGroupViaGroupList(user, groupName, pBelongs);
+   // if the user is a member of the target groupName. We used to compare by names
+   // but now compare by ids.
+   Error groupListError = userBelongsToGroupViaGroupIds(user, groupName, pBelongs);
 
    // if there was no error, then we can return early.
    // otherwise, we fallback to the legacy implementation
@@ -2534,7 +2545,7 @@ Error temporarilyDropPriv(const std::string& newUsername,
 {
    // get user info
    User user;
-   Error error = User::getUserFromIdentifier(newUsername, user);
+   Error error = getUserFromUsername(newUsername, user);
    if (error)
       return error;
 
@@ -2586,7 +2597,7 @@ Error permanentlyDropPriv(const std::string& newUsername, const std::string& new
 {
    // get user info
    User user;
-   Error error = User::getUserFromIdentifier(newUsername, user);
+   Error error = getUserFromUsername(newUsername, user);
    if (error)
       return error;
 
@@ -2669,7 +2680,7 @@ Error permanentlyDropPriv(const std::string& newUsername, const std::string& new
 
    // get user info
    User user;
-   Error error = User::getUserFromIdentifier(newUsername, user);
+   Error error = getUserFromUsername(newUsername, user);
    if (error)
       return error;
 

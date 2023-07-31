@@ -718,7 +718,11 @@ test_context("Logging")
                                      "properties", errorProperties));
 
       REQUIRE(code == boost::system::errc::no_such_file_or_directory);
+#ifndef _WIN32
       REQUIRE(message == "No such file or directory");
+#else
+      REQUIRE(message == "The system cannot find the file specified");
+#endif
       REQUIRE(type == "system");
 
       std::string description;
@@ -728,6 +732,8 @@ test_context("Logging")
       REQUIRE(description == "Couldn't read the file");
    }
 
+#ifndef _WIN32
+   // Disabled in Windows, tracked here: https://github.com/rstudio/rstudio/issues/13165
    test_that("Can log LogMessageProperties")
    {
       FilePath tmpConfPath;
@@ -779,7 +785,8 @@ test_context("Logging")
       REQUIRE(logFileContents.find(", prop4: " + obj.write()) != std::string::npos);
       REQUIRE(logFileContents.find(", prop5: " + arr.write()) != std::string::npos);
       REQUIRE(logFileContents.find("Couldn't find file") != std::string::npos);
-      REQUIRE(logFileContents.find("No such file or directory") != std::string::npos);
+      REQUIRE(((logFileContents.find("No such file or directory") != std::string::npos) || 
+              (logFileContents.find("The system cannot find the file specified") != std::string::npos)));
       REQUIRE(logFileContents.find("LoggingTests.cpp") != std::string::npos);
 
       boost::replace_all(confFileContents, "pretty", "json");
@@ -841,6 +848,7 @@ test_context("Logging")
 
       REQUIRE(success);
    }
+#endif
 
    test_that("Can debug action log")
    {

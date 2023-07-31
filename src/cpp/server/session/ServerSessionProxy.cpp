@@ -52,6 +52,7 @@
 #include <core/system/PosixSystem.hpp>
 #include <core/system/PosixGroup.hpp>
 #include <core/system/PosixUser.hpp>
+#include <core/system/User.hpp>
 #include <core/r_util/RSessionContext.hpp>
 
 #include <core/json/JsonRpc.hpp>
@@ -247,8 +248,7 @@ void handleProxyResponse(
    // request are stamped on the response
    ptrConnection->writeResponse(response, true, getAuthCookies(ptrConnection->response()));
 
-   LOG_DEBUG_MESSAGE("-- sent server proxy response for: " + ptrConnection->request().uri() +
-                     " user: " + context.username +
+   LOG_DEBUG_MESSAGE("-- sent server proxy response for: " + ptrConnection->request().debugInfoFinal() +
                      (context.scope.isWorkspaces() ? " - workspaces" : " id:" + context.scope.id()) +
                       ": " + safe_convert::numberToString(ptrConnection->response().statusCode()));
 }
@@ -519,7 +519,8 @@ void handleContentError(
       const Error& error)
 {   
    // if there was a launch pending then remove it
-   sessionManager().removePendingLaunch(context);
+   sessionManager().removePendingLaunch(context, false, std::string());
+
 
    // check for authentication error
    if (server::isAuthenticationError(error))
@@ -542,7 +543,7 @@ void handleContentError(
       auth::handler::signInThenContinue(ptrConnection->request(), &ptrConnection->response());
       ptrConnection->writeResponse();
 
-      LOG_DEBUG_MESSAGE("-- proxy content authentication error for " + ptrConnection->request().uri());
+      LOG_DEBUG_MESSAGE("-- proxy content authentication error for " + ptrConnection->request().debugInfoFinal());
       return;
    }
 
@@ -552,7 +553,7 @@ void handleContentError(
       http::Response& response = ptrConnection->response();
       if (server::isInvalidSessionScopeError(error))
       {
-         LOG_DEBUG_MESSAGE("-- content error: invalid session scope for " + ptrConnection->request().uri());
+         LOG_DEBUG_MESSAGE("-- content error: invalid session scope for " + ptrConnection->request().debugInfoFinal());
 
          unsigned state = safe_convert::stringTo(error.getProperty("state"), 0);
          if (static_cast<r_util::SessionScopeState>(state) ==
@@ -563,7 +564,7 @@ void handleContentError(
       }
       else
       {
-         LOG_DEBUG_MESSAGE("-- content error: session unavailable for " + ptrConnection->request().uri());
+         LOG_DEBUG_MESSAGE("-- content error: session unavailable for " + ptrConnection->request().debugInfoFinal());
          response.setStatusCode(http::status::ServiceUnavailable);
       }
       ptrConnection->writeResponse();
@@ -577,7 +578,7 @@ void handleContentError(
       // It's important to display a message here when this is the first request for a new session.
       // Ideally we'd print the local stream path or the host:port of the server but it needs to be passed down a long chain
       // of requests to get here
-      LOG_ERROR_MESSAGE("Error connecting to session for " + ptrConnection->request().uri() + " error: " + error.asString());
+      LOG_ERROR_MESSAGE("Error connecting to session for " + ptrConnection->request().debugInfoFinal() + " error: " + error.asString());
 
       // write bad gateway
       http::Response& response = ptrConnection->response();
@@ -587,12 +588,12 @@ void handleContentError(
    }
    else if (handleLicenseError(ptrConnection, error))
    {
-      LOG_WARNING_MESSAGE("Session limit error for " + ptrConnection->request().uri() + " detail: " + error.asString());
+      LOG_WARNING_MESSAGE("Session limit error for " + ptrConnection->request().debugInfoFinal() + " detail: " + error.asString());
       ptrConnection->writeResponse();
    }
    else
    {
-      LOG_INFO_MESSAGE("Proxying error response for " + ptrConnection->request().uri() + " detail: " + error.asString());
+      LOG_INFO_MESSAGE("Proxying error response for " + ptrConnection->request().debugInfoFinal() + " detail: " + error.asString());
 
       // otherwise just forward the error
       ptrConnection->writeError(error);
@@ -605,12 +606,12 @@ void handleRpcError(
       const Error& error)
 {
    // if there was a launch pending then remove it
-   sessionManager().removePendingLaunch(context);
+   sessionManager().removePendingLaunch(context, false, std::string());
 
    // check for authentication error
    if (server::isAuthenticationError(error))
    {
-      LOG_DEBUG_MESSAGE("-- rpc error: authentication error for: " + ptrConnection->request().uri() + " error: " + error.getSummary());
+      LOG_DEBUG_MESSAGE("-- rpc error: authentication error for: " + ptrConnection->request().debugInfoFinal() + " error: " + error.getSummary());
       json::setJsonRpcError(Error(json::errc::Unauthorized, ERROR_LOCATION),
                             &(ptrConnection->response()));
       ptrConnection->writeResponse();
@@ -619,7 +620,7 @@ void handleRpcError(
 
    if (server::isSessionUnavailableError(error))
    {
-      LOG_DEBUG_MESSAGE("-- rpc error: session unavailable for: " + ptrConnection->request().uri() + " error: " + error.getSummary());
+      LOG_DEBUG_MESSAGE("-- rpc error: session unavailable for: " + ptrConnection->request().debugInfoFinal() + " error: " + error.getSummary());
       http::Response& response = ptrConnection->response();
       response.setStatusCode(http::status::ServiceUnavailable);
       ptrConnection->writeResponse();
@@ -628,7 +629,7 @@ void handleRpcError(
 
    if (server::isInvalidSessionScopeError(error))
    {
-      LOG_DEBUG_MESSAGE("-- rpc error: session invalid for: " + ptrConnection->request().uri() + " error: " + error.getSummary());
+      LOG_DEBUG_MESSAGE("-- rpc error: session invalid for: " + ptrConnection->request().debugInfoFinal() + " error: " + error.getSummary());
       // prepare client info
       json::Object clJson;
       clJson["scope_path"] = r_util::urlPathForSessionScope(context.scope);
@@ -649,18 +650,18 @@ void handleRpcError(
    // distinguish between connection and other error types
    if (http::isConnectionUnavailableError(error))
    {
-      LOG_DEBUG_MESSAGE("-- rpc error: connection unavailable for: " + ptrConnection->request().uri() + " error: " + error.getSummary());
+      LOG_DEBUG_MESSAGE("-- rpc error: connection unavailable for: " + ptrConnection->request().debugInfoFinal() + " error: " + error.getSummary());
       json::setJsonRpcError(Error(json::errc::ConnectionError, ERROR_LOCATION),
                             &(ptrConnection->response()));
    }
    else if (!handleLicenseError(ptrConnection, error))
    {
-      LOG_DEBUG_MESSAGE("-- rpc error: other error for: " + ptrConnection->request().uri() + " error: " + error.getSummary());
+      LOG_DEBUG_MESSAGE("-- rpc error: other error for: " + ptrConnection->request().debugInfoFinal() + " error: " + error.getSummary());
       json::setJsonRpcError(Error(json::errc::TransmissionError, ERROR_LOCATION),
                            &(ptrConnection->response()));
    }
    else
-      LOG_DEBUG_MESSAGE("-- rpc error: license error for: " + ptrConnection->request().uri() + " error: " + error.getSummary());
+      LOG_DEBUG_MESSAGE("-- rpc error: license error for: " + ptrConnection->request().debugInfoFinal() + " error: " + error.getSummary());
 
    // write the response
    ptrConnection->writeResponse();
@@ -674,7 +675,7 @@ void handleEventsError(
    // NOTE: events requests don't initiate session launches so
    // we don't call removePendingLaunch here
 
-   LOG_DEBUG_MESSAGE("-- events error for: " + ptrConnection->request().uri() + " error: " + error.getSummary());
+   LOG_DEBUG_MESSAGE("-- events error for: " + ptrConnection->request().debugInfoFinal() + " error: " + error.getSummary());
 
    // distinguish connection error as (expected) "Unavailable" error state
    if (http::isConnectionUnavailableError(error))
@@ -720,7 +721,7 @@ Error userIdForUsername(const std::string& username, UidType* pUID)
    else
    {
       core::system::User user;
-      Error error = core::system::User::getUserFromIdentifier(username, user);
+      Error error = system::getUserFromUsername(username, user);
       if (error)
          return error;
 
@@ -807,7 +808,7 @@ void proxyRequest(
    // assign request
    pClient->request().assign(*pRequest);
 
-   LOG_DEBUG_MESSAGE("- Start server proxy request " + ptrConnection->request().method() + " " + ptrConnection->request().uri() + " user: " + context.username + (context.scope.isWorkspaces() ? " - workspaces" : "") + " for local stream: " + streamPath.getAbsolutePath());
+   LOG_DEBUG_MESSAGE("- Start server proxy request " + ptrConnection->request().method() + " " + ptrConnection->request().debugInfo() + (context.scope.isWorkspaces() ? " - workspaces" : "") + " for local stream: " + streamPath.getAbsolutePath());
 
    // proxy the request
    boost::shared_ptr<http::ChunkProxy> chunkProxy(new http::ChunkProxy(ptrConnection));
@@ -1113,7 +1114,7 @@ void proxyLocalhostRequest(
    if (applyProxyFilter(ptrConnection, pRequest, context))
       return;
 
-   LOG_DEBUG_MESSAGE("Start localhost proxy request " + ptrConnection->request().method() + " " + ptrConnection->request().uri() + " username: " + username);
+   LOG_DEBUG_MESSAGE("Start localhost proxy request " + ptrConnection->request().method() + " " + ptrConnection->request().debugInfo());
 
    // make a copy of the request for forwarding
    http::Request request;

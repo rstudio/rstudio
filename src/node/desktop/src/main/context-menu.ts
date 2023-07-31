@@ -13,35 +13,36 @@
  *
  */
 
-import { BrowserWindow, clipboard, dialog, Menu } from 'electron';
-import path from 'path';
+import { BrowserWindow, clipboard, dialog, Menu, WebContents } from 'electron';
 import i18next from 'i18next';
+import path from 'path';
+import { appState } from './app-state';
 
 type ContextMenuItem = Electron.MenuItem | Electron.MenuItemConstructorOptions;
 
-export const showContextMenu = (event: Electron.IpcMainEvent, params: Electron.ContextMenuParams): void => {
-  const template = _createContextMenuTemplate(event, params);
+export const showContextMenu = (sender: WebContents, params: Electron.ContextMenuParams): void => {
+  const template = _createContextMenuTemplate(sender, params);
 
   const menu = Menu.buildFromTemplate(template);
   menu.popup();
 };
 
 export const _createContextMenuTemplate = (
-  event: Electron.IpcMainEvent,
+  sender: WebContents,
   params: Electron.ContextMenuParams,
 ): ContextMenuItem[] => {
   let template: ContextMenuItem[] = [];
   if (params.hasImageContents) {
-    template = createContextMenuImageTemplate(event, params);
+    template = createContextMenuImageTemplate(sender, params);
   } else {
-    template = createContextMenuTextTemplate(event, params);
+    template = createContextMenuTextTemplate(sender, params);
   }
 
   return template;
 };
 
 const createContextMenuImageTemplate = (
-  event: Electron.IpcMainEvent,
+  sender: WebContents,
   params: Electron.ContextMenuParams,
 ): ContextMenuItem[] => {
   return [
@@ -52,21 +53,23 @@ const createContextMenuImageTemplate = (
         // ask the user for a download file path.  in theory, we could let the
         // default download handler do this, but Electron appears to barf if the
         // user cancels that dialog
-        const webContents = event.sender;
+        const webContents = sender;
         const window = BrowserWindow.fromWebContents(webContents) as BrowserWindow;
-        const downloadPath = dialog.showSaveDialogSync(window, {
-          title: i18next.t('contextMenu.saveImageAs'),
-          defaultPath: path.basename(params.srcURL),
-          buttonLabel: i18next.t('contextMenu.save'),
-          properties: ['createDirectory'],
-        });
+        const downloadPath = appState().modalTracker.trackElectronModalSync(() =>
+          dialog.showSaveDialogSync(window, {
+            title: i18next.t('contextMenu.saveImageAs'),
+            defaultPath: path.basename(params.srcURL),
+            buttonLabel: i18next.t('contextMenu.save'),
+            properties: ['createDirectory'],
+          }),
+        );
 
         if (downloadPath == null) {
           return;
         }
 
         // set up a download handler
-        event.sender.session.once('will-download', (event, item) => {
+        sender.session.once('will-download', (event, item) => {
           // set the download path (so Electron doesn't try to prompt)
           item.setSavePath(downloadPath);
 
@@ -74,17 +77,21 @@ const createContextMenuImageTemplate = (
           item.once('done', (event, state) => {
             switch (state) {
               case 'cancelled': {
-                dialog.showErrorBox(
-                  i18next.t('contextMenu.errorDownloadingImage'),
-                  i18next.t('contextMenu.downloadCancelledMessage'),
+                appState().modalTracker.trackElectronModalSync(() =>
+                  dialog.showErrorBox(
+                    i18next.t('contextMenu.errorDownloadingImage'),
+                    i18next.t('contextMenu.downloadCancelledMessage'),
+                  ),
                 );
                 break;
               }
 
               case 'interrupted': {
-                dialog.showErrorBox(
-                  i18next.t('contextMenu.errorDownloadingImage'),
-                  i18next.t('contextMenu.downloadInterruptedMessage'),
+                appState().modalTracker.trackElectronModalSync(() =>
+                  dialog.showErrorBox(
+                    i18next.t('contextMenu.errorDownloadingImage'),
+                    i18next.t('contextMenu.downloadInterruptedMessage'),
+                  ),
                 );
                 break;
               }
@@ -93,7 +100,7 @@ const createContextMenuImageTemplate = (
         });
 
         // initiate the actual download
-        event.sender.downloadURL(params.srcURL);
+        sender.downloadURL(params.srcURL);
       },
     },
 
@@ -101,7 +108,7 @@ const createContextMenuImageTemplate = (
     {
       label: i18next.t('contextMenu.copyImage'),
       click: () => {
-        event.sender.copyImageAt(params.x, params.y);
+        sender.copyImageAt(params.x, params.y);
       },
     },
 
@@ -125,14 +132,14 @@ const createContextMenuImageTemplate = (
     {
       label: i18next.t('contextMenu.inspectElement'),
       click: () => {
-        event.sender.inspectElement(params.x, params.y);
+        sender.inspectElement(params.x, params.y);
       },
     },
   ];
 };
 
 const createContextMenuTextTemplate = (
-  event: Electron.IpcMainEvent,
+  sender: WebContents,
   params: Electron.ContextMenuParams,
 ): ContextMenuItem[] => {
   // We would like to just always use the already-existing roles for clipboard
@@ -176,7 +183,7 @@ const createContextMenuTextTemplate = (
   template.push({
     label: i18next.t('contextMenu.inspectElement'),
     click: () => {
-      event.sender.inspectElement(params.x, params.y);
+      sender.inspectElement(params.x, params.y);
     },
   });
 

@@ -19,20 +19,23 @@ import com.google.gwt.user.client.Timer;
 
 public class Timers
 {
-   public static final void singleShot(int delayMs, final Command command)
+   public static final Timer singleShot(int delayMs, final Command command)
    {
-      new Timer()
+      Timer timer = new Timer()
       {
          @Override
          public void run()
          {
             command.execute();
          }
-      }.schedule(delayMs);
+      };
+      
+      timer.schedule(delayMs);
+      return timer;
    }
    
-   public static final void singleShot(final Command command)
+   public static final Timer singleShot(final Command command)
    {
-      singleShot(0, command);
+      return singleShot(0, command);
    }
 }

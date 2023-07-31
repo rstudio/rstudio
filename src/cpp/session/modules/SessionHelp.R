@@ -457,95 +457,170 @@ options(help_type = "html")
 
 .rs.addFunction("getHelpColumn", function(name, src, envir = parent.frame())
 {
+   tryCatch(
+      .rs.getHelpColumnImpl(name, src, envir),
+      error = function(e) NULL
+   )
+})
+
+.rs.addFunction("getHelpColumnImpl", function(name, src, envir = parent.frame())
+{
    data <- .rs.getAnywhere(src, envir)
+   if (is.null(data))
+      return(NULL)
    
-   if (!is.null(data))
+   column <- data[[name]]
+   
+   canUsePillar <- FALSE
+   if ("pillar" %in% loadedNamespaces())
    {
-      column <- data[[name]]
-      if (isNamespaceLoaded("pillar"))
-      {
-         formatted <- pillar::format_glimpse(column)
-
-         bits <- c()
-         nchars <- 55
-         i <- 1
-         while (nchars > 1 && i < length(column)) {
-            current <- formatted[i]
-            if (nchar(current) > nchars) {
-               current <- pillar:::str_trunc(current, nchars)
-            }
-            bits <- c(bits, current)
-            nchars <- nchars - nchar(current) - 2
-            i <- i + 1
-         }
-
-         if (length(bits) < length(column))
-         {
-            bits <- c(bits, paste0("<i>", pillar:::get_ellipsis(), "</i>"))
-         }
-
-         description <- paste("<ul>", paste(paste0("<li>", bits, "</li>"), collapse = " "), "</ul>")
-         type <- pillar:::get_pillar_type(column)
-         size <- length(formatted)
-      }
-      else 
-      {
-         described <- .rs.describeObject(data, name)
-         description <- described$description
-         type <- described$type
-         size <- described$length
-      }
-
-      list(
-         html = paste0("<h2></h2><h3>Description</h3><p>", description, "</p>"),
-         signature = paste0("<", type, "> [", size, "]"), 
-         pkgname = src,
-         help = FALSE
-      )
+      pillar <- asNamespace("pillar")
+      canUsePillar <-
+         is.function(pillar$format_glimpse) &&
+         is.function(pillar$str_trunc) &&
+         is.function(pillar$get_pillar_type)
    }
+   
+   if (canUsePillar)
+   {
+      formatted <- pillar$format_glimpse(column)
+      
+      bits <- c()
+      nchars <- 55
+      i <- 1
+      while (nchars > 1 && i <= length(column)) {
+         current <- formatted[i]
+         currentNChars <- nchar(current, keepNA = FALSE)
+         if (currentNChars > nchars) {
+            current <- pillar$str_trunc(current, nchars)
+         }
+         bits <- c(bits, current)
+         nchars <- nchars - currentNChars - 2
+         i <- i + 1
+      }
+      
+      if (length(bits) < length(column))
+      {
+         bits <- c(bits, paste0("<i>", pillar:::get_ellipsis(), "</i>"))
+      }
+      
+      description <- paste("<ul>", paste(paste0("<li>", bits, "</li>"), collapse = " "), "</ul>")
+      type <- pillar$get_pillar_type(column)
+      size <- length(formatted)
+   }
+   else 
+   {
+      described <- .rs.describeObject(data, name)
+      description <- described$description
+      type <- described$type
+      size <- described$length
+   }
+   
+   list(
+      html = paste0("<h2></h2><h3>Description</h3><p>", description, "</p>"),
+      signature = paste0("<", type, "> [", size, "]"),
+      pkgname = src,
+      help = FALSE
+   )
+   
 })
 
 .rs.addFunction("getHelpDataFrame", function(name, src, envir = parent.frame())
 {
+   # try and retrieve the help documentation
    out <- .rs.getHelp(name, src)
+   
+   # Return help page as-is if requested by user
+   showDataPreview <- getOption("rstudio.help.showDataPreview", default = TRUE)
+   if (!showDataPreview)
+      return(out)
 
-   # If 'src' is the name of something on the searchpath, grad the data
+   # try and figure out the data + title
    data <- NULL
    title <- name
+   
+   # If 'src' is the name of something on the search path, grab the data
    pos <- match(src, search(), nomatch = -1L)
    if (pos >= 0)
    {
       data <- tryCatch(get(name, pos = pos), error = function(e) NULL)
    }
 
-   if (is.null(data)) {
+   dataFoundAnywhere <- FALSE
+   # if that failed, try to look it up anywhere
+   if (is.null(data))
+   {
       title <- paste0(src, "$", name)
       data <- .rs.getAnywhere(title, envir)
+
+      # if we still couldn't find any data, just use the help document
+      if (is.null(data))
+      {
+         return(out)
+      }
+   
+      dataFoundAnywhere <- TRUE
    }
 
-   if (is.null(data))
-      return(out)
-
+   # Generate the help pre-amble
    if (is.null(out))
    {
-      ncol <- ncol(data)
+      fmt <- paste(
+         "<h2>%s</h2>",
+         "<h3>Description</h3>",
+         "<p>%i obs. of %i %s</p>",
+         sep = ""
+      )
+      
+      vbls <- if (ncol(data) == 1) "variable" else "variables"
+      html <- sprintf(fmt, name, nrow(data), ncol(data), vbls)
+      
       out <- list(
-         html = paste0("<h2>", name, "</h2><h3>Description</h3><p>", nrow(data), " obs. of ", ncol, " variable", if(ncol > 1) "s", "</p>"),
+         html = html,
          signature = "-", 
          pkgname = src, 
          help = FALSE   
       )
    }
    
-   .rs.assignCachedData("completion_popup_dataframe", data, "")
-   out$view <- paste0("grid_resource/gridviewer.html?env=_rs_no_env&cache_key=completion_popup_dataframe&max_cols=50")
+   # NOTE: We previously tried assigning and using cached data, but this is
+   # not safe since help documents are cached after they are first created.
+   #
+   # Instead, we need to make sure the data viewer references the actual
+   # object in the place it's defined.
+   
+   # Limit the number of columns to the first `maxDisplayColumns`
+   # number of columns. E.g. if data_viewer_max_columns=50, then
+   # we'll only load and show the first 50 columns of the data frame
+   # in the help preview.
+   maxDisplayColumns <- .rs.readUiPref("data_viewer_max_columns")
 
+   # build a uri
+   attrs <- c(
+      obj       = title,
+      max_rows  = 1000,
+      max_cols  = maxDisplayColumns
+   )
+   
+   # only include env if we didn't find the data from "anywhere"
+   if (!dataFoundAnywhere)
+   {
+      attrs <- c(attrs, env = src)
+   }
+   
+   uri <- paste(
+      "grid_resource/gridviewer.html",
+      paste(names(attrs), attrs, sep = "=", collapse = "&"),
+      sep = "?"
+   )
+   
+   out$view <- uri
    out
 })
 
 .rs.addFunction("getHelpFunction", function(name, src, envir = parent.frame())
 {
-   # If 'src' is the name of something on the searchpath, get that object
+   # If 'src' is the name of something on the search path, get that object
    # from the search path, then attempt to get help based on that object
    pos <- match(src, search(), nomatch = -1L)
    if (pos >= 0)
@@ -931,12 +1006,22 @@ options(help_type = "html")
 
 .rs.addFunction("RdLoadMacros", function(file)
 {
-   dir <- dirname(dirname(file))
-   macros <- suppressWarnings(tools::loadPkgRdMacros(dir))
-   tools::loadPkgRdMacros(
-      file.path(R.home("share"), "Rd", "macros", "system.Rd"),
-      macros = macros
-   )
+   maybePackageDir <- dirname(dirname(file))
+   if (file.exists(file.path(maybePackageDir, "DESCRIPTION")) ||
+       file.exists(file.path(maybePackageDir, "DESCRIPTION.in")))
+   {
+      # NOTE: ?loadPkgRdMacros has:
+      #
+      #   loadPkgRdMacros loads the system Rd macros by default
+      #
+      # so it shouldn't be necessary to load system macros ourselves here
+      tools::loadPkgRdMacros(maybePackageDir)
+   }
+   else
+   {
+      rMacroPath <- file.path(R.home("share"), "Rd/macros/system.Rd")
+      tools::loadRdMacros(rMacroPath)
+   }
 })
 
 .rs.addFunction("Rd2HTML", function(file, package = "")

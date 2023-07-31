@@ -34,6 +34,7 @@ public class PanmirrorPandocFormatConfig
    public String wrap;
    public String references_location;
    public String references_prefix;
+   public Boolean references_links;
    public boolean canonical;
    
  
@@ -61,7 +62,8 @@ public class PanmirrorPandocFormatConfig
    {
       return StringUtil.equals(a.wrap, b.wrap) &&
              a.references_location == b.references_location &&
-             a.references_prefix == b.references_prefix;         
+             a.references_prefix == b.references_prefix &&
+              a.references_links == b.references_links;
    }
 }
 

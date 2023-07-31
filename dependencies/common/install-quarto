@@ -20,20 +20,16 @@ set -e
 source "$(dirname "${BASH_SOURCE[0]}")/../tools/rstudio-tools.sh"
 section "Installing Quarto"
 
-if [ "$(arch)" = "aarch64" ]; then
-  echo "install-quarto not yet available for aarch64"
-  exit 0
-fi
-
 # variables that control download + installation process
 # specify a version to pin for releases
-QUARTO_VERSION="1.2.280"
+QUARTO_VERSION="1.3.433"
 
 # update to latest Quarto release
 # QUARTO_VERSION=`curl https://quarto.org/docs/download/_download.json | jq ".version" | grep -oE '[0-9]+\.[0-9]+\.[0-9]+'`
+# QUARTO_VERSION=`curl https://quarto.org/docs/download/_prerelease.json | jq ".version" | grep -oE '[0-9]+\.[0-9]+\.[0-9]+'`
 
-QUARTO_URL_BASE="https://github.com/quarto-dev/quarto-cli/releases/download/v${QUARTO_VERSION}"
-#QUARTO_URL_BASE="https://s3.amazonaws.com/rstudio-buildtools/quarto/${QUARTO_VERSION}"
+# QUARTO_URL_BASE="https://github.com/quarto-dev/quarto-cli/releases/download/v${QUARTO_VERSION}"
+QUARTO_URL_BASE="https://s3.amazonaws.com/rstudio-buildtools/quarto/${QUARTO_VERSION}"
 
 QUARTO_SUBDIR="quarto"
 
@@ -69,13 +65,23 @@ case "${PLATFORM}" in
 
 "Linux-64")
   SUBDIR="linux"
+  if [ "$(arch)" == "aarch64" ]; then
+    ARCH="arm64"
+  else
+    ARCH="amd64"
+  fi
   if [ "$OS_DISTRO" == "centos7" ]; then
-    FILES=(
-      "quarto-${QUARTO_VERSION}-linux-rhel7-amd64.tar.gz"
-    )
+    if [ "$ARCH" == "amd64" ]; then
+      FILES=(
+        "quarto-${QUARTO_VERSION}-linux-rhel7-${ARCH}.tar.gz"
+      )
+    else
+      echo "Quarto binaries are not available for CentOS aarch64"
+      exit 0
+    fi
   else
     FILES=(
-      "quarto-${QUARTO_VERSION}-linux-amd64.tar.gz"
+      "quarto-${QUARTO_VERSION}-linux-${ARCH}.tar.gz"
     )
   fi
 

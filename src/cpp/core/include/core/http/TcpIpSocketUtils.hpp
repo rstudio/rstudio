@@ -83,7 +83,7 @@ inline Error initTcpIpAcceptor(
    tcp::resolver::query query(address, port);
    
    boost::system::error_code ec;
-   tcp::resolver::iterator entries = resolver.resolve(query,ec);
+   tcp::resolver::iterator entries = resolver.resolve(query, ec);
    if (ec)
       return Error(ec, ERROR_LOCATION);
    
@@ -106,6 +106,11 @@ inline Error initTcpIpAcceptor(
    acceptor.set_option(tcp::acceptor::reuse_address(true), ec);
    if (ec)
       return Error(ec, ERROR_LOCATION);
+   
+   // Make sure socket handles aren't inherited by default
+   // https://github.com/rstudio/rstudio/issues/13272
+   int socketHandle = acceptor.native_handle();
+   ::fcntl(socketHandle, F_SETFD, FD_CLOEXEC);
 #else
    // Allow users to toggle this behavior, as an escape hatch
    // for https://github.com/rstudio/rstudio/issues/11395

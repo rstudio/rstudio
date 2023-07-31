@@ -3,9 +3,9 @@ project:
 
 website:
   title: "RStudio User Guide"
+  favicon: "images/favicon.svg"
   twitter-card: true
   open-graph: true
-  favicon: images/favicon.svg
   page-navigation: true
   site-url: https://docs.posit.co/ide/user/
   repo-url: https://github.com/rstudio/rstudio/
@@ -17,24 +17,24 @@ website:
     collapse: false
     pinned: true
     search: true
-    logo: images/posit-logo-fullcolor-TM.svg
+    logo: images/posit-icon-fullcolor.svg
     right:
       - text: Version
         menu:
           - text: Additional versions
-            url: https://docs.rstudio.com/rsw/documentation/
+            url: https://docs.posit.co/rsw/documentation/
       - text: "Guides"
         menu:
           - text: "Workbench Install Guide"
-            url: 'https://docs.rstudio.com/rsw/installation/'
+            url: 'https://docs.posit.co/rsw/installation/'
           - text: "Workbench Admin Guide"
-            url: 'https://docs.rstudio.com/ide/server-pro/'
+            url: 'https://docs.posit.co/ide/server-pro/'
           - text: "Posit Workbench User Guide"
-            url: 'https://docs.rstudio.com/ide/server-pro/user/'
+            url: 'https://docs.posit.co/ide/server-pro/user/'
       - text: "Release Notes"
-        url: "https://www.rstudio.com/products/rstudio/release-notes/"      
+        url: "https://docs.posit.co/ide/news/"      
       - icon: house
-        url: https://docs.rstudio.com/
+        url: https://docs.posit.co/
         aria-label: Posit Documentation website
       - icon: question-circle
         url: https://support.rstudio.com/
@@ -136,7 +136,8 @@ format:
     theme:
       - cosmo
       - styles/styles.scss
-    include-in-header: google_analytics.html
+    include-in-header: _ga-header-tag.html
+    include-before-body: _ga-body-tag.html
     toc: true
     code-overflow: scroll
 

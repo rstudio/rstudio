@@ -82,6 +82,14 @@ public:
    // set and get arbitrary connection-related data
    virtual void setData(const boost::any& data) = 0;
    virtual boost::any getData() = 0;
+
+   virtual const std::string& username() const = 0;
+
+   virtual void setUsername(const std::string& username) = 0;
+
+   virtual const std::string& handlerPrefix() const = 0;
+
+   virtual void setHandlerPrefix(const std::string& prefix) = 0;
 };
 
 } // namespace http

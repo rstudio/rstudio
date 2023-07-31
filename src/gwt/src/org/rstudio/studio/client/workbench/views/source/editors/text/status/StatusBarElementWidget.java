@@ -14,40 +14,44 @@
  */
 package org.rstudio.studio.client.workbench.views.source.editors.text.status;
 
-import com.google.gwt.core.client.GWT;
-import com.google.gwt.dom.client.Document;
-import com.google.gwt.dom.client.NativeEvent;
-import com.google.gwt.event.dom.client.*;
-import com.google.gwt.event.logical.shared.HasSelectionHandlers;
-import com.google.gwt.event.logical.shared.SelectionEvent;
-import com.google.gwt.event.logical.shared.SelectionHandler;
-import com.google.gwt.event.shared.HandlerRegistration;
-import com.google.gwt.resources.client.ClientBundle;
-import com.google.gwt.resources.client.ImageResource;
-import com.google.gwt.user.client.Command;
-import com.google.gwt.user.client.ui.FlowPanel;
-import com.google.gwt.user.client.ui.Label;
-import com.google.gwt.user.client.ui.MenuItem;
-
 import java.util.ArrayList;
 
 import org.rstudio.core.client.StringUtil;
 import org.rstudio.core.client.resources.ImageResource2x;
 import org.rstudio.core.client.widget.DecorativeImage;
 
+import com.google.gwt.core.client.GWT;
+import com.google.gwt.dom.client.Document;
+import com.google.gwt.dom.client.NativeEvent;
+import com.google.gwt.event.dom.client.ClickEvent;
+import com.google.gwt.event.dom.client.MouseDownEvent;
+import com.google.gwt.event.dom.client.MouseDownHandler;
+import com.google.gwt.event.logical.shared.HasSelectionHandlers;
+import com.google.gwt.event.logical.shared.SelectionEvent;
+import com.google.gwt.event.logical.shared.SelectionHandler;
+import com.google.gwt.event.shared.HandlerRegistration;
+import com.google.gwt.resources.client.ClientBundle;
+import com.google.gwt.resources.client.CssResource;
+import com.google.gwt.resources.client.ImageResource;
+import com.google.gwt.user.client.Command;
+import com.google.gwt.user.client.ui.FlowPanel;
+import com.google.gwt.user.client.ui.Image;
+import com.google.gwt.user.client.ui.Label;
+import com.google.gwt.user.client.ui.MenuItem;
+
 public class StatusBarElementWidget extends FlowPanel
       implements StatusBarElement, HasSelectionHandlers<String>
 {
-   interface Resources extends ClientBundle
-   {
-      @Source("upDownArrow_2x.png")
-      ImageResource upDownArrow2x();
-   }
-
    public StatusBarElementWidget()
    {
       options_ = new ArrayList<>();
+      icon_ = new FlowPanel();
       label_ = new Label();
+      
+      icon_.setVisible(false);
+      label_.setVisible(true);
+      
+      add(icon_);
       add(label_);
 
       addDomHandler(mouseDownEvent ->
@@ -60,17 +64,36 @@ public class StatusBarElementWidget extends FlowPanel
 
          StatusBarPopupMenu menu = new StatusBarPopupMenu();
          for (final String option : options_)
+         {
             menu.addItem(new MenuItem(option, (Command) () ->
             {
                SelectionEvent.fire(StatusBarElementWidget.this, option);
             }));
+         }
+         
          menu.showRelativeToUpward(label_,
                StringUtil.equals(popupAlignment_, POPUP_ALIGNMENT_RIGHT));
+         
       }, MouseDownEvent.getType());
+   }
+   
+   public void setIcon(ImageResource resource)
+   {
+      icon_.clear();
+      
+      if (resource != null)
+      {
+         Image icon = new Image(resource);
+         icon.addStyleName(RES.styles().icon());
+         icon_.add(icon);
+      }
+      
+      icon_.setVisible(resource != null);
    }
 
    public void setValue(String value)
    {
+      setIcon(null);
       label_.setText(value);
    }
 
@@ -108,8 +131,7 @@ public class StatusBarElementWidget extends FlowPanel
       {
          if (showArrows)
          {
-            Resources res = GWT.create(Resources.class);
-            arrows_ = new DecorativeImage(new ImageResource2x(res.upDownArrow2x()));
+            arrows_ = new DecorativeImage(new ImageResource2x(RES.upDownArrow2x()));
             arrows_.addStyleName("rstudio-themes-inverts");
             add(arrows_);
          }
@@ -163,6 +185,7 @@ public class StatusBarElementWidget extends FlowPanel
    }
 
    private final ArrayList<String> options_;
+   private final FlowPanel icon_;
    private final Label label_;
    private DecorativeImage arrows_;
    private boolean clicksEnabled_ = true;
@@ -170,4 +193,27 @@ public class StatusBarElementWidget extends FlowPanel
 
    public final static String POPUP_ALIGNMENT_LEFT = "left";
    public final static String POPUP_ALIGNMENT_RIGHT = "right";
+   
+   interface Styles extends CssResource
+   {
+      String icon();
+   }
+   
+   public interface Resources extends ClientBundle
+   {
+      @Source("StatusBarElementWidget.css")
+      Styles styles();
+      
+      @Source("upDownArrow_2x.png")
+      ImageResource upDownArrow2x();
+   }
+
+   
+   
+   private static final Resources RES = GWT.create(Resources.class);
+   static
+   {
+      RES.styles().ensureInjected();
+   }
+   
 }

@@ -212,7 +212,7 @@ core::json::Object ConsoleProcessInfo::toJson(SerializationMode serialMode) cons
    result["channel_mode"] = static_cast<int>(channelMode_);
    result["channel_id"] = channelId_;
    result["alt_buffer"] = altBufferActive_;
-   result["cwd"] = module_context::createAliasedPath(cwd_);
+   result["cwd"] = module_context::createAliasedPath(cwd_.resolveSymlink());
    result["cols"] = cols_;
    result["rows"] = rows_;
    result["restarted"] = restarted_;

@@ -1,0 +1,66 @@
+project:
+  type: website
+
+website:
+  title: "RStudio & Posit Workbench Release Notes"
+  favicon: "images/favicon.svg"
+  page-navigation: true
+  site-url: https://docs.posit.co/ide/news/
+  navbar:
+    pinned: true
+    logo: images/posit-icon-fullcolor.svg
+    title: "RStudio & Posit Workbench Release Notes"
+    collapse: false
+    right:
+      - text: "Guides"
+        menu:
+          - text: "Workbench Install Guide"
+            url: 'https://docs.posit.co/rsw/installation/'
+          - text: "Workbench User Guide"
+            url: 'https://docs.posit.co/ide/server-pro/user/'
+          - text: "RStudio Open Source User Guide"
+            url: 'https://docs.posit.co/ide/user/'
+      - icon: house
+        url: https://docs.posit.co/
+        aria-label: Posit Documentation website
+      - icon: question-circle
+        url: https://support.rstudio.com/
+        aria-label: Posit Professional Support
+      - text: "<img src='/images/posit-logo-black-TM.png' id='navbar-right-logo'>"
+        url: "https://posit.co"
+
+  page-footer:
+    left: |
+      Copyright © 2022 Posit Software, PBC, formerly RStudio, PBC. All Rights Reserved.
+    right:
+      - icon: house-fill
+        href: https://www.posit.co
+      - icon: question-circle-fill
+        href: https://support.posit.co/hc/en-us
+      - icon: lightbulb-fill
+        href: https://solutions.posit.co
+      - icon: twitter
+        href: https://twitter.com/posit_pbc
+
+format:
+  html:
+    # Controls whether external links open in new windows
+    link-external-newwindow: true
+    # Controls whether an icon adorns external links (either true or the bootstrap icon name)
+    link-external-icon: true
+    number-sections: false
+    theme:
+      - cosmo
+      - styles/styles.scss
+    include-in-header: _ga-header-tag.html
+    include-before-body: _ga-body-tag.html
+    toc: true
+    code-overflow: scroll
+
+  pdf:
+    toc: true
+
+  docx:
+    toc: true
+
+

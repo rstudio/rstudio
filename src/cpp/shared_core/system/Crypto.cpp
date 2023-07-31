@@ -244,6 +244,10 @@ Error base64Encode(const unsigned char* in_data, int in_length, std::string& out
 
 Error base64Decode(const std::string& in_data, std::vector<unsigned char>& out_decoded)
 {
+   // this crashes if passed an empty string so avoid that altogether
+   if (in_data.length() == 0)
+      return Success();
+
    // allocate b64 BIO
    BIO* pB64 = ::BIO_new(BIO_f_base64());
    if (pB64 == nullptr)

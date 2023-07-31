@@ -53,6 +53,9 @@ public:
       emptyFile_ = request.emptyFile_;
       parsedQueryParams_ = request.parsedQueryParams_;
       queryParams_ = request.queryParams_;
+      username_ = request.username_;
+      requestSequence_ = request.requestSequence_;
+      startTime_ = request.startTime_;
    }
 
 public:
@@ -105,6 +108,7 @@ public:
    void setHost(const std::string& host) { setHeader("Host", host); }
    
    std::string userAgent() const { return headerValue("User-Agent"); }
+   std::string forwarded() const { return headerValue("Forwarded"); }
    
    // only applies to local stream connections (returns -1 if unknown)
    int remoteUid() const { return remoteUid_; }
@@ -160,6 +164,34 @@ public:
    
    void debugPrintUri(const std::string& caption) const;
 
+   const std::string& username() const { return username_; }
+   void setUsername(const std::string& username) { username_ = username; }
+
+   const std::string& handlerPrefix() const { return handlerPrefix_; }
+   void setHandlerPrefix(const std::string& handlerPrefix) { handlerPrefix_ = handlerPrefix; }
+
+   long requestSequence() const { return requestSequence_; }
+   void setRequestSequence(long seq) { requestSequence_ = seq; }
+
+   boost::posix_time::ptime startTime() const { return startTime_; }
+   void setStartTime(boost::posix_time::ptime time) { startTime_ = time; }
+
+   const std::string debugInfo() const
+   {
+      return std::string(uri() + " (" + username() + ":" + std::to_string(requestSequence()) + ")");
+   }
+
+   const std::string debugInfoFinal() const
+   {
+      std::string inStr;
+      if (startTime().is_not_a_date_time())
+         return debugInfo();
+
+      boost::posix_time::time_duration requestTime = boost::posix_time::microsec_clock::universal_time() - startTime();
+      return debugInfo() + " in " + std::to_string(requestTime.total_seconds()) + "." +
+                                    std::to_string(requestTime.total_milliseconds() % 1000) + "s";
+   }
+
 private:
    // Use the internal URI when you need the "behind the proxy" URI
    std::string internalUri() const;
@@ -184,6 +216,10 @@ private:
    std::string method_;
    std::string uri_;
    int remoteUid_;
+   std::string username_;
+   std::string handlerPrefix_;
+   long requestSequence_;
+   boost::posix_time::ptime startTime_;
    
    // cookies, form fields, and query string are parsed on demand
    mutable bool parsedCookies_;

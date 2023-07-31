@@ -14,10 +14,12 @@
  */
 package org.rstudio.studio.client.workbench.views.vcs.common.diff;
 
-import org.rstudio.core.client.StringUtil;
-import org.rstudio.studio.client.workbench.views.vcs.common.diff.Line.Type;
-
 import java.util.ArrayList;
+
+import org.rstudio.core.client.StringUtil;
+import org.rstudio.core.client.regex.Match;
+import org.rstudio.core.client.regex.Pattern;
+import org.rstudio.studio.client.workbench.views.vcs.common.diff.Line.Type;
 
 public class UnifiedParser implements DiffParser
 {
@@ -43,26 +45,48 @@ public class UnifiedParser implements DiffParser
       ArrayList<String> headerLines = new ArrayList<>();
 
       boolean inDiff = false;
+      boolean isBinary = false;
 
-      String line;
-      while (null != (line = nextLine()) && !line.startsWith("--- "))
+      String line = null;
+      while (true)
       {
+         line = nextLine();
+         if (line == null)
+            return null;
+         
          if (isNewFileLine(line))
             inDiff = true;
 
          if (inDiff)
             headerLines.add(line);
+         
+         if (line.startsWith("--- "))
+            break;
+         
+         if (line.startsWith("Binary files "))
+         {
+            isBinary = true;
+            break;
+         }
       }
 
-      if (line == null)
-         return null;
-
-      String fileA = line.substring(4);
-      line = nextLine();
-      if (line == null || !line.startsWith("+++ "))
-         throw new DiffFormatException("Incomplete file header");
-      String fileB = line.substring(4);
-      return new DiffFileHeader(headerLines, fileA, fileB);
+      if (isBinary)
+      {
+         Pattern pattern = Pattern.create("Binary files (.*) and (.*) differ");
+         Match match = pattern.match(line, 0);
+         if (match == null)
+            throw new DiffFormatException("Unexpected summary of binary file changes");
+         return new DiffFileHeader(headerLines, match.getGroup(1), match.getGroup(2));
+      }
+      else
+      {
+         String fileA = line.substring(4);
+         line = nextLine();
+         if (line == null || !line.startsWith("+++ "))
+            throw new DiffFormatException("Incomplete file header");
+         String fileB = line.substring(4);
+         return new DiffFileHeader(headerLines, fileA, fileB);
+      }
    }
 
    @Override

@@ -222,14 +222,15 @@ void discoverSystemIncludePaths(std::vector<std::string>* pIncludePaths)
 
 #ifdef _WIN32
    {
-      core::system::ProcessResult result;
-      Error error = core::system::runCommand("where.exe gcc.exe", processOptions, &result);
+      Error error = r::exec::RFunction("base:::Sys.which")
+            .addParam("gcc.exe")
+            .call(&compilerPath);
+      
       if (error)
+      {
          LOG_ERROR(error);
-      else if (result.exitStatus != EXIT_SUCCESS)
-         LOG_ERROR_MESSAGE("Error querying CXX compiler: " + result.stdOut);
-      else
-         compilerPath = string_utils::trimWhitespace(result.stdOut);
+         return;
+      }
    }
 #else
    {
@@ -557,7 +558,7 @@ Error getCppCompletions(const core::json::JsonRpcRequest& request,
 
             std::string typedText = result.getTypedText();
 
-            // if we have the same typed text then just ammend previous result
+            // if we have the same typed text then just amend previous result
             if ((typedText == lastTypedText) && !completionsJson.isEmpty())
             {
                json::Object res = completionsJson.getBack().getObject();

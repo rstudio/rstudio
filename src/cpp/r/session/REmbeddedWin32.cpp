@@ -183,80 +183,6 @@ int askYesNoCancel(const char* question)
    }
 }
 
-bool initializeMaxMemoryDangerously()
-{
-   Error error;
-
-   void* pLibrary = nullptr;
-   error = core::system::loadLibrary("R.dll", &pLibrary);
-   if (error)
-      return false;
-
-   // first, see if we can load the 'R_max_memory' symbol directly
-   size_t* p_R_max_memory = nullptr;
-   error = core::system::loadSymbol(
-            pLibrary,
-            "R_max_memory",
-            (void**) &p_R_max_memory);
-
-   if (error)
-   {
-      // terrible, terrible hack -- for typical builds of R from CRAN,
-      // the memory address for R_max_memory lies just before the
-      // Rwin_graphicsx symbol, so find that symbol, and compute the
-      // position of R_max_memory offset from that
-      char* p_Rwin_graphicsx = nullptr;
-      error = core::system::loadSymbol(
-               pLibrary,
-               "Rwin_graphicsx",
-               (void**) &p_Rwin_graphicsx);
-
-      if (error)
-         return false;
-
-      // get memory address for R_max_memory
-      p_R_max_memory = (size_t*) (p_Rwin_graphicsx - sizeof(size_t));
-   }
-
-   // newer versions of R initialize R_max_memory to SIZE_MAX, while
-   // older versions use INT_MAX. allow either value here when checking
-   bool ok =
-         *p_R_max_memory == SIZE_MAX ||
-         *p_R_max_memory == INT_MAX;
-
-   if (!ok)
-      return false;
-
-   // we found the memory address! let's fill it up
-   MEMORYSTATUSEX status;
-   status.dwLength = sizeof(status);
-   ::GlobalMemoryStatusEx(&status);
-   *p_R_max_memory = status.ullTotalPhys;
-
-   return true;
-}
-
-bool initializeMaxMemoryViaCmdLineOptions()
-{
-   static const int rargc = 2;
-   static const char* rargv[] = {"R.exe", "--vanilla"};
-   ::cmdlineoptions(rargc, (char**) rargv);
-
-   return true;
-}
-
-void initializeMaxMemory(const core::FilePath& rHome)
-{
-   // no action required with newer versions of R
-   const char* dllVersion = getDLLVersion();
-   core::Version rVersion(dllVersion);
-   if (rVersion >= core::Version("4.2.0"))
-      return;
-
-   initializeMaxMemoryDangerously() ||
-         initializeMaxMemoryViaCmdLineOptions();
-}
-
 void initializeParams(RStartup* pRP)
 {
    // use R_DefParams for older versions of R
@@ -301,8 +227,14 @@ void runEmbeddedR(const core::FilePath& rHome,
    // no signal handlers (see comment in REmbeddedPosix.cpp for rationale)
    R_SignalHandlers = 0;
 
-   // initialize R_max_memory
-   initializeMaxMemory(rHome);
+   // setup command line options
+   // note that R does a lot of initialization here that's not accessible
+   // in any other way; e.g. the default translation domain is set within
+   //
+   // https://github.com/rstudio/rstudio/issues/10308
+   static const int rargc = 1;
+   static const char* rargv[] = { "R.exe" };
+   ::cmdlineoptions(rargc, (char**) rargv);
 
    // setup params structure
    RStartup rp;

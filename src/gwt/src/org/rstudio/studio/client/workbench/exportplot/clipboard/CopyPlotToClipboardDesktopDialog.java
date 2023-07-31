@@ -90,14 +90,26 @@ public class CopyPlotToClipboardDesktopDialog
                Element img = images.getItem(0);
                DesktopFrame frame = Desktop.getFrame();
                
-               // NOTE: we use a one-pixel fudge factor here to avoid copying
-               // bits of the border; see https://github.com/rstudio/rstudio/issues/4864
-               frame.copyPageRegionToClipboard(
-                     ElementEx.getClientLeft(img) + 1,
-                     ElementEx.getClientTop(img) + 1,
-                     img.getClientWidth(),
-                     img.getClientHeight(),
-                     completed);
+               if (BrowseCap.isElectron()) {
+                  // The x and y calculations here will give us the approximate (x,y)
+                  // point in the middle of the img. The top-left corner is not used
+                  // because it doesn't consistently mark the top-left of the img element.
+                  int imgX = (img.getClientWidth() / 2) + ElementEx.getClientLeft(img);
+                  int imgY = (img.getClientHeight() / 2) + ElementEx.getClientTop(img);
+                  frame.copyImageAtXYToClipboard(
+                        imgX,
+                        imgY,
+                        completed);
+               } else {
+                  // NOTE: we use a one-pixel fudge factor here to avoid copying
+                  // bits of the border; see https://github.com/rstudio/rstudio/issues/4864
+                  frame.copyPageRegionToClipboard(
+                        ElementEx.getClientLeft(img) + 1,
+                        ElementEx.getClientTop(img) + 1,
+                        img.getClientWidth(),
+                        img.getClientHeight(),
+                        completed);
+               }
             }
             else
             {

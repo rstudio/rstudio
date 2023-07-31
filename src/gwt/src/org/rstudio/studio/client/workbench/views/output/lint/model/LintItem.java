@@ -36,7 +36,6 @@ public class LintItem extends JavaScriptObject
          "end.row": endRow,
          "end.column": endColumn,
          "text": text,
-         "raw": text,
          "type": type
       };
                                 
@@ -74,6 +73,14 @@ public class LintItem extends JavaScriptObject
       this["text"] = text;
    }-*/;
    
+   public final native String getHtml() /*-{
+      return this["html"];
+   }-*/;
+
+   public final native void setHtml(String html) /*-{
+      this["html"] = html;
+   }-*/;
+   
    public final native String getType() /*-{
       return this["type"];
    }-*/;
@@ -90,6 +97,7 @@ public class LintItem extends JavaScriptObject
       return AceAnnotation.create(
             getStartRow(),
             getStartColumn(),
+            getHtml(),
             getText(),
             getType());
    }
@@ -102,17 +110,23 @@ public class LintItem extends JavaScriptObject
       
       for (var key in items)
       {
-         var type = items[key]["type"];
+         var item = items[key];
+         var type = item["type"];
          if (type === "style" || type === "note")
             type = "info";
 
-         aceAnnotations.push({
-            row: items[key]["start.row"],
-            column: items[key]["start.column"],
-            html: items[key]["text"],
-            text: items[key]["raw"],
+         var annotation = {
+            row: item["start.row"],
+            column: item["start.column"],
             type: type
-         });
+         };
+         var html = item["html"]
+         if (html)
+            annotation.html = html;
+         else 
+            annotation.text = item["text"];
+         
+         aceAnnotations.push(annotation);
       }
       
       return aceAnnotations;

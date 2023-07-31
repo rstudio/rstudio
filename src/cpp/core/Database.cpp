@@ -161,7 +161,7 @@ public:
    Error operator()(const SqliteConnectionOptions& options) const
    {
       std::string readonly = options.readonly ? " readonly=true" : "";
-      std::string connectionStr = "shared_cache=true" + readonly + " dbname=\"" + options.file + "\"";
+      std::string connectionStr = "shared_cache=true timeout=5" + readonly + " dbname=\"" + options.file + "\"";
       if (pConnectionStr_)
          *pConnectionStr_ = connectionStr;
 
@@ -177,6 +177,14 @@ public:
          Error error = pConnection->executeStr("PRAGMA foreign_keys = ON;");
          if (error)
             return error;
+
+         // enable WAL mode to improve read/write concurrency
+         if (!options.readonly)
+         {
+            error = pConnection->executeStr("PRAGMA journal_mode = WAL;");
+            if (error)
+               return error;
+         }
 
          *pPtrConnection_ = pConnection;
          return Success();

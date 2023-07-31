@@ -69,6 +69,7 @@ assign(x = ".rs.acCompletionTypes",
           R6_OBJECT   = 28, 
           DATATABLE_SPECIAL_SYMBOL = 29,
           SECUNDARY_ARGUMENT       = 30,
+          ACTIVE_BINDING = 31,
 
           CONTEXT     = 99
        )
@@ -1029,7 +1030,7 @@ assign(x = ".rs.acCompletionTypes",
       
       # arguments that are already used by the matched call
       used <- names(as.list(matchedCall)[-1]) 
-      keep <- !names(formals$formals) %in% c("...", used)
+      keep <- !names(formals$formals) %in% used
 
       result <- .rs.appendCompletions(
          argCompletions,
@@ -1267,6 +1268,7 @@ assign(x = ".rs.acCompletionTypes",
       quote    <- quote[idx]
       type     <- type[idx]
       meta     <- meta[idx]
+      context  <- context[idx]
 
       if (!is.null(suggestOnAccept))
          suggestOnAccept <- suggestOnAccept[idx]
@@ -1291,7 +1293,7 @@ assign(x = ".rs.acCompletionTypes",
 
 .rs.addFunction("subsetCompletions", function(completions, indices)
 {
-   for (name in c("results", "packages", "quote", "type"))
+   for (name in c("results", "packages", "quote", "type", "context"))
       completions[[name]] <- completions[[name]][indices]
    
    if (!is.null(completions[["suggestOnAccept"]]))
@@ -1328,7 +1330,7 @@ assign(x = ".rs.acCompletionTypes",
 {
    old[["suggestOnAccept"]] <- .rs.appendCompletionsOptionalElement(old, new, "suggestOnAccept", FALSE)
    
-   for (name in c("results", "packages", "quote", "type", "meta"))
+   for (name in c("results", "packages", "quote", "type", "meta", "context"))
       old[[name]] <- c(old[[name]], new[[name]])
 
    # resolve duplicates -- a completion is duplicated if its result
@@ -1340,7 +1342,7 @@ assign(x = ".rs.acCompletionTypes",
    
    if (length(drop))
    {
-      for (name in c("results", "packages", "quote", "type", "meta"))
+      for (name in c("results", "packages", "quote", "type", "meta", "context"))
          old[[name]] <- old[[name]][-c(drop)]
 
       if (!is.null(old[["suggestOnAccept"]])) {
@@ -1383,7 +1385,13 @@ assign(x = ".rs.acCompletionTypes",
    typeScores[completions$type == .rs.acCompletionTypes$ARGUMENT] <- 1
    typeScores[completions$type == .rs.acCompletionTypes$COLUMN] <- 2
    typeScores[completions$type == .rs.acCompletionTypes$DATATABLE_SPECIAL_SYMBOL] <- 3
-   typeScores[completions$type == .rs.acCompletionTypes$DATAFRAME] <- 4
+
+   # data has high priority, unless it's requested from a :: or ::: context
+   # rationale: https://github.com/rstudio/rstudio/issues/12678)
+   typeScores[
+      completions$type == .rs.acCompletionTypes$DATAFRAME & 
+      ! completions$context %in% c(.rs.acContextTypes$NAMESPACE_EXPORTED, .rs.acContextTypes$NAMESPACE_ALL)
+      ] <- 4
    typeScores[completions$type == .rs.acCompletionTypes$SECUNDARY_ARGUMENT] <- 5
 
    typeScores[completions$type == .rs.acCompletionTypes$PACKAGE] <- 101
@@ -2017,8 +2025,14 @@ assign(x = ".rs.acCompletionTypes",
       if (packages[[i]] == "")
          return(.rs.acCompletionTypes$UNKNOWN)
       
+      name <- results[[i]]
+      env <- as.environment(packages[[i]])
+
+      if (bindingIsActive(name, env))
+         return(.rs.acCompletionTypes$ACTIVE_BINDING)
+
       object <- tryCatch(
-         get(results[[i]], packages[[i]]),
+         get(name, envir = env),
          error = identity
       )
       
@@ -2399,7 +2413,7 @@ assign(x = ".rs.acCompletionTypes",
    }
 
    # the functionCallString was altered, so we need to bump the first numCommas
-   if (isPiped && context[[1L]] == .rs.acContextTypes$FUNCTION)
+   if (isPiped && length(context) && context[[1L]] == .rs.acContextTypes$FUNCTION)
       numCommas[[1L]] <- numCommas[[1L]] + 1L
    
    ## Try to parse the function call string

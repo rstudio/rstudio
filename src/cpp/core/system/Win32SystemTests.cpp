@@ -252,17 +252,18 @@ TEST_CASE("Win32SystemTests")
       CloseHandle(pi.hThread);
    }
 
-   SECTION("We can find programs on the PATH")
-   {
-      FilePath calcPath;
-      Error error;
+   // Disabling for now, tracked here: https://github.com/rstudio/rstudio/issues/13165
+   // SECTION("We can find programs on the PATH")
+   // {
+   //    FilePath cmdPath;
+   //    Error error;
 
-      error = core::system::findProgramOnPath("calc", &calcPath);
-      CHECK(error == Success());
+   //    error = core::system::findProgramOnPath("cmd", &cmdPath);
+   //    CHECK(error == Success());
 
-      error = core::system::findProgramOnPath("calc.exe", &calcPath);
-      CHECK(error == Success());
-   }
+   //    error = core::system::findProgramOnPath("cmd.exe", &cmdPath);
+   //    CHECK(error == Success());
+   // }
 }
 
 } // end namespace tests

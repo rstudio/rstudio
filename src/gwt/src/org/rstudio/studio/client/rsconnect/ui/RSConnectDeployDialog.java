@@ -108,7 +108,7 @@ public class RSConnectDeployDialog
       {
          // we know what the previous deployment settings are, so use them
          contents_.setPublishSource(source, contentType, 
-               fromPrevious.getAsMultiple(), fromPrevious.getAsStatic());
+               fromPrevious.getAsMultiple(), fromPrevious.getAsStatic(), null);
       }
       else
       {
@@ -117,7 +117,7 @@ public class RSConnectDeployDialog
          // an unambiguously single, non-static asset (such as a Shiny app or
          // an R Markdown document in its own directory)
          contents_.setPublishSource(source, contentType, 
-               false, false);
+               false, false, null);
       }
   
       contents_.setOnDeployDisabled(new Command()

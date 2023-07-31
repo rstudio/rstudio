@@ -4,8 +4,17 @@
     "buttonCancel": "Cancel",
     "buttonBrowse": "Browse...",
     "unknownErrorOccurred": "An unknown error occurred.",
+    "workingOnIt": "Working on it...",
     "buttonYes": "Yes",
-    "buttonNo": "No"
+    "buttonNo": "No",
+    "buttonQuit": "Quit",
+    "noFileSelected": "No file selected"
+  },
+  "imgAlt": {
+    "dialogQuestion": "Question Mark Icon",
+    "dialogInfo": "Information Icon",
+    "dialogWarning": "Warning Icon",
+    "dialogError": "Error Icon"
   },
   "contextMenu": {
     "saveImageAsDots": "Save image as...",
@@ -112,5 +121,7 @@
   },
   "i18nManager": {
     "errorLocalizingDocument": "Error localizing document:"
+  },
+  "licenseDialog": {
   }
 }

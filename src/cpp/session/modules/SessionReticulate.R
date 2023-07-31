@@ -1568,15 +1568,14 @@ def _rstudio_html_generator_():
 #  $ contents_deferred: 'rs.scalar' logi FALSE
 .rs.addFunction("reticulate.describeObject", function(name, parent)
 {
-   builtins <- reticulate::import_builtins(convert = TRUE)
-   
+
    object <- if (inherits(parent, "python.builtin.dict"))
       reticulate::py_get_item(parent, name)
    else if (inherits(parent, "python.builtin.object"))
       reticulate::py_get_attr(parent, name)
    else
       get(name, envir = parent)
-   
+
    # is this a null pointer? if so, handle that up-front
    if (reticulate:::py_is_null_xptr(object))
    {
@@ -1592,10 +1591,10 @@ def _rstudio_html_generator_():
          contents          = list(),
          contents_deferred = .rs.scalar(FALSE)
       )
-      
+
       return(result)
    }
-   
+
    # is this object 'data'? consider non-callable, non-module objects as data
    isData <- !(
       grepl("^__.*__$", name) ||

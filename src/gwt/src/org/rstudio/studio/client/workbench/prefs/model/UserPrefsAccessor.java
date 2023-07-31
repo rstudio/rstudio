@@ -1800,7 +1800,7 @@ public class UserPrefsAccessor extends Prefs
          "enable_cloud_publish_ui",
          _constants.enableCloudPublishUiTitle(), 
          _constants.enableCloudPublishUiDescription(), 
-         false);
+         true);
    }
 
    /**
@@ -1979,6 +1979,30 @@ public class UserPrefsAccessor extends Prefs
          "terminal_track_environment",
          _constants.terminalTrackEnvironmentTitle(), 
          _constants.terminalTrackEnvironmentDescription(), 
+         true);
+   }
+
+   /**
+    * Environment variables which should be ignored when tracking changed to environment variables within a Terminal. Environment variables in this list will not be saved when a Terminal instance is saved and restored.
+    */
+   public PrefValue<JsArrayString> terminalIgnoredEnvironmentVariables()
+   {
+      return object(
+         "terminal_ignored_environment_variables",
+         _constants.terminalIgnoredEnvironmentVariablesTitle(), 
+         _constants.terminalIgnoredEnvironmentVariablesDescription(), 
+         JsArrayUtil.createStringArray());
+   }
+
+   /**
+    * Enabled Terminal hooks? Required for Python terminal integration, which places the active version of Python on the PATH in new Terminal sessions.
+    */
+   public PrefValue<Boolean> terminalHooks()
+   {
+      return bool(
+         "terminal_hooks",
+         _constants.terminalHooksTitle(), 
+         _constants.terminalHooksDescription(), 
          true);
    }
 
@@ -2304,6 +2328,17 @@ public class UserPrefsAccessor extends Prefs
          "git_diff_ignore_whitespace",
          _constants.gitDiffIgnoreWhitespaceTitle(), 
          _constants.gitDiffIgnoreWhitespaceDescription(), 
+         false);
+   }
+
+   /**
+    * Whether to sign commits.
+    */
+   public PrefValue<Boolean> gitSignedCommits() {
+     return bool(
+         "git_signed_commits",
+         _constants.gitSignedCommitsTitle(),
+         _constants.gitSignedCommitsDescription(),
          false);
    }
 
@@ -3469,6 +3504,30 @@ public class UserPrefsAccessor extends Prefs
          false);
    }
 
+   /**
+    * When enabled, RStudio will use GitHub Copilot to provide code suggestions.
+    */
+   public PrefValue<Boolean> copilotEnabled()
+   {
+      return bool(
+         "copilot_enabled",
+         _constants.copilotEnabledTitle(), 
+         _constants.copilotEnabledDescription(), 
+         false);
+   }
+
+   /**
+    * The delay (in milliseconds) before GitHub Copilot completions are requested after the cursor position has changed.
+    */
+   public PrefValue<Integer> copilotCompletionsDelay()
+   {
+      return integer(
+         "copilot_completions_delay",
+         _constants.copilotCompletionsDelayTitle(), 
+         _constants.copilotCompletionsDelayDescription(), 
+         300);
+   }
+
    public void syncPrefs(String layer, JsObject source)
    {
       if (source.hasKey("run_rprofile_on_resume"))
@@ -3745,6 +3804,10 @@ public class UserPrefsAccessor extends Prefs
          terminalCloseBehavior().setValue(layer, source.getString("terminal_close_behavior"));
       if (source.hasKey("terminal_track_environment"))
          terminalTrackEnvironment().setValue(layer, source.getBool("terminal_track_environment"));
+      if (source.hasKey("terminal_ignored_environment_variables"))
+         terminalIgnoredEnvironmentVariables().setValue(layer, source.getObject("terminal_ignored_environment_variables"));
+      if (source.hasKey("terminal_hooks"))
+         terminalHooks().setValue(layer, source.getBool("terminal_hooks"));
       if (source.hasKey("terminal_bell_style"))
          terminalBellStyle().setValue(layer, source.getString("terminal_bell_style"));
       if (source.hasKey("terminal_renderer"))
@@ -3787,6 +3850,8 @@ public class UserPrefsAccessor extends Prefs
          globalTheme().setValue(layer, source.getString("global_theme"));
       if (source.hasKey("git_diff_ignore_whitespace"))
          gitDiffIgnoreWhitespace().setValue(layer, source.getBool("git_diff_ignore_whitespace"));
+      if (source.hasKey("git_signed_commits"))
+         gitSignedCommits().setValue(layer, source.getBool("git_signed_commits"));
       if (source.hasKey("console_double_click_select"))
          consoleDoubleClickSelect().setValue(layer, source.getBool("console_double_click_select"));
       if (source.hasKey("console_suspend_blocked_notice"))
@@ -3955,6 +4020,10 @@ public class UserPrefsAccessor extends Prefs
          textRendering().setValue(layer, source.getString("text_rendering"));
       if (source.hasKey("disable_renderer_accessibility"))
          disableRendererAccessibility().setValue(layer, source.getBool("disable_renderer_accessibility"));
+      if (source.hasKey("copilot_enabled"))
+         copilotEnabled().setValue(layer, source.getBool("copilot_enabled"));
+      if (source.hasKey("copilot_completions_delay"))
+         copilotCompletionsDelay().setValue(layer, source.getInteger("copilot_completions_delay"));
    }
    public List<PrefValue<?>> allPrefs()
    {
@@ -4096,6 +4165,8 @@ public class UserPrefsAccessor extends Prefs
       prefs.add(terminalWebsockets());
       prefs.add(terminalCloseBehavior());
       prefs.add(terminalTrackEnvironment());
+      prefs.add(terminalIgnoredEnvironmentVariables());
+      prefs.add(terminalHooks());
       prefs.add(terminalBellStyle());
       prefs.add(terminalRenderer());
       prefs.add(terminalWeblinks());
@@ -4117,6 +4188,7 @@ public class UserPrefsAccessor extends Prefs
       prefs.add(wrapTabNavigation());
       prefs.add(globalTheme());
       prefs.add(gitDiffIgnoreWhitespace());
+      prefs.add(gitSignedCommits());
       prefs.add(consoleDoubleClickSelect());
       prefs.add(consoleSuspendBlockedNotice());
       prefs.add(consoleSuspendBlockedNoticeDelay());
@@ -4201,6 +4273,8 @@ public class UserPrefsAccessor extends Prefs
       prefs.add(editorScrollMultiplier());
       prefs.add(textRendering());
       prefs.add(disableRendererAccessibility());
+      prefs.add(copilotEnabled());
+      prefs.add(copilotCompletionsDelay());
       return prefs;
    }
    

@@ -1166,6 +1166,22 @@ public interface UserPrefsAccessorConstants extends Constants {
    String terminalTrackEnvironmentDescription();
 
    /**
+    * Environment variables which should be ignored when tracking changed to environment variables within a Terminal. Environment variables in this list will not be saved when a Terminal instance is saved and restored.
+    */
+   @DefaultStringValue("Ignored environment variables")
+   String terminalIgnoredEnvironmentVariablesTitle();
+   @DefaultStringValue("Environment variables which should be ignored when tracking changed to environment variables within a Terminal. Environment variables in this list will not be saved when a Terminal instance is saved and restored.")
+   String terminalIgnoredEnvironmentVariablesDescription();
+
+   /**
+    * Enabled Terminal hooks? Required for Python terminal integration, which places the active version of Python on the PATH in new Terminal sessions.
+    */
+   @DefaultStringValue("Enable Terminal hooks")
+   String terminalHooksTitle();
+   @DefaultStringValue("Enabled Terminal hooks? Required for Python terminal integration, which places the active version of Python on the PATH in new Terminal sessions.")
+   String terminalHooksDescription();
+
+   /**
     * Terminal bell style
     */
    @DefaultStringValue("Terminal bell style")
@@ -1332,6 +1348,15 @@ public interface UserPrefsAccessorConstants extends Constants {
    String gitDiffIgnoreWhitespaceTitle();
    @DefaultStringValue("Whether to ignore whitespace when generating diffs of version controlled files.")
    String gitDiffIgnoreWhitespaceDescription();
+
+   /**
+    * Whether to sign commits.
+    */
+   @DefaultStringValue("Sign commits")
+   String gitSignedCommitsTitle();
+
+   @DefaultStringValue("Whether to sign commits.")
+   String gitSignedCommitsDescription();
 
    /**
     * Whether double-clicking should select a word in the Console pane.
@@ -2014,6 +2039,22 @@ public interface UserPrefsAccessorConstants extends Constants {
    String disableRendererAccessibilityTitle();
    @DefaultStringValue("Disable Electron accessibility support.")
    String disableRendererAccessibilityDescription();
+
+   /**
+    * When enabled, RStudio will use GitHub Copilot to provide code suggestions.
+    */
+   @DefaultStringValue("Enable GitHub Copilot")
+   String copilotEnabledTitle();
+   @DefaultStringValue("When enabled, RStudio will use GitHub Copilot to provide code suggestions.")
+   String copilotEnabledDescription();
+
+   /**
+    * The delay (in milliseconds) before GitHub Copilot completions are requested after the cursor position has changed.
+    */
+   @DefaultStringValue("GitHub Copilot completions delay")
+   String copilotCompletionsDelayTitle();
+   @DefaultStringValue("The delay (in milliseconds) before GitHub Copilot completions are requested after the cursor position has changed.")
+   String copilotCompletionsDelayDescription();
 
 
 

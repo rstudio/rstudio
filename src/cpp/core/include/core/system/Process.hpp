@@ -350,7 +350,7 @@ struct ProcessCallbacks
    // Called if an IO error occurs while reading from standard streams. The
    // default behavior if no callback is specified is to log and then terminate
    // the child (which will result in onExit being called w/ exitStatus == 15)
-   boost::function<void(ProcessOperations&,const Error&)> onError;
+   boost::function<void(ProcessOperations&, const Error&)> onError;
 
    // Called after the process has exited. Passes exitStatus (see ProcessResult
    // comment above for potential values)
@@ -366,8 +366,7 @@ struct ProcessCallbacks
 ProcessCallbacks createProcessCallbacks(
                const std::string& input,
                const boost::function<void(const ProcessResult&)>& onCompleted,
-               const boost::function<void(const Error&)>& onError=
-                                  boost::function<void(const core::Error&)>());
+               const boost::function<void(const Error&)>& onError = {});
 
 // Process supervisor
 class ProcessSupervisor : boost::noncopyable

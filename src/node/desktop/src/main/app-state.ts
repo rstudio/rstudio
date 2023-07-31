@@ -20,8 +20,10 @@ import { FilePath } from '../core/file-path';
 import { DesktopActivation } from './activation-overlay';
 import { Application } from './application';
 import { GwtCallback } from './gwt-callback';
+import { LoggerCallback } from './logger-callback';
 import { PendingWindow } from './pending-window';
 import { WindowTracker } from './window-tracker';
+import { ModalDialogTracker } from './modal-dialog-tracker';
 
 /**
  * Global application state
@@ -34,7 +36,9 @@ export interface AppState {
   port: number;
   generateNewPort(): void;
   windowTracker: WindowTracker;
+  modalTracker: ModalDialogTracker;
   gwtCallback?: GwtCallback;
+  loggerCallback?: LoggerCallback;
   setScratchTempDir(path: FilePath): void;
   scratchTempDir(defaultPath: FilePath): FilePath;
   sessionStartDelaySeconds: number;

@@ -21,10 +21,10 @@ set -e
 sudo yum install -y make
 sudo yum install -y gcc
 sudo yum install -y gcc-c++
-sudo yum install -y cmake
 sudo yum install -y rpmdevtools
 sudo yum install -y wget
 sudo yum install -y jq
+sudo yum install -y whois
 
 # core system libraries
 sudo yum install -y libuuid-devel
@@ -63,6 +63,6 @@ fi
 
 # common
 cd ../common
-./install-common $1
+./install-common "$1"
 cd ../linux
 

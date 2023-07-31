@@ -2830,7 +2830,7 @@ public interface PrefsConstants extends com.google.gwt.i18n.client.Messages {
      * @return translated "Virtual Environment"
      */
     @DefaultMessage("Virtual Environment")
-    @Key("unknownType")
+    @Key("virtualEnvironmentType")
     String virtualEnvironmentType();
 
     /**

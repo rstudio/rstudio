@@ -102,6 +102,8 @@ Error ActiveSessions::create(const std::string& project,
    if (editor == kWorkbenchRStudio)
      initialMetadata.emplace(ActiveSession::kLastResumed, ActiveSession::getNowAsPTimestamp());
 
+   LOG_DEBUG_MESSAGE("Creating new session: " + id + ":" + editor + " project: " + project + " dir: " + workingDir);
+
    auto session = get(id);
    session->writeProperties(initialMetadata);
 

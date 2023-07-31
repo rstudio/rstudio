@@ -16,6 +16,8 @@
 import { BrowserWindow, BrowserWindowConstructorOptions, ipcMain } from 'electron';
 import { err, Expected, ok } from '../core/expected';
 import { safeError } from '../core/err';
+import { getenv } from '../core/environment';
+import { appState } from '../main/app-state';
 
 export abstract class ModalDialog<T> extends BrowserWindow {
   abstract onShowModal(): Promise<T>;
@@ -25,12 +27,13 @@ export abstract class ModalDialog<T> extends BrowserWindow {
 
   constructor(url: string, preload: string, parentWindow: BrowserWindow | null = null) {
     let options: BrowserWindowConstructorOptions = {
-      minWidth: 400,
+      minWidth: 450,
       minHeight: 400,
-      width: 400,
+      width: 450,
       height: 400,
       show: false,
       webPreferences: {
+        nodeIntegration: false,
         preload: preload,
       },
     };
@@ -46,14 +49,19 @@ export abstract class ModalDialog<T> extends BrowserWindow {
     this._ipcMainChannels = [];
 
     // remove any registered ipc handlers on close
-    this.on('closed', () => {
+    this.on('closed', async () => {
+      await appState().modalTracker.removeModalDialog(this);
       for (const channel of this._ipcMainChannels) {
         ipcMain.removeHandler(channel);
       }
     });
 
+    this.on('show', async () => {
+      await appState().modalTracker.addModalDialog(this);
+    });
+
     // make this look and behave like a modal
-    this.setMenu(null);
+    this.setMenuBarVisibility(false);
     this.setMinimizable(false);
     this.setMaximizable(false);
     this.setFullScreenable(false);
@@ -82,6 +90,11 @@ export abstract class ModalDialog<T> extends BrowserWindow {
 
     // show the window after loading everything
     this.show();
+
+    const showDevTools = getenv('RSTUDIO_DESKTOP_MODAL_DEVTOOLS').length !== 0;
+    if (showDevTools) {
+      this.webContents.openDevTools();
+    }
 
     // invoke derived class's callback and return the response
     return this.onShowModal();

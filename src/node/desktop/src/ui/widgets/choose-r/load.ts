@@ -20,8 +20,8 @@ import { Callbacks, CallbackData } from './preload';
 import { changeLanguage, initI18n, localize } from '../../../main/i18n-manager';
 
 import './styles.css';
-import { logger } from '../../../core/logger';
 import { checkForNewLanguage } from '../../utils';
+import { logString } from '../../renderer-logging';
 
 declare global {
   interface Window {
@@ -40,6 +40,8 @@ const updateLabels = () => {
 // radio button is checked
 const selectWidget = document.getElementById('select') as HTMLSelectElement;
 const radioChooseCustom = document.getElementById('use-custom') as HTMLInputElement;
+const radioChoose32 = document.getElementById('use-default-32') as HTMLInputElement;
+const radioChoose64 = document.getElementById('use-default-64') as HTMLInputElement;
 const radioButtons = document.querySelectorAll('input[type="radio"]');
 
 radioButtons.forEach((radioButton) => {
@@ -65,6 +67,10 @@ function callbackData(binaryPath?: string): CallbackData {
 }
 
 buttonOk.addEventListener('click', accept);
+radioChoose32.addEventListener('input', validate);
+radioChoose64.addEventListener('input', validate);
+radioChooseCustom.addEventListener('input', validate);
+selectWidget.addEventListener('input', validate);
 
 buttonCancel.addEventListener('click', closeWindow);
 
@@ -78,13 +84,13 @@ buttonBrowse.addEventListener('click', async () => {
       window.close();
     }
   } catch (err) {
-    logger().logDebug(`Error occurred when trying to browse for R: ${err}`);
+    logString('debug', `Error occurred when trying to browse for R: ${err}`);
   } finally {
-    /** 
-    * Without this timeout, the Choose R Modal will also be closed together with the Browse Dialog.
-    * As the modal keeps focused while interacting with the Browse Dialog,
-    * as soon as the dialog is closed, the `Esc` keypress event will also be triggered in the modal.
-    */
+    /**
+     * Without this timeout, the Choose R Modal will also be closed together with the Browse Dialog.
+     * As the modal keeps focused while interacting with the Browse Dialog,
+     * as soon as the dialog is closed, the `Esc` keypress event will also be triggered in the modal.
+     */
     setTimeout(() => {
       isBrowseDialogOpen = false;
     }, 150);
@@ -125,6 +131,10 @@ window.addEventListener('load', () => {
 function closeWindow() {
   window.callbacks.cancel();
   window.close();
+}
+
+async function validate() {
+  buttonOk.disabled = !(selectWidget.value || radioChoose32.checked || radioChoose64.checked);
 }
 
 async function accept() {

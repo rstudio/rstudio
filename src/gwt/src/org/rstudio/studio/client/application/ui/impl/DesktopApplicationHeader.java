@@ -42,6 +42,7 @@ import org.rstudio.studio.client.application.DesktopInfo;
 import org.rstudio.studio.client.application.IgnoredUpdates;
 import org.rstudio.studio.client.application.events.EventBus;
 import org.rstudio.studio.client.application.events.LogoutRequestedEvent;
+import org.rstudio.studio.client.application.events.DesktopMouseNavigateEvent;
 import org.rstudio.studio.client.application.model.ApplicationServerOperations;
 import org.rstudio.studio.client.application.model.UpdateCheckResult;
 import org.rstudio.studio.client.application.ui.ApplicationHeader;
@@ -53,7 +54,9 @@ import org.rstudio.studio.client.server.ServerError;
 import org.rstudio.studio.client.server.ServerRequestCallback;
 import org.rstudio.studio.client.workbench.codesearch.CodeSearch;
 import org.rstudio.studio.client.workbench.commands.Commands;
+import org.rstudio.studio.client.workbench.events.PushClientStateEvent;
 import org.rstudio.studio.client.workbench.events.SessionInitEvent;
+import org.rstudio.studio.client.workbench.model.ClientInitState;
 import org.rstudio.studio.client.workbench.model.ClientState;
 import org.rstudio.studio.client.workbench.model.Session;
 import org.rstudio.studio.client.workbench.model.SessionInfo;
@@ -69,6 +72,7 @@ import com.google.gwt.core.client.JsArrayString;
 import com.google.gwt.core.client.Scheduler;
 import com.google.gwt.core.client.Scheduler.ScheduledCommand;
 import com.google.gwt.dom.client.Element;
+import com.google.gwt.dom.client.NativeEvent;
 import com.google.gwt.user.client.Timer;
 import com.google.gwt.user.client.Window;
 import com.google.gwt.user.client.ui.Widget;
@@ -102,7 +106,6 @@ public class DesktopApplicationHeader implements ApplicationHeader,
       eventBus_= events;
       pUIPrefs_ = pUIPrefs;
       globalDisplay_ = globalDisplay;
-      ignoredUpdates_ = IgnoredUpdates.create();
       server_ = server;
       appQuit_ = appQuit;
       binder_.bind(commands, this);
@@ -143,7 +146,8 @@ public class DesktopApplicationHeader implements ApplicationHeader,
          if (Desktop.isRemoteDesktop())
             addSignoutToolbar();
 
-         overlay_.addConnectionStatusToolbar(DesktopApplicationHeader.this);
+         if (!BrowseCap.isElectron())
+            overlay_.addConnectionStatusToolbar(DesktopApplicationHeader.this);
 
          toolbar_.completeInitialization(sessionInfo);
 
@@ -154,33 +158,7 @@ public class DesktopApplicationHeader implements ApplicationHeader,
             addQuitSessionButton(commands);
          }
 
-         new JSObjectStateValue(
-               "updates",
-               "ignoredUpdates",
-               ClientState.PERSISTENT,
-               session_.getSessionInfo().getClientState(),
-               false)
-         {
-            @Override
-            protected void onInit(JsObject value)
-            {
-               if (value != null)
-                  ignoredUpdates_ = value.cast();
-            }
-
-            @Override
-            protected JsObject getValue()
-            {
-               ignoredUpdatesDirty_ = false;
-               return ignoredUpdates_.cast();
-            }
-
-            @Override
-            protected boolean hasChanged()
-            {
-               return ignoredUpdatesDirty_;
-            }
-         };
+         ignoredUpdatesState_ = new IgnoredUpdatesStateValue(sessionInfo.getClientState());
 
          Scheduler.get().scheduleFinally(new ScheduledCommand()
          {
@@ -212,6 +190,52 @@ public class DesktopApplicationHeader implements ApplicationHeader,
       toolbar_ = new GlobalToolbar(commands, pCodeSearch);
       ThemeStyles styles = ThemeResources.INSTANCE.themeStyles();
       toolbar_.getWrapper().addStyleName(styles.desktopGlobalToolbarWrapper());
+   }
+
+   private class IgnoredUpdatesStateValue extends JSObjectStateValue
+   {
+      public IgnoredUpdatesStateValue(ClientInitState clientState)
+      {
+         super("updates",
+               "ignoredUpdates",
+               ClientState.PERSISTENT,
+               clientState,
+               false);
+         finishInit(clientState);
+      }
+
+      @Override
+      protected void onInit(JsObject value)
+      {
+         if (value != null)
+            ignoredUpdates_ = value.cast();
+      }
+
+      @Override
+      protected JsObject getValue()
+      {
+         ignoredUpdatesDirty_ = false;
+         return ignoredUpdates_.cast();
+      }
+
+      @Override
+      protected boolean hasChanged()
+      {
+         return ignoredUpdatesDirty_;
+      }
+
+      public JsArrayString getIgnoredUpdates()
+      {
+         return ignoredUpdates_.getIgnoredUpdates();
+      }
+
+      public void addIgnoredUpdate(String update) {
+         ignoredUpdates_.addIgnoredUpdate(update);
+         ignoredUpdatesDirty_ = true;
+      }
+
+      private IgnoredUpdates ignoredUpdates_ = IgnoredUpdates.create();
+      private boolean ignoredUpdatesDirty_ = false;
    }
 
    @Override
@@ -447,9 +471,15 @@ public class DesktopApplicationHeader implements ApplicationHeader,
          @Override
          public void onError(ServerError error)
          {
-            globalDisplay_.showErrorMessage(constants_.errorCheckingUpdatesMessage(),
-                  constants_.errorOccurredCheckingUpdatesMessage()
-                  + error.getMessage());
+            // Only show the error message when manually checking for updates 
+            if (manual)
+            {
+               globalDisplay_.showErrorMessage(constants_.errorCheckingUpdatesMessage(),
+                     constants_.errorOccurredCheckingUpdatesMessage()
+                     + error.getMessage()
+                     + "\n\n"
+                     + constants_.visitWebsiteForNewVersionText());
+            }
          }
       });
    }
@@ -458,23 +488,30 @@ public class DesktopApplicationHeader implements ApplicationHeader,
                                      boolean manual)
    {
       boolean ignoredUpdate = false;
-      if (result.getUpdateVersion().length() > 0)
+      String updateVersion = result.getUpdateVersion();
+      boolean updateAvailable = updateVersion.length() > 0;
+      if (updateAvailable)
       {
-         JsArrayString ignoredUpdates = ignoredUpdates_.getIgnoredUpdates();
+         JsArrayString ignoredUpdates = ignoredUpdatesState_.getIgnoredUpdates();
          for (int i = 0; i < ignoredUpdates.length(); i++)
          {
-            if (ignoredUpdates.get(i) == result.getUpdateVersion())
+            if (ignoredUpdates.get(i) == updateVersion)
             {
                ignoredUpdate = true;
             }
          }
       }
-      if (result.getUpdateVersion().length() > 0 &&
-          !ignoredUpdate)
+      // Show dialog if there's an update available and either:
+      // 1) The user is manually checking for this update (whether the update
+      //    was previously ignored doesn't matter); or
+      // 2) This is an automatic update check and the version wasn't previously
+      //    ignored
+      if (updateAvailable && (manual || !ignoredUpdate))
       {
          ArrayList<String> buttonLabels = new ArrayList<>();
          ArrayList<String> elementIds = new ArrayList<>();
          ArrayList<Operation> buttonOperations = new ArrayList<>();
+         boolean isManualAndIgnored = manual && ignoredUpdate;
 
          buttonLabels.add(constants_.quitDownloadButtonLabel());
          elementIds.add(ElementIds.DIALOG_YES_BUTTON);
@@ -494,35 +531,52 @@ public class DesktopApplicationHeader implements ApplicationHeader,
             }
          });
 
-         buttonLabels.add(constants_.remindLaterButtonLabel());
-         elementIds.add(ElementIds.DIALOG_NO_BUTTON);
-         buttonOperations.add(new Operation() {
-            @Override
-            public void execute()
-            {
-               // Don't do anything here; the prompt will re-appear the next
-               // time we do an update check
-            }
-         });
+         // Only show "Remind Later" if the user isn't manually checking for an
+         // update, which happens to be an ignored version. Essentially, it's not
+         // possible for a user to un-ignore a version.
+         if (!isManualAndIgnored) {
+            buttonLabels.add(constants_.remindLaterButtonLabel());
+            elementIds.add(ElementIds.DIALOG_NO_BUTTON);
+            buttonOperations.add(new Operation() {
+               @Override
+               public void execute()
+               {
+                  // Don't do anything here; the prompt will re-appear the next
+                  // time we do an update check
+               }
+            });
+         }
 
          // Only provide the option to ignore the update if it's not urgent.
          if (result.getUpdateUrgency() == 0)
          {
+            // We need to use a final variable here because we're using it in an
+            // anonymous inner class
+            final boolean finalIgnoredUpdate = ignoredUpdate;
             buttonLabels.add(constants_.ignoreUpdateButtonLabel());
             elementIds.add(ElementIds.DIALOG_CANCEL_BUTTON);
             buttonOperations.add(new Operation() {
                @Override
                public void execute()
                {
-                  ignoredUpdates_.addIgnoredUpdate(result.getUpdateVersion());
-                  ignoredUpdatesDirty_ = true;
+                  // only run the following code if we didn't already ignore the update
+                  if (!finalIgnoredUpdate)
+                  {
+                     ignoredUpdatesState_.addIgnoredUpdate(result.getUpdateVersion());
+                     // Trigger an update to the persistent updates state file
+                     eventBus_.fireEvent(new PushClientStateEvent(true));
+                  }
                }
             });
          }
 
+         String updateMessage = isManualAndIgnored
+               ? result.getUpdateMessage() + "\n\n" + constants_.updateDisabledForVersionText(updateVersion)
+               : result.getUpdateMessage();
+
          globalDisplay_.showGenericDialog(GlobalDisplay.MSG_QUESTION,
                constants_.updateAvailableCaption(),
-               result.getUpdateMessage(),
+               updateMessage,
                buttonLabels,
                elementIds,
                buttonOperations, 0);
@@ -634,37 +688,78 @@ public class DesktopApplicationHeader implements ApplicationHeader,
       return null;
    }
    
-   private void onMouseBack()
+   private void onMouseForward(NativeEvent event)
    {
-      commands_.sourceNavigateBack().execute();
+      eventBus_.fireEvent(new DesktopMouseNavigateEvent(true, event.getClientX(), event.getClientY()));
    }
    
-   private void onMouseForward()
+   private void onMouseBack(NativeEvent event)
    {
-      commands_.sourceNavigateForward().execute();
+      eventBus_.fireEvent(new DesktopMouseNavigateEvent(false, event.getClientX(), event.getClientY()));
    }
    
    private final native void addBackForwardMouseDownHandlers()
    /*-{
       
       var self = this;
+      var eventTarget = null;
+      
+      // Suppress 'mousedown' clicks from the back / forward mouse buttons.
+      // Otherwise, they might send focus just before attempting navigation,
+      // which is annoying if the mouse is within an editable text field
+      // (e.g. an editor in the Source pane).
       $doc.body.addEventListener("mousedown", $entry(function(event) {
          
+         var button = event.button;
+         if (button === 3 || button == 4)
+         {
+            // Save the event target, so we can detect if 'mousedown' and 'mouseup'
+            // happened over the same click target.
+            eventTarget = event.target;
+            
+            // Suppress events otherwise.
+            event.stopPropagation();
+            event.preventDefault();
+         }
+         
+      }), true);
+      
+      // Handle navigation attempts in 'mouseup'.
+      $doc.body.addEventListener("mouseup", $entry(function(event) {
+         
+         // Get the event targets.
+         var oldEventTarget = eventTarget;
+         var newEventTarget = event.target;
+         
+         // Clear the cached event target.
+         eventTarget = null;
+         
+         // If the event target changed, nothing to do.
+         var eventsMatch = oldEventTarget === newEventTarget;
+         
+         // Check and handle mouse back / forward buttons.
          var button = event.button;
          if (button === 3)
          {
             event.stopPropagation();
             event.preventDefault();
-            self.@org.rstudio.studio.client.application.ui.impl.DesktopApplicationHeader::onMouseBack()();
+            if (eventsMatch)
+            {
+               self.@org.rstudio.studio.client.application.ui.impl.DesktopApplicationHeader::onMouseBack(*)(event);
+            }
          }
          else if (button === 4)
          {
             event.stopPropagation();
             event.preventDefault();
-            self.@org.rstudio.studio.client.application.ui.impl.DesktopApplicationHeader::onMouseForward()();
+            if (eventsMatch)
+            {
+               self.@org.rstudio.studio.client.application.ui.impl.DesktopApplicationHeader::onMouseForward(*)(event);
+            }
          }
          
       }), true);
+      
    }-*/;
    
    public interface Binder
@@ -680,8 +775,7 @@ public class DesktopApplicationHeader implements ApplicationHeader,
    private GlobalDisplay globalDisplay_;
    Provider<UserPrefs> pUIPrefs_;
    private ApplicationServerOperations server_;
-   private IgnoredUpdates ignoredUpdates_;
-   private boolean ignoredUpdatesDirty_ = false;
+   private IgnoredUpdatesStateValue ignoredUpdatesState_;
    private ApplicationQuit appQuit_;
    private WebApplicationHeaderOverlay overlay_;
    private static final StudioClientApplicationConstants constants_ = GWT.create(StudioClientApplicationConstants.class);

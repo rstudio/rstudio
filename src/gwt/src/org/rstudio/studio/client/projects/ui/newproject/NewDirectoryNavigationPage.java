@@ -19,6 +19,7 @@ import java.util.ArrayList;
 import com.google.gwt.aria.client.Roles;
 import org.rstudio.core.client.CommandWithArg;
 import org.rstudio.core.client.ElementIds;
+import org.rstudio.core.client.Version;
 import org.rstudio.core.client.js.JsUtil;
 import org.rstudio.core.client.resources.ImageResource2x;
 import org.rstudio.core.client.widget.DecorativeImage;
@@ -88,6 +89,10 @@ public class NewDirectoryNavigationPage
          pages.add(new NewQuartoWebsiteProjectPage());
          pages.add(new NewQuartoBlogProjectPage());
          pages.add(new NewQuartoBookProjectPage());
+      }
+      if (Version.compare(sessionInfo.getQuartoConfig().version, "1.4.251") >= 0)
+      {
+    	  pages.add(new NewQuartoManuscriptProjectPage());
       }
       
       // add user-defined project template dialogs

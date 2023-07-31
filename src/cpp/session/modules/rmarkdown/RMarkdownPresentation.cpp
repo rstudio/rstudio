@@ -62,7 +62,7 @@ json::Value itemAsJson(const SlideNavigationItem& item)
 } // anonymous namespace
 
 
-void ammendResults(const std::string& formatName,
+void amendResults(const std::string& formatName,
                    core::FilePath& targetFile,
                    int sourceLine,
                    json::Object* pResultJson)

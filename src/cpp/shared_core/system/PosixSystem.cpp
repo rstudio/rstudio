@@ -43,6 +43,79 @@ namespace posix {
 
 namespace {
 
+// Apple uses int for gid_t whereas unix uses uint32
+#ifndef __APPLE__
+   typedef gid_t GIDTYPE;
+#else
+   typedef int GIDTYPE;
+#endif
+
+// Does root ever have more than one group?
+static const int MAX_PRIV_GROUPS = 16;
+
+bool s_privInited = false;
+std::string s_privUserName;
+uid_t s_privUid;
+gid_t s_privGid;
+gid_t s_privGids[MAX_PRIV_GROUPS];
+int s_privNumGroups;
+
+// Cache the root uids/gids to keep restorePrivileges from having to call ::getpwuid and ::initgroups. restorePriv is used by
+// rserver-pam's onAfterFork callback, where it can use a vendor api (e.g. centrify) that uses locking that
+// will fail in a process that has forked while holding a lock that then appears held in the child
+//
+// Must be called from a single-threaded context like process startup code.
+Error initSystemPriv(uid_t in_uid)
+{
+   if (s_privInited)
+   {
+       if (in_uid == s_privUid)
+          return Success();
+   }
+
+   struct passwd* pPrivPasswd = ::getpwuid(in_uid);
+   if (pPrivPasswd == nullptr)
+   {
+      return systemError(errno, ERROR_LOCATION);
+   }
+
+   s_privUid = in_uid;
+   s_privGid = pPrivPasswd->pw_gid;
+   s_privUserName = std::string(pPrivPasswd->pw_name);
+   s_privNumGroups = MAX_PRIV_GROUPS;
+   // avoids ::initgroups call in onAfterFork callback that can use mutexes and hang!
+#ifndef __APPLE__
+   if (::getgrouplist(s_privUserName.c_str(), s_privGid, s_privGids, &s_privNumGroups) == -1)
+   {
+     if (s_privNumGroups == MAX_PRIV_GROUPS)
+     {
+        s_privNumGroups = 1;
+        s_privGids[0] = 0;
+     }
+   }
+#else
+   int tmpGids[MAX_PRIV_GROUPS];
+   if (::getgrouplist(s_privUserName.c_str(), s_privGid, tmpGids, &s_privNumGroups) == -1)
+   {
+     if (s_privNumGroups == MAX_PRIV_GROUPS)
+     {
+        s_privNumGroups = 1;
+        tmpGids[0] = 0;
+     }
+   }
+
+   // On apple, need to convert from int to unsigned int to keep type system happy
+   for (int i = 0; i < s_privNumGroups; i++)
+      s_privGids[i] = (gid_t) tmpGids[i];
+#endif
+
+   if (s_privNumGroups > MAX_PRIV_GROUPS) // should never happen, but if it does we hopefully only need the first few for pam login etc.
+     s_privNumGroups = MAX_PRIV_GROUPS;
+   s_privInited = true;
+
+   return Success();
+}
+
 Error restorePrivilegesImpl(uid_t in_uid)
 {
    // Reset error state.
@@ -55,20 +128,19 @@ Error restorePrivilegesImpl(uid_t in_uid)
    if (::geteuid() != 0)
       return systemError(EACCES, ERROR_LOCATION);
 
-   // Get user info to use in group calls
-   struct passwd* pPrivPasswd = ::getpwuid(in_uid);
-   if (pPrivPasswd == nullptr)
-      return systemError(errno, ERROR_LOCATION);
+   Error error = initSystemPriv(in_uid);
+   if (error)
+      return error;
 
-   // Supplemental groups
-   if (::initgroups(pPrivPasswd->pw_name, pPrivPasswd->pw_gid) < 0)
+   // Supplemental groups from cache
+   if (::setgroups(s_privNumGroups, s_privGids) < 0)
       return systemError(errno, ERROR_LOCATION);
 
    // Set effective group
-   if (::setegid(pPrivPasswd->pw_gid) < 0)
+   if (::setegid(s_privGid) < 0)
       return systemError(errno, ERROR_LOCATION);
    // Verify
-   if (::getegid() != pPrivPasswd->pw_gid)
+   if (::getegid() != s_privGid)
       return systemError(EACCES, ERROR_LOCATION);
 
    return Success();
@@ -183,13 +255,12 @@ Error restorePrivileges()
    if (::geteuid() != suid)
       return systemError(EACCES, ERROR_LOCATION);
 
-   // get saved user info to use in group calls
-   struct passwd* pPrivPasswd = ::getpwuid(suid);
-   if (pPrivPasswd == nullptr)
-      return systemError(errno, ERROR_LOCATION);
+   Error error = initSystemPriv(suid);
+   if (error)
+      return error;
 
-   // supplemental groups
-   if (::initgroups(pPrivPasswd->pw_name, pPrivPasswd->pw_gid) < 0)
+   // Supplemental groups from cache
+   if (::setgroups(s_privNumGroups, s_privGids) < 0)
       return systemError(errno, ERROR_LOCATION);
 
    // set group
@@ -210,6 +281,13 @@ Error temporarilyDropPrivileges(const User& in_user, const boost::optional<GidTy
 {
    // clear error state
    errno = 0;
+
+   // the starting uid
+   uid_t privUid = ::geteuid();
+
+   Error error = initSystemPriv(privUid);
+   if (error)
+      return error;
 
    GidType targetGID = in_group.or_else(in_user.getGroupId());
 
@@ -242,10 +320,6 @@ Error temporarilyDropPrivileges(const User& in_user, const boost::optional<GidTy
 
 // privilege manipulation for systems that don't support setresuid/getresuid
 #else
-
-namespace {
-   uid_t s_privUid;
-}
 
 Error restorePrivileges()
 {
@@ -303,8 +377,8 @@ Error temporarilyDropPrivileges(const User& in_user, const boost::optional<GidTy
    if (::geteuid() != in_user.getUserId())
       return systemError(EACCES, ERROR_LOCATION);
 
-   // save privileged user id
-   s_privUid = oldEUID;
+   // save privileged user id and gid info
+   initSystemPriv(s_privUid);
 
    // success
    return Success();

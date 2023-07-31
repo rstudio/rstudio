@@ -407,7 +407,7 @@ public:
    void terminateProcess(RenderTerminateType terminateType)
    {
       terminateType_ = terminateType;
-      async_r::AsyncRProcess::terminate();
+      async_r::AsyncRProcess::terminate(isQuarto_);
    }
 
    FilePath outputFile()
@@ -426,7 +426,7 @@ public:
       // file used for preview)
       if (sourceNavigation_)
       {
-         rmarkdown::presentation::ammendResults(
+         rmarkdown::presentation::amendResults(
                   outputFormat_["format_name"].getString(),
                   targetFile_,
                   sourceLine,
@@ -1607,6 +1607,15 @@ void onShutdown(bool terminatedNormally)
                                                s_renderOutputs);
    if (error)
       LOG_ERROR(error);
+
+#ifdef _WIN32
+   // Windows has issues with the Quarto background process running when the session shuts down
+   // It requires that the Quarto process is terminated first
+   if (isRenderRunning())
+   {
+      s_pCurrentRender_->terminateProcess(renderTerminateQuiet);
+   }
+#endif
 }
  
 void onSuspend(const r::session::RSuspendOptions&, core::Settings*)

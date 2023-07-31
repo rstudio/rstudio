@@ -21,6 +21,8 @@
 
 #include <server/ServerOptions.hpp>
 
+#include "ServerMetrics.hpp"
+
 using namespace rstudio::core;
 
 namespace rstudio {
@@ -28,11 +30,14 @@ namespace server {
 
 http::AsyncServer* httpServerCreate(const http::Headers& additionalHeaders)
 {
-   return new http::TcpIpAsyncServer("RStudio",
+   http::TcpIpAsyncServer* server = new http::TcpIpAsyncServer("RStudio",
                                      std::string(),
                                      !options().wwwEnableOriginCheck(),
                                      options().wwwAllowedOrigins(),
-                                     additionalHeaders);
+                                     additionalHeaders,
+                                     options().statsMonitorSeconds(),
+                                     metrics::statsProvider());
+   return server;
 }
 
 Error httpServerInit(http::AsyncServer* pAsyncServer)

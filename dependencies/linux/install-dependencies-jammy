@@ -31,7 +31,6 @@ sudo apt-get -y install \
   ant \
   build-essential \
   clang \
-  cmake \
   curl \
   debsigs \
   dpkg-sig \
@@ -72,12 +71,19 @@ sudo apt-get -y install \
   unzip \
   uuid-dev \
   wget \
+  whois \
   zlib1g-dev
 
 # overlay
 if [ -e install-overlay-common ]
 then
   ./install-overlay-common
+fi
+
+# If on amd64 system, install gcc-multilib
+arch=$(dpkg --print-architecture)
+if [ $arch = "amd64" ] ; then
+  sudo apt-get -y install gcc-multilib
 fi
 
 # crashpad

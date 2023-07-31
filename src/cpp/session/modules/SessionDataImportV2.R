@@ -664,7 +664,7 @@
    
    columns <- list()
    if (ncol(data)) {
-      columns <- .rs.describeCols(data, maxFactors)
+      columns <- .rs.describeCols(data, -1, -1, maxFactors)
       if (ncol(data) > maxCols) {
          columns <- head(columns, maxCols)
          data <- data[1:maxCols]

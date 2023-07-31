@@ -23,6 +23,7 @@ import org.rstudio.studio.client.rsconnect.RsconnectConstants;
 import org.rstudio.studio.client.rsconnect.model.RSConnectPublishInput;
 import org.rstudio.studio.client.rsconnect.model.RSConnectPublishResult;
 import org.rstudio.studio.client.rsconnect.model.RSConnectPublishSource;
+import org.rstudio.studio.client.rsconnect.ui.RSConnectDeploy.ServerType;
 
 import com.google.gwt.resources.client.ImageResource;
 import com.google.gwt.user.client.ui.Widget;
@@ -31,7 +32,8 @@ public class PublishFilesPage
    extends WizardPage<RSConnectPublishInput, RSConnectPublishResult>
 {
    public PublishFilesPage(String title, String subTitle, ImageResource icon,
-         RSConnectPublishInput input, boolean asMultiple, boolean asStatic)
+         RSConnectPublishInput input, boolean asMultiple, boolean asStatic,
+         ServerType serverType)
    {
       super(title, subTitle, constants_.publish(), icon, null);
       
@@ -41,14 +43,14 @@ public class PublishFilesPage
          // publish the HTML file or the original R Markdown doc, as requested
          if (asStatic)
          {
-            RSConnectPublishSource source = null;
+            RSConnectPublishSource source;
             if (input.getOriginatingEvent().getFromPreview() != null)
             {
                source = new RSConnectPublishSource(
                               input.getOriginatingEvent().getFromPreview(),
                               input.getWebsiteDir(),
                               input.isSelfContained(),
-                              asStatic,
+                              true,
                               input.isShiny(),
                               input.getDescription());
             }
@@ -60,14 +62,14 @@ public class PublishFilesPage
                               input.getWebsiteDir(),
                               input.getWebsiteOutputDir(),
                               input.isSelfContained(),
-                              asStatic,
+                              true,
                               input.isShiny(),
                               input.isQuarto(),
                               input.getDescription(),
                               input.getContentType());
             }
             contents_.setPublishSource(source, input.getContentType(), 
-                  asMultiple, true);
+                  asMultiple, true, serverType);
          }
          else
          {
@@ -78,13 +80,13 @@ public class PublishFilesPage
                      input.getSourceRmd().getPath(),
                   input.getWebsiteDir(),
                   input.isSelfContained(),
-                  asStatic,
+                  false,
                   input.isShiny(),
                   input.isQuarto(),
                   input.getDescription(),
                   input.getContentType()),
                input.getContentType(),
-               asMultiple, false);
+               asMultiple, false, serverType);
          }
       }
    }

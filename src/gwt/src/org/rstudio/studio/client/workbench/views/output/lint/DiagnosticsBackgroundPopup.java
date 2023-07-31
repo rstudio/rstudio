@@ -42,7 +42,7 @@ import com.google.gwt.resources.client.CssResource;
 import com.google.gwt.user.client.Event;
 import com.google.gwt.user.client.Event.NativePreviewEvent;
 import com.google.gwt.user.client.Event.NativePreviewHandler;
-import com.google.gwt.user.client.ui.Label;
+import com.google.gwt.user.client.ui.HTML;
 import com.google.gwt.user.client.ui.PopupPanel;
 import com.google.gwt.user.client.ui.PopupPanel.PositionCallback;
 
@@ -202,7 +202,11 @@ public class DiagnosticsBackgroundPopup
              marker.getRange().getEnd().getRow() >= row)
          {
             activeMarker_ = marker;
-            showPopup(annotation.text(), marker.getRange());
+            String text = annotation.html();
+            if (StringUtil.isNullOrEmpty(text))
+               text = annotation.text();
+            showPopup(text, marker.getRange());
+
             return;
          }
       }
@@ -226,7 +230,7 @@ public class DiagnosticsBackgroundPopup
             }
          });
          addStyleName(RES.styles().popup());
-         setWidget(new Label(text));
+         setWidget(new HTML(text));
       }
 
       private final Range range_;

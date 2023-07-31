@@ -319,30 +319,33 @@ std::string onDetectQuartoSourceType(
           filePath.getExtensionLowerCase() == ".md")
       {
          // if we have a format: or knit: quarto render then it's a quarto document
+         // (exclude all documents with an 'output' yaml metadata key)
          std::string yamlHeader = yaml::extractYamlHeader(pDoc->contents());
          static const boost::regex reOutput("(^|\\n)output:\\s*");
          static const boost::regex reFormat("(^|\\n)format:\\s*");
          static const boost::regex reJupyter("(^|\\n)jupyter:\\s*");
          static const boost::regex reKnitQuarto("(^|\\n)knit:\\s*quarto\\s+render");
-         // format: without output:
-         if (regex_utils::search(yamlHeader.begin(), yamlHeader.end(), reFormat) &&
-             !regex_utils::search(yamlHeader.begin(), yamlHeader.end(), reOutput))
+         if (!regex_utils::search(yamlHeader.begin(), yamlHeader.end(), reOutput)) 
          {
-            return kQuartoXt;
-         }
-         // knit: quarto render
-         else if (regex_utils::search(yamlHeader.begin(), yamlHeader.end(), reKnitQuarto))
-         {
-            return kQuartoXt;
-         }
-         // project has quarto config in build target dir
-         else if (filePath.isWithin(projects::projectContext().directory()) && projectIsQuarto())
-         {
-            return kQuartoXt;
+             // format key
+            if (regex_utils::search(yamlHeader.begin(), yamlHeader.end(), reFormat))
+            {
+               return kQuartoXt;
+            }
+            // knit: quarto render
+            else if (regex_utils::search(yamlHeader.begin(), yamlHeader.end(), reKnitQuarto))
+            {
+               return kQuartoXt;
+            }
+            // project has quarto config in build target dir
+            else if (filePath.isWithin(projects::projectContext().directory()) && projectIsQuarto())
+            {
+               return kQuartoXt;
 
-         // file has a parent directory with a quarto config
-         } else if (quartoIsInstalled() && !quartoProjectConfigFile(filePath).isEmpty()) {
-            return kQuartoXt;
+            // file has a parent directory with a quarto config
+            } else if (quartoIsInstalled() && !quartoProjectConfigFile(filePath).isEmpty()) {
+               return kQuartoXt;
+            }
          }
       }
    }
@@ -543,7 +546,7 @@ Error getQmdPublishDetails(const json::JsonRpcRequest& request,
       {
           std::string type, outputDir;
           readQuartoProjectConfig(quartoConfig, &type, &outputDir);
-          if (type == kQuartoProjectBook || type == kQuartoProjectWebsite)
+          if (type == kQuartoProjectBook || type == kQuartoProjectWebsite || type == kQuartoProjectManuscript)
           {
              FilePath configPath = quartoConfig.getParent();
              websiteDir = configPath.getAbsolutePath();
@@ -553,6 +556,10 @@ Error getQmdPublishDetails(const json::JsonRpcRequest& request,
                  if (type == kQuartoProjectBook)
                  {
                      outputDir = "_book";
+                 }
+                 else if (type == kQuartoProjectManuscript)
+                 {
+                     outputDir = "_manuscript";
                  }
                  else
                  {
@@ -715,7 +722,8 @@ Error quartoCreateProject(const json::JsonRpcRequest& request,
    using namespace module_context;
    std::vector<std::string> projFiles;
    if (boost::algorithm::starts_with(type, kQuartoProjectWebsite) ||
-       boost::algorithm::starts_with(type, kQuartoProjectBook))
+       boost::algorithm::starts_with(type, kQuartoProjectBook) ||
+       boost::algorithm::starts_with(type, kQuartoProjectManuscript))
    {
       projFiles.push_back("index.qmd");
       projFiles.push_back("_quarto.yml");
@@ -874,6 +882,8 @@ void readQuartoConfig()
                s_quartoConfig.project_output_dir = "_site";
             else if (s_quartoConfig.project_type == kQuartoProjectBook)
                s_quartoConfig.project_output_dir = "_book";
+             else if (s_quartoConfig.project_type == kQuartoProjectManuscript)
+               s_quartoConfig.project_output_dir = "_manuscript";
          }
       }
    }
@@ -939,6 +949,7 @@ const char* const kQuartoProjectDefault = "default";
 const char* const kQuartoProjectWebsite = "website";
 const char* const kQuartoProjectSite = "site"; // 'website' used to be 'site'
 const char* const kQuartoProjectBook = "book";
+const char* const kQuartoProjectManuscript = "manuscript";
 
 // possible values for the execute-dir project option
 const char* const kQuartoExecuteDirProject = "project";

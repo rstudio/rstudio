@@ -626,9 +626,10 @@ SEXP parseRequestBody(const http::Request& request, r::sexp::Protect* pProtect)
       // content type
       if (!request.contentType().empty())
       {
-         Rf_setAttrib(bodySEXP,
-                      Rf_install("content-type"),
-                      Rf_mkString(request.contentType().c_str()));
+         r::sexp::Protect protect;
+         SEXP requestTypeSEXP;
+         protect.add(requestTypeSEXP = Rf_mkString(request.contentType().c_str()));
+         Rf_setAttrib(bodySEXP, Rf_install("content-type"), requestTypeSEXP);
       }
 
       return bodySEXP;
@@ -674,43 +675,48 @@ SEXP callHandler(const std::string& path,
                  const HandlerSource& handlerSource,
                  r::sexp::Protect* pProtect)
 {
+   // use local protection for intermediate values
+   r::sexp::Protect protect;
+   
    // uri decode the path
    std::string decodedPath = http::util::urlDecode(path);
 
    // construct "try(httpd(url, query, body, headers), silent=TRUE)"
-
-   SEXP trueSEXP;
-   pProtect->add(trueSEXP = Rf_ScalarLogical(TRUE));
    SEXP queryStringSEXP = parseQuery(request.queryParams(), pProtect);
    SEXP requestBodySEXP = parseRequestBody(request, pProtect);
    SEXP headersSEXP = headersBuffer(request, pProtect);
+   
+   SEXP pathSEXP;
+   protect.add(pathSEXP = Rf_mkString(path.c_str()));
 
    SEXP argsSEXP;
-   argsSEXP = Rf_list4(Rf_mkString(path.c_str()),
-                       queryStringSEXP,
-                       requestBodySEXP,
-                       headersSEXP);
-   pProtect->add(argsSEXP);
+   protect.add(argsSEXP = Rf_list4(pathSEXP, queryStringSEXP, requestBodySEXP, headersSEXP));
 
    // form the call expression
+   SEXP handlerSourceSEXP;
+   protect.add(handlerSourceSEXP = handlerSource(path));
+   
+   SEXP argSEXP;
+   protect.add(argSEXP = Rf_lcons(handlerSourceSEXP, argsSEXP));
+   
    SEXP innerCallSEXP;
-   pProtect->add(innerCallSEXP = Rf_lang3(
-         Rf_install("try"),
-         Rf_lcons( (handlerSource(path)), argsSEXP),
-         trueSEXP));
-   SET_TAG(CDR(CDR(innerCallSEXP)), Rf_install("silent"));
+   protect.add(innerCallSEXP = Rf_lang3(Rf_install("try"), argSEXP, R_TrueValue));
+   SET_TAG(CDDR(innerCallSEXP), Rf_install("silent"));
    
    // suppress warnings
    SEXP suppressWarningsSEXP;
-   pProtect->add(suppressWarningsSEXP = r::sexp::findFunction("suppressWarnings", "base"));
+   protect.add(suppressWarningsSEXP = r::sexp::findFunction("suppressWarnings", "base"));
    
    SEXP callSEXP;
-   pProtect->add(callSEXP = Rf_lang2(suppressWarningsSEXP, innerCallSEXP));
+   protect.add(callSEXP = Rf_lang2(suppressWarningsSEXP, innerCallSEXP));
 
+   // get reference to tools namespace
+   SEXP toolsSEXP = r::sexp::findNamespace("tools");
+   
    // execute and return
    SEXP resultSEXP;
-   pProtect->add(resultSEXP = Rf_eval(callSEXP,
-                                      R_FindNamespace(Rf_mkString("tools"))));
+   pProtect->add(resultSEXP = Rf_eval(callSEXP, toolsSEXP));
+   
    return resultSEXP;
 }
 
@@ -993,16 +999,14 @@ SEXP lookupCustomHandler(const std::string& uri)
       // load .httpd.handlers.env
       if (!s_customHandlersEnv)
       {
-         s_customHandlersEnv = Rf_eval(Rf_install(".httpd.handlers.env"),
-                                       R_FindNamespace(Rf_mkString("tools")));
+         SEXP toolsSEXP = r::sexp::findNamespace("tools");
+         s_customHandlersEnv = Rf_eval(Rf_install(".httpd.handlers.env"), toolsSEXP);
       }
 
       // we only proceed if .httpd.handlers.env really exists
       if (TYPEOF(s_customHandlersEnv) == ENVSXP)
       {
-         SEXP cl = Rf_findVarInFrame3(s_customHandlersEnv,
-                                      Rf_install(handler.c_str()),
-                                      TRUE);
+         SEXP cl = Rf_findVarInFrame3(s_customHandlersEnv, Rf_install(handler.c_str()), TRUE);
          if (cl != R_UnboundValue && TYPEOF(cl) == CLOSXP) // need a closure
             return cl;
       }

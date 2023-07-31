@@ -362,16 +362,6 @@ public class GeneralPreferencesPane extends PreferencesPane
       for (int i = 0; i < labels.length; i++)
          values[i] = Double.parseDouble(labels[i]) + "";
 
-      helpFontSize_ = new SelectWidget(constants_.helpFontSizeLabel(),
-                                       labels,
-                                       values,
-                                       false, /* Multi select */
-                                       true, /* Horizontal label */
-                                       false /* List on left */);
-      if (!helpFontSize_.setValue(prefs_.helpFontSizePoints().getValue() + ""))
-         helpFontSize_.getListBox().setSelectedIndex(3);
-      advanced.add(helpFontSize_);
-
       Label experimentalLabel = headerLabel(constants_.experimentalLabel());
       spacedBefore(experimentalLabel);
       advanced.add(experimentalLabel);
@@ -509,11 +499,6 @@ public class GeneralPreferencesPane extends PreferencesPane
    public RestartRequirement onApply(UserPrefs prefs)
    {
       RestartRequirement restartRequirement = super.onApply(prefs);
-
-      {
-         double helpFontSize = Double.parseDouble(helpFontSize_.getValue());
-         prefs.helpFontSizePoints().setGlobalValue(helpFontSize);
-      }
 
       if (clipboardMonitoring_ != null &&
           desktopMonitoring_ != clipboardMonitoring_.getValue())
@@ -713,7 +698,6 @@ public class GeneralPreferencesPane extends PreferencesPane
    private RVersionSelectWidget rServerRVersion_ = null;
    private CheckBox rememberRVersionForProjects_ = null;
    private CheckBox reuseSessionsForProjectLinks_ = null;
-   private SelectWidget helpFontSize_;
    private SelectWidget uiLanguage_;
    private CheckBox clipboardMonitoring_ = null;
    private CheckBox fullPathInTitle_ = null;

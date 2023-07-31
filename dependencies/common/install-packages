@@ -15,46 +15,66 @@
 #
 #
 
-set -e
-
 source "$(dirname "${BASH_SOURCE[0]}")/../tools/rstudio-tools.sh"
 section "Installing R Packages"
 
+# the default packages we install, when no lockfile is provided
+PACKAGES=(
+  digest@0.6.31  # work around arm64 build failures with digest 0.6.32
+  purrr
+  rmarkdown
+  testthat
+  xml2
+  yaml
+)
+
 # install dir
-INSTALL_DIR=`pwd`
+INSTALL_DIR="$(pwd)"
 
-install()
-{
-PACKAGE=$1
-PACKAGE_DIR=$PACKAGE
-PACKAGE_VERSION=$2
-PACKAGE_GITHUB_ROOT=$3
-PACKAGE_BUILD_OPTIONS=$4
+# read lockfile if provided
+PLATFORM="$1"
+LOCKFILE="$(dirname "${BASH_SOURCE[0]}")/lockfiles/${PLATFORM}/renv.lock"
 
-# git clone if necessary
-if [ ! -d "$PACKAGE_DIR" ]
-then
-  if [[ -z "$RSTUDIO_GITHUB_LOGIN" ]]; then
-      # no supplied credentials, clone directly
-      git clone "https://github.com/$PACKAGE_GITHUB_ROOT/$PACKAGE.git"
-  else
-      # credentials supplied, use them
-      git clone "https://$RSTUDIO_GITHUB_LOGIN@github.com/$PACKAGE_GITHUB_ROOT/$PACKAGE.git"
-  fi
+if [ -e "${LOCKFILE}" ]; then
+  info "Using lockfile ${LOCKFILE} for package installation."
+else
+  info "Lockfile ${LOCKFILE} doesn't exist; using latest versions of packages."
+  unset LOCKFILE
 fi
 
-# clean and checkout target branch
-cd $PACKAGE_DIR
-git checkout .
-git clean -df .
-git pull
-git checkout $PACKAGE_VERSION
+# utility function; used when bundling development versions of packages
+install () {
 
-# append GitHub fields to DESCRIPTION
-# NOTE: older-style Github prefix required by Packrat 0.5.0;
-#       newer-style Remote prefix required by renv.
-PACKAGE_SHA1=`git rev-parse $PACKAGE_VERSION`
-cat <<EOF >> DESCRIPTION
+  PACKAGE=$1
+  PACKAGE_DIR=$PACKAGE
+  PACKAGE_VERSION=$2
+  PACKAGE_GITHUB_ROOT=$3
+  PACKAGE_BUILD_OPTIONS=$4
+
+  # git clone if necessary
+  if [ ! -d "$PACKAGE_DIR" ]
+  then
+    if [[ -z "$RSTUDIO_GITHUB_LOGIN" ]]; then
+      # no supplied credentials, clone directly
+      git clone "https://github.com/$PACKAGE_GITHUB_ROOT/$PACKAGE.git"
+    else
+      # credentials supplied, use them
+      git clone "https://$RSTUDIO_GITHUB_LOGIN@github.com/$PACKAGE_GITHUB_ROOT/$PACKAGE.git"
+    fi
+  fi
+
+  # clean and checkout target branch
+  cd $PACKAGE_DIR
+  git checkout .
+  git clean -df .
+  git pull
+  git checkout $PACKAGE_VERSION
+
+  # append GitHub fields to DESCRIPTION
+  # NOTE: older-style Github prefix required by Packrat 0.5.0;
+  #       newer-style Remote prefix required by renv.
+  PACKAGE_SHA1=`git rev-parse $PACKAGE_VERSION`
+  cat <<EOF >> DESCRIPTION
 GithubRepo: $PACKAGE
 GithubUsername: rstudio
 GithubRef: $PACKAGE_VERSION
@@ -68,19 +88,19 @@ RemoteSha: $PACKAGE_SHA1
 Origin: RStudioIDE
 EOF
 
-# create source package (remove previous first)
-cd ..
-PACKAGE_ARCHIVE_PATTERN="$PACKAGE*.tar.gz"
-rm -f $PACKAGE_ARCHIVE_PATTERN
+  # create source package (remove previous first)
+  cd ..
+  PACKAGE_ARCHIVE_PATTERN="$PACKAGE*.tar.gz"
+  rm -f $PACKAGE_ARCHIVE_PATTERN
 
-# build package without vignettes, since vignettes may need e.g. knitr to build
-R CMD build --no-build-vignettes $PACKAGE_BUILD_OPTIONS "$PACKAGE"
+  # build package without vignettes, since vignettes may need e.g. knitr to build
+  R CMD build --no-build-vignettes $PACKAGE_BUILD_OPTIONS "$PACKAGE"
 
-# modify filename to include SHA1
-PACKAGE_ARCHIVE=`ls $PACKAGE_ARCHIVE_PATTERN`
-PACKAGE_ARCHIVE_STEM=${PACKAGE_ARCHIVE%.tar.gz}
-PACKAGE_ARCHIVE_SHA1=${PACKAGE_ARCHIVE_STEM}_${PACKAGE_SHA1}.tar.gz
-mv $PACKAGE_ARCHIVE $PACKAGE_ARCHIVE_SHA1
+  # modify filename to include SHA1
+  PACKAGE_ARCHIVE=`ls $PACKAGE_ARCHIVE_PATTERN`
+  PACKAGE_ARCHIVE_STEM=${PACKAGE_ARCHIVE%.tar.gz}
+  PACKAGE_ARCHIVE_SHA1=${PACKAGE_ARCHIVE_STEM}_${PACKAGE_SHA1}.tar.gz
+  mv $PACKAGE_ARCHIVE $PACKAGE_ARCHIVE_SHA1
 
 }
 
@@ -93,24 +113,62 @@ mv $PACKAGE_ARCHIVE $PACKAGE_ARCHIVE_SHA1
 # install rsconnect main rstudio
 # install renv master rstudio
 
-# ascertain the site library. this is somewhat tricky since this script must
-# run on a variety of Linux distributions early in the Docker build process.
-# the lookup order is as follows:
-# 1. the first .Library.site, if defined; otherwise
-# 2. the last element of .libPaths()
-RPKGLIB=$(Rscript -e 'cat(if(length(.Library.site) > 0) { .Library.site[[1]] } else { tail(.libPaths(), n = 1) })')
-if [[ ! -w $RPKGLIB ]]; then
-  echo "$RPKGLIB is not writable. Creating user R library directory."
-  RPKGLIB=$(Rscript -e 'cat(path.expand(Sys.getenv("R_LIBS_USER")))')
-  mkdir -p "$RPKGLIB"
-fi
+# first, make sure the user library is available, for dev configurations
+cat <<- EOF | R -s
 
-# install packages needed to run tests
-for RPKG in purrr rmarkdown renv testthat xml2 yaml; do
-    RINSTALLCMD="if("'!'"require($RPKG, quietly = TRUE)) { install.packages('$RPKG', lib='$RPKGLIB', repos='https://cran.rstudio.com/') }"
-    echo "> $RINSTALLCMD"
-    Rscript -e "$RINSTALLCMD"
-done
+# make sure user library exists
+dir.create(Sys.getenv("R_LIBS_USER"), recursive = TRUE, showWarnings = FALSE)
+
+EOF
+
+# next, install packages
+cat <<- EOF | R -s
+
+# print R information
+writeLines("# R version ----")
+print(R.version)
+writeLines("")
+
+# set up repositories
+options(repos = c(CRAN = "https://cran.rstudio.com"))
+
+# print out system information
+writeLines("# System information ----")
+info <- as.list(Sys.info())
+str(info)
+writeLines("")
+
+# for root / jenkins, use site library
+if (info[["user"]] %in% c("root", "jenkins") && length(.Library.site)) {
+   .libPaths(.Library.site)
+}
+
+# notify user
+writeLines("# Library paths ----")
+writeLines(paste("-", .libPaths(), collapse = "\n"))
+writeLines("")
+
+# install renv
+installed <- tryCatch(packageVersion("renv") > "0.17.3", error = function(e) FALSE)
+if (!installed) {
+  writeLines("Installing latest version of renv ...")
+  install.packages("renv", repos = "https://rstudio.r-universe.dev")
+}
+
+lockfile <- "${LOCKFILE}"
+if (nzchar(lockfile)) {
+  # if we were provided a lockfile, use it
+  writeLines(paste("Using lockfile:", lockfile))
+  renv::restore(lockfile = lockfile)
+} else {
+  # otherwise, install preset list of packages from CRAN
+  packages <- scan(text = "${PACKAGES[@]}", what = character())
+  writeLines(paste("Installing packages:", paste(packages, collapse = ", ")))
+  renv::install(packages)
+}
+
+EOF
 
 # back to install-dir
 cd "$INSTALL_DIR"
+

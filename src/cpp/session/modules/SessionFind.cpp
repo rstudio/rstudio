@@ -1210,17 +1210,24 @@ class GrepOptions : public boost::noncopyable
 {
 public:
 
-   GrepOptions(std::string search, std::string directory,
-      json::Array includeFilePatterns, bool gitFlag, bool excludeGitIgnore, json::Array excludeFilePatterns,
-      bool asRegex, bool ignoreCase) :
-      asRegex_(asRegex),
-      ignoreCase_(ignoreCase),
-      searchPattern_(search),
-      directory_(directory),
-      includeFilePatterns_(includeFilePatterns),
-      gitFlag_(gitFlag),
-      excludeGitIgnore_(excludeGitIgnore),
-      excludeFilePatterns_(excludeFilePatterns)
+   GrepOptions(const std::string& search,
+               const std::string& directory,
+               json::Array includeFilePatterns,
+               json::Array excludeFilePatterns,
+               bool gitFlag,
+               bool excludeGitIgnore,
+               bool asRegex,
+               bool isWholeWord,
+               bool ignoreCase)
+      : asRegex_(asRegex),
+        isWholeWord_(isWholeWord),
+        ignoreCase_(ignoreCase),
+        searchPattern_(search),
+        directory_(directory),
+        includeFilePatterns_(includeFilePatterns),
+        gitFlag_(gitFlag),
+        excludeGitIgnore_(excludeGitIgnore),
+        excludeFilePatterns_(excludeFilePatterns)
    {
       processIncludeFilePatterns();
       processExcludeFilePatterns();
@@ -1229,6 +1236,11 @@ public:
    bool asRegex() const
    {
       return asRegex_;
+   }
+
+   bool isWholeWord() const
+   {
+      return isWholeWord_;
    }
 
    bool ignoreCase() const
@@ -1294,6 +1306,7 @@ public:
 private:
 
    bool asRegex_;
+   bool isWholeWord_;
    bool ignoreCase_;
 
    const std::string searchPattern_;
@@ -1475,16 +1488,19 @@ core::Error runGrepOperation(const GrepOptions& grepOptions, const ReplaceOption
       cmd << "-c" << "grep.patternType=default";
       cmd << "-c" << "grep.extendedRegexp=true";
       cmd << "-c" << "grep.fullName=false";
-      cmd << "-C";
-      cmd << dirPath.getAbsolutePath();
       cmd << "grep";
       cmd << "-I"; // ignore binaries
       cmd << "--untracked"; // include files not tracked by git...
       cmd << (grepOptions.excludeGitIgnore() ? "--exclude-standard" : "--no-exclude-standard");
       cmd << "-Hn";
       cmd << "--color=always";
+
       if (grepOptions.ignoreCase())
          cmd << "-i";
+
+      if (grepOptions.isWholeWord())
+         cmd << "-w";
+
       if (grepOptions.asRegex())
          cmd << "-E"; // use extended-grep (egrep) for Extended Regular Expressions
       else
@@ -1506,11 +1522,11 @@ core::Error runGrepOperation(const GrepOptions& grepOptions, const ReplaceOption
       }
       else 
       {
-         for (std::string arg : grepOptions.includeArgs())
+         for (const std::string& arg : grepOptions.includeArgs())
             cmd << arg;
       }
       
-      for (std::string arg : grepOptions.excludeArgs())
+      for (const std::string& arg : grepOptions.excludeArgs())
          cmd << arg;
    }
    else
@@ -1523,6 +1539,10 @@ core::Error runGrepOperation(const GrepOptions& grepOptions, const ReplaceOption
 #endif
       if (grepOptions.ignoreCase())
          cmd << "-i";
+
+      if (grepOptions.isWholeWord())
+         cmd << "-w";
+
       if (grepOptions.asRegex())
          cmd << "-E"; // use extended-grep (egrep) for Extended Regular Expressions
       else
@@ -1578,16 +1598,6 @@ core::Error runGrepOperation(const GrepOptions& grepOptions, const ReplaceOption
    return Success();
 }
 
-std::string escapeForRegex(const std::string& query)
-{
-   std::string specialChars("([.|*?+(){}^$\\[\\]])");
-   // Note that we need four backslashes in order to add a backslash before each special character to turn into a literal
-   // \\1 is a backreference that refers to the original symbol we want to escape
-   boost::regex_constants::syntax_option_type flags = 0;
-   std::string updatedQuery = boost::regex_replace(query, boost::regex(specialChars, flags), "\\\\\\1");
-   return updatedQuery;
-}
-
 core::Error beginFind(const json::JsonRpcRequest& request,
                       json::JsonRpcResponse* pResponse)
 {
@@ -1604,17 +1614,23 @@ core::Error beginFind(const json::JsonRpcRequest& request,
                                   &ignoreCase,
                                   &directory,
                                   &includeFilePatterns,
+                                  &excludeFilePatterns,
                                   &useGitGrep,
-                                  &excludeGitIgnore,
-                                  &excludeFilePatterns);
+                                  &excludeGitIgnore);
    if (error)
       return error;
 
-   if (isWholeWord)
-      searchString = "(\\b|^)" + escapeForRegex(searchString) + "(\\b|$)";
+   GrepOptions grepOptions(
+            searchString,
+            directory,
+            includeFilePatterns,
+            excludeFilePatterns,
+            useGitGrep,
+            excludeGitIgnore,
+            asRegex,
+            isWholeWord,
+            ignoreCase);
 
-   GrepOptions grepOptions(searchString, directory, includeFilePatterns, useGitGrep, excludeGitIgnore, excludeFilePatterns,
-      asRegex, ignoreCase);
    error = runGrepOperation(grepOptions, ReplaceOptions(), nullptr, pResponse);
    if (error)
       LOG_DEBUG_MESSAGE("Error running grep operation with search string " + searchString);
@@ -1646,7 +1662,7 @@ core::Error previewReplace(const json::JsonRpcRequest& request,
 {
    std::string searchString;
    std::string replacePattern;
-   bool asRegex, ignoreCase;
+   bool asRegex, isWholeWord, ignoreCase;
    std::string directory;
    bool excludeGitIgnore;
    bool useGitGrep;
@@ -1655,20 +1671,31 @@ core::Error previewReplace(const json::JsonRpcRequest& request,
    Error error = json::readParams(request.params,
                                   &searchString,
                                   &asRegex,
+                                  &isWholeWord,
                                   &ignoreCase,
                                   &directory,
                                   &includeFilePatterns,
+                                  &excludeFilePatterns,
                                   &useGitGrep,
                                   &excludeGitIgnore,
-                                  &excludeFilePatterns,
                                   &replacePattern);
    if (error)
       return error;
+
    if (!asRegex)
       LOG_DEBUG_MESSAGE("Regex should be true during preview");
 
-   GrepOptions grepOptions(searchString, directory, includeFilePatterns, useGitGrep, excludeGitIgnore, excludeFilePatterns,
-      asRegex, ignoreCase);
+   GrepOptions grepOptions(
+            searchString,
+            directory,
+            includeFilePatterns,
+            excludeFilePatterns,
+            useGitGrep,
+            excludeGitIgnore,
+            asRegex,
+            isWholeWord,
+            ignoreCase);
+
    ReplaceOptions replaceOptions(replacePattern);
    replaceOptions.preview = true;
    error = runGrepOperation(grepOptions, replaceOptions, nullptr, pResponse);
@@ -1703,15 +1730,20 @@ core::Error completeReplace(const json::JsonRpcRequest& request,
    if (error)
       return error;
 
-   if (isWholeWord)
-      searchString = "\\b" + escapeForRegex(searchString) + "\\b";
-
    // 5 was chosen based on testing to find a value that was both responsive
    // and not overly frequent
    static const int kUpdatePercent = 5;
    LocalProgress* pProgress = new LocalProgress(originalFindCount, kUpdatePercent);
-   GrepOptions grepOptions(searchString, directory, includeFilePatterns, useGitGrep, excludeGitIgnore, excludeFilePatterns,
-      asRegex, ignoreCase);
+   GrepOptions grepOptions(
+            searchString,
+            directory,
+            includeFilePatterns,
+            excludeFilePatterns,
+            useGitGrep,
+            excludeGitIgnore,
+            asRegex,
+            isWholeWord,
+            ignoreCase);
    ReplaceOptions replaceOptions(replacePattern);
 
    error = runGrepOperation(

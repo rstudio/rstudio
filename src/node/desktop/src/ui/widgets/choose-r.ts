@@ -21,29 +21,39 @@ import { ModalDialog } from '../modal-dialog';
 import { initI18n } from '../../main/i18n-manager';
 import i18next, { t } from 'i18next';
 import { CallbackData } from './choose-r/preload';
-import { ElectronDesktopOptions } from '../../main/preferences/electron-desktop-options';
+import { ElectronDesktopOptions, fixWindowsRExecutablePath } from '../../main/preferences/electron-desktop-options';
+
+import { existsSync } from 'fs';
+import { normalize } from 'path';
+import { kWindowsRExe } from '../utils';
+import { appState } from '../../main/app-state';
 
 declare const CHOOSE_R_WEBPACK_ENTRY: string;
 declare const CHOOSE_R_PRELOAD_WEBPACK_ENTRY: string;
 
 function checkValid(data: CallbackData) {
-  // get path to R
-  const rBinaryPath = data.binaryPath as string;
-
+  const binaryPath = data.binaryPath;
+  if (!binaryPath) {
+    logger().logErrorMessage('internal error: binaryPath was unexpectedly null');
+    return false;
+  }
   // try to run it
-  const [rEnvironment, err] = detectREnvironment(rBinaryPath);
+  const [rEnvironment, err] = detectREnvironment(binaryPath);
 
   if (err) {
     // something went wrong; let the user know they can't use
     // this version of R with RStudio
+    logger().logErrorMessage(`Selected R path: ${data.binaryPath}`);
     logger().logError(err);
 
-    dialog.showMessageBoxSync({
-      type: 'error',
-      title: t('chooseRDialog.rLaunchFailedTitle'),
-      message: t('chooseRDialog.rLaunchFailedMessage'),
-      buttons: [ t('common.buttonOk'), ],
-    });
+    appState().modalTracker.trackElectronModalSync(() =>
+      dialog.showMessageBoxSync({
+        type: 'error',
+        title: t('chooseRDialog.rLaunchFailedTitle'),
+        message: t('chooseRDialog.rLaunchFailedMessage'),
+        buttons: [t('common.buttonOk')],
+      }),
+    );
 
     return false;
   }
@@ -65,10 +75,19 @@ export class ChooseRModalWindow extends ModalDialog<CallbackData | null> {
   }
 
   async maybeResolve(resolve: (data: CallbackData) => void, data: CallbackData) {
-    if (checkValid(data)) {
-      resolve(data);
-      return true;
-    } else {
+    try {
+      logger().logDebug(`maybeResolve binaryPath: ${data.binaryPath ?? 'null binary path'}`);
+      if (data.binaryPath) {
+        data.binaryPath = fixWindowsRExecutablePath(data.binaryPath);
+      }
+      if (checkValid(data)) {
+        resolve(data);
+        return true;
+      } else {
+        return false;
+      }
+    } catch (error: unknown) {
+      logger().logError(error);
       return false;
     }
   }
@@ -77,8 +96,8 @@ export class ChooseRModalWindow extends ModalDialog<CallbackData | null> {
     const r32 = findDefault32Bit();
     const r64 = findDefault64Bit();
     const initData = {
-      default32bitPath: isValidInstallation(r32) ? r32 : '',
-      default64bitPath: isValidInstallation(r64) ? r64 : '',
+      default32bitPath: isValidInstallation(r32, 'i386') ? r32 : '',
+      default64bitPath: isValidInstallation(r64, 'x64') ? r64 : '',
       rInstalls: this.rInstalls,
       renderingEngine: ElectronDesktopOptions().renderingEngine(),
       selectedRVersion: ElectronDesktopOptions().rExecutablePath(),
@@ -88,16 +107,24 @@ export class ChooseRModalWindow extends ModalDialog<CallbackData | null> {
 
     // listen for messages from the window
     return new Promise((resolve) => {
+      this.addIpcHandler('path_normalize', async (event, data) => {
+        return normalize(data);
+      });
+
+      this.addIpcHandler('fs_existsSync', async (event, data) => {
+        return existsSync(data);
+      });
+
       this.addIpcHandler('use-default-32bit', async (event, data: CallbackData) => {
         const installPath = initData.default32bitPath;
-        data.binaryPath = `${installPath}/bin/i386/R.exe`;
+        data.binaryPath = `${installPath}/bin/i386/${kWindowsRExe}`;
         logger().logDebug(`Using default 32-bit version of R (${data.binaryPath})`);
         return this.maybeResolve(resolve, data);
       });
 
       this.addIpcHandler('use-default-64bit', async (event, data: CallbackData) => {
         const installPath = initData.default64bitPath;
-        data.binaryPath = `${installPath}/bin/x64/R.exe`;
+        data.binaryPath = `${installPath}/bin/x64/${kWindowsRExe}`;
         logger().logDebug(`Using default 64-bit version of R (${data.binaryPath})`);
         return this.maybeResolve(resolve, data);
       });
@@ -108,15 +135,18 @@ export class ChooseRModalWindow extends ModalDialog<CallbackData | null> {
       });
 
       this.addIpcHandler('browse-r-exe', async (event, data: CallbackData) => {
-        const response = dialog.showOpenDialogSync(this, {
-          title: i18next.t('uiFolder.chooseRExecutable'),
-          properties: ['openFile'],
-          filters: [{ name: i18next.t('uiFolder.rExecutable'), extensions: ['exe'] }],
-        });
+        const response = appState().modalTracker.trackElectronModalSync(() =>
+          dialog.showOpenDialogSync(this, {
+            title: i18next.t('uiFolder.chooseRExecutable'),
+            properties: ['openFile'],
+            defaultPath: kWindowsRExe,
+            filters: [{ name: i18next.t('uiFolder.rExecutable'), extensions: ['exe'] }],
+          }),
+        );
 
         if (response) {
           data.binaryPath = response[0];
-          logger().logDebug(`Using user-selected version of R (${data.binaryPath})`);
+          logger().logDebug(`Using user-browsed version of R (${data.binaryPath})`);
           return this.maybeResolve(resolve, data);
         }
 

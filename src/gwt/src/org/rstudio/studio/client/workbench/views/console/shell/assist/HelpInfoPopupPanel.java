@@ -16,11 +16,8 @@ package org.rstudio.studio.client.workbench.views.console.shell.assist;
 
 import java.util.Map;
 
-import com.google.gwt.core.client.GWT;
-import com.google.gwt.user.client.Timer;
-import com.google.gwt.user.client.ui.*;
-
 import org.rstudio.core.client.BrowseCap;
+import org.rstudio.core.client.MathUtil;
 import org.rstudio.core.client.SafeHtmlUtil;
 import org.rstudio.core.client.StringUtil;
 import org.rstudio.core.client.widget.RStudioFrame;
@@ -29,6 +26,15 @@ import org.rstudio.studio.client.common.codetools.RCompletionType;
 import org.rstudio.studio.client.workbench.views.console.ConsoleConstants;
 import org.rstudio.studio.client.workbench.views.console.ConsoleResources;
 import org.rstudio.studio.client.workbench.views.help.model.HelpInfo;
+
+import com.google.gwt.core.client.GWT;
+import com.google.gwt.user.client.Timer;
+import com.google.gwt.user.client.ui.FlowPanel;
+import com.google.gwt.user.client.ui.HTML;
+import com.google.gwt.user.client.ui.Label;
+import com.google.gwt.user.client.ui.PopupPanel;
+import com.google.gwt.user.client.ui.ScrollPanel;
+import com.google.gwt.user.client.ui.VerticalPanel;
 
 public class HelpInfoPopupPanel extends PopupPanel
 {
@@ -240,8 +246,8 @@ public class HelpInfoPopupPanel extends PopupPanel
       f1prompt_.setVisible(showF1Prompt);
       scrollPanel_.setVisible(true);
       
-      String newHeight = Math.min(179, vpanel_.getOffsetHeight()) + "px";
-      scrollPanel_.setHeight(newHeight);
+      int height = MathUtil.clamp(vpanel_.getOffsetHeight(), 40, 240);
+      scrollPanel_.setHeight(height + "px");
    }
    
    private final ScrollPanel scrollPanel_ = new ScrollPanel();

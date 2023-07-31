@@ -244,6 +244,8 @@ namespace prefs {
 #define kTerminalCloseBehaviorClean "clean"
 #define kTerminalCloseBehaviorNever "never"
 #define kTerminalTrackEnvironment "terminal_track_environment"
+#define kTerminalIgnoredEnvironmentVariables "terminal_ignored_environment_variables"
+#define kTerminalHooks "terminal_hooks"
 #define kTerminalBellStyle "terminal_bell_style"
 #define kTerminalBellStyleNone "none"
 #define kTerminalBellStyleSound "sound"
@@ -288,6 +290,7 @@ namespace prefs {
 #define kGlobalThemeDefault "default"
 #define kGlobalThemeAlternate "alternate"
 #define kGitDiffIgnoreWhitespace "git_diff_ignore_whitespace"
+#define kGitSignedCommits "git_signed_commits"
 #define kConsoleDoubleClickSelect "console_double_click_select"
 #define kConsoleSuspendBlockedNotice "console_suspend_blocked_notice"
 #define kConsoleSuspendBlockedNoticeDelay "console_suspend_blocked_notice_delay"
@@ -418,6 +421,8 @@ namespace prefs {
 #define kTextRenderingAuto "auto"
 #define kTextRenderingGeometricPrecision "geometricPrecision"
 #define kDisableRendererAccessibility "disable_renderer_accessibility"
+#define kCopilotEnabled "copilot_enabled"
+#define kCopilotCompletionsDelay "copilot_completions_delay"
 
 class UserPrefValues: public Preferences
 {
@@ -1246,6 +1251,18 @@ public:
    core::Error setTerminalTrackEnvironment(bool val);
 
    /**
+    * Environment variables which should be ignored when tracking changed to environment variables within a Terminal. Environment variables in this list will not be saved when a Terminal instance is saved and restored.
+    */
+   core::json::Array terminalIgnoredEnvironmentVariables();
+   core::Error setTerminalIgnoredEnvironmentVariables(core::json::Array val);
+
+   /**
+    * Enabled Terminal hooks? Required for Python terminal integration, which places the active version of Python on the PATH in new Terminal sessions.
+    */
+   bool terminalHooks();
+   core::Error setTerminalHooks(bool val);
+
+   /**
     * Terminal bell style
     */
    std::string terminalBellStyle();
@@ -1370,6 +1387,12 @@ public:
     */
    bool gitDiffIgnoreWhitespace();
    core::Error setGitDiffIgnoreWhitespace(bool val);
+
+  /**
+   * Whether to sign git commits.
+   */
+  bool gitSignedCommits();
+  core::Error setGitSignedCommits(bool val);
 
    /**
     * Whether double-clicking should select a word in the Console pane.
@@ -1874,6 +1897,18 @@ public:
     */
    bool disableRendererAccessibility();
    core::Error setDisableRendererAccessibility(bool val);
+
+   /**
+    * When enabled, RStudio will use GitHub Copilot to provide code suggestions.
+    */
+   bool copilotEnabled();
+   core::Error setCopilotEnabled(bool val);
+
+   /**
+    * The delay (in milliseconds) before GitHub Copilot completions are requested after the cursor position has changed.
+    */
+   int copilotCompletionsDelay();
+   core::Error setCopilotCompletionsDelay(int val);
 
 };
 

@@ -16,11 +16,6 @@ package org.rstudio.studio.client.workbench.prefs.views;
 
 import java.util.List;
 
-import com.google.gwt.core.client.GWT;
-import com.google.gwt.user.client.Command;
-import com.google.gwt.user.client.ui.HasHorizontalAlignment;
-import com.google.gwt.user.client.ui.HorizontalPanel;
-import com.google.gwt.user.client.ui.Panel;
 import org.rstudio.core.client.BrowseCap;
 import org.rstudio.core.client.ElementIds;
 import org.rstudio.core.client.JsArrayUtil;
@@ -45,12 +40,17 @@ import org.rstudio.studio.client.workbench.prefs.model.UserPrefs;
 import org.rstudio.studio.client.workbench.prefs.model.UserPrefsAccessor;
 import org.rstudio.studio.client.workbench.views.terminal.TerminalShellInfo;
 
+import com.google.gwt.core.client.GWT;
 import com.google.gwt.core.client.JsArray;
 import com.google.gwt.core.client.Scheduler;
 import com.google.gwt.dom.client.Style.Unit;
 import com.google.gwt.resources.client.ImageResource;
+import com.google.gwt.user.client.Command;
 import com.google.gwt.user.client.ui.CheckBox;
+import com.google.gwt.user.client.ui.HasHorizontalAlignment;
+import com.google.gwt.user.client.ui.HorizontalPanel;
 import com.google.gwt.user.client.ui.Label;
+import com.google.gwt.user.client.ui.Panel;
 import com.google.gwt.user.client.ui.TextBox;
 import com.google.inject.Inject;
 
@@ -431,6 +431,10 @@ public class TerminalPreferencesPane extends PreferencesPane
    
    private boolean pythonIntegrationSupported()
    {
+      boolean terminalHooksEnabled = prefs_.terminalHooks().getGlobalValue();
+      if (!terminalHooksEnabled)
+         return false;
+      
       String shell = terminalShell_.getValue();
       if (StringUtil.equals(shell, "bash") ||
           StringUtil.equals(shell, "zsh"))

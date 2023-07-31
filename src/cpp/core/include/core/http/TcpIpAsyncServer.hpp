@@ -32,8 +32,10 @@ public:
                     const std::string& baseUri = std::string(),
                     bool disableOriginCheck = true,
                     const std::vector<boost::regex> allowedOrigins = std::vector<boost::regex>(),
-                    const Headers& additionalHeaders = Headers())
-      : AsyncServerImpl<boost::asio::ip::tcp>(serverName, baseUri, disableOriginCheck, allowedOrigins, additionalHeaders)
+                    const Headers& additionalHeaders = Headers(),
+                    int statsMonitorSeconds = 0,
+                   const boost::shared_ptr<AsyncServerStatsProvider> statsProvider = boost::shared_ptr<AsyncServerStatsProvider>())
+      : AsyncServerImpl<boost::asio::ip::tcp>(serverName, baseUri, disableOriginCheck, allowedOrigins, additionalHeaders, statsMonitorSeconds, statsProvider)
    {
    }
    

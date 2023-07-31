@@ -93,8 +93,8 @@ void fillLoginFields(const core::http::Request& request,
       variables[kLoginPageHtml] = server::options().authLoginPageHtml();
 
       // render logo with links
-      std::string logoImgHtml = boost::str(logoImgHtmlFormat % "RStudio Server Logo (goes to external site)");
-      variables[kLogoHtml] = R"DELIM(<a href="https://www.rstudio.com/">)DELIM" + logoImgHtml + "</a>";
+      std::string logoImgHtml = boost::str(logoImgHtmlFormat % "Posit Software PBC (goes to external site)");
+      variables[kLogoHtml] = R"DELIM(<a href="https://posit.co/">)DELIM" + logoImgHtml + "</a>";
    }
    else
    {

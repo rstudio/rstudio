@@ -1042,7 +1042,7 @@ var RCodeModel = function(session, tokenizer,
             //   ## Header 2 ----
             //
             // When we have such a header, we can provide a depth.
-            var match = /^\s*([#]+)\s*\w/.exec(value);
+            var match = /^\s*([#]+)\s*[^#]/.exec(value);
             if (match != null)
             {
                // compute depth -- if the depth seems unlikely / large,

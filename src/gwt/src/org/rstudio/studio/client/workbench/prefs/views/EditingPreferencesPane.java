@@ -14,21 +14,6 @@
  */
 package org.rstudio.studio.client.workbench.prefs.views;
 
-import com.google.gwt.core.client.GWT;
-import com.google.gwt.dom.client.Style.Unit;
-import com.google.gwt.event.dom.client.ChangeEvent;
-import com.google.gwt.event.dom.client.ChangeHandler;
-import com.google.gwt.event.dom.client.ClickEvent;
-import com.google.gwt.event.dom.client.ClickHandler;
-import com.google.gwt.event.logical.shared.ValueChangeEvent;
-import com.google.gwt.event.logical.shared.ValueChangeHandler;
-import com.google.gwt.resources.client.ImageResource;
-import com.google.gwt.user.client.ui.CheckBox;
-import com.google.gwt.user.client.ui.HorizontalPanel;
-import com.google.gwt.user.client.ui.Label;
-import com.google.gwt.user.client.ui.VerticalPanel;
-import com.google.inject.Inject;
-
 import org.rstudio.core.client.ElementIds;
 import org.rstudio.core.client.StringUtil;
 import org.rstudio.core.client.command.KeyboardShortcut;
@@ -46,6 +31,7 @@ import org.rstudio.core.client.widget.SelectWidget;
 import org.rstudio.core.client.widget.SmallButton;
 import org.rstudio.core.client.widget.TextBoxWithButton;
 import org.rstudio.studio.client.common.DiagnosticsHelpLink;
+import org.rstudio.studio.client.common.GlobalDisplay;
 import org.rstudio.studio.client.common.HelpLink;
 import org.rstudio.studio.client.common.SimpleRequestCallback;
 import org.rstudio.studio.client.workbench.commands.Commands;
@@ -58,10 +44,26 @@ import org.rstudio.studio.client.workbench.views.source.editors.text.IconvListRe
 import org.rstudio.studio.client.workbench.views.source.editors.text.ui.ChooseEncodingDialog;
 import org.rstudio.studio.client.workbench.views.source.model.SourceServerOperations;
 
+import com.google.gwt.core.client.GWT;
+import com.google.gwt.dom.client.Style.Unit;
+import com.google.gwt.event.dom.client.ChangeEvent;
+import com.google.gwt.event.dom.client.ChangeHandler;
+import com.google.gwt.event.dom.client.ClickEvent;
+import com.google.gwt.event.dom.client.ClickHandler;
+import com.google.gwt.event.logical.shared.ValueChangeEvent;
+import com.google.gwt.event.logical.shared.ValueChangeHandler;
+import com.google.gwt.resources.client.ImageResource;
+import com.google.gwt.user.client.ui.CheckBox;
+import com.google.gwt.user.client.ui.HorizontalPanel;
+import com.google.gwt.user.client.ui.Label;
+import com.google.gwt.user.client.ui.VerticalPanel;
+import com.google.inject.Inject;
+
 public class EditingPreferencesPane extends PreferencesPane
 {
    @Inject
-   public EditingPreferencesPane(UserPrefs prefs,
+   public EditingPreferencesPane(GlobalDisplay display,
+                                 UserPrefs prefs,
                                  SourceServerOperations server,
                                  PreferencesDialogResources res,
                                  Commands commands,
@@ -391,7 +393,7 @@ public class EditingPreferencesPane extends PreferencesPane
       completionPanel.add(checkboxPref(
             constants_.completionTabMultilineCompletionLabel(),
             prefs_.tabMultilineCompletion()));
-
+      
       Label otherLabel = headerLabel(constants_.editingDiagOtherLabel());
       otherLabel.getElement().getStyle().setMarginTop(8, Unit.PX);
       completionPanel.add(otherLabel);
@@ -550,7 +552,6 @@ public class EditingPreferencesPane extends PreferencesPane
       prefs_.lineEndingConversion().setGlobalValue(lineEndings_.getValue());
       prefs_.insertNativePipeOperator().setGlobalValue(useNativePipe_.getValue());
       prefs_.defaultEncoding().setGlobalValue(encodingValue_);
-
       prefs_.codeCompletion().setGlobalValue(showCompletions_.getValue());
       prefs_.codeCompletionOther().setGlobalValue(showCompletionsOther_.getValue());
 
@@ -615,6 +616,7 @@ public class EditingPreferencesPane extends PreferencesPane
    private final UserPrefs prefs_;
    private final SourceServerOperations server_;
    private final Commands commands_;
+   
    private final NumericValueWidget editorScrollMultiplier_;
    private final NumericValueWidget tabWidth_;
    private final NumericValueWidget marginCol_;

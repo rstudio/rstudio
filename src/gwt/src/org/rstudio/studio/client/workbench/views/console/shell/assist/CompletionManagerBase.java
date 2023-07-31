@@ -17,8 +17,6 @@ package org.rstudio.studio.client.workbench.views.console.shell.assist;
 import java.util.ArrayList;
 import java.util.List;
 
-import com.google.gwt.core.client.GWT;
-
 import org.rstudio.core.client.Invalidation;
 import org.rstudio.core.client.Rectangle;
 import org.rstudio.core.client.StringUtil;
@@ -45,6 +43,7 @@ import org.rstudio.studio.client.workbench.views.source.editors.text.ace.TokenIt
 import org.rstudio.studio.client.workbench.views.source.editors.text.events.DocumentChangedEvent;
 import org.rstudio.studio.client.workbench.views.source.editors.text.events.PasteEvent;
 
+import com.google.gwt.core.client.GWT;
 import com.google.gwt.core.client.Scheduler;
 import com.google.gwt.dom.client.NativeEvent;
 import com.google.gwt.event.dom.client.BlurEvent;
@@ -727,7 +726,10 @@ public abstract class CompletionManagerBase
    }
    
    protected boolean canAutoPopup(char ch, int lookbackLimit)
-   {  
+   {
+      if (userPrefs_.copilotEnabled().getValue())
+         return false;
+      
       String codeComplete = userPrefs_.codeCompletion().getValue();
       
       if (isTriggerCharacter(ch) && !StringUtil.equals(codeComplete, UserPrefs.CODE_COMPLETION_MANUAL))
