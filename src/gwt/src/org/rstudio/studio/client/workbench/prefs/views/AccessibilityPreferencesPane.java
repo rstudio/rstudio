@@ -24,6 +24,7 @@ import org.rstudio.core.client.resources.ImageResource2x;
 import org.rstudio.core.client.theme.DialogTabLayoutPanel;
 import org.rstudio.core.client.theme.VerticalTabPanel;
 import org.rstudio.core.client.widget.CheckBoxList;
+import org.rstudio.core.client.widget.LayoutGrid;
 import org.rstudio.core.client.widget.NumericValueWidget;
 import org.rstudio.studio.client.application.AriaLiveService;
 import org.rstudio.studio.client.common.HelpLink;
@@ -58,11 +59,17 @@ public class AccessibilityPreferencesPane extends PreferencesPane
       chkScreenReaderEnabled_ = new CheckBox(constants_.chkScreenReaderLabel());
       generalPanel.add(chkScreenReaderEnabled_);
 
-      typingStatusDelay_ = numericPref(constants_.typingStatusDelayLabel(),
-            1, 9999, prefs.typingStatusDelayMs());
-      generalPanel.add(indent(typingStatusDelay_));
-      generalPanel.add(indent(maxOutput_ = numericPref(constants_.maxOutputLabel(),
-            0, UserPrefs.MAX_SCREEN_READER_CONSOLE_OUTPUT, prefs.screenreaderConsoleAnnounceLimit())));
+      LayoutGrid assistiveToolsGrid = new LayoutGrid(2, 2);
+      
+      typingStatusDelay_ = numericPref("", 1, 9999, prefs.typingStatusDelayMs());
+      assistiveToolsGrid.setWidget(0, 0, new Label(constants_.typingStatusDelayLabel()));
+      assistiveToolsGrid.setWidget(0, 1, typingStatusDelay_);
+      
+      maxOutput_ = numericPref("", 0, UserPrefs.MAX_SCREEN_READER_CONSOLE_OUTPUT, prefs.screenreaderConsoleAnnounceLimit());
+      assistiveToolsGrid.setWidget(1, 0, new Label(constants_.maxOutputLabel()));
+      assistiveToolsGrid.setWidget(1, 1, maxOutput_);
+      
+      generalPanel.add(assistiveToolsGrid);
 
       Label displayLabel = headerLabel(constants_.displayLabel());
       generalPanel.add(displayLabel);

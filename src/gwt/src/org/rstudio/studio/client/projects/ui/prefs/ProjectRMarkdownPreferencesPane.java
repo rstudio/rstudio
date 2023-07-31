@@ -74,10 +74,6 @@ public class ProjectRMarkdownPreferencesPane extends ProjectPreferencesPane
       wrapPanel.add(new FormLabel(constants_.wrapPanelText(), wrap_));
       wrapPanel.add(wrapColumn_);
       
-      grid.setWidget(0, 0, wrapPanel);
-      grid.setWidget(0, 1, wrap_);
-      
-      
       // references
       references_ = new ListBox();
       references_.addStyleName(RES.styles().listBox());
@@ -85,8 +81,8 @@ public class ProjectRMarkdownPreferencesPane extends ProjectPreferencesPane
       references_.addItem(RProjectConfig.MARKDOWN_REFERENCES_BLOCK.toLowerCase(), RProjectConfig.MARKDOWN_REFERENCES_BLOCK);
       references_.addItem(RProjectConfig.MARKDOWN_REFERENCES_SECTION.toLowerCase(), RProjectConfig.MARKDOWN_REFERENCES_SECTION);
       references_.addItem(RProjectConfig.MARKDOWN_REFERENCES_DOCUMENT.toLowerCase(), RProjectConfig.MARKDOWN_REFERENCES_DOCUMENT);
-      grid.setWidget(1, 0, new FormLabel(constants_.referencesFormLabel(), references_));
-      grid.setWidget(1, 1, references_);
+      grid.setWidget(0, 0, new FormLabel(constants_.referencesFormLabel(), references_));
+      grid.setWidget(0, 1, references_);
       
       // canonical mode
       canonical_ = new ListBox();
@@ -94,8 +90,12 @@ public class ProjectRMarkdownPreferencesPane extends ProjectPreferencesPane
       canonical_.addItem(constants_.canonicalTrueItem());
       canonical_.addItem(constants_.canonicalFalseItem());
       canonical_.addStyleName(RES.styles().listBox());
-      grid.setWidget(2, 0, new FormLabel(constants_.canonicalFormLabel(), canonical_));
-      grid.setWidget(2, 1, canonical_);
+      grid.setWidget(1, 0, new FormLabel(constants_.canonicalFormLabel(), canonical_));
+      grid.setWidget(1, 1, canonical_);
+      
+      // wrapping
+      grid.setWidget(2, 0, wrapPanel);
+      grid.setWidget(2, 1, wrap_);
       
       add(grid);
       
