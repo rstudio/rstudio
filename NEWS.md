@@ -6,6 +6,7 @@
 - Additional support for publishing new content types to Posit Cloud (rstudio-pro#4541)
 - Add support Quarto Manuscript projects, a new Quarto feature that will be released in Quarto 1.4.
 - Added option to sign Git commits (#1865)
+- Add section to theme generation that will use theme-specific color(s) to set colors of vim/emacs-mode cursor
 
 ### Fixed
 - Fixed issue where whitespace in error messages was not properly preserved (#13239)
