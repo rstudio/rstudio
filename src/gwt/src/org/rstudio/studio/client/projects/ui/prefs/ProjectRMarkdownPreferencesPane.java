@@ -49,7 +49,7 @@ public class ProjectRMarkdownPreferencesPane extends ProjectPreferencesPane
       
       Label infoLabel = new Label(constants_.rMarkdownInfoLabel());
       infoLabel.addStyleName(PreferencesDialogBaseResources.INSTANCE.styles().infoLabel());
-      add(infoLabel);
+      add(nudgeRightPlus(infoLabel));
       
       LayoutGrid grid = new LayoutGrid(3, 2);
       grid.addStyleName(RESOURCES.styles().workspaceGrid());

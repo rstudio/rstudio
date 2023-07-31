@@ -35,6 +35,7 @@ import org.rstudio.studio.client.workbench.views.source.editors.text.ui.ChooseEn
 import org.rstudio.studio.client.workbench.views.source.model.SourceServerOperations;
 
 import com.google.gwt.core.client.GWT;
+import com.google.gwt.dom.client.Style.Unit;
 import com.google.gwt.event.dom.client.ClickEvent;
 import com.google.gwt.event.dom.client.ClickHandler;
 import com.google.gwt.resources.client.ImageResource;
@@ -62,6 +63,7 @@ public class ProjectEditingPreferencesPane extends ProjectPreferencesPane
       numSpacesForTab_ = new NumericValueWidget(constants_.tabWidthLabel(), 1, UserPrefs.MAX_TAB_WIDTH);
       numSpacesForTab_.addStyleName(RESOURCES.styles().numberOfTabs());
       numSpacesForTab_.setWidth("36px");
+      numSpacesForTab_.getElement().getStyle().setMarginLeft(20, Unit.PX);
       add(numSpacesForTab_);
 
       LayoutGrid useNativePipeLabeled = new LayoutGrid(1, 2);
@@ -69,7 +71,7 @@ public class ProjectEditingPreferencesPane extends ProjectPreferencesPane
       useNativePipeLabeled.setWidget(0, 0, new FormLabel(constants_.useNativePipeOperatorLabel(), useNativePipeOperator_));
       useNativePipeLabeled.setWidget(0, 1, useNativePipeOperator_);
       useNativePipeLabeled.addStyleName(RESOURCES.styles().useNativePipeOperator());
-      add(spaced(useNativePipeLabeled));
+      add(spacedBefore(spaced(useNativePipeLabeled)));
 
       add(headerLabel("Indexing"));
       
