@@ -38,6 +38,10 @@
                         <g:layer left="6px" right="6px" bottom="0" height="30px">
                            <g:FlowPanel>
                               <g:CheckBox ui:field="commitIsAmend_" text="Amend previous commit"><ui:attribute name="text" key="amendPreviousCommit"/></g:CheckBox>
+                              <g:CheckBox ui:field="signedCommitsCheckbox_"
+                                          text="Sign commit"
+                                          checked="false"
+                                          styleName="{res.styles.signedCommits}"><ui:attribute name="text" key="signedCommitsText"/></g:CheckBox>
                               <rs_widget:ThemedButton ui:field="commitButton_"/>
                            </g:FlowPanel>
                         </g:layer>
@@ -78,10 +82,6 @@
                                   text="Ignore Whitespace"
                                   checked="false"
                                   styleName="{res.styles.ignoreWhitespace}"><ui:attribute name="text" key="ignoreWhitespaceText"/></g:CheckBox>
-                      <g:CheckBox ui:field="signedCommitsCheckbox_"
-                                  text="Signed Commits"
-                                  checked="false"
-                                  styleName="{res.styles.signedCommits}"><ui:attribute name="text" key="signedCommitsText"/></g:CheckBox>
                   </g:FlowPanel>
                   <rs_widget:Toolbar ui:field="diffToolbar_"/>
                </g:HorizontalPanel>

@@ -4,10 +4,12 @@
 - Prometheus metrics are available in Posit Workbench (rstudio-pro:#3273)
 - Update to Electron 25.2.0 (#13322)
 - Additional support for publishing new content types to Posit Cloud (rstudio-pro#4541)
+- Add support Quarto Manuscript projects, a new Quarto feature that will be released in Quarto 1.4.
 - Added option to sign Git commits (#1865)
 
 ### Fixed
 - Fixed issue where 'ggrepel' plot annotations could disappear when a plot was redrawn in an R Markdown document (#4330)
+- Fixed issue where whitespace in error messages was not properly preserved (#13239)
 - Fixed issue where error messages were not properly translated on Windows in some cases (#10308)
 - Fixed issue where Electron menubar commands are not disabled when modals are displayed (#12972)
 - Fixed bug causing invalid/empty `cacheKey` error when accessing a dataframe variable (#13188)

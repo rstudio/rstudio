@@ -346,6 +346,7 @@ public class SessionInfo extends JavaScriptObject
    
    public final static String QUARTO_PROJECT_TYPE_WEBSITE = "website";
    public final static String QUARTO_PROJECT_TYPE_BOOK = "book";
+   public final static String QUARTO_PROJECT_TYPE_MANUSCRIPT = "manuscript";
 
    
    public final native QuartoConfig getQuartoConfig() /*-{
