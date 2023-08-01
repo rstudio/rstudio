@@ -405,7 +405,7 @@ public class BuildPresenter extends BasePresenter
          }
          else 
          {
-            quartoServe("default");
+            quartoServe("all");
          }
       }
       else
