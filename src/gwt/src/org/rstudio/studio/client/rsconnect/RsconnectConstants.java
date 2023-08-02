@@ -710,11 +710,11 @@ public interface RsconnectConstants extends com.google.gwt.i18n.client.Messages{
     String rPubsSubtitle();
 
     /**
-     * Translated "Posit Cloud lets you create shareable data projects, host applications, and publish data-driven documents online. Create your free account today.".
+     * Translated "Posit Cloud lets you create and share data projects, applications, and data-driven documents online. Create your free account today.".
      *
-     * @return translated "Posit Cloud lets you create shareable data projects, host applications, and publish data-driven documents online. Create your free account today."
+     * @return translated "Posit Cloud lets you create and share data projects, applications, and data-driven documents online. Create your free account today."
      */
-    @DefaultMessage("Posit Cloud lets you create shareable data projects, host applications, and publish data-driven documents online. Create your free account today.")
+    @DefaultMessage("Posit Cloud lets you create and share data projects, applications, and data-driven documents online. Create your free account today.")
     @Key("cloudSubtitle")
     String cloudSubtitle();
 
