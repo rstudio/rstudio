@@ -9,6 +9,7 @@
 - Add section to theme generation that will use theme-specific color(s) to set colors of vim/emacs-mode cursor
 
 ### Fixed
+- Fixed issue where 'ggrepel' plot annotations could disappear when a plot was redrawn in an R Markdown document (#4330)
 - Fixed issue where whitespace in error messages was not properly preserved (#13239)
 - Fixed issue where error messages were not properly translated on Windows in some cases (#10308)
 - Fixed issue where Electron menubar commands are not disabled when modals are displayed (#12972)

@@ -116,12 +116,26 @@
 })
 
 .rs.addFunction("replayNotebookPlots", function(width, height, pixelRatio, tempFile, extraArgs) {
-   # open stdin (for consuming snapshots from parent process)
-   stdin <- file("stdin")
    
    require(grDevices, quietly = TRUE)
    
+   loadedPackages <- Sys.getenv("RS_LOADED_PACKAGES", unset = "")
+   loadedPackages <- strsplit(loadedPackages, ",", fixed = TRUE)[[1L]]
+   
+   # TODO: It'd be really nice if we could somehow infer these from
+   # the grobs stored within the plot object.
+   # https://github.com/rstudio/rstudio/issues/4330
+   commonPackages <- c("ggplot2", "ggrepel", "ggforce")
+   suppressPackageStartupMessages({
+      for (package in commonPackages)
+         if (package %in% loadedPackages)
+            require(package, character.only = TRUE, quietly = TRUE)
+   })
+   
+   # open stdin (for consuming snapshots from parent process)
+   stdin <- file("stdin")
    snapshots <- readLines(stdin, warn = FALSE)
+   
    lapply(snapshots, function(snapshot) {
       
       # ignore empty lines
@@ -132,8 +146,11 @@
       # wasteful to use a separate device per plot, but the alternative is
       # doing a lot of state management and post-processing of the files
       # output from the device
-      output <- paste(tools::file_path_sans_ext(snapshot), "resized.png",
-                      sep = ".")
+      output <- paste(
+         tools::file_path_sans_ext(snapshot),
+         "resized.png",
+         sep = "."
+      )
       
       height <- if (height <= 0) width / 1.618 else height
       
@@ -141,52 +158,45 @@
                                        "px", pixelRatio, extraArgs)
       
       # actually replay the plot onto the device
-      tryCatch({
-         .rs.restoreGraphics(snapshot)
-      }, error = function(e) {
-         # nothing reasonable we can do here; we'll just omit this file from the
-         # output
-      })
+      tryCatch(
+         .rs.restoreGraphics(snapshot),
+         error = function(err) {
+            writeLines(conditionMessage(err), con = stderr())
+         }
+      )
       
       # close the device; has the side effect of committing the plot to disk
       dev.off()
       
-      # if the plot file was written out, emit to standard out for the caller to 
-      # consume
-      if (file.exists(output)) {
-         if (tempFile)
-         {
-            chunksPath <- dirname(snapshot)
-            chunksTempPath <- file.path(chunksPath, "temp")
-            
-            if (!dir.exists(chunksTempPath))
-               dir.create(chunksTempPath)
-            
-            chunkBaseName <- basename(tools::file_path_sans_ext(snapshot))
-            
-            final <- file.path(
-               chunksTempPath,
-               paste(chunkBaseName, "png", sep = ".")
-            )
-         }
-         else
-         {
-            final <- paste(tools::file_path_sans_ext(snapshot), "png", sep = ".")
-         }
+      # if the plot file was written out, emit to standard out for caller
+      if (!file.exists(output))
+         return(invisible(NULL))
+      
+      # build output path
+      final <- paste(tools::file_path_sans_ext(snapshot), "png", sep = ".")
+      if (tempFile) {
          
-         # remove the old copy of the plot if it existed
-         if (file.exists(final))
-            unlink(final)
+         chunksPath <- dirname(snapshot)
+         chunksTempPath <- file.path(chunksPath, "temp")
          
-         file.copy(output, final)
+         if (!dir.exists(chunksTempPath))
+            dir.create(chunksTempPath)
          
-         if (file.exists(output))
-            unlink(output)
+         chunkBaseName <- basename(tools::file_path_sans_ext(snapshot))
          
-         if (file.exists(final)) {
-            cat(final, "\n")
-         }
+         final <- file.path(
+            chunksTempPath,
+            paste(chunkBaseName, "png", sep = ".")
+         )
       }
+         
+      # remove the old copy of the plot if it existed
+      file.copy(output, final, overwrite = TRUE)
+      unlink(output)
+         
+      if (file.exists(final))
+         writeLines(final)
+      
    })
    
    invisible(NULL)
