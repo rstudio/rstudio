@@ -133,7 +133,7 @@
    
    suppressPackageStartupMessages({
       for (package in requiredPackages) {
-         library(package, character.only = TRUE, quietly = TRUE)
+         require(package, character.only = TRUE, quietly = TRUE)
       }
    })
    
