@@ -115,21 +115,26 @@
    par(mar = c(5.1, 4.1, 2.1, 2.1))
 })
 
+.rs.addFunction("replayNotebookPlotsPackages", function()
+{
+   grid <- asNamespace("grid")
+   names <- vapply(grid$.__S3MethodsTable__., function(method) {
+      environmentName(environment(method))
+   }, FUN.VALUE = character(1))
+   sort(unique(names))
+})
+
 .rs.addFunction("replayNotebookPlots", function(width, height, pixelRatio, tempFile, extraArgs) {
    
    require(grDevices, quietly = TRUE)
    
-   loadedPackages <- Sys.getenv("RS_LOADED_PACKAGES", unset = "")
-   loadedPackages <- strsplit(loadedPackages, ",", fixed = TRUE)[[1L]]
+   requiredPackages <- Sys.getenv("RS_NOTEBOOK_PACKAGES", unset = "")
+   requiredPackages <- strsplit(requiredPackages, ",", fixed = TRUE)[[1L]]
    
-   # TODO: It'd be really nice if we could somehow infer these from
-   # the grobs stored within the plot object.
-   # https://github.com/rstudio/rstudio/issues/4330
-   commonPackages <- c("ggplot2", "ggrepel", "ggforce")
    suppressPackageStartupMessages({
-      for (package in commonPackages)
-         if (package %in% loadedPackages)
-            require(package, character.only = TRUE, quietly = TRUE)
+      for (package in requiredPackages) {
+         library(package, character.only = TRUE, quietly = TRUE)
+      }
    })
    
    # open stdin (for consuming snapshots from parent process)
