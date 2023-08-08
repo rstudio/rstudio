@@ -98,15 +98,15 @@ public:
       core::system::Options environment;
       core::system::environment(&environment);
       
-      // pass along loaded packages
-      std::vector<std::string> loadedPackages;
-      Error error = r::exec::RFunction("base:::loadedNamespaces")
-            .call(&loadedPackages);
+      // pass along packages we might require for plotting
+      std::vector<std::string> requiredPackages;
+      Error error = r::exec::RFunction(".rs.replayNotebookPlotsPackages")
+            .call(&requiredPackages);
       if (error)
          LOG_ERROR(error);
       
       environment.push_back({ "R_LIBS", module_context::libPathsString() });
-      environment.push_back({ "RS_LOADED_PACKAGES", core::algorithm::join(loadedPackages, ",") });
+      environment.push_back({ "RS_NOTEBOOK_PACKAGES", core::algorithm::join(requiredPackages, ",") });
 
       // invoke the asynchronous process
       boost::shared_ptr<ReplayPlots> pReplayer(new ReplayPlots());
