@@ -67,16 +67,25 @@ public class PublishMultiplePage
       }
       else
       {
-         pages.add(new PublishReportSourcePage(singleTitle, singleSubtitle,
-               constants_.publishToRstudioConnect(),
-               new ImageResource2x(
-                  RSConnectResources.INSTANCE.publishSingleRmd2x()), input, false, true,
-               ServerType.RSCONNECT));
-         pages.add(new PublishReportSourcePage(multipleTitle, multipleSubtitle,
-               constants_.publishToRstudioConnect(),
-               new ImageResource2x(
-                  RSConnectResources.INSTANCE.publishMultipleRmd2x()), input, true, true,
-               ServerType.RSCONNECT));
+         String pageCaption = constants_.publish();
+         boolean allowScheduling = true;
+         if (serverType == ServerType.RSCONNECT)
+         {
+            pageCaption = constants_.publishToRstudioConnect();
+         }
+         else if (serverType == ServerType.POSITCLOUD)
+         {
+            pageCaption = constants_.publishToPositCloud();
+            allowScheduling = false;
+         }
+         pages.add(
+            new PublishReportSourcePage(singleTitle, singleSubtitle, pageCaption,
+                  new ImageResource2x(RSConnectResources.INSTANCE.publishSingleRmd2x()),
+                  input, false, allowScheduling, serverType));
+         pages.add(
+            new PublishReportSourcePage(multipleTitle, multipleSubtitle, pageCaption,
+                  new ImageResource2x(RSConnectResources.INSTANCE.publishMultipleRmd2x()),
+                  input, true, allowScheduling, serverType));
       }
       return pages;
    }
