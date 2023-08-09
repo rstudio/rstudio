@@ -68,7 +68,7 @@ public class PublishFilesPage
                               input.getDescription(),
                               input.getContentType());
             }
-            contents_.setPublishSource(source, input.getContentType(), 
+            contents_.setPublishSource(source, input.getContentType(),
                   asMultiple, true, serverType);
          }
          else
