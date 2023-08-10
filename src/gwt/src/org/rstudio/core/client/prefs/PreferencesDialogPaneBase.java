@@ -14,13 +14,14 @@
  */
 package org.rstudio.core.client.prefs;
 
-import com.google.gwt.aria.client.Roles;
 import org.rstudio.core.client.BrowseCap;
 import org.rstudio.core.client.events.EnsureVisibleEvent;
 import org.rstudio.core.client.events.HasEnsureVisibleHandlers;
+import org.rstudio.core.client.theme.DialogTabLayoutPanel;
 import org.rstudio.core.client.widget.FormLabel;
 import org.rstudio.core.client.widget.ProgressIndicator;
 
+import com.google.gwt.aria.client.Roles;
 import com.google.gwt.dom.client.Element;
 import com.google.gwt.dom.client.Style.Display;
 import com.google.gwt.event.shared.HandlerRegistration;
@@ -190,6 +191,11 @@ public abstract class PreferencesDialogPaneBase<T> extends VerticalPanel
                                               ? Display.BLOCK
                                               : Display.NONE);
 
+   }
+   
+   public void setTabPanelSize(DialogTabLayoutPanel panel)
+   {
+      panel.setSize("448px", "570px");
    }
 
    private ProgressIndicator progressIndicator_;

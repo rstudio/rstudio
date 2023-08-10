@@ -14,11 +14,6 @@
  */
 package org.rstudio.studio.client.workbench.prefs.views;
 
-import com.google.gwt.core.client.GWT;
-import com.google.gwt.event.dom.client.ChangeEvent;
-import com.google.gwt.event.dom.client.ClickEvent;
-import com.google.gwt.event.dom.client.ClickHandler;
-
 import java.util.HashMap;
 import java.util.Map;
 
@@ -49,15 +44,19 @@ import org.rstudio.studio.client.workbench.prefs.PrefsConstants;
 import org.rstudio.studio.client.workbench.prefs.model.LocaleCookie;
 import org.rstudio.studio.client.workbench.prefs.model.UserPrefs;
 import org.rstudio.studio.client.workbench.prefs.model.UserPrefsAccessor;
+import org.rstudio.studio.client.workbench.prefs.model.WebDialogCookie;
 
+import com.google.gwt.core.client.GWT;
 import com.google.gwt.core.client.JsArrayString;
 import com.google.gwt.dom.client.Style;
 import com.google.gwt.dom.client.Style.Unit;
+import com.google.gwt.event.dom.client.ChangeEvent;
+import com.google.gwt.event.dom.client.ClickEvent;
+import com.google.gwt.event.dom.client.ClickHandler;
 import com.google.gwt.resources.client.ImageResource;
 import com.google.gwt.user.client.ui.CheckBox;
 import com.google.gwt.user.client.ui.Label;
 import com.google.inject.Inject;
-import org.rstudio.studio.client.workbench.prefs.model.WebDialogCookie;
 
 public class GeneralPreferencesPane extends PreferencesPane
 {
@@ -396,7 +395,7 @@ public class GeneralPreferencesPane extends PreferencesPane
       restoreLastProject_.setEnabled(false);
 
       DialogTabLayoutPanel tabPanel = new DialogTabLayoutPanel(constants_.generalTablistLabel());
-      tabPanel.setSize("435px", "533px");
+      setTabPanelSize(tabPanel);
       tabPanel.add(basic, constants_.generalTablListBasicOption(), basic.getBasePanelId());
       tabPanel.add(graphics, constants_.generalTablListGraphicsOption(), graphics.getBasePanelId());
       tabPanel.add(advanced, constants_.generalTabListAdvancedOption(), advanced.getBasePanelId());

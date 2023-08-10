@@ -62,12 +62,10 @@ public class ProjectRenvPreferencesPane extends ProjectPreferencesPane
    @Override
    protected void initialize(RProjectOptions options)
    {
-      String labelText =
-            constants_.rstudioInitializeLabel();
-
-      Label label = new Label(labelText);
-      spaced(label);
-      add(label);
+      add(headerLabel(constants_.environmentsText()));
+      
+      Label label = new Label(constants_.rstudioInitializeLabel());
+      add(spaced(label));
 
       RenvContext context = options.getRenvContext();
 

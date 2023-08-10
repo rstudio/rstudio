@@ -245,7 +245,7 @@ class SectionChooser extends SimplePanel implements
 
    public int getDesiredWidth()
    {
-      return 122;
+      return 132;
    }
 
    public void focus()

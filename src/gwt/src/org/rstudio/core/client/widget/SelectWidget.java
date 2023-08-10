@@ -14,19 +14,21 @@
  */
 package org.rstudio.core.client.widget;
 
-import com.google.gwt.aria.client.Id;
-import com.google.gwt.aria.client.Roles;
-import com.google.gwt.core.client.GWT;
 import org.rstudio.core.client.CoreClientConstants;
 import org.rstudio.core.client.ElementIds;
 import org.rstudio.core.client.StringUtil;
 import org.rstudio.core.client.theme.res.ThemeResources;
+import org.rstudio.core.client.theme.res.ThemeStyles;
 import org.rstudio.studio.client.workbench.prefs.model.Prefs.EnumValue;
 
+import com.google.gwt.aria.client.Id;
+import com.google.gwt.aria.client.Roles;
+import com.google.gwt.core.client.GWT;
 import com.google.gwt.event.dom.client.ChangeHandler;
 import com.google.gwt.event.shared.HandlerRegistration;
 import com.google.gwt.user.client.ui.Composite;
 import com.google.gwt.user.client.ui.FlowPanel;
+import com.google.gwt.user.client.ui.Grid;
 import com.google.gwt.user.client.ui.HasVerticalAlignment;
 import com.google.gwt.user.client.ui.HorizontalPanel;
 import com.google.gwt.user.client.ui.ListBox;
@@ -330,11 +332,19 @@ public class SelectWidget extends Composite
    {
       Roles.getListboxRole().setAriaDescribedbyProperty(listBox_.getElement(), Id.of(id));
    }
+   
+   public void insertInto(Grid grid, int row)
+   {
+      addStyleName(ThemeStyles.INSTANCE.gridSelectWidget());
+      grid.setWidget(row, 0, label_);
+      grid.setWidget(row, 1, this);
+   }
 
    private String uniqueId_;
    private HorizontalPanel horizontalPanel_ = null;
    private FlowPanel flowPanel_ = null;
    private FormLabel label_ = null;
    private final ListBox listBox_;
+   
    private static final CoreClientConstants constants_ = GWT.create(CoreClientConstants.class);
 }

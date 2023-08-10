@@ -14,13 +14,13 @@
  */
 package org.rstudio.studio.client.projects.ui.prefs;
 
-import com.google.gwt.core.client.GWT;
 import org.rstudio.core.client.ElementIds;
 import org.rstudio.core.client.files.FileSystemItem;
 import org.rstudio.core.client.prefs.PreferencesDialogBaseResources;
 import org.rstudio.core.client.prefs.RestartRequirement;
 import org.rstudio.core.client.resources.ImageResource2x;
 import org.rstudio.core.client.widget.HelpButton;
+import org.rstudio.core.client.widget.LayoutGrid;
 import org.rstudio.core.client.widget.ProgressIndicator;
 import org.rstudio.core.client.widget.ProgressOperationWithInput;
 import org.rstudio.core.client.widget.TextBoxWithButton;
@@ -31,9 +31,11 @@ import org.rstudio.studio.client.projects.StudioClientProjectConstants;
 import org.rstudio.studio.client.projects.model.RProjectConfig;
 import org.rstudio.studio.client.projects.model.RProjectOptions;
 
+import com.google.gwt.core.client.GWT;
 import com.google.gwt.event.dom.client.ClickEvent;
 import com.google.gwt.event.dom.client.ClickHandler;
 import com.google.gwt.resources.client.ImageResource;
+import com.google.gwt.user.client.ui.FlowPanel;
 import com.google.inject.Inject;
 
 public class ProjectCompilePdfPreferencesPane extends ProjectPreferencesPane
@@ -43,13 +45,22 @@ public class ProjectCompilePdfPreferencesPane extends ProjectPreferencesPane
    {
       addHeader(constants_.pdfGenerationCaption());
 
+      FlowPanel spacer = new FlowPanel();
+      spacer.getElement().getStyle().setProperty("minWidth", "280px");
+      add(spacer);
+
+      LayoutGrid grid = new LayoutGrid(2, 2);
+      grid.setWidth("100%");
+      
       defaultSweaveEngine_ = new RnwWeaveSelectWidget();
-      add(defaultSweaveEngine_);
+      defaultSweaveEngine_.insertInto(grid, 0);
 
       defaultLatexProgram_ = new LatexProgramSelectWidget();
-      add(defaultLatexProgram_);
-
-      addHeader(constants_.pdfPreviewCaption());
+      defaultLatexProgram_.insertInto(grid, 1);
+      
+      add(grid);
+      
+      addHeader(constants_.pdfPreviewCaption(), true);
 
       rootDoc_ = new RootDocumentChooser();
       nudgeRight(rootDoc_);
@@ -161,6 +172,7 @@ public class ProjectCompilePdfPreferencesPane extends ProjectPreferencesPane
    private RnwWeaveSelectWidget defaultSweaveEngine_;
    private LatexProgramSelectWidget defaultLatexProgram_;
    private TextBoxWithButton rootDoc_;
+   
    private static final StudioClientProjectConstants constants_ = GWT.create(StudioClientProjectConstants.class);
 
 }

@@ -4342,11 +4342,11 @@ public interface PrefsConstants extends com.google.gwt.i18n.client.Messages {
     String editingSavePanelAction();
 
     /**
-     * Translated "Auto-save".
+     * Translated "Autosave".
      *
-     * @return translated "Auto-save"
+     * @return translated "Autosave"
      */
-    @DefaultMessage("Auto-save")
+    @DefaultMessage("Autosave")
     @Key("editingSavePanelAutosave")
     String editingSavePanelAutosave();
 
@@ -4540,11 +4540,11 @@ public interface PrefsConstants extends com.google.gwt.i18n.client.Messages {
     String editingTabWidthLabel();
 
     /**
-     * Translated "Editor scroll speed sensitivity"
+     * Translated "Editor scroll speed sensitivity:"
      *
-     * @return translated "Editor scroll speed sensitivity"
+     * @return translated "Editor scroll speed sensitivity:"
      */
-    @DefaultMessage("Editor scroll speed sensitivity")
+    @DefaultMessage("Editor scroll speed sensitivity:")
     @Key("editorScrollMultiplier")
     String editorScrollMultiplier();
 
