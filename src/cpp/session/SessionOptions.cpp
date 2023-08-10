@@ -673,7 +673,12 @@ void Options::resolveQuartoPath(const FilePath& resourcePath,
 void Options::resolveNodePath(const FilePath& resourcePath,
                               std::string* pPath)
 {
+#if defined(__linux__) && !defined(RSTUDIO_PACKAGE_BUILD)
+   FilePath dependenciesPath = resourcePath.completePath("../../dependencies/common/node/16.14.0");
+   resolvePath(dependenciesPath, pPath);
+#else
    resolvePath(resourcePath, pPath);
+#endif
 }
 
 void Options::resolveRsclangPath(const FilePath& resourcePath,
