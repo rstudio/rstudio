@@ -55,10 +55,6 @@
 #define WLOG(__FMT__, ...) COPILOT_LOG_IMPL(LOG_WARNING_MESSAGE, __FMT__, ##__VA_ARGS__)
 #define ELOG(__FMT__, ...) COPILOT_LOG_IMPL(LOG_ERROR_MESSAGE,   __FMT__, ##__VA_ARGS__)
 
-#ifndef RSTUDIO_NODE_VERSION
-# define RSTUDIO_NODE_VERSION "16.14.0"
-#endif
-
 #ifndef _WIN32
 # define kNodeExe "node"
 #else
@@ -180,22 +176,24 @@ Error findNode(FilePath* pNodePath,
 {
    // Check for an admin-configured node path.
    FilePath nodePath = session::options().nodePath();
+   std::cerr << nodePath.getAbsolutePath() << std::endl;
    if (!nodePath.isEmpty())
    {
       // Allow both directories containing a 'node' binary, and the path
       // to a 'node' binary directly.
       if (nodePath.isDirectory())
       {
-         FilePath nodeExePath = nodePath.completeChildPath(kNodeExe);
-         if (nodeExePath.exists())
+         for (auto&& suffix : { "bin/" kNodeExe, kNodeExe })
          {
-            *pNodePath = nodeExePath;
-            return Success();
+            FilePath nodeExePath = nodePath.completeChildPath(suffix);
+            if (nodeExePath.exists())
+            {
+               *pNodePath = nodeExePath;
+               return Success();
+            }
          }
-         else
-         {
-            return Error(fileNotFoundError(nodeExePath, ERROR_LOCATION));
-         }
+
+         return Error(fileNotFoundError(nodePath, ERROR_LOCATION));
       }
       else if (nodePath.isRegularFile())
       {
@@ -209,7 +207,7 @@ Error findNode(FilePath* pNodePath,
    }
 
    // Allow user override, just in case.
-   FilePath userNodePath(r::options::getOption<std::string>("rstudio.node.binaryPath"));
+   FilePath userNodePath(r::options::getOption<std::string>("rstudio.copilot.nodeBinaryPath", std::string(), false));
    if (userNodePath.exists())
    {
       *pNodePath = userNodePath;
@@ -232,7 +230,7 @@ Error findNode(FilePath* pNodePath,
    // In Server builds of RStudio, we can try to use a bundled version of node.
    if (session::options().programMode() == kSessionProgramModeServer)
    {
-      FilePath nodePath = options().rResourcesPath().completeChildPath("node/" RSTUDIO_NODE_VERSION "/bin/node");
+      FilePath nodePath = options().nodePath();
       if (nodePath.exists())
       {
          *pNodePath = nodePath;
