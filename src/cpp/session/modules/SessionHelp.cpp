@@ -22,12 +22,14 @@
 #include <boost/function.hpp>
 #include <boost/format.hpp>
 #include <boost/range/iterator_range.hpp>
+#include <boost/algorithm/string/regex.hpp>
 #include <boost/algorithm/string/replace.hpp>
 #include <boost/algorithm/string.hpp>
 #include <boost/iostreams/filter/aggregate.hpp>
 
-#include <core/Algorithm.hpp>
 #include <shared_core/Error.hpp>
+
+#include <core/Algorithm.hpp>
 #include <core/Exec.hpp>
 #include <core/Log.hpp>
 
@@ -354,37 +356,27 @@ public:
             requestUri_,
             kHelpLocation);
 
+      // copy from src to dest
+      dest = src;
+      
       // fixup hard-coded hrefs
-      Characters tempDest1;
-      boost::algorithm::replace_all_copy(
-            std::back_inserter(tempDest1),
-            boost::make_iterator_range(src.begin(), src.end()),
-            "href=\"/",
-            "href=\"" + baseUrl + "/");
-      Characters tempDest2;
-      boost::algorithm::replace_all_copy(
-            std::back_inserter(tempDest2),
-            boost::make_iterator_range(tempDest1.begin(), tempDest1.end()),
-            "href='/",
-            "href='" + baseUrl + "/");
+      boost::algorithm::replace_all(dest, "href=\"/", "href=\"" + baseUrl + "/");
+      boost::algorithm::replace_all(dest, "href='/", "href='" + baseUrl + "/");
       
       // fixup hard-coded src=
-      Characters tempDest3;
-      boost::algorithm::replace_all_copy(
-            std::back_inserter(tempDest3),
-            boost::make_iterator_range(tempDest2.begin(), tempDest2.end()),
-            "src=\"/",
-            "src=\"" + baseUrl + "/");
-      boost::algorithm::replace_all_copy(
-            std::back_inserter(dest),
-            boost::make_iterator_range(tempDest3.begin(), tempDest3.end()),
-            "src='/",
-            "src='" + baseUrl + "/");
+      boost::algorithm::replace_all(dest, "src=\"/", "src=\"" + baseUrl + "/");
+      boost::algorithm::replace_all(dest, "src='/", "src='" + baseUrl + "/");
+      
+      // add classes to headers
+      boost::regex reHeader("<h3>([^<]+)</h3>");
+      std::string reFormat("<h3 class=\"R-\\1\">\\1</h3>");
+      boost::algorithm::replace_all_regex(dest, reHeader, reFormat);
       
       // append javascript callbacks
       std::string js(kJsCallbacks);
       std::copy(js.begin(), js.end(), std::back_inserter(dest));
    }
+   
 private:
    std::string requestUri_;
 };
