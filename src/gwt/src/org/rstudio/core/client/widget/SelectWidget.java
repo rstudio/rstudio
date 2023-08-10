@@ -135,6 +135,9 @@ public class SelectWidget extends Composite
    {
       if (values == null)
          values = options;
+      
+      if (!label.endsWith(":"))
+         label = label + ":";
 
       listBox_ = new ListBox();
       listBox_.getElement().getStyle().setProperty("minHeight", "20px");
