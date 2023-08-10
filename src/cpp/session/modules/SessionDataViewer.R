@@ -448,7 +448,7 @@
    colNames <- if (is.null(colnames(value)))
       as.character(seq_len(ncol(value)))
    else
-      shQuote(colnames(value))
+      encodeString(colnames(value), quote = '"')
    
    for (i in seq_len(ncol(value))) {
       .rs.dataViewer.flatten(
