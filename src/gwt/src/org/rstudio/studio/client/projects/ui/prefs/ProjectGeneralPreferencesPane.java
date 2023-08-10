@@ -43,7 +43,7 @@ public class ProjectGeneralPreferencesPane extends ProjectPreferencesPane
       
       VerticalPanel container = new VerticalPanel();
       
-      container.add(headerLabel("Workspace"));
+      container.add(headerLabel(constants_.workspaceTitle()));
 
       // use default label
       Label infoLabel = new Label(constants_.projectGeneralInfoLabel());
@@ -71,7 +71,7 @@ public class ProjectGeneralPreferencesPane extends ProjectPreferencesPane
       
       container.add(grid);
       
-      container.add(headerLabel("Miscellaneous"));
+      container.add(headerLabel(constants_.miscellaneousTitle()));
 
       // disable execute .Rprofile
       disableExecuteRprofile_ = new CheckBox(constants_.disableExecuteRprofileText());

@@ -2115,4 +2115,51 @@ public interface StudioClientProjectConstants extends com.google.gwt.i18n.client
     @DefaultMessage("Use condaenv with packages:")
     @Key("useCondaenv")
     String useCondaenv();
+    
+    /**
+     * Translated "Editing".
+     *
+     * @return translated "Editing"
+     */
+    @DefaultMessage("Editing")
+    @Key("editingTitle")
+    String editingTitle();
+ 
+    /**
+     * Translated "Indexing".
+     *
+     * @return translated "Indexing"
+     */
+    @DefaultMessage("Indexing")
+    @Key("indexingTitle")
+    String indexingTitle();
+    
+    /**
+     * Translated "Saving".
+     *
+     * @return translated "Saving"
+     */
+    @DefaultMessage("Saving")
+    @Key("savingTitle")
+    String savingTitle();
+    
+    /**
+     * Translated "Workspace".
+     *
+     * @return translated "Workspace"
+     */
+    @DefaultMessage("Workspace")
+    @Key("workspaceTitle")
+    String workspaceTitle();
+    
+    /**
+     * Translated "Miscellaneous".
+     *
+     * @return translated "Miscellaneous"
+     */
+    @DefaultMessage("Miscellaneous")
+    @Key("miscellaneousTitle")
+    String miscellaneousTitle();
+    
+    
 }

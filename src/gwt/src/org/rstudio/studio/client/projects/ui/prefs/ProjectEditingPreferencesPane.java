@@ -48,7 +48,7 @@ public class ProjectEditingPreferencesPane extends ProjectPreferencesPane
    @Inject
    public ProjectEditingPreferencesPane(final SourceServerOperations server)
    {
-      add(headerLabel("Editing"));
+      add(headerLabel(constants_.editingTitle()));
 
       Label infoLabel = new Label(constants_.projectGeneralInfoLabel());
       infoLabel.addStyleName(PreferencesDialogBaseResources.INSTANCE.styles().infoLabel());
@@ -73,14 +73,14 @@ public class ProjectEditingPreferencesPane extends ProjectPreferencesPane
       useNativePipeLabeled.addStyleName(RESOURCES.styles().useNativePipeOperator());
       add(spacedBefore(spaced(useNativePipeLabeled)));
 
-      add(headerLabel("Indexing"));
+      add(headerLabel(constants_.indexingTitle()));
       
       // source editing options
       enableCodeIndexing_ = new CheckBox(constants_.enableCodeIndexingLabel(), false);
       enableCodeIndexing_.addStyleName(RESOURCES.styles().enableCodeIndexing());
       add(enableCodeIndexing_);
       
-      add(spacedBefore(headerLabel("Saving")));
+      add(spacedBefore(headerLabel(constants_.savingTitle())));
       
       chkAutoAppendNewline_ = new CheckBox(constants_.chkAutoAppendNewlineLabel());
       chkAutoAppendNewline_.addStyleName(RESOURCES.styles().editingOption());

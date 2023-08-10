@@ -1817,8 +1817,8 @@ td.environmentDataFrameCol {
 }
 
 .gridSelectWidget {
-	margin-bottom: 0 !important;
-	float: right;
+   margin-bottom: 0 !important;
+   float: right;
 }
 
 .textBoxWithButton input[type=text] {
