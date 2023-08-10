@@ -368,8 +368,8 @@ public:
       boost::algorithm::replace_all(dest, "src='/", "src='" + baseUrl + "/");
       
       // add classes to headers
-      boost::regex reHeader("<h3>([^<]+)</h3>");
-      std::string reFormat("<h3 class=\"R-\\1\">\\1</h3>");
+      boost::regex reHeader("<h3>Arguments</h3>");
+      std::string reFormat("<h3 class=\"r-arguments-title\">Arguments</h3>");
       boost::algorithm::replace_all_regex(dest, reHeader, reFormat);
       
       // append javascript callbacks
