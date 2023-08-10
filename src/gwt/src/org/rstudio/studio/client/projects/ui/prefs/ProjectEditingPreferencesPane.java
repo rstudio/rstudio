@@ -38,6 +38,8 @@ import com.google.gwt.core.client.GWT;
 import com.google.gwt.dom.client.Style.Unit;
 import com.google.gwt.event.dom.client.ClickEvent;
 import com.google.gwt.event.dom.client.ClickHandler;
+import com.google.gwt.event.logical.shared.ValueChangeEvent;
+import com.google.gwt.event.logical.shared.ValueChangeHandler;
 import com.google.gwt.resources.client.ImageResource;
 import com.google.gwt.user.client.ui.CheckBox;
 import com.google.gwt.user.client.ui.Label;
@@ -65,7 +67,7 @@ public class ProjectEditingPreferencesPane extends ProjectPreferencesPane
       numSpacesForTab_.setWidth("36px");
       numSpacesForTab_.getElement().getStyle().setMarginLeft(20, Unit.PX);
       add(numSpacesForTab_);
-
+      
       LayoutGrid useNativePipeLabeled = new LayoutGrid(1, 2);
       useNativePipeOperator_ = new YesNoAskDefault(false);
       useNativePipeLabeled.setWidget(0, 0, new FormLabel(constants_.useNativePipeOperatorLabel(), useNativePipeOperator_));
@@ -155,6 +157,15 @@ public class ProjectEditingPreferencesPane extends ProjectPreferencesPane
    protected void initialize(RProjectOptions options)
    {
       initialConfig_ = options.getConfig();
+      
+      chkSpacesForTab_.addValueChangeHandler(new ValueChangeHandler<Boolean>()
+      {
+         @Override
+         public void onValueChange(ValueChangeEvent<Boolean> event)
+         {
+            numSpacesForTab_.setEnabled(chkSpacesForTab_.getValue());
+         }
+      });
 
       enableCodeIndexing_.setValue(initialConfig_.getEnableCodeIndexing());
       chkSpacesForTab_.setValue(initialConfig_.getUseSpacesForTab());
