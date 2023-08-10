@@ -176,7 +176,6 @@ Error findNode(FilePath* pNodePath,
 {
    // Check for an admin-configured node path.
    FilePath nodePath = session::options().nodePath();
-   std::cerr << nodePath.getAbsolutePath() << std::endl;
    if (!nodePath.isEmpty())
    {
       // Allow both directories containing a 'node' binary, and the path
