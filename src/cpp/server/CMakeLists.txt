@@ -252,7 +252,8 @@ if (UNIX AND NOT APPLE)
    # install node
    install(
       DIRECTORY "${RSTUDIO_DEPENDENCIES_DIR}/common/node/${RSTUDIO_NODE_VERSION}/"
-      DESTINATION "${RSTUDIO_INSTALL_BIN}/node")
+      DESTINATION "${RSTUDIO_INSTALL_BIN}/node"
+      USE_SOURCE_PERMISSIONS)
 
 elseif(APPLE)
 
