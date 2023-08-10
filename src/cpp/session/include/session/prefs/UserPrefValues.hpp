@@ -1388,11 +1388,11 @@ public:
    bool gitDiffIgnoreWhitespace();
    core::Error setGitDiffIgnoreWhitespace(bool val);
 
-  /**
-   * Whether to sign git commits.
-   */
-  bool gitSignedCommits();
-  core::Error setGitSignedCommits(bool val);
+   /**
+    * Whether to sign git commits.
+    */
+   bool gitSignedCommits();
+   core::Error setGitSignedCommits(bool val);
 
    /**
     * Whether double-clicking should select a word in the Console pane.

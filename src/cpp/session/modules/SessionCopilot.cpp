@@ -55,6 +55,10 @@
 #define WLOG(__FMT__, ...) COPILOT_LOG_IMPL(LOG_WARNING_MESSAGE, __FMT__, ##__VA_ARGS__)
 #define ELOG(__FMT__, ...) COPILOT_LOG_IMPL(LOG_ERROR_MESSAGE,   __FMT__, ##__VA_ARGS__)
 
+#ifndef RSTUDIO_NODE_VERSION
+# define RSTUDIO_NODE_VERSION "16.14.0"
+#endif
+
 #ifndef _WIN32
 # define kNodeExe "node"
 #else
@@ -204,6 +208,14 @@ Error findNode(FilePath* pNodePath,
       }
    }
 
+   // Allow user override, just in case.
+   FilePath userNodePath(r::options::getOption<std::string>("rstudio.node.binaryPath"));
+   if (userNodePath.exists())
+   {
+      *pNodePath = userNodePath;
+      return Success();
+   }
+
    // In Desktop builds of RStudio, we can re-use the version of node
    // bundled with Electron.
    if (session::options().programMode() == kSessionProgramModeDesktop)
@@ -213,6 +225,17 @@ Error findNode(FilePath* pNodePath,
       {
          *pNodePath = FilePath(desktopExePath);
          pOptions->push_back(std::make_pair("ELECTRON_RUN_AS_NODE", "1"));
+         return Success();
+      }
+   }
+
+   // In Server builds of RStudio, we can try to use a bundled version of node.
+   if (session::options().programMode() == kSessionProgramModeServer)
+   {
+      FilePath nodePath = options().rResourcesPath().completeChildPath("node/" RSTUDIO_NODE_VERSION "/bin/node");
+      if (nodePath.exists())
+      {
+         *pNodePath = nodePath;
          return Success();
       }
    }
