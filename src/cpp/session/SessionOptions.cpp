@@ -623,7 +623,7 @@ void Options::resolveQuartoPath(const FilePath& resourcePath,
 }
 
 void Options::resolveNodePath(const FilePath& resourcePath,
-                                std::string* pPath)
+                              std::string* pPath)
 {
    if (*pPath == kDefaultNodePath && programMode() == kSessionProgramModeDesktop)
    {
