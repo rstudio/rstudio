@@ -46,12 +46,10 @@ aws sso login --profile RStudioMain-IDETeam
 Then login to the registry with the following command:
 
 ```bash
-aws ecr get-login-password --region us-east-1 | docker login --username AWS --password-stdin 263245908434.dkr.ecr.us-east-1.amazonaws.com
+aws ecr get-login-password --region us-east-1 --profile RStudioMain-IDETeam | docker login --username AWS --password-stdin 263245908434.dkr.ecr.us-east-1.amazonaws.com
 ```
 
 Then you can pull whichever image you need with a command like this:
-
-```bash
 
 ```bash
 docker pull 263245908434.dkr.ecr.us-east-1.amazonaws.com/jenkins/ide:pro-jammy-x86_64-desert-sunflower
