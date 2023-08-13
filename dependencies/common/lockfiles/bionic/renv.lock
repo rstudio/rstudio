@@ -161,7 +161,7 @@
     },
     "git2r": {
       "Package": "git2r",
-      "Version": "0.32.0",
+      "Version": "0.27.1",
       "Source": "Repository"
     },
     "glue": {
