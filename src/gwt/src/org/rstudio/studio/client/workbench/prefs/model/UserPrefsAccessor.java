@@ -2332,13 +2332,14 @@ public class UserPrefsAccessor extends Prefs
    }
 
    /**
-    * Whether to sign commits.
+    * Whether to sign git commits.
     */
-   public PrefValue<Boolean> gitSignedCommits() {
-     return bool(
+   public PrefValue<Boolean> gitSignedCommits()
+   {
+      return bool(
          "git_signed_commits",
-         _constants.gitSignedCommitsTitle(),
-         _constants.gitSignedCommitsDescription(),
+         _constants.gitSignedCommitsTitle(), 
+         _constants.gitSignedCommitsDescription(), 
          false);
    }
 

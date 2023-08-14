@@ -67,10 +67,12 @@ T getOption(const std::string& name,
    SEXP valueSEXP = getOption(name);
    if (valueSEXP == R_NilValue)
    {
-      core::Error error(errc::SymbolNotFoundError, ERROR_LOCATION);
-      error.addProperty("symbol (option)", name);
       if (logNotFound)
+      {
+         core::Error error(errc::SymbolNotFoundError, ERROR_LOCATION);
+         error.addProperty("symbol (option)", name);
          LOG_ERROR(error);
+      }
       
       return defaultValue;
    }

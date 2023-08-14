@@ -182,16 +182,17 @@ Error findNode(FilePath* pNodePath,
       // to a 'node' binary directly.
       if (nodePath.isDirectory())
       {
-         FilePath nodeExePath = nodePath.completeChildPath(kNodeExe);
-         if (nodeExePath.exists())
+         for (auto&& suffix : { "bin/" kNodeExe, kNodeExe })
          {
-            *pNodePath = nodeExePath;
-            return Success();
+            FilePath nodeExePath = nodePath.completeChildPath(suffix);
+            if (nodeExePath.exists())
+            {
+               *pNodePath = nodeExePath;
+               return Success();
+            }
          }
-         else
-         {
-            return Error(fileNotFoundError(nodeExePath, ERROR_LOCATION));
-         }
+
+         return Error(fileNotFoundError(nodePath, ERROR_LOCATION));
       }
       else if (nodePath.isRegularFile())
       {
@@ -204,6 +205,14 @@ Error findNode(FilePath* pNodePath,
       }
    }
 
+   // Allow user override, just in case.
+   FilePath userNodePath(r::options::getOption<std::string>("rstudio.copilot.nodeBinaryPath", std::string(), false));
+   if (userNodePath.exists())
+   {
+      *pNodePath = userNodePath;
+      return Success();
+   }
+
    // In Desktop builds of RStudio, we can re-use the version of node
    // bundled with Electron.
    if (session::options().programMode() == kSessionProgramModeDesktop)
@@ -213,6 +222,17 @@ Error findNode(FilePath* pNodePath,
       {
          *pNodePath = FilePath(desktopExePath);
          pOptions->push_back(std::make_pair("ELECTRON_RUN_AS_NODE", "1"));
+         return Success();
+      }
+   }
+
+   // In Server builds of RStudio, we can try to use a bundled version of node.
+   if (session::options().programMode() == kSessionProgramModeServer)
+   {
+      FilePath nodePath = options().nodePath();
+      if (nodePath.exists())
+      {
+         *pNodePath = nodePath;
          return Success();
       }
    }
