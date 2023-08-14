@@ -48,6 +48,7 @@ RUN apt-get update && \
     libpq-dev \
     libsqlite3-dev \
     libssl-dev \
+    libssh-dev \
     libtiff5-dev\
     libuser1-dev \
     libxml2-dev \
