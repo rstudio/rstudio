@@ -14,15 +14,18 @@
  */
 package org.rstudio.core.client.widget;
 
-import com.google.gwt.core.client.GWT;
-import com.google.gwt.dom.client.Style.Unit;
-import com.google.gwt.event.logical.shared.ValueChangeHandler;
-import com.google.gwt.event.shared.HandlerRegistration;
-import com.google.gwt.user.client.ui.*;
 import org.rstudio.core.client.CoreClientConstants;
 import org.rstudio.core.client.events.EnsureVisibleEvent;
 import org.rstudio.core.client.events.HasEnsureVisibleHandlers;
 import org.rstudio.studio.client.RStudioGinjector;
+
+import com.google.gwt.core.client.GWT;
+import com.google.gwt.dom.client.Style.Unit;
+import com.google.gwt.event.logical.shared.ValueChangeHandler;
+import com.google.gwt.event.shared.HandlerRegistration;
+import com.google.gwt.user.client.ui.Composite;
+import com.google.gwt.user.client.ui.FlowPanel;
+import com.google.gwt.user.client.ui.HasValue;
 
 public class NumericValueWidget extends Composite
       implements HasValue<String>,
@@ -59,6 +62,10 @@ public class NumericValueWidget extends Composite
     */
    public NumericValueWidget(String label, String tooltip, Integer minValue, Integer maxValue)
    {
+      // ensure labels end with ':' for consistency
+      if (!label.endsWith(":"))
+         label = label + ":";
+      
       label_ = label;
       tooltip_ = tooltip;
       FlowPanel flowPanel = new FlowPanel();

@@ -147,6 +147,7 @@
 # define kDefaultPandocPath        "bin/pandoc"
 #endif
 
+#define kDefaultNodePath           "bin/node"
 #define kDefaultQuartoPath         "bin/quarto"
 #define kDefaultRsclangPath        "bin/rsclang"
 
