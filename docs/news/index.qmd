@@ -119,6 +119,7 @@ This page provides the release notes associated with each release of RStudio and
 - The Kubernetes plugin should now reload authorization tokens more reliably (rstudio/launcher#685)
 - Fixed a memory leak and various crashes in the Kubernetes plugin (rstudio/launcher#584, rstudio/launcher#645, rstudio/launcher#660)
 - The Kubernetes plugin now interprets the default number of AMD GPUs correctly (rstudio/launcher#688)
+- Fixed the logic when manipulating ACLs for project sharing to not remove permissions on parent directories (rstudio/rstudio-pro#4258)
 
 ## RStudio 2023.03.2
 
@@ -360,6 +361,7 @@ Experimental ARM64 and RedHat 9 support
 - Fixed issue with session-ssl that prevented resuming some sessions in a load-balanced environment (rstudio/rstudio-pro#3759)
 - Fixed intermittent problem where sessions in the Posit Workbench homepage would display incorrect status over NFS (rstudio/rstudio-pro#3979)
 - Fixed an issue where Workbench Job output would somtimes fail to show (rstudio-pro#3972)
+- Fixed an issue where reactivating a user could result in an erroneous warning that user license limit had been reached (rstudio-pro#3874)
 
 ### Deprecated / Removed
 
