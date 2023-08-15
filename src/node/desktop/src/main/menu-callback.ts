@@ -285,99 +285,102 @@ export class MenuCallback extends EventEmitter {
    *
    */
   updateMenus(): void {
-    /*
-     * This function will remove items that has a submenu array with no items
-     */
-    const removeItemsWithEmptySubmenuList = (item: MenuItemConstructorOptions) => {
-      if (Object.prototype.hasOwnProperty.call(item, 'submenu')) {
-        if (Array.isArray(item.submenu)) {
-          if (item.submenu.length > 0) {
-            item.submenu = item.submenu.filter((submenu) => {
-              return removeItemsWithEmptySubmenuList(submenu);
-            });
-            return true;
-          } else {
-            return false;
-          }
-        }
-      }
-
-      return true;
-    };
-
-    /**
-     * Builds the final list of menu items using the given menu template
-     *
-     * @param menuItemTemplates a list of menu item templates representing the full menu (may include hidden items)
-     * @returns the final template list after removing unnecessary separators and hidden items
-     */
-    const recursiveCopy = (menuItemTemplates: MenuItemConstructorOptions[]) => {
-      let newMenuTemplate = new Array<MenuItemConstructorOptions>();
-
-      for (const menuItemTemplate of menuItemTemplates) {
-        let referenceMenuItemTemplate;
-        if (menuItemTemplate.id) {
-          referenceMenuItemTemplate = this.menuItemTemplates.get(menuItemTemplate.id) ?? {};
-        }
-        // the new menu item is based on foundMenuItemTemplate then the referenceMenuItemTemplate
-        // menuItemTemplate is the current state (i.e. checkbox state)
-        const newMenuItemTemplate = { ...menuItemTemplate, ...referenceMenuItemTemplate };
-
-        if (newMenuItemTemplate.type === 'separator') {
-          newMenuTemplate.push(newMenuItemTemplate);
-          continue;
-        }
-
-        if (newMenuItemTemplate.id) {
-          this.menuItemTemplates.set(newMenuItemTemplate.id, newMenuItemTemplate);
-        }
-
-        if (!newMenuItemTemplate.visible && !newMenuItemTemplate.role) continue;
-
-        const { submenu } = menuItemTemplate;
-        if (submenu instanceof Array) {
-          newMenuItemTemplate.submenu = recursiveCopy(submenu as Array<MenuItemConstructorOptions>);
-        }
-
-        newMenuTemplate.push(newMenuItemTemplate);
-      }
-
-      newMenuTemplate = newMenuTemplate.filter((item, idx, arr) => {
-        if (item.type !== 'separator') {
-          return removeItemsWithEmptySubmenuList(item);
-        }
-
-        const prevItem = arr[idx - 1];
-        return idx !== 0 && prevItem.type !== 'separator' && idx != arr.length - 1;
-      });
-
-      if (process.platform === 'darwin') {
-        newMenuTemplate = newMenuTemplate.reduce((menuTemplateList: MenuItemConstructorOptions[], menuItem) => {
-          if (menuItem.id === 'Help') {
-            const windowMenuItem: MenuItemConstructorOptions = {
-              id: 'Window',
-              visible: true,
-              role: 'windowMenu',
-              label: 'Window',
-            };
-
-            menuTemplateList.push(windowMenuItem);
-          }
-          menuTemplateList.push(menuItem);
-          return menuTemplateList;
-        }, []);
-      }
-
-      return newMenuTemplate;
-    };
-
-    const newMainMenuTemplate = recursiveCopy(this.mainMenuTemplate);
+    const newMainMenuTemplate = this.recursiveCopy(this.mainMenuTemplate);
     this.mainMenu = Menu.buildFromTemplate(newMainMenuTemplate);
 
-    Menu.setApplicationMenu(this.mainMenu);
-
+    if (appState().modalTracker.numModalsShowing() === 0) {
+      // update only if there are no modals showing
+      Menu.setApplicationMenu(this.mainMenu);
+    }
+    
     this.isMenuSet = true;
   }
+
+  /*
+  * This function will remove items that has a submenu array with no items
+  */
+  private removeItemsWithEmptySubmenuList(item: MenuItemConstructorOptions): boolean {
+    if (Object.prototype.hasOwnProperty.call(item, 'submenu')) {
+      if (Array.isArray(item.submenu)) {
+        if (item.submenu.length > 0) {
+          item.submenu = item.submenu.filter((submenu) => {
+            return this.removeItemsWithEmptySubmenuList(submenu);
+          });
+          return true;
+        } else {
+          return false;
+        }
+      }
+    }
+
+    return true;
+  };
+
+  /**
+   * Builds the final list of menu items using the given menu template
+   *
+   * @param menuItemTemplates a list of menu item templates representing the full menu (may include hidden items)
+   * @returns the final template list after removing unnecessary separators and hidden items
+   */
+  private recursiveCopy(menuItemTemplates: MenuItemConstructorOptions[]): MenuItemConstructorOptions[] {
+    let newMenuTemplate = new Array<MenuItemConstructorOptions>();
+
+    for (const menuItemTemplate of menuItemTemplates) {
+      let referenceMenuItemTemplate;
+      if (menuItemTemplate.id) {
+        referenceMenuItemTemplate = this.menuItemTemplates.get(menuItemTemplate.id) ?? {};
+      }
+      // the new menu item is based on foundMenuItemTemplate then the referenceMenuItemTemplate
+      // menuItemTemplate is the current state (i.e. checkbox state)
+      const newMenuItemTemplate = { ...menuItemTemplate, ...referenceMenuItemTemplate };
+
+      if (newMenuItemTemplate.type === 'separator') {
+        newMenuTemplate.push(newMenuItemTemplate);
+        continue;
+      }
+
+      if (newMenuItemTemplate.id) {
+        this.menuItemTemplates.set(newMenuItemTemplate.id, newMenuItemTemplate);
+      }
+
+      if (!newMenuItemTemplate.visible && !newMenuItemTemplate.role) continue;
+
+      const { submenu } = menuItemTemplate;
+      if (submenu instanceof Array) {
+        newMenuItemTemplate.submenu = this.recursiveCopy(submenu as Array<MenuItemConstructorOptions>);
+      }
+
+      newMenuTemplate.push(newMenuItemTemplate);
+    }
+
+    newMenuTemplate = newMenuTemplate.filter((item, idx, arr) => {
+      if (item.type !== 'separator') {
+        return this.removeItemsWithEmptySubmenuList(item);
+      }
+
+      const prevItem = arr[idx - 1];
+      return idx !== 0 && prevItem.type !== 'separator' && idx != arr.length - 1;
+    });
+
+    if (process.platform === 'darwin') {
+      newMenuTemplate = newMenuTemplate.reduce((menuTemplateList: MenuItemConstructorOptions[], menuItem) => {
+        if (menuItem.id === 'Help') {
+          const windowMenuItem: MenuItemConstructorOptions = {
+            id: 'Window',
+            visible: true,
+            role: 'windowMenu',
+            label: 'Window',
+          };
+
+          menuTemplateList.push(windowMenuItem);
+        }
+        menuTemplateList.push(menuItem);
+        return menuTemplateList;
+      }, []);
+    }
+
+    return newMenuTemplate;
+  };
 
   addCommand(
     cmdId: string,
@@ -485,11 +488,18 @@ export class MenuCallback extends EventEmitter {
    * @param enabled Whether the main menu bar should be enabled or disabled (replaced with a placeholder).
    */
   setMainMenuEnabled(enabled: boolean) {
-    const stubWithPlaceholder = !enabled && !this.savedMenu;
-    if (stubWithPlaceholder) {
-      // Save a copy of the current menu bar so we can restore it later
+    if (!enabled && !this.savedMenu) {
       this.savedMenu = Menu.getApplicationMenu();
-      this.showPlaceholderMenu();
+      if (this.savedMenu) {
+        const disabledMenu = Menu.buildFromTemplate(this.recursiveCopy(this.mainMenuTemplate));
+        disabledMenu?.items?.forEach((item) => {
+          item.submenu?.items.forEach((subItem) => {
+            // keep some commands enabled
+            subItem.enabled = ['cut', 'copy', 'paste', 'redo', 'hide', 'hideOthers', 'unhide', 'selectAll'].includes(subItem.role ?? '');
+          });
+        });
+        Menu.setApplicationMenu(disabledMenu);
+      }
       return;
     }
     const restoreSavedMenu = enabled && !!this.savedMenu && appState().modalTracker.numModalsShowing() === 0;
