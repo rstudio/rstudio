@@ -164,7 +164,7 @@ pipeline {
     stage ("Setup and Trigger Builds") {
       when {
         anyOf {
-          expression { return params.FORCE_BUILD}
+          expression { return params.FORCE_BUILD }
           changeset comparator: 'REGEXP', pattern: '(?:(?!docs/).+|(?!jenkins/Jenkinsfile\\.nightly))'
         }
       }
