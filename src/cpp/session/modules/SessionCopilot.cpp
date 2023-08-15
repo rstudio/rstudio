@@ -174,6 +174,27 @@ bool waitFor(F&& callback)
 Error findNode(FilePath* pNodePath,
                core::system::Options* pOptions)
 {
+   // Allow user override, just in case.
+   FilePath userNodePath(r::options::getOption<std::string>("rstudio.copilot.nodeBinaryPath", std::string(), false));
+   if (userNodePath.exists())
+   {
+      *pNodePath = userNodePath;
+      return Success();
+   }
+
+   // In Desktop builds of RStudio, we can re-use the version of node
+   // bundled with Electron.
+   if (session::options().programMode() == kSessionProgramModeDesktop)
+   {
+      std::string desktopExePath = core::system::getenv("RSTUDIO_DESKTOP_EXE");
+      if (!desktopExePath.empty() && FilePath(desktopExePath).exists())
+      {
+         *pNodePath = FilePath(desktopExePath);
+         pOptions->push_back(std::make_pair("ELECTRON_RUN_AS_NODE", "1"));
+         return Success();
+      }
+   }
+
    // Check for an admin-configured node path.
    FilePath nodePath = session::options().nodePath();
    if (!nodePath.isEmpty())
@@ -202,38 +223,6 @@ Error findNode(FilePath* pNodePath,
       else
       {
          return Error(fileNotFoundError(nodePath, ERROR_LOCATION));
-      }
-   }
-
-   // Allow user override, just in case.
-   FilePath userNodePath(r::options::getOption<std::string>("rstudio.copilot.nodeBinaryPath", std::string(), false));
-   if (userNodePath.exists())
-   {
-      *pNodePath = userNodePath;
-      return Success();
-   }
-
-   // In Desktop builds of RStudio, we can re-use the version of node
-   // bundled with Electron.
-   if (session::options().programMode() == kSessionProgramModeDesktop)
-   {
-      std::string desktopExePath = core::system::getenv("RSTUDIO_DESKTOP_EXE");
-      if (!desktopExePath.empty() && FilePath(desktopExePath).exists())
-      {
-         *pNodePath = FilePath(desktopExePath);
-         pOptions->push_back(std::make_pair("ELECTRON_RUN_AS_NODE", "1"));
-         return Success();
-      }
-   }
-
-   // In Server builds of RStudio, we can try to use a bundled version of node.
-   if (session::options().programMode() == kSessionProgramModeServer)
-   {
-      FilePath nodePath = options().nodePath();
-      if (nodePath.exists())
-      {
-         *pNodePath = nodePath;
-         return Success();
       }
    }
 
