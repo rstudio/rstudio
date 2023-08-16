@@ -250,8 +250,11 @@ public class CopilotPreferencesPane extends PreferencesPane
             }
             else
             {
-               // TODO
-               lblCopilotStatus_.setText(JSON.stringify(response));
+               String message =
+                     "RStudio received a Copilot response that it does not understand.\n" +
+                     JSON.stringify(response);
+               
+               lblCopilotStatus_.setText(message);
             }
          }
          
