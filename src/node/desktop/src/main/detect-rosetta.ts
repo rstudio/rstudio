@@ -1,0 +1,158 @@
+/*
+ * detect-rosetta.ts
+ *
+ * Copyright (C) 2023 by Posit Software, PBC
+ *
+ * Unless you have received this program directly from Posit Software pursuant
+ * to the terms of a commercial license agreement with Posit Software, then
+ * this program is licensed to you under the terms of version 3 of the
+ * GNU Affero General Public License. This program is distributed WITHOUT
+ * ANY EXPRESS OR IMPLIED WARRANTY, INCLUDING THOSE OF NON-INFRINGEMENT,
+ * MERCHANTABILITY OR FITNESS FOR A PARTICULAR PURPOSE. Please refer to the
+ * AGPL (http://www.gnu.org/licenses/agpl-3.0.txt) for more details.
+ *
+ */
+
+import { execSync } from 'child_process';
+import { logger } from '../core/logger';
+import { app, dialog, MessageBoxOptions } from 'electron';
+import { appState } from './app-state';
+import { safeError } from '../core/err';
+
+enum DetectRosettaStatus {
+  ROSETTA_CHECK_FAILED,
+  ROSETTA_INSTALL_PROMPT,
+  ROSETTA_INSTALL_DECLINED,
+  ROSETTA_INSTALL_SUCCESS,
+  ROSETTA_INSTALL_FAILED,
+}
+
+const DETECT_ROSETTA_STATUS_MAP: Map<DetectRosettaStatus, MessageBoxOptions> = new Map([
+  [
+    DetectRosettaStatus.ROSETTA_CHECK_FAILED,
+    {
+      type: 'error',
+      buttons: ['OK'],
+      defaultId: 0,
+      title: 'Rosetta Check Failed',
+      message: 'Something went wrong while detecting your Rosetta installation.',
+      detail: 'Please reopen RStudio to try again.',
+    },
+  ],
+  [
+    DetectRosettaStatus.ROSETTA_INSTALL_PROMPT,
+    {
+      type: 'question',
+      buttons: ['Yes', 'No'],
+      defaultId: 0,
+      title: 'Rosetta Is Not Installed',
+      message: 'To run RStudio on Apple Silicon, Rosetta must be installed.\n\nWould you like to install Rosetta?',
+      detail:
+        "Your use of Rosetta is governed by Apple's Software License Agreements: https://www.apple.com/legal/sla/.\n\nBy using this software, you agree to abide by the terms of Apple's Software License Agreements.",
+    },
+  ],
+  [
+    DetectRosettaStatus.ROSETTA_INSTALL_DECLINED,
+    {
+      type: 'warning',
+      buttons: ['OK'],
+      defaultId: 0,
+      title: 'Rosetta Installation Declined',
+      message: 'Rosetta is not installed on your machine. You may experience issues running RStudio.',
+      detail: 'To avoid these issues, please install Rosetta and reopen RStudio.',
+    },
+  ],
+  [
+    DetectRosettaStatus.ROSETTA_INSTALL_SUCCESS,
+    {
+      type: 'info',
+      buttons: ['OK'],
+      defaultId: 0,
+      title: 'Rosetta Is Installed',
+      message: 'Rosetta has been installed.',
+      detail: 'Please reopen RStudio.',
+    },
+  ],
+  [
+    DetectRosettaStatus.ROSETTA_INSTALL_FAILED,
+    {
+      type: 'error',
+      buttons: ['OK'],
+      defaultId: 0,
+      title: 'Rosetta Install Failed',
+      message: 'Something went wrong while installing Rosetta.',
+      detail: 'Please reopen RStudio to try again.',
+    },
+  ],
+]);
+
+/**
+ * Checks if Rosetta is installed and running on Apple Silicon. Prompts user to install Rosetta
+ * if it is not installed.
+ *
+ * Despite having a "Universal" Mac build, we currently still ship with Intel components.
+ * As a result, users on Mac M1/M2 (aka: arm64, aarch64) will need to have Rosetta 2 installed and running.
+ */
+export function checkForRosetta(): void {
+  const isAppleSilicon = process.platform === 'darwin' && process.arch === 'arm64';
+  if (!isAppleSilicon) return;
+
+  if (!isRosettaRunning()) {
+    logger().logDebug('Rosetta 2 is not running. Prompting user to install.');
+    showDialogForStatus(DetectRosettaStatus.ROSETTA_INSTALL_PROMPT, (selection) => {
+      if (selection === 0) {
+        try {
+          // The user has opted to install Rosetta. Install Rosetta and exit the app.
+          // execSync('/usr/sbin/softwareupdate --install-rosetta --agree-to-license', { encoding: 'utf-8' });
+          showDialogForStatus(DetectRosettaStatus.ROSETTA_INSTALL_SUCCESS, () => app.quit());
+        } catch (error: unknown) {
+          logger().logErrorMessage('Failed to install Rosetta 2.');
+          logger().logError(safeError(error));
+          showDialogForStatus(DetectRosettaStatus.ROSETTA_INSTALL_FAILED, () => app.quit());
+        }
+      } else {
+        // User opted out from installing Rosetta. Show warning dialog, but allow RStudio to start.
+        logger().logDebug('User opted out from installing Rosetta 2.');
+        showDialogForStatus(DetectRosettaStatus.ROSETTA_INSTALL_DECLINED);
+      }
+    });
+  }
+}
+
+/**
+ * Runs a command to check if Rosetta is running.
+ * Internally on Mac, Rosetta 2 is referred to as OAH and its running service is called 'oahd'.
+ * We check that the process id of 'oahd' is returned to determine if Rosetta 2 is running.
+ * @returns true if Rosetta is running, false otherwise.
+ */
+function isRosettaRunning(): boolean {
+  try {
+    logger().logDebug('$ /usr/bin/pgrep oahd');
+    const pgrepOutput = execSync('/usr/bin/pgrep oahd', { encoding: 'utf-8' });
+    logger().logDebug(pgrepOutput);
+    return pgrepOutput.trim().length > 0;
+  } catch (error: unknown) {
+    logger().logErrorMessage('Failed to verify if rosetta is installed.');
+    logger().logErrorMessage(JSON.stringify(error));
+    showDialogForStatus(DetectRosettaStatus.ROSETTA_CHECK_FAILED);
+    throw error;
+  }
+}
+
+/**
+ * Shows a dialog for the given DetectRosettaStatus.
+ * @param status the DetectRosettaStatus to show a dialog for.
+ * @param callback an optional callback function to run after the dialog is interacted with.
+ */
+function showDialogForStatus(status: DetectRosettaStatus, callback?: (selection: number) => void): void {
+  const dialogOptions = DETECT_ROSETTA_STATUS_MAP.get(status);
+  if (!dialogOptions) {
+    logger().logErrorMessage(`No dialog options found for status: ${status}`);
+    return;
+  }
+  appState().modalTracker.trackElectronModalSync(async () =>
+    dialog.showMessageBox(dialogOptions).then((selection) => {
+      if (callback) callback(selection.response);
+    }),
+  );
+}
