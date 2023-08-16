@@ -895,9 +895,9 @@ Error initialize()
          (bind(registerAsyncRpcMethod, "copilot_sign_in", copilotSignIn))
          (bind(registerAsyncRpcMethod, "copilot_sign_out", copilotSignOut))
          (bind(registerAsyncRpcMethod, "copilot_status", copilotStatus))
-         (bind(sourceModuleRFile, "SessionCopilot.R"))
          (bind(registerRpcMethod, "copilot_verify_installed", copilotVerifyInstalled))
          (bind(registerRpcMethod, "copilot_install_agent", copilotInstallAgent))
+         (bind(sourceModuleRFile, "SessionCopilot.R"))
          ;
    return initBlock.execute();
 

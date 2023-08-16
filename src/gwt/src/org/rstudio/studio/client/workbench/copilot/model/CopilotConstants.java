@@ -21,4 +21,10 @@ public class CopilotConstants
    public static final String STATUS_NOT_AUTHORIZED = "NotAuthorized";
    public static final String STATUS_NOT_SIGNED_IN = "NotSignedIn";
    public static final String STATUS_PROMPT_USER_DEVICE_FLOW = "PromptUserDeviceFlow";
+   
+   public static class ErrorCodes
+   {
+      public static final int DOCUMENT_NOT_FOUND = -32602;
+      public static final int NOT_SIGNED_IN = 1000;
+   }
 }

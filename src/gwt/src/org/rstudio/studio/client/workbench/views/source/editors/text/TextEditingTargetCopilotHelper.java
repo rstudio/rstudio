@@ -23,6 +23,7 @@ import org.rstudio.studio.client.common.Timers;
 import org.rstudio.studio.client.server.ServerError;
 import org.rstudio.studio.client.server.ServerRequestCallback;
 import org.rstudio.studio.client.workbench.copilot.Copilot;
+import org.rstudio.studio.client.workbench.copilot.model.CopilotConstants;
 import org.rstudio.studio.client.workbench.copilot.model.CopilotEvent;
 import org.rstudio.studio.client.workbench.copilot.model.CopilotEvent.CopilotEventType;
 import org.rstudio.studio.client.workbench.copilot.model.CopilotResponseTypes.CopilotGenerateCompletionsResponse;
@@ -92,12 +93,23 @@ public class TextEditingTargetCopilotHelper
                            CopilotError error = response.error;
                            if (error != null)
                            {
-                              String message = copilot_.messageForError(error);
-                              events_.fireEvent(
-                                    new CopilotEvent(
-                                          CopilotEventType.COMPLETION_ERROR,
-                                          message));
-                              return;
+                              // Handle 'document could not be found' errors up-front. These errors
+                              // will normally self-resolve after the user starts editing the document,
+                              // so it should suffice just to indicate that no completions are available.
+                              int code = error.code;
+                              if (code == CopilotConstants.ErrorCodes.DOCUMENT_NOT_FOUND)
+                              {
+                                 events_.fireEvent(new CopilotEvent(CopilotEventType.COMPLETION_RECEIVED_NONE));
+                              }
+                              else
+                              {
+                                 String message = copilot_.messageForError(error);
+                                 events_.fireEvent(
+                                       new CopilotEvent(
+                                             CopilotEventType.COMPLETION_ERROR,
+                                             message));
+                                 return;
+                              }
                            }
                            
                            // Check for null result. This might occur if the completion request
