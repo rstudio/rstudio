@@ -126,13 +126,14 @@ core::ProgramStatus Options::read(int argc, char * const argv[], std::ostream& o
    options_description external("external");
    options_description git("git");
    options_description user("user");
+   options_description copilot("copilot");
    options_description misc("misc");
    std::string saveActionDefault;
    int sameSite;
 
    program_options::OptionsDescription optionsDesc =
          buildOptions(&runTests, &runScript, &verify, &version, &program, &log, &docs, &www,
-                      &session, &allow, &r, &limits, &external, &git, &user, &misc,
+                      &session, &allow, &r, &limits, &external, &git, &user, &copilot, &misc,
                       &saveActionDefault, &sameSite);
 
    addOverlayOptions(&misc);
@@ -152,6 +153,7 @@ core::ProgramStatus Options::read(int argc, char * const argv[], std::ostream& o
    optionsDesc.commandLine.add(external);
    optionsDesc.commandLine.add(git);
    optionsDesc.commandLine.add(user);
+   optionsDesc.commandLine.add(copilot);
    optionsDesc.commandLine.add(misc);
 
    // define groups included in config-file processing
@@ -165,6 +167,7 @@ core::ProgramStatus Options::read(int argc, char * const argv[], std::ostream& o
    optionsDesc.configFile.add(limits);
    optionsDesc.configFile.add(external);
    optionsDesc.configFile.add(user);
+   optionsDesc.configFile.add(copilot);
    optionsDesc.configFile.add(misc);
 
    // read configuration

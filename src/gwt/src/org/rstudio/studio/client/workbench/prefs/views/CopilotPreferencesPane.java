@@ -82,7 +82,7 @@ public class CopilotPreferencesPane extends PreferencesPane
    
    private void initDisplay()
    {
-      if (!session_.getSessionInfo().getAllowCopilot())
+      if (!session_.getSessionInfo().getCopilotEnabled())
       {
          add(headerLabel("GitHub Copilot"));
          add(new Label("GitHub Copilot integration has been disabled by the administrator."));

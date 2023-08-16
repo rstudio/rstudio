@@ -538,7 +538,7 @@ bool ensureAgentRunning()
    }
 
    // bail if copilot is not allowed
-   if (!session::options().allowCopilot())
+   if (!session::options().copilotEnabled())
    {
       DLOG("Copilot has been disabled by the administrator; not starting agent.");
       return false;
