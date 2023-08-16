@@ -40,6 +40,8 @@
 #include <session/prefs/UserPrefs.hpp>
 #include <session/SessionModuleContext.hpp>
 
+#include "session-config.h"
+
 #define COPILOT_LOG_IMPL(__LOGGER__, __FMT__, ...)                             \
    do                                                                          \
    {                                                                           \
@@ -306,6 +308,44 @@ void sendRequest(const std::string& method,
    s_pendingRequests.push(request);
 }
 
+void setEditorInfo()
+{
+   json::Object paramsJson;
+   
+   json::Object editorInfoJson;
+   editorInfoJson["name"] = "RStudio";
+   editorInfoJson["version"] = RSTUDIO_VERSION;
+   paramsJson["editorInfo"] = editorInfoJson;
+   
+   SEXP networkProxySEXP = r::options::getOption("rstudio.copilot.networkProxy");
+   if (networkProxySEXP != R_NilValue)
+   {
+      json::Value networkProxyJson;
+      Error error = r::json::jsonValueFromObject(networkProxySEXP, &networkProxyJson);
+      if (error)
+         LOG_ERROR(error);
+      
+      if (networkProxyJson.isObject())
+         paramsJson["networkProxy"] = networkProxyJson.getObject();
+   }
+   
+   SEXP authProviderSEXP = r::options::getOption("rstudio.copilot.authProvider");
+   if (authProviderSEXP != R_NilValue)
+   {
+      json::Value authProviderJson;
+      Error error = r::json::jsonValueFromObject(authProviderSEXP, &authProviderJson);
+      if (error)
+         LOG_ERROR(error);
+      
+      if (authProviderJson.isObject())
+         paramsJson["authProvider"] = authProviderJson.getObject();
+   }
+   
+   
+   std::string requestId = core::system::generateUuid();
+   sendRequest("setEditorInfo", requestId, paramsJson, CopilotContinuation());
+}
+
 namespace agent {
 
 void onStarted(ProcessOperations& operations)
@@ -523,9 +563,18 @@ bool startAgent()
    paramsJson["processId"] = ::getpid();
    paramsJson["clientInfo"] = clientInfoJson;
    paramsJson["capabilities"] = json::Object();
-
+   
+   // set up continuation after we've finished initializing
+   auto callback = [=](const Error& error, json::JsonRpcResponse* pResponse)
+   {
+      if (error)
+         LOG_ERROR(error);
+      else
+         setEditorInfo();
+   };
+   
    std::string requestId = core::system::generateUuid();
-   sendRequest("initialize", requestId, paramsJson, CopilotContinuation());
+   sendRequest("initialize", requestId, paramsJson, CopilotContinuation(callback));
 
    // Okay, we're ready to go.
    return true;
