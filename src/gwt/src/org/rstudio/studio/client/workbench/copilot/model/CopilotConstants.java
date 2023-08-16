@@ -18,6 +18,7 @@ public class CopilotConstants
 {
    public static final String STATUS_OK = "OK";
    public static final String STATUS_ALREADY_SIGNED_IN = "AlreadySignedIn";
+   public static final String STATUS_NOT_AUTHORIZED = "NotAuthorized";
    public static final String STATUS_NOT_SIGNED_IN = "NotSignedIn";
    public static final String STATUS_PROMPT_USER_DEVICE_FLOW = "PromptUserDeviceFlow";
 }
