@@ -230,6 +230,10 @@ public class TextEditingTargetCopilotHelper
 
                         activeCompletion_ = null;
                      }
+                     else if (event.getKeyCode() == KeyCodes.KEY_BACKSPACE)
+                     {
+                        display_.removeGhostText();
+                     }
                   }
                })
 
