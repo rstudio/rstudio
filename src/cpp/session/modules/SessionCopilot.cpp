@@ -47,7 +47,7 @@
       std::string formatted =                                                  \
           fmt::format("[{}]: {}", __func__, message);                          \
       __LOGGER__(formatted);                                                   \
-      if (copilotLogLevel() >= 3)                                              \
+      if (copilotLogLevel() >= 1)                                              \
          std::cerr << formatted << std::endl;                                  \
    } while (0)
 
@@ -75,14 +75,15 @@ class CopilotContinuation
 {
 public:
 
-   // default ctor needed for compatibility with map
-   CopilotContinuation()
-   {
-   }
-
    explicit CopilotContinuation(const json::JsonRpcFunctionContinuation& continuation)
       : continuation_(continuation),
         time_(boost::posix_time::second_clock::local_time())
+   {
+   }
+   
+   // default ctor needed for compatibility with map
+   CopilotContinuation()
+      : CopilotContinuation(json::JsonRpcFunctionContinuation())
    {
    }
 
@@ -295,6 +296,8 @@ void sendRequest(const std::string& method,
                  const json::Value& paramsJson,
                  const CopilotContinuation& continuation)
 {
+   DLOG("Sending request '{}' with id '{}'.", method, requestId);
+   
    // Add the continuation, which is executed in response to the request.
    s_pendingContinuations[requestId] = continuation;
 
@@ -320,7 +323,7 @@ bool onContinue(ProcessOperations& operations)
       std::string request = s_pendingRequests.front();
       s_pendingRequests.pop();
 
-      if (copilotLogLevel() > 2)
+      if (copilotLogLevel() >= 2)
       {
          std::cerr << std::endl;
          std::cerr << "REQUEST" << std::endl;
@@ -391,7 +394,7 @@ void onStdout(ProcessOperations& operations, const std::string& stdOut)
       std::string bodyText = string_utils::substring(stdOut, bodyStart, bodyEnd);
       s_pendingResponses.push(bodyText);
 
-      if (copilotLogLevel() > 2)
+      if (copilotLogLevel() >= 2)
       {
          std::cerr << std::endl;
          std::cerr << "RESPONSE" << std::endl;
@@ -869,6 +872,10 @@ Error initialize()
    using namespace module_context;
 
    s_copilotEnabled = prefs::userPrefs().copilotEnabled();
+   
+   std::string copilotLogLevel = core::system::getenv("RSTUDIO_COPILOT_LOG_LEVEL");
+   if (!copilotLogLevel.empty())
+      s_copilotLogLevel = safe_convert::stringTo<int>(copilotLogLevel, 0);
 
    events().onBackgroundProcessing.connect(onBackgroundProcessing);
    events().onPreferencesSaved.connect(onPreferencesSaved);
