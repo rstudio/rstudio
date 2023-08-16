@@ -286,10 +286,10 @@ export class MenuCallback extends EventEmitter {
    */
   updateMenus(): void {
     const newMainMenuTemplate = this.recursiveCopy(this.mainMenuTemplate);
-    this.mainMenu = Menu.buildFromTemplate(newMainMenuTemplate);
-
+    
     if (appState().modalTracker.numModalsShowing() === 0) {
       // update only if there are no modals showing
+      this.mainMenu = Menu.buildFromTemplate(newMainMenuTemplate);
       Menu.setApplicationMenu(this.mainMenu);
     }
     
@@ -499,12 +499,14 @@ export class MenuCallback extends EventEmitter {
           });
         });
         Menu.setApplicationMenu(disabledMenu);
+        this.mainMenu = disabledMenu;
       }
       return;
     }
-    const restoreSavedMenu = enabled && !!this.savedMenu && appState().modalTracker.numModalsShowing() === 0;
-    if (restoreSavedMenu) {
+    const restoreSavedMenu = enabled && appState().modalTracker.numModalsShowing() === 0;
+    if (restoreSavedMenu && this.savedMenu) {
       Menu.setApplicationMenu(this.savedMenu);
+      this.mainMenu = this.savedMenu;
       this.savedMenu = null;
       return;
     }
