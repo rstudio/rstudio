@@ -203,7 +203,7 @@ public class TextEditingTargetCopilotHelper
                   }
                   
                   // Request completions on cursor navigation.
-                  int delayMs = MathUtil.clamp(prefs_.copilotCompletionsDelay().getValue(), 10, 10000);
+                  int delayMs = MathUtil.clamp(prefs_.copilotCompletionsDelay().getValue(), 10, 5000);
                   completionTimer_.schedule(delayMs);
 
                   // Delay handler so we can handle a Tab keypress

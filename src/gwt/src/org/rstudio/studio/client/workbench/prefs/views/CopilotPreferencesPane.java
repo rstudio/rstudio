@@ -115,7 +115,7 @@ public class CopilotPreferencesPane extends PreferencesPane
          add(spaced(statusPanel));
 
          add(headerLabel("Copilot Completions"));
-         add(numericPref("Show code suggestions after keyboard idle (ms):", 10, 2000, prefs_.copilotCompletionsDelay()));
+         add(numericPref("Show code suggestions after keyboard idle (ms):", 10, 5000, prefs_.copilotCompletionsDelay()));
       }
       else
       {
