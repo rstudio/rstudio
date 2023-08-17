@@ -626,7 +626,9 @@ if(NOT RSTUDIO_SESSION_WIN32 AND NOT RSESSION_ALTERNATE_BUILD)
            DESTINATION ${RSTUDIO_INSTALL_SUPPORTING}/resources)
    # templates
    install(DIRECTORY "resources/templates"
-           DESTINATION ${RSTUDIO_INSTALL_SUPPORTING}/resources)
+           DESTINATION ${RSTUDIO_INSTALL_SUPPORTING}/resources
+           PATTERN ".gitignore"
+           EXCLUDE)
    # pandoc
    install(DIRECTORY "resources/pandoc"
            DESTINATION ${RSTUDIO_INSTALL_SUPPORTING}/resources)
@@ -695,15 +697,21 @@ if(NOT RSTUDIO_SESSION_WIN32 AND NOT RSESSION_ALTERNATE_BUILD)
          if (RSTUDIO_ELECTRON)
             install(DIRECTORY "${RSTUDIO_DEPENDENCIES_QUARTO_DIR}" 
                   DESTINATION "${RSTUDIO_INSTALL_RESOURCES}/app"
-                  USE_SOURCE_PERMISSIONS)
+                  USE_SOURCE_PERMISSIONS
+                  PATTERN ".gitignore"
+                  EXCLUDE)
          else()
             install(DIRECTORY "${RSTUDIO_DEPENDENCIES_QUARTO_DIR}"
                   DESTINATION "${RSTUDIO_INSTALL_BIN}"
                   USE_SOURCE_PERMISSIONS
-                  PATTERN "*/share" EXCLUDE)
+                  PATTERN "*/share"
+                  PATTERN ".gitignore"
+                  EXCLUDE)
             install(DIRECTORY "${RSTUDIO_DEPENDENCIES_QUARTO_DIR}/share" 
                   DESTINATION "${RSTUDIO_INSTALL_SUPPORTING}/quarto"
-                  USE_SOURCE_PERMISSIONS)
+                  USE_SOURCE_PERMISSIONS
+                  PATTERN ".gitignore"
+                  EXCLUDE)
          endif()
       else()
          install(DIRECTORY "${RSTUDIO_DEPENDENCIES_QUARTO_DIR}"

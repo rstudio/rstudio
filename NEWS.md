@@ -27,6 +27,7 @@
 - Fixed bug preventing `HOME` from being modified in system init scripts (rstudio-pro:#4584)
 - Fixed issue with alignment of R argument names in Help pane (#13474)
 - Fixed bug with modals disabling copy/paste (#13365)
+- Removed unnecessary files from install packages (rstudo-pro:#4943)
 
 ### Performance
 - Improved performance of group membership tests (rstudio-pro:#4643)

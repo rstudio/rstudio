@@ -138,13 +138,17 @@ if(GWT_COPY)
    install(
       DIRECTORY www
       DESTINATION "${RSTUDIO_INSTALL_SUPPORTING}"
-      PATTERN "WEB-INF" EXCLUDE)
+      PATTERN "WEB-INF"
+      PATTERN ".gitignore"
+      EXCLUDE)
 
    # install compiled GWT artefacts
    install(
       DIRECTORY "${GWT_WWW_DIR}"
       DESTINATION "${RSTUDIO_INSTALL_SUPPORTING}"
-      PATTERN "WEB-INF" EXCLUDE)
+      PATTERN "WEB-INF"
+      PATTERN ".gitignore"
+      EXCLUDE)
 
    # copy symbol maps
    install(
