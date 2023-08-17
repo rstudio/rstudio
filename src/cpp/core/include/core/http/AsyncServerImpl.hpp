@@ -672,7 +672,8 @@ private:
                 method != "POST" &&
                 method != "HEAD" &&
                 method != "PUT" &&
-                method != "OPTIONS")
+                method != "OPTIONS" &&
+                method != "PATCH")
             {
                // invalid method - fail out
                LOG_ERROR_MESSAGE("Invalid method " + method + " requested for uri: " + pRequest->uri());
