@@ -139,6 +139,7 @@ if(GWT_COPY)
       DIRECTORY www
       DESTINATION "${RSTUDIO_INSTALL_SUPPORTING}"
       PATTERN "WEB-INF"
+      EXCLUDE
       PATTERN ".gitignore"
       EXCLUDE)
 
@@ -147,6 +148,7 @@ if(GWT_COPY)
       DIRECTORY "${GWT_WWW_DIR}"
       DESTINATION "${RSTUDIO_INSTALL_SUPPORTING}"
       PATTERN "WEB-INF"
+      EXCLUDE
       PATTERN ".gitignore"
       EXCLUDE)
 
