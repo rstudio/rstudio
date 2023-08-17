@@ -99,8 +99,8 @@ export function checkForRosetta(): void {
 
   if (!isRosettaRunning()) {
     logger().logDebug('Rosetta 2 is not running. Prompting user to install.');
-    showDialogForStatus(DetectRosettaStatus.ROSETTA_INSTALL_PROMPT, (selection) => {
-      if (selection === 0) {
+    showDialogForStatus(DetectRosettaStatus.ROSETTA_INSTALL_PROMPT, (selectedButtonId) => {
+      if (selectedButtonId === 0) {
         try {
           // The user has opted to install Rosetta. Install Rosetta and exit the app.
           // execSync('/usr/sbin/softwareupdate --install-rosetta --agree-to-license', { encoding: 'utf-8' });
@@ -154,15 +154,15 @@ function isRosettaRunning(): boolean {
  * @param status the DetectRosettaStatus to show a dialog for.
  * @param callback an optional callback function to run after the dialog is interacted with.
  */
-function showDialogForStatus(status: DetectRosettaStatus, callback?: (selection: number) => void): void {
+function showDialogForStatus(status: DetectRosettaStatus, callback?: (selectedButtonId: number) => void): void {
   const dialogOptions = DETECT_ROSETTA_STATUS_MAP.get(status);
   if (!dialogOptions) {
     logger().logErrorMessage(`No dialog options found for status: ${status}`);
     return;
   }
   appState().modalTracker.trackElectronModalSync(async () =>
-    dialog.showMessageBox(dialogOptions).then((selection) => {
-      if (callback) callback(selection.response);
+    dialog.showMessageBox(dialogOptions).then((retVal) => {
+      if (callback) callback(retVal.response);
     }),
   );
 }
