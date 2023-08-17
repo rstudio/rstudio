@@ -44,7 +44,7 @@ const DETECT_ROSETTA_STATUS_MAP: Map<DetectRosettaStatus, MessageBoxOptions> = n
       title: 'Rosetta Is Not Installed',
       message: 'Rosetta is not installed on your machine. You may experience issues running RStudio.',
       detail:
-        'To avoid these issues, please install Rosetta and reopen RStudio. For instructions on how to install Rosetta, please visit https://docs.posit.co/ide/desktop-pro/getting_started/installation.html#apple-silicon-mac-m1m2.',
+        'To avoid these issues, please install Rosetta and reopen RStudio.\n\nFor instructions, please visit https://docs.posit.co/ide/desktop-pro/getting_started/installation.html#apple-silicon-mac-m1m2.',
     },
   ],
 ]);
