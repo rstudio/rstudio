@@ -168,6 +168,7 @@ namespace prefs {
 #define kShowInlineToolbarForRCodeChunks "show_inline_toolbar_for_r_code_chunks"
 #define kHighlightCodeChunks "highlight_code_chunks"
 #define kSaveFilesBeforeBuild "save_files_before_build"
+#define kSaveAndReloadWorkspaceOnBuild "save_and_reload_workspace_on_build"
 #define kFontSizePoints "font_size_points"
 #define kHelpFontSizePoints "help_font_size_points"
 #define kEditorTheme "editor_theme"
@@ -937,6 +938,12 @@ public:
     */
    bool saveFilesBeforeBuild();
    core::Error setSaveFilesBeforeBuild(bool val);
+
+   /**
+    * Whether RStudio should save and reload the R workspace when building the project.
+    */
+   bool saveAndReloadWorkspaceOnBuild();
+   core::Error setSaveAndReloadWorkspaceOnBuild(bool val);
 
    /**
     * The default editor font size, in points.
