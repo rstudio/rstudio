@@ -1491,6 +1491,8 @@
 # If a function internally calls out to one of these functions,
 # we assume that it may perform non-standard evaluation, and avoid
 # attempting certain diagnostics on its usages.
+#
+# Keep in sync with makeNsePrimitives() in RSexp.cpp
 .rs.setVar("nse.primitives", c(
    
    # base R primitives
@@ -1520,6 +1522,7 @@
    
    # dplyr
    "dplyr_quosures"
+   
 ))
 
 .rs.addFunction("performsNonstandardEvaluation", function(object)
