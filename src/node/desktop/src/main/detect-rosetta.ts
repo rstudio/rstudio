@@ -132,6 +132,16 @@ function isRosettaRunning(): boolean {
     logger().logDebug(pgrepOutput);
     return pgrepOutput.trim().length > 0;
   } catch (error: unknown) {
+    // The command will return exit code 1 with empty stderr if the process is not found.
+    // If the process is not found, then we can assume Rosetta is not running.
+    if (error instanceof Object && 'status' in error && 'stderr' in error) {
+      if (error.status === 1 && (error.stderr as string).trim().length === 0) {
+        logger().logDebug('Command returned exit code 1 with empty stderr. Rosetta is not running.');
+        return false;
+      }
+    }
+
+    // Otherwise, something went wrong while running the command.
     logger().logErrorMessage('Failed to verify if rosetta is installed.');
     logger().logErrorMessage(JSON.stringify(error));
     showDialogForStatus(DetectRosettaStatus.ROSETTA_CHECK_FAILED);
