@@ -1488,10 +1488,38 @@
  
 })
 
+# If a function internally calls out to one of these functions,
+# we assume that it may perform non-standard evaluation, and avoid
+# attempting certain diagnostics on its usages.
 .rs.setVar("nse.primitives", c(
-   "quote", "substitute", "match.call", "eval.parent",
-   "enquote", "bquote", "evalq", "lazy_dots", "compat_as_lazy_dots",
-   "select_vars", "quo", "quos", "enquo", "named_quos"
+   
+   # base R primitives
+   "bquote",
+   "enquote",
+   "eval.parent",
+   "evalq",
+   "expression",
+   "library",
+   "match.call",
+   "quote",
+   "require",
+   "subset",
+   "substitute",
+   "sys.call",
+   "sys.calls",
+   "sys.frame",
+   "sys.frames",
+   "sys.function",
+   "sys.parent",
+   
+   # rlang tidy evaluation
+   "enexpr",
+   "enquo",
+   "enquos",
+   "eval_tidy",
+   
+   # dplyr
+   "dplyr_quosures"
 ))
 
 .rs.addFunction("performsNonstandardEvaluation", function(object)
