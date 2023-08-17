@@ -426,10 +426,6 @@ public class SessionInfo extends JavaScriptObject
       return this.allow_full_ui;
    }-*/;
    
-   public final native boolean getAllowCopilot() /*-{
-      return this.allow_copilot || false;
-   }-*/;
-
    public final native int getWebSocketPingInterval() /*-{
       return this.websocket_ping_interval;
    }-*/;
@@ -683,5 +679,10 @@ public class SessionInfo extends JavaScriptObject
    public final native MemoryUsage getMemoryUsage() /*-{
       return this.memory_usage;
    }-*/;
+
+   public final native boolean getCopilotEnabled() /*-{
+      return this.copilot_enabled || false;
+   }-*/;
+
    private static final ModelConstants constants_ = GWT.create(ModelConstants.class);
 }
