@@ -58,15 +58,20 @@ const DETECT_ROSETTA_STATUS_MAP: Map<DetectRosettaStatus, MessageBoxOptions> = n
  * running into issues with Intel-only components.
  *
  * See https://github.com/rstudio/rstudio/issues/12572 regarding Intel-only components.
+ *
+ * @returns true if Rosetta is installed and running, false if Rosetta is not installed,
+ *          and undefined if not on Apple Silicon.
  */
-export function checkForRosetta(): void {
+export function checkForRosetta(): boolean | undefined {
   const isAppleSilicon = process.platform === 'darwin' && process.arch === 'arm64';
-  if (!isAppleSilicon) return;
+  if (!isAppleSilicon) return undefined;
 
-  if (!isRosettaRunning()) {
+  const isRosettaInstalled = isRosettaRunning();
+  if (!isRosettaInstalled) {
     logger().logDebug('Rosetta 2 is not running. Warning user to install Rosetta to avoid issues.');
     showDialogForStatus(DetectRosettaStatus.ROSETTA_INSTALL_WARNING);
   }
+  return isRosettaInstalled;
 }
 
 /**
