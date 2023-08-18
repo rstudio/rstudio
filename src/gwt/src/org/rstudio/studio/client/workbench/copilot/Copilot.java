@@ -325,7 +325,7 @@ public class Copilot
    {
       Integer code = error.code;
       
-      if (code == 1000)
+      if (code == CopilotConstants.ErrorCodes.NOT_SIGNED_IN)
       {
          return "Not signed in.";
       }

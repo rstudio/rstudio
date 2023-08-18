@@ -40,6 +40,8 @@
 #include <session/prefs/UserPrefs.hpp>
 #include <session/SessionModuleContext.hpp>
 
+#include "session-config.h"
+
 #define COPILOT_LOG_IMPL(__LOGGER__, __FMT__, ...)                             \
    do                                                                          \
    {                                                                           \
@@ -47,7 +49,7 @@
       std::string formatted =                                                  \
           fmt::format("[{}]: {}", __func__, message);                          \
       __LOGGER__(formatted);                                                   \
-      if (copilotLogLevel() >= 3)                                              \
+      if (copilotLogLevel() >= 1)                                              \
          std::cerr << formatted << std::endl;                                  \
    } while (0)
 
@@ -75,14 +77,15 @@ class CopilotContinuation
 {
 public:
 
-   // default ctor needed for compatibility with map
-   CopilotContinuation()
-   {
-   }
-
    explicit CopilotContinuation(const json::JsonRpcFunctionContinuation& continuation)
       : continuation_(continuation),
         time_(boost::posix_time::second_clock::local_time())
+   {
+   }
+   
+   // default ctor needed for compatibility with map
+   CopilotContinuation()
+      : CopilotContinuation(json::JsonRpcFunctionContinuation())
    {
    }
 
@@ -174,6 +177,27 @@ bool waitFor(F&& callback)
 Error findNode(FilePath* pNodePath,
                core::system::Options* pOptions)
 {
+   // Allow user override, just in case.
+   FilePath userNodePath(r::options::getOption<std::string>("rstudio.copilot.nodeBinaryPath", std::string(), false));
+   if (userNodePath.exists())
+   {
+      *pNodePath = userNodePath;
+      return Success();
+   }
+
+   // In Desktop builds of RStudio, we can re-use the version of node
+   // bundled with Electron.
+   if (session::options().programMode() == kSessionProgramModeDesktop)
+   {
+      std::string desktopExePath = core::system::getenv("RSTUDIO_DESKTOP_EXE");
+      if (!desktopExePath.empty() && FilePath(desktopExePath).exists())
+      {
+         *pNodePath = FilePath(desktopExePath);
+         pOptions->push_back(std::make_pair("ELECTRON_RUN_AS_NODE", "1"));
+         return Success();
+      }
+   }
+
    // Check for an admin-configured node path.
    FilePath nodePath = session::options().nodePath();
    if (!nodePath.isEmpty())
@@ -202,38 +226,6 @@ Error findNode(FilePath* pNodePath,
       else
       {
          return Error(fileNotFoundError(nodePath, ERROR_LOCATION));
-      }
-   }
-
-   // Allow user override, just in case.
-   FilePath userNodePath(r::options::getOption<std::string>("rstudio.copilot.nodeBinaryPath", std::string(), false));
-   if (userNodePath.exists())
-   {
-      *pNodePath = userNodePath;
-      return Success();
-   }
-
-   // In Desktop builds of RStudio, we can re-use the version of node
-   // bundled with Electron.
-   if (session::options().programMode() == kSessionProgramModeDesktop)
-   {
-      std::string desktopExePath = core::system::getenv("RSTUDIO_DESKTOP_EXE");
-      if (!desktopExePath.empty() && FilePath(desktopExePath).exists())
-      {
-         *pNodePath = FilePath(desktopExePath);
-         pOptions->push_back(std::make_pair("ELECTRON_RUN_AS_NODE", "1"));
-         return Success();
-      }
-   }
-
-   // In Server builds of RStudio, we can try to use a bundled version of node.
-   if (session::options().programMode() == kSessionProgramModeServer)
-   {
-      FilePath nodePath = options().nodePath();
-      if (nodePath.exists())
-      {
-         *pNodePath = nodePath;
-         return Success();
       }
    }
 
@@ -306,12 +298,52 @@ void sendRequest(const std::string& method,
                  const json::Value& paramsJson,
                  const CopilotContinuation& continuation)
 {
+   DLOG("Sending request '{}' with id '{}'.", method, requestId);
+   
    // Add the continuation, which is executed in response to the request.
    s_pendingContinuations[requestId] = continuation;
 
    // Create and enqueue the request.
    std::string request = createRequest(method, requestId, paramsJson);
    s_pendingRequests.push(request);
+}
+
+void setEditorInfo()
+{
+   json::Object paramsJson;
+   
+   json::Object editorInfoJson;
+   editorInfoJson["name"] = "RStudio";
+   editorInfoJson["version"] = RSTUDIO_VERSION;
+   paramsJson["editorInfo"] = editorInfoJson;
+   
+   SEXP networkProxySEXP = r::options::getOption("rstudio.copilot.networkProxy");
+   if (networkProxySEXP != R_NilValue)
+   {
+      json::Value networkProxyJson;
+      Error error = r::json::jsonValueFromObject(networkProxySEXP, &networkProxyJson);
+      if (error)
+         LOG_ERROR(error);
+      
+      if (networkProxyJson.isObject())
+         paramsJson["networkProxy"] = networkProxyJson.getObject();
+   }
+   
+   SEXP authProviderSEXP = r::options::getOption("rstudio.copilot.authProvider");
+   if (authProviderSEXP != R_NilValue)
+   {
+      json::Value authProviderJson;
+      Error error = r::json::jsonValueFromObject(authProviderSEXP, &authProviderJson);
+      if (error)
+         LOG_ERROR(error);
+      
+      if (authProviderJson.isObject())
+         paramsJson["authProvider"] = authProviderJson.getObject();
+   }
+   
+   
+   std::string requestId = core::system::generateUuid();
+   sendRequest("setEditorInfo", requestId, paramsJson, CopilotContinuation());
 }
 
 namespace agent {
@@ -331,7 +363,7 @@ bool onContinue(ProcessOperations& operations)
       std::string request = s_pendingRequests.front();
       s_pendingRequests.pop();
 
-      if (copilotLogLevel() > 2)
+      if (copilotLogLevel() >= 2)
       {
          std::cerr << std::endl;
          std::cerr << "REQUEST" << std::endl;
@@ -402,7 +434,7 @@ void onStdout(ProcessOperations& operations, const std::string& stdOut)
       std::string bodyText = string_utils::substring(stdOut, bodyStart, bodyEnd);
       s_pendingResponses.push(bodyText);
 
-      if (copilotLogLevel() > 2)
+      if (copilotLogLevel() >= 2)
       {
          std::cerr << std::endl;
          std::cerr << "RESPONSE" << std::endl;
@@ -531,9 +563,18 @@ bool startAgent()
    paramsJson["processId"] = ::getpid();
    paramsJson["clientInfo"] = clientInfoJson;
    paramsJson["capabilities"] = json::Object();
-
+   
+   // set up continuation after we've finished initializing
+   auto callback = [=](const Error& error, json::JsonRpcResponse* pResponse)
+   {
+      if (error)
+         LOG_ERROR(error);
+      else
+         setEditorInfo();
+   };
+   
    std::string requestId = core::system::generateUuid();
-   sendRequest("initialize", requestId, paramsJson, CopilotContinuation());
+   sendRequest("initialize", requestId, paramsJson, CopilotContinuation(callback));
 
    // Okay, we're ready to go.
    return true;
@@ -549,7 +590,7 @@ bool ensureAgentRunning()
    }
 
    // bail if copilot is not allowed
-   if (!session::options().allowCopilot())
+   if (!session::options().copilotEnabled())
    {
       DLOG("Copilot has been disabled by the administrator; not starting agent.");
       return false;
@@ -880,6 +921,10 @@ Error initialize()
    using namespace module_context;
 
    s_copilotEnabled = prefs::userPrefs().copilotEnabled();
+   
+   std::string copilotLogLevel = core::system::getenv("RSTUDIO_COPILOT_LOG_LEVEL");
+   if (!copilotLogLevel.empty())
+      s_copilotLogLevel = safe_convert::stringTo<int>(copilotLogLevel, 0);
 
    events().onBackgroundProcessing.connect(onBackgroundProcessing);
    events().onPreferencesSaved.connect(onPreferencesSaved);
@@ -899,9 +944,9 @@ Error initialize()
          (bind(registerAsyncRpcMethod, "copilot_sign_in", copilotSignIn))
          (bind(registerAsyncRpcMethod, "copilot_sign_out", copilotSignOut))
          (bind(registerAsyncRpcMethod, "copilot_status", copilotStatus))
-         (bind(sourceModuleRFile, "SessionCopilot.R"))
          (bind(registerRpcMethod, "copilot_verify_installed", copilotVerifyInstalled))
          (bind(registerRpcMethod, "copilot_install_agent", copilotInstallAgent))
+         (bind(sourceModuleRFile, "SessionCopilot.R"))
          ;
    return initBlock.execute();
 

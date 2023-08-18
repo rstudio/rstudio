@@ -2,7 +2,7 @@
 
 ### New
 - Prometheus metrics are available in Posit Workbench (rstudio-pro:#3273)
-- Update to Electron 25.2.0 (#13322)
+- Update to Electron 25.5.0 (#13457)
 - Additional support for publishing new content types to Posit Cloud (rstudio-pro#4541)
 - Add support Quarto Manuscript projects, a new Quarto feature that will be released in Quarto 1.4.
 - Added option to sign Git commits (#1865)
@@ -27,6 +27,8 @@
 - Fixed bug preventing `HOME` from being modified in system init scripts (rstudio-pro:#4584)
 - Fixed issue with alignment of R argument names in Help pane (#13474)
 - Fixed issue where user was not warned of missing Rosetta installation on Apple silicon (#12791)
+- Fixed bug with modals disabling copy/paste (#13365)
+- Removed unnecessary files from install packages (rstudo-pro:#4943)
 
 ### Performance
 - Improved performance of group membership tests (rstudio-pro:#4643)
