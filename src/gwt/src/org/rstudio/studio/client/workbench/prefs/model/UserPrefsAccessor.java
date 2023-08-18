@@ -1288,6 +1288,18 @@ public class UserPrefsAccessor extends Prefs
    }
 
    /**
+    * Whether RStudio should save and reload the R workspace when building the project.
+    */
+   public PrefValue<Boolean> saveAndReloadWorkspaceOnBuild()
+   {
+      return bool(
+         "save_and_reload_workspace_on_build",
+         _constants.saveAndReloadWorkspaceOnBuildTitle(), 
+         _constants.saveAndReloadWorkspaceOnBuildDescription(), 
+         true);
+   }
+
+   /**
     * The default editor font size, in points.
     */
    public PrefValue<Double> fontSizePoints()
@@ -3701,6 +3713,8 @@ public class UserPrefsAccessor extends Prefs
          highlightCodeChunks().setValue(layer, source.getBool("highlight_code_chunks"));
       if (source.hasKey("save_files_before_build"))
          saveFilesBeforeBuild().setValue(layer, source.getBool("save_files_before_build"));
+      if (source.hasKey("save_and_reload_workspace_on_build"))
+         saveAndReloadWorkspaceOnBuild().setValue(layer, source.getBool("save_and_reload_workspace_on_build"));
       if (source.hasKey("font_size_points"))
          fontSizePoints().setValue(layer, source.getDbl("font_size_points"));
       if (source.hasKey("help_font_size_points"))
@@ -4114,6 +4128,7 @@ public class UserPrefsAccessor extends Prefs
       prefs.add(showInlineToolbarForRCodeChunks());
       prefs.add(highlightCodeChunks());
       prefs.add(saveFilesBeforeBuild());
+      prefs.add(saveAndReloadWorkspaceOnBuild());
       prefs.add(fontSizePoints());
       prefs.add(helpFontSizePoints());
       prefs.add(editorTheme());

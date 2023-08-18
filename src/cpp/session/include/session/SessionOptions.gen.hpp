@@ -56,6 +56,7 @@ protected:
                 boost::program_options::options_description* pExternal,
                 boost::program_options::options_description* pGit,
                 boost::program_options::options_description* pUser,
+                boost::program_options::options_description* pCopilot,
                 boost::program_options::options_description* pMisc,
                 std::string* pSaveActionDefault,
                 int* wwwSameSite)
@@ -276,10 +277,7 @@ protected:
       "Indicates whether or not to allow full standalone UI mode.")
       ("allow-launcher-jobs",
       value<bool>(&allowLauncherJobs_)->default_value(true),
-      "Indicates whether or not to allow running jobs via the Launcher.")
-      ("allow-copilot",
-      value<bool>(&allowCopilot_)->default_value(true),
-      "Indicates whether or not GitHub Copilot integration can be enabled.");
+      "Indicates whether or not to allow running jobs via the Launcher.");
 
    pR->add_options()
       ("r-core-source",
@@ -414,6 +412,11 @@ protected:
       value<std::string>(&launcherToken_)->default_value(""),
       "Specifies the token identifying the session launcher.");
 
+   pCopilot->add_options()
+      ("copilot-enabled",
+      value<bool>(&copilotEnabled_)->default_value(true),
+      "Indicates whether or not GitHub Copilot integration can be enabled.");
+
    pMisc->add_options();
 
    FilePath defaultConfigPath = core::system::xdg::findSystemConfigFile("rsession configuration", "rsession.conf");
@@ -488,7 +491,6 @@ public:
    bool allowPresentationCommands() const { return allowPresentationCommands_ || allowOverlay(); }
    bool allowFullUI() const { return allowFullUI_ || allowOverlay(); }
    bool allowLauncherJobs() const { return allowLauncherJobs_ || allowOverlay(); }
-   bool allowCopilot() const { return allowCopilot_ || allowOverlay(); }
    core::FilePath coreRSourcePath() const { return core::FilePath(coreRSourcePath_); }
    core::FilePath modulesRSourcePath() const { return core::FilePath(modulesRSourcePath_); }
    core::FilePath sessionLibraryPath() const { return core::FilePath(sessionLibraryPath_); }
@@ -528,6 +530,7 @@ public:
    std::string userIdentity() const { return userIdentity_; }
    bool showUserIdentity() const { return showUserIdentity_; }
    std::string launcherToken() const { return launcherToken_; }
+   bool copilotEnabled() const { return copilotEnabled_; }
 
 
 protected:
@@ -596,7 +599,6 @@ protected:
    bool allowPresentationCommands_;
    bool allowFullUI_;
    bool allowLauncherJobs_;
-   bool allowCopilot_;
    std::string coreRSourcePath_;
    std::string modulesRSourcePath_;
    std::string sessionLibraryPath_;
@@ -638,6 +640,7 @@ protected:
    std::string projectId_;
    std::string scopeId_;
    std::string launcherToken_;
+   bool copilotEnabled_;
    virtual bool allowOverlay() const { return false; };
 };
 

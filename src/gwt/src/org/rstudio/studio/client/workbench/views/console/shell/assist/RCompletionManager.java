@@ -766,8 +766,9 @@ public class RCompletionManager implements CompletionManager
          // Perform an auto-popup if a set number of R identifier characters
          // have been inserted (but only if the user has allowed it in prefs)
          boolean autoPopupEnabled =
-               userPrefs_.codeCompletion().getValue() == UserPrefs.CODE_COMPLETION_ALWAYS &&
-               userPrefs_.copilotEnabled().getValue() == false;
+               userPrefs_.codeCompletion().getValue() == UserPrefs.CODE_COMPLETION_ALWAYS && (
+                     behavior_ == EditorBehavior.AceBehaviorConsole ||
+                     userPrefs_.copilotEnabled().getValue() == false);
 
          if (!autoPopupEnabled)
             return false;

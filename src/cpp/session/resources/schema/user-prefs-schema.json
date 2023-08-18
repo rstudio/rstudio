@@ -613,6 +613,12 @@
             "title": "Save files before building",
             "description": "Whether to save all open, unsaved files before building the project."
         },
+        "save_and_reload_workspace_on_build": {
+            "type": "boolean",
+            "default": true,
+            "title": "Save and reload R workspace on build",
+            "description": "Whether RStudio should save and reload the R workspace when building the project."
+        },
         "font_size_points": {
             "type": "number",
             "default": 10.0,
