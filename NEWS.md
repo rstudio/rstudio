@@ -9,6 +9,7 @@
 - Add section to theme generation that will use theme-specific color(s) to set colors of vim/emacs-mode cursor
 
 ### Fixed
+- Fixed issue where `DYLD_FALLBACK_LIBRARY_PATH` was not properly forwarded on macOS (#13085)
 - Fixed issue where 'ggrepel' plot annotations could disappear when a plot was redrawn in an R Markdown document (#4330)
 - Fixed issue where whitespace in error messages was not properly preserved (#13239)
 - Fixed issue where the Data Viewer could fail to render data.frames containing AsIs matrices (#13215)
