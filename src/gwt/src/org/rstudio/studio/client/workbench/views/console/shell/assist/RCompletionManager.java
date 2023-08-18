@@ -44,6 +44,7 @@ import org.rstudio.studio.client.workbench.codesearch.model.FileFunctionDefiniti
 import org.rstudio.studio.client.workbench.codesearch.model.ObjectDefinition;
 import org.rstudio.studio.client.workbench.codesearch.model.SearchPathFunctionDefinition;
 import org.rstudio.studio.client.workbench.prefs.model.UserPrefs;
+import org.rstudio.studio.client.workbench.prefs.model.UserPrefsAccessor;
 import org.rstudio.studio.client.workbench.snippets.SnippetHelper;
 import org.rstudio.studio.client.workbench.views.console.ConsoleConstants;
 import org.rstudio.studio.client.workbench.views.console.events.SendToConsoleEvent;
@@ -61,6 +62,7 @@ import org.rstudio.studio.client.workbench.views.source.editors.text.DocDisplay;
 import org.rstudio.studio.client.workbench.views.source.editors.text.NavigableSourceEditor;
 import org.rstudio.studio.client.workbench.views.source.editors.text.ScopeFunction;
 import org.rstudio.studio.client.workbench.views.source.editors.text.ace.AceEditorCommandEvent;
+import org.rstudio.studio.client.workbench.views.source.editors.text.ace.AceGhostText;
 import org.rstudio.studio.client.workbench.views.source.editors.text.ace.CodeModel;
 import org.rstudio.studio.client.workbench.views.source.editors.text.ace.Position;
 import org.rstudio.studio.client.workbench.views.source.editors.text.ace.RInfixData;
@@ -518,6 +520,23 @@ public class RCompletionManager implements CompletionManager
                
                else if (keycode == KeyCodes.KEY_TAB)
                {
+                  // Let tab insert ghost text if configured to do so
+                  boolean preferGhostText =
+                        docDisplay_.hasGhostText() &&
+                        userPrefs_.copilotTabKeyBehavior().getValue() == UserPrefsAccessor.COPILOT_TAB_KEY_BEHAVIOR_SUGGESTION;
+                  
+                  if (preferGhostText)
+                  {
+                     invalidatePendingRequests();
+                     AceGhostText ghostText = docDisplay_.getGhostText();
+                     docDisplay_.replaceRange(
+                           Range.fromPoints(ghostText.position, ghostText.position),
+                           ghostText.text);
+                     docDisplay_.removeGhostText();
+                     docDisplay_.scrollCursorIntoViewIfNecessary();
+                     return false;
+                  }
+                  
                   QualifiedName value = popup_.getSelectedValue();
                   if (value != null)
                   {
@@ -625,7 +644,19 @@ public class RCompletionManager implements CompletionManager
       return false;
    }
    
-   private boolean isValidForRIdentifier(char c) {
+   private boolean isAutoPopupEnabled()
+   {
+      if (userPrefs_.codeCompletion().getValue() != UserPrefs.CODE_COMPLETION_ALWAYS)
+         return false;
+      
+      if (userPrefs_.copilotEnabled().getValue())
+         return userPrefs_.copilotAllowAutomaticCompletions().getValue();
+      
+      return true;
+   }
+   
+   private boolean isValidForRIdentifier(char c)
+   {
       return (c >= 'a' && c <= 'z') ||
              (c >= 'A' && c <= 'Z') ||
              (c >= '0' && c <= '9') ||
@@ -764,12 +795,7 @@ public class RCompletionManager implements CompletionManager
          
          // Perform an auto-popup if a set number of R identifier characters
          // have been inserted (but only if the user has allowed it in prefs)
-         boolean autoPopupEnabled =
-               userPrefs_.codeCompletion().getValue() == UserPrefs.CODE_COMPLETION_ALWAYS && (
-                     behavior_ == EditorBehavior.AceBehaviorConsole ||
-                     userPrefs_.copilotEnabled().getValue() == false);
-
-         if (!autoPopupEnabled)
+         if (!isAutoPopupEnabled())
             return false;
          
          // Immediately display completions after '$', '::', etc.

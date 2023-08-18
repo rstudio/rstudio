@@ -3247,6 +3247,32 @@ core::Error UserPrefValues::setCopilotCompletionsDelay(int val)
    return writePref("copilot_completions_delay", val);
 }
 
+/**
+ * When enabled, RStudio will continue providing as-you-type code completions when Copilot is enabled.
+ */
+bool UserPrefValues::copilotAllowAutomaticCompletions()
+{
+   return readPref<bool>("copilot_allow_automatic_completions");
+}
+
+core::Error UserPrefValues::setCopilotAllowAutomaticCompletions(bool val)
+{
+   return writePref("copilot_allow_automatic_completions", val);
+}
+
+/**
+ * Control the behavior of the Tab key when both Copilot code suggestions and RStudio code completions are visible.
+ */
+std::string UserPrefValues::copilotTabKeyBehavior()
+{
+   return readPref<std::string>("copilot_tab_key_behavior");
+}
+
+core::Error UserPrefValues::setCopilotTabKeyBehavior(std::string val)
+{
+   return writePref("copilot_tab_key_behavior", val);
+}
+
 std::vector<std::string> UserPrefValues::allKeys()
 {
    return std::vector<std::string>({
@@ -3498,6 +3524,8 @@ std::vector<std::string> UserPrefValues::allKeys()
       kDisableRendererAccessibility,
       kCopilotEnabled,
       kCopilotCompletionsDelay,
+      kCopilotAllowAutomaticCompletions,
+      kCopilotTabKeyBehavior,
    });
 }
    

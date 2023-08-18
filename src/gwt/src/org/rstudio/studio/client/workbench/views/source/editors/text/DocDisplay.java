@@ -34,6 +34,7 @@ import org.rstudio.studio.client.workbench.views.output.lint.model.LintItem;
 import org.rstudio.studio.client.workbench.views.source.editors.text.AceEditor.EditorBehavior;
 import org.rstudio.studio.client.workbench.views.source.editors.text.ace.AceCommandManager;
 import org.rstudio.studio.client.workbench.views.source.editors.text.ace.AceFold;
+import org.rstudio.studio.client.workbench.views.source.editors.text.ace.AceGhostText;
 import org.rstudio.studio.client.workbench.views.source.editors.text.ace.Anchor;
 import org.rstudio.studio.client.workbench.views.source.editors.text.ace.LineWidget;
 import org.rstudio.studio.client.workbench.views.source.editors.text.ace.Marker;
@@ -486,6 +487,7 @@ public interface DocDisplay extends HasValueChangeHandlers<Void>,
    void toggleTokenInfo();
    void setTextInputAriaLabel(String label);
    
+   AceGhostText getGhostText();
    void setGhostText(String text);
    boolean hasGhostText();
    void removeGhostText();
