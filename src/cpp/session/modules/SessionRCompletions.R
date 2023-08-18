@@ -2942,10 +2942,14 @@ assign(x = ".rs.acCompletionTypes",
 
 .rs.addFunction("hasColumns", function(object)
 {
-   if (inherits(object, c("data.frame")))
+   if (inherits(object, c("data.frame", "tbl")))
       return(TRUE)
 
-   if (isNamespaceLoaded("arrow") && inherits(object, c("ArrowTabular", "Dataset", "arrow_dplyr_query")))
+   arrow <-
+      isNamespaceLoaded("arrow") &&
+      inherits(object, c("ArrowTabular", "Dataset", "arrow_dplyr_query"))
+
+   if (arrow)
       return(TRUE)
 
    FALSE
