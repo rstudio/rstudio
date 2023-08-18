@@ -1513,15 +1513,20 @@
    "sys.frames",
    "sys.function",
    "sys.parent",
-   
+
    # rlang tidy evaluation
    "enexpr",
+   "enexprs",
    "enquo",
    "enquos",
    "eval_tidy",
-   
-   # dplyr
-   "dplyr_quosures"
+   "quo",
+   "quos",
+
+   # dplyr -- not really primitives
+   "dplyr_quosures",
+   "group_by",
+   "group_by_prepare"
    
 ))
 
