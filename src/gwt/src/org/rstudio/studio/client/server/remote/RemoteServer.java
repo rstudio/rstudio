@@ -996,44 +996,6 @@ public class RemoteServer implements Server
       sendRequest(RPC_SCOPE, IS_FUNCTION, params, requestCallback);
    }
 
-   public void getDplyrJoinCompletionsString(
-         String token,
-         String string,
-         String cursorPos,
-         ServerRequestCallback<Completions> requestCallback)
-   {
-      JSONArray params = new JSONArray();
-      params.set(0, new JSONString(token));
-      params.set(1, new JSONString(string));
-      params.set(2, new JSONString(cursorPos));
-      sendRequest(
-            RPC_SCOPE,
-            GET_DPLYR_JOIN_COMPLETIONS_STRING,
-            params,
-            requestCallback);
-   }
-
-   public void getDplyrJoinCompletions(
-         String token,
-         String leftDataName,
-         String rightDataName,
-         String verb,
-         String cursorPos,
-         ServerRequestCallback<Completions> requestCallback)
-   {
-      JSONArray params = new JSONArray();
-      params.set(0, new JSONString(token));
-      params.set(1, new JSONString(leftDataName));
-      params.set(2, new JSONString(rightDataName));
-      params.set(3, new JSONString(verb));
-      params.set(4, new JSONString(cursorPos));
-      sendRequest(
-            RPC_SCOPE,
-            GET_DPLYR_JOIN_COMPLETIONS,
-            params,
-            requestCallback);
-   }
-
    public void getArgs(String name,
                        String source,
                        String helpHandler,
@@ -6716,9 +6678,6 @@ public class RemoteServer implements Server
    private static final String ABORT = "abort";
    private static final String ADAPT_TO_LANGUAGE = "adapt_to_language";
    private static final String EXECUTE_CODE = "execute_code";
-   private static final String GET_DPLYR_JOIN_COMPLETIONS_STRING =
-         "get_dplyr_join_completions_string";
-   private static final String GET_DPLYR_JOIN_COMPLETIONS = "get_dplyr_join_completions";
    private static final String GET_ARGS = "get_args";
    private static final String EXTRACT_CHUNK_OPTIONS = "extract_chunk_options";
    private static final String EXECUTE_USER_COMMAND = "execute_user_command";
