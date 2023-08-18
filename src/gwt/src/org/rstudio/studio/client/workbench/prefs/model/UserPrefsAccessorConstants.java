@@ -744,6 +744,14 @@ public interface UserPrefsAccessorConstants extends Constants {
    String saveFilesBeforeBuildDescription();
 
    /**
+    * Whether RStudio should save and reload the R workspace when building the project.
+    */
+   @DefaultStringValue("Save and reload R workspace on build")
+   String saveAndReloadWorkspaceOnBuildTitle();
+   @DefaultStringValue("Whether RStudio should save and reload the R workspace when building the project.")
+   String saveAndReloadWorkspaceOnBuildDescription();
+
+   /**
     * The default editor font size, in points.
     */
    @DefaultStringValue("Editor font size (points)")
