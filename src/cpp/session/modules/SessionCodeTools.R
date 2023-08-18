@@ -1488,10 +1488,46 @@
  
 })
 
+# If a function internally calls out to one of these functions,
+# we assume that it may perform non-standard evaluation, and avoid
+# attempting certain diagnostics on its usages.
+#
+# Keep in sync with makeNsePrimitives() in RSexp.cpp
 .rs.setVar("nse.primitives", c(
-   "quote", "substitute", "match.call", "eval.parent",
-   "enquote", "bquote", "evalq", "lazy_dots", "compat_as_lazy_dots",
-   "select_vars", "quo", "quos", "enquo", "named_quos"
+   
+   # base R primitives
+   "bquote",
+   "enquote",
+   "eval.parent",
+   "evalq",
+   "expression",
+   "library",
+   "match.call",
+   "quote",
+   "require",
+   "subset",
+   "substitute",
+   "sys.call",
+   "sys.calls",
+   "sys.frame",
+   "sys.frames",
+   "sys.function",
+   "sys.parent",
+
+   # rlang tidy evaluation
+   "enexpr",
+   "enexprs",
+   "enquo",
+   "enquos",
+   "eval_tidy",
+   "quo",
+   "quos",
+
+   # dplyr -- not really primitives
+   "dplyr_quosures",
+   "group_by",
+   "group_by_prepare"
+   
 ))
 
 .rs.addFunction("performsNonstandardEvaluation", function(object)
@@ -1514,28 +1550,43 @@
 
 .rs.addFunction("performsNonstandardEvaluationImpl", function(node, nsePrimitives)
 {
+   # Validate that we have a call.
+   if (!is.call(node))
+      return(FALSE)
+   
+   # Check for things that look like tidyr evaluation; that is, `{{}}`.
+   isDoubleBracket <-
+      length(node) == 2L &&
+      is.symbol(node[[1L]]) &&
+      as.character(node[[1L]]) == "{" &&
+      is.call(node[[2L]]) &&
+      length(node[[2L]]) == 2L &&
+      is.symbol(node[[2L]][[1L]]) &&
+      as.character(node[[2L]][[1L]]) == "{"
+   
+   if (isDoubleBracket)
+      return(TRUE)
+   
    # Check if this is a call to an NSE primitive.
-   if (is.call(node))
+   head <- node[[1L]]
+   if (!is.symbol(head))
+      return(FALSE)
+   
+   headString <- as.character(head)
+   if (headString %in% nsePrimitives)
+      return(TRUE)
+
+   # Check if this is a call to an NSE primitive, qualified through
+   # `::` or `:::`.
+   if (headString %in% c("::", ":::") && length(node) == 3L)
    {
-      head <- node[[1]]
-      if (!is.symbol(head))
-         return(FALSE)
-
-      headString <- as.character(head)
-      if (headString %in% nsePrimitives)
+      rhs <- node[[3L]]
+      if (is.symbol(rhs) && as.character(rhs) %in% nsePrimitives)
          return(TRUE)
-
-      # Check if this is a call to an NSE primitive, qualified through
-      # `::` or `:::`.
-      if (headString %in% c("::", ":::") && length(node) == 3)
-      {
-         export <- node[[3]]
-         if (as.character(export) %in% nsePrimitives)
-            return(TRUE)
-      }
    }
-
-   return(FALSE)
+   
+   # Doesn't appear to be using NSE.
+   FALSE
 })
 
 .rs.addFunction("recursiveSearch", function(`_node`, fn, ...)
