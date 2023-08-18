@@ -83,14 +83,16 @@ function launchProcess(absPath: FilePath, argList: string[]): ChildProcess {
 
     // and ensure it's placed on the fallback library path
     const dyldFallbackLibraryPath = `${getenv('DYLD_FALLBACK_LIBRARY_PATH')}:${libraryPath}`;
-    env['DYLD_FALLBACK_LIBRARY_PATH'] = dyldFallbackLibraryPath;
 
     // on macOS with the hardened runtime, we can no longer rely on dyld
     // to lazy-load symbols from libR.dylib; to resolve this, we use
     // DYLD_INSERT_LIBRARIES to inject the library we wish to use
     const rHome = new FilePath(getenv('R_HOME'));
     const rLib = rHome.completePath('lib/libR.dylib');
-    const dyldArg = `DYLD_INSERT_LIBRARIES=${rLib.getAbsolutePath()}`;
+    const dyldArgs = [
+      '-e', `DYLD_INSERT_LIBRARIES=${rLib.getAbsolutePath()}`,
+      '-e', `DYLD_FALLBACK_LIBRARY_PATH=${dyldFallbackLibraryPath}`
+    ];
 
     // launch via /usr/bin/arch, so we can control whether the OS requests
     // x86 or arm64 versions of the libraries in the launched rsession
@@ -98,14 +100,14 @@ function launchProcess(absPath: FilePath, argList: string[]): ChildProcess {
     if (process.arch === 'arm64') {
       const fileInfo = execSync(`/usr/bin/file "${rLib}"`, { encoding: 'utf-8' });
       if (fileInfo.indexOf('arm64') === -1 && fileInfo.indexOf('x86_64') !== -1) {
-        argList = ['-x86_64', '-e', dyldArg, path, ...argList];
+        argList = ['-x86_64', ...dyldArgs, path, ...argList];
         absPath = new FilePath('/usr/bin/arch');
       } else {
-        argList = ['-arm64', '-e', dyldArg, path, ...argList];
+        argList = ['-arm64', ...dyldArgs, path, ...argList];
         absPath = new FilePath('/usr/bin/arch');
       }
     } else {
-      argList = ['-x86_64', '-e', dyldArg, path, ...argList];
+      argList = ['-x86_64', ...dyldArgs, path, ...argList];
       absPath = new FilePath('/usr/bin/arch');
     }
   }
