@@ -1736,12 +1736,17 @@ std::set<std::string> makeNsePrimitives()
 
       // rlang tidy evaluation
       "enexpr",
+      "enexprs",
       "enquo",
       "enquos",
       "eval_tidy",
+      "quo",
+      "quos",
 
-      // dplyr
-      "dplyr_quosures"
+      // dplyr -- not really primitives
+      "dplyr_quosures",
+      "group_by",
+      "group_by_prepare"
       
    };
 }
