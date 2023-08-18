@@ -45,7 +45,6 @@ import org.rstudio.studio.client.workbench.views.source.editors.text.DocDisplay;
 import org.rstudio.studio.client.workbench.views.source.editors.text.RFunction;
 import org.rstudio.studio.client.workbench.views.source.editors.text.ScopeFunction;
 import org.rstudio.studio.client.workbench.views.source.editors.text.ace.CodeModel;
-import org.rstudio.studio.client.workbench.views.source.editors.text.ace.DplyrJoinContext;
 import org.rstudio.studio.client.workbench.views.source.editors.text.ace.Position;
 import org.rstudio.studio.client.workbench.views.source.editors.text.ace.RScopeObject;
 import org.rstudio.studio.client.workbench.views.source.editors.text.ace.TokenCursor;

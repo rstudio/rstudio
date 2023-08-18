@@ -62,7 +62,6 @@ import org.rstudio.studio.client.workbench.views.source.editors.text.NavigableSo
 import org.rstudio.studio.client.workbench.views.source.editors.text.ScopeFunction;
 import org.rstudio.studio.client.workbench.views.source.editors.text.ace.AceEditorCommandEvent;
 import org.rstudio.studio.client.workbench.views.source.editors.text.ace.CodeModel;
-import org.rstudio.studio.client.workbench.views.source.editors.text.ace.DplyrJoinContext;
 import org.rstudio.studio.client.workbench.views.source.editors.text.ace.Position;
 import org.rstudio.studio.client.workbench.views.source.editors.text.ace.RInfixData;
 import org.rstudio.studio.client.workbench.views.source.editors.text.ace.Range;
