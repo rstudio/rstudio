@@ -23,8 +23,10 @@ import { Application } from '../../../src/main/application';
 const separatorTemplate: MenuItemConstructorOptions = { type: 'separator' };
 
 describe('MenuCallback', () => {
+  let callback: MenuCallback;
 
   beforeEach(() => {
+    callback = new MenuCallback();
     setApplication(new Application());
   });
 
@@ -34,11 +36,11 @@ describe('MenuCallback', () => {
     // which eventually triggers a warning about potential leaks. We could up the limit,
     // but opting to cleanup after each test, instead.
     ipcMain.removeAllListeners();
+    callback.debounceUpdateMenuShort.cancel();
     clearApplicationSingleton();
   });
 
   it('can be constructed', () => {
-    const callback = new MenuCallback();
     const menuCount = process.platform === 'darwin' ? 1 : 0; // adjust for MacOS app menu
     callback.beginMain();
     callback.menuBegin('&File');
@@ -48,7 +50,6 @@ describe('MenuCallback', () => {
   });
 
   it('can add a command', () => {
-    const callback = new MenuCallback();
     callback.beginMain();
     callback.menuBegin('&File');
 
@@ -59,7 +60,6 @@ describe('MenuCallback', () => {
   });
 
   it('can set initial visibility for command', () => {
-    const callback = new MenuCallback();
     callback.beginMain();
     callback.menuBegin('&File');
 
@@ -77,7 +77,6 @@ describe('MenuCallback', () => {
   });
 
   it('can change label for a command', () => {
-    const callback = new MenuCallback();
     callback.beginMain();
     callback.menuBegin('&File');
     callback.addCommand('a_command', 'Command', '', '', false, false, true);
@@ -96,7 +95,6 @@ describe('MenuCallback', () => {
   });
 
   it('can change visibility for a command', () => {
-    const callback = new MenuCallback();
     const menuIdx = process.platform === 'darwin' ? 1 : 0; // adjust for MacOS app menu
     const menuCount = process.platform === 'darwin' ? 2 : 1;
 
@@ -121,7 +119,6 @@ describe('MenuCallback', () => {
   });
 
   it('can remove unnecessary separators', () => {
-    const callback = new MenuCallback();
     const menuIdx = process.platform === 'darwin' ? 1 : 0; // adjust for MacOS app menu
 
     callback.beginMain();
@@ -140,7 +137,6 @@ describe('MenuCallback', () => {
   });
 
   it('can remove a separator that is before a hidden item', () => {
-    const callback = new MenuCallback();
     const menuIdx = process.platform === 'darwin' ? 1 : 0; // adjust for MacOS app menu
 
     callback.beginMain();
@@ -157,7 +153,6 @@ describe('MenuCallback', () => {
   });
 
   it('can contain a submenu', () => {
-    const callback = new MenuCallback();
     const menuIdx = process.platform === 'darwin' ? 1 : 0; // adjust for MacOS app menu
     const menuCount = process.platform === 'darwin' ? 2 : 1;
 
@@ -182,7 +177,6 @@ describe('MenuCallback', () => {
   });
 
   it('can rebuild the main menu', () => {
-    const callback = new MenuCallback();
     const menuCount = process.platform === 'darwin' ? 1 : 0; // adjust for MacOS app menu
 
     callback.beginMain();
@@ -208,7 +202,6 @@ describe('MenuCallback', () => {
   });
 
   it('can change a command visibility that causes unnecessary separators', () => {
-    const callback = new MenuCallback();
     const menuIdx = process.platform === 'darwin' ? 1 : 0; // adjust for MacOS app menu
 
     callback.beginMain();
@@ -245,7 +238,6 @@ describe('MenuCallback', () => {
   });
 
   it('can update a command shortcut', () => {
-    const callback = new MenuCallback();
     const menuIdx = process.platform === 'darwin' ? 1 : 0; // adjust for MacOS app menu
 
     callback.beginMain();
@@ -265,7 +257,6 @@ describe('MenuCallback', () => {
   });
 
   it('can disable and enable application menu', () => {
-    const callback = new MenuCallback();
     const menuIdx = process.platform === 'darwin' ? 1 : 0; // adjust for MacOS app menu
 
     callback.beginMain();
