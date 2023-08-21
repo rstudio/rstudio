@@ -33,6 +33,10 @@ std::string prefix()
    return "rserver_";
 }
 
+void sessionLaunch(const std::string& sessionEditor)
+{
+}
+
 void sessionStart(const std::string& sessionEditor, const std::string& username, boost::posix_time::time_duration startDuration)
 {
 }

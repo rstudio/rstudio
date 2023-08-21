@@ -33,6 +33,8 @@ class AsyncServerStatsProvider;
 namespace server {
 namespace metrics {
 
+constexpr const char* kEditorRStudio = "rstudio-pro";
+
 void handle(const core::http::Request& request, core::http::Response* pResponse);
 
 std::string prefix();
@@ -40,6 +42,8 @@ std::string prefix();
 void initialize();
 
 boost::shared_ptr<core::http::AsyncServerStatsProvider> statsProvider();
+
+void sessionLaunch(const std::string& editor);
 
 void sessionStart(const std::string& editor, const std::string& username, boost::posix_time::time_duration startDuration);
 
