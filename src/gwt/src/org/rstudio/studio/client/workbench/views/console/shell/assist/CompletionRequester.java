@@ -45,7 +45,6 @@ import org.rstudio.studio.client.workbench.views.source.editors.text.DocDisplay;
 import org.rstudio.studio.client.workbench.views.source.editors.text.RFunction;
 import org.rstudio.studio.client.workbench.views.source.editors.text.ScopeFunction;
 import org.rstudio.studio.client.workbench.views.source.editors.text.ace.CodeModel;
-import org.rstudio.studio.client.workbench.views.source.editors.text.ace.DplyrJoinContext;
 import org.rstudio.studio.client.workbench.views.source.editors.text.ace.Position;
 import org.rstudio.studio.client.workbench.views.source.editors.text.ace.RScopeObject;
 import org.rstudio.studio.client.workbench.views.source.editors.text.ace.TokenCursor;
@@ -218,71 +217,6 @@ public class CompletionRequester
 
       cachedCompletions_.put(diff, result);
       return result;
-   }
-
-   public void getDplyrJoinCompletionsString(
-         final String token,
-         final String string,
-         final String cursorPos,
-         final boolean implicit,
-         final ServerRequestCallback<CompletionResult> callback)
-   {
-      if (usingCache(token, callback))
-         return;
-
-      server_.getDplyrJoinCompletionsString(
-            token,
-            string,
-            cursorPos,
-            new ServerRequestCallback<Completions>() {
-
-               @Override
-               public void onResponseReceived(Completions response)
-               {
-                  cachedLinePrefix_ = token;
-                  fillCompletionResult(response, implicit, callback);
-               }
-
-               @Override
-               public void onError(ServerError error)
-               {
-                  callback.onError(error);
-               }
-
-            });
-   }
-
-   public void getDplyrJoinCompletions(
-         final DplyrJoinContext joinContext,
-         final boolean implicit,
-         final ServerRequestCallback<CompletionResult> callback)
-   {
-      final String token = joinContext.getToken();
-      if (usingCache(token, callback))
-         return;
-
-      server_.getDplyrJoinCompletions(
-            joinContext.getToken(),
-            joinContext.getLeftData(),
-            joinContext.getRightData(),
-            joinContext.getVerb(),
-            joinContext.getCursorPos(),
-            new ServerRequestCallback<Completions>() {
-
-               @Override
-               public void onError(ServerError error)
-               {
-                  callback.onError(error);
-               }
-
-               @Override
-               public void onResponseReceived(Completions response)
-               {
-                  cachedLinePrefix_ = token;
-                  fillCompletionResult(response, implicit, callback);
-               }
-
-            });
    }
 
    private void fillCompletionResult(
