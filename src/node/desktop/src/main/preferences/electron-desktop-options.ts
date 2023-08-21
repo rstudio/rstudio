@@ -248,7 +248,7 @@ export class DesktopOptionsImpl implements DesktopOptions {
     return this.config.get(kRendererUseGpuDriverBugWorkarounds, properties.renderer.default.useGpuDriverBugWorkarounds);
   }
 
-  // MacOs Apple Silicon-only option
+  // MacOS Apple Silicon-only option
   public setCheckForRosetta(value: boolean): void {
     const isAppleSilicon = process.platform === 'darwin' && process.arch === 'arm64';
     if (!isAppleSilicon) {
@@ -257,12 +257,15 @@ export class DesktopOptionsImpl implements DesktopOptions {
     this.config.set(kCheckForRosetta, value);
   }
 
+  // MacOS Apple Silicon-only option
   public checkForRosetta(): boolean {
     const isAppleSilicon = process.platform === 'darwin' && process.arch === 'arm64';
     if (!isAppleSilicon) {
       return false;
     }
-    return this.config.get(kCheckForRosetta, properties.platform.default.macos.checkForRosetta);
+    const checkForRosettaConfig = this.config.get(kCheckForRosetta, properties.platform.default.macos.checkForRosetta);
+    logger().logDebug(`Desktop option 'checkForRosetta' is: ${checkForRosettaConfig}`);
+    return checkForRosettaConfig;
   }
 
   // Windows-only option
