@@ -16,11 +16,11 @@
 import { describe } from 'mocha';
 import { assert } from 'chai';
 
-import { checkForRosetta } from '../../../src/main/detect-rosetta';
+import { detectRosetta } from '../../../src/main/detect-rosetta';
 
 describe('Detect Rosetta', () => {
   it('Only checks for Rosetta installation on Apple silicon', async () => {
-    const isRosettaInstalled = checkForRosetta();
+    const isRosettaInstalled = detectRosetta();
     const isAppleSilicon = process.platform === 'darwin' && process.arch === 'arm64';
     if (isAppleSilicon) {
       assert.isBoolean(isRosettaInstalled);

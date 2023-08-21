@@ -62,7 +62,7 @@ const DETECT_ROSETTA_STATUS_MAP: Map<DetectRosettaStatus, MessageBoxOptions> = n
  * @returns true if Rosetta is installed and running, false if Rosetta is not installed,
  *          and undefined if not on Apple Silicon.
  */
-export function checkForRosetta(): boolean | undefined {
+export function detectRosetta(): boolean | undefined {
   const isAppleSilicon = process.platform === 'darwin' && process.arch === 'arm64';
   if (!isAppleSilicon) return undefined;
 

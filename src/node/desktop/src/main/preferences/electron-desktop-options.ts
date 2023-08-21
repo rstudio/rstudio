@@ -49,6 +49,8 @@ const kRendererUseGpuDriverBugWorkarounds = 'renderer.useGpuDriverBugWorkarounds
 const kRExecutablePath = 'platform.windows.rExecutablePath';
 const kPreferR64 = 'platform.windows.preferR64';
 
+const kCheckForRosetta = 'platform.macos.checkForRosetta';
+
 const userStateSchema = generateSchema<RStudioUserState>(properties);
 
 export let defaultFonts = ['monospace'];
@@ -163,8 +165,11 @@ export class DesktopOptionsImpl implements DesktopOptions {
     const savedBounds = this.windowBounds();
 
     positionAndEnsureVisible(
-      mainWindow, savedBounds,
-      properties.view.default.windowBounds.width, properties.view.default.windowBounds.height);
+      mainWindow,
+      savedBounds,
+      properties.view.default.windowBounds.width,
+      properties.view.default.windowBounds.height,
+    );
 
     if (savedBounds.maximized) {
       mainWindow.maximize();
@@ -241,6 +246,23 @@ export class DesktopOptionsImpl implements DesktopOptions {
 
   public useGpuDriverBugWorkarounds(): boolean {
     return this.config.get(kRendererUseGpuDriverBugWorkarounds, properties.renderer.default.useGpuDriverBugWorkarounds);
+  }
+
+  // MacOs Apple Silicon-only option
+  public setCheckForRosetta(value: boolean): void {
+    const isAppleSilicon = process.platform === 'darwin' && process.arch === 'arm64';
+    if (!isAppleSilicon) {
+      return;
+    }
+    this.config.set(kCheckForRosetta, value);
+  }
+
+  public checkForRosetta(): boolean {
+    const isAppleSilicon = process.platform === 'darwin' && process.arch === 'arm64';
+    if (!isAppleSilicon) {
+      return false;
+    }
+    return this.config.get(kCheckForRosetta, properties.platform.default.macos.checkForRosetta);
   }
 
   // Windows-only option
