@@ -279,7 +279,8 @@ Error SessionManager::launchSession(boost::asio::io_service& ioService,
    if (numRemoved > 0)
       LOG_DEBUG_MESSAGE("Found " + std::to_string(numRemoved) + " sessions launched, but not connected to from this server in 3 minutes");
 
-   LOG_DEBUG_MESSAGE("Launching " + context.scope.workbench() + " session for: " + context.username + " id: " + context.scope.id());
+   std::string processName = context.scope.isWorkspaces() ? "Homepage (rworkspaces)" : context.scope.workbench();
+   LOG_DEBUG_MESSAGE("Launching " + processName + " session for: " + context.username + " id: " + context.scope.id());
 
    // translate querystring arguments into extra session args 
    core::system::Options args;
@@ -374,6 +375,7 @@ Error SessionManager::launchAndTrackSession(
 
    LOG_DEBUG_MESSAGE("Launched session process for user: " + runAsUser + ": " + profile.executablePath +
                      " pid: " + safe_convert::numberToString(pid));
+   metrics::sessionLaunch(metrics::kEditorRStudio);
 
    // track it for subsequent reaping
    processTracker_.addProcess(pid, boost::bind(onProcessExit,
