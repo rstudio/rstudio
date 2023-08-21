@@ -15,8 +15,9 @@
 
 import { execSync } from 'child_process';
 import { logger } from '../core/logger';
-import { dialog, MessageBoxOptions } from 'electron';
+import { dialog, MessageBoxOptions, shell } from 'electron';
 import { appState } from './app-state';
+import { ElectronDesktopOptions } from './preferences/electron-desktop-options';
 
 enum DetectRosettaStatus {
   ROSETTA_CHECK_FAILED,
@@ -39,12 +40,11 @@ const DETECT_ROSETTA_STATUS_MAP: Map<DetectRosettaStatus, MessageBoxOptions> = n
     DetectRosettaStatus.ROSETTA_INSTALL_WARNING,
     {
       type: 'warning',
-      buttons: ['OK'],
+      buttons: ['More Information', 'Remind Me Later', 'Don\'t Remind Me Again'],
       defaultId: 0,
-      title: 'Rosetta Is Not Installed',
+      title: 'Rosetta is not Installed',
       message: 'Rosetta is not installed on your machine. You may experience issues running RStudio.',
-      detail:
-        'To avoid these issues, please install Rosetta and reopen RStudio.\n\nFor instructions, please visit https://docs.posit.co/ide/desktop-pro/getting_started/installation.html#apple-silicon-mac-m1m2.',
+      detail: 'To avoid these issues, please install Rosetta and reopen RStudio.',
     },
   ],
 ]);
@@ -69,7 +69,26 @@ export function detectRosetta(): boolean | undefined {
   const isRosettaInstalled = isRosettaRunning();
   if (!isRosettaInstalled) {
     logger().logDebug('Rosetta 2 is not running. Warning user to install Rosetta to avoid issues.');
-    showDialogForStatus(DetectRosettaStatus.ROSETTA_INSTALL_WARNING);
+    showDialogForStatus(DetectRosettaStatus.ROSETTA_INSTALL_WARNING, (selectedButtonId) => {
+      switch (selectedButtonId) {
+        case 0:
+          // Selected 'More Information' button. Open link to Rosetta installation instructions.
+          shell.openExternal(
+            'https://docs.posit.co/ide/desktop-pro/getting_started/installation.html#apple-silicon-mac-m1m2',
+          );
+          break;
+        case 1:
+          // Selected 'Remind Me Later' button. Set ElectronDesktopOptions to check for Rosetta on next startup.
+          ElectronDesktopOptions().setCheckForRosetta(true);
+          break;
+        case 2:
+          // Selected 'Don't Remind Me Again' button. Set ElectronDesktopOptions to not check for Rosetta.
+          ElectronDesktopOptions().setCheckForRosetta(false);
+          break;
+        default:
+          break;
+      }
+    });
   }
   return isRosettaInstalled;
 }
