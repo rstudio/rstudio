@@ -62,7 +62,6 @@ import org.rstudio.studio.client.workbench.views.source.editors.text.NavigableSo
 import org.rstudio.studio.client.workbench.views.source.editors.text.ScopeFunction;
 import org.rstudio.studio.client.workbench.views.source.editors.text.ace.AceEditorCommandEvent;
 import org.rstudio.studio.client.workbench.views.source.editors.text.ace.CodeModel;
-import org.rstudio.studio.client.workbench.views.source.editors.text.ace.DplyrJoinContext;
 import org.rstudio.studio.client.workbench.views.source.editors.text.ace.Position;
 import org.rstudio.studio.client.workbench.views.source.editors.text.ace.RInfixData;
 import org.rstudio.studio.client.workbench.views.source.editors.text.ace.Range;
@@ -766,8 +765,9 @@ public class RCompletionManager implements CompletionManager
          // Perform an auto-popup if a set number of R identifier characters
          // have been inserted (but only if the user has allowed it in prefs)
          boolean autoPopupEnabled =
-               userPrefs_.codeCompletion().getValue() == UserPrefs.CODE_COMPLETION_ALWAYS &&
-               userPrefs_.copilotEnabled().getValue() == false;
+               userPrefs_.codeCompletion().getValue() == UserPrefs.CODE_COMPLETION_ALWAYS && (
+                     behavior_ == EditorBehavior.AceBehaviorConsole ||
+                     userPrefs_.copilotEnabled().getValue() == false);
 
          if (!autoPopupEnabled)
             return false;
@@ -1236,38 +1236,6 @@ public class RCompletionManager implements CompletionManager
                if (clone.currentValue() == "=")
                   cursorPos = "right";
             
-            // Try to get a dplyr join completion
-            DplyrJoinContext joinContext =
-                  codeModel.getDplyrJoinContextFromInfixChain(cursor);
-            
-            // If that failed, try a non-infix lookup
-            if (joinContext == null)
-            {
-               String joinString =
-                     getDplyrJoinString(editor, cursor);
-               
-               if (!StringUtil.isNullOrEmpty(joinString))
-               {
-                  requester_.getDplyrJoinCompletionsString(
-                        token,
-                        joinString,
-                        cursorPos,
-                        implicit,
-                        requestContext);
-
-                  return true;
-               }
-            }
-            else
-            {
-               requester_.getDplyrJoinCompletions(
-                     joinContext,
-                     implicit,
-                     requestContext);
-               return true;
-               
-            }
-            
             // Try to see if there's an object name we should use to supplement
             // completions
             if (cursor.moveToPosition(input_.getCursorPosition()))
@@ -1300,42 +1268,6 @@ public class RCompletionManager implements CompletionManager
 
       return true;
    }
-   
-   private String getDplyrJoinString(
-         AceEditor editor,
-         TokenCursor cursor)
-   {
-      while (true)
-      {
-         int commaCount = cursor.findOpeningBracketCountCommas("(", true);
-         if (commaCount == -1)
-            break;
-         
-         if (!cursor.moveToPreviousToken())
-            return "";
-
-         if (!cursor.currentValue().matches(".*join$"))
-            continue;
-         
-         if (commaCount < 2)
-            return "";
-
-         Position start = cursor.currentPosition();
-         if (!cursor.moveToNextToken())
-            return "";
-
-         if (!cursor.fwdToMatchingToken())
-            return "";
-
-         Position end = cursor.currentPosition();
-         end.setColumn(end.getColumn() + 1);
-
-         return editor.getTextForRange(Range.fromPoints(
-               start, end));
-      }
-      return "";
-   }
-   
    
    private void addAutocompletionContextForFile(AutocompletionContext context,
                                                 String line)

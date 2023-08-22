@@ -1129,6 +1129,19 @@ core::Error UserPrefValues::setSaveFilesBeforeBuild(bool val)
 }
 
 /**
+ * Whether RStudio should save and reload the R workspace when building the project.
+ */
+bool UserPrefValues::saveAndReloadWorkspaceOnBuild()
+{
+   return readPref<bool>("save_and_reload_workspace_on_build");
+}
+
+core::Error UserPrefValues::setSaveAndReloadWorkspaceOnBuild(bool val)
+{
+   return writePref("save_and_reload_workspace_on_build", val);
+}
+
+/**
  * The default editor font size, in points.
  */
 double UserPrefValues::fontSizePoints()
@@ -3322,6 +3335,7 @@ std::vector<std::string> UserPrefValues::allKeys()
       kShowInlineToolbarForRCodeChunks,
       kHighlightCodeChunks,
       kSaveFilesBeforeBuild,
+      kSaveAndReloadWorkspaceOnBuild,
       kFontSizePoints,
       kHelpFontSizePoints,
       kEditorTheme,

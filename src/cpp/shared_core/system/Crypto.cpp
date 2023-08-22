@@ -189,11 +189,18 @@ Error aesEncrypt(
 
 Error base64Encode(const std::vector<unsigned char>& in_data, std::string& out_encoded)
 {
-   return base64Encode(&in_data[0], gsl::narrow_cast<int>(in_data.size()), out_encoded);
+   return base64Encode(in_data.data(), gsl::narrow_cast<int>(in_data.size()), out_encoded);
 }
 
 Error base64Encode(const unsigned char* in_data, int in_length, std::string& out_encoded)
 {
+   // this crashes if passed an empty vector so avoid that altogether
+   if (in_length == 0)
+   {
+      out_encoded = "";
+      return Success();
+   }
+   
    // allocate BIO
    BIO* pB64 = ::BIO_new(BIO_f_base64());
    if (pB64 == nullptr)

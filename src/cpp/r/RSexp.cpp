@@ -1710,28 +1710,45 @@ bool inherits(SEXP object, const char* S3Class)
    return Rf_inherits(object, S3Class);
 }
 
+// Keep in sync with 'nse.primitives' in SessionCodeTools.R
 std::set<std::string> makeNsePrimitives()
 {
-   std::set<std::string> nsePrimitives;
-   nsePrimitives.insert("quote");
-   nsePrimitives.insert("substitute");
-   nsePrimitives.insert("match.call");
-   nsePrimitives.insert("library");
-   nsePrimitives.insert("require");
-   nsePrimitives.insert("enquote");
-   nsePrimitives.insert("bquote");
-   nsePrimitives.insert("expression");
-   nsePrimitives.insert("evalq");
-   nsePrimitives.insert("subset");
-   nsePrimitives.insert("eval.parent");
-   nsePrimitives.insert("sys.call");
-   nsePrimitives.insert("sys.calls");
-   nsePrimitives.insert("sys.frame");
-   nsePrimitives.insert("sys.frames");
-   nsePrimitives.insert("sys.function");
-   nsePrimitives.insert("sys.parent");
-   nsePrimitives.insert("lazy_dots");
-   return nsePrimitives;
+   return {
+      
+      // base R primitives
+      "bquote",
+      "enquote",
+      "eval.parent",
+      "evalq",
+      "expression",
+      "library",
+      "match.call",
+      "quote",
+      "require",
+      "subset",
+      "substitute",
+      "sys.call",
+      "sys.calls",
+      "sys.frame",
+      "sys.frames",
+      "sys.function",
+      "sys.parent",
+
+      // rlang tidy evaluation
+      "enexpr",
+      "enexprs",
+      "enquo",
+      "enquos",
+      "eval_tidy",
+      "quo",
+      "quos",
+
+      // dplyr -- not really primitives
+      "dplyr_quosures",
+      "group_by",
+      "group_by_prepare"
+      
+   };
 }
 
 const std::set<std::string>& nsePrimitives()

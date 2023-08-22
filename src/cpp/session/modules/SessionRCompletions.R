@@ -2842,110 +2842,16 @@ assign(x = ".rs.acCompletionTypes",
    
 })
 
-.rs.addJsonRpcHandler("get_dplyr_join_completions", function(token,
-                                                             leftDataName,
-                                                             rightDataName,
-                                                             verb,
-                                                             cursorPos)
-{
-   .rs.getDplyrJoinCompletions(
-      token,
-      leftDataName,
-      rightDataName,
-      verb,
-      cursorPos,
-      .rs.getActiveFrame()
-   )
-   
-})
-
-.rs.addJsonRpcHandler("get_dplyr_join_completions_string", function(token,
-                                                                    string,
-                                                                    cursorPos)
-{
-   result <- tryCatch(
-      
-      expr = {
-         parsed <- parse(text = string)[[1]]
-         verb <- as.character(parsed[[1]])
-         func <- get(verb, envir = asNamespace("dplyr"))
-         matched <- .rs.matchCall(func, parsed)
-         leftName <- as.character(matched[["x"]])
-         rightName <- as.character(matched[["y"]])
-         .rs.getDplyrJoinCompletions(
-            token,
-            leftName,
-            rightName,
-            verb,
-            cursorPos,
-            parent.frame()
-         )
-      },
-      
-      error = function(e) {
-         .rs.emptyCompletions()
-      }
-   )
-   
-   result
-})
-
-.rs.addFunction("getDplyrJoinCompletions", function(token,
-                                                    leftDataName,
-                                                    rightDataName,
-                                                    verb,
-                                                    cursorPos,
-                                                    envir)
-{
-   result <- .rs.emptyCompletions()
-   
-   leftData <- .rs.getAnywhere(leftDataName, envir)
-   rightData <- .rs.getAnywhere(rightDataName, envir)
-   
-   if (!is.list(leftData) || !is.list(rightData))
-      return(.rs.emptyCompletions(excludeOtherCompletions = TRUE))
-   
-   if (cursorPos == "left" && !is.null(leftData))
-   {
-      completions <- .rs.selectFuzzyMatches(
-         .rs.getNames(leftData),
-         token
-      )
-      result <- .rs.makeCompletions(
-         token = token,
-         results = completions,
-         packages = leftDataName,
-         quote = TRUE,
-         type = vapply(leftData[completions], FUN.VALUE = numeric(1), USE.NAMES = FALSE, .rs.getCompletionType),
-         excludeOtherCompletions = TRUE
-      )
-   }
-   else if (cursorPos == "right" && !is.null(rightData))
-   {
-      completions <- .rs.selectFuzzyMatches(
-         .rs.getNames(rightData),
-         token
-      )
-      result <- .rs.makeCompletions(
-         token = token,
-         results = completions,
-         packages = rightDataName,
-         quote = TRUE,
-         type = vapply(rightData[completions], FUN.VALUE = numeric(1), USE.NAMES = FALSE, .rs.getCompletionType),
-         excludeOtherCompletions = TRUE
-      )
-   }
-   
-   result
-   
-})
-
 .rs.addFunction("hasColumns", function(object)
 {
-   if (inherits(object, c("data.frame")))
+   if (inherits(object, c("data.frame", "tbl")))
       return(TRUE)
 
-   if (isNamespaceLoaded("arrow") && inherits(object, c("ArrowTabular", "Dataset", "arrow_dplyr_query")))
+   arrow <-
+      isNamespaceLoaded("arrow") &&
+      inherits(object, c("ArrowTabular", "Dataset", "arrow_dplyr_query"))
+
+   if (arrow)
       return(TRUE)
 
    FALSE

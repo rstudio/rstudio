@@ -438,9 +438,7 @@ bool mightPerformNonstandardEvaluation(const RTokenCursor& origin,
    // Drop down into R.
    bool cacheable = true;
    r::sexp::Protect protect;
-   SEXP symbolSEXP = resolveFunctionAssociatedWithCall(
-            cursor, &protect, &cacheable);
-   
+   SEXP symbolSEXP = resolveFunctionAssociatedWithCall(cursor, &protect, &cacheable);
    if (symbolSEXP == R_UnboundValue)
       return false;
    

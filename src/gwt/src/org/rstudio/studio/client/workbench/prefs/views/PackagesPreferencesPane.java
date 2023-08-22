@@ -177,6 +177,7 @@ public class PackagesPreferencesPane extends PreferencesPane
       lessSpaced(useDevtools_);
       development.add(useDevtools_);
 
+      development.add(checkboxPref(uiPrefs.saveAndReloadWorkspaceOnBuild()));
       development.add(checkboxPref(constants_.developmentSaveLabel(), uiPrefs.saveFilesBeforeBuild()));
       development.add(checkboxPref(constants_.developmentNavigateLabel(), uiPrefs.navigateToBuildError()));
 

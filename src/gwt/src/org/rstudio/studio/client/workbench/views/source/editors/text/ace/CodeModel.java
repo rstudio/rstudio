@@ -114,10 +114,6 @@ public class CodeModel extends JavaScriptObject
       return this.getDataFromInfixChain(tokenCursor);
    }-*/;
    
-   public native final DplyrJoinContext getDplyrJoinContextFromInfixChain(TokenCursor tokenCursor) /*-{
-      return this.getDplyrJoinContextFromInfixChain(tokenCursor);
-   }-*/;
-   
    public native final void insertRoxygenSkeleton() /*-{
       this.insertRoxygenSkeleton && this.insertRoxygenSkeleton();
    }-*/;
