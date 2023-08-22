@@ -937,6 +937,10 @@
    n <- length(value)
    if (n >= 10000L)
       return(TRUE)
+   
+   # 'igraph' objects can be serialized.
+   if (inherits(value, "igraph"))
+      return(TRUE)
 
    # Python objects are connected to the underlying session, and so
    # cannot be restored after a suspend.

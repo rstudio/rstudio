@@ -32,6 +32,7 @@
 - Fixed issue where column names weren't provided as completion candidates for DBI tables. (#12577)
 - Fixed an issue where parameter name completions were not provided within `dplyr` joins. (#13415)
 - Removed unnecessary files from install packages (rstudo-pro:#4943)
+- Fixed issue where R sessions containing large 'igraph' objects could become slow (#13489)
 
 ### Performance
 - Improved performance of group membership tests (rstudio-pro:#4643)
