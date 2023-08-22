@@ -177,6 +177,17 @@ def getBuildEnv(boolean isHourly) {
   return env
 }
 
+/**
+  * Gets the Linux agent label based on the arch.
+  */
+def getLinuxAgentLabel(String arch) {
+  if (arch == 'arm64') {
+    return 'linux && arm64 && 4x'
+  }
+
+  return 'linux-4x && x86_64'
+}
+
 /** 
   * Get the name of the product based on the type of build
   */

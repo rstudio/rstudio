@@ -46,6 +46,16 @@ pipeline {
 
       stages {
         stage('Prepare Build Container') {
+          when {
+            anyOf {
+              expression {
+                return utils.hasChangesIn('docker')
+              }
+              expression {
+                return utils.hasChangesIn('dependencies')
+              }
+            }
+          }
           steps {
             // AWS is here for the S3 bucket that we use for sccache
             withAWS(role: 'build', roleAccount: AWS_ACCOUNT_ID) {
@@ -63,11 +73,14 @@ pipeline {
 
         stage('Build Package and Test') {
           agent {
-            docker {
-              image "jenkins/ide:${utils.getDockerTag()}"
-              reuseNode true
+              docker {
+                image "jenkins/ide:${utils.getDockerTag()}"
+                registryCredentialsId 'ecr:us-east-1:aws-build-role'
+                registryUrl 'https://263245908434.dkr.ecr.us-east-1.amazonaws.com'
+                label "${utils.getLinuxAgentLabel(ARCH)}"
+                reuseNode true
+              }
             }
-          }
 
           stages {
             stage('Build Package') {
