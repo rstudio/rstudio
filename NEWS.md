@@ -27,6 +27,7 @@
 - Fixed bug where clicking "Ignore Update" would fail to ignore the update (#13379)
 - Fixed bug preventing `HOME` from being modified in system init scripts (rstudio-pro:#4584)
 - Fixed issue with alignment of R argument names in Help pane (#13474)
+- Fixed issue where user was not warned of missing Rosetta installation on Apple silicon (#12791)
 - Fixed bug with modals disabling copy/paste (#13365)
 - Fixed issue where column names weren't provided as completion candidates for DBI tables. (#12577)
 - Fixed an issue where parameter name completions were not provided within `dplyr` joins. (#13415)

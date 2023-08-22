@@ -80,6 +80,9 @@ describe('DesktopOptions', () => {
       assert.equal(options.rBinDir(), nonWindowsRBinDir);
       assert.equal(options.peferR64(), nonWindowsPreferR64);
     }
+    if (process.platform === 'darwin' && process.arch === 'arm64') {
+      assert.equal(options.checkForRosetta(), properties.platform.default.macos.checkForRosetta);
+    }
   });
   it('set/get functionality returns correct values', () => {
     const options = testingDesktopOptions();
@@ -133,6 +136,12 @@ describe('DesktopOptions', () => {
     } else {
       assert.equal(options.rBinDir(), nonWindowsRBinDir);
       assert.equal(options.peferR64(), nonWindowsPreferR64);
+    }
+
+    if (process.platform === 'darwin' && process.arch === 'arm64') {
+      const newCheckForRosetta = !properties.platform.default.macos.checkForRosetta;
+      options.setCheckForRosetta(newCheckForRosetta);
+      assert.equal(options.checkForRosetta(), newCheckForRosetta);
     }
   });
   it('values persist between instances', () => {
