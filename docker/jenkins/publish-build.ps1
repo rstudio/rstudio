@@ -147,7 +147,7 @@ try
 
         # Identical call to the original above
         Write-Host "Retrying..."
-        $retryCreateResponse = Invoke-RestMethod -Body $updatePayload -Method 'PUT' -Headers $headers -Uri $url -UseBasicParsing
+        $retryCreateResponse = Invoke-RestMethod -Body $payload -Method 'PUT' -Headers $headers -Uri $url -UseBasicParsing
         Write-Host "Response :"
         Write-Host $retryCreateResponse.Content
     }
