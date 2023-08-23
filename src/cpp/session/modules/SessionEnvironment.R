@@ -528,11 +528,20 @@
    }
    else if (is.data.frame(obj))
    {
-      return(paste(dim(obj)[1],
-                   "obs. of",
-                   dim(obj)[2],
-                   ifelse(dim(obj)[2] == 1, "variable", "variables"),
-                   sep=" "))
+      # use .row_names_info() to avoid materializing altrep vectors
+      # https://github.com/rstudio/rstudio/issues/13540
+      info <- .row_names_info(obj, type = 0L)
+      nr <- if (.rs.isAltrep(info)) "??" else nrow(obj)
+      nc <- length(obj)
+      
+      msg <- sprintf(
+         "%s obs. of %s %s",
+         as.character(nr),
+         as.character(nc),
+         if (nc > 1) "variables" else "variable"
+      )
+      
+      return(msg)
    }
    else if (is.environment(obj))
    {
