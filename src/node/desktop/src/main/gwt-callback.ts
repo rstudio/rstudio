@@ -124,9 +124,13 @@ export class GwtCallback extends EventEmitter {
     }
 
     ipcMain.on('desktop_browse_url', (event, url: string) => {
-      // openExternal seems unreliable on Linux, so just use 'open' instead
       if (platform() === 'linux') {
-        spawn('xdg-open', [url], { detached: true, shell: true });
+        // https://bbs.archlinux.org/viewtopic.php?id=265049
+        exec(`
+          [ -e /dev/fd/1 ] || exec 1>/dev/null
+          [ -e /dev/fd/2 ] || exec 2>/dev/null
+          exec /usr/bin/xdg-open "${url}"
+        `);
       } else {
         void shell.openExternal(url);
       }
