@@ -530,15 +530,20 @@
    {
       # use .row_names_info() to avoid materializing altrep vectors
       # https://github.com/rstudio/rstudio/issues/13540
-      info <- .row_names_info(obj, type = 0L)
-      nr <- if (.rs.isAltrep(info)) "??" else nrow(obj)
-      nc <- length(obj)
+      dims <- .Call("rs_dim", obj, PACKAGE = "(embedding)")
+      if (is.null(dims))
+         dims <- c(-1L, -1L)
       
+      # extract rows, columns
+      nr <- dims[[1L]]
+      nc <- dims[[2L]]
+      
+      # build message
       msg <- sprintf(
          "%s obs. of %s %s",
-         as.character(nr),
-         as.character(nc),
-         if (nc > 1) "variables" else "variable"
+         if (is.na(nr) || nr < 0L) "??" else as.character(nr),
+         if (is.na(nc) || nc < 0L) "??" else as.character(nc),
+         if (!is.na(nc) && nc != 1L) "variables" else "variable"
       )
       
       return(msg)
