@@ -13,7 +13,7 @@
  *
  */
 
-import { exec, execSync } from 'child_process';
+import { exec, execSync, spawn } from 'child_process';
 import {
   app,
   nativeTheme,
@@ -124,8 +124,12 @@ export class GwtCallback extends EventEmitter {
     }
 
     ipcMain.on('desktop_browse_url', (event, url: string) => {
-      // TODO: review if we need additional validation of URL
-      void shell.openExternal(url);
+      // openExternal seems unreliable on Linux, so just use 'open' instead
+      if (platform() === 'linux') {
+        spawn('xdg-open', [url], { detached: true, shell: true });
+      } else {
+        void shell.openExternal(url);
+      }
     });
 
     ipcMain.handle(
