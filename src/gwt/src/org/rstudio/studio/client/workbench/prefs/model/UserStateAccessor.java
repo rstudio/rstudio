@@ -205,6 +205,10 @@ public class UserStateAccessor extends Prefs
          return this && this.windows || {"rBinDir":"","preferR64":true,"rExecutablePath":""};
       }-*/;
 
+      public final native JavaScriptObject getMacos() /*-{
+         return this && this.macos || {"checkForRosetta":true};
+      }-*/;
+
    }
 
    /**

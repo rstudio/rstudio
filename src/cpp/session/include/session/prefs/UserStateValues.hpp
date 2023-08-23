@@ -46,6 +46,7 @@ namespace prefs {
 #define kRendererUseGpuDriverBugWorkarounds "useGpuDriverBugWorkarounds"
 #define kPlatform "platform"
 #define kPlatformWindows "windows"
+#define kPlatformMacos "macos"
 #define kContextId "context_id"
 #define kAutoCreatedProfile "auto_created_profile"
 #define kTheme "theme"
