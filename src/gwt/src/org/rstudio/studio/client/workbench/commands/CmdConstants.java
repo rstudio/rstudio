@@ -1362,6 +1362,14 @@ public interface CmdConstants extends Constants {
     @DefaultStringValue("Check the status of the GitHub Copilot agent.") // $NON-NLS-1$
     String copilotStatusDesc();
     
+    // copilotRequestCompletions
+    @DefaultStringValue("Copilot: Request Completions") // $NON-NLS-1$
+    String copilotRequestCompletionsLabel();
+    @DefaultStringValue("Request Completions") // $NON-NLS-1$
+    String copilotRequestCompletionsMenuLabel();
+    @DefaultStringValue("Request Copilot completions at the cursor position.") // $NON-NLS-1$
+    String copilotRequestCompletionsDesc();
+    
     // sourceNavigateBack
     @DefaultStringValue("Bac_k") // $NON-NLS-1$
     String sourceNavigateBackMenuLabel();

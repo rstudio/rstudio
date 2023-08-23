@@ -17,11 +17,14 @@ package org.rstudio.studio.client.workbench.views.source.editors.text;
 import org.rstudio.core.client.Debug;
 import org.rstudio.core.client.HandlerRegistrations;
 import org.rstudio.core.client.MathUtil;
+import org.rstudio.core.client.command.CommandBinder;
+import org.rstudio.core.client.command.Handler;
 import org.rstudio.studio.client.RStudioGinjector;
 import org.rstudio.studio.client.application.events.EventBus;
 import org.rstudio.studio.client.common.Timers;
 import org.rstudio.studio.client.server.ServerError;
 import org.rstudio.studio.client.server.ServerRequestCallback;
+import org.rstudio.studio.client.workbench.commands.Commands;
 import org.rstudio.studio.client.workbench.copilot.Copilot;
 import org.rstudio.studio.client.workbench.copilot.model.CopilotConstants;
 import org.rstudio.studio.client.workbench.copilot.model.CopilotEvent;
@@ -48,9 +51,14 @@ import jsinterop.base.JsArrayLike;
 
 public class TextEditingTargetCopilotHelper
 {
+   interface CopilotCommandBinder extends CommandBinder<Commands, TextEditingTargetCopilotHelper>
+   {
+   }
+   
    public TextEditingTargetCopilotHelper(TextEditingTarget target)
    {
       RStudioGinjector.INSTANCE.injectMembers(this);
+      binder_.bind(commands_, this);
       
       target_ = target;
       display_ = target.getDocDisplay();
@@ -255,15 +263,25 @@ public class TextEditingTargetCopilotHelper
       
    }
    
+   @Handler
+   public void onCopilotRequestCompletions()
+   {
+      completionTimer_.schedule(0);
+   }
+   
    @Inject
    private void initialize(Copilot copilot,
                            EventBus events,
                            UserPrefs prefs,
+                           Commands commands,
+                           CopilotCommandBinder binder,
                            CopilotServerOperations server)
    {
       copilot_ = copilot;
       events_ = events;
       prefs_ = prefs;
+      commands_ = commands;
+      binder_ = binder;
       server_ = server;
    }
    
@@ -281,5 +299,7 @@ public class TextEditingTargetCopilotHelper
    private Copilot copilot_;
    private EventBus events_;
    private UserPrefs prefs_;
+   private Commands commands_;
+   private CopilotCommandBinder binder_;
    private CopilotServerOperations server_;
 }
