@@ -2121,8 +2121,10 @@ options(reticulate.repl.teardown = function()
       py_config <- NULL
       tryCatch({
          py_config <- .rs.executeFunctionInChildProcess(
-            callback   = function() reticulate::py_discover_config()
-         )
+            callback = function() {
+               suppressWarnings(tryCatch(reticulate::py_discover_config(),
+                                         error = function(e) NULL))
+      })
        }, finally = {
          Sys.setenv(RETICULATE_MINICONDA_ENABLED = prev_miniconda)
       })
