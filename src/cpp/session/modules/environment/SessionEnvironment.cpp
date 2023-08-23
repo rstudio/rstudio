@@ -408,19 +408,14 @@ SEXP rs_dim(SEXP objectSEXP)
          return R_NilValue;
       }
       
-      if (isAltrep(rowNamesInfoSEXP))
+      // Detect compact row names
+      if (TYPEOF(rowNamesInfoSEXP) == INTSXP && LENGTH(rowNamesInfoSEXP) == 2)
       {
-         if (TYPEOF(rowNamesInfoSEXP) == INTSXP)
-         {
-            const int* data = (const int*) DATAPTR_OR_NULL(rowNamesInfoSEXP);
-            if (data != nullptr)
-               numRows = abs(data[1]);
-         }
-      }
-      else if (TYPEOF(rowNamesInfoSEXP) == INTSXP)
-      {
-         int* data = INTEGER(rowNamesInfoSEXP);
-         numRows = data[0];
+         // Use DATAPTR_OR_NULL to allow for ALTREP vectors
+         // https://github.com/rstudio/rstudio/pull/13544
+         const int* data = (const int*) DATAPTR_OR_NULL(rowNamesInfoSEXP);
+         if (data != nullptr && data[0] == NA_INTEGER)
+            numRows = abs(data[1]);
       }
       else
       {
@@ -434,6 +429,7 @@ SEXP rs_dim(SEXP objectSEXP)
    }
    
    // Otherwise, just call 'dim()' directly
+   
    r::sexp::Protect protect;
    SEXP dimSEXP = R_NilValue;
    Error error = r::exec::RFunction("base:::dim")
