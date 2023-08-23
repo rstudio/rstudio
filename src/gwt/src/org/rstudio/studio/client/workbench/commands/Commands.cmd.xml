@@ -2046,6 +2046,11 @@ See `/src/gwt/tools/i18n-helpers/README.md`.
         label="Copilot: Check Status"
         menuLabel="Status"
         desc="Check the status of the GitHub Copilot agent."/>
+        
+   <cmd id="copilotRequestCompletions"
+        label="Copilot: Request Completions"
+        menuLabel="Request Completions"
+        desc="Request Copilot completions at the cursor position."/>
    
    <cmd id="sourceNavigateBack"
         menuLabel="Bac_k"
