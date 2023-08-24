@@ -20,6 +20,7 @@
 
 #include <core/Exec.hpp>
 #include <core/RecursionGuard.hpp>
+#include <core/system/LibraryLoader.hpp>
 
 #define INTERNAL_R_FUNCTIONS
 #include <r/RJson.hpp>
@@ -37,6 +38,14 @@
 #include <r/RSxpInfo.hpp>
 
 #include "EnvironmentUtils.hpp"
+
+#if defined(_WIN32)
+# define kLibraryName "R.dll"
+#elif defined(__APPLE__)
+# define kLibraryName "libR.dylib"
+#else
+# define kLibraryName "libR.so"
+#endif
 
 using namespace rstudio::core;
 using namespace boost::placeholders;
@@ -70,6 +79,10 @@ bool s_browserActive = false;
 bool s_monitoring = true;
 
 namespace {
+
+// by default, use regular 'INTEGER' accessor; 'INTEGER_OR_NULL' will be loaded
+// if provided by this version of R
+int* (*INTEGER_OR_NULL)(SEXP) = INTEGER;
 
 // Keeps track of the data related to the most recent debugging event
 class LineDebugState
@@ -411,9 +424,9 @@ SEXP rs_dim(SEXP objectSEXP)
       // Detect compact row names
       if (TYPEOF(rowNamesInfoSEXP) == INTSXP && LENGTH(rowNamesInfoSEXP) == 2)
       {
-         // Use DATAPTR_OR_NULL to allow for ALTREP vectors
+         // Use INTEGER_OR_NULL to allow for ALTREP vectors
          // https://github.com/rstudio/rstudio/pull/13544
-         const int* data = (const int*) DATAPTR_OR_NULL(rowNamesInfoSEXP);
+         const int* data = INTEGER_OR_NULL(rowNamesInfoSEXP);
          if (data != nullptr && data[0] == NA_INTEGER)
             numRows = abs(data[1]);
       }
@@ -1493,6 +1506,13 @@ Error initialize()
          boost::make_shared<int>(0);
    boost::shared_ptr<r::context::RCntxt> pCurrentContext =
          boost::make_shared<r::context::RCntxt>(r::context::globalContext());
+   
+   // get reference to INTEGER_OR_NULL if provided by this version of R
+   {
+      using core::system::Library;
+      Library rLibrary(kLibraryName);
+      core::system::loadSymbol(rLibrary, "INTEGER_OR_NULL", (void**) &INTEGER_OR_NULL);
+   }
 
    // functions that emit call frames also emit source references; these
    // values capture and supply the currently executing expression emitted by R
