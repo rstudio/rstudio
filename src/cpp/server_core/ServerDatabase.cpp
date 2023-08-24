@@ -72,6 +72,7 @@ constexpr const size_t kDefaultMaxPoolSize = 20;
 constexpr const int kMinimumSupportedPostgreSqlMajorVersion = 11;
 
 boost::shared_ptr<ConnectionPool> s_connectionPool;
+boost::optional<ConnectionOptions> s_connectionOptions = boost::none;
 
 struct ConfiguredDriverVisitor : boost::static_visitor<Driver>
 {
@@ -341,12 +342,12 @@ Error migrationsDir(FilePath* pMigrationsDir)
    return Success();
 }
 
+} // anonymous namespace
+
 core::database::Driver getConfiguredDriver(ConnectionOptions options) {
    ConfiguredDriverVisitor visitor;
    return boost::apply_visitor(visitor, options);
 }
-
-} // anonymous namespace
 
 core::database::Driver getConfiguredDriver(const std::string& databaseConfigFile)
 {
@@ -359,6 +360,11 @@ core::database::Driver getConfiguredDriver(const std::string& databaseConfigFile
    }
 
    return getConfiguredDriver(options);
+}
+
+boost::optional<core::database::ConnectionOptions> getConnectionOptions()
+{
+   return s_connectionOptions;
 }
 
 Error initialize(const std::string& databaseConfigFile,
@@ -431,6 +437,8 @@ Error initialize(const std::string& databaseConfigFile,
          return error;
       }
    }
+
+   s_connectionOptions = options;
 
    return Success();
 }
