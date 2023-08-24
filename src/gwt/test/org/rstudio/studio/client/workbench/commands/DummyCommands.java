@@ -3149,4 +3149,9 @@ public class DummyCommands extends Commands {
         return null;
     }
 
+    @Override
+    public AppCommand copilotRequestCompletions() {
+        return null;
+    }
+
 }
