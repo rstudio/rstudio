@@ -92,7 +92,7 @@ core::ProgramStatus Options::read(int argc, char * const argv[], std::ostream& o
    Error error = core::system::installPath("..", argv[0], &resourcePath_);
    if (error)
    {
-      LOG_ERROR_MESSAGE("Unable to determine install path: "+error.getSummary());
+      LOG_ERROR_MESSAGE("Unable to determine install path: " + error.getSummary());
       return ProgramStatus::exitFailure();
    }
 
@@ -197,6 +197,11 @@ core::ProgramStatus Options::read(int argc, char * const argv[], std::ostream& o
       program_options::reportError(errMsg, ERROR_LOCATION);
       return ProgramStatus::exitFailure();
    }
+   
+#ifdef RSTUDIO_DESKTOP
+   // allow copilot to be enabled by default in RStudio Desktop
+   copilotEnabled_ = true;
+#endif
 
    // compute program identity
    programIdentity_ = "rsession-" + userIdentity_;

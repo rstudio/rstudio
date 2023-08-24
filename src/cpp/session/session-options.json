@@ -823,7 +823,7 @@
             "name": "copilot-enabled",
             "type": "bool",
             "memberName": "copilotEnabled_",
-            "defaultValue": true,
+            "defaultValue": false,
             "description": "Indicates whether or not GitHub Copilot integration can be enabled."
          }
       ],

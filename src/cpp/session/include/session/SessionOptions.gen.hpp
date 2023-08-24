@@ -414,7 +414,7 @@ protected:
 
    pCopilot->add_options()
       ("copilot-enabled",
-      value<bool>(&copilotEnabled_)->default_value(true),
+      value<bool>(&copilotEnabled_)->default_value(false),
       "Indicates whether or not GitHub Copilot integration can be enabled.");
 
    pMisc->add_options();
