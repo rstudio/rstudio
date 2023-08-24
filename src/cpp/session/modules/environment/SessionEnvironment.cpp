@@ -386,6 +386,61 @@ SEXP rs_isAltrep(SEXP obj)
    return r::sexp::create(isAltrep(obj), &protect);
 }
 
+SEXP rs_dim(SEXP objectSEXP)
+{
+   // For 'data.frame' objects, check the 'row.names' attribute
+   if (Rf_inherits(objectSEXP, "data.frame"))
+   {
+      // default values for rows, columns
+      int numRows = -1;
+      int numCols = r::sexp::length(objectSEXP);
+      
+      SEXP rowNamesInfoSEXP = R_NilValue;
+      r::sexp::Protect protect;
+   
+      Error error = r::exec::RFunction("base:::.row_names_info")
+            .addParam(objectSEXP)
+            .addParam(0)
+            .call(&rowNamesInfoSEXP, &protect);
+      if (error)
+      {
+         LOG_ERROR(error);
+         return R_NilValue;
+      }
+      
+      // Detect compact row names
+      if (TYPEOF(rowNamesInfoSEXP) == INTSXP && LENGTH(rowNamesInfoSEXP) == 2)
+      {
+         // Use DATAPTR_OR_NULL to allow for ALTREP vectors
+         // https://github.com/rstudio/rstudio/pull/13544
+         const int* data = (const int*) DATAPTR_OR_NULL(rowNamesInfoSEXP);
+         if (data != nullptr && data[0] == NA_INTEGER)
+            numRows = abs(data[1]);
+      }
+      else
+      {
+         numRows = Rf_length(rowNamesInfoSEXP);
+      }
+      
+      SEXP resultSEXP = Rf_allocVector(INTSXP, 2);
+      INTEGER(resultSEXP)[0] = numRows;
+      INTEGER(resultSEXP)[1] = numCols;
+      return resultSEXP;
+   }
+   
+   // Otherwise, just call 'dim()' directly
+   
+   r::sexp::Protect protect;
+   SEXP dimSEXP = R_NilValue;
+   Error error = r::exec::RFunction("base:::dim")
+         .addParam(objectSEXP)
+         .call(&dimSEXP, &protect);
+   if (error)
+      LOG_ERROR(error);
+   
+   return dimSEXP;
+}
+
 SEXP rs_newTestExternalPointer(SEXP nullSEXP)
 {
    bool nullPtr = r::sexp::asLogical(nullSEXP);
@@ -1452,6 +1507,7 @@ Error initialize()
    RS_REGISTER_CALL_METHOD(rs_hasExternalPointer);
    RS_REGISTER_CALL_METHOD(rs_hasAltrep);
    RS_REGISTER_CALL_METHOD(rs_isAltrep);
+   RS_REGISTER_CALL_METHOD(rs_dim);
    RS_REGISTER_CALL_METHOD(rs_dumpContexts);
    RS_REGISTER_CALL_METHOD(rs_newTestExternalPointer);
 
