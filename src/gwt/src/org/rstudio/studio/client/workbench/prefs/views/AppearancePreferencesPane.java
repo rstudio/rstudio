@@ -57,7 +57,9 @@ import com.google.gwt.dom.client.Style;
 import com.google.gwt.dom.client.Style.Unit;
 import com.google.gwt.event.dom.client.ChangeEvent;
 import com.google.gwt.event.dom.client.ChangeHandler;
+import com.google.gwt.resources.client.ClientBundle;
 import com.google.gwt.resources.client.ImageResource;
+import com.google.gwt.resources.client.TextResource;
 import com.google.gwt.user.client.ui.FlowPanel;
 import com.google.gwt.user.client.ui.HorizontalPanel;
 import com.google.gwt.user.client.ui.VerticalPanel;
@@ -333,7 +335,7 @@ public class AppearancePreferencesPane extends PreferencesPane
       FlowPanel previewPanel = new FlowPanel();
 
       previewPanel.setSize("100%", "100%");
-      preview_ = new AceEditorPreview(CODE_SAMPLE);
+      preview_ = new AceEditorPreview(RES.codeSample().getText());
       preview_.setHeight(previewDefaultHeight_);
       preview_.setWidth("278px");
       preview_.setFontSize(Double.parseDouble(fontSize_.getValue()));
@@ -864,35 +866,15 @@ public class AppearancePreferencesPane extends PreferencesPane
 
    private final static String DEFAULT_FONT_NAME = "(Default)";
    private final static String DEFAULT_FONT_VALUE = "__default__";
+   
    private final static PrefsConstants constants_ = GWT.create(PrefsConstants.class);
-   private static final String CODE_SAMPLE =
-         "# plotting of R objects\n" +
-         "plot <- function (x, y, ...)\n" +
-         "{\n" +
-         "  if (is.function(x) && \n" +
-         "      is.null(attr(x, \"class\")))\n" +
-         "  {\n" +
-         "    if (missing(y))\n" +
-         "      y <- NULL\n" +
-         "    \n" +
-         "    # check for ylab argument\n" +
-         "    hasylab <- function(...) \n" +
-         "      !all(is.na(\n" +
-         "        pmatch(names(list(...)),\n" +
-         "              \"ylab\")))\n" +
-         "    \n" +
-         "    if (hasylab(...))\n" +
-         "      plot.function(x, y, ...)\n" +
-         "    \n" +
-         "    else \n" +
-         "      plot.function(\n" +
-         "        x, y, \n" +
-         "        ylab = paste(\n" +
-         "          deparse(substitute(x)),\n" +
-         "          \"(x)\"), \n" +
-         "        ...)\n" +
-         "  }\n" +
-         "  else \n" +
-         "    UseMethod(\"plot\")\n" +
-         "}\n";
+   
+   public interface Resources extends ClientBundle
+   {
+      @Source("AppearancePreferencesPane.R")
+      TextResource codeSample();
+   }
+   
+   private static final Resources RES = GWT.create(Resources.class);
+   
 }

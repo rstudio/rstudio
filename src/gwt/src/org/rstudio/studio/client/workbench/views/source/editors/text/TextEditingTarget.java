@@ -1041,7 +1041,7 @@ public class TextEditingTarget implements
                }
             });
       
-      events_.addHandler(
+      releaseOnDismiss_.add(events_.addHandler(
             CopilotEvent.TYPE,
             new CopilotEvent.Handler()
             {
@@ -1088,7 +1088,7 @@ public class TextEditingTarget implements
                      
                   }
                }
-            });
+            }));
 
       releaseOnDismiss_.add(
          prefs.autoSaveOnBlur().addValueChangeHandler((ValueChangeEvent<Boolean> val) ->
