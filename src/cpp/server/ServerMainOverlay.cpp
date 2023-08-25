@@ -45,6 +45,10 @@ bool requireLocalR()
    return true;
 } 
 
+bool isLoadBalanced()
+{
+   return false;
+}
 } // namespace overlay
 } // namespace server
 } // namespace rstudio

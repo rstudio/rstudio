@@ -75,6 +75,10 @@ core::Error initialize();
 
 // initialize with specific secure cookie key file
 core::Error initialize(const FilePath& secureKeyFile);
+core::Error initialize(bool isLoadBalanced, const FilePath& secureKeyFile);
+
+// initialize with specific secure cookie key and file
+core::Error initialize(const std::string& secureKey, const FilePath& secureKeyFile);
 
 const std::string& getKey();
 const std::string& getKeyFileUsed();
