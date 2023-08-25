@@ -93,6 +93,7 @@ Error startup();
 bool reloadConfiguration();
 void shutdown();
 bool requireLocalR();
+bool isLoadBalanced();
 
 } // namespace overlay
 } // namespace server
@@ -736,12 +737,6 @@ int main(int argc, char * const argv[])
       // initialize crypto utils
       core::system::crypto::initialize();
 
-      // initialize secure cookie module
-      error = core::http::secure_cookie::initialize(options.secureCookieKeyFile());
-      if (error)
-         return core::system::exitFailure(error, ERROR_LOCATION);
-
-      // execute any database commands if passed
       if (!options.dbCommand().empty())
       {
          Error error = server_core::database::execute(options.databaseConfigFile(), serverUser, options.dbCommand());
@@ -753,6 +748,11 @@ int main(int argc, char * const argv[])
 
       // initialize database connectivity
       error = server_core::database::initialize(options.databaseConfigFile(), true, serverUser);
+      if (error)
+         return core::system::exitFailure(error, ERROR_LOCATION);
+
+      // initialize secure cookie module 
+      error = core::http::secure_cookie::initialize(overlay::isLoadBalanced(), options.secureCookieKeyFile());
       if (error)
          return core::system::exitFailure(error, ERROR_LOCATION);
 

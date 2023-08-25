@@ -23,9 +23,35 @@
 
 #include <shared_core/Hash.hpp>
 
+
 namespace rstudio {
 namespace core {
+
 namespace key_file {
+
+core::Error writeSecureKeyFile(const std::string& secureKey, const FilePath& secureKeyPath)
+{
+   // ensure the parent directory
+   core::Error error = secureKeyPath.getParent().ensureDirectory();
+   if (error)
+      return error;
+
+   std::string keyHash = hash::crc32HexHash(secureKey);
+   LOG_DEBUG_MESSAGE("Creating secure key file: \"" + secureKeyPath.getAbsolutePath() + 
+                     "\" key hash: (" + keyHash + ")");
+
+   // attempt to write it
+   error = writeStringToFile(secureKeyPath, secureKey);
+   if (error)
+      return error;
+
+   // change mode it so it is only readable and writeable by this user
+   error = secureKeyPath.changeFileMode(core::FileMode::USER_READ_WRITE);
+   if (error)
+      return error;
+
+   return Success();
+}
 
 core::Error readSecureKeyFile(const FilePath& secureKeyPath,
                               std::string* pContents,
@@ -67,25 +93,12 @@ core::Error readSecureKeyFile(const FilePath& secureKeyPath,
       // generate a new key
       std::string secureKey = core::system::generateUuid(false);
 
-      // ensure the parent directory
-      core::Error error = secureKeyPath.getParent().ensureDirectory();
+      core::Error error = writeSecureKeyFile(secureKey, secureKeyPath);
       if (error)
          return error;
 
       *pKeyPathUsed = secureKeyPath.getAbsolutePath();
       *pContentsHash = hash::crc32HexHash(secureKey);
-      LOG_DEBUG_MESSAGE("Creating secure key file: \"" + *pKeyPathUsed + 
-                        "\" key hash: (" + *pContentsHash + ")");
-
-      // attempt to write it
-      error = writeStringToFile(secureKeyPath, secureKey);
-      if (error)
-         return error;
-
-      // change mode it so it is only readable and writeable by this user
-      error = secureKeyPath.changeFileMode(core::FileMode::USER_READ_WRITE);
-      if (error)
-         return error;
 
       // successfully generated the cookie key, set it
       *pContents = secureKey;

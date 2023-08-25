@@ -29,6 +29,9 @@ namespace rstudio {
 namespace core {
 namespace key_file {
   
+core::Error writeSecureKeyFile(const std::string& secureKey,
+                               const FilePath& secureKeyPath);
+
 core::Error readSecureKeyFile(const FilePath& secureKeyPath,
                               std::string *pContents);
 
