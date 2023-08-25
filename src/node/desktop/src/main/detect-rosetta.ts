@@ -18,33 +18,41 @@ import { logger } from '../core/logger';
 import { dialog, MessageBoxOptions, shell } from 'electron';
 import { appState } from './app-state';
 import { ElectronDesktopOptions } from './preferences/electron-desktop-options';
+import { t } from 'i18next';
+import { initI18n } from './i18n-manager';
 
 enum DetectRosettaStatus {
   ROSETTA_CHECK_FAILED,
   ROSETTA_INSTALL_WARNING,
 }
 
+initI18n();
+
 const DETECT_ROSETTA_STATUS_MAP: Map<DetectRosettaStatus, MessageBoxOptions> = new Map([
   [
     DetectRosettaStatus.ROSETTA_CHECK_FAILED,
     {
       type: 'error',
-      buttons: ['OK'],
+      buttons: [t('common.buttonOk')],
       defaultId: 0,
-      title: 'Rosetta Check Failed',
-      message: 'Something went wrong while detecting your Rosetta installation.',
-      detail: 'Please reopen RStudio to try again.',
+      title: t('detectRosetta.checkFailedTitle'),
+      message: t('detectRosetta.checkFailedMessage'),
+      detail: t('detectRosetta.checkFailedDetail'),
     },
   ],
   [
     DetectRosettaStatus.ROSETTA_INSTALL_WARNING,
     {
       type: 'warning',
-      buttons: ['More Information', 'Remind Me Later', 'Don\'t Remind Me Again'],
+      buttons: [
+        t('detectRosetta.installWarningMoreInfo'),
+        t('detectRosetta.installWarningRemindLater'),
+        t('detectRosetta.installWarningDoNotRemind'),
+      ],
       defaultId: 0,
-      title: 'Rosetta is not Installed',
-      message: 'Rosetta is not installed on your machine. You may experience issues running RStudio.',
-      detail: 'To avoid these issues, please install Rosetta and reopen RStudio.',
+      title: t('detectRosetta.installWarningTitle'),
+      message: t('detectRosetta.installWarningMessage'),
+      detail: t('detectRosetta.installWarningDetail'),
     },
   ],
 ]);

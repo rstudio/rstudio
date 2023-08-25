@@ -49,6 +49,17 @@
     "rLaunchFailedTitle": "Error Loading R",
     "rLaunchFailedMessage": "An error occurred while attempting to load the selected version of R. Please select a different R installation."
   },
+  "detectRosetta": {
+    "checkFailedTitle": "Rosetta Check Failed",
+    "checkFailedMessage": "Something went wrong while detecting your Rosetta installation.",
+    "checkFailedDetail": "Please reopen RStudio to try again.",
+    "installWarningTitle": "Rosetta is not Installed",
+    "installWarningMessage": "Rosetta is not installed on your machine. You may experience issues running RStudio.",
+    "installWarningDetail": "To avoid these issues, please install Rosetta and reopen RStudio.",
+    "installWarningMoreInfo": "More Information",
+    "installWarningRemindLater": "Remind Me Later",
+    "installWarningDoNotRemind": "Don't Remind Me Again"
+  },
   "uiFolder": {
     "chooseRExecutable": "Choose R Executable",
     "rExecutable": "R Executable",
