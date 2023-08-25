@@ -17,7 +17,6 @@ package org.rstudio.studio.client.rsconnect;
 import java.util.ArrayList;
 import java.util.List;
 
-import com.google.gwt.aria.client.Roles;
 import org.rstudio.core.client.CommandWithArg;
 import org.rstudio.core.client.JsArrayUtil;
 import org.rstudio.core.client.StringUtil;
@@ -77,6 +76,7 @@ import org.rstudio.studio.client.workbench.prefs.model.UserPrefs;
 import org.rstudio.studio.client.workbench.prefs.model.UserState;
 import org.rstudio.studio.client.workbench.views.source.model.SourceServerOperations;
 
+import com.google.gwt.aria.client.Roles;
 import com.google.gwt.core.client.GWT;
 import com.google.gwt.core.client.JavaScriptObject;
 import com.google.gwt.core.client.JsArray;
@@ -84,6 +84,7 @@ import com.google.gwt.core.client.JsArrayString;
 import com.google.gwt.dom.client.Style.Unit;
 import com.google.gwt.event.dom.client.ClickEvent;
 import com.google.gwt.event.dom.client.ClickHandler;
+import com.google.gwt.user.client.Command;
 import com.google.gwt.user.client.ui.HTML;
 import com.google.gwt.user.client.ui.HorizontalPanel;
 import com.google.gwt.user.client.ui.Image;
@@ -169,16 +170,15 @@ public class RSConnect implements SessionInitEvent.Handler,
          constants_.publishingContentLabel(),
          event.getContentType() == CONTENT_TYPE_DOCUMENT ||
          event.getContentType() == CONTENT_TYPE_WEBSITE ||
-         event.getContentType() == CONTENT_TYPE_QUARTO_WEBSITE ,
-         null, new CommandWithArg<Boolean>() {
-            @Override
-            public void execute(Boolean succeeded)
-            {
-               if (succeeded)
-                  handleRSConnectAction(event);
+         event.getContentType() == CONTENT_TYPE_QUARTO_WEBSITE,
+         false,
+         null,
+         (succeeded) ->
+         {
+            if (succeeded)
+               handleRSConnectAction(event);
 
-               depsPending_ = false;
-            }
+            depsPending_ = false;
          });
    }
 
@@ -1195,24 +1195,43 @@ public class RSConnect implements SessionInitEvent.Handler,
                public void onResponseReceived(QmdPublishDetails details)
                {
                   indicator.onCompleted();
+                  
                   RenderedDocPreview previewParams = input.getOriginatingEvent().getFromPreview();
-                  if (previewParams != null)
+                  Command onDependenciesSatisfied = () ->
                   {
-                     if (StringUtil.isNullOrEmpty(details.website_output_dir))
-                        previewParams.setOutputFile(details.output_file);
-                     else
-                        previewParams.setOutputFile(details.website_output_dir);
-                     previewParams.setWebsiteDir(details.website_dir);
-                  }
-                  input.setIsMultiRmd(false);
-                  input.setIsQuarto(true);
-                  input.setIsShiny(details.is_shiny_qmd);
-                  input.setIsSelfContained(details.is_self_contained);
-                  input.setHasConnectAccount(details.has_connect_account);
-                  input.setWebsiteDir(details.website_dir);
-                  input.setWebsiteOutputDir(details.website_output_dir);
+                     if (previewParams != null)
+                     {
+                        if (StringUtil.isNullOrEmpty(details.website_output_dir))
+                           previewParams.setOutputFile(details.output_file);
+                        else
+                           previewParams.setOutputFile(details.website_output_dir);
+                        previewParams.setWebsiteDir(details.website_dir);
+                     }
+                     input.setIsMultiRmd(false);
+                     input.setIsQuarto(true);
+                     input.setIsShiny(details.is_shiny_qmd);
+                     input.setIsSelfContained(details.is_self_contained);
+                     input.setHasConnectAccount(details.has_connect_account);
+                     input.setWebsiteDir(details.website_dir);
+                     input.setWebsiteOutputDir(details.website_output_dir);
 
-                  onComplete.execute(input);
+                     onComplete.execute(input);
+                  };
+                  
+                  if (StringUtil.equals(details.project_type, "manuscript"))
+                  {
+                     dependencyManager_.withRSConnect("Publishing Quarto manuscripts", false, true, null, (succeeded) ->
+                     {
+                        if (succeeded)
+                        {
+                           onDependenciesSatisfied.execute();
+                        }
+                     });
+                  }
+                  else
+                  {
+                     onDependenciesSatisfied.execute();
+                  }
                }
 
                @Override

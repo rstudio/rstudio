@@ -537,27 +537,27 @@ Error getQmdPublishDetails(const json::JsonRpcRequest& request,
 
    // Look up configuration for this Quarto project, if this file is part of a Quarto book or
    // website.
-   std::string websiteDir, websiteOutputDir;
+   std::string websiteDir, websiteOutputDir, projectType;
    auto projectMeta = inspect.find("project");
    if (projectMeta != inspect.end())
    {
       FilePath quartoConfig = quartoProjectConfigFile(qmdPath);
       if (!quartoConfig.isEmpty())
       {
-          std::string type, outputDir;
-          readQuartoProjectConfig(quartoConfig, &type, &outputDir);
-          if (type == kQuartoProjectBook || type == kQuartoProjectWebsite || type == kQuartoProjectManuscript)
+          std::string outputDir;
+          readQuartoProjectConfig(quartoConfig, &projectType, &outputDir);
+          if (projectType == kQuartoProjectBook || projectType == kQuartoProjectWebsite || projectType == kQuartoProjectManuscript)
           {
              FilePath configPath = quartoConfig.getParent();
              websiteDir = configPath.getAbsolutePath();
              // Infer output directory
              if (outputDir.empty())
              {
-                 if (type == kQuartoProjectBook)
+                 if (projectType == kQuartoProjectBook)
                  {
                      outputDir = "_book";
                  }
-                 else if (type == kQuartoProjectManuscript)
+                 else if (projectType == kQuartoProjectManuscript)
                  {
                      outputDir = "_manuscript";
                  }
@@ -590,6 +590,7 @@ Error getQmdPublishDetails(const json::JsonRpcRequest& request,
 
 
    // Build result object
+   result["project_type"] = projectType;
    result["is_self_contained"] = selfContained;
    result["title"] = title;
    result["is_shiny_qmd"] = isShinyQmd;

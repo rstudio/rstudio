@@ -19,11 +19,11 @@ import java.util.ArrayList;
 import java.util.LinkedList;
 import java.util.List;
 
-import com.google.gwt.core.client.GWT;
 import org.rstudio.core.client.CommandWith2Args;
 import org.rstudio.core.client.CommandWithArg;
 import org.rstudio.core.client.Debug;
 import org.rstudio.core.client.StringUtil;
+import org.rstudio.core.client.Version;
 import org.rstudio.core.client.widget.MessageDialog;
 import org.rstudio.core.client.widget.Operation;
 import org.rstudio.core.client.widget.ProgressIndicator;
@@ -46,6 +46,7 @@ import org.rstudio.studio.client.workbench.views.jobs.model.JobConstants;
 import org.rstudio.studio.client.workbench.views.jobs.model.JobUpdate;
 import org.rstudio.studio.client.workbench.views.packages.events.PackageStateChangedEvent;
 
+import com.google.gwt.core.client.GWT;
 import com.google.gwt.core.client.JsArray;
 import com.google.gwt.core.client.JsArrayString;
 import com.google.gwt.event.shared.HandlerRegistration;
@@ -227,14 +228,36 @@ public class DependencyManager implements InstallShinyEvent.Handler,
    }
 
    public void withRSConnect(String userAction,
-         boolean requiresRmarkdown,
-         CommandWith2Args<String, CommandWithArg<Boolean>> userPrompt,
-         final CommandWithArg<Boolean> onCompleted)
+                             boolean requiresRmarkdown,
+                             boolean isQuartoManuscript,
+                             CommandWith2Args<String, CommandWithArg<Boolean>> userPrompt,
+                             final CommandWithArg<Boolean> onCompleted)
    {
       // build dependency array
       List<Dependency> deps = getFeatureDependencies("rsconnect");
       if (requiresRmarkdown)
          deps.addAll(getFeatureDependencies("rmarkdown"));
+      
+      // update rsconnect version if necessary
+      // TODO: Remove after a future release when required 'rsconnect' version
+      // is updated globally.
+      if (isQuartoManuscript)
+      {
+         for (int i = 0, n = deps.size(); i < n; i++)
+         {
+            Dependency dep = deps.get(i);
+            if (StringUtil.equals(dep.getName(), "rsconnect"))
+            {
+               int compare = Version.compare(dep.getVersion(), "1.0.2");
+               if (compare < 0)
+               {
+                  deps.remove(i);
+                  deps.add(Dependency.cranPackage("rsconnect", "1.0.2"));
+                  break;
+               }
+            }
+         }
+      }
 
       withDependencies(
         constants_.publishingPaneHeader(),
@@ -821,6 +844,14 @@ public class DependencyManager implements InstallShinyEvent.Handler,
       processingQueue_ = true;
       processDependencyRequest(requestQueue_.pop());
    }
+   
+   private ProgressIndicator createProgressIndicator(DependencyRequest req)
+   {
+      return new GlobalProgressDelayer(
+            globalDisplay_,
+            250,
+            req.progressCaption + "...").getIndicator();
+   }
 
    private void processDependencyRequest(final DependencyRequest req)
    {
@@ -850,10 +881,7 @@ public class DependencyManager implements InstallShinyEvent.Handler,
       }
 
       // create progress indicator
-      final ProgressIndicator progress = new GlobalProgressDelayer(
-            globalDisplay_,
-            250,
-            req.progressCaption + "...").getIndicator();
+      final ProgressIndicator progress = createProgressIndicator(req);
 
       // query for unsatisfied dependencies
       server_.unsatisfiedDependencies(
