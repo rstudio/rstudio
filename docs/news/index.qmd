@@ -28,10 +28,14 @@ This page provides the release notes associated with each release of RStudio and
 
 #### Posit Workbench
 - Caching of passwd lookups for a few more api calls including the process info api used by load balancing (rstudio/rstudio-pro#4800)
-- Avoid intermittent hanging `rserver` process when using 3rd party active directory (rstudio/rstudio-pro#4700)
+- Avoid intermittent hanging `rserver` process when using 3rd party active directory (rstudio/rstudio-pro#4614)
 - Fixed rserver CPU utilization bug when starting a session that emits lots of output without the expected "listening on port" pattern (rstudio/rstudio-pro#4865)
 - Fixed bug when resuming session not restoring current working directory for Terminal pane (rstudio/rstudio-pro#4027)
 - More efficient version of is user in groups feature and improved error handling for when get group fails (rstudio/rstudio-pro#4643)
+- Fixed issue with Slurm and load balancing that could delay session starts or occasionally fail to start (rstudio/rstudio-pro#4971)
+- Updated jupyterlab buildutils package to fix vulnerability (rstudio/rstudio-pro#4951)
+- Updated the SAML helper program to fix problem found in vulnerability scan (rstudio/rstudio-pro#4903)
+- Add support for newer Slurm v23 (rstduio/rstudio-pro#4766)
 
 ### Deprecated / Removed
 
