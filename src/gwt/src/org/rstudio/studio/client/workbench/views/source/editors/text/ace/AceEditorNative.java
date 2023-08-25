@@ -20,6 +20,7 @@ import org.rstudio.core.client.CommandWithArg;
 import org.rstudio.core.client.js.JsMap;
 import org.rstudio.core.client.widget.CanSetControlId;
 import org.rstudio.studio.client.workbench.prefs.model.UserPrefs;
+import org.rstudio.studio.client.workbench.views.source.editors.text.themes.AceTheme;
 
 import com.google.gwt.core.client.JavaScriptObject;
 import com.google.gwt.dom.client.Element;
@@ -721,6 +722,13 @@ public class AceEditorNative extends JavaScriptObject
       if (bindings.hasOwnProperty("return")) {
          delete bindings["return"];
       }
+   }-*/;
+   
+   // NOTE: We intentionally bypass Ace's 'setTheme()' API, as that only
+   // allows one to load themes that are bundled with Ace, but we instead
+   // load and manage themes ourselves.
+   public final native void setTheme(AceTheme theme) /*-{
+      this.renderer.theme = theme;
    }-*/;
 
    static { initialize(); }

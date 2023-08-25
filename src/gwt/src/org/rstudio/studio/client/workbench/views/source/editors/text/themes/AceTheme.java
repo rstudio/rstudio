@@ -14,12 +14,13 @@
  */
 package org.rstudio.studio.client.workbench.views.source.editors.text.themes;
 
-import com.google.gwt.core.client.GWT;
 import org.rstudio.core.client.StringUtil;
 import org.rstudio.core.client.files.FileSystemItem;
 import org.rstudio.core.client.regex.Pattern;
 import org.rstudio.studio.client.workbench.prefs.model.UserStateAccessor;
 import org.rstudio.studio.client.workbench.views.source.ViewsSourceConstants;
+
+import com.google.gwt.core.client.GWT;
 
 /**
  * Represents an editor theme.
@@ -47,11 +48,11 @@ public class AceTheme extends UserStateAccessor.Theme
 
    public static final native AceTheme create(String name, String url, Boolean isDark)
    /*-{
-      var theme = new Object();
-      theme.name = name;
-      theme.url = url;
-      theme.isDark = isDark;
-      return theme;
+      return {
+         name: name,
+         url: url,
+         isDark: isDark
+      };
    }-*/;
 
    public native final Boolean isDark()

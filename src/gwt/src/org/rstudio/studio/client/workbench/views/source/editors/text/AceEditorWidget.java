@@ -54,6 +54,7 @@ import org.rstudio.studio.client.workbench.views.source.editors.text.events.Brea
 import org.rstudio.studio.client.workbench.views.source.editors.text.events.CursorChangedEvent;
 import org.rstudio.studio.client.workbench.views.source.editors.text.events.DocumentChangedEvent;
 import org.rstudio.studio.client.workbench.views.source.editors.text.events.EditorLoadedEvent;
+import org.rstudio.studio.client.workbench.views.source.editors.text.events.EditorThemeChangedEvent;
 import org.rstudio.studio.client.workbench.views.source.editors.text.events.FoldChangeEvent;
 import org.rstudio.studio.client.workbench.views.source.editors.text.events.FoldChangeEvent.Handler;
 import org.rstudio.studio.client.workbench.views.source.editors.text.events.HasFoldChangeHandlers;
@@ -366,6 +367,15 @@ public class AceEditorWidget extends Composite
                   clearKeyBuffers(editor_);
                }
             });
+      
+      events_.addHandler(EditorThemeChangedEvent.TYPE, new EditorThemeChangedEvent.Handler()
+      {
+         @Override
+         public void onEditorThemeChanged(EditorThemeChangedEvent event)
+         {
+            editor_.setTheme(event.getTheme());
+         }
+      });
    }
 
    // When the 'keyBinding' field is initialized (the field holding all keyboard
