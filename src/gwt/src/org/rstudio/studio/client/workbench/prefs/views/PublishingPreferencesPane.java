@@ -15,21 +15,6 @@
 
 package org.rstudio.studio.client.workbench.prefs.views;
 
-import com.google.gwt.core.client.GWT;
-import com.google.gwt.dom.client.Style.Unit;
-import com.google.gwt.event.dom.client.ChangeEvent;
-import com.google.gwt.event.dom.client.ChangeHandler;
-import com.google.gwt.event.dom.client.ClickEvent;
-import com.google.gwt.event.dom.client.ClickHandler;
-import com.google.gwt.event.logical.shared.ValueChangeEvent;
-import com.google.gwt.event.logical.shared.ValueChangeHandler;
-import com.google.gwt.resources.client.ImageResource;
-import com.google.gwt.user.client.ui.CheckBox;
-import com.google.gwt.user.client.ui.HorizontalPanel;
-import com.google.gwt.user.client.ui.Label;
-import com.google.gwt.user.client.ui.VerticalPanel;
-import com.google.inject.Inject;
-
 import org.rstudio.core.client.CommandWithArg;
 import org.rstudio.core.client.ElementIds;
 import org.rstudio.core.client.prefs.PreferencesDialogBaseResources;
@@ -54,6 +39,21 @@ import org.rstudio.studio.client.server.Void;
 import org.rstudio.studio.client.workbench.prefs.PrefsConstants;
 import org.rstudio.studio.client.workbench.prefs.model.UserPrefs;
 import org.rstudio.studio.client.workbench.prefs.model.UserState;
+
+import com.google.gwt.core.client.GWT;
+import com.google.gwt.dom.client.Style.Unit;
+import com.google.gwt.event.dom.client.ChangeEvent;
+import com.google.gwt.event.dom.client.ChangeHandler;
+import com.google.gwt.event.dom.client.ClickEvent;
+import com.google.gwt.event.dom.client.ClickHandler;
+import com.google.gwt.event.logical.shared.ValueChangeEvent;
+import com.google.gwt.event.logical.shared.ValueChangeHandler;
+import com.google.gwt.resources.client.ImageResource;
+import com.google.gwt.user.client.ui.CheckBox;
+import com.google.gwt.user.client.ui.HorizontalPanel;
+import com.google.gwt.user.client.ui.Label;
+import com.google.gwt.user.client.ui.VerticalPanel;
+import com.google.inject.Inject;
 
 public class PublishingPreferencesPane extends PreferencesPane
 {
@@ -168,7 +168,7 @@ public class PublishingPreferencesPane extends PreferencesPane
          @Override
          public void onClick(ClickEvent arg0)
          {
-            deps_.withRSConnect(constants_.withRSConnectLabel(), false, null,
+            deps_.withRSConnect(constants_.withRSConnectLabel(), false, false, null,
                                 new CommandWithArg<Boolean>()
             {
                @Override
@@ -355,19 +355,14 @@ public class PublishingPreferencesPane extends PreferencesPane
       }
       else
       {
-         deps_.withRSConnect(constants_.getAccountCountLabel(), false, null,
-                             new CommandWithArg<Boolean>()
+         deps_.withRSConnect(constants_.getAccountCountLabel(), false, false, null, (succeeded) ->
          {
-            @Override
-            public void execute(Boolean succeeded)
-            {
-               // refresh the account list in case there are accounts already on
-               // the system (e.g. package was installed at one point and some
-               // metadata remains)
-               accountList_.refreshAccountList();
+            // refresh the account list in case there are accounts already on
+            // the system (e.g. package was installed at one point and some
+            // metadata remains)
+            accountList_.refreshAccountList();
 
-               showAccountWizard();
-            }
+            showAccountWizard();
          });
       }
    }
