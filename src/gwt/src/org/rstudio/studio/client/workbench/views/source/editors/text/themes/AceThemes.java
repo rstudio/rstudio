@@ -65,8 +65,18 @@ public class AceThemes
       state.get().theme().bind(theme -> applyTheme((AceTheme)theme.cast()));
    }
    
+   public AceTheme getCurrentTheme()
+   {
+      return currentTheme_;
+   }
+   
    private void applyTheme(Document document, final AceTheme theme)
    {
+      if (Document.get() == document)
+      {
+         currentTheme_ = theme;
+      }
+      
       final String linkId = "rstudio-acethemes-linkelement";
 
       // Build the URL.
@@ -279,6 +289,8 @@ public class AceThemes
          },
          themeLocation);
    }
+   
+   private AceTheme currentTheme_;
 
    private ThemeServerOperations themeServerOperations_;
    private final EventBus events_;
