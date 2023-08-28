@@ -7,6 +7,11 @@
 - Add support Quarto Manuscript projects, a new Quarto feature that will be released in Quarto 1.4.
 - Added option to sign Git commits (#1865)
 - Add section to theme generation that will use theme-specific color(s) to set colors of vim/emacs-mode cursor
+- Update code-server to version 4.14.1 (VS Code version 1.79.2) bundled with node 16.20.2 (rstudio-pro#4774, rstudio-pro#5012)
+- Update rserver-saml to 0.7.0 (rstudio-pro#4903)
+- Change the default behavior of `launcher-balancing-enabled` to always be true. (rstudio-pro#4953)
+- Auto-generate the `secure-cookie-key` and launcher key pair in load-balanced environments (rstudio-pro#4985)
+- Add the `secure-cookie-key` and launcher key pair to the node table of the database for load-balanced environments. (rstudio-pro#4985)
 
 ### Fixed
 - Fixed issue where `DYLD_FALLBACK_LIBRARY_PATH` was not properly forwarded on macOS (#13085)
