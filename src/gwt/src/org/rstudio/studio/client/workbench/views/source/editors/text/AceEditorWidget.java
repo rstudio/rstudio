@@ -61,6 +61,7 @@ import org.rstudio.studio.client.workbench.views.source.editors.text.events.HasF
 import org.rstudio.studio.client.workbench.views.source.editors.text.events.PasteEvent;
 import org.rstudio.studio.client.workbench.views.source.editors.text.events.RenderFinishedEvent;
 import org.rstudio.studio.client.workbench.views.source.editors.text.events.UndoRedoEvent;
+import org.rstudio.studio.client.workbench.views.source.editors.text.themes.AceThemes;
 import org.rstudio.studio.client.workbench.views.source.events.ScrollYEvent;
 
 import com.google.gwt.core.client.JavaScriptObject;
@@ -145,6 +146,7 @@ public class AceEditorWidget extends Composite
       editor_.setHighlightGutterLine(false);
       editor_.setFixedWidthGutter(true);
       editor_.setIndentedSoftWrap(false);
+      editor_.setTheme(themes_.getCurrentTheme());
       editor_.delegateEventsTo(AceEditorWidget.this);
       editor_.onChange(new CommandWithArg<AceDocumentChangeEventNative>()
       {
@@ -465,10 +467,13 @@ public class AceEditorWidget extends Composite
    }-*/;
 
    @Inject
-   private void initialize(EventBus events, UserPrefs uiPrefs)
+   private void initialize(EventBus events,
+                           UserPrefs uiPrefs,
+                           AceThemes themes)
    {
       events_ = events;
       uiPrefs_ = uiPrefs;
+      themes_ = themes;
    }
 
    public HandlerRegistration addCursorChangedHandler(CursorChangedEvent.Handler handler)
@@ -1321,4 +1326,5 @@ public class AceEditorWidget extends Composite
    // injected
    private EventBus events_;
    private UserPrefs uiPrefs_;
+   private AceThemes themes_;
 }

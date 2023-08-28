@@ -728,6 +728,7 @@ public class AceEditorNative extends JavaScriptObject
    // allows one to load themes that are bundled with Ace, but we instead
    // load and manage themes ourselves.
    public final native void setTheme(AceTheme theme) /*-{
+      theme = theme || { isDark: false };
       this.renderer.theme = theme;
    }-*/;
 
