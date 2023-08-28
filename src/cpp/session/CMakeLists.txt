@@ -717,7 +717,9 @@ if(NOT RSTUDIO_SESSION_WIN32 AND NOT RSESSION_ALTERNATE_BUILD)
       else()
          install(DIRECTORY "${RSTUDIO_DEPENDENCIES_QUARTO_DIR}"
                DESTINATION "${RSTUDIO_INSTALL_BIN}"
-               USE_SOURCE_PERMISSIONS)
+               USE_SOURCE_PERMISSIONS
+               PATTERN ".gitignore"
+               EXCLUDE)
       endif()
    else()
       install(DIRECTORY "${RSTUDIO_DEPENDENCIES_PANDOC_DIR}/"
