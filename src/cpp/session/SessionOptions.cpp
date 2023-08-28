@@ -198,10 +198,11 @@ core::ProgramStatus Options::read(int argc, char * const argv[], std::ostream& o
       return ProgramStatus::exitFailure();
    }
    
-#ifdef RSTUDIO_DESKTOP
    // allow copilot to be enabled by default in RStudio Desktop
-   copilotEnabled_ = true;
-#endif
+   if (programMode_ == kSessionProgramModeDesktop)
+   {
+      copilotEnabled_ = true;
+   }
 
    // compute program identity
    programIdentity_ = "rsession-" + userIdentity_;
