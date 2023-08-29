@@ -128,7 +128,7 @@ public class CopilotPreferencesPane extends PreferencesPane
    
    private void initDisplay()
    {
-      add(headerLabel("GitHub Copilot"));
+      add(headerLabel("GitHub Copilot (Preview)"));
       
       if (session_.getSessionInfo().getCopilotEnabled())
       {
@@ -142,8 +142,8 @@ public class CopilotPreferencesPane extends PreferencesPane
          add(spaced(statusPanel));
 
          add(headerLabel("Copilot Completions"));
-         add(checkboxPref(prefs_.copilotAllowAutomaticCompletions()));
-         add(selCopilotTabKeyBehavior_);
+         // add(checkboxPref(prefs_.copilotAllowAutomaticCompletions()));
+         // add(selCopilotTabKeyBehavior_);
          add(numericPref("Show code suggestions after keyboard idle (ms):", 10, 5000, prefs_.copilotCompletionsDelay()));
          
       }
