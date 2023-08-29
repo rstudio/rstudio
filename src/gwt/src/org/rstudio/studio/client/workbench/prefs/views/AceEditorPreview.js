@@ -17,7 +17,17 @@ editor.setHighlightActiveLine(false);
 editor.renderer.setHScrollBarAlwaysVisible(false);
 editor.renderer.setShowGutter(false);
 editor.renderer.setDisplayIndentGuides(false);
+editor.renderer.setScrollMargin(3, 3, 3, 3);
+
+// Set up line height
+editor.container.style.lineHeight = 1.4;
+editor.renderer.updateFontSize();
 
 // Load R mode
 editor.getSession().setMode(new RMode(false, editor.getSession()));
- 
+
+// Remove Textmate theme, as we'll be applying our own themes for display
+var el = document.getElementById("ace-tm");
+if (el != null) {
+    el.parentNode.removeChild(el);
+}

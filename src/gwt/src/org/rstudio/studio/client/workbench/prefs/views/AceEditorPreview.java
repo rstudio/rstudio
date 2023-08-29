@@ -14,21 +14,27 @@
  */
 package org.rstudio.studio.client.workbench.prefs.views;
 
-import com.google.gwt.core.client.GWT;
-import com.google.gwt.dom.client.*;
-import com.google.gwt.dom.client.Style.BorderStyle;
-import com.google.gwt.dom.client.Style.Unit;
-import com.google.gwt.resources.client.ClientBundle;
-import com.google.gwt.resources.client.TextResource;
-
 import org.rstudio.core.client.ExternalJavaScriptLoader;
 import org.rstudio.core.client.ExternalJavaScriptLoader.Callback;
 import org.rstudio.core.client.theme.ThemeFonts;
 import org.rstudio.core.client.widget.DynamicIFrame;
 import org.rstudio.core.client.widget.FontSizer;
 import org.rstudio.studio.client.application.Desktop;
-import org.rstudio.studio.client.workbench.views.source.editors.text.ace.AceResources;
 import org.rstudio.studio.client.workbench.prefs.PrefsConstants;
+import org.rstudio.studio.client.workbench.views.source.editors.text.ace.AceResources;
+
+import com.google.gwt.core.client.GWT;
+import com.google.gwt.dom.client.BodyElement;
+import com.google.gwt.dom.client.DivElement;
+import com.google.gwt.dom.client.Document;
+import com.google.gwt.dom.client.Element;
+import com.google.gwt.dom.client.LinkElement;
+import com.google.gwt.dom.client.Style;
+import com.google.gwt.dom.client.Style.BorderStyle;
+import com.google.gwt.dom.client.Style.Unit;
+import com.google.gwt.dom.client.StyleElement;
+import com.google.gwt.resources.client.ClientBundle;
+import com.google.gwt.resources.client.TextResource;
 
 public class AceEditorPreview extends DynamicIFrame
 {
