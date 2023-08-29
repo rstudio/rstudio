@@ -14,27 +14,12 @@
  */
 package org.rstudio.studio.client.workbench.views.console.shell.assist;
 
+import java.util.Arrays;
+import java.util.Collections;
 import java.util.HashSet;
+import java.util.List;
 import java.util.Map;
 import java.util.Set;
-
-import com.google.gwt.core.client.GWT;
-import com.google.gwt.dom.client.Element;
-import com.google.gwt.dom.client.NativeEvent;
-import com.google.gwt.event.dom.client.*;
-import com.google.gwt.event.logical.shared.CloseEvent;
-import com.google.gwt.event.logical.shared.CloseHandler;
-import com.google.gwt.event.logical.shared.SelectionEvent;
-import com.google.gwt.event.logical.shared.SelectionHandler;
-import com.google.gwt.event.shared.HandlerRegistration;
-import com.google.gwt.user.client.Event;
-import com.google.gwt.user.client.Event.NativePreviewHandler;
-import com.google.gwt.user.client.Window;
-import com.google.gwt.user.client.Event.NativePreviewEvent;
-import com.google.gwt.user.client.ui.HTML;
-import com.google.gwt.user.client.ui.Label;
-import com.google.gwt.user.client.ui.PopupPanel;
-import com.google.gwt.user.client.ui.VerticalPanel;
 
 import org.rstudio.core.client.ElementIds;
 import org.rstudio.core.client.Rectangle;
@@ -49,6 +34,28 @@ import org.rstudio.studio.client.workbench.views.console.ConsoleConstants;
 import org.rstudio.studio.client.workbench.views.console.ConsoleResources;
 import org.rstudio.studio.client.workbench.views.console.shell.assist.CompletionRequester.QualifiedName;
 import org.rstudio.studio.client.workbench.views.help.model.HelpInfo.ParsedInfo;
+
+import com.google.gwt.core.client.GWT;
+import com.google.gwt.dom.client.Element;
+import com.google.gwt.dom.client.NativeEvent;
+import com.google.gwt.event.dom.client.BlurEvent;
+import com.google.gwt.event.dom.client.BlurHandler;
+import com.google.gwt.event.dom.client.KeyCodes;
+import com.google.gwt.event.dom.client.MouseDownEvent;
+import com.google.gwt.event.dom.client.MouseDownHandler;
+import com.google.gwt.event.logical.shared.CloseEvent;
+import com.google.gwt.event.logical.shared.CloseHandler;
+import com.google.gwt.event.logical.shared.SelectionEvent;
+import com.google.gwt.event.logical.shared.SelectionHandler;
+import com.google.gwt.event.shared.HandlerRegistration;
+import com.google.gwt.user.client.Event;
+import com.google.gwt.user.client.Event.NativePreviewEvent;
+import com.google.gwt.user.client.Event.NativePreviewHandler;
+import com.google.gwt.user.client.Window;
+import com.google.gwt.user.client.ui.HTML;
+import com.google.gwt.user.client.ui.Label;
+import com.google.gwt.user.client.ui.PopupPanel;
+import com.google.gwt.user.client.ui.VerticalPanel;
 
 public class CompletionPopupPanel extends ThemedPopupPanel
       implements CompletionPopupDisplay
@@ -160,10 +167,25 @@ public class CompletionPopupPanel extends ThemedPopupPanel
                                     boolean truncated)
    {
       registerIgnoredKeys();
-      CompletionList<QualifiedName> list = new CompletionList<>(values,
-                                                                9,
-                                                                true,
-                                                                true);
+      
+      // If we're going to display completions on top, then reverse
+      // the completion list, and select the last values instead of the first.
+      boolean isShowingOnBottom = false;
+      if (callback instanceof PopupPositioner)
+      {
+         PopupPositioner positioner = (PopupPositioner) callback;
+         isShowingOnBottom = positioner.getPreferBottom();
+      }
+      
+      if (!isShowingOnBottom)
+      {
+         List<QualifiedName> names = Arrays.asList(values);
+         Collections.reverse(names);
+         values = names.toArray(new QualifiedName[0]);
+      }
+      
+      int numVisibleItems = 7;
+      CompletionList<QualifiedName> list = new CompletionList<>(values, numVisibleItems, true, true);
 
       list.addSelectionCommitHandler((SelectionCommitEvent<QualifiedName> event) ->
       {
@@ -189,11 +211,12 @@ public class CompletionPopupPanel extends ThemedPopupPanel
          container_.add(truncated_);
 
       setWidget(container_);
-
-      ElementIds.assignElementId(list_.getElement(),
-            ElementIds.POPUP_COMPLETIONS);
+      ElementIds.assignElementId(list_.getElement(), ElementIds.POPUP_COMPLETIONS);
 
       show(callback);
+      
+      if (!isShowingOnBottom)
+         selectLast();
    }
 
    public boolean hasCompletions()
