@@ -3566,7 +3566,7 @@ public class UserPrefsAccessor extends Prefs
             COPILOT_TAB_KEY_BEHAVIOR_SUGGESTION,
             COPILOT_TAB_KEY_BEHAVIOR_COMPLETIONS
          },
-         "",
+         "suggestion",
          new String[] {
             _constants.copilotTabKeyBehaviorEnum_suggestion(),
             _constants.copilotTabKeyBehaviorEnum_completions()

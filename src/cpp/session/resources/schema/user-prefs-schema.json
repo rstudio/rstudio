@@ -1696,6 +1696,7 @@
             "type": "string",
             "enum": ["suggestion", "completions"],
             "enumReadable": ["Copilot Suggestion", "Code Completion"],
+            "default": "suggestion",
             "title": "Pressing Tab key will prefer inserting:",
             "description": "Control the behavior of the Tab key when both Copilot code suggestions and RStudio code completions are visible."
         }

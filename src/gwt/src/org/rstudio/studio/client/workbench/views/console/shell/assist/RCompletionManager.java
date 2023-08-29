@@ -521,9 +521,10 @@ public class RCompletionManager implements CompletionManager
                else if (keycode == KeyCodes.KEY_TAB)
                {
                   // Let tab insert ghost text if configured to do so
+                  String tabKeyBehavior = userPrefs_.copilotTabKeyBehavior().getValue();
                   boolean preferGhostText =
                         docDisplay_.hasGhostText() &&
-                        userPrefs_.copilotTabKeyBehavior().getValue() == UserPrefsAccessor.COPILOT_TAB_KEY_BEHAVIOR_SUGGESTION;
+                        tabKeyBehavior == UserPrefsAccessor.COPILOT_TAB_KEY_BEHAVIOR_SUGGESTION;
                   
                   if (preferGhostText)
                   {
