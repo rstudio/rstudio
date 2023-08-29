@@ -114,6 +114,8 @@ public class CopilotPreferencesPane extends PreferencesPane
             true,
             false);
       
+      selCopilotTabKeyBehavior_.setValue(prefs_.copilotTabKeyBehavior().getGlobalValue());
+      
       linkCopilotTos_ = new HelpLink(
             "GitHub Copilot: Terms of Service",
             "github-copilot-terms-of-service",

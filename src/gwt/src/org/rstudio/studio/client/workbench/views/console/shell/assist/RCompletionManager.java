@@ -1853,7 +1853,7 @@ public class RCompletionManager implements CompletionManager
          }
          else
          {
-            boolean preferBottom = !userPrefs_.copilotAllowAutomaticCompletions().getValue();
+            boolean preferBottom = !userPrefs_.copilotEnabled().getValue();
             popup_.showCompletionValues(
                   results,
                   new PopupPositioner(rect, popup_, preferBottom),

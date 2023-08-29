@@ -184,7 +184,11 @@ public class CompletionPopupPanel extends ThemedPopupPanel
          values = names.toArray(new QualifiedName[0]);
       }
       
-      int numVisibleItems = 7;
+      // Since completion popups are usually displayed from the Source pane,
+      // if we're trying to display completions on top of the cursor location,
+      // we'll have relatively less space available. In that case, try to display
+      // fewer items, so we can fit the visible space.
+      int numVisibleItems = isShowingOnBottom ? 9 : 6;
       CompletionList<QualifiedName> list = new CompletionList<>(values, numVisibleItems, true, true);
 
       list.addSelectionCommitHandler((SelectionCommitEvent<QualifiedName> event) ->
