@@ -950,6 +950,7 @@ Error copilotInstallAgent(const json::JsonRpcRequest& request,
 
 } // end anonymous namespace
 
+
 namespace file_monitor {
 
 namespace {
@@ -996,6 +997,9 @@ void onMonitoringEnabled(const tree<core::FileInfo>& tree)
    if (!s_copilotEnabled)
       return;
    
+   if (!prefs::userPrefs().copilotIndexingEnabled())
+      return;
+   
    for (auto&& file : tree)
       indexFile(file);
 }
@@ -1003,6 +1007,9 @@ void onMonitoringEnabled(const tree<core::FileInfo>& tree)
 void onFilesChanged(const std::vector<core::system::FileChangeEvent>& events)
 {
    if (!s_copilotEnabled)
+      return;
+   
+   if (!prefs::userPrefs().copilotIndexingEnabled())
       return;
    
    for (auto&& event : events)
@@ -1014,7 +1021,6 @@ void onMonitoringDisabled()
 }
 
 } // end namespace file_monitor
-
 
 
 Error initialize()
