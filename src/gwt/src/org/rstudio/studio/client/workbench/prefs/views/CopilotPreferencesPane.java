@@ -77,7 +77,6 @@ public class CopilotPreferencesPane extends PreferencesPane
       copilot_ = copilot;
       server_ = server;
       
-      cbCopilotEnabled_ = checkboxPref(prefs_.copilotEnabled(), true);
       lblCopilotStatus_ = new Label("(Loading...)");
       
       statusButtons_ = new ArrayList<SmallButton>();
@@ -99,6 +98,9 @@ public class CopilotPreferencesPane extends PreferencesPane
       btnRefresh_ = new SmallButton("Refresh");
       btnRefresh_.addStyleName(RES.styles().button());
       statusButtons_.add(btnRefresh_);
+      
+      cbCopilotEnabled_ = checkboxPref(prefs_.copilotEnabled(), true);
+      cbCopilotIndexingEnabled_ = checkboxPref(prefs_.copilotIndexingEnabled(), true);
       
       selCopilotTabKeyBehavior_ = new SelectWidget(
             constants.copilotTabKeyBehaviorTitle(),
@@ -140,12 +142,14 @@ public class CopilotPreferencesPane extends PreferencesPane
          statusPanel.add(btnSignOut_);
          statusPanel.add(btnActivate_);
          add(spaced(statusPanel));
+         
+         add(headerLabel("Copilot Indexing"));
+         add(spaced(cbCopilotIndexingEnabled_));
 
          add(headerLabel("Copilot Completions"));
          // add(checkboxPref(prefs_.copilotAllowAutomaticCompletions()));
          // add(selCopilotTabKeyBehavior_);
          add(numericPref("Show code suggestions after keyboard idle (ms):", 10, 5000, prefs_.copilotCompletionsDelay()));
-         
       }
       else
       {
@@ -368,8 +372,9 @@ public class CopilotPreferencesPane extends PreferencesPane
    private final UserPrefs prefs_;
    private final Copilot copilot_;
    private final CopilotServerOperations server_;
-   private final CheckBox cbCopilotEnabled_;
    private final Label lblCopilotStatus_;
+   private final CheckBox cbCopilotEnabled_;
+   private final CheckBox cbCopilotIndexingEnabled_;
    private final List<SmallButton> statusButtons_;
    private final SmallButton btnSignIn_;
    private final SmallButton btnSignOut_;

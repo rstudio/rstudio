@@ -3576,6 +3576,18 @@ public class UserPrefsAccessor extends Prefs
    public final static String COPILOT_TAB_KEY_BEHAVIOR_SUGGESTION = "suggestion";
    public final static String COPILOT_TAB_KEY_BEHAVIOR_COMPLETIONS = "completions";
 
+   /**
+    * When enabled, RStudio will index project files with GitHub Copilot.
+    */
+   public PrefValue<Boolean> copilotIndexingEnabled()
+   {
+      return bool(
+         "copilot_indexing_enabled",
+         _constants.copilotIndexingEnabledTitle(), 
+         _constants.copilotIndexingEnabledDescription(), 
+         false);
+   }
+
    public void syncPrefs(String layer, JsObject source)
    {
       if (source.hasKey("run_rprofile_on_resume"))
@@ -4078,6 +4090,8 @@ public class UserPrefsAccessor extends Prefs
          copilotAllowAutomaticCompletions().setValue(layer, source.getBool("copilot_allow_automatic_completions"));
       if (source.hasKey("copilot_tab_key_behavior"))
          copilotTabKeyBehavior().setValue(layer, source.getString("copilot_tab_key_behavior"));
+      if (source.hasKey("copilot_indexing_enabled"))
+         copilotIndexingEnabled().setValue(layer, source.getBool("copilot_indexing_enabled"));
    }
    public List<PrefValue<?>> allPrefs()
    {
@@ -4332,6 +4346,7 @@ public class UserPrefsAccessor extends Prefs
       prefs.add(copilotCompletionsDelay());
       prefs.add(copilotAllowAutomaticCompletions());
       prefs.add(copilotTabKeyBehavior());
+      prefs.add(copilotIndexingEnabled());
       return prefs;
    }
    
