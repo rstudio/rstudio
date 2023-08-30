@@ -1,5 +1,5 @@
 /*
- * ServerAuthHandler.hpp
+ * ServerAuthHandlerOverlay.hpp
  *
  * Copyright (C) 2023 by Posit Software, PBC
  *
@@ -18,14 +18,22 @@
 
 #include <string>
 
+#include <boost/function.hpp>
+
+#include <core/ExponentialBackoff.hpp>
+#include <core/http/UriHandler.hpp>
+#include <core/http/AsyncUriHandler.hpp>
+
 #include <shared_core/json/Json.hpp>
-#include <shared_core/Error.hpp>
+#include <shared_core/system/User.hpp>
+
+#include <server/auth/ServerSecureUriHandler.hpp>
 
 namespace rstudio {
 namespace server {
 namespace auth {
 namespace handler {
-   
+
 namespace overlay {
 
 core::Error initialize();
