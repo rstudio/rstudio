@@ -2063,6 +2063,26 @@ public interface UserPrefsAccessorConstants extends Constants {
    @DefaultStringValue("The delay (in milliseconds) before GitHub Copilot completions are requested after the cursor position has changed.")
    String copilotCompletionsDelayDescription();
 
+   /**
+    * When enabled, RStudio will continue providing as-you-type code completions when Copilot is enabled.
+    */
+   @DefaultStringValue("Enable as-you-type code completions when Copilot is enabled")
+   String copilotAllowAutomaticCompletionsTitle();
+   @DefaultStringValue("When enabled, RStudio will continue providing as-you-type code completions when Copilot is enabled.")
+   String copilotAllowAutomaticCompletionsDescription();
+
+   /**
+    * Control the behavior of the Tab key when both Copilot code suggestions and RStudio code completions are visible.
+    */
+   @DefaultStringValue("Pressing Tab key will prefer inserting:")
+   String copilotTabKeyBehaviorTitle();
+   @DefaultStringValue("Control the behavior of the Tab key when both Copilot code suggestions and RStudio code completions are visible.")
+   String copilotTabKeyBehaviorDescription();
+   @DefaultStringValue("Copilot Suggestion")
+   String copilotTabKeyBehaviorEnum_suggestion();
+   @DefaultStringValue("Code Completion")
+   String copilotTabKeyBehaviorEnum_completions();
+
 
 
 }

@@ -20,7 +20,9 @@ import java.util.List;
 import org.rstudio.core.client.CommandWithArg;
 import org.rstudio.core.client.Debug;
 import org.rstudio.core.client.JSON;
+import org.rstudio.core.client.prefs.RestartRequirement;
 import org.rstudio.core.client.resources.ImageResource2x;
+import org.rstudio.core.client.widget.SelectWidget;
 import org.rstudio.core.client.widget.SmallButton;
 import org.rstudio.studio.client.application.AriaLiveService;
 import org.rstudio.studio.client.common.HelpLink;
@@ -32,6 +34,8 @@ import org.rstudio.studio.client.workbench.copilot.model.CopilotResponseTypes.Co
 import org.rstudio.studio.client.workbench.copilot.server.CopilotServerOperations;
 import org.rstudio.studio.client.workbench.model.Session;
 import org.rstudio.studio.client.workbench.prefs.model.UserPrefs;
+import org.rstudio.studio.client.workbench.prefs.model.UserPrefsAccessor;
+import org.rstudio.studio.client.workbench.prefs.model.UserPrefsAccessorConstants;
 
 import com.google.gwt.aria.client.Roles;
 import com.google.gwt.core.client.GWT;
@@ -54,6 +58,13 @@ import com.google.inject.Inject;
 
 public class CopilotPreferencesPane extends PreferencesPane
 {
+   @Override
+   public RestartRequirement onApply(UserPrefs prefs)
+   {
+      prefs.copilotTabKeyBehavior().setGlobalValue(selCopilotTabKeyBehavior_.getValue());
+      return super.onApply(prefs);
+   }
+   
    @Inject
    public CopilotPreferencesPane(Session session,
                                  UserPrefs prefs,
@@ -89,6 +100,22 @@ public class CopilotPreferencesPane extends PreferencesPane
       btnRefresh_.addStyleName(RES.styles().button());
       statusButtons_.add(btnRefresh_);
       
+      selCopilotTabKeyBehavior_ = new SelectWidget(
+            constants.copilotTabKeyBehaviorTitle(),
+            new String[] {
+                  constants.copilotTabKeyBehaviorEnum_suggestion(),
+                  constants.copilotTabKeyBehaviorEnum_completions()
+            },
+            new String[] {
+                  UserPrefsAccessor.COPILOT_TAB_KEY_BEHAVIOR_SUGGESTION,
+                  UserPrefsAccessor.COPILOT_TAB_KEY_BEHAVIOR_COMPLETIONS
+            },
+            false,
+            true,
+            false);
+      
+      selCopilotTabKeyBehavior_.setValue(prefs_.copilotTabKeyBehavior().getGlobalValue());
+      
       linkCopilotTos_ = new HelpLink(
             "GitHub Copilot: Terms of Service",
             "github-copilot-terms-of-service",
@@ -101,7 +128,7 @@ public class CopilotPreferencesPane extends PreferencesPane
    
    private void initDisplay()
    {
-      add(headerLabel("GitHub Copilot"));
+      add(headerLabel("GitHub Copilot (Preview)"));
       
       if (session_.getSessionInfo().getCopilotEnabled())
       {
@@ -115,7 +142,10 @@ public class CopilotPreferencesPane extends PreferencesPane
          add(spaced(statusPanel));
 
          add(headerLabel("Copilot Completions"));
+         // add(checkboxPref(prefs_.copilotAllowAutomaticCompletions()));
+         // add(selCopilotTabKeyBehavior_);
          add(numericPref("Show code suggestions after keyboard idle (ms):", 10, 5000, prefs_.copilotCompletionsDelay()));
+         
       }
       else
       {
@@ -345,8 +375,10 @@ public class CopilotPreferencesPane extends PreferencesPane
    private final SmallButton btnSignOut_;
    private final SmallButton btnActivate_;
    private final SmallButton btnRefresh_;
+   private final SelectWidget selCopilotTabKeyBehavior_;
    private final HelpLink linkCopilotTos_;
    private final Label lblCopilotTos_;
-
+   
+   private static final UserPrefsAccessorConstants constants = GWT.create(UserPrefsAccessorConstants.class);
    
 }

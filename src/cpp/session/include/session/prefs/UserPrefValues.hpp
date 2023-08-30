@@ -424,6 +424,10 @@ namespace prefs {
 #define kDisableRendererAccessibility "disable_renderer_accessibility"
 #define kCopilotEnabled "copilot_enabled"
 #define kCopilotCompletionsDelay "copilot_completions_delay"
+#define kCopilotAllowAutomaticCompletions "copilot_allow_automatic_completions"
+#define kCopilotTabKeyBehavior "copilot_tab_key_behavior"
+#define kCopilotTabKeyBehaviorSuggestion "suggestion"
+#define kCopilotTabKeyBehaviorCompletions "completions"
 
 class UserPrefValues: public Preferences
 {
@@ -1916,6 +1920,18 @@ public:
     */
    int copilotCompletionsDelay();
    core::Error setCopilotCompletionsDelay(int val);
+
+   /**
+    * When enabled, RStudio will continue providing as-you-type code completions when Copilot is enabled.
+    */
+   bool copilotAllowAutomaticCompletions();
+   core::Error setCopilotAllowAutomaticCompletions(bool val);
+
+   /**
+    * Control the behavior of the Tab key when both Copilot code suggestions and RStudio code completions are visible.
+    */
+   std::string copilotTabKeyBehavior();
+   core::Error setCopilotTabKeyBehavior(std::string val);
 
 };
 

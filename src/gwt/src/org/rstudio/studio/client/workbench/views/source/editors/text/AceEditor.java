@@ -83,6 +83,7 @@ import org.rstudio.studio.client.workbench.views.source.editors.text.ace.AceEdit
 import org.rstudio.studio.client.workbench.views.source.editors.text.ace.AceEditorCommandEvent;
 import org.rstudio.studio.client.workbench.views.source.editors.text.ace.AceEditorNative;
 import org.rstudio.studio.client.workbench.views.source.editors.text.ace.AceFold;
+import org.rstudio.studio.client.workbench.views.source.editors.text.ace.AceGhostText;
 import org.rstudio.studio.client.workbench.views.source.editors.text.ace.AceInputEditorPosition;
 import org.rstudio.studio.client.workbench.views.source.editors.text.ace.AceKeyboardActivityEvent;
 import org.rstudio.studio.client.workbench.views.source.editors.text.ace.AceResources;
@@ -4587,9 +4588,19 @@ public class AceEditor implements DocDisplay,
       s_lastFocusedEditor = null;
    }
    
+   public AceGhostText getGhostText()
+   {
+      return widget_.getEditor().getGhostText();
+   }
+   
    public void setGhostText(String text)
    {
       widget_.getEditor().setGhostText(text);
+   }
+   
+   public void applyGhostText()
+   {
+      widget_.getEditor().applyGhostText();
    }
    
    public boolean hasGhostText()

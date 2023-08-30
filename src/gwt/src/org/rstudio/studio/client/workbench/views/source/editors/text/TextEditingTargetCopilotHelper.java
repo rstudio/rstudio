@@ -19,6 +19,7 @@ import org.rstudio.core.client.HandlerRegistrations;
 import org.rstudio.core.client.MathUtil;
 import org.rstudio.core.client.command.CommandBinder;
 import org.rstudio.core.client.command.Handler;
+import org.rstudio.core.client.dom.EventProperty;
 import org.rstudio.studio.client.RStudioGinjector;
 import org.rstudio.studio.client.application.events.EventBus;
 import org.rstudio.studio.client.common.Timers;
@@ -192,6 +193,7 @@ public class TextEditingTargetCopilotHelper
    {
       if (!enabled)
       {
+         display_.removeGhostText();
          registrations_.removeHandler();
          requestId_ = 0;
          completionTimer_.cancel();
@@ -203,6 +205,13 @@ public class TextEditingTargetCopilotHelper
 
                display_.addCursorChangedHandler((event) ->
                {
+                  // Allow one-time suppression of cursor change handler
+                  if (suppressCursorChangeHandler_)
+                  {
+                     suppressCursorChangeHandler_ = false;
+                     return;
+                  }
+                  
                   // Don't do anything if we have a selection.
                   if (display_.hasSelection())
                   {
@@ -234,6 +243,17 @@ public class TextEditingTargetCopilotHelper
                      // TODO: If we have a completion popup, should that take precedence?
                      if (display_.isPopupVisible())
                         return;
+                     
+                     // Check if the user just inserted some text matching the current
+                     // ghost text. If so, we'll suppress the next cursor change handler,
+                     // so we can continue presenting the current ghost text.
+                     String key = EventProperty.key(keyEvent.getNativeEvent());
+                     if (activeCompletion_.displayText.startsWith(key))
+                     {
+                        updateCompletion(key);
+                        suppressCursorChangeHandler_ = true;
+                        return;
+                     }
 
                      NativeEvent event = keyEvent.getNativeEvent();
                      if (event.getKeyCode() == KeyCodes.KEY_TAB)
@@ -269,6 +289,24 @@ public class TextEditingTargetCopilotHelper
       completionTimer_.schedule(0);
    }
    
+   private void updateCompletion(String key)
+   {
+      int n = key.length();
+      activeCompletion_.displayText = activeCompletion_.displayText.substring(n);
+      activeCompletion_.text = activeCompletion_.text.substring(n);
+      activeCompletion_.position.character += n;
+      activeCompletion_.range.start.character += n;
+      activeCompletion_.range.end.character += n;
+      
+      // Ace's ghost text uses a custom token appended to the current line,
+      // and lines are eagerly re-tokenized when new text is inserted. To
+      // dodge this effect, we reset the ghost text at the end of the event loop.
+      Timers.singleShot(() ->
+      {
+         display_.setGhostText(activeCompletion_.displayText);
+      });
+   }
+   
    @Inject
    private void initialize(Copilot copilot,
                            EventBus events,
@@ -291,6 +329,7 @@ public class TextEditingTargetCopilotHelper
    private final HandlerRegistrations registrations_;
    
    private int requestId_;
+   private boolean suppressCursorChangeHandler_;
    
    private CopilotCompletion activeCompletion_;
    

@@ -316,6 +316,7 @@ void setEditorInfo()
    editorInfoJson["name"] = "RStudio";
    editorInfoJson["version"] = RSTUDIO_VERSION;
    paramsJson["editorInfo"] = editorInfoJson;
+   paramsJson["editorPluginInfo"] = editorInfoJson;
    
    SEXP networkProxySEXP = r::options::getOption("rstudio.copilot.networkProxy");
    if (networkProxySEXP != R_NilValue)
@@ -425,6 +426,17 @@ void onStdout(ProcessOperations& operations, const std::string& stdOut)
       if (contentLength.empty())
       {
          ELOG("Internal error: response contains no Content-Length header.");
+         
+         if (copilotLogLevel() >= 2)
+         {
+            std::cerr << std::endl;
+            std::cerr << "RESPONSE" << std::endl;
+            std::cerr << "------------------" << std::endl;
+            std::cerr << stdOut << std::endl;
+            std::cerr << "------------------" << std::endl;
+            std::cerr << std::endl << std::endl;
+         }
+
          break;
       }
 
