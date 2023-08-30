@@ -27,6 +27,7 @@
 
 #include <server/ServerOptions.hpp>
 #include <server/auth/ServerAuthHandler.hpp>
+#include <server/auth/ServerAuthHandlerOverlay.hpp>
 
 const char * const kStaySignedInDisplay = "staySignedInDisplay";
 const char * const kAuthTimeoutMinutes = "authTimeoutMinutes";

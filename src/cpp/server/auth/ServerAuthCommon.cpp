@@ -18,6 +18,7 @@
 
 #include <server/auth/ServerAuthCommon.hpp>
 #include <server/auth/ServerAuthHandler.hpp>
+#include <server/auth/ServerAuthHandlerOverlay.hpp>
 
 #include <core/http/URL.hpp>
 #include <core/http/Cookie.hpp>
