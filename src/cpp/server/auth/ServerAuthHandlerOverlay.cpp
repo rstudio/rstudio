@@ -1,5 +1,5 @@
 /*
- * ServerAuthHandler.hpp
+ * ServerAuthHandlerOverlay.cpp
  *
  * Copyright (C) 2023 by Posit Software, PBC
  *
@@ -13,8 +13,7 @@
  *
  */
 
-
-#include <server/auth/ServerAuthHandlerOverlay.hpp>
+#include <server/auth/ServerAuthHandler.hpp>
 
 namespace rstudio {
 namespace server {

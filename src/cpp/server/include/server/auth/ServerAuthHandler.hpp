@@ -233,23 +233,6 @@ std::string getExpiredDateStr();
 core::Error getNumActiveUsers(const boost::shared_ptr<core::database::IConnection>& connection,
                               size_t* pNumActiveUsers);
 
-namespace overlay {
-
-core::Error initialize();
-bool canStaySignedIn();
-bool isUserListCookieValid(const std::string& cookieValue);
-bool shouldShowUserLicenseWarning();
-bool isUserAdmin(const std::string& username);
-bool isUserLocked(bool lockedColumn);
-std::string getUserListCookieValue();
-unsigned int getNamedUserLimit();
-core::json::Array getLicensedUsers();
-core::Error lockUser(boost::asio::io_service& ioService, const std::string& username);
-core::Error unlockUser(boost::asio::io_service& ioService, const std::string& username);
-core::Error setAdmin(boost::asio::io_service& ioService, const std::string& username, bool isAdmin);
-
-} // namespace overlay
-
 } // namespace handler
 } // namespace auth
 } // namespace server

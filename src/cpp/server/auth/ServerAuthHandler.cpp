@@ -17,6 +17,7 @@
 #define SERVER_AUTH_HANDLER_CPP
 
 #include <server/auth/ServerAuthHandler.hpp>
+#include <server/auth/ServerAuthHandlerOverlay.hpp>
 
 #include <boost/algorithm/string.hpp>
 
@@ -847,79 +848,6 @@ Error getNumActiveUsers(const boost::shared_ptr<IConnection>& connection,
    *pNumActiveUsers = numActive;
    return Success();
 }
-
-namespace overlay {
-
-Error initialize()
-{
-   return Success();
-}
-
-bool canStaySignedIn()
-{
-   return true;
-}
-bool isUserListCookieValid(const std::string& cookieValue)
-{
-   return true;
-}
-
-bool shouldShowUserLicenseWarning()
-{
-   return false;
-}
-
-bool isUserAdmin(const std::string& username)
-{
-   return false;
-}
-
-bool isUserLocked(bool lockedColumn)
-{
-   return false;
-}
-
-std::string getUserListCookieValue()
-{
-   return "9c16856330a7400cbbbba228392a5d83";
-}
-
-
-unsigned int getActiveUserCount()
-{
-   return 0;
-}
-
-unsigned int getNamedUserLimit()
-{
-   return 0;
-}
-
-json::Array getLicensedUsers()
-{
-   return getAllUsers();
-}
-
-Error lockUser(boost::asio::io_service& ioService,
-               const std::string& username)
-{
-   return Success();
-}
-
-Error unlockUser(boost::asio::io_service& ioService,
-                 const std::string& username)
-{
-   return Success();
-}
-
-Error setAdmin(boost::asio::io_service& ioService,
-               const std::string& username,
-               bool isAdmin)
-{
-   return Success();
-}
-
-} // namespace overlay
 
 void onCookieRevoked(const std::string& cookie)
 {
