@@ -15,6 +15,8 @@
 
 #include <server/auth/ServerAuthHandler.hpp>
 
+using namespace rstudio::core;
+
 namespace rstudio {
 namespace server {
 namespace auth {
@@ -86,6 +88,9 @@ Error unlockUser(boost::asio::io_service& ioService,
 Error setAdmin(boost::asio::io_service& ioService,
                const std::string& username,
                bool isAdmin)
+{
+   return Success();
+}
 
 } // namespace overlay
 
