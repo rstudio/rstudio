@@ -41,6 +41,7 @@ require("mixins/token_iterator"); // adds mixins to TokenIterator.prototype
 // RStudioEditor ----
 
 var RStudioEditor = function(renderer, session) {
+   session.renderer = renderer;
    Editor.call(this, renderer, session);
    this.setBehavioursEnabled(true);
 };
