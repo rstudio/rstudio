@@ -192,6 +192,7 @@ public class TextEditingTargetCopilotHelper
    {
       if (!enabled)
       {
+         display_.removeGhostText();
          registrations_.removeHandler();
          requestId_ = 0;
          completionTimer_.cancel();
