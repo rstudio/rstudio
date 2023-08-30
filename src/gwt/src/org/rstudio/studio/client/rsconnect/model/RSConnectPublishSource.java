@@ -59,7 +59,8 @@ public class RSConnectPublishSource
       isSingleFileShiny_ = false;
       websiteDir_ = websiteDir;
       isQuarto_ = isQuarto;
-      boolean isWebsite = type == RSConnect.CONTENT_TYPE_WEBSITE || type == RSConnect.CONTENT_TYPE_QUARTO_WEBSITE;
+      boolean isWebsite = type == RSConnect.CONTENT_TYPE_WEBSITE || type == RSConnect.CONTENT_TYPE_QUARTO_WEBSITE || (
+         type == RSConnect.CONTENT_TYPE_DOCUMENT && !StringUtil.isNullOrEmpty(websiteDir));
 
       String category = null;
       if (isWebsite)
