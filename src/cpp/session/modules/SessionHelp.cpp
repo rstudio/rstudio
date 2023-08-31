@@ -468,11 +468,29 @@ void handleHttpdResult(SEXP httpdSEXP,
    // setup response
    pResponse->setStatusCode(code);
    pResponse->setContentType(contentType);
-
+   
    // set headers
    std::for_each(headers.begin(), 
                  headers.end(),
                  boost::bind(&http::Response::setHeaderLine, pResponse, _1));
+   
+   // fix up location header for redirects
+   if (pResponse->containsHeader("Location"))
+   {
+      std::string location = pResponse->headerValue("Location");
+      std::string sessionPort = options().wwwPort();
+      std::string rPort = module_context::rLocalHelpPort();
+      
+      std::string rHelpPrefix = fmt::format("http://127.0.0.1:{}/", rPort);
+      if (boost::algorithm::starts_with(location, rHelpPrefix))
+      {
+         std::string redirect = fmt::format(
+                  "http://127.0.0.1:{}/help/{}",
+                  sessionPort,
+                  location.substr(rHelpPrefix.length()));
+         pResponse->setHeader("Location", redirect);
+      }
+   }
    
    // check payload
    SEXP payloadSEXP = VECTOR_ELT(httpdSEXP, 0);
