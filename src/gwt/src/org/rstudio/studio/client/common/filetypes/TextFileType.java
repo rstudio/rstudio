@@ -14,8 +14,7 @@
  */
 package org.rstudio.studio.client.common.filetypes;
 
-import com.google.gwt.core.client.GWT;
-import com.google.gwt.resources.client.ImageResource;
+import java.util.HashSet;
 
 import org.rstudio.core.client.FilePosition;
 import org.rstudio.core.client.UnicodeLetters;
@@ -32,7 +31,8 @@ import org.rstudio.studio.client.workbench.views.source.SourceWindowManager;
 import org.rstudio.studio.client.workbench.views.source.editors.text.ace.spelling.CharClassifier;
 import org.rstudio.studio.client.workbench.views.source.editors.text.ace.spelling.TokenPredicate;
 
-import java.util.HashSet;
+import com.google.gwt.core.client.GWT;
+import com.google.gwt.resources.client.ImageResource;
 
 public class TextFileType extends EditableFileType
 {
@@ -71,6 +71,18 @@ public class TextFileType extends EditableFileType
       canCheckSpelling_ = canCheckSpelling;
       canShowScopeTree_ = canShowScopeTree;
       canPreviewFromR_ = canPreviewFromR;
+   }
+   
+   @Override
+   public long getFileSizeLimit()
+   {
+      return 5 * 1024 * 1024;
+   }
+
+   @Override
+   public long getLargeFileSize()
+   {
+      return 2 * 1024 * 1024;
    }
 
    @Override
