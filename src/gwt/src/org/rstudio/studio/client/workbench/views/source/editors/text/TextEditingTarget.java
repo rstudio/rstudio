@@ -1550,6 +1550,37 @@ public class TextEditingTarget implements
                                           session_,
                                           column);
       
+
+      events_.addHandler(
+            this,
+            FileChangeEvent.TYPE,
+            new FileChangeEvent.Handler()
+      {
+         @Override
+         public void onFileChange(FileChangeEvent event)
+         {
+            // screen out adds and events that aren't for our path
+            FileChange fileChange = event.getFileChange();
+            if (fileChange.getType() == FileChange.ADD)
+               return;
+            else if (!fileChange.getFile().getPath().equals(getPath()))
+               return;
+
+            // always check for changes if this is the active editor
+            if (isActiveDocument())
+               checkForExternalEdit();
+
+            // also check for changes on modifications if we are not dirty
+            // note that we don't check for changes on removed files because
+            // this will show a confirmation dialog
+            else if (event.getFileChange().getType() == FileChange.MODIFIED &&
+                     dirtyState().getValue() == false)
+            {
+               checkForExternalEdit();
+            }
+         }
+      });
+      
       events_.addHandler(
             this,
             ShinyApplicationStatusEvent.TYPE,
@@ -2083,33 +2114,6 @@ public class TextEditingTarget implements
                }
             }
       ));
-
-      releaseOnDismiss_.add(events_.addHandler(FileChangeEvent.TYPE,
-                                               new FileChangeEvent.Handler() {
-         @Override
-         public void onFileChange(FileChangeEvent event)
-         {
-            // screen out adds and events that aren't for our path
-            FileChange fileChange = event.getFileChange();
-            if (fileChange.getType() == FileChange.ADD)
-               return;
-            else if (!fileChange.getFile().getPath().equals(getPath()))
-               return;
-
-            // always check for changes if this is the active editor
-            if (isActiveDocument())
-               checkForExternalEdit();
-
-            // also check for changes on modifications if we are not dirty
-            // note that we don't check for changes on removed files because
-            // this will show a confirmation dialog
-            else if (event.getFileChange().getType() == FileChange.MODIFIED &&
-                     dirtyState().getValue() == false)
-            {
-               checkForExternalEdit();
-            }
-         }
-      }));
 
       spelling_ = new TextEditingTargetSpelling(docDisplay_, docUpdateSentinel_, lintManager_, prefs_);
 
