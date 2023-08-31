@@ -111,6 +111,19 @@ OverlayResult getAllUsersFromDatabase(const boost::shared_ptr<IConnection>& conn
    return std::make_tuple(Success(), true);
 }
 
+OverlayResult getUserFromDatabase(const boost::shared_ptr<IConnection>& connection,
+                                  const system::User& user,
+                                  core::database::Rowset& rows)
+{
+   Query userQuery = connection->query("SELECT user_name, user_id, last_sign_in, locked FROM licensed_users WHERE user_id = :uid OR user_name = :username")
+         .withInput(user.getUserId())
+         .withInput(user.getUsername());
+   Error error = connection->execute(userQuery, rows);
+   if (error)
+      return std::make_tuple(error, true);
+   return std::make_tuple(Success(), true);
+}
+
 } // namespace overlay
 
 } // namespace handler

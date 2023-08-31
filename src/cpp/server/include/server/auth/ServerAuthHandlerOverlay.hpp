@@ -62,6 +62,9 @@ OverlayResult addUser(boost::asio::io_service& ioService,
                       bool isAdmin = false);
 OverlayResult getAllUsersFromDatabase(const boost::shared_ptr<core::database::IConnection>& connection,
                                       core::database::Rowset& rows);
+OverlayResult getUserFromDatabase(const boost::shared_ptr<core::database::IConnection>& connection,
+                                  const core::system::User& user,
+                                  core::database::Rowset& rows);
 
 } // namespace overlay
 

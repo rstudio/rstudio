@@ -437,13 +437,15 @@ Error getUserFromDatabase(const boost::shared_ptr<IConnection>& connection,
    *pLocked = true;
 
    Rowset rows;
-   Query userQuery = connection->query("SELECT user_name, user_id, last_sign_in, locked FROM licensed_users WHERE user_id = :uid OR user_name = :username")
-         .withInput(user.getUserId())
-         .withInput(user.getUsername());
-
-   Error error = connection->execute(userQuery, rows);
+   const auto result = overlay::getUserFromDatabase(connection, user, rows);
+   Error error;
+   bool wasHandled;
+   std::tie(error, wasHandled) = result;
    if (error)
+   {
+      error.addProperty("description", "Could not get user from database due to database error");
       return error;
+   }
 
    // Old versions of RSW didn't set the posix User ID. If we don't have the ID, update it  now.
    bool foundUser = false;
