@@ -36,6 +36,10 @@ namespace handler {
 
 namespace overlay {
 
+// Allows us to convey the result of an operation to the non-overlay code
+// i.e. whether the operation was handled by the overlay or not
+typedef std::tuple<core::Error, bool> OverlayResult;
+
 core::Error initialize();
 bool canStaySignedIn();
 bool isUserListCookieValid(const std::string& cookieValue);
@@ -48,6 +52,7 @@ core::json::Array getLicensedUsers();
 core::Error lockUser(boost::asio::io_service& ioService, const std::string& username);
 core::Error unlockUser(boost::asio::io_service& ioService, const std::string& username);
 core::Error setAdmin(boost::asio::io_service& ioService, const std::string& username, bool isAdmin);
+OverlayResult addUser(boost::asio::io_service& ioService, const std::string& username, bool isAdmin = false);
 
 } // namespace overlay
 

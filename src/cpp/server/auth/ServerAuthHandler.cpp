@@ -506,6 +506,19 @@ Error addUser(boost::asio::io_service& ioService,
               const std::string& username,
               bool isAdmin)
 {
+   const auto result = overlay::addUser(ioService, username, isAdmin);
+   Error overlayError;
+   bool wasHandled;
+   std::tie(overlayError, wasHandled) = result;
+   if (overlayError)
+   {
+      return overlayError;
+   }
+   if (wasHandled)
+   {
+      return Success();
+   }
+
    boost::shared_ptr<IConnection> connection;
    if (!server_core::database::getConnection(boost::posix_time::seconds(server::options().dbConnectionTimeout()), &connection))
    {

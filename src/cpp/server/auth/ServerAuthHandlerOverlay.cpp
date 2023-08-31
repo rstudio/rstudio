@@ -14,6 +14,7 @@
  */
 
 #include <server/auth/ServerAuthHandler.hpp>
+#include <server/auth/ServerAuthHandlerOverlay.hpp>
 
 using namespace rstudio::core;
 
@@ -90,6 +91,13 @@ Error setAdmin(boost::asio::io_service& ioService,
                bool isAdmin)
 {
    return Success();
+}
+
+OverlayResult addUser(boost::asio::io_service& ioService,
+                             const std::string& username,
+                             bool isAdmin)
+{
+   return std::make_tuple(Success(), false);
 }
 
 } // namespace overlay
