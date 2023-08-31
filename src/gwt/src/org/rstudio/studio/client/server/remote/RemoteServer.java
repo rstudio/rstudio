@@ -622,12 +622,16 @@ public class RemoteServer implements Server
    
    @Override
    public void copilotGenerateCompletions(String documentId,
+                                          String documentPath,
+                                          boolean isUntitled,
                                           int cursorRow,
                                           int cursorColumn,
                                           ServerRequestCallback<CopilotGenerateCompletionsResponse> requestCallback)
    {
       JSONArray params = new JSONArrayBuilder()
             .add(documentId)
+            .add(documentPath)
+            .add(isUntitled)
             .add(cursorRow)
             .add(cursorColumn)
             .get();

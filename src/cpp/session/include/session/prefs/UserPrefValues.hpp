@@ -428,6 +428,7 @@ namespace prefs {
 #define kCopilotTabKeyBehavior "copilot_tab_key_behavior"
 #define kCopilotTabKeyBehaviorSuggestion "suggestion"
 #define kCopilotTabKeyBehaviorCompletions "completions"
+#define kCopilotIndexingEnabled "copilot_indexing_enabled"
 
 class UserPrefValues: public Preferences
 {
@@ -1932,6 +1933,12 @@ public:
     */
    std::string copilotTabKeyBehavior();
    core::Error setCopilotTabKeyBehavior(std::string val);
+
+   /**
+    * When enabled, RStudio will index project files with GitHub Copilot.
+    */
+   bool copilotIndexingEnabled();
+   core::Error setCopilotIndexingEnabled(bool val);
 
 };
 

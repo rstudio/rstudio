@@ -3273,6 +3273,19 @@ core::Error UserPrefValues::setCopilotTabKeyBehavior(std::string val)
    return writePref("copilot_tab_key_behavior", val);
 }
 
+/**
+ * When enabled, RStudio will index project files with GitHub Copilot.
+ */
+bool UserPrefValues::copilotIndexingEnabled()
+{
+   return readPref<bool>("copilot_indexing_enabled");
+}
+
+core::Error UserPrefValues::setCopilotIndexingEnabled(bool val)
+{
+   return writePref("copilot_indexing_enabled", val);
+}
+
 std::vector<std::string> UserPrefValues::allKeys()
 {
    return std::vector<std::string>({
@@ -3526,6 +3539,7 @@ std::vector<std::string> UserPrefValues::allKeys()
       kCopilotCompletionsDelay,
       kCopilotAllowAutomaticCompletions,
       kCopilotTabKeyBehavior,
+      kCopilotIndexingEnabled,
    });
 }
    

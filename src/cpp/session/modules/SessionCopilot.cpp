@@ -23,6 +23,7 @@
 #include <shared_core/json/Json.hpp>
 
 #include <core/Exec.hpp>
+#include <core/FileSerializer.hpp>
 #include <core/http/Header.hpp>
 #include <core/json/JsonRpc.hpp>
 #include <core/system/Process.hpp>
@@ -37,6 +38,7 @@
 #include <r/RSexp.hpp>
 #include <r/session/REventLoop.hpp>
 
+#include <session/projects/SessionProjects.hpp>
 #include <session/prefs/UserPrefs.hpp>
 #include <session/SessionModuleContext.hpp>
 
@@ -144,9 +146,28 @@ std::queue<std::string> s_pendingResponses;
 // Whether we're about to shut down.
 bool s_isSessionShuttingDown = false;
 
-std::string uriFromDocumentId(const std::string& documentId)
+std::string uriFromDocumentPath(const std::string& path)
 {
-   return fmt::format("rstudio-document://{}", documentId);
+   return fmt::format("file://{}", path);
+}
+
+
+std::string uriFromDocumentId(const std::string& id)
+{
+   return fmt::format("rstudio-document://{}", id);
+}
+
+std::string uriFromDocumentImpl(const std::string& id,
+                                const std::string& path,
+                                bool isUntitled)
+{
+   FilePath resolvedPath = module_context::resolveAliasedPath(path);
+   return isUntitled ? uriFromDocumentId(id) : uriFromDocumentPath(resolvedPath.getAbsolutePath());
+   
+}
+std::string uriFromDocument(const boost::shared_ptr<source_database::SourceDocument>& pDoc)
+{
+   return uriFromDocumentImpl(pDoc->id(), pDoc->path(), pDoc->isUntitled());
 }
 
 std::string languageIdFromDocument(boost::shared_ptr<source_database::SourceDocument> pDoc)
@@ -632,7 +653,7 @@ void onDocAdded(boost::shared_ptr<source_database::SourceDocument> pDoc)
       return;
 
    json::Object textDocumentJson;
-   textDocumentJson["uri"] = uriFromDocumentId(pDoc->id());
+   textDocumentJson["uri"] = uriFromDocument(pDoc);
    textDocumentJson["languageId"] = languageIdFromDocument(pDoc);
    textDocumentJson["version"] = 1;
    textDocumentJson["text"] = "";
@@ -650,7 +671,7 @@ void onDocUpdated(boost::shared_ptr<source_database::SourceDocument> pDoc)
 
    // Synchronize document contents with Copilot
    json::Object textDocumentJson;
-   textDocumentJson["uri"] = uriFromDocumentId(pDoc->id());
+   textDocumentJson["uri"] = uriFromDocument(pDoc);
    textDocumentJson["languageId"] = languageIdFromDocument(pDoc);
    textDocumentJson["version"] = 1;
    textDocumentJson["text"] = pDoc->contents();
@@ -667,7 +688,7 @@ void onDocRemoved(const std::string& id, const std::string& path)
       return;
 
    json::Object textDocumentJson;
-   textDocumentJson["uri"] = uriFromDocumentId(id);
+   textDocumentJson["uri"] = uriFromDocumentImpl(id, path, path.empty());
 
    json::Object paramsJson;
    paramsJson["textDocument"] = textDocumentJson;
@@ -823,9 +844,11 @@ Error copilotGenerateCompletions(const json::JsonRpcRequest& request,
 
    // Read params
    std::string documentId;
+   std::string documentPath;
+   bool isUntitled;
    int cursorRow, cursorColumn;
 
-   Error error = core::json::readParams(request.params, &documentId, &cursorRow, &cursorColumn);
+   Error error = core::json::readParams(request.params, &documentId, &documentPath, &isUntitled, &cursorRow, &cursorColumn);
    if (error)
    {
       LOG_ERROR(error);
@@ -839,7 +862,7 @@ Error copilotGenerateCompletions(const json::JsonRpcRequest& request,
 
    json::Object docJson;
    docJson["position"] = positionJson;
-   docJson["uri"] = uriFromDocumentId(documentId);
+   docJson["uri"] = uriFromDocumentImpl(documentId, documentPath, isUntitled);
    docJson["version"] = 1;
 
    json::Object paramsJson;
@@ -927,6 +950,79 @@ Error copilotInstallAgent(const json::JsonRpcRequest& request,
 
 } // end anonymous namespace
 
+
+namespace file_monitor {
+
+namespace {
+
+void indexFile(const core::FileInfo& info)
+{
+   FilePath documentPath = module_context::resolveAliasedPath(info.absolutePath());
+   std::string ext = documentPath.getExtensionLowerCase();
+   
+   // TODO: Stop hard-coding this list?
+   std::string languageId;
+   if (ext == ".r")
+      languageId = "r";
+   else if (ext == ".py")
+      languageId = "python";
+   else if (ext == ".sql")
+      languageId = "sql";
+   else
+      return;
+   
+   DLOG("Indexing document: {}", info.absolutePath());
+   
+   std::string contents;
+   Error error = core::readStringFromFile(documentPath, &contents);
+   if (error)
+      return;
+   
+   json::Object textDocumentJson;
+   textDocumentJson["uri"] = uriFromDocumentPath(documentPath.getAbsolutePath());
+   textDocumentJson["languageId"] = languageId;
+   textDocumentJson["version"] = 1;
+   textDocumentJson["text"] = contents;
+
+   json::Object paramsJson;
+   paramsJson["textDocument"] = textDocumentJson;
+
+   sendNotification("textDocument/didOpen", paramsJson);
+}
+
+} // end anonymous namespace
+
+void onMonitoringEnabled(const tree<core::FileInfo>& tree)
+{
+   if (!s_copilotEnabled)
+      return;
+   
+   if (!prefs::userPrefs().copilotIndexingEnabled())
+      return;
+   
+   for (auto&& file : tree)
+      indexFile(file);
+}
+
+void onFilesChanged(const std::vector<core::system::FileChangeEvent>& events)
+{
+   if (!s_copilotEnabled)
+      return;
+   
+   if (!prefs::userPrefs().copilotIndexingEnabled())
+      return;
+   
+   for (auto&& event : events)
+      indexFile(event.fileInfo());
+}
+
+void onMonitoringDisabled()
+{
+}
+
+} // end namespace file_monitor
+
+
 Error initialize()
 {
    using boost::bind;
@@ -938,6 +1034,14 @@ Error initialize()
    if (!copilotLogLevel.empty())
       s_copilotLogLevel = safe_convert::stringTo<int>(copilotLogLevel, 0);
 
+   // subscribe to project context file monitoring state changes
+   // (note that if there is no project this will no-op)
+   session::projects::FileMonitorCallbacks callbacks;
+   callbacks.onMonitoringEnabled = file_monitor::onMonitoringEnabled;
+   callbacks.onFilesChanged = file_monitor::onFilesChanged;
+   callbacks.onMonitoringDisabled = file_monitor::onMonitoringDisabled;
+   projects::projectContext().subscribeToFileMonitor("Copilot indexing", callbacks);
+   
    events().onBackgroundProcessing.connect(onBackgroundProcessing);
    events().onPreferencesSaved.connect(onPreferencesSaved);
    events().onDeferredInit.connect(onDeferredInit);

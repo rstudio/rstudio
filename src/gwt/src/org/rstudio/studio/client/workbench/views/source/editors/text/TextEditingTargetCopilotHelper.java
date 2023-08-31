@@ -17,6 +17,7 @@ package org.rstudio.studio.client.workbench.views.source.editors.text;
 import org.rstudio.core.client.Debug;
 import org.rstudio.core.client.HandlerRegistrations;
 import org.rstudio.core.client.MathUtil;
+import org.rstudio.core.client.StringUtil;
 import org.rstudio.core.client.command.CommandBinder;
 import org.rstudio.core.client.command.Handler;
 import org.rstudio.core.client.dom.EventProperty;
@@ -82,6 +83,8 @@ public class TextEditingTargetCopilotHelper
                
                server_.copilotGenerateCompletions(
                      target_.getId(),
+                     StringUtil.notNull(target_.getPath()),
+                     StringUtil.isNullOrEmpty(target_.getPath()),
                      display_.getCursorRow(),
                      display_.getCursorColumn(),
                      new ServerRequestCallback<CopilotGenerateCompletionsResponse>()

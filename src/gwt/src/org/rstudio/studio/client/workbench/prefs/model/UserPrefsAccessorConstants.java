@@ -2083,6 +2083,14 @@ public interface UserPrefsAccessorConstants extends Constants {
    @DefaultStringValue("Code Completion")
    String copilotTabKeyBehaviorEnum_completions();
 
+   /**
+    * When enabled, RStudio will index project files with GitHub Copilot.
+    */
+   @DefaultStringValue("Index project files with GitHub Copilot")
+   String copilotIndexingEnabledTitle();
+   @DefaultStringValue("When enabled, RStudio will index project files with GitHub Copilot.")
+   String copilotIndexingEnabledDescription();
+
 
 
 }
