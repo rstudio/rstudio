@@ -20,6 +20,7 @@
 
 #include <boost/function.hpp>
 
+#include <core/Database.hpp>
 #include <core/ExponentialBackoff.hpp>
 #include <core/http/UriHandler.hpp>
 #include <core/http/AsyncUriHandler.hpp>
@@ -49,10 +50,18 @@ bool isUserLocked(bool lockedColumn);
 std::string getUserListCookieValue();
 unsigned int getNamedUserLimit();
 core::json::Array getLicensedUsers();
-core::Error lockUser(boost::asio::io_service& ioService, const std::string& username);
-core::Error unlockUser(boost::asio::io_service& ioService, const std::string& username);
-core::Error setAdmin(boost::asio::io_service& ioService, const std::string& username, bool isAdmin);
-OverlayResult addUser(boost::asio::io_service& ioService, const std::string& username, bool isAdmin = false);
+core::Error lockUser(boost::asio::io_service& ioService,
+                     const std::string& username);
+core::Error unlockUser(boost::asio::io_service& ioService,
+                       const std::string& username);
+core::Error setAdmin(boost::asio::io_service& ioService,
+                     const std::string& username,
+                     bool isAdmin);
+OverlayResult addUser(boost::asio::io_service& ioService,
+                      const std::string& username,
+                      bool isAdmin = false);
+OverlayResult getAllUsersFromDatabase(const boost::shared_ptr<core::database::IConnection>& connection,
+                                      core::database::Rowset& rows);
 
 } // namespace overlay
 

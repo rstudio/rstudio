@@ -17,6 +17,7 @@
 #include <server/auth/ServerAuthHandlerOverlay.hpp>
 
 using namespace rstudio::core;
+using namespace rstudio::core::database;
 
 namespace rstudio {
 namespace server {
@@ -94,10 +95,20 @@ Error setAdmin(boost::asio::io_service& ioService,
 }
 
 OverlayResult addUser(boost::asio::io_service& ioService,
-                             const std::string& username,
-                             bool isAdmin)
+                      const std::string& username,
+                      bool isAdmin)
 {
    return std::make_tuple(Success(), false);
+}
+
+OverlayResult getAllUsersFromDatabase(const boost::shared_ptr<IConnection>& connection,
+                                      core::database::Rowset& rows)
+{
+   Query query = connection->query("SELECT user_name, locked, last_sign_in, is_admin FROM licensed_users");
+   Error error = connection->execute(query, rows);
+   if (error)
+      return std::make_tuple(error, true);
+   return std::make_tuple(Success(), true);
 }
 
 } // namespace overlay

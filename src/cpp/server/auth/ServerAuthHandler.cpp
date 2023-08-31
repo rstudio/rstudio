@@ -579,8 +579,10 @@ json::Array getAllUsers()
    }
 
    Rowset rows;
-   Query query = connection->query("SELECT user_name, locked, last_sign_in, is_admin FROM licensed_users");
-   Error error = connection->execute(query, rows);
+   const auto result = overlay::getAllUsersFromDatabase(connection, rows);
+   Error error;
+   bool wasHandled;
+   std::tie(error, wasHandled) = result;
    if (error)
    {
       error.addProperty("description",
