@@ -3550,7 +3550,7 @@ public class UserPrefsAccessor extends Prefs
          "copilot_allow_automatic_completions",
          _constants.copilotAllowAutomaticCompletionsTitle(), 
          _constants.copilotAllowAutomaticCompletionsDescription(), 
-         false);
+         true);
    }
 
    /**

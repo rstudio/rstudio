@@ -242,8 +242,10 @@ import com.google.gwt.event.dom.client.KeyDownEvent;
 import com.google.gwt.event.dom.client.KeyDownHandler;
 import com.google.gwt.event.dom.client.MouseDownEvent;
 import com.google.gwt.event.dom.client.MouseDownHandler;
+import com.google.gwt.event.logical.shared.AttachEvent;
 import com.google.gwt.event.logical.shared.CloseEvent;
 import com.google.gwt.event.logical.shared.CloseHandler;
+import com.google.gwt.event.logical.shared.HasAttachHandlers;
 import com.google.gwt.event.logical.shared.HasResizeHandlers;
 import com.google.gwt.event.logical.shared.ValueChangeEvent;
 import com.google.gwt.event.logical.shared.ValueChangeHandler;
@@ -265,7 +267,8 @@ import com.google.inject.Provider;
 
 public class TextEditingTarget implements
                                   EditingTarget,
-                                  EditingTargetCodeExecution.CodeExtractor
+                                  EditingTargetCodeExecution.CodeExtractor,
+                                  HasAttachHandlers
 {
    interface MyCommandBinder
          extends CommandBinder<Commands, TextEditingTarget>
@@ -330,8 +333,7 @@ public class TextEditingTarget implements
                             List<String> extensions,
                             String selected);
       void setQuartoFormatOptions(TextFileType fileType, boolean showRmdFormatMenu, List<String> formats);
-      HandlerRegistration addRmdFormatChangedHandler(
-            RmdOutputFormatChangedEvent.Handler handler);
+      HandlerRegistration addRmdFormatChangedHandler(RmdOutputFormatChangedEvent.Handler handler);
 
       void setPublishPath(String type, String publishPath);
       void invokePublish();
@@ -358,6 +360,8 @@ public class TextEditingTarget implements
       void showVisualModeFindReplaceButton(boolean show);
       
       SourceColumn getSourceColumn();
+      
+      HandlerRegistration addAttachHandler(AttachEvent.Handler handler);
    }
 
    private class SaveProgressIndicator implements ProgressIndicator
@@ -818,277 +822,6 @@ public class TextEditingTarget implements
       {
          maybeAutoSaveOnBlur();
       });
-
-      events_.addHandler(
-            ShinyApplicationStatusEvent.TYPE,
-            new ShinyApplicationStatusEvent.Handler()
-            {
-               @Override
-               public void onShinyApplicationStatus(
-                     ShinyApplicationStatusEvent event)
-               {
-                  // If the document appears to be inside the directory
-                  // associated with the event, update the view to match the
-                  // new state.
-                  if (getPath() != null &&
-                      getPath().startsWith(event.getParams().getPath()))
-                  {
-                     String state = event.getParams().getState();
-                     if (event.getParams().getViewerType() !=
-                            UserPrefs.SHINY_VIEWER_TYPE_PANE &&
-                         event.getParams().getViewerType() !=
-                            UserPrefs.SHINY_VIEWER_TYPE_WINDOW)
-                     {
-                        // we can't control the state when it's not in an
-                        // RStudio-owned window, so treat the app as stopped
-                        state = ShinyApplicationParams.STATE_STOPPED;
-                     }
-                     view_.onShinyApplicationStateChanged(state);
-                  }
-               }
-            });
-
-      events_.addHandler(
-            PlumberAPIStatusEvent.TYPE,
-            new PlumberAPIStatusEvent.Handler()
-            {
-               @Override
-               public void onPlumberAPIStatus(PlumberAPIStatusEvent event)
-               {
-                  // If the document appears to be inside the directory
-                  // associated with the event, update the view to match the
-                  // new state.
-                  if (getPath() != null &&
-                      getPath().startsWith(event.getParams().getPath()))
-                  {
-                     String state = event.getParams().getState();
-                     if (event.getParams().getViewerType() !=
-                            UserPrefs.PLUMBER_VIEWER_TYPE_PANE &&
-                         event.getParams().getViewerType() !=
-                            UserPrefs.PLUMBER_VIEWER_TYPE_WINDOW)
-                     {
-                        // we can't control the state when it's not in an
-                        // RStudio-owned window, so treat the app as stopped
-                        state = PlumberAPIParams.STATE_STOPPED;
-                     }
-                     view_.onPlumberAPIStateChanged(state);
-                  }
-               }
-            });
-
-      events_.addHandler(
-            BreakpointsSavedEvent.TYPE,
-            new BreakpointsSavedEvent.Handler()
-      {
-         @Override
-         public void onBreakpointsSaved(BreakpointsSavedEvent event)
-         {
-            // if this document isn't ready for breakpoints, stop now
-            if (docUpdateSentinel_ == null)
-            {
-               return;
-            }
-            for (Breakpoint breakpoint: event.breakpoints())
-            {
-               // discard the breakpoint if it's not related to the file this
-               // editor instance is concerned with
-               if (!breakpoint.isInFile(getPath()))
-               {
-                  continue;
-               }
-
-               // if the breakpoint was saved successfully, enable it on the
-               // editor surface; otherwise, just remove it.
-               if (event.successful())
-               {
-                  docDisplay_.addOrUpdateBreakpoint(breakpoint);
-               }
-               else
-               {
-                  // Show a warning for breakpoints that didn't get set (unless
-                  // the reason the breakpoint wasn't set was that it's being
-                  // removed)
-                  if (breakpoint.getState() != Breakpoint.STATE_REMOVING)
-                  {
-                     view_.showWarningBar(constants_.onBreakpointsSavedWarningBar());
-                  }
-                  docDisplay_.removeBreakpoint(breakpoint);
-               }
-            }
-            updateBreakpointWarningBar();
-         }
-      });
-
-      events_.addHandler(ConvertToShinyDocEvent.TYPE,
-                         new ConvertToShinyDocEvent.Handler()
-      {
-         @Override
-         public void onConvertToShinyDoc(ConvertToShinyDocEvent event)
-         {
-            if (getPath() != null &&
-                getPath().equals(event.getPath()))
-            {
-               String yaml = getRmdFrontMatter();
-               if (yaml == null)
-                  return;
-               String newYaml = rmarkdownHelper_.convertYamlToShinyDoc(yaml);
-               applyRmdFrontMatter(newYaml);
-               renderRmd();
-            }
-         }
-      });
-
-      events_.addHandler(RSConnectDeployInitiatedEvent.TYPE,
-            new RSConnectDeployInitiatedEvent.Handler()
-            {
-               @Override
-               public void onRSConnectDeployInitiated(
-                     RSConnectDeployInitiatedEvent event)
-               {
-                  // no need to process this event if this target doesn't have a
-                  // path, or if the event's contents don't include additional
-                  // files.
-                  if (getPath() == null)
-                     return;
-
-                  // see if the event corresponds to a deployment of this file
-                  if (!getPath().equals(event.getSource().getSourceFile()))
-                     return;
-
-                  RSConnectPublishSettings settings = event.getSettings();
-                  if (settings == null)
-                     return;
-
-                  // ignore deployments of static content generated from this
-                  // file
-                  if (settings.getAsStatic())
-                     return;
-
-                  if (settings.getAdditionalFiles() != null &&
-                      settings.getAdditionalFiles().size() > 0)
-                  {
-                     addAdditionalResourceFiles(settings.getAdditionalFiles());
-                  }
-               }
-            });
-
-      events_.addHandler(
-            SetEditorCommandBindingsEvent.TYPE,
-            new SetEditorCommandBindingsEvent.Handler()
-            {
-               @Override
-               public void onSetEditorCommandBindings(SetEditorCommandBindingsEvent event)
-               {
-                  getDocDisplay().setEditorCommandBinding(
-                        event.getId(),
-                        event.getKeySequences());
-               }
-            });
-
-      events_.addHandler(
-            ResetEditorCommandsEvent.TYPE,
-            new ResetEditorCommandsEvent.Handler()
-            {
-               @Override
-               public void onResetEditorCommands(ResetEditorCommandsEvent event)
-               {
-                  getDocDisplay().resetCommands();
-               }
-            });
-
-      events_.addHandler(DocTabDragStateChangedEvent.TYPE,
-            new DocTabDragStateChangedEvent.Handler()
-            {
-
-               @Override
-               public void onDocTabDragStateChanged(
-                     DocTabDragStateChangedEvent e)
-               {
-                  // enable text drag/drop only while we're not dragging tabs
-                  boolean enabled = e.getState() ==
-                        DocTabDragStateChangedEvent.STATE_NONE;
-
-                  // make editor read only while we're dragging and dropping
-                  // tabs; otherwise the editor surface will accept a tab drop
-                  // as text
-                  docDisplay_.setReadOnly(!enabled);
-               }
-            });
-
-      events_.addHandler(
-            AceAfterCommandExecutedEvent.TYPE,
-            new AceAfterCommandExecutedEvent.Handler()
-            {
-               @Override
-               public void onAceAfterCommandExecuted(AceAfterCommandExecutedEvent event)
-               {
-                  JavaScriptObject data = event.getCommandData();
-                  if (isIncrementalSearchCommand(data))
-                  {
-                     String message = getIncrementalSearchMessage();
-                     if (StringUtil.isNullOrEmpty(message))
-
-                     {
-                        view_.getStatusBar().hideMessage();
-                     }
-                     else
-                     {
-                        view_.getStatusBar().showMessage(
-                              getIncrementalSearchMessage(),
-                              2000);
-                     }
-                  }
-               }
-            });
-      
-      releaseOnDismiss_.add(events_.addHandler(
-            CopilotEvent.TYPE,
-            new CopilotEvent.Handler()
-            {
-               @Override
-               public void onCopilot(CopilotEvent event)
-               {
-                  switch (event.getType())
-                  {
-                  
-                  case COPILOT_DISABLED:
-                     view_.getStatusBar().hideStatus();
-                     break;
-                     
-                  case COMPLETION_REQUESTED:
-                     view_.getStatusBar().showStatus(
-                           StatusBarIconType.TYPE_INFO,
-                           "Copilot: Waiting for completions...");
-                     break;
-                     
-                  case COMPLETION_CANCELLED:
-                     view_.getStatusBar().showStatus(
-                           StatusBarIconType.TYPE_INFO,
-                           "Copilot: No completions available.");
-                     break;
-                     
-                  case COMPLETION_RECEIVED_SOME:
-                     view_.getStatusBar().showStatus(
-                           StatusBarIconType.TYPE_OK,
-                           "Copilot: Completion response received.");
-                     break;
-                     
-                  case COMPLETION_RECEIVED_NONE:
-                     view_.getStatusBar().showStatus(
-                           StatusBarIconType.TYPE_INFO,
-                           "Copilot: No completions available.");
-                     break;
-                     
-                  case COMPLETION_ERROR:
-                     String message = (String) event.getData();
-                     view_.getStatusBar().showStatus(
-                           StatusBarIconType.TYPE_ERROR,
-                           "Copilot: " + message);
-                     break;
-                     
-                  }
-               }
-            }));
 
       releaseOnDismiss_.add(
          prefs.autoSaveOnBlur().addValueChangeHandler((ValueChangeEvent<Boolean> val) ->
@@ -1816,6 +1549,292 @@ public class TextEditingTarget implements
                                           events_,
                                           session_,
                                           column);
+      
+      events_.addHandler(
+            this,
+            ShinyApplicationStatusEvent.TYPE,
+            new ShinyApplicationStatusEvent.Handler()
+            {
+               @Override
+               public void onShinyApplicationStatus(
+                     ShinyApplicationStatusEvent event)
+               {
+                  // If the document appears to be inside the directory
+                  // associated with the event, update the view to match the
+                  // new state.
+                  if (getPath() != null &&
+                      getPath().startsWith(event.getParams().getPath()))
+                  {
+                     String state = event.getParams().getState();
+                     if (event.getParams().getViewerType() !=
+                            UserPrefs.SHINY_VIEWER_TYPE_PANE &&
+                         event.getParams().getViewerType() !=
+                            UserPrefs.SHINY_VIEWER_TYPE_WINDOW)
+                     {
+                        // we can't control the state when it's not in an
+                        // RStudio-owned window, so treat the app as stopped
+                        state = ShinyApplicationParams.STATE_STOPPED;
+                     }
+                     view_.onShinyApplicationStateChanged(state);
+                  }
+               }
+            });
+
+      events_.addHandler(
+            this,
+            PlumberAPIStatusEvent.TYPE,
+            new PlumberAPIStatusEvent.Handler()
+            {
+               @Override
+               public void onPlumberAPIStatus(PlumberAPIStatusEvent event)
+               {
+                  // If the document appears to be inside the directory
+                  // associated with the event, update the view to match the
+                  // new state.
+                  if (getPath() != null &&
+                      getPath().startsWith(event.getParams().getPath()))
+                  {
+                     String state = event.getParams().getState();
+                     if (event.getParams().getViewerType() !=
+                            UserPrefs.PLUMBER_VIEWER_TYPE_PANE &&
+                         event.getParams().getViewerType() !=
+                            UserPrefs.PLUMBER_VIEWER_TYPE_WINDOW)
+                     {
+                        // we can't control the state when it's not in an
+                        // RStudio-owned window, so treat the app as stopped
+                        state = PlumberAPIParams.STATE_STOPPED;
+                     }
+                     view_.onPlumberAPIStateChanged(state);
+                  }
+               }
+            });
+
+      events_.addHandler(
+            this,
+            BreakpointsSavedEvent.TYPE,
+            new BreakpointsSavedEvent.Handler()
+      {
+         @Override
+         public void onBreakpointsSaved(BreakpointsSavedEvent event)
+         {
+            // if this document isn't ready for breakpoints, stop now
+            if (docUpdateSentinel_ == null)
+            {
+               return;
+            }
+            for (Breakpoint breakpoint: event.breakpoints())
+            {
+               // discard the breakpoint if it's not related to the file this
+               // editor instance is concerned with
+               if (!breakpoint.isInFile(getPath()))
+               {
+                  continue;
+               }
+
+               // if the breakpoint was saved successfully, enable it on the
+               // editor surface; otherwise, just remove it.
+               if (event.successful())
+               {
+                  docDisplay_.addOrUpdateBreakpoint(breakpoint);
+               }
+               else
+               {
+                  // Show a warning for breakpoints that didn't get set (unless
+                  // the reason the breakpoint wasn't set was that it's being
+                  // removed)
+                  if (breakpoint.getState() != Breakpoint.STATE_REMOVING)
+                  {
+                     view_.showWarningBar(constants_.onBreakpointsSavedWarningBar());
+                  }
+                  docDisplay_.removeBreakpoint(breakpoint);
+               }
+            }
+            updateBreakpointWarningBar();
+         }
+      });
+
+      events_.addHandler(
+            this,
+            ConvertToShinyDocEvent.TYPE,
+            new ConvertToShinyDocEvent.Handler()
+      {
+         @Override
+         public void onConvertToShinyDoc(ConvertToShinyDocEvent event)
+         {
+            if (getPath() != null &&
+                getPath().equals(event.getPath()))
+            {
+               String yaml = getRmdFrontMatter();
+               if (yaml == null)
+                  return;
+               String newYaml = rmarkdownHelper_.convertYamlToShinyDoc(yaml);
+               applyRmdFrontMatter(newYaml);
+               renderRmd();
+            }
+         }
+      });
+
+      events_.addHandler(
+            this,
+            RSConnectDeployInitiatedEvent.TYPE,
+            new RSConnectDeployInitiatedEvent.Handler()
+            {
+               @Override
+               public void onRSConnectDeployInitiated(
+                     RSConnectDeployInitiatedEvent event)
+               {
+                  // no need to process this event if this target doesn't have a
+                  // path, or if the event's contents don't include additional
+                  // files.
+                  if (getPath() == null)
+                     return;
+
+                  // see if the event corresponds to a deployment of this file
+                  if (!getPath().equals(event.getSource().getSourceFile()))
+                     return;
+
+                  RSConnectPublishSettings settings = event.getSettings();
+                  if (settings == null)
+                     return;
+
+                  // ignore deployments of static content generated from this
+                  // file
+                  if (settings.getAsStatic())
+                     return;
+
+                  if (settings.getAdditionalFiles() != null &&
+                      settings.getAdditionalFiles().size() > 0)
+                  {
+                     addAdditionalResourceFiles(settings.getAdditionalFiles());
+                  }
+               }
+            });
+
+      events_.addHandler(
+            this,
+            SetEditorCommandBindingsEvent.TYPE,
+            new SetEditorCommandBindingsEvent.Handler()
+            {
+               @Override
+               public void onSetEditorCommandBindings(SetEditorCommandBindingsEvent event)
+               {
+                  getDocDisplay().setEditorCommandBinding(
+                        event.getId(),
+                        event.getKeySequences());
+               }
+            });
+
+      events_.addHandler(
+            this,
+            ResetEditorCommandsEvent.TYPE,
+            new ResetEditorCommandsEvent.Handler()
+            {
+               @Override
+               public void onResetEditorCommands(ResetEditorCommandsEvent event)
+               {
+                  getDocDisplay().resetCommands();
+               }
+            });
+
+      events_.addHandler(
+            this,
+            DocTabDragStateChangedEvent.TYPE,
+            new DocTabDragStateChangedEvent.Handler()
+            {
+
+               @Override
+               public void onDocTabDragStateChanged(
+                     DocTabDragStateChangedEvent e)
+               {
+                  // enable text drag/drop only while we're not dragging tabs
+                  boolean enabled = e.getState() ==
+                        DocTabDragStateChangedEvent.STATE_NONE;
+
+                  // make editor read only while we're dragging and dropping
+                  // tabs; otherwise the editor surface will accept a tab drop
+                  // as text
+                  docDisplay_.setReadOnly(!enabled);
+               }
+            });
+
+      events_.addHandler(
+            this,
+            AceAfterCommandExecutedEvent.TYPE,
+            new AceAfterCommandExecutedEvent.Handler()
+            {
+               @Override
+               public void onAceAfterCommandExecuted(AceAfterCommandExecutedEvent event)
+               {
+                  JavaScriptObject data = event.getCommandData();
+                  if (isIncrementalSearchCommand(data))
+                  {
+                     String message = getIncrementalSearchMessage();
+                     if (StringUtil.isNullOrEmpty(message))
+
+                     {
+                        view_.getStatusBar().hideMessage();
+                     }
+                     else
+                     {
+                        view_.getStatusBar().showMessage(
+                              getIncrementalSearchMessage(),
+                              2000);
+                     }
+                  }
+               }
+            });
+      
+      events_.addHandler(
+            this,
+            CopilotEvent.TYPE,
+            new CopilotEvent.Handler()
+            {
+               @Override
+               public void onCopilot(CopilotEvent event)
+               {
+                  switch (event.getType())
+                  {
+                  
+                  case COPILOT_DISABLED:
+                     view_.getStatusBar().hideStatus();
+                     break;
+                     
+                  case COMPLETION_REQUESTED:
+                     view_.getStatusBar().showStatus(
+                           StatusBarIconType.TYPE_INFO,
+                           "Copilot: Waiting for completions...");
+                     break;
+                     
+                  case COMPLETION_CANCELLED:
+                     view_.getStatusBar().showStatus(
+                           StatusBarIconType.TYPE_INFO,
+                           "Copilot: No completions available.");
+                     break;
+                     
+                  case COMPLETION_RECEIVED_SOME:
+                     view_.getStatusBar().showStatus(
+                           StatusBarIconType.TYPE_OK,
+                           "Copilot: Completion response received.");
+                     break;
+                     
+                  case COMPLETION_RECEIVED_NONE:
+                     view_.getStatusBar().showStatus(
+                           StatusBarIconType.TYPE_INFO,
+                           "Copilot: No completions available.");
+                     break;
+                     
+                  case COMPLETION_ERROR:
+                     String message = (String) event.getData();
+                     view_.getStatusBar().showStatus(
+                           StatusBarIconType.TYPE_ERROR,
+                           "Copilot: " + message);
+                     break;
+                     
+                  }
+               }
+            });
+
+      
 
       packageDependencyHelper_ = new TextEditingTargetPackageDependencyHelper(this, docUpdateSentinel_, docDisplay_);
 
@@ -9111,6 +9130,18 @@ public class TextEditingTarget implements
             }
          });
       }
+   }
+   
+   @Override
+   public HandlerRegistration addAttachHandler(AttachEvent.Handler event)
+   {
+      return view_.addAttachHandler(event);
+   }
+
+   @Override
+   public boolean isAttached()
+   {
+      return view_.isAttached();
    }
 
    private StatusBar statusBar_;
