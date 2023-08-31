@@ -475,19 +475,21 @@ void handleHttpdResult(SEXP httpdSEXP,
                  boost::bind(&http::Response::setHeaderLine, pResponse, _1));
    
    // fix up location header for redirects
-   if (pResponse->containsHeader("Location"))
+   if (code == 302 && pResponse->containsHeader("Location"))
    {
+      // check for a redirect to the R help server
       std::string location = pResponse->headerValue("Location");
-      std::string sessionPort = options().wwwPort();
       std::string rPort = module_context::rLocalHelpPort();
-      
       std::string rHelpPrefix = fmt::format("http://127.0.0.1:{}/", rPort);
       if (boost::algorithm::starts_with(location, rHelpPrefix))
       {
-         std::string redirect = fmt::format(
-                  "http://127.0.0.1:{}/help/{}",
-                  sessionPort,
-                  location.substr(rHelpPrefix.length()));
+         // make sure we use the same base URL as the request, otherwise
+         // we might not be allowed to display the redirected Help content in the frame
+         std::string baseUri = request.baseUri();
+         std::string path = request.path();
+         std::string pathPrefix = baseUri.substr(0, baseUri.size() - path.size());
+         std::string redirect = fmt::format("{}/help/{}", pathPrefix, location.substr(rHelpPrefix.length()));
+         
          pResponse->setHeader("Location", redirect);
       }
    }
