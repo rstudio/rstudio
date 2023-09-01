@@ -44,7 +44,8 @@
 - Fixed intermittent rsession crash when the linux nscd service was enabled (rstudio-pro:#4648)
 - Fixed bug when resuming session not restoring current working directory for Terminal pane (rstudio-pro:#4027)
 - Fixed bug preventing `HOME` from being modified in system init scripts (rstudio-pro:#4584)
-- Removed unnecessary files from install packages (rstudo-pro:#4943)
+- Removed unnecessary files from install packages (rstudio-pro:#4943)
+- Updated Launcher go dependencies to latest versions (rstudio-pro:#5021)
 
 ### Performance
 - Improved performance of group membership tests (rstudio-pro:#4643)
