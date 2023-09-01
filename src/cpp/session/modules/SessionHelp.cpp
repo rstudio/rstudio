@@ -477,7 +477,8 @@ void handleHttpdResult(SEXP httpdSEXP,
    // fix up location header for redirects
    if (code == 302 && pResponse->containsHeader("Location"))
    {
-      // check for a redirect to the R help server
+      // check for a redirect to the R help server. the R help server hard-codes
+      // navigation to the help server at 127.0.0.1 in a number of places
       std::string location = pResponse->headerValue("Location");
       std::string rPort = module_context::rLocalHelpPort();
       std::string rHelpPrefix = fmt::format("http://127.0.0.1:{}/", rPort);
