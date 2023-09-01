@@ -638,20 +638,14 @@ Error updateLastSignin(const boost::shared_ptr<IConnection>& connection,
 Error addUserToDatabase(const boost::shared_ptr<IConnection>& connection,
                         const system::User& user,
                         bool isAdmin)
-{   
+{ 
    LOG_DEBUG_MESSAGE("Adding user to database: " + user.getUsername());
 
-   std::string currentTime = date_time::format(boost::posix_time::microsec_clock::universal_time(),
-                                                date_time::kIso8601Format);
-   int locked = 0;
-   Query insertQuery = connection->query("INSERT INTO licensed_users (user_name, user_id, locked, last_sign_in, is_admin) VALUES (:un, :ui, :lk, :ls, :ia)")
-         .withInput(user.getUsername())
-         .withInput(user.getUserId())
-         .withInput(locked)
-         .withInput(currentTime)
-         .withInput(static_cast<int>(isAdmin));
+   const auto result = overlay::addUserToDatabase(connection, user, isAdmin);
+   Error error;
+   bool wasHandled;
+   std::tie(error, wasHandled) = result;
 
-   Error error = connection->execute(insertQuery);
    if (error)
    {
       // if we cannot insert the user into the database, we count this as a hard failure

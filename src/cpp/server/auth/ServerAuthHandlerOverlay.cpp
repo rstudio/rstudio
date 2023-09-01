@@ -16,6 +16,8 @@
 #include <server/auth/ServerAuthHandler.hpp>
 #include <server/auth/ServerAuthHandlerOverlay.hpp>
 
+#include <core/DateTime.hpp>
+
 using namespace rstudio::core;
 using namespace rstudio::core::database;
 
@@ -119,6 +121,27 @@ OverlayResult getUserFromDatabase(const boost::shared_ptr<IConnection>& connecti
          .withInput(user.getUserId())
          .withInput(user.getUsername());
    Error error = connection->execute(userQuery, rows);
+   if (error)
+      return std::make_tuple(error, true);
+   return std::make_tuple(Success(), true);
+}
+
+OverlayResult addUserToDatabase(const boost::shared_ptr<IConnection>& connection,
+                                const system::User& user,
+                                bool isAdmin)
+{
+   std::string currentTime = core::date_time::format(boost::posix_time::microsec_clock::universal_time(),
+                             core::date_time::kIso8601Format);
+   int locked = 0;
+   Query insertQuery = connection->query("INSERT INTO licensed_users (user_name, user_id, locked, last_sign_in, is_admin) VALUES (:un, :ui, :lk, :ls, :ia)")
+         .withInput(user.getUsername())
+         .withInput(user.getUserId())
+         .withInput(locked)
+         .withInput(currentTime)
+         .withInput(static_cast<int>(isAdmin));
+
+   Error error = connection->execute(insertQuery);
+
    if (error)
       return std::make_tuple(error, true);
    return std::make_tuple(Success(), true);

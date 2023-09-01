@@ -65,6 +65,9 @@ OverlayResult getAllUsersFromDatabase(const boost::shared_ptr<core::database::IC
 OverlayResult getUserFromDatabase(const boost::shared_ptr<core::database::IConnection>& connection,
                                   const core::system::User& user,
                                   core::database::Rowset& rows);
+OverlayResult addUserToDatabase(const boost::shared_ptr<core::database::IConnection>& connection,
+                                const core::system::User& user,
+                                bool isAdmin = false);
 
 } // namespace overlay
 
