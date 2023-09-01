@@ -490,11 +490,9 @@ void handleHttpdResult(SEXP httpdSEXP,
          // R help server might try directing to 'http://127.0.0.1:8787'
          //
          // https://github.com/rstudio/rstudio/issues/13263
-         std::string baseUri = request.baseUri();
-         std::string path = request.path();
-         std::string pathPrefix = baseUri.substr(0, baseUri.size() - path.size());
-         std::string redirect = fmt::format("{}/help/{}", pathPrefix, location.substr(rHelpPrefix.length()));
-         
+         std::string path = location.substr(rHelpPrefix.length());
+         std::string ref = request.headerValue("Referer");
+         std::string redirect = fmt::format("{}help/{}", ref, path);
          pResponse->setHeader("Location", redirect);
       }
    }
