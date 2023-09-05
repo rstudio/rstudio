@@ -8,13 +8,23 @@
 - Add section to theme generation that will use theme-specific color(s) to set colors of vim/emacs-mode cursor
 
 #### Posit Workbench
-- Prometheus metrics are available in Posit Workbench (rstudio-pro:#3273)
+- An initial set of Prometheus metrics are available for the Workbench server (rstudio/rstudio-pro#3273)
 - Additional support for publishing new content types to Posit Cloud (rstudio-pro#4541)
 - Update code-server to version 4.14.1 (VS Code version 1.79.2) bundled with node 16.20.2 (rstudio-pro#4774, rstudio-pro#5012)
 - Update rserver-saml to 0.7.0 (rstudio-pro#4903)
 - Change the default behavior of `launcher-balancing-enabled` to always be true. (rstudio-pro#4953)
 - Auto-generate the `secure-cookie-key` and launcher key pair in load-balanced environments (rstudio-pro#4985)
 - Add the `secure-cookie-key` and launcher key pair to the node table of the database for load-balanced environments. (rstudio-pro#4985)
+- Multiple instances of the Slurm plugin can now point at the same backing cluster without interfering with one another, provided they have different names (rstudio/launcher#706)
+- The Slurm plugin now has a `default-partition` setting that allows choosing a different partition than the cluster-wide default. The default partition is also put at the top of the list and highlighted in the UI when launching sessions (rstudio/launcher#551, rstudio/launcher#627, rstudio/rstudio-pro#4658)
+- Resource profiles for the Slurm plugin now support setting the partition (rstudio/launcher#695, rstudio/rstudio-pro#4658)
+- Resource profiles for the Kubernetes plugin now support setting placement constraints (rstudio/launcher#714, rstudio/rstudio-pro#4767)
+- When launching sessions or Workbench jobs, available clusters are now shown only when there is more than one option (rstudio/rstudio-pro#4675)
+- Non-shared projects on the home page no longer show a superfluous "Owner" field (rstudio/rstudio-pro#4984)
+- Users can now opt to receive desktop notifications when their sessions are ready, which is especially useful on platforms like Slurm or Kubernetes where this may take more than a few seconds (rstudio/rstudio-pro#3432)
+- While waiting to auto-join a session from the home page, the popup now shows additional status information on Kubernetes and Slurm and no longer warns about sessions that take more than 30 seconds to start (rstudio/rstudio-pro#4813)
+- Projects that can't be found by the server are no longer completely hidden on the home page; rather, they are flagged as potentially moved or deleted (rstudio/rstudio-pro#4958)
+- Workbench now sets the `SPARK_CONNECT_USER_AGENT` environment variable for all sessions. This can help users of hosted Apache Spark clusters (including Databricks) identify when Workbench users are accessing Spark (rstudio/rstudio-pro#5015)
 
 ### Fixed
 #### RStudio
@@ -46,7 +56,13 @@
 - Fixed bug preventing `HOME` from being modified in system init scripts (rstudio-pro:#4584)
 - Removed unnecessary files from install packages (rstudio-pro:#4943)
 - Updated Launcher go dependencies to latest versions (rstudio-pro:#5021)
+- Workbench will no longer log a spurious error about ownership when the `r-versions` file is on an NFS mount with `root_squash` set (rstudio/rstudio-pro#4721)
+- The `launcher-sessions-clusters`, `launcher-adhoc-clusters`, and `launcher-default-cluster` settings now apply to all IDEs. Individual settings for Jupyter and VS Code sessions are now marked as deprecated (rstudio/rstudio-pro#4651)
+- Recent projects listed on the home page should no longer have an empty "Last Used" field (rstudio/rstudio-pro#4157)
+- The Slurm plugin no longer warns that some legitimately-supported Slurm versions are not supported (rstudio/launcher#644)
+- AWS roles can now be chosen when resuming a session as well as launching a new one (rstudio/rstudio-pro#5043)
 
 ### Performance
 - Improved performance of group membership tests (rstudio-pro:#4643)
 - Increased read buffer size for rserver proxy (rstudio-pro:#4764)
+- Various improvements to the responsiveness of the Workbench home page (rstudio/rstudio-pro#4736, rstudio/rstudio-pro#4750, rstudio/rstudio-pro#4762)
