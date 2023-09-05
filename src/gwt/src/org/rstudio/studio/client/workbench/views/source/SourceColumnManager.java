@@ -14,23 +14,26 @@
  */
 package org.rstudio.studio.client.workbench.views.source;
 
-import com.google.gwt.core.client.GWT;
-import com.google.gwt.core.client.JavaScriptObject;
-import com.google.gwt.core.client.JsArray;
-import com.google.gwt.core.client.JsArrayString;
-import com.google.gwt.core.client.Scheduler;
-import com.google.gwt.dom.client.Element;
-import com.google.gwt.event.dom.client.FocusEvent;
-import com.google.gwt.event.dom.client.FocusHandler;
-import com.google.gwt.json.client.JSONString;
-import com.google.gwt.json.client.JSONValue;
-import com.google.gwt.user.client.Command;
-import com.google.gwt.user.client.ui.Widget;
-import com.google.inject.Inject;
-import com.google.inject.Provider;
-import com.google.inject.Singleton;
+import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.HashSet;
+import java.util.LinkedList;
+import java.util.Queue;
+import java.util.Set;
+import java.util.concurrent.atomic.AtomicInteger;
 
-import org.rstudio.core.client.*;
+import org.rstudio.core.client.ClassIds;
+import org.rstudio.core.client.CommandUtil;
+import org.rstudio.core.client.CommandWithArg;
+import org.rstudio.core.client.Debug;
+import org.rstudio.core.client.FilePosition;
+import org.rstudio.core.client.JsArrayUtil;
+import org.rstudio.core.client.MathUtil;
+import org.rstudio.core.client.ResultCallback;
+import org.rstudio.core.client.SerializedCommand;
+import org.rstudio.core.client.SerializedCommandQueue;
+import org.rstudio.core.client.StringUtil;
+import org.rstudio.core.client.TransformerCommand;
 import org.rstudio.core.client.command.AppCommand;
 import org.rstudio.core.client.command.CommandBinder;
 import org.rstudio.core.client.command.Handler;
@@ -50,7 +53,11 @@ import org.rstudio.studio.client.common.GlobalDisplay;
 import org.rstudio.studio.client.common.GlobalProgressDelayer;
 import org.rstudio.studio.client.common.SimpleRequestCallback;
 import org.rstudio.studio.client.common.dependencies.DependencyManager;
-import org.rstudio.studio.client.common.filetypes.*;
+import org.rstudio.studio.client.common.filetypes.EditableFileType;
+import org.rstudio.studio.client.common.filetypes.FileType;
+import org.rstudio.studio.client.common.filetypes.FileTypeRegistry;
+import org.rstudio.studio.client.common.filetypes.ObjectExplorerFileType;
+import org.rstudio.studio.client.common.filetypes.TextFileType;
 import org.rstudio.studio.client.common.synctex.Synctex;
 import org.rstudio.studio.client.events.GetEditorContextEvent;
 import org.rstudio.studio.client.palette.model.CommandPaletteEntryProvider;
@@ -95,11 +102,34 @@ import org.rstudio.studio.client.workbench.views.source.editors.text.ace.Range;
 import org.rstudio.studio.client.workbench.views.source.editors.text.ace.Selection;
 import org.rstudio.studio.client.workbench.views.source.editors.text.events.EditingTargetSelectedEvent;
 import org.rstudio.studio.client.workbench.views.source.editors.text.ui.NewRMarkdownDialog;
-import org.rstudio.studio.client.workbench.views.source.events.*;
-import org.rstudio.studio.client.workbench.views.source.model.*;
+import org.rstudio.studio.client.workbench.views.source.events.CodeBrowserCreatedEvent;
+import org.rstudio.studio.client.workbench.views.source.events.DocTabActivatedEvent;
+import org.rstudio.studio.client.workbench.views.source.events.SourceExtendedTypeDetectedEvent;
+import org.rstudio.studio.client.workbench.views.source.events.SourceFileSavedEvent;
+import org.rstudio.studio.client.workbench.views.source.events.SwitchToDocEvent;
+import org.rstudio.studio.client.workbench.views.source.model.DataItem;
+import org.rstudio.studio.client.workbench.views.source.model.DocUpdateSentinel;
+import org.rstudio.studio.client.workbench.views.source.model.SourceDocument;
+import org.rstudio.studio.client.workbench.views.source.model.SourceDocumentResult;
+import org.rstudio.studio.client.workbench.views.source.model.SourceNavigationHistory;
+import org.rstudio.studio.client.workbench.views.source.model.SourcePosition;
+import org.rstudio.studio.client.workbench.views.source.model.SourceServerOperations;
 
-import java.util.*;
-import java.util.concurrent.atomic.AtomicInteger;
+import com.google.gwt.core.client.GWT;
+import com.google.gwt.core.client.JavaScriptObject;
+import com.google.gwt.core.client.JsArray;
+import com.google.gwt.core.client.JsArrayString;
+import com.google.gwt.core.client.Scheduler;
+import com.google.gwt.dom.client.Element;
+import com.google.gwt.event.dom.client.FocusEvent;
+import com.google.gwt.event.dom.client.FocusHandler;
+import com.google.gwt.json.client.JSONString;
+import com.google.gwt.json.client.JSONValue;
+import com.google.gwt.user.client.Command;
+import com.google.gwt.user.client.ui.Widget;
+import com.google.inject.Inject;
+import com.google.inject.Provider;
+import com.google.inject.Singleton;
 
 @Singleton
 public class SourceColumnManager implements CommandPaletteEntrySource,
@@ -2066,15 +2096,16 @@ public class SourceColumnManager implements CommandPaletteEntrySource,
       if (openFileAlreadyOpen(file, resultCallback))
          return;
 
-      EditingTarget target = editingTargetSource_.getEditingTarget(fileType);
-
-      if (file.getLength() > target.getFileSizeLimit())
+      long fileSizeLimit = fileType.getFileSizeLimit();
+      long largeFileSize = fileType.getLargeFileSize();
+      
+      if (file.getLength() > fileSizeLimit)
       {
          if (resultCallback != null)
             resultCallback.onCancelled();
-         showFileTooLargeWarning(file, target.getFileSizeLimit());
+         showFileTooLargeWarning(file, fileSizeLimit);
       }
-      else if (file.getLength() > target.getLargeFileSize())
+      else if (file.getLength() > largeFileSize)
       {
          confirmOpenLargeFile(file, new Operation()
          {
