@@ -134,14 +134,16 @@ try
         $updateSha = $getSha.sha
 
         # This looks messy but the whitespace is meaningful
-        $updatePayload = @"
+        $payload = @"
 { "message": "Update $flower build $version in $build", "content": "$base64", "sha": "$updateSha" }
 "@
         Write-Host "Updating version file..."
-        $updateResponse = Invoke-RestMethod -Body $updatePayload -Method 'PUT' -Headers $headers -Uri $url -UseBasicParsing
+        $updateResponse = Invoke-RestMethod -Body $payload -Method 'PUT' -Headers $headers -Uri $url -UseBasicParsing
         Write-Host $updateResponse
 
-    } elseif ($StatusCode -eq 409) { # Assume the repo has been updated backoff and try again.
+    }
+    
+    if ($StatusCode -eq 409) { # Assume the repo has been updated backoff and try again.
         Write-Host "Received a 409, assuming it's a commit interleaving error, waiting 3 seconds and retrying".
         Start-Sleep -Seconds 3
 
