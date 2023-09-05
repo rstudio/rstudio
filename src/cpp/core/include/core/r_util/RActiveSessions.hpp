@@ -155,6 +155,15 @@ public:
       return storage_ == nullptr;
    }
 
+   bool emptySession() const
+   {
+      if (empty())
+         return true;
+      bool validStorage = false;
+      Error error = storage_->isValid(&validStorage);
+      return error || !validStorage;
+   }
+
    std::string id() const
    {
       return id_;
