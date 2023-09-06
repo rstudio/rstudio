@@ -25,6 +25,7 @@ import { appState } from './app-state';
  * Based on src/gwt/src/org/rstudio/core/client/widget/ModalDialogTracker.java
  */
 export class ModalDialogTracker {
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   private modals: ModalDialog<any>[] = [];
   private electronModalsShowing = 0;
   private gwtModalsShowing = 0;
@@ -50,6 +51,7 @@ export class ModalDialogTracker {
    * Adds a ModalDialog to tracking and disables the main menu
    * @param modal ModalDialog to add to tracking
    */
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   public async addModalDialog(modal: ModalDialog<any>) {
     this.modals.push(modal);
     appState().gwtCallback?.mainWindow.menuCallback.setMainMenuEnabled(false);
@@ -59,6 +61,7 @@ export class ModalDialogTracker {
    * Removes a ModalDialog from tracking and re-enables the main menu if applicable
    * @param modal ModalDialog to remove from tracking
    */
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   public async removeModalDialog(modal: ModalDialog<any>) {
     this.modals = this.modals.filter((m) => m !== modal);
     this.maybeReenableMainMenu();
