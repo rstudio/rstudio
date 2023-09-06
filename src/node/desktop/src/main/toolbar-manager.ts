@@ -38,7 +38,7 @@ export class ToolbarManager {
     try {
       await window.webContents.executeJavaScript(jsScript);
 
-      // eslint-disable-next-line @typescript-eslint/no-implicit-any-catch
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
     } catch (err: any) {
       if (err.message !== 'An object could not be cloned.') {
         const error =
