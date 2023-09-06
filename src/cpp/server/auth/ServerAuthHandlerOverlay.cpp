@@ -152,7 +152,13 @@ bool isUserProvisioningEnabled()
    return false;
 }
 
-} // namespace overlay
+std::string getUsernameField()
+{
+   return "user_name";
+
+} 
+
+}// namespace overlay
 
 } // namespace handler
 } // namespace auth

@@ -71,6 +71,8 @@ OverlayResult addUserToDatabase(const boost::shared_ptr<core::database::IConnect
 
 bool isUserProvisioningEnabled();
 
+std::string getUsernameField();
+
 } // namespace overlay
 
 } // namespace handler
