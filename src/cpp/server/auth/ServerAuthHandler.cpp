@@ -767,6 +767,13 @@ Error isUserLicensed(const system::User& user,
          }
       }
    }
+   else if (overlay::isUserProvisioningEnabled())
+   {
+      // When users are provisioned from an external identity provider, only
+      // existing users can be considered licensed.
+      *pLicensed = false;
+      return Success();
+   }
    else
    {
       // since the user is not already a named user, we need to either make them one
@@ -932,7 +939,11 @@ boost::shared_ptr<UserSession> UserSession::createUserSession(const std::string&
    END_LOCK_MUTEX
 
    // Make sure there's a database record for the user when creating the session
-   ensureDatabaseUser(username);
+   // *unless* users can be provisioned only by an external identity provider.
+   if (!overlay::isUserProvisioningEnabled())
+   {
+      ensureDatabaseUser(username);
+   }
 
    metrics::setActiveUserSessionCount(activeSessions);
 

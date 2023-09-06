@@ -69,6 +69,8 @@ OverlayResult addUserToDatabase(const boost::shared_ptr<core::database::IConnect
                                 const core::system::User& user,
                                 bool isAdmin = false);
 
+bool isUserProvisioningEnabled();
+
 } // namespace overlay
 
 } // namespace handler

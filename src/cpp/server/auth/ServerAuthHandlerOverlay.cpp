@@ -147,6 +147,11 @@ OverlayResult addUserToDatabase(const boost::shared_ptr<IConnection>& connection
    return std::make_tuple(Success(), true);
 }
 
+bool isUserProvisioningEnabled()
+{
+   return false;
+}
+
 } // namespace overlay
 
 } // namespace handler
