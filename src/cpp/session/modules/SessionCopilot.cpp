@@ -50,14 +50,14 @@
       std::string message = fmt::format(__FMT__, ##__VA_ARGS__);               \
       std::string formatted =                                                  \
           fmt::format("[{}]: {}", __func__, message);                          \
-      __LOGGER__(formatted);                                                   \
+      __LOGGER__("copilot", formatted);                                        \
       if (copilotLogLevel() >= 1)                                              \
          std::cerr << formatted << std::endl;                                  \
    } while (0)
 
-#define DLOG(__FMT__, ...) COPILOT_LOG_IMPL(LOG_DEBUG_MESSAGE,   __FMT__, ##__VA_ARGS__)
-#define WLOG(__FMT__, ...) COPILOT_LOG_IMPL(LOG_WARNING_MESSAGE, __FMT__, ##__VA_ARGS__)
-#define ELOG(__FMT__, ...) COPILOT_LOG_IMPL(LOG_ERROR_MESSAGE,   __FMT__, ##__VA_ARGS__)
+#define DLOG(__FMT__, ...) COPILOT_LOG_IMPL(LOG_DEBUG_MESSAGE_NAMED,   __FMT__, ##__VA_ARGS__)
+#define WLOG(__FMT__, ...) COPILOT_LOG_IMPL(LOG_WARNING_MESSAGE_NAMED, __FMT__, ##__VA_ARGS__)
+#define ELOG(__FMT__, ...) COPILOT_LOG_IMPL(LOG_ERROR_MESSAGE_NAMED,   __FMT__, ##__VA_ARGS__)
 
 #ifndef _WIN32
 # define kNodeExe "node"
@@ -484,7 +484,9 @@ void onStdout(ProcessOperations& operations, const std::string& stdOut)
 
 void onStderr(ProcessOperations& operations, const std::string& stdErr)
 {
-   std::cerr << stdErr << std::endl;
+   LOG_ERROR_MESSAGE_NAMED("copilot", stdErr);
+   if (copilotLogLevel() >= 1)
+      std::cerr << stdErr << std::endl;
 }
 
 void onExit(int status)
