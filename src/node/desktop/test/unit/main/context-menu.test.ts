@@ -12,6 +12,7 @@
  * AGPL (http://www.gnu.org/licenses/agpl-3.0.txt) for more details.
  *
  */
+/* eslint-disable @typescript-eslint/no-explicit-any */
 
 import { describe } from 'mocha';
 import { assert } from 'chai';

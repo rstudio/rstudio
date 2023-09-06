@@ -32,7 +32,7 @@ module.exports = {
         tabWidth: 2,
         ignoreUrls: true,
         ignoreStrings: true,
-        ignoreTemplateLiterals: true
+        ignoreTemplateLiterals: true,
       },
     ],
 
@@ -47,7 +47,6 @@ module.exports = {
     '@typescript-eslint/promise-function-async': ['warn'],
     '@typescript-eslint/require-array-sort-compare': ['error'],
     '@typescript-eslint/return-await': ['warn'],
-    '@typescript-eslint/no-implicit-any-catch': ['error'],
     '@typescript-eslint/no-unused-vars': [
       'warn',
       {

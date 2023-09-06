@@ -116,6 +116,7 @@ ipcRenderer.on('initialize', (_event, data) => {
       selectEl.appendChild(optionEl);
 
       if (isRVersionSelected(data.selectedRVersion as string, r64) && !isDefault64Selected) {
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
         const useCustomRadioInput = document.getElementById('use-custom') as any;
         useCustomRadioInput.checked = true;
 
@@ -134,6 +135,7 @@ ipcRenderer.on('initialize', (_event, data) => {
       selectEl.appendChild(optionEl);
 
       if (isRVersionSelected(data.selectedRVersion as string, r32) && !isDefault32Selected) {
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
         const useCustomRadioInput = document.getElementById('use-custom') as any;
         useCustomRadioInput.checked = true;
 
