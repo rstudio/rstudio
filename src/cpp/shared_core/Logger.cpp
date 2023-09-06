@@ -612,6 +612,12 @@ void logError(const Error& in_error, const ErrorLocation& in_location)
       logger().writeMessageToDestinations(LogLevel::ERR, std::string(), "", boost::none, in_location, in_error);
 }
 
+void logError(const Error& in_error, const std::string& in_section, const ErrorLocation& in_location)
+{
+   if (!in_error.isExpected())
+      logger().writeMessageToDestinations(LogLevel::ERR, std::string(), in_section, boost::none, in_location, in_error);
+}
+
 void logErrorAsWarning(const Error& in_error)
 {
    if (!in_error.isExpected())

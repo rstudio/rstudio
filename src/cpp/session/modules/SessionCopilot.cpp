@@ -59,6 +59,13 @@
 #define WLOG(__FMT__, ...) COPILOT_LOG_IMPL(LOG_WARNING_MESSAGE_NAMED, __FMT__, ##__VA_ARGS__)
 #define ELOG(__FMT__, ...) COPILOT_LOG_IMPL(LOG_ERROR_MESSAGE_NAMED,   __FMT__, ##__VA_ARGS__)
 
+// Use a default section of 'copilot' for errors / warnings
+#ifdef LOG_ERROR
+# undef LOG_ERROR
+# define LOG_ERROR(error) LOG_ERROR_NAMED("copilot", error)
+#endif
+
+
 #ifndef _WIN32
 # define kNodeExe "node"
 #else

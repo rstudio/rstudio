@@ -204,6 +204,18 @@ void logError(const Error& in_error);
 void logError(const Error& in_error, const ErrorLocation& in_location);
 
 /**
+ * @brief Logs an error to all registered destinations.
+ *
+ * If no destinations are registered, no log will be written.
+ * If the configured log level is below LogLevel::ERR, no log will be written.
+ *
+ * @param in_error        The error to log.
+ * @param in_section      The section of the log that the message belongs in.
+ * @param in_location     The location from which the message was logged.
+ */
+void logError(const Error& in_error, const std::string& in_section, const ErrorLocation& in_loggedFrom);
+
+/**
  * @brief Logs an error as a warning to all registered destinations.
  *
  * If no destinations are registered, no log will be written.
