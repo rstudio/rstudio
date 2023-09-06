@@ -19,43 +19,6 @@ import { dialog, MessageBoxOptions, shell } from 'electron';
 import { appState } from './app-state';
 import { ElectronDesktopOptions } from './preferences/electron-desktop-options';
 import { t } from 'i18next';
-import { initI18n } from './i18n-manager';
-
-enum DetectRosettaStatus {
-  ROSETTA_CHECK_FAILED,
-  ROSETTA_INSTALL_WARNING,
-}
-
-initI18n();
-
-const DETECT_ROSETTA_STATUS_MAP: Map<DetectRosettaStatus, MessageBoxOptions> = new Map([
-  [
-    DetectRosettaStatus.ROSETTA_CHECK_FAILED,
-    {
-      type: 'error',
-      buttons: [t('common.buttonOk')],
-      defaultId: 0,
-      title: t('detectRosetta.checkFailedTitle'),
-      message: t('detectRosetta.checkFailedMessage'),
-      detail: t('detectRosetta.checkFailedDetail'),
-    },
-  ],
-  [
-    DetectRosettaStatus.ROSETTA_INSTALL_WARNING,
-    {
-      type: 'warning',
-      buttons: [
-        t('detectRosetta.installWarningMoreInfo'),
-        t('detectRosetta.installWarningRemindLater'),
-        t('detectRosetta.installWarningDoNotRemind'),
-      ],
-      defaultId: 0,
-      title: t('detectRosetta.installWarningTitle'),
-      message: t('detectRosetta.installWarningMessage'),
-      detail: t('detectRosetta.installWarningDetail'),
-    },
-  ],
-]);
 
 /**
  * Checks if Rosetta is installed and running on Apple Silicon. Warns user to install Rosetta
@@ -77,8 +40,20 @@ export function detectRosetta(): boolean | undefined {
   const isRosettaInstalled = isRosettaRunning();
   if (!isRosettaInstalled) {
     logger().logDebug('Rosetta 2 is not running. Warning user to install Rosetta to avoid issues.');
-    showDialogForStatus(DetectRosettaStatus.ROSETTA_INSTALL_WARNING, (selectedButtonId) => {
-      switch (selectedButtonId) {
+    const dialogOptions: MessageBoxOptions = {
+      type: 'warning',
+      buttons: [
+        t('detectRosetta.installWarningMoreInfo'),
+        t('detectRosetta.installWarningRemindLater'),
+        t('detectRosetta.installWarningDoNotRemind'),
+      ],
+      defaultId: 0,
+      title: t('detectRosetta.installWarningTitle'),
+      message: t('detectRosetta.installWarningMessage'),
+      detail: t('detectRosetta.installWarningDetail'),
+    };
+    appState().modalTracker.trackElectronModalSync(async () => dialog.showMessageBox(dialogOptions).then((retVal) => {
+      switch (retVal.response) {
         case 0:
           // Selected 'More Information' button. Open link to Rosetta installation instructions.
           shell.openExternal(
@@ -96,7 +71,7 @@ export function detectRosetta(): boolean | undefined {
         default:
           break;
       }
-    });
+    }));
   }
   return isRosettaInstalled;
 }
@@ -126,25 +101,15 @@ function isRosettaRunning(): boolean {
     // Otherwise, something went wrong while running the command.
     logger().logErrorMessage('Failed to verify if rosetta is installed.');
     logger().logErrorMessage(JSON.stringify(error));
-    showDialogForStatus(DetectRosettaStatus.ROSETTA_CHECK_FAILED);
+    const dialogOptions: MessageBoxOptions = {
+      type: 'error',
+      buttons: [t('common.buttonOk')],
+      defaultId: 0,
+      title: t('detectRosetta.checkFailedTitle'),
+      message: t('detectRosetta.checkFailedMessage'),
+      detail: t('detectRosetta.checkFailedDetail'),
+    };
+    appState().modalTracker.trackElectronModalSync(async () => dialog.showMessageBox(dialogOptions));
     throw error;
   }
-}
-
-/**
- * Shows a dialog for the given DetectRosettaStatus.
- * @param status the DetectRosettaStatus to show a dialog for.
- * @param callback an optional callback function to run after the dialog is interacted with.
- */
-function showDialogForStatus(status: DetectRosettaStatus, callback?: (selectedButtonId: number) => void): void {
-  const dialogOptions = DETECT_ROSETTA_STATUS_MAP.get(status);
-  if (!dialogOptions) {
-    logger().logErrorMessage(`No dialog options found for status: ${status}`);
-    return;
-  }
-  appState().modalTracker.trackElectronModalSync(async () =>
-    dialog.showMessageBox(dialogOptions).then((retVal) => {
-      if (callback) callback(retVal.response);
-    }),
-  );
 }
