@@ -998,7 +998,7 @@ assign(x = ".rs.acCompletionTypes",
                                                          results = setdiff(.names, .drop),
                                                          quote = FALSE,
                                                          type = .rs.acCompletionTypes$COLUMN, 
-                                                         package = as.character(matchedCall[[".data"]]))
+                                                         packages = as.character(matchedCall[[".data"]]))
                return(groupByCompletions)
             }
          }
