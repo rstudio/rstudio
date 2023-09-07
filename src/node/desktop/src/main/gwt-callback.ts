@@ -57,6 +57,7 @@ import { activateWindow, focusedWebContents } from './window-utils';
 import { getenv } from '../core/environment';
 import { safeError } from '../core/err';
 import { userHomePathString } from '../core/user';
+import { detectRosetta } from './detect-rosetta';
 
 export enum PendingQuit {
   PendingQuitNone,
@@ -949,6 +950,12 @@ export class GwtCallback extends EventEmitter {
         this.addMacOSVersionError();
       }
       return resolveTemplateVar(varName, this.errorPageData);
+    });
+
+    ipcMain.on('desktop_detect_rosetta', () => {
+      if (ElectronDesktopOptions().checkForRosetta()) {
+        detectRosetta();
+      }
     });
   }
 

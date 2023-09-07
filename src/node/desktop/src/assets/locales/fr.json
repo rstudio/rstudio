@@ -40,6 +40,17 @@
     "rLaunchFailedTitle": "Erreur de chargement de R",
     "rLaunchFailedMessage": "Une erreur s'est produite lors de la tentative de chargement de la version sélectionnée de R. Veuillez sélectionner une installation de R différente."
   },
+  "detectRosetta": {
+    "checkFailedTitle": "Rosetta vérification a échoué",
+    "checkFailedMessage": "Une erreur s'est produite lors de la vérification de l'installation de Rosetta.",
+    "checkFailedDetail": "Veuillez rouvrir RStudio pour réessayer.",
+    "installWarningTitle": "Rosetta n'est pas installé",
+    "installWarningMessage": "Rosetta n'est pas installé sur votre machine. Vous pouvez rencontrer des problèmes lors de l'exécution de RStudio.",
+    "installWarningDetail": "Pour éviter ces problèmes, veuillez installer Rosetta et rouvrir RStudio.",
+    "installWarningMoreInfo": "Plus d'informations",
+    "installWarningRemindLater": "Rappelez-moi plus tard",
+    "installWarningDoNotRemind": "Ne me le rappelez plus"
+  },
   "uiFolder": {
     "chooseRExecutable": "Choisissez l'exécutable de R",
     "rExecutable": "Exécutable R",
