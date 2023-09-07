@@ -8,13 +8,14 @@
 - Add section to theme generation that will use theme-specific color(s) to set colors of vim/emacs-mode cursor
 
 #### Posit Workbench
-- Prometheus metrics are available in Posit Workbench (rstudio-pro:#3273)
-- Additional support for publishing new content types to Posit Cloud (rstudio-pro#4541)
-- Update code-server to version 4.14.1 (VS Code version 1.79.2) bundled with node 16.20.2 (rstudio-pro#4774, rstudio-pro#5012)
-- Update rserver-saml to 0.7.0 (rstudio-pro#4903)
-- Change the default behavior of `launcher-balancing-enabled` to always be true. (rstudio-pro#4953)
-- Auto-generate the `secure-cookie-key` and launcher key pair in load-balanced environments (rstudio-pro#4985)
-- Add the `secure-cookie-key` and launcher key pair to the node table of the database for load-balanced environments. (rstudio-pro#4985)
+- Prometheus metrics are available in Posit Workbench (rstudio/rstudio-pro#3273)
+- Additional support for publishing new content types to Posit Cloud (rstudio/rstudio-pro#4541)
+- Update code-server to version 4.14.1 (VS Code version 1.79.2) bundled with node 16.20.2 (rstudio/rstudio-pro#4774, rstudio/rstudio-pro#5012)
+- Update rserver-saml to 0.7.0 (rstudio/rstudio-pro#4903)
+- Change the default behavior of `launcher-balancing-enabled` to always be true. (rstudio/rstudio-pro#4953)
+- Auto-generate the `secure-cookie-key` and launcher key pair in load-balanced environments (rstudio/rstudio-pro#4985)
+- Add the `secure-cookie-key` and launcher key pair to the node table of the database for load-balanced environments. (rstudio/rstudio-pro#4985)
+- Security audit and file size optimization for VS Code Workbench extension (rstudio/rstudio-workbench-vscode-ext#227)
 
 ### Fixed
 #### RStudio
@@ -41,12 +42,12 @@
 - Fixed issue where R sessions containing large 'igraph' objects could become slow (#13489)
 
 #### Posit Workbench 
-- Fixed intermittent rsession crash when the linux nscd service was enabled (rstudio-pro:#4648)
-- Fixed bug when resuming session not restoring current working directory for Terminal pane (rstudio-pro:#4027)
-- Fixed bug preventing `HOME` from being modified in system init scripts (rstudio-pro:#4584)
-- Removed unnecessary files from install packages (rstudio-pro:#4943)
-- Updated Launcher go dependencies to latest versions (rstudio-pro:#5021)
+- Fixed intermittent rsession crash when the linux nscd service was enabled (rstudio/rstudio-pro#4648)
+- Fixed bug when resuming session not restoring current working directory for Terminal pane (rstudio/rstudio-pro#4027)
+- Fixed bug preventing `HOME` from being modified in system init scripts (rstudio/rstudio-pro#4584)
+- Removed unnecessary files from install packages (rstudio/rstudio-pro#4943)
+- Updated Launcher go dependencies to latest versions (rstudio/rstudio-pro#5021)
 
 ### Performance
-- Improved performance of group membership tests (rstudio-pro:#4643)
-- Increased read buffer size for rserver proxy (rstudio-pro:#4764)
+- Improved performance of group membership tests (rstudio/rstudio-pro#4643)
+- Increased read buffer size for rserver proxy (rstudio/rstudio-pro#4764)
