@@ -23,6 +23,8 @@
 #include <core/FileSerializer.hpp>
 #include <core/text/DcfParser.hpp>
 
+#include <r/ROptions.hpp>
+
 #include <session/SessionModuleContext.hpp>
 
 using namespace rstudio::core;
@@ -254,6 +256,43 @@ void onLibPathsChanged(const std::vector<std::string>& libPaths)
    reindexDeferred();
 }
 
+void invokeHook(boost::shared_ptr<source_database::SourceDocument> pDoc,
+                const std::string& hookName)
+{
+   SEXP hookSEXP = r::options::getOption(hookName);
+   if (hookSEXP == R_NilValue)
+      return;
+   
+   r::sexp::Protect protect;
+   r::sexp::ListBuilder builder(&protect);
+   builder.add("id", pDoc->id());
+   builder.add("path", pDoc->path());
+   builder.add("contents", pDoc->contents());
+   
+   Error error = r::exec::RFunction(".rs.ppe.invokeHook")
+         .addParam("hook", hookSEXP)
+         .addParam("data", builder)
+         .call();
+   
+   if (error)
+      LOG_ERROR(error);
+}
+
+void onDocAdded(boost::shared_ptr<source_database::SourceDocument> pDoc)
+{
+   invokeHook(pDoc, "rstudio.events.onDocAdded");
+}
+
+void onDocUpdated(boost::shared_ptr<source_database::SourceDocument> pDoc)
+{
+   invokeHook(pDoc, "rstudio.events.onDocUpdated");
+}
+
+void onDocPendingRemove(boost::shared_ptr<source_database::SourceDocument> pDoc)
+{
+   invokeHook(pDoc, "rstudio.events.onDocPendingRemove");
+}
+
 } // end anonymous namespace
 
 Error initialize()
@@ -265,7 +304,14 @@ Error initialize()
    events().onConsoleInput.connect(onConsoleInput);
    events().onLibPathsChanged.connect(onLibPathsChanged);
    
-   return Success();
+   source_database::events().onDocAdded.connect(onDocAdded);
+   source_database::events().onDocUpdated.connect(onDocUpdated);
+   source_database::events().onDocPendingRemove.connect(onDocPendingRemove);
+   
+   ExecBlock initBlock;
+   initBlock.addFunctions()
+      (boost::bind(module_context::sourceModuleRFile, "SessionPackageProvidedExtension.R"));
+   return initBlock.execute();
 }
 
 } // end namespace ppe

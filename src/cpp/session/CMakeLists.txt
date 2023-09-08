@@ -104,7 +104,7 @@ if(WIN32)
 endif()
 
 # include files
-file(GLOB_RECURSE SESSION_HEADER_FILES "*.h*")
+file(GLOB_RECURSE SESSION_HEADER_FILES CONFIGURE_DEPENDS "*.h*")
 
 
 # source files
@@ -375,7 +375,7 @@ else()
 endif()
 
 # R files
-file(GLOB_RECURSE SESSION_R_FILES "modules/*.R")
+file(GLOB_RECURSE SESSION_R_FILES CONFIGURE_DEPENDS "modules/*.R")
 
 # test files
 if (RSTUDIO_UNIT_TESTS_ENABLED)

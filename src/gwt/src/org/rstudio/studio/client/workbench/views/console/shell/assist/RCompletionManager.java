@@ -44,7 +44,6 @@ import org.rstudio.studio.client.workbench.codesearch.model.FileFunctionDefiniti
 import org.rstudio.studio.client.workbench.codesearch.model.ObjectDefinition;
 import org.rstudio.studio.client.workbench.codesearch.model.SearchPathFunctionDefinition;
 import org.rstudio.studio.client.workbench.prefs.model.UserPrefs;
-import org.rstudio.studio.client.workbench.prefs.model.UserPrefsAccessor;
 import org.rstudio.studio.client.workbench.snippets.SnippetHelper;
 import org.rstudio.studio.client.workbench.views.console.ConsoleConstants;
 import org.rstudio.studio.client.workbench.views.console.events.SendToConsoleEvent;
@@ -412,20 +411,43 @@ public class RCompletionManager implements CompletionManager
 
       int keycode = event.getKeyCode();
       int modifier = KeyboardShortcut.getModifierValue(event);
+ 
+      // Handle ghost text. Ghost text handlers get higher priority over other
+      // completion handlers.
+      if (docDisplay_.hasGhostText())
+      {
+         // Let tab insert ghost text if configured to do so
+         if (keycode == KeyCodes.KEY_TAB && modifier == 0)
+         {
+            invalidatePendingRequests();
+            AceGhostText ghostText = docDisplay_.getGhostText();
+            docDisplay_.replaceRange(
+                  Range.fromPoints(ghostText.position, ghostText.position),
+                  ghostText.text);
+            docDisplay_.removeGhostText();
+            docDisplay_.scrollCursorIntoViewIfNecessary();
+            return true;
+         }
 
+         // Check if the user just inserted some text matching the current
+         // ghost text. If so, we'll suppress the next cursor change handler,
+         // so we can continue presenting the current ghost text.
+         String key = EventProperty.key(event);
+         AceGhostText ghostText = docDisplay_.getGhostText();
+         if (ghostText.text.startsWith(key))
+         {
+            String newGhostText = ghostText.text.substring(1);
+            docDisplay_.insertCode(key);
+            docDisplay_.setGhostText(newGhostText);
+            return true;
+         }
+      }
+      
       if (!popup_.isShowing())
       {
          // don't allow ctrl + space for completions in Emacs mode
          if (docDisplay_.isEmacsModeOn() && event.getKeyCode() == KeyCodes.KEY_SPACE)
             return false;
-         
-         // Don't handle Tab when ghost text is displayed
-         if (keycode == KeyCodes.KEY_TAB &&
-             modifier == 0 &&
-             docDisplay_.hasGhostText())
-         {
-            return false;
-         }
          
          if (CompletionUtils.isCompletionRequest(event, modifier))
          {
@@ -520,24 +542,6 @@ public class RCompletionManager implements CompletionManager
                
                else if (keycode == KeyCodes.KEY_TAB)
                {
-                  // Let tab insert ghost text if configured to do so
-                  String tabKeyBehavior = userPrefs_.copilotTabKeyBehavior().getValue();
-                  boolean preferGhostText =
-                        docDisplay_.hasGhostText() &&
-                        tabKeyBehavior == UserPrefsAccessor.COPILOT_TAB_KEY_BEHAVIOR_SUGGESTION;
-                  
-                  if (preferGhostText)
-                  {
-                     invalidatePendingRequests();
-                     AceGhostText ghostText = docDisplay_.getGhostText();
-                     docDisplay_.replaceRange(
-                           Range.fromPoints(ghostText.position, ghostText.position),
-                           ghostText.text);
-                     docDisplay_.removeGhostText();
-                     docDisplay_.scrollCursorIntoViewIfNecessary();
-                     return false;
-                  }
-                  
                   QualifiedName value = popup_.getSelectedValue();
                   if (value != null)
                   {
