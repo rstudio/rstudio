@@ -103,29 +103,6 @@ OverlayResult addUser(boost::asio::io_service& ioService,
    return std::make_tuple(Success(), false);
 }
 
-OverlayResult getAllUsersFromDatabase(const boost::shared_ptr<IConnection>& connection,
-                                      core::database::Rowset& rows)
-{
-   Query query = connection->query("SELECT user_name, locked, last_sign_in, is_admin FROM licensed_users");
-   Error error = connection->execute(query, rows);
-   if (error)
-      return std::make_tuple(error, true);
-   return std::make_tuple(Success(), true);
-}
-
-OverlayResult getUserFromDatabase(const boost::shared_ptr<IConnection>& connection,
-                                  const system::User& user,
-                                  core::database::Rowset& rows)
-{
-   Query userQuery = connection->query("SELECT user_name, user_id, last_sign_in, locked FROM licensed_users WHERE user_id = :uid OR user_name = :username")
-         .withInput(user.getUserId())
-         .withInput(user.getUsername());
-   Error error = connection->execute(userQuery, rows);
-   if (error)
-      return std::make_tuple(error, true);
-   return std::make_tuple(Success(), true);
-}
-
 OverlayResult addUserToDatabase(const boost::shared_ptr<IConnection>& connection,
                                 const system::User& user,
                                 bool isAdmin)
@@ -152,7 +129,7 @@ bool isUserProvisioningEnabled()
    return false;
 }
 
-std::string getUsernameField()
+std::string getUsernameDbColumnName()
 {
    return "user_name";
 

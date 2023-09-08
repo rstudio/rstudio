@@ -436,11 +436,13 @@ Error getUserFromDatabase(const boost::shared_ptr<IConnection>& connection,
    
    *pLocked = true;
 
+   const auto usernameColName = overlay::getUsernameDbColumnName();
+   Query userQuery = connection->query("SELECT " + usernameColName + ", user_id, last_sign_in, locked FROM licensed_users WHERE user_id = :uid OR " + usernameColName + " = :un")
+         .withInput(user.getUserId())
+         .withInput(user.getUsername());
+
    Rowset rows;
-   const auto result = overlay::getUserFromDatabase(connection, user, rows);
-   Error error;
-   bool wasHandled;
-   std::tie(error, wasHandled) = result;
+   Error error = connection->execute(userQuery, rows);
    if (error)
    {
       error.addProperty("description", "Could not get user from database due to database error");
@@ -580,11 +582,11 @@ json::Array getAllUsers()
       return json::Array();
    }
 
+   const auto usernameColName = overlay::getUsernameDbColumnName();
+   Query query = connection->query("SELECT " + usernameColName + ", locked, last_sign_in, is_admin FROM licensed_users");
+
    Rowset rows;
-   const auto result = overlay::getAllUsersFromDatabase(connection, rows);
-   Error error;
-   bool wasHandled;
-   std::tie(error, wasHandled) = result;
+   Error error = connection->execute(query, rows);
    if (error)
    {
       error.addProperty("description",
