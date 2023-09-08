@@ -47,6 +47,7 @@
 - Fixed bug preventing `HOME` from being modified in system init scripts (rstudio/rstudio-pro#4584)
 - Removed unnecessary files from install packages (rstudio/rstudio-pro#4943)
 - Updated Launcher go dependencies to latest versions (rstudio/rstudio-pro#5021)
+- Fixed bug preventing user's last sign in date from updating on CentOS 7 and PostgreSQL (rstudio/rstudio-pro#5072)
 
 ### Performance
 - Improved performance of group membership tests (rstudio/rstudio-pro#4643)
