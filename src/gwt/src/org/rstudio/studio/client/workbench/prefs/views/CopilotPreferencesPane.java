@@ -362,7 +362,7 @@ public class CopilotPreferencesPane extends PreferencesPane
       
    }
 
-   private static Resources RES = GWT.create(Resources.class);
+   public static Resources RES = GWT.create(Resources.class);
    static
    {
       RES.styles().ensureInjected();

@@ -17,7 +17,6 @@ package org.rstudio.studio.client.projects.ui.prefs;
 import java.util.ArrayList;
 import java.util.List;
 
-import com.google.gwt.core.client.GWT;
 import org.rstudio.core.client.prefs.PreferencesDialogBase;
 import org.rstudio.core.client.prefs.PreferencesDialogPaneBase;
 import org.rstudio.core.client.prefs.RestartRequirement;
@@ -32,6 +31,7 @@ import org.rstudio.studio.client.projects.model.RProjectConfig;
 import org.rstudio.studio.client.projects.model.RProjectOptions;
 import org.rstudio.studio.client.projects.model.RProjectRenvOptions;
 import org.rstudio.studio.client.projects.ui.prefs.buildtools.ProjectBuildToolsPreferencesPane;
+import org.rstudio.studio.client.projects.ui.prefs.buildtools.ProjectCopilotPreferencesPane;
 import org.rstudio.studio.client.server.ServerError;
 import org.rstudio.studio.client.server.ServerRequestCallback;
 import org.rstudio.studio.client.server.Void;
@@ -40,6 +40,7 @@ import org.rstudio.studio.client.workbench.prefs.model.UserPrefs;
 import org.rstudio.studio.client.workbench.prefs.model.UserState;
 import org.rstudio.studio.client.workbench.views.console.events.SendToConsoleEvent;
 
+import com.google.gwt.core.client.GWT;
 import com.google.inject.Inject;
 import com.google.inject.Provider;
 
@@ -74,6 +75,7 @@ public class ProjectPreferencesDialog extends PreferencesDialogBase<RProjectOpti
                                    ProjectRenvPreferencesPane renv,
                                    ProjectPythonPreferencesPane python,
                                    ProjectSharingPreferencesPane sharing,
+                                   ProjectCopilotPreferencesPane copilot,
                                    Provider<ApplicationQuit> pQuit,
                                    Provider<GlobalDisplay> pGlobalDisplay)
    {
@@ -91,7 +93,8 @@ public class ProjectPreferencesDialog extends PreferencesDialogBase<RProjectOpti
                   build,
                   source,
                   renv,
-                  sharing));
+                  sharing,
+                  copilot));
 
       pSession_ = session;
       server_ = server;
@@ -205,7 +208,14 @@ public class ProjectPreferencesDialog extends PreferencesDialogBase<RProjectOpti
                    uiPrefs.spellingDictionaryLanguage().setProjectValue(config.getSpellingDictionary());
                 else
                    uiPrefs.spellingDictionaryLanguage().removeProjectValue(true);
-
+                
+                // copilot prefs
+                Boolean copilotEnabled = config.getCopilotEnabled();
+                if (copilotEnabled != null)
+                   uiPrefs.copilotEnabled().setProjectValue(copilotEnabled);
+                else
+                   uiPrefs.copilotEnabled().removeProjectValue(true);
+                      
                 // convert packrat option changes to console actions
                 emitRenvConsoleActions(options.getRenvOptions());
 

@@ -1004,6 +1004,14 @@ Error readProjectFile(const FilePath& projectFilePath,
    {
       pConfig->spellingDictionary = it->second;
    }
+   
+   // extract copilot fields
+   it = dcfFields.find("CopilotEnabled");
+   if (it != dcfFields.end())
+   {
+      if (!interpretYesNoAskValue(it->second, false, &(pConfig->copilotEnabled)))
+         return requiredFieldError("MarkdownCanonical", pUserErrMsg);
+   }
 
    return Success();
 }
@@ -1064,8 +1072,6 @@ Error writeProjectFile(const FilePath& projectFilePath,
 
       if (config.autoAppendNewline)
       {
-
-
          contents.append("AutoAppendNewline: Yes\n");
       }
 
@@ -1295,6 +1301,12 @@ Error writeProjectFile(const FilePath& projectFilePath,
       contents.append(boost::str(fmt % config.spellingDictionary));
    }
 
+   // add copilot information if present
+   if (config.copilotEnabled != DefaultValue)
+   {
+      boost::format fmt("\nCopilotEnabled: %1%\n");
+      contents.append(boost::str(fmt % yesNoAskValueToString(config.copilotEnabled)));
+   }
 
    // write it
    return writeStringToFile(projectFilePath,
