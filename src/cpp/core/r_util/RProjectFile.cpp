@@ -1010,7 +1010,14 @@ Error readProjectFile(const FilePath& projectFilePath,
    if (it != dcfFields.end())
    {
       if (!interpretYesNoAskValue(it->second, false, &(pConfig->copilotEnabled)))
-         return requiredFieldError("MarkdownCanonical", pUserErrMsg);
+         return requiredFieldError("CopilotEnabled", pUserErrMsg);
+   }
+   
+   it = dcfFields.find("CopilotIndexingEnabled");
+   if (it != dcfFields.end())
+   {
+      if (!interpretYesNoAskValue(it->second, false, &(pConfig->copilotIndexingEnabled)))
+         return requiredFieldError("CopilotIndexingEnabled", pUserErrMsg);
    }
 
    return Success();
@@ -1307,6 +1314,13 @@ Error writeProjectFile(const FilePath& projectFilePath,
       boost::format fmt("\nCopilotEnabled: %1%\n");
       contents.append(boost::str(fmt % yesNoAskValueToString(config.copilotEnabled)));
    }
+   
+   if (config.copilotIndexingEnabled != DefaultValue)
+   {
+      boost::format fmt("CopilotIndexingEnabled: %1%\n");
+      contents.append(boost::str(fmt % yesNoAskValueToString(config.copilotIndexingEnabled)));
+   }
+   
 
    // write it
    return writeStringToFile(projectFilePath,

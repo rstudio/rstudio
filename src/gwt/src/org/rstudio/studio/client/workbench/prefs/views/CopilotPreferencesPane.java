@@ -25,9 +25,14 @@ import org.rstudio.core.client.resources.ImageResource2x;
 import org.rstudio.core.client.widget.SelectWidget;
 import org.rstudio.core.client.widget.SmallButton;
 import org.rstudio.studio.client.application.AriaLiveService;
+import org.rstudio.studio.client.application.events.EventBus;
 import org.rstudio.studio.client.common.HelpLink;
+import org.rstudio.studio.client.projects.model.ProjectsServerOperations;
+import org.rstudio.studio.client.projects.model.RProjectConfig;
+import org.rstudio.studio.client.projects.model.RProjectOptions;
 import org.rstudio.studio.client.server.ServerError;
 import org.rstudio.studio.client.server.ServerRequestCallback;
+import org.rstudio.studio.client.workbench.commands.Commands;
 import org.rstudio.studio.client.workbench.copilot.Copilot;
 import org.rstudio.studio.client.workbench.copilot.model.CopilotConstants;
 import org.rstudio.studio.client.workbench.copilot.model.CopilotResponseTypes.CopilotStatusResponse;
@@ -36,6 +41,7 @@ import org.rstudio.studio.client.workbench.model.Session;
 import org.rstudio.studio.client.workbench.prefs.model.UserPrefs;
 import org.rstudio.studio.client.workbench.prefs.model.UserPrefsAccessor;
 import org.rstudio.studio.client.workbench.prefs.model.UserPrefsAccessorConstants;
+import org.rstudio.studio.client.workbench.prefs.views.events.CopilotEnabledEvent;
 
 import com.google.gwt.aria.client.Roles;
 import com.google.gwt.core.client.GWT;
@@ -66,16 +72,22 @@ public class CopilotPreferencesPane extends PreferencesPane
    }
    
    @Inject
-   public CopilotPreferencesPane(Session session,
+   public CopilotPreferencesPane(EventBus events,
+                                 Session session,
                                  UserPrefs prefs,
+                                 Commands commands,
                                  AriaLiveService ariaLive,
                                  Copilot copilot,
-                                 CopilotServerOperations server)
+                                 CopilotServerOperations server,
+                                 ProjectsServerOperations projectServer)
    {
+      events_ = events;
       session_ = session;
       prefs_ = prefs;
+      commands_ = commands;
       copilot_ = copilot;
       server_ = server;
+      projectServer_ = projectServer;
       
       lblCopilotStatus_ = new Label("(Loading...)");
       
@@ -98,6 +110,10 @@ public class CopilotPreferencesPane extends PreferencesPane
       btnRefresh_ = new SmallButton("Refresh");
       btnRefresh_.addStyleName(RES.styles().button());
       statusButtons_.add(btnRefresh_);
+      
+      btnProjectOptions_ = new SmallButton("Project Options...");
+      btnProjectOptions_.addStyleName(RES.styles().button());
+      statusButtons_.add(btnProjectOptions_);
       
       cbCopilotEnabled_ = checkboxPref(prefs_.copilotEnabled(), true);
       cbCopilotIndexingEnabled_ = checkboxPref(prefs_.copilotIndexingEnabled(), true);
@@ -124,7 +140,7 @@ public class CopilotPreferencesPane extends PreferencesPane
             false);
       
       lblCopilotTos_ = new Label(
-            "By using GitHub Copilot, you agree to abide by the terms of service.");
+            "By using GitHub Copilot, you agree to abide by its terms of service.");
       lblCopilotTos_.addStyleName(RES.styles().copilotTosLabel());
    }
    
@@ -138,9 +154,8 @@ public class CopilotPreferencesPane extends PreferencesPane
 
          HorizontalPanel statusPanel = new HorizontalPanel();
          statusPanel.add(lblCopilotStatus_);
-         statusPanel.add(btnSignIn_);
-         statusPanel.add(btnSignOut_);
-         statusPanel.add(btnActivate_);
+         for (SmallButton button : statusButtons_)
+            statusPanel.add(button);
          add(spaced(statusPanel));
          
          add(headerLabel("Copilot Indexing"));
@@ -240,6 +255,20 @@ public class CopilotPreferencesPane extends PreferencesPane
             Window.open(href, "_blank", "");
          }
       });
+      
+      btnProjectOptions_.addClickHandler(new ClickHandler()
+      {
+         @Override
+         public void onClick(ClickEvent event)
+         {
+            commands_.projectOptions().execute();
+         }
+      });
+      
+      events_.addHandler(CopilotEnabledEvent.TYPE, (event) ->
+      {
+         refresh();
+      });
    }
    
    private void refresh()
@@ -255,7 +284,12 @@ public class CopilotPreferencesPane extends PreferencesPane
             
             if (response == null)
             {
-               if (prefs_.copilotEnabled().getValue())
+               if (projectOptions_ != null && projectOptions_.getConfig().getCopilotEnabled() == RProjectConfig.NO_VALUE)
+               {
+                  lblCopilotStatus_.setText("GitHub Copilot has been disabled in this project.");
+                  showButtons(btnProjectOptions_);
+               }
+               else if (prefs_.copilotEnabled().getValue())
                {
                   lblCopilotStatus_.setText("The GitHub Copilot agent is not currently running.");
                }
@@ -320,6 +354,26 @@ public class CopilotPreferencesPane extends PreferencesPane
    @Override
    protected void initialize(UserPrefs prefs)
    {
+      projectServer_.readProjectOptions(new ServerRequestCallback<RProjectOptions>()
+      {
+         @Override
+         public void onResponseReceived(RProjectOptions options)
+         {
+            projectOptions_ = options;
+            init();
+         }
+
+         @Override
+         public void onError(ServerError error)
+         {
+            Debug.logError(error);
+            init();
+         }
+      });
+   }
+   
+   private void init()
+   {
       initDisplay();
       initModel();
       refresh();
@@ -368,10 +422,10 @@ public class CopilotPreferencesPane extends PreferencesPane
       RES.styles().ensureInjected();
    }
    
-   private final Session session_;
-   private final UserPrefs prefs_;
-   private final Copilot copilot_;
-   private final CopilotServerOperations server_;
+   // State
+   private RProjectOptions projectOptions_;
+ 
+   // UI
    private final Label lblCopilotStatus_;
    private final CheckBox cbCopilotEnabled_;
    private final CheckBox cbCopilotIndexingEnabled_;
@@ -380,9 +434,19 @@ public class CopilotPreferencesPane extends PreferencesPane
    private final SmallButton btnSignOut_;
    private final SmallButton btnActivate_;
    private final SmallButton btnRefresh_;
+   private final SmallButton btnProjectOptions_;
    private final SelectWidget selCopilotTabKeyBehavior_;
    private final HelpLink linkCopilotTos_;
    private final Label lblCopilotTos_;
+   
+   // Injected
+   private final EventBus events_;
+   private final Session session_;
+   private final UserPrefs prefs_;
+   private final Commands commands_;
+   private final Copilot copilot_;
+   private final CopilotServerOperations server_;
+   private final ProjectsServerOperations projectServer_;
    
    private static final UserPrefsAccessorConstants constants = GWT.create(UserPrefsAccessorConstants.class);
    

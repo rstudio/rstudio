@@ -449,11 +449,19 @@ public class RProjectConfig extends JavaScriptObject
       this.zotero_libraries = libraries;
    }-*/;
    
-   public native final Boolean getCopilotEnabled() /*-{
+   public native final int getCopilotEnabled() /*-{
       return this.copilot_enabled;
    }-*/;
    
-   public native final void setCopilotEnabled(boolean enabled) /*-{
+   public native final void setCopilotEnabled(int enabled) /*-{
       this.copilot_enabled = enabled;
+   }-*/;
+   
+   public native final int getCopilotIndexingEnabled() /*-{
+      return this.copilot_indexing_enabled;
+   }-*/;
+   
+   public native final void setCopilotIndexingEnabled(int enabled) /*-{
+      this.copilot_indexing_enabled = enabled;
    }-*/;
 }

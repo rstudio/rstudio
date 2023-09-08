@@ -418,6 +418,8 @@ json::Object projectConfigJson(const r_util::RProjectConfig& config)
       configJson["zotero_libraries"] = json::toJsonArray(config.zoteroLibraries.get());
    else
       configJson["zotero_libraries"] = json::Value(); // null
+   configJson["copilot_enabled"] = config.copilotEnabled;
+   configJson["copilot_indexing_enabled"] = config.copilotIndexingEnabled;
 
    return configJson;
 }
@@ -488,6 +490,9 @@ void setProjectConfig(const r_util::RProjectConfig& config)
 {
    // set it
    s_projectContext.setConfig(config);
+   
+   // notify listeners
+   module_context::events().onProjectConfigUpdated();
 
    // sync underlying R setting
    module_context::syncRSaveAction();
@@ -701,6 +706,14 @@ Error writeProjectConfig(const json::Object& configJson)
    // read spelling options
    error = json::readObject(configJson,
                             "spelling_dictionary", config.spellingDictionary);
+   if (error)
+      return error;
+   
+   // read copilot options
+   error = json::readObject(
+            configJson,
+            "copilot_enabled", config.copilotEnabled,
+            "copilot_indexing_enabled", config.copilotIndexingEnabled);
    if (error)
       return error;
 

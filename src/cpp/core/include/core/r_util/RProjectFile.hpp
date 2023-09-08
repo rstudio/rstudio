@@ -117,7 +117,8 @@ struct RProjectConfig
         pythonVersion(),
         pythonPath(),
         spellingDictionary(),
-        copilotEnabled(DefaultValue)
+        copilotEnabled(DefaultValue),
+        copilotIndexingEnabled(DefaultValue)
    {
    }
 
@@ -164,6 +165,7 @@ struct RProjectConfig
    std::string pythonPath;
    std::string spellingDictionary;
    int copilotEnabled;
+   int copilotIndexingEnabled;
 };
 
 Error findProjectFile(FilePath filePath,

@@ -624,17 +624,17 @@ bool startAgent()
 
 bool ensureAgentRunning()
 {
-   // bail if we haven't enabled copilot
-   if (!s_copilotEnabled)
-   {
-      DLOG("Copilot is not enabled; not starting agent.");
-      return false;
-   }
-
    // bail if copilot is not allowed
    if (!session::options().copilotEnabled())
    {
       DLOG("Copilot has been disabled by the administrator; not starting agent.");
+      return false;
+   }
+
+   // bail if we haven't enabled copilot
+   if (!s_copilotEnabled)
+   {
+      DLOG("Copilot is not enabled; not starting agent.");
       return false;
    }
 
@@ -781,7 +781,7 @@ void onBackgroundProcessing(bool isIdle)
    }
 }
 
-void onPreferencesSaved()
+void synchronize()
 {
    // Check for preference change
    bool oldEnabled = s_copilotEnabled;
@@ -801,14 +801,25 @@ void onPreferencesSaved()
    {
       stopAgent();
    }
+   
+}
+
+void onPreferencesSaved()
+{
+   synchronize();
+}
+
+void onProjectConfigUpdated()
+{
+   synchronize();
 }
 
 void onUserPrefsChanged(const std::string& layer,
                         const std::string& name)
 {
-   if (name == "copilot_enabled")
+   if (name == kCopilotEnabled)
    {
-      onPreferencesSaved();
+      synchronize();
    }
 }
 
@@ -1053,6 +1064,7 @@ Error initialize()
    
    events().onBackgroundProcessing.connect(onBackgroundProcessing);
    events().onPreferencesSaved.connect(onPreferencesSaved);
+   events().onProjectConfigUpdated.connect(onProjectConfigUpdated);
    events().onDeferredInit.connect(onDeferredInit);
    events().onShutdown.connect(onShutdown);
 
