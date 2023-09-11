@@ -136,7 +136,7 @@ public class SelectWidget extends Composite
       if (values == null)
          values = options;
       
-      if (!label.endsWith(":"))
+      if ((label != null) && !label.endsWith(":"))
          label = label + ":";
 
       listBox_ = new ListBox();

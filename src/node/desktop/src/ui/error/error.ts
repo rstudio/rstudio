@@ -13,7 +13,6 @@
  *
  */
 
-/* eslint-disable @typescript-eslint/no-implicit-any-catch */
 import { changeLanguage, initI18n } from '../../main/i18n-manager';
 import i18next from 'i18next';
 import { checkForNewLanguage } from '../utils';
@@ -76,11 +75,13 @@ const loadPageLocalization = () => {
 
   window.addEventListener('load', () => {
     checkForNewLanguage()
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
       .then(async (newLanguage: any) =>
         changeLanguage('' + newLanguage).then(() => {
           updateLabels();
         }),
       )
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
       .catch((err: any) => {
         console.error('An error happened when trying to fetch a new locale: ', err);
       });
@@ -90,6 +91,7 @@ const loadPageLocalization = () => {
 const replaceReportVar = async (report: string, varName: string): Promise<string> => {
   return new Promise((resolve, reject) => {
     try {
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
       (window as any).desktop.getStartupErrorInfo('!' + varName, (result: any) => {
         resolve(report.replace(new RegExp('#' + varName + '#', 'g'), result));
       });

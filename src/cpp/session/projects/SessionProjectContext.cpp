@@ -775,11 +775,11 @@ json::Object ProjectContext::uiPrefs() const
    json::Object uiPrefs;
    uiPrefs[kUseSpacesForTab] = config_.useSpacesForTab;
    uiPrefs[kNumSpacesForTab] = config_.numSpacesForTab;
+   
    // only set project value if explicitly set to Yes or No
-   if (config_.useNativePipeOperator == r_util::YesValue)
-      uiPrefs[kInsertNativePipeOperator] = true;
-   if (config_.useNativePipeOperator == r_util::NoValue)
-      uiPrefs[kInsertNativePipeOperator] = false;
+   if (config_.useNativePipeOperator != DefaultValue)
+      uiPrefs[kInsertNativePipeOperator] = config_.useNativePipeOperator == YesValue;
+   
    uiPrefs[kAutoAppendNewline] = config_.autoAppendNewline;
    uiPrefs[kStripTrailingWhitespace] = config_.stripTrailingWhitespace;
    uiPrefs[kDefaultEncoding] = defaultEncoding();
@@ -820,6 +820,12 @@ json::Object ProjectContext::uiPrefs() const
    if (!config_.spellingDictionary.empty())
       uiPrefs[kSpellingDictionaryLanguage] = config_.spellingDictionary;
 
+   if (config_.copilotEnabled != DefaultValue)
+      uiPrefs[kCopilotEnabled] = config_.copilotEnabled == YesValue;
+   
+   if (config_.copilotIndexingEnabled != DefaultValue)
+      uiPrefs[kCopilotIndexingEnabled] = config_.copilotIndexingEnabled == YesValue;
+   
    return uiPrefs;
 }
 

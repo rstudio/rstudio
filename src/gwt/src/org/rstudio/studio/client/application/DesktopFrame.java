@@ -234,4 +234,6 @@ public interface DesktopFrame extends JavaScriptPassthrough
    void getProxyPortNumber(CommandWithArg<Double> callback);
 
    void signOut();
+
+   void detectRosetta();
 }

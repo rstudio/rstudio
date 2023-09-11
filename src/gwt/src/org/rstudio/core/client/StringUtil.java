@@ -14,17 +14,6 @@
  */
 package org.rstudio.core.client;
 
-import com.google.gwt.core.client.GWT;
-import com.google.gwt.core.client.JsArrayString;
-import com.google.gwt.i18n.client.DateTimeFormat;
-import com.google.gwt.i18n.client.NumberFormat;
-
-import org.rstudio.core.client.container.SafeMap;
-import org.rstudio.core.client.dom.DomMetrics;
-import org.rstudio.core.client.files.FileSystemItem;
-import org.rstudio.core.client.regex.Match;
-import org.rstudio.core.client.regex.Pattern;
-
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collection;
@@ -33,6 +22,17 @@ import java.util.HashMap;
 import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
+
+import org.rstudio.core.client.container.SafeMap;
+import org.rstudio.core.client.dom.DomMetrics;
+import org.rstudio.core.client.files.FileSystemItem;
+import org.rstudio.core.client.regex.Match;
+import org.rstudio.core.client.regex.Pattern;
+
+import com.google.gwt.core.client.GWT;
+import com.google.gwt.core.client.JsArrayString;
+import com.google.gwt.i18n.client.DateTimeFormat;
+import com.google.gwt.i18n.client.NumberFormat;
 
 public class StringUtil
 {
@@ -1498,7 +1498,7 @@ public class StringUtil
       var val2 = str2 ? str2 : "";
       return val1.localeCompare(val2, [], { "numeric": true });
    }-*/;
-
+   
    private static final NumberFormat FORMAT = NumberFormat.getFormat("0.#");
    private static final NumberFormat PRETTY_NUMBER_FORMAT = NumberFormat.getFormat("#,##0.#####");
    private static final DateTimeFormat DATE_FORMAT

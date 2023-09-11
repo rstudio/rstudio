@@ -50,14 +50,21 @@
       std::string message = fmt::format(__FMT__, ##__VA_ARGS__);               \
       std::string formatted =                                                  \
           fmt::format("[{}]: {}", __func__, message);                          \
-      __LOGGER__(formatted);                                                   \
+      __LOGGER__("copilot", formatted);                                        \
       if (copilotLogLevel() >= 1)                                              \
          std::cerr << formatted << std::endl;                                  \
    } while (0)
 
-#define DLOG(__FMT__, ...) COPILOT_LOG_IMPL(LOG_DEBUG_MESSAGE,   __FMT__, ##__VA_ARGS__)
-#define WLOG(__FMT__, ...) COPILOT_LOG_IMPL(LOG_WARNING_MESSAGE, __FMT__, ##__VA_ARGS__)
-#define ELOG(__FMT__, ...) COPILOT_LOG_IMPL(LOG_ERROR_MESSAGE,   __FMT__, ##__VA_ARGS__)
+#define DLOG(__FMT__, ...) COPILOT_LOG_IMPL(LOG_DEBUG_MESSAGE_NAMED,   __FMT__, ##__VA_ARGS__)
+#define WLOG(__FMT__, ...) COPILOT_LOG_IMPL(LOG_WARNING_MESSAGE_NAMED, __FMT__, ##__VA_ARGS__)
+#define ELOG(__FMT__, ...) COPILOT_LOG_IMPL(LOG_ERROR_MESSAGE_NAMED,   __FMT__, ##__VA_ARGS__)
+
+// Use a default section of 'copilot' for errors / warnings
+#ifdef LOG_ERROR
+# undef LOG_ERROR
+# define LOG_ERROR(error) LOG_ERROR_NAMED("copilot", error)
+#endif
+
 
 #ifndef _WIN32
 # define kNodeExe "node"
@@ -484,7 +491,9 @@ void onStdout(ProcessOperations& operations, const std::string& stdOut)
 
 void onStderr(ProcessOperations& operations, const std::string& stdErr)
 {
-   std::cerr << stdErr << std::endl;
+   LOG_ERROR_MESSAGE_NAMED("copilot", stdErr);
+   if (copilotLogLevel() >= 1)
+      std::cerr << stdErr << std::endl;
 }
 
 void onExit(int status)
@@ -615,17 +624,17 @@ bool startAgent()
 
 bool ensureAgentRunning()
 {
-   // bail if we haven't enabled copilot
-   if (!s_copilotEnabled)
-   {
-      DLOG("Copilot is not enabled; not starting agent.");
-      return false;
-   }
-
    // bail if copilot is not allowed
    if (!session::options().copilotEnabled())
    {
       DLOG("Copilot has been disabled by the administrator; not starting agent.");
+      return false;
+   }
+
+   // bail if we haven't enabled copilot
+   if (!s_copilotEnabled)
+   {
+      DLOG("Copilot is not enabled; not starting agent.");
       return false;
    }
 
@@ -772,7 +781,7 @@ void onBackgroundProcessing(bool isIdle)
    }
 }
 
-void onPreferencesSaved()
+void synchronize()
 {
    // Check for preference change
    bool oldEnabled = s_copilotEnabled;
@@ -792,14 +801,25 @@ void onPreferencesSaved()
    {
       stopAgent();
    }
+   
+}
+
+void onPreferencesSaved()
+{
+   synchronize();
+}
+
+void onProjectConfigUpdated()
+{
+   synchronize();
 }
 
 void onUserPrefsChanged(const std::string& layer,
                         const std::string& name)
 {
-   if (name == "copilot_enabled")
+   if (name == kCopilotEnabled)
    {
-      onPreferencesSaved();
+      synchronize();
    }
 }
 
@@ -1044,6 +1064,7 @@ Error initialize()
    
    events().onBackgroundProcessing.connect(onBackgroundProcessing);
    events().onPreferencesSaved.connect(onPreferencesSaved);
+   events().onProjectConfigUpdated.connect(onProjectConfigUpdated);
    events().onDeferredInit.connect(onDeferredInit);
    events().onShutdown.connect(onShutdown);
 

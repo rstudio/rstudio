@@ -17,7 +17,7 @@ import fs, { existsSync } from 'fs';
 import os from 'os';
 import path from 'path';
 import { sep } from 'path';
-import { app, BrowserWindow, dialog, FileFilter, MessageBoxOptions, WebContents, WebRequest } from 'electron';
+import { app, BrowserWindow, Cookie, dialog, FileFilter, MessageBoxOptions, WebContents, WebRequest } from 'electron';
 
 import { Xdg } from '../core/xdg';
 import { getenv, setenv } from '../core/environment';
@@ -450,7 +450,7 @@ export async function createStandaloneErrorDialog(
     );
 
     if (options.shouldCloseWindow) window.close();
-    // eslint-disable-next-line @typescript-eslint/no-implicit-any-catch
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
   } catch (error: any) {
     console.error('[utils.ts] [createStandaloneErrorDialog] Error when creating Standalone Error Dialog: ', error);
   }
@@ -484,8 +484,9 @@ export const handleLocaleCookies = async (window: BrowserWindow, isMainWindow = 
 
   await window.webContents.session.cookies
     .get({})
-    .then(async (cookies) => {
+    .then(async (cookies: Cookie[]) => {
       if (cookies.length === 0) {
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
         await updateLocaleFromCookie({ name: 'LOCALE', value: 'en' } as any, window);
       } else {
         cookies.forEach(async (cookie) => {

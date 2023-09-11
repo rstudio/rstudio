@@ -1,5 +1,5 @@
 /*
- * CopilotPreferencesPane.java
+ * ProjectCopilotPreferencesPane.java
  *
  * Copyright (C) 2022 by Posit Software, PBC
  *
@@ -12,7 +12,7 @@
  * AGPL (http://www.gnu.org/licenses/agpl-3.0.txt) for more details.
  *
  */
-package org.rstudio.studio.client.workbench.prefs.views;
+package org.rstudio.studio.client.projects.ui.prefs.buildtools;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -22,7 +22,8 @@ import org.rstudio.core.client.Debug;
 import org.rstudio.core.client.JSON;
 import org.rstudio.core.client.prefs.RestartRequirement;
 import org.rstudio.core.client.resources.ImageResource2x;
-import org.rstudio.core.client.widget.SelectWidget;
+import org.rstudio.core.client.widget.FormLabel;
+import org.rstudio.core.client.widget.LayoutGrid;
 import org.rstudio.core.client.widget.SmallButton;
 import org.rstudio.studio.client.application.AriaLiveService;
 import org.rstudio.studio.client.application.events.EventBus;
@@ -30,61 +31,59 @@ import org.rstudio.studio.client.common.HelpLink;
 import org.rstudio.studio.client.projects.model.ProjectsServerOperations;
 import org.rstudio.studio.client.projects.model.RProjectConfig;
 import org.rstudio.studio.client.projects.model.RProjectOptions;
+import org.rstudio.studio.client.projects.ui.prefs.ProjectPreferencesPane;
+import org.rstudio.studio.client.projects.ui.prefs.YesNoAskDefault;
 import org.rstudio.studio.client.server.ServerError;
 import org.rstudio.studio.client.server.ServerRequestCallback;
-import org.rstudio.studio.client.workbench.commands.Commands;
+import org.rstudio.studio.client.server.Void;
 import org.rstudio.studio.client.workbench.copilot.Copilot;
 import org.rstudio.studio.client.workbench.copilot.model.CopilotConstants;
 import org.rstudio.studio.client.workbench.copilot.model.CopilotResponseTypes.CopilotStatusResponse;
 import org.rstudio.studio.client.workbench.copilot.server.CopilotServerOperations;
 import org.rstudio.studio.client.workbench.model.Session;
 import org.rstudio.studio.client.workbench.prefs.model.UserPrefs;
-import org.rstudio.studio.client.workbench.prefs.model.UserPrefsAccessor;
 import org.rstudio.studio.client.workbench.prefs.model.UserPrefsAccessorConstants;
+import org.rstudio.studio.client.workbench.prefs.views.CopilotPreferencesPane;
 import org.rstudio.studio.client.workbench.prefs.views.events.CopilotEnabledEvent;
 
 import com.google.gwt.aria.client.Roles;
 import com.google.gwt.core.client.GWT;
 import com.google.gwt.dom.client.Style.Position;
 import com.google.gwt.dom.client.Style.Unit;
+import com.google.gwt.event.dom.client.ChangeEvent;
+import com.google.gwt.event.dom.client.ChangeHandler;
 import com.google.gwt.event.dom.client.ClickEvent;
 import com.google.gwt.event.dom.client.ClickHandler;
-import com.google.gwt.event.logical.shared.ValueChangeEvent;
-import com.google.gwt.event.logical.shared.ValueChangeHandler;
-import com.google.gwt.resources.client.ClientBundle;
-import com.google.gwt.resources.client.CssResource;
 import com.google.gwt.resources.client.ImageResource;
 import com.google.gwt.user.client.Window;
-import com.google.gwt.user.client.ui.CheckBox;
 import com.google.gwt.user.client.ui.HorizontalPanel;
 import com.google.gwt.user.client.ui.Label;
 import com.google.gwt.user.client.ui.VerticalPanel;
 import com.google.inject.Inject;
 
-
-public class CopilotPreferencesPane extends PreferencesPane
+public class ProjectCopilotPreferencesPane extends ProjectPreferencesPane
 {
    @Override
-   public RestartRequirement onApply(UserPrefs prefs)
+   public RestartRequirement onApply(RProjectOptions options)
    {
-      prefs.copilotTabKeyBehavior().setGlobalValue(selCopilotTabKeyBehavior_.getValue());
-      return super.onApply(prefs);
+      RProjectConfig config = options.getConfig();
+      config.setCopilotEnabled(copilotEnabled_.getValue());
+      config.setCopilotIndexingEnabled(copilotIndexingEnabled_.getValue());
+      return new RestartRequirement();
    }
    
    @Inject
-   public CopilotPreferencesPane(EventBus events,
-                                 Session session,
-                                 UserPrefs prefs,
-                                 Commands commands,
-                                 AriaLiveService ariaLive,
-                                 Copilot copilot,
-                                 CopilotServerOperations server,
-                                 ProjectsServerOperations projectServer)
+   public ProjectCopilotPreferencesPane(EventBus events,
+                                        Session session,
+                                        UserPrefs prefs,
+                                        AriaLiveService ariaLive,
+                                        Copilot copilot,
+                                        CopilotServerOperations server,
+                                        ProjectsServerOperations projectServer)
    {
       events_ = events;
       session_ = session;
       prefs_ = prefs;
-      commands_ = commands;
       copilot_ = copilot;
       server_ = server;
       projectServer_ = projectServer;
@@ -111,28 +110,16 @@ public class CopilotPreferencesPane extends PreferencesPane
       btnRefresh_.addStyleName(RES.styles().button());
       statusButtons_.add(btnRefresh_);
       
-      btnProjectOptions_ = new SmallButton("Project Options...");
-      btnProjectOptions_.addStyleName(RES.styles().button());
-      statusButtons_.add(btnProjectOptions_);
+      LayoutGrid grid = new LayoutGrid(2, 2);
+      grid.addStyleName(RESOURCES.styles().workspaceGrid());
+
+      copilotEnabled_ = new YesNoAskDefault(false);
+      grid.setWidget(0, 0, new FormLabel(constants.copilotEnabledTitle(), copilotEnabled_));
+      grid.setWidget(0, 1, copilotEnabled_);
       
-      cbCopilotEnabled_ = checkboxPref(prefs_.copilotEnabled(), true);
-      cbCopilotIndexingEnabled_ = checkboxPref(prefs_.copilotIndexingEnabled(), true);
-      
-      selCopilotTabKeyBehavior_ = new SelectWidget(
-            constants.copilotTabKeyBehaviorTitle(),
-            new String[] {
-                  constants.copilotTabKeyBehaviorEnum_suggestion(),
-                  constants.copilotTabKeyBehaviorEnum_completions()
-            },
-            new String[] {
-                  UserPrefsAccessor.COPILOT_TAB_KEY_BEHAVIOR_SUGGESTION,
-                  UserPrefsAccessor.COPILOT_TAB_KEY_BEHAVIOR_COMPLETIONS
-            },
-            false,
-            true,
-            false);
-      
-      selCopilotTabKeyBehavior_.setValue(prefs_.copilotTabKeyBehavior().getGlobalValue());
+      copilotIndexingEnabled_ = new YesNoAskDefault(false);
+      grid.setWidget(1, 0, new FormLabel(constants.copilotIndexingEnabledTitle(), copilotIndexingEnabled_));
+      grid.setWidget(1, 1, copilotIndexingEnabled_);
       
       linkCopilotTos_ = new HelpLink(
             "GitHub Copilot: Terms of Service",
@@ -144,27 +131,29 @@ public class CopilotPreferencesPane extends PreferencesPane
       lblCopilotTos_.addStyleName(RES.styles().copilotTosLabel());
    }
    
-   private void initDisplay()
+   private void initDisplay(RProjectOptions options)
    {
       add(headerLabel("GitHub Copilot (Preview)"));
       
       if (session_.getSessionInfo().getCopilotEnabled())
       {
-         add(cbCopilotEnabled_);
-
          HorizontalPanel statusPanel = new HorizontalPanel();
          statusPanel.add(lblCopilotStatus_);
          for (SmallButton button : statusButtons_)
             statusPanel.add(button);
          add(spaced(statusPanel));
          
-         add(headerLabel("Copilot Indexing"));
-         add(spaced(cbCopilotIndexingEnabled_));
-
-         add(headerLabel("Copilot Completions"));
-         // add(checkboxPref(prefs_.copilotAllowAutomaticCompletions()));
-         // add(selCopilotTabKeyBehavior_);
-         add(numericPref("Show code suggestions after keyboard idle (ms):", 10, 5000, prefs_.copilotCompletionsDelay()));
+         LayoutGrid grid = new LayoutGrid(2, 2);
+    
+         copilotEnabled_.setValue(options.getConfig().getCopilotEnabled());
+         grid.setWidget(0, 0, new FormLabel(constants.copilotEnabledTitle(), copilotEnabled_));
+         grid.setWidget(0, 1, copilotEnabled_);
+         
+         copilotIndexingEnabled_.setValue(options.getConfig().getCopilotIndexingEnabled());
+         grid.setWidget(1, 0, new FormLabel(constants.copilotIndexingEnabledTitle(), copilotIndexingEnabled_));
+         grid.setWidget(1, 1, copilotIndexingEnabled_);
+         
+         add(grid);
       }
       else
       {
@@ -181,14 +170,14 @@ public class CopilotPreferencesPane extends PreferencesPane
    
    private void initModel()
    {
-      cbCopilotEnabled_.addValueChangeHandler(new ValueChangeHandler<Boolean>()
+      final int initialCopilotEnabled = copilotEnabled_.getValue();
+      copilotEnabled_.addChangeHandler(new ChangeHandler()
       {
          @Override
-         public void onValueChange(ValueChangeEvent<Boolean> event)
+         public void onChange(ChangeEvent event)
          {
-            boolean enabled = event.getValue();
-            
-            if (enabled)
+            int copilotEnabled = copilotEnabled_.getValue();
+            if (copilotEnabled == YesNoAskDefault.YES_VALUE)
             {
                copilot_.ensureAgentInstalled(new CommandWithArg<Boolean>()
                {
@@ -197,31 +186,48 @@ public class CopilotPreferencesPane extends PreferencesPane
                   {
                      if (isInstalled)
                      {
-                        // Eagerly change the preference here, so that we can
-                        // respond to changes in the agent status.
-                        prefs_.copilotEnabled().setGlobalValue(true);
-                        prefs_.writeUserPrefs((completed) ->
+                        options_.getConfig().setCopilotEnabled(copilotEnabled);
+                        projectServer_.writeProjectConfig(options_.getConfig(), new ServerRequestCallback<Void>()
                         {
-                           refresh();
+                           @Override
+                           public void onResponseReceived(Void response)
+                           {
+                              events_.fireEvent(new CopilotEnabledEvent(true, true));
+                              refresh();
+                           }
+                           
+                           @Override
+                           public void onError(ServerError error)
+                           {
+                              Debug.logError(error);
+                              
+                           }
                         });
                      }
                      else
                      {
-                        // Installation of the Copilot agent failed;
-                        // revert the checkbox state.
-                        cbCopilotEnabled_.setValue(false);
+                        copilotEnabled_.setValue(initialCopilotEnabled);
                      }
                   }
                });
             }
             else
             {
-               // Eagerly change the preference here, so that we can
-               // respond to changes in the agent status.
-               prefs_.copilotEnabled().setGlobalValue(false);
-               prefs_.writeUserPrefs((completed) ->
+               options_.getConfig().setCopilotEnabled(copilotEnabled);
+               projectServer_.writeProjectConfig(options_.getConfig(), new ServerRequestCallback<Void>()
                {
-                  refresh();
+                  @Override
+                  public void onResponseReceived(Void response)
+                  {
+                     refresh();
+                  }
+
+                  @Override
+                  public void onError(ServerError error)
+                  {
+                     Debug.logError(error);
+
+                  }
                });
             }
          }
@@ -254,26 +260,12 @@ public class CopilotPreferencesPane extends PreferencesPane
             String href = btnActivate_.getElement().getPropertyString("href");
             Window.open(href, "_blank", "");
          }
-      });
-      
-      btnProjectOptions_.addClickHandler(new ClickHandler()
-      {
-         @Override
-         public void onClick(ClickEvent event)
-         {
-            commands_.projectOptions().execute();
-         }
-      });
-      
-      events_.addHandler(CopilotEnabledEvent.TYPE, (event) ->
-      {
-         refresh();
-      });
+      }); 
    }
    
    private void refresh()
    {
-      reset();
+      hideButtons();
       
       server_.copilotStatus(new ServerRequestCallback<CopilotStatusResponse>()
       {
@@ -284,12 +276,7 @@ public class CopilotPreferencesPane extends PreferencesPane
             
             if (response == null)
             {
-               if (projectOptions_ != null && projectOptions_.getConfig().getCopilotEnabled() == RProjectConfig.NO_VALUE)
-               {
-                  lblCopilotStatus_.setText("GitHub Copilot has been disabled in this project.");
-                  showButtons(btnProjectOptions_);
-               }
-               else if (prefs_.copilotEnabled().getValue())
+               if (prefs_.copilotEnabled().getValue())
                {
                   lblCopilotStatus_.setText("The GitHub Copilot agent is not currently running.");
                }
@@ -334,15 +321,20 @@ public class CopilotPreferencesPane extends PreferencesPane
       });
    }
 
-   private void reset()
+   @Override
+   protected void initialize(RProjectOptions options)
    {
-      hideButtons();
+      options_ = options;
+      
+      initDisplay(options);
+      initModel();
+      refresh();
    }
    
    @Override
    public ImageResource getIcon()
    {
-      return new ImageResource2x(RES.iconCopilotLight2x());
+      return new ImageResource2x(CopilotPreferencesPane.RES.iconCopilotLight2x());
    }
 
    @Override
@@ -351,34 +343,6 @@ public class CopilotPreferencesPane extends PreferencesPane
       return "Copilot";
    }
 
-   @Override
-   protected void initialize(UserPrefs prefs)
-   {
-      projectServer_.readProjectOptions(new ServerRequestCallback<RProjectOptions>()
-      {
-         @Override
-         public void onResponseReceived(RProjectOptions options)
-         {
-            projectOptions_ = options;
-            init();
-         }
-
-         @Override
-         public void onError(ServerError error)
-         {
-            Debug.logError(error);
-            init();
-         }
-      });
-   }
-   
-   private void init()
-   {
-      initDisplay();
-      initModel();
-      refresh();
-   }
-   
    private void hideButtons()
    {
       for (SmallButton button : statusButtons_)
@@ -397,45 +361,17 @@ public class CopilotPreferencesPane extends PreferencesPane
       }
    }
    
-   public interface Styles extends CssResource
-   {
-      String button();
-      String copilotTosLabel();
-   }
-
-   public interface Resources extends ClientBundle
-   {
-      @Source("CopilotPreferencesPane.css")
-      Styles styles();
-      
-      @Source("iconCopilotLight_2x.png")
-      ImageResource iconCopilotLight2x();
-      
-      @Source("iconCopilotDark_2x.png")
-      ImageResource iconCopilotDark2x();
-      
-   }
-
-   public static Resources RES = GWT.create(Resources.class);
-   static
-   {
-      RES.styles().ensureInjected();
-   }
+   private RProjectOptions options_;
    
-   // State
-   private RProjectOptions projectOptions_;
- 
    // UI
+   private final YesNoAskDefault copilotEnabled_;
+   private final YesNoAskDefault copilotIndexingEnabled_;
    private final Label lblCopilotStatus_;
-   private final CheckBox cbCopilotEnabled_;
-   private final CheckBox cbCopilotIndexingEnabled_;
    private final List<SmallButton> statusButtons_;
    private final SmallButton btnSignIn_;
    private final SmallButton btnSignOut_;
    private final SmallButton btnActivate_;
    private final SmallButton btnRefresh_;
-   private final SmallButton btnProjectOptions_;
-   private final SelectWidget selCopilotTabKeyBehavior_;
    private final HelpLink linkCopilotTos_;
    private final Label lblCopilotTos_;
    
@@ -443,11 +379,12 @@ public class CopilotPreferencesPane extends PreferencesPane
    private final EventBus events_;
    private final Session session_;
    private final UserPrefs prefs_;
-   private final Commands commands_;
    private final Copilot copilot_;
    private final CopilotServerOperations server_;
    private final ProjectsServerOperations projectServer_;
    
+   private static final CopilotPreferencesPane.Resources RES = CopilotPreferencesPane.RES;
    private static final UserPrefsAccessorConstants constants = GWT.create(UserPrefsAccessorConstants.class);
+   
    
 }
