@@ -1,4 +1,4 @@
-## RStudio 2023.08.0 "Desert Sunflower" Release Notes
+## RStudio 2023.09.0 "Desert Sunflower" Release Notes
 
 ### New
 #### RStudio
