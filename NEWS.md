@@ -48,7 +48,17 @@
 - Removed unnecessary files from install packages (rstudio/rstudio-pro#4943)
 - Updated Launcher go dependencies to latest versions (rstudio/rstudio-pro#5021)
 - Fixed bug preventing user's last sign in date from updating on CentOS 7 and PostgreSQL (rstudio/rstudio-pro#5072)
+- Fixed load balancing to count all types of sessions (rstudio/rstudio-pro#3016)
+- Added prometheus metrics and a default grafana dashboard (rstudio/rstudio-pro#3273)
+- Added explicit load-balancing-enabled option to rserver.conf (rstudio/rstudio-pro#4836)
+- Fixed rserver CPU bottleneck when session generates lots of output but never starts (rstudio/rstudio-pro#4865)
+- Fixed `rstudio-server active-sessions` command and added `node-status` (rstudio/rstudio-pro#4074)
+- Limit logs collected in rstudio-diagnostics to reduce size
+- Added `delete-node-on-exit` option for load balancing to cleanup node table and fixed error caused by stale nodes (rstudio/rstudio-pro#4888)
 
 ### Performance
 - Improved performance of group membership tests (rstudio/rstudio-pro#4643)
 - Increased read buffer size for rserver proxy (rstudio/rstudio-pro#4764)
+- Avoid username lookups when listing processes looking for sessions (rstudio/rstudio-pro#4800)
+- Speed up of homepage session status transitions (rstudio/rstudio-pro#4085)
+- Avoid load balancing node-status checks for Slurm and Kubernetes sessions (rstudio/rstudio-pro#4876)
