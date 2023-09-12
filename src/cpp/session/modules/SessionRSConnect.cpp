@@ -255,6 +255,16 @@ public:
       // determine quarto version and engines
       std::string quarto = (isQuarto && !asStatic) ? quartoMetadata(dir, file, contentCategory) : "";
 
+
+      // Quarto manuscripts contain .qmd files, and the default app mode for these is 'qmd-static';
+      // but we don't want Connect to attempt to render them, so force the app mode to 'static'.
+      std::string appModeOverride = "";
+      if (isQuarto &&
+          quarto::quartoConfig().project_type == "manuscript" &&
+          asStatic) {
+         appModeOverride = "appMode = 'static', ";
+      }
+
       // form the deploy command to hand off to the async deploy process
       cmd += "rsconnect::deployApp("
              "appDir = '" + string_utils::singleQuotedStrEscape(appDir) + "'," +
@@ -278,7 +288,8 @@ public:
              "launch.browser = function (url) { "
              "   message('" kFinishedMarker "', url) "
              "}, "
-             "lint = FALSE,"
+             "lint = FALSE," +
+             appModeOverride +
              "metadata = list(" +
                  quarto +
              "   asMultiple = " + (asMultiple ? "TRUE" : "FALSE") + ", "

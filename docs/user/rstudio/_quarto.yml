@@ -21,6 +21,12 @@ website:
     right:
       - text: Version
         menu:
+          - text: 2023.06.2+561
+            url: https://docs.posit.co/ide/user/2023.06.2/
+          - text: 2023.06.1+524
+            url: https://docs.posit.co/ide/user/2023.06.1/
+          - text: 2023.03.1+446
+            url: https://docs.posit.co/ide/user/2023.03.1/
           - text: Additional versions
             url: https://docs.posit.co/rsw/documentation/
       - text: "Guides"
