@@ -251,7 +251,7 @@
             "source": false
         },
         "rsconnect": {
-            "version": "1.1.0",
+            "version": "0.8.24",
             "location": "cran",
             "source": true
         },
