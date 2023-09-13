@@ -1686,12 +1686,6 @@
             "title": "GitHub Copilot completions delay",
             "description": "The delay (in milliseconds) before GitHub Copilot completions are requested after the cursor position has changed."
         },
-        "copilot_allow_automatic_completions": {
-            "type": "boolean",
-            "default": true,
-            "title": "Enable as-you-type code completions when Copilot is enabled",
-            "description": "When enabled, RStudio will continue providing as-you-type code completions when Copilot is enabled."
-        },
         "copilot_tab_key_behavior": {
             "type": "string",
             "enum": ["suggestion", "completions"],

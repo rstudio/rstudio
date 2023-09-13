@@ -425,6 +425,7 @@ public class AceEditor implements DocDisplay,
       {
          fixVerticalOffsetBug();
          clearLineHighlight();
+         clearGhostText();
          lastCursorChangedTime_ = System.currentTimeMillis();
       });
 
@@ -433,6 +434,7 @@ public class AceEditor implements DocDisplay,
       {
          lastModifiedTime_ = System.currentTimeMillis();
          clearDebugLineHighlight();
+         clearGhostText();
       });
 
       widget_.addAttachHandler(event ->
@@ -3644,6 +3646,14 @@ public class AceEditor implements DocDisplay,
       {
          getSession().removeMarker(lineHighlightMarkerId_);
          lineHighlightMarkerId_ = null;
+      }
+   }
+   
+   private void clearGhostText()
+   {
+      if (widget_.getEditor().hasGhostText())
+      {
+         widget_.getEditor().removeGhostText();
       }
    }
 

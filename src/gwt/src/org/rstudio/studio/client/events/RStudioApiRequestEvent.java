@@ -109,6 +109,7 @@ public class RStudioApiRequestEvent extends GwtEvent<RStudioApiRequestEvent.Hand
    public static final int TYPE_DOCUMENT_OPEN        = 4;
    public static final int TYPE_DOCUMENT_NEW         = 5;
    public static final int TYPE_FILES_PANE_NAVIGATE  = 6;
+   public static final int TYPE_SET_GHOST_TEXT       = 7;
    
    // list of potential event targets (keep in sync with Api.R)
    public static final int TARGET_UNKNOWN       = 0;
@@ -177,7 +178,14 @@ public class RStudioApiRequestEvent extends GwtEvent<RStudioApiRequestEvent.Hand
       public final native String getPath() /*-{ return this["path"]; }-*/;
    }
    
-   
+   public static class SetGhostTextData extends JavaScriptObject
+   {
+      protected SetGhostTextData()
+      {
+      }
+      
+      public final native String getText() /*-{ return this["text"]; }-*/;
+   }
    
 }
 
