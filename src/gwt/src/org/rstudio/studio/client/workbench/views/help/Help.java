@@ -279,7 +279,7 @@ public class Help extends BasePresenter implements ShowHelpEvent.Handler
 
    void onBrowseCheatSheets()
    {
-      globalDisplay_.openWindow("https://www.rstudio.com/resources/cheatsheets/");
+      globalDisplay_.openWindow("https://www.posit.co/resources/cheatsheets/");
    }
 
    private void openCheatSheet(String name)
