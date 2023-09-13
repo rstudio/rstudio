@@ -3542,18 +3542,6 @@ public class UserPrefsAccessor extends Prefs
    }
 
    /**
-    * When enabled, RStudio will continue providing as-you-type code completions when Copilot is enabled.
-    */
-   public PrefValue<Boolean> copilotAllowAutomaticCompletions()
-   {
-      return bool(
-         "copilot_allow_automatic_completions",
-         _constants.copilotAllowAutomaticCompletionsTitle(), 
-         _constants.copilotAllowAutomaticCompletionsDescription(), 
-         true);
-   }
-
-   /**
     * Control the behavior of the Tab key when both Copilot code suggestions and RStudio code completions are visible.
     */
    public PrefValue<String> copilotTabKeyBehavior()
@@ -4086,8 +4074,6 @@ public class UserPrefsAccessor extends Prefs
          copilotEnabled().setValue(layer, source.getBool("copilot_enabled"));
       if (source.hasKey("copilot_completions_delay"))
          copilotCompletionsDelay().setValue(layer, source.getInteger("copilot_completions_delay"));
-      if (source.hasKey("copilot_allow_automatic_completions"))
-         copilotAllowAutomaticCompletions().setValue(layer, source.getBool("copilot_allow_automatic_completions"));
       if (source.hasKey("copilot_tab_key_behavior"))
          copilotTabKeyBehavior().setValue(layer, source.getString("copilot_tab_key_behavior"));
       if (source.hasKey("copilot_indexing_enabled"))
@@ -4344,7 +4330,6 @@ public class UserPrefsAccessor extends Prefs
       prefs.add(disableRendererAccessibility());
       prefs.add(copilotEnabled());
       prefs.add(copilotCompletionsDelay());
-      prefs.add(copilotAllowAutomaticCompletions());
       prefs.add(copilotTabKeyBehavior());
       prefs.add(copilotIndexingEnabled());
       return prefs;
