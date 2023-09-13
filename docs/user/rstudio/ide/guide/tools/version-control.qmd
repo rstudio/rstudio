@@ -63,6 +63,10 @@ RStudio's version control features are tied to the use of [Projects](../code/pro
 
 Once version control such as Git has been enabled for the current RStudio Project, a few visual elements are added, specifically the **Git/Version control dropdown** and the **Git/Version Control tab**.
 
+::: callout-note
+If you've installed Git for version control, but the Git pane doesn't appear you may need to perform the steps outlined in the section [Git is installed, but the Git pane doesn't appear].
+:::
+
 ![](images/rstudio-vcs-pane-labeled.png){fig-alt="A screenshot of the RStudio interface, highlighting the Git tab in the Environments pane."}
 
 The **Git menu dropdown** provides Commit, Pull/Push Branch, History and Project Setup.
@@ -161,6 +165,20 @@ To make working with SSH key pairs more straightforward the RStudio Version Cont
 
 While Linux and Mac OSX both include SSH as part of the base system, Windows does not. As a result the standard Windows distribution of Git (Msysgit, referenced above) also includes an SSH client.
 
-Subversion for Windows however does not include an SSH client. To overcome this limitation, RStudio includes a version of the Msys SSH client within the `RStudio\bin\msys_ssh directory`. This directory is automatically added to the PATH (for RStudio only rather than system-wide) and is also available on the PATH for command prompt windows opened using the **Tools** > **Shell** command. A Windows shortcut (SSH Command Prompt) is also provided within the `RStudio\bin\msys_ssh` directory to launch a console from the Desktop that supports the svn+ssh protocol.
+Subversion for Windows however does not include an SSH client. To overcome this limitation, RStudio includes a version of the Msys SSH client within the `RStudio\bin\msys_ssh directory`. This directory is automatically added to the PATH (for RStudio only rather than system-wide) and is also available on the PATH for command prompt windows opened using the **Tools** \> **Shell** command. A Windows shortcut (SSH Command Prompt) is also provided within the `RStudio\bin\msys_ssh` directory to launch a console from the Desktop that supports the svn+ssh protocol.
 
+## Troubleshooting
 
+### Git is installed, but the Git pane doesn't appear
+
+The Git pane may not appear if you're working in a folder that your user does not have ownership of, such as a shared project. This is due to a security feature in git `2.35.2` that disables git repos that are created in directories that are not owned by the user. You can verify that this is blocking the Git pane from appearing by submitting a git command in the terminal:
+
+``` bash
+$ git status
+fatal: detected dubious ownership in repository at '/home/posit-user/my-project-folder'
+To add an exception for this directory, call:
+
+        git config --global --add safe.directory /home/posit-user/my-project-folder
+```
+
+You can mark the offending directory as safe by following the suggestion action above and then closing and re-opening the project in RStudio.
