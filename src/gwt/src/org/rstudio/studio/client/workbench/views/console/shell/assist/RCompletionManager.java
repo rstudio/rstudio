@@ -417,7 +417,7 @@ public class RCompletionManager implements CompletionManager
       if (docDisplay_.hasGhostText())
       {
          // Let tab insert ghost text if configured to do so
-         if (keycode == KeyCodes.KEY_TAB && modifier == 0)
+         if (keycode == KeyCodes.KEY_TAB && modifier == KeyboardShortcut.NONE)
          {
             invalidatePendingRequests();
             AceGhostText ghostText = docDisplay_.getGhostText();
@@ -651,13 +651,7 @@ public class RCompletionManager implements CompletionManager
    
    private boolean isAutoPopupEnabled()
    {
-      if (userPrefs_.codeCompletion().getValue() != UserPrefs.CODE_COMPLETION_ALWAYS)
-         return false;
-      
-      if (userPrefs_.copilotEnabled().getValue())
-         return userPrefs_.copilotAllowAutomaticCompletions().getValue();
-      
-      return true;
+      return userPrefs_.codeCompletion().getValue() == UserPrefs.CODE_COMPLETION_ALWAYS;
    }
    
    private boolean isValidForRIdentifier(char c)
