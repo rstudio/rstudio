@@ -56,6 +56,7 @@ import com.google.gwt.event.dom.client.ClickEvent;
 import com.google.gwt.event.dom.client.ClickHandler;
 import com.google.gwt.resources.client.ImageResource;
 import com.google.gwt.user.client.Window;
+import com.google.gwt.user.client.ui.HTML;
 import com.google.gwt.user.client.ui.HorizontalPanel;
 import com.google.gwt.user.client.ui.Label;
 import com.google.gwt.user.client.ui.VerticalPanel;
@@ -121,13 +122,19 @@ public class ProjectCopilotPreferencesPane extends ProjectPreferencesPane
       grid.setWidget(1, 0, new FormLabel(constants.copilotIndexingEnabledTitle(), copilotIndexingEnabled_));
       grid.setWidget(1, 1, copilotIndexingEnabled_);
       
+      previewBlurb_ = new HTML(
+            "<p>This feature is in preview. If you'd like to provide feedback or report an issue, please " +
+            "<a target=\"_blank\" href=\"https://github.com/rstudio/rstudio/issues\">file an issue</a> " +
+            "on the public RStudio GitHub repository.</p>");
+      previewBlurb_.addStyleName(RES.styles().copilotPreviewBlurb());
+      
       linkCopilotTos_ = new HelpLink(
             "GitHub Copilot: Terms of Service",
             "github-copilot-terms-of-service",
             false);
       
       lblCopilotTos_ = new Label(
-            "By using GitHub Copilot, you agree to abide by its terms of service.");
+            "By using GitHub Copilot, you agree to abide by their terms of service.");
       lblCopilotTos_.addStyleName(RES.styles().copilotTosLabel());
    }
    
@@ -163,6 +170,7 @@ public class ProjectCopilotPreferencesPane extends ProjectPreferencesPane
       VerticalPanel bottomPanel = new VerticalPanel();
       bottomPanel.getElement().getStyle().setBottom(0, Unit.PX);
       bottomPanel.getElement().getStyle().setPosition(Position.ABSOLUTE);
+      bottomPanel.add(spaced(previewBlurb_));
       bottomPanel.add(spaced(lblCopilotTos_));
       bottomPanel.add(spaced(linkCopilotTos_));
       add(bottomPanel);
@@ -374,6 +382,7 @@ public class ProjectCopilotPreferencesPane extends ProjectPreferencesPane
    private final SmallButton btnRefresh_;
    private final HelpLink linkCopilotTos_;
    private final Label lblCopilotTos_;
+   private final HTML previewBlurb_;
    
    // Injected
    private final EventBus events_;

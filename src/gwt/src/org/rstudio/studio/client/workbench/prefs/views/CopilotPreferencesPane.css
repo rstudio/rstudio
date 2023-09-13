@@ -7,3 +7,11 @@
 .copilotTosLabel {
 	font-style: oblique;
 }
+
+.copilotPreviewBlurb {
+	font-style: oblique;
+}
+
+.copilotPreviewBlurb a {
+	white-space: nowrap;
+}
