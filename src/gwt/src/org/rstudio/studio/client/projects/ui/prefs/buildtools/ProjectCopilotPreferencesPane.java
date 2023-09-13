@@ -125,7 +125,7 @@ public class ProjectCopilotPreferencesPane extends ProjectPreferencesPane
       previewBlurb_ = new HTML(
             "<p>This feature is in preview. If you'd like to provide feedback or report an issue, please " +
             "<a target=\"_blank\" href=\"https://github.com/rstudio/rstudio/issues\">file an issue</a> " +
-            "on the public RStudio GitHub repository.</p>");
+            "on the RStudio GitHub repository.</p>");
       previewBlurb_.addStyleName(RES.styles().copilotPreviewBlurb());
       
       linkCopilotTos_ = new HelpLink(
