@@ -33,6 +33,8 @@ import org.rstudio.studio.client.server.ServerError;
 import org.rstudio.studio.client.server.ServerRequestCallback;
 import org.rstudio.studio.client.workbench.commands.Commands;
 import org.rstudio.studio.client.workbench.copilot.model.CopilotConstants;
+import org.rstudio.studio.client.workbench.copilot.model.CopilotEvent;
+import org.rstudio.studio.client.workbench.copilot.model.CopilotEvent.CopilotEventType;
 import org.rstudio.studio.client.workbench.copilot.model.CopilotResponseTypes.CopilotInstallAgentResponse;
 import org.rstudio.studio.client.workbench.copilot.model.CopilotResponseTypes.CopilotSignInResponse;
 import org.rstudio.studio.client.workbench.copilot.model.CopilotResponseTypes.CopilotSignInResponseResult;
@@ -75,6 +77,7 @@ public class Copilot implements ProjectOptionsChangedEvent.Handler
       globalDisplay_ = globalDisplay;
       events_ = events;
       prefs_ = prefs;
+      session_ = session;
       server_ = server;
       
       binder.bind(commands, this);
@@ -84,14 +87,27 @@ public class Copilot implements ProjectOptionsChangedEvent.Handler
          @Override
          public void onSessionInit(SessionInitEvent event)
          {
-            copilotProjectOptions_ = session.getSessionInfo().getCopilotProjectOptions();
+            copilotProjectOptions_ = session_.getSessionInfo().getCopilotProjectOptions();
+         }
+      });
+      
+      events_.addHandler(ProjectOptionsChangedEvent.TYPE, new ProjectOptionsChangedEvent.Handler()
+      {
+         @Override
+         public void onProjectOptionsChanged(ProjectOptionsChangedEvent event)
+         {
+            copilotProjectOptions_ = event.getData().getCopilotOptions();
+            if (!isEnabled())
+            {
+               events_.fireEvent(new CopilotEvent(CopilotEventType.COPILOT_DISABLED));
+            }
          }
       });
    }
    
    public boolean isEnabled()
    {
-      if (copilotProjectOptions_ != null)
+      if (copilotProjectOptions_ != null && session_.getSessionInfo().getActiveProjectFile() != null)
       {
          switch (copilotProjectOptions_.copilot_enabled)
          {
@@ -397,6 +413,7 @@ public class Copilot implements ProjectOptionsChangedEvent.Handler
    private final Provider<SourceColumnManager> sourceColumnManager_;
    private final EventBus events_;
    private final UserPrefs prefs_;
+   private final Session session_;
    private final GlobalDisplay globalDisplay_;
    private final CopilotServerOperations server_;
 }
