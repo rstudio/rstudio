@@ -20,11 +20,18 @@ GitHub Copilot is a proprietary tool from GitHub. By using GitHub Copilot, you a
 
 To enable GitHub Copilot in RStudio:
 
-1.  Navigate to Tools \> Global Options \> Copilot\
-2.  Check the box to enable Copilot\
-3.  Download and install the Copilot Agent components\
-4.  Sign-in to Copilot with your existing GitHub credentials\
-5.  Open a source file (`.R`, `.py`, `.qmd`, etc) and begin coding with Copilot
+1.  Navigate to Tools \> Global Options \> Copilot.  \
+2.  Check the box to "Enable GitHub Copilot".  \
+3.  Download and install the Copilot Agent components.  \
+4.  Click the "Sign In" button.  \
+5.  In the "GitHub Copilot: Sign in" dialog, copy the Verification Code.  \
+
+![](images/copilot_sign-in.png){fig-alt="GitHub Copilot: Sign in"}
+
+6.  Navigate to or click on the link to <https://github.com/login/device>, paste the Verification Code and click "Continue".  \
+7.  GitHub will request the necessary permissions for GitHub Copilot. To approve these permissions, click "Authorize GitHub Copilot Plugin".  
+8. After the permissions have been approved, your RStudio IDE will indicate the currently signed in user.  
+5.  Close the Global Options dialogue, open a source file (`.R`, `.py`, `.qmd`, etc) and begin coding with Copilot  
 
 To disable GitHub Copilot either:
 
@@ -49,7 +56,7 @@ For general advice on how to use Copilot, please see:\
 - [Learning GitHub Copilot video series](https://learn.microsoft.com/en-us/shows/introduction-to-github-copilot/)
 
 ::: {.callout-warning title="Trust but Verify"}
-While Copilot often generates useful and functional code, it is important to note that the suggestions are not always valid code examples or completely solve the intended problem. It is important to review the suggestions and ensure that they are both accurate and appropriate for the intended use case.
+While Copilot often generates useful and functional code, it is important to note that the suggestions are not always valid code examples or completely solve the intended problem. It is important to review the suggestions and ensure that they are both accurate and appropriate for the intended use case. Copilot may generate code that contains insecure coding patterns, bugs, or outdated practices. You should always use best practices in code review, testing, and adherence to security standards when using Copilot. For more information, see the [FAQs on GitHub Copilot](https://github.com/features/copilot#faq) and [GitHub Copilot for Business](https://docs.github.com/en/copilot/overview-of-github-copilot/about-github-copilot-for-business).
 :::
 
 ### Autocomplete vs Copilot
@@ -227,3 +234,6 @@ function resetClicks() {
 ```
 
 ![](images/copilot_javascript.png){fig-alt="Copilot HTML and JavaScript completions"}
+## Support
+
+Posit does not provide support or assistance for any code written or generated in RStudio, with or without Copilot. Posit does not support the Copilot output, or test the logic used by Copilot to generate code from prompts.
