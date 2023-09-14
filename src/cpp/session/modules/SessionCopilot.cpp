@@ -137,6 +137,9 @@ int s_copilotLogLevel = 0;
 // Whether Copilot is enabled.
 bool s_copilotEnabled = false;
 
+// Whether Copilot has been allowed to index project files.
+bool s_copilotIndexingEnabled = false;
+
 // The PID of the active Copilot agent process.
 PidType s_agentPid = -1;
 
@@ -814,8 +817,9 @@ void onBackgroundProcessing(bool isIdle)
 
 void synchronize()
 {
-   // Update enabled flag
+   // Update flags
    s_copilotEnabled = isCopilotEnabled();
+   s_copilotIndexingEnabled = s_copilotEnabled && isCopilotIndexingEnabled();
    
    // Start or stop the agent as appropriate
    if (s_copilotEnabled)
@@ -1045,14 +1049,14 @@ void indexFile(const core::FileInfo& info)
 
 void onMonitoringEnabled(const tree<core::FileInfo>& tree)
 {
-   if (isCopilotIndexingEnabled())
+   if (s_copilotIndexingEnabled)
       for (auto&& file : tree)
          indexFile(file);
 }
 
 void onFilesChanged(const std::vector<core::system::FileChangeEvent>& events)
 {
-   if (isCopilotIndexingEnabled())
+   if (s_copilotIndexingEnabled)
       for (auto&& event : events)
          indexFile(event.fileInfo());
 }
