@@ -209,21 +209,6 @@ public class ProjectPreferencesDialog extends PreferencesDialogBase<RProjectOpti
                 else
                    uiPrefs.spellingDictionaryLanguage().removeProjectValue(true);
                 
-                // copilot prefs
-                int copilotEnabled = config.getCopilotEnabled();
-                if (copilotEnabled != RProjectConfig.DEFAULT_VALUE)
-                   uiPrefs.copilotEnabled().setProjectValue(copilotEnabled == RProjectConfig.YES_VALUE);
-                else
-                   uiPrefs.copilotEnabled().removeProjectValue(true);
-                
-                // copilot prefs
-                int copilotIndexingEnabled = config.getCopilotEnabled();
-                if (copilotIndexingEnabled != RProjectConfig.DEFAULT_VALUE)
-                   uiPrefs.copilotIndexingEnabled().setProjectValue(copilotIndexingEnabled == RProjectConfig.YES_VALUE);
-                else
-                   uiPrefs.copilotIndexingEnabled().removeProjectValue(true);
-                
-                      
                 // convert packrat option changes to console actions
                 emitRenvConsoleActions(options.getRenvOptions());
 

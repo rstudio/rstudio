@@ -361,6 +361,7 @@ struct Events : boost::noncopyable
    RSTUDIO_BOOST_SIGNAL<void()>                                       onPackageLibraryMutated;
    RSTUDIO_BOOST_SIGNAL<void()>                                       onPreferencesSaved;
    RSTUDIO_BOOST_SIGNAL<void()>                                       onProjectConfigUpdated;
+   RSTUDIO_BOOST_SIGNAL<void()>                                       onProjectOptionsUpdated;
    RSTUDIO_BOOST_SIGNAL<void(const core::DistributedEvent&)>          onDistributedEvent;
    RSTUDIO_BOOST_SIGNAL<void(core::FilePath)>                         onPermissionsChanged;
    RSTUDIO_BOOST_SIGNAL<void(bool)>                                   onShutdown;

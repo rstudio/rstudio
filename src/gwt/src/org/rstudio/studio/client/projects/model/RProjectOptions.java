@@ -27,11 +27,13 @@ public class RProjectOptions extends JavaScriptObject
    
    public static final RProjectOptions createEmpty()
    {
-      return create(RProjectConfig.createEmpty(), 
-                    RProjectVcsOptions.createEmpty(),
-                    RProjectBuildOptions.createEmpty(),
-                    RProjectPackratOptions.createEmpty(),
-                    RProjectRenvOptions.createEmpty());
+      return create(
+            RProjectConfig.createEmpty(), 
+            RProjectVcsOptions.createEmpty(),
+            RProjectBuildOptions.createEmpty(),
+            RProjectPackratOptions.createEmpty(),
+            RProjectRenvOptions.createEmpty(),
+            RProjectCopilotOptions.createEmpty());
    }
    
    public native static final RProjectOptions create(
@@ -39,7 +41,8 @@ public class RProjectOptions extends JavaScriptObject
                                     RProjectVcsOptions vcsOptions,
                                     RProjectBuildOptions buildOptions,
                                     RProjectPackratOptions packratOptions,
-                                    RProjectRenvOptions renvOptions)
+                                    RProjectRenvOptions renvOptions,
+                                    RProjectCopilotOptions copilotOptions)
    /*-{
       var options = new Object();
       options.config = config;
@@ -48,6 +51,7 @@ public class RProjectOptions extends JavaScriptObject
       options.build_options = buildOptions;
       options.packrat_options = packratOptions;
       options.renv_options = renvOptions;
+      options.copilot_options = copilotOptions;
       return options;
    }-*/;
    
@@ -69,6 +73,10 @@ public class RProjectOptions extends JavaScriptObject
    
    public native final RProjectRenvOptions getRenvOptions() /*-{
       return this.renv_options;
+   }-*/;
+   
+   public native final RProjectCopilotOptions getCopilotOptions() /*-{
+      return this.copilot_options;
    }-*/;
 
    public native final RProjectVcsContext getVcsContext() /*-{

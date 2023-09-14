@@ -890,6 +890,10 @@ Error ProjectContext::buildOptionsFile(Settings* pOptionsFile) const
    return pOptionsFile->initialize(scratchPath().completeChildPath("build_options"));
 }
 
+FilePath ProjectContext::copilotOptionsFilePath() const
+{
+   return scratchPath().completeChildPath("copilot_options");
+}
 
 Error ProjectContext::readVcsOptions(RProjectVcsOptions* pOptions) const
 {
@@ -968,6 +972,35 @@ Error ProjectContext::writeBuildOptions(const RProjectBuildOptions& options)
 
    // opportunistically sync in-memory representation to what we wrote to disk
    buildOptions_ = options;
+
+   return Success();
+}
+
+Error ProjectContext::readCopilotOptions(RProjectCopilotOptions* pOptions) const
+{
+   core::Settings settings;
+   Error error = settings.initialize(copilotOptionsFilePath());
+   if (error)
+      return error;
+
+   using r_util::YesNoAskValue;
+   pOptions->copilotEnabled = static_cast<YesNoAskValue>(settings.getInt("copilot_enabled"));
+   pOptions->copilotIndexingEnabled = static_cast<YesNoAskValue>(settings.getInt("copilot_indexing_enabled"));
+
+   return Success();
+}
+
+Error ProjectContext::writeCopilotOptions(const RProjectCopilotOptions& options) const
+{
+   core::Settings settings;
+   Error error = settings.initialize(copilotOptionsFilePath());
+   if (error)
+      return error;
+
+   settings.beginUpdate();
+   settings.set("copilot_enabled", options.copilotEnabled);
+   settings.set("copilot_indexing_enabled", options.copilotIndexingEnabled);
+   settings.endUpdate();
 
    return Success();
 }

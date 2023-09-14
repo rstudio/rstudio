@@ -29,7 +29,7 @@ import org.rstudio.studio.client.application.AriaLiveService;
 import org.rstudio.studio.client.application.events.EventBus;
 import org.rstudio.studio.client.common.HelpLink;
 import org.rstudio.studio.client.projects.model.ProjectsServerOperations;
-import org.rstudio.studio.client.projects.model.RProjectConfig;
+import org.rstudio.studio.client.projects.model.RProjectCopilotOptions;
 import org.rstudio.studio.client.projects.model.RProjectOptions;
 import org.rstudio.studio.client.projects.ui.prefs.ProjectPreferencesPane;
 import org.rstudio.studio.client.projects.ui.prefs.YesNoAskDefault;
@@ -67,9 +67,9 @@ public class ProjectCopilotPreferencesPane extends ProjectPreferencesPane
    @Override
    public RestartRequirement onApply(RProjectOptions options)
    {
-      RProjectConfig config = options.getConfig();
-      config.setCopilotEnabled(copilotEnabled_.getValue());
-      config.setCopilotIndexingEnabled(copilotIndexingEnabled_.getValue());
+      RProjectCopilotOptions copilotOptions = options.getCopilotOptions();
+      copilotOptions.copilot_enabled = copilotEnabled_.getValue();
+      copilotOptions.copilot_indexing_enabled = copilotIndexingEnabled_.getValue();
       return new RestartRequirement();
    }
    
@@ -152,11 +152,11 @@ public class ProjectCopilotPreferencesPane extends ProjectPreferencesPane
          
          LayoutGrid grid = new LayoutGrid(2, 2);
     
-         copilotEnabled_.setValue(options.getConfig().getCopilotEnabled());
+         copilotEnabled_.setValue(options.getCopilotOptions().copilot_enabled);
          grid.setWidget(0, 0, new FormLabel(constants.copilotEnabledTitle(), copilotEnabled_));
          grid.setWidget(0, 1, copilotEnabled_);
          
-         copilotIndexingEnabled_.setValue(options.getConfig().getCopilotIndexingEnabled());
+         copilotIndexingEnabled_.setValue(options.getCopilotOptions().copilot_indexing_enabled);
          grid.setWidget(1, 0, new FormLabel(constants.copilotIndexingEnabledTitle(), copilotIndexingEnabled_));
          grid.setWidget(1, 1, copilotIndexingEnabled_);
          
@@ -194,8 +194,8 @@ public class ProjectCopilotPreferencesPane extends ProjectPreferencesPane
                   {
                      if (isInstalled)
                      {
-                        options_.getConfig().setCopilotEnabled(copilotEnabled);
-                        projectServer_.writeProjectConfig(options_.getConfig(), new ServerRequestCallback<Void>()
+                        options_.getCopilotOptions().copilot_enabled = copilotEnabled;
+                        projectServer_.writeProjectOptions(options_, new ServerRequestCallback<Void>()
                         {
                            @Override
                            public void onResponseReceived(Void response)
@@ -221,8 +221,8 @@ public class ProjectCopilotPreferencesPane extends ProjectPreferencesPane
             }
             else
             {
-               options_.getConfig().setCopilotEnabled(copilotEnabled);
-               projectServer_.writeProjectConfig(options_.getConfig(), new ServerRequestCallback<Void>()
+               options_.getCopilotOptions().copilot_enabled = copilotEnabled;
+               projectServer_.writeProjectOptions(options_, new ServerRequestCallback<Void>()
                {
                   @Override
                   public void onResponseReceived(Void response)
