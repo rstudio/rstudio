@@ -1111,7 +1111,10 @@
       maxDisplayColumns = cols.length;
     }
 
-    maxRows = parsedLocation.maxRows ?? maxRows;
+    // set maxRows if specified
+    if (parsedLocation.maxRows != null) {
+      maxRows = parsedLocation.maxRows;
+    }
 
     // total_cols is returned in the rownames column data (first column) and is
     // the total number of columns in the dataframe
