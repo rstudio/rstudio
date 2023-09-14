@@ -145,7 +145,7 @@ RStudio includes functionality to make it more straightforward to use the shell 
 
 -   On all platforms, you can use the **Terminal** to open a new system shell with the working directory already initialized to your project's root directory.
 
--   On Windows when using Git, the Shell command will open Git Bash, which is a port of the bash shell to Windows specially configured for use with Msys Git (note you can disable this behavior and use the standard Windows command prompt instead using Options -\> Version Control).
+-   On Windows when using Git, the Shell command will open Git Bash, which is a port of the bash shell to Windows specially configured for use with Git for Windows (note you can disable this behavior and use the standard Windows command prompt instead using Options -\> Version Control).
 
 -   On Windows when using Subversion, RStudio opens a shell with a PATH configured to use a version of ssh.exe which ships with RStudio (required for svn+ssh connections, see below).
 
@@ -163,7 +163,7 @@ In many cases the authentication for an SSH connection is done using public/priv
 
 To make working with SSH key pairs more straightforward the RStudio Version Control options panel can be used to both create new SSH public/private key pairs as well as view and copy the current SSH public key.
 
-While Linux and Mac OSX both include SSH as part of the base system, Windows does not. As a result the standard Windows distribution of Git (Msysgit, referenced above) also includes an SSH client.
+While Linux and Mac OSX both include SSH as part of the base system, Windows does not. As a result the standard Windows distribution of Git (Git for Windows, referenced above) also includes an SSH client.
 
 Subversion for Windows however does not include an SSH client. To overcome this limitation, RStudio includes a version of the Msys SSH client within the `RStudio\bin\msys_ssh directory`. This directory is automatically added to the PATH (for RStudio only rather than system-wide) and is also available on the PATH for command prompt windows opened using the **Tools** \> **Shell** command. A Windows shortcut (SSH Command Prompt) is also provided within the `RStudio\bin\msys_ssh` directory to launch a console from the Desktop that supports the svn+ssh protocol.
 
