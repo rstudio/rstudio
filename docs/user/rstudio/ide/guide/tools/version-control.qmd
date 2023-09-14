@@ -63,8 +63,8 @@ RStudio's version control features are tied to the use of [Projects](../code/pro
 
 Once version control such as Git has been enabled for the current RStudio Project, a few visual elements are added, specifically the **Git/Version control dropdown** and the **Git/Version Control tab**.
 
-::: callout-note
-If you've installed Git for version control, but the Git pane doesn't appear you may need to perform the steps outlined in the section [Git is installed, but the Git pane doesn't appear].
+::: {.callout-note}
+If you've installed Git for version control but the Git pane doesn't display, you may need to perform the steps outlined in the section [Git is installed, but the Git pane doesn't appear].
 :::
 
 ![](images/rstudio-vcs-pane-labeled.png){fig-alt="A screenshot of the RStudio interface, highlighting the Git tab in the Environments pane."}
@@ -171,7 +171,7 @@ Subversion for Windows however does not include an SSH client. To overcome this 
 
 ### Git is installed, but the Git pane doesn't appear
 
-The Git pane may not appear if you're working in a folder that your user does not have ownership of, such as a shared project. This is due to a security feature in git `2.35.2` that disables git repos that are created in directories that are not owned by the user. You can verify that this is blocking the Git pane from appearing by submitting a git command in the terminal:
+The Git pane may not display if you're working in a folder that your user does not have ownership of, such as a shared project. This is due to a security feature in git `2.35.2` that disables git repos created in directories the user does not own. You can verify that this is blocking the Git pane from displaying by submitting a git command in the terminal:
 
 ``` bash
 $ git status
@@ -181,4 +181,4 @@ To add an exception for this directory, call:
         git config --global --add safe.directory /home/posit-user/my-project-folder
 ```
 
-You can mark the offending directory as safe by following the suggestion action above and then closing and re-opening the project in RStudio.
+You can mark the offending directory as safe by following the suggested action above and then closing and re-opening the project in RStudio.
