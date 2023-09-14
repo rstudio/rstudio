@@ -15,7 +15,6 @@
 
 #include <session/projects/SessionProjects.hpp>
 
-#include <core/Debug.hpp>
 #include <core/Exec.hpp>
 #include <core/FileSerializer.hpp>
 #include <core/http/URL.hpp>
