@@ -22,6 +22,7 @@ import org.rstudio.core.client.prefs.PreferencesDialogPaneBase;
 import org.rstudio.core.client.prefs.RestartRequirement;
 import org.rstudio.core.client.widget.Operation;
 import org.rstudio.core.client.widget.ProgressIndicator;
+import org.rstudio.studio.client.RStudioGinjector;
 import org.rstudio.studio.client.application.ApplicationQuit;
 import org.rstudio.studio.client.application.events.EventBus;
 import org.rstudio.studio.client.common.GlobalDisplay;
@@ -32,6 +33,7 @@ import org.rstudio.studio.client.projects.model.RProjectOptions;
 import org.rstudio.studio.client.projects.model.RProjectRenvOptions;
 import org.rstudio.studio.client.projects.ui.prefs.buildtools.ProjectBuildToolsPreferencesPane;
 import org.rstudio.studio.client.projects.ui.prefs.buildtools.ProjectCopilotPreferencesPane;
+import org.rstudio.studio.client.projects.ui.prefs.events.ProjectOptionsChangedEvent;
 import org.rstudio.studio.client.server.ServerError;
 import org.rstudio.studio.client.server.ServerRequestCallback;
 import org.rstudio.studio.client.server.Void;
@@ -215,6 +217,8 @@ public class ProjectPreferencesDialog extends PreferencesDialogBase<RProjectOpti
                 if (onCompleted != null)
                    onCompleted.execute();
 
+                RStudioGinjector.INSTANCE.getEventBus().fireEvent(new ProjectOptionsChangedEvent(options));
+                
                 handleRestart(
                       pGlobalDisplay_.get(),
                       pQuit_.get(),

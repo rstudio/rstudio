@@ -182,19 +182,19 @@ public class TextEditingTargetCopilotHelper
       
       prefs_.copilotEnabled().addValueChangeHandler((event) ->
       {
-         manageHandlers(event.getValue());
+         manageHandlers();
       });
       
       Scheduler.get().scheduleDeferred(() ->
       {
-         manageHandlers(prefs_.copilotEnabled().getValue());
+         manageHandlers();
       });
       
    }
    
-   private void manageHandlers(boolean enabled)
+   private void manageHandlers()
    {
-      if (!enabled)
+      if (!copilot_.isEnabled())
       {
          display_.removeGhostText();
          registrations_.removeHandler();

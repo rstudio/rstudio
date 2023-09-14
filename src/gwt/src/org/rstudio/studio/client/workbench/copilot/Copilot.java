@@ -23,8 +23,12 @@ import org.rstudio.core.client.command.CommandBinder;
 import org.rstudio.core.client.command.Handler;
 import org.rstudio.core.client.widget.ModalDialogBase;
 import org.rstudio.core.client.widget.ProgressIndicator;
+import org.rstudio.studio.client.application.events.EventBus;
 import org.rstudio.studio.client.common.DelayedProgressRequestCallback;
 import org.rstudio.studio.client.common.GlobalDisplay;
+import org.rstudio.studio.client.projects.model.RProjectCopilotOptions;
+import org.rstudio.studio.client.projects.ui.prefs.YesNoAskDefault;
+import org.rstudio.studio.client.projects.ui.prefs.events.ProjectOptionsChangedEvent;
 import org.rstudio.studio.client.server.ServerError;
 import org.rstudio.studio.client.server.ServerRequestCallback;
 import org.rstudio.studio.client.workbench.commands.Commands;
@@ -39,6 +43,9 @@ import org.rstudio.studio.client.workbench.copilot.model.CopilotTypes.CopilotErr
 import org.rstudio.studio.client.workbench.copilot.server.CopilotServerOperations;
 import org.rstudio.studio.client.workbench.copilot.ui.CopilotInstallDialog;
 import org.rstudio.studio.client.workbench.copilot.ui.CopilotSignInDialog;
+import org.rstudio.studio.client.workbench.events.SessionInitEvent;
+import org.rstudio.studio.client.workbench.model.Session;
+import org.rstudio.studio.client.workbench.prefs.model.UserPrefs;
 import org.rstudio.studio.client.workbench.views.source.SourceColumnManager;
 
 import com.google.gwt.event.dom.client.ClickEvent;
@@ -49,13 +56,16 @@ import com.google.inject.Provider;
 import com.google.inject.Singleton;
 
 @Singleton
-public class Copilot
+public class Copilot implements ProjectOptionsChangedEvent.Handler
 {
    @Inject
    public Copilot(GlobalDisplay display,
                   Commands commands,
                   Provider<SourceColumnManager> sourceColumnManager,
                   GlobalDisplay globalDisplay,
+                  EventBus events,
+                  UserPrefs prefs,
+                  Session session,
                   CopilotCommandBinder binder,
                   CopilotServerOperations server)
    {
@@ -63,9 +73,35 @@ public class Copilot
       commands_ = commands;
       sourceColumnManager_ = sourceColumnManager;
       globalDisplay_ = globalDisplay;
+      events_ = events;
+      prefs_ = prefs;
       server_ = server;
       
       binder.bind(commands, this);
+    
+      events_.addHandler(SessionInitEvent.TYPE, new SessionInitEvent.Handler()
+      {
+         @Override
+         public void onSessionInit(SessionInitEvent event)
+         {
+            copilotProjectOptions_ = session.getSessionInfo().getCopilotProjectOptions();
+         }
+      });
+   }
+   
+   public boolean isEnabled()
+   {
+      if (copilotProjectOptions_ != null)
+      {
+         switch (copilotProjectOptions_.copilot_enabled)
+         {
+         case YesNoAskDefault.YES_VALUE: return true;
+         case YesNoAskDefault.NO_VALUE: return false;
+         default: {}
+         }
+      }
+      
+      return prefs_.copilotEnabled().getGlobalValue();
    }
    
    public void ensureAgentInstalled(CommandWithArg<Boolean> callback)
@@ -343,14 +379,24 @@ public class Copilot
             JSON.stringify(object, 4));
    }
    
+   @Override
+   public void onProjectOptionsChanged(ProjectOptionsChangedEvent event)
+   {
+      copilotProjectOptions_ = event.getData().getCopilotOptions();
+   }
+   
    interface CopilotCommandBinder
          extends CommandBinder<Commands, Copilot>
    {
    }
    
+   private RProjectCopilotOptions copilotProjectOptions_;
+   
    private final GlobalDisplay display_;
    private final Commands commands_;
    private final Provider<SourceColumnManager> sourceColumnManager_;
+   private final EventBus events_;
+   private final UserPrefs prefs_;
    private final GlobalDisplay globalDisplay_;
    private final CopilotServerOperations server_;
 }
