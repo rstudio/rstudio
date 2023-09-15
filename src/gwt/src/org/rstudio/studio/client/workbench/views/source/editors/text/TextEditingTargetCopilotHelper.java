@@ -24,6 +24,7 @@ import org.rstudio.core.client.dom.EventProperty;
 import org.rstudio.studio.client.RStudioGinjector;
 import org.rstudio.studio.client.application.events.EventBus;
 import org.rstudio.studio.client.common.Timers;
+import org.rstudio.studio.client.projects.ui.prefs.events.ProjectOptionsChangedEvent;
 import org.rstudio.studio.client.server.ServerError;
 import org.rstudio.studio.client.server.ServerRequestCallback;
 import org.rstudio.studio.client.workbench.commands.Commands;
@@ -180,21 +181,26 @@ public class TextEditingTargetCopilotHelper
          }
       };
       
+      events_.addHandler(ProjectOptionsChangedEvent.TYPE, (event) ->
+      {
+         manageHandlers();
+      });
+      
       prefs_.copilotEnabled().addValueChangeHandler((event) ->
       {
-         manageHandlers(event.getValue());
+         manageHandlers();
       });
       
       Scheduler.get().scheduleDeferred(() ->
       {
-         manageHandlers(prefs_.copilotEnabled().getValue());
+         manageHandlers();
       });
       
    }
    
-   private void manageHandlers(boolean enabled)
+   private void manageHandlers()
    {
-      if (!enabled)
+      if (!copilot_.isEnabled())
       {
          display_.removeGhostText();
          registrations_.removeHandler();

@@ -2196,7 +2196,7 @@ public class RemoteServer implements Server
    }
 
    public void writeProjectOptions(RProjectOptions options,
-                                  ServerRequestCallback<Void> callback)
+                                   ServerRequestCallback<Void> callback)
    {
       sendRequest(RPC_SCOPE, WRITE_PROJECT_OPTIONS, options, callback);
    }
