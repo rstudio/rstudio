@@ -70,7 +70,11 @@ public class ProjectCopilotPreferencesPane extends ProjectPreferencesPane
       RProjectCopilotOptions copilotOptions = options.getCopilotOptions();
       copilotOptions.copilot_enabled = copilotEnabled_.getValue();
       copilotOptions.copilot_indexing_enabled = copilotIndexingEnabled_.getValue();
-      return new RestartRequirement();
+      
+      RestartRequirement requirement = new RestartRequirement();
+      if (options_.getCopilotOptions().copilot_indexing_enabled != copilotIndexingEnabled_.getValue())
+         requirement.setSessionRestartRequired(true);
+      return requirement;
    }
    
    @Inject
@@ -369,6 +373,7 @@ public class ProjectCopilotPreferencesPane extends ProjectPreferencesPane
       }
    }
    
+   // State
    private RProjectOptions options_;
    
    // UI

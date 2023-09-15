@@ -69,7 +69,12 @@ public class CopilotPreferencesPane extends PreferencesPane
    public RestartRequirement onApply(UserPrefs prefs)
    {
       prefs.copilotTabKeyBehavior().setGlobalValue(selCopilotTabKeyBehavior_.getValue());
-      return super.onApply(prefs);
+      
+      RestartRequirement requirement = super.onApply(prefs);
+      if (initialCopilotIndexingEnabled_ != prefs.copilotIndexingEnabled().getGlobalValue())
+         requirement.setSessionRestartRequired(true);
+      
+      return requirement;
    }
    
    @Inject
@@ -362,6 +367,8 @@ public class CopilotPreferencesPane extends PreferencesPane
    @Override
    protected void initialize(UserPrefs prefs)
    {
+      initialCopilotIndexingEnabled_ = prefs.copilotIndexingEnabled().getGlobalValue();
+      
       projectServer_.readProjectOptions(new ServerRequestCallback<RProjectOptions>()
       {
          @Override
@@ -432,6 +439,7 @@ public class CopilotPreferencesPane extends PreferencesPane
    }
    
    // State
+   private boolean initialCopilotIndexingEnabled_;
    private RProjectOptions projectOptions_;
  
    // UI
