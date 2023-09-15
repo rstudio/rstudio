@@ -144,7 +144,7 @@ b2_build_args <- function(bitness) {
       "--abbreviate-paths",
       sprintf("variant=%s", variant),
       sprintf("link=%s", link),
-      sprintf("runtime-link=%s", link),
+      "runtime-link=shared",
       "threading=multi",
       "define=BOOST_USE_WINDOWS_H",
       "install"
