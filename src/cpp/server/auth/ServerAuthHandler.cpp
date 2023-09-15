@@ -373,6 +373,28 @@ void removeExpiredCookies()
    }
 }
 
+Error updateUser(const boost::shared_ptr<IConnection>& connection,
+                 const system::User& user)
+{
+   LOG_DEBUG_MESSAGE("Updating user in database: " + user.getUsername());
+
+   const std::string& username = user.getUsername();
+   Query updateQuery = connection->query("UPDATE licensed_users SET posix_name = :pn, display_name = :dn WHERE user_id = :uid")
+         .withInput(username)
+         .withInput(username)
+         .withInput(user.getUserId());
+
+   Error error = connection->execute(updateQuery);
+   if (error)
+   {
+      error.addProperty("description",
+                        "Could not update user in database: " + user.getUsername());
+      return error;
+   }
+
+   return Success();
+}
+
 } // anonymous namespace
 
 bool isCookieRevoked(const std::string& cookie)
@@ -449,9 +471,21 @@ Error getUserFromDatabase(const boost::shared_ptr<IConnection>& connection,
    for (RowsetIterator itr = rows.begin(); itr != rows.end(); ++itr)
    {
       Row& row = *itr;
+      
+      // Check for null in the username, could happen if the user was added by an older version of RSW
+      std::string username;
+      if (row.get_indicator(0) == soci::i_null)
+      {
+         error = updateUser(connection, user);
+         if (error)
+            return error;
+
+         username = user.getUsername();
+      }
+      else 
+         username = row.get<std::string>(0);
 
       int uid = row.get<int>(1);
-      const std::string& username = row.get<std::string>(0);
       bool locked = row.get<int>(3) == 1;
 
       // Check the last signin time. If we haven't seen a row for this user yet, update the time. 
