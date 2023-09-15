@@ -22,6 +22,7 @@ import org.rstudio.core.client.prefs.PreferencesDialogPaneBase;
 import org.rstudio.core.client.prefs.RestartRequirement;
 import org.rstudio.core.client.widget.Operation;
 import org.rstudio.core.client.widget.ProgressIndicator;
+import org.rstudio.studio.client.RStudioGinjector;
 import org.rstudio.studio.client.application.ApplicationQuit;
 import org.rstudio.studio.client.application.events.EventBus;
 import org.rstudio.studio.client.common.GlobalDisplay;
@@ -32,6 +33,7 @@ import org.rstudio.studio.client.projects.model.RProjectOptions;
 import org.rstudio.studio.client.projects.model.RProjectRenvOptions;
 import org.rstudio.studio.client.projects.ui.prefs.buildtools.ProjectBuildToolsPreferencesPane;
 import org.rstudio.studio.client.projects.ui.prefs.buildtools.ProjectCopilotPreferencesPane;
+import org.rstudio.studio.client.projects.ui.prefs.events.ProjectOptionsChangedEvent;
 import org.rstudio.studio.client.server.ServerError;
 import org.rstudio.studio.client.server.ServerRequestCallback;
 import org.rstudio.studio.client.server.Void;
@@ -209,27 +211,14 @@ public class ProjectPreferencesDialog extends PreferencesDialogBase<RProjectOpti
                 else
                    uiPrefs.spellingDictionaryLanguage().removeProjectValue(true);
                 
-                // copilot prefs
-                int copilotEnabled = config.getCopilotEnabled();
-                if (copilotEnabled != RProjectConfig.DEFAULT_VALUE)
-                   uiPrefs.copilotEnabled().setProjectValue(copilotEnabled == RProjectConfig.YES_VALUE);
-                else
-                   uiPrefs.copilotEnabled().removeProjectValue(true);
-                
-                // copilot prefs
-                int copilotIndexingEnabled = config.getCopilotEnabled();
-                if (copilotIndexingEnabled != RProjectConfig.DEFAULT_VALUE)
-                   uiPrefs.copilotIndexingEnabled().setProjectValue(copilotIndexingEnabled == RProjectConfig.YES_VALUE);
-                else
-                   uiPrefs.copilotIndexingEnabled().removeProjectValue(true);
-                
-                      
                 // convert packrat option changes to console actions
                 emitRenvConsoleActions(options.getRenvOptions());
 
                 if (onCompleted != null)
                    onCompleted.execute();
 
+                RStudioGinjector.INSTANCE.getEventBus().fireEvent(new ProjectOptionsChangedEvent(options));
+                
                 handleRestart(
                       pGlobalDisplay_.get(),
                       pQuit_.get(),

@@ -15,7 +15,6 @@
 
 #include <session/projects/SessionProjects.hpp>
 
-
 #include <core/Exec.hpp>
 #include <core/FileSerializer.hpp>
 #include <core/http/URL.hpp>
@@ -418,8 +417,6 @@ json::Object projectConfigJson(const r_util::RProjectConfig& config)
       configJson["zotero_libraries"] = json::toJsonArray(config.zoteroLibraries.get());
    else
       configJson["zotero_libraries"] = json::Value(); // null
-   configJson["copilot_enabled"] = config.copilotEnabled;
-   configJson["copilot_indexing_enabled"] = config.copilotIndexingEnabled;
 
    return configJson;
 }
@@ -486,6 +483,19 @@ json::Object projectBuildContextJson()
    return contextJson;
 }
 
+json::Object projectCopilotOptionsJson()
+{
+   RProjectCopilotOptions copilotOptions;
+   Error error = s_projectContext.readCopilotOptions(&copilotOptions);
+   if (error)
+      LOG_ERROR(error);
+   
+   json::Object copilotOptionsJson;
+   copilotOptionsJson["copilot_enabled"] = copilotOptions.copilotEnabled;
+   copilotOptionsJson["copilot_indexing_enabled"] = copilotOptions.copilotIndexingEnabled;
+   return copilotOptionsJson;
+}
+
 void setProjectConfig(const r_util::RProjectConfig& config)
 {
    // set it
@@ -546,12 +556,20 @@ Error readProjectOptions(const json::JsonRpcRequest& request,
    optionsJson["packrat_context"] = module_context::packratContextAsJson();
    optionsJson["renv_options"] = module_context::renvOptionsAsJson();
    optionsJson["renv_context"] = module_context::renvContextAsJson();
-
+   optionsJson["copilot_options"] = projectCopilotOptionsJson();
 
    pResponse->setResult(optionsJson);
    return Success();
 }
 
+
+Error rProjectVcsOptionsFromJson(const json::Object& optionsJson,
+                                 RProjectVcsOptions* pOptions)
+{
+   return json::readObject(
+         optionsJson,
+         "active_vcs_override", pOptions->vcsOverride);
+}
 
 Error rProjectBuildOptionsFromJson(const json::Object& optionsJson,
                                    RProjectBuildOptions* pOptions)
@@ -574,12 +592,21 @@ Error rProjectBuildOptionsFromJson(const json::Object& optionsJson,
        "run_on_build_and_reload", pOptions->autoRoxygenizeForBuildAndReload);
 }
 
-Error rProjectVcsOptionsFromJson(const json::Object& optionsJson,
-                                 RProjectVcsOptions* pOptions)
+Error rProjectCopilotOptionsFromJson(const json::Object& optionsJson,
+                                     RProjectCopilotOptions* pOptions)
 {
-   return json::readObject(
-         optionsJson,
-         "active_vcs_override", pOptions->vcsOverride);
+   int copilotEnabled, copilotIndexingEnabled;
+   Error error = json::readObject(
+            optionsJson,
+            "copilot_enabled", copilotEnabled,
+            "copilot_indexing_enabled", copilotIndexingEnabled);
+   if (error)
+      return error;
+   
+   using r_util::YesNoAskValue;
+   pOptions->copilotEnabled = static_cast<YesNoAskValue>(copilotEnabled);
+   pOptions->copilotIndexingEnabled = static_cast<YesNoAskValue>(copilotIndexingEnabled);
+   return Success();
 }
 
 Error writeProjectConfig(const json::Object& configJson)
@@ -709,21 +736,6 @@ Error writeProjectConfig(const json::Object& configJson)
    if (error)
       return error;
    
-   // read copilot options
-   error = json::readObject(
-            configJson,
-            "copilot_enabled", config.copilotEnabled,
-            "copilot_indexing_enabled", config.copilotIndexingEnabled);
-   if (error)
-      return error;
-
-   // write the config
-   error = r_util::writeProjectFile(s_projectContext.file(),
-                                    ProjectContext::buildDefaults(),
-                                    config);
-   if (error)
-      return error;
-
    // set the config
    setProjectConfig(config);
 
@@ -746,12 +758,12 @@ Error writeProjectConfigRpc(const json::JsonRpcRequest& request,
 Error writeProjectOptions(const json::JsonRpcRequest& request,
                           json::JsonRpcResponse* pResponse)
 {
-   // get the project config, vcs options and build options
-   json::Object configJson, vcsOptionsJson, buildOptionsJson;
+   json::Object configJson, vcsOptionsJson, buildOptionsJson, copilotOptionsJson;
    Error error = json::readObjectParam(request.params, 0,
                                        "config", &configJson,
                                        "vcs_options", &vcsOptionsJson,
-                                       "build_options", &buildOptionsJson);
+                                       "build_options", &buildOptionsJson,
+                                       "copilot_options", &copilotOptionsJson);
    if (error)
       return error;
 
@@ -771,6 +783,12 @@ Error writeProjectOptions(const json::JsonRpcRequest& request,
    error = rProjectBuildOptionsFromJson(buildOptionsJson, &buildOptions);
    if (error)
       return error;
+   
+   // read the copilot options
+   RProjectCopilotOptions copilotOptions;
+   error = rProjectCopilotOptionsFromJson(copilotOptionsJson, &copilotOptions);
+   if (error)
+      return error;
 
    // write the vcs options
    error = s_projectContext.writeVcsOptions(vcsOptions);
@@ -781,6 +799,14 @@ Error writeProjectOptions(const json::JsonRpcRequest& request,
    error = s_projectContext.writeBuildOptions(buildOptions);
    if (error)
       LOG_ERROR(error);
+   
+   // write the copilot options
+   error = s_projectContext.writeCopilotOptions(copilotOptions);
+   if (error)
+      LOG_ERROR(error);
+   
+   // notify modules
+   module_context::events().onProjectOptionsUpdated();
 
    return Success();
 }

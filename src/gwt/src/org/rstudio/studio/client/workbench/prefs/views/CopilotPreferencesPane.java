@@ -292,7 +292,7 @@ public class CopilotPreferencesPane extends PreferencesPane
             
             if (response == null)
             {
-               if (projectOptions_ != null && projectOptions_.getConfig().getCopilotEnabled() == RProjectConfig.NO_VALUE)
+               if (projectOptions_ != null && projectOptions_.getCopilotOptions().copilot_enabled == RProjectConfig.NO_VALUE)
                {
                   lblCopilotStatus_.setText("GitHub Copilot has been disabled in this project.");
                   showButtons(btnProjectOptions_);

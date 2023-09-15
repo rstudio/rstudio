@@ -1864,9 +1864,7 @@ public class TextEditingTarget implements
                   }
                }
             });
-
       
-
       packageDependencyHelper_ = new TextEditingTargetPackageDependencyHelper(this, docUpdateSentinel_, docDisplay_);
 
       // create notebook and forward resize events

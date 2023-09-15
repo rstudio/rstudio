@@ -137,6 +137,9 @@ int s_copilotLogLevel = 0;
 // Whether Copilot is enabled.
 bool s_copilotEnabled = false;
 
+// Whether Copilot has been allowed to index project files.
+bool s_copilotIndexingEnabled = false;
+
 // The PID of the active Copilot agent process.
 PidType s_agentPid = -1;
 
@@ -152,6 +155,37 @@ std::queue<std::string> s_pendingResponses;
 
 // Whether we're about to shut down.
 bool s_isSessionShuttingDown = false;
+
+// Project-specific Copilot options.
+projects::RProjectCopilotOptions s_copilotProjectOptions;
+
+bool isCopilotEnabled()
+{
+   // Check project option
+   switch (s_copilotProjectOptions.copilotEnabled)
+   {
+   case r_util::YesValue: return true;
+   case r_util::NoValue: return false;
+   default: {}
+   }
+
+   // Check user preference
+   return prefs::userPrefs().copilotEnabled();
+}
+
+bool isCopilotIndexingEnabled()
+{
+   // Check project option
+   switch (s_copilotProjectOptions.copilotIndexingEnabled)
+   {
+   case r_util::YesValue: return true;
+   case r_util::NoValue: return false;
+   default: {}
+   }
+
+   // Check user preference
+   return prefs::userPrefs().copilotIndexingEnabled();
+}
 
 std::string uriFromDocumentPath(const std::string& path)
 {
@@ -783,15 +817,10 @@ void onBackgroundProcessing(bool isIdle)
 
 void synchronize()
 {
-   // Check for preference change
-   bool oldEnabled = s_copilotEnabled;
-   bool newEnabled = prefs::userPrefs().copilotEnabled();
-   if (oldEnabled == newEnabled)
-      return;
-
-   // Update our preference
-   s_copilotEnabled = newEnabled;
-
+   // Update flags
+   s_copilotEnabled = isCopilotEnabled();
+   s_copilotIndexingEnabled = s_copilotEnabled && isCopilotIndexingEnabled();
+   
    // Start or stop the agent as appropriate
    if (s_copilotEnabled)
    {
@@ -809,8 +838,14 @@ void onPreferencesSaved()
    synchronize();
 }
 
-void onProjectConfigUpdated()
+void onProjectOptionsUpdated()
 {
+   // Update internal cache of project options
+   Error error = projects::projectContext().readCopilotOptions(&s_copilotProjectOptions);
+   if (error)
+      LOG_ERROR(error);
+   
+   // Synchronize other flags
    synchronize();
 }
 
@@ -1014,26 +1049,16 @@ void indexFile(const core::FileInfo& info)
 
 void onMonitoringEnabled(const tree<core::FileInfo>& tree)
 {
-   if (!s_copilotEnabled)
-      return;
-   
-   if (!prefs::userPrefs().copilotIndexingEnabled())
-      return;
-   
-   for (auto&& file : tree)
-      indexFile(file);
+   if (s_copilotIndexingEnabled)
+      for (auto&& file : tree)
+         indexFile(file);
 }
 
 void onFilesChanged(const std::vector<core::system::FileChangeEvent>& events)
 {
-   if (!s_copilotEnabled)
-      return;
-   
-   if (!prefs::userPrefs().copilotIndexingEnabled())
-      return;
-   
-   for (auto&& event : events)
-      indexFile(event.fileInfo());
+   if (s_copilotIndexingEnabled)
+      for (auto&& event : events)
+         indexFile(event.fileInfo());
 }
 
 void onMonitoringDisabled()
@@ -1048,11 +1073,21 @@ Error initialize()
    using boost::bind;
    using namespace module_context;
 
-   s_copilotEnabled = prefs::userPrefs().copilotEnabled();
-   
+   // Read default log level
    std::string copilotLogLevel = core::system::getenv("RSTUDIO_COPILOT_LOG_LEVEL");
    if (!copilotLogLevel.empty())
       s_copilotLogLevel = safe_convert::stringTo<int>(copilotLogLevel, 0);
+   
+   // Read project options
+   if (projects::projectContext().hasProject())
+   {
+      Error error = projects::projectContext().readCopilotOptions(&s_copilotProjectOptions);
+      if (error)
+         LOG_ERROR(error);
+   }
+    
+   // Synchronize user + project preferences with internal caches
+   synchronize();
 
    // subscribe to project context file monitoring state changes
    // (note that if there is no project this will no-op)
@@ -1064,7 +1099,7 @@ Error initialize()
    
    events().onBackgroundProcessing.connect(onBackgroundProcessing);
    events().onPreferencesSaved.connect(onPreferencesSaved);
-   events().onProjectConfigUpdated.connect(onProjectConfigUpdated);
+   events().onProjectOptionsUpdated.connect(onProjectOptionsUpdated);
    events().onDeferredInit.connect(onDeferredInit);
    events().onShutdown.connect(onShutdown);
 
