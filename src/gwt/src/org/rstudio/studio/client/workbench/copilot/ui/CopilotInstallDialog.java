@@ -14,9 +14,11 @@ import org.rstudio.studio.client.common.HelpLink;
 import com.google.gwt.aria.client.Roles;
 import com.google.gwt.core.client.GWT;
 import com.google.gwt.dom.client.Element;
+import com.google.gwt.dom.client.ParagraphElement;
 import com.google.gwt.event.dom.client.ClickHandler;
 import com.google.gwt.event.shared.HandlerRegistration;
 import com.google.gwt.uibinder.client.UiBinder;
+import com.google.gwt.uibinder.client.UiField;
 import com.google.gwt.user.client.ui.HorizontalPanel;
 import com.google.gwt.user.client.ui.Image;
 import com.google.gwt.user.client.ui.Widget;
@@ -31,10 +33,17 @@ public class CopilotInstallDialog extends ModalDialogBase
    {
    }
 
-   public CopilotInstallDialog()
+   public CopilotInstallDialog(boolean isAlreadyInstalled)
    {
       super(Roles.getDialogRole());
       ui_ = uiBinder.createAndBindUi(this);
+      
+      String alreadyInstalledMessage = isAlreadyInstalled
+            ? "The GitHub Copilot agent is already installed. Would you like to re-install it?"
+            : "The GitHub Copilot agent is not currently installed. Would you like to install it?";
+      
+      alreadyInstalledMessage_.setInnerText(alreadyInstalledMessage);
+      
       progress_ = addProgressIndicator();
       
       setTitle("GitHub Copilot: Install Agent");
@@ -77,6 +86,8 @@ public class CopilotInstallDialog extends ModalDialogBase
       panel.add(new ElementPanel(ui_));
       return panel;
    }
+   
+   @UiField ParagraphElement alreadyInstalledMessage_;
    
    private final Element ui_;
    private final ProgressIndicator progress_;
