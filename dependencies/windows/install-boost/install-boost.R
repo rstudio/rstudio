@@ -1,3 +1,4 @@
+
 argument <- function(index, default) {
    args <- commandArgs(TRUE)
    if (length(args) < index)
@@ -91,10 +92,31 @@ invisible(lapply(docs, function(doc) {
 
 # bootstrap the boost build directory
 section("Bootstrapping boost...")
+Sys.setenv(MSVCDir = "C:/Program Files/Microsoft Visual Studio/2022/Community/VC")
+Sys.unsetenv("MSVCDir")
+
+# TODO: Boost has trouble finding the vcvarsall.bat script for some reason?
+# We set this environment variable here to help it find the tools.
+if (is.na(Sys.getenv("B2_TOOLSET_ROOT", unset = NA))) {
+   
+   candidates <- c(
+      "C:/Program Files/Microsoft Visual Studio/2022/Community/VC/"
+   )
+   
+   for (candidate in candidates) {
+      if (file.exists(candidate)) {
+         Sys.setenv(B2_TOOLSET_ROOT = candidate)
+         progress("Using B2_TOOLSET_ROOT = %s", candidate)
+         break
+      }
+   }
+   
+}
+
 exec("cmd.exe", "/C call bootstrap.bat vc142")
 
-# create bcp executable (so we can create Boost
-# using a private namespace)
+# create bcp executable
+# (so we can create Boost using a private namespace)
 exec("b2", "-j 4 tools\\bcp")
 invisible(file.copy("dist/bin/bcp.exe", "bcp.exe"))
 
@@ -122,7 +144,7 @@ b2_build_args <- function(bitness) {
       "--abbreviate-paths",
       sprintf("variant=%s", variant),
       sprintf("link=%s", link),
-      sprintf("runtime-link=shared", link),
+      sprintf("runtime-link=%s", link),
       "threading=multi",
       "define=BOOST_USE_WINDOWS_H",
       "install"
