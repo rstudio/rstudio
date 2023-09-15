@@ -624,16 +624,15 @@ Error updateLastSignin(const boost::shared_ptr<IConnection>& connection,
                        const system::User& user)
 {
    LOG_DEBUG_MESSAGE("Begin update last signIn time");
-
    std::string currentTime = date_time::format(boost::posix_time::microsec_clock::universal_time(),
                                                date_time::kIso8601Format);
+   const auto usernameColName = overlay::getUsernameDbColumnName();
    Query updateSignin =
-         connection->query("UPDATE licensed_users SET last_sign_in = :val WHERE user_id = :uid")
+         connection->query("UPDATE licensed_users SET last_sign_in = :val WHERE user_id = :uid OR " + usernameColName + " = :pn ")
             .withInput(currentTime)
-            .withInput(user.getUserId());
-
+            .withInput(user.getUserId())
+            .withInput(user.getUsername());
    LOG_DEBUG_MESSAGE("End update last signIn time");
-
    return connection->execute(updateSignin);
 }
 
@@ -643,10 +642,7 @@ Error addUserToDatabase(const boost::shared_ptr<IConnection>& connection,
 { 
    LOG_DEBUG_MESSAGE("Adding user to database: " + user.getUsername());
 
-   const auto result = overlay::addUserToDatabase(connection, user, isAdmin);
-   Error error;
-   bool wasHandled;
-   std::tie(error, wasHandled) = result;
+   Error error = overlay::addUserToDatabase(connection, user, isAdmin);
 
    if (error)
    {

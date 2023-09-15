@@ -60,9 +60,9 @@ core::Error setAdmin(boost::asio::io_service& ioService,
 OverlayResult addUser(boost::asio::io_service& ioService,
                       const std::string& username,
                       bool isAdmin = false);
-OverlayResult addUserToDatabase(const boost::shared_ptr<core::database::IConnection>& connection,
-                                const core::system::User& user,
-                                bool isAdmin = false);
+core::Error addUserToDatabase(const boost::shared_ptr<core::database::IConnection>& connection,
+                              const core::system::User& user,
+                              bool isAdmin = false);
 bool isUserProvisioningEnabled();
 std::string getUsernameDbColumnName();
 

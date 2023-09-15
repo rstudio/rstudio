@@ -103,9 +103,9 @@ OverlayResult addUser(boost::asio::io_service& ioService,
    return std::make_tuple(Success(), false);
 }
 
-OverlayResult addUserToDatabase(const boost::shared_ptr<IConnection>& connection,
-                                const system::User& user,
-                                bool isAdmin)
+Error addUserToDatabase(const boost::shared_ptr<IConnection>& connection,
+                        const system::User& user,
+                        bool isAdmin)
 {
    std::string currentTime = core::date_time::format(boost::posix_time::microsec_clock::universal_time(),
                              core::date_time::kIso8601Format);
@@ -117,11 +117,7 @@ OverlayResult addUserToDatabase(const boost::shared_ptr<IConnection>& connection
          .withInput(currentTime)
          .withInput(static_cast<int>(isAdmin));
 
-   Error error = connection->execute(insertQuery);
-
-   if (error)
-      return std::make_tuple(error, true);
-   return std::make_tuple(Success(), true);
+   return connection->execute(insertQuery);
 }
 
 bool isUserProvisioningEnabled()
@@ -132,7 +128,6 @@ bool isUserProvisioningEnabled()
 std::string getUsernameDbColumnName()
 {
    return "user_name";
-
 } 
 
 }// namespace overlay
