@@ -50,7 +50,6 @@ GitHub Copilot primarily relies on the context in the file you are actively edit
 
 For general advice on how to use Copilot, please see:\
 - [How to use GitHub Copilot: Prompts, tips, and use cases](https://github.blog/2023-06-20-how-to-write-better-prompts-for-github-copilot/)\
-- [How to use GitHub Copilot](https://docs.github.com/en/copilot/getting-started-with-github-copilot/how-to-use-github-copilot)\
 - [Learning GitHub Copilot video series](https://learn.microsoft.com/en-us/shows/introduction-to-github-copilot/)
 
 ::: {.callout-warning title="Trust but Verify"}
@@ -65,13 +64,11 @@ Similar to normal autocomplete, Copilot suggestions will begin after a short del
 
 At times, normal autocomplete and Copilot may seem to conflict with each other. In these cases, it is best to review the Copilot suggestion and determine if it is appropriate for the current context. If it is, you can accept the suggestion by pressing <kbd>Tab</kbd>. If it is not, you can ignore the suggestion and continue typing or force the normal autocomplete to show by pressing <kbd>Ctrl+Space</kbd>.
 
-There is also a setting in the Tools \> Global Options \> Copilot options to make <kbd>Tab</kbd> prefer "Copilot Suggestion" or "Autocomplete Suggestion". This setting defaults to prefer "Copilot Suggestion" if Copilot is enabled.
-
 ### Code
 
 The primary use case for Copilot is to generate code. Copilot will use the context of the active document to generate suggestions for code that might be useful.
 
-Copilot suggestions will be presented as grey "ghost text" which may be accepted by pressing the <kbd>Tab</kbd> or <kbd>Enter</kbd> key. Some suggestions will be a single line and others with broader context may be multiple lines.
+Copilot suggestions will be presented as grey "ghost text" which may be accepted by pressing the <kbd>Tab</kbd>, while the <kbd>Enter/Return</kbd> key will ignore the suggestion. Some suggestions will be a single entire line, inline of other code, or others with broader context may be multiple lines.
 
 ![](images/copilot_ghost-text.png){fig-alt="Copilot ghost text"}
 
@@ -190,7 +187,7 @@ mtcars |>
    )
 ```
 
-However, the comment may not needed if a descriptive column name is used instead.
+However, the comment may not be needed if a descriptive column name is used instead.
 
 ![](images/copilot_se-inline.png){fig-alt="Copilot inline completion"}
 
@@ -198,7 +195,7 @@ However, the comment may not needed if a descriptive column name is used instead
 
 While R is the primary expected language for RStudio users, Copilot also supports other languages such as SQL, Python, HTML, CSS, JavaScript, and many other languages. Copilot will use the file extension or other context to determine the language of the active document. In multi-language Quarto documents for example, Copilot could use the active language within a code chunk or the body of the document to generate suggestions.
 
-Comments in other languages can be used to generate suggestions in the active document For example, a HTML comment (`<!-- COMMENT BODY -->`) might be used in the body of a `.qmd` file:
+Comments in other languages can be used to generate suggestions in the active document. For example, a HTML comment (`<!-- COMMENT BODY -->`) might be used in the body of a `.qmd` file:
 
 ``` html
 <!-- Using HTML and JavaScript return a clickable counter that is displayed -->
@@ -232,6 +229,7 @@ function resetClicks() {
 ```
 
 ![](images/copilot_javascript.png){fig-alt="Copilot HTML and JavaScript completions"}
+
 ## Support
 
 Posit does not provide support or assistance for any code written or generated in RStudio, with or without Copilot. Posit does not support the Copilot output, or test the logic used by Copilot to generate code from prompts.
