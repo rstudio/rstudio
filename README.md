@@ -28,7 +28,7 @@ Documentation
 -----------------------------------------------------------------------------
 
 For information on how to use RStudio check out our
-[online documentation](https://support.posit.co/hc/en-us/categories/200035113-Documentation). 
+[online documentation](https://docs.posit.co/ide/user/). 
 
 For documentation on running your own RStudio Server see the 
 [server getting started](https://support.posit.co/hc/en-us/articles/200552306-Getting-Started)
