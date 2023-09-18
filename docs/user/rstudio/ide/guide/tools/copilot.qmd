@@ -33,7 +33,7 @@ To enable GitHub Copilot in RStudio:
 
 To disable GitHub Copilot either:
 
--   Navigate to Tools \> Global Options \> Copilot and uncheck "Enable GitHub Copilot".  
+-   Navigate to Tools \> Global Options \> Copilot and uncheck "Enable GitHub Copilot", or  
 -   Use the Command Palette <kbd>Cmd+Shift+P</kbd> on Mac or <kbd>Ctrl+Shift+P</kbd> on Windows/Linux, search for "Enable GitHub Copilot" and then uncheck "Enable GitHub Copilot".  
 
 ## Using Copilot
