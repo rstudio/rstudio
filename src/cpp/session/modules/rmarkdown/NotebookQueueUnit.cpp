@@ -31,6 +31,7 @@
 #define kQueueUnitCode       "code"
 #define kQueueUnitDocId      "doc_id"
 #define kQueueUnitChunkId    "chunk_id"
+#define kQueueUnitDocType    "doc_type"
 #define kQueueUnitCompleted  "completed"
 #define kQueueUnitPending    "pending"
 #define kQueueUnitExecuting  "executing"
@@ -104,7 +105,8 @@ bool ExecRange::empty()
    return start == 0 && stop == 0;
 }
 
-Error NotebookQueueUnit::fromJson(const json::Object& source, 
+Error NotebookQueueUnit::fromJson(
+      const json::Object& source, 
       boost::shared_ptr<NotebookQueueUnit>* pUnit)
 {
    // extract contained unit for manipulation
@@ -117,6 +119,7 @@ Error NotebookQueueUnit::fromJson(const json::Object& source,
    Error error = json::readObject(source, 
          kQueueUnitCode,      code,
          kQueueUnitDocId,     unit.docId_,
+         kQueueUnitDocType,   unit.docType_,
          kQueueUnitChunkId,   unit.chunkId_,
          kQueueUnitCompleted, completed,
          kQueueUnitPending,   pending,
@@ -149,11 +152,13 @@ Error NotebookQueueUnit::parseOptions(json::Object* pOptions)
       *pOptions = json::Object();
       return Success();
    }
-
+   
    // evaluate this chunk's options in R
    r::sexp::Protect protect;
    SEXP sexpOptions = R_NilValue;
    Error error = r::exec::RFunction(".rs.evaluateChunkOptions")
+         .addUtf8Param(docId_)
+         .addUtf8Param(docType_)
          .addUtf8Param(code_)
          .call(&sexpOptions, &protect);
 
@@ -229,6 +234,7 @@ json::Object NotebookQueueUnit::toJson() const
    json::Object unit;
    unit[kQueueUnitCode]      = code_;
    unit[kQueueUnitDocId]     = docId_;
+   unit[kQueueUnitDocType]   = docType_;
    unit[kQueueUnitChunkId]   = chunkId_;
    unit[kQueueUnitCompleted] = completed;
    unit[kQueueUnitPending]   = pending;
