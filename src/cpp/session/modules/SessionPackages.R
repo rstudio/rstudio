@@ -278,7 +278,7 @@ if (identical(as.character(Sys.info()["sysname"]), "Darwin") &&
 .rs.addFunction("isPackageHyperlinkSafe", function(packageName)
 {
    allowed <- setdiff(
-      c(.packages(), "testthat", "rlang", "devtools", "usethis"), 
+      c(.packages(), "testthat", "rlang", "devtools", "usethis", "pkgload"), 
       c("base", "stats", "utils")
    )
    .rs.scalar(
