@@ -1174,7 +1174,7 @@
    }
    else if (.rs.isExternalPointer(object))
    {
-      output <- capture.output(base::print.default(object))
+      output <- format(object)[[1L]]
       more <- FALSE
    }
    
