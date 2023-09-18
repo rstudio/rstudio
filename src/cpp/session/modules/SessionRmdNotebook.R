@@ -641,15 +641,16 @@ assign(".rs.notebookVersion", envir = .rs.toolsEnv(), "1.0")
    # remove comment prefix
    opt <- sub("^#\\|\\s*", "", opt)
    
-   # first, attempt to parse the code as YAML, then fall
-   # back to the regular knitr params parser
-   tryCatch(
-      .rs.parseYamlOptImpl(opt),
-      error = function(cnd) {
-         opts <- paste(opt, collapse = " ")
-         knitr:::parse_params(opts)
-      }
-   )
+   # check for YAML entry, mimicing code in knitr
+   if (grepl("^[^ :]+:($|\\s)", opt[[1]])) {
+      meta <- .rs.tryCatch(.rs.parseYamlOptImpl(opt))
+      if (!inherits(meta, "error"))
+         return(meta)
+   }
+   
+   # fallback to regular params parser
+   opts <- paste(opt, collapse = " ")
+   knitr:::parse_params(opts, label = FALSE)
 })
 
 .rs.addFunction("evaluateChunkOptions", function(code)
