@@ -614,31 +614,42 @@ assign(".rs.notebookVersion", envir = .rs.toolsEnv(), "1.0")
    .rs.fromJSON(.rs.base64decode(encoded))
 })
 
+
+.rs.addFunction("parseYamlOptImpl", function(opt)
+{
+   # read as YAML
+   opts <- .rs.fromYAML(opt)
+   
+   # parse truthy and falsy style yaml options
+   opts <- lapply(opts, function(value)
+   {
+      if (!is.character(value))
+         return(value)
+      if (tolower(value) %in% c("y", "yes", "on"))
+         return(TRUE)
+      if (tolower(value) %in% c("n", "no", "off"))
+         return(FALSE)
+      else
+         return(value)
+   })
+   
+   opts
+})
+
 .rs.addFunction("parseYamlOpt", function(opt)
 {
-    opt <- sub("^#\\|\\s*", "", opt)
-    if (any(grepl(".+=.+", opt))) # R-style chunk options
-    {
-        opts <- paste(opt, collapse = " ")
-        opts <- knitr:::parse_params(opts)
-    }
-    else
-    {
-        opts <- .rs.fromYAML(opt)
-        # parse truthy and falsy style yaml options
-        opts <- lapply(opts, function(value)
-           {
-             if (!is.character(value))
-               return(value)
-             if (tolower(value) %in% c("y", "yes", "on"))
-               return(TRUE)
-             if (tolower(value) %in% c("n", "no", "off"))
-               return(FALSE)
-             else
-               return(value)
-           })
-    }
-    return(opts)
+   # remove comment prefix
+   opt <- sub("^#\\|\\s*", "", opt)
+   
+   # first, attempt to parse the code as YAML, then fall
+   # back to the regular knitr params parser
+   tryCatch(
+      .rs.parseYamlOptImpl(opt),
+      error = function(cnd) {
+         opts <- paste(opt, collapse = " ")
+         knitr:::parse_params(opts)
+      }
+   )
 })
 
 .rs.addFunction("evaluateChunkOptions", function(code)
