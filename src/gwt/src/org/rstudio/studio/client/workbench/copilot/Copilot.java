@@ -143,7 +143,26 @@ public class Copilot implements ProjectOptionsChangedEvent.Handler
    
    private void installAgentWithPrompt(CommandWithArg<Boolean> callback)
    {
-      CopilotInstallDialog dialog = new CopilotInstallDialog();
+      server_.copilotVerifyInstalled(new ServerRequestCallback<CopilotVerifyInstalledResponse>()
+      {
+         @Override
+         public void onResponseReceived(CopilotVerifyInstalledResponse response)
+         {
+            installAgentWithPromptImpl(response.installed, callback);
+         }
+
+         @Override
+         public void onError(ServerError error)
+         {
+            Debug.logError(error);
+            installAgentWithPromptImpl(false, callback);
+         }
+      });
+   }
+   
+   private void installAgentWithPromptImpl(boolean isAlreadyInstalled, CommandWithArg<Boolean> callback)
+   {
+      CopilotInstallDialog dialog = new CopilotInstallDialog(isAlreadyInstalled);
       
       dialog.addClickHandler(new ClickHandler()
       {
