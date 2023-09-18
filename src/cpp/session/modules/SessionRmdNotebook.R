@@ -660,7 +660,7 @@ assign(".rs.notebookVersion", envir = .rs.toolsEnv(), "1.0")
    Encoding(code) <- "UTF-8"
    code <- unlist(strsplit(code, "\n", fixed = TRUE))
    
-   # parsed chunk options
+   # parsed chunk options; start with default chunk options
    opts <- list()
    
    # first, parse chunk options embedded in the chunk header
@@ -766,6 +766,28 @@ assign(".rs.notebookVersion", envir = .rs.toolsEnv(), "1.0")
       )
       
    })
+   
+   # if this is a SQL chunk, try to provide a default connection
+   # TODO: arguably, we should be using `knitr::opts_chunk$get()`
+   # to provide defaults for chunk options, but it's not clear if
+   # that's always the correct choice, so we just make the smaller
+   # piece-meal decision here
+   if (opts$engine %in% c("mysql", "psql", "sql")) {
+      
+      # get current connection
+      conn <- .rs.nullCoalesce(
+         opts$connection,
+         knitr::opts_chunk$get("connection")
+      )
+      
+      # our chunk execution tools expect a character connection,
+      # so use a temporary variable to store the connection value
+      if (!is.null(conn) && !is.character(conn)) {
+         .rs.setVar("chunkConnection", conn)
+         opts$connection <- ".rs.chunkConnection"
+      }
+      
+   }
    
    .rs.scalarListFromList(opts, expressions = TRUE)
 })
