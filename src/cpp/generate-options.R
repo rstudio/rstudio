@@ -592,12 +592,12 @@ generateOverlayOptions <- function (overlayOptionsJson) {
          
          optionConstant <- optionName[["constant"]]
          if (is.null(optionConstant)) {
-            stop(sprintf("Overlay option %s specified without a constant. All overlay option names must be constants."))
+            stop(sprintf("Overlay option %s specified without a constant. All overlay option names must be constants.", optionName))
          }
          
          optionConstantValue <- optionName[["value"]]
          if (is.null(optionConstantValue)) {
-            stop(sprintf("Overlay option %s constant specified without a value. All constants must have values for documentation."))
+            stop(sprintf("Overlay option %s constant specified without a value. All constants must have values for documentation.", optionName))
          }
          
          skipDefine <- optionName[["skipDefine"]]
