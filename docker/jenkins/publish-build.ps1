@@ -48,6 +48,23 @@ function URLize {
     return $string
 }
 
+function Handle409 {
+    param(
+        $url,
+        $payload,
+        $headers
+    )
+
+    Write-Host "Received a 409, assuming it's a commit interleaving error, waiting 3 seconds and retrying".
+    Start-Sleep -Seconds 3
+
+    # Identical call to the original above
+    Write-Host "Retrying..."
+    $retryCreateResponse = Invoke-RestMethod -Body $payload -Method 'PUT' -Headers $headers -Uri $url -UseBasicParsing
+    Write-Host "Response :"
+    Write-Host $retryCreateResponse.Content
+}
+
 # Extract file metadata
 $size = (Get-Item $file).length
 $filename = (Get-Item $file).Name
@@ -137,20 +154,25 @@ try
         $payload = @"
 { "message": "Update $flower build $version in $build", "content": "$base64", "sha": "$updateSha" }
 "@
-        Write-Host "Updating version file..."
-        $updateResponse = Invoke-RestMethod -Body $payload -Method 'PUT' -Headers $headers -Uri $url -UseBasicParsing
-        Write-Host $updateResponse
+        try {
+            Write-Host "Updating version file..."
+            $updateResponse = Invoke-RestMethod -Body $payload -Method 'PUT' -Headers $headers -Uri $url -UseBasicParsing
+            Write-Host $updateResponse
+        } catch {
+            $StatusCode = $_.Exception.Response.StatusCode.value__
 
+            if ($StatusCode -eq 409)
+            {
+                Handle409 -url $url -payload $payload -headers $headers
+            }
+            else 
+            {
+                Write-Host "Received an unexpected error code: $StatusCode"
+            }
+        }
     }
     
     if ($StatusCode -eq 409) { # Assume the repo has been updated backoff and try again.
-        Write-Host "Received a 409, assuming it's a commit interleaving error, waiting 3 seconds and retrying".
-        Start-Sleep -Seconds 3
-
-        # Identical call to the original above
-        Write-Host "Retrying..."
-        $retryCreateResponse = Invoke-RestMethod -Body $payload -Method 'PUT' -Headers $headers -Uri $url -UseBasicParsing
-        Write-Host "Response :"
-        Write-Host $retryCreateResponse.Content
+        Handle409 -url $url -payload $payload -headers $headers
     }
 }
