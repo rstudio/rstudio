@@ -710,9 +710,18 @@ options(help_type = "html")
                                          package = NULL,
                                          help_type = "html")
 {
-   substitute(utils::help(TOPIC, package = PACKAGE, help_type = "html"),
-              list(TOPIC = topic,
-                   PACKAGE = package))
+   # build help call
+   call <- substitute(
+      utils::help(TOPIC, package = PACKAGE, help_type = "html"),
+      list(TOPIC = topic, PACKAGE = package)
+   )
+   
+   # support devtools shims
+   if ("devtools_shims" %in% search())
+      call[[1L]] <- quote(help)
+   
+   # return generated call
+   call
 })
 
 .rs.addFunction("packageHelpEncoding", function(packagePath)
@@ -779,7 +788,7 @@ options(help_type = "html")
          
          expr = {
             call <- .rs.makeHelpCall(topic, package)
-            eval(call)
+            eval(call, envir = globalenv())
          },
          
          error = function(e) {
@@ -791,13 +800,29 @@ options(help_type = "html")
    if (length(helpfiles) <= 0)
       return()
    
-   file <- helpfiles[[1]]
-   path <- dirname(file)
-   dirpath <- dirname(path)
-   pkgname <- basename(dirpath)
-   
-   query <- paste("/library/", pkgname, "/html/", basename(file), ".html", sep = "")
-   html <- suppressWarnings(tools:::httpd(query, NULL, NULL))$payload
+   # support devtools help
+   if (inherits(helpfiles, "dev_topic") && "pkgload" %in% loadedNamespaces())
+   {
+      .rs.tryCatch({
+         pkgname <- helpfiles$pkg
+         docPath <- file.path(tempdir(), sprintf(".R/doc/html/%s.html", helpfiles$topic))
+         dir.create(dirname(docPath), recursive = TRUE, showWarnings = FALSE)
+         pkgload:::topic_write_html(helpfiles, path = docPath)
+      })
+      
+      html <- paste(readLines(docPath, warn = FALSE), collapse = "\n")
+   }
+   else
+   {
+      # regular old help
+      file <- helpfiles[[1]]
+      path <- dirname(file)
+      dirpath <- dirname(path)
+      pkgname <- basename(dirpath)
+      
+      query <- paste("/library/", pkgname, "/html/", basename(file), ".html", sep = "")
+      html <- suppressWarnings(tools:::httpd(query, NULL, NULL))$payload
+   }
    
    # resolve associated package from helpfile path -- note that help file
    # paths have the format:
