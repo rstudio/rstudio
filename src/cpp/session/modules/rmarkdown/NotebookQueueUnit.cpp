@@ -22,6 +22,7 @@
 #include <boost/algorithm/string.hpp>
 
 #include <core/json/JsonRpc.hpp>
+#include <core/FileSerializer.hpp>
 #include <core/StringUtils.hpp>
 
 #include <r/RExec.hpp>
@@ -181,6 +182,21 @@ Error NotebookQueueUnit::parseOptions(json::Object* pOptions)
    else 
    {
       *pOptions = jsonOptions.getObject();
+   }
+   
+   // if this chunk defines a 'file' option, then we'll read
+   // the contents of that file and use it for code. note that
+   // any existing code in the chunk will be ignored.
+   std::string file;
+   Error readError = core::json::readObject(*pOptions, "file", file);
+   if (!readError)
+   {
+      FilePath resolvedPath = module_context::resolveAliasedPath(file);
+      
+      std::string code;
+      Error error = core::readStringFromFile(resolvedPath, &code);
+      if (!error)
+         replaceCode(code);
    }
 
    return Success();
