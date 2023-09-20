@@ -9,7 +9,7 @@
 
 ### Fixed
 #### RStudio
--
+- Improved performance of R Markdown chunk execution for projects running on networked filesystems. (#8034)
 
 #### Posit Workbench
 -
