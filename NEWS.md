@@ -9,7 +9,7 @@
 
 ### Fixed
 #### RStudio
--
+- RStudio will no longer attempt to automatically activate the default system installation of Python. (#13497)
 
 #### Posit Workbench
 -
