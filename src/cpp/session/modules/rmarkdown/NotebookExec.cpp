@@ -48,6 +48,41 @@ namespace notebook {
 
 namespace {
 
+struct PendingChunkConsoleOutput
+{
+   int type;
+   std::string output;
+};
+
+std::map<FilePath, std::vector<PendingChunkConsoleOutput>> s_pendingChunkOutput;
+
+void flushPendingConsoleOutputImpl(const FilePath& outputCsv)
+{
+   auto&& chunkOutputs = s_pendingChunkOutput[outputCsv];
+   if (chunkOutputs.empty())
+      return;
+   
+   std::stringstream ss;
+   for (auto&& chunkOutput : chunkOutputs)
+   {
+      std::vector<std::string> values;
+      values.push_back(safe_convert::numberToString(chunkOutput.type));
+      values.push_back(chunkOutput.output);
+      ss << text::encodeCsvLine(values) << "\n";
+   }
+   
+   Error error = core::writeStringToFile(outputCsv, ss.str());
+   if (error)
+      LOG_ERROR(error);
+}
+   
+void flushPendingConsoleOutput()
+{
+   for (auto&& entry : s_pendingChunkOutput)
+      flushPendingConsoleOutputImpl(entry.first);
+   s_pendingChunkOutput.clear();
+}
+
 FilePath getNextOutputFile(const std::string& docId, const std::string& chunkId,
    const std::string& nbCtxId, ChunkOutputType outputType, unsigned *pOrdinal)
 {
@@ -446,19 +481,15 @@ void ChunkExecContext::onConsoleText(int type, const std::string& output,
       return;
    }
 
-   // write out as csv
-   std::vector<std::string> vals;
-   vals.push_back(safe_convert::numberToString(type));
-   vals.push_back(output);
-   error = core::writeStringToFile(
-            outputCsv,
-            text::encodeCsvLine(vals) + "\n",
-            string_utils::LineEndingPassthrough,
-            truncate);
-   if (error)
-   {
-      LOG_ERROR(error);
-   }
+   // truncate if necessary
+   if (truncate)
+      s_pendingChunkOutput.erase(outputCsv);
+   
+   // add pending chunk output
+   PendingChunkConsoleOutput chunkOutput;
+   chunkOutput.type = type;
+   chunkOutput.output = output;
+   s_pendingChunkOutput[outputCsv].push_back(chunkOutput);
 
    // if we got some real output, fire event for it
    if (!output.empty())
@@ -469,6 +500,9 @@ void ChunkExecContext::disconnect()
 {
    Error error;
 
+   // flush any pending chunk output
+   flushPendingConsoleOutput();
+   
    // clean up capturing modules (includes plots, errors, and HTML widgets)
    for (boost::shared_ptr<NotebookCapture> pCapture : captures_)
    {
