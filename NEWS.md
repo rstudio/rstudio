@@ -9,7 +9,7 @@
 
 ### Fixed
 #### RStudio
--
+- Fixed an issue where underscores in file names were not displayed correctly in menu items. (#13662)
 
 #### Posit Workbench
 -
