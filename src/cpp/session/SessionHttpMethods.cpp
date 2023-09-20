@@ -302,7 +302,7 @@ void polledEventHandler()
             return;
          }
 
-         if ( isMethod(ptrConnection, kClientInit) )
+         if (isMethod(ptrConnection, kClientInit))
          {
             if (ptrConnection->isAsyncRpc())
             {

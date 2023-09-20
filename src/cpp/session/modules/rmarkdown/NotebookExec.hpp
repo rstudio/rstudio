@@ -41,6 +41,8 @@ namespace modules {
 namespace rmarkdown {
 namespace notebook {
 
+void flushPendingChunkConsoleOutputs(bool clear);
+
 core::Error copyLibDirForOutput(const core::FilePath& file,
    const std::string& docId, const std::string& nbCtxId);
 

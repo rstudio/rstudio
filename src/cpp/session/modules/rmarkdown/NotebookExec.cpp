@@ -56,7 +56,7 @@ struct PendingChunkConsoleOutput
 
 std::map<FilePath, std::vector<PendingChunkConsoleOutput>> s_pendingChunkOutput;
 
-void flushPendingConsoleOutputImpl(const FilePath& outputCsv)
+void flushPendingChunkConsoleOutput(const FilePath& outputCsv)
 {
    auto&& chunkOutputs = s_pendingChunkOutput[outputCsv];
    if (chunkOutputs.empty())
@@ -76,13 +76,6 @@ void flushPendingConsoleOutputImpl(const FilePath& outputCsv)
       LOG_ERROR(error);
 }
    
-void flushPendingConsoleOutput()
-{
-   for (auto&& entry : s_pendingChunkOutput)
-      flushPendingConsoleOutputImpl(entry.first);
-   s_pendingChunkOutput.clear();
-}
-
 FilePath getNextOutputFile(const std::string& docId, const std::string& chunkId,
    const std::string& nbCtxId, ChunkOutputType outputType, unsigned *pOrdinal)
 {
@@ -97,6 +90,14 @@ FilePath getNextOutputFile(const std::string& docId, const std::string& chunkId,
 }
 
 } // anonymous namespace
+
+void flushPendingChunkConsoleOutputs(bool clear)
+{
+   for (auto&& entry : s_pendingChunkOutput)
+      flushPendingChunkConsoleOutput(entry.first);
+   if (clear)
+      s_pendingChunkOutput.clear();
+}
 
 core::Error copyLibDirForOutput(const core::FilePath& file,
    const std::string& docId, const std::string& nbCtxId)
@@ -501,7 +502,7 @@ void ChunkExecContext::disconnect()
    Error error;
 
    // flush any pending chunk output
-   flushPendingConsoleOutput();
+   flushPendingChunkConsoleOutputs(true);
    
    // clean up capturing modules (includes plots, errors, and HTML widgets)
    for (boost::shared_ptr<NotebookCapture> pCapture : captures_)
