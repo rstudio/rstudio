@@ -157,7 +157,8 @@ try
         try {
             Write-Host "Updating version file..."
             $updateResponse = Invoke-RestMethod -Body $payload -Method 'PUT' -Headers $headers -Uri $url -UseBasicParsing
-            Write-Host $updateResponse
+            Write-Host "Response :"
+            Write-Host $updateResponse.Content
         } catch {
             $StatusCode = $_.Exception.Response.StatusCode.value__
 
