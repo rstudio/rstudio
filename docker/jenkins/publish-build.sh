@@ -241,7 +241,7 @@ if [[ $httpCode -eq 422 ]]; then
 
    updateSha=$(echo $getShaResponse | jq -r .sha)
 
-   updatePayload="{\"message\":\"Update $flower build $version in $build\",\"content\":\"$base64_contents\",\"sha\":\"$updateSha\"}"
+   payload="{\"message\":\"Update $flower build $version in $build\",\"content\":\"$base64_contents\",\"sha\":\"$updateSha\"}"
    
    httpCode=$(curl \
       -X PUT \
@@ -250,12 +250,15 @@ if [[ $httpCode -eq 422 ]]; then
       -H "Accept: application/vnd.github.v3+json" \
       -H "Authorization: token $pat" \
       $githubUrl \
-      -d "$updatePayload")
+      -d "$payload")
 
    echo "Github's Update Response:"
    echo "Http Code : $httpCode"
    cat $curlOutFname
-elif [[ $httpCode -eq 409 ]]; then
+fi
+
+# Separate this if block so if the 422 retry block above fails with a 409 we can handle that as well
+if [[ $httpCode -eq 409 ]]; then
    echo "Received a 409 error, assuming it's a commit interleaving error, we'll back off for 3 seconds and retry".
    sleep 3
 
