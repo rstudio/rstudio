@@ -220,6 +220,11 @@ void onChunkExecCompleted(const std::string& docId,
    emitOutputFinished(docId, chunkId, callback, ExecScopeChunk);
 }
 
+void onBeforeClientInit()
+{
+   flushPendingChunkConsoleOutputs(false);
+}
+
 void onDeferredInit(bool)
 {
    FilePath root = notebookCacheRoot();
@@ -263,6 +268,7 @@ Error initialize()
 
    events().onChunkExecCompleted.connect(onChunkExecCompleted);
    
+   module_context::events().onBeforeClientInit.connect(onBeforeClientInit);
    module_context::events().onDeferredInit.connect(onDeferredInit);
 
    ExecBlock initBlock;

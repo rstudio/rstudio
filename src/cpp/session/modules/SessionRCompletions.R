@@ -3041,13 +3041,27 @@ assign(x = ".rs.acCompletionTypes",
    
 })
 
+.rs.addFunction("readDevAliases", function(path)
+{
+   meta <- pkgload::dev_meta(basename(path))
+   if (!is.null(meta))
+      return(pkgload:::dev_topic_index(path))
+})
+
 .rs.addFunction("readAliases", function(path)
 {
    if (!length(path))
       return(character())
    
-   if (file.exists(f <- file.path(path, "help", "aliases.rds")))
-      names(readRDS(f))
+   # Check for packages loaded via devtools::load_all()
+   devIndex <- .rs.tryCatch(.rs.readDevAliases(path))
+   if (is.character(devIndex))
+      return(names(devIndex))
+   
+   # Otherwise, read aliases directly
+   aliasesPath <- file.path(path, "help/aliases.rds")
+   if (file.exists(aliasesPath))
+      names(readRDS(aliasesPath))
    else
       character()
 })

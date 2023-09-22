@@ -259,6 +259,13 @@ void onLibPathsChanged(const std::vector<std::string>& libPaths)
 void invokeHook(boost::shared_ptr<source_database::SourceDocument> pDoc,
                 const std::string& hookName)
 {
+   // NOTE: Because document saves can happen in a background thread,
+   // we need to assert that we're on the main thread before performing
+   // any computation here. It does imply that package extensions might
+   // not be able to see any document changes while the R session is busy.
+   if (!core::thread::isMainThread())
+      return;
+   
    SEXP hookSEXP = r::options::getOption(hookName);
    if (hookSEXP == R_NilValue)
       return;
