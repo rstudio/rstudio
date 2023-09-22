@@ -12,7 +12,7 @@
 #
 
 # set minimum version
-cmake_minimum_required(VERSION 3.4.3)
+cmake_minimum_required(VERSION 3.6.3)
 
 # don't add gwt for special 32-bit binary builds on windows (since
 # we've already got it from the 64-bit build), for development mode

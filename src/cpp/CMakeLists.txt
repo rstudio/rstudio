@@ -14,7 +14,7 @@
 #
 
 # set minimum version
-cmake_minimum_required(VERSION 3.4.3)
+cmake_minimum_required(VERSION 3.6.3)
 
 # read release name
 include("${CMAKE_CURRENT_SOURCE_DIR}/../../CMakeRelease.txt")
@@ -527,6 +527,7 @@ endif()
 
 message(STATUS "SOCI libraries found under ${SOCI_LIBRARY_DIR}")
 set(RSTUDIO_HAS_SOCI 1)
+add_definitions(-DRSTUDIO_HAS_SOCI)
 
 if(UNIX)
 

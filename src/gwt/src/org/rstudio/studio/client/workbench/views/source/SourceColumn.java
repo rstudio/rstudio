@@ -14,24 +14,24 @@
  */
 package org.rstudio.studio.client.workbench.views.source;
 
-import com.google.gwt.core.client.GWT;
-import com.google.gwt.core.client.JsArrayString;
-import com.google.gwt.core.client.Scheduler;
-import com.google.gwt.event.logical.shared.SelectionEvent;
-import com.google.gwt.event.logical.shared.SelectionHandler;
-import com.google.gwt.user.client.Command;
-import com.google.gwt.user.client.Timer;
-import com.google.gwt.user.client.ui.Widget;
-import com.google.inject.Inject;
-import com.google.inject.Provider;
+import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.HashSet;
+import java.util.Map.Entry;
+import java.util.Set;
 
 import org.rstudio.core.client.Debug;
 import org.rstudio.core.client.JsArrayUtil;
 import org.rstudio.core.client.ResultCallback;
 import org.rstudio.core.client.StringUtil;
 import org.rstudio.core.client.command.AppCommand;
+import org.rstudio.core.client.command.AppMenuItem;
 import org.rstudio.core.client.command.CommandBinder;
-import org.rstudio.core.client.events.*;
+import org.rstudio.core.client.events.BeforeShowEvent;
+import org.rstudio.core.client.events.TabCloseEvent;
+import org.rstudio.core.client.events.TabClosedEvent;
+import org.rstudio.core.client.events.TabClosingEvent;
+import org.rstudio.core.client.events.TabReorderEvent;
 import org.rstudio.core.client.files.FileSystemItem;
 import org.rstudio.core.client.js.JsObject;
 import org.rstudio.core.client.js.JsUtil;
@@ -66,17 +66,25 @@ import org.rstudio.studio.client.workbench.views.source.editors.codebrowser.Code
 import org.rstudio.studio.client.workbench.views.source.editors.text.TextEditingTarget;
 import org.rstudio.studio.client.workbench.views.source.editors.text.events.FileTypeChangedEvent;
 import org.rstudio.studio.client.workbench.views.source.editors.text.events.SourceOnSaveChangedEvent;
-import org.rstudio.studio.client.workbench.views.source.events.*;
+import org.rstudio.studio.client.workbench.views.source.events.DocTabActivatedEvent;
+import org.rstudio.studio.client.workbench.views.source.events.DocTabClosedEvent;
+import org.rstudio.studio.client.workbench.views.source.events.LastSourceDocClosedEvent;
+import org.rstudio.studio.client.workbench.views.source.events.SourceDocAddedEvent;
 import org.rstudio.studio.client.workbench.views.source.model.DocUpdateSentinel;
 import org.rstudio.studio.client.workbench.views.source.model.SourceDocument;
 import org.rstudio.studio.client.workbench.views.source.model.SourceNavigation;
 import org.rstudio.studio.client.workbench.views.source.model.SourceServerOperations;
 
-import java.util.ArrayList;
-import java.util.HashMap;
-import java.util.HashSet;
-import java.util.Map.Entry;
-import java.util.Set;
+import com.google.gwt.core.client.GWT;
+import com.google.gwt.core.client.JsArrayString;
+import com.google.gwt.core.client.Scheduler;
+import com.google.gwt.event.logical.shared.SelectionEvent;
+import com.google.gwt.event.logical.shared.SelectionHandler;
+import com.google.gwt.user.client.Command;
+import com.google.gwt.user.client.Timer;
+import com.google.gwt.user.client.ui.Widget;
+import com.google.inject.Inject;
+import com.google.inject.Provider;
 
 public class SourceColumn implements BeforeShowEvent.Handler,
                                      SelectionHandler<Integer>,
@@ -800,32 +808,31 @@ public class SourceColumn implements BeforeShowEvent.Handler,
       if (cmdEnabled)
       {
          String name = FileSystemItem.getNameFromPath(activeEditor_.getPath());
+         name = AppMenuItem.escapeMnemonics(name);
+         
          commands_.vcsFileDiff().setMenuLabel(constants_.diffName(name));
          commands_.vcsFileLog().setMenuLabel(constants_.logOfName(name));
-
          commands_.vcsFileRevert().setMenuLabel(constants_.revertName(name));
+         commands_.vcsViewOnGitHub().setMenuLabel(constants_.viewNameOnGithub(name));
+         commands_.vcsBlameOnGitHub().setMenuLabel(constants_.blameOnGithub(name));
       }
 
       boolean isGithubRepo = manager_.getSession().getSessionInfo().isGithubRepository();
       if (cmdEnabled && isGithubRepo)
       {
-         String name = FileSystemItem.getNameFromPath(activeEditor_.getPath());
-
          commands_.vcsViewOnGitHub().setVisible(true);
          commands_.vcsViewOnGitHub().setEnabled(true);
-         commands_.vcsViewOnGitHub().setMenuLabel(
-                 constants_.viewNameOnGithub(name));
 
          commands_.vcsBlameOnGitHub().setVisible(true);
          commands_.vcsBlameOnGitHub().setEnabled(true);
-         commands_.vcsBlameOnGitHub().setMenuLabel(
-                 constants_.blameOnGithub(name));
       }
       else
       {
-         commands_.vcsViewOnGitHub().setEnabled(false);
-         commands_.vcsBlameOnGitHub().setEnabled(false);
          commands_.vcsViewOnGitHub().setVisible(false);
+         commands_.vcsViewOnGitHub().setEnabled(false);
+         
+         commands_.vcsBlameOnGitHub().setVisible(false);
+         commands_.vcsBlameOnGitHub().setEnabled(false);
       }
    }
 

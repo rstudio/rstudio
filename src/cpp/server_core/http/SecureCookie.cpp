@@ -36,9 +36,12 @@
 #include <core/system/PosixSystem.hpp>
 #include <core/system/Xdg.hpp>
 
-#include <server_core/ServerDatabase.hpp>
 #include <server_core/http/SecureCookie.hpp>
 #include <server_core/SecureKeyFile.hpp>
+
+#ifdef RSTUDIO_HAS_SOCI
+#include <server_core/ServerDatabase.hpp>
+#endif
 
 namespace rstudio {
 namespace core {
@@ -304,21 +307,22 @@ Error initialize(bool isLoadBalanced, const FilePath& secureKeyFile)
       if (!isLoadBalanced)
          return initialize();
 
-      boost::shared_ptr<database::IConnection> pConnection;
-      if (!server_core::database::getConnection(boost::posix_time::seconds(5), &pConnection))
-      {
-         LOG_ERROR_MESSAGE("Unable to connect to database to retrieve load-balanced secure-cookie-key");
-         return systemError(boost::system::errc::invalid_argument, ERROR_LOCATION);
-      }
       FilePath secureKeyPath = core::system::xdg::findSystemConfigFile(
             "secure key", "secure-cookie-key");
       if (!secureKeyPath.exists())
          secureKeyPath = core::FilePath("/var/lib/rstudio-server")
             .completePath("secure-cookie-key");
+#ifdef RSTUDIO_HAS_SOCI
       if (!secureKeyPath.exists())
       {
          LOG_DEBUG_MESSAGE("The secure-cookie-key does not exist on the filesystem, "
             "attempting to read from database");
+         boost::shared_ptr<database::IConnection> pConnection;
+         if (!server_core::database::getConnection(boost::posix_time::seconds(5), &pConnection))
+         {
+            LOG_ERROR_MESSAGE("Unable to connect to database to retrieve load-balanced secure-cookie-key");
+            return systemError(boost::system::errc::invalid_argument, ERROR_LOCATION);
+         }
          Error error = database::execAndProcessQuery(pConnection,
             "SELECT secure_cookie_key FROM cluster",
             [=](const database::Row& row) -> Error
@@ -339,6 +343,7 @@ Error initialize(bool isLoadBalanced, const FilePath& secureKeyFile)
          if (error)
             return error;
       }
+#endif
       if (s_secureCookieKey.empty())
       {
          Error error = key_file::readSecureKeyFile(secureKeyPath, &s_secureCookieKey, &s_secureCookieKeyHash, &s_secureCookieKeyPath);

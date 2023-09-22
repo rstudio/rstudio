@@ -582,7 +582,7 @@ void handleFilesRequest(const http::Request& request,
          return;
       }
    }
-
+   
    pResponse->setNoCacheHeaders();
    pResponse->setFile(filePath, request);
 }
