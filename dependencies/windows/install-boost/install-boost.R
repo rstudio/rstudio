@@ -98,7 +98,9 @@ section("Bootstrapping boost...")
 if (is.na(Sys.getenv("B2_TOOLSET_ROOT", unset = NA))) {
    
    candidates <- c(
-      "C:/Program Files/Microsoft Visual Studio/2022/Community/VC/"
+      "C:/Program Files/Microsoft Visual Studio/2022/Community/VC/",
+      "C:/Program Files (x86)/Microsoft Visual Studio/2019/Community/VC/",
+      "C:/Program Files (x86)/Microsoft Visual Studio/2019/BuildTools/VC/"
    )
    
    for (candidate in candidates) {
