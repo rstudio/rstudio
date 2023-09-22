@@ -717,11 +717,11 @@ assign(".rs.notebookVersion", envir = .rs.toolsEnv(), "1.0")
    # figure out the appropriate chunk prefix based on the engine
    engine <- tolower(.rs.nullCoalesce(opts$engine, "r"))
    commentPrefix <- if (engine %in% c("cc", "cpp", "go", "js", "node", "rcpp", "stan"))
-      "/{2,}"
+      "//"
    else if (engine %in% c("haskell", "sql"))
-      "[-]{2,}"
+      "--"
    else
-      "#+"
+      "#"
    
    yamlPrefix <- .rs.reYamlOptChunkBegin(commentPrefix)
    for (line in code[-1]) {
