@@ -640,7 +640,7 @@ assign(".rs.notebookVersion", envir = .rs.toolsEnv(), "1.0")
 .rs.addFunction("parseYamlOpt", function(opt, commentPrefix = "#")
 {
    # remove comment prefix
-   commentPrefixPattern <- sprintf("^%s\\|\\s*", commentPrefix)
+   commentPrefixPattern <- sprintf("^%s\\|\\s+", commentPrefix)
    opt <- sub(commentPrefixPattern, "", opt)
    
    # check for YAML entry, mimicing code in knitr
