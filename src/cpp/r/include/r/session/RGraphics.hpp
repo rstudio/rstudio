@@ -136,7 +136,7 @@ public:
                                        const std::string& format,
                                        int widthPx,
                                        int heightPx,
-                                       bool useDevicePixelRatio = false) = 0;
+                                       bool useDevicePixelRatio) = 0;
 
    virtual core::Error savePlotAsImage(const core::FilePath& filePath,
                                        const std::string& format,
