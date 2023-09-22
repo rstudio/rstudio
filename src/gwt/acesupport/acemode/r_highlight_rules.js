@@ -21,6 +21,10 @@ var $colorFunctionCalls = false;
 
 define("mode/r_highlight_rules", ["require", "exports", "module"], function(require, exports, module)
 {
+  var YamlHighlightRules = require("mode/yaml_highlight_rules").YamlHighlightRules;
+
+  var Utils = require("mode/utils");
+
   function include(rules) {
     var result = new Array(rules.length);
     for (var i = 0; i < rules.length; i++) {
@@ -915,8 +919,8 @@ define("mode/r_highlight_rules", ["require", "exports", "module"], function(requ
       {
         // R Markdown chunk metadata comments
         token : "comment.doc.tag",
-        regex : "#\\s*[|].*$",
-        next  : "start"
+        regex : "#\\s*[|]\\s*",
+        next  : "yaml-start"
       },
       {
         // Begin Roxygen with todo
@@ -1261,6 +1265,12 @@ define("mode/r_highlight_rules", ["require", "exports", "module"], function(requ
     this.embedRules(rdRules, "rdoc-", [{
       token : "text",
       regex : "^",
+      next  : "start"
+    }]);
+
+    this.embedRules(YamlHighlightRules, "yaml-", [{
+      token : "text",
+      regex : "$",
       next  : "start"
     }]);
 

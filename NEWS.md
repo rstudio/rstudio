@@ -3,6 +3,7 @@
 ### New
 #### RStudio
 - Updated to Boost 1.83.0. (#13577)
+- RStudio now supports highlighting of inline YAML chunk options in R Markdown / Quarto documents. (#11663)
 - Improved support for development documentation when a package has been loaded via `devtools::load_all()`. (#13526)
 
 #### Posit Workbench
