@@ -39,7 +39,7 @@ assign(".rs.notebookVersion", envir = .rs.toolsEnv(), "1.0")
    "^[\t >]*```+\\s*$"
 })
 
-.rs.addFunction("reYamlOptChunkBegin", function(commentPrefix = "#")
+.rs.addFunction("reRmdInlineChunk", function(commentPrefix = "#")
 {
    sprintf("^%s\\| .*", commentPrefix)
 })
@@ -616,7 +616,7 @@ assign(".rs.notebookVersion", envir = .rs.toolsEnv(), "1.0")
 })
 
 
-.rs.addFunction("parseYamlOptImpl", function(opt)
+.rs.addFunction("parseInlineChunkImpl", function(opt)
 {
    # read as YAML
    opts <- .rs.fromYAML(opt)
@@ -637,22 +637,23 @@ assign(".rs.notebookVersion", envir = .rs.toolsEnv(), "1.0")
    opts
 })
 
-.rs.addFunction("parseYamlOpt", function(opt, commentPrefix = "#")
+.rs.addFunction("parseInlineChunk", function(opt, commentPrefix = "#")
 {
    # remove comment prefix
    commentPrefixPattern <- sprintf("^%s\\|\\s+", commentPrefix)
    opt <- sub(commentPrefixPattern, "", opt)
    
-   # check for YAML entry, mimicing code in knitr
+   # check for YAML entry, mimicing code in knitr;
+   # otherwise, parse the code as R code
    if (grepl("^[^ :]+:($|\\s)", opt[[1]])) {
-      meta <- .rs.tryCatch(.rs.parseYamlOptImpl(opt))
-      if (!inherits(meta, "error"))
-         return(meta)
+      tryCatch(
+         .rs.parseInlineChunkImpl(opt),
+         error = function(cnd) list()
+      )
+   } else {
+      opts <- paste(opt, collapse = " ")
+      knitr:::parse_params(opts, label = FALSE)
    }
-   
-   # fallback to regular params parser
-   opts <- paste(opt, collapse = " ")
-   knitr:::parse_params(opts, label = FALSE)
 })
 
 .rs.addFunction("evaluateChunkOptions", function(id, type, code)
@@ -674,10 +675,6 @@ assign(".rs.notebookVersion", envir = .rs.toolsEnv(), "1.0")
    # attempt to parse parameters (swallow errors)
    .rs.tryCatch({
       
-      # if this is the setup chunk, it's not included by default
-      if (.rs.startsWith(rmdChunkOpts, "r setup"))
-         opts$include <- FALSE
-      
       # extract and remove engine name (can be overridden below with engine=)
       opts$engine <- unlist(strsplit(rmdChunkOpts, split = "(\\s|,)+"))[[1]]
       rmdChunkOpts <- substring(rmdChunkOpts, nchar(opts$engine) + 1)
@@ -688,7 +685,12 @@ assign(".rs.notebookVersion", envir = .rs.toolsEnv(), "1.0")
          envir = .GlobalEnv
       )
       
+      # merge options together
       opts <- .rs.mergeLists(opts, parsedParams)
+      
+      # if this is the setup chunk, it's not included by default
+      if (identical(opts$label, "setup") && is.null(opts$include))
+         opts$include <- FALSE
                              
       # if a chunk option is provided in both body (yaml chunk options) and header (rmdChunkOpts)
       # the body should override the header option
@@ -711,8 +713,8 @@ assign(".rs.notebookVersion", envir = .rs.toolsEnv(), "1.0")
       
    })
    
-   # now, try to find inline YAML chunk options
-   yamlChunkOpts <- c()
+   # now, try to find inline chunk options
+   inlineChunkOptions <- c()
    
    # figure out the appropriate chunk prefix based on the engine
    engine <- tolower(.rs.nullCoalesce(opts$engine, "r"))
@@ -723,25 +725,25 @@ assign(".rs.notebookVersion", envir = .rs.toolsEnv(), "1.0")
    else
       "#"
    
-   yamlPrefix <- .rs.reYamlOptChunkBegin(commentPrefix)
+   reCommentPrefix <- .rs.reRmdInlineChunk(commentPrefix)
    for (line in code[-1]) {
       
       # there may be variable number of yaml chunk opts, but they should all be at the top of the chunk
-      match <- unlist(regmatches(line, regexec(yamlPrefix, line)))
+      match <- unlist(regmatches(line, regexec(reCommentPrefix, line)))
       if (length(match) == 0)
          break
       
       # add the line
-      yamlChunkOpts <- c(yamlChunkOpts, match)
+      inlineChunkOptions <- c(inlineChunkOptions, match)
       
    }
    
    # if we had some YAML chunk options, try to add them
-   if (length(yamlChunkOpts) > 0)
+   if (length(inlineChunkOptions) > 0)
    {
       tryCatch({
-         yamlOpts <- .rs.parseYamlOpt(yamlChunkOpts, commentPrefix)
-         opts <- .rs.mergeLists(opts, yamlOpts)
+         inlineOpts <- .rs.parseInlineChunk(inlineChunkOptions, commentPrefix)
+         opts <- .rs.mergeLists(opts, inlineOpts)
       }, error = function(e) {
          warning("Failed to parse chunk options in body:\n", e)
       })
