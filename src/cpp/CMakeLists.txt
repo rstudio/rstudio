@@ -14,7 +14,7 @@
 #
 
 # set minimum version
-cmake_minimum_required(VERSION 3.4.3)
+cmake_minimum_required(VERSION 3.6.3)
 
 # read release name
 include("${CMAKE_CURRENT_SOURCE_DIR}/../../CMakeRelease.txt")
@@ -246,7 +246,7 @@ endif()
 
 # default Boost versions
 if(NOT RSTUDIO_BOOST_REQUESTED_VERSION)
-   set(RSTUDIO_BOOST_REQUESTED_VERSION 1.78.0)
+   set(RSTUDIO_BOOST_REQUESTED_VERSION 1.83.0)
 endif()
 
 # disable system boost if we're not using it.
@@ -273,7 +273,7 @@ list(APPEND BOOST_LIBS
 # UNIX BOOST
 if(UNIX)
    # prefer static link to our custom built version
-   set(RSTUDIO_TOOLS_BOOST "${RSTUDIO_TOOLS_ROOT}/boost/boost_1_78_0")
+   set(RSTUDIO_TOOLS_BOOST "${RSTUDIO_TOOLS_ROOT}/boost/boost_1_83_0")
    if(NOT RSTUDIO_USE_SYSTEM_BOOST AND EXISTS ${RSTUDIO_TOOLS_BOOST})
       add_definitions(-DRSTUDIO_BOOST_NAMESPACE=rstudio_boost)
 
@@ -310,13 +310,13 @@ else()
       set(BOOST_ARCH "64")
    endif()
    if(NOT CMAKE_BUILD_TYPE STREQUAL "Debug")
-      set(BOOST_SUFFIX "vc142-mt-x${BOOST_ARCH}-1_78.lib")
-      set(BOOST_ROOT "${RSTUDIO_WINDOWS_DEPENDENCIES_DIR}/boost-1.78.0-win-msvc142-release-static/boost${BOOST_ARCH}")
+      set(BOOST_SUFFIX "vc142-mt-x${BOOST_ARCH}-1_83.lib")
+      set(BOOST_ROOT "${RSTUDIO_WINDOWS_DEPENDENCIES_DIR}/boost-1.83.0-win-msvc142-release-static/boost${BOOST_ARCH}")
    else()
-      set(BOOST_SUFFIX "vc142-mt-gd-x${BOOST_ARCH}-1_78.lib")
-      set(BOOST_ROOT "${RSTUDIO_WINDOWS_DEPENDENCIES_DIR}/boost-1.78.0-win-msvc142-debug-static/boost${BOOST_ARCH}")
+      set(BOOST_SUFFIX "vc142-mt-gd-x${BOOST_ARCH}-1_83.lib")
+      set(BOOST_ROOT "${RSTUDIO_WINDOWS_DEPENDENCIES_DIR}/boost-1.83.0-win-msvc142-debug-static/boost${BOOST_ARCH}")
    endif()
-   set(BOOST_INCLUDEDIR "${BOOST_ROOT}/include/boost-1_78")
+   set(BOOST_INCLUDEDIR "${BOOST_ROOT}/include/boost-1_83")
    find_package(Boost ${RSTUDIO_BOOST_REQUESTED_VERSION} EXACT REQUIRED)
    set(BOOST_LIBRARYDIR "${BOOST_ROOT}/lib")
    foreach(BOOST_LIB ${BOOST_LIBS})
@@ -527,6 +527,7 @@ endif()
 
 message(STATUS "SOCI libraries found under ${SOCI_LIBRARY_DIR}")
 set(RSTUDIO_HAS_SOCI 1)
+add_definitions(-DRSTUDIO_HAS_SOCI)
 
 if(UNIX)
 

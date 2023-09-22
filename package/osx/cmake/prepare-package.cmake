@@ -13,7 +13,7 @@
 #
 #
 
-cmake_minimum_required(VERSION 3.4.3)
+cmake_minimum_required(VERSION 3.6.3)
 
 # CMake's message is suppressed during install stage so just use echo here
 function(echo MESSAGE)

@@ -1,3 +1,4 @@
+
 argument <- function(index, default) {
    args <- commandArgs(TRUE)
    if (length(args) < index)
@@ -28,8 +29,8 @@ options(log.dir = normalizePath("logs"))
 PATH$prepend("../tools")
 
 # initialize variables
-boost_url <- "https://s3.amazonaws.com/rstudio-buildtools/Boost/boost_1_78_0.7z"
-output_name <- sprintf("boost-1.78.0-win-msvc142-%s-%s.zip", variant, link)
+boost_url <- "https://s3.amazonaws.com/rstudio-buildtools/Boost/boost_1_83_0.7z"
+output_name <- sprintf("boost-1.83.0-win-msvc142-%s-%s.zip", variant, link)
 output_dir <- normalizePath(file.path(owd, ".."), winslash = "/")
 output_file <- file.path(output_dir, output_name)
 install_dir <- file.path(owd, "..", tools::file_path_sans_ext(output_name))
@@ -91,10 +92,31 @@ invisible(lapply(docs, function(doc) {
 
 # bootstrap the boost build directory
 section("Bootstrapping boost...")
+
+# TODO: Boost has trouble finding the vcvarsall.bat script for some reason?
+# We set this environment variable here to help it find the tools.
+if (is.na(Sys.getenv("B2_TOOLSET_ROOT", unset = NA))) {
+   
+   candidates <- c(
+      "C:/Program Files/Microsoft Visual Studio/2022/Community/VC/",
+      "C:/Program Files (x86)/Microsoft Visual Studio/2019/Community/VC/",
+      "C:/Program Files (x86)/Microsoft Visual Studio/2019/BuildTools/VC/"
+   )
+   
+   for (candidate in candidates) {
+      if (file.exists(candidate)) {
+         Sys.setenv(B2_TOOLSET_ROOT = candidate)
+         progress("Using B2_TOOLSET_ROOT = %s", candidate)
+         break
+      }
+   }
+   
+}
+
 exec("cmd.exe", "/C call bootstrap.bat vc142")
 
-# create bcp executable (so we can create Boost
-# using a private namespace)
+# create bcp executable
+# (so we can create Boost using a private namespace)
 exec("b2", "-j 4 tools\\bcp")
 invisible(file.copy("dist/bin/bcp.exe", "bcp.exe"))
 
