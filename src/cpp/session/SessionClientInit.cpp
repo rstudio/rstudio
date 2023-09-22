@@ -179,6 +179,9 @@ Error makePortTokenCookie(boost::shared_ptr<HttpConnection> ptrConnection,
 void handleClientInit(const boost::function<void()>& initFunction,
                       boost::shared_ptr<HttpConnection> ptrConnection)
 {
+   // notify that we're about to initialize
+   module_context::events().onBeforeClientInit();
+   
    // alias options
    Options& options = session::options();
    
