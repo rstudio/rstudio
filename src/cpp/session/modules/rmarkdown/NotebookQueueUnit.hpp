@@ -73,6 +73,7 @@ public:
 
    // accessors
    std::string docId() const;
+   std::string docType() const;
    std::string chunkId() const;
    ExecMode execMode() const;
    ExecScope execScope() const;
@@ -81,6 +82,7 @@ public:
 
 private:
    std::string docId_;
+   std::string docType_;
    std::string chunkId_;
    ExecMode execMode_;
    ExecScope execScope_;

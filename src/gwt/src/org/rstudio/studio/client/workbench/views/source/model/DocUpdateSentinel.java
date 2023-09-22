@@ -14,17 +14,8 @@
  */
 package org.rstudio.studio.client.workbench.views.source.model;
 
-import com.google.gwt.core.client.GWT;
-import com.google.gwt.core.client.JsArray;
-import com.google.gwt.core.client.Scheduler;
-import com.google.gwt.core.client.Scheduler.ScheduledCommand;
-import com.google.gwt.event.logical.shared.ValueChangeEvent;
-import com.google.gwt.event.logical.shared.ValueChangeHandler;
-import com.google.gwt.event.shared.HandlerRegistration;
-import com.google.gwt.user.client.Command;
-import com.google.gwt.user.client.Window;
-import com.google.gwt.user.client.Window.ClosingEvent;
-import com.google.gwt.user.client.Window.ClosingHandler;
+import java.util.HashMap;
+import java.util.Map;
 
 import org.rstudio.core.client.Barrier.Token;
 import org.rstudio.core.client.CommandWithArg;
@@ -58,8 +49,17 @@ import org.rstudio.studio.client.workbench.views.source.events.SaveFailedEvent;
 import org.rstudio.studio.client.workbench.views.source.events.SaveFileEvent;
 import org.rstudio.studio.client.workbench.views.source.events.SaveInitiatedEvent;
 
-import java.util.HashMap;
-import java.util.Map;
+import com.google.gwt.core.client.GWT;
+import com.google.gwt.core.client.JsArray;
+import com.google.gwt.core.client.Scheduler;
+import com.google.gwt.core.client.Scheduler.ScheduledCommand;
+import com.google.gwt.event.logical.shared.ValueChangeEvent;
+import com.google.gwt.event.logical.shared.ValueChangeHandler;
+import com.google.gwt.event.shared.HandlerRegistration;
+import com.google.gwt.user.client.Command;
+import com.google.gwt.user.client.Window;
+import com.google.gwt.user.client.Window.ClosingEvent;
+import com.google.gwt.user.client.Window.ClosingHandler;
 
 public class DocUpdateSentinel
       implements ValueChangeHandler<Void>,
@@ -952,6 +952,11 @@ public class DocUpdateSentinel
    public String getId()
    {
       return sourceDoc_.getId();
+   }
+   
+   public String getType()
+   {
+      return sourceDoc_.getType();
    }
 
    private void createAutosaver()

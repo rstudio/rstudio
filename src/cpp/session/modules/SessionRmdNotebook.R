@@ -15,12 +15,13 @@
 assign(".rs.notebookVersion", envir = .rs.toolsEnv(), "1.0")
 
 .rs.addFunction("extractRmdFromNotebook", function(notebook) {
+   
    # parse the notebook to get the text of the contained R markdown doc
    parsed <- try(rmarkdown::parse_html_notebook(notebook), silent = TRUE)
    if (inherits(parsed, "try-error") || is.null(parsed$rmd)) {
-    return("")
+      return("")
    }
-
+   
    # as this string will be eventually written to (and compared with) files
    # on disk, use native line endings
    return(paste(parsed$rmd,
@@ -38,9 +39,9 @@ assign(".rs.notebookVersion", envir = .rs.toolsEnv(), "1.0")
    "^[\t >]*```+\\s*$"
 })
 
-.rs.addFunction("reYamlOptChunkBegin", function()
+.rs.addFunction("reRmdInlineChunk", function(commentPrefix = "#")
 {
-   "^#\\| .*"
+   sprintf("^%s\\| .*", commentPrefix)
 })
 
 
@@ -50,22 +51,22 @@ assign(".rs.notebookVersion", envir = .rs.toolsEnv(), "1.0")
 })
 
 .rs.addFunction("coalesceCsvOutput", function(chunkData) {
-  # nothing to coalesce if < 2 outputs
-  if (length(chunkData) < 2)
-    return(chunkData)
-    
-  # keep all output by default
-  keep <- rep(TRUE, length(chunkData))
-
-  # coalesce contents for consecutive csv entries
-  csvs <- .rs.endsWith(names(chunkData), ".csv")
-  for (i in seq.int(1, length(csvs) - 1)) {
-    if (keep[[i]] && csvs[[i]] && csvs[[i + 1]]) {
-      chunkData[[i]] <- paste(chunkData[[i]], chunkData[[i + 1]], sep = "")
-      keep[[i + 1]] <- FALSE
-    }
-  }
-  chunkData[keep]
+   # nothing to coalesce if < 2 outputs
+   if (length(chunkData) < 2)
+      return(chunkData)
+   
+   # keep all output by default
+   keep <- rep(TRUE, length(chunkData))
+   
+   # coalesce contents for consecutive csv entries
+   csvs <- .rs.endsWith(names(chunkData), ".csv")
+   for (i in seq.int(1, length(csvs) - 1)) {
+      if (keep[[i]] && csvs[[i]] && csvs[[i + 1]]) {
+         chunkData[[i]] <- paste(chunkData[[i]], chunkData[[i + 1]], sep = "")
+         keep[[i + 1]] <- FALSE
+      }
+   }
+   chunkData[keep]
 })
 
 .rs.addFunction("readRnbCache", function(rmdPath, cachePath)
@@ -101,7 +102,7 @@ assign(".rs.notebookVersion", envir = .rs.toolsEnv(), "1.0")
    names(chunkInfo$chunk_definitions) <-
       unlist(lapply(chunkInfo$chunk_definitions, `[[`, "chunk_id"))
    rnbData[["chunk_info"]] <- chunkInfo
-
+   
    # Read external chunks (code chunks defined in other files)
    rnbData[["external_chunks"]] <- chunkInfo$external_chunks
    
@@ -109,11 +110,11 @@ assign(".rs.notebookVersion", envir = .rs.toolsEnv(), "1.0")
    chunkDirs <- file.path(cachePath, names(chunkInfo$chunk_definitions))
    chunkData <- lapply(chunkDirs, function(dir) {
       files <- list.files(dir, full.names = TRUE)
-
+      
       # exclude directories
       fileInfo <- file.info(files)
       files <- files[!fileInfo$isdir]
-
+      
       # extract the contents from each regular file
       contents <- lapply(files, function(file) {
          
@@ -167,9 +168,9 @@ assign(".rs.notebookVersion", envir = .rs.toolsEnv(), "1.0")
 {
    engine <- tolower(engine)
    switch(engine,
-      rcpp = "cpp",
-      sh = "bash",
-      engine)
+          rcpp = "cpp",
+          sh = "bash",
+          engine)
 })
 
 .rs.addFunction("rnb.outputSourcePng", function(fileName,
@@ -314,11 +315,11 @@ assign(".rs.notebookVersion", envir = .rs.toolsEnv(), "1.0")
             if (identical(context$engine, "js")) {
                htmlOutput <- paste(
                   c('<script type="text/javascript">', code, '</script>'),
-                    collapse = '\n')
+                  collapse = '\n')
             } else if (identical(context$engine, "css")) {
                htmlOutput <- paste(
                   c('<style type="text/css">', code, '</style>'),
-                    collapse = '\n')
+                  collapse = '\n')
             }
          }
          return(knitr::asis_output(htmlOutput))
@@ -408,7 +409,7 @@ assign(".rs.notebookVersion", envir = .rs.toolsEnv(), "1.0")
 {
    if (is.null(outputFile))
       outputFile <- .rs.withChangedExtension(inputFile, ext = ".nb.html")
-
+   
    # specify default encoding (we'll try to infer + convert to UTF-8
    # if necessary)
    encoding <- getOption("encoding")
@@ -424,11 +425,11 @@ assign(".rs.notebookVersion", envir = .rs.toolsEnv(), "1.0")
    # reset the knitr chunk counter (it can be modified as a side effect of
    # parse_params, which is called during notebook execution)
    knitr:::chunk_counter(reset = TRUE)
-
+   
    # restore external chunks into the knit environment
    if (!is.null(rnbData$external_chunks)) 
       knitr:::knit_code$restore(rnbData$external_chunks)
-
+   
    # set up output_source
    outputOptions <- list(output_source = .rs.rnb.outputSource(rnbData))
    
@@ -438,7 +439,7 @@ assign(".rs.notebookVersion", envir = .rs.toolsEnv(), "1.0")
    # could fail)
    if (exists("eval_lang", envir = asNamespace("knitr")))
    {
-      override <- function(x, envir = knit_global()) {
+      override <- function(x, envir = knitr:::knit_global()) {
          
          # white-list for the commonly-used 'T' and 'F' options
          if (identical(x, as.name("T")))
@@ -455,7 +456,7 @@ assign(".rs.notebookVersion", envir = .rs.toolsEnv(), "1.0")
       original <- .rs.replaceBinding("eval_lang", "knitr", override)
       on.exit(.rs.replaceBinding("eval_lang", "knitr", original), add = TRUE)
    }
-
+   
    # knitr outputs relevant information in the form of messages that we attach to the error
    renderMessages <- list()
    tryCatch({
@@ -474,17 +475,17 @@ assign(".rs.notebookVersion", envir = .rs.toolsEnv(), "1.0")
       })
    }, error = function(e) {
       messages <- list(e$message)
-
+      
       lapply(renderMessages, function(m) {
-        if (typeof(m) != "character") return();
-
-        result <- regexec("Quitting from lines ([0-9]+)-([0-9]+) ", text = m)
-        if (result[[1]][[1]] < 0) return();
-
-        groups <- regmatches(m, result)[[1]]
-        messages <<- c(messages, paste("See line ", (strtoi(groups[[2]]) - 1), sep = ""))
+         if (typeof(m) != "character") return();
+         
+         result <- regexec("Quitting from lines ([0-9]+)-([0-9]+) ", text = m)
+         if (result[[1]][[1]] < 0) return();
+         
+         groups <- regmatches(m, result)[[1]]
+         messages <<- c(messages, paste("See line ", (strtoi(groups[[2]]) - 1), sep = ""))
       })
-
+      
       stop(paste(messages, collpase = ". ", sep = ""))
    })
 })
@@ -493,7 +494,7 @@ assign(".rs.notebookVersion", envir = .rs.toolsEnv(), "1.0")
 {
    # presume success unless we fail below
    result <- list(succeeded = .rs.scalar(TRUE))
-
+   
    tryCatch({
       cachePath <- .rs.rnb.cachePathFromRmdPath(rmdPath)
       rnbData <- .rs.readRnbCache(rmdPath, cachePath)
@@ -614,142 +615,199 @@ assign(".rs.notebookVersion", envir = .rs.toolsEnv(), "1.0")
    .rs.fromJSON(.rs.base64decode(encoded))
 })
 
-.rs.addFunction("parseYamlOpt", function(opt)
+
+.rs.addFunction("parseInlineChunkImpl", function(opt)
 {
-    opt <- sub("^#\\|\\s*", "", opt)
-    if (any(grepl(".+=.+", opt))) # R-style chunk options
-    {
-        opts <- paste(opt, collapse = " ")
-        opts <- knitr:::parse_params(opts)
-    }
-    else
-    {
-        opts <- .rs.fromYAML(opt)
-        # parse truthy and falsy style yaml options
-        opts <- lapply(opts, function(value)
-           {
-             if (!is.character(value))
-               return(value)
-             if (tolower(value) %in% c("y", "yes", "on"))
-               return(TRUE)
-             if (tolower(value) %in% c("n", "no", "off"))
-               return(FALSE)
-             else
-               return(value)
-           })
-    }
-    return(opts)
+   # read as YAML
+   opts <- .rs.fromYAML(opt)
+   
+   # parse truthy and falsy style yaml options
+   opts <- lapply(opts, function(value)
+   {
+      if (!is.character(value))
+         return(value)
+      if (tolower(value) %in% c("y", "yes", "on"))
+         return(TRUE)
+      if (tolower(value) %in% c("n", "no", "off"))
+         return(FALSE)
+      else
+         return(value)
+   })
+   
+   opts
 })
 
-.rs.addFunction("evaluateChunkOptions", function(code)
+.rs.addFunction("parseInlineChunk", function(opt, commentPrefix = "#")
 {
-  opts <- list()
+   # remove comment prefix
+   commentPrefixPattern <- sprintf("^%s\\|\\s+", commentPrefix)
+   opt <- sub(commentPrefixPattern, "", opt)
+   
+   # check for YAML entry, mimicing code in knitr;
+   # otherwise, parse the code as R code
+   if (grepl("^[^ :]+:($|\\s)", opt[[1]])) {
+      tryCatch(
+         .rs.parseInlineChunkImpl(opt),
+         error = function(cnd) list()
+      )
+   } else {
+      opts <- paste(opt, collapse = " ")
+      knitr:::parse_params(opts, label = FALSE)
+   }
+})
 
-  Encoding(code) <- "UTF-8"
-  # if several lines of code are passed, we expect the first line to contain the standard Rmd chunk options
-  # the next several lines may or may not contain YAML-style chunk options
-  code <- unlist(strsplit(code, "\n", fixed = TRUE))
-  rmdChunkOpts <- code[[1]]
-  yamlChunkOpts <- c()
-
-  for (line in code[-1]) {
-    match <- unlist(regmatches(line, regexec(.rs.reYamlOptChunkBegin(), line)))
-    # there may be variable number of yaml chunk opts, but they should all be at the top of the chunk
-    if (length(match) == 0)
-        break
-    yamlChunkOpts <- c(yamlChunkOpts, match)
-  }
-  
-  if (length(yamlChunkOpts) > 0)
-  {
-     opts <- tryCatch(
-     .rs.parseYamlOpt(yamlChunkOpts),
-     error = function(e) {
-        warning("Failed to parse chunk options in body:\n", e)
-     })
-  }
-
-  # strip chunk indicators if present
-  matches <- unlist(regmatches(rmdChunkOpts, regexec(.rs.reRmdChunkBegin(), rmdChunkOpts)))
-  if (length(matches) > 1)
-    rmdChunkOpts <- matches[[2]]
-
-  tryCatch({
-    # if this is the setup chunk, it's not included by default
-    setupIndicator <- "r setup"
-    if (identical(substring(rmdChunkOpts, 1, nchar(setupIndicator)),
-                  setupIndicator)) {
-      opts$include <- FALSE
-    }
-
-    # extract and remove engine name (can be overridden below with engine=)
-    opts$engine <- unlist(strsplit(rmdChunkOpts, split = "(\\s|,)+"))[[1]]
-    rmdChunkOpts <- substring(rmdChunkOpts, nchar(opts$engine) + 1)
-
-    # parse them, then merge with the defaults (evaluate in global environment)
-    opts <- .rs.mergeLists(opts,
-                           eval(substitute(knitr:::parse_params(rmdChunkOpts)),
-                                envir = .GlobalEnv))
-
-    # if a chunk option is provided in both body (yaml chunk options) and header (rmdChunkOpts)
-    # the body should override the header option
-    opts <- opts[unique(names(opts))]
-    
-    # convert T, F for R code chunk options to TRUE, FALSE as appropriate
-    opts <- lapply(opts, function(opt) {
-      if (identical(opt, as.name("T")))
-        TRUE
-      else if (identical(opt, as.name("F")))
-        FALSE
-      else
-        opt
-    })
-
-    # convert language name objects to plain characters (these can occur in
-    # malformed expressions, and cause scalar conversion below to fail)
-    names <- vapply(opts, is.name, TRUE)
-    opts[names] <- as.character(opts[names])
-    
-    # ensure that fields we expect to be logical are actually logical
-    # (sanitize invalid inputs here since they can break notebook execution)
-    fields <- list(
+.rs.addFunction("evaluateChunkOptions", function(id, type, code)
+{
+   Encoding(code) <- "UTF-8"
+   code <- unlist(strsplit(code, "\n", fixed = TRUE))
+   
+   # parsed chunk options; start with default chunk options
+   opts <- list()
+   
+   # first, parse chunk options embedded in the chunk header
+   rmdChunkOpts <- code[[1]]
+   
+   # strip chunk indicators if present
+   matches <- unlist(regmatches(rmdChunkOpts, regexec(.rs.reRmdChunkBegin(), rmdChunkOpts)))
+   if (length(matches) > 1)
+      rmdChunkOpts <- matches[[2]]
+   
+   # attempt to parse parameters (swallow errors)
+   .rs.tryCatch({
+      
+      # extract and remove engine name (can be overridden below with engine=)
+      opts$engine <- unlist(strsplit(rmdChunkOpts, split = "(\\s|,)+"))[[1]]
+      rmdChunkOpts <- substring(rmdChunkOpts, nchar(opts$engine) + 1)
+      
+      # parse them, then merge with the defaults (evaluate in global environment)
+      parsedParams <- eval(
+         substitute(knitr:::parse_params(rmdChunkOpts)),
+         envir = .GlobalEnv
+      )
+      
+      # merge options together
+      opts <- .rs.mergeLists(opts, parsedParams)
+      
+      # if this is the setup chunk, it's not included by default
+      if (identical(opts$label, "setup") && is.null(opts$include))
+         opts$include <- FALSE
+                             
+      # if a chunk option is provided in both body (yaml chunk options) and header (rmdChunkOpts)
+      # the body should override the header option
+      opts <- opts[unique(names(opts))]
+      
+      # convert T, F for R code chunk options to TRUE, FALSE as appropriate
+      opts <- lapply(opts, function(opt) {
+         if (identical(opt, as.name("T")))
+            TRUE
+         else if (identical(opt, as.name("F")))
+            FALSE
+         else
+            opt
+      })
+      
+      # convert language name objects to plain characters (these can occur in
+      # malformed expressions, and cause scalar conversion below to fail)
+      names <- vapply(opts, is.name, TRUE)
+      opts[names] <- as.character(opts[names])
+      
+   })
+   
+   # now, try to find inline chunk options
+   inlineChunkOptions <- c()
+   
+   # figure out the appropriate chunk prefix based on the engine
+   engine <- tolower(.rs.nullCoalesce(opts$engine, "r"))
+   commentPrefix <- if (engine %in% c("cc", "cpp", "go", "js", "node", "rcpp", "stan"))
+      "//"
+   else if (engine %in% c("haskell", "sql"))
+      "--"
+   else
+      "#"
+   
+   reCommentPrefix <- .rs.reRmdInlineChunk(commentPrefix)
+   for (line in code[-1]) {
+      
+      # there may be variable number of yaml chunk opts, but they should all be at the top of the chunk
+      match <- unlist(regmatches(line, regexec(reCommentPrefix, line)))
+      if (length(match) == 0)
+         break
+      
+      # add the line
+      inlineChunkOptions <- c(inlineChunkOptions, match)
+      
+   }
+   
+   # if we had some YAML chunk options, try to add them
+   if (length(inlineChunkOptions) > 0)
+   {
+      tryCatch({
+         inlineOpts <- .rs.parseInlineChunk(inlineChunkOptions, commentPrefix)
+         opts <- .rs.mergeLists(opts, inlineOpts)
+      }, error = function(e) {
+         warning("Failed to parse chunk options in body:\n", e)
+      })
+   }
+   
+   # ensure that fields we expect to be logical are actually logical
+   # (sanitize invalid inputs here since they can break notebook execution)
+   fields <- list(
       warning = TRUE,
       message = TRUE,
       error   = FALSE
-    )
-    
-    .rs.enumerate(fields, function(key, default) {
-       
+   )
+   
+   .rs.enumerate(fields, function(key, default) {
+      
       if (is.null(opts[[key]]))
-        next
-       
+         return()
+      
       opts[[key]] <<- tryCatch(
-        as.logical(opts[[key]]),
-        error = function(e) default
+         as.logical(opts[[key]]),
+         error = function(e) default
       )
-       
-    })
-    
-  },
-  error = function(e) {})
-
-  .rs.scalarListFromList(opts, expressions = TRUE)
+      
+   })
+   
+   # if this is a SQL chunk, try to provide a default connection
+   # TODO: arguably, we should be using `knitr::opts_chunk$get()`
+   # to provide defaults for chunk options, but it's not clear if
+   # that's always the correct choice, so we just make the smaller
+   # piece-meal decision here
+   if (opts$engine %in% c("mysql", "psql", "sql")) {
+      
+      # get current connection
+      conn <- .rs.nullCoalesce(
+         opts$connection,
+         knitr::opts_chunk$get("connection")
+      )
+      
+      # our chunk execution tools expect a character connection,
+      # so use a temporary variable to store the connection value
+      if (!is.null(conn) && !is.character(conn)) {
+         .rs.setVar("chunkConnection", conn)
+         opts$connection <- ".rs.chunkConnection"
+      }
+      
+   }
+   
+   .rs.scalarListFromList(opts, expressions = TRUE)
 })
 
 .rs.addFunction("extractChunkInnerCode", function(code)
 {
-  # split into lines
-  Encoding(code) <- "UTF-8"   
-  code <- unlist(strsplit(code, "\n", fixed = TRUE))
-  
-  # find chunk indicators (safe fallbacks if absent)
-  start <- max(1, grep(.rs.reRmdChunkBegin(), code, perl = TRUE))
-  end   <- min(length(code), grep(.rs.reRmdChunkEnd(), code, perl = TRUE))
-
-  code <- code[(start + 1):(end - 1)]
-  code <- gsub("#[|].*$", "", code)
-  
-  paste(code, collapse = "\n")
+   # split into lines
+   Encoding(code) <- "UTF-8"   
+   code <- unlist(strsplit(code, "\n", fixed = TRUE))
+   
+   # find chunk indicators (safe fallbacks if absent)
+   start <- max(1, grep(.rs.reRmdChunkBegin(), code, perl = TRUE))
+   end   <- min(length(code), grep(.rs.reRmdChunkEnd(), code, perl = TRUE))
+   
+   code <- code[(start + 1):(end - 1)]
+   code <- gsub("#[|].*$", "", code)
+   
+   paste(code, collapse = "\n")
 })
 
 .rs.addFunction("extractRmdChunkInformation", function(rmd)
@@ -787,7 +845,7 @@ assign(".rs.notebookVersion", envir = .rs.toolsEnv(), "1.0")
       rmdPath <- .rs.withChangedExtension(nbPath, ".Rmd")
       cachePath <- .rs.rnb.cachePathFromRmdPath(rmdPath)
    }
-
+   
    # ensure cache directory
    if (!.rs.dirExists(cachePath))
       dir.create(cachePath, recursive = TRUE)
@@ -935,9 +993,9 @@ assign(".rs.notebookVersion", envir = .rs.toolsEnv(), "1.0")
       # extract base64 encoded content
       scraped <- .rs.scrapeHtmlAttributes(html)
       ext <- if (.rs.startsWith(scraped$src, "data:image/jpeg;"))
-                 "jpeg" else "png"
+         "jpeg" else "png"
       imgDataEncoded <- substring(scraped$src, 
-         nchar(paste("data:image/", ext, ";base64,", sep = "")) + 1)
+                                  nchar(paste("data:image/", ext, ";base64,", sep = "")) + 1)
       imgData <- .rs.base64decode(imgDataEncoded, binary = TRUE)
       
       # write to file
@@ -947,10 +1005,10 @@ assign(".rs.notebookVersion", envir = .rs.toolsEnv(), "1.0")
       
       # write metadata if present
       if (!is.null(meta) && !is.null(meta$metadata)) {
-        metaPath <- outputPath(cachePath, activeChunkId, activeIndex, "metadata")
-        cat(.rs.toJSON(meta, unbox = TRUE), file = metaPath, sep = "\n")
+         metaPath <- outputPath(cachePath, activeChunkId, activeIndex, "metadata")
+         cat(.rs.toJSON(meta, unbox = TRUE), file = metaPath, sep = "\n")
       }
-
+      
       # update state
       activeIndex <<- activeIndex + 1
    }
@@ -966,25 +1024,25 @@ assign(".rs.notebookVersion", envir = .rs.toolsEnv(), "1.0")
          plotMeta  <<- NULL
       }
    }
-
+   
    # Data frame handling ----
    frameRange <- list(start = NULL, end = NULL)
    frameMeta <- NULL
    writeFrame <- function(source, range, meta) {
       if (is.null(meta))
-        return(NULL);
-
+         return(NULL);
+      
       # write out frame metadata
       if (!is.null(meta$metadata)) {
-        metaPath <- outputPath(cachePath, activeChunkId, activeIndex, "metadata")
-        cat(.rs.toJSON(meta$metadata, unbox = TRUE), file = metaPath, sep = "\n")
+         metaPath <- outputPath(cachePath, activeChunkId, activeIndex, "metadata")
+         cat(.rs.toJSON(meta$metadata, unbox = TRUE), file = metaPath, sep = "\n")
       }
-
+      
       # write out raw frame data
       if (!is.null(meta$rdf)) {
-        rdfPath <- outputPath(cachePath, activeChunkId, activeIndex, "rdf")
-        writeBin(object = .rs.base64decode(meta$rdf, binary = TRUE), 
-                 con = rdfPath)
+         rdfPath <- outputPath(cachePath, activeChunkId, activeIndex, "rdf")
+         writeBin(object = .rs.base64decode(meta$rdf, binary = TRUE), 
+                  con = rdfPath)
       }
    }
    onFrame <- function(annotation) {
@@ -1013,13 +1071,13 @@ assign(".rs.notebookVersion", envir = .rs.toolsEnv(), "1.0")
       
       htmlPath <- outputPath(cachePath, activeChunkId, activeIndex, "html")
       cat(htmlOutput, file = htmlPath, sep = "\n")
-
+      
       # write metadata if present
       if (!is.null(meta) && !is.null(meta$metadata)) {
-        metaPath <- outputPath(cachePath, activeChunkId, activeIndex, "metadata")
-        cat(.rs.toJSON(meta, unbox = TRUE), file = metaPath, sep = "\n")
+         metaPath <- outputPath(cachePath, activeChunkId, activeIndex, "metadata")
+         cat(.rs.toJSON(meta, unbox = TRUE), file = metaPath, sep = "\n")
       }
-
+      
       # update state
       activeIndex <<- activeIndex + 1
    }
@@ -1135,7 +1193,7 @@ assign(".rs.notebookVersion", envir = .rs.toolsEnv(), "1.0")
 {
    # get the current set of chunk options
    chunkOptions <- knitr::opts_chunk$get()
-
+   
    # make sure global connection lists exists
    if (!exists(".rs.knitr.chunkReferences", envir = .rs.toolsEnv()))
       assign(".rs.knitr.chunkReferences", list(), envir = .rs.toolsEnv())
@@ -1147,14 +1205,14 @@ assign(".rs.notebookVersion", envir = .rs.toolsEnv(), "1.0")
       chunkReferences[[idReference]] <- chunkOptions$connection
       chunkOptions$connection <- idReference
    }
-
+   
    # cache the current set of chunk options
    assign(".rs.knitr.chunkOptions", chunkOptions, envir = .rs.toolsEnv())
-
+   
    # cache the set of external code
    knitrCode <- knitr:::knit_code$get()
    assign(".rs.knitr.code", knitrCode, envir = .rs.toolsEnv())
-
+   
    # cache default working dir
    knitrDir <- knitr::opts_knit$get("root.dir")
    assign(".rs.knitr.root.dir", knitrDir, envir = .rs.toolsEnv())
@@ -1200,14 +1258,14 @@ assign(".rs.notebookVersion", envir = .rs.toolsEnv(), "1.0")
 
 .rs.addFunction("executeChunkCallback", function(chunkName, chunkCode)
 {
-  if (exists(".rs.notebookChunkCallbacks", envir = .rs.toolsEnv()) &&
-      length(.rs.notebookChunkCallbacks) != 0)
-  {
-     handle <- ls(envir = .rs.notebookChunkCallbacks)
-     chunkCallback <- get(handle, envir = .rs.notebookChunkCallbacks)
-     return(chunkCallback(eval(chunkName), eval(chunkCode)))
-  }
-  NULL
+   if (exists(".rs.notebookChunkCallbacks", envir = .rs.toolsEnv()) &&
+       length(.rs.notebookChunkCallbacks) != 0)
+   {
+      handle <- ls(envir = .rs.notebookChunkCallbacks)
+      chunkCallback <- get(handle, envir = .rs.notebookChunkCallbacks)
+      return(chunkCallback(eval(chunkName), eval(chunkCode)))
+   }
+   NULL
 })
 
 # a list mapping file extensions to its associated output handler
