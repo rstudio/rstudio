@@ -92,8 +92,6 @@ invisible(lapply(docs, function(doc) {
 
 # bootstrap the boost build directory
 section("Bootstrapping boost...")
-Sys.setenv(MSVCDir = "C:/Program Files/Microsoft Visual Studio/2022/Community/VC")
-Sys.unsetenv("MSVCDir")
 
 # TODO: Boost has trouble finding the vcvarsall.bat script for some reason?
 # We set this environment variable here to help it find the tools.
