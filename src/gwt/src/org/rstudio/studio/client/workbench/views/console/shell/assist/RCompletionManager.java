@@ -127,14 +127,10 @@ public class RCompletionManager implements CompletionManager
       requester_ = new CompletionRequester(rnwContext, docDisplay, snippets_);
       handlers_ = new HandlerRegistrations();
       
-      handlers_.add(input_.addBlurHandler(event ->
+      handlers_.add(input_.addClickHandler(event ->
       {
-         if (!ignoreNextInputBlur_)
-            invalidatePendingRequests();
-         ignoreNextInputBlur_ = false;
+         invalidatePendingRequests();
       }));
-
-      handlers_.add(input_.addClickHandler(event -> invalidatePendingRequests()));
 
       handlers_.add(popup_.addSelectionCommitHandler(event ->
       {
@@ -151,8 +147,6 @@ public class RCompletionManager implements CompletionManager
          else
             showHelpDeferred(context_, lastSelectedItem_, 600);
       }));
-      
-      handlers_.add(popup_.addMouseDownHandler(event -> ignoreNextInputBlur_ = true));
       
       handlers_.add(popup_.addSelectionHandler(event -> docDisplay_.setPopupVisible(true)));
       
@@ -2247,9 +2241,6 @@ public class RCompletionManager implements CompletionManager
    private final CompletionRequester requester_;
    private final InitCompletionFilter initFilter_;
    
-   // Prevents completion popup from being dismissed when you merely
-   // click on it to scroll.
-   private boolean ignoreNextInputBlur_ = false;
    private String token_;
    
    private final DocDisplay docDisplay_;

@@ -103,15 +103,14 @@ public class CompletionPopupPanel extends ThemedPopupPanel
             if (previewEvent.getTypeInt() == Event.ONMOUSEDOWN)
             {
                Element targetEl = previewEvent.getNativeEvent().getEventTarget().cast();
-               if (!help_.getElement().isOrHasChild(targetEl) &&
-                  (container_ == null) || 
-                  (container_.getElement() == null) || 
-                  !container_.getElement().isOrHasChild(targetEl))
-               {
+               boolean isActiveClickTarget =
+                     (help_ != null && help_.getElement().isOrHasChild(targetEl)) ||
+                     (container_ != null && container_.getElement().isOrHasChild(targetEl));
+               
+               if (!isActiveClickTarget)
                   hideAll();
-               }
             }
-            if (previewEvent.getTypeInt() == Event.ONKEYDOWN)
+            else if (previewEvent.getTypeInt() == Event.ONKEYDOWN)
             {
                NativeEvent event = previewEvent.getNativeEvent();
                int keyCode = event.getKeyCode();
