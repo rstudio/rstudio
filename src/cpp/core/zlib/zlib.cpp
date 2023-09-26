@@ -19,7 +19,7 @@
 
 #include <core/Log.hpp>
 
-#include "zlib.h"
+#include <zlib.h>
 
 namespace rstudio {
 namespace core {
