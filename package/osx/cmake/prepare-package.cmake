@@ -54,7 +54,10 @@ if(EXISTS "@RSESSION_ARM64_PATH@")
       COPYONLY)
 
    # copy required Homebrew libraries
-   set(HOMEBREW_LIBS gettext krb5 libpq openssl@1.1 sqlite3)
+   list(APPEND HOMEBREW_LIBS gettext openssl sqlite3)
+   if(@RSTUDIO_PRO_BUILD@)
+      list(APPEND HOMEBREW_LIBS krb5 libpq)
+   endif()
 
    file(MAKE_DIRECTORY "${ARM64_FRAMEWORKS_DIRECTORY}")
    foreach(LIB ${HOMEBREW_LIBS})
@@ -98,7 +101,10 @@ if(@RSTUDIO_ELECTRON@)
    endif()
    
    # copy required Homebrew libraries
-   set(HOMEBREW_LIBS gettext krb5 libpq openssl@1.1 sqlite3)
+   list(APPEND HOMEBREW_LIBS gettext openssl sqlite3)
+   if(@RSTUDIO_PRO_BUILD@)
+      list(APPEND HOMEBREW_LIBS krb5 libpq)
+   endif()
    
    file(MAKE_DIRECTORY "${X64_FRAMEWORKS_DIRECTORY}")
    foreach(LIB ${HOMEBREW_LIBS})

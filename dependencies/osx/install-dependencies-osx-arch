@@ -44,7 +44,7 @@ FORMULAS=(
    krb5
    libpq
    openjdk@11
-   openssl@1.1
+   openssl
    ninja
    pidof
    postgresql
