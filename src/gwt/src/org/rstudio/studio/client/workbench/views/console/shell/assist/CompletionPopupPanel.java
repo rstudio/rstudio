@@ -36,6 +36,7 @@ import org.rstudio.studio.client.workbench.views.console.shell.assist.Completion
 import org.rstudio.studio.client.workbench.views.help.model.HelpInfo.ParsedInfo;
 
 import com.google.gwt.core.client.GWT;
+import com.google.gwt.core.client.JavaScriptObject;
 import com.google.gwt.dom.client.Element;
 import com.google.gwt.dom.client.NativeEvent;
 import com.google.gwt.event.dom.client.BlurEvent;
@@ -48,9 +49,6 @@ import com.google.gwt.event.logical.shared.CloseHandler;
 import com.google.gwt.event.logical.shared.SelectionEvent;
 import com.google.gwt.event.logical.shared.SelectionHandler;
 import com.google.gwt.event.shared.HandlerRegistration;
-import com.google.gwt.user.client.Event;
-import com.google.gwt.user.client.Event.NativePreviewEvent;
-import com.google.gwt.user.client.Event.NativePreviewHandler;
 import com.google.gwt.user.client.Window;
 import com.google.gwt.user.client.ui.HTML;
 import com.google.gwt.user.client.ui.Label;
@@ -91,38 +89,6 @@ public class CompletionPopupPanel extends ThemedPopupPanel
             hideAll();
          }
       });
-
-      handler_ = new NativePreviewHandler()
-      {
-         @Override
-         public void onPreviewNativeEvent(NativePreviewEvent previewEvent)
-         {
-            // any click outside the container or help popup should dismiss
-            // (we need this here b/c we don't seem to be getting onBlur
-            // events when the ace editor is in embedded mode
-            if (previewEvent.getTypeInt() == Event.ONMOUSEDOWN)
-            {
-               Element targetEl = previewEvent.getNativeEvent().getEventTarget().cast();
-               if (!help_.getElement().isOrHasChild(targetEl) &&
-                  (container_ == null) || 
-                  (container_.getElement() == null) || 
-                  !container_.getElement().isOrHasChild(targetEl))
-               {
-                  hideAll();
-               }
-            }
-            if (previewEvent.getTypeInt() == Event.ONKEYDOWN)
-            {
-               NativeEvent event = previewEvent.getNativeEvent();
-               int keyCode = event.getKeyCode();
-               int modifier = KeyboardShortcut.getModifierValue(event);
-               if (modifier != 0 && keyCode == KeyCodes.KEY_ENTER)
-               {
-                  hideAll();
-               }
-            }
-         }
-      };
    }
 
    private void hideAll()
@@ -237,7 +203,7 @@ public class CompletionPopupPanel extends ThemedPopupPanel
 
    private void show(PositionCallback callback)
    {
-      registerNativeHandler(handler_);
+      registerNativeFocusHandler();
 
       if (callback != null)
          setPopupPositionAndShow(callback);
@@ -484,19 +450,44 @@ public class CompletionPopupPanel extends ThemedPopupPanel
    {
       return list_.getItems();
    }
-
-   private void registerNativeHandler(NativePreviewHandler handler)
+   
+   private void registerNativeFocusHandler()
    {
-      if (handlerRegistration_ != null)
-         handlerRegistration_.removeHandler();
-      handlerRegistration_ = Event.addNativePreviewHandler(handler);
+      focusHandler_ = registerNativeFocusHandlerImpl();
+   }
+   
+   private final native JavaScriptObject registerNativeFocusHandlerImpl()
+   /*-{
+      var self = this;
+      var handler = $entry(function(event) {
+         self.@org.rstudio.studio.client.workbench.views.console.shell.assist.CompletionPopupPanel::onFocusIn(*)(event);
+      });
+      $doc.addEventListener("focusin", handler);
+      $doc.addEventListener("mousedown", handler);
+      return handler;
+   }-*/;
+
+   private void onFocusIn(NativeEvent event)
+   {
+      Element targetEl = event.getEventTarget().cast();
+      boolean isActiveClickTarget =
+            (container_ != null && container_.getElement().isOrHasChild(targetEl)) ||
+            (help_ != null && help_.getElement().isOrHasChild(targetEl));
+
+      if (!isActiveClickTarget)
+         hideAll();
    }
 
    private void unregisterNativeHandler()
    {
-      if (handlerRegistration_ != null)
-         handlerRegistration_.removeHandler();
+      unregisterNativeFocusHandlerImpl(focusHandler_);
    }
+   
+   private final native void unregisterNativeFocusHandlerImpl(JavaScriptObject focusHandler)
+   /*-{
+      $doc.removeEventListener("focusin", focusHandler);
+      $doc.removeEventListener("mousedown", focusHandler);
+   }-*/;
 
    private void resetIgnoredKeysHandle()
    {
@@ -527,8 +518,7 @@ public class CompletionPopupPanel extends ThemedPopupPanel
    private static QualifiedName lastSelectedValue_;
    private VerticalPanel container_;
    private final Label truncated_;
-   private final NativePreviewHandler handler_;
-   private HandlerRegistration handlerRegistration_;
+   private JavaScriptObject focusHandler_;
    private ShortcutManager.Handle handle_;
    private static final ConsoleConstants constants_ = GWT.create(ConsoleConstants.class);
 
