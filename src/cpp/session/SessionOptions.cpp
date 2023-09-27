@@ -681,7 +681,7 @@ void Options::resolvePostbackPath(const FilePath& resourcePath,
 void Options::resolvePandocPath(const FilePath& resourcePath,
                                   std::string* pPath)
 {
-   FilePath resolvedPath = resourcePath.completeChildPath(*pPath);
+   FilePath resolvedPath = resourcePath.completePath(*pPath);
    FilePath archPath = resolvedPath.completeChildPath(kQuartoArch);
    *pPath = (archPath.exists() ? archPath : toolsPath).getAbsolutePath();
 }
