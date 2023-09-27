@@ -132,8 +132,11 @@ set(CORE_SOURCE_FILES
    text/TextCursor.cpp
    text/TemplateFilter.cpp
    text/TermBufferParser.cpp
-   zlib/zlib.cpp
 )
+
+if(WIN32)
+   list(APPEND CORE_SOURCE_FILES zlib/zlib.cpp)
+endif()
 
 if (RSTUDIO_HAS_SOCI)
    list(APPEND CORE_SOURCE_FILES Database.cpp)
