@@ -9,7 +9,7 @@ A few examples of integrating RStudio Jobs with specific development workflows i
 
 ## Shiny app
 
-Running a [Shiny](http://shiny.rstudio.com/) for R application as a local background job allows the current R session to remain free to work on other things. This can be especially helpful for making changes to the Shiny code and seeing the changes in real time.
+Running a [Shiny](https://shiny.posit.co/r/getstarted/shiny-basics/lesson1/index.html) for R application as a local background job allows the current R session to remain free to work on other things. This can be especially helpful for making changes to the Shiny code and seeing the changes in real time.
 
 A minimal example of running the Shiny app as a Job is documented below.
 

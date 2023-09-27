@@ -83,7 +83,7 @@ void crossrefRequest(const std::string& resource,
 {
    // email address
    std::string email = r::options::getOption<std::string>("rstudio.crossref_email",
-                                                          "crossref@rstudio.com", false);
+                                                          "crossref@posit.co", false);
 
    // build user agent
    std::string userAgent = r::options::getOption<std::string>("HTTPUserAgent", "RStudio") +

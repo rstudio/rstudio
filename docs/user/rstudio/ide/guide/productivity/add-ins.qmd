@@ -141,9 +141,9 @@ The use case for non-interactive addins is typically simple text insertion or tr
 
 Shiny gadgets are Shiny applications which can be registered and run as addins. Typically, a Shiny Gadget provides a mechanism for interactively generating code, or modifying a document, but within this realm the possibilities are endless. This article demonstrates how you might create a simple Shiny Gadget, for more complete documentation see the following articles on the Shiny Developer Center:
 
--   [Shiny Gadgets](http://shiny.rstudio.com/articles/gadgets.html)
+-   [Shiny Gadgets](https://shiny.posit.co/r/articles/build/gadgets/)
 
--   [Designing Gadget UI](http://shiny.rstudio.com/articles/gadget-ui.html)
+-   [Designing Gadget UI](https://shiny.posit.co/r/articles/build/gadget-ui/)
 
 Shiny Gadgets are similar to regular Shiny applications. You will need to develop a `ui` and a `server` for your gadget, and then use the `runGadget()` function to launch your gadget.
 
@@ -166,7 +166,7 @@ ui <- miniPage(
 )
 ```
 
-If you're unfamiliar with how the UI for a Shiny application can be generated, please read the [Shiny UI Lesson](https://shiny.rstudio.com/tutorial/written-tutorial/lesson2/) to get further acquainted with how the UI for a Shiny application might be developed.
+If you're unfamiliar with how the UI for a Shiny application can be generated, please read the [Shiny UI Lesson](https://shiny.posit.co/r/getstarted/shiny-basics/lesson2/) to get further acquainted with how the UI for a Shiny application might be developed.
 
 ### Gadget Server
 
@@ -279,9 +279,9 @@ clockAddin()
 
 That example provides a fully functional Shiny gadgets. Additional documentation on creating Gadgets is available at the Shiny Developer Center:
 
--   [Shiny Gadgets](http://shiny.rstudio.com/articles/gadgets.html)
+-   [Shiny Gadgets](https://shiny.posit.co/r/articles/build/gadgets/)
 
--   [Designing Gadget UI](http://shiny.rstudio.com/articles/gadget-ui.html)
+-   [Designing Gadget UI](https://shiny.posit.co/r/articles/build/gadget-ui/)
 
 ### Installation
 

@@ -24,7 +24,7 @@ website:
         url: https://docs.posit.co/
         aria-label: Posit Documentation website
       - icon: question-circle
-        url: https://support.rstudio.com/
+        url: https://support.posit.co/
         aria-label: Posit Professional Support
       - text: "<img src='/images/posit-logo-black-TM.png' id='navbar-right-logo'>"
         url: "https://posit.co"

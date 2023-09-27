@@ -43,7 +43,7 @@ website:
         url: https://docs.posit.co/
         aria-label: Posit Documentation website
       - icon: question-circle
-        url: https://support.rstudio.com/
+        url: https://support.posit.co/
         aria-label: Posit Professional Support
       - text: "<img src='/images/posit-logo-black-TM.png' id='navbar-right-logo'>"
         url: "https://posit.co"
@@ -125,11 +125,11 @@ website:
       - icon: house-fill
         href: https://www.posit.co
       - icon: question-circle-fill
-        href: https://support.rstudio.com/hc/en-us
+        href: https://support.posit.co/hc/en-us
       - icon: lightbulb-fill
-        href: https://solutions.rstudio.com
+        href: https://solutions.posit.co
       - icon: twitter
-        href: https://twitter.com/rstudio
+        href: https://twitter.com/posit_pbc
 
 
 format:

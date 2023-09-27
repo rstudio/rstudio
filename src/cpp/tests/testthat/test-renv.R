@@ -23,7 +23,7 @@ context("renv")
 #    
 #    # scope repos option in this scope
 #    renv:::renv_scope_options(
-#       repos = list(RSPM = "https://packagemanager.rstudio.com/cran/latest")
+#       repos = list(RSPM = "https://packagemanager.posit.co/cran/latest")
 #    )
 #    
 #    # initialize project
@@ -38,7 +38,7 @@ context("renv")
 #    # validate correct repositories
 #    expect_identical(
 #       as.list(lockfile$R$Repositories),
-#       list(RSPM = "https://packagemanager.rstudio.com/cran/latest")
+#       list(RSPM = "https://packagemanager.posit.co/cran/latest")
 #    )
 #    
 # })
