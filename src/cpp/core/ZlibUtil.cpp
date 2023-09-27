@@ -1,5 +1,5 @@
 /*
-* zlib.cpp
+* ZlibUtil.cpp
 *
 * Copyright (C) 2022 by Posit Software, PBC
 *
@@ -13,7 +13,7 @@
 *
 */
 
-#include <core/zlib/zlib.hpp>
+#include <core/ZlibUtil.hpp>
 
 #include <cstring> // for memcpy
 
