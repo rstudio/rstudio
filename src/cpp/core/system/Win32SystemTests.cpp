@@ -94,7 +94,7 @@ TEST_CASE("Win32SystemTests")
       si.cb = sizeof(si);
       ZeroMemory(&pi, sizeof(pi));
 
-      std::string cmd = "ping -n 8 www.rstudio.com";
+      std::string cmd = "ping -n 8 posit.co";
       std::vector<char> cmdBuf(cmd.size() + 1, '\0');
       cmd.copy(&(cmdBuf[0]), cmd.size());
 
@@ -130,7 +130,7 @@ TEST_CASE("Win32SystemTests")
       si.cb = sizeof(si);
       ZeroMemory(&pi, sizeof(pi));
 
-      std::string cmd = "cmd.exe /S /C \"ping -n 8 www.rstudio.com\" 1> nul";
+      std::string cmd = "cmd.exe /S /C \"ping -n 8 posit.co\" 1> nul";
       std::vector<char> cmdBuf(cmd.size() + 1, '\0');
       cmd.copy(&(cmdBuf[0]), cmd.size());
 
@@ -185,7 +185,7 @@ TEST_CASE("Win32SystemTests")
       si.cb = sizeof(si);
       ZeroMemory(&pi, sizeof(pi));
 
-      std::string cmd = "cmd.exe /S /C \"ping -n 8 www.rstudio.com\" 1> nul";
+      std::string cmd = "cmd.exe /S /C \"ping -n 8 posit.co\" 1> nul";
       std::vector<char> cmdBuf(cmd.size() + 1, '\0');
       cmd.copy(&(cmdBuf[0]), cmd.size());
 
@@ -225,7 +225,7 @@ TEST_CASE("Win32SystemTests")
       si.cb = sizeof(si);
       ZeroMemory(&pi, sizeof(pi));
 
-      std::string cmd = "ping -n 8 www.rstudio.com";
+      std::string cmd = "ping -n 8 posit.co";
       std::vector<char> cmdBuf(cmd.size() + 1, '\0');
       cmd.copy(&(cmdBuf[0]), cmd.size());
 
