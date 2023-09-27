@@ -21,5 +21,5 @@
 - Fixed an issue where inline YAML chunk options were not properly parsed from SQL chunks. (#13240)
 
 #### Posit Workbench
--
+- Fixed opening job details in new windows more than once for Workbench jobs on the homepage (rstudio/rstudio-pro#5179)
 
