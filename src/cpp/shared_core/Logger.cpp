@@ -912,16 +912,16 @@ bool hasLogDestination()
 {
    Logger& log = logger();
    WRITE_LOCK_BEGIN(log.Mutex)
-      {
-         LogMap* logMap = &log.DefaultLogDestinations;
+   {
+      LogMap* logMap = &log.DefaultLogDestinations;
 
-         const auto destEnd = logMap->end();
-         for (auto iter = logMap->begin(); iter != destEnd; ++iter)
-         {
-            if (std::dynamic_pointer_cast<T, ILogDestination>(iter->second) != nullptr)
-               return true;
-         }
+      const auto destEnd = logMap->end();
+      for (auto iter = logMap->begin(); iter != destEnd; ++iter)
+      {
+         if (std::dynamic_pointer_cast<T, ILogDestination>(iter->second) != nullptr)
+            return true;
       }
+   }
    RW_LOCK_END(false);
    return false;
 }
@@ -931,20 +931,20 @@ void setLogLevel(LogLevel in_newLevel)
 {
    Logger& log = logger();
    WRITE_LOCK_BEGIN(log.Mutex)
-      {
-         LogMap* logMap = &log.DefaultLogDestinations;
+   {
+      LogMap* logMap = &log.DefaultLogDestinations;
 
-         const auto destEnd = logMap->end();
-         for (auto iter = logMap->begin(); iter != destEnd; ++iter)
+      const auto destEnd = logMap->end();
+      for (auto iter = logMap->begin(); iter != destEnd; ++iter)
+      {
+         if (std::dynamic_pointer_cast<T, ILogDestination>(iter->second) != nullptr)
          {
-            if (std::dynamic_pointer_cast<T, ILogDestination>(iter->second) != nullptr)
-            {
-               iter->second->setLogLevel(in_newLevel);
-               if (in_newLevel > log.MaxLogLevel)
-                  log.MaxLogLevel = in_newLevel;
-            }
+            iter->second->setLogLevel(in_newLevel);
+            if (in_newLevel > log.MaxLogLevel)
+               log.MaxLogLevel = in_newLevel;
          }
       }
+   }
    RW_LOCK_END(false);
 }
 
@@ -953,16 +953,16 @@ LogLevel getLogLevel()
 {
    Logger& log = logger();
    WRITE_LOCK_BEGIN(log.Mutex)
-      {
-         LogMap* logMap = &log.DefaultLogDestinations;
+   {
+      LogMap* logMap = &log.DefaultLogDestinations;
 
-         const auto destEnd = logMap->end();
-         for (auto iter = logMap->begin(); iter != destEnd; ++iter)
-         {
-            if (std::dynamic_pointer_cast<T, ILogDestination>(iter->second) != nullptr)
-                return iter->second->getLogLevel();
-         }
+      const auto destEnd = logMap->end();
+      for (auto iter = logMap->begin(); iter != destEnd; ++iter)
+      {
+         if (std::dynamic_pointer_cast<T, ILogDestination>(iter->second) != nullptr)
+             return iter->second->getLogLevel();
       }
+   }
    RW_LOCK_END(false);
 
    return LogLevel::OFF;
