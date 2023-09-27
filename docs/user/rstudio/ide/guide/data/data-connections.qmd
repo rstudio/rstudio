@@ -21,7 +21,7 @@ In RStudio, there are two ways to connect to a database:
 
 The **New Connection** interface will list possible connections:
 
--   ODBC DSNs installed on your system. If the `odbc` package is installed, any system DSN (Data Source Name) you have installed will be listed. For more information, see [Integrated security with DSN](https://solutions.posit.co/connections/db/best-practices/managing-credentials/).
+-   ODBC DSNs installed on your system. If the `odbc` package is installed, any system DSN (Data Source Name) you have installed will be listed. For more information, see [Integrated security with DSN](https://solutions.posit.co/connections/db/best-practices/managing-credentials/#integrated-security-with-dsn).
 
 -   Connections supplied by your administrator. An administrator may put connection snippets into a folder to make them available to end users. If you are an administrator, see our page on [RStudio Connection Snippet Files](connection-snippets.html) for more information.
 
