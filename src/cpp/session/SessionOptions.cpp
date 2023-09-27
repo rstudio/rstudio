@@ -49,6 +49,14 @@
 
 #include "session-config.h"
 
+#if defined(__aarch64__)
+# define kQuartoArch "aarch64"
+#elif defined(__amd64__)
+# define kQuartoArch "x86_64"
+#else
+# error "unknown or unsupported platform architecture"
+#endif
+
 using namespace rstudio::core;
 
 namespace rstudio {
@@ -608,12 +616,15 @@ void Options::resolvePandocPath(const FilePath& resourcePath,
 {
    if (*pPath == kDefaultPandocPath && programMode() == kSessionProgramModeDesktop)
    {
-      FilePath path = macBinaryPath(resourcePath, "quarto/bin/tools");
-      *pPath = path.getAbsolutePath();
+      FilePath toolsPath = macBinaryPath(resourcePath, "quarto/bin/tools");
+      FilePath archPath = toolsPath.completeChildPath(kQuartoArch);
+      *pPath = (archPath.exists() ? archPath : toolsPath).getAbsolutePath();
    }
    else
    {
-      resolvePath(resourcePath, pPath);
+      FilePath resolvedPath = resourcePath.completePath(*pPath);
+      FilePath archPath = resolvedPath.completeChildPath(kQuartoArch);
+      *pPath = (archPath.exists() ? archPath : resolvedPath).getAbsolutePath();
    }
 }
 
@@ -670,7 +681,9 @@ void Options::resolvePostbackPath(const FilePath& resourcePath,
 void Options::resolvePandocPath(const FilePath& resourcePath,
                                   std::string* pPath)
 {
-   resolvePath(resourcePath, pPath);
+   FilePath resolvedPath = resourcePath.completePath(*pPath);
+   FilePath archPath = resolvedPath.completeChildPath(kQuartoArch);
+   *pPath = (archPath.exists() ? archPath : resolvedPath).getAbsolutePath();
 }
 
 void Options::resolveQuartoPath(const FilePath& resourcePath,
