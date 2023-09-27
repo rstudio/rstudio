@@ -17,7 +17,7 @@ The following documentation covers:
 
 ## Installation
 
-RStudio addins are distributed as [R packages](http://r-pkgs.had.co.nz/). Once you've installed an R package that contains addins, they'll be immediately become available within RStudio.
+RStudio addins are distributed as [R packages](https://r-pkgs.org/). Once you've installed an R package that contains addins, they'll be immediately become available within RStudio.
 
 Let's start by playing around with a couple of the example addins provided by the [addinexamples](https://github.com/rstudio/addinexamples) package. Within RStudio, install this package (plus its requisite dependencies) with:
 

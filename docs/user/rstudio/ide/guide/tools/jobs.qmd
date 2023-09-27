@@ -3,9 +3,9 @@ title: "RStudio Jobs"
 date-meta: 2022-12-12
 ---
 
-RStudio has the ability to send long running R scripts to [local and remote background jobs](https://www.rstudio.com/blog/rstudio-1-2-jobs/). This functionality can dramatically improve the productivity of data scientists and analysts using R since they can continue working in RStudio while jobs are running in the background.
+RStudio has the ability to send long running R scripts to [local and remote background jobs](https://posit.co/blog/rstudio-1-2-jobs/). This functionality can dramatically improve the productivity of data scientists and analysts using R since they can continue working in RStudio while jobs are running in the background.
 
-Local background jobs are supported by all versions of the RStudio IDE, server and desktop. Remote background jobs are a feature of [Posit Workbench](https://posit.co/products/enterprise/workbench/) and are orchestrated by the [Launcher](https://docs.rstudio.com/job-launcher/), which also supports running interactive sessions on remote resource managers like [Kubernetes](https://kubernetes.io/). More information about configuring the Job Launcher can be found in the [Posit Workbench Admin Guide](https://docs.rstudio.com/ide/server-pro/job_launcher/job_launcher.html#job-launcher), and more information about using Workbench Jobs can be found in the [Posit Workbench User Guide](https://docs.rstudio.com/ide/server-pro/user/rstudio-pro/guide/workbench-jobs.html).
+Local background jobs are supported by all versions of the RStudio IDE, server and desktop. Remote background jobs are a feature of [Posit Workbench](https://posit.co/products/enterprise/workbench/) and are orchestrated by the [Launcher](https://docs.posit.co/ide/server-pro/job_launcher/job_launcher.html), which also supports running interactive sessions on remote resource managers like [Kubernetes](https://kubernetes.io/). More information about configuring the Job Launcher can be found in the [Posit Workbench Admin Guide](https://docs.posit.co/ide/server-pro/job_launcher/job_launcher.html#configuration.html), and more information about using Workbench Jobs can be found in the [Posit Workbench User Guide](https://docs.posit.co/ide/server-pro/user/rstudio-pro/guide/workbench-jobs.html).
 
 Background jobs can be started manually or programatically. Local background jobs are ideal for interactive, ad-hoc usage.
 
@@ -112,4 +112,4 @@ On Posit Workbench, you also have the option of running your R script on your co
 
 ![](images/workbench-job.png){fig-alt="Source script as launcher job" width="350"}
 
-See more documentation specific to Workbench Jobs at <https://docs.rstudio.com/ide/server-pro/>
+See more documentation specific to Workbench Jobs at <https://docs.posit.co/ide/server-pro/>

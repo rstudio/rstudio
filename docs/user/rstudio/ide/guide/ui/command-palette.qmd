@@ -42,7 +42,7 @@ To find a command, enter a word or short sequence of characters from the command
 
 Keep typing to filter the list, or press Up/Down to choose a command from the list and then press **Enter** to execute the chosen command. Commands are displayed with their bound keyboard shortcuts, if any, so that you know how to invoke the command directly with the keyboard next time.
 
-If your command doesn't have a shortcut, use the [**Modify Keyboard Shortcuts* command](../productivity/custom-shortcuts.html) to add one.
+If your command doesn't have a shortcut, use the [**Modify Keyboard Shortcuts** command](../productivity/custom-shortcuts.html) to add one.
 
 ### Settings
 

@@ -3,7 +3,7 @@ title: "Get Started"
 date-meta: 2022-12-12
 ---
 
-The following documentation walks through an example of using the `ggplot2` R package and RStudio for basic data visualization. If you are new to R and want to learn more about using R for Data Science, also see the [R for Data Science](https://r4ds.hadley.nz/) textbook which is available in [print](https://www.oreilly.com/library/view/r-for-data/9781491910382/) or as a [freely available website](https://r4ds.hadley.nz/)
+The following documentation walks through an example of using the `ggplot2` R package and RStudio for basic data visualization. If you are new to R and want to learn more about using R for Data Science, also see the [R for Data Science](https://r4ds.hadley.nz/) textbook which is available in [print](https://www.oreilly.com/library/view/r-for-data/9781492097396/) or as a [freely available website](https://r4ds.hadley.nz/)
 
 `ggplot2` is part of the `tidyverse` ecosystem of packages.
 
@@ -61,7 +61,7 @@ Everything you need is in one place, and cleanly separated from all the other pr
 
 ## Hello `ggplot2`
 
-The following section is adapted from the ["Data Visualization" chapter](https://r4ds.hadley.nz/data-visualisation.html) of R for Data Science.
+The following section is adapted from the ["Data Visualization" chapter](https://r4ds.hadley.nz/data-visualize) of R for Data Science.
 
 > R has several systems for making graphs, but `ggplot2` is one of the most elegant and most versatile.
 
@@ -196,6 +196,6 @@ There are 4 core panes for managing data analysis tasks
 3.  The **Environment Pane** is used to temporarily store session objects
 4.  The **Output Pane** contains the **Plot tab** which display graphs, and the **Files tab** which lets you explore source code and output files.
 
-To go deeper on learning about `ggplot2` and the rest of the `tidyverse` please see the R for Data Science textbook. R for Data Science is available in [print](https://www.oreilly.com/library/view/r-for-data/9781491910382/) or as a [freely available website](https://r4ds.hadley.nz/)
+To go deeper on learning about `ggplot2` and the rest of the `tidyverse` please see the R for Data Science textbook. R for Data Science is available in [print](https://www.oreilly.com/library/view/r-for-data/9781492097396/) or as a [freely available website](https://r4ds.hadley.nz/)
 
 To learn more about the RStudio, please continue exploring this [User Guide](../guide/ui/ui-panes.qmd)!
