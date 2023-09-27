@@ -263,3 +263,4 @@ regsvr32 /s "C:\Program Files (x86)\Microsoft Visual Studio\2019\BuildTools\DIA 
 
 call install-crashpad.cmd
 call install-soci.cmd
+
