@@ -58,7 +58,7 @@ if (interactive()) {
 
 ## `Rprofile.site` and `Renviron.site`
 
-Both `.Rprofile` and `.Renviron` files have equivalents that apply server wide. `Rprofile.site` and`Renviron.site` (no leading dot) files are managed by admins on Posit Workbench or RStudio Server, and are specific to a particular version of R. The most common settings for these files involve access to package repositories. For example, using the [shared-baseline](https://environments.rstudio.com/shared.html) package management strategy is generally done from an `Rprofile.site`.
+Both `.Rprofile` and `.Renviron` files have equivalents that apply server wide. `Rprofile.site` and`Renviron.site` (no leading dot) files are managed by admins on Posit Workbench or RStudio Server, and are specific to a particular version of R. The most common settings for these files involve access to package repositories. For example, using the [shared-baseline](https://solutions.posit.co/envs-pkgs/environments/shared/) package management strategy is generally done from an `Rprofile.site`.
 
 Users can override settings in these files with their individual `.Rprofile` files.
 
@@ -66,4 +66,4 @@ These files are set for each version of R and should be located in `R_HOME/etc/`
 
 ## `rsession.conf` and `repos.conf`
 
-Posit Workbench and RStudio Server allow server admins to configure particular server-wide R package repositories via the `rsession.conf` and `repos.conf` files. Only one repository can be configured in `rsession.conf`. If multiple repositories are needed, `repos.conf` should be used. Details on configuring Posit Workbench and RStudio Server with these files are in this [support article](https://support.rstudio.com/hc/en-us/articles/360009863114).
+Posit Workbench and RStudio Server allow server admins to configure particular server-wide R package repositories via the `rsession.conf` and `repos.conf` files. Only one repository can be configured in `rsession.conf`. If multiple repositories are needed, `repos.conf` should be used. Details on configuring Posit Workbench and RStudio Server with these files are in this [guide](https://docs.posit.co/ide/server-pro/rstudio_pro_sessions/package_installation.html).

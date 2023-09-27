@@ -2169,11 +2169,11 @@ Miscellaneous
 
 Highlights
 
-- Authoring tools for [R Notebooks](http://rmarkdown.rstudio.com/r_notebooks.html).
-- Integrated support for the [sparklyr](http://spark.rstudio.com) package (R interface to Spark).
-- Enhanced data import tools based on the [readr](https://github.com/hadley/readr), [readxl](https://github.com/hadley/readxl) and [haven](https://github.com/hadley/haven) packages.
-- Performance profiling via integration with the [profvis](https://github.com/rstudio/profvis) package.
-- Authoring tools for R Markdown [websites](http://rmarkdown.rstudio.com/rmarkdown_websites.html) and the [bookdown](https://bookdown.org/) package.
+- Authoring tools for [R Notebooks](https://rmarkdown.rstudio.com/r_notebooks.html).
+- Integrated support for the [sparklyr](https://sparklyr.ai/) package (R interface to Spark).
+- Enhanced data import tools based on the [readr](https://readr.tidyverse.org/), [readxl](https://readxl.tidyverse.org/) and [haven](https://haven.tidyverse.org/) packages.
+- Performance profiling via integration with the [profvis](https://rstudio.github.io/profvis/) package.
+- Authoring tools for R Markdown [websites](https://rmarkdown.rstudio.com/rmarkdown_websites.html) and the [bookdown](https://bookdown.org/) package.
 - Many other miscellaneous enhancements and bug fixes.
 
 R Notebooks
@@ -2186,16 +2186,16 @@ R Notebooks
 
 Data Import
 
-- Import dataset from text via [readr](https://github.com/hadley/readr)
-- Import dataset from Excel via [readxl](https://github.com/hadley/readxl)
-- Import dataset from SAS, SPSS, and Stata via [haven](https://github.com/hadley/haven)
+- Import dataset from text via [readr](https://readr.tidyverse.org/)
+- Import dataset from Excel via [readxl](https://readxl.tidyverse.org/)
+- Import dataset from SAS, SPSS, and Stata via [haven](https://haven.tidyverse.org/)
 - Preview data while importing datasets
 - Explicitly set column types while importing datasets
 - Preview and copy code while importing datasets
 
 Profiler
 
-- Profiling features based on the [profvis](https://github.com/rstudio/profvis) package
+- Profiling features based on the [profvis](https://rstudio.github.io/profvis/) package
 - Visualize profiling results within the IDE
 - Profile menu enables easy stop/start of profiling or profiling of selected lines.
 - Save and load of previous profiling sessions
@@ -2209,7 +2209,7 @@ RStudio Connect
 
 Spark
 
-- Integrated support for the [sparklyr](http://spark.rstudio.com) package
+- Integrated support for the [sparklyr](https://sparklyr.ai/) package
 - Create and manage connections to Spark clusters and local Spark instances
 - Browse tables and columns of Spark DataFrames
 - Preview the first 1,000 rows of Spark DataFrames
@@ -2341,15 +2341,15 @@ Miscellaneous
 
 Highlights
 
-- Support for multiple [source windows](https://support.rstudio.com/hc/en-us/articles/207126217) (tear editor tabs off main window).
+- Support for multiple [source windows](https://support.posit.co/hc/en-us/articles/207126217) (tear editor tabs off main window).
 - Pane zooming for working distraction free within a single mode.
-- Editor and IDE keyboard shortcuts can [now be customized](https://support.rstudio.com/hc/en-us/articles/206382178).
-- New [Emacs keybindings](https://support.rstudio.com/hc/en-us/articles/210928128) mode for the source editor.
+- Editor and IDE keyboard shortcuts can [now be customized](https://support.posit.co/hc/en-us/articles/206382178).
+- New [Emacs keybindings](https://support.posit.co/hc/en-us/articles/210928128) mode for the source editor.
 - Support for registering custom [RStudio Addins](http://rstudio.github.io/rstudioaddins/).
 - R Markdown editing improvements including outline view and inline UI for chunk execution.
 - Support for [parameterized](http://rmarkdown.rstudio.com/developer_parameterized_reports.html) R Markdown reports.
-- Various improvements to RStudio Server Pro including [multiple concurrent R sessions](https://support.rstudio.com/hc/en-us/articles/211789298),
--se of [multiple R versions](https://support.rstudio.com/hc/en-us/articles/212364537), and [shared projects](https://support.rstudio.com/hc/en-us/articles/211659737) for collaboration.
+- Various improvements to RStudio Server Pro including [multiple concurrent R sessions](https://support.posit.co/hc/en-us/articles/211789298),
+-se of [multiple R versions](https://support.posit.co/hc/en-us/articles/212364537), and [shared projects](https://support.posit.co/hc/en-us/articles/211659737) for collaboration.
 
 Source Editor
 
@@ -2691,7 +2691,7 @@ Server
 
 R Markdown
 
-- Next generation of R Markdown based on [pandoc](http://johnmacfarlane.net/pandoc/)
+- Next generation of R Markdown based on [pandoc](https://pandoc.org/)
   - Create HTML, PDF, and MS Word documents as well as [Beamer](https://bitbucket.org/rivanvx/beamer/wiki/Home) and [ioslides](https://code.google.com/p/io-2012-slides/) presentations
   - New markdown syntax including expanded support for tables, definition lists, and bibliographies
   - A responsive (multi-device friendly) and themeable HTML template based on [Bootstrap](http://getbootstrap.com/2.3.2/)
@@ -2837,7 +2837,7 @@ Debugging Tools
 - Step through code line by line
 - Error inspector for quick access to tracebacks and debugger after runtime errors
 - Integration with traditional R debugging tools, such as `browser()` and `debug()`
-- For more information see [Debugging with RStudio](https://support.rstudio.com/hc/en-us/articles/200713843-Debugging-with-RStudio)
+- For more information see [Debugging with RStudio](https://support.posit.co/hc/en-us/articles/200713843-Debugging-with-RStudio)
 
 Environment Pane
 
@@ -2854,7 +2854,7 @@ R Presentations
 - Extensive support for authoring and previewing inside the IDE
 - Many options for customizing layout and appearance
 - Easily published as either a standalone HTML file or to [RPubs](http://rpubs.com/)
-- For more information see [Authoring R Presentations](http://www.rstudio.com/ide/docs/presentations/overview)
+- For more information see [Authoring R Presentations](https://support.posit.co/hc/en-us/articles/200486468-Authoring-R-Presentations)
 
 Source Editor
 
@@ -2901,7 +2901,7 @@ Viewer Pane
 
 -  New Viewer pane for viewing local web content within RStudio
 -  Works with files written to the R session temporary directory or arbitrary localhost URLs
--  For more information see [Extending RStudio with the Viewer Pane](http://www.rstudio.com/ide/docs/advanced/viewer_pane)
+-  For more information see [Extending RStudio with the Viewer Pane](https://support.posit.co/hc/en-us/articles/202133558-Extending-RStudio-with-the-Viewer-Pane)
 
 Miscellaneous
 
@@ -3661,7 +3661,7 @@ We've added some new features & options to the source editor. We've also receive
 - Toggle line numbers on/off
 - Optional soft-wrapping for R source files
 
-The docs on [source code editing options](http://www.rstudio.com/ide/docs/using/customizing#editing) include more details.
+The docs on [source code editing options](https://support.posit.co/hc/en-us/articles/200549016-Customizing-RStudio#editing) include more details.
 
 Customizable layout and appearance
 
@@ -3671,7 +3671,7 @@ One of the most frequently requested features we've have is the ability to put t
 - Change default font size for code views
 - Select from various editor themes including TextMate, Eclipse, and others.
 
-For more details see the docs on [appearance and layout options](http://www.rstudio.com/ide/docs/using/customizing#appearance).
+For more details see the docs on [appearance and layout options](https://support.posit.co/hc/en-us/articles/200549016-Customizing-RStudio#appearance).
 
 Interactive plotting (manipulate)
 
@@ -3681,7 +3681,7 @@ This release includes a package called manipulate that can be use to create inte
 - Variety of control types including slider, picker, and checkbox.
 - Controls appear next to the plot and can be easily shown and hidden
 
-More details as well as screenshots with examples can be found in the [manipulate documentation](http://www.rstudio.com/ide/docs/advanced/manipulate).
+More details as well as screenshots with examples can be found in the [manipulate documentation](https://support.posit.co/hc/en-us/articles/200551906-Interactive-Plotting-with-Manipulate).
 
 Works with R installed from source
 
@@ -3690,7 +3690,7 @@ The first beta of RStudio was compatible with the binary version of R distribute
 - R built and installed from source using make install
 - MacPorts or Homebrew versions of R on MacOS X
 
-The docs on [using different versions of R](http://www.rstudio.com/ide/docs/advanced/versions_of_r) describe how RStudio determines which R to run against on each platform.
+The docs on [using different versions of R](https://support.posit.co/hc/en-us/articles/200486138-Using-Different-Versions-of-R) describe how RStudio determines which R to run against on each platform.
 
 Character encoding
 
@@ -3700,7 +3700,7 @@ In this release we've significantly improved handling of non-ASCII characters, t
   * The source editor supports Unicode characters and can open/save files using any character encoding.
   * A product-wide default encoding can be set, and can be overridden on a per-document basis.
 
-See the [character encoding](http://www.rstudio.com/ide/docs/advanced/encoding) documentation for more details.
+See the [character encoding](https://support.posit.co/hc/en-us/articles/200532197-Character-Encoding) documentation for more details.
 
 Improved management of working directories
 
@@ -3713,7 +3713,7 @@ We've added a number of new features to make it easier to switch between working
 - Mac: Startup in folder dragged and dropped on RStudio Dock icon
 - Linux: Startup in terminal working directory when run from the command line
 
-The docs on [working directories and workspaces](http://www.rstudio.com/ide/docs/using/workspaces) go into more depth on these features.
+The docs on [working directories and workspaces](https://support.posit.co/hc/en-us/articles/200711843-Working-Directories-and-Workspaces) go into more depth on these features.
 
 Other Enhancements
 

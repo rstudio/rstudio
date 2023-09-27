@@ -18,7 +18,7 @@ See our [guide to writing feature requests](https://github.com/rstudio/rstudio/w
 
 ## RStudio Pro
 
-This repo contains the code for the open source version of RStudio and RStudio Server, and its issues page is for issues pertaining specifically to the open source version of the software. To report issues or request new features for the professional version of RStudio, please get in touch with the Posit Support team at <support@rstudio.com>.
+This repo contains the code for the open source version of RStudio and RStudio Server, and its issues page is for issues pertaining specifically to the open source version of the software. To report issues or request new features for the professional version of RStudio, please get in touch with the Posit Support team at <support@posit.co>.
 
 ## Contributing Code
 
@@ -26,7 +26,7 @@ We welcome contributions to RStudio. To submit a contribution:
 
 1. [Fork](https://github.com/rstudio/rstudio/fork) the repository and make your changes.
 
-2. Ensure that you have signed the [individual](https://www.rstudio.com/wp-content/uploads/2014/06/rstudioindividualcontributoragreement.pdf) or [corporate](https://www.rstudio.com/wp-content/uploads/2014/06/rstudiocorporatecontributoragreement.pdf) contributor agreement as appropriate. You can send the signed copy to contribute@rstudio.com.
+2. Ensure that you have signed the [individual](https://posit.co/wp-content/uploads/2022/10/positindividualcontributoragreement-1.pdf) or [corporate](https://posit.co/wp-content/uploads/2022/10/positcorporatecontributoragreement-1.pdf) contributor agreement as appropriate. You can send the signed copy to <contribute@posit.co>.
 
 3. Submit a [pull request](https://help.github.com/articles/using-pull-requests).
 
