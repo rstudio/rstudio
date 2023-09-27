@@ -14,10 +14,9 @@
  */
 package org.rstudio.studio.client.rmarkdown;
 
-import java.util.Map;
 import java.util.HashMap;
+import java.util.Map;
 
-import com.google.gwt.core.client.GWT;
 import org.rstudio.core.client.StringUtil;
 import org.rstudio.core.client.command.CommandBinder;
 import org.rstudio.core.client.dom.WindowEx;
@@ -40,9 +39,9 @@ import org.rstudio.studio.client.rmarkdown.events.PreviewRmdEvent;
 import org.rstudio.studio.client.rmarkdown.events.RenderRmdEvent;
 import org.rstudio.studio.client.rmarkdown.events.RenderRmdSourceEvent;
 import org.rstudio.studio.client.rmarkdown.events.RmdRenderCompletedEvent;
+import org.rstudio.studio.client.rmarkdown.events.RmdRenderPendingEvent;
 import org.rstudio.studio.client.rmarkdown.events.RmdRenderStartedEvent;
 import org.rstudio.studio.client.rmarkdown.events.RmdShinyDocStartedEvent;
-import org.rstudio.studio.client.rmarkdown.events.RmdRenderPendingEvent;
 import org.rstudio.studio.client.rmarkdown.events.WebsiteFileSavedEvent;
 import org.rstudio.studio.client.rmarkdown.model.RMarkdownServerOperations;
 import org.rstudio.studio.client.rmarkdown.model.RmdEditorOptions;
@@ -55,8 +54,8 @@ import org.rstudio.studio.client.rmarkdown.ui.ShinyDocumentWarningDialog;
 import org.rstudio.studio.client.rsconnect.ui.RSConnectPublishButton;
 import org.rstudio.studio.client.server.ServerError;
 import org.rstudio.studio.client.server.ServerRequestCallback;
-import org.rstudio.studio.client.server.VoidServerRequestCallback;
 import org.rstudio.studio.client.server.Void;
+import org.rstudio.studio.client.server.VoidServerRequestCallback;
 import org.rstudio.studio.client.workbench.WorkbenchContext;
 import org.rstudio.studio.client.workbench.commands.Commands;
 import org.rstudio.studio.client.workbench.model.Session;
@@ -64,6 +63,7 @@ import org.rstudio.studio.client.workbench.prefs.events.UserPrefsChangedEvent;
 import org.rstudio.studio.client.workbench.prefs.model.UserPrefs;
 import org.rstudio.studio.client.workbench.views.source.events.NotebookRenderFinishedEvent;
 
+import com.google.gwt.core.client.GWT;
 import com.google.gwt.core.client.JavaScriptObject;
 import com.google.gwt.core.client.Scheduler;
 import com.google.gwt.core.client.Scheduler.ScheduledCommand;
@@ -491,7 +491,7 @@ public class RmdOutput implements RmdRenderStartedEvent.Handler,
    // application if there is one
    private void performRenderOperation(final Operation renderOperation)
    {
-      if (shinyDoc_ != null)
+      if (shinyDoc_ != null && outputFrame_ != null)
       {
          // if we already have this up in the viewer pane, cache the scroll
          // position (we don't need to do this for the satellite since it
