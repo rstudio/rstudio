@@ -683,7 +683,7 @@ void Options::resolvePandocPath(const FilePath& resourcePath,
 {
    FilePath resolvedPath = resourcePath.completePath(*pPath);
    FilePath archPath = resolvedPath.completeChildPath(kQuartoArch);
-   *pPath = (archPath.exists() ? archPath : toolsPath).getAbsolutePath();
+   *pPath = (archPath.exists() ? archPath : resolvedPath).getAbsolutePath();
 }
 
 void Options::resolveQuartoPath(const FilePath& resourcePath,
