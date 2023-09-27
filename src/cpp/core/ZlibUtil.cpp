@@ -19,7 +19,11 @@
 
 #include <core/Log.hpp>
 
-#include <zlib.h>
+#ifdef _WIN32
+# include "zlib/zlib.h"
+#else
+# include <zlib.h>
+#endif
 
 namespace rstudio {
 namespace core {
