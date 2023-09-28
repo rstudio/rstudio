@@ -2280,26 +2280,7 @@ var loadSnippetFile = function (id, snippetFilePath) {
 };
 exports.loadSnippetsForMode = loadSnippetsForMode;
 exports.loadSnippetFile = loadSnippetFile;
-var $characterThreshold = 3;
-var $completionDelay = 250;
 var completionTimer;
-var showCompletionPopupDelayed = function (editor, completer) {
-    clearTimeout(completionTimer);
-    completionTimer = setTimeout(function () {
-        var cursor = editor.getCursorPosition();
-        var row = cursor.row;
-        var column = cursor.column;
-        if (column < $characterThreshold)
-            return;
-        var line = editor.getSession().getLine(row);
-        for (var i = 0; i < $characterThreshold; i++) {
-            var idx = column - i - 1;
-            if (line[idx] == null || " \t\n\r\v".indexOf(line[idx]) !== -1)
-                return;
-        }
-        completer.showPopup(editor);
-    }, $completionDelay);
-};
 var doLiveAutocomplete = function (e) {
     var editor = e.editor;
     var hasCompleter = editor.completer && editor.completer.activated;
@@ -2327,10 +2308,10 @@ var showLiveAutocomplete = function (e) {
     var editor = e.editor;
     var prefix = util.getCompletionPrefix(editor);
     var triggerAutocomplete = util.triggerAutocomplete(editor);
-    if (prefix && prefix.length >= $characterThreshold || triggerAutocomplete) {
+    if (prefix && prefix.length >= editor.$liveAutocompletionThreshold || triggerAutocomplete) {
         var completer = Autocomplete.for(editor);
         completer.autoShown = true;
-        showCompletionPopupDelayed(editor, completer);
+        completer.showPopup(editor);
     }
 };
 var Editor = require("../editor").Editor;
@@ -2380,21 +2361,6 @@ require("../config").defineOptions(Editor.prototype, "editor", {
             }
         },
         value: false
-    },
-    completionDelay: {
-        set: function (val) {
-            $completionDelay = val;
-        }, get: function () {
-            return $completionDelay;
-        }
-    },
-    completionCharacterThreshold: {
-        set: function (val) {
-            $characterThreshold = val;
-        },
-        get: function () {
-            return $characterThreshold;
-        }
     }
 });
 
