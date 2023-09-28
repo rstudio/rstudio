@@ -79,6 +79,24 @@ test_context("Logging")
       LOG_WARNING_MESSAGE("Warning message");
       LOG_ERROR_MESSAGE("Error message");
 
+      // Turn on debug logging for these LOG_DEBUG_MESSAGE tests
+      log::setFileLogLevel(log::LogLevel::DEBUG_LEVEL);
+
+      // Because the LOG_DEBUG_MESSAGE is a macro with a ? operator, these tests make sure it works
+      // in all important contexts
+      bool dummy = false;
+      if (!dummy) LOG_DEBUG_MESSAGE("Debug in solo if");
+
+      if (dummy)
+         dummy = true;
+      else
+         LOG_DEBUG_MESSAGE("Debug in else");
+
+      if (!dummy)
+         LOG_DEBUG_MESSAGE("Debug in if with else");
+      else
+         dummy = false;
+
       FilePath logFile = tmpConfPath.getParent().completeChildPath("logging-tests-" + id + ".log");
       REQUIRE(logFile.exists());
 
@@ -89,6 +107,9 @@ test_context("Logging")
       REQUIRE(logFileContents.find("Info message") != std::string::npos);
       REQUIRE(logFileContents.find("Warning message") != std::string::npos);
       REQUIRE(logFileContents.find("Error message") != std::string::npos);
+      REQUIRE(logFileContents.find("Debug in solo if") != std::string::npos);
+      REQUIRE(logFileContents.find("Debug in else") != std::string::npos);
+      REQUIRE(logFileContents.find("Debug in if with else") != std::string::npos);
    }
 
    test_that("Can override logging based on env vars and write valid json format")
