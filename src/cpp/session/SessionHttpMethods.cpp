@@ -840,8 +840,8 @@ void handleConnection(boost::shared_ptr<HttpConnection> ptrConnection,
    else if (s_defaultUriHandler)
    {
       core::http::Response response;
-       s_defaultUriHandler(request, &response);
-       ptrConnection->sendResponse(response);
+      s_defaultUriHandler(request, &response);
+      ptrConnection->sendResponse(response);
    }
    else
    {
