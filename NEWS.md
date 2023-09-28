@@ -20,6 +20,7 @@
 - Fixed an issue where warnings could be emitted when parsing YAML options within R Markdown code chunks. (#13326)
 - Fixed an issue where inline YAML chunk options were not properly parsed from SQL chunks. (#13240)
 - Fixed an issue where help text in the autocompletion popup was not selectable. (#13674)
+- Fixed an issue where screen reader mode toggle couldn't be enabled. (#13710)
 
 #### Posit Workbench
 - Fixed opening job details in new windows more than once for Workbench jobs on the homepage (rstudio/rstudio-pro#5179)
