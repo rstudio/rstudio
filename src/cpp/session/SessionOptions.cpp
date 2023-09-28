@@ -49,7 +49,9 @@
 
 #include "session-config.h"
 
-#if defined(__aarch64__)
+#if defined(_WIN32)
+# define kQuartoArch "x86_64"
+#elif defined(__aarch64__)
 # define kQuartoArch "aarch64"
 #elif defined(__amd64__)
 # define kQuartoArch "x86_64"
