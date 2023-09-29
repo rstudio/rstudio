@@ -254,13 +254,18 @@
 
 .rs.addFunction("sourceFileFromRef", function(srcref)
 {
-   if (!is.null(srcref))
-   {
-      fileattr <- attr(srcref, "srcfile")
-      enc2utf8(fileattr$filename)
-   }
-   else
-      ""
+   if (is.null(srcref))
+      return("")
+   
+   # check for absolute path in srcref
+   srcfile <- attr(srcref, "srcfile")
+   if (.rs.isAbsolutePath(srcfile$filename))
+      return(srcfile$filename)
+   
+   # if the path was not absolute, we need to resolve it relative
+   # to the working directory associated with the srcref
+   fullPath <- file.path(srcfile$wd, srcfile$filename)
+   normalizePath(fullPath, winslash = "/", mustWork = FALSE)
 })
 
 # Given a function and some content inside that function, returns a vector

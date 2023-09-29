@@ -2724,3 +2724,8 @@
    )
    
 })
+
+.rs.addFunction("isAbsolutePath", function(path)
+{
+   grepl("^(?:/|~|[a-zA-Z]:[/\\])", path)
+})
