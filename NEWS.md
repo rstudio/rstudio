@@ -2,7 +2,9 @@
 
 ### New
 #### RStudio
-- Updated to Boost 1.83.0. (#13577)
+- Updated Ace to version 1.28. (#13708)
+- Updated Boost to version 1.83.0. (#13577)
+- Updated Electron to version 26.2.4. (#13577)
 - RStudio now supports highlighting of inline YAML chunk options in R Markdown / Quarto documents. (#11663)
 - Improved support for development documentation when a package has been loaded via `devtools::load_all()`. (#13526)
 - RStudio now supports the execution of chunks with the 'file' option set. (#13636)
