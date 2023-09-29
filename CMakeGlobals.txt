@@ -14,7 +14,6 @@
 # AGPL (http://www.gnu.org/licenses/agpl-3.0.txt) for more details.
 #
 
-
 # include guard
 if(RSTUDIO_CMAKE_GLOBALS_INCLUDED)
    return()
@@ -24,6 +23,15 @@ set(RSTUDIO_CMAKE_GLOBALS_INCLUDED YES)
 # helper for detecting Linux
 if(UNIX AND NOT APPLE)
    set(LINUX TRUE)
+endif()
+
+# cmake modules (compute path relative to this file)
+get_filename_component(ROOT_SRC_DIR ${CMAKE_CURRENT_LIST_FILE} PATH)
+set(CMAKE_MODULE_PATH "${ROOT_SRC_DIR}/cmake/modules/")
+
+# read /etc/os-release
+if(LINUX)
+   include(OsRelease)
 endif()
 
 # version info
@@ -276,10 +284,6 @@ if(NOT DEFINED RSTUDIO_INSTALL_FREEDESKTOP)
       set(RSTUDIO_INSTALL_FREEDESKTOP FALSE)
    endif()
 endif()
-
-# cmake modules (compute path relative to this file)
-get_filename_component(ROOT_SRC_DIR ${CMAKE_CURRENT_LIST_FILE} PATH)
-set(CMAKE_MODULE_PATH "${ROOT_SRC_DIR}/cmake/modules/")
 
 # dependencies
 if(WIN32)

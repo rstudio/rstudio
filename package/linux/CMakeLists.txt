@@ -16,6 +16,7 @@
 # configure cpack install location
 set(CPACK_SET_DESTDIR "ON")
 set(CPACK_INSTALL_PREFIX "${CMAKE_INSTALL_PREFIX}")
+message(STATUS "Packaging RStudio for ${OS_RELEASE_PRETTY_NAME}")
 
 # detect architecture (packaging platform specific)
 find_program(DPKG_EXECUTABLE dpkg)
@@ -41,21 +42,15 @@ if(EXISTS "/etc/redhat-release")
    endif()
 endif()
 
-# detect Ubuntu 22.04
-set(IS_UBUNTU_JAMMY FALSE)
-if(EXISTS "/etc/os-release")
-  file(READ "/etc/os-release" OS_RELEASE)
-  string(FIND "${OS_RELEASE}" "UBUNTU_CODENAME=jammy" OS_RELEASE_JAMMY_POS)
-  if(OS_RELEASE_JAMMY_POS GREATER 0)
-    set(IS_UBUNTU_JAMMY TRUE)
-  endif()
-endif()
-
 # set libssl dependency
-if(IS_UBUNTU_JAMMY)
-  set(RSTUDIO_DEBIAN_DEPENDS_SSL "libssl-dev")
+if(OS_RELEASE_ID STREQUAL "ubuntu")
+  if(OS_RELEASE_VERSION_ID VERSION_GREATER_EQUAL "22.04")
+    set(RSTUDIO_DEBIAN_DEPENDS_SSL "libssl-dev")
+  else()
+    set(RSTUDIO_DEBIAN_DEPENDS_SSL "libssl1.0.0 | libssl1.0.2 | libssl1.1")
+  endif()
 else()
-  set(RSTUDIO_DEBIAN_DEPENDS_SSL "libssl1.0.0 | libssl1.0.2 | libssl1.1")
+  set(RSTUDIO_DEBIAN_DEPENDS_SSL "libssl-dev")
 endif()
 
 # configuration specific
@@ -77,17 +72,33 @@ if(RSTUDIO_SERVER)
   string(FIND "${RSTUDIO_PACKAGE_OS}" "SUSE" SUSE_POS)
   if(SUSE_POS GREATER 0)
      # SuSE based systems
-     set(RSTUDIO_RPM_DEPENDS "libsqlite3-0, libpq5, ")
+     list(APPEND RSTUDIO_RPM_DEPENDS "libsqlite3-0")
+     if(RSTUDIO_PRO_BUILD)
+       list(APPEND RSTUDIO_RPM_DEPENDS "libpq5")
+     endif()
   else()
-     set(RSTUDIO_RPM_DEPENDS "sqlite, postgresql-libs, ")
+    list(APPEND RSTUDIO_RPM_DEPENDS "sqlite")
+    if(RSTUDIO_PRO_BUILD)
+      list(APPEND RSTUDIO_RPM_DEPENDS "postgresql-libs")
+    endif()
   endif()
-  set(RSTUDIO_RPM_DEPENDS "${RSTUDIO_RPM_DEPENDS} psmisc, ")
+  list(APPEND RSTUDIO_RPM_DEPENDS "psmisc")
 
   # debian dependencies -- to install the .deb from the command line with
   # automatic dependency resolution use e.g.
   #   sudo apt-get install gdebi-core
   #   sudo gdebi rstudio-server-0.97.151-amd64.deb
-  set(RSTUDIO_DEBIAN_DEPENDS "psmisc, sudo, lsb-release, ${RSTUDIO_DEBIAN_DEPENDS_SSL}, libclang-dev, libsqlite3-0, libpq5, ")
+  list(APPEND RSTUDIO_DEBIAN_DEPENDS
+    "${RSTUDIO_DEBIAN_DEPENDS_SSL}"
+    "psmisc"
+    "libclang-dev"
+    "libsqlite3-0"
+    "lsb-release"
+    "sudo")
+
+  if(RSTUDIO_PRO_BUILD)
+    list(APPEND RSTUDIO_DEBIAN_DEPENDS "libpq5")
+  endif()
 
 elseif(RSTUDIO_DESKTOP OR RSTUDIO_ELECTRON)
 
@@ -112,14 +123,31 @@ elseif(RSTUDIO_DESKTOP OR RSTUDIO_ELECTRON)
   # rpm dependencies
   string(FIND "${RSTUDIO_PACKAGE_OS}" "SUSE" SUSE_POS)
   if(SUSE_POS GREATER 0)
-     # SuSE based systems
-     set(RSTUDIO_RPM_DEPENDS "libxkbcommon-x11-0, libsqlite3-0, libpq5, ")
+    # SuSE based systems
+    list(
+      APPEND RSTUDIO_RPM_DEPENDS
+      "libxkbcommon-x11-0"
+      "libsqlite3-0")
+    if(RSTUDIO_PRO_BUILD)
+      list(APPEND RSTUDIO_RPM_DEPENDS "libpq5")
+    endif()
   else()
-     set(RSTUDIO_RPM_DEPENDS "libxkbcommon-x11, sqlite, postgresql-libs, ")
+    list(APPEND RSTUDIO_RPM_DEPENDS
+      "libxkbcommon-x11"
+      "postgresql-libs"
+      "sqlite")
   endif()
 
   # deb dependencies
-  set(RSTUDIO_DEBIAN_DEPENDS "${RSTUDIO_DEBIAN_DEPENDS_SSL}, libclang-dev, libxkbcommon-x11-0, libsqlite3-0, libpq5, ")
+  list(APPEND RSTUDIO_DEBIAN_DEPENDS
+    "${RSTUDIO_DEBIAN_DEPENDS_SSL}"
+    "libclang-dev"
+    "libsqlite3-0"
+    "libxkbcommon-x11-0")
+
+  if(RSTUDIO_PRO_BUILD)
+    list(APPEND RSTUDIO_DEBIAN_DEPENDS "libpq5")
+  endif()
 
 endif()
 
@@ -229,13 +257,18 @@ string(TOLOWER "${CPACK_PACKAGE_FILE_NAME}" CPACK_PACKAGE_FILE_NAME)
 # PACKAGE_LONG_DESCRIPTION is based on the description in docs/user/rstudio/index.qmd
 set(PACKAGE_LONG_DESCRIPTION "RStudio is an integrated development environment (IDE) designed to support multiple languages, including both R and Python. It includes a console, syntax-highlighting editor that supports direct code execution, and a variety of robust tools for plotting, viewing history, debugging and managing your workspace.")
 
+# depend on a recent libc
+list(APPEND RSTUDIO_DEBIAN_DEPENDS "libc6 (>= 2.7)")
+
 # debian-specific
+list(JOIN RSTUDIO_DEBIAN_DEPENDS ", " RSTUDIO_DEBIAN_DEPENDS)
 set(CPACK_DEBIAN_PACKAGE_DESCRIPTION "${CPACK_PACKAGE_DESCRIPTION}\n ${PACKAGE_LONG_DESCRIPTION}")
 set(CPACK_DEBIAN_PACKAGE_ARCHITECTURE "${PACKAGE_ARCHITECTURE}")
-set(CPACK_DEBIAN_PACKAGE_DEPENDS "${RSTUDIO_DEBIAN_DEPENDS} libc6 (>= 2.7)")
+set(CPACK_DEBIAN_PACKAGE_DEPENDS "${RSTUDIO_DEBIAN_DEPENDS}")
 set(CPACK_DEBIAN_PACKAGE_SUGGESTS "r-base (>= ${RSTUDIO_R_MAJOR_VERSION_REQUIRED}.${RSTUDIO_R_MINOR_VERSION_REQUIRED}.${RSTUDIO_R_PATCH_VERSION_REQUIRED})")
 
 # rpm-specific
+list(JOIN RSTUDIO_RPM_DEPENDS ", " RSTUDIO_RPM_DEPENDS)
 set(CPACK_RPM_PACKAGE_SUMMARY "${CPACK_PACKAGE_NAME}")
 set(CPACK_RPM_PACKAGE_DESCRIPTION "${PACKAGE_LONG_DESCRIPTION}")
 set(CPACK_RPM_PACKAGE_LICENSE "AGPL v.3.0")
