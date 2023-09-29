@@ -45,7 +45,6 @@ import org.rstudio.studio.client.workbench.prefs.events.UserPrefsChangedEvent;
 
 import com.google.gwt.core.client.GWT;
 import com.google.gwt.core.client.JsArray;
-import com.google.gwt.core.client.Scheduler;
 import com.google.inject.Inject;
 import com.google.inject.Singleton;
 
@@ -89,12 +88,6 @@ public class UserPrefs extends UserPrefsComputed
       eventBus.addHandler(SessionInitEvent.TYPE, this);
       eventBus.addHandler(UserPrefsChangedEvent.TYPE, this);
       eventBus.addHandler(DeferredInitCompletedEvent.TYPE, this);
-      Scheduler.get().scheduleDeferred(() ->
-      {
-         origScreenReaderLabel_ = commands_.toggleScreenReaderSupport().getMenuLabel(false);
-         announceScreenReaderState();
-         syncToggleTabKeyMovesFocusState();
-      });
    }
 
    public void writeUserPrefs()
@@ -226,6 +219,10 @@ public class UserPrefs extends UserPrefsComputed
    public void onSessionInit(SessionInitEvent event)
    {
       updatePrefs(session_.getSessionInfo().getPrefs());
+
+      origScreenReaderLabel_ = commands_.toggleScreenReaderSupport().getMenuLabel(false);
+      announceScreenReaderState();
+      syncToggleTabKeyMovesFocusState();
    }
 
    @Override
