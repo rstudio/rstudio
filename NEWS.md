@@ -25,4 +25,7 @@
 
 #### Posit Workbench
 - Fixed opening job details in new windows more than once for Workbench jobs on the homepage (rstudio/rstudio-pro#5179)
+- Fixed accessibility issues with empty Session and Project lists on the homepage [accessibility] (rstudio/rstudio-pro#5214)
+- Fixed accessibility issues with Project controls on the homepage when not using launcher sessions [accessibility] (rstudio/rstudio-pro#5215)
+- Fixed unlabeled input field in Rename Session modal dialog on the homepage [accessibility] (rstudio/rstudio-pro#5178)
 
