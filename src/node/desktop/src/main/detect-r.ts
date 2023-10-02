@@ -214,6 +214,7 @@ writeLines(sep = "\x1F", c(
   delete envCopy['R_INCLUDE_DIR'];
   delete envCopy['R_RUNTIME'];
   delete envCopy['R_SHARE_DIR'];
+  delete envCopy[kLdLibraryPathVariable];
 
   const [result, error] = expect(() => {
     return spawnSync(rExecutable.getAbsolutePath(), ['--vanilla', '-s'], {
@@ -264,7 +265,11 @@ writeLines(sep = "\x1F", c(
   stdout = stdout.substring(index + 1);
 
   // unwrap query results
-  const [rVersion, rHome, rDocDir, rIncludeDir, rShareDir, rRuntime, rArch, rLdLibraryPath] = stdout.split('\x1F');
+  let [rVersion, rHome, rDocDir, rIncludeDir, rShareDir, rRuntime, rArch, rLdLibraryPath] = stdout.split('\x1F');
+  if (process.platform !== 'win32' && getenv(kLdLibraryPathVariable) != '') {
+    logger().logDebug(`Pre-pending user-defined ${kLdLibraryPathVariable} to path set by R: ${rLdLibraryPath}`);
+    rLdLibraryPath = getenv(kLdLibraryPathVariable) + ":" + rLdLibraryPath;
+  }
 
   // put it all together
   return ok({
