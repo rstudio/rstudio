@@ -1,5 +1,5 @@
 #!/usr/bin/env bash
-set -e
+set -ex
 
 BRANCH=rstudio/ocean-storm
 
@@ -19,9 +19,8 @@ if [ ! -d rstudio-ace ]; then
 fi
 
 cd rstudio-ace
-git pull
-git checkout "${BRANCH}"
-git reset --hard "${BRANCH}"
+git fetch
+git reset --hard "origin/${BRANCH}"
 git submodule update --init --recursive --force
 npm install
 cd ..
