@@ -536,10 +536,10 @@ Error getQmdPublishDetails(const json::JsonRpcRequest& request,
 
 
    // Look up configuration for this Quarto project, if this file is part of a Quarto book or
-   // website.
+   // website or manuscript.
    std::string websiteDir, websiteOutputDir, projectType;
    FilePath quartoConfig = quartoProjectConfigFile(qmdPath);
-   
+
    if (!quartoConfig.isEmpty())
    {
       std::string outputDir;
