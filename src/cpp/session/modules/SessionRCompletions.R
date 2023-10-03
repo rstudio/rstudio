@@ -1526,16 +1526,30 @@ assign(x = ".rs.acCompletionTypes",
    
    if (isAt)
    {
-      if (isS4(object))
+      if (exists(".AtNames"))
       {
-         tryCatch({
+         .rs.tryCatch({
+            code <- substitute(
+               utils::.AtNames(object, pattern = ""),
+               list(object = object)
+            )
+            allNames <- eval(code, envir = globalenv())
+            names <- .rs.selectFuzzyMatches(allNames, token)
+            type <- attr(names, "types")
+         })
+      }
+      else if (isS4(object))
+      {
+         .rs.tryCatch({
             allNames <- .slotNames(object)
             names <- .rs.selectFuzzyMatches(allNames, token)
             
             # NOTE: Getting the types forces evaluation; we avoid that if
             # there are too many names to evaluate.
             if (length(names) > 2E2)
+            {
                type <- .rs.acCompletionTypes$UNKNOWN
+            }
             else
             {
                type <- numeric(length(names))
@@ -1547,7 +1561,7 @@ assign(x = ".rs.acCompletionTypes",
                   ))
                }
             }
-         }, error = function(e) NULL)
+         })
       }
    }
    else
