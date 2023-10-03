@@ -49,6 +49,12 @@
 
 #include "session-config.h"
 
+#ifdef _WIN32
+# define kPandocExe "pandoc.exe"
+#else
+# define kPandocExe "pandoc"
+#endif
+
 #if defined(_WIN32)
 # define kQuartoArch "x86_64"
 #elif defined(__aarch64__)
@@ -683,9 +689,12 @@ void Options::resolvePostbackPath(const FilePath& resourcePath,
 void Options::resolvePandocPath(const FilePath& resourcePath,
                                   std::string* pPath)
 {
+   // pandoc might be an architecture-specific sub-directory, to handle that
    FilePath resolvedPath = resourcePath.completePath(*pPath);
-   FilePath archPath = resolvedPath.completeChildPath(kQuartoArch);
-   *pPath = (archPath.exists() ? archPath : resolvedPath).getAbsolutePath();
+   FilePath candidatePath = resolvedPath.completeChildPath(kQuartoArch).completeChildPath(kPandocExe);
+   if (!candidatePath.exists())
+      candidatePath = resolvedPath.completeChildPath(kPandocExe);
+   *pPath = candidatePath.getParent().getAbsolutePath();
 }
 
 void Options::resolveQuartoPath(const FilePath& resourcePath,
