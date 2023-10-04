@@ -526,7 +526,10 @@ std::vector<std::string> fileMonitorIgnoredComponents()
       "/renv/python",
       "/renv/staging",
       "/packrat/lib",
-      "/packrat/src"
+      "/packrat/src",
+      
+      // mostly for internal use
+      "/RStudio.app/",
 
       // ignore things marked .noindex
       ".noindex"
