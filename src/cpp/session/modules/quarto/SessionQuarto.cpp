@@ -536,38 +536,35 @@ Error getQmdPublishDetails(const json::JsonRpcRequest& request,
 
 
    // Look up configuration for this Quarto project, if this file is part of a Quarto book or
-   // website.
+   // website or manuscript.
    std::string websiteDir, websiteOutputDir, projectType;
-   auto projectMeta = inspect.find("project");
-   if (projectMeta != inspect.end())
+   FilePath quartoConfig = quartoProjectConfigFile(qmdPath);
+
+   if (!quartoConfig.isEmpty())
    {
-      FilePath quartoConfig = quartoProjectConfigFile(qmdPath);
-      if (!quartoConfig.isEmpty())
+      std::string outputDir;
+      readQuartoProjectConfig(quartoConfig, &projectType, &outputDir);
+      if (projectType == kQuartoProjectBook || projectType == kQuartoProjectWebsite || projectType == kQuartoProjectManuscript)
       {
-          std::string outputDir;
-          readQuartoProjectConfig(quartoConfig, &projectType, &outputDir);
-          if (projectType == kQuartoProjectBook || projectType == kQuartoProjectWebsite || projectType == kQuartoProjectManuscript)
-          {
-             FilePath configPath = quartoConfig.getParent();
-             websiteDir = configPath.getAbsolutePath();
-             // Infer output directory
-             if (outputDir.empty())
-             {
-                 if (projectType == kQuartoProjectBook)
-                 {
-                     outputDir = "_book";
-                 }
-                 else if (projectType == kQuartoProjectManuscript)
-                 {
-                     outputDir = "_manuscript";
-                 }
-                 else
-                 {
-                     outputDir = "_site";
-                 }
-             }
-             websiteOutputDir = configPath.completeChildPath(outputDir).getAbsolutePath();
-          }
+         FilePath configPath = quartoConfig.getParent();
+         websiteDir = configPath.getAbsolutePath();
+         // Infer output directory
+         if (outputDir.empty())
+         {
+            if (projectType == kQuartoProjectBook)
+            {
+               outputDir = "_book";
+            }
+            else if (projectType == kQuartoProjectManuscript)
+            {
+               outputDir = "_manuscript";
+            }
+            else
+            {
+               outputDir = "_site";
+            }
+         }
+         websiteOutputDir = configPath.completeChildPath(outputDir).getAbsolutePath();
       }
    }
 

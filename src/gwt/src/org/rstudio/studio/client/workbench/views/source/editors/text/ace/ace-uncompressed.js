@@ -50116,12 +50116,11 @@ var Gutter = /** @class */ (function () {
         else if (this.$annotations[row]) {
             annotationNode.className = "ace_gutter_annotation";
             annotationIconNode.className = iconClassName;
-            var className = this.$annotations[row].className;
-            if (className) {
+            if (this.$annotations[row].className) {
                 if (this.$useSvgGutterIcons)
-                    annotationIconNode.className += className;
+                    annotationIconNode.className += this.$annotations[row].className;
                 else
-                    element.classList.add(className.replace(" ", ""));
+                    element.classList.add(this.$annotations[row].className.replace(" ", ""));
             }
             dom.setStyle(annotationIconNode.style, "height", lineHeight);
             dom.setStyle(annotationNode.style, "display", "block");

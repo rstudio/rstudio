@@ -357,8 +357,16 @@
       })
    }
    
+   # define handler for logical values
+   handlers <- list(
+      logical = function(x) {
+         value <- ifelse(x %in% TRUE, "true", "false")
+         structure(value, class = "verbatim")
+      }
+   )
+   
    # substitute ticks and convert to yaml
-   yaml <- yaml::as.yaml(tick_sub(input))
+   yaml <- yaml::as.yaml(tick_sub(input), handlers = handlers)
 
    # the yaml package produces UTF-8 output strings, but doesn't mark them
    # as such, which leads to trouble (in particular: on Windows the string

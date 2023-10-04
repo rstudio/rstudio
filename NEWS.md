@@ -8,6 +8,7 @@
 - RStudio now supports highlighting of inline YAML chunk options in R Markdown / Quarto documents. (#11663)
 - Improved support for development documentation when a package has been loaded via `devtools::load_all()`. (#13526)
 - RStudio now supports autocompletion following `@` via `.AtNames`. (#13451)
+- RStudio now supports the execution and display of GraphViz (`dot`) graphs in R Markdown / Quarto chunks. (#13187)
 - RStudio now supports the execution of chunks with the 'file' option set. (#13636)
 
 #### Posit Workbench
@@ -24,6 +25,7 @@
 - Fixed an issue where inline YAML chunk options were not properly parsed from SQL chunks. (#13240)
 - Fixed an issue where help text in the autocompletion popup was not selectable. (#13674)
 - Fixed an issue where a file could be opened twice when debugging functions sourced from other directories. (#13719)
+- Fixed an issue preventing publishing standalone Quarto content from within larger Quarto projects. (#13637)
 
 #### Posit Workbench
 - Fixed opening job details in new windows more than once for Workbench jobs on the homepage (rstudio/rstudio-pro#5179)
