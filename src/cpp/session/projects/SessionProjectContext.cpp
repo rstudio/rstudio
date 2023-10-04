@@ -508,31 +508,31 @@ std::vector<std::string> fileMonitorIgnoredComponents()
    std::vector<std::string> ignores = {
 
       // don't monitor things in .Rproj.user
-      "/.Rproj.user",
+      "/.Rproj.user/",
 
       // don't monitor things in .quarto
-      "/.quarto",
+      "/.quarto/",
 
       // ignore things within a .git folder
       // ... but allow e.g. .github
       "/.git/",
 
       // ignore some directories within the revdep folder
-      "/revdep/checks",
-      "/revdep/library",
+      "/revdep/checks/",
+      "/revdep/library/",
 
       // ignore files within an renv or packrat library
-      "/renv/library",
-      "/renv/python",
-      "/renv/staging",
-      "/packrat/lib",
-      "/packrat/src",
+      "/renv/library/",
+      "/renv/python/",
+      "/renv/staging/",
+      "/packrat/lib/",
+      "/packrat/src/",
       
       // mostly for internal use
       "/RStudio.app/",
 
       // ignore things marked .noindex
-      ".noindex"
+      ".noindex/"
 
    };
 

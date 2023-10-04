@@ -2058,7 +2058,7 @@ bool fileListingFilter(const core::FileInfo& fileInfo, bool hideObjectFiles)
    // Check to see if this is one of the extensions we always show
    std::string ext = filePath.getExtensionLowerCase();
    core::json::Array exts = prefs::userPrefs().alwaysShownExtensions();
-   for (json::Value val: exts)
+   for (json::Value val : exts)
    {
       if (json::isType<std::string>(val))
       {
@@ -2072,7 +2072,7 @@ bool fileListingFilter(const core::FileInfo& fileInfo, bool hideObjectFiles)
    // Check to see if this is one of the files we always show
    std::string name = filePath.getFilename();
    core::json::Array files = prefs::userPrefs().alwaysShownFiles();
-   for (json::Value val: files)
+   for (json::Value val : files)
    {
       if (json::isType<std::string>(val))
       {
@@ -2082,17 +2082,17 @@ bool fileListingFilter(const core::FileInfo& fileInfo, bool hideObjectFiles)
          }
       }
    }
-
-   if (hideObjectFiles &&
-            (ext == ".o" || ext == ".so" || ext == ".dll") &&
-            filePath.getParent().getFilename() == "src")
-   {
+   
+   // Check for hidden files
+   if (filePath.isHidden())
       return false;
-   }
-   else
-   {
-      return !filePath.isHidden();
-   }
+   
+   // Check for object files
+   if (hideObjectFiles && (ext == ".o" || ext == ".so" || ext == ".dll"))
+      return false;
+   
+   // ok, passed our filters
+   return true;
 }
 
 namespace {
