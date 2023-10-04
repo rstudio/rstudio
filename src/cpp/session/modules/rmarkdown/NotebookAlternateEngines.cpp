@@ -644,7 +644,18 @@ Error runUserDefinedEngine(const std::string& docId,
    if (isString(outputSEXP))
    {
       std::string text = asUtf8String(outputSEXP);
-      emitText(text, kChunkConsoleOutput);
+      
+      // handle path outputs
+      if (engine == "dot")
+      {
+         Error error = emitImage(text);
+         if (error)
+            LOG_ERROR(error);
+      }
+      else
+      {
+         emitText(text, kChunkConsoleOutput);
+      }
    }
    else if (inherits(outputSEXP, "htmlwidget"))
    {

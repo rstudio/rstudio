@@ -7,6 +7,7 @@
 - Updated Electron to version 26.2.4. (#13577)
 - RStudio now supports highlighting of inline YAML chunk options in R Markdown / Quarto documents. (#11663)
 - Improved support for development documentation when a package has been loaded via `devtools::load_all()`. (#13526)
+- RStudio now supports the execution and display of GraphViz (`dot`) graphs in R Markdown / Quarto chunks. (#13187)
 - RStudio now supports the execution of chunks with the 'file' option set. (#13636)
 
 #### Posit Workbench
