@@ -93,8 +93,7 @@ bool notHidden(const FileInfo& fileInfo)
 
 bool shouldTraverse(const FileInfo& fileInfo)
 {
-   return fileInfo.isDirectory() &&
-          !FilePath(fileInfo.absolutePath()).isSymlink();
+   return fileInfo.isDirectory() && !fileInfo.isSymlink();
 }
 
 bool sizeAndLastWriteTimeAreEqual(const FileInfo& a, const FileInfo& b)
