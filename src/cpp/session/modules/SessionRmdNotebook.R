@@ -791,6 +791,11 @@ assign(".rs.notebookVersion", envir = .rs.toolsEnv(), "1.0")
       
    }
    
+   # knitr sets a default fig.ext of 'png', so we'll set that too
+   # this is necessary for some engines, e.g. dot
+   # https://github.com/rstudio/rstudio/issues/13187
+   opts$dev <- .rs.nullCoalesce(opts$dev, "png")
+   
    .rs.scalarListFromList(opts, expressions = TRUE)
 })
 
