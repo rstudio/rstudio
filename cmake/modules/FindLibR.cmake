@@ -107,9 +107,7 @@ else()
       if(NOT LIBR_HOME)
 
          # read home from the registry
-         get_filename_component(LIBR_HOME
-            "[HKEY_LOCAL_MACHINE\\SOFTWARE\\R-core\\R;InstallPath]"
-            ABSOLUTE CACHE)
+         get_filename_component(LIBR_HOME "[HKEY_LOCAL_MACHINE\\SOFTWARE\\R-core\\R;InstallPath]" ABSOLUTE)
 
          # print message if not found
          if(NOT LIBR_HOME)
@@ -117,9 +115,22 @@ else()
          endif()
 
          # make sure path exists
-         if (NOT EXISTS "${LIBR_HOME}")
+         if(NOT EXISTS "${LIBR_HOME}")
             message(STATUS "Path to R found in registry '${LIBR_HOME}' doesn't exist")
+            file(GLOB R_INSTALLATIONS "C:/R/*" LIST_DIRECTORIES TRUE)
+            if(R_INSTALLATIONS)
+               list(GET R_INSTALLATIONS 0 LIBR_HOME)
+               message(STATUS "Found R installation at path '${LIBR_HOME}'")
+            endif()
          endif()
+
+         # last chance
+         if(NOT EXISTS "${LIBR_HOME}")
+            message(FATAL_ERROR "Couldn't find any R installation on the system.")
+         endif()
+
+         # cache it now
+         set(LIBR_HOME "${LIBR_HOME}" CACHE INTERNAL "R home directory")
 
       endif()
 
