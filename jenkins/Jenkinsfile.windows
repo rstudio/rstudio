@@ -84,20 +84,19 @@ pipeline {
       }
     }
 
-    // Build on windows agent, use matrix for electron / desktop
+    // Build on windows agent, use matrix for electron
     stage ('Build Matrix') {
       matrix {
         axes {
           axis {
             name 'FLAVOR'
-              values 'Electron', 'Desktop' // desktop denotes a Qt build
+              values 'Electron'
           }
         }
 
         when {
           anyOf {
             environment name: 'FLAVOR', value: 'Electron'
-            expression { return FLAVOR == 'Desktop' && IS_PRO == true } // Only build Qt on Pro
           }
         }
 
@@ -204,7 +203,7 @@ pipeline {
                     when {
                       allOf {
                         expression { return params.DAILY }
-                        environment name: 'FLAVOR', value: 'Desktop'
+                        environment name: 'FLAVOR', value: 'Desktop' // NOTE: not currently doing this for Electron
                       }
                     }
 
@@ -285,12 +284,9 @@ pipeline {
           stage ("Update Daily Build Redirects") {
             agent { label "linux" } 
 
-            // for pro, update with Qt
-            // for open source, update with Electron
             when { 
               anyOf {
-                expression { return params.PUBLISH && params.DAILY && IS_PRO == true && FLAVOR == "Desktop" }
-                expression { return params.PUBLISH && params.DAILY && IS_PRO == false && FLAVOR == "Electron" }
+                expression { return params.PUBLISH && params.DAILY && FLAVOR == "Electron" }
                 expression { return params.PUBLISH && params.DAILY && FLAVOR == "Server" }
               }
             }
