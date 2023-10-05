@@ -14,7 +14,6 @@
  */
 
 import { BrowserWindow, shell, WebContents } from 'electron';
-import { IpcMainEvent } from 'electron/main';
 
 import path from 'path';
 import debounce from 'lodash/debounce';
@@ -103,7 +102,7 @@ export class DesktopBrowserWindow extends EventEmitter {
   mainWindow?: MainWindow;
 
   // debouncing due to https://github.com/rstudio/rstudio/issues/13027
-  positionAndEnsureVisibleDebounced= debounce((window, requestedBounds, defaultWidth, defaultHeight) => 
+  positionAndEnsureVisibleDebounced= debounce((window, requestedBounds, defaultWidth, defaultHeight) =>
     positionAndEnsureVisible(window, requestedBounds, defaultWidth, defaultHeight), 75);
 
   // if loading fails and emits `did-fail-load` it will be followed by a
@@ -154,7 +153,7 @@ export class DesktopBrowserWindow extends EventEmitter {
         .insertCSS(customStyles, {
           cssOrigin: 'author',
         })
-        .then((result) => {
+        .then((_result) => {
           logger().logDebug('Custom Styles Added Successfully');
         })
         .catch((error) => {
@@ -176,6 +175,21 @@ export class DesktopBrowserWindow extends EventEmitter {
     });
 
     this.window.webContents.setWindowOpenHandler((details) => {
+
+      // check for attempts to open a PDF vigette from the help system
+      if (this.options.baseUrl) {
+        const helpPrefix = `${this.options.baseUrl}/help/library/`;
+        if (details.url.startsWith(helpPrefix)) {
+          const reHelp = String.raw `/help/library/([^/]+)/doc/(.*)\.pdf`;
+          const match = details.url.match(reHelp);
+          if (match) {
+            const args = [match[2], match[1]];
+            this.sendRpcRequest('show_vignette', args);
+          }
+          return { action: 'deny' };
+        }
+      }
+
       // check if this is target="_blank" from an IDE window
       if (
         this.options.baseUrl &&
@@ -472,6 +486,13 @@ export class DesktopBrowserWindow extends EventEmitter {
         this.emit(DesktopBrowserWindow.CLOSE_WINDOW_SHORTCUT);
       }
     }
+  }
+
+  sendRpcRequest(name: string, value: object): void {
+    const command = `window.sendRpcRequest("${name}", ${JSON.stringify(value)});`;
+    this.executeJavaScript(command).catch(error => {
+      logger().logError(error);
+    });
   }
 
   /**

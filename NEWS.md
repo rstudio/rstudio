@@ -26,6 +26,7 @@
 - Fixed an issue where help text in the autocompletion popup was not selectable. (#13674)
 - Fixed an issue where a file could be opened twice when debugging functions sourced from other directories. (#13719)
 - Fixed an issue preventing publishing standalone Quarto content from within larger Quarto projects. (#13637)
+- Fixed an issue that prevented RStudio from opening PDF vignettes from the Help pane. (#13041)
 
 #### Posit Workbench
 - Fixed opening job details in new windows more than once for Workbench jobs on the homepage (rstudio/rstudio-pro#5179)
