@@ -63,8 +63,11 @@ Options
         Jenkins, otherwise false (0).
 
   --electron, --rstudio-target=Electron
-        Whether to build the Electron version of RStudio; default is to build the Qt
-        version.
+        Whether to build the Electron version of RStudio (default)
+
+  --desktop, --rstudio-target=Desktop
+        Whether to build the deprecated Qt version of RStudio
+
 EOF
 exit 1
 }
@@ -232,7 +235,7 @@ clean=0
 copy_gwt=1
 install=0
 use_creds=0
-rstudio_target=Desktop
+rstudio_target=Electron
 
 # by default, use RStudio credentials for builds on Jenkins
 if is-jenkins; then
@@ -255,6 +258,7 @@ for arg in "$@"; do
    --build-dmg=*)      build_dmg=${arg#*=} ;;
    --use-creds=*)      use_creds=${arg#*=} ;;
    --electron)         rstudio_target=Electron ;;
+   --desktop)          rstudio_target=Desktop ;;
    --rstudio-target=*) rstudio_target=${arg#*=} ;;
    *)                  help ;;
    esac
@@ -263,7 +267,7 @@ done
 
 if [ "${rstudio_target}" != "Desktop" ] && [ "${rstudio_target}" != "Electron" ]
 then
-   echo "error: must specify --rstudio-target=Desktop|Electron (default Desktop)"
+   echo "error: must specify --rstudio-target=Desktop|Electron (default Electron)"
    exit 1
 fi
 

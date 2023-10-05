@@ -16,7 +16,7 @@ set BUILD_GWT=1
 set QUICK=
 set NOZIP=
 set CLEANBUILD=
-set RSTUDIO_TARGET=Desktop
+set RSTUDIO_TARGET=Electron
 set PACKAGE_VERSION_SET=
 set DEBUG_BUILD=
 
@@ -247,8 +247,8 @@ echo make-package [clean] [debug] [desktop] [electron] [multiarch] [nogwt] [nozi
 echo.
 echo     clean:      perform full rebuild
 echo     debug:      perform a debug build
-echo     desktop:    build Qt desktop (default)
-echo     electron:   build Electron instead of Qt desktop
+echo     desktop:    build Qt desktop (obsolete)
+echo     electron:   build Electron (default)
 echo     multiarch:  produce both 32-bit and 64-bit rsession executables
 echo     nogwt:      skip GWT build (use previous GWT build)
 echo     nozip:      skip creation of ZIP file
