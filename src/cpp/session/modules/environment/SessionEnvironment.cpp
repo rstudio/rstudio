@@ -78,6 +78,9 @@ bool s_browserActive = false;
 // has undesirable side effects.
 bool s_monitoring = true;
 
+// whether or not the global environment can safely be serialized
+bool s_isGlobalEnvironmentSerializable = true;
+
 namespace {
 
 // by default, use regular 'INTEGER' accessor; 'INTEGER_OR_NULL' will be loaded
@@ -114,6 +117,19 @@ public:
 private:
    int& counter_;
 };
+
+bool isGlobalEnvironmentSerializable()
+{
+   bool serializable = false;
+   
+   Error error =
+         r::exec::RFunction(".rs.environment.isSerializable")
+         .call(&serializable);
+   if (error)
+      LOG_ERROR(error);
+   
+   return serializable;
+}
 
 bool isValidSrcref(SEXP srcref)
 {
@@ -1072,8 +1088,8 @@ void onDetectChanges(module_context::ChangeSource /* source */)
          LOG_ERROR(error);
    }
    
+   // Check active environment for changes
    s_pEnvironmentMonitor->checkForChanges();
-   
 }
 
 void onConsolePrompt(boost::shared_ptr<int> pContextDepth,
@@ -1090,6 +1106,9 @@ void onConsolePrompt(boost::shared_ptr<int> pContextDepth,
 
    // End debug output capture every time a console prompt occurs
    *pCapturingDebugOutput = false;
+   
+   // Update session suspendable state
+   s_isGlobalEnvironmentSerializable = isGlobalEnvironmentSerializable();
 
    // If we were debugging but there's no longer a browser on the context stack,
    // switch back to the top level; otherwise, examine the stack and find the
@@ -1108,7 +1127,7 @@ void onConsolePrompt(boost::shared_ptr<int> pContextDepth,
       context = r::context::getFunctionContext(BROWSER_FUNCTION,
                                                &depth, &environmentTop);
    }
-
+   
    if (environmentTop != s_pEnvironmentMonitor->getMonitoredEnvironment() ||
        depth != *pContextDepth ||
        context != *pCurrentContext)
@@ -1135,6 +1154,7 @@ void onConsolePrompt(boost::shared_ptr<int> pContextDepth,
       *pCurrentContext = context;
       enqueContextDepthChangedEvent(depth, pLineDebugState.get());
    }
+   
    // if we're debugging and stayed in the same frame, update the line number
    else if (depth > 0)
    {
@@ -1156,6 +1176,7 @@ void onConsolePrompt(boost::shared_ptr<int> pContextDepth,
          enqueBrowserLineChangedEvent(srcref);
       }
    }
+   
 }
 
 void onBeforeExecute()
@@ -1484,15 +1505,7 @@ SEXP rs_dumpContexts()
 
 bool isSuspendable()
 {
-   bool suspendable = false;
-   
-   Error error =
-         r::exec::RFunction(".rs.environment.isSuspendable")
-         .call(&suspendable);
-   if (error)
-      LOG_ERROR(error);
-   
-   return suspendable;
+   return s_isGlobalEnvironmentSerializable;
 }
 
 Error initialize()
