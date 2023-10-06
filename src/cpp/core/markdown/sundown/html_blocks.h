@@ -59,10 +59,9 @@ static unsigned char gperf_downcase[256] =
 #ifndef GPERF_CASE_STRNCMP
 #define GPERF_CASE_STRNCMP 1
 static int
-gperf_case_strncmp (s1, s2, n)
-     register const char *s1;
-     register const char *s2;
-     register unsigned int n;
+gperf_case_strncmp (register const char* s1,
+                    register const char* s2,
+                    register unsigned int n)
 {
   for (; n > 0;)
     {
@@ -87,9 +86,8 @@ inline
 #endif
 #endif
 static unsigned int
-hash_block_tag (str, len)
-     register const char *str;
-     register unsigned int len;
+hash_block_tag (register const char* str,
+                register unsigned int len)
 {
   static const unsigned char asso_values[] =
     {
@@ -141,9 +139,8 @@ __attribute__ ((__gnu_inline__))
 #endif
 #endif
 const char *
-find_block_tag (str, len)
-     register const char *str;
-     register unsigned int len;
+find_block_tag (register const char* str,
+                register unsigned int len)
 {
   enum
     {
