@@ -736,6 +736,13 @@ Error writeProjectConfig(const json::Object& configJson)
    if (error)
       return error;
    
+   // write the config
+   error = r_util::writeProjectFile(s_projectContext.file(),
+                                    ProjectContext::buildDefaults(),
+                                    config);
+   if (error)
+      return error;
+   
    // set the config
    setProjectConfig(config);
 
