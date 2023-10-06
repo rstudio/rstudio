@@ -63,6 +63,10 @@ OverlayResult addUser(boost::asio::io_service& ioService,
 core::Error addUserToDatabase(const boost::shared_ptr<core::database::IConnection>& connection,
                               const core::system::User& user,
                               bool isAdmin = false);
+core::Error checkForUninitializedUsername(const boost::shared_ptr<core::database::IConnection>& connection,
+                                          core::database::Row& row,
+                                          const core::system::User& user,
+                                          std::string* pUsername);
 bool isUserProvisioningEnabled();
 std::string getUsernameDbColumnName();
 

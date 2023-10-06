@@ -120,6 +120,15 @@ Error addUserToDatabase(const boost::shared_ptr<IConnection>& connection,
    return connection->execute(insertQuery);
 }
 
+Error checkForUninitializedUsername(const boost::shared_ptr<IConnection>& connection,
+                                    Row& row,
+                                    const system::User& user,
+                                    std::string* pUsername)
+{
+   // we don't expect the username to be uninitialized in open source
+   return Success();
+}
+
 bool isUserProvisioningEnabled()
 {
    return false;
