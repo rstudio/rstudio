@@ -22,8 +22,8 @@
 # How should we handle updates?
 .rs.addFunction("copilot.installCopilotAgent", function(targetDirectory)
 {
-   # NOTE: Copilot 1.8.4 release.
-   defaultCopilotRef <- "1358e8e45ecedc53daf971924a0541ddf6224faf"
+   # NOTE: Copilot 1.10.3 release.
+   defaultCopilotRef <- "998cf5ab1b85e844c7e8edb864a997e590df7182"
    copilotRef <- getOption("rstudio.copilot.repositoryRef", defaultCopilotRef)
    
    defaultCopilotBaseUrl <- "https://rstudio.org/links/github-copilot"
