@@ -34,6 +34,7 @@ export function expect<T>(callback: () => T): Expected<T> {
     const result = callback();
     return ok(result);
   } catch (error: unknown) {
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
     return err(error as any);
   }
 }

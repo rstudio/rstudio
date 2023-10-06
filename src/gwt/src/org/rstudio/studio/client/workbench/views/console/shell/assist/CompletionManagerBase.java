@@ -28,6 +28,7 @@ import org.rstudio.studio.client.application.events.EventBus;
 import org.rstudio.studio.client.common.codetools.CodeToolsServerOperations;
 import org.rstudio.studio.client.common.codetools.Completions;
 import org.rstudio.studio.client.common.codetools.RCompletionType;
+import org.rstudio.studio.client.workbench.copilot.Copilot;
 import org.rstudio.studio.client.workbench.prefs.model.UserPrefs;
 import org.rstudio.studio.client.workbench.snippets.SnippetHelper;
 import org.rstudio.studio.client.workbench.views.console.ConsoleConstants;
@@ -72,9 +73,9 @@ public abstract class CompletionManagerBase
    }
    
    protected CompletionManagerBase(CompletionPopupDisplay popup,
-                                DocDisplay docDisplay,
-                                CodeToolsServerOperations server,
-                                CompletionContext context)
+                                   DocDisplay docDisplay,
+                                   CodeToolsServerOperations server,
+                                   CompletionContext context)
    {
       RStudioGinjector.INSTANCE.injectMembers(this);
       
@@ -93,10 +94,12 @@ public abstract class CompletionManagerBase
    @Inject
    private void initialize(EventBus events,
                            UserPrefs uiPrefs,
+                           Copilot copilot,
                            HelpStrategy helpStrategy)
    {
       events_ = events;
       userPrefs_ = uiPrefs;
+      copilot_ = copilot;
       helpStrategy_ = helpStrategy;
    }
    
@@ -727,7 +730,7 @@ public abstract class CompletionManagerBase
    
    protected boolean canAutoPopup(char ch, int lookbackLimit)
    {
-      if (userPrefs_.copilotEnabled().getValue())
+      if (copilot_.isEnabled())
          return false;
       
       String codeComplete = userPrefs_.codeCompletion().getValue();
@@ -1135,5 +1138,6 @@ public abstract class CompletionManagerBase
    
    protected EventBus events_;
    protected UserPrefs userPrefs_;
+   protected Copilot copilot_;
    private static final ConsoleConstants constants_ = GWT.create(ConsoleConstants.class);
 }

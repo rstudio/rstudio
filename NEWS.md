@@ -1,51 +1,38 @@
-## RStudio 2023.08.0 "Desert Sunflower" Release Notes
+## RStudio 2023.12.0 "Ocean Storm" Release Notes
 
 ### New
 #### RStudio
-- Update to Electron 25.5.0 (#13457)
-- Add support Quarto Manuscript projects, a new Quarto feature that will be released in Quarto 1.4.
-- Added option to sign Git commits (#1865)
-- Add section to theme generation that will use theme-specific color(s) to set colors of vim/emacs-mode cursor
+- Updated Ace to version 1.28. (#13708)
+- Updated Boost to version 1.83.0. (#13577)
+- Updated Electron to version 26.2.4. (#13577)
+- RStudio now supports highlighting of inline YAML chunk options in R Markdown / Quarto documents. (#11663)
+- Improved support for development documentation when a package has been loaded via `devtools::load_all()`. (#13526)
+- RStudio now supports autocompletion following `@` via `.AtNames`. (#13451)
+- RStudio now supports the execution and display of GraphViz (`dot`) graphs in R Markdown / Quarto chunks. (#13187)
+- RStudio now supports the execution of chunks with the 'file' option set. (#13636)
 
 #### Posit Workbench
-- Prometheus metrics are available in Posit Workbench (rstudio-pro:#3273)
-- Additional support for publishing new content types to Posit Cloud (rstudio-pro#4541)
-- Update code-server to version 4.14.1 (VS Code version 1.79.2) bundled with node 16.20.2 (rstudio-pro#4774, rstudio-pro#5012)
-- Update rserver-saml to 0.7.0 (rstudio-pro#4903)
-- Change the default behavior of `launcher-balancing-enabled` to always be true. (rstudio-pro#4953)
-- Auto-generate the `secure-cookie-key` and launcher key pair in load-balanced environments (rstudio-pro#4985)
-- Add the `secure-cookie-key` and launcher key pair to the node table of the database for load-balanced environments. (rstudio-pro#4985)
+-
 
 ### Fixed
 #### RStudio
-- Fixed issue where `DYLD_FALLBACK_LIBRARY_PATH` was not properly forwarded on macOS (#13085)
-- Fixed issue where 'ggrepel' plot annotations could disappear when a plot was redrawn in an R Markdown document (#4330)
-- Fixed issue where whitespace in error messages was not properly preserved (#13239)
-- Fixed issue where the Data Viewer could fail to render data.frames containing AsIs matrices (#13215)
-- Fixed issue where error messages were not properly translated on Windows in some cases (#10308)
-- Fixed issue where Electron menubar commands are not disabled when modals are displayed (#12972)
-- Fixed bug causing invalid/empty `cacheKey` error when accessing a dataframe variable (#13188)
-- Fixed bug preventing dataframe column navigation past the default number of display columns (#13220)
-- Fixed bug preventing files from being saved when user `HOME` path includes trailing slashes on Windows (#13105)
-- Fixed broken Help pane after navigating to code demo (#13263)
-- Fixed bug preventing Update Available from displaying (#13347)
-- Fixed bug causing dataframe help preview to fail for nested objects (#13291)
-- Fixed issue where changes to binary files were not presented in Git History view (#13126)
-- Fixed bug where clicking "Ignore Update" would fail to ignore the update (#13379)
-- Fixed issue with alignment of R argument names in Help pane (#13474)
-- Fixed issue where user was not warned of missing Rosetta installation on Apple silicon (#12791)
-- Fixed bug with modals disabling copy/paste (#13365)
-- Fixed issue with file opened twice when navigating `cli` package hyperlinks (#13134)
-- Fixed issue where column names weren't provided as completion candidates for DBI tables. (#12577)
-- Fixed an issue where parameter name completions were not provided within `dplyr` joins. (#13415)
-- Fixed issue where R sessions containing large 'igraph' objects could become slow (#13489)
+- Fixed an issue preventing the object explorer from exploring httr request objects. (#13348)
+- RStudio will no longer attempt to automatically activate the default system installation of Python. (#13497)
+- Improved performance of R Markdown chunk execution for projects running on networked filesystems. (#8034)
+- Fixed an issue where underscores in file names were not displayed correctly in menu items. (#13662)
+- Fixed an issue where previewed plots were not rendered at the correct DPI. (#13387)
+- Fixed an issue where warnings could be emitted when parsing YAML options within R Markdown code chunks. (#13326)
+- Fixed an issue where inline YAML chunk options were not properly parsed from SQL chunks. (#13240)
+- Fixed an issue where help text in the autocompletion popup was not selectable. (#13674)
+- Fixed an issue where a file could be opened twice when debugging functions sourced from other directories. (#13719)
+- Fixed an issue preventing publishing standalone Quarto content from within larger Quarto projects. (#13637)
+- Fixed an issue that prevented RStudio from opening PDF vignettes from the Help pane. (#13041)
+- Inline chunk execution now respects YAML style plot options styled with hyphens. (#11708)
 
-#### Posit Workbench 
-- Fixed intermittent rsession crash when the linux nscd service was enabled (rstudio-pro:#4648)
-- Fixed bug when resuming session not restoring current working directory for Terminal pane (rstudio-pro:#4027)
-- Fixed bug preventing `HOME` from being modified in system init scripts (rstudio-pro:#4584)
-- Removed unnecessary files from install packages (rstudo-pro:#4943)
+#### Posit Workbench
+- Fixed opening job details in new windows more than once for Workbench jobs on the homepage (rstudio/rstudio-pro#5179)
+- Fixed accessibility issues with empty Session and Project lists on the homepage [accessibility] (rstudio/rstudio-pro#5214)
+- Fixed accessibility issues with Project controls on the homepage when not using launcher sessions [accessibility] (rstudio/rstudio-pro#5215)
+- Fixed unlabeled input field in Rename Session modal dialog on the homepage [accessibility] (rstudio/rstudio-pro#5178)
+- Fixed mismatched label on "Join session when ready" checkbox in New Session dialog [accessibility] (rstudio/rstudio-pro#5221)
 
-### Performance
-- Improved performance of group membership tests (rstudio-pro:#4643)
-- Increased read buffer size for rserver proxy (rstudio-pro:#4764)

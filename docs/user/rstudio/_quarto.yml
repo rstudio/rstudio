@@ -21,12 +21,18 @@ website:
     right:
       - text: Version
         menu:
+          - text: 2023.06.2+561
+            url: https://docs.posit.co/ide/user/2023.06.2/
+          - text: 2023.06.1+524
+            url: https://docs.posit.co/ide/user/2023.06.1/
+          - text: 2023.03.1+446
+            url: https://docs.posit.co/ide/user/2023.03.1/
           - text: Additional versions
             url: https://docs.posit.co/rsw/documentation/
       - text: "Guides"
         menu:
           - text: "Workbench Install Guide"
-            url: 'https://docs.posit.co/rsw/installation/'
+            url: 'https://docs.posit.co/ide/server-pro/getting_started/installation/'
           - text: "Workbench Admin Guide"
             url: 'https://docs.posit.co/ide/server-pro/'
           - text: "Posit Workbench User Guide"
@@ -37,7 +43,7 @@ website:
         url: https://docs.posit.co/
         aria-label: Posit Documentation website
       - icon: question-circle
-        url: https://support.rstudio.com/
+        url: https://support.posit.co/
         aria-label: Posit Professional Support
       - text: "<img src='/images/posit-logo-black-TM.png' id='navbar-right-logo'>"
         url: "https://posit.co"
@@ -81,6 +87,7 @@ website:
               - ide/guide/tools/jobs.qmd
               - ide/guide/tools/jobs-in-action.qmd
               - ide/guide/tools/version-control.qmd
+              - ide/guide/tools/copilot.qmd
           - section: "Productivity"
             contents:
               - ide/guide/productivity/text-editor.qmd
@@ -118,11 +125,11 @@ website:
       - icon: house-fill
         href: https://www.posit.co
       - icon: question-circle-fill
-        href: https://support.rstudio.com/hc/en-us
+        href: https://support.posit.co/hc/en-us
       - icon: lightbulb-fill
-        href: https://solutions.rstudio.com
+        href: https://solutions.posit.co
       - icon: twitter
-        href: https://twitter.com/rstudio
+        href: https://twitter.com/posit_pbc
 
 
 format:

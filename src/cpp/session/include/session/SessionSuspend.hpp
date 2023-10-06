@@ -49,7 +49,8 @@ void addBlockingOp(std::string op);
 void addBlockingOp(std::string method, const boost::function<bool()>& allowSuspend);
 void removeBlockingOp(std::string op);
 bool checkBlockingOp(bool blocking, std::string op);
-void checkForSuspend(const boost::function<bool()>& allowSuspend);
+void checkForRequestedSuspend(const boost::function<bool()>& allowSuspend);
+void checkForIdleSuspend(const boost::function<bool()>& allowSuspend);
 std::string getResumedMessage();
 void initFromResume();
 

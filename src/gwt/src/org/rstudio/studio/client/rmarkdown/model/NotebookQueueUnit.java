@@ -26,11 +26,16 @@ public class NotebookQueueUnit extends JavaScriptObject
    {
    }
    
-   public final static native NotebookQueueUnit create(
-         String docId, String chunkId, int execMode, int execScope, 
-         String code) /*-{
+   public final static native NotebookQueueUnit create(String docId,
+                                                       String docType,
+                                                       String chunkId,
+                                                       int execMode,
+                                                       int execScope,
+                                                       String code)
+   /*-{
       return {
          doc_id:     docId,
+         doc_type:   docType,
          chunk_id:   chunkId,
          exec_mode:  execMode,
          exec_scope: execScope,
@@ -43,6 +48,10 @@ public class NotebookQueueUnit extends JavaScriptObject
    
    public final native String getDocId() /*-{
       return this.doc_id;
+   }-*/;
+   
+   public final native String getDocType() /*-{
+      return this.doc_type;
    }-*/;
 
    public final native String getChunkId() /*-{

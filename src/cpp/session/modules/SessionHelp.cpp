@@ -468,11 +468,35 @@ void handleHttpdResult(SEXP httpdSEXP,
    // setup response
    pResponse->setStatusCode(code);
    pResponse->setContentType(contentType);
-
+   
    // set headers
    std::for_each(headers.begin(), 
                  headers.end(),
                  boost::bind(&http::Response::setHeaderLine, pResponse, _1));
+   
+   // fix up location header for redirects
+   if (code == 302 && pResponse->containsHeader("Location"))
+   {
+      // check for a redirect to the R help server. the R help server hard-codes
+      // navigation to the help server at 127.0.0.1 in a number of places
+      std::string location = pResponse->headerValue("Location");
+      std::string rPort = module_context::rLocalHelpPort();
+      std::string rHelpPrefix = fmt::format("http://127.0.0.1:{}/", rPort);
+      if (boost::algorithm::starts_with(location, rHelpPrefix))
+      {
+         // make sure we use the same base URL as the request, otherwise
+         // we might not be allowed to display the redirected Help content in the frame
+         //
+         // for example, RStudio Server might've been loaded from 'http://localhost:8787', but the
+         // R help server might try directing to 'http://127.0.0.1:8787'
+         //
+         // https://github.com/rstudio/rstudio/issues/13263
+         std::string path = location.substr(rHelpPrefix.length());
+         std::string ref = request.headerValue("Referer");
+         std::string redirect = fmt::format("{}help/{}", ref, path);
+         pResponse->setHeader("Location", redirect);
+      }
+   }
    
    // check payload
    SEXP payloadSEXP = VECTOR_ELT(httpdSEXP, 0);

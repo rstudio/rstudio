@@ -14,11 +14,12 @@
  */
 package org.rstudio.studio.client.common.filetypes;
 
-import com.google.gwt.core.client.GWT;
 import org.rstudio.core.client.files.FileSystemItem;
 import org.rstudio.core.client.resources.ImageResource2x;
 import org.rstudio.studio.client.application.events.EventBus;
 import org.rstudio.studio.client.common.StudioClientCommonConstants;
+
+import com.google.gwt.core.client.GWT;
 
 public class CodeBrowserType extends EditableFileType
 {
@@ -33,5 +34,6 @@ public class CodeBrowserType extends EditableFileType
    {
       assert false : "CodeBrowserType doesn't operate on filesystem files";
    }
+   
    private static final StudioClientCommonConstants constants_ = GWT.create(StudioClientCommonConstants.class);
 }

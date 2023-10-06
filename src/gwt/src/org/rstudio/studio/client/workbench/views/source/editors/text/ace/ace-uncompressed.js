@@ -304,7 +304,28 @@ require("./es6-shim");
 
 });
 
-define("ace/lib/lang",["require","exports","module"], function(require, exports, module){"use strict";
+define("ace/lib/deep_copy",["require","exports","module"], function(require, exports, module){exports.deepCopy = function deepCopy(obj) {
+    if (typeof obj !== "object" || !obj)
+        return obj;
+    var copy;
+    if (Array.isArray(obj)) {
+        copy = [];
+        for (var key = 0; key < obj.length; key++) {
+            copy[key] = deepCopy(obj[key]);
+        }
+        return copy;
+    }
+    if (Object.prototype.toString.call(obj) !== "[object Object]")
+        return obj;
+    copy = {};
+    for (var key in obj)
+        copy[key] = deepCopy(obj[key]);
+    return copy;
+};
+
+});
+
+define("ace/lib/lang",["require","exports","module","ace/lib/deep_copy"], function(require, exports, module){"use strict";
 exports.last = function (a) {
     return a[a.length - 1];
 };
@@ -346,24 +367,7 @@ exports.copyArray = function (array) {
     }
     return copy;
 };
-exports.deepCopy = function deepCopy(obj) {
-    if (typeof obj !== "object" || !obj)
-        return obj;
-    var copy;
-    if (Array.isArray(obj)) {
-        copy = [];
-        for (var key = 0; key < obj.length; key++) {
-            copy[key] = deepCopy(obj[key]);
-        }
-        return copy;
-    }
-    if (Object.prototype.toString.call(obj) !== "[object Object]")
-        return obj;
-    copy = {};
-    for (var key in obj)
-        copy[key] = deepCopy(obj[key]);
-    return copy;
-};
+exports.deepCopy = require("./deep_copy").deepCopy;
 exports.arrayToMap = function (arr) {
     var map = {};
     for (var i = 0; i < arr.length; i++) {
@@ -455,6 +459,24 @@ exports.delayedCall = function (fcn, defaultTimeout) {
         return timer;
     };
     return _self;
+};
+exports.supportsLookbehind = function () {
+    try {
+        new RegExp('(?<=.)');
+    }
+    catch (e) {
+        return false;
+    }
+    return true;
+};
+exports.supportsUnicodeFlag = function () {
+    try {
+        new RegExp('^.$', 'u');
+    }
+    catch (error) {
+        return false;
+    }
+    return true;
 };
 
 });
@@ -938,9 +960,20 @@ exports.EventEmitter = EventEmitter;
 
 });
 
-define("ace/lib/app_config",["require","exports","module","ace/lib/oop","ace/lib/event_emitter"], function(require, exports, module){"no use strict";
+define("ace/lib/report_error",["require","exports","module"], function(require, exports, module){exports.reportError = function reportError(msg, data) {
+    var e = new Error(msg);
+    e.data = data;
+    if (typeof console == "object" && console.error)
+        console.error(e);
+    setTimeout(function () { throw e; });
+};
+
+});
+
+define("ace/lib/app_config",["require","exports","module","ace/lib/oop","ace/lib/event_emitter","ace/lib/report_error"], function(require, exports, module){"no use strict";
 var oop = require("./oop");
 var EventEmitter = require("./event_emitter").EventEmitter;
+var reportError = require("./report_error").reportError;
 var optionsProvider = {
     setOptions: function (optList) {
         Object.keys(optList).forEach(function (key) {
@@ -992,13 +1025,7 @@ function warn(message) {
     if (typeof console != "undefined" && console.warn)
         console.warn.apply(console, arguments);
 }
-function reportError(msg, data) {
-    var e = new Error(msg);
-    e.data = data;
-    if (typeof console == "object" && console.error)
-        console.error(e);
-    setTimeout(function () { throw e; });
-}
+var messages;
 var AppConfig = /** @class */ (function () {
     function AppConfig() {
         this.$defaultOptions = {};
@@ -1046,6 +1073,23 @@ var AppConfig = /** @class */ (function () {
             this.setDefaultValue(path, key, optionHash[key]);
         }, this);
     };
+    AppConfig.prototype.setMessages = function (value) {
+        messages = value;
+    };
+    AppConfig.prototype.nls = function (string, params) {
+        if (messages && !messages[string]) {
+            warn("No message found for '" + string + "' in the provided messages, falling back to default English message.");
+        }
+        var translated = messages && messages[string] || string;
+        if (params) {
+            translated = translated.replace(/\$(\$|[\d]+)/g, function (_, name) {
+                if (name == "$")
+                    return "$";
+                return params[name];
+            });
+        }
+        return translated;
+    };
     return AppConfig;
 }());
 AppConfig.prototype.warn = warn;
@@ -1055,14 +1099,14 @@ exports.AppConfig = AppConfig;
 
 });
 
-define("ace/theme/textmate.css",["require","exports","module"], function(require, exports, module){module.exports = ".ace-tm .ace_gutter {\n  background: #f0f0f0;\n  color: #333;\n}\n\n.ace-tm .ace_print-margin {\n  width: 1px;\n  background: #e8e8e8;\n}\n\n.ace-tm .ace_fold {\n    background-color: #6B72E6;\n}\n\n.ace-tm {\n  background-color: #FFFFFF;\n  color: black;\n}\n\n.ace-tm .ace_cursor {\n  color: black;\n}\n        \n.ace-tm .ace_invisible {\n  color: rgb(191, 191, 191);\n}\n\n.ace-tm .ace_storage,\n.ace-tm .ace_keyword {\n  color: blue;\n}\n\n.ace-tm .ace_constant {\n  color: rgb(197, 6, 11);\n}\n\n.ace-tm .ace_constant.ace_buildin {\n  color: rgb(88, 72, 246);\n}\n\n.ace-tm .ace_constant.ace_language {\n  color: rgb(88, 92, 246);\n}\n\n.ace-tm .ace_constant.ace_library {\n  color: rgb(6, 150, 14);\n}\n\n.ace-tm .ace_invalid {\n  background-color: rgba(255, 0, 0, 0.1);\n  color: red;\n}\n\n.ace-tm .ace_support.ace_function {\n  color: rgb(60, 76, 114);\n}\n\n.ace-tm .ace_support.ace_constant {\n  color: rgb(6, 150, 14);\n}\n\n.ace-tm .ace_support.ace_type,\n.ace-tm .ace_support.ace_class {\n  color: rgb(109, 121, 222);\n}\n\n.ace-tm .ace_keyword.ace_operator {\n  color: rgb(104, 118, 135);\n}\n\n.ace-tm .ace_string {\n  color: rgb(3, 106, 7);\n}\n\n.ace-tm .ace_comment {\n  color: rgb(76, 136, 107);\n}\n\n.ace-tm .ace_comment.ace_doc {\n  color: rgb(0, 102, 255);\n}\n\n.ace-tm .ace_comment.ace_doc.ace_tag {\n  color: rgb(128, 159, 191);\n}\n\n.ace-tm .ace_constant.ace_numeric {\n  color: rgb(0, 0, 205);\n}\n\n.ace-tm .ace_variable {\n  color: rgb(49, 132, 149);\n}\n\n.ace-tm .ace_xml-pe {\n  color: rgb(104, 104, 91);\n}\n\n.ace-tm .ace_entity.ace_name.ace_function {\n  color: #0000A2;\n}\n\n\n.ace-tm .ace_heading {\n  color: rgb(12, 7, 255);\n}\n\n.ace-tm .ace_list {\n  color:rgb(185, 6, 144);\n}\n\n.ace-tm .ace_meta.ace_tag {\n  color:rgb(0, 22, 142);\n}\n\n.ace-tm .ace_string.ace_regex {\n  color: rgb(255, 0, 0)\n}\n\n.ace-tm .ace_marker-layer .ace_selection {\n  background: rgb(181, 213, 255);\n}\n.ace-tm.ace_multiselect .ace_selection.ace_start {\n  box-shadow: 0 0 3px 0px white;\n}\n.ace-tm .ace_marker-layer .ace_step {\n  background: rgb(252, 255, 0);\n}\n\n.ace-tm .ace_marker-layer .ace_stack {\n  background: rgb(164, 229, 101);\n}\n\n.ace-tm .ace_marker-layer .ace_bracket {\n  margin: -1px 0 0 -1px;\n  border: 1px solid rgb(192, 192, 192);\n}\n\n.ace-tm .ace_marker-layer .ace_active-line {\n  background: rgba(0, 0, 0, 0.07);\n}\n\n.ace-tm .ace_gutter-active-line {\n    background-color : #dcdcdc;\n}\n\n.ace-tm .ace_marker-layer .ace_selected-word {\n  background: rgb(250, 250, 255);\n  border: 1px solid rgb(200, 200, 250);\n}\n\n.ace-tm .ace_indent-guide {\n  background: url(\"data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAEAAAACCAYAAACZgbYnAAAAE0lEQVQImWP4////f4bLly//BwAmVgd1/w11/gAAAABJRU5ErkJggg==\") right repeat-y;\n}\n\n.ace-tm .ace_indent-guide-active {\n  background: url(\"data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAEAAAACCAYAAACZgbYnAAAACXBIWXMAAAsTAAALEwEAmpwYAAAAIGNIUk0AAHolAACAgwAA+f8AAIDpAAB1MAAA6mAAADqYAAAXb5JfxUYAAAAZSURBVHjaYvj///9/hivKyv8BAAAA//8DACLqBhbvk+/eAAAAAElFTkSuQmCC\") right repeat-y;\n}\n";
+define("ace/theme/textmate-css",["require","exports","module"], function(require, exports, module){module.exports = ".ace-tm .ace_gutter {\n  background: #f0f0f0;\n  color: #333;\n}\n\n.ace-tm .ace_print-margin {\n  width: 1px;\n  background: #e8e8e8;\n}\n\n.ace-tm .ace_fold {\n    background-color: #6B72E6;\n}\n\n.ace-tm {\n  background-color: #FFFFFF;\n  color: black;\n}\n\n.ace-tm .ace_cursor {\n  color: black;\n}\n        \n.ace-tm .ace_invisible {\n  color: rgb(191, 191, 191);\n}\n\n.ace-tm .ace_storage,\n.ace-tm .ace_keyword {\n  color: blue;\n}\n\n.ace-tm .ace_constant {\n  color: rgb(197, 6, 11);\n}\n\n.ace-tm .ace_constant.ace_buildin {\n  color: rgb(88, 72, 246);\n}\n\n.ace-tm .ace_constant.ace_language {\n  color: rgb(88, 92, 246);\n}\n\n.ace-tm .ace_constant.ace_library {\n  color: rgb(6, 150, 14);\n}\n\n.ace-tm .ace_invalid {\n  background-color: rgba(255, 0, 0, 0.1);\n  color: red;\n}\n\n.ace-tm .ace_support.ace_function {\n  color: rgb(60, 76, 114);\n}\n\n.ace-tm .ace_support.ace_constant {\n  color: rgb(6, 150, 14);\n}\n\n.ace-tm .ace_support.ace_type,\n.ace-tm .ace_support.ace_class {\n  color: rgb(109, 121, 222);\n}\n\n.ace-tm .ace_keyword.ace_operator {\n  color: rgb(104, 118, 135);\n}\n\n.ace-tm .ace_string {\n  color: rgb(3, 106, 7);\n}\n\n.ace-tm .ace_comment {\n  color: rgb(76, 136, 107);\n}\n\n.ace-tm .ace_comment.ace_doc {\n  color: rgb(0, 102, 255);\n}\n\n.ace-tm .ace_comment.ace_doc.ace_tag {\n  color: rgb(128, 159, 191);\n}\n\n.ace-tm .ace_constant.ace_numeric {\n  color: rgb(0, 0, 205);\n}\n\n.ace-tm .ace_variable {\n  color: rgb(49, 132, 149);\n}\n\n.ace-tm .ace_xml-pe {\n  color: rgb(104, 104, 91);\n}\n\n.ace-tm .ace_entity.ace_name.ace_function {\n  color: #0000A2;\n}\n\n\n.ace-tm .ace_heading {\n  color: rgb(12, 7, 255);\n}\n\n.ace-tm .ace_list {\n  color:rgb(185, 6, 144);\n}\n\n.ace-tm .ace_meta.ace_tag {\n  color:rgb(0, 22, 142);\n}\n\n.ace-tm .ace_string.ace_regex {\n  color: rgb(255, 0, 0)\n}\n\n.ace-tm .ace_marker-layer .ace_selection {\n  background: rgb(181, 213, 255);\n}\n.ace-tm.ace_multiselect .ace_selection.ace_start {\n  box-shadow: 0 0 3px 0px white;\n}\n.ace-tm .ace_marker-layer .ace_step {\n  background: rgb(252, 255, 0);\n}\n\n.ace-tm .ace_marker-layer .ace_stack {\n  background: rgb(164, 229, 101);\n}\n\n.ace-tm .ace_marker-layer .ace_bracket {\n  margin: -1px 0 0 -1px;\n  border: 1px solid rgb(192, 192, 192);\n}\n\n.ace-tm .ace_marker-layer .ace_active-line {\n  background: rgba(0, 0, 0, 0.07);\n}\n\n.ace-tm .ace_gutter-active-line {\n    background-color : #dcdcdc;\n}\n\n.ace-tm .ace_marker-layer .ace_selected-word {\n  background: rgb(250, 250, 255);\n  border: 1px solid rgb(200, 200, 250);\n}\n\n.ace-tm .ace_indent-guide {\n  background: url(\"data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAEAAAACCAYAAACZgbYnAAAAE0lEQVQImWP4////f4bLly//BwAmVgd1/w11/gAAAABJRU5ErkJggg==\") right repeat-y;\n}\n\n.ace-tm .ace_indent-guide-active {\n  background: url(\"data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAEAAAACCAYAAACZgbYnAAAACXBIWXMAAAsTAAALEwEAmpwYAAAAIGNIUk0AAHolAACAgwAA+f8AAIDpAAB1MAAA6mAAADqYAAAXb5JfxUYAAAAZSURBVHjaYvj///9/hivKyv8BAAAA//8DACLqBhbvk+/eAAAAAElFTkSuQmCC\") right repeat-y;\n}\n";
 
 });
 
-define("ace/theme/textmate",["require","exports","module","ace/theme/textmate.css","ace/lib/dom"], function(require, exports, module){"use strict";
+define("ace/theme/textmate",["require","exports","module","ace/theme/textmate-css","ace/lib/dom"], function(require, exports, module){"use strict";
 exports.isDark = false;
 exports.cssClass = "ace-tm";
-exports.cssText = require("./textmate.css");
+exports.cssText = require("./textmate-css");
 exports.$id = "ace/theme/textmate";
 var dom = require("../lib/dom");
 dom.importCssString(exports.cssText, exports.cssClass, false);
@@ -1134,15 +1178,19 @@ exports.setModuleUrl = function (name, subst) {
 var loader = function (moduleName, cb) {
     if (moduleName === "ace/theme/textmate" || moduleName === "./theme/textmate")
         return cb(null, require("./theme/textmate"));
-    return console.error("loader is not configured");
+    if (customLoader)
+        return customLoader(moduleName, cb);
+    console.error("loader is not configured");
 };
+var customLoader;
 exports.setLoader = function (cb) {
-    loader = cb;
+    customLoader = cb;
 };
 exports.dynamicModules = Object.create(null);
 exports.$loading = {};
+exports.$loaded = {};
 exports.loadModule = function (moduleName, onLoad) {
-    var module, moduleType;
+    var loadedModule, moduleType;
     if (Array.isArray(moduleName)) {
         moduleType = moduleName[0];
         moduleName = moduleName[1];
@@ -1157,6 +1205,8 @@ exports.loadModule = function (moduleName, onLoad) {
             return;
         var afterLoad = function () {
             loader(moduleName, function (err, module) {
+                if (module)
+                    exports.$loaded[moduleName] = module;
                 exports._emit("load.module", { name: moduleName, module: module });
                 var listeners = exports.$loading[moduleName];
                 exports.$loading[moduleName] = null;
@@ -1182,10 +1232,16 @@ exports.loadModule = function (moduleName, onLoad) {
     }
     else {
         try {
-            module = require(moduleName);
+            loadedModule = this.$require(moduleName);
         }
         catch (e) { }
-        load(module);
+        load(loadedModule || exports.$loaded[moduleName]);
+    }
+};
+exports.$require = function (moduleName) {
+    if (typeof module.require == "function") {
+        var req = "require";
+        return module[req](moduleName);
     }
 };
 exports.setModuleLoader = function (moduleName, onLoad) {
@@ -1199,7 +1255,7 @@ var reportErrorIfPathIsNotConfigured = function () {
         reportErrorIfPathIsNotConfigured = function () { };
     }
 };
-exports.version = "1.19.0";
+exports.version = "1.28.0";
 
 });
 
@@ -1220,6 +1276,7 @@ var global = (function() {
 
 module.exports = function(ace) {
     config.init = init;
+    config.$require = require;
     ace.require = require;
 
     if (typeof define === "function")
@@ -1965,8 +2022,8 @@ exports.Range = Range;
 
 });
 
-define("ace/mode/text_highlight_rules",["require","exports","module","ace/lib/lang"], function(require, exports, module){"use strict";
-var lang = require("../lib/lang");
+define("ace/mode/text_highlight_rules",["require","exports","module","ace/lib/deep_copy"], function(require, exports, module){"use strict";
+var deepCopy = require("../lib/deep_copy").deepCopy;
 var TextHighlightRules = function () {
     this.$rules = {
         "start": [{
@@ -2020,7 +2077,7 @@ var TextHighlightRules = function () {
         if (escapeRules) {
             var addRules = Array.prototype[append ? "push" : "unshift"];
             for (var i = 0; i < states.length; i++)
-                addRules.apply(this.$rules[states[i]], lang.deepCopy(escapeRules));
+                addRules.apply(this.$rules[states[i]], deepCopy(escapeRules));
         }
         if (!this.$embeds)
             this.$embeds = [];
@@ -2387,8 +2444,8 @@ oop.inherits(FoldMode, BaseFoldMode);
 
 });
 
-define("ace/tokenizer",["require","exports","module","ace/config"], function(require, exports, module){"use strict";
-var config = require("./config");
+define("ace/tokenizer",["require","exports","module","ace/lib/report_error"], function(require, exports, module){"use strict";
+var reportError = require("./lib/report_error").reportError;
 var MAX_TOKEN_COUNT = 2000;
 var Tokenizer = /** @class */ (function () {
     function Tokenizer(rules) {
@@ -2678,7 +2735,7 @@ var Tokenizer = /** @class */ (function () {
     };
     return Tokenizer;
 }());
-Tokenizer.prototype.reportError = config.reportError;
+Tokenizer.prototype.reportError = reportError;
 exports.Tokenizer = Tokenizer;
 
 });
@@ -2851,6 +2908,7 @@ var getWrapped = function (selection, selected, opening, closing) {
     };
 };
 var CstyleBehaviour = function (options) {
+    options = options || {};
     this.add("braces", "insertion", function (state, action, editor, session, text) {
         var cursor = editor.getCursorPosition();
         var line = session.doc.getLine(cursor.row);
@@ -2862,7 +2920,7 @@ var CstyleBehaviour = function (options) {
                 return getWrapped(selection, selected, '{', '}');
             }
             else if (CstyleBehaviour.isSaneInsertion(editor, session)) {
-                if (/[\]\}\)]/.test(line[cursor.column]) || editor.inMultiSelectMode || options && options.braces) {
+                if (/[\]\}\)]/.test(line[cursor.column]) || editor.inMultiSelectMode || options.braces) {
                     CstyleBehaviour.recordAutoInsert(editor, session, "}");
                     return {
                         text: '{}',
@@ -3098,6 +3156,36 @@ var CstyleBehaviour = function (options) {
             }
         }
     });
+    if (options.closeDocComment !== false) {
+        this.add("doc comment end", "insertion", function (state, action, editor, session, text) {
+            if (state === "doc-start" && (text === "\n" || text === "\r\n") && editor.selection.isEmpty()) {
+                var cursor = editor.getCursorPosition();
+                var line = session.doc.getLine(cursor.row);
+                var nextLine = session.doc.getLine(cursor.row + 1);
+                var indent = this.$getIndent(line);
+                if (/\s*\*/.test(nextLine)) {
+                    if (/^\s*\*/.test(line)) {
+                        return {
+                            text: text + indent + "* ",
+                            selection: [1, 3 + indent.length, 1, 3 + indent.length]
+                        };
+                    }
+                    else {
+                        return {
+                            text: text + indent + " * ",
+                            selection: [1, 3 + indent.length, 1, 3 + indent.length]
+                        };
+                    }
+                }
+                if (/\/\*\*/.test(line.substring(0, cursor.column))) {
+                    return {
+                        text: text + indent + " * " + text + " " + indent + "*/",
+                        selection: [1, 4 + indent.length, 1, 4 + indent.length]
+                    };
+                }
+            }
+        });
+    }
 };
 CstyleBehaviour.isSaneInsertion = function (editor, session) {
     var cursor = editor.getCursorPosition();
@@ -4874,6 +4962,10 @@ var ClojureHighlightRules = function () {
                 token: "keyword",
                 regex: "[\\[|\\]]"
             }, {
+                token: "string.regexp",
+                regex: '#"',
+                next: "regex"
+            }, {
                 token: "keyword",
                 regex: "[\\{|\\}|\\#\\{|\\#\\}]"
             }, {
@@ -4907,9 +4999,6 @@ var ClojureHighlightRules = function () {
             }, {
                 token: "constant",
                 regex: /:[^()\[\]{}'"\^%`,;\s]+/
-            }, {
-                token: "string.regexp",
-                regex: '/#"(?:\\.|(?:\\")|[^""\n])*"/g'
             }
         ],
         "string": [
@@ -4918,11 +5007,47 @@ var ClojureHighlightRules = function () {
                 regex: "\\\\.|\\\\$"
             }, {
                 token: "string",
-                regex: '[^"\\\\]+'
-            }, {
-                token: "string",
                 regex: '"',
                 next: "start"
+            }, {
+                defaultToken: "string"
+            }
+        ],
+        "regex": [
+            {
+                token: "regexp.keyword.operator",
+                regex: "\\\\(?:u[\\da-fA-F]{4}|x[\\da-fA-F]{2}|.)"
+            }, {
+                token: "string.regexp",
+                regex: '"',
+                next: "start"
+            }, {
+                token: "constant.language.escape",
+                regex: /\(\?[:=!]|\)|\{\d+\b,?\d*\}|[+*]\?|[()$^+*?.]/
+            }, {
+                token: "constant.language.delimiter",
+                regex: /\|/
+            }, {
+                token: "constant.language.escape",
+                regex: /\[\^?/,
+                next: "regex_character_class"
+            }, {
+                defaultToken: "string.regexp"
+            }
+        ],
+        "regex_character_class": [
+            {
+                token: "regexp.charclass.keyword.operator",
+                regex: "\\\\(?:u[\\da-fA-F]{4}|x[\\da-fA-F]{2}|.)"
+            }, {
+                token: "constant.language.escape",
+                regex: "]",
+                next: "regex"
+            }, {
+                token: "constant.language.escape",
+                regex: "-"
+            }, {
+                defaultToken: "string.regexp.charachterclass"
             }
         ]
     };
@@ -5421,6 +5546,9 @@ var WorkerClient = function(worker) {
         this._signal("terminate", {});
         this.deltaQueue = null;
         this.$worker.terminate();
+        this.$worker.onerror = function(e) {
+            e.preventDefault();
+        };
         this.$worker = null;
         if (this.$doc)
             this.$doc.off("change", this.changeListener);
@@ -5589,50 +5717,132 @@ exports.Mode = Mode;
 
 });
 
-define("ace/mode/doc_comment_highlight_rules",["require","exports","module","ace/lib/oop","ace/mode/text_highlight_rules"], function(require, exports, module){"use strict";
+define("ace/mode/jsdoc_comment_highlight_rules",["require","exports","module","ace/lib/oop","ace/mode/text_highlight_rules"], function(require, exports, module){"use strict";
 var oop = require("../lib/oop");
 var TextHighlightRules = require("./text_highlight_rules").TextHighlightRules;
-var DocCommentHighlightRules = function () {
+var JsDocCommentHighlightRules = function () {
     this.$rules = {
-        "start": [{
+        "start": [
+            {
+                token: ["comment.doc.tag", "comment.doc.text", "lparen.doc"],
+                regex: "(@(?:param|member|typedef|property|namespace|var|const|callback))(\\s*)({)",
+                push: [
+                    {
+                        token: "lparen.doc",
+                        regex: "{",
+                        push: [
+                            {
+                                include: "doc-syntax"
+                            }, {
+                                token: "rparen.doc",
+                                regex: "}|(?=$)",
+                                next: "pop"
+                            }
+                        ]
+                    }, {
+                        token: ["rparen.doc", "text.doc", "variable.parameter.doc", "lparen.doc", "variable.parameter.doc", "rparen.doc"],
+                        regex: /(})(\s*)(?:([\w=:\/\.]+)|(?:(\[)([\w=:\/\.]+)(\])))/,
+                        next: "pop"
+                    }, {
+                        token: "rparen.doc",
+                        regex: "}|(?=$)",
+                        next: "pop"
+                    }, {
+                        include: "doc-syntax"
+                    }, {
+                        defaultToken: "text.doc"
+                    }
+                ]
+            }, {
+                token: ["comment.doc.tag", "text.doc", "lparen.doc"],
+                regex: "(@(?:returns?|yields|type|this|suppress|public|protected|private|package|modifies|"
+                    + "implements|external|exception|throws|enum|define|extends))(\\s*)({)",
+                push: [
+                    {
+                        token: "lparen.doc",
+                        regex: "{",
+                        push: [
+                            {
+                                include: "doc-syntax"
+                            }, {
+                                token: "rparen.doc",
+                                regex: "}|(?=$)",
+                                next: "pop"
+                            }
+                        ]
+                    }, {
+                        token: "rparen.doc",
+                        regex: "}|(?=$)",
+                        next: "pop"
+                    }, {
+                        include: "doc-syntax"
+                    }, {
+                        defaultToken: "text.doc"
+                    }
+                ]
+            }, {
+                token: ["comment.doc.tag", "text.doc", "variable.parameter.doc"],
+                regex: "(@(?:alias|memberof|instance|module|name|lends|namespace|external|this|template|"
+                    + "requires|param|implements|function|extends|typedef|mixes|constructor|var|"
+                    + "memberof\\!|event|listens|exports|class|constructs|interface|emits|fires|"
+                    + "throws|const|callback|borrows|augments))(\\s+)(\\w[\\w#\.:\/~\"\\-]*)?"
+            }, {
+                token: ["comment.doc.tag", "text.doc", "variable.parameter.doc"],
+                regex: "(@method)(\\s+)(\\w[\\w\.\\(\\)]*)"
+            }, {
                 token: "comment.doc.tag",
-                regex: "@[\\w\\d_]+" // TODO: fix email addresses
+                regex: "@access\\s+(?:private|public|protected)"
+            }, {
+                token: "comment.doc.tag",
+                regex: "@kind\\s+(?:class|constant|event|external|file|function|member|mixin|module|namespace|typedef)"
+            }, {
+                token: "comment.doc.tag",
+                regex: "@\\w+(?=\\s|$)"
             },
-            DocCommentHighlightRules.getTagRule(),
+            JsDocCommentHighlightRules.getTagRule(),
             {
                 defaultToken: "comment.doc",
                 caseInsensitive: true
+            }
+        ],
+        "doc-syntax": [{
+                token: "operator.doc",
+                regex: /[|:]/
+            }, {
+                token: "paren.doc",
+                regex: /[\[\]]/
             }]
     };
+    this.normalizeRules();
 };
-oop.inherits(DocCommentHighlightRules, TextHighlightRules);
-DocCommentHighlightRules.getTagRule = function (start) {
+oop.inherits(JsDocCommentHighlightRules, TextHighlightRules);
+JsDocCommentHighlightRules.getTagRule = function (start) {
     return {
         token: "comment.doc.tag.storage.type",
         regex: "\\b(?:TODO|FIXME|XXX|HACK)\\b"
     };
 };
-DocCommentHighlightRules.getStartRule = function (start) {
+JsDocCommentHighlightRules.getStartRule = function (start) {
     return {
         token: "comment.doc",
         regex: "\\/\\*(?=\\*)",
         next: start
     };
 };
-DocCommentHighlightRules.getEndRule = function (start) {
+JsDocCommentHighlightRules.getEndRule = function (start) {
     return {
         token: "comment.doc",
         regex: "\\*\\/",
         next: start
     };
 };
-exports.DocCommentHighlightRules = DocCommentHighlightRules;
+exports.JsDocCommentHighlightRules = JsDocCommentHighlightRules;
 
 });
 
-define("ace/mode/javascript_highlight_rules",["require","exports","module","ace/lib/oop","ace/mode/doc_comment_highlight_rules","ace/mode/text_highlight_rules"], function(require, exports, module){"use strict";
+define("ace/mode/javascript_highlight_rules",["require","exports","module","ace/lib/oop","ace/mode/jsdoc_comment_highlight_rules","ace/mode/text_highlight_rules"], function(require, exports, module){"use strict";
 var oop = require("../lib/oop");
-var DocCommentHighlightRules = require("./doc_comment_highlight_rules").DocCommentHighlightRules;
+var DocCommentHighlightRules = require("./jsdoc_comment_highlight_rules").JsDocCommentHighlightRules;
 var TextHighlightRules = require("./text_highlight_rules").TextHighlightRules;
 var identifierRe = "[a-zA-Z\\$_\u00a1-\uffff][a-zA-Z\\d\\$_\u00a1-\uffff]*";
 var JavaScriptHighlightRules = function (options) {
@@ -7749,6 +7959,47 @@ exports.Mode = Mode;
 
 });
 
+define("ace/mode/doc_comment_highlight_rules",["require","exports","module","ace/lib/oop","ace/mode/text_highlight_rules"], function(require, exports, module){"use strict";
+var oop = require("../lib/oop");
+var TextHighlightRules = require("./text_highlight_rules").TextHighlightRules;
+var DocCommentHighlightRules = function () {
+    this.$rules = {
+        "start": [
+            {
+                token: "comment.doc.tag",
+                regex: "@\\w+(?=\\s|$)"
+            }, DocCommentHighlightRules.getTagRule(), {
+                defaultToken: "comment.doc",
+                caseInsensitive: true
+            }
+        ]
+    };
+};
+oop.inherits(DocCommentHighlightRules, TextHighlightRules);
+DocCommentHighlightRules.getTagRule = function (start) {
+    return {
+        token: "comment.doc.tag.storage.type",
+        regex: "\\b(?:TODO|FIXME|XXX|HACK)\\b"
+    };
+};
+DocCommentHighlightRules.getStartRule = function (start) {
+    return {
+        token: "comment.doc",
+        regex: "\\/\\*(?=\\*)",
+        next: start
+    };
+};
+DocCommentHighlightRules.getEndRule = function (start) {
+    return {
+        token: "comment.doc",
+        regex: "\\*\\/",
+        next: start
+    };
+};
+exports.DocCommentHighlightRules = DocCommentHighlightRules;
+
+});
+
 define("ace/mode/csharp_highlight_rules",["require","exports","module","ace/lib/oop","ace/mode/doc_comment_highlight_rules","ace/mode/text_highlight_rules"], function(require, exports, module){"use strict";
 var oop = require("../lib/oop");
 var DocCommentHighlightRules = require("./doc_comment_highlight_rules").DocCommentHighlightRules;
@@ -7924,17 +8175,16 @@ oop.inherits(FoldMode, CFoldMode);
 
 });
 
-define("ace/mode/csharp",["require","exports","module","ace/lib/oop","ace/mode/text","ace/mode/csharp_highlight_rules","ace/mode/matching_brace_outdent","ace/mode/behaviour/cstyle","ace/mode/folding/csharp"], function(require, exports, module){"use strict";
+define("ace/mode/csharp",["require","exports","module","ace/lib/oop","ace/mode/text","ace/mode/csharp_highlight_rules","ace/mode/matching_brace_outdent","ace/mode/folding/csharp"], function(require, exports, module){"use strict";
 var oop = require("../lib/oop");
 var TextMode = require("./text").Mode;
 var CSharpHighlightRules = require("./csharp_highlight_rules").CSharpHighlightRules;
 var MatchingBraceOutdent = require("./matching_brace_outdent").MatchingBraceOutdent;
-var CstyleBehaviour = require("./behaviour/cstyle").CstyleBehaviour;
 var CStyleFoldMode = require("./folding/csharp").FoldMode;
 var Mode = function () {
     this.HighlightRules = CSharpHighlightRules;
     this.$outdent = new MatchingBraceOutdent();
-    this.$behaviour = new CstyleBehaviour();
+    this.$behaviour = this.$defaultBehaviour;
     this.foldingRules = new CStyleFoldMode();
 };
 oop.inherits(Mode, TextMode);
@@ -8304,8 +8554,8 @@ define("ace/mode/c_cpp_highlight_rules",["require","exports","module","ace/lib/o
 var oop = require("../lib/oop");
 var DocCommentHighlightRules = require("./doc_comment_highlight_rules").DocCommentHighlightRules;
 var TextHighlightRules = require("./text_highlight_rules").TextHighlightRules;
-var cFunctions = exports.cFunctions = "\\b(?:hypot(?:f|l)?|s(?:scanf|ystem|nprintf|ca(?:nf|lb(?:n(?:f|l)?|ln(?:f|l)?))|i(?:n(?:h(?:f|l)?|f|l)?|gn(?:al|bit))|tr(?:s(?:tr|pn)|nc(?:py|at|mp)|c(?:spn|hr|oll|py|at|mp)|to(?:imax|d|u(?:l(?:l)?|max)|k|f|l(?:d|l)?)|error|pbrk|ftime|len|rchr|xfrm)|printf|et(?:jmp|vbuf|locale|buf)|qrt(?:f|l)?|w(?:scanf|printf)|rand)|n(?:e(?:arbyint(?:f|l)?|xt(?:toward(?:f|l)?|after(?:f|l)?))|an(?:f|l)?)|c(?:s(?:in(?:h(?:f|l)?|f|l)?|qrt(?:f|l)?)|cos(?:h(?:f)?|f|l)?|imag(?:f|l)?|t(?:ime|an(?:h(?:f|l)?|f|l)?)|o(?:s(?:h(?:f|l)?|f|l)?|nj(?:f|l)?|pysign(?:f|l)?)|p(?:ow(?:f|l)?|roj(?:f|l)?)|e(?:il(?:f|l)?|xp(?:f|l)?)|l(?:o(?:ck|g(?:f|l)?)|earerr)|a(?:sin(?:h(?:f|l)?|f|l)?|cos(?:h(?:f|l)?|f|l)?|tan(?:h(?:f|l)?|f|l)?|lloc|rg(?:f|l)?|bs(?:f|l)?)|real(?:f|l)?|brt(?:f|l)?)|t(?:ime|o(?:upper|lower)|an(?:h(?:f|l)?|f|l)?|runc(?:f|l)?|gamma(?:f|l)?|mp(?:nam|file))|i(?:s(?:space|n(?:ormal|an)|cntrl|inf|digit|u(?:nordered|pper)|p(?:unct|rint)|finite|w(?:space|c(?:ntrl|type)|digit|upper|p(?:unct|rint)|lower|al(?:num|pha)|graph|xdigit|blank)|l(?:ower|ess(?:equal|greater)?)|al(?:num|pha)|gr(?:eater(?:equal)?|aph)|xdigit|blank)|logb(?:f|l)?|max(?:div|abs))|di(?:v|fftime)|_Exit|unget(?:c|wc)|p(?:ow(?:f|l)?|ut(?:s|c(?:har)?|wc(?:har)?)|error|rintf)|e(?:rf(?:c(?:f|l)?|f|l)?|x(?:it|p(?:2(?:f|l)?|f|l|m1(?:f|l)?)?))|v(?:s(?:scanf|nprintf|canf|printf|w(?:scanf|printf))|printf|f(?:scanf|printf|w(?:scanf|printf))|w(?:scanf|printf)|a_(?:start|copy|end|arg))|qsort|f(?:s(?:canf|e(?:tpos|ek))|close|tell|open|dim(?:f|l)?|p(?:classify|ut(?:s|c|w(?:s|c))|rintf)|e(?:holdexcept|set(?:e(?:nv|xceptflag)|round)|clearexcept|testexcept|of|updateenv|r(?:aiseexcept|ror)|get(?:e(?:nv|xceptflag)|round))|flush|w(?:scanf|ide|printf|rite)|loor(?:f|l)?|abs(?:f|l)?|get(?:s|c|pos|w(?:s|c))|re(?:open|e|ad|xp(?:f|l)?)|m(?:in(?:f|l)?|od(?:f|l)?|a(?:f|l|x(?:f|l)?)?))|l(?:d(?:iv|exp(?:f|l)?)|o(?:ngjmp|cal(?:time|econv)|g(?:1(?:p(?:f|l)?|0(?:f|l)?)|2(?:f|l)?|f|l|b(?:f|l)?)?)|abs|l(?:div|abs|r(?:int(?:f|l)?|ound(?:f|l)?))|r(?:int(?:f|l)?|ound(?:f|l)?)|gamma(?:f|l)?)|w(?:scanf|c(?:s(?:s(?:tr|pn)|nc(?:py|at|mp)|c(?:spn|hr|oll|py|at|mp)|to(?:imax|d|u(?:l(?:l)?|max)|k|f|l(?:d|l)?|mbs)|pbrk|ftime|len|r(?:chr|tombs)|xfrm)|to(?:b|mb)|rtomb)|printf|mem(?:set|c(?:hr|py|mp)|move))|a(?:s(?:sert|ctime|in(?:h(?:f|l)?|f|l)?)|cos(?:h(?:f|l)?|f|l)?|t(?:o(?:i|f|l(?:l)?)|exit|an(?:h(?:f|l)?|2(?:f|l)?|f|l)?)|b(?:s|ort))|g(?:et(?:s|c(?:har)?|env|wc(?:har)?)|mtime)|r(?:int(?:f|l)?|ound(?:f|l)?|e(?:name|alloc|wind|m(?:ove|quo(?:f|l)?|ainder(?:f|l)?))|a(?:nd|ise))|b(?:search|towc)|m(?:odf(?:f|l)?|em(?:set|c(?:hr|py|mp)|move)|ktime|alloc|b(?:s(?:init|towcs|rtowcs)|towc|len|r(?:towc|len))))\\b";
-var c_cppHighlightRules = function () {
+var cFunctions = exports.cFunctions = "hypot|hypotf|hypotl|sscanf|system|snprintf|scanf|scalbn|scalbnf|scalbnl|scalbln|scalblnf|scalblnl|sin|sinh|sinhf|sinhl|sinf|sinl|signal|signbit|strstr|strspn|strncpy|strncat|strncmp|strcspn|strchr|strcoll|strcpy|strcat|strcmp|strtoimax|strtod|strtoul|strtoull|strtoumax|strtok|strtof|strtol|strtold|strtoll|strerror|strpbrk|strftime|strlen|strrchr|strxfrm|sprintf|setjmp|setvbuf|setlocale|setbuf|sqrt|sqrtf|sqrtl|swscanf|swprintf|srand|nearbyint|nearbyintf|nearbyintl|nexttoward|nexttowardf|nexttowardl|nextafter|nextafterf|nextafterl|nan|nanf|nanl|csin|csinh|csinhf|csinhl|csinf|csinl|csqrt|csqrtf|csqrtl|ccos|ccosh|ccoshf|ccosf|ccosl|cimag|cimagf|cimagl|ctime|ctan|ctanh|ctanhf|ctanhl|ctanf|ctanl|cos|cosh|coshf|coshl|cosf|cosl|conj|conjf|conjl|copysign|copysignf|copysignl|cpow|cpowf|cpowl|cproj|cprojf|cprojl|ceil|ceilf|ceill|cexp|cexpf|cexpl|clock|clog|clogf|clogl|clearerr|casin|casinh|casinhf|casinhl|casinf|casinl|cacos|cacosh|cacoshf|cacoshl|cacosf|cacosl|catan|catanh|catanhf|catanhl|catanf|catanl|calloc|carg|cargf|cargl|cabs|cabsf|cabsl|creal|crealf|creall|cbrt|cbrtf|cbrtl|time|toupper|tolower|tan|tanh|tanhf|tanhl|tanf|tanl|trunc|truncf|truncl|tgamma|tgammaf|tgammal|tmpnam|tmpfile|isspace|isnormal|isnan|iscntrl|isinf|isdigit|isunordered|isupper|ispunct|isprint|isfinite|iswspace|iswcntrl|iswctype|iswdigit|iswupper|iswpunct|iswprint|iswlower|iswalnum|iswalpha|iswgraph|iswxdigit|iswblank|islower|isless|islessequal|islessgreater|isalnum|isalpha|isgreater|isgreaterequal|isgraph|isxdigit|isblank|ilogb|ilogbf|ilogbl|imaxdiv|imaxabs|div|difftime|_Exit|ungetc|ungetwc|pow|powf|powl|puts|putc|putchar|putwc|putwchar|perror|printf|erf|erfc|erfcf|erfcl|erff|erfl|exit|exp|exp2|exp2f|exp2l|expf|expl|expm1|expm1f|expm1l|vsscanf|vsnprintf|vscanf|vsprintf|vswscanf|vswprintf|vprintf|vfscanf|vfprintf|vfwscanf|vfwprintf|vwscanf|vwprintf|va_start|va_copy|va_end|va_arg|qsort|fscanf|fsetpos|fseek|fclose|ftell|fopen|fdim|fdimf|fdiml|fpclassify|fputs|fputc|fputws|fputwc|fprintf|feholdexcept|fesetenv|fesetexceptflag|fesetround|feclearexcept|fetestexcept|feof|feupdateenv|feraiseexcept|ferror|fegetenv|fegetexceptflag|fegetround|fflush|fwscanf|fwide|fwprintf|fwrite|floor|floorf|floorl|fabs|fabsf|fabsl|fgets|fgetc|fgetpos|fgetws|fgetwc|freopen|free|fread|frexp|frexpf|frexpl|fmin|fminf|fminl|fmod|fmodf|fmodl|fma|fmaf|fmal|fmax|fmaxf|fmaxl|ldiv|ldexp|ldexpf|ldexpl|longjmp|localtime|localeconv|log|log1p|log1pf|log1pl|log10|log10f|log10l|log2|log2f|log2l|logf|logl|logb|logbf|logbl|labs|lldiv|llabs|llrint|llrintf|llrintl|llround|llroundf|llroundl|lrint|lrintf|lrintl|lround|lroundf|lroundl|lgamma|lgammaf|lgammal|wscanf|wcsstr|wcsspn|wcsncpy|wcsncat|wcsncmp|wcscspn|wcschr|wcscoll|wcscpy|wcscat|wcscmp|wcstoimax|wcstod|wcstoul|wcstoull|wcstoumax|wcstok|wcstof|wcstol|wcstold|wcstoll|wcstombs|wcspbrk|wcsftime|wcslen|wcsrchr|wcsrtombs|wcsxfrm|wctob|wctomb|wcrtomb|wprintf|wmemset|wmemchr|wmemcpy|wmemcmp|wmemmove|assert|asctime|asin|asinh|asinhf|asinhl|asinf|asinl|acos|acosh|acoshf|acoshl|acosf|acosl|atoi|atof|atol|atoll|atexit|atan|atanh|atanhf|atanhl|atan2|atan2f|atan2l|atanf|atanl|abs|abort|gets|getc|getchar|getenv|getwc|getwchar|gmtime|rint|rintf|rintl|round|roundf|roundl|rename|realloc|rewind|remove|remquo|remquof|remquol|remainder|remainderf|remainderl|rand|raise|bsearch|btowc|modf|modff|modfl|memset|memchr|memcpy|memcmp|memmove|mktime|malloc|mbsinit|mbstowcs|mbsrtowcs|mbtowc|mblen|mbrtowc|mbrlen";
+var c_cppHighlightRules = function (extraKeywords) {
     var keywordControls = ("break|case|continue|default|do|else|for|goto|if|_Pragma|" +
         "return|switch|while|catch|operator|try|throw|using");
     var storageType = ("asm|__asm__|auto|bool|_Bool|char|_Complex|double|enum|float|" +
@@ -8317,14 +8567,15 @@ var c_cppHighlightRules = function () {
     var keywordOperators = ("and|and_eq|bitand|bitor|compl|not|not_eq|or|or_eq|typeid|xor|xor_eq|" +
         "const_cast|dynamic_cast|reinterpret_cast|static_cast|sizeof|namespace");
     var builtinConstants = ("NULL|true|false|TRUE|FALSE|nullptr");
-    var keywordMapper = this.$keywords = this.createKeywordMapper({
+    var keywordMapper = this.$keywords = this.createKeywordMapper(Object.assign({
         "keyword.control": keywordControls,
         "storage.type": storageType,
         "storage.modifier": storageModifiers,
         "keyword.operator": keywordOperators,
         "variable.language": "this",
-        "constant.language": builtinConstants
-    }, "identifier");
+        "constant.language": builtinConstants,
+        "support.function.C99.c": cFunctions
+    }, extraKeywords), "identifier");
     var identifierRe = "[a-zA-Z\\$_\u00a1-\uffff][a-zA-Z\\d\\$_\u00a1-\uffff]*\\b";
     var escapeRe = /\\(?:['"?\\abfnrtv]|[0-7]{1,3}|x[a-fA-F\d]{2}|u[a-fA-F\d]{4}U[a-fA-F\d]{8}|.)/.source;
     var formatRe = "%"
@@ -8386,9 +8637,6 @@ var c_cppHighlightRules = function () {
             }, {
                 token: "keyword",
                 regex: "#\\s*(?:endif|if|ifdef|else|elif|ifndef)\\b"
-            }, {
-                token: "support.function.C99.c",
-                regex: cFunctions
             }, {
                 token: keywordMapper,
                 regex: "[a-zA-Z_$][a-zA-Z0-9_$]*"
@@ -8470,18 +8718,16 @@ exports.c_cppHighlightRules = c_cppHighlightRules;
 
 });
 
-define("ace/mode/c_cpp",["require","exports","module","ace/lib/oop","ace/mode/text","ace/mode/c_cpp_highlight_rules","ace/mode/matching_brace_outdent","ace/range","ace/mode/behaviour/cstyle","ace/mode/folding/cstyle"], function(require, exports, module){"use strict";
+define("ace/mode/c_cpp",["require","exports","module","ace/lib/oop","ace/mode/text","ace/mode/c_cpp_highlight_rules","ace/mode/matching_brace_outdent","ace/mode/folding/cstyle"], function(require, exports, module){"use strict";
 var oop = require("../lib/oop");
 var TextMode = require("./text").Mode;
 var c_cppHighlightRules = require("./c_cpp_highlight_rules").c_cppHighlightRules;
 var MatchingBraceOutdent = require("./matching_brace_outdent").MatchingBraceOutdent;
-var Range = require("../range").Range;
-var CstyleBehaviour = require("./behaviour/cstyle").CstyleBehaviour;
 var CStyleFoldMode = require("./folding/cstyle").FoldMode;
 var Mode = function () {
     this.HighlightRules = c_cppHighlightRules;
     this.$outdent = new MatchingBraceOutdent();
-    this.$behaviour = new CstyleBehaviour();
+    this.$behaviour = this.$defaultBehaviour;
     this.foldingRules = new CStyleFoldMode();
 };
 oop.inherits(Mode, TextMode);
@@ -8717,6 +8963,7 @@ var Mode = function () {
     CMode.call(this);
     this.HighlightRules = DartHighlightRules;
     this.foldingRules = new CStyleFoldMode();
+    this.$behaviour = this.$defaultBehaviour;
 };
 oop.inherits(Mode, CMode);
 (function () {
@@ -9131,17 +9378,16 @@ exports.ShHighlightRules = ShHighlightRules;
 
 });
 
-define("ace/mode/sh",["require","exports","module","ace/lib/oop","ace/mode/text","ace/mode/sh_highlight_rules","ace/range","ace/mode/folding/cstyle","ace/mode/behaviour/cstyle"], function(require, exports, module){"use strict";
+define("ace/mode/sh",["require","exports","module","ace/lib/oop","ace/mode/text","ace/mode/sh_highlight_rules","ace/range","ace/mode/folding/cstyle"], function(require, exports, module){"use strict";
 var oop = require("../lib/oop");
 var TextMode = require("./text").Mode;
 var ShHighlightRules = require("./sh_highlight_rules").ShHighlightRules;
 var Range = require("../range").Range;
 var CStyleFoldMode = require("./folding/cstyle").FoldMode;
-var CstyleBehaviour = require("./behaviour/cstyle").CstyleBehaviour;
 var Mode = function () {
     this.HighlightRules = ShHighlightRules;
     this.foldingRules = new CStyleFoldMode();
-    this.$behaviour = new CstyleBehaviour();
+    this.$behaviour = this.$defaultBehaviour;
 };
 oop.inherits(Mode, TextMode);
 (function () {
@@ -11317,18 +11563,16 @@ exports.glslHighlightRules = glslHighlightRules;
 
 });
 
-define("ace/mode/glsl",["require","exports","module","ace/lib/oop","ace/mode/c_cpp","ace/mode/glsl_highlight_rules","ace/mode/matching_brace_outdent","ace/range","ace/mode/behaviour/cstyle","ace/mode/folding/cstyle"], function(require, exports, module){"use strict";
+define("ace/mode/glsl",["require","exports","module","ace/lib/oop","ace/mode/c_cpp","ace/mode/glsl_highlight_rules","ace/mode/matching_brace_outdent","ace/mode/folding/cstyle"], function(require, exports, module){"use strict";
 var oop = require("../lib/oop");
 var CMode = require("./c_cpp").Mode;
 var glslHighlightRules = require("./glsl_highlight_rules").glslHighlightRules;
 var MatchingBraceOutdent = require("./matching_brace_outdent").MatchingBraceOutdent;
-var Range = require("../range").Range;
-var CstyleBehaviour = require("./behaviour/cstyle").CstyleBehaviour;
 var CStyleFoldMode = require("./folding/cstyle").FoldMode;
 var Mode = function () {
     this.HighlightRules = glslHighlightRules;
     this.$outdent = new MatchingBraceOutdent();
-    this.$behaviour = new CstyleBehaviour();
+    this.$behaviour = this.$defaultBehaviour;
     this.foldingRules = new CStyleFoldMode();
 };
 oop.inherits(Mode, CMode);
@@ -11445,17 +11689,16 @@ exports.GolangHighlightRules = GolangHighlightRules;
 
 });
 
-define("ace/mode/golang",["require","exports","module","ace/lib/oop","ace/mode/text","ace/mode/golang_highlight_rules","ace/mode/matching_brace_outdent","ace/mode/behaviour/cstyle","ace/mode/folding/cstyle"], function(require, exports, module){var oop = require("../lib/oop");
+define("ace/mode/golang",["require","exports","module","ace/lib/oop","ace/mode/text","ace/mode/golang_highlight_rules","ace/mode/matching_brace_outdent","ace/mode/folding/cstyle"], function(require, exports, module){var oop = require("../lib/oop");
 var TextMode = require("./text").Mode;
 var GolangHighlightRules = require("./golang_highlight_rules").GolangHighlightRules;
 var MatchingBraceOutdent = require("./matching_brace_outdent").MatchingBraceOutdent;
-var CstyleBehaviour = require("./behaviour/cstyle").CstyleBehaviour;
 var CStyleFoldMode = require("./folding/cstyle").FoldMode;
 var Mode = function () {
     this.HighlightRules = GolangHighlightRules;
     this.$outdent = new MatchingBraceOutdent();
     this.foldingRules = new CStyleFoldMode();
-    this.$behaviour = new CstyleBehaviour();
+    this.$behaviour = this.$defaultBehaviour;
 };
 oop.inherits(Mode, TextMode);
 (function () {
@@ -11645,6 +11888,7 @@ var GroovyHighlightRules = require("./groovy_highlight_rules").GroovyHighlightRu
 var Mode = function () {
     JavaScriptMode.call(this);
     this.HighlightRules = GroovyHighlightRules;
+    this.$behaviour = this.$defaultBehaviour;
 };
 oop.inherits(Mode, JavaScriptMode);
 (function () {
@@ -12768,17 +13012,16 @@ exports.HaxeHighlightRules = HaxeHighlightRules;
 
 });
 
-define("ace/mode/haxe",["require","exports","module","ace/lib/oop","ace/mode/text","ace/mode/haxe_highlight_rules","ace/mode/matching_brace_outdent","ace/mode/behaviour/cstyle","ace/mode/folding/cstyle"], function(require, exports, module){"use strict";
+define("ace/mode/haxe",["require","exports","module","ace/lib/oop","ace/mode/text","ace/mode/haxe_highlight_rules","ace/mode/matching_brace_outdent","ace/mode/folding/cstyle"], function(require, exports, module){"use strict";
 var oop = require("../lib/oop");
 var TextMode = require("./text").Mode;
 var HaxeHighlightRules = require("./haxe_highlight_rules").HaxeHighlightRules;
 var MatchingBraceOutdent = require("./matching_brace_outdent").MatchingBraceOutdent;
-var CstyleBehaviour = require("./behaviour/cstyle").CstyleBehaviour;
 var CStyleFoldMode = require("./folding/cstyle").FoldMode;
 var Mode = function () {
     this.HighlightRules = HaxeHighlightRules;
     this.$outdent = new MatchingBraceOutdent();
-    this.$behaviour = new CstyleBehaviour();
+    this.$behaviour = this.$defaultBehaviour;
     this.foldingRules = new CStyleFoldMode();
 };
 oop.inherits(Mode, TextMode);
@@ -13137,17 +13380,16 @@ exports.JackHighlightRules = JackHighlightRules;
 
 });
 
-define("ace/mode/jack",["require","exports","module","ace/lib/oop","ace/mode/text","ace/mode/jack_highlight_rules","ace/mode/matching_brace_outdent","ace/mode/behaviour/cstyle","ace/mode/folding/cstyle"], function(require, exports, module){"use strict";
+define("ace/mode/jack",["require","exports","module","ace/lib/oop","ace/mode/text","ace/mode/jack_highlight_rules","ace/mode/matching_brace_outdent","ace/mode/folding/cstyle"], function(require, exports, module){"use strict";
 var oop = require("../lib/oop");
 var TextMode = require("./text").Mode;
 var HighlightRules = require("./jack_highlight_rules").JackHighlightRules;
 var MatchingBraceOutdent = require("./matching_brace_outdent").MatchingBraceOutdent;
-var CstyleBehaviour = require("./behaviour/cstyle").CstyleBehaviour;
 var CStyleFoldMode = require("./folding/cstyle").FoldMode;
 var Mode = function () {
     this.HighlightRules = HighlightRules;
     this.$outdent = new MatchingBraceOutdent();
-    this.$behaviour = new CstyleBehaviour();
+    this.$behaviour = this.$defaultBehaviour;
     this.foldingRules = new CStyleFoldMode();
 };
 oop.inherits(Mode, TextMode);
@@ -14573,18 +14815,17 @@ exports.JsonHighlightRules = JsonHighlightRules;
 
 });
 
-define("ace/mode/json",["require","exports","module","ace/lib/oop","ace/mode/text","ace/mode/json_highlight_rules","ace/mode/matching_brace_outdent","ace/mode/behaviour/cstyle","ace/mode/folding/cstyle","ace/worker/worker_client"], function(require, exports, module){"use strict";
+define("ace/mode/json",["require","exports","module","ace/lib/oop","ace/mode/text","ace/mode/json_highlight_rules","ace/mode/matching_brace_outdent","ace/mode/folding/cstyle","ace/worker/worker_client"], function(require, exports, module){"use strict";
 var oop = require("../lib/oop");
 var TextMode = require("./text").Mode;
 var HighlightRules = require("./json_highlight_rules").JsonHighlightRules;
 var MatchingBraceOutdent = require("./matching_brace_outdent").MatchingBraceOutdent;
-var CstyleBehaviour = require("./behaviour/cstyle").CstyleBehaviour;
 var CStyleFoldMode = require("./folding/cstyle").FoldMode;
 var WorkerClient = require("../worker/worker_client").WorkerClient;
 var Mode = function () {
     this.HighlightRules = HighlightRules;
     this.$outdent = new MatchingBraceOutdent();
-    this.$behaviour = new CstyleBehaviour();
+    this.$behaviour = this.$defaultBehaviour;
     this.foldingRules = new CStyleFoldMode();
 };
 oop.inherits(Mode, TextMode);
@@ -15302,20 +15543,19 @@ exports.LogiQLHighlightRules = LogiQLHighlightRules;
 
 });
 
-define("ace/mode/logiql",["require","exports","module","ace/lib/oop","ace/mode/text","ace/mode/logiql_highlight_rules","ace/mode/folding/coffee","ace/token_iterator","ace/range","ace/mode/behaviour/cstyle","ace/mode/matching_brace_outdent"], function(require, exports, module){"use strict";
+define("ace/mode/logiql",["require","exports","module","ace/lib/oop","ace/mode/text","ace/mode/logiql_highlight_rules","ace/mode/folding/coffee","ace/token_iterator","ace/range","ace/mode/matching_brace_outdent"], function(require, exports, module){"use strict";
 var oop = require("../lib/oop");
 var TextMode = require("./text").Mode;
 var LogiQLHighlightRules = require("./logiql_highlight_rules").LogiQLHighlightRules;
 var FoldMode = require("./folding/coffee").FoldMode;
 var TokenIterator = require("../token_iterator").TokenIterator;
 var Range = require("../range").Range;
-var CstyleBehaviour = require("./behaviour/cstyle").CstyleBehaviour;
 var MatchingBraceOutdent = require("./matching_brace_outdent").MatchingBraceOutdent;
 var Mode = function () {
     this.HighlightRules = LogiQLHighlightRules;
     this.foldingRules = new FoldMode();
     this.$outdent = new MatchingBraceOutdent();
-    this.$behaviour = new CstyleBehaviour();
+    this.$behaviour = this.$defaultBehaviour;
 };
 oop.inherits(Mode, TextMode);
 (function () {
@@ -15486,18 +15726,16 @@ exports.LSLHighlightRules = LSLHighlightRules;
 
 });
 
-define("ace/mode/lsl",["require","exports","module","ace/mode/lsl_highlight_rules","ace/mode/matching_brace_outdent","ace/range","ace/mode/text","ace/mode/behaviour/cstyle","ace/mode/folding/cstyle","ace/lib/oop"], function(require, exports, module){"use strict";
+define("ace/mode/lsl",["require","exports","module","ace/mode/lsl_highlight_rules","ace/mode/matching_brace_outdent","ace/mode/text","ace/mode/folding/cstyle","ace/lib/oop"], function(require, exports, module){"use strict";
 var Rules = require("./lsl_highlight_rules").LSLHighlightRules;
 var Outdent = require("./matching_brace_outdent").MatchingBraceOutdent;
-var Range = require("../range").Range;
 var TextMode = require("./text").Mode;
-var CstyleBehaviour = require("./behaviour/cstyle").CstyleBehaviour;
 var CStyleFoldMode = require("./folding/cstyle").FoldMode;
 var oop = require("../lib/oop");
 var Mode = function () {
     this.HighlightRules = Rules;
     this.$outdent = new Outdent();
-    this.$behaviour = new CstyleBehaviour();
+    this.$behaviour = this.$defaultBehaviour;
     this.foldingRules = new CStyleFoldMode();
 };
 oop.inherits(Mode, TextMode);
@@ -16939,15 +17177,14 @@ exports.MELHighlightRules = MELHighlightRules;
 
 });
 
-define("ace/mode/mel",["require","exports","module","ace/lib/oop","ace/mode/text","ace/mode/mel_highlight_rules","ace/mode/behaviour/cstyle","ace/mode/folding/cstyle"], function(require, exports, module){"use strict";
+define("ace/mode/mel",["require","exports","module","ace/lib/oop","ace/mode/text","ace/mode/mel_highlight_rules","ace/mode/folding/cstyle"], function(require, exports, module){"use strict";
 var oop = require("../lib/oop");
 var TextMode = require("./text").Mode;
 var MELHighlightRules = require("./mel_highlight_rules").MELHighlightRules;
-var CstyleBehaviour = require("./behaviour/cstyle").CstyleBehaviour;
 var CStyleFoldMode = require("./folding/cstyle").FoldMode;
 var Mode = function () {
     this.HighlightRules = MELHighlightRules;
-    this.$behaviour = new CstyleBehaviour();
+    this.$behaviour = this.$defaultBehaviour;
     this.foldingRules = new CStyleFoldMode();
 };
 oop.inherits(Mode, TextMode);
@@ -17601,7 +17838,7 @@ var lang = require("../lib/lang");
 var DocCommentHighlightRules = require("./doc_comment_highlight_rules").DocCommentHighlightRules;
 var TextHighlightRules = require("./text_highlight_rules").TextHighlightRules;
 var MysqlHighlightRules = function () {
-    var mySqlKeywords = /*sql*/ "alter|and|as|asc|between|count|create|delete|desc|distinct|drop|from|lateral|having|in|insert|into|is|join|like|not|on|or|order|select|set|table|union|update|values|where" + "|accessible|action|add|after|algorithm|all|analyze|asensitive|at|authors|auto_increment|autocommit|avg|avg_row_length|before|binary|binlog|both|btree|cache|call|cascade|cascaded|case|catalog_name|chain|change|changed|character|check|checkpoint|checksum|class_origin|client_statistics|close|code|collate|collation|collations|column|columns|comment|commit|committed|completion|concurrent|condition|connection|consistent|constraint|contains|continue|contributors|convert|cross|current_date|current_time|current_timestamp|current_user|cursor|data|database|databases|day_hour|day_microsecond|day_minute|day_second|deallocate|dec|declare|default|delay_key_write|delayed|delimiter|des_key_file|describe|deterministic|dev_pop|dev_samp|deviance|directory|disable|discard|distinctrow|div|dual|dumpfile|each|elseif|enable|enclosed|end|ends|engine|engines|enum|errors|escape|escaped|even|event|events|every|execute|exists|exit|explain|extended|fast|fetch|field|fields|first|flush|for|force|foreign|found_rows|full|fulltext|function|general|global|grant|grants|group|by|groupby_concat|handler|hash|help|high_priority|hosts|hour_microsecond|hour_minute|hour_second|if|ignore|ignore_server_ids|import|index|index_statistics|infile|inner|innodb|inout|insensitive|insert_method|install|interval|invoker|isolation|iterate|key|keys|kill|language|last|leading|leave|left|level|limit|linear|lines|list|load|local|localtime|localtimestamp|lock|logs|low_priority|master|master_heartbeat_period|master_ssl_verify_server_cert|masters|match|max|max_rows|maxvalue|message_text|middleint|migrate|min|min_rows|minute_microsecond|minute_second|mod|mode|modifies|modify|mutex|mysql_errno|natural|next|no|no_write_to_binlog|offline|offset|one|online|open|optimize|option|optionally|out|outer|outfile|pack_keys|parser|partition|partitions|password|phase|plugin|plugins|prepare|preserve|prev|primary|privileges|procedure|processlist|profile|profiles|purge|query|quick|range|read|read_write|reads|real|rebuild|recover|references|regexp|relaylog|release|remove|rename|reorganize|repair|repeatable|replace|require|resignal|restrict|resume|return|returns|revoke|right|rlike|rollback|rollup|row|row_format|rtree|savepoint|schedule|schema|schema_name|schemas|second_microsecond|security|sensitive|separator|serializable|server|session|share|show|signal|slave|slow|smallint|snapshot|soname|spatial|specific|sql|sql_big_result|sql_buffer_result|sql_cache|sql_calc_found_rows|sql_no_cache|sql_small_result|sqlexception|sqlstate|sqlwarning|ssl|start|starting|starts|status|std|stddev|stddev_pop|stddev_samp|storage|straight_join|subclass_origin|sum|suspend|table_name|table_statistics|tables|tablespace|temporary|terminated|to|trailing|transaction|trigger|triggers|truncate|uncommitted|undo|uninstall|unique|unlock|upgrade|usage|use|use_frm|user|user_resources|user_statistics|using|utc_date|utc_time|utc_timestamp|value|variables|varying|view|views|warnings|when|while|with|work|write|xa|xor|year_month|zerofill|begin|do|then|else|loop|repeat";
+    var mySqlKeywords = /*sql*/ "alter|and|as|asc|between|count|create|delete|desc|distinct|drop|from|lateral|having|in|insert|into|is|join|like|not|on|or|order|select|set|table|union|intersect|except|update|values|where" + "|accessible|action|add|after|algorithm|all|analyze|asensitive|at|authors|auto_increment|autocommit|avg|avg_row_length|before|binary|binlog|both|btree|cache|call|cascade|cascaded|case|catalog_name|chain|change|changed|character|check|checkpoint|checksum|class_origin|client_statistics|close|code|collate|collation|collations|column|columns|comment|commit|committed|completion|concurrent|condition|connection|consistent|constraint|contains|continue|contributors|convert|cross|current_date|current_time|current_timestamp|current_user|cursor|data|database|databases|day_hour|day_microsecond|day_minute|day_second|deallocate|dec|declare|default|delay_key_write|delayed|delimiter|des_key_file|describe|deterministic|dev_pop|dev_samp|deviance|directory|disable|discard|distinctrow|div|dual|dumpfile|each|elseif|enable|enclosed|end|ends|engine|engines|enum|errors|escape|escaped|even|event|events|every|execute|exists|exit|explain|extended|fast|fetch|field|fields|first|flush|for|force|foreign|found_rows|full|fulltext|function|general|global|grant|grants|group|by|group_concat|handler|hash|help|high_priority|hosts|hour_microsecond|hour_minute|hour_second|if|ignore|ignore_server_ids|import|index|index_statistics|infile|inner|innodb|inout|insensitive|insert_method|install|interval|invoker|isolation|iterate|key|keys|kill|language|last|leading|leave|left|level|limit|linear|lines|list|load|local|localtime|localtimestamp|lock|logs|low_priority|master|master_heartbeat_period|master_ssl_verify_server_cert|masters|match|max|max_rows|maxvalue|message_text|middleint|migrate|min|min_rows|minute_microsecond|minute_second|mod|mode|modifies|modify|mutex|mysql_errno|natural|next|no|no_write_to_binlog|offline|offset|one|online|open|optimize|option|optionally|out|outer|outfile|pack_keys|parser|partition|partitions|password|phase|plugin|plugins|prepare|preserve|prev|primary|privileges|procedure|processlist|profile|profiles|purge|query|quick|range|read|read_write|reads|real|rebuild|recover|references|regexp|relaylog|release|remove|rename|reorganize|repair|repeatable|replace|require|resignal|restrict|resume|return|returns|revoke|right|rlike|rollback|rollup|row|row_format|rtree|savepoint|schedule|schema|schema_name|schemas|second_microsecond|security|sensitive|separator|serializable|server|session|share|show|signal|slave|slow|smallint|snapshot|soname|spatial|specific|sql|sql_big_result|sql_buffer_result|sql_cache|sql_calc_found_rows|sql_no_cache|sql_small_result|sqlexception|sqlstate|sqlwarning|ssl|start|starting|starts|status|std|stddev|stddev_pop|stddev_samp|storage|straight_join|subclass_origin|sum|suspend|table_name|table_statistics|tables|tablespace|temporary|terminated|to|trailing|transaction|trigger|triggers|truncate|uncommitted|undo|uninstall|unique|unlock|upgrade|usage|use|use_frm|user|user_resources|user_statistics|using|utc_date|utc_time|utc_timestamp|value|variables|varying|view|views|warnings|when|while|with|work|write|xa|xor|year_month|zerofill|begin|do|then|else|loop|repeat";
     var builtins = "rank|coalesce|ifnull|isnull|nvl";
     var variable = "charset|clear|connect|edit|ego|exit|go|help|nopager|notee|nowarning|pager|print|prompt|quit|rehash|source|status|system|tee";
     var datetimeFunctions = 'adddate|addtime|convert_tz|curdate|current_date|current_time|current_timestamp|curtime|date|date_add|date_format|date_sub|datediff|day|dayname|dayofmonth|dayofweek|dayofyear|extract|from_days|from_unixtime|get_format|hour|last_day|localtime|localtimestamp|makedate|maketime|microsecond|minute|month|monthname|now|period_add|period_diff|quarter|sec_to_time|second|str_to_date|subdate|subtime|sysdate|time|time_format|time_to_sec|timediff|timestamp|timestampadd|timestampdiff|to_days|to_seconds|unix_timestamp|utc_date|utc_time|utc_timestamp|week|weekday|weekofyear|year|yearweek';
@@ -17840,9 +18077,22 @@ exports.Mode = Mode;
 define("ace/mode/objectivec_highlight_rules",["require","exports","module","ace/lib/oop","ace/mode/doc_comment_highlight_rules","ace/mode/c_cpp_highlight_rules"], function(require, exports, module){"use strict";
 var oop = require("../lib/oop");
 var DocCommentHighlightRules = require("./doc_comment_highlight_rules").DocCommentHighlightRules;
-var C_Highlight_File = require("./c_cpp_highlight_rules");
-var CHighlightRules = C_Highlight_File.c_cppHighlightRules;
+var CHighlightRules = require("./c_cpp_highlight_rules").c_cppHighlightRules;
 var ObjectiveCHighlightRules = function () {
+    var NSKeywords = {
+        "support.function.cocoa.leopard": "NSRectToCGRect|NSRectFromCGRect|NSMakeCollectable|NSStringFromProtocol|NSSizeToCGSize|NSSizeFromCGSize|NSDrawNinePartImage|NSDrawThreePartImage|NSPointToCGPoint|NSPointFromCGPoint|NSProtocolFromString|NSEventMaskFromType|NSValue",
+        "support.function.cocoa": "NSRoundDownToMultipleOfPageSize|NSRoundUpToMultipleOfPageSize|NSRunCriticalAlertPanel|NSRunCriticalAlertPanelRelativeToWindow|NSRunInformationalAlertPanel|NSRunInformationalAlertPanelRelativeToWindow|NSRunAlertPanel|NSRunAlertPanelRelativeToWindow|NSResetMapTable|NSResetHashTable|NSRecycleZone|NSRectClip|NSRectClipList|NSRectFill|NSRectFillUsingOperation|NSRectFillList|NSRectFillListUsingOperation|NSRectFillListWithGrays|NSRectFillListWithColors|NSRectFillListWithColorsUsingOperation|NSRectFromString|NSRecordAllocationEvent|NSReturnAddress|NSReleaseAlertPanel|NSReadPixel|NSRealMemoryAvailable|NSReallocateCollectable|NSRegisterServicesProvider|NSRangeFromString|NSGetSizeAndAlignment|NSGetCriticalAlertPanel|NSGetInformationalAlertPanel|NSGetUncaughtExceptionHandler|NSGetFileType|NSGetFileTypes|NSGetWindowServerMemory|NSGetAlertPanel|NSMinX|NSMinY|NSMidX|NSMidY|NSMouseInRect|NSMapRemove|NSMapGet|NSMapMember|NSMapInsert|NSMapInsertIfAbsent|NSMapInsertKnownAbsent|NSMakeRect|NSMakeRange|NSMakeSize|NSMakePoint|NSMaxRange|NSMaxX|NSMaxY|NSBitsPerSampleFromDepth|NSBitsPerPixelFromDepth|NSBestDepth|NSBeep|NSBeginCriticalAlertSheet|NSBeginInformationalAlertSheet|NSBeginAlertSheet|NSShouldRetainWithZone|NSShowsServicesMenuItem|NSShowAnimationEffect|NSStringFromRect|NSStringFromRange|NSStringFromMapTable|NSStringFromSize|NSStringFromSelector|NSStringFromHashTable|NSStringFromClass|NSStringFromPoint|NSSizeFromString|NSSetShowsServicesMenuItem|NSSetZoneName|NSSetUncaughtExceptionHandler|NSSetFocusRingStyle|NSSelectorFromString|NSSearchPathForDirectoriesInDomains|NSSwapBigShortToHost|NSSwapBigIntToHost|NSSwapBigDoubleToHost|NSSwapBigFloatToHost|NSSwapBigLongToHost|NSSwapBigLongLongToHost|NSSwapShort|NSSwapHostShortToBig|NSSwapHostShortToLittle|NSSwapHostIntToBig|NSSwapHostIntToLittle|NSSwapHostDoubleToBig|NSSwapHostDoubleToLittle|NSSwapHostFloatToBig|NSSwapHostFloatToLittle|NSSwapHostLongToBig|NSSwapHostLongToLittle|NSSwapHostLongLongToBig|NSSwapHostLongLongToLittle|NSSwapInt|NSSwapDouble|NSSwapFloat|NSSwapLittleShortToHost|NSSwapLittleIntToHost|NSSwapLittleDoubleToHost|NSSwapLittleFloatToHost|NSSwapLittleLongToHost|NSSwapLittleLongLongToHost|NSSwapLong|NSSwapLongLong|NSHighlightRect|NSHostByteOrder|NSHomeDirectory|NSHomeDirectoryForUser|NSHeight|NSHashRemove|NSHashGet|NSHashInsert|NSHashInsertIfAbsent|NSHashInsertKnownAbsent|NSHFSTypeCodeFromFileType|NSHFSTypeOfFile|NSNumberOfColorComponents|NSNextMapEnumeratorPair|NSNextHashEnumeratorItem|NSContainsRect|NSConvertGlyphsToPackedGlyphs|NSConvertSwappedDoubleToHost|NSConvertSwappedFloatToHost|NSConvertHostDoubleToSwapped|NSConvertHostFloatToSwapped|NSCountMapTable|NSCountHashTable|NSCountFrames|NSCountWindows|NSCountWindowsForContext|NSCopyMemoryPages|NSCopyMapTableWithZone|NSCopyBits|NSCopyHashTableWithZone|NSCopyObject|NSColorSpaceFromDepth|NSCompareMapTables|NSCompareHashTables|NSClassFromString|NSCreateMapTable|NSCreateMapTableWithZone|NSCreateHashTable|NSCreateHashTableWithZone|NSCreateZone|NSCreateFilenamePboardType|NSCreateFileContentsPboardType|NSTemporaryDirectory|NSIsControllerMarker|NSIsEmptyRect|NSIsFreedObject|NSInsetRect|NSIncrementExtraRefCount|NSIntersectsRect|NSIntersectionRect|NSIntersectionRange|NSInterfaceStyleForKey|NSIntegralRect|NSZoneRealloc|NSZoneMalloc|NSZoneName|NSZoneCalloc|NSZoneFromPointer|NSZoneFree|NSOpenStepRootDirectory|NSOffsetRect|NSDisableScreenUpdates|NSDivideRect|NSDottedFrameRect|NSDecimalRound|NSDecimalMultiply|NSDecimalString|NSDecimalSubtract|NSDecimalNormalize|NSDecimalCopy|NSDecimalCompact|NSDecimalCompare|NSDecimalIsNotANumber|NSDecimalDivide|NSDecimalPower|NSDecimalAdd|NSDecrementExtraRefCountWasZero|NSDefaultMallocZone|NSDeallocateMemoryPages|NSDeallocateObject|NSDrawGroove|NSDrawGrayBezel|NSDrawBitmap|NSDrawButton|NSDrawColorTiledRects|NSDrawTiledRects|NSDrawDarkBezel|NSDrawWhiteBezel|NSDrawWindowBackground|NSDrawLightBezel|NSUserName|NSUnionRect|NSUnionRange|NSUnregisterServicesProvider|NSUpdateDynamicServices|NSJavaBundleSetup|NSJavaBundleCleanup|NSJavaSetup|NSJavaSetupVirtualMachine|NSJavaNeedsToLoadClasses|NSJavaNeedsVirtualMachine|NSJavaClassesForBundle|NSJavaClassesFromPath|NSJavaObjectNamedInPath|NSJavaProvidesClasses|NSPointInRect|NSPointFromString|NSPerformService|NSPlanarFromDepth|NSPageSize|NSEndMapTableEnumeration|NSEndHashTableEnumeration|NSEnumerateMapTable|NSEnumerateHashTable|NSEnableScreenUpdates|NSEqualRects|NSEqualRanges|NSEqualSizes|NSEqualPoints|NSEraseRect|NSExtraRefCount|NSFileTypeForHFSTypeCode|NSFullUserName|NSFreeMapTable|NSFreeHashTable|NSFrameRect|NSFrameRectWithWidth|NSFrameRectWithWidthUsingOperation|NSFrameAddress|NSWindowList|NSWindowListForContext|NSWidth|NSLocationInRange|NSLog|NSLogv|NSLogPageSize|NSAccessibilityRoleDescription|NSAccessibilityRoleDescriptionForUIElement|NSAccessibilityRaiseBadArgumentException|NSAccessibilityUnignoredChildren|NSAccessibilityUnignoredChildrenForOnlyChild|NSAccessibilityUnignoredDescendant|NSAccessibilityUnignoredAncestor|NSAccessibilityPostNotification|NSAccessibilityActionDescription|NSApplicationMain|NSApplicationLoad|NSAvailableWindowDepths|NSAllMapTableValues|NSAllMapTableKeys|NSAllHashTableObjects|NSAllocateMemoryPages|NSAllocateCollectable|NSAllocateObject",
+        "support.class.cocoa.leopard": "NSRuleEditor|NSGarbageCollector|NSGradient|NSMapTable|NSHashTable|NSCondition|NSCollectionView|NSCollectionViewItem|NSToolbarItemGroup|NSTextInputClient|NSTreeNode|NSTrackingArea|NSInvocationOperation|NSOperation|NSOperationQueue|NSDictionaryController|NSDockTile|NSPointerFunctions|NSPointerArray|NSPathControl|NSPathControlDelegate|NSPathComponentCell|NSPathCell|NSPathCellDelegate|NSPrintPanelAccessorizing|NSPredicateEditor|NSPredicateEditorRowTemplate|NSViewController|NSFastEnumeration|NSAnimationContext|NSAnimatablePropertyContainer",
+        "support.class.cocoa": "NSRunLoop|NSRulerMarker|NSRulerView|NSResponder|NSRecursiveLock|NSRelativeSpecifier|NSRandomSpecifier|NSRangeSpecifier|NSGetCommand|NSGlyphGenerator|NSGlyphStorage|NSGlyphInfo|NSGraphicsContext|NSXMLNode|NSXMLDocument|NSXMLDTD|NSXMLDTDNode|NSXMLParser|NSXMLElement|NSMiddleSpecifier|NSMovie|NSMovieView|NSMoveCommand|NSMutableString|NSMutableSet|NSMutableCharacterSet|NSMutableCopying|NSMutableIndexSet|NSMutableDictionary|NSMutableData|NSMutableURLRequest|NSMutableParagraphStyle|NSMutableAttributedString|NSMutableArray|NSMessagePort|NSMessagePortNameServer|NSMenu|NSMenuItem|NSMenuItemCell|NSMenuView|NSMethodSignature|NSMetadataItem|NSMetadataQuery|NSMetadataQueryResultGroup|NSMetadataQueryAttributeValueTuple|NSMachBootstrapServer|NSMachPort|NSMatrix|NSBitmapImageRep|NSBox|NSBundle|NSButton|NSButtonCell|NSBezierPath|NSBrowser|NSBrowserCell|NSShadow|NSScanner|NSScriptSuiteRegistry|NSScriptCoercionHandler|NSScriptCommand|NSScriptCommandDescription|NSScriptClassDescription|NSScriptObjectSpecifier|NSScriptExecutionContext|NSScriptWhoseTest|NSScroller|NSScrollView|NSScreen|NSStepper|NSStepperCell|NSStatusBar|NSStatusItem|NSString|NSStream|NSSimpleHorizontalTypesetter|NSSimpleCString|NSSocketPort|NSSocketPortNameServer|NSSound|NSSortDescriptor|NSSpecifierTest|NSSpeechRecognizer|NSSpeechSynthesizer|NSSpellServer|NSSpellChecker|NSSplitView|NSSecureTextField|NSSecureTextFieldCell|NSSet|NSSetCommand|NSSearchField|NSSearchFieldCell|NSSerializer|NSSegmentedControl|NSSegmentedCell|NSSlider|NSSliderCell|NSSavePanel|NSHost|NSHTTPCookie|NSHTTPCookieStorage|NSHTTPURLResponse|NSHelpManager|NSNib|NSNibConnector|NSNibControlConnector|NSNibOutletConnector|NSNotification|NSNotificationCenter|NSNotificationQueue|NSNull|NSNumber|NSNumberFormatter|NSNetService|NSNetServiceBrowser|NSNameSpecifier|NSChangeSpelling|NSCharacterSet|NSConstantString|NSConnection|NSControl|NSController|NSConditionLock|NSCoding|NSCoder|NSCountCommand|NSCountedSet|NSCopying|NSColor|NSColorSpace|NSColorPickingCustom|NSColorPickingDefault|NSColorPicker|NSColorPanel|NSColorWell|NSColorList|NSCompoundPredicate|NSComparisonPredicate|NSComboBox|NSComboBoxCell|NSCustomImageRep|NSCursor|NSCIImageRep|NSCell|NSClipView|NSCloseCommand|NSCloneCommand|NSClassDescription|NSCachedImageRep|NSCachedURLResponse|NSCalendar|NSCalendarDate|NSCreateCommand|NSThread|NSTypesetter|NSTimeZone|NSTimer|NSToolbar|NSToolbarItem|NSToolbarItemValidations|NSTokenField|NSTokenFieldCell|NSText|NSTextBlock|NSTextStorage|NSTextContainer|NSTextTab|NSTextTable|NSTextTableBlock|NSTextInput|NSTextView|NSTextField|NSTextFieldCell|NSTextList|NSTextAttachment|NSTextAttachmentCell|NSTask|NSTableHeaderCell|NSTableHeaderView|NSTableColumn|NSTableView|NSTabView|NSTabViewItem|NSTreeController|NSIndexSpecifier|NSIndexSet|NSIndexPath|NSInputManager|NSInputStream|NSInputServiceProvider|NSInputServer|NSInputServerMouseTracker|NSInvocation|NSIgnoreMisspelledWords|NSImage|NSImageRep|NSImageCell|NSImageView|NSOutputStream|NSOutlineView|NSOpenGLContext|NSOpenGLPixelBuffer|NSOpenGLPixelFormat|NSOpenGLView|NSOpenPanel|NSObjCTypeSerializationCallBack|NSObject|NSObjectController|NSDistantObject|NSDistantObjectRequest|NSDistributedNotificationCenter|NSDistributedLock|NSDictionary|NSDirectoryEnumerator|NSDocument|NSDocumentController|NSDeserializer|NSDecimalNumber|NSDecimalNumberBehaviors|NSDecimalNumberHandler|NSDeleteCommand|NSDate|NSDateComponents|NSDatePicker|NSDatePickerCell|NSDateFormatter|NSData|NSDrawer|NSDraggingInfo|NSUserInterfaceValidations|NSUserDefaults|NSUserDefaultsController|NSURL|NSURLResponse|NSURLRequest|NSURLHandle|NSURLHandleClient|NSURLConnection|NSURLCache|NSURLCredential|NSURLCredentialStorage|NSURLDownload|NSURLDownloadDelegate|NSURLProtocol|NSURLProtocolClient|NSURLProtectionSpace|NSURLAuthenticationChallenge|NSURLAuthenticationChallengeSender|NSUniqueIDSpecifier|NSUndoManager|NSUnarchiver|NSPipe|NSPositionalSpecifier|NSPopUpButton|NSPopUpButtonCell|NSPort|NSPortMessage|NSPortNameServer|NSPortCoder|NSPICTImageRep|NSPersistentDocument|NSPDFImageRep|NSPasteboard|NSPanel|NSParagraphStyle|NSPageLayout|NSPrintInfo|NSPrinter|NSPrintOperation|NSPrintPanel|NSProcessInfo|NSProtocolChecker|NSPropertySpecifier|NSPropertyListSerialization|NSProgressIndicator|NSProxy|NSPredicate|NSEnumerator|NSEvent|NSEPSImageRep|NSError|NSException|NSExistsCommand|NSExpression|NSView|NSViewAnimation|NSValidatedToobarItem|NSValidatedUserInterfaceItem|NSValueTransformer|NSKeyedUnarchiver|NSKeyedArchiver|NSQuickDrawView|NSQuitCommand|NSFileManager|NSFileHandle|NSFileWrapper|NSFont|NSFontManager|NSFontDescriptor|NSFontPanel|NSFormCell|NSFormatter|NSWhoseSpecifier|NSWindow|NSWindowController|NSWorkspace|NSLock|NSLocking|NSLocale|NSLogicalTest|NSLevelIndicator|NSLevelIndicatorCell|NSLayoutManager|NSAssertionHandler|NSAnimation|NSActionCell|NSAttributedString|NSAutoreleasePool|NSATSTypesetter|NSApplication|NSAppleScript|NSAppleEventManager|NSAppleEventDescriptor|NSAffineTransform|NSAlert|NSArchiver|NSArray|NSArrayController",
+        "support.type.cocoa.leopard": "",
+        "support.class.quartz": "CISampler|CIContext|CIColor|CIImage|CIImageAccumulator|CIPlugIn|CIPlugInRegistration|CIVector|CIKernel|CIFilter|CIFilterGenerator|CIFilterShape|CARenderer|CAMediaTiming|CAMediaTimingFunction|CABasicAnimation|CAScrollLayer|CAConstraint|CAConstraintLayoutManager|CATiledLayer|CATextLayer|CATransition|CATransaction|CAOpenGLLayer|CAPropertyAnimation|CAKeyframeAnimation|CALayer|CAAnimation|CAAnimationGroup|CAAction",
+        "support.type.quartz": "CGFloat|CGPoint|CGSize|CGRect|CIFormat|CAConstraintAttribute",
+        "support.type.cocoa": "NSRect|NSRectEdge|NSRange|NSGlyph|NSGlyphRelation|NSGlyphLayoutMode|NSGradientType|NSModalSession|NSMatrixMode|NSMapEnumerator|NSBitmapImageFileType|NSBorderType|NSButtonType|NSBezelStyle|NSBackingStoreType|NSBrowserColumnResizingType|NSScrollerPart|NSScrollerArrow|NSScrollArrowPosition|NSScreenAuxiliaryOpaque|NSStringEncoding|NSSize|NSSocketNativeHandle|NSSelectionGranularity|NSSelectionDirection|NSSelectionAffinity|NSSwappedDouble|NSSwappedFloat|NSSaveOperationType|NSHashEnumerator|NSHandler|NSHandler2|NSControlSize|NSControlTint|NSCompositingOperation|NSComparisonResult|NSCellState|NSCellType|NSCellImagePosition|NSCellAttribute|NSThreadPrivate|NSTypesetterGlyphInfo|NSTickMarkPosition|NSTitlePosition|NSTimeInterval|NSToolTipTag|NSToolbarSizeMode|NSToolbarDisplayMode|NSTokenStyle|NSTIFFCompression|NSTextTabType|NSTextAlignment|NSTabState|NSTableViewDropOperation|NSTabViewType|NSTrackingRectTag|NSImageInterpolation|NSZone|NSOpenGLContextAuxiliary|NSOpenGLPixelFormatAuxiliary|NSDocumentChangeType|NSDatePickerElementFlags|NSDrawerState|NSDragOperation|NSUsableScrollerParts|NSPoint|NSPrintingPageOrder|NSProgressIndicatorStyle|NSProgressIndicatorThickness|NSProgressIndicatorThreadInfo|NSEventType|NSKeyValueObservingOptions|NSFontSymbolicTraits|NSFontTraitMask|NSFontAction|NSFocusRingType|NSWindowOrderingMode|NSWindowDepth|NSWorkspaceIconCreationOptions|NSWorkspaceLaunchOptions|NSWritingDirection|NSLineBreakMode|NSLayoutStatus|NSLayoutDirection|NSAnimationProgress|NSAnimationEffect|NSApplicationTerminateReply|NSApplicationDelegateReply|NSApplicationPrintReply|NSAppleEventManagerSuspensionID|NSAffineTransformStruct|NSAlertStyle",
+        "support.constant.cocoa": "NSRGBModeColorPanel|NSRGBColorSpaceModel|NSRightMouseDown|NSRightMouseDownMask|NSRightMouseDragged|NSRightMouseDraggedMask|NSRightMouseUp|NSRightMouseUpMask|NSRightTextMovement|NSRightTextAlignment|NSRightTabsBezelBorder|NSRightTabStopType|NSRightArrowFunctionKey|NSRoundRectBezelStyle|NSRoundBankers|NSRoundedBezelStyle|NSRoundedTokenStyle|NSRoundedDisclosureBezelStyle|NSRoundDown|NSRoundUp|NSRoundPlain|NSRoundLineCapStyle|NSRoundLineJoinStyle|NSRunStoppedResponse|NSRunContinuesResponse|NSRunAbortedResponse|NSResizableWindowMask|NSResetCursorRectsRunLoopOrdering|NSResetFunctionKey|NSRecessedBezelStyle|NSReceiversCantHandleCommandScriptError|NSReceiverEvaluationScriptError|NSReturnTextMovement|NSRedoFunctionKey|NSRequiredArgumentsMissingScriptError|NSRelevancyLevelIndicatorStyle|NSRelativeBefore|NSRelativeAfter|NSRegularSquareBezelStyle|NSRegularControlSize|NSRemoveTraitFontAction|NSRandomSubelement|NSRangeDateMode|NSRatingLevelIndicatorStyle|NSRadioModeMatrix|NSRadioButton|NSGIFFileType|NSGlyphBelow|NSGlyphInscribeBelow|NSGlyphInscribeBase|NSGlyphInscribeOverstrike|NSGlyphInscribeOverBelow|NSGlyphInscribeAbove|NSGlyphLayoutWithPrevious|NSGlyphLayoutAtAPoint|NSGlyphLayoutAgainstAPoint|NSGlyphAttributeBidiLevel|NSGlyphAttributeSoft|NSGlyphAttributeInscribe|NSGlyphAttributeElastic|NSGlyphAbove|NSGrooveBorder|NSGreaterThanComparison|NSGreaterThanOrEqualToComparison|NSGreaterThanOrEqualToPredicateOperatorType|NSGreaterThanPredicateOperatorType|NSGrayModeColorPanel|NSGrayColorSpaceModel|NSGradientNone|NSGradientConcaveStrong|NSGradientConcaveWeak|NSGradientConvexStrong|NSGradientConvexWeak|NSGraphiteControlTint|NSXMLNotationDeclarationKind|NSXMLNodeCompactEmptyElement|NSXMLNodeIsCDATA|NSXMLNodeOptionsNone|NSXMLNodeUseSingleQuotes|NSXMLNodeUseDoubleQuotes|NSXMLNodePreserveNamespaceOrder|NSXMLNodePreserveCharacterReferences|NSXMLNodePreserveCDATA|NSXMLNodePreserveDTD|NSXMLNodePreservePrefixes|NSXMLNodePreserveEntities|NSXMLNodePreserveEmptyElements|NSXMLNodePreserveQuotes|NSXMLNodePreserveWhitespace|NSXMLNodePreserveAttributeOrder|NSXMLNodePreserveAll|NSXMLNodePrettyPrint|NSXMLNodeExpandEmptyElement|NSXMLNamespaceKind|NSXMLCommentKind|NSXMLTextKind|NSXMLInvalidKind|NSXMLDocumentXMLKind|NSXMLDocumentXHTMLKind|NSXMLDocumentXInclude|NSXMLDocumentHTMLKind|NSXMLDocumentTidyXML|NSXMLDocumentTidyHTML|NSXMLDocumentTextKind|NSXMLDocumentIncludeContentTypeDeclaration|NSXMLDocumentValidate|NSXMLDocumentKind|NSXMLDTDKind|NSXMLParserGTRequiredError|NSXMLParserXMLDeclNotStartedError|NSXMLParserXMLDeclNotFinishedError|NSXMLParserMisplacedXMLDeclarationError|NSXMLParserMisplacedCDATAEndStringError|NSXMLParserMixedContentDeclNotStartedError|NSXMLParserMixedContentDeclNotFinishedError|NSXMLParserStandaloneValueError|NSXMLParserStringNotStartedError|NSXMLParserStringNotClosedError|NSXMLParserSpaceRequiredError|NSXMLParserSeparatorRequiredError|NSXMLParserNMTOKENRequiredError|NSXMLParserNotationNotStartedError|NSXMLParserNotationNotFinishedError|NSXMLParserNotWellBalancedError|NSXMLParserNoDTDError|NSXMLParserNamespaceDeclarationError|NSXMLParserNAMERequiredError|NSXMLParserCharacterRefInDTDError|NSXMLParserCharacterRefInPrologError|NSXMLParserCharacterRefInEpilogError|NSXMLParserCharacterRefAtEOFError|NSXMLParserConditionalSectionNotStartedError|NSXMLParserConditionalSectionNotFinishedError|NSXMLParserCommentNotFinishedError|NSXMLParserCommentContainsDoubleHyphenError|NSXMLParserCDATANotFinishedError|NSXMLParserTagNameMismatchError|NSXMLParserInternalError|NSXMLParserInvalidHexCharacterRefError|NSXMLParserInvalidCharacterRefError|NSXMLParserInvalidCharacterInEntityError|NSXMLParserInvalidCharacterError|NSXMLParserInvalidConditionalSectionError|NSXMLParserInvalidDecimalCharacterRefError|NSXMLParserInvalidURIError|NSXMLParserInvalidEncodingNameError|NSXMLParserInvalidEncodingError|NSXMLParserOutOfMemoryError|NSXMLParserDocumentStartError|NSXMLParserDelegateAbortedParseError|NSXMLParserDOCTYPEDeclNotFinishedError|NSXMLParserURIRequiredError|NSXMLParserURIFragmentError|NSXMLParserUndeclaredEntityError|NSXMLParserUnparsedEntityError|NSXMLParserUnknownEncodingError|NSXMLParserUnfinishedTagError|NSXMLParserPCDATARequiredError|NSXMLParserPublicIdentifierRequiredError|NSXMLParserParsedEntityRefMissingSemiError|NSXMLParserParsedEntityRefNoNameError|NSXMLParserParsedEntityRefInInternalSubsetError|NSXMLParserParsedEntityRefInInternalError|NSXMLParserParsedEntityRefInPrologError|NSXMLParserParsedEntityRefInEpilogError|NSXMLParserParsedEntityRefAtEOFError|NSXMLParserProcessingInstructionNotStartedError|NSXMLParserProcessingInstructionNotFinishedError|NSXMLParserPrematureDocumentEndError|NSXMLParserEncodingNotSupportedError|NSXMLParserEntityRefInDTDError|NSXMLParserEntityRefInPrologError|NSXMLParserEntityRefInEpilogError|NSXMLParserEntityReferenceMissingSemiError|NSXMLParserEntityReferenceWithoutNameError|NSXMLParserEntityRefLoopError|NSXMLParserEntityRefAtEOFError|NSXMLParserEntityBoundaryError|NSXMLParserEntityNotStartedError|NSXMLParserEntityNotFinishedError|NSXMLParserEntityIsParameterError|NSXMLParserEntityIsExternalError|NSXMLParserEntityValueRequiredError|NSXMLParserEqualExpectedError|NSXMLParserElementContentDeclNotStartedError|NSXMLParserElementContentDeclNotFinishedError|NSXMLParserExternalStandaloneEntityError|NSXMLParserExternalSubsetNotFinishedError|NSXMLParserExtraContentError|NSXMLParserEmptyDocumentError|NSXMLParserLiteralNotStartedError|NSXMLParserLiteralNotFinishedError|NSXMLParserLTRequiredError|NSXMLParserLTSlashRequiredError|NSXMLParserLessThanSymbolInAttributeError|NSXMLParserAttributeRedefinedError|NSXMLParserAttributeHasNoValueError|NSXMLParserAttributeNotStartedError|NSXMLParserAttributeNotFinishedError|NSXMLParserAttributeListNotStartedError|NSXMLParserAttributeListNotFinishedError|NSXMLProcessingInstructionKind|NSXMLEntityGeneralKind|NSXMLEntityDeclarationKind|NSXMLEntityUnparsedKind|NSXMLEntityParsedKind|NSXMLEntityParameterKind|NSXMLEntityPredefined|NSXMLElementDeclarationMixedKind|NSXMLElementDeclarationUndefinedKind|NSXMLElementDeclarationElementKind|NSXMLElementDeclarationEmptyKind|NSXMLElementDeclarationKind|NSXMLElementDeclarationAnyKind|NSXMLElementKind|NSXMLAttributeNMTokensKind|NSXMLAttributeNMTokenKind|NSXMLAttributeNotationKind|NSXMLAttributeCDATAKind|NSXMLAttributeIDRefsKind|NSXMLAttributeIDRefKind|NSXMLAttributeIDKind|NSXMLAttributeDeclarationKind|NSXMLAttributeEntityKind|NSXMLAttributeEntitiesKind|NSXMLAttributeEnumerationKind|NSXMLAttributeKind|NSMinXEdge|NSMiniaturizableWindowMask|NSMinYEdge|NSMinuteCalendarUnit|NSMiterLineJoinStyle|NSMiddleSubelement|NSMixedState|NSMonthCalendarUnit|NSModeSwitchFunctionKey|NSMouseMoved|NSMouseMovedMask|NSMouseEntered|NSMouseEnteredMask|NSMouseEventSubtype|NSMouseExited|NSMouseExitedMask|NSMoveToBezierPathElement|NSMomentaryChangeButton|NSMomentaryPushButton|NSMomentaryPushInButton|NSMomentaryLight|NSMomentaryLightButton|NSMenuFunctionKey|NSMacintoshInterfaceStyle|NSMacOSRomanStringEncoding|NSMatchesPredicateOperatorType|NSMappedRead|NSMaxXEdge|NSMaxYEdge|NSMACHOperatingSystem|NSBMPFileType|NSBottomTabsBezelBorder|NSBoldFontMask|NSBorderlessWindowMask|NSBoxSecondary|NSBoxSeparator|NSBoxOldStyle|NSBoxPrimary|NSButtLineCapStyle|NSBezelBorder|NSBevelLineJoinStyle|NSBelowBottom|NSBelowTop|NSBeginsWithComparison|NSBeginsWithPredicateOperatorType|NSBeginFunctionKey|NSBlueControlTint|NSBackspaceCharacter|NSBacktabTextMovement|NSBackingStoreRetained|NSBackingStoreBuffered|NSBackingStoreNonretained|NSBackTabCharacter|NSBackwardsSearch|NSBackgroundTab|NSBrowserNoColumnResizing|NSBrowserUserColumnResizing|NSBrowserAutoColumnResizing|NSBreakFunctionKey|NSShiftJISStringEncoding|NSShiftKeyMask|NSShowControlGlyphs|NSShowInvisibleGlyphs|NSShadowlessSquareBezelStyle|NSSysReqFunctionKey|NSSystemDomainMask|NSSystemDefined|NSSystemDefinedMask|NSSystemFunctionKey|NSSymbolStringEncoding|NSScannedOption|NSScaleNone|NSScaleToFit|NSScaleProportionally|NSScrollerNoPart|NSScrollerIncrementPage|NSScrollerIncrementLine|NSScrollerIncrementArrow|NSScrollerDecrementPage|NSScrollerDecrementLine|NSScrollerDecrementArrow|NSScrollerKnob|NSScrollerKnobSlot|NSScrollerArrowsMinEnd|NSScrollerArrowsMaxEnd|NSScrollerArrowsNone|NSScrollerArrowsDefaultSetting|NSScrollWheel|NSScrollWheelMask|NSScrollLockFunctionKey|NSScreenChangedEventType|NSStopFunctionKey|NSStringDrawingOneShot|NSStringDrawingDisableScreenFontSubstitution|NSStringDrawingUsesDeviceMetrics|NSStringDrawingUsesFontLeading|NSStringDrawingUsesLineFragmentOrigin|NSStreamStatusReading|NSStreamStatusNotOpen|NSStreamStatusClosed|NSStreamStatusOpen|NSStreamStatusOpening|NSStreamStatusError|NSStreamStatusWriting|NSStreamStatusAtEnd|NSStreamEventHasBytesAvailable|NSStreamEventHasSpaceAvailable|NSStreamEventNone|NSStreamEventOpenCompleted|NSStreamEventEndEncountered|NSStreamEventErrorOccurred|NSSingleDateMode|NSSingleUnderlineStyle|NSSizeDownFontAction|NSSizeUpFontAction|NSSolarisOperatingSystem|NSSunOSOperatingSystem|NSSpecialPageOrder|NSSecondCalendarUnit|NSSelectByCharacter|NSSelectByParagraph|NSSelectByWord|NSSelectingNext|NSSelectingPrevious|NSSelectionAffinityDownstream|NSSelectionAffinityUpstream|NSSelectedTab|NSSelectFunctionKey|NSSegmentSwitchTrackingMomentary|NSSegmentSwitchTrackingSelectOne|NSSegmentSwitchTrackingSelectAny|NSSquareLineCapStyle|NSSwitchButton|NSSaveToOperation|NSSaveOptionsYes|NSSaveOptionsNo|NSSaveOptionsAsk|NSSaveOperation|NSSaveAsOperation|NSSmallSquareBezelStyle|NSSmallControlSize|NSSmallCapsFontMask|NSSmallIconButtonBezelStyle|NSHighlightModeMatrix|NSHSBModeColorPanel|NSHourMinuteSecondDatePickerElementFlag|NSHourMinuteDatePickerElementFlag|NSHourCalendarUnit|NSHorizontalRuler|NSHomeFunctionKey|NSHTTPCookieAcceptPolicyNever|NSHTTPCookieAcceptPolicyOnlyFromMainDocumentDomain|NSHTTPCookieAcceptPolicyAlways|NSHelpButtonBezelStyle|NSHelpKeyMask|NSHelpFunctionKey|NSHeavierFontAction|NSHPUXOperatingSystem|NSYearMonthDayDatePickerElementFlag|NSYearMonthDatePickerElementFlag|NSYearCalendarUnit|NSNonStandardCharacterSetFontMask|NSNonZeroWindingRule|NSNonactivatingPanelMask|NSNonLossyASCIIStringEncoding|NSNoBorder|NSNotificationSuspensionBehaviorHold|NSNotificationSuspensionBehaviorCoalesce|NSNotificationSuspensionBehaviorDeliverImmediately|NSNotificationSuspensionBehaviorDrop|NSNotificationNoCoalescing|NSNotificationCoalescingOnSender|NSNotificationCoalescingOnName|NSNotificationDeliverImmediately|NSNotificationPostToAllSessions|NSNotPredicateType|NSNotEqualToPredicateOperatorType|NSNoScriptError|NSNoScrollerParts|NSNoSubelement|NSNoSpecifierError|NSNoCellMask|NSNoTitle|NSNoTopLevelContainersSpecifierError|NSNoTabsBezelBorder|NSNoTabsNoBorder|NSNoTabsLineBorder|NSNoInterfaceStyle|NSNoImage|NSNoUnderlineStyle|NSNoFontChangeAction|NSNullGlyph|NSNullCellType|NSNumericSearch|NSNumericPadKeyMask|NSNumberFormatterRoundHalfDown|NSNumberFormatterRoundHalfUp|NSNumberFormatterRoundHalfEven|NSNumberFormatterRoundCeiling|NSNumberFormatterRoundDown|NSNumberFormatterRoundUp|NSNumberFormatterRoundFloor|NSNumberFormatterBehavior10|NSNumberFormatterBehaviorDefault|NSNumberFormatterScientificStyle|NSNumberFormatterSpellOutStyle|NSNumberFormatterNoStyle|NSNumberFormatterCurrencyStyle|NSNumberFormatterDecimalStyle|NSNumberFormatterPercentStyle|NSNumberFormatterPadBeforeSuffix|NSNumberFormatterPadBeforePrefix|NSNumberFormatterPadAfterSuffix|NSNumberFormatterPadAfterPrefix|NSNetServicesBadArgumentError|NSNetServicesNotFoundError|NSNetServicesCollisionError|NSNetServicesCancelledError|NSNetServicesTimeoutError|NSNetServicesInvalidError|NSNetServicesUnknownError|NSNetServicesActivityInProgress|NSNetworkDomainMask|NSNewlineCharacter|NSNextStepInterfaceStyle|NSNextFunctionKey|NSNEXTSTEPStringEncoding|NSNativeShortGlyphPacking|NSNaturalTextAlignment|NSNarrowFontMask|NSChangeReadOtherContents|NSChangeGrayCell|NSChangeGrayCellMask|NSChangeBackgroundCell|NSChangeBackgroundCellMask|NSChangeCleared|NSChangeDone|NSChangeUndone|NSChangeAutosaved|NSCMYKModeColorPanel|NSCMYKColorSpaceModel|NSCircularBezelStyle|NSCircularSlider|NSConstantValueExpressionType|NSContinuousCapacityLevelIndicatorStyle|NSContentsCellMask|NSContainsComparison|NSContainerSpecifierError|NSControlGlyph|NSControlKeyMask|NSCondensedFontMask|NSColorPanelRGBModeMask|NSColorPanelGrayModeMask|NSColorPanelHSBModeMask|NSColorPanelCMYKModeMask|NSColorPanelColorListModeMask|NSColorPanelCustomPaletteModeMask|NSColorPanelCrayonModeMask|NSColorPanelWheelModeMask|NSColorPanelAllModesMask|NSColorListModeColorPanel|NSCoreServiceDirectory|NSCompositeXOR|NSCompositeSourceIn|NSCompositeSourceOut|NSCompositeSourceOver|NSCompositeSourceAtop|NSCompositeHighlight|NSCompositeCopy|NSCompositeClear|NSCompositeDestinationIn|NSCompositeDestinationOut|NSCompositeDestinationOver|NSCompositeDestinationAtop|NSCompositePlusDarker|NSCompositePlusLighter|NSCompressedFontMask|NSCommandKeyMask|NSCustomSelectorPredicateOperatorType|NSCustomPaletteModeColorPanel|NSCursorUpdate|NSCursorUpdateMask|NSCursorPointingDevice|NSCurveToBezierPathElement|NSCenterTextAlignment|NSCenterTabStopType|NSCellHighlighted|NSCellHasImageHorizontal|NSCellHasImageOnLeftOrBottom|NSCellHasOverlappingImage|NSCellChangesContents|NSCellIsBordered|NSCellIsInsetButton|NSCellDisabled|NSCellEditable|NSCellLightsByGray|NSCellLightsByBackground|NSCellLightsByContents|NSCellAllowsMixedState|NSClipPagination|NSClosePathBezierPathElement|NSClosableWindowMask|NSClockAndCalendarDatePickerStyle|NSClearControlTint|NSClearDisplayFunctionKey|NSClearLineFunctionKey|NSCaseInsensitiveSearch|NSCaseInsensitivePredicateOption|NSCannotCreateScriptCommandError|NSCancelButton|NSCancelTextMovement|NSCachesDirectory|NSCalculationNoError|NSCalculationOverflow|NSCalculationDivideByZero|NSCalculationUnderflow|NSCalculationLossOfPrecision|NSCarriageReturnCharacter|NSCriticalRequest|NSCriticalAlertStyle|NSCrayonModeColorPanel|NSThickSquareBezelStyle|NSThickerSquareBezelStyle|NSTypesetterBehavior|NSTypesetterHorizontalTabAction|NSTypesetterContainerBreakAction|NSTypesetterZeroAdvancementAction|NSTypesetterOriginalBehavior|NSTypesetterParagraphBreakAction|NSTypesetterWhitespaceAction|NSTypesetterLineBreakAction|NSTypesetterLatestBehavior|NSTickMarkRight|NSTickMarkBelow|NSTickMarkLeft|NSTickMarkAbove|NSTitledWindowMask|NSTimeZoneDatePickerElementFlag|NSToolbarItemVisibilityPriorityStandard|NSToolbarItemVisibilityPriorityHigh|NSToolbarItemVisibilityPriorityUser|NSToolbarItemVisibilityPriorityLow|NSTopTabsBezelBorder|NSToggleButton|NSTIFFCompressionNone|NSTIFFCompressionNEXT|NSTIFFCompressionCCITTFAX3|NSTIFFCompressionCCITTFAX4|NSTIFFCompressionOldJPEG|NSTIFFCompressionJPEG|NSTIFFCompressionPackBits|NSTIFFCompressionLZW|NSTIFFFileType|NSTerminateNow|NSTerminateCancel|NSTerminateLater|NSTextReadInapplicableDocumentTypeError|NSTextReadWriteErrorMinimum|NSTextReadWriteErrorMaximum|NSTextBlockMinimumHeight|NSTextBlockMinimumWidth|NSTextBlockMiddleAlignment|NSTextBlockMargin|NSTextBlockMaximumHeight|NSTextBlockMaximumWidth|NSTextBlockBottomAlignment|NSTextBlockBorder|NSTextBlockBaselineAlignment|NSTextBlockHeight|NSTextBlockTopAlignment|NSTextBlockPercentageValueType|NSTextBlockPadding|NSTextBlockWidth|NSTextBlockAbsoluteValueType|NSTextStorageEditedCharacters|NSTextStorageEditedAttributes|NSTextCellType|NSTexturedRoundedBezelStyle|NSTexturedBackgroundWindowMask|NSTexturedSquareBezelStyle|NSTextTableFixedLayoutAlgorithm|NSTextTableAutomaticLayoutAlgorithm|NSTextFieldRoundedBezel|NSTextFieldSquareBezel|NSTextFieldAndStepperDatePickerStyle|NSTextWriteInapplicableDocumentTypeError|NSTextListPrependEnclosingMarker|NSTwoByteGlyphPacking|NSTabCharacter|NSTabTextMovement|NSTabletPoint|NSTabletPointMask|NSTabletPointEventSubtype|NSTabletProximity|NSTabletProximityMask|NSTabletProximityEventSubtype|NSTableColumnNoResizing|NSTableColumnUserResizingMask|NSTableColumnAutoresizingMask|NSTableViewReverseSequentialColumnAutoresizingStyle|NSTableViewGridNone|NSTableViewSolidHorizontalGridLineMask|NSTableViewSolidVerticalGridLineMask|NSTableViewSequentialColumnAutoresizingStyle|NSTableViewNoColumnAutoresizing|NSTableViewUniformColumnAutoresizingStyle|NSTableViewFirstColumnOnlyAutoresizingStyle|NSTableViewLastColumnOnlyAutoresizingStyle|NSTrackModeMatrix|NSInsertCharFunctionKey|NSInsertFunctionKey|NSInsertLineFunctionKey|NSIntType|NSInternalScriptError|NSInternalSpecifierError|NSIndexSubelement|NSInvalidIndexSpecifierError|NSInformationalRequest|NSInformationalAlertStyle|NSInPredicateOperatorType|NSItalicFontMask|NSISO2022JPStringEncoding|NSISOLatin1StringEncoding|NSISOLatin2StringEncoding|NSIdentityMappingCharacterCollection|NSIllegalTextMovement|NSImageRight|NSImageRepMatchesDevice|NSImageRepLoadStatusReadingHeader|NSImageRepLoadStatusCompleted|NSImageRepLoadStatusInvalidData|NSImageRepLoadStatusUnexpectedEOF|NSImageRepLoadStatusUnknownType|NSImageRepLoadStatusWillNeedAllData|NSImageBelow|NSImageCellType|NSImageCacheBySize|NSImageCacheNever|NSImageCacheDefault|NSImageCacheAlways|NSImageInterpolationHigh|NSImageInterpolationNone|NSImageInterpolationDefault|NSImageInterpolationLow|NSImageOnly|NSImageOverlaps|NSImageFrameGroove|NSImageFrameGrayBezel|NSImageFrameButton|NSImageFrameNone|NSImageFramePhoto|NSImageLoadStatusReadError|NSImageLoadStatusCompleted|NSImageLoadStatusCancelled|NSImageLoadStatusInvalidData|NSImageLoadStatusUnexpectedEOF|NSImageLeft|NSImageAlignRight|NSImageAlignBottom|NSImageAlignBottomRight|NSImageAlignBottomLeft|NSImageAlignCenter|NSImageAlignTop|NSImageAlignTopRight|NSImageAlignTopLeft|NSImageAlignLeft|NSImageAbove|NSOnState|NSOneByteGlyphPacking|NSOnOffButton|NSOnlyScrollerArrows|NSOtherMouseDown|NSOtherMouseDownMask|NSOtherMouseDragged|NSOtherMouseDraggedMask|NSOtherMouseUp|NSOtherMouseUpMask|NSOtherTextMovement|NSOSF1OperatingSystem|NSOpenGLGOResetLibrary|NSOpenGLGORetainRenderers|NSOpenGLGOClearFormatCache|NSOpenGLGOFormatCacheSize|NSOpenGLPFARobust|NSOpenGLPFARendererID|NSOpenGLPFAMinimumPolicy|NSOpenGLPFAMultisample|NSOpenGLPFAMultiScreen|NSOpenGLPFAMPSafe|NSOpenGLPFAMaximumPolicy|NSOpenGLPFABackingStore|NSOpenGLPFAScreenMask|NSOpenGLPFAStencilSize|NSOpenGLPFAStereo|NSOpenGLPFASingleRenderer|NSOpenGLPFASupersample|NSOpenGLPFASamples|NSOpenGLPFASampleBuffers|NSOpenGLPFASampleAlpha|NSOpenGLPFANoRecovery|NSOpenGLPFAColorSize|NSOpenGLPFAColorFloat|NSOpenGLPFACompliant|NSOpenGLPFAClosestPolicy|NSOpenGLPFAOffScreen|NSOpenGLPFADoubleBuffer|NSOpenGLPFADepthSize|NSOpenGLPFAPixelBuffer|NSOpenGLPFAVirtualScreenCount|NSOpenGLPFAFullScreen|NSOpenGLPFAWindow|NSOpenGLPFAAccumSize|NSOpenGLPFAAccelerated|NSOpenGLPFAAuxBuffers|NSOpenGLPFAAuxDepthStencil|NSOpenGLPFAAlphaSize|NSOpenGLPFAAllRenderers|NSOpenStepUnicodeReservedBase|NSOperationNotSupportedForKeyScriptError|NSOperationNotSupportedForKeySpecifierError|NSOffState|NSOKButton|NSOrPredicateType|NSObjCBitfield|NSObjCBoolType|NSObjCShortType|NSObjCStringType|NSObjCStructType|NSObjCSelectorType|NSObjCNoType|NSObjCCharType|NSObjCObjectType|NSObjCDoubleType|NSObjCUnionType|NSObjCPointerType|NSObjCVoidType|NSObjCFloatType|NSObjCLongType|NSObjCLonglongType|NSObjCArrayType|NSDisclosureBezelStyle|NSDiscreteCapacityLevelIndicatorStyle|NSDisplayWindowRunLoopOrdering|NSDiacriticInsensitivePredicateOption|NSDirectSelection|NSDirectPredicateModifier|NSDocModalWindowMask|NSDocumentDirectory|NSDocumentationDirectory|NSDoubleType|NSDownTextMovement|NSDownArrowFunctionKey|NSDescendingPageOrder|NSDesktopDirectory|NSDecimalTabStopType|NSDeviceNColorSpaceModel|NSDeviceIndependentModifierFlagsMask|NSDeveloperDirectory|NSDeveloperApplicationDirectory|NSDefaultControlTint|NSDefaultTokenStyle|NSDeleteCharacter|NSDeleteCharFunctionKey|NSDeleteFunctionKey|NSDeleteLineFunctionKey|NSDemoApplicationDirectory|NSDayCalendarUnit|NSDateFormatterMediumStyle|NSDateFormatterBehavior10|NSDateFormatterBehaviorDefault|NSDateFormatterShortStyle|NSDateFormatterNoStyle|NSDateFormatterFullStyle|NSDateFormatterLongStyle|NSDrawerClosingState|NSDrawerClosedState|NSDrawerOpeningState|NSDrawerOpenState|NSDragOperationGeneric|NSDragOperationMove|NSDragOperationNone|NSDragOperationCopy|NSDragOperationDelete|NSDragOperationPrivate|NSDragOperationEvery|NSDragOperationLink|NSDragOperationAll|NSUserCancelledError|NSUserDirectory|NSUserDomainMask|NSUserFunctionKey|NSURLHandleNotLoaded|NSURLHandleLoadSucceeded|NSURLHandleLoadInProgress|NSURLHandleLoadFailed|NSURLCredentialPersistenceNone|NSURLCredentialPersistencePermanent|NSURLCredentialPersistenceForSession|NSUnscaledWindowMask|NSUncachedRead|NSUnicodeStringEncoding|NSUnitalicFontMask|NSUnifiedTitleAndToolbarWindowMask|NSUndoCloseGroupingRunLoopOrdering|NSUndoFunctionKey|NSUndefinedDateComponent|NSUnderlineStyleSingle|NSUnderlineStyleNone|NSUnderlineStyleThick|NSUnderlineStyleDouble|NSUnderlinePatternSolid|NSUnderlinePatternDot|NSUnderlinePatternDash|NSUnderlinePatternDashDot|NSUnderlinePatternDashDotDot|NSUnknownColorSpaceModel|NSUnknownPointingDevice|NSUnknownPageOrder|NSUnknownKeyScriptError|NSUnknownKeySpecifierError|NSUnboldFontMask|NSUtilityWindowMask|NSUTF8StringEncoding|NSUpdateWindowsRunLoopOrdering|NSUpTextMovement|NSUpArrowFunctionKey|NSJustifiedTextAlignment|NSJPEG2000FileType|NSJPEGFileType|NSJapaneseEUCGlyphPacking|NSJapaneseEUCStringEncoding|NSPostNow|NSPosterFontMask|NSPostWhenIdle|NSPostASAP|NSPositionReplace|NSPositionBefore|NSPositionBeginning|NSPositionEnd|NSPositionAfter|NSPositiveIntType|NSPositiveDoubleType|NSPositiveFloatType|NSPopUpNoArrow|NSPopUpArrowAtBottom|NSPopUpArrowAtCenter|NSPowerOffEventType|NSPortraitOrientation|NSPNGFileType|NSPushInCell|NSPushInCellMask|NSPushOnPushOffButton|NSPenTipMask|NSPenUpperSideMask|NSPenPointingDevice|NSPenLowerSideMask|NSPeriodic|NSPeriodicMask|NSPPScaleField|NSPPStatusTitle|NSPPStatusField|NSPPSaveButton|NSPPNoteTitle|NSPPNoteField|NSPPNameTitle|NSPPNameField|NSPPCopiesField|NSPPTitleField|NSPPImageButton|NSPPOptionsButton|NSPPPaperFeedButton|NSPPPageRangeTo|NSPPPageRangeFrom|NSPPPageChoiceMatrix|NSPPPreviewButton|NSPPLayoutButton|NSPlainTextTokenStyle|NSPauseFunctionKey|NSParagraphSeparatorCharacter|NSPageDownFunctionKey|NSPageUpFunctionKey|NSPrintingReplyLater|NSPrintingSuccess|NSPrintingCancelled|NSPrintingFailure|NSPrintScreenFunctionKey|NSPrinterTableNotFound|NSPrinterTableOK|NSPrinterTableError|NSPrintFunctionKey|NSPropertyListXMLFormat|NSPropertyListMutableContainers|NSPropertyListMutableContainersAndLeaves|NSPropertyListBinaryFormat|NSPropertyListImmutable|NSPropertyListOpenStepFormat|NSProprietaryStringEncoding|NSProgressIndicatorBarStyle|NSProgressIndicatorSpinningStyle|NSProgressIndicatorPreferredSmallThickness|NSProgressIndicatorPreferredThickness|NSProgressIndicatorPreferredLargeThickness|NSProgressIndicatorPreferredAquaThickness|NSPressedTab|NSPrevFunctionKey|NSPLHeightForm|NSPLCancelButton|NSPLTitleField|NSPLImageButton|NSPLOKButton|NSPLOrientationMatrix|NSPLUnitsButton|NSPLPaperNameButton|NSPLWidthForm|NSEnterCharacter|NSEndsWithComparison|NSEndsWithPredicateOperatorType|NSEndFunctionKey|NSEvenOddWindingRule|NSEverySubelement|NSEvaluatedObjectExpressionType|NSEqualToComparison|NSEqualToPredicateOperatorType|NSEraserPointingDevice|NSEraCalendarUnit|NSEraDatePickerElementFlag|NSExclude10|NSExcludeQuickDrawElementsIconCreationOption|NSExpandedFontMask|NSExecuteFunctionKey|NSViewMinXMargin|NSViewMinYMargin|NSViewMaxXMargin|NSViewMaxYMargin|NSViewHeightSizable|NSViewNotSizable|NSViewWidthSizable|NSViaPanelFontAction|NSVerticalRuler|NSValidationErrorMinimum|NSValidationErrorMaximum|NSVariableExpressionType|NSKeySpecifierEvaluationScriptError|NSKeyDown|NSKeyDownMask|NSKeyUp|NSKeyUpMask|NSKeyPathExpressionType|NSKeyValueMinusSetMutation|NSKeyValueSetSetMutation|NSKeyValueChangeReplacement|NSKeyValueChangeRemoval|NSKeyValueChangeSetting|NSKeyValueChangeInsertion|NSKeyValueIntersectSetMutation|NSKeyValueObservingOptionNew|NSKeyValueObservingOptionOld|NSKeyValueUnionSetMutation|NSKeyValueValidationError|NSQTMovieNormalPlayback|NSQTMovieLoopingBackAndForthPlayback|NSQTMovieLoopingPlayback|NSF11FunctionKey|NSF17FunctionKey|NSF12FunctionKey|NSF18FunctionKey|NSF13FunctionKey|NSF19FunctionKey|NSF14FunctionKey|NSF15FunctionKey|NSF1FunctionKey|NSF10FunctionKey|NSF16FunctionKey|NSF7FunctionKey|NSFindPanelActionReplace|NSFindPanelActionReplaceAndFind|NSFindPanelActionReplaceAll|NSFindPanelActionReplaceAllInSelection|NSFindPanelActionShowFindPanel|NSFindPanelActionSetFindString|NSFindPanelActionSelectAll|NSFindPanelActionSelectAllInSelection|NSFindPanelActionNext|NSFindPanelActionPrevious|NSFindFunctionKey|NSFitPagination|NSFileReadNoSuchFileError|NSFileReadNoPermissionError|NSFileReadCorruptFileError|NSFileReadInvalidFileNameError|NSFileReadInapplicableStringEncodingError|NSFileReadUnsupportedSchemeError|NSFileReadUnknownError|NSFileHandlingPanelCancelButton|NSFileHandlingPanelOKButton|NSFileNoSuchFileError|NSFileErrorMinimum|NSFileErrorMaximum|NSFileWriteNoPermissionError|NSFileWriteInvalidFileNameError|NSFileWriteInapplicableStringEncodingError|NSFileWriteOutOfSpaceError|NSFileWriteUnsupportedSchemeError|NSFileWriteUnknownError|NSFileLockingError|NSFixedPitchFontMask|NSF21FunctionKey|NSF27FunctionKey|NSF22FunctionKey|NSF28FunctionKey|NSF23FunctionKey|NSF29FunctionKey|NSF24FunctionKey|NSF25FunctionKey|NSF2FunctionKey|NSF20FunctionKey|NSF26FunctionKey|NSFontMonoSpaceTrait|NSFontModernSerifsClass|NSFontBoldTrait|NSFontSymbolicClass|NSFontScriptsClass|NSFontSlabSerifsClass|NSFontSansSerifClass|NSFontCondensedTrait|NSFontCollectionApplicationOnlyMask|NSFontClarendonSerifsClass|NSFontTransitionalSerifsClass|NSFontIntegerAdvancementsRenderingMode|NSFontItalicTrait|NSFontOldStyleSerifsClass|NSFontOrnamentalsClass|NSFontDefaultRenderingMode|NSFontUnknownClass|NSFontUIOptimizedTrait|NSFontPanelShadowEffectModeMask|NSFontPanelStandardModesMask|NSFontPanelStrikethroughEffectModeMask|NSFontPanelSizeModeMask|NSFontPanelCollectionModeMask|NSFontPanelTextColorEffectModeMask|NSFontPanelDocumentColorEffectModeMask|NSFontPanelUnderlineEffectModeMask|NSFontPanelFaceModeMask|NSFontPanelAllModesMask|NSFontPanelAllEffectsModeMask|NSFontExpandedTrait|NSFontVerticalTrait|NSFontFamilyClassMask|NSFontFreeformSerifsClass|NSFontAntialiasedRenderingMode|NSFontAntialiasedIntegerAdvancementsRenderingMode|NSFocusRingBelow|NSFocusRingTypeNone|NSFocusRingTypeDefault|NSFocusRingTypeExterior|NSFocusRingOnly|NSFocusRingAbove|NSFourByteGlyphPacking|NSFormattingError|NSFormattingErrorMinimum|NSFormattingErrorMaximum|NSFormFeedCharacter|NSF8FunctionKey|NSFunctionExpressionType|NSFunctionKeyMask|NSF31FunctionKey|NSF32FunctionKey|NSF33FunctionKey|NSF34FunctionKey|NSF35FunctionKey|NSF3FunctionKey|NSF30FunctionKey|NSF9FunctionKey|NSF4FunctionKey|NSFPRevertButton|NSFPSizeTitle|NSFPSizeField|NSFPSetButton|NSFPCurrentField|NSFPPreviewButton|NSFPPreviewField|NSFloatingPointSamplesBitmapFormat|NSFloatType|NSFlagsChanged|NSFlagsChangedMask|NSFaxButton|NSF5FunctionKey|NSF6FunctionKey|NSWheelModeColorPanel|NSWindowsNTOperatingSystem|NSWindowsCP1251StringEncoding|NSWindowsCP1252StringEncoding|NSWindowsCP1253StringEncoding|NSWindowsCP1254StringEncoding|NSWindowsCP1250StringEncoding|NSWindows95InterfaceStyle|NSWindows95OperatingSystem|NSWindowMiniaturizeButton|NSWindowMovedEventType|NSWindowBelow|NSWindowCloseButton|NSWindowToolbarButton|NSWindowZoomButton|NSWindowOut|NSWindowDocumentIconButton|NSWindowExposedEventType|NSWindowAbove|NSWorkspaceLaunchNewInstance|NSWorkspaceLaunchInhibitingBackgroundOnly|NSWorkspaceLaunchDefault|NSWorkspaceLaunchPreferringClassic|NSWorkspaceLaunchWithoutActivation|NSWorkspaceLaunchWithoutAddingToRecents|NSWorkspaceLaunchAsync|NSWorkspaceLaunchAndHide|NSWorkspaceLaunchAndHideOthers|NSWorkspaceLaunchAndPrint|NSWorkspaceLaunchAllowingClassicStartup|NSWeekdayCalendarUnit|NSWeekdayOrdinalCalendarUnit|NSWeekCalendarUnit|NSWantsBidiLevels|NSWarningAlertStyle|NSWritingDirectionRightToLeft|NSWritingDirectionNatural|NSWritingDirectionLeftToRight|NSWrapCalendarComponents|NSListModeMatrix|NSLineMovesRight|NSLineMovesDown|NSLineMovesUp|NSLineMovesLeft|NSLineBorder|NSLineBreakByCharWrapping|NSLineBreakByClipping|NSLineBreakByTruncatingMiddle|NSLineBreakByTruncatingHead|NSLineBreakByTruncatingTail|NSLineBreakByWordWrapping|NSLineSeparatorCharacter|NSLineSweepRight|NSLineSweepDown|NSLineSweepUp|NSLineSweepLeft|NSLineToBezierPathElement|NSLineDoesntMove|NSLinearSlider|NSLiteralSearch|NSLikePredicateOperatorType|NSLighterFontAction|NSLibraryDirectory|NSLocalDomainMask|NSLessThanComparison|NSLessThanOrEqualToComparison|NSLessThanOrEqualToPredicateOperatorType|NSLessThanPredicateOperatorType|NSLeftMouseDown|NSLeftMouseDownMask|NSLeftMouseDragged|NSLeftMouseDraggedMask|NSLeftMouseUp|NSLeftMouseUpMask|NSLeftTextMovement|NSLeftTextAlignment|NSLeftTabsBezelBorder|NSLeftTabStopType|NSLeftArrowFunctionKey|NSLayoutRightToLeft|NSLayoutNotDone|NSLayoutCantFit|NSLayoutOutOfGlyphs|NSLayoutDone|NSLayoutLeftToRight|NSLandscapeOrientation|NSLABColorSpaceModel|NSAsciiWithDoubleByteEUCGlyphPacking|NSAscendingPageOrder|NSAnyType|NSAnyPredicateModifier|NSAnyEventMask|NSAnchoredSearch|NSAnimationBlocking|NSAnimationNonblocking|NSAnimationNonblockingThreaded|NSAnimationEffectDisappearingItemDefault|NSAnimationEffectPoof|NSAnimationEaseIn|NSAnimationEaseInOut|NSAnimationEaseOut|NSAnimationLinear|NSAndPredicateType|NSAtBottom|NSAttachmentCharacter|NSAtomicWrite|NSAtTop|NSASCIIStringEncoding|NSAdobeGB1CharacterCollection|NSAdobeCNS1CharacterCollection|NSAdobeJapan1CharacterCollection|NSAdobeJapan2CharacterCollection|NSAdobeKorea1CharacterCollection|NSAddTraitFontAction|NSAdminApplicationDirectory|NSAutosaveOperation|NSAutoPagination|NSApplicationSupportDirectory|NSApplicationDirectory|NSApplicationDefined|NSApplicationDefinedMask|NSApplicationDelegateReplySuccess|NSApplicationDelegateReplyCancel|NSApplicationDelegateReplyFailure|NSApplicationDeactivatedEventType|NSApplicationActivatedEventType|NSAppKitDefined|NSAppKitDefinedMask|NSAlternateKeyMask|NSAlphaShiftKeyMask|NSAlphaNonpremultipliedBitmapFormat|NSAlphaFirstBitmapFormat|NSAlertSecondButtonReturn|NSAlertThirdButtonReturn|NSAlertOtherReturn|NSAlertDefaultReturn|NSAlertErrorReturn|NSAlertFirstButtonReturn|NSAlertAlternateReturn|NSAllScrollerParts|NSAllDomainsMask|NSAllPredicateModifier|NSAllLibrariesDirectory|NSAllApplicationsDirectory|NSArgumentsWrongScriptError|NSArgumentEvaluationScriptError|NSAboveBottom|NSAboveTop|NSAWTEventType",
+        "support.constant.notification.cocoa.leopard": "NSMenuDidBeginTrackingNotification|NSViewDidUpdateTrackingAreasNotification",
+        "support.constant.notification.cocoa": "NSMenuDidRemoveItemNotification|NSMenuDidSendActionNotification|NSMenuDidChangeItemNotification|NSMenuDidEndTrackingNotification|NSMenuDidAddItemNotification|NSMenuWillSendActionNotification|NSSystemColorsDidChangeNotification|NSSplitViewDidResizeSubviewsNotification|NSSplitViewWillResizeSubviewsNotification|NSContextHelpModeDidDeactivateNotification|NSContextHelpModeDidActivateNotification|NSControlTintDidChangeNotification|NSControlTextDidBeginEditingNotification|NSControlTextDidChangeNotification|NSControlTextDidEndEditingNotification|NSColorPanelColorDidChangeNotification|NSColorListDidChangeNotification|NSComboBoxSelectionIsChangingNotification|NSComboBoxSelectionDidChangeNotification|NSComboBoxWillDismissNotification|NSComboBoxWillPopUpNotification|NSClassDescriptionNeededForClassNotification|NSToolbarDidRemoveItemNotification|NSToolbarWillAddItemNotification|NSTextStorageDidProcessEditingNotification|NSTextStorageWillProcessEditingNotification|NSTextDidBeginEditingNotification|NSTextDidChangeNotification|NSTextDidEndEditingNotification|NSTextViewDidChangeSelectionNotification|NSTextViewDidChangeTypingAttributesNotification|NSTextViewWillChangeNotifyingTextViewNotification|NSTableViewSelectionIsChangingNotification|NSTableViewSelectionDidChangeNotification|NSTableViewColumnDidResizeNotification|NSTableViewColumnDidMoveNotification|NSImageRepRegistryDidChangeNotification|NSOutlineViewSelectionIsChangingNotification|NSOutlineViewSelectionDidChangeNotification|NSOutlineViewColumnDidResizeNotification|NSOutlineViewColumnDidMoveNotification|NSOutlineViewItemDidCollapseNotification|NSOutlineViewItemDidExpandNotification|NSOutlineViewItemWillCollapseNotification|NSOutlineViewItemWillExpandNotification|NSDrawerDidCloseNotification|NSDrawerDidOpenNotification|NSDrawerWillCloseNotification|NSDrawerWillOpenNotification|NSPopUpButtonCellWillPopUpNotification|NSPopUpButtonWillPopUpNotification|NSViewGlobalFrameDidChangeNotification|NSViewBoundsDidChangeNotification|NSViewFocusDidChangeNotification|NSViewFrameDidChangeNotification|NSFontSetChangedNotification|NSWindowDidResizeNotification|NSWindowDidResignMainNotification|NSWindowDidResignKeyNotification|NSWindowDidMiniaturizeNotification|NSWindowDidMoveNotification|NSWindowDidBecomeMainNotification|NSWindowDidBecomeKeyNotification|NSWindowDidChangeScreenNotification|NSWindowDidChangeScreenProfileNotification|NSWindowDidDeminiaturizeNotification|NSWindowDidUpdateNotification|NSWindowDidEndSheetNotification|NSWindowDidExposeNotification|NSWindowWillMiniaturizeNotification|NSWindowWillMoveNotification|NSWindowWillBeginSheetNotification|NSWindowWillCloseNotification|NSWorkspaceSessionDidResignActiveNotification|NSWorkspaceSessionDidBecomeActiveNotification|NSWorkspaceDidMountNotification|NSWorkspaceDidTerminateApplicationNotification|NSWorkspaceDidUnmountNotification|NSWorkspaceDidPerformFileOperationNotification|NSWorkspaceDidWakeNotification|NSWorkspaceDidLaunchApplicationNotification|NSWorkspaceWillSleepNotification|NSWorkspaceWillUnmountNotification|NSWorkspaceWillPowerOffNotification|NSWorkspaceWillLaunchApplicationNotification|NSAntialiasThresholdChangedNotification|NSApplicationDidResignActiveNotification|NSApplicationDidBecomeActiveNotification|NSApplicationDidHideNotification|NSApplicationDidChangeScreenParametersNotification|NSApplicationDidUnhideNotification|NSApplicationDidUpdateNotification|NSApplicationDidFinishLaunchingNotification|NSApplicationWillResignActiveNotification|NSApplicationWillBecomeActiveNotification|NSApplicationWillHideNotification|NSApplicationWillTerminateNotification|NSApplicationWillUnhideNotification|NSApplicationWillUpdateNotification|NSApplicationWillFinishLaunchingNotification|NSAppleEventManagerWillProcessFirstEventNotification",
+        "support.constant.cocoa.leopard": "NSRuleEditorRowTypeSimple|NSRuleEditorRowTypeCompound|NSRuleEditorNestingModeSingle|NSRuleEditorNestingModeSimple|NSRuleEditorNestingModeCompound|NSRuleEditorNestingModeList|NSGradientDrawsBeforeStartingLocation|NSGradientDrawsAfterEndingLocation|NSMinusSetExpressionType|NSMachPortDeallocateReceiveRight|NSMachPortDeallocateSendRight|NSMachPortDeallocateNone|NSMapTableStrongMemory|NSMapTableCopyIn|NSMapTableZeroingWeakMemory|NSMapTableObjectPointerPersonality|NSBoxCustom|NSBundleExecutableArchitectureX86|NSBundleExecutableArchitectureI386|NSBundleExecutableArchitecturePPC|NSBundleExecutableArchitecturePPC64|NSBetweenPredicateOperatorType|NSBackgroundStyleRaised|NSBackgroundStyleDark|NSBackgroundStyleLight|NSBackgroundStyleLowered|NSStringDrawingTruncatesLastVisibleLine|NSStringEncodingConversionExternalRepresentation|NSStringEncodingConversionAllowLossy|NSSubqueryExpressionType|NSSpeechSentenceBoundary|NSSpeechImmediateBoundary|NSSpeechWordBoundary|NSSpellingStateGrammarFlag|NSSpellingStateSpellingFlag|NSSplitViewDividerStyleThin|NSSplitViewDividerStyleThick|NSServiceRequestTimedOutError|NSServiceMiscellaneousError|NSServiceMalformedServiceDictionaryError|NSServiceInvalidPasteboardDataError|NSServiceErrorMinimum|NSServiceErrorMaximum|NSServiceApplicationNotFoundError|NSServiceApplicationLaunchFailedError|NSSegmentStyleRoundRect|NSSegmentStyleRounded|NSSegmentStyleSmallSquare|NSSegmentStyleCapsule|NSSegmentStyleTexturedRounded|NSSegmentStyleTexturedSquare|NSSegmentStyleAutomatic|NSHUDWindowMask|NSHashTableStrongMemory|NSHashTableCopyIn|NSHashTableZeroingWeakMemory|NSHashTableObjectPointerPersonality|NSNoModeColorPanel|NSNetServiceNoAutoRename|NSChangeRedone|NSContainsPredicateOperatorType|NSColorRenderingIntentRelativeColorimetric|NSColorRenderingIntentSaturation|NSColorRenderingIntentDefault|NSColorRenderingIntentPerceptual|NSColorRenderingIntentAbsoluteColorimetric|NSCollectorDisabledOption|NSCellHitNone|NSCellHitContentArea|NSCellHitTrackableArea|NSCellHitEditableTextArea|NSTimeZoneNameStyleShortStandard|NSTimeZoneNameStyleShortDaylightSaving|NSTimeZoneNameStyleStandard|NSTimeZoneNameStyleDaylightSaving|NSTextFieldDatePickerStyle|NSTableViewSelectionHighlightStyleRegular|NSTableViewSelectionHighlightStyleSourceList|NSTrackingMouseMoved|NSTrackingMouseEnteredAndExited|NSTrackingCursorUpdate|NSTrackingInVisibleRect|NSTrackingEnabledDuringMouseDrag|NSTrackingAssumeInside|NSTrackingActiveInKeyWindow|NSTrackingActiveInActiveApp|NSTrackingActiveWhenFirstResponder|NSTrackingActiveAlways|NSIntersectSetExpressionType|NSIndexedColorSpaceModel|NSImageScaleNone|NSImageScaleProportionallyDown|NSImageScaleProportionallyUpOrDown|NSImageScaleAxesIndependently|NSOpenGLPFAAllowOfflineRenderers|NSOperationQueueDefaultMaxConcurrentOperationCount|NSOperationQueuePriorityHigh|NSOperationQueuePriorityNormal|NSOperationQueuePriorityVeryHigh|NSOperationQueuePriorityVeryLow|NSOperationQueuePriorityLow|NSDiacriticInsensitiveSearch|NSDownloadsDirectory|NSUnionSetExpressionType|NSUTF16BigEndianStringEncoding|NSUTF16StringEncoding|NSUTF16LittleEndianStringEncoding|NSUTF32BigEndianStringEncoding|NSUTF32StringEncoding|NSUTF32LittleEndianStringEncoding|NSPointerFunctionsMachVirtualMemory|NSPointerFunctionsMallocMemory|NSPointerFunctionsStrongMemory|NSPointerFunctionsStructPersonality|NSPointerFunctionsCStringPersonality|NSPointerFunctionsCopyIn|NSPointerFunctionsIntegerPersonality|NSPointerFunctionsZeroingWeakMemory|NSPointerFunctionsOpaqueMemory|NSPointerFunctionsOpaquePersonality|NSPointerFunctionsObjectPointerPersonality|NSPointerFunctionsObjectPersonality|NSPathStyleStandard|NSPathStyleNavigationBar|NSPathStylePopUp|NSPatternColorSpaceModel|NSPrintPanelShowsScaling|NSPrintPanelShowsCopies|NSPrintPanelShowsOrientation|NSPrintPanelShowsPaperSize|NSPrintPanelShowsPageRange|NSPrintPanelShowsPageSetupAccessory|NSPrintPanelShowsPreview|NSExecutableRuntimeMismatchError|NSExecutableNotLoadableError|NSExecutableErrorMinimum|NSExecutableErrorMaximum|NSExecutableLinkError|NSExecutableLoadError|NSExecutableArchitectureMismatchError|NSKeyValueObservingOptionInitial|NSKeyValueObservingOptionPrior|NSFindPanelSubstringMatchTypeStartsWith|NSFindPanelSubstringMatchTypeContains|NSFindPanelSubstringMatchTypeEndsWith|NSFindPanelSubstringMatchTypeFullWord|NSFileReadTooLargeError|NSFileReadUnknownStringEncodingError|NSForcedOrderingSearch|NSWindowBackingLocationMainMemory|NSWindowBackingLocationDefault|NSWindowBackingLocationVideoMemory|NSWindowSharingReadOnly|NSWindowSharingReadWrite|NSWindowSharingNone|NSWindowCollectionBehaviorMoveToActiveSpace|NSWindowCollectionBehaviorCanJoinAllSpaces|NSWindowCollectionBehaviorDefault|NSWidthInsensitiveSearch|NSAggregateExpressionType"
+    };
     var escapedConstRe = "\\\\(?:[abefnrtv'\"?\\\\]|" +
         "[0-3]\\d{1,2}|" +
         "[4-7]\\d?|" +
@@ -17856,8 +18106,9 @@ var ObjectiveCHighlightRules = function () {
             token: "variable.language.objc"
         }
     ];
-    var cObj = new CHighlightRules();
+    var cObj = new CHighlightRules(NSKeywords);
     var cRules = cObj.getRules();
+    this.$keywordList = cObj.$keywordList;
     this.$rules = {
         "start": [
             {
@@ -17936,62 +18187,6 @@ var ObjectiveCHighlightRules = function () {
             {
                 token: "support.variable.foundation",
                 regex: "\\bNSApp\\b"
-            },
-            {
-                token: ["support.function.cocoa.leopard"],
-                regex: "(?:\\b)(NS(?:Rect(?:ToCGRect|FromCGRect)|MakeCollectable|S(?:tringFromProtocol|ize(?:ToCGSize|FromCGSize))|Draw(?:NinePartImage|ThreePartImage)|P(?:oint(?:ToCGPoint|FromCGPoint)|rotocolFromString)|EventMaskFromType|Value))(?:\\b)"
-            },
-            {
-                token: ["support.function.cocoa"],
-                regex: "(?:\\b)(NS(?:R(?:ound(?:DownToMultipleOfPageSize|UpToMultipleOfPageSize)|un(?:CriticalAlertPanel(?:RelativeToWindow)?|InformationalAlertPanel(?:RelativeToWindow)?|AlertPanel(?:RelativeToWindow)?)|e(?:set(?:MapTable|HashTable)|c(?:ycleZone|t(?:Clip(?:List)?|F(?:ill(?:UsingOperation|List(?:UsingOperation|With(?:Grays|Colors(?:UsingOperation)?))?)?|romString))|ordAllocationEvent)|turnAddress|leaseAlertPanel|a(?:dPixel|l(?:MemoryAvailable|locateCollectable))|gisterServicesProvider)|angeFromString)|Get(?:SizeAndAlignment|CriticalAlertPanel|InformationalAlertPanel|UncaughtExceptionHandler|FileType(?:s)?|WindowServerMemory|AlertPanel)|M(?:i(?:n(?:X|Y)|d(?:X|Y))|ouseInRect|a(?:p(?:Remove|Get|Member|Insert(?:IfAbsent|KnownAbsent)?)|ke(?:R(?:ect|ange)|Size|Point)|x(?:Range|X|Y)))|B(?:itsPer(?:SampleFromDepth|PixelFromDepth)|e(?:stDepth|ep|gin(?:CriticalAlertSheet|InformationalAlertSheet|AlertSheet)))|S(?:ho(?:uldRetainWithZone|w(?:sServicesMenuItem|AnimationEffect))|tringFrom(?:R(?:ect|ange)|MapTable|S(?:ize|elector)|HashTable|Class|Point)|izeFromString|e(?:t(?:ShowsServicesMenuItem|ZoneName|UncaughtExceptionHandler|FocusRingStyle)|lectorFromString|archPathForDirectoriesInDomains)|wap(?:Big(?:ShortToHost|IntToHost|DoubleToHost|FloatToHost|Long(?:ToHost|LongToHost))|Short|Host(?:ShortTo(?:Big|Little)|IntTo(?:Big|Little)|DoubleTo(?:Big|Little)|FloatTo(?:Big|Little)|Long(?:To(?:Big|Little)|LongTo(?:Big|Little)))|Int|Double|Float|L(?:ittle(?:ShortToHost|IntToHost|DoubleToHost|FloatToHost|Long(?:ToHost|LongToHost))|ong(?:Long)?)))|H(?:ighlightRect|o(?:stByteOrder|meDirectory(?:ForUser)?)|eight|ash(?:Remove|Get|Insert(?:IfAbsent|KnownAbsent)?)|FSType(?:CodeFromFileType|OfFile))|N(?:umberOfColorComponents|ext(?:MapEnumeratorPair|HashEnumeratorItem))|C(?:o(?:n(?:tainsRect|vert(?:GlyphsToPackedGlyphs|Swapped(?:DoubleToHost|FloatToHost)|Host(?:DoubleToSwapped|FloatToSwapped)))|unt(?:MapTable|HashTable|Frames|Windows(?:ForContext)?)|py(?:M(?:emoryPages|apTableWithZone)|Bits|HashTableWithZone|Object)|lorSpaceFromDepth|mpare(?:MapTables|HashTables))|lassFromString|reate(?:MapTable(?:WithZone)?|HashTable(?:WithZone)?|Zone|File(?:namePboardType|ContentsPboardType)))|TemporaryDirectory|I(?:s(?:ControllerMarker|EmptyRect|FreedObject)|n(?:setRect|crementExtraRefCount|te(?:r(?:sect(?:sRect|ionR(?:ect|ange))|faceStyleForKey)|gralRect)))|Zone(?:Realloc|Malloc|Name|Calloc|Fr(?:omPointer|ee))|O(?:penStepRootDirectory|ffsetRect)|D(?:i(?:sableScreenUpdates|videRect)|ottedFrameRect|e(?:c(?:imal(?:Round|Multiply|S(?:tring|ubtract)|Normalize|Co(?:py|mpa(?:ct|re))|IsNotANumber|Divide|Power|Add)|rementExtraRefCountWasZero)|faultMallocZone|allocate(?:MemoryPages|Object))|raw(?:Gr(?:oove|ayBezel)|B(?:itmap|utton)|ColorTiledRects|TiledRects|DarkBezel|W(?:hiteBezel|indowBackground)|LightBezel))|U(?:serName|n(?:ionR(?:ect|ange)|registerServicesProvider)|pdateDynamicServices)|Java(?:Bundle(?:Setup|Cleanup)|Setup(?:VirtualMachine)?|Needs(?:ToLoadClasses|VirtualMachine)|ClassesF(?:orBundle|romPath)|ObjectNamedInPath|ProvidesClasses)|P(?:oint(?:InRect|FromString)|erformService|lanarFromDepth|ageSize)|E(?:n(?:d(?:MapTableEnumeration|HashTableEnumeration)|umerate(?:MapTable|HashTable)|ableScreenUpdates)|qual(?:R(?:ects|anges)|Sizes|Points)|raseRect|xtraRefCount)|F(?:ileTypeForHFSTypeCode|ullUserName|r(?:ee(?:MapTable|HashTable)|ame(?:Rect(?:WithWidth(?:UsingOperation)?)?|Address)))|Wi(?:ndowList(?:ForContext)?|dth)|Lo(?:cationInRange|g(?:v|PageSize)?)|A(?:ccessibility(?:R(?:oleDescription(?:ForUIElement)?|aiseBadArgumentException)|Unignored(?:Children(?:ForOnlyChild)?|Descendant|Ancestor)|PostNotification|ActionDescription)|pplication(?:Main|Load)|vailableWindowDepths|ll(?:MapTable(?:Values|Keys)|HashTableObjects|ocate(?:MemoryPages|Collectable|Object)))))(?:\\b)"
-            },
-            {
-                token: ["support.class.cocoa.leopard"],
-                regex: "(?:\\b)(NS(?:RuleEditor|G(?:arbageCollector|radient)|MapTable|HashTable|Co(?:ndition|llectionView(?:Item)?)|T(?:oolbarItemGroup|extInputClient|r(?:eeNode|ackingArea))|InvocationOperation|Operation(?:Queue)?|D(?:ictionaryController|ockTile)|P(?:ointer(?:Functions|Array)|athC(?:o(?:ntrol(?:Delegate)?|mponentCell)|ell(?:Delegate)?)|r(?:intPanelAccessorizing|edicateEditor(?:RowTemplate)?))|ViewController|FastEnumeration|Animat(?:ionContext|ablePropertyContainer)))(?:\\b)"
-            },
-            {
-                token: ["support.class.cocoa"],
-                regex: "(?:\\b)(NS(?:R(?:u(?:nLoop|ler(?:Marker|View))|e(?:sponder|cursiveLock|lativeSpecifier)|an(?:domSpecifier|geSpecifier))|G(?:etCommand|lyph(?:Generator|Storage|Info)|raphicsContext)|XML(?:Node|D(?:ocument|TD(?:Node)?)|Parser|Element)|M(?:iddleSpecifier|ov(?:ie(?:View)?|eCommand)|utable(?:S(?:tring|et)|C(?:haracterSet|opying)|IndexSet|D(?:ictionary|ata)|URLRequest|ParagraphStyle|A(?:ttributedString|rray))|e(?:ssagePort(?:NameServer)?|nu(?:Item(?:Cell)?|View)?|t(?:hodSignature|adata(?:Item|Query(?:ResultGroup|AttributeValueTuple)?)))|a(?:ch(?:BootstrapServer|Port)|trix))|B(?:itmapImageRep|ox|u(?:ndle|tton(?:Cell)?)|ezierPath|rowser(?:Cell)?)|S(?:hadow|c(?:anner|r(?:ipt(?:SuiteRegistry|C(?:o(?:ercionHandler|mmand(?:Description)?)|lassDescription)|ObjectSpecifier|ExecutionContext|WhoseTest)|oll(?:er|View)|een))|t(?:epper(?:Cell)?|atus(?:Bar|Item)|r(?:ing|eam))|imple(?:HorizontalTypesetter|CString)|o(?:cketPort(?:NameServer)?|und|rtDescriptor)|p(?:e(?:cifierTest|ech(?:Recognizer|Synthesizer)|ll(?:Server|Checker))|litView)|e(?:cureTextField(?:Cell)?|t(?:Command)?|archField(?:Cell)?|rializer|gmentedC(?:ontrol|ell))|lider(?:Cell)?|avePanel)|H(?:ost|TTP(?:Cookie(?:Storage)?|URLResponse)|elpManager)|N(?:ib(?:Con(?:nector|trolConnector)|OutletConnector)?|otification(?:Center|Queue)?|u(?:ll|mber(?:Formatter)?)|etService(?:Browser)?|ameSpecifier)|C(?:ha(?:ngeSpelling|racterSet)|o(?:n(?:stantString|nection|trol(?:ler)?|ditionLock)|d(?:ing|er)|unt(?:Command|edSet)|pying|lor(?:Space|P(?:ick(?:ing(?:Custom|Default)|er)|anel)|Well|List)?|m(?:p(?:oundPredicate|arisonPredicate)|boBox(?:Cell)?))|u(?:stomImageRep|rsor)|IImageRep|ell|l(?:ipView|o(?:seCommand|neCommand)|assDescription)|a(?:ched(?:ImageRep|URLResponse)|lendar(?:Date)?)|reateCommand)|T(?:hread|ypesetter|ime(?:Zone|r)|o(?:olbar(?:Item(?:Validations)?)?|kenField(?:Cell)?)|ext(?:Block|Storage|Container|Tab(?:le(?:Block)?)?|Input|View|Field(?:Cell)?|List|Attachment(?:Cell)?)?|a(?:sk|b(?:le(?:Header(?:Cell|View)|Column|View)|View(?:Item)?))|reeController)|I(?:n(?:dex(?:S(?:pecifier|et)|Path)|put(?:Manager|S(?:tream|erv(?:iceProvider|er(?:MouseTracker)?)))|vocation)|gnoreMisspelledWords|mage(?:Rep|Cell|View)?)|O(?:ut(?:putStream|lineView)|pen(?:GL(?:Context|Pixel(?:Buffer|Format)|View)|Panel)|bj(?:CTypeSerializationCallBack|ect(?:Controller)?))|D(?:i(?:st(?:antObject(?:Request)?|ributed(?:NotificationCenter|Lock))|ctionary|rectoryEnumerator)|ocument(?:Controller)?|e(?:serializer|cimalNumber(?:Behaviors|Handler)?|leteCommand)|at(?:e(?:Components|Picker(?:Cell)?|Formatter)?|a)|ra(?:wer|ggingInfo))|U(?:ser(?:InterfaceValidations|Defaults(?:Controller)?)|RL(?:Re(?:sponse|quest)|Handle(?:Client)?|C(?:onnection|ache|redential(?:Storage)?)|Download(?:Delegate)?|Prot(?:ocol(?:Client)?|ectionSpace)|AuthenticationChallenge(?:Sender)?)?|n(?:iqueIDSpecifier|doManager|archiver))|P(?:ipe|o(?:sitionalSpecifier|pUpButton(?:Cell)?|rt(?:Message|NameServer|Coder)?)|ICTImageRep|ersistentDocument|DFImageRep|a(?:steboard|nel|ragraphStyle|geLayout)|r(?:int(?:Info|er|Operation|Panel)|o(?:cessInfo|tocolChecker|perty(?:Specifier|ListSerialization)|gressIndicator|xy)|edicate))|E(?:numerator|vent|PSImageRep|rror|x(?:ception|istsCommand|pression))|V(?:iew(?:Animation)?|al(?:idated(?:ToobarItem|UserInterfaceItem)|ue(?:Transformer)?))|Keyed(?:Unarchiver|Archiver)|Qui(?:ckDrawView|tCommand)|F(?:ile(?:Manager|Handle|Wrapper)|o(?:nt(?:Manager|Descriptor|Panel)?|rm(?:Cell|atter)))|W(?:hoseSpecifier|indow(?:Controller)?|orkspace)|L(?:o(?:c(?:k(?:ing)?|ale)|gicalTest)|evelIndicator(?:Cell)?|ayoutManager)|A(?:ssertionHandler|nimation|ctionCell|ttributedString|utoreleasePool|TSTypesetter|ppl(?:ication|e(?:Script|Event(?:Manager|Descriptor)))|ffineTransform|lert|r(?:chiver|ray(?:Controller)?))))(?:\\b)"
-            },
-            {
-                token: ["support.type.cocoa.leopard"],
-                regex: "(?:\\b)(NS(?:R(?:u(?:nLoop|ler(?:Marker|View))|e(?:sponder|cursiveLock|lativeSpecifier)|an(?:domSpecifier|geSpecifier))|G(?:etCommand|lyph(?:Generator|Storage|Info)|raphicsContext)|XML(?:Node|D(?:ocument|TD(?:Node)?)|Parser|Element)|M(?:iddleSpecifier|ov(?:ie(?:View)?|eCommand)|utable(?:S(?:tring|et)|C(?:haracterSet|opying)|IndexSet|D(?:ictionary|ata)|URLRequest|ParagraphStyle|A(?:ttributedString|rray))|e(?:ssagePort(?:NameServer)?|nu(?:Item(?:Cell)?|View)?|t(?:hodSignature|adata(?:Item|Query(?:ResultGroup|AttributeValueTuple)?)))|a(?:ch(?:BootstrapServer|Port)|trix))|B(?:itmapImageRep|ox|u(?:ndle|tton(?:Cell)?)|ezierPath|rowser(?:Cell)?)|S(?:hadow|c(?:anner|r(?:ipt(?:SuiteRegistry|C(?:o(?:ercionHandler|mmand(?:Description)?)|lassDescription)|ObjectSpecifier|ExecutionContext|WhoseTest)|oll(?:er|View)|een))|t(?:epper(?:Cell)?|atus(?:Bar|Item)|r(?:ing|eam))|imple(?:HorizontalTypesetter|CString)|o(?:cketPort(?:NameServer)?|und|rtDescriptor)|p(?:e(?:cifierTest|ech(?:Recognizer|Synthesizer)|ll(?:Server|Checker))|litView)|e(?:cureTextField(?:Cell)?|t(?:Command)?|archField(?:Cell)?|rializer|gmentedC(?:ontrol|ell))|lider(?:Cell)?|avePanel)|H(?:ost|TTP(?:Cookie(?:Storage)?|URLResponse)|elpManager)|N(?:ib(?:Con(?:nector|trolConnector)|OutletConnector)?|otification(?:Center|Queue)?|u(?:ll|mber(?:Formatter)?)|etService(?:Browser)?|ameSpecifier)|C(?:ha(?:ngeSpelling|racterSet)|o(?:n(?:stantString|nection|trol(?:ler)?|ditionLock)|d(?:ing|er)|unt(?:Command|edSet)|pying|lor(?:Space|P(?:ick(?:ing(?:Custom|Default)|er)|anel)|Well|List)?|m(?:p(?:oundPredicate|arisonPredicate)|boBox(?:Cell)?))|u(?:stomImageRep|rsor)|IImageRep|ell|l(?:ipView|o(?:seCommand|neCommand)|assDescription)|a(?:ched(?:ImageRep|URLResponse)|lendar(?:Date)?)|reateCommand)|T(?:hread|ypesetter|ime(?:Zone|r)|o(?:olbar(?:Item(?:Validations)?)?|kenField(?:Cell)?)|ext(?:Block|Storage|Container|Tab(?:le(?:Block)?)?|Input|View|Field(?:Cell)?|List|Attachment(?:Cell)?)?|a(?:sk|b(?:le(?:Header(?:Cell|View)|Column|View)|View(?:Item)?))|reeController)|I(?:n(?:dex(?:S(?:pecifier|et)|Path)|put(?:Manager|S(?:tream|erv(?:iceProvider|er(?:MouseTracker)?)))|vocation)|gnoreMisspelledWords|mage(?:Rep|Cell|View)?)|O(?:ut(?:putStream|lineView)|pen(?:GL(?:Context|Pixel(?:Buffer|Format)|View)|Panel)|bj(?:CTypeSerializationCallBack|ect(?:Controller)?))|D(?:i(?:st(?:antObject(?:Request)?|ributed(?:NotificationCenter|Lock))|ctionary|rectoryEnumerator)|ocument(?:Controller)?|e(?:serializer|cimalNumber(?:Behaviors|Handler)?|leteCommand)|at(?:e(?:Components|Picker(?:Cell)?|Formatter)?|a)|ra(?:wer|ggingInfo))|U(?:ser(?:InterfaceValidations|Defaults(?:Controller)?)|RL(?:Re(?:sponse|quest)|Handle(?:Client)?|C(?:onnection|ache|redential(?:Storage)?)|Download(?:Delegate)?|Prot(?:ocol(?:Client)?|ectionSpace)|AuthenticationChallenge(?:Sender)?)?|n(?:iqueIDSpecifier|doManager|archiver))|P(?:ipe|o(?:sitionalSpecifier|pUpButton(?:Cell)?|rt(?:Message|NameServer|Coder)?)|ICTImageRep|ersistentDocument|DFImageRep|a(?:steboard|nel|ragraphStyle|geLayout)|r(?:int(?:Info|er|Operation|Panel)|o(?:cessInfo|tocolChecker|perty(?:Specifier|ListSerialization)|gressIndicator|xy)|edicate))|E(?:numerator|vent|PSImageRep|rror|x(?:ception|istsCommand|pression))|V(?:iew(?:Animation)?|al(?:idated(?:ToobarItem|UserInterfaceItem)|ue(?:Transformer)?))|Keyed(?:Unarchiver|Archiver)|Qui(?:ckDrawView|tCommand)|F(?:ile(?:Manager|Handle|Wrapper)|o(?:nt(?:Manager|Descriptor|Panel)?|rm(?:Cell|atter)))|W(?:hoseSpecifier|indow(?:Controller)?|orkspace)|L(?:o(?:c(?:k(?:ing)?|ale)|gicalTest)|evelIndicator(?:Cell)?|ayoutManager)|A(?:ssertionHandler|nimation|ctionCell|ttributedString|utoreleasePool|TSTypesetter|ppl(?:ication|e(?:Script|Event(?:Manager|Descriptor)))|ffineTransform|lert|r(?:chiver|ray(?:Controller)?))))(?:\\b)"
-            },
-            {
-                token: ["support.class.quartz"],
-                regex: "(?:\\b)(C(?:I(?:Sampler|Co(?:ntext|lor)|Image(?:Accumulator)?|PlugIn(?:Registration)?|Vector|Kernel|Filter(?:Generator|Shape)?)|A(?:Renderer|MediaTiming(?:Function)?|BasicAnimation|ScrollLayer|Constraint(?:LayoutManager)?|T(?:iledLayer|extLayer|rans(?:ition|action))|OpenGLLayer|PropertyAnimation|KeyframeAnimation|Layer|A(?:nimation(?:Group)?|ction))))(?:\\b)"
-            },
-            {
-                token: ["support.type.quartz"],
-                regex: "(?:\\b)(C(?:G(?:Float|Point|Size|Rect)|IFormat|AConstraintAttribute))(?:\\b)"
-            },
-            {
-                token: ["support.type.cocoa"],
-                regex: "(?:\\b)(NS(?:R(?:ect(?:Edge)?|ange)|G(?:lyph(?:Relation|LayoutMode)?|radientType)|M(?:odalSession|a(?:trixMode|p(?:Table|Enumerator)))|B(?:itmapImageFileType|orderType|uttonType|ezelStyle|ackingStoreType|rowserColumnResizingType)|S(?:cr(?:oll(?:er(?:Part|Arrow)|ArrowPosition)|eenAuxiliaryOpaque)|tringEncoding|ize|ocketNativeHandle|election(?:Granularity|Direction|Affinity)|wapped(?:Double|Float)|aveOperationType)|Ha(?:sh(?:Table|Enumerator)|ndler(?:2)?)|C(?:o(?:ntrol(?:Size|Tint)|mp(?:ositingOperation|arisonResult))|ell(?:State|Type|ImagePosition|Attribute))|T(?:hreadPrivate|ypesetterGlyphInfo|i(?:ckMarkPosition|tlePosition|meInterval)|o(?:ol(?:TipTag|bar(?:SizeMode|DisplayMode))|kenStyle)|IFFCompression|ext(?:TabType|Alignment)|ab(?:State|leViewDropOperation|ViewType)|rackingRectTag)|ImageInterpolation|Zone|OpenGL(?:ContextAuxiliary|PixelFormatAuxiliary)|D(?:ocumentChangeType|atePickerElementFlags|ra(?:werState|gOperation))|UsableScrollerParts|P(?:oint|r(?:intingPageOrder|ogressIndicator(?:Style|Th(?:ickness|readInfo))))|EventType|KeyValueObservingOptions|Fo(?:nt(?:SymbolicTraits|TraitMask|Action)|cusRingType)|W(?:indow(?:OrderingMode|Depth)|orkspace(?:IconCreationOptions|LaunchOptions)|ritingDirection)|L(?:ineBreakMode|ayout(?:Status|Direction))|A(?:nimation(?:Progress|Effect)|ppl(?:ication(?:TerminateReply|DelegateReply|PrintReply)|eEventManagerSuspensionID)|ffineTransformStruct|lertStyle)))(?:\\b)"
-            },
-            {
-                token: ["support.constant.cocoa"],
-                regex: "(?:\\b)(NS(?:NotFound|Ordered(?:Ascending|Descending|Same)))(?:\\b)"
-            },
-            {
-                token: ["support.constant.notification.cocoa.leopard"],
-                regex: "(?:\\b)(NS(?:MenuDidBeginTracking|ViewDidUpdateTrackingAreas)?Notification)(?:\\b)"
-            },
-            {
-                token: ["support.constant.notification.cocoa"],
-                regex: "(?:\\b)(NS(?:Menu(?:Did(?:RemoveItem|SendAction|ChangeItem|EndTracking|AddItem)|WillSendAction)|S(?:ystemColorsDidChange|plitView(?:DidResizeSubviews|WillResizeSubviews))|C(?:o(?:nt(?:extHelpModeDid(?:Deactivate|Activate)|rolT(?:intDidChange|extDid(?:BeginEditing|Change|EndEditing)))|lor(?:PanelColorDidChange|ListDidChange)|mboBox(?:Selection(?:IsChanging|DidChange)|Will(?:Dismiss|PopUp)))|lassDescriptionNeededForClass)|T(?:oolbar(?:DidRemoveItem|WillAddItem)|ext(?:Storage(?:DidProcessEditing|WillProcessEditing)|Did(?:BeginEditing|Change|EndEditing)|View(?:DidChange(?:Selection|TypingAttributes)|WillChangeNotifyingTextView))|ableView(?:Selection(?:IsChanging|DidChange)|ColumnDid(?:Resize|Move)))|ImageRepRegistryDidChange|OutlineView(?:Selection(?:IsChanging|DidChange)|ColumnDid(?:Resize|Move)|Item(?:Did(?:Collapse|Expand)|Will(?:Collapse|Expand)))|Drawer(?:Did(?:Close|Open)|Will(?:Close|Open))|PopUpButton(?:CellWillPopUp|WillPopUp)|View(?:GlobalFrameDidChange|BoundsDidChange|F(?:ocusDidChange|rameDidChange))|FontSetChanged|W(?:indow(?:Did(?:Resi(?:ze|gn(?:Main|Key))|M(?:iniaturize|ove)|Become(?:Main|Key)|ChangeScreen(?:|Profile)|Deminiaturize|Update|E(?:ndSheet|xpose))|Will(?:M(?:iniaturize|ove)|BeginSheet|Close))|orkspace(?:SessionDid(?:ResignActive|BecomeActive)|Did(?:Mount|TerminateApplication|Unmount|PerformFileOperation|Wake|LaunchApplication)|Will(?:Sleep|Unmount|PowerOff|LaunchApplication)))|A(?:ntialiasThresholdChanged|ppl(?:ication(?:Did(?:ResignActive|BecomeActive|Hide|ChangeScreenParameters|U(?:nhide|pdate)|FinishLaunching)|Will(?:ResignActive|BecomeActive|Hide|Terminate|U(?:nhide|pdate)|FinishLaunching))|eEventManagerWillProcessFirstEvent)))Notification)(?:\\b)"
-            },
-            {
-                token: ["support.constant.cocoa.leopard"],
-                regex: "(?:\\b)(NS(?:RuleEditor(?:RowType(?:Simple|Compound)|NestingMode(?:Si(?:ngle|mple)|Compound|List))|GradientDraws(?:BeforeStartingLocation|AfterEndingLocation)|M(?:inusSetExpressionType|a(?:chPortDeallocate(?:ReceiveRight|SendRight|None)|pTable(?:StrongMemory|CopyIn|ZeroingWeakMemory|ObjectPointerPersonality)))|B(?:oxCustom|undleExecutableArchitecture(?:X86|I386|PPC(?:64)?)|etweenPredicateOperatorType|ackgroundStyle(?:Raised|Dark|L(?:ight|owered)))|S(?:tring(?:DrawingTruncatesLastVisibleLine|EncodingConversion(?:ExternalRepresentation|AllowLossy))|ubqueryExpressionType|p(?:e(?:ech(?:SentenceBoundary|ImmediateBoundary|WordBoundary)|llingState(?:GrammarFlag|SpellingFlag))|litViewDividerStyleThi(?:n|ck))|e(?:rvice(?:RequestTimedOutError|M(?:iscellaneousError|alformedServiceDictionaryError)|InvalidPasteboardDataError|ErrorM(?:inimum|aximum)|Application(?:NotFoundError|LaunchFailedError))|gmentStyle(?:Round(?:Rect|ed)|SmallSquare|Capsule|Textured(?:Rounded|Square)|Automatic)))|H(?:UDWindowMask|ashTable(?:StrongMemory|CopyIn|ZeroingWeakMemory|ObjectPointerPersonality))|N(?:oModeColorPanel|etServiceNoAutoRename)|C(?:hangeRedone|o(?:ntainsPredicateOperatorType|l(?:orRenderingIntent(?:RelativeColorimetric|Saturation|Default|Perceptual|AbsoluteColorimetric)|lectorDisabledOption))|ellHit(?:None|ContentArea|TrackableArea|EditableTextArea))|T(?:imeZoneNameStyle(?:S(?:hort(?:Standard|DaylightSaving)|tandard)|DaylightSaving)|extFieldDatePickerStyle|ableViewSelectionHighlightStyle(?:Regular|SourceList)|racking(?:Mouse(?:Moved|EnteredAndExited)|CursorUpdate|InVisibleRect|EnabledDuringMouseDrag|A(?:ssumeInside|ctive(?:In(?:KeyWindow|ActiveApp)|WhenFirstResponder|Always))))|I(?:n(?:tersectSetExpressionType|dexedColorSpaceModel)|mageScale(?:None|Proportionally(?:Down|UpOrDown)|AxesIndependently))|Ope(?:nGLPFAAllowOfflineRenderers|rationQueue(?:DefaultMaxConcurrentOperationCount|Priority(?:High|Normal|Very(?:High|Low)|Low)))|D(?:iacriticInsensitiveSearch|ownloadsDirectory)|U(?:nionSetExpressionType|TF(?:16(?:BigEndianStringEncoding|StringEncoding|LittleEndianStringEncoding)|32(?:BigEndianStringEncoding|StringEncoding|LittleEndianStringEncoding)))|P(?:ointerFunctions(?:Ma(?:chVirtualMemory|llocMemory)|Str(?:ongMemory|uctPersonality)|C(?:StringPersonality|opyIn)|IntegerPersonality|ZeroingWeakMemory|O(?:paque(?:Memory|Personality)|bjectP(?:ointerPersonality|ersonality)))|at(?:hStyle(?:Standard|NavigationBar|PopUp)|ternColorSpaceModel)|rintPanelShows(?:Scaling|Copies|Orientation|P(?:a(?:perSize|ge(?:Range|SetupAccessory))|review)))|Executable(?:RuntimeMismatchError|NotLoadableError|ErrorM(?:inimum|aximum)|L(?:inkError|oadError)|ArchitectureMismatchError)|KeyValueObservingOption(?:Initial|Prior)|F(?:i(?:ndPanelSubstringMatchType(?:StartsWith|Contains|EndsWith|FullWord)|leRead(?:TooLargeError|UnknownStringEncodingError))|orcedOrderingSearch)|Wi(?:ndow(?:BackingLocation(?:MainMemory|Default|VideoMemory)|Sharing(?:Read(?:Only|Write)|None)|CollectionBehavior(?:MoveToActiveSpace|CanJoinAllSpaces|Default))|dthInsensitiveSearch)|AggregateExpressionType))(?:\\b)"
-            },
-            {
-                token: ["support.constant.cocoa"],
-                regex: "(?:\\b)(NS(?:R(?:GB(?:ModeColorPanel|ColorSpaceModel)|ight(?:Mouse(?:D(?:own(?:Mask)?|ragged(?:Mask)?)|Up(?:Mask)?)|T(?:ext(?:Movement|Alignment)|ab(?:sBezelBorder|StopType))|ArrowFunctionKey)|ound(?:RectBezelStyle|Bankers|ed(?:BezelStyle|TokenStyle|DisclosureBezelStyle)|Down|Up|Plain|Line(?:CapStyle|JoinStyle))|un(?:StoppedResponse|ContinuesResponse|AbortedResponse)|e(?:s(?:izableWindowMask|et(?:CursorRectsRunLoopOrdering|FunctionKey))|ce(?:ssedBezelStyle|iver(?:sCantHandleCommandScriptError|EvaluationScriptError))|turnTextMovement|doFunctionKey|quiredArgumentsMissingScriptError|l(?:evancyLevelIndicatorStyle|ative(?:Before|After))|gular(?:SquareBezelStyle|ControlSize)|moveTraitFontAction)|a(?:n(?:domSubelement|geDateMode)|tingLevelIndicatorStyle|dio(?:ModeMatrix|Button)))|G(?:IFFileType|lyph(?:Below|Inscribe(?:B(?:elow|ase)|Over(?:strike|Below)|Above)|Layout(?:WithPrevious|A(?:tAPoint|gainstAPoint))|A(?:ttribute(?:BidiLevel|Soft|Inscribe|Elastic)|bove))|r(?:ooveBorder|eaterThan(?:Comparison|OrEqualTo(?:Comparison|PredicateOperatorType)|PredicateOperatorType)|a(?:y(?:ModeColorPanel|ColorSpaceModel)|dient(?:None|Con(?:cave(?:Strong|Weak)|vex(?:Strong|Weak)))|phiteControlTint)))|XML(?:N(?:o(?:tationDeclarationKind|de(?:CompactEmptyElement|IsCDATA|OptionsNone|Use(?:SingleQuotes|DoubleQuotes)|Pre(?:serve(?:NamespaceOrder|C(?:haracterReferences|DATA)|DTD|Prefixes|E(?:ntities|mptyElements)|Quotes|Whitespace|A(?:ttributeOrder|ll))|ttyPrint)|ExpandEmptyElement))|amespaceKind)|CommentKind|TextKind|InvalidKind|D(?:ocument(?:X(?:MLKind|HTMLKind|Include)|HTMLKind|T(?:idy(?:XML|HTML)|extKind)|IncludeContentTypeDeclaration|Validate|Kind)|TDKind)|P(?:arser(?:GTRequiredError|XMLDeclNot(?:StartedError|FinishedError)|Mi(?:splaced(?:XMLDeclarationError|CDATAEndStringError)|xedContentDeclNot(?:StartedError|FinishedError))|S(?:t(?:andaloneValueError|ringNot(?:StartedError|ClosedError))|paceRequiredError|eparatorRequiredError)|N(?:MTOKENRequiredError|o(?:t(?:ationNot(?:StartedError|FinishedError)|WellBalancedError)|DTDError)|amespaceDeclarationError|AMERequiredError)|C(?:haracterRef(?:In(?:DTDError|PrologError|EpilogError)|AtEOFError)|o(?:nditionalSectionNot(?:StartedError|FinishedError)|mment(?:NotFinishedError|ContainsDoubleHyphenError))|DATANotFinishedError)|TagNameMismatchError|In(?:ternalError|valid(?:HexCharacterRefError|C(?:haracter(?:RefError|InEntityError|Error)|onditionalSectionError)|DecimalCharacterRefError|URIError|Encoding(?:NameError|Error)))|OutOfMemoryError|D(?:ocumentStartError|elegateAbortedParseError|OCTYPEDeclNotFinishedError)|U(?:RI(?:RequiredError|FragmentError)|n(?:declaredEntityError|parsedEntityError|knownEncodingError|finishedTagError))|P(?:CDATARequiredError|ublicIdentifierRequiredError|arsedEntityRef(?:MissingSemiError|NoNameError|In(?:Internal(?:SubsetError|Error)|PrologError|EpilogError)|AtEOFError)|r(?:ocessingInstructionNot(?:StartedError|FinishedError)|ematureDocumentEndError))|E(?:n(?:codingNotSupportedError|tity(?:Ref(?:In(?:DTDError|PrologError|EpilogError)|erence(?:MissingSemiError|WithoutNameError)|LoopError|AtEOFError)|BoundaryError|Not(?:StartedError|FinishedError)|Is(?:ParameterError|ExternalError)|ValueRequiredError))|qualExpectedError|lementContentDeclNot(?:StartedError|FinishedError)|xt(?:ernalS(?:tandaloneEntityError|ubsetNotFinishedError)|raContentError)|mptyDocumentError)|L(?:iteralNot(?:StartedError|FinishedError)|T(?:RequiredError|SlashRequiredError)|essThanSymbolInAttributeError)|Attribute(?:RedefinedError|HasNoValueError|Not(?:StartedError|FinishedError)|ListNot(?:StartedError|FinishedError)))|rocessingInstructionKind)|E(?:ntity(?:GeneralKind|DeclarationKind|UnparsedKind|P(?:ar(?:sedKind|ameterKind)|redefined))|lement(?:Declaration(?:MixedKind|UndefinedKind|E(?:lementKind|mptyKind)|Kind|AnyKind)|Kind))|Attribute(?:N(?:MToken(?:sKind|Kind)|otationKind)|CDATAKind|ID(?:Ref(?:sKind|Kind)|Kind)|DeclarationKind|En(?:tit(?:yKind|iesKind)|umerationKind)|Kind))|M(?:i(?:n(?:XEdge|iaturizableWindowMask|YEdge|uteCalendarUnit)|terLineJoinStyle|ddleSubelement|xedState)|o(?:nthCalendarUnit|deSwitchFunctionKey|use(?:Moved(?:Mask)?|E(?:ntered(?:Mask)?|ventSubtype|xited(?:Mask)?))|veToBezierPathElement|mentary(?:ChangeButton|Push(?:Button|InButton)|Light(?:Button)?))|enuFunctionKey|a(?:c(?:intoshInterfaceStyle|OSRomanStringEncoding)|tchesPredicateOperatorType|ppedRead|x(?:XEdge|YEdge))|ACHOperatingSystem)|B(?:MPFileType|o(?:ttomTabsBezelBorder|ldFontMask|rderlessWindowMask|x(?:Se(?:condary|parator)|OldStyle|Primary))|uttLineCapStyle|e(?:zelBorder|velLineJoinStyle|low(?:Bottom|Top)|gin(?:sWith(?:Comparison|PredicateOperatorType)|FunctionKey))|lueControlTint|ack(?:spaceCharacter|tabTextMovement|ingStore(?:Retained|Buffered|Nonretained)|TabCharacter|wardsSearch|groundTab)|r(?:owser(?:NoColumnResizing|UserColumnResizing|AutoColumnResizing)|eakFunctionKey))|S(?:h(?:ift(?:JISStringEncoding|KeyMask)|ow(?:ControlGlyphs|InvisibleGlyphs)|adowlessSquareBezelStyle)|y(?:s(?:ReqFunctionKey|tem(?:D(?:omainMask|efined(?:Mask)?)|FunctionKey))|mbolStringEncoding)|c(?:a(?:nnedOption|le(?:None|ToFit|Proportionally))|r(?:oll(?:er(?:NoPart|Increment(?:Page|Line|Arrow)|Decrement(?:Page|Line|Arrow)|Knob(?:Slot)?|Arrows(?:M(?:inEnd|axEnd)|None|DefaultSetting))|Wheel(?:Mask)?|LockFunctionKey)|eenChangedEventType))|t(?:opFunctionKey|r(?:ingDrawing(?:OneShot|DisableScreenFontSubstitution|Uses(?:DeviceMetrics|FontLeading|LineFragmentOrigin))|eam(?:Status(?:Reading|NotOpen|Closed|Open(?:ing)?|Error|Writing|AtEnd)|Event(?:Has(?:BytesAvailable|SpaceAvailable)|None|OpenCompleted|E(?:ndEncountered|rrorOccurred)))))|i(?:ngle(?:DateMode|UnderlineStyle)|ze(?:DownFontAction|UpFontAction))|olarisOperatingSystem|unOSOperatingSystem|pecialPageOrder|e(?:condCalendarUnit|lect(?:By(?:Character|Paragraph|Word)|i(?:ng(?:Next|Previous)|onAffinity(?:Downstream|Upstream))|edTab|FunctionKey)|gmentSwitchTracking(?:Momentary|Select(?:One|Any)))|quareLineCapStyle|witchButton|ave(?:ToOperation|Op(?:tions(?:Yes|No|Ask)|eration)|AsOperation)|mall(?:SquareBezelStyle|C(?:ontrolSize|apsFontMask)|IconButtonBezelStyle))|H(?:ighlightModeMatrix|SBModeColorPanel|o(?:ur(?:Minute(?:SecondDatePickerElementFlag|DatePickerElementFlag)|CalendarUnit)|rizontalRuler|meFunctionKey)|TTPCookieAcceptPolicy(?:Never|OnlyFromMainDocumentDomain|Always)|e(?:lp(?:ButtonBezelStyle|KeyMask|FunctionKey)|avierFontAction)|PUXOperatingSystem)|Year(?:MonthDa(?:yDatePickerElementFlag|tePickerElementFlag)|CalendarUnit)|N(?:o(?:n(?:StandardCharacterSetFontMask|ZeroWindingRule|activatingPanelMask|LossyASCIIStringEncoding)|Border|t(?:ification(?:SuspensionBehavior(?:Hold|Coalesce|D(?:eliverImmediately|rop))|NoCoalescing|CoalescingOn(?:Sender|Name)|DeliverImmediately|PostToAllSessions)|PredicateType|EqualToPredicateOperatorType)|S(?:cr(?:iptError|ollerParts)|ubelement|pecifierError)|CellMask|T(?:itle|opLevelContainersSpecifierError|abs(?:BezelBorder|NoBorder|LineBorder))|I(?:nterfaceStyle|mage)|UnderlineStyle|FontChangeAction)|u(?:ll(?:Glyph|CellType)|m(?:eric(?:Search|PadKeyMask)|berFormatter(?:Round(?:Half(?:Down|Up|Even)|Ceiling|Down|Up|Floor)|Behavior(?:10|Default)|S(?:cientificStyle|pellOutStyle)|NoStyle|CurrencyStyle|DecimalStyle|P(?:ercentStyle|ad(?:Before(?:Suffix|Prefix)|After(?:Suffix|Prefix))))))|e(?:t(?:Services(?:BadArgumentError|NotFoundError|C(?:ollisionError|ancelledError)|TimeoutError|InvalidError|UnknownError|ActivityInProgress)|workDomainMask)|wlineCharacter|xt(?:StepInterfaceStyle|FunctionKey))|EXTSTEPStringEncoding|a(?:t(?:iveShortGlyphPacking|uralTextAlignment)|rrowFontMask))|C(?:hange(?:ReadOtherContents|GrayCell(?:Mask)?|BackgroundCell(?:Mask)?|Cleared|Done|Undone|Autosaved)|MYK(?:ModeColorPanel|ColorSpaceModel)|ircular(?:BezelStyle|Slider)|o(?:n(?:stantValueExpressionType|t(?:inuousCapacityLevelIndicatorStyle|entsCellMask|ain(?:sComparison|erSpecifierError)|rol(?:Glyph|KeyMask))|densedFontMask)|lor(?:Panel(?:RGBModeMask|GrayModeMask|HSBModeMask|C(?:MYKModeMask|olorListModeMask|ustomPaletteModeMask|rayonModeMask)|WheelModeMask|AllModesMask)|ListModeColorPanel)|reServiceDirectory|m(?:p(?:osite(?:XOR|Source(?:In|O(?:ut|ver)|Atop)|Highlight|C(?:opy|lear)|Destination(?:In|O(?:ut|ver)|Atop)|Plus(?:Darker|Lighter))|ressedFontMask)|mandKeyMask))|u(?:stom(?:SelectorPredicateOperatorType|PaletteModeColorPanel)|r(?:sor(?:Update(?:Mask)?|PointingDevice)|veToBezierPathElement))|e(?:nterT(?:extAlignment|abStopType)|ll(?:State|H(?:ighlighted|as(?:Image(?:Horizontal|OnLeftOrBottom)|OverlappingImage))|ChangesContents|Is(?:Bordered|InsetButton)|Disabled|Editable|LightsBy(?:Gray|Background|Contents)|AllowsMixedState))|l(?:ipPagination|o(?:s(?:ePathBezierPathElement|ableWindowMask)|ckAndCalendarDatePickerStyle)|ear(?:ControlTint|DisplayFunctionKey|LineFunctionKey))|a(?:seInsensitive(?:Search|PredicateOption)|n(?:notCreateScriptCommandError|cel(?:Button|TextMovement))|chesDirectory|lculation(?:NoError|Overflow|DivideByZero|Underflow|LossOfPrecision)|rriageReturnCharacter)|r(?:itical(?:Request|AlertStyle)|ayonModeColorPanel))|T(?:hick(?:SquareBezelStyle|erSquareBezelStyle)|ypesetter(?:Behavior|HorizontalTabAction|ContainerBreakAction|ZeroAdvancementAction|OriginalBehavior|ParagraphBreakAction|WhitespaceAction|L(?:ineBreakAction|atestBehavior))|i(?:ckMark(?:Right|Below|Left|Above)|tledWindowMask|meZoneDatePickerElementFlag)|o(?:olbarItemVisibilityPriority(?:Standard|High|User|Low)|pTabsBezelBorder|ggleButton)|IFF(?:Compression(?:N(?:one|EXT)|CCITTFAX(?:3|4)|OldJPEG|JPEG|PackBits|LZW)|FileType)|e(?:rminate(?:Now|Cancel|Later)|xt(?:Read(?:InapplicableDocumentTypeError|WriteErrorM(?:inimum|aximum))|Block(?:M(?:i(?:nimum(?:Height|Width)|ddleAlignment)|a(?:rgin|ximum(?:Height|Width)))|B(?:o(?:ttomAlignment|rder)|aselineAlignment)|Height|TopAlignment|P(?:ercentageValueType|adding)|Width|AbsoluteValueType)|StorageEdited(?:Characters|Attributes)|CellType|ured(?:RoundedBezelStyle|BackgroundWindowMask|SquareBezelStyle)|Table(?:FixedLayoutAlgorithm|AutomaticLayoutAlgorithm)|Field(?:RoundedBezel|SquareBezel|AndStepperDatePickerStyle)|WriteInapplicableDocumentTypeError|ListPrependEnclosingMarker))|woByteGlyphPacking|ab(?:Character|TextMovement|le(?:tP(?:oint(?:Mask|EventSubtype)?|roximity(?:Mask|EventSubtype)?)|Column(?:NoResizing|UserResizingMask|AutoresizingMask)|View(?:ReverseSequentialColumnAutoresizingStyle|GridNone|S(?:olid(?:HorizontalGridLineMask|VerticalGridLineMask)|equentialColumnAutoresizingStyle)|NoColumnAutoresizing|UniformColumnAutoresizingStyle|FirstColumnOnlyAutoresizingStyle|LastColumnOnlyAutoresizingStyle)))|rackModeMatrix)|I(?:n(?:sert(?:CharFunctionKey|FunctionKey|LineFunctionKey)|t(?:Type|ernalS(?:criptError|pecifierError))|dexSubelement|validIndexSpecifierError|formational(?:Request|AlertStyle)|PredicateOperatorType)|talicFontMask|SO(?:2022JPStringEncoding|Latin(?:1StringEncoding|2StringEncoding))|dentityMappingCharacterCollection|llegalTextMovement|mage(?:R(?:ight|ep(?:MatchesDevice|LoadStatus(?:ReadingHeader|Completed|InvalidData|Un(?:expectedEOF|knownType)|WillNeedAllData)))|Below|C(?:ellType|ache(?:BySize|Never|Default|Always))|Interpolation(?:High|None|Default|Low)|O(?:nly|verlaps)|Frame(?:Gr(?:oove|ayBezel)|Button|None|Photo)|L(?:oadStatus(?:ReadError|C(?:ompleted|ancelled)|InvalidData|UnexpectedEOF)|eft)|A(?:lign(?:Right|Bottom(?:Right|Left)?|Center|Top(?:Right|Left)?|Left)|bove)))|O(?:n(?:State|eByteGlyphPacking|OffButton|lyScrollerArrows)|ther(?:Mouse(?:D(?:own(?:Mask)?|ragged(?:Mask)?)|Up(?:Mask)?)|TextMovement)|SF1OperatingSystem|pe(?:n(?:GL(?:GO(?:Re(?:setLibrary|tainRenderers)|ClearFormatCache|FormatCacheSize)|PFA(?:R(?:obust|endererID)|M(?:inimumPolicy|ulti(?:sample|Screen)|PSafe|aximumPolicy)|BackingStore|S(?:creenMask|te(?:ncilSize|reo)|ingleRenderer|upersample|ample(?:s|Buffers|Alpha))|NoRecovery|C(?:o(?:lor(?:Size|Float)|mpliant)|losestPolicy)|OffScreen|D(?:oubleBuffer|epthSize)|PixelBuffer|VirtualScreenCount|FullScreen|Window|A(?:cc(?:umSize|elerated)|ux(?:Buffers|DepthStencil)|l(?:phaSize|lRenderers))))|StepUnicodeReservedBase)|rationNotSupportedForKeyS(?:criptError|pecifierError))|ffState|KButton|rPredicateType|bjC(?:B(?:itfield|oolType)|S(?:hortType|tr(?:ingType|uctType)|electorType)|NoType|CharType|ObjectType|DoubleType|UnionType|PointerType|VoidType|FloatType|Long(?:Type|longType)|ArrayType))|D(?:i(?:s(?:c(?:losureBezelStyle|reteCapacityLevelIndicatorStyle)|playWindowRunLoopOrdering)|acriticInsensitivePredicateOption|rect(?:Selection|PredicateModifier))|o(?:c(?:ModalWindowMask|ument(?:Directory|ationDirectory))|ubleType|wn(?:TextMovement|ArrowFunctionKey))|e(?:s(?:cendingPageOrder|ktopDirectory)|cimalTabStopType|v(?:ice(?:NColorSpaceModel|IndependentModifierFlagsMask)|eloper(?:Directory|ApplicationDirectory))|fault(?:ControlTint|TokenStyle)|lete(?:Char(?:acter|FunctionKey)|FunctionKey|LineFunctionKey)|moApplicationDirectory)|a(?:yCalendarUnit|teFormatter(?:MediumStyle|Behavior(?:10|Default)|ShortStyle|NoStyle|FullStyle|LongStyle))|ra(?:wer(?:Clos(?:ingState|edState)|Open(?:ingState|State))|gOperation(?:Generic|Move|None|Copy|Delete|Private|Every|Link|All)))|U(?:ser(?:CancelledError|D(?:irectory|omainMask)|FunctionKey)|RL(?:Handle(?:NotLoaded|Load(?:Succeeded|InProgress|Failed))|CredentialPersistence(?:None|Permanent|ForSession))|n(?:scaledWindowMask|cachedRead|i(?:codeStringEncoding|talicFontMask|fiedTitleAndToolbarWindowMask)|d(?:o(?:CloseGroupingRunLoopOrdering|FunctionKey)|e(?:finedDateComponent|rline(?:Style(?:Single|None|Thick|Double)|Pattern(?:Solid|D(?:ot|ash(?:Dot(?:Dot)?)?)))))|known(?:ColorSpaceModel|P(?:ointingDevice|ageOrder)|KeyS(?:criptError|pecifierError))|boldFontMask)|tilityWindowMask|TF8StringEncoding|p(?:dateWindowsRunLoopOrdering|TextMovement|ArrowFunctionKey))|J(?:ustifiedTextAlignment|PEG(?:2000FileType|FileType)|apaneseEUC(?:GlyphPacking|StringEncoding))|P(?:o(?:s(?:t(?:Now|erFontMask|WhenIdle|ASAP)|iti(?:on(?:Replace|Be(?:fore|ginning)|End|After)|ve(?:IntType|DoubleType|FloatType)))|pUp(?:NoArrow|ArrowAt(?:Bottom|Center))|werOffEventType|rtraitOrientation)|NGFileType|ush(?:InCell(?:Mask)?|OnPushOffButton)|e(?:n(?:TipMask|UpperSideMask|PointingDevice|LowerSideMask)|riodic(?:Mask)?)|P(?:S(?:caleField|tatus(?:Title|Field)|aveButton)|N(?:ote(?:Title|Field)|ame(?:Title|Field))|CopiesField|TitleField|ImageButton|OptionsButton|P(?:a(?:perFeedButton|ge(?:Range(?:To|From)|ChoiceMatrix))|reviewButton)|LayoutButton)|lainTextTokenStyle|a(?:useFunctionKey|ragraphSeparatorCharacter|ge(?:DownFunctionKey|UpFunctionKey))|r(?:int(?:ing(?:ReplyLater|Success|Cancelled|Failure)|ScreenFunctionKey|erTable(?:NotFound|OK|Error)|FunctionKey)|o(?:p(?:ertyList(?:XMLFormat|MutableContainers(?:AndLeaves)?|BinaryFormat|Immutable|OpenStepFormat)|rietaryStringEncoding)|gressIndicator(?:BarStyle|SpinningStyle|Preferred(?:SmallThickness|Thickness|LargeThickness|AquaThickness)))|e(?:ssedTab|vFunctionKey))|L(?:HeightForm|CancelButton|TitleField|ImageButton|O(?:KButton|rientationMatrix)|UnitsButton|PaperNameButton|WidthForm))|E(?:n(?:terCharacter|d(?:sWith(?:Comparison|PredicateOperatorType)|FunctionKey))|v(?:e(?:nOddWindingRule|rySubelement)|aluatedObjectExpressionType)|qualTo(?:Comparison|PredicateOperatorType)|ra(?:serPointingDevice|CalendarUnit|DatePickerElementFlag)|x(?:clude(?:10|QuickDrawElementsIconCreationOption)|pandedFontMask|ecuteFunctionKey))|V(?:i(?:ew(?:M(?:in(?:XMargin|YMargin)|ax(?:XMargin|YMargin))|HeightSizable|NotSizable|WidthSizable)|aPanelFontAction)|erticalRuler|a(?:lidationErrorM(?:inimum|aximum)|riableExpressionType))|Key(?:SpecifierEvaluationScriptError|Down(?:Mask)?|Up(?:Mask)?|PathExpressionType|Value(?:MinusSetMutation|SetSetMutation|Change(?:Re(?:placement|moval)|Setting|Insertion)|IntersectSetMutation|ObservingOption(?:New|Old)|UnionSetMutation|ValidationError))|QTMovie(?:NormalPlayback|Looping(?:BackAndForthPlayback|Playback))|F(?:1(?:1FunctionKey|7FunctionKey|2FunctionKey|8FunctionKey|3FunctionKey|9FunctionKey|4FunctionKey|5FunctionKey|FunctionKey|0FunctionKey|6FunctionKey)|7FunctionKey|i(?:nd(?:PanelAction(?:Replace(?:A(?:ndFind|ll(?:InSelection)?))?|S(?:howFindPanel|e(?:tFindString|lectAll(?:InSelection)?))|Next|Previous)|FunctionKey)|tPagination|le(?:Read(?:No(?:SuchFileError|PermissionError)|CorruptFileError|In(?:validFileNameError|applicableStringEncodingError)|Un(?:supportedSchemeError|knownError))|HandlingPanel(?:CancelButton|OKButton)|NoSuchFileError|ErrorM(?:inimum|aximum)|Write(?:NoPermissionError|In(?:validFileNameError|applicableStringEncodingError)|OutOfSpaceError|Un(?:supportedSchemeError|knownError))|LockingError)|xedPitchFontMask)|2(?:1FunctionKey|7FunctionKey|2FunctionKey|8FunctionKey|3FunctionKey|9FunctionKey|4FunctionKey|5FunctionKey|FunctionKey|0FunctionKey|6FunctionKey)|o(?:nt(?:Mo(?:noSpaceTrait|dernSerifsClass)|BoldTrait|S(?:ymbolicClass|criptsClass|labSerifsClass|ansSerifClass)|C(?:o(?:ndensedTrait|llectionApplicationOnlyMask)|larendonSerifsClass)|TransitionalSerifsClass|I(?:ntegerAdvancementsRenderingMode|talicTrait)|O(?:ldStyleSerifsClass|rnamentalsClass)|DefaultRenderingMode|U(?:nknownClass|IOptimizedTrait)|Panel(?:S(?:hadowEffectModeMask|t(?:andardModesMask|rikethroughEffectModeMask)|izeModeMask)|CollectionModeMask|TextColorEffectModeMask|DocumentColorEffectModeMask|UnderlineEffectModeMask|FaceModeMask|All(?:ModesMask|EffectsModeMask))|ExpandedTrait|VerticalTrait|F(?:amilyClassMask|reeformSerifsClass)|Antialiased(?:RenderingMode|IntegerAdvancementsRenderingMode))|cusRing(?:Below|Type(?:None|Default|Exterior)|Only|Above)|urByteGlyphPacking|rm(?:attingError(?:M(?:inimum|aximum))?|FeedCharacter))|8FunctionKey|unction(?:ExpressionType|KeyMask)|3(?:1FunctionKey|2FunctionKey|3FunctionKey|4FunctionKey|5FunctionKey|FunctionKey|0FunctionKey)|9FunctionKey|4FunctionKey|P(?:RevertButton|S(?:ize(?:Title|Field)|etButton)|CurrentField|Preview(?:Button|Field))|l(?:oat(?:ingPointSamplesBitmapFormat|Type)|agsChanged(?:Mask)?)|axButton|5FunctionKey|6FunctionKey)|W(?:heelModeColorPanel|indow(?:s(?:NTOperatingSystem|CP125(?:1StringEncoding|2StringEncoding|3StringEncoding|4StringEncoding|0StringEncoding)|95(?:InterfaceStyle|OperatingSystem))|M(?:iniaturizeButton|ovedEventType)|Below|CloseButton|ToolbarButton|ZoomButton|Out|DocumentIconButton|ExposedEventType|Above)|orkspaceLaunch(?:NewInstance|InhibitingBackgroundOnly|Default|PreferringClassic|WithoutA(?:ctivation|ddingToRecents)|A(?:sync|nd(?:Hide(?:Others)?|Print)|llowingClassicStartup))|eek(?:day(?:CalendarUnit|OrdinalCalendarUnit)|CalendarUnit)|a(?:ntsBidiLevels|rningAlertStyle)|r(?:itingDirection(?:RightToLeft|Natural|LeftToRight)|apCalendarComponents))|L(?:i(?:stModeMatrix|ne(?:Moves(?:Right|Down|Up|Left)|B(?:order|reakBy(?:C(?:harWrapping|lipping)|Truncating(?:Middle|Head|Tail)|WordWrapping))|S(?:eparatorCharacter|weep(?:Right|Down|Up|Left))|ToBezierPathElement|DoesntMove|arSlider)|teralSearch|kePredicateOperatorType|ghterFontAction|braryDirectory)|ocalDomainMask|e(?:ssThan(?:Comparison|OrEqualTo(?:Comparison|PredicateOperatorType)|PredicateOperatorType)|ft(?:Mouse(?:D(?:own(?:Mask)?|ragged(?:Mask)?)|Up(?:Mask)?)|T(?:ext(?:Movement|Alignment)|ab(?:sBezelBorder|StopType))|ArrowFunctionKey))|a(?:yout(?:RightToLeft|NotDone|CantFit|OutOfGlyphs|Done|LeftToRight)|ndscapeOrientation)|ABColorSpaceModel)|A(?:sc(?:iiWithDoubleByteEUCGlyphPacking|endingPageOrder)|n(?:y(?:Type|PredicateModifier|EventMask)|choredSearch|imation(?:Blocking|Nonblocking(?:Threaded)?|E(?:ffect(?:DisappearingItemDefault|Poof)|ase(?:In(?:Out)?|Out))|Linear)|dPredicateType)|t(?:Bottom|tachmentCharacter|omicWrite|Top)|SCIIStringEncoding|d(?:obe(?:GB1CharacterCollection|CNS1CharacterCollection|Japan(?:1CharacterCollection|2CharacterCollection)|Korea1CharacterCollection)|dTraitFontAction|minApplicationDirectory)|uto(?:saveOperation|Pagination)|pp(?:lication(?:SupportDirectory|D(?:irectory|e(?:fined(?:Mask)?|legateReply(?:Success|Cancel|Failure)|activatedEventType))|ActivatedEventType)|KitDefined(?:Mask)?)|l(?:ternateKeyMask|pha(?:ShiftKeyMask|NonpremultipliedBitmapFormat|FirstBitmapFormat)|ert(?:SecondButtonReturn|ThirdButtonReturn|OtherReturn|DefaultReturn|ErrorReturn|FirstButtonReturn|AlternateReturn)|l(?:ScrollerParts|DomainsMask|PredicateModifier|LibrariesDirectory|ApplicationsDirectory))|rgument(?:sWrongScriptError|EvaluationScriptError)|bove(?:Bottom|Top)|WTEventType)))(?:\\b)"
-            },
-            {
-                token: "support.function.C99.c",
-                regex: C_Highlight_File.cFunctions
             },
             {
                 token: cObj.getKeywords(),
@@ -19785,7 +19980,7 @@ apache_reset_timeout|apache_response_headers|apache_setenv|apc_add|apc_bin_dump|
 apc_cache_info|apc_cas|apc_clear_cache|apc_compile_file|apc_dec|apc_define_constants|apc_delete|apc_delete_file|apc_exists|apc_fetch|\
 apc_inc|apc_load_constants|apc_sma_info|apc_store|apciterator|apd_breakpoint|apd_callstack|apd_clunk|apd_continue|apd_croak|\
 apd_dump_function_table|apd_dump_persistent_resources|apd_dump_regular_resources|apd_echo|apd_get_active_symbols|apd_set_pprof_trace|\
-apd_set_session|apd_set_session_trace|apd_set_session_trace_socket|appenditerator|array|array_change_key_case|array_chunk|array_combine|\
+apd_set_session|apd_set_session_trace|apd_set_session_trace_socket|appenditerator|array|array_change_key_case|array_chunk|array_column|array_combine|\
 array_count_values|array_diff|array_diff_assoc|array_diff_key|array_diff_uassoc|array_diff_ukey|array_fill|array_fill_keys|array_filter|\
 array_flip|array_intersect|array_intersect_assoc|array_intersect_key|array_intersect_uassoc|array_intersect_ukey|array_key_exists|\
 array_keys|array_map|array_merge|array_merge_recursive|array_multisort|array_pad|array_pop|array_product|array_push|array_rand|\
@@ -31237,16 +31432,14 @@ exports.PhpCompletions = PhpCompletions;
 
 });
 
-define("ace/mode/php",["require","exports","module","ace/lib/oop","ace/mode/text","ace/mode/php_highlight_rules","ace/mode/php_highlight_rules","ace/mode/matching_brace_outdent","ace/range","ace/worker/worker_client","ace/mode/php_completions","ace/mode/behaviour/cstyle","ace/mode/folding/cstyle","ace/unicode","ace/mode/html","ace/mode/javascript","ace/mode/css"], function(require, exports, module){"use strict";
+define("ace/mode/php",["require","exports","module","ace/lib/oop","ace/mode/text","ace/mode/php_highlight_rules","ace/mode/php_highlight_rules","ace/mode/matching_brace_outdent","ace/worker/worker_client","ace/mode/php_completions","ace/mode/folding/cstyle","ace/unicode","ace/mode/html","ace/mode/javascript","ace/mode/css"], function(require, exports, module){"use strict";
 var oop = require("../lib/oop");
 var TextMode = require("./text").Mode;
 var PhpHighlightRules = require("./php_highlight_rules").PhpHighlightRules;
 var PhpLangHighlightRules = require("./php_highlight_rules").PhpLangHighlightRules;
 var MatchingBraceOutdent = require("./matching_brace_outdent").MatchingBraceOutdent;
-var Range = require("../range").Range;
 var WorkerClient = require("../worker/worker_client").WorkerClient;
 var PhpCompletions = require("./php_completions").PhpCompletions;
-var CstyleBehaviour = require("./behaviour/cstyle").CstyleBehaviour;
 var CStyleFoldMode = require("./folding/cstyle").FoldMode;
 var unicode = require("../unicode");
 var HtmlMode = require("./html").Mode;
@@ -31255,7 +31448,7 @@ var CssMode = require("./css").Mode;
 var PhpMode = function (opts) {
     this.HighlightRules = PhpLangHighlightRules;
     this.$outdent = new MatchingBraceOutdent();
-    this.$behaviour = new CstyleBehaviour();
+    this.$behaviour = this.$defaultBehaviour;
     this.$completer = new PhpCompletions();
     this.foldingRules = new CStyleFoldMode();
 };
@@ -31502,17 +31695,16 @@ exports.PowershellHighlightRules = PowershellHighlightRules;
 
 });
 
-define("ace/mode/powershell",["require","exports","module","ace/lib/oop","ace/mode/text","ace/mode/powershell_highlight_rules","ace/mode/matching_brace_outdent","ace/mode/behaviour/cstyle","ace/mode/folding/cstyle"], function(require, exports, module){"use strict";
+define("ace/mode/powershell",["require","exports","module","ace/lib/oop","ace/mode/text","ace/mode/powershell_highlight_rules","ace/mode/matching_brace_outdent","ace/mode/folding/cstyle"], function(require, exports, module){"use strict";
 var oop = require("../lib/oop");
 var TextMode = require("./text").Mode;
 var PowershellHighlightRules = require("./powershell_highlight_rules").PowershellHighlightRules;
 var MatchingBraceOutdent = require("./matching_brace_outdent").MatchingBraceOutdent;
-var CstyleBehaviour = require("./behaviour/cstyle").CstyleBehaviour;
 var CStyleFoldMode = require("./folding/cstyle").FoldMode;
 var Mode = function () {
     this.HighlightRules = PowershellHighlightRules;
     this.$outdent = new MatchingBraceOutdent();
-    this.$behaviour = new CstyleBehaviour();
+    this.$behaviour = this.$defaultBehaviour;
     this.foldingRules = new CStyleFoldMode({ start: "^\\s*(<#)", end: "^[#\\s]>\\s*$" });
 };
 oop.inherits(Mode, TextMode);
@@ -32449,18 +32641,17 @@ oop.inherits(FoldMode, BaseFoldMode);
 
 });
 
-define("ace/mode/ruby",["require","exports","module","ace/lib/oop","ace/mode/text","ace/mode/ruby_highlight_rules","ace/mode/matching_brace_outdent","ace/range","ace/mode/behaviour/cstyle","ace/mode/folding/ruby"], function(require, exports, module){"use strict";
+define("ace/mode/ruby",["require","exports","module","ace/lib/oop","ace/mode/text","ace/mode/ruby_highlight_rules","ace/mode/matching_brace_outdent","ace/range","ace/mode/folding/ruby"], function(require, exports, module){"use strict";
 var oop = require("../lib/oop");
 var TextMode = require("./text").Mode;
 var RubyHighlightRules = require("./ruby_highlight_rules").RubyHighlightRules;
 var MatchingBraceOutdent = require("./matching_brace_outdent").MatchingBraceOutdent;
 var Range = require("../range").Range;
-var CstyleBehaviour = require("./behaviour/cstyle").CstyleBehaviour;
 var FoldMode = require("./folding/ruby").FoldMode;
 var Mode = function () {
     this.HighlightRules = RubyHighlightRules;
     this.$outdent = new MatchingBraceOutdent();
-    this.$behaviour = new CstyleBehaviour();
+    this.$behaviour = this.$defaultBehaviour;
     this.foldingRules = new FoldMode();
     this.indentKeywords = this.foldingRules.indentKeywords;
 };
@@ -32907,17 +33098,16 @@ exports.scadHighlightRules = scadHighlightRules;
 
 });
 
-define("ace/mode/scad",["require","exports","module","ace/lib/oop","ace/mode/text","ace/mode/scad_highlight_rules","ace/mode/matching_brace_outdent","ace/mode/behaviour/cstyle","ace/mode/folding/cstyle"], function(require, exports, module){"use strict";
+define("ace/mode/scad",["require","exports","module","ace/lib/oop","ace/mode/text","ace/mode/scad_highlight_rules","ace/mode/matching_brace_outdent","ace/mode/folding/cstyle"], function(require, exports, module){"use strict";
 var oop = require("../lib/oop");
 var TextMode = require("./text").Mode;
 var scadHighlightRules = require("./scad_highlight_rules").scadHighlightRules;
 var MatchingBraceOutdent = require("./matching_brace_outdent").MatchingBraceOutdent;
-var CstyleBehaviour = require("./behaviour/cstyle").CstyleBehaviour;
 var CStyleFoldMode = require("./folding/cstyle").FoldMode;
 var Mode = function () {
     this.HighlightRules = scadHighlightRules;
     this.$outdent = new MatchingBraceOutdent();
-    this.$behaviour = new CstyleBehaviour();
+    this.$behaviour = this.$defaultBehaviour;
     this.foldingRules = new CStyleFoldMode();
 };
 oop.inherits(Mode, TextMode);
@@ -33522,17 +33712,16 @@ exports.SJSHighlightRules = SJSHighlightRules;
 
 });
 
-define("ace/mode/sjs",["require","exports","module","ace/lib/oop","ace/mode/javascript","ace/mode/sjs_highlight_rules","ace/mode/matching_brace_outdent","ace/mode/behaviour/cstyle","ace/mode/folding/cstyle"], function(require, exports, module){"use strict";
+define("ace/mode/sjs",["require","exports","module","ace/lib/oop","ace/mode/javascript","ace/mode/sjs_highlight_rules","ace/mode/matching_brace_outdent","ace/mode/folding/cstyle"], function(require, exports, module){"use strict";
 var oop = require("../lib/oop");
 var JSMode = require("./javascript").Mode;
 var SJSHighlightRules = require("./sjs_highlight_rules").SJSHighlightRules;
 var MatchingBraceOutdent = require("./matching_brace_outdent").MatchingBraceOutdent;
-var CstyleBehaviour = require("./behaviour/cstyle").CstyleBehaviour;
 var CStyleFoldMode = require("./folding/cstyle").FoldMode;
 var Mode = function () {
     this.HighlightRules = SJSHighlightRules;
     this.$outdent = new MatchingBraceOutdent();
-    this.$behaviour = new CstyleBehaviour();
+    this.$behaviour = this.$defaultBehaviour;
     this.foldingRules = new CStyleFoldMode();
 };
 oop.inherits(Mode, JSMode);
@@ -33817,7 +34006,7 @@ var TextHighlightRules = require("./text_highlight_rules").TextHighlightRules;
 var SqlHighlightRules = function () {
     var keywords = ("select|insert|update|delete|from|where|and|or|group|by|order|limit|offset|having|as|case|" +
         "when|then|else|end|type|left|right|join|on|outer|desc|asc|union|create|table|primary|key|if|" +
-        "foreign|not|references|default|null|inner|cross|natural|database|drop|grant|distinct");
+        "foreign|not|references|default|null|inner|cross|natural|database|drop|grant|distinct|is|in");
     var builtinConstants = ("true|false");
     var builtinFunctions = ("avg|count|first|last|max|min|sum|ucase|lcase|mid|len|round|rank|now|format|" +
         "coalesce|ifnull|isnull|nvl");
@@ -34163,7 +34352,7 @@ var SwiftHighlightRules = function () {
     function comments() {
         return [{
                 token: "comment",
-                regex: "\\/\\/(?=.)",
+                regex: /\/\//,
                 next: [
                     DocCommentHighlightRules.getTagRule(),
                     { token: "comment", regex: "$|^", next: "start" },
@@ -34236,19 +34425,17 @@ exports.HighlightRules = SwiftHighlightRules;
 
 });
 
-define("ace/mode/swift",["require","exports","module","ace/lib/oop","ace/mode/text","ace/mode/swift_highlight_rules","ace/mode/behaviour/cstyle","ace/mode/folding/cstyle"], function(require, exports, module){/*
+define("ace/mode/swift",["require","exports","module","ace/lib/oop","ace/mode/text","ace/mode/swift_highlight_rules","ace/mode/folding/cstyle"], function(require, exports, module){/*
   THIS FILE WAS AUTOGENERATED BY mode.tmpl.js
 */
 "use strict";
 var oop = require("../lib/oop");
 var TextMode = require("./text").Mode;
 var HighlightRules = require("./swift_highlight_rules").HighlightRules;
-var CstyleBehaviour = require("./behaviour/cstyle").CstyleBehaviour;
 var FoldMode = require("./folding/cstyle").FoldMode;
 var Mode = function () {
     this.HighlightRules = HighlightRules;
     this.foldingRules = new FoldMode();
-    this.$behaviour = new CstyleBehaviour();
     this.$behaviour = this.$defaultBehaviour;
 };
 oop.inherits(Mode, TextMode);
@@ -35043,20 +35230,19 @@ exports.TypeScriptHighlightRules = TypeScriptHighlightRules;
 
 });
 
-define("ace/mode/typescript",["require","exports","module","ace/lib/oop","ace/mode/javascript","ace/mode/typescript_highlight_rules","ace/mode/behaviour/cstyle","ace/mode/folding/cstyle","ace/mode/matching_brace_outdent"], function(require, exports, module){/*
+define("ace/mode/typescript",["require","exports","module","ace/lib/oop","ace/mode/javascript","ace/mode/typescript_highlight_rules","ace/mode/folding/cstyle","ace/mode/matching_brace_outdent"], function(require, exports, module){/*
   THIS FILE WAS AUTOGENERATED BY mode.tmpl.js
 */
 "use strict";
 var oop = require("../lib/oop");
 var jsMode = require("./javascript").Mode;
 var TypeScriptHighlightRules = require("./typescript_highlight_rules").TypeScriptHighlightRules;
-var CstyleBehaviour = require("./behaviour/cstyle").CstyleBehaviour;
 var CStyleFoldMode = require("./folding/cstyle").FoldMode;
 var MatchingBraceOutdent = require("./matching_brace_outdent").MatchingBraceOutdent;
 var Mode = function () {
     this.HighlightRules = TypeScriptHighlightRules;
     this.$outdent = new MatchingBraceOutdent();
-    this.$behaviour = new CstyleBehaviour();
+    this.$behaviour = this.$defaultBehaviour;
     this.foldingRules = new CStyleFoldMode();
 };
 oop.inherits(Mode, jsMode);
@@ -35413,22 +35599,19 @@ exports.ValaHighlightRules = ValaHighlightRules;
 
 });
 
-define("ace/mode/vala",["require","exports","module","ace/lib/oop","ace/mode/text","ace/tokenizer","ace/mode/vala_highlight_rules","ace/mode/folding/cstyle","ace/mode/behaviour/cstyle","ace/mode/folding/cstyle","ace/mode/matching_brace_outdent"], function(require, exports, module){/*
+define("ace/mode/vala",["require","exports","module","ace/lib/oop","ace/mode/text","ace/mode/vala_highlight_rules","ace/mode/folding/cstyle","ace/mode/matching_brace_outdent"], function(require, exports, module){/*
   THIS FILE WAS AUTOGENERATED BY mode.tmpl.js
 */
 "use strict";
 var oop = require("../lib/oop");
 var TextMode = require("./text").Mode;
-var Tokenizer = require("../tokenizer").Tokenizer;
 var ValaHighlightRules = require("./vala_highlight_rules").ValaHighlightRules;
-var FoldMode = require("./folding/cstyle").FoldMode;
-var CstyleBehaviour = require("./behaviour/cstyle").CstyleBehaviour;
 var CStyleFoldMode = require("./folding/cstyle").FoldMode;
 var MatchingBraceOutdent = require("./matching_brace_outdent").MatchingBraceOutdent;
 var Mode = function () {
     this.HighlightRules = ValaHighlightRules;
     this.$outdent = new MatchingBraceOutdent();
-    this.$behaviour = new CstyleBehaviour();
+    this.$behaviour = this.$defaultBehaviour;
     this.foldingRules = new CStyleFoldMode();
 };
 oop.inherits(Mode, TextMode);
@@ -36811,6 +36994,7 @@ var Keys = (function () {
     return ret;
 })();
 oop.mixin(exports, Keys);
+exports.default = exports;
 exports.keyCodeToString = function (keyCode) {
     var keyString = Keys[keyCode];
     if (typeof keyString != "string")
@@ -37117,8 +37301,9 @@ module.exports = {
 
 });
 
-define("ace/keyboard/textinput",["require","exports","module","ace/lib/event","ace/lib/useragent","ace/lib/dom","ace/lib/lang","ace/clipboard","ace/lib/keys"], function(require, exports, module){"use strict";
+define("ace/keyboard/textinput",["require","exports","module","ace/lib/event","ace/config","ace/lib/useragent","ace/lib/dom","ace/lib/lang","ace/clipboard","ace/lib/keys"], function(require, exports, module){"use strict";
 var event = require("../lib/event");
+var nls = require("../config").nls;
 var useragent = require("../lib/useragent");
 var dom = require("../lib/dom");
 var lang = require("../lib/lang");
@@ -37154,10 +37339,22 @@ var TextInput = function (parentNode, host) {
     var lastSelectionStart = 0;
     var lastSelectionEnd = 0;
     var lastRestoreEnd = 0;
+    var rowStart = Number.MAX_SAFE_INTEGER;
+    var rowEnd = Number.MIN_SAFE_INTEGER;
+    var numberOfExtraLines = 0;
     try {
         var isFocused = document.activeElement === text;
     }
     catch (e) { }
+    this.setNumberOfExtraLines = function (number) {
+        rowStart = Number.MAX_SAFE_INTEGER;
+        rowEnd = Number.MIN_SAFE_INTEGER;
+        if (number < 0) {
+            numberOfExtraLines = 0;
+            return;
+        }
+        numberOfExtraLines = number;
+    };
     this.setAriaOptions = function (options) {
         if (options.activeDescendant) {
             text.setAttribute("aria-haspopup", "true");
@@ -37172,25 +37369,20 @@ var TextInput = function (parentNode, host) {
         if (options.role) {
             text.setAttribute("role", options.role);
         }
-    };
-    this.setAriaLabel = function () {
-        var row;
-        if (!host.session)
-            row = 0;
-        else
-            row = host.session.selection.cursor.row;
-        text.setAttribute("aria-roledescription", "editor");
-        text.setAttribute("aria-label", "Cursor at row ".concat(row + 1));
+        if (options.setLabel) {
+            text.setAttribute("aria-roledescription", nls("editor"));
+            if (host.session) {
+                var row = host.session.selection.cursor.row;
+                text.setAttribute("aria-label", nls("Cursor at row $0", [row + 1]));
+            }
+        }
     };
     this.setAriaOptions({ role: "textbox" });
-    this.setAriaLabel();
     event.addListener(text, "blur", function (e) {
         if (ignoreFocusEvents)
             return;
         host.onBlur(e);
         isFocused = false;
-        if (isMobile && !isIOS)
-            document.removeEventListener("selectionchange", detectSelectionChange);
     }, host);
     event.addListener(text, "focus", function (e) {
         if (ignoreFocusEvents)
@@ -37208,12 +37400,12 @@ var TextInput = function (parentNode, host) {
             setTimeout(resetSelection);
         else
             resetSelection();
-        if (isMobile && !isIOS)
-            document.addEventListener("selectionchange", detectSelectionChange);
     }, host);
     this.$focusScroll = false;
     this.focus = function () {
-        this.setAriaLabel();
+        this.setAriaOptions({
+            setLabel: host.renderer.enableKeyboardAccessibility
+        });
         if (tempStyle || HAS_FOCUS_ARGS || this.$focusScroll == "browser")
             return text.focus({ preventScroll: true });
         var top = text.style.top;
@@ -37267,6 +37459,13 @@ var TextInput = function (parentNode, host) {
         }
         resetSelection();
     });
+    var positionToSelection = function (row, column) {
+        var selection = column;
+        for (var i = 1; i <= row - rowStart && i < 2 * numberOfExtraLines + 1; i++) {
+            selection += host.session.getLine(row - i).length + 1;
+        }
+        return selection;
+    };
     var resetSelection = isIOS
         ? function (value) {
             if (!isFocused || (copied && !value) || sendingText)
@@ -37297,18 +37496,34 @@ var TextInput = function (parentNode, host) {
                 var selection = host.selection;
                 var range = selection.getRange();
                 var row = selection.cursor.row;
-                selectionStart = range.start.column;
-                selectionEnd = range.end.column;
-                line = host.session.getLine(row);
-                if (range.start.row != row) {
-                    var prevLine = host.session.getLine(row - 1);
-                    selectionStart = range.start.row < row - 1 ? 0 : selectionStart;
+                if (row === rowEnd + 1) {
+                    rowStart = rowEnd + 1;
+                    rowEnd = rowStart + 2 * numberOfExtraLines;
+                }
+                else if (row === rowStart - 1) {
+                    rowEnd = rowStart - 1;
+                    rowStart = rowEnd - 2 * numberOfExtraLines;
+                }
+                else if (row < rowStart - 1 || row > rowEnd + 1) {
+                    rowStart = row > numberOfExtraLines ? row - numberOfExtraLines : 0;
+                    rowEnd = row > numberOfExtraLines ? row + numberOfExtraLines : 2 * numberOfExtraLines;
+                }
+                var lines = [];
+                for (var i = rowStart; i <= rowEnd; i++) {
+                    lines.push(host.session.getLine(i));
+                }
+                line = lines.join('\n');
+                selectionStart = positionToSelection(range.start.row, range.start.column);
+                selectionEnd = positionToSelection(range.end.row, range.end.column);
+                if (range.start.row < rowStart) {
+                    var prevLine = host.session.getLine(rowStart - 1);
+                    selectionStart = range.start.row < rowStart - 1 ? 0 : selectionStart;
                     selectionEnd += prevLine.length + 1;
                     line = prevLine + "\n" + line;
                 }
-                else if (range.end.row != row) {
-                    var nextLine = host.session.getLine(row + 1);
-                    selectionEnd = range.end.row > row + 1 ? nextLine.length : selectionEnd;
+                else if (range.end.row > rowEnd) {
+                    var nextLine = host.session.getLine(rowEnd + 1);
+                    selectionEnd = range.end.row > rowEnd + 1 ? nextLine.length : range.end.column;
                     selectionEnd += line.length + 1;
                     line = line + "\n" + nextLine;
                 }
@@ -37332,11 +37547,11 @@ var TextInput = function (parentNode, host) {
                         }
                     }
                 }
-            }
-            var newValue = line + "\n\n";
-            if (newValue != lastValue) {
-                text.value = lastValue = newValue;
-                lastSelectionStart = lastSelectionEnd = newValue.length;
+                var newValue = line + "\n\n";
+                if (newValue != lastValue) {
+                    text.value = lastValue = newValue;
+                    lastSelectionStart = lastSelectionEnd = newValue.length;
+                }
             }
             if (afterContextMenu) {
                 lastSelectionStart = text.selectionStart;
@@ -37377,27 +37592,6 @@ var TextInput = function (parentNode, host) {
             resetSelection();
         }
     };
-    function detectSelectionChange(e) {
-        if (!text || !text.parentNode)
-            document.removeEventListener("selectionchange", detectSelectionChange);
-        if (inComposition)
-            return;
-        if (text.selectionStart !== text.selectionEnd)
-            return;
-        var startDiff = text.selectionStart - lastSelectionStart;
-        var oldLenght = lastSelectionEnd - lastSelectionStart;
-        if (startDiff > 0) {
-            startDiff = Math.max(startDiff - oldLenght, 1);
-        }
-        else if (startDiff === 0 && oldLenght) {
-            startDiff = -1;
-        }
-        var repeat = Math.abs(startDiff);
-        var key = startDiff > 0 ? KEYS.right : KEYS.left;
-        for (var i = 0; i < repeat; i++) {
-            host.onCommandKey({}, 0, key);
-        }
-    }
     var inputHandler = null;
     this.setInputHandler = function (cb) { inputHandler = cb; };
     this.getInputHandler = function () { return inputHandler; };
@@ -38210,8 +38404,9 @@ exports.popupManager = popupManager;
 exports.Tooltip = Tooltip;
 var HoverTooltip = /** @class */ (function (_super) {
     __extends(HoverTooltip, _super);
-    function HoverTooltip() {
-        var _this = _super.call(this, document.body) || this;
+    function HoverTooltip(parentNode) {
+        if (parentNode === void 0) { parentNode = document.body; }
+        var _this = _super.call(this, parentNode) || this;
         _this.timeout = undefined;
         _this.lastT = 0;
         _this.idleTime = 350;
@@ -38226,7 +38421,7 @@ var HoverTooltip = /** @class */ (function (_super) {
         el.addEventListener("mouseout", _this.onMouseOut);
         el.tabIndex = -1;
         el.addEventListener("blur", function () {
-            if (document.activeElement != el)
+            if (!el.contains(document.activeElement))
                 this.hide();
         }.bind(_this));
         return _this;
@@ -38312,23 +38507,13 @@ var HoverTooltip = /** @class */ (function (_super) {
         element.appendChild(domNode);
         element.style.display = "block";
         var position = renderer.textToScreenCoordinates(range.start.row, range.start.column);
-        var cursorPos = editor.getCursorPosition();
         var labelHeight = element.clientHeight;
         var rect = renderer.scroller.getBoundingClientRect();
-        var isTopdown = true;
-        if (this.row > cursorPos.row) {
-            isTopdown = true;
+        var isAbove = true;
+        if (position.pageY - labelHeight < 0) {
+            isAbove = false;
         }
-        else if (this.row < cursorPos.row) {
-            isTopdown = false;
-        }
-        if (position.pageY - labelHeight + renderer.lineHeight < rect.top) {
-            isTopdown = true;
-        }
-        else if (position.pageY + labelHeight > rect.bottom) {
-            isTopdown = false;
-        }
-        if (!isTopdown) {
+        if (isAbove) {
             position.pageY -= labelHeight;
         }
         else {
@@ -38392,7 +38577,7 @@ exports.HoverTooltip = HoverTooltip;
 
 });
 
-define("ace/mouse/default_gutter_handler",["require","exports","module","ace/lib/dom","ace/lib/event","ace/tooltip"], function(require, exports, module){"use strict";
+define("ace/mouse/default_gutter_handler",["require","exports","module","ace/lib/dom","ace/lib/event","ace/tooltip","ace/config"], function(require, exports, module){"use strict";
 var __extends = (this && this.__extends) || (function () {
     var extendStatics = function (d, b) {
         extendStatics = Object.setPrototypeOf ||
@@ -38422,6 +38607,7 @@ var __values = (this && this.__values) || function(o) {
 var dom = require("../lib/dom");
 var event = require("../lib/event");
 var Tooltip = require("../tooltip").Tooltip;
+var nls = require("../config").nls;
 function GutterHandler(mouseHandler) {
     var editor = mouseHandler.editor;
     var gutter = editor.renderer.$gutterLayer;
@@ -38458,24 +38644,32 @@ function GutterHandler(mouseHandler) {
                 return hideTooltip();
         }
         tooltip.showTooltip(row);
+        if (!tooltip.isOpen)
+            return;
         editor.on("mousewheel", hideTooltip);
         if (mouseHandler.$tooltipFollowsMouse) {
             moveTooltip(mouseEvent);
         }
         else {
-            var gutterElement = gutter.$lines.cells[row].element.querySelector("[class*=ace_icon]");
-            var rect = gutterElement.getBoundingClientRect();
-            var style = tooltip.getElement().style;
-            style.left = rect.right + "px";
-            style.top = rect.bottom + "px";
+            var gutterRow = mouseEvent.getGutterRow();
+            var gutterCell = gutter.$lines.get(gutterRow);
+            if (gutterCell) {
+                var gutterElement = gutterCell.element.querySelector(".ace_gutter_annotation");
+                var rect = gutterElement.getBoundingClientRect();
+                var style = tooltip.getElement().style;
+                style.left = rect.right + "px";
+                style.top = rect.bottom + "px";
+            }
+            else {
+                moveTooltip(mouseEvent);
+            }
         }
     }
     function hideTooltip() {
         if (tooltipTimeout)
             tooltipTimeout = clearTimeout(tooltipTimeout);
         if (tooltip.isOpen) {
-            tooltip.hide();
-            editor._signal("hideGutterTooltip", tooltip);
+            tooltip.hideTooltip();
             editor.off("mousewheel", hideTooltip);
         }
     }
@@ -38509,6 +38703,7 @@ function GutterHandler(mouseHandler) {
         }, 50);
     }, editor);
     editor.on("changeSession", hideTooltip);
+    editor.on("input", hideTooltip);
 }
 exports.GutterHandler = GutterHandler;
 var GutterTooltip = /** @class */ (function (_super) {
@@ -38536,9 +38731,9 @@ var GutterTooltip = /** @class */ (function (_super) {
     Object.defineProperty(GutterTooltip, "annotationLabels", {
         get: function () {
             return {
-                error: { singular: "error", plural: "errors" },
-                warning: { singular: "warning", plural: "warnings" },
-                info: { singular: "information message", plural: "information messages" }
+                error: { singular: nls("error"), plural: nls("errors") },
+                warning: { singular: nls("warning"), plural: nls("warnings") },
+                info: { singular: nls("information message"), plural: nls("information messages") }
             };
         },
         enumerable: false,
@@ -38588,13 +38783,18 @@ var GutterTooltip = /** @class */ (function (_super) {
         }
         var tooltipContent = [].concat(annotationMessages.error, annotationMessages.warning, annotationMessages.info).join("<br>");
         this.setHtml(tooltipContent);
-        this.setClassName("ace_gutter-tooltip");
         this.$element.setAttribute("aria-live", "polite");
         if (!this.isOpen) {
             this.setTheme(this.editor.renderer.theme);
+            this.setClassName("ace_gutter-tooltip");
         }
-        this.editor._signal("showGutterTooltip", this);
         this.show();
+        this.editor._signal("showGutterTooltip", this);
+    };
+    GutterTooltip.prototype.hideTooltip = function () {
+        this.$element.removeAttribute("aria-live");
+        this.hide();
+        this.editor._signal("hideGutterTooltip", this);
     };
     GutterTooltip.annotationsToSummaryString = function (annotations) {
         var e_1, _a;
@@ -38655,6 +38855,12 @@ var MouseEvent = /** @class */ (function () {
             return this.$pos;
         this.$pos = this.editor.renderer.screenToTextCoordinates(this.clientX, this.clientY);
         return this.$pos;
+    };
+    MouseEvent.prototype.getGutterRow = function () {
+        var documentRow = this.getDocumentPosition().row;
+        var screenRow = this.editor.session.documentToScreenRow(documentRow, 0);
+        var screenTopRow = this.editor.session.documentToScreenRow(this.editor.renderer.$gutterLayer.$lines.get(0).row, 0);
+        return screenRow - screenTopRow;
     };
     MouseEvent.prototype.inSelection = function () {
         if (this.$inSelection !== null)
@@ -40231,61 +40437,58 @@ var oop = require("./lib/oop");
 var lang = require("./lib/lang");
 var EventEmitter = require("./lib/event_emitter").EventEmitter;
 var Range = require("./range").Range;
-var Selection = function (session) {
-    this.session = session;
-    this.doc = session.getDocument();
-    this.clearSelection();
-    this.cursor = this.lead = this.doc.createAnchor(0, 0);
-    this.anchor = this.doc.createAnchor(0, 0);
-    this.$silent = false;
-    var self = this;
-    this.cursor.on("change", function (e) {
-        self.$cursorChanged = true;
-        if (!self.$silent)
-            self._emit("changeCursor");
-        if (!self.$isEmpty && !self.$silent)
-            self._emit("changeSelection");
-        if (!self.$keepDesiredColumnOnChange && e.old.column != e.value.column)
-            self.$desiredColumn = null;
-    });
-    this.anchor.on("change", function () {
-        self.$anchorChanged = true;
-        if (!self.$isEmpty && !self.$silent)
-            self._emit("changeSelection");
-    });
-};
-(function () {
-    oop.implement(this, EventEmitter);
-    this.isEmpty = function () {
+var Selection = /** @class */ (function () {
+    function Selection(session) {
+        this.session = session;
+        this.doc = session.getDocument();
+        this.clearSelection();
+        this.cursor = this.lead = this.doc.createAnchor(0, 0);
+        this.anchor = this.doc.createAnchor(0, 0);
+        this.$silent = false;
+        var self = this;
+        this.cursor.on("change", function (e) {
+            self.$cursorChanged = true;
+            if (!self.$silent)
+                self._emit("changeCursor");
+            if (!self.$isEmpty && !self.$silent)
+                self._emit("changeSelection");
+            if (!self.$keepDesiredColumnOnChange && e.old.column != e.value.column)
+                self.$desiredColumn = null;
+        });
+        this.anchor.on("change", function () {
+            self.$anchorChanged = true;
+            if (!self.$isEmpty && !self.$silent)
+                self._emit("changeSelection");
+        });
+    }
+    Selection.prototype.isEmpty = function () {
         return this.$isEmpty || (this.anchor.row == this.lead.row &&
             this.anchor.column == this.lead.column);
     };
-    this.isMultiLine = function () {
+    Selection.prototype.isMultiLine = function () {
         return !this.$isEmpty && this.anchor.row != this.cursor.row;
     };
-    this.getCursor = function () {
+    Selection.prototype.getCursor = function () {
         return this.lead.getPosition();
     };
-    this.setAnchor = function (row, column) {
+    Selection.prototype.setAnchor = function (row, column) {
         this.$isEmpty = false;
         this.anchor.setPosition(row, column);
     };
-    this.setSelectionAnchor = this.setAnchor;
-    this.getAnchor = function () {
+    Selection.prototype.getAnchor = function () {
         if (this.$isEmpty)
             return this.getSelectionLead();
         return this.anchor.getPosition();
     };
-    this.getSelectionAnchor = this.getAnchor;
-    this.getSelectionLead = function () {
+    Selection.prototype.getSelectionLead = function () {
         return this.lead.getPosition();
     };
-    this.isBackwards = function () {
+    Selection.prototype.isBackwards = function () {
         var anchor = this.anchor;
         var lead = this.lead;
         return (anchor.row > lead.row || (anchor.row == lead.row && anchor.column > lead.column));
     };
-    this.getRange = function () {
+    Selection.prototype.getRange = function () {
         var anchor = this.anchor;
         var lead = this.lead;
         if (this.$isEmpty)
@@ -40294,22 +40497,21 @@ var Selection = function (session) {
             ? Range.fromPoints(lead, anchor)
             : Range.fromPoints(anchor, lead);
     };
-    this.clearSelection = function () {
+    Selection.prototype.clearSelection = function () {
         if (!this.$isEmpty) {
             this.$isEmpty = true;
             this._emit("changeSelection");
         }
     };
-    this.selectAll = function () {
+    Selection.prototype.selectAll = function () {
         this.$setSelection(0, 0, Number.MAX_VALUE, Number.MAX_VALUE);
     };
-    this.setRange =
-        this.setSelectionRange = function (range, reverse) {
-            var start = reverse ? range.end : range.start;
-            var end = reverse ? range.start : range.end;
-            this.$setSelection(start.row, start.column, end.row, end.column);
-        };
-    this.$setSelection = function (anchorRow, anchorColumn, cursorRow, cursorColumn) {
+    Selection.prototype.setRange = function (range, reverse) {
+        var start = reverse ? range.end : range.start;
+        var end = reverse ? range.start : range.end;
+        this.$setSelection(start.row, start.column, end.row, end.column);
+    };
+    Selection.prototype.$setSelection = function (anchorRow, anchorColumn, cursorRow, cursorColumn) {
         if (this.$silent)
             return;
         var wasEmpty = this.$isEmpty;
@@ -40325,61 +40527,61 @@ var Selection = function (session) {
         if (this.$cursorChanged || this.$anchorChanged || wasEmpty != this.$isEmpty || wasMultiselect)
             this._emit("changeSelection");
     };
-    this.$moveSelection = function (mover) {
+    Selection.prototype.$moveSelection = function (mover) {
         var lead = this.lead;
         if (this.$isEmpty)
             this.setSelectionAnchor(lead.row, lead.column);
         mover.call(this);
     };
-    this.selectTo = function (row, column) {
+    Selection.prototype.selectTo = function (row, column) {
         this.$moveSelection(function () {
             this.moveCursorTo(row, column);
         });
     };
-    this.selectToPosition = function (pos) {
+    Selection.prototype.selectToPosition = function (pos) {
         this.$moveSelection(function () {
             this.moveCursorToPosition(pos);
         });
     };
-    this.moveTo = function (row, column) {
+    Selection.prototype.moveTo = function (row, column) {
         this.clearSelection();
         this.moveCursorTo(row, column);
     };
-    this.moveToPosition = function (pos) {
+    Selection.prototype.moveToPosition = function (pos) {
         this.clearSelection();
         this.moveCursorToPosition(pos);
     };
-    this.selectUp = function () {
+    Selection.prototype.selectUp = function () {
         this.$moveSelection(this.moveCursorUp);
     };
-    this.selectDown = function () {
+    Selection.prototype.selectDown = function () {
         this.$moveSelection(this.moveCursorDown);
     };
-    this.selectRight = function () {
+    Selection.prototype.selectRight = function () {
         this.$moveSelection(this.moveCursorRight);
     };
-    this.selectLeft = function () {
+    Selection.prototype.selectLeft = function () {
         this.$moveSelection(this.moveCursorLeft);
     };
-    this.selectLineStart = function () {
+    Selection.prototype.selectLineStart = function () {
         this.$moveSelection(this.moveCursorLineStart);
     };
-    this.selectLineEnd = function () {
+    Selection.prototype.selectLineEnd = function () {
         this.$moveSelection(this.moveCursorLineEnd);
     };
-    this.selectFileEnd = function () {
+    Selection.prototype.selectFileEnd = function () {
         this.$moveSelection(this.moveCursorFileEnd);
     };
-    this.selectFileStart = function () {
+    Selection.prototype.selectFileStart = function () {
         this.$moveSelection(this.moveCursorFileStart);
     };
-    this.selectWordRight = function () {
+    Selection.prototype.selectWordRight = function () {
         this.$moveSelection(this.moveCursorWordRight);
     };
-    this.selectWordLeft = function () {
+    Selection.prototype.selectWordLeft = function () {
         this.$moveSelection(this.moveCursorWordLeft);
     };
-    this.getWordRange = function (row, column) {
+    Selection.prototype.getWordRange = function (row, column) {
         if (typeof column == "undefined") {
             var cursor = row || this.lead;
             row = cursor.row;
@@ -40387,15 +40589,15 @@ var Selection = function (session) {
         }
         return this.session.getWordRange(row, column);
     };
-    this.selectWord = function () {
+    Selection.prototype.selectWord = function () {
         this.setSelectionRange(this.getWordRange());
     };
-    this.selectAWord = function () {
+    Selection.prototype.selectAWord = function () {
         var cursor = this.getCursor();
         var range = this.session.getAWordRange(cursor.row, cursor.column);
         this.setSelectionRange(range);
     };
-    this.getLineRange = function (row, excludeLastChar) {
+    Selection.prototype.getLineRange = function (row, excludeLastChar) {
         var rowStart = typeof row == "number" ? row : this.lead.row;
         var rowEnd;
         var foldLine = this.session.getFoldLine(rowStart);
@@ -40411,16 +40613,16 @@ var Selection = function (session) {
         else
             return new Range(rowStart, 0, rowEnd + 1, 0);
     };
-    this.selectLine = function () {
+    Selection.prototype.selectLine = function () {
         this.setSelectionRange(this.getLineRange());
     };
-    this.moveCursorUp = function () {
+    Selection.prototype.moveCursorUp = function () {
         this.moveCursorBy(-1, 0);
     };
-    this.moveCursorDown = function () {
+    Selection.prototype.moveCursorDown = function () {
         this.moveCursorBy(1, 0);
     };
-    this.wouldMoveIntoSoftTab = function (cursor, tabSize, direction) {
+    Selection.prototype.wouldMoveIntoSoftTab = function (cursor, tabSize, direction) {
         var start = cursor.column;
         var end = cursor.column + tabSize;
         if (direction < 0) {
@@ -40429,7 +40631,7 @@ var Selection = function (session) {
         }
         return this.session.isTabStop(cursor) && this.doc.getLine(cursor.row).slice(start, end).split(" ").length - 1 == tabSize;
     };
-    this.moveCursorLeft = function () {
+    Selection.prototype.moveCursorLeft = function () {
         var cursor = this.lead.getPosition(), fold;
         if (fold = this.session.getFoldAt(cursor.row, cursor.column, -1)) {
             this.moveCursorTo(fold.start.row, fold.start.column);
@@ -40449,7 +40651,7 @@ var Selection = function (session) {
             }
         }
     };
-    this.moveCursorRight = function () {
+    Selection.prototype.moveCursorRight = function () {
         var cursor = this.lead.getPosition(), fold;
         if (fold = this.session.getFoldAt(cursor.row, cursor.column, 1)) {
             this.moveCursorTo(fold.end.row, fold.end.column);
@@ -40470,7 +40672,7 @@ var Selection = function (session) {
             }
         }
     };
-    this.moveCursorLineStart = function () {
+    Selection.prototype.moveCursorLineStart = function () {
         var row = this.lead.row;
         var column = this.lead.column;
         var screenRow = this.session.documentToScreenRow(row, column);
@@ -40481,7 +40683,7 @@ var Selection = function (session) {
             firstColumnPosition.column += leadingSpace[0].length;
         this.moveCursorToPosition(firstColumnPosition);
     };
-    this.moveCursorLineEnd = function () {
+    Selection.prototype.moveCursorLineEnd = function () {
         var lead = this.lead;
         var lineEnd = this.session.getDocumentLastRowColumnPosition(lead.row, lead.column);
         if (this.lead.column == lineEnd.column) {
@@ -40494,15 +40696,15 @@ var Selection = function (session) {
         }
         this.moveCursorTo(lineEnd.row, lineEnd.column);
     };
-    this.moveCursorFileEnd = function () {
+    Selection.prototype.moveCursorFileEnd = function () {
         var row = this.doc.getLength() - 1;
         var column = this.doc.getLine(row).length;
         this.moveCursorTo(row, column);
     };
-    this.moveCursorFileStart = function () {
+    Selection.prototype.moveCursorFileStart = function () {
         this.moveCursorTo(0, 0);
     };
-    this.moveCursorLongWordRight = function () {
+    Selection.prototype.moveCursorLongWordRight = function () {
         var row = this.lead.row;
         var column = this.lead.column;
         var line = this.doc.getLine(row);
@@ -40532,7 +40734,7 @@ var Selection = function (session) {
         }
         this.moveCursorTo(row, column);
     };
-    this.moveCursorLongWordLeft = function () {
+    Selection.prototype.moveCursorLongWordLeft = function () {
         var row = this.lead.row;
         var column = this.lead.column;
         var fold;
@@ -40565,7 +40767,7 @@ var Selection = function (session) {
         }
         this.moveCursorTo(row, column);
     };
-    this.$shortWordEndIndex = function (rightOfCursor) {
+    Selection.prototype.$shortWordEndIndex = function (rightOfCursor) {
         var index = 0, ch;
         var whitespaceRe = /\s/;
         var tokenRe = this.session.tokenRe;
@@ -40599,7 +40801,7 @@ var Selection = function (session) {
         tokenRe.lastIndex = 0;
         return index;
     };
-    this.moveCursorShortWordRight = function () {
+    Selection.prototype.moveCursorShortWordRight = function () {
         var row = this.lead.row;
         var column = this.lead.column;
         var line = this.doc.getLine(row);
@@ -40620,7 +40822,7 @@ var Selection = function (session) {
         var index = this.$shortWordEndIndex(rightOfCursor);
         this.moveCursorTo(row, column + index);
     };
-    this.moveCursorShortWordLeft = function () {
+    Selection.prototype.moveCursorShortWordLeft = function () {
         var row = this.lead.row;
         var column = this.lead.column;
         var fold;
@@ -40640,19 +40842,19 @@ var Selection = function (session) {
         var index = this.$shortWordEndIndex(leftOfCursor);
         return this.moveCursorTo(row, column - index);
     };
-    this.moveCursorWordRight = function () {
+    Selection.prototype.moveCursorWordRight = function () {
         if (this.session.$selectLongWords)
             this.moveCursorLongWordRight();
         else
             this.moveCursorShortWordRight();
     };
-    this.moveCursorWordLeft = function () {
+    Selection.prototype.moveCursorWordLeft = function () {
         if (this.session.$selectLongWords)
             this.moveCursorLongWordLeft();
         else
             this.moveCursorShortWordLeft();
     };
-    this.moveCursorBy = function (rows, chars) {
+    Selection.prototype.moveCursorBy = function (rows, chars) {
         var screenPos = this.session.documentToScreenPosition(this.lead.row, this.lead.column);
         var offsetX;
         if (chars === 0) {
@@ -40682,10 +40884,10 @@ var Selection = function (session) {
         }
         this.moveCursorTo(docPos.row, docPos.column + chars, chars === 0);
     };
-    this.moveCursorToPosition = function (position) {
+    Selection.prototype.moveCursorToPosition = function (position) {
         this.moveCursorTo(position.row, position.column);
     };
-    this.moveCursorTo = function (row, column, keepDesiredColumn) {
+    Selection.prototype.moveCursorTo = function (row, column, keepDesiredColumn) {
         var fold = this.session.getFoldAt(row, column, 1);
         if (fold) {
             row = fold.start.row;
@@ -40704,19 +40906,19 @@ var Selection = function (session) {
         if (!keepDesiredColumn)
             this.$desiredColumn = null;
     };
-    this.moveCursorToScreen = function (row, column, keepDesiredColumn) {
+    Selection.prototype.moveCursorToScreen = function (row, column, keepDesiredColumn) {
         var pos = this.session.screenToDocumentPosition(row, column);
         this.moveCursorTo(pos.row, pos.column, keepDesiredColumn);
     };
-    this.detach = function () {
+    Selection.prototype.detach = function () {
         this.lead.detach();
         this.anchor.detach();
     };
-    this.fromOrientedRange = function (range) {
+    Selection.prototype.fromOrientedRange = function (range) {
         this.setSelectionRange(range, range.cursor == range.start);
         this.$desiredColumn = range.desiredColumn || this.$desiredColumn;
     };
-    this.toOrientedRange = function (range) {
+    Selection.prototype.toOrientedRange = function (range) {
         var r = this.getRange();
         if (range) {
             range.start.column = r.start.column;
@@ -40731,7 +40933,7 @@ var Selection = function (session) {
         range.desiredColumn = this.$desiredColumn;
         return range;
     };
-    this.getRangeOfMovements = function (func) {
+    Selection.prototype.getRangeOfMovements = function (func) {
         var start = this.getCursor();
         try {
             func(this);
@@ -40745,7 +40947,7 @@ var Selection = function (session) {
             this.moveCursorToPosition(start);
         }
     };
-    this.toJSON = function () {
+    Selection.prototype.toJSON = function () {
         if (this.rangeCount) {
             var data = this.ranges.map(function (r) {
                 var r1 = r.clone();
@@ -40759,7 +40961,7 @@ var Selection = function (session) {
         }
         return data;
     };
-    this.fromJSON = function (data) {
+    Selection.prototype.fromJSON = function (data) {
         if (data.start == undefined) {
             if (this.rangeList && data.length > 1) {
                 this.toSingleRange(data[0]);
@@ -40779,7 +40981,7 @@ var Selection = function (session) {
             this.toSingleRange(data);
         this.setSelectionRange(data, data.isBackwards);
     };
-    this.isEqual = function (data) {
+    Selection.prototype.isEqual = function (data) {
         if ((data.length || this.rangeCount) && data.length != this.rangeCount)
             return false;
         if (!data.length || !this.ranges)
@@ -40790,7 +40992,12 @@ var Selection = function (session) {
         }
         return true;
     };
-}).call(Selection.prototype);
+    return Selection;
+}());
+Selection.prototype.setSelectionAnchor = Selection.prototype.setAnchor;
+Selection.prototype.getSelectionAnchor = Selection.prototype.getAnchor;
+Selection.prototype.setSelectionRange = Selection.prototype.setRange;
+oop.implement(Selection.prototype, EventEmitter);
 exports.Selection = Selection;
 
 });
@@ -42487,7 +42694,7 @@ function Folding() {
         if (token && /^comment|string/.test(type)) {
             type = type.match(/comment|string/)[0];
             if (type == "comment")
-                type += "|doc-start";
+                type += "|doc-start|\\.doc";
             var re = new RegExp(type);
             var range = new Range();
             if (dir != 1) {
@@ -44796,11 +45003,23 @@ var Search = /** @class */ (function () {
         var needle = options.needle;
         if (!options.needle)
             return options.re = false;
+        if (options.$supportsUnicodeFlag === undefined) {
+            options.$supportsUnicodeFlag = lang.supportsUnicodeFlag();
+        }
+        try {
+            new RegExp(needle, "u");
+        }
+        catch (e) {
+            options.$supportsUnicodeFlag = false; //left for backward compatibility with previous versions for cases like /ab\{2}/gu
+        }
         if (!options.regExp)
             needle = lang.escapeRegExp(needle);
         if (options.wholeWord)
             needle = addWordBoundary(needle, options);
         var modifier = options.caseSensitive ? "gm" : "gmi";
+        if (options.$supportsUnicodeFlag) {
+            modifier += "u";
+        }
         options.$isMultiLine = !$disableFakeMultiline && /[\n\r]/.test(needle);
         if (options.$isMultiLine)
             return options.re = this.$assembleMultilineRegExp(needle, modifier);
@@ -44940,43 +45159,67 @@ var Search = /** @class */ (function () {
     return Search;
 }());
 function addWordBoundary(needle, options) {
-    function wordBoundary(c) {
-        if (/\w/.test(c) || options.regExp)
+    var supportsLookbehind = lang.supportsLookbehind();
+    function wordBoundary(c, firstChar) {
+        if (firstChar === void 0) { firstChar = true; }
+        var wordRegExp = supportsLookbehind && options.$supportsUnicodeFlag ? new RegExp("[\\p{L}\\p{N}_]", "u") : new RegExp("\\w");
+        if (wordRegExp.test(c) || options.regExp) {
+            if (supportsLookbehind && options.$supportsUnicodeFlag) {
+                if (firstChar)
+                    return "(?<=^|[^\\p{L}\\p{N}_])";
+                return "(?=[^\\p{L}\\p{N}_]|$)";
+            }
             return "\\b";
+        }
         return "";
     }
-    return wordBoundary(needle[0]) + needle
-        + wordBoundary(needle[needle.length - 1]);
+    var needleArray = Array.from(needle);
+    var firstChar = needleArray[0];
+    var lastChar = needleArray[needleArray.length - 1];
+    return wordBoundary(firstChar) + needle + wordBoundary(lastChar, false);
 }
 exports.Search = Search;
 
 });
 
 define("ace/keyboard/hash_handler",["require","exports","module","ace/lib/keys","ace/lib/useragent"], function(require, exports, module){"use strict";
+var __extends = (this && this.__extends) || (function () {
+    var extendStatics = function (d, b) {
+        extendStatics = Object.setPrototypeOf ||
+            ({ __proto__: [] } instanceof Array && function (d, b) { d.__proto__ = b; }) ||
+            function (d, b) { for (var p in b) if (Object.prototype.hasOwnProperty.call(b, p)) d[p] = b[p]; };
+        return extendStatics(d, b);
+    };
+    return function (d, b) {
+        if (typeof b !== "function" && b !== null)
+            throw new TypeError("Class extends value " + String(b) + " is not a constructor or null");
+        extendStatics(d, b);
+        function __() { this.constructor = d; }
+        d.prototype = b === null ? Object.create(b) : (__.prototype = b.prototype, new __());
+    };
+})();
 var keyUtil = require("../lib/keys");
 var useragent = require("../lib/useragent");
 var KEY_MODS = keyUtil.KEY_MODS;
-function HashHandler(config, platform) {
-    this.platform = platform || (useragent.isMac ? "mac" : "win");
-    this.commands = {};
-    this.commandKeyBinding = {};
-    this.addCommands(config);
-    this.$singleCommand = true;
-}
-function MultiHashHandler(config, platform) {
-    HashHandler.call(this, config, platform);
-    this.$singleCommand = false;
-}
-MultiHashHandler.prototype = HashHandler.prototype;
-(function () {
-    this.addCommand = function (command) {
+var MultiHashHandler = /** @class */ (function () {
+    function MultiHashHandler(config, platform) {
+        this.$init(config, platform, false);
+    }
+    MultiHashHandler.prototype.$init = function (config, platform, $singleCommand) {
+        this.platform = platform || (useragent.isMac ? "mac" : "win");
+        this.commands = {};
+        this.commandKeyBinding = {};
+        this.addCommands(config);
+        this.$singleCommand = $singleCommand;
+    };
+    MultiHashHandler.prototype.addCommand = function (command) {
         if (this.commands[command.name])
             this.removeCommand(command);
         this.commands[command.name] = command;
         if (command.bindKey)
             this._buildKeyHash(command);
     };
-    this.removeCommand = function (command, keepCommand) {
+    MultiHashHandler.prototype.removeCommand = function (command, keepCommand) {
         var name = command && (typeof command === 'string' ? command : command.name);
         command = this.commands[name];
         if (!keepCommand)
@@ -44997,7 +45240,7 @@ MultiHashHandler.prototype = HashHandler.prototype;
             }
         }
     };
-    this.bindKey = function (key, command, position) {
+    MultiHashHandler.prototype.bindKey = function (key, command, position) {
         if (typeof key == "object" && key) {
             if (position == undefined)
                 position = key.position;
@@ -45025,12 +45268,7 @@ MultiHashHandler.prototype = HashHandler.prototype;
             this._addCommandToBinding(chain + id, command, position);
         }, this);
     };
-    function getPosition(command) {
-        return typeof command == "object" && command.bindKey
-            && command.bindKey.position
-            || (command.isDefault ? -100 : 0);
-    }
-    this._addCommandToBinding = function (keyId, command, position) {
+    MultiHashHandler.prototype._addCommandToBinding = function (keyId, command, position) {
         var ckb = this.commandKeyBinding, i;
         if (!command) {
             delete ckb[keyId];
@@ -45058,7 +45296,7 @@ MultiHashHandler.prototype = HashHandler.prototype;
             commands.splice(i, 0, command);
         }
     };
-    this.addCommands = function (commands) {
+    MultiHashHandler.prototype.addCommands = function (commands) {
         commands && Object.keys(commands).forEach(function (name) {
             var command = commands[name];
             if (!command)
@@ -45074,20 +45312,20 @@ MultiHashHandler.prototype = HashHandler.prototype;
             this.addCommand(command);
         }, this);
     };
-    this.removeCommands = function (commands) {
+    MultiHashHandler.prototype.removeCommands = function (commands) {
         Object.keys(commands).forEach(function (name) {
             this.removeCommand(commands[name]);
         }, this);
     };
-    this.bindKeys = function (keyList) {
+    MultiHashHandler.prototype.bindKeys = function (keyList) {
         Object.keys(keyList).forEach(function (key) {
             this.bindKey(key, keyList[key]);
         }, this);
     };
-    this._buildKeyHash = function (command) {
+    MultiHashHandler.prototype._buildKeyHash = function (command) {
         this.bindKey(command.bindKey, command);
     };
-    this.parseKeys = function (keys) {
+    MultiHashHandler.prototype.parseKeys = function (keys) {
         var parts = keys.toLowerCase().split(/[\-\+]([\-\+])?/).filter(function (x) { return x; });
         var key = parts.pop();
         var keyCode = keyUtil[key];
@@ -45109,11 +45347,11 @@ MultiHashHandler.prototype = HashHandler.prototype;
         }
         return { key: key, hashId: hashId };
     };
-    this.findKeyCommand = function findKeyCommand(hashId, keyString) {
+    MultiHashHandler.prototype.findKeyCommand = function (hashId, keyString) {
         var key = KEY_MODS[hashId] + keyString;
         return this.commandKeyBinding[key];
     };
-    this.handleKeyboard = function (data, hashId, keyString, keyCode) {
+    MultiHashHandler.prototype.handleKeyboard = function (data, hashId, keyString, keyCode) {
         if (keyCode < 0)
             return;
         var key = KEY_MODS[hashId] + keyString;
@@ -45136,10 +45374,31 @@ MultiHashHandler.prototype = HashHandler.prototype;
         }
         return { command: command };
     };
-    this.getStatusText = function (editor, data) {
+    MultiHashHandler.prototype.getStatusText = function (editor, data) {
         return data.$keyChain || "";
     };
-}).call(HashHandler.prototype);
+    return MultiHashHandler;
+}());
+function getPosition(command) {
+    return typeof command == "object" && command.bindKey
+        && command.bindKey.position
+        || (command.isDefault ? -100 : 0);
+}
+var HashHandler = /** @class */ (function (_super) {
+    __extends(HashHandler, _super);
+    function HashHandler(config, platform) {
+        var _this = _super.call(this, config, platform) || this;
+        _this.$singleCommand = true;
+        return _this;
+    }
+    return HashHandler;
+}(MultiHashHandler));
+HashHandler.call = function (thisArg, config, platform) {
+    MultiHashHandler.prototype.$init.call(thisArg, config, platform, true);
+};
+MultiHashHandler.call = function (thisArg, config, platform) {
+    MultiHashHandler.prototype.$init.call(thisArg, config, platform, false);
+};
 exports.HashHandler = HashHandler;
 exports.MultiHashHandler = MultiHashHandler;
 
@@ -46472,7 +46731,7 @@ var GutterKeyboardHandler = /** @class */ (function () {
         if (this.annotationTooltip.isOpen) {
             e.preventDefault();
             if (e.keyCode === keys["escape"])
-                this.annotationTooltip.hide();
+                this.annotationTooltip.hideTooltip();
             return;
         }
         if (e.target === this.element) {
@@ -46516,6 +46775,12 @@ var GutterKeyboardHandler = /** @class */ (function () {
             }.bind(this), 10);
             return;
         }
+        this.$handleGutterKeyboardInteraction(e);
+        setTimeout(function () {
+            this.editor._signal("gutterkeydown", new GutterKeyboardEvent(e, this));
+        }.bind(this), 10);
+    };
+    GutterKeyboardHandler.prototype.$handleGutterKeyboardInteraction = function (e) {
         if (e.keyCode === keys["tab"]) {
             e.preventDefault();
             return;
@@ -46554,10 +46819,12 @@ var GutterKeyboardHandler = /** @class */ (function () {
         if (e.keyCode === keys["left"]) {
             e.preventDefault();
             this.$switchLane("annotation");
+            return;
         }
         if (e.keyCode === keys["right"]) {
             e.preventDefault();
             this.$switchLane("fold");
+            return;
         }
         if (e.keyCode === keys["enter"] || e.keyCode === keys["space"]) {
             e.preventDefault();
@@ -46603,7 +46870,7 @@ var GutterKeyboardHandler = /** @class */ (function () {
             }
         }
         if (this.annotationTooltip.isOpen)
-            this.annotationTooltip.hide();
+            this.annotationTooltip.hideTooltip();
         return;
     };
     GutterKeyboardHandler.prototype.$isFoldWidgetVisible = function (index) {
@@ -46656,26 +46923,24 @@ var GutterKeyboardHandler = /** @class */ (function () {
         if (index == null)
             return;
         var foldWidget = this.$getFoldWidget(index);
-        foldWidget.classList.add(this.editor.keyboardFocusClassName);
+        foldWidget.classList.add(this.editor.renderer.keyboardFocusClassName);
         foldWidget.focus();
     };
     GutterKeyboardHandler.prototype.$focusAnnotation = function (index) {
         if (index == null)
             return;
         var annotation = this.$getAnnotation(index);
-        annotation.classList.add(this.editor.keyboardFocusClassName);
-        annotation.setAttribute("role", "button");
+        annotation.classList.add(this.editor.renderer.keyboardFocusClassName);
         annotation.focus();
     };
     GutterKeyboardHandler.prototype.$blurFoldWidget = function (index) {
         var foldWidget = this.$getFoldWidget(index);
-        foldWidget.classList.remove(this.editor.keyboardFocusClassName);
+        foldWidget.classList.remove(this.editor.renderer.keyboardFocusClassName);
         foldWidget.blur();
     };
     GutterKeyboardHandler.prototype.$blurAnnotation = function (index) {
         var annotation = this.$getAnnotation(index);
-        annotation.classList.remove(this.editor.keyboardFocusClassName);
-        annotation.removeAttribute("role");
+        annotation.classList.remove(this.editor.renderer.keyboardFocusClassName);
         annotation.blur();
     };
     GutterKeyboardHandler.prototype.$moveFoldWidgetUp = function () {
@@ -46778,10 +47043,30 @@ var GutterKeyboardHandler = /** @class */ (function () {
     return GutterKeyboardHandler;
 }());
 exports.GutterKeyboardHandler = GutterKeyboardHandler;
+var GutterKeyboardEvent = /** @class */ (function () {
+    function GutterKeyboardEvent(domEvent, gutterKeyboardHandler) {
+        this.gutterKeyboardHandler = gutterKeyboardHandler;
+        this.domEvent = domEvent;
+    }
+    GutterKeyboardEvent.prototype.getKey = function () {
+        return keys.keyCodeToString(this.domEvent.keyCode);
+    };
+    GutterKeyboardEvent.prototype.getRow = function () {
+        return this.gutterKeyboardHandler.$rowIndexToRow(this.gutterKeyboardHandler.activeRowIndex);
+    };
+    GutterKeyboardEvent.prototype.isInAnnotationLane = function () {
+        return this.gutterKeyboardHandler.activeLane === "annotation";
+    };
+    GutterKeyboardEvent.prototype.isInFoldLane = function () {
+        return this.gutterKeyboardHandler.activeLane === "fold";
+    };
+    return GutterKeyboardEvent;
+}());
+exports.GutterKeyboardEvent = GutterKeyboardEvent;
 
 });
 
-define("ace/editor",["require","exports","module","ace/lib/fixoldbrowsers","ace/mode/abap","ace/mode/actionscript","ace/mode/ada","ace/mode/applescript","ace/mode/asciidoc","ace/mode/autohotkey","ace/mode/batchfile","ace/mode/behaviour","ace/mode/c9search","ace/mode/cirru","ace/mode/clojure","ace/mode/cobol","ace/mode/coffee","ace/mode/coldfusion","ace/mode/csharp","ace/mode/css","ace/mode/curly","ace/mode/d","ace/mode/dart","ace/mode/diff","ace/mode/django","ace/mode/dockerfile","ace/mode/dot","ace/mode/eiffel","ace/mode/elixir","ace/mode/elm","ace/mode/erlang","ace/mode/forth","ace/mode/ftl","ace/mode/gcode","ace/mode/gherkin","ace/mode/gitignore","ace/mode/glsl","ace/mode/golang","ace/mode/groovy","ace/mode/haml","ace/mode/handlebars","ace/mode/haskell","ace/mode/haxe","ace/mode/html","ace/mode/ini","ace/mode/io","ace/mode/jack","ace/mode/jade","ace/mode/java","ace/mode/javascript","ace/mode/julia","ace/mode/latex","ace/mode/less","ace/mode/liquid","ace/mode/lisp","ace/mode/livescript","ace/mode/logiql","ace/mode/lsl","ace/mode/lua","ace/mode/luapage","ace/mode/lucene","ace/mode/makefile","ace/mode/markdown","ace/mode/mask","ace/mode/matlab","ace/mode/mel","ace/mode/mushcode","ace/mode/mysql","ace/mode/nix","ace/mode/objectivec","ace/mode/ocaml","ace/mode/pascal","ace/mode/perl","ace/mode/pgsql","ace/mode/php","ace/mode/powershell","ace/mode/praat","ace/mode/prolog","ace/mode/properties","ace/mode/protobuf","ace/mode/python","ace/mode/ruby","ace/mode/rust","ace/mode/sass","ace/mode/scad","ace/mode/scala","ace/mode/scheme","ace/mode/scss","ace/mode/sh","ace/mode/sjs","ace/mode/smarty","ace/mode/snippets","ace/mode/space","ace/mode/sql","ace/mode/stylus","ace/mode/swift","ace/mode/svg","ace/mode/tcl","ace/mode/tex","ace/mode/text","ace/mode/textile","ace/mode/toml","ace/mode/twig","ace/mode/typescript","ace/mode/vala","ace/mode/vbscript","ace/mode/velocity","ace/mode/verilog","ace/mode/vhdl","ace/mode/xml","ace/mode/yaml","ace/lib/oop","ace/lib/dom","ace/lib/lang","ace/lib/useragent","ace/keyboard/textinput","ace/mouse/mouse_handler","ace/mouse/fold_handler","ace/keyboard/keybinding","ace/edit_session","ace/search","ace/range","ace/lib/event_emitter","ace/commands/command_manager","ace/commands/default_commands","ace/config","ace/token_iterator","ace/line_widgets","ace/keyboard/gutter_handler","ace/clipboard","ace/lib/keys"], function(require, exports, module){"use strict";
+define("ace/editor",["require","exports","module","ace/lib/fixoldbrowsers","ace/mode/abap","ace/mode/actionscript","ace/mode/ada","ace/mode/applescript","ace/mode/asciidoc","ace/mode/autohotkey","ace/mode/batchfile","ace/mode/behaviour","ace/mode/c9search","ace/mode/cirru","ace/mode/clojure","ace/mode/cobol","ace/mode/coffee","ace/mode/coldfusion","ace/mode/csharp","ace/mode/css","ace/mode/curly","ace/mode/d","ace/mode/dart","ace/mode/diff","ace/mode/django","ace/mode/dockerfile","ace/mode/dot","ace/mode/eiffel","ace/mode/elixir","ace/mode/elm","ace/mode/erlang","ace/mode/forth","ace/mode/ftl","ace/mode/gcode","ace/mode/gherkin","ace/mode/gitignore","ace/mode/glsl","ace/mode/golang","ace/mode/groovy","ace/mode/haml","ace/mode/handlebars","ace/mode/haskell","ace/mode/haxe","ace/mode/html","ace/mode/ini","ace/mode/io","ace/mode/jack","ace/mode/jade","ace/mode/java","ace/mode/javascript","ace/mode/julia","ace/mode/latex","ace/mode/less","ace/mode/liquid","ace/mode/lisp","ace/mode/livescript","ace/mode/logiql","ace/mode/lsl","ace/mode/lua","ace/mode/luapage","ace/mode/lucene","ace/mode/makefile","ace/mode/markdown","ace/mode/mask","ace/mode/matlab","ace/mode/mel","ace/mode/mushcode","ace/mode/mysql","ace/mode/nix","ace/mode/objectivec","ace/mode/ocaml","ace/mode/pascal","ace/mode/perl","ace/mode/pgsql","ace/mode/php","ace/mode/powershell","ace/mode/praat","ace/mode/prolog","ace/mode/properties","ace/mode/protobuf","ace/mode/python","ace/mode/ruby","ace/mode/rust","ace/mode/sass","ace/mode/scad","ace/mode/scala","ace/mode/scheme","ace/mode/scss","ace/mode/sh","ace/mode/sjs","ace/mode/smarty","ace/mode/snippets","ace/mode/space","ace/mode/sql","ace/mode/stylus","ace/mode/swift","ace/mode/svg","ace/mode/tcl","ace/mode/tex","ace/mode/text","ace/mode/textile","ace/mode/toml","ace/mode/twig","ace/mode/typescript","ace/mode/vala","ace/mode/vbscript","ace/mode/velocity","ace/mode/verilog","ace/mode/vhdl","ace/mode/xml","ace/mode/yaml","ace/lib/oop","ace/lib/dom","ace/lib/lang","ace/lib/useragent","ace/keyboard/textinput","ace/mouse/mouse_handler","ace/mouse/fold_handler","ace/keyboard/keybinding","ace/edit_session","ace/search","ace/range","ace/lib/event_emitter","ace/commands/command_manager","ace/commands/default_commands","ace/config","ace/token_iterator","ace/line_widgets","ace/keyboard/gutter_handler","ace/config","ace/clipboard","ace/lib/keys"], function(require, exports, module){"use strict";
 var __values = (this && this.__values) || function(o) {
     var s = typeof Symbol === "function" && Symbol.iterator, m = s && o[s], i = 0;
     if (m) return m.call(o);
@@ -46919,6 +47204,7 @@ var config = require("./config");
 var TokenIterator = require("./token_iterator").TokenIterator;
 var LineWidgets = require("./line_widgets").LineWidgets;
 var GutterKeyboardHandler = require("./keyboard/gutter_handler").GutterKeyboardHandler;
+var nls = require("./config").nls;
 var clipboard = require("./clipboard");
 var keys = require('./lib/keys');
 var Editor = /** @class */ (function () {
@@ -48754,14 +49040,15 @@ config.defineOptions(Editor.prototype, "editor", {
         set: function (message) {
             if (!this.$updatePlaceholder) {
                 this.$updatePlaceholder = function () {
-                    var value = this.session && (this.renderer.$composition || this.getValue());
-                    if (value && this.renderer.placeholderNode) {
+                    var hasValue = this.session && (this.renderer.$composition ||
+                        this.session.getLength() > 1 || this.session.getLine(0).length > 0);
+                    if (hasValue && this.renderer.placeholderNode) {
                         this.renderer.off("afterRender", this.$updatePlaceholder);
                         dom.removeCssClass(this.container, "ace_hasPlaceholder");
                         this.renderer.placeholderNode.remove();
                         this.renderer.placeholderNode = null;
                     }
-                    else if (!value && !this.renderer.placeholderNode) {
+                    else if (!hasValue && !this.renderer.placeholderNode) {
                         this.renderer.on("afterRender", this.$updatePlaceholder);
                         dom.addCssClass(this.container, "ace_hasPlaceholder");
                         var el = dom.createElement("div");
@@ -48770,7 +49057,7 @@ config.defineOptions(Editor.prototype, "editor", {
                         this.renderer.placeholderNode = el;
                         this.renderer.content.appendChild(this.renderer.placeholderNode);
                     }
-                    else if (!value && this.renderer.placeholderNode) {
+                    else if (!hasValue && this.renderer.placeholderNode) {
                         this.renderer.placeholderNode.textContent = this.$placeholder || "";
                     }
                 }.bind(this);
@@ -48787,12 +49074,12 @@ config.defineOptions(Editor.prototype, "editor", {
                 bindKey: "Esc",
                 exec: function (editor) {
                     editor.blur();
-                    editor.renderer.content.focus();
+                    editor.renderer.scroller.focus();
                 },
                 readOnly: true
             };
             var focusOnEnterKeyup = function (e) {
-                if (e.target == this.renderer.content && e.keyCode === keys['enter']) {
+                if (e.target == this.renderer.scroller && e.keyCode === keys['enter']) {
                     e.preventDefault();
                     var row = this.getCursorPosition().row;
                     if (!this.isRowVisible(row))
@@ -48802,40 +49089,46 @@ config.defineOptions(Editor.prototype, "editor", {
             };
             var gutterKeyboardHandler;
             if (value) {
-                this.keyboardFocusClassName = "ace_keyboard-focus";
+                this.renderer.enableKeyboardAccessibility = true;
+                this.renderer.keyboardFocusClassName = "ace_keyboard-focus";
                 this.textInput.getElement().setAttribute("tabindex", -1);
-                this.renderer.content.setAttribute("tabindex", 0);
-                this.renderer.content.setAttribute("role", "group");
-                this.renderer.content.setAttribute("aria-roledescription", "editor");
-                this.renderer.content.classList.add(this.keyboardFocusClassName);
-                this.renderer.content.setAttribute("aria-label", "Editor content, press Enter to start editing, press Escape to exit");
-                this.renderer.content.addEventListener("keyup", focusOnEnterKeyup.bind(this));
+                this.textInput.setNumberOfExtraLines(useragent.isWin ? 3 : 0);
+                this.renderer.scroller.setAttribute("tabindex", 0);
+                this.renderer.scroller.setAttribute("role", "group");
+                this.renderer.scroller.setAttribute("aria-roledescription", nls("editor"));
+                this.renderer.scroller.classList.add(this.renderer.keyboardFocusClassName);
+                this.renderer.scroller.setAttribute("aria-label", nls("Editor content, press Enter to start editing, press Escape to exit"));
+                this.renderer.scroller.addEventListener("keyup", focusOnEnterKeyup.bind(this));
                 this.commands.addCommand(blurCommand);
                 this.renderer.$gutter.setAttribute("tabindex", 0);
                 this.renderer.$gutter.setAttribute("aria-hidden", false);
                 this.renderer.$gutter.setAttribute("role", "group");
-                this.renderer.$gutter.setAttribute("aria-roledescription", "editor");
-                this.renderer.$gutter.setAttribute("aria-label", "Editor gutter, press Enter to interact with controls using arrow keys, press Escape to exit");
-                this.renderer.$gutter.classList.add(this.keyboardFocusClassName);
+                this.renderer.$gutter.setAttribute("aria-roledescription", nls("editor"));
+                this.renderer.$gutter.setAttribute("aria-label", nls("Editor gutter, press Enter to interact with controls using arrow keys, press Escape to exit"));
+                this.renderer.$gutter.classList.add(this.renderer.keyboardFocusClassName);
+                this.renderer.content.setAttribute("aria-hidden", true);
                 if (!gutterKeyboardHandler)
                     gutterKeyboardHandler = new GutterKeyboardHandler(this);
                 gutterKeyboardHandler.addListener();
             }
             else {
+                this.renderer.enableKeyboardAccessibility = false;
                 this.textInput.getElement().setAttribute("tabindex", 0);
-                this.renderer.content.setAttribute("tabindex", -1);
-                this.renderer.content.removeAttribute("role");
-                this.renderer.content.removeAttribute("aria-roledescription");
-                this.renderer.content.classList.remove(this.keyboardFocusClassName);
-                this.renderer.content.removeAttribute("aria-label");
-                this.renderer.content.removeEventListener("keyup", focusOnEnterKeyup.bind(this));
+                this.textInput.setNumberOfExtraLines(0);
+                this.renderer.scroller.setAttribute("tabindex", -1);
+                this.renderer.scroller.removeAttribute("role");
+                this.renderer.scroller.removeAttribute("aria-roledescription");
+                this.renderer.scroller.classList.remove(this.renderer.keyboardFocusClassName);
+                this.renderer.scroller.removeAttribute("aria-label");
+                this.renderer.scroller.removeEventListener("keyup", focusOnEnterKeyup.bind(this));
                 this.commands.removeCommand(blurCommand);
+                this.renderer.content.removeAttribute("aria-hidden");
                 this.renderer.$gutter.setAttribute("tabindex", -1);
                 this.renderer.$gutter.setAttribute("aria-hidden", true);
                 this.renderer.$gutter.removeAttribute("role");
                 this.renderer.$gutter.removeAttribute("aria-roledescription");
                 this.renderer.$gutter.removeAttribute("aria-label");
-                this.renderer.$gutter.classList.remove(this.keyboardFocusClassName);
+                this.renderer.$gutter.classList.remove(this.renderer.keyboardFocusClassName);
                 if (gutterKeyboardHandler)
                     gutterKeyboardHandler.removeListener();
             }
@@ -49489,12 +49782,13 @@ exports.Lines = Lines;
 
 });
 
-define("ace/layer/gutter",["require","exports","module","ace/lib/dom","ace/lib/oop","ace/lib/lang","ace/lib/event_emitter","ace/layer/lines"], function(require, exports, module){"use strict";
+define("ace/layer/gutter",["require","exports","module","ace/lib/dom","ace/lib/oop","ace/lib/lang","ace/lib/event_emitter","ace/layer/lines","ace/config"], function(require, exports, module){"use strict";
 var dom = require("../lib/dom");
 var oop = require("../lib/oop");
 var lang = require("../lib/lang");
 var EventEmitter = require("../lib/event_emitter").EventEmitter;
 var Lines = require("./lines").Lines;
+var nls = require("../config").nls;
 var Gutter = /** @class */ (function () {
     function Gutter(parentEl) {
         this.element = dom.createElement("div");
@@ -49746,18 +50040,17 @@ var Gutter = /** @class */ (function () {
             className += decorations[row];
         if (this.$annotations[row] && this.$annotations[row].className)
             className += this.$annotations[row].className;
-        if (element.className != className)
-            element.className = className;
         if (foldWidgets) {
             var c = foldWidgets[row];
             if (c == null)
                 c = foldWidgets[row] = session.getFoldWidget(row);
         }
         if (c) {
-            var className = "ace_fold-widget ace_" + c;
-            if (c == "start" && row == foldStart && row < fold.end.row) {
-                className += " ace_closed";
-                var foldAnnotationClass;
+            var foldClass = "ace_fold-widget ace_" + c;
+            var isClosedFold = c == "start" && row == foldStart && row < fold.end.row;
+            if (isClosedFold) {
+                foldClass += " ace_closed";
+                var foldAnnotationClass = '';
                 var annotationInFold = false;
                 for (var i = row + 1; i <= fold.end.row; i++) {
                     if (!this.$annotations[i])
@@ -49773,24 +50066,32 @@ var Gutter = /** @class */ (function () {
                         continue;
                     }
                 }
-                element.className += foldAnnotationClass;
+                className += foldAnnotationClass;
             }
             else
-                className += " ace_open";
-            if (foldWidget.className != className)
-                foldWidget.className = className;
+                foldClass += " ace_open";
+            if (foldWidget.className != foldClass)
+                foldWidget.className = foldClass;
             dom.setStyle(foldWidget.style, "height", lineHeight);
             dom.setStyle(foldWidget.style, "display", "inline-block");
             foldWidget.setAttribute("role", "button");
             foldWidget.setAttribute("tabindex", "-1");
-            var fold = session.getFoldLine(rowText - 1);
-            if (fold) {
-                foldWidget.setAttribute("aria-label", "Unfold rows ".concat(rowText, " to ").concat(fold.end.row + 1));
-                foldWidget.setAttribute("title", "Unfold code");
+            var foldRange = session.getFoldWidgetRange(row);
+            if (foldRange)
+                foldWidget.setAttribute("aria-label", nls("Toggle code folding, rows $0 through $1", [foldRange.start.row + 1, foldRange.end.row + 1]));
+            else {
+                if (fold)
+                    foldWidget.setAttribute("aria-label", nls("Toggle code folding, rows $0 through $1", [fold.start.row + 1, fold.end.row + 1]));
+                else
+                    foldWidget.setAttribute("aria-label", nls("Toggle code folding, row $0", [row + 1]));
+            }
+            if (isClosedFold) {
+                foldWidget.setAttribute("aria-expanded", "false");
+                foldWidget.setAttribute("title", nls("Unfold code"));
             }
             else {
-                foldWidget.setAttribute("aria-label", "Fold at row ".concat(rowText));
-                foldWidget.setAttribute("title", "Fold code");
+                foldWidget.setAttribute("aria-expanded", "true");
+                foldWidget.setAttribute("title", nls("Fold code"));
             }
         }
         else {
@@ -49808,36 +50109,44 @@ var Gutter = /** @class */ (function () {
             dom.setStyle(annotationIconNode.style, "height", lineHeight);
             dom.setStyle(annotationNode.style, "display", "block");
             dom.setStyle(annotationNode.style, "height", lineHeight);
-            annotationNode.setAttribute("aria-label", "Read annotations row ".concat(rowText));
+            annotationNode.setAttribute("aria-label", nls("Read annotations row $0", [rowText]));
             annotationNode.setAttribute("tabindex", "-1");
+            annotationNode.setAttribute("role", "button");
         }
         else if (this.$annotations[row]) {
             annotationNode.className = "ace_gutter_annotation";
             annotationIconNode.className = iconClassName;
-            var className = this.$annotations[row].className;
-            if (className) {
+            if (this.$annotations[row].className) {
                 if (this.$useSvgGutterIcons)
-                    annotationIconNode.className += className;
+                    annotationIconNode.className += this.$annotations[row].className;
                 else
-                    element.classList.add(className.replace(" ", ""));
+                    element.classList.add(this.$annotations[row].className.replace(" ", ""));
             }
             dom.setStyle(annotationIconNode.style, "height", lineHeight);
             dom.setStyle(annotationNode.style, "display", "block");
             dom.setStyle(annotationNode.style, "height", lineHeight);
-            annotationNode.setAttribute("aria-label", "Read annotations row ".concat(rowText));
+            annotationNode.setAttribute("aria-label", nls("Read annotations row $0", [rowText]));
             annotationNode.setAttribute("tabindex", "-1");
+            annotationNode.setAttribute("role", "button");
         }
         else {
             dom.setStyle(annotationNode.style, "display", "none");
             annotationNode.removeAttribute("aria-label");
+            annotationNode.removeAttribute("role");
             annotationNode.setAttribute("tabindex", "0");
         }
         if (rowText !== textNode.data) {
             textNode.data = rowText;
         }
+        if (element.className != className)
+            element.className = className;
         dom.setStyle(cell.element.style, "height", this.$lines.computeLineHeight(row, config, session) + "px");
         dom.setStyle(cell.element.style, "top", this.$lines.computeLineTop(row, config, session) + "px");
         cell.text = rowText;
+        if (annotationNode.style.display === "none" && foldWidget.style.display === "none")
+            cell.element.setAttribute("aria-hidden", true);
+        else
+            cell.element.setAttribute("aria-hidden", false);
         return cell;
     };
     Gutter.prototype.setHighlightGutterLine = function (highlightGutterLine) {
@@ -50088,12 +50397,22 @@ exports.Marker = Marker;
 
 });
 
-define("ace/layer/text",["require","exports","module","ace/lib/oop","ace/lib/dom","ace/lib/lang","ace/layer/lines","ace/lib/event_emitter"], function(require, exports, module){"use strict";
+define("ace/layer/text_util",["require","exports","module"], function(require, exports, module){// Tokens for which Ace just uses a simple TextNode and does not add any special className.
+var textTokens = new Set(["text", "rparen", "lparen"]);
+exports.isTextToken = function (tokenType) {
+    return textTokens.has(tokenType);
+};
+
+});
+
+define("ace/layer/text",["require","exports","module","ace/lib/oop","ace/lib/dom","ace/lib/lang","ace/layer/lines","ace/lib/event_emitter","ace/config","ace/layer/text_util"], function(require, exports, module){"use strict";
 var oop = require("../lib/oop");
 var dom = require("../lib/dom");
 var lang = require("../lib/lang");
 var Lines = require("./lines").Lines;
 var EventEmitter = require("../lib/event_emitter").EventEmitter;
+var nls = require("../config").nls;
+var isTextToken = require("./text_util").isTextToken;
 var namedColors = {
     aliceblue: "#f0f8ff",
     antiquewhite: "#faebd7",
@@ -50546,7 +50865,7 @@ var Text = /** @class */ (function () {
                     valueFragment.appendChild(span);
                 }
                 else {
-                    valueFragment.appendChild(this.com.createTextNode(simpleSpace, this.element));
+                    valueFragment.appendChild(this.dom.createTextNode(simpleSpace, this.element));
                 }
             }
             else if (controlCharacter) {
@@ -50573,12 +50892,12 @@ var Text = /** @class */ (function () {
             }
         }
         valueFragment.appendChild(this.dom.createTextNode(i ? value.slice(i) : value, this.element));
-        if (!this.$textToken[token.type]) {
+        if (!isTextToken(token.type)) {
             var classes = "ace_" + token.type.replace(/\./g, " ace_");
             var span = this.dom.createElement("span");
             if (token.type == "fold") {
                 span.style.width = (token.value.length * this.config.characterWidth) + "px";
-                span.setAttribute("title", "Unfold code");
+                span.setAttribute("title", nls("Unfold code"));
             }
             if (token.bg && this.showColorPreview)
                 span.setAttribute("style", bgStyle(token.bg, this.backgroundColor));
@@ -50887,11 +51206,6 @@ var Text = /** @class */ (function () {
     };
     return Text;
 }());
-Text.prototype.$textToken = {
-    "text": true,
-    "rparen": true,
-    "lparen": true
-};
 Text.prototype.EOF_CHAR = "\xB6";
 Text.prototype.EOL_CHAR_LF = "\xAC";
 Text.prototype.EOL_CHAR_CRLF = "\xa4";
@@ -51704,7 +52018,7 @@ exports.FontMetrics = FontMetrics;
 
 });
 
-define("ace/css/editor.css",["require","exports","module"], function(require, exports, module){/*
+define("ace/css/editor-css",["require","exports","module"], function(require, exports, module){/*
 styles = []
 for (var i = 1; i < 16; i++) {
     styles.push(".ace_br" + i + "{" + (
@@ -51840,7 +52154,7 @@ exports.Decorator = Decorator;
 
 });
 
-define("ace/virtual_renderer",["require","exports","module","ace/lib/oop","ace/lib/dom","ace/lib/lang","ace/config","ace/layer/gutter","ace/layer/marker","ace/layer/text","ace/layer/cursor","ace/scrollbar","ace/scrollbar","ace/scrollbar_custom","ace/scrollbar_custom","ace/renderloop","ace/layer/font_metrics","ace/lib/event_emitter","ace/css/editor.css","ace/layer/decorators","ace/lib/useragent"], function(require, exports, module){"use strict";
+define("ace/virtual_renderer",["require","exports","module","ace/lib/oop","ace/lib/dom","ace/lib/lang","ace/config","ace/layer/gutter","ace/layer/marker","ace/layer/text","ace/layer/cursor","ace/scrollbar","ace/scrollbar","ace/scrollbar_custom","ace/scrollbar_custom","ace/renderloop","ace/layer/font_metrics","ace/lib/event_emitter","ace/css/editor-css","ace/layer/decorators","ace/lib/useragent"], function(require, exports, module){"use strict";
 var oop = require("./lib/oop");
 var dom = require("./lib/dom");
 var lang = require("./lib/lang");
@@ -51856,7 +52170,7 @@ var VScrollBarCustom = require("./scrollbar_custom").VScrollBar;
 var RenderLoop = require("./renderloop").RenderLoop;
 var FontMetrics = require("./layer/font_metrics").FontMetrics;
 var EventEmitter = require("./lib/event_emitter").EventEmitter;
-var editorCss = require("./css/editor.css");
+var editorCss = require("./css/editor-css");
 var Decorator = require("./layer/decorators").Decorator;
 var useragent = require("./lib/useragent");
 dom.importCssString(editorCss, "ace_editor.css", false);
@@ -52149,7 +52463,7 @@ var VirtualRenderer = /** @class */ (function () {
     VirtualRenderer.prototype.getShowInvisibles = function () {
         return this.getOption("showInvisibles");
     };
-    VirtualRenderer.prototype.getDisplayIndentGuide = function () {
+    VirtualRenderer.prototype.getDisplayIndentGuides = function () {
         return this.getOption("displayIndentGuides");
     };
     VirtualRenderer.prototype.setDisplayIndentGuides = function (display) {
@@ -52393,7 +52707,9 @@ var VirtualRenderer = /** @class */ (function () {
         }
         if (changes & this.CHANGE_H_SCROLL) {
             dom.translate(this.content, -this.scrollLeft, -config.offset);
-            this.scroller.className = this.scrollLeft <= 0 ? "ace_scroller" : "ace_scroller ace_scroll-left";
+            this.scroller.className = this.scrollLeft <= 0 ? "ace_scroller " : "ace_scroller ace_scroll-left ";
+            if (this.enableKeyboardAccessibility)
+                this.scroller.className += this.keyboardFocusClassName;
         }
         if (changes & this.CHANGE_FULL) {
             this.$changedLines = null;
@@ -54366,11 +54682,9 @@ require("./config").defineOptions(Editor.prototype, "editor", {
         set: function (val) {
             MultiSelect(this);
             if (val) {
-                this.on("changeSession", this.$multiselectOnSessionChange);
                 this.on("mousedown", onMouseDown);
             }
             else {
-                this.off("changeSession", this.$multiselectOnSessionChange);
                 this.off("mousedown", onMouseDown);
             }
         },
@@ -54386,10 +54700,11 @@ require("./config").defineOptions(Editor.prototype, "editor", {
 
 });
 
-define("ace/ext/error_marker",["require","exports","module","ace/line_widgets","ace/lib/dom","ace/range"], function(require, exports, module){"use strict";
+define("ace/ext/error_marker",["require","exports","module","ace/line_widgets","ace/lib/dom","ace/range","ace/config"], function(require, exports, module){"use strict";
 var LineWidgets = require("../line_widgets").LineWidgets;
 var dom = require("../lib/dom");
 var Range = require("../range").Range;
+var nls = require("../config").nls;
 function binarySearch(array, needle, comparator) {
     var first = 0;
     var last = array.length - 1;
@@ -54466,7 +54781,7 @@ exports.showErrorMarker = function (editor, dir) {
     }
     else {
         gutterAnno = {
-            text: ["Looks good!"],
+            text: [nls("Looks good!")],
             className: "ace_ok"
         };
     }
@@ -54636,13 +54951,19 @@ exports.version = exports.config.version;
                         a.config.init(true);
                         a.define = window.define;
                     }
-                    if (!window.ace)
-                        window.ace = a;
+                    var global = (function () {
+                        return this;
+                    })();
+                    if (!global && typeof window != "undefined") global = window; // can happen in strict mode
+                    if (!global && typeof self != "undefined") global = self; // can happen in webworker
+                    
+                    if (!global.ace)
+                        global.ace = a;
                     for (var key in a) if (a.hasOwnProperty(key))
-                        window.ace[key] = a[key];
-                    window.ace["default"] = window.ace;
+                        global.ace[key] = a[key];
+                    global.ace["default"] = global.ace;
                     if (typeof module == "object" && typeof exports == "object" && module) {
-                        module.exports = window.ace;
+                        module.exports = global.ace;
                     }
                 });
             })();

@@ -424,6 +424,10 @@ namespace prefs {
 #define kDisableRendererAccessibility "disable_renderer_accessibility"
 #define kCopilotEnabled "copilot_enabled"
 #define kCopilotCompletionsDelay "copilot_completions_delay"
+#define kCopilotTabKeyBehavior "copilot_tab_key_behavior"
+#define kCopilotTabKeyBehaviorSuggestion "suggestion"
+#define kCopilotTabKeyBehaviorCompletions "completions"
+#define kCopilotIndexingEnabled "copilot_indexing_enabled"
 
 class UserPrefValues: public Preferences
 {
@@ -1916,6 +1920,18 @@ public:
     */
    int copilotCompletionsDelay();
    core::Error setCopilotCompletionsDelay(int val);
+
+   /**
+    * Control the behavior of the Tab key when both Copilot code suggestions and RStudio code completions are visible.
+    */
+   std::string copilotTabKeyBehavior();
+   core::Error setCopilotTabKeyBehavior(std::string val);
+
+   /**
+    * When enabled, RStudio will index project files with GitHub Copilot.
+    */
+   bool copilotIndexingEnabled();
+   core::Error setCopilotIndexingEnabled(bool val);
 
 };
 

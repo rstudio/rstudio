@@ -78,6 +78,11 @@ public:
    LogLevel getLogLevel() { return m_logLevel; }
 
    /**
+    * @brief Sets the maximum level of logs that will be written to this log destination.
+    */
+   void setLogLevel(LogLevel newLevel) { m_logLevel = newLevel; }
+
+   /**
     * @brief Gets the log message format type for this log destination.
     *
     * @return This log destination's message format type.

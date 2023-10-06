@@ -1,4 +1,3 @@
-/* eslint-disable @typescript-eslint/no-implicit-any-catch */
 /*
  * i18n-manager.ts
  *

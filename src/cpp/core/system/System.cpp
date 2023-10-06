@@ -375,6 +375,11 @@ void initFileLogDestination(log::LogLevel level, FilePath defaultLogDir)
                                           s_programIdentity,
                                           defaultOptions)));
    }
+   else
+   {
+      if (log::getFileLogLevel() < level)
+         log::setFileLogLevel(level);
+   }
 }
 
 void log(log::LogLevel logLevel,

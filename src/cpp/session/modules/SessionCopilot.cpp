@@ -23,6 +23,7 @@
 #include <shared_core/json/Json.hpp>
 
 #include <core/Exec.hpp>
+#include <core/FileSerializer.hpp>
 #include <core/http/Header.hpp>
 #include <core/json/JsonRpc.hpp>
 #include <core/system/Process.hpp>
@@ -37,6 +38,7 @@
 #include <r/RSexp.hpp>
 #include <r/session/REventLoop.hpp>
 
+#include <session/projects/SessionProjects.hpp>
 #include <session/prefs/UserPrefs.hpp>
 #include <session/SessionModuleContext.hpp>
 
@@ -48,14 +50,21 @@
       std::string message = fmt::format(__FMT__, ##__VA_ARGS__);               \
       std::string formatted =                                                  \
           fmt::format("[{}]: {}", __func__, message);                          \
-      __LOGGER__(formatted);                                                   \
+      __LOGGER__("copilot", formatted);                                        \
       if (copilotLogLevel() >= 1)                                              \
          std::cerr << formatted << std::endl;                                  \
    } while (0)
 
-#define DLOG(__FMT__, ...) COPILOT_LOG_IMPL(LOG_DEBUG_MESSAGE,   __FMT__, ##__VA_ARGS__)
-#define WLOG(__FMT__, ...) COPILOT_LOG_IMPL(LOG_WARNING_MESSAGE, __FMT__, ##__VA_ARGS__)
-#define ELOG(__FMT__, ...) COPILOT_LOG_IMPL(LOG_ERROR_MESSAGE,   __FMT__, ##__VA_ARGS__)
+#define DLOG(__FMT__, ...) COPILOT_LOG_IMPL(LOG_DEBUG_MESSAGE_NAMED,   __FMT__, ##__VA_ARGS__)
+#define WLOG(__FMT__, ...) COPILOT_LOG_IMPL(LOG_WARNING_MESSAGE_NAMED, __FMT__, ##__VA_ARGS__)
+#define ELOG(__FMT__, ...) COPILOT_LOG_IMPL(LOG_ERROR_MESSAGE_NAMED,   __FMT__, ##__VA_ARGS__)
+
+// Use a default section of 'copilot' for errors / warnings
+#ifdef LOG_ERROR
+# undef LOG_ERROR
+# define LOG_ERROR(error) LOG_ERROR_NAMED("copilot", error)
+#endif
+
 
 #ifndef _WIN32
 # define kNodeExe "node"
@@ -128,6 +137,9 @@ int s_copilotLogLevel = 0;
 // Whether Copilot is enabled.
 bool s_copilotEnabled = false;
 
+// Whether Copilot has been allowed to index project files.
+bool s_copilotIndexingEnabled = false;
+
 // The PID of the active Copilot agent process.
 PidType s_agentPid = -1;
 
@@ -144,9 +156,59 @@ std::queue<std::string> s_pendingResponses;
 // Whether we're about to shut down.
 bool s_isSessionShuttingDown = false;
 
-std::string uriFromDocumentId(const std::string& documentId)
+// Project-specific Copilot options.
+projects::RProjectCopilotOptions s_copilotProjectOptions;
+
+bool isCopilotEnabled()
 {
-   return fmt::format("rstudio-document://{}", documentId);
+   // Check project option
+   switch (s_copilotProjectOptions.copilotEnabled)
+   {
+   case r_util::YesValue: return true;
+   case r_util::NoValue: return false;
+   default: {}
+   }
+
+   // Check user preference
+   return prefs::userPrefs().copilotEnabled();
+}
+
+bool isCopilotIndexingEnabled()
+{
+   // Check project option
+   switch (s_copilotProjectOptions.copilotIndexingEnabled)
+   {
+   case r_util::YesValue: return true;
+   case r_util::NoValue: return false;
+   default: {}
+   }
+
+   // Check user preference
+   return prefs::userPrefs().copilotIndexingEnabled();
+}
+
+std::string uriFromDocumentPath(const std::string& path)
+{
+   return fmt::format("file://{}", path);
+}
+
+
+std::string uriFromDocumentId(const std::string& id)
+{
+   return fmt::format("rstudio-document://{}", id);
+}
+
+std::string uriFromDocumentImpl(const std::string& id,
+                                const std::string& path,
+                                bool isUntitled)
+{
+   FilePath resolvedPath = module_context::resolveAliasedPath(path);
+   return isUntitled ? uriFromDocumentId(id) : uriFromDocumentPath(resolvedPath.getAbsolutePath());
+   
+}
+std::string uriFromDocument(const boost::shared_ptr<source_database::SourceDocument>& pDoc)
+{
+   return uriFromDocumentImpl(pDoc->id(), pDoc->path(), pDoc->isUntitled());
 }
 
 std::string languageIdFromDocument(boost::shared_ptr<source_database::SourceDocument> pDoc)
@@ -316,6 +378,7 @@ void setEditorInfo()
    editorInfoJson["name"] = "RStudio";
    editorInfoJson["version"] = RSTUDIO_VERSION;
    paramsJson["editorInfo"] = editorInfoJson;
+   paramsJson["editorPluginInfo"] = editorInfoJson;
    
    SEXP networkProxySEXP = r::options::getOption("rstudio.copilot.networkProxy");
    if (networkProxySEXP != R_NilValue)
@@ -425,6 +488,17 @@ void onStdout(ProcessOperations& operations, const std::string& stdOut)
       if (contentLength.empty())
       {
          ELOG("Internal error: response contains no Content-Length header.");
+         
+         if (copilotLogLevel() >= 2)
+         {
+            std::cerr << std::endl;
+            std::cerr << "RESPONSE" << std::endl;
+            std::cerr << "------------------" << std::endl;
+            std::cerr << stdOut << std::endl;
+            std::cerr << "------------------" << std::endl;
+            std::cerr << std::endl << std::endl;
+         }
+
          break;
       }
 
@@ -451,7 +525,9 @@ void onStdout(ProcessOperations& operations, const std::string& stdOut)
 
 void onStderr(ProcessOperations& operations, const std::string& stdErr)
 {
-   std::cerr << stdErr << std::endl;
+   LOG_ERROR_MESSAGE_NAMED("copilot", stdErr);
+   if (copilotLogLevel() >= 1)
+      std::cerr << stdErr << std::endl;
 }
 
 void onExit(int status)
@@ -582,17 +658,17 @@ bool startAgent()
 
 bool ensureAgentRunning()
 {
-   // bail if we haven't enabled copilot
-   if (!s_copilotEnabled)
-   {
-      DLOG("Copilot is not enabled; not starting agent.");
-      return false;
-   }
-
    // bail if copilot is not allowed
    if (!session::options().copilotEnabled())
    {
       DLOG("Copilot has been disabled by the administrator; not starting agent.");
+      return false;
+   }
+
+   // bail if we haven't enabled copilot
+   if (!s_copilotEnabled)
+   {
+      DLOG("Copilot is not enabled; not starting agent.");
       return false;
    }
 
@@ -620,7 +696,7 @@ void onDocAdded(boost::shared_ptr<source_database::SourceDocument> pDoc)
       return;
 
    json::Object textDocumentJson;
-   textDocumentJson["uri"] = uriFromDocumentId(pDoc->id());
+   textDocumentJson["uri"] = uriFromDocument(pDoc);
    textDocumentJson["languageId"] = languageIdFromDocument(pDoc);
    textDocumentJson["version"] = 1;
    textDocumentJson["text"] = "";
@@ -638,7 +714,7 @@ void onDocUpdated(boost::shared_ptr<source_database::SourceDocument> pDoc)
 
    // Synchronize document contents with Copilot
    json::Object textDocumentJson;
-   textDocumentJson["uri"] = uriFromDocumentId(pDoc->id());
+   textDocumentJson["uri"] = uriFromDocument(pDoc);
    textDocumentJson["languageId"] = languageIdFromDocument(pDoc);
    textDocumentJson["version"] = 1;
    textDocumentJson["text"] = pDoc->contents();
@@ -655,7 +731,7 @@ void onDocRemoved(const std::string& id, const std::string& path)
       return;
 
    json::Object textDocumentJson;
-   textDocumentJson["uri"] = uriFromDocumentId(id);
+   textDocumentJson["uri"] = uriFromDocumentImpl(id, path, path.empty());
 
    json::Object paramsJson;
    paramsJson["textDocument"] = textDocumentJson;
@@ -739,17 +815,12 @@ void onBackgroundProcessing(bool isIdle)
    }
 }
 
-void onPreferencesSaved()
+void synchronize()
 {
-   // Check for preference change
-   bool oldEnabled = s_copilotEnabled;
-   bool newEnabled = prefs::userPrefs().copilotEnabled();
-   if (oldEnabled == newEnabled)
-      return;
-
-   // Update our preference
-   s_copilotEnabled = newEnabled;
-
+   // Update flags
+   s_copilotEnabled = isCopilotEnabled();
+   s_copilotIndexingEnabled = s_copilotEnabled && isCopilotIndexingEnabled();
+   
    // Start or stop the agent as appropriate
    if (s_copilotEnabled)
    {
@@ -759,14 +830,31 @@ void onPreferencesSaved()
    {
       stopAgent();
    }
+   
+}
+
+void onPreferencesSaved()
+{
+   synchronize();
+}
+
+void onProjectOptionsUpdated()
+{
+   // Update internal cache of project options
+   Error error = projects::projectContext().readCopilotOptions(&s_copilotProjectOptions);
+   if (error)
+      LOG_ERROR(error);
+   
+   // Synchronize other flags
+   synchronize();
 }
 
 void onUserPrefsChanged(const std::string& layer,
                         const std::string& name)
 {
-   if (name == "copilot_enabled")
+   if (name == kCopilotEnabled)
    {
-      onPreferencesSaved();
+      synchronize();
    }
 }
 
@@ -811,9 +899,11 @@ Error copilotGenerateCompletions(const json::JsonRpcRequest& request,
 
    // Read params
    std::string documentId;
+   std::string documentPath;
+   bool isUntitled;
    int cursorRow, cursorColumn;
 
-   Error error = core::json::readParams(request.params, &documentId, &cursorRow, &cursorColumn);
+   Error error = core::json::readParams(request.params, &documentId, &documentPath, &isUntitled, &cursorRow, &cursorColumn);
    if (error)
    {
       LOG_ERROR(error);
@@ -827,7 +917,7 @@ Error copilotGenerateCompletions(const json::JsonRpcRequest& request,
 
    json::Object docJson;
    docJson["position"] = positionJson;
-   docJson["uri"] = uriFromDocumentId(documentId);
+   docJson["uri"] = uriFromDocumentImpl(documentId, documentPath, isUntitled);
    docJson["version"] = 1;
 
    json::Object paramsJson;
@@ -915,19 +1005,101 @@ Error copilotInstallAgent(const json::JsonRpcRequest& request,
 
 } // end anonymous namespace
 
+
+namespace file_monitor {
+
+namespace {
+
+void indexFile(const core::FileInfo& info)
+{
+   FilePath documentPath = module_context::resolveAliasedPath(info.absolutePath());
+   std::string ext = documentPath.getExtensionLowerCase();
+   
+   // TODO: Stop hard-coding this list?
+   std::string languageId;
+   if (ext == ".r")
+      languageId = "r";
+   else if (ext == ".py")
+      languageId = "python";
+   else if (ext == ".sql")
+      languageId = "sql";
+   else
+      return;
+   
+   DLOG("Indexing document: {}", info.absolutePath());
+   
+   std::string contents;
+   Error error = core::readStringFromFile(documentPath, &contents);
+   if (error)
+      return;
+   
+   json::Object textDocumentJson;
+   textDocumentJson["uri"] = uriFromDocumentPath(documentPath.getAbsolutePath());
+   textDocumentJson["languageId"] = languageId;
+   textDocumentJson["version"] = 1;
+   textDocumentJson["text"] = contents;
+
+   json::Object paramsJson;
+   paramsJson["textDocument"] = textDocumentJson;
+
+   sendNotification("textDocument/didOpen", paramsJson);
+}
+
+} // end anonymous namespace
+
+void onMonitoringEnabled(const tree<core::FileInfo>& tree)
+{
+   if (s_copilotIndexingEnabled)
+      for (auto&& file : tree)
+         indexFile(file);
+}
+
+void onFilesChanged(const std::vector<core::system::FileChangeEvent>& events)
+{
+   if (s_copilotIndexingEnabled)
+      for (auto&& event : events)
+         indexFile(event.fileInfo());
+}
+
+void onMonitoringDisabled()
+{
+}
+
+} // end namespace file_monitor
+
+
 Error initialize()
 {
    using boost::bind;
    using namespace module_context;
 
-   s_copilotEnabled = prefs::userPrefs().copilotEnabled();
-   
+   // Read default log level
    std::string copilotLogLevel = core::system::getenv("RSTUDIO_COPILOT_LOG_LEVEL");
    if (!copilotLogLevel.empty())
       s_copilotLogLevel = safe_convert::stringTo<int>(copilotLogLevel, 0);
+   
+   // Read project options
+   if (projects::projectContext().hasProject())
+   {
+      Error error = projects::projectContext().readCopilotOptions(&s_copilotProjectOptions);
+      if (error)
+         LOG_ERROR(error);
+   }
+    
+   // Synchronize user + project preferences with internal caches
+   synchronize();
 
+   // subscribe to project context file monitoring state changes
+   // (note that if there is no project this will no-op)
+   session::projects::FileMonitorCallbacks callbacks;
+   callbacks.onMonitoringEnabled = file_monitor::onMonitoringEnabled;
+   callbacks.onFilesChanged = file_monitor::onFilesChanged;
+   callbacks.onMonitoringDisabled = file_monitor::onMonitoringDisabled;
+   projects::projectContext().subscribeToFileMonitor("Copilot indexing", callbacks);
+   
    events().onBackgroundProcessing.connect(onBackgroundProcessing);
    events().onPreferencesSaved.connect(onPreferencesSaved);
+   events().onProjectOptionsUpdated.connect(onProjectOptionsUpdated);
    events().onDeferredInit.connect(onDeferredInit);
    events().onShutdown.connect(onShutdown);
 

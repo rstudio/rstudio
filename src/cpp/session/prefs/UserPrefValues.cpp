@@ -3247,6 +3247,32 @@ core::Error UserPrefValues::setCopilotCompletionsDelay(int val)
    return writePref("copilot_completions_delay", val);
 }
 
+/**
+ * Control the behavior of the Tab key when both Copilot code suggestions and RStudio code completions are visible.
+ */
+std::string UserPrefValues::copilotTabKeyBehavior()
+{
+   return readPref<std::string>("copilot_tab_key_behavior");
+}
+
+core::Error UserPrefValues::setCopilotTabKeyBehavior(std::string val)
+{
+   return writePref("copilot_tab_key_behavior", val);
+}
+
+/**
+ * When enabled, RStudio will index project files with GitHub Copilot.
+ */
+bool UserPrefValues::copilotIndexingEnabled()
+{
+   return readPref<bool>("copilot_indexing_enabled");
+}
+
+core::Error UserPrefValues::setCopilotIndexingEnabled(bool val)
+{
+   return writePref("copilot_indexing_enabled", val);
+}
+
 std::vector<std::string> UserPrefValues::allKeys()
 {
    return std::vector<std::string>({
@@ -3498,6 +3524,8 @@ std::vector<std::string> UserPrefValues::allKeys()
       kDisableRendererAccessibility,
       kCopilotEnabled,
       kCopilotCompletionsDelay,
+      kCopilotTabKeyBehavior,
+      kCopilotIndexingEnabled,
    });
 }
    

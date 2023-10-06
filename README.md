@@ -2,7 +2,7 @@ RStudio
 =============================================================================
 
 RStudio is an integrated development environment (IDE) for the 
-[R programming language](http://www.r-project.org). Some of its
+[R programming language](https://www.r-project.org). Some of its
 features include:
 
 - Customizable workbench with all of the tools required to work with R in one
@@ -16,7 +16,7 @@ features include:
   IDE using a web browser.
 
 For more information on RStudio please visit the 
-[project website](http://www.posit.co/).
+[project website](https://posit.co/).
 
 Getting the Code
 -----------------------------------------------------------------------------
@@ -28,10 +28,10 @@ Documentation
 -----------------------------------------------------------------------------
 
 For information on how to use RStudio check out our
-[online documentation](http://www.rstudio.com/ide/docs/). 
+[online documentation](https://docs.posit.co/ide/user/). 
 
 For documentation on running your own RStudio Server see the 
-[server getting started](http://www.rstudio.com/ide/docs/server/getting_started)
+[server getting started](https://support.posit.co/hc/en-us/articles/200552306-Getting-Started)
 guide.
 
 See also the following files included with the distribution:

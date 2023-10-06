@@ -51,9 +51,11 @@ export class MenuCallback extends EventEmitter {
 
   savedMenu: Menu | null = null;
 
+  /* eslint-disable @typescript-eslint/no-explicit-any */
   debounceUpdateMenuLong: any = debounce(() => this.updateMenus(), 5000);
   debounceUpdateMenuMedium: any = debounce(() => this.updateMenus(), 250);
   debounceUpdateMenuShort: any = debounce(() => this.updateMenus(), 10);
+  /* eslint-enable @typescript-eslint/no-explicit-any */
 
   constructor() {
     super();
@@ -286,19 +288,19 @@ export class MenuCallback extends EventEmitter {
    */
   updateMenus(): void {
     const newMainMenuTemplate = this.recursiveCopy(this.mainMenuTemplate);
-    
+
     if (appState().modalTracker.numModalsShowing() === 0) {
       // update only if there are no modals showing
       this.mainMenu = Menu.buildFromTemplate(newMainMenuTemplate);
       Menu.setApplicationMenu(this.mainMenu);
     }
-    
+
     this.isMenuSet = true;
   }
 
   /*
-  * This function will remove items that has a submenu array with no items
-  */
+   * This function will remove items that has a submenu array with no items
+   */
   private removeItemsWithEmptySubmenuList(item: MenuItemConstructorOptions): boolean {
     if (Object.prototype.hasOwnProperty.call(item, 'submenu')) {
       if (Array.isArray(item.submenu)) {
@@ -314,7 +316,7 @@ export class MenuCallback extends EventEmitter {
     }
 
     return true;
-  };
+  }
 
   /**
    * Builds the final list of menu items using the given menu template
@@ -380,7 +382,7 @@ export class MenuCallback extends EventEmitter {
     }
 
     return newMenuTemplate;
-  };
+  }
 
   addCommand(
     cmdId: string,
@@ -492,10 +494,12 @@ export class MenuCallback extends EventEmitter {
       this.savedMenu = Menu.getApplicationMenu();
       if (this.savedMenu) {
         const disabledMenu = Menu.buildFromTemplate(this.recursiveCopy(this.mainMenuTemplate));
-        disabledMenu?.items?.forEach((item) => {
+        disabledMenu.items.forEach((item) => {
           item.submenu?.items.forEach((subItem) => {
             // keep some commands enabled
-            subItem.enabled = ['cut', 'copy', 'paste', 'redo', 'hide', 'hideOthers', 'unhide', 'selectAll'].includes(subItem.role ?? '');
+            subItem.enabled = ['cut', 'copy', 'paste', 'redo', 'hide', 'hideOthers', 'unhide', 'selectAll'].includes(
+              subItem.role ?? '',
+            );
           });
         });
         Menu.setApplicationMenu(disabledMenu);

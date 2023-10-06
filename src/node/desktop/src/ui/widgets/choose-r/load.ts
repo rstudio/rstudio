@@ -13,7 +13,6 @@
  *
  */
 
-/* eslint-disable @typescript-eslint/no-implicit-any-catch */
 // eslint-disable-next-line @typescript-eslint/no-unused-vars
 
 import { Callbacks, CallbackData } from './preload';
@@ -118,11 +117,13 @@ window.addEventListener('load', () => {
   );
 
   checkForNewLanguage()
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
     .then(async (newLanguage: any) =>
       changeLanguage('' + newLanguage).then(() => {
         updateLabels();
       }),
     )
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
     .catch((err: any) => {
       console.error('An error happened when trying to fetch a new locale: ', err);
     });

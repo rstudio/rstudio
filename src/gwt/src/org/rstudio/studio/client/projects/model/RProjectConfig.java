@@ -16,13 +16,20 @@ package org.rstudio.studio.client.projects.model;
 
 import java.util.ArrayList;
 
-import com.google.gwt.core.client.GWT;
 import org.rstudio.core.client.StringUtil;
-
-import com.google.gwt.core.client.JavaScriptObject;
-import com.google.gwt.core.client.JsArrayString;
 import org.rstudio.studio.client.projects.StudioClientProjectConstants;
 
+import com.google.gwt.core.client.GWT;
+import com.google.gwt.core.client.JavaScriptObject;
+import com.google.gwt.core.client.JsArrayString;
+
+// This class encompasses project configuration which should be included
+// within a project's .Rproj file. These settings are useful for project-specific
+// settings which should apply to all users in a project.
+//
+// Contrast this with user-specific project settings, like the version of git
+// the user has configured for use in a project -- this could differ from
+// user to user, and so isn't appropriate for the .Rproj file.
 public class RProjectConfig extends JavaScriptObject
 {
    private static final StudioClientProjectConstants constants_ = GWT.create(StudioClientProjectConstants.class);
@@ -36,9 +43,9 @@ public class RProjectConfig extends JavaScriptObject
    }
 
    public native static final RProjectConfig createEmpty() /*-{
-      var config = new Object();
-      config.version = 1.0;
-      return config;
+      return {
+         version: 1.0
+      }
    }-*/;
 
    public native final double getVersion() /*-{

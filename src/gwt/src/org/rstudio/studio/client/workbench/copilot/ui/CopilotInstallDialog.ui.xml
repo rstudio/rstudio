@@ -17,9 +17,7 @@
 	
 	<div class="{style.container}">
 		
-		<p>
-			The GitHub Copilot agent is not currently installed. Would you like to install it?
-		</p>
+		<p ui:field="alreadyInstalledMessage_"></p>
 		
 		<p>
 			Your use of GitHub Copilot is governed by the GitHub Copilot terms of service.

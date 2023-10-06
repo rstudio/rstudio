@@ -190,7 +190,7 @@ void pubMedRequest(const std::string& resource,
 
    // add standard params
    params.push_back(std::make_pair("tool", "rstudio"));
-   params.push_back(std::make_pair("email", "pubmed@rstudio.com"));
+   params.push_back(std::make_pair("email", "pubmed@posit.co"));
    params.push_back(std::make_pair("retmode", "json"));
 
    // add apikey if specified

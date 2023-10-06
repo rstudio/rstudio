@@ -157,8 +157,8 @@ public class StringUtilTests extends GWTTestCase
 
    public void testGetAuthorityFromUrl()
    {
-      String url = "http://rstudio.com/products";
-      assertEquals("rstudio.com", StringUtil.getAuthorityFromUrl(url));
+      String url = "http://posit.co/products";
+      assertEquals("posit.co", StringUtil.getAuthorityFromUrl(url));
       
       url = "https://google.com";
       assertEquals("google.com", StringUtil.getAuthorityFromUrl(url));

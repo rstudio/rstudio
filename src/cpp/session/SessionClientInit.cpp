@@ -179,6 +179,9 @@ Error makePortTokenCookie(boost::shared_ptr<HttpConnection> ptrConnection,
 void handleClientInit(const boost::function<void()>& initFunction,
                       boost::shared_ptr<HttpConnection> ptrConnection)
 {
+   // notify that we're about to initialize
+   module_context::events().onBeforeClientInit();
+   
    // alias options
    Options& options = session::options();
    
@@ -637,6 +640,23 @@ void handleClientInit(const boost::function<void()>& initFunction,
    
    // copilot
    sessionInfo["copilot_enabled"] = options.copilotEnabled();
+   
+   if (projects::projectContext().hasProject())
+   {
+      projects::RProjectCopilotOptions options;
+      Error error = projects::projectContext().readCopilotOptions(&options);
+      if (error)
+      {
+         LOG_ERROR(error);
+      }
+      else
+      {
+         json::Object copilotOptionsJson;
+         copilotOptionsJson["copilot_enabled"] = options.copilotEnabled;
+         copilotOptionsJson["copilot_indexing_enabled"] = options.copilotIndexingEnabled;
+         sessionInfo["copilot_project_options"] = copilotOptionsJson;
+      }
+   }
 
    module_context::events().onSessionInfo(&sessionInfo);
 

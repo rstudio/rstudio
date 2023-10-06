@@ -132,13 +132,16 @@ define("mode/auto_brace_insert", ["require", "exports", "module"], function(requ
 
       this.allowAutoInsert = function(session, pos, text)
       {
-         return true;
+         return session.renderer.$ghostText == null;
       };
 
       // To enable this, call "this.allowAutoInsert = this.smartAllowAutoInsert"
       // in the mode subclass
       this.smartAllowAutoInsert = function(session, pos, text)
       {
+         if (session.renderer.$ghostText != null)
+            return false;
+
          // Always allow auto-insert for other insertion types
          if (text !== "'" && text !== '"' && text !== '`')
             return true;

@@ -3541,6 +3541,41 @@ public class UserPrefsAccessor extends Prefs
          300);
    }
 
+   /**
+    * Control the behavior of the Tab key when both Copilot code suggestions and RStudio code completions are visible.
+    */
+   public PrefValue<String> copilotTabKeyBehavior()
+   {
+      return enumeration(
+         "copilot_tab_key_behavior",
+         _constants.copilotTabKeyBehaviorTitle(), 
+         _constants.copilotTabKeyBehaviorDescription(), 
+         new String[] {
+            COPILOT_TAB_KEY_BEHAVIOR_SUGGESTION,
+            COPILOT_TAB_KEY_BEHAVIOR_COMPLETIONS
+         },
+         "suggestion",
+         new String[] {
+            _constants.copilotTabKeyBehaviorEnum_suggestion(),
+            _constants.copilotTabKeyBehaviorEnum_completions()
+         });
+   }
+
+   public final static String COPILOT_TAB_KEY_BEHAVIOR_SUGGESTION = "suggestion";
+   public final static String COPILOT_TAB_KEY_BEHAVIOR_COMPLETIONS = "completions";
+
+   /**
+    * When enabled, RStudio will index project files with GitHub Copilot.
+    */
+   public PrefValue<Boolean> copilotIndexingEnabled()
+   {
+      return bool(
+         "copilot_indexing_enabled",
+         _constants.copilotIndexingEnabledTitle(), 
+         _constants.copilotIndexingEnabledDescription(), 
+         false);
+   }
+
    public void syncPrefs(String layer, JsObject source)
    {
       if (source.hasKey("run_rprofile_on_resume"))
@@ -4039,6 +4074,10 @@ public class UserPrefsAccessor extends Prefs
          copilotEnabled().setValue(layer, source.getBool("copilot_enabled"));
       if (source.hasKey("copilot_completions_delay"))
          copilotCompletionsDelay().setValue(layer, source.getInteger("copilot_completions_delay"));
+      if (source.hasKey("copilot_tab_key_behavior"))
+         copilotTabKeyBehavior().setValue(layer, source.getString("copilot_tab_key_behavior"));
+      if (source.hasKey("copilot_indexing_enabled"))
+         copilotIndexingEnabled().setValue(layer, source.getBool("copilot_indexing_enabled"));
    }
    public List<PrefValue<?>> allPrefs()
    {
@@ -4291,6 +4330,8 @@ public class UserPrefsAccessor extends Prefs
       prefs.add(disableRendererAccessibility());
       prefs.add(copilotEnabled());
       prefs.add(copilotCompletionsDelay());
+      prefs.add(copilotTabKeyBehavior());
+      prefs.add(copilotIndexingEnabled());
       return prefs;
    }
    

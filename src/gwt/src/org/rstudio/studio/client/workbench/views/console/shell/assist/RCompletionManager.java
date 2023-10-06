@@ -43,6 +43,7 @@ import org.rstudio.studio.client.workbench.codesearch.model.DataDefinition;
 import org.rstudio.studio.client.workbench.codesearch.model.FileFunctionDefinition;
 import org.rstudio.studio.client.workbench.codesearch.model.ObjectDefinition;
 import org.rstudio.studio.client.workbench.codesearch.model.SearchPathFunctionDefinition;
+import org.rstudio.studio.client.workbench.copilot.Copilot;
 import org.rstudio.studio.client.workbench.prefs.model.UserPrefs;
 import org.rstudio.studio.client.workbench.snippets.SnippetHelper;
 import org.rstudio.studio.client.workbench.views.console.ConsoleConstants;
@@ -61,6 +62,7 @@ import org.rstudio.studio.client.workbench.views.source.editors.text.DocDisplay;
 import org.rstudio.studio.client.workbench.views.source.editors.text.NavigableSourceEditor;
 import org.rstudio.studio.client.workbench.views.source.editors.text.ScopeFunction;
 import org.rstudio.studio.client.workbench.views.source.editors.text.ace.AceEditorCommandEvent;
+import org.rstudio.studio.client.workbench.views.source.editors.text.ace.AceGhostText;
 import org.rstudio.studio.client.workbench.views.source.editors.text.ace.CodeModel;
 import org.rstudio.studio.client.workbench.views.source.editors.text.ace.Position;
 import org.rstudio.studio.client.workbench.views.source.editors.text.ace.RInfixData;
@@ -125,14 +127,10 @@ public class RCompletionManager implements CompletionManager
       requester_ = new CompletionRequester(rnwContext, docDisplay, snippets_);
       handlers_ = new HandlerRegistrations();
       
-      handlers_.add(input_.addBlurHandler(event ->
+      handlers_.add(input_.addClickHandler(event ->
       {
-         if (!ignoreNextInputBlur_)
-            invalidatePendingRequests();
-         ignoreNextInputBlur_ = false;
+         invalidatePendingRequests();
       }));
-
-      handlers_.add(input_.addClickHandler(event -> invalidatePendingRequests()));
 
       handlers_.add(popup_.addSelectionCommitHandler(event ->
       {
@@ -149,8 +147,6 @@ public class RCompletionManager implements CompletionManager
          else
             showHelpDeferred(context_, lastSelectedItem_, 600);
       }));
-      
-      handlers_.add(popup_.addMouseDownHandler(event -> ignoreNextInputBlur_ = true));
       
       handlers_.add(popup_.addSelectionHandler(event -> docDisplay_.setPopupVisible(true)));
       
@@ -202,13 +198,15 @@ public class RCompletionManager implements CompletionManager
                           FileTypeRegistry fileTypeRegistry,
                           EventBus eventBus,
                           HelpStrategy helpStrategy,
-                          UserPrefs uiPrefs)
+                          UserPrefs uiPrefs,
+                          Copilot copilot)
    {
       globalDisplay_ = globalDisplay;
       fileTypeRegistry_ = fileTypeRegistry;
       eventBus_ = eventBus;
       helpStrategy_ = helpStrategy;
       userPrefs_ = uiPrefs;
+      copilot_ = copilot;
    }
    
    public void detach()
@@ -410,20 +408,43 @@ public class RCompletionManager implements CompletionManager
 
       int keycode = event.getKeyCode();
       int modifier = KeyboardShortcut.getModifierValue(event);
+ 
+      // Handle ghost text. Ghost text handlers get higher priority over other
+      // completion handlers.
+      if (docDisplay_.hasGhostText())
+      {
+         // Let tab insert ghost text if configured to do so
+         if (keycode == KeyCodes.KEY_TAB && modifier == KeyboardShortcut.NONE)
+         {
+            invalidatePendingRequests();
+            AceGhostText ghostText = docDisplay_.getGhostText();
+            docDisplay_.replaceRange(
+                  Range.fromPoints(ghostText.position, ghostText.position),
+                  ghostText.text);
+            docDisplay_.removeGhostText();
+            docDisplay_.scrollCursorIntoViewIfNecessary();
+            return true;
+         }
 
+         // Check if the user just inserted some text matching the current
+         // ghost text. If so, we'll suppress the next cursor change handler,
+         // so we can continue presenting the current ghost text.
+         String key = EventProperty.key(event);
+         AceGhostText ghostText = docDisplay_.getGhostText();
+         if (ghostText.text.startsWith(key))
+         {
+            String newGhostText = ghostText.text.substring(1);
+            docDisplay_.insertCode(key);
+            docDisplay_.setGhostText(newGhostText);
+            return true;
+         }
+      }
+      
       if (!popup_.isShowing())
       {
          // don't allow ctrl + space for completions in Emacs mode
          if (docDisplay_.isEmacsModeOn() && event.getKeyCode() == KeyCodes.KEY_SPACE)
             return false;
-         
-         // Don't handle Tab when ghost text is displayed
-         if (keycode == KeyCodes.KEY_TAB &&
-             modifier == 0 &&
-             docDisplay_.hasGhostText())
-         {
-            return false;
-         }
          
          if (CompletionUtils.isCompletionRequest(event, modifier))
          {
@@ -625,7 +646,13 @@ public class RCompletionManager implements CompletionManager
       return false;
    }
    
-   private boolean isValidForRIdentifier(char c) {
+   private boolean isAutoPopupEnabled()
+   {
+      return userPrefs_.codeCompletion().getValue() == UserPrefs.CODE_COMPLETION_ALWAYS;
+   }
+   
+   private boolean isValidForRIdentifier(char c)
+   {
       return (c >= 'a' && c <= 'z') ||
              (c >= 'A' && c <= 'Z') ||
              (c >= '0' && c <= '9') ||
@@ -764,12 +791,7 @@ public class RCompletionManager implements CompletionManager
          
          // Perform an auto-popup if a set number of R identifier characters
          // have been inserted (but only if the user has allowed it in prefs)
-         boolean autoPopupEnabled =
-               userPrefs_.codeCompletion().getValue() == UserPrefs.CODE_COMPLETION_ALWAYS && (
-                     behavior_ == EditorBehavior.AceBehaviorConsole ||
-                     userPrefs_.copilotEnabled().getValue() == false);
-
-         if (!autoPopupEnabled)
+         if (!isAutoPopupEnabled())
             return false;
          
          // Immediately display completions after '$', '::', etc.
@@ -1826,9 +1848,10 @@ public class RCompletionManager implements CompletionManager
          }
          else
          {
+            boolean preferBottom = !copilot_.isEnabled();
             popup_.showCompletionValues(
                   results,
-                  new PopupPositioner(rect, popup_),
+                  new PopupPositioner(rect, popup_, preferBottom),
                   false);
          }
       }
@@ -2209,6 +2232,7 @@ public class RCompletionManager implements CompletionManager
    private EventBus eventBus_;
    private HelpStrategy helpStrategy_;
    private UserPrefs userPrefs_;
+   private Copilot copilot_;
 
    private final CodeToolsServerOperations server_;
    private final InputEditorDisplay input_;
@@ -2217,9 +2241,6 @@ public class RCompletionManager implements CompletionManager
    private final CompletionRequester requester_;
    private final InitCompletionFilter initFilter_;
    
-   // Prevents completion popup from being dismissed when you merely
-   // click on it to scroll.
-   private boolean ignoreNextInputBlur_ = false;
    private String token_;
    
    private final DocDisplay docDisplay_;

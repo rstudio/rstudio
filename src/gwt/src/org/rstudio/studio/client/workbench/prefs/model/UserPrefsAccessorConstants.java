@@ -2063,6 +2063,26 @@ public interface UserPrefsAccessorConstants extends Constants {
    @DefaultStringValue("The delay (in milliseconds) before GitHub Copilot completions are requested after the cursor position has changed.")
    String copilotCompletionsDelayDescription();
 
+   /**
+    * Control the behavior of the Tab key when both Copilot code suggestions and RStudio code completions are visible.
+    */
+   @DefaultStringValue("Pressing Tab key will prefer inserting:")
+   String copilotTabKeyBehaviorTitle();
+   @DefaultStringValue("Control the behavior of the Tab key when both Copilot code suggestions and RStudio code completions are visible.")
+   String copilotTabKeyBehaviorDescription();
+   @DefaultStringValue("Copilot Suggestion")
+   String copilotTabKeyBehaviorEnum_suggestion();
+   @DefaultStringValue("Code Completion")
+   String copilotTabKeyBehaviorEnum_completions();
+
+   /**
+    * When enabled, RStudio will index project files with GitHub Copilot.
+    */
+   @DefaultStringValue("Index project files with GitHub Copilot")
+   String copilotIndexingEnabledTitle();
+   @DefaultStringValue("When enabled, RStudio will index project files with GitHub Copilot.")
+   String copilotIndexingEnabledDescription();
+
 
 
 }

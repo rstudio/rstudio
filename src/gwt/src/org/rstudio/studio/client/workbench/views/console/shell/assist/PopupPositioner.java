@@ -14,21 +14,42 @@
  */
 package org.rstudio.studio.client.workbench.views.console.shell.assist;
 
+import org.rstudio.core.client.Rectangle;
+
 import com.google.gwt.user.client.Window;
 import com.google.gwt.user.client.ui.PopupPanel;
 import com.google.gwt.user.client.ui.PopupPanel.PositionCallback;
 
-import org.rstudio.core.client.Rectangle;
-
 public class PopupPositioner implements PositionCallback
 {
-   private Rectangle cursorBounds_;
-   private CompletionPopupDisplay popup_;
-   
-   public PopupPositioner(Rectangle cursorBounds, CompletionPopupDisplay popup)
+   public static class Coordinates
    {
-      this.cursorBounds_ = cursorBounds;
+      public Coordinates(int left, int top)
+      {
+         left_ = left;
+         top_ = top;
+      }
+      
+      public int getLeft() { return left_; }
+      public int getTop() { return top_; }
+      
+      private final int left_;
+      private final int top_;
+   }
+   
+   public PopupPositioner(Rectangle cursorBounds,
+                          CompletionPopupDisplay popup,
+                          boolean preferBottom)
+   {
+      cursorBounds_ = cursorBounds;
       popup_ = popup;
+      preferBottom_ = preferBottom;
+   }
+   
+   public PopupPositioner(Rectangle cursorBounds,
+                          CompletionPopupDisplay popup)
+   {
+      this(cursorBounds, popup, true);
    }
 
    public void setPosition(int popupWidth, int popupHeight)
@@ -45,24 +66,9 @@ public class PopupPositioner implements PositionCallback
             cursorBounds_.getLeft(),
             cursorBounds_.getBottom(),
             5,
-            true);
+            preferBottom_);
       
       popup_.setPopupPosition(coords.getLeft(), coords.getTop());
-   }
-   
-   public static class Coordinates
-   {
-      public Coordinates(int left, int top)
-      {
-         left_ = left;
-         top_ = top;
-      }
-      
-      public int getLeft() { return left_; }
-      public int getTop() { return top_; }
-      
-      private final int left_;
-      private final int top_;
    }
    
    public static Coordinates getPopupPosition(int width,
@@ -96,13 +102,13 @@ public class PopupPositioner implements PositionCallback
          boolean showOnBottom = pageY + height + fudgeFactor < windowBottom;
          pageY = showOnBottom
                ? pageY + fudgeFactor
-               : pageY - height - fudgeFactor - 10;
+               : pageY - height - fudgeFactor - 20;
       }
       else
       {
          boolean showOnTop = pageY - height - fudgeFactor > 0;
          pageY = showOnTop
-               ? pageY - height - fudgeFactor - 10
+               ? pageY - height - fudgeFactor - 20
                : pageY + fudgeFactor;
       }
       
@@ -143,4 +149,14 @@ public class PopupPositioner implements PositionCallback
             transformed.getLeft(),
             transformed.getTop());
    }
+   
+   public boolean getPreferBottom()
+   {
+      return preferBottom_;
+   }
+   
+   private final Rectangle cursorBounds_;
+   private final CompletionPopupDisplay popup_;
+   private final boolean preferBottom_;
+   
 }

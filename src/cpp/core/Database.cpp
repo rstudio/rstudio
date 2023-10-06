@@ -27,8 +27,12 @@
 #include <shared_core/system/Crypto.hpp>
 
 #include <soci/row-exchange.h>
-#include <soci/postgresql/soci-postgresql.h>
 #include <soci/sqlite3/soci-sqlite3.h>
+
+#ifdef RSTUDIO_HAS_SOCI_POSTGRESQL
+# include <soci/postgresql/soci-postgresql.h>
+#endif
+
 
 #include "config.h"
 
@@ -156,6 +160,8 @@ public:
       pConnectionStr_(pConnectionStr),
       pPassword_(pPassword)
    {
+      // suppress unused value warning
+      (void) pPassword_;
    }
 
    Error operator()(const SqliteConnectionOptions& options) const
@@ -197,6 +203,7 @@ public:
 
    Error operator()(const PostgresqlConnectionOptions& options) const
    {
+#ifdef RSTUDIO_HAS_SOCI_POSTGRESQL
       try
       {
          std::string connectionStr;
@@ -249,12 +256,16 @@ public:
       {
          return DatabaseError(error);
       }
+#else
+      return Error(boost::system::errc::operation_not_supported, ERROR_LOCATION);
+#endif
    }
 
    Error parseConnectionUri(const std::string& uri,
                             std::string& password,
                             std::string* pConnectionStr) const
    {
+#ifdef RSTUDIO_HAS_SOCI_POSTGRESQL
       boost::regex re("(postgres|postgresql)://([^/#?]+)(.*)", boost::regex::icase);
       boost::cmatch matches;
 
@@ -403,10 +414,14 @@ public:
       }
 
       return Success();
+#else
+      return Error(boost::system::errc::operation_not_supported, ERROR_LOCATION);
+#endif
    }
 
    Error getPassword(const PostgresqlConnectionOptions& options, std::string& password) const
    {
+#ifdef RSTUDIO_HAS_SOCI_POSTGRESQL
       // override password from the input with the one from options if any
       if (!options.password.empty())
          password = options.password;
@@ -442,6 +457,9 @@ public:
          }
       }
       return Success();
+#else
+      return Error(boost::system::errc::operation_not_supported, ERROR_LOCATION);
+#endif
    }
 
    std::string pgEncode(const std::string& str,

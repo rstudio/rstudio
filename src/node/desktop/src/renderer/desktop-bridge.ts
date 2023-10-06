@@ -690,6 +690,10 @@ export function getDesktopBridge() {
         .catch((error) => reportIpcError('getStartupErrorInfo', error));
     },
 
+    detectRosetta: () => {
+      ipcRenderer.send('desktop_detect_rosetta');
+    },
+
     // pro-only start
 
     // pro-only end

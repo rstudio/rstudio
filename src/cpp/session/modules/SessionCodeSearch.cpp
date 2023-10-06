@@ -122,7 +122,7 @@ bool isWithinIgnoredDirectory(const FilePath& filePath, const std::vector<FilePa
          return true;
 
       // cmake build directory
-      if (parentPath.completeChildPath("cmake_install.cmake").exists())
+      if (parentPath.completeChildPath("CMakeCache.txt").exists())
          return true;
 
       // revdep sub-directories

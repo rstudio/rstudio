@@ -58,6 +58,7 @@ set(CORE_SOURCE_FILES
    Trace.cpp
    WaitUtils.cpp
    YamlUtil.cpp
+   ZlibUtil.cpp
    file_lock/FileLock.cpp
    file_lock/AdvisoryFileLock.cpp
    file_lock/LinkBasedFileLock.cpp
@@ -132,7 +133,6 @@ set(CORE_SOURCE_FILES
    text/TextCursor.cpp
    text/TemplateFilter.cpp
    text/TermBufferParser.cpp
-   zlib/zlib.cpp
 )
 
 if (RSTUDIO_HAS_SOCI)

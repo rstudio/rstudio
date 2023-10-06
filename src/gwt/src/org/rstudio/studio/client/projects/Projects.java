@@ -1035,7 +1035,7 @@ public class Projects implements OpenProjectFileEvent.Handler,
                   ProgressOperationWithInput<OpenProjectParams> onCompleted)
    {
       opener_.showOpenProjectDialog(fsContext_, projServer_,
-            "~",
+            pUserPrefs_.get().defaultProjectLocation().getValue(),
             defaultType, allowOpenInNewWindow, onCompleted);
    }
 

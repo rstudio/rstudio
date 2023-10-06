@@ -342,6 +342,7 @@ struct firstNonEmpty
 // session events
 struct Events : boost::noncopyable
 {
+   RSTUDIO_BOOST_SIGNAL<void()>                                       onBeforeClientInit;
    RSTUDIO_BOOST_SIGNAL<void(core::json::Object*)>                    onSessionInfo;
    RSTUDIO_BOOST_SIGNAL<void()>                                       onClientInit;
    RSTUDIO_BOOST_SIGNAL<void()>                                       onInitComplete;
@@ -360,6 +361,8 @@ struct Events : boost::noncopyable
    RSTUDIO_BOOST_SIGNAL<void(const std::string&)>                     onPackageLoaded;
    RSTUDIO_BOOST_SIGNAL<void()>                                       onPackageLibraryMutated;
    RSTUDIO_BOOST_SIGNAL<void()>                                       onPreferencesSaved;
+   RSTUDIO_BOOST_SIGNAL<void()>                                       onProjectConfigUpdated;
+   RSTUDIO_BOOST_SIGNAL<void()>                                       onProjectOptionsUpdated;
    RSTUDIO_BOOST_SIGNAL<void(const core::DistributedEvent&)>          onDistributedEvent;
    RSTUDIO_BOOST_SIGNAL<void(core::FilePath)>                         onPermissionsChanged;
    RSTUDIO_BOOST_SIGNAL<void(bool)>                                   onShutdown;

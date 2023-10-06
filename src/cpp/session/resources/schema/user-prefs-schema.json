@@ -1685,6 +1685,20 @@
             "default": 300,
             "title": "GitHub Copilot completions delay",
             "description": "The delay (in milliseconds) before GitHub Copilot completions are requested after the cursor position has changed."
+        },
+        "copilot_tab_key_behavior": {
+            "type": "string",
+            "enum": ["suggestion", "completions"],
+            "enumReadable": ["Copilot Suggestion", "Code Completion"],
+            "default": "suggestion",
+            "title": "Pressing Tab key will prefer inserting:",
+            "description": "Control the behavior of the Tab key when both Copilot code suggestions and RStudio code completions are visible."
+        },
+        "copilot_indexing_enabled": {
+            "type": "boolean",
+            "default": false,
+            "title": "Index project files with GitHub Copilot",
+            "description": "When enabled, RStudio will index project files with GitHub Copilot."
         }
      }
 }

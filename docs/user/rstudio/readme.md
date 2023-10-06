@@ -1,7 +1,7 @@
 # RStudio User Guide
 
 -   Source code: <https://github.com/rstudio/rstudio/tree/main/docs/user/rstudio>
--   Public URL: <https://docs.rstudio.com/ide/user/>
+-   Public URL: <https://docs.posit.co/ide/user/>
 
 > If you’re interested in getting involved with open source, contributing to documentation is a good—and helpful—place to start. - [James Turnbill](https://increment.com/documentation/documentation-as-a-gateway-to-open-source/)
 

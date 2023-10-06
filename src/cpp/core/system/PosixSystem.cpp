@@ -1633,7 +1633,8 @@ core::Error pidof(const std::string& process, std::vector<PidType>* pPids)
 Error processInfo(const std::string& process,
                   std::vector<ProcessInfo>* pInfo,
                   bool suppressErrors,
-                  ProcessFilter filter)
+                  ProcessFilter filter,
+                  bool populateUsername)
 {
    // clear the existing process info
    pInfo->clear();
@@ -1657,7 +1658,7 @@ Error processInfo(const std::string& process,
             continue;
 
          ProcessInfo info;
-         Error error = processInfo(safe_convert::stringTo<pid_t>(pDirent->d_name, -1), &info);
+         Error error = processInfo(safe_convert::stringTo<pid_t>(pDirent->d_name, -1), &info, populateUsername);
          if (error)
          {
             // only log the error if we were not told otherwise
@@ -1689,7 +1690,7 @@ Error processInfo(const std::string& process,
    return Success();
 }
 
-Error processInfo(pid_t pid, ProcessInfo* pInfo)
+Error processInfo(pid_t pid, ProcessInfo* pInfo, bool populateUsername)
 {
    std::string pidStr = safe_convert::numberToString(pid);
 
@@ -1735,11 +1736,15 @@ Error processInfo(pid_t pid, ProcessInfo* pInfo)
       return error;
    }
 
-   // get the username
    core::system::User user;
-   error = getUserFromUserId(st.st_uid, user);
-   if (error)
-      return error;
+
+   // get the username
+   if (populateUsername)
+   {
+      error = getUserFromUserId(st.st_uid, user);
+      if (error)
+         return error;
+   }
 
    // read the stat fields for other relevant process info
    std::string statStr;
@@ -1775,7 +1780,10 @@ Error processInfo(pid_t pid, ProcessInfo* pInfo)
    pInfo->pid = pid;
    pInfo->ppid = ppid;
    pInfo->pgrp = pgrp;
-   pInfo->username = user.getUsername();
+   if (populateUsername)
+      pInfo->username = user.getUsername();
+   pInfo->uid_ = st.st_uid;
+   pInfo->uidSet_ = true;
    pInfo->exe = FilePath(cmdline).getFilename();
    pInfo->state = state;
    pInfo->arguments = commandVector;
@@ -1897,7 +1905,7 @@ core::Error pidof(const std::string& process, std::vector<PidType>* pPids)
    return Success();
 }
 
-Error processInfo(const std::string& process, std::vector<ProcessInfo>* pInfo, bool suppressErrors, ProcessFilter filter)
+Error processInfo(const std::string& process, std::vector<ProcessInfo>* pInfo, bool suppressErrors, ProcessFilter filter, bool populateUsername)
 {
    // use ps to capture process info
    // output format
@@ -1931,12 +1939,14 @@ Error processInfo(const std::string& process, std::vector<ProcessInfo>* pInfo, b
 
       if (lineInfo.size() < 10)
       {
-         LOG_WARNING_MESSAGE("Exepcted 10 items from ps output but received: " + safe_convert::numberToString<size_t>(lineInfo.size()));
+         LOG_WARNING_MESSAGE("Expected 10 items from ps output but received: " + safe_convert::numberToString<size_t>(lineInfo.size()));
          continue;
       }
 
       ProcessInfo procInfo;
       procInfo.username = lineInfo[0];
+      //procInfo.uid_ = only used to get the username and not available here
+      procInfo.uidSet_ = false;
       procInfo.pid = safe_convert::stringTo<pid_t>(lineInfo[1], 0);
       procInfo.ppid = safe_convert::stringTo<pid_t>(lineInfo[2], 0);
       procInfo.pgrp = safe_convert::stringTo<pid_t>(lineInfo[3], 0);
@@ -1963,9 +1973,32 @@ Error ProcessInfo::creationTime(boost::posix_time::ptime* pCreationTime) const
 }
 #endif
 
-std::ostream& operator<<(std::ostream& os, const ProcessInfo& info)
+std::string ProcessInfo::getUsername() const
 {
-   os << info.pid << " - " << info.username;
+   if (username.empty())
+   {
+      if (uidSet_)
+      {
+         // get the username
+         core::system::User user;
+         Error error = getUserFromUserId(uid_, user);
+         if (error)
+         {
+            LOG_DEBUG_MESSAGE("Error resolving process owner: " + std::to_string(uid_) + " error: " + error.asString());
+            return "__user_" + std::to_string(uid_);
+         }
+         else
+            return user.getUsername();
+      }
+      else
+         LOG_ERROR_MESSAGE("No uid or username for ProcessInfo");
+   }
+   return username;
+}
+
+std::ostream& operator<<(std::ostream& os, ProcessInfo& info)
+{
+   os << info.pid << " - " << info.getUsername();
    return os;
 }
 
@@ -2350,20 +2383,21 @@ Error runProcess(const std::string& path,
    return error;
 }
 
-Error getChildProcesses(std::vector<ProcessInfo> *pOutProcesses)
+Error getChildProcesses(std::vector<ProcessInfo> *pOutProcesses, bool populateUsername)
 {
-   return getChildProcesses(::getpid(), pOutProcesses);
+   return getChildProcesses(::getpid(), pOutProcesses, populateUsername);
 }
 
 Error getChildProcesses(pid_t pid,
-                        std::vector<ProcessInfo> *pOutProcesses)
+                        std::vector<ProcessInfo> *pOutProcesses,
+                        bool populateUsername)
 {
    if (!pOutProcesses)
       return systemError(EINVAL, ERROR_LOCATION);
 
    // get all processes
    std::vector<ProcessInfo> processes;
-   Error error = processInfo("", &processes, true);
+   Error error = processInfo("", &processes, true, ProcessFilter(), populateUsername);
    if (error)
       return error;
 
@@ -2396,7 +2430,7 @@ Error terminateChildProcesses(pid_t pid,
                               int signal)
 {
    std::vector<ProcessInfo> childProcesses;
-   Error error = getChildProcesses(pid, &childProcesses);
+   Error error = getChildProcesses(pid, &childProcesses, false);
    if (error)
       return error;
 

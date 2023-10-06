@@ -36,9 +36,9 @@ This guide is intended for RStudio IDE users (e.g., data scientists).
 :::{.callout-note}
 This guide is intended for RStudio IDE users.
 
-Posit Workbench users (e.g., data scientists) can reference the [Posit Workbench User Guide](https://docs.rstudio.com/ide/server-pro/user/).
+Posit Workbench users (e.g., data scientists) can reference the [Posit Workbench User Guide](https://docs.posit.co/ide/server-pro/user/).
 
-Posit Workbench administrators can reference the [Posit Workbench Administrator Guide](https://docs.rstudio.com/ide/server-pro/).
+Posit Workbench administrators can reference the [Posit Workbench Administrator Guide](https://docs.posit.co/ide/server-pro/).
 
 :::
 
@@ -66,7 +66,7 @@ Posit Workbench has several features that differentiate it from the open-source 
 
 ### Commercial
 
-- [Posit Workbench](https://docs.rstudio.com/rsw/installation/) - administration guide for installation and configuration
+- [Posit Workbench](https://docs.posit.co/rsw/installation/) - administration guide for installation and configuration
 - [RStudio Desktop Pro](https://posit.co/download/rstudio-desktop-pro/) - available for Windows/Mac/Linux
 
 ::: {.callout-caution }

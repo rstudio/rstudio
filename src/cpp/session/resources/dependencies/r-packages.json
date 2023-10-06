@@ -395,7 +395,6 @@
                 "jsonlite",
                 "knitr",
                 "magrittr",
-                "markdown",
                 "mime",
                 "rmarkdown",
                 "stringi",

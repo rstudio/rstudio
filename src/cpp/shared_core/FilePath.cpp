@@ -805,10 +805,11 @@ Error FilePath::copy(const FilePath& in_targetPath, bool overwrite) const
 {
    try
    {
-      boost::filesystem::copy_option::enum_type option = overwrite
-         ? boost::filesystem::copy_option::overwrite_if_exists
-         : boost::filesystem::copy_option::fail_if_exists;
-      boost::filesystem::copy_file(m_impl->Path, in_targetPath.m_impl->Path, option);
+      using boost::filesystem::copy_options;
+      boost::filesystem::copy_file(
+               m_impl->Path,
+               in_targetPath.m_impl->Path,
+               overwrite ? copy_options::overwrite_existing : copy_options::none);
       return Success();
    }
    catch(const boost::filesystem::filesystem_error& e)

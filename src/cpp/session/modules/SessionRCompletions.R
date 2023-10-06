@@ -998,7 +998,7 @@ assign(x = ".rs.acCompletionTypes",
                                                          results = setdiff(.names, .drop),
                                                          quote = FALSE,
                                                          type = .rs.acCompletionTypes$COLUMN, 
-                                                         package = as.character(matchedCall[[".data"]]))
+                                                         packages = as.character(matchedCall[[".data"]]))
                return(groupByCompletions)
             }
          }
@@ -1526,16 +1526,30 @@ assign(x = ".rs.acCompletionTypes",
    
    if (isAt)
    {
-      if (isS4(object))
+      if (exists(".AtNames"))
       {
-         tryCatch({
+         .rs.tryCatch({
+            code <- substitute(
+               utils::.AtNames(object, pattern = ""),
+               list(object = object)
+            )
+            allNames <- eval(code, envir = globalenv())
+            names <- .rs.selectFuzzyMatches(allNames, token)
+            type <- attr(names, "types")
+         })
+      }
+      else if (isS4(object))
+      {
+         .rs.tryCatch({
             allNames <- .slotNames(object)
             names <- .rs.selectFuzzyMatches(allNames, token)
             
             # NOTE: Getting the types forces evaluation; we avoid that if
             # there are too many names to evaluate.
             if (length(names) > 2E2)
+            {
                type <- .rs.acCompletionTypes$UNKNOWN
+            }
             else
             {
                type <- numeric(length(names))
@@ -1547,7 +1561,7 @@ assign(x = ".rs.acCompletionTypes",
                   ))
                }
             }
-         }, error = function(e) NULL)
+         })
       }
    }
    else
@@ -3041,13 +3055,27 @@ assign(x = ".rs.acCompletionTypes",
    
 })
 
+.rs.addFunction("readDevAliases", function(path)
+{
+   meta <- pkgload::dev_meta(basename(path))
+   if (!is.null(meta))
+      return(pkgload:::dev_topic_index(path))
+})
+
 .rs.addFunction("readAliases", function(path)
 {
    if (!length(path))
       return(character())
    
-   if (file.exists(f <- file.path(path, "help", "aliases.rds")))
-      names(readRDS(f))
+   # Check for packages loaded via devtools::load_all()
+   devIndex <- .rs.tryCatch(.rs.readDevAliases(path))
+   if (is.character(devIndex))
+      return(names(devIndex))
+   
+   # Otherwise, read aliases directly
+   aliasesPath <- file.path(path, "help/aliases.rds")
+   if (file.exists(aliasesPath))
+      names(readRDS(aliasesPath))
    else
       character()
 })

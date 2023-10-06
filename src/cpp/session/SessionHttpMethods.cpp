@@ -302,7 +302,7 @@ void polledEventHandler()
             return;
          }
 
-         if ( isMethod(ptrConnection, kClientInit) )
+         if (isMethod(ptrConnection, kClientInit))
          {
             if (ptrConnection->isAsyncRpc())
             {
@@ -462,6 +462,8 @@ bool waitForMethod(const std::string& method,
    boost::posix_time::time_duration connectionQueueTimeout =
                                    boost::posix_time::milliseconds(50);
 
+   int checkForIdleCount = 0;
+
    // If this method (and the provided allowSuspend() function) blocks auto suspension,
    // make sure to record it
    suspend::addBlockingOp(method, allowSuspend);
@@ -469,8 +471,8 @@ bool waitForMethod(const std::string& method,
    // wait until we get the method we are looking for
    while (true)
    {
-      // suspend if necessary (does not return if a suspend occurs)
-      suspend::checkForSuspend(allowSuspend);
+      // before waiting, suspend if necessary due to forced or requests suspend (does not return if a suspend occurs)
+      suspend::checkForRequestedSuspend(allowSuspend);
 
       // look for a connection (waiting for the specified interval)
       boost::shared_ptr<HttpConnection> ptrConnection =
@@ -555,6 +557,17 @@ bool waitForMethod(const std::string& method,
             rstudio::r::session::event_loop::initializePolledEventHandler(
                                                      polledEventHandler);
       }
+      else
+      {
+         // avoid calling allowSuspend too often as it iterates through the environment in R
+         // looking to be sure all objects are suspendable
+         if ((++checkForIdleCount % 20) == 0)
+         {
+            // timed-out waiting for (usually) console input 20 times (1s)
+            suspend::checkForIdleSuspend(allowSuspend);
+         }
+      }
+
    }
 
    suspend::removeBlockingOp(suspend::kGenericMethod + method);
@@ -827,8 +840,8 @@ void handleConnection(boost::shared_ptr<HttpConnection> ptrConnection,
    else if (s_defaultUriHandler)
    {
       core::http::Response response;
-       s_defaultUriHandler(request, &response);
-       ptrConnection->sendResponse(response);
+      s_defaultUriHandler(request, &response);
+      ptrConnection->sendResponse(response);
    }
    else
    {

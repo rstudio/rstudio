@@ -13,7 +13,7 @@
 *
 */
 
-#include <core/zlib/zlib.hpp>
+#include <core/ZlibUtil.hpp>
 
 #include <tests/TestThat.hpp>
 

@@ -83,6 +83,7 @@ import org.rstudio.studio.client.workbench.views.source.editors.text.ace.AceEdit
 import org.rstudio.studio.client.workbench.views.source.editors.text.ace.AceEditorCommandEvent;
 import org.rstudio.studio.client.workbench.views.source.editors.text.ace.AceEditorNative;
 import org.rstudio.studio.client.workbench.views.source.editors.text.ace.AceFold;
+import org.rstudio.studio.client.workbench.views.source.editors.text.ace.AceGhostText;
 import org.rstudio.studio.client.workbench.views.source.editors.text.ace.AceInputEditorPosition;
 import org.rstudio.studio.client.workbench.views.source.editors.text.ace.AceKeyboardActivityEvent;
 import org.rstudio.studio.client.workbench.views.source.editors.text.ace.AceResources;
@@ -424,6 +425,7 @@ public class AceEditor implements DocDisplay,
       {
          fixVerticalOffsetBug();
          clearLineHighlight();
+         clearGhostText();
          lastCursorChangedTime_ = System.currentTimeMillis();
       });
 
@@ -432,6 +434,7 @@ public class AceEditor implements DocDisplay,
       {
          lastModifiedTime_ = System.currentTimeMillis();
          clearDebugLineHighlight();
+         clearGhostText();
       });
 
       widget_.addAttachHandler(event ->
@@ -3645,6 +3648,14 @@ public class AceEditor implements DocDisplay,
          lineHighlightMarkerId_ = null;
       }
    }
+   
+   private void clearGhostText()
+   {
+      if (widget_.getEditor().hasGhostText())
+      {
+         widget_.getEditor().removeGhostText();
+      }
+   }
 
    private void applyDebugLineHighlight(
          Position startPos,
@@ -4587,9 +4598,19 @@ public class AceEditor implements DocDisplay,
       s_lastFocusedEditor = null;
    }
    
+   public AceGhostText getGhostText()
+   {
+      return widget_.getEditor().getGhostText();
+   }
+   
    public void setGhostText(String text)
    {
       widget_.getEditor().setGhostText(text);
+   }
+   
+   public void applyGhostText()
+   {
+      widget_.getEditor().applyGhostText();
    }
    
    public boolean hasGhostText()

@@ -14,12 +14,6 @@
  */
 package org.rstudio.studio.client.workbench.prefs.model;
 
-import com.google.gwt.core.client.JsArray;
-import com.google.gwt.core.client.Scheduler;
-import com.google.inject.Inject;
-import com.google.inject.Singleton;
-import com.google.gwt.core.client.GWT;
-
 import org.rstudio.core.client.CommandWithArg;
 import org.rstudio.core.client.Debug;
 import org.rstudio.core.client.StringUtil;
@@ -35,6 +29,7 @@ import org.rstudio.studio.client.application.events.AriaLiveStatusEvent.Timing;
 import org.rstudio.studio.client.application.events.DeferredInitCompletedEvent;
 import org.rstudio.studio.client.application.events.EventBus;
 import org.rstudio.studio.client.application.events.ReloadEvent;
+import org.rstudio.studio.client.common.GlobalDisplay;
 import org.rstudio.studio.client.common.Timers;
 import org.rstudio.studio.client.common.satellite.Satellite;
 import org.rstudio.studio.client.common.satellite.SatelliteManager;
@@ -43,14 +38,21 @@ import org.rstudio.studio.client.server.ServerRequestCallback;
 import org.rstudio.studio.client.server.Void;
 import org.rstudio.studio.client.server.VoidServerRequestCallback;
 import org.rstudio.studio.client.workbench.commands.Commands;
+import org.rstudio.studio.client.workbench.events.SessionInitEvent;
 import org.rstudio.studio.client.workbench.model.Session;
-import org.rstudio.studio.client.workbench.prefs.events.UserPrefsChangedEvent;
-import org.rstudio.studio.client.common.GlobalDisplay;
 import org.rstudio.studio.client.workbench.prefs.PrefsConstants;
+import org.rstudio.studio.client.workbench.prefs.events.UserPrefsChangedEvent;
+
+import com.google.gwt.core.client.GWT;
+import com.google.gwt.core.client.JsArray;
+import com.google.inject.Inject;
+import com.google.inject.Singleton;
 
 @Singleton
 public class UserPrefs extends UserPrefsComputed
-   implements UserPrefsChangedEvent.Handler, DeferredInitCompletedEvent.Handler
+   implements UserPrefsChangedEvent.Handler,
+              SessionInitEvent.Handler,
+              DeferredInitCompletedEvent.Handler
 {
    public interface Binder
            extends CommandBinder<Commands, UserPrefs> {}
@@ -83,14 +85,9 @@ public class UserPrefs extends UserPrefsComputed
 
       binder.bind(commands_, this);
 
+      eventBus.addHandler(SessionInitEvent.TYPE, this);
       eventBus.addHandler(UserPrefsChangedEvent.TYPE, this);
       eventBus.addHandler(DeferredInitCompletedEvent.TYPE, this);
-      Scheduler.get().scheduleDeferred(() ->
-      {
-         origScreenReaderLabel_ = commands_.toggleScreenReaderSupport().getMenuLabel(false);
-         announceScreenReaderState();
-         syncToggleTabKeyMovesFocusState();
-      });
    }
 
    public void writeUserPrefs()
@@ -216,6 +213,16 @@ public class UserPrefs extends UserPrefsComputed
          constants_.onClearUserPrefsYesLabel(),
          constants_.cancel(),
          false);
+   }
+   
+   @Override
+   public void onSessionInit(SessionInitEvent event)
+   {
+      updatePrefs(session_.getSessionInfo().getPrefs());
+
+      origScreenReaderLabel_ = commands_.toggleScreenReaderSupport().getMenuLabel(false);
+      announceScreenReaderState();
+      syncToggleTabKeyMovesFocusState();
    }
 
    @Override

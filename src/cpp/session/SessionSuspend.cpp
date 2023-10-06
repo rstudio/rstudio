@@ -356,7 +356,7 @@ bool suspendSession(bool force, int status)
    return r::session::suspend(force, status, session::options().ephemeralEnvVars());
 }
 
-void checkForTimeout(const boost::function<bool()>& allowSuspend)
+void checkForIdleSuspend(const boost::function<bool()>& allowSuspend)
 {
    bool canSuspend = allowSuspend();
 
@@ -433,7 +433,7 @@ void checkForTimeout(const boost::function<bool()>& allowSuspend)
    }
 }
 
-void checkForSuspend(const boost::function<bool()>& allowSuspend)
+void checkForRequestedSuspend(const boost::function<bool()>& allowSuspend)
 {
    // never suspend in desktop mode
    if (options().programMode() == kSessionProgramModeDesktop)
@@ -486,9 +486,6 @@ void checkForSuspend(const boost::function<bool()>& allowSuspend)
       // errors will be logged/reported internally and we will move on
       suspendSession(false);
    }
-
-   // timeout suspend
-   checkForTimeout(allowSuspend);
 }
 
 std::string mostSignificantTimeAgo(const boost::posix_time::ptime& before, const boost::posix_time::ptime& after = boost::posix_time::second_clock::universal_time())

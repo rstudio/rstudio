@@ -1004,7 +1004,7 @@ Error readProjectFile(const FilePath& projectFilePath,
    {
       pConfig->spellingDictionary = it->second;
    }
-
+   
    return Success();
 }
 
@@ -1064,8 +1064,6 @@ Error writeProjectFile(const FilePath& projectFilePath,
 
       if (config.autoAppendNewline)
       {
-
-
          contents.append("AutoAppendNewline: Yes\n");
       }
 
@@ -1294,7 +1292,6 @@ Error writeProjectFile(const FilePath& projectFilePath,
       boost::format fmt("\nSpellingDictionary: %1%\n");
       contents.append(boost::str(fmt % config.spellingDictionary));
    }
-
 
    // write it
    return writeStringToFile(projectFilePath,
