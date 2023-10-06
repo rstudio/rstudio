@@ -28,6 +28,7 @@
 - Fixed an issue preventing publishing standalone Quarto content from within larger Quarto projects. (#13637)
 - Fixed an issue that prevented RStudio from opening PDF vignettes from the Help pane. (#13041)
 - Inline chunk execution now respects YAML style plot options styled with hyphens. (#11708)
+- Fixed a bug where project options updated in the Project Options pane were not properly persisted in RStudio 2023.09.0. (#13757)
 
 #### Posit Workbench
 - Fixed opening job details in new windows more than once for Workbench jobs on the homepage (rstudio/rstudio-pro#5179)
