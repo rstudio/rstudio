@@ -33,21 +33,22 @@ import org.rstudio.core.client.widget.Operation;
 import org.rstudio.core.client.widget.ToolbarButton;
 import org.rstudio.core.client.widget.ToolbarLabel;
 import org.rstudio.studio.client.RStudioGinjector;
-import org.rstudio.studio.client.application.StudioClientApplicationConstants;
 import org.rstudio.studio.client.application.ApplicationQuit;
 import org.rstudio.studio.client.application.ApplicationQuit.QuitContext;
 import org.rstudio.studio.client.application.Desktop;
 import org.rstudio.studio.client.application.DesktopHooks;
 import org.rstudio.studio.client.application.DesktopInfo;
 import org.rstudio.studio.client.application.IgnoredUpdates;
+import org.rstudio.studio.client.application.StudioClientApplicationConstants;
+import org.rstudio.studio.client.application.events.DesktopMouseNavigateEvent;
 import org.rstudio.studio.client.application.events.EventBus;
 import org.rstudio.studio.client.application.events.LogoutRequestedEvent;
-import org.rstudio.studio.client.application.events.DesktopMouseNavigateEvent;
 import org.rstudio.studio.client.application.model.ApplicationServerOperations;
 import org.rstudio.studio.client.application.model.UpdateCheckResult;
 import org.rstudio.studio.client.application.ui.ApplicationHeader;
 import org.rstudio.studio.client.application.ui.GlobalToolbar;
 import org.rstudio.studio.client.common.GlobalDisplay;
+import org.rstudio.studio.client.common.Timers;
 import org.rstudio.studio.client.common.debugging.ErrorManager;
 import org.rstudio.studio.client.events.EditEvent;
 import org.rstudio.studio.client.server.ServerError;
@@ -73,11 +74,11 @@ import com.google.gwt.core.client.Scheduler;
 import com.google.gwt.core.client.Scheduler.ScheduledCommand;
 import com.google.gwt.dom.client.Element;
 import com.google.gwt.dom.client.NativeEvent;
+import com.google.gwt.resources.client.ClientBundle;
+import com.google.gwt.resources.client.ImageResource;
 import com.google.gwt.user.client.Timer;
 import com.google.gwt.user.client.Window;
 import com.google.gwt.user.client.ui.Widget;
-import com.google.gwt.resources.client.ClientBundle;
-import com.google.gwt.resources.client.ImageResource;
 import com.google.inject.Inject;
 import com.google.inject.Provider;
 
@@ -179,8 +180,14 @@ public class DesktopApplicationHeader implements ApplicationHeader,
          });
       });
 
-      if (BrowseCap.isMacintoshDesktop() && BrowseCap.isElectron()) {
+      if (BrowseCap.isMacintoshDesktop() && BrowseCap.isElectron())
+      {
          Desktop.getFrame().detectRosetta();
+      }
+      
+      if (BrowseCap.isMacintoshDesktop() && BrowseCap.isElectron())
+      {
+         addPasteboardFixupHandlers();
       }
 
       events.addHandler(ShowFolderEvent.TYPE, new ShowFolderEvent.Handler()
@@ -701,6 +708,33 @@ public class DesktopApplicationHeader implements ApplicationHeader,
    {
       eventBus_.fireEvent(new DesktopMouseNavigateEvent(false, event.getClientX(), event.getClientY()));
    }
+   
+   private void updatePasteboard(int delayMs)
+   {
+      Timers.singleShot(300, () ->
+      {
+         Desktop.getFrame().writeClipboardImage();
+      });
+   }
+   
+   private final native void addPasteboardFixupHandlers()
+   /*-{
+   
+      var self = this;
+      var handler = $entry(function(event) {
+         self.@org.rstudio.studio.client.application.ui.impl.DesktopApplicationHeader::updatePasteboard(*)();
+      });
+      
+      // update pasteboard when we detect a 'copy' from within RStudio
+      // TODO: But this doesn't work if the copy happened within an iframe...
+      $wnd.addEventListener("cut", handler);
+      $wnd.addEventListener("copy", handler);
+      
+      // update pasteboard when we get focus, in case the user has
+      // copied an image while a separate application had focus
+      $wnd.addEventListener("focus", handler);
+   
+   }-*/;
    
    private final native void addBackForwardMouseDownHandlers()
    /*-{

@@ -111,6 +111,7 @@ export class MainWindow extends GwtWindow {
       // It seems some sort of clash between setting this here and the subsequent set
       // that happens in MenuCallback.updateMenus().
     });
+
     this.menuCallback.on(MenuCallback.COMMAND_INVOKED, (commandId) => {
       this.invokeCommand(commandId);
     });
