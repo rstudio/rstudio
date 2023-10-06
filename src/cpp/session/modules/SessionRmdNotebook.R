@@ -620,7 +620,18 @@ assign(".rs.notebookVersion", envir = .rs.toolsEnv(), "1.0")
 {
    # read as YAML
    opts <- .rs.fromYAML(opt)
-   
+
+   # knitr version 1.44 introduced a function `knitr:::dot_names`
+   # which converts dashes to dots in chunk options
+   knitr <- asNamespace("knitr")
+   if (is.function(knitr$dot_names)) 
+   {
+      opts <- knitr$dot_names(opts)
+   } 
+   else 
+   {
+      names(opts) <- gsub("-", ".", names(opts))
+   }
    # parse truthy and falsy style yaml options
    opts <- lapply(opts, function(value)
    {

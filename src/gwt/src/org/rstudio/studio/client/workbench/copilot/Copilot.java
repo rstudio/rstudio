@@ -262,6 +262,16 @@ public class Copilot implements ProjectOptionsChangedEvent.Handler
          @Override
          protected void onSuccess(CopilotSignInResponse response)
          {
+            CopilotError error = response.error;
+            if (error != null)
+            {
+               globalDisplay_.showMessage(
+                     MessageDisplay.MSG_ERROR,
+                     "GitHub Copilot: Sign in",
+                     "Error " + error.code + ": " + error.message);
+               return;
+            }
+            
             CopilotSignInResponseResult result = response.result.cast();
             if (result.status == CopilotConstants.STATUS_PROMPT_USER_DEVICE_FLOW)
             {

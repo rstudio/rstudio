@@ -287,8 +287,43 @@ public class RemoteServer implements Server
       });
 
       // create server event listener
-      serverEventListener_ = new RemoteServerEventListener(this,
-                                                           externalListener);
+      serverEventListener_ = new RemoteServerEventListener(this, externalListener);
+      
+      // create JS callback for requests
+      if (Desktop.isDesktop())
+      {
+         initializeRpcRequestCallback();
+      }
+   }
+   
+   private final native void initializeRpcRequestCallback()
+   /*-{
+      var self = this;
+      $wnd.sendRpcRequest = $entry(function(name, value) {
+         self.@org.rstudio.studio.client.server.remote.RemoteServer::sendRpcRequestCallback(*)(name, value);
+      });
+   }-*/;
+   
+   private void sendRpcRequestCallback(String name, JavaScriptObject value)
+   {
+      try
+      {
+         if (name == SHOW_VIGNETTE)
+         {
+            JsArrayString arguments = value.cast();
+            String topic = arguments.get(0);
+            String packageName = arguments.get(1);
+            showVignette(topic, packageName);
+         }
+         else
+         {
+            Debug.log("Error: Unsupported RPC '" + name + "'");
+         }
+      }
+      catch (Exception e)
+      {
+         Debug.logException(e);
+      }
    }
 
    // complete initialization now that the workbench is ready
