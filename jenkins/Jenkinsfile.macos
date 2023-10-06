@@ -243,12 +243,9 @@ pipeline {
                       RSTUDIO_ORG_PEM = credentials('www-rstudio-org-pem')
                     }
 
-                    // for pro, update with Qt
-                    // for open source, update with Electron
                     when { 
                       anyOf {
-                        expression { return params.PUBLISH && params.DAILY && IS_PRO == true && FLAVOR == "Desktop" }
-                        expression { return params.PUBLISH && params.DAILY && IS_PRO == false && FLAVOR == "Electron" }
+                        expression { return params.PUBLISH && params.DAILY && FLAVOR == "Electron" }
                         expression { return params.PUBLISH && params.DAILY && FLAVOR == "Server" }
                       }
                     }
