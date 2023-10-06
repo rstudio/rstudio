@@ -13,5 +13,5 @@
 - Fixed issue preventing enabling screen reader mode (#13710)
 
 #### Posit Workbench
-- 
+- Fixed issue that caused start up crash in environments with encrypted database passwords. (rstudio-pro#5228)
 
