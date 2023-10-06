@@ -123,7 +123,7 @@ if(NOT RSTUDIO_TARGET)
    # for macOS pro builds, default to desktop as otherwise
    # we will try (and fail) to build Linux-only launcher pieces
    if(APPLE AND RSTUDIO_PRO_BUILD)
-      set(RSTUDIO_TARGET "Desktop")
+      set(RSTUDIO_TARGET "Electron")
    else()
       set(RSTUDIO_TARGET "Development")
    endif()
