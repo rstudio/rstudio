@@ -18,7 +18,7 @@ perlCandidates <- c(
    "C:/Strawberry/perl/bin"
 )
 
-perl <- head(Filter(file.exists, perlCandidates))
+perl <- head(Filter(file.exists, perlCandidates), n = 1)
 if (length(perl) == 0)
    fatal("No perl installation detected (please install ActiveState Perl via 'choco install activeperl')")
 
