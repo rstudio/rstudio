@@ -21,6 +21,7 @@
 
 #include <chrono>
 #include <codecvt>
+#include <fstream>
 #include <iomanip>
 #include <iostream>
 #include <locale>
@@ -29,6 +30,7 @@
 #include <vector>
 
 #ifdef __APPLE__
+# include <sys/stat.h>
 # include <CoreFoundation/CoreFoundation.h>
 # include <Carbon/Carbon.h>
 #endif
@@ -370,6 +372,11 @@ public:
       return &value_;
    }
 
+   explicit operator bool() const
+   {
+      return value_ != nullptr;
+   }
+
 private:
    TValue value_;
 };
@@ -465,6 +472,89 @@ Napi::Value cleanClipboard(const Napi::CallbackInfo& info)
    cleanClipboardImpl(stripHtml);
 
    // return value
+   return Napi::Value();
+}
+
+namespace {
+
+void writeClipboardImageImpl()
+{
+#ifdef __APPLE__
+
+   // get reference to clipboard
+   CFReleaseHandle<PasteboardRef> clipboard;
+   if (::PasteboardCreate(kPasteboardClipboard, &clipboard))
+      return;
+
+   // synchronize clipboard
+   ::PasteboardSynchronize(clipboard);
+
+   // check for items on the pasteboard
+   ItemCount itemCount;
+   if (::PasteboardGetItemCount(clipboard, &itemCount))
+      return;
+
+   // if we don't have anything on the clipboard, bail
+   if (itemCount < 1)
+      return;
+
+   // get the item identifier
+   PasteboardItemID itemId;
+   if (::PasteboardGetItemIdentifier(clipboard, 1, &itemId))
+      return;
+
+   // check for an image on the pasteboard -- if one exists, try writing it
+   // to file, and then updating the pasteboard with the image location
+   CFReleaseHandle<CFDataRef> pngData;
+   ::PasteboardCopyItemFlavorData(clipboard, itemId, CFSTR("public.png"), &pngData);
+   if (!pngData)
+      return;
+
+   // check and see if it has a URL -- if it does, nothing to do
+   CFReleaseHandle<CFDataRef> urlData;
+   ::PasteboardCopyItemFlavorData(clipboard, itemId, CFSTR("public.file-url"), &urlData);
+   if (urlData)
+      return;
+
+   // ok, we have an image on the pasteboard, but no associated file path.
+   // we'll clear the pasteboard, then put our own image contents there.
+
+   // copy image data to local buffer
+   auto length = ::CFDataGetLength(pngData);
+   std::vector<UInt8> buffer(length);
+   ::CFDataGetBytes(pngData, CFRangeMake(0, length), (UInt8*) buffer.data());
+
+   // form image path in temporary directory -- we intentionally use the temporary directory
+   // here because the visual editor makes use of 'file_show', which has some restrictions
+   // around which filesystem locations it can access
+   const char* tmpdir = ::getenv("TMPDIR");
+   std::string localImagePath = std::string(tmpdir ? tmpdir : "/tmp") + "/rstudio-clipboard.png";
+
+   // write the PNG bytes to file
+   std::ofstream ofs(localImagePath);
+   ofs.write((const char *) buffer.data(), length);
+   ofs.close();
+
+   // clear the clipboard so we can start updating it
+   // (we can only edit the pasteboard if we 'own' it)
+   ::PasteboardClear(clipboard);
+
+   // put the image itself back on the pasteboard
+   ::PasteboardPutItemFlavor(clipboard, (PasteboardItemID)1, CFSTR("public.png"), pngData, 0);
+
+   // write out file URI to pasteboard
+   std::string fileUri = "file://" + localImagePath;
+   CFReleaseHandle<CFDataRef> fileRef = CFDataCreate(kCFAllocatorDefault, (UInt8 *) fileUri.data(), fileUri.size());
+   ::PasteboardPutItemFlavor(clipboard, (PasteboardItemID)1, CFSTR("public.file-url"), fileRef, 0);
+
+#endif
+}
+
+} // end namespace impl
+
+Napi::Value writeClipboardImage(const Napi::CallbackInfo& info)
+{
+   writeClipboardImageImpl();
    return Napi::Value();
 }
 
@@ -684,6 +774,7 @@ Napi::Object Init(Napi::Env env, Napi::Object exports) {
    }
 
    RS_EXPORT_FUNCTION("cleanClipboard", rstudio::desktop::cleanClipboard);
+   RS_EXPORT_FUNCTION("writeClipboardImage", rstudio::desktop::writeClipboardImage);
    RS_EXPORT_FUNCTION("isCtrlKeyDown", rstudio::desktop::isCtrlKeyDown);
    RS_EXPORT_FUNCTION("currentCSIDLPersonalHomePath", rstudio::desktop::currentCSIDLPersonalHomePath);
    RS_EXPORT_FUNCTION("defaultCSIDLPersonalHomePath", rstudio::desktop::defaultCSIDLPersonalHomePath);

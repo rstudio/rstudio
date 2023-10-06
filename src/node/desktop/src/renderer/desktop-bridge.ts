@@ -370,6 +370,10 @@ export function getDesktopBridge() {
       ipcRenderer.send('desktop_clean_clipboard', stripHtml);
     },
 
+    writeClipboardImage: () => {
+      ipcRenderer.send('desktop_write_clipboard_image');
+    },
+
     setPendingQuit: (pendingQuit: number, callback: VoidCallback<unknown>) => {
       ipcRenderer
         .invoke('desktop_set_pending_quit', pendingQuit)

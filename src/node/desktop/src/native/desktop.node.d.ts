@@ -10,6 +10,15 @@
 export declare function cleanClipboard(stripHtml: boolean): void;
 
 /**
+ * (macOS only)
+ *
+ * Write the current clipboard image to a local file, and update the Pasteboard
+ * with a reference to that local content on disk. This works around an apparent
+ * Electron bug with copy + pasting images on the Pasteboard that lack an associated URL.
+ */
+export declare function writeClipboardImage(): void;
+
+/**
  * (Windows only)
  *
  * Detect if the CTRL key is currently being held down.
