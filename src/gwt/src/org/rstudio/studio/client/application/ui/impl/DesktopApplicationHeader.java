@@ -179,7 +179,7 @@ public class DesktopApplicationHeader implements ApplicationHeader,
          });
       });
 
-      if (BrowseCap.isMacintoshDesktop()) {
+      if (BrowseCap.isMacintoshDesktop() && BrowseCap.isElectron()) {
          Desktop.getFrame().detectRosetta();
       }
 
