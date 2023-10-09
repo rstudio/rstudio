@@ -204,10 +204,9 @@ public:
    Error operator()(const PostgresqlConnectionOptions& options) const
    {
 #ifdef RSTUDIO_HAS_SOCI_POSTGRESQL
+      std::string connectionStr;
       try
       {
-         std::string connectionStr;
-
          // prefer connection-uri
          std::string password;
          if (!options.connectionUri.empty())
@@ -232,15 +231,41 @@ public:
          if (error)
             return error;
 
-         // Make the password part of the connection string
-         // unless requested to be returned as-is separately
-         if (!pPassword_)
+         if (!password.empty())
          {
-            password = pgEncode(password, false);
-            connectionStr += " password='" + password + "'";
+            // Make the password part of the connection string
+            // unless requested to be returned as-is separately
+            if (!pPassword_)
+            {
+               // unencrypted password
+               password = pgEncode(password, false);
+               connectionStr += " password='" + password + "'";
+            }
+            else
+               *pPassword_ = password;
          }
          else
-            *pPassword_ = password;
+         {
+            // When a password isn't specified, we authenticate using SSL certificates.
+            // This requires that the connection string contain sslcert and sslkey parameters and that sslmode=verify-ca.
+            if (!boost::algorithm::contains(connectionStr, "sslcert") || 
+                !boost::algorithm::contains(connectionStr, "sslkey") ||
+                !boost::algorithm::contains(connectionStr, "sslrootcert"))
+            {
+               // Return invalid configuration error
+               return systemError(boost::system::errc::invalid_argument,
+                                  "Because a password has not been specified in database.conf,"
+                                  " the Postgres connection must be configured to use SSL authentication."
+                                  " This requires including the path to sslcert, sslkey, and sslrootcert in the connection URI."
+                                  " Update database.conf to add these values to the connection URI or add a password."
+                                  " For more information about PostgreSQL SSL Authentication see https://www.postgresql.org/docs/current/auth-cert.html",
+                                  ERROR_LOCATION);
+            }
+            else if (!boost::algorithm::contains(connectionStr, "sslmode=verify-ca")) 
+            {
+               connectionStr += " sslmode=verify-ca";
+            }
+         }
 
          if (pConnectionStr_)
             *pConnectionStr_ = connectionStr;
@@ -426,34 +451,23 @@ public:
       if (!options.password.empty())
          password = options.password;
 
-      // Somewhat convoluted due to need to handle several cases (Pro-only):
-      //
-      // (1) password without embedded encryption key; this could be a plain-text
-      //     password or an encrypted password generated before we added such embedding, but
-      //     we can't be sure without trying to decrypt and treating as plain text if that fails
-      // (2) an encrypted password with embedded key hash; if it won't decrypt, this is an error
-      //     and we don't want to treat as plain text
-      //
-      // In a future release we could simplify by assuming a password without embedded key must
-      // be plain text. Tracked in https://github.com/rstudio/rstudio-pro/issues/2446
-      // 
-
+      // Prior to 2023.09.1, we allowed customers to encrypt their passwords. This configuration is
+      // no longer supported so we log a warning if we think the password is encrypted but still
+      // attempt to use it without decrypting, allowing the connection to fail later on with an
+      // invalid password error. This is to allow for the case where a customer happens to create
+      // a password that coincidentally matches the pattern we look for when detecting encryption.
       bool assumeEncrypted = core::system::crypto::passwordContainsKeyHash(password);
 
-      Error error = core::system::crypto::decryptPassword(options.secureKey, options.secureKeyHash, password);
-      if (error)
+      if (assumeEncrypted)
       {
          static bool warnOnce = false;
-
-         if (assumeEncrypted)
-            return error;
-
-         // decrypt failed, we'll just use the password as-is
          if (!warnOnce)
          {
             warnOnce = true;
-            LOG_DEBUG_MESSAGE(error.asString());
-            LOG_WARNING_MESSAGE("A plain text value is potentially being used for the PostgreSQL password, or an encrypted password could not be decrypted. The RStudio Server documentation for PostgreSQL shows how to encrypt this value.");
+            LOG_WARNING_MESSAGE("It looks like the configured PostgreSQL password in database.conf"
+                " may have been encrypted, which is no longer a supported configuration. The password will be"
+                " passed to PostgreSQL as-is. Please see the Posit Workbench Administration"
+                " Guide for more information.");
          }
       }
       return Success();

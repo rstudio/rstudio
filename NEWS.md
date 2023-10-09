@@ -36,4 +36,5 @@
 - Fixed accessibility issues with Project controls on the homepage when not using launcher sessions [accessibility] (rstudio/rstudio-pro#5215)
 - Fixed unlabeled input field in Rename Session modal dialog on the homepage [accessibility] (rstudio/rstudio-pro#5178)
 - Fixed mismatched label on "Join session when ready" checkbox in New Session dialog [accessibility] (rstudio/rstudio-pro#5221)
+- Fixed issue that caused start up crash in environments with encrypted database passwords. (rstudio-pro#5228)
 
