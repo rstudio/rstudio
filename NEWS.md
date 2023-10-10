@@ -31,10 +31,12 @@
 - Fixed a bug where project options updated in the Project Options pane were not properly persisted in RStudio 2023.09.0. (#13757)
 
 #### Posit Workbench
-- Fixed opening job details in new windows more than once for Workbench jobs on the homepage (rstudio/rstudio-pro#5179)
-- Fixed accessibility issues with empty Session and Project lists on the homepage [accessibility] (rstudio/rstudio-pro#5214)
-- Fixed accessibility issues with Project controls on the homepage when not using launcher sessions [accessibility] (rstudio/rstudio-pro#5215)
-- Fixed unlabeled input field in Rename Session modal dialog on the homepage [accessibility] (rstudio/rstudio-pro#5178)
-- Fixed mismatched label on "Join session when ready" checkbox in New Session dialog [accessibility] (rstudio/rstudio-pro#5221)
+- Fixed opening job details in new windows more than once for Workbench jobs on the homepage. (rstudio/rstudio-pro#5179)
+- Fixed accessibility issues with empty Session and Project lists on the homepage. [accessibility] (rstudio/rstudio-pro#5214)
+- Fixed accessibility issues with Project controls on the homepage when not using launcher sessions. [accessibility] (rstudio/rstudio-pro#5215)
+- Fixed unlabeled input field in Rename Session modal dialog on the homepage. [accessibility] (rstudio/rstudio-pro#5178)
+- Fixed mismatched label on "Join session when ready" checkbox in New Session dialog. [accessibility] (rstudio/rstudio-pro#5221)
 - Fixed issue that caused start up crash in environments with encrypted database passwords. (rstudio-pro#5228)
+- Fixed an issue where Shift+Tab wouldn't wrap focus in the New Session dialog. [accessibility] (rstudio-pro#4488)
+- Fixed an issue where sessions couldn't be started with keyboard with Kubernetes or Slurm. [accessibility] (rstudio-pro#4360)
 
