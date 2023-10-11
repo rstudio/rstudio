@@ -223,7 +223,6 @@ pipeline {
             }
 
             environment {
-              GITHUB_LOGIN = credentials('posit-jenkins')
               AWS_BUCKET="rstudio-ide-build"
               PRODUCT="${utils.getProductName()}"
               BUILD_LOCATION = "build-${FLAVOR}-${ext_map[env.OS].toUpperCase()}" // Don't use BUILD_DIR because it impacts the make-package script
