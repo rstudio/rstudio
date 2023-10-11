@@ -125,7 +125,8 @@ Error checkForUninitializedUsername(const boost::shared_ptr<IConnection>& connec
                                     const system::User& user,
                                     std::string* pUsername)
 {
-   // we don't expect the username to be uninitialized in open source
+   // we don't expect the username to be uninitialized in open source, so just set it and return
+   *pUsername = row.get<std::string>(0);
    return Success();
 }
 
