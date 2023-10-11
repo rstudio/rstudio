@@ -183,6 +183,7 @@ pipeline {
                       withAWS(role: 'ide-build', region: 'us-east-1') {
                         retry(5) {
                           script {
+                            echo "Uploading ${PACKAGE_FILE} to ${AWS_PATH}/"
                             utils.uploadPackageToS3 "package/osx/build/${PACKAGE_FILE}", "${AWS_PATH}/"
                           }
                         }
@@ -206,7 +207,8 @@ pipeline {
                           dir ('package/osx/build/gwt') {
                             script {
                               if (FLAVOR == 'Electron') {
-                                utils.sentryUploadSourceMaps()
+                                echo "Skipping Sentry source maps upload for node update build"
+                                // utils.sentryUploadSourceMaps()
                               }
                             }
                           }
@@ -214,7 +216,8 @@ pipeline {
                           // upload C++ debug information
                           dir ('package/osx/build/src/cpp') {
                             script {
-                              utils.sentryUpload 'dsym'
+                              echo "Skipping Sentry upload for node update build"
+                              // utils.sentryUpload 'dsym'
                             }
                           }
                         }
@@ -231,8 +234,9 @@ pipeline {
                     steps {
                       dir("package/osx/build") {
                         script {
+                          echo "Skipping publishing macos ${PACKAGE_FILE} to dailies site"
                           // publish build to dailies page
-                          utils.publishToDailiesSite PACKAGE_FILE, DAILIES_PATH, AWS_PATH
+                          // utils.publishToDailiesSite PACKAGE_FILE, DAILIES_PATH, AWS_PATH
                         }
                       }
                     }
@@ -255,8 +259,9 @@ pipeline {
 
                     steps {
                       script {
+                        echo "Skipping updating daily build redirects for ${AWS_PATH}/${PACKAGE_FILE}"
                         // upload daily build redirects
-                        utils.updateDailyRedirects "${AWS_PATH}/${PACKAGE_FILE}"
+                        // utils.updateDailyRedirects "${AWS_PATH}/${PACKAGE_FILE}"
                       }
                     }
                   }
@@ -272,7 +277,7 @@ pipeline {
   post {
     always {
       deleteDir()
-      sendNotifications slack_channel: SLACK_CHANNEL
+      // sendNotifications slack_channel: SLACK_CHANNEL
     }
   }
 

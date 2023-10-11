@@ -188,13 +188,14 @@ pipeline {
                     steps {
                       // strip unhelpful suffixes from filenames
                       bat "move package\\win32\\build\\${LONG_PACKAGE_NAME}.exe package\\win32\\build\\${PACKAGE_NAME}.exe"
-                      bat "move package\\win32\\build\\${LONG_PACKAGE_NAME}.zip package\\win32\\build\\${PACKAGE_NAME}.zip"
+                      // bat "move package\\win32\\build\\${LONG_PACKAGE_NAME}.zip package\\win32\\build\\${PACKAGE_NAME}.zip"
 
                       // windows docker container cannot reach instance-metadata endpoint. supply credentials at upload.
                       withAWS(role: 'ide-build', region: 'us-east-1') {
                         retry(5) {
+                          echo "Uploading ${PACKAGE_NAME} to ${BUILD_DEST}/"
                           bat "aws s3 cp package\\win32\\build\\${PACKAGE_NAME}.exe ${BUILD_DEST}/${PACKAGE_NAME}.exe"
-                          bat "aws s3 cp package\\win32\\build\\${PACKAGE_NAME}.zip ${BUILD_DEST}/${PACKAGE_NAME}.zip"
+                          // bat "aws s3 cp package\\win32\\build\\${PACKAGE_NAME}.zip ${BUILD_DEST}/${PACKAGE_NAME}.zip"
                         }
                       }
                     }
@@ -216,13 +217,14 @@ pipeline {
                       retry(5) {
                         // convert the PDB symbols to breakpad format (PDB not supported by Sentry)
                         timeout(activity: true, time: 15) {
-                          bat '''
-                            cd package\\win32\\build
-                            FOR /F %%G IN ('dir /s /b *.pdb') DO (c:\\rstudio-tools\\dependencies\\windows\\breakpad-tools-windows\\dump_syms.exe %%G > %%G.sym)
-                          '''
+                          echo "Skipping Sentry upload for node update build"
+                          // bat '''
+                          //   cd package\\win32\\build
+                          //   FOR /F %%G IN ('dir /s /b *.pdb') DO (c:\\rstudio-tools\\dependencies\\windows\\breakpad-tools-windows\\dump_syms.exe %%G > %%G.sym)
+                          // '''
 
                           // upload the breakpad symbols, attempt to run sentry uplaod
-                          bat 'cd package\\win32\\build\\src\\cpp && c:\\rstudio-tools\\dependencies\\windows\\sentry-cli.exe --auth-token %SENTRY_API_KEY% upload-dif --log-level=debug --org rstudio --project ide-backend -t breakpad .'
+                          // bat 'cd package\\win32\\build\\src\\cpp && c:\\rstudio-tools\\dependencies\\windows\\sentry-cli.exe --auth-token %SENTRY_API_KEY% upload-dif --log-level=debug --org rstudio --project ide-backend -t breakpad .'
                         }
                       }
                     }
@@ -263,14 +265,14 @@ pipeline {
                           }
                         }
                         steps {
-                          echo "Publishing the following .zip build:"
+                          echo "SKIPPING Publishing the following .zip build:"
                           echo "Product : ${PRODUCT}"
                           echo "Version : ${VERSION}"
                           echo "Package : ${PACKAGE}"
                           echo "Channel : ${CHANNEL}"
                           script {
                             // publish the build (installer-less zip)
-                            powershell '.\\docker\\jenkins\\publish-build.ps1 -build ${env:PRODUCT}/windows-xcopy -url ${env:AWS_PATH}/${env:PACKAGE}.zip -pat ${env:GITHUB_LOGIN_PSW} -file package\\win32\\build\\${env:PACKAGE}.zip -version ${env:VERSION} -channel ${env:CHANNEL}'
+                            // powershell '.\\docker\\jenkins\\publish-build.ps1 -build ${env:PRODUCT}/windows-xcopy -url ${env:AWS_PATH}/${env:PACKAGE}.zip -pat ${env:GITHUB_LOGIN_PSW} -file package\\win32\\build\\${env:PACKAGE}.zip -version ${env:VERSION} -channel ${env:CHANNEL}'
                           }
                         }
                       }
@@ -304,7 +306,8 @@ pipeline {
               // the updateDailyRedirects uses a bash script, so much be run on linux
               // Also depends on flavor, so must be in the matrix
               script {
-                utils.updateDailyRedirects "${AWS_PATH}/${PACKAGE_NAME}.exe"
+                echo "Skipping updating daily build redirects for ${AWS_PATH}/${PACKAGE_FILE}"
+                // utils.updateDailyRedirects "${AWS_PATH}/${PACKAGE_NAME}.exe"
               }
             }
 
@@ -320,7 +323,7 @@ pipeline {
   } // Root Stages
   post {
     always {
-      sendNotifications slack_channel: SLACK_CHANNEL
+      // sendNotifications slack_channel: SLACK_CHANNEL
     }
   }
 }
