@@ -17,6 +17,7 @@
 #define SERVER_AUTH_HANDLER_CPP
 
 #include <server/auth/ServerAuthHandler.hpp>
+#include <server/auth/ServerAuthHandlerOverlay.hpp>
 
 #include <boost/algorithm/string.hpp>
 
@@ -435,14 +436,18 @@ Error getUserFromDatabase(const boost::shared_ptr<IConnection>& connection,
    
    *pLocked = true;
 
-   Rowset rows;
-   Query userQuery = connection->query("SELECT user_name, user_id, last_sign_in, locked FROM licensed_users WHERE user_id = :uid OR user_name = :username")
+   const auto usernameColName = overlay::getUsernameDbColumnName();
+   Query userQuery = connection->query("SELECT " + usernameColName + ", user_id, last_sign_in, locked FROM licensed_users WHERE user_id = :uid OR " + usernameColName + " = :un")
          .withInput(user.getUserId())
          .withInput(user.getUsername());
 
+   Rowset rows;
    Error error = connection->execute(userQuery, rows);
    if (error)
+   {
+      error.addProperty("description", "Could not get user from database due to database error");
       return error;
+   }
 
    // Old versions of RSW didn't set the posix User ID. If we don't have the ID, update it  now.
    bool foundUser = false;
@@ -450,8 +455,13 @@ Error getUserFromDatabase(const boost::shared_ptr<IConnection>& connection,
    {
       Row& row = *itr;
 
+      // Check for null in the username, could happen if the user was added by an older version of RSW
+      std::string username;
+      error = overlay::checkForUninitializedUsername(connection, row, user, &username);
+      if (error)
+         return error;
+
       int uid = row.get<int>(1);
-      const std::string& username = row.get<std::string>(0);
       bool locked = row.get<int>(3) == 1;
 
       // Check the last signin time. If we haven't seen a row for this user yet, update the time. 
@@ -505,6 +515,19 @@ Error addUser(boost::asio::io_service& ioService,
               const std::string& username,
               bool isAdmin)
 {
+   const auto result = overlay::addUser(ioService, username, isAdmin);
+   Error overlayError;
+   bool wasHandled;
+   std::tie(overlayError, wasHandled) = result;
+   if (overlayError)
+   {
+      return overlayError;
+   }
+   if (wasHandled)
+   {
+      return Success();
+   }
+
    boost::shared_ptr<IConnection> connection;
    if (!server_core::database::getConnection(boost::posix_time::seconds(server::options().dbConnectionTimeout()), &connection))
    {
@@ -564,8 +587,10 @@ json::Array getAllUsers()
       return json::Array();
    }
 
+   const auto usernameColName = overlay::getUsernameDbColumnName();
+   Query query = connection->query("SELECT " + usernameColName + ", locked, last_sign_in, is_admin FROM licensed_users");
+
    Rowset rows;
-   Query query = connection->query("SELECT user_name, locked, last_sign_in, is_admin FROM licensed_users");
    Error error = connection->execute(query, rows);
    if (error)
    {
@@ -604,36 +629,26 @@ Error updateLastSignin(const boost::shared_ptr<IConnection>& connection,
                        const system::User& user)
 {
    LOG_DEBUG_MESSAGE("Begin update last signIn time");
-
    std::string currentTime = date_time::format(boost::posix_time::microsec_clock::universal_time(),
                                                date_time::kIso8601Format);
+   const auto usernameColName = overlay::getUsernameDbColumnName();
    Query updateSignin =
-         connection->query("UPDATE licensed_users SET last_sign_in = :val WHERE user_id = :uid")
+         connection->query("UPDATE licensed_users SET last_sign_in = :val WHERE user_id = :uid OR " + usernameColName + " = :pn ")
             .withInput(currentTime)
-            .withInput(user.getUserId());
-
+            .withInput(user.getUserId())
+            .withInput(user.getUsername());
    LOG_DEBUG_MESSAGE("End update last signIn time");
-
    return connection->execute(updateSignin);
 }
 
 Error addUserToDatabase(const boost::shared_ptr<IConnection>& connection,
                         const system::User& user,
                         bool isAdmin)
-{   
+{ 
    LOG_DEBUG_MESSAGE("Adding user to database: " + user.getUsername());
 
-   std::string currentTime = date_time::format(boost::posix_time::microsec_clock::universal_time(),
-                                                date_time::kIso8601Format);
-   int locked = 0;
-   Query insertQuery = connection->query("INSERT INTO licensed_users (user_name, user_id, locked, last_sign_in, is_admin) VALUES (:un, :ui, :lk, :ls, :ia)")
-         .withInput(user.getUsername())
-         .withInput(user.getUserId())
-         .withInput(locked)
-         .withInput(currentTime)
-         .withInput(static_cast<int>(isAdmin));
+   Error error = overlay::addUserToDatabase(connection, user, isAdmin);
 
-   Error error = connection->execute(insertQuery);
    if (error)
    {
       // if we cannot insert the user into the database, we count this as a hard failure
@@ -755,6 +770,13 @@ Error isUserLicensed(const system::User& user,
          }
       }
    }
+   else if (overlay::isUserProvisioningEnabled())
+   {
+      // When users are provisioned from an external identity provider, only
+      // existing users can be considered licensed.
+      *pLicensed = false;
+      return Success();
+   }
    else
    {
       // since the user is not already a named user, we need to either make them one
@@ -848,79 +870,6 @@ Error getNumActiveUsers(const boost::shared_ptr<IConnection>& connection,
    return Success();
 }
 
-namespace overlay {
-
-Error initialize()
-{
-   return Success();
-}
-
-bool canStaySignedIn()
-{
-   return true;
-}
-bool isUserListCookieValid(const std::string& cookieValue)
-{
-   return true;
-}
-
-bool shouldShowUserLicenseWarning()
-{
-   return false;
-}
-
-bool isUserAdmin(const std::string& username)
-{
-   return false;
-}
-
-bool isUserLocked(bool lockedColumn)
-{
-   return false;
-}
-
-std::string getUserListCookieValue()
-{
-   return "9c16856330a7400cbbbba228392a5d83";
-}
-
-
-unsigned int getActiveUserCount()
-{
-   return 0;
-}
-
-unsigned int getNamedUserLimit()
-{
-   return 0;
-}
-
-json::Array getLicensedUsers()
-{
-   return getAllUsers();
-}
-
-Error lockUser(boost::asio::io_service& ioService,
-               const std::string& username)
-{
-   return Success();
-}
-
-Error unlockUser(boost::asio::io_service& ioService,
-                 const std::string& username)
-{
-   return Success();
-}
-
-Error setAdmin(boost::asio::io_service& ioService,
-               const std::string& username,
-               bool isAdmin)
-{
-   return Success();
-}
-
-} // namespace overlay
-
 void onCookieRevoked(const std::string& cookie)
 {
 }
@@ -993,7 +942,11 @@ boost::shared_ptr<UserSession> UserSession::createUserSession(const std::string&
    END_LOCK_MUTEX
 
    // Make sure there's a database record for the user when creating the session
-   ensureDatabaseUser(username);
+   // *unless* users can be provisioned only by an external identity provider.
+   if (!overlay::isUserProvisioningEnabled())
+   {
+      ensureDatabaseUser(username);
+   }
 
    metrics::setActiveUserSessionCount(activeSessions);
 

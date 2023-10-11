@@ -32,7 +32,7 @@
 #include <core/system/User.hpp>
 
 #include <server/ServerOptions.hpp>
-#include <server/auth/ServerAuthHandler.hpp>
+#include <server/auth/ServerAuthHandlerOverlay.hpp>
 
 #include <server/session/ServerSessionRpc.hpp>
 #include <server/DBActiveSessionsStorage.hpp>

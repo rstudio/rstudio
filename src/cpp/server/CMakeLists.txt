@@ -44,6 +44,7 @@ set(SERVER_SOURCE_FILES
    ServerREnvironment.cpp
    ServerXdgVars.cpp
    auth/ServerAuthHandler.cpp
+   auth/ServerAuthHandlerOverlay.cpp
    auth/ServerAuthCommon.cpp
    auth/ServerSecureUriHandler.cpp
    auth/ServerValidateUser.cpp
