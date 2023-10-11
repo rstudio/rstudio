@@ -234,7 +234,7 @@ endif()
 set(PANDOC_VERSION "2.18" CACHE INTERNAL "Pandoc version")
 
 # node version
-set(RSTUDIO_NODE_VERSION "16.14.0" CACHE INTERNAL "Node version")
+set(RSTUDIO_NODE_VERSION "16.20.2" CACHE INTERNAL "Node version")
 
 # detect Centos 7, because we don't support Quarto on Centos7 arm64
 set(IS_CENTOS7 FALSE)
