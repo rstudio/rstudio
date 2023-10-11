@@ -40,4 +40,5 @@
 - Fixed an issue where Shift+Tab wouldn't wrap focus in the New Session dialog. [accessibility] (rstudio-pro#4488)
 - Fixed an issue where sessions couldn't be started with keyboard with Kubernetes or Slurm. [accessibility] (rstudio-pro#4360)
 - Fixed label on button for showing and hiding launcher details so it is available to screen reader. [accessibility] (rstudio-pro#5268)
+- Improved the accessible label on launcher job details buttons. [accessibility] (rstudio-pro#5270)
 
