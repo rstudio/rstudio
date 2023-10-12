@@ -10,6 +10,7 @@
 - RStudio now supports autocompletion following `@` via `.AtNames`. (#13451)
 - RStudio now supports the execution and display of GraphViz (`dot`) graphs in R Markdown / Quarto chunks. (#13187)
 - RStudio now supports the execution of chunks with the 'file' option set. (#13636)
+- With screen reader support enabled, hitting ESC key allows Tabbing away from editor. [accessibility] (#13593)
 
 #### Posit Workbench
 -
@@ -29,6 +30,7 @@
 - Fixed an issue that prevented RStudio from opening PDF vignettes from the Help pane. (#13041)
 - Inline chunk execution now respects YAML style plot options styled with hyphens. (#11708)
 - Fixed a bug where project options updated in the Project Options pane were not properly persisted in RStudio 2023.09.0. (#13757)
+- Improved screen reader support when navigating source files in the editor. [accessibility] (#7337)
 
 #### Posit Workbench
 - Fixed opening job details in new windows more than once for Workbench jobs on the homepage. (rstudio/rstudio-pro#5179)
