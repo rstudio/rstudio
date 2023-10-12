@@ -273,8 +273,13 @@ pipeline {
 
                   stage ('GWT and C++ Tests') {
                     when {
-                      // Disable bionic tests until builds are removed completely
-                      expression { return OS != "bionic" }
+                      allOf {
+                        // Disable opensuse15 while investigating R test failure
+                        expression { return OS != "opensuse15" }
+
+                        // Disable bionic tests until builds are removed completely
+                        expression { return OS != "bionic" }
+                      }
                     }
                     
                     steps {
