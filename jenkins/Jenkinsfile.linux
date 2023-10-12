@@ -49,7 +49,7 @@ def shouldBuild(boolean isDaily, boolean isPro) {
 
 def renameFile(String dir, String match) {
   def file = sh(script: "basename `ls ${dir}/${match}`", returnStdout: true).trim()
-  def renamedFile = file.replace('-relwithdebinfo', '-nodeupdate')
+  def renamedFile = file.replace('-relwithdebinfo', '')
   sh "mv ${dir}/${file} ${dir}/${renamedFile}"
   return renamedFile
 }
@@ -156,7 +156,7 @@ pipeline {
 
     stage('Build Matrix') {
       matrix {
-        // when { expression { return shouldBuild(params.DAILY, IS_PRO) } }
+        when { expression { return shouldBuild(params.DAILY, IS_PRO) } }
 
         axes {
           axis {
@@ -366,7 +366,6 @@ pipeline {
                       withAWS(role: 'ide-build', region: 'us-east-1') {
                         retry(5) {
                           script {
-                            echo "Uploading ${PACKAGE_FILE} to ${AWS_PATH}/"
                             utils.uploadPackageToS3 "${PACKAGE_DIR}/${PACKAGE_FILE}", "${AWS_PATH}/"
                           }
                         }
@@ -375,8 +374,7 @@ pipeline {
                           if ((FLAVOR == "Desktop") || (FLAVOR == "Electron")) {
                             retry(5) {
                               script {
-                                echo "Skipping for node update build ${TAR_PACKAGE_FILE} to ${AWS_PATH}/"
-                                // utils.uploadPackageToS3 "${TAR_PACKAGE_DIR}/${TAR_PACKAGE_FILE}", "${AWS_PATH}/"
+                                utils.uploadPackageToS3 "${TAR_PACKAGE_DIR}/${TAR_PACKAGE_FILE}", "${AWS_PATH}/"
                               }
                             }
                           }
@@ -398,8 +396,7 @@ pipeline {
                         retry(5) {
                           timeout(activity: true, time: 15) {
                             script {
-                              echo "Skipping Sentry upload for node update build"
-                              // utils.sentryUpload 'elf'
+                              utils.sentryUpload 'elf'
                             }
                           }
                         }
@@ -416,16 +413,15 @@ pipeline {
                     steps {
                       dir("${PACKAGE_DIR}") {
                         script {
-                          echo "Skipping publishing ${ARCH}/${PACKAGE_FILE} to dailies site"
                           // publish build to dailies page
-                          // utils.publishToDailiesSite PACKAGE_FILE, DAILIES_PATH, AWS_PATH
+                          utils.publishToDailiesSite PACKAGE_FILE, DAILIES_PATH, AWS_PATH
                         }
                       }
 
                       dir("${TAR_PACKAGE_DIR}") {
                         script {
                           if (FLAVOR == "Electron") {
-                            // utils.publishToDailiesSite TAR_PACKAGE_FILE, "${DAILIES_PATH}-xcopy", AWS_PATH
+                            utils.publishToDailiesSite TAR_PACKAGE_FILE, "${DAILIES_PATH}-xcopy", AWS_PATH
                           }
                         }
                       }
@@ -449,8 +445,7 @@ pipeline {
 
                     steps {
                       script {
-                        echo "Skipping updating daily build redirects for ${AWS_PATH}/${PACKAGE_FILE}"
-                        // utils.updateDailyRedirects "${AWS_PATH}/${PACKAGE_FILE}"
+                        utils.updateDailyRedirects "${AWS_PATH}/${PACKAGE_FILE}"
                       }
                     }
                   }
@@ -476,7 +471,6 @@ pipeline {
         allOf {
           expression { return params.DAILY }
           expression { return params.PUBLISH }
-          expression { return env.BRANCH_NAME != "upgrade-node-to-16.20.2" }
           expression { return env.BRANCH_NAME != "release-ghost-orchid" }
           expression { return env.BRANCH_NAME != "v1.4-juliet-rose" }
         }
@@ -501,7 +495,7 @@ pipeline {
     always {
       node('linux') {
         deleteDir()
-        // sendNotifications slack_channel: SLACK_CHANNEL
+        sendNotifications slack_channel: SLACK_CHANNEL
       }
     }
   }
