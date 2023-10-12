@@ -80,7 +80,11 @@ public class AceEditorNative extends JavaScriptObject
    public native final void setRelativeLineNumbers(boolean relative) /*-{
       this.setOption("relativeLineNumbers", relative);
    }-*/;
-   
+
+    public native final void setEnableKeyboardAccessibility(boolean keyboardAccessible) /*-{
+      this.setOption("enableKeyboardAccessibility", keyboardAccessible);
+   }-*/;
+
    public native final void setHighlightGutterLine(boolean highlight) /*-{
       this.setHighlightGutterLine(highlight);
    }-*/;

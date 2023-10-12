@@ -229,6 +229,11 @@ public class TextEditingTargetPrefsHelper
                {
                   docDisplay.setFoldStyle(FoldStyle.fromPref(arg));
                }));
+         releaseOnDismiss.add(prefs.enableScreenReader().bind(
+               (arg) ->
+               {
+                  docDisplay.setEnableKeyboardAccessibility(arg);
+               }));
       }
       
       // Embedded mode specific prefs
