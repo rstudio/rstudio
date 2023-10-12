@@ -2420,6 +2420,11 @@ public class AceEditor implements DocDisplay,
       widget_.getEditor().setRelativeLineNumbers(relative);
    }
 
+   public void setEnableKeyboardAccessibility(boolean keyboardAccessible)
+   {
+      widget_.getEditor().setEnableKeyboardAccessibility(keyboardAccessible);
+   }
+
    public boolean getUseSoftTabs()
    {
       return getSession().getUseSoftTabs();

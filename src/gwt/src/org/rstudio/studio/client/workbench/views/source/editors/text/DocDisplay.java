@@ -189,6 +189,7 @@ public interface DocDisplay extends HasValueChangeHandlers<Void>,
    void setHighlightSelectedWord(boolean on);
    void setShowLineNumbers(boolean on);
    void setRelativeLineNumbers(boolean relative);
+   void setEnableKeyboardAccessibility(boolean keyboardAccessible);
    void setUseSoftTabs(boolean on);
    void setUseWrapMode(boolean on);
    boolean getUseWrapMode();
