@@ -298,7 +298,7 @@ Error readOptions(const std::string& databaseConfigFile,
    if (optionsFile.exists() && checkConfFilePermissions)
    {
       // the database configuration file can potentially contain sensitive information
-      // log a warning if permissions are too lax
+      // attempt to update the permissions and log a warning if permissions are too lax
       FileMode fileMode;
       Error error = optionsFile.getFileMode(fileMode);
       if (error)
@@ -314,9 +314,31 @@ Error readOptions(const std::string& databaseConfigFile,
              fileMode != FileMode::USER_READ_WRITE)
          {
             LOG_WARNING_MESSAGE("The database configuration file " + optionsFile.getAbsolutePath() +
-                                " has unrestrictive permissions. Please ensure that the file has"
-                                " only user read/write permissions (600) if it contains sensitive information");
+                                " has unrestrictive permissions. Posit Workbench will attempt to"
+                                " change the file permissions to 600 to protect sensitive information");
+            // ensure the config file has root ownership and correct file permissions
+            error = optionsFile.changeFileMode(FileMode::USER_READ_WRITE);
+            if (error)
+               LOG_WARNING_MESSAGE("Unable to change the file permissions for " +
+                                   optionsFile.getAbsolutePath() + " - please ensure that the file has " +
+                                   "only user read/write permissions (600) if it contains sensitive information");
          }
+
+         system::User rootUser;
+         error = system::User::getUserFromIdentifier(UidType(0), rootUser);
+         bool logOwnershipWarning = false;
+         if (error)
+            logOwnershipWarning = true;
+
+         error = optionsFile.changeOwnership(rootUser);
+         if (error)
+            logOwnershipWarning = true;
+         
+         if (logOwnershipWarning)
+            LOG_WARNING_MESSAGE("Failed attempt to update ownership of database configuration file " +
+                                optionsFile.getAbsolutePath() + " to root user: " + error.getMessage() +
+                                " - please ensure that the file owner is root if it contains" +
+                                " sensitive information");
       }
    }
 
