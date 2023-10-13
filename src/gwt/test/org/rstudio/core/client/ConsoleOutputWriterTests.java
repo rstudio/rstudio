@@ -656,18 +656,16 @@ public class ConsoleOutputWriterTests extends GWTTestCase
       ConsoleOutputWriter output = getCOW();
       output.outputToConsole("✔ xxx \033[34myyy\033[39m xxx", myClass, notError, ignoreLineCount, false);
       output.outputToConsole("\r", myClass, notError, ignoreLineCount, false);
-      output.outputToConsole("✔xxx \033[31myyy\033[39m zzz", myClass, notError, ignoreLineCount, false);
+      output.outputToConsole("✔xxx \033[31myyy\033[39m zzz", myClass, notError, ignoreLineCount, false);
       output.outputToConsole("\n", myClass, notError, ignoreLineCount, false);
       output.outputToConsole("\n", myClass, notError, ignoreLineCount, false);
       output.outputToConsole("✔ xxx \033[34myyy\033[39m xxx", myClass, notError, ignoreLineCount, false);
       output.outputToConsole("\r", myClass, notError, ignoreLineCount, false);
-      output.outputToConsole("✔ xxx \033[31myyy\033[39m zzz", myClass, notError, ignoreLineCount, false);
+      output.outputToConsole("✔ xxx \033[31myyy\033[39m zzz", myClass, notError, ignoreLineCount, false);
       output.outputToConsole("\n", myClass, notError, ignoreLineCount, false);
       Assert.assertEquals(3, output.getCurrentLines());
       Assert.assertEquals(
          "<span class=\"myClass\">✔xxx </span>" +
-         "<span class=\"myClass xtermColor1\"></span>" + // redundant
-         "<span class=\"myClass\"></span>" + // redundant
          "<span class=\"myClass xtermColor1\">yyy</span>" +
          "<span class=\"myClass xtermColor4\"></span>" + // redundant
          "<span class=\"myClass\"></span>" + // redundant
