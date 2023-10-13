@@ -114,8 +114,8 @@ public class AceEditorNative extends JavaScriptObject
         enableBasicAutocompletion: enabled,
         enableSnippets: enabled && snippets,
         enableLiveAutocompletion: enabled && live,
-        completionCharacterThreshold: characterThreshold,
-        completionDelay: delayMilliseconds
+        liveAutocompletionThreshold: characterThreshold,
+        liveAutocompletionDelay: delayMilliseconds
       });
    }-*/;
    
