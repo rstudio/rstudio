@@ -16,7 +16,7 @@ RUN set -x \
 # reinstalling ca-certificates hopefully gets us past errors such as:
 # "The team named '~openjdk-r' has no PPA named 'ubuntu/ppa'"
 RUN apt-get update \
-  && apt-get install --reinstall ca-certificates \
+  && apt-get install -y --reinstall ca-certificates \
   && apt-get install -y software-properties-common \
   && add-apt-repository ppa:openjdk-r/ppa
 
