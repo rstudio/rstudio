@@ -28,6 +28,7 @@
 #include <core/RegexUtils.hpp>
 #include <core/Settings.hpp>
 #include <core/system/Environment.hpp>
+#include <core/system/PosixSystem.hpp>
 #include <core/system/Process.hpp>
 #include <core/system/System.hpp>
 #include <core/system/Xdg.hpp>
@@ -324,21 +325,24 @@ Error readOptions(const std::string& databaseConfigFile,
                                    "only user read/write permissions (600) if it contains sensitive information");
          }
 
-         system::User rootUser;
-         error = system::User::getUserFromIdentifier(UidType(0), rootUser);
-         bool logOwnershipWarning = false;
-         if (error)
-            logOwnershipWarning = true;
-
-         error = optionsFile.changeOwnership(rootUser);
-         if (error)
-            logOwnershipWarning = true;
-         
-         if (logOwnershipWarning)
-            LOG_WARNING_MESSAGE("Failed attempt to update ownership of database configuration file " +
-                                optionsFile.getAbsolutePath() + " to root user: " + error.getMessage() +
-                                " - please ensure that the file owner is root if it contains" +
-                                " sensitive information");
+         if (core::system::realUserIsRoot())
+         {
+            system::User rootUser;
+            error = system::User::getUserFromIdentifier(UidType(0), rootUser);
+            bool logOwnershipWarning = false;
+            if (error)
+               logOwnershipWarning = true;
+   
+            error = optionsFile.changeOwnership(rootUser);
+            if (error)
+               logOwnershipWarning = true;
+            
+            if (logOwnershipWarning)
+               LOG_WARNING_MESSAGE("Failed attempt to update ownership of database configuration file " +
+                                   optionsFile.getAbsolutePath() + " to root user: " + error.getMessage() +
+                                   " - please ensure that the file owner is root if it contains" +
+                                   " sensitive information");
+         }
       }
    }
 
