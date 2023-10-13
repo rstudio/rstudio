@@ -12,14 +12,6 @@ RUN set -x \
     && export DEBIAN_FRONTEND=noninteractive \
     && apt-get update 
 
-# add ppa repository so we can install java 8 (not in any official repo for bionic)
-# reinstalling ca-certificates hopefully gets us past errors such as:
-# "The team named '~openjdk-r' has no PPA named 'ubuntu/ppa'"
-RUN apt-get update \
-  && apt-get install -y --reinstall ca-certificates \
-  && apt-get install -y software-properties-common \
-  && add-apt-repository ppa:openjdk-r/ppa
-
 RUN apt-get update && \
     export DEBIAN_FRONTEND=noninteractive && \
     apt-get install -y \
