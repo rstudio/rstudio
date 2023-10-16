@@ -33,6 +33,7 @@ public class PanmirrorTheme
    public String commentColor;
    public String commentFontStyle;
    public String commentBackgroundColor;
+   public String hrBackgroundColor;
    public String gutterBackgroundColor;
    public String gutterTextColor;
    public String textColor;

@@ -95,6 +95,7 @@ public class PanmirrorThemeCreator
       borderBkgdClasses.push("ace_find_line");
       String borderColor = DomUtils.extractCssValue(borderBkgdClasses, "backgroundColor");
       theme.borderBackgroundColor = borderColor;
+      theme.hrBackgroundColor = borderColor;
       theme.blockBorderColor = borderColor;
       theme.focusOutlineColor = borderColor;
       
