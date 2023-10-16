@@ -2162,29 +2162,47 @@ std::string githubUrl(const std::string& view,
 
    // get the upstream for the current branch
    std::string upstream = getUpstream();
+   std::string upstreamBranch;
 
-   // if there is none then get the upstream for master
-   if (upstream.empty())
-      upstream = getUpstream("master");
-
-   // if there still isn't one then fall back to origin/master
-   if (upstream.empty())
-      upstream = "origin/master";
-
-   // parse out the upstream name and branch
-   std::string::size_type pos = upstream.find_first_of('/');
-   if (pos == std::string::npos)
+   if (!upstream.empty())
    {
-      LOG_ERROR_MESSAGE("No / in upstream name: " + upstream);
-      return std::string();
+      // parse out the upstream name and branch
+      std::string::size_type pos = upstream.find_first_of('/');
+      if (pos == std::string::npos)
+      {
+         LOG_ERROR_MESSAGE("No / in upstream name: " + upstream);
+         return std::string();
+      }
+      upstreamBranch = upstream.substr(pos + 1);
    }
-   std::string upstreamName = upstream.substr(0, pos);
-   std::string upstreamBranch = upstream.substr(pos + 1);
+   // if there is none then use the last commit id
+   else
+   {
+      core::system::ProcessResult commitId;
+      std::string relativePath = filePath.getRelativePath(s_git_.root());
+      if (relativePath.empty())
+         relativePath = ".";
+      Error error = gitExec(gitArgs() << "rev-list" << "-1" << "HEAD" << relativePath,
+               s_git_.root(),
+               &commitId);
+      if (error)
+      {
+         LOG_ERROR(error);
+         return std::string();
+      }
+      else if (commitId.exitStatus != 0)
+      {
+         if (!commitId.stdErr.empty())
+            LOG_ERROR_MESSAGE(commitId.stdErr);
+         return std::string();
+      }
+      upstreamBranch = boost::algorithm::trim_copy(commitId.stdOut);
+   }
 
    // now get the remote url
    core::system::ProcessResult result;
    Error error = gitExec(gitArgs() <<
-                   "config" << "--get" << ("remote." + upstreamName + ".url"),
+                   "ls-remote" << "--get-url",
                    s_git_.root(),
                    &result);
    if (error)
