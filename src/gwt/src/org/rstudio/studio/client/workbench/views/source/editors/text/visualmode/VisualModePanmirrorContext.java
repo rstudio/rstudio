@@ -20,7 +20,6 @@ import java.util.ArrayList;
 import java.util.HashSet;
 import java.util.List;
 
-import com.google.gwt.core.client.GWT;
 import org.rstudio.core.client.BrowseCap;
 import org.rstudio.core.client.JsArrayUtil;
 import org.rstudio.core.client.StringUtil;
@@ -50,6 +49,7 @@ import org.rstudio.studio.client.workbench.views.source.editors.text.TextEditing
 import org.rstudio.studio.client.workbench.views.source.events.XRefNavigationEvent;
 import org.rstudio.studio.client.workbench.views.source.model.DocUpdateSentinel;
 
+import com.google.gwt.core.client.GWT;
 import com.google.gwt.core.client.JsArrayString;
 import com.google.inject.Inject;
 
@@ -278,7 +278,21 @@ public class VisualModePanmirrorContext
             }
          });
       };
-
+      
+      uiContext.resolveBase64Images = (images) -> {
+         return new Promise<JsArrayString>((ResolveCallbackFn<JsArrayString> resolve, RejectCallbackFn reject) -> {
+            FileSystemItem resourceDir = FileSystemItem.createDir(uiContext.getDefaultResourceDir.get());
+            String imagesDir = resourceDir.completePath(constants_.images());
+            server_.rmdSaveBase64Images(images, imagesDir, new SimpleRequestCallback<JsArrayString>()
+            {
+               @Override
+               public void onResponseReceived(JsArrayString response)
+               {
+                  resolve.onInvoke(response);
+               }
+            });
+         });
+      };
 
       uiContext.isWindowsDesktop = () -> {
          return BrowseCap.isWindowsDesktop();

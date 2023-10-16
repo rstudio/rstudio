@@ -29,8 +29,11 @@
 #include <boost/format.hpp>
 #include <boost/scope_exit.hpp>
 
-#include <core/FileSerializer.hpp>
+#include <shared_core/Hash.hpp>
+
+#include <core/Base64.hpp>
 #include <core/Exec.hpp>
+#include <core/FileSerializer.hpp>
 #include <core/system/Environment.hpp>
 #include <core/system/Process.hpp>
 #include <core/StringUtils.hpp>
@@ -77,6 +80,7 @@ namespace session {
 
 namespace {
 
+const char* kBase64ImagePrefix = "data:image/png;base64,";
 bool s_rmarkdownAvailable = false;
 bool s_rmarkdownAvailableInited = false;
 
@@ -1574,6 +1578,65 @@ Error rmdImportImages(const json::JsonRpcRequest& request,
    return Success();
 }
 
+Error rmdSaveBase64Images(const json::JsonRpcRequest& request,
+                          json::JsonRpcResponse* pResponse)
+{
+   // read params
+   json::Array imageDataJson;
+   std::string imagesDir;
+   Error error = json::readParams(request.params, &imageDataJson, &imagesDir);
+   if (error)
+      return error;
+
+   // determine images dir
+   FilePath imagesPath = module_context::resolveAliasedPath(imagesDir);
+   error = imagesPath.ensureDirectory();
+   if (error)
+      return error;
+   
+   // use clipboard directory for these
+   FilePath clipboardPath = imagesPath.completeChildPath("clipboard");
+   error = clipboardPath.ensureDirectory();
+   if (error)
+      return error;
+
+   // build list of target image paths
+   std::vector<std::string> createdImages;
+
+   // copy each image to the target directory (renaming with a unique stem as required)
+   std::vector<std::string> imageData;
+   imageDataJson.toVectorString(imageData);
+   for (auto&& image : imageData)
+   {
+      if (boost::algorithm::starts_with(image, kBase64ImagePrefix))
+      {
+         // trim the base64 data prefix if it exists
+         image = image.substr(strlen(kBase64ImagePrefix));
+         std::cerr << image.substr(0, 8);
+         
+         // convert back into raw data
+         std::string rawData;
+         base64::decode(image, &rawData);
+         
+         // create filename from hash of data
+         std::string crcHash = core::hash::crc32Hash(rawData);
+         FilePath imagePath = clipboardPath.completeChildPath(crcHash + ".png");
+         
+         // write to file
+         Error error = core::writeStringToFile(imagePath, rawData);
+         if (error)
+            LOG_ERROR(error);
+         
+         createdImages.push_back(module_context::createAliasedPath(imagePath));
+      }
+   }
+   
+   json::Array createdImagesJson = core::json::toJsonArray(createdImages);
+   pResponse->setResult(createdImagesJson);
+   return Success();
+}
+
+
 SEXP rs_paramsFileForRmd(SEXP fileSEXP)
 {
    static std::map<std::string,std::string> s_paramsFiles;
@@ -1756,6 +1819,7 @@ Error initialize()
       (bind(registerRpcMethod, "prepare_for_rmd_chunk_execution", prepareForRmdChunkExecution))
       (bind(registerRpcMethod, "maybe_copy_website_asset", maybeCopyWebsiteAsset))
       (bind(registerRpcMethod, "rmd_import_images", rmdImportImages))
+      (bind(registerRpcMethod, "rmd_save_base64_images", rmdSaveBase64Images))
       (bind(registerUriHandler, kRmdOutputLocation, handleRmdOutputRequest))
       (bind(module_context::sourceModuleRFile, "SessionRMarkdown.R"));
 
