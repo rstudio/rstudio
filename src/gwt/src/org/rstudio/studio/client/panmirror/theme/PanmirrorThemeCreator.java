@@ -61,9 +61,9 @@ public class PanmirrorThemeCreator
          theme.selectionForegroundColor = DomUtils.extractCssValue("ace_editor", "color");
       }
       
+      theme.nodeSelectionColor = DomUtils.extractCssValue("ace_node-selector", "backgroundColor");
       theme.backgroundColor = DomUtils.extractCssValue("ace_editor", "backgroundColor");
       theme.metadataBackgroundColor = theme.backgroundColor;
-      theme.nodeSelectionColor = DomUtils.extractCssValue("ace_node-selector", "backgroundColor");
 
       JsArrayString regionBkgdClasses = JsArrayString.createArray().cast();
       regionBkgdClasses.push("ace_marker-layer");
