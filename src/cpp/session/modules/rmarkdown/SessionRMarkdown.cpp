@@ -1597,7 +1597,7 @@ Error rmdSaveBase64Images(const json::JsonRpcRequest& request,
    // build list of target image paths
    std::vector<std::string> createdImages;
 
-   // copy each image to the target directory (renaming with a unique stem as required)
+   // start decoding and writing image data to file
    std::vector<std::string> imageData;
    imageDataJson.toVectorString(imageData);
    for (auto&& image : imageData)
