@@ -1594,12 +1594,6 @@ Error rmdSaveBase64Images(const json::JsonRpcRequest& request,
    if (error)
       return error;
    
-   // use clipboard directory for these
-   FilePath clipboardPath = imagesPath.completeChildPath("clipboard");
-   error = clipboardPath.ensureDirectory();
-   if (error)
-      return error;
-
    // build list of target image paths
    std::vector<std::string> createdImages;
 
@@ -1612,7 +1606,6 @@ Error rmdSaveBase64Images(const json::JsonRpcRequest& request,
       {
          // trim the base64 data prefix if it exists
          image = image.substr(strlen(kBase64ImagePrefix));
-         std::cerr << image.substr(0, 8);
          
          // convert back into raw data
          std::string rawData;
@@ -1620,7 +1613,8 @@ Error rmdSaveBase64Images(const json::JsonRpcRequest& request,
          
          // create filename from hash of data
          std::string crcHash = core::hash::crc32Hash(rawData);
-         FilePath imagePath = clipboardPath.completeChildPath(crcHash + ".png");
+         std::string fileName = fmt::format("clipboard-{}.png", crcHash);
+         FilePath imagePath = imagesPath.completeChildPath(fileName);
          
          // write to file
          Error error = core::writeStringToFile(imagePath, rawData);
@@ -1629,13 +1623,28 @@ Error rmdSaveBase64Images(const json::JsonRpcRequest& request,
          
          createdImages.push_back(module_context::createAliasedPath(imagePath));
       }
+      else
+      {
+         static const boost::regex rePrefix("^(data:[^,]+,)");
+         
+         boost::smatch match;
+         if (boost::regex_match(image, match, rePrefix))
+         {
+            WLOGF("Don't know how to handle image data {}", match[1].str());
+         }
+         else
+         {
+            auto n = std::min(std::size_t(16), image.length());
+            WLOGF("Don't know how to handle image data {}", image.substr(0, n));
+         }
+      }
    }
    
+   // send back new image paths to client
    json::Array createdImagesJson = core::json::toJsonArray(createdImages);
    pResponse->setResult(createdImagesJson);
    return Success();
 }
-
 
 SEXP rs_paramsFileForRmd(SEXP fileSEXP)
 {
