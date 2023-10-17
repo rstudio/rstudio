@@ -148,6 +148,8 @@
          <arg value="build"/>
          <arg value="--minify"/>
          <arg value="${panmirror.minify}"/>
+         <arg value="--sourcemap"/>
+         <arg value="true"/>
          <env key="PANMIRROR_OUTDIR" value="dist-rstudio"/>
       </exec>
       <copy todir="${panmirror.build.dir}">
