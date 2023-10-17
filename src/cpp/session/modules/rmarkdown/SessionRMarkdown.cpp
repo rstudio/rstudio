@@ -80,7 +80,6 @@ namespace session {
 
 namespace {
 
-const char* kBase64ImagePrefix = "data:image/png;base64,";
 bool s_rmarkdownAvailable = false;
 bool s_rmarkdownAvailableInited = false;
 
@@ -1602,18 +1601,35 @@ Error rmdSaveBase64Images(const json::JsonRpcRequest& request,
    imageDataJson.toVectorString(imageData);
    for (auto&& image : imageData)
    {
-      if (boost::algorithm::starts_with(image, kBase64ImagePrefix))
+      // data:[<mime type>][;charset=<charset>][;base64],<encoded data>
+      boost::regex reDataImage(
+               "^data:image/([^;,]+)"  // data + mime type prefix; capture the image type
+               "(;charset=[^;,]+)?"    // optional charset
+               "(;base64)?"            // optional base64 declaration
+               ",(.*)$"                // comma separating prefix from data
+      );
+      
+      boost::smatch match;
+      if (boost::regex_match(image, match, reDataImage))
       {
-         // trim the base64 data prefix if it exists
-         image = image.substr(strlen(kBase64ImagePrefix));
+         // extract the captured image data
+         std::string rawData = match[4];
+         if (match[3].matched)
+         {
+            Error error = base64::decode(rawData, &rawData);
+            if (error)
+               LOG_ERROR(error);
+         }
          
-         // convert back into raw data
-         std::string rawData;
-         base64::decode(image, &rawData);
+         // figure out an appropriate extension
+         std::string mimeType = match[1];
+         std::string fileExtension = mimeType;
+         if (mimeType == "svg+xml")
+            fileExtension = "svg";
          
-         // create filename from hash of data
+         // create the file path
          std::string crcHash = core::hash::crc32Hash(rawData);
-         std::string fileName = fmt::format("clipboard-{}.png", crcHash);
+         std::string fileName = fmt::format("clipboard-{}.{}", crcHash, fileExtension);
          FilePath imagePath = imagesPath.completeChildPath(fileName);
          
          // write to file
