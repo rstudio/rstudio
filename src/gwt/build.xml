@@ -126,8 +126,18 @@
       file="c:\rstudio-tools\src\gwt\lib\quarto\apps\panmirror"/>
 
    <target name="panmirror" description="Compile panmirror library">
+
+      <!-- Make sure a default value for panmirror.minify is set -->
+      <condition property="panmirror.minify" value="true">
+         <not>
+            <isset property="panmirror.minify" />
+         </not>
+      </condition>
+
       <echo message="yarn location: ${yarn.bin}"/>
       <echo message="panmirror location: ${panmirror.dir}"/>
+      <echo message="panmirror minify: ${panmirror.minify}"/>
+
       <mkdir dir="${panmirror.build.dir}"/>
       <exec executable="${yarn.bin}" dir="${panmirror.dir}" resolveexecutable="true" failonerror="true">
          <arg value="install"/>
@@ -136,6 +146,10 @@
       </exec>
       <exec executable="${yarn.bin}" dir="${panmirror.dir}" resolveexecutable="true" failonerror="true">
          <arg value="build"/>
+         <arg value="--minify"/>
+         <arg value="${panmirror.minify}"/>
+         <arg value="--sourcemap"/>
+         <arg value="true"/>
          <env key="PANMIRROR_OUTDIR" value="dist-rstudio"/>
       </exec>
       <copy todir="${panmirror.build.dir}">
@@ -224,6 +238,7 @@
       <antcall target="codeserver">
          <param name="gwt.main.module" value="org.rstudio.studio.RStudioDesktopSuperDevMode"/>
          <param name="panmirror.target" value="ide-dev"/>
+         <param name="panmirror.minify" value="false"/>
       </antcall>
    </target>
 
@@ -232,6 +247,7 @@
       <antcall target="codeserver">
          <param name="gwt.main.module" value="org.rstudio.studio.RStudioSuperDevMode"/>
          <param name="panmirror.target" value="ide-dev"/>
+         <param name="panmirror.minify" value="false"/>
       </antcall>
    </target>
 
@@ -239,6 +255,7 @@
       <antcall target="codeserver">
          <param name="gwt.main.module" value="org.rstudio.studio.RStudioSuperDevMode"/>
          <param name="panmirror.target" value="ide-dev-watch"/>
+         <param name="panmirror.minify" value="false"/>
       </antcall>
    </target>
 
