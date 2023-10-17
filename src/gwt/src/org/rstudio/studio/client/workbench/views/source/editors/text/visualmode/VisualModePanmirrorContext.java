@@ -21,6 +21,7 @@ import java.util.HashSet;
 import java.util.List;
 
 import org.rstudio.core.client.BrowseCap;
+import org.rstudio.core.client.Debug;
 import org.rstudio.core.client.JsArrayUtil;
 import org.rstudio.core.client.StringUtil;
 import org.rstudio.core.client.XRef;
@@ -38,6 +39,8 @@ import org.rstudio.studio.client.panmirror.ui.PanmirrorUIDisplay;
 import org.rstudio.studio.client.quarto.QuartoHelper;
 import org.rstudio.studio.client.quarto.model.QuartoConfig;
 import org.rstudio.studio.client.rmarkdown.model.RMarkdownServerOperations;
+import org.rstudio.studio.client.server.ServerError;
+import org.rstudio.studio.client.server.ServerRequestCallback;
 import org.rstudio.studio.client.workbench.WorkbenchContext;
 import org.rstudio.studio.client.workbench.model.BlogdownConfig;
 import org.rstudio.studio.client.workbench.model.Session;
@@ -283,12 +286,19 @@ public class VisualModePanmirrorContext
          return new Promise<JsArrayString>((ResolveCallbackFn<JsArrayString> resolve, RejectCallbackFn reject) -> {
             FileSystemItem resourceDir = FileSystemItem.createDir(uiContext.getDefaultResourceDir.get());
             String imagesDir = resourceDir.completePath(constants_.images());
-            server_.rmdSaveBase64Images(images, imagesDir, new SimpleRequestCallback<JsArrayString>()
+            server_.rmdSaveBase64Images(images, imagesDir, new ServerRequestCallback<JsArrayString>()
             {
                @Override
                public void onResponseReceived(JsArrayString response)
                {
                   resolve.onInvoke(response);
+               }
+               
+               @Override
+               public void onError(ServerError error)
+               {
+                  Debug.logError(error);
+                  reject.onInvoke(error);
                }
             });
          });
