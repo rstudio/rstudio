@@ -256,18 +256,18 @@
 {
    if (is.null(srcref))
       return("")
-   
-   # resolve file path + working directory for this srcref
+
+   # resolve file path for this srcref
    srcfile <- attr(srcref, "srcfile")
-   wd <- enc2utf8(srcfile$wd)
    filename <- enc2utf8(srcfile$filename)
-   
+
    # check for absolute path in srcref
    if (.rs.isAbsolutePath(filename))
       return(filename)
-   
+
    # if the path was not absolute, we need to resolve it relative
    # to the working directory associated with the srcref
+   wd <- enc2utf8(srcfile$wd)
    fullPath <- paste(c(wd, filename), collapse = "/")
    normalizePath(fullPath, winslash = "/", mustWork = FALSE)
 })
@@ -542,11 +542,11 @@
       dims <- .Call("rs_dim", obj, PACKAGE = "(embedding)")
       if (is.null(dims))
          dims <- c(-1L, -1L)
-      
+
       # extract rows, columns
       nr <- dims[[1L]]
       nc <- dims[[2L]]
-      
+
       # build message
       msg <- sprintf(
          "%s obs. of %s %s",
@@ -554,7 +554,7 @@
          if (is.na(nc) || nc < 0L) "??" else as.character(nc),
          if (!is.na(nc) && nc != 1L) "variables" else "variable"
       )
-      
+
       return(msg)
    }
    else if (is.environment(obj))
@@ -960,7 +960,7 @@
    n <- length(value)
    if (n >= 10000L)
       return(TRUE)
-   
+
    # Objects containing external pointers cannot be serialized.
    if (typeof(value) %in% c("externalptr", "weakref"))
       return(FALSE)
@@ -968,7 +968,7 @@
    # Check for 'known-safe' object classes.
    if (inherits(value, c("data.frame", "igraph")))
       return(TRUE)
-   
+
    # Check for 'known-unsafe' object classes.
    if (inherits(value, c("ArrowObject", "DBIConnection", "python.builtin.object")))
        return(FALSE)

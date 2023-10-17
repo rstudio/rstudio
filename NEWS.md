@@ -6,6 +6,7 @@
 - Updated Boost to version 1.83.0. (#13577)
 - Updated Electron to version 26.2.4. (#13577)
 - Updated GWT to version 2.10.0 (#11505)
+- Updated the default version of the GitHub Copilot agent to 1.10.3. (#13729)
 - RStudio now supports highlighting of inline YAML chunk options in R Markdown / Quarto documents. (#11663)
 - Improved support for development documentation when a package has been loaded via `devtools::load_all()`. (#13526)
 - RStudio now supports autocompletion following `@` via `.AtNames`. (#13451)
@@ -32,6 +33,7 @@
 - Inline chunk execution now respects YAML style plot options styled with hyphens. (#11708)
 - Fixed a bug where project options updated in the Project Options pane were not properly persisted in RStudio 2023.09.0. (#13757)
 - Improved screen reader support when navigating source files in the editor. [accessibility] (#7337)
+- Fixed viewing or blaming file on GitHub for a newly created branch. (#9798)
 
 #### Posit Workbench
 - Fixed opening job details in new windows more than once for Workbench jobs on the homepage. (rstudio/rstudio-pro#5179)

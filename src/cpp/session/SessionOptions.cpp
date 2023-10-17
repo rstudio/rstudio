@@ -707,7 +707,7 @@ void Options::resolveNodePath(const FilePath& resourcePath,
                               std::string* pPath)
 {
 #if defined(__linux__) && !defined(RSTUDIO_PACKAGE_BUILD)
-   FilePath dependenciesPath = resourcePath.completePath("../../dependencies/common/node/16.14.0");
+   FilePath dependenciesPath = resourcePath.completePath("../../dependencies/common/node/16.20.2");
    resolvePath(dependenciesPath, pPath);
 #else
    resolvePath(resourcePath, pPath);
