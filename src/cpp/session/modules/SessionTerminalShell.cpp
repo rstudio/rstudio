@@ -155,6 +155,25 @@ void scanAvailableShells(std::vector<TerminalShell>* pShells)
 
 } // anonymous namespace
 
+TerminalShell::ShellType TerminalShell::getEffectiveShellType() const
+{
+   // keep non-custom shell types as-is
+   if (type != TerminalShell::ShellType::CustomShell)
+      return type;
+   
+   // otherwise, see if we can resolve the type
+#ifndef _WIN32
+   std::string filename = path.getFilename();
+   if (filename == "bash")
+      return TerminalShell::ShellType::PosixBash;
+   else if (filename == "zsh")
+      return TerminalShell::ShellType::PosixZsh;
+#endif
+   
+   // continue returning 'Custom' if we couldn't infer a known internal type
+   return type;
+}
+
 core::json::Object TerminalShell::toJson() const
 {
    core::json::Object resultJson;
@@ -327,10 +346,10 @@ bool AvailableTerminalShells::getSystemShell(TerminalShell* pShellInfo)
 {
 #ifdef _WIN32
    
-   pShellInfo->path = core::system::expandComSpec();
-   pShellInfo->type = TerminalShell::ShellType::Cmd64;
    pShellInfo->name = "Command Prompt";
-   
+   pShellInfo->type = TerminalShell::ShellType::Cmd64;
+   pShellInfo->path = core::system::expandComSpec();
+
 #else
    
    // use default bash shell
@@ -338,11 +357,18 @@ bool AvailableTerminalShells::getSystemShell(TerminalShell* pShellInfo)
    pShellInfo->type = TerminalShell::ShellType::PosixBash;
    pShellInfo->path = core::FilePath("/usr/bin/env");
    pShellInfo->args.emplace_back("bash");
+   
+# ifndef __APPLE__
+   
+   // the default Bash installation on macOS does not support sourcing
+   // of scripts specified in the ENV environment variable, or so it seems
    pShellInfo->args.emplace_back("--login");  // act like a login shell
    
    // if terminal hooks are enabled, start in POSIX mode, so we can control startup init scripts 
    if (prefs::userPrefs().terminalHooks())
       pShellInfo->args.emplace_back("--posix");
+   
+# endif
    
 #endif
    
@@ -351,11 +377,13 @@ bool AvailableTerminalShells::getSystemShell(TerminalShell* pShellInfo)
 
 bool AvailableTerminalShells::getCustomShell(TerminalShell* pShellInfo)
 {
+   using ShellType = TerminalShell::ShellType;
+   
    core::FilePath customShellPath =
          module_context::resolveAliasedPath(prefs::userPrefs().customShellCommand());
    
    pShellInfo->name = "Custom";
-   pShellInfo->type = TerminalShell::ShellType::CustomShell;
+   pShellInfo->type = ShellType::CustomShell;
    pShellInfo->path = customShellPath;
 
    // arguments are space separated, currently no way to represent a literal space
@@ -371,6 +399,7 @@ bool AvailableTerminalShells::getCustomShell(TerminalShell* pShellInfo)
       std::vector<std::string> extraArgs;
       
       // if this appears to be a bash shell, make sure we launch it as a POSIX shell
+      // TODO: should we also launch these as --login shells? Or just rely on the user to request that?
       if (customShellPath.getFilename() == "bash" || customShellPath.getFilename() == "bash.exe")
       {
          bool hasPosixFlag = core::algorithm::contains(args, "--posix");
@@ -378,24 +407,8 @@ bool AvailableTerminalShells::getCustomShell(TerminalShell* pShellInfo)
             extraArgs.push_back("--posix");
       }
       
-      /*
-      
-      // if this is a zsh shell, then emulate 'sh'
-      else if (customShellPath.getFilename() == "zsh" || customShellPath.getFilename() == "zsh.exe")
-      {
-         bool hasEmulateFlag = core::algorithm::contains(args, "--emulate");
-         if (!hasEmulateFlag)
-         {
-            extraArgs.push_back("--emulate");
-            extraArgs.push_back("sh");
-         }
-      }
-      
-      */
-      
       // insert the arguments at the front
       args.insert(args.begin(), extraArgs.begin(), extraArgs.end());
-            
    }
    
    pShellInfo->args = args;

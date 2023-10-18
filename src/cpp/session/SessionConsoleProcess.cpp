@@ -105,22 +105,7 @@ core::system::ProcessOptions ConsoleProcess::createTerminalProcOptions(
 
    *pSelectedShellType = procInfo.getShellType();
 
-#ifndef _WIN32
-   // set xterm title to show current working directory after each command
-   core::system::setenv(&shellEnv, "PROMPT_COMMAND",
-                        R"(echo -ne "\033]0;${PWD/#${HOME}/~}\007")");
-
-   // don't add commands starting with a space to shell history
-   if (procInfo.getTrackEnv())
-   {
-      // HISTCONTROL is Bash-specific. In Zsh we rely on the shell having the 
-      // HIST_IGNORE_SPACE option set, which we do via -g when we start Zsh. In the
-      // future we could make environment-capture smarter and not set this variable
-      // for shells that don't use it, but for now keeping it to avoid having to 
-      // rework PrivateCommand class.
-      core::system::setenv(&shellEnv, "HISTCONTROL", "ignoreboth");
-   }
-#else
+#ifdef _WIN32
    core::system::setHomeToUserProfile(&shellEnv);
 #endif
    
@@ -143,9 +128,10 @@ core::system::ProcessOptions ConsoleProcess::createTerminalProcOptions(
 
    // set options
    core::system::ProcessOptions options;
-   options.workingDir = procInfo.getCwd().isEmpty() ? module_context::shellWorkingDirectory() :
-                                                    procInfo.getCwd();
-   options.environment = shellEnv;
+   options.workingDir = procInfo.getCwd().isEmpty()
+         ? module_context::shellWorkingDirectory()
+         : procInfo.getCwd();
+   
    options.smartTerminal = true;
 #ifdef _WIN32
    options.reportHasSubprocs = false; // child process detection not supported on Windows
@@ -186,7 +172,46 @@ core::system::ProcessOptions ConsoleProcess::createTerminalProcOptions(
          options.args = sysShell.args;
       }
    }
+   
+#ifndef _WIN32
+   // set xterm title to show current working directory after each command
+   switch (shell.getEffectiveShellType())
+   {
+   
+   case TerminalShell::ShellType::PosixBash:
+   {
+      // NOTE: We don't use `${string//pattern/replacement}`-style variable substitution
+      // on Bash, as the way tilde is handled as a replacement character seems to depend
+      // on some unknown factors (sometimes it needs to be escaped like '\~'?)
+      const char* kPromptCommand = R"((_RS_PWD=$(dirs +0); echo -ne "\033]0;${_RS_PWD}\007"; unset _RS_PWD))"; 
+      core::system::setenv(&shellEnv, "PROMPT_COMMAND", kPromptCommand);
+      break;
+   }
+      
+   default:
+   {
+      const char* kPromptCommand = R"(echo -ne "\033]0;${PWD/#${HOME}/~}\007")"; 
+      core::system::setenv(&shellEnv, "PROMPT_COMMAND", kPromptCommand);
+      break;
+   }
+      
+   } // end switch
 
+   // don't add commands starting with a space to shell history
+   if (procInfo.getTrackEnv())
+   {
+      // HISTCONTROL is Bash-specific. In Zsh we rely on the shell having the 
+      // HIST_IGNORE_SPACE option set, which we do via -g when we start Zsh. In the
+      // future we could make environment-capture smarter and not set this variable
+      // for shells that don't use it, but for now keeping it to avoid having to 
+      // rework PrivateCommand class.
+      core::system::setenv(&shellEnv, "HISTCONTROL", "ignoreboth");
+   }
+#endif
+
+   // finally, set up environment
+   options.environment = shellEnv;
+   
    return options;
 }
 
@@ -919,59 +944,28 @@ void useTerminalHooks(ConsoleProcessPtr cp)
       core::FilePath bashDotDir = session::options().rResourcesPath().completeChildPath("terminal/bash");
       core::FilePath bashProfile = bashDotDir.completeChildPath(".bash_profile");
 
+#ifdef __APPLE__
+      if (cp->getShellType() == TerminalShell::ShellType::PosixBash)
+      {
+         // use --rcfile to set startup scripts when using default bash shell
+         auto&& options = cp->getProcessOptions();
+         options.args.push_back("--rcfile");
+         options.args.push_back(bashProfile.getAbsolutePath());
+      }
+      else
+      {
+         // use ENV with other custom shells (presumedly a modern Bash shell)
+         const char* env = ::getenv("ENV");
+         cp->setenv("_REALENV", env ? env : "<unset>");
+         cp->setenv("ENV", bashProfile.getAbsolutePath());
+      }
+#else
       // set ENV so that our terminal hooks are run
       const char* env = ::getenv("ENV");
       cp->setenv("_REALENV", env ? env : "<unset>");
       cp->setenv("ENV", bashProfile.getAbsolutePath());
-   }
-   
-   /*
-
-   // enable terminal hooks for zsh
-   auto isZshShell = [&]()
-   {
-      switch (cp->getShellType())
-      {
-
-      case TerminalShell::ShellType::PosixZsh:
-      {
-         return true;
-      }
-
-      case TerminalShell::ShellType::CustomShell:
-      {
-         FilePath shellPath = cp->getShellPath();
-         std::string shellName = shellPath.getFilename();
-
-#ifdef _WIN32
-         if (boost::algorithm::ends_with(shellName, "zsh.exe"))
-            return true;
 #endif
-
-         if (boost::algorithm::ends_with(shellName, "zsh"))
-            return true;
-      }
-
-      default:
-      {
-         return false;
-      }
-
-      }
-   };
-
-   if (isZshShell())
-   {
-      core::FilePath zshDotDir = session::options().rResourcesPath().completeChildPath("terminal/zsh");
-      core::FilePath zshProfile = zshDotDir.completeChildPath(".zprofile");
-
-      // set ENV so that our terminal hooks are run
-      const char* env = ::getenv("ENV");
-      cp->setenv("_REALENV", env ? env : "<unset>");
-      cp->setenv("ENV", zshProfile.getAbsolutePath());
    }
-   
-   */
    
    // let terminals know if python integration is enabled
    cp->setenv(
