@@ -105,39 +105,7 @@ core::system::ProcessOptions ConsoleProcess::createTerminalProcOptions(
 
    *pSelectedShellType = procInfo.getShellType();
 
-#ifndef _WIN32
-   // set xterm title to show current working directory after each command
-   using ShellType = TerminalShell::ShellType;
-   switch (procInfo.getShellType())
-   {
-   case ShellType::PosixBash:
-   {
-      // NOTE: We don't use `${string//pattern/replacement}`-style variable substituion
-      // on Bash, as the way tilde is handling seems to have changed across different
-      // versions of Bash. `dirs` is more stable and portable across different Bash versions.
-      const char* kPromptCommand = R"((_RS_PWD=$(dirs +0); echo -ne "\033]0;${_RS_PWD}\007"); unset _RS_PWD))"; 
-      core::system::setenv(&shellEnv, "PROMPT_COMMAND", kPromptCommand);
-      break;
-   }
-   default:
-   {
-      const char* kPromptCommand = R"(echo -ne "\033]0;${PWD/#${HOME}/~}\007")"; 
-      core::system::setenv(&shellEnv, "PROMPT_COMMAND", kPromptCommand);
-      break;
-   }
-   }
-
-   // don't add commands starting with a space to shell history
-   if (procInfo.getTrackEnv())
-   {
-      // HISTCONTROL is Bash-specific. In Zsh we rely on the shell having the 
-      // HIST_IGNORE_SPACE option set, which we do via -g when we start Zsh. In the
-      // future we could make environment-capture smarter and not set this variable
-      // for shells that don't use it, but for now keeping it to avoid having to 
-      // rework PrivateCommand class.
-      core::system::setenv(&shellEnv, "HISTCONTROL", "ignoreboth");
-   }
-#else
+#ifdef _WIN32
    core::system::setHomeToUserProfile(&shellEnv);
 #endif
    
@@ -160,9 +128,10 @@ core::system::ProcessOptions ConsoleProcess::createTerminalProcOptions(
 
    // set options
    core::system::ProcessOptions options;
-   options.workingDir = procInfo.getCwd().isEmpty() ? module_context::shellWorkingDirectory() :
-                                                    procInfo.getCwd();
-   options.environment = shellEnv;
+   options.workingDir = procInfo.getCwd().isEmpty()
+         ? module_context::shellWorkingDirectory() :
+           procInfo.getCwd();
+   
    options.smartTerminal = true;
 #ifdef _WIN32
    options.reportHasSubprocs = false; // child process detection not supported on Windows
@@ -203,7 +172,46 @@ core::system::ProcessOptions ConsoleProcess::createTerminalProcOptions(
          options.args = sysShell.args;
       }
    }
+   
+#ifndef _WIN32
+   // set xterm title to show current working directory after each command
+   switch (shell.getEffectiveShellType())
+   {
+   
+   case TerminalShell::ShellType::PosixBash:
+   {
+      // NOTE: We don't use `${string//pattern/replacement}`-style variable substituion
+      // on Bash, as the way tilde is handling seems to have changed across different
+      // versions of Bash. `dirs` is more stable and portable across different Bash versions.
+      const char* kPromptCommand = R"((_RS_PWD=$(dirs +0); echo -ne "\033]0;${_RS_PWD}\007"; unset _RS_PWD))"; 
+      core::system::setenv(&shellEnv, "PROMPT_COMMAND", kPromptCommand);
+      break;
+   }
+      
+   default:
+   {
+      const char* kPromptCommand = R"(echo -ne "\033]0;${PWD/#${HOME}/~}\007")"; 
+      core::system::setenv(&shellEnv, "PROMPT_COMMAND", kPromptCommand);
+      break;
+   }
+      
+   } // end switch
 
+   // don't add commands starting with a space to shell history
+   if (procInfo.getTrackEnv())
+   {
+      // HISTCONTROL is Bash-specific. In Zsh we rely on the shell having the 
+      // HIST_IGNORE_SPACE option set, which we do via -g when we start Zsh. In the
+      // future we could make environment-capture smarter and not set this variable
+      // for shells that don't use it, but for now keeping it to avoid having to 
+      // rework PrivateCommand class.
+      core::system::setenv(&shellEnv, "HISTCONTROL", "ignoreboth");
+   }
+#endif
+
+   // finally, set up environment
+   options.environment = shellEnv;
+   
    return options;
 }
 

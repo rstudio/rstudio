@@ -155,6 +155,25 @@ void scanAvailableShells(std::vector<TerminalShell>* pShells)
 
 } // anonymous namespace
 
+TerminalShell::ShellType TerminalShell::getEffectiveShellType() const
+{
+   // keep non-custom shell types as-is
+   if (type != TerminalShell::ShellType::CustomShell)
+      return type;
+   
+   // otherwise, see if we can resolve the type
+#ifndef _WIN32
+   std::string filename = path.getFilename();
+   if (filename == "bash")
+      return TerminalShell::ShellType::PosixBash;
+   else if (filename == "zsh")
+      return TerminalShell::ShellType::PosixZsh;
+#endif
+   
+   // continue returning 'Custom' if we couldn't infer a known internal type
+   return type;
+}
+
 core::json::Object TerminalShell::toJson() const
 {
    core::json::Object resultJson;
