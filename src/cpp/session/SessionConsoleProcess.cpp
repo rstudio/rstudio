@@ -180,9 +180,9 @@ core::system::ProcessOptions ConsoleProcess::createTerminalProcOptions(
    
    case TerminalShell::ShellType::PosixBash:
    {
-      // NOTE: We don't use `${string//pattern/replacement}`-style variable substituion
-      // on Bash, as the way tilde is handling seems to have changed across different
-      // versions of Bash. `dirs` is more stable and portable across different Bash versions.
+      // NOTE: We don't use `${string//pattern/replacement}`-style variable substitution
+      // on Bash, as the way tilde is handled as a replacement character seems to depend
+      // on some unknown factors (sometimes it needs to be escaped like '\~'?)
       const char* kPromptCommand = R"((_RS_PWD=$(dirs +0); echo -ne "\033]0;${_RS_PWD}\007"; unset _RS_PWD))"; 
       core::system::setenv(&shellEnv, "PROMPT_COMMAND", kPromptCommand);
       break;
