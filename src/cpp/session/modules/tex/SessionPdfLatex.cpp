@@ -48,6 +48,7 @@ public:
    {
       types_.push_back("pdfLaTeX");
       types_.push_back("XeLaTeX");
+      types_.push_back("LuaLaTeX");
    }
 
    const std::vector<std::string>& allTypes() const
