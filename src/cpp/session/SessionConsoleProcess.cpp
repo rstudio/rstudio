@@ -129,8 +129,8 @@ core::system::ProcessOptions ConsoleProcess::createTerminalProcOptions(
    // set options
    core::system::ProcessOptions options;
    options.workingDir = procInfo.getCwd().isEmpty()
-         ? module_context::shellWorkingDirectory() :
-           procInfo.getCwd();
+         ? module_context::shellWorkingDirectory()
+         : procInfo.getCwd();
    
    options.smartTerminal = true;
 #ifdef _WIN32
