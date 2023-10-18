@@ -363,31 +363,8 @@ bool AvailableTerminalShells::getCustomShell(TerminalShell* pShellInfo)
    core::FilePath customShellPath =
          module_context::resolveAliasedPath(prefs::userPrefs().customShellCommand());
    
-   // figure out name and type for the custom shell
-   std::string shellName = "Custom";
-   ShellType shellType = ShellType::CustomShell;
-   
-#ifndef _WIN32
-   // try to provide helpful names / types
-   std::string shellFilename = customShellPath.getFilename();
-   if (shellFilename == "bash" || shellFilename == "bash.exe")
-   {
-      shellName = "Bash";
-      shellType = ShellType::PosixBash;
-   }
-   else if (shellFilename == "zsh" || shellFilename == "zsh.exe")
-   {
-      shellName = "Zsh";
-      shellType = ShellType::PosixZsh;
-   }
-   else if (shellFilename == "fish" || shellFilename == "fish.exe")
-   {
-      shellName = "Fish";
-   }
-#endif
-   
-   pShellInfo->name = shellName;
-   pShellInfo->type = shellType;
+   pShellInfo->name = "Custom";
+   pShellInfo->type = ShellType::CustomShell;
    pShellInfo->path = customShellPath;
 
    // arguments are space separated, currently no way to represent a literal space
