@@ -14,7 +14,7 @@
 - With screen reader support enabled, hitting ESC key allows Tabbing away from editor. [accessibility] (#13593)
 
 #### Posit Workbench
--
+- Removed link for opening sessions in RStudio Desktop Pro from Session Info dialog. (rstudio-pro#5263)
 
 ### Fixed
 #### RStudio
