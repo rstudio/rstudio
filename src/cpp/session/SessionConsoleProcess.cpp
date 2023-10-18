@@ -107,8 +107,9 @@ core::system::ProcessOptions ConsoleProcess::createTerminalProcOptions(
 
 #ifndef _WIN32
    // set xterm title to show current working directory after each command
-   core::system::setenv(&shellEnv, "PROMPT_COMMAND",
-                        R"(echo -ne "\033]0;${PWD/#${HOME}/~}\007")");
+   // use 'dirs' to allow for substitution of home directory in a portable way
+   const char* kPromptCommand = R"((set +o posix; _RS_PWD=$(dirs +0); echo -ne "\033]0;${_RS_PWD}\007"); unset _RS_PWD)";
+   core::system::setenv(&shellEnv, "PROMPT_COMMAND", kPromptCommand);
 
    // don't add commands starting with a space to shell history
    if (procInfo.getTrackEnv())
