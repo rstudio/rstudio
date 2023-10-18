@@ -206,6 +206,11 @@ public:
 
    void setZombie();
    static bool useWebsockets();
+   
+   void appendArgument(const std::string& argument)
+   {
+      args_.push_back(argument);
+   }
 
 private:
    core::system::ProcessCallbacks createProcessCallbacks();

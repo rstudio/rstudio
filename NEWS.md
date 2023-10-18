@@ -33,6 +33,7 @@
 - Fixed a bug where project options updated in the Project Options pane were not properly persisted in RStudio 2023.09.0. (#13757)
 - Improved screen reader support when navigating source files in the editor. [accessibility] (#7337)
 - Fixed viewing or blaming file on GitHub for a newly created branch. (#9798)
+- Fixed an issue on macOS where '-ne' was erroneously printed to the console with certain versions of Bash. (#13809)
 
 #### Posit Workbench
 - Fixed opening job details in new windows more than once for Workbench jobs on the homepage. (rstudio/rstudio-pro#5179)

@@ -107,9 +107,25 @@ core::system::ProcessOptions ConsoleProcess::createTerminalProcOptions(
 
 #ifndef _WIN32
    // set xterm title to show current working directory after each command
-   // use 'dirs' to allow for substitution of home directory in a portable way
-   const char* kPromptCommand = R"((set +o posix; _RS_PWD=$(dirs +0); echo -ne "\033]0;${_RS_PWD}\007"); unset _RS_PWD)";
-   core::system::setenv(&shellEnv, "PROMPT_COMMAND", kPromptCommand);
+   using ShellType = TerminalShell::ShellType;
+   switch (procInfo.getShellType())
+   {
+   case ShellType::PosixBash:
+   {
+      // NOTE: We don't use `${string//pattern/replacement}`-style variable substituion
+      // on Bash, as the way tilde is handling seems to have changed across different
+      // versions of Bash. `dirs` is more stable and portable across different Bash versions.
+      const char* kPromptCommand = R"((_RS_PWD=$(dirs +0); echo -ne "\033]0;${_RS_PWD}\007"); unset _RS_PWD))"; 
+      core::system::setenv(&shellEnv, "PROMPT_COMMAND", kPromptCommand);
+      break;
+   }
+   default:
+   {
+      const char* kPromptCommand = R"(echo -ne "\033]0;${PWD/#${HOME}/~}\007")"; 
+      core::system::setenv(&shellEnv, "PROMPT_COMMAND", kPromptCommand);
+      break;
+   }
+   }
 
    // don't add commands starting with a space to shell history
    if (procInfo.getTrackEnv())
@@ -920,59 +936,17 @@ void useTerminalHooks(ConsoleProcessPtr cp)
       core::FilePath bashDotDir = session::options().rResourcesPath().completeChildPath("terminal/bash");
       core::FilePath bashProfile = bashDotDir.completeChildPath(".bash_profile");
 
+#ifdef __APPLE__
+      // use --rcfile to set startup scripts
+      cp->appendArgument("--rcfile");
+      cp->appendArgument(bashProfile.getAbsolutePath());
+#else
       // set ENV so that our terminal hooks are run
       const char* env = ::getenv("ENV");
       cp->setenv("_REALENV", env ? env : "<unset>");
       cp->setenv("ENV", bashProfile.getAbsolutePath());
-   }
-   
-   /*
-
-   // enable terminal hooks for zsh
-   auto isZshShell = [&]()
-   {
-      switch (cp->getShellType())
-      {
-
-      case TerminalShell::ShellType::PosixZsh:
-      {
-         return true;
-      }
-
-      case TerminalShell::ShellType::CustomShell:
-      {
-         FilePath shellPath = cp->getShellPath();
-         std::string shellName = shellPath.getFilename();
-
-#ifdef _WIN32
-         if (boost::algorithm::ends_with(shellName, "zsh.exe"))
-            return true;
 #endif
-
-         if (boost::algorithm::ends_with(shellName, "zsh"))
-            return true;
-      }
-
-      default:
-      {
-         return false;
-      }
-
-      }
-   };
-
-   if (isZshShell())
-   {
-      core::FilePath zshDotDir = session::options().rResourcesPath().completeChildPath("terminal/zsh");
-      core::FilePath zshProfile = zshDotDir.completeChildPath(".zprofile");
-
-      // set ENV so that our terminal hooks are run
-      const char* env = ::getenv("ENV");
-      cp->setenv("_REALENV", env ? env : "<unset>");
-      cp->setenv("ENV", zshProfile.getAbsolutePath());
    }
-   
-   */
    
    // let terminals know if python integration is enabled
    cp->setenv(

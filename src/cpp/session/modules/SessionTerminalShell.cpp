@@ -327,10 +327,10 @@ bool AvailableTerminalShells::getSystemShell(TerminalShell* pShellInfo)
 {
 #ifdef _WIN32
    
-   pShellInfo->path = core::system::expandComSpec();
-   pShellInfo->type = TerminalShell::ShellType::Cmd64;
    pShellInfo->name = "Command Prompt";
-   
+   pShellInfo->type = TerminalShell::ShellType::Cmd64;
+   pShellInfo->path = core::system::expandComSpec();
+
 #else
    
    // use default bash shell
@@ -338,11 +338,18 @@ bool AvailableTerminalShells::getSystemShell(TerminalShell* pShellInfo)
    pShellInfo->type = TerminalShell::ShellType::PosixBash;
    pShellInfo->path = core::FilePath("/usr/bin/env");
    pShellInfo->args.emplace_back("bash");
+   
+# ifndef __APPLE__
+   
+   // the default Bash installation on macOS does not support sourcing
+   // of scripts specified in the ENV environment variable, or so it seems
    pShellInfo->args.emplace_back("--login");  // act like a login shell
    
    // if terminal hooks are enabled, start in POSIX mode, so we can control startup init scripts 
    if (prefs::userPrefs().terminalHooks())
       pShellInfo->args.emplace_back("--posix");
+   
+# endif
    
 #endif
    
@@ -351,11 +358,36 @@ bool AvailableTerminalShells::getSystemShell(TerminalShell* pShellInfo)
 
 bool AvailableTerminalShells::getCustomShell(TerminalShell* pShellInfo)
 {
+   using ShellType = TerminalShell::ShellType;
+   
    core::FilePath customShellPath =
          module_context::resolveAliasedPath(prefs::userPrefs().customShellCommand());
    
-   pShellInfo->name = "Custom";
-   pShellInfo->type = TerminalShell::ShellType::CustomShell;
+   // figure out name and type for the custom shell
+   std::string shellName = "Custom";
+   ShellType shellType = ShellType::CustomShell;
+   
+#ifndef _WIN32
+   // try to provide helpful names / types
+   std::string shellFilename = customShellPath.getFilename();
+   if (shellFilename == "bash" || shellFilename == "bash.exe")
+   {
+      shellName = "Bash";
+      shellType = ShellType::PosixBash;
+   }
+   else if (shellFilename == "zsh" || shellFilename == "zsh.exe")
+   {
+      shellName = "Zsh";
+      shellType = ShellType::PosixZsh;
+   }
+   else if (shellFilename == "fish" || shellFilename == "fish.exe")
+   {
+      shellName = "Fish";
+   }
+#endif
+   
+   pShellInfo->name = shellName;
+   pShellInfo->type = shellType;
    pShellInfo->path = customShellPath;
 
    // arguments are space separated, currently no way to represent a literal space
@@ -365,6 +397,7 @@ bool AvailableTerminalShells::getCustomShell(TerminalShell* pShellInfo)
       args = core::algorithm::split(prefs::userPrefs().customShellOptions(), " ");
    }
    
+#ifndef __APPLE__
    if (prefs::userPrefs().terminalHooks())
    {
       // build the extra args
@@ -378,25 +411,10 @@ bool AvailableTerminalShells::getCustomShell(TerminalShell* pShellInfo)
             extraArgs.push_back("--posix");
       }
       
-      /*
-      
-      // if this is a zsh shell, then emulate 'sh'
-      else if (customShellPath.getFilename() == "zsh" || customShellPath.getFilename() == "zsh.exe")
-      {
-         bool hasEmulateFlag = core::algorithm::contains(args, "--emulate");
-         if (!hasEmulateFlag)
-         {
-            extraArgs.push_back("--emulate");
-            extraArgs.push_back("sh");
-         }
-      }
-      
-      */
-      
       // insert the arguments at the front
       args.insert(args.begin(), extraArgs.begin(), extraArgs.end());
-            
    }
+#endif
    
    pShellInfo->args = args;
    return true;
