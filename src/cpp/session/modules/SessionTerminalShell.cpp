@@ -393,13 +393,13 @@ bool AvailableTerminalShells::getCustomShell(TerminalShell* pShellInfo)
       args = core::algorithm::split(prefs::userPrefs().customShellOptions(), " ");
    }
    
-#ifndef __APPLE__
    if (prefs::userPrefs().terminalHooks())
    {
       // build the extra args
       std::vector<std::string> extraArgs;
       
       // if this appears to be a bash shell, make sure we launch it as a POSIX shell
+      // TODO: should we also launch these as --login shells? Or just rely on the user to request that?
       if (customShellPath.getFilename() == "bash" || customShellPath.getFilename() == "bash.exe")
       {
          bool hasPosixFlag = core::algorithm::contains(args, "--posix");
@@ -410,7 +410,6 @@ bool AvailableTerminalShells::getCustomShell(TerminalShell* pShellInfo)
       // insert the arguments at the front
       args.insert(args.begin(), extraArgs.begin(), extraArgs.end());
    }
-#endif
    
    pShellInfo->args = args;
    return true;

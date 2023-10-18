@@ -945,9 +945,20 @@ void useTerminalHooks(ConsoleProcessPtr cp)
       core::FilePath bashProfile = bashDotDir.completeChildPath(".bash_profile");
 
 #ifdef __APPLE__
-      // use --rcfile to set startup scripts
-      cp->appendArgument("--rcfile");
-      cp->appendArgument(bashProfile.getAbsolutePath());
+      if (cp->getShellType() == TerminalShell::ShellType::PosixBash)
+      {
+         // use --rcfile to set startup scripts when using default bash shell
+         auto&& options = cp->getProcessOptions();
+         options.args.push_back("--rcfile");
+         options.args.push_back(bashProfile.getAbsolutePath());
+      }
+      else
+      {
+         // use ENV with other custom shells (presumedly a modern Bash shell)
+         const char* env = ::getenv("ENV");
+         cp->setenv("_REALENV", env ? env : "<unset>");
+         cp->setenv("ENV", bashProfile.getAbsolutePath());
+      }
 #else
       // set ENV so that our terminal hooks are run
       const char* env = ::getenv("ENV");

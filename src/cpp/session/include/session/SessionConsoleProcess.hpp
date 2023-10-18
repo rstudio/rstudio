@@ -153,6 +153,7 @@ public:
    InteractionMode interactionMode() const { return procInfo_->getInteractionMode(); }
    
    void setenv(const std::string& name, const std::string& value);
+   core::system::ProcessOptions& getProcessOptions() { return options_; }
 
    core::Error start();
    void enqueInput(const Input& input);
@@ -206,11 +207,6 @@ public:
 
    void setZombie();
    static bool useWebsockets();
-   
-   void appendArgument(const std::string& argument)
-   {
-      args_.push_back(argument);
-   }
 
 private:
    core::system::ProcessCallbacks createProcessCallbacks();
@@ -238,7 +234,9 @@ private:
    static void loadEnvironment(const std::string& handle, core::system::Options* pEnv);
 
 private:
-   // Command and options that will be used when start() is called
+   // Command and options that will be used when start() is called.
+   // NOTE: args_ is ignored for interactive terminals; options_.args
+   // is used instead.
    std::string command_;
    std::string program_;
    std::vector<std::string> args_;
