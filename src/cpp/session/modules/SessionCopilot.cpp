@@ -308,7 +308,7 @@ FilePath copilotAgentPath()
    // Check for configured copilot path.
    FilePath copilotPath = session::options().copilotPath();
    if (copilotPath.exists())
-      return copilotPath.getParent();
+      return copilotPath;
 
    // Otherwise, use a default user location.
    return core::system::xdg::userCacheDir().completeChildPath("copilot/dist/agent.js");
