@@ -22,13 +22,14 @@ RUN $env:chocolateyUseWindowsCompression = 'true'; `
     iex ((New-Object System.Net.WebClient).DownloadString('https://chocolatey.org/install.ps1'))
 
 # install some deps via chocolatey
+# pin python to 3.11 while this issue is pending: https://github.com/nodejs/node-gyp/issues/2869
 RUN choco install -y cmake --installargs 'ADD_CMAKE_TO_PATH=""System""' --fail-on-error-output; `
   choco install -y jdk8; `
   choco install -y -i ant; `
   choco install -y windows-sdk-10.1 --version 10.1.19041.0; `
   choco install -y 7zip; `
   choco install -y ninja --version "1.10.0"; `
-  choco install -y python; `
+  choco install -y python311; `
   choco install -y nsis --version "3.08"; `
   choco install -y jq
 
