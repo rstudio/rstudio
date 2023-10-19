@@ -12,6 +12,7 @@
 - RStudio now supports the execution and display of GraphViz (`dot`) graphs in R Markdown / Quarto chunks. (#13187)
 - RStudio now supports the execution of chunks with the 'file' option set. (#13636)
 - With screen reader support enabled, hitting ESC key allows Tabbing away from editor. [accessibility] (#13593)
+- RStudio now supports `LuaLaTeX` to compile Sweave/Rnw documents. (#13812)
 
 #### Posit Workbench
 - Removed link for opening sessions in RStudio Desktop Pro from Session Info dialog. (rstudio-pro#5263)
