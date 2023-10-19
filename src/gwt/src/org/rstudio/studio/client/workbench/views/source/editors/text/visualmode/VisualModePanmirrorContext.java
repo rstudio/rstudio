@@ -284,9 +284,10 @@ public class VisualModePanmirrorContext
       
       uiContext.resolveBase64Images = (images) -> {
          return new Promise<JsArrayString>((ResolveCallbackFn<JsArrayString> resolve, RejectCallbackFn reject) -> {
+            String documentPath = uiContext.getDocumentPath.get();
             FileSystemItem resourceDir = FileSystemItem.createDir(uiContext.getDefaultResourceDir.get());
-            String imagesDir = resourceDir.completePath(constants_.images());
-            server_.rmdSaveBase64Images(images, imagesDir, new ServerRequestCallback<JsArrayString>()
+            String imagesDir = resourceDir.completePath("images");
+            server_.rmdSaveBase64Images(images, documentPath, imagesDir, new ServerRequestCallback<JsArrayString>()
             {
                @Override
                public void onResponseReceived(JsArrayString response)
