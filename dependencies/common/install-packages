@@ -24,7 +24,7 @@ PACKAGES=(
   digest@0.6.31  # work around arm64 build failures with digest 0.6.32
   purrr
   rmarkdown
-  testthat@3.1.9 # testthat@3.2.0 requires R >= 3.6.0, but opensuse/leap:15.3 only has R 3.5.0
+  testthat
   xml2
   yaml
 )
