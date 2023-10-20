@@ -14,12 +14,17 @@
  */
 package org.rstudio.core.client.widget;
 
+import org.rstudio.core.client.resources.CoreResources;
+
 import com.google.gwt.animation.client.Animation;
 import com.google.gwt.aria.client.Roles;
 import com.google.gwt.core.client.GWT;
 import com.google.gwt.core.client.Scheduler;
 import com.google.gwt.core.client.Scheduler.ScheduledCommand;
-import com.google.gwt.dom.client.*;
+import com.google.gwt.dom.client.DivElement;
+import com.google.gwt.dom.client.ImageElement;
+import com.google.gwt.dom.client.Style;
+import com.google.gwt.dom.client.TableElement;
 import com.google.gwt.event.dom.client.ClickEvent;
 import com.google.gwt.event.dom.client.ClickHandler;
 import com.google.gwt.resources.client.ClientBundle;
@@ -33,8 +38,6 @@ import com.google.gwt.user.client.ui.Composite;
 import com.google.gwt.user.client.ui.HTMLPanel;
 import com.google.gwt.user.client.ui.LayoutPanel;
 import com.google.gwt.user.client.ui.Widget;
-
-import org.rstudio.core.client.resources.CoreResources;
 
 public class SlideLabel extends Composite
 {
@@ -231,6 +234,7 @@ public class SlideLabel extends Composite
                @Override
                protected void onComplete()
                {
+                  setHeight(height);
                   currentAnimation_ = null;
                   if (autoHideMillis >= 0)
                   {

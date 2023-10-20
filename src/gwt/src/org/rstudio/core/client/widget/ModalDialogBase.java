@@ -14,6 +14,23 @@
  */
 package org.rstudio.core.client.widget;
 
+import java.util.ArrayList;
+
+import org.rstudio.core.client.CoreClientConstants;
+import org.rstudio.core.client.Debug;
+import org.rstudio.core.client.ElementIds;
+import org.rstudio.core.client.Point;
+import org.rstudio.core.client.StringUtil;
+import org.rstudio.core.client.command.ShortcutManager;
+import org.rstudio.core.client.command.ShortcutManager.Handle;
+import org.rstudio.core.client.dom.DomUtils;
+import org.rstudio.core.client.dom.NativeWindow;
+import org.rstudio.core.client.theme.res.ThemeStyles;
+import org.rstudio.studio.client.RStudioGinjector;
+import org.rstudio.studio.client.application.events.AriaLiveStatusEvent.Severity;
+import org.rstudio.studio.client.application.ui.RStudioThemes;
+import org.rstudio.studio.client.common.Timers;
+
 import com.google.gwt.animation.client.Animation;
 import com.google.gwt.aria.client.DialogRole;
 import com.google.gwt.aria.client.Id;
@@ -40,22 +57,6 @@ import com.google.gwt.user.client.ui.VerticalPanel;
 import com.google.gwt.user.client.ui.Widget;
 
 import elemental2.dom.DomGlobal;
-import org.rstudio.core.client.CoreClientConstants;
-import org.rstudio.core.client.Debug;
-import org.rstudio.core.client.ElementIds;
-import org.rstudio.core.client.Point;
-import org.rstudio.core.client.StringUtil;
-import org.rstudio.core.client.command.ShortcutManager;
-import org.rstudio.core.client.command.ShortcutManager.Handle;
-import org.rstudio.core.client.dom.DomUtils;
-import org.rstudio.core.client.dom.NativeWindow;
-import org.rstudio.core.client.theme.res.ThemeStyles;
-import org.rstudio.studio.client.RStudioGinjector;
-import org.rstudio.studio.client.application.events.AriaLiveStatusEvent.Severity;
-import org.rstudio.studio.client.application.ui.RStudioThemes;
-import org.rstudio.studio.client.common.Timers;
-
-import java.util.ArrayList;
 
 public abstract class ModalDialogBase extends DialogBox
                                       implements AriaLiveStatusReporter
@@ -437,10 +438,16 @@ public abstract class ModalDialogBase extends DialogBox
 
    protected ProgressIndicator addProgressIndicator()
    {
-      return addProgressIndicator(true);
+      return addProgressIndicator(true, true);
    }
 
    protected ProgressIndicator addProgressIndicator(final boolean closeOnCompleted)
+   {
+      return addProgressIndicator(closeOnCompleted, true);
+   }
+   
+   protected ProgressIndicator addProgressIndicator(final boolean closeOnCompleted,
+                                                    final boolean disableCancelOnProgress)
    {
       final SlideLabel label = new SlideLabel(true);
       Element labelEl = label.getElement();
@@ -471,7 +478,9 @@ public abstract class ModalDialogBase extends DialogBox
                label.setText(message, false);
                if (!showing_)
                {
-                  enableControls(false);
+                  if (disableCancelOnProgress)
+                     enableControls(false);
+                  
                   label.show();
                   showing_ = true;
                }
