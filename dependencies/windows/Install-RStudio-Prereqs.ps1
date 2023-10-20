@@ -63,6 +63,7 @@ iex ((New-Object System.Net.WebClient).DownloadString('https://chocolatey.org/in
 refreshenv
 
 # install some deps via chocolatey
+# pin python to 3.11 while this issue is pending: https://github.com/nodejs/node-gyp/issues/2869
 choco install -y cmake --installargs 'ADD_CMAKE_TO_PATH=""System""' --fail-on-error-output
 refreshenv
 choco install -y jdk8
@@ -74,7 +75,7 @@ choco install -y windows-sdk-10.1 --version 10.1.19041.0
 choco install -y visualstudio2019buildtools --version 16.11.10.0
 choco install -y visualstudio2019-workload-vctools --version 1.0.1
 choco install -y nsis
-choco install -y python
+choco install -y python311
 choco install -y jq
 
 # cpack (an alias from chocolatey) and cmake's cpack conflict.
