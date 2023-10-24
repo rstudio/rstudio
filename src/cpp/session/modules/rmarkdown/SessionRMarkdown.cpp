@@ -1582,9 +1582,8 @@ Error rmdSaveBase64Images(const json::JsonRpcRequest& request,
 {
    // read params
    json::Array imageDataJson;
-   std::string documentPath;
    std::string imagesDir;
-   Error error = json::readParams(request.params, &imageDataJson, &documentPath, &imagesDir);
+   Error error = json::readParams(request.params, &imageDataJson, &imagesDir);
    if (error)
       return error;
 
@@ -1638,14 +1637,8 @@ Error rmdSaveBase64Images(const json::JsonRpcRequest& request,
          if (error)
             LOG_ERROR(error);
          
-         // return a relative path to the generated image
-         std::string resolvedPath = imagePath.getAbsolutePath();
-         if (!documentPath.empty())
-         {
-            FilePath resolvedDocumentPath = module_context::resolveAliasedPath(documentPath);
-            resolvedPath = imagePath.getRelativePath(resolvedDocumentPath.getParent());
-         }
-         
+         // return path to generated image
+         std::string resolvedPath = fmt::format("images/{}", fileName);
          createdImages.push_back(resolvedPath);
       }
       else

@@ -964,7 +964,10 @@ bool isFileInSessionQuartoProject(const core::FilePath& file)
    if (config.is_project)
    {
       FilePath projDir = module_context::resolveAliasedPath(config.project_dir);
-      return file.isWithin(projDir);
+      projDir = FilePath(projDir.getCanonicalPath());
+      
+      FilePath canonicalFile = FilePath(file.getCanonicalPath());
+      return canonicalFile.isWithin(projDir);
    }
    else
    {
@@ -977,17 +980,18 @@ std::string urlPathForQuartoProjectOutputFile(const core::FilePath& outputFile)
 {
    if (!outputFile.isEmpty())
    {
-      FilePath quartoProjectDir = module_context::resolveAliasedPath(
-         quartoConfig().project_dir
-      );
-
-      FilePath quartoProjectOutputDir = quartoProjectDir.completeChildPath(
-         quartoConfig().project_output_dir
-      );
-      std::string path = outputFile.isWithin(quartoProjectOutputDir)
-                            ? outputFile.getRelativePath(quartoProjectOutputDir)
-                            :  std::string();
-      return path;
+      // get quarto project directory
+      FilePath quartoProjectDir = module_context::resolveAliasedPath(quartoConfig().project_dir);
+      
+      // resolve symlinks in path, since 'FilePath::isWithin()' doesn't do this for us
+      FilePath canonicalOutputFile = FilePath(outputFile.getCanonicalPath());
+      quartoProjectDir = FilePath(quartoProjectDir.getCanonicalPath());
+      
+      // check whether the output file lives within the output directory
+      FilePath quartoProjectOutputDir = quartoProjectDir.completeChildPath(quartoConfig().project_output_dir);
+      return canonicalOutputFile.isWithin(quartoProjectOutputDir)
+            ? canonicalOutputFile.getRelativePath(quartoProjectOutputDir)
+            : std::string();
    }
    else
    {

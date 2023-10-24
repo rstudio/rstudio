@@ -5707,13 +5707,11 @@ public class RemoteServer implements Server
    
    @Override
    public void rmdSaveBase64Images(JsArrayString images,
-                                   String documentPath,
                                    String imagesDir,
                                    ServerRequestCallback<JsArrayString> requestCallback)
    {
       JSONArray params = new JSONArrayBuilder()
             .add(images)
-            .add(StringUtil.notNull(documentPath))
             .add(imagesDir)
             .get();
       
