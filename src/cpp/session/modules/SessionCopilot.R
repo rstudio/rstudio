@@ -83,3 +83,14 @@
    
    TRUE
 })
+
+.rs.addFunction("copilot.networkProxy", function()
+{
+   # check for proxy from option
+   proxy <- getOption("rstudio.copilot.networkProxy")
+   if (is.null(proxy))
+      return(NULL)
+ 
+   # return as scalar list  
+   .rs.scalarListFromList(proxy)
+})

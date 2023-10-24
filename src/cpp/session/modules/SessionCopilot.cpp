@@ -380,7 +380,12 @@ void setEditorInfo()
    paramsJson["editorInfo"] = editorInfoJson;
    paramsJson["editorPluginInfo"] = editorInfoJson;
    
-   SEXP networkProxySEXP = r::options::getOption("rstudio.copilot.networkProxy");
+   r::sexp::Protect protect;
+   SEXP networkProxySEXP = R_NilValue;
+   Error error = r::exec::RFunction(".rs.copilot.networkProxy").call(&networkProxySEXP, &protect);
+   if (error)
+      LOG_ERROR(error);
+   
    if (networkProxySEXP != R_NilValue)
    {
       json::Value networkProxyJson;
@@ -389,7 +394,10 @@ void setEditorInfo()
          LOG_ERROR(error);
       
       if (networkProxyJson.isObject())
+      {
+         DLOG("Using network proxy: {}", networkProxyJson.writeFormatted());
          paramsJson["networkProxy"] = networkProxyJson.getObject();
+      }
    }
    
    SEXP authProviderSEXP = r::options::getOption("rstudio.copilot.authProvider");
@@ -401,9 +409,11 @@ void setEditorInfo()
          LOG_ERROR(error);
       
       if (authProviderJson.isObject())
+      {
+         DLOG("Using authentication provider: {}", authProviderJson.writeFormatted());
          paramsJson["authProvider"] = authProviderJson.getObject();
+      }
    }
-   
    
    std::string requestId = core::system::generateUuid();
    sendRequest("setEditorInfo", requestId, paramsJson, CopilotContinuation());
