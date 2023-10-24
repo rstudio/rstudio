@@ -447,10 +447,12 @@ Error jsonValueFromVector(SEXP vectorSEXP, core::json::Value* pValue)
 {
    int vectorLength = Rf_length(vectorSEXP);
 
-   if (Rf_inherits(vectorSEXP, "rs.scalar"))
+   if (Rf_inherits(vectorSEXP, "rs.scalar") || Rf_inherits(vectorSEXP, "AsIs"))
    {
       if (vectorLength > 0)
+      {
          return jsonValueFromVectorElement(vectorSEXP, 0, pValue);
+      }
       else
       {
          // return null
@@ -460,7 +462,7 @@ Error jsonValueFromVector(SEXP vectorSEXP, core::json::Value* pValue)
    }
 
    core::json::Array vectorValues;
-   for (int i=0; i<vectorLength; i++)
+   for (int i = 0; i < vectorLength; i++)
    {
       core::json::Value elementValue;
       Error error = jsonValueFromVectorElement(vectorSEXP, i, &elementValue);

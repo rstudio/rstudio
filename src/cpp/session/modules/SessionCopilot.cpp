@@ -380,18 +380,51 @@ void setEditorInfo()
    paramsJson["editorInfo"] = editorInfoJson;
    paramsJson["editorPluginInfo"] = editorInfoJson;
    
-   SEXP networkProxySEXP = r::options::getOption("rstudio.copilot.networkProxy");
-   if (networkProxySEXP != R_NilValue)
+   // network proxy settings 
+   r::sexp::Protect protect;
+   SEXP networkProxySEXP = R_NilValue;
+      
+   // check strict ssl flag
+   bool proxyStrictSsl = session::options().copilotProxyStrictSsl();
+   
+   // check for server-configured proxy URL
+   std::string proxyUrl = session::options().copilotProxyUrl();
+   if (!proxyUrl.empty())
    {
-      json::Value networkProxyJson;
-      Error error = r::json::jsonValueFromObject(networkProxySEXP, &networkProxyJson);
+      // parse the URL into its associated components
+      Error error = r::exec::RFunction(".rs.copilot.parseNetworkProxyUrl")
+            .addUtf8Param(proxyUrl)
+            .call(&networkProxySEXP, &protect);
       if (error)
          LOG_ERROR(error);
-      
-      if (networkProxyJson.isObject())
-         paramsJson["networkProxy"] = networkProxyJson.getObject();
    }
    
+   // if the network proxy isn't set, try reading a fallback from R
+   if (networkProxySEXP == R_NilValue)
+   {
+      Error error = r::exec::RFunction(".rs.copilot.networkProxy").call(&networkProxySEXP, &protect);
+      if (error)
+         LOG_ERROR(error);
+   }
+
+   // if we now have a network proxy definition, use it
+   if (networkProxySEXP != R_NilValue)
+   {
+      json::Value networkProxy;
+      Error error = r::json::jsonValueFromObject(networkProxySEXP, &networkProxy);
+      if (error)
+         LOG_ERROR(error);
+
+      if (networkProxy.isObject())
+      {
+         DLOG("Using network proxy: {}", networkProxy.writeFormatted());
+         json::Object networkProxyJson = networkProxy.getObject();
+         networkProxyJson["rejectUnauthorized"] = proxyStrictSsl;
+         paramsJson["networkProxy"] = networkProxyJson.getObject();
+      }
+   }
+   
+   // check for authentication provider configuration from R
    SEXP authProviderSEXP = r::options::getOption("rstudio.copilot.authProvider");
    if (authProviderSEXP != R_NilValue)
    {
@@ -401,9 +434,11 @@ void setEditorInfo()
          LOG_ERROR(error);
       
       if (authProviderJson.isObject())
+      {
+         DLOG("Using authentication provider: {}", authProviderJson.writeFormatted());
          paramsJson["authProvider"] = authProviderJson.getObject();
+      }
    }
-   
    
    std::string requestId = core::system::generateUuid();
    sendRequest("setEditorInfo", requestId, paramsJson, CopilotContinuation());

@@ -106,7 +106,7 @@
 {
    # hint that every non-list element of the hierarchical list l
    # is a scalar value if it is of length 1
-   l <- lapply(l, function(ele) {
+   lapply(l, function(ele) {
       if (is.null(ele))
          NULL
       else if (is.list(ele)) 
