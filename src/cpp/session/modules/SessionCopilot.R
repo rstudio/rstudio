@@ -122,6 +122,9 @@
    
    # drop the 'url' and 'protocol' fields as they are not used by copilot
    networkProxy[c("url", "protocol")] <- NULL
+   
+   # port needs to be a number
+   networkProxy[["port"]] <- as.numeric(networkProxy[["port"]])
 
    # return rest of the data   
    .rs.scalarListFromList(networkProxy)
