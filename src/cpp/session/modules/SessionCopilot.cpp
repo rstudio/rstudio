@@ -380,6 +380,37 @@ void setEditorInfo()
    paramsJson["editorInfo"] = editorInfoJson;
    paramsJson["editorPluginInfo"] = editorInfoJson;
    
+   // check for server-configured proxy URL
+   std::string proxyUrl = session::options().copilotProxyUrl();
+   if (!proxyUrl.empty())
+   {
+      // parse the URL into its associated components
+      r::sexp::Protect protect;
+      SEXP networkProxySEXP = R_NilValue;
+      Error error = r::exec::RFunction(".rs.copilot.parseNetworkProxyUrl")
+            .addUtf8Param(proxyUrl)
+            .call(&networkProxySEXP, &protect);
+      if (error)
+         LOG_ERROR(error);
+
+      // if we succeeded, set it
+      if (networkProxySEXP != R_NilValue)
+      {
+         json::Value networkProxyJson;
+         Error error = r::json::jsonValueFromObject(networkProxySEXP, &networkProxyJson);
+         if (error)
+            LOG_ERROR(error);
+
+         if (networkProxyJson.isObject())
+         {
+            DLOG("Using network proxy: {}", networkProxyJson.writeFormatted());
+            paramsJson["networkProxy"] = networkProxyJson.getObject();
+         }
+      }
+
+   }
+   
+   // check for proxy configuration from R
    r::sexp::Protect protect;
    SEXP networkProxySEXP = R_NilValue;
    Error error = r::exec::RFunction(".rs.copilot.networkProxy").call(&networkProxySEXP, &protect);
@@ -400,6 +431,7 @@ void setEditorInfo()
       }
    }
    
+   // check for authentication provider configuration from R
    SEXP authProviderSEXP = r::options::getOption("rstudio.copilot.authProvider");
    if (authProviderSEXP != R_NilValue)
    {

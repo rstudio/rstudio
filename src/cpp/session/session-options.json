@@ -825,6 +825,13 @@
             "memberName": "copilotEnabled_",
             "defaultValue": false,
             "description": "Indicates whether or not GitHub Copilot integration can be enabled."
+         },
+         {
+            "name": "copilot-proxy-url",
+            "type": "string",
+            "memberName": "copilotProxyUrl_",
+            "defaultValue": "",
+            "description": "The proxy URL that the Copilot agent should use for outgoing network requests. Only plain HTTP proxy URLs are supported."
          }
       ],
       "misc": [

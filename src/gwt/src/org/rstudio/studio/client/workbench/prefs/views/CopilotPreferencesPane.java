@@ -173,7 +173,7 @@ public class CopilotPreferencesPane extends PreferencesPane
          add(headerLabel("Copilot Indexing"));
          add(spaced(cbCopilotIndexingEnabled_));
 
-         add(headerLabel("Copilot Completions"));
+         add(spacedBefore(headerLabel("Copilot Completions")));
          // add(checkboxPref(prefs_.copilotAllowAutomaticCompletions()));
          // add(selCopilotTabKeyBehavior_);
          add(numericPref("Show code suggestions after keyboard idle (ms):", 10, 5000, prefs_.copilotCompletionsDelay()));

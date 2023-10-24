@@ -94,3 +94,35 @@
    # return as scalar list  
    .rs.scalarListFromList(proxy)
 })
+
+.rs.addFunction("copilot.parseNetworkProxyUrl", function(url)
+{
+   # build regex
+   reProxyUrl <- paste0(
+      "(?:(\\w+)://)?",         # protocol (optional)
+      "(?:([^:]+):([^@]+)@)?",  # username + password (optional)
+      "([^:]+):(\\d+)"          # host + port (required)
+   )
+   
+   # attempt to match
+   networkProxy <- as.list(regmatches(url, regexec(reProxyUrl, url))[[1L]])
+   if (length(networkProxy) != 6L)
+      warning("couldn't parse network proxy url '", url, "'")
+   
+   # set names of matched values
+   names(networkProxy) <- c("url", "protocol", "user", "pass", "host", "port")
+   
+   # drop empty strings
+   networkProxy[!nzchar(networkProxy)] <- NULL
+   
+   # validate the protocol, if it was set
+   protocol <- .rs.nullCoalesce(networkProxy$protocol, "http")
+   if (protocol != "http")
+      warning("only 'http' network proxies are supported")
+   
+   # drop the 'url' and 'protocol' fields as they are not used by copilot
+   networkProxy[c("url", "protocol")] <- NULL
+
+   # return rest of the data   
+   .rs.scalarListFromList(networkProxy)
+})
