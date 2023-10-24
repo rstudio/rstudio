@@ -156,7 +156,15 @@ public class VisualModePanmirrorContext
       };
 
       uiContext.mapResourceToURL = path -> {
+         
+         // resolve asset path
          path = resolvePath(path);
+         
+         // root paths should be resolved relative to the resource directory,
+         // so if the path starts with a leading slash, just remove it
+         if (path.startsWith("/"))
+            path = path.substring(1);
+         
          FileSystemItem resourceDir = FileSystemItem.createDir(uiContext.getDefaultResourceDir.get());
          return ImagePreviewer.imgSrcPathFromHref(resourceDir.getPath(), path);
       };
@@ -284,10 +292,9 @@ public class VisualModePanmirrorContext
       
       uiContext.resolveBase64Images = (images) -> {
          return new Promise<JsArrayString>((ResolveCallbackFn<JsArrayString> resolve, RejectCallbackFn reject) -> {
-            String documentPath = uiContext.getDocumentPath.get();
             FileSystemItem resourceDir = FileSystemItem.createDir(uiContext.getDefaultResourceDir.get());
             String imagesDir = resourceDir.completePath("images");
-            server_.rmdSaveBase64Images(images, documentPath, imagesDir, new ServerRequestCallback<JsArrayString>()
+            server_.rmdSaveBase64Images(images, imagesDir, new ServerRequestCallback<JsArrayString>()
             {
                @Override
                public void onResponseReceived(JsArrayString response)

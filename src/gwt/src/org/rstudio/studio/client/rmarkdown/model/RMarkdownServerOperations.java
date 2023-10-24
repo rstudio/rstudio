@@ -120,7 +120,6 @@ public interface RMarkdownServerOperations extends CryptoServerOperations
                         ServerRequestCallback<JsArrayString> requestCallback);
    
    void rmdSaveBase64Images(JsArrayString images,
-                            String documentPath,
                             String imagesDir,
                             ServerRequestCallback<JsArrayString> requestCallback);
    
