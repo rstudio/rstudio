@@ -832,6 +832,13 @@
             "memberName": "copilotProxyUrl_",
             "defaultValue": "",
             "description": "The proxy URL that the Copilot agent should use for outgoing network requests. Only plain HTTP proxy URLs are supported."
+         },
+         {
+            "name": "copilot-proxy-strict-ssl",
+            "type": "bool",
+            "memberName": "copilotProxyStrictSsl_",
+            "defaultValue": true,
+            "description": "Should the GitHub Copilot agent perform SSL certificate validation when forming web requests?"
          }
       ],
       "misc": [

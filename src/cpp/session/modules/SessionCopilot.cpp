@@ -380,53 +380,46 @@ void setEditorInfo()
    paramsJson["editorInfo"] = editorInfoJson;
    paramsJson["editorPluginInfo"] = editorInfoJson;
    
+   // network proxy settings 
+   r::sexp::Protect protect;
+   SEXP networkProxySEXP = R_NilValue;
+      
+   // check strict ssl flag
+   bool proxyStrictSsl = session::options().copilotProxyStrictSsl();
+   
    // check for server-configured proxy URL
    std::string proxyUrl = session::options().copilotProxyUrl();
    if (!proxyUrl.empty())
    {
       // parse the URL into its associated components
-      r::sexp::Protect protect;
-      SEXP networkProxySEXP = R_NilValue;
       Error error = r::exec::RFunction(".rs.copilot.parseNetworkProxyUrl")
             .addUtf8Param(proxyUrl)
             .call(&networkProxySEXP, &protect);
       if (error)
          LOG_ERROR(error);
-
-      // if we succeeded, set it
-      if (networkProxySEXP != R_NilValue)
-      {
-         json::Value networkProxyJson;
-         Error error = r::json::jsonValueFromObject(networkProxySEXP, &networkProxyJson);
-         if (error)
-            LOG_ERROR(error);
-
-         if (networkProxyJson.isObject())
-         {
-            DLOG("Using network proxy: {}", networkProxyJson.writeFormatted());
-            paramsJson["networkProxy"] = networkProxyJson.getObject();
-         }
-      }
-
    }
    
-   // check for proxy configuration from R
-   r::sexp::Protect protect;
-   SEXP networkProxySEXP = R_NilValue;
-   Error error = r::exec::RFunction(".rs.copilot.networkProxy").call(&networkProxySEXP, &protect);
-   if (error)
-      LOG_ERROR(error);
-   
-   if (networkProxySEXP != R_NilValue)
+   // if the network proxy isn't set, try reading a fallback from R
+   if (networkProxySEXP == R_NilValue)
    {
-      json::Value networkProxyJson;
-      Error error = r::json::jsonValueFromObject(networkProxySEXP, &networkProxyJson);
+      Error error = r::exec::RFunction(".rs.copilot.networkProxy").call(&networkProxySEXP, &protect);
       if (error)
          LOG_ERROR(error);
-      
-      if (networkProxyJson.isObject())
+   }
+
+   // if we now have a network proxy definition, use it
+   if (networkProxySEXP != R_NilValue)
+   {
+      json::Value networkProxy;
+      Error error = r::json::jsonValueFromObject(networkProxySEXP, &networkProxy);
+      if (error)
+         LOG_ERROR(error);
+
+      if (networkProxy.isObject())
       {
-         DLOG("Using network proxy: {}", networkProxyJson.writeFormatted());
+         DLOG("Using network proxy: {}", networkProxy.writeFormatted());
+         json::Object networkProxyJson = networkProxy.getObject();
+         networkProxyJson["rejectUnauthorized"] = proxyStrictSsl;
          paramsJson["networkProxy"] = networkProxyJson.getObject();
       }
    }

@@ -418,7 +418,10 @@ protected:
       "Indicates whether or not GitHub Copilot integration can be enabled.")
       ("copilot-proxy-url",
       value<std::string>(&copilotProxyUrl_)->default_value(""),
-      "The proxy URL that the Copilot agent should use for outgoing network requests. Only plain HTTP proxy URLs are supported.");
+      "The proxy URL that the Copilot agent should use for outgoing network requests. Only plain HTTP proxy URLs are supported.")
+      ("copilot-proxy-strict-ssl",
+      value<bool>(&copilotProxyStrictSsl_)->default_value(true),
+      "Should the GitHub Copilot agent perform SSL certificate validation when forming web requests?");
 
    pMisc->add_options();
 
@@ -535,6 +538,7 @@ public:
    std::string launcherToken() const { return launcherToken_; }
    bool copilotEnabled() const { return copilotEnabled_; }
    std::string copilotProxyUrl() const { return copilotProxyUrl_; }
+   bool copilotProxyStrictSsl() const { return copilotProxyStrictSsl_; }
 
 
 protected:
@@ -646,6 +650,7 @@ protected:
    std::string launcherToken_;
    bool copilotEnabled_;
    std::string copilotProxyUrl_;
+   bool copilotProxyStrictSsl_;
    virtual bool allowOverlay() const { return false; };
 };
 
