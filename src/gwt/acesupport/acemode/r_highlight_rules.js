@@ -1275,6 +1275,31 @@ define("mode/r_highlight_rules", ["require", "exports", "module"], function(requ
     }]);
 
     this.normalizeRules();
+
+    // allow for multi-line strings in YAML comments
+    this.$rules["yaml-mlString"].unshift({
+        regex : /^(#[|])(\s*)/,
+        onMatch: function(value, state, stack) {
+
+            // if the indent has decreased relative to what
+            // was used to start the multiline string, then
+            // exit multiline string state
+            var indent = stack[1];
+            if (indent >= value.length) {
+                this.next = stack[0];
+            } else {
+                this.next = state;
+            }
+
+            // retrieve tokens for the matched value
+            var tokens = this.splitRegex.exec(value);
+            return [
+                { type: "comment.doc.tag", value: tokens[1] },
+                { type: "indent", value: tokens[2] }
+            ];
+        }
+    });
+
   };
 
   oop.inherits(RHighlightRules, TextHighlightRules);

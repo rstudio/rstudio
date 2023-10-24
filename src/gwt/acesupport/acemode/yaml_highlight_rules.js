@@ -77,7 +77,9 @@ var YamlHighlightRules = function() {
                 token : "string", // multi line string start
                 regex : /[|>][-+\d\s]*$/,
                 onMatch: function(val, state, stack, line) {
-                    var indent = /^\s*/.exec(line)[0];
+
+                    // compute indent (allow for comment prefix for comment-embedded YAML)
+                    var indent = /^(?:#[|])?\s*/.exec(line)[0];
 
                     // save prior state + indent length
                     stack = stack || [];
@@ -131,7 +133,8 @@ var YamlHighlightRules = function() {
                 next : "mlString"
             }, {
                 token : "string",
-                regex : '.+'
+                regex : ".+",
+                next  : "mlString"
             }
         ]};
     this.normalizeRules();
