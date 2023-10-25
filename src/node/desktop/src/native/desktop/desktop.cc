@@ -468,6 +468,67 @@ Napi::Value cleanClipboard(const Napi::CallbackInfo& info)
    return Napi::Value();
 }
 
+Napi::Value shortPathName(const Napi::CallbackInfo& info)
+{
+   Napi::String path = info[0].As<Napi::String>();
+
+#ifdef _WIN32
+
+   // Get path as UTF-8 text
+   std::string utf8Path = info[0].As<Napi::String>().Utf8Value();
+
+   // Figure out required size of string
+   std::wstring widePath(1024, 0);
+   {
+      int size = ::MultiByteToWideChar(
+         CP_UTF8, 0,
+         utf8Path.data(), utf8Path.size(),
+         &widePath[0], widePath.size()
+      );
+
+      if (size == 0) {
+         return path;
+      } else {
+         widePath.resize(size);
+      }
+   }
+
+   // Convert to a short path name
+   std::wstring wShortPath(1024, 0);
+   {
+      int size = ::GetShortPathNameW(widePath.data(), &wShortPath[0], wShortPath.size());
+      if (size == 0) {
+         return path;
+      } else {
+         wShortPath.resize(size);
+      }
+   }
+
+   // Convert back to a UTF-8 path
+   std::string aShortPath(1024, 0);
+   {
+      int size = ::WideCharToMultiByte(
+         CP_UTF8, 0,
+         wShortPath.data(), wShortPath.size(),
+         &aShortPath[0], aShortPath.size(),
+         nullptr, nullptr
+      );
+
+      if (size == 0) {
+         return path;
+      } else {
+         aShortPath.resize(size);
+      }
+   }
+
+   path = Napi::String::From(info.Env(), aShortPath);
+#endif
+
+   return path;
+}
+
+
+
 namespace {
 
 bool isCtrlKeyDownImpl()
@@ -684,6 +745,7 @@ Napi::Object Init(Napi::Env env, Napi::Object exports) {
    }
 
    RS_EXPORT_FUNCTION("cleanClipboard", rstudio::desktop::cleanClipboard);
+   RS_EXPORT_FUNCTION("shortPathName", rstudio::desktop::shortPathName);
    RS_EXPORT_FUNCTION("isCtrlKeyDown", rstudio::desktop::isCtrlKeyDown);
    RS_EXPORT_FUNCTION("currentCSIDLPersonalHomePath", rstudio::desktop::currentCSIDLPersonalHomePath);
    RS_EXPORT_FUNCTION("defaultCSIDLPersonalHomePath", rstudio::desktop::defaultCSIDLPersonalHomePath);
