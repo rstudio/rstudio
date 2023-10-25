@@ -38,6 +38,7 @@ var YamlHighlightRules = function() {
     // regexp must not have capturing parentheses. Use (?:) instead.
     // regexps are ordered -> the first match is used
     this.$rules = {
+
         "start" : [
             {
                 // NOTE: YAML inline comments must be preceded by whitespace
@@ -71,8 +72,19 @@ var YamlHighlightRules = function() {
                 token : "keyword.operator",
                 regex : "-\\s*(?=[{])"
             }, {
-                token : "string", // single line
+                token : "string", // single-line double-quoted string
                 regex : '["](?:(?:\\\\.)|(?:[^"\\\\]))*?["]'
+            }, {
+                token : "string", // single-line single-quoted string
+                regex : "['](?:(?:\\\\.)|(?:[^'\\\\]))*?[']"
+            }, {
+                token : "string",
+                regex : "'",
+                push  : "qstring"
+            }, {
+                token : "string",
+                regex : "\"",
+                push  : "qqstring"
             }, {
                 token : "string", // multi line string start
                 regex : /[|>][-+\d\s]*$/,
@@ -83,15 +95,12 @@ var YamlHighlightRules = function() {
 
                     // save prior state + indent length
                     stack = stack || [];
-                    stack[0] = state;
-                    stack[1] = indent.length;
+                    stack.unshift(indent.length);
+                    stack.unshift(state);
 
                     return this.token;
                 },
-                next : "mlString"
-            }, {
-                token : "string", // single quoted string
-                regex : "['](?:(?:\\\\.)|(?:[^'\\\\]))*?[']"
+                next  : "multiline-string"
             }, {
                 token : "constant.numeric", // float
                 regex : /(\b|[+\-\.])[\d_]+(?:(?:\.[\d_]*)?(?:[eE][+\-]?[\d_]+)?)/
@@ -109,34 +118,78 @@ var YamlHighlightRules = function() {
                 regex : "[\\])}]"
             }
         ],
-        "mlString" : [
+
+
+        "qstring" : [
+            {
+                token : "constant.escape",
+                regex : "''",
+                next  : "qstring"
+            },
+            {
+                token : "string",
+                regex : "'",
+                next  : "pop"
+            },
+            {
+                token : "string",
+                regex : ".",
+                next  : "qstring"
+            }
+        ],
+
+        "qqstring" : [
+            {
+                token : "constant.escape",
+                regex : "\\\\.",
+                next  : "qqstring"
+            },
+            {
+                token : "string",
+                regex : "\"",
+                next  : "pop"
+            },
+            {
+                token : "string",
+                regex : ".",
+                next  : "qqstring"
+            }
+        ],
+
+        "multiline-string" : [
             {
                 token : "indent",
-                regex : /^\s*$/
+                regex : /^\s*$/,
+                next  : "multiline-string"
             }, {
                 token : "indent",
                 regex : /^\s*/,
-                onMatch: function(val, state, stack) {
+                onMatch: function(value, state, stack) {
 
                     // if the indent has decreased relative to what
                     // was used to start the multiline string, then
                     // exit multiline string state
+                    var next = stack[0];
                     var indent = stack[1];
-                    if (indent >= val.length) {
-                        this.next = stack[0];
+
+                    if (indent >= value.length) {
+                        this.next = next;
+                        stack.shift();
+                        stack.shift();
                     } else {
                         this.next = state;
                     }
 
                     return this.token;
-                },
-                next : "mlString"
+                }
             }, {
                 token : "string",
                 regex : ".+",
-                next  : "mlString"
+                next  : "multiline-string"
             }
-        ]};
+        ]
+    };
+
     this.normalizeRules();
 
 };
