@@ -502,6 +502,7 @@ Napi::Value shortPathName(const Napi::CallbackInfo& info)
       }
 
       wShortPath.assign(buffer);
+      free(buffer);
    }
 
    // Set the resulting path.
