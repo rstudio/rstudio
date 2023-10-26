@@ -12,6 +12,13 @@ export declare function cleanClipboard(stripHtml: boolean): void;
 /**
  * (Windows only)
  *
+ * Convert a file path into a Windows short path name if possible.
+ */
+export declare function shortPathName(path: string): string;
+
+/**
+ * (Windows only)
+ *
  * Detect if the CTRL key is currently being held down.
  */
 export declare function isCtrlKeyDown(): boolean;

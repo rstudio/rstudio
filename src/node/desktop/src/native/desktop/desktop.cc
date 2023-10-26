@@ -468,6 +468,58 @@ Napi::Value cleanClipboard(const Napi::CallbackInfo& info)
    return Napi::Value();
 }
 
+Napi::Value shortPathName(const Napi::CallbackInfo& info)
+{
+   Napi::String path = info[0].As<Napi::String>();
+
+#ifdef _WIN32
+
+   // Get path as UTF-16 text.
+   // Note that, on Windows, std::wstring and std::u16string are interchangable.
+   // With the exception that char16_t is unsigned, and wchar_t is signed.
+   std::u16string u16Path = info[0].As<Napi::String>().Utf16Value();
+   std::wstring wPath(u16Path.begin(), u16Path.end());
+
+   // Convert to a short path.
+   std::wstring wShortPath;
+   {
+      // https://learn.microsoft.com/en-us/windows/win32/api/fileapi/nf-fileapi-getshortpathnamew
+      //
+      // If the lpszShortPath buffer is too small to contain the path, the
+      // return value is the size of the buffer, _in TCHARs_, that is required to
+      // hold the path _and the terminating null character_.
+      //
+      // Hence, the return value here does include a null terminator.
+      int requiredSizeInBytesIncludingTerminator = ::GetShortPathNameW(wPath.data(), nullptr, 0);
+      if (requiredSizeInBytesIncludingTerminator == 0) {
+         return path;
+      }
+
+      wchar_t* buffer = (wchar_t*) malloc(requiredSizeInBytesIncludingTerminator);
+      if (buffer == nullptr) {
+         return path;
+      }
+
+      int numBytesWritten = ::GetShortPathNameW(wPath.data(), buffer, requiredSizeInBytesIncludingTerminator);
+      if (numBytesWritten == 0) {
+         return path;
+      }
+
+      wShortPath.assign(buffer);
+      free(buffer);
+   }
+
+   // Set the resulting path.
+   std::u16string u16ShortPath(wShortPath.begin(), wShortPath.end());
+   path = Napi::String::From(info.Env(), u16ShortPath);
+
+#endif
+
+   return path;
+}
+
+
+
 namespace {
 
 bool isCtrlKeyDownImpl()
@@ -684,6 +736,7 @@ Napi::Object Init(Napi::Env env, Napi::Object exports) {
    }
 
    RS_EXPORT_FUNCTION("cleanClipboard", rstudio::desktop::cleanClipboard);
+   RS_EXPORT_FUNCTION("shortPathName", rstudio::desktop::shortPathName);
    RS_EXPORT_FUNCTION("isCtrlKeyDown", rstudio::desktop::isCtrlKeyDown);
    RS_EXPORT_FUNCTION("currentCSIDLPersonalHomePath", rstudio::desktop::currentCSIDLPersonalHomePath);
    RS_EXPORT_FUNCTION("defaultCSIDLPersonalHomePath", rstudio::desktop::defaultCSIDLPersonalHomePath);

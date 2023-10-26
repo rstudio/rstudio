@@ -36,6 +36,7 @@
 - Improved screen reader support when navigating source files in the editor. [accessibility] (#7337)
 - Fixed viewing or blaming file on GitHub for a newly created branch. (#9798)
 - Fixed an issue on macOS where '-ne' was erroneously printed to the console with certain versions of Bash. (#13809)
+- Fixed an issue where attempts to open files containing non-ASCII characters from the Files pane could fail on Windows. (#13855, #12467)
 
 #### Posit Workbench
 - Fixed opening job details in new windows more than once for Workbench jobs on the homepage. (rstudio/rstudio-pro#5179)

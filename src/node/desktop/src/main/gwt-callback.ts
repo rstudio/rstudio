@@ -125,7 +125,14 @@ export class GwtCallback extends EventEmitter {
     }
 
     ipcMain.on('desktop_browse_url', (event, url: string) => {
-      // TODO: review if we need additional validation of URL
+
+      // shell.openExternal() doesn't handle file URIs containining non-ASCII characters
+      if (process.platform === 'win32' && url.startsWith('file:///')) {
+        const filePath = url.substring('file:///'.length);
+        const shortPath = desktop.shortPathName(filePath);
+        url = `file:///${shortPath}`;
+      }
+
       void shell.openExternal(url);
     });
 
