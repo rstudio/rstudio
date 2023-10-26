@@ -474,54 +474,40 @@ Napi::Value shortPathName(const Napi::CallbackInfo& info)
 
 #ifdef _WIN32
 
-   // Get path as UTF-8 text
-   std::string utf8Path = info[0].As<Napi::String>().Utf8Value();
+   // Get path as UTF-16 text.
+   // Note that, on Windows, std::wstring and std::u16string are interchangable.
+   // With the exception that char16_t is unsigned, and wchar_t is signed.
+   std::u16string u16Path = info[0].As<Napi::String>().Utf16Value();
+   std::wstring wPath(u16Path.begin(), u16Path.end());
 
-   // Figure out required size of string
-   std::wstring widePath(1024, 0);
+   // Convert to a short path.
+   std::wstring wShortPath;
    {
-      int size = ::MultiByteToWideChar(
-         CP_UTF8, 0,
-         utf8Path.data(), utf8Path.size(),
-         &widePath[0], widePath.size()
-      );
-
-      if (size == 0) {
+      // https://learn.microsoft.com/en-us/windows/win32/api/fileapi/nf-fileapi-getshortpathnamew
+      //
+      // If the lpszShortPath buffer is too small to contain the path, the
+      // return value is the size of the buffer, _in TCHARs_, that is required to
+      // hold the path _and the terminating null character_.
+      //
+      // Hence, the return value here does include a null terminator.
+      int requiredSizeInBytes = ::GetShortPathNameW(wPath.data(), nullptr, 0);
+      if (requiredSizeInBytes == 0) {
          return path;
-      } else {
-         widePath.resize(size);
       }
+
+      wchar_t* buffer = (wchar_t*) malloc(requiredSizeInBytes * sizeof(wchar_t));
+      int numBytesWritten = ::GetShortPathNameW(wPath.data(), buffer, requiredSizeInBytes);
+      if (numBytesWritten == 0) {
+         return path;
+      }
+
+      wShortPath.assign(buffer);
    }
 
-   // Convert to a short path name
-   std::wstring wShortPath(1024, 0);
-   {
-      int size = ::GetShortPathNameW(widePath.data(), &wShortPath[0], wShortPath.size());
-      if (size == 0) {
-         return path;
-      } else {
-         wShortPath.resize(size);
-      }
-   }
+   // Set the resulting path.
+   std::u16string u16ShortPath(wShortPath.begin(), wShortPath.end());
+   path = Napi::String::From(info.Env(), u16ShortPath);
 
-   // Convert back to a UTF-8 path
-   std::string aShortPath(1024, 0);
-   {
-      int size = ::WideCharToMultiByte(
-         CP_UTF8, 0,
-         wShortPath.data(), wShortPath.size(),
-         &aShortPath[0], aShortPath.size(),
-         nullptr, nullptr
-      );
-
-      if (size == 0) {
-         return path;
-      } else {
-         aShortPath.resize(size);
-      }
-   }
-
-   path = Napi::String::From(info.Env(), aShortPath);
 #endif
 
    return path;
