@@ -490,13 +490,13 @@ Napi::Value shortPathName(const Napi::CallbackInfo& info)
       // hold the path _and the terminating null character_.
       //
       // Hence, the return value here does include a null terminator.
-      int requiredSizeInBytes = ::GetShortPathNameW(wPath.data(), nullptr, 0);
-      if (requiredSizeInBytes == 0) {
+      int requiredSizeInBytesIncludingTerminator = ::GetShortPathNameW(wPath.data(), nullptr, 0);
+      if (requiredSizeInBytesIncludingTerminator == 0) {
          return path;
       }
 
-      wchar_t* buffer = (wchar_t*) malloc(requiredSizeInBytes * sizeof(wchar_t));
-      int numBytesWritten = ::GetShortPathNameW(wPath.data(), buffer, requiredSizeInBytes);
+      wchar_t* buffer = (wchar_t*) malloc(requiredSizeInBytesIncludingTerminator);
+      int numBytesWritten = ::GetShortPathNameW(wPath.data(), buffer, requiredSizeInBytesIncludingTerminator);
       if (numBytesWritten == 0) {
          return path;
       }
