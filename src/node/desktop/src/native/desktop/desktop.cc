@@ -496,6 +496,10 @@ Napi::Value shortPathName(const Napi::CallbackInfo& info)
       }
 
       wchar_t* buffer = (wchar_t*) malloc(requiredSizeInBytesIncludingTerminator);
+      if (buffer == nullptr) {
+         return path;
+      }
+
       int numBytesWritten = ::GetShortPathNameW(wPath.data(), buffer, requiredSizeInBytesIncludingTerminator);
       if (numBytesWritten == 0) {
          return path;
