@@ -498,7 +498,7 @@ Napi::Value shortPathName(const Napi::CallbackInfo& info)
    }
 
    // Copy into that buffer.
-   int numBytesWritten = ::GetShortPathNameW((LPWSTR) wPath.data(), wShortPath, wShortPathSize);
+   int numBytesWritten = ::GetShortPathNameW((LPCWSTR) wPath.data(), wShortPath, wShortPathSize);
    if (numBytesWritten == 0) {
       return path;
    }
