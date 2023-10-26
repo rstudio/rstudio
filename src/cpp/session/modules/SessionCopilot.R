@@ -124,8 +124,9 @@
    networkProxy[c("url", "protocol")] <- NULL
    
    # port needs to be a number
-   networkProxy[["port"]] <- as.numeric(networkProxy[["port"]])
+   networkProxy[["port"]] <- as.integer(networkProxy[["port"]])
 
    # return rest of the data   
    .rs.scalarListFromList(networkProxy)
 })
+

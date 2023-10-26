@@ -417,8 +417,18 @@ void setEditorInfo()
 
       if (networkProxy.isObject())
       {
-         DLOG("Using network proxy: {}", networkProxy.writeFormatted());
          json::Object networkProxyJson = networkProxy.getObject();
+         
+         if (s_copilotLogLevel > 0)
+         {
+            json::Object networkProxyClone = networkProxyJson.clone().getObject();
+            if (networkProxyClone.hasMember("user"))
+               networkProxyClone["user"] = "<user>";
+            if (networkProxyClone.hasMember("pass"))
+               networkProxyClone["pass"] = "<pass>";
+            DLOG("Using network proxy: {}", networkProxyClone.writeFormatted());
+         }
+         
          networkProxyJson["rejectUnauthorized"] = proxyStrictSsl;
          paramsJson["networkProxy"] = networkProxyJson.getObject();
       }
