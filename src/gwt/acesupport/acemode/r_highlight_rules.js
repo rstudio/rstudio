@@ -1286,7 +1286,6 @@ define("mode/r_highlight_rules", ["require", "exports", "module"], function(requ
         // exit multiline string state
         var next = stack[0];
         var indent = stack[1];
-        debugger;
 
         if (indent >= value.length) {
           this.next = next;
