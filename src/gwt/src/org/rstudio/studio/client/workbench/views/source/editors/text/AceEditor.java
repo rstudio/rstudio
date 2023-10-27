@@ -476,6 +476,20 @@ public class AceEditor implements DocDisplay,
       });
 
       addFocusHandler((FocusEvent event) -> s_lastFocusedEditor = this);
+      
+      // https://github.com/rstudio/rstudio/issues/13118
+      if (behavior_ == EditorBehavior.AceBehaviorConsole)
+      {
+         setColorPreview(userPrefs_.colorPreview().getValue());
+         userPrefs_.colorPreview().addValueChangeHandler(new ValueChangeHandler<Boolean>()
+         {
+            @Override
+            public void onValueChange(ValueChangeEvent<Boolean> event)
+            {
+               setColorPreview(event.getValue());
+            }
+         });
+      }
 
       events_.addHandler(
             AceEditorCommandEvent.TYPE,
