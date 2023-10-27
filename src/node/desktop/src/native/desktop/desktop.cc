@@ -491,23 +491,17 @@ Napi::Value shortPathName(const Napi::CallbackInfo& info)
       return path;
    }
 
-   // Allocate space for the short path string.
-   LPWSTR wShortPath = (LPWSTR) malloc(wShortPathSize * sizeof(WCHAR));
-   if (wShortPath == nullptr) {
-      return path;
-   }
+   // Allocate a vector for the short path string.
+   std::vector<WCHAR> wShortPath(wShortPathSize, 0);
 
    // Copy into that buffer.
-   int numBytesWritten = ::GetShortPathNameW((LPCWSTR) wPath.data(), wShortPath, wShortPathSize);
+   int numBytesWritten = ::GetShortPathNameW((LPCWSTR) wPath.data(), &wShortPath[0], wShortPathSize);
    if (numBytesWritten == 0) {
       return path;
    }
 
    // Set the resulting path.
-   path = Napi::String::From(info.Env(), (const char16_t*) wShortPath);
-
-   // Clean up.
-   free(wShortPath);
+   path = Napi::String::From(info.Env(), (const char16_t*) &wShortPath[0]);
 
 #endif
 
