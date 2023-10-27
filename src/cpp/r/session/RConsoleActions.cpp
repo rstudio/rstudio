@@ -117,6 +117,8 @@ void ConsoleActions::add(int type, const std::string& data)
       std::size_t offset = 0;
       while (true)
       {
+         // the remaining data in the buffer is less than the chunk size;
+         // now, substring that data to remove any data we've committed
          if (pendingAction_.data.length() < offset + kChunkSize)
          {
             pendingAction_.data = pendingAction_.data.substr(offset);
@@ -129,7 +131,7 @@ void ConsoleActions::add(int type, const std::string& data)
          action.data = pendingAction_.data.substr(offset, kChunkSize);
          actions_.push_back(action);
          
-         // update offset
+         // update offset, indicating data we've committed
          offset += kChunkSize;
       }
    }
