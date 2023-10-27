@@ -78,7 +78,7 @@ private:
    // console output capture threads) can interact with console actions
    mutable boost::mutex mutex_;
    boost::circular_buffer<ConsoleAction> actions_;
-   ConsoleAction pendingAction_;
+   ConsoleAction action_;
    std::vector<std::string> pendingInput_;
 };
 
