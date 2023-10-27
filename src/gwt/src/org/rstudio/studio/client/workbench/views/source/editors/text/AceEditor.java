@@ -476,6 +476,19 @@ public class AceEditor implements DocDisplay,
       });
 
       addFocusHandler((FocusEvent event) -> s_lastFocusedEditor = this);
+      
+      // Need to set this here so that it's respected by all Ace instances,
+      // including the instance used for console input
+      // https://github.com/rstudio/rstudio/issues/13118
+      setColorPreview(userPrefs_.colorPreview().getValue());
+      userPrefs_.colorPreview().addValueChangeHandler(new ValueChangeHandler<Boolean>()
+      {
+         @Override
+         public void onValueChange(ValueChangeEvent<Boolean> event)
+         {
+            setColorPreview(event.getValue());
+         }
+      });
 
       events_.addHandler(
             AceEditorCommandEvent.TYPE,
