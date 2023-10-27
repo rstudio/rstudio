@@ -16,13 +16,15 @@
 #include <r/session/RConsoleActions.hpp>
 
 #include <algorithm>
+
 #include <gsl/gsl>
 
 #include <boost/algorithm/string/split.hpp>
 
-#include <core/Log.hpp>
 #include <shared_core/Error.hpp>
 #include <shared_core/FilePath.hpp>
+
+#include <core/Log.hpp>
 #include <core/FileSerializer.hpp>
 #include <core/Thread.hpp>
 
@@ -30,11 +32,13 @@
 
 using namespace rstudio::core;
 
+#define kChunkSize 512
+
 namespace rstudio {
 namespace r {
 namespace session {
 
-namespace {   
+namespace {
 const char * const kActionType = "type";
 const char * const kActionData = "data";
 }
@@ -54,7 +58,7 @@ int ConsoleActions::capacity() const
 {
    LOCK_MUTEX(mutex_)
    {
-      return gsl::narrow_cast<int>(actionsType_.capacity());
+      return gsl::narrow_cast<int>(actions_.capacity());
    }
    END_LOCK_MUTEX
 
@@ -66,8 +70,7 @@ void ConsoleActions::setCapacity(int capacity)
 {
    LOCK_MUTEX(mutex_)
    {
-      actionsType_.set_capacity(capacity);
-      actionsData_.set_capacity(capacity);
+      actions_.set_capacity(capacity);
    }
    END_LOCK_MUTEX
 }
@@ -85,29 +88,49 @@ void ConsoleActions::add(int type, const std::string& data)
       else if (type == kConsoleActionInput)
       {
          std::vector<std::string> input;
-         boost::algorithm::split(input,
-                                 data,
-                                 boost::algorithm::is_any_of("\n"));
+         boost::algorithm::split(input, data, boost::algorithm::is_any_of("\n"));
          pendingInput_.insert(pendingInput_.end(), input.begin(), input.end());
       }
-
-
-      // automatically combine consecutive output actions (up to 512 bytes)
-      // we enforce a limit so that the limit defined for our circular buffer
-      // (see setCapacity above) implies a content size limit as well (if we
-      // didn't cap the size of combined output then the output actions could
-      // grow to arbitrary size)
-      if (type == kConsoleActionOutput &&
-          actionsType_.size() > 0      &&
-          actionsType_.back().getInt() == kConsoleActionOutput &&
-          actionsData_.back().getString().size() < 512)
+      else if (data.empty())
       {
-         actionsData_.back() = actionsData_.back().getString() + data;
+         return;
+      }
+
+      // check for type change, and push into buffer on type change
+      bool isOutputType = type == kConsoleActionOutput || kConsoleActionOutputError;
+      if (isOutputType && type == pendingAction_.type)
+      {
+         pendingAction_.data.append(data);
       }
       else
       {
-         actionsType_.push_back(json::Value(type));
-         actionsData_.push_back(json::Value(data));
+         // the output type has changed; push the pending action
+         if (!pendingAction_.data.empty())
+            actions_.push_back(pendingAction_);
+         
+         // update the action with the newly-provided data
+         pendingAction_.type = type;
+         pendingAction_.data = data;
+      }
+      
+      // consume chunks of data if available
+      std::size_t offset = 0;
+      while (true)
+      {
+         if (pendingAction_.data.length() < offset + kChunkSize)
+         {
+            pendingAction_.data = pendingAction_.data.substr(offset);
+            break;
+         }
+         
+         // consume chunk of data
+         ConsoleAction action;
+         action.type = pendingAction_.type;
+         action.data = pendingAction_.data.substr(offset, kChunkSize);
+         actions_.push_back(action);
+         
+         // update offset
+         offset += kChunkSize;
       }
    }
    END_LOCK_MUTEX
@@ -127,8 +150,8 @@ void ConsoleActions::reset()
    LOCK_MUTEX(mutex_)
    {
       // clear the existing actions
-      actionsType_.clear();
-      actionsData_.clear();
+      actions_.clear();
+      pendingAction_.data.clear();
    }
    END_LOCK_MUTEX
 }
@@ -142,16 +165,21 @@ void ConsoleActions::asJson(json::Object* pActions) const
 
       // copy actions and insert into destination
       json::Array actionsType;
-      std::copy(actionsType_.begin(),
-                actionsType_.end(),
-                std::back_inserter(actionsType));
-      pActions->operator[](kActionType) = actionsType;
-
-      // copy data and insert into destination
       json::Array actionsData;
-      std::copy(actionsData_.begin(),
-                actionsData_.end(),
-                std::back_inserter(actionsData));
+      
+      for (auto&& action : actions_)
+      {
+         actionsType.push_back(json::Value(action.type));
+         actionsData.push_back(json::Value(action.data));
+      }
+      
+      if (!pendingAction_.data.empty())
+      {
+         actionsType.push_back(json::Value(pendingAction_.type));
+         actionsData.push_back(json::Value(pendingAction_.data));
+      }
+      
+      pActions->operator[](kActionType) = actionsType;
       pActions->operator[](kActionData) = actionsData;
    }
    END_LOCK_MUTEX
@@ -161,55 +189,42 @@ Error ConsoleActions::loadFromFile(const FilePath& filePath)
 {
    LOCK_MUTEX(mutex_)
    {
-      actionsType_.clear();
-      actionsData_.clear();
+      Error error;
+      
+      // read from file
+      std::string contents;
+      error = readStringFromFile(filePath, &contents);
+      if (error && !isFileNotFoundError(error))
+         return error;
 
-      if (filePath.exists())
+      // parse JSON
+      json::Object value;
+      error = value.parse(contents);
+      if (error)
+         return error;
+      
+      // read type + data fields
+      json::Value typeJson = value.getObject()[kActionType];
+      if (!typeJson.isArray())
+         return Error(errc::UnexpectedDataTypeError, ERROR_LOCATION);
+      
+      json::Value dataJson = value.getObject()[kActionData];
+      if (!dataJson.isArray())
+         return Error(errc::UnexpectedDataTypeError, ERROR_LOCATION);
+      
+      json::Array typeArray = typeJson.getArray();
+      json::Array dataArray = dataJson.getArray();
+      if (typeArray.getSize() != dataArray.getSize())
+         return Error(errc::UnexpectedDataTypeError, ERROR_LOCATION);
+      
+      for (int i = 0, n = typeArray.getSize(); i < n; i++)
       {
-         // read from file
-         std::string actionsJson;
-         Error error = readStringFromFile(filePath, &actionsJson);
-         if (error)
-            return error;
-
-         // parse json and confirm it contains an object
-         json::Value value;
-         if (
-            !value.parse(actionsJson) && value.isObject() )
-         {
-            json::Object actions = value.getObject();
-
-            json::Value typeValue = actions[kActionType];
-            if (typeValue.getType() == json::Type::ARRAY)
-            {
-               const json::Array& actionsType = typeValue.getArray();
-               std::copy(actionsType.begin(),
-                         actionsType.end(),
-                         std::back_inserter(actionsType_));
-            }
-            else
-            {
-               LOG_WARNING_MESSAGE("unexpected json type in: " + actionsJson);
-            }
-
-            json::Value dataValue = actions[kActionData];
-            if ( dataValue.getType() == json::Type::ARRAY )
-            {
-               const json::Array& actionsData = dataValue.getArray();
-               std::copy(actionsData.begin(),
-                         actionsData.end(),
-                         std::back_inserter(actionsData_));
-            }
-            else
-            {
-               LOG_WARNING_MESSAGE("unexpected json type in: " + actionsJson);
-            }
-         }
-         else
-         {
-            LOG_WARNING_MESSAGE("unexpected json type in: " + actionsJson);
-         }
+         ConsoleAction action;
+         action.type = typeArray[i].getInt();
+         action.data = dataArray[i].getString();
+         actions_.push_back(action);
       }
+      
    }
    END_LOCK_MUTEX
    
