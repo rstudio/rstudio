@@ -121,7 +121,8 @@ void ConsoleActions::add(int type, const std::string& data)
          // now, substring that data to remove any data we've committed
          if (action_.data.length() < offset + kChunkSize)
          {
-            action_.data = action_.data.substr(offset);
+            if (offset > 0)
+               action_.data = action_.data.substr(offset);
             break;
          }
          
