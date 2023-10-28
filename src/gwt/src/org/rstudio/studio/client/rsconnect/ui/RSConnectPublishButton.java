@@ -16,7 +16,6 @@ package org.rstudio.studio.client.rsconnect.ui;
 
 import java.util.ArrayList;
 
-import com.google.gwt.core.client.GWT;
 import org.rstudio.core.client.CommandWithArg;
 import org.rstudio.core.client.Debug;
 import org.rstudio.core.client.ElementIds;
@@ -49,13 +48,13 @@ import org.rstudio.studio.client.rsconnect.events.RSConnectActionEvent;
 import org.rstudio.studio.client.rsconnect.events.RSConnectDeployInitiatedEvent;
 import org.rstudio.studio.client.rsconnect.events.RSConnectDeploymentCompletedEvent;
 import org.rstudio.studio.client.rsconnect.model.PlotPublishMRUList;
+import org.rstudio.studio.client.rsconnect.model.PlotPublishMRUList.Entry;
 import org.rstudio.studio.client.rsconnect.model.PublishHtmlSource;
 import org.rstudio.studio.client.rsconnect.model.RSConnectDeploymentRecord;
 import org.rstudio.studio.client.rsconnect.model.RSConnectPublishSettings;
 import org.rstudio.studio.client.rsconnect.model.RSConnectPublishSource;
 import org.rstudio.studio.client.rsconnect.model.RSConnectServerOperations;
 import org.rstudio.studio.client.rsconnect.model.RenderedDocPreview;
-import org.rstudio.studio.client.rsconnect.model.PlotPublishMRUList.Entry;
 import org.rstudio.studio.client.server.ServerError;
 import org.rstudio.studio.client.server.ServerRequestCallback;
 import org.rstudio.studio.client.server.Void;
@@ -66,6 +65,7 @@ import org.rstudio.studio.client.workbench.model.SessionInfo;
 import org.rstudio.studio.client.workbench.prefs.model.UserPrefs;
 import org.rstudio.studio.client.workbench.prefs.model.UserState;
 
+import com.google.gwt.core.client.GWT;
 import com.google.gwt.core.client.JsArray;
 import com.google.gwt.core.client.Scheduler;
 import com.google.gwt.dom.client.Style.Unit;
@@ -387,14 +387,6 @@ public class RSConnectPublishButton extends Composite
    public void onRSConnectDeploymentCompleted(
          RSConnectDeploymentCompletedEvent event)
    {
-      if (!event.succeeded())
-         return;
-      
-      // when a deployment is successful, refresh ourselves. Consider: it's 
-      // a little wasteful to do this whether or not the deployment was for 
-      // the content on which this button is hosted, but there are unlikely to
-      // be more than a couple publish buttons at any one time, and this is
-      // cheap (just hits the local disk)
       populateDeployments(true);
    }
 
