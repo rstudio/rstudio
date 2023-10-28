@@ -38,6 +38,7 @@
 - Fixed an issue on macOS where '-ne' was erroneously printed to the console with certain versions of Bash. (#13809)
 - Fixed an issue where attempts to open files containing non-ASCII characters from the Files pane could fail on Windows. (#13855, #12467)
 - Fixed an issue where color highlight for Console input could not be disabled. (#13118)
+- RStudio now records the deployment target for newly-published documents, even when deployment fails due to an error in the document. (#12707)
 
 #### Posit Workbench
 - Fixed opening job details in new windows more than once for Workbench jobs on the homepage. (rstudio/rstudio-pro#5179)
