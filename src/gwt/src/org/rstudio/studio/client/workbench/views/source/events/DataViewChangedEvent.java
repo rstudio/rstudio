@@ -15,6 +15,7 @@
 package org.rstudio.studio.client.workbench.views.source.events;
 
 import com.google.gwt.core.client.JavaScriptObject;
+import com.google.gwt.core.client.JsArrayString;
 import com.google.gwt.event.shared.EventHandler;
 import com.google.gwt.event.shared.GwtEvent;
 
@@ -24,17 +25,11 @@ public class DataViewChangedEvent extends GwtEvent<DataViewChangedEvent.Handler>
    {
       protected Data() {}
       
-      public final native String getCacheKey() /*-{
-         return this.cache_key;
-      }-*/;
-
-      public final native boolean structureChanged() /*-{
-         return this.structure_changed || false;
-      }-*/;
-
-      public final native boolean typeChanged() /*-{
-         return this.type_changed || false;
-      }-*/;
+      public final native String getCacheKey()            /*-{ return this.cache_key; }-*/;
+      public final native boolean getTypeChanged()        /*-{ return this.type_changed || false; }-*/;
+      public final native boolean getStructureChanged()   /*-{ return this.structure_changed || false; }-*/;
+      public final native boolean getObjectExists()       /*-{ return this.object_exists || false; }-*/;
+      public final native JsArrayString getObjectClass()  /*-{ return this.object_class; }-*/;
    }
 
    public static final GwtEvent.Type<DataViewChangedEvent.Handler> TYPE = new GwtEvent.Type<>();

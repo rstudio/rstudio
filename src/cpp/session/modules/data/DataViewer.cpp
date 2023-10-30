@@ -246,6 +246,7 @@ struct CachedFrame
       }
 
       // cache number of columns
+      nrow = safeDim(sexp, DIM_ROWS);
       ncol = safeDim(sexp, DIM_COLS);
    };
 
@@ -255,10 +256,9 @@ struct CachedFrame
    std::string envName;
    std::string objName;
 
-   // The frame's columns; used to determine whether the shape of the frame has
-   // changed (necessitating a full reload of any displayed version of the
-   // frame)
-   int ncol;
+   // The number of rows and columns; used to determine whether the shape of the frame has changed
+   // (necessitating a full reload of any displayed version of the frame)
+   int nrow, ncol;
    std::vector<std::string> colNames;
 
    // The current search string and filter set
@@ -322,28 +322,6 @@ SEXP findInNamedEnvir(const std::string& envir, const std::string& name)
    // find the SEXP directly in the environment; return null if unbound
    SEXP obj = r::sexp::findVar(name, env);
    return obj == R_UnboundValue ? nullptr : obj;
-}
-
-SEXP getNamedEnvir(const std::string& envir)
-{
-   SEXP env = nullptr;
-   r::sexp::Protect protect;
-
-   // shortcut for unbound environment
-   if (envir == kNoBoundEnv)
-      return nullptr;
-
-   // use the global environment or resolve environment name
-   if (envir.empty() || envir == "R_GlobalEnv")
-      return R_GlobalEnv;
-   
-   r::exec::RFunction(".rs.safeAsEnvironment", envir).call(&env, &protect);
-
-   // if we failed to find an environment by name, return a null SEXP
-   if (env == nullptr || TYPEOF(env) == NILSXP || Rf_isNull(env))
-      return nullptr; 
-
-   return env;
 }
 
 // data items are used both as the payload for the client event that opens an
@@ -1080,26 +1058,56 @@ void onDetectChanges(module_context::ChangeSource source)
          // clear working data for the object
          r::exec::RFunction(".rs.removeWorkingData", i->first).call();
    
-         if (sexp != nullptr && Rf_inherits(sexp, "data.frame"))
+         if (sexp != nullptr)
          {
             // create a new frame object to capture the new state of the frame
             CachedFrame newFrame(i->second.envName, i->second.objName, sexp);
+            
+            // check for changes in the object
+            bool typeChanged = false;
+            if (i->second.observedSEXP != nullptr)
+            {
+               SEXP oldClass = Rf_getAttrib(i->second.observedSEXP, R_ClassSymbol);
+               SEXP newClass = Rf_getAttrib(sexp, R_ClassSymbol);
+               typeChanged = !R_compute_identical(oldClass, newClass, 0);
+            }
+            
+            bool structureChanged =
+                  i->second.nrow != newFrame.nrow ||
+                  i->second.ncol != newFrame.ncol ||
+                  i->second.colNames != newFrame.colNames;
+            
+            if (typeChanged || structureChanged)
+            {
+               // replace cached copy
+               r::exec::RFunction(".rs.assignCachedData")
+                     .addParam(i->first)
+                     .addParam(sexp)
+                     .addParam(i->second.objName)
+                     .call();
+               
+               // figure out the object classes for this thing
+               std::vector<std::string> objectClass;
+               Error error = r::exec::RFunction("base:::class")
+                     .addParam(sexp)
+                     .call(&objectClass);
+               
+               if (error)
+                  LOG_ERROR(error);
 
-            // replace cached copy
-            r::exec::RFunction(".rs.assignCachedData", 
-                  i->first, sexp, i->second.objName).call();
+               // emit client event
+               json::Object changed;
+               changed["cache_key"] = i->first;
+               changed["type_changed"] = typeChanged;
+               changed["structure_changed"] = structureChanged;
+               changed["object_exists"] = true;
+               changed["object_class"] = json::toJsonArray(objectClass);
+               ClientEvent event(client_events::kDataViewChanged, changed);
+               module_context::enqueClientEvent(event);
 
-            // emit client event
-            json::Object changed;
-            changed["cache_key"] = i->first;
-            changed["structure_changed"] = i->second.ncol != newFrame.ncol || 
-               i->second.colNames != newFrame.colNames;
-            changed["type_changed"] = false;
-            ClientEvent event(client_events::kDataViewChanged, changed);
-            module_context::enqueClientEvent(event);
-
-            // replace old frame with new
-            s_cachedFrames[i->first] = newFrame;
+               // replace old frame with new
+               s_cachedFrames[i->first] = newFrame;
+            }
          }
          else 
          {
@@ -1108,29 +1116,10 @@ void onDetectChanges(module_context::ChangeSource source)
             changed["cache_key"] = i->first;
             changed["type_changed"] = true;
             changed["structure_changed"] = true;
+            changed["object_exists"] = false;
+            changed["object_class"] = json::Array();
             ClientEvent event(client_events::kDataViewChanged, changed);
             module_context::enqueClientEvent(event);
-
-            // then View() it again if there is something to View()
-            if (sexp != nullptr)
-            {
-               SEXP env = getNamedEnvir(i->second.envName);
-               if (env != nullptr)
-               {
-                  r::sexp::Protect protect;
-                  protect.add(env);
-
-                  SEXP symbol = Rf_install(i->second.objName.c_str());
-
-                  Error error = r::exec::RFunction("View")
-                     .addParam(symbol)
-                     .call(env, true);
-                  if (error)
-                  {
-                     LOG_ERROR(error);
-                  }
-               }
-            }
          }
       }
    }
