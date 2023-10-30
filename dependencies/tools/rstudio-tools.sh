@@ -490,3 +490,15 @@ restore-original-file () {
 	mv $SAVED_FILE $ORIGINAL_FILE
 	rm -f $MODIFIED_FILE
 }
+
+# Checks if environment variables are set (takes one or more env var names as arguments)
+check_env_vars() {
+	local all_set=0
+	for var in "$@"; do
+		if [ -z "${!var}" ]; then
+			echo "internal error: environment variable '$var' is not set."
+			all_set=1
+		fi
+	done
+	return $all_set
+}
