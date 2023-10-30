@@ -474,7 +474,7 @@ export RSTUDIO_TOOLS_ROOT
 export RSTUDIO_NODE_VERSION="16.20.2"
 
 # RStudio dependency cache
-export RSTUDIO_BUILDTOOLS="https://s3.amazonaws.com/rstudio-buildtools"
+export RSTUDIO_BUILDTOOLS="https://rstudio-buildtools.s3.amazonaws.com"
 
 # create a copy of a file in the same folder with .original extension
 save-original-file () {
