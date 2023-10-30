@@ -299,7 +299,7 @@ Error readStringVectorFromFile(const core::FilePath& filePath,
 // note: this only has an effect on Windows
 Error writeStringToFile(const core::FilePath& filePath,
                         const std::string& str,
-                        string_utils::LineEnding lineEnding=string_utils::LineEndingPassthrough,
+                        string_utils::LineEnding lineEnding = string_utils::LineEndingPassthrough,
                         bool truncate = true,
                         int maxOpenRetrySeconds = 0,
                         bool logError = true);
@@ -307,7 +307,7 @@ Error writeStringToFile(const core::FilePath& filePath,
 // lineEnding is the type of line ending you want the resulting string to have
 Error readStringFromFile(const core::FilePath& filePath,
                          std::string* pStr,
-                         string_utils::LineEnding lineEnding=string_utils::LineEndingPassthrough,
+                         string_utils::LineEnding lineEnding = string_utils::LineEndingPassthrough,
                          int startLine = 0,
                          int endLine = 0,
                          int startCharacter = 0,
@@ -319,7 +319,7 @@ Error readStringFromFile(
    const core::FilePath& filePath,
    const Filter& filter,
    std::string* pContents,
-   string_utils::LineEnding lineEnding=string_utils::LineEndingPassthrough)
+   string_utils::LineEnding lineEnding = string_utils::LineEndingPassthrough)
 {
    try
    {
