@@ -15,3 +15,4 @@
 
 
 set RSTUDIO_NODE_VERSION=16.20.2
+set RSTUDIO_BUILDTOOLS=https://s3.amazonaws.com/rstudio-buildtools
