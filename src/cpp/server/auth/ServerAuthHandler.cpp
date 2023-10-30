@@ -57,10 +57,6 @@ namespace handler {
 
 namespace {
 
-// This doesn't account for leap years, but that's alright because
-// we just need an approximate year.
-static constexpr unsigned int kHoursInOneYear = 365 * 24;
-
 Error dbUnavailableError(const std::string& msg,
                          const std::string& username,
                          const ErrorLocation& location)
@@ -85,13 +81,6 @@ boost::posix_time::ptime cookieExpiration(const std::string& cookie)
       return http::util::parseHttpDate(expirationStr);
    }
    return boost::posix_time::second_clock::universal_time();
-}
-
-boost::posix_time::ptime parseSigninTime(const std::string& strTime)
-{
-   boost::posix_time::ptime signinTime;
-   date_time::parseUtcTimeFromIso8601String(strTime, &signinTime);
-   return signinTime;
 }
 
 // map of last user sign in times to prevent users from creating
@@ -437,9 +426,13 @@ Error getUserFromDatabase(const boost::shared_ptr<IConnection>& connection,
    *pLocked = true;
 
    const auto usernameColName = overlay::getUsernameDbColumnName();
-   Query userQuery = connection->query("SELECT " + usernameColName + ", user_id, last_sign_in, locked FROM licensed_users WHERE user_id = :uid OR " + usernameColName + " = :un")
-         .withInput(user.getUserId())
-         .withInput(user.getUsername());
+   Query userQuery = connection
+                         ->query("SELECT " + usernameColName +
+                                 ", user_id, last_sign_in, locked FROM "
+                                 "licensed_users WHERE user_id = :uid OR " +
+                                 usernameColName + " = :un")
+                         .withInput(user.getUserId())
+                         .withInput(user.getUsername());
 
    Rowset rows;
    Error error = connection->execute(userQuery, rows);
@@ -470,7 +463,7 @@ Error getUserFromDatabase(const boost::shared_ptr<IConnection>& connection,
       // Safe static cast, because we already handled uid < 0
       if ((username == user.getUsername()) && ((uid < 0) || (static_cast<UidType>(uid) == user.getUserId())))
       {
-         boost::posix_time::ptime lastSignin = parseSigninTime(row.get<std::string>(2));
+         boost::posix_time::ptime lastSignin = parseDateStr(row.get<std::string>(2));
          if (!foundUser || (lastSignin > *pLastSignin))
             *pLastSignin = lastSignin;
 
@@ -503,12 +496,6 @@ Error getUserFromDatabase(const boost::shared_ptr<IConnection>& connection,
    else
       LOG_DEBUG_MESSAGE("No record found for user in db: " + user.getUsername());
    return Success();
-}
-
-bool isUserActive(const boost::posix_time::ptime& lastSignin)
-{
-   return (boost::posix_time::microsec_clock::universal_time() - lastSignin <
-           boost::posix_time::time_duration(kHoursInOneYear, 0, 0));
 }
 
 Error addUser(boost::asio::io_service& ioService,
@@ -554,7 +541,7 @@ Error addUser(boost::asio::io_service& ioService,
    {
       // user doesn't exist - check to see if we can add them
       bool isLicensed;
-      Error error = isUserLicensed(user, isAdmin, &isLicensed);
+      Error error = isUserLicensed(user, isAdmin, &isLicensed, false);
       if (error)
       {
          return error;
@@ -612,7 +599,9 @@ json::Array getAllUsers()
       if (locked)
          status = "Locked";
       else
-         status = isUserActive(parseSigninTime(lastSignin)) ? "Active" : "Inactive";
+         status = overlay::isUserActive(parseDateStr(lastSignin), username)
+                      ? "Active"
+                      : "Inactive";
 
       json::Object user;
       user["username"] = username;
@@ -694,7 +683,8 @@ Error isUserLicensed(const std::string& username,
 
 Error isUserLicensed(const system::User& user,
                      bool isAdmin,
-                     bool* pLicensed)
+                     bool* pLicensed,
+                     bool isSigningIn)
 {
    const unsigned int userLimit = overlay::getNamedUserLimit();
 
@@ -718,7 +708,7 @@ Error isUserLicensed(const system::User& user,
          return Success();
       }
 
-      if (isUserActive(lastSignin))
+      if (overlay::isUserActive(lastSignin, user.getUsername()))
       {
          *pLicensed = true;
 
@@ -738,32 +728,35 @@ Error isUserLicensed(const system::User& user,
       else
       {
          // user is not active, meaning they haven't signed in for over a year
-         // attempt to making them active again by updating their signin time
-         // and checking to make sure this doesn't cause us to go over user limit
-
-         error = updateLastSignin(connection, user);
-         if (error)
-         {
-            // since we're trying to reactivate an old user, consider this a hard failure
-            // as we could not be able to enforce the user limit if we allowed this sign
-            // in to proceed
-            error.addProperty("description",
-                              "Could not reactivate user: " +  user.getUsername());
-            return error;
-         }
+         // check to make sure this doesn't cause us to go over user limit
+         // then attempt to making them active again by updating their signin time
 
          size_t numActiveUsers = 0;
-         error = getNumActiveUsers(connection, &numActiveUsers);
+         std::tie(numActiveUsers, error) = overlay::getActiveUserCount(connection);
          if (error)
             return error;
 
-         if ((userLimit > 0) && (numActiveUsers > userLimit))
+         if ((userLimit > 0) && (numActiveUsers >= userLimit))
          {
             *pLicensed = false;
             return Success();
          }
          else
          {
+            error = updateLastSignin(connection, user);
+            if (error)
+            {
+               // since we're trying to reactivate an old user, consider this a hard failure
+               // as we could not be able to enforce the user limit if we allowed this sign
+               // in to proceed
+               error.addProperty(
+                   "description",
+                   "Could not reactivate user: " + user.getUsername() +
+                       " - Unable to update last sign in time, which is "
+                       "required to enforce license limits");
+               return error;
+            }
+
             // there was room for this user, so let them sign in
             *pLicensed = true;
             return Success();
@@ -783,49 +776,32 @@ Error isUserLicensed(const system::User& user,
       // (by assigning them as an active user), or we've run out of spaces for the
       // license and auth should fail
       size_t numActiveUsers = 0;
-      error = getNumActiveUsers(connection, &numActiveUsers);
+      std::tie(numActiveUsers, error) = overlay::getActiveUserCount(connection);
       if (error)
          return error;
 
-      if ((userLimit > 0) && (numActiveUsers > userLimit))
+      if ((userLimit > 0) && (numActiveUsers >= userLimit))
       {
          // no more space for this user, so don't let them sign in
          *pLicensed = false;
          return Success();
       }
       
-      addUserToDatabase(connection, user, isAdmin);
+      error = addUserToDatabase(connection, user, isAdmin);
+      if (error)
+         return error;
+
+      if(isSigningIn)
+      {
+         // If the user is signing in, we need to update their last sign-in time
+         error = updateLastSignin(connection, user);
+         return error;
+      }
       
       // added successfully, and there's space for the user
       *pLicensed = true;
       return Success();
    }
-}
-
-unsigned int getActiveUserCount()
-{
-   if (overlay::getNamedUserLimit() == 0)
-      return 0;
-
-   boost::shared_ptr<IConnection> connection;
-   if (!server_core::database::getConnection(boost::posix_time::seconds(server::options().dbConnectionTimeout()), &connection))
-   {
-      LOG_ERROR(systemError(boost::system::errc::timed_out,
-                            "Could not determine active user count - named user "
-                               "licensing system temporarily unavailable",
-                             ERROR_LOCATION));
-      return 0;
-   }
-
-   size_t numActiveUsers = 0;
-   Error error = getNumActiveUsers(connection, &numActiveUsers);
-   if (error)
-   {
-      error.addProperty("description", "Database error occurred while determining active users");
-      LOG_ERROR(error);
-   }
-
-   return numActiveUsers;
 }
 
 std::string getExpiredDateStr()
@@ -835,43 +811,16 @@ std::string getExpiredDateStr()
    return date_time::format(oneYearAgo, date_time::kIso8601Format);
 }
 
-Error getNumActiveUsers(const boost::shared_ptr<IConnection>& connection,
-                        size_t* pNumActiveUsers)
+boost::posix_time::ptime parseDateStr(const std::string& strTime)
 {
-   std::string expiration = getExpiredDateStr();
-
-   size_t numActive = 0;
-   bool dataReturned = false;
-
-   LOG_DEBUG_MESSAGE("Retrieving active licensed user count - begin");
-
-   std::string queryStr = "SELECT COUNT(*) FROM licensed_users WHERE locked = false AND last_sign_in > :exp";
-   if (connection->driver() == Driver::Sqlite)
-      boost::replace_all(queryStr, "false", "0");
-
-   Query query = connection->query(queryStr)
-         .withInput(expiration)
-         .withOutput(numActive);
-
-   Error error = connection->execute(query, &dataReturned);
-   if (error)
-      return error;
-
-   if (!dataReturned)
-   {
-      return systemError(boost::system::errc::io_error,
-                         "Database returned no count of licensed users",
-                         ERROR_LOCATION);
-   }
-
-   LOG_DEBUG_MESSAGE("Retrieving active licensed user count - result: " + std::to_string(numActive));
-
-   *pNumActiveUsers = numActive;
-   return Success();
+   boost::posix_time::ptime time;
+   date_time::parseUtcTimeFromIso8601String(strTime, &time);
+   return time;
 }
 
 void onCookieRevoked(const std::string& cookie)
 {
+   
 }
 
 // uri constants
@@ -1441,5 +1390,3 @@ Error initialize()
 } // namespace rstudio
 
 #endif // SERVER_AUTH_HANDLER_CPP
-
-
