@@ -29,7 +29,7 @@ export NODE_VERSION="${RSTUDIO_NODE_VERSION}"
 export NODE_FOLDER="${NODE_VERSION}"
 export NODE_ROOT="node"
 export NODE_SUBDIR="${NODE_ROOT}/${NODE_FOLDER}"
-export NODE_BASE_URL="https://nodejs.org/dist/v${NODE_VERSION}/"
+export NODE_BASE_URL="https://s3.amazonaws.com/rstudio-buildtools/node/v${NODE_VERSION}/"
 
 # special case for building on M1 Mac: install x64 node in the 
 # default location (so GWT build can easily find it), but also a
