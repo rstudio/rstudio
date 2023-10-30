@@ -237,16 +237,20 @@ struct CachedFrame
 
       // cache list of column names
       r::sexp::Protect protect;
-      SEXP namesSEXP;
+      SEXP namesSEXP = R_NilValue;
       r::exec::RFunction("names", sexp).call(&namesSEXP, &protect);
-      if (namesSEXP != nullptr && TYPEOF(namesSEXP) != NILSXP 
-          && !Rf_isNull(namesSEXP))
+      if (!Rf_isNull(namesSEXP))
       {
          r::sexp::extract(namesSEXP, &colNames);
       }
 
+      // cache number of rows, but only for 'local' data
+      // (avoid potentially expensive queries for remote tables)
+      nrow = Rf_inherits(sexp, "data.frame") || Rf_inherits(sexp, "matrix")
+            ? safeDim(sexp, DIM_ROWS)
+            : -1;
+      
       // cache number of columns
-      nrow = safeDim(sexp, DIM_ROWS);
       ncol = safeDim(sexp, DIM_COLS);
    };
 
