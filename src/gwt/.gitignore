@@ -11,3 +11,6 @@ javac.*
 
 # ignore development properties file
 *_dev.properties
+
+# ignore local VSCode settings
+.vscode/
