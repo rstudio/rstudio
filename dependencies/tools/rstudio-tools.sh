@@ -468,7 +468,13 @@ fi
 export RSTUDIO_TOOLS_ROOT
 
 # version of node.js used for building
+#
+# When changing node version you must download the archives from https://nodejs.org/dist/vX.Y.Z/
+# and upload them to RSTUDIO_BUILDTOOLS/node/vX.Y.Z/.
 export RSTUDIO_NODE_VERSION="16.20.2"
+
+# RStudio dependency cache
+export RSTUDIO_BUILDTOOLS="https://s3.amazonaws.com/rstudio-buildtools"
 
 # create a copy of a file in the same folder with .original extension
 save-original-file () {
