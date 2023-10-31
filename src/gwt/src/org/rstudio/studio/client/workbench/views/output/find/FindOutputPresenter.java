@@ -522,10 +522,11 @@ public class FindOutputPresenter extends BasePresenter
             @Override
             public void onResponseReceived(String handle)
             {
-               updateSearchLabel(dialogState_.getQuery(),
-                  dialogState_.getPath(),
-                  dialogState_.isWholeWord(),
-                  dialogState_.isRegex());
+               updateSearchLabel(
+                     dialogState_.getQuery(),
+                     dialogState_.getPath(),
+                     dialogState_.isWholeWord(),
+                     dialogState_.isRegex());
 
                super.onResponseReceived(handle);
                view_.ensureVisible(true);
