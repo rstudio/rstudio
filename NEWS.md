@@ -41,6 +41,7 @@
 - Fixed an issue where color highlight for Console input could not be disabled. (#13118)
 - Fixed an issue that could cause the RStudio IDE to crash if a large amount of Console output was serialized with a suspended session. (#13857)
 - RStudio now records the deployment target for newly-published documents, even when deployment fails due to an error in the document. (#12707)
+- Fixed an issue that could cause errors to occur if an R Markdown document was saved while a chunk was running. (#13860)
 
 #### Posit Workbench
 - Fixed opening job details in new windows more than once for Workbench jobs on the homepage. (rstudio/rstudio-pro#5179)
