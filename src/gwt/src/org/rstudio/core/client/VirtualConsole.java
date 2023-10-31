@@ -23,21 +23,20 @@ import java.util.SortedMap;
 import java.util.TreeMap;
 import java.util.TreeSet;
 
-import com.google.gwt.dom.client.Node;
-import com.google.inject.Provider;
-import com.google.inject.assistedinject.Assisted;
-
 import org.rstudio.core.client.hyperlink.Hyperlink;
 import org.rstudio.core.client.regex.Match;
 import org.rstudio.core.client.regex.Pattern;
 import org.rstudio.core.client.virtualscroller.VirtualScrollerManager;
 import org.rstudio.studio.client.workbench.prefs.model.UserPrefs;
+import org.rstudio.studio.client.workbench.prefs.model.UserPrefsSubset;
 
 import com.google.gwt.core.client.JsArrayString;
 import com.google.gwt.dom.client.Document;
 import com.google.gwt.dom.client.Element;
+import com.google.gwt.dom.client.Node;
 import com.google.inject.Inject;
-import org.rstudio.studio.client.workbench.prefs.model.UserPrefsSubset;
+import com.google.inject.Provider;
+import com.google.inject.assistedinject.Assisted;
 
 /**
  * Simulates a console that behaves like the R console, specifically with
@@ -526,6 +525,9 @@ public class VirtualConsole
       newElements_.clear();
 
       newText_ = ariaLiveAnnounce && prefs_.screenReaderEnabled() ? new StringBuilder() : null;
+      
+      // remove alarm characters from text
+      data = data.replaceAll("\u0007", "");
 
       // If previous submit ended with an incomplete ANSI code, add new data
       // to the previous (unwritten) data so we can try again to recognize
