@@ -1603,14 +1603,14 @@ core::Error runGrepOperation(const std::string& handle,
 core::Error beginFind(const json::JsonRpcRequest& request,
                       json::JsonRpcResponse* pResponse)
 {
-   std::string findOperationHandle, searchString;
+   std::string handle, searchString;
    bool asRegex, isWholeWord, ignoreCase;
    std::string directory;
    json::Array includeFilePatterns, excludeFilePatterns;
    bool useGitGrep, excludeGitIgnore;
 
    Error error = json::readParams(request.params,
-                                  &findOperationHandle,
+                                  &handle,
                                   &searchString,
                                   &asRegex,
                                   &isWholeWord,
@@ -1634,7 +1634,7 @@ core::Error beginFind(const json::JsonRpcRequest& request,
             isWholeWord,
             ignoreCase);
 
-   error = runGrepOperation(findOperationHandle, grepOptions, ReplaceOptions(), nullptr, pResponse);
+   error = runGrepOperation(handle, grepOptions, ReplaceOptions(), nullptr, pResponse);
    if (error)
       LOG_DEBUG_MESSAGE("Error running grep operation with search string " + searchString);
    return error;
