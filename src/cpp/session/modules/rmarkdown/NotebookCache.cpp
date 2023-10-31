@@ -407,21 +407,10 @@ Error createMigrationFile(const FilePath& source, const FilePath& target)
    Error error;
    FilePath migrationFile = source.completePath(kMigrationTarget);
 
-   // Ensure migration file doesn't already exist. This shouldn't happen unless a crash occurred
-   // during a previous chunk execution.
-   if (migrationFile.exists())
-   {
-      LOG_WARNING_MESSAGE("Notebook output migration file " kMigrationTarget " already exists in " + 
-            source.getAbsolutePath());
-      error = migrationFile.remove();
-      if (error)
-      {
-         error.addProperty("description", "Unable to remove notebook output migration file");
-         return error;
-      }
-   }
-
-   error = writeStringToFile(migrationFile, target.getAbsolutePath()); 
+   // Write the migration file. Note that this file might already exist; this
+   // can happen if the document was saved mulitple times while the document
+   // was executing. In that case, we just overwrite it.
+   error = writeStringToFile(migrationFile, target.getAbsolutePath());
    if (error)
    {
       error.addProperty("description", "Unable to write notebook output migration file");

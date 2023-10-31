@@ -20,7 +20,7 @@ set -e
 source "$(dirname "${BASH_SOURCE[0]}")/../tools/rstudio-tools.sh"
 section "Installing Mathjax"
 
-URL="https://s3.amazonaws.com/rstudio-buildtools"
+URL="${RSTUDIO_BUILDTOOLS}"
 
 # download and extract mathjax if necessary
 MATHJAX_DIR="${RSTUDIO_TOOLS_ROOT}/mathjax-27"
