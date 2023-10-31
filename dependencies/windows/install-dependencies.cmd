@@ -18,7 +18,7 @@ for %%X in (R.exe 7z.exe cmake.exe wget.exe) do (
 set WGET_ARGS=-c --no-check-certificate --no-hsts
 set UNZIP_ARGS=-q
 
-set BASEURL=https://s3.amazonaws.com/rstudio-buildtools/
+set BASEURL=%RSTUDIO_BUILDTOOLS%/
 set GIN_FILE=gin-2.1.2.zip
 set JUNIT_FILE=junit-4.9b3.jar
 set GNUDIFF_FILE=gnudiff.zip
@@ -68,7 +68,7 @@ set LIBCLANG_FILE=%LIBCLANG_NAME%.zip
 set NODE_VERSION=%RSTUDIO_NODE_VERSION%
 set NODE_ROOT=node
 set NODE_SUBDIR=%NODE_ROOT%\%NODE_VERSION%
-set NODE_BASE_URL=https://nodejs.org/dist/v%NODE_VERSION%/
+set NODE_BASE_URL=%BASEURL%node/v%NODE_VERSION%/
 set NODE_ARCHIVE_DIR=node-v%NODE_VERSION%-win-x64
 set NODE_ARCHIVE_FILE=%NODE_ARCHIVE_DIR%.zip
 
