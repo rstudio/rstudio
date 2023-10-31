@@ -473,6 +473,9 @@ export RSTUDIO_TOOLS_ROOT
 # and upload them to RSTUDIO_BUILDTOOLS/node/vX.Y.Z/.
 export RSTUDIO_NODE_VERSION="16.20.2"
 
+# version of go used for building
+export WORKBENCH_GO_VERSION="1.20.5"
+
 # RStudio dependency cache
 export RSTUDIO_BUILDTOOLS="https://rstudio-buildtools.s3.amazonaws.com"
 
