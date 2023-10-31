@@ -404,11 +404,6 @@ public class DomUtils
    public static final native boolean contains(Element container, Node descendant) /*-{
       return container.contains(descendant);
    }-*/;
-   
-   public static final native boolean containsElement(Element container, Element descendant)
-   /*-{
-      return container.contains(descendant);
-   }-*/;
 
    /**
     * CharacterData.deleteData(node, index, offset)
