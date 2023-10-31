@@ -721,7 +721,7 @@ boost::shared_ptr<IConnection> ConnectionPool::getConnection()
       else
       {
          LOG_ERROR_MESSAGE("Potential hang detected: could not get database connection from pool "
-                           "after 30 seconds. If issue persists, please notify RStudio Support");
+                           "after 30 seconds. If issue persists, please notify Posit Support");
       }
    }
 }
@@ -1275,6 +1275,9 @@ Error createConnectionPool(size_t poolSize,
       Error error = connect(options, &connection);
       if (error)
       {
+         // Logging the error before resetting the pool because a customer saw a SEGV when handling this error.
+         LOG_ERROR_MESSAGE("Error allocating database connection: " + std::to_string(i+1) + " with pool-size: " + std::to_string(poolSize) + ": " + error.asString());
+
          // destroy the pool, which will free each previously created connections
          pPool->reset();
          return error;

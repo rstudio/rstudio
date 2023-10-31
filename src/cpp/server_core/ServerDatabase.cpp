@@ -59,7 +59,7 @@ constexpr const char* kDefaultPostgresqlDatabasePort = "5432";
 constexpr const char* kDatabaseUsername = "username";
 constexpr const char* kDefaultPostgresqlDatabaseUsername = "postgres";
 constexpr const char* kDatabasePassword = "password";
-constexpr const char* kPostgresqlDatabaseConnectionTimeoutSeconds = "connnection-timeout-seconds";
+constexpr const char* kPostgresqlDatabaseConnectionTimeoutSeconds = "connection-timeout-seconds";
 constexpr const int   kDefaultPostgresqlDatabaseConnectionTimeoutSeconds = 10;
 constexpr const char* kPostgresqlDatabaseConnectionUri = "connection-uri";
 constexpr const char* kConnectionPoolSize = "pool-size";
@@ -67,9 +67,10 @@ constexpr const char* kConnectionPoolSize = "pool-size";
 // environment variables
 constexpr const char* kDatabaseMigrationsPathEnvVar = "RS_DB_MIGRATIONS_PATH";
 
-// misc constants
+// Choosing a modest pool size as the db usage of rserver is not high enough to
+// justify anything larger and with 20 a cluster of 5 nodes hits the postgres default limit of 100.
 constexpr const size_t kDefaultMinPoolSize = 4;
-constexpr const size_t kDefaultMaxPoolSize = 20;
+constexpr const size_t kDefaultMaxPoolSize = 6;
 constexpr const int kMinimumSupportedPostgreSqlMajorVersion = 11;
 
 boost::shared_ptr<ConnectionPool> s_connectionPool;
