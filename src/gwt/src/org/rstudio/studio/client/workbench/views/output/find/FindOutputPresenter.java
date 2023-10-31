@@ -14,15 +14,8 @@
  */
 package org.rstudio.studio.client.workbench.views.output.find;
 
-import com.google.gwt.core.client.GWT;
-import com.google.gwt.core.client.JsArrayString;
-import com.google.gwt.event.dom.client.ClickEvent;
-import com.google.gwt.event.dom.client.ClickHandler;
-import com.google.gwt.event.dom.client.HasClickHandlers;
-import com.google.gwt.event.logical.shared.ValueChangeEvent;
-import com.google.gwt.event.logical.shared.ValueChangeHandler;
-import com.google.gwt.event.shared.HandlerRegistration;
-import com.google.inject.Inject;
+import java.util.ArrayList;
+
 import org.rstudio.core.client.CodeNavigationTarget;
 import org.rstudio.core.client.Debug;
 import org.rstudio.core.client.StringUtil;
@@ -41,10 +34,10 @@ import org.rstudio.studio.client.application.events.EventBus;
 import org.rstudio.studio.client.common.GlobalDisplay;
 import org.rstudio.studio.client.common.SimpleRequestCallback;
 import org.rstudio.studio.client.common.filetypes.FileTypeRegistry;
+import org.rstudio.studio.client.common.vcs.VCSConstants;
 import org.rstudio.studio.client.server.ServerError;
 import org.rstudio.studio.client.server.ServerRequestCallback;
 import org.rstudio.studio.client.server.VoidServerRequestCallback;
-import org.rstudio.studio.client.common.vcs.VCSConstants;
 import org.rstudio.studio.client.workbench.WorkbenchContext;
 import org.rstudio.studio.client.workbench.WorkbenchView;
 import org.rstudio.studio.client.workbench.commands.Commands;
@@ -58,14 +51,22 @@ import org.rstudio.studio.client.workbench.views.output.find.events.FindInFilesE
 import org.rstudio.studio.client.workbench.views.output.find.events.FindOperationEndedEvent;
 import org.rstudio.studio.client.workbench.views.output.find.events.FindResultEvent;
 import org.rstudio.studio.client.workbench.views.output.find.events.PreviewReplaceEvent;
+import org.rstudio.studio.client.workbench.views.output.find.events.ReplaceOperationEndedEvent;
 import org.rstudio.studio.client.workbench.views.output.find.events.ReplaceProgressEvent;
 import org.rstudio.studio.client.workbench.views.output.find.events.ReplaceResultEvent;
-import org.rstudio.studio.client.workbench.views.output.find.events.ReplaceOperationEndedEvent;
 import org.rstudio.studio.client.workbench.views.output.find.model.FindInFilesServerOperations;
 import org.rstudio.studio.client.workbench.views.output.find.model.FindInFilesState;
 import org.rstudio.studio.client.workbench.views.output.find.model.FindResult;
 
-import java.util.ArrayList;
+import com.google.gwt.core.client.GWT;
+import com.google.gwt.core.client.JsArrayString;
+import com.google.gwt.event.dom.client.ClickEvent;
+import com.google.gwt.event.dom.client.ClickHandler;
+import com.google.gwt.event.dom.client.HasClickHandlers;
+import com.google.gwt.event.logical.shared.ValueChangeEvent;
+import com.google.gwt.event.logical.shared.ValueChangeHandler;
+import com.google.gwt.event.shared.HandlerRegistration;
+import com.google.inject.Inject;
 
 public class FindOutputPresenter extends BasePresenter
 {
@@ -215,8 +216,7 @@ public class FindOutputPresenter extends BasePresenter
             stopAndClear();
             dialogState_.clearResultsCount();
 
-            FileSystemItem searchPath =
-                                      FileSystemItem.createDir(dialogState_.getPath());
+            FileSystemItem searchPath = FileSystemItem.createDir(dialogState_.getPath());
             JsArrayString includeFilePatterns = JsArrayString.createArray().cast();
             for (String pattern : dialogState_.getFilePatterns())
                includeFilePatterns.push(pattern);
@@ -224,7 +224,9 @@ public class FindOutputPresenter extends BasePresenter
             for (String pattern : dialogState_.getExcludeFilePatterns())
                excludeFilePatterns.push(pattern);
 
-            server_.previewReplace(dialogState_.getQuery(),
+            currentFindHandle_ = generateHandle();
+            server_.previewReplace(currentFindHandle_,
+                                   dialogState_.getQuery(),
                                    dialogState_.isRegex(),
                                    dialogState_.isWholeWord(),
                                    !dialogState_.isCaseSensitive(),
@@ -240,7 +242,6 @@ public class FindOutputPresenter extends BasePresenter
                                       public void onResponseReceived(String handle)
                                       {
                                          view_.clearMatches();
-                                         currentFindHandle_ = handle;
                                          updateSearchLabel(dialogState_.getQuery(),
                                             dialogState_.getPath(),
                                             dialogState_.isWholeWord(),
@@ -313,8 +314,9 @@ public class FindOutputPresenter extends BasePresenter
                            excludeFilePatterns.push(pattern);
 
                         String serverQuery = dialogState_.getQuery();
-
-                        server_.completeReplace(serverQuery,
+                        currentFindHandle_ = generateHandle();
+                        server_.completeReplace(currentFindHandle_,
+                                                serverQuery,
                                                 dialogState_.isRegex(),
                                                 dialogState_.isWholeWord(),
                                                 !dialogState_.isCaseSensitive(),
@@ -330,7 +332,6 @@ public class FindOutputPresenter extends BasePresenter
                                                    @Override
                                                    public void onResponseReceived(String handle)
                                                    {
-                                                      currentFindHandle_ = handle;
                                                       updateSearchLabel(dialogState_.getQuery(),
                                                                         dialogState_.getPath(),
                                                                         dialogState_.isWholeWord(),
@@ -502,9 +503,11 @@ public class FindOutputPresenter extends BasePresenter
       view_.turnOffReplaceMode();
       view_.disableReplace();
 
+      currentFindHandle_ = generateHandle();
       String serverQuery = dialogState_.getQuery();
 
       server_.beginFind(
+         currentFindHandle_,
          serverQuery,
          dialogState_.isRegex(),
          dialogState_.isWholeWord(),
@@ -519,7 +522,6 @@ public class FindOutputPresenter extends BasePresenter
             @Override
             public void onResponseReceived(String handle)
             {
-               currentFindHandle_ = handle;
                updateSearchLabel(dialogState_.getQuery(),
                   dialogState_.getPath(),
                   dialogState_.isWholeWord(),
@@ -711,6 +713,11 @@ public class FindOutputPresenter extends BasePresenter
          view_.setStopReplaceButtonVisible(false);
          view_.hideProgress();
       }
+   }
+   
+   private String generateHandle()
+   {
+      return StringUtil.makeRandomId(16);
    }
 
    private String currentFindHandle_;
