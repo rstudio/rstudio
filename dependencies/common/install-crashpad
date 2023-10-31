@@ -38,9 +38,9 @@ INSTALL_DIR=$(pwd)
 # vars
 DEPOT_TOOLS_DIR=$RSTUDIO_TOOLS_ROOT/depot_tools
 LLVM_VERSION=4.0.0
-LLVM_SOURCE_URL=https://s3.amazonaws.com/rstudio-buildtools/llvm-$LLVM_VERSION.src.tar.xz
-CLANG_SOURCE_URL=https://s3.amazonaws.com/rstudio-buildtools/cfe-$LLVM_VERSION.src.tar.xz
-CRASHPAD_PRE_BUILT_ROOT_URL=https://s3.amazonaws.com/rstudio-buildtools/crashpad-bin
+LLVM_SOURCE_URL=${RSTUDIO_BUILDTOOLS}/llvm-$LLVM_VERSION.src.tar.xz
+CLANG_SOURCE_URL=${RSTUDIO_BUILDTOOLS}/cfe-$LLVM_VERSION.src.tar.xz
+CRASHPAD_PRE_BUILT_ROOT_URL=${RSTUDIO_BUILDTOOLS}/crashpad-bin
 LLVM_DIR=$RSTUDIO_TOOLS_ROOT/llvm-$LLVM_VERSION
 LLVM_BIN_DIR=$LLVM_DIR/build/bin
 CRASHPAD_DIR=$RSTUDIO_TOOLS_ROOT/crashpad

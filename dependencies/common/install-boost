@@ -60,7 +60,7 @@ sudo-if-necessary-for "${RSTUDIO_TOOLS_ROOT}" "$@"
 cd "$(mktemp -d)"
 
 # download boost
-BOOST_URL="https://s3.amazonaws.com/rstudio-buildtools/Boost/${BOOST_TAR}"
+BOOST_URL="${RSTUDIO_BUILDTOOLS}/Boost/${BOOST_TAR}"
 download "${BOOST_URL}"
 
 # remove existing boost directory
