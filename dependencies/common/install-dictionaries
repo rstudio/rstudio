@@ -20,7 +20,7 @@ set -e
 source "$(dirname "${BASH_SOURCE[0]}")/../tools/rstudio-tools.sh"
 section "Installing Dictionaries"
 
-URL="https://s3.amazonaws.com/rstudio-buildtools/dictionaries"
+URL="${RSTUDIO_BUILDTOOLS}/dictionaries"
 
 # download and extract the dictionaries if necessary
 DICTIONARIES_DIR="${RSTUDIO_TOOLS_ROOT}/dictionaries"
