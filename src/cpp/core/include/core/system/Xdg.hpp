@@ -73,6 +73,13 @@ FilePath userLogDir();
 FilePath userCacheDir(const boost::optional<std::string>& user = boost::none,
                       const boost::optional<FilePath>& homeDir = boost::none);
 
+// Older versions of RStudio used FOLDERID_InternetCache for cached data files.
+// This function allows callers to query that older location, to allow resources
+// to be migrated transparently.
+FilePath oldUserCacheDir(
+    const boost::optional<std::string>& user = boost::none,
+    const boost::optional<FilePath>& homeDir = boost::none);
+
 // This function verifies that the userConfigDir() and userDataDir() exist and are owned by the running user.
 // 
 // It should be invoked once. Any issues with these directories will be emitted to the session log.

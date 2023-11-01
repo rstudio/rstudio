@@ -310,8 +310,24 @@ FilePath copilotAgentPath()
    if (copilotPath.exists())
       return copilotPath;
 
+   using namespace core::system::xdg;
+
+#ifdef _WIN32
+   // on Windows, the copilot agent was previously downloaded to a different location.
+   // Delete and remove the old location after sufficient time has passed, in a future
+   // RStudio release.
+   FilePath oldAgentLocation = oldUserCacheDir().completeChildPath("copilot");
+   FilePath newAgentLocation = userCacheDir().completeChildPath("copilot");
+   if (oldAgentLocation.exists() && !newAgentLocation.exists())
+   {
+      Error error = newAgentLocation.copyDirectoryRecursive(newAgentLocation);
+      if (error)
+         LOG_ERROR(error);
+   }
+#endif
+
    // Otherwise, use a default user location.
-   return core::system::xdg::userCacheDir().completeChildPath("copilot/dist/agent.js");
+   return userCacheDir().completeChildPath("copilot/dist/agent.js");
 }
 
 bool isCopilotAgentInstalled()
