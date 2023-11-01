@@ -17,12 +17,15 @@
 #define SESSION_QUARTO_JOB_HPP
 
 #include <string>
+
 #include <boost/noncopyable.hpp>
 #include <boost/shared_ptr.hpp>
 #include <boost/enable_shared_from_this.hpp>
 
 #include <shared_core/FilePath.hpp>
 #include <shared_core/SafeConvert.hpp>
+
+#include <core/Algorithm.hpp>
 #include <core/system/Types.hpp>
 #include <core/system/ShellUtils.hpp>
 #include <core/system/Process.hpp>
@@ -60,7 +63,7 @@ public:
    {
       stopRequested_ = true;
 
-      // on windows we need to be a bit more aggressive (as we've seen cases where
+      // on windows we need to be a bit more aggressive, as we've seen cases where
       // the 'stop' doesn't actually work esp. when deno is running a web server
 #ifdef _WIN32
       using namespace core::shell_utils;
@@ -121,6 +124,9 @@ protected:
    virtual void onStarted(core::system::ProcessOperations& process)
    {
       pid_ = process.getPid();
+      
+      std::string command = fmt::format("==> quarto {}\n\n", core::algorithm::join(args(), " "));
+      pJob_->addOutput(command, false);
    }
 
    virtual bool onContinue()
