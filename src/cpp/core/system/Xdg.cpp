@@ -89,6 +89,7 @@ std::string getHostname()
  *   current user is used
  * @param homeDir Optionally, the home directory to resolve against; if omitted
  *   the current user's home directory is used
+ * @param suffix An optional path component to append to the computed path.
  */
 FilePath resolveXdgDir(
       const std::string& rstudioEnvVar,
@@ -179,7 +180,7 @@ FilePath resolveXdgDir(
    // resolve aliases in the path
    xdgHome = FilePath::resolveAliasedPath(expanded, homeDir ? *homeDir : userHomePath());
 
-   // if this is the final path, we can return it as-is
+   // if this is not a final path, then append the RStudio data folder name
    if (!finalPath)
       xdgHome = xdgHome.completePath(kRStudioDataFolderName);
    
