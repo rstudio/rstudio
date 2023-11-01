@@ -1370,6 +1370,14 @@ public interface CmdConstants extends Constants {
     @DefaultStringValue("Request Copilot completions at the cursor position.") // $NON-NLS-1$
     String copilotRequestCompletionsDesc();
     
+    // copilotAcceptNextWord
+    @DefaultStringValue("Copilot: Accept Next Word") // $NON-NLS-1$
+    String copilotAcceptNextWordLabel();
+    @DefaultStringValue("Request Completions") // $NON-NLS-1$
+    String copilotAcceptNextWordMenuLabel();
+    @DefaultStringValue("Accept the next word of the current Copilot suggestion, if any.") // $NON-NLS-1$
+    String copilotAcceptNextWordDesc();
+    
     // sourceNavigateBack
     @DefaultStringValue("Bac_k") // $NON-NLS-1$
     String sourceNavigateBackMenuLabel();
