@@ -239,6 +239,8 @@ FilePath userCacheDir(
    );
 }
 
+#ifdef _WIN32
+
 FilePath oldUserCacheDir(
         const boost::optional<std::string>& user,
         const boost::optional<FilePath>& homeDir)
@@ -254,6 +256,7 @@ FilePath oldUserCacheDir(
    );
 }
 
+#endif
 
 FilePath userLogDir()
 {
