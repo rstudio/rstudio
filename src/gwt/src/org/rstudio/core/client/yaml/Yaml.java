@@ -14,12 +14,10 @@
  */
 package org.rstudio.core.client.yaml;
 
-import com.google.gwt.core.client.JavaScriptObject;
-
 import jsinterop.annotations.JsType;
 
 @JsType(isNative = true, name = "jsyaml")
 public class Yaml
 {
-   public static native JavaScriptObject load(String yaml);
+   public static native Object load(String yaml);
 }

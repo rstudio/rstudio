@@ -76,14 +76,11 @@ import org.rstudio.studio.client.workbench.views.source.model.DocUpdateSentinel;
 import org.rstudio.studio.client.workbench.views.source.model.SourceDocument;
 
 import com.google.gwt.core.client.GWT;
-import com.google.gwt.core.client.JavaScriptObject;
 import com.google.gwt.core.client.JsArray;
 import com.google.gwt.core.client.JsArrayString;
 import com.google.gwt.event.shared.HandlerRegistration;
 import com.google.gwt.user.client.Command;
 import com.google.inject.Inject;
-
-import jsinterop.base.Js;
 
 public class TextEditingTargetRMarkdownHelper
 {
@@ -1146,8 +1143,8 @@ public class TextEditingTargetRMarkdownHelper
       if (outputs.isEmpty())
       {
          String rawValue = tree.getKeyValue(outputKey);
-         JavaScriptObject parsedValue = Yaml.load(rawValue);
-         outputs.add(Js.cast(parsedValue));
+         Object parsedValue = Yaml.load(rawValue);
+         outputs.add((String) parsedValue);
       }
       
       // filter commented out outputs
