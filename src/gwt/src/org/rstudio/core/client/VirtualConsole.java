@@ -94,6 +94,7 @@ public class VirtualConsole
          String contents;
          int endIndex;
          
+         // ESC ']' '8' ';' <params> ';' <url> ( BEL | ESC ')')
          TextCursor cursor = new TextCursor(data, offset);
          if (!cursor.consume("\u001b]8;"))
             return null;
