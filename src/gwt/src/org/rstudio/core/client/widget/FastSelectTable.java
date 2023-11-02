@@ -14,17 +14,11 @@
  */
 package org.rstudio.core.client.widget;
 
-import com.google.gwt.core.client.JavaScriptException;
-import com.google.gwt.core.client.Scheduler;
-import com.google.gwt.core.client.Scheduler.ScheduledCommand;
-import com.google.gwt.dom.client.*;
-import com.google.gwt.dom.client.Style.Cursor;
-import com.google.gwt.event.dom.client.*;
-import com.google.gwt.event.shared.HandlerRegistration;
-import com.google.gwt.user.client.DOM;
-import com.google.gwt.user.client.Event;
-import com.google.gwt.user.client.ui.ScrollPanel;
-import com.google.gwt.user.client.ui.Widget;
+import java.util.ArrayList;
+import java.util.Collections;
+import java.util.Comparator;
+import java.util.List;
+
 import org.rstudio.core.client.ClassIds;
 import org.rstudio.core.client.Rectangle;
 import org.rstudio.core.client.command.KeyboardShortcut;
@@ -32,9 +26,50 @@ import org.rstudio.core.client.dom.DomUtils;
 import org.rstudio.core.client.dom.NativeWindow;
 import org.rstudio.core.client.widget.events.SelectionChangedEvent;
 
-import java.util.ArrayList;
-import java.util.Collections;
-import java.util.Comparator;
+import com.google.gwt.core.client.JavaScriptException;
+import com.google.gwt.core.client.Scheduler;
+import com.google.gwt.core.client.Scheduler.ScheduledCommand;
+import com.google.gwt.dom.client.Document;
+import com.google.gwt.dom.client.Element;
+import com.google.gwt.dom.client.NativeEvent;
+import com.google.gwt.dom.client.NodeList;
+import com.google.gwt.dom.client.Style.Cursor;
+import com.google.gwt.dom.client.TableElement;
+import com.google.gwt.dom.client.TableRowElement;
+import com.google.gwt.dom.client.TableSectionElement;
+import com.google.gwt.event.dom.client.BlurEvent;
+import com.google.gwt.event.dom.client.BlurHandler;
+import com.google.gwt.event.dom.client.ClickEvent;
+import com.google.gwt.event.dom.client.ClickHandler;
+import com.google.gwt.event.dom.client.FocusEvent;
+import com.google.gwt.event.dom.client.FocusHandler;
+import com.google.gwt.event.dom.client.HasAllKeyHandlers;
+import com.google.gwt.event.dom.client.HasAllMouseHandlers;
+import com.google.gwt.event.dom.client.HasClickHandlers;
+import com.google.gwt.event.dom.client.KeyCodes;
+import com.google.gwt.event.dom.client.KeyDownEvent;
+import com.google.gwt.event.dom.client.KeyDownHandler;
+import com.google.gwt.event.dom.client.KeyPressEvent;
+import com.google.gwt.event.dom.client.KeyPressHandler;
+import com.google.gwt.event.dom.client.KeyUpEvent;
+import com.google.gwt.event.dom.client.KeyUpHandler;
+import com.google.gwt.event.dom.client.MouseDownEvent;
+import com.google.gwt.event.dom.client.MouseDownHandler;
+import com.google.gwt.event.dom.client.MouseMoveEvent;
+import com.google.gwt.event.dom.client.MouseMoveHandler;
+import com.google.gwt.event.dom.client.MouseOutEvent;
+import com.google.gwt.event.dom.client.MouseOutHandler;
+import com.google.gwt.event.dom.client.MouseOverEvent;
+import com.google.gwt.event.dom.client.MouseOverHandler;
+import com.google.gwt.event.dom.client.MouseUpEvent;
+import com.google.gwt.event.dom.client.MouseUpHandler;
+import com.google.gwt.event.dom.client.MouseWheelEvent;
+import com.google.gwt.event.dom.client.MouseWheelHandler;
+import com.google.gwt.event.shared.HandlerRegistration;
+import com.google.gwt.user.client.DOM;
+import com.google.gwt.user.client.Event;
+import com.google.gwt.user.client.ui.ScrollPanel;
+import com.google.gwt.user.client.ui.Widget;
 
 public class FastSelectTable<TItemInput, TItemOutput, TItemOutput2> extends Widget
    implements HasAllMouseHandlers, HasClickHandlers, HasAllKeyHandlers
@@ -73,6 +108,24 @@ public class FastSelectTable<TItemInput, TItemOutput, TItemOutput2> extends Widg
       table_.getStyle().setCursor(Cursor.DEFAULT);
       setClassId(title);
       setElement(table_);
+      
+      addDomHandler(new FocusHandler()
+      {
+         @Override
+         public void onFocus(FocusEvent event)
+         {
+            isFocused_ = true;
+         }
+      }, FocusEvent.getType());
+      
+      addDomHandler(new BlurHandler()
+      {
+         @Override
+         public void onBlur(BlurEvent event)
+         {
+            isFocused_ = false;
+         }
+      }, BlurEvent.getType());
 
       addMouseDownHandler(new MouseDownHandler()
       {
@@ -94,6 +147,7 @@ public class FastSelectTable<TItemInput, TItemOutput, TItemOutput2> extends Widg
                handleRowClick(event, row);
          }
       });
+      
       addClickHandler(new ClickHandler()
       {
          public void onClick(ClickEvent event)
@@ -109,7 +163,38 @@ public class FastSelectTable<TItemInput, TItemOutput, TItemOutput2> extends Widg
             handleKeyDown(event);
          }
       });
+      
+      // set up a copy handler -- we do this in a relatively convoluted way
+      // just because FastSelectTable has rather complicated focus handling
+      // and this is the simplest way to hook things up without too much surgery
+      addNativeCopyHandler(this);
    }
+   
+   private static native final void addNativeCopyHandler(FastSelectTable<?, ?, ?> table) /*-{
+      $doc.body.addEventListener("copy", $entry(function(event) {
+         table.@org.rstudio.core.client.widget.FastSelectTable::onCopy(*)(event);
+      }), true);
+   }-*/;
+   
+   private void onCopy(NativeEvent event)
+   {
+      if (!isFocused_ || selectedRows_.isEmpty())
+         return;
+      
+      event.stopPropagation();
+      event.preventDefault();
+      
+      List<String> rowText = new ArrayList<String>();
+      for (TableRowElement row : selectedRows_)
+         rowText.add(row.getInnerText());
+      
+      String fullText = String.join("\n", rowText);
+      setClipboardText(event, fullText);
+   }
+   
+   private static final native void setClipboardText(NativeEvent event, String text) /*-{
+      event.clipboardData.setData("text/plain", text);
+   }-*/;
    
    public void setClassId(String name)
    {
@@ -691,4 +776,5 @@ public class FastSelectTable<TItemInput, TItemOutput, TItemOutput2> extends Widg
    private final boolean allowMultiSelect_;
    private ScrollPanel scrollPanel_;
    private final boolean focusable_;
+   private boolean isFocused_;
 }
