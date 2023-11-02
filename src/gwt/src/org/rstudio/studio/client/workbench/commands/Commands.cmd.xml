@@ -2052,6 +2052,11 @@ See `/src/gwt/tools/i18n-helpers/README.md`.
         menuLabel="Request Completions"
         desc="Request Copilot completions at the cursor position."/>
    
+   <cmd id="copilotAcceptNextWord"
+        label="Copilot: Accept Next Word"
+        menuLabel="Request Completions"
+        desc="Accept the next word of the current Copilot suggestion, if any."/>
+   
    <cmd id="sourceNavigateBack"
         menuLabel="Bac_k"
         desc="Go back to the previous source location"/>

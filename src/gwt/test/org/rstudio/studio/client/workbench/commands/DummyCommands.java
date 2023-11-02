@@ -3126,26 +3126,22 @@ public class DummyCommands extends Commands {
     }
 
     @Override
-    public AppCommand copilotInstallAgent()
-    {
+    public AppCommand copilotInstallAgent() {
         return null;
     }
 
     @Override
-    public AppCommand copilotSignIn()
-    {
+    public AppCommand copilotSignIn() {
         return null;
     }
 
     @Override
-    public AppCommand copilotSignOut()
-    {
+    public AppCommand copilotSignOut() {
         return null;
     }
 
     @Override
-    public AppCommand copilotStatus()
-    {
+    public AppCommand copilotStatus() {
         return null;
     }
 
@@ -3153,5 +3149,11 @@ public class DummyCommands extends Commands {
     public AppCommand copilotRequestCompletions() {
         return null;
     }
+    
+    @Override
+    public AppCommand copilotAcceptNextWord() {
+        return null;
+    }
+    
 
 }
