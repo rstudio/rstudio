@@ -1011,7 +1011,6 @@ public class RSConnectPublishButton extends Composite
    private Commands commands_;
    private GlobalDisplay display_;
    private Session session_;
-   @SuppressWarnings("unused")
    private Provider<UserPrefs> pUserPrefs_;
    private Provider<UserState> pUserState_;
    private PlotPublishMRUList plotMru_;

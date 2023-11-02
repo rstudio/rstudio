@@ -16,8 +16,6 @@ package org.rstudio.studio.client.rsconnect.ui;
 
 import java.util.ArrayList;
 
-import com.google.gwt.aria.client.Id;
-import com.google.gwt.aria.client.Roles;
 import org.rstudio.core.client.CommandWithArg;
 import org.rstudio.core.client.Debug;
 import org.rstudio.core.client.ElementIds;
@@ -54,6 +52,8 @@ import org.rstudio.studio.client.server.ServerRequestCallback;
 import org.rstudio.studio.client.workbench.prefs.model.UserPrefs;
 import org.rstudio.studio.client.workbench.prefs.model.UserState;
 
+import com.google.gwt.aria.client.Id;
+import com.google.gwt.aria.client.Roles;
 import com.google.gwt.core.client.GWT;
 import com.google.gwt.core.client.JsArray;
 import com.google.gwt.core.client.Scheduler;
@@ -1346,7 +1346,6 @@ public class RSConnectDeploy extends Composite
    private RSConnectServerOperations server_;
    private GlobalDisplay display_;
    private RSAccountConnector connector_;
-   @SuppressWarnings("unused")
    private UserPrefs userPrefs_;
    private UserState userState_;
    
