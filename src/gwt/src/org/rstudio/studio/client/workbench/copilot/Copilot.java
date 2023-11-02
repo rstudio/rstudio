@@ -48,13 +48,11 @@ import org.rstudio.studio.client.workbench.copilot.ui.CopilotSignInDialog;
 import org.rstudio.studio.client.workbench.events.SessionInitEvent;
 import org.rstudio.studio.client.workbench.model.Session;
 import org.rstudio.studio.client.workbench.prefs.model.UserPrefs;
-import org.rstudio.studio.client.workbench.views.source.SourceColumnManager;
 
 import com.google.gwt.event.dom.client.ClickEvent;
 import com.google.gwt.event.dom.client.ClickHandler;
 import com.google.gwt.user.client.Timer;
 import com.google.inject.Inject;
-import com.google.inject.Provider;
 import com.google.inject.Singleton;
 
 @Singleton
@@ -63,7 +61,6 @@ public class Copilot implements ProjectOptionsChangedEvent.Handler
    @Inject
    public Copilot(GlobalDisplay display,
                   Commands commands,
-                  Provider<SourceColumnManager> sourceColumnManager,
                   GlobalDisplay globalDisplay,
                   EventBus events,
                   UserPrefs prefs,
@@ -73,14 +70,13 @@ public class Copilot implements ProjectOptionsChangedEvent.Handler
    {
       display_ = display;
       commands_ = commands;
-      sourceColumnManager_ = sourceColumnManager;
       globalDisplay_ = globalDisplay;
       events_ = events;
       prefs_ = prefs;
       session_ = session;
       server_ = server;
       
-      binder.bind(commands, this);
+      binder.bind(commands_, this);
     
       events_.addHandler(SessionInitEvent.TYPE, new SessionInitEvent.Handler()
       {
@@ -439,7 +435,6 @@ public class Copilot implements ProjectOptionsChangedEvent.Handler
    
    private final GlobalDisplay display_;
    private final Commands commands_;
-   private final Provider<SourceColumnManager> sourceColumnManager_;
    private final EventBus events_;
    private final UserPrefs prefs_;
    private final Session session_;

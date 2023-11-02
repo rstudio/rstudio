@@ -43,6 +43,7 @@
 - RStudio now records the deployment target for newly-published documents, even when deployment fails due to an error in the document. (#12707)
 - Fixed an issue where Find in Files results were not presented in rare cases. (#12657)
 - Fixed an issue that could cause errors to occur if an R Markdown document was saved while a chunk was running. (#13860)
+- Fixed an issue where console output could be dropped when rendering large ANSI links. (#13869)
 - Fixed an issue preventing users from copying code from the History pane. (#3219)
 
 #### Posit Workbench

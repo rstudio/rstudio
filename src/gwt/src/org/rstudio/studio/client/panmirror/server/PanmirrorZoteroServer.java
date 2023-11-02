@@ -15,7 +15,6 @@
 
 package org.rstudio.studio.client.panmirror.server;
 
-import com.google.gwt.core.client.GWT;
 import org.rstudio.core.client.promise.PromiseServerRequestCallback;
 import org.rstudio.studio.client.RStudioGinjector;
 
@@ -28,7 +27,6 @@ import elemental2.promise.Promise;
 import elemental2.promise.Promise.PromiseExecutorCallbackFn.RejectCallbackFn;
 import elemental2.promise.Promise.PromiseExecutorCallbackFn.ResolveCallbackFn;
 import jsinterop.annotations.JsType;
-import org.rstudio.studio.client.panmirror.PanmirrorConstants;
 
 @JsType
 public class PanmirrorZoteroServer
@@ -96,7 +94,6 @@ public class PanmirrorZoteroServer
          );
       });
    }
-   private static final PanmirrorConstants constants_ = GWT.create(PanmirrorConstants.class);
-
-   PanmirrorZoteroServerOperations server_;
+   
+   private PanmirrorZoteroServerOperations server_;
 }
