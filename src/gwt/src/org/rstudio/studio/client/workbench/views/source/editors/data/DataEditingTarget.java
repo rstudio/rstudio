@@ -14,10 +14,7 @@
  */
 package org.rstudio.studio.client.workbench.views.source.editors.data;
 
-import com.google.gwt.aria.client.Roles;
-import com.google.gwt.core.client.GWT;
-import com.google.gwt.user.client.ui.Widget;
-import com.google.inject.Inject;
+import java.util.HashMap;
 
 import org.rstudio.core.client.StringUtil;
 import org.rstudio.core.client.widget.SimplePanelWithProgress;
@@ -37,7 +34,10 @@ import org.rstudio.studio.client.workbench.views.source.events.PopoutDocEvent;
 import org.rstudio.studio.client.workbench.views.source.model.DataItem;
 import org.rstudio.studio.client.workbench.views.source.model.SourceServerOperations;
 
-import java.util.HashMap;
+import com.google.gwt.aria.client.Roles;
+import com.google.gwt.core.client.GWT;
+import com.google.gwt.user.client.ui.Widget;
+import com.google.inject.Inject;
 
 public class DataEditingTarget extends UrlContentEditingTarget
                                implements DataViewChangedEvent.Handler
@@ -90,23 +90,25 @@ public class DataEditingTarget extends UrlContentEditingTarget
    @Override
    public void onDataViewChanged(DataViewChangedEvent event)
    {
+      // check whether this editing target is managing the changed data view
       DataViewChangedEvent.Data eventData = event.getData();
-      if (eventData.getCacheKey().equals(getDataItem().getCacheKey()))
+      DataItem item = getDataItem();
+      if (!eventData.getCacheKey().equals(item.getCacheKey()))
+         return;
+      
+      // close if the object no longer exists
+      if (!eventData.getObjectExists())
       {
-         // when this is no longer a data frame, close it
-         if (eventData.typeChanged())
-         {
-            events_.fireEvent(new CloseDataEvent(getDataItem()));
-            return;
-         }
+         events_.fireEvent(new CloseDataEvent(item));
+         return;
+      }
 
-         queuedRefresh_ = QueuedRefreshType.StructureRefresh;
-         // perform the refresh immediately if the tab is active; otherwise,
-         // leave it in the queue and it'll be run when the tab is activated
-         if (isActive_)
-         {
-            doQueuedRefresh();
-         }
+      // perform the refresh immediately if the tab is active; otherwise,
+      // leave it in the queue and it'll be run when the tab is activated
+      queuedRefresh_ = QueuedRefreshType.StructureRefresh;
+      if (isActive_)
+      {
+         doQueuedRefresh();
       }
    }
 

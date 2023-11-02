@@ -1192,14 +1192,15 @@ public class AceEditor implements DocDisplay,
       fireEvent(new ScrollYEvent(Position.create(getFirstVisibleRow(), 0)));
    }
 
+   public void insertCode(String code, boolean unused)
+   {
+      insertCode(code);
+   }
+   
    public void insertCode(String code)
    {
-      insertCode(code, false);
-   }
-
-   public void insertCode(String code, boolean blockMode)
-   {
-      widget_.getEditor().insert(StringUtil.normalizeNewLines(code));
+      String normalizedCode = StringUtil.normalizeNewLines(code);
+      widget_.getEditor().insert(normalizedCode);
    }
 
    public void applyChanges(TextChange[] changes)

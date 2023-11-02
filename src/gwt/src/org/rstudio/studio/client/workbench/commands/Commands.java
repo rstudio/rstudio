@@ -737,6 +737,7 @@ public abstract class
    public abstract AppCommand copilotSignOut();
    public abstract AppCommand copilotStatus();
    public abstract AppCommand copilotRequestCompletions();
+   public abstract AppCommand copilotAcceptNextWord();
 
    // Internal
    public abstract AppCommand showDomElements();

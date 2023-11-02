@@ -21,6 +21,8 @@ import org.rstudio.core.client.StringUtil;
 import org.rstudio.core.client.command.CommandBinder;
 import org.rstudio.core.client.command.Handler;
 import org.rstudio.core.client.dom.EventProperty;
+import org.rstudio.core.client.regex.Match;
+import org.rstudio.core.client.regex.Pattern;
 import org.rstudio.studio.client.RStudioGinjector;
 import org.rstudio.studio.client.application.events.EventBus;
 import org.rstudio.studio.client.common.Timers;
@@ -295,7 +297,42 @@ public class TextEditingTargetCopilotHelper
    @Handler
    public void onCopilotRequestCompletions()
    {
-      completionTimer_.schedule(0);
+      if (display_.isFocused())
+         completionTimer_.schedule(0);
+   }
+   
+   @Handler
+   public void onCopilotAcceptNextWord()
+   {
+      if (!display_.isFocused())
+         return;
+         
+      boolean hasActiveSuggestion = display_.hasGhostText() && activeCompletion_ != null;
+      if (!hasActiveSuggestion)
+         return;
+      
+      String text = activeCompletion_.displayText;
+      Pattern pattern = Pattern.create("\\b");
+      Match match = pattern.match(text, 1);
+      if (match == null)
+         return;
+      
+      String insertedWord = text.substring(0, match.getIndex());
+      String leftoverText = text.substring(match.getIndex());
+      
+      int n = insertedWord.length();
+      activeCompletion_.displayText = leftoverText;
+      activeCompletion_.text = leftoverText;
+      activeCompletion_.position.character += n;
+      activeCompletion_.range.start.character += n;
+      activeCompletion_.range.end.character += n;
+      
+      Timers.singleShot(() ->
+      {
+         suppressCursorChangeHandler_ = true;
+         display_.insertCode(insertedWord);
+         display_.setGhostText(activeCompletion_.displayText);
+      });
    }
    
    private void updateCompletion(String key)

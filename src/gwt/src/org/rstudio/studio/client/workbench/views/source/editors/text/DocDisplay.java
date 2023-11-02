@@ -122,7 +122,9 @@ public interface DocDisplay extends HasValueChangeHandlers<Void>,
    JsArrayString getLines();
    JsArrayString getLines(int startRow, int endRow);
    void setCode(String code, boolean preserveCursorPosition);
-   void insertCode(String code, boolean blockMode);
+   void insertCode(String code);
+   void insertCode(String code, boolean unused);
+   void insertCode(InputEditorPosition position, String code);
    void applyChanges(TextChange[] changes);
    void applyChanges(TextChange[] changes, boolean preserveCursorPosition);
    void focus();
@@ -294,8 +296,6 @@ public interface DocDisplay extends HasValueChangeHandlers<Void>,
                                Position start,
                                Range range,
                                boolean regexpModex);
-
-   void insertCode(InputEditorPosition position, String code);
 
    int getScrollLeft();
    void scrollToX(int x);
