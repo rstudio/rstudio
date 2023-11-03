@@ -14,6 +14,7 @@
  */
 package org.rstudio.studio.client.common.dialog;
 
+import org.rstudio.core.client.DialogOptions;
 import org.rstudio.core.client.ElementIds;
 import org.rstudio.core.client.StringUtil;
 import org.rstudio.core.client.widget.DialogBuilder;
@@ -33,10 +34,11 @@ public class DesktopDialogBuilderFactory implements DialogBuilderFactory
 {
    static class Builder extends DialogBuilderBase
    {
-      public Builder(int type, String caption, String message)
+      public Builder(int type, String caption, String message, DialogOptions options)
       {
          super(type, caption);
          message_ = message;
+         options_ = options;
       }
 
       @Override
@@ -138,12 +140,14 @@ public class DesktopDialogBuilderFactory implements DialogBuilderFactory
       }
 
       private final String message_;
+      private final DialogOptions options_;
+      
       private Command dismissProgress_;
    }
 
-   public DialogBuilder create(int type, String caption, String message)
+   public DialogBuilder create(int type, String caption, String message, DialogOptions options)
    {
-      return new Builder(type, caption, message);
+      return new Builder(type, caption, message, options);
    }
    private static final StudioClientCommonConstants constants_ = GWT.create(StudioClientCommonConstants.class);
 }

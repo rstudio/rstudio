@@ -129,11 +129,28 @@ public abstract class MessageDisplay
    protected abstract DialogBuilder createDialog(int type,
                                                  String caption,
                                                  String message);
+   
+   protected abstract DialogBuilder createDialog(int type,
+                                                 String caption,
+                                                 String message,
+                                                 DialogOptions options);
+   
 
-   public void showMessage(int type, String caption, String message)
+   public void showMessage(int type,
+                           String caption,
+                           String message)
    {
       createDialog(type, caption, message).showModal();
    }
+   
+   public void showMessage(int type,
+                           String caption,
+                           String message,
+                           DialogOptions options)
+   {
+      createDialog(type, caption, message, options).showModal();
+   }
+   
 
    public void showMessage(int type,
                            String caption,

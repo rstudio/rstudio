@@ -19,16 +19,19 @@ import java.util.List;
 
 import org.rstudio.core.client.CommandWithArg;
 import org.rstudio.core.client.Debug;
+import org.rstudio.core.client.DialogOptions;
 import org.rstudio.core.client.JSON;
 import org.rstudio.core.client.StringUtil;
 import org.rstudio.core.client.prefs.RestartRequirement;
 import org.rstudio.core.client.resources.ImageResource2x;
+import org.rstudio.core.client.widget.DialogBuilder;
 import org.rstudio.core.client.widget.SelectWidget;
 import org.rstudio.core.client.widget.SmallButton;
 import org.rstudio.studio.client.application.AriaLiveService;
 import org.rstudio.studio.client.application.events.EventBus;
 import org.rstudio.studio.client.common.GlobalDisplay;
 import org.rstudio.studio.client.common.HelpLink;
+import org.rstudio.studio.client.common.dialog.WebDialogBuilderFactory;
 import org.rstudio.studio.client.projects.model.ProjectsServerOperations;
 import org.rstudio.studio.client.projects.model.RProjectConfig;
 import org.rstudio.studio.client.projects.model.RProjectOptions;
@@ -254,10 +257,22 @@ public class CopilotPreferencesPane extends PreferencesPane
          @Override
          public void onClick(ClickEvent event)
          {
-            display_.showMessage(
+            DialogOptions options = new DialogOptions();
+            options.width = "auto";
+            options.height = "auto";
+            options.userSelect = "text";
+            
+            // Prefer using a web dialog even on Desktop, as we want to allow customization
+            // of how the UI is presented. In particular, we want to allow users to select
+            // and copy text if they need to.
+            WebDialogBuilderFactory builder = GWT.create(WebDialogBuilderFactory.class);
+            DialogBuilder dialog = builder.create(
                   GlobalDisplay.MSG_INFO,
                   "GitHub Copilot: Status",
-                  copilotStartupError_);
+                  copilotStartupError_,
+                  options);
+            
+            dialog.showModal();
          }
       });
       

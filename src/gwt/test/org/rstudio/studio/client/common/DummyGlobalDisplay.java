@@ -1,5 +1,6 @@
 package org.rstudio.studio.client.common;
 
+import org.rstudio.core.client.DialogOptions;
 import org.rstudio.core.client.dom.WindowEx;
 import org.rstudio.core.client.widget.DialogBuilder;
 import org.rstudio.core.client.widget.Operation;
@@ -229,6 +230,16 @@ public class DummyGlobalDisplay extends GlobalDisplay
 
     }
 
+    @Override
+    protected DialogBuilder createDialog(int type,
+                                         String caption,
+                                         String message,
+                                         DialogOptions options)
+    {
+
+        return null;
+    }
+    
     @Override
     protected DialogBuilder createDialog(int type,
                                          String caption,

@@ -14,13 +14,18 @@
  */
 package org.rstudio.core.client.widget;
 
-import com.google.gwt.aria.client.Roles;
-import com.google.gwt.user.client.ui.*;
-
 import org.rstudio.core.client.StringUtil;
 import org.rstudio.core.client.resources.ImageResource2x;
 import org.rstudio.core.client.theme.res.ThemeResources;
 import org.rstudio.core.client.widget.images.MessageDialogImages;
+
+import com.google.gwt.aria.client.Roles;
+import com.google.gwt.user.client.ui.HasHorizontalAlignment;
+import com.google.gwt.user.client.ui.HasVerticalAlignment;
+import com.google.gwt.user.client.ui.HorizontalPanel;
+import com.google.gwt.user.client.ui.Image;
+import com.google.gwt.user.client.ui.Label;
+import com.google.gwt.user.client.ui.Widget;
 
 public class MessageDialog extends ModalDialogBase
 {
@@ -154,6 +159,23 @@ public class MessageDialog extends ModalDialogBase
    protected void focusInitialControl()
    {
       focusOkButton();
+   }
+   
+   public void setUserSelect(String userSelect)
+   {
+      messageWidget_.getElement().getStyle().setProperty("userSelect", userSelect);
+   }
+   
+   @Override
+   public void setWidth(String width)
+   {
+      messageWidget_.setWidth(width);
+   }
+   
+   @Override
+   public void setHeight(String height)
+   {
+      messageWidget_.setHeight(height);
    }
 
    private final int type_;
