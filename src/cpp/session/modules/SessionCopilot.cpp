@@ -177,9 +177,6 @@ bool s_isSessionShuttingDown = false;
 // Project-specific Copilot options.
 projects::RProjectCopilotOptions s_copilotProjectOptions;
 
-// The error (if any) that occurred when trying to launch Copilot.
-Error s_copilotLaunchError = Success();
-
 bool isCopilotEnabled()
 {
    // Check project option
@@ -617,9 +614,9 @@ void onStderr(ProcessOperations& operations, const std::string& stdErr)
  
    // If we get output from stderr while the agent is starting, that means
    // something went wrong and we're about to shut down.
-   if (s_agentStatus == status::Starting)
+   if (s_agentStatus == status::Starting || s_agentStatus == status::Stopping)
    {
-      s_agentStartupError = stdErr;
+      s_agentStartupError += stdErr;
       s_agentStatus = status::Stopping;
    }
 }
