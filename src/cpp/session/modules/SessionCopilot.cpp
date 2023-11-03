@@ -131,6 +131,18 @@ private:
    boost::posix_time::ptime time_;
 };
 
+namespace status {
+
+enum CopilotAgentStatus {
+   Unknown,
+   Starting,
+   Running,
+   Stopping,
+   Stopped,
+};
+
+} // end namespace status
+
 // The log level for Copilot-specific logs. Primarily for developer use.
 int s_copilotLogLevel = 0;
 
@@ -142,6 +154,12 @@ bool s_copilotIndexingEnabled = false;
 
 // The PID of the active Copilot agent process.
 PidType s_agentPid = -1;
+
+// Error output (if any) that was written during startup.
+std::string s_agentStartupError;
+
+// Whether the current Copilot agent process is ready.
+status::CopilotAgentStatus s_agentStatus = status::Unknown;
 
 // A queue of pending requests, to be sent via the agent's stdin.
 std::queue<std::string> s_pendingRequests;
@@ -480,6 +498,7 @@ void onStarted(ProcessOperations& operations)
    // Record the PID of the agent.
    DLOG("Copilot agent has started [PID = {}]", operations.getPid());
    s_agentPid = operations.getPid();
+   s_agentStatus = status::Starting;
 }
 
 bool onContinue(ProcessOperations& operations)
@@ -585,6 +604,9 @@ void onStdout(ProcessOperations& operations, const std::string& stdOut)
       // Update the start index.
       startIndex = bodyEnd;
    }
+   
+   // Note that the agent is now ready.
+   s_agentStatus = status::Running;
 }
 
 void onStderr(ProcessOperations& operations, const std::string& stdErr)
@@ -592,16 +614,26 @@ void onStderr(ProcessOperations& operations, const std::string& stdErr)
    LOG_ERROR_MESSAGE_NAMED("copilot", stdErr);
    if (copilotLogLevel() >= 1)
       std::cerr << stdErr << std::endl;
+ 
+   // If we get output from stderr while the agent is starting, that means
+   // something went wrong and we're about to shut down.
+   if (s_agentStatus == status::Starting)
+   {
+      s_agentStartupError = stdErr;
+      s_agentStatus = status::Stopping;
+   }
 }
 
 void onError(ProcessOperations& operations, const Error& error)
 {
    s_agentPid = -1;
+   s_agentStatus = status::Stopped;
 }
 
 void onExit(int status)
 {
    s_agentPid = -1;
+   s_agentStatus = status::Stopped;
 
    if (s_isSessionShuttingDown)
       return;
@@ -685,7 +717,14 @@ Error startAgent()
    //
    // This also has the downside of failing less gracefully if 'node' is able to start
    // successfully, but it later dies after trying to run the 'agent.js' script.
+   s_agentStatus = status::Unknown;
+   s_agentStartupError = std::string();
    waitFor([]() { return s_agentPid != -1; });
+   if (s_agentPid == -1)
+      return Error(boost::system::errc::no_such_process, ERROR_LOCATION);
+   
+   // Wait for Copilot to report that it's started running.
+   waitFor([]() { return s_agentStatus == status::Running || s_agentStatus == status::Stopped; });
    if (s_agentPid == -1)
       return Error(boost::system::errc::no_such_process, ERROR_LOCATION);
 
@@ -1046,6 +1085,7 @@ Error copilotStatus(const json::JsonRpcRequest& request,
          
          json::Object resultJson;
          resultJson["error"] = errorJson;
+         resultJson["output"] = s_agentStartupError;
          response.setResult(resultJson);
       }
       

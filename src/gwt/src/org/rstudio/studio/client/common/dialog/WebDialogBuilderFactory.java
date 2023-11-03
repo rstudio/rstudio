@@ -14,9 +14,11 @@
  */
 package org.rstudio.studio.client.common.dialog;
 
-import com.google.gwt.user.client.ui.Widget;
 import org.rstudio.core.client.ElementIds;
-import org.rstudio.core.client.widget.*;
+import org.rstudio.core.client.widget.DialogBuilder;
+import org.rstudio.core.client.widget.MessageDialog;
+
+import com.google.gwt.user.client.ui.Widget;
 
 public class WebDialogBuilderFactory implements DialogBuilderFactory
 {

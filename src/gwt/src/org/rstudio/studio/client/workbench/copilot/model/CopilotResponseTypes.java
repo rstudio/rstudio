@@ -88,7 +88,11 @@ public class CopilotResponseTypes
       public String jsonrpc;
       public String id;
       public CopilotStatusResponseResult result;
+      
+      // These aren't part of a normal Copilot status request; we append
+      // this extra information to help report agent startup errors.
       public RpcError error;
+      public String output;
    }
    
    @JsType(isNative = true, namespace = JsPackage.GLOBAL, name = "Object")

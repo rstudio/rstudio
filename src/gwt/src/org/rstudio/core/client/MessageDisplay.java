@@ -16,10 +16,6 @@ package org.rstudio.core.client;
 
 import java.util.List;
 
-import com.google.gwt.user.client.Window;
-import com.google.gwt.user.client.ui.Focusable;
-
-import com.google.gwt.core.client.GWT;
 import org.rstudio.core.client.widget.CanFocus;
 import org.rstudio.core.client.widget.DialogBuilder;
 import org.rstudio.core.client.widget.FocusHelper;
@@ -28,6 +24,10 @@ import org.rstudio.core.client.widget.OperationWithInput;
 import org.rstudio.core.client.widget.ProgressOperation;
 import org.rstudio.core.client.widget.ProgressOperationWithInput;
 import org.rstudio.studio.client.common.GlobalDisplay;
+
+import com.google.gwt.core.client.GWT;
+import com.google.gwt.user.client.Window;
+import com.google.gwt.user.client.ui.Focusable;
 
 public abstract class MessageDisplay
 {
