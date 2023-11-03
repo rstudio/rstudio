@@ -452,7 +452,23 @@ options(help_type = "html")
 
 .rs.addJsonRpcHandler("show_vignette", function(topic, package)
 {
-   print(utils::vignette(topic, package))
+   # First, check for an explicitly registered vignette
+   vignette <- tryCatch(utils::vignette(topic, package), condition = identity)
+   if (!inherits(vignette, "condition"))
+      return(print(vignette))
+   
+   # Try falling back to opening bundled documentation that's not
+   # explicitly registered as a vignette.
+   exts <- c("pdf", "html")
+   for (ext in exts) {
+      suffix <- sprintf("doc/%s.%s", topic, ext)
+      path <- system.file(suffix, package = package, mustWork = FALSE)
+      if (nzchar(path))
+         return(browseURL(path))
+   }
+ 
+   # If we couldn't find the vignette, re-throw the original error.
+   stop(conditionMessage(vignette), call. = FALSE)
 })
 
 .rs.addFunction("getHelpColumn", function(name, src, envir = parent.frame())
