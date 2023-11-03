@@ -159,6 +159,9 @@ bool s_isSessionShuttingDown = false;
 // Project-specific Copilot options.
 projects::RProjectCopilotOptions s_copilotProjectOptions;
 
+// The error (if any) that occurred when trying to launch Copilot.
+Error s_copilotLaunchError = Success();
+
 bool isCopilotEnabled()
 {
    // Check project option
@@ -591,6 +594,11 @@ void onStderr(ProcessOperations& operations, const std::string& stdErr)
       std::cerr << stdErr << std::endl;
 }
 
+void onError(ProcessOperations& operations, const Error& error)
+{
+   s_agentPid = -1;
+}
+
 void onExit(int status)
 {
    s_agentPid = -1;
@@ -619,16 +627,13 @@ void stopAgent()
       LOG_ERROR(error);
 }
 
-bool startAgent()
+Error startAgent()
 {
    Error error;
 
    FilePath agentPath = copilotAgentPath();
    if (!agentPath.exists())
-   {
-      ELOG("Copilot agent not installed; cannot start agent.");
-      return false;
-   }
+      return fileNotFoundError(agentPath, ERROR_LOCATION);
 
    // Create environment for agent process
    core::system::Options environment;
@@ -638,15 +643,10 @@ bool startAgent()
    FilePath nodePath;
    error = findNode(&nodePath, &environment);
    if (error)
-   {
-      LOG_ERROR(error);
-      return false;
-   }
-   else if (!nodePath.exists())
-   {
-      LOG_ERROR(fileNotFoundError(ERROR_LOCATION));
-      return false;
-   }
+      return error;
+   
+   if (!nodePath.exists())
+      return fileNotFoundError("node", ERROR_LOCATION);
 
    // Set up process callbacks
    core::system::ProcessCallbacks callbacks;
@@ -654,6 +654,7 @@ bool startAgent()
    callbacks.onContinue = &agent::onContinue;
    callbacks.onStdout = &agent::onStdout;
    callbacks.onStderr = &agent::onStderr;
+   callbacks.onError = &agent::onError;
    callbacks.onExit = &agent::onExit;
 
    // Set up process options
@@ -671,10 +672,7 @@ bool startAgent()
             callbacks);
 
    if (error)
-   {
-      LOG_ERROR(error);
-      return false;
-   }
+      return error;
 
    // Wait for the process to start.
    //
@@ -684,12 +682,12 @@ bool startAgent()
    // We include this because all requests will fail if we haven't yet called
    // initialized, so maybe the right approach is to have some sort of 'ensureInitialized'
    // method?
+   //
+   // This also has the downside of failing less gracefully if 'node' is able to start
+   // successfully, but it later dies after trying to run the 'agent.js' script.
    waitFor([]() { return s_agentPid != -1; });
    if (s_agentPid == -1)
-   {
-      ELOG("Copilot agent failed to start.");
-      return false;
-   }
+      return Error(boost::system::errc::no_such_process, ERROR_LOCATION);
 
    // Send an initialize request to the agent.
    json::Object clientInfoJson;
@@ -714,11 +712,19 @@ bool startAgent()
    sendRequest("initialize", requestId, paramsJson, CopilotContinuation(callback));
 
    // Okay, we're ready to go.
-   return true;
+   return Success();
 }
 
-bool ensureAgentRunning()
+bool ensureAgentRunning(Error* pAgentLaunchError = nullptr)
 {
+   // TODO: Should we further validate the PID is actually associated
+   // with a running Copilot process, or just handle that separately?
+   if (s_agentPid != -1)
+   {
+      DLOG("Copilot is already running; nothing to do.");
+      return true;
+   }
+
    // bail if copilot is not allowed
    if (!session::options().copilotEnabled())
    {
@@ -740,15 +746,14 @@ bool ensureAgentRunning()
       return false;
    }
 
-   // TODO: Should we further validate the PID is actually associated
-   // with a running Copilot process, or just handle that separately?
-   if (s_agentPid != -1)
-   {
-      DLOG("Copilot is already running; nothing to do.");
-      return true;
-   }
-
-   return startAgent();
+   Error error = startAgent();
+   if (error)
+      LOG_ERROR(error);
+   
+   if (pAgentLaunchError)
+      *pAgentLaunchError = error;
+   
+   return error == Success();
 }
 
 void onDocAdded(boost::shared_ptr<source_database::SourceDocument> pDoc)
@@ -1030,9 +1035,20 @@ Error copilotStatus(const json::JsonRpcRequest& request,
                     const json::JsonRpcFunctionContinuation& continuation)
 {
    // Make sure copilot is running
-   if (!ensureAgentRunning())
+   Error launchError;
+   if (!ensureAgentRunning(&launchError))
    {
       json::JsonRpcResponse response;
+      if (launchError)
+      {
+         json::Object errorJson;
+         launchError.writeJson(&errorJson);
+         
+         json::Object resultJson;
+         resultJson["error"] = errorJson;
+         response.setResult(resultJson);
+      }
+      
       continuation(Success(), &response);
       return Success();
    }

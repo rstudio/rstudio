@@ -96,6 +96,7 @@ public class CopilotPreferencesPane extends PreferencesPane
       projectServer_ = projectServer;
       
       lblCopilotStatus_ = new Label("(Loading...)");
+      lblCopilotStatus_.addStyleName(RES.styles().copilotStatusLabel());
       
       statusButtons_ = new ArrayList<SmallButton>();
       
@@ -306,7 +307,15 @@ public class CopilotPreferencesPane extends PreferencesPane
             
             if (response == null)
             {
-               if (projectOptions_ != null && projectOptions_.getCopilotOptions().copilot_enabled == RProjectConfig.NO_VALUE)
+               lblCopilotStatus_.setText("An unexpected error occurred while checking the status of the GitHub Copilot agent.");
+            }
+            else if (response.result == null)
+            {
+               if (response.error != null)
+               {
+                  lblCopilotStatus_.setText("An error occurred while attempting to start the Copilot agent.\n\n" + response.error.getMessage());
+               }
+               else if (projectOptions_ != null && projectOptions_.getCopilotOptions().copilot_enabled == RProjectConfig.NO_VALUE)
                {
                   lblCopilotStatus_.setText("GitHub Copilot has been disabled in this project.");
                   showButtons(btnProjectOptions_);
@@ -424,6 +433,7 @@ public class CopilotPreferencesPane extends PreferencesPane
    public interface Styles extends CssResource
    {
       String button();
+      String copilotStatusLabel();
       String copilotTosLabel();
       String copilotPreviewBlurb();
    }
