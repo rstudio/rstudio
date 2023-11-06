@@ -82,7 +82,7 @@
 
 .contents tr.gwt-MenuItem-selected .columnSize,
 .contents tr.gwt-MenuItem-selected .columnDate {
-   color: white;
+   color: black;
 }
 
 .gwt-CheckBox-FilesSelectAll {
