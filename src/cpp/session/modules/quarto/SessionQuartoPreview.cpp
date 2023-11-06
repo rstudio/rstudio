@@ -157,8 +157,8 @@ protected:
    {
       return "Preview: " + previewTarget_.getFilename();
    }
-
-   std::vector<std::string> computeArgs()
+   
+   virtual std::vector<std::string> args()
    {
       // preview target file
       std::vector<std::string> args = { "preview" };
@@ -184,12 +184,6 @@ protected:
       args.push_back("--no-browse");
 
       return args;
-   }
-   
-   virtual std::vector<std::string> args()
-   {
-      static std::vector<std::string> instance = computeArgs();
-      return instance;
    }
    
    virtual void environment(core::system::Options* pEnv)
