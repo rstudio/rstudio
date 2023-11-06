@@ -1,4 +1,5 @@
 @charset "UTF-8";
 
 .modalDialog {
+	overflow: clip !important;
 }
