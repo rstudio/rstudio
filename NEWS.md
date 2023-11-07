@@ -15,6 +15,7 @@
 - With screen reader support enabled, hitting ESC key allows Tabbing away from editor. [accessibility] (#13593)
 - RStudio now supports `LuaLaTeX` to compile Sweave/Rnw documents. (#13812)
 - Better error message when user preferences fail to save due to folder permissions. (#12974)
+- Update Electon Forge to 6.4.2 and Webpack to 5.89.0. (rstudio-pro#5383)
 
 #### Posit Workbench
 - Removed link for opening sessions in RStudio Desktop Pro from Session Info dialog. (rstudio-pro#5263)
