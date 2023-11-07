@@ -50,11 +50,21 @@
    
    # Extract the tarball. Make sure things get unpacked into the download dir.
    local({
+      
+      # Move to download directory.
       owd <- setwd(downloadDir)
       on.exit(setwd(owd), add = TRUE)
-      untar(destfile)
+      
+      # Make sure we have a valid tar set up.
+      # https://github.com/rstudio/rstudio/issues/13746
+      tar <- Sys.getenv("TAR")
+      if (!file.exists(tar))
+         tar <- Sys.which("tar")
+      
+      # Extract the archive.
+      untar(destfile, tar = tar)
+      
    })
-   
    
    # Find the unpacked directory.
    # NOTE: The copilot agent used to be bundled within the 'copilot/dist' sub-directory,
