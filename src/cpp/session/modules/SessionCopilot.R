@@ -109,15 +109,18 @@
 {
    # build regex
    reProxyUrl <- paste0(
+      "^",
       "(?:(\\w+)://)?",         # protocol (optional)
       "(?:([^:]+):([^@]+)@)?",  # username + password (optional)
-      "([^:]+):(\\d+)"          # host + port (required)
+      "([^:]+):(\\d+)",         # host + port (required)
+      "/?",                     # optional trailing slash, just in case
+      "$"
    )
    
    # attempt to match
    networkProxy <- as.list(regmatches(url, regexec(reProxyUrl, url))[[1L]])
    if (length(networkProxy) != 6L)
-      warning("couldn't parse network proxy url '", url, "'")
+      warning("couldn't parse network proxy url '", url, "'", call. = FALSE)
    
    # set names of matched values
    names(networkProxy) <- c("url", "protocol", "user", "pass", "host", "port")
@@ -128,7 +131,7 @@
    # validate the protocol, if it was set
    protocol <- .rs.nullCoalesce(networkProxy$protocol, "http")
    if (protocol != "http")
-      warning("only 'http' network proxies are supported")
+      warning("only 'http' network proxies are supported by the GitHub Copilot agent", call. = FALSE)
    
    # drop the 'url' and 'protocol' fields as they are not used by copilot
    networkProxy[c("url", "protocol")] <- NULL
