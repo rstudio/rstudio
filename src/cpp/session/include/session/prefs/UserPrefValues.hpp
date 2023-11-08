@@ -178,6 +178,7 @@ namespace prefs {
 #define kDefaultEncoding "default_encoding"
 #define kToolbarVisible "toolbar_visible"
 #define kDefaultProjectLocation "default_project_location"
+#define kDefaultOpenProjectLocation "default_open_project_location"
 #define kSourceWithEcho "source_with_echo"
 #define kDefaultSweaveEngine "default_sweave_engine"
 #define kDefaultLatexProgram "default_latex_program"
@@ -1003,6 +1004,12 @@ public:
     */
    std::string defaultProjectLocation();
    core::Error setDefaultProjectLocation(std::string val);
+
+   /**
+    * The default directory to use in file dialogs when opening a project.
+    */
+   std::string defaultOpenProjectLocation();
+   core::Error setDefaultOpenProjectLocation(std::string val);
 
    /**
     * Whether to echo R code when sourcing it.

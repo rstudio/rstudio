@@ -107,6 +107,13 @@ public abstract class PreferencesDialogPaneBase<T> extends VerticalPanel
       widget.addStyleName(res_.styles().spacedBefore());
       return widget;
    }
+   
+   protected Widget extraSpacedBefore(Widget widget)
+   {
+      widget.addStyleName(res_.styles().extraSpacedBefore());
+      return widget;
+   }
+   
 
    protected Widget spaced(Widget widget)
    {

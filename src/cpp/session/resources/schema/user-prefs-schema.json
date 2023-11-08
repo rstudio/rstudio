@@ -673,6 +673,12 @@
             "title": "Default new project location",
             "description": "The directory path under which to place new projects by default."
         },
+        "default_open_project_location": {
+            "type": "string",
+            "default": "~",
+            "title": "Default open project location",
+            "description": "The default directory to use in file dialogs when opening a project."
+        },
         "source_with_echo": {
             "type": "boolean",
             "default": false,
