@@ -1259,6 +1259,19 @@ core::Error UserPrefValues::setDefaultProjectLocation(std::string val)
 }
 
 /**
+ * The default directory to use in file dialogs when opening a project.
+ */
+std::string UserPrefValues::defaultOpenProjectLocation()
+{
+   return readPref<std::string>("default_open_project_location");
+}
+
+core::Error UserPrefValues::setDefaultOpenProjectLocation(std::string val)
+{
+   return writePref("default_open_project_location", val);
+}
+
+/**
  * Whether to echo R code when sourcing it.
  */
 bool UserPrefValues::sourceWithEcho()
@@ -3384,6 +3397,7 @@ std::vector<std::string> UserPrefValues::allKeys()
       kDefaultEncoding,
       kToolbarVisible,
       kDefaultProjectLocation,
+      kDefaultOpenProjectLocation,
       kSourceWithEcho,
       kDefaultSweaveEngine,
       kDefaultLatexProgram,

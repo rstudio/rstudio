@@ -96,5 +96,6 @@
    margin-top: 8px;
 }
 
-
-
+.extraSpacedBefore {
+	margin-top: 12px;
+}

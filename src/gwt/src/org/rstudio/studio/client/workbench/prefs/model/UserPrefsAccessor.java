@@ -1408,6 +1408,18 @@ public class UserPrefsAccessor extends Prefs
    }
 
    /**
+    * The default directory to use in file dialogs when opening a project.
+    */
+   public PrefValue<String> defaultOpenProjectLocation()
+   {
+      return string(
+         "default_open_project_location",
+         _constants.defaultOpenProjectLocationTitle(), 
+         _constants.defaultOpenProjectLocationDescription(), 
+         "~");
+   }
+
+   /**
     * Whether to echo R code when sourcing it.
     */
    public PrefValue<Boolean> sourceWithEcho()
@@ -3780,6 +3792,8 @@ public class UserPrefsAccessor extends Prefs
          toolbarVisible().setValue(layer, source.getBool("toolbar_visible"));
       if (source.hasKey("default_project_location"))
          defaultProjectLocation().setValue(layer, source.getString("default_project_location"));
+      if (source.hasKey("default_open_project_location"))
+         defaultOpenProjectLocation().setValue(layer, source.getString("default_open_project_location"));
       if (source.hasKey("source_with_echo"))
          sourceWithEcho().setValue(layer, source.getBool("source_with_echo"));
       if (source.hasKey("default_sweave_engine"))
@@ -4191,6 +4205,7 @@ public class UserPrefsAccessor extends Prefs
       prefs.add(defaultEncoding());
       prefs.add(toolbarVisible());
       prefs.add(defaultProjectLocation());
+      prefs.add(defaultOpenProjectLocation());
       prefs.add(sourceWithEcho());
       prefs.add(defaultSweaveEngine());
       prefs.add(defaultLatexProgram());

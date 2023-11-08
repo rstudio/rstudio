@@ -42,6 +42,7 @@ public interface PreferencesDialogBaseResources extends ClientBundle
       String infoLabel();
       String headerLabel();
       String spacedBefore();
+      String extraSpacedBefore();
    }
 
    @Source("PreferencesDialogBase.css")

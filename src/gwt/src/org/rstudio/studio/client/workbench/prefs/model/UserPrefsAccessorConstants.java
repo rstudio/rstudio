@@ -824,6 +824,14 @@ public interface UserPrefsAccessorConstants extends Constants {
    String defaultProjectLocationDescription();
 
    /**
+    * The default directory to use in file dialogs when opening a project.
+    */
+   @DefaultStringValue("Default open project location")
+   String defaultOpenProjectLocationTitle();
+   @DefaultStringValue("The default directory to use in file dialogs when opening a project.")
+   String defaultOpenProjectLocationDescription();
+
+   /**
     * Whether to echo R code when sourcing it.
     */
    @DefaultStringValue("Source with echo by default")
