@@ -436,6 +436,14 @@ public interface UserPrefsAccessorConstants extends Constants {
    String showFunctionSignatureTooltipsDescription();
 
    /**
+    * Whether a data preview is shown in the autocompletion help popup for datasets and values.
+    */
+   @DefaultStringValue("Show data preview in autocompletion help popup")
+   String showDataPreviewTitle();
+   @DefaultStringValue("Whether a data preview is shown in the autocompletion help popup for datasets and values.")
+   String showDataPreviewDescription();
+
+   /**
     * Whether to show diagnostic messages (such as syntax and usage errors) for R code as you type.
     */
    @DefaultStringValue("Show diagnostics in R code")

@@ -125,6 +125,7 @@ namespace prefs {
 #define kCodeCompletionDelay "code_completion_delay"
 #define kCodeCompletionCharacters "code_completion_characters"
 #define kShowFunctionSignatureTooltips "show_function_signature_tooltips"
+#define kShowDataPreview "show_data_preview"
 #define kShowDiagnosticsR "show_diagnostics_r"
 #define kShowDiagnosticsCpp "show_diagnostics_cpp"
 #define kShowDiagnosticsYaml "show_diagnostics_yaml"
@@ -714,6 +715,12 @@ public:
     */
    bool showFunctionSignatureTooltips();
    core::Error setShowFunctionSignatureTooltips(bool val);
+
+   /**
+    * Whether a data preview is shown in the autocompletion help popup for datasets and values.
+    */
+   bool showDataPreview();
+   core::Error setShowDataPreview(bool val);
 
    /**
     * Whether to show diagnostic messages (such as syntax and usage errors) for R code as you type.

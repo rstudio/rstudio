@@ -812,6 +812,18 @@ public class UserPrefsAccessor extends Prefs
    }
 
    /**
+    * Whether a data preview is shown in the autocompletion help popup for datasets and values.
+    */
+   public PrefValue<Boolean> showDataPreview()
+   {
+      return bool(
+         "show_data_preview",
+         _constants.showDataPreviewTitle(), 
+         _constants.showDataPreviewDescription(), 
+         true);
+   }
+
+   /**
     * Whether to show diagnostic messages (such as syntax and usage errors) for R code as you type.
     */
    public PrefValue<Boolean> showDiagnosticsR()
@@ -3672,6 +3684,8 @@ public class UserPrefsAccessor extends Prefs
          codeCompletionCharacters().setValue(layer, source.getInteger("code_completion_characters"));
       if (source.hasKey("show_function_signature_tooltips"))
          showFunctionSignatureTooltips().setValue(layer, source.getBool("show_function_signature_tooltips"));
+      if (source.hasKey("show_data_preview"))
+         showDataPreview().setValue(layer, source.getBool("show_data_preview"));
       if (source.hasKey("show_diagnostics_r"))
          showDiagnosticsR().setValue(layer, source.getBool("show_diagnostics_r"));
       if (source.hasKey("show_diagnostics_cpp"))
@@ -4129,6 +4143,7 @@ public class UserPrefsAccessor extends Prefs
       prefs.add(codeCompletionDelay());
       prefs.add(codeCompletionCharacters());
       prefs.add(showFunctionSignatureTooltips());
+      prefs.add(showDataPreview());
       prefs.add(showDiagnosticsR());
       prefs.add(showDiagnosticsCpp());
       prefs.add(showDiagnosticsYaml());

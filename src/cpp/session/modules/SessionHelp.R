@@ -550,6 +550,10 @@ options(help_type = "html")
    showDataPreview <- getOption("rstudio.help.showDataPreview", default = TRUE)
    if (!showDataPreview)
       return(out)
+   
+   showDataPreview <- .rs.readUserPref("show_data_preview")
+   if (!identical(showDataPreview, TRUE))
+      return(out)
 
    # try and figure out the data + title
    data <- NULL
