@@ -1,7 +1,7 @@
 /*
- * DialogBuilderFactory.java
+ * DialogOptions.java
  *
- * Copyright (C) 2022 by Posit Software, PBC
+ * Copyright (C) 2023 by Posit Software, PBC
  *
  * Unless you have received this program directly from Posit Software pursuant
  * to the terms of a commercial license agreement with Posit Software, then
@@ -12,12 +12,11 @@
  * AGPL (http://www.gnu.org/licenses/agpl-3.0.txt) for more details.
  *
  */
-package org.rstudio.studio.client.common.dialog;
+package org.rstudio.core.client;
 
-import org.rstudio.core.client.DialogOptions;
-import org.rstudio.core.client.widget.DialogBuilder;
-
-public interface DialogBuilderFactory
+public class DialogOptions
 {
-   DialogBuilder create(int type, String caption, String message, DialogOptions options);
+   public String width = null;
+   public String height = null;
+   public String userSelect = null;
 }

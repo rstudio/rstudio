@@ -41,6 +41,11 @@ class FilePath;
 class Error;
 class Success;
 
+namespace json {
+class Value;
+class Object;
+} // end namespace json
+
 /**
  * @brief A class which can be derived from in order to prevent child classes from being derived from further.
  */
@@ -427,6 +432,13 @@ public:
     */
    std::string asString() const;
 
+   /**
+    * @brief Formats the error as a JSON object.
+    *
+    * @return The error formatted as a JSON object.
+    */
+   void writeJson(json::Object* pJson) const;
+   
    /**
     * @brief Checks whether this error was caused by a separate error.
     *

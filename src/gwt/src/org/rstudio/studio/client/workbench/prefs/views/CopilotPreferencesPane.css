@@ -4,6 +4,10 @@
 	margin-top: -2px;
 }
 
+.copilotStatusLabel {
+	height: 20px;
+}
+
 .copilotTosLabel {
 	font-style: oblique;
 }

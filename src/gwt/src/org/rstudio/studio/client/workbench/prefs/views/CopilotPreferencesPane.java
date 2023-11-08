@@ -19,14 +19,19 @@ import java.util.List;
 
 import org.rstudio.core.client.CommandWithArg;
 import org.rstudio.core.client.Debug;
+import org.rstudio.core.client.DialogOptions;
 import org.rstudio.core.client.JSON;
+import org.rstudio.core.client.StringUtil;
 import org.rstudio.core.client.prefs.RestartRequirement;
 import org.rstudio.core.client.resources.ImageResource2x;
+import org.rstudio.core.client.widget.DialogBuilder;
 import org.rstudio.core.client.widget.SelectWidget;
 import org.rstudio.core.client.widget.SmallButton;
 import org.rstudio.studio.client.application.AriaLiveService;
 import org.rstudio.studio.client.application.events.EventBus;
+import org.rstudio.studio.client.common.GlobalDisplay;
 import org.rstudio.studio.client.common.HelpLink;
+import org.rstudio.studio.client.common.dialog.WebDialogBuilderFactory;
 import org.rstudio.studio.client.projects.model.ProjectsServerOperations;
 import org.rstudio.studio.client.projects.model.RProjectConfig;
 import org.rstudio.studio.client.projects.model.RProjectOptions;
@@ -83,6 +88,7 @@ public class CopilotPreferencesPane extends PreferencesPane
                                  UserPrefs prefs,
                                  Commands commands,
                                  AriaLiveService ariaLive,
+                                 GlobalDisplay display,
                                  Copilot copilot,
                                  CopilotServerOperations server,
                                  ProjectsServerOperations projectServer)
@@ -91,13 +97,19 @@ public class CopilotPreferencesPane extends PreferencesPane
       session_ = session;
       prefs_ = prefs;
       commands_ = commands;
+      display_ = display;
       copilot_ = copilot;
       server_ = server;
       projectServer_ = projectServer;
       
       lblCopilotStatus_ = new Label("(Loading...)");
+      lblCopilotStatus_.addStyleName(RES.styles().copilotStatusLabel());
       
       statusButtons_ = new ArrayList<SmallButton>();
+      
+      btnShowError_ = new SmallButton("Show Error...");
+      btnShowError_.addStyleName(RES.styles().button());
+      statusButtons_.add(btnShowError_);
       
       btnSignIn_ = new SmallButton("Sign In");
       btnSignIn_.addStyleName(RES.styles().button());
@@ -240,6 +252,30 @@ public class CopilotPreferencesPane extends PreferencesPane
          }
       });
       
+      btnShowError_.addClickHandler(new ClickHandler()
+      {
+         @Override
+         public void onClick(ClickEvent event)
+         {
+            DialogOptions options = new DialogOptions();
+            options.width = "auto";
+            options.height = "auto";
+            options.userSelect = "text";
+            
+            // Prefer using a web dialog even on Desktop, as we want to allow customization
+            // of how the UI is presented. In particular, we want to allow users to select
+            // and copy text if they need to.
+            WebDialogBuilderFactory builder = GWT.create(WebDialogBuilderFactory.class);
+            DialogBuilder dialog = builder.create(
+                  GlobalDisplay.MSG_INFO,
+                  "GitHub Copilot: Status",
+                  copilotStartupError_,
+                  options);
+            
+            dialog.showModal();
+         }
+      });
+      
       btnSignIn_.addClickHandler(new ClickHandler()
       {
          @Override
@@ -306,7 +342,20 @@ public class CopilotPreferencesPane extends PreferencesPane
             
             if (response == null)
             {
-               if (projectOptions_ != null && projectOptions_.getCopilotOptions().copilot_enabled == RProjectConfig.NO_VALUE)
+               lblCopilotStatus_.setText("An unexpected error occurred while checking the status of the GitHub Copilot agent.");
+            }
+            else if (response.result == null)
+            {
+               if (response.error != null)
+               {
+                  lblCopilotStatus_.setText("An error occurred while starting the Copilot agent.");
+                  if (!StringUtil.isNullOrEmpty(response.output))
+                  {
+                     copilotStartupError_ = response.output;
+                     showButtons(btnShowError_);
+                  }
+               }
+               else if (projectOptions_ != null && projectOptions_.getCopilotOptions().copilot_enabled == RProjectConfig.NO_VALUE)
                {
                   lblCopilotStatus_.setText("GitHub Copilot has been disabled in this project.");
                   showButtons(btnProjectOptions_);
@@ -358,6 +407,7 @@ public class CopilotPreferencesPane extends PreferencesPane
 
    private void reset()
    {
+      copilotStartupError_ = null;
       hideButtons();
    }
    
@@ -424,6 +474,7 @@ public class CopilotPreferencesPane extends PreferencesPane
    public interface Styles extends CssResource
    {
       String button();
+      String copilotStatusLabel();
       String copilotTosLabel();
       String copilotPreviewBlurb();
    }
@@ -448,6 +499,7 @@ public class CopilotPreferencesPane extends PreferencesPane
    }
    
    // State
+   private String copilotStartupError_;
    private boolean initialCopilotIndexingEnabled_;
    private RProjectOptions projectOptions_;
  
@@ -456,6 +508,7 @@ public class CopilotPreferencesPane extends PreferencesPane
    private final CheckBox cbCopilotEnabled_;
    private final CheckBox cbCopilotIndexingEnabled_;
    private final List<SmallButton> statusButtons_;
+   private final SmallButton btnShowError_;
    private final SmallButton btnSignIn_;
    private final SmallButton btnSignOut_;
    private final SmallButton btnActivate_;
@@ -471,6 +524,7 @@ public class CopilotPreferencesPane extends PreferencesPane
    private final Session session_;
    private final UserPrefs prefs_;
    private final Commands commands_;
+   private final GlobalDisplay display_;
    private final Copilot copilot_;
    private final CopilotServerOperations server_;
    private final ProjectsServerOperations projectServer_;
