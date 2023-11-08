@@ -382,6 +382,12 @@
             "title": "Show function signature tooltips",
             "description": "Whether to show function signature tooltips during autocompletion."
         },
+        "show_data_preview": {
+            "type": "boolean",
+            "default": true,
+            "title": "Show data preview in autocompletion help popup",
+            "description": "Whether a data preview is shown in the autocompletion help popup for datasets and values."
+        },
         "show_diagnostics_r": {
             "type": "boolean",
             "default": true,
