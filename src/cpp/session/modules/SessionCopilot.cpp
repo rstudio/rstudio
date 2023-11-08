@@ -392,7 +392,7 @@ void setEditorInfo()
    
    // if that's not set, check an environment variable
    if (proxyUrl.empty())
-      proxyUrl = core::system::getenv("RSTUDIO_COPILOT_PROXY_URL");
+      proxyUrl = core::system::getenv("COPILOT_PROXY_URL");
    
    // if we have one now, try to parse it
    if (!proxyUrl.empty())
@@ -1125,7 +1125,7 @@ Error initialize()
    using namespace module_context;
 
    // Read default log level
-   std::string copilotLogLevel = core::system::getenv("RSTUDIO_COPILOT_LOG_LEVEL");
+   std::string copilotLogLevel = core::system::getenv("COPILOT_LOG_LEVEL");
    if (!copilotLogLevel.empty())
       s_copilotLogLevel = safe_convert::stringTo<int>(copilotLogLevel, 0);
    
