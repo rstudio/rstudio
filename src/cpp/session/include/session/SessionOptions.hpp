@@ -244,7 +244,7 @@ public:
    {
       return authRequiredUserGroup_;
    }
-
+   
 private:
    bool multiSession_;
    bool showUserHomePage_;

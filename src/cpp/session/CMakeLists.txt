@@ -764,6 +764,19 @@ if(NOT RSTUDIO_SESSION_WIN32 AND NOT RSESSION_ALTERNATE_BUILD)
       DIRECTORY "resources/terminal"
       DESTINATION ${RSTUDIO_INSTALL_SUPPORTING}/resources)
 
+   # install copilot resources
+   if(NOT WIN32)
+
+      configure_file(
+         ${CMAKE_CURRENT_SOURCE_DIR}/copilot/copilot-agent-helper
+         ${CMAKE_CURRENT_BINARY_DIR}/copilot/copilot-agent-helper COPYONLY)
+
+      install(
+         DIRECTORY ${CMAKE_CURRENT_BINARY_DIR}/copilot
+         DESTINATION ${RSTUDIO_INSTALL_BIN})
+
+   endif()
+
    # install libclang
    if(WIN32)
       file(GLOB LIBCLANG_32_FILES "${LIBCLANG_DIR}/x86/*")

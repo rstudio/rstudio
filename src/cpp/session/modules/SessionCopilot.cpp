@@ -664,12 +664,26 @@ bool startAgent()
    options.callbacksRequireMainThread = true; // TODO: It'd be nice to drop this requirement!
    options.workingDir = agentPath.getParent();
 
-   error = module_context::processSupervisor().runProgram(
-            nodePath.getAbsolutePath(),
-            { agentPath.getAbsolutePath() },
-            options,
-            callbacks);
+   std::string agentExe = nodePath.getAbsolutePath();
+   std::vector<std::string> agentArgs = { agentPath.getAbsolutePath() };
 
+   if (session::options().programMode() == kSessionProgramModeServer)
+   {
+      // If we have a helper script available, use it.
+      FilePath exePath;
+      Error error = core::system::executablePath(nullptr, &exePath);
+      if (error == Success())
+      {
+         FilePath helperScriptPath = exePath.getParent().completeChildPath("copilot/copilot-agent-helper");
+         if (helperScriptPath.exists())
+         {
+            agentExe = helperScriptPath.getAbsolutePath();
+            agentArgs = { nodePath.getAbsolutePath(), agentPath.getAbsolutePath() };
+         }
+      }
+   }
+   
+   error = module_context::processSupervisor().runProgram(agentExe, agentArgs, options, callbacks);
    if (error)
    {
       LOG_ERROR(error);
