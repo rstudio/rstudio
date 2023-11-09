@@ -33,8 +33,9 @@
 
 #include <session/SessionModuleContext.hpp>
 #include <session/projects/SessionProjects.hpp>
-
 #include <session/prefs/UserPrefs.hpp>
+
+#include "SessionGit.hpp"
 
 using namespace rstudio::core;
 using namespace boost::placeholders;
@@ -67,6 +68,32 @@ namespace {
 const size_t MAX_COUNT = 1000;
 
 const size_t MAX_LINE_LENGTH = 3000;
+
+class ProgramArguments
+{
+ public:
+
+   ProgramArguments& operator <<(const FilePath& path)
+   {
+      // TODO: Should we prefer short path names on Windows?
+      args_.push_back(path.getAbsolutePathNative());
+      return *this;
+   }
+
+   ProgramArguments& operator <<(const std::string& arg)
+   {
+      args_.push_back(arg);
+      return *this;
+   }
+
+   operator const std::vector<std::string>&() const
+   {
+      return args_;
+   }
+
+ private:
+   std::vector<std::string> args_;
+};
 
 bool debugging()
 {
@@ -1399,7 +1426,7 @@ void addDirectoriesToCommand(
       bool packageSourceFlag,
       bool packageTestsFlag,
       const FilePath& directoryPath,
-      shell_utils::ShellCommand* pCmd)
+      ProgramArguments* pCmd)
 {
    if (packageSourceFlag)
    {
@@ -1472,15 +1499,23 @@ core::Error runGrepOperation(const std::string& handle,
    auto ptrGrepOp = GrepOperation::create(handle, dirPath.getAbsolutePath(), encoding, tempFile);
    core::system::ProcessCallbacks callbacks = ptrGrepOp->createProcessCallbacks();
 
+   // Start building executable + arguments to be used
+   using namespace shell_utils;
+   FilePath searchExecutablePath;
+   ProgramArguments cmd;
+
 #ifdef _WIN32
-   shell_utils::ShellCommand cmd(grepPath.completePath("grep"));
+   searchExecutablePath = grepPath.completeChildPath("grep.exe");
 #else
-   shell_utils::ShellCommand cmd("grep");
+   error = core::system::findProgramOnPath("grep", &searchExecutablePath);
+   if (error)
+      LOG_ERROR(error);
 #endif
 
    if (grepOptions.gitFlag())
    {
-      cmd = shell_utils::ShellCommand("git");
+      // Run the git executable instead, using the 'grep' command.
+      searchExecutablePath = modules::git::gitExePath();
 
       // -c is used to override potential user-defined git parameters
       cmd << "-c" << "submodule.recurse=false";
@@ -1490,6 +1525,8 @@ core::Error runGrepOperation(const std::string& handle,
       cmd << "-c" << "grep.patternType=default";
       cmd << "-c" << "grep.extendedRegexp=true";
       cmd << "-c" << "grep.fullName=false";
+
+      // start building actual 'grep' arguments
       cmd << "grep";
       cmd << "-I"; // ignore binaries
       cmd << "--untracked"; // include files not tracked by git...
@@ -1536,6 +1573,7 @@ core::Error runGrepOperation(const std::string& handle,
       cmd << "--binary-files=without-match";
       cmd << "-rHn";
       cmd << "--color=always";
+
 #ifndef _WIN32
       cmd << "--devices=skip";
 #endif
@@ -1577,10 +1615,17 @@ core::Error runGrepOperation(const std::string& handle,
    options.workingDir = dirPath;
 
    if (debugging())
-      std::cerr << cmd.string() << std::endl;
+   {
+      std::cerr << searchExecutablePath << " " << core::algorithm::join(cmd, " ") << std::endl;
+   }
 
-   // Run command
-   error = module_context::processSupervisor().runCommand(cmd, options, callbacks);
+   // Run command.
+   error = module_context::processSupervisor().runProgram(
+       searchExecutablePath.getAbsolutePath(),
+       cmd,
+       options,
+       callbacks);
+
    if (error)
       return error;
 

@@ -64,6 +64,7 @@ bool isGithubRepository();
 
 core::Error initializeGit(const core::FilePath& workingDir);
 
+core::FilePath gitExePath();
 core::FilePath detectedGitExePath();
 
 std::string nonPathGitBinDir();
