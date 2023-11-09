@@ -471,7 +471,7 @@ export RSTUDIO_TOOLS_ROOT
 #
 # When changing node version you must download the archives from https://nodejs.org/dist/vX.Y.Z/
 # and upload them to RSTUDIO_BUILDTOOLS/node/vX.Y.Z/.
-export RSTUDIO_NODE_VERSION="16.20.2"
+export RSTUDIO_NODE_VERSION="18.18.2"
 
 # version of go used for building
 export WORKBENCH_GO_VERSION="1.20.5"
