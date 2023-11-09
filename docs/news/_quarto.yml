@@ -20,7 +20,7 @@ website:
             url: 'https://docs.posit.co/ide/server-pro/user/'
           - text: "RStudio Open Source User Guide"
             url: 'https://docs.posit.co/ide/user/'
-      - icon: house
+      - icon: book
         url: https://docs.posit.co/
         aria-label: Posit Documentation website
       - icon: question-circle
@@ -31,8 +31,6 @@ website:
     left: |
       Copyright © 2022 Posit Software, PBC, formerly RStudio, PBC. All Rights Reserved.
     right:
-      - icon: house-fill
-        href: https://www.posit.co
       - icon: question-circle-fill
         href: https://support.posit.co/hc/en-us
       - icon: lightbulb-fill

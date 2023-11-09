@@ -19,16 +19,8 @@ website:
     search: true
     logo: images/posit-icon-fullcolor.svg
     right:
-      - text: Version
-        menu:
-          - text: 2023.06.2+561
-            url: https://docs.posit.co/ide/user/2023.06.2/
-          - text: 2023.06.1+524
-            url: https://docs.posit.co/ide/user/2023.06.1/
-          - text: 2023.03.1+446
-            url: https://docs.posit.co/ide/user/2023.03.1/
-          - text: Additional versions
-            url: https://docs.posit.co/rsw/documentation/
+      - text: "Versions"
+        url: 'https://docs.posit.co/previous-versions/rstudio/'
       - text: "Guides"
         menu:
           - text: "Workbench Install Guide"
@@ -39,7 +31,7 @@ website:
             url: 'https://docs.posit.co/ide/server-pro/user/'
       - text: "Release Notes"
         url: "https://docs.posit.co/ide/news/"      
-      - icon: house
+      - icon: book
         url: https://docs.posit.co/
         aria-label: Posit Documentation website
       - icon: question-circle
@@ -121,8 +113,6 @@ website:
     left: |
       Copyright © 2022 Posit Software, PBC formerly RStudio, PBC. All Rights Reserved.
     right:
-      - icon: house-fill
-        href: https://www.posit.co
       - icon: question-circle-fill
         href: https://support.posit.co/hc/en-us
       - icon: lightbulb-fill
