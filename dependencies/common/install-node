@@ -48,6 +48,7 @@ esac
 # gross hack for CentOS 7
 if [ -e /etc/centos-release ]; then
 	if grep -siq "release 7" /etc/centos-release; then
+		NODE_BASE_URL="${RSTUDIO_BUILDTOOLS}/node/v16.20.2/"
 		case "$(arch)" in
 		aarch64) NODE_FILE="node-v16.20.2-linux-arm64" ;;
 		x86_64)  NODE_FILE="node-v16.20.2-linux-x64" ;;
