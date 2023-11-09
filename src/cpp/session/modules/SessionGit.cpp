@@ -3137,6 +3137,11 @@ bool isWithinGitRoot(const core::FilePath& filePath)
    return isGitEnabled() && filePath.isWithin(s_git_.root());
 }
 
+FilePath gitExePath()
+{
+   return s_gitExePath.empty() ? detectedGitExePath() : FilePath(s_gitExePath);
+}
+
 FilePath detectedGitExePath()
 {
 #ifdef _WIN32
