@@ -271,7 +271,7 @@ Error runProgram(const std::string& executable,
 // by a command shell (/bin/sh on posix, cmd.exe on windows).
 //
 // NOTE: UNC paths are not supported by cmd.exe on Windows, so prefer using
-// runProgram() if running a program that might injest a file path. Note that
+// runProgram() if running a program that might ingest a file path. Note that
 // this might happen just by virtue of having a project on a network share,
 // since the working directory might then be the project directory itself!
 Error runCommand(const std::string& command,
