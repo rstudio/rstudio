@@ -52,3 +52,12 @@ export declare function searchRegistryForInstallationsOfR(): string[];
  * @param registryVersionKey The registry version key -- typically 'R' or 'R64'.
  */
 export declare function searchRegistryForDefaultInstallationOfR(registryVersionKey: string): string;
+
+/**
+ * (Windows only)
+ *
+ * Open a file using the default application registered for that file.
+ *
+ * @param path The path to an existing file.
+ */
+export declare function openExternal(path: string): void;
