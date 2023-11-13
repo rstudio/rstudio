@@ -127,6 +127,7 @@ export class GwtCallback extends EventEmitter {
     ipcMain.on('desktop_browse_url', (event, url: string) => {
 
       // shell.openExternal() seems unreliable on Windows
+      // https://github.com/electron/electron/issues/31347
       if (process.platform === 'win32' && url.startsWith('file:///')) {
         const path = decodeURI(url).substring('file:///'.length).replaceAll('/', '\\');
         desktop.openExternal(path);
