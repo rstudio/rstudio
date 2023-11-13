@@ -22,7 +22,7 @@ import org.rstudio.core.client.BrowseCap;
 import org.rstudio.core.client.CommandWithArg;
 import org.rstudio.core.client.Debug;
 import org.rstudio.core.client.StringUtil;
-import org.rstudio.core.client.elemental2.File;
+import org.rstudio.core.client.elemental2.overlay.File;
 import org.rstudio.core.client.widget.CanSetControlId;
 import org.rstudio.core.client.widget.FontSizer;
 import org.rstudio.studio.client.RStudioGinjector;
@@ -383,7 +383,10 @@ public class AceEditorWidget extends Composite
          }
       });
       
-      addNativePasteHandler(getElement());
+      if (BrowseCap.isElectron())
+      {
+         addNativePasteHandler(getElement());
+      }
    }
    
    private final native void addNativePasteHandler(Element el)
@@ -410,15 +413,6 @@ public class AceEditorWidget extends Composite
       }
    }
 
-   private static final native boolean maybeHandleClipboardFilePasteEvent(NativeEvent event)
-   /*-{
-      var types = event.clipboardData.types;
-      if (types.length === 1 && types[0] === "Files") {
-         var path = event.clipboardData.files[0].path;
-         event.clipboardData.setData("text/plain", path);
-      }
-   }-*/;
-   
    // When the 'keyBinding' field is initialized (the field holding all keyboard
    // handlers for an Ace editor), an associated '$data' element is used to store
    // information on keys (to allow for keyboard chaining, and so on). We refresh
