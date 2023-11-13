@@ -795,7 +795,8 @@ Error isUserLicensed(const system::User& user,
       {
          // If the user is signing in, we need to update their last sign-in time
          error = updateLastSignin(connection, user);
-         return error;
+         if (error)
+            return error;
       }
       
       // added successfully, and there's space for the user
