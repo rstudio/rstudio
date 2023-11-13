@@ -33,6 +33,23 @@ namespace rstudio {
 namespace core {
 namespace http {
 
+struct ConnectionInfo {
+   bool closed, requestParsed, sendingResponse;
+   std::string requestUri, username;
+   boost::posix_time::ptime startTime;
+   int requestSequence;
+};
+
+struct ServerInfo {
+   long numRequests;
+   long numStreaming;
+   boost::posix_time::time_duration minTime;
+   boost::posix_time::time_duration maxTime;
+   std::string maxUrl;
+   boost::posix_time::time_duration totalTime;
+   boost::posix_time::time_duration elapsedTime;
+};
+
 class AsyncServer
 {
 public:   
@@ -86,6 +103,7 @@ public:
 
    virtual int getActiveConnectionCount() = 0;
 
+   virtual long getServerInfoSnapshot(std::vector<ConnectionInfo>& connInfoList, ServerInfo& serverInfo, bool reset) = 0;
 };
 
 class AsyncServerStatsProvider
