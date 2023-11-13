@@ -124,7 +124,7 @@ void scanAvailableShells(std::vector<TerminalShell>* pShells)
    addShell(bashWSL,
             TerminalShell::ShellType::WSLBash,
             "Bash (Windows Subsystem for Linux)",
-            bashLoginArgs,
+            args, // don't pass bashLoginArgs here (rstudio issue #13918)
             pShells);
 #endif
 
