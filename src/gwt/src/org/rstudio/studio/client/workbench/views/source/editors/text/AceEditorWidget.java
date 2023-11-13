@@ -22,6 +22,7 @@ import org.rstudio.core.client.BrowseCap;
 import org.rstudio.core.client.CommandWithArg;
 import org.rstudio.core.client.Debug;
 import org.rstudio.core.client.StringUtil;
+import org.rstudio.core.client.elemental2.File;
 import org.rstudio.core.client.widget.CanSetControlId;
 import org.rstudio.core.client.widget.FontSizer;
 import org.rstudio.studio.client.RStudioGinjector;
@@ -107,6 +108,9 @@ import com.google.gwt.user.client.ui.Composite;
 import com.google.gwt.user.client.ui.HTML;
 import com.google.gwt.user.client.ui.RequiresResize;
 import com.google.inject.Inject;
+
+import elemental2.dom.ClipboardEvent;
+import jsinterop.base.Js;
 
 public class AceEditorWidget extends Composite
       implements RequiresResize,
@@ -378,8 +382,43 @@ public class AceEditorWidget extends Composite
             editor_.setTheme(event.getTheme());
          }
       });
+      
+      addNativePasteHandler(getElement());
+   }
+   
+   private final native void addNativePasteHandler(Element el)
+   /*-{
+      var self = this;
+      el.addEventListener("paste", $entry(function(event) {
+         self.@org.rstudio.studio.client.workbench.views.source.editors.text.AceEditorWidget::onPaste(*)(event);
+      }));
+   }-*/;
+   
+   private void onPaste(NativeEvent event)
+   {
+      ClipboardEvent clipboardEvent = Js.cast(event);
+      elemental2.core.JsArray<String> types = clipboardEvent.clipboardData.types;
+      if (types.length == 1 && types.getAt(0) == "Files")
+      {
+         File file = Js.cast(clipboardEvent.clipboardData.files.getAt(0));
+         if (file != null && file.path != null)
+         {
+            event.stopPropagation();
+            event.preventDefault();
+            editor_.insert(file.path.replace('\\', '/'));
+         }
+      }
    }
 
+   private static final native boolean maybeHandleClipboardFilePasteEvent(NativeEvent event)
+   /*-{
+      var types = event.clipboardData.types;
+      if (types.length === 1 && types[0] === "Files") {
+         var path = event.clipboardData.files[0].path;
+         event.clipboardData.setData("text/plain", path);
+      }
+   }-*/;
+   
    // When the 'keyBinding' field is initialized (the field holding all keyboard
    // handlers for an Ace editor), an associated '$data' element is used to store
    // information on keys (to allow for keyboard chaining, and so on). We refresh
