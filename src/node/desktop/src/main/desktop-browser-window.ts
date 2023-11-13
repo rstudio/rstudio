@@ -183,7 +183,7 @@ export class DesktopBrowserWindow extends EventEmitter {
           const reHelp = String.raw `/help/library/([^/]+)/doc/(.*)\.pdf`;
           const match = details.url.match(reHelp);
           if (match) {
-            const args = [match[2], match[1]];
+            const args = [decodeURIComponent(match[2]), decodeURIComponent(match[1])];
             this.sendRpcRequest('show_vignette', args);
           }
           return { action: 'deny' };

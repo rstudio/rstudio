@@ -710,6 +710,18 @@ Napi::Value searchRegistryForDefaultInstallationOfR(const Napi::CallbackInfo& in
    return Napi::String::From(info.Env(), installPath);
 }
 
+Napi::Value openExternal(const Napi::CallbackInfo& info)
+{
+
+#ifdef _WIN32
+   std::u16string uPath = info[0].As<Napi::String>().Utf16Value();
+   CoInitializeEx(NULL, COINIT_APARTMENTTHREADED | COINIT_DISABLE_OLE1DDE);
+   ShellExecuteW(NULL, L"open", (wchar_t*) &uPath[0], NULL, NULL, SW_SHOWNORMAL);
+#endif
+
+   return Napi::Value();
+
+}
 
 } // end namespace desktop
 } // end namespace rstudio
@@ -732,6 +744,7 @@ Napi::Object Init(Napi::Env env, Napi::Object exports) {
    RS_EXPORT_FUNCTION("defaultCSIDLPersonalHomePath", rstudio::desktop::defaultCSIDLPersonalHomePath);
    RS_EXPORT_FUNCTION("searchRegistryForInstallationsOfR", rstudio::desktop::searchRegistryForInstallationsOfR);
    RS_EXPORT_FUNCTION("searchRegistryForDefaultInstallationOfR", rstudio::desktop::searchRegistryForDefaultInstallationOfR);
+   RS_EXPORT_FUNCTION("openExternal", rstudio::desktop::openExternal);
 
    return exports;
 
