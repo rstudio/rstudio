@@ -250,7 +250,8 @@ void handleProxyResponse(
 
    LOG_DEBUG_MESSAGE("-- sent server proxy response for: " + ptrConnection->request().debugInfoFinal() +
                      (context.scope.isWorkspaces() ? " - workspaces" : " id:" + context.scope.id()) +
-                      ": " + safe_convert::numberToString(ptrConnection->response().statusCode()));
+                      ": " + safe_convert::numberToString(ptrConnection->response().statusCode()) +
+                      " " + std::to_string(ptrConnection->response().body().length()) + "b");
 }
 
 void rewriteLocalhostAddressHeader(const std::string& headerName,
