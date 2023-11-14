@@ -3,9 +3,9 @@
 REM Run this script with 'call envvars.bat' to update the PATH in your
 REM cmd.exe shell, so that the appropriate versions of node are found
 set NODE_PATHS=^
-	..\..\..\dependencies\common\node\16.20.2^
-	..\..\dependencies\common\node\16.20.2^
-	c:\rstudio-tools\dependencies\common\node\16.20.2
+	..\..\..\dependencies\common\node\18.18.2^
+	..\..\dependencies\common\node\18.18.2^
+	c:\rstudio-tools\dependencies\common\node\18.18.2
 
 call :SetNodePath
 if not exist "%NODE_PATH%" (
