@@ -259,17 +259,22 @@
 
    # resolve file path for this srcref
    srcfile <- attr(srcref, "srcfile")
-   filename <- enc2utf8(srcfile$filename)
-
+   if (is.null(srcfile) || is.null(srcfile$filename))
+      return("")
+   
    # check for absolute path in srcref
+   filename <- enc2utf8(srcfile$filename)
    if (.rs.isAbsolutePath(filename))
       return(filename)
 
    # if the path was not absolute, we need to resolve it relative
    # to the working directory associated with the srcref
-   wd <- enc2utf8(srcfile$wd)
-   fullPath <- paste(c(wd, filename), collapse = "/")
-   normalizePath(fullPath, winslash = "/", mustWork = FALSE)
+   if (!is.null(srcfile$wd)) {
+      wd <- enc2utf8(srcfile$wd)
+      filename <- paste(c(wd, filename), collapse = "/")
+   }
+   
+   normalizePath(filename, winslash = "/", mustWork = FALSE)
 })
 
 # Given a function and some content inside that function, returns a vector
