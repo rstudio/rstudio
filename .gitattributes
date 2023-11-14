@@ -1,2 +1,2 @@
 /NEWS*.md merge=union
-
+build/** linguist-generated=false
