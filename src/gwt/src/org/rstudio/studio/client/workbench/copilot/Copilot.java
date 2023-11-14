@@ -266,8 +266,8 @@ public class Copilot implements ProjectOptionsChangedEvent.Handler
                   {
                      display_.showErrorMessage(
                            "An error occurred while installing GitHub Copilot.\n\n" +
-                           error);
-                  callback.execute(false);
+                                 error);
+                     callback.execute(false);
                   }
                   else
                   {
@@ -275,7 +275,7 @@ public class Copilot implements ProjectOptionsChangedEvent.Handler
                            MessageDisplay.MSG_INFO,
                            "GitHub Copilot: Install Agent",
                            "GitHub Copilot agent successfully installed.");
-                  callback.execute(true);
+                     callback.execute(true);
                   }
                   
                }
@@ -298,12 +298,15 @@ public class Copilot implements ProjectOptionsChangedEvent.Handler
    @Handler
    public void onCopilotSignIn()
    {
-      onCopilotSignIn((response) ->
+      ensureAgentInstalled((installed) ->
       {
-         globalDisplay_.showMessage(
-               MessageDisplay.MSG_INFO,
-               "GitHub Copilot: Sign in",
-               "You are now signed in as '" + response.result.user + "'.");
+         onCopilotSignIn((response) ->
+         {
+            globalDisplay_.showMessage(
+                  MessageDisplay.MSG_INFO,
+                  "GitHub Copilot: Sign in",
+                  "You are now signed in as '" + response.result.user + "'.");
+         });
       });
    }
    
@@ -425,6 +428,14 @@ public class Copilot implements ProjectOptionsChangedEvent.Handler
    
    @Handler
    public void onCopilotStatus()
+   {
+      ensureAgentInstalled((installed) ->
+      {
+         onCopilotStatusImpl();
+      });
+   }
+   
+   private void onCopilotStatusImpl()
    {
       server_.copilotStatus(new DelayedProgressRequestCallback<CopilotStatusResponse>("Checking status...")
       {
