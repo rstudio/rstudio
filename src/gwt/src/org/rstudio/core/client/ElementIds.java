@@ -406,6 +406,7 @@ public class ElementIds
 
    // Modal Dialogs
    public final static String DIALOG_GLOBAL_PREFS = "dialog_global_prefs";
+   public static String getDialogGlobalPrefs() { return getElementId(DIALOG_GLOBAL_PREFS); }
    public final static String DIALOG_CREATE_SSH_KEY = "dialog_create_ssh_key";
 
    // DataImport

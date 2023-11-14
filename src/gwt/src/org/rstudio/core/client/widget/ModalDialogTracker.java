@@ -14,9 +14,9 @@
  */
 package org.rstudio.core.client.widget;
 
-import com.google.gwt.dom.client.Element;
-import com.google.gwt.user.client.DOM;
-import com.google.gwt.user.client.ui.PopupPanel;
+import java.util.ArrayList;
+import java.util.List;
+
 import org.rstudio.core.client.BrowseCap;
 import org.rstudio.core.client.ElementIds;
 import org.rstudio.core.client.a11y.A11y;
@@ -24,7 +24,9 @@ import org.rstudio.core.client.command.impl.DesktopMenuCallback;
 import org.rstudio.studio.client.application.Desktop;
 import org.rstudio.studio.client.application.events.AriaLiveStatusEvent.Severity;
 
-import java.util.ArrayList;
+import com.google.gwt.dom.client.Element;
+import com.google.gwt.user.client.DOM;
+import com.google.gwt.user.client.ui.PopupPanel;
 
 public class ModalDialogTracker
 {
@@ -84,6 +86,11 @@ public class ModalDialogTracker
       }
       return false;
    }
+   
+   public static List<PopupPanel> getModalDialogs()
+   {
+      return dialogStack_;
+   }
 
    private static void updateInert(boolean addedPopup)
    {
@@ -127,5 +134,5 @@ public class ModalDialogTracker
          A11y.setInert(satWrapper, inert);
    }
 
-   private static final ArrayList<PopupPanel> dialogStack_ = new ArrayList<>();
+   private static final List<PopupPanel> dialogStack_ = new ArrayList<>();
 }

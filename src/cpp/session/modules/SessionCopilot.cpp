@@ -1081,22 +1081,22 @@ Error copilotStatus(const json::JsonRpcRequest& request,
    if (!ensureAgentRunning(&launchError))
    {
       json::JsonRpcResponse response;
+      
+      json::Object resultJson;
       if (launchError)
       {
          json::Object errorJson;
          launchError.writeJson(&errorJson);
-         
-         json::Object resultJson;
          resultJson["error"] = errorJson;
          resultJson["output"] = s_agentStartupError;
-         response.setResult(resultJson);
       }
       
+      response.setResult(resultJson);
       continuation(Success(), &response);
       return Success();
    }
 
-   // Send sign out request
+   // Send status request
    std::string requestId = core::system::generateUuid();
    sendRequest("checkStatus", requestId, json::Object(), CopilotContinuation(continuation));
    return Success();

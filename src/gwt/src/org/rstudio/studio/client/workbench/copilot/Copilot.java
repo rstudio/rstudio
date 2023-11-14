@@ -14,14 +14,18 @@
  */
 package org.rstudio.studio.client.workbench.copilot;
 
+import java.util.List;
+
 import org.rstudio.core.client.CommandWithArg;
 import org.rstudio.core.client.Debug;
+import org.rstudio.core.client.ElementIds;
 import org.rstudio.core.client.JSON;
 import org.rstudio.core.client.MessageDisplay;
 import org.rstudio.core.client.StringUtil;
 import org.rstudio.core.client.command.CommandBinder;
 import org.rstudio.core.client.command.Handler;
 import org.rstudio.core.client.widget.ModalDialogBase;
+import org.rstudio.core.client.widget.ModalDialogTracker;
 import org.rstudio.core.client.widget.ProgressIndicator;
 import org.rstudio.studio.client.application.events.EventBus;
 import org.rstudio.studio.client.common.DelayedProgressRequestCallback;
@@ -49,9 +53,13 @@ import org.rstudio.studio.client.workbench.events.SessionInitEvent;
 import org.rstudio.studio.client.workbench.model.Session;
 import org.rstudio.studio.client.workbench.prefs.model.UserPrefs;
 
+import com.google.gwt.dom.client.Element;
 import com.google.gwt.event.dom.client.ClickEvent;
 import com.google.gwt.event.dom.client.ClickHandler;
+import com.google.gwt.event.logical.shared.ValueChangeEvent;
+import com.google.gwt.event.logical.shared.ValueChangeHandler;
 import com.google.gwt.user.client.Timer;
+import com.google.gwt.user.client.ui.PopupPanel;
 import com.google.inject.Inject;
 import com.google.inject.Singleton;
 
@@ -77,6 +85,56 @@ public class Copilot implements ProjectOptionsChangedEvent.Handler
       server_ = server;
       
       binder.bind(commands_, this);
+      
+      // Detect attempts to modify the Copilot enabled preference through the
+      // command palette, and ensure that Copilot is installed when doing so.
+      prefs_.copilotEnabled().addValueChangeHandler(new ValueChangeHandler<Boolean>()
+      {
+         boolean ignoreNextChange_ = false;
+         
+         @Override
+         public void onValueChange(ValueChangeEvent<Boolean> event)
+         {
+            if (ignoreNextChange_)
+            {
+               ignoreNextChange_ = false;
+               return;
+            }
+            
+            // Don't do anything if a Global Options or Project Options entry
+            // is being shown.
+            List<PopupPanel> modalDialogs = ModalDialogTracker.getModalDialogs();
+            for (PopupPanel modalDialog : modalDialogs)
+            {
+               Element el = modalDialog.getElement();
+               String id = el.getId();
+               if (id == ElementIds.getDialogGlobalPrefs())
+                  return;
+            }
+            
+            boolean enabled = prefs_.copilotEnabled().getValue();
+            if (enabled)
+            {
+               ensureAgentInstalled(new CommandWithArg<Boolean>()
+               {
+                  @Override
+                  public void execute(Boolean isInstalled)
+                  {
+                     if (!isInstalled)
+                     {
+                        // Avoid recursion.
+                        ignoreNextChange_ = true;
+                        
+                        // Eagerly change the preference here, so that we can
+                        // respond to changes in the agent status.
+                        prefs_.copilotEnabled().setGlobalValue(false);
+                        prefs_.writeUserPrefs((completed) -> {});
+                     }
+                  }
+               });
+            }
+         }
+      });
     
       events_.addHandler(SessionInitEvent.TYPE, new SessionInitEvent.Handler()
       {
