@@ -118,6 +118,14 @@ private:
    int& counter_;
 };
 
+bool isCompactRowNames(SEXP rowNamesInfoSEXP)
+{
+   return
+         TYPEOF(rowNamesInfoSEXP) == INTSXP &&
+         Rf_length(rowNamesInfoSEXP) == 2 &&
+         INTEGER(rowNamesInfoSEXP)[0] == NA_INTEGER;
+}
+
 bool isGlobalEnvironmentSerializable()
 {
    bool serializable = false;
@@ -437,14 +445,13 @@ SEXP rs_dim(SEXP objectSEXP)
          return R_NilValue;
       }
       
-      // Detect compact row names
-      if (TYPEOF(rowNamesInfoSEXP) == INTSXP && LENGTH(rowNamesInfoSEXP) == 2)
+      if (isAltrep(rowNamesInfoSEXP))
       {
-         // Use INTEGER_OR_NULL to allow for ALTREP vectors
-         // https://github.com/rstudio/rstudio/pull/13544
-         const int* data = INTEGER_OR_NULL(rowNamesInfoSEXP);
-         if (data != nullptr && data[0] == NA_INTEGER)
-            numRows = abs(data[1]);
+         numRows = Rf_length(rowNamesInfoSEXP);
+      }
+      else if (isCompactRowNames(rowNamesInfoSEXP))
+      {
+         numRows = INTEGER(rowNamesInfoSEXP)[1];
       }
       else
       {
