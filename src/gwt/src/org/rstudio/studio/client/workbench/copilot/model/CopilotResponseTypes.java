@@ -18,6 +18,7 @@ import org.rstudio.core.client.jsonrpc.RpcError;
 import org.rstudio.studio.client.workbench.copilot.model.CopilotTypes.CopilotCompletion;
 import org.rstudio.studio.client.workbench.copilot.model.CopilotTypes.CopilotResponse;
 
+import elemental2.core.JsNumber;
 import jsinterop.annotations.JsPackage;
 import jsinterop.annotations.JsType;
 import jsinterop.base.JsArrayLike;
@@ -27,6 +28,50 @@ import jsinterop.base.JsArrayLike;
 // Class names should match method names from CopilotServerOperations.java.
 public class CopilotResponseTypes
 {
+   // This is extra metadata added by us; not part of typical Copilot return values.
+   // Used to communicate to the user why the Copilot Agent might not be running.
+   public static class CopilotAgentNotRunningReason
+   {
+      public static String reasonToString(int reason)
+      {
+         if (reason == Unknown)
+         {
+            return "An unknown error occurred.";
+         }
+         else if (reason == NotInstalled)
+         {
+            return "The GitHub Copilot agent is not installed.";
+         }
+         else if (reason == DisabledByAdministrator)
+         {
+            return "GitHub Copilot has been disabled by the system administrator.";
+         }
+         else if (reason == DisabledViaProjectPreferences)
+         {
+            return "GitHub Copilot has been disabled via project preferences.";
+         }
+         else if (reason == DisabledViaGlobalOptions)
+         {
+            return "GitHub Copilot has been disabled via global options.";
+         }
+         else if (reason == LaunchError)
+         {
+            return "An error occurred while attempting to launch GitHub Copilot.";
+         }
+         else
+         {
+            return "<unknown>";
+         }
+      }
+      
+      public static int Unknown = 0;
+      public static int NotInstalled = 1;
+      public static int DisabledByAdministrator = 2;
+      public static int DisabledViaProjectPreferences = 3;
+      public static int DisabledViaGlobalOptions = 4;
+      public static int LaunchError = 5;
+   }
+   
    @JsType(isNative = true, namespace = JsPackage.GLOBAL, name = "Object")
    public static class CopilotResponseMetadata
    {
@@ -90,7 +135,8 @@ public class CopilotResponseTypes
       public CopilotStatusResponseResult result;
       
       // These aren't part of a normal Copilot status request; we append
-      // this extra information to help report agent startup errors.
+      // this extra information to help report agent launch errors.
+      public JsNumber reason;
       public RpcError error;
       public String output;
    }
