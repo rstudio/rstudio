@@ -611,5 +611,5 @@
 })
 
 .rs.addFunction("connectionOdbcRStudioDriver", function() {
-   " with RStudio Driver"
+   " with Posit Driver"
 })
