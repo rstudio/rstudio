@@ -203,7 +203,7 @@ FilePath copilotAgentPath()
    FilePath newAgentLocation = userCacheDir().completeChildPath("copilot");
    if (oldAgentLocation.exists() && !newAgentLocation.exists())
    {
-      Error error = newAgentLocation.copyDirectoryRecursive(newAgentLocation);
+      Error error = oldAgentLocation.copyDirectoryRecursive(newAgentLocation);
       if (error)
          LOG_ERROR(error);
    }
