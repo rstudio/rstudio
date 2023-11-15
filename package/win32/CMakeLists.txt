@@ -26,14 +26,13 @@ string(REPLACE "+" "-" CPACK_PACKAGE_FILE_NAME "${CPACK_PACKAGE_FILE_NAME}")
 
 if(RSTUDIO_ELECTRON)
    set(CPACK_NSIS_INSTALLED_ICON_NAME "rstudio.exe")
+   set(CPACK_NSIS_EXECUTABLES_DIRECTORY ".")
 else()
    set(CPACK_NSIS_INSTALLED_ICON_NAME "bin\\\\rstudio.exe")
 endif()
 
 set(CPACK_PACKAGE_INSTALL_REGISTRY_KEY "RStudio")
-if(NOT RSTUDIO_ELECTRON)
-   set(CPACK_PACKAGE_EXECUTABLES "rstudio" "RStudio")
-endif()
+set(CPACK_PACKAGE_EXECUTABLES "rstudio" "RStudio")
 set(CPACK_INCLUDE_TOPLEVEL_DIRECTORY 0)
 
 # To keep pathnames from getting too long, use a temp directory
