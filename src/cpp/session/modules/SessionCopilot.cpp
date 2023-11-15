@@ -186,6 +186,30 @@ bool s_isSessionShuttingDown = false;
 // Project-specific Copilot options.
 projects::RProjectCopilotOptions s_copilotProjectOptions;
 
+bool isIndexableFile(const FilePath& documentPath)
+{
+   // Don't index hidden files.
+   if (documentPath.isHidden())
+      return false;
+   
+   // Don't index R files which might contain secrets.
+   std::string name = documentPath.getFilename();
+   if (name == ".Renviron" || name == "Renviron.site")
+      return false;
+   
+   // Don't try to index SSH secrets.
+   std::string path = documentPath.getAbsolutePath();
+   if (path.find("/.ssh/") != std::string::npos)
+      return false;
+   
+   return true;
+}
+
+bool isIndexableFile(const boost::shared_ptr<source_database::SourceDocument>& pDoc)
+{
+   return isIndexableFile(FilePath(pDoc->path()));
+}
+
 FilePath copilotAgentPath()
 {
    // Check for configured copilot path.
@@ -856,6 +880,9 @@ bool ensureAgentRunning(Error* pAgentLaunchError = nullptr)
 
 void onDocAdded(boost::shared_ptr<source_database::SourceDocument> pDoc)
 {
+   if (!isIndexableFile(pDoc))
+      return;
+   
    if (!ensureAgentRunning())
       return;
 
@@ -873,6 +900,9 @@ void onDocAdded(boost::shared_ptr<source_database::SourceDocument> pDoc)
 
 void onDocUpdated(boost::shared_ptr<source_database::SourceDocument> pDoc)
 {
+   if (!isIndexableFile(pDoc))
+      return;
+   
    if (!ensureAgentRunning())
       return;
 
