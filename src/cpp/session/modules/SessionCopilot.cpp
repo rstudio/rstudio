@@ -186,6 +186,11 @@ bool s_isSessionShuttingDown = false;
 // Project-specific Copilot options.
 projects::RProjectCopilotOptions s_copilotProjectOptions;
 
+// Forward declaration.
+bool subscribeToFileMonitor();
+
+
+
 FilePath copilotAgentPath()
 {
    // Check for configured copilot path.
@@ -985,6 +990,12 @@ void synchronize()
    s_copilotEnabled = isCopilotEnabled();
    s_copilotIndexingEnabled = s_copilotEnabled && isCopilotIndexingEnabled();
    
+   // Subscribe to file monitor if enabled
+   if (s_copilotIndexingEnabled)
+   {
+      static bool once = subscribeToFileMonitor();
+   }
+   
    // Start or stop the agent as appropriate
    if (s_copilotEnabled)
    {
@@ -1249,6 +1260,16 @@ void onMonitoringDisabled()
 {
 }
 
+bool subscribeToFileMonitor()
+{
+   session::projects::FileMonitorCallbacks callbacks;
+   callbacks.onMonitoringEnabled = file_monitor::onMonitoringEnabled;
+   callbacks.onFilesChanged = file_monitor::onFilesChanged;
+   callbacks.onMonitoringDisabled = file_monitor::onMonitoringDisabled;
+   projects::projectContext().subscribeToFileMonitor("Copilot indexing", callbacks);
+   return true;
+}
+
 } // end namespace file_monitor
 
 
@@ -1273,14 +1294,6 @@ Error initialize()
    // Synchronize user + project preferences with internal caches
    synchronize();
 
-   // subscribe to project context file monitoring state changes
-   // (note that if there is no project this will no-op)
-   session::projects::FileMonitorCallbacks callbacks;
-   callbacks.onMonitoringEnabled = file_monitor::onMonitoringEnabled;
-   callbacks.onFilesChanged = file_monitor::onFilesChanged;
-   callbacks.onMonitoringDisabled = file_monitor::onMonitoringDisabled;
-   projects::projectContext().subscribeToFileMonitor("Copilot indexing", callbacks);
-   
    events().onBackgroundProcessing.connect(onBackgroundProcessing);
    events().onPreferencesSaved.connect(onPreferencesSaved);
    events().onProjectOptionsUpdated.connect(onProjectOptionsUpdated);
