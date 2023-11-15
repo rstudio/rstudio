@@ -131,17 +131,22 @@ private:
    boost::posix_time::ptime time_;
 };
 
-namespace status {
+enum class CopilotAgentNotRunningReason {
+   Unknown,
+   NotInstalled,
+   DisabledByAdministrator,
+   DisabledViaProjectPreferences,
+   DisabledViaGlobalPreferences,
+   LaunchError,
+};
 
-enum CopilotAgentStatus {
+enum class CopilotAgentRuntimeStatus {
    Unknown,
    Starting,
    Running,
    Stopping,
    Stopped,
 };
-
-} // end namespace status
 
 // The log level for Copilot-specific logs. Primarily for developer use.
 int s_copilotLogLevel = 0;
@@ -158,8 +163,12 @@ PidType s_agentPid = -1;
 // Error output (if any) that was written during startup.
 std::string s_agentStartupError;
 
-// Whether the current Copilot agent process is ready.
-status::CopilotAgentStatus s_agentStatus = status::Unknown;
+// The current status of the Copilot agent, mainly around if it's enabled
+// (and why or why not).
+CopilotAgentNotRunningReason s_agentNotRunningReason = CopilotAgentNotRunningReason::Unknown;
+
+// The current runtime status of the Copilot agent process.
+CopilotAgentRuntimeStatus s_agentRuntimeStatus = CopilotAgentRuntimeStatus::Unknown;
 
 // A queue of pending requests, to be sent via the agent's stdin.
 std::queue<std::string> s_pendingRequests;
@@ -177,18 +186,81 @@ bool s_isSessionShuttingDown = false;
 // Project-specific Copilot options.
 projects::RProjectCopilotOptions s_copilotProjectOptions;
 
+FilePath copilotAgentPath()
+{
+   // Check for configured copilot path.
+   FilePath copilotPath = session::options().copilotPath();
+   if (copilotPath.exists())
+      return copilotPath;
+
+   using namespace core::system::xdg;
+
+#ifdef _WIN32
+   // on Windows, the copilot agent was previously downloaded to a different location.
+   // Delete and remove the old location after sufficient time has passed, in a future
+   // RStudio release.
+   FilePath oldAgentLocation = oldUserCacheDir().completeChildPath("copilot");
+   FilePath newAgentLocation = userCacheDir().completeChildPath("copilot");
+   if (oldAgentLocation.exists() && !newAgentLocation.exists())
+   {
+      Error error = oldAgentLocation.copyDirectoryRecursive(newAgentLocation);
+      if (error)
+         LOG_ERROR(error);
+   }
+#endif
+
+   // Otherwise, use a default user location.
+   return userCacheDir().completeChildPath("copilot/dist/agent.js");
+}
+
+bool isCopilotAgentInstalled()
+{
+   return copilotAgentPath().exists();
+}
+
 bool isCopilotEnabled()
 {
+   // Check administrator option
+   if (!session::options().copilotEnabled())
+   {
+      s_agentNotRunningReason = CopilotAgentNotRunningReason::DisabledByAdministrator;
+      return false;
+   }
+   
+   // Check whether the agent is installed
+   if (!isCopilotAgentInstalled())
+   {
+      s_agentNotRunningReason = CopilotAgentNotRunningReason::NotInstalled;
+      return false;
+   }
+   
    // Check project option
    switch (s_copilotProjectOptions.copilotEnabled)
    {
-   case r_util::YesValue: return true;
-   case r_util::NoValue: return false;
+   
+   case r_util::YesValue:
+   {
+      return true;
+   }
+      
+   case r_util::NoValue:
+   {
+      s_agentNotRunningReason = CopilotAgentNotRunningReason::DisabledViaProjectPreferences;
+      return false;
+   }
+      
    default: {}
+      
    }
 
    // Check user preference
-   return prefs::userPrefs().copilotEnabled();
+   if (!prefs::userPrefs().copilotEnabled())
+   {
+      s_agentNotRunningReason = CopilotAgentNotRunningReason::DisabledViaGlobalPreferences;
+      return false;
+   }
+   
+   return true;
 }
 
 bool isCopilotIndexingEnabled()
@@ -319,38 +391,6 @@ Error findNode(FilePath* pNodePath,
 int copilotLogLevel()
 {
    return s_copilotLogLevel;
-}
-
-FilePath copilotAgentPath()
-{
-   // Check for configured copilot path.
-   FilePath copilotPath = session::options().copilotPath();
-   if (copilotPath.exists())
-      return copilotPath;
-
-   using namespace core::system::xdg;
-
-#ifdef _WIN32
-   // on Windows, the copilot agent was previously downloaded to a different location.
-   // Delete and remove the old location after sufficient time has passed, in a future
-   // RStudio release.
-   FilePath oldAgentLocation = oldUserCacheDir().completeChildPath("copilot");
-   FilePath newAgentLocation = userCacheDir().completeChildPath("copilot");
-   if (oldAgentLocation.exists() && !newAgentLocation.exists())
-   {
-      Error error = newAgentLocation.copyDirectoryRecursive(newAgentLocation);
-      if (error)
-         LOG_ERROR(error);
-   }
-#endif
-
-   // Otherwise, use a default user location.
-   return userCacheDir().completeChildPath("copilot/dist/agent.js");
-}
-
-bool isCopilotAgentInstalled()
-{
-   return copilotAgentPath().exists();
 }
 
 Error installCopilotAgent()
@@ -501,7 +541,7 @@ void onStarted(ProcessOperations& operations)
    // Record the PID of the agent.
    DLOG("Copilot agent has started [PID = {}]", operations.getPid());
    s_agentPid = operations.getPid();
-   s_agentStatus = status::Starting;
+   s_agentRuntimeStatus = CopilotAgentRuntimeStatus::Starting;
 }
 
 bool onContinue(ProcessOperations& operations)
@@ -609,7 +649,7 @@ void onStdout(ProcessOperations& operations, const std::string& stdOut)
    }
    
    // Note that the agent is now ready.
-   s_agentStatus = status::Running;
+   s_agentRuntimeStatus = CopilotAgentRuntimeStatus::Running;
 }
 
 void onStderr(ProcessOperations& operations, const std::string& stdErr)
@@ -620,23 +660,34 @@ void onStderr(ProcessOperations& operations, const std::string& stdErr)
  
    // If we get output from stderr while the agent is starting, that means
    // something went wrong and we're about to shut down.
-   if (s_agentStatus == status::Starting || s_agentStatus == status::Stopping)
+   switch (s_agentRuntimeStatus)
+   {
+   
+   case CopilotAgentRuntimeStatus::Starting:
+   case CopilotAgentRuntimeStatus::Stopping:
    {
       s_agentStartupError += stdErr;
-      s_agentStatus = status::Stopping;
+      s_agentRuntimeStatus = CopilotAgentRuntimeStatus::Stopping;
+      break;
    }
+ 
+   // TODO: Is there anything reasonable we can do with errors here?
+   default: {}
+      
+   }
+
 }
 
 void onError(ProcessOperations& operations, const Error& error)
 {
    s_agentPid = -1;
-   s_agentStatus = status::Stopped;
+   s_agentRuntimeStatus = CopilotAgentRuntimeStatus::Stopped;
 }
 
 void onExit(int status)
 {
    s_agentPid = -1;
-   s_agentStatus = status::Stopped;
+   s_agentRuntimeStatus = CopilotAgentRuntimeStatus::Stopped;
 
    if (s_isSessionShuttingDown)
       return;
@@ -720,14 +771,26 @@ Error startAgent()
    //
    // This also has the downside of failing less gracefully if 'node' is able to start
    // successfully, but it later dies after trying to run the 'agent.js' script.
-   s_agentStatus = status::Unknown;
+   s_agentRuntimeStatus = CopilotAgentRuntimeStatus::Unknown;
    s_agentStartupError = std::string();
    waitFor([]() { return s_agentPid != -1; });
    if (s_agentPid == -1)
       return Error(boost::system::errc::no_such_process, ERROR_LOCATION);
    
-   // Wait for Copilot to report that it's started running.
-   waitFor([]() { return s_agentStatus == status::Running || s_agentStatus == status::Stopped; });
+   // Wait for Copilot to report that it's started running, or that it's failed to start.
+   waitFor([]()
+   {
+      switch (s_agentRuntimeStatus)
+      {
+      case CopilotAgentRuntimeStatus::Running:
+      case CopilotAgentRuntimeStatus::Stopped:
+         return true;
+      default:
+         return false;
+      }
+      
+   });
+
    if (s_agentPid == -1)
       return Error(boost::system::errc::no_such_process, ERROR_LOCATION);
 
@@ -765,13 +828,6 @@ bool ensureAgentRunning(Error* pAgentLaunchError = nullptr)
    {
       DLOG("Copilot is already running; nothing to do.");
       return true;
-   }
-
-   // bail if copilot is not allowed
-   if (!session::options().copilotEnabled())
-   {
-      DLOG("Copilot has been disabled by the administrator; not starting agent.");
-      return false;
    }
 
    // bail if we haven't enabled copilot
@@ -1083,12 +1139,18 @@ Error copilotStatus(const json::JsonRpcRequest& request,
       json::JsonRpcResponse response;
       
       json::Object resultJson;
+      
       if (launchError)
       {
          json::Object errorJson;
          launchError.writeJson(&errorJson);
+         resultJson["reason"] = static_cast<int>(CopilotAgentNotRunningReason::LaunchError);
          resultJson["error"] = errorJson;
          resultJson["output"] = s_agentStartupError;
+      }
+      else
+      {
+         resultJson["reason"] = static_cast<int>(s_agentNotRunningReason);
       }
       
       response.setResult(resultJson);
@@ -1120,6 +1182,8 @@ Error copilotInstallAgent(const json::JsonRpcRequest& request,
    if (installError)
       responseJson["error"] = installError.asString();
    pResponse->setResult(responseJson);
+   
+   synchronize();
    return Success();
 }
 
