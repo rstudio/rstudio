@@ -463,8 +463,6 @@ void setEditorInfo()
    
    // check for server-configured proxy URL
    std::string proxyUrl = session::options().copilotProxyUrl();
-   
-   // if that's not set, check an environment variable
    if (proxyUrl.empty())
       proxyUrl = core::system::getenv("COPILOT_PROXY_URL");
    
@@ -514,19 +512,35 @@ void setEditorInfo()
       }
    }
    
-   // check for authentication provider configuration from R
-   SEXP authProviderSEXP = r::options::getOption("rstudio.copilot.authProvider");
-   if (authProviderSEXP != R_NilValue)
+   // check for authentication provider
+   std::string authProviderUrl = session::options().copilotAuthProvider();
+   if (authProviderUrl.empty())
+      authProviderUrl = core::system::getenv("COPILOT_AUTH_PROVIDER");
+   
+   if (!authProviderUrl.empty())
    {
-      json::Value authProviderJson;
-      Error error = r::json::jsonValueFromObject(authProviderSEXP, &authProviderJson);
-      if (error)
-         LOG_ERROR(error);
+      json::Object authProviderJson;
+      authProviderJson["url"] = authProviderUrl;
       
-      if (authProviderJson.isObject())
+      DLOG("Using authentication provider: {}", authProviderJson.writeFormatted());
+      paramsJson["authProvider"] = authProviderJson;
+   }
+   else
+   {
+      // check for authentication provider configuration from R
+      SEXP authProviderSEXP = r::options::getOption("rstudio.copilot.authProvider");
+      if (authProviderSEXP != R_NilValue)
       {
-         DLOG("Using authentication provider: {}", authProviderJson.writeFormatted());
-         paramsJson["authProvider"] = authProviderJson.getObject();
+         json::Value authProviderJson;
+         Error error = r::json::jsonValueFromObject(authProviderSEXP, &authProviderJson);
+         if (error)
+            LOG_ERROR(error);
+
+         if (authProviderJson.isObject())
+         {
+            DLOG("Using authentication provider: {}", authProviderJson.writeFormatted());
+            paramsJson["authProvider"] = authProviderJson.getObject();
+         }
       }
    }
    
