@@ -48,6 +48,7 @@
 - Fixed an issue where console output could be dropped when rendering large ANSI links. (#13869)
 - Fixed an issue preventing users from copying code from the History pane. (#3219)
 - Fixed WSL terminals not starting on RStudio Desktop for Windows. (#13918)
+- Fixed Windows installer to delete Start Menu shortcut during uninstall (#13936)
 - Fixed an issue that prevented users from opening files and vignettes with non-ASCII characters in their paths. (#13886)
 
 #### Posit Workbench
