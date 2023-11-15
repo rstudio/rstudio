@@ -118,6 +118,14 @@ private:
    int& counter_;
 };
 
+bool isCompactRowNames(SEXP rowNamesInfoSEXP)
+{
+   return
+         TYPEOF(rowNamesInfoSEXP) == INTSXP &&
+         r::sexp::length(rowNamesInfoSEXP) == 2 &&
+         INTEGER(rowNamesInfoSEXP)[0] == NA_INTEGER;
+}
+
 bool isGlobalEnvironmentSerializable()
 {
    bool serializable = false;
@@ -437,18 +445,43 @@ SEXP rs_dim(SEXP objectSEXP)
          return R_NilValue;
       }
       
-      // Detect compact row names
-      if (TYPEOF(rowNamesInfoSEXP) == INTSXP && LENGTH(rowNamesInfoSEXP) == 2)
+      // Avoid materializing certain ALTREP representations.
+      //
+      // https://github.com/rstudio/rstudio/issues/13907
+      // https://github.com/rstudio/rstudio/pull/13544
+      bool canComputeRows = true;
+      if (isAltrep(rowNamesInfoSEXP))
       {
-         // Use INTEGER_OR_NULL to allow for ALTREP vectors
-         // https://github.com/rstudio/rstudio/pull/13544
-         const int* data = INTEGER_OR_NULL(rowNamesInfoSEXP);
-         if (data != nullptr && data[0] == NA_INTEGER)
-            numRows = abs(data[1]);
+         // This code makes use of some internal details about ALTREP class metadata.
+         // In particular, for an ALTREP object, the class information is stored as
+         // a raw vector as a TAG on the associated object. The attributes of that
+         // class give some metadata information about the ALTREP class.
+         //
+         // https://github.com/wch/r-source/blob/e26e3f02a5e4255c4aad0842a46e141c03eed379/src/main/altrep.c#L38-L42
+         //
+         // The second entry in the table is the name of the package providing the
+         // ALTREP class definition, as a symbol.
+         SEXP altrepClassSEXP = TAG(rowNamesInfoSEXP);
+         SEXP altrepAttribSEXP = ATTRIB(altrepClassSEXP);
+         if (TYPEOF(altrepAttribSEXP) == LISTSXP && r::sexp::length(altrepAttribSEXP) >= 2)
+         {
+            SEXP packageSEXP = CADR(altrepAttribSEXP);
+            if (packageSEXP == Rf_install("duckdb"))
+               canComputeRows = false;
+         }
       }
-      else
+      
+      // Detect compact row names.
+      if (canComputeRows)
       {
-         numRows = Rf_length(rowNamesInfoSEXP);
+         if (isCompactRowNames(rowNamesInfoSEXP))
+         {
+            numRows = abs(INTEGER(rowNamesInfoSEXP)[1]);
+         }
+         else
+         {
+            numRows = r::sexp::length(rowNamesInfoSEXP);
+         }
       }
       
       SEXP resultSEXP = Rf_allocVector(INTSXP, 2);
@@ -458,7 +491,6 @@ SEXP rs_dim(SEXP objectSEXP)
    }
    
    // Otherwise, just call 'dim()' directly
-   
    r::sexp::Protect protect;
    SEXP dimSEXP = R_NilValue;
    Error error = r::exec::RFunction("base:::dim")
