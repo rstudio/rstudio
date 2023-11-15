@@ -298,6 +298,8 @@ test_context("Diagnostics")
       
       EXPECT_NO_LINT("apples <- 42; glue(\"{apples} and {bananas}\", bananas = 24)");
       EXPECT_NO_LINT("mtcars %>% stats::lm(mpg ~ cyl, data = .)");
+      
+      EXPECT_NO_LINT("r'())'");
    }
    
    test_that("RStudio files can be successfully linted")
