@@ -1270,8 +1270,10 @@ namespace {
 void indexFile(const core::FileInfo& info)
 {
    FilePath documentPath = module_context::resolveAliasedPath(info.absolutePath());
-   std::string ext = documentPath.getExtensionLowerCase();
+   if (!isIndexableFile(documentPath))
+      return;
    
+   std::string ext = documentPath.getExtensionLowerCase();
    std::string languageId = languageIdFromExtension(ext);
    DLOG("Indexing document: {}", info.absolutePath());
    
