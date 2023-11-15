@@ -749,18 +749,31 @@ options(
    })
 })
 
-.rs.addJsonRpcHandler("get_new_connection_context", function() {
-   connectionList <- c(
-      list(),
-      .rs.connectionReadSnippets(),         # add snippets to connections list
-      .rs.connectionReadDSN(),              # add ODBC DSNs to connections list
-      .rs.connectionReadPackages(),         # add packages to connections list
-      .rs.connectionReadOdbc(),             # add ODBC drivers to connections list
-      .rs.connectionReadInstallers(),       # add installers to connections list
-      .rs.connectionReadPackageInstallers() # add package installers to connection list
-   )
+.rs.addFunction("connectionListFilter", function(connectionList) {
+   # Function to filter and deduplicate entries in the connections list
+   # The list may include multiple entries that have the same name,
+   # which may be from the same source or from different sources altogether
+   #
+   # IMPORTANT: We reference and modify the connectionList entries in place,
+   # even though it is less readable so that returned entries are modified
    
    connectionList <- Filter(function(e) !is.null(e), connectionList)
+
+   # Installers that are managed by Pro Drivers or the RStudio IDE
+   pro_driver_installers <- c("RStudio Pro Drivers", "Posit Pro Drivers")
+   posit_installers <- c("RStudio", pro_driver_installers)
+   # Helpers for connection list deduplication
+   is_desktop_install <- function(entry) {
+      identical(as.character(entry$installer), "RStudio") ||
+      (
+         # set by connectionReadInstallers
+         identical(as.character(entry$type), "Install") &&
+         identical(as.character(entry$subtype), "Odbc")
+      )
+   }
+   is_pro_driver <- function(entry) {
+      toString(entry$installer) %in% pro_driver_installers
+   }
 
    # remove duplicate names, in order
    connectionNames <- list()
@@ -770,9 +783,9 @@ options(
          existingDriver <- connectionNames[[entryName]]
          withRStudioName <- paste(entryName, .rs.connectionOdbcRStudioDriver(), sep = "")
 
-         if (identical(as.character(connectionList[[i]]$type), "Install") &&
-             !identical(as.character(existingDriver$installer), "RStudio") &&
-             is.null(connectionNames[[withRStudioName]])) {
+         if (is.null(connectionNames[[withRStudioName]]) &&
+             !(toString(existingDriver$installer) %in% posit_installers) &&
+             (is_desktop_install(connectionList[[i]]) || is_pro_driver(connectionList[[i]]))) {
             connectionList[[i]]$name <- entryName <- .rs.scalar(withRStudioName)
          }
          else {
@@ -787,6 +800,23 @@ options(
    
    connectionList <- Filter(function(e) !identical(e$remove, TRUE), connectionList)
 
+   connectionList
+})
+
+.rs.addJsonRpcHandler("get_new_connection_context", function() {
+   connectionList <- c(
+      list(),
+      .rs.connectionReadSnippets(),         # add snippets to connections list
+      .rs.connectionReadDSN(),              # add ODBC DSNs to connections list
+      .rs.connectionReadPackages(),         # add packages to connections list
+      .rs.connectionReadOdbc(),             # add ODBC drivers to connections list
+      .rs.connectionReadInstallers(),       # add installers to connections list
+      .rs.connectionReadPackageInstallers() # add package installers to connection list
+   )
+   # Filter list to handle empty values and duplicate names
+   connectionList <- .rs.connectionListFilter(connectionList)
+
+   # Remove names before sending to the UI
    context <- list(
       connectionsList = unname(connectionList)
    )
