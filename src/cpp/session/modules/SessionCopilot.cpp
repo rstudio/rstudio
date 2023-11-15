@@ -325,11 +325,54 @@ std::string uriFromDocument(const boost::shared_ptr<source_database::SourceDocum
    return uriFromDocumentImpl(pDoc->id(), pDoc->path(), pDoc->isUntitled());
 }
 
+// https://microsoft.github.io/language-server-protocol/specifications/lsp/3.17/specification/#textDocumentItem
+std::string languageIdFromExtension(const std::string& ext)
+{
+   static std::map<std::string, std::string> extToIdMap = {
+      { ".bash", "shellscript" },
+      { ".c",    "c" },
+      { ".cc",   "cpp" },
+      { ".cpp",  "cpp" },
+      { ".cs",   "csharp" },
+      { ".erl",  "erlang" },
+      { ".h",    "c" },
+      { ".hpp",  "cpp" },
+      { ".js",   "javascript" },
+      { ".jsx",  "javascriptreact" },
+      { ".md",   "markdown" },
+      { ".mjs",  "javascript" },
+      { ".ps",   "powershell" },
+      { ".py",   "python" },
+      { ".tex",  "latex" },
+      { ".rb",   "ruby" },
+      { ".rnw",  "r" },
+      { ".rnb",  "r" },
+      { ".rmd",  "r" },
+      { ".sh",   "shellscript" },
+      { ".ts",   "typescript" },
+      { ".tsx",  "typescriptreact" },
+      { ".yml",  "yaml" },
+   };
+   
+   if (extToIdMap.count(ext))
+      return extToIdMap.at(ext);
+   else
+      return ext.substr(1);
+}
+
+
 std::string languageIdFromDocument(boost::shared_ptr<source_database::SourceDocument> pDoc)
 {
    if (pDoc->isRMarkdownDocument() || pDoc->isRFile())
       return "r";
 
+   FilePath docPath(pDoc->path());
+   std::string name = docPath.getFilename();
+   if (name == "Makefile")
+      return "makefile";
+   else if (name == "Dockerfile")
+      return "dockerfile";
+   
    return boost::algorithm::to_lower_copy(pDoc->type());
 }
 
@@ -1229,17 +1272,7 @@ void indexFile(const core::FileInfo& info)
    FilePath documentPath = module_context::resolveAliasedPath(info.absolutePath());
    std::string ext = documentPath.getExtensionLowerCase();
    
-   // TODO: Stop hard-coding this list?
-   std::string languageId;
-   if (ext == ".r")
-      languageId = "r";
-   else if (ext == ".py")
-      languageId = "python";
-   else if (ext == ".sql")
-      languageId = "sql";
-   else
-      return;
-   
+   std::string languageId = languageIdFromExtension(ext);
    DLOG("Indexing document: {}", info.absolutePath());
    
    std::string contents;
