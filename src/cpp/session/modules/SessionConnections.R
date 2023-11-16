@@ -531,7 +531,7 @@ options(
    tryCatch({
       currentDriver <- drivers[drivers$attribute == "Driver" & drivers$name == driver, ]$value
       driverInstaller <- drivers[drivers$attribute == "Installer" & drivers$name == driver, ]$value
-      driverId <- gsub(.rs.connectionOdbcRStudioDriver(), "", driver)
+      driverId <- .rs.connectionStripRStudioDriver(driver)
 
       # Instead of assuming the location of the snippets directory, we instead
       # walk up the directory tree to find the snippets directory
@@ -832,6 +832,7 @@ options(
 })
 
 .rs.addJsonRpcHandler("get_new_odbc_connection_context", function(name, retries = 1) {
+   name <- .rs.connectionStripRStudioDriver(name)
    singleEntryFilter <- function(e) {
       identical(as.character(e$name), name)
    }
@@ -937,7 +938,7 @@ options(
    connectionContext <- Filter(function(e) {
       identical(
          as.character(e$name),
-         gsub(.rs.connectionOdbcRStudioDriver(), "", driverName)
+         .rs.connectionStripRStudioDriver(driverName)
       )
    }, .rs.connectionReadInstallers())[[1]]
 
@@ -992,6 +993,7 @@ options(
 
 .rs.addJsonRpcHandler("uninstall_odbc_driver", function(driverName) {
    tryCatch({
+      driverName <- .rs.connectionStripRStudioDriver(driverName)
       defaultInstallPath <- file.path(.rs.connectionOdbcInstallPath(), tolower(driverName))
       defaultInstallExists <- dir.exists(defaultInstallPath)
 
