@@ -186,6 +186,30 @@ bool s_isSessionShuttingDown = false;
 // Project-specific Copilot options.
 projects::RProjectCopilotOptions s_copilotProjectOptions;
 
+bool isIndexableFile(const FilePath& documentPath)
+{
+   // Don't index hidden files.
+   if (documentPath.isHidden())
+      return false;
+   
+   // Don't index R files which might contain secrets.
+   std::string name = documentPath.getFilename();
+   if (name == ".Renviron" || name == "Renviron.site")
+      return false;
+   
+   // Don't try to index SSH secrets.
+   std::string path = documentPath.getAbsolutePath();
+   if (path.find("/.ssh/") != std::string::npos)
+      return false;
+   
+   return true;
+}
+
+bool isIndexableFile(const boost::shared_ptr<source_database::SourceDocument>& pDoc)
+{
+   return isIndexableFile(FilePath(pDoc->path()));
+}
+
 FilePath copilotAgentPath()
 {
    // Check for configured copilot path.
@@ -301,11 +325,54 @@ std::string uriFromDocument(const boost::shared_ptr<source_database::SourceDocum
    return uriFromDocumentImpl(pDoc->id(), pDoc->path(), pDoc->isUntitled());
 }
 
+// https://microsoft.github.io/language-server-protocol/specifications/lsp/3.17/specification/#textDocumentItem
+std::string languageIdFromExtension(const std::string& ext)
+{
+   static std::map<std::string, std::string> extToIdMap = {
+      { ".bash", "shellscript" },
+      { ".c",    "c" },
+      { ".cc",   "cpp" },
+      { ".cpp",  "cpp" },
+      { ".cs",   "csharp" },
+      { ".erl",  "erlang" },
+      { ".h",    "c" },
+      { ".hpp",  "cpp" },
+      { ".js",   "javascript" },
+      { ".jsx",  "javascriptreact" },
+      { ".md",   "markdown" },
+      { ".mjs",  "javascript" },
+      { ".ps",   "powershell" },
+      { ".py",   "python" },
+      { ".tex",  "latex" },
+      { ".rb",   "ruby" },
+      { ".rnw",  "r" },
+      { ".rnb",  "r" },
+      { ".rmd",  "r" },
+      { ".sh",   "shellscript" },
+      { ".ts",   "typescript" },
+      { ".tsx",  "typescriptreact" },
+      { ".yml",  "yaml" },
+   };
+   
+   if (extToIdMap.count(ext))
+      return extToIdMap.at(ext);
+   else
+      return ext.substr(1);
+}
+
+
 std::string languageIdFromDocument(boost::shared_ptr<source_database::SourceDocument> pDoc)
 {
    if (pDoc->isRMarkdownDocument() || pDoc->isRFile())
       return "r";
 
+   FilePath docPath(pDoc->path());
+   std::string name = docPath.getFilename();
+   if (name == "Makefile")
+      return "makefile";
+   else if (name == "Dockerfile")
+      return "dockerfile";
+   
    return boost::algorithm::to_lower_copy(pDoc->type());
 }
 
@@ -870,6 +937,9 @@ bool ensureAgentRunning(Error* pAgentLaunchError = nullptr)
 
 void onDocAdded(boost::shared_ptr<source_database::SourceDocument> pDoc)
 {
+   if (!isIndexableFile(pDoc))
+      return;
+   
    if (!ensureAgentRunning())
       return;
 
@@ -887,6 +957,9 @@ void onDocAdded(boost::shared_ptr<source_database::SourceDocument> pDoc)
 
 void onDocUpdated(boost::shared_ptr<source_database::SourceDocument> pDoc)
 {
+   if (!isIndexableFile(pDoc))
+      return;
+   
    if (!ensureAgentRunning())
       return;
 
@@ -1211,19 +1284,11 @@ namespace {
 void indexFile(const core::FileInfo& info)
 {
    FilePath documentPath = module_context::resolveAliasedPath(info.absolutePath());
-   std::string ext = documentPath.getExtensionLowerCase();
-   
-   // TODO: Stop hard-coding this list?
-   std::string languageId;
-   if (ext == ".r")
-      languageId = "r";
-   else if (ext == ".py")
-      languageId = "python";
-   else if (ext == ".sql")
-      languageId = "sql";
-   else
+   if (!isIndexableFile(documentPath))
       return;
    
+   std::string ext = documentPath.getExtensionLowerCase();
+   std::string languageId = languageIdFromExtension(ext);
    DLOG("Indexing document: {}", info.absolutePath());
    
    std::string contents;
