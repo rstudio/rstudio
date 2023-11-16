@@ -703,7 +703,7 @@ options(
 
             snippet <- paste(
                "library(DBI)\n",
-               "con <- dbConnect(odbc::odbc(), \"${1:Data Source Name=", 
+               "con <- dbConnect(odbc::odbc(), dsn=\"${1:Data Source Name=",
                dataSource$name,
                "}\", timeout = 10)",
                sep = "")
