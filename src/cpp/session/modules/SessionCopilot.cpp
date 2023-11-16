@@ -190,6 +190,29 @@ projects::RProjectCopilotOptions s_copilotProjectOptions;
 bool subscribeToFileMonitor();
 
 
+bool isIndexableFile(const FilePath& documentPath)
+{
+   // Don't index hidden files.
+   if (documentPath.isHidden())
+      return false;
+   
+   // Don't index R files which might contain secrets.
+   std::string name = documentPath.getFilename();
+   if (name == ".Renviron" || name == "Renviron.site")
+      return false;
+   
+   // Don't try to index SSH secrets.
+   std::string path = documentPath.getAbsolutePath();
+   if (path.find("/.ssh/") != std::string::npos)
+      return false;
+   
+   return true;
+}
+
+bool isIndexableFile(const boost::shared_ptr<source_database::SourceDocument>& pDoc)
+{
+   return isIndexableFile(FilePath(pDoc->path()));
+}
 
 FilePath copilotAgentPath()
 {
@@ -306,11 +329,54 @@ std::string uriFromDocument(const boost::shared_ptr<source_database::SourceDocum
    return uriFromDocumentImpl(pDoc->id(), pDoc->path(), pDoc->isUntitled());
 }
 
+// https://microsoft.github.io/language-server-protocol/specifications/lsp/3.17/specification/#textDocumentItem
+std::string languageIdFromExtension(const std::string& ext)
+{
+   static std::map<std::string, std::string> extToIdMap = {
+      { ".bash", "shellscript" },
+      { ".c",    "c" },
+      { ".cc",   "cpp" },
+      { ".cpp",  "cpp" },
+      { ".cs",   "csharp" },
+      { ".erl",  "erlang" },
+      { ".h",    "c" },
+      { ".hpp",  "cpp" },
+      { ".js",   "javascript" },
+      { ".jsx",  "javascriptreact" },
+      { ".md",   "markdown" },
+      { ".mjs",  "javascript" },
+      { ".ps",   "powershell" },
+      { ".py",   "python" },
+      { ".tex",  "latex" },
+      { ".rb",   "ruby" },
+      { ".rnw",  "r" },
+      { ".rnb",  "r" },
+      { ".rmd",  "r" },
+      { ".sh",   "shellscript" },
+      { ".ts",   "typescript" },
+      { ".tsx",  "typescriptreact" },
+      { ".yml",  "yaml" },
+   };
+   
+   if (extToIdMap.count(ext))
+      return extToIdMap.at(ext);
+   else
+      return ext.substr(1);
+}
+
+
 std::string languageIdFromDocument(boost::shared_ptr<source_database::SourceDocument> pDoc)
 {
    if (pDoc->isRMarkdownDocument() || pDoc->isRFile())
       return "r";
 
+   FilePath docPath(pDoc->path());
+   std::string name = docPath.getFilename();
+   if (name == "Makefile")
+      return "makefile";
+   else if (name == "Dockerfile")
+      return "dockerfile";
+   
    return boost::algorithm::to_lower_copy(pDoc->type());
 }
 
@@ -468,8 +534,6 @@ void setEditorInfo()
    
    // check for server-configured proxy URL
    std::string proxyUrl = session::options().copilotProxyUrl();
-   
-   // if that's not set, check an environment variable
    if (proxyUrl.empty())
       proxyUrl = core::system::getenv("COPILOT_PROXY_URL");
    
@@ -519,19 +583,35 @@ void setEditorInfo()
       }
    }
    
-   // check for authentication provider configuration from R
-   SEXP authProviderSEXP = r::options::getOption("rstudio.copilot.authProvider");
-   if (authProviderSEXP != R_NilValue)
+   // check for authentication provider
+   std::string authProviderUrl = session::options().copilotAuthProvider();
+   if (authProviderUrl.empty())
+      authProviderUrl = core::system::getenv("COPILOT_AUTH_PROVIDER");
+   
+   if (!authProviderUrl.empty())
    {
-      json::Value authProviderJson;
-      Error error = r::json::jsonValueFromObject(authProviderSEXP, &authProviderJson);
-      if (error)
-         LOG_ERROR(error);
+      json::Object authProviderJson;
+      authProviderJson["url"] = authProviderUrl;
       
-      if (authProviderJson.isObject())
+      DLOG("Using authentication provider: {}", authProviderJson.writeFormatted());
+      paramsJson["authProvider"] = authProviderJson;
+   }
+   else
+   {
+      // check for authentication provider configuration from R
+      SEXP authProviderSEXP = r::options::getOption("rstudio.copilot.authProvider");
+      if (authProviderSEXP != R_NilValue)
       {
-         DLOG("Using authentication provider: {}", authProviderJson.writeFormatted());
-         paramsJson["authProvider"] = authProviderJson.getObject();
+         json::Value authProviderJson;
+         Error error = r::json::jsonValueFromObject(authProviderSEXP, &authProviderJson);
+         if (error)
+            LOG_ERROR(error);
+
+         if (authProviderJson.isObject())
+         {
+            DLOG("Using authentication provider: {}", authProviderJson.writeFormatted());
+            paramsJson["authProvider"] = authProviderJson.getObject();
+         }
       }
    }
    
@@ -861,6 +941,9 @@ bool ensureAgentRunning(Error* pAgentLaunchError = nullptr)
 
 void onDocAdded(boost::shared_ptr<source_database::SourceDocument> pDoc)
 {
+   if (!isIndexableFile(pDoc))
+      return;
+   
    if (!ensureAgentRunning())
       return;
 
@@ -878,6 +961,9 @@ void onDocAdded(boost::shared_ptr<source_database::SourceDocument> pDoc)
 
 void onDocUpdated(boost::shared_ptr<source_database::SourceDocument> pDoc)
 {
+   if (!isIndexableFile(pDoc))
+      return;
+   
    if (!ensureAgentRunning())
       return;
 
@@ -1208,19 +1294,11 @@ namespace {
 void indexFile(const core::FileInfo& info)
 {
    FilePath documentPath = module_context::resolveAliasedPath(info.absolutePath());
-   std::string ext = documentPath.getExtensionLowerCase();
-   
-   // TODO: Stop hard-coding this list?
-   std::string languageId;
-   if (ext == ".r")
-      languageId = "r";
-   else if (ext == ".py")
-      languageId = "python";
-   else if (ext == ".sql")
-      languageId = "sql";
-   else
+   if (!isIndexableFile(documentPath))
       return;
    
+   std::string ext = documentPath.getExtensionLowerCase();
+   std::string languageId = languageIdFromExtension(ext);
    DLOG("Indexing document: {}", info.absolutePath());
    
    std::string contents;

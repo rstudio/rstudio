@@ -834,6 +834,13 @@
             "description": "The proxy URL that the Copilot agent should use for outgoing network requests. Only plain HTTP proxy URLs are supported."
          },
          {
+            "name": "copilot-auth-provider",
+            "type": "string",
+            "memberName": "copilotAuthProvider_",
+            "defaultValue": "",
+            "description": "The URL to the authentication provider to be used by GitHub Copilot."
+         },
+         {
             "name": "copilot-proxy-strict-ssl",
             "type": "bool",
             "memberName": "copilotProxyStrictSsl_",
