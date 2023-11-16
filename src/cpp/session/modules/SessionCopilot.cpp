@@ -213,7 +213,7 @@ bool isIndexableFile(const boost::shared_ptr<source_database::SourceDocument>& p
 FilePath copilotAgentPath()
 {
    // Check for configured copilot path.
-   FilePath copilotPath = session::options().copilotPath();
+   FilePath copilotPath = session::options().copilotAgentPath();
    if (copilotPath.exists())
       return copilotPath;
 
@@ -798,10 +798,6 @@ Error startAgent()
 {
    Error error;
 
-   FilePath agentPath = copilotAgentPath();
-   if (!agentPath.exists())
-      return fileNotFoundError(agentPath, ERROR_LOCATION);
-
    // Create environment for agent process
    core::system::Options environment;
    core::system::environment(&environment);
@@ -830,16 +826,35 @@ Error startAgent()
    options.allowParentSuspend = true;
    options.exitWithParent = true;
    options.callbacksRequireMainThread = true; // TODO: It'd be nice to drop this requirement!
-   options.workingDir = agentPath.getParent();
 
-   error = module_context::processSupervisor().runProgram(
-            nodePath.getAbsolutePath(),
-            { agentPath.getAbsolutePath() },
-            options,
-            callbacks);
+   // Run the Copilot agent. If RStudio has been configured with a custom
+   // Copilot agent script, use that; otherwise, just run the agent directly.
+   FilePath copilotAgentHelper = session::options().copilotAgentHelper();
+   if (copilotAgentHelper.exists())
+   {
+      error = module_context::processSupervisor().runProgram(
+               copilotAgentHelper.getAbsolutePath(),
+               { nodePath.getAbsolutePath() },
+               options,
+               callbacks);
+   }
+   else
+   {
+      FilePath agentPath = copilotAgentPath();
+      if (!agentPath.exists())
+         return fileNotFoundError(agentPath, ERROR_LOCATION);
 
+      options.workingDir = agentPath.getParent();
+      error = module_context::processSupervisor().runProgram(
+               nodePath.getAbsolutePath(),
+               { agentPath.getAbsolutePath() },
+               options,
+               callbacks);
+   }
+   
    if (error)
       return error;
+   
 
    // Wait for the process to start.
    //
