@@ -527,20 +527,27 @@ options(
    do.call(rbind, lapply(registryEntriesValue, function(e) data.frame(e, stringsAsFactors = FALSE)))
 })
 
-.rs.addFunction("connectionReadOdbcEntry", function(drivers, uniqueDriverNames, driver) {
+.rs.addFunction("connectionReadOdbcEntry", function(drivers, driver) {
    tryCatch({
-      currentDriver <- drivers[drivers$attribute == "Driver" & drivers$name == driver, ]
-      driverInstaller <- drivers[drivers$attribute == "Installer" & drivers$name == driver, ]
+      currentDriver <- drivers[drivers$attribute == "Driver" & drivers$name == driver, ]$value
+      driverInstaller <- drivers[drivers$attribute == "Installer" & drivers$name == driver, ]$value
       driverId <- gsub(.rs.connectionOdbcRStudioDriver(), "", driver)
 
-      basePath <- sub(paste(tolower(driver), ".*$", sep = ""), "", currentDriver$value)
-      snippetsFile <- file.path(
-         basePath,
-         tolower(driver),
-         "snippets",
-         paste(tolower(driverId), ".R", sep = "")
-      )
-      
+      # Instead of assuming the location of the snippets directory, we instead
+      # walk up the directory tree to find the snippets directory
+      prevDir <- NULL
+      walkDir <- dirname(currentDriver)
+      while (!identical(walkDir, prevDir)) {
+         snippetsDir <- file.path(walkDir, "snippets")
+         if (dir.exists(snippetsDir)) {
+            break
+         }
+         prevDir <- walkDir
+         walkDir <- dirname(walkDir)
+      }
+
+      snippetsFile <- file.path(snippetsDir, paste(tolower(driverId), ".R", sep = ""))
+
       if (identical(file.exists(snippetsFile), TRUE)) {
          snippet <- paste(readLines(snippetsFile), collapse = "\n")
       }
@@ -552,13 +559,13 @@ options(
             sep = "")
       }
 
-      licenseFile <- file.path(dirname(currentDriver$value), "license.lock")
+      licenseFile <- file.path(dirname(currentDriver), "license.lock")
 
       iconData <- .Call("rs_connectionIcon", driverId)
       if (nchar(iconData) == 0)
          iconData <- .Call("rs_connectionIcon", "ODBC")
 
-      hasInstaller <- identical(driverInstaller$value, "RStudio")
+      hasInstaller <- identical(driverInstaller, "RStudio")
       warningMessage <- NULL
 
       if (hasInstaller) {
@@ -584,7 +591,7 @@ options(
          source = .rs.scalar("ODBC"),
          hasInstaller = .rs.scalar(hasInstaller),
          warning = .rs.scalar(warningMessage),
-         installer = .rs.scalar(driverInstaller$value)
+         installer = .rs.scalar(driverInstaller)
       )
    }, error = function(e) {
       warning(e$message)
@@ -607,7 +614,7 @@ options(
       uniqueDriverNames <- unique(drivers$name)
 
       lapply(uniqueDriverNames, function(driver) {
-         .rs.connectionReadOdbcEntry(drivers, uniqueDriverNames, driver)
+         .rs.connectionReadOdbcEntry(drivers, driver)
       })
    }
 })
