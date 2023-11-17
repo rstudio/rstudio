@@ -386,7 +386,7 @@ public interface UserPrefsAccessorConstants extends Constants {
    String codeCompletionEnum_never();
    @DefaultStringValue("When triggered ($, ::)")
    String codeCompletionEnum_triggered();
-   @DefaultStringValue("Manually (tab)")
+   @DefaultStringValue("Manually (Tab, Ctrl + Space)")
    String codeCompletionEnum_manual();
 
    /**

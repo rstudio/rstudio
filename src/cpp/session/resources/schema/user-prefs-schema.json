@@ -345,7 +345,7 @@
         "code_completion": {
             "type": "string",
             "enum": ["always", "never", "triggered", "manual"],
-            "enumReadable": ["Automatically", "Never", "When triggered ($, ::)", "Manually (tab)"],
+            "enumReadable": ["Automatically", "Never", "When triggered ($, ::)", "Manually (Tab, Ctrl + Space)"],
             "default": "always",
             "title": "Use code completion for R",
             "description": "When to use auto-completion for R code in the RStudio code editor."

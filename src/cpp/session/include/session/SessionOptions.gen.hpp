@@ -377,8 +377,8 @@ protected:
       ("external-node-path",
       value<std::string>(&nodePath_)->default_value(kDefaultNodePath),
       "Specifies the path to node binaries.")
-      ("external-copilot-path",
-      value<std::string>(&copilotPath_)->default_value(std::string()),
+      ("external-copilot-agent-path",
+      value<std::string>(&copilotAgentPath_)->default_value(std::string()),
       "Specifies the path to the GitHub Copilot agent.")
       ("external-libclang-path",
       value<std::string>(&libclangPath_)->default_value(kDefaultRsclangPath),
@@ -419,9 +419,15 @@ protected:
       ("copilot-proxy-url",
       value<std::string>(&copilotProxyUrl_)->default_value(""),
       "The proxy URL that the Copilot agent should use for outgoing network requests. Only plain HTTP proxy URLs are supported.")
+      ("copilot-auth-provider",
+      value<std::string>(&copilotAuthProvider_)->default_value(""),
+      "The URL to the authentication provider to be used by GitHub Copilot.")
       ("copilot-proxy-strict-ssl",
       value<bool>(&copilotProxyStrictSsl_)->default_value(true),
-      "Should the GitHub Copilot agent perform SSL certificate validation when forming web requests?");
+      "Should the GitHub Copilot agent perform SSL certificate validation when forming web requests?")
+      ("copilot-agent-helper",
+      value<std::string>(&copilotAgentHelper_)->default_value(std::string()),
+      "The path to an optional shell script, which when invoked, should start the GitHub Copilot agent.");
 
    pMisc->add_options();
 
@@ -528,7 +534,7 @@ public:
    core::FilePath pandocPath() const { return core::FilePath(pandocPath_); }
    core::FilePath quartoPath() const { return core::FilePath(quartoPath_); }
    core::FilePath nodePath() const { return core::FilePath(nodePath_); }
-   core::FilePath copilotPath() const { return core::FilePath(copilotPath_); }
+   core::FilePath copilotAgentPath() const { return core::FilePath(copilotAgentPath_); }
    core::FilePath libclangPath() const { return core::FilePath(libclangPath_); }
    core::FilePath libclangHeadersPath() const { return core::FilePath(libclangHeadersPath_); }
    core::FilePath winptyPath() const { return core::FilePath(winptyPath_); }
@@ -538,7 +544,9 @@ public:
    std::string launcherToken() const { return launcherToken_; }
    bool copilotEnabled() const { return copilotEnabled_; }
    std::string copilotProxyUrl() const { return copilotProxyUrl_; }
+   std::string copilotAuthProvider() const { return copilotAuthProvider_; }
    bool copilotProxyStrictSsl() const { return copilotProxyStrictSsl_; }
+   core::FilePath copilotAgentHelper() const { return core::FilePath(copilotAgentHelper_); }
 
 
 protected:
@@ -638,7 +646,7 @@ protected:
    std::string pandocPath_;
    std::string quartoPath_;
    std::string nodePath_;
-   std::string copilotPath_;
+   std::string copilotAgentPath_;
    std::string libclangPath_;
    std::string libclangHeadersPath_;
    std::string winptyPath_;
@@ -650,7 +658,9 @@ protected:
    std::string launcherToken_;
    bool copilotEnabled_;
    std::string copilotProxyUrl_;
+   std::string copilotAuthProvider_;
    bool copilotProxyStrictSsl_;
+   std::string copilotAgentHelper_;
    virtual bool allowOverlay() const { return false; };
 };
 

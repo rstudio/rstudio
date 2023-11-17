@@ -39,6 +39,7 @@ import org.rstudio.studio.client.workbench.commands.Commands;
 import org.rstudio.studio.client.workbench.copilot.model.CopilotConstants;
 import org.rstudio.studio.client.workbench.copilot.model.CopilotEvent;
 import org.rstudio.studio.client.workbench.copilot.model.CopilotEvent.CopilotEventType;
+import org.rstudio.studio.client.workbench.copilot.model.CopilotResponseTypes;
 import org.rstudio.studio.client.workbench.copilot.model.CopilotResponseTypes.CopilotInstallAgentResponse;
 import org.rstudio.studio.client.workbench.copilot.model.CopilotResponseTypes.CopilotSignInResponse;
 import org.rstudio.studio.client.workbench.copilot.model.CopilotResponseTypes.CopilotSignInResponseResult;
@@ -265,8 +266,8 @@ public class Copilot implements ProjectOptionsChangedEvent.Handler
                   {
                      display_.showErrorMessage(
                            "An error occurred while installing GitHub Copilot.\n\n" +
-                           error);
-                  callback.execute(false);
+                                 error);
+                     callback.execute(false);
                   }
                   else
                   {
@@ -274,7 +275,7 @@ public class Copilot implements ProjectOptionsChangedEvent.Handler
                            MessageDisplay.MSG_INFO,
                            "GitHub Copilot: Install Agent",
                            "GitHub Copilot agent successfully installed.");
-                  callback.execute(true);
+                     callback.execute(true);
                   }
                   
                }
@@ -297,12 +298,15 @@ public class Copilot implements ProjectOptionsChangedEvent.Handler
    @Handler
    public void onCopilotSignIn()
    {
-      onCopilotSignIn((response) ->
+      ensureAgentInstalled((installed) ->
       {
-         globalDisplay_.showMessage(
-               MessageDisplay.MSG_INFO,
-               "GitHub Copilot: Sign in",
-               "You are now signed in as '" + response.result.user + "'.");
+         onCopilotSignIn((response) ->
+         {
+            globalDisplay_.showMessage(
+                  MessageDisplay.MSG_INFO,
+                  "GitHub Copilot: Sign in",
+                  "You are now signed in as '" + response.result.user + "'.");
+         });
       });
    }
    
@@ -425,12 +429,49 @@ public class Copilot implements ProjectOptionsChangedEvent.Handler
    @Handler
    public void onCopilotStatus()
    {
+      ensureAgentInstalled((installed) ->
+      {
+         onCopilotStatusImpl();
+      });
+   }
+   
+   private void onCopilotStatusImpl()
+   {
       server_.copilotStatus(new DelayedProgressRequestCallback<CopilotStatusResponse>("Checking status...")
       {
          @Override
          protected void onSuccess(CopilotStatusResponse response)
          {
-            if (response.result.status == CopilotConstants.STATUS_NOT_SIGNED_IN)
+            if (response == null)
+            {
+               display_.showMessage(
+                     MessageDisplay.MSG_INFO,
+                     "GitHub Copilot: Check Status",
+                     "RStudio received an unexpected empty response from the GitHub Copilot agent.");
+               
+            }
+            else if (response.error != null)
+            {
+               String message = StringUtil.join(new String[] {
+                     "An error occurred while starting the GitHub Copilot agent.",
+                     "Error: " + response.error.getEndUserMessage(),
+                     "Output: " + response.output
+               }, "\n\n");
+               
+               display_.showMessage(
+                     MessageDisplay.MSG_INFO,
+                     "GitHub Copilot: Check Status",
+                     message);
+            }
+            else if (response.reason != null)
+            {
+               int reason = (int) response.reason.valueOf();
+               display_.showMessage(
+                     MessageDisplay.MSG_INFO,
+                     "GitHub Copilot: Check Status",
+                     CopilotResponseTypes.CopilotAgentNotRunningReason.reasonToString(reason));
+            }
+            else if (response.result.status == CopilotConstants.STATUS_NOT_SIGNED_IN)
             {
                display_.showMessage(
                      MessageDisplay.MSG_INFO,
