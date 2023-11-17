@@ -476,6 +476,17 @@ public class AceEditor implements DocDisplay,
       });
 
       addFocusHandler((FocusEvent event) -> s_lastFocusedEditor = this);
+      
+      // https://github.com/rstudio/rstudio/issues/13118
+      setColorPreview(userPrefs_.colorPreview().getValue());
+      userPrefs_.colorPreview().addValueChangeHandler(new ValueChangeHandler<Boolean>()
+      {
+         @Override
+         public void onValueChange(ValueChangeEvent<Boolean> event)
+         {
+            setColorPreview(event.getValue());
+         }
+      });
 
       events_.addHandler(
             AceEditorCommandEvent.TYPE,
@@ -1178,14 +1189,15 @@ public class AceEditor implements DocDisplay,
       fireEvent(new ScrollYEvent(Position.create(getFirstVisibleRow(), 0)));
    }
 
+   public void insertCode(String code, boolean unused)
+   {
+      insertCode(code);
+   }
+   
    public void insertCode(String code)
    {
-      insertCode(code, false);
-   }
-
-   public void insertCode(String code, boolean blockMode)
-   {
-      widget_.getEditor().insert(StringUtil.normalizeNewLines(code));
+      String normalizedCode = StringUtil.normalizeNewLines(code);
+      widget_.getEditor().insert(normalizedCode);
    }
 
    public void applyChanges(TextChange[] changes)

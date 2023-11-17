@@ -468,6 +468,48 @@ Napi::Value cleanClipboard(const Napi::CallbackInfo& info)
    return Napi::Value();
 }
 
+Napi::Value shortPathName(const Napi::CallbackInfo& info)
+{
+   Napi::String path = info[0].As<Napi::String>();
+
+#ifdef _WIN32
+
+   // Get path as UTF-16 text.
+   // Note that, on Windows, std::wstring and std::u16string are interchangable.
+   // With the exception that char16_t is unsigned, and wchar_t is signed.
+   std::u16string wPath = info[0].As<Napi::String>().Utf16Value();
+
+   // Convert to a short path.
+   //
+   // https://learn.microsoft.com/en-us/windows/win32/api/fileapi/nf-fileapi-getshortpathnamew
+   //
+   // If the lpszShortPath buffer is too small to contain the path, the
+   // return value is the size of the buffer, _in TCHARs_, that is required to
+   // hold the path _and the terminating null character_.
+   int wShortPathSize = ::GetShortPathNameW((LPCWSTR) wPath.data(), nullptr, 0);
+   if (wShortPathSize == 0) {
+      return path;
+   }
+
+   // Allocate a vector for the short path string.
+   std::vector<WCHAR> wShortPath(wShortPathSize, 0);
+
+   // Copy into that buffer.
+   int numBytesWritten = ::GetShortPathNameW((LPCWSTR) wPath.data(), &wShortPath[0], wShortPathSize);
+   if (numBytesWritten == 0) {
+      return path;
+   }
+
+   // Set the resulting path.
+   path = Napi::String::From(info.Env(), (const char16_t*) &wShortPath[0]);
+
+#endif
+
+   return path;
+}
+
+
+
 namespace {
 
 bool isCtrlKeyDownImpl()
@@ -668,6 +710,18 @@ Napi::Value searchRegistryForDefaultInstallationOfR(const Napi::CallbackInfo& in
    return Napi::String::From(info.Env(), installPath);
 }
 
+Napi::Value openExternal(const Napi::CallbackInfo& info)
+{
+
+#ifdef _WIN32
+   std::u16string uPath = info[0].As<Napi::String>().Utf16Value();
+   CoInitializeEx(NULL, COINIT_APARTMENTTHREADED | COINIT_DISABLE_OLE1DDE);
+   ShellExecuteW(NULL, L"open", (wchar_t*) &uPath[0], NULL, NULL, SW_SHOWNORMAL);
+#endif
+
+   return Napi::Value();
+
+}
 
 } // end namespace desktop
 } // end namespace rstudio
@@ -684,11 +738,13 @@ Napi::Object Init(Napi::Env env, Napi::Object exports) {
    }
 
    RS_EXPORT_FUNCTION("cleanClipboard", rstudio::desktop::cleanClipboard);
+   RS_EXPORT_FUNCTION("shortPathName", rstudio::desktop::shortPathName);
    RS_EXPORT_FUNCTION("isCtrlKeyDown", rstudio::desktop::isCtrlKeyDown);
    RS_EXPORT_FUNCTION("currentCSIDLPersonalHomePath", rstudio::desktop::currentCSIDLPersonalHomePath);
    RS_EXPORT_FUNCTION("defaultCSIDLPersonalHomePath", rstudio::desktop::defaultCSIDLPersonalHomePath);
    RS_EXPORT_FUNCTION("searchRegistryForInstallationsOfR", rstudio::desktop::searchRegistryForInstallationsOfR);
    RS_EXPORT_FUNCTION("searchRegistryForDefaultInstallationOfR", rstudio::desktop::searchRegistryForDefaultInstallationOfR);
+   RS_EXPORT_FUNCTION("openExternal", rstudio::desktop::openExternal);
 
    return exports;
 

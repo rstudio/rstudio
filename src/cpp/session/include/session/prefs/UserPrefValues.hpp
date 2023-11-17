@@ -125,6 +125,7 @@ namespace prefs {
 #define kCodeCompletionDelay "code_completion_delay"
 #define kCodeCompletionCharacters "code_completion_characters"
 #define kShowFunctionSignatureTooltips "show_function_signature_tooltips"
+#define kShowDataPreview "show_data_preview"
 #define kShowDiagnosticsR "show_diagnostics_r"
 #define kShowDiagnosticsCpp "show_diagnostics_cpp"
 #define kShowDiagnosticsYaml "show_diagnostics_yaml"
@@ -177,6 +178,7 @@ namespace prefs {
 #define kDefaultEncoding "default_encoding"
 #define kToolbarVisible "toolbar_visible"
 #define kDefaultProjectLocation "default_project_location"
+#define kDefaultOpenProjectLocation "default_open_project_location"
 #define kSourceWithEcho "source_with_echo"
 #define kDefaultSweaveEngine "default_sweave_engine"
 #define kDefaultLatexProgram "default_latex_program"
@@ -716,6 +718,12 @@ public:
    core::Error setShowFunctionSignatureTooltips(bool val);
 
    /**
+    * Whether a data preview is shown in the autocompletion help popup for datasets and values.
+    */
+   bool showDataPreview();
+   core::Error setShowDataPreview(bool val);
+
+   /**
     * Whether to show diagnostic messages (such as syntax and usage errors) for R code as you type.
     */
    bool showDiagnosticsR();
@@ -996,6 +1004,12 @@ public:
     */
    std::string defaultProjectLocation();
    core::Error setDefaultProjectLocation(std::string val);
+
+   /**
+    * The default directory to use in file dialogs when opening a project.
+    */
+   std::string defaultOpenProjectLocation();
+   core::Error setDefaultOpenProjectLocation(std::string val);
 
    /**
     * Whether to echo R code when sourcing it.

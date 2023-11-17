@@ -20,7 +20,6 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Iterator;
 
-import com.google.gwt.core.client.JsArrayString;
 import org.rstudio.core.client.Debug;
 import org.rstudio.core.client.Rectangle;
 import org.rstudio.studio.client.RStudioGinjector;
@@ -35,12 +34,12 @@ import org.rstudio.studio.client.panmirror.ui.PanmirrorUISpelling;
 import org.rstudio.studio.client.server.ServerError;
 import org.rstudio.studio.client.server.ServerRequestCallback;
 import org.rstudio.studio.client.workbench.views.source.editors.text.DocDisplay;
-import org.rstudio.studio.client.workbench.views.source.editors.text.ace.spelling.CharClassifier;
 import org.rstudio.studio.client.workbench.views.source.editors.text.spelling.SpellingContext;
 import org.rstudio.studio.client.workbench.views.source.editors.text.spelling.SpellingDoc;
 import org.rstudio.studio.client.workbench.views.source.editors.text.visualmode.events.VisualModeSpellingAddToDictionaryEvent;
 import org.rstudio.studio.client.workbench.views.source.model.DocUpdateSentinel;
 
+import com.google.gwt.core.client.JsArrayString;
 import com.google.inject.Inject;
 
 public class VisualModeSpelling extends SpellingContext
@@ -57,7 +56,6 @@ public class VisualModeSpelling extends SpellingContext
    {
      super(docUpdateSentinel);  
      RStudioGinjector.INSTANCE.injectMembers(this);
-     docDisplay_ = docDisplay;
      context_ = context;
    }
    
@@ -187,8 +185,6 @@ public class VisualModeSpelling extends SpellingContext
    
    public PanmirrorUISpelling uiSpelling()
    {
-      CharClassifier classifier = docDisplay_.getFileType().getCharPredicate();
-      
       PanmirrorUISpelling uiSpelling = new PanmirrorUISpelling();
 
       uiSpelling.checkWords = (words) -> {
@@ -268,7 +264,6 @@ public class VisualModeSpelling extends SpellingContext
          eventBus_.fireEvent(new VisualModeSpellingAddToDictionaryEvent(word));
    }
 
-   private final DocDisplay docDisplay_;
    private final Context context_;
    private EventBus eventBus_;
 }

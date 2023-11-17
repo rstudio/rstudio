@@ -16,8 +16,8 @@ package org.rstudio.studio.client.projects;
 
 
 import java.util.ArrayList;
+import java.util.function.Consumer;
 
-import com.google.gwt.core.client.GWT;
 import org.rstudio.core.client.Debug;
 import org.rstudio.core.client.ElementIds;
 import org.rstudio.core.client.SerializedCommand;
@@ -46,15 +46,15 @@ import org.rstudio.studio.client.common.dependencies.model.Dependency;
 import org.rstudio.studio.client.common.vcs.GitServerOperations;
 import org.rstudio.studio.client.common.vcs.VCSConstants;
 import org.rstudio.studio.client.common.vcs.VcsCloneOptions;
+import org.rstudio.studio.client.projects.events.NewProjectEvent;
+import org.rstudio.studio.client.projects.events.NewProjectFolderEvent;
+import org.rstudio.studio.client.projects.events.NewProjectFromVcsEvent;
 import org.rstudio.studio.client.projects.events.OpenProjectErrorEvent;
+import org.rstudio.studio.client.projects.events.OpenProjectEvent;
 import org.rstudio.studio.client.projects.events.OpenProjectFileEvent;
 import org.rstudio.studio.client.projects.events.OpenProjectNewWindowEvent;
 import org.rstudio.studio.client.projects.events.RequestOpenProjectEvent;
 import org.rstudio.studio.client.projects.events.SwitchToProjectEvent;
-import org.rstudio.studio.client.projects.events.NewProjectEvent;
-import org.rstudio.studio.client.projects.events.NewProjectFolderEvent;
-import org.rstudio.studio.client.projects.events.NewProjectFromVcsEvent;
-import org.rstudio.studio.client.projects.events.OpenProjectEvent;
 import org.rstudio.studio.client.projects.model.NewProjectContext;
 import org.rstudio.studio.client.projects.model.NewProjectInput;
 import org.rstudio.studio.client.projects.model.NewProjectResult;
@@ -81,11 +81,11 @@ import org.rstudio.studio.client.workbench.model.SessionOpener;
 import org.rstudio.studio.client.workbench.prefs.model.UserPrefs;
 import org.rstudio.studio.client.workbench.views.vcs.common.ConsoleProgressDialog;
 
+import com.google.gwt.core.client.GWT;
 import com.google.gwt.user.client.Command;
 import com.google.inject.Inject;
 import com.google.inject.Provider;
 import com.google.inject.Singleton;
-import java.util.function.Consumer;
 
 @Singleton
 public class Projects implements OpenProjectFileEvent.Handler,
@@ -1034,9 +1034,12 @@ public class Projects implements OpenProjectFileEvent.Handler,
                   boolean allowOpenInNewWindow,
                   ProgressOperationWithInput<OpenProjectParams> onCompleted)
    {
+      String defaultLocation = pUserPrefs_.get().defaultOpenProjectLocation().getValue();
+      if (StringUtil.isNullOrEmpty(defaultLocation))
+         defaultLocation = "~";
+      
       opener_.showOpenProjectDialog(fsContext_, projServer_,
-            pUserPrefs_.get().defaultProjectLocation().getValue(),
-            defaultType, allowOpenInNewWindow, onCompleted);
+            defaultLocation, defaultType, allowOpenInNewWindow, onCompleted);
    }
 
    @Handler

@@ -39,6 +39,7 @@ public class PanmirrorUIContext
    public ClipboardUris clipboardUris;
    public ClipboardImage clipboardImage;
    public ResolveImageUris resolveImageUris;
+   public ResolveBase64Images resolveBase64Images;
    public BooleanGetter isWindowsDesktop;
 
    @JsFunction 
@@ -94,6 +95,13 @@ public class PanmirrorUIContext
    {
       Promise<JsArrayString> resolveImageUris(JsArrayString imageUris);
    }
+   
+   @JsFunction
+   public interface ResolveBase64Images
+   {
+      Promise<JsArrayString> resolveBase64Images(JsArrayString base64Files);
+   }
+   
 }
 
 

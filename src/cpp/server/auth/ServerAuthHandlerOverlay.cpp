@@ -61,10 +61,24 @@ std::string getUserListCookieValue()
    return "9c16856330a7400cbbbba228392a5d83";
 }
 
-
-unsigned int getActiveUserCount()
+bool isUserActive(const boost::posix_time::ptime& lastSignin,
+                  const std::string& username)
 {
-   return 0;
+   if (lastSignin == boost::posix_time::not_a_date_time) 
+   {
+      return true;
+   }
+   else
+   {
+      return (boost::posix_time::microsec_clock::universal_time() - lastSignin <
+            boost::posix_time::time_duration(kHoursInOneYear, 0, 0));
+   }
+}
+
+ActiveUsersResult getActiveUserCount(
+    boost::shared_ptr<rstudio::core::database::IConnection> connection)
+{
+   return std::make_tuple(0, Success());
 }
 
 unsigned int getNamedUserLimit()
@@ -78,13 +92,15 @@ json::Array getLicensedUsers()
 }
 
 Error lockUser(boost::asio::io_service& ioService,
-               const std::string& username)
+               const std::string& username,
+               bool force)
 {
    return Success();
 }
 
 Error unlockUser(boost::asio::io_service& ioService,
-                 const std::string& username)
+                 const std::string& username,
+                 bool force)
 {
    return Success();
 }
@@ -138,7 +154,7 @@ bool isUserProvisioningEnabled()
 std::string getUsernameDbColumnName()
 {
    return "user_name";
-} 
+}
 
 }// namespace overlay
 

@@ -468,7 +468,16 @@ fi
 export RSTUDIO_TOOLS_ROOT
 
 # version of node.js used for building
-export RSTUDIO_NODE_VERSION="16.20.2"
+#
+# When changing node version you must download the archives from https://nodejs.org/dist/vX.Y.Z/
+# and upload them to RSTUDIO_BUILDTOOLS/node/vX.Y.Z/.
+export RSTUDIO_NODE_VERSION="18.18.2"
+
+# version of go used for building
+export WORKBENCH_GO_VERSION="1.20.5"
+
+# RStudio dependency cache
+export RSTUDIO_BUILDTOOLS="https://rstudio-buildtools.s3.amazonaws.com"
 
 # create a copy of a file in the same folder with .original extension
 save-original-file () {
@@ -489,4 +498,16 @@ restore-original-file () {
 	mv $ORIGINAL_FILE $MODIFIED_FILE
 	mv $SAVED_FILE $ORIGINAL_FILE
 	rm -f $MODIFIED_FILE
+}
+
+# Checks if environment variables are set (takes one or more env var names as arguments)
+check_env_vars() {
+	local all_set=0
+	for var in "$@"; do
+		if [ -z "${!var}" ]; then
+			echo "internal error: environment variable '$var' is not set."
+			all_set=1
+		fi
+	done
+	return $all_set
 }

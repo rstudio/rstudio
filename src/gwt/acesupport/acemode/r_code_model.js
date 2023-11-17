@@ -752,7 +752,7 @@ var RCodeModel = function(session, tokenizer,
 
    this.$buildScopeTreeUpToRow = function(maxRow)
    {
-      function getChunkLabel(reOptions, comment, iterator) {
+      function getChunkLabel(session, reOptions, comment, iterator) {
 
          if (typeof reOptions === "undefined")
             return "";
@@ -785,17 +785,15 @@ var RCodeModel = function(session, tokenizer,
          // ```{r}
          // #| label: foo
          var it = iterator.clone();
-         
-         var tok = it.moveToNextToken();
-         while(tok != null && tok.type.startsWith("comment"))
+         var token = it.moveToNextToken();
+         while (token != null && token.type.startsWith("comment"))
          {
-            var value = tok.value;
-            
+            var value = session.getLine(it.$row);
             var labelRegex = /^#\|\s*label\s*:\s*(.*)$/;
             if (labelRegex.test(value))
                return value.replace(labelRegex, "$1");
             
-            tok = it.moveToNextToken();
+            token = it.moveToStartOfNextRowWithTokens();
          }
          
          return null;
@@ -1081,7 +1079,7 @@ var RCodeModel = function(session, tokenizer,
             var chunkPos = {row: chunkStartPos.row + 1, column: 0};
             var chunkNum = chunkCount;
 
-            var chunkLabel = getChunkLabel(this.$codeBeginPattern, value, iterator);
+            var chunkLabel = getChunkLabel(this.$session, this.$codeBeginPattern, value, iterator);
             var scopeName = "Chunk " + chunkNum;
             if (chunkLabel && value !== "YAML Header")
                scopeName += ": " + chunkLabel;

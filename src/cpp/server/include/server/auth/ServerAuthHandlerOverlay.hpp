@@ -40,34 +40,60 @@ namespace overlay {
 // Allows us to convey the result of an operation to the non-overlay code
 // i.e. whether the operation was handled by the overlay or not
 typedef std::tuple<core::Error, bool> OverlayResult;
+typedef std::tuple<size_t, core::Error> ActiveUsersResult;
 
 core::Error initialize();
+
 bool canStaySignedIn();
+
 bool isUserListCookieValid(const std::string& cookieValue);
+
 bool shouldShowUserLicenseWarning();
+
 bool isUserAdmin(const std::string& username);
+
 bool isUserLocked(bool lockedColumn);
+
 std::string getUserListCookieValue();
+
+bool isUserActive(const boost::posix_time::ptime& lastSignin,
+                  const std::string& username);
+
+ActiveUsersResult getActiveUserCount(
+    boost::shared_ptr<rstudio::core::database::IConnection> connection =
+       nullptr);
+
 unsigned int getNamedUserLimit();
+
 core::json::Array getLicensedUsers();
+
 core::Error lockUser(boost::asio::io_service& ioService,
-                     const std::string& username);
+                     const std::string& username,
+                     bool force = false);
+
 core::Error unlockUser(boost::asio::io_service& ioService,
-                       const std::string& username);
+                       const std::string& username,
+                     bool force = false);
+
 core::Error setAdmin(boost::asio::io_service& ioService,
                      const std::string& username,
                      bool isAdmin);
+
 OverlayResult addUser(boost::asio::io_service& ioService,
                       const std::string& username,
                       bool isAdmin = false);
+
 core::Error addUserToDatabase(const boost::shared_ptr<core::database::IConnection>& connection,
                               const core::system::User& user,
                               bool isAdmin = false);
+
 core::Error checkForUninitializedUsername(const boost::shared_ptr<core::database::IConnection>& connection,
                                           core::database::Row& row,
                                           const core::system::User& user,
                                           std::string* pUsername);
+
 bool isUserProvisioningEnabled();
+
 std::string getUsernameDbColumnName();
 
 } // namespace overlay

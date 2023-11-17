@@ -16,10 +16,8 @@ package org.rstudio.studio.client.workbench.views.console.shell.assist;
 
 import java.util.HashMap;
 
-import com.google.gwt.core.client.GWT;
 import org.rstudio.core.client.Debug;
 import org.rstudio.studio.client.RStudioGinjector;
-import org.rstudio.studio.client.common.SimpleRequestCallback;
 import org.rstudio.studio.client.common.codetools.CodeToolsServerOperations;
 import org.rstudio.studio.client.common.codetools.RCompletionType;
 import org.rstudio.studio.client.server.ServerError;
@@ -29,6 +27,7 @@ import org.rstudio.studio.client.workbench.views.console.shell.assist.Completion
 import org.rstudio.studio.client.workbench.views.help.model.HelpInfo;
 import org.rstudio.studio.client.workbench.views.help.model.HelpInfo.ParsedInfo;
 
+import com.google.gwt.core.client.GWT;
 import com.google.inject.Inject;
 import com.google.inject.Singleton;
 

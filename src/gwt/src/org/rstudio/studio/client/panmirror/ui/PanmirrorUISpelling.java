@@ -18,9 +18,6 @@
 package org.rstudio.studio.client.panmirror.ui;
 
 import elemental2.core.Function;
-import org.rstudio.studio.client.panmirror.spelling.PanmirrorWordRange;
-
-import elemental2.core.JsArray;
 import jsinterop.annotations.JsFunction;
 import jsinterop.annotations.JsType;
 

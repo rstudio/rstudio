@@ -69,9 +69,20 @@ FilePath userLogDir();
 // Returns the RStudio XDG user cache directory.
 //
 // On Unix-alikes, this is ~/.cache, or XDG_CACHE_HOME.
-// On Windows, this is 'FOLDERID_InternetCache' (typically 'AppData/Local/Microsoft/Windows/Temporary Files')
+// On Windows, this resolves to %LOCALAPPDATA%/RStudio/Cache by default.
 FilePath userCacheDir(const boost::optional<std::string>& user = boost::none,
                       const boost::optional<FilePath>& homeDir = boost::none);
+
+#ifdef _WIN32
+
+// Older versions of RStudio on Windows used FOLDERID_InternetCache for cached data files.
+// This function allows callers to query that older location, to allow resources
+// to be migrated transparently.
+FilePath oldUserCacheDir(
+    const boost::optional<std::string>& user = boost::none,
+    const boost::optional<FilePath>& homeDir = boost::none);
+
+#endif
 
 // This function verifies that the userConfigDir() and userDataDir() exist and are owned by the running user.
 // 

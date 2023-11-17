@@ -33,8 +33,9 @@
 
 #include <session/SessionModuleContext.hpp>
 #include <session/projects/SessionProjects.hpp>
-
 #include <session/prefs/UserPrefs.hpp>
+
+#include "SessionGit.hpp"
 
 using namespace rstudio::core;
 using namespace boost::placeholders;
@@ -67,6 +68,32 @@ namespace {
 const size_t MAX_COUNT = 1000;
 
 const size_t MAX_LINE_LENGTH = 3000;
+
+class ProgramArguments
+{
+ public:
+
+   ProgramArguments& operator <<(const FilePath& path)
+   {
+      // TODO: Should we prefer short path names on Windows?
+      args_.push_back(path.getAbsolutePathNative());
+      return *this;
+   }
+
+   ProgramArguments& operator <<(const std::string& arg)
+   {
+      args_.push_back(arg);
+      return *this;
+   }
+
+   operator const std::vector<std::string>&() const
+   {
+      return args_;
+   }
+
+ private:
+   std::vector<std::string> args_;
+};
 
 bool debugging()
 {
@@ -406,27 +433,26 @@ FindInFilesState& findResults()
 class GrepOperation : public boost::enable_shared_from_this<GrepOperation>
 {
 public:
-   static boost::shared_ptr<GrepOperation> create(const std::string& workingDir,
+   static boost::shared_ptr<GrepOperation> create(const std::string& handle,
+                                                  const std::string& workingDir,
                                                   const std::string& encoding,
                                                   const FilePath& tempFile)
    {
-      return boost::shared_ptr<GrepOperation>(
-               new GrepOperation(workingDir, encoding, tempFile));
+      return boost::make_shared<GrepOperation>(handle, workingDir, encoding, tempFile);
    }
 
-private:
-   GrepOperation(const std::string& workingDir,
+   GrepOperation(const std::string& handle,
+                 const std::string& workingDir,
                  const std::string& encoding,
                  const FilePath& tempFile)
-      : workingDir_(workingDir),
+      : handle_(handle),
+        workingDir_(workingDir),
         encoding_(encoding),
         tempFile_(tempFile),
         firstDecodeError_(true)
    {
-      handle_ = core::system::generateUuid(false);
    }
 
-public:
    std::string handle() const
    {
       return handle_;
@@ -1187,12 +1213,12 @@ private:
    }
 
 private:
+   std::string handle_;
    std::string workingDir_;
    std::string encoding_;
    FilePath tempFile_;
    bool firstDecodeError_;
    std::string stdOutBuf_;
-   std::string handle_;
    std::string currentFile_;
    FilePath tempReplaceFile_;
    std::shared_ptr<std::istream> inputStream_;
@@ -1400,7 +1426,7 @@ void addDirectoriesToCommand(
       bool packageSourceFlag,
       bool packageTestsFlag,
       const FilePath& directoryPath,
-      shell_utils::ShellCommand* pCmd)
+      ProgramArguments* pCmd)
 {
    if (packageSourceFlag)
    {
@@ -1424,8 +1450,11 @@ void addDirectoriesToCommand(
    }
 }
 
-core::Error runGrepOperation(const GrepOptions& grepOptions, const ReplaceOptions& replaceOptions,
-   LocalProgress* pProgress, json::JsonRpcResponse* pResponse)
+core::Error runGrepOperation(const std::string& handle,
+                             const GrepOptions& grepOptions,
+                             const ReplaceOptions& replaceOptions,
+                             LocalProgress* pProgress,
+                             json::JsonRpcResponse* pResponse)
 {
    core::system::ProcessOptions options;
 
@@ -1467,18 +1496,26 @@ core::Error runGrepOperation(const GrepOptions& grepOptions, const ReplaceOption
    pStream.reset(); // release file handle
 
    FilePath dirPath = module_context::resolveAliasedPath(grepOptions.directory());
-   auto ptrGrepOp = GrepOperation::create(dirPath.getAbsolutePath(), encoding, tempFile);
+   auto ptrGrepOp = GrepOperation::create(handle, dirPath.getAbsolutePath(), encoding, tempFile);
    core::system::ProcessCallbacks callbacks = ptrGrepOp->createProcessCallbacks();
 
+   // Start building executable + arguments to be used
+   using namespace shell_utils;
+   FilePath searchExecutablePath;
+   ProgramArguments cmd;
+
 #ifdef _WIN32
-   shell_utils::ShellCommand cmd(grepPath.completePath("grep"));
+   searchExecutablePath = grepPath.completeChildPath("grep.exe");
 #else
-   shell_utils::ShellCommand cmd("grep");
+   error = core::system::findProgramOnPath("grep", &searchExecutablePath);
+   if (error)
+      LOG_ERROR(error);
 #endif
 
    if (grepOptions.gitFlag())
    {
-      cmd = shell_utils::ShellCommand("git");
+      // Run the git executable instead, using the 'grep' command.
+      searchExecutablePath = modules::git::gitExePath();
 
       // -c is used to override potential user-defined git parameters
       cmd << "-c" << "submodule.recurse=false";
@@ -1488,6 +1525,8 @@ core::Error runGrepOperation(const GrepOptions& grepOptions, const ReplaceOption
       cmd << "-c" << "grep.patternType=default";
       cmd << "-c" << "grep.extendedRegexp=true";
       cmd << "-c" << "grep.fullName=false";
+
+      // start building actual 'grep' arguments
       cmd << "grep";
       cmd << "-I"; // ignore binaries
       cmd << "--untracked"; // include files not tracked by git...
@@ -1534,6 +1573,7 @@ core::Error runGrepOperation(const GrepOptions& grepOptions, const ReplaceOption
       cmd << "--binary-files=without-match";
       cmd << "-rHn";
       cmd << "--color=always";
+
 #ifndef _WIN32
       cmd << "--devices=skip";
 #endif
@@ -1575,10 +1615,17 @@ core::Error runGrepOperation(const GrepOptions& grepOptions, const ReplaceOption
    options.workingDir = dirPath;
 
    if (debugging())
-      std::cerr << cmd.string() << std::endl;
+   {
+      std::cerr << searchExecutablePath << " " << core::algorithm::join(cmd, " ") << std::endl;
+   }
 
-   // Run command
-   error = module_context::processSupervisor().runCommand(cmd, options, callbacks);
+   // Run command.
+   error = module_context::processSupervisor().runProgram(
+       searchExecutablePath.getAbsolutePath(),
+       cmd,
+       options,
+       callbacks);
+
    if (error)
       return error;
 
@@ -1601,13 +1648,14 @@ core::Error runGrepOperation(const GrepOptions& grepOptions, const ReplaceOption
 core::Error beginFind(const json::JsonRpcRequest& request,
                       json::JsonRpcResponse* pResponse)
 {
-   std::string searchString;
+   std::string handle, searchString;
    bool asRegex, isWholeWord, ignoreCase;
    std::string directory;
    json::Array includeFilePatterns, excludeFilePatterns;
    bool useGitGrep, excludeGitIgnore;
 
    Error error = json::readParams(request.params,
+                                  &handle,
                                   &searchString,
                                   &asRegex,
                                   &isWholeWord,
@@ -1631,7 +1679,7 @@ core::Error beginFind(const json::JsonRpcRequest& request,
             isWholeWord,
             ignoreCase);
 
-   error = runGrepOperation(grepOptions, ReplaceOptions(), nullptr, pResponse);
+   error = runGrepOperation(handle, grepOptions, ReplaceOptions(), nullptr, pResponse);
    if (error)
       LOG_DEBUG_MESSAGE("Error running grep operation with search string " + searchString);
    return error;
@@ -1660,6 +1708,7 @@ core::Error clearFindResults(const json::JsonRpcRequest& /*request*/,
 core::Error previewReplace(const json::JsonRpcRequest& request,
                            json::JsonRpcResponse* pResponse)
 {
+   std::string handle;
    std::string searchString;
    std::string replacePattern;
    bool asRegex, isWholeWord, ignoreCase;
@@ -1669,6 +1718,7 @@ core::Error previewReplace(const json::JsonRpcRequest& request,
    json::Array includeFilePatterns, excludeFilePatterns;
 
    Error error = json::readParams(request.params,
+                                  &handle,
                                   &searchString,
                                   &asRegex,
                                   &isWholeWord,
@@ -1698,7 +1748,7 @@ core::Error previewReplace(const json::JsonRpcRequest& request,
 
    ReplaceOptions replaceOptions(replacePattern);
    replaceOptions.preview = true;
-   error = runGrepOperation(grepOptions, replaceOptions, nullptr, pResponse);
+   error = runGrepOperation(handle, grepOptions, replaceOptions, nullptr, pResponse);
 
    return error;
 }
@@ -1706,6 +1756,7 @@ core::Error previewReplace(const json::JsonRpcRequest& request,
 core::Error completeReplace(const json::JsonRpcRequest& request,
                             json::JsonRpcResponse* pResponse)
 {
+   std::string handle;
    bool asRegex, isWholeWord, ignoreCase;
    std::string searchString;
    std::string replacePattern;
@@ -1716,6 +1767,7 @@ core::Error completeReplace(const json::JsonRpcRequest& request,
    int originalFindCount;
 
    Error error = json::readParams(request.params,
+                                  &handle,
                                   &searchString,
                                   &asRegex,
                                   &isWholeWord,
@@ -1746,9 +1798,7 @@ core::Error completeReplace(const json::JsonRpcRequest& request,
             ignoreCase);
    ReplaceOptions replaceOptions(replacePattern);
 
-   error = runGrepOperation(
-      grepOptions, replaceOptions, pProgress, pResponse);
-   return error;
+   return runGrepOperation(handle, grepOptions, replaceOptions, pProgress, pResponse);
 }
 
 core::Error stopReplace(const json::JsonRpcRequest& request,

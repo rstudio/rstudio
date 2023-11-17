@@ -395,6 +395,8 @@ public class EditingPreferencesPane extends PreferencesPane
       completionPanel.add(checkboxPref(
             constants_.completionTabMultilineCompletionLabel(),
             prefs_.tabMultilineCompletion()));
+      completionPanel.add(
+            checkboxPref(prefs_.showDataPreview()));
       
       Label otherLabel = headerLabel(constants_.editingDiagOtherLabel());
       otherLabel.getElement().getStyle().setMarginTop(8, Unit.PX);

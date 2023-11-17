@@ -272,7 +272,16 @@ public class ProjectCopilotPreferencesPane extends ProjectPreferencesPane
             String href = btnActivate_.getElement().getPropertyString("href");
             Window.open(href, "_blank", "");
          }
-      }); 
+      });
+      
+      btnRefresh_.addClickHandler(new ClickHandler()
+      {
+         @Override
+         public void onClick(ClickEvent event)
+         {
+            refresh();
+         }
+      });
    }
    
    private void refresh()
@@ -300,19 +309,19 @@ public class ProjectCopilotPreferencesPane extends ProjectPreferencesPane
             else if (response.result.status == CopilotConstants.STATUS_OK ||
                      response.result.status == CopilotConstants.STATUS_ALREADY_SIGNED_IN)
             {
-               showButtons(btnSignOut_);
+               showButtons(btnSignOut_, btnRefresh_);
                lblCopilotStatus_.setText("You are currently signed in as: " + response.result.user);
             }
             else if (response.result.status == CopilotConstants.STATUS_NOT_AUTHORIZED)
             {
-               showButtons(btnActivate_, btnRefresh_);
+               showButtons(btnActivate_, btnSignOut_, btnRefresh_);
                lblCopilotStatus_.setText(
                      "You are currently signed in as " + response.result.user + ", but " +
                      "you haven't yet activated your GitHub Copilot account.");
             }
             else if (response.result.status == CopilotConstants.STATUS_NOT_SIGNED_IN)
             {
-               showButtons(btnSignIn_);
+               showButtons(btnSignIn_, btnRefresh_);
                lblCopilotStatus_.setText("You are not currently signed in.");
             }
             else

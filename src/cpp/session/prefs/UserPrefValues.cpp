@@ -635,6 +635,19 @@ core::Error UserPrefValues::setShowFunctionSignatureTooltips(bool val)
 }
 
 /**
+ * Whether a data preview is shown in the autocompletion help popup for datasets and values.
+ */
+bool UserPrefValues::showDataPreview()
+{
+   return readPref<bool>("show_data_preview");
+}
+
+core::Error UserPrefValues::setShowDataPreview(bool val)
+{
+   return writePref("show_data_preview", val);
+}
+
+/**
  * Whether to show diagnostic messages (such as syntax and usage errors) for R code as you type.
  */
 bool UserPrefValues::showDiagnosticsR()
@@ -1243,6 +1256,19 @@ std::string UserPrefValues::defaultProjectLocation()
 core::Error UserPrefValues::setDefaultProjectLocation(std::string val)
 {
    return writePref("default_project_location", val);
+}
+
+/**
+ * The default directory to use in file dialogs when opening a project.
+ */
+std::string UserPrefValues::defaultOpenProjectLocation()
+{
+   return readPref<std::string>("default_open_project_location");
+}
+
+core::Error UserPrefValues::setDefaultOpenProjectLocation(std::string val)
+{
+   return writePref("default_open_project_location", val);
 }
 
 /**
@@ -3323,6 +3349,7 @@ std::vector<std::string> UserPrefValues::allKeys()
       kCodeCompletionDelay,
       kCodeCompletionCharacters,
       kShowFunctionSignatureTooltips,
+      kShowDataPreview,
       kShowDiagnosticsR,
       kShowDiagnosticsCpp,
       kShowDiagnosticsYaml,
@@ -3370,6 +3397,7 @@ std::vector<std::string> UserPrefValues::allKeys()
       kDefaultEncoding,
       kToolbarVisible,
       kDefaultProjectLocation,
+      kDefaultOpenProjectLocation,
       kSourceWithEcho,
       kDefaultSweaveEngine,
       kDefaultLatexProgram,

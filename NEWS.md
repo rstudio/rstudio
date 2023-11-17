@@ -7,15 +7,20 @@
 - Updated Electron to version 26.2.4. (#13577)
 - Updated GWT to version 2.10.0 (#11505)
 - Updated the default version of the GitHub Copilot agent to 1.10.3. (#13729)
+- Update openssl to 1.1.1w on Mac and Windows (#13683)
 - RStudio now supports highlighting of inline YAML chunk options in R Markdown / Quarto documents. (#11663)
 - Improved support for development documentation when a package has been loaded via `devtools::load_all()`. (#13526)
 - RStudio now supports autocompletion following `@` via `.AtNames`. (#13451)
 - RStudio now supports the execution and display of GraphViz (`dot`) graphs in R Markdown / Quarto chunks. (#13187)
 - RStudio now supports the execution of chunks with the 'file' option set. (#13636)
 - With screen reader support enabled, hitting ESC key allows Tabbing away from editor. [accessibility] (#13593)
+- RStudio now supports `LuaLaTeX` to compile Sweave/Rnw documents. (#13812)
+- Better error message when user preferences fail to save due to folder permissions. (#12974)
+- Update Electon Forge to 6.4.2 and Webpack to 5.89.0. (rstudio-pro#5383)
+- RStudio now supports pasting of file paths for files copied to the clipboard. (#4572)
 
 #### Posit Workbench
--
+- Removed link for opening sessions in RStudio Desktop Pro from Session Info dialog. (rstudio-pro#5263)
 
 ### Fixed
 #### RStudio
@@ -34,6 +39,17 @@
 - Fixed a bug where project options updated in the Project Options pane were not properly persisted in RStudio 2023.09.0. (#13757)
 - Improved screen reader support when navigating source files in the editor. [accessibility] (#7337)
 - Fixed viewing or blaming file on GitHub for a newly created branch. (#9798)
+- Fixed an issue on macOS where '-ne' was erroneously printed to the console with certain versions of Bash. (#13809)
+- Fixed an issue where attempts to open files containing non-ASCII characters from the Files pane could fail on Windows. (#13855, #12467)
+- Fixed an issue where color highlight for Console input could not be disabled. (#13118)
+- Fixed an issue that could cause the RStudio IDE to crash if a large amount of Console output was serialized with a suspended session. (#13857)
+- RStudio now records the deployment target for newly-published documents, even when deployment fails due to an error in the document. (#12707)
+- Fixed an issue where Find in Files results were not presented in rare cases. (#12657)
+- Fixed an issue that could cause errors to occur if an R Markdown document was saved while a chunk was running. (#13860)
+- Fixed an issue where console output could be dropped when rendering large ANSI links. (#13869)
+- Fixed an issue preventing users from copying code from the History pane. (#3219)
+- Fixed WSL terminals not starting on RStudio Desktop for Windows. (#13918)
+- Fixed an issue that prevented users from opening files and vignettes with non-ASCII characters in their paths. (#13886)
 
 #### Posit Workbench
 - Fixed opening job details in new windows more than once for Workbench jobs on the homepage. (rstudio/rstudio-pro#5179)
@@ -46,4 +62,5 @@
 - Fixed an issue where sessions couldn't be started with keyboard with Kubernetes or Slurm. [accessibility] (rstudio-pro#4360)
 - Fixed label on button for showing and hiding launcher details so it is available to screen reader. [accessibility] (rstudio-pro#5268)
 - Improved the accessible label on launcher job details buttons. [accessibility] (rstudio-pro#5270)
+- Fixed an issue where last sign in for user would be updated even if login fails due to license limits (rstudio-pro#5039)
 

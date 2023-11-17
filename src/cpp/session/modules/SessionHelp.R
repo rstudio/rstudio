@@ -452,7 +452,23 @@ options(help_type = "html")
 
 .rs.addJsonRpcHandler("show_vignette", function(topic, package)
 {
-   print(utils::vignette(topic, package))
+   # First, check for an explicitly registered vignette
+   vignette <- tryCatch(utils::vignette(topic, package), condition = identity)
+   if (!inherits(vignette, "condition"))
+      return(print(vignette))
+   
+   # Try falling back to opening bundled documentation that's not
+   # explicitly registered as a vignette.
+   exts <- c("pdf", "html")
+   for (ext in exts) {
+      suffix <- sprintf("doc/%s.%s", topic, ext)
+      path <- system.file(suffix, package = package, mustWork = FALSE)
+      if (nzchar(path))
+         return(browseURL(path))
+   }
+ 
+   # If we couldn't find the vignette, re-throw the original error.
+   stop(conditionMessage(vignette), call. = FALSE)
 })
 
 .rs.addFunction("getHelpColumn", function(name, src, envir = parent.frame())
@@ -469,52 +485,10 @@ options(help_type = "html")
    if (is.null(data))
       return(NULL)
    
-   column <- data[[name]]
-   
-   canUsePillar <- FALSE
-   if ("pillar" %in% loadedNamespaces())
-   {
-      pillar <- asNamespace("pillar")
-      canUsePillar <-
-         is.function(pillar$format_glimpse) &&
-         is.function(pillar$str_trunc) &&
-         is.function(pillar$get_pillar_type)
-   }
-   
-   if (canUsePillar)
-   {
-      formatted <- pillar$format_glimpse(column)
-      
-      bits <- c()
-      nchars <- 55
-      i <- 1
-      while (nchars > 1 && i <= length(column)) {
-         current <- formatted[i]
-         currentNChars <- nchar(current, keepNA = FALSE)
-         if (currentNChars > nchars) {
-            current <- pillar$str_trunc(current, nchars)
-         }
-         bits <- c(bits, current)
-         nchars <- nchars - currentNChars - 2
-         i <- i + 1
-      }
-      
-      if (length(bits) < length(column))
-      {
-         bits <- c(bits, paste0("<i>", pillar:::get_ellipsis(), "</i>"))
-      }
-      
-      description <- paste("<ul>", paste(paste0("<li>", bits, "</li>"), collapse = " "), "</ul>")
-      type <- pillar$get_pillar_type(column)
-      size <- length(formatted)
-   }
-   else 
-   {
-      described <- .rs.describeObject(data, name)
-      description <- described$description
-      type <- described$type
-      size <- described$length
-   }
+   described <- .rs.describeObject(data, name)
+   description <- described$description
+   type <- described$type
+   size <- described$length
    
    list(
       html = paste0("<h2></h2><h3>Description</h3><p>", description, "</p>"),
@@ -533,6 +507,10 @@ options(help_type = "html")
    # Return help page as-is if requested by user
    showDataPreview <- getOption("rstudio.help.showDataPreview", default = TRUE)
    if (!showDataPreview)
+      return(out)
+   
+   showDataPreview <- .rs.readUserPref("show_data_preview")
+   if (!identical(showDataPreview, TRUE))
       return(out)
 
    # try and figure out the data + title

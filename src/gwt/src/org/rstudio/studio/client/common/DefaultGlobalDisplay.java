@@ -14,18 +14,17 @@
  */
 package org.rstudio.studio.client.common;
 
-import com.google.gwt.core.client.GWT;
-import com.google.gwt.http.client.URL;
-import com.google.gwt.user.client.Command;
-import com.google.gwt.user.client.ui.RootLayoutPanel;
-import com.google.inject.Inject;
-import com.google.inject.Provider;
-
+import org.rstudio.core.client.DialogOptions;
 import org.rstudio.core.client.MessageDisplay;
 import org.rstudio.core.client.StringUtil;
 import org.rstudio.core.client.dom.WindowEx;
 import org.rstudio.core.client.files.FileSystemItem;
-import org.rstudio.core.client.widget.*;
+import org.rstudio.core.client.widget.DialogBuilder;
+import org.rstudio.core.client.widget.Operation;
+import org.rstudio.core.client.widget.OperationWithInput;
+import org.rstudio.core.client.widget.ProgressIndicator;
+import org.rstudio.core.client.widget.ProgressOperationWithInput;
+import org.rstudio.core.client.widget.SlideLabel;
 import org.rstudio.studio.client.application.ApplicationView;
 import org.rstudio.studio.client.application.Desktop;
 import org.rstudio.studio.client.application.model.ApplicationServerOperations;
@@ -33,6 +32,13 @@ import org.rstudio.studio.client.common.dialog.DialogBuilderFactory;
 import org.rstudio.studio.client.workbench.commands.Commands;
 import org.rstudio.studio.client.workbench.model.Session;
 import org.rstudio.studio.client.workbench.model.SessionInfo;
+
+import com.google.gwt.core.client.GWT;
+import com.google.gwt.http.client.URL;
+import com.google.gwt.user.client.Command;
+import com.google.gwt.user.client.ui.RootLayoutPanel;
+import com.google.inject.Inject;
+import com.google.inject.Provider;
 
 public class DefaultGlobalDisplay extends GlobalDisplay
 {
@@ -208,14 +214,24 @@ public class DefaultGlobalDisplay extends GlobalDisplay
             },
             cancelOperation);
    }
+   
+   @Override
+   protected DialogBuilder createDialog(int type,
+                                        String caption,
+                                        String message,
+                                        DialogOptions options)
+   {
+      DialogBuilderFactory factory = GWT.create(DialogBuilderFactory.class);
+      return factory.create(type, caption, message, options);
+   }
+   
 
    @Override
    protected DialogBuilder createDialog(int type,
                                         String caption,
                                         String message)
    {
-      return ((DialogBuilderFactory)GWT.create(DialogBuilderFactory.class))
-            .create(type, caption, message);
+      return createDialog(type, caption, message, null);
    }
 
    public Command showProgress(String message)

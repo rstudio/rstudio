@@ -29,6 +29,14 @@
 #include <shared_core/SafeConvert.hpp>
 #include <shared_core/system/User.hpp>
 
+#ifdef _WIN32
+# define kRStudioDataFolderName "RStudio"
+# define kRStudioCacheSuffix    "Cache"
+#else
+# define kRStudioDataFolderName "rstudio"
+# define kRStudioCacheSuffix    ""
+#endif
+
 namespace rstudio {
 namespace core {
 namespace system {
@@ -81,6 +89,7 @@ std::string getHostname()
  *   current user is used
  * @param homeDir Optionally, the home directory to resolve against; if omitted
  *   the current user's home directory is used
+ * @param suffix An optional path component to append to the computed path.
  */
 FilePath resolveXdgDir(
       const std::string& rstudioEnvVar,
@@ -90,7 +99,8 @@ FilePath resolveXdgDir(
 #endif
       const std::string& defaultDir,
       const boost::optional<std::string>& user,
-      const boost::optional<FilePath>& homeDir)
+      const boost::optional<FilePath>& homeDir,
+      const std::string& suffix = std::string())
 {
    FilePath xdgHome;
    bool finalPath = true;
@@ -170,20 +180,15 @@ FilePath resolveXdgDir(
    // resolve aliases in the path
    xdgHome = FilePath::resolveAliasedPath(expanded, homeDir ? *homeDir : userHomePath());
 
-   // If this is the final path, we can return it as-is
-   if (finalPath)
-   {
-      return xdgHome;
-   }
+   // if this is not a final path, then append the RStudio data folder name
+   if (!finalPath)
+      xdgHome = xdgHome.completePath(kRStudioDataFolderName);
+   
+   // if a path suffix was provided, use it
+   if (!suffix.empty())
+      xdgHome = xdgHome.completePath(suffix);
 
-   // Otherwise, it's a root folder in which we need to create our own subfolder
-   return xdgHome.completePath(
-#ifdef _WIN32
-      "RStudio"
-#else
-      "rstudio"
-#endif
-   );
+   return xdgHome;
 }
 
 } // anonymous namespace
@@ -225,6 +230,24 @@ FilePath userCacheDir(
    return resolveXdgDir("RSTUDIO_CACHE_HOME",
          "XDG_CACHE_HOME",
 #ifdef _WIN32
+         FOLDERID_LocalAppData,
+#endif
+         "~/.cache",
+         user,
+         homeDir,
+         kRStudioCacheSuffix
+   );
+}
+
+#ifdef _WIN32
+
+FilePath oldUserCacheDir(
+        const boost::optional<std::string>& user,
+        const boost::optional<FilePath>& homeDir)
+{
+   return resolveXdgDir("RSTUDIO_CACHE_HOME",
+         "XDG_CACHE_HOME",
+#ifdef _WIN32
          FOLDERID_InternetCache,
 #endif
          "~/.cache",
@@ -232,6 +255,8 @@ FilePath userCacheDir(
          homeDir
    );
 }
+
+#endif
 
 FilePath userLogDir()
 {

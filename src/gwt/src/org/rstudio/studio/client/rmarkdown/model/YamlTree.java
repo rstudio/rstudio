@@ -24,6 +24,8 @@ import org.rstudio.core.client.Debug;
 import com.google.gwt.regexp.shared.MatchResult;
 import com.google.gwt.regexp.shared.RegExp;
 
+// NOTE: This class does not fully parse YAML fields; it just provides some facilities
+// for inspecting and extracting structured pieces of a YAML tree.
 public class YamlTree
 {
    private class YamlTreeNode

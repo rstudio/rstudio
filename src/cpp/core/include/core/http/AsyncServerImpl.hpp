@@ -94,6 +94,7 @@ public:
         totalTime_(boost::posix_time::seconds(0)),
         minTime_(boost::posix_time::seconds(0)),
         maxTime_(boost::posix_time::seconds(0)),
+        statsStartTime_(boost::posix_time::microsec_clock::universal_time()),
         statsMonitorSeconds_(statsMonitorSeconds),
         statsProvider_(statsProvider)
    {
@@ -202,34 +203,17 @@ public:
       return Success();
    }
 
-   bool logStatsMonitor()
+   virtual long getServerInfoSnapshot(std::vector<ConnectionInfo>& connInfoList, ServerInfo& serverInfo, bool reset)
    {
-      struct ConnInfo {
-         bool closed, requestParsed, sendingResponse;
-         std::string requestUri, username;
-         boost::posix_time::ptime startTime;
-         int requestSequence;
-      };
-
-      struct ServerInfo {
-         long numRequests;
-         long numStreaming;
-         boost::posix_time::time_duration minTime;
-         boost::posix_time::time_duration maxTime;
-         std::string maxUrl;
-         boost::posix_time::time_duration totalTime;
-
-      };
-      std::vector<ConnInfo> connInfoList;
-      ServerInfo serverInfo;
       long requestSequence;
-
+      boost::posix_time::ptime now = boost::posix_time::microsec_clock::universal_time();
       RECURSIVE_LOCK_MUTEX(mutex_)
       {
-         ConnInfo connInfo;
          for (boost::weak_ptr<AsyncConnectionImpl<typename ProtocolType::socket>> connectionPtr : connections_)
          {
             auto connection = connectionPtr.lock();
+            ConnectionInfo connInfo;
+
             connInfo.closed = connection->closed();
             connInfo.requestParsed = connection->requestParsed();
             connInfo.sendingResponse = connection->sendingResponse();
@@ -247,16 +231,31 @@ public:
          serverInfo.maxTime = maxTime_;
          serverInfo.maxUrl = maxUrl_;
          serverInfo.totalTime = totalTime_;
+         serverInfo.elapsedTime = now - statsStartTime_;
 
-         numRequests_ = 0;
-         numStreaming_ = 0;
-         minTime_ = boost::posix_time::seconds(0);
-         maxTime_ = boost::posix_time::seconds(0);
-         maxUrl_ = "";
-         totalTime_ = boost::posix_time::seconds(0);
+         if (reset)
+         {
+            numRequests_ = 0;
+            numStreaming_ = 0;
+            minTime_ = boost::posix_time::seconds(0);
+            maxTime_ = boost::posix_time::seconds(0);
+            maxUrl_ = "";
+            totalTime_ = boost::posix_time::seconds(0);
+            statsStartTime_ = now;
+         }
+
          requestSequence = requestSequence_;
       }
       END_LOCK_MUTEX
+      return requestSequence;
+   }
+
+   bool logStatsMonitor()
+   {
+      std::vector<ConnectionInfo> connInfoList;
+      ServerInfo serverInfo;
+
+      long requestSequence = getServerInfoSnapshot(connInfoList, serverInfo, true);
 
       if (serverInfo.numRequests > 0)
       {
@@ -289,7 +288,7 @@ public:
       }
 
       boost::posix_time::ptime now = boost::posix_time::microsec_clock::universal_time();
-      for (const ConnInfo& connInfo : connInfoList)
+      for (const ConnectionInfo& connInfo : connInfoList)
       {
          std::string state;
          if (connInfo.closed)
@@ -987,6 +986,7 @@ private:
    boost::posix_time::time_duration totalTime_;
    boost::posix_time::time_duration minTime_;
    boost::posix_time::time_duration maxTime_;
+   boost::posix_time::ptime statsStartTime_;
    std::string maxUrl_;
    // The prefix of URLs to record stats using streaming
    std::set<std::string> streamUris_;

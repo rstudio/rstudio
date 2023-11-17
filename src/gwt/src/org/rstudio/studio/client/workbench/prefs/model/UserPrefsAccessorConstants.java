@@ -386,7 +386,7 @@ public interface UserPrefsAccessorConstants extends Constants {
    String codeCompletionEnum_never();
    @DefaultStringValue("When triggered ($, ::)")
    String codeCompletionEnum_triggered();
-   @DefaultStringValue("Manually (tab)")
+   @DefaultStringValue("Manually (Tab, Ctrl + Space)")
    String codeCompletionEnum_manual();
 
    /**
@@ -434,6 +434,14 @@ public interface UserPrefsAccessorConstants extends Constants {
    String showFunctionSignatureTooltipsTitle();
    @DefaultStringValue("Whether to show function signature tooltips during autocompletion.")
    String showFunctionSignatureTooltipsDescription();
+
+   /**
+    * Whether a data preview is shown in the autocompletion help popup for datasets and values.
+    */
+   @DefaultStringValue("Show data preview in autocompletion help popup")
+   String showDataPreviewTitle();
+   @DefaultStringValue("Whether a data preview is shown in the autocompletion help popup for datasets and values.")
+   String showDataPreviewDescription();
 
    /**
     * Whether to show diagnostic messages (such as syntax and usage errors) for R code as you type.
@@ -814,6 +822,14 @@ public interface UserPrefsAccessorConstants extends Constants {
    String defaultProjectLocationTitle();
    @DefaultStringValue("The directory path under which to place new projects by default.")
    String defaultProjectLocationDescription();
+
+   /**
+    * The default directory to use in file dialogs when opening a project.
+    */
+   @DefaultStringValue("Default open project location")
+   String defaultOpenProjectLocationTitle();
+   @DefaultStringValue("The default directory to use in file dialogs when opening a project.")
+   String defaultOpenProjectLocationDescription();
 
    /**
     * Whether to echo R code when sourcing it.

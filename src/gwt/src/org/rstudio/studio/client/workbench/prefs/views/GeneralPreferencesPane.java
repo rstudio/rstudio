@@ -115,6 +115,7 @@ public class GeneralPreferencesPane extends PreferencesPane
          spaced(rVersion_);
          basic.add(rVersion_);
       }
+      
       if (versionsInfo.isMultiVersion())
       {
          rServerRVersion_ = new RVersionSelectWidget(
@@ -148,12 +149,12 @@ public class GeneralPreferencesPane extends PreferencesPane
       lessSpaced(restoreLastProject_);
       basic.add(restoreLastProject_);
 
-        basic.add(checkboxPref(constants_.rRestorePreviousOpenTitle(), prefs_.restoreSourceDocuments()));
+      basic.add(checkboxPref(constants_.rRestorePreviousOpenTitle(), prefs_.restoreSourceDocuments()));
 
       rProfileOnResume_ = new CheckBox(constants_.rRunProfileTitle());
       if (!Desktop.isDesktop())
          basic.add(rProfileOnResume_);
-
+      
       basic.add(spacedBefore(headerLabel(constants_.workspaceCaption())));
       basic.add(loadRData_ = new CheckBox(constants_.workspaceLabel()));
       lessSpaced(loadRData_);
@@ -239,6 +240,14 @@ public class GeneralPreferencesPane extends PreferencesPane
 
       VerticalTabPanel advanced = new VerticalTabPanel(ElementIds.GENERAL_ADVANCED_PREFS);
 
+      advanced.add(headerLabel("Projects"));
+      advanced.add(defaultOpenProjectLocationChooser_ = new DirectoryChooserTextBox(
+            prefs_.defaultOpenProjectLocation().getTitle(),
+            ElementIds.TextBoxButtonId.DEFAULT_OPEN_PROJECT_DIR,
+            null,
+            fileDialogs_,
+            fsContext_));
+
       showServerHomePage_ = new SelectWidget(
               constants_.serverHomePageLabel(),
             new String[] {
@@ -257,7 +266,6 @@ public class GeneralPreferencesPane extends PreferencesPane
 
       reuseSessionsForProjectLinks_ = new CheckBox(constants_.reUseIdleSessionLabel());
       lessSpaced(reuseSessionsForProjectLinks_);
-      boolean firstHeader = true;
 
       if (!Desktop.hasDesktopFrame())
       {
@@ -267,7 +275,6 @@ public class GeneralPreferencesPane extends PreferencesPane
             Label homePageLabel = headerLabel(constants_.desktopCaption());
             spacedBefore(homePageLabel);
             advanced.add(homePageLabel);
-            firstHeader = false;
          }
          if (session_.getSessionInfo().getShowUserHomePage())
          {
@@ -279,12 +286,7 @@ public class GeneralPreferencesPane extends PreferencesPane
       }
 
      Label debuggingLabel = headerLabel(constants_.advancedDebuggingCaption());
-     if (!firstHeader)
-     {
-        spacedBefore(debuggingLabel);
-        firstHeader = false;
-     }
-     advanced.add(debuggingLabel);
+     advanced.add(extraSpacedBefore(debuggingLabel));
      advanced.add(checkboxPref(
            constants_.advancedDebuggingLabel(),
            prefs_.handleErrorsInUserCodeOnly()));
@@ -388,6 +390,7 @@ public class GeneralPreferencesPane extends PreferencesPane
       saveWorkspace_.setEnabled(false);
       loadRData_.setEnabled(false);
       dirChooser_.setEnabled(false);
+      defaultOpenProjectLocationChooser_.setEnabled(false);
       alwaysSaveHistory_.setEnabled(false);
       removeHistoryDuplicates_.setEnabled(false);
       rProfileOnResume_.setEnabled(false);
@@ -413,6 +416,7 @@ public class GeneralPreferencesPane extends PreferencesPane
       saveWorkspace_.setEnabled(true);
       loadRData_.setEnabled(true);
       dirChooser_.setEnabled(true);
+      defaultOpenProjectLocationChooser_.setEnabled(true);
 
       if (!isLauncherSession)
          showServerHomePage_.setValue(prefs.showUserHomePage().getValue());
@@ -446,8 +450,12 @@ public class GeneralPreferencesPane extends PreferencesPane
       String workingDir = prefs.initialWorkingDirectory().getValue();
       if (StringUtil.isNullOrEmpty(workingDir))
          workingDir = "~";
-      
       dirChooser_.setText(workingDir);
+      
+      String defaultOpenProjectLocation = prefs.defaultOpenProjectLocation().getValue();
+      if (StringUtil.isNullOrEmpty(defaultOpenProjectLocation))
+         defaultOpenProjectLocation = "~";
+      defaultOpenProjectLocationChooser_.setText(defaultOpenProjectLocation);
 
       alwaysSaveHistory_.setEnabled(true);
       removeHistoryDuplicates_.setEnabled(true);
@@ -552,6 +560,7 @@ public class GeneralPreferencesPane extends PreferencesPane
       prefs.loadWorkspace().setGlobalValue(loadRData_.getValue());
       prefs.runRprofileOnResume().setGlobalValue(rProfileOnResume_.getValue());
       prefs.initialWorkingDirectory().setGlobalValue(dirChooser_.getText());
+      prefs.defaultOpenProjectLocation().setGlobalValue(defaultOpenProjectLocationChooser_.getText());
       prefs.showLastDotValue().setGlobalValue(showLastDotValue_.getValue());
       prefs.alwaysSaveHistory().setGlobalValue(alwaysSaveHistory_.getValue());
       prefs.removeHistoryDuplicates().setGlobalValue(removeHistoryDuplicates_.getValue());
@@ -714,6 +723,7 @@ public class GeneralPreferencesPane extends PreferencesPane
    private SelectWidget saveWorkspace_;
    private TextBoxWithButton rVersion_;
    private TextBoxWithButton dirChooser_;
+   private TextBoxWithButton defaultOpenProjectLocationChooser_;
    private CheckBox loadRData_;
    private final CheckBox alwaysSaveHistory_;
    private final CheckBox removeHistoryDuplicates_;

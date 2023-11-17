@@ -167,7 +167,7 @@ fi
 ELECTRON_SOURCE_DIR="${PKG_DIR}/../../src/node/desktop"
 
 # find node and npm
-RSTUDIO_NODE_VERSION=16.20.2
+RSTUDIO_NODE_VERSION=18.18.2
 find-program NODE node \
    "${PKG_DIR}/../../dependencies/common/node/${RSTUDIO_NODE_VERSION}/bin" \
    "/opt/rstudio-tools/dependencies/common/node/${RSTUDIO_NODE_VERSION}/bin"

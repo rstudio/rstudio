@@ -16,8 +16,8 @@
 package org.rstudio.studio.client.panmirror.theme;
 
 import org.rstudio.core.client.BrowseCap;
-import org.rstudio.core.client.StringUtil;
 import org.rstudio.core.client.ColorUtil.RGBColor;
+import org.rstudio.core.client.StringUtil;
 import org.rstudio.core.client.dom.DomUtils;
 import org.rstudio.core.client.theme.ThemeColors;
 import org.rstudio.core.client.theme.ThemeFonts;
@@ -36,6 +36,7 @@ public class PanmirrorThemeCreator
       
       // set mode info
       theme.darkMode = aceTheme.isDark();
+      theme.highContrast = false;
       theme.solarizedMode = aceTheme.isSolarizedLight();
       
       // get cursor color (work around themes that don't set the ace_cursor color
@@ -49,6 +50,7 @@ public class PanmirrorThemeCreator
       if (aceTheme.isDark())
       {
          theme.selectionColor = ThemeColors.darkGreyMenuSelected;
+         theme.selectionForegroundColor = DomUtils.extractCssValue("ace_editor", "color");
       }
       else
       {
@@ -56,11 +58,12 @@ public class PanmirrorThemeCreator
          selectionBkgdClasses.push("ace_marker-layer");
          selectionBkgdClasses.push("ace_selection");
          theme.selectionColor = DomUtils.extractCssValue(selectionBkgdClasses, "backgroundColor");
+         theme.selectionForegroundColor = DomUtils.extractCssValue("ace_editor", "color");
       }
       
+      theme.nodeSelectionColor = DomUtils.extractCssValue("ace_node-selector", "backgroundColor");
       theme.backgroundColor = DomUtils.extractCssValue("ace_editor", "backgroundColor");
       theme.metadataBackgroundColor = theme.backgroundColor;
-      theme.nodeSelectionColor = DomUtils.extractCssValue("ace_node-selector", "backgroundColor");
 
       JsArrayString regionBkgdClasses = JsArrayString.createArray().cast();
       regionBkgdClasses.push("ace_marker-layer");

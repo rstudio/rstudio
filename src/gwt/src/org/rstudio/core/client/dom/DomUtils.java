@@ -14,28 +14,6 @@
  */
 package org.rstudio.core.client.dom;
 
-import com.google.gwt.core.client.GWT;
-import com.google.gwt.core.client.JavaScriptObject;
-import com.google.gwt.core.client.JsArrayMixed;
-import com.google.gwt.core.client.JsArrayString;
-import com.google.gwt.dom.client.*;
-import com.google.gwt.dom.client.Element;
-import com.google.gwt.dom.client.Style.Position;
-import com.google.gwt.dom.client.Style.Unit;
-import com.google.gwt.event.dom.client.HasAllKeyHandlers;
-import com.google.gwt.event.dom.client.KeyCodes;
-import com.google.gwt.event.dom.client.KeyDownEvent;
-import com.google.gwt.event.dom.client.KeyDownHandler;
-import com.google.gwt.event.dom.client.KeyPressEvent;
-import com.google.gwt.event.dom.client.KeyPressHandler;
-import com.google.gwt.event.dom.client.KeyUpEvent;
-import com.google.gwt.event.dom.client.KeyUpHandler;
-import com.google.gwt.resources.client.TextResource;
-import com.google.gwt.user.client.*;
-import com.google.gwt.user.client.ui.TextBox;
-import com.google.gwt.user.client.ui.UIObject;
-import com.google.gwt.user.client.ui.Widget;
-
 import java.util.ArrayList;
 import java.util.List;
 
@@ -51,6 +29,39 @@ import org.rstudio.core.client.regex.Match;
 import org.rstudio.core.client.regex.Pattern;
 import org.rstudio.core.client.widget.FontSizer;
 import org.rstudio.studio.client.application.Desktop;
+
+import com.google.gwt.core.client.GWT;
+import com.google.gwt.core.client.JavaScriptObject;
+import com.google.gwt.core.client.JsArrayMixed;
+import com.google.gwt.core.client.JsArrayString;
+import com.google.gwt.dom.client.BRElement;
+import com.google.gwt.dom.client.Document;
+import com.google.gwt.dom.client.Element;
+import com.google.gwt.dom.client.EventTarget;
+import com.google.gwt.dom.client.HeadElement;
+import com.google.gwt.dom.client.IFrameElement;
+import com.google.gwt.dom.client.NativeEvent;
+import com.google.gwt.dom.client.Node;
+import com.google.gwt.dom.client.NodeList;
+import com.google.gwt.dom.client.PreElement;
+import com.google.gwt.dom.client.ScriptElement;
+import com.google.gwt.dom.client.Style;
+import com.google.gwt.dom.client.Style.Position;
+import com.google.gwt.dom.client.Style.Unit;
+import com.google.gwt.dom.client.Text;
+import com.google.gwt.event.dom.client.HasAllKeyHandlers;
+import com.google.gwt.event.dom.client.KeyCodes;
+import com.google.gwt.event.dom.client.KeyDownEvent;
+import com.google.gwt.event.dom.client.KeyDownHandler;
+import com.google.gwt.event.dom.client.KeyPressEvent;
+import com.google.gwt.event.dom.client.KeyPressHandler;
+import com.google.gwt.event.dom.client.KeyUpEvent;
+import com.google.gwt.event.dom.client.KeyUpHandler;
+import com.google.gwt.resources.client.TextResource;
+import com.google.gwt.user.client.DOM;
+import com.google.gwt.user.client.ui.TextBox;
+import com.google.gwt.user.client.ui.UIObject;
+import com.google.gwt.user.client.ui.Widget;
 
 /**
  * Helper methods that are mostly useful for interacting with
@@ -390,17 +401,9 @@ public class DomUtils
       return impl.selectionExists();
    }
 
-   public static boolean contains(Element container, Node descendant)
-   {
-      while (descendant != null)
-      {
-         if (descendant == container)
-            return true;
-
-         descendant = descendant.getParentNode();
-      }
-      return false;
-   }
+   public static final native boolean contains(Element container, Node descendant) /*-{
+      return container.contains(descendant);
+   }-*/;
 
    /**
     * CharacterData.deleteData(node, index, offset)
@@ -1075,8 +1078,7 @@ public class DomUtils
          el.setSelectionRange(start, end);
    }-*/;
 
-   public static final String extractCssValue(String className,
-         String propertyName)
+   public static final String extractCssValue(String className, String propertyName)
    {
       JsArrayString classes = JsArrayString.createArray().cast();
       classes.push(className);

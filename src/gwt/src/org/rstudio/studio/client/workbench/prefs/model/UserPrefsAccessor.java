@@ -812,6 +812,18 @@ public class UserPrefsAccessor extends Prefs
    }
 
    /**
+    * Whether a data preview is shown in the autocompletion help popup for datasets and values.
+    */
+   public PrefValue<Boolean> showDataPreview()
+   {
+      return bool(
+         "show_data_preview",
+         _constants.showDataPreviewTitle(), 
+         _constants.showDataPreviewDescription(), 
+         true);
+   }
+
+   /**
     * Whether to show diagnostic messages (such as syntax and usage errors) for R code as you type.
     */
    public PrefValue<Boolean> showDiagnosticsR()
@@ -1393,6 +1405,18 @@ public class UserPrefsAccessor extends Prefs
          _constants.defaultProjectLocationTitle(), 
          _constants.defaultProjectLocationDescription(), 
          "");
+   }
+
+   /**
+    * The default directory to use in file dialogs when opening a project.
+    */
+   public PrefValue<String> defaultOpenProjectLocation()
+   {
+      return string(
+         "default_open_project_location",
+         _constants.defaultOpenProjectLocationTitle(), 
+         _constants.defaultOpenProjectLocationDescription(), 
+         "~");
    }
 
    /**
@@ -3672,6 +3696,8 @@ public class UserPrefsAccessor extends Prefs
          codeCompletionCharacters().setValue(layer, source.getInteger("code_completion_characters"));
       if (source.hasKey("show_function_signature_tooltips"))
          showFunctionSignatureTooltips().setValue(layer, source.getBool("show_function_signature_tooltips"));
+      if (source.hasKey("show_data_preview"))
+         showDataPreview().setValue(layer, source.getBool("show_data_preview"));
       if (source.hasKey("show_diagnostics_r"))
          showDiagnosticsR().setValue(layer, source.getBool("show_diagnostics_r"));
       if (source.hasKey("show_diagnostics_cpp"))
@@ -3766,6 +3792,8 @@ public class UserPrefsAccessor extends Prefs
          toolbarVisible().setValue(layer, source.getBool("toolbar_visible"));
       if (source.hasKey("default_project_location"))
          defaultProjectLocation().setValue(layer, source.getString("default_project_location"));
+      if (source.hasKey("default_open_project_location"))
+         defaultOpenProjectLocation().setValue(layer, source.getString("default_open_project_location"));
       if (source.hasKey("source_with_echo"))
          sourceWithEcho().setValue(layer, source.getBool("source_with_echo"));
       if (source.hasKey("default_sweave_engine"))
@@ -4129,6 +4157,7 @@ public class UserPrefsAccessor extends Prefs
       prefs.add(codeCompletionDelay());
       prefs.add(codeCompletionCharacters());
       prefs.add(showFunctionSignatureTooltips());
+      prefs.add(showDataPreview());
       prefs.add(showDiagnosticsR());
       prefs.add(showDiagnosticsCpp());
       prefs.add(showDiagnosticsYaml());
@@ -4176,6 +4205,7 @@ public class UserPrefsAccessor extends Prefs
       prefs.add(defaultEncoding());
       prefs.add(toolbarVisible());
       prefs.add(defaultProjectLocation());
+      prefs.add(defaultOpenProjectLocation());
       prefs.add(sourceWithEcho());
       prefs.add(defaultSweaveEngine());
       prefs.add(defaultLatexProgram());

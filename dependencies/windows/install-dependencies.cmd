@@ -18,7 +18,7 @@ for %%X in (R.exe 7z.exe cmake.exe wget.exe) do (
 set WGET_ARGS=-c --no-check-certificate --no-hsts
 set UNZIP_ARGS=-q
 
-set BASEURL=https://s3.amazonaws.com/rstudio-buildtools/
+set BASEURL=%RSTUDIO_BUILDTOOLS%/
 set GIN_FILE=gin-2.1.2.zip
 set JUNIT_FILE=junit-4.9b3.jar
 set GNUDIFF_FILE=gnudiff.zip
@@ -68,7 +68,7 @@ set LIBCLANG_FILE=%LIBCLANG_NAME%.zip
 set NODE_VERSION=%RSTUDIO_NODE_VERSION%
 set NODE_ROOT=node
 set NODE_SUBDIR=%NODE_ROOT%\%NODE_VERSION%
-set NODE_BASE_URL=https://nodejs.org/dist/v%NODE_VERSION%/
+set NODE_BASE_URL=%BASEURL%node/v%NODE_VERSION%/
 set NODE_ARCHIVE_DIR=node-v%NODE_VERSION%-win-x64
 set NODE_ARCHIVE_FILE=%NODE_ARCHIVE_DIR%.zip
 
@@ -174,7 +174,7 @@ if not exist "nsprocess/%NSIS_NSPROCESS_VERSION%" (
 pushd ..\common
 set CORE_DICTIONARIES=core-dictionaries.zip
 if not exist "dictionaries\en_US.dic" (
-  wget %WGET_ARGS% "https://s3.amazonaws.com/rstudio-buildtools/dictionaries/%CORE_DICTIONARIES%"
+  wget %WGET_ARGS% "%BASEURL%dictionaries/%CORE_DICTIONARIES%"
   if exist "%CORE_DICTIONARIES%" (
      mkdir dictionaries
      echo Unzipping %CORE_DICTIONARIES%
@@ -185,7 +185,7 @@ if not exist "dictionaries\en_US.dic" (
 
 set MATHJAX=mathjax-27.zip
 if not exist "mathjax-27" (
-  wget %WGET_ARGS% "https://s3.amazonaws.com/rstudio-buildtools/%MATHJAX%"
+  wget %WGET_ARGS% "%BASEURL%%MATHJAX%"
   if exist "%MATHJAX%" (
      mkdir mathjax-27
      echo Unzipping %MATHJAX%
@@ -206,7 +206,7 @@ if not exist pandoc\%PANDOC_VERSION% (
 
 
 
-REM wget %WGET_ARGS% https://s3.amazonaws.com/rstudio-buildtools/quarto/%QUARTO_VERSION%/%QUARTO_FILE%
+REM wget %WGET_ARGS% %BASEURL%quarto/%QUARTO_VERSION%/%QUARTO_FILE%
 wget %WGET_ARGS% https://github.com/quarto-dev/quarto-cli/releases/download/v%QUARTO_VERSION%/%QUARTO_FILE%
 echo Unzipping Quarto %QUARTO_FILE%
 rmdir /s /q quarto

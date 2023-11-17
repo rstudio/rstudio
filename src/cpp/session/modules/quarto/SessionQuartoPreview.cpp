@@ -157,11 +157,11 @@ protected:
    {
       return "Preview: " + previewTarget_.getFilename();
    }
-
+   
    virtual std::vector<std::string> args()
    {
       // preview target file
-      std::vector<std::string> args({"preview"});
+      std::vector<std::string> args = { "preview" };
       if (!previewTarget_.isDirectory())
       {
          args.push_back(string_utils::utf8ToSystem(previewTarget_.getFilename()));
@@ -185,7 +185,7 @@ protected:
 
       return args;
    }
-
+   
    virtual void environment(core::system::Options* pEnv)
    {
       // set render token

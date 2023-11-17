@@ -345,7 +345,7 @@
         "code_completion": {
             "type": "string",
             "enum": ["always", "never", "triggered", "manual"],
-            "enumReadable": ["Automatically", "Never", "When triggered ($, ::)", "Manually (tab)"],
+            "enumReadable": ["Automatically", "Never", "When triggered ($, ::)", "Manually (Tab, Ctrl + Space)"],
             "default": "always",
             "title": "Use code completion for R",
             "description": "When to use auto-completion for R code in the RStudio code editor."
@@ -381,6 +381,12 @@
             "default": true,
             "title": "Show function signature tooltips",
             "description": "Whether to show function signature tooltips during autocompletion."
+        },
+        "show_data_preview": {
+            "type": "boolean",
+            "default": true,
+            "title": "Show data preview in autocompletion help popup",
+            "description": "Whether a data preview is shown in the autocompletion help popup for datasets and values."
         },
         "show_diagnostics_r": {
             "type": "boolean",
@@ -666,6 +672,12 @@
             "default": "",
             "title": "Default new project location",
             "description": "The directory path under which to place new projects by default."
+        },
+        "default_open_project_location": {
+            "type": "string",
+            "default": "~",
+            "title": "Default open project location",
+            "description": "The default directory to use in file dialogs when opening a project."
         },
         "source_with_echo": {
             "type": "boolean",

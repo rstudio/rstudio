@@ -134,8 +134,10 @@ elseif(RSTUDIO_DESKTOP OR RSTUDIO_ELECTRON)
   else()
     list(APPEND RSTUDIO_RPM_DEPENDS
       "libxkbcommon-x11"
-      "postgresql-libs"
       "sqlite")
+    if(RSTUDIO_PRO_BUILD)
+      list(APPEND RSTUDIO_RPM_DEPENDS "postgresql-libs")
+    endif()
   endif()
 
   # deb dependencies

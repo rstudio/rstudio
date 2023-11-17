@@ -70,6 +70,7 @@ struct TerminalShell
    core::FilePath path;
    std::vector<std::string> args;
 
+   ShellType getEffectiveShellType() const;
    core::json::Object toJson() const;
 
    // get a user-friendly name for the given shell type

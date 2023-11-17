@@ -14,9 +14,10 @@
  */
 package org.rstudio.studio.client.common.dialog;
 
+import org.rstudio.core.client.DialogOptions;
 import org.rstudio.core.client.widget.DialogBuilder;
 
 public interface DialogBuilderFactory
 {
-   DialogBuilder create(int type, String caption, String message);
+   DialogBuilder create(int type, String caption, String message, DialogOptions options);
 }

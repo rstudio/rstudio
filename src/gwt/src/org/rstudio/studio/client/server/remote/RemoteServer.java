@@ -4597,7 +4597,8 @@ public class RemoteServer implements Server
    }
 
    @Override
-   public void beginFind(String searchString,
+   public void beginFind(String handle,
+                         String searchString,
                          boolean regex,
                          boolean isWholeWord,
                          boolean ignoreCase,
@@ -4609,16 +4610,17 @@ public class RemoteServer implements Server
                          ServerRequestCallback<String> requestCallback)
    {
       JSONArray params = new JSONArray();
-      params.set(0, new JSONString(searchString));
-      params.set(1, JSONBoolean.getInstance(regex));
-      params.set(2, JSONBoolean.getInstance(isWholeWord));
-      params.set(3, JSONBoolean.getInstance(ignoreCase));
-      params.set(4, new JSONString(directory == null ? ""
+      params.set(0, new JSONString(handle));
+      params.set(1, new JSONString(searchString));
+      params.set(2, JSONBoolean.getInstance(regex));
+      params.set(3, JSONBoolean.getInstance(isWholeWord));
+      params.set(4, JSONBoolean.getInstance(ignoreCase));
+      params.set(5, new JSONString(directory == null ? ""
                                                      : directory.getPath()));
-      params.set(5, new JSONArray(includeFilePatterns));
-      params.set(6, new JSONArray(excludeFilePatterns));
-      params.set(7, JSONBoolean.getInstance(useGitGrep));
-      params.set(8, JSONBoolean.getInstance(excludeGitIgnore));
+      params.set(6, new JSONArray(includeFilePatterns));
+      params.set(7, new JSONArray(excludeFilePatterns));
+      params.set(8, JSONBoolean.getInstance(useGitGrep));
+      params.set(9, JSONBoolean.getInstance(excludeGitIgnore));
       sendRequest(RPC_SCOPE, BEGIN_FIND, params, requestCallback);
    }
 
@@ -4636,7 +4638,8 @@ public class RemoteServer implements Server
    }
 
    @Override
-   public void previewReplace(String searchString,
+   public void previewReplace(String handle,
+                              String searchString,
                               boolean regex,
                               boolean isWholeWord,
                               boolean searchIgnoreCase,
@@ -4649,23 +4652,25 @@ public class RemoteServer implements Server
                               ServerRequestCallback<String> requestCallback)
    {
       JSONArray params = new JSONArray();
-      params.set(0, new JSONString(searchString));
-      params.set(1, JSONBoolean.getInstance(regex));
-      params.set(2, JSONBoolean.getInstance(isWholeWord));
-      params.set(3, JSONBoolean.getInstance(searchIgnoreCase));
-      params.set(4, new JSONString(directory == null ? ""
+      params.set(0, new JSONString(handle));
+      params.set(1, new JSONString(searchString));
+      params.set(2, JSONBoolean.getInstance(regex));
+      params.set(3, JSONBoolean.getInstance(isWholeWord));
+      params.set(4, JSONBoolean.getInstance(searchIgnoreCase));
+      params.set(5, new JSONString(directory == null ? ""
                                                      : directory.getPath()));
-      params.set(5, new JSONArray(includeFilePatterns));
-      params.set(6, new JSONArray(excludeFilePatterns));
-      params.set(7, JSONBoolean.getInstance(useGitGrep));
-      params.set(8, JSONBoolean.getInstance(excludeGitIgnore));
-      params.set(9, new JSONString(replaceString));
+      params.set(6, new JSONArray(includeFilePatterns));
+      params.set(7, new JSONArray(excludeFilePatterns));
+      params.set(8, JSONBoolean.getInstance(useGitGrep));
+      params.set(9, JSONBoolean.getInstance(excludeGitIgnore));
+      params.set(10, new JSONString(replaceString));
 
       sendRequest(RPC_SCOPE, PREVIEW_REPLACE, params, requestCallback);
    }
 
    @Override
-   public void completeReplace(String searchString,
+   public void completeReplace(String handle,
+                               String searchString,
                                boolean regex,
                                boolean isWholeWord,
                                boolean searchIgnoreCase,
@@ -4679,18 +4684,19 @@ public class RemoteServer implements Server
                                ServerRequestCallback<String> requestCallback)
    {
       JSONArray params = new JSONArray();
-      params.set(0, new JSONString(searchString));
-      params.set(1, JSONBoolean.getInstance(regex));
-      params.set(2, JSONBoolean.getInstance(isWholeWord));
-      params.set(3, JSONBoolean.getInstance(searchIgnoreCase));
-      params.set(4, new JSONString(directory == null ? ""
+      params.set(0, new JSONString(handle));
+      params.set(1, new JSONString(searchString));
+      params.set(2, JSONBoolean.getInstance(regex));
+      params.set(3, JSONBoolean.getInstance(isWholeWord));
+      params.set(4, JSONBoolean.getInstance(searchIgnoreCase));
+      params.set(5, new JSONString(directory == null ? ""
                                                      : directory.getPath()));
-      params.set(5, new JSONArray(includeFilePatterns));
-      params.set(6, JSONBoolean.getInstance(useGitGrep));
-      params.set(7, JSONBoolean.getInstance(excludeGitIgnore));
-      params.set(8, new JSONArray(excludeFilePatterns));
-      params.set(9, new JSONNumber(searchResults));
-      params.set(10, new JSONString(replaceString));
+      params.set(6, new JSONArray(includeFilePatterns));
+      params.set(7, JSONBoolean.getInstance(useGitGrep));
+      params.set(8, JSONBoolean.getInstance(excludeGitIgnore));
+      params.set(9, new JSONArray(excludeFilePatterns));
+      params.set(10, new JSONNumber(searchResults));
+      params.set(11, new JSONString(replaceString));
 
       sendRequest(RPC_SCOPE, COMPLETE_REPLACE, params, requestCallback);
    }
@@ -5703,6 +5709,19 @@ public class RemoteServer implements Server
       params.set(0, new JSONArray(images));
       params.set(1,  new JSONString(imagesDir));
       sendRequest(RPC_SCOPE, RMD_IMPORT_IMAGES, params, requestCallback);
+   }
+   
+   @Override
+   public void rmdSaveBase64Images(JsArrayString images,
+                                   String imagesDir,
+                                   ServerRequestCallback<JsArrayString> requestCallback)
+   {
+      JSONArray params = new JSONArrayBuilder()
+            .add(images)
+            .add(imagesDir)
+            .get();
+      
+      sendRequest(RPC_SCOPE, RMD_SAVE_BASE64_IMAGES, params, requestCallback);
    }
 
    @Override
@@ -7081,6 +7100,7 @@ public class RemoteServer implements Server
    private static final String GET_RMD_TEMPLATES = "get_rmd_templates";
    private static final String GET_RMD_OUTPUT_INFO = "get_rmd_output_info";
    private static final String RMD_IMPORT_IMAGES = "rmd_import_images";
+   private static final String RMD_SAVE_BASE64_IMAGES = "rmd_save_base64_images";
 
    private static final String GET_PACKRAT_PREREQUISITES = "get_packrat_prerequisites";
    private static final String INSTALL_PACKRAT = "install_packrat";

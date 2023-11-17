@@ -1245,19 +1245,6 @@ public class RCompletionManager implements CompletionManager
          
          if (cursor.moveToPosition(input_.getCursorPosition()))
          {
-            String token = "";
-            if (cursor.hasType("identifier"))
-               token = cursor.currentValue();
-            
-            String cursorPos = "left";
-            if (cursor.currentValue() == "=")
-               cursorPos = "right";
-            
-            TokenCursor clone = cursor.cloneCursor();
-            if (clone.moveToPreviousToken())
-               if (clone.currentValue() == "=")
-                  cursorPos = "right";
-            
             // Try to see if there's an object name we should use to supplement
             // completions
             if (cursor.moveToPosition(input_.getCursorPosition()))

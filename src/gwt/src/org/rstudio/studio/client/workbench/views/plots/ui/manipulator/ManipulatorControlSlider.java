@@ -18,7 +18,11 @@ import org.rstudio.core.client.StringUtil;
 import org.rstudio.studio.client.workbench.views.plots.model.Manipulator;
 
 import com.google.gwt.json.client.JSONNumber;
-import com.google.gwt.user.client.ui.*;
+import com.google.gwt.user.client.ui.ChangeListener;
+import com.google.gwt.user.client.ui.HorizontalPanel;
+import com.google.gwt.user.client.ui.Label;
+import com.google.gwt.user.client.ui.VerticalPanel;
+import com.google.gwt.user.client.ui.Widget;
 import com.google.gwt.widgetideas.client.SliderBar;
 
 @SuppressWarnings("deprecation")
@@ -76,7 +80,7 @@ public class ManipulatorControlSlider extends ManipulatorControl
       {
          double numTicks = range / step;
          if (numTicks <= 25) // no more than 25 ticks
-            sliderBar_.setNumTicks(new Double(numTicks).intValue());
+            sliderBar_.setNumTicks((int) numTicks);
          else
             sliderBar_.setNumTicks(1);
       }

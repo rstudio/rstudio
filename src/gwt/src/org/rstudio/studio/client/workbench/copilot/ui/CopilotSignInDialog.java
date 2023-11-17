@@ -37,7 +37,7 @@ public class CopilotSignInDialog extends ModalDialogBase
       setText("GitHub Copilot: Sign in");
 
       ui_ = uiBinder.createAndBindUi(this);
-      progress_ = addProgressIndicator();
+      progress_ = addProgressIndicator(true, false);
       verificationUri_.setInnerText(verificationUri);
       verificationUri_.setHref(verificationUri);
       verificationCode_.setInnerText(verificationCode);
@@ -48,7 +48,12 @@ public class CopilotSignInDialog extends ModalDialogBase
       {
          if (BrowserEvents.KEYDOWN.equals(event.getType()) && event.getKeyCode() != KeyCodes.KEY_ENTER)
             return;
-         progress_.onProgress("Authenticating...", () -> progress_.clearProgress());
+         
+         if (!progressShowing_)
+         {
+            progressShowing_ = true;
+            progress_.onProgress("Authenticating...");
+         }
       });
 
       addCancelButton();
@@ -66,6 +71,7 @@ public class CopilotSignInDialog extends ModalDialogBase
    @UiField AnchorElement verificationUri_;
    @UiField SpanElement verificationCode_;
    
+   private boolean progressShowing_ = false;
    private final DivElement ui_;
    private final ProgressIndicator progress_;
 
