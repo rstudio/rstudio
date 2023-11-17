@@ -356,6 +356,8 @@ std::string languageIdFromExtension(const std::string& ext)
    
    if (extToIdMap.count(ext))
       return extToIdMap.at(ext);
+   else if (ext.empty())
+      return "";
    else
       return ext.substr(1);
 }
@@ -1303,9 +1305,14 @@ void indexFile(const core::FileInfo& info)
       return;
    
    std::string ext = documentPath.getExtensionLowerCase();
-   std::string languageId = languageIdFromExtension(ext);
-   DLOG("Indexing document: {}", info.absolutePath());
+   if (ext.empty())
+      return;
    
+   std::string languageId = languageIdFromExtension(ext);
+   if (languageId.empty())
+      return;
+   
+   DLOG("Indexing document: {}", info.absolutePath());
    std::string contents;
    Error error = core::readStringFromFile(documentPath, &contents);
    if (error)
