@@ -1452,6 +1452,19 @@ public class StringUtil
    }
 
    /**
+    * GWT 2.10 changed String.substring to behave more like Java: it now throws an exception
+    * if the start or end index is out of range. If you need the old behavior use the following
+    * methods, instead.
+    */
+   public static native String substring(String str, int indexStart, int indexEnd) /*-{
+      return str.substr(indexStart, indexEnd - indexStart);
+   }-*/;
+
+   public static native String substring(String str, int indexStart) /*-{
+      return str.substr(indexStart);
+   }-*/;
+
+   /**
     * Convert a string "foo" to "f o o"
     * @param str
     * @return

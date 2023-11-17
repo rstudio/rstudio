@@ -104,7 +104,7 @@ public class VirtualConsole
             return null;
          
          int paramsEnd = cursor.getIndex();
-         params = data.substring(paramsStart, paramsEnd);
+         params = StringUtil.substring(data, paramsStart, paramsEnd);
          
          if (!cursor.consume(';'))
             return null;
@@ -114,7 +114,7 @@ public class VirtualConsole
             return null;
          
          int contentsEnd = cursor.getIndex();
-         contents = data.substring(contentsStart, contentsEnd);
+         contents = StringUtil.substring(data, contentsStart, contentsEnd);
          cursor.advance(cursor.peek() == '\u0007' ? 1 : 2);
          endIndex = cursor.getIndex();
          
@@ -262,9 +262,9 @@ public class VirtualConsole
          String string = splat.get(i);
          String trimmed = StringUtil.trimRight(string);
          if (trimmed.length() > maxLength)
-            splat.set(i, trimmed.substring(0, maxLength) + "... <truncated>");
+            splat.set(i, StringUtil.substring(trimmed, 0, maxLength) + "... <truncated>");
          else if (string.length() > maxLength)
-            splat.set(i, string.substring(0, maxLength));
+            splat.set(i, StringUtil.substring(string, 0, maxLength));
       }
 
       return splat.join("\n");
@@ -472,7 +472,7 @@ public class VirtualConsole
                ClassRange remainder = new ClassRange(
                      end,
                      overlap.clazz,
-                     text.substring((text.length() - (amountTrimmed - range.length))),
+                     StringUtil.substring(text, (text.length() - (amountTrimmed - range.length))),
                      preserveHTML_,
                      overlap.hyperlink_);
                insertions.add(remainder);
@@ -622,7 +622,7 @@ public class VirtualConsole
          // character, add it.
          if (tail != pos)
          {
-            text(data.substring(tail, pos), currentClazz, forceNewRange);
+            text(StringUtil.substring(data, tail, pos), currentClazz, forceNewRange);
 
             // once we've started a new range, rest of output for this submit
             // call should share that range (e.g. a multi-line error message)
@@ -687,7 +687,7 @@ public class VirtualConsole
                   {
                      // only have "[" at end, could be any ANSI code, so save remainder
                      // of string to see if we can recognize it when more arrives
-                     partialAnsiCode_ = data.substring(pos);
+                     partialAnsiCode_ = StringUtil.substring(data, pos);
                      return;
                   }
 
@@ -698,7 +698,7 @@ public class VirtualConsole
                      // Might have an SGR ANSI code that was split across submit calls;
                      // save remainder of string to see if we can recognize it
                      // when more arrives
-                     partialAnsiCode_ = data.substring(pos);
+                     partialAnsiCode_ = StringUtil.substring(data, pos);
                      return;
                   }
 
@@ -742,7 +742,7 @@ public class VirtualConsole
 
       // If there was any plain text after the last control character, add it
       if (tail < data.length())
-         text(data.substring(tail), currentClazz, forceNewRange);
+         text(StringUtil.substring(data, tail), currentClazz, forceNewRange);
          
       if (wasAtBottom && isVirtualized())
          VirtualScrollerManager.scrollToBottom(parent_.getParentElement());
@@ -845,37 +845,36 @@ public class VirtualConsole
       {
          length -= delta;
          start += delta;
-         setText(element.getInnerText().substring(delta));
+         setText(StringUtil.substring(element.getInnerText(), delta));
       }
 
       public void trimRight(int delta)
       {
          length -= delta;
          String text = element.getInnerText();
-         setText(text.substring(0, text.length() - delta));
+         setText(StringUtil.substring(text, 0, text.length() - delta));
       }
 
       public void appendLeft(String content, int delta)
       {
          length += content.length() - delta;
          start -= (content.length() - delta);
-         setText(content +
-               element.getInnerText().substring(delta));
+         setText(content + StringUtil.substring(element.getInnerText(), delta));
       }
 
       public void appendRight(String content, int delta)
       {
          length += content.length() - delta;
          String text = text();
-         setText(text.substring(0, text.length() - delta) + content);
+         setText(StringUtil.substring(text, 0, text.length() - delta) + content);
       }
 
       public void overwrite(String content, int pos)
       {
          String text = element.getInnerText();
          setText(
-               text.substring(0, pos) + content +
-               text.substring(pos + content.length()));
+               StringUtil.substring(text, 0, pos) + content +
+               StringUtil.substring(text, pos + content.length()));
       }
 
       public String text()
