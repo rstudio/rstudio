@@ -1083,11 +1083,81 @@ void onBackgroundProcessing(bool isIdle)
    }
 }
 
+namespace file_monitor {
+
+namespace {
+
+void indexFile(const core::FileInfo& info)
+{
+   FilePath documentPath = module_context::resolveAliasedPath(info.absolutePath());
+   if (!isIndexableFile(documentPath))
+      return;
+   
+   std::string ext = documentPath.getExtensionLowerCase();
+   std::string languageId = languageIdFromExtension(ext);
+   DLOG("Indexing document: {}", info.absolutePath());
+   
+   std::string contents;
+   Error error = core::readStringFromFile(documentPath, &contents);
+   if (error)
+      return;
+   
+   json::Object textDocumentJson;
+   textDocumentJson["uri"] = uriFromDocumentPath(documentPath.getAbsolutePath());
+   textDocumentJson["languageId"] = languageId;
+   textDocumentJson["version"] = 1;
+   textDocumentJson["text"] = contents;
+
+   json::Object paramsJson;
+   paramsJson["textDocument"] = textDocumentJson;
+
+   sendNotification("textDocument/didOpen", paramsJson);
+}
+
+} // end anonymous namespace
+
+void onMonitoringEnabled(const tree<core::FileInfo>& tree)
+{
+   if (s_copilotIndexingEnabled)
+      for (auto&& file : tree)
+         indexFile(file);
+}
+
+void onFilesChanged(const std::vector<core::system::FileChangeEvent>& events)
+{
+   if (s_copilotIndexingEnabled)
+      for (auto&& event : events)
+         indexFile(event.fileInfo());
+}
+
+void onMonitoringDisabled()
+{
+}
+
+} // end namespace file_monitor
+
+bool subscribeToFileMonitor()
+{
+   session::projects::FileMonitorCallbacks callbacks;
+   callbacks.onMonitoringEnabled = file_monitor::onMonitoringEnabled;
+   callbacks.onFilesChanged = file_monitor::onFilesChanged;
+   callbacks.onMonitoringDisabled = file_monitor::onMonitoringDisabled;
+   projects::projectContext().subscribeToFileMonitor("Copilot indexing", callbacks);
+   return true;
+}
+
 void synchronize()
 {
    // Update flags
    s_copilotEnabled = isCopilotEnabled();
    s_copilotIndexingEnabled = s_copilotEnabled && isCopilotIndexingEnabled();
+   
+   // Subscribe to file monitor if enabled
+   if (s_copilotIndexingEnabled)
+   {
+      static bool once = subscribeToFileMonitor();
+      (void) once;
+   }
    
    // Start or stop the agent as appropriate
    if (s_copilotEnabled)
@@ -1294,65 +1364,6 @@ Error copilotInstallAgent(const json::JsonRpcRequest& request,
 } // end anonymous namespace
 
 
-namespace file_monitor {
-
-namespace {
-
-void indexFile(const core::FileInfo& info)
-{
-   FilePath documentPath = module_context::resolveAliasedPath(info.absolutePath());
-   if (!isIndexableFile(documentPath))
-      return;
-   
-   std::string ext = documentPath.getExtensionLowerCase();
-   if (ext.empty())
-      return;
-   
-   std::string languageId = languageIdFromExtension(ext);
-   if (languageId.empty())
-      return;
-   
-   DLOG("Indexing document: {}", info.absolutePath());
-   std::string contents;
-   Error error = core::readStringFromFile(documentPath, &contents);
-   if (error)
-      return;
-   
-   json::Object textDocumentJson;
-   textDocumentJson["uri"] = uriFromDocumentPath(documentPath.getAbsolutePath());
-   textDocumentJson["languageId"] = languageId;
-   textDocumentJson["version"] = 1;
-   textDocumentJson["text"] = contents;
-
-   json::Object paramsJson;
-   paramsJson["textDocument"] = textDocumentJson;
-
-   sendNotification("textDocument/didOpen", paramsJson);
-}
-
-} // end anonymous namespace
-
-void onMonitoringEnabled(const tree<core::FileInfo>& tree)
-{
-   if (s_copilotIndexingEnabled)
-      for (auto&& file : tree)
-         indexFile(file);
-}
-
-void onFilesChanged(const std::vector<core::system::FileChangeEvent>& events)
-{
-   if (s_copilotIndexingEnabled)
-      for (auto&& event : events)
-         indexFile(event.fileInfo());
-}
-
-void onMonitoringDisabled()
-{
-}
-
-} // end namespace file_monitor
-
-
 Error initialize()
 {
    using boost::bind;
@@ -1374,14 +1385,6 @@ Error initialize()
    // Synchronize user + project preferences with internal caches
    synchronize();
 
-   // subscribe to project context file monitoring state changes
-   // (note that if there is no project this will no-op)
-   session::projects::FileMonitorCallbacks callbacks;
-   callbacks.onMonitoringEnabled = file_monitor::onMonitoringEnabled;
-   callbacks.onFilesChanged = file_monitor::onFilesChanged;
-   callbacks.onMonitoringDisabled = file_monitor::onMonitoringDisabled;
-   projects::projectContext().subscribeToFileMonitor("Copilot indexing", callbacks);
-   
    events().onBackgroundProcessing.connect(onBackgroundProcessing);
    events().onPreferencesSaved.connect(onPreferencesSaved);
    events().onProjectOptionsUpdated.connect(onProjectOptionsUpdated);
