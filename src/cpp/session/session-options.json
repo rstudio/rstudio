@@ -732,9 +732,9 @@
             "description": "Specifies the path to node binaries."
          },
          {
-            "name": "external-copilot-path",
+            "name": "external-copilot-agent-path",
             "type": "core::FilePath",
-            "memberName": "copilotPath_",
+            "memberName": "copilotAgentPath_",
             "description": "Specifies the path to the GitHub Copilot agent."
          },
          {
@@ -846,7 +846,14 @@
             "memberName": "copilotProxyStrictSsl_",
             "defaultValue": true,
             "description": "Should the GitHub Copilot agent perform SSL certificate validation when forming web requests?"
+         },
+         {
+            "name": "copilot-agent-helper",
+            "type": "core::FilePath",
+            "memberName": "copilotAgentHelper_",
+            "description": "The path to an optional shell script, which when invoked, should start the GitHub Copilot agent."
          }
+
       ],
       "misc": [
          
