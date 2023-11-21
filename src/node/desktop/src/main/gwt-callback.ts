@@ -743,7 +743,7 @@ export class GwtCallback extends EventEmitter {
       ElectronDesktopOptions().setAccessibility(enable);
     });
 
-    ipcMain.on('desktop_set_autohide_menubar', (_event, autohide) => {
+    ipcMain.on('desktop_set_autohide_menubar', (_event, autohide: boolean) => {
       this.mainWindow.window.setAutoHideMenuBar(autohide);
       this.mainWindow.window.setMenuBarVisibility(!autohide);
     });
