@@ -1332,7 +1332,7 @@ FilePath projectFromDirectory(const FilePath& path)
         it != children.end();
         ++it)
    {
-      if (!it->isDirectory() && (it->getExtensionLowerCase() == ".rproj"))
+      if ((it->getExtensionLowerCase() == ".rproj") && !it->isDirectory())
       {
          if (string_utils::toLower(it->getFilename()) == projFileLower)
             return *it;
